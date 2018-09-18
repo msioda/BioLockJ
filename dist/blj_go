@@ -1,0 +1,37 @@
+#!/bin/bash
+##############################################################
+##                                                          ##
+##  This script navigates the $USER to their most recent    ##
+##  pipeline and lists the current directory                ##
+##                                                          ##
+##############################################################
+
+function valid_dir {
+	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
+		echo "Y" 
+	else 
+		echo "N"
+	fi
+}
+
+
+function most_recent_pipeline {
+	if [ "$(valid_dir $BLJ_PROJ)" == "Y" ]; then
+		dir=$( \ls -t $BLJ_PROJ | head -1 )
+		if [ ${#dir} -gt 0 ] && [ "$(valid_dir $BLJ_PROJ/$dir)" == "Y" ]; then
+			echo "$BLJ_PROJ/$dir"
+		else
+			echo ""
+		fi
+   fi
+}
+
+pipeline=$(most_recent_pipeline)
+if [ ${#pipeline} -gt 0 ]; then
+	echo "Goto latest BioLockJ pipeline: $pipeline"
+	cd "$pipeline"
+	ls "$pipeline"
+elif [ "$(valid_dir $BLJ_PROJ)" == "Y" ]; then
+	cd $BLJ_PROJ
+	echo "No pipeline directories found in BLJ_PROJ: $BLJ_PROJ"
+fi

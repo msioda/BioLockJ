@@ -3,414 +3,573 @@ package biolockj.module.report;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
-import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.math.NumberUtils;
+import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.BioModule;
-import biolockj.module.BioModuleImpl;
-import biolockj.module.parser.ParsedSample;
-import biolockj.module.parser.ParserModule;
+import biolockj.module.JavaModule;
+import biolockj.module.JavaModuleImpl;
+import biolockj.module.r.CalculateStats;
+import biolockj.node.JsonNode;
+import biolockj.node.OtuNode;
+import biolockj.node.ParsedSample;
 import biolockj.util.ModuleUtil;
+import biolockj.util.SeqUtil;
 
-public class JsonReport extends BioModuleImpl
+/**
+ * This BioModule is used to build a JSON file (summary.json) from pipeline OTU-metadata tables.
+ */
+public class JsonReport extends JavaModuleImpl implements JavaModule
 {
-	private static class JsonNode implements Serializable, Comparable<JsonNode>
-	{
-		@Override
-		public int compareTo( final JsonNode node )
-		{
-			return name.compareTo( node.name );
-		}
-
-		@Override
-		public boolean equals( final Object o )
-		{
-			if( ( o != null ) && ( o instanceof JsonNode ) )
-			{
-				if( o == this )
-				{
-					return true;
-				}
-				if( ( (JsonNode) o ).parent != null )
-				{
-					if( parent == null )
-					{
-						return false;
-					}
-					return new EqualsBuilder().append( name, ( (JsonNode) o ).name )
-							.append( parent, ( (JsonNode) o ).parent ).isEquals();
-				}
-				return new EqualsBuilder().append( name, ( (JsonNode) o ).name ).isEquals();
-			}
-
-			return false;
-		}
-
-		@Override
-		public int hashCode()
-		{
-			if( parent == null )
-			{
-				return name.hashCode();
-			}
-			return ( name + parent ).hashCode();
-		}
-
-		String name;
-		Long numSequences;
-		JsonNode parent;
-		HashMap<String, Double> stats = new LinkedHashMap<>();
-
-		private static final long serialVersionUID = 7967794387383764650L;
-
-	}
-
-	/**
-	 * Verify Config params & that RReport is the previous module.
-	 *
-	 * @Exception if modules out of order or config is missing/invalid
-	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		Config.requireString( Config.REPORT_LOG_BASE );
-		ModuleUtil.requireModule( RReport.class.getName() );
 		ModuleUtil.requireParserModule();
 	}
 
-	/**
-	 * Obtain parsed sample data, build root node, & create the jsonMap by passing both
-	 * to buildMap().  Set ROOT_NODE #sequences with getRootCount(jsonMap), add stats info
-	 * to the jsonNodes, & finally build the JSON file.
-	 *
-	 * @Exception if propagated by sub-methods
-	 */
 	@Override
-	public void executeProjectFile() throws Exception
+	public List<File> getInputFiles() throws Exception
 	{
-		final BioModule parserMod = ModuleUtil.requireParserModule();
-		final BioModule rMod = ModuleUtil.requireModule( RReport.class.getName() );
-		if( !ModuleUtil.isComplete( rMod ) || !ModuleUtil.isComplete( parserMod ) )
-		{
-			throw new Exception(
-					"BioLockJ Modules Out of Order --> Prerequisite modules have not successfully completed!  "
-							+ parserMod.getClass().getName() + " & " + RReport.class.getName() + " incomplete" );
-		}
-
-		final Set<ParsedSample> parsedSamples = getParsedSamples();
-		final JsonNode root = buildNode( ROOT_NODE, 0L, null );
-		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = buildJsonMap( root, parsedSamples );
-		root.numSequences = getRootCount( jsonMap );
-		addStats( jsonMap, root );
-		writeJSON( jsonMap, root );
+		return new ArrayList<>();
+		// nothing to do
 	}
 
 	/**
-	 * Stats can be found for all taxonomy levels in the RReport output, which is also
-	 * the JsonReport inputDir() since it must be configured as the
-	 *
-	 * @param LinkedHashMap<String, TreeSet<JsonNode>> jsonMap (key=level)
-	 * @param root
-	 * @throws Exception if unable to parse report files
+	 * Module prerequisites include:
+	 * <ul>
+	 * <li>{@link biolockj.module.report.AddMetadataToOtuTables}
+	 * <li>{@link biolockj.module.r.CalculateStats}
+	 * </ul>
 	 */
-	private void addStats( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final JsonNode root )
-			throws Exception
+	@Override
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
-		Log.out.info( "Adding stats (pvals, r-squared, etc) to JSON nodes..." );
-		for( final String level: Config.requireTaxonomy() )
+		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		preReqs.add( AddMetadataToOtuTables.class );
+		preReqs.add( CalculateStats.class );
+		return preReqs;
+	}
+
+	/**
+	 * Add summary with unique OTU counts/level, and for each level, give # reads with a gap in the taxonomy assignment.
+	 */
+	@Override
+	public String getSummary() throws Exception
+	{
+		final Map<String, Long> gaps = new HashMap<>();
+		for( final Map<String, String> otus: brokenOtuNetworks )
 		{
-			final File statsReport = getTaxaLevelReport( level );
-			final BufferedReader reader = new BufferedReader( new FileReader( statsReport ) );
-			final List<String> columnNames = Arrays
-					.asList( reader.readLine().replaceAll( "\"", "" ).split( TAB_DELIM ) );
-
-			Log.out.debug( "addStats(" + level + ") using report: " + statsReport.getAbsolutePath() );
-
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			final int size = otus.size();
+			int count = 0;
+			for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
 			{
-				final StringTokenizer st = new StringTokenizer( line.replaceAll( "\"", "" ), TAB_DELIM );
-				final String otu = st.nextToken();
-
-				Log.out.debug( "addStats(" + level + ") otu: " + otu + "   [length=" + otu.length() + "]" );
-
-				int i = 0;
-				final JsonNode jsonNode = getJsonNode( otu, jsonMap.get( level ) );
-				if( jsonNode != null )
+				if( otus.get( level ) != null )
 				{
-					while( st.hasMoreTokens() )
+					count++;
+				}
+				else if( count < size )
+				{
+					if( gaps.get( level ) == null )
 					{
-						jsonNode.stats.put( columnNames.get( ++i ), Double.parseDouble( st.nextToken() ) );
-						Log.out.debug( "addStats(" + level + ") for: " + columnNames.get( i ) );
+						gaps.put( level, 0L );
+					}
+
+					gaps.put( level, gaps.get( level ) + 1 );
+				}
+			}
+		}
+
+		final StringBuffer sb = new StringBuffer();
+		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		{
+			final Long count = gaps.get( level );
+			if( count != null )
+			{
+				sb.append( "# OTU Gaps [ " + level + " ]: " + count + RETURN );
+			}
+		}
+
+		return super.getSummary() + summary.toString() + sb.toString();
+	}
+
+	/**
+	 * Obtain parsed sample data, build root node, and create the jsonMap by passing both to buildMap(). Set ROOT_NODE
+	 * #seqs with getRootCount(jsonMap), add stats info to the jsonNodes, and finally build the JSON file.
+	 */
+	@Override
+	public void runModule() throws Exception
+	{
+		final JsonNode root = new JsonNode( ROOT_NODE, 0L, null, null );
+		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = buildJsonMap( root );
+		root.addCount( getRootCount( jsonMap ) );
+		addStats( jsonMap, root );
+		writeJson( writeNodeAndChildren( root, false, jsonMap, 0 ) );
+	}
+
+	/**
+	 * Return list of OTUs that passed the filters in {@link biolockj.module.r.CalculateStats} which has generated
+	 * statistics. Key=level, Value=OTUs.
+	 * 
+	 * @return Map of valid OTUs by level
+	 * @throws Exception if errors occur
+	 */
+	protected Map<String, Set<String>> getValidOtus() throws Exception
+	{
+		final Map<String, Set<String>> validOtuMap = new HashMap<>();
+		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		{
+			final File statsFile = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_PAR );
+			final Set<String> validOtus = new HashSet<>();
+			if( statsFile != null )
+			{
+				final BufferedReader reader = SeqUtil.getFileReader( statsFile );
+				try
+				{
+					reader.readLine(); // skip column headers
+					for( String line = reader.readLine(); line != null; line = reader.readLine() )
+					{
+						final StringTokenizer st = new StringTokenizer( line.replaceAll( "\"", "" ), TAB_DELIM );
+						validOtus.add( st.nextToken().trim() );
 					}
 				}
-				else
+				finally
 				{
-					Log.out.error(
-							"Could not find " + level + " OTU: " + otu + " from " + statsReport.getAbsolutePath() );
+					if( reader != null )
+					{
+						reader.close();
+					}
 				}
 			}
 
-			reader.close();
+			validOtuMap.put( level, validOtus );
+		}
+
+		return validOtuMap;
+	}
+
+	/**
+	 * Statistics can be found for all taxonomy levels in the output from {@link biolockj.module.r.CalculateStats},
+	 * which is also the JsonReport inputDir() since it must be configured as the
+	 *
+	 * @param LinkedHashMap jsonMap (key=level)
+	 * @param root JsonNode
+	 * @throws Exception if unable to parse report files
+	 */
+	private void addStats( LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final JsonNode root ) throws Exception
+	{
+		Log.get( getClass() ).info( "Adding stats to JSON nodes..." );
+		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		{
+			final File[] statReports = getStatReports( level );
+			for( final File stats: statReports )
+			{
+				if( stats != null )
+				{
+					jsonMap = updateNodeStats( jsonMap, stats, level );
+				}
+			}
 		}
 	}
 
 	/**
-	 * Build the JSON-Map key=level, value = Set<OtuNode>
-	 * The value
-	 *
+	 * Build the JSON Map [key=level, value = TreeSet<JsonNode>].<br>
+	 * 
+	 * 
 	 * @param JsonNode rootNode
-	 * @param Set<ParsedSample> parsedSamples
-	 * @return LinkedHashMap<String, TreeSet<JsonNode>> jsonMap
-	 * @throws Exception
+	 * @return jsonMap of JsonNodes for each taxonomy level
+	 * @throws Exception if errors occur
 	 */
-	private LinkedHashMap<String, TreeSet<JsonNode>> buildJsonMap( final JsonNode rootNode,
-			final Set<ParsedSample> parsedSamples ) throws Exception
+	private LinkedHashMap<String, TreeSet<JsonNode>> buildJsonMap( final JsonNode rootNode ) throws Exception
 	{
-		Log.out.info( "Build JSON for " + parsedSamples.size() + " samples..." );
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = new LinkedHashMap<>();
+		final Set<ParsedSample> parsedSamples = ModuleUtil.requireParserModule().getParsedSamples();
+		Log.get( getClass() ).info( "Build JSON Nodes for " + parsedSamples.size() + " samples..." );
+		final Map<String, Set<String>> validOtus = getValidOtus();
 
-		//		//for each sample...
-		//		for( final ParsedSample sample: parsedSamples )
-		//		{
-		//			Log.out.info( "Process Sample ID: " + id );
-		//			final Iterator<OtuNode> it = otuNodeMap.get( id ).iterator();
-		//			while( it.hasNext() )
-		//			{
-		//				JsonNode parent = rootNode;
-		//				final OtuNode otuNode = it.next();
-		//				for( final String level: Config.requireTaxonomy() )
-		//				{
-		//					final String otu = otuNode.getOtu( level );
-		//					if( otu != null )
-		//					{
-		//						final long count = otuNode.getCount();
-		//						if( jsonMap.get( level ) == null )
-		//						{
-		//							jsonMap.put( level, new TreeSet<JsonNode>() );
-		//						}
-		//						JsonNode jsonNode = getJsonNode( otu, jsonMap.get( level ) );
-		//
-		//						if( jsonNode == null )
-		//						{
-		//							jsonNode = buildNode( otu, count, parent );
-		//							jsonMap.get( level ).add( jsonNode );
-		//						}
-		//						else
-		//						{
-		//							jsonNode.numSequences += count;
-		//						}
-		//
-		//						parent = jsonNode;
-		//					}
-		//				}
-		//			}
-		//		}
+		// for each sample...
+		for( final ParsedSample sample: parsedSamples )
+		{
+			Log.get( getClass() ).debug( "Build JSON Node for Sample ID[ " + sample.getSampleId() + " ] with #Hits:"
+					+ sample.getNumHits() + " | #OTU Nodes: " + sample.getOtuNodes().size() );
+
+			// for each sample OtuNode
+			for( final OtuNode node: sample.getOtuNodes() )
+			{
+				final Map<String, String> otuBranch = node.getOtuMap();
+				boolean foundGap = false;
+				final StringBuffer gaps = new StringBuffer();
+				String parentOtu = null;
+				String parentLevel = null;
+				final Iterator<String> levels = Config.getList( Config.REPORT_TAXONOMY_LEVELS ).iterator();
+				while( levels.hasNext() )
+				{
+					final String level = levels.next();
+					final String otu = otuBranch.get( level );
+					if( otu != null && validOtus.get( level ).contains( otu ) )
+					{
+						// missing levels only become a gap if OTUs are found below the gap
+						if( !gaps.toString().isEmpty() )
+						{
+							foundGap = true;
+						}
+
+						// create jsonMap level entry
+						if( jsonMap.get( level ) == null )
+						{
+							jsonMap.put( level, new TreeSet<JsonNode>() );
+						}
+
+						// create JsonNode for OTU at the given level
+						JsonNode jsonNode = getJsonNode( otu, jsonMap.get( level ), level );
+						if( jsonNode == null )
+						{
+							JsonNode parent = getParent( parentOtu, parentLevel, jsonMap );
+							if( parent == null )
+							{
+								parent = rootNode;
+							}
+							jsonNode = new JsonNode( otu, 0L, parent, level );
+							jsonMap.get( level ).add( jsonNode );
+						}
+
+						jsonNode.addCount( node.getCount() );
+						parentOtu = otu;
+						parentLevel = level;
+					}
+					else if( parentOtu != null ) // OTU = null: Tree has a gap, so do not check remaining nodes
+					{
+						gaps.append( ( gaps.toString().isEmpty() ? "": ", " ) + level );
+
+					}
+				}
+
+				if( foundGap )
+				{
+					brokenOtuNetworks.add( otuBranch );
+					node.report();
+					Log.get( getClass() )
+							.warn( "Missing OTU Levels [ " + sample.getSampleId() + " ]: " + gaps.toString() );
+				}
+			}
+		}
 
 		return jsonMap;
 	}
 
-	/**
-	 * The ParserModule has already parsed & cached the classifier report data.
-	 * If running a restarted pipeline, this cache will need to be rebuilt.
-	 *
-	 * @return Set<ParsedSample>
-	 * @throws Exception thrown if unable to obtain parsed sample data
-	 */
-	private Set<ParsedSample> getParsedSamples() throws Exception
+	private List<JsonNode> getChildNodes( final JsonNode node, final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap,
+			final int nodeLevel ) throws Exception
 	{
-		final ParserModule parser = ModuleUtil.requireParserModule();
-		if( !ModuleUtil.hasExecuted( parser ) )
+		final List<JsonNode> childNodes = new ArrayList<>();
+		if( nodeLevel < Config.getList( Config.REPORT_TAXONOMY_LEVELS ).size() )
 		{
-			Log.out.info( parser.getClass().getName()
-					+ " has not executed so must be executing a pipeline restart --> attempting to rebuild ParsedSample cache..." );
-			parser.parseSamples();
-		}
-		if( !parser.getParsedSamples().isEmpty() )
-		{
-			return parser.getParsedSamples();
-		}
+			// getting all JsonNodes for the nodeLevel
+			final Set<JsonNode> jsonNodes = jsonMap
+					.get( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).get( nodeLevel ) );
 
-		throw new Exception( "Unalbe to obtain cached parsed sample data!" );
+			if( jsonNodes != null )
+			{
+				for( final JsonNode innerNode: jsonNodes )
+				{
+					if( innerNode.getParent().equals( node ) )
+					{
+						childNodes.add( innerNode );
+					}
+				}
+			}
+		}
+		return childNodes;
+	}
+
+	private JsonNode getJsonNode( final String otu, final Set<JsonNode> jsonNodes, final String level )
+	{
+		if( jsonNodes != null )
+		{
+			for( final JsonNode jsonNode: jsonNodes )
+			{
+				if( jsonNode.getOtu().equals( otu ) && jsonNode.getLevel().equals( level ) )
+				{
+					return jsonNode;
+				}
+			}
+		}
+		return null;
+	}
+
+	private JsonNode getParent( final String parentOtu, final String parentLevel,
+			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap )
+	{
+		if( parentLevel != null && parentOtu != null && jsonMap != null && !parentLevel.isEmpty()
+				&& !parentOtu.isEmpty() && !jsonMap.isEmpty() && jsonMap.get( parentLevel ) != null )
+		{
+			for( final JsonNode node: jsonMap.get( parentLevel ) )
+			{
+				if( node.getOtu().equals( parentOtu ) )
+				{
+					return node;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
-	 * The root count = sum of sequence counts for OTUs in top level taxonomy.
-	 * Also log (INFO) the #sequences at each taxonomy level.
+	 * The root count = sum of sequence counts for OTUs in top level taxonomy.<br>
+	 * Also log #sequences at each taxonomy level.
 	 *
-	 * @param LinkedHashMap<String, TreeSet<JsonNode>> jsonMap (key=level)
+	 * @param LinkedHashMap jsonMap (key=level)
 	 * @return long count
-	 * @throws Exception thrown if propagated from Config.requireTaxonomy()
+	 * @throws Exception if parent is missing for any node
 	 */
 	private long getRootCount( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap ) throws Exception
 	{
-		Log.out.info( Log.LOG_SPACER );
-		Log.out.info( "JSON OTU Report" );
-		Log.out.info( Log.LOG_SPACER );
+		Log.get( getClass() ).info( Log.LOG_SPACER );
+		Log.get( getClass() ).info( "JSON OTU Report" );
+		Log.get( getClass() ).info( Log.LOG_SPACER );
 		long rootCount = 0L;
 		final LinkedHashMap<String, Long> countMap = new LinkedHashMap<>();
-		for( final String level: Config.requireTaxonomy() )
+		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
 		{
 			long totalSeqs = 0L;
-			for( final JsonNode jsonNode: jsonMap.get( level ) )
+			int numOtus = 0;
+			if( jsonMap.get( level ) != null )
 			{
-				if( jsonNode == null )
+				for( final JsonNode jsonNode: jsonMap.get( level ) )
 				{
-					throw new Exception( "No JSON Nodes as level: " + level );
-				}
+					numOtus++;
+					if( jsonNode.getParent() == null )
+					{
+						throw new Exception( "No parent found: " + level + " : " + jsonNode.getOtu() );
+					}
 
-				if( jsonNode.parent == null )
-				{
-					throw new Exception( "No parent found: " + level + " : " + jsonNode.name );
+					totalSeqs += jsonNode.getCount();
+					Log.get( getClass() ).info( level + ":" + jsonNode.getOtu() + " [ parent:"
+							+ jsonNode.getParent().getOtu() + " ] = " + jsonNode.getCount() );
 				}
-
-				if( jsonNode.numSequences == null )
-				{
-					throw new Exception( "numSequences is null! --> " + level + " : " + jsonNode.name );
-				}
-
-				totalSeqs += jsonNode.numSequences;
-				Log.out.info( level + " : " + jsonNode.name + " (parent=" + jsonNode.parent.name + ") = "
-						+ jsonNode.numSequences );
 			}
+
 			countMap.put( level, totalSeqs );
-			if( ( rootCount == 0L ) && ( totalSeqs > 0 ) )
+			if( rootCount == 0L && totalSeqs > 0 )
 			{
 				rootCount = totalSeqs; // sets top level count
 			}
+
+			summary.append( "# Unique OTU [ " + level + " ]: " + numOtus + RETURN );
 		}
 
-		for( final String level: Config.requireTaxonomy() )
+		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
 		{
-			Log.out.info( "Seq Total [" + level + "] = " + countMap.get( level ) );
+			summary.append( "# Total OTU [ " + level + " ]: " + countMap.get( level ) + RETURN );
 		}
 
 		return rootCount;
 	}
 
 	/**
-	 * Get the approriate level specific report from the RReport outputDir.
+	 * Get the taxonomy level reports from {@link biolockj.module.r.CalculateStats} for the given level
 	 *
 	 * @param String level
 	 * @return File log normalized report
-	 * @throws Exception if unable to obtain the report due to propagated excptions
+	 * @throws Exception if unable to obtain the report due to propagated exceptions
 	 */
-	private File getTaxaLevelReport( final String level ) throws Exception
+	private File[] getStatReports( final String level ) throws Exception
 	{
-		for( final File f: ModuleUtil.requireModule( RReport.class.getName() ).getOutputDir().listFiles() )
+		final File[] statReports = new File[ 5 ];
+		statReports[ PAR_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_PAR );
+		statReports[ NON_PAR_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_NP );
+		statReports[ ADJ_PAR_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_PAR_ADJ );
+		statReports[ ADJ_NON_PAR_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_NP_ADJ );
+		statReports[ R2_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.R_SQUARED_VALS );
+		return statReports;
+	}
+
+	private LinkedHashMap<String, TreeSet<JsonNode>> updateNodeStats(
+			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final File stats, final String level )
+			throws Exception
+	{
+		Log.get( getClass() ).info( "Adding stats from: " + stats.getAbsolutePath() );
+		final BufferedReader reader = SeqUtil.getFileReader( stats );
+		try
 		{
-			if( f.getName().equals( Config.getLogPrefix() + level + ".tsv" ) )
+			final List<String> columnNames = Arrays
+					.asList( reader.readLine().replaceAll( "\"", "" ).split( TAB_DELIM ) );
+
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				return f;
+				final StringTokenizer st = new StringTokenizer( line.replaceAll( "\"", "" ), TAB_DELIM );
+				final String otu = st.nextToken().trim();
+
+				int i = 0;
+				final JsonNode jsonNode = getJsonNode( otu, jsonMap.get( level ), level );
+				if( jsonNode != null )
+				{
+					while( st.hasMoreTokens() )
+					{
+						final String token = st.nextToken();
+						if( NumberUtils.isNumber( token ) )
+						{
+							final double val = Double.parseDouble( token );
+							final String statName = getStatsType( stats ) + "_" + columnNames.get( ++i );
+							jsonNode.updateStats( statName, val );
+						}
+					}
+				}
+				else
+				{
+					Log.get( getClass() )
+							.debug( "Missing OTU " + level + ": " + otu
+									+ " (likely due to OTU network gap), as found in CalculateStats output: "
+									+ stats.getAbsolutePath() );
+				}
 			}
 		}
-		return null;
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
+
+		return jsonMap;
 	}
 
 	/**
-	 * Generate the JSON_SUMMARY file by recursively calling writeNodeAndChildren()
-	 *
-	 * @param jsonMap contains all JsonNodes, key=level
-	 * @param rootNode is the ROOT_NODE & must contain children to build hierarchy
-	 * @throws Exception thrown if unable to create the new file
+	 * This method formats the JSON code to indent code blocks surround by curly-braces "{ }"
+	 * 
+	 * @param writer BufferedWriter writes to the file
+	 * @param code JSON code
+	 * @throws Exception if I/O errors occur
 	 */
-	private void writeJSON( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final JsonNode rootNode )
-			throws Exception
+	private void writeJson( final String code ) throws Exception
 	{
 		final BufferedWriter writer = new BufferedWriter(
 				new FileWriter( new File( getOutputDir().getAbsolutePath() + File.separator + JSON_SUMMARY ) ) );
+		try
+		{
+			int indentCount = 0;
+			final StringTokenizer st = new StringTokenizer( code, BioLockJ.RETURN );
+			while( st.hasMoreTokens() )
+			{
+				final String line = st.nextToken();
+				if( line.startsWith( "}" ) )
+				{
+					indentCount--;
+				}
 
-		writeNodeAndChildren( writer, rootNode, jsonMap, 0 );
-		writer.close();
+				int i = 0;
+				while( i++ < indentCount )
+				{
+					writer.write( BioLockJ.TAB_DELIM );
+				}
+
+				writer.write( line + BioLockJ.RETURN );
+
+				if( line.endsWith( "{" ) )
+				{
+					indentCount++;
+				}
+			}
+		}
+		finally
+		{
+			if( writer != null )
+			{
+				writer.close();
+			}
+		}
+
 	}
 
-	private void writeNodeAndChildren( final BufferedWriter writer, final JsonNode node,
+	private String writeNodeAndChildren( final JsonNode node, final boolean hasPeer,
 			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final int nodeLevel ) throws Exception
 	{
-		final String taxaLevel = ( nodeLevel == 0 ) ? ROOT_NODE: Config.requireTaxonomy().get( nodeLevel - 1 );
-		writer.write( "{" + RETURN );
-		writer.write( "\"" + OTU_NAME + "\": \"" + node.name + "\"" + RETURN );
-		writer.write( "\"" + OTU_LEVEL + "\": \"" + taxaLevel + "\"," + RETURN );
-		writer.write( "\"" + NUM_SEQS + "\": " + node.numSequences + "," + RETURN );
+		final String logBase = Config.getString( Config.REPORT_LOG_BASE );
+		final String prefix = logBase == null ? "": "log" + logBase;
 
-		if( node.stats.size() > 0 )
+		final String taxaLevel = nodeLevel == 0 ? ROOT_NODE
+				: Config.getList( Config.REPORT_TAXONOMY_LEVELS ).get( nodeLevel - 1 );
+
+		final List<JsonNode> childNodes = getChildNodes( node, jsonMap, nodeLevel );
+
+		final StringBuffer sb = new StringBuffer();
+		sb.append( "{" + RETURN );
+		sb.append( "\"" + OTU_NAME + "\": \"" + node.getOtu() + "\"," + RETURN );
+		sb.append( "\"" + OTU_LEVEL + "\": \"" + taxaLevel + "\"," + RETURN );
+		sb.append( "\"" + NUM_SEQS + "\": " + node.getCount() + "," + RETURN );
+
+		if( node.getStats().size() > 0 )
 		{
-			for( final String s: node.stats.keySet() )
+			for( final Iterator<String> stats = node.getStats().keySet().iterator(); stats.hasNext(); )
 			{
-				writer.write( "\"-log" + Config.requireString( Config.REPORT_LOG_BASE ) + "(" + s + ")\": "
-						+ node.stats.get( s ) + "," + RETURN );
+				final String stat = stats.next();
+				final String name = stat.startsWith( CalculateStats.R_SQUARED_VALS ) ? stat: prefix + "(" + stat + ")";
+				sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
+				sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
 			}
 		}
 
-		if( nodeLevel < Config.requireTaxonomy().size() )
+		if( !childNodes.isEmpty() )
 		{
-			final List<JsonNode> childNodes = new ArrayList<>();
-			final Iterator<JsonNode> jsonNodes = jsonMap.get( Config.requireTaxonomy().get( nodeLevel ) ).iterator();
-
-			while( jsonNodes.hasNext() )
+			sb.append( "\"" + CHILDREN + "\": [" + RETURN );
+			for( final Iterator<JsonNode> children = childNodes.iterator(); children.hasNext(); )
 			{
-				final JsonNode innerNode = jsonNodes.next();
-				// if ( innerNode == node )
-				if( innerNode.parent.equals( node ) )
-				{
-					childNodes.add( innerNode );
-				}
-			}
-
-			if( childNodes.size() > 0 )
-			{
-				writer.write( ",\"" + CHILDREN + "\": [" + RETURN );
-				for( final Iterator<JsonNode> children = childNodes.iterator(); children.hasNext(); )
-				{
-					writeNodeAndChildren( writer, children.next(), jsonMap, nodeLevel + 1 );
-					if( children.hasNext() )
-					{
-						writer.write( "," );
-					}
-				}
-				writer.write( "]" + RETURN );
+				sb.append( writeNodeAndChildren( children.next(), children.hasNext(), jsonMap, nodeLevel + 1 ) );
 			}
 		}
 
-		writer.write( "}" + RETURN );
+		sb.append( "}" + ( hasPeer ? ",": nodeLevel != 0 ? " ]": "" ) + RETURN );
+		return sb.toString();
 	}
 
-	private static JsonNode buildNode( final String name, final Long count, final JsonNode parent )
+	private static String getStatsType( final File file ) throws Exception
 	{
-		final JsonNode node = new JsonNode();
-		node.name = name;
-		node.numSequences = count;
-		node.parent = parent;
-		return node;
-	}
-
-	private static JsonNode getJsonNode( final String otu, final Set<JsonNode> jsonNodes )
-	{
-		for( final JsonNode jsonNode: jsonNodes )
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + CalculateStats.TSV_EXT ) )
 		{
-			if( jsonNode.name.equals( otu ) )
-			{
-				return jsonNode;
-			}
+			return CalculateStats.P_VALS_PAR;
 		}
-		return null;
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP + CalculateStats.TSV_EXT ) )
+		{
+			return CalculateStats.P_VALS_NP;
+		}
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + CalculateStats.TSV_EXT ) )
+		{
+			return CalculateStats.P_VALS_PAR_ADJ;
+		}
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + CalculateStats.TSV_EXT ) )
+		{
+			return CalculateStats.P_VALS_NP_ADJ;
+		}
+		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + CalculateStats.TSV_EXT ) )
+		{
+			return CalculateStats.R_SQUARED_VALS;
+		}
+
+		throw new Exception( "Invalid Stats file: " + file.getAbsolutePath() );
 	}
 
+	private final Set<Map<String, String>> brokenOtuNetworks = new HashSet<>();
+	private final StringBuffer summary = new StringBuffer();
+	private static final int ADJ_NON_PAR_PVAL_INDEX = 3;
+	private static final int ADJ_PAR_PVAL_INDEX = 2;
 	private static final String CHILDREN = "children";
 	private static final String JSON_SUMMARY = "summary.json";
+	private static final int NON_PAR_PVAL_INDEX = 1;
 	private static final String NUM_SEQS = "numSeqs";
 	private static final String OTU_LEVEL = "taxaLevel";
 	private static final String OTU_NAME = "otu";
+	private static final int PAR_PVAL_INDEX = 0;
+	private static final int R2_PVAL_INDEX = 4;
 	private static final String ROOT_NODE = "root";
 }

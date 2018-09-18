@@ -1,0 +1,176 @@
+/* colors found at http://advancement.uncc.edu/sites/advancement.uncc.edu/files/media/identity-standards-guide.pdf */
+/* This block is for the nav-bar */
+.nav-bar {
+    overflow: hidden;
+    background-color: rgb(0,112,60);/* uncc charlotte green */
+    font-family: Arial;
+}
+.nav-bar a {
+    float: left;
+    font-size: 16px;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+.banner {
+  text-align: center;
+  font-size: 24px;
+  color: rgb(243,144,29);
+  padding: 0px 0px;
+  margin-bottom: 5px;
+  margin-top: 11px;
+}
+.dropdown {
+    float: left;
+    overflow: hidden;
+}
+.dropdown .dropbtn {
+    cursor: pointer;
+    font-size: 16px;
+    border: none;
+    outline: none;
+    color: white;
+    padding: 10px 16px;
+    background-color: inherit;
+}
+.nav-bar a:hover, .dropdown:hover .dropbtn {
+    background-color: rgb(195,215,164);
+}
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    /*z-index: 1;*/
+}
+.dropdown-content a {
+    float: none;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+.dropdown-content a:hover {
+    background-color: rgb(255,246,220);
+}
+.show {
+    display: block;
+}
+
+.hidden{
+  display: none !important;
+}
+
+
+/* for menu and tabbed buttons of menu */
+.menu {
+    padding: 14px 10px;
+    background-color: rgb(255,246,220);
+    border: 1px solid black;
+    margin: 10px 30px 20px 30px;
+    display: none; /*hidden until "new" is clicked */
+}
+/* Style the tab */
+div.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+/* Style the buttons inside the tab */
+div.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 10px;
+    transition: 0.3s;
+    font-size: 17px;
+}
+/* Change background color of buttons on hover */
+div.tab button:hover {
+    background-color: #ddd;
+}
+/* Create an active/current tablink class */
+div.tab button.active {
+    background-color: #ccc;
+}
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 6px 3px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+/*for module options*/
+.modChoosen {
+  background-color: green !important;
+  color: white;
+}
+
+/*for disabled modules in the module tab*/
+.disabledMod {
+  color: silver;
+  font-style: italic;
+  /*font-size: 10px;*/
+  pointer-events: none;
+}
+
+select[multiple] {
+    width: 20em;
+}
+
+.recentConfigs {
+  text-align: right !important;
+}
+
+/*for the list elements of the module tab*/
+div#module li {
+list-style-type:none;
+padding:4px;
+margin:2px;
+background-color:#FFFFFF;
+border:2px double #CCCCCC;
+position: relative;
+display: block;
+/*transition-timing-function: ease;*/
+}
+div#module ul{
+  padding-left: 5;
+}
+
+div#module{
+  max-width: 525px;
+  float: left;
+  margin: 5px;
+
+}
+div#module span{
+  position: relative;
+  text-align: center;
+}
+
+div#moduleInfo{
+  max-width: 300px;
+  position: relative;
+  text-align: left;
+  display: inline;
+  margin: 15px;
+}
+div#moduleInfoDiv {
+  position: relative;
+  display: inline;
+  padding: 10, 10, 10, 10;
+  left: 20px;
+}
+#implicitWarning{
+  display: inline;
+}
+#tempModInfo{
+  display: initial;
+  /*position: fixed;*/
+  width: inherit;
+}

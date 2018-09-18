@@ -3,15 +3,11 @@
  * @author Michael Sioda
  * @email msioda@uncc.edu
  * @date Feb 16, 2017
- * @disclaimer 	This code is free software; you can redistribute it and/or
- * 				modify it under the terms of the GNU General Public License
- * 				as published by the Free Software Foundation; either version 2
- * 				of the License, or (at your option) any later version,
- * 				provided that any use properly credits the author.
- * 				This program is distributed in the hope that it will be useful,
- * 				but WITHOUT ANY WARRANTY; without even the implied warranty of
- * 				MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * 				GNU General Public License for more details at http://www.gnu.org *
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
 package biolockj.node.wgs;
 
@@ -20,22 +16,29 @@ import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 
 /**
- * To see file format example: head 7A_1_processed.txt
- *
- * #SampleID Metaphlan2_Analysis
+ * This class represents one line of {@link biolockj.module.classifier.wgs.MetaphlanClassifier} output. For a full
+ * description of the output file format
+ * <a href= "https://bitbucket.org/biobakery/biobakery/wiki/metaphlan2#rst-header-output-files" target=
+ * "_top">https://bitbucket.org/biobakery/biobakery/wiki/metaphlan2#rst-header-output-files</a> Each line can represent
+ * multiple reads since the estimated_number_of_reads_from_the_clade column is used to approximate the number of reads
+ * with the given OTU in the sample.
+ * <p>
+ * 3 sample lines of Metaphlan output (2 header rows + 1st row): <br>
+ * #SampleID Metaphlan2_Analysis <br>
  * #clade_name relative_abundance coverage average_genome_length_in_the_clade estimated_number_of_reads_from_the_clade
+ * <br>
  * k__Bacteria|p__Bacteroidetes 14.68863 0.137144143537 4234739 580770
- *
  */
 public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 {
-
 	/**
-	 * Build the OtuNode by extracting the OTU names for each level from the line.
+	 * Build the OtuNode by extracting the OTU names for each level from the line. Sample ID is passed as a parameter
+	 * pulled from the file name. The number of reads matching the line taxonomy is extracted from the last column
+	 * (estimated_number_of_reads_from_the_clade)
 	 *
-	 * @param String id of the sample, extracted from the classifier output file name
-	 * @param String line from the classifier output file
-	 * @throws Exception if the line format is invalid
+	 * @param id Sample ID
+	 * @param line Metaphlan output line
+	 * @throws Exception if an invalid line format is found
 	 */
 	public MetaphlanNode( final String id, final String line ) throws Exception
 	{
@@ -53,14 +56,22 @@ public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 			setLine( line );
 			setCount( Long.valueOf( parts[ 4 ] ) );
 
+			String levelDelim = null;
+			String taxa = null;
 			final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], METAPHLAN_DELIM );
 			while( taxas.hasMoreTokens() )
 			{
 				final String token = taxas.nextToken();
-				final String level = token.substring( 0, 3 );
-				final String taxa = token.substring( 3 );
-				addOtu( level, taxa );
+				levelDelim = token.substring( 0, 3 );
+
+				if( !token.substring( 3 ).trim().isEmpty() )
+				{
+					taxa = token.substring( 3 );
+				}
 			}
+
+			buildOtuNode( taxa, levelDelim );
+
 		}
 		catch( final Exception ex )
 		{
@@ -70,6 +81,7 @@ public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 
 	private static final String METAPHLAN_DELIM = "\\|";
 
+	// Override default DOMAIN taxonomy level delimiter (d__) set in OtuNodeImpl with QIIME domain delim (k__)
 	static
 	{
 		DOMAIN_DELIM = "k__";

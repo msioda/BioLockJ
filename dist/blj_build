@@ -1,0 +1,23 @@
+#!/bin/bash
+#################################################################
+##                                                             ##
+##  This script calls ant on build.xml to create BioLockJ.jar  ##
+##                                                             ##
+#################################################################
+function valid_dir {
+	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
+		echo "Y" 
+	else 
+		echo "N"
+	fi
+}
+
+echo "Building BioLockJ..."
+if [ "$(valid_dir $BLJ/resources)" == "Y" ]; then
+	cd $BLJ/resources
+	[ ${#1} -eq 0 ] && ant
+	[ ${#1} -gt 0 ] && ant $1
+	echo "Build complete!"
+else
+	echo "Invalid directory path: $BLJ/resources"
+fi

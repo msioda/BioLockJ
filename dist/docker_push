@@ -1,0 +1,25 @@
+#!/bin/bash
+###########################################################################
+##                                                                       ##
+##  Deploy all Docker hub images                                         ##
+##                                                                       ##
+###########################################################################
+function valid_dir {
+	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
+		echo "Y" 
+	else 
+		echo "N"
+	fi
+}
+
+docker push biolockj/manager
+docker push biolockj/javamodule
+docker push biolockj/awkfastaconverter
+docker push biolockj/pearmergereads
+docker push biolockj/rdpclassifier
+docker push biolockj/qiimeclassifier
+docker push biolockj/krakenclassifier
+docker push biolockj/metaphlanclassifier
+docker push biolockj/r_module
+
+echo "Deployment complete!"

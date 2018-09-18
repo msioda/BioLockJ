@@ -1,0 +1,27 @@
+###################################################################
+##                                                               ##
+##  This script is called from the $USER ~/.bash_profile         ##
+##  to set their $PATH and alias in current shell.               ##
+##                                                               ##
+##  $BLJ/install updates ~/.bash_profile to call this script     ##
+##                                                               ##
+###################################################################
+export BLJ_DIST="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export BLJ="$(dirname $BLJ_DIST)"
+export PATH=$PATH:$BLJ_DIST
+
+# Enable these values for local deployment
+#export BLJ_GRP_OWNER="staff"
+#export BLJ_PROJ=$BLJ/pipelines/$USER
+
+# Enable these values on Copperhead 
+export BLJ_GRP_OWNER=":afodor_rsrch"
+export BLJ_PROJ=/scratch/afodor_research/blj_pipeline/$USER
+
+# Enable these values on Longleaf
+#export BLJ_GRP_OWNER=":rc_meyer_lab_psx"
+#export BLJ_PROJ=/pine/scr/m/s/msioda/projects
+
+alias blj_log=". $BLJ_DIST/blj_log"
+alias blj_go=". $BLJ_DIST/blj_go"
+alias blj_build=". $BLJ_DIST/blj_build"

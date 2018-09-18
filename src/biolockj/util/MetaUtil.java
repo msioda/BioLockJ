@@ -3,25 +3,19 @@
  * @author Michael Sioda
  * @email msioda@uncc.edu
  * @date Feb 9, 2017
- * @disclaimer 	This code is free software; you can redistribute it and/or
- * 				modify it under the terms of the GNU General Public License
- * 				as published by the Free Software Foundation; either version 2
- * 				of the License, or (at your option) any later version,
- * 				provided that any use properly credits the author.
- * 				This program is distributed in the hope that it will be useful,
- * 				but WITHOUT ANY WARRANTY; without even the implied warranty of
- * 				MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * 				GNU General Public License for more details at http://www.gnu.org *
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
 package biolockj.util;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,328 +23,485 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.TreeSet;
-import org.apache.commons.lang.math.NumberUtils;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.util.r.RScript;
 
 /**
- * The metadataUtil helps access and modify data in the metadata file.
+ * This utility is used to read, modify, or create a metadata file for the sequence data. The 1st row must hold the
+ * Sample ID and column names must be unique. Metadata information is cached in this class for quick access throughout
+ * the application.
  */
 public class MetaUtil
 {
+	// Prevent instantiation
+	private MetaUtil()
+	{}
+
 	/**
-	 * When a new column is added to metadata, this method will add the column, with all row values.
-	 * The updated file is output to the "outputDir" to be picked up by the next executor.
-	 * @param name
-	 * @param map
-	 * @param fileDir
-	 * @throws Exception
+	 * Adds a column to the metadata file. The updated metadata file is output to the fileDir. Once the new file is
+	 * created, the new file is cached in memory and used as the new metadata.
+	 *
+	 * @param colName Name of new column
+	 * @param map Map relates Sample ID to a field value
+	 * @param fileDir File representing output directory for new metadata file
+	 * @throws Exception if unable to add the new column
 	 */
-	public static void addNumericColumn( final String name, final Map<String, Long> map, final File fileDir )
+	public static void addColumn( final String colName, final Map<String, String> map, final File fileDir )
 			throws Exception
 	{
-		if( getAttributeNames().contains( name ) )
+		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getMetadataFileName() );
+		Log.info( MetaUtil.class, "Adding new field [" + colName + "] to metadata: " + newMeta.getAbsolutePath() );
+		if( getFieldNames().contains( colName ) )
 		{
-			Log.out.warn( "MetaUtil already contains column [" + name + "] so this data will not be added to "
-					+ metadataFile.getName() );
+			Log.warn( MetaUtil.class,
+					"Metadata column [" + colName + "] already exists in: " + getFile().getAbsolutePath() );
 			return;
 		}
 
-		numericFields.add( name );
-
-		final BufferedReader reader = new BufferedReader( new FileReader( metadataFile ) );
-		metadataFile = new File( fileDir.getAbsolutePath() + File.separator + metadataFile.getName() );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( metadataFile ) );
-
-		Log.out.info( "Adding new attribute [" + name + "] to metadata" );
-		boolean isHeaderRow = true;
+		final Set<String> keys = map.keySet();
+		final BufferedReader reader = SeqUtil.getFileReader( getFile() );
+		setFile( newMeta );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
 		try
 		{
-			final Set<String> keys = map.keySet();
+			writer.write( reader.readLine() + BioLockJ.TAB_DELIM + colName + BioLockJ.RETURN );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
-				if( isHeaderRow )
+
+				final String id = st.nextToken();
+				if( keys.contains( id ) )
 				{
-					isHeaderRow = false;
-					line += BioLockJ.TAB_DELIM + name;
+					writer.write( line + BioLockJ.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
 				}
 				else
 				{
-					final String id = st.nextToken();
-					if( keys.contains( id ) )
-					{
-						line += BioLockJ.TAB_DELIM + map.get( id );
-					}
-					else
-					{
-						line += BioLockJ.TAB_DELIM + Config.requireString( MetaUtil.INPUT_NULL_VALUE );
-					}
+					writer.write(
+							line + BioLockJ.TAB_DELIM + Config.requireString( META_NULL_VALUE ) + BioLockJ.RETURN );
 				}
-
-				writer.write( line + BioLockJ.RETURN );
 			}
-		}
-		catch( final Exception ex )
-		{
-			Log.out.error( "Error occurred updating metadata with new attribute [" + name + "]", ex );
 		}
 		finally
 		{
 			reader.close();
 			writer.close();
-			refresh();
+			refreshCache();
 		}
 	}
 
-	public static void addNumericField( final String field )
+	/**
+	 * Get the comment delimeter (or default empty string)
+	 * 
+	 * @return Comment char
+	 */
+	public static String getCommentChar()
 	{
-		numericFields.add( field );
-	}
+		String commentDelim = Config.getString( META_COMMENT_CHAR );
+		if( commentDelim == null )
+		{
+			commentDelim = "";
+		}
 
-	public static boolean exists()
-	{
-		return ( metadataFile != null ) && metadataFile.exists();
+		return DEFAULT_COMMENT_CHAR;
 	}
 
 	/**
-	 * Many users modify metadata spreadsheets in Excel.  If the first cell value starts with # symbol,
-	 * Excel adds a ZERO WIDTH NO-BREAK space as an invisible character.  Here we strip this value;
-	 * See http://www.fileformat.info/info/unicode/char/feff/index.htm
-	 * @param id
-	 * @return
+	 * Get metadata field value for given sampleId.
+	 *
+	 * @param sampleId Sample ID
+	 * @param attName Field Name (column name in metadata file)
+	 * @return Metadata field value
+	 * @throws Exception if parameters are invalid
 	 */
-	public static String formatMetaId( String id )
+	public static String getField( final String sampleId, final String attName ) throws Exception
 	{
-		final char c = id.trim().toCharArray()[ 0 ];
-		if( c == 65279 )
+		if( !getFieldNames().contains( attName ) )
 		{
-			Log.out.warn(
-					"MetadataUtil found row ID starting with ASCII 65279 - this invalid invisble character has been removed!" );
+			throw new Exception(
+					"Invalid field [" + attName + "] not found in Metadata = " + getFile().getAbsolutePath() );
+		}
 
-			final char[] chars = id.trim().toCharArray();
-			for( int i = 0; i < chars.length; i++ )
+		if( getMetadataRecord( sampleId ) == null )
+		{
+			throw new Exception(
+					"Invalid Sample ID [" + sampleId + "] not found in Metadata = " + getFile().getAbsolutePath() );
+		}
+
+		return getMetadataRecord( sampleId ).get( getFieldNames().indexOf( attName ) );
+	}
+
+	/**
+	 * Get a list of all metadata fields (metadata file column names except the 1st).
+	 *
+	 * @return List of metadata column names, excluding the 1st column
+	 * @throws Exception if unable to read metadata file
+	 */
+	public static List<String> getFieldNames() throws Exception
+	{
+
+		if( getFile() == null || !getFile().exists() )
+		{
+			Log.warn( MetaUtil.class, "Metadata file path is undefined.  Cannot get metadata field names." );
+		}
+
+		final List<String> headers = getMetadataRecord( metaId );
+
+		if( headers == null )
+		{
+			Log.warn( MetaUtil.class,
+					"Metadata headers not found!  Please verify 1st column header is not missing from: "
+							+ getFile().getAbsolutePath() );
+		}
+
+		return headers;
+	}
+
+	/**
+	 * Get metadata column for given field name.
+	 *
+	 * @param attName Column name
+	 * @return List of Column values for sample ID
+	 * @throws Exception if metadata file or column name not found
+	 */
+	public static List<String> getFieldValues( final String attName ) throws Exception
+	{
+		if( !getFieldNames().contains( attName ) )
+		{
+			throw new Exception( "Invalid field [" + attName + "] in Metadata = " + getFile().getAbsolutePath() );
+		}
+
+		final List<String> vals = new ArrayList<>();
+
+		for( final String id: getSampleIds() )
+		{
+			final String val = getField( id, attName );
+			if( val != null && val.trim().length() > 0 )
 			{
-				Log.out.debug( "ID[" + i + "] = " + chars[ i ] );
+				vals.add( val );
 			}
-
-			id = id.substring( 1 );
-			Log.out.info( "Updated ID = " + id );
 		}
-		return id;
+
+		return vals;
 	}
 
 	/**
-	 * Get a list of all attribute names from the metadata file column names.
-	 * @return
+	 * Get the current metadata file. This path may change as updates are made by BioModules.
+	 *
+	 * @return Metadata file
 	 */
-	public static List<String> getAttributeNames()
-	{
-		return metadataMap.get( metaId );
-	}
-
-	/**
-	 * Get attribute values from metadata (get row for a given ID).
-	 * @param id
-	 * @return
-	 * @throws Exception
-	 */
-	public static List<String> getAttributes( final String id ) throws Exception
-	{
-		try
-		{
-			return metadataMap.get( id );
-		}
-		catch( final Exception ex )
-		{
-			throw new Exception( "Invalid ID: " + id );
-		}
-
-	}
-
-	public static Set<String> getBinaryFields()
-	{
-		return binaryFields;
-	}
-
-	public static List<String> getCleanVals( final Collection<String> vals ) throws Exception
-	{
-		final List<String> formattedValues = new ArrayList<>();
-		for( final String val: vals )
-		{
-			formattedValues.add( rScriptFormat( val ) );
-		}
-		return formattedValues;
-	}
-
 	public static File getFile()
 	{
 		return metadataFile;
 	}
 
+	/**
+	 * Get the metadata file ID column name. This value may change as updates are made by BioModules.
+	 *
+	 * @return Metadata ID column name
+	 */
 	public static String getID()
 	{
 		return metaId;
 	}
 
-	public static String getMetadataFileName() throws Exception
+	/**
+	 * Metadata file getter.
+	 * 
+	 * @return Metadata file
+	 * @throws Exception if any errors occur
+	 */
+	public static File getMetadata() throws Exception
 	{
-		return Config.getExistingFile( Config.INPUT_METADATA ) == null ? MetaUtil.DEFAULT_METADATA
-				: Config.getExistingFile( Config.INPUT_METADATA ).getName();
+		if( Config.getString( META_FILE_PATH ) == null )
+		{
+			return null;
+		}
+
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			return DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.CONTAINER_META_DIR, "metadata" );
+		}
+		return Config.requireExistingFile( META_FILE_PATH );
+	}
+
+	/**
+	 * Get the metadata file name, if it exists, otherwise return projectName.tsv
+	 *
+	 * @return Name of metadata file, or a default name if no metadata file exists
+	 */
+	public static String getMetadataFileName()
+	{
+		try
+		{
+			if( metadataFile == null )
+			{
+				metadataFile = getMetadata();
+			}
+
+			if( metadataFile != null )
+			{
+				return metadataFile.getName();
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.error( MetaUtil.class, "Error occurred accessing Config property: " + META_FILE_PATH, ex );
+			ex.printStackTrace();
+		}
+
+		return Config.getString( Config.INTERNAL_PIPELINE_NAME ) + ".tsv";
+
+	}
+
+	/**
+	 * Get metadata row for a given Sample ID.
+	 *
+	 * @param sampleId Sample ID
+	 * @return Metadata row values for sample ID
+	 * @throws Exception if Sample ID not found or metadata file doesn't exist
+	 */
+	public static List<String> getMetadataRecord( final String sampleId ) throws Exception
+	{
+		try
+		{
+			return metadataMap.get( sampleId );
+		}
+		catch( final Exception ex )
+		{
+			throw new Exception( "Invalid ID: " + sampleId );
+		}
 	}
 
 	/**
 	 * Get the first column from the metadata file.
-	 * @return
-	 */
-	public static Set<String> getMetaFileFirstColValues()
-	{
-		return metadataMap.keySet();
-	}
-
-	public static Set<String> getNominalFields()
-	{
-		return nominalFields;
-	}
-
-	public static Set<String> getNumericFields()
-	{
-		return numericFields;
-	}
-
-	/**
-	 * Loading new metadata will set the static field values and populate the attributeMap.
-	 * @param metadata
-	 * @throws Exception
-	 */
-	public static void refresh() throws Exception
-	{
-		metadataMap.clear();
-		attributeMap.clear();
-		processMetadata( processFile() );
-		setRscriptFields();
-		populateAttributeMap();
-		validateConfig();
-
-		Config.getSet( Config.INPUT_IGNORE_FILES ).add( MetaUtil.getFile().getName() );
-
-		Log.out.info( "MetaUtil Attributes: " + getAttributeNames() );
-		Log.out.info( "MetaUtil 1st Column (Header ID name & Sample IDs): " + getMetaFileFirstColValues() );
-		Log.out.info( Log.LOG_SPACER );
-		Log.out.info( "New MetaUtil file loaded: " + metadataFile.getAbsolutePath() );
-
-	}
-
-	public static void setFile( final File f )
-	{
-		if( f != null )
-		{
-			Log.out.info( "===> Set new metadata: " + f.getAbsolutePath() );
-		}
-		metadataFile = f;
-	}
-
-	/**
-	 * The attributeMap maps attributes to their set of values.  Only done for metadata that will
-	 * be used in the R-script.
 	 *
-	 * @throws Exception
+	 * @return Sample IDs found in metadata file
 	 */
-	private static void populateAttributeMap() throws Exception
+	public static List<String> getSampleIds()
 	{
-		//Log.out.warn( "===> calling populateAttributeMap() for metaId = " + metaId );
-		//Log.out.warn( "===> metadataMap.get( metaId ) = " + metadataMap.get( metaId ) );
-		Log.out.info( "===> All rScriptFields = " + rScriptFields );
-
-		final Map<String, Integer> colIndexMap = new HashMap<>();
-		int j = 0;
-		for( final String att: metadataMap.get( metaId ) )
+		final List<String> ids = new ArrayList<>();
+		for( final String key: metadataMap.keySet() )
 		{
-			if( rScriptFields.contains( att ) )
+			if( !key.equals( metaId ) )
 			{
-				Log.out.info( "Initialize Attribute Map | attribute(" + att + ") = index(" + j + ")" );
-				colIndexMap.put( att, j );
-				attributeMap.put( att, new HashSet<>() );
-			}
-			j++;
-		}
-
-		for( final String att: colIndexMap.keySet() )
-		{
-			final int target = colIndexMap.get( att );
-			for( final String key: metadataMap.keySet() )
-			{
-
-				if( !key.equals( metaId ) )
-				{
-					//					Log.out.warn( "===> metadataMap KEY DOES NOT MATCH metaId" );
-					//					Log.out.warn( "===> metadataMap CHECK IF --> key( " + key + " ) = metaId( " + metaId + " )" );
-					//					Log.out.warn(
-					//							"===> key LENGTH( " + key.length() + " ) = metaId LENGTH( " + metaId.length() + " )" );
-					int i = 0;
-					final List<String> row = metadataMap.get( key );
-					for( final String value: row )
-					{
-						if( ( i++ == target ) && !value.equals( Config.requireString( MetaUtil.INPUT_NULL_VALUE ) ) )
-						{
-							Log.out.debug(
-									"===> Add (" + value + ") to existing attributeMap " + attributeMap.get( att ) );
-							attributeMap.get( att ).add( value );
-						}
-					}
-				}
+				ids.add( key );
 			}
 		}
 
-		for( final String key: attributeMap.keySet() )
-		{
-			final Set<String> vals = attributeMap.get( key );
-			Log.out.info( "Attribute Map (" + key + ") = " + vals );
-			if( nominalFields.contains( key ) && ( vals.size() < 2 ) )
-			{
-				throw new Exception( "Property " + RScript.R_NOMINAL_DATA + " contains attribute [" + key
-						+ "] with only " + vals.size()
-						+ " values in the metadata file.  Statistical tests require at least 2 unique options." );
-			}
-			else if( nominalFields.contains( key ) && ( vals.size() == 2 ) )
-			{
+		return ids;
+	}
 
-				binaryFields.add( key );
-				nominalFields.remove( key );
-			}
-			else if( numericFields.contains( key ) )
+	/**
+	 * Check dependencies used to handle the metadata file are defined and unique. For undefined properties we set the
+	 * same default values as used by the R{utils} read.table() function.
+	 * <ul>
+	 * <li>{@value #META_COLUMN_DELIM} column separator
+	 * <li>{@value #META_COMMENT_CHAR} indicates start of comment in a cell, Requires length == 1
+	 * <li>{@value #META_NULL_VALUE} indicates null cell
+	 * </ul>
+	 * 
+	 * @throws Exception if invalid Config properties are detected
+	 */
+	public static void initialize() throws Exception
+	{
+		if( Config.getString( META_NULL_VALUE ) == null )
+		{
+			Config.setConfigProperty( META_NULL_VALUE, DEFAULT_NULL_VALUE );
+		}
+
+		if( Config.getString( META_COLUMN_DELIM ) == null )
+		{
+			Config.setConfigProperty( META_COLUMN_DELIM, DEFAULT_COL_DELIM );
+		}
+
+		if( getCommentChar().length() > 1 )
+		{
+			throw new Exception(
+					META_COMMENT_CHAR + " must be a single character of length = 1.  Current property value is "
+							+ getCommentChar().length() + " characters in length, value=\"" + getCommentChar() + "\"" );
+		}
+
+		final Set<String> metaProps = new HashSet<>();
+		metaProps.add( Config.requireString( META_NULL_VALUE ) );
+		metaProps.add( Config.requireString( META_COLUMN_DELIM ) );
+		metaProps.add( getCommentChar() );
+
+		if( metaProps.size() < 3 )
+		{
+			throw new Exception( "BioLockJ requires 3 unique values for config properties: (" + META_NULL_VALUE + ", "
+					+ META_COLUMN_DELIM + ", " + META_COMMENT_CHAR + ") | Current values = (\""
+					+ Config.requireString( META_NULL_VALUE ) + "\", \"" + Config.requireString( META_COLUMN_DELIM )
+					+ "\", \"" + getCommentChar() + "\")" );
+		}
+
+		if( Config.getString( META_FILE_PATH ) != null )
+		{
+			setFile( MetaUtil.getMetadata() );
+			refreshCache();
+		}
+
+	}
+
+	/**
+	 * Refresh the metadata cache.
+	 *
+	 * @throws Exception if unable to refresh cache
+	 */
+	public static void refreshCache() throws Exception
+	{
+		if( metadataFile != null && metadataFile.exists() )
+		{
+			Log.info( MetaUtil.class, "Cache metadata: " + metadataFile.getAbsolutePath() );
+			metadataMap.clear();
+			cacheMetadata( parseMetadataFile() );
+
+			final String exId = getSampleIds().get( 0 );
+
+			if( !RuntimeParamUtil.isDirectMode() )
 			{
-				for( final String val: vals )
+				Log.info( MetaUtil.class, META_SPACER );
+				Log.info( MetaUtil.class, "===> New Metadata file: " + metadataFile.getAbsolutePath() );
+				Log.info( MetaUtil.class, "===> Sample IDs: " + getSampleIds() );
+				Log.info( MetaUtil.class, "===> Metadata fields: " + getFieldNames() );
+				Log.info( MetaUtil.class, "===> 1st Record: [" + exId + "]: " + getMetadataRecord( exId ) );
+				Log.info( MetaUtil.class, META_SPACER );
+			}
+		}
+		else
+		{
+			Log.warn( MetaUtil.class, "Cannot cache metadata - invalid/missing file path in Config property: "
+					+ MetaUtil.META_FILE_PATH );
+		}
+	}
+
+	/**
+	 * Remove the metadata column from the metadata file
+	 * 
+	 * @param colName Name of column to remove
+	 * @param fileDir File representing output directory for new metadata file
+	 * @throws Exception if errors occur
+	 */
+	public static void removeColumn( final String colName, final File fileDir ) throws Exception
+	{
+		if( getFile() == null || !getFile().exists() )
+		{
+			Log.warn( MetaUtil.class, "Cannot remove column [" + colName + "] because no metadata file exists." );
+			return;
+		}
+
+		if( !getFieldNames().contains( colName ) )
+		{
+			Log.warn( MetaUtil.class, "Metadata column [" + colName
+					+ "] cannot be removed, because it does not exists in: " + getFile().getAbsolutePath() );
+			return;
+		}
+
+		Log.info( MetaUtil.class, "Removing field [" + colName + "] from metadata: " + getFile().getAbsolutePath() );
+		final int index = MetaUtil.getFieldNames().indexOf( colName );
+
+		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getMetadataFileName() );
+		final BufferedReader reader = SeqUtil.getFileReader( getFile() );
+		setFile( newMeta );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
+		try
+		{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			{
+				int i = 1;
+				final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+				writer.write( st.nextToken() );
+				while( st.hasMoreTokens() )
 				{
-					if( !NumberUtils.isNumber( val ) )
+					final String token = st.nextToken();
+					if( i++ != index )
 					{
-						throw new Exception( "Property " + RScript.R_NUMERIC_DATA + " contains attribute [" + key
-								+ "] with non-numeric data [" + val + "]" );
+						writer.write( BioLockJ.TAB_DELIM + token );
 					}
 				}
+				writer.write( BioLockJ.RETURN );
+			}
+		}
+		finally
+		{
+			reader.close();
+			writer.close();
+			refreshCache();
+		}
+	}
+
+	/**
+	 * Set a new metadata file.
+	 *
+	 * @param newMetadataFile New metadata file
+	 * @throws Exception if null parameter is passed
+	 */
+	public static void setFile( final File newMetadataFile ) throws Exception
+	{
+		if( newMetadataFile != null )
+		{
+			if( metadataFile != null && newMetadataFile.getAbsolutePath().equals( metadataFile.getAbsolutePath() ) )
+			{
+				Log.debug( MetaUtil.class, "===> MetaUtil.setFile() not required, file already defined as "
+						+ metadataFile.getAbsolutePath() );
+			}
+		}
+		else
+		{
+			throw new Exception( "Metadata file is required!" );
+		}
+
+		metadataFile = newMetadataFile;
+	}
+
+	private static void cacheMetadata( final List<List<String>> data ) throws Exception
+	{
+		int rowNum = 0;
+		final Iterator<List<String>> rows = data.iterator();
+		while( rows.hasNext() )
+		{
+			final List<String> row = rows.next();
+			final String id = row.get( 0 );
+
+			if( rowNum == 0 )
+			{
+				metaId = id;
+				Log.debug( MetaUtil.class, "Metadata Headers: " + row );
+			}
+
+			if( rowNum++ == 1 )
+			{
+				Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
+			}
+
+			if( id != null && !id.equals( Config.requireString( META_NULL_VALUE ) ) )
+			{
+				row.remove( 0 );
+				Log.debug( MetaUtil.class, "metadataMap add: " + id + " = " + row );
+
+				metadataMap.put( id, row );
 			}
 		}
 	}
 
 	/**
-	 * Process a file by getting clean values for each cell in the spreadsheet.
-	 * @param file
+	 * The processed data is trimmed, with comments removed, and empty cells replaced with NA values.
+	 * 
 	 * @return
+	 * @throws Exception
 	 */
-	private static List<List<String>> processFile() throws Exception
+	private static List<List<String>> parseMetadataFile() throws Exception
 	{
 		final List<List<String>> data = new ArrayList<>();
-		final BufferedReader reader = new BufferedReader( new FileReader( metadataFile ) );
+		final BufferedReader reader = SeqUtil.getFileReader( getFile() );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
+			Log.debug( MetaUtil.class, "===> Meta line: " + line );
 			final ArrayList<String> record = new ArrayList<>();
 			final String[] cells = line.split( BioLockJ.TAB_DELIM, -1 );
 			for( final String cell: cells )
 			{
-				record.add( rScriptFormat( cell ) );
+				record.add( removeComments( setNullValueIfEmpty( cell ) ) );
 			}
 			data.add( record );
 		}
@@ -358,143 +509,83 @@ public class MetaUtil
 		return data;
 	}
 
-	/**
-	 * Process metadata & output some values to output file for verification.
-	 * @param data
-	 */
-	private static void processMetadata( final List<List<String>> data )
+	private static String removeComments( String val ) throws Exception
 	{
-		final int digits = new Integer( data.size() ).toString().length();
-		int rowNum = 0;
-		final Iterator<List<String>> rows = data.iterator();
-		while( rows.hasNext() )
+		if( getCommentChar().length() > 0 )
 		{
-			final List<String> row = trim( rows.next() );
-			String id = row.get( 0 );
-			row.remove( 0 );
-
-			if( rowNum == 0 )
+			final int index = val.indexOf( getCommentChar() );
+			if( index > -1 )
 			{
-				id = formatMetaId( id );
-				metaId = id;
-				Log.out.info( "Loading METADATA [ID = " + metaId + "] with " + row.size() + " attribute columns" );
+				val = val.substring( 0, index );
 			}
-
-			if( rowNum < 2 )
-			{
-				Log.out.info( "Example MetaUtil Row[" + String.format( "%0" + digits + "d", rowNum ) + "]: Key(" + id
-						+ "): " + row );
-			}
-
-			metadataMap.put( id, row );
-			rowNum++;
 		}
+
+		return val;
 	}
 
-	/**
-	 * Clean values avoid commas, and replace spaces with underscores.
-	 * @param val
-	 * @return
-	 */
-	private static String rScriptFormat( String val ) throws Exception
+	private static String setNullValueIfEmpty( final String val ) throws Exception
 	{
-		if( ( val == null ) || val.trim().isEmpty() )
+		if( val == null || val.trim().isEmpty() )
 		{
-			return Config.requireString( MetaUtil.INPUT_NULL_VALUE );
+			return Config.requireString( META_NULL_VALUE );
 		}
-
-		final int index = val.indexOf( Config.requireString( MetaUtil.INPUT_COMMENT ) );
-		if( index > -1 )
-		{
-			val = val.substring( 0, val.indexOf( Config.requireString( MetaUtil.INPUT_COMMENT ) ) );
-		}
-
 		return val.trim();
-
 	}
 
 	/**
-	 * Set rScriptFields variable =  all metadata attributes referenced in R Script:
-	 * Uses 4 config file props: nominalFields, numericFields, filterNaAttributes, & filterAttributes
+	 * {@link biolockj.Config} property {@value #META_BARCODE_COLUMN} defines metadata column with identifying barcode
 	 */
-	private static void setRscriptFields() throws Exception
-	{
-		nominalFields.addAll( Config.getSet( RScript.R_NOMINAL_DATA ) );
-		numericFields.addAll( Config.getSet( RScript.R_NUMERIC_DATA ) );
-		rScriptFields.addAll( nominalFields );
-		rScriptFields.addAll( numericFields );
-		rScriptFields.addAll( Config.getSet( RScript.R_FILTER_NA_ATTRIBUTES ) );
-		rScriptFields.addAll( Config.getSet( RScript.R_FILTER_ATTRIBUTES ) );
-
-		for( final String att: metadataMap.get( metaId ) )
-		{
-			if( att.equals( NUM_READS ) && Config.getBoolean( Config.REPORT_NUM_READS ) )
-			{
-				rScriptFields.add( NUM_READS );
-			}
-			else if( att.equals( NUM_HITS ) && Config.getBoolean( Config.REPORT_NUM_HITS ) )
-			{
-				rScriptFields.add( NUM_HITS );
-			}
-		}
-	}
+	public static final String META_BARCODE_COLUMN = "metadata.barcodeColumn";
 
 	/**
-	 * Trim all values in row.
-	 * @param row
-	 * @return
+	 * {@link biolockj.Config} property that defines how metadata columns are separated: {@value #META_COLUMN_DELIM}
+	 * Typically files are tab or comma separated.
 	 */
-	private static List<String> trim( final List<String> row )
-	{
-		final List<String> formattedRow = new ArrayList<>();
-		final Iterator<String> it = row.iterator();
-		while( it.hasNext() )
-		{
-			formattedRow.add( it.next().trim() );
-		}
-
-		return formattedRow;
-	}
+	public static final String META_COLUMN_DELIM = "metadata.columnDelim";
 
 	/**
-	 * Verify any fields to be used in R scripts.
-	 * @throws Exception
+	 * {@link biolockj.Config} property to set metadata file comment indicator: {@value #META_COMMENT_CHAR}<br>
+	 * Empty string is a valid option indicating no comments in metadata file
 	 */
-	private static void validateConfig() throws Exception
-	{
-		if( Config.requireString( MetaUtil.INPUT_COMMENT ).length() > 1 )
-		{
-			throw new Exception( MetaUtil.INPUT_COMMENT + " must be a single character with length = 1" );
-		}
+	public static final String META_COMMENT_CHAR = "metadata.commentChar";
 
-		if( Config.requireString( MetaUtil.INPUT_NULL_VALUE ).equals( Config.requireString( MetaUtil.INPUT_COMMENT ) ) )
-		{
-			throw new Exception( "BioLockJ requires unique values for config properties: " + MetaUtil.INPUT_NULL_VALUE
-					+ " & " + MetaUtil.INPUT_COMMENT );
-		}
+	/**
+	 * {@link biolockj.Config} String property: {@value #META_FILE_PATH}<br>
+	 * If absolute file path, use file as metadata.<br>
+	 * If directory path, must find exactly 1 file within, to use as metadata.
+	 */
+	public static final String META_FILE_PATH = "metadata.filePath";
 
-		for( final String field: rScriptFields )
-		{
-			if( !MetaUtil.getAttributeNames().contains( field ) )
-			{
-				throw new Exception( field + " is not found in metadata: " + metadataFile.getAbsolutePath() );
-			}
-		}
-	}
+	/**
+	 * {@link biolockj.Config} property to set metadata file empty cell: {@value #META_NULL_VALUE}
+	 */
+	public static final String META_NULL_VALUE = "metadata.nullValue";
 
-	public static final String DEFAULT_METADATA = "defaultMetadata.tsv";
-	public static final String INPUT_COMMENT = "input.commentDelim";
-	public static final String INPUT_NULL_VALUE = "input.nullValue";
-	public static final String META_MERGED_SUFFIX = "MetaMerged.tsv";
-	public static final String NUM_HITS = "Num_Hits";
-	public static final String NUM_READS = "Num_Reads";
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #META_REQUIRE_METADATA}<br>
+	 * If Y, require metadata row for every sample in {@value biolockj.Config#INPUT_DIRS}.<br>
+	 * If N, samples without metadata row will be ignored.
+	 */
+	public static final String META_REQUIRE_METADATA = "metadata.requireMetadata";
 
-	private static final Map<String, Set<String>> attributeMap = new HashMap<>();
-	private static final Set<String> binaryFields = new TreeSet<>();
+	/**
+	 * Default column delimiter = tab character
+	 */
+	protected static final String DEFAULT_COL_DELIM = BioLockJ.TAB_DELIM;
+
+	/**
+	 * Default comment character for any new metadata file created by a BioModule: {@value #DEFAULT_COMMENT_CHAR}
+	 */
+	protected static final String DEFAULT_COMMENT_CHAR = "";
+
+	/**
+	 * Default field value to represent null-value: {@value #DEFAULT_NULL_VALUE}
+	 */
+	protected static final String DEFAULT_NULL_VALUE = "NA";
+
+	private static String META_SPACER = "************************************************************************";
 	private static File metadataFile = null;
 	private static final Map<String, List<String>> metadataMap = new HashMap<>();
-	private static String metaId = null;
-	private static final Set<String> nominalFields = new TreeSet<>();
-	private static final Set<String> numericFields = new TreeSet<>();
-	private static final Set<String> rScriptFields = new HashSet<>();
+
+	private static String metaId = "SAMPLE_ID";
 }

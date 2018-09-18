@@ -1,0 +1,16 @@
+# Deployment path:  $BLJ/resources/primers/avaPrimers.txt
+# AvaC PRIMERS
+^C[TG][TA].....AG[AG]GTTTGATC[AC]TGGCTCAG
+CAGC[AC]GCCGC[ACGT]GTAA[ACGT]AC	
+#### Use RC of reverse primer once merged ^GT[ACGT]TTAC[ACGT]GCGGC[GT]GCTG
+###################################
+# forward AGRGTTTGATCMTGGCTCAG
+# reverse GTNTTACNGCGGCKGCTG
+###################################
+# BASE SUBSTITUTIONS
+###################################
+# R [AG]
+# M [AC]
+# N [ACGT]
+# K [GT]
+###################################

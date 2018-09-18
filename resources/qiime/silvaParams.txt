@@ -1,0 +1,10 @@
+filter_alignment:allowed_gap_frac			0.80
+filter_alignment:entropy_threshold			0.10
+filter_alignment:suppress_lane_mask_filter	True
+
+# TRIAL 2
+# To RUN the usearch OTU pickers in size-order mode: 
+#pick_otus:otu_picking_method 				usearch61
+#pick_otus:sizeorder 						True
+#pick_otus:maxaccepts 						16
+#pick_otus:maxrejects 						64

@@ -1,0 +1,115 @@
+<project name="BioLockJ" default="standard-build" basedir="..">
+
+	<path id="lib.classpath">
+		<fileset dir="lib">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+	
+    <target name="clean" >
+   		<delete dir="bin"/>
+    		<delete file="dist/BioLockJ.jar"/>
+    </target>
+
+    <target name="init" depends="clean">
+    		<tstamp/>
+    		<mkdir dir="bin"/>
+    </target>
+
+    <target name="compile-source" depends="init">
+    		<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin">
+       		<classpath>
+       			<fileset dir="lib">
+       	        		<include name="**/*.jar"/>
+       	    		</fileset>
+       		</classpath>
+    		</javac>
+    </target>
+	
+    <target name="copy-log4j-properties" depends="compile-source">
+  		<copy file="resources/log4j.properties" todir="bin"/>
+    </target>
+
+	
+	<target name="jar" depends="copy-log4j-properties">
+		<jar basedir="bin" destfile="dist/BioLockJ.jar">
+			<fileset dir="src"/>
+			<zipgroupfileset dir="lib" includes="*.jar"/>
+			<manifest>
+				<attribute name="Version" value="1.0"/>
+				<attribute name="Main-Class" value="biolockj.BioLockJ"/>
+				<attribute name="Class-Path" value="lib.classpath"/>
+			</manifest>
+		</jar>
+	</target>
+	
+
+	<target name="standard-build" depends="jar">
+		<chmod type="file" perm="777">		
+			<fileset dir="dist" includes="**" />
+		</chmod>
+	</target>
+	
+	
+	<target name="javadoc" depends="standard-build">
+		<javadoc access="protected" author="true" destdir="docs" doctitle="BioLockJ" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="biolockj,biolockj.exception,biolockj.module,biolockj.module.classifier,biolockj.module.classifier.r16s,biolockj.module.classifier.wgs,biolockj.module.implicit,biolockj.module.implicit.parser,biolockj.module.implicit.parser.r16s,biolockj.module.implicit.parser.wgs,biolockj.module.implicit.qiime,biolockj.module.r,biolockj.module.report,biolockj.module.seq,biolockj.node,biolockj.node.r16s,biolockj.node.wgs,biolockj.util,biolockj.util.r" source="1.8" sourcepath="src" splitindex="true" use="true" version="true">
+		 	<classpath>
+		    		<fileset dir="lib">
+		        		<include name="**/*.jar"/>
+		        	</fileset>
+		     </classpath>
+		     <link href="https://docs.oracle.com/javase/8/docs/api/"/>
+		     <link href="http://docs.oracle.com/javase/8/javafx/api/"/>
+		</javadoc>
+	</target>
+	
+	<target name="remove_release" depends="standard-build">
+		<delete file="dist/release_v1.0.tar.gz"/>
+	</target>	
+	
+	<target name="remove_docker" depends="standard-build">
+			<delete file="dist/biolockj_v1.0.tar.gz"/>
+	</target>
+	
+	<target name="deploy" depends="remove_release">
+		<tar compression="gzip" destfile="dist/release_v1.0.tar.gz">
+			<tarfileset dir="." filemode="777">
+				<include name="dist/**" />
+				<include name="docs/**" /> 
+				<include name="install" /> 
+				<include name="lib/*" />
+				<include name="resources/build.xml" /> 
+				<include name="resources/config/default/standard.properties" /> 
+				<include name="resources/config/default/docker.properties" /> 
+				<include name="resources/config/template/*" /> 
+				<include name="resources/docker/**" /> 
+				<include name="resources/log4j.properties" />
+				<include name="resources/qiime/*" /> 
+				<include name="src/**" />
+			</tarfileset>
+		</tar>	
+	</target>
+	
+	<target name="dockerDeploy" depends="remove_docker">
+			<tar compression="gzip" destfile="dist/biolockj_v1.0.tar.gz">
+				<tarfileset dir="." filemode="777">
+					<include name="dist/**" />
+					<include name="install" /> 
+					<include name="resources/config/default/standard.properties" /> 
+					<include name="resources/config/default/docker.properties" /> 
+					<include name="resources/docker/**" /> 
+					<include name="resources/log4j.properties" />
+					<include name="resources/qiime/*" /> 
+				</tarfileset>
+			</tar>	
+		</target>
+	
+	<target name="buildRelease" depends="deploy">
+		<chmod file="dist/release_v1.0.tar.gz" perm="777"/>		
+	</target>
+	
+	<target name="buildDockerRelease" depends="dockerDeploy">
+		<chmod file="dist/biolockj_v1.0.tar.gz" perm="777"/>		
+	</target>
+	
+</project>

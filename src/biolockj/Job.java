@@ -1,17 +1,13 @@
 /**
  * @UNCC Fodor Lab
- * @author Anthony Fodor
- * @email anthony.fodor@gmail.com
+ * @author Michael Sioda
+ * @email msioda@uncc.edu
  * @date Feb 9, 2017
- * @disclaimer 	This code is free software; you can redistribute it and/or
- * 				modify it under the terms of the GNU General Public License
- * 				as published by the Free Software Foundation; either version 2
- * 				of the License, or (at your option) any later version,
- * 				provided that any use properly credits the author.
- * 				This program is distributed in the hope that it will be useful,
- * 				but WITHOUT ANY WARRANTY; without even the implied warranty of
- * 				MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * 				GNU General Public License for more details at http://www.gnu.org *
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
 package biolockj;
 
@@ -19,15 +15,36 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
+import biolockj.module.ScriptModule;
 
 /**
- * ProcessUtil enables the Java program to execute scripts on thos emailHost OS.
+ * {@link biolockj.module.ScriptModule}s that generate scripts will submit a main script to the OS for execution as a
+ * {@link biolockj.Job}.
  */
 public class Job
 {
+	private Job( final ScriptModule module ) throws Exception
+	{
+		Log.get( getClass() ).info( "[Run Command]: " + getArgsAsString( module.getJobParams() ) );
+		final Runtime r = Runtime.getRuntime();
+		final Process p = r.exec( module.getJobParams() );
+		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
+		String s;
+		while( ( s = br.readLine() ) != null )
+		{
+			if( !s.trim().isEmpty() )
+			{
+				Log.get( getClass() ).info( "[" + module.getClass().getSimpleName() + "] " + s );
+			}
+		}
+
+		p.waitFor();
+		p.destroy();
+	}
+
 	private Job( final String[] args ) throws Exception
 	{
-		Log.out.info( "[BioLockJ Execute Command]: " + getArgsAsString( args ) );
+		Log.get( getClass() ).info( "[Run Command]: " + getArgsAsString( args ) );
 		final Runtime r = Runtime.getRuntime();
 		final Process p = r.exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
@@ -36,9 +53,8 @@ public class Job
 		{
 			if( !s.trim().isEmpty() )
 			{
-				Log.out.info( "[BioLockJ Process Output] " + s );
+				Log.get( getClass() ).info( "[Process] " + s );
 			}
-
 		}
 
 		p.waitFor();
@@ -56,51 +72,53 @@ public class Job
 		return sb.toString();
 	}
 
-	public static void submit( final File dir, final String[] args ) throws Exception
+	/**
+	 * Set file permissions by executing chmod {@value biolockj.module.ScriptModule#SCRIPT_PERMISSIONS} on generated
+	 * bash scripts.
+	 *
+	 * @param scriptDir Script directory
+	 * @throws Exception if chmod command command fails
+	 */
+	public static void setFilePermissions( final File scriptDir ) throws Exception
 	{
-		setFilePermissions( dir );
-		new Job( args );
+		for( final File f: scriptDir.listFiles() )
+		{
+			final StringTokenizer st = new StringTokenizer(
+					"chmod " + Config.requireString( ScriptModule.SCRIPT_PERMISSIONS ) + " " + f.getAbsolutePath() );
+			final String[] args = new String[ st.countTokens() ];
+			for( int i = 0; i < args.length; i++ )
+			{
+				args[ i ] = st.nextToken();
+			}
+			submit( args );
+		}
 	}
 
+	/**
+	 * This method is called by script generating {@link biolockj.module.ScriptModule}s to update the script
+	 * file-permissions to ensure they are executable by the program. Once file permissions are set, the main script
+	 * (passed in the args param) is executed. Calls {@link #setFilePermissions(File)} and {@link #submit(ScriptModule)}
+	 *
+	 * @param module ScriptModule that is submitting its main script as a Job
+	 * @throws Exception if errors occur during execution
+	 */
+	public static void submit( final ScriptModule module ) throws Exception
+	{
+		setFilePermissions( module.getScriptDir() );
+		new Job( module );
+	}
+
+	/**
+	 * Instantiates a new {@link biolockj.Job}.<br>
+	 * String[] array used to control spacing between command/params.<br>
+	 * As if executing on terminal args[0] args[1]... args[n-1] as one command.
+	 *
+	 * @param args Terminal command created from args (adds 1 space between each array element)
+	 * @throws Exception if errors occur during execution
+	 */
 	public static void submit( final String[] args ) throws Exception
 	{
 		new Job( args );
-	}
-
-	/**
-	 * Populate Job args[] by tokenizing command and appending script absolute path.
-	 *
-	 * @param String command
-	 * @param File script
-	 * @return String[] args
-	 */
-	private static String[] getArgs( final String command, final File script )
-	{
-		final StringTokenizer st = new StringTokenizer( command + " " + script.getAbsolutePath() );
-		final String[] args = new String[ st.countTokens() ];
-		for( int i = 0; i < args.length; i++ )
-		{
-			args[ i ] = st.nextToken();
-		}
-
-		return args;
-	}
-
-	/**
-	 * Execute SCRIPT_CHMOD_COMMAND to ensure the new bash scripts are executable.
-	 * @param scriptDir
-	 * @throws Exception
-	 */
-	private static void setFilePermissions( final File scriptDir ) throws Exception
-	{
-		final File[] listOfFiles = scriptDir.listFiles();
-		for( final File file: listOfFiles )
-		{
-			if( file.isFile() && !file.getName().startsWith( "." ) )
-			{
-				submit( getArgs( Config.requireString( Config.SCRIPT_CHMOD_COMMAND ), file ) );
-			}
-		}
 	}
 
 }

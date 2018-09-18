@@ -3,15 +3,11 @@
  * @author Michael Sioda
  * @email msioda@uncc.edu
  * @date Jun 2, 2017
- * @disclaimer 	This code is free software; you can redistribute it and/or
- * 				modify it under the terms of the GNU General Public License
- * 				as published by the Free Software Foundation; either version 2
- * 				of the License, or (at your option) any later version,
- * 				provided that any use properly credits the author.
- * 				This program is distributed in the hope that it will be useful,
- * 				but WITHOUT ANY WARRANTY; without even the implied warranty of
- * 				MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * 				GNU General Public License for more details at http://www.gnu.org *
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
 package biolockj.node;
 
@@ -22,68 +18,53 @@ import biolockj.Config;
 import biolockj.Log;
 
 /**
- * OtuNode holds taxonomy info representing one line of output from the classifier output file.
+ * The default implementation of {@link biolockj.node.OtuNode} is also the superclass for all WGS and 16S OtuNode
+ * classes. OtuNodes hold taxonomy assignment info, represents one line of
+ * {@link biolockj.module.classifier.ClassifierModule} output. The assignment is stored in a local otuMap, which holds
+ * one OTU name per level (level-gaps allowed).
  */
 public abstract class OtuNodeImpl implements OtuNode
 {
-	/**
-	 * Add OTU for a taxonomy level.
-	 *
-	 * @param String levelDelim
-	 * @param String otuName
-	 */
+
 	@Override
-	public void addOtu( final String levelDelim, final String otuName )
+	public void buildOtuNode( final String otu, final String levelDelim )
 	{
-		if( ( levelDelim != null ) && ( otuName != null ) && !levelDelim.trim().isEmpty() && !otuName.trim().isEmpty() )
+		// Log.debug( getClass(), id + " buildOtuNode --> OTU: " + otu + " : delim = " + levelDelim );
+
+		if( levelDelim != null && otu != null && !levelDelim.trim().isEmpty() && !otu.trim().isEmpty() )
 		{
 			final String taxaLevel = delimToLevelMap().get( levelDelim );
-			try
+
+			// if taxaLevel not configured or for level BioLockJ doesn't support (like strain) - take no action
+			if( taxaLevel == null || !Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( taxaLevel ) )
 			{
-				// if taxaLevel not configured or for level BioLockJ doesn't support (like strain) - take no action
-				if( ( taxaLevel == null ) || !Config.requireTaxonomy().contains( taxaLevel ) )
-				{
-					Log.out.debug(
-							"OtuNode.addOtu() skipping invalid taxaLevel (not configured or not supported): delim="
-									+ levelDelim + "; taxa=" + taxaLevel );
-					return;
-				}
-			}
-			catch( final Exception ex )
-			{
-				Log.out.error( "Unable to get configured taxonomy! " + ex.getMessage(), ex );
+				// Log.debug( getClass(), "OtuNode.addOtu() skipping invalid taxaLevel (not configured or not
+				// supported): delim="
+				// + levelDelim + "; taxa=" + taxaLevel );
+				return;
 			}
 
 			if( otuMap.get( taxaLevel ) != null )
 			{
-				Log.out.warn( "OtuNode.addOtu() " + id + " overwriting OTU: " + otuMap.get( taxaLevel ) + " with "
-						+ otuName + "  --> Line = " + line );
+				Log.debug( getClass(),
+						id + " overwriting OTU: " + otuMap.get( taxaLevel ) + " with " + otu + "  --> Line = " + line );
 			}
 
-			otuMap.put( taxaLevel, otuName );
+			otuMap.put( taxaLevel, otu );
 		}
 		else
 		{
-			Log.out.warn( "OtuNode.addOtu() " + id + " called with null params! --> Line = " + line );
+			Log.debug( getClass(), "ID=[ " + id + " ] --> OTU missing! for: levelDelim=[ " + levelDelim + " ]; OTU=[ "
+					+ otu + " ]; Line =[ " + line + " ]" );
 		}
 	}
 
-	/**
-	 * Get the OTU count.
-	 *
-	 * @return Long count
-	 */
 	@Override
 	public Long getCount()
 	{
 		return count;
 	}
 
-	/**
-	 * Get the line from classifier output file used to create the OtuNode.
-	 *
-	 * @return String classifier output file line
-	 */
 	@Override
 	public String getLine()
 	{
@@ -96,11 +77,6 @@ public abstract class OtuNodeImpl implements OtuNode
 		return otuMap;
 	}
 
-	/**
-	 * Get the Sample ID
-	 *
-	 * @return String id
-	 */
 	@Override
 	public String getSampleId()
 	{
@@ -111,48 +87,47 @@ public abstract class OtuNodeImpl implements OtuNode
 	public void report()
 	{
 		final StringBuffer sb = new StringBuffer();
-		sb.append( getClass().getSimpleName() + "[" + id + "]=" + count + " | line=" + line + BioLockJ.RETURN );
+		sb.append( "[" + id + "]=" + count + " | line=" + line + BioLockJ.RETURN );
 		for( final String key: otuMap.keySet() )
 		{
 			sb.append( key + " = " + otuMap.get( key ) + BioLockJ.RETURN );
 		}
-		Log.out.warn( sb.toString() );
+		Log.debug( getClass(), sb.toString() );
 	}
 
-	/**
-	 * Set the OTU count
-	 *
-	 * @param Long count
-	 */
 	@Override
 	public void setCount( final Long count )
 	{
 		this.count = count;
 	}
 
-	/**
-	 * Set line from classifier output file used to create the OtuNode.
-	 *
-	 * @param String line
-	 */
 	@Override
 	public void setLine( final String line )
 	{
-		this.line = line;
+		try {
+			if( Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" )  )
+			{
+				this.line = line;
+			}
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace();
+		}
 	}
 
-	/**
-	 * Set the Sample ID.
-	 *
-	 * @param String id
-	 */
 	@Override
 	public void setSampleId( final String id )
 	{
 		this.id = id;
 	}
 
-	private static Map<String, String> delimToLevelMap()
+	/**
+	 * Map used to match classifier specific leve delimiters to BioLockJ taxonomy level names.
+	 *
+	 * @return delimToLevelMap
+	 */
+	protected static Map<String, String> delimToLevelMap()
 	{
 		if( delimToLevelMap.isEmpty() )
 		{
@@ -169,28 +144,48 @@ public abstract class OtuNodeImpl implements OtuNode
 
 	private Long count = 0L;
 	private String id = null;
-	private String line = null;
+	private String line = "";
+
+	// key=level, val=otu
 	private final Map<String, String> otuMap = new HashMap<>();
+
+	/**
+	 * Standard classifier output level delimiter for CLASS
+	 */
 	protected static String CLASS_DELIM = "c__";
+
+	/**
+	 * Map level delim to full taxonomy level name.
+	 */
+	protected static final Map<String, String> delimToLevelMap = new HashMap<>();
+
+	/**
+	 * Standard classifier output level delimiter for DOMAIN
+	 */
 	protected static String DOMAIN_DELIM = "d__";
+
+	/**
+	 * Standard classifier output level delimiter for FAMILY
+	 */
 	protected static String FAMILY_DELIM = "f__";
+
+	/**
+	 * Standard classifier output level delimiter for GENUS
+	 */
 	protected static String GENUS_DELIM = "g__";
+
+	/**
+	 * Standard classifier output level delimiter for ORDER
+	 */
 	protected static String ORDER_DELIM = "o__";
+
+	/**
+	 * Standard classifier output level delimiter for PHYLUM
+	 */
 	protected static String PHYLUM_DELIM = "p__";
 
+	/**
+	 * Standard classifier output level delimiter for SPECIES
+	 */
 	protected static String SPECIES_DELIM = "s__";
-
-	private static final Map<String, String> delimToLevelMap = new HashMap<>();
-
-	//private static final Map<String, String> levelToDelimMap = new HashMap<>();
-	//static
-	//{
-	//		levelToDelimMap.put( Config.DOMAIN, DOMAIN_DELIM );
-	//		levelToDelimMap.put( Config.PHYLUM, PHYLUM_DELIM );
-	//		levelToDelimMap.put( Config.CLASS, CLASS_DELIM );
-	//		levelToDelimMap.put( Config.ORDER, ORDER_DELIM );
-	//		levelToDelimMap.put( Config.FAMILY, FAMILY_DELIM );
-	//		levelToDelimMap.put( Config.GENUS, GENUS_DELIM );
-	//		levelToDelimMap.put( Config.SPECIES, SPECIES_DELIM );
-	//}
 }

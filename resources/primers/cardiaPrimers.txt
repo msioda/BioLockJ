@@ -1,0 +1,19 @@
+# Deployment path: ~/projects/cardia/primers/cardiaPrimers.txt
+
+# NOTE: CARDIA primers use 4 IUPAC base substitutions:
+
+# 1.  H [ACT] 
+# 2.  N [ACGT]
+# 3.  V [ACG]
+# 4.  W [AT]
+
+# For a complete list of IUPAC DNA base substitutions see:
+# https://www.dnabaser.com/articles/IUPAC%20ambiguity%20codes.html
+
+# Forward Read PCR primer
+^CCTACGGGNGGCWGCAG
+
+# Reverse Read PCR primer
+^GACTACHVGGGTATCTAATCC
+
+

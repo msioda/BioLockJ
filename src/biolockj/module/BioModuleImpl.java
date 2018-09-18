@@ -3,209 +3,213 @@
  * @author Michael Sioda
  * @email msioda@uncc.edu
  * @date Feb 9, 2017
- * @disclaimer 	This code is free software; you can redistribute it and/or
- * 				modify it under the terms of the GNU General Public License
- * 				as published by the Free Software Foundation; either version 2
- * 				of the License, or (at your option) any later version,
- * 				provided that any use properly credits the author.
- * 				This program is distributed in the hope that it will be useful,
- * 				but WITHOUT ANY WARRANTY; without even the implied warranty of
- * 				MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * 				GNU General Public License for more details at http://www.gnu.org *
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
 package biolockj.module;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.util.MetaUtil;
 import biolockj.util.ModuleUtil;
+import biolockj.util.SeqUtil;
+import biolockj.util.SummaryUtil;
 
 /**
- * Superclass for basic Modules (classifiers, parsers, reports).
+ * Superclass for standard BioModules (classifiers, parsers, etc). Sets standard behavior for many of the BioModule
+ * interface methods.
  */
 public abstract class BioModuleImpl implements BioModule
 {
 
+	/**
+	 * If restarting or running a direct pipeline execute the cleanup for completed modules.
+	 */
 	@Override
 	public abstract void checkDependencies() throws Exception;
 
+	/**
+	 * By default, no cleanUp code is required.
+	 */
 	@Override
-	public abstract void executeProjectFile() throws Exception;
-
-	@Override
-	public File getInputDir()
+	public void cleanUp() throws Exception
 	{
-		return inputDir;
+		// no action by default
 	}
 
+	@Override
+	public abstract void executeTask() throws Exception;
+
+	/**
+	 * BioModule {@link #initInputFiles()} is called to initialize upon first call and cached.
+	 */
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
 		if( inputFiles.isEmpty() )
 		{
-			initInputFiles( TrueFileFilter.INSTANCE, null );
-		}
-
-		if( MetaUtil.exists() )
-		{
-			final File inputMeta = new File(
-					getInputDir().getAbsolutePath() + File.separator + MetaUtil.getFile().getName() );
-			if( inputMeta.exists() )
-			{
-				MetaUtil.setFile( inputMeta );
-				MetaUtil.refresh();
-				inputFiles.remove( inputMeta );
-			}
+			initInputFiles();
 		}
 
 		return inputFiles;
 	}
 
-	@Override
-	public String[] getJobParams() throws Exception
-	{
-		final String[] cmd = new String[ 1 ];
-		cmd[ 0 ] = ModuleUtil.getMainScript( this ).getAbsolutePath();
-		Log.out.info( "Executing Script: " + ModuleUtil.getMainScript( this ).getName() );
-		return cmd;
-	}
-
+	/**
+	 * All BioModule work must be contained within the scope of its root directory.
+	 */
 	@Override
 	public File getModuleDir()
 	{
 		return moduleDir;
 	}
 
+	/**
+	 * Returns moduleDir/output which will be used as the next module's input.
+	 */
 	@Override
 	public File getOutputDir()
 	{
 		return ModuleUtil.requireSubDir( this, OUTPUT_DIR );
 	}
 
+	/**
+	 * By default, no post-requisites are required.
+	 */
 	@Override
-	public File getScriptDir()
+	public List<Class<?>> getPostRequisiteModules() throws Exception
 	{
-		return ModuleUtil.requireSubDir( this, SCRIPT_DIR );
+		return new ArrayList<>();
 	}
 
 	/**
-	 * Summary message.
+	 * By default, no prerequisites are required.
 	 */
 	@Override
-	public String getSummary()
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
-		return ModuleUtil.getScriptDirSummary( this ) + ModuleUtil.getOutputDirSummary( this )
-				+ ModuleUtil.getFailureDirSummary( this );
+		return new ArrayList<>();
 	}
 
+	/**
+	 * Returns summary message to be displayed by Email module so must not contain confidential info. ModuleUtil
+	 * provides summary metrics on output files
+	 */
+	@Override
+	public String getSummary() throws Exception
+	{
+		Log.info( SummaryUtil.class, "Building module summary for: " + getClass().getSimpleName() );
+		return SummaryUtil.getOutputDirSummary( this );
+	}
+
+	/**
+	 * Returns moduleDir/temp for intermediate files. If {@link biolockj.BioLockJ#PROJECT_DELETE_TEMP_FILES} =
+	 * {@value biolockj.Config#TRUE}, this directory is deleted after pipeline completes successfully.
+	 */
 	@Override
 	public File getTempDir()
 	{
 		return ModuleUtil.requireSubDir( this, TEMP_DIR );
 	}
 
-	@Override
-	public Integer getTimeout()
-	{
-		return null;
-	}
-
 	/**
-	 * Set input directory and set inputFiles to any file in top level of dir that doesn't
-	 * start with "." to avoid hidden files.
-	 *
-	 *
-	 * @throws Exception
+	 * Creates the BioModule root directory if it doesn't exist and sets moduleDir member variable.
 	 */
 	@Override
-	public void initInputFiles( final IOFileFilter ff, final IOFileFilter recursive ) throws Exception
+	public void setModuleDir( final String filePath )
 	{
-		final List<File> dirs = getInputDirs( inputDir );
-		final Set<String> fileNames = new HashSet<>();
-		int index = 0;
-		for( final File d: dirs )
-		{
-			final Collection<File> files = FileUtils.listFiles( d, ff, recursive );
-			if( ( files == null ) || files.isEmpty() )
-			{
-				throw new Exception( "No input files found in directory: " + d );
-			}
-
-			Log.out.info( "# Files found: " + ( ( files == null ) ? 0: files.size() ) );
-			for( final File f: files )
-			{
-				if( !f.isDirectory() && !f.getName().startsWith( "." )
-						&& !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
-				{
-					validateFileNameUnique( fileNames, f );
-					fileNames.add( f.getName() );
-					Log.out.info( "INPUT FILE[" + index++ + "] = " + f.getAbsolutePath() );
-					inputFiles.add( f );
-				}
-				else
-				{
-					Log.out.warn( "Skipping file: " + f.getName() );
-				}
-			}
-		}
-
-		Collections.sort( inputFiles );
-	}
-
-	@Override
-	public void setInputDir( final File dir )
-	{
-		Log.out.info( "Set " + getClass().getName() + " input dir: " + dir );
-		inputDir = dir;
-	}
-
-	@Override
-	public void setModuleDir( final String name )
-	{
-		moduleDir = new File( name );
+		moduleDir = new File( filePath );
 		if( !moduleDir.exists() )
 		{
 			moduleDir.mkdirs();
-			Log.out.info( "Create Executor Directory: " + moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Create BioModule root directory: " + moduleDir.getAbsolutePath() );
 		}
 	}
 
-	protected void validateFileNameUnique( final Set<String> fileNames, final File f ) throws Exception
+	/**
+	 * Called upon first access of input files to return sorted list of files from all inputDirs.<br>
+	 * Hidden files (starting with ".") are ignored.
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected void initInputFiles() throws Exception
 	{
-		if( fileNames.contains( f.getName() ) )
+		Log.debug( getClass(), "Initialize input files..." );
+		final BioModule previousModule = ModuleUtil.getPreviousModule( this );
+		final Set<File> files = new HashSet<>();
+		if( previousModule == null )
 		{
-			throw new Exception( "File names must be unique!  Duplicate file: " + f.getAbsolutePath() );
+			files.addAll( SeqUtil.getPipelineInputFiles() );
+		}
+		else
+		{
+			files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
+					HiddenFileFilter.VISIBLE ) );
+
+			if( ModuleUtil.isMetadataModule( previousModule ) )
+			{
+				files.addAll( previousModule.getInputFiles() );
+			}
+		}
+
+		for( final File f: files )
+		{
+			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			{
+				inputFiles.add( f );
+			}
+		}
+
+		if( inputFiles.isEmpty() )
+		{
+			throw new Exception( "No input files found!" );
+		}
+
+		Collections.sort( inputFiles );
+
+		Log.info( getClass(), "# Input Files: " + inputFiles.size() );
+		for( int i = 0; i < inputFiles.size(); i++ )
+		{
+			Log.info( getClass(), "Input File[" + i + "] = " + inputFiles.get( i ).getAbsolutePath() );
 		}
 	}
 
-	private List<File> getInputDirs( final File dir ) throws Exception
+	/**
+	 * Validate files in {@link biolockj.Config#INPUT_DIRS} have unique names. BioModules that expect duplicates must
+	 * override this method.
+	 *
+	 * @param fileNames A registry of module input file names added so far
+	 * @param file Next file to validate
+	 * @throws Exception if a duplicate file name found
+	 */
+	protected void validateFileNameUnique( final Set<String> fileNames, final File file ) throws Exception
 	{
-		if( dir == null )
+		if( fileNames.contains( file.getName() ) )
 		{
-			final List<File> inputDirs = Config.requireExistingDirs( Config.INPUT_DIRS );
-			setInputDir( inputDirs.get( 0 ) );
-			return inputDirs;
+			throw new Exception( "File names must be unique!  Duplicate file: " + file.getAbsolutePath() );
 		}
-
-		setInputDir( dir );
-		return new ArrayList<>( Arrays.asList( dir ) );
 	}
 
-	private File inputDir = null;
 	private final List<File> inputFiles = new ArrayList<>();
 	private File moduleDir = null;
+
+	/**
+	 * BioLockJ newline = "\n"
+	 */
 	public static final String RETURN = BioLockJ.RETURN;
+
+	/**
+	 * BioLockJ tab delim = "\t"
+	 */
 	public static final String TAB_DELIM = BioLockJ.TAB_DELIM;
 }

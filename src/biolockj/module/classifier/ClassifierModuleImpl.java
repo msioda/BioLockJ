@@ -3,15 +3,11 @@
  * @author Michael Sioda
  * @email msioda@uncc.edu
  * @date June 19, 2017
- * @disclaimer 	This code is free software; you can redistribute it and/or
- * 				modify it under the terms of the GNU General Public License
- * 				as published by the Free Software Foundation; either version 2
- * 				of the License, or (at your option) any later version,
- * 				provided that any use properly credits the author.
- * 				This program is distributed in the hope that it will be useful,
- * 				but WITHOUT ANY WARRANTY; without even the implied warranty of
- * 				MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * 				GNU General Public License for more details at http://www.gnu.org *
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
 package biolockj.module.classifier;
 
@@ -22,104 +18,111 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import biolockj.BioLockJ;
 import biolockj.Config;
-import biolockj.Job;
 import biolockj.Log;
+import biolockj.Pipeline;
+import biolockj.exception.ConfigFormatException;
+import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
-import biolockj.module.BioModuleImpl;
+import biolockj.module.ScriptModuleImpl;
+import biolockj.module.implicit.parser.ParserModule;
 import biolockj.util.BashScriptBuilder;
-import biolockj.util.SeqUtil;
+import biolockj.util.RuntimeParamUtil;
 
 /**
- * This is the Classifier superclass used by all WGS & 16S classifiers.
+ * This is the superclass for all WGS and 16S biolockj.module.classifier BioModules.
  */
-public abstract class ClassifierModuleImpl extends BioModuleImpl implements ClassifierModule
+public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements ClassifierModule
 {
-	@Override
-	public abstract List<List<String>> buildScript( final List<File> files ) throws Exception;
-
-	@Override
-	public abstract List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception;
-
 	/**
-	 * Check dependencies as we read in generic classifier props.
+	 * Validate module dependencies:
+	 * <ul>
+	 * <li>Call {@link #getClassifierExe()} to verify the executable
+	 * <li>Call {@link #getClassifierParams()} to verify the runtime parameters are valid
+	 * <li>Call {@link #validateModuleOrder()} to validate module configuration order.
+	 * <li>Call {@link biolockj.module.ScriptModule#checkDependencies() } to validate script dependencies.
+	 * </ul>
 	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		classifierExe = getClassifierExe();
 		classifierParams = getClassifierParams();
-		SeqUtil.getInputSequenceType();
-		logVersion();
+		getNumThreads();
+		validateModuleOrder();
+		super.checkDependencies();
 	}
 
 	/**
-	 * Default classifier execution registers numReads for each sample (if report.numReads=Y)
-	 * Then call abstract method for paired or single reads based on paried read prop.
-	 * Finally Bash Scripts must be built for execution.
+	 * Get the classifier executable command from the Config. Verify command is either loaded as a cluster module or is
+	 * a valid file path. To simplify the Config, default values for exe.classifier can be defined by replacing "exe"
+	 * with a classifier type (rdp, qiime, kraken, metaphlan, or slimm). For example, if exe.classifer is missing or
+	 * blank and getClassifierType() returns "rdp" the property rdp.classifier will be used in place of exe.classifier.
+	 * This allows all classifiers to be defined in a file such as standard.properties.
+	 *
+	 * @return Classifier command to use in bash scripts
+	 * @throws Exception if the executable is undefined or invalid
 	 */
-	@Override
-	public void executeProjectFile() throws Exception
-	{
-		final List<File> files = getInputFiles();
-		SeqUtil.registerNumReadsPerSample( files, getOutputDir() );
-		final List<List<String>> data = Config.getBoolean( Config.INPUT_PAIRED_READS )
-				? buildScriptForPairedReads( files ): buildScript( files );
-		BashScriptBuilder.buildScripts( this, data, files, Config.requirePositiveInteger( Config.SCRIPT_BATCH_SIZE ) );
-	}
-
 	@Override
 	public String getClassifierExe() throws Exception
 	{
-
-		if( ( classifierExe == null ) || classifierExe.isEmpty() )
+		if( classifierExe == null || classifierExe.isEmpty() )
 		{
 			classifierExe = Config.getString( EXE_CLASSIFIER );
-			if( ( classifierExe == null ) || classifierExe.isEmpty() )
+			if( classifierExe == null || classifierExe.isEmpty() )
 			{
 				final String defaultProp = getClassifierType() + "." + EXE_CLASSIFIER.substring( 4 );
-				classifierExe = Config.getString( defaultProp );
-				if( ( classifierExe == null ) || classifierExe.isEmpty() )
+
+				classifierExe = Config.requireString( defaultProp );
+				Log.info( getClass(), "Loading default classifier property: " + defaultProp + " = " + classifierExe );
+
+				if( classifierExe == null || classifierExe.isEmpty() )
 				{
-					Config.throwPropNotFoundException( EXE_CLASSIFIER );
+					throw new ConfigNotFoundException( EXE_CLASSIFIER );
 				}
-				Log.out.info( "Loading default classifier property: " + defaultProp );
 			}
 
-			if( !BashScriptBuilder.clusterModuleExists( classifierExe ) )
+			if( !BashScriptBuilder.clusterModuleExists( classifierExe ) && !RuntimeParamUtil.isDockerMode() )
 			{
-				final File f = new File( classifierExe );
+				final File f = new File( Config.getSystemFilePath( classifierExe ) );
 				if( !f.exists() )
 				{
 					Config.requireExistingFile( EXE_CLASSIFIER );
 				}
 			}
 		}
+
 		return classifierExe;
 	}
 
 	/**
-	 * Get the basic classifier switches from the prop file.
-	 * @return
-	 * @throws Exception
+	 * Get optional classifier switches by appending "--" to each value in the list parameter if defined in the Config
+	 * file. Classifiers that use a single "-" must be override this method. To simplify the Config, default values for
+	 * exe.classifier can be defined by replacing "exe" with a classifier type (rdp, qiime, kraken, metaphlan, or
+	 * slimm). For example, if exe.classifer is missing or blank and getClassifierType() returns "rdp" the property
+	 * rdp.classifier will be used in place of exe.classifier. This allows all classifiers to be defined in a file such
+	 * as standard.properties.
+	 *
+	 * @return String containing formatted switches to append to the executable
+	 * @throws Exception if defined but invalid
 	 */
 	@Override
 	public String getClassifierParams() throws Exception
 	{
-		if( ( classifierParams == null ) || classifierParams.isEmpty() )
+		if( classifierParams == null || classifierParams.isEmpty() )
 		{
 			classifierParams = " ";
 			List<String> paramList = Config.getList( EXE_CLASSIFIER_PARAMS );
-			if( ( paramList == null ) || paramList.isEmpty() )
+			if( paramList == null || paramList.isEmpty() )
 			{
 				final String defaultProp = getClassifierType() + "." + EXE_CLASSIFIER_PARAMS.substring( 4 );
 				paramList = Config.getList( defaultProp );
-				if( ( paramList != null ) && !paramList.isEmpty() )
+				if( paramList != null && !paramList.isEmpty() )
 				{
-					Log.out.info( "Loading default classifier property: " + defaultProp );
+					Log.info( getClass(), "Loading default classifier property: " + defaultProp );
 				}
 			}
 
-			if( ( paramList != null ) && !paramList.isEmpty() )
+			if( paramList != null && !paramList.isEmpty() )
 			{
 				final Iterator<String> it = paramList.iterator();
 				while( it.hasNext() )
@@ -133,15 +136,37 @@ public abstract class ClassifierModuleImpl extends BioModuleImpl implements Clas
 	}
 
 	/**
-	 * Summary message.
+	 * This method returns the corresponding Parser module associated with the classifier. The Parser module name is
+	 * built using the same prefix used in the Classifier module
+	 * <p>
+	 * For example RdpClassifier, will return the RdpParser.
 	 */
 	@Override
-	public String getSummary()
+	public List<Class<?>> getPostRequisiteModules() throws Exception
+	{
+		final List<Class<?>> postReqs = super.getPostRequisiteModules();
+		final String type = getClassifierType().substring( 0, 1 ).toUpperCase() + getClassifierType().substring( 1 );
+		postReqs.add( Class
+				.forName( ParserModule.class.getPackage().getName() + "." + getSeqType() + "." + type + "Parser" ) );
+		return postReqs;
+	}
+
+	/**
+	 * This method extends the basic summary by adding metrics on the input files. Prints the number and type of
+	 * sequence files and the mean output file size.
+	 */
+	@Override
+	public String getSummary() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
 			final int numIn = getInputFiles().size();
+			if( numIn < 1 )
+			{
+				return null;
+			}
+
 			BigInteger inAvg = BigInteger.valueOf( 0L );
 			for( final File f: getInputFiles() )
 			{
@@ -151,84 +176,111 @@ public abstract class ClassifierModuleImpl extends BioModuleImpl implements Clas
 			}
 			inAvg = inAvg.divide( BigInteger.valueOf( numIn ) );
 
-			sb.append( "Input " + numIn + " " + SeqUtil.getInputSequenceType() + " files" + BioLockJ.RETURN );
-			sb.append( "Mean output file size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
+			sb.append( "# Input files: " + BioLockJ.RETURN );
+			sb.append( "Mean input file size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
 			return sb.toString() + super.getSummary();
 
 		}
 		catch( final Exception ex )
 		{
-			Log.out.error( "Unable to produce module summary for: " + getClass().getName() + " : " + ex.getMessage(),
-					ex );
+			final String msg = "Unable to complete module summary: " + ex.getMessage();
+			sb.append( msg + RETURN );
+			Log.get( getClass() ).warn( msg );
 		}
 
-		return super.getSummary();
+		return super.getSummary() + sb.toString();
 	}
 
 	/**
-	 * Log the version info to the output file.
+	 * This method returns the classifier class name in lower case, after "classifier" is removed.<br>
+	 * The remaining text should uniquely identify the name of the program.<br>
+	 * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan, or slimm).<br>
+	 * <p>
+	 * The purpose of this method is to allow users to configure multiple classifiers in a default properties file.<br>
+	 * Instead of setting the property {@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER} in the
+	 * {@link biolockj.Config} file, leave this value blank and configure the default properties file one time with:
+	 * "rdp.classifier", "qiime.classifier", "kraken.classifier", "metaphlan.classifier", and "slimm.classifier".<br>
+	 * The same approach should be taken with
+	 * {@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}.
+	 *
+	 * @return String rdp, qiime, kraken, metaphlan, slimm
 	 */
-	protected void logVersion() throws Exception
+	protected String getClassifierType()
 	{
-		logVersion( getClassifierExe(), "--version" );
-	}
-
-	private String getClassifierType() throws Exception
-	{
-		for( final BioModule bioModule: Config.getModules() )
-		{
-			if( bioModule.getClass().getSimpleName().toUpperCase().contains( RDP ) )
-			{
-				return RDP.toLowerCase();
-			}
-			if( bioModule.getClass().getSimpleName().toUpperCase().contains( QIIME ) )
-			{
-				return QIIME.toLowerCase();
-			}
-			if( bioModule.getClass().getSimpleName().toUpperCase().contains( KRAKEN ) )
-			{
-				return KRAKEN.toLowerCase();
-			}
-			if( bioModule.getClass().getSimpleName().toUpperCase().contains( METAPHLAN ) )
-			{
-				return METAPHLAN.toLowerCase();
-			}
-			if( bioModule.getClass().getSimpleName().toUpperCase().contains( SLIMM ) )
-			{
-				return SLIMM.toLowerCase();
-			}
-		}
-
-		throw new Exception( "Classifier type undefined!  No configured module includes a classifier keyword [ " + RDP
-				+ ", " + QIIME + ", " + KRAKEN + ", " + SLIMM + ", " + METAPHLAN + "]" );
+		return getClass().getSimpleName().toLowerCase().replaceAll( "classifier", "" );
 	}
 
 	/**
-	 * Another method to output version to handle cases with a unique version switch param.
-	 * @param programExe
-	 * @param versionSwitch
+	 * Validate {@link biolockj.module.classifier} modules run after {@link biolockj.module.seq} modules.
+	 * 
+	 * @throws Exception if modules are out of order
 	 */
-	private void logVersion( final String programExe, final String versionSwitch )
+	protected void validateModuleOrder() throws Exception
 	{
-		try
+		boolean found = false;
+		for( final BioModule module: Pipeline.getModules() )
 		{
-			final String[] cmd = new String[ 2 ];
-			cmd[ 0 ] = programExe;
-			cmd[ 1 ] = versionSwitch;
-			Job.submit( cmd );
+			if( found )
+			{
+				if( module.getClass().getName().contains( "biolockj.module.seq" ) )
+				{
+					throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
+							+ " must run before any " + getClass().getPackage().getName() + " BioModule." );
+				}
+			}
+
+			if( module.getClass().equals( getClass() ) )
+			{
+				found = true;
+			}
 		}
-		catch( final Exception ex )
+	}
+
+	private String getSeqType()
+	{
+		if( getClass().getName().startsWith( "biolockj.module.classifier.wgs" ) )
 		{
-			Log.out.error( "Version not found: " + programExe + " " + versionSwitch, ex );
+			return "wgs";
 		}
+
+		return "r16s";
+
+	}
+
+	/**
+	 * Get classifier specific number of threads property value, if defined. Otherwise, return the standard number of
+	 * threads property value.
+	 * 
+	 * @return Positive integer value
+	 * @throws ConfigFormatException if property is not a positive integer
+	 * @throws ConfigNotFoundException if properties are undefined
+	 */
+	public static Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException
+	{
+		if( Config.getPositiveInteger( CLASSIFIER_NUM_THREADS ) != null )
+		{
+			return Config.getPositiveInteger( CLASSIFIER_NUM_THREADS );
+		}
+
+		return Config.requirePositiveInteger( SCRIPT_NUM_THREADS );
+	}
+
+	/**
+	 * Get classifier number of threads property name.
+	 * 
+	 * @return Number of threads property name
+	 * @throws ConfigFormatException if property is not a positive integer
+	 */
+	public static String getNumThreadsParam() throws ConfigFormatException
+	{
+		if( Config.getPositiveInteger( CLASSIFIER_NUM_THREADS ) != null )
+		{
+			return CLASSIFIER_NUM_THREADS;
+		}
+
+		return SCRIPT_NUM_THREADS;
 	}
 
 	private String classifierExe = null;
 	private String classifierParams = null;
-	private static final String KRAKEN = "KRAKEN";
-	private static final String METAPHLAN = "METAPHLAN";
-	private static final String QIIME = "QIIME";
-	private static final String RDP = "RDP";
-	private static final String SLIMM = "SLIMM";
-
 }

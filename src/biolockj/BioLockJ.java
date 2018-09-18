@@ -3,341 +3,268 @@
  * @author Michael Sioda
  * @email msioda@uncc.edu
  * @date Feb 9, 2017
- * @disclaimer 	This code is free software; you can redistribute it and/or
- * 				modify it under the terms of the GNU General Public License
- * 				as published by the Free Software Foundation; either version 2
- * 				of the License, or (at your option) any later version,
- * 				provided that any use properly credits the author.
- * 				This program is distributed in the hope that it will be useful,
- * 				but WITHOUT ANY WARRANTY; without even the implied warranty of
- * 				MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * 				GNU General Public License for more details at http://www.gnu.org
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org
  */
 package biolockj;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.module.BioModule;
-import biolockj.module.Email;
-import biolockj.module.Metadata;
+import biolockj.module.JavaModule;
+import biolockj.module.JavaModuleImpl;
+import biolockj.module.ScriptModule;
+import biolockj.module.report.Email;
 import biolockj.util.MetaUtil;
 import biolockj.util.ModuleUtil;
+import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
+import biolockj.util.StringUtil;
+import biolockj.util.SummaryUtil;
 
 /**
- * This is the main program used to control top level execution.
+ * This is the primary BioLockJ class - its main() method is executed when the jar is run.<br>
+ * This class validates the runtime parameters to run a new pipeline or restart a failed pipeline.<br>
+ * The Java log file is initialized and the configuration file is processed before starting the pipeline.<br>
+ * If the pipeline is successful, the program executes clean up operations (if configured) and creates a status-complete
+ * indicator file in the pipeline root directory.<br>
  */
 public class BioLockJ
 {
 
-	public static boolean isRestarted()
+	private BioLockJ()
+	{}
+
+	/**
+	 * Copy file to pipeline root directory.
+	 * 
+	 * @param file File to copy
+	 * @throws Exception if errors occur
+	 */
+	public static void copyFileToPipelineRoot( final File file ) throws Exception
 	{
-		return isRestarted;
+		final String rootPath = Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath();
+		final File localFile = new File( rootPath + File.separator + file.getName() );
+		if( !localFile.exists() )
+		{
+			FileUtils.copyFileToDirectory( file, Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ) );
+			if( !localFile.exists() )
+			{
+				throw new Exception( "Unable to copy file to pipeline root directory: " + file.getAbsolutePath() );
+			}
+
+		}
 	}
 
 	/**
-	 * The main method is the first method called when BioLockJ is run. Here we
-	 * read property file, copy it to project directory, initialize Config
-	 * and call runProgram().
+	 * {@link biolockj.BioLockJ} is the BioLockj.jar Main-Class, so this main method is the first method executed when
+	 * BioLockJ runs. The biolockj shell script always passed the project directory path $DOCKER_PROJ as 1st param.<br>
+	 * The program requires a single user-provided parameter, the path to a {@link biolockj.Config} file.<br>
+	 * If -r switch is passed, attempt to restart a filed pipeline.<br>
+	 * If -d switch is passed, run direct pipeline for given Java module.<br>
+	 * An optional parameter can be used to set the encrypted email password or as the direct pipelines Java class.<br>
+	 * Execution summary:<br>
+	 * <ol>
+	 * <li>Call {@link biolockj.util.RuntimeParamUtil#registerRuntimeParameters(String[])} to validate runtime
+	 * parameters
+	 * <li>Call {@link biolockj.Config#initialize(File)} to load project properties
+	 * <li>Call {@link biolockj.util.MetaUtil#initialize()} to verify metadata dependencies
+	 * <li>Copy {@link biolockj.Config} file and nested {@value biolockj.Properties#PROJECT_DEFAULT_PROPS} files into
+	 * {@value biolockj.Config#INTERNAL_PIPELINE_DIR} to preserve the state of these files at runtime.
+	 * <li>Initialize {@link Log} using /resources/log4J.properties
+	 * <li>If {@value #PROJECT_COPY_FILES} = {@value biolockj.Config#TRUE}, copy input files into a new "input"
+	 * directory under {@value biolockj.Config#INTERNAL_PIPELINE_DIR}
+	 * <li>Call {@link biolockj.util.SeqUtil#initialize()} to set Config parameters based on sequence files
+	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
+	 * <li>Call {@link biolockj.Pipeline#runPipeline()} or {@link biolockj.Pipeline#runDirectModule(String)} to execute
+	 * pipeline modules.
+	 * <li>Call {@link #removeTempFiles()} to complete clean up operation, and if
+	 * {@link biolockj.Config}.{@value #PROJECT_DELETE_TEMP_FILES} = {@value biolockj.Config#TRUE}, delete temp
+	 * directories
+	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status
+	 * </ol>
+	 * <p>
+	 * If pipeline has failed, attempt execute {@link biolockj.module.report.Email} (if configured) to notify user of
+	 * failures.
 	 *
-	 * If the password param is given, the password is encrypted & stored to the
-	 * prop file.
-	 *
-	 * @param args - args[0] path to property file - args[1] clear-text admin
-	 *        email password
+	 * @param args - String[] runtime parameters passed to the Java program when launching BioLockJ
 	 */
-	public static void main( String[] args )
+	public static void main( final String[] args )
 	{
 		try
 		{
-			args = validateJavaParameters( args );
+			RuntimeParamUtil.registerRuntimeParameters( args );
 
-			System.out.println( "args[CONFIG_PARAM]: " + args[ CONFIG_PARAM ] );
-			System.out.println( "args[OPTIONAL_PARAM]: " + args[ OPTIONAL_PARAM ] );
+			Config.initialize( RuntimeParamUtil.getConfigFile() );
 
-			if( changePassword( args[ OPTIONAL_PARAM ] ) )
+			Config.setConfigProperty( Config.INTERNAL_PIPELINE_NAME, getProjectName() );
+
+			MetaUtil.initialize();
+
+			if( RuntimeParamUtil.doChangePassword() )
 			{
-				System.out.println( "Encrypting and storing new admin email password!" );
-				Email.encryptAndStoreEmailPassword( args[ CONFIG_PARAM ], args[ OPTIONAL_PARAM ] );
+				Email.encryptAndStoreEmailPassword( RuntimeParamUtil.getConfigFile(),
+						RuntimeParamUtil.getAdminEmailPassword() );
 				System.exit( 0 );
 			}
-
-			Config.loadProperties( args[ CONFIG_PARAM ] );
-			setProjectDir( args[ OPTIONAL_PARAM ] );
-
-			if( !doRestart( args[ OPTIONAL_PARAM ] ) )
+			else if( RuntimeParamUtil.isDirectMode() )
 			{
-				logWelcomeMsg();
-				Config.copyConfig();
+				Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, getRestartDir().getAbsolutePath() );
+				Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModule() ) );
 			}
-
-			Log.initialize();
-			initializeModules();
-			runProgram();
+			else if( RuntimeParamUtil.doRestart() )
+			{
+				Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, getRestartDir().getAbsolutePath() );
+				SummaryUtil.updateNumAttempts();
+				Log.initialize( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
+			}
+			else
+			{
+				Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, createPipelineDirectory().getAbsolutePath() );
+				Log.initialize( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
+			}
 		}
 		catch( final Exception ex )
 		{
-			if( Log.out != null )
-			{
-				Log.out.error( "Error occurred running program! ", ex );
-			}
-			else
-			{
-				System.out.println( "FATAL APPLICATION ERROR - Log file = null: args: " + args );
-				ex.printStackTrace();
-			}
-		}
-	}
-
-	protected static void initializeModules() throws Exception
-	{
-		Log.out.info( "Initializing BioLockJ Modules..." );
-		File metadata = Config.getExistingFile( Config.INPUT_METADATA );
-		Log.out.debug( "===> Initial metadata: " + metadata );
-
-		final Set<String> ignoredFiles = Config.getSet( Config.INPUT_IGNORE_FILES );
-		ignoredFiles.add( BioModule.BLJ_STARTED );
-		ignoredFiles.add( BioModule.BLJ_COMPLETE );
-
-		Config.setProperty( Config.INPUT_IGNORE_FILES, ignoredFiles );
-
-		BioModule previousModule = null;
-		for( final BioModule bioModule: Config.getModules() )
-		{
-			final String moduleName = Config.requireExistingDir( Config.PROJECT_DIR ).getAbsolutePath() + File.separator
-					+ Config.getModules().indexOf( bioModule ) + "_" + bioModule.getClass().getSimpleName();
-
-			bioModule.setModuleDir( moduleName );
-
-			if( ModuleUtil.isIncomplete( bioModule ) )
-			{
-				Log.out.info( "Reset incomplete BioLockJ Module: " + bioModule.getClass().getName() );
-				FileUtils.forceDelete( bioModule.getModuleDir() );
-				bioModule.setModuleDir( moduleName );
-			}
-
-			if( Config.getModules().indexOf( bioModule ) == 0 )
-			{
-				bioModule.initInputFiles( TrueFileFilter.INSTANCE, null );
-			}
-			else
-			{
-				if( previousModule instanceof Metadata )
-				{
-					bioModule.initInputFiles( TrueFileFilter.INSTANCE, null );
-				}
-				else
-				{
-					bioModule.setInputDir( previousModule.getOutputDir() );
-				}
-			}
-
-			if( ModuleUtil.getOutputMetadata( bioModule ) != null )
-			{
-				metadata = ModuleUtil.getOutputMetadata( bioModule );
-			}
-
-			if( !ModuleUtil.isComplete( bioModule ) )
-			{
-				bioModule.checkDependencies();
-			}
-
-			previousModule = bioModule;
+			printErrorFileAndExitProgram( args, ex );
 		}
 
-		if( metadata != null )
-		{
-			MetaUtil.setFile( metadata );
-			MetaUtil.refresh();
-		}
-	}
-
-	/**
-	 * Output welcome message to the output file with BioLockJ version, lab citation,
-	 * and freeware msg.
-	 */
-	protected static void logWelcomeMsg()
-	{
-		Log.addMsg( RETURN );
-		Log.addMsg( Log.LOG_SPACER );
-		Log.addMsg( "Launching BioLockJ " + BLJ_VERSION + " ~ Distributed by UNCC Fodor Lab @2017" );
-		Log.addMsg( Log.LOG_SPACER );
-		Log.addMsg( "This code is free software; you can redistribute and/or modify it" );
-		Log.addMsg( "under the terms of the GNU General Public License as published by" );
-		Log.addMsg( "the Free Software Foundation; either version 2 of the License, or" );
-		Log.addMsg( "any later version, provided proper credit is given to the authors." );
-		Log.addMsg( "This program is distributed in the hope that it will be useful," );
-		Log.addMsg( "but WITHOUT ANY WARRANTY; without even the implied warranty of" );
-		Log.addMsg( "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the" );
-		Log.addMsg( "GNU General Public License for more details at http://www.gnu.org" );
-		Log.addMsg( Log.LOG_SPACER );
-	}
-
-	/**
-	 * Called by main(args[]) to check all of the executor dependencies, execute scripts,
-	 * and then clean up by deleting temp dirs if needed.
-	 * @throws Exception
-	 */
-	protected static void runProgram() throws Exception
-	{
 		try
 		{
-			if( Config.getBoolean( PROJECT_COPY_FILES ) )
+			if( MetaUtil.getMetadata() != null )
 			{
-				SeqUtil.copyInputData();
+				BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
 			}
 
-			for( final BioModule bioModule: Config.getModules() )
+			SeqUtil.initialize();
+			Pipeline.initializePipeline();
+
+			if( !RuntimeParamUtil.isDirectMode() )
 			{
-				if( !ModuleUtil.isComplete( bioModule ) )
-				{
-					ModuleUtil.markStarted( bioModule );
-					executeAndWaitForScriptsIfAny( bioModule );
-					ModuleUtil.markComplete( bioModule );
-				}
-				else
-				{
-					Log.out.info( "Skip completed BioLockJ Module: " + bioModule.getClass().getName() );
-				}
+				saveMasterConfig();
 			}
 
-			if( Config.getBoolean( PROJECT_DELETE_TEMP_FILES ) )
+			if( RuntimeParamUtil.isDirectMode() )
 			{
-				for( final BioModule bioModule: Config.getModules() )
+				Pipeline.runDirectModule( RuntimeParamUtil.getDirectModule() );
+				singleModeSuccess = true;
+			}
+			else
+			{
+				if( Config.getBoolean( PROJECT_COPY_FILES ) )
 				{
-					if( ModuleUtil.subDirExists( bioModule, BioModule.TEMP_DIR ) )
-					{
-						Log.out.info( "Delete temp dir for BioLockJ Module: " + bioModule.getClass().getName() );
-						FileUtils.forceDelete( ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ) );
-					}
-
+					SeqUtil.copyInputData();
 				}
+
+				Pipeline.runPipeline();
+
+				if( Config.getBoolean( PROJECT_DELETE_TEMP_FILES ) )
+				{
+					removeTempFiles();
+				}
+
+				markProjectStatus( Pipeline.BLJ_COMPLETE );
 			}
 
-			markProjectComplete();
 		}
 		catch( final Exception ex )
 		{
-			if( Log.out != null )
+			printFatalError( ex );
+			if( !RuntimeParamUtil.isDirectMode() )
 			{
-				Log.out.error( "Error occurred during module execution! ", ex );
-				for( final BioModule bioModule: Config.getModules() )
+				markProjectStatus( Pipeline.BLJ_FAILED );
+			}
+
+			logFinalException( args, ex );
+		}
+		finally
+		{
+			try
+			{
+				if( RuntimeParamUtil.isDirectMode() )
 				{
-					if( bioModule instanceof Email )
-					{
-						final Email emailMod = (Email) bioModule;
-						emailMod.setError( ex );
-						executeAndWaitForScriptsIfAny( bioModule );
-					}
+					setSingleModeStatus();
 				}
 			}
-			else
+			catch( final Exception ex )
 			{
-				System.out.println( "Error occurred during module execution!" );
-				ex.printStackTrace();
+				logFinalException( args, ex );
 			}
 		}
-	}
-
-	protected static String[] validateJavaParameters( final String[] args ) throws Exception
-	{
-		final String[] params = new String[ 2 ];
-		if( ( args == null ) || ( args.length < 1 ) || ( args.length > 2 ) )
-		{
-			throw new Exception( "BioLockJ accepts only 1-2 Java application parameters" + RETURN
-					+ "Required Arg = path to config file" + RETURN
-					+ "Optional Arg = [ new_email_password ] or [ restart_flag (\"restart\" or \"r\") ]" + RETURN
-					+ RETURN + "PROGRAM TERMINATED!" );
-		}
-
-		File configFile = new File( args[ 0 ] );
-		String optionalParam = null;
-		if( ( args.length == 1 ) && ( !configFile.exists() || configFile.isDirectory() ) )
-		{
-			throw new Exception( configFile.getAbsolutePath() + " is not a valid file!" );
-		}
-
-		if( args.length == 2 )
-		{
-			optionalParam = args[ 1 ].toLowerCase();
-			if( !configFile.exists() || configFile.isDirectory() )
-			{
-				optionalParam = args[ 0 ].toLowerCase();
-				configFile = new File( args[ 1 ] );
-				params[ 0 ] = configFile.getAbsolutePath();
-				if( !configFile.exists() || configFile.isDirectory() )
-				{
-					throw new Exception( "Neither parameter is a valid file path [ " + args[ 0 ] + " / " + args[ 1 ]
-							+ " ] does not exist!" );
-				}
-			}
-
-			if( restartFlags.contains( optionalParam ) )
-			{
-				params[ 1 ] = Config.TRUE;
-			}
-			else
-			{
-				params[ 1 ] = optionalParam;
-			}
-		}
-
-		params[ 0 ] = configFile.getAbsolutePath();
-		params[ 1 ] = optionalParam;
-
-		return params;
-	}
-
-	private static boolean changePassword( final String val )
-	{
-		return ( val != null ) && !restartFlags.contains( val );
-	}
-
-	private static boolean doRestart( final String val )
-	{
-		return ( val != null ) && restartFlags.contains( val );
 	}
 
 	/**
-	 * Execute the Module scripts (if any).
+	 * Create the pipeline root directory under $DOCKER_PROJ and save the path to
+	 * {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}.
+	 * <p>
+	 * For example, the following {@link biolockj.Config} settings will create:
+	 * <b>/projects/MicrobeProj_2018Jan01</b><br>
+	 * <ul>
+	 * <li>$DOCKER_PROJ = /projects
+	 * <li>{@link biolockj.Config} file name = MicrobeProj.properties
+	 * <li>Current date = January 1, 2018
+	 * </ul>
 	 *
-	 * @param BioModule
-	 * @throws Exception
+	 * @return Pipeline root directory
+	 * @throws Exception if projectDir already exists and optionalParam != restart
 	 */
-	private static void executeAndWaitForScriptsIfAny( final BioModule m ) throws Exception
+	protected static File createPipelineDirectory() throws Exception
 	{
-		m.executeProjectFile();
-		if( ModuleUtil.subDirExists( m, BioModule.SCRIPT_DIR ) )
+		final String year = String.valueOf( new GregorianCalendar().get( Calendar.YEAR ) );
+		final String month = new GregorianCalendar().getDisplayName( Calendar.MONTH, Calendar.SHORT, Locale.ENGLISH );
+		final String day = StringUtil.formatDigits( new GregorianCalendar().get( Calendar.DATE ), 2 );
+		final File projectDir = new File( RuntimeParamUtil.getBaseDir().getAbsolutePath() + File.separator
+				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + year + month + day );
+
+		if( projectDir.exists() )
 		{
-			Job.submit( m.getScriptDir(), m.getJobParams() );
-			pollAndSpin( m );
+			throw new Exception( "Project already exists with today's date: " + projectDir.getAbsolutePath()
+					+ ".  Restart failed pipelines with -r or save the Config file with a unique name and try again." );
 		}
+
+		projectDir.mkdirs();
+		return projectDir;
 	}
 
-	private static File getRestartDir() throws Exception
+	/**
+	 * Method called if restart flag passed to BioLockJ to look in $DOCKER_PROJ for the most recent pipeline sharing the
+	 * same project name. Delete status indicator if {@value biolockj.Pipeline#BLJ_FAILED} found in root directory.
+	 *
+	 * @return File - the existing pipeline root directory to restart
+	 * @throws Exception thrown if the most recent pipeline with the same project name is not found or ran successfully
+	 */
+	protected static File getRestartDir() throws Exception
 	{
 		File restartDir = null;
 		GregorianCalendar mostRecent = null;
-		final FileFilter ff = new WildcardFileFilter( Config.requireString( Config.PROJECT_NAME ) + "*" );
-		final File[] dirs = Config.requireExistingDir( PROJECTS_DIR ).listFiles( ff );
+		Log.info( BioLockJ.class,
+				"Looking for most recent pipeline for: " + Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
+		final FileFilter ff = new WildcardFileFilter( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "*" );
+		final File[] dirs = RuntimeParamUtil.getBaseDir().listFiles( ff );
 
 		for( final File d: dirs )
 		{
 			if( !d.isDirectory()
-					|| ( d.getName().length() != ( Config.requireString( Config.PROJECT_NAME ).length() + 10 ) ) )
+					|| d.getName().length() != Config.requireString( Config.INTERNAL_PIPELINE_NAME ).length() + 10 )
 			{
 				continue;
 			}
@@ -352,9 +279,9 @@ public class BioLockJ
 			projectDate.setTime( date );
 
 			// Value > 0 if projectDate has a more recent date than mostRecent
-			if( ( mostRecent == null ) || ( projectDate.compareTo( mostRecent ) > 0 ) )
+			if( mostRecent == null || projectDate.compareTo( mostRecent ) > 0 )
 			{
-				Log.addMsg( "Found previous run = " + d.getAbsolutePath() );
+				Log.info( BioLockJ.class, "Found previous pipeline run = " + d.getAbsolutePath() );
 				restartDir = d;
 				mostRecent = projectDate;
 			}
@@ -363,249 +290,346 @@ public class BioLockJ
 		if( restartDir == null )
 		{
 			throw new Exception(
-					"Unalbe to locate restart directory in --> " + Config.requireExistingDir( PROJECTS_DIR ) );
+					"Unalbe to locate restart directory in --> " + RuntimeParamUtil.getBaseDir().getAbsolutePath() );
 		}
 
-		if( isProjectComplete( restartDir ) )
+		if( isPipelineComplete( restartDir ) )
 		{
-			throw new Exception( "RESTART FAILED!  Project ran successfully: " + restartDir.getAbsolutePath() );
+			throw new Exception(
+					"RESTART FAILED!  Pipeline already ran successfully: " + restartDir.getAbsolutePath() );
+		}
+		else
+		{
+			final File f = new File( restartDir.getAbsolutePath() + File.separator + Pipeline.BLJ_FAILED );
+			if( f.exists() )
+			{
+				FileUtils.forceDelete( f );
+			}
 		}
 
-		isRestarted = true;
-
-		Log.addMsg( RETURN );
-		Log.addMsg( RETURN );
-		Log.addMsg( Log.LOG_SPACER );
-		Log.addMsg( Log.LOG_SPACER );
-		Log.addMsg( RETURN );
-		Log.addMsg( "RESTART PROJECT DIR --> " + restartDir.getAbsolutePath() );
-		Log.addMsg( RETURN );
-		Log.addMsg( Log.LOG_SPACER );
-		Log.addMsg( Log.LOG_SPACER );
-		Log.addMsg( RETURN );
+		Log.warn( BioLockJ.class, RETURN );
+		Log.warn( BioLockJ.class, Log.LOG_SPACER );
+		Log.warn( BioLockJ.class, "RESTART PROJECT DIR --> " + restartDir.getAbsolutePath() );
+		Log.warn( BioLockJ.class, Log.LOG_SPACER );
+		Log.warn( BioLockJ.class, RETURN );
 
 		return restartDir;
 	}
 
-	private static boolean isProjectComplete( final File projDir ) throws Exception
+	/**
+	 * Create indicator file in pipeline root directory, with name = status parameter.
+	 * {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}.
+	 * 
+	 * @param status Status indicator file name
+	 */
+	protected static void markProjectStatus( final String status )
 	{
-		final File f = new File( projDir.getAbsolutePath() + File.separator + BioModule.BLJ_COMPLETE );
+		try
+		{
+			Log.info( BioLockJ.class,
+					"BioLockJ Pipeline [" + Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "] = " + status );
+
+			final File f = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+					+ File.separator + status );
+			final FileWriter writer = new FileWriter( f );
+			writer.close();
+			if( !f.exists() )
+			{
+				throw new Exception( "Unable to create " + f.getAbsolutePath() );
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.error( BioLockJ.class, "Unable to create pipeline status indicator file!", ex );
+		}
+
+	}
+
+	/**
+	 * Delete all {@link biolockj.module.BioModule}/{@value biolockj.module.BioModule#TEMP_DIR} folders.
+	 *
+	 * @throws Exception if unable to delete temp files
+	 */
+	protected static void removeTempFiles() throws Exception
+	{
+		Log.get( BioLockJ.class ).info( "Cleaning up BioLockJ Modules..." );
+		for( final BioModule bioModule: Pipeline.getModules() )
+		{
+			if( ModuleUtil.subDirExists( bioModule, BioModule.TEMP_DIR ) )
+			{
+				Log.get( BioLockJ.class )
+						.info( "Delete temp dir for BioLockJ Module: " + bioModule.getClass().getName() );
+				FileUtils.forceDelete( ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ) );
+			}
+		}
+	}
+
+	/**
+	 * Save a single version of the config file by combing with default config files, if any exist.
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected static void saveMasterConfig() throws Exception
+	{
+		final File projectDir = Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR );
+		final File masterConfig = new File(
+				projectDir.getAbsolutePath() + File.separator + MASTER_PREFIX + Config.getConfigFileName() );
+
+		if( masterConfig.exists() && !RuntimeParamUtil.doRestart() )
+		{
+			throw new Exception( "MASTER Config should not exist unless restarting a failed pipeline, but was found: "
+					+ masterConfig.getAbsolutePath() );
+		}
+
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( masterConfig ) );
+		try
+		{
+			writer.write( "# This MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
+			writer.write( "# This MASTER Config file was generated from the following Config files: " + RETURN );
+			writer.write( "# ----> Project Config: " + Config.getConfigFilePath() + RETURN );
+
+			final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
+			if( defaults != null && !defaults.isEmpty() )
+			{
+				for( final String defConfig: Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) )
+				{
+					writer.write( "# ----> Default Config: " + defConfig + RETURN );
+				}
+				writer.write( RETURN );
+			}
+
+			for( final String module: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
+			{
+				writer.write( Config.INTERNAL_BLJ_MODULE + " " + module + RETURN );
+			}
+
+			writer.write( RETURN );
+
+			final Map<String, String> map = Config.getProperties();
+			map.remove( Config.INTERNAL_BLJ_MODULE );
+			map.remove( Config.INTERNAL_DEFAULT_CONFIG );
+			map.remove( Config.INTERNAL_PAIRED_READS );
+			map.remove( Config.INTERNAL_ALL_MODULES );
+			map.remove( Config.INTERNAL_MULTIPLEXED );
+			map.remove( Config.INTERNAL_PIPELINE_NAME );
+			map.remove( Config.INTERNAL_PIPELINE_DIR );
+			map.remove( SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
+			map.remove( SeqUtil.INTERNAL_SEQ_TYPE );
+
+			final Iterator<String> it = map.keySet().iterator();
+			while( it.hasNext() )
+			{
+				final String key = it.next();
+				writer.write( key + "=" + map.get( key ) + RETURN );
+			}
+		}
+		finally
+		{
+			if( writer != null )
+			{
+				writer.close();
+			}
+		}
+
+		if( !masterConfig.exists() )
+		{
+			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
+		}
+
+	}
+
+	private static String getDirectLogName( final String className ) throws Exception
+	{
+		final ScriptModule module = (ScriptModule) Class.forName( className ).newInstance();
+		final String name = module.getClass().getSimpleName();
+		final File pipelinDir = Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR );
+		final Collection<File> dirs = FileUtils.listFilesAndDirs( pipelinDir, FalseFileFilter.INSTANCE,
+				TrueFileFilter.INSTANCE );
+		for( final File moduleDir: dirs )
+		{
+			if( moduleDir.getName().endsWith( "_" + name ) )
+			{
+				final File tempDir = new File( moduleDir.getAbsolutePath() + File.separator + BioModule.TEMP_DIR );
+				tempDir.mkdir();
+				final String logName = moduleDir.getName() + File.separator + BioModule.TEMP_DIR + File.separator
+						+ name;
+				return logName;
+			}
+
+		}
+
+		throw new Exception(
+				"Unable to find module [" + className + "] directory under " + pipelinDir.getAbsolutePath() );
+	}
+
+	private static String getProjectName() throws Exception
+	{
+		String name = RuntimeParamUtil.getConfigFile().getName();
+		final String[] exts = { ".ascii", ".asc", ".plain", ".rft", ".tab", ".text", ".tsv", ".txt", ".properties",
+				".prop", ".config" };
+
+		for( final String ext: exts )
+		{
+			if( name.toLowerCase().endsWith( ext ) )
+			{
+				name = name.substring( 0, name.length() - ext.length() );
+			}
+		}
+
+		Log.info( BioLockJ.class, "Set project name to: " + name );
+		return name;
+	}
+
+	/**
+	 * Determine project status based on existence of {@value biolockj.Pipeline#BLJ_COMPLETE} in pipeline root
+	 * directory.
+	 *
+	 * @param projDir File path for the pipeline
+	 * @return true if {@value biolockj.Pipeline#BLJ_COMPLETE} exists in the pipeline root directory, otherwise false
+	 */
+	private static boolean isPipelineComplete( final File projDir )
+	{
+		final File f = new File( projDir.getAbsolutePath() + File.separator + Pipeline.BLJ_COMPLETE );
 		return f.exists();
 	}
 
-	private static void markProjectComplete() throws Exception
+	private static void logFinalException( final String[] args, final Exception ex )
 	{
-		final File f = new File( Config.requireExistingDir( Config.PROJECT_DIR ).getAbsolutePath() + File.separator
-				+ BioModule.BLJ_COMPLETE );
-		final FileWriter writer = new FileWriter( f );
-		writer.close();
-		if( !f.exists() )
+		if( Log.getFile() != null )
 		{
-			throw new Exception( "Unable to create " + f.getAbsolutePath() );
-		}
-	}
-
-	/**
-	 * Poll checks the Module's script dir for flag files indicating either
-	 * SUCCESS or FAILURE.  Output message to output indicating num pass/fail.
-	 * Exit if failures found and exitOnFailure flag set to Y.
-	 *
-	 * @param scriptFiles
-	 * @param mainScript
-	 * @return
-	 * @throws Exception
-	 */
-	private static boolean poll( final File mainScript, final Collection<File> scriptFiles ) throws Exception
-	{
-
-		final File mainSuccess = new File( mainScript.getAbsolutePath() + "_" + SCRIPT_SUCCESS );
-		final File mainFailed = new File( mainScript.getAbsolutePath() + "_" + SCRIPT_FAILED );
-
-		// for bash scripts, remove main script from scriptFiles
-		// for R, we will have only one script, so leave it in
-		if( mainScript.getName().startsWith( BioModule.MAIN_SCRIPT_PREFIX ) )
-		{
-			scriptFiles.remove( mainScript );
-			if( mainSuccess.exists() )
-			{
-				scriptFiles.remove( mainSuccess );
-			}
-
-			if( mainFailed.exists() )
-			{
-				scriptFiles.remove( mainFailed );
-			}
-		}
-
-		File failure = null;
-		int numSuccess = 0;
-		int numStarted = 0;
-		int numFailed = 0;
-		for( final File f: scriptFiles )
-		{
-			final File testStarted = new File( f.getAbsolutePath() + "_" + SCRIPT_STARTED );
-			if( testStarted.exists() )
-			{
-				numStarted++;
-			}
-
-			final File testSuccess = new File( f.getAbsolutePath() + "_" + SCRIPT_SUCCESS );
-			if( testSuccess.exists() )
-			{
-				numSuccess++;
-			}
-
-			final File testFailure = new File( f.getAbsolutePath() + "_" + SCRIPT_FAILED );
-			if( testFailure.exists() )
-			{
-				failure = testFailure;
-				numFailed++;
-			}
-
-		}
-
-		int numScripts = scriptFiles.size() - numSuccess - numFailed - numStarted;
-		if( !mainScript.getName().endsWith( ".sh" ) ) // must be R script
-		{
-			numScripts = 1;
-			numStarted = 1;
-			if( mainSuccess.exists() )
-			{
-				numSuccess = 1;
-			}
-			if( mainFailed.exists() )
-			{
-				numFailed = 1;
-			}
-		}
-
-		final int numRunning = numStarted - numSuccess - numFailed;
-		final int numQueued = numScripts - numStarted;
-
-		if( mainFailed.exists() )
-		{
-			failure = mainFailed;
-		}
-
-		final String logMsg = mainScript.getName() + " Status (Total=" + numScripts + "): Success=" + numSuccess
-				+ "; Failed=" + numFailed + "; Running=" + numRunning + "; Queued=" + numQueued;
-
-		if( !statusMsg.equals( logMsg ) )
-		{
-			statusMsg = logMsg;
-			Log.out.info( logMsg );
-		}
-		else if( ( pollUpdateMeter++ % 10 ) == 0 )
-		{
-			Log.out.info( logMsg );
-		}
-
-		if( mainFailed.exists()
-				|| ( Config.getBoolean( Config.SCRIPT_EXIT_ON_ERROR ) && ( failure != null ) && failure.exists() ) )
-		{
-			throw new Exception( "SCRIPT FAILED: " + failure.getAbsolutePath() );
-		}
-
-		return ( numSuccess + numFailed ) == numScripts;
-	}
-
-	/**
-	 * This method calls poll to check status of scripts and then sleeps for pollTime seconds.
-	 *
-	 * @param mainScript
-	 * @throws Exception
-	 */
-	private static void pollAndSpin( final BioModule m ) throws Exception
-	{
-		int numMinutes = 0;
-		boolean finished = false;
-		while( !finished )
-		{
-			finished = poll( ModuleUtil.getMainScript( m ),
-					FileUtils.listFiles( m.getScriptDir(), TrueFileFilter.INSTANCE, null ) );
-			if( !finished )
-			{
-				if( ( m.getTimeout() != null ) && ( m.getTimeout() > 0 ) && ( numMinutes++ >= m.getTimeout() ) )
-				{
-					throw new Exception( ModuleUtil.getMainScript( m ).getAbsolutePath() + " timed out after "
-							+ numMinutes + " minutes." );
-				}
-
-				Thread.sleep( POLL_TIME * 1000 );
-			}
-		}
-		pollUpdateMeter = 0;
-	}
-
-	/**
-	 * This method creates the sub-dir under projects by attaching date-string to the project name
-	 * unless restarting, in which case we send the most recent project with a matching name.
-	 *
-	 * @param String 2nd Java param - if restartFlag, set to existing project dir,
-	 * otherwise, build new projectDir
-	 * @throws Exception if projectDir already exists
-	 */
-	private static void setProjectDir( final String optionalParam ) throws Exception
-	{
-		if( doRestart( optionalParam ) )
-		{
-			Config.setAProperty( Config.PROJECT_DIR, getRestartDir().getAbsolutePath() );
+			Log.get( BioLockJ.class ).error( "BioLockJ exception: " + ex.getMessage() + " --> Program args: "
+					+ StringUtil.getCollectionAsString( Arrays.asList( args ) ), ex );
 		}
 		else
 		{
-			final String year = String.valueOf( new GregorianCalendar().get( Calendar.YEAR ) );
-			final String month = new GregorianCalendar().getDisplayName( Calendar.MONTH, Calendar.SHORT,
-					Locale.ENGLISH );
-			final String day = twoDigitVal( new GregorianCalendar().get( Calendar.DATE ) );
-			final File projectDir = new File( Config.requireExistingDir( PROJECTS_DIR ).getAbsolutePath()
-					+ File.separator + Config.requireString( Config.PROJECT_NAME ) + "_" + year + month + day );
+			System.out.println( "FATAL APPLICATION ERROR - " + ex.getMessage() + " --> Program args: "
+					+ StringUtil.getCollectionAsString( Arrays.asList( args ) ) );
+		}
+		ex.printStackTrace();
+	}
 
-			if( projectDir.exists() )
+	/**
+	 * Print the {@link biolockj.Log} messages saved via {@link biolockj.Log#addMsg(String)} and the exception stack
+	 * trace info to the $USER $HOME directory.
+	 * 
+	 * @param fatalException Fatal application Exception
+	 */
+	private static void printErrorFileAndExitProgram( final String[] args, final Exception fatalException )
+	{
+		try
+		{
+			Log.info( BioLockJ.class, "Pipeline failed before root directory or Log file was created!" );
+			printFatalError( fatalException );
+
+			String suffix = null;
+			try
 			{
-				throw new Exception( "Project already exists with today's date: " + projectDir.getAbsolutePath()
-						+ ".  Set restart flag to continue failed pipeline or provide a unique value for: "
-						+ Config.PROJECT_NAME );
+				if( Config.getString( Config.INTERNAL_PIPELINE_NAME ) != null )
+				{
+					suffix = Config.getString( Config.INTERNAL_PIPELINE_NAME );
+				}
+				else if( RuntimeParamUtil.getConfigFile() != null )
+				{
+					suffix = RuntimeParamUtil.getConfigFile().getName();
+				}
+				else
+				{
+					suffix = "Config_param_not_found";
+				}
+			}
+			catch( final Exception ex )
+			{
+				suffix = "Config_initialzation_failed";
 			}
 
-			projectDir.mkdirs();
-			Config.setAProperty( Config.PROJECT_DIR, projectDir.getAbsolutePath() );
-		}
-	}
+			int index = 0;
+			final String prefix = ( RuntimeParamUtil.isDockerMode() ? RuntimeParamUtil.getBaseDir().getAbsolutePath()
+					: "~" ) + File.separator;
+			File errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + ".log" ) );
+			while( errFile.exists() )
+			{
+				errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
+						+ new Integer( ++index ).toString() + ".log" ) );
+			}
 
-	private static String twoDigitVal( final Integer input )
-	{
-		String val = input.toString();
-		if( val.length() == 1 )
+			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
+			for( final String msg: Log.getMsgs() )
+			{
+				writer.write( msg + RETURN );
+			}
+			writer.close();
+
+		}
+		catch( final Exception ex )
 		{
-			val = "0" + val;
+			System.out.println( "Unable to access Log or write to $USER $HOME directory!" );
+			ex.printStackTrace();
+			RuntimeParamUtil.printRuntimeArgs( args, true );
+			printFatalError( fatalException );
 		}
-		return val;
+		finally
+		{
+			System.exit( 1 );
+		}
 	}
 
-	public static final long APP_START_TIME = System.currentTimeMillis();
-	public static final String BLJ_VERSION = "v.0.1_beta";
-	public static final String INDENT = "   ";
-	public static final String LOG_NORMAL = "_LogNormalCounts";
-	public static final String NORMAL = "_NormalCounts";
-	public static final String RETURN = "\n";
-	public static final String SCRIPT_FAILED = "Failure";
-	public static final String SCRIPT_STARTED = "Started";
-	public static final String SCRIPT_SUCCESS = "Success";
-	public static final String TAB_DELIM = "\t";
-	private static final int CONFIG_PARAM = 0;
-	private static boolean isRestarted = false;
-	private static final int OPTIONAL_PARAM = 1;
-	private static final int POLL_TIME = 60;
-	private static int pollUpdateMeter = 0;
-	private static final String PROJECT_COPY_FILES = "project.copyInput";
-	private static final String PROJECT_DELETE_TEMP_FILES = "project.deleteTempFiles";
-	private static final String PROJECTS_DIR = "project.rootDir";
-	private static final List<String> restartFlags = new ArrayList<>();
-	private static String statusMsg = "";
-
-	static
+	private static void printFatalError( final Exception ex )
 	{
-		restartFlags.add( "restart" );
-		restartFlags.add( "r" );
+		Log.warn( BioLockJ.class, Log.LOG_SPACER );
+		Log.warn( BioLockJ.class, "Fatal Exception: " + ex.getMessage() );
+		for( int i = 0; i < ex.getStackTrace().length; i++ )
+		{
+			Log.warn( BioLockJ.class, ex.getStackTrace()[ i ].toString() );
+		}
+		Log.warn( BioLockJ.class, Log.LOG_SPACER );
 	}
+
+	private static void setSingleModeStatus() throws Exception
+	{
+		Log.info( BioLockJ.class, "Reporting Direct module status" );
+		final JavaModule module = (JavaModuleImpl) ModuleUtil.getModule( RuntimeParamUtil.getDirectModule() );
+		if( singleModeSuccess )
+		{
+			Log.info( BioLockJ.class, "Save success status" );
+			module.moduleComplete();
+		}
+		else
+		{
+			Log.info( BioLockJ.class, "Save failure status" );
+			module.moduleFailed();
+		}
+
+		SummaryUtil.reportSuccess( module );
+	}
+
+	/**
+	 * Captures the application start time
+	 */
+	public static final long APP_START_TIME = System.currentTimeMillis();
+
+	/**
+	 * {@link biolockj.Config} property set to copy input files into pipeline root directory:
+	 * {@value #PROJECT_COPY_FILES}
+	 */
+	public static final String PROJECT_COPY_FILES = "project.copyInput";
+
+	/**
+	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
+	 * {@value #PROJECT_DELETE_TEMP_FILES}
+	 */
+	public static final String PROJECT_DELETE_TEMP_FILES = "project.deleteTempFiles";
+
+	/**
+	 * Return character: {@value #RETURN}
+	 */
+	public static final String RETURN = "\n";
+
+	/**
+	 * Tab delimiter character: {@value #TAB_DELIM}
+	 */
+	public static final String TAB_DELIM = "\t";
+
+	private static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
+	private static final String MASTER_PREFIX = "MASTER_";
+	private static boolean singleModeSuccess = false;
 }

@@ -1,0 +1,22 @@
+#!/bin/bash
+##################################################################################
+#                                                                                #
+#  This script will call blj_config from ~/.bash_profile                         #
+#  If profile exists: backup to ~/.bash_profile~, else create ~/.bash_profile.   #
+#                                                                                #
+##################################################################################
+BSH_PRO=~/.bash_profile
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+if [ ! -f $BSH_PRO ]; then
+	printf '%s\n' '#BioLockJ generated bash profile' > $BSH_PRO
+	echo "    Created profile: $BSH_PRO"
+else
+	cp $BSH_PRO $BSH_PRO~
+	echo "    Saved backup:  $BSH_PRO~"
+fi
+
+echo "[ -x $SCRIPT_DIR/dist/blj_config ] && . $SCRIPT_DIR/dist/blj_config" >> $BSH_PRO
+source $BSH_PRO
+echo "    Saved profile:  $BSH_PRO"
+echo "BioLockJ installation complete!"

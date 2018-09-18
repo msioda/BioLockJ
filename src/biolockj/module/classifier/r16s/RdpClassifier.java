@@ -3,34 +3,34 @@
  * @author Michael Sioda
  * @email msioda@uncc.edu
  * @date Feb 9, 2017
- * @disclaimer 	This code is free software; you can redistribute it and/or
- * 				modify it under the terms of the GNU General Public License
- * 				as published by the Free Software Foundation; either version 2
- * 				of the License, or (at your option) any later version,
- * 				provided that any use properly credits the author.
- * 				This program is distributed in the hope that it will be useful,
- * 				but WITHOUT ANY WARRANTY; without even the implied warranty of
- * 				MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * 				GNU General Public License for more details at http://www.gnu.org *
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
 package biolockj.module.classifier.r16s;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import biolockj.BioModuleFactory;
 import biolockj.Config;
-import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.SeqUtil;
 
 /**
- * RdpClassifier is used to build RDP classifier bash scripts
+ * This BioModule uses RDP to assign taxonomy to 16s sequences.
  */
 public class RdpClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
 	/**
-	 * Call RDP jar with specified params.
+	 * Build bash script lines to classify unpaired reads with RDP. The inner list contains the bash script lines
+	 * required to classify 1 sample (call java to run RDP jar on sample).
+	 * <p>
+	 * Example line: "java -jar $RDP_PATH t /database/silva128/rRNAClassifier.properties -o
+	 * ./output/sample42.fasta_reported.tsv ./input/sample42.fasta"
 	 */
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
@@ -41,8 +41,8 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 			final String outputFile = getOutputDir().getAbsolutePath() + File.separator
 					+ SeqUtil.getSampleId( file.getName() ) + PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>();
-			lines.add( javaExe + " -jar " + getClassifierExe() + getClassifierParams() + "-o " + outputFile + " "
-					+ file.getAbsolutePath() );
+			lines.add( Config.getExe( EXE_JAVA ) + " -jar " + getClassifierExe() + getClassifierParams() + "-o "
+					+ outputFile + " " + file.getAbsolutePath() );
 			data.add( lines );
 		}
 
@@ -50,34 +50,22 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	}
 
 	/**
-	 * Paired reads must use mergeUtil & then call standard buildScripts() method.
+	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
-		return buildScript( files );
+		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
+		}
+
+		return preReqs;
 	}
 
 	/**
-	 * The only unique RDP dependency is on Java.
+	 * {@link biolockj.Config} property for java executable: {@value #EXE_JAVA}
 	 */
-	@Override
-	public void checkDependencies() throws Exception
-	{
-		super.checkDependencies();
-		javaExe = Config.requireString( EXE_JAVA );
-	}
-
-	/**
-	 * RDP does not supply a version call.
-	 */
-	@Override
-	protected void logVersion() throws Exception
-	{
-		Log.out.warn( "Version unavailable for: " + getClassifierExe() );
-	}
-
-	private String javaExe;
 	protected static final String EXE_JAVA = "exe.java";
-
 }
