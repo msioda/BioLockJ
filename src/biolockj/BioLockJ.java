@@ -21,10 +21,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -34,11 +31,11 @@ import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.ScriptModule;
 import biolockj.module.report.Email;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.ModuleUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
-import biolockj.util.StringUtil;
 import biolockj.util.SummaryUtil;
 
 /**
@@ -88,7 +85,7 @@ public class BioLockJ
 	 * parameters
 	 * <li>Call {@link biolockj.Config#initialize(File)} to load project properties
 	 * <li>Call {@link biolockj.util.MetaUtil#initialize()} to verify metadata dependencies
-	 * <li>Copy {@link biolockj.Config} file and nested {@value biolockj.Properties#PROJECT_DEFAULT_PROPS} files into
+	 * <li>Copy {@link biolockj.Config} file and nested {@value biolockj.Config#PROJECT_DEFAULT_PROPS} files into
 	 * {@value biolockj.Config#INTERNAL_PIPELINE_DIR} to preserve the state of these files at runtime.
 	 * <li>Initialize {@link Log} using /resources/log4J.properties
 	 * <li>If {@value #PROJECT_COPY_FILES} = {@value biolockj.Config#TRUE}, copy input files into a new "input"
@@ -160,7 +157,7 @@ public class BioLockJ
 
 			if( !RuntimeParamUtil.isDirectMode() )
 			{
-				saveMasterConfig();
+				BioLockJUtil.saveNewMasterConfig();
 			}
 
 			if( RuntimeParamUtil.isDirectMode() )
@@ -231,7 +228,7 @@ public class BioLockJ
 	{
 		final String year = String.valueOf( new GregorianCalendar().get( Calendar.YEAR ) );
 		final String month = new GregorianCalendar().getDisplayName( Calendar.MONTH, Calendar.SHORT, Locale.ENGLISH );
-		final String day = StringUtil.formatDigits( new GregorianCalendar().get( Calendar.DATE ), 2 );
+		final String day = BioLockJUtil.formatDigits( new GregorianCalendar().get( Calendar.DATE ), 2 );
 		final File projectDir = new File( RuntimeParamUtil.getBaseDir().getAbsolutePath() + File.separator
 				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + year + month + day );
 
@@ -364,80 +361,6 @@ public class BioLockJ
 		}
 	}
 
-	/**
-	 * Save a single version of the config file by combing with default config files, if any exist.
-	 * 
-	 * @throws Exception if errors occur
-	 */
-	protected static void saveMasterConfig() throws Exception
-	{
-		final File projectDir = Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR );
-		final File masterConfig = new File(
-				projectDir.getAbsolutePath() + File.separator + MASTER_PREFIX + Config.getConfigFileName() );
-
-		if( masterConfig.exists() && !RuntimeParamUtil.doRestart() )
-		{
-			throw new Exception( "MASTER Config should not exist unless restarting a failed pipeline, but was found: "
-					+ masterConfig.getAbsolutePath() );
-		}
-
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( masterConfig ) );
-		try
-		{
-			writer.write( "# This MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
-			writer.write( "# This MASTER Config file was generated from the following Config files: " + RETURN );
-			writer.write( "# ----> Project Config: " + Config.getConfigFilePath() + RETURN );
-
-			final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
-			if( defaults != null && !defaults.isEmpty() )
-			{
-				for( final String defConfig: Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) )
-				{
-					writer.write( "# ----> Default Config: " + defConfig + RETURN );
-				}
-				writer.write( RETURN );
-			}
-
-			for( final String module: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
-			{
-				writer.write( Config.INTERNAL_BLJ_MODULE + " " + module + RETURN );
-			}
-
-			writer.write( RETURN );
-
-			final Map<String, String> map = Config.getProperties();
-			map.remove( Config.INTERNAL_BLJ_MODULE );
-			map.remove( Config.INTERNAL_DEFAULT_CONFIG );
-			map.remove( Config.INTERNAL_PAIRED_READS );
-			map.remove( Config.INTERNAL_ALL_MODULES );
-			map.remove( Config.INTERNAL_MULTIPLEXED );
-			map.remove( Config.INTERNAL_PIPELINE_NAME );
-			map.remove( Config.INTERNAL_PIPELINE_DIR );
-			map.remove( SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
-			map.remove( SeqUtil.INTERNAL_SEQ_TYPE );
-
-			final Iterator<String> it = map.keySet().iterator();
-			while( it.hasNext() )
-			{
-				final String key = it.next();
-				writer.write( key + "=" + map.get( key ) + RETURN );
-			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
-		}
-
-		if( !masterConfig.exists() )
-		{
-			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
-		}
-
-	}
-
 	private static String getDirectLogName( final String className ) throws Exception
 	{
 		final ScriptModule module = (ScriptModule) Class.forName( className ).newInstance();
@@ -498,12 +421,12 @@ public class BioLockJ
 		if( Log.getFile() != null )
 		{
 			Log.get( BioLockJ.class ).error( "BioLockJ exception: " + ex.getMessage() + " --> Program args: "
-					+ StringUtil.getCollectionAsString( Arrays.asList( args ) ), ex );
+					+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ), ex );
 		}
 		else
 		{
 			System.out.println( "FATAL APPLICATION ERROR - " + ex.getMessage() + " --> Program args: "
-					+ StringUtil.getCollectionAsString( Arrays.asList( args ) ) );
+					+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) );
 		}
 		ex.printStackTrace();
 	}
@@ -630,6 +553,6 @@ public class BioLockJ
 	public static final String TAB_DELIM = "\t";
 
 	private static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
-	private static final String MASTER_PREFIX = "MASTER_";
+
 	private static boolean singleModeSuccess = false;
 }

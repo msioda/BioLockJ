@@ -1,1 +1,5 @@
 /bin/
+/pipelines/*
+.DS_Store
+.classpath
+.project

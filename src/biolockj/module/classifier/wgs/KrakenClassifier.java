@@ -30,7 +30,6 @@ import biolockj.util.SeqUtil;
  */
 public class KrakenClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
-
 	/**
 	 * Build bash script lines to classify unpaired WGS reads with Kraken. The inner list contains 2 bash script lines
 	 * used to classify 1 sample.

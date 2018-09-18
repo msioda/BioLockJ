@@ -122,7 +122,7 @@ public class ModuleUtil
 	 */
 	public static String getModuleRootDir( final BioModule bioModule ) throws Exception
 	{
-		final String i = StringUtil.formatDigits( Pipeline.getModules().indexOf( bioModule ),
+		final String i = BioLockJUtil.formatDigits( Pipeline.getModules().indexOf( bioModule ),
 				String.valueOf( Pipeline.getModules().size() ).length() );
 		return Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator + i + "_"
 				+ bioModule.getClass().getSimpleName();

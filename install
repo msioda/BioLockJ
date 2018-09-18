@@ -6,7 +6,7 @@
 #                                                                                #
 ##################################################################################
 BSH_PRO=~/.bash_profile
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+INSTALL_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ ! -f $BSH_PRO ]; then
 	printf '%s\n' '#BioLockJ generated bash profile' > $BSH_PRO
@@ -16,7 +16,7 @@ else
 	echo "    Saved backup:  $BSH_PRO~"
 fi
 
-echo "[ -x $SCRIPT_DIR/dist/blj_config ] && . $SCRIPT_DIR/dist/blj_config" >> $BSH_PRO
+echo "[ -x $INSTALL_SCRIPT_DIR/script/blj_config ] && . $INSTALL_SCRIPT_DIR/script/blj_config" >> $BSH_PRO
 source $BSH_PRO
 echo "    Saved profile:  $BSH_PRO"
 echo "BioLockJ installation complete!"

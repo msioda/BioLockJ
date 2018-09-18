@@ -143,6 +143,48 @@ public class BioModuleFactory
 	}
 
 	/**
+	 * Get the Java Class name for the default Demultiplexer module
+	 * 
+	 * @return Demultiplexer module Java class name
+	 */
+	public static String getDefaultDemultiplexer()
+	{
+		if( Config.getString( DEFAULT_MOD_DEMUX ) != null )
+		{
+			return Config.getString( DEFAULT_MOD_DEMUX );
+		}
+		return Demultiplexer.class.getName();
+	}
+
+	/**
+	 * Get the Java Class name for the default Fasta converter module
+	 * 
+	 * @return Fasta converter module Java class name
+	 */
+	public static String getDefaultFastaConverter()
+	{
+		if( Config.getString( DEFAULT_MOD_FASTA_CONV ) != null )
+		{
+			return Config.getString( DEFAULT_MOD_FASTA_CONV );
+		}
+		return AwkFastaConverter.class.getName();
+	}
+
+	/**
+	 * Get the Java Class name for the default Merge paired read module
+	 * 
+	 * @return Merge paired read module Java class name
+	 */
+	public static String getDefaultMergePairedReadsConverter()
+	{
+		if( Config.getString( DEFAULT_MOD_SEQ_MERGER ) != null )
+		{
+			return Config.getString( DEFAULT_MOD_SEQ_MERGER );
+		}
+		return PearMergeReads.class.getName();
+	}
+
+	/**
 	 * This method returns all module post-requisites (including prerequisites and post-requisites for the
 	 * post-requisites).
 	 * 
@@ -309,46 +351,6 @@ public class BioModuleFactory
 			Log.get( Pipeline.class ).warn( msg );
 		}
 	}
-	
-	/**
-	 * Get the Java Class name for the default Demultiplexer module
-	 * @return Demultiplexer module Java class name
-	 */
-	public static String getDefaultDemultiplexer() 
-	{
-		if( Config.getString( DEFAULT_MOD_DEMUX ) != null )
-		{
-			return Config.getString( DEFAULT_MOD_DEMUX ); 
-		}
-		return Demultiplexer.class.getName() ;
-	}
-	
-	/**
-	 * Get the Java Class name for the default Fasta converter module
-	 * @return Fasta converter module Java class name
-	 */
-	public static String getDefaultFastaConverter()
-	{
-		if( Config.getString( DEFAULT_MOD_FASTA_CONV ) != null )
-		{
-			return Config.getString( DEFAULT_MOD_FASTA_CONV ); 
-		}
-		return AwkFastaConverter.class.getName();
-	}
-	
-	/**
-	 * Get the Java Class name for the default Merge paired read module
-	 * @return Merge paired read module Java class name
-	 */
-	public static String getDefaultMergePairedReadsConverter()
-	{
-		if( Config.getString( DEFAULT_MOD_SEQ_MERGER ) != null )
-		{
-			return Config.getString( DEFAULT_MOD_SEQ_MERGER ); 
-		}
-		return PearMergeReads.class.getName();
-	}
-	
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #ALLOW_IMPLICIT_MODULES}<br>
@@ -356,7 +358,12 @@ public class BioModuleFactory
 	 * can only by automatically added to pipelines by BioLockJ.
 	 */
 	protected static final String ALLOW_IMPLICIT_MODULES = "project.allowImplicitModules";
-	
+
+	/**
+	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data
+	 */
+	protected static final String DEFAULT_MOD_DEMUX = "project.defaultModuleDemultiplexer";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to convert files into fasta
 	 * format
@@ -367,12 +374,6 @@ public class BioModuleFactory
 	 * {@link biolockj.Config} String property: Java class name for default module used combined paired read files
 	 */
 	protected static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultModuleSeqMerger";
-
-
-	/**
-	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data
-	 */
-	protected static final String DEFAULT_MOD_DEMUX = "project.defaultModuleDemultiplexer";
 
 	private static int safetyCount = 0;
 }

@@ -192,7 +192,7 @@ public class SeqUtil
 	}
 
 	/**
-	 * Get the  list of input directories for the pipeline.
+	 * Get the list of input directories for the pipeline.
 	 * 
 	 * @return List of system directory file paths
 	 * @throws Exception if errors occur

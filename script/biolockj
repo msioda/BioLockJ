@@ -28,11 +28,15 @@ function valid_file {
 	fi
 }
 
+
+[ ${#BLJ_PROJ} -eq 0 ] && echo "$BLJ_PROJ undefined" && exit 1
+
 SPACER="============================================================"
 GAP="    "
 # If the jar & scripts is deployed outside of the standard $BLJ directory, $DIR can be used to set $BLJ_JAR instead.
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BLJ_JAR=$DIR/BioLockJ.jar
+BLJ_DIR="$(dirname $DIR)"
+BLJ_JAR=$BLJ_DIR/dist/BioLockJ.jar
 
 if [ "$(valid_file $BLJ_JAR)" == "N" ]; then
     echo "$GAP Jar not found: $BLJ_JAR"

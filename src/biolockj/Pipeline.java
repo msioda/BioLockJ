@@ -21,11 +21,11 @@ import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.report.Email;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.DockerUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.ModuleUtil;
 import biolockj.util.RuntimeParamUtil;
-import biolockj.util.StringUtil;
 import biolockj.util.SummaryUtil;
 
 /**
@@ -70,7 +70,7 @@ public class Pipeline
 	{
 		refreshMetadataCache( MetaUtil.getMetadata() );
 		bioModules = BioModuleFactory.buildModules();
-		Config.setConfigProperty( Config.INTERNAL_ALL_MODULES, StringUtil.getClassNames( bioModules ) );
+		Config.setConfigProperty( Config.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		int modNum = 0;
 		info( "BioLockJ Pipeline Run-Order:" );
 		for( final BioModule bioModule: bioModules )
@@ -88,7 +88,7 @@ public class Pipeline
 	 */
 	public static void runDirectModule( final String moduleName ) throws Exception
 	{
-		Log.info( Pipeline.class,"Run Direct BioModule: " + moduleName );
+		Log.info( Pipeline.class, "Run Direct BioModule: " + moduleName );
 		final BioModule module = ModuleUtil.getModule( moduleName );
 		if( module instanceof JavaModule )
 		{
@@ -120,7 +120,7 @@ public class Pipeline
 			SummaryUtil.reportFailure( ex );
 			try
 			{
-				BioModule emailMod = ModuleUtil.getModule( Email.class.getName() );
+				final BioModule emailMod = ModuleUtil.getModule( Email.class.getName() );
 				if( emailMod != null && !ModuleUtil.isIncomplete( emailMod ) )
 				{
 					emailMod.executeTask();
@@ -132,7 +132,7 @@ public class Pipeline
 			}
 			catch( final Exception innerEx )
 			{
-				Log.error( Pipeline.class, 
+				Log.error( Pipeline.class,
 						"Attempt to send Email after pipeline failure has also failed!  " + innerEx.getMessage(),
 						innerEx );
 			}
@@ -141,7 +141,7 @@ public class Pipeline
 		}
 		finally
 		{
-			Log.info( Pipeline.class,"Log Pipeline Summary" + BioLockJ.RETURN + SummaryUtil.getSummary() );
+			Log.info( Pipeline.class, "Log Pipeline Summary" + BioLockJ.RETURN + SummaryUtil.getSummary() );
 		}
 	}
 
@@ -198,7 +198,8 @@ public class Pipeline
 			}
 			else
 			{
-				Log.info( Pipeline.class, "Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
+				Log.info( Pipeline.class,
+						"Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
 			}
 			prevModule = module;
 		}
@@ -255,7 +256,7 @@ public class Pipeline
 			{
 				if( ModuleUtil.isIncomplete( bioModule ) )
 				{
-					Log.warn( Pipeline.class,"Reset BioModule: " + bioModule.getModuleDir().getAbsolutePath() );
+					Log.warn( Pipeline.class, "Reset BioModule: " + bioModule.getModuleDir().getAbsolutePath() );
 					FileUtils.forceDelete( bioModule.getModuleDir() );
 				}
 
@@ -313,10 +314,10 @@ public class Pipeline
 
 		scriptFiles.remove( mainScript );
 
-		Log.debug( Pipeline.class,"mainScript = " + mainScript.getAbsolutePath() );
+		Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
 		for( final File f: scriptFiles )
 		{
-			Log.debug( Pipeline.class,"Worker Script = " + f.getAbsolutePath() );
+			Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
 		}
 
 		for( final File f: scriptFiles )
@@ -347,18 +348,18 @@ public class Pipeline
 		{
 			statusMsg = logMsg;
 			pollCount = 0;
-			Log.info( Pipeline.class,logMsg );
+			Log.info( Pipeline.class, logMsg );
 		}
 		else if( ++pollCount % 10 == 0 )
 		{
-			Log.info( Pipeline.class,logMsg );
+			Log.info( Pipeline.class, logMsg );
 		}
 
 		if( mainFailed.exists()
 				|| Config.getBoolean( ScriptModule.SCRIPT_EXIT_ON_ERROR ) && failure != null && failure.exists() )
 		{
 			final String failMsg = "SCRIPT FAILED: "
-					+ StringUtil.getCollectionAsString( ModuleUtil.getScriptErrors( module ) );
+					+ BioLockJUtil.getCollectionAsString( ModuleUtil.getScriptErrors( module ) );
 			Log.warn( Pipeline.class, failMsg );
 			throw new Exception( failMsg );
 		}

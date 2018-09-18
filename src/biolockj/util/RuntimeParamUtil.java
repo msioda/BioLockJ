@@ -400,7 +400,7 @@ public class RuntimeParamUtil
 		if( !extraParams.isEmpty() )
 		{
 			throw new Exception( "Too many runtime parameters found for command [ biolockj ]. " + RETURN
-					+ "Extra paramaters = { " + StringUtil.getCollectionAsString( extraParams ) + " }" + RETURN );
+					+ "Extra paramaters = { " + BioLockJUtil.getCollectionAsString( extraParams ) + " }" + RETURN );
 		}
 
 		if( getConfigFile() == null )

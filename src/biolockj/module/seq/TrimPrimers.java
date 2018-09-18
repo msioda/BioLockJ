@@ -29,12 +29,12 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.DockerUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.ModuleUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
-import biolockj.util.StringUtil;
 
 /**
  * This BioModule removes sequence primers from demultiplexed files.<br>
@@ -176,7 +176,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			totalValid += v;
 
 			double ratio = Double.valueOf( df.format( 100 * ( (double) a / ( a + b ) ) ) );
-			String per = StringUtil.formatPercentage( a, a + b );
+			String per = BioLockJUtil.formatPercentage( a, a + b );
 
 			Log.get( getClass() )
 					.info( f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
@@ -184,7 +184,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
 			{
 				ratio = Double.valueOf( df.format( 100 * ( (double) v / ( a + b ) ) ) );
-				per = StringUtil.formatPercentage( v, a + b );
+				per = BioLockJUtil.formatPercentage( v, a + b );
 				Log.get( getClass() ).info(
 						f.getName() + " Paired reads with primer in both -- " + v + "/" + ( a + b ) + " = " + per );
 			}
@@ -274,22 +274,22 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		{
 
 			summaryMsgs.add( "Mean % reads with primer = " + totalWithPrimer + "/" + total + " = "
-					+ StringUtil.formatPercentage( totalWithPrimer, total ) );
+					+ BioLockJUtil.formatPercentage( totalWithPrimer, total ) );
 
 			Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
 
 			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
 			{
 				summaryMsgs.add( "Mean % Forward reads with primer = " + totalPrimerF + "/" + totalF + " = "
-						+ StringUtil.formatPercentage( totalPrimerF, totalF ) );
+						+ BioLockJUtil.formatPercentage( totalPrimerF, totalF ) );
 				Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
 				summaryMsgs.add( "Mean % Reverse reads with primer  = " + totalPrimerR + "/" + totalR + " = "
-						+ StringUtil.formatPercentage( totalPrimerR, totalR ) );
+						+ BioLockJUtil.formatPercentage( totalPrimerR, totalR ) );
 				Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
 				if( !Config.getBoolean( INPUT_REQUIRE_PRIMER ) )
 				{
 					summaryMsgs.add( "Mean % Paired reads with matching primer = " + totalValid + "/" + total + " = "
-							+ StringUtil.formatPercentage( totalValid, total ) );
+							+ BioLockJUtil.formatPercentage( totalValid, total ) );
 				}
 
 				Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );

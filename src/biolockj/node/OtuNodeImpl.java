@@ -104,13 +104,14 @@ public abstract class OtuNodeImpl implements OtuNode
 	@Override
 	public void setLine( final String line )
 	{
-		try {
-			if( Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" )  )
+		try
+		{
+			if( Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" ) )
 			{
 				this.line = line;
 			}
 		}
-		catch( Exception ex )
+		catch( final Exception ex )
 		{
 			ex.printStackTrace();
 		}

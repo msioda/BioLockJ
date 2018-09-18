@@ -34,7 +34,7 @@ RUN echo ' '  >> ~/.bashrc && \
 	
 #3.) ================= Install PEAR =================
 RUN mkdir -p /app/pear && cd /app/pear && \  
-	wget https://github.com/msioda/BioLockJ/releases/download/v1.0/${PEAR_VERSION}.gz && \
+	wget https://github.com/mikesioda/BioLockJ_Dev/releases/download/v1.0/${PEAR_VERSION}.gz && \
 	gzip -df ${PEAR_VERSION}.gz && \
 	chmod +x /app/pear/${PEAR_VERSION} 
 	

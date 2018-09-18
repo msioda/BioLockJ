@@ -153,7 +153,7 @@ public class UpdateJavaDocs
 	static final String NEWLINE_1 = "<li>&nbsp;&nbsp;</li>";
 	static final String NEWLINE_2 = "<li><a href=\"https://github.com/msioda/BioLockJ/wiki\" target=\"_top\"><strong>RETURN to WIKI</strong></a></li>";
 	static final String OVERVIEW_SUMMARY = "overview-summary.html";
-	static final String PATH = "~/git/BioLockJ/docs/";
+	static final String PATH = "$BLJ/docs/";
 	static final String RETURN = "\n";
 	static final String TARGET = "help-doc.html\">Help</a></li>";
 	static final String TARGET_2 = "<li class=\"navBarCell1Rev\">Help</li>";

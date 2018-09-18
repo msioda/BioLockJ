@@ -32,9 +32,9 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
-import biolockj.util.StringUtil;
 
 /**
  * This BioModule imposes a minimum and/or maximum number of reads per sample. Samples below the minimum are discarded.
@@ -133,7 +133,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	protected void buildRarefiedFile( final File input, final List<Long> indexes ) throws Exception
 	{
 		Log.get( getClass() ).info( "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
-		Log.get( getClass() ).debug( "indexes: " + StringUtil.getCollectionAsString( indexes ) );
+		Log.get( getClass() ).debug( "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
 		final String fileExt = "." + SeqUtil.getInputSequenceType();
 		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
 				+ fileExt;

@@ -26,7 +26,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
-import biolockj.util.StringUtil;
+import biolockj.util.BioLockJUtil;
 
 /**
  * Provides type-safe, validated methods for storing/accessing system properties.<br>
@@ -125,7 +125,7 @@ public class Config
 			return propertyName.substring( 4 );
 		}
 
-		return getString( propertyName ).trim();
+		return getExistingFile( propertyName ).getAbsolutePath();
 	}
 
 	/**
@@ -287,19 +287,17 @@ public class Config
 			return null;
 		}
 
-		String val = obj.toString().trim();
+		final String val = obj.toString().trim();
 
 		// allow statements like x = $someOtherDir to avoid re-typing paths
 		if( val.startsWith( "$" ) )
 		{
-			val = props.getProperty( val.substring( 1 ) );
+			final String localProp = props.getProperty( val.substring( 1 ) );
 
-			if( val == null )
+			if( localProp != null )
 			{
-				return null;
+				return localProp.trim();
 			}
-
-			val = val.trim();
 		}
 
 		if( val.isEmpty() )
@@ -317,8 +315,9 @@ public class Config
 	 * 
 	 * @param filePath File path
 	 * @return Formatted filePath
+	 * @throws ConfigPathException if path is invalid
 	 */
-	public static String getSystemFilePath( String filePath )
+	public static String getSystemFilePath( String filePath ) throws ConfigPathException
 	{
 
 		if( filePath != null && filePath.startsWith( "~" ) )
@@ -339,6 +338,13 @@ public class Config
 		{
 			Log.debug( Config.class, "Replacing $USER in file-path: " + filePath );
 			filePath = filePath.replace( "$USER", System.getProperty( "user.name" ) );
+			Log.debug( Config.class, "Updated file-path: " + filePath );
+		}
+
+		if( filePath != null && filePath.contains( "$BLJ" ) )
+		{
+			Log.debug( Config.class, "Replacing $BLJ in file-path: " + filePath );
+			filePath = filePath.replace( "$BLJ", BioLockJUtil.getSource().getAbsolutePath() );
 			Log.debug( Config.class, "Updated file-path: " + filePath );
 		}
 
@@ -603,11 +609,11 @@ public class Config
 			{
 				fileData.add( ( (File) obj ).getAbsolutePath() );
 			}
-			val = StringUtil.getCollectionAsString( fileData );
+			val = BioLockJUtil.getCollectionAsString( fileData );
 		}
 		else
 		{
-			val = StringUtil.getCollectionAsString( data );
+			val = BioLockJUtil.getCollectionAsString( data );
 
 		}
 		props.setProperty( propertyName, val );
@@ -877,6 +883,13 @@ public class Config
 	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #PHYLUM}
 	 */
 	public static final String PHYLUM = "phylum";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
+	 * Set file path of default property file. Nested default properties are supported (so the default property file can
+	 * also have a default, and so on).
+	 */
+	public static final String PROJECT_DEFAULT_PROPS = "project.defaultProps";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #PROJECT_ENV}<br>

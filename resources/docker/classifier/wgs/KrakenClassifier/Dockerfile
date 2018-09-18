@@ -38,9 +38,9 @@ RUN cd /app && wget -qO- https://github.com/DerrickWood/kraken/archive/v0.10.5-b
 #4.) ================ Install Kraken DB ================ 
 # Kraken Databases available here: https://ccb.jhu.edu/software/kraken/ 
 # uncomment for MiniKraken DB_4GB
-RUN cd /db && wget -qO- https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz | bsdtar -xzf-
+RUN mkdir /db && cd /db && wget -qO- https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz | bsdtar -xzf-
 # uncomment for MiniKraken DB_8GB
-# RUN cd /db && wget -qO- https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_8GB.tgz | bsdtar -xzf-
+# RUN mkdir /db && cd /db && wget -qO- https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_8GB.tgz | bsdtar -xzf-
 	
 #5.) ================= Container Command =================
 CMD bash $BLJ_SCRIPT

@@ -216,12 +216,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	private String getRefGenomeIndex() throws Exception
 	{
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			return Config.requireString( REF_GENOME_INDEX );
-		}
-
-		return Config.requireExistingDir( REF_GENOME_INDEX ).getAbsolutePath();
+		return Config.requireString( REF_GENOME_INDEX );
 	}
 
 	private String getRuntimeBowtieParams() throws Exception

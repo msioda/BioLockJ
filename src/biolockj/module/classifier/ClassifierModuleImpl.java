@@ -73,6 +73,7 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 				final String defaultProp = getClassifierType() + "." + EXE_CLASSIFIER.substring( 4 );
 
 				classifierExe = Config.requireString( defaultProp );
+
 				Log.info( getClass(), "Loading default classifier property: " + defaultProp + " = " + classifierExe );
 
 				if( classifierExe == null || classifierExe.isEmpty() )
@@ -207,7 +208,13 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 	 */
 	protected String getClassifierType()
 	{
-		return getClass().getSimpleName().toLowerCase().replaceAll( "classifier", "" );
+		String type = getClass().getSimpleName().toLowerCase().replaceAll( "classifier", "" );
+		if( type.startsWith( "qiime" ) )
+		{
+			type = "qiime";
+		}
+
+		return type;
 	}
 
 	/**

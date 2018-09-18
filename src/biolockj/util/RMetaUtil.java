@@ -9,9 +9,11 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.util.r;
+package biolockj.util;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.commons.lang.math.NumberUtils;
@@ -24,9 +26,6 @@ import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.module.report.AddMetadataToOtuTables;
-import biolockj.util.MetaUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.StringUtil;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -67,6 +66,9 @@ public final class RMetaUtil
 	 * <li>Verify reportable metadata fields exist and contain at least 2 unique values
 	 * <li>Verify numeric fields contain all numeric data
 	 * </ul>
+	 * <p>
+	 * Save MASTER {@link biolockj.Config} properties: {@value #BINARY_FIELDS}, {@value #NOMINAL_FIELDS},
+	 * {@value #NUMERIC_FIELDS}
 	 * 
 	 * @throws Exception if {@link biolockj.Config} lists invalid metadata fields or metadata filed has less than 2
 	 * unique values
@@ -102,7 +104,7 @@ public final class RMetaUtil
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			Log.info( RMetaUtil.class, "List override nominalFields BEFORE checking for generated columns: "
-					+ StringUtil.getCollectionAsString( nominalFields ) );
+					+ BioLockJUtil.getCollectionAsString( nominalFields ) );
 		}
 
 		rScriptFields.addAll( Config.getSet( R_REPORT_FIELDS ) );
@@ -131,7 +133,7 @@ public final class RMetaUtil
 			if( !RuntimeParamUtil.isDirectMode() )
 			{
 				Log.debug( RMetaUtil.class, "List R fields BEFORE chekcing for Qiime alpha metrics: "
-						+ StringUtil.getCollectionAsString( rScriptFields ) );
+						+ BioLockJUtil.getCollectionAsString( rScriptFields ) );
 			}
 			if( hasQiimeMapping() )
 			{
@@ -145,7 +147,7 @@ public final class RMetaUtil
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			Log.info( RMetaUtil.class, "List R fields AFTER checking for generated columnss: "
-					+ StringUtil.getCollectionAsString( rScriptFields ) );
+					+ BioLockJUtil.getCollectionAsString( rScriptFields ) );
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_READS )
@@ -257,6 +259,8 @@ public final class RMetaUtil
 			}
 		}
 
+		updateProps();
+
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			Log.info( RMetaUtil.class, Log.LOG_SPACER );
@@ -341,6 +345,17 @@ public final class RMetaUtil
 		return getUniqueValues( att ).size();
 	}
 
+	private static String getSetAsString( final Set<String> set )
+	{
+		final StringBuffer sb = new StringBuffer();
+		for( final String val: set )
+		{
+			sb.append( sb.toString().isEmpty() ? val: "," + val );
+		}
+
+		return sb.toString();
+	}
+
 	private static Set<String> getUniqueValues( final String att ) throws Exception
 	{
 		final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( att ) );
@@ -382,13 +397,6 @@ public final class RMetaUtil
 		return false;
 	}
 
-	/**
-	 * Check if field is a valid numeric field with > 1 unique value.
-	 * 
-	 * @param field Metadata column name
-	 * @return boolean TRUE if of numeric fields
-	 * @throws Exception if unable to read metadata file
-	 */
 	private static boolean isValidNumericField( final String field ) throws Exception
 	{
 		if( field != null && MetaUtil.getFieldNames().contains( field ) )
@@ -408,6 +416,27 @@ public final class RMetaUtil
 		return false;
 	}
 
+	private static void updateProps() throws Exception
+	{
+		final Map<String, String> props = new HashMap<>();
+		if( !binaryFields.isEmpty() )
+		{
+			props.put( BINARY_FIELDS, getSetAsString( binaryFields ) );
+		}
+		if( !nominalFields.isEmpty() )
+		{
+			props.put( NOMINAL_FIELDS, getSetAsString( nominalFields ) );
+		}
+		if( !numericFields.isEmpty() )
+		{
+			props.put( NUMERIC_FIELDS, getSetAsString( numericFields ) );
+		}
+
+		props.put( NUM_META_COLS, new Integer( MetaUtil.getFieldNames().size() ).toString() );
+
+		BioLockJUtil.updateMasterConfig( props );
+	}
+
 	private static void verifyNumericData( final String field, final Set<String> data ) throws Exception
 	{
 		for( final String val: data )
@@ -425,6 +454,11 @@ public final class RMetaUtil
 	 * List metadata fields to generate MDS ordination plots.
 	 */
 	protected static final String MDS_REPORT_FIELDS = "rMds.reportFields";
+
+	/**
+	 * Name of R script variable with metadata column count
+	 */
+	protected static final String NUM_META_COLS = "internal.numMetaCols";
 
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_EXCLUDE_FIELDS}<br>
@@ -450,8 +484,11 @@ public final class RMetaUtil
 	 */
 	protected static final String R_REPORT_FIELDS = "r.reportFields";
 
+	private static final String BINARY_FIELDS = "internal.binaryFields";
 	private static final Set<String> binaryFields = new TreeSet<>();
 	private static final Set<String> mdsFields = new TreeSet<>();
+	private static final String NOMINAL_FIELDS = "internal.nominalFields";
 	private static final Set<String> nominalFields = new TreeSet<>();
+	private static final String NUMERIC_FIELDS = "internal.numericFields";
 	private static final Set<String> numericFields = new TreeSet<>();
 }

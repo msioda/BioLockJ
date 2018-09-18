@@ -1,0 +1,17 @@
+###################################################################
+##                                                               ##
+##  This script is called from the $USER ~/.bash_profile         ##
+##  to set their $PATH and alias in current shell.               ##
+##                                                               ##
+##  $BLJ/install updates ~/.bash_profile to call this script     ##
+##                                                               ##
+###################################################################
+
+export BLJ_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export BLJ="$(dirname $BLJ_SCRIPT)"
+export PATH=$PATH:$BLJ_SCRIPT
+export BLJ_GRP_OWNER=
+export BLJ_PROJ=$BLJ/pipelines
+
+alias blj_go=". $BLJ_SCRIPT/blj_go"
+alias blj_git=". $BLJ_SCRIPT/blj_git"

@@ -23,9 +23,7 @@ import biolockj.Log;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
-import biolockj.util.BashScriptBuilder;
 import biolockj.util.MetaUtil;
-import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
 
 /**
@@ -95,10 +93,13 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 					+ Config.getString( Config.INPUT_REVERSE_READ_SUFFIX ) );
 		}
 
-		if( !RuntimeParamUtil.isDockerMode() && !BashScriptBuilder.clusterModuleExists( Config.getExe( EXE_PEAR ) ) )
-		{
-			Config.requireExistingFile( EXE_PEAR );
-		}
+		// verify PEAR mod changes
+		Config.getExe( EXE_PEAR );
+		//
+		// if( !RuntimeParamUtil.isDockerMode() && !BashScriptBuilder.clusterModuleExists( Config.getExe( EXE_PEAR ) ) )
+		// {
+		// Config.requireExistingFile( EXE_PEAR );
+		// }
 	}
 
 	/**

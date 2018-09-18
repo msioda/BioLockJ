@@ -265,6 +265,20 @@ public class Log
 	public static final String BLJ_VERSION = "v1.0";
 
 	/**
+	 * {@link biolockj.Config} property used to set log sensitivity in
+	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
+	 * "_top">log4j.properties</a><br>
+	 * <i>log4j.rootLogger=${project.logLevel}, file, stdout</i>
+	 * <ol>
+	 * <li>DEBUG - Log all messages
+	 * <li>INFO - Log info, warning and error messages
+	 * <li>WARN - Log warning and error messages
+	 * <li>ERROR - Log error messages only
+	 * </ol>
+	 */
+	public static final String LOG_LEVEL_PROPERTY = "project.logLevel";
+
+	/**
 	 * Spacer used to improve log file readability
 	 */
 	public static final String LOG_SPACER = "========================================================================";
@@ -282,8 +296,7 @@ public class Log
 
 	/**
 	 * Set in {@link #initialize(String)} to true only if executing pipeline restart.<br>
-	 * Used by
-	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
+	 * Used by <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
 	 * "_top">log4j.properties</a><br>
 	 * <i>log4j.appender.file.Append=${LOG_APPEND}</i>
 	 */
@@ -291,8 +304,7 @@ public class Log
 
 	/**
 	 * Set in {@link #initialize(String)} to file path of pipeline Java log file<br>
-	 * Used by
-	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
+	 * Used by <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
 	 * "_top">log4j.properties</a><br>
 	 * <i>log4j.appender.file.File=${LOG_FILE}</i>
 	 */
@@ -300,26 +312,11 @@ public class Log
 
 	/**
 	 * Set in {@link #initialize(String)} to proper layout based on pipeline is direct or note<br>
-	 * Used by
-	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
+	 * Used by <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
 	 * "_top">log4j.properties</a><br>
 	 * <i>log4j.appender.file.layout.ConversionPattern=${LOG_FORMAT}</i>
 	 */
 	protected static final String LOG_FORMAT = "LOG_FORMAT";
-
-	/**
-	 * {@link biolockj.Config} property used to set log sensitivity in
-	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
-	 * "_top">log4j.properties</a><br>
-	 * <i>log4j.rootLogger=${project.logLevel}, file, stdout</i>
-	 * <ol>
-	 * <li>DEBUG - Log all messages
-	 * <li>INFO - Log info, warning and error messages
-	 * <li>WARN - Log warning and error messages
-	 * <li>ERROR - Log error messages only
-	 * </ol>
-	 */
-	public static final String LOG_LEVEL_PROPERTY = "project.logLevel";
 	private static File logFile = null;
 	private static Map<String, Logger> loggers = new HashMap<>();
 	private static final List<String> logMesseges = new ArrayList<>();

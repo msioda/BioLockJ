@@ -425,7 +425,7 @@ public class SummaryUtil
 				sb.append( TAB_DELIM + ste.toString() + RETURN );
 			}
 		}
-		
+
 		saveSummary( sb.toString() );
 	}
 

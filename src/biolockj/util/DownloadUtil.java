@@ -11,28 +11,23 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.Pipeline;
 import biolockj.module.BioModule;
+import biolockj.module.ScriptModule;
 import biolockj.module.r.R_Module;
 import biolockj.module.report.AddMetadataToOtuTables;
 import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
-import biolockj.util.r.BaseScript;
-import biolockj.util.r.PlotScript;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -42,73 +37,21 @@ public final class DownloadUtil
 	// Prevent instantiation
 	private DownloadUtil()
 	{}
-
-	/**
-	 * Save a copy of the module R scripts into their output directory after changing any cluster pipeline root
-	 * directory paths found in the script with the download direction from the Config File
-	 * 
-	 * @param module R_Module
-	 * @throws Exception if any errors occur
-	 */
-	public static void copyLocalScripts( final R_Module module ) throws Exception
+	
+	protected static String getExts( R_Module mod ) throws Exception
 	{
-		final IOFileFilter ff = new WildcardFileFilter( "*" + R_Module.R_EXT );
-		final Collection<File> scripts = FileUtils.listFiles( module.getScriptDir(), ff, null );
-
-		for( final File script: scripts )
+		if( mod.scpExtensions() == null ||  mod.scpExtensions().isEmpty() )
 		{
-			final File newScript = new File(
-					module.getOutputDir().getAbsolutePath() + File.separator + script.getName() );
-
-			Log.get( DownloadUtil.class ).info(
-					"Copy localized version of R script to output dir for download: " + newScript.getAbsolutePath() );
-
-			final BufferedReader reader = SeqUtil.getFileReader( script );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( newScript ) );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				String newLine = line;
-				if( line.startsWith( R_Module.R_BASE_DIR ) )
-				{
-					newLine = R_Module.R_BASE_DIR + " = \"" + Config.requireString( DOWNLOAD_DIR ) + "\"";
-				}
-
-				if( line.startsWith( "source" ) && line.contains( BaseScript.class.getSimpleName() + R_Module.R_EXT ) )
-				{
-					newLine = "source(\"" + getDownloadDirPath() + File.separator + BaseScript.class.getSimpleName()
-							+ R_Module.R_EXT + "\" )";
-				}
-				else if( line.startsWith( "source" )
-						&& line.contains( PlotScript.class.getSimpleName() + R_Module.R_EXT ) )
-				{
-					newLine = "source(\"" + getDownloadDirPath() + File.separator + PlotScript.class.getSimpleName()
-							+ R_Module.R_EXT + "\" )";
-				}
-				else if( line.startsWith( R_Module.R_OUTPUT_DIR ) || line.startsWith( R_Module.R_TEMP_DIR ) )
-				{
-					newLine = line.substring( 0, line.indexOf( "," ) + 1 ) + " \""
-							+ Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName() + File.separator
-							+ R_Module.R_LOCAL_DIR_NAME + File.separator + "\" )";
-				}
-				else if( line.startsWith( R_Module.R_TABLE_DIR ) || line.startsWith( R_Module.R_STATS_DIR )
-						|| line.startsWith( R_Module.R_SCRIPT_DIR ) )
-				{
-					newLine = line.substring( 0, line.indexOf( "," ) + 1 ) + " \""
-							+ Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName() + "\" )";
-				}
-
-				if( !line.equals( newLine ) )
-				{
-					Log.get( DownloadUtil.class ).info( script.getName() + ": replace: [ " + line + BioLockJ.RETURN
-							+ " ] with [" + newLine + " ]" );
-				}
-
-				writer.write( newLine + R_Module.RETURN );
-			}
-
-			reader.close();
-			writer.close();
+			return "*";
 		}
+		
+		StringBuffer sb = new StringBuffer();
+		for( String ext: mod.scpExtensions() )
+		{
+			sb.append( sb.toString().isEmpty() ? "*.{" : "," ).append( ext );
+		}
+		sb.append( "}" );
+		return sb.toString();
 	}
 
 	/**
@@ -127,54 +70,51 @@ public final class DownloadUtil
 		final List<BioModule> modules = getDownloadModules();
 		if( Config.isOnCluster() && modules != null && getDownloadDirPath() != null )
 		{
+			String status = "Complete";
+			String targets = getSrc( MAIN_OUT );
+			BigInteger downloadSize = FileUtils.sizeOfAsBigInteger( Log.getFile() );
+			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( SummaryUtil.getSummaryFile() ) );
+			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( BioLockJUtil.getMasterConfig() ) );
+
 			if( modules.get( modules.size() - 1 ) instanceof R_Module )
 			{
-				makeRunAllScript( modules );
+				File runAll = makeRunAllScript( modules );
+				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( runAll ) );
 			}
 
-			String status = null;
-			String targets = Log.getFile().getAbsolutePath() + " " + SummaryUtil.getSummaryFile().getAbsolutePath();
-			BigInteger downloadSize = BigInteger.valueOf( 0L );
 			for( final BioModule module: modules )
 			{
+				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getOutputDir() ) );
 				if( module instanceof R_Module )
 				{
-					copyLocalScripts( (R_Module) module );
+					targets += " " + getSrc( ModuleUtil.getModuleNum( module ) + "*" + File.separator + "*" + File.separator + getExts( ( R_Module ) module) );
+					downloadSize = downloadSize
+							.add( FileUtils.sizeOfAsBigInteger( ( (ScriptModule) module ).getScriptDir() ) );
+					downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getTempDir() ) );
 				}
-
-				if( status == null && !ModuleUtil.isComplete( module ) )
+				else
 				{
-					status = "Failed ";
+					targets += " " + getSrc( ModuleUtil.getModuleNum( module ) + "*" + File.separator + "output" + File.separator + "*" );
 				}
 
-				final BigInteger size = FileUtils.sizeOfAsBigInteger( module.getOutputDir() );
-				downloadSize = downloadSize.add( size );
-				targets = targets + " " + module.getOutputDir().getAbsolutePath() + File.separator + "*";
+				if( !ModuleUtil.isComplete( module ) )
+				{
+					status = "Failed";
+				}
 			}
-
-			final BigInteger logSize = FileUtils.sizeOfAsBigInteger( Log.getFile() );
-			downloadSize = downloadSize.add( logSize );
-			Log.get( DownloadUtil.class ).info( "Log Size: " + FileUtils.byteCountToDisplaySize( logSize ) );
-			Log.get( DownloadUtil.class )
-					.info( "Full Download Size: " + FileUtils.byteCountToDisplaySize( downloadSize ) );
-
-			final BigInteger summarySize = FileUtils.sizeOfAsBigInteger( SummaryUtil.getSummaryFile() );
-			downloadSize = downloadSize.add( summarySize );
-			Log.get( DownloadUtil.class ).info( "Summary Size: " + FileUtils.byteCountToDisplaySize( summarySize ) );
-			Log.get( DownloadUtil.class )
-					.info( "Full Download Size: " + FileUtils.byteCountToDisplaySize( downloadSize ) );
-
-			final String label = getDownloadModules().size() > 1 ? "Modules --> ": "Module --> ";
+			final String pipeRoot = Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath();
+			final String label = status + ( getDownloadModules().size() > 1 ? " Modules --> ": " Module --> " );
 			final String displaySize = FileUtils.byteCountToDisplaySize( downloadSize );
-			final String cmd = "mkdir " + getDownloadDirPath() + "; scp -rp " + getClusterUser() + "@"
-					+ Config.requireString( Email.CLUSTER_HOST ) + ":\"" + targets + "\" ";
+			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + "; mkdir -p " + getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR ) 
+				+ "; scp -rp " + getClusterUser() + "@" + Config.requireString( Email.CLUSTER_HOST ) + ":\"" + targets + "\" " + DEST;
 
-			return "Download " + ( status == null ? "Completed ": status ) + label + " [" + displaySize + "]:"
-					+ BioLockJ.RETURN + cmd + getDownloadDirPath() + File.separator;
+			return "Download " + label + " [" + displaySize + "]:" + RETURN + cmd;
 		}
 
 		return null;
 	}
+
+	
 
 	/**
 	 * Get validated {@link biolockj.Config}.{@value #DOWNLOAD_DIR} if running on cluster, otherwise return null
@@ -196,22 +136,6 @@ public final class DownloadUtil
 		}
 
 		return null;
-	}
-
-	/**
-	 * Create the output directory for local output in the download module.
-	 * 
-	 * @param module R_Module
-	 * @throws Exception if unable to create local directories
-	 */
-	protected static void createLocalOutputDir( final R_Module module ) throws Exception
-	{
-		final File f = new File( module.getOutputDir().getAbsolutePath() + File.separator + R_Module.R_LOCAL_DIR_NAME );
-		f.mkdir();
-		if( !f.exists() )
-		{
-			throw new Exception( "Unable to build directory: " + f.getAbsolutePath() );
-		}
 	}
 
 	/**
@@ -273,7 +197,6 @@ public final class DownloadUtil
 
 			if( lastModule != null && !rModules.isEmpty() )
 			{
-				createLocalOutputDir( (R_Module) rModules.get( rModules.size() - 1 ) );
 				modules.addAll( rModules );
 			}
 
@@ -286,34 +209,41 @@ public final class DownloadUtil
 		}
 		catch( final Exception ex )
 		{
-			Log.get( SummaryUtil.class ).warn( "Unable to find any executed modules to summarize: " + ex.getMessage() );
+			Log.warn( DownloadUtil.class, "Unable to find any executed modules to summarize: " + ex.getMessage() );
 		}
 		return null;
 	}
 
-	private static void makeRunAllScript( final List<BioModule> modules ) throws Exception
+	/**
+	 * This script allows a user to run all R scripts together from a single script.
+	 * 
+	 * @param modules BioModules
+	 * @throws Exception if errors occur
+	 */
+	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception
 	{
-		final List<String> lines = new ArrayList<>();
-		lines.add( "# Execute this script to run all R scripts on your local workstation" );
+		final File script = new File( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+				+ File.separator + RUN_ALL_SCRIPT );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
+		writer.write( "# Execute this script to run all R scripts on your local workstation" + RETURN );
+		writer.write( R_Module.buildGetModuleScriptDirFunction() );
+
 		for( final BioModule mod: modules )
 		{
-			if( !( mod instanceof AddMetadataToOtuTables ) && !( mod instanceof JsonReport ) )
+			if( mod instanceof R_Module )
 			{
-				lines.add( "source(\"" + getDownloadDirPath() + File.separator + R_Module.MAIN_SCRIPT_PREFIX
-						+ mod.getClass().getSimpleName() + R_Module.R_EXT + "\")" );
+				writer.write( "source( file.path( " + R_Module.R_FUNCTION_GET_MOD_SCRIPT_DIR + "(), \""
+						+ ( (R_Module) mod ).getPrimaryScript().getName() + "\" ) )" + RETURN );
 			}
 		}
 
-		final String path = modules.get( modules.size() - 1 ).getOutputDir().getAbsolutePath() + File.separator
-				+ RUN_ALL_SCRIPT;
-		final File script = new File( path );
-
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
-		for( final String line: lines )
-		{
-			writer.write( line + BioLockJ.RETURN );
-		}
+		writer.write( "runAllScript = file.path( pipelineDir, \"" + RUN_ALL_SCRIPT + "\" )" + RETURN );
+		writer.write( R_Module.METHOD_RUN_PROGRAM + "( runAllScript )" + RETURN );
+		writer.write( R_Module.METHOD_REPORT_STATUS + "( runAllScript )" + RETURN );
+		
 		writer.close();
+
+		return script;
 	}
 
 	/**
@@ -321,7 +251,29 @@ public final class DownloadUtil
 	 * Sets the local directory targeted by the scp command.
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
+	
+	/**
+	 * List of file extensions download-able from pipeline root directory: {@value #MAIN_OUT}
+	 */
+	protected final static String MAIN_OUT = "*.{log,properties,txt,R}";
+	
+	
 
+	private static String getSrc( String val )
+	{
+		return SOURCE + File.separator + val;
+	}
+	
+	private static String getDest( String val )
+	{
+		return DEST + File.separator + val;
+	}
+	
+	private static final String SOURCE = "$src";
+	private static final String DEST = "$out";
+	
+
+	private static final String RETURN = BioLockJ.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All" + R_Module.R_EXT;
 
 }

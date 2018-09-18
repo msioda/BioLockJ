@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import biolockj.exception.ConfigPathException;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
-import biolockj.util.StringUtil;
 
 /**
  * Load properties defined in the BioLockJ configuration file, including inherited properties from project.defaultProps
@@ -43,9 +43,9 @@ public class Properties extends java.util.Properties
 	}
 
 	/**
-	 * Constructor called when {@value #PROJECT_DEFAULT_PROPS} contains a valid file-path
+	 * Constructor called when {@value biolockj.Config#PROJECT_DEFAULT_PROPS} contains a valid file-path
 	 *
-	 * @param defaultConfig Config built from {@value #PROJECT_DEFAULT_PROPS} property
+	 * @param defaultConfig Config built from {@value biolockj.Config#PROJECT_DEFAULT_PROPS} property
 	 */
 	public Properties( final Properties defaultConfig )
 	{
@@ -102,9 +102,9 @@ public class Properties extends java.util.Properties
 		Log.debug( Properties.class, "Run loadProperties for Config: " + file.getAbsolutePath() );
 		configFile = file;
 		props = buildConfig( configFile );
-		props.setProperty( Config.INTERNAL_BLJ_MODULE, StringUtil.getCollectionAsString( getListedModules() ) );
+		props.setProperty( Config.INTERNAL_BLJ_MODULE, BioLockJUtil.getCollectionAsString( getListedModules() ) );
 		props.setProperty( Config.INTERNAL_DEFAULT_CONFIG,
-				StringUtil.getCollectionAsString( StringUtil.getFilePaths( defaultConfigFiles ) ) );
+				BioLockJUtil.getCollectionAsString( BioLockJUtil.getFilePaths( defaultConfigFiles ) ) );
 		return props;
 	}
 
@@ -160,7 +160,7 @@ public class Properties extends java.util.Properties
 	}
 
 	/**
-	 * Parse property file for the property {@value #PROJECT_DEFAULT_PROPS}.<br>
+	 * Parse property file for the property {@value biolockj.Config#PROJECT_DEFAULT_PROPS}.<br>
 	 * project.defaultProps=/app/biolockj_v1.0/resources/config/default/docker.properties
 	 * 
 	 * @param configFile BioLockJ Config file
@@ -178,7 +178,7 @@ public class Properties extends java.util.Properties
 			final StringTokenizer st = new StringTokenizer( line, "=" );
 			if( st.countTokens() > 1 )
 			{
-				if( st.nextToken().trim().equals( PROJECT_DEFAULT_PROPS ) )
+				if( st.nextToken().trim().equals( Config.PROJECT_DEFAULT_PROPS ) )
 				{
 					final File defaultConfig = Config.getExistingFileObject( st.nextToken().trim() );
 					reader.close();
@@ -236,13 +236,6 @@ public class Properties extends java.util.Properties
 	 * Sets Docker properties as the default config.
 	 */
 	protected static final String DOCKER_CONFIG_PATH = "/app/biolockj_v1.0/resources/config/default/docker.properties";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
-	 * Set file path of default property file. Nested default properties are supported (so the default property file can
-	 * also have a default, and so on).
-	 */
-	protected static final String PROJECT_DEFAULT_PROPS = "project.defaultProps";
 
 	private static File configFile = null;
 

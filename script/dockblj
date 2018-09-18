@@ -6,14 +6,14 @@
 ##  Bash env must include pipeline base directory: $BLJ_PROJ            	##
 ##  Must pass the script 2 runtime parameters:                          	##
 ##                                                                  		##
-##  $config				Config file path                                 ##
-##  $inputDirPaths		Input dir paths (commma separated, no spaces)    ##
+##  $config				Config file path                                    ##
+##  $inputDirPaths		Input dir paths (commma separated, no spaces)       ##
 ##                                                                      	##
 ##  Optional parameters:                                                	##
 ##                                                                      	##
 ##  $metadataFilePath		Metadata file directory path                	##
-##  $trimPrimersFilePath		Primer file directory path                  	##
-##  $BLJ_OPTIONS				Singleton options: -r or -p                 	##
+##  $trimPrimersFilePath		Primer file directory path                  ##
+##  $BLJ_OPTIONS				Singleton options: -r or -p                 ##
 ##                                                                      	##
 ############################################################################
 
@@ -35,6 +35,10 @@ function valid_dir {
 	fi
 }
 
+[ ${#BLJ} -eq 0 ] && echo "$BLJ undefined" && exit 1
+[ ${#BLJ_PROJ} -eq 0 ] && echo "$BLJ_PROJ undefined" && exit 1
+
+FROM_DOCKER="N"
 BLJ_CONFIG=""
 CONFIG_DIR=""
 BLJ_OPTIONS="-D"  #init to -D to indicate run BioLockJ as a Docker container
@@ -57,6 +61,8 @@ for arg in "$@"; do
 	if [ ${#tokens[*]} -eq 1 ]; then
 		if [ $arg == "-r" ]; then
 			BLJ_OPTIONS="$BLJ_OPTIONS -r"
+		elif [ $arg == "-docker" ]; then
+			FROM_DOCKER="Y"
 		else
 			echo "Exit script - Invalid runtime parameter: $arg"
 			exit 1
@@ -84,9 +90,10 @@ for arg in "$@"; do
 	fi
 done
 
+
 # Create pipeline directory on host system if on 1st run
 # Create $BLJ_PROJ directory if missing and parent directory exists
-if [ "$(valid_dir $BLJ_PROJ)" == "N" ]; then
+if [ FROM_DOCKER == "N" ] && [ "$(valid_dir $BLJ_PROJ)" == "N" ]; then
     projDir="$(dirname $BLJ_PROJ)"
     parentDir="$(dirname $projDir)"
     topDir="$(dirname $parentDir)"
@@ -98,7 +105,7 @@ fi
 BLJ_OPTIONS="$BLJ_OPTIONS -b $BLJ_PROJ"
 
 # Require config script parameter
-if [ "$(valid_file $config)" == "N" ]; then
+if [ FROM_DOCKER == "N" ] && [ "$(valid_file $config)" == "N" ]; then
 	echo "Exit script - Config file not found: $config"
 	exit 1
 else	
@@ -116,7 +123,7 @@ else
 	IFS=","
 	dirPaths=( $inputDirPaths )
 	for dir in "$dirPaths"; do
-		if [ "$(valid_dir $dir)" == "N" ]; then
+		if [ FROM_DOCKER == "N" ] && [ "$(valid_dir $dir)" == "N" ]; then
 			echo "Exit script - Input directory not found: $dir"
 			exit 1
 		else
@@ -127,7 +134,7 @@ else
 fi
 
 # Validate metadataFilePath is a valid directory path, if defined
-if [ ${#metadataFilePath} -gt 0 ] && [ "$(valid_dir $metadataFilePath)" == "N" ]; then
+if [ ${#metadataFilePath} -gt 0 ] && [ FROM_DOCKER == "N" ] && [ "$(valid_dir $metadataFilePath)" == "N" ]; then
 	echo "Exit script - Metadata file directory not found: $metadataFilePath"
 	exit 1
 elif [ ${#metadataFilePath} -gt 0 ]; then
@@ -135,7 +142,7 @@ elif [ ${#metadataFilePath} -gt 0 ]; then
 fi
 
 # Validate trimPrimersFilePath is a valid directory path, if defined
-if [ ${#trimPrimersFilePath} -gt 0 ] && [ "$(valid_dir $trimPrimersFilePath)" == "N" ]; then
+if [ ${#trimPrimersFilePath} -gt 0 ] && [ FROM_DOCKER == "N" ] && [ "$(valid_dir $trimPrimersFilePath)" == "N" ]; then
 	echo "Exit script - Primer file directory not found: $trimPrimersFilePath"
 	exit 1
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then

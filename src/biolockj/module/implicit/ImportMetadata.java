@@ -29,8 +29,8 @@ import biolockj.module.BioModuleImpl;
 import biolockj.module.r.R_Module;
 import biolockj.module.report.AddMetadataToOtuTables;
 import biolockj.util.MetaUtil;
+import biolockj.util.RMetaUtil;
 import biolockj.util.SeqUtil;
-import biolockj.util.r.RMetaUtil;
 
 /**
  * This BioModule validates the contents/format of the project metadata file and the related Config properties. If

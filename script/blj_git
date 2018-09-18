@@ -21,8 +21,6 @@ if [ "$(valid_dir $BLJ)" == "Y" ]; then
 	git checkout -f origin/master
 	echo build complete
 	chmod -R 774 $BLJ
-	chmod 744 $BLJ/dist/blj_git
-	chmod 744 $BLJ/dist/blj_build
 	[ ${#BLJ_GRP_OWNER} -gt 0 ] && chown -R $BLJ_GRP_OWNER $BLJ
 else
 	echo "Invalid directory path: $BLJ"
