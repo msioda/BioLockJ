@@ -206,8 +206,23 @@ public class BioLockJ
 			{
 				logFinalException( args, ex );
 			}
+			 
+			try
+			{
+				String pipelineRoot = Config.getString( Config.INTERNAL_PIPELINE_DIR );
+				String perm = Config.getString( PROJECT_PERMISSIONS );
+				if( pipelineRoot != null && perm != null )
+				{
+					Job.setFilePermissions( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ), perm, true );
+				}
+			}
+			catch( final Exception ex )
+			{
+				logFinalException( args, ex );
+			}
 		}
 	}
+	
 
 	/**
 	 * Create the pipeline root directory under $DOCKER_PROJ and save the path to
@@ -535,6 +550,13 @@ public class BioLockJ
 	 * {@value #PROJECT_COPY_FILES}
 	 */
 	public static final String PROJECT_COPY_FILES = "project.copyInput";
+	
+	/**
+	 * {@link biolockj.Config} property to define permission setttings when running chmod on pipeline root dir:
+	 * {@value #PROJECT_PERMISSIONS}
+	 */
+	protected static final String PROJECT_PERMISSIONS = "project.permissions";
+
 
 	/**
 	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
