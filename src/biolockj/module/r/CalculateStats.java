@@ -24,20 +24,6 @@ import biolockj.util.ModuleUtil;
 public class CalculateStats extends R_Module implements BioModule
 {
 	/**
-	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil} 
-	 * @return Set of file extensions
-	 * @throws Exception if errors occur
-	 */
-	@Override
-	public Set<String> scpExtensions() throws Exception
-	{
-		final TreeSet<String> set = (TreeSet<String>)super.scpExtensions();
-		set.add( TSV_EXT.substring( 1 ) );
-		return set;
-	}
-	
-	
-	/**
 	 * Validate configuration file properties used to build the R report:
 	 * <ul>
 	 * <li>super.checkDependencies()
@@ -51,6 +37,20 @@ public class CalculateStats extends R_Module implements BioModule
 		super.checkDependencies();
 		Config.requireString( R_ADJ_PVALS_SCOPE );
 		Config.requireString( R_PVAL_ADJ_METHOD );
+	}
+
+	/**
+	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil}
+	 * 
+	 * @return Set of file extensions
+	 * @throws Exception if errors occur
+	 */
+	@Override
+	public Set<String> scpExtensions() throws Exception
+	{
+		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
+		set.add( TSV_EXT.substring( 1 ) );
+		return set;
 	}
 
 	/**

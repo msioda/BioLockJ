@@ -14,7 +14,6 @@ package biolockj;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.util.StringTokenizer;
 import biolockj.module.ScriptModule;
 
 /**
@@ -78,38 +77,27 @@ public class Job
 	 *
 	 * @param dir Target directory
 	 * @param permissions Set the chmod security bits (ex 764)
-	 * @param recursive Boolean if chmod should add -R switch
 	 * @throws Exception if chmod command command fails
 	 */
-	public static void setFilePermissions( final File dir, final String permissions, final boolean recursive ) throws Exception
+	public static void setFilePermissions( final File dir, final String permissions ) throws Exception
 	{
 		final String[] args = new String[ 1 ];
-		args[ 0 ] = "chmod " + ( recursive ? "-R" : "" ) + permissions + " " + dir.getAbsolutePath();
+		args[ 0 ] = "chmod -R " + permissions + " " + dir.getAbsolutePath();
 		submit( args );
-//		for( final File f: dir.listFiles() )
-//		{
-//			final StringTokenizer st = new StringTokenizer(
-//					"chmod " + Config.requireString( ScriptModule.SCRIPT_PERMISSIONS ) + " " + f.getAbsolutePath() );
-//			final String[] args = new String[ st.countTokens() ];
-//			for( int i = 0; i < args.length; i++ )
-//			{
-//				args[ i ] = st.nextToken();
-//			}
-//			submit( args );
-//		}
 	}
 
 	/**
 	 * This method is called by script generating {@link biolockj.module.ScriptModule}s to update the script
 	 * file-permissions to ensure they are executable by the program. Once file permissions are set, the main script
-	 * (passed in the args param) is executed. Calls {@link #setFilePermissions(File, String, boolean)} and {@link #submit(ScriptModule)}
+	 * (passed in the args param) is executed. Calls {@link #setFilePermissions(File, String)} and
+	 * {@link #submit(ScriptModule)}
 	 *
 	 * @param module ScriptModule that is submitting its main script as a Job
 	 * @throws Exception if errors occur during execution
 	 */
 	public static void submit( final ScriptModule module ) throws Exception
 	{
-		setFilePermissions( module.getScriptDir(), Config.requireString( ScriptModule.SCRIPT_PERMISSIONS ), false );
+		setFilePermissions( module.getScriptDir(), Config.requireString( ScriptModule.SCRIPT_PERMISSIONS ) );
 		new Job( module );
 	}
 

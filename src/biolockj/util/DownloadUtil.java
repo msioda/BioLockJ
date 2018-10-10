@@ -37,22 +37,6 @@ public final class DownloadUtil
 	// Prevent instantiation
 	private DownloadUtil()
 	{}
-	
-	protected static String getExts( R_Module mod ) throws Exception
-	{
-		if( mod.scpExtensions() == null ||  mod.scpExtensions().isEmpty() )
-		{
-			return "*";
-		}
-		
-		StringBuffer sb = new StringBuffer();
-		for( String ext: mod.scpExtensions() )
-		{
-			sb.append( sb.toString().isEmpty() ? "*.{" : "," ).append( ext );
-		}
-		sb.append( "}" );
-		return sb.toString();
-	}
 
 	/**
 	 * If running on cluster, build scp command for user to download pipeline analysis.<br>
@@ -78,7 +62,7 @@ public final class DownloadUtil
 
 			if( modules.get( modules.size() - 1 ) instanceof R_Module )
 			{
-				File runAll = makeRunAllScript( modules );
+				final File runAll = makeRunAllScript( modules );
 				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( runAll ) );
 			}
 
@@ -87,14 +71,16 @@ public final class DownloadUtil
 				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getOutputDir() ) );
 				if( module instanceof R_Module )
 				{
-					targets += " " + getSrc( ModuleUtil.getModuleNum( module ) + "*" + File.separator + "*" + File.separator + getExts( ( R_Module ) module) );
+					targets += " " + getSrc( ModuleUtil.getModuleNum( module ) + "*" + File.separator + "*"
+							+ File.separator + getExts( (R_Module) module ) );
 					downloadSize = downloadSize
 							.add( FileUtils.sizeOfAsBigInteger( ( (ScriptModule) module ).getScriptDir() ) );
 					downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getTempDir() ) );
 				}
 				else
 				{
-					targets += " " + getSrc( ModuleUtil.getModuleNum( module ) + "*" + File.separator + "output" + File.separator + "*" );
+					targets += " " + getSrc( ModuleUtil.getModuleNum( module ) + "*" + File.separator + "output"
+							+ File.separator + "*" );
 				}
 
 				if( !ModuleUtil.isComplete( module ) )
@@ -105,16 +91,16 @@ public final class DownloadUtil
 			final String pipeRoot = Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath();
 			final String label = status + ( getDownloadModules().size() > 1 ? " Modules --> ": " Module --> " );
 			final String displaySize = FileUtils.byteCountToDisplaySize( downloadSize );
-			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + "; mkdir -p " + getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR ) 
-				+ "; scp -rp " + getClusterUser() + "@" + Config.requireString( Email.CLUSTER_HOST ) + ":\"" + targets + "\" " + DEST;
+			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + "; mkdir -p "
+					+ getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR ) + "; scp -rp "
+					+ getClusterUser() + "@" + Config.requireString( Email.CLUSTER_HOST ) + ":\"" + targets + "\" "
+					+ DEST;
 
 			return "Download " + label + " [" + displaySize + "]:" + RETURN + cmd;
 		}
 
 		return null;
 	}
-
-	
 
 	/**
 	 * Get validated {@link biolockj.Config}.{@value #DOWNLOAD_DIR} if running on cluster, otherwise return null
@@ -214,6 +200,22 @@ public final class DownloadUtil
 		return null;
 	}
 
+	protected static String getExts( final R_Module mod ) throws Exception
+	{
+		if( mod.scpExtensions() == null || mod.scpExtensions().isEmpty() )
+		{
+			return "*";
+		}
+
+		final StringBuffer sb = new StringBuffer();
+		for( final String ext: mod.scpExtensions() )
+		{
+			sb.append( sb.toString().isEmpty() ? "*.{": "," ).append( ext );
+		}
+		sb.append( "}" );
+		return sb.toString();
+	}
+
 	/**
 	 * This script allows a user to run all R scripts together from a single script.
 	 * 
@@ -240,10 +242,20 @@ public final class DownloadUtil
 		writer.write( "runAllScript = file.path( pipelineDir, \"" + RUN_ALL_SCRIPT + "\" )" + RETURN );
 		writer.write( R_Module.METHOD_RUN_PROGRAM + "( runAllScript )" + RETURN );
 		writer.write( R_Module.METHOD_REPORT_STATUS + "( runAllScript )" + RETURN );
-		
+
 		writer.close();
 
 		return script;
+	}
+
+	private static String getDest( final String val )
+	{
+		return DEST + File.separator + val;
+	}
+
+	private static String getSrc( final String val )
+	{
+		return SOURCE + File.separator + val;
 	}
 
 	/**
@@ -251,29 +263,16 @@ public final class DownloadUtil
 	 * Sets the local directory targeted by the scp command.
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
-	
+
 	/**
 	 * List of file extensions download-able from pipeline root directory: {@value #MAIN_OUT}
 	 */
 	protected final static String MAIN_OUT = "*.{log,properties,txt,R}";
-	
-	
 
-	private static String getSrc( String val )
-	{
-		return SOURCE + File.separator + val;
-	}
-	
-	private static String getDest( String val )
-	{
-		return DEST + File.separator + val;
-	}
-	
-	private static final String SOURCE = "$src";
 	private static final String DEST = "$out";
-	
-
 	private static final String RETURN = BioLockJ.RETURN;
+
 	private static final String RUN_ALL_SCRIPT = "Run_All" + R_Module.R_EXT;
+	private static final String SOURCE = "$src";
 
 }
