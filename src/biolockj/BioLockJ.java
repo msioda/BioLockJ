@@ -206,6 +206,20 @@ public class BioLockJ
 			{
 				logFinalException( args, ex );
 			}
+
+			try
+			{
+				final String pipelineRoot = Config.getString( Config.INTERNAL_PIPELINE_DIR );
+				final String perm = Config.getString( PROJECT_PERMISSIONS );
+				if( pipelineRoot != null && perm != null )
+				{
+					Job.setFilePermissions( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ), perm );
+				}
+			}
+			catch( final Exception ex )
+			{
+				logFinalException( args, ex );
+			}
 		}
 	}
 
@@ -551,6 +565,12 @@ public class BioLockJ
 	 * Tab delimiter character: {@value #TAB_DELIM}
 	 */
 	public static final String TAB_DELIM = "\t";
+
+	/**
+	 * {@link biolockj.Config} property to define permission setttings when running chmod on pipeline root dir:
+	 * {@value #PROJECT_PERMISSIONS}
+	 */
+	protected static final String PROJECT_PERMISSIONS = "project.permissions";
 
 	private static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 

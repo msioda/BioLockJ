@@ -23,20 +23,6 @@ import biolockj.module.ScriptModule;
 public class BuildOtuPlots extends R_Module implements ScriptModule
 {
 	/**
-	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil} 
-	 * Add {@value #PDF_EXT} to super class set.
-	 * 
-	 * @return Set of file extensions
-	 * @throws Exception if errors occur
-	 */
-	public Set<String> scpExtensions() throws Exception
-	{
-		final TreeSet<String> set = (TreeSet<String>)super.scpExtensions();
-		set.add( PDF_EXT.substring( 1 ) );
-		return set;
-	}
-	
-	/**
 	 * Add prerequisite module: {@link biolockj.module.r.CalculateStats}.
 	 */
 	@Override
@@ -45,5 +31,20 @@ public class BuildOtuPlots extends R_Module implements ScriptModule
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
 		preReqs.add( CalculateStats.class );
 		return preReqs;
+	}
+
+	/**
+	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil} Add
+	 * {@value #PDF_EXT} to super class set.
+	 * 
+	 * @return Set of file extensions
+	 * @throws Exception if errors occur
+	 */
+	@Override
+	public Set<String> scpExtensions() throws Exception
+	{
+		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
+		set.add( PDF_EXT.substring( 1 ) );
+		return set;
 	}
 }

@@ -67,8 +67,7 @@ public final class RMetaUtil
 	 * <li>Verify numeric fields contain all numeric data
 	 * </ul>
 	 * <p>
-	 * Save MASTER {@link biolockj.Config} properties: {@value #BINARY_FIELDS}, {@value #NOMINAL_FIELDS},
-	 * {@value #NUMERIC_FIELDS}
+	 * Save MASTER {@link biolockj.Config} properties to store lists of binary, nominal, and numeric fields
 	 * 
 	 * @throws Exception if {@link biolockj.Config} lists invalid metadata fields or metadata filed has less than 2
 	 * unique values
