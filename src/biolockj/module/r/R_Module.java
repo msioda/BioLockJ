@@ -174,8 +174,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Get the main R script prefix, typically {@value #MAIN_R_SCRIPT} except when running in Docker mode, which instead
-	 * uses a numeric prefix since {@value #MAIN_R_SCRIPT} will be reserved for the MAIN bash script.
+	 * Get the main R script prefix, typically {@value #MAIN_SCRIPT_PREFIX} except when running in Docker mode, which instead
+	 * uses a numeric prefix since {@value #MAIN_SCRIPT_PREFIX} will be reserved for the MAIN bash script.
 	 * 
 	 * @return MAIN script prefix
 	 * @throws Exception if errors occur
@@ -424,6 +424,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		return getClass().getSimpleName() + R_EXT;
 	}
 
+	/**
+	 * Build R script function to return the R script parent directory: {@value #R_FUNCTION_GET_MOD_SCRIPT_DIR}
+	 * @return R script function
+	 * @throws Exception if errors occur
+	 */
 	public static String buildGetModuleScriptDirFunction() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();

@@ -200,15 +200,22 @@ public final class DownloadUtil
 		return null;
 	}
 
-	protected static String getExts( final R_Module mod ) throws Exception
+	/**
+	 * Get file extensions for each R module to include in scp download command
+	 * 
+	 * @param module R_Module
+	 * @return REGEX to scp specific file estensions
+	 * @throws Exception
+	 */
+	protected static String getExts( final R_Module module ) throws Exception
 	{
-		if( mod.scpExtensions() == null || mod.scpExtensions().isEmpty() )
+		if( module.scpExtensions() == null || module.scpExtensions().isEmpty() )
 		{
 			return "*";
 		}
 
 		final StringBuffer sb = new StringBuffer();
-		for( final String ext: mod.scpExtensions() )
+		for( final String ext: module.scpExtensions() )
 		{
 			sb.append( sb.toString().isEmpty() ? "*.{": "," ).append( ext );
 		}
@@ -220,6 +227,7 @@ public final class DownloadUtil
 	 * This script allows a user to run all R scripts together from a single script.
 	 * 
 	 * @param modules BioModules
+	 * @return File Run_All.R script
 	 * @throws Exception if errors occur
 	 */
 	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception
