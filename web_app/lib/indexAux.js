@@ -15,8 +15,9 @@ exports.parseBljJson = function(currentConfig){
   //add modules to config first
   if (currentConfig["modules"] != null){
     for (var i = 0; i < currentConfig["modules"].length; i++) {
-      text += currentConfig["modules"][i].concat("\n");
+      text += '#BioModule '.concat(currentConfig["modules"][i],"\n");;
     }
+    console.log(text);
   };
   //for non_module
   for (var key in currentConfig) {
@@ -73,50 +74,53 @@ exports.buildLaunchArgument = function (validConfig){
   return partialLauchArgument;
 }
 
-
-
 exports.createFullLaunchCommand = function(launchJSON){//
-  const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
-  const bljDir = process.env.BLJ;
-  const dockblj = path.join(bljDir,'dist','dockblj')
+  //const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
+  //const bljDir = process.env.BLJ;
+  const dockblj = path.join('blj','dist','dockblj')
   //console.log(dockblj);
-  let launch = dockblj.toString();
+  let command = [];
   //console.log(launchJSON);
+  command.push(dockblj.toString());
   Object.keys(launchJSON).forEach(key => {
     //if key not config, grab path.Dirname(launchJSON[key])
     if (key != 'config' && key != 'inputDirPaths'){//need only the dir, not the file name
       launchJSON[key] = path.dirname(launchJSON[key]);
-    }
-    console.log(` ${key}=${launchJSON[key]}`);
-    launch = launch + ` ${key}=${launchJSON[key]}`;
+      command.push(`${key}=${launchJSON[key]}`)
+    }else{
+    command.push(`${key}=${launchJSON[key]}`);
+    };
   });
+  command.push('-docker');
   console.log('launch');
-  console.log(launch);
-  return launch;
+  console.log(command);
+  return command;
 }//end createFullLaunchCommand
 
-exports.runLaunchCommand = function(command) {
+exports.runLaunchCommand = function(command, eventEmitter) {
+  const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
   const { spawn } = require('child_process');//for running child processes
+  const first = command.shift();
+  console.log(first);
+  console.log(command);
   try {
-    const child = spawn(command , (error, stdout, stderr) => {
-            console.log(`launch stdout ${stdout}`);
-            console.log(`$launch stderr {stderr}`);
-            if (error !== null) {
-                console.log(`exec error: ${error}`);
-            }
-        });
-    //child.chdir('/config/');
-    // child.stdout.on('data',
-    //     function (data) {
-    //         console.log('ls command output: ' + data);
-    //     });
-    // child.stderr.on('data', function (data) {
-    //     //throw errors
-    //     console.log('stderr: ' + data);
-    // });
-    // child.on('close', function (code) {
-    //     console.log('child process exited with code ' + code);
-    // });
+    const child = spawn(first, command, {detached: true});
+    child.stdout.on('data', function(data){
+      eventEmitter.emit('log',data);
+    });
+    child.stderr.on('data', function (data) {
+        //throw errors
+        eventEmitter.emit('log',data);
+        console.log('stderr: ' + data);
+    });
+    child.on('error', function (data) {
+        //throw errors
+        eventEmitter.emit('log',data);
+    });
+    child.on('close', function (code) {
+        console.log('child process exited with code ' + code);
+    });
+    child.unref();
   } catch (e) {
     console.error(`launch error: ${e}`);
   } finally {
@@ -158,7 +162,3 @@ exports.mapDir = function (currentDirPath, callback) {
 //     console.log(file);
 //   });
 // })
-
-exports.testing = function(currentConfig){
-  console.log('asfdsdklfjadslfjsadlk;fjsdl;kfjasdlfkjaf;asldfjasdlkfjas;dfjasd;lfjkasd;f');
-}

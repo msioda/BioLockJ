@@ -13,6 +13,7 @@ var express = require('express'),
  events = require('events');
 var eventEmitter = new events.EventEmitter();//for making an event emitter
 const { spawn } = require('child_process');//for running child processes
+const Stream = new events.EventEmitter(); // my event emitter instance
 
 const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
 const bljDir = process.env.BLJ;
@@ -50,7 +51,7 @@ router.post('/launch', function(req, res, next) {
     const launchCommand = indexAux.createFullLaunchCommand(launchArg);
     //console.log(launchCommand);
     console.log('launching!');
-    indexAux.runLaunchCommand(launchCommand);
+    indexAux.runLaunchCommand(launchCommand, Stream);
     //console.log('launched?');
     let fileModTime = new Map();
 
@@ -91,34 +92,42 @@ router.post('/launch', function(req, res, next) {
 
 });
 
-
-//begin serverside events
-const Stream = new events.EventEmitter(); // my event emitter instance
-
-router.get('/streamprogress', function(request, response){
-  console.log('entered get');
+router.get('/streamLog', function(request, response){
   response.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive'
   });
-  progressEmitter.on("progresspush", function(event) {
-    console.log(`progressEmitter: ${event}`);
+  Stream.on("log", function(event) {
+    console.log(`Stream: ${event}`);
     response.write("data: " + event + "\n\n");
     //response.write("event: " + String(event) + "\n" + "data: " + JSON.stringify(data) + "\n\n");
   });
 });
 
-const progressEmitter = new events.EventEmitter();
 
-  fs.watch('/config', (eventType, filename) => {
-    console.log(`Filename: ${filename}, Event: ${eventType}`);
-    console.log(`Filename: ${filename}, Event: ${eventType}`);
-    progressEmitter.emit('progresspush',filename);
-    //console.log(`FS.watch Filename: ${filename}`);
-  // could be either 'rename' or 'change'. new file event and delete
-  // also generally emit 'rename'
-  })
+//begin serverside events
+router.get('/streamProgress', function(request, response){
+  response.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+  Stream.on("progresspush", function(event) {
+    console.log(`Stream: ${event}`);
+    response.write("data: " + event + "\n\n");
+    //response.write("event: " + String(event) + "\n" + "data: " + JSON.stringify(data) + "\n\n");
+  });
+});
+
+fs.watch('/config', (eventType, filename) => {
+  console.log(`Filename: ${filename}, Event: ${eventType}`);
+  console.log(`Filename: ${filename}, Event: ${eventType}`);
+  Stream.emit('progresspush',filename);
+  //console.log(`FS.watch Filename: ${filename}`);
+// could be either 'rename' or 'change'. new file event and delete
+// also generally emit 'rename'
+})
 module.exports = router;
 
 

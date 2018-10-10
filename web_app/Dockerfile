@@ -2,6 +2,9 @@
 
 FROM ubuntu:18.04
 
+# Expose port for Email
+Expose 25
+
 ENV NODE_VERSION 8.11.3
 
 #1.) ================= Setup Env =================
@@ -79,7 +82,7 @@ RUN apt-get update && \
 #5.) ================= Install BioLockJ =================
 ARG BLJ_VER=1
 ENV BLJ_TAR=biolockj_v1.0.tar.gz
-ENV BLJ_RELEASE_URL="https://github.com/msioda/BioLockJ/raw/master/dist/$BLJ_TAR"
+ENV BLJ_RELEASE_URL="https://github.com/mikesioda/BioLockJ_dev/raw/master/dist/$BLJ_TAR"
 RUN echo $BLJ_VER && \
 	cd $BLJ && \
 	wget $BLJ_RELEASE_URL && \
