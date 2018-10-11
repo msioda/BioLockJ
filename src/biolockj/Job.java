@@ -14,6 +14,7 @@ package biolockj;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.StringTokenizer;
 import biolockj.module.ScriptModule;
 
 /**
@@ -81,8 +82,13 @@ public class Job
 	 */
 	public static void setFilePermissions( final File dir, final String permissions ) throws Exception
 	{
-		final String[] args = new String[ 1 ];
-		args[ 0 ] = "chmod -R " + permissions + " " + dir.getAbsolutePath();
+		final StringTokenizer st = new StringTokenizer( "chmod -R " + permissions + " " + dir.getAbsolutePath() );
+		final String[] args = new String[ st.countTokens() ];
+		for( int i = 0; i < args.length; i++ )
+		{
+			args[ i ] = st.nextToken();
+		}
+
 		submit( args );
 	}
 
