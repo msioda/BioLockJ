@@ -179,17 +179,27 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			if( defaultSwitches.indexOf( "--paired " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--paired) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ derives this value by analyzing input files" );
+						+ "). BioLockJ derives this value by analyzing input sequence files" );
 			}
 			if( defaultSwitches.indexOf( "--output " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--output) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ hard codes this value based on Sample IDs found in: " + Config.INPUT_DIRS );
+						+ "). BioLockJ hard codes this file path based on sequence files names in: " + Config.INPUT_DIRS );
 			}
 			if( defaultSwitches.indexOf( "--db " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--db) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ hard codes this value based on Sample IDs found in: " + KRAKEN_DATABASE );
+						+ "). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
+			}
+			if( defaultSwitches.indexOf( "--help " ) > -1 )
+			{
+				throw new Exception( "Invalid classifier option (--help) found in property(" + EXE_CLASSIFIER_PARAMS
+						+ ")." );
+			}
+			if( defaultSwitches.indexOf( "--version " ) > -1 )
+			{
+				throw new Exception( "Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS
+						+ ")." );
 			}
 		}
 
