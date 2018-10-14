@@ -2,7 +2,8 @@
 #########################################################################
 ##                                                                     ##
 ##  This script fetches the latest BioLockJ code from GitHub.          ##
-##  Set $BLJ file permissions to 774 with group owner $BLJ_GRP_OWNER.  ##
+##  Set $BLJ file permissions to 770 with group owner $BLJ_GRP_OWNER.  ##
+##  Build the latest BioLockJ.jar file to $BLJ/dist                    ##
 ##                                                                     ##
 #########################################################################
 
@@ -14,14 +15,16 @@ function valid_dir {
 	fi
 }
 
-echo "Fetch latest BioLockJ code from GitHub"
+echo "Pull latest BioLockJ code from GitHub"
 if [ "$(valid_dir $BLJ)" == "Y" ]; then
 	cd $BLJ
-	git fetch
-	git checkout -f origin/master
-	echo build complete
-	chmod -R 774 $BLJ
+	git branch
+	git pull
+	chmod -R 770 $BLJ
 	[ ${#BLJ_GRP_OWNER} -gt 0 ] && chown -R $BLJ_GRP_OWNER $BLJ
+	echo "Git pull Successful"
 else
 	echo "Invalid directory path: $BLJ"
 fi
+
+blj_build standard-build

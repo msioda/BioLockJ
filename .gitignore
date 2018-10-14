@@ -1,5 +1,7 @@
 /bin/
-/pipelines/*
+/dist/*.jar
+/dist/*.tar.gz
+/pipelines/
 .DS_Store
 .classpath
 .project
