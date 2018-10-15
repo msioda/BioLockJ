@@ -7,6 +7,7 @@
 ##                                                                     ##
 #########################################################################
 
+# Returns Y or N to indicate if directory exists
 function valid_dir {
 	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
 		echo "Y" 
@@ -18,7 +19,6 @@ function valid_dir {
 echo "Pull latest BioLockJ code from GitHub"
 if [ "$(valid_dir $BLJ)" == "Y" ]; then
 	cd $BLJ
-	git branch
 	git pull
 	chmod -R 770 $BLJ
 	[ ${#BLJ_GRP_OWNER} -gt 0 ] && chown -R $BLJ_GRP_OWNER $BLJ
