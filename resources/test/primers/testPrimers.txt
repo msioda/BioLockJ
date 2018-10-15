@@ -1,3 +1,0 @@
-# Deployment path: $BLJ/resources/test/primers/testPrimers.txt
-
-^TAATT
