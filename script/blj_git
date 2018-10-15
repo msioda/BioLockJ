@@ -27,4 +27,4 @@ fi
 
 blj_build standard-build
 chmod -R 770 $BLJ
-[ ${#BLJ_GRP_OWNER} -gt 0 ] && chown -R :$BLJ_GRP_OWNER $BLJ
+[ ${#BLJ_GRP_OWNER} -gt 0 ] && chown -R :$BLJ_GRP_OWNER $BLJ && echo "Set $BLJ group owner to $BLJ_GRP_OWNER"

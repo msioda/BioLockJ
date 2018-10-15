@@ -73,4 +73,3 @@ echo "BioLockJ Config:  $config"
 [ "$(valid_file $config)" == "N" ] && echo "Exit program - $config not found" && exit 1
 nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &
 [ "$?" != "0" ] && echo "Exit program - Unable to execute $BLJ_JAR" && exit 1
-echo "Executing command [ nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 & ]"
