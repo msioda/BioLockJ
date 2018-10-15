@@ -216,11 +216,16 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			if( ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR ) == null
-					|| ModuleUtil.getMainScript( scriptModule ) == null
+			
+			if( ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR ) == null )
+			{
+				return "";
+			}
+			
+			if( ModuleUtil.getMainScript( scriptModule ) == null
 					|| scriptModule.getScriptDir().listFiles().length == 0 )
 			{
-				return "No scripts found!";
+				return "No scripts found!" + RETURN;
 			}
 
 			final IOFileFilter ff0 = new WildcardFileFilter( "*.sh" );
@@ -347,7 +352,7 @@ public class SummaryUtil
 			final String msg = "Unable to produce module scriptDir summary for: " + scriptModule.getClass().getName()
 					+ " : " + ex.getMessage();
 			Log.warn( SummaryUtil.class, msg );
-			sb.append( msg );
+			sb.append( msg + RETURN );
 		}
 
 		return sb.toString();
