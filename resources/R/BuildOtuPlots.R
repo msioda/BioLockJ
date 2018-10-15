@@ -41,14 +41,9 @@ addScatterPlot <- function( otuTable, otuCol, metaCol, parPval, nonParPval )
    plot( otuTable[ ,metaCol], otuTable[ ,otuCol], pch=getProperty("r.pch"), col=pointColors, ylab=otuName, xlab=attName, main=title, col.lab=color, col.main=color, cex.main=1 )
 }
 
-# Required lib for setting the color scheme
-importLibs <- function() {
-   return( library( ggpubr, logical.return=TRUE ) )
-}
-
-
+# Requires lib ggpubr for setting the color scheme
 main <- function() {
-   stopifnot( importLibs() )
+   importLibs( c( "ggpubr" ) )
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
       if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildOtuPlots_", otuLevel, ".log") ) )
       pdf( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU_plots.pdf") ) )

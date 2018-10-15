@@ -8,16 +8,11 @@ addHistogram <- function( v, title, xLabel, size ) {
    }
 }
 
-# Required lib for setting the color scheme
-importLibs <- function() {
-   return( library( ggpubr, logical.return=TRUE ) )
-}
-
-
+# Requires ggpubr lib for setting the color scheme
 # Mian function generates reports for each each report.taxonomyLevels
 # Each taxonomy report includes 1 histogram for each report attribute  
 main <- function() {
-   stopifnot( importLibs() )
+   importLibs( c( "ggpubr" ) )
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
       if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildPvalHistograms_", otuLevel, ".log") ) )
       pdf( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_histograms.pdf") ) )

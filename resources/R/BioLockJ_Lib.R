@@ -107,10 +107,10 @@ getMaxAttLen <- function( v ) {
 
 
 getModuleDir <- function() {
-	if( pipelineDir == getModuleScriptDir() ){
+	if( pipelineDir == dirname( getModuleScript() ) ){
 		return( pipelineDir )
 	}
-	return( dirname( getModuleScriptDir() ) )
+	return( dirname( dirname( getModuleScript() ) ) )
 }
 
 
@@ -127,7 +127,7 @@ getPlotTitle <- function( line1, line2 ) {
 }
 
 getMasterProperties <- function() {
-   testDir = getModuleScriptDir()
+   testDir = dirname( getModuleScript() )
    propFile = vector( mode="character" )
    while( length( propFile ) == 0 && testDir != "/" ) {
       propFile = list.files( testDir, "MASTER.*.properties", full.names=TRUE )
@@ -147,6 +147,20 @@ getProperty <- function( name, val=NULL ) {
 
 getValuesByName <- function( vals, name ) {
    return( as.vector( vals[names(vals)==name] ) )
+}
+
+
+importLibs <- function( libs ) {
+   errors = vector( mode="character" )
+   for( i in 1:length( libs ) ) {
+      if ( !library( libs[i], logical.return=TRUE, character.only=TRUE ) ) {
+         errors[ length( errors ) + 1 ] = paste( "Missing R library, please run install.packages(", libs[i], ")" )
+      }
+   }   
+
+   if( length( errors ) > 0 ) {
+      writeErrors( getModuleScript(), errors )
+   }
 }
 
 
@@ -190,36 +204,48 @@ pValueTestName <- function( attName, isParametric ) {
 }
 
 reportStatus <- function( script ) {
-   conn = file( paste0( script, "_Failures" ), open="r" )
-   errors = readLines( conn )
+   conn = file( paste0( script, "_Warnings" ), open="r" )
+   warnings = readLines( conn )
    close( conn )
-   foundError = FALSE
+   errors = vector( mode="character" )
    if( length( errors ) > 0 ) {
-      for ( i in 1:length( errors ) ) {
-         if( grepl( "Error", errors[i] ) ) {
-            foundError = TRUE
+      for ( i in 1:length( warnings ) ) {
+         if( grepl( "Error", warnings[i] ) ) {
+            errors[ length( errors ) + 1 ] = warnings[i]
          }
       }
    }
-   if( !foundError ) {
+
+   if( file.exists( paste0( script, "_Warnings" ) ) ) {
+         file.remove( paste0( script, "_Warnings" ) )
+   }
+
+   if( length( errors ) > 0 ) {
+      writeErrors( script, errors )
+   } else {
       file.create( paste0( script, "_Success" ) )
-      if( file.exists( paste0( script, "_Failures" ) ) ) {
-         file.remove( paste0( script, "_Failures" ) )
-      }
    }
 }
 
-
 runProgram <- function( script ) {
-   errorLog = file( paste0( script, "_Failures" ), open="wt" )
-   sink( errorLog, type="message" )
-   if( r.debug ) print( paste( "Pipeline dir: ", pipelineDir ) )
+   log = file( paste0( script, "_Warnings" ), open="wt" )
+   sink( log, type="message" )
+   print( paste( "Pipeline dir: ", pipelineDir ) )
    try( main() )
    sink( type="message" )
-   close( errorLog )
+   close( log )
 }
 
-stopifnot( library( properties, logical.return=TRUE ) && library( stringr, logical.return=TRUE ))
+
+writeErrors <- function( script, msgs ) {
+   errorConn = file( paste0( script, "_Failures" ), open="wt" )
+   writeLines( msgs, errorConn )
+   close( errorConn )
+   stop( paste( "Check error file to see runtime errors:", paste0( script, "_Failures" ) ) )
+}
+
+
+importLibs( c( "properties", "stringr" ) )
 configFile = getMasterProperties()
 pipelineDir = dirname( configFile )
 r.debug = getProperty("r.debug", FALSE)

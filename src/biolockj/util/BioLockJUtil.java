@@ -133,8 +133,10 @@ public class BioLockJUtil
 	 */
 	public static File getMasterConfig() throws Exception
 	{
+		String configName = Config.getConfigFileName();
+		if( configName.startsWith( MASTER_PREFIX ) ) configName = configName.replaceAll( MASTER_PREFIX, "" );
 		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ MASTER_PREFIX + Config.getConfigFileName() );
+				+ MASTER_PREFIX + configName );
 	}
 
 	/**
@@ -286,7 +288,10 @@ public class BioLockJUtil
 				+ TEMP_PREFIX + Config.getConfigFileName() );
 	}
 
-	private static final String MASTER_PREFIX = "MASTER_";
+	/**
+	 * Prefix added to the master Config file: {@value #MASTER_PREFIX}
+	 */
+	public static final String MASTER_PREFIX = "MASTER_";
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final String TEMP_PREFIX = "TEMP_";
 }
