@@ -30,7 +30,7 @@ if [ "$(valid_dir $BLJ/resources)" == "Y" ]; then
 	[ ${#1} -gt 0 ] && ant $1
 	echo "Ant script execution complete"
 else
-	echo "Invalid directory path: $BLJ/resources"
+	echo "Invalid directory path: $BLJ/resources" && exit 1
 fi
 
 if [ "$(valid_file $BLJ/dist/BioLockJ.jar)" == "Y" ]; then

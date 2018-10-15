@@ -20,11 +20,11 @@ echo "Pull latest BioLockJ code from GitHub"
 if [ "$(valid_dir $BLJ)" == "Y" ]; then
 	cd $BLJ
 	git pull
-	chmod -R 770 $BLJ
-	[ ${#BLJ_GRP_OWNER} -gt 0 ] && chown -R $BLJ_GRP_OWNER $BLJ
 	echo "Git pull Successful"
 else
-	echo "Invalid directory path: $BLJ"
+	echo "Invalid directory path: $BLJ" && exit 1
 fi
 
 blj_build standard-build
+chmod -R 770 $BLJ
+[ ${#BLJ_GRP_OWNER} -gt 0 ] && chown -R :$BLJ_GRP_OWNER $BLJ
