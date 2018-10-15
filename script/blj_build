@@ -12,6 +12,15 @@ function valid_dir {
 	fi
 }
 
+# Returns Y or N to indicate if file exists
+function valid_file {
+	if [ ${#1} -gt 0 ] && [ -f "$1" ]; then  
+		echo "Y" 
+	else 
+		echo "N"
+	fi
+}
+
 echo "Building BioLockJ..."
 if [ "$(valid_dir $BLJ/resources)" == "Y" ]; then
 	cd $BLJ/resources
@@ -22,7 +31,7 @@ else
 	echo "Invalid directory path: $BLJ/resources"
 fi
 
-if [ "$(valid_file $BLJ/dist/BioLockJ.jar) == "Y" ]; then
+if [ "$(valid_file $BLJ/dist/BioLockJ.jar)" == "Y" ]; then
 	echo "Build Successful - created $BLJ/dist/BioLockJ.jar"
 else
 	echo "Build Failed - missing $BLJ/dist/BioLockJ.jar"
