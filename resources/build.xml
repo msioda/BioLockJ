@@ -74,19 +74,10 @@
 	<target name="deploy" depends="remove_release">
 		<tar compression="gzip" destfile="dist/release_v1.0.tar.gz">
 			<tarfileset dir="." filemode="777">
-				<include name="dist/*" />
-				<include name="docs/**" /> 
-				<include name="install" /> 
-				<include name="lib/*" />
-				<include name="resources/build.xml" /> 
-				<include name="resources/config/default/docker.properties" /> 
-				<include name="resources/config/default/standard.properties" /> 
-				<include name="resources/config/template/*" /> 
-				<include name="resources/docker/**" /> 
-				<include name="resources/qiime/*" /> 
-				<include name="resources/R/*" /> 
-				<include name="script/*" />
-				<include name="src/**" />
+				<exclude name="bin/**" />
+				<exclude name=".*" /> 
+				<exclude name="_*.yml" /> 
+				<exclude name="*.md" /> 
 			</tarfileset>
 		</tar>	
 	</target>
@@ -95,9 +86,7 @@
 			<tar compression="gzip" destfile="dist/biolockj_v1.0.tar.gz">
 				<tarfileset dir="." filemode="777">
 					<include name="dist/*" />
-					<include name="resources/config/default/docker.properties" /> 
-					<include name="resources/config/default/standard.properties" /> 
-					<include name="resources/qiime/*" /> 
+					<include name="resources/config/default/*" /> 
 					<include name="resources/R/*" /> 
 					<include name="script/*" /> 
 				</tarfileset>
