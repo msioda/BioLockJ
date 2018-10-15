@@ -4,13 +4,6 @@
 ##  Pull all Docker hub images                                           ##
 ##                                                                       ##
 ###########################################################################
-function valid_dir {
-	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
 
 docker pull biolockj/manager
 docker pull biolockj/javamodule
@@ -21,5 +14,4 @@ docker pull biolockj/qiimeclassifier
 docker pull biolockj/krakenclassifier
 docker pull biolockj/metaphlanclassifier
 docker pull biolockj/r_module
-
-echo "Pull complete!"
+echo "Docker pull complete!"

@@ -10,6 +10,7 @@
 ##                                                                       ##
 ###########################################################################
 
+# Returns Y or N to indicate if directory exists
 function valid_dir {
 	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
 		echo "Y" 
@@ -18,6 +19,7 @@ function valid_dir {
 	fi
 }
 
+# Returns Y or N to indicate if file exists
 function valid_file {
 	if [ ${#1} -gt 0 ] && [ -f "$1" ]; then  
 		echo "Y" 
@@ -87,7 +89,7 @@ if [ "$#" == 2 ] && [ "$2" == "-x" ]; then
 fi
 
 if [ "$BLJ_PROJ" == "$PWD" ]; then
-    echo "CANNOT RUN-ALL FROM $BLJ_PROJ"
+    echo "Cannot execute blj_test from $BLJ_PROJ"
     exit 1
 fi
 

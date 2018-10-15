@@ -12,6 +12,4 @@ export BLJ="$(dirname $BLJ_SCRIPT)"
 export PATH=$BLJ_SCRIPT:$PATH
 export BLJ_GRP_OWNER=
 export BLJ_PROJ=$BLJ/pipelines
-
 alias blj_go=". $BLJ_SCRIPT/blj_go"
-#alias blj_git=". $BLJ_SCRIPT/blj_git"

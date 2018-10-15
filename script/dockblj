@@ -26,7 +26,7 @@ function valid_file {
 	fi
 }
 
-# Returns Y or N to indicate if file exists
+# Returns Y or N to indicate if directory exists
 function valid_dir {
 	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
 		echo Y
@@ -35,8 +35,10 @@ function valid_dir {
 	fi
 }
 
-[ ${#BLJ} -eq 0 ] && echo "$BLJ undefined" && exit 1
-[ ${#BLJ_PROJ} -eq 0 ] && echo "$BLJ_PROJ undefined" && exit 1
+
+[ "$(valid_dir $BLJ_PROJ)" == "N" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
+[ "$(valid_dir $BLJ)" == "N" ]  && echo "Exit program - Required bash variable BLJ undefined" && exit 1
+[ "$#" -lt 2 ] && echo "Exit script - Missing required script parameters: config & inputDirPaths" && exit 1
 
 FROM_DOCKER="N"
 BLJ_CONFIG=""
@@ -46,12 +48,6 @@ config=""
 inputDirPaths=""
 metadataFilePath=""
 trimPrimersFilePath=""
-
-# Require at least parameters: config & inputDirPaths
-if [ ${#1} -lt 2 ]; then
-	echo "Exit script - Missing required script parameters: config & inputDirPaths"
-	exit 1
-fi
 
 # Validate all script params are valid
 for arg in "$@"; do
@@ -89,18 +85,6 @@ for arg in "$@"; do
 		exit 1
 	fi
 done
-
-
-# Create pipeline directory on host system if on 1st run
-# Create $BLJ_PROJ directory if missing and parent directory exists
-if [ FROM_DOCKER == "N" ] && [ "$(valid_dir $BLJ_PROJ)" == "N" ]; then
-    projDir="$(dirname $BLJ_PROJ)"
-    parentDir="$(dirname $projDir)"
-    topDir="$(dirname $parentDir)"
-    [ "$(valid_dir $topDir)" == "Y" ] && [ "$(valid_dir $parentDir)" == "N" ] && mkdir $parentDir
-	[ "$(valid_dir $parentDir)" == "Y" ] && mkdir $BLJ_PROJ
-	[ "$(valid_dir $parentDir)" == "N" ] && echo "Exit script - Unable to make directory: $BLJ_PROJ" && exit 1
-fi
 
 BLJ_OPTIONS="$BLJ_OPTIONS -b $BLJ_PROJ"
 
