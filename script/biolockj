@@ -50,22 +50,23 @@ if [ "$#" -eq 1 ]; then
         exit 0
     fi
 fi
-	config=
-	params=""
+
+config=""
+params=""
 if [ "$#" -eq 1 ]; then
 	config=$1
 elif [ "$#" -eq 2 ]; then
 	[ "$1" != "-r" ] && echo "Exit program - Invalid command switch:   $1" && exit 1
 	echo "Restarting failed pipeline"
  	config=$2
-	params="$1
+	params=$1
 elif [ "$#" -eq 3 ]; then
 	[ "$1" != "-p" ] && [ "$1" != "--password" ] && echo "Exit program - Invalid  BioLockJ parameters: $1 $2" && exit 1   
 	echo "Encrypt & save email password to Config property mail.encryptedPassword in $3"
 	config=$3
 	params="$1 $2"   
 else
-    echo "Exit program - Too many script parameters - max of 3 parameters are allowed" && exit 1
+    echo "Exit program - Too many script parameters: max of 3 parameters are allowed" && exit 1
 fi
 
 echo "BioLockJ JAR: $BLJ_JAR"
@@ -73,3 +74,4 @@ echo "BioLockJ Config:  $config"
 [ "$(valid_file $config)" == "N" ] && echo "Exit program - $config not found" && exit 1
 nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &
 [ "$?" != "0" ] && echo "Exit program - Unable to execute $BLJ_JAR" && exit 1
+echo "Executing command [ nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 & ]"
