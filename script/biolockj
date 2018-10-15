@@ -7,10 +7,11 @@
 ##  Pass optional param "-r" as 1st param to restart failed pipeline    ##
 ##                                                                      ##
 ##  Pass admin email password as 1st param to encode and store in the   ##
-##  BioLockJ Config file (1st param) instead of running a pipeline      ##
+##  BioLockJ Config file (2nd param) instead of running a pipeline      ##
 ##                                                                      ##
 ##########################################################################
 
+# Returns Y or N to indicate if directory exists
 function valid_dir {
 	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
 		echo "Y" 
@@ -19,7 +20,7 @@ function valid_dir {
 	fi
 }
 
-
+# Returns Y or N to indicate if file exists
 function valid_file {
 	if [ ${#1} -gt 0 ] && [ -f "$1" ]; then  
 		echo "Y" 
@@ -28,115 +29,49 @@ function valid_file {
 	fi
 }
 
+BLJ_JAR=$BLJ/dist/BioLockJ.jar
 
-[ ${#BLJ_PROJ} -eq 0 ] && echo "$BLJ_PROJ undefined" && exit 1
+[ "$(valid_dir $BLJ_PROJ)" == "N" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
+[ "$(valid_dir $BLJ)" == "N" ]  && echo "Exit program - Required bash variable BLJ undefined" && exit 1
+[ "$(valid_file $BLJ_JAR)" == "N" ] && echo "Exit program - $BLJ/dist/BioLockJ.jar not found" && exit 1
+[ "$#" -eq 0 ] && echo "Exit program - Required configuration file parameter missing" && exit 1
 
-SPACER="============================================================"
-GAP="    "
-# If the jar & scripts is deployed outside of the standard $BLJ directory, $DIR can be used to set $BLJ_JAR instead.
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BLJ_DIR="$(dirname $DIR)"
-BLJ_JAR=$BLJ_DIR/dist/BioLockJ.jar
-
-if [ "$(valid_file $BLJ_JAR)" == "N" ]; then
-    echo "$GAP Jar not found: $BLJ_JAR"
-    exit 1
-fi
-
-# Create pipelines directory if on 1st run
-# Create $BLJ_PROJ directory if parent directory exists
-if [ "$(valid_dir $BLJ_PROJ)" == "N" ]; then
-    projDir="$(dirname $BLJ_PROJ)"
-    parentDir="$(dirname $projDir)"
-    topDir="$(dirname $parentDir)"
-    [ "$(valid_dir $topDir)" == "Y" ] && [ "$(valid_dir $parentDir)" == "N" ] && mkdir $parentDir
-	[ "$(valid_dir $parentDir)" == "Y" ] && mkdir $BLJ_PROJ
-	[ "$(valid_dir $parentDir)" == "N" ] && echo "Quit test~ Unable to make directory: $BLJ_PROJ" && exit 1
-fi
-
-if [ "$#" -eq 0 ]; then
-        echo "$GAP CANCEL EXECUTION - Must pass BioLockJ config file as parameter" 
-elif [ "$#" -eq 1 ]; then
+if [ "$#" -eq 1 ]; then
     if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
         echo "BioLockJ v1.0 - UNCC Fodor Lab July 2018"
         echo "usage: biolockj [-hr] [-p password] [<file>]"
         echo "Run BioLockJ using the Config: <file>"
         echo ""
-        echo "-b --basedir                  Pipeline parent directory "
+        echo "-b --basedir                  Pipeline parent directory"
         echo "-c --config                   BioLockJ Config file"
         echo "-h --help                     Show this help menu"
         echo "-p --password new_password    Encrypt new_password and save it to BioLockJ Config property mail.encryptedPassword"
         echo "-r --restart                  Restart existing pipeline "
         exit 0
     fi
-    
-    echo "$GAP $SPACER"
-	echo "$GAP BioLockJ JAR: $BLJ_JAR"
-    echo "$GAP BioLockJ Config File:  $1"
-    
-    if [ "$(valid_file $1)" == "N" ]; then
-        echo "$GAP $1 not found!"
-        echo "$GAP Exit Program"
-        echo "$GAP $SPACER" 
-        exit 1
-    fi
-	nohup java -jar $BLJ_JAR -b $BLJ_PROJ -c $1 >/dev/null 2>&1 &
-    exitCode=$?
-    if [ "$exitCode" != "0" ]; then
-        echo "$GAP ERROR - Unable to execute:  $BLJ_JAR"
-        exit 1
-    else
-        echo "$GAP BioLockJ started successfully!"
-    fi    
-elif [ "$#" -eq 2 ]; then
-
-    echo "$GAP $SPACER"
-	echo "$GAP BioLockJ JAR: $BLJ_JAR"
-	 if [ "$(valid_file $2)" == "N" ]; then
-        echo "$GAP $2 not found!"
-        echo "$GAP Exit Program"
-        echo "$GAP $SPACER" 
-        exit 1
-    fi
-
-	if [ "$1" == "-r" ]; then 
-    		echo "$GAP RESTART config:   $2"
-    else
-        echo "$GAP INVALID command switch:   $1"
-        echo "$GAP Exit Program"
-        echo "$GAP $SPACER" 
-        exit 1
-	fi
-
-    nohup java -jar $BLJ_JAR $1 -b $BLJ_PROJ -c $2 >/dev/null 2>&1  &
-    exitCode=$?
-    if [ "$exitCode" != "0" ]; then
-        echo "$GAP ERROR - Unable to execute $BLJ_JAR"
-        exit 1
-    else
-        echo "$GAP BioLockJ started successfully!"
-    fi  
-elif [ "$#" -eq 3 ]; then
-	echo "$GAP $SPACER"
-	echo "$GAP BioLockJ JAR: $BLJ_JAR"
-	if [ "$1" == "-p" ] || [ "$1" == "--password" ]; then    
-    		echo "$GAP Encrypting email password and saving to Config property mail.encryptedPassword"
-    		nohup java -jar $BLJ_JAR $1 $2 -b $BLJ_PROJ -c $3 >/dev/null 2>&1 &
-        exitCode=$?
-    else
-    		echo "Invalid parameters!"
-    		exit 1
-    fi 
-    if [ "$exitCode" != "0" ]; then
-        echo "$GAP ERROR - Unable to execute:  $BLJ_JAR"
-        exit 1
-    else
-        echo "$GAP BioLockJ started successfully!"
-    fi    
-elif [ "$#" -gt 3 ]; then
-	echo "$GAP $SPACER"
-	echo "$GAP BioLockJ JAR: $BLJ_JAR"
-    echo "$GAP CANCEL EXECUTION - Too many script parameters!  BioLockJ accepts a maximum of 3 parameters"
-    exit 1
 fi
-echo "$GAP $SPACER"
+
+config=""
+params=""
+if [ "$#" -eq 1 ]; then
+	config=$1
+elif [ "$#" -eq 2 ]; then
+	[ "$1" != "-r" ] && echo "Exit program - Invalid command switch:   $1" && exit 1
+	echo "Restarting failed pipeline"
+ 	config=$2
+	params=$1
+elif [ "$#" -eq 3 ]; then
+	[ "$1" != "-p" ] && [ "$1" != "--password" ] && echo "Exit program - Invalid  BioLockJ parameters: $1 $2" && exit 1   
+	echo "Encrypt & save email password to Config property mail.encryptedPassword in $3"
+	config=$3
+	params="$1 $2"   
+else
+    echo "Exit program - Too many script parameters: max of 3 parameters are allowed" && exit 1
+fi
+
+echo "BioLockJ JAR: $BLJ_JAR"
+echo "BioLockJ Config:  $config"
+[ "$(valid_file $config)" == "N" ] && echo "Exit program - $config not found" && exit 1
+nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &
+[ "$?" != "0" ] && echo "Exit program - Unable to execute $BLJ_JAR" && exit 1
+echo "Executing command [ nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 & ]"

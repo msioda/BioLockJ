@@ -72,13 +72,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final StringBuffer sb = new StringBuffer();
 		sb.append( buildGetModuleScriptDirFunction() + RETURN );
 		sb.append(
-				"source( file.path( " + R_FUNCTION_GET_MOD_SCRIPT_DIR + "(), \"" + R_FUNCTION_LIB + "\" ) )" + RETURN );
-		sb.append( "source( file.path( " + R_FUNCTION_GET_MOD_SCRIPT_DIR + "(), \"" + getModuleScriptName() + "\" ) )"
+				"source( file.path( dirname( " + R_FUNCTION_GET_MOD_SCRIPT + "() ), \"" + R_FUNCTION_LIB + "\" ) )" + RETURN );
+		sb.append( "source( file.path( dirname( " + R_FUNCTION_GET_MOD_SCRIPT + "() ), \"" + getModuleScriptName() + "\" ) )"
 				+ RETURN );
-		sb.append( "moduleScript = file.path( " + R_FUNCTION_GET_MOD_SCRIPT_DIR + "(), \"" + getMainScriptName()
-				+ "\" )" + RETURN );
-		sb.append( METHOD_RUN_PROGRAM + "( moduleScript )" + RETURN );
-		sb.append( METHOD_REPORT_STATUS + "( moduleScript )" + RETURN );
+		sb.append( METHOD_RUN_PROGRAM + "( " + R_FUNCTION_GET_MOD_SCRIPT + "() )" + RETURN );
+		sb.append( METHOD_REPORT_STATUS + "( " + R_FUNCTION_GET_MOD_SCRIPT + "() )" + RETURN );
 		if( Config.getBoolean( R_SAVE_R_DATA ) )
 		{
 			sb.append( "save.image( file.path( getModuleDir(), \"output\", \"" + getClass().getSimpleName() + R_DATA_EXT
@@ -425,7 +423,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Build R script function to return the R script parent directory: {@value #R_FUNCTION_GET_MOD_SCRIPT_DIR}
+	 * Build R script function to return the R script parent directory: {@value #R_FUNCTION_GET_MOD_SCRIPT}
 	 * @return R script function
 	 * @throws Exception if errors occur
 	 */
@@ -434,14 +432,14 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final StringBuffer sb = new StringBuffer();
 		sb.append( RETURN );
 		sb.append( "# Return script directory path" + RETURN );
-		sb.append( R_FUNCTION_GET_MOD_SCRIPT_DIR + " <- function() {" + RETURN );
+		sb.append( R_FUNCTION_GET_MOD_SCRIPT + " <- function() {" + RETURN );
 		sb.append( "   initial.options = commandArgs(trailingOnly = FALSE)" + RETURN );
 		sb.append( "   script.name <- sub(\"--file=\", \"\", initial.options[grep(\"--file=\", initial.options)])"
 				+ RETURN );
 		sb.append( "   if( length( script.name ) == 0 ) {" + RETURN );
 		sb.append( "       stop( \"BioLockJ_Lib.R is not interactive - use RScript to execute.\" )" + RETURN );
 		sb.append( "   }" + RETURN );
-		sb.append( "   return( dirname( script.name ) )" + RETURN );
+		sb.append( "   return( normalizePath( script.name ) )" + RETURN );
 		sb.append( "}" + RETURN );
 		return sb.toString();
 	}
@@ -522,10 +520,10 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public static final String R_EXT = ".R";
 
 	/**
-	 * R function to get module script dir path: {@value #R_FUNCTION_GET_MOD_SCRIPT_DIR}
+	 * R function to get module script file path: {@value #R_FUNCTION_GET_MOD_SCRIPT}
 	 */
-	public static String R_FUNCTION_GET_MOD_SCRIPT_DIR = "getModuleScriptDir";
-
+	public static String R_FUNCTION_GET_MOD_SCRIPT = "getModuleScript"; 
+	
 	/**
 	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}
 	 */

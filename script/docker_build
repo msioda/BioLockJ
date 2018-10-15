@@ -1,9 +1,11 @@
 #!/bin/bash
 ###########################################################################
 ##                                                                       ##
-##  Build $BLJ/dist/biolockj_v1.0.tar.gz & update docker hub images      ##
+##  Build all Docker images                                              ##
 ##                                                                       ##
 ###########################################################################
+
+# Returns Y or N to indicate if directory exists
 function valid_dir {
 	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
 		echo "Y" 
@@ -12,22 +14,10 @@ function valid_dir {
 	fi
 }
 
-function clearDock {
-	echo "Stop/remove all containers & remove old images..."
-	docker kill $(docker ps -q)
-	docker rm $(docker ps -aq)
-	docker rmi $(docker images -f "dangling=true" -q) 
-	echo "Verify all containers & old images are removed..."
-	docker images
-	docker container ls --all
-}
-
 BLJ_VERSION=biolockj_v1.0
 DOCKER_CLIENT=docker-18.06.0-ce.tgz
 
-if [ "$(valid_dir $BLJ/resources)" == "Y" ]  && [ "$(valid_dir $BLJ/resources/docker)" == "Y" ]; then
-	
-	#clearDock
+if [ "$(valid_dir $BLJ/resources/docker)" == "Y" ]; then
 	
 	echo "Build new module images..."
 	docker build --build-arg BLJ_DATE=$(date +%s) --build-arg BLJ_VERSION=$BLJ_VERSION --build-arg DOCKER_CLIENT=$DOCKER_CLIENT -t biolockj/manager $BLJ/resources/docker
@@ -40,8 +30,6 @@ if [ "$(valid_dir $BLJ/resources)" == "Y" ]  && [ "$(valid_dir $BLJ/resources/do
 	docker build -t biolockj/metaphlanclassifier $BLJ/resources/docker/classifier/wgs/MetaphlanClassifier
 	docker build -t biolockj/r_module $BLJ/resources/docker/R_Module
 
-	#clearDock
-	
 	echo "Deployment complete!"
 
 else

@@ -1,4 +1,6 @@
 /bin/
+BioLockJ.jar
+*.tar.gz
 /pipelines/*
 .DS_Store
 .classpath

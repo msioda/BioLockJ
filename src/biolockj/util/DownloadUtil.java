@@ -242,7 +242,7 @@ public final class DownloadUtil
 		{
 			if( mod instanceof R_Module )
 			{
-				writer.write( "source( file.path( " + R_Module.R_FUNCTION_GET_MOD_SCRIPT_DIR + "(), \""
+				writer.write( "source( file.path( dirname( " + R_Module.R_FUNCTION_GET_MOD_SCRIPT + "() ), \""
 						+ ( (R_Module) mod ).getPrimaryScript().getName() + "\" ) )" + RETURN );
 			}
 		}

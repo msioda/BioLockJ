@@ -1,0 +1,7 @@
+The $BLJ/resource/build.xml Ant script builds release jar & tar.gz files to this directory: $BLJ/dist.
+
+ * Ant target "compile-source" builds $BLJ/dist/BioLockJ.jar
+
+ * Ant target "buildRelease" builds $BLJ/dist/release_v1.0.tar.gz
+
+ * Ant target "buildDockerRelease" builds $BLJ/dist/biolockj_v1.0.tar.gz

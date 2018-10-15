@@ -1,15 +1,10 @@
 # Module script for: biolockj.module.r.BuildMdsPlots
 
-
-# Import vegan library for distance plot support:
-importLibs <- function() {
-   return( library( vegan, logical.return=TRUE ) )
-}
-
+# Import vegan library for distance plot support
 # Main function generates 3 MDS plots for each attribute at each level in report.taxonomyLevels
 main <- function() { 
    mdsAtts = getProperty( "rMds.reportFields", allAtts )
-   stopifnot( importLibs() )
+   importLibs( c( "vegan" ) )
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
       if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", otuLevel, ".log") ) )
       pdf( paste0( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_MDS.pdf" ) ) ) )

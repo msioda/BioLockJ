@@ -412,6 +412,11 @@ public class BioLockJ
 				name = name.substring( 0, name.length() - ext.length() );
 			}
 		}
+		
+		if( name.startsWith( BioLockJUtil.MASTER_PREFIX ) )
+		{
+			name = name.replace( BioLockJUtil.MASTER_PREFIX, "" );
+		}
 
 		Log.info( BioLockJ.class, "Set project name to: " + name );
 		return name;
