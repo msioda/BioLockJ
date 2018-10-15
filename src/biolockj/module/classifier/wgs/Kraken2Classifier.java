@@ -237,8 +237,16 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 
 		if( !getInputFiles().isEmpty() && getInputFiles().get( 0 ).getName().toLowerCase().endsWith( ".gz" ) )
 		{
-			Log.get( getClass() ).warn( "Setting: --gzip-compressed" );
-			switches.put( "--gzip-compressed", "" );
+			if( getDefaultSwitches().indexOf( "--bzip2-compressed " ) > -1 )
+			{
+				Log.get( getClass() ).warn( "Setting: --bzip2-compressed based on user input" );
+				switches.put( "--gzip-compressed", "" );
+			}
+			else
+			{
+				Log.get( getClass() ).warn( "Setting: --gzip-compressed" );
+				switches.put( "--gzip-compressed", "" );
+			}
 		}
 
 		return switches;
