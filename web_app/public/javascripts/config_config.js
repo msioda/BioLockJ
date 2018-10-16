@@ -1,11 +1,11 @@
 var currentConfig = {};//IMPORTANT: This variable holds all of the selected configuations
 
-class configO {//does currentConfig need to be an object
-  constructor() {
-    this.params = params;
-    this.methods = methods;
-  }
-}
+// class configO {//does currentConfig need to be an object
+//   constructor() {
+//     this.params = params;
+//     this.methods = methods;
+//   }
+// }
 
 // function configValidation(config){//did I use this?
 //   let formNames = [];
@@ -120,15 +120,85 @@ var sendConfigDataToForms = function(configObject, selectedModulesArray) {
 }; //end sendConfigDataToForms
 
 function validateConfig(){
+  // if (typeof(Worker) !== "undefined") {
+  //   // Yes! Web worker support!
+  // } else {
+  //   alert('Web workers not found, please use a web worker compatabile browser.  Validation cancelled');
+  //   return false;
+  //   }
   const configForm = document.getElementById('configForm');
-  const requiredIntial = ['input.dirPaths', 'report.taxonomyLevels', 'script.permissions', 'script.defaultHeader'];
+  const requiredParamIds = ['input.dirPaths', 'report.taxonomyLevels',
+  'script.permissions', 'script.defaultHeader'];
+  const requiredParamNames = ['Sequence input directory path',
+  'Taxonomy levels to report', 'Script permissions', 'Script default headers']
   const menuTabs = document.getElementsByClassName('tabcontent')
-  for (let reqIni of requiredIntial){
-    console.log(reqIni);
-    if (!(reqIni in currentConfig)){
 
-      console.log();
-      console.log(document.getElementById(reqIni).parentNode.parentNode);
+  function getParentDiv(nodeId){
+    let parentDiv;
+    var node = document.getElementById(nodeId);
+    let counter = 4;
+    while (parentDiv == undefined && counter > 0){
+      if (node.parentNode.tagName == 'DIV'){
+        parentDiv = node.parentNode;
+        return parentDiv;
+      }
+      if (counter === 0){
+        alert(`Check for developer bug found in getParentDiv: ${node}`)
+      }
+      node = node.parentNode;
+      counter--
+    }//end while
+  }//end getParentDiv
+
+  function getCurrentMenuTab(){//shows the currently viewed tab
+    const allMenuTabs = document.getElementsByClassName('tabcontent');
+    for (let i = 0; i < allMenuTabs.length; i++) {
+      if (allMenuTabs[i].style.display == 'block'){
+        return allMenuTabs[i];
+      }
+    }//end for forloop
+    alert('problem with getCurrentMenuTab')
+  };//end getCurrentMenuTab
+
+  function highlightRequiredParam(nodeId){
+    const target = document.getElementById(nodeId);
+    target.style.animation = 'highlightInput 1s ease 0s 20';//show animation
+  }//end highlightRequiredParam
+
+  function resetAnimation(nodeId){
+    const target = document.getElementById(nodeId);
+    if(typeof(Worker) !== "undefined") {
+        if(typeof(w) == "undefined") {
+            w = new Worker("resetAnimationWorker.js");
+        }
+        w.onmessage = function(event) {
+          console.log(event.data);
+          //magic for reseting css animation
+          target.style.webkitAnimation = 'none';
+          setTimeout(function() {
+              target.style.webkitAnimation = '';
+          }, 1);//end css reset magic
+        };
+    } else {
+        alert("Sorry, your browser does not support Web Workers...");
+    }
+  }
+
+  //document.getElementById('tt').style.border = '4em solid black';
+//var test = document.getElementById('input.dirPaths').parentNode
+  //First check: four minimum data for running BLJ:
+  //'input.dirPaths', 'report.taxonomyLevels', 'script.permissions', 'script.defaultHeader'
+  for (var r = 0; r < requiredParamIds.length; r++) {
+    //console.log(requiredParamIds[r]);
+    if (!(requiredParamIds[r] in currentConfig)){
+      resetAnimation(requiredParamIds[r]);
+      console.log(requiredParamIds[r]);
+      const currentMenuTab = getCurrentMenuTab();
+      console.log(currentMenuTab);
+      currentMenuTab.style.display = 'none';
+      getParentDiv(requiredParamIds[r]).style.display='block';
+      highlightRequiredParam(requiredParamIds[r]);
+      alert('Required information missing: '.concat(requiredParamNames[r]))//change this to modal later
       return false;
     }
   }//end for loop
@@ -197,14 +267,18 @@ function saveConfigParamsForm(event){
   const configFile = document.getElementById('project.configFile');
   if (configFile.value == ""){
     let now = new Date();
-    let c = now.toString().replace(' ', '_');
-    console.log(c);
+    let year = now.getYear() + 1900;
+    let month = now.getMonth() + 1;
+    let day = now.getDay();
+    let c = 'Untitled_BLJ_project_'.concat(year,'/',month,'/',day,);
+    //console.log(c);
     configFile.value = c;
   }
   const configParaForm = new FormData(configForm);
+  //console.log(configParaForm);
   let input = [], value = [];
   for(var pair of configParaForm.entries()) {
-    console.log(`${pair[0]} ${pair[1]}`);
+    //console.log(`input: ${pair[0]}, value: ${pair[1]}`);
     if (pair[1] != ''){
       input.push(pair[0]);
       value.push(pair[1]);
@@ -220,10 +294,12 @@ function saveConfigParamsForm(event){
     }
   modulesToCurrentConfig();
   localStorage.setItem(currentConfig['project.configFile'].toString(), JSON.stringify(currentConfig));
-  console.dir(currentConfig);
+  console.log('saved');
+  //console.dir(currentConfig);
 };//end saveConfigParams
 
 function modulesToCurrentConfig() {
+  //console.log('modules to current config');
   mods = document.getElementById('module').getElementsByTagName('li');
   selectedMods = [];
   for (var i = 0; i < mods.length; i++) {
@@ -235,40 +311,60 @@ function modulesToCurrentConfig() {
     currentConfig['modules'] = selectedMods;
   }else{delete currentConfig['modules']}
   localStorage.setItem(currentConfig['project.configFile'].toString(), JSON.stringify(currentConfig));
-};
+};//end modulesToCurrentConfig
 
+// NOTE: Something is broken here...
 //Function for creating downloadable config file
-(function() {
-  makeTextFile = function() {
-    var text = "";
-    textFile = null;
-    //add modules to config first
-    if (currentConfig["modules"] != null){
-      for (var i = 0; i < currentConfig["modules"].length; i++) {
-        text += '#BioModule '.concat(currentConfig["modules"][i],"\n");
-      }
-    };
-    //for non_module
-    for (var key in currentConfig) {
-      console.log(key);
-      if (currentConfig.hasOwnProperty(key)) { //only lets keys that are user inputed pass
-        if (key == "modules" || key == "project.configFile") {// skipping project.configFile and modules
-        } else if (key.toString() != "project.configFile" || key != "modules") { //project.configFile doesn't go inside the document
-          text += key.concat("=", currentConfig[key], "\n");
-        }
-      }
-    }
-    var data = new Blob([text], {
-      type: 'text/plain'
-    });
-    // If we are replacing a previously generated file we need to manually revoke the object URL to avoid memory leaks.
-    if (textFile !== null) {
-      window.URL.revokeObjectURL(textFile);
-    }
-    textFile = window.URL.createObjectURL(data);
-    return textFile;
-  };
-
+// (function() {
+//   makeTextFile = function() {
+//     var text = "";
+//     textFile = null;
+//     //add modules to config first
+//     if (currentConfig["modules"] != null){
+//       for (var i = 0; i < currentConfig["modules"].length; i++) {
+//         text += '#BioModule '.concat(currentConfig["modules"][i],"\n");
+//       }
+//     };
+//     //for non_module
+//     for (var key in currentConfig) {
+//       console.log('making download');
+//       console.log(key);
+//       if (currentConfig.hasOwnProperty(key)) { //only lets keys that are user inputed pass
+//         if (key == "modules" || key == "project.configFile") {// skipping project.configFile and modules
+//         } else if (key.toString() != "project.configFile" || key != "modules") { //project.configFile doesn't go inside the document
+//           text += key.concat("=", currentConfig[key], "\n");
+//         }
+//       }
+//     }
+//     var data = new Blob([text], {
+//       type: 'text/plain'
+//     });
+//     // If we are replacing a previously generated file we need to manually revoke the object URL to avoid memory leaks.
+//     if (textFile !== null) {
+//       window.URL.revokeObjectURL(textFile);
+//     }
+//     textFile = window.URL.createObjectURL(data);
+//     return textFile;
+//   }//end makeTextFile
+//
+//   //gets all buttons with create class
+//   var createDownload = document.getElementsByClassName('createDownload');
+//   for (var i = 0; i < createDownload.length; i++) {
+//     //console.log(createDownload[i]);
+//     createDownload[i].addEventListener('click', function() {
+//       //event.preventDefault()
+//       var links = document.getElementsByClassName('downloadlink');
+//       for (var a = 0; a < links.length; a++) {
+//         let link = links[a];
+//         console.log(links[a]);
+//         console.log('links');
+//         link['download'] = currentConfig["project.configFile"] + '.properties';
+//         link.href = makeTextFile();
+//         link.style.display = 'block';
+//         };
+//       }, false);
+//     };//end forloop for createDownload
+// })();
 
 function buildLaunchArgument(validConfig){
   partialLauchArgument = {};
@@ -318,24 +414,24 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
   });//end eventlistener
 };//end forloop
 
-//gets all buttons with create class
-var createDownload = document.getElementsByClassName('createDownload');
-for (var i = 0; i < createDownload.length; i++) {
-  createDownload[i].addEventListener('click', function() {
-    event.preventDefault()
-    var links = document.getElementsByClassName('downloadlink');
-    for (var a = 0; a < links.length; a++) {
-      let link = links[a];
-      link['download'] = currentConfig["project.configFile"] + '.properties';
-      link.href = makeTextFile();
-      link.style.display = 'block';
-      };
-    }, false);
-  };
-})();
-
 //for autosave
+(function () {
+  const configFormInputs = document.getElementById('configForm');
+  const configTexts = configFormInputs.getElementsByTagName('text');
+  const configSelects = configFormInputs.getElementsByTagName('select');
+  const configChecks = configFormInputs.getElementsByTagName('checkbox');
 
+  for (let inp of configTexts){
+  inp.addEventListener('change', saveConfigParamsForm, false);
+  console.log(inp);
+  }
 
-Array.from(document.getElementById('configForm').getElementsByTagName('input'))
-  .forEach(inp => inp.addEventListener('blur', saveConfigParamsForm()));
+  for (let inp of configSelects){
+  inp.addEventListener('change', saveConfigParamsForm, false)
+  }
+
+  for (let inp of configChecks){
+  inp.addEventListener('change', saveConfigParamsForm, false);
+  }
+
+})();
