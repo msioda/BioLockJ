@@ -14,7 +14,7 @@ function valid_dir {
 	fi
 }
 
-BLJ_VERSION=biolockj_v1.0
+BLJ_VERSION=v1.0
 DOCKER_CLIENT=docker-18.06.0-ce.tgz
 
 if [ "$(valid_dir $BLJ/resources/docker)" == "Y" ]; then
