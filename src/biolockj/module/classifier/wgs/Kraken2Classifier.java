@@ -103,7 +103,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-	 * This method generates the required bash functions: {@value #FUNCTION_TRANSLATE} and {@value #FUNCTION_KRAKEN}
+	 * This method generates the required bash function: {@value #FUNCTION_KRAKEN}
 	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
