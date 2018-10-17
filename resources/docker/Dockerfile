@@ -36,8 +36,8 @@ ARG BLJ_VERSION
 ARG BLJ_DATE
 ENV BLJ=/app/${BLJ_VERSION}
 ENV PATH=$PATH:$BLJ/dist
-ENV BLJ_TAR=${BLJ_VERSION}.tar.gz
-ENV BLJ_RELEASE_URL=https://github.com/msioda/BioLockJ/raw/master/dist/$BLJ_TAR
+ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tar.gz
+ENV BLJ_RELEASE_URL=https://github.com/msioda/BioLockJ/releases/download/${BLJ_VERSION}/$BLJ_TAR
 RUN echo ${BLJ_DATE} && \
 	mkdir $BLJ && \
 	cd $BLJ && \
