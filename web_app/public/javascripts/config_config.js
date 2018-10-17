@@ -127,10 +127,22 @@ function validateConfig(){
   //   return false;
   //   }
   const configForm = document.getElementById('configForm');
+  const requiredParams = new Map(Object.entries({
+    'input.dirPaths' : 'what is your sequence input directory path?',
+    'report.taxonomyLevels' : 'What taxonomy levels would you like in the report?',
+    'script.permissions' : 'what are the script permissions?',
+    'script.defaultHeader' : 'what are the script default headers?',
+
+
+  })
   const requiredParamIds = ['input.dirPaths', 'report.taxonomyLevels',
   'script.permissions', 'script.defaultHeader'];
-  const requiredParamNames = ['Sequence input directory path',
-  'Taxonomy levels to report', 'Script permissions', 'Script default headers']
+  const requiredParamMes = [
+  'what is your sequence input directory path?',
+  'What taxonomy levels would you like in the report?',
+  'what are the script permissions?',
+  'what are the script default headers?'
+  ]
   const menuTabs = document.getElementsByClassName('tabcontent')
 
   function getParentDiv(nodeId){
@@ -162,43 +174,33 @@ function validateConfig(){
 
   function highlightRequiredParam(nodeId){
     const target = document.getElementById(nodeId);
-    target.style.animation = 'highlightInput 1s ease 0s 20';//show animation
+    if (target.classList.contains('missingParameterOnValidation')){
+      target.classList.remove('missingParameterOnValidation');
+      void target.offsetWidth;
+      target.classList.add('missingParameterOnValidation');
+      console.log('already has');
+      console.log(target);
+      console.log(target.classList);
+    }else{
+      target.classList.add('missingParameterOnValidation');
+      console.log(target);
+      console.log(target.classList);
+    }
   }//end highlightRequiredParam
 
-  function resetAnimation(nodeId){
-    const target = document.getElementById(nodeId);
-    if(typeof(Worker) !== "undefined") {
-        if(typeof(w) == "undefined") {
-            w = new Worker("resetAnimationWorker.js");
-        }
-        w.onmessage = function(event) {
-          console.log(event.data);
-          //magic for reseting css animation
-          target.style.webkitAnimation = 'none';
-          setTimeout(function() {
-              target.style.webkitAnimation = '';
-          }, 1);//end css reset magic
-        };
-    } else {
-        alert("Sorry, your browser does not support Web Workers...");
-    }
-  }
-
-  //document.getElementById('tt').style.border = '4em solid black';
-//var test = document.getElementById('input.dirPaths').parentNode
   //First check: four minimum data for running BLJ:
   //'input.dirPaths', 'report.taxonomyLevels', 'script.permissions', 'script.defaultHeader'
-  for (var r = 0; r < requiredParamIds.length; r++) {
+  for (var r = 0; r < requiredParams.size; r++) {
     //console.log(requiredParamIds[r]);
     if (!(requiredParamIds[r] in currentConfig)){
-      resetAnimation(requiredParamIds[r]);
-      console.log(requiredParamIds[r]);
+      //resetAnimation(requiredParamIds[r]);
+      console.log(requiredParams);
       const currentMenuTab = getCurrentMenuTab();
       console.log(currentMenuTab);
       currentMenuTab.style.display = 'none';
       getParentDiv(requiredParamIds[r]).style.display='block';
+      alert('Required information missing: '.concat(requiredParamMes[r]))//change this to modal later
       highlightRequiredParam(requiredParamIds[r]);
-      alert('Required information missing: '.concat(requiredParamNames[r]))//change this to modal later
       return false;
     }
   }//end for loop

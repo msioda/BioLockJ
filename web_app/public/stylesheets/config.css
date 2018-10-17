@@ -1,4 +1,18 @@
 /* colors found at http://advancement.uncc.edu/sites/advancement.uncc.edu/files/media/identity-standards-guide.pdf */
+
+/* for adding blinking to validation */
+@keyframes highlightInput {
+  from {
+    border-style: solid;
+    border-width: thin;
+    border-color: red;}
+  to {
+    border-style: solid;
+    border-width: medium;
+    border-color: yellow;}
+    /* background-color: yellow;} */
+  }
+
 /* This block is for the nav-bar */
 .nav-bar {
     overflow: hidden;
@@ -173,4 +187,8 @@ div#moduleInfoDiv {
   display: initial;
   /*position: fixed;*/
   width: inherit;
+}
+
+.missingParameterOnValidation{
+  animation: highlightInput 1s ease 0s 20;
 }
