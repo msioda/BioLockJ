@@ -134,15 +134,7 @@ function validateConfig(){
     'script.defaultHeader' : 'what are the script default headers?',
 
 
-  })
-  const requiredParamIds = ['input.dirPaths', 'report.taxonomyLevels',
-  'script.permissions', 'script.defaultHeader'];
-  const requiredParamMes = [
-  'what is your sequence input directory path?',
-  'What taxonomy levels would you like in the report?',
-  'what are the script permissions?',
-  'what are the script default headers?'
-  ]
+  }));
   const menuTabs = document.getElementsByClassName('tabcontent')
 
   function getParentDiv(nodeId){
@@ -190,17 +182,17 @@ function validateConfig(){
 
   //First check: four minimum data for running BLJ:
   //'input.dirPaths', 'report.taxonomyLevels', 'script.permissions', 'script.defaultHeader'
-  for (var r = 0; r < requiredParams.size; r++) {
-    //console.log(requiredParamIds[r]);
-    if (!(requiredParamIds[r] in currentConfig)){
+  for (let para of requiredParams.keys()){
+    console.log(para);
+    if (!(para in currentConfig)){
       //resetAnimation(requiredParamIds[r]);
-      console.log(requiredParams);
+      console.log(para);
       const currentMenuTab = getCurrentMenuTab();
       console.log(currentMenuTab);
       currentMenuTab.style.display = 'none';
-      getParentDiv(requiredParamIds[r]).style.display='block';
-      alert('Required information missing: '.concat(requiredParamMes[r]))//change this to modal later
-      highlightRequiredParam(requiredParamIds[r]);
+      getParentDiv(para).style.display='block';
+      alert('Required information missing: '.concat(requiredParams.get(para)))//change this to modal later
+      highlightRequiredParam(para);
       return false;
     }
   }//end for loop
