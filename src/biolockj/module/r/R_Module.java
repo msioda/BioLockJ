@@ -522,7 +522,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	/**
 	 * R function to get module script file path: {@value #R_FUNCTION_GET_MOD_SCRIPT}
 	 */
-	public static String R_FUNCTION_GET_MOD_SCRIPT = "getModuleScript"; 
+	public static final String R_FUNCTION_GET_MOD_SCRIPT = "getModuleScript"; 
 	
 	/**
 	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}

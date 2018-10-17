@@ -205,7 +205,7 @@ public final class DownloadUtil
 	 * 
 	 * @param module R_Module
 	 * @return REGEX to scp specific file estensions
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	protected static String getExts( final R_Module module ) throws Exception
 	{
