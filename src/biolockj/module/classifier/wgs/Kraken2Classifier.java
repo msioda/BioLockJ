@@ -28,18 +28,16 @@ import biolockj.util.SeqUtil;
  * defined in the online manual: <a href="http://ccb.jhu.edu/software/kraken/MANUAL.html" target=
  * "_top">http://ccb.jhu.edu/software/kraken/MANUAL.html</a>
  */
-public class KrakenClassifier extends ClassifierModuleImpl implements ClassifierModule
+public class Kraken2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {
 	/**
-	 * Build bash script lines to classify unpaired WGS reads with Kraken. The inner list contains 2 bash script lines
+	 * Build bash script lines to classify unpaired WGS reads with Kraken2. The inner list contains 1 bash script line
 	 * used to classify 1 sample.
 	 * <p>
 	 * Example lines:
 	 * <ol>
-	 * <li>kraken --fasta-input --only-classified-output --threads 8 --db /database/kraken --output
-	 * ./temp/sample42_kraken.txt ./input/sample42.fasta<br>
-	 * <li>kraken-translate --db /database/kraken --mpa-format ./temp/sample42_kraken.txt &gt;
-	 * ./output/sample42_reported.tsv
+	 * <li>kraken2 --mpa-format --only-classified-output --threads 8 --db /database/kraken --output
+	 * ./output/sample42_reported.tsv ./input/sample42.fasta<br>
 	 * </ol>
 	 */
 	@Override
@@ -51,9 +49,8 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			final String fileId = SeqUtil.getSampleId( file.getName() );
 			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
 			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId + PROCESSED;
-			final ArrayList<String> lines = new ArrayList<>( 2 );
-			lines.add( FUNCTION_KRAKEN + " " + tempFile + " " + file.getAbsolutePath() );
-			lines.add( FUNCTION_TRANSLATE + " " + tempFile + " " + krakenOutput );
+			final ArrayList<String> lines = new ArrayList<>( 1 );
+			lines.add( FUNCTION_KRAKEN + " " + krakenOutput + " " + tempFile + " " + file.getAbsolutePath() );
 			data.add( lines );
 		}
 
@@ -61,15 +58,13 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	}
 
 	/**
-	 * Build bash script lines to classify paired WGS reads with Kraken. The inner list contains 2 bash script lines
+	 * Build bash script lines to classify paired WGS reads with Kraken. The inner list contains 1 bash script line
 	 * used to classify 1 sample (2 files: forward and reverse reads).
 	 * <p>
 	 * Example lines:
 	 * <ol>
-	 * <li>kraken --paired --fasta-input --only-classified-output --threads 8 --db /database/kraken --output
-	 * ./temp/sample42_kraken.txt ./input/sample42_R1.fasta ./input/sample42_R2.fasta<br>
-	 * <li>kraken-translate --db /database/kraken --mpa-format ./temp/sample42_kraken.txt &gt;
-	 * ./output/sample42_reported.tsv
+	 * <li>kraken --mpa-format --paired --fasta-input --only-classified-output --threads 8 --db /database/kraken --output
+	 * ./output/sample42_reported.tsv ./input/sample42_R1.fasta ./input/sample42_R2.fasta<br>	 * 
 	 * </ol>
 	 */
 	@Override
@@ -82,10 +77,9 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			final String fileId = SeqUtil.getSampleId( file.getName() );
 			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
 			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId + PROCESSED;
-			final ArrayList<String> lines = new ArrayList<>( 2 );
-			lines.add( FUNCTION_KRAKEN + " " + tempFile + " " + file.getAbsolutePath() + " "
+			final ArrayList<String> lines = new ArrayList<>( 1 );
+			lines.add( FUNCTION_KRAKEN + " " + krakenOutput + " " + tempFile + " " + file.getAbsolutePath() + " "
 					+ map.get( file ).getAbsolutePath() );
-			lines.add( FUNCTION_TRANSLATE + " " + tempFile + " " + krakenOutput );
 			data.add( lines );
 		}
 
@@ -114,13 +108,10 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final String params = "$1 $2" + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " $3": "" );
+		final String inFiles = "$3" + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " $4": "" );
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
-		lines.add( getClassifierExe() + getRuntimeParams() + "--output " + params );
-		lines.add( "}" );
-		lines.add( "function " + FUNCTION_TRANSLATE + "() {" );
-		lines.add( getClassifierExe() + "-translate --db " + getDB() + " --mpa-format $1 > $2" );
+		lines.add( getClassifierExe() + getRuntimeParams() + "--report $1 " + "--output $2 " + inFiles );
 		lines.add( "}" );
 		return lines;
 	}
@@ -171,6 +162,14 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			{
 				defaultSwitches.replaceAll( "--fastq-input", "" );
 			}
+			if( defaultSwitches.indexOf( "--use-names " ) > -1 )
+			{
+				defaultSwitches.replaceAll( "--use-names ", "" );
+			}
+			if( defaultSwitches.indexOf( "--use-mpa-style " ) > -1 )
+			{
+				defaultSwitches.replaceAll( "--use-mpa-style ", "" );
+			}
 			if( defaultSwitches.indexOf( "--threads " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--threads) found in property(" + EXE_CLASSIFIER_PARAMS
@@ -201,6 +200,11 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 				throw new Exception( "Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS
 						+ ")." );
 			}
+			if( defaultSwitches.indexOf( "--report " ) > -1 )
+			{
+				throw new Exception( "Invalid classifier option (--report) found in property(" + EXE_CLASSIFIER_PARAMS
+						+ "). BioLockJ hard codes this value based on Sample IDs found in: " + Config.INPUT_DIRS );
+			}
 		}
 
 		if( defaultSwitches == null )
@@ -221,9 +225,11 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	private Map<String, String> getHardCodedKrakenSwitches() throws Exception
 	{
 		final Map<String, String> switches = new HashMap<>();
+		switches.put( "--use-names", ""); //needed for output style expected by Kraken2Parser
+		switches.put( "--use-mpa-style", ""); //needed for output style expected by Kraken2Parser
 		switches.put( "--db", getDB() );
 		switches.put( "--threads", getNumThreads().toString() );
-		switches.put( getInputSwitch(), "" );
+//		switches.put( getInputSwitch(), "" );
 		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			switches.put( "--paired", "" );
@@ -248,21 +254,22 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 
 	/**
 	 * Set the input switch based reading a sample input file.
+	 * Kraken2 does this automatically.
 	 *
 	 * @return file type switch
 	 * @throws Exception
 	 */
-	private String getInputSwitch() throws Exception
-	{
-		if( SeqUtil.isFastA() )
-		{
-			return "--fasta-input";
-		}
-		else
-		{
-			return "--fastq-input";
-		}
-	}
+//	private String getInputSwitch() throws Exception
+//	{
+//		if( SeqUtil.isFastA() )
+//		{
+//			return "--fasta-input";
+//		}
+//		else
+//		{
+//			return "--fastq-input";
+//		}
+//	}
 
 	private String getRuntimeParams() throws Exception
 	{
@@ -285,21 +292,16 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	/**
 	 * Name of the kraken function used to assign taxonomy: {@value #FUNCTION_KRAKEN}
 	 */
-	protected static final String FUNCTION_KRAKEN = "runKraken";
-
-	/**
-	 * Name of the translate function used to convert mpa-format to standard format: {@value #FUNCTION_TRANSLATE}
-	 */
-	protected static final String FUNCTION_TRANSLATE = "translate";
+	protected static final String FUNCTION_KRAKEN = "runKraken2";
 
 	/**
 	 * {@link biolockj.Config} property must contain file path to Kraken kmer database directory:
 	 * {@value #KRAKEN_DATABASE}
 	 */
-	protected static final String KRAKEN_DATABASE = "kraken.db";
+	protected static final String KRAKEN_DATABASE = "kraken2.db";
 
 	/**
 	 * File suffix added by BioLockJ to kraken output files (before translation): {@value #KRAKEN_FILE}
 	 */
-	protected static final String KRAKEN_FILE = "_kraken_out.txt";
+	protected static final String KRAKEN_FILE = "_kraken2_out.txt";
 }
