@@ -14,7 +14,7 @@ function valid_dir {
 	fi
 }
 
-BLJ_VERSION=v1.0
+BLJ_VERSION=v0.6-beta
 DOCKER_CLIENT=docker-18.06.0-ce.tgz
 
 if [ "$(valid_dir $BLJ/resources/docker)" == "Y" ]; then
@@ -29,7 +29,6 @@ if [ "$(valid_dir $BLJ/resources/docker)" == "Y" ]; then
 	docker build -t biolockj/krakenclassifier $BLJ/resources/docker/classifier/wgs/KrakenClassifier
 	docker build -t biolockj/metaphlanclassifier $BLJ/resources/docker/classifier/wgs/MetaphlanClassifier
 	docker build -t biolockj/r_module $BLJ/resources/docker/R_Module
-
 	echo "Deployment complete!"
 
 else

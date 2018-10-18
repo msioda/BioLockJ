@@ -84,10 +84,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) && !RuntimeParamUtil.isDockerMode() )
 		{
 			getVsearchParams();
-			if( !BashScriptBuilder.clusterModuleExists( Config.getExe( EXE_VSEARCH ) ) )
-			{
-				Config.requireExistingFile( EXE_VSEARCH );
-			}
+			Config.getExe( EXE_VSEARCH );
 		}
 	}
 
