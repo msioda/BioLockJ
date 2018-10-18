@@ -200,7 +200,7 @@ public class Properties extends java.util.Properties
 		if( RuntimeParamUtil.isDockerMode()
 				&& !defaultConfigFiles.contains( Config.getExistingFileObject( DOCKER_CONFIG_PATH ) ) )
 		{
-			// Log.info( Properties.class, "Import Docker Config: " + DOCKER_CONFIG_PATH );
+			Log.info( Properties.class, "Import Docker Config: " + DOCKER_CONFIG_PATH );
 			return Config.getExistingFileObject( DOCKER_CONFIG_PATH );
 		}
 
@@ -235,7 +235,7 @@ public class Properties extends java.util.Properties
 	 * Path to Docker Config file: {@value #DOCKER_CONFIG_PATH}<br>
 	 * Sets Docker properties as the default config.
 	 */
-	protected static final String DOCKER_CONFIG_PATH = "/app/biolockj_v1.0/resources/config/default/docker.properties";
+	protected static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";
 
 	private static File configFile = null;
 

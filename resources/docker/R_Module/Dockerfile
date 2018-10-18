@@ -17,7 +17,9 @@ RUN apt-get update && \
 RUN Rscript -e "install.packages('Kendall', dependencies=TRUE, repos = 'http://cran.us.r-project.org')" && \
 	Rscript -e "install.packages('coin', dependencies=TRUE, repos = 'http://cran.us.r-project.org')" && \
 	Rscript -e "install.packages('vegan', dependencies=TRUE, repos = 'http://cran.us.r-project.org')" && \
-	Rscript -e "install.packages('ggpubr', dependencies=TRUE, repos = 'http://cran.us.r-project.org')"
+	Rscript -e "install.packages('ggpubr', dependencies=TRUE, repos = 'http://cran.us.r-project.org')" && \
+	Rscript -e "install.packages('properties', dependencies=TRUE, repos = 'http://cran.us.r-project.org')" && \
+	Rscript -e "install.packages('stringr', dependencies=TRUE, repos = 'http://cran.us.r-project.org')"
 
 #4.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \

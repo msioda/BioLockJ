@@ -44,7 +44,7 @@
 	
 
 	<target name="standard-build" depends="jar">
-		<chmod type="file" perm="777">		
+		<chmod type="file" perm="770">		
 			<fileset dir="dist" includes="**" />
 			<fileset dir="script" includes="**" />
 		</chmod>
@@ -63,42 +63,24 @@
 		</javadoc>
 	</target>
 	
-	<target name="remove_release" depends="standard-build">
-		<delete file="dist/release_v1.0.tar.gz"/>
+	<target name="remove_tar" depends="standard-build">
+		<delete file="dist/biolockj_v0.6-beta.tar.gz"/>
 	</target>	
 	
-	<target name="remove_docker" >
-			<delete file="dist/biolockj_v1.0.tar.gz"/>
-	</target>
-	
-	<target name="deploy" depends="remove_release">
-		<tar compression="gzip" destfile="dist/release_v1.0.tar.gz">
-			<tarfileset dir="." filemode="777">
+	<target name="deploy" depends="remove_tar">
+		<tar compression="gzip" destfile="dist/biolockj_v0.6-beta.tar.gz">
+			<tarfileset dir="." filemode="770">
 				<exclude name="bin/**" />
+				<exclude name="dist/*.tar.gz" /> 
 				<exclude name=".*" /> 
-				<exclude name="_*.yml" /> 
+				<exclude name="*.yml" /> 
 				<exclude name="*.md" /> 
 			</tarfileset>
 		</tar>	
 	</target>
 	
-	<target name="dockerDeploy" depends="remove_docker">
-			<tar compression="gzip" destfile="dist/biolockj_v1.0.tar.gz">
-				<tarfileset dir="." filemode="777">
-					<include name="dist/*" />
-					<include name="resources/config/default/*" /> 
-					<include name="resources/R/*" /> 
-					<include name="script/*" /> 
-				</tarfileset>
-			</tar>	
-		</target>
-	
 	<target name="buildRelease" depends="deploy">
-		<chmod file="dist/release_v1.0.tar.gz" perm="777"/>		
-	</target>
-	
-	<target name="buildDockerRelease" depends="dockerDeploy">
-		<chmod file="dist/biolockj_v1.0.tar.gz" perm="777"/>		
+		<chmod file="dist/biolockj_v0.6-beta.tar.gz" perm="770"/>		
 	</target>
 	
 </project>

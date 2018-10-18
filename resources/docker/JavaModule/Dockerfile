@@ -26,17 +26,17 @@ RUN apt-get upgrade -y && \
 #4.) ================= Install BioLockJ =================
 ARG BLJ_VERSION
 ARG BLJ_DATE
-ENV BLJ=/app/${BLJ_VERSION}
-ENV BLJ_TAR=${BLJ_VERSION}.tar.gz
+ENV BLJ=/app/biolockj
+ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tar.gz
 ENV BLJ_RELEASE_URL=https://github.com/msioda/BioLockJ/releases/download/${BLJ_VERSION}/$BLJ_TAR
 RUN echo ${BLJ_DATE} && \
 	mkdir $BLJ && \
 	cd $BLJ && \
 	wget $BLJ_RELEASE_URL && \
 	tar -xzf $BLJ_TAR && \
-	chmod -R 777 $BLJ && \
-	rm -f $BLJ_TAR
-
+	chmod -R 770 $BLJ && \
+	rm -f $BLJ_TAR && rm -rf $BLJ/[slip]* && rm -rf $BLJ/docs && rm -rf $BLJ/resources/[blid]*
+	
 #5.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \

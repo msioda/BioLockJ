@@ -114,7 +114,7 @@ public class BioModuleFactory
 		}
 
 		final BioModule firstSeqProcMod = getFirstSeqProcessingModule( bioModules );
-		if( firstSeqProcMod.getClass().getName().contains( "qiime" ) )
+		if( firstSeqProcMod != null && firstSeqProcMod.getClass().getName().contains( "qiime" ) )
 		{
 			for( final File file: SeqUtil.getPipelineInputFiles() )
 			{
@@ -299,6 +299,7 @@ public class BioModuleFactory
 			}
 		}
 
+		info( "No sequence processing BioModules found" );
 		return null;
 	}
 

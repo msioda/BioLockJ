@@ -34,8 +34,7 @@ RUN cd /tmp && mkdir -p /usr/local/bin && \
 #5.) ================= Install BioLockJ =================
 ARG BLJ_VERSION
 ARG BLJ_DATE
-ENV BLJ=/app/${BLJ_VERSION}
-ENV PATH=$PATH:$BLJ/dist
+ENV BLJ=/app/biolockj
 ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tar.gz
 ENV BLJ_RELEASE_URL=https://github.com/msioda/BioLockJ/releases/download/${BLJ_VERSION}/$BLJ_TAR
 RUN echo ${BLJ_DATE} && \
@@ -43,8 +42,8 @@ RUN echo ${BLJ_DATE} && \
 	cd $BLJ && \
 	wget $BLJ_RELEASE_URL && \
 	tar -xzf $BLJ_TAR && \
-	chmod -R 777 $BLJ && \
-	rm -f $BLJ_TAR
+	chmod -R 770 $BLJ && \
+	rm -f $BLJ_TAR && rm -rf $BLJ/[slip]* && rm -rf $BLJ/docs && rm -rf $BLJ/resources/[blid]*
 
 #6.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \

@@ -145,22 +145,22 @@ echo "BLJ_OPTIONS = $BLJ_OPTIONS"
 echo "------------------------------------------------------------"
 
 if [ ${#metadataFilePath} -gt 0 ] && [ ${#trimPrimersFilePath} -gt 0 ]; then
-	docker run --name manager -p 6000:6000 -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
+	docker run -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $BLJ_PROJ:/pipeline:delegated -v $CONFIG_DIR:/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta -v $trimPrimersFilePath:/primer \
 		--rm biolockj/manager
 elif [ ${#metadataFilePath} -gt 0 ]; then	
-	docker run --name manager -p 6000:6000 -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
+	docker run -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $BLJ_PROJ:/pipeline:delegated -v $CONFIG_DIR:/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta \
 		--rm biolockj/manager 
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then	
-	docker run --name manager -p 6000:6000 -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
+	docker run -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $BLJ_PROJ:/pipeline:delegated -v $CONFIG_DIR:/config -v $inputDirPaths:/input \
 		-v $trimPrimersFilePath:/primer \
 		--rm biolockj/manager 
 else
-	docker run --name manager -p 6000:6000 -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
+	docker run -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $BLJ_PROJ:/pipeline:delegated -v $CONFIG_DIR:/config -v $inputDirPaths:/input \
 		--rm biolockj/manager 
 fi
