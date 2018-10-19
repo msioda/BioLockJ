@@ -175,11 +175,11 @@ For fastq, typically “@”.)<h5></p>
       <p>Set the Demultiplexer strategy. If using barcodes, they must be provided in the
         metadata.filePath with in column name defined by metadata.barcodeColumn. This is only used by the Demultiplexer module:
         <select class="" id="demux.strategy" name="demux.strategy">
-          <option selected default value="">Click for options</option>
-          <option value="barcode_in_header">Barcode is in header</option>
-          <option value="barcode_in_seq">Barcode is in sequence</option>
-          <option value="id_in_header">Sequence ID is in header</option>
-          <option value="do_not_demux.">Do not demultiplex</option>
+          <!-- <option selected value="">Click for options</option> -->
+          <option value="barcode_in_header">Barcode in header</option>
+          <option value="barcode_in_seq">Barcode in sequence</option>
+          <option value="id_in_header">Sequence ID in header</option>
+          <option selected default value="do_not_demux.">N/A</option>
         </select></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -242,7 +242,6 @@ For fastq, typically “@”.)<h5></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
   </div>
 
   <div id="scriptTab" class="tabcontent">
@@ -297,7 +296,7 @@ For fastq, typically “@”.)<h5></p>
         <input type="number" min='0' id="report.minOtuThreshold" name="report.minOtuThreshold">
       <!--  <p>Delimiter to sepearte genus and species:<br>
         <input type="text" name="emptySpaceDelim"><br></p>-->
-      <p>Taxonomic levels included in report:<br>
+      <p id='report.taxonomyLevels'>Taxonomic levels included in report:<br>
         <input type="checkbox" name="report.taxonomyLevels" value="domain">Domain<br>
         <input type="checkbox" name="report.taxonomyLevels" value="phylum">Phylum<br>
         <input type="checkbox" name="report.taxonomyLevels" value="class">Class<br>
@@ -386,14 +385,14 @@ For fastq, typically “@”.)<h5></p>
       <p>Sets R plot pch parameter for PDF report:
         <input type='text' id="r.pch" name="r.pch"></p>
       <p>Sets PDF report plot label maximum width
-        <input type="text" id="r.plotWidth" name="r.plotWidth" value=""></p>
+        <input type="text" id="r.plotWidth" min="1" name="r.plotWidth" value=""></p>
       <p>Sets p-value cutoff used to assign label r.colorHighlight
         <input type="text" id="r.pvalCutoff" name="r.pvalCutoff" value="">
       </p>
       <p>Format of the pvalue used in R sprintf() function
         <input type="text" id="r.pValFormat" name="r.pValFormat" value=""></p>
       <p>Rare OTU threshold: (If > 1, R will filter OTUs below value provided. If < 1, R will interperate the value as a percentage and discard OTUs not found in at least that percentage of samples)
-        <input type="number" min='0' id="r.rareOtuThreshold" name="r.rareOtuThreshold" value=""></p>
+        <input type="number" min='1' id="r.rareOtuThreshold" name="r.rareOtuThreshold" value=""></p>
       <p>Override field used to explicitly list metadata columns to report in the R scripts. If left undefined, all columns are reported.
       <input type="text" id="r.reportFields" name="r.reportFields" value=""></p>
       <p>Save r data? (If Y, all R script generating BioModules will save R Session data to the module output directory to a file using the extension ".RData")
@@ -403,7 +402,7 @@ For fastq, typically “@”.)<h5></p>
           <option value="N"> No</option>
         </select></p>
       <p># minutes before R Script times out:
-        <input type="number" min='0' id="r.timeout" name="r.timeout"><br>
+        <input type="number" min='1' id="r.timeout" name="r.timeout"><br>
       </p>
       <p>Number of MDS axis to plot:
       <input type="number" min="0" id="rMds.numAxis" name="rMds.numAxis" value=""> </p>
@@ -560,7 +559,9 @@ For fastq, typically “@”.)<h5></p>
     <!--<path d="M70,30 L80,30  M75,30 L75,35 " fill="none" stroke="rgb(0,112,60)" stroke-width="2"/>-->
   </svg>
   <span class='hidden' id='hackForDownload'></span>
+  <!-- <button form='configForm' type="submit" name="button" class='hidden'></button> -->
 </div>
 
 <script type="text/javascript" src="./javascripts/config_menus.js"></script>
 <script type="text/javascript" src="./javascripts/config_config.js"></script>
+<!-- <script type="text/javascript" src="resetAnimationWorker.js"></script> -->

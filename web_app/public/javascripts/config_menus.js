@@ -107,19 +107,19 @@ function parseBljModuleJavaClass(text){//gets text java documentation from Java 
 }//end parseBljModuleJavaClass
 
 //section for module related functions
-function modulesToCurrentConfig() {
-  mods = document.getElementById('module').getElementsByTagName('li');
-  selectedMods = [];
-  for (var i = 0; i < mods.length; i++) {
-    if (mods[i].classList.contains('modChoosen') && mods[i].disabled != true) {
-      selectedMods.push( mods[i].innerHTML);
-    };
-  };
-  if (selectedMods.length > 0) {
-    currentConfig['modules'] = selectedMods;
-  }else{delete currentConfig['modules']}
-  localStorage.setItem(currentConfig['project.configFile'].toString(), JSON.stringify(currentConfig));
-};
+// function modulesToCurrentConfig() {
+//   mods = document.getElementById('module').getElementsByTagName('li');
+//   selectedMods = [];
+//   for (var i = 0; i < mods.length; i++) {
+//     if (mods[i].classList.contains('modChoosen') && mods[i].disabled != true) {
+//       selectedMods.push( mods[i].innerHTML);
+//     };
+//   };
+//   if (selectedMods.length > 0) {
+//     currentConfig['modules'] = selectedMods;
+//   }else{delete currentConfig['modules']}
+//   localStorage.setItem(currentConfig['project.configFile'].toString(), JSON.stringify(currentConfig));
+// };
 
 /*This function object will be used to keep track of how many of each moduleClass is chosen
 modsToDisable will be one of the _____ModChoosen*/
@@ -236,23 +236,24 @@ function dropped(evt) {//function for dropping dragged modules
   evt.target.innerHTML = data.html;
   evt.target.classList = data.classes;
   evt.target.info = data.info;
+  saveConfigParamsForm();
 }
-
-/* the following block of code adds an eventlistener with two functions to the next
-tab tabButtons one for saving, and one for jumping to the next tab */
-var tabButtons = Array.from(document.getElementsByClassName("nextTab"));
-for (var t = 0; t < tabButtons.length; t++) {
-  var tabs = Array.from(document.getElementsByClassName("tabcontent"));
-  //eventlistener for moving to next tabName
-  tabButtons[t].tabNum = t;
-  tabButtons[t].addEventListener("click", function() {
-      //saveTab(this.parentNode.id);
-      //openTab(event, tabs[this.tabNum + 1].getAttribute("id"));
-    }, {
-      once: false
-    } //end of eventlistener
-  ) //end of nextTab eventlistener
-}; //end tabs for-loop
+// NOTE: I think this block is no longer in use
+// /* the following block of code adds an eventlistener with two functions to the next
+// tab tabButtons one for saving, and one for jumping to the next tab */
+// var tabButtons = Array.from(document.getElementsByClassName("nextTab"));
+// for (var t = 0; t < tabButtons.length; t++) {
+//   var tabs = Array.from(document.getElementsByClassName("tabcontent"));
+//   //eventlistener for moving to next tabName
+//   tabButtons[t].tabNum = t;
+//   tabButtons[t].addEventListener("click", function() {
+//       //saveTab(this.parentNode.id);
+//       //openTab(event, tabs[this.tabNum + 1].getAttribute("id"));
+//     }, {
+//       once: false
+//     } //end of eventlistener
+//   ) //end of nextTab eventlistener
+// }; //end tabs for-loop
 
 //list of modules with their java classes and their javascript classes
 //has the format of nested array, with the first item of the nested array being the java class
@@ -413,6 +414,7 @@ function runModuleFunctions() {//large function to build module li and counters
         target.classList.add("modChoosen");
         }
     }
+    saveConfigParamsForm();
   };// end toggleSelectModule
 
   function makeModuleLi(link, classes){

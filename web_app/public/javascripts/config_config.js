@@ -132,10 +132,28 @@ function validateConfig(){
     'report.taxonomyLevels' : 'What taxonomy levels would you like in the report?',
     'script.permissions' : 'what are the script permissions?',
     'script.defaultHeader' : 'what are the script default headers?',
+    'demux.strategy' : 'What demultiplexing statagy do you want to use?',
+    'project.env' : 'In which enviroment do you wish to run this project?',
+
 
 
   }));
-  const menuTabs = document.getElementsByClassName('tabcontent')
+
+  const reqForR = new Map(Object.entries({//R module dependencies
+    'r.colorBase' : 'Please choose your R plot base color.',
+    'r.colorHighlight' : 'Please choose your R plot highlight color.',
+    'r.colorPalette' : 'Please choose your R plot color palette.',
+    'r.colorPoint' : 'Please choose your R plot point color.',
+    'r.pch' : 'Please choose your R point size.',
+    'r.plotWidth' : 'Please choose your R plot width (positive integer).',
+    'r.pvalCutoff' : 'Please choose your p-value cut off (alpha) for your R statistics.',
+    'r.pValFormat' : 'Please choose your p-value format for your R reports.',
+    'r.rareOtuThreshold' : 'Please choose your rare OTU threshold (positive integer).',
+    'r.timeout' : 'Please set your R timeout threshold (positive integer).',
+    'rStats.pAdjustMethod' : 'Please choose your p-value adjust method.',
+    }));
+
+  const menuTabs = document.getElementsByClassName('tabcontent');
 
   function getParentDiv(nodeId){
     let parentDiv;
@@ -166,22 +184,34 @@ function validateConfig(){
 
   function highlightRequiredParam(nodeId){
     const target = document.getElementById(nodeId);
+    //found here: https://css-tricks.com/restart-css-animation/
     if (target.classList.contains('missingParameterOnValidation')){
       target.classList.remove('missingParameterOnValidation');
       void target.offsetWidth;
       target.classList.add('missingParameterOnValidation');
-      console.log('already has');
-      console.log(target);
-      console.log(target.classList);
     }else{
       target.classList.add('missingParameterOnValidation');
-      console.log(target);
-      console.log(target.classList);
     }
   }//end highlightRequiredParam
 
-  //First check: four minimum data for running BLJ:
-  //'input.dirPaths', 'report.taxonomyLevels', 'script.permissions', 'script.defaultHeader'
+  // function dependenciesPresent(dependencyMap){
+  //   for (let para of dependencyMap.keys()){
+  //     console.log(para);
+  //     if (!(para in currentConfig)){
+  //       //resetAnimation(requiredParamIds[r]);
+  //       console.log(para);
+  //       const currentMenuTab = getCurrentMenuTab();
+  //       console.log(currentMenuTab);
+  //       currentMenuTab.style.display = 'none';
+  //       getParentDiv(para).style.display='block';
+  //       alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
+  //       highlightRequiredParam(para);
+  //       return false;
+  //     }//end if
+  //   }//end for loop
+  // }
+
+  //First check: check for required parameters
   for (let para of requiredParams.keys()){
     console.log(para);
     if (!(para in currentConfig)){
@@ -194,10 +224,41 @@ function validateConfig(){
       alert('Required information missing: '.concat(requiredParams.get(para)))//change this to modal later
       highlightRequiredParam(para);
       return false;
-    }
+    }//end if
   }//end for loop
-};
-const inpDirPath = document.getElementById('input.dirPaths');
+
+  if ( ['barcode_in_header', 'barcode_in_seq'].contains(currentConfig['demux.strategy'])){
+    if (!currentConfig['metadata.barcodeColumn'] || currentConfig['metadata.barcodeColumn'] == ''){
+      const currentMenuTab = getCurrentMenuTab();
+      console.log(currentMenuTab);
+      currentMenuTab.style.display = 'none';
+      getParentDiv('metadata.barcodeColumn').style.display='block';
+      alert('If demultiplex strategy is either "barcode in header", or "barcode in sequence", then the header of the metadata barcode column must be named.')//change this to modal later
+      highlightRequiredParam('metadata.barcodeColumn');
+      return false;
+    }//end nested if
+  }//end demux.strategy if
+
+  //check for module dependencies
+  for (let mod of currentConfig['modules']){
+    //check for demendencies
+    //console.log(mod);
+    let shortMod = mod.slice('biolockj.module.'.length);
+    console.log(shortMod);
+    switch(shortMod) {
+    case ('r.BuildMdsPlots' || 'r.BuildOtuPlots' || 'r.BuildPvalHistograms' || 'r.CalculateStats'):
+        console.log('switch works');
+        break;
+    // case valueTwo:
+    //     //statements
+    //     break;
+    default: //optional
+    //statements
+    }//end switch
+  }//end for loop
+
+
+};//end validation
 
 //   # Note, a “non-negative integer” accepts 0, a “positive integer” does not
 //
@@ -293,17 +354,19 @@ function saveConfigParamsForm(event){
 };//end saveConfigParams
 
 function modulesToCurrentConfig() {
-  //console.log('modules to current config');
-  mods = document.getElementById('module').getElementsByTagName('li');
-  selectedMods = [];
+  const mods = document.getElementById('module_ul').children;
+  const selectedMods = [];
   for (var i = 0; i < mods.length; i++) {
-    if (mods[i].classList.contains('modChoosen') && mods[i].disabled != true) {
-      selectedMods.push( mods[i].innerHTML)
+    if (mods[i].classList.contains('modChoosen')) {
+      selectedMods.push( mods[i].innerHTML);
     };
   };
+  //const selectedMods = Array.from(document.getElementsByClassName('modChoosen'));
   if (selectedMods.length > 0) {
     currentConfig['modules'] = selectedMods;
-  }else{delete currentConfig['modules']}
+  }else{
+    delete currentConfig['modules'];
+  };
   localStorage.setItem(currentConfig['project.configFile'].toString(), JSON.stringify(currentConfig));
 };//end modulesToCurrentConfig
 
@@ -425,7 +488,14 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
   }
 
   for (let inp of configChecks){
-  inp.addEventListener('change', saveConfigParamsForm, false);
+  inp.addEventListener('click', saveConfigParamsForm, false);
   }
 
+  configFormInputs.onkeypress = function(e) {
+  var key = e.charCode || e.keyCode || 0;
+  if (key == 13) {
+    saveConfigParamsForm();
+    e.preventDefault();
+  }
+}
 })();
