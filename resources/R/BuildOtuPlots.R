@@ -21,9 +21,8 @@ addBoxPlot <- function( otuTable, otuCol, metaCol, parPval, nonParPval )
    if( r.debug ) print( paste( c("labels = getLabels( levels(att) ):", labels), collapse= " " ) )
    orient = getLas( levels(att) )
    if( r.debug ) print( paste( "orient = getLas( levels(att) ):", orient ) )
-   pointColors = getColors( length(otuTable[ ,metaCol]) )
    boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=getProperty("r.pch"), cex=0.2, ylab=otuName, xlab=attName, main=title, col.lab=color, col.main=color, cex.main=1, cex.axis=cexAxis )
-   stripchart( otuTable[ ,otuCol] ~ att, data=data.frame(otuTable[ ,otuCol], att), method="jitter", vertical=TRUE, pch=20, ces=0.5, col=pointColors, add=TRUE )
+   stripchart( otuTable[ ,otuCol] ~ att, data=data.frame(otuTable[ ,otuCol], att), method="jitter", vertical=TRUE, pch=20, ces=0.5, add=TRUE )
 }
 
 # Plot numeric field vs OTU abundance

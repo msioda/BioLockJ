@@ -175,18 +175,12 @@ getP_AdjustLen <- function( otuNames ) {
    } 
 }
 
-# Import required libraries:
-# Pacakge coin for wilcox_test (non-parametric binary test)
-# Pacakge Kendall for Kendall tau (parametric numeric test)
-importLibs <- function() {
-   return( library(coin, logical.return=TRUE) && library(Kendall, logical.return=TRUE) )
-}
 
 # Main function imports libraries and for each report.taxonomyLevels:
 # Generates the reportStats list with p-value and R^2 metrics
 # Outputs summary tables for each metric at each taxonomyLevel
 main <- function() {
-   stopifnot( importLibs() )
+   importLibs( c( "coin", "Kendall" ) ) 
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
       if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_CalculateStats_", otuLevel, ".log") ) )
       inputFile = list.files( pipelineDir, paste0(otuLevel, ".*_metaMerged.tsv"), full.names=TRUE, recursive=TRUE )
