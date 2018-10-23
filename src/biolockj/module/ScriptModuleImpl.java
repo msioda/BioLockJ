@@ -69,8 +69,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	{
 		if( DockerUtil.isDockerJavaModule( this ) )
 		{
-			BashScriptBuilder.buildScripts( this,
-					DockerUtil.buildDockerScript( DockerUtil.getContainerName( this, "0" ) ), 1 );
+			BashScriptBuilder.buildScripts( this, DockerUtil.buildDockerScript(), 1 );
 		}
 		else
 		{

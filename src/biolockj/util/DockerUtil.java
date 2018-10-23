@@ -36,11 +36,11 @@ public class DockerUtil
 	 * @return Bash script lines for the docker script
 	 * @throws Exception if errors occur
 	 */
-	public static List<List<String>> buildDockerScript( final String containerName ) throws Exception
+	public static List<List<String>> buildDockerScript() throws Exception
 	{
 		final List<List<String>> dockerScriptLines = new ArrayList<>();
 		final List<String> innerList = new ArrayList<>();
-		innerList.add( runDockerContainer( containerName ) );
+		innerList.add( DOCKER_RUN );
 		dockerScriptLines.add( innerList );
 		return dockerScriptLines;
 	}
@@ -63,7 +63,7 @@ public class DockerUtil
 				+ RuntimeParamUtil.getRuntimeArgs().replaceAll( RuntimeParamUtil.RESTART_FLAG + " ", "" ) );
 
 		final StringBuffer vols = new StringBuffer();
-		vols.append( " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET );
+		//vols.append( " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET );
 		vols.append( " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR );
 		vols.append( " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR + ":delegated" );
 		vols.append( " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR );
@@ -103,17 +103,6 @@ public class DockerUtil
 		return lines;
 	}
 
-	/**
-	 * Build the container name
-	 * 
-	 * @param module Module
-	 * @param id Worker script ID
-	 * @return Docker container name
-	 */
-	public static String getContainerName( final BioModule module, final String id )
-	{
-		return module.getClass().getSimpleName().toLowerCase() + "_" + id;
-	}
 
 	/**
 	 * Get mapped Docker system path from {@link biolockj.Config} property by replacing the host system path with the
@@ -193,16 +182,7 @@ public class DockerUtil
 		return DOCKER_USER + "/" + name.toLowerCase();
 	}
 
-	/**
-	 * Called iteratively, each container will get the next port number.
-	 * 
-	 * @param containerName Name of Docker container
-	 * @return Docker run command
-	 */
-	protected static String runDockerContainer( final String containerName )
-	{
-		return DOCKER_RUN + " " + containerName + " " + dockerPort + " " + dockerPort++;
-	}
+	
 
 	/**
 	 * Docker environment variable holding the Docker program switches: {@value #BLJ_OPTIONS}
@@ -267,7 +247,6 @@ public class DockerUtil
 
 	private static final String DOCK_RM_FLAG = "--rm";
 
-	private static int dockerPort = 6001;
 
 	/**
 	 * Update Config file paths to use the container paths in place of host paths

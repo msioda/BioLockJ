@@ -196,6 +196,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = new LinkedHashMap<>();
 		final Set<ParsedSample> parsedSamples = ModuleUtil.requireParserModule().getParsedSamples();
 		Log.get( getClass() ).info( "Build JSON Nodes for " + parsedSamples.size() + " samples..." );
+		
+		
 		final Map<String, Set<String>> validOtus = getValidOtus();
 
 		// for each sample...

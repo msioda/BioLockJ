@@ -163,7 +163,7 @@ public class BashScriptBuilder
 
 		if( DockerUtil.isDockerScriptModule( module ) )
 		{
-			line.append( DockerUtil.runDockerContainer( DockerUtil.getContainerName( module, workerId ) ) + " " );
+			line.append( DockerUtil.DOCKER_RUN + " " );
 		}
 		else if( Config.isOnCluster() )
 		{
