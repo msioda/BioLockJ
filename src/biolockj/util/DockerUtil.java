@@ -56,19 +56,6 @@ public class DockerUtil
 	public static List<String> buildRunDockerFunction( final BioModule module ) throws Exception
 	{
 
-		// opt.append( BLJ_OPTIONS + " " + RuntimeParamUtil.DOCKER_FLAG );
-		// opt.append( " " + RuntimeParamUtil.INPUT_DIR_FLAG + " " + RuntimeParamUtil.getDockerHostInputDir() );
-		// opt.append( " " + RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getDockerHostPipelineDir() );
-		// opt.append( " " + RuntimeParamUtil.CONFIG_FLAG + " " + RuntimeParamUtil.getConfigFile().getAbsolutePath() );
-		// if( RuntimeParamUtil.getDockerHostMetaDir() != null )
-		// {
-		// opt.append( " " + RuntimeParamUtil.META_DIR_FLAG + " " + RuntimeParamUtil.getDockerHostMetaDir() );
-		// }
-		// if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
-		// {
-		// opt.append( " " + RuntimeParamUtil.PRIMER_DIR_FLAG + " " + RuntimeParamUtil.getDockerHostPrimerDir() );
-		// }
-
 		final String rmFlag = Config.getBoolean( DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
 
 		final StringBuffer opts = new StringBuffer();
@@ -110,7 +97,7 @@ public class DockerUtil
 		final List<String> lines = new ArrayList<>();
 		lines.add( opts.toString() );
 		lines.add( "function " + DOCKER_RUN + "() {" );
-		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run --name $1 -p $2:$3" + miscParams + rmFlag + bljOptions
+		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run " + miscParams + rmFlag + bljOptions
 				+ vols.toString() + " " + getDockerImage( module ) );
 		lines.add( "}" );
 		return lines;
