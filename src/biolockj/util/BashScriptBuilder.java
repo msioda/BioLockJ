@@ -163,7 +163,7 @@ public class BashScriptBuilder
 
 		if( DockerUtil.isDockerScriptModule( module ) )
 		{
-			line.append( DockerUtil.DOCKER_RUN + " " );
+			line.append( DockerUtil.SPAWN_DOCKER_CONTAINER + " " );
 		}
 		else if( Config.isOnCluster() )
 		{
@@ -244,22 +244,22 @@ public class BashScriptBuilder
 
 		lines.add( "# BioLockJ " + Log.BLJ_VERSION + " " + getMainScriptPath( module ) );
 		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED );
-		lines.add( FAIL_FILE + "=" + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_FAILURES );
+		lines.add( FAIL_FILE + "=" + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_FAILURES + RETURN );
 		
 		if( DockerUtil.isDockerScriptModule( module ) )
 		{
-			lines.add( "# This script can spawn multiple Docker containers for parallel processing" + RETURN );
 			lines.addAll( DockerUtil.buildRunDockerFunction( module ) );
 		}
 		else if( Config.isOnCluster() )
 		{
-			lines.add( "# This script can submit multiple worker scripts for parallel processing" + RETURN );
+			lines.add( "# Submit job script" );
 			lines.add( "function " + FUNCTION_RUN_JOB + "() {" );
 			lines.add( Config.requireString( CLUSTER_BATCH_COMMAND ) + " $1" );
 			lines.add( "}" );
 		}
 		
 		lines.addAll( buildExecuteFunction() );
+		lines.add( RETURN );
 		
 		return lines;
 	}
@@ -323,10 +323,10 @@ public class BashScriptBuilder
 		final List<String> lines = new ArrayList<>();
 		lines.add( "function " + FUNCTION_EXECUTE + "() {" );
 		lines.add( "$1" );
-		lines.add( EXIT_CODE + "=$?" );
-		lines.add( "if [ $" + EXIT_CODE + " != 0 ]; then" );
-		lines.add( "echo \"Failure code [ $" + EXIT_CODE + " ] on Line [ $2 ]:  $1\" >> $" + FAIL_FILE );
-		lines.add( "exit $" + EXIT_CODE );
+		lines.add( "statusCode=$?" );
+		lines.add( "if [ $statusCode != 0 ]; then" );
+		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> $" + FAIL_FILE );
+		lines.add( "exit $statusCode" );
 		lines.add( "fi" );
 		lines.add( "}" );
 		return lines;
@@ -657,11 +657,6 @@ public class BashScriptBuilder
 	 * {@value biolockj.module.ScriptModule#CLASSIFIER_NUM_THREADS}
 	 */
 	protected static final String CLUSTER_VALIDATE_PARAMS = "cluster.validateParams";
-
-	/**
-	 * Script variable to store exit code of previous statement: {@value #EXIT_CODE}
-	 */
-	protected static final String EXIT_CODE = "exitCode";
 
 	/**
 	 * Script variable to store path of file where error messages will be saved: {@value #FAIL_FILE}

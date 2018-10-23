@@ -43,4 +43,4 @@ RUN mkdir /db && cd /db && wget -qO- https://ccb.jhu.edu/software/kraken/dl/mini
 # RUN mkdir /db && cd /db && wget -qO- https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_8GB.tgz | bsdtar -xzf-
 	
 #5.) ================= Container Command =================
-CMD bash $BLJ_SCRIPT
+CMD bash $COMPUTE_SCRIPT

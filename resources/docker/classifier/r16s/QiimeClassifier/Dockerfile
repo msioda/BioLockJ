@@ -58,4 +58,4 @@ RUN cd /app && \
 #	echo 'assign_taxonomy_id_to_taxonomy_fp /db/SILVA_132_QIIME_release/taxonomy/16S_only/97/majority_taxonomy_7_levels.txt' >> ~/.qiime_config
 
 #6.) ================= Container Command =================
-CMD bash $BLJ_SCRIPT
+CMD bash $COMPUTE_SCRIPT
