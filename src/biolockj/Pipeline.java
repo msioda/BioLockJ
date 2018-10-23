@@ -355,8 +355,7 @@ public class Pipeline
 			Log.info( Pipeline.class, logMsg );
 		}
 
-		if( mainFailed.exists()
-				|| Config.getBoolean( ScriptModule.SCRIPT_EXIT_ON_ERROR ) && failure != null && failure.exists() )
+		if( mainFailed.exists() || failure != null && failure.exists() )
 		{
 			final String failMsg = "SCRIPT FAILED: "
 					+ BioLockJUtil.getCollectionAsString( ModuleUtil.getScriptErrors( module ) );

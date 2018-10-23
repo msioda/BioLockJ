@@ -104,12 +104,6 @@ public interface ScriptModule extends BioModule
 	public static final String SCRIPT_DIR = "script";
 
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #SCRIPT_EXIT_ON_ERROR}<br>
-	 * If set to {@value biolockj.Config#TRUE}, pipeline will fail on any script error.
-	 */
-	public static final String SCRIPT_EXIT_ON_ERROR = "script.exitOnError";
-
-	/**
 	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_NUM_THREADS}<br>
 	 * Used to reserve cluster resources and passed to any external application call that accepts a numThreads
 	 * parameter.

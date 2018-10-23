@@ -45,7 +45,6 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_PERMISSIONS} exists
 	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_BATCH_SIZE} is positive integer
 	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_NUM_THREADS} is positive integer
-	 * <li>Verify {@link biolockj.Config}.{@value #SCRIPT_EXIT_ON_ERROR} is Y/N if set
 	 * <li>Verify {@link biolockj.Config}.{@value #SCRIPT_TIMEOUT} is positive integer if set
 	 * </ul>
 	 */
@@ -55,7 +54,6 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		Config.requireString( SCRIPT_PERMISSIONS );
 		Config.requirePositiveInteger( SCRIPT_BATCH_SIZE );
 		Config.requirePositiveInteger( SCRIPT_NUM_THREADS );
-		Config.getBoolean( SCRIPT_EXIT_ON_ERROR );
 		Config.getPositiveInteger( SCRIPT_TIMEOUT );
 	}
 

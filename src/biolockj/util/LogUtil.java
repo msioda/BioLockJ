@@ -37,7 +37,7 @@ public class LogUtil
 	 * @param module BioModule
 	 * @throws Exception if errors occur
 	 */
-	public static void syncModuleLogs( final BioModule module ) throws Exception
+	public static void syncModuleLogs( final ScriptModule module ) throws Exception
 	{
 		if( module instanceof JavaModule && Config.getBoolean( JavaModule.JAVA_RUN_AS_SCRIPT ) )
 		{
@@ -46,24 +46,18 @@ public class LogUtil
 
 		if( module instanceof ScriptModule && Config.isOnCluster() )
 		{
-			final File qsub = ModuleUtil.getSubDir( module, BashScriptBuilder.QSUB_DIR );
-			if( qsub == null || qsub.listFiles().length == 0 )
-			{
-				throw new Exception( "Cannot sync logs, qsub directory not found!" );
-			}
-
-			final List<String> cache = new ArrayList<>();
-			for( final File log: qsub.listFiles() )
-			{
-				final List<String> lines = cacheLog( log );
-				if( !lines.isEmpty() )
-				{
-					cache.add( "Logging info from: " + log.getAbsolutePath() );
-					cache.addAll( lines );
-				}
-			}
-
-			merge( cache );
+//			final List<String> cache = new ArrayList<>();
+//			for( final File log: module.getScriptDir().listFiles() )
+//			{
+//				final List<String> lines = cacheLog( log );
+//				if( !lines.isEmpty() )
+//				{
+//					cache.add( "Logging info from: " + log.getAbsolutePath() );
+//					cache.addAll( lines );
+//				}
+//			}
+//
+//			merge( cache );
 		}
 	}
 
