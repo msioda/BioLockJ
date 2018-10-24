@@ -34,7 +34,6 @@
 		</loadfile>
 		<for param="line" list="${strip_file}" delimiter="${line.separator}">
 	    	<sequential>
-	    		<echo>@{line}</echo>
 	    		<concat destfile=".temp_tarball">@{line}</concat>
 	    	</sequential>
 		</for>
@@ -59,8 +58,8 @@
 			</manifest>
 		</jar>
 		<chmod type="file" perm="770">		
-			<fileset dir="dist" />
-			<fileset dir="script" />
+			<fileset dir="dist/*" />
+			<fileset dir="script/*" />
 		</chmod>
 	</target>
 	
