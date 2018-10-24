@@ -294,8 +294,6 @@ public class Pipeline
 	 * Script status is polled each minute, determining status by counting indicator files.<br>
 	 * {@link biolockj.Log} outputs the # of started, failed, and successful scripts (if any change).<br>
 	 * {@link biolockj.Log} repeats the previous message every 10 minutes if no status change is detected.<br>
-	 * If {@link biolockj.module.ScriptModule#SCRIPT_EXIT_ON_ERROR} = {@value biolockj.Config#TRUE}, the pipeline will
-	 * fail if any script error occurs.<br>
 	 *
 	 * @param module ScriptModule
 	 * @return true if all scripts are complete, regardless of status

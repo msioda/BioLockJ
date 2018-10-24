@@ -48,8 +48,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * <p>
 	 * The QiimeClassifier script begins with the following QIIME scripts:
 	 * <ol>
-	 * <li>{@value #SCRIPT_PRINT_CONFIG} - prints version/environment info to
-	 * {@value #OUTPUT_DIR}/{@value biolockj.util.BashScriptBuilder#QSUB_DIR} output file
+	 * <li>{@value #SCRIPT_PRINT_CONFIG} - logs version/environment info
 	 * <li>{@value #SCRIPT_SUMMARIZE_TAXA} - processes {@value #OTU_TABLE} to create taxonomy-level reports in the
 	 * output directory
 	 * <li>{@value #SCRIPT_SUMMARIZE_BIOM} - processes {@value #OTU_TABLE} to create summary file:

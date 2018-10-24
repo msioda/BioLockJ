@@ -32,7 +32,6 @@ public class DockerUtil
 	/**
 	 * Build a docker bash script.
 	 * 
-	 * @param containerName Name of Docker container
 	 * @return Bash script lines for the docker script
 	 * @throws Exception if errors occur
 	 */
@@ -229,8 +228,7 @@ public class DockerUtil
 	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipeline";
 
 	/**
-	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the container {@value #CONTAINER_PRIMER_DIR}
-	 * volume
+	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer" volume.
 	 */
 	public static final String CONTAINER_PRIMER_DIR = File.separator + "primer";
 

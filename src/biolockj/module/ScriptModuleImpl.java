@@ -60,7 +60,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	/**
 	 * 
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
-	 * the worker scripts. If running Docker, return {@link biolockj.util.DockerUtil#buildDockerScript(String)}, else
+	 * the worker scripts. If running Docker, return {@link biolockj.util.DockerUtil#buildDockerScript()}, else
 	 * pass{@link #getInputFiles()} to either {@link #buildScript(List)} or {@link #buildScriptForPairedReads(List)}
 	 * based on {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PAIRED_READS}.
 	 */
