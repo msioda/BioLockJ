@@ -33,11 +33,7 @@ RUN echo ' '  >> ~/.bashrc && \
 
 #3.) ================= Install Java   =================
 RUN apt-get upgrade -y && \
-    add-apt-repository ppa:webupd8team/java -y && \
-    apt-get update && \
-    echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
-    apt-get install -y oracle-java8-installer
-    
+   	apt-get install -y openjdk-8-jre
 	
 #4.) =======================  RDP  ========================== 
 RUN cd /app && \
@@ -48,7 +44,13 @@ RUN cd /app && \
 
 #5.) =======================  Cleanup  ========================== 
 RUN	apt-get clean && \
-	rm -rf /var/lib/apt/lists/* 
+	rm -rf /var/lib/apt/lists/* && \
+	find / -name *python* | xargs rm -rf && \
+	rm -rf var/cache/* && \
+	rm -rf var/log/* && \
+	rm -rf tmp/* && \
+	rm -rf usr/games && \
+	rm -rf usr/share/*
 	
 #6.) ================= Container Command =================
 CMD bash $COMPUTE_SCRIPT

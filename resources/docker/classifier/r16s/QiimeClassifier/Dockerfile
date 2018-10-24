@@ -57,5 +57,14 @@ RUN cd /app && \
 #	echo 'assign_taxonomy_reference_seqs_fp /db/SILVA_132_QIIME_release/rep_set/rep_set_16S_only/97/silva_132_97_16S.fna' >> ~/.qiime_config && \
 #	echo 'assign_taxonomy_id_to_taxonomy_fp /db/SILVA_132_QIIME_release/taxonomy/16S_only/97/majority_taxonomy_7_levels.txt' >> ~/.qiime_config
 
-#6.) ================= Container Command =================
+#6. ) =============== Cleanup ================================
+RUN	apt-get clean && \
+	rm -rf /var/lib/apt/lists/* && \
+	rm -rf var/cache/* && \
+	rm -rf var/log/* && \
+	rm -rf tmp/* && \
+	rm -rf usr/games && \
+	rm -rf usr/share/*
+
+#7.) ================= Container Command =================
 CMD bash $COMPUTE_SCRIPT

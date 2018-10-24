@@ -36,6 +36,16 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc
+
+#5.) =======================  Cleanup  ========================== 
+RUN	apt-get clean && \
+	rm -rf /var/lib/apt/lists/* && \
+	find / -name *python* | xargs rm -rf && \
+	rm -rf var/cache/* && \
+	rm -rf var/log/* && \
+	rm -rf tmp/* && \
+	rm -rf usr/games && \
+	rm -rf usr/share/*
 	
-#5.) ================= Container Command =================
+#6.) ================= Container Command =================
 CMD bash $COMPUTE_SCRIPT

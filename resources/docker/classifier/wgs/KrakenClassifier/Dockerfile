@@ -41,6 +41,16 @@ RUN cd /app && wget -qO- https://github.com/DerrickWood/kraken/archive/v0.10.5-b
 RUN mkdir /db && cd /db && wget -qO- https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz | bsdtar -xzf-
 # uncomment for MiniKraken DB_8GB
 # RUN mkdir /db && cd /db && wget -qO- https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_8GB.tgz | bsdtar -xzf-
-	
-#5.) ================= Container Command =================
+
+#5. ) =============== Cleanup ================================
+RUN	apt-get clean && \
+	rm -rf /var/lib/apt/lists/* && \
+	find / -name *python* | xargs rm -rf && \
+	rm -rf var/cache/* && \
+	rm -rf var/log/* && \
+	rm -rf tmp/* && \
+	rm -rf usr/games && \
+	rm -rf usr/share/*
+		
+#6.) ================= Container Command =================
 CMD bash $COMPUTE_SCRIPT

@@ -14,7 +14,7 @@ RUN apt-get update && \
 	gawk && \
 	apt-get clean
 
-#2.1) ============ Update Ubuntu ~/.bashrc =================
+#3.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \
 	echo 'alias ..="cd .."' >> ~/.bashrc && \
@@ -29,6 +29,16 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc
+
+#4.) =======================  Cleanup  ==========================
+RUN	apt-get clean && \
+	rm -rf /var/lib/apt/lists/* && \
+	find / -name *python* | xargs rm -rf && \
+	rm -rf var/cache/* && \
+	rm -rf var/log/* && \
+	rm -rf tmp/* && \
+	rm -rf usr/games && \
+	rm -rf usr/share/*
 	
 #3.) ================= Container Command =================
 CMD bash $COMPUTE_SCRIPT
