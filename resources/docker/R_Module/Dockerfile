@@ -38,4 +38,4 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc
 	
 #5.) ================= Container Command =================
-CMD bash $BLJ_SCRIPT
+CMD bash $COMPUTE_SCRIPT

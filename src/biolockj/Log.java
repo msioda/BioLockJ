@@ -262,7 +262,7 @@ public class Log
 	/**
 	 * Current release version: {@value #BLJ_VERSION}
 	 */
-	public static final String BLJ_VERSION = "v1.0";
+	public static final String BLJ_VERSION = "0.6-beta";
 
 	/**
 	 * {@link biolockj.Config} property used to set log sensitivity in

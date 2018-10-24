@@ -51,4 +51,4 @@ RUN	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* 
 	
 #6.) ================= Container Command =================
-CMD bash $BLJ_SCRIPT
+CMD bash $COMPUTE_SCRIPT

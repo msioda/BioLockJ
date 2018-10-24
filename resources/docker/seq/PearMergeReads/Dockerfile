@@ -39,4 +39,4 @@ RUN mkdir -p /app/pear && cd /app/pear && \
 	chmod +x /app/pear/${PEAR_VERSION} 
 	
 #4.) ================= Container Command =================
-CMD bash $BLJ_SCRIPT
+CMD bash $COMPUTE_SCRIPT

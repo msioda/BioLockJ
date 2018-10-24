@@ -45,7 +45,6 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_PERMISSIONS} exists
 	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_BATCH_SIZE} is positive integer
 	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_NUM_THREADS} is positive integer
-	 * <li>Verify {@link biolockj.Config}.{@value #SCRIPT_EXIT_ON_ERROR} is Y/N if set
 	 * <li>Verify {@link biolockj.Config}.{@value #SCRIPT_TIMEOUT} is positive integer if set
 	 * </ul>
 	 */
@@ -55,14 +54,13 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		Config.requireString( SCRIPT_PERMISSIONS );
 		Config.requirePositiveInteger( SCRIPT_BATCH_SIZE );
 		Config.requirePositiveInteger( SCRIPT_NUM_THREADS );
-		Config.getBoolean( SCRIPT_EXIT_ON_ERROR );
 		Config.getPositiveInteger( SCRIPT_TIMEOUT );
 	}
 
 	/**
 	 * 
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
-	 * the worker scripts. If running Docker, return {@link biolockj.util.DockerUtil#buildDockerScript(String)}, else
+	 * the worker scripts. If running Docker, return {@link biolockj.util.DockerUtil#buildDockerScript()}, else
 	 * pass{@link #getInputFiles()} to either {@link #buildScript(List)} or {@link #buildScriptForPairedReads(List)}
 	 * based on {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PAIRED_READS}.
 	 */
@@ -71,8 +69,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	{
 		if( DockerUtil.isDockerJavaModule( this ) )
 		{
-			BashScriptBuilder.buildScripts( this,
-					DockerUtil.buildDockerScript( DockerUtil.getContainerName( this, "0" ) ), 1 );
+			BashScriptBuilder.buildScripts( this, DockerUtil.buildDockerScript(), 1 );
 		}
 		else
 		{

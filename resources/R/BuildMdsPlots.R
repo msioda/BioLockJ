@@ -3,8 +3,8 @@
 # Import vegan library for distance plot support
 # Main function generates 3 MDS plots for each attribute at each level in report.taxonomyLevels
 main <- function() { 
-   mdsAtts = getProperty( "rMds.reportFields", allAtts )
    importLibs( c( "vegan" ) )
+   mdsAtts = getProperty( "rMds.reportFields", c( binaryFields, nominalFields )  )
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
       if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", otuLevel, ".log") ) )
       pdf( paste0( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_MDS.pdf" ) ) ) )
@@ -22,6 +22,7 @@ main <- function() {
       eigenFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(otuLevel, "_eigenValues") ), ".tsv" )
       write.table( myMDS$CA$eig, file=eigenFileName, sep="\t")
       percentVariance = eigenvals(myMDS)/sum( eigenvals(myMDS) )
+      colors = getColors(2)
       for( metaCol in mdsCols )
       {
          att = as.factor(otuTable[,metaCol])
@@ -32,7 +33,7 @@ main <- function() {
                if(x == y) {
                   break
                }
-               plot(myMDS$CA$u[,x], myMDS$CA$u[,y], xlab=paste("Axis:", paste0( round(percentVariance[x]*100, 2), "%" ) ), ylab=paste("Axis:", paste0( round(percentVariance[y]*100, 2), "%" ) ), main=paste( "MDS", attName, otuLevel), cex=1.2, pch=ifelse(otuTable[,metaCol] == vals[2], 17, 16),col=ifelse(otuTable[,metaCol] == vals[2], rgb(0,0,1,0.75), rgb(1,0,0,0.75)) )
+               plot( myMDS$CA$u[,x], myMDS$CA$u[,y], xlab=getMdsLabel( percentVariance[x] ), ylab=getMdsLabel( percentVariance[y] ), main=paste( "MDS", attName, otuLevel), cex=1.2, pch=getProperty("r.pch"), col=getMdsColors( otuTable, metaCol ) )
             }
          }
       }
@@ -40,4 +41,20 @@ main <- function() {
    }
 }
 
+getMdsLabel <- function( variance ) { 
+   return( paste("Axis:", paste0( round( variance * 100, 2 ), "%" ) ) )
+}
 
+#metaCol=476
+getMdsColors <- function( otuTable,  metaCol ) { 
+   tableVals = as.factor( otuTable[,metaCol] )
+   factors = levels( tableVals )
+   colors = getColors( length( factors ) )
+   results = vector( mode="character", length=length( tableVals ) )
+   for( i in 1:length( colors ) ){
+      keyVals = which( tableVals %in% factors[i] )
+      results[ keyVals ] = colors[ i ]
+   }
+   
+   return( results )
+}

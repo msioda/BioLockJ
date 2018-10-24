@@ -1,1 +1,1 @@
-This directory is the target directory the BioLockJ Gui uses to save web-generated Config files.
+This BioLockJ web application saves new Config files to this directory when created with the GUI.

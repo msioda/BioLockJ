@@ -32,21 +32,69 @@ public class DockerUtil
 	/**
 	 * Build a docker bash script.
 	 * 
-	 * @param containerName Name of Docker container
 	 * @return Bash script lines for the docker script
 	 * @throws Exception if errors occur
 	 */
-	public static List<List<String>> buildDockerScript( final String containerName ) throws Exception
+	public static List<List<String>> buildDockerScript() throws Exception
 	{
 		final List<List<String>> dockerScriptLines = new ArrayList<>();
 		final List<String> innerList = new ArrayList<>();
-		innerList.add( runDockerContainer( containerName ) );
+		innerList.add( SPAWN_DOCKER_CONTAINER );
 		dockerScriptLines.add( innerList );
 		return dockerScriptLines;
 	}
+	
 
+
+	private static final String getDockerEnvVars( BioModule module ) throws Exception
+	{
+		String envVars = " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
+		if( isDockerScriptModule( module ) )
+		{
+			envVars += " -e " + COMPUTE_SCRIPT + "=$1";
+		}
+		
+		return envVars;
+	}
+	
+	private static final String getDockerVolumes() throws Exception
+	{
+		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR + ":delegated";
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR;
+		
+		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
+		{
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
+		}
+		if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
+		{
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPrimerDir() + ":" + CONTAINER_PRIMER_DIR;
+		}
+		
+		return dockerVolumes;
+	}
+	
+	private static final String getBljOptions( final BioModule module ) throws Exception
+	{
+		String bljOptions = RuntimeParamUtil.getRuntimeArgs().replaceAll( RuntimeParamUtil.RESTART_FLAG + " ", "" );
+		if( !isDockerScriptModule( module ) )
+		{
+			bljOptions += " " + RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName();
+		}
+		
+		return BLJ_OPTIONS + "=\"" + bljOptions + "\"";
+	}
+	
+	private static final String rmFlag() throws Exception
+	{
+		return Config.getBoolean( DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
+	}
+	
+	
 	/**
-	 * Build the {@value #DOCKER_RUN} method, which takes container name, in/out port, and optionally script path
+	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script path
 	 * parameters.
 	 * 
 	 * @param module BioModule
@@ -55,78 +103,19 @@ public class DockerUtil
 	 */
 	public static List<String> buildRunDockerFunction( final BioModule module ) throws Exception
 	{
-
-		// opt.append( BLJ_OPTIONS + " " + RuntimeParamUtil.DOCKER_FLAG );
-		// opt.append( " " + RuntimeParamUtil.INPUT_DIR_FLAG + " " + RuntimeParamUtil.getDockerHostInputDir() );
-		// opt.append( " " + RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getDockerHostPipelineDir() );
-		// opt.append( " " + RuntimeParamUtil.CONFIG_FLAG + " " + RuntimeParamUtil.getConfigFile().getAbsolutePath() );
-		// if( RuntimeParamUtil.getDockerHostMetaDir() != null )
-		// {
-		// opt.append( " " + RuntimeParamUtil.META_DIR_FLAG + " " + RuntimeParamUtil.getDockerHostMetaDir() );
-		// }
-		// if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
-		// {
-		// opt.append( " " + RuntimeParamUtil.PRIMER_DIR_FLAG + " " + RuntimeParamUtil.getDockerHostPrimerDir() );
-		// }
-
-		final String rmFlag = Config.getBoolean( DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
-
-		final StringBuffer opts = new StringBuffer();
-		opts.append( BLJ_OPTIONS + "=\""
-				+ RuntimeParamUtil.getRuntimeArgs().replaceAll( RuntimeParamUtil.RESTART_FLAG + " ", "" ) );
-
-		final StringBuffer vols = new StringBuffer();
-		vols.append( " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET );
-		vols.append( " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR );
-		vols.append( " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR + ":delegated" );
-		vols.append( " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR );
-
-		String miscParams = "";
-		if( isDockerScriptModule( module ) )
-		{
-			miscParams = " -e " + COMPUTE_SCRIPT + "=$4";
-		}
-		else
-		{
-			opts.append( " " + RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName() );
-		}
-
-		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
-		{
-			vols.append( " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR );
-		}
-		if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
-		{
-			vols.append( " -v " + RuntimeParamUtil.getDockerHostPrimerDir() + ":" + CONTAINER_PRIMER_DIR );
-		}
-
-		opts.append( "\"" );
-
-		final String bljOptions = " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
-
-		Log.info( DockerUtil.class, "Docker volumes: " + vols.toString() + BioLockJ.RETURN );
-		Log.info( DockerUtil.class, "Docker environment var: " + opts.toString() + BioLockJ.RETURN );
-
+		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
+		Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + BioLockJ.RETURN );
+		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
+		
 		final List<String> lines = new ArrayList<>();
-		lines.add( opts.toString() );
-		lines.add( "function " + DOCKER_RUN + "() {" );
-		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run --name $1 -p $2:$3" + miscParams + rmFlag + bljOptions
-				+ vols.toString() + " " + getDockerImage( module ) );
-		lines.add( "}" );
-		return lines;
+		lines.add( getBljOptions( module ) + BioLockJ.RETURN );
+		lines.add( "# Spawn Docker container" );
+		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
+		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module ) + getDockerVolumes() + getDockerImage( module ) );
+		lines.add( "}" + BioLockJ.RETURN );
+		return lines; 
 	}
 
-	/**
-	 * Build the container name
-	 * 
-	 * @param module Module
-	 * @param id Worker script ID
-	 * @return Docker container name
-	 */
-	public static String getContainerName( final BioModule module, final String id )
-	{
-		return module.getClass().getSimpleName().toLowerCase() + "_" + id;
-	}
 
 	/**
 	 * Get mapped Docker system path from {@link biolockj.Config} property by replacing the host system path with the
@@ -203,19 +192,10 @@ public class DockerUtil
 						: isDockerScriptModule( module ) ? module.getClass().getSimpleName()
 								: JavaModule.class.getSimpleName();
 
-		return DOCKER_USER + "/" + name.toLowerCase();
+		return " " + DOCKER_USER + "/" + name.toLowerCase();
 	}
 
-	/**
-	 * Called iteratively, each container will get the next port number.
-	 * 
-	 * @param containerName Name of Docker container
-	 * @return Docker run command
-	 */
-	protected static String runDockerContainer( final String containerName )
-	{
-		return DOCKER_RUN + " " + containerName + " " + dockerPort + " " + dockerPort++;
-	}
+	
 
 	/**
 	 * Docker environment variable holding the Docker program switches: {@value #BLJ_OPTIONS}
@@ -225,7 +205,7 @@ public class DockerUtil
 	/**
 	 * Docker environment variable holding the name of the compute script file: {@value #COMPUTE_SCRIPT}
 	 */
-	public static final String COMPUTE_SCRIPT = "BLJ_SCRIPT";
+	public static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
 
 	/**
 	 * All containers mount the host {@link biolockj.Config} directory to the container"config" volume
@@ -248,15 +228,14 @@ public class DockerUtil
 	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipeline";
 
 	/**
-	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the container "primer"
-	 * volume
+	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer" volume.
 	 */
 	public static final String CONTAINER_PRIMER_DIR = File.separator + "primer";
 
 	/**
-	 * Name of the bash script function used to launch a new Docker module: {@value #DOCKER_RUN}
+	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
 	 */
-	public static final String DOCKER_RUN = "runDocker";
+	public static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
 
 	/**
 	 * Docker socket path: {@value #DOCKER_SOCKET}
@@ -280,7 +259,6 @@ public class DockerUtil
 
 	private static final String DOCK_RM_FLAG = "--rm";
 
-	private static int dockerPort = 6001;
 
 	/**
 	 * Update Config file paths to use the container paths in place of host paths
