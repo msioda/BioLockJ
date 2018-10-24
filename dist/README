@@ -2,4 +2,4 @@ The $BLJ/resource/build.xml Ant script builds release jar & tar.gz files to this
 
  * Ant target "compile-source" builds $BLJ/dist/BioLockJ.jar
 
- * Ant target "buildDockerRelease" builds $BLJ/dist/biolockj_v0.6-beta.tar.gz
+ * Ant target "buildRelease" builds $BLJ/dist/biolockj_v0.6-beta.tar.gz

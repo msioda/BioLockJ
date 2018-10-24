@@ -1,22 +1,34 @@
-<project name="BioLockJ" default="standard-build" basedir="..">
+<project name="BioLockJ" default="build-jar" basedir="..">
 
-	<path id="lib.classpath">
-		<fileset dir="lib">
-			<include name="**/*.jar"/>
-		</fileset>
-	</path>
 	
-    <target name="clean" >
-   		<delete dir="bin"/>
-    		<delete file="dist/BioLockJ.jar"/>
-    </target>
 
-    <target name="init" depends="clean">
-    		<tstamp/>
-    		<mkdir dir="bin"/>
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/Users/mike/git/BioLockJ/lib/ant-contrib-0.6.jar"/>
+		</classpath>
+	</taskdef>
+	
+	<taskdef name="var" classname="net.sf.antcontrib.property.Variable" classpath="/Users/mike/git/BioLockJ/lib/ant-contrib-0.6.jar" />
+
+	<target name="clean">
+		<delete dir="bin"/>
+		<delete file="dist/BioLockJ.jar"/>
+	</target>
+	
+    <target name="init">
+    		<loadfile property="blj_version" srcfile=".version"/> 
+    		<echo>${blj_version}</echo> 
+    	    <property name="release_ext" value=".tar.gz"/>
+    		<echo>${release_ext}</echo> 
+    		<property name="release_dir" value="dist/biolockj_${blj_version}"/>
+    		<echo>${release_dir}</echo> 
+    		<var name="release_tar" value="${release_dir}${release_ext}" />
+    		<echo>${release_dir}${release_ext}</echo> 
+    		<echo>${release_tar}</echo> 
     </target>
 
     <target name="compile-source" depends="init">
+    		<mkdir dir="bin"/>
     		<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin">
        		<classpath>
        			<fileset dir="lib">
@@ -24,34 +36,30 @@
        	    		</fileset>
        		</classpath>
     		</javac>
+    		<copy file="resources/log4j.properties" todir="bin"/>
     </target>
 	
-    <target name="copy-log4j-properties" depends="compile-source">
-  		<copy file="resources/log4j.properties" todir="bin"/>
-    </target>
-
-	
-	<target name="jar" depends="copy-log4j-properties">
+	<target name="build-jar" depends="compile-source">
+		<path id="lib.classpath">
+			<fileset dir="lib">
+				<include name="**/*.jar"/>
+			</fileset>
+		</path>
 		<jar basedir="bin" destfile="dist/BioLockJ.jar">
 			<zipgroupfileset dir="lib" includes="*.jar"/>
 			<manifest>
-				<attribute name="Version" value="1.0"/>
+				<attribute name="Version" value="${blj_version}"/>
 				<attribute name="Main-Class" value="biolockj.BioLockJ"/>
 				<attribute name="Class-Path" value="lib.classpath"/>
 			</manifest>
 		</jar>
-	</target>
-	
-
-	<target name="standard-build" depends="jar">
 		<chmod type="file" perm="770">		
 			<fileset dir="dist" includes="**" />
 			<fileset dir="script" includes="**" />
 		</chmod>
 	</target>
 	
-	
-	<target name="javadoc" depends="standard-build">
+	<target name="javadoc" depends="build-jar">
 		<javadoc access="protected" author="true" destdir="docs" doctitle="BioLockJ" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="biolockj,biolockj.exception,biolockj.module,biolockj.module.classifier,biolockj.module.classifier.r16s,biolockj.module.classifier.wgs,biolockj.module.implicit,biolockj.module.implicit.parser,biolockj.module.implicit.parser.r16s,biolockj.module.implicit.parser.wgs,biolockj.module.implicit.qiime,biolockj.module.r,biolockj.module.report,biolockj.module.seq,biolockj.node,biolockj.node.r16s,biolockj.node.wgs,biolockj.util" source="1.8" sourcepath="src" splitindex="true" use="true" version="true">
 		 	<classpath>
 		    		<fileset dir="lib">
@@ -63,12 +71,9 @@
 		</javadoc>
 	</target>
 	
-	<target name="remove_tar" depends="standard-build">
-		<delete file="dist/biolockj_v0.6-beta.tar.gz"/>
-	</target>	
-	
-	<target name="deploy" depends="remove_tar">
-		<tar compression="gzip" destfile="dist/biolockj_v0.6-beta.tar.gz">
+	<target name="deploy" depends="build-jar">
+		<delete file="${release_tar}"/>
+		<tar compression="gzip" destfile="${release_tar}">
 			<tarfileset dir="." filemode="770">
 				<exclude name="bin/**" />
 				<exclude name="dist/*.tar.gz" /> 
@@ -77,10 +82,7 @@
 				<exclude name="*.md" /> 
 			</tarfileset>
 		</tar>	
-	</target>
-	
-	<target name="buildRelease" depends="deploy">
-		<chmod file="dist/biolockj_v0.6-beta.tar.gz" perm="770"/>		
+		<chmod file="${release_tar}" perm="770"/>	
 	</target>
 	
 </project>
