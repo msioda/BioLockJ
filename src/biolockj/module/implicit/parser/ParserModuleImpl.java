@@ -30,8 +30,8 @@ import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
 
 /**
  * Parser {@link biolockj.module.BioModule}s read {@link biolockj.module.classifier.ClassifierModule} output to build
@@ -425,7 +425,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	private Map<String, Map<String, Integer>> getSparseTableMap( final File sparseFile ) throws Exception
 	{
 		final Map<String, Map<String, Integer>> map = new HashMap<>();
-		final BufferedReader reader = SeqUtil.getFileReader( sparseFile );
+		final BufferedReader reader = BioLockJUtil.getFileReader( sparseFile );
 		String nextLine = null;
 		try
 		{

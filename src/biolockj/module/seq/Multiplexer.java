@@ -28,6 +28,7 @@ import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.report.Email;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
 
@@ -159,7 +160,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 	{
 		Log.get( getClass() ).info( "Multiplexing file  = " + sample.getAbsolutePath() );
 		final List<String> seqLines = new ArrayList<>();
-		final BufferedReader reader = SeqUtil.getFileReader( sample );
+		final BufferedReader reader = BioLockJUtil.getFileReader( sample );
 		final BufferedWriter writer = new BufferedWriter(
 				new FileWriter( new File( getMutliplexeFileName( sample ) ), true ) );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )

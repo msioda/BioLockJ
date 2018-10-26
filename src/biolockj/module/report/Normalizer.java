@@ -24,8 +24,8 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.r.R_Module;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
 
 /**
  * This utility is used to normalize and/or log-transform the raw OTU counts using the formulas:
@@ -93,7 +93,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	 */
 	protected void normalize( final File otuTable ) throws Exception
 	{
-		final BufferedReader reader = SeqUtil.getFileReader( otuTable );
+		final BufferedReader reader = BioLockJUtil.getFileReader( otuTable );
 		final List<List<Double>> dataPointsNormalized = new ArrayList<>();
 		final List<List<Double>> dataPointsNormalizedThenLogged = new ArrayList<>();
 		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();

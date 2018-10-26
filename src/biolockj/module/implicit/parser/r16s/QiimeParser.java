@@ -26,6 +26,7 @@ import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
 import biolockj.node.r16s.QiimeNode;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
 
@@ -88,7 +89,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	{
 		final File file = getInputFiles().get( 0 );
 		Log.get( getClass() ).info( "Parse file: " + file.getName() );
-		final BufferedReader reader = SeqUtil.getFileReader( file );
+		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
 			if( line.startsWith( "#" ) )
@@ -276,7 +277,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 				.info( "Initialize QIIME_ID to SAMPLE_ID Maps for: " + MetaUtil.getFile().getAbsolutePath() );
 		int fileNameCol = 0;
 		boolean isHeaderRow = true;
-		final BufferedReader reader = SeqUtil.getFileReader( MetaUtil.getFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
@@ -311,7 +312,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	{
 		Log.get( getClass() ).info(
 				"Configure ordered list of Qiime IDs based on the 1st taxonomy report: " + file.getAbsolutePath() );
-		final BufferedReader reader = SeqUtil.getFileReader( file );
+		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 
 		final String commenLine = reader.readLine(); // skip first line (its a comment)
 		final String headerLine = reader.readLine();

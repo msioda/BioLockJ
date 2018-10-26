@@ -47,7 +47,7 @@ public class UpdateJavaDocs
 			{
 				lines.clear();
 				System.out.println( "Reading: " + file.getAbsolutePath() );
-				reader = SeqUtil.getFileReader( file );
+				reader = BioLockJUtil.getFileReader( file );
 				boolean updatedFile = false;
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{

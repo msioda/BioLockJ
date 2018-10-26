@@ -16,7 +16,7 @@ import java.io.File;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.ParsedSample;
 import biolockj.node.wgs.SlimmNode;
-import biolockj.util.SeqUtil;
+import biolockj.util.BioLockJUtil;
 
 /**
  * This BioModule parses SlimmClassifier output reports to build standard OTU abundance tables.
@@ -40,7 +40,7 @@ public class SlimmParser extends ParserModuleImpl
 	{
 		for( final File file: getInputFiles() )
 		{
-			final BufferedReader reader = SeqUtil.getFileReader( file );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 
 			String line = reader.readLine(); // skip header
 			for( line = reader.readLine(); line != null; line = reader.readLine() )

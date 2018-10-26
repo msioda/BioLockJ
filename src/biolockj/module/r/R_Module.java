@@ -39,7 +39,6 @@ import biolockj.util.BioLockJUtil;
 import biolockj.util.ModuleUtil;
 import biolockj.util.RMetaUtil;
 import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
 
 /**
  * This BioModule is the superclass for R script generating modules.
@@ -393,7 +392,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 		errors.append( INDENT + rSpacer + RETURN );
 		errors.append( INDENT + "R Script Errors:" + RETURN );
-		final BufferedReader reader = SeqUtil.getFileReader( scriptsFailed.iterator().next() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( scriptsFailed.iterator().next() );
 		try
 		{
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )

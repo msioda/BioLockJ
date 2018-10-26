@@ -25,8 +25,8 @@ import biolockj.module.r.CalculateStats;
 import biolockj.node.JsonNode;
 import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.ModuleUtil;
-import biolockj.util.SeqUtil;
 
 /**
  * This BioModule is used to build a JSON file (summary.json) from pipeline OTU-metadata tables.
@@ -134,7 +134,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			final Set<String> validOtus = new HashSet<>();
 			if( statsFile != null )
 			{
-				final BufferedReader reader = SeqUtil.getFileReader( statsFile );
+				final BufferedReader reader = BioLockJUtil.getFileReader( statsFile );
 				try
 				{
 					reader.readLine(); // skip column headers
@@ -401,7 +401,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			throws Exception
 	{
 		Log.get( getClass() ).info( "Adding stats from: " + stats.getAbsolutePath() );
-		final BufferedReader reader = SeqUtil.getFileReader( stats );
+		final BufferedReader reader = BioLockJUtil.getFileReader( stats );
 		try
 		{
 			final List<String> columnNames = Arrays
