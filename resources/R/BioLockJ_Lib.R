@@ -1,6 +1,5 @@
 # BioLockJ_Lib.R contains the library of functions shared by multiple BioLockJ R script modules. 
 
-
 addPlotLabel <- function( label, size, color, las, side, rowIndex, colIndex ) {
    mtext( bquote(bold(.( label ))), outer=TRUE, cex=size, side=side, las=las, line=colIndex, adj=rowIndex, col=color )
 }
@@ -243,16 +242,3 @@ writeErrors <- function( script, msgs ) {
    close( errorConn )
    stop( paste( "Check error file to see runtime errors:", paste0( script, "_Failures" ) ) )
 }
-
-
-importLibs( c( "properties", "stringr", "ggpubr" ) )
-configFile = getMasterProperties()
-print( paste( "Importing Config:", configFile ) )
-#print( read.properties( configFile ) )
-pipelineDir = dirname( configFile )
-r.debug = getProperty("r.debug", FALSE)
-binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )
-nominalFields = getProperty("internal.nominalFields", vector( mode="character" ) )
-numericFields = getProperty("internal.numericFields", vector( mode="character" ) )
-allAtts = c( binaryFields, nominalFields, numericFields )
-cexAxisMin = 0.65

@@ -229,11 +229,11 @@ public final class DownloadUtil
 	 */
 	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception
 	{
+		
 		final File script = new File( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
 				+ File.separator + RUN_ALL_SCRIPT );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
-		writer.write( "# Execute this script to run all R scripts on your local workstation" + RETURN );
-		writer.write( R_Module.buildGetModuleScriptDirFunction() );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( script, true ) );
+		FileUtils.copyFile( getRunAllStarter(), script );
 
 		for( final BioModule mod: modules )
 		{
@@ -251,6 +251,23 @@ public final class DownloadUtil
 		writer.close();
 
 		return script;
+	}
+	
+	/**
+	 * Get the Run_All starter script, additional lines are added to this starter.
+	 * 
+	 * @return Function template script
+	 * @throws Exception if errors occur
+	 */
+	private static File getRunAllStarter() throws Exception
+	{
+		final File rFile = new File( R_Module.getRTemplateDir() + RUN_ALL_STARTER );
+		if( !rFile.exists() )
+		{
+			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
+		}
+
+		return rFile;
 	}
 
 	private static String getDest( final String val )
@@ -278,6 +295,7 @@ public final class DownloadUtil
 	private static final String RETURN = BioLockJ.RETURN;
 
 	private static final String RUN_ALL_SCRIPT = "Run_All" + R_Module.R_EXT;
+	private static final String RUN_ALL_STARTER = "BioLockJ_" + RUN_ALL_SCRIPT;
 	private static final String SOURCE = "$src";
 
 }

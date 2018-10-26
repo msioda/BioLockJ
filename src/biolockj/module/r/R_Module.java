@@ -44,32 +44,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Build the R module primary script.
-	 *
-	 * @return R code
-	 * @throws Exception if {@link biolockj.Config} properties are invalid or missing
-	 */
-	public String buildPrimaryScript() throws Exception
-	{
-		final StringBuffer sb = new StringBuffer();
-		sb.append( buildGetModuleScriptDirFunction() + RETURN );
-		sb.append( "source( file.path( dirname( " + R_FUNCTION_GET_MOD_SCRIPT + "() ), \"" + R_FUNCTION_LIB + "\" ) )"
-				+ RETURN );
-		sb.append( "source( file.path( dirname( " + R_FUNCTION_GET_MOD_SCRIPT + "() ), \"" + getModuleScriptName()
-				+ "\" ) )" + RETURN );
-		sb.append( METHOD_RUN_PROGRAM + "( " + R_FUNCTION_GET_MOD_SCRIPT + "() )" + RETURN );
-		sb.append( METHOD_REPORT_STATUS + "( " + R_FUNCTION_GET_MOD_SCRIPT + "() )" + RETURN );
-		if( Config.getBoolean( R_SAVE_R_DATA ) )
-		{
-			sb.append( "save.image( file.path( dirname( getModuleScript() ), " + "\"" + getClass().getSimpleName()
-					+ R_DATA_EXT + "\" ) )" + RETURN );
-		}
-		sb.append( "sessionInfo()" + RETURN );
-
-		return sb.toString();
-	}
-
-	/**
 	 * Not needed for R script modules.
 	 */
 	@Override
@@ -116,6 +90,23 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public File getFunctionLib() throws Exception
 	{
 		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
+		if( !rFile.exists() )
+		{
+			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
+		}
+
+		return rFile;
+	}
+	
+	/**
+	 * Get the main R script
+	 * 
+	 * @return Main R script
+	 * @throws Exception if errors occur
+	 */
+	public File getMainR() throws Exception
+	{
+		final File rFile = new File( getRTemplateDir() + R_MAIN_SCRIPT );
 		if( !rFile.exists() )
 		{
 			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
@@ -207,7 +198,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @return System file path
 	 * @throws Exception if errors occur
 	 */
-	public String getRTemplateDir() throws Exception
+	public static String getRTemplateDir() throws Exception
 	{
 		return BioLockJUtil.getSource().getAbsolutePath() + File.separator + "resources" + File.separator + "R"
 				+ File.separator;
@@ -348,11 +339,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		getTempDir();
 		getOutputDir();
+		FileUtils.copyFile( getMainR(), getPrimaryScript() );
 		FileUtils.copyFileToDirectory( getFunctionLib(), getScriptDir() );
 		FileUtils.copyFileToDirectory( getModuleScript(), getScriptDir() );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getPrimaryScript() ) );
-		writer.write( buildPrimaryScript() );
-		writer.close();
 	}
 
 	private String getErrors() throws Exception
@@ -395,29 +384,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	private String getModuleScriptName() throws Exception
 	{
 		return getClass().getSimpleName() + R_EXT;
-	}
-
-	/**
-	 * Build R script function to return the R script parent directory: {@value #R_FUNCTION_GET_MOD_SCRIPT}
-	 * 
-	 * @return R script function
-	 * @throws Exception if errors occur
-	 */
-	public static String buildGetModuleScriptDirFunction() throws Exception
-	{
-		final StringBuffer sb = new StringBuffer();
-		sb.append( RETURN );
-		sb.append( "# Return script directory path" + RETURN );
-		sb.append( R_FUNCTION_GET_MOD_SCRIPT + " <- function() {" + RETURN );
-		sb.append( "   initial.options = commandArgs(trailingOnly = FALSE)" + RETURN );
-		sb.append( "   script.name <- sub(\"--file=\", \"\", initial.options[grep(\"--file=\", initial.options)])"
-				+ RETURN );
-		sb.append( "   if( length( script.name ) == 0 ) {" + RETURN );
-		sb.append( "       stop( \"BioLockJ_Lib.R is not interactive - use RScript to execute.\" )" + RETURN );
-		sb.append( "   }" + RETURN );
-		sb.append( "   return( normalizePath( script.name ) )" + RETURN );
-		sb.append( "}" + RETURN );
-		return sb.toString();
 	}
 
 	/**
@@ -504,6 +470,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}
 	 */
 	public static final String R_FUNCTION_LIB = "BioLockJ_Lib.R";
+	
+	/**
+	 * This main R script that sources helper libraries and calls modules main method function: {@value #R_MAIN_SCRIPT}
+	 */
+	public static final String R_MAIN_SCRIPT = "BioLockJ_MAIN.R";
 
 	/**
 	 * {@link biolockj.Config} boolean property {@value #R_SAVE_R_DATA} enables the .RData file to save.
