@@ -5,86 +5,64 @@
 			<pathelement location="lib/ant-contrib-0.6.jar"/>
 		</classpath>
 	</taskdef>
-	
+		
 	<taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="lib/ant-contrib-0.6.jar" />
-	
-	<path id="blj.path">
+		
+	<path id="lib.path">
 		<fileset dir="lib"/>
 	</path>
 	
-	<target name="clean">
+	<target name="init">
 		<if><available file="bin"/><then>
-			<delete dir="bin"/>
+			<delete includeemptydirs="true">
+			  <fileset dir="bin" includes="**/*"/>
+			</delete>
 		</then></if>
 		<if><available file="dist/BioLockJ.jar"/><then>
 			<delete file="dist/BioLockJ.jar"/>
 		</then></if>
-		<if><available file=".temp"/><then>
-			<delete file=".temp"/>
-		</then></if>
+		<loadfile property="blj_version" srcfile=".version">
+    		<filterchain><striplinebreaks/></filterchain>
+    	</loadfile>
+    	<property name="release_tar" value="dist/biolockj_${blj_version}.tar.gz"/>
 	</target>
-
-    <target name="init" depends="clean">
-    	<loadfile property="blj_version" srcfile=".version"/> 
-    	<property name="release_dir" value="dist/biolockj_${blj_version}"/>
-    	<property name="release_ext" value=".tar.gz"/>
-    	<concat destfile=".temp">${release_dir}${release_ext}</concat>
-    	<loadfile property="strip_file" srcfile=".temp">
-			<filterchain><striplinebreaks/></filterchain>
-		</loadfile>
-		<for param="line" list="${strip_file}" delimiter="${line.separator}">
-	    	<sequential>
-	    		<concat destfile=".temp_tarball">@{line}</concat>
-	    	</sequential>
-		</for>
-    	<loadfile property="release_tar" srcfile=".temp_tarball"/>
-    	<delete file=".temp"/>
-    	<delete file=".temp_tarball"/>
-    </target>
+	
 
     <target name="compile-source" depends="init">
-    	<mkdir dir="bin"/>
-    	<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin" classpathref="blj.path"/>
+		<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin" classpathref="lib.path"/>
     	<copy file="resources/log4j.properties" todir="bin"/>
     	<copy file=".version" todir="bin"/>
     </target>
+
 	
 	<target name="build-jar" depends="compile-source">
 		<jar basedir="bin" destfile="dist/BioLockJ.jar">
-			<zipgroupfileset dir="lib"/>
+			<zipgroupfileset dir="lib" includes="*.jar"/>
 			<manifest>
-				<attribute name="Version" value="${blj_version}"/>
+				<attribute name="Version" value="1.0"/>
 				<attribute name="Main-Class" value="biolockj.BioLockJ"/>
-				<attribute name="Class-Path" value="blj.path"/>
 			</manifest>
 		</jar>
-		<echo>basedir = ${basedir}</echo>
-		<exec executable="chmod" dir="${basedir}/dist" failonerror="true">
-		    <arg line="-R 0770 ." />
-		</exec>
-		<exec executable="chmod" dir="${basedir}/script" failonerror="true">
-			<arg line="-R 0770 ." />
-		</exec>
 	</target>
-	
+
 	<target name="javadoc" depends="build-jar">
-		<javadoc classpathref="blj.path" access="protected" author="true" destdir="docs" doctitle="BioLockJ" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="biolockj,biolockj.exception,biolockj.module,biolockj.module.classifier,biolockj.module.classifier.r16s,biolockj.module.classifier.wgs,biolockj.module.implicit,biolockj.module.implicit.parser,biolockj.module.implicit.parser.r16s,biolockj.module.implicit.parser.wgs,biolockj.module.implicit.qiime,biolockj.module.r,biolockj.module.report,biolockj.module.seq,biolockj.node,biolockj.node.r16s,biolockj.node.wgs,biolockj.util" source="1.8" sourcepath="src" splitindex="true" use="true" version="true">
+		<javadoc classpathref="lib.classpath" access="protected" author="true" destdir="docs" doctitle="BioLockJ" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="biolockj,biolockj.exception,biolockj.module,biolockj.module.classifier,biolockj.module.classifier.r16s,biolockj.module.classifier.wgs,biolockj.module.implicit,biolockj.module.implicit.parser,biolockj.module.implicit.parser.r16s,biolockj.module.implicit.parser.wgs,biolockj.module.implicit.qiime,biolockj.module.r,biolockj.module.report,biolockj.module.seq,biolockj.node,biolockj.node.r16s,biolockj.node.wgs,biolockj.util" source="1.8" sourcepath="src" splitindex="true" use="true" version="true">
 			<link href="https://docs.oracle.com/javase/8/docs/api/"/>
 		    <link href="http://docs.oracle.com/javase/8/javafx/api/"/>
 		</javadoc>
 	</target>
 	
 	<target name="deploy" depends="build-jar">
-		<if><available file="bin"/><then>
-			<delete file="${release_tar}"/>
-		</then></if>
 		<tar compression="gzip" destfile="${release_tar}">
-			<tarfileset dir="." filemode="770">
-				<exclude name="bin/**" />
-				<exclude name="dist/*.tar.gz" /> 
-				<exclude name=".*" /> 
-				<exclude name="*.yml" /> 
-				<exclude name="*.md" /> 
+			<tarfileset dir="." filemode="770" dirmode="770">
+				<exclude name="/bin"/>
+				<exclude name="${release_tar}"/> 
+				<exclude name="*.yml"/> 
+				<exclude name="*.md"/> 
+				<exclude name=".DS_Store"/> 
+				<exclude name=".git*"/> 
+				<exclude name=".project"/> 
+				<exclude name=".classpath"/> 
 			</tarfileset>
 		</tar>	
 		<chmod file="${release_tar}" perm="770"/>	
