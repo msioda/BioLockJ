@@ -57,10 +57,13 @@
 				<attribute name="Class-Path" value="blj.path"/>
 			</manifest>
 		</jar>
-		<chmod type="file" perm="770">		
-			<fileset dir="dist/*" />
-			<fileset dir="script/*" />
-		</chmod>
+		<echo>basedir = ${basedir}</echo>
+		<exec executable="chmod" dir="${basedir}/dist" failonerror="true">
+		    <arg line="-R 0770 ." />
+		</exec>
+		<exec executable="chmod" dir="${basedir}/script" failonerror="true">
+			<arg line="-R 0770 ." />
+		</exec>
 	</target>
 	
 	<target name="javadoc" depends="build-jar">
