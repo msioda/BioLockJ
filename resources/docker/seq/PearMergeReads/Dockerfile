@@ -12,8 +12,7 @@ RUN apt-get update && \
 	apt-get install -y build-essential \
 	apt-utils \
 	wget \
-	gzip && \
-	apt-get clean
+	gzip 
 
 #2.1) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
@@ -37,6 +36,16 @@ RUN mkdir -p /app/pear && cd /app/pear && \
 	wget https://github.com/mikesioda/BioLockJ_Dev/releases/download/v1.0/${PEAR_VERSION}.gz && \
 	gzip -df ${PEAR_VERSION}.gz && \
 	chmod +x /app/pear/${PEAR_VERSION} 
-	
-#4.) ================= Container Command =================
+
+#4. ) =============== Cleanup ================================
+RUN	apt-get clean && \
+	rm -rf /var/lib/apt/lists/* && \
+	find / -name *python* | xargs rm -rf && \
+	rm -rf var/cache/* && \
+	rm -rf var/log/* && \
+	rm -rf tmp/* && \
+	rm -rf usr/games && \
+	rm -rf usr/share/*
+		
+#5.) ================= Container Command =================
 CMD bash $COMPUTE_SCRIPT

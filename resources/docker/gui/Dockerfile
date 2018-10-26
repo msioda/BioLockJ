@@ -14,24 +14,18 @@ RUN apt-get update && \
 	checkinstall \
 	apt-utils \
 	software-properties-common \
-	git \
-	unzip \
 	ca-certificates \
 	tar \
 	wget \
 	gzip \
     curl \
-	tzdata
+    nodejs \
+    aptitude && \
+    apt-get update && \
+    curl --silent --location https://deb.nodesource.com/setup_8.x | bash -
 
 ##########Dockerize Node
-#3.) NODE (from Malcom)
-RUN apt-get update && \
-	apt-get install -y curl && \
-	curl --silent --location https://deb.nodesource.com/setup_8.x | bash - && \
-	apt-get update && \
-	apt-get install --y nodejs aptitude
-#RUN apt-get update && apt-get install -y npm
-
+#3.) NODE (from Malcom) & npm install
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
@@ -58,48 +52,36 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc
 
-#5.) ================= Install Java   =================
-RUN apt-get upgrade -y && \
-   	add-apt-repository ppa:webupd8team/java -y && \
-   	apt-get update && \
-   	echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
-   	apt-get install -y oracle-java8-installer
-   	
-#6.) ============ Install  Docker Client =================
-ARG DOCKER_CLIENT
-RUN cd /tmp && mkdir -p /usr/local/bin && \  
-	wget https://download.docker.com/linux/static/stable/x86_64/${DOCKER_CLIENT} && \
-	tar --strip-components=1 -zxf ${DOCKER_CLIENT} -C /usr/local/bin && \
-	chmod +x /usr/local/bin/docker && \
-	rm -f /tmp/$DOCKER_CLIENT
-
-#7.) ================= Install BioLockJ =================
+#5.) ================= Install BioLockJ =================
 ARG BLJ_VERSION
 ARG BLJ_DATE
-ENV BLJ=/app/${BLJ_VERSION}
-ENV PATH=$PATH:$BLJ/dist
-ENV BLJ_TAR=${BLJ_VERSION}.tar.gz
-ENV BLJ_RELEASE_URL=https://github.com/msioda/BioLockJ/raw/master/dist/$BLJ_TAR
+ENV BLJ=/app/biolockj
+ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tar.gz
+ENV BLJ_RELEASE_URL=https://github.com/msioda/BioLockJ/releases/download/${BLJ_VERSION}/$BLJ_TAR
 RUN echo ${BLJ_DATE} && \
 	mkdir $BLJ && \
 	cd $BLJ && \
 	wget $BLJ_RELEASE_URL && \
 	tar -xzf $BLJ_TAR && \
-	chmod -R 777 $BLJ && \
-	rm -f $BLJ_TAR
+	chmod -R 770 $BLJ && \
+	rm -f $BLJ_TAR && rm -rf $BLJ/[slip]* && rm -rf $BLJ/docs && rm -rf $BLJ/resources/[blid]*
 	
-#8.) ================= Set the timezone =================
-RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
-
-#9.) ================= Expose Port 8080 =================
+#6.) ================= Expose Port 8080 =================
 #I used https://nodejs.org/en/docs/guides/nodejs-docker-webapp/ initially.
 #Now, I'm copying from https://github.com/nodejs/docker-node/blob/master/Dockerfile-alpine.template //didn't work
 #Your app binds to port 8080 so you'll use the EXPOSE instruction to have it mapped by the docker daemon:
 EXPOSE 8080
 
-#10.) ================= Bundle app source --> what is this for? =================
-COPY . .
+#7.) =======================  Cleanup  ==========================
+RUN	apt-get clean && \
+	rm -rf /var/lib/apt/lists/* && \
+	find / -name *python* | xargs rm -rf && \
+	rm -rf var/cache/* && \
+	rm -rf var/log/* && \
+	rm -rf tmp/* && \
+	rm -rf usr/games && \
+	rm -rf usr/share/*
 
-#11.) ================= Define command = npm start =================
+#8.) ================= Define command = npm start =================
 #define the command to run your app using CMD which defines your runtime. Here we will use the basic npm start which will run node server.js to start your server:
 CMD [ "npm", "start" ]
