@@ -242,7 +242,7 @@ public class BashScriptBuilder
 			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) );
 		}
 
-		lines.add( "# BioLockJ " + Log.BLJ_VERSION + " " + getMainScriptPath( module ) );
+		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) );
 		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED );
 		lines.add( FAIL_FILE + "=" + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_FAILURES + RETURN );
 		
@@ -288,7 +288,7 @@ public class BashScriptBuilder
 			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) );
 		}
 		
-		lines.add( "#BioLockJ." + Log.BLJ_VERSION + " " + scriptPath + " | batch size = "
+		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = "
 				+ new Integer( Config.requirePositiveInteger( ScriptModule.SCRIPT_BATCH_SIZE ) ).toString() );
 		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED );
 		lines.add( FAIL_FILE + "=" + scriptPath + "_" + Pipeline.SCRIPT_FAILURES );
@@ -612,7 +612,7 @@ public class BashScriptBuilder
 		Log.debug( BashScriptBuilder.class, "PRINT FILE => " + filePath );
 		try
 		{
-			final BufferedReader in = SeqUtil.getFileReader( new File( filePath ) );
+			final BufferedReader in = BioLockJUtil.getFileReader( new File( filePath ) );
 			String line;
 			while( ( line = in.readLine() ) != null )
 			{

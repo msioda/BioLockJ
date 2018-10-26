@@ -29,6 +29,7 @@ import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.module.classifier.r16s.QiimeOpenRefClassifier;
 import biolockj.module.seq.PearMergeReads;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.ModuleUtil;
 import biolockj.util.SeqUtil;
@@ -148,7 +149,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 
 		MetaUtil.refreshCache(); // to get the new alpha metric fields
-		final BufferedReader reader = SeqUtil.getFileReader( MetaUtil.getFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 		MetaUtil.setFile(
 				new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() ) );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( MetaUtil.getFile() ) );
@@ -288,7 +289,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			final File otuSummary = new File( getTempDir().getAbsolutePath() + File.separator + OTU_SUMMARY_FILE );
 			if( otuSummary.exists() )
 			{
-				final BufferedReader reader = SeqUtil.getFileReader( otuSummary );
+				final BufferedReader reader = BioLockJUtil.getFileReader( otuSummary );
 				sb.append( "OTU Summary" + RETURN );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{

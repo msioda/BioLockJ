@@ -28,6 +28,7 @@ import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
 import biolockj.module.r.R_Module;
 import biolockj.module.report.AddMetadataToOtuTables;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.RMetaUtil;
 import biolockj.util.SeqUtil;
@@ -106,7 +107,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 					"Importing metadata (column delim=" + Config.requireString( MetaUtil.META_COLUMN_DELIM ) + "): "
 							+ MetaUtil.getFile().getAbsolutePath() );
 
-			final BufferedReader reader = SeqUtil.getFileReader( MetaUtil.getFile() );
+			final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			try
 			{

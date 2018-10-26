@@ -64,7 +64,7 @@ public class LogUtil
 	private static List<String> cacheLog( final File log ) throws Exception
 	{
 		final List<String> cache = new ArrayList<>();
-		final BufferedReader reader = SeqUtil.getFileReader( log );
+		final BufferedReader reader = BioLockJUtil.getFileReader( log );
 		try
 		{
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )

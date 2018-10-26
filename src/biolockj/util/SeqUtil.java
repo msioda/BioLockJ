@@ -13,12 +13,7 @@ package biolockj.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,7 +23,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.BioLockJ;
@@ -95,7 +89,7 @@ public class SeqUtil
 	public static long countNumReads( final File seqFile ) throws Exception
 	{
 		long count = 0L;
-		final BufferedReader r = getFileReader( seqFile );
+		final BufferedReader r = BioLockJUtil.getFileReader( seqFile );
 		for( String line = r.readLine(); line != null; line = r.readLine() )
 		{
 			count++;
@@ -103,21 +97,6 @@ public class SeqUtil
 		r.close();
 
 		return count / getNumLinesPerRead();
-	}
-
-	/**
-	 * Get a {@link BufferedReader} for standard text file or {@link GZIPInputStream} for gzipped files ending in ".gz"
-	 *
-	 * @param file to be read
-	 * @return {@link BufferedReader} or {@link GZIPInputStream} if file is gzipped
-	 * @throws FileNotFoundException if file does not exist
-	 * @throws IOException if unable to read or write the file
-	 */
-	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException
-	{
-		return file.getName().toLowerCase().endsWith( ".gz" )
-				? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
-				: new BufferedReader( new FileReader( file ) );
 	}
 
 	/**
@@ -156,7 +135,7 @@ public class SeqUtil
 	public static Set<String> getHeaders( final File seq ) throws Exception
 	{
 		final Set<String> headers = new HashSet<>();
-		final BufferedReader reader = getFileReader( seq );
+		final BufferedReader reader = BioLockJUtil.getFileReader( seq );
 		int lineCounter = 1;
 		try
 		{
@@ -231,7 +210,7 @@ public class SeqUtil
 
 			for( final File f: getPipelineInputFiles() )
 			{
-				final BufferedReader reader = getFileReader( f );
+				final BufferedReader reader = BioLockJUtil.getFileReader( f );
 				headerChar = reader.readLine().trim().substring( 0, 1 );
 				Log.debug( SeqUtil.class, "First character of test input sequence file: " + headerChar );
 				if( FASTA_HEADER_DELIMS.contains( headerChar ) )
@@ -614,7 +593,7 @@ public class SeqUtil
 		{
 			if( hasSeqInput() )
 			{
-				final BufferedReader reader = SeqUtil.getFileReader( f );
+				final BufferedReader reader = BioLockJUtil.getFileReader( f );
 				final String testChar = reader.readLine().trim().substring( 0, 1 );
 				Log.debug( SeqUtil.class, "First character of input file = " + testChar );
 				if( !SeqUtil.FASTA_HEADER_DELIMS.contains( testChar )
@@ -777,7 +756,7 @@ public class SeqUtil
 			{
 				boolean foundFw = false;
 				boolean foundRv = false;
-				final BufferedReader reader = SeqUtil.getFileReader( getPipelineInputFiles().get( 0 ) );
+				final BufferedReader reader = BioLockJUtil.getFileReader( getPipelineInputFiles().get( 0 ) );
 				Log.info( SeqUtil.class, "Reading multiplexed file to check for paired reads: "
 						+ getPipelineInputFiles().get( 0 ).getAbsolutePath() );
 

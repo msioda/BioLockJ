@@ -26,6 +26,7 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
 
@@ -68,7 +69,7 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 
 		final Map<String, String> metaLines = new HashMap<>();
 		String header = null;
-		final BufferedReader reader = SeqUtil.getFileReader( MetaUtil.getFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
 			final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );

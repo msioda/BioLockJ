@@ -26,6 +26,7 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.DemuxUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.ModuleUtil;
@@ -196,7 +197,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 					.info( "Break multiplexed file [ " + file.getAbsolutePath() + " ] into files with a max #lines = [ "
 							+ NUM_LINES_TEMP_FILE + " ] to avoid memory issues while processing" );
 
-			final BufferedReader reader = SeqUtil.getFileReader( file );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final List<String> seqLines = new ArrayList<>();
 			int i = 0;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
@@ -241,7 +242,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			Log.get( getClass() ).info( "Demultiplexing file " + file.getAbsolutePath() );
 			final List<String> seqLines = new ArrayList<>();
 			final Map<String, List<String>> output = new HashMap<>();
-			final BufferedReader reader = SeqUtil.getFileReader( file );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				seqLines.add( line );
@@ -323,7 +324,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			Log.get( getClass() ).info( "Processing split file for FW headers: " + file.getAbsolutePath() );
 
 			final List<String> seqLines = new ArrayList<>();
-			final BufferedReader reader = SeqUtil.getFileReader( file );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				seqLines.add( line );
@@ -398,7 +399,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			Log.get( getClass() ).info( "Processing split file for RV headers: " + file.getAbsolutePath() );
 
 			final List<String> seqLines = new ArrayList<>();
-			final BufferedReader reader = SeqUtil.getFileReader( file );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				seqLines.add( line );

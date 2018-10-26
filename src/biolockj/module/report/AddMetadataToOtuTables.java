@@ -32,7 +32,6 @@ import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.r.R_Module;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
 import biolockj.util.SummaryUtil;
 
 /**
@@ -164,7 +163,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 			final String name = Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_"
 					+ file.getName().replaceAll( R_Module.TSV_EXT, "" ) + META_MERGED;
 			Log.get( getClass() ).info( "Merge OTU table + Metadata file: " + outDir + name );
-			final BufferedReader reader = SeqUtil.getFileReader( file );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
 
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )

@@ -46,6 +46,7 @@
     	<mkdir dir="bin"/>
     	<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin" classpathref="blj.path"/>
     	<copy file="resources/log4j.properties" todir="bin"/>
+    	<copy file=".version" todir="bin"/>
     </target>
 	
 	<target name="build-jar" depends="compile-source">

@@ -138,7 +138,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
 				+ fileExt;
 		final File output = new File( name );
-		final BufferedReader reader = SeqUtil.getFileReader( input );
+		final BufferedReader reader = BioLockJUtil.getFileReader( input );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( output ) );
 		Log.get( getClass() ).debug(
 				"Building file [#lines/read=" + SeqUtil.getNumLinesPerRead() + "]: " + output.getAbsolutePath() );
@@ -235,7 +235,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 
 		final File newMapping = new File(
 				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-		final BufferedReader reader = SeqUtil.getFileReader( MetaUtil.getFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMapping ) );
 

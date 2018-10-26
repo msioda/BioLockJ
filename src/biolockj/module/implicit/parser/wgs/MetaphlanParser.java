@@ -18,7 +18,7 @@ import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.ParsedSample;
 import biolockj.node.wgs.MetaphlanNode;
-import biolockj.util.SeqUtil;
+import biolockj.util.BioLockJUtil;
 
 /**
  * This BioModules parses MetaphlanClassifier output reports to build standard OTU abundance tables.
@@ -44,7 +44,7 @@ public class MetaphlanParser extends ParserModuleImpl implements ParserModule
 	{
 		for( final File file: getInputFiles() )
 		{
-			final BufferedReader reader = SeqUtil.getFileReader( file );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{

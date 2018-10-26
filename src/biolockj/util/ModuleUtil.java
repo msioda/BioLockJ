@@ -223,7 +223,7 @@ public class ModuleUtil
 		final Collection<File> failedScripts = FileUtils.listFiles( module.getScriptDir(), ffFailed, null );
 		for( final File script: failedScripts )
 		{
-			final BufferedReader reader = SeqUtil.getFileReader( script );
+			final BufferedReader reader = BioLockJUtil.getFileReader( script );
 			try
 			{
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )

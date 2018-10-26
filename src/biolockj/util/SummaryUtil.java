@@ -340,7 +340,7 @@ public class SummaryUtil
 			for( final File failureScript: scriptsFailed )
 			{
 				sb.append( "Script Failed:" + failureScript.getAbsolutePath() + RETURN );
-				final BufferedReader reader = SeqUtil.getFileReader( failureScript );
+				final BufferedReader reader = BioLockJUtil.getFileReader( failureScript );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
 					sb.append( line + RETURN );
@@ -375,7 +375,7 @@ public class SummaryUtil
 			}
 			else
 			{
-				final BufferedReader reader = SeqUtil.getFileReader( summary );
+				final BufferedReader reader = BioLockJUtil.getFileReader( summary );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
 					sb.append( line + RETURN );
@@ -495,7 +495,7 @@ public class SummaryUtil
 		{
 			FileUtils.copyFile( getSummaryFile(), getTempFile() );
 			FileUtils.forceDelete( getSummaryFile() );
-			final BufferedReader reader = SeqUtil.getFileReader( getTempFile() );
+			final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 			try
 			{
@@ -537,7 +537,7 @@ public class SummaryUtil
 	protected static Integer getModuleNumber() throws Exception
 	{
 		Integer num = null;
-		final BufferedReader reader = SeqUtil.getFileReader( getSummaryFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( getSummaryFile() );
 		try
 		{
 			if( getSummaryFile().exists() )
@@ -634,7 +634,7 @@ public class SummaryUtil
 	{
 		FileUtils.copyFile( getSummaryFile(), getTempFile() );
 		FileUtils.forceDelete( getSummaryFile() );
-		final BufferedReader reader = SeqUtil.getFileReader( getTempFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 		try
 		{

@@ -312,7 +312,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		boolean rvMergePrimerFound = false;
 		final Set<String> primers = new HashSet<>();
 		final File trimSeqFile = getPrimerFile();
-		final BufferedReader reader = SeqUtil.getFileReader( trimSeqFile );
+		final BufferedReader reader = BioLockJUtil.getFileReader( trimSeqFile );
 		try
 		{
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
@@ -417,7 +417,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	private Set<String> getValidHeaders( final File file, final Set<String> primers ) throws Exception
 	{
 		final Set<String> validHeaders = new HashSet<>();
-		final BufferedReader reader = SeqUtil.getFileReader( file );
+		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		int lineCounter = 1;
 		String header = null;
 		try
@@ -535,7 +535,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		final File trimmedFile = new File( getTrimFilePath( file ) );
 		Log.get( getClass() ).info( "Create trimmed file = " + trimmedFile.getAbsolutePath() );
 
-		final BufferedReader reader = SeqUtil.getFileReader( file );
+		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( trimmedFile ) );
 		try
 		{

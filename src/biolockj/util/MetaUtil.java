@@ -60,7 +60,7 @@ public class MetaUtil
 		}
 
 		final Set<String> keys = map.keySet();
-		final BufferedReader reader = SeqUtil.getFileReader( getFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
 		setFile( newMeta );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
 		try
@@ -401,7 +401,7 @@ public class MetaUtil
 		final int index = MetaUtil.getFieldNames().indexOf( colName );
 
 		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getMetadataFileName() );
-		final BufferedReader reader = SeqUtil.getFileReader( getFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
 		setFile( newMeta );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
 		try
@@ -493,7 +493,7 @@ public class MetaUtil
 	private static List<List<String>> parseMetadataFile() throws Exception
 	{
 		final List<List<String>> data = new ArrayList<>();
-		final BufferedReader reader = SeqUtil.getFileReader( getFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
 			Log.debug( MetaUtil.class, "===> Meta line: " + line );

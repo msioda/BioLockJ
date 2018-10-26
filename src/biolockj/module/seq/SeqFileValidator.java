@@ -26,6 +26,7 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
 
@@ -154,7 +155,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 
 		final List<String> seqLines = new ArrayList<>();
 		final List<String> badLines = new ArrayList<>();
-		final BufferedReader reader = SeqUtil.getFileReader( file );
+		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		final BufferedWriter writer = new BufferedWriter(
 				new FileWriter( new File( getFileName( getOutputDir(), file.getName() ) ) ) );
 

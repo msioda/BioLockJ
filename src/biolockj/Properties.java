@@ -26,7 +26,6 @@ import java.util.StringTokenizer;
 import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
 
 /**
  * Load properties defined in the BioLockJ configuration file, including inherited properties from project.defaultProps
@@ -172,7 +171,7 @@ public class Properties extends java.util.Properties
 	protected static File getDefaultConfigProp( final File configFile )
 			throws FileNotFoundException, IOException, ConfigPathException
 	{
-		final BufferedReader reader = SeqUtil.getFileReader( configFile );
+		final BufferedReader reader = BioLockJUtil.getFileReader( configFile );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
 			final StringTokenizer st = new StringTokenizer( line, "=" );
@@ -210,7 +209,7 @@ public class Properties extends java.util.Properties
 	private static List<String> getListedModules() throws Exception
 	{
 		final List<String> modules = new ArrayList<>();
-		final BufferedReader reader = SeqUtil.getFileReader( configFile );
+		final BufferedReader reader = BioLockJUtil.getFileReader( configFile );
 		try
 		{
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
