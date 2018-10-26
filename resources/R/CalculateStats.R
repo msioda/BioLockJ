@@ -1,5 +1,11 @@
 # Module script for: biolockj.module.r.CalculateStats
 
+r.debug = getProperty("r.debug", FALSE)
+binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )
+nominalFields = getProperty("internal.nominalFields", vector( mode="character" ) )
+numericFields = getProperty("internal.numericFields", vector( mode="character" ) )
+allAtts = c( binaryFields, nominalFields, numericFields )
+
 # Add value to vector v and assign name 
 addNamedVectorElement <- function( v, name, value ) {
    v[length(v) + 1] = value

@@ -1,6 +1,5 @@
 # BioLockJ_Lib.R contains the library of functions shared by multiple BioLockJ R script modules. 
 
-
 addPlotLabel <- function( label, size, color, las, side, rowIndex, colIndex ) {
    mtext( bquote(bold(.( label ))), outer=TRUE, cex=size, side=side, las=las, line=colIndex, adj=rowIndex, col=color )
 }
@@ -11,10 +10,18 @@ displayPval <- function( pval ) {
 }
 
 
-getCexAxis <- function( labels ) {
+getCexAxis <- function( labels=NULL, returnMax=F, returnMin=F) {
+	cexAxisMax = 1
+	cexAxisMin = 0.65
+	if (returnMax){
+		return(cexAxisMax)
+	}
+	if (returnMin){
+		return(cexAxisMin)
+	}
    nchars = sum(nchar(labels)) + length(labels) - 1
    if( nchars < getProperty("r.plotWidth")) {
-      return( 1 )
+      return( cexAxisMax )
    }
    else if( nchars < (getProperty("r.plotWidth")+7) ) {
       return( 0.9 )
@@ -58,7 +65,7 @@ getColors <- function( n ) {
 
 # Return a file matching the pattern underwhere under the pipeline root directory
 getPipelineFile <- function( pattern ) {
-   result = list.files( pipelineDir, pattern, full.names=TRUE, recursive=TRUE )
+   result = list.files( getPipelineDir(), pattern, full.names=TRUE, recursive=TRUE )
    if( length( result ) > 1 ){
       stop( paste( "Ambiguous file:", subDir, pattern ) )
    }
@@ -77,7 +84,7 @@ getFactorGroups <- function( otuTable, metaCol, otuCol ) {
 
 
 getLabels <- function( labels ) {
-   if( getCexAxis(labels) == cexAxisMin ) {
+   if( getCexAxis(labels) == getCexAxis(returnMin=T) ) {
       nchars = sum(nchar(labels)) + length(labels) - 1
       maxSize = ((getProperty("r.plotWidth")*2)+2)/length(labels)
       return( strtrim(labels, floor(maxSize) ) )
@@ -97,6 +104,20 @@ getLas <- function( labels ) {
 }
 
 
+getMasterProperties <- function() {
+	testDir = dirname( getModuleScript() )
+	propFile = vector( mode="character" )
+	while( length( propFile ) == 0 && testDir != "/" ) {
+		propFile = list.files( testDir, "MASTER.*.properties", full.names=TRUE )
+		testDir = dirname( testDir )
+	}
+	if( length( propFile ) == 0 ) {
+		stop( "MASTER property file not found!" )
+	}
+	return( propFile )
+}
+
+
 getMaxAttLen <- function( v ) {
    max = 0
    for( i in 1:length(v) ) {
@@ -107,8 +128,8 @@ getMaxAttLen <- function( v ) {
 
 
 getModuleDir <- function() {
-	if( pipelineDir == dirname( getModuleScript() ) ){
-		return( pipelineDir )
+	if( getPipelineDir() == dirname( getModuleScript() ) ){
+		return( getPipelineDir() )
 	}
 	return( dirname( dirname( getModuleScript() ) ) )
 }
@@ -119,24 +140,16 @@ getPath <- function( rootDir, name ) {
 }
 
 
+getPipelineDir <- function() {
+	return( dirname( getMasterProperties() ) )
+}
+
+
 getPlotTitle <- function( line1, line2 ) {
    if( (nchar(line1) + nchar(line2) ) > getProperty("r.plotWidth") ) {
       return( paste0( line1, "\n", line2 ) )
    }
    return( paste( line1, line2 ) )
-}
-
-getMasterProperties <- function() {
-   testDir = dirname( getModuleScript() )
-   propFile = vector( mode="character" )
-   while( length( propFile ) == 0 && testDir != "/" ) {
-      propFile = list.files( testDir, "MASTER.*.properties", full.names=TRUE )
-      testDir = dirname( testDir )
-   }
-   if( length( propFile ) == 0 ) {
-      stop( "MASTER property file not found!" )
-   }
-   return( propFile )
 }
 
 
@@ -151,21 +164,21 @@ getValuesByName <- function( vals, name ) {
 
 
 importLibs <- function( libs ) {
-   errors = vector( mode="character" )
-   for( i in 1:length( libs ) ) {
-      if ( !library( libs[i], logical.return=TRUE, character.only=TRUE ) ) {
-         errors[ length( errors ) + 1 ] = paste( "Missing R library, please run install.packages(", libs[i], ")" )
-      }
-   }   
-
-   if( length( errors ) > 0 ) {
-      writeErrors( getModuleScript(), errors )
-   }
+	errors = vector( mode="character" )
+	for( i in 1:length( libs ) ) {
+		if ( !library( libs[i], logical.return=TRUE, character.only=TRUE ) ) {
+			errors[ length( errors ) + 1 ] = paste( "Missing R library, please run install.packages(", libs[i], ")" )
+		}
+	}   
+	
+	if( length( errors ) > 0 ) {
+		writeErrors( getModuleScript(), errors )
+	}
 }
 
 
 parseConfig <- function( name, val=NULL ) {
-   config = read.properties( configFile )
+   config = read.properties( getMasterProperties() )
    prop = config[[ name ]]
 
    if( is.null( prop ) ) {
@@ -195,12 +208,15 @@ parseConfig <- function( name, val=NULL ) {
 
 
 pValueTestName <- function( attName, isParametric ) {
-   if( attName %in% binaryFields && isParametric ) return ( "T-Test" )
-   if( attName %in% binaryFields && !isParametric ) return ( "Wilcox" )
-   if( attName %in% nominalFields && isParametric ) return ( "ANOVA" )
-   if( attName %in% nominalFields && !isParametric ) return ( "Kruskal" )
-   if( attName %in% numericFields && isParametric ) return ( "Pearson" )
-   if( attName %in% numericFields && !isParametric ) return ( "Kendall" )
+	binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )
+	nominalFields = getProperty("internal.nominalFields", vector( mode="character" ) )
+	numericFields = getProperty("internal.numericFields", vector( mode="character" ) )
+	if( attName %in% binaryFields && isParametric ) return ( "T-Test" )
+	if( attName %in% binaryFields && !isParametric ) return ( "Wilcox" )
+	if( attName %in% nominalFields && isParametric ) return ( "ANOVA" )
+	if( attName %in% nominalFields && !isParametric ) return ( "Kruskal" )
+	if( attName %in% numericFields && isParametric ) return ( "Pearson" )
+	if( attName %in% numericFields && !isParametric ) return ( "Kendall" )
 }
 
 reportStatus <- function( script ) {
@@ -230,12 +246,11 @@ reportStatus <- function( script ) {
 runProgram <- function( script ) {
    log = file( paste0( script, "_Warnings" ), open="wt" )
    sink( log, type="message" )
-   print( paste( "Pipeline dir: ", pipelineDir ) )
+   print( paste( "Pipeline dir: ", getPipelineDir() ) )
    try( main() )
    sink( type="message" )
    close( log )
 }
-
 
 writeErrors <- function( script, msgs ) {
    errorConn = file( paste0( script, "_Failures" ), open="wt" )
@@ -246,13 +261,3 @@ writeErrors <- function( script, msgs ) {
 
 
 importLibs( c( "properties", "stringr", "ggpubr" ) )
-configFile = getMasterProperties()
-print( paste( "Importing Config:", configFile ) )
-#print( read.properties( configFile ) )
-pipelineDir = dirname( configFile )
-r.debug = getProperty("r.debug", FALSE)
-binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )
-nominalFields = getProperty("internal.nominalFields", vector( mode="character" ) )
-numericFields = getProperty("internal.numericFields", vector( mode="character" ) )
-allAtts = c( binaryFields, nominalFields, numericFields )
-cexAxisMin = 0.65

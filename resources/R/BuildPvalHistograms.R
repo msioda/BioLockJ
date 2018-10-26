@@ -1,5 +1,7 @@
 # Module script for: biolockj.module.r.BuildPvalHistograms
 
+r.debug = getProperty("r.debug", FALSE)
+
 # Add one histogram to the report
 addHistogram <- function( v, title, xLabel, size ) {
    if ( !all(is.nan( v )) && !all(is.na( v )) ) {

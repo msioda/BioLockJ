@@ -1,5 +1,9 @@
 # Module script for: biolockj.module.r.BuildMdsPlots
 
+r.debug = getProperty("r.debug", FALSE)
+binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )
+nominalFields = getProperty("internal.nominalFields", vector( mode="character" ) )
+
 # Import vegan library for distance plot support
 # Main function generates 3 MDS plots for each attribute at each level in report.taxonomyLevels
 main <- function() { 
