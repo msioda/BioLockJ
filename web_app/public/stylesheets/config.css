@@ -4,14 +4,28 @@
 @keyframes highlightInput {
   from {
     border-style: solid;
-    border-width: thin;
+    border-width: medium;
     border-color: red;}
   to {
+    background-color: orange;
     border-style: solid;
     border-width: medium;
     border-color: yellow;}
     /* background-color: yellow;} */
   }
+
+  @keyframes highlightText {
+    from {
+      border-style: solid;
+      border-width: medium;
+      border-color: red;}
+    to {
+      background-color: orange;
+      border-style: solid;
+      border-width: medium;
+      border-color: yellow;}
+      /* background-color: yellow;} */
+    }
 
 /* This block is for the nav-bar */
 .nav-bar {
@@ -191,4 +205,7 @@ div#moduleInfoDiv {
 
 .missingParameterOnValidation{
   animation: highlightInput 1s ease 0s 20;
+}
+.textMissingParameterOnValidation{
+  animation: highlightText 1s ease 0s 20;
 }

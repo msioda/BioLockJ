@@ -120,12 +120,6 @@ var sendConfigDataToForms = function(configObject, selectedModulesArray) {
 }; //end sendConfigDataToForms
 
 function validateConfig(){
-  // if (typeof(Worker) !== "undefined") {
-  //   // Yes! Web worker support!
-  // } else {
-  //   alert('Web workers not found, please use a web worker compatabile browser.  Validation cancelled');
-  //   return false;
-  //   }
   const configForm = document.getElementById('configForm');
   const requiredParams = new Map(Object.entries({
     'input.dirPaths' : 'what is your sequence input directory path?',
@@ -134,8 +128,6 @@ function validateConfig(){
     'script.defaultHeader' : 'what are the script default headers?',
     'demux.strategy' : 'What demultiplexing statagy do you want to use?',
     'project.env' : 'In which enviroment do you wish to run this project?',
-
-
 
   }));
 
@@ -151,15 +143,45 @@ function validateConfig(){
     'r.rareOtuThreshold' : 'Please choose your rare OTU threshold (positive integer).',
     'r.timeout' : 'Please set your R timeout threshold (positive integer).',
     'rStats.pAdjustMethod' : 'Please choose your p-value adjust method.',
+    'rStats.pAdjustScope' : 'Please choose your p-value adjust scope.'
+    }));
+  const reqForEmail = new Map(Object.entries({
+    'mail.encryptedPassword' : 'In order to receive an Emailed report, please provide your encrypted password.',
+    'mail.from' : 'Please choose the Email address from which you want to recieve your Emailed report.',
+    'ail.smtp.auth' : 'Please provide SMTP Authentication.',
+    'mail.smtp.host' : 'Please provide your SMTP host.',
+    'mail.to' : 'Please provide the Email recipient.',
+    'mail.smtp.port' : 'Please provide the SMTP port.'
+    }));
+
+  const reqForMdsPlots = new Map(Object.entries({
+    'rMds.numAxis' : 'Please provide the number of axes for the MDS plot.',
+    'rMds.distance' : 'Please provide the number of axes for the MDS plot.',
+    'rMds.outliers' : 'Please choose the Email address from which you want to recieve your Emailed report.',
+    }));
+
+  const reqForRdpClassifier = new Map(Object.entries({
+    'rdp.minThresholdScore' : 'Please provide the RDP minium threshold score.'
+    }));
+
+  const reqForSlimmClassifier = new Map(Object.entries({
+  'slimm.db' : 'Please provide a Slimm database.',
+  'slimm.refGenomeIndex' : 'Please provide a reference genome index for Slimm.'
+  }));
+
+  const reqForKrakenClassifier = new Map(Object.entries({
+    'kraken.db' : 'Please provide a Kraken database.',
     }));
 
   const menuTabs = document.getElementsByClassName('tabcontent');
+  const menuTabButtons = document.getElementsByClassName('tablinks');
 
   function getParentDiv(nodeId){
     let parentDiv;
     var node = document.getElementById(nodeId);
     let counter = 4;
     while (parentDiv == undefined && counter > 0){
+      console.log(node);
       if (node.parentNode.tagName == 'DIV'){
         parentDiv = node.parentNode;
         return parentDiv;
@@ -173,10 +195,9 @@ function validateConfig(){
   }//end getParentDiv
 
   function getCurrentMenuTab(){//shows the currently viewed tab
-    const allMenuTabs = document.getElementsByClassName('tabcontent');
-    for (let i = 0; i < allMenuTabs.length; i++) {
-      if (allMenuTabs[i].style.display == 'block'){
-        return allMenuTabs[i];
+    for (let i = 0; i < menuTabs.length; i++) {
+      if (menuTabs[i].style.display == 'block'){
+        return menuTabs[i];
       }
     }//end for forloop
     alert('problem with getCurrentMenuTab')
@@ -194,40 +215,46 @@ function validateConfig(){
     }
   }//end highlightRequiredParam
 
-  // function dependenciesPresent(dependencyMap){
-  //   for (let para of dependencyMap.keys()){
-  //     console.log(para);
-  //     if (!(para in currentConfig)){
-  //       //resetAnimation(requiredParamIds[r]);
-  //       console.log(para);
-  //       const currentMenuTab = getCurrentMenuTab();
-  //       console.log(currentMenuTab);
-  //       currentMenuTab.style.display = 'none';
-  //       getParentDiv(para).style.display='block';
-  //       alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
-  //       highlightRequiredParam(para);
-  //       return false;
-  //     }//end if
-  //   }//end for loop
-  // }
+  function dependenciesPresent(dependencyMap){
+    const menuTabsArray = Array.from(menuTabs);
+    for (let para of dependencyMap.keys()){
+      console.log(para);
+      if (!(para in currentConfig)){
+        //resetAnimation(requiredParamIds[r]);
+        console.log(para);
+        const currentMenuTab = getCurrentMenuTab();
+        console.log(menuTabsArray.indexOf(currentMenuTab));
+        // console.log(currentMenuTab);
+        currentMenuTab.style.display = 'none';
+        menuTabButtons[menuTabsArray.indexOf(getParentDiv(para))].click();
+        //getParentDiv(para).style.display='block';
+        alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
+        highlightRequiredParam(para);
+        return false;
+      }//end if
+    }//end for loop
+  }
 
   //First check: check for required parameters
-  for (let para of requiredParams.keys()){
-    console.log(para);
-    if (!(para in currentConfig)){
-      //resetAnimation(requiredParamIds[r]);
-      console.log(para);
-      const currentMenuTab = getCurrentMenuTab();
-      console.log(currentMenuTab);
-      currentMenuTab.style.display = 'none';
-      getParentDiv(para).style.display='block';
-      alert('Required information missing: '.concat(requiredParams.get(para)))//change this to modal later
-      highlightRequiredParam(para);
-      return false;
-    }//end if
-  }//end for loop
+  if (dependenciesPresent(requiredParams) == false){
+    return false;
+  }
+  // for (let para of requiredParams.keys()){
+  //   console.log(para);
+  //   if (!(para in currentConfig)){
+  //     //resetAnimation(requiredParamIds[r]);
+  //     console.log(para);
+  //     const currentMenuTab = getCurrentMenuTab();
+  //     console.log(currentMenuTab);
+  //     currentMenuTab.style.display = 'none';
+  //     getParentDiv(para).style.display='block';
+  //     alert('Required information missing: '.concat(requiredParams.get(para)))//change this to modal later
+  //     highlightRequiredParam(para);
+  //     return false;
+  //   }//end if
+  // }//end for loop
 
-  if ( ['barcode_in_header', 'barcode_in_seq'].contains(currentConfig['demux.strategy'])){
+  if ( ['barcode_in_header', 'barcode_in_seq'].includes(currentConfig['demux.strategy'])){
     if (!currentConfig['metadata.barcodeColumn'] || currentConfig['metadata.barcodeColumn'] == ''){
       const currentMenuTab = getCurrentMenuTab();
       console.log(currentMenuTab);
@@ -240,52 +267,74 @@ function validateConfig(){
   }//end demux.strategy if
 
   //check for module dependencies
+  if (!(currentConfig['modules'])){
+    alert('Please select at least one module.')
+    return false;
+  }
   for (let mod of currentConfig['modules']){
     //check for demendencies
-    //console.log(mod);
+    console.log('inside switch ',mod);
+    // NOTE: When I change the format of the module li's this will change...
     let shortMod = mod.slice('biolockj.module.'.length);
     console.log(shortMod);
     switch(shortMod) {
-    case ('r.BuildMdsPlots' || 'r.BuildOtuPlots' || 'r.BuildPvalHistograms' || 'r.CalculateStats'):
-        console.log('switch works');
-        break;
-    // case valueTwo:
-    //     //statements
-    //     break;
+    case 'r.BuildMdsPlots': case 'r.BuildOtuPlots': case 'r.BuildPvalHistograms': case 'r.CalculateStats':
+      if (dependenciesPresent(reqForR) == false){
+        return false;
+      }
+      break;
+    case 'report.Email':
+      if (dependenciesPresent(reqForEmail) == false){
+        return false;
+      }
+      break
+    case 'seq.rarefier':
+      // NOTE: ASK WHAT to do if both are there.
+      if (!(currentConfig['rarefier.max'] || currentConfig['rarefier.min'])){
+        const currentMenuTab = getCurrentMenuTab();
+        currentMenuTab.style.display = 'none';
+        getParentDiv('rarefier.max').style.display='block';
+        alert('A maximum or minimum value is required for the rarifier.');
+        highlightRequiredParam('rarefier.min');
+        highlightRequiredParam('rarefier.max');
+        return false;
+      }
+         break;
+    case 'classifier.r16s.RdpClassifier':
+      if (dependenciesPresent(reqForRdpClassifier) == false){
+        return false;
+      }
+      break
+    case 'classifier.wgs.KrakenClassifier':
+      if (dependenciesPresent(reqForKrakenClassifier) == false){
+        return false;
+      }
+      break
+    case 'classifier.wgs.SlimmClassifier':
+      if (dependenciesPresent(reqForSlimmClassifier) == false){
+        return false;
+      }
+      break
     default: //optional
     //statements
     }//end switch
+
+    const modules = currentConfig['modules'];
+
+// If module = biolockj.module.implicit.parser.*, no biolockj.module.seq.* or biolockj.module.classifier.* modules can come after
+// IF email is included, don't worry about the order, we automatically re-order so it runs last if its found anywhere
+// If module = biolockj.module.implicit.report, *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
+// oops, I meant If module = biolockj.module.report.*  (no implicit pacakge)
+// If module = biolockj.module.r. *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
+// thats everything
+
+    return true;
   }//end for loop
 
 
 };//end validation
 
-//   # Note, a “non-negative integer” accepts 0, a “positive integer” does not
-//
-// 2. Requires positive integer: script.numThreads, script.batchSize
-//
-// 3. demux.strategy is required, default value = do_not_demux (display as N/A)
-// * key values: barcode_in_header, barcode_in_seq, id_in_header, do_not_demux
-// * display values: Barcode in Header, Barcode in Sequence, ID in Header, N/A
-//
-// if( demux.strategy == barcode_in_header or barcode_in_seq) metadata.barcodeColumn is required.
-//
-//
-// 4. project.env is required & should be a dropdown list:
-// * key values: Cluster, aws, local
-// * display values: Cluster, AWS, Local
-//
-// 5. project.logLevel is required & should be a dropdown list:
-// * key values: DEBUG, INFO, WARN, ERROR
-// * display values: Debug, Info, Warning, Error
-//
-// 6. Required for R modules: r.colorBase, r.colorHighlight, r.colorPalette, r.colorPoint, r.pch, r.plotWidth (positive integer), r.pvalCutoff, r.pValFormat, r.rareOtuThreshold (positive integer), r.timeout (positive integer), rStats.pAdjustMethod
-//
-//
-// Also required for R Modules: rStats.pAdjustScope - should be a dropdown
-// * key values: ATTRIBUTE, GLOBAL, LOCAL, TAXA
-// * Display values: Attribute, Global, Local, Taxonomy Level
-//
+
 // 7. Required for BuildMdsPlots: rMds.numAxis (positive integer), rMds.distance, rMds.outliers
 //
 // 8. Required for Email: mail.encryptedPassword, mail.from, ail.smtp.auth, mail.smtp.host, mail.smtp.port, mail.to
@@ -337,6 +386,8 @@ function saveConfigParamsForm(event){
     if (pair[1] != ''){
       input.push(pair[0]);
       value.push(pair[1]);
+    }else if (pair[1] == '' && currentConfig[pair[0]]){
+      delete currentConfig[pair[0]];
     };
   };
   input.forEach(key => currentConfig[key] = '');
@@ -449,22 +500,24 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
     try {
       //tabForm.forEach( ele => ele.submit());
       saveConfigParamsForm();
-      var request = new XMLHttpRequest();
-      request.open('POST', '/launch', true);
-      request.setRequestHeader("Content-Type", "application/json");
-      request.send(JSON.stringify({
-        config : currentConfig,
-        partialLaunchArg : buildLaunchArgument(currentConfig),
-        //additional parameters for launch
-      }));
-      console.log('launch sent');
-      request.onreadystatechange = function() {
-      if (request.readyState == XMLHttpRequest.DONE) {
-        console.log(request.responseText);
-        window.location = '/progress';
+      if ( validateConfig() === true ){
+        var request = new XMLHttpRequest();
+        request.open('POST', '/launch', true);
+        request.setRequestHeader("Content-Type", "application/json");
+        request.send(JSON.stringify({
+          config : currentConfig,
+          partialLaunchArg : buildLaunchArgument(currentConfig),
+          //additional parameters for launch
+        }));
+        console.log('launch sent');
+        request.onreadystatechange = function() {
+        if (request.readyState == XMLHttpRequest.DONE) {
+          console.log(request.responseText);
+          window.location = '/progress';
+          }
         }
+        console.log(request.responseText);
       }
-      console.log(request.responseText);
     } catch (e) {
       alert(e)
     }
@@ -473,14 +526,19 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
 
 //for autosave
 (function () {
-  const configFormInputs = document.getElementById('configForm');
-  const configTexts = configFormInputs.getElementsByTagName('text');
-  const configSelects = configFormInputs.getElementsByTagName('select');
-  const configChecks = configFormInputs.getElementsByTagName('checkbox');
+  const configFormInputs = Array.from(document.getElementById('configForm').getElementsByTagName('input'));
+  //const configTexts = configFormInputs.getElementsByTagName('text');
+  const configTexts = configFormInputs.filter(inp => inp.type === 'text');
+  //console.log(configTexts, 'text input');
+  const configSelects = configFormInputs.filter(inp => inp.type === 'select');
+  const configChecks = configFormInputs.filter(inp => inp.type === 'checkbox');;
+
+  const configNumbers = configFormInputs.filter(inp => inp.type === 'number');;
+  //console.log(configNumbers, 'num');
 
   for (let inp of configTexts){
   inp.addEventListener('change', saveConfigParamsForm, false);
-  console.log(inp);
+  //console.log(inp);
   }
 
   for (let inp of configSelects){
@@ -491,11 +549,16 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
   inp.addEventListener('click', saveConfigParamsForm, false);
   }
 
-  configFormInputs.onkeypress = function(e) {
+  for (let inp of configNumbers){
+  inp.addEventListener('change', saveConfigParamsForm, false);
+  //console.log(inp);
+  }
+
+  configFormInputs.forEach(inp => inp.onkeypress = function(e) {
   var key = e.charCode || e.keyCode || 0;
   if (key == 13) {
     saveConfigParamsForm();
     e.preventDefault();
-  }
-}
+    }
+  })
 })();

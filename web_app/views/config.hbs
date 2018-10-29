@@ -256,9 +256,9 @@ For fastq, typically “@”.)<h5></p>
       <p>Number of sequence files to process per script:
         <input type="number" min='0' id="script.batchSize" name="script.batchSize"><br></p>
       <p>Command to grant script execute permissions:
-        <input type="text" id="script.scriptPermissions" name="script.scriptPermissions" value="chmod 774"><br></p>
+        <input type="text" id="script.permissions" name="script.permissions" value="chmod 774"><br></p>
       <p>Number of threads:
-        <input type="text" min='0' id="script.numThreads" name="script.numThreads"><br></p>
+        <input type="number" min='0' id="script.numThreads" name="script.numThreads"><br></p>
       <p>Default header: (Used to set shebang line to define scripts as bash executables, such as "#!/bin/bash"
         scriptDefaultHeader)
         <input type="text" id="script.defaultHeader" name="script.defaultHeader"><br></p>
@@ -416,7 +416,7 @@ For fastq, typically “@”.)<h5></p>
           <option value="TAXA">TAXA</option>
           <option value="ATTRIBUTE">ATTRIBUTE</option>
         </select></p>
-      <p>Sets the p.adjust "method" parameter:<a href=https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html>More info</a><br>
+      <p>Set the p.adjust "method" parameter:<a href=https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html>More info</a><br>
         <select class="" id="rStats.pAdjustMethod" name="rStats.pAdjustMethod">
           <option selected default value="">Click for options</option>
           <option value="holm">Holm</option>
@@ -428,6 +428,28 @@ For fastq, typically “@”.)<h5></p>
           <option value="fdr">FDR</option>
           <option value="none">none</option>
         </select></p>
+        <p>Select the distance/dissimilary measure for your MDS BuildMdsPlots
+          <select class="" id='rMds.distance' name="rMds.distance">
+            <option value="euclidean">Euclidean dissimilarity</option>
+            <option value="bray">Bray Curtis dissimilary</option>
+            <option value="manhattan">Manhattan dissimilarities</option>
+            <option value="canberra">Canberra index</option>
+            <option value="kulczynski">Kulczynski index</option>
+            <option value="jaccard">Jaccard index</option>
+            <option value="gower">Gower index</option>
+            <option value="altGower">Alternative Gower index</option>
+            <option value="morisita">Morisita index</option>
+            <option value="horn">Horn index</option>
+            <option value="mountford">Mountford index</option>
+            <option value="raup">Raup index</option>
+            <option value="binomial">Binomial index</option>
+            <option value="chao">Chao index</option>
+            <option value="cao">Cao index</option>
+            <option value="mahalanobis">Mahalanobis index</option>
+          </select>
+"altGower", "morisita", "horn", "mountford", "raup" , "binomial", "chao", "cao" or "mahalanobis".
+
+
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>

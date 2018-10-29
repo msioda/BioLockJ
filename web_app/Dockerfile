@@ -2,9 +2,6 @@
 
 FROM ubuntu:18.04
 
-# Expose port for Email
-Expose 25
-
 ENV NODE_VERSION 8.11.3
 
 #1.) ================= Setup Env =================

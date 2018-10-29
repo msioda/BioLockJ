@@ -104,7 +104,7 @@ exports.runLaunchCommand = function(command, eventEmitter) {
   console.log(first);
   console.log(command);
   try {
-    const child = spawn(first, command, {detached: true});
+    const child = spawn(first, command, {detached: false});
     child.stdout.on('data', function(data){
       eventEmitter.emit('log',data);
     });
@@ -120,7 +120,7 @@ exports.runLaunchCommand = function(command, eventEmitter) {
     child.on('close', function (code) {
         console.log('child process exited with code ' + code);
     });
-    child.unref();
+    //child.unref();//to run in background
   } catch (e) {
     console.error(`launch error: ${e}`);
   } finally {
