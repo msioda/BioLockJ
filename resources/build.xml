@@ -38,7 +38,7 @@
 		<jar basedir="bin" destfile="dist/BioLockJ.jar">
 			<zipgroupfileset dir="lib" includes="*.jar"/>
 			<manifest>
-				<attribute name="Version" value="${blj_version}"/>
+				<attribute name="Version" value="1.0"/>
 				<attribute name="Main-Class" value="biolockj.BioLockJ"/>
 			</manifest>
 		</jar>
