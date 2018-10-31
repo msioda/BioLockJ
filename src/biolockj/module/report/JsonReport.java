@@ -172,8 +172,11 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 					}
 				}
 			}
-
-			validOtuMap.put( level, validOtus );
+			
+			if( validOtus != null )
+			{
+				validOtuMap.put( level, validOtus );
+			}
 		}
 
 		return validOtuMap;
@@ -202,6 +205,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			}
 		}
 	}
+	
 
 	/**
 	 * Build the JSON Map [key=level, value = TreeSet<JsonNode>].<br>

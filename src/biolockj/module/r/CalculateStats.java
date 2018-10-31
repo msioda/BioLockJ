@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Set;
 import java.util.TreeSet;
 import biolockj.Config;
+import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.util.ModuleUtil;
 
@@ -67,7 +68,8 @@ public class CalculateStats extends R_Module implements BioModule
 		final String fileName = mod.getOutputDir().getAbsolutePath() + File.separator
 				+ Config.getString( Config.INTERNAL_PIPELINE_NAME ) + "_" + otuLevel + "_" + fileType
 				+ R_Module.TSV_EXT;
-
+		
+		Log.info( CalculateStats.class, "Find stats file: " + fileName );
 		final File file = new File( fileName );
 		if( file.exists() )
 		{
@@ -80,7 +82,7 @@ public class CalculateStats extends R_Module implements BioModule
 	/**
 	 * Non parametric p-value identifier: {@value #P_VALS_NP}
 	 */
-	public static final String P_VALS_NP = "nonParametricPval";
+	public static final String P_VALS_NP = "nonParametricPvals";
 
 	/**
 	 * Non parametric adjusted p-value identifier: {@value #P_VALS_NP_ADJ}
@@ -90,7 +92,7 @@ public class CalculateStats extends R_Module implements BioModule
 	/**
 	 * Parametric p-value identifier: {@value #P_VALS_PAR}
 	 */
-	public static final String P_VALS_PAR = "parametricPval";
+	public static final String P_VALS_PAR = "parametricPvals";
 
 	/**
 	 * Parametric adjusted p-value identifier: {@value #P_VALS_PAR_ADJ}
