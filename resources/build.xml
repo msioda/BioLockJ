@@ -24,14 +24,13 @@
 		<loadfile property="blj_version" srcfile=".version">
     		<filterchain><striplinebreaks/></filterchain>
     	</loadfile>
-    	<property name="release_tar" value="dist/biolockj_${blj_version}.tar.gz"/>
+    	<property name="release_tar" value="dist/biolockj_${blj_version}.tgz"/>
 	</target>
 	
 
     <target name="compile-source" depends="init">
 		<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin" classpathref="lib.path"/>
     	<copy file="resources/log4j.properties" todir="bin"/>
-    	<copy file=".version" todir="bin"/>
     </target>
 
 	
