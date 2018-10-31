@@ -14,14 +14,19 @@ function valid_dir {
 	fi
 }
 
-BLJ_VERSION=v0.6-beta
+# get the BioLockJ build version
+function get_version {
+	{ read -r v; } < "$BLJ/.version"
+	echo $v
+}
+
 DOCKER_CLIENT=docker-18.06.0-ce.tgz
 
 if [ "$(valid_dir $BLJ/resources/docker)" == "Y" ]; then
 	
 	echo "Build new module images..."
-	docker build --build-arg BLJ_DATE=$(date +%s) --build-arg BLJ_VERSION=$BLJ_VERSION --build-arg DOCKER_CLIENT=$DOCKER_CLIENT -t biolockj/manager $BLJ/resources/docker
-	docker build --build-arg BLJ_DATE=$(date +%s) --build-arg BLJ_VERSION=$BLJ_VERSION -t biolockj/javamodule $BLJ/resources/docker/JavaModule
+	docker build --build-arg BLJ_DATE=$(date +%s) --build-arg BLJ_VERSION=$(get_version) --build-arg DOCKER_CLIENT=$DOCKER_CLIENT -t biolockj/manager $BLJ/resources/docker
+	docker build --build-arg BLJ_DATE=$(date +%s) --build-arg BLJ_VERSION=$(get_version) -t biolockj/javamodule $BLJ/resources/docker/JavaModule
 	docker build -t biolockj/awkfastaconverter $BLJ/resources/docker/seq/AwkFastaConverter
 	docker build -t biolockj/pearmergereads $BLJ/resources/docker/seq/PearMergeReads
 	docker build -t biolockj/rdpclassifier $BLJ/resources/docker/classifier/r16s/RdpClassifier
