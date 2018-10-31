@@ -37,6 +37,26 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	public void checkDependencies() throws Exception
 	{
 		ModuleUtil.requireParserModule();
+		
+		final TreeSet<Integer> indexes = new TreeSet<>();
+		final List<String> taxLevels = Arrays
+				.asList( new String[] { Config.DOMAIN, Config.PHYLUM, Config.CLASS, Config.ORDER, Config.FAMILY, Config.GENUS, Config.SPECIES } );
+		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		{
+			indexes.add( taxLevels.indexOf( level ) );
+		}
+		
+		final Iterator<Integer> it = indexes.iterator();
+		int base = it.next();
+		while( it.hasNext() )
+		{
+			int next = it.next();
+			if( next != (base + 1) )
+			{
+				throw new Exception( "JsonReport requires that taxonomy levels configured in: " + Config.REPORT_TAXONOMY_LEVELS + 
+						" does not have any gaps.  Missing taxonomy level(s) between: [" + base + "-" + next + "]" );
+			}
+		}
 	}
 
 	@Override
@@ -169,7 +189,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 */
 	private void addStats( LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final JsonNode root ) throws Exception
 	{
-		Log.get( getClass() ).info( "Adding stats to JSON nodes..." );
+		Log.info( getClass(), "Adding stats to JSON nodes..." );
 		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
 		{
 			final File[] statReports = getStatReports( level );
@@ -195,15 +215,13 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	{
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = new LinkedHashMap<>();
 		final Set<ParsedSample> parsedSamples = ModuleUtil.requireParserModule().getParsedSamples();
-		Log.get( getClass() ).info( "Build JSON Nodes for " + parsedSamples.size() + " samples..." );
-		
-		
+		Log.info( getClass(), "Build JSON Nodes for " + parsedSamples.size() + " samples..." );
 		final Map<String, Set<String>> validOtus = getValidOtus();
 
 		// for each sample...
 		for( final ParsedSample sample: parsedSamples )
 		{
-			Log.get( getClass() ).debug( "Build JSON Node for Sample ID[ " + sample.getSampleId() + " ] with #Hits:"
+			Log.debug( getClass(), "Build JSON Node for Sample ID[ " + sample.getSampleId() + " ] with #Hits:"
 					+ sample.getNumHits() + " | #OTU Nodes: " + sample.getOtuNodes().size() );
 
 			// for each sample OtuNode
@@ -261,8 +279,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				{
 					brokenOtuNetworks.add( otuBranch );
 					node.report();
-					Log.get( getClass() )
-							.warn( "Missing OTU Levels [ " + sample.getSampleId() + " ]: " + gaps.toString() );
+					Log.warn( getClass(), "Missing OTU Levels [ " + sample.getSampleId() + " ]: " + gaps.toString() );
 				}
 			}
 		}
@@ -336,9 +353,9 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 */
 	private long getRootCount( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap ) throws Exception
 	{
-		Log.get( getClass() ).info( Log.LOG_SPACER );
-		Log.get( getClass() ).info( "JSON OTU Report" );
-		Log.get( getClass() ).info( Log.LOG_SPACER );
+		Log.info( getClass(), Log.LOG_SPACER );
+		Log.info( getClass(), "JSON OTU Report" );
+		Log.info( getClass(), Log.LOG_SPACER );
 		long rootCount = 0L;
 		final LinkedHashMap<String, Long> countMap = new LinkedHashMap<>();
 		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
@@ -356,7 +373,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 					}
 
 					totalSeqs += jsonNode.getCount();
-					Log.get( getClass() ).info( level + ":" + jsonNode.getOtu() + " [ parent:"
+					Log.info( getClass(), level + ":" + jsonNode.getOtu() + " [ parent:"
 							+ jsonNode.getParent().getOtu() + " ] = " + jsonNode.getCount() );
 				}
 			}
@@ -400,7 +417,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final File stats, final String level )
 			throws Exception
 	{
-		Log.get( getClass() ).info( "Adding stats from: " + stats.getAbsolutePath() );
+		Log.info( getClass(), "Adding stats from: " + stats.getAbsolutePath() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( stats );
 		try
 		{
@@ -429,8 +446,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				}
 				else
 				{
-					Log.get( getClass() )
-							.debug( "Missing OTU " + level + ": " + otu
+					Log.debug( getClass(), "Missing OTU " + level + ": " + otu
 									+ " (likely due to OTU network gap), as found in CalculateStats output: "
 									+ stats.getAbsolutePath() );
 				}
