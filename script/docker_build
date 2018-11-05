@@ -4,25 +4,11 @@
 ##  Build all Docker images                                              ##
 ##                                                                       ##
 ###########################################################################
-
-# Returns Y or N to indicate if directory exists
-function valid_dir {
-	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
-
-# get the BioLockJ build version
-function get_version {
-	{ read -r v; } < "$BLJ/.version"
-	echo $v
-}
+. $BLJ/script/blj_functions
 
 DOCKER_CLIENT=docker-18.06.0-ce.tgz
 
-if [ "$(valid_dir $BLJ/resources/docker)" == "Y" ]; then
+if $(valid_dir $BLJ/resources/docker); then
 	
 	echo "Build new module images..."
 	docker build --build-arg BLJ_DATE=$(date +%s) --build-arg BLJ_VERSION=$(get_version) --build-arg DOCKER_CLIENT=$DOCKER_CLIENT -t biolockj/manager $BLJ/resources/docker

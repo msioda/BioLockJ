@@ -10,6 +10,5 @@
 export THIS_FILE_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export BLJ="$(dirname $THIS_FILE_PATH)"
 export PATH=$THIS_FILE_PATH:$PATH
-export BLJ_GRP_OWNER=
 export BLJ_PROJ=$BLJ/pipelines
 alias blj_go=". $THIS_FILE_PATH/blj_go"

@@ -16,28 +16,11 @@
 ##  $BLJ_OPTIONS				Singleton options: -r or -p                  ##
 ##                                                                      	##
 ############################################################################
-
-# Returns Y or N to indicate if file exists
-function valid_file {
-	if [ ${#1} -gt 0 ] && [ -f "$1" ]; then  
-		echo Y 
-	else 
-		echo N
-	fi
-}
-
-# Returns Y or N to indicate if directory exists
-function valid_dir {
-	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
-		echo Y
-	else 
-		echo N
-	fi
-}
+. $BLJ/script/blj_functions
 
 
-[ "$(valid_dir $BLJ_PROJ)" == "N" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
-[ "$(valid_dir $BLJ)" == "N" ]  && echo "Exit program - Required bash variable BLJ undefined" && exit 1
+$(valid_dir $BLJ_PROJ) && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
+$(valid_dir $BLJ) && echo "Exit program - Required bash variable BLJ undefined" && exit 1
 [ "$#" -lt 2 ] && echo "Exit script - Missing required script parameters: config & inputDirPaths" && exit 1
 
 FROM_DOCKER="N"
@@ -89,7 +72,7 @@ done
 BLJ_OPTIONS="$BLJ_OPTIONS -b $BLJ_PROJ"
 
 # Require config script parameter
-if [ FROM_DOCKER == "N" ] && [ "$(valid_file $config)" == "N" ]; then
+if [ FROM_DOCKER == "N" ] && ! $(valid_file $config); then
 	echo "Exit script - Config file not found: $config"
 	exit 1
 else	
@@ -107,7 +90,7 @@ else
 	IFS=","
 	dirPaths=( $inputDirPaths )
 	for dir in "$dirPaths"; do
-		if [ FROM_DOCKER == "N" ] && [ "$(valid_dir $dir)" == "N" ]; then
+		if [ FROM_DOCKER == "N" ] && ! $(valid_dir $dir); then
 			echo "Exit script - Input directory not found: $dir"
 			exit 1
 		else
@@ -118,7 +101,7 @@ else
 fi
 
 # Validate metadataFilePath is a valid directory path, if defined
-if [ ${#metadataFilePath} -gt 0 ] && [ FROM_DOCKER == "N" ] && [ "$(valid_dir $metadataFilePath)" == "N" ]; then
+if [ ${#metadataFilePath} -gt 0 ] && [ FROM_DOCKER == "N" ] && ! $(valid_dir $metadataFilePath); then
 	echo "Exit script - Metadata file directory not found: $metadataFilePath"
 	exit 1
 elif [ ${#metadataFilePath} -gt 0 ]; then
@@ -126,7 +109,7 @@ elif [ ${#metadataFilePath} -gt 0 ]; then
 fi
 
 # Validate trimPrimersFilePath is a valid directory path, if defined
-if [ ${#trimPrimersFilePath} -gt 0 ] && [ FROM_DOCKER == "N" ] && [ "$(valid_dir $trimPrimersFilePath)" == "N" ]; then
+if [ ${#trimPrimersFilePath} -gt 0 ] && [ FROM_DOCKER == "N" ] && ! $(valid_dir $trimPrimersFilePath); then
 	echo "Exit script - Primer file directory not found: $trimPrimersFilePath"
 	exit 1
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then

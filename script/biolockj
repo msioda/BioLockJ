@@ -10,35 +10,18 @@
 ##  BioLockJ Config file (2nd param) instead of running a pipeline      ##
 ##                                                                      ##
 ##########################################################################
-
-# Returns Y or N to indicate if directory exists
-function valid_dir {
-	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
-
-# Returns Y or N to indicate if file exists
-function valid_file {
-	if [ ${#1} -gt 0 ] && [ -f "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
+. $BLJ/script/blj_functions
 
 BLJ_JAR=$BLJ/dist/BioLockJ.jar
 
-[ "$(valid_dir $BLJ_PROJ)" == "N" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
-[ "$(valid_dir $BLJ)" == "N" ]  && echo "Exit program - Required bash variable BLJ undefined" && exit 1
-[ "$(valid_file $BLJ_JAR)" == "N" ] && echo "Exit program - $BLJ/dist/BioLockJ.jar not found" && exit 1
-[ "$#" -eq 0 ] && echo "Exit program - Required configuration file parameter missing" && exit 1
+! $(valid_dir $BLJ_PROJ)  && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
+! $(valid_dir $BLJ) && echo "Exit program - Required bash variable BLJ undefined" && exit 1
+! $(valid_file $BLJ_JAR) && echo "Exit program - $BLJ_JAR not found" && exit 1
+[ $# -eq 0 ] && echo "Exit program - Required configuration file parameter missing" && exit 1
 
-if [ "$#" -eq 1 ]; then
+if [ $# -eq 1 ]; then
     if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
-        echo "BioLockJ v1.0 - UNCC Fodor Lab July 2018"
+        echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
         echo "usage: biolockj [-hr] [-p password] [<file>]"
         echo "Run BioLockJ using the Config: <file>"
         echo ""
@@ -53,14 +36,14 @@ fi
 
 config=""
 params=""
-if [ "$#" -eq 1 ]; then
+if [ $# -eq 1 ]; then
 	config=$1
-elif [ "$#" -eq 2 ]; then
+elif [ $# -eq 2 ]; then
 	[ "$1" != "-r" ] && echo "Exit program - Invalid command switch:   $1" && exit 1
 	echo "Restarting failed pipeline"
  	config=$2
 	params=$1
-elif [ "$#" -eq 3 ]; then
+elif [ $# -eq 3 ]; then
 	[ "$1" != "-p" ] && [ "$1" != "--password" ] && echo "Exit program - Invalid  BioLockJ parameters: $1 $2" && exit 1   
 	echo "Encrypt & save email password to Config property mail.encryptedPassword in $3"
 	config=$3
@@ -71,7 +54,7 @@ fi
 
 echo "BioLockJ JAR: $BLJ_JAR"
 echo "BioLockJ Config:  $config"
-[ "$(valid_file $config)" == "N" ] && echo "Exit program - $config not found" && exit 1
+! $(valid_file $config) && echo "Exit program - $config not found" && exit 1
 nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &
-[ "$?" != "0" ] && echo "Exit program - Unable to execute $BLJ_JAR" && exit 1
+[ $? != 0 ] && echo "Exit program - Unable to execute $BLJ_JAR" && exit 1
 echo "Executing command [ nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 & ]"
