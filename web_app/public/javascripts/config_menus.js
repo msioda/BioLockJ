@@ -296,78 +296,78 @@ function dropped(evt) {//function for dropping dragged modules
 //Creating a Map object for module information
 myModules = new Map(Object.entries({
   'biolockj/module/implicit/ImportMetadata' :
-  { cssClass : ['implicit','hidden'], label : 'Metadata Importer', catagory : 'implicit'},
+  { cssClass : ['implicit','hidden'], label : 'Metadata Importer', category : 'implicit'},
 
   'biolockj/module/implicit/Demultiplexer' :
-  { cssClass : ['implicit', 'hidden'], catagory : 'implicit'},
+  { cssClass : ['implicit', 'hidden'], category : 'implicit'},
 
-  'biolockj/module/seq/SeqFileValidator' : { cssClass : [], catagory : 'seq'},
+  'biolockj/module/seq/SeqFileValidator' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/TrimPrimers' : { cssClass : [], catagory : 'seq'},
+  'biolockj/module/seq/TrimPrimers' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/Rarefier' : { cssClass : [], catagory : 'seq'},
+  'biolockj/module/seq/Rarefier' : { cssClass : [], category : 'seq'},
 
   'biolockj/module/classifier/r16s/QiimeClosedRefClassifier' :
-  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', catagory : 'classifier'},
+  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
   'biolockj/module/classifier/r16s/RdpClassifier' :
-  { cssClass : ['rdpClass', 'classifierUnique'], label : "16S Classifier: RDP", counter : 'rdpModuleCounter' , catagory : 'classifier'},
+  { cssClass : ['rdpClass', 'classifierUnique'], label : "16S Classifier: RDP", counter : 'rdpModuleCounter' , category : 'classifier'},
 
   'biolockj/module/implicit/parser/r16s/RdpParser' :
-  { cssClass : ['rdpClass', , 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , catagory : 'implicit.parser'},
+  { cssClass : ['rdpClass', , 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/implicit/parser/r16s/QiimeParser' :
-  { cssClass : ['rdpClass', , 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , catagory : 'implicit.parser'},
+  { cssClass : ['rdpClass', , 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/classifier/r16s/QiimeDeNovoClassifier' :
-  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', catagory : 'classifier'},
+  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
   'biolockj/module/classifier/r16s/QiimeOpenRefClassifier' :
-  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', catagory : 'classifier'},
+  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
   'biolockj/module/classifier/wgs/KrakenClassifier' :
-  { cssClass : ['krakenClass', 'classifierUnique'], counter : 'krakenModuleCounter', catagory : 'classifier'},
+  { cssClass : ['krakenClass', 'classifierUnique'], counter : 'krakenModuleCounter', category : 'classifier'},
 
   'biolockj/module/classifier/wgs/MetaphlanClassifier' :
-  { cssClass : ['metaphlanClass', 'classifierUnique'], counter : 'metaphlanModuleCounter', catagory : 'classifier'},
+  { cssClass : ['metaphlanClass', 'classifierUnique'], counter : 'metaphlanModuleCounter', category : 'classifier'},
 
   'biolockj/module/classifier/wgs/SlimmClassifier' :
-  { cssClass : ['slimmClass', 'classifierUnique'], counter : 'slimmModuleCounter', catagory : 'classifier'},
+  { cssClass : ['slimmClass', 'classifierUnique'], counter : 'slimmModuleCounter', category : 'classifier'},
 
   'biolockj/module/implicit/parser/wgs/KrakenParser' :
-  { cssClass : ['krakenClass', 'classifierUnique'], counter : 'krakenModuleCounter', catagory : 'implicit.parser'},
+  { cssClass : ['krakenClass', 'classifierUnique'], counter : 'krakenModuleCounter', category : 'implicit.parser'},
 
   'biolockj/module/implicit/parser/wgs/MetaphlanParser' :
-  { cssClass : ['metaphlanClass', 'classifierUnique'], counter : 'metaphlanModuleCounter', catagory : 'implicit.parser'},
+  { cssClass : ['metaphlanClass', 'classifierUnique'], counter : 'metaphlanModuleCounter', category : 'implicit.parser'},
 
   'biolockj/module/implicit/parser/wgs/SlimmParser' :
-  { cssClass : ['slimmClass', 'classifierUnique'], counter : 'slimmModuleCounter', catagory : 'implicit.parser'},
+  { cssClass : ['slimmClass', 'classifierUnique'], counter : 'slimmModuleCounter', category : 'implicit.parser'},
 
-  'biolockj/module/report/Normalizer' : { cssClass : [], catagory : 'report'},
+  'biolockj/module/report/Normalizer' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/r/BuildMdsPlots' : { cssClass : [], catagory : 'r'},
+  'biolockj/module/r/BuildMdsPlots' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/r/BuildOtuPlots' : { cssClass : [], catagory : 'r'},
+  'biolockj/module/r/BuildOtuPlots' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/r/BuildPvalHistograms' : { cssClass : [], catagory : 'r'},
+  'biolockj/module/r/BuildPvalHistograms' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/r/CalculateStats' : { cssClass : [], catagory : 'r'},
+  'biolockj/module/r/CalculateStats' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/report/AddMetadataToOtuTables' : { cssClass : [], catagory : 'report'},
+  'biolockj/module/report/AddMetadataToOtuTables' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/JsonReport' : { cssClass : [], catagory : 'report'},
+  'biolockj/module/report/JsonReport' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/seq/AwkFastaConverter' : { cssClass : [], catagory : 'seq'},
+  'biolockj/module/seq/AwkFastaConverter' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/Multiplexer' : { cssClass : [], catagory : 'seq'},
+  'biolockj/module/seq/Multiplexer' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/PearMergeReads' : { cssClass : [], catagory : 'seq'},
+  'biolockj/module/seq/PearMergeReads' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/Gunzipper' : { cssClass : [], catagory : 'seq'},
+  'biolockj/module/seq/Gunzipper' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/implicit/RegisterNumReads' : { cssClass : ['implicit', 'hidden'], catagory : 'implicit'},
+  'biolockj/module/implicit/RegisterNumReads' : { cssClass : ['implicit', 'hidden'], category : 'implicit'},
 
-  'biolockj/module/report/Email' : { cssClass : [], catagory : 'seq'},
+  'biolockj/module/report/Email' : { cssClass : [], category : 'seq'},
 
 }));
 

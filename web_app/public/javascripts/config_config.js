@@ -7,17 +7,6 @@ var currentConfig = {};//IMPORTANT: This variable holds all of the selected conf
 //   }
 // }
 
-// function configValidation(config){//did I use this?
-//   let formNames = [];
-//   config.keys(obj).forEach(function(key,index) {
-//     let keyForm = key.split('.')
-//     console.log(keyForm);
-//     if (!formNames.contains(keyForm)){
-//       formNames.push(keyForm);
-//     }
-//   });//end forEach
-// }//end configValidation
-
 function loadLocalFile() {//loading from computer
   const file = document.getElementById("localFile").files[0];
   let localModules = [];
@@ -128,7 +117,6 @@ function validateConfig(){
     'script.defaultHeader' : 'what are the script default headers?',
     'demux.strategy' : 'What demultiplexing statagy do you want to use?',
     'project.env' : 'In which enviroment do you wish to run this project?',
-
   }));
 
   const reqForR = new Map(Object.entries({//R module dependencies
@@ -175,6 +163,42 @@ function validateConfig(){
 
   const menuTabs = document.getElementsByClassName('tabcontent');
   const menuTabButtons = document.getElementsByClassName('tablinks');
+  const modules = currentConfig['modules'];
+  //const moduleNameShortened = modules.forEach(mod => mod.slice('biolockj.module.'.length)); //broken
+
+  let implicits = [],
+    classifiers = [],
+    implicitParsers = [],
+    seqs = [],
+    rs = [],
+    reports = [];
+
+  for (ele of myModules.entries()){
+    //console.log(ele[1].catagory);
+    switch (ele[1].category) {
+      case 'implicit':
+        implicits.push(ele[0].split('/').join('.'));
+        break;
+      case 'seq':
+        seqs.push(ele[0].split('/').join('.'));
+        break
+      case 'classifier':
+        classifiers.push(ele[0].split('/').join('.'));
+        break;
+      case 'implicit.parser':
+        implicitParsers.push(ele[0].split('/').join('.'));
+        break;
+      case 'r':
+        rs.push(ele[0].split('/').join('.'));
+        break;
+      case 'report':
+        reports.push(ele[0].split('/').join('.'));
+      default:
+      //let all elements with no catagory fall through
+    }
+  }
+  console.log('reports: ',reports);
+  console.log(rs);
 
   function getParentDiv(nodeId){
     let parentDiv;
@@ -239,20 +263,6 @@ function validateConfig(){
   if (dependenciesPresent(requiredParams) == false){
     return false;
   }
-  // for (let para of requiredParams.keys()){
-  //   console.log(para);
-  //   if (!(para in currentConfig)){
-  //     //resetAnimation(requiredParamIds[r]);
-  //     console.log(para);
-  //     const currentMenuTab = getCurrentMenuTab();
-  //     console.log(currentMenuTab);
-  //     currentMenuTab.style.display = 'none';
-  //     getParentDiv(para).style.display='block';
-  //     alert('Required information missing: '.concat(requiredParams.get(para)))//change this to modal later
-  //     highlightRequiredParam(para);
-  //     return false;
-  //   }//end if
-  // }//end for loop
 
   if ( ['barcode_in_header', 'barcode_in_seq'].includes(currentConfig['demux.strategy'])){
     if (!currentConfig['metadata.barcodeColumn'] || currentConfig['metadata.barcodeColumn'] == ''){
@@ -273,7 +283,6 @@ function validateConfig(){
   }
   for (let mod of currentConfig['modules']){
     //check for demendencies
-    console.log('inside switch ',mod);
     // NOTE: When I change the format of the module li's this will change...
     let shortMod = mod.slice('biolockj.module.'.length);
     console.log(shortMod);
@@ -304,66 +313,55 @@ function validateConfig(){
       if (dependenciesPresent(reqForRdpClassifier) == false){
         return false;
       }
-      break
+      break;
     case 'classifier.wgs.KrakenClassifier':
       if (dependenciesPresent(reqForKrakenClassifier) == false){
         return false;
       }
-      break
+      break;
     case 'classifier.wgs.SlimmClassifier':
       if (dependenciesPresent(reqForSlimmClassifier) == false){
         return false;
       }
-      break
+      break;
     default: //optional
-    //statements
+    console.log('All required parameters are found');
     }//end switch
 
-    const modules = currentConfig['modules'];
 
-// If module = biolockj.module.implicit.parser.*, no biolockj.module.seq.* or biolockj.module.classifier.* modules can come after
-// IF email is included, don't worry about the order, we automatically re-order so it runs last if its found anywhere
-// If module = biolockj.module.implicit.report, *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
-// oops, I meant If module = biolockj.module.report.*  (no implicit pacakge)
-// If module = biolockj.module.r. *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
-// thats everything
-
-    return true;
-  }//end for loop
-
-
+    //check order
+    const modsAfterMod = modules.slice(modules.indexOf(mod)+1);
+    for (m of modsAfterMod){
+      // If module = biolockj.module.classifier.*, no biolockj.module.seq.* modules can come after
+      if (classifiers.includes(mod) && seqs.includes(m)){
+        alert('Please re-order your modules -no biolockj.module.seq modules can come after biolockj.module.classifiers.');
+        return false;
+      }
+      // If module = biolockj.module.implicit.parser.*, no biolockj.module.seq.* or biolockj.module.classifier.* modules can come after
+      if (implicitParsers.includes(mod)){
+        if (seqs.includes(m) || classifiers.includes(m)){
+          alert('Please re-order your modules -no biolockj.module.seq modules or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
+          return false;
+        }
+      }
+      // If module = biolockj.module.report, *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
+      if (reports.includes(mod)){
+        if (seqs.includes(m) || classifiers.includes(m) || implicitParsers.includes(m)){
+          alert('Please re-order your modules -no biolockj.module.seq modules, biolockj.module.implicit.parser modules, or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
+          return false;
+        }
+      }
+      // If module = biolockj.module.r. *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
+      if (rs.includes(mod)){
+        if (seqs.includes(m) || classifiers.includes(m) || implicitParsers.includes(m)){
+          alert('Please re-order your modules -no biolockj.module.seq modules, biolockj.module.implicit.parser modules, or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
+          return false;
+          }
+        }
+      }//end for (m of modsAfterMod){
+    }//end for loop
+  return true;
 };//end validation
-
-
-// 7. Required for BuildMdsPlots: rMds.numAxis (positive integer), rMds.distance, rMds.outliers
-//
-// 8. Required for Email: mail.encryptedPassword, mail.from, ail.smtp.auth, mail.smtp.host, mail.smtp.port, mail.to
-//
-// 9. One of these 2 are required as non-negative integer (not both) for Rarefier module: rarefier.max, rarefier.min
-//
-// 10. Required for RdpClassifier: rdp.minThresholdScore (positive integer
-//
-// 11. Required for SlimmClassifier: slimm.db, slimm.refGenomeIndex
-//
-// 12. Required for KrakenClassifier: kraken.db
-//
-// 13. Required for any QiimeClassifer (closed, deNovo, open)
-//
-// 14. metadata.commentChar should be of length = 1 (if it exists)
-//
-// 15. Required for TrimPrimers: trimPrimers.filePath
-//
-// These required non-negative integers: report.minOtuCount, report.minOtuThreshold
-//
-// Correction on #4 below (the auto-correct capitalized the C in cluster)
-//
-// 4. project.env is required & should be a dropdown list:
-// * key values: cluster, aws, local
-// * display values: Cluster, AWS, Local
-//
-// Also, if ( project.env == “cluster” ) require cluster.batchCommand, cluster.host, cluster.jobHeader, cluster.classifierHeader
-//
-// Config fields: cluster.numClassifierThreads, input.seqMaxLen, input.seqMinLen  are not required, but only accept positive integers
 
 function saveConfigParamsForm(event){
   //event.preventDefault()
@@ -495,7 +493,8 @@ function buildLaunchArgument(validConfig){
 
 //Adding all eventlisteners
 for (const launch of document.getElementsByClassName("launchBlj")) {
-  launch.addEventListener("click", function(){
+  launch.addEventListener("click", function(event){
+    event.preventDefault();
     // TODO: make a loop to add all forms to current config and do validation
     try {
       //tabForm.forEach( ele => ele.submit());
