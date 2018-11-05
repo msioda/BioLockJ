@@ -26,13 +26,15 @@ RUN apt-get update && \
   
 #3.) ================ Install Kraken ================ 
 ENV KRAKEN_VER=2.0.7-beta
+ENV K2=/app/kraken2
 ENV KB=/app/kraken2-${KRAKEN_VER}/build
 RUN cd /app && \
   wget -qO- https://github.com/DerrickWood/kraken2/archive/v${KRAKEN_VER}.tar.gz | bsdtar -xf- && \
   cd kraken2-${KRAKEN_VER} && \
-  mkdir $KB && \
-  ./install_kraken2.sh $KB && \
-  chmod o+x -R $KB
+  mkdir $K2 && \
+  ./install_kraken2.sh $K2 && \
+  chmod o+x -R $K2 && \
+  rm -rf /app/kraken2-${KRAKEN_VER}
 
 #4.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
@@ -52,7 +54,7 @@ RUN echo ' '  >> ~/.bashrc && \
   
   	
 #5.) ================= Copy 4GB database =================
-COPY miniKraken2_20181027 /db/miniKraken2_20181027
+COPY miniKraken2_20181027 /db/miniKraken2
 
 #6.) =============== Cleanup ================================
 RUN	apt-get clean && \

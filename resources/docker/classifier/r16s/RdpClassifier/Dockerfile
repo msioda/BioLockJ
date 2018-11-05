@@ -33,6 +33,7 @@ RUN echo ' '  >> ~/.bashrc && \
 
 #3.) ================= Install Java   =================
 RUN apt-get upgrade -y && \
+	apt-get update && \
    	apt-get install -y openjdk-8-jre
 	
 #4.) =======================  RDP  ========================== 

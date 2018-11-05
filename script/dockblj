@@ -19,8 +19,8 @@
 . $BLJ/script/blj_functions
 
 
-$(valid_dir $BLJ_PROJ) && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
-$(valid_dir $BLJ) && echo "Exit program - Required bash variable BLJ undefined" && exit 1
+! $(valid_dir $BLJ_PROJ) && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
+! $(valid_dir $BLJ) && echo "Exit program - Required bash variable BLJ undefined" && exit 1
 [ "$#" -lt 2 ] && echo "Exit script - Missing required script parameters: config & inputDirPaths" && exit 1
 
 FROM_DOCKER="N"
