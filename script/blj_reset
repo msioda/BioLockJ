@@ -5,22 +5,7 @@
 ##  All modules numbered higher than the current module will also be reset.  ##
 ##                                                                           ##
 ###############################################################################
-
-function valid_file {
-	if [ "${#1}" -ne "0" ] && [ -f "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
-
-function valid_dir {
-	if [ "${#1}" -ne "0" ] && [ -d "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
+. $BLJ/script/blj_functions
 
 parentDir="$(dirname $PWD)"
 currentDirName="$(basename $PWD)"
@@ -30,22 +15,22 @@ modStarted=$PWD/biolockjStarted
 modComplete=$PWD/biolockjComplete
 pipelineComplete=$parentDir/biolockjComplete
 
-if [ "${#maxNum}" -ne "0" ] && [ "$(valid_file $modComplete)" == "Y" ]; then
+if [ ${#maxNum} -ne 0 ] && $(valid_file $modComplete ); then
 
 	echo "Reset BioLockJ pipeline $parentDir from step # $maxNum"
-	[ "$(valid_file $pipelineComplete)" == "Y" ] && rm $pipelineComplete && echo "delete $pipelineComplete"
-	[ "$(valid_file $modStarted)" != "Y" ] && touch $modStarted && echo "create $modStarted"
+	$(valid_file $pipelineComplete) && rm $pipelineComplete && echo "deleted $pipelineComplete"
+	$(valid_file $modStarted) && touch $modStarted && echo "created $modStarted"
 	rm $modComplete && echo "delete $modComplete"
 	
 	for pipelineDir in $parentDir/*; do
-		if [ "$(valid_dir $pipelineDir)" == "Y" ]; then
+		if $(valid_dir $pipelineDir); then
 			modStarted=$pipelineDir/biolockjStarted
 			modComplete=$pipelineDir/biolockjComplete
 			dir="$(basename $pipelineDir)"
 			modNum=${dir%_*}
 			if [ ${#modNum} -gt 0 ] && [ $modNum -gt $maxNum ]; then
-				[ "$(valid_file $modComplete)" == "Y" ] && rm $modComplete && echo "delete $modComplete"
-				[ "$(valid_file $modStarted)" != "Y" ] && touch $modStarted && echo "create $modStarted"
+				$(valid_file $modComplete) && rm $modComplete && echo "delete $modComplete"
+				$(valid_file $modStarted) && touch $modStarted && echo "create $modStarted"
 			fi
 		fi
 	done

@@ -6,37 +6,11 @@
 ##  summary of the most recent pipeline executed.                         ##
 ##                                                                        ##
 ############################################################################
-
-function valid_dir {
-	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
-
-function valid_file {
-	if [ ${#1} -gt 0 ] && [ -f "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
-
-function most_recent_pipeline {
-	if [ "$(valid_dir $BLJ_PROJ)" == "Y" ]; then
-		dir=$( \ls -t $BLJ_PROJ | head -1 )
-		if [ ${#dir} -gt 0 ] && [ "$(valid_dir $BLJ_PROJ/$dir)" == "Y" ]; then
-			echo "$BLJ_PROJ/$dir"
-		else
-			echo ""
-		fi
-   fi
-}
+. $BLJ/script/blj_functions
 
 pipeline=$(most_recent_pipeline)
 SUM=summary.txt
-if [ "$(valid_file $SUM)" == "Y" ]; then
+if $(valid_file $SUM); then
 	echo "Print summary file: $SUM"
 	cat $SUM
 elif [ ${#pipeline} -gt 0 ]; then

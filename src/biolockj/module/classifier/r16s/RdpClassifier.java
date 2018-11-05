@@ -41,7 +41,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 			final String outputFile = getOutputDir().getAbsolutePath() + File.separator
 					+ SeqUtil.getSampleId( file.getName() ) + PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>();
-			lines.add( FUNCTION_RDP + " " + file.getAbsolutePath()  + " " + outputFile );
+			lines.add( FUNCTION_RDP + " " + file.getAbsolutePath() + " " + outputFile );
 			data.add( lines );
 		}
 
@@ -62,8 +62,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 
 		return preReqs;
 	}
-	
-	
+
 	/**
 	 * This method generates the required bash functions: {@value #FUNCTION_RDP}
 	 */
@@ -76,17 +75,15 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 		lines.add( "}" );
 		return lines;
 	}
-	
 
 	/**
 	 * {@link biolockj.Config} property for java executable: {@value #EXE_JAVA}
 	 */
 	protected static final String EXE_JAVA = "exe.java";
-	
-	
+
 	/**
 	 * Name of the RdpClassifier bash script function used to assign taxonomy: {@value #FUNCTION_RDP}
 	 */
 	protected static final String FUNCTION_RDP = "runRdp";
-	
+
 }

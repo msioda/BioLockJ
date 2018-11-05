@@ -16,10 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.exception.ConfigFormatException;
-import biolockj.util.BashScriptBuilder;
-import biolockj.util.DockerUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * Superclass for Java BioModules that will be called in separate instances of the application.

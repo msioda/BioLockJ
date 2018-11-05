@@ -1,4 +1,4 @@
-# Deployment path: $BLJ/resources/docker/gui/Dockerfile
+# Deployment path: $BLJ/resources/docker/gui
 
 FROM ubuntu:18.04
 

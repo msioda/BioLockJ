@@ -11,22 +11,9 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import biolockj.BioLockJ;
@@ -38,21 +25,6 @@ import biolockj.exception.ConfigPathException;
  */
 public class BioLockJUtil
 {
-
-	/**
-	 * Get a {@link BufferedReader} for standard text file or {@link GZIPInputStream} for gzipped files ending in ".gz"
-	 *
-	 * @param file to be read
-	 * @return {@link BufferedReader} or {@link GZIPInputStream} if file is gzipped
-	 * @throws FileNotFoundException if file does not exist
-	 * @throws IOException if unable to read or write the file
-	 */
-	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException
-	{
-		return file.getName().toLowerCase().endsWith( ".gz" )
-				? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
-				: new BufferedReader( new FileReader( file ) );
-	}
 
 	/**
 	 * This method formats the input number to have a length of at least numDigits.<br>
@@ -147,6 +119,21 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Get a {@link BufferedReader} for standard text file or {@link GZIPInputStream} for gzipped files ending in ".gz"
+	 *
+	 * @param file to be read
+	 * @return {@link BufferedReader} or {@link GZIPInputStream} if file is gzipped
+	 * @throws FileNotFoundException if file does not exist
+	 * @throws IOException if unable to read or write the file
+	 */
+	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException
+	{
+		return file.getName().toLowerCase().endsWith( ".gz" )
+				? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
+				: new BufferedReader( new FileReader( file ) );
+	}
+
+	/**
 	 * Return the MASTER config file.
 	 * 
 	 * @return MASTER config
@@ -155,35 +142,13 @@ public class BioLockJUtil
 	public static File getMasterConfig() throws Exception
 	{
 		String configName = Config.getConfigFileName();
-		if( configName.startsWith( MASTER_PREFIX ) ) configName = configName.replaceAll( MASTER_PREFIX, "" );
+		if( configName.startsWith( MASTER_PREFIX ) )
+		{
+			configName = configName.replaceAll( MASTER_PREFIX, "" );
+		}
 		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
 				+ MASTER_PREFIX + configName );
 	}
-	
-	/**
-	 * Method returns the current version of BioLockJ.
-	 * 
-	 * @return BioLockJ version
-	 * @throws Exception if errors occur
-	 */
-	public static String getVersion() throws Exception
-	{
-		String missingMsg = "undetermined - mission $BLJ/.version file";
-		File file = new File( getSource().getAbsoluteFile() + File.separator + VERSION_FILE );
-		if( file.exists() )
-		{
-			BufferedReader reader = getFileReader( file );
-			for( String line = reader.readLine(); line != null; )
-			{
-				return line;
-			}
-			reader.close();
-		}
-		
-		return missingMsg;
-	}
-	
-	private static final String VERSION_FILE = ".version";
 
 	/**
 	 * Get the program source (either the jar path or main class biolockj.BioLockJ);
@@ -211,6 +176,29 @@ public class BioLockJUtil
 			throw new ConfigPathException( "Unable to decode $BLJ environment variable." );
 		}
 		return null;
+	}
+
+	/**
+	 * Method returns the current version of BioLockJ.
+	 * 
+	 * @return BioLockJ version
+	 * @throws Exception if errors occur
+	 */
+	public static String getVersion() throws Exception
+	{
+		final String missingMsg = "undetermined - mission $BLJ/.version file";
+		final File file = new File( getSource().getAbsoluteFile() + File.separator + VERSION_FILE );
+		if( file.exists() )
+		{
+			final BufferedReader reader = getFileReader( file );
+			for( final String line = reader.readLine(); line != null; )
+			{
+				return line;
+			}
+			reader.close();
+		}
+
+		return missingMsg;
 	}
 
 	/**
@@ -338,6 +326,8 @@ public class BioLockJUtil
 	 * Prefix added to the master Config file: {@value #MASTER_PREFIX}
 	 */
 	public static final String MASTER_PREFIX = "MASTER_";
+
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final String TEMP_PREFIX = "TEMP_";
+	private static final String VERSION_FILE = ".version";
 }

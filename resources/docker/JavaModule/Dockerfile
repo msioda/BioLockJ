@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/JavaModule/Dockerfile
+# Deployment path:  $BLJ/resources/docker/JavaModule
 
 FROM ubuntu:18.04
 

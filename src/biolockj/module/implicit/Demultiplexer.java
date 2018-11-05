@@ -11,26 +11,14 @@
  */
 package biolockj.module.implicit;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.DemuxUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule splits multiplexed data into a separate file or pair of files (for paired reads) for each sample. The

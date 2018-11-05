@@ -16,18 +16,18 @@ import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 
 /**
- * This class represents one line of {@link biolockj.module.classifier.wgs.Kraken2Classifier} output. 
- * Each line can represent multiple reads since the estimated_number_of_reads_from_the_clade 
- * column is used to approximate the number of reads with the given OTU in the sample.
+ * This class represents one line of {@link biolockj.module.classifier.wgs.Kraken2Classifier} output. Each line can
+ * represent multiple reads since the estimated_number_of_reads_from_the_clade column is used to approximate the number
+ * of reads with the given OTU in the sample.
  * <p>
  * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
- * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales	20094
+ * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales 20094
  */
 public class Kraken2Node extends OtuNodeImpl implements OtuNode
 {
 	/**
 	 * Build the OtuNode by extracting the OTU names for each level from the line. Sample ID is passed as a parameter
-	 * pulled from the file name. 
+	 * pulled from the file name.
 	 *
 	 * @param id Sample ID
 	 * @param line Kraken2 output line
@@ -38,8 +38,7 @@ public class Kraken2Node extends OtuNodeImpl implements OtuNode
 		final String[] parts = line.split( "\\t" );
 		if( parts.length != 2 )
 		{
-			throw new Exception( "INVALID FILE FORMAT.  Line should have 2 parts.  LINE =  (" + line
-					+ ") " );
+			throw new Exception( "INVALID FILE FORMAT.  Line should have 2 parts.  LINE =  (" + line + ") " );
 		}
 
 		try
@@ -72,5 +71,5 @@ public class Kraken2Node extends OtuNodeImpl implements OtuNode
 	}
 
 	private static final String TAXA_DELIM = "\\|";
-	
+
 }

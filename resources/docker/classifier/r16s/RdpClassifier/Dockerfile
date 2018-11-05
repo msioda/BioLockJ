@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/classifier/r16s/RdpClassifier/Dockerfile
+# Deployment path:  $BLJ/resources/docker/classifier/r16s/RdpClassifier
 
 FROM ubuntu:18.04
 

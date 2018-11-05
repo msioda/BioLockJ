@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/seq/PearMergeReads/Dockerfile
+# Deployment path:  $BLJ/resources/docker/seq/PearMergeReads
 
 FROM ubuntu:18.04
 

@@ -29,6 +29,7 @@
 	
 
     <target name="compile-source" depends="init">
+    	    <mkdir dir="bin" />
 		<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin" classpathref="lib.path"/>
     	<copy file="resources/log4j.properties" todir="bin"/>
     </target>
@@ -45,7 +46,7 @@
 	</target>
 
 	<target name="javadoc" depends="build-jar">
-		<javadoc classpathref="lib.classpath" access="protected" author="true" destdir="docs" doctitle="BioLockJ" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="biolockj,biolockj.exception,biolockj.module,biolockj.module.classifier,biolockj.module.classifier.r16s,biolockj.module.classifier.wgs,biolockj.module.implicit,biolockj.module.implicit.parser,biolockj.module.implicit.parser.r16s,biolockj.module.implicit.parser.wgs,biolockj.module.implicit.qiime,biolockj.module.r,biolockj.module.report,biolockj.module.seq,biolockj.node,biolockj.node.r16s,biolockj.node.wgs,biolockj.util" source="1.8" sourcepath="src" splitindex="true" use="true" version="true">
+		<javadoc classpathref="lib.path" access="protected" author="true" destdir="docs" doctitle="BioLockJ" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="biolockj,biolockj.exception,biolockj.module,biolockj.module.classifier,biolockj.module.classifier.r16s,biolockj.module.classifier.wgs,biolockj.module.implicit,biolockj.module.implicit.parser,biolockj.module.implicit.parser.r16s,biolockj.module.implicit.parser.wgs,biolockj.module.implicit.qiime,biolockj.module.r,biolockj.module.report,biolockj.module.seq,biolockj.node,biolockj.node.r16s,biolockj.node.wgs,biolockj.util" source="1.8" sourcepath="src" splitindex="true" use="true" version="true">
 			<link href="https://docs.oracle.com/javase/8/docs/api/"/>
 		    <link href="http://docs.oracle.com/javase/8/javafx/api/"/>
 		</javadoc>

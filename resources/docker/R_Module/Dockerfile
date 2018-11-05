@@ -1,4 +1,4 @@
-# Deployment path: $BLJ/resources/docker/R_Module/Dockerfile
+# Deployment path: $BLJ/resources/docker/R_Module
 
 FROM ubuntu:18.04
 

@@ -11,32 +11,16 @@
  */
 package biolockj;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileWriter;
+import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Locale;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
-import biolockj.module.ScriptModule;
+import biolockj.module.*;
 import biolockj.module.report.Email;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * This is the primary BioLockJ class - its main() method is executed when the jar is run.<br>
@@ -412,7 +396,7 @@ public class BioLockJ
 				name = name.substring( 0, name.length() - ext.length() );
 			}
 		}
-		
+
 		if( name.startsWith( BioLockJUtil.MASTER_PREFIX ) )
 		{
 			name = name.replace( BioLockJUtil.MASTER_PREFIX, "" );

@@ -1,0 +1,58 @@
+###################################################################
+##                                                               ##
+##  This script contains common functions used in BioLockJ.      ##
+##                                                               ##
+###################################################################
+
+# Return 0 if directory exists
+valid_dir() {
+	[ ${#1} -gt 0 ] && [ -d "$1" ] && return
+}
+
+# Return 0 if file exists
+valid_file() {
+	[ ${#1} -gt 0 ] && [ -f "$1" ] && return
+}
+
+# Return 0 if directory is empty (or missing)
+is_empty() {
+	if $(valid_dir $1); then
+		lines=$(ls $1)
+		[ ${#lines} -gt 0 ] && return 1
+	fi
+	true
+}
+
+# Return BioLockJ release version
+get_version() {
+	if $(valid_file $BLJ/.version); then
+		{ read -r v; } < "$BLJ/.version"
+		echo $v
+	else
+		echo "Missing $BLJ/.version"
+	fi
+}
+
+# Return absolute path of current pipeline if in a pipeline directory
+current_pipeline() {
+	if $(valid_dir $BLJ_PROJ); then
+		dir=$PWD
+		parentDir="$(dirname $dir)"
+		while [ "$parentDir" != "$BLJ_PROJ" ] && [  "$parentDir" != "$(dirname $parentDir)" ] 
+		do
+			dir=$parentDir
+			parentDir="$(dirname $parentDir)"
+		done
+		[ "$parentDir" == "$BLJ_PROJ" ] && echo $dir && exit
+   fi
+}
+
+# Return absolute path of most recent pipeline
+most_recent_pipeline() {
+	if $(valid_dir $BLJ_PROJ) && ! $(is_empty $BLJ_PROJ); then
+		for dirPath in $(ls -1dt $BLJ_PROJ/*); do
+			$(valid_dir $dirPath) && echo "$dirPath" && exit
+		done
+	fi
+}
+

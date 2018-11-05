@@ -1,20 +1,7 @@
 package biolockj.module.report;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
+import java.io.*;
+import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.BioLockJ;
 import biolockj.Config;
@@ -22,6 +9,7 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.r.CalculateStats;
+import biolockj.module.r.R_Module;
 import biolockj.node.JsonNode;
 import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
@@ -37,6 +25,30 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	public void checkDependencies() throws Exception
 	{
 		ModuleUtil.requireParserModule();
+
+		final TreeSet<Integer> indexes = new TreeSet<>();
+		final List<String> taxLevels = Arrays.asList( new String[] { Config.DOMAIN, Config.PHYLUM, Config.CLASS,
+				Config.ORDER, Config.FAMILY, Config.GENUS, Config.SPECIES } );
+		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		{
+			Log.debug( getClass(),
+					"Found valid Config Taxa Level :" + level + " - at index # " + taxLevels.indexOf( level ) );
+			indexes.add( taxLevels.indexOf( level ) );
+		}
+
+		final Iterator<Integer> it = indexes.iterator();
+		int base = it.next();
+		while( it.hasNext() )
+		{
+			final int next = it.next();
+			if( next != base + 1 )
+			{
+				throw new Exception( "JsonReport requires that taxonomy levels configured in: "
+						+ Config.REPORT_TAXONOMY_LEVELS
+						+ " does not have any gaps.  Missing taxonomy level(s) between: [" + taxLevels.get( base ) + "-" + taxLevels.get( next )  + "]" );
+			}
+			base = next;
+		}
 	}
 
 	@Override
@@ -153,7 +165,10 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				}
 			}
 
-			validOtuMap.put( level, validOtus );
+			if( validOtus != null )
+			{
+				validOtuMap.put( level, validOtus );
+			}
 		}
 
 		return validOtuMap;
@@ -169,7 +184,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 */
 	private void addStats( LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final JsonNode root ) throws Exception
 	{
-		Log.get( getClass() ).info( "Adding stats to JSON nodes..." );
+		Log.info( getClass(), "Adding stats to JSON nodes..." );
 		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
 		{
 			final File[] statReports = getStatReports( level );
@@ -195,15 +210,13 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	{
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = new LinkedHashMap<>();
 		final Set<ParsedSample> parsedSamples = ModuleUtil.requireParserModule().getParsedSamples();
-		Log.get( getClass() ).info( "Build JSON Nodes for " + parsedSamples.size() + " samples..." );
-		
-		
+		Log.info( getClass(), "Build JSON Nodes for " + parsedSamples.size() + " samples..." );
 		final Map<String, Set<String>> validOtus = getValidOtus();
 
 		// for each sample...
 		for( final ParsedSample sample: parsedSamples )
 		{
-			Log.get( getClass() ).debug( "Build JSON Node for Sample ID[ " + sample.getSampleId() + " ] with #Hits:"
+			Log.debug( getClass(), "Build JSON Node for Sample ID[ " + sample.getSampleId() + " ] with #Hits:"
 					+ sample.getNumHits() + " | #OTU Nodes: " + sample.getOtuNodes().size() );
 
 			// for each sample OtuNode
@@ -261,8 +274,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				{
 					brokenOtuNetworks.add( otuBranch );
 					node.report();
-					Log.get( getClass() )
-							.warn( "Missing OTU Levels [ " + sample.getSampleId() + " ]: " + gaps.toString() );
+					Log.warn( getClass(), "Missing OTU Levels [ " + sample.getSampleId() + " ]: " + gaps.toString() );
 				}
 			}
 		}
@@ -336,9 +348,9 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 */
 	private long getRootCount( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap ) throws Exception
 	{
-		Log.get( getClass() ).info( Log.LOG_SPACER );
-		Log.get( getClass() ).info( "JSON OTU Report" );
-		Log.get( getClass() ).info( Log.LOG_SPACER );
+		Log.info( getClass(), Log.LOG_SPACER );
+		Log.info( getClass(), "JSON OTU Report" );
+		Log.info( getClass(), Log.LOG_SPACER );
 		long rootCount = 0L;
 		final LinkedHashMap<String, Long> countMap = new LinkedHashMap<>();
 		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
@@ -356,8 +368,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 					}
 
 					totalSeqs += jsonNode.getCount();
-					Log.get( getClass() ).info( level + ":" + jsonNode.getOtu() + " [ parent:"
-							+ jsonNode.getParent().getOtu() + " ] = " + jsonNode.getCount() );
+					Log.info( getClass(), level + ":" + jsonNode.getOtu() + " [ parent:" + jsonNode.getParent().getOtu()
+							+ " ] = " + jsonNode.getCount() );
 				}
 			}
 
@@ -400,7 +412,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final File stats, final String level )
 			throws Exception
 	{
-		Log.get( getClass() ).info( "Adding stats from: " + stats.getAbsolutePath() );
+		Log.info( getClass(), "Adding stats from: " + stats.getAbsolutePath() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( stats );
 		try
 		{
@@ -429,8 +441,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				}
 				else
 				{
-					Log.get( getClass() )
-							.debug( "Missing OTU " + level + ": " + otu
+					Log.debug( getClass(),
+							"Missing OTU " + level + ": " + otu
 									+ " (likely due to OTU network gap), as found in CalculateStats output: "
 									+ stats.getAbsolutePath() );
 				}
@@ -537,23 +549,23 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	private static String getStatsType( final File file ) throws Exception
 	{
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_PAR;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_NP;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_PAR_ADJ;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_NP_ADJ;
 		}
-		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.R_SQUARED_VALS;
 		}

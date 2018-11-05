@@ -4,27 +4,10 @@
 ##  This script calls ant on build.xml to create BioLockJ.jar  ##
 ##                                                             ##
 #################################################################
+. $BLJ/script/blj_functions
 
-# Returns Y or N to indicate if directory exists
-function valid_dir {
-	if [ ${#1} -gt 0 ] && [ -d "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
-
-# Returns Y or N to indicate if file exists
-function valid_file {
-	if [ ${#1} -gt 0 ] && [ -f "$1" ]; then  
-		echo "Y" 
-	else 
-		echo "N"
-	fi
-}
-
-echo "Building BioLockJ..."
-if [ "$(valid_dir $BLJ/resources)" == "Y" ]; then
+echo "Building BioLockJ with ANT..."
+if $(valid_dir $BLJ/resources); then
 	cd $BLJ/resources
 	[ ${#1} -eq 0 ] && ant
 	[ ${#1} -gt 0 ] && ant $1
@@ -33,8 +16,8 @@ else
 	echo "Invalid directory path: $BLJ/resources" && exit 1
 fi
 
-if [ "$(valid_file $BLJ/dist/BioLockJ.jar)" == "Y" ]; then
-	echo "Build Successful - created $BLJ/dist/BioLockJ.jar"
+if $(valid_file $BLJ/dist/BioLockJ.jar); then
+	ls $BLJ/dist/BioLockJ.jar
 else
 	echo "Build Failed - missing $BLJ/dist/BioLockJ.jar"
 fi

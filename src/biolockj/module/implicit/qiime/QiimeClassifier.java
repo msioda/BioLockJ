@@ -11,28 +11,15 @@
  */
 package biolockj.module.implicit.qiime;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
-import biolockj.BioModuleFactory;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import java.io.*;
+import java.util.*;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.module.classifier.r16s.QiimeOpenRefClassifier;
 import biolockj.module.seq.PearMergeReads;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule generates the bash script used to create QIIME summary scripts, taxonomy-level reports, and add alpha

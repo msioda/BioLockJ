@@ -11,34 +11,17 @@
  */
 package biolockj.module.r;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
+import java.io.*;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.report.AddMetadataToOtuTables;
-import biolockj.util.BashScriptBuilder;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.RMetaUtil;
-import biolockj.util.RuntimeParamUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule is the superclass for R script generating modules.
@@ -70,10 +53,10 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		final StringBuffer sb = new StringBuffer();
 		sb.append( buildGetModuleScriptDirFunction() + RETURN );
-		sb.append(
-				"source( file.path( dirname( " + R_FUNCTION_GET_MOD_SCRIPT + "() ), \"" + R_FUNCTION_LIB + "\" ) )" + RETURN );
-		sb.append( "source( file.path( dirname( " + R_FUNCTION_GET_MOD_SCRIPT + "() ), \"" + getModuleScriptName() + "\" ) )"
+		sb.append( "source( file.path( dirname( " + R_FUNCTION_GET_MOD_SCRIPT + "() ), \"" + R_FUNCTION_LIB + "\" ) )"
 				+ RETURN );
+		sb.append( "source( file.path( dirname( " + R_FUNCTION_GET_MOD_SCRIPT + "() ), \"" + getModuleScriptName()
+				+ "\" ) )" + RETURN );
 		sb.append( METHOD_RUN_PROGRAM + "( " + R_FUNCTION_GET_MOD_SCRIPT + "() )" + RETURN );
 		sb.append( METHOD_REPORT_STATUS + "( " + R_FUNCTION_GET_MOD_SCRIPT + "() )" + RETURN );
 		if( Config.getBoolean( R_SAVE_R_DATA ) )
@@ -171,8 +154,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Get the main R script prefix, typically {@value #MAIN_SCRIPT_PREFIX} except when running in Docker mode, which instead
-	 * uses a numeric prefix since {@value #MAIN_SCRIPT_PREFIX} will be reserved for the MAIN bash script.
+	 * Get the main R script prefix, typically {@value #MAIN_SCRIPT_PREFIX} except when running in Docker mode, which
+	 * instead uses a numeric prefix since {@value #MAIN_SCRIPT_PREFIX} will be reserved for the MAIN bash script.
 	 * 
 	 * @return MAIN script prefix
 	 * @throws Exception if errors occur
@@ -423,6 +406,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	/**
 	 * Build R script function to return the R script parent directory: {@value #R_FUNCTION_GET_MOD_SCRIPT}
+	 * 
 	 * @return R script function
 	 * @throws Exception if errors occur
 	 */
@@ -521,8 +505,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	/**
 	 * R function to get module script file path: {@value #R_FUNCTION_GET_MOD_SCRIPT}
 	 */
-	public static final String R_FUNCTION_GET_MOD_SCRIPT = "getModuleScript"; 
-	
+	public static final String R_FUNCTION_GET_MOD_SCRIPT = "getModuleScript";
+
 	/**
 	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}
 	 */

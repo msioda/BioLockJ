@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/classifier/wgs/MetaphlanClassifier/Dockerfile
+# Deployment path:  $BLJ/resources/docker/classifier/wgs/MetaphlanClassifier
 
 FROM ubuntu:18.04
 
