@@ -38,16 +38,14 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 		final Iterator<Integer> it = indexes.iterator();
 		int base = it.next();
-		Log.debug( getClass(), "BASE (should be lowest) Taxa Level :" + base );
 		while( it.hasNext() )
 		{
 			final int next = it.next();
-			Log.debug( getClass(), "NEXT Taxa Level :" + next );
 			if( next != base + 1 )
 			{
 				throw new Exception( "JsonReport requires that taxonomy levels configured in: "
 						+ Config.REPORT_TAXONOMY_LEVELS
-						+ " does not have any gaps.  Missing taxonomy level(s) between: [" + base + "-" + next + "]" );
+						+ " does not have any gaps.  Missing taxonomy level(s) between: [" + taxLevels.get( base ) + "-" + taxLevels.get( next )  + "]" );
 			}
 			base = next;
 		}
