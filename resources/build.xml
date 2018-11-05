@@ -29,6 +29,7 @@
 	
 
     <target name="compile-source" depends="init">
+    	    <mkdir dir="bin" />
 		<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin" classpathref="lib.path"/>
     	<copy file="resources/log4j.properties" todir="bin"/>
     </target>
