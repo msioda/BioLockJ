@@ -6,14 +6,14 @@
 ##  Bash env must include pipeline base directory: $BLJ_PROJ            	##
 ##  Must pass the script 2 runtime parameters:                          	##
 ##                                                                  		##
-##  $config				Config file path                                    ##
-##  $inputDirPaths		Input dir paths (commma separated, no spaces)       ##
+##  $config				Config file path                                 ##
+##  $inputDirPaths		Input dir paths (commma separated, no spaces)    ##
 ##                                                                      	##
 ##  Optional parameters:                                                	##
 ##                                                                      	##
 ##  $metadataFilePath		Metadata file directory path                	##
-##  $trimPrimersFilePath		Primer file directory path                  ##
-##  $BLJ_OPTIONS				Singleton options: -r or -p                 ##
+##  $trimPrimersFilePath		Primer file directory path                   ##
+##  $BLJ_OPTIONS				Singleton options: -r or -p                  ##
 ##                                                                      	##
 ############################################################################
 

@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/classifier/r16s/QiimeClassifier/Dockerfile
+# Deployment path:  $BLJ/resources/docker/classifier/r16s/QiimeClassifier
 
 FROM ubuntu:18.04
 

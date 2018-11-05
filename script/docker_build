@@ -32,6 +32,7 @@ if [ "$(valid_dir $BLJ/resources/docker)" == "Y" ]; then
 	docker build -t biolockj/rdpclassifier $BLJ/resources/docker/classifier/r16s/RdpClassifier
 	docker build -t biolockj/qiimeclassifier $BLJ/resources/docker/classifier/r16s/QiimeClassifier
 	docker build -t biolockj/krakenclassifier $BLJ/resources/docker/classifier/wgs/KrakenClassifier
+	docker build -t biolockj/krakenclassifier $BLJ/resources/docker/classifier/wgs/Kraken2Classifier
 	docker build -t biolockj/metaphlanclassifier $BLJ/resources/docker/classifier/wgs/MetaphlanClassifier
 	docker build -t biolockj/r_module $BLJ/resources/docker/R_Module
 	echo "Deployment complete!"

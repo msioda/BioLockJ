@@ -1,4 +1,4 @@
-# Deployment path: $BLJ/resources/docker/seq/AwkFastaConverter/Dockerfile
+# Deployment path: $BLJ/resources/docker/seq/AwkFastaConverter
 
 FROM ubuntu:18.04
 

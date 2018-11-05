@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/classifier/wgs/KrakenClassifier/Dockerfile
+# Deployment path:  $BLJ/resources/docker/classifier/wgs/KrakenClassifier
 
 FROM ubuntu:18.04
 

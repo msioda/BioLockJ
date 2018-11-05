@@ -245,7 +245,7 @@ public class BashScriptBuilder
 		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) );
 		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED );
 		lines.add( FAIL_FILE + "=" + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_FAILURES + RETURN );
-		
+		lines.add( "cd " + module.getScriptDir().getAbsolutePath() );
 		if( DockerUtil.isDockerScriptModule( module ) )
 		{
 			lines.addAll( DockerUtil.buildRunDockerFunction( module ) );
