@@ -19,10 +19,7 @@ import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.MergeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.util.BashScriptBuilder;
-import biolockj.util.MetaUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule executes the QIIME script pick_closed_reference_otus.py on a FastA sequence files. Unlike open and de

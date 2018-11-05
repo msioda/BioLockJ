@@ -12,10 +12,7 @@
 package biolockj.module.classifier.wgs;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
@@ -58,13 +55,14 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-	 * Build bash script lines to classify paired WGS reads with Kraken. The inner list contains 1 bash script line
-	 * used to classify 1 sample (2 files: forward and reverse reads).
+	 * Build bash script lines to classify paired WGS reads with Kraken. The inner list contains 1 bash script line used
+	 * to classify 1 sample (2 files: forward and reverse reads).
 	 * <p>
 	 * Example lines:
 	 * <ol>
-	 * <li>kraken --mpa-format --paired --fasta-input --only-classified-output --threads 8 --db /database/kraken --output
-	 * ./output/sample42_reported.tsv ./input/sample42_R1.fasta ./input/sample42_R2.fasta<br>	 * 
+	 * <li>kraken --mpa-format --paired --fasta-input --only-classified-output --threads 8 --db /database/kraken
+	 * --output ./output/sample42_reported.tsv ./input/sample42_R1.fasta ./input/sample42_R2.fasta<br>
+	 * *
 	 * </ol>
 	 */
 	@Override
@@ -183,7 +181,8 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 			if( defaultSwitches.indexOf( "--output " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--output) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ hard codes this file path based on sequence files names in: " + Config.INPUT_DIRS );
+						+ "). BioLockJ hard codes this file path based on sequence files names in: "
+						+ Config.INPUT_DIRS );
 			}
 			if( defaultSwitches.indexOf( "--db " ) > -1 )
 			{
@@ -192,13 +191,13 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 			}
 			if( defaultSwitches.indexOf( "--help " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--help) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ ")." );
+				throw new Exception(
+						"Invalid classifier option (--help) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
 			if( defaultSwitches.indexOf( "--version " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ ")." );
+				throw new Exception(
+						"Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
 			if( defaultSwitches.indexOf( "--report " ) > -1 )
 			{
@@ -225,11 +224,11 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	private Map<String, String> getHardCodedKrakenSwitches() throws Exception
 	{
 		final Map<String, String> switches = new HashMap<>();
-		switches.put( "--use-names", ""); //needed for output style expected by Kraken2Parser
-		switches.put( "--use-mpa-style", ""); //needed for output style expected by Kraken2Parser
+		switches.put( "--use-names", "" ); // needed for output style expected by Kraken2Parser
+		switches.put( "--use-mpa-style", "" ); // needed for output style expected by Kraken2Parser
 		switches.put( "--db", getDB() );
 		switches.put( "--threads", getNumThreads().toString() );
-//		switches.put( getInputSwitch(), "" );
+		// switches.put( getInputSwitch(), "" );
 		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			switches.put( "--paired", "" );
@@ -253,23 +252,22 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-	 * Set the input switch based reading a sample input file.
-	 * Kraken2 does this automatically.
+	 * Set the input switch based reading a sample input file. Kraken2 does this automatically.
 	 *
 	 * @return file type switch
 	 * @throws Exception
 	 */
-//	private String getInputSwitch() throws Exception
-//	{
-//		if( SeqUtil.isFastA() )
-//		{
-//			return "--fasta-input";
-//		}
-//		else
-//		{
-//			return "--fastq-input";
-//		}
-//	}
+	// private String getInputSwitch() throws Exception
+	// {
+	// if( SeqUtil.isFastA() )
+	// {
+	// return "--fasta-input";
+	// }
+	// else
+	// {
+	// return "--fastq-input";
+	// }
+	// }
 
 	private String getRuntimeParams() throws Exception
 	{

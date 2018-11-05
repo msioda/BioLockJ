@@ -11,27 +11,14 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 
@@ -216,12 +203,12 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			
+
 			if( ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR ) == null )
 			{
 				return "";
 			}
-			
+
 			if( ModuleUtil.getMainScript( scriptModule ) == null
 					|| scriptModule.getScriptDir().listFiles().length == 0 )
 			{

@@ -11,18 +11,8 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;

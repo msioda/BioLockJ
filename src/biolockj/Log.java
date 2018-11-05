@@ -12,11 +12,7 @@
 package biolockj;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import biolockj.util.BioLockJUtil;
@@ -224,15 +220,16 @@ public class Log
 
 	/**
 	 * Print welcome message.<br>
-	 * Message includes BioLockJ version {@link biolockj.util.BioLockJUtil#getVersion()}, 
-	 * lab citation, and freeware blurb.
+	 * Message includes BioLockJ version {@link biolockj.util.BioLockJUtil#getVersion()}, lab citation, and freeware
+	 * blurb.
 	 * 
 	 * @throws Exception if errors occur
 	 */
 	protected static void logWelcomeMsg() throws Exception
 	{
 		Log.info( Log.class, LOG_SPACER );
-		Log.info( Log.class, "Launching BioLockJ " + BioLockJUtil.getVersion() + " ~ Distributed by UNCC Fodor Lab @2018" );
+		Log.info( Log.class,
+				"Launching BioLockJ " + BioLockJUtil.getVersion() + " ~ Distributed by UNCC Fodor Lab @2018" );
 		Log.info( Log.class, LOG_SPACER );
 		Log.info( Log.class, "This code is free software; you can redistribute and/or modify it" );
 		Log.info( Log.class, "under the terms of the GNU General Public License as published by" );
@@ -262,7 +259,6 @@ public class Log
 		}
 		return logLevel;
 	}
-
 
 	/**
 	 * {@link biolockj.Config} property used to set log sensitivity in

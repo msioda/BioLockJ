@@ -39,7 +39,7 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 	 * </ol>
 	 * <p>
 	 * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
-	 * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales	20094
+	 * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales 20094
 	 */
 	@Override
 	public void parseSamples() throws Exception

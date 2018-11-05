@@ -68,7 +68,7 @@ public class CalculateStats extends R_Module implements BioModule
 		final String fileName = mod.getOutputDir().getAbsolutePath() + File.separator
 				+ Config.getString( Config.INTERNAL_PIPELINE_NAME ) + "_" + otuLevel + "_" + fileType
 				+ R_Module.TSV_EXT;
-		
+
 		Log.info( CalculateStats.class, "Find stats file: " + fileName );
 		final File file = new File( fileName );
 		if( file.exists() )

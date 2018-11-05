@@ -12,10 +12,7 @@
 package biolockj.module.classifier.wgs;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
@@ -184,7 +181,8 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			if( defaultSwitches.indexOf( "--output " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--output) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ hard codes this file path based on sequence files names in: " + Config.INPUT_DIRS );
+						+ "). BioLockJ hard codes this file path based on sequence files names in: "
+						+ Config.INPUT_DIRS );
 			}
 			if( defaultSwitches.indexOf( "--db " ) > -1 )
 			{
@@ -193,13 +191,13 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			}
 			if( defaultSwitches.indexOf( "--help " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--help) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ ")." );
+				throw new Exception(
+						"Invalid classifier option (--help) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
 			if( defaultSwitches.indexOf( "--version " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ ")." );
+				throw new Exception(
+						"Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
 		}
 

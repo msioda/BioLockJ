@@ -14,21 +14,10 @@ package biolockj.util;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.classifier.ClassifierModule;
 
 /**

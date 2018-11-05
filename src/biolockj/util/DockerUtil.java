@@ -43,59 +43,10 @@ public class DockerUtil
 		dockerScriptLines.add( innerList );
 		return dockerScriptLines;
 	}
-	
 
-
-	private static final String getDockerEnvVars( BioModule module ) throws Exception
-	{
-		String envVars = " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
-		if( isDockerScriptModule( module ) )
-		{
-			envVars += " -e " + COMPUTE_SCRIPT + "=$1";
-		}
-		
-		return envVars;
-	}
-	
-	private static final String getDockerVolumes() throws Exception
-	{
-		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR + ":delegated";
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR;
-		
-		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
-		{
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
-		}
-		if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
-		{
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPrimerDir() + ":" + CONTAINER_PRIMER_DIR;
-		}
-		
-		return dockerVolumes;
-	}
-	
-	private static final String getBljOptions( final BioModule module ) throws Exception
-	{
-		String bljOptions = RuntimeParamUtil.getRuntimeArgs().replaceAll( RuntimeParamUtil.RESTART_FLAG + " ", "" );
-		if( !isDockerScriptModule( module ) )
-		{
-			bljOptions += " " + RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName();
-		}
-		
-		return BLJ_OPTIONS + "=\"" + bljOptions + "\"";
-	}
-	
-	private static final String rmFlag() throws Exception
-	{
-		return Config.getBoolean( DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
-	}
-	
-	
 	/**
-	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script path
-	 * parameters.
+	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script
+	 * path parameters.
 	 * 
 	 * @param module BioModule
 	 * @return Bash function to run docker
@@ -106,16 +57,16 @@ public class DockerUtil
 		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
 		Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + BioLockJ.RETURN );
 		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
-		
+
 		final List<String> lines = new ArrayList<>();
 		lines.add( getBljOptions( module ) + BioLockJ.RETURN );
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
-		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module ) + getDockerVolumes() + getDockerImage( module ) );
+		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
+				+ getDockerVolumes() + getDockerImage( module ) );
 		lines.add( "}" + BioLockJ.RETURN );
-		return lines; 
+		return lines;
 	}
-
 
 	/**
 	 * Get mapped Docker system path from {@link biolockj.Config} property by replacing the host system path with the
@@ -195,7 +146,52 @@ public class DockerUtil
 		return " " + DOCKER_USER + "/" + name.toLowerCase();
 	}
 
-	
+	private static final String getBljOptions( final BioModule module ) throws Exception
+	{
+		String bljOptions = RuntimeParamUtil.getRuntimeArgs().replaceAll( RuntimeParamUtil.RESTART_FLAG + " ", "" );
+		if( !isDockerScriptModule( module ) )
+		{
+			bljOptions += " " + RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName();
+		}
+
+		return BLJ_OPTIONS + "=\"" + bljOptions + "\"";
+	}
+
+	private static final String getDockerEnvVars( final BioModule module ) throws Exception
+	{
+		String envVars = " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
+		if( isDockerScriptModule( module ) )
+		{
+			envVars += " -e " + COMPUTE_SCRIPT + "=$1";
+		}
+
+		return envVars;
+	}
+
+	private static final String getDockerVolumes() throws Exception
+	{
+		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR
+				+ ":delegated";
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR;
+
+		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
+		{
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
+		}
+		if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
+		{
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPrimerDir() + ":" + CONTAINER_PRIMER_DIR;
+		}
+
+		return dockerVolumes;
+	}
+
+	private static final String rmFlag() throws Exception
+	{
+		return Config.getBoolean( DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
+	}
 
 	/**
 	 * Docker environment variable holding the Docker program switches: {@value #BLJ_OPTIONS}
@@ -228,14 +224,10 @@ public class DockerUtil
 	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipeline";
 
 	/**
-	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer" volume.
+	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer"
+	 * volume.
 	 */
 	public static final String CONTAINER_PRIMER_DIR = File.separator + "primer";
-
-	/**
-	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
-	 */
-	public static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
 
 	/**
 	 * Docker socket path: {@value #DOCKER_SOCKET}
@@ -253,12 +245,16 @@ public class DockerUtil
 	public static final String MANAGER = "manager";
 
 	/**
+	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
+	 */
+	public static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
+
+	/**
 	 * {@link biolockj.Config} property sets --rm flag on docker run command if set to TRUE: {@value #DELETE_ON_EXIT}
 	 */
 	protected static final String DELETE_ON_EXIT = "docker.deleteContainerOnExit";
 
 	private static final String DOCK_RM_FLAG = "--rm";
-
 
 	/**
 	 * Update Config file paths to use the container paths in place of host paths

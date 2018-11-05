@@ -1,20 +1,7 @@
 package biolockj.module.report;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
+import java.io.*;
+import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.BioLockJ;
 import biolockj.Config;
@@ -38,25 +25,31 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	public void checkDependencies() throws Exception
 	{
 		ModuleUtil.requireParserModule();
-		
+
 		final TreeSet<Integer> indexes = new TreeSet<>();
-		final List<String> taxLevels = Arrays
-				.asList( new String[] { Config.DOMAIN, Config.PHYLUM, Config.CLASS, Config.ORDER, Config.FAMILY, Config.GENUS, Config.SPECIES } );
+		final List<String> taxLevels = Arrays.asList( new String[] { Config.DOMAIN, Config.PHYLUM, Config.CLASS,
+				Config.ORDER, Config.FAMILY, Config.GENUS, Config.SPECIES } );
 		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
 		{
+			Log.debug( getClass(),
+					"Found valid Config Taxa Level :" + level + " - at index # " + taxLevels.indexOf( level ) );
 			indexes.add( taxLevels.indexOf( level ) );
 		}
-		
+
 		final Iterator<Integer> it = indexes.iterator();
 		int base = it.next();
+		Log.debug( getClass(), "BASE (should be lowest) Taxa Level :" + base );
 		while( it.hasNext() )
 		{
-			int next = it.next();
-			if( next != (base + 1) )
+			final int next = it.next();
+			Log.debug( getClass(), "NEXT Taxa Level :" + next );
+			if( next != base + 1 )
 			{
-				throw new Exception( "JsonReport requires that taxonomy levels configured in: " + Config.REPORT_TAXONOMY_LEVELS + 
-						" does not have any gaps.  Missing taxonomy level(s) between: [" + base + "-" + next + "]" );
+				throw new Exception( "JsonReport requires that taxonomy levels configured in: "
+						+ Config.REPORT_TAXONOMY_LEVELS
+						+ " does not have any gaps.  Missing taxonomy level(s) between: [" + base + "-" + next + "]" );
 			}
+			base = next;
 		}
 	}
 
@@ -173,7 +166,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 					}
 				}
 			}
-			
+
 			if( validOtus != null )
 			{
 				validOtuMap.put( level, validOtus );
@@ -206,7 +199,6 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			}
 		}
 	}
-	
 
 	/**
 	 * Build the JSON Map [key=level, value = TreeSet<JsonNode>].<br>
@@ -378,8 +370,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 					}
 
 					totalSeqs += jsonNode.getCount();
-					Log.info( getClass(), level + ":" + jsonNode.getOtu() + " [ parent:"
-							+ jsonNode.getParent().getOtu() + " ] = " + jsonNode.getCount() );
+					Log.info( getClass(), level + ":" + jsonNode.getOtu() + " [ parent:" + jsonNode.getParent().getOtu()
+							+ " ] = " + jsonNode.getCount() );
 				}
 			}
 
@@ -451,7 +443,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				}
 				else
 				{
-					Log.debug( getClass(), "Missing OTU " + level + ": " + otu
+					Log.debug( getClass(),
+							"Missing OTU " + level + ": " + otu
 									+ " (likely due to OTU network gap), as found in CalculateStats output: "
 									+ stats.getAbsolutePath() );
 				}

@@ -11,10 +11,7 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
@@ -46,18 +43,18 @@ public class LogUtil
 
 		if( module instanceof ScriptModule && Config.isOnCluster() )
 		{
-//			final List<String> cache = new ArrayList<>();
-//			for( final File log: module.getScriptDir().listFiles() )
-//			{
-//				final List<String> lines = cacheLog( log );
-//				if( !lines.isEmpty() )
-//				{
-//					cache.add( "Logging info from: " + log.getAbsolutePath() );
-//					cache.addAll( lines );
-//				}
-//			}
-//
-//			merge( cache );
+			// final List<String> cache = new ArrayList<>();
+			// for( final File log: module.getScriptDir().listFiles() )
+			// {
+			// final List<String> lines = cacheLog( log );
+			// if( !lines.isEmpty() )
+			// {
+			// cache.add( "Logging info from: " + log.getAbsolutePath() );
+			// cache.addAll( lines );
+			// }
+			// }
+			//
+			// merge( cache );
 		}
 	}
 

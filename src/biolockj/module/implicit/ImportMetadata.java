@@ -11,27 +11,14 @@
  */
 package biolockj.module.implicit;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import java.io.*;
+import java.util.*;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
 import biolockj.module.r.R_Module;
 import biolockj.module.report.AddMetadataToOtuTables;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.RMetaUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule validates the contents/format of the project metadata file and the related Config properties. If

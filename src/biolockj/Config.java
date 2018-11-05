@@ -12,16 +12,7 @@
 package biolockj;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
@@ -126,7 +117,7 @@ public class Config
 		{
 			return propertyName.substring( 4 );
 		}
-		
+
 		if( !RuntimeParamUtil.isDockerMode() && !BashScriptBuilder.clusterModuleExists( getString( propertyName ) ) )
 		{
 			return requireExistingFile( propertyName ).getAbsolutePath();

@@ -11,18 +11,8 @@
  */
 package biolockj;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.util.*;
 import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.RuntimeParamUtil;

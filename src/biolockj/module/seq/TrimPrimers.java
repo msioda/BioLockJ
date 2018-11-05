@@ -11,30 +11,16 @@
  */
 package biolockj.module.seq;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.DockerUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule removes sequence primers from demultiplexed files.<br>

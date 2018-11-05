@@ -11,18 +11,9 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import java.io.*;
+import java.util.*;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
@@ -57,8 +48,8 @@ public class BashScriptBuilder
 		final List<String> mainScriptLines = initMainScript( module );
 		for( final File worker: workerScripts )
 		{
-			mainScriptLines.add(
-					getMainScriptExecuteWorkerLine( module, worker.getAbsolutePath(), getWorkerId( scriptCount++, digits ) ) );
+			mainScriptLines.add( getMainScriptExecuteWorkerLine( module, worker.getAbsolutePath(),
+					getWorkerId( scriptCount++, digits ) ) );
 		}
 
 		mainScriptLines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_SUCCESS );
@@ -116,7 +107,30 @@ public class BashScriptBuilder
 		return false;
 	}
 
-
+	/**
+	 * Create bash worker script function: {@value #FUNCTION_EXECUTE}.<br>
+	 * Failure details written to the failure script file if any occur.
+	 * <ol>
+	 * <li>$1 Script payload line to execute
+	 * <li>$2 Script line number
+	 * </ol>
+	 * 
+	 * @return Bash script lines
+	 * @throws Exception if errors occur
+	 */
+	protected static List<String> buildExecuteFunction() throws Exception
+	{
+		final List<String> lines = new ArrayList<>();
+		lines.add( "function " + FUNCTION_EXECUTE + "() {" );
+		lines.add( "$1" );
+		lines.add( "statusCode=$?" );
+		lines.add( "if [ $statusCode != 0 ]; then" );
+		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> $" + FAIL_FILE );
+		lines.add( "exit $statusCode" );
+		lines.add( "fi" );
+		lines.add( "}" );
+		return lines;
+	}
 
 	/**
 	 * Create the script. Leading zeros added if needed so all worker scripts have same number of digits. Print the
@@ -154,7 +168,7 @@ public class BashScriptBuilder
 	 * @param module ScriptModule
 	 * @param workerScriptPath Worker script path
 	 * @param workerId Worker script ID
-	 * @return bash script line 
+	 * @return bash script line
 	 * @throws Exception if errors occur
 	 */
 	protected static String getMainScriptExecuteWorkerLine( final ScriptModule module, final String workerScriptPath,
@@ -170,14 +184,12 @@ public class BashScriptBuilder
 		{
 			line.append( FUNCTION_RUN_JOB + " " );
 		}
-		
+
 		line.append( workerScriptPath );
-		
+
 		return FUNCTION_EXECUTE + " \"" + line.toString() + "\" $LINENO";
 
 	}
-	
-	
 
 	/**
 	 * Pass each line and the current line number to {@value #FUNCTION_EXECUTE}
@@ -186,8 +198,7 @@ public class BashScriptBuilder
 	 * @return List of bash script lines
 	 * @throws Exception if errors occur
 	 */
-	protected static List<String> getWorkerScriptLines( final List<String> lines )
-			throws Exception
+	protected static List<String> getWorkerScriptLines( final List<String> lines ) throws Exception
 	{
 		final List<String> wrappedLines = new ArrayList<>();
 		for( final String line: lines )
@@ -197,9 +208,6 @@ public class BashScriptBuilder
 
 		return wrappedLines;
 	}
-	
-
-	
 
 	/**
 	 * Build the file path for the numbered worker script. Leading zeros added if needed so all worker scripts have same
@@ -237,7 +245,7 @@ public class BashScriptBuilder
 	protected static List<String> initMainScript( final ScriptModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		
+
 		if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
 			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) );
@@ -258,10 +266,10 @@ public class BashScriptBuilder
 			lines.add( Config.requireString( CLUSTER_BATCH_COMMAND ) + " $1" );
 			lines.add( "}" );
 		}
-		
+
 		lines.addAll( buildExecuteFunction() );
 		lines.add( RETURN );
-		
+
 		return lines;
 	}
 
@@ -288,12 +296,12 @@ public class BashScriptBuilder
 		{
 			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) );
 		}
-		
+
 		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = "
 				+ new Integer( Config.requirePositiveInteger( ScriptModule.SCRIPT_BATCH_SIZE ) ).toString() );
 		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED );
 		lines.add( FAIL_FILE + "=" + scriptPath + "_" + Pipeline.SCRIPT_FAILURES );
-		
+
 		lines.addAll( loadModules() );
 
 		final List<String> bashFunctions = module.getWorkerScriptFunctions();
@@ -301,35 +309,9 @@ public class BashScriptBuilder
 		{
 			lines.addAll( bashFunctions );
 		}
-		
-		lines.addAll( buildExecuteFunction() );
-		
-		return lines;
-	}
-	
 
-	/**
-	 * Create bash worker script function: {@value #FUNCTION_EXECUTE}.<br>
-	 * Failure details written to the failure script file if any occur.
-	 * <ol>
-	 * <li>$1 Script payload line to execute
-	 * <li>$2 Script line number
-	 * </ol>
-	 * 
-	 * @return Bash script lines
-	 * @throws Exception if errors occur
-	 */
-	protected static List<String> buildExecuteFunction() throws Exception
-	{
-		final List<String> lines = new ArrayList<>();
-		lines.add( "function " + FUNCTION_EXECUTE + "() {" );
-		lines.add( "$1" );
-		lines.add( "statusCode=$?" );
-		lines.add( "if [ $statusCode != 0 ]; then" );
-		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> $" + FAIL_FILE );
-		lines.add( "exit $statusCode" );
-		lines.add( "fi" );
-		lines.add( "}" );
+		lines.addAll( buildExecuteFunction() );
+
 		return lines;
 	}
 
@@ -417,8 +399,6 @@ public class BashScriptBuilder
 		}
 	}
 
-
-
 	/**
 	 * This method formats the bash script to indent if statement code blocks
 	 * 
@@ -499,7 +479,8 @@ public class BashScriptBuilder
 		}
 
 		Log.info( BashScriptBuilder.class, Log.LOG_SPACER );
-		Log.info( BashScriptBuilder.class, workerScripts.size() + " WORKER scripts created for: " + module.getClass().getName() );
+		Log.info( BashScriptBuilder.class,
+				workerScripts.size() + " WORKER scripts created for: " + module.getClass().getName() );
 		Log.info( BashScriptBuilder.class, Log.LOG_SPACER );
 	}
 
@@ -534,8 +515,8 @@ public class BashScriptBuilder
 
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
 	{
-		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator
-				+ BioModule.MAIN_SCRIPT_PREFIX + scriptModule.getModuleDir().getName() + ".sh" ).getAbsolutePath();
+		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
+				+ scriptModule.getModuleDir().getName() + ".sh" ).getAbsolutePath();
 	}
 
 	private static Integer getNumThreads( final ScriptModule module ) throws Exception
@@ -665,14 +646,14 @@ public class BashScriptBuilder
 	protected static final String FAIL_FILE = "failureFile";
 
 	/**
-	 * Main script function to submit jobs on the cluster
-	 */
-	protected static final String FUNCTION_RUN_JOB = "runJob";
-	
-	/**
 	 * Worker script function to execute 1 line of a worker script.
 	 */
 	protected static final String FUNCTION_EXECUTE = "execute";
+
+	/**
+	 * Main script function to submit jobs on the cluster
+	 */
+	protected static final String FUNCTION_RUN_JOB = "runJob";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #SCRIPT_JOB_HEADER}<br>
