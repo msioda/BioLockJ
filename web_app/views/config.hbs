@@ -14,7 +14,7 @@
 <div class="banner">BioLockJ</div>
 
 <div id="openConfig" class="menu">
-  <form class='tabForm' id=localFileForm>
+  <form class='' id=localFileForm>
     Select BiolockJ configuration file
     <input type="file" id="localFile">
     <button type="button" id="submitLocalFile" onclick="loadLocalFile()">Submit</button>
@@ -40,11 +40,10 @@
     <button class="tablinks" onclick="openTab(event, 'slimmTab')">SLIMM</button>
   </div>
   <!--tabbed menu-->
+<form id="configForm" class="" action="" method="post">
 
   <div id="projectTab" class="tabcontent">
-    <form class='tabForm' id="project">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Project name:
         <input name='project.configFile' id='project.configFile' name='project.configFile' type="text" size='35' required></p>
@@ -86,18 +85,21 @@
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
+      <p>Delete docker containers on exit"
+        <select class="" id="docker.deleteContainerOnExit" name="docker.deleteContainerOnExit">
+          <option selected default value="">Click for options</option>
+          <option value="Y">Yes</option>
+          <option value="N">No</option>
+        </select></p>
       <p>A directory on the local workstation where the cluster.downloadModule will be downloaded
         <input type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
-      <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="submit" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
+      <!-- <!-- <button class="createDownload">Create configuration file for download</button> -->
+      <a class="downloadlink hidden">Download configuration file to default directory</a> -->
+      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
   </div>
 
   <div id="moduleTab" class="tabcontent">
-    <button type='submit' class='saveTab'>Save progress</button>
-    <button class="createDownload">Create configuration file for download</button>
+    <!-- <button class="createDownload">Create configuration file for download</button> -->
     <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
     <fieldset>
@@ -118,21 +120,18 @@
       </div>
     </fieldset>
     <p>BioLockJ automatically adds implicit modules as they are needed, but you may override this behavior and force it to run an implicit module.</p>
-    <select form='project' class="" id="project.allowImplicitModules" name="project.allowImplicitModules">
+    <select class="" id="project.allowImplicitModules" name="project.allowImplicitModules">
       <option class='noOverrideImplicit' selected default value="">Click for options</option>
       <option id='yesOverrideImplicit' value="Y">Allow implicit modules to be directly added to pipeline</option>
       <option class='noOverrideImplicit' value="N">Allow BLJ to determine where to add implicit modules in the pipeline</option>
     </select><br>
-    <button type='submit' class='saveTab'>Save progress</button>
-    <button class="createDownload">Create configuration file for download</button>
+    <!-- <!-- <button class="createDownload">Create configuration file for download</button> --> -->
     <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
   </div>
 
   <div id="inputTab" class="tabcontent">
-    <form class='tabForm' id="input">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Input directory (or directories): <input type="text" size='70' id="input.dirPaths" name="input.dirPaths" required>
         <h5>(Input directory must contain files expected by the first module executed.
@@ -176,23 +175,19 @@ For fastq, typically “@”.)<h5></p>
       <p>Set the Demultiplexer strategy. If using barcodes, they must be provided in the
         metadata.filePath with in column name defined by metadata.barcodeColumn. This is only used by the Demultiplexer module:
         <select class="" id="demux.strategy" name="demux.strategy">
-          <option selected default value="">Click for options</option>
-          <option value="barcode_in_header">Barcode is in header</option>
-          <option value="barcode_in_seq">Barcode is in sequence</option>
-          <option value="id_in_header">Sequence ID is in header</option>
-          <option value="do_not_demux.">Do not demultiplex</option>
+          <!-- <option selected value="">Click for options</option> -->
+          <option value="barcode_in_header">Barcode in header</option>
+          <option value="barcode_in_seq">Barcode in sequence</option>
+          <option value="id_in_header">Sequence ID in header</option>
+          <option selected default value="do_not_demux.">N/A</option>
         </select></p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
   </div>
 
   <div id="metadataTab" class="tabcontent">
-    <form class='tabForm' id="metadata">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Metadata column name containing the barcode used for demultiplexing:
         <input type="text" id="metadata.barcodeColumn" name="metadata.barcodeColumn" value="barcode"><br></p>
@@ -204,18 +199,14 @@ For fastq, typically “@”.)<h5></p>
         <input type="text" id="metadata.nullValue" name="metadata.nullValue"></p>
       <p>Define column delimiter for input.metadata (input.columnDelim)
         <input type="text" id="metadata.columnDelim" name="metadata.columnDelim"></p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
     </div>
 
 
   <div id="clusterTab" class="tabcontent">
-    <form class='tabForm' id="cluster">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
       <p>Cluster host address (cluster.host):
@@ -248,16 +239,13 @@ For fastq, typically “@”.)<h5></p>
       <p>Cluster modules to load before execution:
         <input type="text" id="cluster.modules" name="cluster.modules"><br></p>
       <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
   </div>
 
   <div id="scriptTab" class="tabcontent">
-    <form class='tabForm' id="script">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Exit program if errors in script occur: (script.exitOnError)
         <select class="" id="script.exitOnError" name="script.exitOnError">
@@ -268,25 +256,21 @@ For fastq, typically “@”.)<h5></p>
       <p>Number of sequence files to process per script:
         <input type="number" min='0' id="script.batchSize" name="script.batchSize"><br></p>
       <p>Command to grant script execute permissions:
-        <input type="text" id="script.scriptPermissions" name="script.scriptPermissions" value="chmod 774"><br></p>
+        <input type="text" id="script.permissions" name="script.permissions" value="chmod 774"><br></p>
       <p>Number of threads:
-        <input type="text" min='0' id="script.numThreads" name="script.numThreads"><br></p>
+        <input type="number" min='0' id="script.numThreads" name="script.numThreads"><br></p>
       <p>Default header: (Used to set shebang line to define scripts as bash executables, such as "#!/bin/bash"
         scriptDefaultHeader)
         <input type="text" id="script.defaultHeader" name="script.defaultHeader"><br></p>
       <p>Set # minutes before direct Java module script will time out and fail
         <input type="number" min='0' id="java.timeout" name="java.timeout"><br></p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
   </div>
 
   <div id="reportTab" class="tabcontent">
-    <form class='tabForm' id="report">
-    <button type='submit' class='saveTab'>Save progress</button>
-    <button class="createDownload">Create configuration file for download</button>
+    <!-- <button class="createDownload">Create configuration file for download</button> -->
     <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Report logbase: (If e, use natural log (base e), otherwise use log base 10):
         <select class="" id="report.logBase" name="report.logBase">
@@ -312,7 +296,7 @@ For fastq, typically “@”.)<h5></p>
         <input type="number" min='0' id="report.minOtuThreshold" name="report.minOtuThreshold">
       <!--  <p>Delimiter to sepearte genus and species:<br>
         <input type="text" name="emptySpaceDelim"><br></p>-->
-      <p>Taxonomic levels included in report:<br>
+      <p id='report.taxonomyLevels'>Taxonomic levels included in report:<br>
         <input type="checkbox" name="report.taxonomyLevels" value="domain">Domain<br>
         <input type="checkbox" name="report.taxonomyLevels" value="phylum">Phylum<br>
         <input type="checkbox" name="report.taxonomyLevels" value="class">Class<br>
@@ -321,17 +305,13 @@ For fastq, typically “@”.)<h5></p>
         <input type="checkbox" name="report.taxonomyLevels" value="genus">Genus<br>
         <input type="checkbox" name="report.taxonomyLevels" value="species">Species<br>
       </p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
   </div>
 
   <div id="mailTab" class="tabcontent">
-    <form class='tabForm' id="mail">
-    <button type='submit' class='saveTab'>Save progress</button>
-    <button class="createDownload">Create configuration file for download</button>
+    <!-- <button class="createDownload">Create configuration file for download</button> -->
     <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Encrypted E-mail password:<br>
         <i>(Encrypted password from email.from account.  If BioLockJ is passed a 2nd parameter
@@ -364,17 +344,13 @@ For fastq, typically “@”.)<h5></p>
             <option value="Y">Yes</option>
             <option value="N"> No</option>
           </select></p>
-        <button type='submit' class='saveTab'>Save progress</button>
-        <button class="createDownload">Create configuration file for download</button>
+        <!-- <button class="createDownload">Create configuration file for download</button> -->
         <a class="downloadlink hidden">Download configuration file to default directory</a>
         <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
   </div>
 
   <div id="rTab" class="tabcontent">
-    <form class='tabForm' id="r">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>This is the base color used for labels & headings in the PDF report:
         <input type="text" id="r.colorBase" name="r.colorBase">
@@ -409,14 +385,14 @@ For fastq, typically “@”.)<h5></p>
       <p>Sets R plot pch parameter for PDF report:
         <input type='text' id="r.pch" name="r.pch"></p>
       <p>Sets PDF report plot label maximum width
-        <input type="text" id="r.plotWidth" name="r.plotWidth" value=""></p>
+        <input type="text" id="r.plotWidth" min="1" name="r.plotWidth" value=""></p>
       <p>Sets p-value cutoff used to assign label r.colorHighlight
         <input type="text" id="r.pvalCutoff" name="r.pvalCutoff" value="">
       </p>
       <p>Format of the pvalue used in R sprintf() function
         <input type="text" id="r.pValFormat" name="r.pValFormat" value=""></p>
       <p>Rare OTU threshold: (If > 1, R will filter OTUs below value provided. If < 1, R will interperate the value as a percentage and discard OTUs not found in at least that percentage of samples)
-        <input type="number" min='0' id="r.rareOtuThreshold" name="r.rareOtuThreshold" value=""></p>
+        <input type="number" min='1' id="r.rareOtuThreshold" name="r.rareOtuThreshold" value=""></p>
       <p>Override field used to explicitly list metadata columns to report in the R scripts. If left undefined, all columns are reported.
       <input type="text" id="r.reportFields" name="r.reportFields" value=""></p>
       <p>Save r data? (If Y, all R script generating BioModules will save R Session data to the module output directory to a file using the extension ".RData")
@@ -426,7 +402,7 @@ For fastq, typically “@”.)<h5></p>
           <option value="N"> No</option>
         </select></p>
       <p># minutes before R Script times out:
-        <input type="number" min='0' id="r.timeout" name="r.timeout"><br>
+        <input type="number" min='1' id="r.timeout" name="r.timeout"><br>
       </p>
       <p>Number of MDS axis to plot:
       <input type="number" min="0" id="rMds.numAxis" name="rMds.numAxis" value=""> </p>
@@ -440,7 +416,7 @@ For fastq, typically “@”.)<h5></p>
           <option value="TAXA">TAXA</option>
           <option value="ATTRIBUTE">ATTRIBUTE</option>
         </select></p>
-      <p>Sets the p.adjust "method" parameter:<a href=https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html>More info</a><br>
+      <p>Set the p.adjust "method" parameter:<a href=https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html>More info</a><br>
         <select class="" id="rStats.pAdjustMethod" name="rStats.pAdjustMethod">
           <option selected default value="">Click for options</option>
           <option value="holm">Holm</option>
@@ -452,20 +428,38 @@ For fastq, typically “@”.)<h5></p>
           <option value="fdr">FDR</option>
           <option value="none">none</option>
         </select></p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+        <p>Select the distance/dissimilary measure for your MDS BuildMdsPlots
+          <select class="" id='rMds.distance' name="rMds.distance">
+            <option value="euclidean">Euclidean dissimilarity</option>
+            <option value="bray">Bray Curtis dissimilary</option>
+            <option value="manhattan">Manhattan dissimilarities</option>
+            <option value="canberra">Canberra index</option>
+            <option value="kulczynski">Kulczynski index</option>
+            <option value="jaccard">Jaccard index</option>
+            <option value="gower">Gower index</option>
+            <option value="altGower">Alternative Gower index</option>
+            <option value="morisita">Morisita index</option>
+            <option value="horn">Horn index</option>
+            <option value="mountford">Mountford index</option>
+            <option value="raup">Raup index</option>
+            <option value="binomial">Binomial index</option>
+            <option value="chao">Chao index</option>
+            <option value="cao">Cao index</option>
+            <option value="mahalanobis">Mahalanobis index</option>
+          </select>
+"altGower", "morisita", "horn", "mountford", "raup" , "binomial", "chao", "cao" or "mahalanobis".
+
+
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
   </div>
 
   <div id="exeTab" class="tabcontent">
     <p>If the program executable isn't already in your classpath ($PATH), add the executable path below:
     </p>
     <!--Make it so default commands are hints that will not be saved.-->
-     <form class='tabForm' id="exe">
-       <button type='submit' class='saveTab'>Save progress</button>
-       <button class="createDownload">Create configuration file for download</button>
+       <!-- <button class="createDownload">Create configuration file for download</button> -->
        <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Define executable awk command if default "awk" is not included in your $PATH:
         <input type="text" id="exe.awk" name="exe.awk">
@@ -511,31 +505,24 @@ For fastq, typically “@”.)<h5></p>
       <p>Optional vsearch parameters:
         <input type="text" id="exe.vsearchParams" name="exe.vsearchParams">
       </p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
-    </form>
   </div>
 
   <div id="rdpTab" class="tabcontent">
-    <form class='tabForm' id="rdp">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Required RDP minimum threshold score for valid OTUs:
         <input type="text" id="rdp.minThresholdScore" name="rdp.minThresholdScore">
       </p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-    </form>
   </div>
 
   <div id="qiimeTab" class="tabcontent">
-    <form class='tabForm' id="qiime">
       <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Alpha diverisity metrics: <br> Options listed online:
         <a href="http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html">
@@ -549,30 +536,23 @@ For fastq, typically “@”.)<h5></p>
           <option value="N">No</option>
         </select></p>
       </p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-    </form>
   </div>
 
   <div id="krakenTab" class="tabcontent">
-    <form class='tabForm' id="kraken">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Path to Kraken database:
         <input type="text" size='70' id="kraken.db" name="kraken.db">
       </p>
       <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
-    </form>
   </div>
 
   <div id="slimmTab" class="tabcontent">
-    <form class='tabForm' id="slimm">
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Path to SLIMM database:
         <input type="text" size='70' id="slimm.db" name="slimm.db">
@@ -580,12 +560,14 @@ For fastq, typically “@”.)<h5></p>
       <p>Path the bowtie2 reference genome index:
         <input type="text" size='70' id="slimm.refGenomeIndex" name="slimm.refGenomeIndex">
       </p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink">Download configuration file to default directory</a>
-    </form>
   </div>
+
+</form> <!--End of configForm -->
+
 </div>
+
 <div class="banner">
   <!--Working on logo here-->
   <?xml version="1.0" standalone="No"?>
@@ -599,5 +581,9 @@ For fastq, typically “@”.)<h5></p>
     <!--<path d="M70,30 L80,30  M75,30 L75,35 " fill="none" stroke="rgb(0,112,60)" stroke-width="2"/>-->
   </svg>
   <span class='hidden' id='hackForDownload'></span>
+  <!-- <button form='configForm' type="submit" name="button" class='hidden'></button> -->
 </div>
-<script type="text/javascript" src="./javascripts/config.js"></script>
+
+<script type="text/javascript" src="./javascripts/config_menus.js"></script>
+<script type="text/javascript" src="./javascripts/config_config.js"></script>
+<!-- <script type="text/javascript" src="resetAnimationWorker.js"></script> -->
