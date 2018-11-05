@@ -6,7 +6,7 @@ ENV NODE_VERSION 8.11.3
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
-RUN mkdir /input && mkdir /pipeline && mkdir /app && mkdir /meta && mkdir /primer && mkdir /config  
+RUN mkdir /pipeline && mkdir /app && mkdir /config  
 
 #2.) ============ Install Ubuntu Prereqs =================
 RUN apt-get update && \
@@ -18,11 +18,10 @@ RUN apt-get update && \
 	tar \
 	wget \
 	gzip \
-    curl \
     nodejs \
     aptitude && \
     apt-get update && \
-    curl --silent --location https://deb.nodesource.com/setup_8.x | bash -
+    wget https://deb.nodesource.com/setup_8.x | bash -
 
 ##########Dockerize Node
 #3.) NODE (from Malcom) & npm install
@@ -30,11 +29,9 @@ RUN apt-get update && \
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
 COPY package*.json ./
-RUN npm install
 
-# If you are building your code for production
-# I THINK WE WANT TO USE THIS ONE  -noteL: MS 9/2
-# RUN npm install --only=production
+# Remove "--only=production" if adding new packages (maybe) MS 11/1
+RUN npm install --only=production
 
 #4.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
@@ -64,7 +61,7 @@ RUN echo ${BLJ_DATE} && \
 	wget $BLJ_RELEASE_URL && \
 	tar -xzf $BLJ_TAR && \
 	chmod -R 770 $BLJ && \
-	rm -f $BLJ_TAR && rm -rf $BLJ/[slip]* && rm -rf $BLJ/docs && rm -rf $BLJ/resources/[blid]*
+	rm -f $BLJ_TAR && rm -rf $BLJ/[lip]* && rm -rf $BLJ/src && rm -rf $BLJ/docs && rm -rf $BLJ/resources/[blid]*
 	
 #6.) ================= Expose Port 8080 =================
 #I used https://nodejs.org/en/docs/guides/nodejs-docker-webapp/ initially.
