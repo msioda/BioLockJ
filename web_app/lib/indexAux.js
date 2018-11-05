@@ -1,4 +1,4 @@
-/**Functions for serverside js for BioLockJ guide
+/**Functions for serverside js for BioLockJ gui
   *Author: Aaron Yerke
   *
 */
@@ -77,7 +77,7 @@ exports.buildLaunchArgument = function (validConfig){
 exports.createFullLaunchCommand = function(launchJSON){//
   //const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
   //const bljDir = process.env.BLJ;
-  const dockblj = path.join('blj','dist','dockblj')
+  const dockblj = path.join('blj','script','dockblj')
   //console.log(dockblj);
   let command = [];
   //console.log(launchJSON);
@@ -104,18 +104,20 @@ exports.runLaunchCommand = function(command, eventEmitter) {
   console.log(first);
   console.log(command);
   try {
-    const child = spawn(first, command, {detached: false});
+    const child = spawn(first, command);
     child.stdout.on('data', function(data){
       eventEmitter.emit('log',data);
+      console.log('child.stout: ' + data);
     });
     child.stderr.on('data', function (data) {
         //throw errors
         eventEmitter.emit('log',data);
-        console.log('stderr: ' + data);
+        console.log('child.stderr: ' + data);
     });
     child.on('error', function (data) {
         //throw errors
         eventEmitter.emit('log',data);
+        console.log('child.err: ' + data);
     });
     child.on('close', function (code) {
         console.log('child process exited with code ' + code);
@@ -131,8 +133,6 @@ exports.runLaunchCommand = function(command, eventEmitter) {
 exports.newestFileInDir = function(dirPath){
 
 }
-
-
 
 //shamelessly ripped from https://stackoverflow.com/questions/2727167/how-do-you-get-a-list-of-the-names-of-all-files-present-in-a-directory-in-node-j
 // async version with basic error handling
