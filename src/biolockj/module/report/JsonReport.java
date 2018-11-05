@@ -22,6 +22,7 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.r.CalculateStats;
+import biolockj.module.r.R_Module;
 import biolockj.node.JsonNode;
 import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
@@ -557,23 +558,23 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	private static String getStatsType( final File file ) throws Exception
 	{
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_PAR;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_NP;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_PAR_ADJ;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_NP_ADJ;
 		}
-		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + CalculateStats.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + R_Module.TSV_EXT ) )
 		{
 			return CalculateStats.R_SQUARED_VALS;
 		}

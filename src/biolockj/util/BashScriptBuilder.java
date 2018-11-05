@@ -24,6 +24,7 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.Pipeline;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -218,7 +219,7 @@ public class BashScriptBuilder
 		}
 
 		final String modPrefix = new File( getMainScriptPath( module ) ).getName()
-				.replaceAll( ScriptModule.MAIN_SCRIPT_PREFIX, "" );
+				.replaceAll( BioModule.MAIN_SCRIPT_PREFIX, "" );
 
 		final String jobName = modIndex + "." + workerId + modPrefix.substring( modIndex.length() );
 
@@ -534,7 +535,7 @@ public class BashScriptBuilder
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
 	{
 		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator
-				+ ScriptModule.MAIN_SCRIPT_PREFIX + scriptModule.getModuleDir().getName() + ".sh" ).getAbsolutePath();
+				+ BioModule.MAIN_SCRIPT_PREFIX + scriptModule.getModuleDir().getName() + ".sh" ).getAbsolutePath();
 	}
 
 	private static Integer getNumThreads( final ScriptModule module ) throws Exception
