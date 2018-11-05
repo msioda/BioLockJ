@@ -65,4 +65,4 @@ RUN	apt-get clean && \
 	rm -rf usr/share/*
 
 #7.) ================= Container Command =================
-CMD bash $BLJ_SCRIPT
+CMD bash $COMPUTE_SCRIPT
