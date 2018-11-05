@@ -25,8 +25,8 @@ RUN apt-get update && \
   
   
 #3.) ================ Install Kraken ================ 
-KRAKEN_VER=2.0.7-beta
-KB=/app/kraken2-${KRAKEN_VER}/build
+ENV KRAKEN_VER=2.0.7-beta
+ENV KB=/app/kraken2-${KRAKEN_VER}/build
 RUN cd /app && \
   wget -qO- https://github.com/DerrickWood/kraken2/archive/v${KRAKEN_VER}.tar.gz | bsdtar -xf- && \
   cd kraken2-${KRAKEN_VER} && \
@@ -49,8 +49,12 @@ RUN echo ' '  >> ~/.bashrc && \
   echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
   echo '    . /etc/bash_completion' >> ~/.bashrc && \
   echo 'fi' >> ~/.bashrc
+  
+  	
+#5.) ================= Copy 4GB database =================
+COPY miniKraken2_20181027 /db/miniKraken2_20181027
 
-#5.) =============== Cleanup ================================
+#6.) =============== Cleanup ================================
 RUN	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* && \
 	find / -name *python* | xargs rm -rf && \
@@ -60,5 +64,5 @@ RUN	apt-get clean && \
 	rm -rf usr/games && \
 	rm -rf usr/share/*
 
-#6.) ================= Container Command =================
+#7.) ================= Container Command =================
 CMD bash $BLJ_SCRIPT
