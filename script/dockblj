@@ -18,7 +18,6 @@
 ############################################################################
 . $BLJ/script/blj_functions
 
-
 ! $(valid_dir $BLJ_PROJ) && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
 ! $(valid_dir $BLJ) && echo "Exit program - Required bash variable BLJ undefined" && exit 1
 [ "$#" -lt 2 ] && echo "Exit script - Missing required script parameters: config & inputDirPaths" && exit 1
@@ -75,7 +74,7 @@ BLJ_OPTIONS="$BLJ_OPTIONS -b $BLJ_PROJ"
 if [ FROM_DOCKER == "N" ] && ! $(valid_file $config); then
 	echo "Exit script - Config file not found: $config"
 	exit 1
-else	
+elif	 [ ${#config} -gt 0 ]; then
 	echo "$config is a valid file path"
 	CONFIG_DIR=$(dirname $config)
 	BLJ_CONFIG=$(basename $config)
