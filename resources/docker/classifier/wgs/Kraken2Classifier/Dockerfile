@@ -26,13 +26,14 @@ RUN apt-get update && \
   
 #3.) ================ Install Kraken ================ 
 ENV KRAKEN_VER=2.0.7-beta
-ENV KB=/app/kraken2-${KRAKEN_VER}/build
+ENV KB=/app/kraken2
 RUN cd /app && \
   wget -qO- https://github.com/DerrickWood/kraken2/archive/v${KRAKEN_VER}.tar.gz | bsdtar -xf- && \
   cd kraken2-${KRAKEN_VER} && \
   mkdir $KB && \
   ./install_kraken2.sh $KB && \
-  chmod o+x -R $KB
+  chmod o+x -R $KB && \
+  rm -rf /app/kraken2-${KRAKEN_VER}
 
 #4.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
@@ -50,19 +51,19 @@ RUN echo ' '  >> ~/.bashrc && \
   echo '    . /etc/bash_completion' >> ~/.bashrc && \
   echo 'fi' >> ~/.bashrc
   
-  	
+    
 #5.) ================= Copy 4GB database =================
-COPY miniKraken2_20181027 /db/miniKraken2_20181027
+COPY miniKraken2_20181027 /db/miniKraken2
 
 #6.) =============== Cleanup ================================
-RUN	apt-get clean && \
-	rm -rf /var/lib/apt/lists/* && \
-	find / -name *python* | xargs rm -rf && \
-	rm -rf var/cache/* && \
-	rm -rf var/log/* && \
-	rm -rf tmp/* && \
-	rm -rf usr/games && \
-	rm -rf usr/share/*
+RUN apt-get clean && \
+  rm -rf /var/lib/apt/lists/* && \
+  find / -name *python* | xargs rm -rf && \
+  rm -rf var/cache/* && \
+  rm -rf var/log/* && \
+  rm -rf tmp/* && \
+  rm -rf usr/games && \
+  rm -rf usr/share/*
 
 #7.) ================= Container Command =================
 CMD bash $COMPUTE_SCRIPT

@@ -6,12 +6,12 @@
 
 # Return 0 if directory exists
 valid_dir() {
-	[ ${#1} -gt 0 ] && [ -d "$1" ] && return
+	[ ${#1} -gt 0 ] && [ -d "$1" ] 
 }
 
 # Return 0 if file exists
 valid_file() {
-	[ ${#1} -gt 0 ] && [ -f "$1" ] && return
+	[ ${#1} -gt 0 ] && [ -f "$1" ]
 }
 
 # Return 0 if directory is empty (or missing)
