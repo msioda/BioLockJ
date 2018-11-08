@@ -21,6 +21,7 @@ import biolockj.module.JavaModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.MemoryUtil;
 import biolockj.util.MetaUtil;
 
 /**
@@ -122,17 +123,21 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	@Override
 	public void runModule() throws Exception
 	{
+		MemoryUtil.reportMemoryUsage( "About to parse samples" );
 		parseSamples();
-
+		
+		
 		Log.debug( getClass(), "# Samples parsed: " + parsedSamples.size() );
 
 		if( parsedSamples.isEmpty() )
 		{
 			throw new Exception( "Parser failed to produce output!" );
 		}
-
+		
+		MemoryUtil.reportMemoryUsage( "About to build OTU-counts" );
 		buildOtuCounts();
-		Log.debug( getClass(), "buildOtuCounts() complete!" );
+		MemoryUtil.reportMemoryUsage( "Build OTU-counts complete!" );
+		
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
 			registerNumHits();

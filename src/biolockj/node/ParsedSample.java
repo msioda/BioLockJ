@@ -144,25 +144,25 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	{
 		try
 		{
-			Log.get( getClass() ).info( Log.LOG_SPACER );
-			Log.get( getClass() ).info( "PARSED SAMPLE REPORT" );
-			Log.get( getClass() ).info( Log.LOG_SPACER );
-			Log.get( getClass() ).info( "Sample ID = " + sampleId );
+			Log.info( getClass(), Log.LOG_SPACER );
+			Log.info( getClass(), "PARSED SAMPLE REPORT" );
+			Log.info( getClass(), Log.LOG_SPACER );
+			Log.info( getClass(), "Sample ID = " + sampleId );
 			for( final String level: otuCountMap.keySet() )
 			{
 				Log.get( getClass() ).info( "OTUs at Level = " + level );
 				for( final String otu: otuCountMap.get( level ).keySet() )
 				{
-					Log.get( getClass() ).info( otu + " = " + otuCountMap.get( level ).get( otu ) );
+					Log.info( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
 				}
 			}
 		}
 		catch( final Exception ex )
 		{
-			Log.get( getClass() ).error( "Unable to report ParsedSample! " + ex.getMessage(), ex );
+			Log.error( getClass(), "Unable to report ParsedSample! " + ex.getMessage(), ex );
 		}
 
-		Log.get( getClass() ).info( Log.LOG_SPACER );
+		Log.info( getClass(), Log.LOG_SPACER );
 	}
 
 	// key=level

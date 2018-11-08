@@ -40,15 +40,14 @@ addScatterPlot <- function( otuTable, otuCol, metaCol, parPval, nonParPval )
    plot( otuTable[ ,metaCol], otuTable[ ,otuCol], pch=getProperty("r.pch"), col=pointColors, ylab=otuName, xlab=attName, main=title, col.lab=color, col.main=color, cex.main=1 )
 }
 
-# Requires lib ggpubr for setting the color scheme
 main <- function() {
-   importLibs( c( "ggpubr" ) )
+
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
       if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildOtuPlots_", otuLevel, ".log") ) )
       pdf( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU_plots.pdf") ) )
       par( mfrow=c(2, 2), las=1 )
 
-      inputFile = list.files( pipelineDir, paste0(otuLevel, ".*_metaMerged.tsv"), full.names=TRUE, recursive=TRUE )
+      inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
       if( r.debug ) print( paste( "inputFile:", inputFile ) )
       if( length( inputFile ) == 0 ) { next }
       otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
@@ -62,13 +61,13 @@ main <- function() {
       numericCols = getColIndexes( otuTable, numericFields )
       if( r.debug ) print( paste( c("numericCols:", numericCols), collapse= " " ) )
 
-      parInputFile = getPipelineFile( "output", paste0(otuLevel, "_parametricPvals.tsv") )
-      if( r.debug ) print( paste( "parInputFile:", parInputFile ) )
-      parStats = read.table( parInputFile, check.names=FALSE, header=TRUE, sep="\t" )
+      adjParInputFile = getPipelineFile( paste0(otuLevel, "_adjParPvals.tsv") )
+      if( r.debug ) print( paste( "adjParInputFile:", adjParInputFile ) )
+      parStats = read.table( adjParInputFile, check.names=FALSE, header=TRUE, sep="\t" )
       
-      nonParInputFile = getPipelineFile( "output", paste0(otuLevel, "_nonParametricPvals.tsv") )
-      if( r.debug ) print( paste( "nonParInputFile:", nonParInputFile ) )
-      nonParStats = read.table( nonParInputFile, check.names=FALSE, header=TRUE, sep="\t" )
+      adjNonParInputFile = getPipelineFile( paste0(otuLevel, "_adjNonParPvals.tsv") )
+      if( r.debug ) print( paste( "adjNonParInputFile:", adjNonParInputFile ) )
+      nonParStats = read.table( adjNonParInputFile, check.names=FALSE, header=TRUE, sep="\t" )
       
 
       # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of otuTable rows

@@ -204,10 +204,10 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			}
 
 			reader.close();
-			Log.get( getClass() ).info( "Done splitting file: " + file.getAbsolutePath() );
+			Log.info( getClass(), "Done splitting file: " + file.getAbsolutePath() );
 		}
 
-		Log.get( getClass() ).info( "Number of temp files created: " + getSplitDir().listFiles().length );
+		Log.info( getClass(), "Number of temp files created: " + getSplitDir().listFiles().length );
 	}
 
 	/**

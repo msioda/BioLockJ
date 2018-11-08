@@ -65,6 +65,7 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 					}
 				}
 			}
+			reader.close();
 		}
 	}
 }

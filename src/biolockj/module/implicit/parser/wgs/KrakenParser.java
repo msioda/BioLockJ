@@ -45,27 +45,37 @@ public class KrakenParser extends ParserModuleImpl implements ParserModule
 	@Override
 	public void parseSamples() throws Exception
 	{
-		for( final File file: getInputFiles() )
+		File currentFile = null;
+		try
 		{
-			Log.debug( getClass(), "Parsing: " + file.getAbsolutePath() );
-			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			for( final File file: getInputFiles() )
 			{
-				final KrakenNode node = new KrakenNode( file.getName().replace( ClassifierModule.PROCESSED, "" ),
-						line );
-				if( isValid( node ) )
-				{
-					final ParsedSample sample = getParsedSample( node.getSampleId() );
-					if( sample == null )
+				currentFile = file;
+				final BufferedReader reader = BioLockJUtil.getFileReader( file );
+				ParsedSample sample = null;
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
+				{	
+					final KrakenNode node = new KrakenNode( file.getName().replace( ClassifierModule.PROCESSED, "" ),
+							line );
+					if( isValid( node ) )
 					{
-						addParsedSample( new ParsedSample( node ) );
-					}
-					else
-					{
-						sample.addNode( node );
+						sample = getParsedSample( node.getSampleId() );
+						if( sample == null )
+						{
+							addParsedSample( new ParsedSample( node ) );
+						}
+						else
+						{
+							sample.addNode( node );
+						}
 					}
 				}
+				reader.close();
 			}
+		}
+		catch(Exception ex)
+		{
+			Log.error( getClass(), "Error parsing " + currentFile.getAbsolutePath(), ex );		
 		}
 	}
 }
