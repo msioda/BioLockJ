@@ -51,29 +51,33 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	 */
 	public void buildOtuCounts()
 	{
-		if( otuCountMap.isEmpty() )
+		if( otuNodes.isEmpty() )
 		{
-			for( final OtuNode otuNode: otuNodes )
+			return;
+		}
+
+		for( final OtuNode otuNode: otuNodes )
+		{
+			final Map<String, String> map = otuNode.getOtuMap();
+			for( final String level: map.keySet() )
 			{
-				final Map<String, String> map = otuNode.getOtuMap();
-				for( final String level: map.keySet() )
+				final String otu = map.get( level );
+
+				if( otuCountMap.get( level ) == null )
 				{
-					final String otu = map.get( level );
-
-					if( otuCountMap.get( level ) == null )
-					{
-						otuCountMap.put( level, new TreeMap<String, Long>() );
-					}
-
-					if( otuCountMap.get( level ).get( otu ) == null )
-					{
-						otuCountMap.get( level ).put( otu, 0L );
-					}
-
-					otuCountMap.get( level ).put( otu, otuCountMap.get( level ).get( otu ) + otuNode.getCount() );
+					otuCountMap.put( level, new TreeMap<String, Long>() );
 				}
+
+				if( otuCountMap.get( level ).get( otu ) == null )
+				{
+					otuCountMap.get( level ).put( otu, 0L );
+				}
+
+				otuCountMap.get( level ).put( otu, otuCountMap.get( level ).get( otu ) + otuNode.getCount() );
 			}
 		}
+
+		otuNodes.clear();
 	}
 
 	@Override
@@ -103,7 +107,7 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 			}
 		}
 
-		Log.get( getClass() ).warn( "ParsedSample has no data: " + sampleId + " has 0 hits!" );
+		Log.warn( getClass(), "ParsedSample has no data: " + sampleId + " has 0 hits!" );
 		return 0L;
 	}
 

@@ -231,7 +231,8 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		{
 			if( getDefaultSwitches().indexOf( "--bzip2-compressed " ) > -1 )
 			{
-				Log.warn( getClass(), "VERIFY THIS PROPERTY IS CORRECT!  Setting user specified \"--bzip2-compressed\" - even though file ends with .gz (possibly mis-named)" );
+				Log.warn( getClass(),
+						"VERIFY THIS PROPERTY IS CORRECT!  Setting user specified \"--bzip2-compressed\" - even though file ends with .gz (possibly mis-named)" );
 				switches.put( "--bzip2-compressed", "" );
 			}
 			else

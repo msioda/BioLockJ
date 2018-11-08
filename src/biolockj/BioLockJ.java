@@ -55,7 +55,7 @@ public class BioLockJ
 
 		}
 	}
-	
+
 	/**
 	 * {@link biolockj.BioLockJ} is the BioLockj.jar Main-Class, so this main method is the first method executed when
 	 * BioLockJ runs. The biolockj shell script always passed the project directory path $DOCKER_PROJ as 1st param.<br>
@@ -94,7 +94,7 @@ public class BioLockJ
 		try
 		{
 			MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
-			
+
 			RuntimeParamUtil.registerRuntimeParameters( args );
 
 			Config.initialize( RuntimeParamUtil.getConfigFile() );

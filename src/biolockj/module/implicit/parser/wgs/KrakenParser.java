@@ -13,7 +13,6 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -21,6 +20,7 @@ import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
 import biolockj.node.wgs.KrakenNode;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.MemoryUtil;
 
 /**
  * This BioModules parses KrakenClassifier output reports to build standard OTU abundance tables.
@@ -45,37 +45,34 @@ public class KrakenParser extends ParserModuleImpl implements ParserModule
 	@Override
 	public void parseSamples() throws Exception
 	{
-		File currentFile = null;
-		try
+
+		for( final File file: getInputFiles() )
 		{
-			for( final File file: getInputFiles() )
+			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				currentFile = file;
-				final BufferedReader reader = BioLockJUtil.getFileReader( file );
-				ParsedSample sample = null;
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{	
-					final KrakenNode node = new KrakenNode( file.getName().replace( ClassifierModule.PROCESSED, "" ),
-							line );
-					if( isValid( node ) )
+				final KrakenNode node = new KrakenNode( file.getName().replace( ClassifierModule.PROCESSED, "" ),
+						line );
+				if( isValid( node ) )
+				{
+					final ParsedSample sample = getParsedSample( node.getSampleId() );
+					if( sample == null )
 					{
-						sample = getParsedSample( node.getSampleId() );
-						if( sample == null )
-						{
-							addParsedSample( new ParsedSample( node ) );
-						}
-						else
-						{
-							sample.addNode( node );
-						}
+						addParsedSample( new ParsedSample( node ) );
+					}
+					else
+					{
+						sample.addNode( node );
 					}
 				}
-				reader.close();
+			}
+			reader.close();
+			for( final ParsedSample sample: getParsedSamples() )
+			{
+				sample.buildOtuCounts();
 			}
 		}
-		catch(Exception ex)
-		{
-			Log.error( getClass(), "Error parsing " + currentFile.getAbsolutePath(), ex );		
-		}
+
 	}
 }

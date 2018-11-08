@@ -22,6 +22,7 @@ import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
 import biolockj.node.r16s.RdpNode;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.MemoryUtil;
 
 /**
  * This BioModule parses RDP output files to build standard OTU abundance tables.
@@ -47,6 +48,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	{
 		for( final File file: getInputFiles() )
 		{
+			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
@@ -66,6 +68,10 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 			}
 
 			reader.close();
+			for( final ParsedSample sample: getParsedSamples() )
+			{
+				sample.buildOtuCounts();
+			}
 		}
 	}
 

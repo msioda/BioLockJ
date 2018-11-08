@@ -61,8 +61,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		sb.append( METHOD_REPORT_STATUS + "( " + R_FUNCTION_GET_MOD_SCRIPT + "() )" + RETURN );
 		if( Config.getBoolean( R_SAVE_R_DATA ) )
 		{
-			sb.append( "save.image( file.path( dirname( getModuleScript() ), " + "\"" 
-					+ getClass().getSimpleName() + R_DATA_EXT + "\" ) )" + RETURN );
+			sb.append( "save.image( file.path( dirname( getModuleScript() ), " + "\"" + getClass().getSimpleName()
+					+ R_DATA_EXT + "\" ) )" + RETURN );
 		}
 		sb.append( "sessionInfo()" + RETURN );
 
