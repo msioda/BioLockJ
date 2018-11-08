@@ -123,9 +123,9 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	@Override
 	public void runModule() throws Exception
 	{
-		MemoryUtil.reportMemoryUsage( "Before parsing samples" );
+		MemoryUtil.reportMemoryUsage( "About to parse samples" );
 		parseSamples();
-		MemoryUtil.reportMemoryUsage( "After parsing samples - build OTU-counts next" );
+		
 		
 		Log.debug( getClass(), "# Samples parsed: " + parsedSamples.size() );
 
@@ -134,9 +134,10 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 			throw new Exception( "Parser failed to produce output!" );
 		}
 		
+		MemoryUtil.reportMemoryUsage( "About to build OTU-counts" );
 		buildOtuCounts();
-		MemoryUtil.reportMemoryUsage( "Build OTU-counts complete" );
-		Log.debug( getClass(), "buildOtuCounts() complete!" );
+		MemoryUtil.reportMemoryUsage( "Build OTU-counts complete!" );
+		
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
 			registerNumHits();
