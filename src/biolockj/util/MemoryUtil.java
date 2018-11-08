@@ -39,12 +39,16 @@ public class MemoryUtil
 		if( total != prevTotal || free != prevFree )
 		{
 			reportMemoryInBytes();
-			Log.debug( MemoryUtil.class, msg
+			Log.info( MemoryUtil.class, msg
 					+ ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB() + ", ∆Total: "
 					+ getChangeFormatted( total, prevTotal ) + ", %Free: " + getPercentageFreeFormatted()
 					+ ", Free: " + getFreeMemoryInMiB() + ", ∆Free: " + getChangeFormatted( free, prevFree ) );
 			prevTotal = total;
 			prevFree = free;
+		}
+		else
+		{
+			Log.info( MemoryUtil.class, msg + " no change" );
 		}
 	}
 
