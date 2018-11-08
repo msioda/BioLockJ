@@ -183,7 +183,7 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 		{
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
-			Log.get( getClass() ).warn( msg );
+			Log.warn( getClass(), msg );
 		}
 
 		return super.getSummary() + sb.toString();

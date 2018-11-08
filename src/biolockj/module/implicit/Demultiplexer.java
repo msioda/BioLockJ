@@ -78,18 +78,18 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 			if( DemuxUtil.barcodeInSeq() )
 			{
-				Log.get( getClass() ).info( "Barcode sequences will be removed from the output file sequences." );
+				Log.info( getClass(), "Barcode sequences will be removed from the output file sequences." );
 			}
 		}
 		else
 		{
-			Log.get( getClass() )
-					.info( demuxStrategy + " so Demultiplexer will use the Config properties ["
-							+ Config.INPUT_TRIM_PREFIX + " & " + Config.INPUT_TRIM_SUFFIX
+			Log.info( getClass(),
+					demuxStrategy + " so Demultiplexer will use the Config properties [" + Config.INPUT_TRIM_PREFIX
+							+ " & " + Config.INPUT_TRIM_SUFFIX
 							+ "] to extract the Sample ID from the sequence header" );
-			Log.get( getClass() ).info( "Config property [ " + Config.INPUT_TRIM_PREFIX + " ] = "
+			Log.info( getClass(), "Config property [ " + Config.INPUT_TRIM_PREFIX + " ] = "
 					+ Config.getString( Config.INPUT_TRIM_PREFIX ) );
-			Log.get( getClass() ).info( "Config property [ " + Config.INPUT_TRIM_SUFFIX + " ] = "
+			Log.info( getClass(), "Config property [ " + Config.INPUT_TRIM_SUFFIX + " ] = "
 					+ Config.getString( Config.INPUT_TRIM_SUFFIX ) );
 
 		}
@@ -144,7 +144,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
-			Log.get( getClass() ).warn( msg );
+			Log.warn( getClass(), msg );
 		}
 
 		return super.getSummary() + sb.toString();
@@ -181,8 +181,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	{
 		for( final File file: getInputFiles() )
 		{
-			Log.get( getClass() )
-					.info( "Break multiplexed file [ " + file.getAbsolutePath() + " ] into files with a max #lines = [ "
+			Log.info( getClass(),
+					"Break multiplexed file [ " + file.getAbsolutePath() + " ] into files with a max #lines = [ "
 							+ NUM_LINES_TEMP_FILE + " ] to avoid memory issues while processing" );
 
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
@@ -227,7 +227,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 		for( final File file: getSplitDir().listFiles() )
 		{
-			Log.get( getClass() ).info( "Demultiplexing file " + file.getAbsolutePath() );
+			Log.info( getClass(), "Demultiplexing file " + file.getAbsolutePath() );
 			final List<String> seqLines = new ArrayList<>();
 			final Map<String, List<String>> output = new HashMap<>();
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
@@ -253,8 +253,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 						if( doPrint )
 						{
 							doPrint = false;
-							Log.get( getClass() ).info( "EXAMPLE Demultiplexed Sample ID: " + sampleId );
-							Log.get( getClass() ).info( "EXAMPLE Demultiplexed sequence file: " + otu );
+							Log.info( getClass(), "EXAMPLE Demultiplexed Sample ID: " + sampleId );
+							Log.info( getClass(), "EXAMPLE Demultiplexed sequence file: " + otu );
 						}
 					}
 
@@ -271,13 +271,13 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 				// {
 				// loopCount++;
 				// count = 0;
-				// Log.get( getClass() ).info( "Checked: " + ( 10000 * loopCount) + " lines so far" );
+				// Log.info( getClass(), "Checked: " + ( 10000 * loopCount) + " lines so far" );
 				// }
 			}
 
 			for( final String outName: output.keySet() )
 			{
-				Log.get( getClass() ).debug( outName + " adding # lines = " + output.get( outName ).size() );
+				Log.debug( getClass(), outName + " adding # lines = " + output.get( outName ).size() );
 				writeSample( output.get( outName ), outName );
 			}
 
@@ -297,7 +297,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		final boolean isPaird = Config.requireBoolean( Config.INTERNAL_PAIRED_READS );
 		final boolean isCombined = isPaird && getInputFiles().size() == 1;
 
-		Log.get( getClass() ).info( "Get FW Headers from temp files "
+		Log.info( getClass(), "Get FW Headers from temp files "
 				+ ( isCombined ? "created from multiplexed file with both forward and reverse reads": "" ) );
 
 		// check forward reads only
@@ -309,7 +309,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 				continue;
 			}
 
-			Log.get( getClass() ).info( "Processing split file for FW headers: " + file.getAbsolutePath() );
+			Log.info( getClass(), "Processing split file for FW headers: " + file.getAbsolutePath() );
 
 			final List<String> seqLines = new ArrayList<>();
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
@@ -350,7 +350,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 		for( final String sampleId: validHeaders.keySet() )
 		{
-			Log.get( getClass() ).debug( sampleId + msg + validHeaders.get( sampleId ).size() );
+			Log.debug( getClass(), sampleId + msg + validHeaders.get( sampleId ).size() );
 		}
 
 		return validHeaders;
@@ -368,7 +368,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		final Map<String, Set<String>> validFwHeaders = getValidFwHeaders();
 		if( !Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
-			Log.get( getClass() ).info( "Demultiplexing unpaired reads...# " + validFwHeaders.size() );
+			Log.info( getClass(), "Demultiplexing unpaired reads...# " + validFwHeaders.size() );
 			return validFwHeaders;
 		}
 
@@ -384,7 +384,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 				continue;
 			}
 
-			Log.get( getClass() ).info( "Processing split file for RV headers: " + file.getAbsolutePath() );
+			Log.info( getClass(), "Processing split file for RV headers: " + file.getAbsolutePath() );
 
 			final List<String> seqLines = new ArrayList<>();
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
@@ -423,7 +423,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 		for( final String sampleId: validHeaders.keySet() )
 		{
-			Log.get( getClass() ).info( sampleId + " # valid headers = " + validHeaders.get( sampleId ).size() );
+			Log.info( getClass(), sampleId + " # valid headers = " + validHeaders.get( sampleId ).size() );
 		}
 
 		return validHeaders;
@@ -447,15 +447,14 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			if( Config.getString( Config.INPUT_TRIM_PREFIX ) == null )
 			{
 				Config.setConfigProperty( Config.INPUT_TRIM_PREFIX, defaultSeqHeadChar );
-				Log.get( DemuxUtil.class )
-						.info( "====> Set: " + Config.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
+				Log.info( getClass(), "====> Set: " + Config.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
 			}
 
 			if( Config.getString( Config.INPUT_TRIM_SUFFIX ) == null )
 			{
 				Config.setConfigProperty( Config.INPUT_TRIM_SUFFIX, SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
-				Log.get( DemuxUtil.class )
-						.info( "====> Set: " + Config.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
+				Log.info( getClass(),
+						"====> Set: " + Config.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
 			}
 		}
 	}
@@ -564,9 +563,9 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			size += validHeaders.get( sampleId ).size();
 		}
 
-		Log.get( getClass() ).info( "Total fw reads = " + numTotalFwReads );
-		Log.get( getClass() ).info( "Total rv reads = " + numTotalRvReads );
-		Log.get( getClass() ).info( "Number valid reads = " + size );
+		Log.info( getClass(), "Total fw reads = " + numTotalFwReads );
+		Log.info( getClass(), "Total rv reads = " + numTotalRvReads );
+		Log.info( getClass(), "Number valid reads = " + size );
 	}
 
 	private void writeSample( final List<String> lines, final String fileName ) throws Exception

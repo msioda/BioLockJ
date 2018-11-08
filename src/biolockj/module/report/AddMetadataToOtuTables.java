@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.Pipeline;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
@@ -85,7 +84,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 		{
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
-			Log.get( getClass() ).warn( msg );
+			Log.warn( getClass(), msg );
 		}
 
 		return super.getSummary() + sb.toString();
@@ -106,9 +105,9 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 
 		generateMergedTables();
 
-		Log.get( getClass() ).info( mergeHeaderLine );
-		Log.get( getClass() ).info( mergeSampleLine );
-		Log.get( Pipeline.class ).info( "Direct runModule() complete!" );
+		Log.info( getClass(), mergeHeaderLine );
+		Log.info( getClass(), mergeSampleLine );
+		Log.info( getClass(), "Direct runModule() complete!" );
 	}
 
 	/**
@@ -133,7 +132,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 			{
 				final long numReads = Long.valueOf( numReadsField );
 				final long numHits = Long.valueOf( numHitsField );
-				Log.get( getClass() ).info(
+				Log.info( getClass(),
 						HIT_RATIO + " for: [" + id + "] ==> " + BioLockJUtil.formatPercentage( numHits, numReads ) );
 				hitRatioPerSample.put( id, Double.valueOf( (double) numHits / numReads ).toString() );
 			}
@@ -154,7 +153,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 		{
 			final String name = Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_"
 					+ file.getName().replaceAll( R_Module.TSV_EXT, "" ) + META_MERGED;
-			Log.get( getClass() ).info( "Merge OTU table + Metadata file: " + outDir + name );
+			Log.info( getClass(), "Merge OTU table + Metadata file: " + outDir + name );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
 
@@ -169,7 +168,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 
 			writer.close();
 			reader.close();
-			Log.get( getClass() ).info( "Done merging table: " + file.getAbsolutePath() );
+			Log.info( getClass(), "Done merging table: " + file.getAbsolutePath() );
 		}
 
 	}
@@ -195,7 +194,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 		}
 		else
 		{
-			Log.get( getClass() ).warn(
+			Log.warn( getClass(),
 					"Missing record for: " + sampleId + " in metadata: " + MetaUtil.getFile().getAbsolutePath() );
 			return null;
 		}

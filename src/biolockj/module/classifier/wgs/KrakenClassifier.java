@@ -237,7 +237,6 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			}
 			else
 			{
-				Log.debug( getClass(), "Setting: --gzip-compressed" );
 				switches.put( "--gzip-compressed", "" );
 			}
 		}

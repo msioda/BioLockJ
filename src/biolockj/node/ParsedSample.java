@@ -147,30 +147,33 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	 * 
 	 * @param countsOnly Set true to print level counts instead of OTU counts.
 	 */
-	public void report( boolean countsOnly )
+	public void report()
 	{
 		try
 		{
-			Log.info( getClass(), Log.LOG_SPACER );
-			Log.info( getClass(), "Sample Report ==> " + sampleId);
+			String val = "Parsed [" + sampleId + "] ==> ";
+
 			for( final String level: otuCountMap.keySet() )
 			{
-				Log.get( getClass() ).info( "# of " + level + " OTUs  = " + otuCountMap.get( level ).size() );
-				if( !countsOnly )
+				final String otuCountMsg = level + " #OTUs: " + otuCountMap.get( level ).size();
+
+				val += otuCountMsg + " | ";
+				Log.debug( getClass(), Log.LOG_SPACER );
+				Log.debug( getClass(), otuCountMsg );
+				for( final String otu: otuCountMap.get( level ).keySet() )
 				{
-					for( final String otu: otuCountMap.get( level ).keySet() )
-					{
-						Log.info( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
-					}
+					Log.debug( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
 				}
+
 			}
+
+			Log.debug( getClass(), Log.LOG_SPACER );
+			Log.info( getClass(), val );
 		}
 		catch( final Exception ex )
 		{
 			Log.error( getClass(), "Unable to report ParsedSample! " + ex.getMessage(), ex );
 		}
-
-		Log.info( getClass(), Log.LOG_SPACER );
 	}
 
 	// key=level

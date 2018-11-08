@@ -349,13 +349,12 @@ public class BioLockJ
 	 */
 	protected static void removeTempFiles() throws Exception
 	{
-		Log.get( BioLockJ.class ).info( "Cleaning up BioLockJ Modules..." );
+		Log.info( BioLockJ.class, "Cleaning up BioLockJ Modules..." );
 		for( final BioModule bioModule: Pipeline.getModules() )
 		{
 			if( ModuleUtil.subDirExists( bioModule, BioModule.TEMP_DIR ) )
 			{
-				Log.get( BioLockJ.class )
-						.info( "Delete temp dir for BioLockJ Module: " + bioModule.getClass().getName() );
+				Log.info( BioLockJ.class, "Delete temp dir for BioLockJ Module: " + bioModule.getClass().getName() );
 				FileUtils.forceDelete( ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ) );
 			}
 		}
@@ -425,7 +424,7 @@ public class BioLockJ
 	{
 		if( Log.getFile() != null )
 		{
-			Log.get( BioLockJ.class ).error( "BioLockJ exception: " + ex.getMessage() + " --> Program args: "
+			Log.error( BioLockJ.class, "BioLockJ exception: " + ex.getMessage() + " --> Program args: "
 					+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ), ex );
 		}
 		else

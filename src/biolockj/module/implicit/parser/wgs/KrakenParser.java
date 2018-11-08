@@ -29,8 +29,6 @@ import biolockj.util.MemoryUtil;
 public class KrakenParser extends ParserModuleImpl implements ParserModule
 {
 
-	String KEY = "091A_reported.tsv";
-	
 	/**
 	 * Parse all {@link biolockj.module.classifier.wgs.KrakenClassifier} reports in the input directory.<br>
 	 * Build an {@link biolockj.node.wgs.KrakenNode} for each line.<br>
@@ -72,13 +70,15 @@ public class KrakenParser extends ParserModuleImpl implements ParserModule
 				}
 			}
 			reader.close();
-			
-			Log.info( getClass() , "# samples: " +  getParsedSamples().size() );
+
+			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
 			if( sample != null )
 			{
 				sample.buildOtuCounts();
-				sample.report( true );
+				sample.report();
 			}
 		}
 	}
+
+	String KEY = "091A_reported.tsv";
 }

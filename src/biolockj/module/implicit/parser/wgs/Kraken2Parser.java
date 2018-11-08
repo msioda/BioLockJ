@@ -13,6 +13,7 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
+import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -67,10 +68,11 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 				}
 			}
 			reader.close();
+			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
 			if( sample != null )
 			{
 				sample.buildOtuCounts();
-				sample.report( true );
+				sample.report();
 			}
 		}
 	}

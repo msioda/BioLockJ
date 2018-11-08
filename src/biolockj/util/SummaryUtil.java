@@ -374,7 +374,7 @@ public class SummaryUtil
 		{
 			final String msg = "Error occurred creating the pipeline summary: " + ex.getMessage();
 			sb.append( RETURN + msg );
-			Log.get( SummaryUtil.class ).error( msg, ex );
+			Log.error( SummaryUtil.class, msg, ex );
 		}
 		return sb.toString();
 	}

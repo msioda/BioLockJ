@@ -74,27 +74,26 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 		{
 			if( MetaUtil.getFieldValues( NUM_READS ).size() == MetaUtil.getSampleIds().size() )
 			{
-				Log.get( getClass() ).warn( NUM_READS + " column already fully populated in metadata file :"
+				Log.warn( getClass(), NUM_READS + " column already fully populated in metadata file :"
 						+ MetaUtil.getFile().getAbsolutePath() );
 				return;
 			}
 			else
 			{
-				Log.get( getClass() )
-						.warn( NUM_READS + " column partially populated.  Clearing values & recounting reads" );
+				Log.warn( getClass(), NUM_READS + " column partially populated.  Clearing values & recounting reads" );
 				MetaUtil.removeColumn( NUM_READS, getTempDir() );
 			}
 		}
 
 		final List<File> files = getInputFiles();
-		Log.get( getClass() ).info( "Counting # reads/sample for " + files.size() + " files" );
+		Log.info( getClass(), "Counting # reads/sample for " + files.size() + " files" );
 
 		for( final File f: files )
 		{
 			if( SeqUtil.isForwardRead( f.getName() ) )
 			{
 				final long count = SeqUtil.countNumReads( f );
-				Log.get( getClass() ).debug( "Num Reads for :[" + SeqUtil.getSampleId( f.getName() ) + "] = " + count );
+				Log.debug( getClass(), "Num Reads for :[" + SeqUtil.getSampleId( f.getName() ) + "] = " + count );
 				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 		}
@@ -136,7 +135,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 		}
 		else if( numReadFieldName != null && numReadFieldName.equals( name ) )
 		{
-			Log.get( RegisterNumReads.class ).warn( "NumReads field already set to: " + numReadFieldName );
+			Log.warn( RegisterNumReads.class, "NumReads field already set to: " + numReadFieldName );
 		}
 		else
 		{

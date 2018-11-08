@@ -85,7 +85,7 @@ public class Email extends BioModuleImpl implements BioModule
 		try
 		{
 			Transport.send( getMimeMessage( emailBody + RETURN + "Regards," + RETURN + "BioLockJ Admin" ) );
-			Log.get( getClass() ).info( "EMAIL SENT!" );
+			Log.info( getClass(), "EMAIL SENT!" );
 			successful = true;
 		}
 		catch( final Exception ex )
@@ -146,9 +146,8 @@ public class Email extends BioModuleImpl implements BioModule
 				}
 				catch( final Exception ex )
 				{
-					Log.get( getClass() )
-							.error( "Unable to build PasswordAuthentication due to missing/invalid properties: "
-									+ EMAIL_FROM + " or " + EMAIL_ENCRYPTED_PASSWORD + " : " + ex.getMessage(), ex );
+					Log.error( getClass(), "Unable to build PasswordAuthentication due to missing/invalid properties: "
+							+ EMAIL_FROM + " or " + EMAIL_ENCRYPTED_PASSWORD + " : " + ex.getMessage(), ex );
 				}
 
 				return null;
@@ -178,7 +177,7 @@ public class Email extends BioModuleImpl implements BioModule
 		}
 		catch( final Exception ex )
 		{
-			Log.get( getClass() ).error( ex.getMessage(), ex );
+			Log.error( getClass(), ex.getMessage(), ex );
 		}
 
 		return decryptedPassword;

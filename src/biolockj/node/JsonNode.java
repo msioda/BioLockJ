@@ -143,7 +143,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 */
 	public void report()
 	{
-		Log.get( getClass() ).info( "Report JsonNode[ " + level + ":" + otu + ":" + count + " ]" );
+		Log.info( getClass(), "Report JsonNode[ " + level + ":" + otu + ":" + count + " ]" );
 	}
 
 	/**

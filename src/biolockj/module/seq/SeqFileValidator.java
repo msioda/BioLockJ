@@ -103,7 +103,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		{
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
-			Log.get( getClass() ).warn( msg );
+			Log.warn( getClass(), msg );
 		}
 
 		return super.getSummary() + sb.toString();
@@ -118,7 +118,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		for( final File file: getInputFiles() )
 		{
 			validateFile( file );
-			Log.get( getClass() ).info( "Done validating " + file.getAbsolutePath() );
+			Log.info( getClass(), "Done validating " + file.getAbsolutePath() );
 		}
 
 		MetaUtil.addColumn( NUM_VALID_READS, readsPerSample, getOutputDir() );
@@ -163,23 +163,23 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 				{
 					numInvalidFormat++;
 					badLines.addAll( seqLines );
-					Log.get( getClass() )
-							.warn( "Sequence #" + seqNum + " format invalid.  Must begin with a valid header char ("
+					Log.warn( getClass(),
+							"Sequence #" + seqNum + " format invalid.  Must begin with a valid header char ("
 									+ SeqUtil.getSeqHeaderChars() + ")  --> header line = " + seqLines.get( 0 ) );
 				}
 				else if( seqLines.get( 1 ).length() < minReadLen() )
 				{
 					numTooShort++;
 					badLines.addAll( seqLines );
-					Log.get( getClass() )
-							.warn( "Sequence #" + seqNum + " format invalid.  Must have a minimum number of bases ("
+					Log.warn( getClass(),
+							"Sequence #" + seqNum + " format invalid.  Must have a minimum number of bases ("
 									+ minReadLen() + ")  --> \n" + seqLines.get( 0 ) + "\n" + seqLines.get( 1 ) );
 				}
 				else if( SeqUtil.isFastQ() && seqLines.get( 1 ).length() != seqLines.get( 3 ).length() )
 				{
 					numInvalidFormat++;
 					badLines.addAll( seqLines );
-					Log.get( getClass() ).warn( "Sequence #" + seqNum + " fastq format invalid.  Must have equal "
+					Log.warn( getClass(), "Sequence #" + seqNum + " fastq format invalid.  Must have equal "
 							+ " number of bases and quality scores: " + seqLines.get( 0 ) );
 				}
 				else
@@ -211,7 +211,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		if( !badLines.isEmpty() )
 		{
 			final File tempFile = new File( getFileName( getTempDir(), "INVALID_READS_" + file.getName() ) );
-			Log.get( getClass() ).warn( "Extracting invalid reads to --> " + tempFile.getAbsolutePath() );
+			Log.warn( getClass(), "Extracting invalid reads to --> " + tempFile.getAbsolutePath() );
 			final BufferedWriter invalidWriter = new BufferedWriter( new FileWriter( tempFile ) );
 			for( final String seqLine: badLines )
 			{

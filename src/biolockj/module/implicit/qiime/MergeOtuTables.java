@@ -45,7 +45,7 @@ public class MergeOtuTables extends ScriptModuleImpl implements ScriptModule
 			}
 			else
 			{
-				Log.get( getClass() ).warn(
+				Log.warn( getClass(),
 						"Ignoring non-" + QiimeClassifier.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
 			}
 		}
@@ -87,7 +87,7 @@ public class MergeOtuTables extends ScriptModuleImpl implements ScriptModule
 		}
 		else if( getInputFiles().size() == 1 )
 		{
-			Log.get( getClass() ).warn(
+			Log.warn( getClass(),
 					"Previous module only output 1 " + QiimeClassifier.OTU_TABLE + "so there is nothing to merge" );
 			FileUtils.copyFileToDirectory( getInputFiles().get( 0 ), getOutputDir() );
 		}

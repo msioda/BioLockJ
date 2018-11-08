@@ -25,7 +25,7 @@ public class Job
 {
 	private Job( final ScriptModule module ) throws Exception
 	{
-		Log.get( getClass() ).info( "[Run Command]: " + getArgsAsString( module.getJobParams() ) );
+		Log.info( getClass(), "[Run Command]: " + getArgsAsString( module.getJobParams() ) );
 		final Runtime r = Runtime.getRuntime();
 		final Process p = r.exec( module.getJobParams() );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
@@ -34,7 +34,7 @@ public class Job
 		{
 			if( !s.trim().isEmpty() )
 			{
-				Log.get( getClass() ).info( "[" + module.getClass().getSimpleName() + "] " + s );
+				Log.info( getClass(), "[" + module.getClass().getSimpleName() + "] " + s );
 			}
 		}
 
@@ -44,7 +44,7 @@ public class Job
 
 	private Job( final String[] args ) throws Exception
 	{
-		Log.get( getClass() ).info( "[Run Command]: " + getArgsAsString( args ) );
+		Log.info( getClass(), "[Run Command]: " + getArgsAsString( args ) );
 		final Runtime r = Runtime.getRuntime();
 		final Process p = r.exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
@@ -53,7 +53,7 @@ public class Job
 		{
 			if( !s.trim().isEmpty() )
 			{
-				Log.get( getClass() ).info( "[Process] " + s );
+				Log.info( getClass(), "[Process] " + s );
 			}
 		}
 

@@ -90,9 +90,9 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		final List<File> files = getInputFiles();
 		final int numFiles = files == null ? 0: files.size();
 
-		Log.get( getClass() ).info( "Rarefying " + numFiles + " " + SeqUtil.getInputSequenceType() + " files..." );
-		Log.get( getClass() ).info( "=====> Min # Reads = " + Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) );
-		Log.get( getClass() ).info( "=====> Max # Reads = " + Config.getPositiveInteger( INPUT_RAREFYING_MAX ) );
+		Log.info( getClass(), "Rarefying " + numFiles + " " + SeqUtil.getInputSequenceType() + " files..." );
+		Log.info( getClass(), "=====> Min # Reads = " + Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) );
+		Log.info( getClass(), "=====> Max # Reads = " + Config.getPositiveInteger( INPUT_RAREFYING_MAX ) );
 
 		int i = 0;
 		for( final File f: files )
@@ -100,13 +100,13 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 			rarefy( f );
 			if( ++i % 25 == 0 )
 			{
-				Log.get( getClass() ).info( "Done rarefying " + i + "/" + numFiles + " files." );
+				Log.info( getClass(), "Done rarefying " + i + "/" + numFiles + " files." );
 			}
 		}
 
 		if( i % 25 != 0 )
 		{
-			Log.get( getClass() ).info( "Done rarefying " + i + "/" + numFiles + " files." );
+			Log.info( getClass(), "Done rarefying " + i + "/" + numFiles + " files." );
 		}
 
 		updateMetadata();
@@ -121,15 +121,15 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	 */
 	protected void buildRarefiedFile( final File input, final List<Long> indexes ) throws Exception
 	{
-		Log.get( getClass() ).info( "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
-		Log.get( getClass() ).debug( "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
+		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
+		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
 		final String fileExt = "." + SeqUtil.getInputSequenceType();
 		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
 				+ fileExt;
 		final File output = new File( name );
 		final BufferedReader reader = BioLockJUtil.getFileReader( input );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( output ) );
-		Log.get( getClass() ).debug(
+		Log.debug( getClass(),
 				"Building file [#lines/read=" + SeqUtil.getNumLinesPerRead() + "]: " + output.getAbsolutePath() );
 		try
 		{
@@ -142,7 +142,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 				{
 					if( !usedIndexes.contains( index ) )
 					{
-						Log.get( getClass() ).debug( "Add to usedIndexes: " + index );
+						Log.debug( getClass(), "Add to usedIndexes: " + index );
 					}
 
 					usedIndexes.add( index );
@@ -184,7 +184,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		final long numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
 		final int count = Integer.parseInt( Long.toString( numReads ) );
 		max = count < max ? count: max;
-		Log.get( getClass() ).debug( "Sample[" + sampleId + "]  numReads = " + numReads );
+		Log.debug( getClass(), "Sample[" + sampleId + "]  numReads = " + numReads );
 		if( numReads >= Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) )
 		{
 			final long[] range = LongStream.rangeClosed( 0L, numReads - 1L ).toArray();
@@ -196,8 +196,8 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		}
 		else
 		{
-			Log.get( getClass() )
-					.info( "Remove sample [" + sampleId + "] - contains (" + numReads
+			Log.info( getClass(),
+					"Remove sample [" + sampleId + "] - contains (" + numReads
 							+ ") reads, which is less than minimum # reads ("
 							+ Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) + ")" );
 			badSamples.add( sampleId );
@@ -213,13 +213,12 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	{
 		if( badSamples.isEmpty() )
 		{
-			Log.get( getClass() )
-					.info( "All samples rarefied & meet minimum read threshold - none will be ommitted..." );
+			Log.info( getClass(), "All samples rarefied & meet minimum read threshold - none will be ommitted..." );
 		}
 		else
 		{
-			Log.get( getClass() ).warn( "Removing samples below rarefying threshold" );
-			Log.get( getClass() ).warn( "Removing bad samples ===> " + badSamples );
+			Log.warn( getClass(), "Removing samples below rarefying threshold" );
+			Log.warn( getClass(), "Removing bad samples ===> " + badSamples );
 		}
 
 		final File newMapping = new File(

@@ -319,7 +319,7 @@ public class BioModuleFactory
 	{
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
-			Log.get( Pipeline.class ).info( msg );
+			Log.info( Pipeline.class, msg );
 		}
 	}
 
@@ -349,7 +349,7 @@ public class BioModuleFactory
 	{
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
-			Log.get( Pipeline.class ).warn( msg );
+			Log.warn( Pipeline.class, msg );
 		}
 	}
 

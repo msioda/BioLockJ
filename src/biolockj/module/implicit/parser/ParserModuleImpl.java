@@ -251,7 +251,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 				else
 				{
 					Log.warn( getClass(), sample.getSampleId() + " has 0 OTUs for level: " + level );
-					sample.report( true );
+					sample.report();
 				}
 			}
 			writer.close();

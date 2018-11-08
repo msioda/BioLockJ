@@ -69,10 +69,11 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 			}
 
 			reader.close();
+			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
 			if( sample != null )
 			{
 				sample.buildOtuCounts();
-				sample.report( true );
+				sample.report();
 			}
 		}
 	}
@@ -96,7 +97,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 		}
 		catch( final Exception ex )
 		{
-			Log.error( getClass() , "Unable to verify if OTU node is valid! " + ex.getMessage(), ex );
+			Log.error( getClass(), "Unable to verify if OTU node is valid! " + ex.getMessage(), ex );
 		}
 		return false;
 	}
@@ -106,7 +107,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	 *
 	 * @Override public String getSummary() { final StringBuffer sb = new StringBuffer(); try { int i = 0; for( final
 	 * String gap: RdpNode.getGaps() ) { sb.append( "Taxonomy gap[" + ( i++ ) + "]: " + gap + RETURN ); } return
-	 * sb.toString() + super.getSummary(); } catch( final Exception ex ) { Log.get( RdpParser.class ).error( "Unable to
+	 * sb.toString() + super.getSummary(); } catch( final Exception ex ) { Log.error( RdpParser.class, "Unable to
 	 * produce module summary! " + ex.getMessage(), ex ); } return super.getSummary(); }
 	 */
 

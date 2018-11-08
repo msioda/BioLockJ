@@ -100,7 +100,7 @@ public class LogUtil
 			}
 			catch( final Exception ex )
 			{
-				Log.get( LogUtil.class ).warn( "Unable to find ~/.bash_profile" );
+				Log.warn( LogUtil.class, "Unable to find ~/.bash_profile" );
 			}
 		}
 		return profile;

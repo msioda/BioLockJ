@@ -51,7 +51,7 @@ public class MetaphlanParser extends ParserModuleImpl implements ParserModule
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				
+
 				if( !line.startsWith( "#" ) )
 				{
 					final MetaphlanNode node = new MetaphlanNode(
@@ -71,11 +71,11 @@ public class MetaphlanParser extends ParserModuleImpl implements ParserModule
 				}
 			}
 			reader.close();
-			Log.info( getClass() , "# samples: " +  getParsedSamples().size() );
+			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
 			if( sample != null )
 			{
 				sample.buildOtuCounts();
-				sample.report( true );
+				sample.report();
 			}
 		}
 	}
