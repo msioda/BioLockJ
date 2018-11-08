@@ -8,19 +8,18 @@ addHistogram <- function( v, title, xLabel, size ) {
    }
 }
 
-# Requires ggpubr lib for setting the color scheme
 # Mian function generates reports for each each report.taxonomyLevels
 # Each taxonomy report includes 1 histogram for each report attribute  
 main <- function() {
-   importLibs( c( "ggpubr" ) )
+
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
       if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildPvalHistograms_", otuLevel, ".log") ) )
       pdf( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_histograms.pdf") ) )
       par( mfrow=c(2, 2), las=1 )
-      parInputFile = getPipelineFile( "output", paste0( otuLevel, "_parametricPvals.tsv" ) )
+      parInputFile = getPipelineFile( paste0( otuLevel, "_parametricPvals.tsv" ) )
       if( r.debug ) print( paste( "parInputFile:", parInputFile ) )
       parStats = read.table( parInputFile, check.names=FALSE, header=TRUE, sep="\t" )
-      nonParInputFile = getPipelineFile( "output", paste0( otuLevel, "_nonParametricPvals.tsv" ) )
+      nonParInputFile = getPipelineFile( paste0( otuLevel, "_nonParametricPvals.tsv" ) )
       if( r.debug ) print( paste( "nonParInputFile:", nonParInputFile ) )
       nonParStats = read.table( nonParInputFile, check.names=FALSE, header=TRUE, sep="\t" )
       size = 25/getMaxAttLen( colnames(parStats) )

@@ -106,7 +106,7 @@ public abstract class OtuNodeImpl implements OtuNode
 	{
 		try
 		{
-			if( Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" ) )
+			if( debugMode() )
 			{
 				this.line = line;
 			}
@@ -121,6 +121,17 @@ public abstract class OtuNodeImpl implements OtuNode
 	public void setSampleId( final String id )
 	{
 		this.id = id;
+	}
+	
+	/**
+	 * Return TRUE if Config file set to DEBUG mode.
+	 * 
+	 * @return boolean TRUE if {@value biolockj.Log#LOG_LEVEL_PROPERTY} == {@value biolockj.Config#TRUE}
+	 * @throws Exception if {@value biolockj.Log#LOG_LEVEL_PROPERTY} is undefined
+	 */
+	protected static boolean debugMode() throws Exception
+	{
+		return Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" );
 	}
 
 	/**

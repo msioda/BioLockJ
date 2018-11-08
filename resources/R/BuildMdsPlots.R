@@ -9,8 +9,7 @@ main <- function() {
       if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", otuLevel, ".log") ) )
       pdf( paste0( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_MDS.pdf" ) ) ) )
       par( mfrow=c(2, 2), las=1 )
-      inputFile = list.files( pipelineDir, paste0(otuLevel, ".*_metaMerged.tsv"), full.names=TRUE, recursive=TRUE )
-
+      inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
       if( r.debug ) print( paste( "inputFile = list.files( tableDir, paste0(otuLevel, .*, _metaMerged.tsv), full.names=TRUE ):", inputFile ) )
       if( length( inputFile ) == 0 ) { next }
       otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )

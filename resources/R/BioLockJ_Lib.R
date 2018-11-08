@@ -55,10 +55,10 @@ getColors <- function( n ) {
    return( get_palette( getProperty("r.colorPalette", "npg"), n ) )
 }
 
-# Return a file matching the pattern under any pipelineDir subDir
-getPipelineFile <- function( subDir, pattern ) {
-   dir = dir( pipelineDir, subDir, full.names=TRUE, recursive=TRUE, include.dirs=TRUE )
-   result = list.files( dir, pattern, full.names=TRUE, recursive=TRUE )
+
+# Return a file matching the pattern underwhere under the pipeline root directory
+getPipelineFile <- function( pattern ) {
+   result = list.files( pipelineDir, pattern, full.names=TRUE, recursive=TRUE )
    if( length( result ) > 1 ){
       stop( paste( "Ambiguous file:", subDir, pattern ) )
    }
