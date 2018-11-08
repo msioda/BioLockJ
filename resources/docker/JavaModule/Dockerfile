@@ -19,7 +19,7 @@ RUN apt-get update && \
 #3.) ================= Install Java   =================
 RUN apt-get upgrade -y && \
 	apt-get update && \
-   	apt-get install -y openjdk-8-jre
+   	apt-get install -y openjdk-8-jre-headless
 
 #4.) ================= Install BioLockJ =================
 ARG BLJ_VERSION

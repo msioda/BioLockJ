@@ -34,7 +34,7 @@ RUN echo ' '  >> ~/.bashrc && \
 #3.) ================= Install Java   =================
 RUN apt-get upgrade -y && \
 	apt-get update && \
-   	apt-get install -y openjdk-8-jre
+   	apt-get install -y openjdk-8-jre-headless
 	
 #4.) =======================  RDP  ========================== 
 RUN cd /app && \

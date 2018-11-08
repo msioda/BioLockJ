@@ -94,7 +94,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 		}
 		catch( final Exception ex )
 		{
-			Log.get( getClass() ).error( "Unable to verify if OTU node is valid! " + ex.getMessage(), ex );
+			Log.error( getClass() , "Unable to verify if OTU node is valid! " + ex.getMessage(), ex );
 		}
 		return false;
 	}

@@ -13,6 +13,7 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
+import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -28,6 +29,8 @@ import biolockj.util.MemoryUtil;
 public class KrakenParser extends ParserModuleImpl implements ParserModule
 {
 
+	String KEY = "091A_reported.tsv";
+	
 	/**
 	 * Parse all {@link biolockj.module.classifier.wgs.KrakenClassifier} reports in the input directory.<br>
 	 * Build an {@link biolockj.node.wgs.KrakenNode} for each line.<br>
@@ -68,11 +71,13 @@ public class KrakenParser extends ParserModuleImpl implements ParserModule
 				}
 			}
 			reader.close();
+			
+			Log.info( getClass() , "# samples: " +  getParsedSamples().size() );
 			for( final ParsedSample sample: getParsedSamples() )
 			{
 				sample.buildOtuCounts();
+				sample.report();
 			}
 		}
-
 	}
 }
