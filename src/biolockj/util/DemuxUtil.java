@@ -144,17 +144,17 @@ public class DemuxUtil
 
 		if( demuxWithBarcode() )
 		{
-			Log.get( DemuxUtil.class ).info(
+			Log.info( DemuxUtil.class,
 					"Detected Config." + BARCODE_USE_REV_COMP + " = " + Config.getBoolean( BARCODE_USE_REV_COMP ) );
 
-			Log.get( DemuxUtil.class )
-					.info( "Building Barcode-SampleID Map using the "
+			Log.info( DemuxUtil.class,
+					"Building Barcode-SampleID Map using the "
 							+ ( Config.getBoolean( BARCODE_USE_REV_COMP ) ? "reverse compliment of ": "" )
 							+ "metadata column = " + Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
 		}
 		else
 		{
-			Log.get( DemuxUtil.class ).debug( "Lookup multiplexed Sample IDs in header (no barcodes)" );
+			Log.debug( DemuxUtil.class, "Lookup multiplexed Sample IDs in header (no barcodes)" );
 			return null;
 		}
 
@@ -172,8 +172,8 @@ public class DemuxUtil
 
 		for( final String key: idMap.keySet() )
 		{
-			Log.get( DemuxUtil.class )
-					.info( "Barcode-SampleID Map key[ " + key + " ] -->  value[ " + idMap.get( key ) + " ]" );
+			Log.info( DemuxUtil.class,
+					"Barcode-SampleID Map key[ " + key + " ] -->  value[ " + idMap.get( key ) + " ]" );
 		}
 
 		return idMap;

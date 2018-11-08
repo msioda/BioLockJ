@@ -22,6 +22,7 @@ import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
 import biolockj.node.r16s.RdpNode;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.MemoryUtil;
 
 /**
  * This BioModule parses RDP output files to build standard OTU abundance tables.
@@ -47,13 +48,15 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	{
 		for( final File file: getInputFiles() )
 		{
+			ParsedSample sample = null;
+			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final RdpNode node = new RdpNode( file.getName().replace( ClassifierModule.PROCESSED, "" ), line );
 				if( isValid( node ) )
 				{
-					final ParsedSample sample = getParsedSample( node.getSampleId() );
+					sample = getParsedSample( node.getSampleId() );
 					if( sample == null )
 					{
 						addParsedSample( new ParsedSample( node ) );
@@ -66,6 +69,12 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 			}
 
 			reader.close();
+			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
+			if( sample != null )
+			{
+				sample.buildOtuCounts();
+				sample.report();
+			}
 		}
 	}
 
@@ -88,7 +97,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 		}
 		catch( final Exception ex )
 		{
-			Log.get( getClass() ).error( "Unable to verify if OTU node is valid! " + ex.getMessage(), ex );
+			Log.error( getClass(), "Unable to verify if OTU node is valid! " + ex.getMessage(), ex );
 		}
 		return false;
 	}
@@ -98,7 +107,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	 *
 	 * @Override public String getSummary() { final StringBuffer sb = new StringBuffer(); try { int i = 0; for( final
 	 * String gap: RdpNode.getGaps() ) { sb.append( "Taxonomy gap[" + ( i++ ) + "]: " + gap + RETURN ); } return
-	 * sb.toString() + super.getSummary(); } catch( final Exception ex ) { Log.get( RdpParser.class ).error( "Unable to
+	 * sb.toString() + super.getSummary(); } catch( final Exception ex ) { Log.error( RdpParser.class, "Unable to
 	 * produce module summary! " + ex.getMessage(), ex ); } return super.getSummary(); }
 	 */
 

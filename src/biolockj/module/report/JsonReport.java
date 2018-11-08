@@ -43,9 +43,10 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			final int next = it.next();
 			if( next != base + 1 )
 			{
-				throw new Exception( "JsonReport requires that taxonomy levels configured in: "
-						+ Config.REPORT_TAXONOMY_LEVELS
-						+ " does not have any gaps.  Missing taxonomy level(s) between: [" + taxLevels.get( base ) + "-" + taxLevels.get( next )  + "]" );
+				throw new Exception(
+						"JsonReport requires that taxonomy levels configured in: " + Config.REPORT_TAXONOMY_LEVELS
+								+ " does not have any gaps.  Missing taxonomy level(s) between: ["
+								+ taxLevels.get( base ) + "-" + taxLevels.get( next ) + "]" );
 			}
 			base = next;
 		}

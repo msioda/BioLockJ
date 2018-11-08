@@ -37,12 +37,12 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
 	{
-		Log.get( getClass() ).info( "Processing " + ( files == null ? 0: files.size() ) + " files" );
+		Log.info( getClass(), "Processing " + ( files == null ? 0: files.size() ) + " files" );
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
 		if( RuntimeParamUtil.isDockerMode() || Config.requirePositiveInteger( SCRIPT_BATCH_SIZE ) >= files.size() )
 		{
-			Log.get( getClass() ).info( "Batch size > # sequence files, so run all in 1 batch" );
+			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
 			lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getFile().getAbsolutePath(),
 					getTempDir() ) );
 			lines.add( copyBatchOtuTableToOutputDir( getTempDir(), null ) );
@@ -50,7 +50,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		}
 		else
 		{
-			Log.get( getClass() ).info(
+			Log.info( getClass(),
 					"Pick closed ref OTUs in batches of size: " + Config.requirePositiveInteger( SCRIPT_BATCH_SIZE ) );
 			int startIndex = 1;
 			int batchNum = 0;

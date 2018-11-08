@@ -331,9 +331,9 @@ public class ModuleUtil
 		final File startFile = new File(
 				bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
 		FileUtils.forceDelete( startFile );
-		Log.get( ModuleUtil.class ).info( Log.LOG_SPACER );
-		Log.get( ModuleUtil.class ).info( "FINISHED " + bioModule.getClass().getName() );
-		Log.get( ModuleUtil.class ).info( Log.LOG_SPACER );
+		Log.info( ModuleUtil.class, Log.LOG_SPACER );
+		Log.info( ModuleUtil.class, "FINISHED " + bioModule.getClass().getName() );
+		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 	}
 
 	/**
@@ -353,9 +353,9 @@ public class ModuleUtil
 		{
 			throw new Exception( "Unable to create " + f.getAbsolutePath() );
 		}
-		Log.get( ModuleUtil.class ).info( Log.LOG_SPACER );
-		Log.get( ModuleUtil.class ).info( "STARTING " + bioModule.getClass().getName() );
-		Log.get( ModuleUtil.class ).info( Log.LOG_SPACER );
+		Log.info( ModuleUtil.class, Log.LOG_SPACER );
+		Log.info( ModuleUtil.class, "STARTING " + bioModule.getClass().getName() );
+		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 	}
 
 	/**
@@ -398,7 +398,7 @@ public class ModuleUtil
 		if( !dir.exists() )
 		{
 			dir.mkdirs();
-			Log.get( ModuleUtil.class ).info( "Create directory: " + dir.getAbsolutePath() );
+			Log.info( ModuleUtil.class, "Create directory: " + dir.getAbsolutePath() );
 		}
 		return dir;
 	}

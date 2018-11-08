@@ -108,15 +108,15 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 
 		if( !MetaUtil.getFieldNames().contains( NUM_MERGED_READS ) )
 		{
-			Log.get( getClass() )
-					.info( "Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
+			Log.info( getClass(),
+					"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
 			final Map<String, String> readsPerSample = new HashMap<>();
 			for( final File f: getOutputDir().listFiles() )
 			{
 				if( !f.getName().equals( MetaUtil.getMetadataFileName() ) )
 				{
 					final long count = SeqUtil.countNumReads( f );
-					Log.get( getClass() ).info( "Num merged Reads for File:[" + f.getName() + "] ==> ID:["
+					Log.info( getClass(), "Num merged Reads for File:[" + f.getName() + "] ==> ID:["
 							+ SeqUtil.getSampleId( f.getName() ) + "] = " + count );
 					readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 				}
@@ -126,7 +126,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 		}
 		else
 		{
-			Log.get( getClass() ).warn( "Counts for # merged reads/sample already found in metadata, not re-counting "
+			Log.warn( getClass(), "Counts for # merged reads/sample already found in metadata, not re-counting "
 					+ MetaUtil.getFile().getAbsolutePath() );
 		}
 

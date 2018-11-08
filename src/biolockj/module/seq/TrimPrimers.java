@@ -76,7 +76,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		}
 		catch( final Exception ex )
 		{
-			Log.get( getClass() ).warn( "Unable to complete module summary! " + ex.getMessage() );
+			Log.warn( getClass(), "Unable to complete module summary! " + ex.getMessage() );
 		}
 
 		return super.getSummary();
@@ -90,22 +90,22 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	public void runModule() throws Exception
 	{
 		trimSeqs();
-		Log.get( getClass() ).debug( "numLinesPerRead = " + SeqUtil.getNumLinesPerRead() );
-		Log.get( getClass() ).debug( "#samples in table numLinesWithPrimer = " + numLinesWithPrimer.size() );
-		Log.get( getClass() ).debug( "#samples in table numLinesNoPrimer = " + numLinesNoPrimer.size() );
-		Log.get( getClass() ).debug( "#samples in table validReadsPerFile = " + validReadsPerFile.size() );
-		Log.get( getClass() ).debug( "fileNames.size() = " + fileNames.size() );
+		Log.debug( getClass(), "numLinesPerRead = " + SeqUtil.getNumLinesPerRead() );
+		Log.debug( getClass(), "#samples in table numLinesWithPrimer = " + numLinesWithPrimer.size() );
+		Log.debug( getClass(), "#samples in table numLinesNoPrimer = " + numLinesNoPrimer.size() );
+		Log.debug( getClass(), "#samples in table validReadsPerFile = " + validReadsPerFile.size() );
+		Log.debug( getClass(), "fileNames.size() = " + fileNames.size() );
 		final TreeSet<File> files = new TreeSet<>( validReadsPerFile.keySet() );
 		for( final String name: fileNames )
 		{
-			Log.get( getClass() ).debug( "Checking file to see if primers have been trimmed = " + name );
+			Log.debug( getClass(), "Checking file to see if primers have been trimmed = " + name );
 			boolean found = false;
 			for( final File f: files )
 			{
-				Log.get( getClass() ).debug( "Checking validReadsPerFile.keySet().next() = " + f.getAbsolutePath() );
+				Log.debug( getClass(), "Checking validReadsPerFile.keySet().next() = " + f.getAbsolutePath() );
 				if( name.startsWith( f.getAbsolutePath() ) )
 				{
-					Log.get( getClass() ).debug( "found match!" );
+					Log.debug( getClass(), "found match!" );
 					found = true;
 					break;
 				}
@@ -113,14 +113,13 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			if( !found && numDebugLines++ < 4 )
 			{
 				summaryMsgs.add( "File contains no primers!  File name: " + name );
-				Log.get( getClass() ).warn( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+				Log.warn( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			}
 		}
 
 		if( Config.getBoolean( INPUT_REQUIRE_PRIMER ) )
 		{
-			Log.get( getClass() )
-					.warn( INPUT_REQUIRE_PRIMER + "=Y so any sequences without a primer have been discarded" );
+			Log.warn( getClass(), INPUT_REQUIRE_PRIMER + "=Y so any sequences without a primer have been discarded" );
 		}
 
 		long totalPrimerR = 0L;
@@ -164,23 +163,23 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			double ratio = Double.valueOf( df.format( 100 * ( (double) a / ( a + b ) ) ) );
 			String per = BioLockJUtil.formatPercentage( a, a + b );
 
-			Log.get( getClass() )
-					.info( f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
+			Log.info( getClass(),
+					f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
 
 			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
 			{
 				ratio = Double.valueOf( df.format( 100 * ( (double) v / ( a + b ) ) ) );
 				per = BioLockJUtil.formatPercentage( v, a + b );
-				Log.get( getClass() ).info(
+				Log.info( getClass(),
 						f.getName() + " Paired reads with primer in both -- " + v + "/" + ( a + b ) + " = " + per );
 			}
 
-			Log.get( getClass() ).debug( "file = " + f.getAbsolutePath() );
-			Log.get( getClass() ).debug( "maxFw = " + maxFw );
-			Log.get( getClass() ).debug( "minFw = " + minFw );
-			Log.get( getClass() ).debug( "ratio = " + ratio );
-			Log.get( getClass() ).debug( "maxFw < ratio = " + ( maxFw < ratio ) );
-			Log.get( getClass() ).debug( "minFw > ratio = " + ( minFw > ratio ) );
+			Log.debug( getClass(), "file = " + f.getAbsolutePath() );
+			Log.debug( getClass(), "maxFw = " + maxFw );
+			Log.debug( getClass(), "minFw = " + minFw );
+			Log.debug( getClass(), "ratio = " + ratio );
+			Log.debug( getClass(), "maxFw < ratio = " + ( maxFw < ratio ) );
+			Log.debug( getClass(), "minFw > ratio = " + ( minFw > ratio ) );
 
 			if( foundPaired && f.getName().contains( Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX ) ) )
 			{
@@ -189,7 +188,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 					maxRv = ratio;
 					maxRvDisplay = per;
 					maxFileRv = f.getAbsolutePath();
-					Log.get( getClass() ).info(
+					Log.info( getClass(),
 							"Found new: Max % reads kept in Reverse Read = " + maxFileRv + " = " + maxRvDisplay );
 				}
 
@@ -198,7 +197,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 					minRv = ratio;
 					minRvDisplay = per;
 					minFileRv = f.getAbsolutePath();
-					Log.get( getClass() ).info(
+					Log.info( getClass(),
 							"Found new: Min % reads kept in Reverse Read = " + minFileRv + " = " + minRvDisplay );
 				}
 
@@ -212,7 +211,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 					maxFw = ratio;
 					maxFwDisplay = per;
 					maxFileFw = f.getAbsolutePath();
-					Log.get( getClass() ).info(
+					Log.info( getClass(),
 							"Found new: Max % reads kept in Forward Read = " + maxFileFw + " = " + maxFwDisplay );
 				}
 
@@ -221,7 +220,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 					minFw = ratio;
 					minFwDisplay = per;
 					minFileFw = f.getAbsolutePath();
-					Log.get( getClass() ).info(
+					Log.info( getClass(),
 							"Found new: Min % reads kept in Forward Read = " + minFileFw + " = " + minFwDisplay );
 				}
 
@@ -233,22 +232,22 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
 		{
 			summaryMsgs.add( "Max % reads kept in Forward Read = " + maxFileFw + " = " + maxFwDisplay );
-			Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			summaryMsgs.add( "Min % reads kept in Forward Read = " + minFileFw + " = " + minFwDisplay );
-			Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 
 			summaryMsgs.add( "Max % reads kept in Reverse Read = " + maxFileRv + " = " + maxRvDisplay );
-			Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			summaryMsgs.add( "Min % reads kept in Reverse Read = " + minFileRv + " = " + minRvDisplay );
-			Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 
 		}
 		else
 		{
 			summaryMsgs.add( "Max % reads kept in = " + maxFileFw + " = " + maxFwDisplay );
-			Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			summaryMsgs.add( "Min % reads kept in = " + minFileFw + " = " + minFwDisplay );
-			Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 		}
 
 		final long totalF = totalPrimerF + totalNoPrimerF;
@@ -262,23 +261,23 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			summaryMsgs.add( "Mean % reads with primer = " + totalWithPrimer + "/" + total + " = "
 					+ BioLockJUtil.formatPercentage( totalWithPrimer, total ) );
 
-			Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 
 			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
 			{
 				summaryMsgs.add( "Mean % Forward reads with primer = " + totalPrimerF + "/" + totalF + " = "
 						+ BioLockJUtil.formatPercentage( totalPrimerF, totalF ) );
-				Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 				summaryMsgs.add( "Mean % Reverse reads with primer  = " + totalPrimerR + "/" + totalR + " = "
 						+ BioLockJUtil.formatPercentage( totalPrimerR, totalR ) );
-				Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 				if( !Config.getBoolean( INPUT_REQUIRE_PRIMER ) )
 				{
 					summaryMsgs.add( "Mean % Paired reads with matching primer = " + totalValid + "/" + total + " = "
 							+ BioLockJUtil.formatPercentage( totalValid, total ) );
 				}
 
-				Log.get( getClass() ).info( summaryMsgs.get( summaryMsgs.size() - 1 ) );
+				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			}
 		}
 	}
@@ -310,7 +309,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 					{
 						if( doLog )
 						{
-							Log.get( getClass() ).info( "Found primer to trim: " + seq );
+							Log.info( getClass(), "Found primer to trim: " + seq );
 						}
 						String regexSeq = "";
 
@@ -325,8 +324,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 								{
 									if( doLog )
 									{
-										Log.get( getClass() )
-												.info( "IUPAC substitution of base: " + base + " to: " + iupac );
+										Log.info( getClass(), "IUPAC substitution of base: " + base + " to: " + iupac );
 									}
 									substitutions.add( base );
 								}
@@ -441,7 +439,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 				lineCounter++;
 			}
 
-			Log.get( getClass() ).info( file.getName() + " # valid headers = " + validHeaders.size() );
+			Log.info( getClass(), file.getName() + " # valid headers = " + validHeaders.size() );
 
 		}
 		finally
@@ -476,7 +474,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			for( final String key: missingPrimers.keySet() )
 			{
 				final Map<String, String> map = missingPrimers.get( key );
-				Log.get( getClass() ).warn( "TrimPrimers " + key + " # " + reportLabel + " = " + map.size() );
+				Log.warn( getClass(), "TrimPrimers " + key + " # " + reportLabel + " = " + map.size() );
 
 				BufferedWriter writer = null;
 				try
@@ -491,7 +489,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 				}
 				catch( final Exception ex )
 				{
-					Log.get( getClass() ).error( "Error occurred writng primer report" + ex.getMessage(), ex );
+					Log.error( getClass(), "Error occurred writng primer report" + ex.getMessage(), ex );
 				}
 				finally
 				{
@@ -504,7 +502,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		}
 		else if( mergedReadTwoPrimers )
 		{
-			Log.get( getClass() ).warn( "TrimPrimers # " + reportLabel + " = 0" );
+			Log.warn( getClass(), "TrimPrimers # " + reportLabel + " = 0" );
 		}
 	}
 
@@ -516,10 +514,10 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	private void processFile( final File file, final Set<String> validHeaders, final Set<String> primers )
 			throws Exception
 	{
-		Log.get( getClass() ).info( "Processing file = " + file.getAbsolutePath() );
+		Log.info( getClass(), "Processing file = " + file.getAbsolutePath() );
 		fileNames.add( file.getAbsolutePath() );
 		final File trimmedFile = new File( getTrimFilePath( file ) );
-		Log.get( getClass() ).info( "Create trimmed file = " + trimmedFile.getAbsolutePath() );
+		Log.info( getClass(), "Create trimmed file = " + trimmedFile.getAbsolutePath() );
 
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( trimmedFile ) );
@@ -571,7 +569,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 
 							if( mergedReadTwoPrimers && fwPrimerLength < 1 && rvPrimerLength < 1 )
 							{
-								// Log.get( getClass() ).warn( "Read missing BOTH primers " + origSequence );
+								// Log.warn( getClass(), "Read missing BOTH primers " + origSequence );
 								if( missingBothPrimers.get( file.getName() ) == null )
 								{
 									final Map<String, String> m = new HashMap<>();
@@ -585,7 +583,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 							}
 							else if( mergedReadTwoPrimers && fwPrimerLength < 1 )
 							{
-								Log.get( getClass() ).debug( "Read missing forward primer " + origSequence );
+								Log.debug( getClass(), "Read missing forward primer " + origSequence );
 								if( missingFwPrimers.get( file.getName() ) == null )
 								{
 									final Map<String, String> m = new HashMap<>();
@@ -600,7 +598,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 							}
 							else if( mergedReadTwoPrimers && rvPrimerLength < 1 )
 							{
-								Log.get( getClass() ).debug( "Read missing reverse primer " + origSequence );
+								Log.debug( getClass(), "Read missing reverse primer " + origSequence );
 								if( missingRvPrimers.get( file.getName() ) == null )
 								{
 									final Map<String, String> m = new HashMap<>();
@@ -669,7 +667,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		}
 		catch( final Exception ex )
 		{
-			Log.get( getClass() ).error( "Error removing primers from file = " + file.getAbsolutePath(), ex );
+			Log.error( getClass(), "Error removing primers from file = " + file.getAbsolutePath(), ex );
 		}
 		finally
 		{
@@ -686,7 +684,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		final List<File> files = mergeModuleExists ? new ArrayList<>( pairedReads.keySet() ): getInputFiles();
 		final int count = files == null ? 0: files.size();
 		int i = 0;
-		Log.get( getClass() ).info( "Trimming primers from " + ( mergeModuleExists ? 2 * count: count ) + " files..." );
+		Log.info( getClass(), "Trimming primers from " + ( mergeModuleExists ? 2 * count: count ) + " files..." );
 		for( final File file: files )
 		{
 
@@ -704,13 +702,12 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 
 			if( ( i++ + 1 ) % 25 == 0 )
 			{
-				Log.get( getClass() )
-						.info( "Done trimming " + i + "/" + count + ( mergeModuleExists ? " file pairs": " files" ) );
+				Log.info( getClass(),
+						"Done trimming " + i + "/" + count + ( mergeModuleExists ? " file pairs": " files" ) );
 			}
 		}
 
-		Log.get( getClass() )
-				.info( "Done trimming " + i + "/" + count + ( mergeModuleExists ? " file pairs": " files" ) );
+		Log.info( getClass(), "Done trimming " + i + "/" + count + ( mergeModuleExists ? " file pairs": " files" ) );
 
 		printReports( missingBothPrimers, "missingBothPrimers" );
 		printReports( missingFwPrimers, "missingFwPrimers" );

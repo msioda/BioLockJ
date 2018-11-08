@@ -39,7 +39,7 @@ public class Gunzipper extends ScriptModuleImpl implements ScriptModule
 			}
 			else
 			{
-				Log.get( getClass() ).warn(
+				Log.warn( getClass(),
 						"May be able to remove this BioModule - input already decompressed: " + f.getAbsolutePath() );
 				lines.add( copyToOutputDir( f ) );
 			}

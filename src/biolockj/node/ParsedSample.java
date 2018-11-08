@@ -51,29 +51,34 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	 */
 	public void buildOtuCounts()
 	{
-		if( otuCountMap.isEmpty() )
+		if( otuNodes.isEmpty() )
 		{
-			for( final OtuNode otuNode: otuNodes )
+			return;
+		}
+
+		for( final OtuNode otuNode: otuNodes )
+		{
+			final Map<String, String> map = otuNode.getOtuMap();
+			for( final String level: map.keySet() )
 			{
-				final Map<String, String> map = otuNode.getOtuMap();
-				for( final String level: map.keySet() )
+				final String otu = map.get( level );
+
+				if( otuCountMap.get( level ) == null )
 				{
-					final String otu = map.get( level );
-
-					if( otuCountMap.get( level ) == null )
-					{
-						otuCountMap.put( level, new TreeMap<String, Long>() );
-					}
-
-					if( otuCountMap.get( level ).get( otu ) == null )
-					{
-						otuCountMap.get( level ).put( otu, 0L );
-					}
-
-					otuCountMap.get( level ).put( otu, otuCountMap.get( level ).get( otu ) + otuNode.getCount() );
+					otuCountMap.put( level, new TreeMap<String, Long>() );
 				}
+
+				if( otuCountMap.get( level ).get( otu ) == null )
+				{
+					otuCountMap.get( level ).put( otu, 0L );
+				}
+
+				otuCountMap.get( level ).put( otu, otuCountMap.get( level ).get( otu ) + otuNode.getCount() );
 			}
 		}
+
+		otuNodes = null;
+		otuNodes = new HashSet<>();
 	}
 
 	@Override
@@ -103,7 +108,7 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 			}
 		}
 
-		Log.get( getClass() ).warn( "ParsedSample has no data: " + sampleId + " has 0 hits!" );
+		Log.warn( getClass(), "ParsedSample has no data: " + sampleId + " has 0 hits!" );
 		return 0L;
 	}
 
@@ -139,35 +144,41 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 
 	/**
 	 * Print OTU counts at every level to the log file.
+	 * 
+	 * @param countsOnly Set true to print level counts instead of OTU counts.
 	 */
 	public void report()
 	{
 		try
 		{
-			Log.info( getClass(), Log.LOG_SPACER );
-			Log.info( getClass(), "PARSED SAMPLE REPORT" );
-			Log.info( getClass(), Log.LOG_SPACER );
-			Log.info( getClass(), "Sample ID = " + sampleId );
+			String val = "Parsed [" + sampleId + "] ==> ";
+
 			for( final String level: otuCountMap.keySet() )
 			{
-				Log.get( getClass() ).info( "OTUs at Level = " + level );
+				final String otuCountMsg = level + " #OTUs: " + otuCountMap.get( level ).size();
+
+				val += otuCountMsg + " | ";
+				Log.debug( getClass(), Log.LOG_SPACER );
+				Log.debug( getClass(), otuCountMsg );
 				for( final String otu: otuCountMap.get( level ).keySet() )
 				{
-					Log.info( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
+					Log.debug( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
 				}
+
 			}
+
+			Log.debug( getClass(), Log.LOG_SPACER );
+			Log.info( getClass(), val );
 		}
 		catch( final Exception ex )
 		{
 			Log.error( getClass(), "Unable to report ParsedSample! " + ex.getMessage(), ex );
 		}
-
-		Log.info( getClass(), Log.LOG_SPACER );
 	}
 
 	// key=level
 	private final TreeMap<String, TreeMap<String, Long>> otuCountMap = new TreeMap<>();
-	private final Set<OtuNode> otuNodes = new HashSet<>();
+	private Set<OtuNode> otuNodes = new HashSet<>();
 	private final String sampleId;
 	private static final long serialVersionUID = 4882054401193953055L;
 }

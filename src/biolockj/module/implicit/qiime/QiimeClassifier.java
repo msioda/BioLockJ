@@ -147,7 +147,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			final String headers = reader.readLine();
 			writer.write( headers + RETURN );
 
-			Log.get( getClass() ).warn( "Build new METADATA FILE with headers: " + headers );
+			Log.warn( getClass(), "Build new METADATA FILE with headers: " + headers );
 
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
@@ -296,7 +296,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 		catch( final Exception ex )
 		{
-			Log.get( getClass() ).warn( "Unable to complete module summary: " + ex.getMessage() );
+			Log.warn( getClass(), "Unable to complete module summary: " + ex.getMessage() );
 		}
 
 		return super.getSummary();

@@ -54,7 +54,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 
 			if( !f.getName().toLowerCase().endsWith( ".gz" ) && SeqUtil.isFastA() )
 			{
-				Log.get( getClass() ).warn( "Remove this BioModule from Config:  "
+				Log.warn( getClass(), "Remove this BioModule from Config:  "
 						+ " Files are already in decompressed FastA format!  It is unnecessary to make duplicate files..." );
 				lines.add( copyToOutputDir( filePath, fileId + dirExt + ext ) );
 			}

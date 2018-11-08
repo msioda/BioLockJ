@@ -44,8 +44,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Log.get( getClass() )
-				.warn( "BioLockJ requires demultiplexed data, so this must be the last module except Email" );
+		Log.warn( getClass(), "BioLockJ requires demultiplexed data, so this must be the last module except Email" );
 
 		validateModuleOrder();
 	}
@@ -80,7 +79,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 		{
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
-			Log.get( getClass() ).warn( msg );
+			Log.warn( getClass(), msg );
 		}
 
 		return super.getSummary() + sb.toString();
@@ -92,10 +91,10 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		Log.get( getClass() ).info( "Multiplexing file type = " + SeqUtil.getInputSequenceType() );
+		Log.info( getClass(), "Multiplexing file type = " + SeqUtil.getInputSequenceType() );
 		if( !hasValidBarcodes() )
 		{
-			Log.get( getClass() ).info(
+			Log.info( getClass(),
 					"Multiplexer setting Sample ID in sequence header for identification since valid barcodes are not provided" );
 
 		}
@@ -150,7 +149,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 	 */
 	protected void multiplex( final File sample ) throws Exception
 	{
-		Log.get( getClass() ).info( "Multiplexing file  = " + sample.getAbsolutePath() );
+		Log.info( getClass(), "Multiplexing file  = " + sample.getAbsolutePath() );
 		final List<String> seqLines = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( sample );
 		final BufferedWriter writer = new BufferedWriter(
@@ -259,13 +258,13 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 				vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
 				if( sampleIds.size() != vals.size() )
 				{
-					Log.get( getClass() ).warn(
+					Log.warn( getClass(),
 							"Multiplexer setting Sample ID in output instead of barcode because dataset contains "
 									+ sampleIds.size() + " unique Sample IDs but only " + vals.size()
 									+ " unique barcodes" );
 					for( final String id: MetaUtil.getSampleIds() )
 					{
-						Log.get( getClass() ).warn(
+						Log.warn( getClass(),
 								"ID [ " + id + " ] ==> " + MetaUtil.getField( id, MetaUtil.META_BARCODE_COLUMN ) );
 					}
 				}
@@ -277,7 +276,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 		}
 		catch( final Exception ex )
 		{
-			Log.get( getClass() ).error( "" + ex.getMessage(), ex );
+			Log.error( getClass(), "" + ex.getMessage(), ex );
 		}
 
 		return useBarcode;

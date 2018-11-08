@@ -13,12 +13,14 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
+import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.ParsedSample;
 import biolockj.node.wgs.MetaphlanNode;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.MemoryUtil;
 
 /**
  * This BioModules parses MetaphlanClassifier output reports to build standard OTU abundance tables.
@@ -44,17 +46,19 @@ public class MetaphlanParser extends ParserModuleImpl implements ParserModule
 	{
 		for( final File file: getInputFiles() )
 		{
+			ParsedSample sample = null;
+			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
+
 				if( !line.startsWith( "#" ) )
 				{
 					final MetaphlanNode node = new MetaphlanNode(
 							file.getName().replace( ClassifierModule.PROCESSED, "" ), line );
 					if( isValid( node ) )
 					{
-						final ParsedSample sample = getParsedSample( node.getSampleId() );
+						sample = getParsedSample( node.getSampleId() );
 						if( sample == null )
 						{
 							addParsedSample( new ParsedSample( node ) );
@@ -67,6 +71,12 @@ public class MetaphlanParser extends ParserModuleImpl implements ParserModule
 				}
 			}
 			reader.close();
+			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
+			if( sample != null )
+			{
+				sample.buildOtuCounts();
+				sample.report();
+			}
 		}
 	}
 }

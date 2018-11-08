@@ -84,7 +84,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	public void parseSamples() throws Exception
 	{
 		final File file = getInputFiles().get( 0 );
-		Log.get( getClass() ).info( "Parse file: " + file.getName() );
+		Log.info( getClass(), "Parse file: " + file.getName() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
@@ -121,6 +121,12 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 			}
 		}
 		reader.close();
+		for( final ParsedSample sample: getParsedSamples() )
+		{
+			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
+			sample.buildOtuCounts();
+			sample.report();
+		}
 	}
 
 	/**
@@ -162,10 +168,10 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 		while( header.hasMoreTokens() )
 		{
 			final String token = header.nextToken();
-			Log.get( getClass() ).info( "column(" + colNum + ") = " + token );
+			Log.info( getClass(), "column(" + colNum + ") = " + token );
 			if( token.equals( QiimeClassifier.DEMUX_COLUMN ) )
 			{
-				Log.get( getClass() ).info( "Found DEMUX_COLUMN, not checking remaining metadata columns!" );
+				Log.info( getClass(), "Found DEMUX_COLUMN, not checking remaining metadata columns!" );
 				return colNum;
 			}
 			colNum++;
@@ -269,8 +275,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	 */
 	protected void initializeMaps() throws Exception
 	{
-		Log.get( getClass() )
-				.info( "Initialize QIIME_ID to SAMPLE_ID Maps for: " + MetaUtil.getFile().getAbsolutePath() );
+		Log.info( getClass(), "Initialize QIIME_ID to SAMPLE_ID Maps for: " + MetaUtil.getFile().getAbsolutePath() );
 		int fileNameCol = 0;
 		boolean isHeaderRow = true;
 		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
@@ -282,13 +287,13 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 			{
 				isHeaderRow = false;
 				fileNameCol = getFileNameColumn( line );
-				Log.get( getClass() ).info( "Header ID (" + qiimeId + ") has " + QiimeClassifier.DEMUX_COLUMN
-						+ " in column #" + fileNameCol );
+				Log.info( getClass(), "Header ID (" + qiimeId + ") has " + QiimeClassifier.DEMUX_COLUMN + " in column #"
+						+ fileNameCol );
 			}
 			else
 			{
 				final String sampleId = getSampleIdFromMappingFile( qiimeId, fileNameCol );
-				Log.get( getClass() ).info( "[Id-Map Entry] QIIME_ID(" + qiimeId + ")<=>SAMPLE_ID(" + sampleId + ")" );
+				Log.info( getClass(), "[Id-Map Entry] QIIME_ID(" + qiimeId + ")<=>SAMPLE_ID(" + sampleId + ")" );
 				qiimeIdToSampleIdMap.put( qiimeId, sampleId );
 				sampleIdToQiimeIdMap.put( sampleId, qiimeId );
 			}
@@ -306,31 +311,31 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	 */
 	protected void setOrderedQiimeIDs( final File file ) throws Exception
 	{
-		Log.get( getClass() ).info(
+		Log.info( getClass(),
 				"Configure ordered list of Qiime IDs based on the 1st taxonomy report: " + file.getAbsolutePath() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 
 		final String commenLine = reader.readLine(); // skip first line (its a comment)
 		final String headerLine = reader.readLine();
 		final String header = headerLine.replace( OTU_ID, "" );
-		Log.get( getClass() ).info( "Skip comment line: " + commenLine );
-		Log.get( getClass() ).info( "Read header line: " + headerLine );
-		Log.get( getClass() ).info( "Remove " + OTU_ID + " from header" );
-		Log.get( getClass() ).info( "Remaining header line should contain the QIIME IDs for all samples: " + header );
+		Log.info( getClass(), "Skip comment line: " + commenLine );
+		Log.info( getClass(), "Read header line: " + headerLine );
+		Log.info( getClass(), "Remove " + OTU_ID + " from header" );
+		Log.info( getClass(), "Remaining header line should contain the QIIME IDs for all samples: " + header );
 
 		final String[] parts = header.split( "\\s" );
 		for( final String qiimeId: parts )
 		{
 			if( qiimeId.trim().length() > 0 )
 			{
-				Log.get( getClass() ).debug( "Add QiimeID: " + qiimeId );
+				Log.debug( getClass(), "Add QiimeID: " + qiimeId );
 				orderedQiimeIDs.add( qiimeId );
 			}
 		}
 
 		reader.close();
 
-		Log.get( getClass() ).info( "List QIIME IDs( total#" + orderedQiimeIDs.size() + " ) = " + orderedQiimeIDs );
+		Log.info( getClass(), "List QIIME IDs( total#" + orderedQiimeIDs.size() + " ) = " + orderedQiimeIDs );
 	}
 
 	/**

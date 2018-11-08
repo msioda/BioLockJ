@@ -122,7 +122,7 @@ public abstract class OtuNodeImpl implements OtuNode
 	{
 		this.id = id;
 	}
-	
+
 	/**
 	 * Return TRUE if Config file set to DEBUG mode.
 	 * 

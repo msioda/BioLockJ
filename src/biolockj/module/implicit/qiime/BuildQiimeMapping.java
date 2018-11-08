@@ -68,7 +68,7 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 			metaLines.put( st.nextToken(), line );
 			if( header == null )
 			{
-				Log.get( getClass() ).info( "Initial metadata columns = " + line );
+				Log.info( getClass(), "Initial metadata columns = " + line );
 				header = line;
 			}
 		}
@@ -79,13 +79,13 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 		writer.write( QIIME_ID );
 		if( !hasQm1 )
 		{
-			Log.get( getClass() ).info( "Add required column(2) field = " + BARCODE_SEQUENCE );
+			Log.info( getClass(), "Add required column(2) field = " + BARCODE_SEQUENCE );
 			writer.write( TAB_DELIM + BARCODE_SEQUENCE );
 		}
 
 		if( !hasQm2 )
 		{
-			Log.get( getClass() ).info( "Add required column(3) field = " + LINKER_PRIMER_SEQUENCE );
+			Log.info( getClass(), "Add required column(3) field = " + LINKER_PRIMER_SEQUENCE );
 			writer.write( TAB_DELIM + LINKER_PRIMER_SEQUENCE );
 		}
 		final StringTokenizer ht = new StringTokenizer( header, TAB_DELIM );
@@ -96,13 +96,13 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 		}
 		if( !hasQm3 )
 		{
-			Log.get( getClass() ).info( "Add required column(n-1) field = " + DEMUX_COLUMN );
+			Log.info( getClass(), "Add required column(n-1) field = " + DEMUX_COLUMN );
 			writer.write( TAB_DELIM + DEMUX_COLUMN );
 		}
 
 		if( !hasQm4 )
 		{
-			Log.get( getClass() ).info( "Add required column(n) field = " + DESCRIPTION );
+			Log.info( getClass(), "Add required column(n) field = " + DESCRIPTION );
 			writer.write( TAB_DELIM + DESCRIPTION );
 		}
 
@@ -236,8 +236,7 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 		sb.append( colIndex( cols, DESCRIPTION ) );
 		sb.append( " }' " + initMetaFile.getAbsolutePath() + " > " + getOrderedMapping().getAbsolutePath() );
 
-		Log.get( getClass() )
-				.debug( FUNCTION_REORDER_FIELDS + " will update column order using awk --> " + sb.toString() );
+		Log.debug( getClass(), FUNCTION_REORDER_FIELDS + " will update column order using awk --> " + sb.toString() );
 
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_REORDER_FIELDS + "() {" );
@@ -276,17 +275,17 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 	 */
 	private List<String> createQiimeCorrectedMapping() throws Exception
 	{
-		Log.get( getClass() ).info( "Create QIIME Specific Mapping File" );
+		Log.info( getClass(), "Create QIIME Specific Mapping File" );
 		final List<String> lines = new ArrayList<>();
 		initMetaFile = addMissingFields();
 		final List<String> cols = getMetaCols();
 		if( cols != null )
 		{
-			Log.get( getClass() ).info( "Metadata column order:" );
+			Log.info( getClass(), "Metadata column order:" );
 			int d = 0;
 			for( final String col: cols )
 			{
-				Log.get( getClass() ).info( "col[" + d++ + "] = " + col );
+				Log.info( getClass(), "col[" + d++ + "] = " + col );
 			}
 
 			lines.add( FUNCTION_REORDER_FIELDS );
@@ -294,7 +293,7 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 		}
 		else
 		{
-			Log.get( getClass() ).info( "Qiime mapping file columns already in order!" );
+			Log.info( getClass(), "Qiime mapping file columns already in order!" );
 		}
 
 		lines.add( validateMapping() );

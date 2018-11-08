@@ -84,7 +84,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		if( parsedSamples.isEmpty() )
 		{
 			parseSamples();
-			buildOtuCounts();
 		}
 	}
 
@@ -125,19 +124,18 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	{
 		MemoryUtil.reportMemoryUsage( "About to parse samples" );
 		parseSamples();
-		
-		
+
 		Log.debug( getClass(), "# Samples parsed: " + parsedSamples.size() );
 
 		if( parsedSamples.isEmpty() )
 		{
 			throw new Exception( "Parser failed to produce output!" );
 		}
-		
-		MemoryUtil.reportMemoryUsage( "About to build OTU-counts" );
-		buildOtuCounts();
-		MemoryUtil.reportMemoryUsage( "Build OTU-counts complete!" );
-		
+
+		// MemoryUtil.reportMemoryUsage( "About to build OTU-counts" );
+		// buildOtuCounts();
+		// MemoryUtil.reportMemoryUsage( "Build OTU-counts complete!" );
+
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
 			registerNumHits();
@@ -146,16 +144,16 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		buildOtuTables();
 	}
 
-	/**
-	 * Build OTU counts after all classifier output has been parsed into OtuNode objects.
-	 */
-	protected void buildOtuCounts()
-	{
-		for( final ParsedSample sample: parsedSamples )
-		{
-			sample.buildOtuCounts();
-		}
-	}
+	// /**
+	// * Build OTU counts after all classifier output has been parsed into OtuNode objects.
+	// */
+	// protected void buildOtuCounts()
+	// {
+	// for( final ParsedSample sample: parsedSamples )
+	// {
+	// sample.buildOtuCounts();
+	// }
+	// }
 
 	/**
 	 * This method reads the temp 3-col-table to build the raw count table populated with raw OTU counts for OTUs that
