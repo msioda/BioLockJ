@@ -77,7 +77,8 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 			}
 		}
 
-		otuNodes.clear();
+		otuNodes = null;
+		otuNodes = new HashSet<>();
 	}
 
 	@Override
@@ -143,8 +144,10 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 
 	/**
 	 * Print OTU counts at every level to the log file.
+	 * 
+	 * @param countsOnly Set true to print level counts instead of OTU counts.
 	 */
-	public void report()
+	public void report( boolean countsOnly )
 	{
 		try
 		{
@@ -152,10 +155,13 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 			Log.info( getClass(), "PARSED SAMPLE REPORT ==>" + sampleId);
 			for( final String level: otuCountMap.keySet() )
 			{
-				Log.get( getClass() ).info( "# of " + level + "OTUs  = " + otuCountMap.get( level ).size() );
-				for( final String otu: otuCountMap.get( level ).keySet() )
+				Log.get( getClass() ).info( "# of " + level + " OTUs  = " + otuCountMap.get( level ).size() );
+				if( !countsOnly )
 				{
-					Log.info( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
+					for( final String otu: otuCountMap.get( level ).keySet() )
+					{
+						Log.info( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
+					}
 				}
 			}
 		}
@@ -169,7 +175,7 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 
 	// key=level
 	private final TreeMap<String, TreeMap<String, Long>> otuCountMap = new TreeMap<>();
-	private final Set<OtuNode> otuNodes = new HashSet<>();
+	private Set<OtuNode> otuNodes = new HashSet<>();
 	private final String sampleId;
 	private static final long serialVersionUID = 4882054401193953055L;
 }

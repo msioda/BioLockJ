@@ -84,7 +84,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	public void parseSamples() throws Exception
 	{
 		final File file = getInputFiles().get( 0 );
-		Log.get( getClass() ).info( "Parse file: " + file.getName() );
+		Log.info( getClass() , "Parse file: " + file.getName() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
@@ -124,6 +124,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 		for( final ParsedSample sample: getParsedSamples() )
 		{
 			sample.buildOtuCounts();
+			sample.report( true );
 		}
 	}
 

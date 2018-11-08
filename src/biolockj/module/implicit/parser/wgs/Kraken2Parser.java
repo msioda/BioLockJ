@@ -46,6 +46,7 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 	{
 		for( final File file: getInputFiles() )
 		{
+			ParsedSample sample = null;
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
@@ -54,7 +55,7 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 						line );
 				if( isValid( node ) )
 				{
-					final ParsedSample sample = getParsedSample( node.getSampleId() );
+					sample = getParsedSample( node.getSampleId() );
 					if( sample == null )
 					{
 						addParsedSample( new ParsedSample( node ) );
@@ -66,9 +67,10 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 				}
 			}
 			reader.close();
-			for( final ParsedSample sample: getParsedSamples() )
+			if( sample != null )
 			{
 				sample.buildOtuCounts();
+				sample.report( true );
 			}
 		}
 	}

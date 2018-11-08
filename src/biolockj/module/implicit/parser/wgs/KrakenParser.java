@@ -53,13 +53,14 @@ public class KrakenParser extends ParserModuleImpl implements ParserModule
 		{
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
+			ParsedSample sample = null;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final KrakenNode node = new KrakenNode( file.getName().replace( ClassifierModule.PROCESSED, "" ),
 						line );
 				if( isValid( node ) )
 				{
-					final ParsedSample sample = getParsedSample( node.getSampleId() );
+					sample = getParsedSample( node.getSampleId() );
 					if( sample == null )
 					{
 						addParsedSample( new ParsedSample( node ) );
@@ -73,10 +74,10 @@ public class KrakenParser extends ParserModuleImpl implements ParserModule
 			reader.close();
 			
 			Log.info( getClass() , "# samples: " +  getParsedSamples().size() );
-			for( final ParsedSample sample: getParsedSamples() )
+			if( sample != null )
 			{
 				sample.buildOtuCounts();
-				sample.report();
+				sample.report( true );
 			}
 		}
 	}

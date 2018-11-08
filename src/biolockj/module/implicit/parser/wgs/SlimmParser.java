@@ -41,6 +41,7 @@ public class SlimmParser extends ParserModuleImpl
 	{
 		for( final File file: getInputFiles() )
 		{
+			ParsedSample sample = null;
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			String line = reader.readLine(); // skip header
@@ -49,7 +50,7 @@ public class SlimmParser extends ParserModuleImpl
 				final SlimmNode node = new SlimmNode( file.getName(), line );
 				if( isValid( node ) )
 				{
-					final ParsedSample sample = getParsedSample( node.getSampleId() );
+					sample = getParsedSample( node.getSampleId() );
 					if( sample == null )
 					{
 						addParsedSample( new ParsedSample( node ) );
@@ -62,9 +63,10 @@ public class SlimmParser extends ParserModuleImpl
 			}
 
 			reader.close();
-			for( final ParsedSample sample: getParsedSamples() )
+			if( sample != null )
 			{
 				sample.buildOtuCounts();
+				sample.report( true );
 			}
 		}
 	}
