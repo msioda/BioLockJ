@@ -4,13 +4,6 @@ function projectOptions() {
   document.getElementById("projects").classList.toggle("show");
 }
 
-if ('child' == 'cool')
-  console.log('string');
-function nope() {
-    console.log('james');
-  };
-nope();
-
 //Open the main Menu when "Projects" -> "New" is clicked
 function newProj() {
   document.getElementById("mainMenu").style.display = "block";
@@ -112,21 +105,6 @@ function parseBljModuleJavaClass(text){//gets text java documentation from Java 
   }
   return modDescrip;
 }//end parseBljModuleJavaClass
-
-//section for module related functions
-// function modulesToCurrentConfig() {
-//   mods = document.getElementById('module').getElementsByTagName('li');
-//   selectedMods = [];
-//   for (var i = 0; i < mods.length; i++) {
-//     if (mods[i].classList.contains('modChoosen') && mods[i].disabled != true) {
-//       selectedMods.push( mods[i].innerHTML);
-//     };
-//   };
-//   if (selectedMods.length > 0) {
-//     currentConfig['modules'] = selectedMods;
-//   }else{delete currentConfig['modules']}
-//   localStorage.setItem(currentConfig['project.configFile'].toString(), JSON.stringify(currentConfig));
-// };
 
 /*This function object will be used to keep track of how many of each moduleClass is chosen
 modsToDisable will be one of the _____ModChoosen*/
@@ -243,55 +221,8 @@ function dropped(evt) {//function for dropping dragged modules
   evt.target.innerHTML = data.html;
   evt.target.classList = data.classes;
   evt.target.info = data.info;
-  saveConfigParamsForm();
+  //saveConfigParamsForm();
 }
-// NOTE: I think this block is no longer in use
-// /* the following block of code adds an eventlistener with two functions to the next
-// tab tabButtons one for saving, and one for jumping to the next tab */
-// var tabButtons = Array.from(document.getElementsByClassName("nextTab"));
-// for (var t = 0; t < tabButtons.length; t++) {
-//   var tabs = Array.from(document.getElementsByClassName("tabcontent"));
-//   //eventlistener for moving to next tabName
-//   tabButtons[t].tabNum = t;
-//   tabButtons[t].addEventListener("click", function() {
-//       //saveTab(this.parentNode.id);
-//       //openTab(event, tabs[this.tabNum + 1].getAttribute("id"));
-//     }, {
-//       once: false
-//     } //end of eventlistener
-//   ) //end of nextTab eventlistener
-// }; //end tabs for-loop
-
-//list of modules with their java classes and their javascript classes
-//has the format of nested array, with the first item of the nested array being the java class
-// const moduleLinkAndClass = [
-//     ['biolockj/module/implicit/ImportMetadata.java', 'implicit', 'hidden'],
-//     ['biolockj/module/implicit/Demultiplexer.java', 'implicit', 'hidden'],
-//     ['biolockj/module/seq/SeqFileValidator.java'],
-//     ['biolockj/module/seq/TrimPrimers.java'],
-//     ['biolockj/module/seq/Rarefier.java'],
-//     ['biolockj/module/classifier/r16s/QiimeClosedRefClassifier.java', 'qiimeClass'],
-//     ['biolockj/module/classifier/r16s/RdpClassifier.java', 'rdpClass'],
-//     ['biolockj/module/implicit/parser/r16s/RdpParser.java', 'rdpClass', 'implicit', 'hidden'],
-//     ['biolockj/module/classifier/r16s/QiimeDeNovoClassifier.java', 'qiimeClass'],
-//     ['biolockj/module/classifier/r16s/QiimeOpenRefClassifier.java', 'qiimeClass'],
-//     ['biolockj/module/classifier/wgs/KrakenClassifier.java', 'krakenClass'],
-//     ['biolockj/module/classifier/wgs/MetaphlanClassifier.java',  'metaphlanClass'],
-//     ['biolockj/module/classifier/wgs/SlimmClassifier.java', 'slimmClass'],
-//     ['biolockj/module/report/Normalizer.java'],
-//     ['biolockj/module/r/BuildMdsPlots.java'],
-//     ['biolockj/module/r/BuildOtuPlots.java'],
-//     ['biolockj/module/r/BuildPvalHistograms.java'],
-//     ['biolockj/module/r/CalculateStats.java'],
-//     ['biolockj/module/report/AddMetadataToOtuTables.java'],
-//     ['biolockj/module/report/JsonReport.java'],
-//     ['biolockj/module/seq/AwkFastaConverter.java'],
-//     ['biolockj/module/seq/Multiplexer.java'],
-//     ['biolockj/module/seq/PearMergeReads.java'],
-//     ['biolockj/module/seq/Gunzipper.java'],
-//     ['biolockj/module/implicit/RegisterNumReads.java','implicit', 'hidden'],
-//     ['biolockj/module/report/Email.java']
-// ];
 
 //Creating a Map object for module information
 myModules = new Map(Object.entries({
@@ -367,7 +298,7 @@ myModules = new Map(Object.entries({
 
   'biolockj/module/implicit/RegisterNumReads' : { cssClass : ['implicit', 'hidden'], category : 'implicit'},
 
-  'biolockj/module/report/Email' : { cssClass : [], category : 'seq'},
+  'biolockj/module/report/Email' : { cssClass : [], category : 'report'},
 
 }));
 
@@ -434,18 +365,17 @@ function runModuleFunctions() {//large function to build module li and counters
         target.classList.add("modChoosen");
         }
     }
-    saveConfigParamsForm();
+    currentConfig.saveConfigParamsForm();
   };// end toggleSelectModule
 
   function makeModuleLi(link, classes){
-
     var mod = document.createElement('li');
     for (var c = 0; c < classes.length; c++){
       mod.classList.add(classes[c])
     }//  ^this function is a hack because classList.add() adds commas between the css classes, making them unreadable to css
     mod.setAttribute('draggable', true);
     mod.innerHTML = link.split('.')[0].replace(/\//g,'.');//remove .java then replace / with .
-    var text = getText(getUrl(link))
+    var text = getText(getUrl(link));
     text.then(result => {
       mod.setAttribute('data-info', parseBljModuleJavaClass(result));
       hoverEventlistenerForModules(mod);
@@ -494,30 +424,28 @@ function runModuleFunctions() {//large function to build module li and counters
 };//end runModuleFunctions
 runModuleFunctions();
 
-//Event listeners
- //eventlistener for adding the recent config files to "recent"
- document.getElementById("recent").addEventListener("mouseover", function() {
-   recentMenuChoices = Object.keys(localStorage);
-   for (var i = 0; i < recentMenuChoices.length; i++) {
-     let opt = document.createElement('a');
-     opt.setAttribute("name", recentMenuChoices[i]);
-     var text = document.createTextNode(recentMenuChoices[i].toString());
-     opt.addEventListener("click", function() {
-       const configJson = JSON.parse(localStorage.getItem(this.name));
-       console.log('local file');
-       console.log(configJson);
-       sendConfigDataToForms(configJson, configJson.modules);
-     });
-     opt.appendChild(text);
-     opt.setAttribute('position', 'relative');
-     opt.setAttribute('display', 'block');
-     opt.classList.add('recentConfigs');
-     let proj = document.getElementById("projects");
-     proj.appendChild(opt);
-   };
- }, {
-   once: true
- });
+// //Event listeners
+//  //eventlistener for adding the recent config files to "recent"
+//  document.getElementById("recent").addEventListener("mouseover", function() {
+//    const recentMenuChoices = Object.keys(localStorage);
+//    for (var i = 0; i < recentMenuChoices.length; i++) {
+//      let opt = document.createElement('a');
+//      opt.setAttribute("name", recentMenuChoices[i]);
+//      var text = document.createTextNode(recentMenuChoices[i].toString());
+//      opt.addEventListener("click", function() {
+//        currentConfig = JSON.parse(localStorage.getItem(this.name));
+//        currentConfig.sendConfigDataToForms();
+//      });
+//      opt.appendChild(text);
+//      opt.setAttribute('position', 'relative');
+//      opt.setAttribute('display', 'block');
+//      opt.classList.add('recentConfigs');
+//      let proj = document.getElementById("projects");
+//      proj.appendChild(opt);
+//    };
+//  }, {
+//    once: true
+//  });
 
  // Close the dropdown if the user clicks outside of it
  window.onclick = function(e) {
