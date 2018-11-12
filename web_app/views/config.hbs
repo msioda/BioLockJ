@@ -16,8 +16,7 @@
 <div id="openConfig" class="menu">
   <form class='' id=localFileForm>
     Select BiolockJ configuration file
-    <input type="file" id="localFile">
-    <button type="button" id="submitLocalFile" onclick="loadLocalFile()">Submit</button>
+    <input type="file" accept="text/plain" id="localFile">
   </form>
 </div>
 
@@ -93,8 +92,8 @@
         </select></p>
       <p>A directory on the local workstation where the cluster.downloadModule will be downloaded
         <input type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
-      <!-- <!-- <button class="createDownload">Create configuration file for download</button> -->
-      <a class="downloadlink hidden">Download configuration file to default directory</a> -->
+      <!-- <button class="createDownload">Create configuration file for download</button> -->
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
   </div>
 
@@ -125,7 +124,7 @@
       <option id='yesOverrideImplicit' value="Y">Allow implicit modules to be directly added to pipeline</option>
       <option class='noOverrideImplicit' value="N">Allow BLJ to determine where to add implicit modules in the pipeline</option>
     </select><br>
-    <!-- <!-- <button class="createDownload">Create configuration file for download</button> --> -->
+    <!-- <button class="createDownload">Create configuration file for download</button> -->
     <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
   </div>
@@ -144,7 +143,7 @@
         <input type="text" id="input.suffixRw" name="input.suffixRw"><br>
             </p>
       <p>Trim prefix:
-        <input type="text" id="input.trimPrefix" name=id="input.trimPrefix">
+        <input type="text" id="input.trimPrefix" name="input.trimPrefix">
       <h5>(For files named by Sample ID, provide the
         prefix preceding the ID to trim when extracting Sample ID.
 If input.demultiplex=Y, provide any characters in the sequence header preceding the ID.
@@ -352,10 +351,12 @@ For fastq, typically “@”.)<h5></p>
   <div id="rTab" class="tabcontent">
       <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>This is the base color used for labels & headings in the PDF report:
+      <p>The base color used for labels & headings in the PDF report:
         <input type="text" id="r.colorBase" name="r.colorBase">
       </p>
-      <p>This color is used to highlight significant attributes:
+      <p>The color palette for the plots:
+        <input type="text" name="r.colorPalette" id="r.colorPalette">
+      <p>The color used to highlight significant attributes:
         <input type="text" id="r.colorHighlight" name="r.colorHighlight">
       </p>
       <p>Sets the color of scatterplot points:<br>
@@ -386,7 +387,7 @@ For fastq, typically “@”.)<h5></p>
         <input type='text' id="r.pch" name="r.pch"></p>
       <p>Sets PDF report plot label maximum width
         <input type="text" id="r.plotWidth" min="1" name="r.plotWidth" value=""></p>
-      <p>Sets p-value cutoff used to assign label r.colorHighlight
+      <p>Sets p-value cutoff used to assign label the highlight color
         <input type="text" id="r.pvalCutoff" name="r.pvalCutoff" value="">
       </p>
       <p>Format of the pvalue used in R sprintf() function
@@ -409,7 +410,7 @@ For fastq, typically “@”.)<h5></p>
       <p>Override field used to explicitly list metadata columns to build MDS plots. If left undefined, all columns are reported
       <input type="text" id="rMds.reportFields" name="rMds.reportFields" value=""> </p>
       <p>P-value adjustment scope: Used to set the p.adjust "n" parameter for how many simultaneous p-value calculations:
-        <select class="" id="rStats.adjPvalsScope" name="rStats.adjPvalsScope">
+        <select class="" id="rStats.pAdjustScope" name="rStats.pAdjustScope">
           <option selected default value="">Click for options</option>
           <option value="GLOBAL">GLOBAL</option>
           <option value="LOCAL">LOCAL</option>
@@ -446,10 +447,7 @@ For fastq, typically “@”.)<h5></p>
             <option value="chao">Chao index</option>
             <option value="cao">Cao index</option>
             <option value="mahalanobis">Mahalanobis index</option>
-          </select>
-"altGower", "morisita", "horn", "mountford", "raup" , "binomial", "chao", "cao" or "mahalanobis".
-
-
+          </select><br>
       <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
@@ -518,6 +516,7 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
   </div>
 
   <div id="qiimeTab" class="tabcontent">
@@ -527,7 +526,7 @@ For fastq, typically “@”.)<h5></p>
       <p>Alpha diverisity metrics: <br> Options listed online:
         <a href="http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html">
           scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html</a>.<br>
-        <input type="text" id="qiime.alphaDiversityMetrics" name="qiime.alphaDiversityMetrics">
+        <input type="text" id="qiime.alphaMetrics" name="qiime.alphaMetrics">
       </p>
       <p>Remove chimeras after open or de novo OTU picking:<br>
         <select class="" id="qiime.removeChimeras" name="qiime.removeChimeras">
@@ -538,6 +537,7 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
   </div>
 
   <div id="krakenTab" class="tabcontent">
@@ -562,6 +562,7 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <!-- <button class="createDownload">Create configuration file for download</button> -->
       <a class="downloadlink">Download configuration file to default directory</a>
+      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
   </div>
 
 </form> <!--End of configForm -->
