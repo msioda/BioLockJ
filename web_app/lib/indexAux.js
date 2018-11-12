@@ -7,29 +7,31 @@ var fs = require('fs'),
   path = require('path');
 
 
-/**parseBljJson turns a config json into a string in flat file format.
-*/
-exports.parseBljJson = function(currentConfig){
+/**parseBljJson turns a config json into a string in flat file format.*/
+exports.formatAsFlatFile = function(modules, paramKeys, paramValues){
   var text = "";
   textFile = null;
-  //add modules to config first
-  if (currentConfig["modules"] != null){
-    for (var i = 0; i < currentConfig["modules"].length; i++) {
-      text += '#BioModule '.concat(currentConfig["modules"][i],"\n");;
-    }
-    console.log(text);
-  };
-  //for non_module
-  for (var key in currentConfig) {
-    //console.log(key);
-    if (currentConfig.hasOwnProperty(key)) { //only lets keys that are user inputed pass
-      if (key == "modules" || key == "project.configFile") {// skipping project.configFile and modules
-      } else if (currentConfig[key] != '') { //project.configFile doesn't go inside the document
-        text += key.concat("=", currentConfig[key], "\n");
+  try {
+    //add modules to config first
+    if ( modules != null && modules.length > 0 ){
+      for (let i = 0; i < modules.length; i++) {
+        text += '#BioModule '.concat(modules[i],"\n");;
+      }
+      //console.log(text);
+    };
+    //for non_module
+    if ( paramKeys != null && paramKeys.length > 0 && paramValues != null && paramValues.length > 0 ){
+      for (let i = 0; i < paramKeys.length; i++){
+        text += paramKeys[i].concat("=", paramValues[i], "\n");
       }
     }
+    return text;
+  } catch (e) {
+    console.log(e);
+  } finally {
+
   }
-  return text;
+
 };
 
 exports.progressStatus = function(dirPath){
@@ -55,7 +57,7 @@ exports.saveConfigToLocal = function(configName, configText){
   })
 }
 
-exports.buildLaunchArgument = function (validConfig){
+exports.buildPartialLaunchArgument = function (validConfig){
   partialLauchArgument = {};
   //config key : blj_argument
   //config Path will be built serverside

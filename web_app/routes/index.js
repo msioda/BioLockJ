@@ -39,12 +39,14 @@ router.post('/launch', function(req, res, next) {
   const configLocal = path.join(bljDir,'resources','config','gui');
   try {
     console.log('entered try catch');
-    //console.log(req.body);
-    let currentConfig = req.body.config;
+    console.log(req.body);
+    const modules = req.body.modules;
+    const paramKeys = req.body.paramKeys;
+    const paramValues = req.body.paramValues;
     let launchArg = req.body.partialLaunchArg;
     //console.log(launchArg);
-    let configText = indexAux.parseBljJson(currentConfig);
-    let configName = currentConfig['project.configFile'];
+    const configText = indexAux.formatAsFlatFile(modules, paramKeys, paramValues);
+    let configName = paramValues[paramKeys.indexOf('project.configFile')];
     indexAux.saveConfigToLocal(configName,configText);
 
     launchArg['config'] = path.join(configLocal,configName);
