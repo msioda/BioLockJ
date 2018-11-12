@@ -1,150 +1,138 @@
 #!/bin/bash
-############################################################################
-##                                                                      	##
-##  Script launches BioLockJ in a Docker container                      	##
-##                                                                      	##
-##  Bash env must include pipeline base directory: $BLJ_PROJ            	##
-##  Must pass the script 2 runtime parameters:                          	##
-##                                                                  		##
-##  $config				Config file path                                 ##
-##  $inputDirPaths		Input dir paths (commma separated, no spaces)    ##
-##                                                                      	##
-##  Optional parameters:                                                	##
-##                                                                      	##
-##  $metadataFilePath		Metadata file directory path                	##
-##  $trimPrimersFilePath		Primer file directory path                   ##
-##  $BLJ_OPTIONS				Singleton options: -r or -p                  ##
-##                                                                      	##
-############################################################################
-. $BLJ/script/blj_functions
+##############################################################################
+##                                                                          ##
+##  Script launches BioLockJ in a Docker container                          ##
+##                                                                          ##
+##  Bash env must include pipeline base directory: $BLJ_PROJ                ##
+##  Must pass the script a minimum of 2 runtime parameters:                 ##
+##                                                                          ##
+##  $config                Config file path                                 ##
+##  $inputDirPaths         Input dir paths (commma separated, no spaces)    ##
+##                                                                          ##
+##  Optional parameters:                                                    ##
+##                                                                          ##
+##  $metadataFilePath       Metadata file directory path                    ##
+##  $trimPrimersFilePath    Primer file directory path                      ##
+##  $BLJ_OPTIONS            Singleton options: -r or -p                     ##
+##                                                                          ##
+##############################################################################
+[ ${#BLJ} -gt 0 ] && [ -d "$BLJ" ] && . $BLJ/script/blj_functions
 
-! $(valid_dir $BLJ_PROJ) && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
 ! $(valid_dir $BLJ) && echo "Exit program - Required bash variable BLJ undefined" && exit 1
-[ "$#" -lt 2 ] && echo "Exit script - Missing required script parameters: config & inputDirPaths" && exit 1
+! $(valid_dir $BLJ_PROJ) && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
 
-FROM_DOCKER="N"
-BLJ_CONFIG=""
-CONFIG_DIR=""
-BLJ_OPTIONS="-D"  #init to -D to indicate run BioLockJ as a Docker container
-config=""
-inputDirPaths=""
-metadataFilePath=""
-trimPrimersFilePath=""
+# Pass script input parameters + the argument value
+arg_exists() {
+	args=("$@")
+	numArgs=${#args[@]-1}
+	lastIndex=$((numArgs-1))
+	target=${args[$lastIndex]}
+	args=${args[@]:0:${lastIndex-1}}
+	for arg in $args; do [ $arg == $target ] && echo $target && return; done
+}
 
-# Validate all script params are valid
-for arg in "$@"; do
-	IFS="="
-	echo "found arg:  $arg"
-	tokens=( $arg )
-	if [ ${#tokens[*]} -eq 1 ]; then
-		if [ $arg == "-r" ]; then
-			BLJ_OPTIONS="$BLJ_OPTIONS -r"
-		elif [ $arg == "-docker" ]; then
-			FROM_DOCKER="Y"
-		else
-			echo "Exit script - Invalid runtime parameter: $arg"
-			exit 1
-		fi
-	elif [ ${#tokens[*]} -eq 2 ]; then
-		argName=${tokens[0]}
-		argVal=${tokens[1]}
-		if [ $argName == "config" ]; then
-			config=$argVal
-		elif [ $argName == "inputDirPaths" ]; then
-			inputDirPaths=$argVal
-		elif [ $argName == "metadataFilePath" ]; then
-			metadataFilePath=$argVal
-		elif [ $argName == "trimPrimersFilePath" ]; then
-			trimPrimersFilePath=$argVal
-		elif [ $argName == "-p" ]; then
-			BLJ_OPTIONS="$BLJ_OPTIONS -p $argVal"
-		else
-			echo "Exit script - Invalid runtime parameter name: $argName"
-			exit 1
-		fi
-	else
-		echo "Exit script - Invalid runtime parameter (too many equals) : $arg"
-		exit 1
-	fi
-done
-
-BLJ_OPTIONS="$BLJ_OPTIONS -b $BLJ_PROJ"
-
-# Require config script parameter
-if [ FROM_DOCKER == "N" ] && ! $(valid_file $config); then
-	echo "Exit script - Config file not found: $config"
-	exit 1
-elif	 [ ${#config} -gt 0 ]; then
-	echo "$config is a valid file path"
-	CONFIG_DIR=$(dirname $config)
-	BLJ_CONFIG=$(basename $config)
-	BLJ_OPTIONS="$BLJ_OPTIONS -C $CONFIG_DIR -c /config/$BLJ_CONFIG"
-fi 
-
-# Validate all inputDirPaths exists
-if [ ${#inputDirPaths} -lt 1 ]; then
-	echo "Exit script - Input directories not found: $inputDirPaths"
-	exit 1
-else
-	IFS=","
-	dirPaths=( $inputDirPaths )
-	for dir in "$dirPaths"; do
-		if [ FROM_DOCKER == "N" ] && ! $(valid_dir $dir); then
-			echo "Exit script - Input directory not found: $dir"
-			exit 1
-		else
-			echo "$dir is a valid directory path"
+# Pass script input parameters + the argument name
+# Named argument must be formated like "argName=argValue"
+get_named_arg() {
+	args=("$@")
+	numArgs=${#args[@]-1}
+	lastIndex=$((numArgs-1))
+	targetName=${args[$lastIndex]}
+	args=${args[@]:0:${lastIndex-1}}
+	for arg in $args; do
+		IFS="="
+		#echo "checking $arg"
+		tokens=( $arg )
+		if [ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $targetName ]; then
+			echo ${tokens[1]} && return
 		fi
 	done
-	BLJ_OPTIONS="$BLJ_OPTIONS -i $inputDirPaths"
-fi
+	echo ""
+}
 
-# Validate metadataFilePath is a valid directory path, if defined
-if [ ${#metadataFilePath} -gt 0 ] && [ FROM_DOCKER == "N" ] && ! $(valid_dir $metadataFilePath); then
-	echo "Exit script - Metadata file directory not found: $metadataFilePath"
-	exit 1
-elif [ ${#metadataFilePath} -gt 0 ]; then
-	BLJ_OPTIONS="$BLJ_OPTIONS -m $metadataFilePath"
-fi
+# Verify host file exists, if dockblj is not deployed inside a Docker container
+validateHostFile() {
+	#echo "validate Host Dir: $# + $1"
+	[ ! ${#inDockerContainer} -gt 0 ] && [ $# -eq 2 ] && ! $(valid_file $1) && echo "Exit script - $2 file not found: $1" && exit 1
+}
 
-# Validate trimPrimersFilePath is a valid directory path, if defined
-if [ ${#trimPrimersFilePath} -gt 0 ] && [ FROM_DOCKER == "N" ] && ! $(valid_dir $trimPrimersFilePath); then
-	echo "Exit script - Primer file directory not found: $trimPrimersFilePath"
-	exit 1
-elif [ ${#trimPrimersFilePath} -gt 0 ]; then
-	BLJ_OPTIONS="$BLJ_OPTIONS -t $trimPrimersFilePath"
-fi
+# Verify host directory exists, if dockblj is not deployed inside a Docker container
+validateHostDir() {
+	#echo "validate Host Dir: $# + $1"
+	[ ! ${#inDockerContainer} -gt 0 ] && [ $# -eq 2 ] && ! $(valid_dir $1) && echo "Exit script - $2 directory not found: $1" && exit 1
+}
 
-echo "------------------------------------------------------------"
-echo "------------- Output runtime script parameters -------------"
-echo "------------------------------------------------------------"
-echo "config = $config"
-echo "inputDirPaths = $inputDirPaths"
-echo "metadataFilePath = $metadataFilePath"
-echo "trimPrimersFilePath = $trimPrimersFilePath"
-echo "BLJ_PROJ = $BLJ_PROJ"
-echo "BLJ_OPTIONS = $BLJ_OPTIONS"
-echo "------------------------------------------------------------"
+# Verify paths are valid, if dockblj is not deployed inside a Docker container
+validate_input() {
+	validateHostFile $config "Config"
+	validateHostDir $metadataFilePath "Metadata"
+	validateHostDir $trimPrimersFilePath "Primer"
+	if [ ${#inputDirPaths} -lt 0 ]; then
+		echo "Exit script - Input directory is required" && exit 1
+	else
+		IFS=","
+		dirPaths=( $inputDirPaths )
+		for dir in "$dirPaths"; do
+			validateHostDir $dir "Input"
+		done
+	fi 
+}
+
+# Populates the docker run BLJ_OPTIONS parameter
+# Include -D to run BioLockJ in a Docker container
+# Include Docker container path to required Config file
+# Include all directory paths the manager may need to map volumes in spawned Docker compute node instances
+get_blj_options() {
+	options="-D -b $BLJ_PROJ" 
+	[ ${#changePassword} -gt 0 ] && options="$options $changePassword"
+	[ ${#restartPipeline} -gt 0 ] && options="$options $restartPipeline"
+	[ ${#inDockerContainer} -gt 0 ] && options="$options $inDockerContainer"
+	[ ${#config} -gt 0 ] && options="$options -C $(dirname $config) -c /config/$(basename $config)"
+	[ ${#inputDirPaths} -gt 0 ] && options="$options -i $inputDirPaths"
+	[ ${#metadataFilePath} -gt 0 ] && options="$options -m $metadataFilePath"
+	[ ${#trimPrimersFilePath} -gt 0 ] && options="$options -t $trimPrimersFilePath"
+	echo $options
+}
+
+get_docker_volumes() {
+	VOL="-v /var/run/docker.sock:/var/run/docker.sock -v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input"
+	[ ${#metadataFilePath} -gt 0 ] && VOL="$VOL -v $metadataFilePath:/meta"
+	[ ${#trimPrimersFilePath} -gt 0 ] && VOL="$VOL -v $trimPrimersFilePath:/primer"
+	echo $VOL
+}
+
+config=$(get_named_arg "$@" "config")
+inputDirPaths=$(get_named_arg "$@" "inputDirPaths")
+metadataFilePath=$(get_named_arg "$@" "metadataFilePath")
+trimPrimersFilePath=$(get_named_arg "$@" "trimPrimersFilePath")
+changePassword=$(arg_exists "$@" "-p")
+restartPipeline=$(arg_exists "$@" "-r")
+inDockerContainer=$(arg_exists "$@" "-docker")
+echo $inDockerContainer
+validate_input
+
+options="$(get_blj_options)"
+echo "options: $options"
 
 if [ ${#metadataFilePath} -gt 0 ] && [ ${#trimPrimersFilePath} -gt 0 ]; then
-	docker run -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ_PROJ:/pipeline:delegated -v $CONFIG_DIR:/config -v $inputDirPaths:/input \
+	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
+		-v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta -v $trimPrimersFilePath:/primer \
 		--rm biolockj/manager
 elif [ ${#metadataFilePath} -gt 0 ]; then	
-	docker run -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ_PROJ:/pipeline:delegated -v $CONFIG_DIR:/config -v $inputDirPaths:/input \
+	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
+		-v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta \
 		--rm biolockj/manager 
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then	
-	docker run -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ_PROJ:/pipeline:delegated -v $CONFIG_DIR:/config -v $inputDirPaths:/input \
+	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
+		-v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $trimPrimersFilePath:/primer \
 		--rm biolockj/manager 
 else
-	docker run -e "BLJ_OPTIONS=$BLJ_OPTIONS" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ_PROJ:/pipeline:delegated -v $CONFIG_DIR:/config -v $inputDirPaths:/input \
+	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
+		-v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		--rm biolockj/manager 
 fi
 
-[ $? -ne 0 ] && echo "Exit script - Docker run command failed"  
+[ $? -ne 0 ] && echo "Exit script - docker run command failed"  
