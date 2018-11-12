@@ -25,6 +25,7 @@ RUN apt-get upgrade -y && \
 ARG BLJ_VERSION
 ARG BLJ_DATE
 ENV BLJ=/app/biolockj
+ENV BLJ_PROJ=/pipelines
 ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tgz
 ENV BLJ_RELEASE_URL=https://github.com/msioda/BioLockJ/releases/download/${BLJ_VERSION}/$BLJ_TAR
 RUN echo ${BLJ_DATE} && \
