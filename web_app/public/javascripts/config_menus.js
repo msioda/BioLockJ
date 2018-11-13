@@ -365,7 +365,6 @@ function runModuleFunctions() {//large function to build module li and counters
         target.classList.add("modChoosen");
         }
     }
-    currentConfig.saveConfigParamsForm();
   };// end toggleSelectModule
 
   function makeModuleLi(link, classes){
@@ -423,29 +422,6 @@ function runModuleFunctions() {//large function to build module li and counters
   });
 };//end runModuleFunctions
 runModuleFunctions();
-
-// //Event listeners
-//  //eventlistener for adding the recent config files to "recent"
-//  document.getElementById("recent").addEventListener("mouseover", function() {
-//    const recentMenuChoices = Object.keys(localStorage);
-//    for (var i = 0; i < recentMenuChoices.length; i++) {
-//      let opt = document.createElement('a');
-//      opt.setAttribute("name", recentMenuChoices[i]);
-//      var text = document.createTextNode(recentMenuChoices[i].toString());
-//      opt.addEventListener("click", function() {
-//        currentConfig = JSON.parse(localStorage.getItem(this.name));
-//        currentConfig.sendConfigDataToForms();
-//      });
-//      opt.appendChild(text);
-//      opt.setAttribute('position', 'relative');
-//      opt.setAttribute('display', 'block');
-//      opt.classList.add('recentConfigs');
-//      let proj = document.getElementById("projects");
-//      proj.appendChild(opt);
-//    };
-//  }, {
-//    once: true
-//  });
 
  // Close the dropdown if the user clicks outside of it
  window.onclick = function(e) {
