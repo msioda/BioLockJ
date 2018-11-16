@@ -24,10 +24,9 @@
 # Pass script input parameters + the argument value
 arg_exists() {
 	args=("$@")
-	numArgs=${#args[@]-1}
-	lastIndex=$((numArgs-1))
-	target=${args[$lastIndex]}
-	args=${args[@]:0:${lastIndex-1}}
+	numArgs=${#@}
+	targetName=${args[$((numArgs-1))]}
+	args=${args[@]:0:$((numArgs-2))}
 	for arg in $args; do [ $arg == $target ] && echo $target && return; done
 }
 
@@ -35,19 +34,16 @@ arg_exists() {
 # Named argument must be formated like "argName=argValue"
 get_named_arg() {
 	args=("$@")
-	numArgs=${#args[@]-1}
-	lastIndex=$((numArgs-1))
-	targetName=${args[$lastIndex]}
-	args=${args[@]:0:${lastIndex-1}}
+	numArgs=${#@}
+	targetName=${args[$((numArgs-1))]}
+	args=${args[@]:0:$((numArgs-2))}
 	for arg in $args; do
 		IFS="="
-		#echo "checking $arg"
 		tokens=( $arg )
 		if [ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $targetName ]; then
 			echo ${tokens[1]} && return
 		fi
 	done
-	echo ""
 }
 
 # Verify host file exists, if dockblj is not deployed inside a Docker container
@@ -101,7 +97,10 @@ get_docker_volumes() {
 	echo $VOL
 }
 
+echo "TESTING..."
 config=$(get_named_arg "$@" "config")
+echo "DONE CALLING get_named_arg for config..."
+
 inputDirPaths=$(get_named_arg "$@" "inputDirPaths")
 metadataFilePath=$(get_named_arg "$@" "metadataFilePath")
 trimPrimersFilePath=$(get_named_arg "$@" "trimPrimersFilePath")
