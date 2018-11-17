@@ -10,15 +10,14 @@
 ############################################################################
 . $BLJ/script/blj_functions
 
-
 pipeline=$(most_recent_pipeline)
 SUM=summary.txt
 MSG=
-if $(valid_file $SUM); then
+if [ -f $SUM ]; then
 	val=$(grep -B 1 "mkdir" $SUM)
 	[ ${#val} -gt 0 ] && MSG="$val"
 elif [ ${#pipeline} -gt 0 ]; then
-	val=$(grep -B 1 "mkdir" $pipeline/$SUM)
+	val=$(grep -B 1 "mkdir" "$pipeline/$SUM")
 	[ ${#val} -gt 0 ] && MSG="$val"
 else
 	MSG="No completed pipelines found in BLJ_PROJ: $BLJ_PROJ"
@@ -27,5 +26,5 @@ fi
 if [ ${#MSG} -gt 0 ]; then
 	echo "$MSG"
 else
-	echo "Summary missing scp command (applicable on cluster only)" 
+	echo "Summary missing scp command (applicable for cluster pipelines only)" 
 fi

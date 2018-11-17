@@ -10,12 +10,12 @@
 
 pipeline=$(most_recent_pipeline)
 SUM=summary.txt
-if $(valid_file $SUM); then
+if [ -f $SUM ]; then
 	echo "Print summary file: $SUM"
 	cat $SUM
 elif [ ${#pipeline} -gt 0 ]; then
 	echo "Print summary file: $pipeline/$SUM"
-	cat $pipeline/$SUM
+	cat "$pipeline/$SUM"
 else
 	echo "No pipeline summary found in BLJ_PROJ: $BLJ_PROJ"
 fi

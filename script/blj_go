@@ -7,14 +7,13 @@
 ##############################################################
 . $BLJ/script/blj_functions
 
+[ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
+
 pipeline=$(most_recent_pipeline)
 if [ ${#pipeline} -gt 0 ]; then
 	echo "Goto latest BioLockJ pipeline: $pipeline"
 	cd "$pipeline"
 	ls "$pipeline"
-elif $(valid_dir $BLJ_PROJ); then
-	cd $BLJ_PROJ
-	echo "No pipelines found in BLJ_PROJ: $BLJ_PROJ"
 else
-	echo "BLJ_PROJ is not a valid directory: $BLJ_PROJ"
+	echo "No pipelines found in BLJ_PROJ: $BLJ_PROJ"
 fi

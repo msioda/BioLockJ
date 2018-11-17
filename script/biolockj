@@ -12,49 +12,62 @@
 ##########################################################################
 . $BLJ/script/blj_functions
 
-BLJ_JAR=$BLJ/dist/BioLockJ.jar
-
-! $(valid_dir $BLJ_PROJ)  && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
-! $(valid_dir $BLJ) && echo "Exit program - Required bash variable BLJ undefined" && exit 1
-! $(valid_file $BLJ_JAR) && echo "Exit program - $BLJ_JAR not found" && exit 1
-[ $# -eq 0 ] && echo "Exit program - Required configuration file parameter missing" && exit 1
-
-if [ $# -eq 1 ]; then
-    if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
-        echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
-        echo "usage: biolockj [-hr] [-p password] [<file>]"
-        echo "Run BioLockJ using the Config: <file>"
-        echo ""
-        echo "-b --basedir                  Pipeline parent directory"
-        echo "-c --config                   BioLockJ Config file"
-        echo "-h --help                     Show this help menu"
-        echo "-p --password new_password    Encrypt new_password and save it to BioLockJ Config property mail.encryptedPassword"
-        echo "-r --restart                  Restart existing pipeline "
-        exit 0
-    fi
-fi
-
 config=""
 params=""
-if [ $# -eq 1 ]; then
+bljJar=$BLJ/dist/BioLockJ.jar
+
+[ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
+[ ! -f "$bljJar" ] && echo "Exit program - $bljJar not found" && exit 1
+
+if [ $# -eq 1 ] && [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
+    echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
+    echo "Run a new pipeline:                   biolockj <file>"
+    echo "Run a new pipeline:                   biolockj -c/--config <file>"
+    echo "Restart a failed pipeline:            biolockj -r/--restart <file>"
+    echo "Change admin email password:          biolockj -p/--password <new_password> <file>"
+    echo "View BioLockJ help menu:              biolockj -h/--help"
+    exit 0
+elif [ $# -eq 1 ]; then
 	config=$1
-elif [ $# -eq 2 ]; then
-	[ "$1" != "-r" ] && echo "Exit program - Invalid command switch:   $1" && exit 1
-	echo "Restarting failed pipeline"
- 	config=$2
-	params=$1
-elif [ $# -eq 3 ]; then
-	[ "$1" != "-p" ] && [ "$1" != "--password" ] && echo "Exit program - Invalid  BioLockJ parameters: $1 $2" && exit 1   
-	echo "Encrypt & save email password to Config property mail.encryptedPassword in $3"
-	config=$3
-	params="$1 $2"   
-else
-    echo "Exit program - Too many script parameters: max of 3 parameters are allowed" && exit 1
 fi
 
-echo "BioLockJ JAR: $BLJ_JAR"
+if [ $# -eq 0 ]; then
+	echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1
+elif [ $# -eq 1 ]; then
+	config=$1
+elif [ $# -eq 2 ]; then
+	if [ "$1" == "-c" ] || [ "$1" == "--config" ]; then
+		config=$2
+	elif [ "$1" == "-r" ] || [ "$1" == "--restart" ]; then
+		echo "Restarting pipeline..."
+		params=$1
+		config=$2
+	else
+		echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1
+	fi
+elif [ $# -eq 3 ]; then
+	if [ "$1" == "-p" ] || [ "$1" == "--password" ]; then
+		echo "Encrypt & save email password to Config property mail.encryptedPassword in $3"
+		params="$1 $2"   
+		config=$3
+	elif [ "$1" == "-r" ] || [ "$1" == "--restart" ] && [ "$2" == "-c" ] || [ "$2" == "--config" ]; then
+		echo "Restarting pipeline..."
+		params=$1
+		config=$3
+	else
+		echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1 
+	fi  
+else
+    echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1 
+fi
+
+[ ! -f "$config" ] && echo "Exit program - $config not found"  && $BLJ/script/biolockj -h && exit 1
+
+echo "BioLockJ JAR: $bljJar" 
 echo "BioLockJ Config:  $config"
-! $(valid_file $config) && echo "Exit program - $config not found" && exit 1
-nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &
-[ $? != 0 ] && echo "Exit program - Unable to execute $BLJ_JAR" && exit 1
-echo "Executing command [ nohup java -jar $BLJ_JAR $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 & ]"
+
+nohup java -jar $bljJar $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &
+
+[ $? != 0 ] && echo "Exit program - Unable to run $bljJar" && exit 1
+
+echo "Executing command: \"nohup java -jar $bljJar $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &\""
