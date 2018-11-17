@@ -11,7 +11,7 @@
 ##                                                                          ##
 ##  Optional parameters:                                                    ##
 ##                                                                          ##
-##  Admin email passwordL 	changePassword                                  ##
+##  Admin email password    changePassword                                  ##
 ##  Metadata directory:     metadataFilePath                                ##
 ##  Primer directory:       trimPrimersFilePath                             ##
 ##  Restart flag:           -r                                              ##
@@ -22,21 +22,17 @@
 
 [ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
 
-
 # Pass script input parameters + the argument value
-# Return 0 if arg exists, otherwise 1
+# Return value if found in input parameters
 arg_exists() {
 	args=("$@")
 	numArgs=${#@}
 	target=${args[$((numArgs-1))]}
-	#echo "target: $target"
 	args=${args[@]:0:$((numArgs-1))}
 	for arg in $args;
 	do
-		#echo "arg_exists testing: $arg"
-		[ "$arg" == "$target" ] && return
+		[ "$arg" == "$target" ] && echo "$target" && return
 	done
-	false
 }
 
 # Pass script input parameters + the argument name
@@ -45,13 +41,11 @@ get_named_arg() {
 	args=("$@")
 	numArgs=${#@}
 	target=${args[$((numArgs-1))]}
-	#echo "target: $target"
 	args=${args[@]:0:$((numArgs-1))}
 	for arg in $args; 
 	do
 		IFS="="
 		tokens=( $arg )
-		#echo "get_named_arg testing: $arg"
 		if [ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ]; then
 			echo ${tokens[1]} && return
 		fi
@@ -62,13 +56,13 @@ get_named_arg() {
 # Verify host file exists, if dockblj is not deployed inside a Docker container
 validateHostFile() {
 	#echo "validate Host Dir: $# + $1"
-	[ ! $inDockerContainer ] && [ $# -eq 2 ] && [ ! -f "$1" ] && echo "Exit script - $2 file not found: $1" && exit 1
+	[ ${#inDockerContainer} -eq 0 ] && [ $# -eq 2 ] && [ ! -f "$1" ] && echo "Exit script - $2 file not found: $1" && exit 1
 }
 
 # Verify host directory exists, if dockblj is not deployed inside a Docker container
 validateHostDir() {
 	#echo "validate Host Dir: $# + $1"
-	[ ! $inDockerContainer ] && [ $# -eq 2 ] && [ ! -d "$1" ] && echo "Exit script - $2 directory not found: $1" && exit 1
+ 	[ ${#inDockerContainer} -eq 0 ] && [ $# -eq 2 ] && [ ! -d "$1" ] && echo "Exit script - $2 directory not found: $1" && exit 1
 }
 
 # Verify paths are valid, if dockblj is not deployed inside a Docker container
@@ -93,7 +87,7 @@ validate_input() {
 # Include all directory paths the manager may need to map volumes in spawned Docker compute node instances
 get_blj_options() {
 	options="-D -b $BLJ_PROJ" 
-	[ $restartPipeline ] && options="$options -r"
+	[ ${#restartPipeline} -gt 0 ] && options="$options $restartPipeline"
 	[ ${#changePassword} -gt 0 ] && options="$options -p $changePassword"
 	[ ${#config} -gt 0 ] && options="$options -C $(dirname $config) -c /config/$(basename $config)"
 	[ ${#inputDirPaths} -gt 0 ] && options="$options -i $inputDirPaths"
@@ -105,13 +99,13 @@ get_blj_options() {
 # Print status message with GUI context and BLJ_OPTIONS
 get_status_msg() {
 	msg=""
-	if [ $inDockerContainer ]; then
+	if [ ${#inDockerContainer} -gt 0 ]; then
 		msg="Docker biolockj/webapp GUI"
 	else
 		msg="Host machine $BLJ/web_app GUI" 
 	fi
 	
-	if [ $restartPipeline ]; then 
+	if [ ${#restartPipeline} -gt 0 ]; then 
 		msg+=" restarting biolockj/manager Docker container"
 	else
 		msg+=" starting biolockj/manager Docker container"
@@ -132,7 +126,7 @@ inDockerContainer=$(arg_exists "$@" "-docker")
 validate_input
 
 # Call function to print status message
-get_status_msg
+echo $(get_status_msg)
 
 if [ ${#metadataFilePath} -gt 0 ] && [ ${#trimPrimersFilePath} -gt 0 ]; then
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
