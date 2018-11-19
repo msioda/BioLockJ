@@ -4,20 +4,18 @@
 ##  This script calls ant on build.xml to create BioLockJ.jar  ##
 ##                                                             ##
 #################################################################
-. $BLJ/script/blj_functions
 
 echo "Building BioLockJ with ANT..."
-if $(valid_dir $BLJ/resources); then
-	cd $BLJ/resources
-	[ ${#1} -eq 0 ] && ant
-	[ ${#1} -gt 0 ] && ant $1
-	echo "Ant script execution complete"
-else
-	echo "Invalid directory path: $BLJ/resources" && exit 1
-fi
+[ ! -f "$BLJ/resources/build.xml" ] && echo "ANT build script missing: $BLJ/resources/build.xml" && exit 1
 
-if $(valid_file $BLJ/dist/BioLockJ.jar); then
-	ls $BLJ/dist/BioLockJ.jar
+cd $BLJ/resources
+[ ${#1} -eq 0 ] && ant
+[ ${#1} -gt 0 ] && ant $1
+echo "Ant script execution complete"
+
+
+if [ -f "$BLJ/dist/BioLockJ.jar" ]; then
+	ls -lh "$BLJ/dist/BioLockJ.jar"
 else
 	echo "Build Failed - missing $BLJ/dist/BioLockJ.jar"
 fi

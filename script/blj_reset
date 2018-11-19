@@ -8,33 +8,24 @@
 . $BLJ/script/blj_functions
 
 parentDir="$(dirname $PWD)"
-currentDirName="$(basename $PWD)"
-maxNum=${currentDirName%_*}
+currentDir="$(basename $PWD)"
+targetNum=${currentDir%_*}
 
-modStarted=$PWD/biolockjStarted
-modComplete=$PWD/biolockjComplete
-pipelineComplete=$parentDir/biolockjComplete
+! $(is_pipeline_dir $parentDir) || (($targetNum < 0)) || [ ! -f "$PWD/biolockjComplete" ] && \
+	echo "ABORT: blj_reset must be executed within a biolockjComplete module directory" && exit 1
 
-if [ ${#maxNum} -ne 0 ] && $(valid_file $modComplete ); then
+echo "Reset $parentDir modules after and including step #$targetNum"
+[ -f "$parentDir/biolockjComplete" ] && rm "$parentDir/biolockjComplete" && echo "deleted $parentDir/biolockjComplete"
+[ ! -f "$PWD/biolockjStarted" ] && touch "$PWD/biolockjStarted" && echo "created $PWD/biolockjStarted"
+rm "$PWD/biolockjComplete" && echo "deleted $PWD/biolockjComplete"
 
-	echo "Reset BioLockJ pipeline $parentDir from step # $maxNum"
-	$(valid_file $pipelineComplete) && rm $pipelineComplete && echo "deleted $pipelineComplete"
-	$(valid_file $modStarted) && touch $modStarted && echo "created $modStarted"
-	rm $modComplete && echo "delete $modComplete"
-	
-	for pipelineDir in $parentDir/*; do
-		if $(valid_dir $pipelineDir); then
-			modStarted=$pipelineDir/biolockjStarted
-			modComplete=$pipelineDir/biolockjComplete
-			dir="$(basename $pipelineDir)"
-			modNum=${dir%_*}
-			if [ ${#modNum} -gt 0 ] && [ $modNum -gt $maxNum ]; then
-				$(valid_file $modComplete) && rm $modComplete && echo "delete $modComplete"
-				$(valid_file $modStarted) && touch $modStarted && echo "create $modStarted"
-			fi
+for modDir in $parentDir/*; do
+	if [ -d $modDir ]; then
+		dirName="$(basename $modDir)"
+		modNum=${dirName%_*}
+		if [ $modNum -gt $targetNum ] && ! $(is_empty $modDir); then
+			[ -f "$modDir/biolockjComplete" ] && rm "$modDir/biolockjComplete" && echo "deleted $modDir/biolockjComplete"
+			[ ! -f "$modDir/biolockjStarted" ] && touch "$modDir/biolockjStarted" && echo "created $modDir/biolockjStarted"
 		fi
-	done
-	
-else
-	echo "Command (blj_reset) aborted: no completed pipelines were found." 
-fi
+	fi
+done
