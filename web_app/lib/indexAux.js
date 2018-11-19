@@ -48,7 +48,7 @@ exports.saveConfigToLocal = function(configName, configText){
     configName = configName.concat('.properties')
   }
   const configPath = path.join('/config/', configName);
-  console.log(configPath.toString());
+  //console.log(configPath.toString());
   fs.writeFile(configPath, configText,function(err) {
     if(err) {
         return console.log(err);
@@ -127,9 +127,8 @@ exports.runLaunchCommand = function(command, eventEmitter) {
     //child.unref();//to run in background
   } catch (e) {
     console.error(`launch error: ${e}`);
-  } finally {
-
   }
+  
 }//end runLaunchCommand
 
 exports.newestFileInDir = function(dirPath){

@@ -435,6 +435,28 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     return partialLauchArgument;
   }
 
+  this.formatAsFlatFile = function(){
+    var text = "";
+    textFile = null;
+    try {
+      //add modules to config first
+      if ( this.modules != null && this.modules.length > 0 ){
+        for (let i = 0; i < this.modules.length; i++) {
+          text += '#BioModule '.concat(this.modules[i],"\n");;
+        }
+        //console.log(text);
+      };
+      //for non_module
+      if ( this.paramKeys != null && this.paramKeys.length > 0 && this.paramValues != null && this.paramValues.length > 0 ){
+        for (let i = 0; i < this.paramKeys.length; i++){
+          text += this.paramKeys[i].concat("=", this.paramValues[i], "\n");
+        }
+      }
+      return text;
+    } catch (e) {
+      console.log('formatAsFlatFile: ', e);
+    };
+  }//end formatAsFlatFile
 }//end Config prototype
 
 var currentConfig = new Config();//IMPORTANT: This variable holds all of the selected configuations
@@ -455,84 +477,45 @@ const readUploadedFileAsText = (inputFile) => {
 }
 document.getElementById('localFile').addEventListener('change', currentConfig.loadLocal);
 
-
-// NOTE: Something is broken here...
-// Function for creating downloadable config file
-// (function() {
-//   makeTextFile = function() {
-//     var text = "";
-//     textFile = null;
-//     //add modules to config first
-//     if (currentConfig["modules"] != null){
-//       for (var i = 0; i < currentConfig["modules"].length; i++) {
-//         text += '#BioModule '.concat(currentConfig["modules"][i],"\n");
-//       }
-//     };
-//     //for non_module
-//     for (var key in currentConfig) {
-//       console.log('making download');
-//       console.log(key);
-//       if (currentConfig.hasOwnProperty(key)) { //only lets keys that are user inputed pass
-//         if (key == "modules" || key == "project.configFile") {// skipping project.configFile and modules
-//         } else if (key.toString() != "project.configFile" || key != "modules") { //project.configFile doesn't go inside the document
-//           text += key.concat("=", currentConfig[key], "\n");
-//         }
-//       }
-//     }
-//     var data = new Blob([text], {
-//       type: 'text/plain'
-//     });
-//     // If we are replacing a previously generated file we need to manually revoke the object URL to avoid memory leaks.
-//     if (textFile !== null) {
-//       window.URL.revokeObjectURL(textFile);
-//     }
-//     textFile = window.URL.createObjectURL(data);
-//     return textFile;
-//   }//end makeTextFile
-//
-//   //gets all buttons with create class
-//   var createDownload = document.getElementsByClassName('createDownload');
-//   for (var i = 0; i < createDownload.length; i++) {
-//     //console.log(createDownload[i]);
-//     createDownload[i].addEventListener('click', function() {
-//       //event.preventDefault()
-//       var links = document.getElementsByClassName('downloadlink');
-//       for (var a = 0; a < links.length; a++) {
-//         let link = links[a];
-//         console.log(links[a]);
-//         console.log('links');
-//         link['download'] = currentConfig["project.configFile"] + '.properties';
-//         link.href = makeTextFile();
-//         link.style.display = 'block';
-//         };
-//       }, false);
-//     };//end forloop for createDownload
-// })();
-
 //Adding all eventlisteners
+//eventlistener for adding the recent config files to "recent"
+document.getElementById("recent").addEventListener("mouseover", function() {
+  const recentMenuChoices = Object.keys(localStorage);
+  for (var i = 0; i < recentMenuChoices.length; i++) {
+    let opt = document.createElement('a');
+    opt.setAttribute("name", recentMenuChoices[i]);
+    var text = document.createTextNode(recentMenuChoices[i].toString());
+    opt.addEventListener("click", function() {
+     const tempConfig = JSON.parse(localStorage.getItem(this.name));
+      console.log(tempConfig);
+      currentConfig = new Config(tempConfig.modules, tempConfig.paramKeys, tempConfig.paramValues);
+      currentConfig.sendConfigDataToForms();
+      console.log(currentConfig);
+    });
+    opt.appendChild(text);
+    opt.setAttribute('position', 'relative');
+    opt.setAttribute('display', 'block');
+    opt.classList.add('recentConfigs');
+    let proj = document.getElementById("projects");
+    proj.appendChild(opt);
+  };
+}, {
+ once: true
+});
 
- //eventlistener for adding the recent config files to "recent"
- document.getElementById("recent").addEventListener("mouseover", function() {
-   const recentMenuChoices = Object.keys(localStorage);
-   for (var i = 0; i < recentMenuChoices.length; i++) {
-     let opt = document.createElement('a');
-     opt.setAttribute("name", recentMenuChoices[i]);
-     var text = document.createTextNode(recentMenuChoices[i].toString());
-     opt.addEventListener("click", function() {
-       const tempConfig = JSON.parse(localStorage.getItem(this.name));
-       currentConfig = new Config(tempConfig.modules, tempConfig.paramKeys, tempConfig.paramValues);
-       currentConfig.sendConfigDataToForms();
-     });
-     opt.appendChild(text);
-     opt.setAttribute('position', 'relative');
-     opt.setAttribute('display', 'block');
-     opt.classList.add('recentConfigs');
-     let proj = document.getElementById("projects");
-     proj.appendChild(opt);
-   };
- }, {
-   once: true
- });
+const createDownload = document.getElementsByClassName('createDownload');
+for (var i = 0; i < createDownload.length; i++) {
+  createDownload[i].addEventListener('click', function() {
+    //event.preventDefault();
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(currentConfig.formatAsFlatFile()));
+    element['download'] = currentConfig.paramValues[currentConfig.paramKeys.indexOf("project.configFile")];
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  }, false);
+};//end forloop for createDownload
 
 for (const launch of document.getElementsByClassName("launchBlj")) {
   launch.addEventListener("click", function(event){
@@ -568,7 +551,6 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
 };//end forloop
 
 //for autosave
-(function () {
   const configFormInputs = Array.from(document.getElementById('configForm').getElementsByTagName('input'));
   //const configTexts = configFormInputs.getElementsByTagName('text');
   const configTexts = configFormInputs.filter(inp => inp.type === 'text');
@@ -603,5 +585,4 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
     currentConfig.saveConfigParamsForm();
     e.preventDefault();
     }
-  })
-})();
+  });
