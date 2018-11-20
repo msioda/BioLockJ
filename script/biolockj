@@ -24,7 +24,7 @@ if [ $# -eq 1 ] && [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     echo "Run a new pipeline:                   biolockj <file>"
     echo "Run a new pipeline:                   biolockj -c/--config <file>"
     echo "Restart a failed pipeline:            biolockj -r/--restart <file>"
-    echo "Change admin email password:          biolockj -p/--password <new_password> <file>"
+    echo "Encrypt email password:                biolockj -p/--password <new_password> <file>"
     echo "View BioLockJ help menu:              biolockj -h/--help"
     exit 0
 elif [ $# -eq 1 ]; then

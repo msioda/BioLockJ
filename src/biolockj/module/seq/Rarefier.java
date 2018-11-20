@@ -45,11 +45,12 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		super.checkDependencies();
 		final Integer rarefyingMax = Config.getPositiveInteger( INPUT_RAREFYING_MAX );
 		final Integer rarefyingMin = Config.getNonNegativeInteger( INPUT_RAREFYING_MIN );
+		
+		
 
-		if( rarefyingMax == null || rarefyingMax < 1 || rarefyingMin == null || rarefyingMin > rarefyingMax )
+		if( ( rarefyingMin == null && rarefyingMax == null ) || rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
 		{
-			throw new Exception( "Invalid parameter value.  Rarefier requires that (" + INPUT_RAREFYING_MIN + " <= "
-					+ INPUT_RAREFYING_MAX + ") & (" + INPUT_RAREFYING_MAX + " > 1)" );
+			throw new Exception( "Invalid parameters!  Rarefier requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
 		}
 	}
 

@@ -362,7 +362,6 @@ public final class RMetaUtil
 	{
 		for( final BioModule module: Pipeline.getModules() )
 		{
-			Log.debug( RMetaUtil.class, "Looking for Qiime: " + module.getClass().getName() );
 			if( module.getClass().getName().toLowerCase().contains( "qiime" ) )
 			{
 				Log.debug( RMetaUtil.class, "Found Qiime Module: " + module.getClass().getName() );
