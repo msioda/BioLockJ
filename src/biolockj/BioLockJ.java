@@ -34,7 +34,7 @@ public class BioLockJ
 
 	private BioLockJ()
 	{}
-
+	
 	/**
 	 * Copy file to pipeline root directory.
 	 * 
@@ -172,11 +172,7 @@ public class BioLockJ
 		catch( final Exception ex )
 		{
 			printFatalError( ex );
-			if( !RuntimeParamUtil.isDirectMode() )
-			{
-				markProjectStatus( Pipeline.BLJ_FAILED );
-			}
-
+			markProjectStatus( Pipeline.BLJ_FAILED );
 			logFinalException( args, ex );
 		}
 		finally
@@ -300,7 +296,7 @@ public class BioLockJ
 			final File f = new File( restartDir.getAbsolutePath() + File.separator + Pipeline.BLJ_FAILED );
 			if( f.exists() )
 			{
-				FileUtils.forceDelete( f );
+				BioLockJUtil.deleteWithRetry( f, 5 );
 			}
 		}
 
@@ -355,7 +351,7 @@ public class BioLockJ
 			if( ModuleUtil.subDirExists( bioModule, BioModule.TEMP_DIR ) )
 			{
 				Log.info( BioLockJ.class, "Delete temp dir for BioLockJ Module: " + bioModule.getClass().getName() );
-				FileUtils.forceDelete( ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ) );
+				BioLockJUtil.deleteWithRetry( ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ), 10 );
 			}
 		}
 	}
@@ -424,7 +420,7 @@ public class BioLockJ
 	{
 		if( Log.getFile() != null )
 		{
-			Log.error( BioLockJ.class, "BioLockJ exception: " + ex.getMessage() + " --> Program args: "
+			Log.error( BioLockJ.class, "FATAL APPLICATION ERROR - " + ex.getMessage() + " --> Program args: "
 					+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ), ex );
 		}
 		else
@@ -445,9 +441,7 @@ public class BioLockJ
 	{
 		try
 		{
-			Log.info( BioLockJ.class, "Pipeline failed before root directory or Log file was created!" );
-			printFatalError( fatalException );
-
+			Log.error( BioLockJ.class, "Pipeline failed before root directory or Log file was created!" );
 			String suffix = null;
 			try
 			{
@@ -502,13 +496,13 @@ public class BioLockJ
 
 	private static void printFatalError( final Exception ex )
 	{
-		Log.warn( BioLockJ.class, Log.LOG_SPACER );
-		Log.warn( BioLockJ.class, "Fatal Exception: " + ex.getMessage() );
+		Log.error( BioLockJ.class, Log.LOG_SPACER );
+		Log.error( BioLockJ.class, "Fatal Exception: " + ex.getMessage() );
 		for( int i = 0; i < ex.getStackTrace().length; i++ )
 		{
-			Log.warn( BioLockJ.class, ex.getStackTrace()[ i ].toString() );
+			Log.error( BioLockJ.class, ex.getStackTrace()[ i ].toString() );
 		}
-		Log.warn( BioLockJ.class, Log.LOG_SPACER );
+		Log.error( BioLockJ.class, Log.LOG_SPACER );
 	}
 
 	private static void setSingleModeStatus() throws Exception

@@ -22,8 +22,6 @@ import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.implicit.parser.ParserModule;
-import biolockj.util.BashScriptBuilder;
-import biolockj.util.RuntimeParamUtil;
 
 /**
  * This is the superclass for all WGS and 16S biolockj.module.classifier BioModules.
@@ -69,24 +67,27 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 			{
 				final String defaultProp = getClassifierType() + "." + EXE_CLASSIFIER.substring( 4 );
 
-				classifierExe = Config.requireString( defaultProp );
+				classifierExe = Config.getString( defaultProp );
 
-				Log.info( getClass(), "Loading default classifier property: " + defaultProp + " = " + classifierExe );
-
-				if( classifierExe == null || classifierExe.isEmpty() )
+				if( classifierExe != null && !classifierExe.isEmpty() )
 				{
-					throw new ConfigNotFoundException( EXE_CLASSIFIER );
+					Log.info( getClass(), "Using default classifier property: " + defaultProp + " = " + classifierExe );
+				}
+				else
+				{
+					classifierExe = getClassifierType();
 				}
 			}
 
-			if( !BashScriptBuilder.clusterModuleExists( classifierExe ) && !RuntimeParamUtil.isDockerMode() )
-			{
-				final File f = new File( Config.getSystemFilePath( classifierExe ) );
-				if( !f.exists() )
-				{
-					Config.requireExistingFile( EXE_CLASSIFIER );
-				}
-			}
+			// DO NOT VERIFY FILE EXISTS --> EXECUTABLE MAY BE CLUSTER MODULE OR ALIAS
+			// if( !BashScriptBuilder.clusterModuleExists( classifierExe ) && !RuntimeParamUtil.isDockerMode() )
+			// {
+			// final File f = new File( Config.getSystemFilePath( classifierExe ) );
+			// if( !f.exists() )
+			// {
+			// Config.requireExistingFile( EXE_CLASSIFIER );
+			// }
+			// }
 		}
 
 		return classifierExe;
@@ -97,18 +98,17 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 	 * file. Classifiers that use a single "-" must be override this method. To simplify the Config, default values for
 	 * exe.classifier can be defined by replacing "exe" with a classifier type (rdp, qiime, kraken, metaphlan, or
 	 * slimm). For example, if exe.classifer is missing or blank and getClassifierType() returns "rdp" the property
-	 * rdp.classifier will be used in place of exe.classifier. This allows all classifiers to be defined in a file such
-	 * as standard.properties.
+	 * rdp.classifier will be used in place of exe.classifier. This allows all classifiers to be defined in
+	 * standard.properties.
 	 *
 	 * @return String containing formatted switches to append to the executable
-	 * @throws Exception if defined but invalid
+	 * @throws Exception if runtime errors occur
 	 */
 	@Override
 	public String getClassifierParams() throws Exception
 	{
 		if( classifierParams == null || classifierParams.isEmpty() )
 		{
-			classifierParams = " ";
 			List<String> paramList = Config.getList( EXE_CLASSIFIER_PARAMS );
 			if( paramList == null || paramList.isEmpty() )
 			{
@@ -128,6 +128,11 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 					classifierParams += "--" + it.next() + " ";
 				}
 			}
+		}
+
+		if( classifierParams == null || classifierParams.isEmpty() )
+		{
+			classifierParams = " ";
 		}
 
 		return classifierParams;

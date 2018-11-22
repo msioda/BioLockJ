@@ -245,8 +245,10 @@ writeErrors <- function( script, msgs ) {
 }
 
 
-importLibs( c( "properties", "stringr" ) )
+importLibs( c( "properties", "stringr", "ggpubr" ) )
 configFile = getMasterProperties()
+print( paste( "Importing Config:", configFile ) )
+#print( read.properties( configFile ) )
 pipelineDir = dirname( configFile )
 r.debug = getProperty("r.debug", FALSE)
 binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )

@@ -96,18 +96,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	/**
 	 * Builds an R script by calling sub-methods to builds the BaseScript and creates the MAIN script shell that sources
 	 * the BaseScript, calls runProgram(), reportStatus() and main() which can only be implemented in a subclass.<br>
-	 * 
-	 * <ol>
-	 * <li>Call {@link biolockj.util.RMetaUtil#classifyReportableMetadata()}
-	 * <li>Call {@link #writePrimaryScript()}
-	 * </ol>
 	 */
 	@Override
 	public void executeTask() throws Exception
 	{
-		RMetaUtil.classifyReportableMetadata();
 		writePrimaryScript();
-
 		if( RuntimeParamUtil.isDockerMode() )
 		{
 			BashScriptBuilder.buildScripts( this, buildDockerBashScript(), 1 );

@@ -330,7 +330,7 @@ public class ModuleUtil
 		}
 		final File startFile = new File(
 				bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
-		FileUtils.forceDelete( startFile );
+		BioLockJUtil.deleteWithRetry( startFile, 5 );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 		Log.info( ModuleUtil.class, "FINISHED " + bioModule.getClass().getName() );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );

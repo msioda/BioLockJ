@@ -19,7 +19,6 @@ import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.util.BashScriptBuilder;
 import biolockj.util.MetaUtil;
-import biolockj.util.RuntimeParamUtil;
 
 /**
  * This module runs the QIIME pick_de_novo_otus.py script on FastA sequence files in a single script so it is important
@@ -70,18 +69,16 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 	 * Call {@link biolockj.module.implicit.qiime.QiimeClassifier} checkOtuPickingDependencies() method to verify OTU
 	 * picking script parameters. If not in Docker mode and property
 	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Config#TRUE},
-	 * verify {@value biolockj.module.implicit.qiime.QiimeClassifier#EXE_VSEARCH} and
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#EXE_VSEARCH_PARAMS}.
+	 * verify {@value biolockj.module.implicit.qiime.QiimeClassifier#EXE_VSEARCH_PARAMS}.
 	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
 		checkOtuPickingDependencies();
-		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) && !RuntimeParamUtil.isDockerMode() )
+		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) )
 		{
 			getVsearchParams();
-			Config.getExe( EXE_VSEARCH );
 		}
 	}
 

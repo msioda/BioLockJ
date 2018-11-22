@@ -38,7 +38,7 @@ public class MemoryUtil
 
 		if( total != prevTotal || free != prevFree )
 		{
-			reportMemoryInBytes();
+			// reportMemoryInBytes();
 			Log.info( MemoryUtil.class,
 					msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB() + ", ∆Total: "
 							+ getChangeFormatted( total, prevTotal ) + ", %Free: " + getPercentageFreeFormatted()
@@ -105,6 +105,7 @@ public class MemoryUtil
 				+ ", %Free: " + getPercentageFreeFormatted() + ", Free: " + getFreeMemoryInMiB() );
 	}
 
+	@SuppressWarnings("unused")
 	private static void reportMemoryInBytes()
 	{
 		Log.debug( MemoryUtil.class, "MAXIMUM MEMORY: " + Runtime.getRuntime().maxMemory() );

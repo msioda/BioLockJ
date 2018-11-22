@@ -16,8 +16,6 @@ import java.util.*;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
-import biolockj.module.r.R_Module;
-import biolockj.module.report.AddMetadataToOtuTables;
 import biolockj.util.*;
 
 /**
@@ -45,24 +43,22 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	}
 
 	/**
-	 * Refresh the metadata cache.
+	 * Verify the metadata fields configured for R reports.
 	 */
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		if( getMetadata().exists() )
 		{
-			MetaUtil.setFile( getMetadata() );
-			MetaUtil.refreshCache();
-
-			if( hasRModules() )
+			if( Pipeline.hasRModules() )
 			{
 				RMetaUtil.classifyReportableMetadata();
 			}
 		}
 		else
 		{
-			throw new Exception( getClass().getSimpleName() + " failed to import metadata!" );
+			throw new Exception( "Failed to import metadata file" );
 		}
 	}
 
@@ -386,19 +382,6 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		{
 			return true;
 		}
-		return false;
-	}
-
-	private static boolean hasRModules() throws Exception
-	{
-		for( final BioModule module: Pipeline.getModules() )
-		{
-			if( module instanceof R_Module || module instanceof AddMetadataToOtuTables )
-			{
-				return true;
-			}
-		}
-
 		return false;
 	}
 

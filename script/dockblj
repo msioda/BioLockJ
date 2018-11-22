@@ -94,9 +94,9 @@ validate_input() {
 # Include all directory paths the manager may need to map volumes in spawned Docker compute node instances
 get_blj_options() {
 	options="-D -b $(get_blj_proj)" 
-	[ ${#restartPipeline} -gt 0 ] && options="$options $restartPipeline"
+	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -gt 0 ] && options="$options -C $(dirname $config) -r /config/$(basename $config)"
+	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -eq 0 ] && options="$options -C $(dirname $config) -c /config/$(basename $config)"
 	[ ${#changePassword} -gt 0 ] && options="$options -p $changePassword"
-	[ ${#config} -gt 0 ] && options="$options -C $(dirname $config) -c /config/$(basename $config)"
 	[ ${#inputDirPaths} -gt 0 ] && options="$options -i $inputDirPaths"
 	[ ${#metadataFilePath} -gt 0 ] && options="$options -m $metadataFilePath"
 	[ ${#trimPrimersFilePath} -gt 0 ] && options="$options -t $trimPrimersFilePath"

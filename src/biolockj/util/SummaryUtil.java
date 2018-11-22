@@ -481,7 +481,7 @@ public class SummaryUtil
 		if( summary.exists() )
 		{
 			FileUtils.copyFile( getSummaryFile(), getTempFile() );
-			FileUtils.forceDelete( getSummaryFile() );
+			BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
 			final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 			try
@@ -499,7 +499,7 @@ public class SummaryUtil
 						writer.write( line + RETURN );
 					}
 				}
-				FileUtils.forceDelete( getTempFile() );
+				BioLockJUtil.deleteWithRetry( getTempFile(), 10 );
 			}
 			finally
 			{
@@ -620,7 +620,7 @@ public class SummaryUtil
 	protected static void resetModuleSummary( final BioModule module ) throws Exception
 	{
 		FileUtils.copyFile( getSummaryFile(), getTempFile() );
-		FileUtils.forceDelete( getSummaryFile() );
+		BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
 		final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 		try

@@ -204,21 +204,8 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 
 	private String getMutliplexeFileName( final File file ) throws Exception
 	{
-		String suffix = "";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			if( SeqUtil.isForwardRead( file.getName() ) )
-			{
-				suffix = Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
-			}
-			else
-			{
-				suffix = Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
-			}
-		}
-
 		return getOutputDir().getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
-				+ suffix + "." + SeqUtil.getInputSequenceType();
+				+ SeqUtil.getReadDirectionSuffix( file ) + "." + SeqUtil.getInputSequenceType();
 	}
 
 	private long getNumReads( final File file ) throws Exception

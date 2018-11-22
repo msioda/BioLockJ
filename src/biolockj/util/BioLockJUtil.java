@@ -18,6 +18,7 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import biolockj.BioLockJ;
 import biolockj.Config;
+import biolockj.Log;
 import biolockj.exception.ConfigPathException;
 
 /**
@@ -25,6 +26,43 @@ import biolockj.exception.ConfigPathException;
  */
 public class BioLockJUtil
 {
+	
+	
+	/**
+	 * Delete file or directory with retry.  Wait 3 seconds between each try - waiting for resource to release lock if .
+	 * @param file File or directory
+	 * @param numTries Number of attempts
+	 * @return boolean status 
+	 * @throws Exception if errors occur
+	 */
+	public static boolean deleteWithRetry( final File file, int numTries ) throws Exception
+	{
+		int i = 0;
+		while( i++ < numTries )
+		{
+			try
+			{
+				Thread.sleep( 3 * 1000 );
+				if( i == numTries )
+				{
+					file.delete();
+					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) fails, but file.delete() works" );
+				}
+				else
+				{
+					FileUtils.forceDelete( file );
+				}
+				return true;
+			}
+			catch( IOException ex )
+			{
+				Log.info( BioLockJUtil.class,
+						"Waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
+			}
+		}
+		
+		return false;
+	}
 
 	/**
 	 * This method formats the input number to have a length of at least numDigits.<br>
@@ -90,7 +128,7 @@ public class BioLockJUtil
 	public static String getCollectionAsString( final Collection<?> data )
 	{
 		final StringBuffer sb = new StringBuffer();
-		if( data != null )
+		if( data != null && !data.isEmpty() )
 		{
 			for( final Object val: data )
 			{
@@ -208,20 +246,29 @@ public class BioLockJUtil
 	 */
 	public static void saveNewMasterConfig() throws Exception
 	{
-
 		final File masterConfig = getMasterConfig();
-
-		if( masterConfig.exists() && !RuntimeParamUtil.doRestart() )
+		final boolean masterExists = masterConfig.exists();
+		if( masterExists && !RuntimeParamUtil.doRestart() )
 		{
 			throw new Exception( "MASTER Config should not exist unless restarting a failed pipeline, but was found: "
 					+ masterConfig.getAbsolutePath() );
 		}
 
+		if( masterExists )
+		{
+			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
+			if( getMasterConfig().exists() )
+			{
+				throw new Exception(
+						"Moved MASTER Config to " + getTempConfig().getAbsolutePath() + " but MASTER still exists!" );
+			}
+		}
+
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( masterConfig ) );
 		try
 		{
-			writer.write( "# This MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
-			writer.write( "# This MASTER Config file was generated from the following Config files: " + RETURN );
+			writer.write( "# The MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
+			writer.write( "# The MASTER Config file was generated from the following Config files: " + RETURN );
 			writer.write( "# ----> Project Config: " + Config.getConfigFilePath() + RETURN );
 
 			final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
@@ -265,6 +312,17 @@ public class BioLockJUtil
 			{
 				writer.close();
 			}
+
+			if( getTempConfig().exists() && getMasterConfig().exists() )
+			{
+				BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
+			}
+			else if( getTempConfig().exists() )
+			{
+				throw new Exception(
+						"Error occurred updating MASTER config.  File has been deleted, please recover using: "
+								+ getTempConfig().getAbsolutePath() );
+			}
 		}
 
 		if( !masterConfig.exists() )
@@ -282,7 +340,61 @@ public class BioLockJUtil
 	 */
 	public static void updateMasterConfig( final Map<String, String> props ) throws Exception
 	{
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getTempConfig() ) );
+		final List<String> configLines = readMasterConfig( props );
+		if( configLines == null || props == null || props.isEmpty() )
+		{
+			return;
+		}
+
+		BufferedWriter writer = new BufferedWriter( new FileWriter( getTempConfig() ) );
+		try
+		{
+			for( final String line: configLines )
+			{
+				writer.write( line + RETURN );
+			}
+
+			for( final String name: props.keySet() )
+			{
+				Log.info( BioLockJUtil.class, "Update MASTER config property: " + name + "=" + props.get( name ) );
+				writer.write( name + "=" + props.get( name ) + RETURN );
+			}
+
+			writer.close();
+			writer = null;
+			
+			BioLockJUtil.deleteWithRetry( getMasterConfig(), 10 );
+			FileUtils.moveFile( getTempConfig(), getMasterConfig() );
+		}
+		finally
+		{
+			if( writer != null )
+			{
+				writer.close();
+			}
+			if( getTempConfig().exists() && getMasterConfig().exists() )
+			{
+				BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
+			}
+			else if( getTempConfig().exists() )
+			{
+				throw new Exception(
+						"Error occurred updating MASTER config.  File has been deleted, please recover from: "
+								+ getTempConfig().getAbsolutePath() );
+			}
+
+		}
+	}
+
+	private static File getTempConfig() throws Exception
+	{
+		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
+				+ TEMP_PREFIX + Config.getConfigFileName() );
+	}
+
+	private static List<String> readMasterConfig( final Map<String, String> props ) throws Exception
+	{
+		final List<String> newLines = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( getMasterConfig() );
 		try
 		{
@@ -291,17 +403,9 @@ public class BioLockJUtil
 				final StringTokenizer st = new StringTokenizer( line, "=" );
 				if( st.countTokens() < 2 || !props.keySet().contains( st.nextToken() ) )
 				{
-					writer.write( line + RETURN );
+					newLines.add( line );
 				}
 			}
-
-			for( final String name: props.keySet() )
-			{
-				writer.write( name + "=" + props.get( name ) + RETURN );
-			}
-
-			FileUtils.forceDelete( getMasterConfig() );
-			FileUtils.moveFile( getTempConfig(), getMasterConfig() );
 		}
 		finally
 		{
@@ -309,17 +413,9 @@ public class BioLockJUtil
 			{
 				reader.close();
 			}
-			if( writer != null )
-			{
-				writer.close();
-			}
 		}
-	}
 
-	private static File getTempConfig() throws Exception
-	{
-		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ TEMP_PREFIX + Config.getConfigFileName() );
+		return newLines;
 	}
 
 	/**

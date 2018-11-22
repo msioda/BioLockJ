@@ -49,7 +49,7 @@ public class SeqUtil
 		final File startedFlag = new File( inputFileDir.getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
 		if( startedFlag.exists() )
 		{
-			FileUtils.forceDelete( inputFileDir );
+			BioLockJUtil.deleteWithRetry( inputFileDir, 10 );
 		}
 
 		for( final File dir: getInputDirs() )
@@ -360,6 +360,42 @@ public class SeqUtil
 	}
 
 	/**
+	 * Return read direction indicator for forward or reverse read if found in the file name.
+	 * 
+	 * @param file Sequence file
+	 * @return Forward or reverse read file suffix
+	 * @throws Exception if errors occur
+	 */
+	public static String getReadDirectionSuffix( final File file ) throws Exception
+	{
+		return getReadDirectionSuffix( file.getName() );
+	}
+
+	/**
+	 * Return read direction indicator for forward or reverse read if found in the file name.
+	 * 
+	 * @param fileName Sequence file name
+	 * @return Forward or reverse read file suffix
+	 * @throws Exception if errors occur
+	 */
+	public static String getReadDirectionSuffix( final String fileName ) throws Exception
+	{
+		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			if( SeqUtil.isForwardRead( fileName ) )
+			{
+				return Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
+			}
+			else
+			{
+				return Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
+			}
+		}
+
+		return "";
+	}
+
+	/**
 	 * Method extracts Sample ID from the name param. Possibly input is a file name so remove file extensions. If
 	 * demultiplexing (RDP/Kraken support this option), input is a sequence header
 	 *
@@ -372,11 +408,6 @@ public class SeqUtil
 		String id = value;
 		try
 		{
-			final String fwReadSuffix = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
-			final String rvReadSuffix = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
-			final String trimPrefix = Config.getString( Config.INPUT_TRIM_PREFIX );
-			final String trimSuffix = Config.getString( Config.INPUT_TRIM_SUFFIX );
-
 			// trim .gz extension
 			if( id.toLowerCase().endsWith( ".gz" ) )
 			{
@@ -389,8 +420,11 @@ public class SeqUtil
 				id = id.substring( 0, id.length() - 6 );
 			}
 
-			if( !Config.requireBoolean( Config.INTERNAL_MULTIPLEXED ) ) // must be a file
+			// trim directional suffix
+			if( !Config.requireBoolean( Config.INTERNAL_MULTIPLEXED ) ) // must be a file name
 			{
+				final String fwReadSuffix = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
+				final String rvReadSuffix = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
 				if( fwReadSuffix != null && isForwardRead( id ) && id.lastIndexOf( fwReadSuffix ) > 0 )
 				{
 					id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
@@ -401,20 +435,22 @@ public class SeqUtil
 				}
 			}
 
-			if( trimPrefix != null && trimPrefix.length() > 0 && id.indexOf( trimPrefix ) > -1 )
+			// trim user defined file prefix and/or suffix patterns
+			final String trimPrefix = Config.getString( Config.INPUT_TRIM_PREFIX );
+			final String trimSuffix = Config.getString( Config.INPUT_TRIM_SUFFIX );
+			if( trimPrefix != null && !trimPrefix.isEmpty() && id.indexOf( trimPrefix ) > -1 )
 			{
 				id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
 			}
 
-			if( trimSuffix != null && trimSuffix.length() > 0 && id.indexOf( trimSuffix ) > 0 )
+			if( trimSuffix != null && !trimSuffix.isEmpty() && id.indexOf( trimSuffix ) > 0 )
 			{
 				id = id.substring( 0, id.indexOf( trimSuffix ) );
 			}
-
 		}
 		catch( final Exception ex )
 		{
-			Log.error( SeqUtil.class, "Unable to get SampleID from: " + value, ex );
+			Log.error( SeqUtil.class, "Unable to extract Sample ID from: " + value, ex );
 			throw ex;
 		}
 
@@ -687,8 +723,6 @@ public class SeqUtil
 	private static boolean registerDemuxStatus() throws Exception
 	{
 		boolean isMultiplexed = false;
-		final String fwRead = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
-		final String rvRead = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
 
 		if( !DemuxUtil.doDemux() )
 		{
@@ -703,6 +737,8 @@ public class SeqUtil
 		{
 			boolean foundFw = false;
 			boolean foundRv = false;
+			final String fwRead = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
+			final String rvRead = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
 			for( final File file: getBasicInputFiles() )
 			{
 				if( fwRead != null && file.getName().contains( fwRead ) )

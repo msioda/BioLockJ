@@ -73,6 +73,9 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
+		Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
+		Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
+
 		super.checkDependencies();
 		if( !SeqUtil.isFastQ() )
 		{
@@ -84,17 +87,9 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 			throw new Exception( getClass().getName()
 					+ " requires paired input data as a combined multiplexed file or as separate files named with "
 					+ " matching sample IDs ending in the forward & reverse file suffix values: "
-					+ Config.getString( Config.INPUT_FORWARD_READ_SUFFIX ) + " & "
-					+ Config.getString( Config.INPUT_REVERSE_READ_SUFFIX ) );
+					+ Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX ) + " & "
+					+ Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX ) );
 		}
-
-		// verify PEAR mod changes
-		Config.getExe( EXE_PEAR );
-		//
-		// if( !RuntimeParamUtil.isDockerMode() && !BashScriptBuilder.clusterModuleExists( Config.getExe( EXE_PEAR ) ) )
-		// {
-		// Config.requireExistingFile( EXE_PEAR );
-		// }
 	}
 
 	/**
@@ -104,22 +99,27 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, Config.FALSE );
 
-		if( !MetaUtil.getFieldNames().contains( NUM_MERGED_READS ) )
+		final File updatedMeta = new File(
+				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+		if( updatedMeta.exists() )
+		{
+			MetaUtil.setFile( updatedMeta );
+			MetaUtil.refreshCache();
+		}
+		else if( !MetaUtil.getFieldNames().contains( NUM_MERGED_READS ) )
 		{
 			Log.info( getClass(),
 					"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
 			final Map<String, String> readsPerSample = new HashMap<>();
 			for( final File f: getOutputDir().listFiles() )
 			{
-				if( !f.getName().equals( MetaUtil.getMetadataFileName() ) )
-				{
-					final long count = SeqUtil.countNumReads( f );
-					Log.info( getClass(), "Num merged Reads for File:[" + f.getName() + "] ==> ID:["
-							+ SeqUtil.getSampleId( f.getName() ) + "] = " + count );
-					readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
-				}
+				final long count = SeqUtil.countNumReads( f );
+				Log.info( getClass(), "Num merged Reads for File:[" + f.getName() + "] ==> ID:["
+						+ SeqUtil.getSampleId( f.getName() ) + "] = " + count );
+				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
 			MetaUtil.addColumn( NUM_MERGED_READS, readsPerSample, getOutputDir() );

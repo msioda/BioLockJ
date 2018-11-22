@@ -81,6 +81,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		if( parsedSamples.isEmpty() )
 		{
 			parseSamples();

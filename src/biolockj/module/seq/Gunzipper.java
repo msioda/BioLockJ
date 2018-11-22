@@ -68,27 +68,10 @@ public class Gunzipper extends ScriptModuleImpl implements ScriptModule
 		return "cp " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath();
 	}
 
-	private String getReadDirection( final File file ) throws Exception
-	{
-		String suffix = "";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			if( SeqUtil.isForwardRead( file.getName() ) )
-			{
-				suffix = Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
-			}
-			else
-			{
-				suffix = Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
-			}
-		}
-		return suffix;
-	}
-
 	private String unzip( final File file ) throws Exception
 	{
 		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() + File.separator
-				+ SeqUtil.getSampleId( file.getName() ) + getReadDirection( file ) + "."
+				+ SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
 				+ SeqUtil.getInputSequenceType();
 	}
 

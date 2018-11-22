@@ -68,6 +68,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 		{
 			logBase = "";
 		}
+		super.checkDependencies();
 	}
 
 	/**

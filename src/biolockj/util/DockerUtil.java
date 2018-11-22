@@ -146,15 +146,15 @@ public class DockerUtil
 		return " " + DOCKER_USER + "/" + name.toLowerCase();
 	}
 
-	private static final String getBljOptions( final BioModule module ) throws Exception
+	private static String getBljOptions( final BioModule module ) throws Exception
 	{
-		String bljOptions = RuntimeParamUtil.getRuntimeArgs().replaceAll( RuntimeParamUtil.RESTART_FLAG + " ", "" );
+		String args = RuntimeParamUtil.getDockerRuntimeArgs();
 		if( !isDockerScriptModule( module ) )
 		{
-			bljOptions += " " + RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName();
+			args += " " + RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName();
 		}
 
-		return BLJ_OPTIONS + "=\"" + bljOptions + "\"";
+		return BLJ_OPTIONS + "=\"" + args + "\"";
 	}
 
 	private static final String getDockerEnvVars( final BioModule module ) throws Exception

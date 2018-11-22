@@ -53,7 +53,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	@Override
 	public void cleanUp() throws Exception
 	{
-		MetaUtil.addColumn( NUM_TRIMMED_READS, getValidReadsPerSample(), getOutputDir() );
+		super.cleanUp();
 		RegisterNumReads.setNumReadFieldName( NUM_TRIMMED_READS );
 	}
 
@@ -93,29 +93,10 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		Log.debug( getClass(), "numLinesPerRead = " + SeqUtil.getNumLinesPerRead() );
 		Log.debug( getClass(), "#samples in table numLinesWithPrimer = " + numLinesWithPrimer.size() );
 		Log.debug( getClass(), "#samples in table numLinesNoPrimer = " + numLinesNoPrimer.size() );
-		Log.debug( getClass(), "#samples in table validReadsPerFile = " + validReadsPerFile.size() );
-		Log.debug( getClass(), "fileNames.size() = " + fileNames.size() );
-		final TreeSet<File> files = new TreeSet<>( validReadsPerFile.keySet() );
-		for( final String name: fileNames )
-		{
-			Log.debug( getClass(), "Checking file to see if primers have been trimmed = " + name );
-			boolean found = false;
-			for( final File f: files )
-			{
-				Log.debug( getClass(), "Checking validReadsPerFile.keySet().next() = " + f.getAbsolutePath() );
-				if( name.startsWith( f.getAbsolutePath() ) )
-				{
-					Log.debug( getClass(), "found match!" );
-					found = true;
-					break;
-				}
-			}
-			if( !found && numDebugLines++ < 4 )
-			{
-				summaryMsgs.add( "File contains no primers!  File name: " + name );
-				Log.warn( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
-			}
-		}
+		Log.debug( getClass(), "#samples in table validReadsPerFile = " + seqsWithPrimersTrimmed.size() );
+		Log.debug( getClass(), "#seq files = " + seqs.size() );
+
+		addBadFilesToSummary();
 
 		if( Config.getBoolean( INPUT_REQUIRE_PRIMER ) )
 		{
@@ -139,9 +120,11 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		String minFwDisplay = null;
 		String maxRvDisplay = null;
 		String minRvDisplay = null;
+
+		final TreeSet<File> files = new TreeSet<>( seqsWithPrimersTrimmed.keySet() );
 		for( final File f: files )
 		{
-			Long v = validReadsPerFile.get( f );
+			Long v = seqsWithPrimersTrimmed.get( f );
 			Long a = numLinesWithPrimer.get( f.getAbsolutePath() );
 			Long b = numLinesNoPrimer.get( f.getAbsolutePath() );
 
@@ -181,7 +164,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			Log.debug( getClass(), "maxFw < ratio = " + ( maxFw < ratio ) );
 			Log.debug( getClass(), "minFw > ratio = " + ( minFw > ratio ) );
 
-			if( foundPaired && f.getName().contains( Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX ) ) )
+			if( foundPaired && !SeqUtil.isForwardRead( f.getName() ) )
 			{
 				if( maxRvDisplay == null || maxRv < ratio )
 				{
@@ -240,7 +223,6 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			summaryMsgs.add( "Min % reads kept in Reverse Read = " + minFileRv + " = " + minRvDisplay );
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
-
 		}
 		else
 		{
@@ -278,6 +260,37 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 				}
 
 				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
+			}
+		}
+
+		MetaUtil.addColumn( NUM_TRIMMED_READS, getValidReadsPerSample(), getOutputDir() );
+	}
+
+	/**
+	 * Update summaryMsgs with list of seq files that contained no reads with a valid primer.
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected void addBadFilesToSummary() throws Exception
+	{
+		final TreeSet<File> files = new TreeSet<>( seqsWithPrimersTrimmed.keySet() );
+		for( final File seq: seqs )
+		{
+			boolean found = false;
+			for( final File f: files )
+			{
+				Log.debug( getClass(), "Looking for primers in:" + f.getAbsolutePath() );
+				if( seq.getAbsolutePath().equals( f.getAbsolutePath() ) )
+				{
+					Log.debug( getClass(), "Bad seq file:" + f.getAbsolutePath() );
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{
+				summaryMsgs.add( "No valid primers found in: " + seq.getAbsolutePath() );
+				Log.warn( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			}
 		}
 	}
@@ -381,21 +394,10 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		return Config.requireExistingFile( INPUT_TRIM_SEQ_FILE );
 	}
 
-	private String getTrimFilePath( final File f ) throws Exception
+	private String getTrimFilePath( final File file ) throws Exception
 	{
-		String suffix = "";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( f.getName() ) )
-		{
-			foundPaired = true;
-			suffix = Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
-		}
-		else
-		{
-			suffix = Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
-		}
-
-		return getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( f.getName() ) + suffix + "."
-				+ SeqUtil.getInputSequenceType();
+		return getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( file.getName() )
+				+ SeqUtil.getReadDirectionSuffix( file ) + "." + SeqUtil.getInputSequenceType();
 	}
 
 	private Set<String> getValidHeaders( final File file, final Set<String> primers ) throws Exception
@@ -454,12 +456,12 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	{
 		if( !MetaUtil.getFieldNames().contains( NUM_TRIMMED_READS ) && validReadsPerSample.isEmpty() )
 		{
-			for( final File f: validReadsPerFile.keySet() )
+			for( final File f: seqsWithPrimersTrimmed.keySet() )
 			{
 				if( !Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
 				{
 					validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
-							Long.toString( validReadsPerFile.get( f ) ) );
+							Long.toString( seqsWithPrimersTrimmed.get( f ) ) );
 				}
 			}
 		}
@@ -515,7 +517,13 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			throws Exception
 	{
 		Log.info( getClass(), "Processing file = " + file.getAbsolutePath() );
-		fileNames.add( file.getAbsolutePath() );
+		seqs.add( file );
+
+		if( !SeqUtil.isForwardRead( file.getName() ) )
+		{
+			foundPaired = true;
+		}
+
 		final File trimmedFile = new File( getTrimFilePath( file ) );
 		Log.info( getClass(), "Create trimmed file = " + trimmedFile.getAbsolutePath() );
 
@@ -651,8 +659,8 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 
 					if( !Config.getBoolean( INPUT_REQUIRE_PRIMER ) || validRecord )
 					{
-						final Long x = validReadsPerFile.get( file );
-						validReadsPerFile.put( file, x == null ? 1L: x + 1L );
+						final Long x = seqsWithPrimersTrimmed.get( file );
+						seqsWithPrimersTrimmed.put( file, x == null ? 1L: x + 1L );
 
 						for( int j = 0; j < SeqUtil.getNumLinesPerRead(); j++ )
 						{
@@ -725,17 +733,17 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 
 	private final DecimalFormat df = new DecimalFormat( "##.##" );
 
-	private final Set<String> fileNames = new HashSet<>();
-
 	private boolean foundPaired = false;
 
 	private boolean mergedReadTwoPrimers = false;
+
 	private final Map<String, Map<String, String>> missingBothPrimers = new HashMap<>();
 	private final Map<String, Map<String, String>> missingFwPrimers = new HashMap<>();
 	private final Map<String, Map<String, String>> missingRvPrimers = new HashMap<>();
 	private final Map<String, Long> numLinesNoPrimer = new HashMap<>();
 	private final Map<String, Long> numLinesWithPrimer = new HashMap<>();
-	private final Map<File, Long> validReadsPerFile = new HashMap<>();
+	private final Set<File> seqs = new HashSet<>();
+	private final Map<File, Long> seqsWithPrimersTrimmed = new HashMap<>();
 	private final Map<String, String> validReadsPerSample = new HashMap<>();
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_TRIM_SEQ_FILE} defines the file path to the file that defines the
@@ -752,7 +760,6 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	 */
 	protected static final String INPUT_REQUIRE_PRIMER = "trimPrimers.requirePrimer";
 	private static final Map<String, String> DNA_BASE_MAP = new HashMap<>();
-	private static long numDebugLines = 0;
 	private static Set<String> substitutions = new HashSet<>();
 	private static final List<String> summaryMsgs = new ArrayList<>();
 	static

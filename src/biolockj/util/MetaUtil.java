@@ -81,6 +81,16 @@ public class MetaUtil
 	}
 
 	/**
+	 * Determine if metadata file exists
+	 *
+	 * @return TRUE if metadata exists
+	 */
+	public static boolean exists()
+	{
+		return getFile() != null && getFile().exists();
+	}
+
+	/**
 	 * Get the comment delimeter (or default empty string)
 	 * 
 	 * @return Comment char
@@ -129,20 +139,20 @@ public class MetaUtil
 	 */
 	public static List<String> getFieldNames() throws Exception
 	{
-
 		if( getFile() == null || !getFile().exists() )
 		{
-			Log.warn( MetaUtil.class, "Metadata file path is undefined.  Cannot get metadata field names." );
+			throw new Exception( "Metadata file path is undefined.  Cannot get metadata field names." );
 		}
 
 		final List<String> headers = getMetadataRecord( metaId );
 
 		if( headers == null )
 		{
-			Log.warn( MetaUtil.class,
-					"Metadata headers not found!  Please verify 1st column header is not missing from: "
-							+ getFile().getAbsolutePath() );
+			throw new Exception( "Metadata headers not found!  Please verify 1st column header is not missing from: "
+					+ getFile().getAbsolutePath() );
 		}
+
+		Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
 
 		return headers;
 	}
@@ -330,7 +340,6 @@ public class MetaUtil
 			setFile( MetaUtil.getMetadata() );
 			refreshCache();
 		}
-
 	}
 
 	/**
@@ -340,28 +349,23 @@ public class MetaUtil
 	 */
 	public static void refreshCache() throws Exception
 	{
-		if( metadataFile != null && metadataFile.exists() )
+		if( isUpdated() )
 		{
-			Log.info( MetaUtil.class, "Cache metadata: " + metadataFile.getAbsolutePath() );
+			Log.info( MetaUtil.class, "Update metadata cache: " + metadataFile.getAbsolutePath() );
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
-			final String exId = getSampleIds().get( 0 );
-
 			if( !RuntimeParamUtil.isDirectMode() )
 			{
-				Log.info( MetaUtil.class, META_SPACER );
-				Log.info( MetaUtil.class, "===> New Metadata file: " + metadataFile.getAbsolutePath() );
-				Log.info( MetaUtil.class, "===> Sample IDs: " + getSampleIds() );
-				Log.info( MetaUtil.class, "===> Metadata fields: " + getFieldNames() );
-				Log.info( MetaUtil.class, "===> 1st Record: [" + exId + "]: " + getMetadataRecord( exId ) );
-				Log.info( MetaUtil.class, META_SPACER );
+				report();
 			}
+
+			reportedMetadata = metadataFile;
 		}
 		else
 		{
-			Log.warn( MetaUtil.class, "Cannot cache metadata - invalid/missing file path in Config property: "
-					+ MetaUtil.META_FILE_PATH );
+			Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
+					+ ( metadataFile == null ? "<NO_METADATA_PATH>": metadataFile.getAbsolutePath() ) );
 		}
 	}
 
@@ -423,14 +427,14 @@ public class MetaUtil
 	/**
 	 * Set a new metadata file.
 	 *
-	 * @param newMetadataFile New metadata file
+	 * @param file New metadata file
 	 * @throws Exception if null parameter is passed
 	 */
-	public static void setFile( final File newMetadataFile ) throws Exception
+	public static void setFile( final File file ) throws Exception
 	{
-		if( newMetadataFile != null )
+		if( file != null )
 		{
-			if( metadataFile != null && newMetadataFile.getAbsolutePath().equals( metadataFile.getAbsolutePath() ) )
+			if( metadataFile != null && file.getAbsolutePath().equals( metadataFile.getAbsolutePath() ) )
 			{
 				Log.debug( MetaUtil.class, "===> MetaUtil.setFile() not required, file already defined as "
 						+ metadataFile.getAbsolutePath() );
@@ -438,10 +442,11 @@ public class MetaUtil
 		}
 		else
 		{
-			throw new Exception( "Metadata file is required!" );
+			throw new Exception( "Must pass valid file to MetaUtil.setFile( file ), found value: "
+					+ ( file == null ? "": file.getAbsolutePath() ) );
 		}
 
-		metadataFile = newMetadataFile;
+		metadataFile = file;
 	}
 
 	private static void cacheMetadata( final List<List<String>> data ) throws Exception
@@ -456,10 +461,13 @@ public class MetaUtil
 			if( rowNum == 0 )
 			{
 				metaId = id;
-				Log.debug( MetaUtil.class, "Metadata Headers: " + row );
+				if( isUpdated() )
+				{
+					Log.debug( MetaUtil.class, "Metadata Headers: " + row );
+				}
 			}
 
-			if( rowNum++ == 1 )
+			if( isUpdated() && rowNum++ == 1 )
 			{
 				Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
 			}
@@ -467,11 +475,20 @@ public class MetaUtil
 			if( id != null && !id.equals( Config.requireString( META_NULL_VALUE ) ) )
 			{
 				row.remove( 0 );
-				Log.debug( MetaUtil.class, "metadataMap add: " + id + " = " + row );
+				if( isUpdated() )
+				{
+					Log.debug( MetaUtil.class, "metadataMap add: " + id + " = " + row );
+				}
 
 				metadataMap.put( id, row );
 			}
 		}
+	}
+
+	private static boolean isUpdated()
+	{
+		return metadataFile != null && metadataFile.exists() && reportedMetadata == null
+				|| !reportedMetadata.getAbsolutePath().equals( metadataFile.getAbsolutePath() );
 	}
 
 	/**
@@ -486,7 +503,10 @@ public class MetaUtil
 		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
-			Log.debug( MetaUtil.class, "===> Meta line: " + line );
+			if( isUpdated() )
+			{
+				Log.debug( MetaUtil.class, "===> Meta line: " + line );
+			}
 			final ArrayList<String> record = new ArrayList<>();
 			final String[] cells = line.split( BioLockJ.TAB_DELIM, -1 );
 			for( final String cell: cells )
@@ -511,6 +531,22 @@ public class MetaUtil
 		}
 
 		return val;
+	}
+
+	/**
+	 * Report metadata sample IDs, field names, 1 example row.
+	 * 
+	 * @throws Exception
+	 */
+	private static void report() throws Exception
+	{
+		final String exId = getSampleIds().get( 0 );
+		Log.info( MetaUtil.class, META_SPACER );
+		Log.info( MetaUtil.class, "===> New Metadata file: " + metadataFile.getAbsolutePath() );
+		Log.info( MetaUtil.class, "===> Sample IDs: " + getSampleIds() );
+		Log.info( MetaUtil.class, "===> Metadata fields: " + getFieldNames() );
+		Log.info( MetaUtil.class, "===> 1st Record: [" + exId + "]: " + getMetadataRecord( exId ) );
+		Log.info( MetaUtil.class, META_SPACER );
 	}
 
 	private static String setNullValueIfEmpty( final String val ) throws Exception
@@ -578,4 +614,5 @@ public class MetaUtil
 	private static final Map<String, List<String>> metadataMap = new HashMap<>();
 
 	private static String metaId = "SAMPLE_ID";
+	private static File reportedMetadata = null;
 }

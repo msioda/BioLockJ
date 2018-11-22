@@ -6,32 +6,36 @@
 		</classpath>
 	</taskdef>
 		
-	<taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="lib/ant-contrib-0.6.jar" />
+	<taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" classpath="lib/ant-contrib-0.6.jar"/>
 		
 	<path id="lib.path">
 		<fileset dir="lib"/>
 	</path>
 	
 	<target name="init">
-		<if><available file="bin"/><then>
-			<delete includeemptydirs="true">
-			  <fileset dir="bin" includes="**/*"/>
-			</delete>
-		</then></if>
-		<if><available file="dist/BioLockJ.jar"/><then>
-			<delete file="dist/BioLockJ.jar"/>
-		</then></if>
+		<if><available file="bin"/>
+			<then>
+				<delete includeemptydirs="true">
+			  		<fileset dir="bin" includes="**/*"/>
+				</delete>
+			</then>
+		</if>
+		<if><available file="dist/BioLockJ.jar"/>
+			<then>
+				<delete file="dist/BioLockJ.jar"/>
+			</then>
+		</if>
 		<loadfile property="blj_version" srcfile=".version">
-    		<filterchain><striplinebreaks/></filterchain>
-    	</loadfile>
-    	<property name="release_tar" value="dist/biolockj_${blj_version}.tgz"/>
+    			<filterchain><striplinebreaks/></filterchain>
+    		</loadfile>
+    		<property name="release_tar" value="dist/biolockj_${blj_version}.tgz"/>
 	</target>
 	
 
     <target name="compile-source" depends="init">
     	    <mkdir dir="bin" />
 		<javac includeantruntime="false" debug="on" srcdir="src" destdir="bin" classpathref="lib.path"/>
-    	<copy file="resources/log4j.properties" todir="bin"/>
+    		<copy file="resources/log4j.properties" todir="bin"/>
     </target>
 
 	
@@ -53,6 +57,9 @@
 	</target>
 	
 	<target name="deploy" depends="build-jar">
+		<delete>
+			<fileset dir="dist" includes="*.tgz"/>
+		</delete>
 		<tar compression="gzip" destfile="${release_tar}">
 			<tarfileset dir="." filemode="770" dirmode="770">
 				<exclude name="/bin"/>

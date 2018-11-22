@@ -51,7 +51,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		super.checkDependencies();
 		setMultiplexedConfig();
 		final String demuxStrategy = "Config property [ " + DemuxUtil.DEMUX_STRATEGY + "="
 				+ Config.getString( DemuxUtil.DEMUX_STRATEGY ) + " ]";
@@ -93,6 +92,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 					+ Config.getString( Config.INPUT_TRIM_SUFFIX ) );
 
 		}
+		super.checkDependencies();
 	}
 
 	/**
@@ -103,6 +103,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		Config.setConfigProperty( Config.INTERNAL_MULTIPLEXED, Config.FALSE );
 	}
 
@@ -500,18 +501,17 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		return ModuleUtil.requireSubDir( this, getTempDir().getName() + File.separator + "split" );
 	}
 
-	// set name of pairedFastqMultiplex_R2.fastq.gz
 	private String getSplitFileName( final String fileName, final int i ) throws Exception
 	{
-		final String suffix = "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
-		String readDir = "";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) && getInputFiles().size() > 1 )
+		String suffix = "";
+		if( getInputFiles().size() > 1 )
 		{
-			readDir = SeqUtil.isForwardRead( fileName ) ? Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX )
-					: Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
+			suffix = SeqUtil.getReadDirectionSuffix( fileName );
 		}
 
-		return getSplitDir().getAbsolutePath() + File.separator + "split_" + i + readDir + suffix;
+		suffix += "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
+
+		return getSplitDir().getAbsolutePath() + File.separator + "split_" + i + suffix;
 	}
 
 	private void incrementCounts( final String name, final String header ) throws Exception

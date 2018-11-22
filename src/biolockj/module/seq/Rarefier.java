@@ -45,12 +45,12 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		super.checkDependencies();
 		final Integer rarefyingMax = Config.getPositiveInteger( INPUT_RAREFYING_MAX );
 		final Integer rarefyingMin = Config.getNonNegativeInteger( INPUT_RAREFYING_MIN );
-		
-		
 
-		if( ( rarefyingMin == null && rarefyingMax == null ) || rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
+		if( rarefyingMin == null && rarefyingMax == null
+				|| rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
 		{
-			throw new Exception( "Invalid parameters!  Rarefier requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
+			throw new Exception(
+					"Invalid parameters!  Rarefier requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
 		}
 	}
 
@@ -60,6 +60,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		RegisterNumReads.setNumReadFieldName( NUM_RAREFIED_READS );
 	}
 
