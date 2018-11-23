@@ -49,7 +49,7 @@ RUN cd /app && \
 #5.) ============ Install metaphlan2 =================
 ENV mpa_dir=/app/metaphlan2
 ENV META_ZIP=metaphlan2.zip
-ENV META_URL="https://www.dropbox.com/s/j8zbdxidfamyjlf/metaphlan2.zip"
+ENV META_URL="https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip"
 RUN cd /app && \
 	wget $META_URL && \
 	unzip $META_ZIP && \
