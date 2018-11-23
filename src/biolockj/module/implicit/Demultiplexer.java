@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.*;
@@ -96,7 +97,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Update SeqUtil to indicate data has been demuxed.
+	 * Update SeqUtil to indicate data has been demuxed.<br>
+	 * If {@value biolockj.util.MetaUtil#META_REQUIRED}, verify each sequence has a metadata record.
 	 * 
 	 * @throws Exception if unable to modify property
 	 */
@@ -105,6 +107,10 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	{
 		super.cleanUp();
 		Config.setConfigProperty( Config.INTERNAL_MULTIPLEXED, Config.FALSE );
+		if( Config.getBoolean( MetaUtil.META_REQUIRED ) )
+		{
+			verifySeqMetadata();
+		}
 	}
 
 	/**
@@ -457,6 +463,32 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 				Log.info( getClass(),
 						"====> Set: " + Config.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
 			}
+		}
+	}
+
+	/**
+	 * Verify that each sequence file has a corresponding record in the metadata file.
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected void verifySeqMetadata() throws Exception
+	{
+		final StringBuffer sb = new StringBuffer();
+		int x = 0;
+		for( final File seq: getOutputDir().listFiles() )
+		{
+			final String id = SeqUtil.getSampleId( seq.getName() );
+			if( SeqUtil.isForwardRead( seq.getName() ) && !MetaUtil.getSampleIds().contains( id ) )
+			{
+				x++;
+				sb.append( sb.toString().isEmpty() ? "": ", " ).append( id );
+			}
+		}
+
+		if( !sb.toString().isEmpty() )
+		{
+			throw new ConfigViolationException( MetaUtil.META_REQUIRED,
+					"Metadata row is missing for the following " + x + " samples IDs: " + sb.toString() );
 		}
 	}
 

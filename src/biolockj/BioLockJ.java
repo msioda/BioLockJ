@@ -34,7 +34,7 @@ public class BioLockJ
 
 	private BioLockJ()
 	{}
-	
+
 	/**
 	 * Copy file to pipeline root directory.
 	 * 

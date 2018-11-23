@@ -397,7 +397,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	private String getTrimFilePath( final File file ) throws Exception
 	{
 		return getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( file.getName() )
-				+ SeqUtil.getReadDirectionSuffix( file ) + "." + SeqUtil.getInputSequenceType();
+				+ SeqUtil.getReadDirectionSuffix( file ) + "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 	}
 
 	private Set<String> getValidHeaders( final File file, final Set<String> primers ) throws Exception

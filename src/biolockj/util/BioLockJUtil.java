@@ -26,16 +26,16 @@ import biolockj.exception.ConfigPathException;
  */
 public class BioLockJUtil
 {
-	
-	
+
 	/**
-	 * Delete file or directory with retry.  Wait 3 seconds between each try - waiting for resource to release lock if .
+	 * Delete file or directory with retry. Wait 3 seconds between each try - waiting for resource to release lock if .
+	 * 
 	 * @param file File or directory
 	 * @param numTries Number of attempts
-	 * @return boolean status 
+	 * @return boolean status
 	 * @throws Exception if errors occur
 	 */
-	public static boolean deleteWithRetry( final File file, int numTries ) throws Exception
+	public static boolean deleteWithRetry( final File file, final int numTries ) throws Exception
 	{
 		int i = 0;
 		while( i++ < numTries )
@@ -54,13 +54,13 @@ public class BioLockJUtil
 				}
 				return true;
 			}
-			catch( IOException ex )
+			catch( final IOException ex )
 			{
 				Log.info( BioLockJUtil.class,
 						"Waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -362,7 +362,7 @@ public class BioLockJUtil
 
 			writer.close();
 			writer = null;
-			
+
 			BioLockJUtil.deleteWithRetry( getMasterConfig(), 10 );
 			FileUtils.moveFile( getTempConfig(), getMasterConfig() );
 		}

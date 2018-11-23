@@ -20,7 +20,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.r.R_Module;
 import biolockj.module.report.Email;
 import biolockj.util.*;
 
@@ -34,25 +33,6 @@ public class Pipeline
 
 	private Pipeline()
 	{}
-
-	/**
-	 * Return first R module configured in pipeline.
-	 * 
-	 * @return First {@link biolockj.module.r.R_Module} or NULL
-	 * @throws Exception if errors occur
-	 */
-	public static R_Module getFirstRModule() throws Exception
-	{
-		for( final BioModule module: getModules() )
-		{
-			if( module instanceof R_Module )
-			{
-				return (R_Module) module;
-			}
-		}
-
-		return null;
-	}
 
 	/**
 	 * Return a list of {@link biolockj.module.BioModule}s constructed by the {@link biolockj.BioModuleFactory}
@@ -74,17 +54,6 @@ public class Pipeline
 	public static String getStatus() throws Exception
 	{
 		return pipelineException == null ? Pipeline.SCRIPT_SUCCESS: Pipeline.SCRIPT_FAILURES;
-	}
-
-	/**
-	 * Determine if pipeline include R modules.
-	 * 
-	 * @return TRUE if instances of {@link biolockj.module.r.R_Module} exist in pipeline
-	 * @throws Exception if errors occur
-	 */
-	public static boolean hasRModules() throws Exception
-	{
-		return getFirstRModule() != null;
 	}
 
 	/**
@@ -172,6 +141,35 @@ public class Pipeline
 	}
 
 	/**
+	 * Delete and recreate incomplete module directory.
+	 * 
+	 * @param module BioModule
+	 * @throws Exception if errors occur
+	 */
+	protected static void deleteIncompleteModule( final BioModule module ) throws Exception
+	{
+		Log.info( Pipeline.class, "Reset incomplete module: " + module.getModuleDir().getAbsolutePath() );
+		if( BioLockJUtil.deleteWithRetry( module.getModuleDir(), 10 ) )
+		{
+			module.setModuleDir( ModuleUtil.getModuleRootDir( module ) ); // recreate deleted directory
+		}
+		else if( module.getModuleDir().listFiles().length > 0 )
+		{
+			for( final File f: module.getModuleDir().listFiles() )
+			{
+				if( BioLockJUtil.deleteWithRetry( f, 5 ) )
+				{
+					Log.info( Pipeline.class, "Deleted: " + f.getAbsolutePath() );
+				}
+				else
+				{
+					throw new Exception( "Unable to Delete: " + f.getAbsolutePath() );
+				}
+			}
+		}
+	}
+
+	/**
 	 * This method executes all new and incomplete modules<br>
 	 * Before/after a module is executed, set persistent module status by creating status indicator files. Incomplete
 	 * modules have an empty file {@value #BLJ_STARTED} in the module directory.<br>
@@ -197,15 +195,7 @@ public class Pipeline
 			{
 				ModuleUtil.markStarted( module );
 				refreshOutputMetadata( prevModule );
-
-				if( module.getClass().getName().equals( getFirstRModule().getClass().getName() ) ) // 1st R_Module
-				{
-					Log.info( Pipeline.class,
-							"Refresh R-cache before running 1st R module: " + module.getClass().getName() );
-					RMetaUtil.classifyReportableMetadata();
-					BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig() );
-				}
-
+				refreshRCacheIfNeeded( module );
 				module.executeTask();
 
 				final boolean isJava = module instanceof JavaModule;
@@ -229,7 +219,7 @@ public class Pipeline
 			}
 			else
 			{
-				Log.info( Pipeline.class,
+				Log.debug( Pipeline.class,
 						"Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
 			}
 			prevModule = module;
@@ -280,48 +270,16 @@ public class Pipeline
 	{
 		for( final BioModule module: getModules() )
 		{
-			final String moduleDir = ModuleUtil.getModuleRootDir( module );
-			module.setModuleDir( moduleDir );
-
-			if( !RuntimeParamUtil.isDirectMode() && ModuleUtil.isIncomplete( module ) || module instanceof Email )
+			module.setModuleDir( ModuleUtil.getModuleRootDir( module ) );
+			if( ModuleUtil.isIncomplete( module ) && !RuntimeParamUtil.isDirectMode() || module instanceof Email )
 			{
-				Log.warn( Pipeline.class, "Reset BioModule: " + module.getModuleDir().getAbsolutePath() );
-				boolean status = BioLockJUtil.deleteWithRetry( module.getModuleDir(), 10 );
-				if( status )
-				{
-					module.setModuleDir( moduleDir ); // rebuild deleted directory
-				}
-				else // attempt to delete contents instead
-				{
-					for( File f: module.getModuleDir().listFiles() )
-					{
-						String path = f.getAbsolutePath();
-						status = BioLockJUtil.deleteWithRetry( f, 5 );
-						if( status )
-						{
-							Log.info( Pipeline.class, "Deleted: " + path );
-						}
-						else
-						{
-							throw new Exception( "Unable to Delete: " + path );
-						}
-					}
-				}
+				deleteIncompleteModule( module );
 			}
 			else if( ModuleUtil.isComplete( module ) )
 			{
-				refreshOutputMetadata( module );
-				info( "Clean up: " + module.getClass().getName() );
 				module.cleanUp();
 				refreshOutputMetadata( module );
-
-				if( module.getClass().getName().equals( getFirstRModule().getClass().getName() ) ) // 1st R_Module
-				{
-					Log.debug( Pipeline.class,
-							"Refresh cache after initializing 1st R module: " + module.getClass().getName() );
-					RMetaUtil.classifyReportableMetadata();
-					BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig() );
-				}
+				refreshRCacheIfNeeded( module );
 			}
 			else if( !RuntimeParamUtil.isDockerMode() || DockerUtil.isManager() || RuntimeParamUtil.isDirectMode()
 					&& RuntimeParamUtil.getDirectModule().equals( module.getClass().getName() ) )
@@ -436,6 +394,16 @@ public class Pipeline
 				MetaUtil.setFile( metadata );
 				MetaUtil.refreshCache();
 			}
+		}
+	}
+
+	protected static void refreshRCacheIfNeeded( final BioModule module ) throws Exception
+	{
+		if( ModuleUtil.isFirstRModule( module ) )
+		{
+			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
+			RMetaUtil.classifyReportableMetadata();
+			BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig() );
 		}
 	}
 

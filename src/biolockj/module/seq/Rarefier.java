@@ -92,7 +92,8 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		final List<File> files = getInputFiles();
 		final int numFiles = files == null ? 0: files.size();
 
-		Log.info( getClass(), "Rarefying " + numFiles + " " + SeqUtil.getInputSequenceType() + " files..." );
+		Log.info( getClass(),
+				"Rarefying " + numFiles + " " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " files..." );
 		Log.info( getClass(), "=====> Min # Reads = " + Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) );
 		Log.info( getClass(), "=====> Max # Reads = " + Config.getPositiveInteger( INPUT_RAREFYING_MAX ) );
 
@@ -125,7 +126,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	{
 		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
 		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
-		final String fileExt = "." + SeqUtil.getInputSequenceType();
+		final String fileExt = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
 				+ fileExt;
 		final File output = new File( name );

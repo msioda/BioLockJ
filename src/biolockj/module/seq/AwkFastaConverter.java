@@ -32,7 +32,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 		final List<List<String>> data = new ArrayList<>();
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
-		final String ext = "." + SeqUtil.getInputSequenceType();
+		final String ext = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 		for( final File f: files )
 		{
 			final ArrayList<String> lines = new ArrayList<>();

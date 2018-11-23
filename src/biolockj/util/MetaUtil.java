@@ -588,11 +588,11 @@ public class MetaUtil
 	public static final String META_NULL_VALUE = "metadata.nullValue";
 
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #META_REQUIRE_METADATA}<br>
-	 * If Y, require metadata row for every sample in {@value biolockj.Config#INPUT_DIRS}.<br>
-	 * If N, samples without metadata row will be ignored.
+	 * {@link biolockj.Config} Boolean property: {@value #META_REQUIRED}<br>
+	 * If Y, require metadata rew for each sample with sequence data in {@value biolockj.Config#INPUT_DIRS}.<br>
+	 * If N, samples without metadata are ignored.
 	 */
-	public static final String META_REQUIRE_METADATA = "metadata.requireMetadata";
+	public static final String META_REQUIRED = "metadata.required";
 
 	/**
 	 * Default column delimiter = tab character

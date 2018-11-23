@@ -13,7 +13,9 @@ package biolockj.module.implicit;
 
 import java.io.*;
 import java.util.*;
-import biolockj.*;
+import biolockj.BioLockJ;
+import biolockj.Config;
+import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
 import biolockj.util.*;
@@ -51,14 +53,14 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		super.cleanUp();
 		if( getMetadata().exists() )
 		{
-			if( Pipeline.hasRModules() )
+			if( ModuleUtil.hasRModules() )
 			{
 				RMetaUtil.classifyReportableMetadata();
 			}
 		}
 		else
 		{
-			throw new Exception( "Failed to import metadata file" );
+			throw new Exception( "Failed to import metadata filels" );
 		}
 	}
 

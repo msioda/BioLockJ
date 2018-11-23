@@ -24,6 +24,7 @@ import biolockj.Pipeline;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.implicit.parser.ParserModule;
+import biolockj.module.r.R_Module;
 
 /**
  * This utility holds general methods useful for BioModule interaction and management.
@@ -34,6 +35,25 @@ public class ModuleUtil
 	// Prevent instantiation
 	private ModuleUtil()
 	{}
+
+	/**
+	 * Return first R module configured in pipeline.
+	 * 
+	 * @return First {@link biolockj.module.r.R_Module} or NULL
+	 * @throws Exception if errors occur
+	 */
+	public static R_Module getFirstRModule() throws Exception
+	{
+		for( final BioModule module: Pipeline.getModules() )
+		{
+			if( module instanceof R_Module )
+			{
+				return (R_Module) module;
+			}
+		}
+
+		return null;
+	}
 
 	/**
 	 * Get the main script file in the bioModule script directory, with prefix:
@@ -264,6 +284,17 @@ public class ModuleUtil
 	}
 
 	/**
+	 * Check pipeline for configured {@link biolockj.module.r.R_Module}s.
+	 * 
+	 * @return TRUE if {@link biolockj.module.r.R_Module} is found
+	 * @throws Exception if errors occur
+	 */
+	public static boolean hasRModules() throws Exception
+	{
+		return getFirstRModule() != null;
+	}
+
+	/**
 	 * Return TRUE if bioModule completed successfully.
 	 *
 	 * @param bioModule BioModule
@@ -273,6 +304,19 @@ public class ModuleUtil
 	{
 		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_COMPLETE );
 		return f.exists();
+	}
+
+	/**
+	 * Test if module is the first {@link biolockj.module.r.R_Module} configured in the pipeline.
+	 * 
+	 * @param module BioModule to test
+	 * @return TRUE if module is 1st {@link biolockj.module.r.R_Module}
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isFirstRModule( final BioModule module ) throws Exception
+	{
+		return module != null && hasRModules()
+				&& module.getClass().getName().equals( getFirstRModule().getClass().getName() );
 	}
 
 	/**

@@ -28,7 +28,7 @@ import biolockj.util.*;
  * <a href= "http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html" target=
  * "_top">http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html</a><br>
  */
-public abstract class QiimeClassifier extends ClassifierModuleImpl implements ClassifierModule
+public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
 
 	/**

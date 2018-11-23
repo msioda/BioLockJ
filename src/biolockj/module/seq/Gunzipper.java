@@ -72,7 +72,7 @@ public class Gunzipper extends ScriptModuleImpl implements ScriptModule
 	{
 		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() + File.separator
 				+ SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
-				+ SeqUtil.getInputSequenceType();
+				+ Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 	}
 
 	/**

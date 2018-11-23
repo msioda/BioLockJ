@@ -63,14 +63,25 @@ public abstract class ConfigException extends Exception
 	 * @param msg Exception details
 	 * @return Exception message that will be passed to superclass {@link java.lang.Exception} via super()
 	 */
-	protected static String buildMessage( final String propertyName, final String type, String msg )
+	protected static String buildMessage( final String propertyName, String type, String msg )
 	{
+		if( type != null && !type.isEmpty() )
+		{
+			type += " " + type;
+		}
 		if( !msg.isEmpty() )
 		{
 			msg = msg + BioLockJ.RETURN;
 		}
-		return "Config Property [ " + propertyName + " ] " + type + " Exception" + BioLockJ.RETURN + msg
-				+ "Restart BioLockJ pipeline after updating this property in your Config file: "
+
+		String val = Config.getString( propertyName );
+		if( val == null )
+		{
+			val = "{undefined}";
+		}
+
+		return "Config" + type + " Exception [ " + propertyName + "=" + val + " ] " + BioLockJ.RETURN + msg
+				+ "Restart pipeline after updating application inputs or Config " + propertyName + " value in: "
 				+ Config.getConfigFileName();
 	}
 

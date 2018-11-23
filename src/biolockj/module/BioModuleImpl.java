@@ -41,7 +41,7 @@ public abstract class BioModuleImpl implements BioModule
 	@Override
 	public void cleanUp() throws Exception
 	{
-		// no action by default
+		Log.info( getClass(), "Clean up: " + getClass().getName() );
 	}
 
 	@Override
