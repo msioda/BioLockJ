@@ -11,21 +11,26 @@ parentDir="$(dirname $PWD)"
 currentDir="$(basename $PWD)"
 targetNum=${currentDir%_*}
 
-! $(is_pipeline_dir $parentDir) || (($targetNum < 0)) || [ ! -f "$PWD/biolockjComplete" ] && \
+if $(is_pipeline_dir $currentDir); then
+	parentDir=$currentDir
+	targetNum=0
+elif ! $(is_pipeline_dir $parentDir) || ((10#$targetNum < 0)) || [ ! -f "$PWD/biolockjComplete" ]; then 
 	echo "ABORT: blj_reset must be executed within a biolockjComplete module directory" && exit 1
+fi
 
-echo "Reset $parentDir modules after and including step #$targetNum"
+echo "Reset $parentDir modules after and including step #$targetNum to status: STARTED"
+
 [ -f "$parentDir/biolockjComplete" ] && rm "$parentDir/biolockjComplete" && echo "deleted $parentDir/biolockjComplete"
 [ ! -f "$PWD/biolockjStarted" ] && touch "$PWD/biolockjStarted" && echo "created $PWD/biolockjStarted"
 rm "$PWD/biolockjComplete" && echo "deleted $PWD/biolockjComplete"
 
 for modDir in $parentDir/*; do
-	if [ -d $modDir ]; then
+	if [ -d "$modDir" ]; then
 		dirName="$(basename $modDir)"
 		modNum=${dirName%_*}
-		if [ $modNum -gt $targetNum ] && ! $(is_empty $modDir); then
+		if [ $((10#$modNum)) -gt $((10#$targetNum)) ] && ! $(is_empty $modDir); then
 			[ -f "$modDir/biolockjComplete" ] && rm "$modDir/biolockjComplete" && echo "deleted $modDir/biolockjComplete"
-			[ ! -f "$modDir/biolockjStarted" ] && touch "$modDir/biolockjStarted" && echo "created $modDir/biolockjStarted"
+			[ ! -f "$modDir/biolockjStarted" ] && ! $(is_empty $modDir) && touch "$modDir/biolockjStarted" && echo "created $modDir/biolockjStarted"
 		fi
 	fi
 done

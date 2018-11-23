@@ -46,12 +46,19 @@ get_named_arg() {
 	do
 		IFS="="
 		tokens=( $arg )
-		if [ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ]; then
-			echo ${tokens[1]} && return
-		fi
+		[ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
 	done
 }
 
+# Return $HOST_BLJ_PROJ if called from within a docker container (like biolockj/webapp), otherwise return $BLJ_PROJ
+get_blj_proj() {
+	if [ ${#inDockerContainer} -gt 0 ]; then
+		[ ${#HOST_BLJ_PROJ} -gt 0 ] && echo $HOST_BLJ_PROJ && return
+		echo "Exit program - Required env variable HOST_BLJ_PROJ undefined" && exit 1
+	fi
+	[ ${#BLJ_PROJ} -gt 0 ] && echo $BLJ_PROJ && return
+	echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
+}
 
 # Verify host file exists, if dockblj is not deployed inside a Docker container
 validateHostFile() {
@@ -86,10 +93,10 @@ validate_input() {
 # Include Docker container path to required Config file
 # Include all directory paths the manager may need to map volumes in spawned Docker compute node instances
 get_blj_options() {
-	options="-D -b $BLJ_PROJ" 
-	[ ${#restartPipeline} -gt 0 ] && options="$options $restartPipeline"
+	options="-D -b $(get_blj_proj)" 
+	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -gt 0 ] && options="$options -C $(dirname $config) -r /config/$(basename $config)"
+	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -eq 0 ] && options="$options -C $(dirname $config) -c /config/$(basename $config)"
 	[ ${#changePassword} -gt 0 ] && options="$options -p $changePassword"
-	[ ${#config} -gt 0 ] && options="$options -C $(dirname $config) -c /config/$(basename $config)"
 	[ ${#inputDirPaths} -gt 0 ] && options="$options -i $inputDirPaths"
 	[ ${#metadataFilePath} -gt 0 ] && options="$options -m $metadataFilePath"
 	[ ${#trimPrimersFilePath} -gt 0 ] && options="$options -t $trimPrimersFilePath"
@@ -130,22 +137,22 @@ echo $(get_status_msg)
 
 if [ ${#metadataFilePath} -gt 0 ] && [ ${#trimPrimersFilePath} -gt 0 ]; then
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
+		-v $(get_blj_proj):/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta -v $trimPrimersFilePath:/primer \
 		--rm biolockj/manager
 elif [ ${#metadataFilePath} -gt 0 ]; then	
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
+		-v $(get_blj_proj):/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta \
 		--rm biolockj/manager 
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then	
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
+		-v $(get_blj_proj):/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $trimPrimersFilePath:/primer \
 		--rm biolockj/manager 
 else
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ_PROJ:/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
+		-v $(get_blj_proj):/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		--rm biolockj/manager 
 fi
 

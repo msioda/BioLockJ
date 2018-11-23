@@ -62,6 +62,17 @@ public class Log
 	}
 
 	/**
+	 * Print log level ERROR message without exception stacktrace
+	 * 
+	 * @param myClass Logging class
+	 * @param msg Message to log
+	 */
+	public static void error( final Class<?> myClass, final String msg )
+	{
+		error( myClass, msg, null );
+	}
+
+	/**
 	 * Print log level ERROR message.
 	 * 
 	 * @param myClass Logging class
@@ -74,9 +85,13 @@ public class Log
 		{
 			logMesseges.add( msg );
 		}
-		else
+		else if( exception != null )
 		{
 			get( myClass ).error( msg, exception );
+		}
+		else
+		{
+			get( myClass ).error( msg );
 		}
 	}
 

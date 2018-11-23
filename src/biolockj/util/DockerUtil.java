@@ -54,12 +54,18 @@ public class DockerUtil
 	 */
 	public static List<String> buildRunDockerFunction( final BioModule module ) throws Exception
 	{
-		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
-		Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + BioLockJ.RETURN );
-		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
 
 		final List<String> lines = new ArrayList<>();
-		lines.add( getBljOptions( module ) + BioLockJ.RETURN );
+		if( isDockerJavaModule( module ) )
+		{
+			lines.add( getBljOptions( module ) + BioLockJ.RETURN );
+			Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + BioLockJ.RETURN );
+		}
+		
+		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
+		
+		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
+		
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
 		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
@@ -146,26 +152,22 @@ public class DockerUtil
 		return " " + DOCKER_USER + "/" + name.toLowerCase();
 	}
 
-	private static final String getBljOptions( final BioModule module ) throws Exception
+	private static String getBljOptions( final BioModule module ) throws Exception
 	{
-		String bljOptions = RuntimeParamUtil.getRuntimeArgs().replaceAll( RuntimeParamUtil.RESTART_FLAG + " ", "" );
-		if( !isDockerScriptModule( module ) )
-		{
-			bljOptions += " " + RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName();
-		}
+		final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " 
+				+ RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName();
 
-		return BLJ_OPTIONS + "=\"" + bljOptions + "\"";
+		return BLJ_OPTIONS + "=\"" + args + "\"";
 	}
 
 	private static final String getDockerEnvVars( final BioModule module ) throws Exception
 	{
-		String envVars = " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
 		if( isDockerScriptModule( module ) )
 		{
-			envVars += " -e " + COMPUTE_SCRIPT + "=$1";
+			return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 		}
-
-		return envVars;
+		
+		return " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
 	}
 
 	private static final String getDockerVolumes() throws Exception

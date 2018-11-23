@@ -5,18 +5,18 @@
 #  If profile exists: backup to ~/.bash_profile~, else create ~/.bash_profile.   #
 #                                                                                #
 ##################################################################################
-BSH_PRO=~/.bash_profile
-INSTALL_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+bashProfile=~/.bash_profile
+bljDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ ! -f $BSH_PRO ]; then
-	printf '%s\n' '#BioLockJ generated bash profile' > $BSH_PRO
-	echo "    Created profile: $BSH_PRO"
+if [ ! -f "$bashProfile" ]; then
+	printf '%s\n' '#BioLockJ generated bash profile' > $bashProfile
+	echo "    Created profile: $bashProfile"
 else
-	cp $BSH_PRO $BSH_PRO~
-	echo "    Saved backup:  $BSH_PRO~"
+	cp $bashProfile $bashProfile~
+	echo "    Saved backup:  $bashProfile~"
 fi
 
-echo "[ -x $INSTALL_SCRIPT_DIR/script/blj_config ] && . $INSTALL_SCRIPT_DIR/script/blj_config" >> $BSH_PRO
-source $BSH_PRO
-echo "    Saved profile:  $BSH_PRO"
+echo '[ -x "$bljDir/script/blj_config" ] && . $bljDir/script/blj_config' >> $bashProfile
+source $bashProfile
+echo "    Saved profile:  $bashProfile"
 echo "BioLockJ installation complete!"

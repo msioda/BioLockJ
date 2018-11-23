@@ -46,10 +46,11 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		final Integer rarefyingMax = Config.getPositiveInteger( INPUT_RAREFYING_MAX );
 		final Integer rarefyingMin = Config.getNonNegativeInteger( INPUT_RAREFYING_MIN );
 
-		if( rarefyingMax == null || rarefyingMax < 1 || rarefyingMin == null || rarefyingMin > rarefyingMax )
+		if( rarefyingMin == null && rarefyingMax == null
+				|| rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
 		{
-			throw new Exception( "Invalid parameter value.  Rarefier requires that (" + INPUT_RAREFYING_MIN + " <= "
-					+ INPUT_RAREFYING_MAX + ") & (" + INPUT_RAREFYING_MAX + " > 1)" );
+			throw new Exception(
+					"Invalid parameters!  Rarefier requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
 		}
 	}
 
@@ -59,6 +60,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		RegisterNumReads.setNumReadFieldName( NUM_RAREFIED_READS );
 	}
 
@@ -90,7 +92,8 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		final List<File> files = getInputFiles();
 		final int numFiles = files == null ? 0: files.size();
 
-		Log.info( getClass(), "Rarefying " + numFiles + " " + SeqUtil.getInputSequenceType() + " files..." );
+		Log.info( getClass(),
+				"Rarefying " + numFiles + " " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " files..." );
 		Log.info( getClass(), "=====> Min # Reads = " + Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) );
 		Log.info( getClass(), "=====> Max # Reads = " + Config.getPositiveInteger( INPUT_RAREFYING_MAX ) );
 
@@ -123,7 +126,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	{
 		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
 		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
-		final String fileExt = "." + SeqUtil.getInputSequenceType();
+		final String fileExt = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
 				+ fileExt;
 		final File output = new File( name );

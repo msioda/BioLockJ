@@ -122,6 +122,7 @@ public class UpdateJavaDocs
 	{
 		final String filePath = file.getAbsolutePath();
 		FileUtils.forceDelete( file );
+		BioLockJUtil.deleteWithRetry( file, 5 );
 		System.out.println( "Deleted: " + filePath );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( filePath ) );
 		try

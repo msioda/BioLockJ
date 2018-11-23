@@ -128,6 +128,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		final List<String> metrics = Config.getList( QIIME_ALPHA_DIVERSITY_METRICS );
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
 				|| Config.requireString( MetaUtil.META_NULL_VALUE ).equals( ALPHA_DIV_NULL_VALUE ) )
@@ -155,7 +156,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 				writer.write( st.nextToken() ); // write ID col
 				for( int i = 0; i < numCols; i++ ) // write all standard columns
 				{
-
 					writer.write( TAB_DELIM + st.nextToken() );
 				}
 

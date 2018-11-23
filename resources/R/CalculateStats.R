@@ -42,6 +42,10 @@ calculateStats <- function(otuTable, binaryCols, nominalCols, numericCols ) {
    adjNonParPvals = vector( mode="double" )
    lastOtuCol = ncol(otuTable) - getProperty("internal.numMetaCols")
 
+   if( r.debug ) print( paste( "internal.numMetaCols:", getProperty("internal.numMetaCols") ) )
+   if( r.debug ) print( paste( "ncol(otuTable):", ncol(otuTable) ) )
+   if( r.debug ) print( paste( "lastOtuCol:", lastOtuCol ) )
+
    # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of otuTable rows
    cutoffValue = getProperty("r.rareOtuThreshold", 1)
    if( cutoffValue < 1 ) {
@@ -123,6 +127,8 @@ calculateStats <- function(otuTable, binaryCols, nominalCols, numericCols ) {
    }
 
    if( length( otuNames ) == 0 ) {
+      if( r.debug ) print( "No OTU Names found, should print empty vector below:"  )
+      if( r.debug ) print( otuNames )
       return( NULL )
    }
 

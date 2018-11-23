@@ -9,6 +9,6 @@
 
 export scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export BLJ="$(dirname $scriptDir)"
-export PATH=$scriptDir:$PATH
-export BLJ_PROJ=$BLJ/pipelines
+export PATH="$scriptDir:$PATH"
+export BLJ_PROJ="$BLJ/pipelines"
 alias blj_go=". $scriptDir/blj_go"

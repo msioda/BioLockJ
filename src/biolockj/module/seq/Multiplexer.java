@@ -91,7 +91,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		Log.info( getClass(), "Multiplexing file type = " + SeqUtil.getInputSequenceType() );
+		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
 		if( !hasValidBarcodes() )
 		{
 			Log.info( getClass(),
@@ -204,21 +204,8 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 
 	private String getMutliplexeFileName( final File file ) throws Exception
 	{
-		String suffix = "";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			if( SeqUtil.isForwardRead( file.getName() ) )
-			{
-				suffix = Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
-			}
-			else
-			{
-				suffix = Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
-			}
-		}
-
 		return getOutputDir().getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
-				+ suffix + "." + SeqUtil.getInputSequenceType();
+				+ SeqUtil.getReadDirectionSuffix( file ) + "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 	}
 
 	private long getNumReads( final File file ) throws Exception

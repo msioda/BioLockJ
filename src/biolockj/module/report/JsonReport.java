@@ -50,6 +50,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			}
 			base = next;
 		}
+		super.checkDependencies();
 	}
 
 	@Override

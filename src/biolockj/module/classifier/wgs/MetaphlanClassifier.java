@@ -110,7 +110,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	protected Map<String, String> getMetaphlanDerivedSwitches() throws Exception
 	{
 		final Map<String, String> metaphlanSwitches = new HashMap<>();
-		metaphlanSwitches.put( "--input_type", SeqUtil.getInputSequenceType() );
+		metaphlanSwitches.put( "--input_type", Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
 		metaphlanSwitches.put( "--nproc", getNumThreads().toString() );
 		metaphlanSwitches.put( "-t", "rel_ab_w_read_stats" );
 		return metaphlanSwitches;

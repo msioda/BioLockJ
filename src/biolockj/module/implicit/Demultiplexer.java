@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.*;
@@ -51,7 +52,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		super.checkDependencies();
 		setMultiplexedConfig();
 		final String demuxStrategy = "Config property [ " + DemuxUtil.DEMUX_STRATEGY + "="
 				+ Config.getString( DemuxUtil.DEMUX_STRATEGY ) + " ]";
@@ -93,17 +93,24 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 					+ Config.getString( Config.INPUT_TRIM_SUFFIX ) );
 
 		}
+		super.checkDependencies();
 	}
 
 	/**
-	 * Update SeqUtil to indicate data has been demuxed.
+	 * Update SeqUtil to indicate data has been demuxed.<br>
+	 * If {@value biolockj.util.MetaUtil#META_REQUIRED}, verify each sequence has a metadata record.
 	 * 
 	 * @throws Exception if unable to modify property
 	 */
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		Config.setConfigProperty( Config.INTERNAL_MULTIPLEXED, Config.FALSE );
+		if( Config.getBoolean( MetaUtil.META_REQUIRED ) )
+		{
+			verifySeqMetadata();
+		}
 	}
 
 	/**
@@ -459,6 +466,32 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		}
 	}
 
+	/**
+	 * Verify that each sequence file has a corresponding record in the metadata file.
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected void verifySeqMetadata() throws Exception
+	{
+		final StringBuffer sb = new StringBuffer();
+		int x = 0;
+		for( final File seq: getOutputDir().listFiles() )
+		{
+			final String id = SeqUtil.getSampleId( seq.getName() );
+			if( SeqUtil.isForwardRead( seq.getName() ) && !MetaUtil.getSampleIds().contains( id ) )
+			{
+				x++;
+				sb.append( sb.toString().isEmpty() ? "": ", " ).append( id );
+			}
+		}
+
+		if( !sb.toString().isEmpty() )
+		{
+			throw new ConfigViolationException( MetaUtil.META_REQUIRED,
+					"Metadata row is missing for the following " + x + " samples IDs: " + sb.toString() );
+		}
+	}
+
 	private String getFileSuffix( final String name, final String header ) throws Exception
 	{
 		String suffix = "";
@@ -500,18 +533,17 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		return ModuleUtil.requireSubDir( this, getTempDir().getName() + File.separator + "split" );
 	}
 
-	// set name of pairedFastqMultiplex_R2.fastq.gz
 	private String getSplitFileName( final String fileName, final int i ) throws Exception
 	{
-		final String suffix = "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
-		String readDir = "";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) && getInputFiles().size() > 1 )
+		String suffix = "";
+		if( getInputFiles().size() > 1 )
 		{
-			readDir = SeqUtil.isForwardRead( fileName ) ? Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX )
-					: Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
+			suffix = SeqUtil.getReadDirectionSuffix( fileName );
 		}
 
-		return getSplitDir().getAbsolutePath() + File.separator + "split_" + i + readDir + suffix;
+		suffix += "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
+
+		return getSplitDir().getAbsolutePath() + File.separator + "split_" + i + suffix;
 	}
 
 	private void incrementCounts( final String name, final String header ) throws Exception

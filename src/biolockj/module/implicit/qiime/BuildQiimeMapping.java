@@ -210,21 +210,20 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final List<String> cols = getMetaCols();
-		if( cols == null )
+		if( metaColumns == null )
 		{
 			return null;
 		}
 
-		final List<Integer> skip = Arrays.asList( new Integer[] { cols.indexOf( BARCODE_SEQUENCE ),
-				cols.indexOf( LINKER_PRIMER_SEQUENCE ), cols.indexOf( DEMUX_COLUMN ), cols.indexOf( DESCRIPTION ) } );
+		final List<Integer> skip = Arrays.asList( new Integer[] { metaColumns.indexOf( BARCODE_SEQUENCE ),
+				metaColumns.indexOf( LINKER_PRIMER_SEQUENCE ), metaColumns.indexOf( DEMUX_COLUMN ), metaColumns.indexOf( DESCRIPTION ) } );
 
 		final StringBuffer sb = new StringBuffer();
 		sb.append(
 				Config.getExe( Config.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM + "\" '{ print $1,"
-						+ colIndex( cols, BARCODE_SEQUENCE ) + "," + colIndex( cols, LINKER_PRIMER_SEQUENCE ) + "," );
+						+ colIndex( metaColumns, BARCODE_SEQUENCE ) + "," + colIndex( metaColumns, LINKER_PRIMER_SEQUENCE ) + "," );
 
-		for( int i = 1; i < cols.size(); i++ )
+		for( int i = 1; i < metaColumns.size(); i++ )
 		{
 			if( !skip.contains( i ) )
 			{
@@ -232,8 +231,8 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 			}
 		}
 
-		sb.append( colIndex( cols, DEMUX_COLUMN ) + "," );
-		sb.append( colIndex( cols, DESCRIPTION ) );
+		sb.append( colIndex( metaColumns, DEMUX_COLUMN ) + "," );
+		sb.append( colIndex( metaColumns, DESCRIPTION ) );
 		sb.append( " }' " + initMetaFile.getAbsolutePath() + " > " + getOrderedMapping().getAbsolutePath() );
 
 		Log.debug( getClass(), FUNCTION_REORDER_FIELDS + " will update column order using awk --> " + sb.toString() );
@@ -278,12 +277,12 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 		Log.info( getClass(), "Create QIIME Specific Mapping File" );
 		final List<String> lines = new ArrayList<>();
 		initMetaFile = addMissingFields();
-		final List<String> cols = getMetaCols();
-		if( cols != null )
+		metaColumns = getMetaCols();
+		if( metaColumns != null )
 		{
 			Log.info( getClass(), "Metadata column order:" );
 			int d = 0;
-			for( final String col: cols )
+			for( final String col: metaColumns )
 			{
 				Log.info( getClass(), "col[" + d++ + "] = " + col );
 			}
@@ -360,6 +359,7 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 	}
 
 	private File initMetaFile = null;
+	private List<String> metaColumns = null;
 
 	/**
 	 * QIIME mapping file required 2nd column name

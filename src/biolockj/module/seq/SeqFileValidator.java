@@ -35,6 +35,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	@Override
 	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		RegisterNumReads.setNumReadFieldName( NUM_VALID_READS );
 	}
 

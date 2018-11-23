@@ -41,7 +41,7 @@ public class RuntimeParamUtil
 	 */
 	public static boolean doRestart()
 	{
-		return params.keySet().contains( RESTART_FLAG );
+		return params.get( RESTART_FLAG ) != null;
 	}
 
 	/**
@@ -97,7 +97,6 @@ public class RuntimeParamUtil
 		}
 
 		return DockerUtil.MANAGER;
-
 	}
 
 	/**
@@ -150,14 +149,29 @@ public class RuntimeParamUtil
 		return params.get( PRIMER_DIR_FLAG );
 	}
 
-	/**
-	 * Return all runtime args
-	 * 
-	 * @return boolean
-	 */
-	public static String getRuntimeArgs()
+	public static String getDockerRuntimeArgs() throws Exception
 	{
-		return runtimeArgs;
+		final StringBuffer sb = new StringBuffer();
+		final TreeMap<String, String> args = new TreeMap<>( params );
+
+		for( final String key: args.keySet() )
+		{
+			if( key.equals( RESTART_FLAG ) || key.equals( BASE_DIR_FLAG ) )
+			{
+				continue;
+			}
+			else if( key.equals( HOST_PIPELINE_DIR ) )
+			{
+				sb.append( ( sb.toString().isEmpty() ? "": " " ) + BASE_DIR_FLAG + " " + args.get( key ) );
+			}
+			else
+			{
+				sb.append( ( sb.toString().isEmpty() ? "": " " ) + key );
+				sb.append( args.get( key ).equals( Config.TRUE ) ? "": " " + args.get( key ) );
+			}
+		}
+
+		return sb.toString();
 	}
 
 	/**
@@ -188,58 +202,29 @@ public class RuntimeParamUtil
 	 */
 	public static void printRuntimeArgs( final String[] args, final boolean useSysOut )
 	{
-		if( useSysOut )
+		try
 		{
-			System.out.println( Log.LOG_SPACER );
-		}
-		else
-		{
-			Log.info( RuntimeParamUtil.class, Log.LOG_SPACER );
-		}
-		if( args != null && args.length > 0 )
-		{
-			final String msg = "Application runtime args:";
-			if( useSysOut )
+			useSystemOut = useSysOut;
+			info( RETURN + Log.LOG_SPACER );
+			if( args != null && args.length > 0 )
 			{
-				System.out.println( msg );
+				info( "Application runtime args:" );
+				int i = 0;
+				for( final String arg: args )
+				{
+					info( " ---> arg[" + i++ + "] = " + arg );
+				}
 			}
 			else
 			{
-				Log.info( RuntimeParamUtil.class, msg );
+				info( "NO RUNTIME ARGS FOUND!" );
 			}
-			int i = 0;
-			for( final String arg: args )
-			{
-				final String out = " ---> arg[" + i++ + "] = " + arg;
-				if( useSysOut )
-				{
-					System.out.println( out );
-				}
-				else
-				{
-					Log.info( RuntimeParamUtil.class, out );
-				}
-			}
+			info( Log.LOG_SPACER );
+
 		}
-		else
+		catch( final Exception ex )
 		{
-			final String msg = "NO RUNTIME ARGS FOUND!";
-			if( useSysOut )
-			{
-				System.out.println( msg );
-			}
-			else
-			{
-				Log.info( RuntimeParamUtil.class, msg );
-			}
-		}
-		if( useSysOut )
-		{
-			System.out.println( Log.LOG_SPACER );
-		}
-		else
-		{
-			Log.info( RuntimeParamUtil.class, Log.LOG_SPACER );
+			Log.error( RuntimeParamUtil.class, "Error reading inpur parameters", ex );
 		}
 	}
 
@@ -259,35 +244,54 @@ public class RuntimeParamUtil
 
 		if( args == null || args.length < 2 )
 		{
-			throw new Exception( "Missing required runtime parameters." + RETURN + "Config file path is required."
+			throw new Exception( "Missing required runtime parameters." + RETURN + "Required system path is not found. "
 					+ RETURN + RETURN + "PROGRAM TERMINATED!" );
 		}
 
 		parseParams( simplifyArgs( args ) );
 
-		cacheRuntimeArgs( args );
+		if( doRestart() )
+		{
+			assignRestartConfig();
+		}
 
 		if( isDockerMode() )
 		{
-			params.put( HOST_PIPELINE_DIR, params.get( BASE_DIR_FLAG ) );
-			params.put( BASE_DIR_FLAG, DockerUtil.CONTAINER_OUTPUT_DIR );
+			reassignDockerConfig();
 		}
 
 		validateParams();
 	}
 
-	private static void cacheRuntimeArgs( final String[] args ) throws Exception
+	private static void assignLastParam( final String param ) throws Exception
 	{
-		final StringBuffer sb = new StringBuffer();
-		if( args != null )
+		if( param.equals( RESTART_FLAG ) || param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG )
+				|| param.equals( CONFIG_DIR_FLAG ) || param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG )
+				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( PRIMER_DIR_FLAG ) )
 		{
-			for( final String val: args )
-			{
-				sb.append( ( sb.length() > 0 ? " ": "" ) + val );
-			}
+			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
 		}
 
-		runtimeArgs = sb.toString();
+		if( !params.keySet().contains( RESTART_FLAG ) && !params.keySet().contains( CONFIG_FLAG )
+				&& !params.keySet().contains( param ) && !params.values().contains( param ) )
+		{
+			params.put( CONFIG_FLAG, param );
+		}
+	}
+
+	private static void assignRestartConfig() throws Exception
+	{
+		Log.info( RuntimeParamUtil.class, "Found \"" + RESTART_FLAG + "\" arg ---> RESTART PIPELINE" );
+		if( params.keySet().contains( CONFIG_FLAG ) && params.keySet().contains( RESTART_FLAG ) )
+		{
+			throw new Exception(
+					CONFIG_FLAG + " and " + RESTART_FLAG + " are mutually exclusive, use only 1 of these arguments" );
+		}
+		else if( params.keySet().contains( RESTART_FLAG ) )
+		{
+			params.put( CONFIG_FLAG, getRestartConfigFile( params.get( RESTART_FLAG ) ) );
+			params.put( RESTART_FLAG, Config.TRUE );
+		}
 	}
 
 	private static String getName( final String javaClassName )
@@ -298,18 +302,55 @@ public class RuntimeParamUtil
 				: null;
 	}
 
-	private static void parseParams( final String[] args )
+	private static String getRestartConfigFile( final String val ) throws Exception
+	{
+		final File arg = new File( val );
+		if( arg.isDirectory() )
+		{
+			if( arg.listFiles().length > 0 )
+			{
+				for( final File f: arg.listFiles() )
+				{
+					if( f.getName().startsWith( BioLockJUtil.MASTER_PREFIX ) )
+					{
+						return f.getAbsolutePath();
+					}
+				}
+			}
+		}
+		else if( arg.isFile() )
+		{
+			return val;
+		}
+
+		throw new Exception(
+				"Restarted pipelines require a valid config file path or pipeline directory path after \"-r\" parameter." );
+	}
+
+	private static void info( final String msg ) throws Exception
+	{
+		if( useSystemOut )
+		{
+			System.out.println( msg );
+		}
+		else
+		{
+			Log.info( RuntimeParamUtil.class, msg );
+		}
+	}
+
+	private static void parseParams( final String[] args ) throws Exception
 	{
 		String prevParam = "";
 		for( final String arg: args )
 		{
-			if( arg.equals( RESTART_FLAG ) )
-			{
-				params.put( RESTART_FLAG, Config.TRUE );
-			}
-			else if( arg.equals( DOCKER_FLAG ) )
+			if( arg.equals( DOCKER_FLAG ) )
 			{
 				params.put( DOCKER_FLAG, Config.TRUE );
+			}
+			else if( prevParam.equals( RESTART_FLAG ) )
+			{
+				params.put( RESTART_FLAG, arg );
 			}
 			else if( prevParam.equals( BASE_DIR_FLAG ) )
 			{
@@ -351,17 +392,24 @@ public class RuntimeParamUtil
 			prevParam = arg;
 		}
 
-		if( !params.keySet().contains( CONFIG_FLAG ) && !params.keySet().contains( prevParam )
-				&& !params.values().contains( prevParam ) )
-		{
-			params.put( CONFIG_FLAG, prevParam );
-		}
+		assignLastParam( prevParam );
 
 		extraParams.removeAll( params.keySet() );
 		extraParams.removeAll( params.values() );
 	}
 
-	private static String[] simplifyArgs( final String[] args )
+	private static void reassignDockerConfig() throws Exception
+	{
+		Log.info( RuntimeParamUtil.class, "Found \"" + DOCKER_FLAG + "\" arg ---> ENV = DOCKER CONTAINER" );
+		Log.info( RuntimeParamUtil.class,
+				"Assign \"" + HOST_PIPELINE_DIR + "\" arg ---> " + params.get( BASE_DIR_FLAG ) );
+		Log.info( RuntimeParamUtil.class,
+				"Reassign \"" + BASE_DIR_FLAG + "\" arg ---> " + DockerUtil.CONTAINER_OUTPUT_DIR );
+		params.put( HOST_PIPELINE_DIR, params.get( BASE_DIR_FLAG ) );
+		params.put( BASE_DIR_FLAG, DockerUtil.CONTAINER_OUTPUT_DIR );
+	}
+
+	private static String[] simplifyArgs( final String[] args ) throws Exception
 	{
 		final String[] simpleArgs = new String[ args.length ];
 		int i = 0;
@@ -508,16 +556,16 @@ public class RuntimeParamUtil
 	 */
 	public static final String RESTART_FLAG = "-r";
 
-	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
+	static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
 
+	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
 	private static final String CONFIG_FLAG_EXT = "--config";
 	private static final List<String> extraParams = new ArrayList<>();
-	private static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
 	private static final Map<String, String> params = new HashMap<>();
 	private static final String PASSWORD_FLAG_EXT = "--password";
 	private static final String RESTART_FLAG_EXT = "--restart";
 	private static final String RETURN = BioLockJ.RETURN;
-	private static String runtimeArgs = "";
+	private static boolean useSystemOut = false;
 
 	// private static void checkDirectoryForSingleFile( final String prop ) throws Exception
 	// {

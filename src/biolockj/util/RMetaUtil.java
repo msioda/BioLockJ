@@ -70,10 +70,8 @@ public final class RMetaUtil
 	 */
 	public static void classifyReportableMetadata() throws Exception
 	{
-		if( !RuntimeParamUtil.isDirectMode() )
-		{
-			Log.info( RMetaUtil.class, "Validating Metadata R fields in: " + MetaUtil.getFile().getAbsolutePath() );
-		}
+		Log.info( RMetaUtil.class, "Validate reportable metadata fields: " + MetaUtil.getFile().getAbsolutePath() );
+
 		final Set<String> rScriptFields = new HashSet<>();
 		binaryFields.clear();
 		mdsFields.clear();
@@ -90,6 +88,8 @@ public final class RMetaUtil
 		numericFields.removeAll( excludeFields );
 		mdsFields.removeAll( excludeFields );
 
+		final List<String> metaFields = MetaUtil.getFieldNames();
+
 		verifyMetadataFieldsExist( R_EXCLUDE_FIELDS, excludeFields );
 		verifyMetadataFieldsExist( R_REPORT_FIELDS, Config.getSet( R_REPORT_FIELDS ) );
 		verifyMetadataFieldsExist( R_NUMERIC_FIELDS, numericFields );
@@ -98,8 +98,10 @@ public final class RMetaUtil
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
-			Log.info( RMetaUtil.class, "List override nominalFields BEFORE checking for generated columns: "
-					+ BioLockJUtil.getCollectionAsString( nominalFields ) );
+			Log.debug( RMetaUtil.class,
+					"List override nominal fields: " + BioLockJUtil.getCollectionAsString( nominalFields ) );
+			Log.debug( RMetaUtil.class,
+					"List override numeric fields: " + BioLockJUtil.getCollectionAsString( numericFields ) );
 		}
 
 		rScriptFields.addAll( Config.getSet( R_REPORT_FIELDS ) );
@@ -139,14 +141,8 @@ public final class RMetaUtil
 			}
 		}
 
-		if( !RuntimeParamUtil.isDirectMode() )
-		{
-			Log.info( RMetaUtil.class, "List R fields AFTER checking for generated columnss: "
-					+ BioLockJUtil.getCollectionAsString( rScriptFields ) );
-		}
-
 		if( Config.getBoolean( Config.REPORT_NUM_READS )
-				&& isValidNumericField( RegisterNumReads.getNumReadFieldName() ) )
+				&& isValidNumericField( metaFields, RegisterNumReads.getNumReadFieldName() ) )
 		{
 			rScriptFields.add( RegisterNumReads.getNumReadFieldName() );
 			numericFields.add( RegisterNumReads.getNumReadFieldName() );
@@ -157,7 +153,8 @@ public final class RMetaUtil
 			numericFields.remove( RegisterNumReads.getNumReadFieldName() );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_HITS ) && isValidNumericField( ParserModuleImpl.NUM_HITS ) )
+		if( Config.getBoolean( Config.REPORT_NUM_HITS )
+				&& isValidNumericField( metaFields, ParserModuleImpl.NUM_HITS ) )
 		{
 			rScriptFields.add( ParserModuleImpl.NUM_HITS );
 			numericFields.add( ParserModuleImpl.NUM_HITS );
@@ -168,7 +165,8 @@ public final class RMetaUtil
 			numericFields.remove( ParserModuleImpl.NUM_HITS );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_HITS ) && isValidNumericField( AddMetadataToOtuTables.HIT_RATIO ) )
+		if( Config.getBoolean( Config.REPORT_NUM_HITS )
+				&& isValidNumericField( metaFields, AddMetadataToOtuTables.HIT_RATIO ) )
 		{
 			rScriptFields.add( AddMetadataToOtuTables.HIT_RATIO );
 			numericFields.add( AddMetadataToOtuTables.HIT_RATIO );
@@ -217,11 +215,6 @@ public final class RMetaUtil
 				boolean foundNumeric = false;
 				boolean foundNominal = false;
 
-				if( !RuntimeParamUtil.isDirectMode() )
-				{
-					Log.warn( RMetaUtil.class, "Assigning numeric/nominal field status for: " + field );
-				}
-
 				for( final String val: data )
 				{
 					if( NumberUtils.isNumber( val ) )
@@ -237,6 +230,11 @@ public final class RMetaUtil
 				if( foundNominal && !foundNumeric ) // all nominal
 				{
 					nominalFields.add( field );
+					if( !RuntimeParamUtil.isDirectMode() )
+					{
+						Log.debug( RMetaUtil.class, "Assign as nominal field: " + field );
+					}
+
 				}
 				else if( foundNominal && foundNumeric ) // mixed nominal/numeric
 				{
@@ -250,11 +248,13 @@ public final class RMetaUtil
 				else if( !foundNominal && foundNumeric ) // all numeric
 				{
 					numericFields.add( field );
+					if( !RuntimeParamUtil.isDirectMode() )
+					{
+						Log.debug( RMetaUtil.class, "Assign as numeric field: " + field );
+					}
 				}
 			}
 		}
-
-		updateProps();
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -304,6 +304,53 @@ public final class RMetaUtil
 		return numericFields;
 	}
 
+	public static Map<String, String> getUpdatedRConfig() throws Exception
+	{
+		final Map<String, String> props = new HashMap<>();
+		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
+		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
+
+		if( numCols != null && numCols >= numMetaCols )
+		{
+			Log.info( RMetaUtil.class, "R Config unchanged..." );
+			return props;
+		}
+
+		props.put( NUM_META_COLS, numMetaCols.toString() );
+		Log.info( RMetaUtil.class, "Set " + NUM_META_COLS + " = " + numMetaCols );
+
+		if( !binaryFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( binaryFields );
+			if( Config.getString( BINARY_FIELDS ) == null || !val.equals( Config.getString( BINARY_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
+				props.put( BINARY_FIELDS, val );
+			}
+
+		}
+		if( !nominalFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
+			if( Config.getString( NOMINAL_FIELDS ) == null || !val.equals( Config.getString( NOMINAL_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
+				props.put( NOMINAL_FIELDS, val );
+			}
+		}
+		if( !numericFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( numericFields );
+			if( Config.getString( NUMERIC_FIELDS ) == null || !val.equals( Config.getString( NUMERIC_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
+				props.put( NUMERIC_FIELDS, val );
+			}
+		}
+
+		return props;
+	}
+
 	/**
 	 * The override property: {@link biolockj.Config}.{@value #R_REPORT_FIELDS} can be used to list the metadata
 	 * reportable fields for use in the R modules. If undefined, report all fields.
@@ -340,17 +387,6 @@ public final class RMetaUtil
 		return getUniqueValues( att ).size();
 	}
 
-	private static String getSetAsString( final Set<String> set )
-	{
-		final StringBuffer sb = new StringBuffer();
-		for( final String val: set )
-		{
-			sb.append( sb.toString().isEmpty() ? val: "," + val );
-		}
-
-		return sb.toString();
-	}
-
 	private static Set<String> getUniqueValues( final String att ) throws Exception
 	{
 		final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( att ) );
@@ -362,7 +398,6 @@ public final class RMetaUtil
 	{
 		for( final BioModule module: Pipeline.getModules() )
 		{
-			Log.debug( RMetaUtil.class, "Looking for Qiime: " + module.getClass().getName() );
 			if( module.getClass().getName().toLowerCase().contains( "qiime" ) )
 			{
 				Log.debug( RMetaUtil.class, "Found Qiime Module: " + module.getClass().getName() );
@@ -392,9 +427,9 @@ public final class RMetaUtil
 		return false;
 	}
 
-	private static boolean isValidNumericField( final String field ) throws Exception
+	private static boolean isValidNumericField( final List<String> metaFields, final String field ) throws Exception
 	{
-		if( field != null && MetaUtil.getFieldNames().contains( field ) )
+		if( field != null && metaFields.contains( field ) )
 		{
 			final int count = countUniqueValues( field );
 			if( count > 1 )
@@ -409,27 +444,6 @@ public final class RMetaUtil
 		}
 
 		return false;
-	}
-
-	private static void updateProps() throws Exception
-	{
-		final Map<String, String> props = new HashMap<>();
-		if( !binaryFields.isEmpty() )
-		{
-			props.put( BINARY_FIELDS, getSetAsString( binaryFields ) );
-		}
-		if( !nominalFields.isEmpty() )
-		{
-			props.put( NOMINAL_FIELDS, getSetAsString( nominalFields ) );
-		}
-		if( !numericFields.isEmpty() )
-		{
-			props.put( NUMERIC_FIELDS, getSetAsString( numericFields ) );
-		}
-
-		props.put( NUM_META_COLS, new Integer( MetaUtil.getFieldNames().size() ).toString() );
-
-		BioLockJUtil.updateMasterConfig( props );
 	}
 
 	private static void verifyNumericData( final String field, final Set<String> data ) throws Exception

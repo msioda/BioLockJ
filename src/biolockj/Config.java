@@ -17,9 +17,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
-import biolockj.util.BashScriptBuilder;
 import biolockj.util.BioLockJUtil;
-import biolockj.util.RuntimeParamUtil;
 
 /**
  * Provides type-safe, validated methods for storing/accessing system properties.<br>
@@ -100,7 +98,7 @@ public class Config
 	}
 
 	/**
-	 * Get exe.* property name. If null, return the property name (without the "exe."ß prefix)
+	 * Get exe.* property name. If null, return the property name (without the "exe." prefix)
 	 *
 	 * @param propertyName Property name
 	 * @return String value of executable
@@ -113,15 +111,17 @@ public class Config
 			throw new Exception( "Config.getExe() can be called for properties that begin with \"exe.\"" );
 		}
 
+		// return name of property after trimming "exe.", for example if exe.pear is undefined, return "pear"
 		if( getString( propertyName ) == null || getString( propertyName ).equals( propertyName.substring( 4 ) ) )
 		{
 			return propertyName.substring( 4 );
 		}
 
-		if( !RuntimeParamUtil.isDockerMode() && !BashScriptBuilder.clusterModuleExists( getString( propertyName ) ) )
-		{
-			return requireExistingFile( propertyName ).getAbsolutePath();
-		}
+		// DO NOT VERIFY FILE EXISTS --> EXECUTABLE MAY BE CLUSTER MODULE OR ALIAS
+		// if( !RuntimeParamUtil.isDockerMode() && !BashScriptBuilder.clusterModuleExists( getString( propertyName ) ) )
+		// {
+		// return requireExistingFile( propertyName ).getAbsolutePath();
+		// }
 
 		return getString( propertyName );
 	}

@@ -32,12 +32,12 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 		final List<List<String>> data = new ArrayList<>();
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
-		final String ext = "." + SeqUtil.getInputSequenceType();
+		final String ext = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 		for( final File f: files )
 		{
 			final ArrayList<String> lines = new ArrayList<>();
 			final String fileId = SeqUtil.getSampleId( f.getName() );
-			final String dirExt = getReadDirection( f );
+			final String dirExt = SeqUtil.getReadDirectionSuffix( f );
 
 			String filePath = f.getAbsolutePath();
 
@@ -70,10 +70,13 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 	 * {@value biolockj.util.SeqUtil#FASTA}<br>
 	 * Set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_SEQ_HEADER_CHAR} =
 	 * {@link biolockj.util.SeqUtil#FASTA_HEADER_DEFAULT_DELIM}
+	 * 
+	 * @throws Exception if errors occur
 	 */
 	@Override
-	public void cleanUp()
+	public void cleanUp() throws Exception
 	{
+		super.cleanUp();
 		Config.setConfigProperty( SeqUtil.INTERNAL_SEQ_TYPE, SeqUtil.FASTA );
 		Config.setConfigProperty( SeqUtil.INTERNAL_SEQ_HEADER_CHAR, SeqUtil.FASTA_HEADER_DEFAULT_DELIM );
 	}
@@ -123,23 +126,6 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 	private String copyToOutputDir( final String source, final String target ) throws Exception
 	{
 		return "cp " + source + " " + getOutputDir().getAbsolutePath() + File.separator + target;
-	}
-
-	private String getReadDirection( final File file ) throws Exception
-	{
-		String dirExt = "";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			if( SeqUtil.isForwardRead( file.getName() ) )
-			{
-				dirExt = Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
-			}
-			else
-			{
-				dirExt = Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
-			}
-		}
-		return dirExt;
 	}
 
 	private boolean hasGzipped() throws Exception

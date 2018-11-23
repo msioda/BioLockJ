@@ -115,20 +115,22 @@ public class BashScriptBuilder
 	 * <li>$2 Script line number
 	 * </ol>
 	 * 
+	 * @param script Execute script
 	 * @return Bash script lines
 	 * @throws Exception if errors occur
 	 */
-	protected static List<String> buildExecuteFunction() throws Exception
+	protected static List<String> buildExecuteFunction( final String script ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
 		lines.add( "function " + FUNCTION_EXECUTE + "() {" );
 		lines.add( "$1" );
 		lines.add( "statusCode=$?" );
 		lines.add( "if [ $statusCode != 0 ]; then" );
-		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> $" + FAIL_FILE );
+		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_" + Pipeline.SCRIPT_FAILURES + "\"" );
 		lines.add( "exit $statusCode" );
 		lines.add( "fi" );
 		lines.add( "}" );
+		lines.add( "" );
 		return lines;
 	}
 
@@ -248,13 +250,13 @@ public class BashScriptBuilder
 
 		if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
-			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) );
+			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
 		}
 
-		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) );
-		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED );
-		lines.add( FAIL_FILE + "=" + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_FAILURES + RETURN );
-		lines.add( "cd " + module.getScriptDir().getAbsolutePath() );
+		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) + RETURN );
+		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED + RETURN );
+		lines.add( "cd " + module.getScriptDir().getAbsolutePath() + RETURN );
+		
 		if( DockerUtil.isDockerScriptModule( module ) )
 		{
 			lines.addAll( DockerUtil.buildRunDockerFunction( module ) );
@@ -267,9 +269,7 @@ public class BashScriptBuilder
 			lines.add( "}" );
 		}
 
-		lines.addAll( buildExecuteFunction() );
-		lines.add( RETURN );
-
+		lines.addAll( buildExecuteFunction( getMainScriptPath( module ) ) );
 		return lines;
 	}
 
@@ -290,18 +290,17 @@ public class BashScriptBuilder
 		final List<String> lines = new ArrayList<>();
 		if( Config.isOnCluster() && getJobHeader( module ) != null )
 		{
-			lines.add( getJobHeader( module ) );
+			lines.add( getJobHeader( module ) + RETURN );
 		}
 		else if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
-			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) );
+			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
 		}
 
 		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = "
-				+ new Integer( Config.requirePositiveInteger( ScriptModule.SCRIPT_BATCH_SIZE ) ).toString() );
-		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED );
-		lines.add( FAIL_FILE + "=" + scriptPath + "_" + Pipeline.SCRIPT_FAILURES );
-
+				+ new Integer( Config.requirePositiveInteger( ScriptModule.SCRIPT_BATCH_SIZE ) ).toString() + RETURN );
+		
+		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules() );
 
 		final List<String> bashFunctions = module.getWorkerScriptFunctions();
@@ -310,8 +309,7 @@ public class BashScriptBuilder
 			lines.addAll( bashFunctions );
 		}
 
-		lines.addAll( buildExecuteFunction() );
-
+		lines.addAll( buildExecuteFunction( scriptPath ) );
 		return lines;
 	}
 
@@ -335,7 +333,6 @@ public class BashScriptBuilder
 	 */
 	protected static void verifyConfig( final ScriptModule module ) throws Exception
 	{
-
 		if( !Config.isOnCluster() )
 		{
 			return;
@@ -581,6 +578,9 @@ public class BashScriptBuilder
 		{
 			lines.add( "module load " + module );
 		}
+		
+		if( !lines.isEmpty() ) lines.add( "" );
+		
 		return lines;
 	}
 
@@ -639,11 +639,6 @@ public class BashScriptBuilder
 	 * {@value biolockj.module.ScriptModule#CLASSIFIER_NUM_THREADS}
 	 */
 	protected static final String CLUSTER_VALIDATE_PARAMS = "cluster.validateParams";
-
-	/**
-	 * Script variable to store path of file where error messages will be saved: {@value #FAIL_FILE}
-	 */
-	protected static final String FAIL_FILE = "failureFile";
 
 	/**
 	 * Worker script function to execute 1 line of a worker script.
