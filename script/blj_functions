@@ -7,7 +7,7 @@
 # Return 0 status code if dir param ends with patthern _yyyymmmdd.
 # Example: myTestPipeline_2018Jan01
 is_pipeline_dir() {
-	[ -d "$(echo $1 | grep [_\d{4}\(A-S\)\(b-y\){2}\d{2}$] )" ]
+	[ -d "$(echo $1 | grep [_\d{4}\(A\-S\)\(b\-y\){2}\d{2}$] )" ]
 }
 
 # Return 0 if directory is empty (or missing)
@@ -28,11 +28,11 @@ get_version() {
 # Return absolute path of current pipeline if in a pipeline directory
 current_pipeline() {
 	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then
-		dir=$PWD
+		dir="$PWD"
 		parentDir="$(dirname $dir)"
 		while [ "$parentDir" != "$BLJ_PROJ" ] && [  "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir) 
 		do
-			dir=$parentDir
+			dir="$parentDir"
 			parentDir="$(dirname $parentDir)"
 		done
 		[ "$parentDir" == "$BLJ_PROJ" ] && echo $dir
@@ -46,4 +46,49 @@ most_recent_pipeline() {
 			$(is_pipeline_dir $dir) && echo "$dir" && exit
 		done
 	fi
+}
+
+# Return absolute path of most recent pipeline
+last_new_pipeline() {
+	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then
+		most_recent_year=
+		most_recent_month=
+		most_recent_day=
+		most_recent_dir=
+		for dir in $(ls -1dt $BLJ_PROJ/*); do
+			if $(is_pipeline_dir $dir); then
+				year=$((${dir: -9:4})) 
+				month=$(getNumericMonth ${dir: -9:7})
+				day=$((${dir: -2}))
+				[ ${#most_recent_year} -eq 0 ] || [ $most_recent_year < $year ] && most_recent_year=$year && \
+					[ ${#most_recent_month} -eq 0 ] || [ $most_recent_month < $month ] && most_recent_month=$month && \
+					[ ${#most_recent_day} -eq 0 ] || [ $most_recent_day < $day ] && most_recent_day=$day && \
+					most_recent_dir="$dir"
+			fi 
+		done
+		echo "$most_recent_dir"
+	fi
+}
+
+# Get month name from pipeline date string
+getMonthName() {
+	echo ${x:0:4}
+}
+
+# Get numeric month value between 1-12 from 3-char abbreviation
+getNumericMonth() {
+	case $1 in
+        Jan) echo 1 ;;
+        Feb) echo 2 ;;
+        Mar) echo 3 ;;
+        Apr) echo 4 ;;
+        May) echo 5 ;;
+        Jun) echo 6 ;;
+        Jul) echo 7 ;;
+        Aug) echo 8 ;;
+        Sep) echo 9 ;;
+        Oct) echo 10 ;;
+        Nov) echo 11 ;;
+        Dec) echo 12 ;;
+	esac
 }
