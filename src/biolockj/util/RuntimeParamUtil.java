@@ -265,14 +265,14 @@ public class RuntimeParamUtil
 
 	private static void assignLastParam( final String param ) throws Exception
 	{
-		if( param.equals( RESTART_FLAG ) || param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG )
+		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG )
 				|| param.equals( CONFIG_DIR_FLAG ) || param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG )
 				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( PRIMER_DIR_FLAG ) )
 		{
 			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
 		}
 
-		if( !params.keySet().contains( RESTART_FLAG ) && !params.keySet().contains( CONFIG_FLAG )
+		if( !params.keySet().contains( CONFIG_FLAG )
 				&& !params.keySet().contains( param ) && !params.values().contains( param ) )
 		{
 			params.put( CONFIG_FLAG, param );
@@ -282,15 +282,9 @@ public class RuntimeParamUtil
 	private static void assignRestartConfig() throws Exception
 	{
 		Log.info( RuntimeParamUtil.class, "Found \"" + RESTART_FLAG + "\" arg ---> RESTART PIPELINE" );
-		if( params.keySet().contains( CONFIG_FLAG ) && params.keySet().contains( RESTART_FLAG ) )
+		if( params.keySet().contains( RESTART_FLAG ) )
 		{
-			throw new Exception(
-					CONFIG_FLAG + " and " + RESTART_FLAG + " are mutually exclusive, use only 1 of these arguments" );
-		}
-		else if( params.keySet().contains( RESTART_FLAG ) )
-		{
-			params.put( CONFIG_FLAG, getRestartConfigFile( params.get( RESTART_FLAG ) ) );
-			params.put( RESTART_FLAG, Config.TRUE );
+			params.put( CONFIG_FLAG, getRestartConfigFile( params.get( CONFIG_FLAG ) ) );
 		}
 	}
 
@@ -307,6 +301,7 @@ public class RuntimeParamUtil
 		final File arg = new File( val );
 		if( arg.isDirectory() )
 		{
+			Log.info( RuntimeParamUtil.class, "Found \"" + RESTART_FLAG + "\" arg directory = " + arg.getAbsolutePath() );
 			if( arg.listFiles().length > 0 )
 			{
 				for( final File f: arg.listFiles() )
@@ -348,9 +343,9 @@ public class RuntimeParamUtil
 			{
 				params.put( DOCKER_FLAG, Config.TRUE );
 			}
-			else if( prevParam.equals( RESTART_FLAG ) )
+			else if( arg.equals( RESTART_FLAG ) )
 			{
-				params.put( RESTART_FLAG, arg );
+				params.put( RESTART_FLAG, Config.TRUE );
 			}
 			else if( prevParam.equals( BASE_DIR_FLAG ) )
 			{
