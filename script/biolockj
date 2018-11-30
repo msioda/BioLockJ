@@ -65,7 +65,7 @@ else
 fi
 
 $restart && [ ! -d "$config" ] && [ ! -f "$config" ] && echo "Exit program - $config is not a valid directory or file"  && $BLJ/script/biolockj -h && exit 1
-! $restart && [ ! -f "$config" ] && echo "Exit program - $config is not a valid file"  && $BLJ/script/biolockj -h && exit 1
+! $restart && [ ! -f "$config" ] && echo "Exit program - $config is not a valid file" && $BLJ/script/biolockj -h && exit 1
 
 echo "BioLockJ JAR: $bljJar" 
 echo "BioLockJ Config:  $config"

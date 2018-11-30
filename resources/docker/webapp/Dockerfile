@@ -6,7 +6,7 @@ ENV NODE_VERSION 8.11.3
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
-RUN mkdir /pipeline && mkdir /app && mkdir /config  
+RUN mkdir /pipeline && mkdir /app && mkdir /config && mkdir /log 
 
 #2.) ============ Install Ubuntu Prereqs =================
 RUN apt-get update && \
@@ -91,5 +91,6 @@ RUN	apt-get clean && \
 	## && \ rm -rf usr/share/* <-- selectively delete content, but don't remove /usr/share/npm* packages (maybe more)
 
 #11.) ================= Define command = npm start =================
+
 #define the command to run your app using CMD which defines your runtime. Here we will use the basic npm start which will run node server.js to start your server:
 CMD [ "npm", "start" ]
