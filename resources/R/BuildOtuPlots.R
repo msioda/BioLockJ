@@ -1,5 +1,10 @@
 # Module script for: biolockj.module.r.BuildOtuPlots
 
+r.debug = getProperty("r.debug", FALSE)
+binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )
+nominalFields = getProperty("internal.nominalFields", vector( mode="character" ) )
+numericFields = getProperty("internal.numericFields", vector( mode="character" ) )
+
 # Box-plot nominal fields by categorical OTU abundance
 addBoxPlot <- function( otuTable, otuCol, metaCol, parPval, nonParPval )
 {

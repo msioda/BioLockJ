@@ -229,24 +229,26 @@ public final class DownloadUtil
 	 */
 	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception
 	{
+
 		final File script = new File( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
 				+ File.separator + RUN_ALL_SCRIPT );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
-		writer.write( "# Execute this script to run all R scripts on your local workstation" + RETURN );
-		writer.write( R_Module.buildGetModuleScriptDirFunction() );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( script, true ) );
+
+		if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
+		{
+			writer.write( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN + RETURN );
+		}
+		
+		writer.write( "# Use this script to locally run R modules." + RETURN );
 
 		for( final BioModule mod: modules )
 		{
 			if( mod instanceof R_Module )
 			{
-				writer.write( "source( file.path( dirname( " + R_Module.R_FUNCTION_GET_MOD_SCRIPT + "() ), \""
-						+ ( (R_Module) mod ).getPrimaryScript().getName() + "\" ) )" + RETURN );
+				//do not use exe.Rscript config option, this is a convenience for the users local system not for the system where biolockj ran.
+				writer.write("Rscript " + ( (R_Module) mod ).getPrimaryScript().getName() + RETURN );
 			}
 		}
-
-		writer.write( "runAllScript = file.path( pipelineDir, \"" + RUN_ALL_SCRIPT + "\" )" + RETURN );
-		writer.write( R_Module.METHOD_RUN_PROGRAM + "( runAllScript )" + RETURN );
-		writer.write( R_Module.METHOD_REPORT_STATUS + "( runAllScript )" + RETURN );
 
 		writer.close();
 
@@ -272,12 +274,12 @@ public final class DownloadUtil
 	/**
 	 * List of file extensions download-able from pipeline root directory: {@value #MAIN_OUT}
 	 */
-	protected final static String MAIN_OUT = "*.{log,properties,txt,R}";
+	protected final static String MAIN_OUT = "*.{log,properties,txt,sh}";
 
 	private static final String DEST = "$out";
 	private static final String RETURN = BioLockJ.RETURN;
 
-	private static final String RUN_ALL_SCRIPT = "Run_All" + R_Module.R_EXT;
+	private static final String RUN_ALL_SCRIPT = "Run_All_R.sh";
 	private static final String SOURCE = "$src";
 
 }
