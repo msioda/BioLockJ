@@ -17,11 +17,6 @@ doDebug <- function() {
   return( getProperty("r.debug", FALSE) )
 }
 
-# Return vector that includs all binary, nominal, and numeric fields or an empty vector
-getReportFields <- function() {
-   return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
-}
-
 # Return vector of binary fields or an empty vector
 getBinaryFields <- function() {
    return( getProperty("internal.binaryFields", vector( mode="character" ) ) )
@@ -53,30 +48,6 @@ getColors <- function( n ) {
    return( get_palette( getProperty("r.colorPalette", "npg"), n ) )
 }
 
-# Return vector of nominal fields or an empty vector
-getNominalFields <- function() {
-   return( getProperty("internal.nominalFields", vector( mode="character" ) ) )
-}
-
-# Return vector of numeric fields or an empty vector
-getNumericFields <- function() {
-   return( getProperty("internal.numericFields", vector( mode="character" ) ) )
-}
-
-# Return a file matching the pattern underwhere under the pipeline root directory
-# If multiple results are found, return the most recent version
-getPipelineFile <- function( pattern ) {
-   results = list.files( getPipelineDir(), pattern, full.names=TRUE, recursive=TRUE )
-   returnFile = NULL
-   for( i in 1:length( results ) ) {
-      if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
-         returnFile = results[i] 
-      }
-   }
-
-   return( returnFile )
-}
-
 # Return list, each record contains the OTUs associated with a unique value for the given nominal metadata field (metaCol)
 getFactorGroups <- function( otuTable, metaCol, otuCol ) {
    vals = list()
@@ -86,7 +57,6 @@ getFactorGroups <- function( otuTable, metaCol, otuCol ) {
    }
    return( vals )
 }
-
 
 # Return the name of the BioLockJ MASTER Config file
 getMasterConfigFile <- function() {
@@ -111,6 +81,16 @@ getModuleDir <- function() {
 	return( dirname( dirname( getModuleScript() ) ) )
 }
 
+# Return vector of nominal fields or an empty vector
+getNominalFields <- function() {
+   return( getProperty("internal.nominalFields", vector( mode="character" ) ) )
+}
+
+# Return vector of numeric fields or an empty vector
+getNumericFields <- function() {
+   return( getProperty("internal.numericFields", vector( mode="character" ) ) )
+}
+
 # Return file path of file in rootDir, with the pipeline name appended as a prefix to name
 getPath <- function( rootDir, name ) {
    return( file.path( rootDir, paste0( getProperty("internal.pipelineName"), "_", name ) ) )
@@ -119,6 +99,20 @@ getPath <- function( rootDir, name ) {
 # Return the pipeline root directory
 getPipelineDir <- function() {
 	return( dirname( getMasterConfigFile() ) )
+}
+
+# Return a file matching the pattern underwhere under the pipeline root directory
+# If multiple results are found, return the most recent version
+getPipelineFile <- function( pattern ) {
+   results = list.files( getPipelineDir(), pattern, full.names=TRUE, recursive=TRUE )
+   returnFile = NULL
+   for( i in 1:length( results ) ) {
+      if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
+         returnFile = results[i] 
+      }
+   }
+
+   return( returnFile )
 }
 
 # Return the PDF plot label based on r.plotWidth, standar.properties default assumes 4 plots/page 
@@ -132,6 +126,11 @@ getPlotTitle <- function( line1, line2 ) {
 # Return property value from MASTER Config file, otherwise return the defaultVal
 getProperty <- function( name, defaultVal=NULL ) {
    return ( suppressWarnings( parseConfig( name, defaultVal ) ) )
+}
+
+# Return vector that includs all binary, nominal, and numeric fields or an empty vector
+getReportFields <- function() {
+   return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
 }
     
 # Return named vector values for the given name
@@ -216,9 +215,6 @@ reportStatus <- function( script ) {
 
    sessionInfo()
 }
-
-
-
 
 # MAIN R scripts all must call this method to wrap execution in sink() to catch error messages
 # Call reportStatus( script ) when executin is complete
