@@ -208,10 +208,10 @@ reportStatus <- function( script ) {
       writeErrors( script, errors )
    } else {
       file.create( paste0( script, "_Success" ) )
-   }
-
-   if ( getProperty( "r.saveRData", FALSE ) ){
-      save.image( paste0( sub("^MAIN_", "", script ), "Data" ) )
+      if ( getProperty( "r.saveRData", FALSE ) ){
+         moduleBaseName = sub( "^MAIN_", "", basename( getModuleScript() ) )
+         save.image( file.path( dirname( script ), paste0( moduleBaseName, "Data" ) ) )
+      }
    }
 
    sessionInfo()
