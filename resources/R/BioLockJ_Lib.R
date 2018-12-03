@@ -17,11 +17,6 @@ doDebug <- function() {
   return( getProperty("r.debug", FALSE) )
 }
 
-# Return vector that includs all binary, nominal, and numeric fields or an empty vector
-getReportFields <- function() {
-   return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
-}
-
 # Return vector of binary fields or an empty vector
 getBinaryFields <- function() {
    return( getProperty("internal.binaryFields", vector( mode="character" ) ) )
@@ -53,6 +48,39 @@ getColors <- function( n ) {
    return( get_palette( getProperty("r.colorPalette", "npg"), n ) )
 }
 
+# Return list, each record contains the OTUs associated with a unique value for the given nominal metadata field (metaCol)
+getFactorGroups <- function( otuTable, metaCol, otuCol ) {
+   vals = list()
+   options = levels( metaCol )
+   for( i in 1:length(options) ) {
+      vals[[i]] = otuTable[metaCol==options[i], otuCol]
+   }
+   return( vals )
+}
+
+# Return the name of the BioLockJ MASTER Config file
+getMasterConfigFile <- function() {
+   testDir = dirname( getModuleScript() )
+   propFile = vector( mode="character" )
+   while( length( propFile ) == 0 && testDir != "/" ) {
+      propFile = list.files( testDir, "MASTER.*.properties", full.names=TRUE )
+      testDir = dirname( testDir )
+   }
+   if( length( propFile ) == 0 ) {
+      stop( "MASTER property file not found!" )
+   }
+   return( propFile )
+}
+
+# If downloaded with scp, all files share 1 directory, so return getPipelineDir() 
+# Otherwise, script path like: piplineDir/moduleDir/script/MAIN*.R, so return moduleDir (the dir 2 levels above script)  
+getModuleDir <- function() {
+   if( getPipelineDir() == dirname( getModuleScript() ) ){
+      return( getPipelineDir() )
+   }
+   return( dirname( dirname( getModuleScript() ) ) )
+}
+
 # Return vector of nominal fields or an empty vector
 getNominalFields <- function() {
    return( getProperty("internal.nominalFields", vector( mode="character" ) ) )
@@ -61,6 +89,16 @@ getNominalFields <- function() {
 # Return vector of numeric fields or an empty vector
 getNumericFields <- function() {
    return( getProperty("internal.numericFields", vector( mode="character" ) ) )
+}
+
+# Return file path of file in rootDir, with the pipeline name appended as a prefix to name
+getPath <- function( rootDir, name ) {
+   return( file.path( rootDir, paste0( getProperty("internal.pipelineName"), "_", name ) ) )
+}
+
+# Return the pipeline root directory
+getPipelineDir <- function() {
+   return( dirname( getMasterConfigFile() ) )
 }
 
 # Return a file matching the pattern underwhere under the pipeline root directory
@@ -77,50 +115,6 @@ getPipelineFile <- function( pattern ) {
    return( returnFile )
 }
 
-# Return list, each record contains the OTUs associated with a unique value for the given nominal metadata field (metaCol)
-getFactorGroups <- function( otuTable, metaCol, otuCol ) {
-   vals = list()
-   options = levels( metaCol )
-   for( i in 1:length(options) ) {
-      vals[[i]] = otuTable[metaCol==options[i], otuCol]
-   }
-   return( vals )
-}
-
-
-# Return the name of the BioLockJ MASTER Config file
-getMasterConfigFile <- function() {
-	testDir = dirname( getModuleScript() )
-	propFile = vector( mode="character" )
-	while( length( propFile ) == 0 && testDir != "/" ) {
-		propFile = list.files( testDir, "MASTER.*.properties", full.names=TRUE )
-		testDir = dirname( testDir )
-	}
-	if( length( propFile ) == 0 ) {
-		stop( "MASTER property file not found!" )
-	}
-	return( propFile )
-}
-
-# If downloaded with scp, all files share 1 directory, so return getPipelineDir() 
-# Otherwise, script path like: piplineDir/moduleDir/script/MAIN*.R, so return moduleDir (the dir 2 levels above script)  
-getModuleDir <- function() {
-	if( getPipelineDir() == dirname( getModuleScript() ) ){
-		return( getPipelineDir() )
-	}
-	return( dirname( dirname( getModuleScript() ) ) )
-}
-
-# Return file path of file in rootDir, with the pipeline name appended as a prefix to name
-getPath <- function( rootDir, name ) {
-   return( file.path( rootDir, paste0( getProperty("internal.pipelineName"), "_", name ) ) )
-}
-
-# Return the pipeline root directory
-getPipelineDir <- function() {
-	return( dirname( getMasterConfigFile() ) )
-}
-
 # Return the PDF plot label based on r.plotWidth, standar.properties default assumes 4 plots/page 
 getPlotTitle <- function( line1, line2 ) {
    if( (nchar(line1) + nchar(line2) ) > getProperty("r.plotWidth") ) {
@@ -133,6 +127,11 @@ getPlotTitle <- function( line1, line2 ) {
 getProperty <- function( name, defaultVal=NULL ) {
    return ( suppressWarnings( parseConfig( name, defaultVal ) ) )
 }
+
+# Return vector that includs all binary, nominal, and numeric fields or an empty vector
+getReportFields <- function() {
+   return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
+}
     
 # Return named vector values for the given name
 getValuesByName <- function( vals, name ) {
@@ -141,16 +140,16 @@ getValuesByName <- function( vals, name ) {
 
 # Import libraries and abort program with descriptive error
 importLibs <- function( libs ) {
-	errors = vector( mode="character" )
-	for( i in 1:length( libs ) ) {
-		if ( !library( libs[i], logical.return=TRUE, character.only=TRUE ) ) {
-			errors[ length( errors ) + 1 ] = paste( "Missing R library, please run install.packages(", libs[i], ")" )
-		}
-	}   
-	
-	if( length( errors ) > 0 ) {
-		writeErrors( getModuleScript(), errors )
-	}
+   errors = vector( mode="character" )
+   for( i in 1:length( libs ) ) {
+      if ( !library( libs[i], logical.return=TRUE, character.only=TRUE ) ) {
+         errors[ length( errors ) + 1 ] = paste( "Missing R library, please run install.packages(", libs[i], ")" )
+      }
+   }   
+   
+   if( length( errors ) > 0 ) {
+      writeErrors( getModuleScript(), errors )
+   }
 }
 
 # Parse MASTER config for property value, if undefined return default defaultVal
@@ -216,9 +215,6 @@ reportStatus <- function( script ) {
 
    sessionInfo()
 }
-
-
-
 
 # MAIN R scripts all must call this method to wrap execution in sink() to catch error messages
 # Call reportStatus( script ) when executin is complete
