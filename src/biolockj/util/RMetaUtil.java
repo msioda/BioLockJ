@@ -114,6 +114,10 @@ public final class RMetaUtil
 			{
 				rScriptFields.remove( Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
 			}
+			if( Config.getString( MetaUtil.META_FILENAME_COLUMN ) != null )
+			{
+				rScriptFields.remove( Config.getString( MetaUtil.META_FILENAME_COLUMN ) );
+			}
 
 			// remove BLJ generated fields since inclusion depends upon the report.num* properties
 			rScriptFields.remove( ParserModuleImpl.NUM_HITS );

@@ -88,6 +88,15 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		}
 		else
 		{
+			if( ModuleUtil.moduleExists( Demultiplexer.class.getName() ) )
+			{
+				MetaUtil.removeColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ), getTempDir() );
+				Log.warn( ImportMetadata.class,
+						"The " + MetaUtil.META_FILENAME_COLUMN
+								+ " option is incompatible with using the demultiplexer module. The supplied value \""
+								+ Config.getString( MetaUtil.META_FILENAME_COLUMN ) + "\" will be ignored." );
+				Config.setConfigProperty( MetaUtil.META_FILENAME_COLUMN, "" );
+			}
 			Log.info( getClass(),
 					"Importing metadata (column delim=" + Config.requireString( MetaUtil.META_COLUMN_DELIM ) + "): "
 							+ MetaUtil.getFile().getAbsolutePath() );

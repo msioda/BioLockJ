@@ -331,7 +331,9 @@ public class SeqUtil
 
 	/**
 	 * Method extracts Sample ID from the name param. Possibly input is a file name so remove file extensions. If
-	 * demultiplexing (RDP/Kraken support this option), input is a sequence header
+	 * demultiplexing (RDP/Kraken support this option), input is a sequence header. If MetaUtil.META_FILENAME_COLUMN is
+	 * supplied, then possible return values are limited to the given samples ids, or "" if the file is not in the
+	 * filename column.
 	 *
 	 * @param value File name or sequence header
 	 * @return Sample ID
@@ -339,48 +341,86 @@ public class SeqUtil
 	 */
 	public static String getSampleId( final String value ) throws Exception
 	{
-		String id = value;
+		Log.debug( SeqUtil.class, "Seeking sample id for file: " + value );
+		String id;
+		String revValue = "";
 		try
 		{
-			// trim .gz extension
-			if( id.toLowerCase().endsWith( ".gz" ) )
+			if( Config.getString( MetaUtil.META_FILENAME_COLUMN ) != null )
 			{
-				id = id.substring( 0, id.length() - 3 ); // 9_R2.fastq
-			}
-
-			// trim .fasta or .fastq extension
-			if( id.toLowerCase().endsWith( "." + FASTA ) || id.toLowerCase().endsWith( "." + FASTQ ) )
-			{
-				id = id.substring( 0, id.length() - 6 );
-			}
-
-			// trim directional suffix
-			if( !Config.requireBoolean( Config.INTERNAL_MULTIPLEXED ) ) // must be a file name
-			{
-				final String fwReadSuffix = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
-				final String rvReadSuffix = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
-				if( fwReadSuffix != null && isForwardRead( id ) && id.lastIndexOf( fwReadSuffix ) > 0 )
+				int ind;
+				if( isForwardRead( value ) )
 				{
-					id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
+					ind = MetaUtil.getFieldValues( Config.getString( MetaUtil.META_FILENAME_COLUMN ) ).indexOf( value );
 				}
-				else if( rvReadSuffix != null && id.lastIndexOf( rvReadSuffix ) > 0 )
+
+				else
 				{
-					id = id.substring( 0, id.lastIndexOf( rvReadSuffix ) );
+					// if this file name is a reverse file, look up the corresponding forward file name.
+					final String fwReadSuffix = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
+					final String rvReadSuffix = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
+					revValue = value.replace( rvReadSuffix, fwReadSuffix );
+					Log.debug( SeqUtil.class, value + " is a reverse read. Seeking sample id for file: " + revValue );
+					ind = MetaUtil.getFieldValues( Config.getString( MetaUtil.META_FILENAME_COLUMN ) )
+							.indexOf( revValue );
+				}
+				if( ind == -1 )
+				{
+					Log.info( SeqUtil.class, "Filename [" + ( isForwardRead( value ) ? value: revValue )
+							+ "] does not appear in column [" + Config.getString( MetaUtil.META_FILENAME_COLUMN )
+							+ "]. This file will be ignored." );
+					id = "";
+				}
+				else
+				{
+					id = MetaUtil.getSampleIds().get( ind );
+				}
+
+			}
+			else
+			{
+				id = value;
+				// trim .gz extension
+				if( id.toLowerCase().endsWith( ".gz" ) )
+				{
+					id = id.substring( 0, id.length() - 3 ); // 9_R2.fastq
+				}
+
+				// trim .fasta or .fastq extension
+				if( id.toLowerCase().endsWith( "." + FASTA ) || id.toLowerCase().endsWith( "." + FASTQ ) )
+				{
+					id = id.substring( 0, id.length() - 6 );
+				}
+
+				// trim directional suffix
+				if( !Config.requireBoolean( Config.INTERNAL_MULTIPLEXED ) ) // must be a file name
+				{
+					final String fwReadSuffix = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
+					final String rvReadSuffix = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
+					if( fwReadSuffix != null && isForwardRead( id ) && id.lastIndexOf( fwReadSuffix ) > 0 )
+					{
+						id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
+					}
+					else if( rvReadSuffix != null && id.lastIndexOf( rvReadSuffix ) > 0 )
+					{
+						id = id.substring( 0, id.lastIndexOf( rvReadSuffix ) );
+					}
+				}
+
+				// trim user defined file prefix and/or suffix patterns
+				final String trimPrefix = Config.getString( Config.INPUT_TRIM_PREFIX );
+				final String trimSuffix = Config.getString( Config.INPUT_TRIM_SUFFIX );
+				if( trimPrefix != null && !trimPrefix.isEmpty() && id.indexOf( trimPrefix ) > -1 )
+				{
+					id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
+				}
+
+				if( trimSuffix != null && !trimSuffix.isEmpty() && id.indexOf( trimSuffix ) > 0 )
+				{
+					id = id.substring( 0, id.indexOf( trimSuffix ) );
 				}
 			}
 
-			// trim user defined file prefix and/or suffix patterns
-			final String trimPrefix = Config.getString( Config.INPUT_TRIM_PREFIX );
-			final String trimSuffix = Config.getString( Config.INPUT_TRIM_SUFFIX );
-			if( trimPrefix != null && !trimPrefix.isEmpty() && id.indexOf( trimPrefix ) > -1 )
-			{
-				id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
-			}
-
-			if( trimSuffix != null && !trimSuffix.isEmpty() && id.indexOf( trimSuffix ) > 0 )
-			{
-				id = id.substring( 0, id.indexOf( trimSuffix ) );
-			}
 		}
 		catch( final Exception ex )
 		{
@@ -427,6 +467,18 @@ public class SeqUtil
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			printCollection( Config.getSet( Config.INPUT_IGNORE_FILES ), "Ignore Module Input Files" );
+		}
+
+		if( Config.getString( MetaUtil.META_FILENAME_COLUMN ) != null
+				&& ( Config.getString( Config.INPUT_TRIM_PREFIX ) != null
+						|| Config.getString( Config.INPUT_TRIM_SUFFIX ) != null ) )
+		{
+			Log.warn( SeqUtil.class,
+					"The properties " + Config.INPUT_TRIM_PREFIX + " and " + Config.INPUT_TRIM_SUFFIX
+							+ " will be ignored. Samples will be matched to file names useing the \""
+							+ Config.getString( MetaUtil.META_FILENAME_COLUMN ) + "\" column in the metadata." );
+			Config.setConfigProperty( Config.INPUT_TRIM_PREFIX, "" );
+			Config.setConfigProperty( Config.INPUT_TRIM_SUFFIX, "" );
 		}
 
 	}
