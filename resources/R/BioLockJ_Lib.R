@@ -186,6 +186,7 @@ parseConfig <- function( name, defaultVal=NULL ) {
 # Create status indicator file by appending suffix of _Success or _Failure if any error messages logged
 # BioLockJ Java program checks for existance of new file named as R script + status indicator
 # Messages logged to _Warning file are generally spurious so file is deleted after processing
+# Save MAIN script R data if r.saveRData configured and print session info
 reportStatus <- function( script ) {
    conn = file( paste0( script, "_Warnings" ), open="r" )
    warnings = readLines( conn )
@@ -208,16 +209,27 @@ reportStatus <- function( script ) {
    } else {
       file.create( paste0( script, "_Success" ) )
    }
+
+   if ( getProperty( "r.saveRData", FALSE ) ){
+      save.image( paste0( script, "Data" ) )
+   }
+
+   sessionInfo()
 }
 
+
+
+
 # MAIN R scripts all must call this method to wrap execution in sink() to catch error messages
+# Call reportStatus( script ) when executin is complete
 runProgram <- function( script ) {
    log = file( paste0( script, "_Warnings" ), open="wt" )
    sink( log, type="message" )
-   print( paste( "Pipeline dir: ", getPipelineDir() ) )
+   print( paste( "Run script:", script, "in pipeline dir:", getPipelineDir() ) )
    try( main() )
    sink( type="message" )
    close( log )
+   reportStatus( script )
 }
 
 # Method writes error msgs to the script _Failures file and aborts R program

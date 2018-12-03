@@ -39,7 +39,7 @@ addScatterPlot <- function( otuTable, otuCol, metaCol, parPval, nonParPval )
    pointColors = getColors( length(otuTable[ ,metaCol]) )
    title = getPlotTitle( paste("Adj. Par. Pval:", parPval), paste("Adj. Npr. Pval:", nonParPval) )
    if( doDebug() ) print( paste( "title = getPlotTitle( paste(Adj. Par. Pval:, parPval), paste(Adj. Npr. Pval:, nonParPval) ):", title ) )
-   plot( otuTable[ ,metaCol], otuTable[ ,otuCol], pch=getProperty("r.pch"), col=pointColors, ylab=otuName, xlab=attName, main=title, col.lab=color, col.main=color, cex.main=1 )
+   plot( otuTable[ ,metaCol], otuTable[ ,otuCol], pch=getProperty("r.pch"), col=getProperty("r.colorPoint", "black"), ylab=otuName, xlab=attName, main=title, col.lab=color, col.main=color, cex.main=1 )
 }
 
 # Return nominal group names truncated for display on X-axis of box plot

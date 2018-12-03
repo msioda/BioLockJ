@@ -11,12 +11,7 @@ addHistogram <- function( v, title, xLabel, size ) {
 getCexMain<- function( labels=NULL ) {
    cexMax = 1.2
    cexMin = 0.65
-   if (returnMax){
-      return(cexMax)
-   }
-   if (returnMin){
-      return(cexMin)
-   }
+
    maxLabelSize = 1
    for( i in 1:length(labels) ) {
       if( nchar(labels[i]) > maxLabelSize ) maxLabelSize = nchar(labels[i])
