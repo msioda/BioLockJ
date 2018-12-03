@@ -1,20 +1,16 @@
 # Module script for: biolockj.module.r.BuildMdsPlots
 
-r.debug = getProperty("r.debug", FALSE)
-binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )
-nominalFields = getProperty("internal.nominalFields", vector( mode="character" ) )
-
 # Import vegan library for distance plot support
 # Main function generates 3 MDS plots for each attribute at each level in report.taxonomyLevels
 main <- function() { 
    importLibs( c( "vegan" ) )
-   mdsAtts = getProperty( "rMds.reportFields", c( binaryFields, nominalFields )  )
+   mdsAtts = getProperty( "rMds.reportFields", c( getBinaryFields(), getNominalFields() )  )
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
-      if( r.debug ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", otuLevel, ".log") ) )
+      if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", otuLevel, ".log") ) )
       pdf( paste0( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_MDS.pdf" ) ) ) )
       par( mfrow=c(2, 2), las=1 )
       inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
-      if( r.debug ) print( paste( "inputFile = list.files( tableDir, paste0(otuLevel, .*, _metaMerged.tsv), full.names=TRUE ):", inputFile ) )
+      if( doDebug() ) print( paste( "inputFile = list.files( tableDir, paste0(otuLevel, .*, _metaMerged.tsv), full.names=TRUE ):", inputFile ) )
       if( length( inputFile ) == 0 ) { next }
       otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
       mdsCols = getColIndexes( otuTable, mdsAtts )
@@ -40,7 +36,7 @@ main <- function() {
             }
          }
       }
-      if( r.debug ) sink()
+      if( doDebug() ) sink()
    }
 }
 
@@ -48,7 +44,6 @@ getMdsLabel <- function( variance ) {
    return( paste("Axis:", paste0( round( variance * 100, 2 ), "%" ) ) )
 }
 
-#metaCol=476
 getMdsColors <- function( otuTable,  metaCol ) { 
    tableVals = as.factor( otuTable[,metaCol] )
    factors = levels( tableVals )
