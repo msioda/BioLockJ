@@ -211,7 +211,7 @@ reportStatus <- function( script ) {
    }
 
    if ( getProperty( "r.saveRData", FALSE ) ){
-      save.image( paste0( script, "Data" ) )
+      save.image( paste0( sub("^MAIN_", "", script ), "Data" ) )
    }
 
    sessionInfo()
