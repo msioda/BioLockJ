@@ -340,6 +340,42 @@ public class MetaUtil
 			setFile( MetaUtil.getMetadata() );
 			refreshCache();
 		}
+
+		// verify that values in columns used as identifiers are unique per sample.
+		checkUniqueVals( META_BARCODE_COLUMN );
+		checkUniqueVals( META_FILENAME_COLUMN );
+
+	}
+
+	/**
+	 * Verify that a column in the metadata is unique for each sample
+	 * 
+	 * @param columnAttr {@link biolockj.Config} property giving the name of the column.
+	 * @throws Exception if number of unique values in the column does not match number of samples
+	 */
+	private static void checkUniqueVals( String columnAttr ) throws Exception
+	{
+		final String columnName = Config.getString( columnAttr );
+		if( columnName != null )
+		{
+			if( MetaUtil.getFieldNames().contains( columnName ) )
+			{
+				int lenSamples = ( new HashSet<String>( getSampleIds() ) ).size();
+				int lenVals = ( new HashSet<String>( getFieldValues( columnName ) ) ).size(); // get unique values
+				if( lenSamples != lenVals )
+				{
+					throw new Exception( "Should have exactly 1 unique value per sample in column " + columnName
+							+ ". Found " + lenVals + " unique values for " + lenSamples + " samples." );
+				}
+				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
+						+ "] gives a column of unique values in the meta data file." );
+			}
+			else
+			{
+				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
+						+ "] is ignored because it does not appear as a header in the meta data file." );
+			}
+		}
 	}
 
 	/**
@@ -557,11 +593,29 @@ public class MetaUtil
 		}
 		return val.trim();
 	}
+	
+	public static boolean hasColumn(String columnName)
+	{
+		try 
+		{
+			return (columnName != null
+					&& getFieldNames().contains( columnName ));
+		}
+		catch (final Exception ex)
+		{
+			return(false);
+		}
+	}
 
 	/**
 	 * {@link biolockj.Config} property {@value #META_BARCODE_COLUMN} defines metadata column with identifying barcode
 	 */
 	public static final String META_BARCODE_COLUMN = "metadata.barcodeColumn";
+
+	/**
+	 * {@link biolockj.Config} property {@value #META_FILENAME_COLUMN} defines metadata column with input file names
+	 */
+	public static final String META_FILENAME_COLUMN = "metadata.fileNameColumn";
 
 	/**
 	 * {@link biolockj.Config} property that defines how metadata columns are separated: {@value #META_COLUMN_DELIM}
