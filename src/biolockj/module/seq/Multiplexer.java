@@ -237,10 +237,10 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 		{
 			useBarcode = false;
 			final String barCodeCol = Config.getString( MetaUtil.META_BARCODE_COLUMN );
-			if( barCodeCol != null && MetaUtil.getFieldNames().contains( MetaUtil.META_BARCODE_COLUMN ) )
+			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) )
 			{
 				final Set<String> sampleIds = new HashSet<>( MetaUtil.getSampleIds() );
-				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( MetaUtil.META_BARCODE_COLUMN ) );
+				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol ) );
 				sampleIds.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
 				vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
 				if( sampleIds.size() != vals.size() )
@@ -252,7 +252,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 					for( final String id: MetaUtil.getSampleIds() )
 					{
 						Log.warn( getClass(),
-								"ID [ " + id + " ] ==> " + MetaUtil.getField( id, MetaUtil.META_BARCODE_COLUMN ) );
+								"ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
 					}
 				}
 				else
