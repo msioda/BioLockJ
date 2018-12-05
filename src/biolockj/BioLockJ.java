@@ -472,6 +472,8 @@ public class BioLockJ
 				errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
 						+ new Integer( ++index ).toString() + ".log" ) );
 			}
+			
+			printFatalError( fatalException );
 
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
 			for( final String msg: Log.getMsgs() )
@@ -486,7 +488,7 @@ public class BioLockJ
 			System.out.println( "Unable to access Log or write to $USER $HOME directory!" );
 			ex.printStackTrace();
 			RuntimeParamUtil.printRuntimeArgs( args, true );
-			printFatalError( fatalException );
+			printFatalError( ex );
 		}
 		finally
 		{

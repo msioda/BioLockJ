@@ -109,6 +109,7 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 	{
 		if( classifierParams == null || classifierParams.isEmpty() )
 		{
+			classifierParams = " ";
 			List<String> paramList = Config.getList( EXE_CLASSIFIER_PARAMS );
 			if( paramList == null || paramList.isEmpty() )
 			{
@@ -129,11 +130,6 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 					classifierParams += "--" + it.next() + " ";
 				}
 			}
-		}
-
-		if( classifierParams == null || classifierParams.isEmpty() )
-		{
-			classifierParams = " ";
 		}
 
 		return classifierParams;

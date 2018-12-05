@@ -1,46 +1,39 @@
 # BioLockJ_Lib.R contains the library of functions shared by multiple BioLockJ R script modules. 
 
-
-addPlotLabel <- function( label, size, color, las, side, rowIndex, colIndex ) {
-   mtext( bquote(bold(.( label ))), outer=TRUE, cex=size, side=side, las=las, line=colIndex, adj=rowIndex, col=color )
+# Add value to vector v and assign name 
+addNamedVectorElement <- function( v, name, value ) {
+   v[length(v) + 1] = value
+   names(v)[length(v)] = name
+   return( v )
 }
 
-
+# Return P value formated with sprintf as defined in MASTER Config r.pValFormat, otherwise use %1.2g default
 displayPval <- function( pval ) {
    return( paste( sprintf(getProperty("r.pValFormat", "%1.2g"), pval) ) )
 }
 
-
-getCexAxis <- function( labels ) {
-   nchars = sum(nchar(labels)) + length(labels) - 1
-   if( nchars < getProperty("r.plotWidth")) {
-      return( 1 )
-   }
-   else if( nchars < (getProperty("r.plotWidth")+7) ) {
-      return( 0.9 )
-   }
-   else if( nchars < (getProperty("r.plotWidth")+15) ) {
-      return( 0.8 )
-   }
-   else if( nchars < (getProperty("r.plotWidth")+24) ) {
-      return( 0.7 )
-   }
-   return( cexAxisMin )
+# Return TRUE if BioLock Config indicates debug files should be generated for R scripts
+doDebug <- function() {
+  return( getProperty("r.debug", FALSE) )
 }
 
+# Return vector of binary fields or an empty vector
+getBinaryFields <- function() {
+   return( getProperty("internal.binaryFields", vector( mode="character" ) ) )
+}
 
-getColIndexes <- function( otuTable, attNames ) {
+# Return otuTable column indexes for the given colNames
+getColIndexes <- function( otuTable, colNames ) {
    cols = vector( mode="integer" )
-   if( !is.na(attNames) && length(attNames) > 0 ) {
-      for( i in 1:length(attNames) ) {
-         cols[i] = grep(TRUE, colnames(otuTable)==attNames[i])
+   if( length(colNames) > 0 ) {
+      for( i in 1:length(colNames) ) {
+         cols[i] = grep(TRUE, colnames(otuTable)==colNames[i])
       }
    }
    return( cols )
 }
 
-
-#return r.colorHighlight if any of the input values meet the r.pvalCutoff, otherwise return r.colorBase
+# Return r.colorHighlight if any of the input values meet the r.pvalCutoff, otherwise return r.colorBase
 getColor <- function( v ) {
    for( i in 1:length(v) ) {
       if( grepl("e", v[i]) || !is.na(v[i]) && !is.nan(v[i]) && ( v[i] <= getProperty("r.pvalCutoff", 0.05) ) ) {
@@ -50,22 +43,12 @@ getColor <- function( v ) {
    return( getProperty("r.colorBase", "black") )
 }
 
-
+# Return n colors using the palette defined in the MASTER Config
 getColors <- function( n ) {
    return( get_palette( getProperty("r.colorPalette", "npg"), n ) )
 }
 
-
-# Return a file matching the pattern underwhere under the pipeline root directory
-getPipelineFile <- function( pattern ) {
-   result = list.files( pipelineDir, pattern, full.names=TRUE, recursive=TRUE )
-   if( length( result ) > 1 ){
-      stop( paste( "Ambiguous file:", subDir, pattern ) )
-   }
-
-   return( result )
-}
-
+# Return list, each record contains the OTUs associated with a unique value for the given nominal metadata field (metaCol)
 getFactorGroups <- function( otuTable, metaCol, otuCol ) {
    vals = list()
    options = levels( metaCol )
@@ -75,58 +58,8 @@ getFactorGroups <- function( otuTable, metaCol, otuCol ) {
    return( vals )
 }
 
-
-getLabels <- function( labels ) {
-   if( getCexAxis(labels) == cexAxisMin ) {
-      nchars = sum(nchar(labels)) + length(labels) - 1
-      maxSize = ((getProperty("r.plotWidth")*2)+2)/length(labels)
-      return( strtrim(labels, floor(maxSize) ) )
-   }
-   return( labels )
-}
-
-
-getLas <- function( labels ) {
-   HORIZONTAL = 1
-   VERTICAL = 3
-   nchars = sum(nchar(labels)) + length(labels) - 1
-   aveSize = sum(nchar(labels))/length(labels)
-   las = HORIZONTAL
-   if( (length(labels) > 5) && aveSize > 3 ) las = VERTICAL
-   return( las )
-}
-
-
-getMaxAttLen <- function( v ) {
-   max = 0
-   for( i in 1:length(v) ) {
-      if( nchar(v[i]) > max ) max = nchar(v[i])
-   }
-   return( max )
-}
-
-
-getModuleDir <- function() {
-	if( pipelineDir == dirname( getModuleScript() ) ){
-		return( pipelineDir )
-	}
-	return( dirname( dirname( getModuleScript() ) ) )
-}
-
-
-getPath <- function( rootDir, name ) {
-   return( file.path( rootDir, paste0( getProperty("internal.pipelineName"), "_", name ) ) )
-}
-
-
-getPlotTitle <- function( line1, line2 ) {
-   if( (nchar(line1) + nchar(line2) ) > getProperty("r.plotWidth") ) {
-      return( paste0( line1, "\n", line2 ) )
-   }
-   return( paste( line1, line2 ) )
-}
-
-getMasterProperties <- function() {
+# Return the name of the BioLockJ MASTER Config file
+getMasterConfigFile <- function() {
    testDir = dirname( getModuleScript() )
    propFile = vector( mode="character" )
    while( length( propFile ) == 0 && testDir != "/" ) {
@@ -139,17 +72,73 @@ getMasterProperties <- function() {
    return( propFile )
 }
 
+# If downloaded with scp, all files share 1 directory, so return getPipelineDir() 
+# Otherwise, script path like: piplineDir/moduleDir/script/MAIN*.R, so return moduleDir (the dir 2 levels above script)  
+getModuleDir <- function() {
+   if( getPipelineDir() == dirname( getModuleScript() ) ){
+      return( getPipelineDir() )
+   }
+   return( dirname( dirname( getModuleScript() ) ) )
+}
 
-getProperty <- function( name, val=NULL ) {
-   return ( suppressWarnings( parseConfig( name, val ) ) )
+# Return vector of nominal fields or an empty vector
+getNominalFields <- function() {
+   return( getProperty("internal.nominalFields", vector( mode="character" ) ) )
+}
+
+# Return vector of numeric fields or an empty vector
+getNumericFields <- function() {
+   return( getProperty("internal.numericFields", vector( mode="character" ) ) )
+}
+
+# Return file path of file in rootDir, with the pipeline name appended as a prefix to name
+getPath <- function( rootDir, name ) {
+   return( file.path( rootDir, paste0( getProperty("internal.pipelineName"), "_", name ) ) )
+}
+
+# Return the pipeline root directory
+getPipelineDir <- function() {
+   return( dirname( getMasterConfigFile() ) )
+}
+
+# Return a file matching the pattern underwhere under the pipeline root directory
+# If multiple results are found, return the most recent version
+getPipelineFile <- function( pattern ) {
+   results = list.files( getPipelineDir(), pattern, full.names=TRUE, recursive=TRUE )
+   returnFile = NULL
+   for( i in 1:length( results ) ) {
+      if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
+         returnFile = results[i] 
+      }
+   }
+
+   return( returnFile )
+}
+
+# Return the PDF plot label based on r.plotWidth, standar.properties default assumes 4 plots/page 
+getPlotTitle <- function( line1, line2 ) {
+   if( (nchar(line1) + nchar(line2) ) > getProperty("r.plotWidth") ) {
+      return( paste0( line1, "\n", line2 ) )
+   }
+   return( paste( line1, line2 ) )
+}
+
+# Return property value from MASTER Config file, otherwise return the defaultVal
+getProperty <- function( name, defaultVal=NULL ) {
+   return ( suppressWarnings( parseConfig( name, defaultVal ) ) )
+}
+
+# Return vector that includs all binary, nominal, and numeric fields or an empty vector
+getReportFields <- function() {
+   return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
 }
     
-
+# Return named vector values for the given name
 getValuesByName <- function( vals, name ) {
    return( as.vector( vals[names(vals)==name] ) )
 }
 
-
+# Import libraries and abort program with descriptive error
 importLibs <- function( libs ) {
    errors = vector( mode="character" )
    for( i in 1:length( libs ) ) {
@@ -157,19 +146,19 @@ importLibs <- function( libs ) {
          errors[ length( errors ) + 1 ] = paste( "Missing R library, please run install.packages(", libs[i], ")" )
       }
    }   
-
+   
    if( length( errors ) > 0 ) {
       writeErrors( getModuleScript(), errors )
    }
 }
 
-
-parseConfig <- function( name, val=NULL ) {
-   config = read.properties( configFile )
+# Parse MASTER config for property value, if undefined return default defaultVal
+parseConfig <- function( name, defaultVal=NULL ) {
+   config = read.properties( getMasterConfigFile() )
    prop = config[[ name ]]
 
    if( is.null( prop ) ) {
-      return( val )
+      return( defaultVal )
    }
    if( is.null( prop ) ) {
       return( NULL )
@@ -193,16 +182,10 @@ parseConfig <- function( name, val=NULL ) {
    return( str_trim( prop ) )
 }
 
-
-pValueTestName <- function( attName, isParametric ) {
-   if( attName %in% binaryFields && isParametric ) return ( "T-Test" )
-   if( attName %in% binaryFields && !isParametric ) return ( "Wilcox" )
-   if( attName %in% nominalFields && isParametric ) return ( "ANOVA" )
-   if( attName %in% nominalFields && !isParametric ) return ( "Kruskal" )
-   if( attName %in% numericFields && isParametric ) return ( "Pearson" )
-   if( attName %in% numericFields && !isParametric ) return ( "Kendall" )
-}
-
+# Create status indicator file by appending suffix of _Success or _Failure if any error messages logged
+# BioLockJ Java program checks for existance of new file named as R script + status indicator
+# Messages logged to _Warning file are generally spurious so file is deleted after processing
+# Save MAIN script R data if r.saveRData configured and print session info
 reportStatus <- function( script ) {
    conn = file( paste0( script, "_Warnings" ), open="r" )
    warnings = readLines( conn )
@@ -224,19 +207,28 @@ reportStatus <- function( script ) {
       writeErrors( script, errors )
    } else {
       file.create( paste0( script, "_Success" ) )
+      if ( getProperty( "r.saveRData", FALSE ) ){
+         moduleBaseName = sub( "^MAIN_", "", basename( getModuleScript() ) )
+         save.image( file.path( dirname( script ), paste0( moduleBaseName, "Data" ) ) )
+      }
    }
+
+   sessionInfo()
 }
 
+# MAIN R scripts all must call this method to wrap execution in sink() to catch error messages
+# Call reportStatus( script ) when executin is complete
 runProgram <- function( script ) {
    log = file( paste0( script, "_Warnings" ), open="wt" )
    sink( log, type="message" )
-   print( paste( "Pipeline dir: ", pipelineDir ) )
+   print( paste( "Run script:", script, "in pipeline dir:", getPipelineDir() ) )
    try( main() )
    sink( type="message" )
    close( log )
+   reportStatus( script )
 }
 
-
+# Method writes error msgs to the script _Failures file and aborts R program
 writeErrors <- function( script, msgs ) {
    errorConn = file( paste0( script, "_Failures" ), open="wt" )
    writeLines( msgs, errorConn )
@@ -244,15 +236,5 @@ writeErrors <- function( script, msgs ) {
    stop( paste( "Check error file to see runtime errors:", paste0( script, "_Failures" ) ) )
 }
 
-
+# Import standard shared libraries
 importLibs( c( "properties", "stringr", "ggpubr" ) )
-configFile = getMasterProperties()
-print( paste( "Importing Config:", configFile ) )
-#print( read.properties( configFile ) )
-pipelineDir = dirname( configFile )
-r.debug = getProperty("r.debug", FALSE)
-binaryFields = getProperty("internal.binaryFields", vector( mode="character" ) )
-nominalFields = getProperty("internal.nominalFields", vector( mode="character" ) )
-numericFields = getProperty("internal.numericFields", vector( mode="character" ) )
-allAtts = c( binaryFields, nominalFields, numericFields )
-cexAxisMin = 0.65
