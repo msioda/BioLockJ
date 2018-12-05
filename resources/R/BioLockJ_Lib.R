@@ -72,6 +72,33 @@ getMasterConfigFile <- function() {
    return( propFile )
 }
 
+getMetaDataFile <- function(){
+	origFile = getProperty(name = "metadata.filePath")
+	if (is.null(origFile)){
+		#getPipelineFile("ImportMetadata/output/")
+		return(NULL)
+	}else{
+		fileName = basename(origFile)
+		localCopy = file.path(getPipelineDir(), fileName)
+	}
+	return(localCopy)
+}
+
+# Return a data frame of the metadata.  Note that biolockj assumes that the first column is the sample id
+# and that the sample id is unique within the file, so the first row is used as rownames in the returned dataframe.
+getMetaData <- function(){
+	file = getMetaDataFile()
+	if (is.null(file)){
+		inputFile = getPipelineFile( "*_metaMerged.tsv" )
+		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
+		firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
+		meta = otuTable[firstMetaCol:ncol(otuTable)]
+	}else{
+		meta = read.delim(file=file, comment.char = getProperty("metadata.commentChar",""), row.names = 1)
+	}
+	return(meta)
+}
+
 # If downloaded with scp, all files share 1 directory, so return getPipelineDir() 
 # Otherwise, script path like: piplineDir/moduleDir/script/MAIN*.R, so return moduleDir (the dir 2 levels above script)  
 getModuleDir <- function() {
@@ -180,6 +207,11 @@ parseConfig <- function( name, defaultVal=NULL ) {
    }
 
    return( str_trim( prop ) )
+}
+
+plotPlainText <- function(textToPrint){
+	plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
+	text(labels=textToPrint, x = 0.5, y = 0.5, cex = 1.6, col = "black")
 }
 
 # Create status indicator file by appending suffix of _Success or _Failure if any error messages logged
