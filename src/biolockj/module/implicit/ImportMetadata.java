@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
 import biolockj.util.*;
@@ -107,8 +108,24 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 				reader.close();
 				writer.close();
 			}
+			
+			if( doIdToSeqVerifiction() )
+			{
+				MetaUtil.setFile( getMetadata() );
+				MetaUtil.refreshCache();
+				verifyAllRowsMapToSeqFile( getInputFiles() );
+			}
 		}
 	}
+	
+	private boolean doIdToSeqVerifiction() throws Exception
+	{
+		return Config.getBoolean( MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() ) &&
+				!Config.getBoolean( Config.INTERNAL_MULTIPLEXED );
+	}
+	
+	
+	
 
 	/**
 	 * The metadata file can be updated several times during pipeline execution. Summary prints the file-path of the
@@ -272,6 +289,37 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 
 		return false;
 	}
+	
+	/**
+	 * Verify every row (every Sample ID) maps to a sequence file
+	 * 
+	 * @throws ConfigViolationException if unmapped Sample IDs are found
+	 * @throws Exception if other errors occur
+	 */
+	protected void verifyAllRowsMapToSeqFile(final List<File> files ) throws Exception
+	{
+		List<String> ids = MetaUtil.getSampleIds();
+		for( String id: MetaUtil.getSampleIds() )
+		{
+			for( File seq: files )
+			{
+				if( SeqUtil.isForwardRead( seq.getName() ) &&
+						SeqUtil.getSampleId( seq.getName() ).equals( id ) )
+				{
+					ids.remove( id );
+					break;
+				}
+			}
+		}
+		
+		if( !ids.isEmpty() )
+		{
+			throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW, 
+					"This property requires every Sample ID in the metadata file " + MetaUtil.getMetadataFileName() +
+					" map to one of the sequence files in an input directory: " + Config.getString( Config.INPUT_DIRS ) +
+					BioLockJ.RETURN + "The following " + ids.size() + " Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
+		}
+	}
 
 	/**
 	 * Method called to parse a row from the metadata file, where
@@ -392,5 +440,4 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	private String quotedText = "";
 	private int rowNum = 0;
 	private static String inputDelim = null;
-
 }

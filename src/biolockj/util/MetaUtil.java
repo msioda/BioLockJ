@@ -589,7 +589,7 @@ public class MetaUtil
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #META_REQUIRED}<br>
-	 * If Y, require metadata rew for each sample with sequence data in {@value biolockj.Config#INPUT_DIRS}.<br>
+	 * If Y, require metadata row for each sample with sequence data in {@value biolockj.Config#INPUT_DIRS}.<br>
 	 * If N, samples without metadata are ignored.
 	 */
 	public static final String META_REQUIRED = "metadata.required";
@@ -608,6 +608,14 @@ public class MetaUtil
 	 * Default field value to represent null-value: {@value #DEFAULT_NULL_VALUE}
 	 */
 	protected static final String DEFAULT_NULL_VALUE = "NA";
+	
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #USE_EVERY_ROW}<br>
+	 * If Y, require a sequence file for every SampleID (every row) in {@value #META_FILE_PATH}.<br>
+	 * If N, metadata can include extraneous SampleIDs.
+	 */
+	public static final String USE_EVERY_ROW = "metadata.useEveryRow";
+	
 
 	private static String META_SPACER = "************************************************************************";
 	private static File metadataFile = null;

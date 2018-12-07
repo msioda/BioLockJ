@@ -118,6 +118,27 @@ public class BioLockJUtil
 
 		return names;
 	}
+	
+	/**
+	 * Print collection one item per line. 
+	 * 
+	 * @param data Collection of data
+	 * @return Collection data as a String
+	 */
+	public static String printLongFormList( final Collection<?> data )
+	{
+		final StringBuffer sb = new StringBuffer();
+		if( data != null && !data.isEmpty() )
+		{
+			sb.append( BioLockJ.RETURN );
+			for( final Object val: data )
+			{
+				sb.append( val ).append( BioLockJ.RETURN );
+			}
+		}
+
+		return sb.toString();
+	}
 
 	/**
 	 * Concatenate data and return as a comma separated String.

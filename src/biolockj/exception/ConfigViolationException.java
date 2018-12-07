@@ -20,14 +20,16 @@ package biolockj.exception;
 public class ConfigViolationException extends ConfigException
 {
 	/**
-	 * ConfigFormatException is thrown if propertyName is defined but the format is invalid.
+	 * ConfigViolationException is thrown application detects a violation due to a {@link biolockj.Config} 
+	 * property setting, such as finding Sample IDs with no corresponding sequence file enforced by 
+	 * {@link biolockj.Config}.{@value biolockj.util.MetaUtil#USE_EVERY_ROW} = {@value biolockj.Config#TRUE} 
 	 *
 	 * @param propertyName {@link biolockj.Config} property name
 	 * @param msg Exception message details
 	 */
 	public ConfigViolationException( final String propertyName, final String msg )
 	{
-		super( propertyName, "I/O", msg );
+		super( propertyName, "Violation", msg );
 	}
 
 	private static final long serialVersionUID = -5659243602699272132L;
