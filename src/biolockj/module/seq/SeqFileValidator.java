@@ -53,6 +53,11 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 			boolean foundTooShort = false;
 			boolean foundInvalid = false;
 
+			int numSamples = sampleStats.keySet().size();
+			long totalMeanReads = 0L;
+			long overallMinReadLen = 0L;
+			long overallMaxReadLen = 0L;
+			
 			for( final String sampleId: new TreeSet<>( sampleStats.keySet() ) )
 			{
 				final Long[] stats = sampleStats.get( sampleId );
@@ -60,6 +65,22 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 				final Long numTooShort = stats[ NUM_TOO_SHORT_READS_INDEX ];
 				final Long numTrimmed = stats[ NUM_TRIMMED_READS_INDEX ];
 				final Long numInvalid = stats[ NUM_INVALID_FORMAT_INDEX ];
+				final Long meanReadLen = stats[ MEAN_NUM_READ_INDEX ];
+				final Long maxReadLen = stats[ MAX_READ_INDEX ];
+				final Long minReadLen = stats[ MIN_READ_INDEX ];
+				
+				totalMeanReads += meanReadLen;
+			
+				if( overallMinReadLen == 0 || minReadLen < overallMinReadLen  )
+				{
+					overallMinReadLen = minReadLen;
+				}
+				
+				if( maxReadLen > overallMaxReadLen  )
+				{
+					overallMaxReadLen = maxReadLen;
+				}
+				
 				if( numTooShort > 0 || numTrimmed > 0 || numInvalid > 0 )
 				{
 					sb.append( sampleId + ": " );
@@ -86,14 +107,18 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 					sb.append( RETURN );
 				}
 			}
+			
+			sb.append( "Mean valid read length = " + new Double(totalMeanReads/numSamples).toString() + RETURN );
+			sb.append( "Min valid read length = " + new Long( overallMinReadLen ).toString() + RETURN );
+			sb.append( "Max valid read length = " + new Long( overallMaxReadLen ).toString() + RETURN );
 
 			if( foundTooShort )
 			{
-				sb.append( "Minimum read length = " + minReadLen() + RETURN );
+				sb.append( "Minimum discarded read length = " + minReadLen() + RETURN );
 			}
 			if( foundTrimmed )
 			{
-				sb.append( "Maximum read length = " + Config.getPositiveInteger( INPUT_SEQ_MAX ) + RETURN );
+				sb.append( "Maximum discarded read length = " + Config.getPositiveInteger( INPUT_SEQ_MAX ) + RETURN );
 			}
 			if( foundInvalid || foundTooShort )
 			{
@@ -140,6 +165,9 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	 */
 	protected void validateFile( final File file ) throws Exception
 	{
+		long totalReadLen = 0L;
+		long minReadLen = 0L;
+		long maxReadLen = 0L;
 		long seqNum = 0L;
 		long numValid = 0L;
 		long numTrimmed = 0L;
@@ -156,6 +184,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
 			seqLines.add( line );
+
 			if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 			{
 				seqNum++;
@@ -195,7 +224,21 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 							seqLines.set( 3, seqLines.get( 3 ).substring( 0, seqMax ) );
 						}
 					}
-
+					
+					
+					int readLen = seqLines.get( 1 ).length();
+					
+					totalReadLen += readLen;
+					
+					if( minReadLen == 0 || readLen < minReadLen  )
+					{
+						minReadLen = readLen;
+					}
+					if( readLen > maxReadLen  )
+					{
+						maxReadLen = readLen;
+					}
+					
 					for( final String seqLine: seqLines )
 					{
 						writer.write( seqLine + BioLockJ.RETURN );
@@ -205,7 +248,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 				seqLines.clear();
 			}
 		}
-
+		
 		writer.close();
 		reader.close();
 
@@ -227,6 +270,12 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		stats[ NUM_TRIMMED_READS_INDEX ] = numTrimmed;
 		stats[ NUM_TOO_SHORT_READS_INDEX ] = numTooShort;
 		stats[ NUM_INVALID_FORMAT_INDEX ] = numInvalidFormat;
+		
+		stats[ MEAN_NUM_READ_INDEX ] = Double.valueOf( totalReadLen / numValid ).longValue();
+		stats[ MIN_READ_INDEX ] = minReadLen;
+		stats[ MAX_READ_INDEX ] = maxReadLen;
+		minReadLen = 0;
+		
 		sampleStats.put( SeqUtil.getSampleId( file.getName() ), stats );
 
 		if( SeqUtil.isForwardRead( file.getName() ) )
@@ -275,8 +324,11 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	 */
 	protected static final String INPUT_SEQ_MIN = "input.seqMinLen";
 
-	private static final int NUM_INVALID_FORMAT_INDEX = 3;
-	private static final int NUM_TOO_SHORT_READS_INDEX = 2;
-	private static final int NUM_TRIMMED_READS_INDEX = 1;
+	private static final int MAX_READ_INDEX = 7;
+	private static final int MIN_READ_INDEX = 6;
+	private static final int NUM_INVALID_FORMAT_INDEX = 5;
+	private static final int NUM_TOO_SHORT_READS_INDEX = 4;
+	private static final int NUM_TRIMMED_READS_INDEX = 3;
+	private static final int MEAN_NUM_READ_INDEX = 1;
 	private static final int NUM_VALID_READS_INDEX = 0;
 }
