@@ -43,6 +43,16 @@ public class RuntimeParamUtil
 	{
 		return params.get( RESTART_FLAG ) != null;
 	}
+	
+	/**
+	 * Return restart pipeline directory
+	 * 
+	 * @return File directory path
+	 */
+	public static File getRestartDir()
+	{
+		return params.get( RESTART_FLAG ) == null ? null: new File( params.get( RESTART_FLAG ) );
+	}
 
 	/**
 	 * Runtime property getter for {@value #PASSWORD_FLAG}
@@ -83,6 +93,17 @@ public class RuntimeParamUtil
 	{
 		return params.get( DIRECT_FLAG );
 	}
+	
+	/**
+	 * Runtime property getter for direct module pipeline directory 
+	 * 
+	 * @return Pipeline directory dir
+	 */
+	public static File getDirectPipelineDir()
+	{
+		return params.get( DIRECT_PIPELINE_DIR ) == null ? null: new File( params.get( DIRECT_PIPELINE_DIR ) );
+	}
+	
 
 	/**
 	 * Returns the name of the Docker container running the current module.
@@ -249,6 +270,11 @@ public class RuntimeParamUtil
 		}
 
 		parseParams( simplifyArgs( args ) );
+		
+		if( isDirectMode() )
+		{
+			assignDirectPipelineDir();
+		}
 
 		if( doRestart() )
 		{
@@ -265,18 +291,40 @@ public class RuntimeParamUtil
 
 	private static void assignLastParam( final String param ) throws Exception
 	{
-		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG )
+		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG )
 				|| param.equals( CONFIG_DIR_FLAG ) || param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG )
 				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( PRIMER_DIR_FLAG ) )
 		{
 			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
 		}
 
-		if( !params.keySet().contains( CONFIG_FLAG )
+		if( !params.keySet().contains( CONFIG_FLAG ) && !params.keySet().contains( RESTART_FLAG )
 				&& !params.keySet().contains( param ) && !params.values().contains( param ) )
 		{
 			params.put( CONFIG_FLAG, param );
 		}
+	}
+	
+	private static void assignDirectPipelineDir() throws Exception
+	{
+		Log.info( RuntimeParamUtil.class, "Separating pipeline dir name and module name from: \"" + DIRECT_FLAG + "\" " + getDirectModule() );
+		StringTokenizer st = new StringTokenizer( getDirectModule() , ":" );
+		if( st.countTokens() != 2 )
+		{
+			throw new Exception( "Direct module param format requires pipelineDir name & BioModule class name to be separated" 
+					+ " with a colon \":\" which should appear exactly once but was found " + st.countTokens() 
+					+ " times in the param [ "+ getDirectModule() + " ]" );
+		}
+
+		String pipelineName = st.nextToken();
+		final File pipelineDir = new File( getBaseDir().getAbsolutePath() + File.separator + pipelineName );
+		if( !pipelineDir.exists() )
+		{
+			throw new Exception( "Direct module pipeline directory not found: " + pipelineDir.getAbsolutePath() );
+		}
+		
+		params.put( DIRECT_PIPELINE_DIR, pipelineDir.getAbsolutePath() );
+		params.put( DIRECT_FLAG, st.nextToken() );
 	}
 
 	private static void assignRestartConfig() throws Exception
@@ -284,7 +332,7 @@ public class RuntimeParamUtil
 		Log.info( RuntimeParamUtil.class, "Found \"" + RESTART_FLAG + "\" arg ---> RESTART PIPELINE" );
 		if( params.keySet().contains( RESTART_FLAG ) )
 		{
-			params.put( CONFIG_FLAG, getRestartConfigFile( params.get( CONFIG_FLAG ) ) );
+			params.put( CONFIG_FLAG, getRestartConfigFile() );
 		}
 	}
 
@@ -296,15 +344,14 @@ public class RuntimeParamUtil
 				: null;
 	}
 
-	private static String getRestartConfigFile( final String val ) throws Exception
+	private static String getRestartConfigFile() throws Exception
 	{
-		final File arg = new File( val );
-		if( arg.isDirectory() )
+		if( getRestartDir() != null && getRestartDir().isDirectory() )
 		{
-			Log.info( RuntimeParamUtil.class, "Found \"" + RESTART_FLAG + "\" arg directory = " + arg.getAbsolutePath() );
-			if( arg.listFiles().length > 0 )
+			Log.info( RuntimeParamUtil.class, "Found \"" + RESTART_FLAG + "\" directory = " + getRestartDir().getAbsolutePath() );
+			if( getRestartDir().listFiles().length > 0 )
 			{
-				for( final File f: arg.listFiles() )
+				for( final File f: getRestartDir().listFiles() )
 				{
 					if( f.getName().startsWith( BioLockJUtil.MASTER_PREFIX ) )
 					{
@@ -313,13 +360,12 @@ public class RuntimeParamUtil
 				}
 			}
 		}
-		else if( arg.isFile() )
-		{
-			return val;
-		}
+//		else if( arg.isFile() )
+//		{
+//			return val;
+//		}
 
-		throw new Exception(
-				"Restarted pipelines require a valid config file path or pipeline directory path after \"-r\" parameter." );
+		throw new Exception( "Restarted pipelines require a valid pipeline directory path after \"-r\" parameter." );
 	}
 
 	private static void info( final String msg ) throws Exception
@@ -343,9 +389,9 @@ public class RuntimeParamUtil
 			{
 				params.put( DOCKER_FLAG, Config.TRUE );
 			}
-			else if( arg.equals( RESTART_FLAG ) )
+			else if( prevParam.equals( RESTART_FLAG ) )
 			{
-				params.put( RESTART_FLAG, Config.TRUE );
+				params.put( RESTART_FLAG, arg );
 			}
 			else if( prevParam.equals( BASE_DIR_FLAG ) )
 			{
@@ -553,6 +599,7 @@ public class RuntimeParamUtil
 
 	static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
 
+	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
 	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
 	private static final String CONFIG_FLAG_EXT = "--config";
 	private static final List<String> extraParams = new ArrayList<>();

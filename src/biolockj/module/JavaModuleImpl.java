@@ -19,6 +19,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.RuntimeParamUtil;
 
 /**
@@ -36,7 +37,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		final List<List<String>> data = new ArrayList<>();
 		final ArrayList<String> lines = new ArrayList<>();
 
-		lines.add( "java" + getSource() + " " + RuntimeParamUtil.DIRECT_FLAG + " " + getClass().getName() + " "
+		lines.add( "java" + getSource() + " " + BioLockJUtil.getDirectModuleParam( this ) + " "
 				+ RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getBaseDir().getAbsolutePath() + " "
 				+ RuntimeParamUtil.CONFIG_FLAG + " " + Config.getConfigFilePath() );
 

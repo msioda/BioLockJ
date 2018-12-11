@@ -54,6 +54,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		super.cleanUp();
 		if( getMetadata().exists() )
 		{
+			addMetadataToConfigIgnoreInputFiles();
 			if( ModuleUtil.hasRModules() )
 			{
 				RMetaUtil.classifyReportableMetadata();
@@ -63,6 +64,18 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		{
 			throw new Exception( "Failed to import metadata filels" );
 		}
+	}
+	
+	private void addMetadataToConfigIgnoreInputFiles() throws Exception
+	{
+		final Set<String> ignore = new HashSet<>();
+		if( Config.getSet( Config.INPUT_IGNORE_FILES ) != null )
+		{
+			ignore.addAll( Config.getSet( Config.INPUT_IGNORE_FILES ) );
+		}
+
+		ignore.add( MetaUtil.getMetadataFileName() );
+		Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
 	}
 
 	/**
@@ -78,14 +91,6 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		if( configMeta == null )
 		{
 			buildNewMetadataFile();
-			final Set<String> ignore = new HashSet<>();
-			if( Config.getSet( Config.INPUT_IGNORE_FILES ) != null )
-			{
-				ignore.addAll( Config.getSet( Config.INPUT_IGNORE_FILES ) );
-			}
-
-			ignore.add( MetaUtil.getMetadataFileName() );
-			Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
 		}
 		else
 		{

@@ -280,11 +280,11 @@ public class SeqUtil
 			msg += "Unpaired RV Reads: " + BioLockJUtil.printLongFormList( rvReads ); 
 		}
 		
-		if( Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
+		if( Config.getString( Config.INTERNAL_PAIRED_READS ) != null && Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
 		{
 			throw new ConfigViolationException( INPUT_REQUIRE_COMPLETE_PAIRS, msg );
 		}
-		else if( !msg.isEmpty() )
+		else if( Config.getString( Config.INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
 		{
 			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ " + INPUT_REQUIRE_COMPLETE_PAIRS +
 					"=" + Config.FALSE + " ]" + BioLockJ.RETURN + msg );

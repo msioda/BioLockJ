@@ -155,7 +155,7 @@ public class DockerUtil
 	private static String getBljOptions( final BioModule module ) throws Exception
 	{
 		final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " 
-				+ RuntimeParamUtil.DIRECT_FLAG + " " + module.getClass().getName();
+				+ BioLockJUtil.getDirectModuleParam( module );
 
 		return BLJ_OPTIONS + "=\"" + args + "\"";
 	}

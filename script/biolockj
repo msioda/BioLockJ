@@ -12,66 +12,97 @@
 ##########################################################################
 . $BLJ/script/blj_functions
 
-config=""
-params=""
+config=
 bljJar=$BLJ/dist/BioLockJ.jar
-restart=false
+
+# Convert input parameters to array with values "name,value"
+get_params() {
+	args=("$@")
+	numArgs=${#@}
+	i=0
+	found_config=false
+	name=
+    for arg in ${args[@]}
+    do  
+    		[ $((i%2)) -eq 0 ] && name=${arg}
+    		if [ $((i%2)) -eq 1 ]; then
+    			[ "$name" == "-c" ] || [ "$name" == "-config" ] && found_config=true
+    			echo "$name,${arg}"
+    			name=""
+		fi  
+    		i=$(expr $i + 1)
+    done
+    [ ${#name} -gt 0 ] && [ ! found_config ] && echo "-c,$name"
+}
+
+# Get a named parameter from a "name,value" pair
+get_named_arg() {
+	args=("$@")
+	numArgs=${#@}
+	target=${args[$((numArgs-1))]}
+	args=${args[@]:0:$((numArgs-1))}
+	for arg in $args; 
+	do
+		IFS=","
+		tokens=( $arg )
+		[ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
+	done
+}
 
 [ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
 [ ! -f "$bljJar" ] && echo "Exit program - $bljJar not found" && exit 1
 
-if [ $# -eq 1 ] && [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
-    echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
-    echo "Run new pipeline:                     biolockj <file>"
-    echo "Run new pipeline:                     biolockj -c/--config <file>"
-    echo "Restart failed pipeline:              biolockj -r/--restart <directory/file>"
-    echo "Encrypt email password:               biolockj -p/--password <new_password> <file>"
-    echo "View BioLockJ help menu:              biolockj -h/--help"
-    exit 0
-elif [ $# -eq 1 ]; then
-	config=$1
-fi
-
 if [ $# -eq 0 ]; then
 	echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1
-elif [ $# -eq 1 ]; then
-	config=$1
-elif [ $# -eq 2 ]; then
-	if [ "$1" == "-c" ] || [ "$1" == "--config" ]; then
-		config=$2
-	elif [ "$1" == "-r" ] || [ "$1" == "--restart" ]; then
-		echo "Restart pipeline..."
-		restart=true
-		params=$1
-		config=$2
-	else
-		echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1
-	fi
-elif [ $# -eq 3 ]; then
-	if [ "$1" == "-p" ] || [ "$1" == "--password" ]; then
-		echo "Encrypt & save email password to Config property mail.encryptedPassword in $3"
-		params="$1 $2"   
-		config=$3
-	elif [ "$1" == "-r" ] || [ "$1" == "--restart" ] && [ "$2" == "-c" ] || [ "$2" == "--config" ]; then
-		echo "Restart pipeline..."
-		restart=true
-		params=$1
-		config=$3
-	else
-		echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1 
-	fi  
-else
-    echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1 
 fi
 
-$restart && [ ! -d "$config" ] && [ ! -f "$config" ] && echo "Exit program - $config is not a valid directory or file"  && $BLJ/script/biolockj -h && exit 1
-! $restart && [ ! -f "$config" ] && echo "Exit program - $config is not a valid file" && $BLJ/script/biolockj -h && exit 1
+if [ $# -eq 1 ] && [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
+    echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
+    echo "Run pipeline:     biolockj [ -c/--config ] <config_file>"
+    echo "Restart pipeline:          -r/--restart <directory>"
+    echo "Encrypt email password:    -p/--password <new_password>"
+    echo "Show help menu:            -h/--help"
+    exit 0
+fi
 
-echo "BioLockJ JAR: $bljJar" 
-echo "BioLockJ Config:  $config"
+inArray=$(get_params $@)
 
-nohup java -jar $bljJar $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &
+config=$(get_named_arg $inArray -c)
+[ ${#config} -eq 0 ] && config=$(get_named_arg $inArray --config)
+
+restart=$(get_named_arg $inArray -r)
+[ ${#restart} -eq 0 ] && restart=$(get_named_arg $inArray --restart)
+
+newPass=$(get_named_arg $inArray -p)
+[ ${#newPass} -eq 0 ] && newPass=$(get_named_arg $inArray --password)
+
+
+if [ $# -eq 1 ] && [ ${#config} -eq 0 ]; then
+	config=$1
+fi
+
+if [ ${#newPass} -gt 0 ] && [ ${#config} -eq 0 ]; then
+	echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1 
+fi
+
+if [ ${#restart} -eq 0 ] && [ ${#config} -eq 0 ]; then
+	echo "Exit program - Invalid parameters: $@" && $BLJ/script/biolockj -h && exit 1 
+fi
+
+if [ ${#restart} -gt 0 ] && [ ! -d "$restart" ]; then
+	echo "Exit program - $restart is not a valid directory\n" && $BLJ/script/biolockj -h && exit 1
+fi 
+
+if [ ${#config} -gt 0 ] && [ ! -f "$config" ]; then
+	echo "Exit program - $config is not a valid file\n" && $BLJ/script/biolockj -h && exit 1
+fi
+
+if [ ${#newPass} -gt 0 ] && [ ${#config} -gt 0 ]; then
+	echo "Encrypt & save email password to Config property mail.encryptedPassword in $config\n"
+fi
+
+nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &
 
 [ $? != 0 ] && echo "Exit program - Unable to run $bljJar" && exit 1
 
-echo "Executing command: \"nohup java -jar $bljJar $params -b $BLJ_PROJ -c $config >/dev/null 2>&1 &\""
+echo "Executing command: \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\""
