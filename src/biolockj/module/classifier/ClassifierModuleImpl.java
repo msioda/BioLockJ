@@ -123,7 +123,6 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 
 			if( paramList != null && !paramList.isEmpty() )
 			{
-				classifierParams = "";
 				final Iterator<String> it = paramList.iterator();
 				while( it.hasNext() )
 				{
