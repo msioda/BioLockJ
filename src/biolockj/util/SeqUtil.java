@@ -248,47 +248,46 @@ public class SeqUtil
 			{
 				map.put( fwRead, rvRead );
 			}
-			else if( Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) )
+			else 
 			{
-				Log.warn( SeqUtil.class,
-						"No RV read found for file: [ " + name + " ] with sample ID: " + sampleID );
 				unpairedFwReads.add( fwRead );
 			}
-			else
+
+		}
+		
+		
+		for( File f: map.values() )
+		{
+			for( String rv: rvReads )
 			{
-				Log.debug( SeqUtil.class, "Missing paired read!  Unpaired foward read = " + fwRead.getAbsolutePath() );
+				if( rv.equals( f.getName() ) )
+				{
+					rvReads.remove( rv );
+					break;
+				}
 			}
 		}
 		
-		if( Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) )
+		
+		String msg = "";
+		if( !unpairedFwReads.isEmpty() )
 		{
-			for( File f: map.values() )
-			{
-				for( String rv: rvReads )
-				{
-					if( rv.equals( f.getName() ) )
-					{
-						rvReads.remove( rv );
-						break;
-					}
-				}
-			}
-			
-			String msg = "";
-			if( !unpairedFwReads.isEmpty() )
-			{
-				msg = "Unpaired FW Reads: [ " + BioLockJUtil.printLongFormList( unpairedFwReads ) + " ]; ";
-			}
-			
-			if( !rvReads.isEmpty() )
-			{
-				msg += "Unpaired RV Reads: [ " + BioLockJUtil.printLongFormList( rvReads ) + " ]"; 
-			}
-			
-			if( !msg.isEmpty() )
-			{
-				throw new ConfigViolationException( INPUT_REQUIRE_COMPLETE_PAIRS, msg );
-			}
+			msg = "Unpaired FW Reads:" + BioLockJUtil.printLongFormList( unpairedFwReads );
+		}
+		
+		if( !rvReads.isEmpty() )
+		{
+			msg += "Unpaired RV Reads: " + BioLockJUtil.printLongFormList( rvReads ); 
+		}
+		
+		if( Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
+		{
+			throw new ConfigViolationException( INPUT_REQUIRE_COMPLETE_PAIRS, msg );
+		}
+		else if( !msg.isEmpty() )
+		{
+			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ " + INPUT_REQUIRE_COMPLETE_PAIRS +
+					"=" + Config.FALSE + " ]" + BioLockJ.RETURN + msg );
 		}
 
 		return map;

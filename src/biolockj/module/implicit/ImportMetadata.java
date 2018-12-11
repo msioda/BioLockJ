@@ -251,7 +251,10 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	protected TreeSet<String> getSampleIds() throws Exception
 	{
 		final TreeSet<String> ids = new TreeSet<>();
-		for( final File file: getInputFiles() )
+		final Collection<File> inputFiles = Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) ? 
+			new TreeSet<File> ( SeqUtil.getPairedReads( getInputFiles() ).keySet() ) : getInputFiles();
+		
+		for( final File file: inputFiles )
 		{
 			final String id = SeqUtil.getSampleId( file.getName() );
 			if( id == null || id.length() < 1 )
