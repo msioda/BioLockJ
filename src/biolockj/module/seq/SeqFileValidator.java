@@ -53,13 +53,34 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 			boolean foundTooShort = false;
 			boolean foundInvalid = false;
 
+			int numSamples = sampleStats.keySet().size();
+			long combinedMeanReadLen = 0L;
+			long overallMinReadLen = 0L;
+			long overallMaxReadLen = 0L;
+			
 			for( final String sampleId: new TreeSet<>( sampleStats.keySet() ) )
 			{
 				final Long[] stats = sampleStats.get( sampleId );
-				final Long numValid = stats[ NUM_VALID_READS_INDEX ];
-				final Long numTooShort = stats[ NUM_TOO_SHORT_READS_INDEX ];
-				final Long numTrimmed = stats[ NUM_TRIMMED_READS_INDEX ];
-				final Long numInvalid = stats[ NUM_INVALID_FORMAT_INDEX ];
+				final Long numValid = stats[ INDEX_NUM_VALID_READS ];
+				final Long numTooShort = stats[ INDEX_NUM_READS_TOO_SHORT ];
+				final Long numTrimmed = stats[ INDEX_NUM_TRIMMED_READS ];
+				final Long numInvalid = stats[ INDEX_NUM_READS_INVALID_FORMAT ];
+				final Long meanReadLen = stats[ INDEX_MEAN_NUM_READS ];
+				final Long maxReadLen = stats[ INDEX_MAX_READS ];
+				final Long minReadLen = stats[ INDEX_MIN_READS ];
+				
+				combinedMeanReadLen += meanReadLen;
+			
+				if( overallMinReadLen == 0 || minReadLen < overallMinReadLen  )
+				{
+					overallMinReadLen = minReadLen;
+				}
+				
+				if( maxReadLen > overallMaxReadLen  )
+				{
+					overallMaxReadLen = maxReadLen;
+				}
+				
 				if( numTooShort > 0 || numTrimmed > 0 || numInvalid > 0 )
 				{
 					sb.append( sampleId + ": " );
@@ -86,18 +107,29 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 					sb.append( RETURN );
 				}
 			}
+			
+			long avgReadLen = numSamples > 0 ? Double.valueOf( combinedMeanReadLen / numSamples ).longValue() : 0;
+			
+			sb.append( "Mean valid read length = " + avgReadLen + RETURN );
+			sb.append( "Min valid read length = " + Long.valueOf( overallMinReadLen ).toString() + RETURN );
+			sb.append( "Max valid read length = " + Long.valueOf( overallMaxReadLen ).toString() + RETURN );
 
 			if( foundTooShort )
 			{
-				sb.append( "Minimum read length = " + minReadLen() + RETURN );
+				sb.append( "Minimum discarded read length = " + minReadLen() + RETURN );
 			}
 			if( foundTrimmed )
 			{
-				sb.append( "Maximum read length = " + Config.getPositiveInteger( INPUT_SEQ_MAX ) + RETURN );
+				sb.append( "Maximum discarded read length = " + Config.getPositiveInteger( INPUT_SEQ_MAX ) + RETURN );
 			}
 			if( foundInvalid || foundTooShort )
 			{
 				sb.append( "Discarded sequences stored in: " + getTempDir().getAbsolutePath() + RETURN );
+			}
+			
+			if( !foundTooShort && !foundTrimmed && !foundInvalid )
+			{
+				sb.append( "All sequence files pass validation checks - no changes required." + RETURN );
 			}
 		}
 		catch( final Exception ex )
@@ -119,7 +151,6 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		for( final File file: getInputFiles() )
 		{
 			validateFile( file );
-			Log.info( getClass(), "Done validating " + file.getAbsolutePath() );
 		}
 
 		MetaUtil.addColumn( NUM_VALID_READS, readsPerSample, getOutputDir() );
@@ -140,6 +171,10 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	 */
 	protected void validateFile( final File file ) throws Exception
 	{
+		Log.info( getClass(), "Validating " + file.getAbsolutePath() ); 
+		long combinedReadLen = 0L;
+		long minReadLen = 0L;
+		long maxReadLen = 0L;
 		long seqNum = 0L;
 		long numValid = 0L;
 		long numTrimmed = 0L;
@@ -156,6 +191,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
 			seqLines.add( line );
+
 			if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 			{
 				seqNum++;
@@ -195,7 +231,21 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 							seqLines.set( 3, seqLines.get( 3 ).substring( 0, seqMax ) );
 						}
 					}
-
+					
+					
+					int readLen = seqLines.get( 1 ).length();
+					
+					combinedReadLen += readLen;
+					
+					if( readLen > 0 && minReadLen == 0 || readLen < minReadLen  )
+					{
+						minReadLen = readLen;
+					}
+					if( readLen > maxReadLen  )
+					{
+						maxReadLen = readLen;
+					}
+					
 					for( final String seqLine: seqLines )
 					{
 						writer.write( seqLine + BioLockJ.RETURN );
@@ -205,7 +255,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 				seqLines.clear();
 			}
 		}
-
+		
 		writer.close();
 		reader.close();
 
@@ -221,12 +271,20 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 
 			invalidWriter.close();
 		}
+		
+		Log.debug( getClass(), "combinedReadLen / numValid = " + combinedReadLen + " / " 
+				+ numValid + " = " + (numValid > 0 ? Double.valueOf( combinedReadLen / numValid ).longValue() : 0) );
 
-		final Long[] stats = new Long[ 4 ];
-		stats[ NUM_VALID_READS_INDEX ] = numValid;
-		stats[ NUM_TRIMMED_READS_INDEX ] = numTrimmed;
-		stats[ NUM_TOO_SHORT_READS_INDEX ] = numTooShort;
-		stats[ NUM_INVALID_FORMAT_INDEX ] = numInvalidFormat;
+		final Long[] stats = new Long[ 7 ];
+		stats[ INDEX_NUM_VALID_READS ] = numValid;
+		stats[ INDEX_NUM_TRIMMED_READS ] = numTrimmed;
+		stats[ INDEX_NUM_READS_TOO_SHORT ] = numTooShort;
+		stats[ INDEX_NUM_READS_INVALID_FORMAT ] = numInvalidFormat;
+		stats[ INDEX_MEAN_NUM_READS ] = numValid > 0 ? Double.valueOf( combinedReadLen / numValid ).longValue() : 0;
+		stats[ INDEX_MIN_READS ] = minReadLen;
+		stats[ INDEX_MAX_READS ] = maxReadLen;
+		minReadLen = 0;
+		
 		sampleStats.put( SeqUtil.getSampleId( file.getName() ), stats );
 
 		if( SeqUtil.isForwardRead( file.getName() ) )
@@ -275,8 +333,13 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	 */
 	protected static final String INPUT_SEQ_MIN = "input.seqMinLen";
 
-	private static final int NUM_INVALID_FORMAT_INDEX = 3;
-	private static final int NUM_TOO_SHORT_READS_INDEX = 2;
-	private static final int NUM_TRIMMED_READS_INDEX = 1;
-	private static final int NUM_VALID_READS_INDEX = 0;
+	private static final int INDEX_NUM_VALID_READS = 0;
+	private static final int INDEX_MIN_READS = 1;
+	private static final int INDEX_MAX_READS = 2;
+	private static final int INDEX_MEAN_NUM_READS = 3;
+	private static final int INDEX_NUM_READS_INVALID_FORMAT = 4;
+	private static final int INDEX_NUM_READS_TOO_SHORT = 5;
+	private static final int INDEX_NUM_TRIMMED_READS = 6;
+	
+	
 }

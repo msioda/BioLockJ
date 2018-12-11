@@ -20,6 +20,7 @@ import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.exception.ConfigPathException;
+import biolockj.module.BioModule;
 
 /**
  * Simple utility containing String manipulation and formatting functions.
@@ -27,6 +28,20 @@ import biolockj.exception.ConfigPathException;
 public class BioLockJUtil
 {
 
+	/**
+	 * Direct module param format has 2 parts separated by a colon (pipeline directory name):(module name)
+	 * 
+	 * @param module
+	 * @return Direct param string
+	 * @throws Exception if errors occur
+	 */
+	public static String getDirectModuleParam( final BioModule module ) throws Exception
+	{
+		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName() + 
+				":" + module.getClass().getName();
+	}
+	
+	
 	/**
 	 * Delete file or directory with retry. Wait 3 seconds between each try - waiting for resource to release lock if .
 	 * 
@@ -46,7 +61,7 @@ public class BioLockJUtil
 				if( i == numTries )
 				{
 					file.delete();
-					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) fails, but file.delete() works" );
+					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) failed, but file.delete() worked" );
 				}
 				else
 				{
@@ -117,6 +132,27 @@ public class BioLockJUtil
 		}
 
 		return names;
+	}
+	
+	/**
+	 * Print collection one item per line. 
+	 * 
+	 * @param data Collection of data
+	 * @return Collection data as a String
+	 */
+	public static String printLongFormList( final Collection<?> data )
+	{
+		final StringBuffer sb = new StringBuffer();
+		if( data != null && !data.isEmpty() )
+		{
+			sb.append( BioLockJ.RETURN );
+			for( final Object val: data )
+			{
+				sb.append( val ).append( BioLockJ.RETURN );
+			}
+		}
+
+		return sb.toString();
 	}
 
 	/**

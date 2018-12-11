@@ -23,6 +23,7 @@ import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.seq.AwkFastaConverter;
 import biolockj.module.seq.Gunzipper;
 import biolockj.module.seq.PearMergeReads;
+import biolockj.util.MetaUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
 
@@ -57,7 +58,8 @@ public class BioModuleFactory
 			bioModules.add( getModule( getDefaultDemultiplexer() ) );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_READS ) )
+		if( Config.getBoolean( Config.REPORT_NUM_READS ) 
+				&& !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ).equals( MetaUtil.META_NULL_VALUE ) )
 		{
 			info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] --> Adding module: "
 					+ RegisterNumReads.class.getName() );

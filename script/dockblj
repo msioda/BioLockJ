@@ -14,7 +14,7 @@
 ##  Admin email password    changePassword                                  ##
 ##  Metadata directory:     metadataFilePath                                ##
 ##  Primer directory:       trimPrimersFilePath                             ##
-##  Restart flag:           -r                                              ##
+##  Restart flag:           -r <directory>                                  ##
 ##  Docker flag:            -docker                                         ##
 ##                                                                          ##
 ##############################################################################
@@ -52,11 +52,23 @@ get_named_arg() {
 
 # Return $HOST_BLJ_PROJ if called from within a docker container (like biolockj/webapp), otherwise return $BLJ_PROJ
 get_blj_proj() {
+	
+	bljProj=$BLJ_PROJ
 	if [ ${#inDockerContainer} -gt 0 ]; then
-		[ ${#HOST_BLJ_PROJ} -gt 0 ] && echo $HOST_BLJ_PROJ && return
-		echo "Exit program - Required env variable HOST_BLJ_PROJ undefined" && exit 1
+		bljProj=$HOST_BLJ_PROJ
+		if [ ${#HOST_BLJ_PROJ} -gt 0 ]; then
+			bljProj=$HOST_BLJ_PROJ
+		else
+			echo "Exit program - Required env variable HOST_BLJ_PROJ undefined" && exit 1
+		fi
 	fi
-	[ ${#BLJ_PROJ} -gt 0 ] && echo $BLJ_PROJ && return
+	
+	if [ "${bljProj: -1}" == "/" ]; then
+		len=$((${#bljProj}-1))
+		bljProj="${bljProj:0:len}"
+	fi
+	
+	[ ${#bljProj} -gt 0 ] && echo $bljProj && return
 	echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
 }
 
@@ -74,7 +86,8 @@ validateHostDir() {
 
 # Verify paths are valid, if dockblj is not deployed inside a Docker container
 validate_input() {
-	validateHostFile $config Config
+	[ ${#restartPipeline} -gt 0 ] && validateHostDir $restartPipeline Restart
+	[ ${#restartPipeline} -eq 0 ] && validateHostFile $config Config
 	validateHostDir $metadataFilePath Metadata
 	validateHostDir $trimPrimersFilePath Primer
 	if [ ${#inputDirPaths} -lt 0 ]; then
@@ -83,9 +96,13 @@ validate_input() {
 		IFS=","
 		dirPaths=( $inputDirPaths )
 		for dir in "$dirPaths"; do
-			validateHostDir $dir "Input"
+			validateHostDir $dir Input
 		done
 	fi 
+}
+
+get_restart_dir() {
+	echo "/pipeline/${restartPipeline#$(get_blj_proj)/}"
 }
 
 # Populates the docker run BLJ_OPTIONS parameter
@@ -94,7 +111,7 @@ validate_input() {
 # Include all directory paths the manager may need to map volumes in spawned Docker compute node instances
 get_blj_options() {
 	options="-D -b $(get_blj_proj)" 
-	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -gt 0 ] && options="$options -C $(dirname $config) -r /config/$(basename $config)"
+	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -gt 0 ] && options="$options -C $(dirname $config) -r $(get_restart_dir) -c /config/$(basename $config)"
 	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -eq 0 ] && options="$options -C $(dirname $config) -c /config/$(basename $config)"
 	[ ${#changePassword} -gt 0 ] && options="$options -p $changePassword"
 	[ ${#inputDirPaths} -gt 0 ] && options="$options -i $inputDirPaths"
@@ -126,7 +143,7 @@ inputDirPaths=$(get_named_arg "$@" "inputDirPaths")
 metadataFilePath=$(get_named_arg "$@" "metadataFilePath")
 trimPrimersFilePath=$(get_named_arg "$@" "trimPrimersFilePath")
 changePassword=$(get_named_arg "$@" "-p")
-restartPipeline=$(arg_exists "$@" "-r")
+restartPipeline=$(get_named_arg "$@" "-r")
 inDockerContainer=$(arg_exists "$@" "-docker")
 
 # Call function to verify input parameters are vaild

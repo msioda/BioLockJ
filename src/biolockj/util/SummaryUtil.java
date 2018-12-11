@@ -137,7 +137,7 @@ public class SummaryUtil
 		{
 			if( bioModule.getOutputDir().listFiles().length == 0 )
 			{
-				return "# Files Output: 0";
+				return "# Files Output: 0" + RETURN;
 			}
 
 			final Collection<File> outFiles = FileUtils.listFiles( bioModule.getOutputDir(), HiddenFileFilter.VISIBLE,

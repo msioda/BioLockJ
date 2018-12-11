@@ -210,18 +210,23 @@ public class SeqUtil
 	 *
 	 * @param files List of paired read files
 	 * @return Map with key=fwRead and val=rvRead
+	 * @throws ConfigViolationException if unpaired reads are found and 
+	 * {@link biolockj.Config}.{@value #INPUT_REQUIRE_COMPLETE_PAIRS} = {@value biolockj.Config#TRUE}
 	 * @throws Exception if unable to find paired reads
 	 */
 	public static Map<File, File> getPairedReads( final Collection<File> files ) throws Exception
 	{
 		Log.debug( SeqUtil.class, "Looking for paired reads in " + ( files == null ? 0: files.size() ) + " files " );
 		final Map<File, File> map = new HashMap<>();
+		final Set<String> rvReads = new HashSet<>();
+		final Set<File> unpairedFwReads = new HashSet<>();
 		for( final File fwRead: files )
 		{
 			final String name = fwRead.getName();
 
 			if( !isForwardRead( name ) )
 			{
+				rvReads.add( name );
 				continue;
 			}
 
@@ -243,10 +248,46 @@ public class SeqUtil
 			{
 				map.put( fwRead, rvRead );
 			}
-			else
+			else 
 			{
-				Log.debug( SeqUtil.class, "Missing paired read!  Unpaired foward read = " + fwRead.getAbsolutePath() );
+				unpairedFwReads.add( fwRead );
 			}
+
+		}
+		
+		
+		for( File f: map.values() )
+		{
+			for( String rv: rvReads )
+			{
+				if( rv.equals( f.getName() ) )
+				{
+					rvReads.remove( rv );
+					break;
+				}
+			}
+		}
+		
+		
+		String msg = "";
+		if( !unpairedFwReads.isEmpty() )
+		{
+			msg = "Unpaired FW Reads:" + BioLockJUtil.printLongFormList( unpairedFwReads );
+		}
+		
+		if( !rvReads.isEmpty() )
+		{
+			msg += "Unpaired RV Reads: " + BioLockJUtil.printLongFormList( rvReads ); 
+		}
+		
+		if( Config.getString( Config.INTERNAL_PAIRED_READS ) != null && Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
+		{
+			throw new ConfigViolationException( INPUT_REQUIRE_COMPLETE_PAIRS, msg );
+		}
+		else if( Config.getString( Config.INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
+		{
+			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ " + INPUT_REQUIRE_COMPLETE_PAIRS +
+					"=" + Config.FALSE + " ]" + BioLockJ.RETURN + msg );
 		}
 
 		return map;
@@ -258,12 +299,14 @@ public class SeqUtil
 	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_IGNORE_FILES}
 	 * 
 	 * @return Pipeline input files
+	 * @throws ConfigViolationException if sequence files without valid metadata are detected
 	 * @throws Exception if no input files are found
 	 */
 	public static List<File> getPipelineInputFiles() throws Exception
 	{
 		if( filteredInputFiles.isEmpty() )
 		{
+			List<File> seqsWithoutMetaId = new ArrayList<>();
 			for( final File file: getBasicInputFiles() )
 			{
 				if( !requireSeqInput() || Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
@@ -274,6 +317,7 @@ public class SeqUtil
 				}
 				else if( Config.getBoolean( MetaUtil.META_REQUIRED ) ) // metadata required
 				{
+					seqsWithoutMetaId.add( file );
 					throw new ConfigViolationException( MetaUtil.META_REQUIRED,
 							"Sample ID not found in metadata file: " + file.getAbsolutePath() );
 				}
@@ -282,6 +326,12 @@ public class SeqUtil
 					Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
 							+ MetaUtil.META_REQUIRED + "=" + Config.FALSE + " ]: " + file.getAbsolutePath() );
 				}
+			}
+			
+			if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( MetaUtil.META_REQUIRED )  )
+			{
+				throw new ConfigViolationException( MetaUtil.META_REQUIRED, "No metadata found for the following files: " + 
+						BioLockJ.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
 			}
 
 			if( filteredInputFiles.isEmpty() )
@@ -292,6 +342,7 @@ public class SeqUtil
 
 		return filteredInputFiles;
 	}
+
 
 	/**
 	 * Return read direction indicator for forward or reverse read if found in the file name.
@@ -610,7 +661,7 @@ public class SeqUtil
 	 * @return boolean {@value biolockj.Config#TRUE} if classifier or seq {@link biolockj.module.BioModule} are found
 	 * @throws Exception if errors occur
 	 */
-	protected static boolean requireSeqInput() throws Exception
+	public static boolean requireSeqInput() throws Exception
 	{
 		for( final String modName: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
 		{
@@ -785,6 +836,7 @@ public class SeqUtil
 		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, foundPairedReads ? Config.TRUE: Config.FALSE );
 		return foundPairedReads;
 	}
+	
 
 	/**
 	 * File extension for fasta files = .fasta
@@ -821,6 +873,12 @@ public class SeqUtil
 	 */
 	public static final String ILLUMINA_RV_READ_IND = " 2:N:";
 
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #INPUT_REQUIRE_COMPLETE_PAIRS}<br>
+	 * Require 100% sequence input files are matching paired reads
+	 */
+	public static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
+	
 	/**
 	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>
 	 * The property holds the 1st character used in the sequence header for the given dataset
