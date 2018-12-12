@@ -154,6 +154,7 @@ public abstract class BioModuleImpl implements BioModule
 
 			if( ModuleUtil.isMetadataModule( previousModule ) )
 			{
+				Log.debug( getClass(), "Get previous module input files..." );
 				files.addAll( previousModule.getInputFiles() );
 			}
 		}
