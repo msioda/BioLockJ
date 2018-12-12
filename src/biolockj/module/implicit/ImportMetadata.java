@@ -301,6 +301,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	/**
 	 * Verify every row (every Sample ID) maps to a sequence file
 	 * 
+	 * @param files List of sequence files
 	 * @throws ConfigViolationException if unmapped Sample IDs are found
 	 * @throws Exception if other errors occur
 	 */

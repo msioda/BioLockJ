@@ -114,7 +114,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * Parsers execute a task with 3 core functions:
 	 * <ol>
 	 * <li>{@link #parseSamples()} - generates {@link biolockj.node.ParsedSample}s
-	 * <li>{@link #buildOtuCounts()} - stores internal summary counts for the {@link biolockj.node.ParsedSample}s
 	 * <li>{@link #registerNumHits()} (if {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_HITS} =
 	 * {@value biolockj.Config#TRUE})
 	 * <li>{@link #buildOtuTables()} - builds output tables

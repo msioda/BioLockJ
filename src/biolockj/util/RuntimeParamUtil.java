@@ -170,6 +170,13 @@ public class RuntimeParamUtil
 		return params.get( PRIMER_DIR_FLAG );
 	}
 
+	/**
+	 * Get Docker runtime arguments, passed to BioLockJ from dockblj script.<br>
+	 * These are used to build Docker worker scripts by the modules.
+	 * 
+	 * @return Docker runtime args
+	 * @throws Exception if errors occur
+	 */
 	public static String getDockerRuntimeArgs() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();

@@ -144,8 +144,6 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 
 	/**
 	 * Print OTU counts at every level to the log file.
-	 * 
-	 * @param countsOnly Set true to print level counts instead of OTU counts.
 	 */
 	public void report()
 	{
