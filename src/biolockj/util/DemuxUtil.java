@@ -135,8 +135,8 @@ public class DemuxUtil
 	 * Return the demux mapping file used to map sequence files to barcode.
 	 * 
 	 * @return Mapping file path
-	 * @throws ConfigNotFoundException if {@value MAPPING_FILE} is undefined
-	 * @throws ConfigPathException if {@value MAPPING_FILE} path does not exist on the file system
+	 * @throws ConfigNotFoundException if {@value #MAPPING_FILE} is undefined
+	 * @throws ConfigPathException if {@value #MAPPING_FILE} path does not exist on the file system
 	 * 
 	 */
 	public static File getMapping() throws ConfigNotFoundException, ConfigPathException
@@ -160,7 +160,13 @@ public class DemuxUtil
 				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
 	}
 	
-	
+	/**
+	 * Build header refs from mapping file
+	 * 
+	 * INCOMPLETE CODE -- not currently used
+	 * 
+	 * @throws Exception if errors occur
+	 */
 	public static void buildHeaderRefs() throws Exception
 	{
 		final BufferedReader reader = BioLockJUtil.getFileReader( DemuxUtil.getMapping() );

@@ -14,6 +14,7 @@ package biolockj.module.implicit;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
@@ -76,6 +77,14 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 			{
 				Log.warn( getClass(), NUM_READS + " column already fully populated in metadata file :"
 						+ MetaUtil.getFile().getAbsolutePath() );
+				FileUtils.copyFileToDirectory( MetaUtil.getFile(), getOutputDir() );
+				File metaFile = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+				if( !metaFile.exists() )
+				{
+					throw new Exception( "FileUtils.copyFileToDirectory did not successfully copy the metadata file" );
+				}
+				
+				
 				return;
 			}
 			else
