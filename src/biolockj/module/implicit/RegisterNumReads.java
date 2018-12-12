@@ -79,12 +79,6 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 						+ MetaUtil.getFile().getAbsolutePath() );
 				FileUtils.copyFileToDirectory( MetaUtil.getFile(), getOutputDir() );
 				File metaFile = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-				int i = 0;
-				while( !metaFile.exists() && i++ < 10 )
-				{
-					Log.warn( getClass(),"Waiting for meta to build..." );
-					Thread.sleep( 1000 );
-				}
 				if( !metaFile.exists() )
 				{
 					throw new Exception( "FileUtils.copyFileToDirectory did not successfully copy the metadata file" );
