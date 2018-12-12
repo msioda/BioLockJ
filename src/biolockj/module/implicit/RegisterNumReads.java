@@ -82,6 +82,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 				int i = 0;
 				while( !metaFile.exists() && i++ < 10 )
 				{
+					Log.warn( getClass(),"Waiting for meta to build..." );
 					Thread.sleep( 1000 );
 				}
 				if( !metaFile.exists() )
