@@ -54,6 +54,8 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		super.cleanUp();
 		if( getMetadata().exists() )
 		{
+			MetaUtil.setFile( getMetadata() );
+			MetaUtil.refreshCache();
 			addMetadataToConfigIgnoreInputFiles();
 			if( ModuleUtil.hasRModules() )
 			{
