@@ -49,7 +49,7 @@ public class SlimmNode extends OtuNodeImpl implements OtuNode
 		{
 			setLine( line );
 			setSampleId( fileName.substring( 0, fileName.indexOf( level ) - 1 ) );
-			setCount( Long.valueOf( parts[ 3 ] ) );
+			setCount( Integer.valueOf( parts[ 3 ] ) );
 			buildOtuNode( taxa, level );
 		}
 	}

@@ -1,3 +1,4 @@
+package biolockj.module.report;
 /**
  * @UNCC Fodor Lab
  * @author Michael Sioda
@@ -9,8 +10,6 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.seq;
-
 import java.io.*;
 import java.util.*;
 import java.util.stream.LongStream;
@@ -26,90 +25,49 @@ import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
 
 /**
- * This BioModule imposes a minimum and/or maximum number of reads per sample. Samples below the minimum are discarded.
- * Samples above the maximum are limited by selecting random reads up to the maximum value.
+ * This BioModule
  */
-public class Rarefier extends JavaModuleImpl implements JavaModule
+public class PostRarefier extends JavaModuleImpl implements JavaModule
 {
-	/**
-	 * Validate module dependencies
-	 * <ol>
-	 * <li>Validate {@link biolockj.Config}.{@link #INPUT_RAREFYING_MIN} is a non-negative integer
-	 * <li>Validate {@link biolockj.Config}.{@link #INPUT_RAREFYING_MAX} is a positive integer that is greater than or
-	 * equal to {@link biolockj.Config}.{@link #INPUT_RAREFYING_MIN} (if defined)
-	 * </ol>
-	 */
+
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		final Integer rarefyingMax = Config.getPositiveInteger( INPUT_RAREFYING_MAX );
-		final Integer rarefyingMin = Config.getNonNegativeInteger( INPUT_RAREFYING_MIN );
+		Config.getPositiveInteger( MIN_OTU_COUNT );
+		Config.getPositiveDoubleVal( MIN_OTU_THRESHOLD );
+		Config.requirePositiveDoubleVal( QUANTILE );
+		Config.getBoolean( REMOVE_LOW_ABUNDANT_SAMPLES );
 
-		if( rarefyingMin == null && rarefyingMax == null
-				|| rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
-		{
-			throw new Exception(
-					"Invalid parameters!  Rarefier requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
-		}
 	}
 
 	/**
-	 * Set {@value #NUM_RAREFIED_READS} as the number of reads field.
+	 * Set {@value #NUM_RAREFIED_HITS} as the number of hits field.
 	 */
 	@Override
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		RegisterNumReads.setNumReadFieldName( NUM_RAREFIED_READS );
+		//RegisterNumReads.setNumReadFieldName( NUM_RAREFIED_HITS );
 	}
 
-	/**
-	 * This method always requires the prerequisite module: {@link biolockj.module.implicit.RegisterNumReads}. If paired
-	 * reads found, also return a 2nd module: {@link biolockj.module.seq.PearMergeReads}.
-	 */
-	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
-	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		preReqs.add( RegisterNumReads.class );
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
-		}
 
-		return preReqs;
-	}
 
 	/**
-	 * For each file with number reads outside of {@link biolockj.Config}.{@link #INPUT_RAREFYING_MIN} and
-	 * {@link biolockj.Config}.{@link #INPUT_RAREFYING_MAX} values, generate a new sequence file from a shuffled list of
-	 * its sequences.
+	 * 
 	 */
 	@Override
 	public void runModule() throws Exception
 	{
 		final List<File> files = getInputFiles();
-		final int numFiles = files == null ? 0: files.size();
-
-		Log.info( getClass(),
-				"Rarefying " + numFiles + " " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " files..." );
-		Log.info( getClass(), "=====> Min # Reads = " + Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) );
-		Log.info( getClass(), "=====> Max # Reads = " + Config.getPositiveInteger( INPUT_RAREFYING_MAX ) );
-
-		int i = 0;
-		for( final File f: files )
+		for( int i=0; i< files.size(); i++ )
 		{
+			File f = files.get( i );
 			rarefy( f );
-			if( ++i % 25 == 0 )
+			if( i % 25 == 0 || (i + 1) == files.size() )
 			{
-				Log.info( getClass(), "Done rarefying " + i + "/" + numFiles + " files." );
+				Log.info( getClass(), "Done rarefying " + i + "/" + files.size() + " files." );
 			}
-		}
-
-		if( i % 25 != 0 )
-		{
-			Log.info( getClass(), "Done rarefying " + i + "/" + numFiles + " files." );
 		}
 
 		updateMetadata();
@@ -158,7 +116,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 				}
 			}
 
-			rarefiedPerSample.put( SeqUtil.getSampleId( input.getName() ), Integer.toString( indexes.size() ) );
+			rarefiedHitsPerSample.put( SeqUtil.getSampleId( input.getName() ), Integer.toString( indexes.size() ) );
 
 			if( !usedIndexes.containsAll( indexes ) )
 			{
@@ -233,7 +191,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		try
 		{
 			String line = reader.readLine();
-			writer.write( line + TAB_DELIM + NUM_RAREFIED_READS + RETURN );
+			writer.write( line + TAB_DELIM + NUM_RAREFIED_HITS + RETURN );
 
 			for( line = reader.readLine(); line != null; line = reader.readLine() )
 			{
@@ -255,36 +213,48 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 		MetaUtil.refreshCache();
 	}
 
-	private Long getCount( final String sampleId, final String attName ) throws Exception
-	{
-		if( MetaUtil.getFieldNames().contains( attName ) )
-		{
-			final String count = MetaUtil.getField( sampleId, attName );
-			if( count != null && NumberUtils.isNumber( count ) )
-			{
-				return Long.valueOf( count );
-			}
-		}
 
-		return null;
-	}
 
 	private final Set<String> badSamples = new HashSet<>();
+	private final Map<String, String> rarefiedHitsPerSample = new HashMap<>();
+	
 	/**
-	 * Metadata column name for column that holds number of rarefied reads per sample: {@value #NUM_RAREFIED_READS}
+	 * Metadata column name for column that holds number of rarefied hits per sample: {@value #NUM_RAREFIED_HITS}
 	 */
-	public static final String NUM_RAREFIED_READS = "Num_Rarefied_Reads";
+	public static final String NUM_RAREFIED_HITS = "Num_Rarefied_Hits";
 
 	/**
-	 * {@link biolockj.Config} property {@value #INPUT_RAREFYING_MAX} defines the maximum number of reads per file
+	 * {@link biolockj.Config} Positive Integer property {@value #NUM_ITERATIONS} defines the number of iterations to randomly select
+	 * the {@value #QUANTILE}% of OTUs.
 	 */
-	protected static final String INPUT_RAREFYING_MAX = "rarefier.max";
+	protected static final String NUM_ITERATIONS = "postRarefier.iterations";
 
 	/**
-	 * {@link biolockj.Config} property {@value #INPUT_RAREFYING_MIN} defines the minimum number of reads per file
+	 * {@link biolockj.Config} Positive Double property {@value #MIN_OTU_THRESHOLD} defines minimum percentage of samples
+	 * that must contain an OTU for it to be kept.
 	 */
-	protected static final String INPUT_RAREFYING_MIN = "rarefier.min";
+	protected static final String MIN_OTU_THRESHOLD = "postRarefier.minOtuThreshold";
+	
+	/**
+	 * {@link biolockj.Config} Positive Integer property {@value #MIN_OTU_COUNT} defines the minimum number of OTUs allowed, if a count less that this
+	 * value is found, it is set to 0.
+	 */
+	protected static final String MIN_OTU_COUNT = "postRarefier.minOtuCount";
+	
+	/**
+	 * {@link biolockj.Config} Positive Double property {@value #QUANTILE} defines quantile for rarefication.  The number of OTUs/sample are ordered, all samples with
+	 * more OTUs than the quantile sample are subselected without replacement until they have the same number of OTUs as the quantile sample value.  A quantile of 0.50
+	 * returns the median value. 
+	 */
+	protected static final String QUANTILE = "postRarefier.quantile";
+	
+	/**
+	 * {@link biolockj.Config} Boolean property {@value #REMOVE_LOW_ABUNDANT_SAMPLES} if TRUE, all samples below the quantile sample are removed.
+	 */
+	protected static final String REMOVE_LOW_ABUNDANT_SAMPLES = "postRarefier.removeSamplesBelowQuantile";
+	
 
-	private static final Map<String, String> rarefiedPerSample = new HashMap<>();
+	
+	
 
 }

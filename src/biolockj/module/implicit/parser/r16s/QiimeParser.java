@@ -121,12 +121,6 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 			}
 		}
 		reader.close();
-		for( final ParsedSample sample: getParsedSamples() )
-		{
-			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
-			sample.buildOtuCounts();
-			sample.report();
-		}
 	}
 
 	/**

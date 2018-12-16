@@ -45,7 +45,7 @@ public class Kraken2Node extends OtuNodeImpl implements OtuNode
 		{
 			setSampleId( id );
 			setLine( line );
-			setCount( Long.valueOf( parts[ 1 ] ) );
+			setCount( Integer.valueOf( parts[ 1 ] ) );
 
 			String levelDelim = null;
 			String taxa = null;

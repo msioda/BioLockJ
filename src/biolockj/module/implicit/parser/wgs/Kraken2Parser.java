@@ -68,12 +68,6 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 				}
 			}
 			reader.close();
-			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
-			if( sample != null )
-			{
-				sample.buildOtuCounts();
-				sample.report();
-			}
 		}
 	}
 }

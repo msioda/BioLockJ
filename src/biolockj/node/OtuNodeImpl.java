@@ -60,7 +60,7 @@ public abstract class OtuNodeImpl implements OtuNode
 	}
 
 	@Override
-	public Long getCount()
+	public Integer getCount()
 	{
 		return count;
 	}
@@ -96,7 +96,7 @@ public abstract class OtuNodeImpl implements OtuNode
 	}
 
 	@Override
-	public void setCount( final Long count )
+	public void setCount( final int count )
 	{
 		this.count = count;
 	}
@@ -134,12 +134,8 @@ public abstract class OtuNodeImpl implements OtuNode
 		return Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" );
 	}
 
-	/**
-	 * Map used to match classifier specific leve delimiters to BioLockJ taxonomy level names.
-	 *
-	 * @return delimToLevelMap
-	 */
-	protected static Map<String, String> delimToLevelMap()
+	@Override
+	public Map<String, String> delimToLevelMap()
 	{
 		if( delimToLevelMap.isEmpty() )
 		{
@@ -154,7 +150,7 @@ public abstract class OtuNodeImpl implements OtuNode
 		return delimToLevelMap;
 	}
 
-	private Long count = 0L;
+	private int count = 0;
 	private String id = null;
 	private String line = "";
 

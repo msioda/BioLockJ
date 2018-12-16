@@ -44,7 +44,7 @@ public class KrakenNode extends OtuNodeImpl implements OtuNode
 			st.nextToken(); // skip the header
 			setSampleId( id );
 			setLine( line );
-			setCount( 1L );
+			setCount( 1 );
 
 			final StringTokenizer taxas = new StringTokenizer( st.nextToken(), KRAKEN_DELIM );
 			while( taxas.hasMoreTokens() )

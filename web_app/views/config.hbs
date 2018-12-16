@@ -160,9 +160,9 @@ For fastq, typically “@”.)<h5></p>
       <p>Minimum accepted length of sequence read:
         <input type="number" id="input.seqMinLen" name="input.seqMinLen" min="1"><br></p>
       <p>Minimum number of sequences per sample for use in rarefication (BioLockJ will discard samples with sequences below this.):
-        <input type="number" id="rarefier.min" name="rarefier.min" min="1"><br></p> <!--these should be hidden unless rarefy module is selected (also change names)-->
+        <input type="number" id="preRarefier.min" name="preRarefier.min" min="1"><br></p> <!--these should be hidden unless rarefy module is selected (also change names)-->
       <p>Randomly select maximum number of sequences per sample use in rarefication:
-        <input type="number" id="rarefier.max" name="rarefier.max" min="1"><br></p>
+        <input type="number" id="preRarefier.max" name="preRarefier.max" min="1"><br></p>
       <p>Path to file containing primers to trim (File must contain only one sequence per line):
         <input type="text" id="trimPrimers.filePath" name="trimPrimers.filePath" size='70'><br></p>
       <p>Discard reads with no primers?

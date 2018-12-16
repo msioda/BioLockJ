@@ -51,7 +51,7 @@ public final class RMetaUtil
 	 * <li>{@value biolockj.module.implicit.RegisterNumReads#NUM_READS}
 	 * <li>{@value biolockj.module.seq.TrimPrimers#NUM_TRIMMED_READS}
 	 * <li>{@value biolockj.module.seq.SeqFileValidator#NUM_VALID_READS}
-	 * <li>{@value biolockj.module.seq.Rarefier#NUM_RAREFIED_READS}
+	 * <li>{@value biolockj.module.seq.PreRarefier#NUM_RAREFIED_READS}
 	 * </ul>
 	 * <p>
 	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_HITS} = {@value biolockj.Config#TRUE}, add the

@@ -54,7 +54,7 @@ public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 		{
 			setSampleId( id );
 			setLine( line );
-			setCount( Long.valueOf( parts[ 4 ] ) );
+			setCount( Integer.valueOf( parts[ 4 ] ) );
 
 			String levelDelim = null;
 			String taxa = null;

@@ -350,13 +350,13 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
           break
         case 'seq.rarefier':
           // NOTE: ASK WHAT to do if both are there.
-          if (!(this.paramKeys.contains('rarefier.max') || this.paramKeys.contains('rarefier.min'))){
+          if (!(this.paramKeys.contains('preRarefier.max') || this.paramKeys.contains('preRarefier.min'))){
             const currentMenuTab = getCurrentMenuTab();
             currentMenuTab.style.display = 'none';
-            getParentDiv('rarefier.max').style.display='block';
+            getParentDiv('preRarefier.max').style.display='block';
             alert('A maximum or minimum value is required for the rarifier.');
-            highlightRequiredParam('rarefier.min');
-            highlightRequiredParam('rarefier.max');
+            highlightRequiredParam('preRarefier.min');
+            highlightRequiredParam('preRarefier.max');
             return false;
           }
              break;

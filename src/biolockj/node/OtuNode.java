@@ -36,7 +36,7 @@ public interface OtuNode
 	 *
 	 * @return Number of reads in node sampleId with node OTU assignment
 	 */
-	public Long getCount();
+	public Integer getCount();
 
 	/**
 	 * Get the line from classifier output file used to create this OtuNode.
@@ -69,7 +69,7 @@ public interface OtuNode
 	 *
 	 * @param count Number of reads having this OTU assignment
 	 */
-	public void setCount( Long count );
+	public void setCount( int count );
 
 	/**
 	 * Set the classifier report line parsed to build this OTU node.
@@ -84,4 +84,12 @@ public interface OtuNode
 	 * @param sampleId ID of sample to which this taxonomy assignment belongs
 	 */
 	public void setSampleId( final String sampleId );
+	
+	/**
+	 * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to 
+	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
+	 * 
+	 * @return Map<String, String>
+	 */
+	public Map<String, String> delimToLevelMap();
 }

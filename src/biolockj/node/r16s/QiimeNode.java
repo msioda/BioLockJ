@@ -33,7 +33,7 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 * @param count Extracted from column of the Sample ID
 	 * @throws Exception if propagated from addOtu() method
 	 */
-	public QiimeNode( final String id, final String taxas, final Long count ) throws Exception
+	public QiimeNode( final String id, final String taxas, final int count ) throws Exception
 	{
 		setLine( id + "_" + taxas + "_" + count );
 		setSampleId( id );

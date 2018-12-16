@@ -211,7 +211,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	private LinkedHashMap<String, TreeSet<JsonNode>> buildJsonMap( final JsonNode rootNode ) throws Exception
 	{
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = new LinkedHashMap<>();
-		final Set<ParsedSample> parsedSamples = ModuleUtil.requireParserModule().getParsedSamples();
+		final Set<ParsedSample> parsedSamples = null; // TO-DO!
 		Log.info( getClass(), "Build JSON Nodes for " + parsedSamples.size() + " samples..." );
 		final Map<String, Set<String>> validOtus = getValidOtus();
 

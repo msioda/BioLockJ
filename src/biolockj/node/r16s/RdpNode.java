@@ -67,7 +67,7 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 		final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
 		setSampleId( id );
 		setLine( line );
-		setCount( 1L );
+		setCount( 1 );
 
 		st.nextToken(); // skip the header
 

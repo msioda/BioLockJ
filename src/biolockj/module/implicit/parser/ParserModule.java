@@ -11,7 +11,6 @@
  */
 package biolockj.module.implicit.parser;
 
-import java.util.TreeSet;
 import biolockj.module.JavaModule;
 import biolockj.node.ParsedSample;
 
@@ -34,12 +33,11 @@ public interface ParserModule extends JavaModule
 	public void addParsedSample( ParsedSample parsedSample ) throws Exception;
 
 	/**
-	 * After {@link #parseSamples()} completes, this method builds the OTU tables. For each level in
-	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}, 1 OTU table is generated.
+	 * After {@link #parseSamples()} completes, this method builds the OTU tree files.
 	 *
 	 * @throws Exception if error occurs while building OTU tables
 	 */
-	public void buildOtuTables() throws Exception;
+	public void buildOtuTreeFiles() throws Exception;
 
 	/**
 	 * After {@link #parseSamples()} completes, this method can be called to get a {@link biolockj.node.ParsedSample} by
@@ -50,13 +48,6 @@ public interface ParserModule extends JavaModule
 	 */
 	public ParsedSample getParsedSample( String sampleId );
 
-	/**
-	 * After {@link #parseSamples()} completes, this method can be called to get all of the
-	 * {@link biolockj.node.ParsedSample}s generated from the classifier output
-	 *
-	 * @return Set of all ParsedSamples
-	 */
-	public TreeSet<ParsedSample> getParsedSamples();
 
 	/**
 	 * Parse {@link biolockj.module.classifier.ClassifierModule} output to build {@link biolockj.node.ParsedSample}s.
