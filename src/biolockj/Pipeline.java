@@ -258,9 +258,9 @@ public class Pipeline
 	 * modules
 	 * <li>Delete incomplete module contents if restarting a failed pipeline
 	 * {@value biolockj.module.BioModule#OUTPUT_DIR} directory<br>
-	 * <li>Call {@link #refreshMetadataCache(File)} to cache initial metadata or (if restarting) cache the updated
-	 * version found in a completed module output directory<br>
-	 * <li>Verify dependencies with {@link biolockj.module.BioModule#checkDependencies()}.<br>
+	 * <li>Call {@link #refreshOutputMetadata(BioModule)} to cache metadata if output by a complete module<br>
+	 * <li>Call {@link #refreshRCacheIfNeeded(BioModule)} to cache R fields after 1st R module runs<br>
+	 * <li>Verify dependencies with {@link biolockj.module.BioModule#checkDependencies()}<br>
 	 * </ol>
 	 *
 	 * @throws Exception thrown if propagated by called methods
@@ -397,6 +397,12 @@ public class Pipeline
 		}
 	}
 
+	/**
+	 * Refresh R cache if about to run the 1st R module.
+	 * 
+	 * @param module BioModule
+	 * @throws Exception if errors occur
+	 */
 	protected static void refreshRCacheIfNeeded( final BioModule module ) throws Exception
 	{
 		if( ModuleUtil.isFirstRModule( module ) )

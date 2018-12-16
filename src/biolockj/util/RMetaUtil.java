@@ -304,6 +304,12 @@ public final class RMetaUtil
 		return numericFields;
 	}
 
+	/**
+	 * Get updated R config props
+	 * 
+	 * @return map of R props by data type
+	 * @throws Exception if errors occur
+	 */
 	public static Map<String, String> getUpdatedRConfig() throws Exception
 	{
 		final Map<String, String> props = new HashMap<>();

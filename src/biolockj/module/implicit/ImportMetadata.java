@@ -54,6 +54,8 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		super.cleanUp();
 		if( getMetadata().exists() )
 		{
+			MetaUtil.setFile( getMetadata() );
+			MetaUtil.refreshCache();
 			addMetadataToConfigIgnoreInputFiles();
 			if( ModuleUtil.hasRModules() )
 			{
@@ -301,6 +303,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	/**
 	 * Verify every row (every Sample ID) maps to a sequence file
 	 * 
+	 * @param files List of sequence files
 	 * @throws ConfigViolationException if unmapped Sample IDs are found
 	 * @throws Exception if other errors occur
 	 */
