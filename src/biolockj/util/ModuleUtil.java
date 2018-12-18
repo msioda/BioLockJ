@@ -286,6 +286,11 @@ public class ModuleUtil
 				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
 		if( ModuleUtil.isComplete( module ) || outputMeta.exists() )
 		{
+			if( outputMeta.exists() )
+			{
+				MetaUtil.setFile( outputMeta );
+				MetaUtil.refreshCache();
+			}
 			return MetaUtil.getLatestColumnName( col );
 		}
 		else

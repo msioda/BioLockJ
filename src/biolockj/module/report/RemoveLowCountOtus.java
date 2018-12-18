@@ -199,7 +199,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 		if( otuColName == null )
 		{
 			final String baseName = ParserModuleImpl.getModule().getNumHitsFieldName() + "+"
-					+ Config.requirePositiveDouble( MIN_OTU_COUNT );
+					+ Config.requirePositiveDouble( MIN_OTU_COUNT ).intValue();
 			otuColName = ModuleUtil.getSystemMetaCol( this, baseName );
 		}
 

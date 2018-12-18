@@ -216,8 +216,9 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 	private String mergeSampleLine = null;
 
 	/**
-	 * Metadata column name for column that stores the calculation for
-	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_OTUS}/{@value biolockj.module.implicit.RegisterNumReads#NUM_READS}:
+	 * Metadata column name for column that stores the calculation for: 
+	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getNumHitsFieldName()}/
+	 * {@link biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}:
 	 * {@value #HIT_RATIO}.
 	 */
 	public static final String HIT_RATIO = "Hit_Ratio";

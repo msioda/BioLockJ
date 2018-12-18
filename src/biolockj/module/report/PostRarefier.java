@@ -187,7 +187,8 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 				otuCount.put( otu, otuCount.get( otu ) + 1 );
 			}
 		}
-
+		
+		int sum = 0;
 		final TreeMap<String, Integer> aveCount = new TreeMap<>();
 		for( final String otu: otuCount.keySet() )
 		{
@@ -195,9 +196,11 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 			if( avg > 0 )
 			{
 				aveCount.put( otu, avg );
+				sum += avg;
 			}
 		}
-
+		
+		hitsPerSample.put( sampleId, String.valueOf( sum ) );
 		return aveCount;
 	}
 

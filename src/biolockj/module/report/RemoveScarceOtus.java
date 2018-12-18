@@ -321,7 +321,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		if( otuColName == null )
 		{
 			final String baseName = ParserModuleImpl.getModule().getNumHitsFieldName() + "+"
-					+ Config.requirePositiveDouble( MIN_OTU_THRESHOLD );
+					+ Config.requirePositiveDouble( MIN_OTU_THRESHOLD ).intValue();
 			otuColName = ModuleUtil.getSystemMetaCol( this, baseName );
 		}
 
