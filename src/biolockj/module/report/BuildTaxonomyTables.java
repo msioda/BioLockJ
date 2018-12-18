@@ -1,353 +1,161 @@
 package biolockj.module.report;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.Pipeline;
+import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.node.ParsedSample;
-import biolockj.util.BioLockJUtil;
+import biolockj.module.implicit.parser.ParserModule;
 import biolockj.util.MetaUtil;
+import biolockj.util.OtuUtil;
 
-public class BuildTaxonomyTables extends JavaModuleImpl
+public class BuildTaxonomyTables extends JavaModuleImpl implements JavaModule
 {
 
-	@Override
-	public void runModule() throws Exception
-	{
-		// TODO Auto-generated method stub
-		
-	}
-	
-
 	/**
-	 * Validate module dependencies:
-	 * <ul>
-	 * <li>Verify {@link biolockj.Config}.{@value #REPORT_MINIMUM_OTU_COUNT} is a non-negative integer (if defined)
-	 * <li>Verify {@link biolockj.Config}.{@value #REPORT_MINIMUM_OTU_THRESHOLD} is a non-negative integer (if defined)
-	 * <li>Execute {@link #validateModuleOrder()} to validate module configuration order.
-	 * </ul>
+	 * Execute {@link #validateModuleOrder()} to validate module configuration order.
 	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.getNonNegativeInteger( REPORT_MINIMUM_OTU_COUNT );
-		Config.getNonNegativeInteger( REPORT_MINIMUM_OTU_THRESHOLD );
+		validateModuleOrder();
 	}
 
+	/**
+	 * Return the taxonomy table file for the given level.
+	 * 
+	 * @param level {@link biolockj.Config.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
+	 * @return Taxonomy table file
+	 * @throws Exception if errors occur building the File object
+	 */
+	public File getTaxonomyTable( final String level ) throws Exception
+	{
+		return new File( getOutputDir().getAbsolutePath() + File.separator
+				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + level + TSV );
+	}
 
-
-
-
-
+	@Override
+	public void runModule() throws Exception
+	{
+		buildTaxonomyTables( OtuUtil.getSampleOtuCounts( getInputFiles() ) );
+	}
 
 	/**
-	 * This method reads the temp 3-col-table to build the raw count table populated with raw OTU counts for OTUs that
-	 * meet the threshold value: {@link biolockj.Config}.{@value #REPORT_MINIMUM_OTU_COUNT}
-	 *
-	 * @param files Sparse 3-col tables
-	 * @throws Exception if unable to build the basic OTU table
+	 * Build taxonomy tables from the sampleTaxaCounts.
+	 * 
+	 * @param sampleOtuCounts Map(SampleId, Map(OTU, count)) OTU counts for every sample
+	 * @throws Exception if errors occur
 	 */
-	protected void buildRawCountTables( final List<File> files ) throws Exception
+	protected void buildTaxonomyTables( final Map<String, Map<String, Integer>> sampleOtuCounts ) throws Exception
 	{
-		for( final File file: files )
+		final List<String> otus = OtuUtil.findUniqueOtus( sampleOtuCounts );
+
+		report( "Print Sample OTU Counts", sampleOtuCounts );
+		report( "Print Unique OTUs", otus );
+
+		for( final String level: Config.requireList( Config.REPORT_TAXONOMY_LEVELS ) )
 		{
-			final Map<String, Map<String, Integer>> sparse3colTableMap = getSparseTableMap( file );
-			final File otuTable = new File( getOutputDir().getAbsolutePath() + File.separator + file.getName() );
+			final List<String> levelTaxa = OtuUtil.findUniqueTaxa( otus, level );
+			final TreeMap<String, Map<String, Integer>> levelTaxaCounts = OtuUtil.getLevelTaxaCounts( sampleOtuCounts,
+					level );
 
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( otuTable ) );
-			Log.info( getClass(), "Building: " + otuTable );
-			writer.write( MetaUtil.getID() );
-			final List<String> otuList = getOTUSAtThreshold( sparse3colTableMap );
-			Collections.sort( otuList );
-			for( final String s: otuList )
+			report( "Taxonomy Counts @" + level, levelTaxaCounts );
+
+			Log.info( getClass(), "Building: " + getTaxonomyTable( level ).getAbsolutePath() );
+			final BufferedWriter writer = new BufferedWriter( new FileWriter( getTaxonomyTable( level ) ) );
+			try
 			{
-				writer.write( TAB_DELIM + s.replaceAll( "'", "" ).replaceAll( "\"", "" ) );
-			}
-
-			writer.write( RETURN );
-			final List<String> samples = new ArrayList<>();
-			for( final String sample: sparse3colTableMap.keySet() )
-			{
-				samples.add( sample );
-			}
-
-			Collections.sort( samples );
-			int sampleCount = 0;
-
-			for( final String sample: samples )
-			{
-				writer.write( getOtuTableRowId( sample ) );
-				for( final String otu: otuList )
+				writer.write( MetaUtil.getID() );
+				for( final String taxa: levelTaxa )
 				{
-					Integer count = sparse3colTableMap.get( sample ).get( otu );
-					if( count == null )
-					{
-						count = 0;
-					}
-					writer.write( TAB_DELIM + count );
+					writer.write( TAB_DELIM + taxa );
 				}
+				writer.write( RETURN );
 
-				if( ++sampleCount != samples.size() )
+				for( final String sampleId: sampleOtuCounts.keySet() )
 				{
+					final Map<String, Integer> taxaCounts = levelTaxaCounts.get( sampleId );
+					writer.write( sampleId );
+
+					for( final String taxa: levelTaxa )
+					{
+						Integer count = 0;
+						if( taxaCounts != null && taxaCounts.keySet().contains( taxa ) )
+						{
+							count = taxaCounts.get( taxa );
+						}
+
+						writer.write( TAB_DELIM + count );
+						Log.debug( getClass(), sampleId + ":" + taxa + "=" + count );
+					}
+
 					writer.write( RETURN );
 				}
 			}
-
-			writer.write( RETURN );
-			writer.close();
-		}
-	}
-
-
-/**
-	 * Use {@link biolockj.node.ParsedSample}s to generate the temp 3-col OTU tables for each
-	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
-	 *
-	 * @return List of "sparse-3-col" tables
-	 * @throws Exception if unable to build "sparse-3-col" tables
-	 */
-	protected List<File> createTaxaSparseThreeColFiles() throws Exception
-	{
-		final List<File> files = new ArrayList<>();
-		List<ParsedSample> parsedSamples = new ArrayList<>();
-
-		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
-		{
-			final File spTable = new File( getTempDir().getAbsolutePath() + File.separator + level + EXT );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( spTable ) );
-			Log.info( getClass(), "Building: " + spTable.getAbsolutePath() );
-			for( final ParsedSample sample: parsedSamples )
+			finally
 			{
-				final TreeMap<String, Long> levelCounts = sample.getOtuCountMap().get( level );
-				if( levelCounts != null )
+				if( writer != null )
 				{
-					for( final String otu: levelCounts.keySet() )
-					{
-						Log.debug( getClass(),
-								"sample ID = " + ( sample.getSampleId() == null ? "null": sample.getSampleId() ) );
-
-						Log.debug( getClass(), "otu = " + ( otu == null ? "null": otu ) );
-
-						Log.debug( getClass(), "levelCounts.get( otu )  = "
-								+ ( levelCounts.get( otu ) == null ? "null": levelCounts.get( otu ) ) );
-
-						writer.write(
-								sample.getSampleId() + TAB_DELIM + otu + TAB_DELIM + levelCounts.get( otu ) + RETURN );
-					}
-				}
-				else
-				{
-					Log.warn( getClass(), sample.getSampleId() + " has 0 OTUs for level: " + level );
-					sample.report();
+					writer.close();
 				}
 			}
-			writer.close();
-			files.add( spTable );
 		}
-
-		return files;
-	}
-
-
-	/**
-	 * This method is used to get an R-friendly OTU table row value by stripping out the quotes.
-	 *
-	 * @param id Sample ID
-	 * @return id with quotes removed
-	 * @throws Exception If id value is null
-	 */
-	protected String getOtuTableRowId( final String id ) throws Exception
-	{
-		return id.replaceAll( "'", "" ).replaceAll( "\"", "" );
-	}
-
-
-
-
-
-	private int getOtuCountIfAboveMinThreshold( final String sample, final String otu, Integer val ) throws Exception
-	{
-		if( val == null )
-		{
-			val = 0;
-		}
-
-		final Integer minOtu = Config.getNonNegativeInteger( REPORT_MINIMUM_OTU_COUNT );
-		if( val != 0 && minOtu != null && minOtu > 0 && val < minOtu )
-		{
-			Log.warn( getClass(),
-					"Reporting 0 instead of " + val + " since count < " + REPORT_MINIMUM_OTU_COUNT + "=" + minOtu + "["
-							+ ( sample == null ? "": " Sample:" + sample + " | " ) + "OTU:" + otu + " | count:" + val
-							+ "]" );
-			val = 0;
-		}
-
-		return val;
 	}
 
 	/**
-	 * Return OTU counts for OTUs with a total count that meets or exceeds the
-	 * {@link biolockj.Config}.{@value #REPORT_MINIMUM_OTU_THRESHOLD}
-	 *
-	 * @param map Map linking sampleID to OTU counts
-	 * @return List of OTUs with counts greater than {@link biolockj.Config}.{@value #REPORT_MINIMUM_OTU_THRESHOLD}
+	 * Validate {@link biolockj.module.implicit.parser.ParserModule} runs before this module.
+	 * 
+	 * @throws Exception if modules are out of order
 	 */
-	private List<String> getOTUSAtThreshold( final Map<String, Map<String, Integer>> map ) throws Exception
+	protected void validateModuleOrder() throws Exception
 	{
-		final Map<String, Integer> countMap = new HashMap<>();
-		for( final String s: map.keySet() )
+		boolean foundSelf = false;
+		boolean foundParser = false;
+		for( final BioModule module: Pipeline.getModules() )
 		{
-			final Map<String, Integer> innerMap = map.get( s );
+			if( module.getClass().equals( getClass() ) )
+			{
+				foundSelf = true;
+			}
+
+			if( !foundParser )
+			{
+				foundParser = module instanceof ParserModule;
+			}
+
+			if( !foundParser && foundSelf )
+			{
+				throw new Exception( "ParserModule must run prior to " + getClass().getName() );
+			}
+		}
+	}
+
+	private void report( final String label, final Collection<String> col ) throws Exception
+	{
+		Log.warn( getClass(), label );
+		for( final String item: col )
+		{
+			Log.warn( getClass(), item );
+		}
+	}
+
+	private void report( final String label, final Map<String, Map<String, Integer>> map ) throws Exception
+	{
+		Log.warn( getClass(), label );
+		for( final String id: map.keySet() )
+		{
+			final Map<String, Integer> innerMap = map.get( id );
 			for( final String otu: innerMap.keySet() )
 			{
-				Integer oldCount = countMap.get( otu );
-				if( oldCount == null )
-				{
-					oldCount = 0;
-				}
-
-				oldCount += innerMap.get( otu );
-				countMap.put( otu, oldCount );
+				Log.warn( getClass(), id + ": " + otu + "=" + innerMap.get( otu ) );
 			}
 		}
-		final Integer otuThreshold = Config.getNonNegativeInteger( REPORT_MINIMUM_OTU_THRESHOLD );
-
-		final List<String> otuList = new ArrayList<>();
-		for( final String otu: countMap.keySet() )
-		{
-			if( otuThreshold == null || otuThreshold < 1 || countMap.get( otu ) >= otuThreshold )
-			{
-				otuList.add( otu );
-			}
-			else
-			{
-				Log.info( getClass(), "Skipping OTU.  Count < " + REPORT_MINIMUM_OTU_THRESHOLD + " [OTU:" + otu
-						+ "| count:" + countMap.get( otu ) + "]" );
-			}
-		}
-
-		return otuList;
-
 	}
 
-	/**
-	 * Read the temp 3-col-table files to build a map for each sample: key=SampleID, with value = Map<taxa, count>
-	 *
-	 * @param sparseFile Temp 3-col OTU table
-	 * @return Map linking sample ID to OTU counts
-	 * @throws Exception if unable to build map
-	 */
-	private Map<String, Map<String, Integer>> getSparseTableMap( final File sparseFile ) throws Exception
-	{
-		final Map<String, Map<String, Integer>> map = new HashMap<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( sparseFile );
-		String nextLine = null;
-		try
-		{
-			nextLine = reader.readLine();
-			while( nextLine != null && nextLine.trim().length() > 0 )
-			{
-				final StringTokenizer st = new StringTokenizer( nextLine, TAB_DELIM );
-				final String sample = st.nextToken();
-				final String taxa = st.nextToken();
-				final String next = st.nextToken();
-				final int count = Integer.parseInt( next );
-				Map<String, Integer> innerMap = map.get( sample );
-				if( innerMap == null )
-				{
-					innerMap = new HashMap<>();
-					map.put( sample, innerMap );
-				}
-
-				if( innerMap.containsKey( taxa ) )
-				{
-					throw new Exception( "Duplicate OTU: " + sample + ": " + taxa + ":" + next );
-				}
-
-				innerMap.put( taxa, count );
-				nextLine = reader.readLine();
-			}
-		}
-		catch( final Exception ex )
-		{
-			Log.warn( getClass(), "BAD LINE: " + nextLine );
-			ex.printStackTrace();
-			throw new Exception( "Error occurred processing (" + sparseFile.getAbsolutePath() + "): " + ex.getMessage(),
-					ex );
-		}
-		finally
-		{
-			reader.close();
-		}
-
-		return removeAllZeroOtus( map );
-	}
-
-	private Map<String, Map<String, Integer>> removeAllZeroOtus( final Map<String, Map<String, Integer>> map )
-			throws Exception
-	{
-		Log.debug( getClass(), "Calling removeAllZeroOtus..." );
-		// key = taxa, val=count
-		final Map<String, Integer> otuTotalCounts = new HashMap<>();
-
-		for( final String sample: map.keySet() )
-		{
-			final Map<String, Integer> otuCounts = map.get( sample );
-			for( final String otu: otuCounts.keySet() )
-			{
-				Log.debug( getClass(), "Check sample: " + sample + " = " + map.get( sample ).get( otu ) );
-				if( otuTotalCounts.get( otu ) == null )
-				{
-					otuTotalCounts.put( otu, 0 );
-				}
-
-				otuTotalCounts.put( otu, otuTotalCounts.get( otu )
-						+ getOtuCountIfAboveMinThreshold( sample, otu, otuCounts.get( otu ) ) );
-			}
-		}
-
-		final List<String> otusToRemove = new ArrayList<>();
-		for( final String otu: otuTotalCounts.keySet() )
-		{
-			if( otuTotalCounts.get( otu ) == 0 )
-			{
-				otusToRemove.add( otu );
-				Log.warn( getClass(), "Remove OTU [" + otu + "] since it is below minimum threshold: "
-						+ Config.getNonNegativeInteger( REPORT_MINIMUM_OTU_COUNT ) );
-			}
-		}
-
-		for( final String otu: otusToRemove )
-		{
-			for( final String sample: map.keySet() )
-			{
-				final Map<String, Integer> sampleOtuCounts = map.get( sample );
-
-				if( sampleOtuCounts.keySet().contains( otu ) )
-				{
-					map.get( sample ).remove( otu );
-					Log.warn( getClass(), "Removing OTU [" + otu + "]" );
-				}
-			}
-		}
-
-		return map;
-	}
-
-
-	/**
-	 * {@link biolockj.Config} property {@value #REPORT_MINIMUM_OTU_COUNT} defines the minimum OTU count that will be
-	 * added to the raw count table. A sample will only include an OTU if the count meets or exceeds this value.
-	 */
-	protected static final String REPORT_MINIMUM_OTU_COUNT = "report.minOtuCount";
-
-	/**
-	 * {@link biolockj.Config} property {@value #REPORT_MINIMUM_OTU_THRESHOLD} defines the total across all samples an
-	 * OTU must reach to be included in the raw count table. OTUs that do not reach the threshold, will be omitted.
-	 */
-	protected static final String REPORT_MINIMUM_OTU_THRESHOLD = "report.minOtuThreshold";
-
-	private static final String EXT = ".tsv";
 }

@@ -61,7 +61,7 @@ public class BuildMdsPlots extends R_Module implements ScriptModule
 	{
 		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
 		set.add( PDF_EXT.substring( 1 ) );
-		set.add( TSV_EXT.substring( 1 ) );
+		set.add( TSV.substring( 1 ) );
 		return set;
 	}
 

@@ -526,7 +526,7 @@ public class Config
 	 * @throws ConfigNotFoundException if propertyName is undefined
 	 * @throws ConfigFormatException if propertyName is defined, but not set to a positive numeric value
 	 */
-	public static Double requirePositiveDoubleVal( final String propertyName )
+	public static Double requirePositiveDouble( final String propertyName )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
 		final Double val = requireDoubleVal( propertyName );
@@ -921,7 +921,7 @@ public class Config
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #REPORT_NUM_HITS}<br>
-	 * If set to {@value #TRUE}, NUM_HITS will be added to metadata file by
+	 * If set to {@value #TRUE}, NUM_OTUS will be added to metadata file by
 	 * {@link biolockj.module.implicit.parser.ParserModuleImpl} and included in R reports
 	 */
 	public static final String REPORT_NUM_HITS = "report.numHits";

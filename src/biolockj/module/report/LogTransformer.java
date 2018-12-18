@@ -24,27 +24,10 @@ import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 
 /**
- * This utility is used to normalize and/or log-transform the raw OTU counts using the formulas:
- * <ul>
- * <li>Normalized OTU count formula = (RC/n)*((SUM(x))/N)+1
- * <li>Relative abundance formula = Log(log_base) [ (RC/n)*((SUM(x))/N)+1 ]
- * </ul>
- * The code implementation supports (log_base = e) and (log_base = 10) which is configured via
- * {@link biolockj.Config#REPORT_LOG_BASE} property.
- * <ul>
- * <li>RC = Sample OTU count read in from each Sample-OTU cell in the raw count file passed to the constructor
- * <li>n = number of sequences in the sample, read in as the row sum (sum of OTU counts for the sample)
- * <li>SUM(x) = total number of counts in the table, read in as the table sum (sum of OTU counts for all samples)
- * <li>N = total number of samples, rowCount - 1 (header row)
- * </ul>
- * Further explanation regarding the normalization scheme, please read The ISME Journal 2013 paper by Dr. Anthony Fodor:
- * "Stochastic changes over time and not founder effects drive cage effects in microbial community assembly in a mouse
- * model" <a href= "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/" target=
- * "_top">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/</a>
+ * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.
  */
-public class Normalizer extends JavaModuleImpl implements JavaModule
+public class LogTransformer extends JavaModuleImpl implements JavaModule
 {
-
 	/**
 	 * Verify {@link biolockj.Config}.{@value biolockj.Config#REPORT_LOG_BASE} property is valid (if defined) with a
 	 * value = (e or 10).
@@ -54,19 +37,14 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		logBase = Config.getString( Config.REPORT_LOG_BASE );
-		if( logBase != null )
+		logBase = Config.requireString( Config.REPORT_LOG_BASE );
+
+		if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
 		{
-			if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
-			{
-				throw new ConfigFormatException( Config.REPORT_LOG_BASE,
-						"Property only accepts value \"10\" or \"e\"" );
-			}
+			throw new ConfigFormatException( Config.REPORT_LOG_BASE,
+					"Property only accepts value \"10\" or \"e\"" );
 		}
-		else
-		{
-			logBase = "";
-		}
+		
 		super.checkDependencies();
 	}
 
@@ -78,21 +56,20 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	{
 		for( final File file: getInputFiles() )
 		{
-			normalize( file );
+			transform( file );
 		}
 	}
 
 	/**
-	 * Populate normalized OTU counts with the formula: (RC/n)*((SUM(x))/N)+1
+	 * Log transform the data
 	 *
 	 * @param otuTable OTU raw count table
 	 * @throws Exception if unable to construct DataNormalizer
 	 */
-	protected void normalize( final File otuTable ) throws Exception
+	protected void transform( final File otuTable ) throws Exception
 	{
 		final BufferedReader reader = BioLockJUtil.getFileReader( otuTable );
-		final List<List<Double>> dataPointsNormalized = new ArrayList<>();
-		final List<List<Double>> dataPointsNormalizedThenLogged = new ArrayList<>();
+		final List<List<Double>> dataPointsLogged = new ArrayList<>();
 		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();
 		final List<String> sampleNames = new ArrayList<>();
 		final List<String> otuNames = getOtuNames( reader.readLine() );
@@ -106,8 +83,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 			final List<Double> innerList = new ArrayList<>();
 			sampleNames.add( sampleName );
 			dataPointsUnnormalized.add( innerList );
-			dataPointsNormalized.add( new ArrayList<Double>() );
-			dataPointsNormalizedThenLogged.add( new ArrayList<Double>() );
+			dataPointsLogged.add( new ArrayList<Double>() );
 
 			while( st.hasMoreTokens() )
 			{
@@ -128,33 +104,23 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 		reader.close();
 		assertNum( totalCounts, dataPointsUnnormalized );
 		assertNoZeros( dataPointsUnnormalized );
-		final double avgNumber = totalCounts / dataPointsNormalized.size();
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
 			final List<Double> unnormalizedInnerList = dataPointsUnnormalized.get( x );
-			double sum = 0;
 
-			for( final Double d: unnormalizedInnerList )
-			{
-				sum += d;
-			}
 
-			final List<Double> normalizedInnerList = dataPointsNormalized.get( x );
-			final List<Double> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
+			final List<Double> loggedInnerList = dataPointsLogged.get( x );
 
 			for( int y = 0; y < unnormalizedInnerList.size(); y++ )
 			{
-				final double val = avgNumber * unnormalizedInnerList.get( y ) / sum;
-				normalizedInnerList.add( val );
-
 				if( logBase.equalsIgnoreCase( LOG_E ) )
 				{
-					loggedInnerList.add( Math.log( val + 1 ) );
+					loggedInnerList.add( Math.log( y + 1 ) );
 				}
 				else if( logBase.equalsIgnoreCase( LOG_10 ) )
 				{
-					loggedInnerList.add( Math.log10( val + 1 ) );
+					loggedInnerList.add( Math.log10( y + 1 ) );
 				}
 			}
 		}
@@ -162,16 +128,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 		final String pathPrefix = getOutputDir().getAbsolutePath() + File.separator
 				+ otuTable.getName().substring( 0, otuTable.getName().indexOf( TSV ) );
 
-		if( !logBase.isEmpty() )
-		{
-			writeDataToFile( new File( pathPrefix + "_" + "Log" + logBase + NORMAL + TSV ), sampleNames, otuNames,
-					dataPointsNormalizedThenLogged );
-		}
-		else
-		{
-			writeDataToFile( new File( pathPrefix + NORMAL + TSV ), sampleNames, otuNames, dataPointsNormalized );
-		}
-
+		writeDataToFile( new File( pathPrefix + "_" + "Log" + logBase + TSV ), sampleNames, otuNames, dataPointsLogged );
 	}
 
 	private List<String> getOtuNames( final String firstLine ) throws Exception
@@ -276,10 +233,6 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 
 	private String logBase = "";
 
-	/**
-	 * File suffix appended to normalized OTU tables
-	 */
-	public static final String NORMAL = "_norm";
 
 	/**
 	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Config#REPORT_LOG_BASE}

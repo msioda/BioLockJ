@@ -51,5 +51,5 @@ public interface ClassifierModule extends ScriptModule
 	/**
 	 * File suffix appended to processed samples in the module output directory.
 	 */
-	public static final String PROCESSED = "_reported.tsv";
+	public static final String PROCESSED = "_reported" + TSV;
 }

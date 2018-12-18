@@ -20,9 +20,9 @@ package biolockj.exception;
 public class ConfigViolationException extends ConfigException
 {
 	/**
-	 * ConfigViolationException is thrown application detects a violation due to a {@link biolockj.Config} 
-	 * property setting, such as finding Sample IDs with no corresponding sequence file enforced by 
-	 * {@link biolockj.Config}.{@value biolockj.util.MetaUtil#USE_EVERY_ROW} = {@value biolockj.Config#TRUE} 
+	 * ConfigViolationException is thrown application detects a violation due to a {@link biolockj.Config} property
+	 * setting, such as finding Sample IDs with no corresponding sequence file enforced by
+	 * {@link biolockj.Config}.{@value biolockj.util.MetaUtil#USE_EVERY_ROW} = {@value biolockj.Config#TRUE}
 	 *
 	 * @param propertyName {@link biolockj.Config} property name
 	 * @param msg Exception message details

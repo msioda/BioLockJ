@@ -20,7 +20,6 @@ import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.module.r.R_Module;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SummaryUtil;
@@ -28,7 +27,7 @@ import biolockj.util.SummaryUtil;
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
-public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
+public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModule
 {
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
@@ -97,8 +96,10 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		if( MetaUtil.getFieldNames().contains( RegisterNumReads.NUM_READS )
-				&& MetaUtil.getFieldNames().contains( ParserModuleImpl.NUM_HITS ) )
+		final String numReadsCol = RegisterNumReads.getModule().getNumReadFieldName();
+		final String numHitsCol = ParserModuleImpl.getModule().getNumHitsFieldName();
+		if( numReadsCol != null && numHitsCol != null && MetaUtil.getFieldNames().contains( numReadsCol )
+				&& MetaUtil.getFieldNames().contains( numHitsCol ) )
 		{
 			addHitRatioToMetadata();
 		}
@@ -119,8 +120,8 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 	{
 		for( final String id: MetaUtil.getSampleIds() )
 		{
-			final String numReadsField = MetaUtil.getField( id, RegisterNumReads.getNumReadFieldName() );
-			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.NUM_HITS );
+			final String numReadsField = MetaUtil.getField( id, RegisterNumReads.getModule().getNumReadFieldName() );
+			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getModule().getNumHitsFieldName() );
 
 			if( numReadsField == null || numHitsField == null
 					|| numReadsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) )
@@ -152,7 +153,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 		for( final File file: getInputFiles() )
 		{
 			final String name = Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_"
-					+ file.getName().replaceAll( R_Module.TSV_EXT, "" ) + META_MERGED;
+					+ file.getName().replaceAll( TSV, "" ) + META_MERGED;
 			Log.info( getClass(), "Merge OTU table + Metadata file: " + outDir + name );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
@@ -216,7 +217,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 
 	/**
 	 * Metadata column name for column that stores the calculation for
-	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_HITS}/{@value biolockj.module.implicit.RegisterNumReads#NUM_READS}:
+	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_OTUS}/{@value biolockj.module.implicit.RegisterNumReads#NUM_READS}:
 	 * {@value #HIT_RATIO}.
 	 */
 	public static final String HIT_RATIO = "Hit_Ratio";
@@ -224,6 +225,6 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 	/**
 	 * File suffix added to OTU table file name once merged with metadata.
 	 */
-	public static final String META_MERGED = "_metaMerged" + R_Module.TSV_EXT;
+	public static final String META_MERGED = "_metaMerged" + TSV;
 	private static final Map<String, String> hitRatioPerSample = new HashMap<>();
 }

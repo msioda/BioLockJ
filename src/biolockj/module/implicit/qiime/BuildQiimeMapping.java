@@ -215,13 +215,14 @@ public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
 			return null;
 		}
 
-		final List<Integer> skip = Arrays.asList( new Integer[] { metaColumns.indexOf( BARCODE_SEQUENCE ),
-				metaColumns.indexOf( LINKER_PRIMER_SEQUENCE ), metaColumns.indexOf( DEMUX_COLUMN ), metaColumns.indexOf( DESCRIPTION ) } );
+		final List<Integer> skip = Arrays.asList(
+				new Integer[] { metaColumns.indexOf( BARCODE_SEQUENCE ), metaColumns.indexOf( LINKER_PRIMER_SEQUENCE ),
+						metaColumns.indexOf( DEMUX_COLUMN ), metaColumns.indexOf( DESCRIPTION ) } );
 
 		final StringBuffer sb = new StringBuffer();
-		sb.append(
-				Config.getExe( Config.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM + "\" '{ print $1,"
-						+ colIndex( metaColumns, BARCODE_SEQUENCE ) + "," + colIndex( metaColumns, LINKER_PRIMER_SEQUENCE ) + "," );
+		sb.append( Config.getExe( Config.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
+				+ "\" '{ print $1," + colIndex( metaColumns, BARCODE_SEQUENCE ) + ","
+				+ colIndex( metaColumns, LINKER_PRIMER_SEQUENCE ) + "," );
 
 		for( int i = 1; i < metaColumns.size(); i++ )
 		{

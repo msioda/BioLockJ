@@ -50,7 +50,7 @@ public class CalculateStats extends R_Module implements BioModule
 	public Set<String> scpExtensions() throws Exception
 	{
 		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
-		set.add( TSV_EXT.substring( 1 ) );
+		set.add( TSV.substring( 1 ) );
 		return set;
 	}
 
@@ -66,8 +66,7 @@ public class CalculateStats extends R_Module implements BioModule
 	{
 		final BioModule mod = ModuleUtil.getModule( CalculateStats.class.getName() );
 		final String fileName = mod.getOutputDir().getAbsolutePath() + File.separator
-				+ Config.getString( Config.INTERNAL_PIPELINE_NAME ) + "_" + otuLevel + "_" + fileType
-				+ R_Module.TSV_EXT;
+				+ Config.getString( Config.INTERNAL_PIPELINE_NAME ) + "_" + otuLevel + "_" + fileType + TSV;
 
 		Log.info( CalculateStats.class, "Find stats file: " + fileName );
 		final File file = new File( fileName );

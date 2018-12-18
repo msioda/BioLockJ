@@ -21,7 +21,7 @@ import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.module.report.AddMetadataToOtuTables;
+import biolockj.module.report.AddMetaToTaxonomyTables;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -55,7 +55,7 @@ public final class RMetaUtil
 	 * </ul>
 	 * <p>
 	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_HITS} = {@value biolockj.Config#TRUE}, add the
-	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_HITS} field as a numeric field.
+	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_OTUS} field as a numeric field.
 	 * <p>
 	 * Perform validations:
 	 * <ul>
@@ -116,15 +116,24 @@ public final class RMetaUtil
 			}
 
 			// remove BLJ generated fields since inclusion depends upon the report.num* properties
-			rScriptFields.remove( ParserModuleImpl.NUM_HITS );
-			if( RegisterNumReads.getNumReadFieldName() != null )
+			if( ParserModuleImpl.getModule().getNumHitsFieldName() != null )
 			{
-				rScriptFields.remove( RegisterNumReads.getNumReadFieldName() );
+				rScriptFields.remove( ParserModuleImpl.getModule().getNumHitsFieldName() );
 			}
 
-			if( RegisterNumReads.getDepricatedReadFields() != null )
+			if( ParserModuleImpl.getModule().getDepricatedHitFields() != null )
 			{
-				rScriptFields.removeAll( RegisterNumReads.getDepricatedReadFields() );
+				rScriptFields.removeAll( ParserModuleImpl.getModule().getDepricatedHitFields() );
+			}
+
+			if( RegisterNumReads.getModule().getNumReadFieldName() != null )
+			{
+				rScriptFields.remove( RegisterNumReads.getModule().getNumReadFieldName() );
+			}
+
+			if( RegisterNumReads.getModule().getDepricatedReadFields() != null )
+			{
+				rScriptFields.removeAll( RegisterNumReads.getModule().getDepricatedReadFields() );
 			}
 
 			if( !RuntimeParamUtil.isDirectMode() )
@@ -142,39 +151,39 @@ public final class RMetaUtil
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_READS )
-				&& isValidNumericField( metaFields, RegisterNumReads.getNumReadFieldName() ) )
+				&& isValidNumericField( metaFields, RegisterNumReads.getModule().getNumReadFieldName() ) )
 		{
-			rScriptFields.add( RegisterNumReads.getNumReadFieldName() );
-			numericFields.add( RegisterNumReads.getNumReadFieldName() );
+			rScriptFields.add( RegisterNumReads.getModule().getNumReadFieldName() );
+			numericFields.add( RegisterNumReads.getModule().getNumReadFieldName() );
 		}
 		else
 		{
-			rScriptFields.remove( RegisterNumReads.getNumReadFieldName() );
-			numericFields.remove( RegisterNumReads.getNumReadFieldName() );
+			rScriptFields.remove( RegisterNumReads.getModule().getNumReadFieldName() );
+			numericFields.remove( RegisterNumReads.getModule().getNumReadFieldName() );
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, ParserModuleImpl.NUM_HITS ) )
+				&& isValidNumericField( metaFields, ParserModuleImpl.getModule().getNumHitsFieldName() ) )
 		{
-			rScriptFields.add( ParserModuleImpl.NUM_HITS );
-			numericFields.add( ParserModuleImpl.NUM_HITS );
+			rScriptFields.add( ParserModuleImpl.getModule().getNumHitsFieldName() );
+			numericFields.add( ParserModuleImpl.getModule().getNumHitsFieldName() );
 		}
 		else
 		{
-			rScriptFields.remove( ParserModuleImpl.NUM_HITS );
-			numericFields.remove( ParserModuleImpl.NUM_HITS );
+			rScriptFields.remove( ParserModuleImpl.getModule().getNumHitsFieldName() );
+			numericFields.remove( ParserModuleImpl.getModule().getNumHitsFieldName() );
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, AddMetadataToOtuTables.HIT_RATIO ) )
+				&& isValidNumericField( metaFields, AddMetaToTaxonomyTables.HIT_RATIO ) )
 		{
-			rScriptFields.add( AddMetadataToOtuTables.HIT_RATIO );
-			numericFields.add( AddMetadataToOtuTables.HIT_RATIO );
+			rScriptFields.add( AddMetaToTaxonomyTables.HIT_RATIO );
+			numericFields.add( AddMetaToTaxonomyTables.HIT_RATIO );
 		}
 		else
 		{
-			rScriptFields.remove( AddMetadataToOtuTables.HIT_RATIO );
-			numericFields.remove( AddMetadataToOtuTables.HIT_RATIO );
+			rScriptFields.remove( AddMetaToTaxonomyTables.HIT_RATIO );
+			numericFields.remove( AddMetaToTaxonomyTables.HIT_RATIO );
 		}
 
 		if( reportAllFields() && !RuntimeParamUtil.isDirectMode() )

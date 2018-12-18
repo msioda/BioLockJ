@@ -18,9 +18,7 @@ import org.apache.commons.io.FileUtils;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule parses sequence file to count the number of reads per sample. The data is stored in a new column
@@ -28,6 +26,25 @@ import biolockj.util.SummaryUtil;
  */
 public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 {
+	/**
+	 * Getter for depricatedReadFields
+	 * 
+	 * @return depricatedReadFields
+	 */
+	public Set<String> getDepricatedReadFields()
+	{
+		return depricatedReadFields;
+	}
+
+	/**
+	 * Getter for numReadFieldName
+	 * 
+	 * @return numReadFieldName
+	 */
+	public String getNumReadFieldName()
+	{
+		return numReadFieldName;
+	}
 
 	/**
 	 * Produce summary message with min, max, mean, and median number of reads.
@@ -78,13 +95,13 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 				Log.warn( getClass(), NUM_READS + " column already fully populated in metadata file :"
 						+ MetaUtil.getFile().getAbsolutePath() );
 				FileUtils.copyFileToDirectory( MetaUtil.getFile(), getOutputDir() );
-				File metaFile = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+				final File metaFile = new File(
+						getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
 				if( !metaFile.exists() )
 				{
 					throw new Exception( "FileUtils.copyFileToDirectory did not successfully copy the metadata file" );
 				}
-				
-				
+
 				return;
 			}
 			else
@@ -107,27 +124,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		MetaUtil.addColumn( NUM_READS, readsPerSample, getOutputDir() );
-	}
-
-	/**
-	 * Getter for depricatedReadFields
-	 * 
-	 * @return depricatedReadFields
-	 */
-	public static Set<String> getDepricatedReadFields()
-	{
-		return depricatedReadFields;
-	}
-
-	/**
-	 * Getter for numReadFieldName
-	 * 
-	 * @return numReadFieldName
-	 */
-	public static String getNumReadFieldName()
-	{
-		return numReadFieldName;
+		MetaUtil.addColumn( getNumReadFieldName(), readsPerSample, getOutputDir() );
 	}
 
 	/**
@@ -136,15 +133,15 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 	 * @param name Name of new number of reads metadata field
 	 * @throws Exception if null value passed
 	 */
-	public static void setNumReadFieldName( final String name ) throws Exception
+	public void setNumReadFieldName( final String name ) throws Exception
 	{
 		if( name == null )
 		{
-			throw new Exception( "Null name value passed to RegisterNumReads.setNumReadFieldName()" );
+			throw new Exception( "Null name value passed to RegisterNumReads.setNumReadFieldName(name)" );
 		}
 		else if( numReadFieldName != null && numReadFieldName.equals( name ) )
 		{
-			Log.warn( RegisterNumReads.class, "NumReads field already set to: " + numReadFieldName );
+			Log.warn( getClass(), "NumReads field already set to: " + numReadFieldName );
 		}
 		else
 		{
@@ -159,12 +156,22 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
+	 * Get RegisterNumReads instance from the pipeline registry.
+	 * 
+	 * @return RegisterNumReads BioModule
+	 * @throws Exception if errors occur
+	 */
+	public static RegisterNumReads getModule() throws Exception
+	{
+		return (RegisterNumReads) ModuleUtil.getModule( RegisterNumReads.class.getName() );
+	}
+
+	private final Set<String> depricatedReadFields = new HashSet<>();
+	private String numReadFieldName = NUM_READS;
+	private final Map<String, String> readsPerSample = new HashMap<>();
+	/**
 	 * Metadata column name for column that holds number of reads per sample: {@value #NUM_READS}
 	 */
-	public static final String NUM_READS = "Num_Reads";
-
-	private static final Set<String> depricatedReadFields = new HashSet<>();
-	private static String numReadFieldName = NUM_READS;
-	private static final Map<String, String> readsPerSample = new HashMap<>();
+	protected static final String NUM_READS = "Num_Reads";
 
 }

@@ -233,7 +233,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	/**
 	 * Name of each batch mapping file (each in its own batch directory)
 	 */
-	protected static final String BATCH_MAPPING = "batchMapping.tsv";
+	protected static final String BATCH_MAPPING = "batchMapping" + TSV;
 
 	/**
 	 * Name of the bash function that prepares a batch of seqs for processing: {@value #FUNCTION_CREATE_BATCH_MAPPING}

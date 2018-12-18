@@ -19,9 +19,7 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule validates fasta/fastq file formats are valid and enforces min/max read lengths.
@@ -36,7 +34,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		RegisterNumReads.setNumReadFieldName( NUM_VALID_READS );
+		RegisterNumReads.getModule().setNumReadFieldName( getMetaColName() );
 	}
 
 	/**
@@ -53,11 +51,11 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 			boolean foundTooShort = false;
 			boolean foundInvalid = false;
 
-			int numSamples = sampleStats.keySet().size();
+			final int numSamples = sampleStats.keySet().size();
 			long combinedMeanReadLen = 0L;
 			long overallMinReadLen = 0L;
 			long overallMaxReadLen = 0L;
-			
+
 			for( final String sampleId: new TreeSet<>( sampleStats.keySet() ) )
 			{
 				final Long[] stats = sampleStats.get( sampleId );
@@ -68,19 +66,19 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 				final Long meanReadLen = stats[ INDEX_MEAN_NUM_READS ];
 				final Long maxReadLen = stats[ INDEX_MAX_READS ];
 				final Long minReadLen = stats[ INDEX_MIN_READS ];
-				
+
 				combinedMeanReadLen += meanReadLen;
-			
-				if( overallMinReadLen == 0 || minReadLen < overallMinReadLen  )
+
+				if( overallMinReadLen == 0 || minReadLen < overallMinReadLen )
 				{
 					overallMinReadLen = minReadLen;
 				}
-				
-				if( maxReadLen > overallMaxReadLen  )
+
+				if( maxReadLen > overallMaxReadLen )
 				{
 					overallMaxReadLen = maxReadLen;
 				}
-				
+
 				if( numTooShort > 0 || numTrimmed > 0 || numInvalid > 0 )
 				{
 					sb.append( sampleId + ": " );
@@ -107,9 +105,9 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 					sb.append( RETURN );
 				}
 			}
-			
-			long avgReadLen = numSamples > 0 ? Double.valueOf( combinedMeanReadLen / numSamples ).longValue() : 0;
-			
+
+			final long avgReadLen = numSamples > 0 ? Double.valueOf( combinedMeanReadLen / numSamples ).longValue(): 0;
+
 			sb.append( "Mean valid read length = " + avgReadLen + RETURN );
 			sb.append( "Min valid read length = " + Long.valueOf( overallMinReadLen ).toString() + RETURN );
 			sb.append( "Max valid read length = " + Long.valueOf( overallMaxReadLen ).toString() + RETURN );
@@ -126,7 +124,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 			{
 				sb.append( "Discarded sequences stored in: " + getTempDir().getAbsolutePath() + RETURN );
 			}
-			
+
 			if( !foundTooShort && !foundTrimmed && !foundInvalid )
 			{
 				sb.append( "All sequence files pass validation checks - no changes required." + RETURN );
@@ -153,7 +151,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 			validateFile( file );
 		}
 
-		MetaUtil.addColumn( NUM_VALID_READS, readsPerSample, getOutputDir() );
+		MetaUtil.addColumn( getMetaColName(), readsPerSample, getOutputDir() );
 	}
 
 	/**
@@ -171,7 +169,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	 */
 	protected void validateFile( final File file ) throws Exception
 	{
-		Log.info( getClass(), "Validating " + file.getAbsolutePath() ); 
+		Log.info( getClass(), "Validating " + file.getAbsolutePath() );
 		long combinedReadLen = 0L;
 		long minReadLen = 0L;
 		long maxReadLen = 0L;
@@ -231,21 +229,20 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 							seqLines.set( 3, seqLines.get( 3 ).substring( 0, seqMax ) );
 						}
 					}
-					
-					
-					int readLen = seqLines.get( 1 ).length();
-					
+
+					final int readLen = seqLines.get( 1 ).length();
+
 					combinedReadLen += readLen;
-					
-					if( readLen > 0 && minReadLen == 0 || readLen < minReadLen  )
+
+					if( readLen > 0 && minReadLen == 0 || readLen < minReadLen )
 					{
 						minReadLen = readLen;
 					}
-					if( readLen > maxReadLen  )
+					if( readLen > maxReadLen )
 					{
 						maxReadLen = readLen;
 					}
-					
+
 					for( final String seqLine: seqLines )
 					{
 						writer.write( seqLine + BioLockJ.RETURN );
@@ -255,7 +252,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 				seqLines.clear();
 			}
 		}
-		
+
 		writer.close();
 		reader.close();
 
@@ -271,20 +268,20 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 
 			invalidWriter.close();
 		}
-		
-		Log.debug( getClass(), "combinedReadLen / numValid = " + combinedReadLen + " / " 
-				+ numValid + " = " + (numValid > 0 ? Double.valueOf( combinedReadLen / numValid ).longValue() : 0) );
+
+		Log.debug( getClass(), "combinedReadLen / numValid = " + combinedReadLen + " / " + numValid + " = "
+				+ ( numValid > 0 ? Double.valueOf( combinedReadLen / numValid ).longValue(): 0 ) );
 
 		final Long[] stats = new Long[ 7 ];
 		stats[ INDEX_NUM_VALID_READS ] = numValid;
 		stats[ INDEX_NUM_TRIMMED_READS ] = numTrimmed;
 		stats[ INDEX_NUM_READS_TOO_SHORT ] = numTooShort;
 		stats[ INDEX_NUM_READS_INVALID_FORMAT ] = numInvalidFormat;
-		stats[ INDEX_MEAN_NUM_READS ] = numValid > 0 ? Double.valueOf( combinedReadLen / numValid ).longValue() : 0;
+		stats[ INDEX_MEAN_NUM_READS ] = numValid > 0 ? Double.valueOf( combinedReadLen / numValid ).longValue(): 0;
 		stats[ INDEX_MIN_READS ] = minReadLen;
 		stats[ INDEX_MAX_READS ] = maxReadLen;
 		minReadLen = 0;
-		
+
 		sampleStats.put( SeqUtil.getSampleId( file.getName() ), stats );
 
 		if( SeqUtil.isForwardRead( file.getName() ) )
@@ -305,6 +302,16 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		return dir.getAbsolutePath() + File.separator + name;
 	}
 
+	private String getMetaColName() throws Exception
+	{
+		if( otuColName == null )
+		{
+			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_VALID_READS );
+		}
+
+		return otuColName;
+	}
+
 	private int minReadLen() throws Exception
 	{
 		Integer seqMin = Config.getPositiveInteger( INPUT_SEQ_MIN );
@@ -314,6 +321,8 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		}
 		return seqMin;
 	}
+
+	private String otuColName = null;
 
 	private final Map<String, String> readsPerSample = new HashMap<>();
 	private final Map<String, Long[]> sampleStats = new HashMap<>();
@@ -333,13 +342,12 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	 */
 	protected static final String INPUT_SEQ_MIN = "input.seqMinLen";
 
-	private static final int INDEX_NUM_VALID_READS = 0;
-	private static final int INDEX_MIN_READS = 1;
 	private static final int INDEX_MAX_READS = 2;
 	private static final int INDEX_MEAN_NUM_READS = 3;
+	private static final int INDEX_MIN_READS = 1;
 	private static final int INDEX_NUM_READS_INVALID_FORMAT = 4;
 	private static final int INDEX_NUM_READS_TOO_SHORT = 5;
 	private static final int INDEX_NUM_TRIMMED_READS = 6;
-	
-	
+	private static final int INDEX_NUM_VALID_READS = 0;
+
 }

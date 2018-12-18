@@ -48,7 +48,6 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	{
 		for( final File file: getInputFiles() )
 		{
-			ParsedSample sample = null;
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
@@ -56,7 +55,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 				final RdpNode node = new RdpNode( file.getName().replace( ClassifierModule.PROCESSED, "" ), line );
 				if( isValid( node ) )
 				{
-					sample = getParsedSample( node.getSampleId() );
+					final ParsedSample sample = getParsedSample( node.getSampleId() );
 					if( sample == null )
 					{
 						addParsedSample( new ParsedSample( node ) );

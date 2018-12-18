@@ -61,11 +61,11 @@ public class DockerUtil
 			lines.add( getBljOptions( module ) + BioLockJ.RETURN );
 			Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + BioLockJ.RETURN );
 		}
-		
+
 		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
-		
+
 		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
-		
+
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
 		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
@@ -154,8 +154,7 @@ public class DockerUtil
 
 	private static String getBljOptions( final BioModule module ) throws Exception
 	{
-		final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " 
-				+ BioLockJUtil.getDirectModuleParam( module );
+		final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " + BioLockJUtil.getDirectModuleParam( module );
 
 		return BLJ_OPTIONS + "=\"" + args + "\"";
 	}
@@ -166,7 +165,7 @@ public class DockerUtil
 		{
 			return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 		}
-		
+
 		return " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
 	}
 

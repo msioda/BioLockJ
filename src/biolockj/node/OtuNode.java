@@ -32,6 +32,14 @@ public interface OtuNode
 	public void buildOtuNode( final String otu, final String levelDelim );
 
 	/**
+	 * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to
+	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
+	 * 
+	 * @return Map<String, String>
+	 */
+	public Map<String, String> delimToLevelMap();
+
+	/**
 	 * Gets the OTU count.
 	 *
 	 * @return Number of reads in node sampleId with node OTU assignment
@@ -84,12 +92,4 @@ public interface OtuNode
 	 * @param sampleId ID of sample to which this taxonomy assignment belongs
 	 */
 	public void setSampleId( final String sampleId );
-	
-	/**
-	 * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to 
-	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
-	 * 
-	 * @return Map<String, String>
-	 */
-	public Map<String, String> delimToLevelMap();
 }

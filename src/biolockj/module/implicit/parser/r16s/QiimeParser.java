@@ -99,7 +99,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 
 			while( st.hasMoreTokens() )
 			{
-				final Long count = Double.valueOf( st.nextToken() ).longValue();
+				final Integer count = Double.valueOf( st.nextToken() ).intValue();
 				final String id = orderedQiimeIDs.get( index++ );
 				if( count > 0 )
 				{
@@ -182,7 +182,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	 * @return formatted Sample ID
 	 * @throws Exception If any QIIME ID does not have a corresponding Sample ID
 	 */
-	@Override
+	// @Override
 	protected String getOtuTableRowId( final String id ) throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();

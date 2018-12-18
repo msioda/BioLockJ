@@ -171,7 +171,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 			if( defaultSwitches.indexOf( "-s " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (-s) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). SAM output not supported.  BioLockJ outputs .tsv files." );
+						+ "). SAM output not supported.  BioLockJ outputs " + TSV + " files." );
 			}
 			if( defaultSwitches.indexOf( "-o " ) > -1 )
 			{

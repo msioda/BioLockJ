@@ -11,7 +11,9 @@
  */
 package biolockj.module.implicit.parser;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
@@ -20,13 +22,11 @@ import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MemoryUtil;
-import biolockj.util.MetaUtil;
+import biolockj.util.*;
 
 /**
  * Parser {@link biolockj.module.BioModule}s read {@link biolockj.module.classifier.ClassifierModule} output to build
- * standardized OTU abundance tables. This class provides the default abstract implementation.
+ * standardized OTU count tables. This class provides the default abstract implementation.
  */
 public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserModule
 {
@@ -44,6 +44,35 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		parsedSamples.add( newSample );
 	}
 
+	@Override
+	public void buildOtuCountFiles() throws Exception
+	{
+		for( final ParsedSample sample: parsedSamples )
+		{
+			final Map<String, Integer> otuCounts = sample.getOtuCounts();
+			final BufferedWriter writer = new BufferedWriter(
+					new FileWriter( getOtuCountFile( sample.getSampleId() ) ) );
+			int numHits = 0;
+			try
+			{
+				for( final String otu: otuCounts.keySet() )
+				{
+					numHits += otuCounts.get( otu );
+					writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
+				}
+			}
+			finally
+			{
+				if( writer != null )
+				{
+					writer.close();
+				}
+			}
+
+			hitsPerSample.put( sample.getSampleId(), String.valueOf( numHits ) );
+
+		}
+	}
 
 	/**
 	 * Execute {@link #validateModuleOrder()} to validate module configuration order.
@@ -53,6 +82,34 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	{
 		super.checkDependencies();
 		validateModuleOrder();
+	}
+
+	/**
+	 * Getter for depricatedHitFields
+	 * 
+	 * @return depricatedHitFields
+	 */
+	public Set<String> getDepricatedHitFields()
+	{
+		return depricatedHitFields;
+	}
+
+	/**
+	 * Getter for numHitsFieldName
+	 * 
+	 * @return numHitsFieldName
+	 */
+	public String getNumHitsFieldName()
+	{
+		return numHitsFieldName;
+	}
+
+	@Override
+	public File getOtuCountFile( final String sampleId ) throws Exception
+	{
+		return new File( getOutputDir().getAbsolutePath() + File.separator
+				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + OtuUtil.OTU_COUNT + "_" + sampleId
+				+ TSV );
 	}
 
 	@Override
@@ -75,7 +132,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * Parsers execute a task with 3 core functions:
 	 * <ol>
 	 * <li>{@link #parseSamples()} - generates {@link biolockj.node.ParsedSample}s
-	 * <li>{@link #buildOtuTreeFiles()} - builds OTU tree tables from the {@link biolockj.node.ParsedSample}s
+	 * <li>{@link #buildOtuCountFiles()} - builds OTU tree tables from the {@link biolockj.node.ParsedSample}s
 	 * </ol>
 	 */
 	@Override
@@ -90,50 +147,43 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		{
 			throw new Exception( "Parser failed to produce output!" );
 		}
-		
-		buildOtuTreeFiles();
-		
+
+		buildOtuCountFiles();
+
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( NUM_HITS, hitsPerSample, getOutputDir() );
+			MetaUtil.addColumn( NUM_OTUS, hitsPerSample, getOutputDir() );
+
 		}
 	}
 
-
-	
-	
-	
 	/**
-	 * Build OTU count tree
+	 * When a module modifies the number of hits, the new counts must replace the old count fields.
 	 * 
+	 * @param name Name of new number of hits metadata field
+	 * @throws Exception if null value passed
 	 */
-	public void buildOtuTreeFiles() throws Exception
+	public void setNumHitsFieldName( final String name ) throws Exception
 	{
-		for( ParsedSample sample: parsedSamples )
+		if( name == null )
 		{
-			final Map<String, Integer> treeCounts = sample.getTreeCounts();
-			final File tree = new File( getOutputDir().getAbsolutePath() + File.separator + sample.getSampleId() + EXT );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( tree ) );
-			int numHits = 0;
-			try
+			throw new Exception( "Null name value passed to ParserModuleImpl.setNumHitsFieldName(name)" );
+		}
+		else if( numHitsFieldName != null && numHitsFieldName.equals( name ) )
+		{
+			Log.warn( getClass(), "Num Hits field already set to: " + numHitsFieldName );
+		}
+		else
+		{
+			if( numHitsFieldName != null )
 			{
-				for( String otu: treeCounts.keySet() )
-				{
-					numHits += treeCounts.get( otu ).intValue();
-					writer.write( otu + TAB_DELIM + treeCounts.get( otu ) );
-				}
+				depricatedHitFields.add( numHitsFieldName );
 			}
-			finally
-			{
-				if( writer != null ) writer.close();
-			}
-			
-			hitsPerSample.put( sample.getSampleId(), Integer.toString( numHits ).toString() );
-			
+
+			depricatedHitFields.remove( name );
+			numHitsFieldName = name;
 		}
 	}
-
-
 
 	/**
 	 * Some {@link biolockj.module.classifier.ClassifierModule}s can include taxonomy level identifiers without an OTU
@@ -160,8 +210,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 
 		return false;
 	}
-
-	
 
 	/**
 	 * Validate {@link biolockj.module.implicit.parser} modules run after {@link biolockj.module.classifier} and
@@ -191,13 +239,26 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	}
 
 	/**
-	 * Metadata column name for column that holds number of OTU hits after any {@link biolockj.module.implicit.parser}
-	 * module executes: {@value #NUM_HITS}
+	 * Get RegisterNumReads instance from the pipeline registry.
+	 * 
+	 * @return RegisterNumReads BioModule
+	 * @throws Exception if errors occur
 	 */
-	public static final String NUM_HITS = "Num_Hits";
+	public static ParserModuleImpl getModule() throws Exception
+	{
+		return (ParserModuleImpl) ModuleUtil.getParserModule();
+	}
 
-	private static final String EXT = ".tsv";
-	private static final TreeSet<ParsedSample> parsedSamples = new TreeSet<>();
+	private final Set<String> depricatedHitFields = new HashSet<>();
 	private final Map<String, String> hitsPerSample = new HashMap<>();
+	private String numHitsFieldName = NUM_OTUS;
+
+	private final TreeSet<ParsedSample> parsedSamples = new TreeSet<>();
+
+	/**
+	 * Metadata column name for column that holds number of OTU hits after any {@link biolockj.module.implicit.parser}
+	 * module executes: {@value #NUM_OTUS}
+	 */
+	protected static final String NUM_OTUS = "Num_OTUs";
 
 }

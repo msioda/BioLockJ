@@ -19,6 +19,7 @@ import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.MetaUtil;
+import biolockj.util.ModuleUtil;
 import biolockj.util.SeqUtil;
 
 /**
@@ -51,10 +52,6 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 					+ " " + map.get( file ).getAbsolutePath() + " " + getTempDir().getAbsolutePath() + " "
 					+ getOutputDir().getAbsolutePath() );
 
-			// lines.add( Config.getExe( EXE_PEAR ) + " -f " + file.getAbsolutePath() + " -r "
-			// + map.get( file ).getAbsolutePath() + " -o " + tempDir + sampleId + params );
-			// lines.add( "mv " + tempDir + sampleId + ".assembled." + SeqUtil.FASTQ + " " + outDir + sampleId + "."
-			// + SeqUtil.FASTQ );
 			data.add( lines );
 		}
 
@@ -109,7 +106,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 			MetaUtil.setFile( updatedMeta );
 			MetaUtil.refreshCache();
 		}
-		else if( !MetaUtil.getFieldNames().contains( NUM_MERGED_READS ) )
+		else if( !MetaUtil.getFieldNames().contains( getMetaColName() ) )
 		{
 			Log.info( getClass(),
 					"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
@@ -122,15 +119,14 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
-			MetaUtil.addColumn( NUM_MERGED_READS, readsPerSample, getOutputDir() );
+			MetaUtil.addColumn( getMetaColName(), readsPerSample, getOutputDir() );
 		}
 		else
 		{
 			Log.warn( getClass(), "Counts for # merged reads/sample already found in metadata, not re-counting "
 					+ MetaUtil.getFile().getAbsolutePath() );
 		}
-
-		RegisterNumReads.setNumReadFieldName( NUM_MERGED_READS );
+		RegisterNumReads.getModule().setNumReadFieldName( getMetaColName() );
 	}
 
 	/**
@@ -147,6 +143,16 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 				+ SeqUtil.FASTQ );
 		lines.add( "}" );
 		return lines;
+	}
+
+	private String getMetaColName() throws Exception
+	{
+		if( otuColName == null )
+		{
+			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_MERGED_READS );
+		}
+
+		return otuColName;
 	}
 
 	/**
@@ -166,6 +172,8 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 
 		return formattedSwitches;
 	}
+
+	private String otuColName = null;
 
 	/**
 	 * Metadata column name for column that holds number of reads per sample after merging: {@value #NUM_MERGED_READS}

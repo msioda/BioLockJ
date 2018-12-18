@@ -273,6 +273,28 @@ public class ModuleUtil
 	}
 
 	/**
+	 * Return a system generated metadata column name based on the module status.
+	 * 
+	 * @param module BioModule
+	 * @param col Column name
+	 * @return Metadata column name
+	 * @throws Exception if errors occur
+	 */
+	public static String getSystemMetaCol( final BioModule module, final String col ) throws Exception
+	{
+		final File outputMeta = new File(
+				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+		if( ModuleUtil.isComplete( module ) || outputMeta.exists() )
+		{
+			return MetaUtil.getLatestColumnName( col );
+		}
+		else
+		{
+			return MetaUtil.getForcedColumnName( col );
+		}
+	}
+
+	/**
 	 * Return TRUE if bioModule has executed.
 	 *
 	 * @param bioModule BioModule

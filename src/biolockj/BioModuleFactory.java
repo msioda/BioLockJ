@@ -58,7 +58,7 @@ public class BioModuleFactory
 			bioModules.add( getModule( getDefaultDemultiplexer() ) );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_READS ) 
+		if( Config.getBoolean( Config.REPORT_NUM_READS )
 				&& !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ).equals( MetaUtil.META_NULL_VALUE ) )
 		{
 			info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] --> Adding module: "

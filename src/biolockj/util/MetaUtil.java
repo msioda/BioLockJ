@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.module.BioModule;
 
 /**
  * This utility is used to read, modify, or create a metadata file for the sequence data. The 1st row must hold the
@@ -196,6 +197,34 @@ public class MetaUtil
 	}
 
 	/**
+	 * Used to generate a guaretneed to be unique column name. If NUM_READS already exists, this will return
+	 * NUM_READS_1, or NUM_READ_2, etc until a unique column name is found. If a column already exists, but contains
+	 * only {@ biolockj.Config}.{@value #META_NULL_VALUE} return the name of that empty column.
+	 * 
+	 * @param name Base column name
+	 * @return column name
+	 * @throws Exception if errors occur
+	 */
+	public static String getForcedColumnName( final String name ) throws Exception
+	{
+		int suffix = 1;
+		String testName = name;
+		while( getFieldNames().contains( testName ) )
+		{
+			final Set<String> testSet = new HashSet<>( getFieldValues( testName ) );
+			testSet.remove( Config.requireString( META_NULL_VALUE ) );
+			if( testSet.isEmpty() )
+			{
+				MetaUtil.removeColumn( testName, null );
+				break; // reuse the column
+			}
+
+			testName = name + "_" + suffix++;
+		}
+		return testName;
+	}
+
+	/**
 	 * Get the metadata file ID column name. This value may change as updates are made by BioModules.
 	 *
 	 * @return Metadata ID column name
@@ -203,6 +232,26 @@ public class MetaUtil
 	public static String getID()
 	{
 		return metaId;
+	}
+
+	/**
+	 * Returns the latest version of the given column.
+	 * 
+	 * @param name Base column name
+	 * @return column name
+	 * @throws Exception if errors occur
+	 */
+	public static String getLatestColumnName( final String name ) throws Exception
+	{
+		int suffix = 1;
+		String testName = name;
+		String foundName = null;
+		while( getFieldNames().contains( testName ) )
+		{
+			foundName = testName;
+			testName = name + "_" + suffix++;
+		}
+		return foundName;
 	}
 
 	/**
@@ -250,7 +299,7 @@ public class MetaUtil
 			ex.printStackTrace();
 		}
 
-		return Config.getString( Config.INTERNAL_PIPELINE_NAME ) + ".tsv";
+		return Config.getString( Config.INTERNAL_PIPELINE_NAME ) + BioModule.TSV;
 
 	}
 
@@ -376,8 +425,18 @@ public class MetaUtil
 	 * @param fileDir File representing output directory for new metadata file
 	 * @throws Exception if errors occur
 	 */
-	public static void removeColumn( final String colName, final File fileDir ) throws Exception
+	public static void removeColumn( final String colName, File fileDir ) throws Exception
 	{
+		if( fileDir == null )
+		{
+			fileDir = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+					+ File.separator + ".temp" );
+			if( !fileDir.exists() )
+			{
+				fileDir.mkdir();
+			}
+		}
+
 		if( getFile() == null || !getFile().exists() )
 		{
 			Log.warn( MetaUtil.class, "Cannot remove column [" + colName + "] because no metadata file exists." );
@@ -595,6 +654,13 @@ public class MetaUtil
 	public static final String META_REQUIRED = "metadata.required";
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #USE_EVERY_ROW}<br>
+	 * If Y, require a sequence file for every SampleID (every row) in {@value #META_FILE_PATH}.<br>
+	 * If N, metadata can include extraneous SampleIDs.
+	 */
+	public static final String USE_EVERY_ROW = "metadata.useEveryRow";
+
+	/**
 	 * Default column delimiter = tab character
 	 */
 	protected static final String DEFAULT_COL_DELIM = BioLockJ.TAB_DELIM;
@@ -608,14 +674,6 @@ public class MetaUtil
 	 * Default field value to represent null-value: {@value #DEFAULT_NULL_VALUE}
 	 */
 	protected static final String DEFAULT_NULL_VALUE = "NA";
-	
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #USE_EVERY_ROW}<br>
-	 * If Y, require a sequence file for every SampleID (every row) in {@value #META_FILE_PATH}.<br>
-	 * If N, metadata can include extraneous SampleIDs.
-	 */
-	public static final String USE_EVERY_ROW = "metadata.useEveryRow";
-	
 
 	private static String META_SPACER = "************************************************************************";
 	private static File metadataFile = null;

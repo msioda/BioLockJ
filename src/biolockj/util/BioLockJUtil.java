@@ -29,20 +29,6 @@ public class BioLockJUtil
 {
 
 	/**
-	 * Direct module param format has 2 parts separated by a colon (pipeline directory name):(module name)
-	 * 
-	 * @param module
-	 * @return Direct param string
-	 * @throws Exception if errors occur
-	 */
-	public static String getDirectModuleParam( final BioModule module ) throws Exception
-	{
-		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName() + 
-				":" + module.getClass().getName();
-	}
-	
-	
-	/**
 	 * Delete file or directory with retry. Wait 3 seconds between each try - waiting for resource to release lock if .
 	 * 
 	 * @param file File or directory
@@ -133,27 +119,6 @@ public class BioLockJUtil
 
 		return names;
 	}
-	
-	/**
-	 * Print collection one item per line. 
-	 * 
-	 * @param data Collection of data
-	 * @return Collection data as a String
-	 */
-	public static String printLongFormList( final Collection<?> data )
-	{
-		final StringBuffer sb = new StringBuffer();
-		if( data != null && !data.isEmpty() )
-		{
-			sb.append( BioLockJ.RETURN );
-			for( final Object val: data )
-			{
-				sb.append( val ).append( BioLockJ.RETURN );
-			}
-		}
-
-		return sb.toString();
-	}
 
 	/**
 	 * Concatenate data and return as a comma separated String.
@@ -173,6 +138,19 @@ public class BioLockJUtil
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Direct module param format has 2 parts separated by a colon (pipeline directory name):(module name)
+	 * 
+	 * @param module
+	 * @return Direct param string
+	 * @throws Exception if errors occur
+	 */
+	public static String getDirectModuleParam( final BioModule module ) throws Exception
+	{
+		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName()
+				+ ":" + module.getClass().getName();
 	}
 
 	/**
@@ -273,6 +251,65 @@ public class BioLockJUtil
 		}
 
 		return missingMsg;
+	}
+
+	/**
+	 * Print collection one item per line.
+	 * 
+	 * @param data Collection of data
+	 * @return Collection data as a String
+	 */
+	public static String printLongFormList( final Collection<?> data )
+	{
+		final StringBuffer sb = new StringBuffer();
+		if( data != null && !data.isEmpty() )
+		{
+			sb.append( BioLockJ.RETURN );
+			for( final Object val: data )
+			{
+				sb.append( val ).append( BioLockJ.RETURN );
+			}
+		}
+
+		return sb.toString();
+	}
+
+	/**
+	 * Remove the outer single or double quotes of the given value
+	 * 
+	 * @param value
+	 * @return value without outer quotes
+	 * @throws Exception if errors occur
+	 */
+	public static String removeOuterQuotes( final String value ) throws Exception
+	{
+		if( value.startsWith( "\"" ) && value.endsWith( "\"" ) )
+		{
+			return value.substring( 1, value.length() - 1 );
+		}
+		if( value.startsWith( "'" ) && value.endsWith( "'" ) )
+		{
+			return value.substring( 1, value.length() - 1 );
+		}
+
+		return value;
+	}
+
+	/**
+	 * Remove all single and double quotation marks found in value.
+	 * 
+	 * @param value
+	 * @return value with no quotes
+	 * @throws Exception if errors occur
+	 */
+	public static String removeQuotes( final String value ) throws Exception
+	{
+		if( value == null )
+		{
+			return null;
+		}
+
+		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
 	/**

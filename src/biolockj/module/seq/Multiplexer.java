@@ -251,8 +251,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 									+ " unique barcodes" );
 					for( final String id: MetaUtil.getSampleIds() )
 					{
-						Log.warn( getClass(),
-								"ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
+						Log.warn( getClass(), "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
 					}
 				}
 				else

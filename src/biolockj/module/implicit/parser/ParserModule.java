@@ -11,14 +11,15 @@
  */
 package biolockj.module.implicit.parser;
 
+import java.io.File;
 import biolockj.module.JavaModule;
 import biolockj.node.ParsedSample;
 
 /**
  * This interface defines the required methods to parse ClassifierModule output. Each BioLockJ ClassifierModule
  * implementation must have a corresponding ParserModule that understands the classifier output file format to extract
- * the OTU counts assigned to each sample. Parser BioModules read ClassifierModule output to build standardized OTU
- * abundance tables.
+ * the OTUs assigned to each sample. Parser BioModules read ClassifierModule output to build a single OTU count files
+ * for each sample using a standard format.
  */
 public interface ParserModule extends JavaModule
 {
@@ -33,11 +34,20 @@ public interface ParserModule extends JavaModule
 	public void addParsedSample( ParsedSample parsedSample ) throws Exception;
 
 	/**
-	 * After {@link #parseSamples()} completes, this method builds the OTU tree files.
+	 * After {@link #parseSamples()} completes, this method builds the OTU count files.
 	 *
 	 * @throws Exception if error occurs while building OTU tables
 	 */
-	public void buildOtuTreeFiles() throws Exception;
+	public void buildOtuCountFiles() throws Exception;
+
+	/**
+	 * Get the name of the OTU count file output for the given sampleId
+	 * 
+	 * @param sampleId Sample ID
+	 * @return OTU count file
+	 * @throws Exception if errors occur
+	 */
+	public File getOtuCountFile( String sampleId ) throws Exception;
 
 	/**
 	 * After {@link #parseSamples()} completes, this method can be called to get a {@link biolockj.node.ParsedSample} by
@@ -47,7 +57,6 @@ public interface ParserModule extends JavaModule
 	 * @return ParsedSample with the given sampleId
 	 */
 	public ParsedSample getParsedSample( String sampleId );
-
 
 	/**
 	 * Parse {@link biolockj.module.classifier.ClassifierModule} output to build {@link biolockj.node.ParsedSample}s.

@@ -157,4 +157,6 @@ public interface BioModule
 	 */
 	public static final String TEMP_DIR = "temp";
 
+	public static final String TSV = ".tsv";
+
 }

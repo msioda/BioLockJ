@@ -13,7 +13,6 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.Log;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.ParsedSample;
 import biolockj.node.wgs.SlimmNode;

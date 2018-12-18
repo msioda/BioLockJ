@@ -9,9 +9,7 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.r.CalculateStats;
-import biolockj.module.r.R_Module;
 import biolockj.node.JsonNode;
-import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.ModuleUtil;
@@ -63,7 +61,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	/**
 	 * Module prerequisites include:
 	 * <ul>
-	 * <li>{@link biolockj.module.report.AddMetadataToOtuTables}
+	 * <li>{@link biolockj.module.report.AddMetaToTaxonomyTables}
 	 * <li>{@link biolockj.module.r.CalculateStats}
 	 * </ul>
 	 */
@@ -71,7 +69,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		preReqs.add( AddMetadataToOtuTables.class );
+		preReqs.add( AddMetaToTaxonomyTables.class );
 		preReqs.add( CalculateStats.class );
 		return preReqs;
 	}
@@ -125,7 +123,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		final JsonNode root = new JsonNode( ROOT_NODE, 0L, null, null );
+		final JsonNode root = new JsonNode( ROOT_NODE, 0, null, null );
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = buildJsonMap( root );
 		root.addCount( getRootCount( jsonMap ) );
 		addStats( jsonMap, root );
@@ -218,67 +216,65 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		// for each sample...
 		for( final ParsedSample sample: parsedSamples )
 		{
-			Log.debug( getClass(), "Build JSON Node for Sample ID[ " + sample.getSampleId() + " ] with #Hits:"
-					+ sample.getNumHits() + " | #OTU Nodes: " + sample.getOtuNodes().size() );
 
-			// for each sample OtuNode
-			for( final OtuNode node: sample.getOtuNodes() )
-			{
-				final Map<String, String> otuBranch = node.getOtuMap();
-				boolean foundGap = false;
-				final StringBuffer gaps = new StringBuffer();
-				String parentOtu = null;
-				String parentLevel = null;
-				final Iterator<String> levels = Config.getList( Config.REPORT_TAXONOMY_LEVELS ).iterator();
-				while( levels.hasNext() )
-				{
-					final String level = levels.next();
-					final String otu = otuBranch.get( level );
-					if( otu != null && validOtus.get( level ).contains( otu ) )
-					{
-						// missing levels only become a gap if OTUs are found below the gap
-						if( !gaps.toString().isEmpty() )
-						{
-							foundGap = true;
-						}
-
-						// create jsonMap level entry
-						if( jsonMap.get( level ) == null )
-						{
-							jsonMap.put( level, new TreeSet<JsonNode>() );
-						}
-
-						// create JsonNode for OTU at the given level
-						JsonNode jsonNode = getJsonNode( otu, jsonMap.get( level ), level );
-						if( jsonNode == null )
-						{
-							JsonNode parent = getParent( parentOtu, parentLevel, jsonMap );
-							if( parent == null )
-							{
-								parent = rootNode;
-							}
-							jsonNode = new JsonNode( otu, 0L, parent, level );
-							jsonMap.get( level ).add( jsonNode );
-						}
-
-						jsonNode.addCount( node.getCount() );
-						parentOtu = otu;
-						parentLevel = level;
-					}
-					else if( parentOtu != null ) // OTU = null: Tree has a gap, so do not check remaining nodes
-					{
-						gaps.append( ( gaps.toString().isEmpty() ? "": ", " ) + level );
-
-					}
-				}
-
-				if( foundGap )
-				{
-					brokenOtuNetworks.add( otuBranch );
-					node.report();
-					Log.warn( getClass(), "Missing OTU Levels [ " + sample.getSampleId() + " ]: " + gaps.toString() );
-				}
-			}
+			// // for each sample OtuNode
+			// for( final OtuNode node: sample.getOtuNodes() )
+			// {
+			// final Map<String, String> otuBranch = node.getOtuMap();
+			// boolean foundGap = false;
+			// final StringBuffer gaps = new StringBuffer();
+			// String parentOtu = null;
+			// String parentLevel = null;
+			// final Iterator<String> levels = Config.getList( Config.REPORT_TAXONOMY_LEVELS ).iterator();
+			// while( levels.hasNext() )
+			// {
+			// final String level = levels.next();
+			// final String otu = otuBranch.get( level );
+			// if( otu != null && validOtus.get( level ).contains( otu ) )
+			// {
+			// // missing levels only become a gap if OTUs are found below the gap
+			// if( !gaps.toString().isEmpty() )
+			// {
+			// foundGap = true;
+			// }
+			//
+			// // create jsonMap level entry
+			// if( jsonMap.get( level ) == null )
+			// {
+			// jsonMap.put( level, new TreeSet<JsonNode>() );
+			// }
+			//
+			// // create JsonNode for OTU at the given level
+			// JsonNode jsonNode = getJsonNode( otu, jsonMap.get( level ), level );
+			// if( jsonNode == null )
+			// {
+			// JsonNode parent = getParent( parentOtu, parentLevel, jsonMap );
+			// if( parent == null )
+			// {
+			// parent = rootNode;
+			// }
+			// jsonNode = new JsonNode( otu, 0, parent, level );
+			// jsonMap.get( level ).add( jsonNode );
+			// }
+			//
+			// jsonNode.addCount( node.getCount() );
+			// parentOtu = otu;
+			// parentLevel = level;
+			// }
+			// else if( parentOtu != null ) // OTU = null: Tree has a gap, so do not check remaining nodes
+			// {
+			// gaps.append( ( gaps.toString().isEmpty() ? "": ", " ) + level );
+			//
+			// }
+			// }
+			//
+			// if( foundGap )
+			// {
+			// brokenOtuNetworks.add( otuBranch );
+			// node.report();
+			// Log.warn( getClass(), "Missing OTU Levels [ " + sample.getSampleId() + " ]: " + gaps.toString() );
+			// }
+			// }
 		}
 
 		return jsonMap;
@@ -345,19 +341,19 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * Also log #sequences at each taxonomy level.
 	 *
 	 * @param LinkedHashMap jsonMap (key=level)
-	 * @return long count
+	 * @return count
 	 * @throws Exception if parent is missing for any node
 	 */
-	private long getRootCount( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap ) throws Exception
+	private int getRootCount( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap ) throws Exception
 	{
 		Log.info( getClass(), Log.LOG_SPACER );
 		Log.info( getClass(), "JSON OTU Report" );
 		Log.info( getClass(), Log.LOG_SPACER );
-		long rootCount = 0L;
-		final LinkedHashMap<String, Long> countMap = new LinkedHashMap<>();
+		int rootCount = 0;
+		final LinkedHashMap<String, Integer> countMap = new LinkedHashMap<>();
 		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
 		{
-			long totalSeqs = 0L;
+			int totalSeqs = 0;
 			int numOtus = 0;
 			if( jsonMap.get( level ) != null )
 			{
@@ -376,7 +372,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			}
 
 			countMap.put( level, totalSeqs );
-			if( rootCount == 0L && totalSeqs > 0 )
+			if( rootCount == 0 && totalSeqs > 0 )
 			{
 				rootCount = totalSeqs; // sets top level count
 			}
@@ -551,23 +547,23 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	private static String getStatsType( final File file ) throws Exception
 	{
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + R_Module.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + TSV ) )
 		{
 			return CalculateStats.P_VALS_PAR;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP + R_Module.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP + TSV ) )
 		{
 			return CalculateStats.P_VALS_NP;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + R_Module.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + TSV ) )
 		{
 			return CalculateStats.P_VALS_PAR_ADJ;
 		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + R_Module.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + TSV ) )
 		{
 			return CalculateStats.P_VALS_NP_ADJ;
 		}
-		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + R_Module.TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + TSV ) )
 		{
 			return CalculateStats.R_SQUARED_VALS;
 		}

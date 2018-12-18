@@ -11,10 +11,11 @@
  */
 package biolockj.node;
 
-import java.io.*;
+import java.io.Serializable;
 import java.util.*;
-import biolockj.Config;
 import biolockj.Log;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.OtuUtil;
 
 /**
  * {@link biolockj.module.implicit.parser.ParserModule}s create and store one {@link biolockj.node.ParsedSample}, with
@@ -45,25 +46,35 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	{
 		otuNodes.add( node );
 	}
-	
+
+	@Override
+	public int compareTo( final ParsedSample o )
+	{
+		return o.getSampleId().compareTo( getSampleId() );
+	}
+
 	/**
-	 * Get the streamlined taxonomy tree with counts, each OTU listed only 1 time with num occurrences in the sample.<br>
-	 * Example: d__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__Bacteroides_vulgatus 87342
+	 * Get the streamlined taxonomy tree with counts, each OTU listed only 1 time with num occurrences in the
+	 * sample.<br>
+	 * Example:
+	 * d__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__Bacteroides_vulgatus
+	 * 87342
+	 * 
 	 * @return map OTU-count
 	 * @throws Exception if errors occur
 	 */
-	public Map<String, Integer> getTreeCounts() throws Exception
+	public Map<String, Integer> getOtuCounts() throws Exception
 	{
 		if( otuNodes.isEmpty() )
 		{
 			Log.warn( getClass(), "No samples found for " + sampleId );
 			return null;
 		}
-		
-		final Map<String, Integer> counts = new TreeMap<>();
 
-		final Map<String, String> map = getDelimMap( otuNodes.iterator().next() );
-		
+		final Map<String, Integer> otuCounts = new TreeMap<>();
+
+		final Map<String, String> map = otuNodes.iterator().next().delimToLevelMap();
+
 		for( final OtuNode otuNode: otuNodes )
 		{
 			final StringBuffer otu = new StringBuffer();
@@ -74,99 +85,26 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 				{
 					if( !otu.toString().isEmpty() )
 					{
-						otu.append( SEPARATOR );
+						otu.append( OtuUtil.SEPARATOR );
 					}
-							
-					otu.append( map.get( level ) ).append( name );
+
+					otu.append( OtuUtil.buildOtuTaxa( map.get( level ), BioLockJUtil.removeQuotes( name ) ) );
 				}
 			}
-			
-			if( counts.get( otu.toString() ) == null )
+
+			if( !otuCounts.keySet().contains( otu.toString() ) )
 			{
-				counts.put( otu.toString(), 0 );
+				otuCounts.put( otu.toString(), 0 );
 			}
-			
-			counts.put( otu.toString() , counts.get( otu.toString() ) + otuNode.getCount() );
+
+			otuCounts.put( otu.toString(), otuCounts.get( otu.toString() ) + otuNode.getCount() );
 
 		}
 
 		otuNodes = null;
 		otuNodes = new HashSet<>();
-		
-		return counts;
-	}
 
-
-	
-
-	private Map<String, String> delimMap = null;
-	
-	private Map<String, String> getDelimMap( OtuNode node ) throws Exception
-	{
-		if( delimMap == null )
-		{
-			delimMap = new HashMap<>();
-			Map<String, String> map = node.delimToLevelMap();
-			for( final String level: map.keySet() )
-			{
-				if( map.get( level ).equals( Config.DOMAIN ) )
-				{
-					delimMap.put( level, DOMAIN_DELIM );
-				}
-				else if( map.get( level ).equals( Config.PHYLUM ) )
-				{
-					delimMap.put( level, PHYLUM_DELIM );
-				}
-				else if( map.get( level ).equals( Config.CLASS ) )
-				{
-					delimMap.put( level, CLASS_DELIM );
-				}
-				else if( map.get( level ).equals( Config.ORDER ) )
-				{
-					delimMap.put( level, ORDER_DELIM );
-				}
-				else if( map.get( level ).equals( Config.FAMILY ) )
-				{
-					delimMap.put( level, FAMILY_DELIM );
-				}
-				else if( map.get( level ).equals( Config.GENUS ) )
-				{
-					delimMap.put( level, GENUS_DELIM );
-				}
-				else if( map.get( level ).equals( Config.SPECIES ) )
-				{
-					delimMap.put( level, SPECIES_DELIM );
-				}
-			}
-		}
-		return delimMap;
-	}
-
-	
-	@Override
-	public int compareTo( final ParsedSample o )
-	{
-		return o.getSampleId().compareTo( getSampleId() );
-	}
-
-	/**
-	 * Getter for otuCountMap, a nested TreeMap with outer key = level, inner key = OTU, inner value = count.
-	 *
-	 * @return OTU count map
-	 */
-	public TreeMap<String, TreeMap<String, Long>> getOtuCountMap()
-	{
-		return otuCountMap;
-	}
-
-	/**
-	 * Return all otuNodes
-	 * 
-	 * @return OTU nodes
-	 */
-	public Set<OtuNode> getOtuNodes()
-	{
-		return otuNodes;
+		return otuCounts;
 	}
 
 	/**
@@ -179,58 +117,9 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 		return sampleId;
 	}
 
-	/**
-	 * Print OTU counts at every level to the log file.
-	 */
-	public void report()
-	{
-		try
-		{
-			String val = "Parsed [" + sampleId + "] ==> ";
-
-			for( final String level: otuCountMap.keySet() )
-			{
-				final String otuCountMsg = level + " #OTUs: " + otuCountMap.get( level ).size();
-
-				val += otuCountMsg + " | ";
-				Log.debug( getClass(), Log.LOG_SPACER );
-				Log.debug( getClass(), otuCountMsg );
-				for( final String otu: otuCountMap.get( level ).keySet() )
-				{
-					Log.debug( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
-				}
-
-			}
-
-			Log.debug( getClass(), Log.LOG_SPACER );
-			Log.info( getClass(), val );
-		}
-		catch( final Exception ex )
-		{
-			Log.error( getClass(), "Unable to report ParsedSample! " + ex.getMessage(), ex );
-		}
-	}
-	
-	private static String SEPARATOR = ";";
-
-
-	private static String DOMAIN_DELIM = "d__";
-
-	private static String PHYLUM_DELIM = "p__";
-
-	private static String CLASS_DELIM = "c__";
-
-	private static String ORDER_DELIM = "o__";
-
-	private static String FAMILY_DELIM = "f__";
-
-	private static String GENUS_DELIM = "g__";
-
-	private static String SPECIES_DELIM = "s__";
-
-	// key=level
-	private final TreeMap<String, TreeMap<String, Long>> otuCountMap = new TreeMap<>();
 	private Set<OtuNode> otuNodes = new HashSet<>();
+
 	private final String sampleId;
+
 	private static final long serialVersionUID = 4882054401193953055L;
 }

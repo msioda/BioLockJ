@@ -54,7 +54,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		RegisterNumReads.setNumReadFieldName( NUM_TRIMMED_READS );
+		RegisterNumReads.getModule().setNumReadFieldName( getMetaColName() );
 	}
 
 	/**
@@ -263,7 +263,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		MetaUtil.addColumn( NUM_TRIMMED_READS, getValidReadsPerSample(), getOutputDir() );
+		MetaUtil.addColumn( getMetaColName(), getValidReadsPerSample(), getOutputDir() );
 	}
 
 	/**
@@ -383,6 +383,16 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		}
 
 		return primers;
+	}
+
+	private String getMetaColName() throws Exception
+	{
+		if( otuColName == null )
+		{
+			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_TRIMMED_READS );
+		}
+
+		return otuColName;
 	}
 
 	private File getPrimerFile() throws Exception
@@ -738,10 +748,12 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	private boolean mergedReadTwoPrimers = false;
 
 	private final Map<String, Map<String, String>> missingBothPrimers = new HashMap<>();
+
 	private final Map<String, Map<String, String>> missingFwPrimers = new HashMap<>();
 	private final Map<String, Map<String, String>> missingRvPrimers = new HashMap<>();
 	private final Map<String, Long> numLinesNoPrimer = new HashMap<>();
 	private final Map<String, Long> numLinesWithPrimer = new HashMap<>();
+	private String otuColName = null;
 	private final Set<File> seqs = new HashSet<>();
 	private final Map<File, Long> seqsWithPrimersTrimmed = new HashMap<>();
 	private final Map<String, String> validReadsPerSample = new HashMap<>();

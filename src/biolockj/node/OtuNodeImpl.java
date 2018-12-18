@@ -60,6 +60,22 @@ public abstract class OtuNodeImpl implements OtuNode
 	}
 
 	@Override
+	public Map<String, String> delimToLevelMap()
+	{
+		if( delimToLevelMap.isEmpty() )
+		{
+			delimToLevelMap.put( DOMAIN_DELIM, Config.DOMAIN );
+			delimToLevelMap.put( PHYLUM_DELIM, Config.PHYLUM );
+			delimToLevelMap.put( CLASS_DELIM, Config.CLASS );
+			delimToLevelMap.put( ORDER_DELIM, Config.ORDER );
+			delimToLevelMap.put( FAMILY_DELIM, Config.FAMILY );
+			delimToLevelMap.put( GENUS_DELIM, Config.GENUS );
+			delimToLevelMap.put( SPECIES_DELIM, Config.SPECIES );
+		}
+		return delimToLevelMap;
+	}
+
+	@Override
 	public Integer getCount()
 	{
 		return count;
@@ -132,22 +148,6 @@ public abstract class OtuNodeImpl implements OtuNode
 	protected static boolean debugMode() throws Exception
 	{
 		return Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" );
-	}
-
-	@Override
-	public Map<String, String> delimToLevelMap()
-	{
-		if( delimToLevelMap.isEmpty() )
-		{
-			delimToLevelMap.put( DOMAIN_DELIM, Config.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, Config.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, Config.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, Config.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, Config.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, Config.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, Config.SPECIES );
-		}
-		return delimToLevelMap;
 	}
 
 	private int count = 0;
