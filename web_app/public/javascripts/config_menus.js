@@ -58,9 +58,9 @@ function openProjDisplay() {
 -bljModuleJavaClassName=”biolockj/module/seq/AwkFastaConverter.java”*/
 function getUrl(bljModuleJavaClassName){
   //This function makes the string to feed into getText
-  console.assert(typeof bljModuleJavaClassName === "string", "getUrl function requires string argumentd")
-  urlRoot="https://raw.githubusercontent.com/msioda/BioLockJ/master/src/"
-  return (urlRoot + bljModuleJavaClassName + '.java')
+  console.assert(typeof bljModuleJavaClassName === "string", "getUrl function requires string argumentd");
+  urlRoot="https://raw.githubusercontent.com/msioda/BioLockJ/master/src/";
+  return (urlRoot + bljModuleJavaClassName + '.java');
 }//end getUrl
 function getText(bljLink){// read text from URL location
   return new Promise((resolve, reject) => {
@@ -83,6 +83,10 @@ function getText(bljLink){// read text from URL location
     request.send();
   })
 }//end getText
+
+function makeInnerHtml(myModulesKey){
+  
+}
 
 function parseBljModuleJavaClass(text){//gets text java documentation from Java class
   var startPublicClass;
@@ -304,7 +308,6 @@ myModules = new Map(Object.entries({
 
 //reorder moduleLinkAndClass to suit config form
 function orderModulesFromLocalFiles(selectedModulesArray, defaultOrderMap){
-
   if (selectedModulesArray == undefined){
     return defaultOrderMap;
   }
@@ -340,7 +343,7 @@ function orderModulesFromLocalFiles(selectedModulesArray, defaultOrderMap){
   }//end while
 
   return reorderedMods;
-}
+}//end orderModulesFromLocalFiles
 //let test = orderModulesFromLocalFiles(['biolockj/module/r/BuildPvalHistograms', 'biolockj/module/r/BuildPvalHistograms', 'biolockj/module/r/CalculateStats', 'biolockj/module/report/Normalizer'], myModules)
 
 
@@ -379,6 +382,7 @@ function runModuleFunctions() {//large function to build module li and counters
       mod.setAttribute('data-info', parseBljModuleJavaClass(result));
       hoverEventlistenerForModules(mod);
     });
+    mod.setAttribute('data-link', link)
     mod.addEventListener('dragstart', function(){dragStarted(event)});
     mod.addEventListener('dragover', function(){draggingOver(event)});
     mod.addEventListener('drop',function(){dropped(event)});
