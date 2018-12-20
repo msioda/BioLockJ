@@ -18,10 +18,12 @@ import java.util.StringTokenizer;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
+import biolockj.util.OtuUtil;
 
 /**
  * This utility is used to normalize and/or log-transform the raw OTU counts using the formulas:
@@ -44,6 +46,12 @@ import biolockj.util.MetaUtil;
  */
 public class Normalizer extends JavaModuleImpl implements JavaModule
 {
+	
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return OtuUtil.outputHasTaxonomyTables( previousModule );
+	}
 
 	/**
 	 * Verify {@link biolockj.Config}.{@value biolockj.Config#REPORT_LOG_BASE} property is valid (if defined) with a

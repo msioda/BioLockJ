@@ -76,13 +76,14 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		final Map<String, Set<String>> uniqueOtus = initUniqueLevelTaxaCountMap();
 		for( final String otu: otuCounts.keySet() )
 		{
+			Log.debug( getClass(), "Add JSON otu " + otu );
 			JsonNode parent = rootNode;
 			final Map<String, String> taxaMap = OtuUtil.getTaxaByLevel( otu );
 			for( final String level: taxaMap.keySet() )
 			{
 				final String taxa = taxaMap.get( level );
 				final int otuCount = otuCounts.get( otu );
-
+				Log.debug( getClass(), "JSON level " + level + " - taxa:" + taxa + " - otuCount: " + otuCount );
 				final JsonNode jsonNode = new JsonNode( taxa, otuCount, parent, level );
 				jsonMap.get( level ).add( jsonNode );
 

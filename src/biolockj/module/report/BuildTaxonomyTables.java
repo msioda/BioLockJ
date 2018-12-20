@@ -15,23 +15,10 @@ import biolockj.util.OtuUtil;
 public class BuildTaxonomyTables extends JavaModuleImpl implements JavaModule
 {
 
-	/**
-	 * Return the taxonomy table file for the given level.
-	 * 
-	 * @param level {@link biolockj.Config.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
-	 * @return Taxonomy table file
-	 * @throws Exception if errors occur building the File object
-	 */
-	public File getTaxonomyTable( final String level ) throws Exception
-	{
-		return new File( getOutputDir().getAbsolutePath() + File.separator
-				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + level + TSV );
-	}
-
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return OtuUtil.outputhasOtuCountFiles( previousModule );
+		return OtuUtil.outputHasOtuCountFiles( previousModule );
 	}
 
 	@Override
@@ -60,9 +47,9 @@ public class BuildTaxonomyTables extends JavaModuleImpl implements JavaModule
 					level );
 
 			report( "Taxonomy Counts @" + level, levelTaxaCounts );
-
-			Log.info( getClass(), "Building: " + getTaxonomyTable( level ).getAbsolutePath() );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( getTaxonomyTable( level ) ) );
+			File table = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, null );
+			Log.info( getClass(), "Building: " + table.getAbsolutePath() );
+			final BufferedWriter writer = new BufferedWriter( new FileWriter( table ) );
 			try
 			{
 				writer.write( MetaUtil.getID() );

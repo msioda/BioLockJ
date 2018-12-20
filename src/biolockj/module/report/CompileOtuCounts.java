@@ -22,7 +22,7 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return OtuUtil.outputhasOtuCountFiles( previousModule );
+		return OtuUtil.outputHasOtuCountFiles( previousModule );
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 		{
 			for( final String otu: otuCounts.keySet() )
 			{
-				writer.write( otu + TAB_DELIM + otuCounts.get( otu ) );
+				writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
 			}
 		}
 		finally

@@ -159,28 +159,34 @@ public abstract class BioModuleImpl implements BioModule
 	protected void initInputFiles() throws Exception
 	{
 		Log.debug( getClass(), "Initialize input files..." );
-		final BioModule previousModule = ModuleUtil.getPreviousModule( this );
+		boolean validInput = false;
 		final Set<File> files = new HashSet<>();
-		if( previousModule == null )
+		BioModule previousModule = ModuleUtil.getPreviousModule( this );
+		while ( !validInput )
 		{
-			Log.debug( getClass(), "Previous module is null...pull input.dirPaths data" );
-			files.addAll( SeqUtil.getPipelineInputFiles() );
-		}
-		else
-		{
-			Log.debug( getClass(), "Checking previous module: " + previousModule.getClass().getName() );
-			if( !isValidInputModule( previousModule ) )
+			if( previousModule == null )
 			{
-				List<File> prevInput = previousModule.getInputFiles();
-				files.addAll( prevInput );
-				Log.debug( getClass(), "Get previous module input files... # " + prevInput.size() );
+				Log.debug( getClass(), "Previous module is null...pull input.dirPaths data" );
+				files.addAll( SeqUtil.getPipelineInputFiles() );
+				validInput = true;
 			}
 			else
 			{
-				Log.debug( getClass(), "Previous module NOT VALID: " + previousModule.getClass().getName() );
-				Log.debug( getClass(), "Return files from: " + previousModule.getOutputDir().getAbsolutePath() );
-				files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
-						HiddenFileFilter.VISIBLE ) );
+				Log.debug( getClass(), "Check previous module for valid input files... # " + previousModule.getClass().getName() );
+				validInput = isValidInputModule( previousModule );
+				if( validInput )
+				{
+					Log.debug( getClass(), "Found VALID input in the output dir of: " 
+							+ previousModule.getClass().getName() + " --> " + previousModule.getOutputDir().getAbsolutePath() );
+					files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
+							HiddenFileFilter.VISIBLE ) );
+				}
+				else
+				{
+					previousModule = ModuleUtil.getPreviousModule( previousModule );
+					//List<File> prevInput = previousModule.getInputFiles();
+					//files.addAll( prevInput );
+				}
 			}
 		}
 

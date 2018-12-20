@@ -287,7 +287,11 @@ public class OtuUtil
 		final Map<String, String> map = new HashMap<>();
 		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
 		{
-			map.put( level, getTaxaName( otu, level ) );
+			String name = getTaxaName( otu, level );
+			if( name != null )
+			{
+				map.put( level, getTaxaName( otu, level ) );
+			}
 		}
 		return map;
 	}
@@ -343,13 +347,85 @@ public class OtuUtil
 		}
 		return null;
 	}
+	
+	
+	/**
+	 * Check the module to determine if it generated taxonomy table files.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if module generated taxonomy table files
+	 * @throws Exception if errors occur
+	 */
+	public static boolean outputHasTaxonomyTables( final BioModule module ) throws Exception
+	{
+		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
+				HiddenFileFilter.VISIBLE );
+
+		if( files == null || files.isEmpty() )
+		{
+			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
+		}
+
+		for( final File f: files )
+		{
+			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			{
+				return OtuUtil.isTaxonomyTable( f );
+			}
+		}
+
+		return false;
+	}
+	
+	public static File getTaxonomyTableFile( final File dir, String level, String suffix ) throws Exception
+	{
+		if( level == null )
+		{
+			level = "_";
+		}
+		else
+		{
+			level = "_" + level + "_";
+		}
+		
+		if( suffix == null )
+		{
+			suffix = "";
+		}
+		if( !suffix.startsWith( "_" ) )
+		{
+			suffix = "_" + suffix;
+		}
+		if( !suffix.endsWith( "_" ) )
+		{
+			suffix += "_";
+		}
+
+		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
+				+ level + TAXA_TABLE + suffix + BioModule.TSV );
+	}
 
 	/**
-	 * Check the file name and contents to verify file in an OTU count file.
+	 * Check the file name to determine if it is a taxonomy table file.
 	 * 
 	 * @param file
-	 * @return
-	 * @throws Exception
+	 * @return boolean
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isTaxonomyTable( final File file ) throws Exception
+	{
+		return file.getName().startsWith( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) ) && file.getName().endsWith( BioModule.TSV )
+				&& file.getName().contains( "_" + TAXA_TABLE + "_" );
+		
+	}
+	
+	
+	/**
+	 * Check the file name and contents to verify file is an OTU count file.
+	 * 
+	 * @param file
+	 * @return boolean 
+	 * @throws Exception if errors occur
 	 */
 	public static boolean isOtuFile( final File file ) throws Exception
 	{
@@ -391,7 +467,7 @@ public class OtuUtil
 	 * @return TRUE if module generated OTU count files
 	 * @throws Exception if errors occur
 	 */
-	public static boolean outputhasOtuCountFiles( final BioModule module ) throws Exception
+	public static boolean outputHasOtuCountFiles( final BioModule module ) throws Exception
 	{
 		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
 				HiddenFileFilter.VISIBLE );
@@ -417,10 +493,17 @@ public class OtuUtil
 	 * with {@value #DELIM_SEP}
 	 */
 	public static String DELIM_SEP = "@";
+	
 	/**
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
 	 */
 	public static final String OTU_COUNT = "otuCount";
+	
+	/**
+	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
+	 */
+	public static final String TAXA_TABLE = "taxaCount";
+	
 
 	/**
 	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}

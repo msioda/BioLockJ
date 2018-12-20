@@ -329,6 +329,11 @@ public class BioLockJUtil
 
 		if( masterExists )
 		{
+			if( getTempConfig().exists() )
+			{
+				deleteTempConfigFile();
+			}
+			
 			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
 			if( getMasterConfig().exists() )
 			{
@@ -386,23 +391,27 @@ public class BioLockJUtil
 				writer.close();
 			}
 
-			if( getTempConfig().exists() && getMasterConfig().exists() )
-			{
-				BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
-			}
-			else if( getTempConfig().exists() )
-			{
-				throw new Exception(
-						"Error occurred updating MASTER config.  File has been deleted, please recover using: "
-								+ getTempConfig().getAbsolutePath() );
-			}
+			deleteTempConfigFile();
 		}
 
 		if( !masterConfig.exists() )
 		{
 			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
 		}
-
+	}
+	
+	private static void deleteTempConfigFile() throws Exception
+	{
+		if( getTempConfig().exists() && getMasterConfig().exists() )
+		{
+			BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
+		}
+		else if( getTempConfig().exists() )
+		{
+			throw new Exception(
+					"Error occurred updating MASTER config.  File has been deleted, please recover using: "
+							+ getTempConfig().getAbsolutePath() );
+		}
 	}
 
 	/**
@@ -497,6 +506,6 @@ public class BioLockJUtil
 	public static final String MASTER_PREFIX = "MASTER_";
 
 	private static final String RETURN = BioLockJ.RETURN;
-	private static final String TEMP_PREFIX = "TEMP_";
+	private static final String TEMP_PREFIX = ".TEMP_";
 	private static final String VERSION_FILE = ".version";
 }

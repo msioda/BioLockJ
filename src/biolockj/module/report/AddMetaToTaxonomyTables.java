@@ -16,19 +16,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
 public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModule
 {
+	
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return OtuUtil.outputHasTaxonomyTables( previousModule );
+	}
+	
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
 	 */

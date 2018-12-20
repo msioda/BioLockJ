@@ -48,7 +48,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return OtuUtil.outputhasOtuCountFiles( previousModule );
+		return OtuUtil.outputHasOtuCountFiles( previousModule );
 	}
 
 	@Override
