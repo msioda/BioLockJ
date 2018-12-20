@@ -172,7 +172,7 @@ public abstract class BioModuleImpl implements BioModule
 			files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
 					HiddenFileFilter.VISIBLE ) );
 
-			if( isValidInputModule( previousModule ) )
+			if( !isValidInputModule( previousModule ) )
 			{
 				List<File> prevInput = previousModule.getInputFiles();
 				files.addAll( prevInput );
