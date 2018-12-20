@@ -168,6 +168,20 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	{
 		for( final ParsedSample sample: parsedSamples )
 		{
+			Log.debug( getClass(), "CHECK SAMPLE: " + sample.getSampleId() );
+			Map<String, Integer> otuCounts = sample.getOtuCounts();
+			if( otuCounts == null )
+			{
+				Log.debug( getClass(), "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: "  + sample.getSampleId() );
+			}
+			else
+			{
+				for( String key: otuCounts.keySet() )
+				{
+					Log.debug( getClass(), "key: " + key + " = " + otuCounts.get( key ) );
+				}
+			}
+			Log.debug( getClass(), "CHECK SAMPLE: " + sample.getOtuCounts() );
 			if( sample.getOtuCounts() == null )
 			{
 				Log.debug( getClass(), "111111111111111" );
