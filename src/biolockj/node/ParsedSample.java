@@ -92,12 +92,16 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 				}
 			}
 
+			
 			if( !otuCounts.keySet().contains( otu.toString() ) )
 			{
 				otuCounts.put( otu.toString(), 0 );
 			}
-
-			otuCounts.put( otu.toString(), otuCounts.get( otu.toString() ) + otuNode.getCount() );
+			
+			int count = otuCounts.get( otu.toString() ) + otuNode.getCount();
+			otuCounts.put( otu.toString(), count );
+			
+			Log.debug( getClass(), "Add OTU " + otu.toString() + "=" +  count );
 
 		}
 

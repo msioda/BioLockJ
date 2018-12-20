@@ -12,6 +12,7 @@
 package biolockj.module.implicit.parser;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import biolockj.Config;
@@ -49,10 +50,13 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		for( final ParsedSample sample: parsedSamples )
 		{
 			final Map<String, Integer> otuCounts = sample.getOtuCounts();
+			
 			if( otuCounts != null )
 			{
-				final BufferedWriter writer = new BufferedWriter(
-						new FileWriter( OtuUtil.getOtuCountFile( getOutputDir(), sample.getSampleId(), null ) ) );
+				File outputFile = OtuUtil.getOtuCountFile( getOutputDir(), sample.getSampleId(), null );
+				Log.info( getClass(), "Build output sample: " + sample.getSampleId() + " has " + otuCounts.size() + " OTUs --> " 
+						+ outputFile.getAbsolutePath() );
+				final BufferedWriter writer = new BufferedWriter( new FileWriter( outputFile ) );
 				int numHits = 0;
 				try
 				{
