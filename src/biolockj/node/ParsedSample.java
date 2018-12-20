@@ -80,14 +80,17 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 			final StringBuffer otu = new StringBuffer();
 			for( final String level: map.keySet() )
 			{
+				Log.debug( getClass(), "Check level" + level );
 				final String name = otuNode.getTaxaMap().get( level );
+				Log.debug( getClass(), "Check name" + name );
 				if( name != null )
 				{
 					if( !otu.toString().isEmpty() )
 					{
 						otu.append( OtuUtil.SEPARATOR );
 					}
-
+					Log.debug( getClass(), "map.get( level )" + map.get( level ) );
+					Log.debug( getClass(), "BioLockJUtil.removeQuotes( name )" + BioLockJUtil.removeQuotes( name ) );
 					otu.append( OtuUtil.buildOtuTaxa( map.get( level ), BioLockJUtil.removeQuotes( name ) ) );
 				}
 			}
