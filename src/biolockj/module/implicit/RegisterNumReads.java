@@ -124,7 +124,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		MetaUtil.addColumn( getNumReadFieldName(), readsPerSample, getOutputDir() );
+		MetaUtil.addColumn( getNumReadFieldName(), readsPerSample, getOutputDir(), true );
 	}
 
 	/**

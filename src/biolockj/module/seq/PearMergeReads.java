@@ -120,7 +120,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
-			MetaUtil.addColumn( metaColName, readsPerSample, getOutputDir() );
+			MetaUtil.addColumn( metaColName, readsPerSample, getOutputDir(), true );
 		}
 		else
 		{

@@ -57,9 +57,10 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
+		String metaColName = getMetaColName();
 		final Map<String, Map<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 		removeLowCounts( sampleOtuCounts );
-		updateMetadata();
+		MetaUtil.addColumn( metaColName, hitsPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -92,105 +93,50 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 				}
 			}
 
-			if( validOtus.isEmpty() )
-			{
-				badSamples.add( sampleId );
-			}
-			else
+			if( !validOtus.isEmpty() && numOtus > 0 )
 			{
 				hitsPerSample.put( sampleId, String.valueOf( numOtus ) );
-			}
 
-			if( validOtus.size() == otuCounts.size() )
-			{
-				FileUtils.copyFileToDirectory( getFileMap().get( sampleId ), getOutputDir() );
-			}
-			else if( !badSamples.contains( sampleId ) )
-			{
-				final Set<String> badOtus = new HashSet<>( otuCounts.keySet() );
-				badOtus.removeAll( validOtus );
-
-				Log.warn( getClass(),
-						"Removed low OTU counts below " + MIN_OTU_COUNT + "="
-								+ Config.requirePositiveInteger( MIN_OTU_COUNT ) + " --> "
-								+ BioLockJUtil.getCollectionAsString( badOtus ) );
-
-				final File otuFile = OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getIdString() );
-				final BufferedWriter writer = new BufferedWriter( new FileWriter( otuFile ) );
-				try
+				if( validOtus.size() == otuCounts.size() )
 				{
-					for( final String otu: validOtus )
+					FileUtils.copyFileToDirectory( getFileMap().get( sampleId ), getOutputDir() );
+				}
+				else 
+				{
+					final Set<String> badOtus = new HashSet<>( otuCounts.keySet() );
+					badOtus.removeAll( validOtus );
+	
+					Log.warn( getClass(),
+							"Removed low OTU counts below " + MIN_OTU_COUNT + "="
+									+ Config.requirePositiveInteger( MIN_OTU_COUNT ) + " --> "
+									+ BioLockJUtil.getCollectionAsString( badOtus ) );
+	
+					final File otuFile = OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getIdString() );
+					final BufferedWriter writer = new BufferedWriter( new FileWriter( otuFile ) );
+					try
 					{
-						Log.debug( getClass(),
-								sampleId + ":otuCounts.size(): " + otuCounts.size() + "=" + otuCounts.get( otu ) );
-						writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
+						for( final String otu: validOtus )
+						{
+							Log.debug( getClass(),
+									sampleId + ":otuCounts.size(): " + otuCounts.size() + "=" + otuCounts.get( otu ) );
+							writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
+						}
+					}
+					finally
+					{
+						if( writer != null )
+						{
+							writer.close();
+						}
+	
+						getFileMap().put( sampleId, otuFile );
 					}
 				}
-				finally
-				{
-					if( writer != null )
-					{
-						writer.close();
-					}
-
-					getFileMap().put( sampleId, otuFile );
-				}
+			
 			}
 		}
 	}
 
-	/**
-	 * Remove the invalid samples from the metadata file and add new NumOtus field.
-	 *
-	 * @throws Exception if errors occur
-	 */
-	protected void updateMetadata() throws Exception
-	{
-		String metaColName = getMetaColName();
-		if( badSamples.isEmpty() )
-		{
-			Log.info( getClass(), "All samples have OTUs that meet minimum read threshold - none will be ommitted..." );
-			MetaUtil.addColumn( metaColName, hitsPerSample, getOutputDir() );
-			return;
-		}
-		else
-		{
-			Log.warn( getClass(), "Removing samples below with only low count OTUs: "
-					+ BioLockJUtil.printLongFormList( badSamples ) );
-		}
-
-		final File newMapping = new File(
-				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-
-		Log.info( getClass(), "Current metadata file: " + MetaUtil.getFile().getAbsolutePath() );
-		Log.info( getClass(),
-				"Building metadata file: " + newMapping.getAbsolutePath() + " with new col: " + metaColName );
-		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMapping ) );
-		try
-		{
-			String line = reader.readLine();
-			writer.write( line + TAB_DELIM + metaColName + RETURN );
-			Log.info( getClass(), "Adding col header: " + metaColName );
-			for( line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
-				final String id = st.nextToken();
-				if( !badSamples.contains( id ) )
-				{
-					writer.write( line + TAB_DELIM + hitsPerSample.get( id ) + RETURN );
-				}
-			}
-		}
-		finally
-		{
-			reader.close();
-			writer.close();
-		}
-
-		MetaUtil.setFile( newMapping );
-		MetaUtil.refreshCache();
-	}
 
 	private Map<String, File> getFileMap() throws Exception
 	{
@@ -220,7 +166,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 		return otuColName;
 	}
 
-	private final Set<String> badSamples = new HashSet<>();
+
 	private Map<String, File> fileMap = null;
 	private final Map<String, String> hitsPerSample = new HashMap<>();
 	private String otuColName = null;

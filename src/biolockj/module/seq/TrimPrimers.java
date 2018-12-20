@@ -265,7 +265,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		MetaUtil.addColumn( getMetaColName(), getValidReadsPerSample(), getOutputDir() );
+		MetaUtil.addColumn( getMetaColName(), getValidReadsPerSample(), getOutputDir(), true );
 	}
 
 	/**

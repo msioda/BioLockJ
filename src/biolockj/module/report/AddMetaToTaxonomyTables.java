@@ -145,7 +145,7 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 			}
 		}
 
-		MetaUtil.addColumn( HIT_RATIO, hitRatioPerSample, getOutputDir() );
+		MetaUtil.addColumn( HIT_RATIO, hitRatioPerSample, getOutputDir(), true );
 	}
 
 	/**

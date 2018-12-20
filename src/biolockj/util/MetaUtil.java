@@ -36,9 +36,11 @@ public class MetaUtil
 	 * @param colName Name of new column
 	 * @param map Map relates Sample ID to a field value
 	 * @param fileDir File representing output directory for new metadata file
+	 * @param removeMissingIds if TRUE, sampleIds not include in the map param will be removed from the metadata
 	 * @throws Exception if unable to add the new column
 	 */
-	public static void addColumn( final String colName, final Map<String, String> map, final File fileDir )
+	public static void addColumn( final String colName, final Map<String, String> map, final File fileDir, 
+			boolean removeMissingIds )
 			throws Exception
 	{
 		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getMetadataFileName() );
@@ -50,7 +52,7 @@ public class MetaUtil
 			return;
 		}
 
-		final Set<String> keys = map.keySet();
+		final Set<String> sampleIds = map.keySet();
 		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
 		setFile( newMeta );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
@@ -62,14 +64,19 @@ public class MetaUtil
 				final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
 
 				final String id = st.nextToken();
-				if( keys.contains( id ) )
+				if( sampleIds.contains( id ) )
 				{
 					writer.write( line + BioLockJ.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
 				}
-				else
+				else if( !removeMissingIds )
 				{
 					writer.write(
 							line + BioLockJ.TAB_DELIM + Config.requireString( META_NULL_VALUE ) + BioLockJ.RETURN );
+				}
+				else
+				{
+					Log.warn( MetaUtil.class,
+							"REMOVE SAMPLE ID [" + id + "] due to no data in metadata column: " + colName );
 				}
 			}
 		}
@@ -337,6 +344,8 @@ public class MetaUtil
 				ids.add( key );
 			}
 		}
+		
+		Collections.sort( ids );
 
 		return ids;
 	}

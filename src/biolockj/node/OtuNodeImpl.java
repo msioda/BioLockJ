@@ -95,27 +95,19 @@ public abstract class OtuNodeImpl implements OtuNode
 	@Override
 	public Map<String, String> getTaxaMap() throws Exception
 	{
-		Log.debug( getClass(), "Calling getTaxaMap()" );
 		String parentTaxa = null;
 		final Set<String> populatedLevels = new HashSet<>( taxaMap.keySet() );
-		for( String lev: populatedLevels)
-		{
-			Log.debug( getClass(), "populatedLevel: " + lev );
-		}
 		
 		for( final String level: OtuUtil.getAllTaxonomyLevels() )
 		{
-			Log.debug( getClass(), "Checking getTaxaMap() level: " + level );
 			if( populatedLevels.contains( level ) )
 			{
 				populatedLevels.remove( level );
 			}
 
 			final String levelTaxa = taxaMap.get( level );
-			Log.debug( getClass(), "getTaxaMap() levelTaxa: " + levelTaxa );
 			if( levelTaxa == null && parentTaxa != null && !populatedLevels.isEmpty() )
 			{
-				Log.debug( getClass(), "ADD: " + level + " = " + parentTaxa );
 				taxaMap.put( level, parentTaxa );
 			}
 			if( levelTaxa != null )

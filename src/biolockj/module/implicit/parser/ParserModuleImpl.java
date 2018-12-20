@@ -40,8 +40,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 				throw new Exception( "Attempt to add duplicate sample! " + sample.getSampleId() );
 			}
 		}
-
-		parsedSamples.add( newSample );
 	}
 
 	@Override
@@ -54,7 +52,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 			if( otuCounts != null )
 			{
 				File outputFile = OtuUtil.getOtuCountFile( getOutputDir(), sample.getSampleId(), null );
-				Log.info( getClass(), "Build output sample: " + sample.getSampleId() + " has " + otuCounts.size() + " OTUs --> " 
+				Log.info( getClass(), "Build output sample: " + sample.getSampleId() + " | #OTUs=" + otuCounts.size() + "--> " 
 						+ outputFile.getAbsolutePath() );
 				final BufferedWriter writer = new BufferedWriter( new FileWriter( outputFile ) );
 				int numHits = 0;
@@ -144,15 +142,46 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		{
 			throw new Exception( "Parser failed to produce output!" );
 		}
+		
+		removeBadSamples();
 
 		buildOtuCountFiles();
+		
+		updateMetadata();
 
+		
+	}
+	
+	
+	protected void updateMetadata() throws Exception
+	{
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( NUM_OTUS, hitsPerSample, getOutputDir() );
-
+			MetaUtil.addColumn( NUM_OTUS, hitsPerSample, getOutputDir(), true );
 		}
 	}
+	
+	protected void removeBadSamples() throws Exception
+	{
+		for( final ParsedSample sample: parsedSamples )
+		{
+			if( sample.getOtuCounts() == null || sample.getOtuCounts().isEmpty() ||
+					sample.getOtuCounts().values().stream().mapToInt( Integer::intValue ).sum() == 0 )
+			{
+				badSamples.add( sample);
+			}
+		}
+		
+		if( !badSamples.isEmpty() )
+		{
+			for( final ParsedSample sample: badSamples )
+			{
+				parsedSamples.remove( sample );
+			}
+		}
+	}
+	
+	
 
 	/**
 	 * When a module modifies the number of hits, the new counts must replace the old count fields.
@@ -246,6 +275,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		return (ParserModuleImpl) ModuleUtil.getParserModule();
 	}
 
+	private final Set<ParsedSample> badSamples = new HashSet<>();
 	private final Set<String> depricatedOtuCountFields = new HashSet<>();
 	private final Map<String, String> hitsPerSample = new HashMap<>();
 	private String otuCountField = NUM_OTUS;

@@ -70,6 +70,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
+		String metaColName = getMetaColName();
 		final Map<String, Map<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 		final Integer quantileNum = getNumOtusForQuantile( sampleOtuCounts );
 
@@ -82,7 +83,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		updateMetadata();
+		MetaUtil.addColumn( metaColName, hitsPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -177,7 +178,6 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 		final List<String> data = getData( sampleId, otuCounts );
 		if( Config.getBoolean( REMOVE_LOW_ABUNDANT_SAMPLES ) && data.size() < quantileNum )
 		{
-			badSamples.add( sampleId );
 			return null;
 		}
 
@@ -210,56 +210,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 		return aveCount;
 	}
 
-	/**
-	 * Remove the invalid samples from the metadata file and add {@value #NUM_RAREFIED_OTUS} column with the new OTU
-	 * counts.
-	 *
-	 * @throws Exception if errors occur
-	 */
-	protected void updateMetadata() throws Exception
-	{
-		String metaColName = getMetaColName();
-		if( badSamples.isEmpty() )
-		{
-			Log.info( getClass(),
-					"All samples have valid OTUs that meet minimum read threshold - none will be ommitted..." );
-			MetaUtil.addColumn( metaColName, hitsPerSample, getOutputDir() );
-			return;
-		}
-		else
-		{
-			Log.warn( getClass(), "Removing samples containing nothing but low count OTUs that have been removed: "
-					+ BioLockJUtil.printLongFormList( badSamples ) );
-		}
 
-		final File newMapping = new File(
-				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMapping ) );
-		try
-		{
-			String line = reader.readLine();
-			writer.write( line + TAB_DELIM + metaColName + RETURN );
-
-			for( line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
-				final String id = st.nextToken();
-				if( !badSamples.contains( id ) )
-				{
-					writer.write( line + TAB_DELIM + hitsPerSample.get( id ) + RETURN );
-				}
-			}
-		}
-		finally
-		{
-			reader.close();
-			writer.close();
-		}
-
-		MetaUtil.setFile( newMapping );
-		MetaUtil.refreshCache();
-	}
 
 	private String getIdString() throws Exception
 	{
@@ -276,7 +227,6 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 		return otuColName;
 	}
 
-	private final Set<String> badSamples = new HashSet<>();
 	private final Map<String, String> hitsPerSample = new HashMap<>();
 	private String otuColName = null;
 	/**

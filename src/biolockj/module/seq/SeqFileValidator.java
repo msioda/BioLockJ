@@ -151,7 +151,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 			validateFile( file );
 		}
 
-		MetaUtil.addColumn( getMetaColName(), readsPerSample, getOutputDir() );
+		MetaUtil.addColumn( getMetaColName(), readsPerSample, getOutputDir(), true );
 	}
 
 	/**

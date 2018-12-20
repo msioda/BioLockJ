@@ -54,6 +54,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
+		String metaColName = getMetaColName();
 		Log.info( getClass(), "Searching samples to remove OTUs found in less than " + getCutoff() + " samples." );
 		final Map<String, Map<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 
@@ -67,7 +68,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		final Map<String, Set<String>> scarceOtus = findScarceOtus( sampleOtuCounts, uniqueOtus, scarceTaxa );
 		logScarceOtus( scarceOtus.keySet() );
 		removeScarceOtus( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
-		updateMetadata();
+		MetaUtil.addColumn( metaColName, hitsPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -214,36 +215,26 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		{
 			Log.debug( getClass(), "removeScarceOtus Checking sampleId: " + sampleId );
 			final Map<String, Integer> otuCounts = updatedOtuCounts.get( sampleId );
-			if( otuCounts == null || otuCounts.isEmpty() )
-			{
-				badSamples.add( sampleId );
-				Log.warn( getClass(), sampleId + " has no valid OTUs after removing scarce OTUS below "
-						+ MIN_OTU_THRESHOLD + "=" + Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) );
-			}
-			else
+			if( otuCounts != null && !otuCounts.isEmpty() )
 			{
 				final BufferedWriter writer = new BufferedWriter( new FileWriter(
 						OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getIdString().replace( "%", "" ) ) ) );
 				try
 				{
-					Log.debug( getClass(), "removeScarceOtus Found: " + otuCounts.size() );
+					Log.debug( getClass(), "#OTUs: " + otuCounts.size() );
 					Integer total = 0;
 					for( final String otu: otuCounts.keySet() )
 					{
-						Log.debug( getClass(), "removeScarceOtus Checking OTU: " + otu );
+						Log.debug( getClass(), "Checking OTU: " + otu );
 						final Integer sampleCount = otuCounts.get( otu );
-						Log.debug( getClass(),
-								"removeScarceOtus otuCounts key #1: " + otuCounts.keySet().iterator().next() );
 						if( sampleCount != null )
 						{
 							total += otuCounts.get( otu );
 							writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
-							Log.debug( getClass(), "Updated OTU count: " + otuCounts.get( otu ) );
 						}
 					}
 
 					hitsPerSample.put( sampleId, total.toString() );
-					
 				}
 				finally
 				{
@@ -256,55 +247,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		}
 	}
 
-	/**
-	 * Remove the invalid samples from the metadata file and add new NumOtus field.
-	 *
-	 * @throws Exception if errors occur
-	 */
-	protected void updateMetadata() throws Exception
-	{
-		String metaColName = getMetaColName();
-		if( badSamples.isEmpty() )
-		{
-			Log.info( getClass(),
-					"All samples have valid OTUs that meet minimum read threshold - none will be ommitted..." );
-			MetaUtil.addColumn( metaColName, hitsPerSample, getOutputDir() );
-			return;
-		}
-		else
-		{
-			Log.warn( getClass(), "Removing samples containing nothing but low count OTUs that have been removed: "
-					+ BioLockJUtil.printLongFormList( badSamples ) );
-		}
-
-		final File newMapping = new File(
-				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMapping ) );
-		try
-		{
-			String line = reader.readLine();
-			writer.write( line + TAB_DELIM + metaColName + RETURN );
-
-			for( line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
-				final String id = st.nextToken();
-				if( !badSamples.contains( id ) )
-				{
-					writer.write( line + TAB_DELIM + hitsPerSample.get( id ) + RETURN );
-				}
-			}
-		}
-		finally
-		{
-			reader.close();
-			writer.close();
-		}
-
-		MetaUtil.setFile( newMapping );
-		MetaUtil.refreshCache();
-	}
+	
 
 	private int getCutoff() throws Exception
 	{
@@ -332,7 +275,6 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		return new File( getTempDir().getAbsolutePath() + File.separator + "scarceOtus.txt" );
 	}
 
-	private final Set<String> badSamples = new HashSet<>();
 	private final Map<String, String> hitsPerSample = new HashMap<>();
 	private String otuColName = null;
 	/**

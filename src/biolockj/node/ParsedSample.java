@@ -90,12 +90,11 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 					{
 						otu.append( OtuUtil.SEPARATOR );
 					}
-					Log.debug( getClass(), "Add name [ otuNode.getTaxaMap().get( level=" + level +" ) ]: " + BioLockJUtil.removeQuotes( name )  );
+					
 					otu.append( OtuUtil.buildOtuTaxa( level, BioLockJUtil.removeQuotes( name ) ) );
 				}
 			}
 
-			
 			if( !otuCounts.keySet().contains( otu.toString() ) )
 			{
 				otuCounts.put( otu.toString(), 0 );
@@ -105,7 +104,6 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 			otuCounts.put( otu.toString(), count );
 			
 			Log.debug( getClass(), "Add OTU " + otu.toString() + "=" +  count );
-
 		}
 
 		otuNodes = null;

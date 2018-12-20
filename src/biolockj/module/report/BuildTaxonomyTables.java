@@ -116,5 +116,5 @@ public class BuildTaxonomyTables extends JavaModuleImpl implements JavaModule
 			}
 		}
 	}
-
+	
 }

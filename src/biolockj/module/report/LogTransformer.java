@@ -30,6 +30,7 @@ import biolockj.util.OtuUtil;
 public class LogTransformer extends JavaModuleImpl implements JavaModule
 {
 	
+
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
@@ -114,6 +115,10 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
+			if( x == 14 )  
+			{
+				Log.warn( getClass(), "Found all zero row" + x );
+			}
 			final List<Double> unnormalizedInnerList = dataPointsUnnormalized.get( x );
 
 			final List<Double> loggedInnerList = dataPointsLogged.get( x );
@@ -208,7 +213,6 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 				if( sum == 0 )
 				{
 					allZero.add( x );
-				
 				}
 			}
 		}
