@@ -164,50 +164,21 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		}
 	}
 	
+	/**
+	 * SHOULD NOT BE NEEDED IF "isValid(OtuNode) is working
+	 * @throws Exception
+	 */
 	protected void removeBadSamples() throws Exception
 	{
 		for( final ParsedSample sample: parsedSamples )
 		{
 			Log.debug( getClass(), "CHECK SAMPLE: " + sample.getSampleId() );
 			Map<String, Integer> otuCounts = sample.getOtuCounts();
-			if( otuCounts == null )
-			{
-				Log.debug( getClass(), "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: "  + sample.getSampleId() );
-			}
-			else
-			{
-				for( String key: otuCounts.keySet() )
-				{
-					Log.debug( getClass(), "key: " + key + " = " + otuCounts.get( key ) );
-				}
-			}
-			Log.debug( getClass(), "CHECK SAMPLE: " + sample.getOtuCounts() );
-			if( sample.getOtuCounts() == null )
-			{
-				Log.debug( getClass(), "111111111111111" );
-			}
-			else if( sample.getOtuCounts().isEmpty()  )
-			{
-				Log.debug( getClass(), "22222222222222" );
-			}
-			else if( sample.getOtuCounts().values() == null )
-			{
-				Log.debug( getClass(), "3333333333333333" );
-			}
-			else if( sample.getOtuCounts().values().isEmpty() )
-			{
-				Log.debug( getClass(), "4444444444444" );
-			}
-			else if( sample.getOtuCounts().values().stream().mapToInt( Integer::intValue ) == null )
-			{
-				Log.debug( getClass(), "5555555555555555555" );
-			}
 
-			
-			if( sample.getOtuCounts() == null || sample.getOtuCounts().isEmpty() ||
-					sample.getOtuCounts().values() == null || sample.getOtuCounts().values().isEmpty() ||
-					sample.getOtuCounts().values().stream().mapToInt( Integer::intValue ) == null ||
-					sample.getOtuCounts().values().stream().mapToInt( Integer::intValue ).sum() == 0 )
+			if( otuCounts == null || otuCounts.isEmpty() ||
+					otuCounts.values() == null || otuCounts.values().isEmpty() ||
+					otuCounts.values().stream().mapToInt( Integer::intValue ) == null ||
+					otuCounts.values().stream().mapToInt( Integer::intValue ).sum() == 0 )
 			{
 				badSamples.add( sample );
 			}
@@ -217,6 +188,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		{
 			for( final ParsedSample sample: badSamples )
 			{
+				Log.debug( getClass(), "Removing bad sample" );
 				parsedSamples.remove( sample );
 			}
 		}
@@ -262,7 +234,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 */
 	protected boolean isValid( final OtuNode node ) throws Exception
 	{
-		if( node != null && node.getSampleId() != null && node.getCount() != null && !node.getTaxaMap().isEmpty() )
+		if( node != null && node.getSampleId() != null && node.getCount() != null && !node.getTaxaMap().isEmpty() 
+				&& !node.getSampleId().isEmpty() && node.getCount() > 0 )
 		{
 			for( final String level: node.getTaxaMap().keySet() )
 			{
