@@ -101,8 +101,8 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 		}
 
 		reader.close();
-		assertNum( totalCounts, dataPointsUnnormalized );
-		assertNoZeros( dataPointsUnnormalized );
+		assertNum( otuTable, totalCounts, dataPointsUnnormalized );
+		assertNoZeros( otuTable, dataPointsUnnormalized );
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
@@ -176,7 +176,7 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 		writer.close();
 	}
 
-	private static void assertNoZeros( final List<List<Double>> dataPointsUnnormalized ) throws Exception
+	private static void assertNoZeros( File otuTable, final List<List<Double>> dataPointsUnnormalized ) throws Exception
 	{
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
@@ -191,14 +191,14 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 
 				if( sum == 0 )
 				{
-					throw new Exception( "Logic error" );
+					throw new Exception( "Logic error: OTU counts sum to zero: " + otuTable.getAbsolutePath() );
 				}
 
 			}
 		}
 	}
 
-	private static void assertNum( final int totalCounts, final List<List<Double>> dataPointsUnnormalized )
+	private static void assertNum( File otuTable, final int totalCounts, final List<List<Double>> dataPointsUnnormalized )
 			throws Exception
 	{
 		int sum = 0;
@@ -213,7 +213,7 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 
 		if( totalCounts != sum )
 		{
-			throw new Exception( "Logic error " + totalCounts + " " + sum );
+			throw new Exception( "Logic error " + totalCounts + " " + sum + " --> " +  otuTable.getAbsolutePath() );
 		}
 
 		if( dataPointsUnnormalized.size() > 0 )
@@ -224,7 +224,7 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 			{
 				if( length != dataPointsUnnormalized.get( x ).size() )
 				{
-					throw new Exception( "Jagged array" );
+					throw new Exception( "Jagged array in: " + otuTable.getAbsolutePath() );
 				}
 			}
 		}
