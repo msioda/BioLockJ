@@ -163,17 +163,20 @@ public abstract class BioModuleImpl implements BioModule
 		final Set<File> files = new HashSet<>();
 		if( previousModule == null )
 		{
+			Log.debug( getClass(), "Previous module is null...pull input.dirPaths data" );
 			files.addAll( SeqUtil.getPipelineInputFiles() );
 		}
 		else
 		{
+			Log.debug( getClass(), "Checking previous module: " + previousModule.getClass().getName() );
 			files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
 					HiddenFileFilter.VISIBLE ) );
 
 			if( isValidInputModule( previousModule ) )
 			{
-				Log.debug( getClass(), "Get previous module input files..." );
-				files.addAll( previousModule.getInputFiles() );
+				List<File> prevInput = previousModule.getInputFiles();
+				files.addAll( prevInput );
+				Log.debug( getClass(), "Get previous module input files... # " + prevInput.size() );
 			}
 		}
 
@@ -182,6 +185,10 @@ public abstract class BioModuleImpl implements BioModule
 			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
 			{
 				inputFiles.add( f );
+			}
+			else
+			{
+				Log.debug( getClass(), "Ignore file " + f.getAbsolutePath() );
 			}
 		}
 
@@ -215,10 +222,8 @@ public abstract class BioModuleImpl implements BioModule
 		}
 	}
 
-	/**
-	 * Module input files cache
-	 */
-	protected final List<File> inputFiles = new ArrayList<>();
+
+	private final List<File> inputFiles = new ArrayList<>();
 
 	private File moduleDir = null;
 
