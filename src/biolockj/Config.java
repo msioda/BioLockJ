@@ -26,9 +26,7 @@ import biolockj.util.BioLockJUtil;
  * reads?, etc.).
  */
 public class Config
-{
-	// test comments
-	
+{	
 	/**
 	 * Parse property value (Y or N) to return boolean, if not found, return false;
 	 *
