@@ -222,7 +222,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 				{
 					badSamples.add( sampleId );
 					Log.warn( getClass(), sampleId + " has no valid OTUs after removing scarce OTUS below "
-							+ MIN_OTU_THRESHOLD + "=" + Config.getPositiveInteger( MIN_OTU_THRESHOLD ) );
+							+ MIN_OTU_THRESHOLD + "=" + Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) );
 				}
 				else
 				{
