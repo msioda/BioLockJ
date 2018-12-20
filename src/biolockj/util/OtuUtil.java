@@ -265,8 +265,8 @@ public class OtuUtil
 		{
 			if( !file.getName().contains( "_" + OTU_COUNT + "_" ) )
 			{
-				throw new Exception( "Module input files must contain sample OTU counts with \"" + OTU_COUNT
-						+ "\" as part of the file name" );
+				throw new Exception( "Module input files must contain sample OTU counts with \"_" + OTU_COUNT
+						+ "_\" as part of the file name.  Found file: " + file.getAbsolutePath() );
 			}
 
 			otuCountsBySample.put( getSampleId( file ), compileSampleOtuCounts( file ) );

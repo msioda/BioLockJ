@@ -169,14 +169,16 @@ public abstract class BioModuleImpl implements BioModule
 		else
 		{
 			Log.debug( getClass(), "Checking previous module: " + previousModule.getClass().getName() );
-			files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
-					HiddenFileFilter.VISIBLE ) );
-
 			if( !isValidInputModule( previousModule ) )
 			{
 				List<File> prevInput = previousModule.getInputFiles();
 				files.addAll( prevInput );
 				Log.debug( getClass(), "Get previous module input files... # " + prevInput.size() );
+			}
+			else
+			{
+				files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
+						HiddenFileFilter.VISIBLE ) );
 			}
 		}
 
