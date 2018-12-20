@@ -355,7 +355,7 @@ public class OtuUtil
 	{
 		final String name = file.getName();
 		if( name.startsWith( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) ) && name.endsWith( BioModule.TSV )
-				&& name.contains( OTU_COUNT + "_" ) )
+				&& name.contains( "_" + OTU_COUNT + "_" ) )
 		{
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try
@@ -391,7 +391,7 @@ public class OtuUtil
 	 * @return TRUE if module generated OTU count files
 	 * @throws Exception if errors occur
 	 */
-	public static boolean outputOtuCountFiles( final BioModule module ) throws Exception
+	public static boolean outputhasOtuCountFiles( final BioModule module ) throws Exception
 	{
 		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
 				HiddenFileFilter.VISIBLE );

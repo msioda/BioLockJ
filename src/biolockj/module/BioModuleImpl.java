@@ -177,6 +177,8 @@ public abstract class BioModuleImpl implements BioModule
 			}
 			else
 			{
+				Log.debug( getClass(), "Previous module NOT VALID: " + previousModule.getClass().getName() );
+				Log.debug( getClass(), "Return files from: " + previousModule.getOutputDir().getAbsolutePath() );
 				files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
 						HiddenFileFilter.VISIBLE ) );
 			}
