@@ -1,8 +1,16 @@
-function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
+function Config(modules = [], paramKeys = [], paramValues = [], comments = [], standardProp = false){
   this.modules = modules;
   this.paramKeys = paramKeys;
   this.paramValues = paramValues;
   this.comments = comments;
+  //this.standardProp = standardProp;
+
+  //varibles for communicating with the middleware
+  this.duplicate = false;
+  this.deleteOldOrRestart = 'restart';
+  this.launch = false;
+  this.check = true;
+
   const _this = this; //hack for when some callback changes my 'this', used in this.saveConfigParamsForm
 
   this.loadLocal = async (event) => {//update Config from local object
@@ -13,20 +21,10 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
 
       //read in file and refill modules, keys, and values
       const fileContents = await readUploadedFileAsText(file);
-      let lines = fileContents.split('\n');
-      for (let line = 0; line < lines.length; line++) {
-        let lineSplit = lines[line].split("=");
-        if (lines[line].slice(0, 11) === "#BioModule ") {
-          this.modules.push(lines[line].slice(11));
-        } else if (lineSplit.length >= 2 && !lines[line].startsWith('#')) { //if spliting at "=" is 2 or greater...
-          this.paramKeys.push(String(lineSplit[0]));
-          this.paramValues.push(lineSplit.slice(1).join('='));
-        } else if (line[lines] == undefined) {
-        } else {
-          alert('Lines must start with "#", or have key/values seperated by "=". Please check your config form');
-          return
-        };
-      }; //end for-loop
+      const results = readFlatFile(fileContents);
+      this.modules = results[0];
+      this.paramKeys = results[1];
+      this.paramValues = results[2];
       this.paramKeys.push("project.configFile");
       this.paramValues.push(file.name);
       console.dir(this);
@@ -37,14 +35,43 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       //hide used file reader from user
       document.getElementById("openConfig").style.display = "none";
 
-      this.sendConfigDataToForms();
+      // var dprop;
+      //
+      // const RunDocker = this.paramvalues[this.paramKeys.indexOf('project.runDocker')];
+      // const DefaultProps = this.paramvalues[this.paramKeys.indexOf('project.defaultProps')];
+      // if (RunDocker !== undefined && RunDocker === 'Y'){
+      //   dprop = resolveDefaultProps(this, docker = true);
+      //   console.log('dp: ', dprop);
+      // }else if (DefaultProps !== undefined && DefaultProps !== ''){
+      //   dprop = resolveDefaultProps(this, docker = false);
+      //   console.log('dp: ', dprop);
+      // }else{
+      //   this.paramKeys.push('project.defaultProps');
+      //   this.paramValues.push('$BLJ/resources/config/default/standard.properties');
+      //   dprop = resolveDefaultProps(this, docker = false);
+      // }
 
+      this.sendConfigDataToForms();
     } catch (e) {
       alert(e);
     }
   }//end load localhost
 
   this.sendConfigDataToForms = function(){
+    // if (this.standardProp === true){
+    //   const blankKeys = [];
+    //   const blankVals = [];
+    //   //find the blank input parameters
+    //   for (let i = 0; i < this.paramKeys.length; i++) {
+    //     if (!currentConfig.paramKeys.includes(this.paramKeys[i])){
+    //       blankKeys.push(this.paramKeys[i]);
+    //       blankVals.push(this.blankVals[i]);
+    //     }
+    //   }//end for forloop
+    //   //replace paramKeys and values with only blank ones
+    //   this.paramKeys = blankKeys;
+    //   this.paramValues = blankVals;
+    // }//end if (standardProp === true)...
     if (this.paramKeys.length != this.paramValues.length){
       alert('Your paramKeys should be the same length as your paramValues.  Find the error');
       return false;
@@ -113,14 +140,16 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     _this.paramKeys = [], _this.paramValues = [];
     //let configForm = document.getElementById('configForm');
     let configFile = document.getElementById('project.configFile');
+    //console.log('configFile.value: ', configFile.value);
     if (configFile.value == ""){
       let now = new Date();
       let year = now.getYear() + 1900;
       let month = now.getMonth() + 1;
       let day = now.getDay();
-      let c = 'Untitled_BLJ_project_'.concat(year,'/',month,'/',day);
+      let c = 'Untitled_BLJ_project_'.concat(year,month,day);
       configFile.value = c;
     }
+    //console.log('configFile.value: ', configFile.value);
     const configParaForm = new FormData(document.getElementById('configForm'));
     //console.log(configParaForm);
     for(var pair of configParaForm.entries()) {
@@ -133,10 +162,10 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       };
     };
     _this.modulesToCurrentConfig();
-    localStorage.setItem(configFile.value, JSON.stringify(this));
+    console.log('configFile.value', configFile.value);
+    localStorage.setItem(configFile.value, JSON.stringify(_this));
     console.log('saved');
     console.dir(_this);
-    //console.dir(JSON.parse(localStorage.getItem(this.paramValues[paramKeys.indexOf('project.configFile')])));
   };//end this.saveConfigParams
 
   this.modulesToCurrentConfig = function() {
@@ -147,7 +176,8 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         this.modules.push( mods[i].innerHTML);
       };
     };
-    localStorage.setItem(this.paramValues[paramKeys.indexOf('project.configFile')], JSON.stringify(this));
+    console.log("this.paramKeys.indexOf('project.configFile'): ", this.paramKeys.indexOf('project.configFile'));
+    localStorage.setItem(this.paramValues[this.paramKeys.indexOf('project.configFile')], JSON.stringify(this));
   };//end modulesToCurrentConfig
 
   this.validateConfig = function() {
@@ -457,24 +487,57 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       console.log('formatAsFlatFile: ', e);
     };
   }//end formatAsFlatFile
+
+  this.loadFromText = function(configText){
+    this.modules = [], this.paramKeys = [], this.paramValues = [];
+    const results = readFlatFile(configText);
+    this.modules = results[0];
+    this.paramKeys = results[1];
+    this.paramValues = results[2];
+  }
+
+  function readFlatFile(fileString){
+    const mods = [], pk = [], pv = [];
+    //console.log('fileString: ',fileString);
+    let lines = fileString.split('\n');
+    for (let line = 0; line < lines.length; line++) {
+      let lineSplit = lines[line].split("=");
+      if (lines[line].slice(0, 11) === "#BioModule ") {
+        mods.push(lines[line].slice(11));
+      } else if (lineSplit.length >= 2 && !lines[line].startsWith('#')) { //if spliting at "=" is 2 or greater...
+        pk.push(String(lineSplit[0]));
+        pv.push(lineSplit.slice(1).join('='));
+      } else if (line[lines] == undefined) {
+      } else {
+        alert('Lines must start with "#", or have key/values seperated by "=". Please check your config form');
+        return
+      };
+    }//end forloop
+    return [mods, pk, pv];
+  }//end readFlatFile
+
+  //function to convert file uploader to promise
+  const readUploadedFileAsText = (inputFile) => {
+    const temporaryFileReader = new FileReader();
+    return new Promise((resolve, reject) => {
+      temporaryFileReader.onerror = () => {
+        temporaryFileReader.abort();
+        reject(new DOMException("Problem parsing BioLockJ '.properties' file."));
+      };
+      temporaryFileReader.onload = () => {
+        resolve(temporaryFileReader.result);
+      };
+      temporaryFileReader.readAsText(inputFile);
+    });
+  }//end readUploadedFileAsText
+
 }//end Config prototype
 
 var currentConfig = new Config();//IMPORTANT: This variable holds all of the selected configuations
 
-//text to convert file uploader to promise
-const readUploadedFileAsText = (inputFile) => {
-  const temporaryFileReader = new FileReader();
-  return new Promise((resolve, reject) => {
-    temporaryFileReader.onerror = () => {
-      temporaryFileReader.abort();
-      reject(new DOMException("Problem parsing BioLockJ '.properties' file."));
-    };
-    temporaryFileReader.onload = () => {
-      resolve(temporaryFileReader.result);
-    };
-    temporaryFileReader.readAsText(inputFile);
-  });
-}
+//used for creating the table of of default config parameters. Used for getAllDefaultProps..
+const defaultConfigs = []; //array to hold all of the configs.
+
 document.getElementById('localFile').addEventListener('change', currentConfig.loadLocal);
 
 //Adding all eventlisteners
@@ -506,7 +569,8 @@ document.getElementById("recent").addEventListener("mouseover", function() {
 const createDownload = document.getElementsByClassName('createDownload');
 for (var i = 0; i < createDownload.length; i++) {
   createDownload[i].addEventListener('click', function() {
-    //event.preventDefault();
+    event.preventDefault();
+    currentConfig.saveConfigParamsForm();
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(currentConfig.formatAsFlatFile()));
     element['download'] = currentConfig.paramValues[currentConfig.paramKeys.indexOf("project.configFile")];
@@ -517,7 +581,7 @@ for (var i = 0; i < createDownload.length; i++) {
   }, false);
 };//end forloop for createDownload
 
-for (const launch of document.getElementsByClassName("launchBlj")) {
+for (const launch of document.getElementsByClassName("openLaunchModal")) {
   launch.addEventListener("click", function(event){
     event.preventDefault();
     // TODO: make a loop to add all forms to current config and do validation
@@ -525,24 +589,34 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
       //tabForm.forEach( ele => ele.submit());
       currentConfig.saveConfigParamsForm();
       if ( currentConfig.validateConfig() === true ){
-        var request = new XMLHttpRequest();
-        request.open('POST', '/launch', true);
-        request.setRequestHeader("Content-Type", "application/json");
-        request.send(JSON.stringify({
-          modules : currentConfig.modules,
-          paramKeys : currentConfig.paramKeys,
-          paramValues : currentConfig.paramValues,
-          partialLaunchArg : currentConfig.buildPartialLaunchArgument(),
-          //additional parameters for launch
-        }));
-        console.log('launch sent');
+      launchModal.style.display = "block";
+
+      var request = new XMLHttpRequest();
+      request.open('POST', '/launch', true);
+      request.setRequestHeader("Content-Type", "application/json");
+      request.send(JSON.stringify({
+        modules : currentConfig.modules,
+        paramKeys : currentConfig.paramKeys,
+        paramValues : currentConfig.paramValues,
+        partialLaunchArg : currentConfig.buildPartialLaunchArgument(),
+        deleteOldOrRestart: currentConfig.deleteOldOrRestart,
+        launch : currentConfig.launch,
+        check : true,
+        //additional parameters for launch
+      }));
+        console.log('check request sent');
         request.onreadystatechange = function() {
         if (request.readyState == XMLHttpRequest.DONE) {
           console.log(request.responseText);
-          window.location = '/progress';
+          if (request.responseText === 'previously started'){
+            currentConfig.launch = false;
+            const rOrE = document.getElementById('restartOrErase')
+            if (rOrE.classList.contains('hidden')){
+              rOrE.classList.remove('hidden');
+              }
+            }
           }
         }
-        console.log(request.responseText);
       }
     } catch (e) {
       alert(e)
@@ -550,39 +624,380 @@ for (const launch of document.getElementsByClassName("launchBlj")) {
   });//end eventlistener
 };//end forloop
 
-//for autosave
-  const configFormInputs = Array.from(document.getElementById('configForm').getElementsByTagName('input'));
-  //const configTexts = configFormInputs.getElementsByTagName('text');
-  const configTexts = configFormInputs.filter(inp => inp.type === 'text');
-  //console.log(configTexts, 'text input');
-  const configSelects = configFormInputs.filter(inp => inp.type === 'select');
-  const configChecks = configFormInputs.filter(inp => inp.type === 'checkbox');;
-
-  const configNumbers = configFormInputs.filter(inp => inp.type === 'number');;
-  //console.log(configNumbers, 'num');
-
-  for (let inp of configTexts){
-  inp.addEventListener('change', currentConfig.saveConfigParamsForm, false);
-  //console.log(inp);
-  }
-
-  for (let inp of configSelects){
-  inp.addEventListener('change', currentConfig.saveConfigParamsForm, false)
-  }
-
-  for (let inp of configChecks){
-  inp.addEventListener('click', currentConfig.saveConfigParamsForm, false);
-  }
-
-  for (let inp of configNumbers){
-  inp.addEventListener('change', currentConfig.saveConfigParamsForm, false);
-  //console.log(inp);
-  }
-
-  configFormInputs.forEach(inp => inp.onkeypress = function(e) {
-  var key = e.charCode || e.keyCode || 0;
-  if (key == 13) {
-    currentConfig.saveConfigParamsForm();
-    e.preventDefault();
+document.getElementById('launchBlj').addEventListener("click", function(event){
+  event.preventDefault();
+  //launchModal.style.display = "block";
+  var request = new XMLHttpRequest();
+  request.open('POST', '/launch', true);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.send(JSON.stringify({
+    modules : currentConfig.modules,
+    paramKeys : currentConfig.paramKeys,
+    paramValues : currentConfig.paramValues,
+    partialLaunchArg : currentConfig.buildPartialLaunchArgument(),
+    deleteOldOrRestart : currentConfig.deleteOldOrRestart,
+    launch : currentConfig.launch,
+    check : false,
+    //additional parameters for launch
+  }));
+  console.log('launch sent');
+  request.onreadystatechange = function() {
+  if (request.readyState == XMLHttpRequest.DONE) {
+    console.log(request.responseText);
+    //window.location = '/progress';
     }
+  }
+  console.log(request.responseText);
+});
+
+//for autosave
+const configFormInputs = Array.from(document.getElementById('configForm').getElementsByTagName('input'));
+const configTexts = configFormInputs.filter(inp => inp.type === 'text');
+const configSelects = Array.from(document.getElementById('configForm').getElementsByTagName('SELECT'));
+const configChecks = configFormInputs.filter(inp => inp.type === 'checkbox');
+const configNumbers = configFormInputs.filter(inp => inp.type === 'number');
+
+for (let inp of configTexts){
+inp.addEventListener('change', currentConfig.saveConfigParamsForm, false);
+}
+
+for (let inp of configSelects){
+inp.addEventListener('change', currentConfig.saveConfigParamsForm, false)
+}
+
+for (let inp of configChecks){
+inp.addEventListener('click', currentConfig.saveConfigParamsForm, false);
+}
+
+for (let inp of configNumbers){
+inp.addEventListener('change', currentConfig.saveConfigParamsForm, false);
+}
+
+configFormInputs.forEach(inp => inp.onkeypress = function(e) {
+var key = e.charCode || e.keyCode || 0;
+if (key == 13) {
+  currentConfig.saveConfigParamsForm();
+  e.preventDefault();
+  }
+});
+
+// Get the launch modal
+const launchModal = document.getElementById('launchConsole');
+
+// Get the <span> element that closes the modal
+const launchSpan = Array.from(document.getElementsByClassName("closeModal"));
+
+launchSpan.forEach(span => span.addEventListener('click', function(){
+  this.parentNode.parentNode.style.display = "none";
+}));
+
+// When the user clicks on <span> (x), close the modal
+// launchSpan.onclick = function() {
+//     launchModal.style.display = "none";
+// }
+
+// remove other choices for standard properties in if docker is running
+const defaultProps = document.getElementById("project.defaultProps");
+const defaultPropsP = document.getElementById('defaultPropsP');
+//// NOTE: add event listener for default props section after
+const runDocker = document.getElementById('project.runDocker');
+runDocker.addEventListener('change', function(){
+  var defaultPath;
+  console.log("eventListener rundockr ", defaultConfigs);
+  defaultConfigs.length = 0; //array to hold all of the configs.  Will use this to build the table of default parameters
+  defaultConfigs.push(currentConfig);
+  console.log("defaultConfig event listener:  ", defaultConfigs);
+  const runDockerVal = runDocker.value;
+  console.log('runDockerVal', runDocker.value);
+  const defaultPropsVal = defaultProps.value;
+  console.log('defaultPropsVal: ', defaultPropsVal);
+  if (runDockerVal === 'Y'){//check for run-in-docker
+    defaultPath = '$BLJ/resources/config/default/docker.properties';
+    defaultPropsP.classList.add('hidden');
+    defaultProps.value = '$BLJ/resources/config/default/docker.properties';
+    currentConfig.paramKeys.push('project.defaultProps');
+    currentConfig.paramValues.push(defaultPath);
+
+    getAllDefaultProps(defaultPath);
+  } else {
+    defaultPropsP.classList.remove('hidden');
+    if (defaultPropsVal !== null){
+      // NOTE: look-up regex to split for all computers //f
+      //defaultPathArray = defaultPropsVal.split('/');
+      defaultPath = defaultPropsVal;
+    }
+  }
+  if (defaultPath !== undefined){
+    console.log('defaultPropsVal: ', defaultPropsVal);
+    //currentConfig = resolveDefaultProps(currentConfig, docker = true);  //commented out because I want to be more explicit with the user on how we resolve default properties
+  }
+}, false);
+
+document.getElementById('acceptDefaultProps').addEventListener('click', tableToCurrentConfig);
+document.getElementById('seeResolvedDefaultProperties').addEventListener('click', function(){
+  const parameterSelectorTable = document.getElementById('parameterSelectorTable');
+  parameterSelectorTable.classList.remove('hidden');
+  parameterSelectorTable.style.display = 'block';
+})
+
+
+
+
+function getAllDefaultProps(dfpath){
+  console.log('defaultConfigs getAllDefaultProps', defaultConfigs);
+  const defaultFlatFile = retreiveDefaultProps(dfpath);
+  defaultFlatFile.then( flatFile => {
+    const defaultConfig = new Config();
+    defaultConfig.loadFromText(flatFile);
+    const splitPath = dfpath.split('/');
+    console.log('splitPath: ', splitPath);
+
+    //most config files won't have the file name as a property so we need to add it.
+    defaultConfig.paramKeys.push('project.configFile');
+    console.log('splitPath[splitPath.length]: ', splitPath[splitPath.length-1]);
+    defaultConfig.paramValues.push(splitPath[splitPath.length-1]);
+
+    //now that our file has a name, add it to the default config array
+    defaultConfigs.push(defaultConfig);
+    console.log(defaultConfigs);
+
+    console.log('defaultProps, ', defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')]);
+    if (defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')] !== undefined){
+      getAllDefaultProps(defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')])
+    } else{
+      console.log(defaultConfigs);
+      //get the length of the longest array of paramKeys (mod of https://stackoverflow.com/questions/4020796/finding-the-max-value-of-an-attribute-in-an-array-of-objects)
+      const tableLength = Math.max.apply(Math, defaultConfigs.map(function(config) { return config.paramKeys.length; }));
+      let rowCounter = 0;
+      const usedParamKeys = [];
+      const table = document.getElementById("parameterSelectorTable");
+      table.innerHTML = ''; //clear the table everytime
+
+      // Create an empty <thead> element and add it to the table:
+      var header = table.createTHead();
+
+      // Create an empty <tr> element and add it to the first position of <thead>:
+      var row = header.insertRow(0);
+      const th = document.createElement('th');
+      th.innerHTML = '';
+      row.appendChild(th);
+      //row.insertCell(0).innerHTML = ''
+
+      //add the table headers
+      for (var name = 0; name < defaultConfigs.length; name++) {
+        // Insert a new cell (<td>) at the first position of the "new" <tr> element:
+        const th = document.createElement('th');
+        th.innerHTML = defaultConfigs[name].paramValues[defaultConfigs[name].paramKeys.indexOf('project.configFile')];
+        row.appendChild(th);
+        //var cell = row.create(name+1);
+        //cell.innerHTML = defaultConfigs[name].paramValues[defaultConfigs[name].paramKeys.indexOf('project.configFile')];
+      }//end for loop
+      usedParamKeys.push('project.configFile');
+      rowCounter += 1;
+
+      //cycle through the configs and add the parameters of each in order.
+      for (var c = 0; c < defaultConfigs.length; c++) {
+        const dfconfig = defaultConfigs[c];
+
+        for (var pk = 0; pk < dfconfig.paramKeys.length-1; pk++) {
+          if (!usedParamKeys.includes(dfconfig.paramKeys[pk])){
+            const r = header.insertRow(-1);
+            const th = document.createElement('th');
+            th.innerHTML = dfconfig.paramKeys[pk];
+            th.classList.add('rowHeader');
+            r.appendChild(th);
+            //r.insertCell(0).innerHTML = dfconfig.paramKeys[pk];
+
+            for (var pv = 0; pv < defaultConfigs.length; pv++) {
+              const cl = r.insertCell(pv+1);
+              if (pv === c){
+                cl.classList.add('modChoosen');
+              }
+              const param = defaultConfigs[pv].paramValues[defaultConfigs[pv].paramKeys.indexOf(dfconfig.paramKeys[pk])];
+              if (param === undefined) {
+                cl.innerHTML = '-';
+                cl.classList.add('emptyTd');
+              }else{
+                cl.innerHTML = defaultConfigs[pv].paramValues[defaultConfigs[pv].paramKeys.indexOf(dfconfig.paramKeys[pk])];
+              }
+            }
+            usedParamKeys.push(dfconfig.paramKeys[pk])
+          }
+        }
+      }
+
+      const defaultPropertiesModal = document.getElementById('defaultPropertiesModal');
+      defaultPropertiesModal.style.display = "block";
+    }
+  })
+}
+
+function tableToCurrentConfig(){
+  const table = document.getElementById('parameterSelectorTable')
+  const paramKeys = [];
+  const paramValues = [];
+
+  for (let row of table.rows){
+    for(let cell of row.cells){
+      if (cell.classList.contains('rowHeader')){
+        paramKeys.push(cell.innerText); // or cell.innerHtml (you can also set value to innerText/Html)
+        console.log(paramKeys);
+      }
+      if (cell.classList.contains('modChoosen')){
+        paramValues.push(cell.innerText); // or cell.innerHtml (you can also set value to innerText/Html)
+      }
+    }
+  }//end for (let row of
+  console.log('paramKeys len: ', paramKeys.length);
+  currentConfig.paramKeys = paramKeys;
+  currentConfig.paramValues = paramValues;
+  alert(currentConfig.paramKeys.length);
+  currentConfig.sendConfigDataToForms();
+  currentConfig.saveConfigParamsForm();
+  table.classList.add('hidden');
+}//function tableToCurrentConfig...
+
+//retrieves chain of default props without user input
+// function resolveDefaultProps(config, docker = false){
+//   const dpropPath = config.paramValues[config.paramKeys.indexOf('project.defaultProps')];
+//   console.log('dpropPath ', dpropPath);
+//   // if (!config.paramKeys.includes('project.defaultProps')){
+//   //   console.error('no default props found');
+//   //   return;
+//   // }
+//   const defaultConfig = new Config();
+//   const dprop = retreiveDefaultProps(dpropPath, docker);
+//   dprop.then( retreived => {
+//     defaultConfig.loadFromText( retreived );
+//     console.log('defaultConfig ', defaultConfig);
+//     const defaultConfigDPath = defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')];
+//     console.log('dpropPat ',dpropPath);
+//     console.log('defaultConfigDPat ',defaultConfigDPath);
+//     if (defaultConfigDPath && defaultConfigDPath !== dpropPath){
+//       console.log('need to resolve again');
+//       return resolveDefaultProps(defaultConfig);
+//     }
+//     for (let i = 0; i < defaultConfig.paramKeys.length; i++) {
+//       const dfKey = defaultConfig.paramKeys[i]
+//       if (dfKey !== 'project.configFile' && !config.paramKeys.includes(dfKey)){
+//         config.paramKeys.push(defaultConfig.paramKeys[i]);
+//         config.paramValues.push(defaultConfig.paramValues[i])
+//       }
+//     }
+//     return config;
+//   });
+// }
+
+//returns config flat file
+function retreiveDefaultProps(dpropPath, docker = false) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('POST', '/defaultproperties', true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(JSON.stringify({
+      file : dpropPath,
+      docker : docker,// can get rid of this
+      //additional parameters for launch
+    }));
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        try{
+          if(this.status === 200 && request.readyState === 4){
+            resolve(this.responseText);
+          }else{
+            reject(this.status + " " + this.statusText)
+          }
+        } catch(e) {
+          reject (e.message);
+        }
+      //window.location = '/progress';
+      }//end request.onreadystatechange ...
+    }// end if (docker === true){
   });
+}//end retreiveDefaultProps
+
+// function buildParameterTable(arrayOfConfigObjects){
+//   //order of arguments is important, with the more specific item being first.
+//   //Last should always have the list specific, standard.properties.
+//   const paramTable = document.getElementById(parameterSelector);
+//   for (let i = 0; i < currentParam.paramKeys.length; i++) {
+//     paramTable.add
+//   }
+// }
+
+// const standPropConfig = new Config();
+// standPropConfig.loadFromText(request.responseText);
+// standPropConfig.sendConfigDataToForms();
+// console.log('currentConfig.paramKeys', currentConfig.paramKeys);
+// currentConfig.saveConfigParamsForm();
+// console.log('currentConfig.paramKeys', currentConfig.paramKeys);
+
+
+
+// When the user clicks anywhere outside of the modal, close it
+// FIXME: commented out because it breaks .prjct hide
+// window.onclick = function(event) {
+//     if (event.target == launchModal) {
+//         launchModal.style.display = "none";
+//     }
+// }
+if(typeof(EventSource) !== "undefined") {
+	console.log('EventSource Works');
+		// Yes! Server-sent events support!
+    // Some code.....
+	var StreamLog = new EventSource("/streamLog",{ withCredentials: true });
+	StreamLog.addEventListener("message", function(e) {
+	    console.log(e.data);
+	}, false);
+
+	StreamLog.addEventListener("open", function(e) {
+	    console.log("StreamLog connection was opened.");
+	}, false);
+
+	StreamLog.addEventListener("error", function(e) {
+	    console.log("Error - connection was lost.");
+	}, false);
+	StreamLog.onmessage = function(event) {
+		document.getElementById("log").innerHTML += event.data + "<br>";
+	};
+
+	//for getting progress from blj
+	var streamProgress = new EventSource("/streamProgress",{ withCredentials: true });
+	streamProgress.addEventListener("message", function(e) {
+	    console.log(e.data);
+	}, false);
+
+	streamProgress.addEventListener("open", function(e) {
+	    console.log("streamprogress connection was opened.");
+	}, false);
+
+	streamProgress.addEventListener("error", function(e) {
+	    console.log("Error - connection was lost.");
+	}, false);
+	streamProgress.onmessage = function(event) {
+		console.log('onmessage fired');
+		console.log(event);
+	//     //document.getElementById("result").innerHTML += event.data + "<br>";
+	};
+	var streamProgress = new EventSource("/streamProgress",{ withCredentials: true });
+	streamProgress.addEventListener("message", function(e) {
+	    console.log(e.data);
+	}, false);
+
+	streamProgress.addEventListener("open", function(e) {
+	    console.log("streamprogress connection was opened.");
+	}, false);
+
+	streamProgress.addEventListener("error", function(e) {
+	    console.log("Error - connection was lost.");
+	}, false);
+	streamProgress.onmessage = function(event) {
+		console.log('onmessage fired');
+		console.log(event);
+	//     //document.getElementById("result").innerHTML += event.data + "<br>";
+	};
+
+} else {
+	console.log('Sorry! No server-sent events support for this browser');
+    // Sorry! No server-sent events support..
+}

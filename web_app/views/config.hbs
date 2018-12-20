@@ -16,7 +16,7 @@
 <div id="openConfig" class="menu">
   <form class='' id=localFileForm>
     Select BiolockJ configuration file
-    <input type="file" accept="text/plain" id="localFile">
+    <input type="file" accept=".txt,.properties" id="localFile">
   </form>
 </div>
 
@@ -36,6 +36,8 @@
     <button class="tablinks" onclick="openTab(event, 'rdpTab')">RDP</button>
     <button class="tablinks" onclick="openTab(event, 'qiimeTab')">QIIME</button>
     <button class="tablinks" onclick="openTab(event, 'krakenTab')">Kraken</button>
+    <button class="tablinks" onclick="openTab(event, 'kraken2Tab')">Kraken2</button>
+    <button class="tablinks" onclick="openTab(event, 'metaphlanTab')">MetaPhlAn</button>
     <button class="tablinks" onclick="openTab(event, 'slimmTab')">SLIMM</button>
   </div>
   <!--tabbed menu-->
@@ -45,7 +47,7 @@
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Project name:
-        <input name='project.configFile' id='project.configFile' name='project.configFile' type="text" size='35' required></p>
+        <input name='project.configFile' id='project.configFile' name='project.configFile' type="text" size='35'></p>
       <p>Copy input files into the parent directory:
         <select id='project.copyInput' name='project.copyInput'>
           <option selected default value="">Click for options</option>
@@ -58,7 +60,7 @@
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
-      <p>Path to default properties file:
+      <p id="defaultPropsP">Path to default properties file:
         <input type="text" id="project.defaultProps" name="project.defaultProps" size='70'><br> add file picker here
         <i>(Path to a default BioLockJ configuration file containing default
         property values that are overridden if defined in the primary
@@ -81,10 +83,10 @@
       <p>Run project in Docker:
         <select class="" id="project.runDocker" name="project.runDocker">
           <option selected default value="">Click for options</option>
-          <option value="Y">Yes</option>
+          <option default value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
-      <p>Delete docker containers on exit"
+      <p>Delete docker containers on exit
         <select class="" id="docker.deleteContainerOnExit" name="docker.deleteContainerOnExit">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
@@ -94,13 +96,13 @@
         <input type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="moduleTab" class="tabcontent">
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
     <fieldset>
       <legend>Module options</legend>
       <div id="module">
@@ -126,13 +128,13 @@
     </select><br>
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="inputTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Input directory (or directories): <input type="text" size='70' id="input.dirPaths" name="input.dirPaths" required>
+      <p>Input directory (or directories): <input type="text" size='70' id="input.dirPaths" name="input.dirPaths">
         <h5>(Input directory must contain files expected by the first module executed.
         Multiple directories must be comma-separated.)</h5></p>
       <p>Files in input directory to ignore: <input type="text" id="input.ignoreFiles" name="input.ignoreFiles"><br>
@@ -182,14 +184,14 @@ For fastq, typically “@”.)<h5></p>
         </select></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="metadataTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Metadata column name containing the barcode used for demultiplexing:
-        <input type="text" id="metadata.barcodeColumn" name="metadata.barcodeColumn" value="barcode"><br></p>
+        <input type="text" id="metadata.barcodeColumn" name="metadata.barcodeColumn"><br></p>
       <p>Metadata file path (file must have unique column headers):
         <input type="text" id="metadata.filePath" name="metadata.filePath" size='70'><br></p>
       <p>Define how comments are represented in metadata:
@@ -200,14 +202,14 @@ For fastq, typically “@”.)<h5></p>
         <input type="text" id="metadata.columnDelim" name="metadata.columnDelim"></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
     </div>
 
 
   <div id="clusterTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
       <p>Cluster host address (cluster.host):
         <input type="text" id="cluster.host" name="cluster.host"><br></p>
       <p>Batch command to submit jobs on the cluster:
@@ -240,7 +242,7 @@ For fastq, typically “@”.)<h5></p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="scriptTab" class="tabcontent">
@@ -255,7 +257,7 @@ For fastq, typically “@”.)<h5></p>
       <p>Number of sequence files to process per script:
         <input type="number" min='0' id="script.batchSize" name="script.batchSize"><br></p>
       <p>Command to grant script execute permissions:
-        <input type="text" id="script.permissions" name="script.permissions" value="chmod 774"><br></p>
+        <input type="text" id="script.permissions" name="script.permissions"><br></p>
       <p>Number of threads:
         <input type="number" min='0' id="script.numThreads" name="script.numThreads"><br></p>
       <p>Default header: (Used to set shebang line to define scripts as bash executables, such as "#!/bin/bash"
@@ -265,7 +267,7 @@ For fastq, typically “@”.)<h5></p>
         <input type="number" min='0' id="java.timeout" name="java.timeout"><br></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="reportTab" class="tabcontent">
@@ -306,7 +308,7 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="mailTab" class="tabcontent">
@@ -345,7 +347,7 @@ For fastq, typically “@”.)<h5></p>
           </select></p>
         <button class="createDownload">Create configuration file for download</button>
         <a class="downloadlink hidden">Download configuration file to default directory</a>
-        <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+        <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="rTab" class="tabcontent">
@@ -431,6 +433,7 @@ For fastq, typically “@”.)<h5></p>
         </select></p>
         <p>Select the distance/dissimilary measure for your MDS BuildMdsPlots
           <select class="" id='rMds.distance' name="rMds.distance">
+            <option selected default value="">Click for options</option>
             <option value="euclidean">Euclidean dissimilarity</option>
             <option value="bray">Bray Curtis dissimilary</option>
             <option value="manhattan">Manhattan dissimilarities</option>
@@ -450,7 +453,7 @@ For fastq, typically “@”.)<h5></p>
           </select><br>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="exeTab" class="tabcontent">
@@ -505,7 +508,7 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="rdpTab" class="tabcontent">
@@ -514,9 +517,12 @@ For fastq, typically “@”.)<h5></p>
       <p>Required RDP minimum threshold score for valid OTUs:
         <input type="text" id="rdp.minThresholdScore" name="rdp.minThresholdScore">
       </p>
+      <p>Path to RDP classifier:
+        <input type="text" size='70' id="rdp.classifier" name="rdp.classifier">
+      </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="qiimeTab" class="tabcontent">
@@ -537,7 +543,7 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="krakenTab" class="tabcontent">
@@ -546,10 +552,42 @@ For fastq, typically “@”.)<h5></p>
       <p>Path to Kraken database:
         <input type="text" size='70' id="kraken.db" name="kraken.db">
       </p>
+      <p>Path to Kraken classifier:
+        <input type="text" size='70' id="kraken.classifier" name="kraken.classifier">
+      </p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
       <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
   </div>
+
+  <div id="kraken2Tab" class="tabcontent">
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <p>Path to Kraken database:
+        <input type="text" size='70' id="kraken2.db" name="kraken2.db">
+      </p>
+      <p>Path to Kraken classifier:
+        <input type="text" size='70' id="kraken2.classifier" name="kraken2.classifier">
+      </p>
+      <button type='submit' class='saveTab'>Save progress</button>
+      <button class="createDownload">Create configuration file for download</button>
+      <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
+  </div>
+
+  <div id="metaphlanTab" class="tabcontent">
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <p>Path to MetaPhlAn database:
+        <input type="text" size='70' id="metaphlan.db" name="metaphlan.db">
+      </p>
+      <p>Path to MetaPhlAn classifier:
+        <input type="text" size='70' id="metaphlan.classifier" name="metaphlan.classifier">
+      </p>
+      <button type='submit' class='saveTab'>Save progress</button>
+      <button class="createDownload">Create configuration file for download</button>
+      <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
+  </div>
+
 
   <div id="slimmTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
@@ -557,16 +595,58 @@ For fastq, typically “@”.)<h5></p>
       <p>Path to SLIMM database:
         <input type="text" size='70' id="slimm.db" name="slimm.db">
       </p>
+      <p>Path to SLIMM classifier:
+        <input type="text" size='70' id="slimm.classifier" name="slimm.classifier">
+      </p>
       <p>Path the bowtie2 reference genome index:
         <input type="text" size='70' id="slimm.refGenomeIndex" name="slimm.refGenomeIndex">
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink">Download configuration file to default directory</a>
-      <button type="button" class="launchBlj">Save and Launch BioLockJ!</button>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
 </form> <!--End of configForm -->
 
+</div>
+
+<!-- The Modal that appears after launch-->
+<div id="launchConsole" class="modal">
+  <!-- Modal content -->
+  <div class="modal-content">
+    <span class="closeModal">&times;</span>
+    <div id='progress'></div>
+    <div id='log'></div>
+
+  <div id=id="restartOrErase" class="hidden">
+    Your current project has the same name as a previous project.  Would you like to restart the pipeline or erase the old one and rerun from your new configuration file?
+    <select class="projectFoundInPipelines" name="restartOrEraseSelect">
+      <option value="restart" default >Restart project at failed module [only parameters can be changed, no new modules]</option>
+      <option value="deleteOld">Erase old project and start over</option>
+    </select>
+  </div>
+    <button type="button" id="launchBlj" name="launchBlj">Launch</button>
+
+  </div>
+
+</div><!-- end launch console -->
+
+<div id="defaultPropertiesModal"class="modal">
+  <div class="modal-content">
+    <span class="closeModal">&times;</span>
+    <div class="">
+      The default properties file of a BioLockJ configureation are used to fill empty parameters
+      in configuration files.  Multiple default properties files can be chained together by making
+      one the default properties file of the next.
+    </div>
+    <button type="button" id="seeResolvedDefaultProperties" name="seeResolvedDefaultProperties">See default properties</button>
+    <button type="button" name="acceptDefaultProps" id="acceptDefaultProps">Accept default properties</button>
+    <button type="button" class="closeModal" name="cancel">Cancel</button>
+    <!-- <fieldset>
+      <legend>Please verify your default parameters</legend> -->
+        <table class="hidden" id="parameterSelectorTable"></table><br>
+    <!-- </fieldset><br> -->
+  </div>
 </div>
 
 <div class="banner">
@@ -587,4 +667,5 @@ For fastq, typically “@”.)<h5></p>
 
 <script type="text/javascript" src="./javascripts/config_menus.js"></script>
 <script type="text/javascript" src="./javascripts/config_config.js"></script>
+</script>
 <!-- <script type="text/javascript" src="resetAnimationWorker.js"></script> -->

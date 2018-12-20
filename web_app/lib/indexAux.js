@@ -79,7 +79,8 @@ exports.buildPartialLaunchArgument = function (validConfig){
 exports.createFullLaunchCommand = function(launchJSON){//
   //const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
   //const bljDir = process.env.BLJ;
-  const dockblj = path.join('blj','script','dockblj')
+  const dockblj = path.join('..','script','dockblj');//relative path from webapp folder
+  //const dockblj = path.join('..','script','dockblj');
   //console.log(dockblj);
   let command = [];
   //console.log(launchJSON);
@@ -128,7 +129,7 @@ exports.runLaunchCommand = function(command, eventEmitter) {
   } catch (e) {
     console.error(`launch error: ${e}`);
   }
-  
+
 }//end runLaunchCommand
 
 exports.newestFileInDir = function(dirPath){

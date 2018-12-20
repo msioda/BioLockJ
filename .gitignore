@@ -5,4 +5,5 @@ BioLockJ.jar
 .DS_Store
 .classpath
 .project
+*_not4git*
 .Rproj.user
