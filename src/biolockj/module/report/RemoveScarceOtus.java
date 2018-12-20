@@ -213,18 +213,18 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		for( final String sampleId: updatedOtuCounts.keySet() )
 		{
 			Log.debug( getClass(), "removeScarceOtus Checking sampleId: " + sampleId );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter(
-					OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getIdString().replace( "%", "" ) ) ) );
-			try
+			final Map<String, Integer> otuCounts = updatedOtuCounts.get( sampleId );
+			if( otuCounts == null || otuCounts.isEmpty() )
 			{
-				final Map<String, Integer> otuCounts = updatedOtuCounts.get( sampleId );
-				if( otuCounts == null || otuCounts.isEmpty() )
-				{
-					badSamples.add( sampleId );
-					Log.warn( getClass(), sampleId + " has no valid OTUs after removing scarce OTUS below "
-							+ MIN_OTU_THRESHOLD + "=" + Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) );
-				}
-				else
+				badSamples.add( sampleId );
+				Log.warn( getClass(), sampleId + " has no valid OTUs after removing scarce OTUS below "
+						+ MIN_OTU_THRESHOLD + "=" + Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) );
+			}
+			else
+			{
+				final BufferedWriter writer = new BufferedWriter( new FileWriter(
+						OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getIdString().replace( "%", "" ) ) ) );
+				try
 				{
 					Log.debug( getClass(), "removeScarceOtus Found: " + otuCounts.size() );
 					Integer total = 0;
@@ -243,13 +243,14 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 					}
 
 					hitsPerSample.put( sampleId, total.toString() );
+					
 				}
-			}
-			finally
-			{
-				if( writer != null )
+				finally
 				{
-					writer.close();
+					if( writer != null )
+					{
+						writer.close();
+					}
 				}
 			}
 		}
