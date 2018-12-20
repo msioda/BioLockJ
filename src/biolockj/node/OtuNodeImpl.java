@@ -15,7 +15,6 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.util.BioLockJUtil;
 import biolockj.util.OtuUtil;
 
 /**
