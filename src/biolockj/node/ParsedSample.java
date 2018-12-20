@@ -65,13 +65,16 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	 */
 	public Map<String, Integer> getOtuCounts() throws Exception
 	{
-		if( otuNodes.isEmpty() )
+		if( !otuCounts.isEmpty() )
+		{
+			return otuCounts;
+		}
+		else if( otuNodes == null || otuNodes.isEmpty() )
 		{
 			Log.warn( getClass(), "No samples found for " + sampleId );
 			return null;
 		}
 
-		final Map<String, Integer> otuCounts = new TreeMap<>();
 		final Map<String, String> map = otuNodes.iterator().next().delimToLevelMap();
 
 		for( final OtuNode otuNode: otuNodes )
@@ -107,7 +110,6 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 		}
 
 		otuNodes = null;
-		otuNodes = new HashSet<>();
 
 		return otuCounts;
 	}
@@ -122,6 +124,7 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 		return sampleId;
 	}
 
+	private Map<String, Integer> otuCounts = new TreeMap<>();
 	private Set<OtuNode> otuNodes = new HashSet<>();
 
 	private final String sampleId;
