@@ -222,7 +222,7 @@ public class OtuUtil
 
 		if( sampleId != null )
 		{
-			sampleId += "_";
+			sampleId = "_" + sampleId;
 		}
 		else
 		{
