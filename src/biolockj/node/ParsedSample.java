@@ -77,12 +77,15 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 
 		for( final OtuNode otuNode: otuNodes )
 		{
+			otuNode.report();
+			
+			
 			final StringBuffer otu = new StringBuffer();
-			for( final String level: map.keySet() )
+			for( final String level: map.values() )
 			{
-				Log.debug( getClass(), "Check level" + level );
+				Log.debug( getClass(), "Check level: " + level );
 				final String name = otuNode.getTaxaMap().get( level );
-				Log.debug( getClass(), "Check name" + name );
+				Log.debug( getClass(), "Check name: " + name );
 				if( name != null )
 				{
 					if( !otu.toString().isEmpty() )
