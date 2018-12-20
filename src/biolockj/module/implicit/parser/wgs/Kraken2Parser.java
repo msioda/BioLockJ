@@ -49,24 +49,31 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 			ParsedSample sample = null;
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			try
 			{
-				final Kraken2Node node = new Kraken2Node( file.getName().replace( ClassifierModule.PROCESSED, "" ),
-						line );
-				if( isValid( node ) )
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-					sample = getParsedSample( node.getSampleId() );
-					if( sample == null )
+					final Kraken2Node node = new Kraken2Node( file.getName().replace( ClassifierModule.PROCESSED, "" ),
+							line );
+					if( isValid( node ) )
 					{
-						addParsedSample( new ParsedSample( node ) );
-					}
-					else
-					{
-						sample.addNode( node );
+						sample = getParsedSample( node.getSampleId() );
+						if( sample == null )
+						{
+							addParsedSample( new ParsedSample( node ) );
+						}
+						else
+						{
+							sample.addNode( node );
+						}
 					}
 				}
 			}
-			reader.close();
+			finally
+			{
+				if( reader != null ) reader.close();
+			}
+			
 		}
 	}
 }

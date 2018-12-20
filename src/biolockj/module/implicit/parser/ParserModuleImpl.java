@@ -40,6 +40,9 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 				throw new Exception( "Attempt to add duplicate sample! " + sample.getSampleId() );
 			}
 		}
+		
+		parsedSamples.add( newSample );
+		
 	}
 
 	@Override
