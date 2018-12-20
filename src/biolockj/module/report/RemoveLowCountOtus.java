@@ -154,13 +154,17 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 
 		final File newMapping = new File(
 				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+		
+		
+		Log.info( getClass(), "Current metadata file: " +  MetaUtil.getFile().getAbsolutePath() );
+		Log.info( getClass(), "Building metadata file: " +  newMapping.getAbsolutePath() +" with new col: " + getMetaColName() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMapping ) );
 		try
 		{
 			String line = reader.readLine();
 			writer.write( line + TAB_DELIM + getMetaColName() + RETURN );
-
+			Log.info( getClass(), "Adding col header: " + getMetaColName() );
 			for( line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
