@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 import biolockj.BioLockJ;
 import biolockj.Config;
+import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
@@ -70,6 +71,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 				throw new ConfigFormatException( Config.REPORT_LOG_BASE,
 						"Property only accepts value \"10\" or \"e\"" );
 			}
+			Log.debug( getClass(), "Found logBase: " + logBase );
 		}
 		else
 		{
@@ -166,10 +168,12 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 				}
 			}
 		}
+		
 
 		final String pathPrefix = getOutputDir().getAbsolutePath() + File.separator
 				+ otuTable.getName().substring( 0, otuTable.getName().indexOf( TSV ) );
 
+		Log.debug( getClass(), "Use pathPrefix: " + pathPrefix );
 		if( !logBase.isEmpty() )
 		{
 			writeDataToFile( new File( pathPrefix + "_" + "Log" + logBase + NORMAL + TSV ), sampleNames, otuNames,

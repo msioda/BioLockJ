@@ -392,13 +392,9 @@ public class OtuUtil
 		{
 			suffix = "";
 		}
-		if( !suffix.startsWith( "_" ) )
+		else if( !suffix.startsWith( "_" ) )
 		{
 			suffix = "_" + suffix;
-		}
-		if( !suffix.endsWith( "_" ) )
-		{
-			suffix += "_";
 		}
 
 		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
