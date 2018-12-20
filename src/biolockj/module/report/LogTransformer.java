@@ -12,22 +12,30 @@
 package biolockj.module.report;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
+import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
+import biolockj.util.OtuUtil;
 
 /**
  * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.
  */
 public class LogTransformer extends JavaModuleImpl implements JavaModule
 {
+	
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return OtuUtil.outputHasTaxonomyTables( previousModule );
+	}
+	
 	/**
 	 * Verify {@link biolockj.Config}.{@value biolockj.Config#REPORT_LOG_BASE} property is valid (if defined) with a
 	 * value = (e or 10).
@@ -102,7 +110,7 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 
 		reader.close();
 		assertNum( otuTable, totalCounts, dataPointsUnnormalized );
-		assertNoZeros( otuTable, dataPointsUnnormalized );
+		Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
@@ -112,6 +120,12 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 
 			for( int y = 0; y < unnormalizedInnerList.size(); y++ )
 			{
+				if( allZeroIndex.contains( x ) )
+				{
+					// index 0 = col headers, so add + 1
+					String id = MetaUtil.getSampleIds().get( x + 1 );
+					Log.warn( getClass(), "All zero row will not be transformed for " + id );
+				}
 				if( logBase.equalsIgnoreCase( LOG_E ) )
 				{
 					loggedInnerList.add( Math.log( y + 1 ) );
@@ -122,12 +136,13 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 				}
 			}
 		}
+		
+		String level = OtuUtil.getTaxonomyTableLevel( otuTable );
+		Log.debug( getClass(), "Transforming table for level: " + level );
 
-		final String pathPrefix = getOutputDir().getAbsolutePath() + File.separator
-				+ otuTable.getName().substring( 0, otuTable.getName().indexOf( TSV ) );
+		File logNormTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase  );
 
-		writeDataToFile( new File( pathPrefix + "_" + "Log" + logBase + TSV ), sampleNames, otuNames,
-				dataPointsLogged );
+		writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsLogged );
 	}
 
 	private List<String> getOtuNames( final String firstLine ) throws Exception
@@ -176,8 +191,9 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 		writer.close();
 	}
 
-	private static void assertNoZeros( File otuTable, final List<List<Double>> dataPointsUnnormalized ) throws Exception
+	private static Set<Integer> findAllZeroIndex( final List<List<Double>> dataPointsUnnormalized ) throws Exception
 	{
+		Set<Integer> allZero = new HashSet<>();
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
@@ -191,11 +207,12 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 
 				if( sum == 0 )
 				{
-					throw new Exception( "Logic error: OTU counts sum to zero: " + otuTable.getAbsolutePath() );
+					allZero.add( x );
+				
 				}
-
 			}
 		}
+		return allZero;
 	}
 
 	private static void assertNum( File otuTable, final int totalCounts, final List<List<Double>> dataPointsUnnormalized )
