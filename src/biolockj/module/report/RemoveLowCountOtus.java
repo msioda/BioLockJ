@@ -146,10 +146,11 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	 */
 	protected void updateMetadata() throws Exception
 	{
+		String metaColName = getMetaColName();
 		if( badSamples.isEmpty() )
 		{
 			Log.info( getClass(), "All samples have OTUs that meet minimum read threshold - none will be ommitted..." );
-			MetaUtil.addColumn( getMetaColName(), hitsPerSample, getOutputDir() );
+			MetaUtil.addColumn( metaColName, hitsPerSample, getOutputDir() );
 			return;
 		}
 		else
@@ -163,14 +164,14 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 
 		Log.info( getClass(), "Current metadata file: " + MetaUtil.getFile().getAbsolutePath() );
 		Log.info( getClass(),
-				"Building metadata file: " + newMapping.getAbsolutePath() + " with new col: " + getMetaColName() );
+				"Building metadata file: " + newMapping.getAbsolutePath() + " with new col: " + metaColName );
 		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMapping ) );
 		try
 		{
 			String line = reader.readLine();
-			writer.write( line + TAB_DELIM + getMetaColName() + RETURN );
-			Log.info( getClass(), "Adding col header: " + getMetaColName() );
+			writer.write( line + TAB_DELIM + metaColName + RETURN );
+			Log.info( getClass(), "Adding col header: " + metaColName );
 			for( line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );

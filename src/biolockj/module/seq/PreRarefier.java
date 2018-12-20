@@ -200,6 +200,7 @@ public class PreRarefier extends JavaModuleImpl implements JavaModule
 	 */
 	protected void updateMetadata() throws Exception
 	{
+		String metaColName = getMetaColName();
 		if( badSamples.isEmpty() )
 		{
 			Log.info( getClass(), "All samples rarefied & meet minimum read threshold - none will be ommitted..." );
@@ -219,7 +220,7 @@ public class PreRarefier extends JavaModuleImpl implements JavaModule
 		try
 		{
 			String line = reader.readLine();
-			writer.write( line + TAB_DELIM + getMetaColName() + RETURN );
+			writer.write( line + TAB_DELIM + metaColName + RETURN );
 
 			for( line = reader.readLine(); line != null; line = reader.readLine() )
 			{

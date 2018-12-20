@@ -262,11 +262,12 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 	 */
 	protected void updateMetadata() throws Exception
 	{
+		String metaColName = getMetaColName();
 		if( badSamples.isEmpty() )
 		{
 			Log.info( getClass(),
 					"All samples have valid OTUs that meet minimum read threshold - none will be ommitted..." );
-			MetaUtil.addColumn( getMetaColName(), hitsPerSample, getOutputDir() );
+			MetaUtil.addColumn( metaColName, hitsPerSample, getOutputDir() );
 			return;
 		}
 		else
@@ -282,7 +283,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		try
 		{
 			String line = reader.readLine();
-			writer.write( line + TAB_DELIM + getMetaColName() + RETURN );
+			writer.write( line + TAB_DELIM + metaColName + RETURN );
 
 			for( line = reader.readLine(); line != null; line = reader.readLine() )
 			{

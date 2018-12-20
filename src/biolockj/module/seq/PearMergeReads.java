@@ -96,6 +96,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public void cleanUp() throws Exception
 	{
+		String metaColName = getMetaColName();
 		super.cleanUp();
 		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, Config.FALSE );
 
@@ -106,7 +107,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 			MetaUtil.setFile( updatedMeta );
 			MetaUtil.refreshCache();
 		}
-		else if( !MetaUtil.getFieldNames().contains( getMetaColName() ) )
+		else if( !MetaUtil.getFieldNames().contains( metaColName ) )
 		{
 			Log.info( getClass(),
 					"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
@@ -119,14 +120,14 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
-			MetaUtil.addColumn( getMetaColName(), readsPerSample, getOutputDir() );
+			MetaUtil.addColumn( metaColName, readsPerSample, getOutputDir() );
 		}
 		else
 		{
 			Log.warn( getClass(), "Counts for # merged reads/sample already found in metadata, not re-counting "
 					+ MetaUtil.getFile().getAbsolutePath() );
 		}
-		RegisterNumReads.getModule().setNumReadFieldName( getMetaColName() );
+		RegisterNumReads.getModule().setNumReadFieldName( metaColName );
 	}
 
 	/**
