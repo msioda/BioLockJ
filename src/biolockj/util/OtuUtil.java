@@ -381,24 +381,24 @@ public class OtuUtil
 	{
 		if( level == null )
 		{
-			level = "_";
+			throw new Exception( "Level is required to build a taonomy table" );
 		}
-		else
+
+		if(  suffix != null && !suffix.endsWith( "_" ) )
 		{
-			level = "_" + level + "_";
+			suffix += "_";
 		}
-		
-		if( suffix == null )
-		{
-			suffix = "";
-		}
-		else if( !suffix.startsWith( "_" ) )
+		if(  suffix != null && !suffix.startsWith( "_" ) )
 		{
 			suffix = "_" + suffix;
 		}
+		if( suffix == null )
+		{
+			suffix = "_";
+		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
-				+ level + TAXA_TABLE + suffix + BioModule.TSV );
+		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME ) 
+			+ "_" + TAXA_TABLE + suffix + level + BioModule.TSV );
 	}
 
 	/**
@@ -410,9 +410,36 @@ public class OtuUtil
 	 */
 	public static boolean isTaxonomyTable( final File file ) throws Exception
 	{
-		return file.getName().startsWith( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) ) && file.getName().endsWith( BioModule.TSV )
-				&& file.getName().contains( "_" + TAXA_TABLE + "_" );
-		
+		if( file.getName().startsWith( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + TAXA_TABLE + "_" ) )
+		{
+			for( String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+			{
+				if( file.getName().endsWith( level + BioModule.TSV ) )
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Extract the level from an existing taxonomy table.
+	 * 
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getTaxonomyTableLevel( File file ) throws Exception
+	{
+		for( String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		{
+			if( file.getName().endsWith( level + BioModule.TSV ) )
+			{
+				return level;
+			}
+		}
+		return null;
 	}
 	
 	

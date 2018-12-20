@@ -95,12 +95,12 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	/**
 	 * Populate normalized OTU counts with the formula: (RC/n)*((SUM(x))/N)+1
 	 *
-	 * @param otuTable OTU raw count table
+	 * @param taxaTable OTU raw count table
 	 * @throws Exception if unable to construct DataNormalizer
 	 */
-	protected void normalize( final File otuTable ) throws Exception
+	protected void normalize( final File taxaTable ) throws Exception
 	{
-		final BufferedReader reader = BioLockJUtil.getFileReader( otuTable );
+		final BufferedReader reader = BioLockJUtil.getFileReader( taxaTable );
 		final List<List<Double>> dataPointsNormalized = new ArrayList<>();
 		final List<List<Double>> dataPointsNormalizedThenLogged = new ArrayList<>();
 		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();
@@ -170,18 +170,17 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 		}
 		
 
-		final String pathPrefix = getOutputDir().getAbsolutePath() + File.separator
-				+ otuTable.getName().substring( 0, otuTable.getName().indexOf( TSV ) );
-
-		Log.debug( getClass(), "Use pathPrefix: " + pathPrefix );
+		String level = OtuUtil.getTaxonomyTableLevel( taxaTable );
+		Log.debug( getClass(), "Normalizing table for level: " + level );
 		if( !logBase.isEmpty() )
 		{
-			writeDataToFile( new File( pathPrefix + "_" + "Log" + logBase + NORMAL + TSV ), sampleNames, otuNames,
-					dataPointsNormalizedThenLogged );
+			File logNormTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase + NORMAL  );
+			writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsNormalizedThenLogged );
 		}
 		else
 		{
-			writeDataToFile( new File( pathPrefix + NORMAL + TSV ), sampleNames, otuNames, dataPointsNormalized );
+			File normTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, NORMAL  );
+			writeDataToFile( normTable, sampleNames, otuNames, dataPointsNormalized );
 		}
 
 	}
