@@ -81,20 +81,21 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 			
 			
 			final StringBuffer otu = new StringBuffer();
-			for( final String level: map.values() )
+			for( final String delim: map.keySet() )
 			{
-				Log.debug( getClass(), "Check level: " + level );
+				String level = map.get( delim );
+				Log.debug( getClass(), "Check delim: " + delim );
 				final String name = otuNode.getTaxaMap().get( level );
-				Log.debug( getClass(), "Check name: " + name );
+				Log.debug( getClass(), "Check name [ otuNode.getTaxaMap().get( level ) ]: " + name );
 				if( name != null )
 				{
 					if( !otu.toString().isEmpty() )
 					{
 						otu.append( OtuUtil.SEPARATOR );
 					}
-					Log.debug( getClass(), "map.get( level )" + map.get( level ) );
-					Log.debug( getClass(), "BioLockJUtil.removeQuotes( name )" + BioLockJUtil.removeQuotes( name ) );
-					otu.append( OtuUtil.buildOtuTaxa( map.get( level ), BioLockJUtil.removeQuotes( name ) ) );
+					Log.debug( getClass(), "map.get( delim ): " + level );
+					Log.debug( getClass(), "BioLockJUtil.removeQuotes( name ): " + BioLockJUtil.removeQuotes( name ) );
+					otu.append( OtuUtil.buildOtuTaxa( level, BioLockJUtil.removeQuotes( name ) ) );
 				}
 			}
 
