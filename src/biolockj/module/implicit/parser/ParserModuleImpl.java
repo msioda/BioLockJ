@@ -12,7 +12,6 @@
 package biolockj.module.implicit.parser;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import biolockj.Config;
@@ -50,27 +49,29 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		for( final ParsedSample sample: parsedSamples )
 		{
 			final Map<String, Integer> otuCounts = sample.getOtuCounts();
-			final BufferedWriter writer = new BufferedWriter(
-					new FileWriter( getOtuCountFile( sample.getSampleId() ) ) );
-			int numHits = 0;
-			try
+			if( otuCounts != null )
 			{
-				for( final String otu: otuCounts.keySet() )
+				final BufferedWriter writer = new BufferedWriter(
+						new FileWriter( OtuUtil.getOtuCountFile( getOutputDir(), sample.getSampleId(), null ) ) );
+				int numHits = 0;
+				try
 				{
-					numHits += otuCounts.get( otu );
-					writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
+					for( final String otu: otuCounts.keySet() )
+					{
+						numHits += otuCounts.get( otu );
+						writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
+					}
 				}
-			}
-			finally
-			{
-				if( writer != null )
+				finally
 				{
-					writer.close();
+					if( writer != null )
+					{
+						writer.close();
+					}
 				}
+
+				hitsPerSample.put( sample.getSampleId(), String.valueOf( numHits ) );
 			}
-
-			hitsPerSample.put( sample.getSampleId(), String.valueOf( numHits ) );
-
 		}
 	}
 
@@ -85,31 +86,23 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	}
 
 	/**
-	 * Getter for depricatedHitFields
+	 * Getter for depricatedOtuCountFields
 	 * 
-	 * @return depricatedHitFields
+	 * @return depricatedOtuCountFields
 	 */
-	public Set<String> getDepricatedHitFields()
+	public Set<String> getDepricatedOtuCountFields()
 	{
-		return depricatedHitFields;
+		return depricatedOtuCountFields;
 	}
 
 	/**
-	 * Getter for numHitsFieldName
+	 * Getter for otuCountField
 	 * 
-	 * @return numHitsFieldName
+	 * @return otuCountField
 	 */
-	public String getNumHitsFieldName()
+	public String getOtuCountField()
 	{
-		return numHitsFieldName;
-	}
-
-	@Override
-	public File getOtuCountFile( final String sampleId ) throws Exception
-	{
-		return new File( getOutputDir().getAbsolutePath() + File.separator
-				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + OtuUtil.OTU_COUNT + "_" + sampleId
-				+ TSV );
+		return otuCountField;
 	}
 
 	@Override
@@ -169,19 +162,19 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		{
 			throw new Exception( "Null name value passed to ParserModuleImpl.setNumHitsFieldName(name)" );
 		}
-		else if( numHitsFieldName != null && numHitsFieldName.equals( name ) )
+		else if( otuCountField != null && otuCountField.equals( name ) )
 		{
-			Log.warn( getClass(), "Num Hits field already set to: " + numHitsFieldName );
+			Log.warn( getClass(), "Num Hits field already set to: " + otuCountField );
 		}
 		else
 		{
-			if( numHitsFieldName != null )
+			if( otuCountField != null )
 			{
-				depricatedHitFields.add( numHitsFieldName );
+				depricatedOtuCountFields.add( otuCountField );
 			}
 
-			depricatedHitFields.remove( name );
-			numHitsFieldName = name;
+			depricatedOtuCountFields.remove( name );
+			otuCountField = name;
 		}
 	}
 
@@ -193,13 +186,13 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * @param node OtuNode build from 1 line of a {@link biolockj.module.classifier.ClassifierModule} output file
 	 * @return boolean if {@link biolockj.node.OtuNode} is valid
 	 */
-	protected boolean isValid( final OtuNode node )
+	protected boolean isValid( final OtuNode node ) throws Exception
 	{
-		if( node != null && node.getSampleId() != null && node.getCount() != null && !node.getOtuMap().isEmpty() )
+		if( node != null && node.getSampleId() != null && node.getCount() != null && !node.getTaxaMap().isEmpty() )
 		{
-			for( final String level: node.getOtuMap().keySet() )
+			for( final String level: node.getTaxaMap().keySet() )
 			{
-				final String otu = node.getOtuMap().get( level );
+				final String otu = node.getTaxaMap().get( level );
 				if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( level ) && otu != null
 						&& !otu.trim().isEmpty() )
 				{
@@ -249,9 +242,9 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		return (ParserModuleImpl) ModuleUtil.getParserModule();
 	}
 
-	private final Set<String> depricatedHitFields = new HashSet<>();
+	private final Set<String> depricatedOtuCountFields = new HashSet<>();
 	private final Map<String, String> hitsPerSample = new HashMap<>();
-	private String numHitsFieldName = NUM_OTUS;
+	private String otuCountField = NUM_OTUS;
 
 	private final TreeSet<ParsedSample> parsedSamples = new TreeSet<>();
 
@@ -259,6 +252,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * Metadata column name for column that holds number of OTU hits after any {@link biolockj.module.implicit.parser}
 	 * module executes: {@value #NUM_OTUS}
 	 */
-	protected static final String NUM_OTUS = "Num_OTUs";
+	public static final String NUM_OTUS = "NUM_OTU";
 
 }

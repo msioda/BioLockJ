@@ -73,10 +73,10 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 
 		while( st.hasMoreTokens() )
 		{
-			String otu = st.nextToken().replaceAll( "'", "" ).replaceAll( "\"", "" ).trim();
-			while( otu.trim().equals( "-" ) || otu.trim().equals( "" ) )
+			String taxa = st.nextToken().replaceAll( "'", "" ).replaceAll( "\"", "" ).trim();
+			while( taxa.trim().equals( "-" ) || taxa.trim().equals( "" ) )
 			{
-				otu = st.nextToken().replaceAll( "'", "" ).replaceAll( "\"", "" );
+				taxa = st.nextToken().replaceAll( "'", "" ).replaceAll( "\"", "" );
 			}
 
 			final String level = st.nextToken();
@@ -86,7 +86,7 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 					&& nextScore >= Config.requirePositiveInteger( RdpParser.RDP_THRESHOLD_SCORE ) )
 			{
 				score = nextScore;
-				buildOtuNode( otu, level );
+				addTaxa( taxa, level );
 			}
 
 			// #Code commented out, used to require unbroken taxa chain from top level to current level

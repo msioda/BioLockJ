@@ -18,6 +18,7 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.OtuUtil;
 
 /**
  * Provides type-safe, validated methods for storing/accessing system properties.<br>
@@ -647,8 +648,7 @@ public class Config
 
 		final Set<String> taxa = new HashSet<>();
 
-		final List<String> validOptions = Arrays
-				.asList( new String[] { DOMAIN, PHYLUM, CLASS, ORDER, FAMILY, GENUS, SPECIES } );
+		final List<String> validOptions = OtuUtil.getAllTaxonomyLevels();
 
 		for( final String element: requireList( REPORT_TAXONOMY_LEVELS ) )
 		{

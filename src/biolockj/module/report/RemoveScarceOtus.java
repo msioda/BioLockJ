@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -42,6 +43,12 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 	{
 		super.cleanUp();
 		ParserModuleImpl.getModule().setNumHitsFieldName( getMetaColName() );
+	}
+
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return OtuUtil.outputOtuCountFiles( previousModule );
 	}
 
 	@Override
@@ -191,7 +198,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		Log.warn( getClass(),
+		Log.info( getClass(),
 				"Found " + scarceOtus.size() + " scarce OTUs saved to --> " + getScareOtuLogFile().getAbsolutePath() );
 	}
 
@@ -206,8 +213,8 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		for( final String sampleId: updatedOtuCounts.keySet() )
 		{
 			Log.debug( getClass(), "removeScarceOtus Checking sampleId: " + sampleId );
-			final BufferedWriter writer = new BufferedWriter(
-					new FileWriter( getOutputFile( getFileMap().get( sampleId ) ) ) );
+			final BufferedWriter writer = new BufferedWriter( new FileWriter(
+					OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getIdString().replace( "%", "" ) ) ) );
 			try
 			{
 				final Map<String, Integer> otuCounts = updatedOtuCounts.get( sampleId );
@@ -303,34 +310,19 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		return cutoff.intValue();
 	}
 
-	private Map<String, File> getFileMap() throws Exception
+	private String getIdString() throws Exception
 	{
-		if( fileMap == null )
-		{
-			fileMap = new HashMap<>();
-			for( final File f: getInputFiles() )
-			{
-				fileMap.put( OtuUtil.getSampleId( f ), f );
-			}
-		}
-		return fileMap;
+		return MIN_OTU + "_" + new Double( Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) * 100 ).intValue() + "%";
 	}
 
 	private String getMetaColName() throws Exception
 	{
 		if( otuColName == null )
 		{
-			final String baseName = ParserModuleImpl.getModule().getNumHitsFieldName() + "+"
-					+ Config.requirePositiveDouble( MIN_OTU_THRESHOLD ).intValue();
-			otuColName = ModuleUtil.getSystemMetaCol( this, baseName );
+			otuColName = ModuleUtil.getSystemMetaCol( this, ParserModuleImpl.NUM_OTUS + "_" + getIdString() );
 		}
 
 		return otuColName;
-	}
-
-	private File getOutputFile( final File f ) throws Exception
-	{
-		return new File( getOutputDir().getAbsolutePath() + File.separator + f.getName() );
 	}
 
 	private File getScareOtuLogFile() throws Exception
@@ -339,14 +331,14 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 	}
 
 	private final Set<String> badSamples = new HashSet<>();
-	private Map<String, File> fileMap = null;
 	private final Map<String, String> hitsPerSample = new HashMap<>();
 	private String otuColName = null;
-
 	/**
 	 * {@link biolockj.Config} Positive Double property {@value #MIN_OTU_THRESHOLD} defines minimum percentage of
 	 * samples that must contain an OTU for it to be kept.
 	 */
 	protected static final String MIN_OTU_THRESHOLD = "removeScarceOtus.minOtuThreshold";
+
+	private static final String MIN_OTU = "minOtuPer";
 
 }

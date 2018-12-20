@@ -11,7 +11,6 @@
  */
 package biolockj.module.implicit.parser;
 
-import java.io.File;
 import biolockj.module.JavaModule;
 import biolockj.node.ParsedSample;
 
@@ -39,15 +38,6 @@ public interface ParserModule extends JavaModule
 	 * @throws Exception if error occurs while building OTU tables
 	 */
 	public void buildOtuCountFiles() throws Exception;
-
-	/**
-	 * Get the name of the OTU count file output for the given sampleId
-	 * 
-	 * @param sampleId Sample ID
-	 * @return OTU count file
-	 * @throws Exception if errors occur
-	 */
-	public File getOtuCountFile( String sampleId ) throws Exception;
 
 	/**
 	 * After {@link #parseSamples()} completes, this method can be called to get a {@link biolockj.node.ParsedSample} by

@@ -11,127 +11,129 @@
  */
 package biolockj.util;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.commons.io.FileUtils;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.ScriptModule;
+// import java.io.*;
+// import java.util.ArrayList;
+// import java.util.List;
+// import org.apache.commons.io.FileUtils;
+// import biolockj.BioLockJ;
+// import biolockj.Config;
+// import biolockj.Log;
+// import biolockj.module.BioModule;
+// import biolockj.module.JavaModule;
+// import biolockj.module.ScriptModule;
 
 /**
  * This util adds auxiliary log info to BioLockJ log file
  */
 public class LogUtil
 {
+	//
+	// private static String getTempLogPath()
+	// {
+	// return Log.getFile().getAbsolutePath().replace( Log.getFile().getName(), ".temp" + Log.getFile().getName() );
+	// }
+	//
 
-	/**
-	 * Not used currently.
-	 * 
-	 * @param module BioModule
-	 * @throws Exception if errors occur
-	 */
-	public static void syncModuleLogs( final ScriptModule module ) throws Exception
-	{
-		if( module instanceof JavaModule && Config.getBoolean( JavaModule.JAVA_RUN_AS_SCRIPT ) )
-		{
-			merge( cacheLog( getModuleLog( module ) ) );
-		}
+	// /**
+	// * Not used currently.
+	// *
+	// * @param module BioModule
+	// * @throws Exception if errors occur
+	// */
+	// public static void syncModuleLogs( final ScriptModule module ) throws Exception
+	// {
+	// if( module instanceof JavaModule && Config.getBoolean( JavaModule.JAVA_RUN_AS_SCRIPT ) )
+	// {
+	// merge( cacheLog( getModuleLog( module ) ) );
+	// }
+	//
+	// if( module instanceof ScriptModule && Config.isOnCluster() )
+	// {
+	// // final List<String> cache = new ArrayList<>();
+	// // for( final File log: module.getScriptDir().listFiles() )
+	// // {
+	// // final List<String> lines = cacheLog( log );
+	// // if( !lines.isEmpty() )
+	// // {
+	// // cache.add( "Logging info from: " + log.getAbsolutePath() );
+	// // cache.addAll( lines );
+	// // }
+	// // }
+	// //
+	// // merge( cache );
+	// }
+	// }
+	//
+	// private static List<String> cacheLog( final File log ) throws Exception
+	// {
+	// final List<String> cache = new ArrayList<>();
+	// final BufferedReader reader = BioLockJUtil.getFileReader( log );
+	// try
+	// {
+	// for( String line = reader.readLine(); line != null; line = reader.readLine() )
+	// {
+	// if( !line.trim().isEmpty() && !getProfile().contains( line ) )
+	// {
+	// cache.add( line );
+	// }
+	// }
+	// }
+	// finally
+	// {
+	// reader.close();
+	// }
+	//
+	// return cache;
+	// }
 
-		if( module instanceof ScriptModule && Config.isOnCluster() )
-		{
-			// final List<String> cache = new ArrayList<>();
-			// for( final File log: module.getScriptDir().listFiles() )
-			// {
-			// final List<String> lines = cacheLog( log );
-			// if( !lines.isEmpty() )
-			// {
-			// cache.add( "Logging info from: " + log.getAbsolutePath() );
-			// cache.addAll( lines );
-			// }
-			// }
-			//
-			// merge( cache );
-		}
-	}
+	// private static File getModuleLog( final BioModule module ) throws Exception
+	// {
+	// return new File( ModuleUtil.getModuleRootDir( module ) + File.separator + BioModule.TEMP_DIR + File.separator
+	// + module.getClass().getSimpleName() + ".log" );
+	// }
 
-	private static List<String> cacheLog( final File log ) throws Exception
-	{
-		final List<String> cache = new ArrayList<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( log );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				if( !line.trim().isEmpty() && !getProfile().contains( line ) )
-				{
-					cache.add( line );
-				}
-			}
-		}
-		finally
-		{
-			reader.close();
-		}
-
-		return cache;
-	}
-
-	private static File getModuleLog( final BioModule module ) throws Exception
-	{
-		return new File( ModuleUtil.getModuleRootDir( module ) + File.separator + BioModule.TEMP_DIR + File.separator
-				+ module.getClass().getSimpleName() + ".log" );
-	}
-
-	private static List<String> getProfile()
-	{
-		if( profile.isEmpty() )
-		{
-			try
-			{
-				final File bashProfile = new File( Config.getSystemFilePath( "~/.bash_profile" ) );
-				if( bashProfile.exists() )
-				{
-					profile.addAll( cacheLog( bashProfile ) );
-				}
-			}
-			catch( final Exception ex )
-			{
-				Log.warn( LogUtil.class, "Unable to find ~/.bash_profile" );
-			}
-		}
-		return profile;
-	}
-
-	private static String getTempLogPath()
-	{
-		return Log.getFile().getAbsolutePath().replace( Log.getFile().getName(), ".temp" + Log.getFile().getName() );
-	}
-
-	private static void merge( final List<String> lines ) throws Exception
-	{
-		final File tempLog = new File( getTempLogPath() );
-		FileUtils.copyFile( Log.getFile(), tempLog );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( tempLog, true ) );
-		try
-		{
-			for( final String line: lines )
-			{
-				writer.write( line + BioLockJ.RETURN );
-			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
-		}
-		FileUtils.copyFile( tempLog, Log.getFile() );
-	}
-
-	private static final List<String> profile = new ArrayList<>();
+	// private static List<String> getProfile()
+	// {
+	// if( profile.isEmpty() )
+	// {
+	// try
+	// {
+	// final File bashProfile = new File( Config.getSystemFilePath( "~/.bash_profile" ) );
+	// if( bashProfile.exists() )
+	// {
+	// profile.addAll( cacheLog( bashProfile ) );
+	// }
+	// }
+	// catch( final Exception ex )
+	// {
+	// Log.warn( LogUtil.class, "Unable to find ~/.bash_profile" );
+	// }
+	// }
+	// return profile;
+	// }
+	//
+	//
+	// private static void merge( final List<String> lines ) throws Exception
+	// {
+	// final File tempLog = new File( getTempLogPath() );
+	// FileUtils.copyFile( Log.getFile(), tempLog );
+	// final BufferedWriter writer = new BufferedWriter( new FileWriter( tempLog, true ) );
+	// try
+	// {
+	// for( final String line: lines )
+	// {
+	// writer.write( line + BioLockJ.RETURN );
+	// }
+	// }
+	// finally
+	// {
+	// if( writer != null )
+	// {
+	// writer.close();
+	// }
+	// }
+	// FileUtils.copyFile( tempLog, Log.getFile() );
+	// }
+	//
+	// private static final List<String> profile = new ArrayList<>();
 }

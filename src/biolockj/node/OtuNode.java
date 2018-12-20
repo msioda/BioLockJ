@@ -29,7 +29,7 @@ public interface OtuNode
 	 * @param otu Classifier OTU name
 	 * @param levelDelim Classifier specific taxonomy level indicator
 	 */
-	public void buildOtuNode( final String otu, final String levelDelim );
+	public void addTaxa( final String otu, final String levelDelim );
 
 	/**
 	 * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to
@@ -54,13 +54,6 @@ public interface OtuNode
 	public String getLine();
 
 	/**
-	 * Gets the map holding level-specific OTU names
-	 *
-	 * @return OTU map (key=level, value=OTU)
-	 */
-	public Map<String, String> getOtuMap();
-
-	/**
 	 * Gets the sample ID to which the read belongs
 	 *
 	 * @return Sample ID
@@ -68,9 +61,19 @@ public interface OtuNode
 	public String getSampleId();
 
 	/**
-	 * Print level name and OTU name for each taxonomy level populated.
+	 * Gets the map holding level-specific OTU names
+	 *
+	 * @return OTU map (key=level, value=OTU)
+	 * @throws Exception if errors occur building map
 	 */
-	public void report();
+	public Map<String, String> getTaxaMap() throws Exception;
+
+	/**
+	 * Print level name and OTU name for each taxonomy level populated.
+	 * 
+	 * @throws Exception if errors occur building map
+	 */
+	public void report() throws Exception;
 
 	/**
 	 * Set the number of reads for a sample ID that have this OTU assignment.

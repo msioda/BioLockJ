@@ -52,7 +52,7 @@ public class KrakenNode extends OtuNodeImpl implements OtuNode
 				final String token = taxas.nextToken();
 				final String levelDelim = token.substring( 0, 3 );
 				final String taxa = token.substring( 3 );
-				buildOtuNode( taxa, levelDelim );
+				addTaxa( taxa, levelDelim );
 			}
 		}
 		else
@@ -62,7 +62,7 @@ public class KrakenNode extends OtuNodeImpl implements OtuNode
 				Log.warn( getClass(), "Extra Kraken token [ more than expected 2! ]: " + st.nextToken() );
 			}
 
-			throw new Exception( "Invalid Record = (" + ( debugMode() ? line: id ) + ")" + BioLockJ.RETURN
+			throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + BioLockJ.RETURN
 					+ "Kraken output must have exactly 2 tab delimited columns per line. " );
 		}
 	}

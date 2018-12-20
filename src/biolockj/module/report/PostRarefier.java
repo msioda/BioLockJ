@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -55,6 +56,12 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 		ParserModuleImpl.getModule().setNumHitsFieldName( getMetaColName() );
 	}
 
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return OtuUtil.outputOtuCountFiles( previousModule );
+	}
+
 	/**
 	 * Apply the quantile config to the number of OTUs per sample to calculate the maximum OTU count per sample. For
 	 * each sample rarefy the configured number of times and output a file with the average counts. Update the metadata
@@ -71,9 +78,8 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 			final TreeMap<String, Integer> data = rarefy( sampleId, sampleOtuCounts.get( sampleId ), quantileNum );
 			if( data != null )
 			{
-				generateOtuput( getOutputFile( getFileMap().get( sampleId ) ), data );
+				generateOtuput( OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getIdString() ), data );
 			}
-
 		}
 
 		updateMetadata();
@@ -107,7 +113,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 
 	protected List<String> getData( final String sampleId, final Map<String, Integer> otuCounts ) throws Exception
 	{
-		final String metaField = MetaUtil.getField( sampleId, ParserModuleImpl.getModule().getNumHitsFieldName() );
+		final String metaField = MetaUtil.getField( sampleId, ParserModuleImpl.getModule().getOtuCountField() );
 		final Integer val = Integer.valueOf( metaField );
 		final List<String> otus = new ArrayList<>( val );
 		for( final String otu: otuCounts.keySet() )
@@ -187,7 +193,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 				otuCount.put( otu, otuCount.get( otu ) + 1 );
 			}
 		}
-		
+
 		int sum = 0;
 		final TreeMap<String, Integer> aveCount = new TreeMap<>();
 		for( final String otu: otuCount.keySet() )
@@ -199,7 +205,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 				sum += avg;
 			}
 		}
-		
+
 		hitsPerSample.put( sampleId, String.valueOf( sum ) );
 		return aveCount;
 	}
@@ -255,44 +261,24 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 		MetaUtil.refreshCache();
 	}
 
-	private Map<String, File> getFileMap() throws Exception
+	private String getIdString() throws Exception
 	{
-		if( fileMap == null )
-		{
-			fileMap = new HashMap<>();
-			for( final File f: getInputFiles() )
-			{
-				fileMap.put( OtuUtil.getSampleId( f ), f );
-			}
-		}
-		return fileMap;
+		return RARE_OTU + "_" + new Double( Config.requirePositiveDouble( QUANTILE ) * 100 ).intValue();
 	}
 
 	private String getMetaColName() throws Exception
 	{
 		if( otuColName == null )
 		{
-			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_RAREFIED_OTUS );
+			otuColName = ModuleUtil.getSystemMetaCol( this, ParserModuleImpl.NUM_OTUS + "_" + getIdString() );
 		}
 
 		return otuColName;
 	}
 
-	private File getOutputFile( final File f ) throws Exception
-	{
-		return new File( getOutputDir().getAbsolutePath() + File.separator + f.getName() );
-	}
-
 	private final Set<String> badSamples = new HashSet<>();
-	private Map<String, File> fileMap = null;
 	private final Map<String, String> hitsPerSample = new HashMap<>();
 	private String otuColName = null;
-
-	/**
-	 * Metadata column name for column that holds number of rarefied hits per sample: {@value #NUM_RAREFIED_OTUS}
-	 */
-	public static final String NUM_RAREFIED_OTUS = "Num_Rarefied_Otus";
-
 	/**
 	 * {@link biolockj.Config} Positive Integer property {@value #NUM_ITERATIONS} defines the number of iterations to
 	 * randomly select the {@value #QUANTILE}% of OTUs.
@@ -312,5 +298,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 	 * quantile sample are removed.
 	 */
 	protected static final String REMOVE_LOW_ABUNDANT_SAMPLES = "postRarefier.removeSamplesBelowQuantile";
+
+	private static final String RARE_OTU = "rarefied";
 
 }

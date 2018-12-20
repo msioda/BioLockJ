@@ -6,26 +6,14 @@ import java.io.FileWriter;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.Pipeline;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.module.implicit.parser.ParserModule;
 import biolockj.util.MetaUtil;
 import biolockj.util.OtuUtil;
 
 public class BuildTaxonomyTables extends JavaModuleImpl implements JavaModule
 {
-
-	/**
-	 * Execute {@link #validateModuleOrder()} to validate module configuration order.
-	 */
-	@Override
-	public void checkDependencies() throws Exception
-	{
-		super.checkDependencies();
-		validateModuleOrder();
-	}
 
 	/**
 	 * Return the taxonomy table file for the given level.
@@ -38,6 +26,12 @@ public class BuildTaxonomyTables extends JavaModuleImpl implements JavaModule
 	{
 		return new File( getOutputDir().getAbsolutePath() + File.separator
 				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + level + TSV );
+	}
+
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return OtuUtil.outputOtuCountFiles( previousModule );
 	}
 
 	@Override
@@ -108,52 +102,30 @@ public class BuildTaxonomyTables extends JavaModuleImpl implements JavaModule
 		}
 	}
 
-	/**
-	 * Validate {@link biolockj.module.implicit.parser.ParserModule} runs before this module.
-	 * 
-	 * @throws Exception if modules are out of order
-	 */
-	protected void validateModuleOrder() throws Exception
-	{
-		boolean foundSelf = false;
-		boolean foundParser = false;
-		for( final BioModule module: Pipeline.getModules() )
-		{
-			if( module.getClass().equals( getClass() ) )
-			{
-				foundSelf = true;
-			}
-
-			if( !foundParser )
-			{
-				foundParser = module instanceof ParserModule;
-			}
-
-			if( !foundParser && foundSelf )
-			{
-				throw new Exception( "ParserModule must run prior to " + getClass().getName() );
-			}
-		}
-	}
-
 	private void report( final String label, final Collection<String> col ) throws Exception
 	{
-		Log.warn( getClass(), label );
-		for( final String item: col )
+		if( Log.doDebug() )
 		{
-			Log.warn( getClass(), item );
+			Log.debug( getClass(), label );
+			for( final String item: col )
+			{
+				Log.debug( getClass(), item );
+			}
 		}
 	}
 
 	private void report( final String label, final Map<String, Map<String, Integer>> map ) throws Exception
 	{
-		Log.warn( getClass(), label );
-		for( final String id: map.keySet() )
+		if( Log.doDebug() )
 		{
-			final Map<String, Integer> innerMap = map.get( id );
-			for( final String otu: innerMap.keySet() )
+			Log.debug( getClass(), label );
+			for( final String id: map.keySet() )
 			{
-				Log.warn( getClass(), id + ": " + otu + "=" + innerMap.get( otu ) );
+				final Map<String, Integer> innerMap = map.get( id );
+				for( final String otu: innerMap.keySet() )
+				{
+					Log.debug( getClass(), id + ": " + otu + "=" + innerMap.get( otu ) );
+				}
 			}
 		}
 	}

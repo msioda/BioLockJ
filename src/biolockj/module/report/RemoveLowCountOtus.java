@@ -16,6 +16,7 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -42,6 +43,12 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	{
 		super.cleanUp();
 		ParserModuleImpl.getModule().setNumHitsFieldName( getMetaColName() );
+	}
+
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return OtuUtil.outputOtuCountFiles( previousModule );
 	}
 
 	/**
@@ -74,7 +81,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 
 			for( final String otu: otuCounts.keySet() )
 			{
-				if( otuCounts.get( otu ) < Config.getPositiveInteger( MIN_OTU_COUNT ) )
+				if( otuCounts.get( otu ) < Config.requirePositiveInteger( MIN_OTU_COUNT ) )
 				{
 					Log.debug( getClass(), sampleId + ": must remove: " + otu + "=" + otuCounts.get( otu ) );
 					validOtus.remove( otu );
@@ -105,14 +112,13 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 
 				Log.warn( getClass(),
 						"Removed low OTU counts below " + MIN_OTU_COUNT + "="
-								+ Config.getPositiveInteger( MIN_OTU_COUNT ) + " --> "
+								+ Config.requirePositiveInteger( MIN_OTU_COUNT ) + " --> "
 								+ BioLockJUtil.getCollectionAsString( badOtus ) );
 
-				final BufferedWriter writer = new BufferedWriter(
-						new FileWriter( getOutputFile( getFileMap().get( sampleId ) ) ) );
+				final File otuFile = OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getIdString() );
+				final BufferedWriter writer = new BufferedWriter( new FileWriter( otuFile ) );
 				try
 				{
-
 					for( final String otu: validOtus )
 					{
 						Log.debug( getClass(),
@@ -127,7 +133,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 						writer.close();
 					}
 
-					getFileMap().put( sampleId, getOutputFile( getFileMap().get( sampleId ) ) );
+					getFileMap().put( sampleId, otuFile );
 				}
 			}
 		}
@@ -154,10 +160,10 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 
 		final File newMapping = new File(
 				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-		
-		
-		Log.info( getClass(), "Current metadata file: " +  MetaUtil.getFile().getAbsolutePath() );
-		Log.info( getClass(), "Building metadata file: " +  newMapping.getAbsolutePath() +" with new col: " + getMetaColName() );
+
+		Log.info( getClass(), "Current metadata file: " + MetaUtil.getFile().getAbsolutePath() );
+		Log.info( getClass(),
+				"Building metadata file: " + newMapping.getAbsolutePath() + " with new col: " + getMetaColName() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMapping ) );
 		try
@@ -198,21 +204,19 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 		return fileMap;
 	}
 
+	private String getIdString() throws Exception
+	{
+		return MIN_OTU + Config.requirePositiveInteger( MIN_OTU_COUNT );
+	}
+
 	private String getMetaColName() throws Exception
 	{
 		if( otuColName == null )
 		{
-			final String baseName = ParserModuleImpl.getModule().getNumHitsFieldName() + "+"
-					+ Config.requirePositiveDouble( MIN_OTU_COUNT ).intValue();
-			otuColName = ModuleUtil.getSystemMetaCol( this, baseName );
+			otuColName = ModuleUtil.getSystemMetaCol( this, ParserModuleImpl.NUM_OTUS + "_" + getIdString() );
 		}
 
 		return otuColName;
-	}
-
-	private File getOutputFile( final File f ) throws Exception
-	{
-		return new File( getOutputDir().getAbsolutePath() + File.separator + f.getName() );
 	}
 
 	private final Set<String> badSamples = new HashSet<>();
@@ -225,5 +229,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	 * allowed, if a count less that this value is found, it is set to 0.
 	 */
 	protected static final String MIN_OTU_COUNT = "removeLowCounts.minOtuCount";
+
+	private static final String MIN_OTU = "minOtuCount";
 
 }

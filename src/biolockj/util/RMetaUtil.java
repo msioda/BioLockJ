@@ -116,14 +116,14 @@ public final class RMetaUtil
 			}
 
 			// remove BLJ generated fields since inclusion depends upon the report.num* properties
-			if( ParserModuleImpl.getModule().getNumHitsFieldName() != null )
+			if( ParserModuleImpl.getModule().getOtuCountField() != null )
 			{
-				rScriptFields.remove( ParserModuleImpl.getModule().getNumHitsFieldName() );
+				rScriptFields.remove( ParserModuleImpl.getModule().getOtuCountField() );
 			}
 
-			if( ParserModuleImpl.getModule().getDepricatedHitFields() != null )
+			if( ParserModuleImpl.getModule().getDepricatedOtuCountFields() != null )
 			{
-				rScriptFields.removeAll( ParserModuleImpl.getModule().getDepricatedHitFields() );
+				rScriptFields.removeAll( ParserModuleImpl.getModule().getDepricatedOtuCountFields() );
 			}
 
 			if( RegisterNumReads.getModule().getNumReadFieldName() != null )
@@ -163,15 +163,15 @@ public final class RMetaUtil
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, ParserModuleImpl.getModule().getNumHitsFieldName() ) )
+				&& isValidNumericField( metaFields, ParserModuleImpl.getModule().getOtuCountField() ) )
 		{
-			rScriptFields.add( ParserModuleImpl.getModule().getNumHitsFieldName() );
-			numericFields.add( ParserModuleImpl.getModule().getNumHitsFieldName() );
+			rScriptFields.add( ParserModuleImpl.getModule().getOtuCountField() );
+			numericFields.add( ParserModuleImpl.getModule().getOtuCountField() );
 		}
 		else
 		{
-			rScriptFields.remove( ParserModuleImpl.getModule().getNumHitsFieldName() );
-			numericFields.remove( ParserModuleImpl.getModule().getNumHitsFieldName() );
+			rScriptFields.remove( ParserModuleImpl.getModule().getOtuCountField() );
+			numericFields.remove( ParserModuleImpl.getModule().getOtuCountField() );
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS )

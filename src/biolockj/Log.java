@@ -61,6 +61,11 @@ public class Log
 		}
 	}
 
+	public static boolean doDebug() throws Exception
+	{
+		return Config.requireString( LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
+	}
+
 	/**
 	 * Print log level ERROR message without exception stacktrace
 	 * 

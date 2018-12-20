@@ -14,7 +14,11 @@ package biolockj.util;
 import java.io.BufferedReader;
 import java.io.File;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.BioLockJ;
+import biolockj.Config;
+import biolockj.Log;
 import biolockj.module.BioModule;
 
 /**
@@ -23,7 +27,9 @@ import biolockj.module.BioModule;
  */
 public class OtuUtil
 {
-
+	/**
+	 * This inner class is used to hold a signle line from an OTU count file.
+	 */
 	public static class OtuCountLine
 	{
 		public OtuCountLine( final String line ) throws Exception
@@ -72,7 +78,6 @@ public class OtuUtil
 	public static Map<String, Integer> compileSampleOtuCounts( final File file ) throws Exception
 	{
 		final Map<String, Integer> otuCounts = new TreeMap<>();
-
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try
 		{
@@ -150,6 +155,18 @@ public class OtuUtil
 	}
 
 	/**
+	 * Returns a list of all taxonomy levels, not only the levels configured via
+	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}.
+	 * 
+	 * @return
+	 */
+	public static List<String> getAllTaxonomyLevels()
+	{
+		return Arrays.asList( new String[] { Config.DOMAIN, Config.PHYLUM, Config.CLASS, Config.ORDER, Config.FAMILY,
+				Config.GENUS, Config.SPECIES } );
+	}
+
+	/**
 	 * Return Map keyed on Sample ID, each sample maps to an inner map(taxa, count).<br>
 	 * Input param sampleOtuCounts contains OTUs for which many can share the same level taxonomy assignment.<br>
 	 * For example if sample42 contained the following 3 OTU values, a phylum level report would contain the entry:
@@ -176,6 +193,44 @@ public class OtuUtil
 		}
 
 		return taxaCounts;
+	}
+
+	/**
+	 * Build OTU count file using a standard format in the directory given.<br>
+	 * Format: pipeline_name + prefix + {@value #OTU_COUNT} + sampleId + {@value biolockj.module.BioModule#TSV}
+	 * 
+	 * @param dir File directory
+	 * @param sampleId Sample ID
+	 * @param prefix File prefix (after pipeline name)
+	 * @return OTU count file
+	 * @throws Exception if errors occur
+	 */
+	public static File getOtuCountFile( final File dir, String sampleId, String prefix ) throws Exception
+	{
+		if( prefix == null )
+		{
+			prefix = "_";
+		}
+		if( !prefix.startsWith( "_" ) )
+		{
+			prefix = "_" + prefix;
+		}
+		if( !prefix.endsWith( "_" ) )
+		{
+			prefix += "_";
+		}
+
+		if( sampleId != null )
+		{
+			sampleId += "_";
+		}
+		else
+		{
+			sampleId = "";
+		}
+
+		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
+				+ prefix + OTU_COUNT + sampleId + BioModule.TSV );
 	}
 
 	/**
@@ -218,6 +273,23 @@ public class OtuUtil
 		}
 
 		return otuCountsBySample;
+	}
+
+	/**
+	 * Return a map of the OTU split by level.
+	 * 
+	 * @param otu OTU with multiple taxa levels
+	 * @return Map(level,taxa)
+	 * @throws Exception if errors occur
+	 */
+	public static Map<String, String> getTaxaByLevel( final String otu ) throws Exception
+	{
+		final Map<String, String> map = new HashMap<>();
+		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		{
+			map.put( level, getTaxaName( otu, level ) );
+		}
+		return map;
 	}
 
 	/**
@@ -273,7 +345,75 @@ public class OtuUtil
 	}
 
 	/**
-	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix endind
+	 * Check the file name and contents to verify file in an OTU count file.
+	 * 
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean isOtuFile( final File file ) throws Exception
+	{
+		final String name = file.getName();
+		if( name.startsWith( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) ) && name.endsWith( BioModule.TSV )
+				&& name.contains( OTU_COUNT + "_" ) )
+		{
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
+			try
+			{
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
+				{
+					new OtuCountLine( line );
+				}
+			}
+			catch( final Exception ex )
+			{
+				Log.debug( OtuUtil.class, "File is not an OTU count file: " + file.getAbsolutePath() );
+				return false;
+			}
+			finally
+			{
+				if( reader != null )
+				{
+					reader.close();
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check the module to determine if it generated OTU count files.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if module generated OTU count files
+	 * @throws Exception if errors occur
+	 */
+	public static boolean outputOtuCountFiles( final BioModule module ) throws Exception
+	{
+		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
+				HiddenFileFilter.VISIBLE );
+
+		if( files == null || files.isEmpty() )
+		{
+			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
+		}
+
+		for( final File f: files )
+		{
+			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			{
+				return OtuUtil.isOtuFile( f );
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
 	 * with {@value #DELIM_SEP}
 	 */
 	public static String DELIM_SEP = "@";

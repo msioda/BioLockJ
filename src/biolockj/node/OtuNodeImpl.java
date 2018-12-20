@@ -11,51 +11,47 @@
  */
 package biolockj.node;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.util.OtuUtil;
 
 /**
  * The default implementation of {@link biolockj.node.OtuNode} is also the superclass for all WGS and 16S OtuNode
  * classes. OtuNodes hold taxonomy assignment info, represents one line of
- * {@link biolockj.module.classifier.ClassifierModule} output. The assignment is stored in a local otuMap, which holds
+ * {@link biolockj.module.classifier.ClassifierModule} output. The assignment is stored in a local taxaMap, which holds
  * one OTU name per level (level-gaps allowed).
  */
 public abstract class OtuNodeImpl implements OtuNode
 {
 
 	@Override
-	public void buildOtuNode( final String otu, final String levelDelim )
+	public void addTaxa( final String taxa, final String levelDelim )
 	{
-		// Log.debug( getClass(), id + " buildOtuNode --> OTU: " + otu + " : delim = " + levelDelim );
-
-		if( levelDelim != null && otu != null && !levelDelim.trim().isEmpty() && !otu.trim().isEmpty() )
+		// Log.debug( getClass(), id + " addTaxa --> Taxa: " + otu + " : delim = " + levelDelim );
+		if( levelDelim != null && taxa != null && !levelDelim.trim().isEmpty() && !taxa.trim().isEmpty() )
 		{
 			final String taxaLevel = delimToLevelMap().get( levelDelim );
 
 			// if taxaLevel not configured or for level BioLockJ doesn't support (like strain) - take no action
 			if( taxaLevel == null || !Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( taxaLevel ) )
 			{
-				// Log.debug( getClass(), "OtuNode.addOtu() skipping invalid taxaLevel (not configured or not
-				// supported): delim="
-				// + levelDelim + "; taxa=" + taxaLevel );
 				return;
 			}
 
-			if( otuMap.get( taxaLevel ) != null )
+			if( taxaMap.get( taxaLevel ) != null )
 			{
-				Log.debug( getClass(),
-						id + " overwriting OTU: " + otuMap.get( taxaLevel ) + " with " + otu + "  --> Line = " + line );
+				Log.debug( getClass(), id + " overwriting OTU: " + taxaMap.get( taxaLevel ) + " with " + taxa
+						+ "  --> Line = " + line );
 			}
 
-			otuMap.put( taxaLevel, otu );
+			taxaMap.put( taxaLevel, taxa );
 		}
 		else
 		{
-			Log.debug( getClass(), "ID=[ " + id + " ] --> OTU missing! for: levelDelim=[ " + levelDelim + " ]; OTU=[ "
-					+ otu + " ]; Line =[ " + line + " ]" );
+			Log.debug( getClass(), "ID=[ " + id + " ] --> Taxa level missing! for: levelDelim=[ " + levelDelim
+					+ " ]; Taxa=[ " + taxa + " ]; Line =[ " + line + " ]" );
 		}
 	}
 
@@ -88,25 +84,49 @@ public abstract class OtuNodeImpl implements OtuNode
 	}
 
 	@Override
-	public Map<String, String> getOtuMap()
-	{
-		return otuMap;
-	}
-
-	@Override
 	public String getSampleId()
 	{
 		return id;
 	}
 
+	/**
+	 * This implementation ensures all levels between top and bottom taxonomy levels are complete. If missing middle
+	 * levels are found, they inherit their parent taxa.
+	 */
 	@Override
-	public void report()
+	public Map<String, String> getTaxaMap() throws Exception
+	{
+		String parentTaxa = null;
+		final Set<String> populatedLevels = new HashSet<>( taxaMap.keySet() );
+		for( final String level: OtuUtil.getAllTaxonomyLevels() )
+		{
+			if( populatedLevels.contains( level ) )
+			{
+				populatedLevels.remove( level );
+			}
+
+			final String levelTaxa = taxaMap.get( level );
+			if( levelTaxa == null && parentTaxa != null && !populatedLevels.isEmpty() )
+			{
+				taxaMap.put( level, parentTaxa );
+			}
+			if( levelTaxa != null )
+			{
+				parentTaxa = levelTaxa;
+			}
+		}
+
+		return taxaMap;
+	}
+
+	@Override
+	public void report() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();
 		sb.append( "[" + id + "]=" + count + " | line=" + line + BioLockJ.RETURN );
-		for( final String key: otuMap.keySet() )
+		for( final String key: getTaxaMap().keySet() )
 		{
-			sb.append( key + " = " + otuMap.get( key ) + BioLockJ.RETURN );
+			sb.append( key + " = " + getTaxaMap().get( key ) + BioLockJ.RETURN );
 		}
 		Log.debug( getClass(), sb.toString() );
 	}
@@ -122,7 +142,7 @@ public abstract class OtuNodeImpl implements OtuNode
 	{
 		try
 		{
-			if( debugMode() )
+			if( Log.doDebug() )
 			{
 				this.line = line;
 			}
@@ -139,23 +159,12 @@ public abstract class OtuNodeImpl implements OtuNode
 		this.id = id;
 	}
 
-	/**
-	 * Return TRUE if Config file set to DEBUG mode.
-	 * 
-	 * @return boolean TRUE if {@value biolockj.Log#LOG_LEVEL_PROPERTY} == {@value biolockj.Config#TRUE}
-	 * @throws Exception if {@value biolockj.Log#LOG_LEVEL_PROPERTY} is undefined
-	 */
-	protected static boolean debugMode() throws Exception
-	{
-		return Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" );
-	}
-
 	private int count = 0;
 	private String id = null;
 	private String line = "";
 
 	// key=level, val=otu
-	private final Map<String, String> otuMap = new HashMap<>();
+	private final Map<String, String> taxaMap = new HashMap<>();
 
 	/**
 	 * Standard classifier output level delimiter for CLASS

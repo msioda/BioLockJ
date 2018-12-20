@@ -97,7 +97,7 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 	public void runModule() throws Exception
 	{
 		final String numReadsCol = RegisterNumReads.getModule().getNumReadFieldName();
-		final String numHitsCol = ParserModuleImpl.getModule().getNumHitsFieldName();
+		final String numHitsCol = ParserModuleImpl.getModule().getOtuCountField();
 		if( numReadsCol != null && numHitsCol != null && MetaUtil.getFieldNames().contains( numReadsCol )
 				&& MetaUtil.getFieldNames().contains( numHitsCol ) )
 		{
@@ -121,7 +121,7 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 		for( final String id: MetaUtil.getSampleIds() )
 		{
 			final String numReadsField = MetaUtil.getField( id, RegisterNumReads.getModule().getNumReadFieldName() );
-			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getModule().getNumHitsFieldName() );
+			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getModule().getOtuCountField() );
 
 			if( numReadsField == null || numHitsField == null
 					|| numReadsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) )
@@ -152,8 +152,7 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 		for( final File file: getInputFiles() )
 		{
-			final String name = Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_"
-					+ file.getName().replaceAll( TSV, "" ) + META_MERGED;
+			final String name = file.getName().replaceAll( TSV, "" ) + META_MERGED;
 			Log.info( getClass(), "Merge OTU table + Metadata file: " + outDir + name );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
@@ -216,10 +215,9 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 	private String mergeSampleLine = null;
 
 	/**
-	 * Metadata column name for column that stores the calculation for: 
-	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getNumHitsFieldName()}/
-	 * {@link biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}:
-	 * {@value #HIT_RATIO}.
+	 * Metadata column name for column that stores the calculation for:
+	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getOtuCountField()}/
+	 * {@link biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}: {@value #HIT_RATIO}.
 	 */
 	public static final String HIT_RATIO = "Hit_Ratio";
 

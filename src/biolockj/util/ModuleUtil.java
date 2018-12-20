@@ -442,21 +442,6 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Returns the parser module.
-	 *
-	 * @return ParserModule
-	 * @throws Exception if no ParserModule configured
-	 */
-	public static ParserModule requireParserModule() throws Exception
-	{
-		if( getParserModule() == null )
-		{
-			throw new Exception( "Unable to find required ParserModule" );
-		}
-		return getParserModule();
-	}
-
-	/**
 	 * Get BioModule subdirectory File object with given name. If directory doesn't exist, create it.
 	 *
 	 * @param bioModule BioModule

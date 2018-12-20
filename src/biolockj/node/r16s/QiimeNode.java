@@ -46,7 +46,7 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 			taxa = st.nextToken();
 			final String levelDelim = getLevelDelim( taxa );
 			final String otu = taxa.substring( levelDelimSize );
-			buildOtuNode( otu, levelDelim );
+			addTaxa( otu, levelDelim );
 		}
 	}
 

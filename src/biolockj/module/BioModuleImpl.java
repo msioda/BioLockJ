@@ -119,6 +119,22 @@ public abstract class BioModuleImpl implements BioModule
 	}
 
 	/**
+	 * In the early stages of the pipeline, starting with the very 1st module
+	 * {@link biolockj.module.implicit.ImportMetadata}, most modules expect sequence files as input. This method returns
+	 * false if the previousModule only produced a new metadata file, such as
+	 * {@link biolockj.module.implicit.ImportMetadata} or {@link biolockj.module.implicit.RegisterNumReads}.
+	 * 
+	 * When {@link #initInputFiles()} is called, this method determines if the previousModule output is valid input for
+	 * the current BioModule. The default implementation of this method returns FALSE if the previousModule only
+	 * generates a new metadata file.
+	 */
+	@Override
+	public boolean isValidInputModule( final BioModule module ) throws Exception
+	{
+		return !ModuleUtil.isMetadataModule( module );
+	}
+
+	/**
 	 * Creates the BioModule root directory if it doesn't exist and sets moduleDir member variable.
 	 */
 	@Override
@@ -134,7 +150,9 @@ public abstract class BioModuleImpl implements BioModule
 
 	/**
 	 * Called upon first access of input files to return sorted list of files from all inputDirs.<br>
-	 * Hidden files (starting with ".") are ignored.
+	 * Hidden files (starting with ".") are ignored.<br>
+	 * {@link #isValidInputModule(BioModule)} is called to determine if the previous module output is acceptable input
+	 * for the current module. If not, it checks the previous module recursively until valid input is found.
 	 * 
 	 * @throws Exception if errors occur
 	 */
@@ -152,7 +170,7 @@ public abstract class BioModuleImpl implements BioModule
 			files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
 					HiddenFileFilter.VISIBLE ) );
 
-			if( ModuleUtil.isMetadataModule( previousModule ) )
+			if( isValidInputModule( previousModule ) )
 			{
 				Log.debug( getClass(), "Get previous module input files..." );
 				files.addAll( previousModule.getInputFiles() );
@@ -197,7 +215,11 @@ public abstract class BioModuleImpl implements BioModule
 		}
 	}
 
-	private final List<File> inputFiles = new ArrayList<>();
+	/**
+	 * Module input files cache
+	 */
+	protected final List<File> inputFiles = new ArrayList<>();
+
 	private File moduleDir = null;
 
 	/**

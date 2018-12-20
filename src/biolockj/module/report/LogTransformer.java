@@ -41,10 +41,9 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 
 		if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
 		{
-			throw new ConfigFormatException( Config.REPORT_LOG_BASE,
-					"Property only accepts value \"10\" or \"e\"" );
+			throw new ConfigFormatException( Config.REPORT_LOG_BASE, "Property only accepts value \"10\" or \"e\"" );
 		}
-		
+
 		super.checkDependencies();
 	}
 
@@ -109,7 +108,6 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 		{
 			final List<Double> unnormalizedInnerList = dataPointsUnnormalized.get( x );
 
-
 			final List<Double> loggedInnerList = dataPointsLogged.get( x );
 
 			for( int y = 0; y < unnormalizedInnerList.size(); y++ )
@@ -128,7 +126,8 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 		final String pathPrefix = getOutputDir().getAbsolutePath() + File.separator
 				+ otuTable.getName().substring( 0, otuTable.getName().indexOf( TSV ) );
 
-		writeDataToFile( new File( pathPrefix + "_" + "Log" + logBase + TSV ), sampleNames, otuNames, dataPointsLogged );
+		writeDataToFile( new File( pathPrefix + "_" + "Log" + logBase + TSV ), sampleNames, otuNames,
+				dataPointsLogged );
 	}
 
 	private List<String> getOtuNames( final String firstLine ) throws Exception
@@ -232,7 +231,6 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 	}
 
 	private String logBase = "";
-
 
 	/**
 	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Config#REPORT_LOG_BASE}

@@ -146,15 +146,17 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			double ratio = Double.valueOf( df.format( 100 * ( (double) a / ( a + b ) ) ) );
 			String per = BioLockJUtil.formatPercentage( a, a + b );
 
-			Log.info( getClass(),
-					f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
-
 			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
 			{
 				ratio = Double.valueOf( df.format( 100 * ( (double) v / ( a + b ) ) ) );
 				per = BioLockJUtil.formatPercentage( v, a + b );
 				Log.info( getClass(),
 						f.getName() + " Paired reads with primer in both -- " + v + "/" + ( a + b ) + " = " + per );
+			}
+			else
+			{
+				Log.info( getClass(),
+						f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
 			}
 
 			Log.debug( getClass(), "file = " + f.getAbsolutePath() );
