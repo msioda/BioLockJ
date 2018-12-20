@@ -617,10 +617,21 @@ public class SeqUtil
 		String foundFasta = null;
 		String foundFastq = null;
 		String testChar = null;
+		Set<File> removeFiles = new HashSet<>();
 		for( final File f: getBasicInputFiles() )
 		{
 			final BufferedReader reader = BioLockJUtil.getFileReader( f );
-			testChar = reader.readLine().trim().substring( 0, 1 );
+			try
+			{
+				testChar = reader.readLine().trim().substring( 0, 1 );
+			}
+			catch( Exception ex )
+			{
+				removeFiles.add( f );
+				ignore.add( f.getName() );
+				Log.warn( SeqUtil.class, "Found empty file - removing from input file list: " + f.getAbsolutePath() );
+				continue;
+			}
 			if( FASTA_HEADER_DELIMS.contains( testChar ) )
 			{
 				foundFasta = f.getAbsolutePath();
@@ -638,6 +649,14 @@ public class SeqUtil
 								+ "FASTA files must begin with \">\" or \";\" and FASTQ files must begin with \"@\""
 								+ BioLockJ.RETURN );
 				ignore.add( f.getName() );
+				removeFiles.add( f );
+			}
+		}
+		
+		if( !removeFiles.isEmpty() )
+		{
+			for( File f: removeFiles )
+			{
 				inputFiles.remove( f );
 			}
 		}
