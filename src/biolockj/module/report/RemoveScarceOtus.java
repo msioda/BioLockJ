@@ -238,7 +238,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 						{
 							total += otuCounts.get( otu );
 							writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
-							Log.debug( getClass(), "removeScarceOtus Updated OTU count: " + otuCounts.get( otu ) );
+							Log.debug( getClass(), "Updated OTU count: " + otuCounts.get( otu ) );
 						}
 					}
 
