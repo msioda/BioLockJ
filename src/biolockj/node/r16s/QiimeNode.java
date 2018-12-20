@@ -44,7 +44,7 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 		while( st.hasMoreTokens() )
 		{
 			taxa = st.nextToken();
-			final String levelDelim = getLevelDelim( taxa );
+			final String levelDelim = getLevel( taxa );
 			final String otu = taxa.substring( levelDelimSize );
 			addTaxa( otu, levelDelim );
 		}
@@ -57,7 +57,7 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 * @return Level delim
 	 * @throws Exception if the taxa delim is undefined
 	 */
-	protected String getLevelDelim( final String taxa ) throws Exception
+	protected String getLevel( final String taxa ) throws Exception
 	{
 		if( taxa.startsWith( SILVA_AMBIGUOUS_DELIM ) )
 		{
@@ -87,7 +87,7 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 			setLevelDelims = true;
 		}
 
-		return taxa.substring( 0, levelDelimSize );
+		return delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) );
 	}
 
 	/**

@@ -729,7 +729,7 @@ public class SummaryUtil
 	/**
 	 * Name of the temp file created in pipeline root directory: {@value #TEMP_SUMMARY_FILE}
 	 */
-	protected static final String TEMP_SUMMARY_FILE = "tempSummary.txt";
+	protected static final String TEMP_SUMMARY_FILE = ".tempSummary.txt";
 
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String NUM_ATTEMPTS = "# Attempts";

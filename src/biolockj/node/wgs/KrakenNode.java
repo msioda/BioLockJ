@@ -52,7 +52,7 @@ public class KrakenNode extends OtuNodeImpl implements OtuNode
 				final String token = taxas.nextToken();
 				final String levelDelim = token.substring( 0, 3 );
 				final String taxa = token.substring( 3 );
-				addTaxa( taxa, levelDelim );
+				addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
 			}
 		}
 		else

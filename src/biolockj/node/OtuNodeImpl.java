@@ -27,30 +27,29 @@ public abstract class OtuNodeImpl implements OtuNode
 {
 
 	@Override
-	public void addTaxa( final String taxa, final String levelDelim )
+	public void addTaxa( final String taxa, final String level )
 	{
 		// Log.debug( getClass(), id + " addTaxa --> Taxa: " + otu + " : delim = " + levelDelim );
-		if( levelDelim != null && taxa != null && !levelDelim.trim().isEmpty() && !taxa.trim().isEmpty() )
+		if( level != null && taxa != null && !level.trim().isEmpty() && !taxa.trim().isEmpty() )
 		{
-			final String taxaLevel = delimToLevelMap().get( levelDelim );
 
 			// if taxaLevel not configured or for level BioLockJ doesn't support (like strain) - take no action
-			if( taxaLevel == null || !Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( taxaLevel ) )
+			if( level == null || !Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( level ) )
 			{
 				return;
 			}
 
-			if( taxaMap.get( taxaLevel ) != null )
+			if( taxaMap.get( level ) != null )
 			{
-				Log.debug( getClass(), id + " overwriting OTU: " + taxaMap.get( taxaLevel ) + " with " + taxa
+				Log.debug( getClass(), id + " overwriting OTU: " + taxaMap.get( level ) + " with " + taxa
 						+ "  --> Line = " + line );
 			}
 
-			taxaMap.put( taxaLevel, taxa );
+			taxaMap.put( level, taxa );
 		}
 		else
 		{
-			Log.debug( getClass(), "ID=[ " + id + " ] --> Taxa level missing! for: levelDelim=[ " + levelDelim
+			Log.debug( getClass(), "ID=[ " + id + " ] --> Taxa level missing! for: level=[ " + level
 					+ " ]; Taxa=[ " + taxa + " ]; Line =[ " + line + " ]" );
 		}
 	}

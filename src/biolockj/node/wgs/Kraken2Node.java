@@ -61,7 +61,7 @@ public class Kraken2Node extends OtuNodeImpl implements OtuNode
 				}
 			}
 
-			addTaxa( taxa, levelDelim );
+			addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
 
 		}
 		catch( final Exception ex )
