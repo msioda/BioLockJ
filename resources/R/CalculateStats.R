@@ -189,7 +189,7 @@ main <- function() {
    importLibs( c( "coin", "Kendall" ) ) 
    for( otuLevel in getProperty("report.taxonomyLevels") ) {
       if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_CalculateStats_", otuLevel, ".log") ) )
-      inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
+      inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv" ) )
       if( doDebug() ) print( paste( "inputFile:", inputFile ) )
       if( length( inputFile ) == 0 ) { next }
       otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )

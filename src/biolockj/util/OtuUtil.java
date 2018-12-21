@@ -515,7 +515,7 @@ public class OtuUtil
 	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
 	 * with {@value #DELIM_SEP}
 	 */
-	public static String DELIM_SEP = "@";
+	public static String DELIM_SEP = "__";
 	
 	/**
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
@@ -531,5 +531,5 @@ public class OtuUtil
 	/**
 	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
 	 */
-	public static String SEPARATOR = ";";
+	public static String SEPARATOR = "|";
 }

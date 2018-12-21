@@ -149,6 +149,20 @@ public final class RMetaUtil
 				rScriptFields.remove( BuildQiimeMapping.BARCODE_SEQUENCE );
 			}
 		}
+//		else
+//		{
+//			Set<String> rmData = new HashSet<>();
+//			if( !numericFields.isEmpty() )
+//			{
+//				for( String field: numericFields )
+//				{
+//					if( rScriptFields.contains( field ) )
+//					{
+//						rmData.add(  field );
+//					}
+//				}
+//			}
+//		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_READS )
 				&& isValidNumericField( metaFields, RegisterNumReads.getModule().getNumReadFieldName() ) )

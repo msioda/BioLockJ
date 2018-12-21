@@ -519,11 +519,18 @@ public class BioLockJ
 			printFatalError( fatalException );
 
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
-			for( final String msg: Log.getMsgs() )
+			try
 			{
-				writer.write( msg + RETURN );
+				for( final String msg: Log.getMsgs() )
+				{
+					writer.write( msg + RETURN );
+				}
 			}
-			writer.close();
+			finally
+			{
+				if( writer != null ) writer.close();
+			}
+			
 
 		}
 		catch( final Exception ex )

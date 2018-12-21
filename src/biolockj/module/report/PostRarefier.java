@@ -14,7 +14,6 @@ package biolockj.module.report;
 import java.io.*;
 import java.util.*;
 import biolockj.Config;
-import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;

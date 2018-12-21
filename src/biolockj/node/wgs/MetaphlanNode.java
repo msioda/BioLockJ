@@ -68,9 +68,9 @@ public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 				{
 					taxa = token.substring( 3 );
 				}
-				addTaxa( taxa, delimToLevelMap().get( levelDelim  ) );
 			}
-
+			
+			addTaxa( taxa, delimToLevelMap().get( levelDelim  ) );
 			
 
 		}

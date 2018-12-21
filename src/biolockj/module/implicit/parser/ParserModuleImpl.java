@@ -180,6 +180,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 					otuCounts.values().stream().mapToInt( Integer::intValue ) == null ||
 					otuCounts.values().stream().mapToInt( Integer::intValue ).sum() == 0 )
 			{
+				Log.warn( getClass(), "SHOULD NOT REACH THIS CODE - OtuNode.isValid() should have removed this sample: "
+						+ sample.getSampleId() );
 				badSamples.add( sample );
 			}
 		}
@@ -188,7 +190,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		{
 			for( final ParsedSample sample: badSamples )
 			{
-				Log.debug( getClass(), "Removing bad sample" );
+				Log.debug( getClass(), "Removing bad sample: " + sample.getSampleId());
 				parsedSamples.remove( sample );
 			}
 		}
