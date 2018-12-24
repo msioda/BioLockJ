@@ -137,7 +137,7 @@ public class BioLockJ
 			Config.initialize( RuntimeParamUtil.getConfigFile() );
 
 			Config.setConfigProperty( Config.INTERNAL_PIPELINE_NAME, getProjectName() );
-
+			
 			MetaUtil.initialize();
 
 			if( RuntimeParamUtil.doChangePassword() )
@@ -513,7 +513,7 @@ public class BioLockJ
 			System.out.println("\nUsage java biolockj.BioLockJ -b path_to_pipeline_output parent_directory " + 
 					"-c path_to_properties_file ");
 			System.out.println("\nSee https://github.com/msioda/BioLockJ/wiki\n");
-			System.out.println("Writing error file to " + errFile.getAbsolutePath());	
+			System.out.println("Writing error file to " + errFile.getAbsolutePath() + "\n");	
 			
 			printFatalError( fatalException );
 
@@ -547,6 +547,7 @@ public class BioLockJ
 			Log.error( BioLockJ.class, ex.getStackTrace()[ i ].toString() );
 		}
 		Log.error( BioLockJ.class, Log.LOG_SPACER );
+		ex.printStackTrace(System.out);
 	}
 
 	private static void setSingleModeStatus() throws Exception
