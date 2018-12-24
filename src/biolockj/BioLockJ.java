@@ -510,6 +510,9 @@ public class BioLockJ
 						+ new Integer( ++index ).toString() + ".log" ) );
 			}
 			
+			System.out.println("Writing error file to " + errFile.getAbsolutePath());	
+			
+			
 			printFatalError( fatalException );
 
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
