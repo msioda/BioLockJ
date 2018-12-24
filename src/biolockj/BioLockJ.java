@@ -512,7 +512,7 @@ public class BioLockJ
 			
 			System.out.println("\nUsage java biolockj.BioLockJ -b path_to_pipeline_output parent_directory " + 
 					"-c path_to_properties_file ");
-			System.out.println("\nSee https://github.com/msioda/BioLockJ/wiki ");
+			System.out.println("\nSee https://github.com/msioda/BioLockJ/wiki\n");
 			System.out.println("Writing error file to " + errFile.getAbsolutePath());	
 			
 			printFatalError( fatalException );
