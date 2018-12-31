@@ -94,6 +94,14 @@
         </select></p>
       <p>A directory on the local workstation where the cluster.downloadModule will be downloaded
         <input type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
+      <p>Assign module to demultiplex datasets.
+        <input type="text" id="project.defaultModuleDemultiplexer" name="project.defaultModuleDemultiplexer" size='70'></p>
+      <p>Assign module to convert fastq sequence files into fasta format when required.
+        <input type="text" id="project.defaultModuleFastaConverter" name="project.defaultModuleFastaConverter" size='70'></p>
+      <p>Assign module to merge paired reads when required.
+        <input type="text" id="project.defaultModuleSeqMerger" name="project.defaultModuleSeqMerger" size='70'></p>
+      <p>Set chmod -R command security bits on pipeline root directory (Ex. 770).
+        <input type="text" id="project.permissions" name="project.permissions" size='70'></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -142,7 +150,7 @@
       <p>File name suffix to indicate a forward read:
           <input type="text" id="input.suffixFw" name="input.suffixFw"><br>
         File name suffix to indicate a reverse read.
-        <input type="text" id="input.suffixRw" name="input.suffixRw"><br>
+        <input type="text" id="input.suffixRv" name="input.suffixRv"><br>
             </p>
       <p>Trim prefix:
         <input type="text" id="input.trimPrefix" name="input.trimPrefix">
@@ -200,6 +208,13 @@ For fastq, typically “@”.)<h5></p>
         <input type="text" id="metadata.nullValue" name="metadata.nullValue"></p>
       <p>Define column delimiter for input.metadata (input.columnDelim)
         <input type="text" id="metadata.columnDelim" name="metadata.columnDelim"></p>
+      <p>Require every sequence file to have a corresponding row in metadata file:
+        <select class="" id="metadata.required" name="metadata.required">
+          <option selected default value="">Click for options</option>
+          <option value="Y">Yes</option>
+          <option value="N"> No</option>
+        </select></p>
+      </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -555,6 +570,9 @@ For fastq, typically “@”.)<h5></p>
       <p>Path to Kraken classifier:
         <input type="text" size='70' id="kraken.classifier" name="kraken.classifier">
       </p>
+      <p>Additional Kraken classifier parameters:
+        <input type="text" size='70' id="kraken.classifierParams" name="kraken.classifierParams">
+      </p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
       <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
@@ -610,7 +628,7 @@ For fastq, typically “@”.)<h5></p>
 
 </div>
 
-<!-- The Modal that appears after launch-->
+<!-- The Modal that appears after ready to launch button is pressed -->
 <div id="launchConsole" class="modal">
   <!-- Modal content -->
   <div class="modal-content">
@@ -618,15 +636,12 @@ For fastq, typically “@”.)<h5></p>
     <div id='progress'></div>
     <div id='log'></div>
 
-  <div id=id="restartOrErase" class="hidden">
-    Your current project has the same name as a previous project.  Would you like to restart the pipeline or erase the old one and rerun from your new configuration file?
-    <select class="projectFoundInPipelines" name="restartOrEraseSelect">
-      <option value="restart" default >Restart project at failed module [only parameters can be changed, no new modules]</option>
-      <option value="deleteOld">Erase old project and start over</option>
-    </select>
+  <div id="restartOrErase" class="hidden">
+    <span id="restartOrEraseText"></span><br>
+    <button type="button" id='restartProject' name="restartProject">Restart project from last check point</button>
+    <button type="button" id="eraseRestart" name="eraseRestart">Erase previsous project with this name and then launch BioLockJ</button>
   </div>
-    <button type="button" id="launchBlj" name="launchBlj">Launch</button>
-
+    <button type="button" class='hidden' id="launchBlj" name="launchBlj">Launch</button>
   </div>
 
 </div><!-- end launch console -->
