@@ -1,15 +1,8 @@
-function Config(modules = [], paramKeys = [], paramValues = [], comments = [], standardProp = false){
+function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
   this.modules = modules;
   this.paramKeys = paramKeys;
   this.paramValues = paramValues;
   this.comments = comments;
-  //this.standardProp = standardProp;
-
-  //varibles for communicating with the middleware
-  this.duplicate = false;
-  this.deleteOldOrRestart = 'restart';
-  this.launch = false;
-  this.check = true;
 
   const _this = this; //hack for when some callback changes my 'this', used in this.saveConfigParamsForm
 
@@ -35,22 +28,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = [], s
       //hide used file reader from user
       document.getElementById("openConfig").style.display = "none";
 
-      // var dprop;
-      //
-      // const RunDocker = this.paramvalues[this.paramKeys.indexOf('project.runDocker')];
-      // const DefaultProps = this.paramvalues[this.paramKeys.indexOf('project.defaultProps')];
-      // if (RunDocker !== undefined && RunDocker === 'Y'){
-      //   dprop = resolveDefaultProps(this, docker = true);
-      //   console.log('dp: ', dprop);
-      // }else if (DefaultProps !== undefined && DefaultProps !== ''){
-      //   dprop = resolveDefaultProps(this, docker = false);
-      //   console.log('dp: ', dprop);
-      // }else{
-      //   this.paramKeys.push('project.defaultProps');
-      //   this.paramValues.push('$BLJ/resources/config/default/standard.properties');
-      //   dprop = resolveDefaultProps(this, docker = false);
-      // }
-
       this.sendConfigDataToForms();
     } catch (e) {
       alert(e);
@@ -58,20 +35,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = [], s
   }//end load localhost
 
   this.sendConfigDataToForms = function(){
-    // if (this.standardProp === true){
-    //   const blankKeys = [];
-    //   const blankVals = [];
-    //   //find the blank input parameters
-    //   for (let i = 0; i < this.paramKeys.length; i++) {
-    //     if (!currentConfig.paramKeys.includes(this.paramKeys[i])){
-    //       blankKeys.push(this.paramKeys[i]);
-    //       blankVals.push(this.blankVals[i]);
-    //     }
-    //   }//end for forloop
-    //   //replace paramKeys and values with only blank ones
-    //   this.paramKeys = blankKeys;
-    //   this.paramValues = blankVals;
-    // }//end if (standardProp === true)...
     if (this.paramKeys.length != this.paramValues.length){
       alert('Your paramKeys should be the same length as your paramValues.  Find the error');
       return false;
@@ -446,8 +409,14 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = [], s
       return true;
   };//end validation
 
-  this.buildPartialLaunchArgument = function buildLaunchArgument(){
-    partialLauchArgument = {};
+  this.buildPartialLaunchArgument = function buildLaunchArgument(restart = false){
+    /**
+    Returns something like:
+    inputDirPaths: "/Users/aaronyerke/git/blj_support/resources/test/data/multiplexed/combinedFastq"
+    metadataFilePath: "/Users/aaronyerke/git/blj_support/resources/test/metadata/testMetadata.tsv"
+    trimPrimersFilePath: "/Users/aaronyerke/git/blj_support/resources/test/primers/testPrimers.txt"
+    */
+    const partialLaunchArgument = {};
     //config key : blj_argument
     //config Path will be built serverside
     const runtimeArguments = {
@@ -459,10 +428,11 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = [], s
     };
     for (var i = 0; i < this.paramKeys.length; i++) {
       if (Object.keys(runtimeArguments).includes(this.paramKeys[i])){
-        partialLauchArgument[runtimeArguments[this.paramKeys[i]]] = this.paramValues[i];
+        partialLaunchArgument[runtimeArguments[this.paramKeys[i]]] = this.paramValues[i];
       }
     }
-    return partialLauchArgument;
+    //console.log('partialLaunchArgument: ', partialLaunchArgument);
+    return partialLaunchArgument;
   }
 
   this.formatAsFlatFile = function(){
@@ -592,29 +562,42 @@ for (const launch of document.getElementsByClassName("openLaunchModal")) {
       launchModal.style.display = "block";
 
       var request = new XMLHttpRequest();
-      request.open('POST', '/launch', true);
+      request.open('POST', '/checkProjectExists', true);
       request.setRequestHeader("Content-Type", "application/json");
       request.send(JSON.stringify({
-        modules : currentConfig.modules,
-        paramKeys : currentConfig.paramKeys,
-        paramValues : currentConfig.paramValues,
-        partialLaunchArg : currentConfig.buildPartialLaunchArgument(),
-        deleteOldOrRestart: currentConfig.deleteOldOrRestart,
-        launch : currentConfig.launch,
-        check : true,
+        projectName : currentConfig.paramValues[currentConfig.paramKeys.indexOf('project.configFile')]
         //additional parameters for launch
       }));
         console.log('check request sent');
         request.onreadystatechange = function() {
+          console.log('this.status: ', this.status);
         if (request.readyState == XMLHttpRequest.DONE) {
           console.log(request.responseText);
-          if (request.responseText === 'previously started'){
-            currentConfig.launch = false;
-            const rOrE = document.getElementById('restartOrErase')
+          if (request.responseText !== ''){
+            const checkedParams = JSON.parse(request.responseText);
+            console.log('checkedParams: ', checkedParams);
+            currentConfig.prevProjectName = checkedParams.projectName;
+            currentConfig.prevProjectPath = checkedParams.projectPath;
+            const rOrEText = document.getElementById('restartOrEraseText');
+            rOrEText.innerHTML = `Your current project, ${currentConfig.prevProjectName}, has the same name as a previous project.  Would you like to restart the pipeline or erase the old one and rerun from your new configuration file? (Click only once)`;
+            const rOrE = document.getElementById('restartOrErase');
             if (rOrE.classList.contains('hidden')){
               rOrE.classList.remove('hidden');
               }
-            }
+            const restartProject = document.getElementById('restartProject');
+            restartProject.addEventListener('click', function(){
+              console.log('inrestart event');
+              console.log(this);
+              launcher(launchAction = 'restartProject', restartProjectPath = currentConfig.prevProjectPath);
+            });
+            const eraseRestart = document.getElementById('eraseRestart');
+            eraseRestart.addEventListener('click', function(){
+              console.log('launching erarse terstart ', currentConfig.prevProjectPath);
+              launcher(launchAction = 'eraseRestart', projectNameToDelete = currentConfig.prevProjectPath)
+            })
+          }else{
+            document.getElementById('launchBlj').classList.remove('hidden');
+          }
           }
         }
       }
@@ -624,30 +607,10 @@ for (const launch of document.getElementsByClassName("openLaunchModal")) {
   });//end eventlistener
 };//end forloop
 
-document.getElementById('launchBlj').addEventListener("click", function(event){
+const launchBlj = document.getElementById('launchBlj');
+launchBlj.addEventListener("click", function(event){
   event.preventDefault();
-  //launchModal.style.display = "block";
-  var request = new XMLHttpRequest();
-  request.open('POST', '/launch', true);
-  request.setRequestHeader("Content-Type", "application/json");
-  request.send(JSON.stringify({
-    modules : currentConfig.modules,
-    paramKeys : currentConfig.paramKeys,
-    paramValues : currentConfig.paramValues,
-    partialLaunchArg : currentConfig.buildPartialLaunchArgument(),
-    deleteOldOrRestart : currentConfig.deleteOldOrRestart,
-    launch : currentConfig.launch,
-    check : false,
-    //additional parameters for launch
-  }));
-  console.log('launch sent');
-  request.onreadystatechange = function() {
-  if (request.readyState == XMLHttpRequest.DONE) {
-    console.log(request.responseText);
-    //window.location = '/progress';
-    }
-  }
-  console.log(request.responseText);
+  launcher();
 });
 
 //for autosave
@@ -699,7 +662,7 @@ launchSpan.forEach(span => span.addEventListener('click', function(){
 // remove other choices for standard properties in if docker is running
 const defaultProps = document.getElementById("project.defaultProps");
 const defaultPropsP = document.getElementById('defaultPropsP');
-//// NOTE: add event listener for default props section after
+//// NOTE: add event listener for default props section after talking to Mike
 const runDocker = document.getElementById('project.runDocker');
 runDocker.addEventListener('change', function(){
   var defaultPath;
@@ -739,9 +702,6 @@ document.getElementById('seeResolvedDefaultProperties').addEventListener('click'
   parameterSelectorTable.classList.remove('hidden');
   parameterSelectorTable.style.display = 'block';
 })
-
-
-
 
 function getAllDefaultProps(dfpath){
   console.log('defaultConfigs getAllDefaultProps', defaultConfigs);
@@ -857,7 +817,7 @@ function tableToCurrentConfig(){
   table.classList.add('hidden');
 }//function tableToCurrentConfig...
 
-//retrieves chain of default props without user input
+//retrieves chain of default props without user input, not used anymore
 // function resolveDefaultProps(config, docker = false){
 //   const dpropPath = config.paramValues[config.paramKeys.indexOf('project.defaultProps')];
 //   console.log('dpropPath ', dpropPath);
@@ -915,24 +875,6 @@ function retreiveDefaultProps(dpropPath, docker = false) {
     }// end if (docker === true){
   });
 }//end retreiveDefaultProps
-
-// function buildParameterTable(arrayOfConfigObjects){
-//   //order of arguments is important, with the more specific item being first.
-//   //Last should always have the list specific, standard.properties.
-//   const paramTable = document.getElementById(parameterSelector);
-//   for (let i = 0; i < currentParam.paramKeys.length; i++) {
-//     paramTable.add
-//   }
-// }
-
-// const standPropConfig = new Config();
-// standPropConfig.loadFromText(request.responseText);
-// standPropConfig.sendConfigDataToForms();
-// console.log('currentConfig.paramKeys', currentConfig.paramKeys);
-// currentConfig.saveConfigParamsForm();
-// console.log('currentConfig.paramKeys', currentConfig.paramKeys);
-
-
 
 // When the user clicks anywhere outside of the modal, close it
 // FIXME: commented out because it breaks .prjct hide
@@ -1000,4 +942,39 @@ if(typeof(EventSource) !== "undefined") {
 } else {
 	console.log('Sorry! No server-sent events support for this browser');
     // Sorry! No server-sent events support..
+}
+
+function launcher(launchAction = 'launch', restartProjectPath, projectNameToDelete){
+  event.preventDefault();
+  //launchModal.style.display = "block";
+  requestParams = {
+    modules : currentConfig.modules,
+    paramKeys : currentConfig.paramKeys,
+    paramValues : currentConfig.paramValues,
+    partialLaunchArg : currentConfig.buildPartialLaunchArgument(),
+    launchAction : launchAction,
+    //additional parameters for launch
+  }
+  if (launchAction === 'restartProject' || launchAction === 'eraseRestart' ){
+    requestParams['restartProjectPath'] = restartProjectPath;
+    console.log(requestParams);
+  }else if (launchAction === 'eraseRestart') {
+    requestParams['projectNameToDelete'] = projectNameToDelete;
+    console.log(requestParams);
+  }
+
+  var request = new XMLHttpRequest();
+  request.open('POST', '/launch', true);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.send(JSON.stringify(
+    requestParams
+  ));
+  console.log('launch sent');
+  request.onreadystatechange = function() {
+  if (request.readyState == XMLHttpRequest.DONE) {
+    console.log(request.responseText);
+    //window.location = '/progress';
+    }
+  }
+  console.log(request.responseText);
 }
