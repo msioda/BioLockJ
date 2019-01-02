@@ -207,11 +207,12 @@ main <- function(){
 		lastOtuCol = ncol(otuTable) - getProperty("internal.numMetaCols")
 		otuTable = otuTable[1:lastOtuCol]
 		#
-		# # Might undo log-scale to get fold change values, then optionally scale them in some way.
-		# logbase = getProperty("report.logBase")
-		# if (!is.null(logbase)){
-		# 	otuTable = logbase^otuTable
-		# }
+		# Might undo log-scale to get fold change values, then optionally scale them in some way.
+		logBase = getProperty("report.logBase", NULL) # move this to top of main where we get properties
+		if (!is.null(logBase)){
+			otuTable = logBase^otuTable
+			if( doDebug() ) print( paste( "Input values are on a ", logBase, " scale, this has been reversed." ) )
+		}
 		#
 		# get pvals from calc stats, maybe add config option to specify which pvals to get
 		pvalFileIdentifier = getProperty(name = "r.FCplot.pvalType", "_adjNonParPvals.tsv")
