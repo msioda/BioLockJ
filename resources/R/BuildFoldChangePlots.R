@@ -126,7 +126,7 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 	# text(paste("greater in", numGroupName), x=mean(c(0,par("usr")[2])), y=par("usr")[4], xpd=NA)
 	# text(paste("greater in", denGroupName), x=mean(c(0,par("usr")[1])), y=par("usr")[4], xpd=NA)
 	mtext(text=paste0(scale.fun, "(fold change)"), side=1, line=2)
-	mtext(text=paste(numGroupName, "relative to", denGroupName), side=1, line=3)
+	mtext(text=paste0(numGroupName, " (n=", nrow(numGroupVals), ") relative to ", denGroupName, " (n=", nrow(denGroupVals), ")"), side=1, line=3)
 	mtext(paste0("Showing top ", maxBars, " most changed OTUs ", comment), side=1, line=5, adj=0)
 	# Axis and background lines and inner text
 	# The vertical lines should match the axis tick marks, they should be behind the bars,
