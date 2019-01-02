@@ -14,7 +14,7 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 															pvals=NULL, pvalIncludeBar=0.05, pvalStar=NULL,
 															maxBars=30, userOTUs=NULL, fixedBarHeightInches=0,
 															numGroupColor="darkorange2", denGroupColor="burlywood1",
-															centerAt0=TRUE, scale.fun="log2"){
+															centerAt0=TRUE, scale.fun="log2", saveRefTable=NULL){
 	# numGroupName, denGroupName - Strings used in plot
 	# numGroupVals, denGroupVals - each a data frame, where OTUs are column names and rows are samples
 	##   these should have different row names (samples are from different groups) but matching column names.
@@ -32,6 +32,7 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 	# centerAt0 - boolean, should the xmin and xmax be set to the same value?
 	# scale.fun - string (with quotes) giving the name of the function to use to scale
 	##   the fold change values: probably log2 or log10.
+	# saveRefTable - file name to save a reference table corresponding to the plot
 	#
 	# Select viable OTUs to plot
 	sharedOTUs = intersect(names(numGroupVals), names(denGroupVals))
@@ -61,6 +62,7 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 	infUp = plotOTUs[which(numMeans > 0 & denMeans == 0)] #In the table, these are Inf
 	infDown = plotOTUs[which(numMeans == 0 & denMeans > 0)] #In the table, these are 0
 	toPlot = data.frame(OTU=plotOTUs, row.names=plotOTUs,
+											numMeans = numMeans, denMeans = denMeans,
 											foldChange = numMeans / denMeans)
 	toPlot$scaledFC = do.call(scale.fun, list(x=toPlot$foldChange))
 	toPlot$color = NA
@@ -71,13 +73,44 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 	# cases where one group is all-zeros is treated at most changed
 	toPlot = toPlot[order(abs(toPlot$scaledFC), decreasing = T),] #highest abs on top
 	maxBars = min(c(maxBars, nrow(toPlot)))
+	toPrint = toPlot # keep a full version to save as a table
+	toPrint$plotPriority = 1:nrow(toPlot)
 	toPlot = toPlot[1:maxBars,]
 	infUp = intersect(infUp, row.names(toPlot))
 	infDown = intersect(infDown, row.names(toPlot))
 	#
 	# order OTUs to plot
+	ordNames = row.names(toPlot)[order(toPlot$scaledFC)]
+	toPlot = toPlot[ordNames,] #lowest values at top, barplot plots from bottom
+	#
+	# save a table the user can reference
+	if (!is.null(saveRefTable)){
+		header = "Fold Change Plot Reference"
+		toPrint = toPrint[,grep("color", names(toPrint), invert = TRUE)] # don't print the color choice
+		header = c(header, "<group name>.mean: the mean value for each group used to calculate the fold change.",
+							 paste("foldChange: ratio of the mean of one group over the other,", numGroupName, "over", denGroupName), 
+							 paste0("scaledFC: the ", scale.fun, "-scaled fold change, this is the bar length shown in the plot"),
+							 'plotPriority: the rank of this OTU when determineing the "most changed" using abs(scaledFC); number of OTUs plotted can configured with r.FCplot.maxBars or over-riden using r.FCplot.userOTUs.')
+		names(toPrint)[2:3] = paste(c(numGroupName, denGroupName), "mean", sep=".")
+		header = c(header, "plot.location: vertical location of the bar in the plot")
+		toPrint$plot.location = NA
+		toPrint[ordNames,"plot.location"] = nrow(toPlot):1
+		toPrint = toPrint[order(toPrint$plot.location),]
+		header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", 
+															pvalIncludeBar,") and if OTU got a star (if under ", pvalStar, 
+															"),  thresholds controlled by r.FCplot.pvalIncludeBar and r.pvalCutoff properties respectively.",
+															" See also: r.FCplot.pvalType property"))
+		toPrint$pvalue = pvals[row.names(toPrint)]
+		header = c(header, "flag.Inf: was the fold change flagged for having all-0-counts in one group.")
+		toPrint$flag.Inf = NA
+		toPrint[row.names(toPlot), "flag.Inf"] = FALSE
+		toPrint[c(infUp,infDown), "flag.Inf"] = TRUE
+		header = paste("#", header)
+		writeLines(header, con=saveRefTable)
+		suppressWarnings(write.table(toPrint, file=saveRefTable, quote=FALSE, sep="\t", row.names = FALSE, append = TRUE))
+	}
+	#
 	# cases where one group is all-zeros is plotted as 0 
-	toPlot = toPlot[order(toPlot$scaledFC),] #lowest values at top, barplot plots from bottom
 	toPlot[c(infUp,infDown), "scaledFC"] = 0 # bar gets a space, but no visible bar is plotted.
 	#
 	# determine plot size based on number of bars to plot
@@ -236,6 +269,7 @@ main <- function(){
 				if( doDebug() ) print( paste("Calling addFoldChangePlot for otuLevel:", otuLevel, " and binary attribute:", biAtt) )
 				complete = addFoldChangePlot(numGroupName=names(splitOTU)[2], denGroupName=names(splitOTU)[1], 
 													numGroupVals=splitOTU[[2]], denGroupVals=splitOTU[[1]], title=biAtt,
+													saveRefTable = getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"OTU-foldChangeTable.tsv", sep="_") ),
 													pvals = pvals, 
 													pvalIncludeBar = pvalIncludeBar,
 													pvalStar = pvalStar,
