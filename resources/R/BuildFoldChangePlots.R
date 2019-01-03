@@ -232,10 +232,11 @@ main <- function(){
 		#
 		# get normalized OTU vals
 		# inputFile = getPipelineFile( paste0(otuLevel, ".*_norm.tsv") ) <-- might revert to this in future
-		inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
-		if( doDebug() ) print( paste( "inputFile:", inputFile ) )
-		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), 
-													 comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1)
+		# inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
+		# if( doDebug() ) print( paste( "inputFile:", inputFile ) )
+		# otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), 
+		# 											 comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1)
+		otuTable = normalize(readRawCounts(otuLevel)[[1]])
 		if( doDebug() ){ print( paste0("otuTable has ", nrow(otuTable), " rows and ", ncol(otuTable), " columns."))}
 		lastOtuCol = ncol(otuTable) - getProperty("internal.numMetaCols")
 		otuTable = otuTable[1:lastOtuCol]
@@ -295,6 +296,41 @@ main <- function(){
 		if( doDebug() ) sink()
 	}
 }
+
+# Read the counts from the parser module
+# returns a list with each otuLevel as an element.
+readRawCounts <- function(otuLevels=getProperty("report.taxonomyLevels")){
+	parserModule = getProperty("internal.parserModule")
+	parserOutput = file.path(parserModule, "output")
+	counts = list()
+	names(counts) = otuLevels
+	for (level in otuLevels){
+		fileName = dir(path=parserOutput, pattern=level)
+		if (length(fileName) > 1){
+			stop(paste("Ambiguous file for", level))
+		}
+		if (length(fileName) < 1){
+			print(paste("no file found for", level))
+		}
+		counts[level] = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), 
+																comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1)
+	}
+	return(counts)
+}
+
+
+# normalize otu counts by simple relative abundance
+normalize <- function(otuTable){
+	# otuTable - data frame with a row for each sample and a column for each OTU
+	normFactor = rowSums(otuTable)
+	normed = otuTable/normFactor
+	return(normed)
+}
+
+
+
+
+
 
 
 

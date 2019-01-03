@@ -14,7 +14,10 @@ package biolockj.module.r;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import biolockj.Config;
 import biolockj.module.ScriptModule;
+import biolockj.module.implicit.parser.ParserModule;
+import biolockj.util.ModuleUtil;
 
 /**
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
@@ -30,6 +33,7 @@ public class BuildFoldChangePlots extends R_Module implements ScriptModule
 	{
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
 		preReqs.add( CalculateStats.class );
+		preReqs.add( ParserModule.class );
 		return preReqs;
 	}
 
@@ -47,4 +51,14 @@ public class BuildFoldChangePlots extends R_Module implements ScriptModule
 		set.add( PDF_EXT.substring( 1 ) );
 		return set;
 	}
+
+	@Override
+	public void executeTask() throws Exception
+	{
+		// TODO Auto-generated method stub
+		super.executeTask();
+		Config.setConfigProperty( Config.INTERNAL_PARSER_MODULE,
+				ModuleUtil.getParserModule().getOutputDir().toString() );
+	}
+
 }
