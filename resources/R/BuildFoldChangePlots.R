@@ -116,7 +116,7 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 	# determine plot size based on number of bars to plot
 	if (!is.null(fixedBarHeightInches)){
 		if (fixedBarHeightInches == 0 ) { # set bar width + space to be the same size as one "line" of the margin
-			fixedBarHeightInches = max(par("mai") / par("mar")) # 4 vals should all be the same but any could be /0
+			fixedBarHeightInches = max(par("mai") / par("mar"), na.rm=TRUE) # 4 vals should all be the same but any could be /0
 		}
 		if (fixedBarHeightInches > 0 ) { # set bar width + space to this many inches
 			plotRegionHeightInches = par("fin")[2]
