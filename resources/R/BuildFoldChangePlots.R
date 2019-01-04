@@ -9,12 +9,16 @@
 # r.FCplot.maxBars=
 ###
 
+# Create a barplot representing the relative impact of a given factor on each of many OTUs.
+# This function can be called outside of the BiolockJ environment, but many arguments must be supplied.
+# If this function reaches the end, it returns TRUE.
 addFoldChangePlot <- function(numGroupName, denGroupName, 
 															numGroupVals, denGroupVals, title,
 															pvals=NULL, pvalIncludeBar=0.05, pvalStar=NULL,
 															maxBars=30, userOTUs=NULL, fixedBarHeightInches=0,
 															numGroupColor="darkorange2", denGroupColor="burlywood1",
-															centerAt0=TRUE, scale.fun="log2", saveRefTable=NULL){
+															centerAt0=TRUE, scale.fun="log2", saveRefTable=NULL,
+															starColor = "red"){
 	# numGroupName, denGroupName - Strings used in plot
 	# numGroupVals, denGroupVals - each a data frame, where OTUs are column names and rows are samples
 	##   these should have different row names (samples are from different groups) but matching column names.
@@ -33,6 +37,7 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 	# scale.fun - string (with quotes) giving the name of the function to use to scale
 	##   the fold change values: probably log2 or log10.
 	# saveRefTable - file name to save a reference table corresponding to the plot
+	# starColor = color to use for plotting the star next to significant OTU bars
 	#
 	# Select viable OTUs to plot
 	sharedOTUs = intersect(names(numGroupVals), names(denGroupVals))
@@ -191,7 +196,6 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 	# plot the stars
 	if (!is.null(pvalStar) & !is.null(pvals)){
 		starOTUs = intersect(names(pvals)[pvals <= pvalStar], row.names(toPlot))
-		starColor = getProperty("r.colorHighlight", "red")
 		starChar = "*"
 		if ( length(starOTUs) > 0 ){
 			starBarGap = 0.03 * par("usr")[2]
@@ -204,6 +208,9 @@ addFoldChangePlot <- function(numGroupName, denGroupName,
 	return(TRUE)
 	}
 
+
+# The main method is designed to integrate this module with BiolockJ.  
+# It handles pulling data from other modules and options from the BiolockJ properties.
 main <- function(){
 	# get config option for pvalStar, pvalIncludeBar, maxBars, userOTUs, 
 	pvalStar = getProperty("r.pvalCutoff", 0.05)
@@ -275,7 +282,8 @@ main <- function(){
 													pvalIncludeBar = pvalIncludeBar,
 													pvalStar = pvalStar,
 													maxBars = maxBars,
-													userOTUs = userOTUs)
+													userOTUs = userOTUs,
+													starColor = getProperty("r.colorHighlight", "red"))
 				if (complete) {
 					print( paste("Calling addFoldChangePlot for otuLevel:", otuLevel, " and binary attribute:", biAtt))
 				}
@@ -297,7 +305,7 @@ main <- function(){
 	}
 }
 
-# Read the counts from the parser module
+# Read the counts from the parser module; this requires the BiolockJ pipeline environment.
 # returns a list with each otuLevel as an element.
 readRawCounts <- function(otuLevels=getProperty("report.taxonomyLevels")){
 	parserModule = getProperty("internal.parserModule")
