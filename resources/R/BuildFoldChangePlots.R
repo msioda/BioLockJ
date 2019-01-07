@@ -26,6 +26,7 @@ main <- function(){
 	pvalIncludeBar = getProperty("r.FCplot.pvalIncludeBar", 1)
 	maxBars = getProperty("r.FCplot.maxBars", 40)
 	userOTUs = getProperty("r.FCplot.userOTUs", NULL)
+	scale.fun="log2"
 	# get metadata
 	if( doDebug() ) print( paste( "metadata file:", getMetaDataFile() ) )
 	meta = getMetaData()
@@ -84,17 +85,18 @@ main <- function(){
 			# make plot
 			tryCatch(expr={
 				if( doDebug() ) print( paste("Calling addFoldChangePlot for otuLevel:", otuLevel, " and binary attribute:", biAtt) )
-				complete = addFoldChangePlot(numGroupName=names(splitOTU)[2], denGroupName=names(splitOTU)[1], 
-																		 numGroupVals=splitOTU[[2]], denGroupVals=splitOTU[[1]], title=biAtt,
-																		 saveRefTable = getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"OTU-foldChangeTable.tsv", sep="_") ),
-																		 pvals = pvals, 
-																		 pvalIncludeBar = pvalIncludeBar,
-																		 pvalStar = pvalStar,
-																		 maxBars = maxBars,
-																		 userOTUs = userOTUs,
-																		 starColor = getProperty("r.colorHighlight", "red"))
+				calculations = calcBarSizes(numGroupVals=splitOTU[[2]], denGroupVals=splitOTU[[1]], 
+																		numGroupName=names(splitOTU)[2], denGroupName=names(splitOTU)[1],
+																		pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars, 
+																		saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"OTU-foldChangeTable.tsv", sep="_") ),
+																		scale.fun=scale.fun)
+				complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="scaledFC",
+								 xAxisLab=paste0(scale.fun, "(fold change)"), title=biAtt,
+								 pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"), 
+								 xAxisLab2 = calculations[["xAxisLab2"]], 
+								 comments=calculations[["comments"]])
 				if (complete) {
-					print( paste("Calling addFoldChangePlot for otuLevel:", otuLevel, " and binary attribute:", biAtt))
+					print( paste("Completed plot for otuLevel:", otuLevel, " and binary attribute:", biAtt))
 				}
 			}, error= function(err) {
 				if( doDebug() ){print(err)}
@@ -145,64 +147,25 @@ normalize <- function(otuTable){
 }
 
 
-
-
-
-# Create a barplot representing the relative impact of a given factor on each of many OTUs.
-# This function can be called outside of the BiolockJ environment, but many arguments must be supplied.
-# If this function reaches the end, it returns TRUE.
-addFoldChangePlot <- function(numGroupName, denGroupName, 
-															numGroupVals, denGroupVals, title,
-															pvals=NULL, pvalIncludeBar=0.05, pvalStar=NULL,
-															maxBars=30, userOTUs=NULL, fixedBarHeightInches=0,
-															numGroupColor="darkorange2", denGroupColor="burlywood1",
-															scale.fun="log2", saveRefTable=NULL,
-															starColor = "red"){
-	# numGroupName, denGroupName - Strings used in plot
-	# numGroupVals, denGroupVals - each a data frame, where OTUs are column names and rows are samples
-	##   these should have different row names (samples are from different groups) but matching column names.
-	# title - string, binary attribute being plotted
-	# pvals - named vector of pvalues, taken from calcStats (which test is configurable).
-	##   names of pvals are OTU's, and should match num(den)GroupVals column names.
-	# pvalIncludeBar - OTUs that do not meet this value are not plotted (if pvals supplied)
-	# pvalStar - OTUs that meet this cuttoff get a star.
-	# maxBars - int, maximum number of bars to plot
-	# userOTUs - string vector, set of OTUs of interest to the user.  If present, this overrides pvals.
-	##   userOTUs may include OTUs that are not in the tables, only the intersect of both tables and userOTUs will be used.
-	# numGroupColor, denGroupColor - color to use to fill bar for OTUs with neg/pos fold change
-	# scale.fun - string (with quotes) giving the name of the function to use to scale
-	##   the fold change values: probably log2 or log10.
-	# saveRefTable - file name to save a reference table corresponding to the plot
-	# starColor = color to use for plotting the star next to significant OTU bars
-	#
-	calculations = calcBarSizes(numGroupVals=numGroupVals, denGroupVals=denGroupVals, 
-															numGroupName=numGroupName, denGroupName=denGroupName,
-															pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, 
-															maxBars=maxBars, saveRefTable=saveRefTable, scale.fun=scale.fun)
-	toPlot = calculations[["toPlot"]]
-	comment = calculations[["comment"]]
-	rm(calculations)
-	#
-	drawPlot(toPlot=toPlot, barSizeColumn="scaledFC",
-					 xAxisLab=paste0(scale.fun, "(fold change)"),
-					 numGroupColor=numGroupColor, denGroupColor=denGroupColor, title=title,
-					 pvalStar=pvalStar, starColor=starColor, 
-					 xAxisLab2 = paste0(numGroupName, " (n=", nrow(numGroupVals), ") relative to ", denGroupName, " (n=", nrow(denGroupVals), ")"), 
-					 comments=comment)
-	# done
-	return(TRUE)
-}
-
-
-
 # returns a list of 2:
 #  toPlot - a dataframe with values to plot and info for each bar
 #  comment - a string(s) that should be included in the plot to inform the user about this step
 calcBarSizes <- function(numGroupVals, denGroupVals, 
 												 numGroupName, denGroupName,
-												 pvals, pvalIncludeBar, userOTUs,
-												 maxBars, saveRefTable=NULL, scale.fun=NULL){
-	# For all args, see description in addFoldChangePlot
+												 pvals=NULL, pvalIncludeBar=0.05, maxBars=30, userOTUs=NULL,
+												 saveRefTable=NULL, scale.fun="log2"){
+	# numGroupVals, denGroupVals - each a data frame, where OTUs are column names and rows are samples
+	##   these should have different row names (samples are from different groups) but matching column names.
+	# numGroupName, denGroupName - Strings used in plot
+	# pvals - named vector of pvalues, taken from calcStats (which test is configurable).
+	##   names of pvals are OTU's, and should match num(den)GroupVals column names.
+	# pvalIncludeBar - OTUs that do not meet this value are not plotted (if pvals supplied)
+	# maxBars - int, maximum number of bars to plot
+	# userOTUs - string vector, set of OTUs of interest to the user.  If present, this overrides pvals.
+	##   userOTUs may include OTUs that are not in the tables, only the intersect of both tables and userOTUs will be used.
+	# saveRefTable - file name to save a reference table corresponding to the plot
+	# scale.fun - string (with quotes) giving the name of the function to use to scale
+	##   the bar values values: probably log2 or log10.
 	#
 	# Select viable OTUs to plot
 	viableOTUs = selectViableOTUs(group1=names(numGroupVals), group2= names(denGroupVals), 
@@ -245,8 +208,9 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	#
 	# get rid of the rows that will not be plotted
 	toPlot = toPlot[toPlot$includeInPlot,]
-	comment = paste0("Showing top ", maxBars, " most changed OTUs ", comment)
-	return(list(toPlot=toPlot,comment=comment))
+	xAxisLab2 = paste0(numGroupName, " (n=", nrow(numGroupVals), ") relative to ", denGroupName, " (n=", nrow(denGroupVals), ")")
+	comments = paste0("Showing top ", maxBars, " most changed OTUs ", comment)
+	return(list(toPlot=toPlot, comments=comments, xAxisLab2=xAxisLab2))
 }
 
 
@@ -320,7 +284,7 @@ saveRefTableWithHeader <- function(saveRefTable, toPrint, skipColumns=NULL,
 }
 
 
-
+# If this function reaches the end, it returns TRUE.
 drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impact per OTU",
 										 numGroupColor="darkorange2", denGroupColor="burlywood1",
 										 pvalStar=NULL, starColor="red",
@@ -332,6 +296,10 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
 	#  and optionally: infUp, infDown, pvals, color, OTU
 	#  If OTU column is present, that will used for labels, otherwise row.names will be used
 	# barSizeColumn - character (or potentially integer) giving the column from toPlot to be used to create bars, currently supports length 1.
+  # title - main title for the plot
+	# numGroupColor, denGroupColor - color to use for bars to the left and right (respectively) of the 0 line.
+	# pvalStar - OTUs that meet this cuttoff get a star.
+	# starColor - color to use for significance star
 	# xAxisLab - label to use for x-axis
 	# xAxisLab2 - string to plot below the x-axis label (added explaination of x-axis)
 	# comments - string(s) to add to bottom of the plot to inform the user
@@ -468,6 +436,7 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
 		}
 		mtext(paste0("(", starChar, ") p-value <= ", pvalStar), side=3, line=0, adj=0)
 	}
+	return(TRUE)
 }
 
 
