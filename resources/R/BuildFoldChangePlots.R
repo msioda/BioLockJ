@@ -403,7 +403,7 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
 	bp = barplot(toPlot[,barSizeColumn], horiz=TRUE, plot=FALSE, width = barWidth, space = barSpace) # this one is not plotted, its just a reference
 	row.names(bp) = row.names(toPlot)
 	# check xlims
-	print(paste("xmin, xmax: ", xmin, ", ", xmax))
+	# print(paste("xmin, xmax: ", xmin, ", ", xmax))
 	#
 	# plot area and outer text
 	plot(x=0, y=1, type='n', 
