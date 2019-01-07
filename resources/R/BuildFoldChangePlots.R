@@ -374,15 +374,17 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
 			fixedBarHeightInches = max(par("mai") / par("mar"), na.rm=TRUE) # 4 vals should all be the same but any could be /0
 		}
 		if (fixedBarHeightInches > 0 ) { # set bar width + space to this many inches
-			plotRegionHeightInches = par("fin")[2]
-			plotMarginsHeightInches = par("mai")[1] + par("mai")[3]
+			plotRegionHeightInches = dev.size()[2]
+			plotMarginsHeightInches = par("mai")[1] + par("mai")[3] + par("omi")[1] + par("omi")[3]
 			inchesForBars = nrow(toPlot) * fixedBarHeightInches
 			inchesToRemove = plotRegionHeightInches - plotMarginsHeightInches - inchesForBars
 		}else{
 			print("Argument fixedBarHeightInches should be a numeric value >= 0.")
 		}
 		if (inchesToRemove > 0){
-			par(omi=c(inchesToRemove, 0, 0, 0))
+			mais = par("mai")
+			mais[1] = mais[1] + inchesToRemove
+			par(mai=mais)
 		}else{
 			print(paste0("Not enough space in plot for ", nrow(toPlot), " bars with ", 
 									 fixedBarHeightInches, " for each bar. Bar widths will be set to fit the space."))
@@ -397,6 +399,9 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
 		if (width == 0){width = 1}
 		xmin = -width
 		xmax = width
+	}else{
+		xmin = min(0, xmin)
+		xmax = max(0, xmax)
 	}
 	barWidth=1
 	barSpace=.2
