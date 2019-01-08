@@ -45,7 +45,7 @@ main <- function(){
 		}else{
 			par(mfrow=c(1,1))
 		}
-		par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
+		#par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
 		#
 		# get normalized OTU vals
 		# inputFile = getPipelineFile( paste0(otuLevel, ".*_norm.tsv") ) <-- might revert to this in future
@@ -59,11 +59,11 @@ main <- function(){
 		otuTable = otuTable[1:lastOtuCol]
 		#
 		# Might undo log-scale to get fold change values, then optionally scale them in some way.
-		logBase = getProperty("report.logBase", NULL) # move this to top of main where we get properties
-		if (!is.null(logBase)){
-			otuTable = logBase^otuTable
-			if( doDebug() ) print( paste( "Input values are on a ", logBase, " scale, this has been reversed." ) )
-		}
+		# logBase = getProperty("report.logBase", NULL) # move this to top of main where we get properties
+		# if (!is.null(logBase)){
+		# 	otuTable = logBase^otuTable
+		# 	if( doDebug() ) print( paste( "Input values are on a ", logBase, " scale, this has been reversed." ) )
+		# }
 		#
 		# get pvals from calc stats, maybe add config option to specify which pvals to get
 		pvalFileIdentifier = getProperty(name = "r.FCplot.pvalType", "_adjNonParPvals.tsv")
@@ -84,14 +84,15 @@ main <- function(){
 			par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0)) # this is changed within the plot function, so reset before each plot
 			# make plot
 			tryCatch(expr={
-				if( doDebug() ) print( paste("Calling addFoldChangePlot for otuLevel:", otuLevel, " and binary attribute:", biAtt) )
+				if( doDebug() ) print( paste("Calling calcBarSizes for otuLevel:", otuLevel, " and binary attribute:", biAtt) )
 				calculations = calcBarSizes(numGroupVals=splitOTU[[2]], denGroupVals=splitOTU[[1]], 
 																		numGroupName=names(splitOTU)[2], denGroupName=names(splitOTU)[1],
 																		pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars, 
 																		saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"OTU-foldChangeTable.tsv", sep="_") ),
 																		scale.fun=scale.fun)
-				complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="scaledFC",
-								 xAxisLab=paste0(scale.fun, "(fold change)"), title=biAtt,
+				if( doDebug() ) print( paste("Calling drawPlot for otuLevel:", otuLevel, " and binary attribute:", biAtt) )
+				complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="effectSize",
+								 xAxisLab="Effect Size", title=biAtt,
 								 pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"), 
 								 xAxisLab2 = calculations[["xAxisLab2"]], 
 								 comments=calculations[["comments"]])
@@ -152,11 +153,17 @@ normalize <- function(otuTable){
 #  comment - a string(s) that should be included in the plot to inform the user about this step
 calcBarSizes <- function(numGroupVals, denGroupVals, 
 												 numGroupName, denGroupName,
+												 effectType="effectSize", r2vals=NULL,
 												 pvals=NULL, pvalIncludeBar=0.05, maxBars=30, userOTUs=NULL,
-												 saveRefTable=NULL, scale.fun="log2"){
+												 saveRefTable=NULL, scale.fun="log2", orderByColumn=effectType[1]){
 	# numGroupVals, denGroupVals - each a data frame, where OTUs are column names and rows are samples
 	##   these should have different row names (samples are from different groups) but matching column names.
-	# numGroupName, denGroupName - Strings used in plot
+	# numGroupName, denGroupName - Strings used in comments (and later in plot)
+	# effectType - what type of impact should be calculated
+	##   effectSize (default) is the difference of the means devided by the pooled standard deviation
+	##   foldChange is the ratio of the means
+	##   rSquared is taken from the calculate stats module
+	# r2vals - (optional) named vector of r-squared values from a statistical test to use for bar sizes.
 	# pvals - named vector of pvalues, taken from calcStats (which test is configurable).
 	##   names of pvals are OTU's, and should match num(den)GroupVals column names.
 	# pvalIncludeBar - OTUs that do not meet this value are not plotted (if pvals supplied)
@@ -166,35 +173,72 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	# saveRefTable - file name to save a reference table corresponding to the plot
 	# scale.fun - string (with quotes) giving the name of the function to use to scale
 	##   the bar values values: probably log2 or log10.
+	# orderByColumn - the name of the column to use in ordering the final output rows.
 	#
 	# Select viable OTUs to plot
 	viableOTUs = selectViableOTUs(group1=names(numGroupVals), group2= names(denGroupVals), 
 																pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs)
 	plotOTUs = viableOTUs[["plotOTUs"]]
-	comment = viableOTUs[["comment"]]
+	comments = viableOTUs[["comment"]]
 	numGroupVals = numGroupVals[plotOTUs]
 	denGroupVals = denGroupVals[plotOTUs]
 	#
 	# assemble data frame of plot values. Calc and scale fold changes
+	numGroupN = sapply(numGroupVals, function(x){sum(!is.na(x))})
+	denGroupN = sapply(denGroupVals, function(x){sum(!is.na(x))})
 	numMeans = colMeans(numGroupVals, na.rm=TRUE)
 	denMeans = colMeans(denGroupVals, na.rm=TRUE)
 	toPlot = data.frame(OTU=plotOTUs, row.names=plotOTUs,
 											numMeans = numMeans, denMeans = denMeans,
-											foldChange = numMeans / denMeans,
 											infUp = numMeans > 0 & denMeans == 0, #In the table, these are Inf
 											infDown = numMeans == 0 & denMeans > 0) #In the table, these are 0
-	toPlot$scaledFC = do.call(scale.fun, list(x=toPlot$foldChange))
-	toPlot$pvalue = pvals[row.names(toPlot)]
+	if (!is.null(pvals)){
+		toPlot$pvalue = pvals[row.names(toPlot)]
+	}
+	xAxisLab2="" #just make sure it exists; it is defined in if statements
+	if ("effectSize" %in% effectType){
+		numGroupSD = sapply(numGroupVals, sd, na.rm=TRUE)
+		denGroupSD = sapply(denGroupVals, sd, na.rm=TRUE)
+		pooledSD = mapply(calc2GroupPooledSD, 
+											group1.n=numGroupN, group2.n=denGroupN, 
+											group1.sd=numGroupSD, group2.sd=denGroupSD, 
+											USE.NAMES = TRUE)
+		toPlot$effectSize = (denMeans - numMeans) / pooledSD
+		xAxisLab2 = paste0("difference of the means, ", denGroupName, " (n=", max(numGroupN), ") minus ", numGroupName, " (n=", max(denGroupN), "), over pooled sd")
+		if (length(effectType) > 1){
+			comments = c(comments, paste("Effect size is", xAxisLab2))
+		}
+	}
+	if ("foldChange" %in% effectType){
+		toPlot$foldChange = numMeans / denMeans
+		toPlot$scaledFC = do.call(scale.fun, list(x=toPlot$foldChange))
+		xAxisLab2 = paste0(numGroupName, " (n=", max(numGroupN), ") relative to ", denGroupName, " (n=", max(denGroupN), ")")
+		if (length(effectType) > 1){
+			comments = c(comments, paste("Fold change is", xAxisLab2))
+		}
+	}
+	if ("rSquared" %in% effectType){
+		if (is.null(r2vals)){
+			stop("r2vals must be supplied.")
+		}else{
+			toPlot$rSquared = r2vals[row.names(toPlot)]
+			xAxisLab2 = ""
+			if (length(effectType) > 1){
+				comments = c(comments, "r-squared values are taken from the CalculateStats module.")
+			}
+		}
+	}
 	#
 	# select top [maxBars] most changed OTUs
 	# cases where one group is all-zeros is treated at most changed
-	toPlot = toPlot[order(abs(toPlot$scaledFC), decreasing = T),] #highest abs on top
+	toPlot = toPlot[order(abs(toPlot[,orderByColumn]), decreasing = T),] #highest abs on top
 	maxBars = min(c(maxBars, nrow(toPlot)))
 	toPlot$plotPriority = 1:nrow(toPlot)
 	toPlot$includeInPlot = toPlot$plotPriority <= maxBars
+	comments[1] = paste0("Showing top ", maxBars, " most changed OTUs ", viableOTUs[["comment"]])
 	#
 	# order OTUs to plot
-	ordNames = row.names(toPlot)[order(toPlot$scaledFC)]
+	ordNames = row.names(toPlot)[order(toPlot[,orderByColumn])]
 	toPlot = toPlot[ordNames,] #lowest values at top, barplot plots from bottom
 	#
 	# save a table the user can reference
@@ -208,8 +252,6 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	#
 	# get rid of the rows that will not be plotted
 	toPlot = toPlot[toPlot$includeInPlot,]
-	xAxisLab2 = paste0(numGroupName, " (n=", nrow(numGroupVals), ") relative to ", denGroupName, " (n=", nrow(denGroupVals), ")")
-	comments = paste0("Showing top ", maxBars, " most changed OTUs ", comment)
 	return(list(toPlot=toPlot, comments=comments, xAxisLab2=xAxisLab2))
 }
 
@@ -244,6 +286,20 @@ selectViableOTUs <- function(group1, group2, pvals=NULL, pvalIncludeBar=NULL, us
 		stop("Stop Plotting: No qualifying OTUs to plot.")
 	}
 	return(list(plotOTUs=plotOTUs, comment=comment))
+}
+
+
+calcPooledSD <- function(group.n, group.sd){
+	# group.n - the number of samples in each group
+	# group.sh - the within-group standard deviation for each group
+	# formula taken from https://en.wikipedia.org/wiki/Pooled_variance#Computation
+	group.var = group.sd^2
+	pooled.var = sum( (group.n - 1) * group.var) / sum(group.n - 1)
+	return(sqrt(pooled.var))
+}
+
+calc2GroupPooledSD <- function(group1.n, group2.n, group1.sd, group2.sd){
+	return(calcPooledSD(group.n=c(group1.n, group2.n), group.sd=c(group1.sd, group2.sd)))
 }
 
 
