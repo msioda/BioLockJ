@@ -11,7 +11,10 @@
  */
 package biolockj.node.r16s;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
+import biolockj.Config;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 
@@ -33,7 +36,7 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 * @param count Extracted from column of the Sample ID
 	 * @throws Exception if propagated from addOtu() method
 	 */
-	public QiimeNode( final String id, final String taxas, final Long count ) throws Exception
+	public QiimeNode( final String id, final String taxas, final int count ) throws Exception
 	{
 		setLine( id + "_" + taxas + "_" + count );
 		setSampleId( id );
@@ -44,10 +47,26 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 		while( st.hasMoreTokens() )
 		{
 			taxa = st.nextToken();
-			final String levelDelim = getLevelDelim( taxa );
+			final String levelDelim = getLevel( taxa );
 			final String otu = taxa.substring( levelDelimSize );
-			buildOtuNode( otu, levelDelim );
+			addTaxa( otu, levelDelim );
 		}
+	}
+
+	@Override
+	public Map<String, String> delimToLevelMap()
+	{
+		if( delimToLevelMap.isEmpty() )
+		{
+			delimToLevelMap.put( DOMAIN_DELIM, Config.DOMAIN );
+			delimToLevelMap.put( PHYLUM_DELIM, Config.PHYLUM );
+			delimToLevelMap.put( CLASS_DELIM, Config.CLASS );
+			delimToLevelMap.put( ORDER_DELIM, Config.ORDER );
+			delimToLevelMap.put( FAMILY_DELIM, Config.FAMILY );
+			delimToLevelMap.put( GENUS_DELIM, Config.GENUS );
+			delimToLevelMap.put( SPECIES_DELIM, Config.SPECIES );
+		}
+		return delimToLevelMap;
 	}
 
 	/**
@@ -57,15 +76,14 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 * @return Level delim
 	 * @throws Exception if the taxa delim is undefined
 	 */
-	protected String getLevelDelim( final String taxa ) throws Exception
+	protected String getLevel( final String taxa ) throws Exception
 	{
 		if( taxa.startsWith( SILVA_AMBIGUOUS_DELIM ) )
 		{
 			return null;
 		}
-		else if( !setLevelDelims )
+		else if( delimToLevelMap.isEmpty() )
 		{
-
 			if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null )
 			{
 				delimToLevelMap.clear();
@@ -78,16 +96,17 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 				GENUS_DELIM = SILVA_GENUS_DELIM;
 				SPECIES_DELIM = SILVA_SPECIES_DELIM;
 
-				if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null )
+				final String delim = taxa.substring( 0, levelDelimSize );
+				if( delimToLevelMap().get( delim ) == null )
 				{
-					throw new Exception( "Taxa delim is undefined for taxas: " + getSampleId() + ": " + taxa );
+					throw new Exception(
+							"Taxa delim [ " + delim + " ] is undefined in: " + getSampleId() + ": " + taxa );
 				}
 
 			}
-			setLevelDelims = true;
 		}
 
-		return taxa.substring( 0, levelDelimSize );
+		return delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) );
 	}
 
 	/**
@@ -135,13 +154,15 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 */
 	protected static final String SILVA_SPECIES_DELIM = "D_6__";
 
+	private static final Map<String, String> delimToLevelMap = new HashMap<>();
 	private static int levelDelimSize = 3;
+
 	private static final String QIIME_DELIM = ";";
-	private static boolean setLevelDelims = false;
 
 	// Override default DOMAIN taxonomy level delimiter (d__) set in OtuNodeImpl with QIIME domain delim (k__)
 	static
 	{
 		DOMAIN_DELIM = QIIME_DOMAIN_DELIM;
 	}
+
 }

@@ -44,22 +44,63 @@ public class DemuxUtil
 	 * @return boolean
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
-	public static boolean barcodeInSeq() throws ConfigNotFoundException
+	public static boolean barcodeInMapping() throws ConfigNotFoundException
 	{
 		return Config.getString( DEMUX_STRATEGY ) != null
-				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
+				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_MAPPING );
 	}
-	
+
 	/**
 	 * Return TRUE if Config is setup to demux the sequence data based on barcodes in the sequence itself.
 	 * 
 	 * @return boolean
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
-	public static boolean barcodeInMapping() throws ConfigNotFoundException
+	public static boolean barcodeInSeq() throws ConfigNotFoundException
 	{
 		return Config.getString( DEMUX_STRATEGY ) != null
-				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_MAPPING );
+				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
+	}
+
+	/**
+	 * Build header refs from mapping file
+	 * 
+	 * INCOMPLETE CODE -- not currently used
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	public static void buildHeaderRefs() throws Exception
+	{
+		final BufferedReader reader = BioLockJUtil.getFileReader( DemuxUtil.getMapping() );
+		try
+		{
+			final Map<String, String> barcodeMap = getIdMap();
+			final List<String> seqLines = new ArrayList<>();
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			{
+				seqLines.add( line );
+				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
+				{
+					final String header = seqLines.get( 0 );
+					final String barcode = seqLines.get( 1 );
+					if( barcodeMap.keySet().contains( barcode ) )
+					{
+						final BufferedWriter writer = new BufferedWriter(
+								new FileWriter( getHeaderFile( barcode ), true ) );
+						writer.write( header + BioLockJ.RETURN );
+						writer.close();
+					}
+				}
+			}
+
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
 	}
 
 	/**
@@ -89,6 +130,23 @@ public class DemuxUtil
 	{
 		return Config.getString( DEMUX_STRATEGY ) != null
 				&& !Config.requireString( DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX );
+	}
+
+	/**
+	 * Return the demux mapping file used to map sequence files to barcode.
+	 * 
+	 * @return Mapping file path
+	 * @throws ConfigNotFoundException if {@value #MAPPING_FILE} is undefined
+	 * @throws ConfigPathException if {@value #MAPPING_FILE} path does not exist on the file system
+	 * 
+	 */
+	public static File getMapping() throws ConfigNotFoundException, ConfigPathException
+	{
+		if( barcodeInMapping() )
+		{
+			return Config.requireExistingFile( MAPPING_FILE );
+		}
+		return null;
 	}
 
 	/**
@@ -130,23 +188,6 @@ public class DemuxUtil
 		return SeqUtil.getSampleId( seqLines.get( 0 ) );
 
 	}
-	
-	/**
-	 * Return the demux mapping file used to map sequence files to barcode.
-	 * 
-	 * @return Mapping file path
-	 * @throws ConfigNotFoundException if {@value #MAPPING_FILE} is undefined
-	 * @throws ConfigPathException if {@value #MAPPING_FILE} path does not exist on the file system
-	 * 
-	 */
-	public static File getMapping() throws ConfigNotFoundException, ConfigPathException
-	{
-		if( barcodeInMapping() )
-		{
-			return Config.requireExistingFile( MAPPING_FILE );
-		}
-		return null;
-	}
 
 	/**
 	 * Return TRUE if Config is setup to demux the sequence data based on Sample IDs in the sequence headers.
@@ -158,64 +199,6 @@ public class DemuxUtil
 	{
 		return Config.getString( DEMUX_STRATEGY ) != null
 				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
-	}
-	
-	/**
-	 * Build header refs from mapping file
-	 * 
-	 * INCOMPLETE CODE -- not currently used
-	 * 
-	 * @throws Exception if errors occur
-	 */
-	public static void buildHeaderRefs() throws Exception
-	{
-		final BufferedReader reader = BioLockJUtil.getFileReader( DemuxUtil.getMapping() );
-		try
-		{
-			Map<String, String> barcodeMap = getIdMap(); 
-			final List<String> seqLines = new ArrayList<>();
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				seqLines.add( line );
-				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
-				{
-					final String header = seqLines.get( 0 );
-					final String barcode = seqLines.get( 1 );
-					if( barcodeMap.keySet().contains( barcode ) )
-					{
-						final BufferedWriter writer = new BufferedWriter( new FileWriter( getHeaderFile( barcode ), true ) );
-						writer.write( header + BioLockJ.RETURN );
-						writer.close();
-					}
-				}
-			}
-			
-		}
-		finally
-		{
-			if( reader != null ) reader.close();
-		}
-	}
-	
-	private static File getHeaderFile( String barcode ) throws Exception
-	{
-		if( headerFileMap.get( barcode ) == null )
-		{
-			File barcodeDir = new File( ModuleUtil.getModule( Demultiplexer.class.getName() ).getTempDir().getAbsolutePath() 
-					+ File.separator + "barcodeHeaderMaps" );
-			if( !barcodeDir.exists() )
-			{
-				barcodeDir.mkdirs();
-			}
-			
-			File file = new File( barcodeDir.getAbsolutePath() + File.separator + barcode + ".txt" );
-			if( !file.exists() )
-			{
-				headerFileMap.put( barcode, file.getAbsolutePath() );
-			}
-		}
-		
-		return new File( headerFileMap.get( barcode ) );
 	}
 
 	/**
@@ -270,6 +253,28 @@ public class DemuxUtil
 		return idMap;
 	}
 
+	private static File getHeaderFile( final String barcode ) throws Exception
+	{
+		if( headerFileMap.get( barcode ) == null )
+		{
+			final File barcodeDir = new File(
+					ModuleUtil.getModule( Demultiplexer.class.getName() ).getTempDir().getAbsolutePath()
+							+ File.separator + "barcodeHeaderMaps" );
+			if( !barcodeDir.exists() )
+			{
+				barcodeDir.mkdirs();
+			}
+
+			final File file = new File( barcodeDir.getAbsolutePath() + File.separator + barcode + ".txt" );
+			if( !file.exists() )
+			{
+				headerFileMap.put( barcode, file.getAbsolutePath() );
+			}
+		}
+
+		return new File( headerFileMap.get( barcode ) );
+	}
+
 	/**
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} tells BioLockJ how to match sequences with Sample
 	 * IDs.<br>
@@ -283,11 +288,11 @@ public class DemuxUtil
 	 * {@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} to match sample IDs to sequences.
 	 */
 	protected static final String BARCODE_USE_REV_COMP = "demux.barcodeUseReverseCompliment";
-	
+
 	/**
-	 * {@link biolockj.Config} String property {@value #MAPPING_FILE} lists the path to the mapping file to match 
-	 * sequence headers to barcodes.  The barcodes found in metadata file {@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} 
-	 * can be used to match sample IDs to sequences.
+	 * {@link biolockj.Config} String property {@value #MAPPING_FILE} lists the path to the mapping file to match
+	 * sequence headers to barcodes. The barcodes found in metadata file
+	 * {@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} can be used to match sample IDs to sequences.
 	 */
 	protected static final String MAPPING_FILE = "demux.mapping";
 
@@ -295,7 +300,7 @@ public class DemuxUtil
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} option: {@value #OPTION_BARCODE_IN_HEADER}
 	 */
 	protected static final String OPTION_BARCODE_IN_HEADER = "barcode_in_header";
-	
+
 	/**
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} option: {@value #OPTION_BARCODE_IN_MAPPING}
 	 */
@@ -316,6 +321,6 @@ public class DemuxUtil
 	 */
 	protected static final String OPTION_ID_IN_HEADER = "id_in_header";
 
-	private static final Map<String, String> idMap = new HashMap<>();
 	private static final Map<String, String> headerFileMap = new HashMap<>();
+	private static final Map<String, String> idMap = new HashMap<>();
 }

@@ -19,9 +19,7 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule validates fasta/fastq file formats are valid and enforces min/max read lengths.
@@ -36,7 +34,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		RegisterNumReads.setNumReadFieldName( NUM_VALID_READS );
+		RegisterNumReads.setNumReadFieldName( getMetaColName() );
 	}
 
 	/**
@@ -49,93 +47,61 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			boolean foundTrimmed = false;
-			boolean foundTooShort = false;
-			boolean foundInvalid = false;
+			long combinedMeanFwReadLen = 0L;
+			long combinedMeanRvReadLen = 0L;
+			int overallMinReadLen = 0;
+			int overallMaxReadLen = 0;
 
-			int numSamples = sampleStats.keySet().size();
-			long combinedMeanReadLen = 0L;
-			long overallMinReadLen = 0L;
-			long overallMaxReadLen = 0L;
-			
+			sb.append( getSeqLenRange() + RETURN );
+
+			if( !badFiles.isEmpty() )
+			{
+				sb.append( "Removed " + badFiles.size() + " empty files" + RETURN );
+			}
+
+			final TreeSet<String> invalidReads = new TreeSet<>();
+			final TreeSet<String> shortReads = new TreeSet<>();
+			final TreeSet<String> longReads = new TreeSet<>();
 			for( final String sampleId: new TreeSet<>( sampleStats.keySet() ) )
 			{
-				final Long[] stats = sampleStats.get( sampleId );
-				final Long numValid = stats[ INDEX_NUM_VALID_READS ];
-				final Long numTooShort = stats[ INDEX_NUM_READS_TOO_SHORT ];
-				final Long numTrimmed = stats[ INDEX_NUM_TRIMMED_READS ];
-				final Long numInvalid = stats[ INDEX_NUM_READS_INVALID_FORMAT ];
-				final Long meanReadLen = stats[ INDEX_MEAN_NUM_READS ];
-				final Long maxReadLen = stats[ INDEX_MAX_READS ];
-				final Long minReadLen = stats[ INDEX_MIN_READS ];
-				
-				combinedMeanReadLen += meanReadLen;
-			
-				if( overallMinReadLen == 0 || minReadLen < overallMinReadLen  )
+				final Integer[] stats = sampleStats.get( sampleId );
+				combinedMeanFwReadLen += stats[ INDEX_AVG_FW_READ_LEN ];
+				combinedMeanRvReadLen += stats[ INDEX_AVG_RV_READ_LEN ];
+				Log.debug( getClass(), "combinedMeanFwReadLen=" + combinedMeanFwReadLen );
+				Log.debug( getClass(), "combinedMeanRvReadLen=" + combinedMeanRvReadLen );
+				if( stats[ INDEX_MIN_READS ] == 0 || overallMinReadLen == 0 )
 				{
-					overallMinReadLen = minReadLen;
+					overallMinReadLen = Math.max( overallMinReadLen, stats[ INDEX_MIN_READS ] );
 				}
-				
-				if( maxReadLen > overallMaxReadLen  )
+				else
 				{
-					overallMaxReadLen = maxReadLen;
+					overallMinReadLen = Math.min( overallMinReadLen, stats[ INDEX_MIN_READS ] );
 				}
-				
-				if( numTooShort > 0 || numTrimmed > 0 || numInvalid > 0 )
-				{
-					sb.append( sampleId + ": " );
-					if( numInvalid > 0 )
-					{
-						foundInvalid = true;
-						sb.append( "# Seq with valid format = " + numValid + " | " );
-					}
-					if( numInvalid > 0 )
-					{
-						foundInvalid = true;
-						sb.append( "# Seq with invalid format = " + numInvalid + " | " );
-					}
-					if( numTooShort > 0 )
-					{
-						foundTooShort = true;
-						sb.append( "# Seq length below threshold = " + numTooShort + " | " );
-					}
-					if( numTrimmed > 0 )
-					{
-						foundTrimmed = true;
-						sb.append( "# Seq length above threshold = " + numTrimmed + " | " );
-					}
-					sb.append( RETURN );
-				}
-			}
-			
-			long avgReadLen = numSamples > 0 ? Double.valueOf( combinedMeanReadLen / numSamples ).longValue() : 0;
-			
-			sb.append( "Mean valid read length = " + avgReadLen + RETURN );
-			sb.append( "Min valid read length = " + Long.valueOf( overallMinReadLen ).toString() + RETURN );
-			sb.append( "Max valid read length = " + Long.valueOf( overallMaxReadLen ).toString() + RETURN );
 
-			if( foundTooShort )
-			{
-				sb.append( "Minimum discarded read length = " + minReadLen() + RETURN );
+				overallMaxReadLen = Math.max( overallMaxReadLen, stats[ INDEX_MAX_READS ] );
+
+				if( stats[ INDEX_NUM_READS_INVALID_FORMAT ] > 0 )
+				{
+					invalidReads.add( sampleId + ":" + stats[ INDEX_NUM_READS_INVALID_FORMAT ] );
+				}
+				if( stats[ INDEX_NUM_READS_TOO_SHORT ] > 0 )
+				{
+					shortReads.add( sampleId + ":" + stats[ INDEX_NUM_READS_TOO_SHORT ] );
+				}
+				if( stats[ INDEX_NUM_TRIMMED_READS ] > 0 )
+				{
+					longReads.add( sampleId + ":" + stats[ INDEX_NUM_TRIMMED_READS ] );
+				}
 			}
-			if( foundTrimmed )
-			{
-				sb.append( "Maximum discarded read length = " + Config.getPositiveInteger( INPUT_SEQ_MAX ) + RETURN );
-			}
-			if( foundInvalid || foundTooShort )
-			{
-				sb.append( "Discarded sequences stored in: " + getTempDir().getAbsolutePath() + RETURN );
-			}
-			
-			if( !foundTooShort && !foundTrimmed && !foundInvalid )
-			{
-				sb.append( "All sequence files pass validation checks - no changes required." + RETURN );
-			}
+
+			sb.append( getSeqModSummary( invalidReads, shortReads, longReads, combinedMeanFwReadLen,
+					combinedMeanRvReadLen, overallMinReadLen, overallMaxReadLen ) );
+			freeMemory();
 		}
 		catch( final Exception ex )
 		{
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
-			sb.append( msg + RETURN );
+			sb.append( RETURN + msg );
 			Log.warn( getClass(), msg );
 		}
 
@@ -143,17 +109,28 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Call {@link #validateFile(File)} for each input file.
+	 * Call {@link #validateFile(File)} for each input file. Call {@link #removeBadFiles()} to remove empty files and
+	 * files with no valid reads. Call {@link #verifyPairedSeqs()} if module input files are paired read files. Call
+	 * {@link biolockj.util.MetaUtil#addColumn(String, Map, File, boolean)}
 	 */
 	@Override
 	public void runModule() throws Exception
 	{
+		sampleIds.addAll( MetaUtil.getSampleIds() );
+		int count = 0;
 		for( final File file: getInputFiles() )
 		{
-			validateFile( file );
+			validateFile( file, count++ );
 		}
 
-		MetaUtil.addColumn( NUM_VALID_READS, readsPerSample, getOutputDir() );
+		removeBadFiles();
+
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			verifyPairedSeqs();
+		}
+
+		MetaUtil.addColumn( getMetaColName(), readsPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -167,131 +144,190 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	 * Invalid reads are saved to a file in the module temp directory for analysis/review.
 	 * 
 	 * @param file Sequence file
+	 * @param fileCount Integer count
 	 * @throws Exception if I/O errors occur while processing sequence files
 	 */
-	protected void validateFile( final File file ) throws Exception
+	protected void validateFile( final File file, final int fileCount ) throws Exception
 	{
-		Log.info( getClass(), "Validating " + file.getAbsolutePath() ); 
-		long combinedReadLen = 0L;
-		long minReadLen = 0L;
-		long maxReadLen = 0L;
-		long seqNum = 0L;
-		long numValid = 0L;
-		long numTrimmed = 0L;
-		long numTooShort = 0L;
-		long numInvalidFormat = 0L;
-		final Integer seqMax = Config.getPositiveInteger( INPUT_SEQ_MAX );
+		Log.info( getClass(), "Validating File[" + fileCount + "]: " + file.getAbsolutePath() );
+		final Integer[] stats = initStats();
+		int combinedReadLen = 0;
+		int seqNum = 0;
 
 		final List<String> seqLines = new ArrayList<>();
 		final List<String> badLines = new ArrayList<>();
+		final File outputFile = new File( getFileName( getOutputDir(), file.getName() ) );
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
-		final BufferedWriter writer = new BufferedWriter(
-				new FileWriter( new File( getFileName( getOutputDir(), file.getName() ) ) ) );
-
-		for( String line = reader.readLine(); line != null; line = reader.readLine() )
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( outputFile ) );
+		try
 		{
-			seqLines.add( line );
-
-			if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
+			String line = reader.readLine();
+			if( line == null )
 			{
-				seqNum++;
-				final String headerChar = seqLines.get( 0 ).substring( 0, 1 );
-				if( !SeqUtil.getSeqHeaderChars().contains( headerChar ) )
+				badFiles.add( outputFile );
+				return;
+			}
+
+			do
+			{
+				seqLines.add( line );
+				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 				{
-					numInvalidFormat++;
-					badLines.addAll( seqLines );
-					Log.warn( getClass(),
-							"Sequence #" + seqNum + " format invalid.  Must begin with a valid header char ("
-									+ SeqUtil.getSeqHeaderChars() + ")  --> header line = " + seqLines.get( 0 ) );
-				}
-				else if( seqLines.get( 1 ).length() < minReadLen() )
-				{
-					numTooShort++;
-					badLines.addAll( seqLines );
-					Log.warn( getClass(),
-							"Sequence #" + seqNum + " format invalid.  Must have a minimum number of bases ("
-									+ minReadLen() + ")  --> \n" + seqLines.get( 0 ) + "\n" + seqLines.get( 1 ) );
-				}
-				else if( SeqUtil.isFastQ() && seqLines.get( 1 ).length() != seqLines.get( 3 ).length() )
-				{
-					numInvalidFormat++;
-					badLines.addAll( seqLines );
-					Log.warn( getClass(), "Sequence #" + seqNum + " fastq format invalid.  Must have equal "
-							+ " number of bases and quality scores: " + seqLines.get( 0 ) );
-				}
-				else
-				{
-					numValid++;
-					if( seqMax != null && seqMax > 0 && seqLines.get( 1 ).length() > seqMax )
+					final int seqLen = seqLines.get( 1 ).length();
+					seqNum++;
+					final String headerChar = seqLines.get( 0 ).substring( 0, 1 );
+					if( !SeqUtil.getSeqHeaderChars().contains( headerChar ) )
 					{
-						numTrimmed++;
-						seqLines.set( 1, seqLines.get( 1 ).substring( 0, seqMax ) );
-						if( SeqUtil.isFastQ() )
+						stats[ INDEX_NUM_READS_INVALID_FORMAT ]++;
+						badLines.addAll( seqLines );
+						Log.warn( getClass(),
+								"Sequence #" + seqNum + " format invalid.  Must begin with a valid header char ("
+										+ SeqUtil.getSeqHeaderChars() + ")  --> header line = " + seqLines.get( 0 ) );
+					}
+					else if( seqLen < minReadLen() )
+					{
+						stats[ INDEX_NUM_READS_TOO_SHORT ]++;
+						badLines.addAll( seqLines );
+						Log.warn( getClass(),
+								"Sequence #" + seqNum + " format invalid.  Must have a minimum number of bases ("
+										+ minReadLen() + ")  --> \n" + seqLines.get( 0 ) + "\n" + seqLines.get( 1 ) );
+					}
+					else if( SeqUtil.isFastQ() && seqLen != seqLines.get( 3 ).length() )
+					{
+						stats[ INDEX_NUM_READS_INVALID_FORMAT ]++;
+						badLines.addAll( seqLines );
+						Log.warn( getClass(), "Sequence #" + seqNum + " fastq format invalid.  Must have equal "
+								+ " number of bases and quality scores: " + seqLines.get( 0 ) );
+					}
+					else
+					{
+						stats[ INDEX_NUM_VALID_READS ]++;
+						setMaxSeq( SeqUtil.getSampleId( file.getName() ), seqLen );
+						final Integer seqMax = Config.getPositiveInteger( INPUT_SEQ_MAX );
+						if( seqMax != null && seqMax > 0 && seqLen > seqMax )
 						{
-							seqLines.set( 3, seqLines.get( 3 ).substring( 0, seqMax ) );
+							stats[ INDEX_NUM_TRIMMED_READS ]++;
+							seqLines.set( 1, seqLines.get( 1 ).substring( 0, seqMax ) );
+							if( SeqUtil.isFastQ() )
+							{
+								seqLines.set( 3, seqLines.get( 3 ).substring( 0, seqMax ) );
+							}
+						}
+
+						final int readLen = seqLines.get( 1 ).length();
+						combinedReadLen += readLen;
+
+						if( readLen > 0 && stats[ INDEX_MIN_READS ] == 0 || readLen < stats[ INDEX_MIN_READS ] )
+						{
+							stats[ INDEX_MIN_READS ] = readLen;
+						}
+						if( readLen > stats[ INDEX_MAX_READS ] )
+						{
+							stats[ INDEX_MAX_READS ] = readLen;
+						}
+
+						for( final String seqLine: seqLines )
+						{
+							writer.write( seqLine + BioLockJ.RETURN );
 						}
 					}
-					
-					
-					int readLen = seqLines.get( 1 ).length();
-					
-					combinedReadLen += readLen;
-					
-					if( readLen > 0 && minReadLen == 0 || readLen < minReadLen  )
+
+					seqLines.clear();
+				}
+
+				line = reader.readLine();
+			}
+			while( line != null );
+		}
+		finally
+		{
+			if( writer != null )
+			{
+				writer.close();
+			}
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
+
+		if( stats[ INDEX_NUM_VALID_READS ] == 0 )
+		{
+			badFiles.add( file );
+		}
+
+		if( !badFiles.contains( file ) )
+		{
+			saveRemovedSeqsToFile( badLines, file );
+			populateSampleStats( stats, file, seqNum, combinedReadLen );
+		}
+	}
+
+	/**
+	 * Verify equal number of forward and reverse read files.<br>
+	 * if {@value #REQUIRE_EUQL_NUM_PAIRS}={@value biolockj.Config#TRUE}, verify forward and reverse read files have an
+	 * equal number of reads.
+	 * 
+	 * @throws Exception if validations fail or errors occur
+	 */
+	protected void verifyPairedSeqs() throws Exception
+	{
+		if( !rvReadsPerSample.isEmpty() )
+		{
+			Log.info( getClass(), "Validing paired reads..." );
+			final Set<String> keys = new TreeSet<>( readsPerSample.keySet() );
+			keys.removeAll( rvReadsPerSample.keySet() );
+			final Set<String> keys2 = new TreeSet<>( rvReadsPerSample.keySet() );
+			keys2.removeAll( readsPerSample.keySet() );
+
+			if( !keys.isEmpty() && !keys2.isEmpty() )
+			{
+				throw new Exception( "Unpaired forward reads: " + keys + " & " + "Unpaired reverse reads: " + keys2 );
+			}
+			else if( !keys.isEmpty() )
+			{
+				throw new Exception( "Unpaired forward reads: " + keys );
+			}
+			else if( !keys2.isEmpty() )
+			{
+				throw new Exception( "Unpaired reverse reads: " + keys2 );
+			}
+
+			if( Config.getBoolean( REQUIRE_EUQL_NUM_PAIRS ) )
+			{
+				final Set<String> unequalNumReads = new TreeSet<>();
+				for( final String sampleId: rvReadsPerSample.keySet() )
+				{
+					final String numFwReads = readsPerSample.get( sampleId );
+					final String numRvReads = rvReadsPerSample.get( sampleId );
+					if( !Integer.valueOf( numFwReads ).equals( Integer.valueOf( numRvReads ) ) )
 					{
-						minReadLen = readLen;
-					}
-					if( readLen > maxReadLen  )
-					{
-						maxReadLen = readLen;
-					}
-					
-					for( final String seqLine: seqLines )
-					{
-						writer.write( seqLine + BioLockJ.RETURN );
+						Log.warn( getClass(), sampleId + " has unequal read count FW=" + readsPerSample.get( sampleId )
+								+ "; RV=" + rvReadsPerSample.get( sampleId ) );
+						unequalNumReads.add( sampleId );
 					}
 				}
 
-				seqLines.clear();
+				if( !unequalNumReads.isEmpty() )
+				{
+					throw new Exception( "Paired reads require an equal number of reads: " + unequalNumReads );
+				}
 			}
 		}
-		
-		writer.close();
-		reader.close();
+	}
 
-		if( !badLines.isEmpty() )
-		{
-			final File tempFile = new File( getFileName( getTempDir(), "INVALID_READS_" + file.getName() ) );
-			Log.warn( getClass(), "Extracting invalid reads to --> " + tempFile.getAbsolutePath() );
-			final BufferedWriter invalidWriter = new BufferedWriter( new FileWriter( tempFile ) );
-			for( final String seqLine: badLines )
-			{
-				invalidWriter.write( seqLine + RETURN );
-			}
-
-			invalidWriter.close();
-		}
-		
-		Log.debug( getClass(), "combinedReadLen / numValid = " + combinedReadLen + " / " 
-				+ numValid + " = " + (numValid > 0 ? Double.valueOf( combinedReadLen / numValid ).longValue() : 0) );
-
-		final Long[] stats = new Long[ 7 ];
-		stats[ INDEX_NUM_VALID_READS ] = numValid;
-		stats[ INDEX_NUM_TRIMMED_READS ] = numTrimmed;
-		stats[ INDEX_NUM_READS_TOO_SHORT ] = numTooShort;
-		stats[ INDEX_NUM_READS_INVALID_FORMAT ] = numInvalidFormat;
-		stats[ INDEX_MEAN_NUM_READS ] = numValid > 0 ? Double.valueOf( combinedReadLen / numValid ).longValue() : 0;
-		stats[ INDEX_MIN_READS ] = minReadLen;
-		stats[ INDEX_MAX_READS ] = maxReadLen;
-		minReadLen = 0;
-		
-		sampleStats.put( SeqUtil.getSampleId( file.getName() ), stats );
-
-		if( SeqUtil.isForwardRead( file.getName() ) )
-		{
-			readsPerSample.put( SeqUtil.getSampleId( file.getName() ), String.valueOf( numValid ) );
-		}
-
+	/**
+	 * Free up memory.
+	 */
+	private void freeMemory()
+	{
+		readsPerSample = null;
+		rvReadsPerSample = null;
+		sampleIds = null;
+		readsPerSample = null;
+		sampleStats = null;
+		badFiles = null;
+		sampleStats = null;
 	}
 
 	private String getFileName( final File dir, String name ) throws Exception
@@ -305,6 +341,92 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		return dir.getAbsolutePath() + File.separator + name;
 	}
 
+	private String getMetaColName() throws Exception
+	{
+		if( otuColName == null )
+		{
+			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_VALID_READS );
+		}
+
+		return otuColName;
+	}
+
+	private String getSeqLenRange() throws Exception
+	{
+		final Integer max = Config.getPositiveInteger( INPUT_SEQ_MAX );
+		return "Valid SEQ Len Range --> min( " + minReadLen() + " ) - max( " + ( max == null ? "UNLIMITED": max )
+				+ " )";
+	}
+
+	private String getSeqModSummary( final TreeSet<String> invalidReads, final TreeSet<String> shortReads,
+			final TreeSet<String> longReads, final long totalAvgFwLen, final long totalAvgRvLen, final int minReadLen,
+			final int maxReadLen ) throws Exception
+	{
+		final StringBuffer sb = new StringBuffer();
+		final int avgReadLen = Double.valueOf( totalAvgFwLen / sampleStats.size() ).intValue();
+
+		if( totalAvgRvLen > 0 )
+		{
+			final int avgRvReadLen = Double.valueOf( totalAvgRvLen / sampleStats.size() ).intValue();
+			sb.append( "Mean valid FW read len: " + avgReadLen + RETURN );
+			sb.append( "Mean valid RV read len: " + avgRvReadLen + RETURN );
+		}
+		else
+		{
+			sb.append( "Mean valid read len: " + avgReadLen + RETURN );
+		}
+
+		sb.append( "Min valid read len: " + minReadLen + RETURN );
+		sb.append( "Max valid read len: " + maxReadLen + RETURN );
+
+		if( invalidReads.isEmpty() && shortReads.isEmpty() && longReads.isEmpty() )
+		{
+			sb.append( "SEQ files pass all validations - no sequences were modified or removed." + RETURN );
+		}
+		else if( !invalidReads.isEmpty() || !shortReads.isEmpty() )
+		{
+			if( !invalidReads.isEmpty() )
+			{
+				sb.append( "Removed invalid reads from: " + invalidReads + RETURN );
+			}
+
+			if( !shortReads.isEmpty() )
+			{
+				sb.append( "Removed short reads from: " + shortReads + RETURN );
+			}
+
+			sb.append( "Discarded reads stored in: " + getTempDir().getAbsolutePath() + RETURN );
+		}
+
+		if( !longReads.isEmpty() )
+		{
+			sb.append( "Trimmed long reads from: " + shortReads + RETURN );
+		}
+
+		final int max = maxSeqFound.keySet().iterator().next();
+		final TreeSet<String> ids = new TreeSet<>( maxSeqFound.values().iterator().next() );
+		sb.append( "IDs w/ ORIGINAL max read len [ " + max + " ]: " + ids + RETURN );
+
+		String summary = SummaryUtil.getCountSummary( readsPerSample, "Valid Reads" ) + sb.toString();
+		sampleIds.removeAll( readsPerSample.keySet() );
+		if( !sampleIds.isEmpty() )
+		{
+			summary += "Removed empty samples: " + sampleIds;
+		}
+
+		return summary;
+	}
+
+	private Integer[] initStats() throws Exception
+	{
+		final Integer[] stats = new Integer[ 8 ];
+		for( int i = 0; i < stats.length; i++ )
+		{
+			stats[ i ] = 0;
+		}
+		return stats;
+	}
+
 	private int minReadLen() throws Exception
 	{
 		Integer seqMin = Config.getPositiveInteger( INPUT_SEQ_MIN );
@@ -315,8 +437,144 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		return seqMin;
 	}
 
-	private final Map<String, String> readsPerSample = new HashMap<>();
-	private final Map<String, Long[]> sampleStats = new HashMap<>();
+	private void populateSampleStats( final Integer[] stats, final File file, final int seqNum,
+			final int combinedReadLen ) throws Exception
+	{
+		final String id = SeqUtil.getSampleId( file.getName() );
+		setNumReads( file, stats );
+
+		final Integer[] otherStats = sampleStats.get( id );
+		final int len = stats[ INDEX_NUM_VALID_READS ] > 0
+				? Double.valueOf( combinedReadLen / stats[ INDEX_NUM_VALID_READS ] ).intValue()
+				: 0;
+		if( SeqUtil.isForwardRead( file.getName() ) )
+		{
+			Log.debug( getClass(), "Average FW seq length = " + combinedReadLen + " / " + stats[ INDEX_NUM_VALID_READS ]
+					+ " = " + len );
+			stats[ INDEX_AVG_FW_READ_LEN ] = len;
+		}
+		else
+		{
+			Log.debug( getClass(), "Average RV seq length = " + combinedReadLen + " / " + stats[ INDEX_NUM_VALID_READS ]
+					+ " = " + len );
+			stats[ INDEX_AVG_RV_READ_LEN ] = len;
+		}
+
+		if( otherStats != null )
+		{
+			Log.debug( getClass(), "Merging paired read stats for: " + file.getName() );
+			stats[ INDEX_NUM_VALID_READS ] = otherStats[ INDEX_NUM_VALID_READS ] + stats[ INDEX_NUM_VALID_READS ];
+			stats[ INDEX_NUM_TRIMMED_READS ] = otherStats[ INDEX_NUM_TRIMMED_READS ] + stats[ INDEX_NUM_TRIMMED_READS ];
+			stats[ INDEX_NUM_READS_TOO_SHORT ] = otherStats[ INDEX_NUM_READS_TOO_SHORT ]
+					+ stats[ INDEX_NUM_READS_TOO_SHORT ];
+			stats[ INDEX_NUM_READS_INVALID_FORMAT ] = otherStats[ INDEX_NUM_READS_INVALID_FORMAT ]
+					+ stats[ INDEX_NUM_READS_INVALID_FORMAT ];
+			stats[ INDEX_MIN_READS ] = Math.min( otherStats[ INDEX_MIN_READS ], stats[ INDEX_MIN_READS ] );
+			stats[ INDEX_MAX_READS ] = Math.max( otherStats[ INDEX_MAX_READS ], stats[ INDEX_MAX_READS ] );
+
+			if( SeqUtil.isForwardRead( file.getName() ) )
+			{
+				Log.debug( getClass(), "Local average RV seq length = " + stats[ INDEX_AVG_RV_READ_LEN ] );
+				stats[ INDEX_AVG_RV_READ_LEN ] = otherStats[ INDEX_AVG_RV_READ_LEN ];
+				Log.debug( getClass(), "Updated RV seq length = " + stats[ INDEX_AVG_RV_READ_LEN ] );
+			}
+			else
+			{
+				Log.debug( getClass(), "Local average FW seq length = " + stats[ INDEX_AVG_FW_READ_LEN ] );
+				stats[ INDEX_AVG_FW_READ_LEN ] = otherStats[ INDEX_AVG_FW_READ_LEN ];
+				Log.debug( getClass(), "Updated FW seq length = " + stats[ INDEX_AVG_FW_READ_LEN ] );
+			}
+		}
+
+		sampleStats.put( SeqUtil.getSampleId( file.getName() ), stats );
+	}
+
+	private void removeBadFiles() throws Exception
+	{
+		if( !badFiles.isEmpty() )
+		{
+			for( final File file: badFiles )
+			{
+				if( BioLockJUtil.deleteWithRetry( file, 5 ) )
+				{
+					Log.warn( BioLockJUtil.class, "Deleted empty file: " + file.getAbsolutePath() );
+				}
+			}
+		}
+	}
+
+	private void saveRemovedSeqsToFile( final Collection<String> badLines, final File file ) throws Exception
+	{
+		if( !badLines.isEmpty() )
+		{
+			final File tempFile = new File( getFileName( getTempDir(), "INVALID_READS_" + file.getName() ) );
+			Log.warn( getClass(), "Extracting invalid reads to --> " + tempFile.getAbsolutePath() );
+			final BufferedWriter invalidWriter = new BufferedWriter( new FileWriter( tempFile ) );
+			try
+			{
+				for( final String seqLine: badLines )
+				{
+					invalidWriter.write( seqLine + RETURN );
+				}
+			}
+			finally
+			{
+				if( invalidWriter != null )
+				{
+					invalidWriter.close();
+				}
+			}
+		}
+	}
+
+	private void setMaxSeq( final String sampleId, final int seqLen ) throws Exception
+	{
+		final TreeSet<String> ids = new TreeSet<>();
+		ids.add( sampleId );
+
+		if( maxSeqFound.isEmpty() )
+		{
+			maxSeqFound.put( seqLen, ids );
+		}
+		else
+		{
+			final int currentMaxLen = maxSeqFound.keySet().iterator().next();
+			final int newMaxLen = Math.max( seqLen, currentMaxLen );
+			if( newMaxLen == currentMaxLen )
+			{
+				ids.addAll( maxSeqFound.values().iterator().next() );
+				maxSeqFound.put( newMaxLen, ids );
+			}
+			else if( newMaxLen > currentMaxLen )
+			{
+				maxSeqFound.put( newMaxLen, ids );
+			}
+		}
+	}
+
+	private void setNumReads( final File file, final Integer[] stats ) throws Exception
+	{
+		if( SeqUtil.isForwardRead( file.getName() ) )
+		{
+			readsPerSample.put( SeqUtil.getSampleId( file.getName() ),
+					String.valueOf( stats[ INDEX_NUM_VALID_READS ] ) );
+		}
+		else
+		{
+			rvReadsPerSample.put( SeqUtil.getSampleId( file.getName() ),
+					String.valueOf( stats[ INDEX_NUM_VALID_READS ] ) );
+		}
+
+	}
+
+	private Set<File> badFiles = new HashSet<>();
+	private final Map<Integer, TreeSet<String>> maxSeqFound = new HashMap<>();
+	private String otuColName = null;
+	private Map<String, String> readsPerSample = new HashMap<>();
+	private Map<String, String> rvReadsPerSample = new HashMap<>();
+	private Set<String> sampleIds = new HashSet<>();
+
+	private Map<String, Integer[]> sampleStats = new HashMap<>();
 
 	/**
 	 * Column name that holds number of valid reads per sample: {@value #NUM_VALID_READS}
@@ -326,20 +584,20 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_SEQ_MAX} defines the maximum number of reads per file
 	 */
-	protected static final String INPUT_SEQ_MAX = "input.seqMaxLen";
+	protected static final String INPUT_SEQ_MAX = "seqFileVal.seqMaxLen";
 
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_SEQ_MIN} defines the minimum number of reads per file
 	 */
-	protected static final String INPUT_SEQ_MIN = "input.seqMinLen";
+	protected static final String INPUT_SEQ_MIN = "seqFileVal.seqMinLen";
 
-	private static final int INDEX_NUM_VALID_READS = 0;
-	private static final int INDEX_MIN_READS = 1;
+	protected static final String REQUIRE_EUQL_NUM_PAIRS = "seqFileVal.requireEqualNumPairs";
+	private static final int INDEX_AVG_FW_READ_LEN = 6;
+	private static final int INDEX_AVG_RV_READ_LEN = 7;
 	private static final int INDEX_MAX_READS = 2;
-	private static final int INDEX_MEAN_NUM_READS = 3;
+	private static final int INDEX_MIN_READS = 1;
 	private static final int INDEX_NUM_READS_INVALID_FORMAT = 4;
 	private static final int INDEX_NUM_READS_TOO_SHORT = 5;
-	private static final int INDEX_NUM_TRIMMED_READS = 6;
-	
-	
+	private static final int INDEX_NUM_TRIMMED_READS = 3;
+	private static final int INDEX_NUM_VALID_READS = 0;
 }

@@ -132,6 +132,21 @@ public interface BioModule
 	public File getTempDir();
 
 	/**
+	 * BioModules {@link #getInputFiles()} method typically, but not always, return the previousModule output files.
+	 * This method checks the output directory from the previous module to check for input deemed acceptable by the
+	 * current module. The conditions coded in this method will be checked on each previous module in the pipeline until
+	 * acceptable input is found. If no previous module produced acceptable input, the files under
+	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS} are returned.<br>
+	 * <br>
+	 * This method can be overridden by modules that need input files generated prior to the previous module.
+	 * 
+	 * @param previousModule BioModule that ran before the current BioModule
+	 * @return boolean TRUE if the previousModule output is acceptable input for the current BioModule
+	 * @throws Exception if unexpected errors occur
+	 */
+	public boolean isValidInputModule( BioModule previousModule ) throws Exception;
+
+	/**
 	 * {@link biolockj.Pipeline} calls this method to set the name of each BioModule root directory.<br>
 	 * Module root directories are created directly under the {@value biolockj.Config#INTERNAL_PIPELINE_DIR} pipeline
 	 * root directory.<br>
@@ -156,5 +171,4 @@ public interface BioModule
 	 * Name of the temporary sub-directory
 	 */
 	public static final String TEMP_DIR = "temp";
-
 }

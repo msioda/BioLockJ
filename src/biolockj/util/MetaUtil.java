@@ -35,10 +35,11 @@ public class MetaUtil
 	 * @param colName Name of new column
 	 * @param map Map relates Sample ID to a field value
 	 * @param fileDir File representing output directory for new metadata file
+	 * @param removeMissingIds if TRUE, sampleIds not include in the map param will be removed from the metadata
 	 * @throws Exception if unable to add the new column
 	 */
-	public static void addColumn( final String colName, final Map<String, String> map, final File fileDir )
-			throws Exception
+	public static void addColumn( final String colName, final Map<String, String> map, final File fileDir,
+			final boolean removeMissingIds ) throws Exception
 	{
 		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getMetadataFileName() );
 		Log.info( MetaUtil.class, "Adding new field [" + colName + "] to metadata: " + newMeta.getAbsolutePath() );
@@ -49,7 +50,7 @@ public class MetaUtil
 			return;
 		}
 
-		final Set<String> keys = map.keySet();
+		final Set<String> sampleIds = map.keySet();
 		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
 		setFile( newMeta );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
@@ -61,14 +62,19 @@ public class MetaUtil
 				final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
 
 				final String id = st.nextToken();
-				if( keys.contains( id ) )
+				if( sampleIds.contains( id ) )
 				{
 					writer.write( line + BioLockJ.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
 				}
-				else
+				else if( !removeMissingIds )
 				{
 					writer.write(
 							line + BioLockJ.TAB_DELIM + Config.requireString( META_NULL_VALUE ) + BioLockJ.RETURN );
+				}
+				else
+				{
+					Log.warn( MetaUtil.class,
+							"REMOVE SAMPLE ID [" + id + "] due to no data in metadata column: " + colName );
 				}
 			}
 		}
@@ -152,7 +158,10 @@ public class MetaUtil
 					+ getFile().getAbsolutePath() );
 		}
 
-		Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
+		if( debug )
+		{
+			Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
+		}
 
 		return headers;
 	}
@@ -196,6 +205,34 @@ public class MetaUtil
 	}
 
 	/**
+	 * Used to generate a guaretneed to be unique column name. If NUM_READS already exists, this will return
+	 * NUM_READS_1, or NUM_READ_2, etc until a unique column name is found. If a column already exists, but contains
+	 * only {@ biolockj.Config}.{@value #META_NULL_VALUE} return the name of that empty column.
+	 * 
+	 * @param name Base column name
+	 * @return column name
+	 * @throws Exception if errors occur
+	 */
+	public static String getForcedColumnName( final String name ) throws Exception
+	{
+		int suffix = 1;
+		String testName = name;
+		while( getFieldNames().contains( testName ) )
+		{
+			final Set<String> testSet = new HashSet<>( getFieldValues( testName ) );
+			testSet.remove( Config.requireString( META_NULL_VALUE ) );
+			if( testSet.isEmpty() )
+			{
+				MetaUtil.removeColumn( testName, null );
+				break; // reuse the column
+			}
+
+			testName = name + "_" + suffix++;
+		}
+		return testName;
+	}
+
+	/**
 	 * Get the metadata file ID column name. This value may change as updates are made by BioModules.
 	 *
 	 * @return Metadata ID column name
@@ -203,6 +240,26 @@ public class MetaUtil
 	public static String getID()
 	{
 		return metaId;
+	}
+
+	/**
+	 * Returns the latest version of the given column.
+	 * 
+	 * @param name Base column name
+	 * @return column name
+	 * @throws Exception if errors occur
+	 */
+	public static String getLatestColumnName( final String name ) throws Exception
+	{
+		int suffix = 1;
+		String testName = name;
+		String foundName = null;
+		while( getFieldNames().contains( testName ) )
+		{
+			foundName = testName;
+			testName = name + "_" + suffix++;
+		}
+		return foundName;
 	}
 
 	/**
@@ -250,7 +307,7 @@ public class MetaUtil
 			ex.printStackTrace();
 		}
 
-		return Config.getString( Config.INTERNAL_PIPELINE_NAME ) + ".tsv";
+		return Config.getString( Config.INTERNAL_PIPELINE_NAME ) + BioLockJ.TSV_EXT;
 
 	}
 
@@ -281,6 +338,7 @@ public class MetaUtil
 	public static List<String> getSampleIds()
 	{
 		final List<String> ids = new ArrayList<>();
+
 		for( final String key: metadataMap.keySet() )
 		{
 			if( !key.equals( metaId ) )
@@ -289,7 +347,21 @@ public class MetaUtil
 			}
 		}
 
+		Collections.sort( ids );
+
 		return ids;
+	}
+
+	public static boolean hasColumn( final String columnName )
+	{
+		try
+		{
+			return columnName != null && getFieldNames().contains( columnName );
+		}
+		catch( final Exception ex )
+		{
+			return false;
+		}
 	}
 
 	/**
@@ -337,44 +409,15 @@ public class MetaUtil
 
 		if( Config.getString( META_FILE_PATH ) != null )
 		{
+			final Set<String> ignore = Config.getTreeSet( Config.INPUT_IGNORE_FILES );
+			ignore.add( MetaUtil.getMetadataFileName() );
+			Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
 			setFile( MetaUtil.getMetadata() );
 			refreshCache();
-		}
-
-		// verify that values in columns used as identifiers are unique per sample.
-		checkUniqueVals( META_BARCODE_COLUMN );
-		checkUniqueVals( META_FILENAME_COLUMN );
-
-	}
-
-	/**
-	 * Verify that a column in the metadata is unique for each sample
-	 * 
-	 * @param columnAttr {@link biolockj.Config} property giving the name of the column.
-	 * @throws Exception if number of unique values in the column does not match number of samples
-	 */
-	private static void checkUniqueVals( String columnAttr ) throws Exception
-	{
-		final String columnName = Config.getString( columnAttr );
-		if( columnName != null )
-		{
-			if( MetaUtil.getFieldNames().contains( columnName ) )
-			{
-				int lenSamples = ( new HashSet<String>( getSampleIds() ) ).size();
-				int lenVals = ( new HashSet<String>( getFieldValues( columnName ) ) ).size(); // get unique values
-				if( lenSamples != lenVals )
-				{
-					throw new Exception( "Should have exactly 1 unique value per sample in column " + columnName
-							+ ". Found " + lenVals + " unique values for " + lenSamples + " samples." );
-				}
-				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
-						+ "] gives a column of unique values in the meta data file." );
-			}
-			else
-			{
-				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
-						+ "] is ignored because it does not appear as a header in the meta data file." );
-			}
+			
+			// verify that values in columns used as identifiers are unique per sample.
+			checkUniqueVals( META_BARCODE_COLUMN );
+			checkUniqueVals( META_FILENAME_COLUMN );
 		}
 	}
 
@@ -398,7 +441,7 @@ public class MetaUtil
 
 			reportedMetadata = metadataFile;
 		}
-		else
+		else if( debug )
 		{
 			Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
 					+ ( metadataFile == null ? "<NO_METADATA_PATH>": metadataFile.getAbsolutePath() ) );
@@ -412,8 +455,18 @@ public class MetaUtil
 	 * @param fileDir File representing output directory for new metadata file
 	 * @throws Exception if errors occur
 	 */
-	public static void removeColumn( final String colName, final File fileDir ) throws Exception
+	public static void removeColumn( final String colName, File fileDir ) throws Exception
 	{
+		if( fileDir == null )
+		{
+			fileDir = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+					+ File.separator + ".temp" );
+			if( !fileDir.exists() )
+			{
+				fileDir.mkdir();
+			}
+		}
+
 		if( getFile() == null || !getFile().exists() )
 		{
 			Log.warn( MetaUtil.class, "Cannot remove column [" + colName + "] because no metadata file exists." );
@@ -472,8 +525,11 @@ public class MetaUtil
 		{
 			if( metadataFile != null && file.getAbsolutePath().equals( metadataFile.getAbsolutePath() ) )
 			{
-				Log.debug( MetaUtil.class, "===> MetaUtil.setFile() not required, file already defined as "
-						+ metadataFile.getAbsolutePath() );
+				if( debug )
+				{
+					Log.debug( MetaUtil.class, "===> MetaUtil.setFile() not required, file already defined as "
+							+ metadataFile.getAbsolutePath() );
+				}
 			}
 		}
 		else
@@ -497,13 +553,13 @@ public class MetaUtil
 			if( rowNum == 0 )
 			{
 				metaId = id;
-				if( isUpdated() )
+				if( debug && isUpdated() )
 				{
 					Log.debug( MetaUtil.class, "Metadata Headers: " + row );
 				}
 			}
 
-			if( isUpdated() && rowNum++ == 1 )
+			if( rowNum++ == 1 && debug && isUpdated() )
 			{
 				Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
 			}
@@ -517,6 +573,37 @@ public class MetaUtil
 				}
 
 				metadataMap.put( id, row );
+			}
+		}
+	}
+
+	/**
+	 * Verify that a column in the metadata is unique for each sample
+	 * 
+	 * @param columnAttr {@link biolockj.Config} property giving the name of the column.
+	 * @throws Exception if number of unique values in the column does not match number of samples
+	 */
+	private static void checkUniqueVals( final String columnAttr ) throws Exception
+	{
+		final String columnName = Config.getString( columnAttr );
+		if( columnName != null )
+		{
+			if( MetaUtil.getFieldNames().contains( columnName ) )
+			{
+				final int lenSamples = new HashSet<>( getSampleIds() ).size();
+				final int lenVals = new HashSet<>( getFieldValues( columnName ) ).size(); // get unique values
+				if( lenSamples != lenVals )
+				{
+					throw new Exception( "Should have exactly 1 unique value per sample in column " + columnName
+							+ ". Found " + lenVals + " unique values for " + lenSamples + " samples." );
+				}
+				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
+						+ "] gives a column of unique values in the meta data file." );
+			}
+			else
+			{
+				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
+						+ "] is ignored because it does not appear as a header in the meta data file." );
 			}
 		}
 	}
@@ -539,7 +626,7 @@ public class MetaUtil
 		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
-			if( isUpdated() )
+			if( debug && isUpdated() )
 			{
 				Log.debug( MetaUtil.class, "===> Meta line: " + line );
 			}
@@ -593,29 +680,11 @@ public class MetaUtil
 		}
 		return val.trim();
 	}
-	
-	public static boolean hasColumn(String columnName)
-	{
-		try 
-		{
-			return (columnName != null
-					&& getFieldNames().contains( columnName ));
-		}
-		catch (final Exception ex)
-		{
-			return(false);
-		}
-	}
 
 	/**
 	 * {@link biolockj.Config} property {@value #META_BARCODE_COLUMN} defines metadata column with identifying barcode
 	 */
 	public static final String META_BARCODE_COLUMN = "metadata.barcodeColumn";
-
-	/**
-	 * {@link biolockj.Config} property {@value #META_FILENAME_COLUMN} defines metadata column with input file names
-	 */
-	public static final String META_FILENAME_COLUMN = "metadata.fileNameColumn";
 
 	/**
 	 * {@link biolockj.Config} property that defines how metadata columns are separated: {@value #META_COLUMN_DELIM}
@@ -637,6 +706,11 @@ public class MetaUtil
 	public static final String META_FILE_PATH = "metadata.filePath";
 
 	/**
+	 * {@link biolockj.Config} property {@value #META_FILENAME_COLUMN} defines metadata column with input file names
+	 */
+	public static final String META_FILENAME_COLUMN = "metadata.fileNameColumn";
+
+	/**
 	 * {@link biolockj.Config} property to set metadata file empty cell: {@value #META_NULL_VALUE}
 	 */
 	public static final String META_NULL_VALUE = "metadata.nullValue";
@@ -647,6 +721,13 @@ public class MetaUtil
 	 * If N, samples without metadata are ignored.
 	 */
 	public static final String META_REQUIRED = "metadata.required";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #USE_EVERY_ROW}<br>
+	 * If Y, require a sequence file for every SampleID (every row) in {@value #META_FILE_PATH}.<br>
+	 * If N, metadata can include extraneous SampleIDs.
+	 */
+	public static final String USE_EVERY_ROW = "metadata.useEveryRow";
 
 	/**
 	 * Default column delimiter = tab character
@@ -662,19 +743,11 @@ public class MetaUtil
 	 * Default field value to represent null-value: {@value #DEFAULT_NULL_VALUE}
 	 */
 	protected static final String DEFAULT_NULL_VALUE = "NA";
-	
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #USE_EVERY_ROW}<br>
-	 * If Y, require a sequence file for every SampleID (every row) in {@value #META_FILE_PATH}.<br>
-	 * If N, metadata can include extraneous SampleIDs.
-	 */
-	public static final String USE_EVERY_ROW = "metadata.useEveryRow";
-	
 
+	private static boolean debug = false;
 	private static String META_SPACER = "************************************************************************";
 	private static File metadataFile = null;
 	private static final Map<String, List<String>> metadataMap = new HashMap<>();
-
 	private static String metaId = "SAMPLE_ID";
 	private static File reportedMetadata = null;
 }

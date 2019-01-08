@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.RuntimeParamUtil;
+import biolockj.util.*;
 
 /**
  * Simple Logging Facade for Java (SLF4J) implementation using Log4J<br>
@@ -41,13 +39,25 @@ public class Log
 	/**
 	 * Print log level DEBUG message.<br>
 	 * Do not print {@link biolockj.util.MetaUtil} debug since these will always print since the Logger isn't
-	 * initialized yet.
+	 * initialized yet and logMesseges will print them as INFO after Log file initializes.
 	 * 
 	 * @param loggingClass Logging class
 	 * @param msg Message to log
 	 */
 	public static void debug( final Class<?> loggingClass, final String msg )
 	{
+		if( isInitialized() && !debugClasses().isEmpty() && !debugClasses().contains( loggingClass.getName() ) )
+		{
+			if( !gaveDebugWarning )
+			{
+				gaveDebugWarning = true;
+				warn( loggingClass, "DEBUG DISABLED!  Because the [ " + LIMIT_DEBUG_CLASSES
+						+ " ] property is enabled, \"Debug\" log output is only written for clasess defined in Config property: "
+						+ LIMIT_DEBUG_CLASSES + " ---> " + debugClasses() );
+			}
+			return;
+		}
+
 		if( logFile == null )
 		{
 			if( !MetaUtil.class.equals( loggingClass ) )
@@ -59,6 +69,11 @@ public class Log
 		{
 			get( loggingClass ).debug( msg );
 		}
+	}
+
+	public static boolean doDebug() throws Exception
+	{
+		return Config.requireString( LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
 	}
 
 	/**
@@ -192,7 +207,6 @@ public class Log
 			Log.info( Log.class, "Java Logger initialized" );
 			Log.info( Log.class, LOG_SPACER );
 		}
-
 	}
 
 	/**
@@ -276,6 +290,46 @@ public class Log
 	}
 
 	/**
+	 * Some classes should always print DEBUG. This limitation is designed to avoid unwanted BioModule DEBUG in your
+	 * pipeline.
+	 * 
+	 * @return Set of debug classes
+	 */
+	private static Set<String> debugClasses()
+	{
+		if( debugClasses == null )
+		{
+			debugClasses = Config.getSet( LIMIT_DEBUG_CLASSES );
+			if( !debugClasses.isEmpty() )
+			{
+				debugClasses.add( BioLockJ.class.getName() );
+				debugClasses.add( BioModuleFactory.class.getName() );
+				debugClasses.add( Config.class.getName() );
+				debugClasses.add( Job.class.getName() );
+				debugClasses.add( Log.class.getName() );
+				debugClasses.add( Pipeline.class.getName() );
+				debugClasses.add( Properties.class.getName() );
+				debugClasses.add( SeqUtil.class.getName() );
+				debugClasses.add( DockerUtil.class.getName() );
+				debugClasses.add( BioLockJUtil.class.getName() );
+				debugClasses.add( SummaryUtil.class.getName() );
+			}
+		}
+		return debugClasses;
+	}
+
+	private static boolean isInitialized()
+	{
+		return logFile != null && logFile.exists();
+	}
+
+	/**
+	 * {@link biolockj.Config} property used to limit classes that log debug statements when
+	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Config#TRUE}
+	 */
+	public static final String LIMIT_DEBUG_CLASSES = "project.limitDebugClasses";
+
+	/**
 	 * {@link biolockj.Config} property used to set log sensitivity in
 	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
 	 * "_top">log4j.properties</a><br>
@@ -328,6 +382,8 @@ public class Log
 	 * <i>log4j.appender.file.layout.ConversionPattern=${LOG_FORMAT}</i>
 	 */
 	protected static final String LOG_FORMAT = "LOG_FORMAT";
+	private static Set<String> debugClasses = null;
+	private static boolean gaveDebugWarning = false;
 	private static File logFile = null;
 	private static Map<String, Logger> loggers = new HashMap<>();
 	private static final List<String> logMesseges = new ArrayList<>();

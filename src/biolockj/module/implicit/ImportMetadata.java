@@ -67,18 +67,6 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			throw new Exception( "Failed to import metadata filels" );
 		}
 	}
-	
-	private void addMetadataToConfigIgnoreInputFiles() throws Exception
-	{
-		final Set<String> ignore = new HashSet<>();
-		if( Config.getSet( Config.INPUT_IGNORE_FILES ) != null )
-		{
-			ignore.addAll( Config.getSet( Config.INPUT_IGNORE_FILES ) );
-		}
-
-		ignore.add( MetaUtil.getMetadataFileName() );
-		Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
-	}
 
 	/**
 	 * If {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_FILE_PATH} is undefined, build a new metadata file
@@ -125,7 +113,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 				reader.close();
 				writer.close();
 			}
-			
+
 			if( doIdToSeqVerifiction() )
 			{
 				MetaUtil.setFile( getMetadata() );
@@ -134,15 +122,6 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			}
 		}
 	}
-	
-	private boolean doIdToSeqVerifiction() throws Exception
-	{
-		return Config.getBoolean( MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() ) &&
-				!Config.getBoolean( Config.INTERNAL_MULTIPLEXED );
-	}
-	
-	
-	
 
 	/**
 	 * The metadata file can be updated several times during pipeline execution. Summary prints the file-path of the
@@ -268,9 +247,10 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	protected TreeSet<String> getSampleIds() throws Exception
 	{
 		final TreeSet<String> ids = new TreeSet<>();
-		final Collection<File> inputFiles = Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) ? 
-			new TreeSet<File> ( SeqUtil.getPairedReads( getInputFiles() ).keySet() ) : getInputFiles();
-		
+		final Collection<File> inputFiles = Config.getBoolean( Config.INTERNAL_PAIRED_READS )
+				? new TreeSet<>( SeqUtil.getPairedReads( getInputFiles() ).keySet() )
+				: getInputFiles();
+
 		for( final File file: inputFiles )
 		{
 			final String id = SeqUtil.getSampleId( file.getName() );
@@ -308,38 +288,6 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		}
 
 		return false;
-	}
-	
-	/**
-	 * Verify every row (every Sample ID) maps to a sequence file
-	 * 
-	 * @param files List of sequence files
-	 * @throws ConfigViolationException if unmapped Sample IDs are found
-	 * @throws Exception if other errors occur
-	 */
-	protected void verifyAllRowsMapToSeqFile(final List<File> files ) throws Exception
-	{
-		List<String> ids = MetaUtil.getSampleIds();
-		for( String id: MetaUtil.getSampleIds() )
-		{
-			for( File seq: files )
-			{
-				if( SeqUtil.isForwardRead( seq.getName() ) &&
-						SeqUtil.getSampleId( seq.getName() ).equals( id ) )
-				{
-					ids.remove( id );
-					break;
-				}
-			}
-		}
-		
-		if( !ids.isEmpty() )
-		{
-			throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW, 
-					"This property requires every Sample ID in the metadata file " + MetaUtil.getMetadataFileName() +
-					" map to one of the sequence files in an input directory: " + Config.getString( Config.INPUT_DIRS ) +
-					BioLockJ.RETURN + "The following " + ids.size() + " Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
-		}
 	}
 
 	/**
@@ -404,6 +352,38 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	}
 
 	/**
+	 * Verify every row (every Sample ID) maps to a sequence file
+	 * 
+	 * @param files List of sequence files
+	 * @throws ConfigViolationException if unmapped Sample IDs are found
+	 * @throws Exception if other errors occur
+	 */
+	protected void verifyAllRowsMapToSeqFile( final List<File> files ) throws Exception
+	{
+		final List<String> ids = MetaUtil.getSampleIds();
+		for( final String id: MetaUtil.getSampleIds() )
+		{
+			for( final File seq: files )
+			{
+				if( SeqUtil.isForwardRead( seq.getName() ) && SeqUtil.getSampleId( seq.getName() ).equals( id ) )
+				{
+					ids.remove( id );
+					break;
+				}
+			}
+		}
+
+		if( !ids.isEmpty() )
+		{
+			throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
+					"This property requires every Sample ID in the metadata file " + MetaUtil.getMetadataFileName()
+							+ " map to one of the sequence files in an input directory: "
+							+ Config.getString( Config.INPUT_DIRS ) + BioLockJ.RETURN + "The following " + ids.size()
+							+ " Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
+		}
+	}
+
+	/**
 	 * Verify column headers are not null and unique
 	 *
 	 * @param cell value of the header column name
@@ -435,6 +415,24 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			throw new Exception( "MetaUtil file column names must be unique.  Column #" + colNum
 					+ " is a duplicate of Column #" + j + " - duplicate name = [" + dup + "]" );
 		}
+	}
+
+	private void addMetadataToConfigIgnoreInputFiles() throws Exception
+	{
+		final Set<String> ignore = new HashSet<>();
+		if( Config.getTreeSet( Config.INPUT_IGNORE_FILES ) != null )
+		{
+			ignore.addAll( Config.getTreeSet( Config.INPUT_IGNORE_FILES ) );
+		}
+
+		ignore.add( MetaUtil.getMetadataFileName() );
+		Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
+	}
+
+	private boolean doIdToSeqVerifiction() throws Exception
+	{
+		return Config.getBoolean( MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() )
+				&& !Config.getBoolean( Config.INTERNAL_MULTIPLEXED );
 	}
 
 	private File getMetadata()

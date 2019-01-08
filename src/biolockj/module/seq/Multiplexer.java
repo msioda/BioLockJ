@@ -211,7 +211,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 	private long getNumReads( final File file ) throws Exception
 	{
 		Long numReads = null;
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			numReads = rvMap.get( file.getName() );
 		}
@@ -251,8 +251,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 									+ " unique barcodes" );
 					for( final String id: MetaUtil.getSampleIds() )
 					{
-						Log.warn( getClass(),
-								"ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
+						Log.warn( getClass(), "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
 					}
 				}
 				else
@@ -274,7 +273,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 		Long numReads = getNumReads( file );
 		numReads++;
 
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			rvMap.put( file.getName(), numReads );
 			totalNumRvReads++;

@@ -273,6 +273,33 @@ public class ModuleUtil
 	}
 
 	/**
+	 * Return a system generated metadata column name based on the module status.
+	 * 
+	 * @param module BioModule
+	 * @param col Column name
+	 * @return Metadata column name
+	 * @throws Exception if errors occur
+	 */
+	public static String getSystemMetaCol( final BioModule module, final String col ) throws Exception
+	{
+		final File outputMeta = new File(
+				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+		if( ModuleUtil.isComplete( module ) || outputMeta.exists() )
+		{
+			if( outputMeta.exists() )
+			{
+				MetaUtil.setFile( outputMeta );
+				MetaUtil.refreshCache();
+			}
+			return MetaUtil.getLatestColumnName( col );
+		}
+		else
+		{
+			return MetaUtil.getForcedColumnName( col );
+		}
+	}
+
+	/**
 	 * Return TRUE if bioModule has executed.
 	 *
 	 * @param bioModule BioModule
@@ -347,7 +374,7 @@ public class ModuleUtil
 			{
 				foundMeta = true;
 			}
-			else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			else if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
 			{
 				foundOther = true;
 			}
@@ -412,21 +439,6 @@ public class ModuleUtil
 	public static boolean moduleExists( final String moduleName ) throws Exception
 	{
 		return getModule( moduleName ) != null;
-	}
-
-	/**
-	 * Returns the parser module.
-	 *
-	 * @return ParserModule
-	 * @throws Exception if no ParserModule configured
-	 */
-	public static ParserModule requireParserModule() throws Exception
-	{
-		if( getParserModule() == null )
-		{
-			throw new Exception( "Unable to find required ParserModule" );
-		}
-		return getParserModule();
 	}
 
 	/**

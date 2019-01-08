@@ -54,7 +54,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		RegisterNumReads.setNumReadFieldName( NUM_TRIMMED_READS );
+		RegisterNumReads.setNumReadFieldName( getMetaColName() );
 	}
 
 	/**
@@ -146,15 +146,17 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			double ratio = Double.valueOf( df.format( 100 * ( (double) a / ( a + b ) ) ) );
 			String per = BioLockJUtil.formatPercentage( a, a + b );
 
-			Log.info( getClass(),
-					f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
-
 			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
 			{
 				ratio = Double.valueOf( df.format( 100 * ( (double) v / ( a + b ) ) ) );
 				per = BioLockJUtil.formatPercentage( v, a + b );
 				Log.info( getClass(),
 						f.getName() + " Paired reads with primer in both -- " + v + "/" + ( a + b ) + " = " + per );
+			}
+			else
+			{
+				Log.info( getClass(),
+						f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
 			}
 
 			Log.debug( getClass(), "file = " + f.getAbsolutePath() );
@@ -263,7 +265,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		MetaUtil.addColumn( NUM_TRIMMED_READS, getValidReadsPerSample(), getOutputDir() );
+		MetaUtil.addColumn( getMetaColName(), getValidReadsPerSample(), getOutputDir(), true );
 	}
 
 	/**
@@ -385,6 +387,16 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		return primers;
 	}
 
+	private String getMetaColName() throws Exception
+	{
+		if( otuColName == null )
+		{
+			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_TRIMMED_READS );
+		}
+
+		return otuColName;
+	}
+
 	private File getPrimerFile() throws Exception
 	{
 		if( RuntimeParamUtil.isDockerMode() )
@@ -458,7 +470,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		{
 			for( final File f: seqsWithPrimersTrimmed.keySet() )
 			{
-				if( !Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
+				if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
 				{
 					validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
 							Long.toString( seqsWithPrimersTrimmed.get( f ) ) );
@@ -482,7 +494,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 				try
 				{
 					writer = new BufferedWriter( new FileWriter( new File(
-							getTempDir().getAbsolutePath() + File.separator + key + "_" + reportLabel + " .txt" ) ) );
+							getTempDir().getAbsolutePath() + File.separator + key + "_" + reportLabel + TXT_EXT ) ) );
 					for( final String header: map.keySet() )
 					{
 						writer.write( header + RETURN );
@@ -738,10 +750,12 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	private boolean mergedReadTwoPrimers = false;
 
 	private final Map<String, Map<String, String>> missingBothPrimers = new HashMap<>();
+
 	private final Map<String, Map<String, String>> missingFwPrimers = new HashMap<>();
 	private final Map<String, Map<String, String>> missingRvPrimers = new HashMap<>();
 	private final Map<String, Long> numLinesNoPrimer = new HashMap<>();
 	private final Map<String, Long> numLinesWithPrimer = new HashMap<>();
+	private String otuColName = null;
 	private final Set<File> seqs = new HashSet<>();
 	private final Map<File, Long> seqsWithPrimersTrimmed = new HashMap<>();
 	private final Map<String, String> validReadsPerSample = new HashMap<>();

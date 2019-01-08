@@ -13,9 +13,7 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.Log;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.node.ParsedSample;
 import biolockj.node.wgs.SlimmNode;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MemoryUtil;
@@ -42,33 +40,22 @@ public class SlimmParser extends ParserModuleImpl
 	{
 		for( final File file: getInputFiles() )
 		{
-			ParsedSample sample = null;
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			String line = reader.readLine(); // skip header
-			for( line = reader.readLine(); line != null; line = reader.readLine() )
+			try
 			{
-				final SlimmNode node = new SlimmNode( file.getName(), line );
-				if( isValid( node ) )
+				String line = reader.readLine(); // skip header
+				for( line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-					sample = getParsedSample( node.getSampleId() );
-					if( sample == null )
-					{
-						addParsedSample( new ParsedSample( node ) );
-					}
-					else
-					{
-						sample.addNode( node );
-					}
+					addOtuNode( new SlimmNode( file.getName(), line ) );
 				}
 			}
-
-			reader.close();
-			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
-			if( sample != null )
+			finally
 			{
-				sample.buildOtuCounts();
-				sample.report();
+				if( reader != null )
+				{
+					reader.close();
+				}
 			}
 		}
 	}

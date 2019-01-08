@@ -13,7 +13,7 @@ package biolockj.module.seq;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.LongStream;
+import java.util.stream.IntStream;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.BioModuleFactory;
 import biolockj.Config;
@@ -21,15 +21,13 @@ import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule imposes a minimum and/or maximum number of reads per sample. Samples below the minimum are discarded.
  * Samples above the maximum are limited by selecting random reads up to the maximum value.
  */
-public class Rarefier extends JavaModuleImpl implements JavaModule
+public class PreRarefier extends JavaModuleImpl implements JavaModule
 {
 	/**
 	 * Validate module dependencies
@@ -50,7 +48,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 				|| rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
 		{
 			throw new Exception(
-					"Invalid parameters!  Rarefier requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
+					"Invalid parameters!  PreRarefier requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
 		}
 	}
 
@@ -60,8 +58,10 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	@Override
 	public void cleanUp() throws Exception
 	{
+		final String colName = getMetaColName();
 		super.cleanUp();
-		RegisterNumReads.setNumReadFieldName( NUM_RAREFIED_READS );
+		RegisterNumReads.setNumReadFieldName( colName );
+		MetaUtil.addColumn( colName, readsPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -82,6 +82,22 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
+	 * Produce summary message with min, max, mean, and median number of reads.
+	 */
+	@Override
+	public String getSummary() throws Exception
+	{
+		String summary = SummaryUtil.getCountSummary( readsPerSample, "Reads" );
+		sampleIds.removeAll( readsPerSample.keySet() );
+		if( !sampleIds.isEmpty() )
+		{
+			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+		}
+		readsPerSample = null;
+		return super.getSummary() + summary;
+	}
+
+	/**
 	 * For each file with number reads outside of {@link biolockj.Config}.{@link #INPUT_RAREFYING_MIN} and
 	 * {@link biolockj.Config}.{@link #INPUT_RAREFYING_MAX} values, generate a new sequence file from a shuffled list of
 	 * its sequences.
@@ -89,30 +105,18 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
+		sampleIds.addAll( MetaUtil.getSampleIds() );
 		final List<File> files = getInputFiles();
-		final int numFiles = files == null ? 0: files.size();
-
-		Log.info( getClass(),
-				"Rarefying " + numFiles + " " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " files..." );
-		Log.info( getClass(), "=====> Min # Reads = " + Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) );
-		Log.info( getClass(), "=====> Max # Reads = " + Config.getPositiveInteger( INPUT_RAREFYING_MAX ) );
-
-		int i = 0;
-		for( final File f: files )
+		for( int i = 0; i < files.size(); i++ )
 		{
+			final File f = files.get( i );
 			rarefy( f );
-			if( ++i % 25 == 0 )
+			if( i % 25 == 0 || i + 1 == files.size() )
 			{
-				Log.info( getClass(), "Done rarefying " + i + "/" + numFiles + " files." );
+				Log.info( getClass(), "Done rarefying " + i + "/" + files.size() + " files." );
 			}
 		}
 
-		if( i % 25 != 0 )
-		{
-			Log.info( getClass(), "Done rarefying " + i + "/" + numFiles + " files." );
-		}
-
-		updateMetadata();
 	}
 
 	/**
@@ -122,7 +126,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	 * @param indexes List of indexes to keep
 	 * @throws Exception if unable to build rarefied file
 	 */
-	protected void buildRarefiedFile( final File input, final List<Long> indexes ) throws Exception
+	protected void buildRarefiedFile( final File input, final List<Integer> indexes ) throws Exception
 	{
 		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
 		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
@@ -136,9 +140,9 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 				"Building file [#lines/read=" + SeqUtil.getNumLinesPerRead() + "]: " + output.getAbsolutePath() );
 		try
 		{
-			long index = 0L;
-			long i = 0L;
-			final Set<Long> usedIndexes = new HashSet<>();
+			int index = 0;
+			int i = 0;
+			final Set<Integer> usedIndexes = new HashSet<>();
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				if( indexes.contains( index ) )
@@ -158,7 +162,7 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 				}
 			}
 
-			rarefiedPerSample.put( SeqUtil.getSampleId( input.getName() ), Integer.toString( indexes.size() ) );
+			readsPerSample.put( SeqUtil.getSampleId( input.getName() ), Integer.toString( indexes.size() ) );
 
 			if( !usedIndexes.containsAll( indexes ) )
 			{
@@ -184,15 +188,15 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	{
 		int max = Config.getNonNegativeInteger( INPUT_RAREFYING_MAX );
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
-		final long numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
+		final int numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
 		final int count = Integer.parseInt( Long.toString( numReads ) );
 		max = count < max ? count: max;
 		Log.debug( getClass(), "Sample[" + sampleId + "]  numReads = " + numReads );
 		if( numReads >= Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) )
 		{
-			final long[] range = LongStream.rangeClosed( 0L, numReads - 1L ).toArray();
-			final List<Long> indexes = new ArrayList<>();
-			Collections.addAll( indexes, Arrays.stream( range ).boxed().toArray( Long[]::new ) );
+			final int[] range = IntStream.rangeClosed( 0, numReads - 1 ).toArray();
+			final List<Integer> indexes = new ArrayList<>();
+			Collections.addAll( indexes, Arrays.stream( range ).boxed().toArray( Integer[]::new ) );
 			Collections.shuffle( indexes );
 			indexes.subList( max, indexes.size() ).clear();
 			buildRarefiedFile( seqFile, indexes );
@@ -203,73 +207,37 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 					"Remove sample [" + sampleId + "] - contains (" + numReads
 							+ ") reads, which is less than minimum # reads ("
 							+ Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) + ")" );
-			badSamples.add( sampleId );
 		}
 	}
 
-	/**
-	 * Remove the invalid samples from the metadata file.
-	 *
-	 * @throws Exception if unable to create the new
-	 */
-	protected void updateMetadata() throws Exception
-	{
-		if( badSamples.isEmpty() )
-		{
-			Log.info( getClass(), "All samples rarefied & meet minimum read threshold - none will be ommitted..." );
-		}
-		else
-		{
-			Log.warn( getClass(), "Removing samples below rarefying threshold" );
-			Log.warn( getClass(), "Removing bad samples ===> " + badSamples );
-		}
-
-		final File newMapping = new File(
-				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
-
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMapping ) );
-
-		try
-		{
-			String line = reader.readLine();
-			writer.write( line + TAB_DELIM + NUM_RAREFIED_READS + RETURN );
-
-			for( line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
-				final String id = st.nextToken();
-				if( !badSamples.contains( id ) )
-				{
-					writer.write( line + TAB_DELIM + rarefiedPerSample.get( id ) + RETURN );
-				}
-			}
-		}
-		finally
-		{
-			reader.close();
-			writer.close();
-		}
-
-		MetaUtil.setFile( newMapping );
-		MetaUtil.refreshCache();
-	}
-
-	private Long getCount( final String sampleId, final String attName ) throws Exception
+	private Integer getCount( final String sampleId, final String attName ) throws Exception
 	{
 		if( MetaUtil.getFieldNames().contains( attName ) )
 		{
 			final String count = MetaUtil.getField( sampleId, attName );
 			if( count != null && NumberUtils.isNumber( count ) )
 			{
-				return Long.valueOf( count );
+				return Integer.valueOf( count );
 			}
 		}
 
 		return null;
 	}
 
-	private final Set<String> badSamples = new HashSet<>();
+	private String getMetaColName() throws Exception
+	{
+		if( otuColName == null )
+		{
+			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_RAREFIED_READS );
+		}
+
+		return otuColName;
+	}
+
+	private String otuColName = null;
+	private Map<String, String> readsPerSample = new HashMap<>();
+	private final Set<String> sampleIds = new HashSet<>();
+
 	/**
 	 * Metadata column name for column that holds number of rarefied reads per sample: {@value #NUM_RAREFIED_READS}
 	 */
@@ -278,13 +246,11 @@ public class Rarefier extends JavaModuleImpl implements JavaModule
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_RAREFYING_MAX} defines the maximum number of reads per file
 	 */
-	protected static final String INPUT_RAREFYING_MAX = "rarefier.max";
+	protected static final String INPUT_RAREFYING_MAX = "preRarefier.max";
 
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_RAREFYING_MIN} defines the minimum number of reads per file
 	 */
-	protected static final String INPUT_RAREFYING_MIN = "rarefier.min";
-
-	private static final Map<String, String> rarefiedPerSample = new HashMap<>();
+	protected static final String INPUT_RAREFYING_MIN = "preRarefier.min";
 
 }

@@ -323,11 +323,11 @@ public class Pipeline
 
 		scriptFiles.remove( mainScript );
 
-//		Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
-//		for( final File f: scriptFiles )
-//		{
-//			Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
-//		}
+		// Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
+		// for( final File f: scriptFiles )
+		// {
+		// Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
+		// }
 
 		for( final File f: scriptFiles )
 		{

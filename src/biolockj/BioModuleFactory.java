@@ -23,9 +23,7 @@ import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.seq.AwkFastaConverter;
 import biolockj.module.seq.Gunzipper;
 import biolockj.module.seq.PearMergeReads;
-import biolockj.util.MetaUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This class initializes pipeline modules, startign with those in the Config file and adding the prerequisite and
@@ -58,11 +56,17 @@ public class BioModuleFactory
 			bioModules.add( getModule( getDefaultDemultiplexer() ) );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_READS ) 
-				&& !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ).equals( MetaUtil.META_NULL_VALUE ) )
+		if( Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ ) )
 		{
-			info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] --> Adding module: "
-					+ RegisterNumReads.class.getName() );
+			bioModules.add( getModule( getDefaultFastaConverter() ) );
+		}
+
+		if( Config.getBoolean( Config.REPORT_NUM_READS ) && !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
+				.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
+		{
+			info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] & [ "
+					+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
+					+ " --> Adding module: " + RegisterNumReads.class.getName() );
 			bioModules.add( getModule( RegisterNumReads.class.getName() ) );
 		}
 
@@ -118,7 +122,7 @@ public class BioModuleFactory
 		final BioModule firstSeqProcMod = getFirstSeqProcessingModule( bioModules );
 		if( firstSeqProcMod != null && firstSeqProcMod.getClass().getName().contains( "qiime" ) )
 		{
-			for( final File file: SeqUtil.getPipelineInputFiles() )
+			for( final File file: BioLockJUtil.getPipelineInputFiles() )
 			{
 				if( file.getName().toLowerCase().endsWith( ".gz" ) )
 				{

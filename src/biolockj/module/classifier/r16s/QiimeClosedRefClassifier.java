@@ -105,7 +105,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	{
 		final List<Class<?>> postReqs = new ArrayList<>();
 		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
-				|| SeqUtil.getPipelineInputFiles().size() > Config.requireInteger( SCRIPT_BATCH_SIZE ) ) )
+				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( SCRIPT_BATCH_SIZE ) ) )
 		{
 			postReqs.add( MergeOtuTables.class );
 		}
@@ -233,7 +233,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	/**
 	 * Name of each batch mapping file (each in its own batch directory)
 	 */
-	protected static final String BATCH_MAPPING = "batchMapping.tsv";
+	protected static final String BATCH_MAPPING = "batchMapping" + TSV_EXT;
 
 	/**
 	 * Name of the bash function that prepares a batch of seqs for processing: {@value #FUNCTION_CREATE_BATCH_MAPPING}

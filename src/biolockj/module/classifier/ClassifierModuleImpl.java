@@ -175,7 +175,7 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 			}
 			inAvg = inAvg.divide( BigInteger.valueOf( numIn ) );
 
-			sb.append( "# Input files: " + BioLockJ.RETURN );
+			sb.append( "# Input files: " + numIn + BioLockJ.RETURN );
 			sb.append( "Mean input file size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
 			return sb.toString() + super.getSummary();
 

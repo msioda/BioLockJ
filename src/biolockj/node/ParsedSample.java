@@ -13,8 +13,8 @@ package biolockj.node;
 
 import java.io.Serializable;
 import java.util.*;
-import biolockj.Config;
 import biolockj.Log;
+import biolockj.util.OtuUtil;
 
 /**
  * {@link biolockj.module.implicit.parser.ParserModule}s create and store one {@link biolockj.node.ParsedSample}, with
@@ -23,7 +23,6 @@ import biolockj.Log;
  */
 public class ParsedSample implements Serializable, Comparable<ParsedSample>
 {
-
 	/**
 	 * Construct a new ParsedSample with it's 1st OtuNode.
 	 *
@@ -43,42 +42,17 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	 */
 	public void addNode( final OtuNode node )
 	{
-		otuNodes.add( node );
-	}
-
-	/**
-	 * Build OTU counts after all otuNodes have been built.
-	 */
-	public void buildOtuCounts()
-	{
-		if( otuNodes.isEmpty() )
+		if( otuCounts.get( node.getOtuName() ) == null )
 		{
-			return;
+			Log.debug( getClass(), "Add new OtuNode: " + node.getOtuName() + "=" + node.getCount() );
+			otuCounts.put( node.getOtuName(), node.getCount() );
 		}
-
-		for( final OtuNode otuNode: otuNodes )
+		else
 		{
-			final Map<String, String> map = otuNode.getOtuMap();
-			for( final String level: map.keySet() )
-			{
-				final String otu = map.get( level );
-
-				if( otuCountMap.get( level ) == null )
-				{
-					otuCountMap.put( level, new TreeMap<String, Long>() );
-				}
-
-				if( otuCountMap.get( level ).get( otu ) == null )
-				{
-					otuCountMap.get( level ).put( otu, 0L );
-				}
-
-				otuCountMap.get( level ).put( otu, otuCountMap.get( level ).get( otu ) + otuNode.getCount() );
-			}
+			final int count = otuCounts.get( node.getOtuName() ) + node.getCount();
+			Log.debug( getClass(), "Update OtuNode: " + node.getOtuName() + "=" + count );
+			otuCounts.put( node.getOtuName(), count );
 		}
-
-		otuNodes = null;
-		otuNodes = new HashSet<>();
 	}
 
 	@Override
@@ -87,49 +61,93 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 		return o.getSampleId().compareTo( getSampleId() );
 	}
 
-	/**
-	 * Return total OTU count for all OTUs assigned at the highest taxonomy level found in the sample.
-	 *
-	 * @return Total OTU counts at top taxonomy level found in sample
-	 */
-	public Long getNumHits()
+	@Override
+	public boolean equals( final Object o )
 	{
-		long total = 0L;
-		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		if( sampleId == null || o == null || !( o instanceof ParsedSample ) )
 		{
-			final TreeMap<String, Long> topLevelMap = otuCountMap.get( level );
-			if( topLevelMap != null )
-			{
-				for( final Long count: topLevelMap.values() )
-				{
-					total += count;
-				}
-				return total;
-			}
+			return false;
+		}
+		final ParsedSample ps = (ParsedSample) o;
+		if( ps.getSampleId() == null || ps.getSampleId().isEmpty() )
+		{
+			return false;
+		}
+		return ps.getSampleId().equals( sampleId );
+
+	}
+
+	/**
+	 * Get the streamlined taxonomy tree with counts, each OTU listed only 1 time with num occurrences in the
+	 * sample.<br>
+	 * Example:
+	 * d__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__Bacteroides_vulgatus
+	 * 87342
+	 * 
+	 * @return map OTU-count
+	 * @throws Exception if errors occur
+	 */
+	public TreeMap<String, Integer> getOtuCounts() throws Exception
+	{
+		// Log.debug( getClass(), "Calling getOtuCounts() for: " + sampleId );
+		if( otuCounts == null )
+		{
+			throw new Exception( getClass().getName()
+					+ ".getOtuCounts() should be called only once - cached data is cleared after 1st call." );
+		}
+		else if( otuCounts.isEmpty() )
+		{
+			Log.debug( getClass(), "No valid OTUs found for: " + sampleId );
+			return null;
 		}
 
-		Log.warn( getClass(), "ParsedSample has no data: " + sampleId + " has 0 hits!" );
-		return 0L;
-	}
+		final TreeMap<String, Integer> fullPathOtuCounts = new TreeMap<>();
+		for( String otu: otuCounts.keySet() )
+		{
+			if( otu.isEmpty() )
+			{
+				continue;
+			}
 
-	/**
-	 * Getter for otuCountMap, a nested TreeMap with outer key = level, inner key = OTU, inner value = count.
-	 *
-	 * @return OTU count map
-	 */
-	public TreeMap<String, TreeMap<String, Long>> getOtuCountMap()
-	{
-		return otuCountMap;
-	}
+			final Set<String> kids = getChildren( fullPathOtuCounts, otu );
+			final int otuCount = otuCounts.get( otu );
+			if( kids.isEmpty() )
+			{
+				Log.debug( getClass(), "Add [ " + sampleId + " ] OTU " + otu + "=" + otuCount );
+				fullPathOtuCounts.put( otu, otuCount );
+			}
+			else
+			{
+				final int totalCount = totalCount( fullPathOtuCounts, kids );
+				if( totalCount < otuCount )
+				{
+					String parentTaxa = null;
+					for( final String level: OtuUtil.getTaxaLevelSpan() )
+					{
+						if( otu.contains( level ) )
+						{
+							parentTaxa = OtuUtil.getTaxaName( otu, level );
+						}
+						else if( parentTaxa != null )
+						{
+							otu += OtuUtil.SEPARATOR
+									+ OtuUtil.buildOtuTaxa( level, OtuUtil.getUnclassifiedTaxa( parentTaxa ) );
+						}
+					}
 
-	/**
-	 * Return all otuNodes
-	 * 
-	 * @return OTU nodes
-	 */
-	public Set<OtuNode> getOtuNodes()
-	{
-		return otuNodes;
+					final int diff = otuCount - totalCount;
+					fullPathOtuCounts.put( otu, diff );
+					Log.debug( getClass(),
+							"Add parent remainder count [ " + sampleId + " ] Unclassified OTU: " + otu + "=" + diff );
+				}
+				else if( otuCount >= totalCount )
+				{
+					Log.debug( getClass(), "Ignore [" + sampleId + " ] Parent OTU " + otu + "=" + otuCount );
+				}
+			}
+		}
+		otuCounts = null;
+		return fullPathOtuCounts;
 	}
 
 	/**
@@ -142,41 +160,30 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 		return sampleId;
 	}
 
-	/**
-	 * Print OTU counts at every level to the log file.
-	 */
-	public void report()
+	private Set<String> getChildren( final TreeMap<String, Integer> otuCounts, final String otu ) throws Exception
 	{
-		try
+		final Set<String> kids = new HashSet<>();
+		for( final String key: otuCounts.keySet() )
 		{
-			String val = "Parsed [" + sampleId + "] ==> ";
-
-			for( final String level: otuCountMap.keySet() )
+			if( key.contains( otu ) )
 			{
-				final String otuCountMsg = level + " #OTUs: " + otuCountMap.get( level ).size();
-
-				val += otuCountMsg + " | ";
-				Log.debug( getClass(), Log.LOG_SPACER );
-				Log.debug( getClass(), otuCountMsg );
-				for( final String otu: otuCountMap.get( level ).keySet() )
-				{
-					Log.debug( getClass(), otu + " = " + otuCountMap.get( level ).get( otu ) );
-				}
-
+				kids.add( key );
 			}
-
-			Log.debug( getClass(), Log.LOG_SPACER );
-			Log.info( getClass(), val );
 		}
-		catch( final Exception ex )
-		{
-			Log.error( getClass(), "Unable to report ParsedSample! " + ex.getMessage(), ex );
-		}
+		return kids;
 	}
 
-	// key=level
-	private final TreeMap<String, TreeMap<String, Long>> otuCountMap = new TreeMap<>();
-	private Set<OtuNode> otuNodes = new HashSet<>();
+	private int totalCount( final TreeMap<String, Integer> otuCounts, final Set<String> otus ) throws Exception
+	{
+		int count = 0;
+		for( final String otu: otus )
+		{
+			count += otuCounts.get( otu );
+		}
+		return count;
+	}
+
+	private Map<String, Integer> otuCounts = new TreeMap<>();
 	private final String sampleId;
 	private static final long serialVersionUID = 4882054401193953055L;
 }

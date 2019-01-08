@@ -54,24 +54,19 @@ public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 		{
 			setSampleId( id );
 			setLine( line );
-			setCount( Long.valueOf( parts[ 4 ] ) );
+			setCount( Integer.valueOf( parts[ 4 ] ) );
 
-			String levelDelim = null;
-			String taxa = null;
 			final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], METAPHLAN_DELIM );
 			while( taxas.hasMoreTokens() )
 			{
 				final String token = taxas.nextToken();
-				levelDelim = token.substring( 0, 3 );
-
-				if( !token.substring( 3 ).trim().isEmpty() )
+				final String levelDelim = token.substring( 0, 3 );
+				final String taxa = token.substring( 3 ).trim();
+				if( !taxa.isEmpty() )
 				{
-					taxa = token.substring( 3 );
+					addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
 				}
 			}
-
-			buildOtuNode( taxa, levelDelim );
-
 		}
 		catch( final Exception ex )
 		{

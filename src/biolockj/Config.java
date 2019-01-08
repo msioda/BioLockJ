@@ -18,6 +18,7 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.OtuUtil;
 
 /**
  * Provides type-safe, validated methods for storing/accessing system properties.<br>
@@ -51,6 +52,26 @@ public class Config
 		}
 
 		return false;
+	}
+
+	/**
+	 * Gets the configuration file extension (often ".properties")
+	 *
+	 * @return Config file extension
+	 */
+	public static String getConfigFileExt()
+	{
+		String ext = null;
+		final StringTokenizer st = new StringTokenizer( configFile.getName(), "." );
+		if( st.countTokens() > 1 )
+		{
+			while( st.hasMoreTokens() )
+			{
+				ext = st.nextToken();
+			}
+		}
+
+		return "." + ext;
 	}
 
 	/**
@@ -259,14 +280,14 @@ public class Config
 	}
 
 	/**
-	 * Parse comma-separated property value to build an ordered Set
+	 * Parse comma-separated property value to build an unordered Set
 	 *
 	 * @param propertyName Property name
 	 * @return Set of values or an empty set (if no values)
 	 */
 	public static Set<String> getSet( final String propertyName )
 	{
-		final Set<String> set = new TreeSet<>();
+		final Set<String> set = new HashSet<>();
 		set.addAll( getList( propertyName ) );
 		return set;
 	}
@@ -339,7 +360,23 @@ public class Config
 			Log.debug( Config.class, "Updated file-path: " + filePath );
 		}
 
-		if( filePath != null && filePath.contains( "$BLJ" ) )
+		if( filePath != null && filePath.contains( "$BLJ_SUP" ) )
+		{
+			final File bljSup = new File(
+					BioLockJUtil.getSource().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
+			if( bljSup.exists() && bljSup.isDirectory() )
+			{
+				Log.debug( Config.class, "Replacing $BLJ_SUP in file-path: " + filePath );
+				filePath = filePath.replace( "$BLJ_SUP", bljSup.getAbsolutePath() );
+				Log.debug( Config.class, "Updated file-path: " + filePath );
+			}
+			else
+			{
+				Log.warn( Config.class, "Could not find/replace $BLJ_SUP in file-path: " + filePath );
+			}
+
+		}
+		else if( filePath != null && filePath.contains( "$BLJ" ) )
 		{
 			Log.debug( Config.class, "Replacing $BLJ in file-path: " + filePath );
 			filePath = filePath.replace( "$BLJ", BioLockJUtil.getSource().getAbsolutePath() );
@@ -347,6 +384,19 @@ public class Config
 		}
 
 		return filePath;
+	}
+
+	/**
+	 * Parse comma-separated property value to build an ordered Set
+	 *
+	 * @param propertyName Property name
+	 * @return Set of values or an empty set (if no values)
+	 */
+	public static Set<String> getTreeSet( final String propertyName )
+	{
+		final Set<String> set = new TreeSet<>();
+		set.addAll( getList( propertyName ) );
+		return set;
 	}
 
 	/**
@@ -526,7 +576,7 @@ public class Config
 	 * @throws ConfigNotFoundException if propertyName is undefined
 	 * @throws ConfigFormatException if propertyName is defined, but not set to a positive numeric value
 	 */
-	public static Double requirePositiveDoubleVal( final String propertyName )
+	public static Double requirePositiveDouble( final String propertyName )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
 		final Double val = requireDoubleVal( propertyName );
@@ -566,7 +616,7 @@ public class Config
 	 */
 	public static Set<String> requireSet( final String propertyName ) throws ConfigNotFoundException
 	{
-		final Set<String> val = getSet( propertyName );
+		final Set<String> val = getTreeSet( propertyName );
 		if( val == null || val.isEmpty() )
 		{
 			throw new ConfigNotFoundException( propertyName );
@@ -647,8 +697,7 @@ public class Config
 
 		final Set<String> taxa = new HashSet<>();
 
-		final List<String> validOptions = Arrays
-				.asList( new String[] { DOMAIN, PHYLUM, CLASS, ORDER, FAMILY, GENUS, SPECIES } );
+		final List<String> validOptions = OtuUtil.getAllTaxonomyLevels();
 
 		for( final String element: requireList( REPORT_TAXONOMY_LEVELS ) )
 		{
@@ -849,6 +898,12 @@ public class Config
 	public static final String INTERNAL_DEFAULT_CONFIG = "internal.defaultConfig";
 
 	/**
+	 * {@link biolockj.Config} Internal Boolean property: {@value #INTERNAL_IS_MULTI_LINE_SEQ}<br>
+	 * Store TRUE if {@biolockj.util.SeqUtil} determines input sequences are multi-line format.
+	 */
+	public static final String INTERNAL_IS_MULTI_LINE_SEQ = "internal.isMultiLineSeq";
+
+	/**
 	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_MULTIPLEXED}<br>
 	 * Set to true if multiplexed reads are found, set by the application runtime code.
 	 */
@@ -921,7 +976,7 @@ public class Config
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #REPORT_NUM_HITS}<br>
-	 * If set to {@value #TRUE}, NUM_HITS will be added to metadata file by
+	 * If set to {@value #TRUE}, NUM_OTUS will be added to metadata file by
 	 * {@link biolockj.module.implicit.parser.ParserModuleImpl} and included in R reports
 	 */
 	public static final String REPORT_NUM_HITS = "report.numHits";
@@ -951,6 +1006,7 @@ public class Config
 	 */
 	public static final String TRUE = "Y";
 
+	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
 	private static Properties props = null;
 

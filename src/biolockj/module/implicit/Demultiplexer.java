@@ -122,7 +122,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 			{
 				sb.append( "# Forward Reads: " + numTotalFwReads + RETURN );
 				sb.append( "# Reverse Reads: " + numTotalRvReads + RETURN );
@@ -175,12 +175,12 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	public void runModule() throws Exception
 	{
 		breakUpFiles();
-		
-//		if( DemuxUtil.barcodeInMapping() )
-//		{
-//			DemuxUtil.buildHeaderRefs();
-//		}
-		
+
+		// if( DemuxUtil.barcodeInMapping() )
+		// {
+		// DemuxUtil.buildHeaderRefs();
+		// }
+
 		demultiplex( getValidHeaders() );
 	}
 
@@ -307,7 +307,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	protected Map<String, Set<String>> getValidFwHeaders() throws Exception
 	{
 		final Map<String, Set<String>> validHeaders = new HashMap<>();
-		final boolean isPaird = Config.requireBoolean( Config.INTERNAL_PAIRED_READS );
+		final boolean isPaird = Config.getBoolean( Config.INTERNAL_PAIRED_READS );
 		final boolean isCombined = isPaird && getInputFiles().size() == 1;
 
 		Log.info( getClass(), "Get FW Headers from temp files "
@@ -379,7 +379,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	protected Map<String, Set<String>> getValidHeaders() throws Exception
 	{
 		final Map<String, Set<String>> validFwHeaders = getValidFwHeaders();
-		if( !Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			Log.info( getClass(), "Demultiplexing unpaired reads...# " + validFwHeaders.size() );
 			return validFwHeaders;
@@ -501,7 +501,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	private String getFileSuffix( final String name, final String header ) throws Exception
 	{
 		String suffix = "";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			suffix = isForwardRead( name, header ) ? Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX )
 					: Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
@@ -566,7 +566,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 	private boolean isForwardRead( final String name, final String header ) throws Exception
 	{
-		if( !Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			return true;
 		}
@@ -605,46 +605,45 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		Log.info( getClass(), "Total rv reads = " + numTotalRvReads );
 		Log.info( getClass(), "Number valid reads = " + size );
 	}
-	
-	
-//
-//	/**
-//	 * Add barcode to seq header after 1st character, or return null if the header isn't listed
-//	 * 
-//	 * @return Header line with barcode seq inserted
-//	 * @throws Exception if errors occur
-//	 */
-//	protected String addBarcodeToSeqHeader( String header ) throws Exception
-//	{
-//		final BufferedReader reader = BioLockJUtil.getFileReader( DemuxUtil.getMapping() );
-//		try
-//		{
-////			if( results == null || results.size() == 0 )
-////			{
-////				throw new Exception( "Seq header [ " + header + " ] not found!" );
-////			}
-////			else if( results.size() == 2 )
-////			{
-////				Iterator<GrepResult> it = results.iterator();
-////				GrepResult seqHeader = it.next();
-////				GrepResult barcode = it.next();
-////	
-////				Log.info( getClass(), "seqHeader HEADER: " + seqHeader.getHeaderInformation() );
-////				Log.info( getClass(), "seqHeader TEXT: " + seqHeader.getText() );
-////				Log.info( getClass(), "barcode HEADER: " + barcode.getHeaderInformation() );
-////				Log.info( getClass(), "barcode TEXT: " + barcode.getText() );
-////				return header.substring( 0, 1 ) + barcode.toString().trim() + header.substring( 1 );
-////			}
-////			else 
-////			{
-////				throw new Exception( "Seq header [ " + header + " ] returned too many results! --> #Lines=" + results.size() );
-////			}
-//		}
-//		finally
-//		{
-//			if( reader != null ) reader.close();
-//		}
-//	}
+
+	//
+	// /**
+	// * Add barcode to seq header after 1st character, or return null if the header isn't listed
+	// *
+	// * @return Header line with barcode seq inserted
+	// * @throws Exception if errors occur
+	// */
+	// protected String addBarcodeToSeqHeader( String header ) throws Exception
+	// {
+	// final BufferedReader reader = BioLockJUtil.getFileReader( DemuxUtil.getMapping() );
+	// try
+	// {
+	//// if( results == null || results.size() == 0 )
+	//// {
+	//// throw new Exception( "Seq header [ " + header + " ] not found!" );
+	//// }
+	//// else if( results.size() == 2 )
+	//// {
+	//// Iterator<GrepResult> it = results.iterator();
+	//// GrepResult seqHeader = it.next();
+	//// GrepResult barcode = it.next();
+	////
+	//// Log.info( getClass(), "seqHeader HEADER: " + seqHeader.getHeaderInformation() );
+	//// Log.info( getClass(), "seqHeader TEXT: " + seqHeader.getText() );
+	//// Log.info( getClass(), "barcode HEADER: " + barcode.getHeaderInformation() );
+	//// Log.info( getClass(), "barcode TEXT: " + barcode.getText() );
+	//// return header.substring( 0, 1 ) + barcode.toString().trim() + header.substring( 1 );
+	//// }
+	//// else
+	//// {
+	//// throw new Exception( "Seq header [ " + header + " ] returned too many results! --> #Lines=" + results.size() );
+	//// }
+	// }
+	// finally
+	// {
+	// if( reader != null ) reader.close();
+	// }
+	// }
 
 	private void writeSample( final List<String> lines, final String fileName ) throws Exception
 	{
@@ -654,10 +653,10 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		int i = 0;
 		for( final String line: lines )
 		{
-			
+
 			if( i++ == 0 && DemuxUtil.barcodeInMapping() )
 			{
-				//writer.write( addBarcodeToSeqHeader( line ) + BioLockJ.RETURN );
+				// writer.write( addBarcodeToSeqHeader( line ) + BioLockJ.RETURN );
 			}
 			else
 			{
