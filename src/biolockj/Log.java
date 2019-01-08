@@ -183,7 +183,7 @@ public class Log
 	public static void initialize( final String name ) throws Exception
 	{
 		logFile = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ name + ".log" );
+				+ name + BioLockJ.LOG_EXT );
 
 		System.setProperty( LOG_FILE, logFile.getAbsolutePath() );
 		System.setProperty( LOG_LEVEL_PROPERTY, validateLogLevel() );

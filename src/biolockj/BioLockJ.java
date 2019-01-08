@@ -173,7 +173,7 @@ public class BioLockJ
 			printFatalError( ex );
 			markProjectStatus( Pipeline.BLJ_FAILED );
 			logFinalException( args, ex );
-			SummaryUtil.addSummaryFooterForFailedPipeline();
+			SummaryUtil.addSummaryFooterForFailedPipeline( getHelpInfo( null ) );
 		}
 		finally
 		{
@@ -203,6 +203,27 @@ public class BioLockJ
 				logFinalException( args, ex );
 			}
 		}
+	}
+	
+	/**
+	 * Print error file path, restart instructions, and link to the BioLockJ Wiki
+	 * 
+	 * @param errFile Error File
+	 * @return Help Info
+	 * @throws Exception if errors occur
+	 */
+	public static String getHelpInfo( File errFile ) 
+	{
+		try
+		{
+			return RETURN + "Usage java biolockj.BioLockJ -b path_to_pipeline_output parent_directory " + 
+					"-c path_to_properties_file " + RETURN + "See https://github.com/msioda/BioLockJ/wiki" + RETURN +
+					( errFile != null ? "Writing error file to " + errFile.getAbsolutePath()  : "" ) + RETURN;
+		}catch(Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		return "";
 	}
 
 	/**
@@ -510,13 +531,15 @@ public class BioLockJ
 			int index = 0;
 			final String prefix = ( RuntimeParamUtil.isDockerMode() ? RuntimeParamUtil.getBaseDir().getAbsolutePath()
 					: "~" ) + File.separator;
-			File errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + ".log" ) );
+			File errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + LOG_EXT ) );
 			while( errFile.exists() )
 			{
 				errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
-						+ new Integer( ++index ).toString() + ".log" ) );
+						+ new Integer( ++index ).toString() + LOG_EXT ) );
 			}
 
+			System.out.println( getHelpInfo( errFile ) );
+			
 			printFatalError( fatalException );
 
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
