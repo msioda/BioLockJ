@@ -33,13 +33,13 @@ public class SummaryUtil
 	/**
 	 * To be called when pipeline fails to add summary details if possible.
 	 */
-	public static void addSummaryFooterForFailedPipeline()
+	public static void addSummaryFooterForFailedPipeline( String helpInfo )
 	{
 		String summaryFile = "";
 		try
 		{
 			summaryFile = getSummaryFile().getAbsolutePath();
-			saveSummary( getFooter() );
+			saveSummary( helpInfo + RETURN + getFooter() );
 		}
 		catch( final Exception ex )
 		{

@@ -83,7 +83,7 @@ public class LogUtil
 	private static File getModuleLog( final BioModule module ) throws Exception
 	{
 		return new File( ModuleUtil.getModuleRootDir( module ) + File.separator + BioModule.TEMP_DIR + File.separator
-				+ module.getClass().getSimpleName() + ".log" );
+				+ module.getClass().getSimpleName() + BioLockJ.LOG_EXT );
 	}
 
 	private static List<String> getProfile()

@@ -195,7 +195,7 @@ importLibs <- function( libs ) {
    errors = vector( mode="character" )
    for( i in 1:length( libs ) ) {
       if ( !library( libs[i], logical.return=TRUE, character.only=TRUE ) ) {
-         errors[ length( errors ) + 1 ] = paste( "Missing R library, please run install.packages(", libs[i], ")" )
+        errors[ length( errors ) + 1 ] = paste0( "Missing R library, please run install.packages(\"", libs[i], "\") from within R" )
       }
    }   
    
