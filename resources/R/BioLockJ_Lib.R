@@ -86,17 +86,23 @@ getMetaDataFile <- function(){
 
 # Return a data frame of the metadata.  Note that biolockj assumes that the first column is the sample id
 # and that the sample id is unique within the file, so the first row is used as rownames in the returned dataframe.
-getMetaData <- function(){
-  file = getMetaDataFile()
-  if (is.null(file)){
-    inputFile = getPipelineFile( "*_metaMerged.tsv" )
-    otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
-    firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
-    meta = otuTable[firstMetaCol:ncol(otuTable)]
-  }else{
-    meta = read.delim(file=file, comment.char = getProperty("metadata.commentChar",""), row.names = 1)
-  }
-  return(meta)
+getMetaData <- function(useMetaMerged=FALSE){
+	file = getMetaDataFile()
+	if (is.null(file) | useMetaMerged){
+		inputFile = getPipelineFile( "*_metaMerged.tsv" )
+		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
+		firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
+		meta = otuTable[firstMetaCol:ncol(otuTable)]
+	}else{
+		importMetaDataModule = grep("ImportMetadata", dir(dirname(file)), value=T)
+		processedMetaFile = file.path(dirname(file), importMetaDataModule, "output", basename(file))
+		if (file.exists(processedMetaFile)){
+			meta = read.delim(file=processedMetaFile, comment.char = getProperty("metadata.commentChar",""), row.names = 1)
+		}else{
+			meta = read.delim(file=file, comment.char = getProperty("metadata.commentChar",""), row.names = 1)
+		}
+	}
+	return(meta)
 }
 
 
