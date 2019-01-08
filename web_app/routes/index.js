@@ -86,6 +86,34 @@ router.post('/defaultproperties', function(req, res, next) {
 
 });//end router.post('/defaultproperties'...
 
+//currently for docker only
+router.post('/checkProjectExists', function(req, res, next) {
+  try {
+    const projectPath = pipelineProjectName(req.body.projectName);
+    const projectName = path.parse(projectPath).base;
+    console.log('checkingProject: ', projectName);
+    if (fs.existsSync(projectPath)){
+      console.log('exists');
+
+      const resParams = {
+        projectName : projectName,
+        projectPath : projectPath,
+      }
+
+      res.setHeader('Content-Type', 'text/html');
+      res.write(JSON.stringify(resParams));
+      res.end();
+    }else{
+      console.log('not exists');
+      res.setHeader('Content-Type', 'text/html');
+      res.write('');
+      res.end();
+    }
+  } catch (e) {
+    console.log(e);
+  }
+});// end outer.post('/checkProjectExists',
+
 router.post('/launch', function(req, res, next) {
   console.log('entered /launch');
   const configLocal = path.join(HOST_BLJ,'resources','config','gui');
@@ -98,78 +126,70 @@ router.post('/launch', function(req, res, next) {
     const paramValues = req.body.paramValues;
     let launchArg = req.body.partialLaunchArg;
     let configName = paramValues[paramKeys.indexOf('project.configFile')];
-    if (req.body.check === true){
-      if (fs.existsSync(pipelineProjectName(configName))){
-        res.setHeader('Content-Type', 'text/html');
-        res.write('previously started');
-        res.end();
-      }else{
-        res.setHeader('Content-Type', 'text/html');
-        res.write('not found in pipeline');
-        res.end();
+
+    const configText = indexAux.formatAsFlatFile(modules, paramKeys, paramValues);
+    indexAux.saveConfigToLocal(configName,configText);
+    launchArg['config'] = path.join(configLocal, configName);
+
+    var launchCommand;
+
+    switch (req.body.launchAction) {
+      case 'restartProject':
+        console.log('restart request: ', req.body.restartProjectPath);
+        const fullRestartPath = path.join(bljDir,req.body.restartProjectPath);
+        console.log(fullRestartPath);
+        launchCommand = indexAux.createFullLaunchCommand(launchArg, fullRestartPath);
+        console.log('launching!');
+        indexAux.runLaunchCommand(launchCommand, Stream);
+
+        break;
+      case 'eraseRestart':
+      try {
+        const eraseDir = req.body.restartProjectPath;
+        console.log(eraseDir);
+        //fs.rmdir(eraseDir, e => console.log(e));
+
+        var deleteFolderRecursive = function(p) {
+          if (p != '/'){
+            if (fs.existsSync(p)) {
+              fs.readdirSync(p).forEach(function(file, index){
+                var curPath = path.join(p,file);
+                if (fs.lstatSync(curPath).isDirectory()) { // recurse
+                  deleteFolderRecursive(curPath);
+                } else { // delete file
+                  fs.unlinkSync(curPath);
+                }
+              });
+              fs.rmdirSync(p);
+            }
+          }else{
+            console.log('p cannot be root');
+          }
+
+        };
+        deleteFolderRecursive(eraseDir);
+        launchCommand = indexAux.createFullLaunchCommand(launchArg);
+        console.log('launching!');
+        indexAux.runLaunchCommand(launchCommand, Stream);
+
+      } catch (e) {
+        console.log(e);
       }
-    }else if (req.body.check === false && req.body.launch === true && req.body.deleteOldOrRestart === 'delete') {
-      //console.log(launchArg);
-      const configText = indexAux.formatAsFlatFile(modules, paramKeys, paramValues);
-      let configName = paramValues[paramKeys.indexOf('project.configFile')];
-      indexAux.saveConfigToLocal(configName,configText);
 
-      launchArg['config'] = path.join(configLocal,configName);
-      const launchCommand = indexAux.createFullLaunchCommand(launchArg);
-      //console.log(launchCommand);
-      console.log('launching!');
-      indexAux.runLaunchCommand(launchCommand, Stream);
-      //console.log('launched?');
-      let fileModTime = new Map();
+        break;
+      case 'launch':
+        launchCommand = indexAux.createFullLaunchCommand(launchArg);
+        console.log('launching!');
+        indexAux.runLaunchCommand(launchCommand, Stream);
+        //let fileModTime = new Map();
 
-      // const dirFiles = fs.readdirSync( '/blj_proj' );
-      // dirFiles.forEach(file => {
-      //   console.log(path.join( '/blj_proj/', file ));
-      //   fs.stat(path.join( '/blj_proj/', file ), function(err, m) {
-      //     if (err){
-      //       console.error(err);
-      //     }else{
-      //       fileModTime.set(file,  m.mtime )}
-      //       console.log(fileModTime.get(file));
-      //     });
-      //   });
+      break;
+      default:
 
-      // var mtimeArr = [];
-      // fileModTime.forEach(file => mtimeArr.push(file.mtime));
-      // console.log('mtime');
-      // console.log(mtimeArr);
-      // console.log(fileModTime.get('test.properties').mtime);
-      // console.log(fileModTime);
-      // console.log(fs.readdirSync(bljDir.concat(configDir)));
-      // progressReports(configPath + '*');
-
-        res.setHeader('Content-Type', 'text/html');
-        res.write('Server Response: Config recieved!');
-        res.end();
-
-
-      // postProgress('/Users/aaronyerke/Desktop/fodor_lab/blj_testing/');
-      // res.redirect('/progress');
-
-    }else{
-
-      const configText = indexAux.formatAsFlatFile(modules, paramKeys, paramValues);
-      let configName = paramValues[paramKeys.indexOf('project.configFile')];
-      indexAux.saveConfigToLocal(configName,configText);
-
-      launchArg['config'] = path.join(configLocal,configName);
-      const launchCommand = indexAux.createFullLaunchCommand(launchArg);
-      //console.log(launchCommand);
-      console.log('launching!');
-      indexAux.runLaunchCommand(launchCommand, Stream);
-      //console.log('launched?');
-      let fileModTime = new Map();
-
-      res.setHeader('Content-Type', 'text/html');
-      res.write('Server Response: Config recieved!');
-      res.end();
     }
-
+      res.setHeader('Content-Type', 'text/html');
+      res.write('Server Response: project launched!');
+      res.end();
 
   } catch (e) {
     console.error(e);
@@ -233,7 +253,7 @@ function pipelineProjectName(configName){
   let month = now.toLocaleString("en-us", {
     month: "short"
     });
-  let day = now.getDay();
+  let day = now.getDate();
   console.log(day);
   let c = configName.concat('_',year,month,day);
   const projectPipelinePath = path.join('/','pipeline', c );

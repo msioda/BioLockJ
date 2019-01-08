@@ -57,7 +57,13 @@ exports.saveConfigToLocal = function(configName, configText){
   })
 }
 
-exports.buildPartialLaunchArgument = function (validConfig){
+exports.buildPartialLaunchArgument = function (validConfig, restart = false){
+  /**
+  Returns something like:
+  inputDirPaths: "/Users/aaronyerke/git/blj_support/resources/test/data/multiplexed/combinedFastq"
+  metadataFilePath: "/Users/aaronyerke/git/blj_support/resources/test/metadata/testMetadata.tsv"
+  trimPrimersFilePath: "/Users/aaronyerke/git/blj_support/resources/test/primers/testPrimers.txt"
+  */
   partialLauchArgument = {};
   //config key : blj_argument
   //config Path will be built serverside
@@ -73,17 +79,15 @@ exports.buildPartialLaunchArgument = function (validConfig){
       partialLauchArgument[runtimeArguments[key].toString()] = validConfig[key];
     };
   })
+  console.log('partialLaunchArgument: ', partialLaunchArgument);
   return partialLauchArgument;
 }
 
-exports.createFullLaunchCommand = function(launchJSON){//
+exports.createFullLaunchCommand = function(launchJSON, restartPath){//
   //const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
   //const bljDir = process.env.BLJ;
   const dockblj = path.join('..','script','dockblj');//relative path from webapp folder
-  //const dockblj = path.join('..','script','dockblj');
-  //console.log(dockblj);
   let command = [];
-  //console.log(launchJSON);
   command.push(dockblj.toString());
   Object.keys(launchJSON).forEach(key => {
     //if key not config, grab path.Dirname(launchJSON[key])
@@ -95,8 +99,12 @@ exports.createFullLaunchCommand = function(launchJSON){//
     };
   });
   command.push('-docker');
+  if (restartPath !== undefined ){
+    //note, change to make more universal
+    command.push(`-r ${restartPath}`)
+  }
   console.log('launch');
-  console.log(command);
+  console.log('full launch command: \n', command);
   return command;
 }//end createFullLaunchCommand
 
