@@ -16,10 +16,12 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.exception.ConfigPathException;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
 
 /**
@@ -29,19 +31,39 @@ public class BioLockJUtil
 {
 
 	/**
-	 * Direct module param format has 2 parts separated by a colon (pipeline directory name):(module name)
+	 * Add leading spaces until the val is padded to given length
 	 * 
-	 * @param module
-	 * @return Direct param string
-	 * @throws Exception if errors occur
+	 * @param val Value to add spaces
+	 * @param length Total length of val with spaces
+	 * @return Padded value
+	 * @throws Exception if errors occur.
 	 */
-	public static String getDirectModuleParam( final BioModule module ) throws Exception
+	public static String addLeadingSpaces( String val, final int length ) throws Exception
 	{
-		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName() + 
-				":" + module.getClass().getName();
+		while( val.length() < length )
+		{
+			val = " " + val;
+		}
+		return val;
 	}
-	
-	
+
+	/**
+	 * Add trailing spaces until the val is padded to given length
+	 * 
+	 * @param val Value to add spaces
+	 * @param length Total length of val with spaces
+	 * @return Padded value
+	 * @throws Exception if errors occur.
+	 */
+	public static String addTrailingSpaces( String val, final int length ) throws Exception
+	{
+		while( val.length() < length )
+		{
+			val += " ";
+		}
+		return val;
+	}
+
 	/**
 	 * Delete file or directory with retry. Wait 3 seconds between each try - waiting for resource to release lock if .
 	 * 
@@ -67,6 +89,7 @@ public class BioLockJUtil
 				{
 					FileUtils.forceDelete( file );
 				}
+
 				return true;
 			}
 			catch( final IOException ex )
@@ -75,6 +98,8 @@ public class BioLockJUtil
 						"Waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
 			}
 		}
+
+		Log.warn( BioLockJUtil.class, "Failed to delete file: " + file.getAbsolutePath() );
 
 		return false;
 	}
@@ -99,6 +124,38 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * This method formats the input number by adding commas.
+	 *
+	 * @param input Integer value
+	 * @return number as String with commas
+	 * 
+	 */
+	@SuppressWarnings("unused")
+	public static String formatNumericOutput( final Integer input )
+	{
+		if( input == null )
+		{
+			return "0";
+		}
+		else if( true )
+		{
+			return input.toString();
+		}
+
+		String output = "";
+		for( int i = input.toString().length(); i > 0; i-- )
+		{
+			if( output.length() % 4 == 0 )
+			{
+				output = "," + output;
+			}
+			output = input.toString().substring( i - 1, i ) + output;
+		}
+
+		return output.substring( 0, output.length() - 1 );
+	}
+
+	/**
 	 * Build the percentage display string for the num/denom ratio as "##.##%"
 	 * 
 	 * @param num Numerator
@@ -117,6 +174,33 @@ public class BioLockJUtil
 		return percentage + "%";
 	}
 
+	public static Collection<File> getBasicInputFiles() throws Exception
+	{
+		if( inputFiles.isEmpty() )
+		{
+			final Collection<File> files = new HashSet<>();
+			for( final File dir: getInputDirs() )
+			{
+				Log.info( SeqUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
+				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+			}
+			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
+			for( final File file: files )
+			{
+				if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+				{
+					inputFiles.add( file );
+				}
+				else
+				{
+					Log.warn( SeqUtil.class, "Ignoring file: " + file.getName() );
+				}
+			}
+		}
+
+		return inputFiles;
+	}
+
 	/**
 	 * Return an ordered list of the class names from the input collection.
 	 * 
@@ -132,27 +216,6 @@ public class BioLockJUtil
 		}
 
 		return names;
-	}
-	
-	/**
-	 * Print collection one item per line. 
-	 * 
-	 * @param data Collection of data
-	 * @return Collection data as a String
-	 */
-	public static String printLongFormList( final Collection<?> data )
-	{
-		final StringBuffer sb = new StringBuffer();
-		if( data != null && !data.isEmpty() )
-		{
-			sb.append( BioLockJ.RETURN );
-			for( final Object val: data )
-			{
-				sb.append( val ).append( BioLockJ.RETURN );
-			}
-		}
-
-		return sb.toString();
 	}
 
 	/**
@@ -173,6 +236,19 @@ public class BioLockJUtil
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Direct module param format has 2 parts separated by a colon (pipeline directory name):(module name)
+	 * 
+	 * @param module
+	 * @return Direct param string
+	 * @throws Exception if errors occur
+	 */
+	public static String getDirectModuleParam( final BioModule module ) throws Exception
+	{
+		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName()
+				+ ":" + module.getClass().getName();
 	}
 
 	/**
@@ -208,6 +284,28 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Get the list of input directories for the pipeline.
+	 * 
+	 * @return List of system directory file paths
+	 * @throws Exception if errors occur
+	 */
+	public static List<File> getInputDirs() throws Exception
+	{
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			final List<File> dirs = new ArrayList<>();
+			final File dir = new File( DockerUtil.CONTAINER_INPUT_DIR );
+			if( !dir.exists() )
+			{
+				throw new Exception( "Container missing mapped input volume system path: " + dir.getAbsolutePath() );
+			}
+			dirs.add( dir );
+			return dirs;
+		}
+		return Config.requireExistingDirs( Config.INPUT_DIRS );
+	}
+
+	/**
 	 * Return the MASTER config file.
 	 * 
 	 * @return MASTER config
@@ -222,6 +320,57 @@ public class BioLockJUtil
 		}
 		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
 				+ MASTER_PREFIX + configName );
+	}
+
+	/**
+	 * Recursively get files located in the directories listed in
+	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS} after removing
+	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_IGNORE_FILES}
+	 * 
+	 * @return Pipeline input files
+	 * @throws ConfigViolationException if sequence files without valid metadata are detected
+	 * @throws Exception if no input files are found
+	 */
+	public static List<File> getPipelineInputFiles() throws Exception
+	{
+		if( filteredInputFiles.isEmpty() )
+		{
+			final List<File> seqsWithoutMetaId = new ArrayList<>();
+			for( final File file: BioLockJUtil.getBasicInputFiles() )
+			{
+				if( !SeqUtil.requireSeqInput() || Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
+						|| MetaUtil.getMetadata() == null
+						|| MetaUtil.getSampleIds().contains( SeqUtil.getSampleId( file.getName() ) ) )
+				{
+					filteredInputFiles.add( file );
+				}
+				else if( Config.getBoolean( MetaUtil.META_REQUIRED ) ) // metadata required
+				{
+					seqsWithoutMetaId.add( file );
+					throw new ConfigViolationException( MetaUtil.META_REQUIRED,
+							"Sample ID not found in metadata file: " + file.getAbsolutePath() );
+				}
+				else
+				{
+					Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
+							+ MetaUtil.META_REQUIRED + "=" + Config.FALSE + " ]: " + file.getAbsolutePath() );
+				}
+			}
+
+			if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( MetaUtil.META_REQUIRED ) )
+			{
+				throw new ConfigViolationException( MetaUtil.META_REQUIRED,
+						"No metadata found for the following files: " + BioLockJ.RETURN
+								+ BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
+			}
+
+			if( filteredInputFiles.isEmpty() )
+			{
+				throw new Exception( "No valid files found in: " + Config.INPUT_DIRS );
+			}
+		}
+
+		return filteredInputFiles;
 	}
 
 	/**
@@ -276,6 +425,65 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Print collection one item per line.
+	 * 
+	 * @param data Collection of data
+	 * @return Collection data as a String
+	 */
+	public static String printLongFormList( final Collection<?> data )
+	{
+		final StringBuffer sb = new StringBuffer();
+		if( data != null && !data.isEmpty() )
+		{
+			sb.append( BioLockJ.RETURN );
+			for( final Object val: data )
+			{
+				sb.append( val ).append( BioLockJ.RETURN );
+			}
+		}
+
+		return sb.toString();
+	}
+
+	/**
+	 * Remove the outer single or double quotes of the given value
+	 * 
+	 * @param value
+	 * @return value without outer quotes
+	 * @throws Exception if errors occur
+	 */
+	public static String removeOuterQuotes( final String value ) throws Exception
+	{
+		if( value.startsWith( "\"" ) && value.endsWith( "\"" ) )
+		{
+			return value.substring( 1, value.length() - 1 );
+		}
+		if( value.startsWith( "'" ) && value.endsWith( "'" ) )
+		{
+			return value.substring( 1, value.length() - 1 );
+		}
+
+		return value;
+	}
+
+	/**
+	 * Remove all single and double quotation marks found in value.
+	 * 
+	 * @param value
+	 * @return value with no quotes
+	 * @throws Exception if errors occur
+	 */
+	public static String removeQuotes( final String value ) throws Exception
+	{
+		if( value == null )
+		{
+			return null;
+		}
+
+		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
+	}
+
+	/**
 	 * Save a single version of the config file by combing with default config files, if any exist.
 	 * 
 	 * @throws Exception if errors occur
@@ -290,8 +498,14 @@ public class BioLockJUtil
 					+ masterConfig.getAbsolutePath() );
 		}
 
+		final List<String> initConfig = getInitConfig();
 		if( masterExists )
 		{
+			if( getTempConfig().exists() )
+			{
+				deleteTempConfigFile();
+			}
+
 			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
 			if( getMasterConfig().exists() )
 			{
@@ -305,26 +519,36 @@ public class BioLockJUtil
 		{
 			writer.write( "# The MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
 			writer.write( "# The MASTER Config file was generated from the following Config files: " + RETURN );
-			writer.write( "# ----> Project Config: " + Config.getConfigFilePath() + RETURN );
 
-			final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
-			if( defaults != null && !defaults.isEmpty() )
+			if( initConfig == null )
 			{
-				for( final String defConfig: Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) )
+				writer.write( ORIG_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
+
+				final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
+				if( defaults != null && !defaults.isEmpty() )
 				{
-					writer.write( "# ----> Default Config: " + defConfig + RETURN );
+					for( final String defConfig: Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) )
+					{
+						writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
+					}
 				}
-				writer.write( RETURN );
+			}
+			else
+			{
+				for( final String line: initConfig )
+				{
+					writer.write( line + RETURN );
+				}
 			}
 
+			writer.write( RETURN );
 			for( final String module: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
 			{
 				writer.write( Config.INTERNAL_BLJ_MODULE + " " + module + RETURN );
 			}
-
 			writer.write( RETURN );
 
-			final Map<String, String> map = Config.getProperties();
+			final Map<String, String> map = new HashMap<>( Config.getProperties() );
 			map.remove( Config.INTERNAL_BLJ_MODULE );
 			map.remove( Config.INTERNAL_PIPELINE_DIR );
 			map.remove( Config.INTERNAL_DEFAULT_CONFIG );
@@ -334,11 +558,11 @@ public class BioLockJUtil
 			map.remove( SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
 			map.remove( SeqUtil.INTERNAL_SEQ_TYPE );
 			map.remove( Config.PROJECT_DEFAULT_PROPS );
+			map.remove( Config.INTERNAL_IS_MULTI_LINE_SEQ );
 
-			final Iterator<String> it = map.keySet().iterator();
-			while( it.hasNext() )
+			final Set<String> keys = new TreeSet<>( map.keySet() );
+			for( final String key: keys )
 			{
-				final String key = it.next();
 				writer.write( key + "=" + map.get( key ) + RETURN );
 			}
 		}
@@ -349,23 +573,13 @@ public class BioLockJUtil
 				writer.close();
 			}
 
-			if( getTempConfig().exists() && getMasterConfig().exists() )
-			{
-				BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
-			}
-			else if( getTempConfig().exists() )
-			{
-				throw new Exception(
-						"Error occurred updating MASTER config.  File has been deleted, please recover using: "
-								+ getTempConfig().getAbsolutePath() );
-			}
+			deleteTempConfigFile();
 		}
 
 		if( !masterConfig.exists() )
 		{
 			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
 		}
-
 	}
 
 	/**
@@ -422,6 +636,48 @@ public class BioLockJUtil
 		}
 	}
 
+	private static void deleteTempConfigFile() throws Exception
+	{
+		if( getTempConfig().exists() && getMasterConfig().exists() )
+		{
+			BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
+		}
+		else if( getTempConfig().exists() )
+		{
+			throw new Exception( "Error occurred updating MASTER config.  File has been deleted, please recover using: "
+					+ getTempConfig().getAbsolutePath() );
+		}
+	}
+
+	private static List<String> getInitConfig() throws Exception
+	{
+		final File masterConfig = getMasterConfig();
+		if( !masterConfig.exists() || !Config.getConfigFilePath().equals( masterConfig.getAbsolutePath() ) )
+		{
+			return null;
+		}
+		final List<String> initConfig = new ArrayList<>();
+		final BufferedReader reader = BioLockJUtil.getFileReader( masterConfig );
+		try
+		{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			{
+				if( line.startsWith( ORIG_CONFIG_FLAG ) || line.startsWith( DEFAULT_CONFIG_FLAG ) )
+				{
+					initConfig.add( line );
+				}
+			}
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
+		return initConfig;
+	}
+
 	private static File getTempConfig() throws Exception
 	{
 		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
@@ -458,8 +714,12 @@ public class BioLockJUtil
 	 * Prefix added to the master Config file: {@value #MASTER_PREFIX}
 	 */
 	public static final String MASTER_PREFIX = "MASTER_";
+	private static final String DEFAULT_CONFIG_FLAG = "# ----> Default Config: ";
+	private static final List<File> filteredInputFiles = new ArrayList<>();
 
+	private static final List<File> inputFiles = new ArrayList<>();
+	private static final String ORIG_CONFIG_FLAG = "# ----> Project Config: ";
 	private static final String RETURN = BioLockJ.RETURN;
-	private static final String TEMP_PREFIX = "TEMP_";
+	private static final String TEMP_PREFIX = ".TEMP_";
 	private static final String VERSION_FILE = ".version";
 }

@@ -20,7 +20,6 @@ import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.node.OtuNode;
-import biolockj.node.ParsedSample;
 import biolockj.node.r16s.QiimeNode;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
@@ -86,47 +85,35 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 		final File file = getInputFiles().get( 0 );
 		Log.info( getClass(), "Parse file: " + file.getName() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
-		for( String line = reader.readLine(); line != null; line = reader.readLine() )
+		try
 		{
-			if( line.startsWith( "#" ) )
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				continue;
-			}
-
-			final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
-			int index = 0;
-			final String taxas = st.nextToken();
-
-			while( st.hasMoreTokens() )
-			{
-				final Long count = Double.valueOf( st.nextToken() ).longValue();
-				final String id = orderedQiimeIDs.get( index++ );
-				if( count > 0 )
+				if( line.startsWith( "#" ) )
 				{
-					final QiimeNode node = new QiimeNode( id, taxas, count );
-					if( isValid( node ) )
-					{
-						final ParsedSample sample = getParsedSample( node.getSampleId() );
-						if( sample == null )
-						{
-							addParsedSample( new ParsedSample( node ) );
-						}
-						else
-						{
-							sample.addNode( node );
-						}
-					}
+					continue;
+				}
 
+				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
+				int index = 0;
+				final String taxas = st.nextToken();
+
+				while( st.hasMoreTokens() )
+				{
+					final Integer count = Double.valueOf( st.nextToken() ).intValue();
+					final String id = orderedQiimeIDs.get( index++ );
+					addOtuNode( new QiimeNode( id, taxas, count ) );
 				}
 			}
 		}
-		reader.close();
-		for( final ParsedSample sample: getParsedSamples() )
+		finally
 		{
-			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
-			sample.buildOtuCounts();
-			sample.report();
+			if( reader != null )
+			{
+				reader.close();
+			}
 		}
+
 	}
 
 	/**
@@ -188,7 +175,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	 * @return formatted Sample ID
 	 * @throws Exception If any QIIME ID does not have a corresponding Sample ID
 	 */
-	@Override
+	// @Override
 	protected String getOtuTableRowId( final String id ) throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();

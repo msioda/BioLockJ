@@ -58,10 +58,11 @@ fi
 
 if [ $# -eq 1 ] && [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
     echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
-    echo "Run pipeline:     biolockj [ -c/--config ] <config_file>"
-    echo "Restart pipeline:          -r/--restart <directory>"
-    echo "Encrypt email password:    -p/--password <new_password>"
-    echo "Show help menu:            -h/--help"
+    echo "Run new pipeline:   biolockj               <config_file>"
+    echo "Run new pipeline:             -c/--config  <config_file>"
+    echo "Restart pipeline:             -r/--restart  <directory>"
+    echo "Encrypt password:             -p/--pass     <new_passw>"
+    echo "Show help menu:               -h/--help"
     exit 0
 fi
 
@@ -101,8 +102,35 @@ if [ ${#newPass} -gt 0 ] && [ ${#config} -gt 0 ]; then
 	echo "Encrypt & save email password to Config property mail.encryptedPassword in $config\n"
 fi
 
+
+i=0
+initPipeline=$(most_recent_pipeline)
+pipelineDir=$(most_recent_pipeline)
+initJava=$(ps | grep -c java)
+numJava=$(ps | grep -c java)
+
 nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &
-
 [ $? != 0 ] && echo "Exit program - Unable to run $bljJar" && exit 1
+echo "Initializing BioLockJ"
 
-echo "Executing command: \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\""
+while [ $i -lt 10 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
+	sleep 1
+	((i++))
+	pipelineDir="$(most_recent_pipeline)"
+	numJava=$(ps | grep -c java)
+done
+
+
+if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ] && [ "$initPipeline" == "$pipelineDir" ]; then
+	echo "Restarted pipeline:  $pipelineDir"
+elif [ ${#restart} -eq 0 ] && [ "$initPipeline" != "$pipelineDir" ]; then
+	echo "Started new pipeline:  $pipelineDir"
+else
+	echo "BioLockJ may have failed on: exec( \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\" )"
+	echo "Check $BLJ_PROJ for new pipeline directory"
+	exit 1
+fi
+
+echo "blj_go       -> Move to pipeline output directory"
+echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
+echo "blj_summary  -> View module execution summary"

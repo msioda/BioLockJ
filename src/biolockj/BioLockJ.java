@@ -11,7 +11,9 @@
  */
 package biolockj;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
@@ -51,45 +53,6 @@ public class BioLockJ
 				throw new Exception( "Unable to copy file to pipeline root directory: " + file.getAbsolutePath() );
 			}
 
-		}
-	}
-	
-	/**
-	 * Initialize restarted pipeline by:
-	 * <ol> 
-	 * <li> Set {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}
-	 * <li> Initialize {@link biolockj.Log} file
-	 * <li> Update summary #Attempts ccount
-	 * <li> Verify pipeline status in not {@value biolockj.Pipeline#BLJ_COMPLETE}
-	 * <li> Delete status file {@value biolockj.Pipeline#BLJ_FAILED} in pipeline root directory
-	 * </ol>
-	 * @throws Exception
-	 */
-	protected static void initRestart() throws Exception
-	{
-		Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
-		Log.initialize( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
-		
-		Log.warn( BioLockJ.class, RETURN + RETURN + Log.LOG_SPACER + RETURN 
-				+ "RESTART PROJECT DIR --> " + RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN 
-				+ Log.LOG_SPACER + RETURN + RETURN );
-		
-		SummaryUtil.updateNumAttempts();
-		if( isPipelineComplete( RuntimeParamUtil.getRestartDir() ) )
-		{
-			throw new Exception(
-					"RESTART FAILED!  Pipeline already ran successfully: " + RuntimeParamUtil.getRestartDir().getAbsolutePath() );
-		}
-		else
-		{
-			final File f = new File( RuntimeParamUtil.getRestartDir().getAbsolutePath() + File.separator + Pipeline.BLJ_FAILED );
-			if( f.exists() )
-			{
-				if( !BioLockJUtil.deleteWithRetry( f, 5 ) )
-				{
-					Log.warn(  BioLockJ.class, "Unable to delete " + f.getAbsolutePath() );
-				}
-			}
 		}
 	}
 
@@ -148,7 +111,8 @@ public class BioLockJ
 			}
 			else if( RuntimeParamUtil.isDirectMode() )
 			{
-				Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
+				Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR,
+						RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
 				Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModule() ) );
 			}
 			else if( RuntimeParamUtil.doRestart() )
@@ -209,6 +173,7 @@ public class BioLockJ
 			printFatalError( ex );
 			markProjectStatus( Pipeline.BLJ_FAILED );
 			logFinalException( args, ex );
+			SummaryUtil.addSummaryFooterForFailedPipeline();
 		}
 		finally
 		{
@@ -264,13 +229,13 @@ public class BioLockJ
 				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME );
 		final String dateString = "_" + year + month + day;
 		File projectDir = new File( baseString + dateString );
-		
+
 		int i = 2;
 		while( projectDir.exists() )
 		{
-//			throw new Exception( "Project already exists with today's date: " + projectDir.getAbsolutePath()
-//					+ ".  Restart failed pipelines with -r or save the Config file with a unique name and try again." );
-			
+			// throw new Exception( "Project already exists with today's date: " + projectDir.getAbsolutePath()
+			// + ". Restart failed pipelines with -r or save the Config file with a unique name and try again." );
+
 			projectDir = new File( baseString + "_" + i++ + dateString );
 		}
 
@@ -278,76 +243,118 @@ public class BioLockJ
 		return projectDir;
 	}
 
-//	/**
-//	 * Method called if restart flag passed to BioLockJ to look in $DOCKER_PROJ for the most recent pipeline sharing the
-//	 * same project name. Delete status indicator if {@value biolockj.Pipeline#BLJ_FAILED} found in root directory.
-//	 *
-//	 * @return File - the existing pipeline root directory to restart
-//	 * @throws Exception thrown if the most recent pipeline with the same project name is not found or ran successfully
-//	 */
-//	protected static File getRestartDir() throws Exception
-//	{
-//		File restartDir = null;
-//		GregorianCalendar mostRecent = null;
-//		Log.info( BioLockJ.class,
-//				"Looking for most recent pipeline for: " + Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
-//		final FileFilter ff = new WildcardFileFilter( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "*" );
-//		final File[] dirs = RuntimeParamUtil.getBaseDir().listFiles( ff );
-//
-//		for( final File d: dirs )
-//		{
-//			if( !d.isDirectory()
-//					|| d.getName().length() != Config.requireString( Config.INTERNAL_PIPELINE_NAME ).length() + 10 )
-//			{
-//				continue;
-//			}
-//
-//			final String name = d.getName();
-//			final int len = name.length();
-//			final String year = name.substring( len - 9, len - 5 );
-//			final String mon = name.substring( len - 5, len - 2 );
-//			final String day = name.substring( len - 2 );
-//			final Date date = new SimpleDateFormat( "yyyyMMMdd" ).parse( year + mon + day );
-//			final GregorianCalendar projectDate = new GregorianCalendar();
-//			projectDate.setTime( date );
-//
-//			// Value > 0 if projectDate has a more recent date than mostRecent
-//			if( mostRecent == null || projectDate.compareTo( mostRecent ) > 0 )
-//			{
-//				Log.info( BioLockJ.class, "Found previous pipeline run = " + d.getAbsolutePath() );
-//				restartDir = d;
-//				mostRecent = projectDate;
-//			}
-//		}
-//
-//		if( restartDir == null )
-//		{
-//			throw new Exception(
-//					"Unalbe to locate restart directory in --> " + RuntimeParamUtil.getBaseDir().getAbsolutePath() );
-//		}
-//
-//		if( isPipelineComplete( restartDir ) )
-//		{
-//			throw new Exception(
-//					"RESTART FAILED!  Pipeline already ran successfully: " + restartDir.getAbsolutePath() );
-//		}
-//		else
-//		{
-//			final File f = new File( restartDir.getAbsolutePath() + File.separator + Pipeline.BLJ_FAILED );
-//			if( f.exists() )
-//			{
-//				BioLockJUtil.deleteWithRetry( f, 5 );
-//			}
-//		}
-//
-//		Log.warn( BioLockJ.class, RETURN );
-//		Log.warn( BioLockJ.class, Log.LOG_SPACER );
-//		Log.warn( BioLockJ.class, "RESTART PROJECT DIR --> " + restartDir.getAbsolutePath() );
-//		Log.warn( BioLockJ.class, Log.LOG_SPACER );
-//		Log.warn( BioLockJ.class, RETURN );
-//
-//		return restartDir;
-//	}
+	/**
+	 * Initialize restarted pipeline by:
+	 * <ol>
+	 * <li>Set {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}
+	 * <li>Initialize {@link biolockj.Log} file
+	 * <li>Update summary #Attempts ccount
+	 * <li>Verify pipeline status in not {@value biolockj.Pipeline#BLJ_COMPLETE}
+	 * <li>Delete status file {@value biolockj.Pipeline#BLJ_FAILED} in pipeline root directory
+	 * </ol>
+	 * 
+	 * @throws Exception
+	 */
+	protected static void initRestart() throws Exception
+	{
+		Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+		Log.initialize( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
+
+		Log.warn( BioLockJ.class, RETURN + RETURN + Log.LOG_SPACER + RETURN + "RESTART PROJECT DIR --> "
+				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN + Log.LOG_SPACER + RETURN + RETURN );
+
+		SummaryUtil.updateNumAttempts();
+		if( isPipelineComplete( RuntimeParamUtil.getRestartDir() ) )
+		{
+			throw new Exception( "RESTART FAILED!  Pipeline already ran successfully: "
+					+ RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+		}
+		else
+		{
+			final File f = new File(
+					RuntimeParamUtil.getRestartDir().getAbsolutePath() + File.separator + Pipeline.BLJ_FAILED );
+			if( f.exists() )
+			{
+				if( !BioLockJUtil.deleteWithRetry( f, 5 ) )
+				{
+					Log.warn( BioLockJ.class, "Unable to delete " + f.getAbsolutePath() );
+				}
+			}
+		}
+	}
+
+	// /**
+	// * Method called if restart flag passed to BioLockJ to look in $DOCKER_PROJ for the most recent pipeline sharing
+	// the
+	// * same project name. Delete status indicator if {@value biolockj.Pipeline#BLJ_FAILED} found in root directory.
+	// *
+	// * @return File - the existing pipeline root directory to restart
+	// * @throws Exception thrown if the most recent pipeline with the same project name is not found or ran
+	// successfully
+	// */
+	// protected static File getRestartDir() throws Exception
+	// {
+	// File restartDir = null;
+	// GregorianCalendar mostRecent = null;
+	// Log.info( BioLockJ.class,
+	// "Looking for most recent pipeline for: " + Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
+	// final FileFilter ff = new WildcardFileFilter( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "*" );
+	// final File[] dirs = RuntimeParamUtil.getBaseDir().listFiles( ff );
+	//
+	// for( final File d: dirs )
+	// {
+	// if( !d.isDirectory()
+	// || d.getName().length() != Config.requireString( Config.INTERNAL_PIPELINE_NAME ).length() + 10 )
+	// {
+	// continue;
+	// }
+	//
+	// final String name = d.getName();
+	// final int len = name.length();
+	// final String year = name.substring( len - 9, len - 5 );
+	// final String mon = name.substring( len - 5, len - 2 );
+	// final String day = name.substring( len - 2 );
+	// final Date date = new SimpleDateFormat( "yyyyMMMdd" ).parse( year + mon + day );
+	// final GregorianCalendar projectDate = new GregorianCalendar();
+	// projectDate.setTime( date );
+	//
+	// // Value > 0 if projectDate has a more recent date than mostRecent
+	// if( mostRecent == null || projectDate.compareTo( mostRecent ) > 0 )
+	// {
+	// Log.info( BioLockJ.class, "Found previous pipeline run = " + d.getAbsolutePath() );
+	// restartDir = d;
+	// mostRecent = projectDate;
+	// }
+	// }
+	//
+	// if( restartDir == null )
+	// {
+	// throw new Exception(
+	// "Unalbe to locate restart directory in --> " + RuntimeParamUtil.getBaseDir().getAbsolutePath() );
+	// }
+	//
+	// if( isPipelineComplete( restartDir ) )
+	// {
+	// throw new Exception(
+	// "RESTART FAILED! Pipeline already ran successfully: " + restartDir.getAbsolutePath() );
+	// }
+	// else
+	// {
+	// final File f = new File( restartDir.getAbsolutePath() + File.separator + Pipeline.BLJ_FAILED );
+	// if( f.exists() )
+	// {
+	// BioLockJUtil.deleteWithRetry( f, 5 );
+	// }
+	// }
+	//
+	// Log.warn( BioLockJ.class, RETURN );
+	// Log.warn( BioLockJ.class, Log.LOG_SPACER );
+	// Log.warn( BioLockJ.class, "RESTART PROJECT DIR --> " + restartDir.getAbsolutePath() );
+	// Log.warn( BioLockJ.class, Log.LOG_SPACER );
+	// Log.warn( BioLockJ.class, RETURN );
+	//
+	// return restartDir;
+	// }
 
 	/**
 	 * Create indicator file in pipeline root directory, with name = status parameter.
@@ -509,15 +516,24 @@ public class BioLockJ
 				errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
 						+ new Integer( ++index ).toString() + ".log" ) );
 			}
-			
+
 			printFatalError( fatalException );
 
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
-			for( final String msg: Log.getMsgs() )
+			try
 			{
-				writer.write( msg + RETURN );
+				for( final String msg: Log.getMsgs() )
+				{
+					writer.write( msg + RETURN );
+				}
 			}
-			writer.close();
+			finally
+			{
+				if( writer != null )
+				{
+					writer.close();
+				}
+			}
 
 		}
 		catch( final Exception ex )
@@ -568,6 +584,16 @@ public class BioLockJ
 	public static final long APP_START_TIME = System.currentTimeMillis();
 
 	/**
+	 * BioLockJ log file extension constant: {@value #LOG_EXT}
+	 */
+	public static final String LOG_EXT = ".log";
+
+	/**
+	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
+	 */
+	public static final String PDF_EXT = ".pdf";
+
+	/**
 	 * {@link biolockj.Config} property set to copy input files into pipeline root directory:
 	 * {@value #PROJECT_COPY_FILES}
 	 */
@@ -580,14 +606,34 @@ public class BioLockJ
 	public static final String PROJECT_DELETE_TEMP_FILES = "project.deleteTempFiles";
 
 	/**
+	 * BioLockJ properties file extension constant: {@value #PROP_EXT}
+	 */
+	public static final String PROP_EXT = ".properties";
+
+	/**
 	 * Return character constant *backslash-n*
 	 */
 	public static final String RETURN = "\n";
 
 	/**
-	 * Tab delimiter character: {@value #TAB_DELIM}
+	 * BioLockJ shell script file extension constant: {@value #SH_EXT}
+	 */
+	public static final String SH_EXT = ".sh";
+
+	/**
+	 * BioLockJ tab character constant: {@value #TAB_DELIM}
 	 */
 	public static final String TAB_DELIM = "\t";
+
+	/**
+	 * BioLockJ tab delimited text file extension constant: {@value #TSV_EXT}
+	 */
+	public static final String TSV_EXT = ".tsv";
+
+	/**
+	 * BioLockJ standard text file extension constant: {@value #TXT_EXT}
+	 */
+	public static final String TXT_EXT = ".txt";
 
 	/**
 	 * {@link biolockj.Config} property to define permission setttings when running chmod on pipeline root dir:

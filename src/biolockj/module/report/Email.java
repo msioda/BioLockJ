@@ -119,11 +119,11 @@ public class Email extends BioModuleImpl implements BioModule
 	{
 		String startTls = "false";
 		String smtpAuth = "false";
-		if( Config.requireBoolean( EMAIL_SMTP_AUTH ) )
+		if( Config.getBoolean( EMAIL_SMTP_AUTH ) )
 		{
 			smtpAuth = "true";
 		}
-		if( Config.requireBoolean( EMAIL_START_TLS_ENABLE ) )
+		if( Config.getBoolean( EMAIL_START_TLS_ENABLE ) )
 		{
 			startTls = "true";
 		}

@@ -23,20 +23,30 @@ import java.util.Map;
 public interface OtuNode
 {
 	/**
-	 * Build the {@link biolockj.node.OtuNode} if level is configured in:
-	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}.
-	 *
-	 * @param otu Classifier OTU name
+	 * Add {@link biolockj.node.OtuNode} taxa names for the
+	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS} level mapped by the classifier specific
+	 * levelDelim parameter: .
+	 * 
+	 * @param taxa Classifier Taxa name
 	 * @param levelDelim Classifier specific taxonomy level indicator
+	 * @throws Exception if errors occur adding the taxa
 	 */
-	public void buildOtuNode( final String otu, final String levelDelim );
+	public void addTaxa( final String taxa, final String levelDelim ) throws Exception;
+
+	/**
+	 * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to
+	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
+	 * 
+	 * @return Map<String, String>
+	 */
+	public Map<String, String> delimToLevelMap();
 
 	/**
 	 * Gets the OTU count.
 	 *
 	 * @return Number of reads in node sampleId with node OTU assignment
 	 */
-	public Long getCount();
+	public int getCount();
 
 	/**
 	 * Get the line from classifier output file used to create this OtuNode.
@@ -46,11 +56,11 @@ public interface OtuNode
 	public String getLine();
 
 	/**
-	 * Gets the map holding level-specific OTU names
-	 *
-	 * @return OTU map (key=level, value=OTU)
+	 * Build the OTU name from the taxaMap.
+	 * 
+	 * @return OTU name
 	 */
-	public Map<String, String> getOtuMap();
+	public String getOtuName();
 
 	/**
 	 * Gets the sample ID to which the read belongs
@@ -60,16 +70,19 @@ public interface OtuNode
 	public String getSampleId();
 
 	/**
-	 * Print level name and OTU name for each taxonomy level populated.
+	 * Gets the map holding level-specific OTU names
+	 *
+	 * @return OTU map (key=level, value=OTU)
+	 * @throws Exception if errors occur building map
 	 */
-	public void report();
+	public Map<String, String> getTaxaMap() throws Exception;
 
 	/**
 	 * Set the number of reads for a sample ID that have this OTU assignment.
 	 *
 	 * @param count Number of reads having this OTU assignment
 	 */
-	public void setCount( Long count );
+	public void setCount( int count );
 
 	/**
 	 * Set the classifier report line parsed to build this OTU node.

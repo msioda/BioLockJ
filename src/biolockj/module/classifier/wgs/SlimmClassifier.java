@@ -46,7 +46,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 			final String alignFile = getTempDir().getAbsolutePath() + File.separator + fileId + ".bam";
 			final ArrayList<String> lines = new ArrayList<>( 2 );
 			lines.add( FUNCTION_ALIGN + " " + file.getAbsolutePath() + " " + getTempDir().getAbsolutePath()
-					+ File.separator + fileId + "_alignmentReport.txt " + alignFile );
+					+ File.separator + fileId + "_alignmentReport" + TXT_EXT + " " + alignFile );
 			lines.add( getClassifierExe() + slimmSwitches + "-m " + getDB() + " -o " + getOutputDir().getAbsolutePath()
 					+ File.separator + " " + alignFile );
 			data.add( lines );
@@ -76,7 +76,8 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 			final String alignFile = getTempDir().getAbsolutePath() + File.separator + fileId + ".bam";
 			final ArrayList<String> lines = new ArrayList<>( 2 );
 			lines.add( FUNCTION_ALIGN + " " + file.getAbsolutePath() + " " + map.get( file ).getAbsolutePath() + " "
-					+ getTempDir().getAbsolutePath() + File.separator + fileId + "_alignmentReport.txt " + alignFile );
+					+ getTempDir().getAbsolutePath() + File.separator + fileId + "_alignmentReport" + TXT_EXT + " "
+					+ alignFile );
 			lines.add( getClassifierExe() + slimmSwitches + "-m " + getDB() + " -o " + getOutputDir().getAbsolutePath()
 					+ File.separator + " " + alignFile );
 			data.add( lines );

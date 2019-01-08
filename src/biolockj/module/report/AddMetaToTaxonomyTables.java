@@ -16,20 +16,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.module.r.R_Module;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
-public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
+public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModule
 {
+
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
 	 */
@@ -90,6 +89,12 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 		return super.getSummary() + sb.toString();
 	}
 
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return OtuUtil.outputHasTaxonomyTables( previousModule );
+	}
+
 	/**
 	 * This method matches records from the OTU table and the metadata file by matching the sample ID value in the very
 	 * 1st column.
@@ -97,8 +102,10 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		if( MetaUtil.getFieldNames().contains( RegisterNumReads.NUM_READS )
-				&& MetaUtil.getFieldNames().contains( ParserModuleImpl.NUM_HITS ) )
+		final String numReadsCol = RegisterNumReads.getNumReadFieldName();
+		final String numHitsCol = ParserModuleImpl.getOtuCountField();
+		if( numReadsCol != null && numHitsCol != null && MetaUtil.getFieldNames().contains( numReadsCol )
+				&& MetaUtil.getFieldNames().contains( numHitsCol ) )
 		{
 			addHitRatioToMetadata();
 		}
@@ -120,7 +127,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 		for( final String id: MetaUtil.getSampleIds() )
 		{
 			final String numReadsField = MetaUtil.getField( id, RegisterNumReads.getNumReadFieldName() );
-			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.NUM_HITS );
+			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getOtuCountField() );
 
 			if( numReadsField == null || numHitsField == null
 					|| numReadsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) )
@@ -138,7 +145,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		MetaUtil.addColumn( HIT_RATIO, hitRatioPerSample, getOutputDir() );
+		MetaUtil.addColumn( HIT_RATIO, hitRatioPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -151,8 +158,7 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 		for( final File file: getInputFiles() )
 		{
-			final String name = Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_"
-					+ file.getName().replaceAll( R_Module.TSV_EXT, "" ) + META_MERGED;
+			final String name = file.getName().replaceAll( TSV_EXT, "" ) + META_MERGED;
 			Log.info( getClass(), "Merge OTU table + Metadata file: " + outDir + name );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
@@ -215,15 +221,15 @@ public class AddMetadataToOtuTables extends JavaModuleImpl implements JavaModule
 	private String mergeSampleLine = null;
 
 	/**
-	 * Metadata column name for column that stores the calculation for
-	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_HITS}/{@value biolockj.module.implicit.RegisterNumReads#NUM_READS}:
-	 * {@value #HIT_RATIO}.
+	 * Metadata column name for column that stores the calculation for:
+	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getOtuCountField()}/
+	 * {@link biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}: {@value #HIT_RATIO}.
 	 */
 	public static final String HIT_RATIO = "Hit_Ratio";
 
 	/**
 	 * File suffix added to OTU table file name once merged with metadata.
 	 */
-	public static final String META_MERGED = "_metaMerged" + R_Module.TSV_EXT;
+	public static final String META_MERGED = "_metaMerged" + TSV_EXT;
 	private static final Map<String, String> hitRatioPerSample = new HashMap<>();
 }

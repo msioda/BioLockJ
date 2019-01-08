@@ -12,9 +12,7 @@
 package biolockj.module.report;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
@@ -27,25 +25,9 @@ import biolockj.util.MetaUtil;
 import biolockj.util.OtuUtil;
 
 /**
- * This utility is used to normalize and/or log-transform the raw OTU counts using the formulas:
- * <ul>
- * <li>Normalized OTU count formula = (RC/n)*((SUM(x))/N)+1
- * <li>Relative abundance formula = Log(log_base) [ (RC/n)*((SUM(x))/N)+1 ]
- * </ul>
- * The code implementation supports (log_base = e) and (log_base = 10) which is configured via
- * {@link biolockj.Config#REPORT_LOG_BASE} property.
- * <ul>
- * <li>RC = Sample OTU count read in from each Sample-OTU cell in the raw count file passed to the constructor
- * <li>n = number of sequences in the sample, read in as the row sum (sum of OTU counts for the sample)
- * <li>SUM(x) = total number of counts in the table, read in as the table sum (sum of OTU counts for all samples)
- * <li>N = total number of samples, rowCount - 1 (header row)
- * </ul>
- * Further explanation regarding the normalization scheme, please read The ISME Journal 2013 paper by Dr. Anthony Fodor:
- * "Stochastic changes over time and not founder effects drive cage effects in microbial community assembly in a mouse
- * model" <a href= "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/" target=
- * "_top">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/</a>
+ * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.
  */
-public class Normalizer extends JavaModuleImpl implements JavaModule
+public class LogTransformer extends JavaModuleImpl implements JavaModule
 {
 
 	/**
@@ -57,33 +39,14 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		logBase = Config.getString( Config.REPORT_LOG_BASE );
-		if( logBase != null )
+		logBase = Config.requireString( Config.REPORT_LOG_BASE );
+
+		if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
 		{
-			if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
-			{
-				throw new ConfigFormatException( Config.REPORT_LOG_BASE,
-						"Property only accepts value \"10\" or \"e\"" );
-			}
-			Log.debug( getClass(), "Found logBase: " + logBase );
+			throw new ConfigFormatException( Config.REPORT_LOG_BASE, "Property only accepts value \"10\" or \"e\"" );
 		}
-		else
-		{
-			logBase = "";
-		}
+
 		super.checkDependencies();
-	}
-
-	@Override
-	public String getSummary() throws Exception
-	{
-		if( Config.getString( Config.REPORT_LOG_BASE ) != null )
-		{
-			summary += " Log(" + Config.getString( Config.REPORT_LOG_BASE ) + ")";
-		}
-
-		summary += " normalized tables";
-		return super.getSummary() + summary;
 	}
 
 	@Override
@@ -100,23 +63,20 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	{
 		for( final File file: getInputFiles() )
 		{
-			normalize( file );
+			transform( file );
 		}
-
-		summary = "Output " + getInputFiles().size();
 	}
 
 	/**
-	 * Populate normalized OTU counts with the formula: (RC/n)*((SUM(x))/N)+1
+	 * Log transform the data
 	 *
-	 * @param taxaTable OTU raw count table
+	 * @param otuTable OTU raw count table
 	 * @throws Exception if unable to construct DataNormalizer
 	 */
-	protected void normalize( final File taxaTable ) throws Exception
+	protected void transform( final File otuTable ) throws Exception
 	{
-		final BufferedReader reader = BioLockJUtil.getFileReader( taxaTable );
-		final List<List<Double>> dataPointsNormalized = new ArrayList<>();
-		final List<List<Double>> dataPointsNormalizedThenLogged = new ArrayList<>();
+		final BufferedReader reader = BioLockJUtil.getFileReader( otuTable );
+		final List<List<Double>> dataPointsLogged = new ArrayList<>();
 		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();
 		final List<String> sampleNames = new ArrayList<>();
 		final List<String> otuNames = getOtuNames( reader.readLine() );
@@ -130,8 +90,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 			final List<Double> innerList = new ArrayList<>();
 			sampleNames.add( sampleName );
 			dataPointsUnnormalized.add( innerList );
-			dataPointsNormalized.add( new ArrayList<Double>() );
-			dataPointsNormalizedThenLogged.add( new ArrayList<Double>() );
+			dataPointsLogged.add( new ArrayList<Double>() );
 
 			while( st.hasMoreTokens() )
 			{
@@ -150,52 +109,44 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 		}
 
 		reader.close();
-		assertNum( totalCounts, dataPointsUnnormalized );
-		assertNoZeros( dataPointsUnnormalized );
-		final double avgNumber = totalCounts / dataPointsNormalized.size();
+		assertNum( otuTable, totalCounts, dataPointsUnnormalized );
+		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
-			final List<Double> unnormalizedInnerList = dataPointsUnnormalized.get( x );
-			double sum = 0;
-
-			for( final Double d: unnormalizedInnerList )
+			if( x == 14 )
 			{
-				sum += d;
+				Log.warn( getClass(), "Found all zero row" + x );
 			}
+			final List<Double> unnormalizedInnerList = dataPointsUnnormalized.get( x );
 
-			final List<Double> normalizedInnerList = dataPointsNormalized.get( x );
-			final List<Double> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
+			final List<Double> loggedInnerList = dataPointsLogged.get( x );
 
 			for( int y = 0; y < unnormalizedInnerList.size(); y++ )
 			{
-				final double val = avgNumber * unnormalizedInnerList.get( y ) / sum;
-				normalizedInnerList.add( val );
-
+				if( allZeroIndex.contains( x ) )
+				{
+					// index 0 = col headers, so add + 1
+					final String id = MetaUtil.getSampleIds().get( x + 1 );
+					Log.warn( getClass(), "All zero row will not be transformed for " + id );
+				}
 				if( logBase.equalsIgnoreCase( LOG_E ) )
 				{
-					loggedInnerList.add( Math.log( val + 1 ) );
+					loggedInnerList.add( Math.log( y + 1 ) );
 				}
 				else if( logBase.equalsIgnoreCase( LOG_10 ) )
 				{
-					loggedInnerList.add( Math.log10( val + 1 ) );
+					loggedInnerList.add( Math.log10( y + 1 ) );
 				}
 			}
 		}
 
-		final String level = OtuUtil.getTaxonomyTableLevel( taxaTable );
-		Log.debug( getClass(), "Normalizing table for level: " + level );
-		if( !logBase.isEmpty() )
-		{
-			final File logNormTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase + NORMAL );
-			writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsNormalizedThenLogged );
-		}
-		else
-		{
-			final File normTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, NORMAL );
-			writeDataToFile( normTable, sampleNames, otuNames, dataPointsNormalized );
-		}
+		final String level = OtuUtil.getTaxonomyTableLevel( otuTable );
+		Log.debug( getClass(), "Transforming table for level: " + level );
 
+		final File logNormTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase );
+
+		writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsLogged );
 	}
 
 	private List<String> getOtuNames( final String firstLine ) throws Exception
@@ -244,30 +195,8 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 		writer.close();
 	}
 
-	private static void assertNoZeros( final List<List<Double>> dataPointsUnnormalized ) throws Exception
-	{
-		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
-		{
-			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
-			{
-				double sum = 0;
-
-				for( final Double d: dataPointsUnnormalized.get( x ) )
-				{
-					sum += d;
-				}
-
-				if( sum == 0 )
-				{
-					throw new Exception( "Logic error" );
-				}
-
-			}
-		}
-	}
-
-	private static void assertNum( final int totalCounts, final List<List<Double>> dataPointsUnnormalized )
-			throws Exception
+	private static void assertNum( final File otuTable, final int totalCounts,
+			final List<List<Double>> dataPointsUnnormalized ) throws Exception
 	{
 		int sum = 0;
 
@@ -281,7 +210,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 
 		if( totalCounts != sum )
 		{
-			throw new Exception( "Logic error " + totalCounts + " " + sum );
+			throw new Exception( "Logic error " + totalCounts + " " + sum + " --> " + otuTable.getAbsolutePath() );
 		}
 
 		if( dataPointsUnnormalized.size() > 0 )
@@ -292,19 +221,36 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 			{
 				if( length != dataPointsUnnormalized.get( x ).size() )
 				{
-					throw new Exception( "Jagged array" );
+					throw new Exception( "Jagged array in: " + otuTable.getAbsolutePath() );
 				}
 			}
 		}
 	}
 
-	private String logBase = "";
-	private String summary = "";
+	private static Set<Integer> findAllZeroIndex( final List<List<Double>> dataPointsUnnormalized ) throws Exception
+	{
+		final Set<Integer> allZero = new HashSet<>();
+		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
+		{
+			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
+			{
+				double sum = 0;
 
-	/**
-	 * File suffix appended to normalized OTU tables
-	 */
-	public static final String NORMAL = "_norm";
+				for( final Double d: dataPointsUnnormalized.get( x ) )
+				{
+					sum += d;
+				}
+
+				if( sum == 0 )
+				{
+					allZero.add( x );
+				}
+			}
+		}
+		return allZero;
+	}
+
+	private String logBase = "";
 
 	/**
 	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Config#REPORT_LOG_BASE}

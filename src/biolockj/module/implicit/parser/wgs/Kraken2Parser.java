@@ -13,12 +13,10 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.OtuNode;
-import biolockj.node.ParsedSample;
 import biolockj.node.wgs.Kraken2Node;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MemoryUtil;
@@ -47,33 +45,24 @@ public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 	{
 		for( final File file: getInputFiles() )
 		{
-			ParsedSample sample = null;
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			try
 			{
-				final Kraken2Node node = new Kraken2Node( file.getName().replace( ClassifierModule.PROCESSED, "" ),
-						line );
-				if( isValid( node ) )
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-					sample = getParsedSample( node.getSampleId() );
-					if( sample == null )
-					{
-						addParsedSample( new ParsedSample( node ) );
-					}
-					else
-					{
-						sample.addNode( node );
-					}
+					// Log.debug( getClass(), " LINE = " + line );
+					addOtuNode( new Kraken2Node( file.getName().replace( ClassifierModule.PROCESSED, "" ), line ) );
 				}
 			}
-			reader.close();
-			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
-			if( sample != null )
+			finally
 			{
-				sample.buildOtuCounts();
-				sample.report();
+				if( reader != null )
+				{
+					reader.close();
+				}
 			}
+
 		}
 	}
 }

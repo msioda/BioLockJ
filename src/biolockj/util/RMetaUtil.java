@@ -21,7 +21,7 @@ import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.module.report.AddMetadataToOtuTables;
+import biolockj.module.report.AddMetaToTaxonomyTables;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -51,11 +51,11 @@ public final class RMetaUtil
 	 * <li>{@value biolockj.module.implicit.RegisterNumReads#NUM_READS}
 	 * <li>{@value biolockj.module.seq.TrimPrimers#NUM_TRIMMED_READS}
 	 * <li>{@value biolockj.module.seq.SeqFileValidator#NUM_VALID_READS}
-	 * <li>{@value biolockj.module.seq.Rarefier#NUM_RAREFIED_READS}
+	 * <li>{@value biolockj.module.seq.PreRarefier#NUM_RAREFIED_READS}
 	 * </ul>
 	 * <p>
 	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_HITS} = {@value biolockj.Config#TRUE}, add the
-	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_HITS} field as a numeric field.
+	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_OTUS} field as a numeric field.
 	 * <p>
 	 * Perform validations:
 	 * <ul>
@@ -78,11 +78,11 @@ public final class RMetaUtil
 		nominalFields.clear();
 		numericFields.clear();
 
-		nominalFields.addAll( Config.getSet( R_NOMINAL_FIELDS ) );
-		numericFields.addAll( Config.getSet( R_NUMERIC_FIELDS ) );
-		mdsFields.addAll( Config.getSet( MDS_REPORT_FIELDS ) );
+		nominalFields.addAll( Config.getTreeSet( R_NOMINAL_FIELDS ) );
+		numericFields.addAll( Config.getTreeSet( R_NUMERIC_FIELDS ) );
+		mdsFields.addAll( Config.getTreeSet( MDS_REPORT_FIELDS ) );
 
-		final Set<String> excludeFields = Config.getSet( R_EXCLUDE_FIELDS );
+		final Set<String> excludeFields = Config.getTreeSet( R_EXCLUDE_FIELDS );
 
 		nominalFields.removeAll( excludeFields );
 		numericFields.removeAll( excludeFields );
@@ -91,7 +91,7 @@ public final class RMetaUtil
 		final List<String> metaFields = MetaUtil.getFieldNames();
 
 		verifyMetadataFieldsExist( R_EXCLUDE_FIELDS, excludeFields );
-		verifyMetadataFieldsExist( R_REPORT_FIELDS, Config.getSet( R_REPORT_FIELDS ) );
+		verifyMetadataFieldsExist( R_REPORT_FIELDS, Config.getTreeSet( R_REPORT_FIELDS ) );
 		verifyMetadataFieldsExist( R_NUMERIC_FIELDS, numericFields );
 		verifyMetadataFieldsExist( R_NOMINAL_FIELDS, nominalFields );
 		verifyMetadataFieldsExist( MDS_REPORT_FIELDS, mdsFields );
@@ -104,7 +104,7 @@ public final class RMetaUtil
 					"List override numeric fields: " + BioLockJUtil.getCollectionAsString( numericFields ) );
 		}
 
-		rScriptFields.addAll( Config.getSet( R_REPORT_FIELDS ) );
+		rScriptFields.addAll( Config.getTreeSet( R_REPORT_FIELDS ) );
 
 		if( reportAllFields() )
 		{
@@ -120,7 +120,16 @@ public final class RMetaUtil
 			}
 
 			// remove BLJ generated fields since inclusion depends upon the report.num* properties
-			rScriptFields.remove( ParserModuleImpl.NUM_HITS );
+			if( ParserModuleImpl.getOtuCountField() != null )
+			{
+				rScriptFields.remove( ParserModuleImpl.getOtuCountField() );
+			}
+
+			if( ParserModuleImpl.getDepricatedOtuCountFields() != null )
+			{
+				rScriptFields.removeAll( ParserModuleImpl.getDepricatedOtuCountFields() );
+			}
+
 			if( RegisterNumReads.getNumReadFieldName() != null )
 			{
 				rScriptFields.remove( RegisterNumReads.getNumReadFieldName() );
@@ -158,27 +167,27 @@ public final class RMetaUtil
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, ParserModuleImpl.NUM_HITS ) )
+				&& isValidNumericField( metaFields, ParserModuleImpl.getOtuCountField() ) )
 		{
-			rScriptFields.add( ParserModuleImpl.NUM_HITS );
-			numericFields.add( ParserModuleImpl.NUM_HITS );
+			rScriptFields.add( ParserModuleImpl.getOtuCountField() );
+			numericFields.add( ParserModuleImpl.getOtuCountField() );
 		}
 		else
 		{
-			rScriptFields.remove( ParserModuleImpl.NUM_HITS );
-			numericFields.remove( ParserModuleImpl.NUM_HITS );
+			rScriptFields.remove( ParserModuleImpl.getOtuCountField() );
+			numericFields.remove( ParserModuleImpl.getOtuCountField() );
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, AddMetadataToOtuTables.HIT_RATIO ) )
+				&& isValidNumericField( metaFields, AddMetaToTaxonomyTables.HIT_RATIO ) )
 		{
-			rScriptFields.add( AddMetadataToOtuTables.HIT_RATIO );
-			numericFields.add( AddMetadataToOtuTables.HIT_RATIO );
+			rScriptFields.add( AddMetaToTaxonomyTables.HIT_RATIO );
+			numericFields.add( AddMetaToTaxonomyTables.HIT_RATIO );
 		}
 		else
 		{
-			rScriptFields.remove( AddMetadataToOtuTables.HIT_RATIO );
-			numericFields.remove( AddMetadataToOtuTables.HIT_RATIO );
+			rScriptFields.remove( AddMetaToTaxonomyTables.HIT_RATIO );
+			numericFields.remove( AddMetaToTaxonomyTables.HIT_RATIO );
 		}
 
 		if( reportAllFields() && !RuntimeParamUtil.isDirectMode() )
@@ -369,7 +378,7 @@ public final class RMetaUtil
 	 */
 	public static boolean reportAllFields()
 	{
-		return Config.getSet( R_REPORT_FIELDS ).isEmpty();
+		return Config.getTreeSet( R_REPORT_FIELDS ).isEmpty();
 	}
 
 	/**
@@ -420,7 +429,7 @@ public final class RMetaUtil
 
 	private static boolean isQiimeMetric( final String field )
 	{
-		final Set<String> alphaDivMetrics = Config.getSet( QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
+		final Set<String> alphaDivMetrics = Config.getTreeSet( QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( !alphaDivMetrics.isEmpty() )
 		{
 			for( final String metric: alphaDivMetrics )

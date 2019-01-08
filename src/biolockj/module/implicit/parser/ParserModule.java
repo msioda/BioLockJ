@@ -11,35 +11,35 @@
  */
 package biolockj.module.implicit.parser;
 
-import java.util.TreeSet;
 import biolockj.module.JavaModule;
+import biolockj.node.OtuNode;
 import biolockj.node.ParsedSample;
 
 /**
  * This interface defines the required methods to parse ClassifierModule output. Each BioLockJ ClassifierModule
  * implementation must have a corresponding ParserModule that understands the classifier output file format to extract
- * the OTU counts assigned to each sample. Parser BioModules read ClassifierModule output to build standardized OTU
- * abundance tables.
+ * the OTUs assigned to each sample. Parser BioModules read ClassifierModule output to build a single OTU count files
+ * for each sample using a standard format.
  */
 public interface ParserModule extends JavaModule
 {
 	/**
 	 * Each sample with taxonomic assignments from a {@link biolockj.module.classifier.ClassifierModule} is parsed by
 	 * {@link #parseSamples()} to produce a {@link biolockj.node.ParsedSample}. As each file is processed, this method
-	 * is called to add the {@link biolockj.node.ParsedSample} to the Set returned by {@link #getParsedSamples()}
+	 * is called to add the {@link biolockj.node.OtuNode} to the {@link biolockj.node.ParsedSample} with the same sample
+	 * ID (if valid).
 	 *
-	 * @param parsedSample ParsedSample
-	 * @throws Exception if unable to add the parsed sample
+	 * @param node OtuNode
+	 * @throws Exception if unable to add the OTU node
 	 */
-	public void addParsedSample( ParsedSample parsedSample ) throws Exception;
+	public void addOtuNode( OtuNode node ) throws Exception;
 
 	/**
-	 * After {@link #parseSamples()} completes, this method builds the OTU tables. For each level in
-	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}, 1 OTU table is generated.
+	 * After {@link #parseSamples()} completes, this method builds the OTU count files.
 	 *
 	 * @throws Exception if error occurs while building OTU tables
 	 */
-	public void buildOtuTables() throws Exception;
+	public void buildOtuCountFiles() throws Exception;
 
 	/**
 	 * After {@link #parseSamples()} completes, this method can be called to get a {@link biolockj.node.ParsedSample} by
@@ -49,14 +49,6 @@ public interface ParserModule extends JavaModule
 	 * @return ParsedSample with the given sampleId
 	 */
 	public ParsedSample getParsedSample( String sampleId );
-
-	/**
-	 * After {@link #parseSamples()} completes, this method can be called to get all of the
-	 * {@link biolockj.node.ParsedSample}s generated from the classifier output
-	 *
-	 * @return Set of all ParsedSamples
-	 */
-	public TreeSet<ParsedSample> getParsedSamples();
 
 	/**
 	 * Parse {@link biolockj.module.classifier.ClassifierModule} output to build {@link biolockj.node.ParsedSample}s.

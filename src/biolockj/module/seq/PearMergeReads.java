@@ -18,8 +18,7 @@ import biolockj.Log;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
-import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule will merge forward and reverse fastq files using PEAR.<br>
@@ -40,6 +39,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
 	{
+		sampleIds.addAll( MetaUtil.getSampleIds() );
 		final List<List<String>> data = new ArrayList<>();
 		final Map<File, File> map = SeqUtil.getPairedReads( files );
 		final Set<File> keys = new TreeSet<>( map.keySet() );
@@ -51,10 +51,6 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 					+ " " + map.get( file ).getAbsolutePath() + " " + getTempDir().getAbsolutePath() + " "
 					+ getOutputDir().getAbsolutePath() );
 
-			// lines.add( Config.getExe( EXE_PEAR ) + " -f " + file.getAbsolutePath() + " -r "
-			// + map.get( file ).getAbsolutePath() + " -o " + tempDir + sampleId + params );
-			// lines.add( "mv " + tempDir + sampleId + ".assembled." + SeqUtil.FASTQ + " " + outDir + sampleId + "."
-			// + SeqUtil.FASTQ );
 			data.add( lines );
 		}
 
@@ -82,7 +78,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 			throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
 		}
 
-		if( !Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			throw new Exception( getClass().getName()
 					+ " requires paired input data as a combined multiplexed file or as separate files named with "
@@ -99,6 +95,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public void cleanUp() throws Exception
 	{
+		final String metaColName = getMetaColName();
 		super.cleanUp();
 		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, Config.FALSE );
 
@@ -109,28 +106,42 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 			MetaUtil.setFile( updatedMeta );
 			MetaUtil.refreshCache();
 		}
-		else if( !MetaUtil.getFieldNames().contains( NUM_MERGED_READS ) )
+		else if( !MetaUtil.getFieldNames().contains( metaColName ) && readsPerSample != null )
 		{
 			Log.info( getClass(),
 					"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
-			final Map<String, String> readsPerSample = new HashMap<>();
 			for( final File f: getOutputDir().listFiles() )
 			{
-				final long count = SeqUtil.countNumReads( f );
+				final int count = SeqUtil.countNumReads( f );
 				Log.info( getClass(), "Num merged Reads for File:[" + f.getName() + "] ==> ID:["
 						+ SeqUtil.getSampleId( f.getName() ) + "] = " + count );
-				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
+				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Integer.toString( count ) );
 			}
 
-			MetaUtil.addColumn( NUM_MERGED_READS, readsPerSample, getOutputDir() );
+			MetaUtil.addColumn( metaColName, readsPerSample, getOutputDir(), true );
 		}
 		else
 		{
 			Log.warn( getClass(), "Counts for # merged reads/sample already found in metadata, not re-counting "
 					+ MetaUtil.getFile().getAbsolutePath() );
 		}
+		RegisterNumReads.setNumReadFieldName( metaColName );
+	}
 
-		RegisterNumReads.setNumReadFieldName( NUM_MERGED_READS );
+	/**
+	 * Produce summary message with min, max, mean, and median number of reads.
+	 */
+	@Override
+	public String getSummary() throws Exception
+	{
+		String summary = SummaryUtil.getCountSummary( readsPerSample, "Paired Reads" );
+		sampleIds.removeAll( readsPerSample.keySet() );
+		if( !sampleIds.isEmpty() )
+		{
+			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+		}
+		readsPerSample = null;
+		return super.getSummary() + summary;
 	}
 
 	/**
@@ -147,6 +158,16 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 				+ SeqUtil.FASTQ );
 		lines.add( "}" );
 		return lines;
+	}
+
+	private String getMetaColName() throws Exception
+	{
+		if( otuColName == null )
+		{
+			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_MERGED_READS );
+		}
+
+		return otuColName;
 	}
 
 	/**
@@ -166,6 +187,10 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 
 		return formattedSwitches;
 	}
+
+	private String otuColName = null;
+	private Map<String, String> readsPerSample = new HashMap<>();
+	private final Set<String> sampleIds = new HashSet<>();
 
 	/**
 	 * Metadata column name for column that holds number of reads per sample after merging: {@value #NUM_MERGED_READS}

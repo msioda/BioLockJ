@@ -13,133 +13,102 @@ package biolockj.node;
 
 import java.util.HashMap;
 import java.util.Map;
-import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.util.OtuUtil;
 
 /**
  * The default implementation of {@link biolockj.node.OtuNode} is also the superclass for all WGS and 16S OtuNode
  * classes. OtuNodes hold taxonomy assignment info, represents one line of
- * {@link biolockj.module.classifier.ClassifierModule} output. The assignment is stored in a local otuMap, which holds
- * one OTU name per level (level-gaps allowed).
+ * {@link biolockj.module.classifier.ClassifierModule} output. The assignment is stored in a local taxaMap, which holds
+ * one taxa name per taxonomy level.
  */
-public abstract class OtuNodeImpl implements OtuNode
+public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 {
-
+	/**
+	 * If called for level not included in {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS},
+	 * check if the top level taxonomy level is already assigned. If so, populate missing levels by passing the parent
+	 * taxa to {@link biolockj.util.OtuUtil#getUnclassifiedTaxa(String)} until the given in level is assigned.<br>
+	 * <br>
+	 * This method assumes it is called repeatedly for each OTU (once/level) and that each subsequent call passes a
+	 * lower taxonomy level than the previous.
+	 * 
+	 * @param taxa Taxa name
+	 * @param level Taxonomy level
+	 * @throws Exception if errors occur
+	 */
 	@Override
-	public void buildOtuNode( final String otu, final String levelDelim )
+	public void addTaxa( final String taxa, final String level ) throws Exception
 	{
-		// Log.debug( getClass(), id + " buildOtuNode --> OTU: " + otu + " : delim = " + levelDelim );
-
-		if( levelDelim != null && otu != null && !levelDelim.trim().isEmpty() && !otu.trim().isEmpty() )
+		if( level == null || taxa == null || level.trim().isEmpty() || taxa.trim().isEmpty() )
 		{
-			final String taxaLevel = delimToLevelMap().get( levelDelim );
+			Log.debug( getClass(), "ID=[ " + sampleId + " ] --> Taxa missing for: level=[ " + level + " ]; Taxa=[ "
+					+ taxa + " ]; Line =[ " + line + " ]" );
+			return;
+		}
 
-			// if taxaLevel not configured or for level BioLockJ doesn't support (like strain) - take no action
-			if( taxaLevel == null || !Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( taxaLevel ) )
+		if( !Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( level ) )
+		{
+			if( !taxaMap.containsKey( OtuUtil.getTopTaxaLevel() ) )
 			{
-				// Log.debug( getClass(), "OtuNode.addOtu() skipping invalid taxaLevel (not configured or not
-				// supported): delim="
-				// + levelDelim + "; taxa=" + taxaLevel );
+				// Some classifiers will report a species or genus name but are missing domain/phylum/class/order/family
+				// info.
+				// If top level taxonomy level undefined, we omit the result for lack of context.
 				return;
 			}
 
-			if( otuMap.get( taxaLevel ) != null )
+			// Some classifiers will report a phylum and a lower level (like genus) but are missing in-between levels.
+			// Populate missing levels between top-level and current level
+			String parentTaxa = null;
+			for( final String testLevel: OtuUtil.getTaxaLevelSpan() )
 			{
-				Log.debug( getClass(),
-						id + " overwriting OTU: " + otuMap.get( taxaLevel ) + " with " + otu + "  --> Line = " + line );
+				if( taxaMap.keySet().contains( testLevel ) )
+				{
+					parentTaxa = taxaMap.get( testLevel );
+				}
+				else if( parentTaxa != null )
+				{
+					final String unclassifiedTaxa = OtuUtil.getUnclassifiedTaxa( parentTaxa );
+					taxaMap.put( testLevel, unclassifiedTaxa );
+					// Log.debug( getClass(), testLevel + " taxa undefined, inherit parent name as: " + unclassifiedTaxa
+					// );
+				}
+
+				if( level.equals( testLevel ) )
+				{
+					return;
+				}
 			}
 
-			otuMap.put( taxaLevel, otu );
+			// Log.debug( getClass(), level + " = Not a valid level" );
+			return;
 		}
-		else
+
+		if( taxaMap.get( level ) != null )
 		{
-			Log.debug( getClass(), "ID=[ " + id + " ] --> OTU missing! for: levelDelim=[ " + levelDelim + " ]; OTU=[ "
-					+ otu + " ]; Line =[ " + line + " ]" );
+			Log.warn( getClass(),
+					sampleId + " overwriting OTU: " + taxaMap.get( level ) + " with " + taxa + "  --> Line = " + line );
 		}
-	}
 
-	@Override
-	public Long getCount()
-	{
-		return count;
-	}
-
-	@Override
-	public String getLine()
-	{
-		return line;
-	}
-
-	@Override
-	public Map<String, String> getOtuMap()
-	{
-		return otuMap;
-	}
-
-	@Override
-	public String getSampleId()
-	{
-		return id;
-	}
-
-	@Override
-	public void report()
-	{
-		final StringBuffer sb = new StringBuffer();
-		sb.append( "[" + id + "]=" + count + " | line=" + line + BioLockJ.RETURN );
-		for( final String key: otuMap.keySet() )
-		{
-			sb.append( key + " = " + otuMap.get( key ) + BioLockJ.RETURN );
-		}
-		Log.debug( getClass(), sb.toString() );
-	}
-
-	@Override
-	public void setCount( final Long count )
-	{
-		this.count = count;
-	}
-
-	@Override
-	public void setLine( final String line )
-	{
-		try
-		{
-			if( debugMode() )
-			{
-				this.line = line;
-			}
-		}
-		catch( final Exception ex )
-		{
-			ex.printStackTrace();
-		}
-	}
-
-	@Override
-	public void setSampleId( final String id )
-	{
-		this.id = id;
+		// Log.debug( getClass(), "taxaMap.put( level=" + level + ", taxa=" + taxa + " )" );
+		taxaMap.put( level, taxa );
 	}
 
 	/**
-	 * Return TRUE if Config file set to DEBUG mode.
-	 * 
-	 * @return boolean TRUE if {@value biolockj.Log#LOG_LEVEL_PROPERTY} == {@value biolockj.Config#TRUE}
-	 * @throws Exception if {@value biolockj.Log#LOG_LEVEL_PROPERTY} is undefined
+	 * The sort order of the TreeSet({@link biolockj.node.OtuNode}) is absolutely required for proper processing in
+	 * {@link #addTaxa(String, String)} and {@link #getTaxaMap()}. We sort alphabetically by otuName, however if one
+	 * otuName is a substring of the compared otuName, the longer name is ordered before the shorter name.<br>
+	 * Because of this, when iterating through a sorted list of {@link biolockj.node.OtuNode}s we can be sure we add
+	 * nodes in the taxonomy hierarchy from the bottom-up.
 	 */
-	protected static boolean debugMode() throws Exception
+	@Override
+	public int compareTo( final OtuNode node )
 	{
-		return Config.requireString( Log.LOG_LEVEL_PROPERTY ).equals( "DEBUG" );
+		return node.getOtuName().compareTo( getOtuName() );
 	}
 
-	/**
-	 * Map used to match classifier specific leve delimiters to BioLockJ taxonomy level names.
-	 *
-	 * @return delimToLevelMap
-	 */
-	protected static Map<String, String> delimToLevelMap()
+	@Override
+	public Map<String, String> delimToLevelMap()
 	{
 		if( delimToLevelMap.isEmpty() )
 		{
@@ -154,22 +123,155 @@ public abstract class OtuNodeImpl implements OtuNode
 		return delimToLevelMap;
 	}
 
-	private Long count = 0L;
-	private String id = null;
+	@Override
+	public int getCount()
+	{
+		return count;
+	}
+
+	@Override
+	public String getLine()
+	{
+		return line;
+	}
+
+	@Override
+	public String getOtuName()
+	{
+		if( name != null )
+		{
+			return name;
+		}
+
+		final StringBuffer otu = new StringBuffer();
+		try
+		{
+			String parentTaxa = null;
+			for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+			{
+				String name = taxaMap.get( level );
+				if( name == null || name.isEmpty() )
+				{
+					name = OtuUtil.getUnclassifiedTaxa( parentTaxa );
+				}
+				else
+				{
+					parentTaxa = name;
+				}
+
+				if( !otu.toString().isEmpty() )
+				{
+					otu.append( OtuUtil.SEPARATOR );
+				}
+
+				otu.append( OtuUtil.buildOtuTaxa( level, name ) );
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.error( getClass(), "Unable to build OTU name for " + sampleId, ex );
+		}
+		name = otu.toString();
+		return name;
+	}
+
+	@Override
+	public String getSampleId()
+	{
+		return sampleId;
+	}
+
+	/**
+	 * This implementation ensures all levels between top and bottom taxonomy levels are complete. If missing middle
+	 * levels are found, they inherit their parent taxa.
+	 */
+	@Override
+	public Map<String, String> getTaxaMap() throws Exception
+	{
+		if( !taxaMap.containsKey( OtuUtil.getTopTaxaLevel() ) )
+		{
+			Log.debug( getClass(), "Omit incomplete [ " + sampleId + " ] OTU missing the top taxonomy level: "
+					+ OtuUtil.getTopTaxaLevel() + ( line.isEmpty() ? "": ", classifier output = " + line ) );
+			return null;
+		}
+
+		populateInBetweenTaxa();
+		return taxaMap;
+	}
+
+	@Override
+	public void setCount( final int count )
+	{
+		this.count = count;
+	}
+
+	/**
+	 * Set line only if in DEBUG mode, so we can print OtuNode constructor inputs.
+	 */
+	@Override
+	public void setLine( final String line )
+	{
+		try
+		{
+			if( Log.doDebug() )
+			{
+				this.line = line;
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.error( getClass(),
+					"Unable to set OtuNode line: " + ( sampleId == null ? "sampleId UNDEFINED": sampleId ), ex );
+		}
+	}
+
+	@Override
+	public void setSampleId( final String sampleId )
+	{
+		this.sampleId = sampleId;
+	}
+
+	/**
+	 * Populate missing OTUs if top level taxa is defined and there is a level gap between the top level and the bottom
+	 * level. Missing levels inherit the parent name as "Unclassified (parent-name) OTU".
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected void populateInBetweenTaxa() throws Exception
+	{
+		final int numTaxa = taxaMap.size();
+		int numFound = 0;
+		String parentTaxa = null;
+
+		for( final String level: OtuUtil.getTaxaLevelSpan() )
+		{
+			if( taxaMap.get( level ) != null )
+			{
+				numFound++;
+				parentTaxa = taxaMap.get( level );
+			}
+			else if( parentTaxa != null && taxaMap.get( level ) == null && numFound < numTaxa )
+			{
+				taxaMap.put( level, OtuUtil.getUnclassifiedTaxa( parentTaxa ) );
+			}
+			else if( numFound == numTaxa )
+			{
+				break;
+			}
+		}
+	}
+
+	private int count = 0;
 	private String line = "";
+	private String name = null;
+	private String sampleId = null;
 
 	// key=level, val=otu
-	private final Map<String, String> otuMap = new HashMap<>();
-
+	private final Map<String, String> taxaMap = new HashMap<>();
 	/**
 	 * Standard classifier output level delimiter for CLASS
 	 */
 	protected static String CLASS_DELIM = "c__";
-
-	/**
-	 * Map level delim to full taxonomy level name.
-	 */
-	protected static final Map<String, String> delimToLevelMap = new HashMap<>();
 
 	/**
 	 * Standard classifier output level delimiter for DOMAIN
@@ -200,4 +302,6 @@ public abstract class OtuNodeImpl implements OtuNode
 	 * Standard classifier output level delimiter for SPECIES
 	 */
 	protected static String SPECIES_DELIM = "s__";
+
+	private static final Map<String, String> delimToLevelMap = new HashMap<>();
 }

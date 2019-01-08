@@ -16,8 +16,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigViolationException;
 
 /**
@@ -52,7 +52,7 @@ public class SeqUtil
 			BioLockJUtil.deleteWithRetry( inputFileDir, 10 );
 		}
 
-		for( final File dir: getInputDirs() )
+		for( final File dir: BioLockJUtil.getInputDirs() )
 		{
 			Log.info( SeqUtil.class, "Copying input files from " + dir + " to " + inputFileDir );
 			FileUtils.copyDirectory( dir, inputFileDir );
@@ -75,9 +75,9 @@ public class SeqUtil
 	 * @return Number of reads in seqFile
 	 * @throws Exception if errors occur
 	 */
-	public static long countNumReads( final File seqFile ) throws Exception
+	public static int countNumReads( final File seqFile ) throws Exception
 	{
-		long count = 0L;
+		int count = 0;
 		final BufferedReader r = BioLockJUtil.getFileReader( seqFile );
 		for( String line = r.readLine(); line != null; line = r.readLine() )
 		{
@@ -160,28 +160,6 @@ public class SeqUtil
 	}
 
 	/**
-	 * Get the list of input directories for the pipeline.
-	 * 
-	 * @return List of system directory file paths
-	 * @throws Exception if errors occur
-	 */
-	public static List<File> getInputDirs() throws Exception
-	{
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			final List<File> dirs = new ArrayList<>();
-			final File dir = new File( DockerUtil.CONTAINER_INPUT_DIR );
-			if( !dir.exists() )
-			{
-				throw new Exception( "Container missing mapped input volume system path: " + dir.getAbsolutePath() );
-			}
-			dirs.add( dir );
-			return dirs;
-		}
-		return Config.requireExistingDirs( Config.INPUT_DIRS );
-	}
-
-	/**
 	 * Return number of lines per read (for fasta return 2, for fastq return 4)
 	 * 
 	 * @return 2 or 4
@@ -210,13 +188,13 @@ public class SeqUtil
 	 *
 	 * @param files List of paired read files
 	 * @return Map with key=fwRead and val=rvRead
-	 * @throws ConfigViolationException if unpaired reads are found and 
+	 * @throws ConfigViolationException if unpaired reads are found and
 	 * {@link biolockj.Config}.{@value #INPUT_REQUIRE_COMPLETE_PAIRS} = {@value biolockj.Config#TRUE}
 	 * @throws Exception if unable to find paired reads
 	 */
 	public static Map<File, File> getPairedReads( final Collection<File> files ) throws Exception
 	{
-		return ( getPairedReads( files, true ) );
+		return getPairedReads( files, true );
 	}
 
 	/**
@@ -229,7 +207,8 @@ public class SeqUtil
 	 * @return Map with key=fwRead and val=rvRead, or the reverse if fwReadAsKey is false.
 	 * @throws Exception if unable to find paired reads
 	 */
-	public static Map<File, File> getPairedReads( final Collection<File> files, boolean fwReadAsKey ) throws Exception
+	public static Map<File, File> getPairedReads( final Collection<File> files, final boolean fwReadAsKey )
+			throws Exception
 	{
 		Log.debug( SeqUtil.class, "Looking for paired reads in " + ( files == null ? 0: files.size() ) + " files " );
 		final Map<File, File> map = new HashMap<>();
@@ -270,17 +249,16 @@ public class SeqUtil
 					map.put( rvRead, fwRead );
 				}
 			}
-			else 
+			else
 			{
 				unpairedFwReads.add( fwRead );
 			}
 
 		}
-		
-		
-		for( File f: map.values() )
+
+		for( final File f: map.values() )
 		{
-			for( String rv: rvReads )
+			for( final String rv: rvReads )
 			{
 				if( rv.equals( f.getName() ) )
 				{
@@ -289,82 +267,31 @@ public class SeqUtil
 				}
 			}
 		}
-		
-		
+
 		String msg = "";
 		if( !unpairedFwReads.isEmpty() )
 		{
 			msg = "Unpaired FW Reads:" + BioLockJUtil.printLongFormList( unpairedFwReads );
 		}
-		
+
 		if( !rvReads.isEmpty() )
 		{
-			msg += "Unpaired RV Reads: " + BioLockJUtil.printLongFormList( rvReads ); 
+			msg += "Unpaired RV Reads: " + BioLockJUtil.printLongFormList( rvReads );
 		}
-		
-		if( Config.getString( Config.INTERNAL_PAIRED_READS ) != null && Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
+
+		if( Config.getString( Config.INTERNAL_PAIRED_READS ) != null
+				&& Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
 		{
 			throw new ConfigViolationException( INPUT_REQUIRE_COMPLETE_PAIRS, msg );
 		}
 		else if( Config.getString( Config.INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
 		{
-			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ " + INPUT_REQUIRE_COMPLETE_PAIRS +
-					"=" + Config.FALSE + " ]" + BioLockJ.RETURN + msg );
+			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ "
+					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Config.FALSE + " ]" + BioLockJ.RETURN + msg );
 		}
 
 		return map;
 	}
-
-	/**
-	 * Recursively get files located in the directories listed in
-	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS} after removing
-	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_IGNORE_FILES}
-	 * 
-	 * @return Pipeline input files
-	 * @throws ConfigViolationException if sequence files without valid metadata are detected
-	 * @throws Exception if no input files are found
-	 */
-	public static List<File> getPipelineInputFiles() throws Exception
-	{
-		if( filteredInputFiles.isEmpty() )
-		{
-			List<File> seqsWithoutMetaId = new ArrayList<>();
-			for( final File file: getBasicInputFiles() )
-			{
-				if( !requireSeqInput() || Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
-						|| MetaUtil.getMetadata() == null
-						|| MetaUtil.getSampleIds().contains( SeqUtil.getSampleId( file.getName() ) ) )
-				{
-					filteredInputFiles.add( file );
-				}
-				else if( Config.getBoolean( MetaUtil.META_REQUIRED ) ) // metadata required
-				{
-					seqsWithoutMetaId.add( file );
-					throw new ConfigViolationException( MetaUtil.META_REQUIRED,
-							"Sample ID not found in metadata file: " + file.getAbsolutePath() );
-				}
-				else
-				{
-					Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
-							+ MetaUtil.META_REQUIRED + "=" + Config.FALSE + " ]: " + file.getAbsolutePath() );
-				}
-			}
-			
-			if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( MetaUtil.META_REQUIRED )  )
-			{
-				throw new ConfigViolationException( MetaUtil.META_REQUIRED, "No metadata found for the following files: " + 
-						BioLockJ.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
-			}
-
-			if( filteredInputFiles.isEmpty() )
-			{
-				throw new Exception( "No valid files found in: " + Config.INPUT_DIRS );
-			}
-		}
-
-		return filteredInputFiles;
-	}
-
 
 	/**
 	 * Return read direction indicator for forward or reverse read if found in the file name.
@@ -387,7 +314,7 @@ public class SeqUtil
 	 */
 	public static String getReadDirectionSuffix( final String fileName ) throws Exception
 	{
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			if( SeqUtil.isForwardRead( fileName ) )
 			{
@@ -414,7 +341,6 @@ public class SeqUtil
 	 */
 	public static String getSampleId( final String value ) throws Exception
 	{
-		Log.debug( SeqUtil.class, "Seeking sample id for file: " + value );
 		String id;
 		String revValue = "";
 		try
@@ -449,7 +375,6 @@ public class SeqUtil
 				{
 					id = MetaUtil.getSampleIds().get( ind );
 				}
-
 			}
 			else
 			{
@@ -465,36 +390,34 @@ public class SeqUtil
 				{
 					id = id.substring( 0, id.length() - 6 );
 				}
-
-				// trim directional suffix
-				if( !Config.requireBoolean( Config.INTERNAL_MULTIPLEXED ) ) // must be a file name
+			}
+			// trim directional suffix
+			if( !Config.getBoolean( Config.INTERNAL_MULTIPLEXED ) ) // must be a file name
+			{
+				final String fwReadSuffix = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
+				final String rvReadSuffix = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
+				if( fwReadSuffix != null && isForwardRead( id ) && id.lastIndexOf( fwReadSuffix ) > 0 )
 				{
-					final String fwReadSuffix = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
-					final String rvReadSuffix = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
-					if( fwReadSuffix != null && isForwardRead( id ) && id.lastIndexOf( fwReadSuffix ) > 0 )
-					{
-						id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
-					}
-					else if( rvReadSuffix != null && id.lastIndexOf( rvReadSuffix ) > 0 )
-					{
-						id = id.substring( 0, id.lastIndexOf( rvReadSuffix ) );
-					}
+					id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
 				}
-
-				// trim user defined file prefix and/or suffix patterns
-				final String trimPrefix = Config.getString( Config.INPUT_TRIM_PREFIX );
-				final String trimSuffix = Config.getString( Config.INPUT_TRIM_SUFFIX );
-				if( trimPrefix != null && !trimPrefix.isEmpty() && id.indexOf( trimPrefix ) > -1 )
+				else if( rvReadSuffix != null && id.lastIndexOf( rvReadSuffix ) > 0 )
 				{
-					id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
-				}
-
-				if( trimSuffix != null && !trimSuffix.isEmpty() && id.indexOf( trimSuffix ) > 0 )
-				{
-					id = id.substring( 0, id.indexOf( trimSuffix ) );
+					id = id.substring( 0, id.lastIndexOf( rvReadSuffix ) );
 				}
 			}
 
+			// trim user defined file prefix and/or suffix patterns
+			final String trimPrefix = Config.getString( Config.INPUT_TRIM_PREFIX );
+			final String trimSuffix = Config.getString( Config.INPUT_TRIM_SUFFIX );
+			if( trimPrefix != null && !trimPrefix.isEmpty() && id.indexOf( trimPrefix ) > -1 )
+			{
+				id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
+			}
+
+			if( trimSuffix != null && !trimSuffix.isEmpty() && id.indexOf( trimSuffix ) > 0 )
+			{
+				id = id.substring( 0, id.indexOf( trimSuffix ) );
+			}
 		}
 		catch( final Exception ex )
 		{
@@ -534,27 +457,29 @@ public class SeqUtil
 	 */
 	public static void initialize() throws Exception
 	{
-		initSeqParams();
-		registerDemuxStatus();
-		registerPairedReadStatus();
-
-		if( !RuntimeParamUtil.isDirectMode() )
+		if( requireSeqInput() )
 		{
-			printCollection( Config.getSet( Config.INPUT_IGNORE_FILES ), "Ignore Module Input Files" );
-		}
+			initSeqParams();
+			registerDemuxStatus();
+			registerPairedReadStatus();
 
-		if( MetaUtil.hasColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ) )
-				&& ( Config.getString( Config.INPUT_TRIM_PREFIX ) != null
-						|| Config.getString( Config.INPUT_TRIM_SUFFIX ) != null ) )
+			if( MetaUtil.hasColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ) )
+					&& ( Config.getString( Config.INPUT_TRIM_PREFIX ) != null
+							|| Config.getString( Config.INPUT_TRIM_SUFFIX ) != null ) )
+			{
+				Log.warn( SeqUtil.class,
+						"The properties " + Config.INPUT_TRIM_PREFIX + " and " + Config.INPUT_TRIM_SUFFIX
+								+ " will be ignored. Samples will be matched to file names useing the \""
+								+ Config.getString( MetaUtil.META_FILENAME_COLUMN ) + "\" column in the metadata." );
+				Config.setConfigProperty( Config.INPUT_TRIM_PREFIX, "" );
+				Config.setConfigProperty( Config.INPUT_TRIM_SUFFIX, "" );
+			}
+
+		}
+		else
 		{
-			Log.warn( SeqUtil.class,
-					"The properties " + Config.INPUT_TRIM_PREFIX + " and " + Config.INPUT_TRIM_SUFFIX
-							+ " will be ignored. Samples will be matched to file names useing the \""
-							+ Config.getString( MetaUtil.META_FILENAME_COLUMN ) + "\" column in the metadata." );
-			Config.setConfigProperty( Config.INPUT_TRIM_PREFIX, "" );
-			Config.setConfigProperty( Config.INPUT_TRIM_SUFFIX, "" );
+			Config.setConfigProperty( INTERNAL_SEQ_TYPE, Config.requireString( MetaUtil.META_NULL_VALUE ) );
 		}
-
 	}
 
 	/**
@@ -609,6 +534,29 @@ public class SeqUtil
 	}
 
 	/**
+	 * Most pipelines have {@value #FASTA} or {@value #FASTQ} files in {@value biolockj.Config#INPUT_DIRS}. However,
+	 * some pipeline {@value biolockj.Config#INPUT_DIRS} contain files that are not sequence files, such as from a
+	 * {@link biolockj.module.implicit.parser.ParserModule} output directory. This method returns
+	 * {@value biolockj.Config#TRUE} if a {@link biolockj.module.BioModule} is found from one of the 2 packages that
+	 * require sequence data input: {@link biolockj.module.classifier} and {@link biolockj.module.seq}.
+	 *
+	 * @return boolean {@value biolockj.Config#TRUE} if classifier or seq {@link biolockj.module.BioModule} are found
+	 * @throws Exception if errors occur
+	 */
+	public static boolean requireSeqInput() throws Exception
+	{
+		for( final String modName: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
+		{
+			if( modName.startsWith( "biolockj.module.classifier" ) || modName.startsWith( "biolockj.module.seq" ) )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Return the DNA reverse compliment for the input dna parameter.
 	 * 
 	 * @param dna DNA base sequence
@@ -659,45 +607,88 @@ public class SeqUtil
 	 */
 	protected static void initSeqParams() throws Exception
 	{
-		final Set<String> ignore = Config.getSet( Config.INPUT_IGNORE_FILES );
-
-		if( MetaUtil.getFile() != null )
-		{
-			ignore.add( MetaUtil.getMetadataFileName() );
-			Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
-		}
-
 		String foundFasta = null;
 		String foundFastq = null;
 		String testChar = null;
-		for( final File f: getBasicInputFiles() )
+		for( final File f: BioLockJUtil.getBasicInputFiles() )
 		{
 			final BufferedReader reader = BioLockJUtil.getFileReader( f );
-			testChar = reader.readLine().trim().substring( 0, 1 );
-			if( requireSeqInput() )
+			try
 			{
-				Log.debug( SeqUtil.class, "First character of input file = " + testChar );
+				String line = reader.readLine().trim();
+				testChar = line.substring( 0, 1 );
+
+				int numLines = 0;
+				do
+				{
+					line = reader.readLine();
+					if( line != null && !line.isEmpty() )
+					{
+						final String lineChar = line.trim().substring( 0, 1 );
+						if( !lineChar.equals( "+" ) && !FASTA_HEADER_DELIMS.contains( lineChar )
+								&& !lineChar.equals( FASTQ_HEADER_DELIM ) )
+						{
+							numLines++;
+							if( numLines > 1 )
+							{
+								Log.debug( SeqUtil.class, f.getName() + " --> Line[" + numLines
+										+ "] after TEST CHARACTER: " + testChar + " = #" + numLines );
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+				while( line != null );
+
+				Log.debug( SeqUtil.class, f.getAbsolutePath() + " TEST CHARACTER: " + testChar + ": " + numLines );
+
+				if( numLines > 1 && Config.getString( Config.INTERNAL_IS_MULTI_LINE_SEQ ) == null
+						&& ( FASTA_HEADER_DELIMS.contains( testChar ) || testChar.equals( FASTQ_HEADER_DELIM ) ) )
+				{
+					Log.info( SeqUtil.class, "Multi-line input file detected: # lines/seq: " + numLines );
+					Config.setConfigProperty( Config.INTERNAL_IS_MULTI_LINE_SEQ, Config.TRUE );
+					if( numMultiSeqLines != null && numMultiSeqLines == 0 )
+					{
+						numMultiSeqLines = numLines;
+					}
+					else if( numMultiSeqLines != null && numMultiSeqLines != numLines )
+					{
+						Log.warn( SeqUtil.class, "Multi-line input file has inconsistant number of lines per read" );
+						numMultiSeqLines = null;
+					}
+				}
 			}
+			catch( final Exception ex )
+			{
+				throw new Exception( "Found invalid sequence file: " + f.getAbsolutePath() );
+			}
+			finally
+			{
+				if( reader != null )
+				{
+					reader.close();
+				}
+			}
+
 			if( FASTA_HEADER_DELIMS.contains( testChar ) )
 			{
-				Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, testChar );
 				foundFasta = f.getAbsolutePath();
+				Log.debug( SeqUtil.class, "detected FASTA: " + foundFasta );
 			}
 			else if( testChar.equals( FASTQ_HEADER_DELIM ) )
 			{
-				Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, testChar );
 				foundFastq = f.getAbsolutePath();
+				Log.debug( SeqUtil.class, "detected FASTQ: " + foundFastq );
 			}
-			else if( requireSeqInput() )
+			else
 			{
-				Log.warn( SeqUtil.class,
-						"IGNORE INPUT FILE!  Adding file name to Config." + Config.INPUT_IGNORE_FILES
-								+ " due to invalid sequence file format (1st character = " + testChar + "): "
-								+ f.getAbsolutePath() + BioLockJ.RETURN
-								+ "FASTA files must begin with \">\" or \";\" and FASTQ files must begin with \"@\""
-								+ BioLockJ.RETURN );
-				ignore.add( f.getName() );
-				inputFiles.remove( f );
+				throw new Exception( "Invalid sequence file format (1st character = " + testChar + ") in: "
+						+ f.getAbsolutePath() + BioLockJ.RETURN + "FASTA files must begin with either character: "
+						+ BioLockJUtil.getCollectionAsString( FASTA_HEADER_DELIMS )
+						+ " and FASTQ files must begin with \"" + FASTQ_HEADER_DELIM + "\"" );
 			}
 		}
 
@@ -708,82 +699,110 @@ public class SeqUtil
 					+ foundFasta + BioLockJ.RETURN + "FASTQ file found: " + foundFastq );
 		}
 
-		if( foundFasta != null )
+		if( testChar != null )
+		{
+			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, testChar );
+		}
+
+		final String seqType = Config.getString( INTERNAL_SEQ_TYPE );
+		if( seqType != null )
+		{
+			if( !seqType.toLowerCase().equals( FASTA ) && !seqType.toLowerCase().equals( FASTQ ) )
+			{
+				throw new ConfigFormatException( INTERNAL_SEQ_TYPE,
+						"Must be configured to " + FASTA + " or " + FASTQ + "." );
+			}
+		}
+		else if( foundFasta != null || seqType != null && seqType.toLowerCase().equals( FASTA ) )
 		{
 			Config.setConfigProperty( INTERNAL_SEQ_TYPE, FASTA );
 
 		}
-		else if( foundFastq != null )
+		else if( foundFastq != null || seqType != null && seqType.toLowerCase().equals( FASTQ ) )
 		{
 			Config.setConfigProperty( INTERNAL_SEQ_TYPE, FASTQ );
 		}
 		else
 		{
-			Config.setConfigProperty( INTERNAL_SEQ_TYPE, MetaUtil.META_NULL_VALUE );
-			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, MetaUtil.META_NULL_VALUE );
+			Config.setConfigProperty( INTERNAL_SEQ_TYPE, Config.requireString( MetaUtil.META_NULL_VALUE ) );
+			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, Config.requireString( MetaUtil.META_NULL_VALUE ) );
 		}
-
-		Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
 	}
 
 	/**
-	 * Most pipelines have {@value #FASTA} or {@value #FASTQ} files in {@value biolockj.Config#INPUT_DIRS}. However,
-	 * some pipeline {@value biolockj.Config#INPUT_DIRS} contain files that are not sequence files, such as from a
-	 * {@link biolockj.module.implicit.parser.ParserModule} output directory. This method returns
-	 * {@value biolockj.Config#TRUE} if a {@link biolockj.module.BioModule} is found from one of the 2 packages that
-	 * require sequence data input: {@link biolockj.module.classifier} and {@link biolockj.module.seq}.
-	 *
-	 * @return boolean {@value biolockj.Config#TRUE} if classifier or seq {@link biolockj.module.BioModule} are found
-	 * @throws Exception if errors occur
+	 * Inspect the pipeline input files to determine if input includes paired reads.
+	 * 
+	 * @throws Exception if unable to determine if reads are paired
 	 */
-	public static boolean requireSeqInput() throws Exception
+	protected static void registerPairedReadStatus() throws Exception
 	{
-		for( final String modName: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
+		boolean foundPairedReads = false;
+		if( Config.getBoolean( Config.INTERNAL_MULTIPLEXED ) )
 		{
-			if( modName.startsWith( "biolockj.module.classifier" ) || modName.startsWith( "biolockj.module.seq" ) )
+			if( BioLockJUtil.getPipelineInputFiles().size() > 1 )
 			{
-				return true;
+				foundPairedReads = true;
 			}
-		}
-
-		return false;
-	}
-
-	private static Collection<File> getBasicInputFiles() throws Exception
-	{
-		if( inputFiles.isEmpty() )
-		{
-			final Collection<File> files = new HashSet<>();
-			for( final File dir: getInputDirs() )
+			else
 			{
-				Log.info( SeqUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
-				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-			}
-			Log.info( SeqUtil.class, "# Initial input Files found: " + files.size() );
-			for( final File file: files )
-			{
-				if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+				boolean foundFw = false;
+				boolean foundRv = false;
+				final BufferedReader reader = BioLockJUtil
+						.getFileReader( BioLockJUtil.getPipelineInputFiles().get( 0 ) );
+				try
 				{
-					inputFiles.add( file );
+					Log.info( SeqUtil.class, "Reading multiplexed file to check for paired reads: "
+							+ BioLockJUtil.getPipelineInputFiles().get( 0 ).getAbsolutePath() );
+					final List<String> seqLines = new ArrayList<>();
+					for( String line = reader.readLine(); line != null; line = reader.readLine() )
+					{
+						seqLines.add( line );
+						if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
+						{
+							if( seqLines.get( 0 ).contains( ILLUMINA_FW_READ_IND ) )
+							{
+								foundFw = true;
+							}
+							else if( seqLines.get( 0 ).contains( ILLUMINA_RV_READ_IND ) )
+							{
+								foundRv = true;
+							}
+							else
+							{
+								Log.warn( SeqUtil.class,
+										"Invalid header, no direction indicator: " + seqLines.get( 0 ) );
+							}
+
+							seqLines.clear();
+						}
+					}
 				}
-				else
+				finally
 				{
-					Log.warn( SeqUtil.class, "Ignoring file: " + file.getName() );
+					if( reader != null )
+					{
+						reader.close();
+					}
+				}
+
+				foundPairedReads = foundFw && foundRv;
+				if( foundRv && !foundFw )
+				{
+					throw new Exception( "Invalid dataset.  Found only reverse reads in mutliplexed file!"
+							+ "Reverse read indicator found in headers: " + ILLUMINA_RV_READ_IND
+							+ "All datasets must contain forward read indicators in the headers: "
+							+ ILLUMINA_FW_READ_IND );
 				}
 			}
 		}
-
-		return inputFiles;
-	}
-
-	private static void printCollection( final Collection<String> items, final String label )
-	{
-		int i = 0;
-		final Iterator<String> it = items.iterator();
-		while( it.hasNext() )
+		else // not multiplexed
 		{
-			Log.warn( SeqUtil.class, label + " [" + i++ + "] = " + it.next() );
+			foundPairedReads = !getPairedReads( BioLockJUtil.getPipelineInputFiles() ).isEmpty();
 		}
+
+		Log.info( SeqUtil.class,
+				"Set " + Config.INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Config.TRUE: Config.FALSE ) );
+		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, foundPairedReads ? Config.TRUE: Config.FALSE );
 	}
 
 	/**
@@ -792,10 +811,9 @@ public class SeqUtil
 	 * names, we determine if the data is multiplexed. This function can be overridden by the Config property
 	 * {@value biolockj.module.implicit.Demultiplexer#INPUT_DO_NOT_DEMUX} to return false regardless of input file data.
 	 *
-	 * @return boolean TRUE if pipeline data-set is multiplexed
 	 * @throws Exception if validation fails
 	 */
-	private static boolean registerDemuxStatus() throws Exception
+	private static void registerDemuxStatus() throws Exception
 	{
 		boolean isMultiplexed = false;
 
@@ -803,18 +821,18 @@ public class SeqUtil
 		{
 			Log.debug( SeqUtil.class, "Do not demux!" );
 		}
-		else if( requireSeqInput() && getBasicInputFiles().size() == 1 )
+		else if( BioLockJUtil.getBasicInputFiles().size() == 1 )
 		{
 			Log.info( SeqUtil.class, "Must demultiplex data!  Found exactly 1 input file" );
 			isMultiplexed = true;
 		}
-		else if( requireSeqInput() && getBasicInputFiles().size() == 2 )
+		else if( BioLockJUtil.getBasicInputFiles().size() == 2 )
 		{
 			boolean foundFw = false;
 			boolean foundRv = false;
 			final String fwRead = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
 			final String rvRead = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
-			for( final File file: getBasicInputFiles() )
+			for( final File file: BioLockJUtil.getBasicInputFiles() )
 			{
 				if( fwRead != null && file.getName().contains( fwRead ) )
 				{
@@ -834,84 +852,12 @@ public class SeqUtil
 		}
 
 		Config.setConfigProperty( Config.INTERNAL_MULTIPLEXED, isMultiplexed ? Config.TRUE: Config.FALSE );
-		return isMultiplexed;
-	}
 
-	/**
-	 * Inspect the pipeline input files to determine if input includes paired reads.
-	 * 
-	 * @return boolean TRUE if paired reads are found
-	 * @throws Exception if unable to determine if reads are paired
-	 */
-	private static boolean registerPairedReadStatus() throws Exception
-	{
-		boolean foundPairedReads = false;
-		if( Config.requireBoolean( Config.INTERNAL_MULTIPLEXED ) )
+		if( isMultiplexed && numMultiSeqLines == null )
 		{
-			if( getPipelineInputFiles().size() > 1 )
-			{
-				foundPairedReads = true;
-			}
-			else
-			{
-				boolean foundFw = false;
-				boolean foundRv = false;
-				final BufferedReader reader = BioLockJUtil.getFileReader( getPipelineInputFiles().get( 0 ) );
-				Log.info( SeqUtil.class, "Reading multiplexed file to check for paired reads: "
-						+ getPipelineInputFiles().get( 0 ).getAbsolutePath() );
-
-				Log.info( SeqUtil.class,
-						"Save Sequence File Property [ #lines/read ] = " + SeqUtil.getNumLinesPerRead() );
-				final List<String> seqLines = new ArrayList<>();
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
-					seqLines.add( line );
-					if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
-					{
-						if( seqLines.get( 0 ).contains( ILLUMINA_FW_READ_IND ) )
-						{
-							foundFw = true;
-						}
-						else if( seqLines.get( 0 ).contains( ILLUMINA_RV_READ_IND ) )
-						{
-							foundRv = true;
-						}
-						else
-						{
-							Log.warn( SeqUtil.class, "Invalid header, no direction indicator: " + seqLines.get( 0 ) );
-						}
-
-						seqLines.clear();
-					}
-				}
-
-				reader.close();
-				foundPairedReads = foundFw && foundRv;
-				Log.debug( SeqUtil.class, "Found Forward reads: " + foundFw );
-				Log.debug( SeqUtil.class, "Found Reverse reads: " + foundRv );
-				Log.debug( SeqUtil.class, "Found Paired Reads: " + foundPairedReads );
-
-				if( foundRv && !foundFw )
-				{
-					throw new Exception( "Invalid dataset.  Found only reverse reads in mutliplexed file!"
-							+ "Reverse read indicator found in headers: " + ILLUMINA_RV_READ_IND
-							+ "All datasets must contain forward read indicators in the headers: "
-							+ ILLUMINA_FW_READ_IND );
-				}
-			}
+			throw new Exception( "Multi-line sequence files must be demultiplexed before analyzed by BioLockJ" );
 		}
-		else // not multiplexed
-		{
-			foundPairedReads = !getPairedReads( getPipelineInputFiles() ).isEmpty();
-		}
-
-		Log.info( SeqUtil.class,
-				"Set " + Config.INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Config.TRUE: Config.FALSE ) );
-
-		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, foundPairedReads ? Config.TRUE: Config.FALSE );
-		return foundPairedReads;
 	}
-	
 
 	/**
 	 * File extension for fasta files = .fasta
@@ -953,7 +899,7 @@ public class SeqUtil
 	 * Require 100% sequence input files are matching paired reads
 	 */
 	public static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
-	
+
 	/**
 	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>
 	 * The property holds the 1st character used in the sequence header for the given dataset
@@ -961,12 +907,12 @@ public class SeqUtil
 	public static final String INTERNAL_SEQ_HEADER_CHAR = "internal.seqHeaderChar";
 
 	/**
-	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_TYPE}<br>
-	 * The sequence type path will save either {@value #FASTA} or {@value #FASTQ} to {@link biolockj.Config} using this
-	 * property.
+	 * {@link biolockj.Config} Internal property: {@value #INTERNAL_SEQ_TYPE}<br>
+	 * The sequence type requires either {@value #FASTA} or {@value #FASTQ}<br>
+	 * System will auto-detect if not configured
 	 */
 	public static final String INTERNAL_SEQ_TYPE = "internal.seqType";
 
-	private final static List<File> filteredInputFiles = new ArrayList<>();
-	private final static List<File> inputFiles = new ArrayList<>();
+	private static Integer numMultiSeqLines = 0;
+
 }

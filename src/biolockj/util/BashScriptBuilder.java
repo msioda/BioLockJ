@@ -95,7 +95,7 @@ public class BashScriptBuilder
 	{
 		if( clusterModuleName != null )
 		{
-			for( final String module: Config.getSet( CLUSTER_MODULES ) )
+			for( final String module: Config.getTreeSet( CLUSTER_MODULES ) )
 			{
 				if( exists( Config.requireString( CLUSTER_BATCH_COMMAND ) ) && module.contains( clusterModuleName ) )
 				{
@@ -126,7 +126,8 @@ public class BashScriptBuilder
 		lines.add( "$1" );
 		lines.add( "statusCode=$?" );
 		lines.add( "if [ $statusCode != 0 ]; then" );
-		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_" + Pipeline.SCRIPT_FAILURES + "\"" );
+		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_"
+				+ Pipeline.SCRIPT_FAILURES + "\"" );
 		lines.add( "exit $statusCode" );
 		lines.add( "fi" );
 		lines.add( "}" );
@@ -256,7 +257,7 @@ public class BashScriptBuilder
 		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) + RETURN );
 		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED + RETURN );
 		lines.add( "cd " + module.getScriptDir().getAbsolutePath() + RETURN );
-		
+
 		if( DockerUtil.isDockerScriptModule( module ) )
 		{
 			lines.addAll( DockerUtil.buildRunDockerFunction( module ) );
@@ -299,7 +300,7 @@ public class BashScriptBuilder
 
 		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = "
 				+ new Integer( Config.requirePositiveInteger( ScriptModule.SCRIPT_BATCH_SIZE ) ).toString() + RETURN );
-		
+
 		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules() );
 
@@ -574,13 +575,16 @@ public class BashScriptBuilder
 	private static List<String> loadModules() throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		for( final String module: Config.getSet( CLUSTER_MODULES ) )
+		for( final String module: Config.getTreeSet( CLUSTER_MODULES ) )
 		{
 			lines.add( "module load " + module );
 		}
-		
-		if( !lines.isEmpty() ) lines.add( "" );
-		
+
+		if( !lines.isEmpty() )
+		{
+			lines.add( "" );
+		}
+
 		return lines;
 	}
 

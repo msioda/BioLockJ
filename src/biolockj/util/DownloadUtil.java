@@ -22,7 +22,7 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.r.R_Module;
-import biolockj.module.report.AddMetadataToOtuTables;
+import biolockj.module.report.AddMetaToTaxonomyTables;
 import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
 
@@ -52,7 +52,8 @@ public final class DownloadUtil
 		if( Config.isOnCluster() && modules != null && getDownloadDirPath() != null )
 		{
 			String status = "Complete";
-			String targets = getSrc( MAIN_OUT );
+
+			String targets = getSrc( getExts( null ) );
 			BigInteger downloadSize = FileUtils.sizeOfAsBigInteger( Log.getFile() );
 			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( SummaryUtil.getSummaryFile() ) );
 			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( BioLockJUtil.getMasterConfig() ) );
@@ -88,11 +89,12 @@ public final class DownloadUtil
 			final String pipeRoot = Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath();
 			final String label = status + ( getDownloadModules().size() > 1 ? " Modules --> ": " Module --> " );
 			final String displaySize = FileUtils.byteCountToDisplaySize( downloadSize );
-			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + "; mkdir -p "
-					+ getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR ) + "; scp -rp "
+			final String rDirs = ModuleUtil.hasRModules()
+					? "; mkdir -p " + getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR )
+					: "";
+			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + rDirs + "; scp -rp "
 					+ getClusterUser() + "@" + Config.requireString( Email.CLUSTER_HOST ) + ":\"" + targets + "\" "
 					+ DEST;
-
 			return "Download " + label + " [" + displaySize + "]:" + RETURN + cmd;
 		}
 
@@ -145,7 +147,7 @@ public final class DownloadUtil
 	/**
 	 * Get the modules to download. Some modules are always included:
 	 * <ul>
-	 * <li>{@link biolockj.module.report.AddMetadataToOtuTables}
+	 * <li>{@link biolockj.module.report.AddMetaToTaxonomyTables}
 	 * <li>{@link biolockj.module.report.JsonReport}
 	 * <li>Any module that implements {@link biolockj.module.r.R_Module} interface
 	 * </ul>
@@ -163,7 +165,7 @@ public final class DownloadUtil
 			for( final BioModule module: Pipeline.getModules() )
 			{
 				if( ModuleUtil.hasExecuted( module ) && module instanceof JsonReport
-						|| module instanceof AddMetadataToOtuTables )
+						|| module instanceof AddMetaToTaxonomyTables )
 				{
 					modules.add( module );
 				}
@@ -206,7 +208,25 @@ public final class DownloadUtil
 	 */
 	protected static String getExts( final R_Module module ) throws Exception
 	{
-		if( module.scpExtensions() == null || module.scpExtensions().isEmpty() )
+
+		if( module == null )
+		{
+			String ext = BioLockJ.LOG_EXT.substring( 1 ) + "," + BioLockJ.TXT_EXT.substring( 1 );
+			if( Config.getConfigFileExt() != null )
+			{
+				ext += "," + Config.getConfigFileExt();
+			}
+
+			if( ModuleUtil.hasRModules() )
+			{
+				return "*.{" + ext + "," + BioLockJ.SH_EXT.substring( 1 ) + "}";
+			}
+			else
+			{
+				return "*.{" + ext + "}";
+			}
+		}
+		else if( module.scpExtensions() == null || module.scpExtensions().isEmpty() )
 		{
 			return "*";
 		}
@@ -238,15 +258,16 @@ public final class DownloadUtil
 		{
 			writer.write( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN + RETURN );
 		}
-		
+
 		writer.write( "# Use this script to locally run R modules." + RETURN );
 
 		for( final BioModule mod: modules )
 		{
 			if( mod instanceof R_Module )
 			{
-				//do not use exe.Rscript config option, this is a convenience for the users local system not for the system where biolockj ran.
-				writer.write("Rscript " + ( (R_Module) mod ).getPrimaryScript().getName() + RETURN );
+				// do not use exe.Rscript config option, this is a convenience for the users local system not for the
+				// system where biolockj ran.
+				writer.write( "Rscript " + ( (R_Module) mod ).getPrimaryScript().getName() + RETURN );
 			}
 		}
 
@@ -260,7 +281,7 @@ public final class DownloadUtil
 		return DEST + File.separator + val;
 	}
 
-	private static String getSrc( final String val )
+	private static String getSrc( final String val ) throws Exception
 	{
 		return SOURCE + File.separator + val;
 	}
@@ -271,15 +292,9 @@ public final class DownloadUtil
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
 
-	/**
-	 * List of file extensions download-able from pipeline root directory: {@value #MAIN_OUT}
-	 */
-	protected final static String MAIN_OUT = "*.{log,properties,txt,sh}";
-
 	private static final String DEST = "$out";
 	private static final String RETURN = BioLockJ.RETURN;
-
-	private static final String RUN_ALL_SCRIPT = "Run_All_R.sh";
+	private static final String RUN_ALL_SCRIPT = "Run_All_R" + BioLockJ.SH_EXT;
 	private static final String SOURCE = "$src";
 
 }

@@ -222,7 +222,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		switches.put( "--db", getDB() );
 		switches.put( "--threads", getNumThreads().toString() );
 		switches.put( getInputSwitch(), "" );
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			switches.put( "--paired", "" );
 		}
@@ -299,5 +299,5 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	/**
 	 * File suffix added by BioLockJ to kraken output files (before translation): {@value #KRAKEN_FILE}
 	 */
-	protected static final String KRAKEN_FILE = "_kraken_out.txt";
+	protected static final String KRAKEN_FILE = "_kraken_out" + TXT_EXT;
 }

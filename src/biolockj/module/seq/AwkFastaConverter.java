@@ -30,9 +30,11 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
 	{
 		final List<List<String>> data = new ArrayList<>();
+		final boolean isMultiLine = Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ );
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
-		final String ext = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		// final String ext = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		final String ext = "." + ( isMultiLine ? SeqUtil.FASTA: Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
 		for( final File f: files )
 		{
 			final ArrayList<String> lines = new ArrayList<>();
@@ -43,11 +45,15 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 
 			if( f.getName().toLowerCase().endsWith( ".gz" ) )
 			{
-				filePath = ( SeqUtil.isFastQ() ? tempDir: outDir ) + fileId + dirExt + ext;
+				filePath = ( SeqUtil.isFastQ() || isMultiLine ? tempDir: outDir ) + fileId + dirExt + ext;
 				lines.add( unzip( f, filePath ) );
 			}
 
-			if( SeqUtil.isFastQ() )
+			if( Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ ) )
+			{
+				lines.add( convert454( filePath, fileId + dirExt, outDir ) );
+			}
+			else if( SeqUtil.isFastQ() )
 			{
 				lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
 			}
@@ -94,7 +100,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_CONVERT_TO_FASTA + "() {" );
 		lines.add( "cat $1 | " + Config.getExe( Config.EXE_AWK )
-				+ " '{if(NR%4==1) {printf(\">%s \\n\",substr($0,2));} else if(NR%4==2) print;}' > $2 " );
+				+ " '{ if(NR%4==1) { printf( \">%s \\n\",substr($0,2) ); } else if(NR%4==2) print; }' > $2 " );
 		lines.add( "}" );
 		if( hasGzipped() )
 		{
@@ -103,6 +109,13 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 			lines.add( "}" );
 		}
 
+		if( Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ ) )
+		{
+			lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
+			lines.add( "cat $1 | " + Config.getExe( Config.EXE_AWK )
+					+ " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf;}' > $2 " );
+			lines.add( "}" );
+		}
 		return lines;
 	}
 
@@ -121,6 +134,11 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 	private String convert2fastA( final String filePath, final String fileId, final String outDir ) throws Exception
 	{
 		return FUNCTION_CONVERT_TO_FASTA + " " + filePath + " " + outDir + fileId + "." + SeqUtil.FASTA;
+	}
+
+	private String convert454( final String filePath, final String fileId, final String outDir ) throws Exception
+	{
+		return FUNCTION_CONVERT_454 + " " + filePath + " " + outDir + fileId + "." + SeqUtil.FASTA;
 	}
 
 	private String copyToOutputDir( final String source, final String target ) throws Exception
@@ -142,6 +160,12 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
+	 * Name of the bash function used to conver 454 format to BioLockJ friendly Illumina format:
+	 * {@value #FUNCTION_CONVERT_454}
+	 */
+	protected static final String FUNCTION_CONVERT_454 = "convert454";
+
+	/**
 	 * Name of the bash function that converts the file format to Fasta: {@value #FUNCTION_CONVERT_TO_FASTA}
 	 */
 	protected static final String FUNCTION_CONVERT_TO_FASTA = "convertToFastA";
@@ -150,4 +174,5 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 	 * Name of the bash function used to decompress gzipped files: {@value #FUNCTION_GUNZIP}
 	 */
 	protected static final String FUNCTION_GUNZIP = "decompressGzip";
+
 }

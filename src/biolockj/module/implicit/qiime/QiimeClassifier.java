@@ -466,7 +466,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	/**
 	 * File produced by QIIME {@value #SCRIPT_CALC_ALPHA_DIVERSITY} script: {@value #ALPHA_DIVERSITY_TABLE}
 	 */
-	public static final String ALPHA_DIVERSITY_TABLE = "alphaDiversity.txt";
+	public static final String ALPHA_DIVERSITY_TABLE = "alphaDiversity" + TXT_EXT;
 
 	/**
 	 * Multiplexed fasta file produced by QIIME {@value #SCRIPT_ADD_LABELS} script: {@value #COMBINED_FNA}
@@ -493,7 +493,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	/**
 	 * File produced by QIIME {@value #SCRIPT_SUMMARIZE_BIOM} script: {@value #OTU_SUMMARY_FILE}
 	 */
-	public static final String OTU_SUMMARY_FILE = "otuSummary.txt";
+	public static final String OTU_SUMMARY_FILE = "otuSummary" + TXT_EXT;
 
 	/**
 	 * File produced by OTU picking scripts holding read taxonomy assignments: {@value #OTU_TABLE}

@@ -13,11 +13,9 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.node.ParsedSample;
 import biolockj.node.wgs.MetaphlanNode;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MemoryUtil;
@@ -46,36 +44,25 @@ public class MetaphlanParser extends ParserModuleImpl implements ParserModule
 	{
 		for( final File file: getInputFiles() )
 		{
-			ParsedSample sample = null;
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			try
 			{
-
-				if( !line.startsWith( "#" ) )
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-					final MetaphlanNode node = new MetaphlanNode(
-							file.getName().replace( ClassifierModule.PROCESSED, "" ), line );
-					if( isValid( node ) )
+					if( !line.startsWith( "#" ) )
 					{
-						sample = getParsedSample( node.getSampleId() );
-						if( sample == null )
-						{
-							addParsedSample( new ParsedSample( node ) );
-						}
-						else
-						{
-							sample.addNode( node );
-						}
+						addOtuNode(
+								new MetaphlanNode( file.getName().replace( ClassifierModule.PROCESSED, "" ), line ) );
 					}
 				}
 			}
-			reader.close();
-			Log.debug( getClass(), "Sample # " + getParsedSamples().size() );
-			if( sample != null )
+			finally
 			{
-				sample.buildOtuCounts();
-				sample.report();
+				if( reader != null )
+				{
+					reader.close();
+				}
 			}
 		}
 	}

@@ -14,6 +14,7 @@ package biolockj.util;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -30,6 +31,75 @@ public class SummaryUtil
 {
 
 	/**
+	 * To be called when pipeline fails to add summary details if possible.
+	 */
+	public static void addSummaryFooterForFailedPipeline()
+	{
+		String summaryFile = "";
+		try
+		{
+			summaryFile = getSummaryFile().getAbsolutePath();
+			saveSummary( getFooter() );
+		}
+		catch( final Exception ex )
+		{
+			Log.error( SummaryUtil.class, "Unable to update summary file: " + summaryFile, ex );
+		}
+	}
+
+	/**
+	 * Retun the min/max/mean/median summary stats for the given metadata numeric column
+	 * 
+	 * @param map Map(sampleId,count)
+	 * @param label Context label
+	 * @return Summary lines
+	 * @throws Exception if errors occur
+	 */
+	public static String getCountSummary( final Map<String, String> map, final String label ) throws Exception
+	{
+		String msg = "# Samples:    " + BioLockJUtil.addLeadingSpaces( "", label.length() )
+				+ BioLockJUtil.formatNumericOutput( map.size() ) + RETURN;
+		if( !map.isEmpty() )
+		{
+			final TreeSet<Integer> vals = new TreeSet<>(
+					map.values().stream().map( Integer::parseInt ).collect( Collectors.toSet() ) );
+			msg += "# " + label + " (min):     " + BioLockJUtil.formatNumericOutput( vals.first() ) + RETURN;
+			msg += "# " + label + " (median):  "
+					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMedian( vals, false ) ) )
+					+ RETURN;
+			msg += "# " + label + " (mean):    "
+					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMean( vals, false ) ) )
+					+ RETURN;
+			msg += "# " + label + " (max):     " + BioLockJUtil.formatNumericOutput( vals.last() ) + RETURN;
+			msg += "# " + label + " (total):   "
+					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( vals.stream().mapToInt( i -> i ).sum() ) )
+					+ RETURN;
+
+			if( !vals.first().equals( vals.last() ) )
+			{
+				final Set<String> minSamples = new HashSet<>();
+				final Set<String> maxSamples = new HashSet<>();
+				for( final String id: map.keySet() )
+				{
+					if( map.get( id ).equals( vals.first().toString() ) )
+					{
+						minSamples.add( id );
+					}
+					if( map.get( id ).equals( vals.last().toString() ) )
+					{
+						maxSamples.add( id );
+					}
+				}
+
+				msg += "IDs w/ min " + label + ":  " + minSamples + RETURN;
+				msg += "IDs w/ max " + label + ":  " + maxSamples + RETURN;
+			}
+		}
+
+		return msg;
+	}
+
+	/**
 	 * Print the final lines of the summary with overall status, runtime, and the download scp command if applicable.
 	 * 
 	 * @return Summary info
@@ -42,9 +112,12 @@ public class SummaryUtil
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
 		sb.append( getLabel( PIPELINE_RUNTIME )
 				+ ModuleUtil.getRunTime( System.currentTimeMillis() - BioLockJ.APP_START_TIME ) + RETURN );
-		sb.append( getLabel( PIPELINE_CONFIG ) + " " + Config.getConfigFilePath() + RETURN );
-		sb.append( getLabel( PIPELINE_OUTPUT ) + " "
+
+		sb.append( getLabel( PIPELINE_OUTPUT ) + "    "
 				+ Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + RETURN );
+		sb.append( getLabel( PIPELINE_CONFIG ) + " " + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( PIPELINE_META ) + "  "
+				+ ( MetaUtil.exists() ? MetaUtil.getFile().getAbsolutePath(): "N/A" ) + RETURN );
 
 		final String downloadCmd = DownloadUtil.getDownloadCmd();
 		if( downloadCmd != null )
@@ -73,8 +146,10 @@ public class SummaryUtil
 			return Double.valueOf( doubleVals.stream().mapToDouble( i -> i ).sum() / doubleVals.size() ).toString();
 		}
 
-		final Collection<Long> longVals = (Collection<Long>) vals;
-		return Long.valueOf( longVals.stream().mapToLong( i -> i ).sum() / longVals.size() ).toString();
+		final Collection<Integer> intVals = (Collection<Integer>) vals;
+		return Integer
+				.valueOf( Double.valueOf( intVals.stream().mapToInt( i -> i ).sum() / intVals.size() ).intValue() )
+				.toString();
 	}
 
 	/**
@@ -99,7 +174,7 @@ public class SummaryUtil
 		}
 		else
 		{
-			data = new ArrayList<>( (Collection<Long>) vals );
+			data = new ArrayList<>( (Collection<Integer>) vals );
 		}
 
 		Collections.sort( data );
@@ -115,7 +190,8 @@ public class SummaryUtil
 		}
 		else
 		{
-			return Long.valueOf( ( (Long) data.get( middle - 1 ) + (Long) data.get( middle ) ) / 2 ).toString();
+			return Integer.valueOf( ( (Integer) data.get( middle - 1 ) + (Integer) data.get( middle ) ) / 2 )
+					.toString();
 		}
 	}
 
@@ -215,10 +291,13 @@ public class SummaryUtil
 				return "No scripts found!" + RETURN;
 			}
 
-			final IOFileFilter ff0 = new WildcardFileFilter( "*.sh" );
-			final IOFileFilter ffStarted = new WildcardFileFilter( "*.sh_" + Pipeline.SCRIPT_STARTED );
-			final IOFileFilter ffSuccess = new WildcardFileFilter( "*.sh_" + Pipeline.SCRIPT_SUCCESS );
-			final IOFileFilter ffFailed = new WildcardFileFilter( "*.sh_" + Pipeline.SCRIPT_FAILURES );
+			final IOFileFilter ff0 = new WildcardFileFilter( "*" + BioLockJ.SH_EXT );
+			final IOFileFilter ffStarted = new WildcardFileFilter(
+					"*" + BioLockJ.SH_EXT + "_" + Pipeline.SCRIPT_STARTED );
+			final IOFileFilter ffSuccess = new WildcardFileFilter(
+					"*" + BioLockJ.SH_EXT + "_" + Pipeline.SCRIPT_SUCCESS );
+			final IOFileFilter ffFailed = new WildcardFileFilter(
+					"*" + BioLockJ.SH_EXT + "_" + Pipeline.SCRIPT_FAILURES );
 
 			final Collection<File> scripts = FileUtils.listFiles( scriptModule.getScriptDir(), ff0, null );
 			final Collection<File> scriptsStarted = FileUtils.listFiles( scriptModule.getScriptDir(), ffStarted, null );
@@ -307,7 +386,7 @@ public class SummaryUtil
 			sb.append( scriptsSuccess.size() + " successful" );
 			sb.append( scriptsFailed.isEmpty() ? "": "; " + scriptsFailed.size() + " failed" );
 			sb.append( numInc > 0 ? "; " + numInc + " incomplete": "" );
-			sb.append( "] " + RETURN );
+			sb.append( "]" + RETURN );
 
 			if( avgRunTime != null )
 			{
@@ -394,7 +473,7 @@ public class SummaryUtil
 	/**
 	 * Report exception details in the summary
 	 *
-	 * @param ex Exception
+	 * @param ex Exception thrown causing application runtime failure
 	 * @throws Exception if unable to save the updates summary
 	 */
 	public static void reportFailure( final Exception ex ) throws Exception
@@ -414,7 +493,7 @@ public class SummaryUtil
 		{
 			for( final StackTraceElement ste: ex.getStackTrace() )
 			{
-				sb.append( TAB_DELIM + ste.toString() + RETURN );
+				sb.append( BioLockJ.TAB_DELIM + ste.toString() + RETURN );
 			}
 		}
 
@@ -668,13 +747,11 @@ public class SummaryUtil
 	protected static void saveSummary( final String summary ) throws Exception
 	{
 		final File f = getSummaryFile();
-		Log.info( SummaryUtil.class, "Update summary: " + f.getAbsolutePath() );
 		final boolean append = f.exists();
-		Log.debug( SummaryUtil.class, "File exists?: " + append );
 		final FileWriter writer = new FileWriter( f, append );
 		writer.write( summary );
 		writer.close();
-		Log.info( SummaryUtil.class, "Save complete!" );
+		Log.info( SummaryUtil.class, "Summary updated" );
 	}
 
 	private static String getHeading() throws Exception
@@ -724,23 +801,22 @@ public class SummaryUtil
 	/**
 	 * Name of the summary file created in pipeline root directory: {@value #SUMMARY_FILE}
 	 */
-	protected static final String SUMMARY_FILE = "summary.txt";
+	protected static final String SUMMARY_FILE = "summary" + BioLockJ.TXT_EXT;
 
 	/**
 	 * Name of the temp file created in pipeline root directory: {@value #TEMP_SUMMARY_FILE}
 	 */
-	protected static final String TEMP_SUMMARY_FILE = "tempSummary.txt";
-
+	protected static final String TEMP_SUMMARY_FILE = ".tempSummary" + BioLockJ.TXT_EXT;
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String NUM_ATTEMPTS = "# Attempts";
 	private static final String NUM_MODULES = "# Modules";
 	private static final String PIPELINE_CONFIG = "Pipeline Config";
+	private static final String PIPELINE_META = "Final Metadata";
 	private static final String PIPELINE_NAME = "Pipeline Name";
-	private static final String PIPELINE_OUTPUT = "Pipeline Output";
+	private static final String PIPELINE_OUTPUT = "Pipeline Dir";
 	private static final String PIPELINE_RUNTIME = "Pipeline Runtime";
 	private static final String PIPELINE_STATUS = "Pipeline Status";
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final String SPACER = "---------------------------------------------------------------------";
 	private static final String SPACER_2X = SPACER + SPACER;
-	private static final String TAB_DELIM = BioLockJ.TAB_DELIM;
 }

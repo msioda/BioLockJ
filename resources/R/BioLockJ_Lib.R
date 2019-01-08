@@ -73,36 +73,37 @@ getMasterConfigFile <- function() {
 }
 
 getMetaDataFile <- function(){
-	origFile = getProperty(name = "metadata.filePath")
-	if (is.null(origFile)){
-		#getPipelineFile("ImportMetadata/output/")
-		return(NULL)
-	}else{
-		fileName = basename(origFile)
-		localCopy = file.path(getPipelineDir(), fileName)
-	}
-	return(localCopy)
+  origFile = getProperty("metadata.filePath")
+  if (is.null(origFile)){
+    #getPipelineFile("ImportMetadata/output/")
+    return(NULL)
+  }else{
+    fileName = basename(origFile)
+    localCopy = file.path(getPipelineDir(), fileName)
+  }
+  return(localCopy)
 }
 
 # Return a data frame of the metadata.  Note that biolockj assumes that the first column is the sample id
 # and that the sample id is unique within the file, so the first row is used as rownames in the returned dataframe.
 getMetaData <- function(){
-	file = getMetaDataFile()
-	if (is.null(file)){
-		inputFile = getPipelineFile( "*_metaMerged.tsv" )
-		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
-		firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
-		meta = otuTable[firstMetaCol:ncol(otuTable)]
-	}else{
-		meta = read.delim(file=file, comment.char = getProperty("metadata.commentChar",""), row.names = 1)
-	}
-	return(meta)
+  file = getMetaDataFile()
+  if (is.null(file)){
+    inputFile = getPipelineFile( "*_metaMerged.tsv" )
+    otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
+    firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
+    meta = otuTable[firstMetaCol:ncol(otuTable)]
+  }else{
+    meta = read.delim(file=file, comment.char = getProperty("metadata.commentChar",""), row.names = 1)
+  }
+  return(meta)
 }
+
 
 # If downloaded with scp, all files share 1 directory, so return getPipelineDir() 
 # Otherwise, script path like: piplineDir/moduleDir/script/MAIN*.R, so return moduleDir (the dir 2 levels above script)  
 getModuleDir <- function() {
-   if( getPipelineDir() == dirname( getModuleScript() ) ){
+   if( getPipelineDir() == dirname( getModuleScript() ) ) {
       return( getPipelineDir() )
    }
    return( dirname( dirname( getModuleScript() ) ) )
@@ -130,16 +131,39 @@ getPipelineDir <- function() {
 
 # Return a file matching the pattern underwhere under the pipeline root directory
 # If multiple results are found, return the most recent version
-getPipelineFile <- function( pattern ) {
-   results = list.files( getPipelineDir(), pattern, full.names=TRUE, recursive=TRUE )
-   returnFile = NULL
-   for( i in 1:length( results ) ) {
-      if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
-         returnFile = results[i] 
-      }
-   }
-
-   return( returnFile )
+# If dir is undefined, look in pipeline dir
+# If no results, check in Config property input.dirPaths
+getPipelineFile <- function( pattern, dir=getPipelineDir() ) {
+    
+    if( length( dir ) > 1 ) {
+        for( i in 1:length( dir ) ) {
+            inputDirResults = getPipelineFile( pattern, dir[i] )
+            if( !is.null( inputDirResults ) ) {
+                return( inputDirResults )
+            }
+        }
+        writeErrors( getModuleScript(), c( paste0( "getPipelineFile(", pattern, ",", dir, ")" ) ) )
+    }
+    
+    print( paste( "Search:", dir, " for input files matching pattern:", pattern ) )
+    results = list.files( dir, pattern, full.names=TRUE, recursive=TRUE )
+    if( length( results ) == 0 ) {
+        if( ! dir %in% getProperty("input.dirPaths") ) {
+            return( getPipelineFile( pattern, getProperty("input.dirPaths") ) ) 
+        }
+        else {
+            return( NULL )
+        }
+    }
+    
+    returnFile = NULL
+    for( i in 1:length( results ) ) {
+        if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
+            returnFile = results[i] 
+        }
+    }
+    
+    return( returnFile )
 }
 
 # Return the PDF plot label based on r.plotWidth, standar.properties default assumes 4 plots/page 
@@ -149,6 +173,7 @@ getPlotTitle <- function( line1, line2 ) {
    }
    return( paste( line1, line2 ) )
 }
+
 
 # Return property value from MASTER Config file, otherwise return the defaultVal
 getProperty <- function( name, defaultVal=NULL ) {
@@ -209,9 +234,10 @@ parseConfig <- function( name, defaultVal=NULL ) {
    return( str_trim( prop ) )
 }
 
+
 plotPlainText <- function(textToPrint){
-	plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
-	text(labels=textToPrint, x = 0.5, y = 0.5, cex = 1.6, col = "black")
+  plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
+  text(labels=textToPrint, x = 0.5, y = 0.5, cex = 1.6, col = "black")
 }
 
 # Create status indicator file by appending suffix of _Success or _Failure if any error messages logged
