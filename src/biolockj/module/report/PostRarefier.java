@@ -30,7 +30,7 @@ import biolockj.util.*;
  * most appropriately) to the default 0.50 quantile, otherwise known as the median. Users can configure this module to
  * discard all samples with less OTUs than the rarefication threshold. Each sample is rarefied the configured number of
  * times and the average OTU count is used for each sample. Note that even if a previous module removed singletons, this
- * approach can yeild new singleton OTU assignments but these are less likely to be due to contaminent and thus, should
+ * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
  */
 public class PostRarefier extends JavaModuleImpl implements JavaModule
@@ -51,7 +51,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Set {@value #NUM_RAREFIED_OTUS} as the number of hits field.
+	 * Update {@link biolockj.module.implicit.parser.ParserModuleImpl} OTU_COUNT field name.
 	 */
 	@Override
 	public void cleanUp() throws Exception
@@ -83,9 +83,9 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Apply the quantile config to the number of OTUs per sample to calculate the maximum OTU count per sample. For
+	 * Apply the quantile Config to the number of OTUs per sample to calculate the maximum OTU count per sample. For
 	 * each sample rarefy the configured number of times and output a file with the average counts. Update the metadata
-	 * to add the {@value #NUM_RAREFIED_OTUS} column with the new OTU count per sample.
+	 * to add the new OTU_COUNT column with the new OTU count per sample.
 	 */
 	@Override
 	public void runModule() throws Exception
@@ -304,7 +304,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 
 	private String getMetaColName() throws Exception
 	{
-		return "OTU_COUNT_rareifyQuantile" + new Double( Config.requirePositiveDouble( QUANTILE ) * 100 ).intValue();
+		return "OTU_COUNT_rareQuant" + new Double( Config.requirePositiveDouble( QUANTILE ) * 100 ).intValue();
 	}
 
 	private Map<String, String> hitsPerSample = new HashMap<>();

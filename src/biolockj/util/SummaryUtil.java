@@ -31,9 +31,11 @@ public class SummaryUtil
 {
 
 	/**
-	 * To be called when pipeline fails to add summary details if possible.
+	 * Called when pipeline fails to add summary details to summary file, if possible.
+	 * 
+	 * @param helpInfo Help Info
 	 */
-	public static void addSummaryFooterForFailedPipeline( String helpInfo )
+	public static void addSummaryFooterForFailedPipeline( final String helpInfo )
 	{
 		String summaryFile = "";
 		try

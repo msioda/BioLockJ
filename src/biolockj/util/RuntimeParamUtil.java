@@ -70,6 +70,7 @@ public class RuntimeParamUtil
 	 * Runtime property getter for {@value #CONFIG_FLAG}
 	 * 
 	 * @return {@link biolockj.Config} file
+	 * @throws Exception if errors occur
 	 */
 	public static File getConfigFile() throws Exception
 	{

@@ -17,6 +17,7 @@ import biolockj.Config;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.SeqUtil;
+import biolockj.util.TaxaUtil;
 
 /**
  * This BioModule builds the bash scripts used to execute metaphlan2.py to classify WGS sequences.
@@ -166,7 +167,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 			if( defaultSwitches.indexOf( "--tax_lev " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ sets this value based on: " + Config.REPORT_TAXONOMY_LEVELS );
+						+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 			}
 			if( defaultSwitches.indexOf( "-s " ) > -1 )
 			{
@@ -203,15 +204,14 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	}
 
 	/**
-	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS} if only
+	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} if only
 	 * one taxonomy level is to be reported, otherwise report all levels.
 	 */
 	private void setRankSwitch()
 	{
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).size() == 1 )
+		if( TaxaUtil.getTaxaLevels().size() == 1 )
 		{
-			defaultSwitches += "--tax_lev "
-					+ taxaLevelMap.get( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).get( 0 ) ) + " ";
+			defaultSwitches += "--tax_lev " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
 		}
 	}
 
@@ -220,13 +220,13 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
 
 	{
-		taxaLevelMap.put( Config.SPECIES, METAPHLAN_SPECIES );
-		taxaLevelMap.put( Config.GENUS, METAPHLAN_GENUS );
-		taxaLevelMap.put( Config.FAMILY, METAPHLAN_FAMILY );
-		taxaLevelMap.put( Config.ORDER, METAPHLAN_ORDER );
-		taxaLevelMap.put( Config.CLASS, METAPHLAN_CLASS );
-		taxaLevelMap.put( Config.PHYLUM, METAPHLAN_PHYLUM );
-		taxaLevelMap.put( Config.DOMAIN, METAPHLAN_DOMAIN );
+		taxaLevelMap.put( TaxaUtil.SPECIES, METAPHLAN_SPECIES );
+		taxaLevelMap.put( TaxaUtil.GENUS, METAPHLAN_GENUS );
+		taxaLevelMap.put( TaxaUtil.FAMILY, METAPHLAN_FAMILY );
+		taxaLevelMap.put( TaxaUtil.ORDER, METAPHLAN_ORDER );
+		taxaLevelMap.put( TaxaUtil.CLASS, METAPHLAN_CLASS );
+		taxaLevelMap.put( TaxaUtil.PHYLUM, METAPHLAN_PHYLUM );
+		taxaLevelMap.put( TaxaUtil.DOMAIN, METAPHLAN_DOMAIN );
 	}
 
 	/**

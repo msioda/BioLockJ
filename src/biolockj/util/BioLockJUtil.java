@@ -239,10 +239,10 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Direct module param format has 2 parts separated by a colon (pipeline directory name):(module name)
+	 * Direct module parameters contain 2 parts separated by a colon: (pipeline directory name):(module name)
 	 * 
-	 * @param module
-	 * @return Direct param string
+	 * @param module BioModule
+	 * @return Direct parameter flag + value
 	 * @throws Exception if errors occur
 	 */
 	public static String getDirectModuleParam( final BioModule module ) throws Exception
@@ -446,9 +446,10 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Remove the outer single or double quotes of the given value
+	 * Remove the outer single or double quotes of the given value.<br>
+	 * Quotes are only removed if quotes are found as very 1st and last characters.
 	 * 
-	 * @param value
+	 * @param value Possibly quoted value
 	 * @return value without outer quotes
 	 * @throws Exception if errors occur
 	 */
@@ -469,7 +470,7 @@ public class BioLockJUtil
 	/**
 	 * Remove all single and double quotation marks found in value.
 	 * 
-	 * @param value
+	 * @param value Possibly quoted value 
 	 * @return value with no quotes
 	 * @throws Exception if errors occur
 	 */

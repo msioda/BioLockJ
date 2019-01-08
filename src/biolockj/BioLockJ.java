@@ -57,6 +57,27 @@ public class BioLockJ
 	}
 
 	/**
+	 * Print error file path, restart instructions, and link to the BioLockJ Wiki
+	 * 
+	 * @param errFile Error File
+	 * @return Help Info
+	 */
+	public static String getHelpInfo( final File errFile )
+	{
+		try
+		{
+			return RETURN + "Usage java biolockj.BioLockJ -b path_to_pipeline_output parent_directory "
+					+ "-c path_to_properties_file " + RETURN + "See https://github.com/msioda/BioLockJ/wiki" + RETURN
+					+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath(): "" ) + RETURN;
+		}
+		catch( final Exception ex )
+		{
+			ex.printStackTrace();
+		}
+		return "";
+	}
+
+	/**
 	 * {@link biolockj.BioLockJ} is the BioLockj.jar Main-Class, so this main method is the first method executed when
 	 * BioLockJ runs. The biolockj shell script always passed the project directory path $DOCKER_PROJ as 1st param.<br>
 	 * The program requires a single user-provided parameter, the path to a {@link biolockj.Config} file.<br>
@@ -204,27 +225,6 @@ public class BioLockJ
 			}
 		}
 	}
-	
-	/**
-	 * Print error file path, restart instructions, and link to the BioLockJ Wiki
-	 * 
-	 * @param errFile Error File
-	 * @return Help Info
-	 * @throws Exception if errors occur
-	 */
-	public static String getHelpInfo( File errFile ) 
-	{
-		try
-		{
-			return RETURN + "Usage java biolockj.BioLockJ -b path_to_pipeline_output parent_directory " + 
-					"-c path_to_properties_file " + RETURN + "See https://github.com/msioda/BioLockJ/wiki" + RETURN +
-					( errFile != null ? "Writing error file to " + errFile.getAbsolutePath()  : "" ) + RETURN;
-		}catch(Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return "";
-	}
 
 	/**
 	 * Create the pipeline root directory under $DOCKER_PROJ and save the path to
@@ -268,27 +268,27 @@ public class BioLockJ
 	 * Initialize restarted pipeline by:
 	 * <ol>
 	 * <li>Set {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}
-	 * <li>Initialize {@link biolockj.Log} file
-	 * <li>Update summary #Attempts ccount
-	 * <li>Verify pipeline status in not {@value biolockj.Pipeline#BLJ_COMPLETE}
+	 * <li>Initialize {@link biolockj.Log} file, name after {@value biolockj.Config#INTERNAL_PIPELINE_NAME}
+	 * <li>Update summary #Attempts count
+	 * <li>If pipeline status = {@value biolockj.Pipeline#BLJ_COMPLETE}
 	 * <li>Delete status file {@value biolockj.Pipeline#BLJ_FAILED} in pipeline root directory
 	 * </ol>
 	 * 
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	protected static void initRestart() throws Exception
 	{
 		Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
 		Log.initialize( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
 
-		Log.warn( BioLockJ.class, RETURN + RETURN + Log.LOG_SPACER + RETURN + "RESTART PROJECT DIR --> "
-				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN + Log.LOG_SPACER + RETURN + RETURN );
+		Log.warn( BioLockJ.class, RETURN + Log.LOG_SPACER + RETURN + "RESTART PROJECT DIR --> "
+				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN + Log.LOG_SPACER + RETURN );
 
 		SummaryUtil.updateNumAttempts();
 		if( isPipelineComplete( RuntimeParamUtil.getRestartDir() ) )
 		{
-			throw new Exception( "RESTART FAILED!  Pipeline already ran successfully: "
-					+ RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+			throw new Exception( "RESTART FAILED!  Restart pipeline still shows status as: " + Pipeline.BLJ_COMPLETE
+					+ " --> Check restart directory: " + RuntimeParamUtil.getRestartDir().getAbsolutePath() );
 		}
 		else
 		{
@@ -539,7 +539,7 @@ public class BioLockJ
 			}
 
 			System.out.println( getHelpInfo( errFile ) );
-			
+
 			printFatalError( fatalException );
 
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );

@@ -12,10 +12,10 @@
 package biolockj.node.wgs;
 
 import biolockj.BioLockJ;
-import biolockj.Config;
 import biolockj.module.classifier.wgs.SlimmClassifier;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
+import biolockj.util.TaxaUtil;
 
 /**
  * This class represents one line of {@link biolockj.module.classifier.wgs.SlimmClassifier} output. SLIMM generates a
@@ -56,7 +56,7 @@ public class SlimmNode extends OtuNodeImpl implements OtuNode
 
 	private static String getLevel( final String fileName )
 	{
-		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
 			if( fileName.contains( level ) )
 			{
@@ -70,11 +70,11 @@ public class SlimmNode extends OtuNodeImpl implements OtuNode
 	static
 	{
 		DOMAIN_DELIM = SlimmClassifier.SLIMM_DOMAIN_DELIM;
-		CLASS_DELIM = Config.CLASS;
-		FAMILY_DELIM = Config.FAMILY;
-		GENUS_DELIM = Config.GENUS;
-		ORDER_DELIM = Config.ORDER;
-		PHYLUM_DELIM = Config.PHYLUM;
-		SPECIES_DELIM = Config.SPECIES;
+		CLASS_DELIM = TaxaUtil.CLASS;
+		FAMILY_DELIM = TaxaUtil.FAMILY;
+		GENUS_DELIM = TaxaUtil.GENUS;
+		ORDER_DELIM = TaxaUtil.ORDER;
+		PHYLUM_DELIM = TaxaUtil.PHYLUM;
+		SPECIES_DELIM = TaxaUtil.SPECIES;
 	}
 }

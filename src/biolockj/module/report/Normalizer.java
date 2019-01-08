@@ -24,7 +24,7 @@ import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
-import biolockj.util.OtuUtil;
+import biolockj.util.TaxaUtil;
 
 /**
  * This utility is used to normalize and/or log-transform the raw OTU counts using the formulas:
@@ -89,12 +89,9 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return OtuUtil.outputHasTaxonomyTables( previousModule );
+		return TaxaUtil.outputHasTaxonomyTables( previousModule );
 	}
 
-	/**
-	 * 
-	 */
 	@Override
 	public void runModule() throws Exception
 	{
@@ -183,16 +180,16 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		final String level = OtuUtil.getTaxonomyTableLevel( taxaTable );
+		final String level = TaxaUtil.getTaxonomyTableLevel( taxaTable );
 		Log.debug( getClass(), "Normalizing table for level: " + level );
 		if( !logBase.isEmpty() )
 		{
-			final File logNormTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase + NORMAL );
+			final File logNormTable = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase + NORMAL );
 			writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsNormalizedThenLogged );
 		}
 		else
 		{
-			final File normTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, NORMAL );
+			final File normTable = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, NORMAL );
 			writeDataToFile( normTable, sampleNames, otuNames, dataPointsNormalized );
 		}
 

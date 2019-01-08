@@ -22,7 +22,7 @@ import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
-import biolockj.util.OtuUtil;
+import biolockj.util.TaxaUtil;
 
 /**
  * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.
@@ -52,7 +52,7 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return OtuUtil.outputHasTaxonomyTables( previousModule );
+		return TaxaUtil.outputHasTaxonomyTables( previousModule );
 	}
 
 	/**
@@ -141,10 +141,10 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		final String level = OtuUtil.getTaxonomyTableLevel( otuTable );
+		final String level = TaxaUtil.getTaxonomyTableLevel( otuTable );
 		Log.debug( getClass(), "Transforming table for level: " + level );
 
-		final File logNormTable = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase );
+		final File logNormTable = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase );
 
 		writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsLogged );
 	}

@@ -144,14 +144,14 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 			throws Exception
 	{
 		final TreeMap<String, TreeSet<String>> scarceTaxa = new TreeMap<>();
-		for( final String level: Config.requireList( Config.REPORT_TAXONOMY_LEVELS ) )
+		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
 			final TreeMap<String, TreeSet<String>> scarceLevelTaxa = new TreeMap<>();
-			final TreeSet<String> levelTaxa = OtuUtil.findUniqueTaxa( otus, level );
+			final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
 			Log.debug( getClass(), "Checking level: " + level + " with " + levelTaxa.size() + " taxa" );
 			for( final String taxa: levelTaxa )
 			{
-				final TreeMap<String, TreeMap<String, Integer>> levelTaxaCounts = OtuUtil
+				final TreeMap<String, TreeMap<String, Integer>> levelTaxaCounts = TaxaUtil
 						.getLevelTaxaCounts( sampleOtuCounts, level );
 				final TreeSet<String> samplesWithTaxa = new TreeSet<>();
 				for( final String sampleId: levelTaxaCounts.keySet() )

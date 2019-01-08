@@ -17,9 +17,7 @@ import biolockj.Config;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.module.report.JsonReport;
-import biolockj.util.ModuleUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule builds the scripts used to call SLIMM for classification of WGS data.
@@ -270,7 +268,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( slimmSwitches.indexOf( "-r " ) > -1 )
 		{
 			throw new Exception( "Invalid SLIMM option (-r) found in property(" + EXE_BOWTIE_PARAMS
-					+ "). BioLockJ sets this value based on: " + Config.REPORT_TAXONOMY_LEVELS );
+					+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 		}
 
 		setSlimmRankSwitch();
@@ -295,9 +293,9 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	 */
 	private void setSlimmRankSwitch() throws Exception
 	{
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).size() == 1 )
+		if( TaxaUtil.getTaxaLevels().size() == 1 )
 		{
-			slimmSwitches += "-r " + taxaLevelMap.get( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).get( 0 ) ) + " ";
+			slimmSwitches += "-r " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
 		}
 	}
 
@@ -305,17 +303,17 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	private String slimmSwitches = null;
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
 	{
-		taxaLevelMap.put( Config.SPECIES, Config.SPECIES );
-		taxaLevelMap.put( Config.GENUS, Config.GENUS );
-		taxaLevelMap.put( Config.FAMILY, Config.FAMILY );
-		taxaLevelMap.put( Config.ORDER, Config.ORDER );
-		taxaLevelMap.put( Config.CLASS, Config.CLASS );
-		taxaLevelMap.put( Config.PHYLUM, Config.PHYLUM );
-		taxaLevelMap.put( Config.DOMAIN, SLIMM_DOMAIN_DELIM );
+		taxaLevelMap.put( TaxaUtil.SPECIES, TaxaUtil.SPECIES );
+		taxaLevelMap.put( TaxaUtil.GENUS, TaxaUtil.GENUS );
+		taxaLevelMap.put( TaxaUtil.FAMILY, TaxaUtil.FAMILY );
+		taxaLevelMap.put( TaxaUtil.ORDER, TaxaUtil.ORDER );
+		taxaLevelMap.put( TaxaUtil.CLASS, TaxaUtil.CLASS );
+		taxaLevelMap.put( TaxaUtil.PHYLUM, TaxaUtil.PHYLUM );
+		taxaLevelMap.put( TaxaUtil.DOMAIN, SLIMM_DOMAIN_DELIM );
 	}
 	/**
-	 * Override {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}.{@value biolockj.Config#DOMAIN}
-	 * value
+	 * Override
+	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN} value
 	 */
 	public static final String SLIMM_DOMAIN_DELIM = "superkingdom";
 

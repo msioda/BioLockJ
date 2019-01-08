@@ -168,11 +168,12 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 
 	/**
 	 * Some {@link biolockj.module.classifier.ClassifierModule}s can include taxonomy level identifiers without an OTU
-	 * name in the sample report files. This method verifies the node exists, has a valid sample ID, and that no emptry
+	 * name in the sample report files. This method verifies the node exists, has a valid sample ID, and that no empty
 	 * String OTU names are reported.
 	 *
 	 * @param node OtuNode build from 1 line of a {@link biolockj.module.classifier.ClassifierModule} output file
 	 * @return boolean if {@link biolockj.node.OtuNode} is valid
+	 * @throws Exception if errors occur checking if node is valid
 	 */
 	protected boolean isValid( final OtuNode node ) throws Exception
 	{

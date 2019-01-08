@@ -15,14 +15,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
-import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.OtuUtil;
+import biolockj.util.*;
 
 /**
  * Many R BioModules expect separate tables containing log-normalized taxa counts for each taxonomy level. This module
@@ -65,16 +62,16 @@ public class BuildTaxonomyTables extends JavaModuleImpl implements JavaModule
 		summary += "# Samples: " + BioLockJUtil.formatNumericOutput( sampleOtuCounts.size() ) + RETURN;
 		int totalOtus = 0;
 		boolean topLevel = true;
-		for( final String level: Config.requireList( Config.REPORT_TAXONOMY_LEVELS ) )
+		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
-			final TreeSet<String> levelTaxa = OtuUtil.findUniqueTaxa( otus, level );
-			final TreeMap<String, TreeMap<String, Integer>> levelTaxaCounts = OtuUtil
+			final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
+			final TreeMap<String, TreeMap<String, Integer>> levelTaxaCounts = TaxaUtil
 					.getLevelTaxaCounts( sampleOtuCounts, level );
 			final Map<String, Integer> uniqueOtus = new HashMap<>();
 
 			uniqueOtus.put( level, levelTaxa.size() );
 			report( "Taxonomy Counts @" + level, levelTaxaCounts );
-			final File table = OtuUtil.getTaxonomyTableFile( getOutputDir(), level, null );
+			final File table = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, null );
 			Log.info( getClass(), "Building: " + table.getAbsolutePath() );
 
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( table ) );

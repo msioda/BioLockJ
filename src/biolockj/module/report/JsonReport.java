@@ -11,9 +11,7 @@ import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.r.CalculateStats;
 import biolockj.node.JsonNode;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.OtuUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule is used to build a JSON file (summary.json) from pipeline OTU-metadata tables.
@@ -88,8 +86,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			Log.debug( getClass(), "Add JSON otu " + otu );
 			JsonNode parent = rootNode;
 			final int otuCount = otuCounts.get( otu );
-			final Map<String, String> taxaMap = OtuUtil.getTaxaByLevel( otu );
-			for( final String level: Config.requireList( Config.REPORT_TAXONOMY_LEVELS ) )
+			final Map<String, String> taxaMap = TaxaUtil.getTaxaByLevel( otu );
+			for( final String level: TaxaUtil.getTaxaLevels() )
 			{
 				final String taxa = taxaMap.get( level );
 				JsonNode jsonNode = getNode( jsonMap.get( level ), taxa );
@@ -120,7 +118,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * 
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode))
 	 * @param stats Stats file
-	 * @param level {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
+	 * @param level {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
 	 * @return LinkedHashMap(level,Set(JsonNode))
 	 * @throws Exception if errors occur
 	 */
@@ -188,8 +186,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		final String logBase = Config.getString( Config.REPORT_LOG_BASE );
 		final String prefix = logBase == null ? "": "log" + logBase;
 
-		final String taxaLevel = nodeLevel == 0 ? ROOT_NODE
-				: Config.requireList( Config.REPORT_TAXONOMY_LEVELS ).get( nodeLevel - 1 );
+		final String taxaLevel = nodeLevel == 0 ? ROOT_NODE: TaxaUtil.getTaxaLevels().get( nodeLevel - 1 );
 
 		final List<JsonNode> childNodes = getChildNodes( node, jsonMap, nodeLevel );
 
@@ -235,7 +232,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	private void addStats( LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final JsonNode root ) throws Exception
 	{
 		Log.info( getClass(), "Adding stats to JSON nodes..." );
-		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
 			final File[] statReports = getStatReports( level );
 			for( final File stats: statReports )
@@ -252,11 +249,10 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			final int nodeLevel ) throws Exception
 	{
 		final List<JsonNode> childNodes = new ArrayList<>();
-		if( nodeLevel < Config.getList( Config.REPORT_TAXONOMY_LEVELS ).size() )
+		if( nodeLevel < TaxaUtil.getTaxaLevels().size() )
 		{
 			// getting all JsonNodes for the nodeLevel
-			final Set<JsonNode> jsonNodes = jsonMap
-					.get( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).get( nodeLevel ) );
+			final Set<JsonNode> jsonNodes = jsonMap.get( TaxaUtil.getTaxaLevels().get( nodeLevel ) );
 
 			if( jsonNodes != null )
 			{
@@ -320,7 +316,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	private LinkedHashMap<String, TreeSet<JsonNode>> initJsonMap() throws Exception
 	{
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = new LinkedHashMap<>();
-		for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
 			jsonMap.put( level, new TreeSet<JsonNode>() );
 		}
