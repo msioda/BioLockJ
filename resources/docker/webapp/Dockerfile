@@ -53,7 +53,7 @@ RUN echo ${BLJ_DATE} && \
 	wget $BLJ_RELEASE_URL && \
 	tar -xzf $BLJ_TAR && \
 	chmod -R 770 $BLJ && \
-	rm -f $BLJ_TAR && rm -rf $BLJ/[lip]* && rm -rf $BLJ/src && rm -rf $BLJ/docs && rm -rf $BLJ/resources/[blid]*
+	rm -f $BLJ_TAR && rm -rf $BLJ/[lip]* && rm -rf $BLJ/src && rm -rf $BLJ/resources/[blid]*
 
 #5.) ============ Install  Docker Client =================
 ARG DOCKER_CLIENT

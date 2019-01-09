@@ -42,6 +42,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		dockerScriptLines.add( innerList );
 		return dockerScriptLines;
 	}
+	
 
 	/**
 	 * Not needed for R script modules.
@@ -138,22 +139,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Get the main R script prefix, typically {@value #MAIN_SCRIPT_PREFIX} except when running in Docker mode, which
-	 * instead uses a numeric prefix since {@value #MAIN_SCRIPT_PREFIX} will be reserved for the MAIN bash script.
-	 * 
-	 * @return MAIN script prefix
-	 * @throws Exception if errors occur
-	 */
-	public String getMainRscriptPrefix() throws Exception
-	{
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			return ModuleUtil.getModuleNum( this ) + ".0_";
-		}
-		return MAIN_SCRIPT_PREFIX;
-	}
-
-	/**
 	 * Get the Module script
 	 * 
 	 * @return Module R script
@@ -193,7 +178,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 */
 	public File getPrimaryScript() throws Exception
 	{
-		return new File( getScriptDir().getAbsolutePath() + File.separator + getMainScriptName() );
+		return new File( getScriptDir().getAbsolutePath() + File.separator + MAIN_SCRIPT_PREFIX + getModuleScriptName() );
 	}
 
 	/**
@@ -235,7 +220,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 				}
 			}
 
-			final File rScript = ModuleUtil.getMainScript( this );
+			final File rScript = getPrimaryScript();
 			if( rScript == null || !rScript.exists() )
 			{
 				sb.append( "Failed to generate R Script!" + RETURN );
@@ -340,7 +325,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	private String getErrors() throws Exception
 	{
-		final IOFileFilter ff = new WildcardFileFilter( "*" + R_EXT + "_" + Pipeline.SCRIPT_FAILURES );
+		final IOFileFilter ff = new WildcardFileFilter( "*" + Pipeline.SCRIPT_FAILURES );
 		final Collection<File> scriptsFailed = FileUtils.listFiles( getScriptDir(), ff, null );
 		if( scriptsFailed.isEmpty() )
 		{
@@ -370,10 +355,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		return errors.toString();
 	}
 
-	private String getMainScriptName() throws Exception
-	{
-		return getMainRscriptPrefix() + getModuleScriptName();
-	}
 
 	private String getModuleScriptName() throws Exception
 	{

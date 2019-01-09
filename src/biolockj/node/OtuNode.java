@@ -24,7 +24,7 @@ public interface OtuNode
 {
 	/**
 	 * Add {@link biolockj.node.OtuNode} taxa names for the
-	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS} level mapped by the classifier specific
+	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} level mapped by the classifier specific
 	 * levelDelim parameter: .
 	 * 
 	 * @param taxa Classifier Taxa name
@@ -35,9 +35,9 @@ public interface OtuNode
 
 	/**
 	 * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to
-	 * {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS}
+	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
 	 * 
-	 * @return Map<String, String>
+	 * @return Map(delim, level) map
 	 */
 	public Map<String, String> delimToLevelMap();
 

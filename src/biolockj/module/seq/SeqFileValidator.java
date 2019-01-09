@@ -109,9 +109,11 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Call {@link #validateFile(File)} for each input file. Call {@link #removeBadFiles()} to remove empty files and
-	 * files with no valid reads. Call {@link #verifyPairedSeqs()} if module input files are paired read files. Call
-	 * {@link biolockj.util.MetaUtil#addColumn(String, Map, File, boolean)}
+	 * Cache sampleIds to compare to validated sampleIds post-processing. Call {@link #validateFile(File, Integer)} for
+	 * each input file.<br>
+	 * Call {@link #removeBadFiles()} to remove empty files (cases where all reads fail validation).<br>
+	 * Call {@link #verifyPairedSeqs()} if module input files are paired read files.<br>
+	 * Call {@link biolockj.util.MetaUtil#addColumn(String, Map, File, boolean)}
 	 */
 	@Override
 	public void runModule() throws Exception
@@ -134,6 +136,25 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
+	 * Remove sequence files in which all reads failed validation checks, leaving only an empty file.
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected void removeBadFiles() throws Exception
+	{
+		if( !badFiles.isEmpty() )
+		{
+			for( final File file: badFiles )
+			{
+				if( BioLockJUtil.deleteWithRetry( file, 5 ) )
+				{
+					Log.warn( BioLockJUtil.class, "Deleted empty file: " + file.getAbsolutePath() );
+				}
+			}
+		}
+	}
+
+	/**
 	 * Validate sequence files:
 	 * <ol>
 	 * <li>Validate valid 1st sequence header character is expected character
@@ -147,7 +168,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	 * @param fileCount Integer count
 	 * @throws Exception if I/O errors occur while processing sequence files
 	 */
-	protected void validateFile( final File file, final int fileCount ) throws Exception
+	protected void validateFile( final File file, final Integer fileCount ) throws Exception
 	{
 		Log.info( getClass(), "Validating File[" + fileCount + "]: " + file.getAbsolutePath() );
 		final Integer[] stats = initStats();
@@ -487,20 +508,6 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 		}
 
 		sampleStats.put( SeqUtil.getSampleId( file.getName() ), stats );
-	}
-
-	private void removeBadFiles() throws Exception
-	{
-		if( !badFiles.isEmpty() )
-		{
-			for( final File file: badFiles )
-			{
-				if( BioLockJUtil.deleteWithRetry( file, 5 ) )
-				{
-					Log.warn( BioLockJUtil.class, "Deleted empty file: " + file.getAbsolutePath() );
-				}
-			}
-		}
 	}
 
 	private void saveRemovedSeqsToFile( final Collection<String> badLines, final File file ) throws Exception

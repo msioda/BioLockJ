@@ -205,12 +205,12 @@ public class MetaUtil
 	}
 
 	/**
-	 * Used to generate a guaretneed to be unique column name. If NUM_READS already exists, this will return
-	 * NUM_READS_1, or NUM_READ_2, etc until a unique column name is found. If a column already exists, but contains
-	 * only {@ biolockj.Config}.{@value #META_NULL_VALUE} return the name of that empty column.
+	 * Used to generate a guaranteed to be unique column name. If parameter "name" already exists, this will return
+	 * name_1, or name_2, etc until an unused column name is found. If a column already exists, but contains only
+	 * {@link biolockj.Config}.{@value #META_NULL_VALUE} values, return the name of that empty column to overwrite.
 	 * 
 	 * @param name Base column name
-	 * @return column name
+	 * @return Column name
 	 * @throws Exception if errors occur
 	 */
 	public static String getForcedColumnName( final String name ) throws Exception
@@ -414,7 +414,7 @@ public class MetaUtil
 			Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
 			setFile( MetaUtil.getMetadata() );
 			refreshCache();
-			
+
 			// verify that values in columns used as identifiers are unique per sample.
 			checkUniqueVals( META_BARCODE_COLUMN );
 			checkUniqueVals( META_FILENAME_COLUMN );

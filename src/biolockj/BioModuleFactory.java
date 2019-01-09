@@ -20,9 +20,7 @@ import biolockj.module.classifier.wgs.KrakenClassifier;
 import biolockj.module.implicit.Demultiplexer;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.implicit.RegisterNumReads;
-import biolockj.module.seq.AwkFastaConverter;
-import biolockj.module.seq.Gunzipper;
-import biolockj.module.seq.PearMergeReads;
+import biolockj.module.seq.*;
 import biolockj.util.*;
 
 /**
@@ -61,12 +59,12 @@ public class BioModuleFactory
 			bioModules.add( getModule( getDefaultFastaConverter() ) );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_READS ) && !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
-				.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
+		if( Config.getBoolean( Config.REPORT_NUM_READS ) && !listedModules.contains( SeqFileValidator.class.getName() )
+				&& !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ).equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
 		{
 			info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] & [ "
 					+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
-					+ " --> Adding module: " + RegisterNumReads.class.getName() );
+					+ " ] --> Adding module: " + RegisterNumReads.class.getName() );
 			bioModules.add( getModule( RegisterNumReads.class.getName() ) );
 		}
 

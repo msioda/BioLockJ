@@ -40,10 +40,12 @@ public class UpdateJavaDocs
 			final Collection<File> files = FileUtils.listFiles( new File( Config.getSystemFilePath( PATH ) ),
 					HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE );
 			final List<String> lines = new ArrayList<>();
+			System.out.println( "Checking: " + files.size() + " files to update heads with link to online Wiki" );
+			int i = 0;
 			for( final File file: files )
 			{
 				lines.clear();
-				System.out.println( "Reading: " + file.getAbsolutePath() );
+				System.out.println( "Reading file [ " + i++ + "] --> " + file.getAbsolutePath() );
 				reader = BioLockJUtil.getFileReader( file );
 				boolean updatedFile = false;
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )

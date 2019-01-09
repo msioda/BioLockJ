@@ -13,9 +13,9 @@ package biolockj.node;
 
 import java.util.HashMap;
 import java.util.Map;
-import biolockj.Config;
 import biolockj.Log;
 import biolockj.util.OtuUtil;
+import biolockj.util.TaxaUtil;
 
 /**
  * The default implementation of {@link biolockj.node.OtuNode} is also the superclass for all WGS and 16S OtuNode
@@ -26,9 +26,9 @@ import biolockj.util.OtuUtil;
 public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 {
 	/**
-	 * If called for level not included in {@link biolockj.Config}.{@value biolockj.Config#REPORT_TAXONOMY_LEVELS},
+	 * If called for level not included in {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS},
 	 * check if the top level taxonomy level is already assigned. If so, populate missing levels by passing the parent
-	 * taxa to {@link biolockj.util.OtuUtil#getUnclassifiedTaxa(String)} until the given in level is assigned.<br>
+	 * taxa to {@link biolockj.util.TaxaUtil#buildUnclassifiedTaxa(String)} until the given in level is assigned.<br>
 	 * <br>
 	 * This method assumes it is called repeatedly for each OTU (once/level) and that each subsequent call passes a
 	 * lower taxonomy level than the previous.
@@ -47,12 +47,11 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 			return;
 		}
 
-		if( !Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( level ) )
+		if( !TaxaUtil.getTaxaLevels().contains( level ) )
 		{
-			if( !taxaMap.containsKey( OtuUtil.getTopTaxaLevel() ) )
+			if( !taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) )
 			{
-				// Some classifiers will report a species or genus name but are missing domain/phylum/class/order/family
-				// info.
+				// Some classifiers report species or genus name but are missing domain/phylum/class/order/family info.
 				// If top level taxonomy level undefined, we omit the result for lack of context.
 				return;
 			}
@@ -60,7 +59,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 			// Some classifiers will report a phylum and a lower level (like genus) but are missing in-between levels.
 			// Populate missing levels between top-level and current level
 			String parentTaxa = null;
-			for( final String testLevel: OtuUtil.getTaxaLevelSpan() )
+			for( final String testLevel: TaxaUtil.getTaxaLevelSpan() )
 			{
 				if( taxaMap.keySet().contains( testLevel ) )
 				{
@@ -68,7 +67,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 				}
 				else if( parentTaxa != null )
 				{
-					final String unclassifiedTaxa = OtuUtil.getUnclassifiedTaxa( parentTaxa );
+					final String unclassifiedTaxa = TaxaUtil.buildUnclassifiedTaxa( parentTaxa );
 					taxaMap.put( testLevel, unclassifiedTaxa );
 					// Log.debug( getClass(), testLevel + " taxa undefined, inherit parent name as: " + unclassifiedTaxa
 					// );
@@ -86,7 +85,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 
 		if( taxaMap.get( level ) != null )
 		{
-			Log.warn( getClass(),
+			Log.debug( getClass(),
 					sampleId + " overwriting OTU: " + taxaMap.get( level ) + " with " + taxa + "  --> Line = " + line );
 		}
 
@@ -112,13 +111,13 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 	{
 		if( delimToLevelMap.isEmpty() )
 		{
-			delimToLevelMap.put( DOMAIN_DELIM, Config.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, Config.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, Config.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, Config.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, Config.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, Config.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, Config.SPECIES );
+			delimToLevelMap.put( DOMAIN_DELIM, TaxaUtil.DOMAIN );
+			delimToLevelMap.put( PHYLUM_DELIM, TaxaUtil.PHYLUM );
+			delimToLevelMap.put( CLASS_DELIM, TaxaUtil.CLASS );
+			delimToLevelMap.put( ORDER_DELIM, TaxaUtil.ORDER );
+			delimToLevelMap.put( FAMILY_DELIM, TaxaUtil.FAMILY );
+			delimToLevelMap.put( GENUS_DELIM, TaxaUtil.GENUS );
+			delimToLevelMap.put( SPECIES_DELIM, TaxaUtil.SPECIES );
 		}
 		return delimToLevelMap;
 	}
@@ -147,12 +146,12 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 		try
 		{
 			String parentTaxa = null;
-			for( final String level: Config.getList( Config.REPORT_TAXONOMY_LEVELS ) )
+			for( final String level: TaxaUtil.getTaxaLevels() )
 			{
 				String name = taxaMap.get( level );
 				if( name == null || name.isEmpty() )
 				{
-					name = OtuUtil.getUnclassifiedTaxa( parentTaxa );
+					name = TaxaUtil.buildUnclassifiedTaxa( parentTaxa );
 				}
 				else
 				{
@@ -188,10 +187,10 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 	@Override
 	public Map<String, String> getTaxaMap() throws Exception
 	{
-		if( !taxaMap.containsKey( OtuUtil.getTopTaxaLevel() ) )
+		if( !taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) )
 		{
 			Log.debug( getClass(), "Omit incomplete [ " + sampleId + " ] OTU missing the top taxonomy level: "
-					+ OtuUtil.getTopTaxaLevel() + ( line.isEmpty() ? "": ", classifier output = " + line ) );
+					+ TaxaUtil.topTaxaLevel() + ( line.isEmpty() ? "": ", classifier output = " + line ) );
 			return null;
 		}
 
@@ -243,7 +242,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 		int numFound = 0;
 		String parentTaxa = null;
 
-		for( final String level: OtuUtil.getTaxaLevelSpan() )
+		for( final String level: TaxaUtil.getTaxaLevelSpan() )
 		{
 			if( taxaMap.get( level ) != null )
 			{
@@ -252,7 +251,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 			}
 			else if( parentTaxa != null && taxaMap.get( level ) == null && numFound < numTaxa )
 			{
-				taxaMap.put( level, OtuUtil.getUnclassifiedTaxa( parentTaxa ) );
+				taxaMap.put( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
 			}
 			else if( numFound == numTaxa )
 			{

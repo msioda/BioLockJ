@@ -38,7 +38,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Set {@value #NUM_OTUS} as the number of hits field.
+	 * Update {@link biolockj.module.implicit.parser.ParserModuleImpl} OTU_COUNT field name.
 	 */
 	@Override
 	public void cleanUp() throws Exception
@@ -129,6 +129,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	 * Remove OTUs below the {@link biolockj.Config}.{@value #MIN_OTU_COUNT}
 	 * 
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
+	 * @return TreeMap(SampleId, TreeMap(OTU, count)) Updated sampleOtuCounts after removal of low counts.
 	 * @throws Exception if errors occur
 	 */
 	protected TreeMap<String, TreeSet<String>> removeLowCountOtus(

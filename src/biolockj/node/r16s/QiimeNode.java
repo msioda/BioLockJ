@@ -14,9 +14,9 @@ package biolockj.node.r16s;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-import biolockj.Config;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
+import biolockj.util.TaxaUtil;
 
 /**
  * This class holds the OTU assignments from one line of {@link biolockj.module.implicit.qiime.QiimeClassifier} output.
@@ -58,13 +58,13 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	{
 		if( delimToLevelMap.isEmpty() )
 		{
-			delimToLevelMap.put( DOMAIN_DELIM, Config.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, Config.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, Config.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, Config.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, Config.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, Config.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, Config.SPECIES );
+			delimToLevelMap.put( DOMAIN_DELIM, TaxaUtil.DOMAIN );
+			delimToLevelMap.put( PHYLUM_DELIM, TaxaUtil.PHYLUM );
+			delimToLevelMap.put( CLASS_DELIM, TaxaUtil.CLASS );
+			delimToLevelMap.put( ORDER_DELIM, TaxaUtil.ORDER );
+			delimToLevelMap.put( FAMILY_DELIM, TaxaUtil.FAMILY );
+			delimToLevelMap.put( GENUS_DELIM, TaxaUtil.GENUS );
+			delimToLevelMap.put( SPECIES_DELIM, TaxaUtil.SPECIES );
 		}
 		return delimToLevelMap;
 	}

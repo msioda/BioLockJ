@@ -70,6 +70,7 @@ public class RuntimeParamUtil
 	 * Runtime property getter for {@value #CONFIG_FLAG}
 	 * 
 	 * @return {@link biolockj.Config} file
+	 * @throws Exception if errors occur
 	 */
 	public static File getConfigFile() throws Exception
 	{
@@ -283,6 +284,11 @@ public class RuntimeParamUtil
 		}
 
 		parseParams( simplifyArgs( args ) );
+		
+		if( isDockerMode() )
+		{
+			reassignDockerConfig();
+		}
 
 		if( isDirectMode() )
 		{
@@ -294,10 +300,7 @@ public class RuntimeParamUtil
 			assignRestartConfig();
 		}
 
-		if( isDockerMode() )
-		{
-			reassignDockerConfig();
-		}
+		
 
 		validateParams();
 	}

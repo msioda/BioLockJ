@@ -305,14 +305,10 @@ public class Log
 				debugClasses.add( BioLockJ.class.getName() );
 				debugClasses.add( BioModuleFactory.class.getName() );
 				debugClasses.add( Config.class.getName() );
-				debugClasses.add( Job.class.getName() );
 				debugClasses.add( Log.class.getName() );
 				debugClasses.add( Pipeline.class.getName() );
 				debugClasses.add( Properties.class.getName() );
-				debugClasses.add( SeqUtil.class.getName() );
 				debugClasses.add( DockerUtil.class.getName() );
-				debugClasses.add( BioLockJUtil.class.getName() );
-				debugClasses.add( SummaryUtil.class.getName() );
 			}
 		}
 		return debugClasses;

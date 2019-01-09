@@ -20,6 +20,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
+import biolockj.module.r.R_Module;
 import biolockj.module.report.Email;
 import biolockj.util.*;
 
@@ -30,7 +31,6 @@ import biolockj.util.*;
  */
 public class Pipeline
 {
-
 	private Pipeline()
 	{}
 
@@ -271,7 +271,7 @@ public class Pipeline
 		for( final BioModule module: getModules() )
 		{
 			module.setModuleDir( ModuleUtil.getModuleRootDir( module ) );
-			if( ModuleUtil.isIncomplete( module ) && !RuntimeParamUtil.isDirectMode() || module instanceof Email )
+			if( ModuleUtil.isIncomplete( module ) && ( !RuntimeParamUtil.isDirectMode() || module instanceof Email ) )
 			{
 				deleteIncompleteModule( module );
 			}
@@ -312,22 +312,28 @@ public class Pipeline
 	 */
 	protected static boolean poll( final ScriptModule module ) throws Exception
 	{
+		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
 		final File mainScript = ModuleUtil.getMainScript( module );
-		final IOFileFilter ff = new WildcardFileFilter( "*.sh" );
+		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? R_Module.R_EXT: BioLockJ.SH_EXT ) );
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
-		final File mainSuccess = new File( mainScript.getAbsolutePath() + "_" + SCRIPT_SUCCESS );
-		final File mainFailed = new File( mainScript.getAbsolutePath() + "_" + SCRIPT_FAILURES );
+		scriptFiles.remove( mainScript );
+
+//		Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
+//		for( final File f: scriptFiles )
+//		{
+//			Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
+//		}
+
+		if( is_R )
+		{
+			scriptFiles.clear();
+			scriptFiles.add( mainScript );
+		}
+
+		final int numScripts = scriptFiles.size();
 		int numSuccess = 0;
 		int numStarted = 0;
 		int numFailed = 0;
-
-		scriptFiles.remove( mainScript );
-
-		// Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
-		// for( final File f: scriptFiles )
-		// {
-		// Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
-		// }
 
 		for( final File f: scriptFiles )
 		{
@@ -339,19 +345,8 @@ public class Pipeline
 			numFailed = numFailed + ( testFailure.exists() ? 1: 0 );
 		}
 
-		int numScripts = scriptFiles.size();
-		if( !mainScript.getName().endsWith( ".sh" ) ) // must be R script
-		{
-			numScripts = 1;
-			numStarted = 1;
-			numSuccess = mainSuccess.exists() ? 1: numSuccess;
-			numFailed = mainFailed.exists() ? 1: numFailed;
-		}
-
-		final int numRunning = numStarted - numSuccess - numFailed;
-		final File failure = mainFailed.exists() ? mainFailed: null;
 		final String logMsg = mainScript.getName() + " Status (Total=" + numScripts + "): Success=" + numSuccess
-				+ "; Failed=" + numFailed + "; Running=" + numRunning + "; Queued=" + ( numScripts - numStarted );
+				+ "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) + "; Queued=" + ( numScripts - numStarted );
 
 		if( !statusMsg.equals( logMsg ) )
 		{
@@ -364,7 +359,8 @@ public class Pipeline
 			Log.info( Pipeline.class, logMsg );
 		}
 
-		if( mainFailed.exists() || failure != null && failure.exists() )
+		final File mainFailed = new File( mainScript.getAbsolutePath() + "_" + SCRIPT_FAILURES );
+		if( mainFailed.exists() || numFailed > 0 )
 		{
 			final String failMsg = "SCRIPT FAILED: "
 					+ BioLockJUtil.getCollectionAsString( ModuleUtil.getScriptErrors( module ) );
@@ -430,6 +426,33 @@ public class Pipeline
 			Log.info( Pipeline.class, msg );
 		}
 	}
+	
+	private static void logScriptTimeOutMsg( final ScriptModule module ) throws Exception
+	{
+		String prompt = "------> ";
+		Log.info( Pipeline.class, prompt + "Java program wakes every 60 seconds to check execution progress" );
+		Log.info( Pipeline.class, prompt + 
+				"Status determined by existance of indicator files in " + module.getScriptDir().getAbsolutePath() );
+		Log.info( Pipeline.class, prompt +  "Indicator files end with: \"_" + SCRIPT_STARTED + "\", \"_" + SCRIPT_SUCCESS
+				+ "\", or \"_" + SCRIPT_FAILURES + "\"" );
+		Log.info( Pipeline.class, prompt +  "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
+		if( module.getTimeout() == null || module.getTimeout() > 10 )
+		{
+			Log.info( Pipeline.class,
+					prompt + "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
+		}
+		
+		if( module.getTimeout() != null )
+		{
+			Log.info( Pipeline.class,
+					prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = " + module.getTimeout() );
+		}
+		else
+		{
+			Log.info( Pipeline.class,
+					prompt + "Running scripts will NEVER TIME OUT." );
+		}
+	}
 
 	/**
 	 * This method calls poll to check status of scripts and then sleeps for pollTime (60) seconds.
@@ -439,14 +462,7 @@ public class Pipeline
 	 */
 	private static void pollAndSpin( final ScriptModule module ) throws Exception
 	{
-		Log.info( Pipeline.class, "Java program wakes every 60 seconds to check execution progress" );
-		Log.info( Pipeline.class,
-				"Status determined by existance of indicator files in " + module.getScriptDir().getAbsolutePath() );
-		Log.info( Pipeline.class, "Indicator files end with: \"_" + SCRIPT_STARTED + "\", \"_" + SCRIPT_SUCCESS
-				+ "\", or \"_" + SCRIPT_FAILURES + "\"" );
-		Log.info( Pipeline.class, "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
-		Log.info( Pipeline.class,
-				"The status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
+		logScriptTimeOutMsg( module );
 
 		int numMinutes = 0;
 		boolean finished = false;

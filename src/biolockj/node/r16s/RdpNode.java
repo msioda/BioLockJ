@@ -17,6 +17,7 @@ import biolockj.Config;
 import biolockj.module.implicit.parser.r16s.RdpParser;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
+import biolockj.util.TaxaUtil;
 
 /**
  * This class represents one line of {@link biolockj.module.classifier.r16s.RdpClassifier} output. RDP outputs the
@@ -151,12 +152,12 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 	// Override default taxonomy level delimiters set in OtuNodeImpl
 	static
 	{
-		DOMAIN_DELIM = Config.DOMAIN;
-		CLASS_DELIM = Config.CLASS;
-		FAMILY_DELIM = Config.FAMILY;
-		GENUS_DELIM = Config.GENUS;
-		ORDER_DELIM = Config.ORDER;
-		PHYLUM_DELIM = Config.PHYLUM;
-		SPECIES_DELIM = Config.SPECIES;
+		DOMAIN_DELIM = TaxaUtil.DOMAIN;
+		CLASS_DELIM = TaxaUtil.CLASS;
+		FAMILY_DELIM = TaxaUtil.FAMILY;
+		GENUS_DELIM = TaxaUtil.GENUS;
+		ORDER_DELIM = TaxaUtil.ORDER;
+		PHYLUM_DELIM = TaxaUtil.PHYLUM;
+		SPECIES_DELIM = TaxaUtil.SPECIES;
 	}
 }

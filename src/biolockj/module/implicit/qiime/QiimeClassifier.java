@@ -429,31 +429,31 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	private String getQiimeTaxaLevels()
 	{
 		String levels = "";
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( Config.DOMAIN ) )
+		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.DOMAIN ) )
 		{
 			levels += "1";
 		}
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( Config.PHYLUM ) )
+		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.PHYLUM ) )
 		{
 			levels += ( levels.isEmpty() ? "": "," ) + "2";
 		}
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( Config.CLASS ) )
+		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.CLASS ) )
 		{
 			levels += ( levels.isEmpty() ? "": "," ) + "3";
 		}
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( Config.ORDER ) )
+		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.ORDER ) )
 		{
 			levels += ( levels.isEmpty() ? "": "," ) + "4";
 		}
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( Config.FAMILY ) )
+		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.FAMILY ) )
 		{
 			levels += ( levels.isEmpty() ? "": "," ) + "5";
 		}
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( Config.GENUS ) )
+		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.GENUS ) )
 		{
 			levels += ( levels.isEmpty() ? "": "," ) + "6";
 		}
-		if( Config.getList( Config.REPORT_TAXONOMY_LEVELS ).contains( Config.SPECIES ) )
+		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.SPECIES ) )
 		{
 			levels += ( levels.isEmpty() ? "": "," ) + "7";
 		}

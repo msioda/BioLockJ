@@ -18,7 +18,7 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
-import biolockj.util.OtuUtil;
+import biolockj.util.TaxaUtil;
 
 /**
  * Provides type-safe, validated methods for storing/accessing system properties.<br>
@@ -407,10 +407,10 @@ public class Config
 	 */
 	public static void initialize( final File file ) throws Exception
 	{
-		Log.debug( Config.class, "Initialize Config: " + file.getAbsolutePath() );
+		Log.info( Config.class, "Initialize Config: " + file.getAbsolutePath() );
 		configFile = file;
 		props = Properties.loadProperties( configFile );
-		setTaxonomy();
+		TaxaUtil.initTaxaLevels();
 	}
 
 	/**
@@ -681,76 +681,6 @@ public class Config
 	}
 
 	/**
-	 * Set taxonomy levels ordered by level, from highest to lowest. Require {@value #REPORT_TAXONOMY_LEVELS} property.
-	 * Accepts only valid options: {@value #DOMAIN}, {@value #PHYLUM}, {@value #CLASS}, {@value #ORDER},
-	 * {@value #FAMILY}, {@value #GENUS}, {@value #SPECIES}
-	 *
-	 * @throws ConfigNotFoundException if {@value #REPORT_TAXONOMY_LEVELS} is undefined
-	 * @throws ConfigFormatException if {@value #REPORT_TAXONOMY_LEVELS} is defined, but does not contain any valid
-	 * taxonomy levels
-	 */
-	public static void setTaxonomy() throws ConfigNotFoundException, ConfigFormatException
-	{
-		final List<String> taxonomy = new ArrayList<>();
-		final String errorMsg = "Property only accepts valid taxonomy levels ==> { " + DOMAIN + ", " + PHYLUM + ", "
-				+ CLASS + ", " + ORDER + ", " + FAMILY + ", " + GENUS + ", " + SPECIES + " }";
-
-		final Set<String> taxa = new HashSet<>();
-
-		final List<String> validOptions = OtuUtil.getAllTaxonomyLevels();
-
-		for( final String element: requireList( REPORT_TAXONOMY_LEVELS ) )
-		{
-			if( validOptions.contains( element.toLowerCase() ) )
-			{
-				taxa.add( element.toLowerCase() );
-			}
-			else
-			{
-				throw new ConfigFormatException( REPORT_TAXONOMY_LEVELS,
-						"Invalid level defined [" + element + "]  " + errorMsg );
-			}
-		}
-
-		if( taxa.contains( DOMAIN ) )
-		{
-			taxonomy.add( DOMAIN );
-		}
-		if( taxa.contains( PHYLUM ) )
-		{
-			taxonomy.add( PHYLUM );
-		}
-		if( taxa.contains( CLASS ) )
-		{
-			taxonomy.add( CLASS );
-		}
-		if( taxa.contains( ORDER ) )
-		{
-			taxonomy.add( ORDER );
-		}
-		if( taxa.contains( FAMILY ) )
-		{
-			taxonomy.add( FAMILY );
-		}
-		if( taxa.contains( GENUS ) )
-		{
-			taxonomy.add( GENUS );
-		}
-		if( taxa.contains( SPECIES ) )
-		{
-			taxonomy.add( SPECIES );
-		}
-
-		if( taxonomy.isEmpty() )
-		{
-			throw new ConfigFormatException( REPORT_TAXONOMY_LEVELS, "No valid options configured.  " + errorMsg );
-		}
-
-		Config.setConfigProperty( REPORT_TAXONOMY_LEVELS, taxonomy );
-
-	}
-
-	/**
 	 * Build File using filePath. Replace "~" with System.getProperty( "user.home" ) if found.
 	 *
 	 * @param filePath File path
@@ -800,16 +730,6 @@ public class Config
 	}
 
 	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #CLASS}
-	 */
-	public static final String CLASS = "class";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #DOMAIN}
-	 */
-	public static final String DOMAIN = "domain";
-
-	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
 	 */
@@ -831,16 +751,6 @@ public class Config
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
 	public static final String FALSE = "N";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #FAMILY}
-	 */
-	public static final String FAMILY = "family";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #GENUS}
-	 */
-	public static final String GENUS = "genus";
 
 	/**
 	 * {@link biolockj.Config} List property: {@value #INPUT_DIRS}<br>
@@ -899,7 +809,7 @@ public class Config
 
 	/**
 	 * {@link biolockj.Config} Internal Boolean property: {@value #INTERNAL_IS_MULTI_LINE_SEQ}<br>
-	 * Store TRUE if {@biolockj.util.SeqUtil} determines input sequences are multi-line format.
+	 * Store TRUE if {@link biolockj.util.SeqUtil} determines input sequences are multi-line format.
 	 */
 	public static final String INTERNAL_IS_MULTI_LINE_SEQ = "internal.isMultiLineSeq";
 
@@ -926,16 +836,6 @@ public class Config
 	 * Stores the root name of the pipeline (derived from the configuration file name).
 	 */
 	public static final String INTERNAL_PIPELINE_NAME = "internal.pipelineName";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #ORDER}
-	 */
-	public static final String ORDER = "order";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #PHYLUM}
-	 */
-	public static final String PHYLUM = "phylum";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
@@ -986,20 +886,6 @@ public class Config
 	 * If set to {@value #TRUE} and NUM_READS exists in metadata file, NUM_READS will be included in the R reports
 	 */
 	public static final String REPORT_NUM_READS = "report.numReads";
-
-	/**
-	 * {@link biolockj.Config} List property: {@value #REPORT_TAXONOMY_LEVELS}<br>
-	 * This property drives a lot of BioLockJ functionality and determines which taxonomy-levels are reported. Note,
-	 * some classifiers do not identify {@value #SPECIES} level OTUs.<br>
-	 * Options = {@value #DOMAIN}, {@value #PHYLUM}, {@value #CLASS}, {@value #ORDER}, {@value #FAMILY},
-	 * {@value #GENUS}, {@value #SPECIES}
-	 */
-	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #SPECIES}
-	 */
-	public static final String SPECIES = "species";
 
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}

@@ -15,6 +15,7 @@ import java.io.Serializable;
 import java.util.*;
 import biolockj.Log;
 import biolockj.util.OtuUtil;
+import biolockj.util.TaxaUtil;
 
 /**
  * {@link biolockj.module.implicit.parser.ParserModule}s create and store one {@link biolockj.node.ParsedSample}, with
@@ -122,16 +123,16 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 				if( totalCount < otuCount )
 				{
 					String parentTaxa = null;
-					for( final String level: OtuUtil.getTaxaLevelSpan() )
+					for( final String level: TaxaUtil.getTaxaLevelSpan() )
 					{
 						if( otu.contains( level ) )
 						{
-							parentTaxa = OtuUtil.getTaxaName( otu, level );
+							parentTaxa = TaxaUtil.getTaxaName( otu, level );
 						}
 						else if( parentTaxa != null )
 						{
 							otu += OtuUtil.SEPARATOR
-									+ OtuUtil.buildOtuTaxa( level, OtuUtil.getUnclassifiedTaxa( parentTaxa ) );
+									+ OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
 						}
 					}
 
