@@ -10,6 +10,7 @@
 # r.FCplot.pvalIncludeBar=
 # r.FCplot.userOTUs=
 # r.FCplot.maxBars=
+# r.FCplot.effectSizeType=effectSize, foldChange, rSquared
 ### also uses:
 # r.pvalCutoff
 # internal.numMetaCols
@@ -27,6 +28,11 @@ main <- function(){
 	maxBars = getProperty("r.FCplot.maxBars", 40)
 	userOTUs = getProperty("r.FCplot.userOTUs", NULL)
 	scale.fun="log2"
+	effectType = getProperty("r.FCplot.effectSizeType", c("effectSize", "foldChange", "rSquared"))
+	doFoldChange = "foldChange" %in% effectType
+	doEffectSize = "effectSize" %in% effectType
+	doRSquared = "rSquared" %in% effectType
+	#
 	# get metadata
 	if( doDebug() ) print( paste( "metadata file:", getMetaDataFile() ) )
 	meta = getMetaData()
@@ -39,88 +45,156 @@ main <- function(){
 		if( doDebug() ) print( paste( "Creating file:", outFileName ) )
 		height=10
 		pdf(file=outFileName, paper="letter", width=7.5, height=height, onefile=TRUE)
-		# make some logical choices about par() based on maxBars and paper size
-		if (maxBars < 20 & height >=10){
-			par(mfrow=c(2,1))
-		}else{
-			par(mfrow=c(1,1))
+		par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
+		p = par(no.readonly = TRUE)
+		resetPar <- function(){ # use this to reset par to the values it has as of right now.
+			par(p)
 		}
-		#par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
 		#
 		# get normalized OTU vals
-		# inputFile = getPipelineFile( paste0(otuLevel, ".*_norm.tsv") ) <-- might revert to this in future
 		inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
 		if( doDebug() ) print( paste( "inputFile:", inputFile ) )
 		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"),
 													 comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1)
-		#otuTable = normalize(readRawCounts(otuLevel)[[1]])
-		if( doDebug() ){ print( paste0("otuTable has ", nrow(otuTable), " rows and ", ncol(otuTable), " columns."))}
 		lastOtuCol = ncol(otuTable) - getProperty("internal.numMetaCols")
 		otuTable = otuTable[1:lastOtuCol]
+		if( doDebug() ){ print( paste0("otuTable has ", nrow(otuTable), " rows and ", ncol(otuTable), " columns."))}
 		#
-		# Might undo log-scale to get fold change values, then optionally scale them in some way.
-		# logBase = getProperty("report.logBase", NULL) # move this to top of main where we get properties
-		# if (!is.null(logBase)){
-		# 	otuTable = logBase^otuTable
-		# 	if( doDebug() ) print( paste( "Input values are on a ", logBase, " scale, this has been reversed." ) )
-		# }
-		#
-		# get pvals from calc stats, maybe add config option to specify which pvals to get
+		# get pvals from calc stats
 		pvalFileIdentifier = getProperty(name = "r.FCplot.pvalType", "_adjNonParPvals.tsv")
 		pvalFile = getPipelineFile( paste0(otuLevel, pvalFileIdentifier) )
 		if( doDebug() ) print( paste( "p-value file:", pvalFile ) )
 		pvalTable = read.table( pvalFile, check.names=FALSE, header=TRUE, sep="\t", row.names = 1)
 		if( doDebug() ){ print( paste0("pvalTable has ", nrow(pvalTable), " rows and ", ncol(pvalTable), " columns."))}
-		# 
-		if( doDebug() ) print( paste( "Prepareing plot for each of ", length(getBinaryFields()), "binary attributes." ) )
-		if (length(getBinaryFields()) == 0){
-			plotPlainText("No binary attributes.")
+		#
+		# get r-squared values from calc stats
+		if (doRSquared){
+			if( doDebug() ) print( paste( "Prepareing r-squared plot for each of", length(getReportFields()), "report fields.") )
+			r2File = getPipelineFile( paste0(otuLevel, "_rSquaredVals.tsv") )
+			if( doDebug() ) print( paste( "r-squared file:", r2File ) )
+			r2Table = read.table( r2File, check.names=FALSE, header=TRUE, sep="\t", row.names = 1)
+			if( doDebug() ){ print( paste0("r-squared table has ", nrow(r2Table), " rows and ", ncol(r2Table), " columns."))}
 		}
-		for (biAtt in getBinaryFields()){
-			if( doDebug() ) print( paste( "processing binary attribute:", biAtt ) )
-			splitOTU = split(otuTable[row.names(meta),], f=meta[,biAtt])
-			pvals = pvalTable[,biAtt]
+		# 
+		if (doEffectSize){
+			if( doDebug() ) print( paste( "Prepareing effect size plot for each of", length(getBinaryFields()), "report fields.") )
+		}
+		#
+		# Get the raw counts from the parser and calc simple relative abundance---only if a parser module is given.
+		# Don't bother with this unless we will use it, ie: there are binary attributes and we plan to do fold change
+		if (!is.null(getProperty("internal.parserModule")) & length(getBinaryFields()) > 0 & doFoldChange){
+			if( doDebug() ) print( paste( "Prepareing fold change plot for each of", length(getBinaryFields()), "report fields.") )
+			if( doDebug() ) print( "retrieving raw counts..." )
+			relAbundance = normalize(readRawCounts(otuLevel)[[1]])
+		}else{
+			relAbundance=NULL
+		}
+		#
+		if( doDebug() ) print( paste( "Prepareing plot for each of", length(getReportFields()), "report fields. ",
+																	length(getBinaryFields()), "are binary attributes.") )
+		if (length(getReportFields()) == 0){
+			plotPlainText("No reportable fields.")
+		}
+		for (reportField in getReportFields()){
+			isBinaryAtt = reportField %in% getBinaryFields()
+			if( doDebug() ) print( paste0( "Processing report field: ", reportField, ", which ", ifelse(isBinaryAtt, "is", "is not"), " a binary attribute." ) )
+			# pvals
+			pvals = pvalTable[,reportField]
 			names(pvals) = row.names(pvalTable)
-			par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0)) # this is changed within the plot function, so reset before each plot
-			# make plot
-			tryCatch(expr={
-				if( doDebug() ) print( paste("Calling calcBarSizes for otuLevel:", otuLevel, " and binary attribute:", biAtt) )
-				calculations = calcBarSizes(numGroupVals=splitOTU[[2]], denGroupVals=splitOTU[[1]], 
-																		numGroupName=names(splitOTU)[2], denGroupName=names(splitOTU)[1],
-																		pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars, 
-																		saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"OTU-foldChangeTable.tsv", sep="_") ),
-																		scale.fun=scale.fun)
-				if( doDebug() ) print( paste("Calling drawPlot for otuLevel:", otuLevel, " and binary attribute:", biAtt) )
-				complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="effectSize",
-								 xAxisLab="Effect Size", title=biAtt,
-								 pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"), 
-								 xAxisLab2 = calculations[["xAxisLab2"]], 
-								 comments=calculations[["comments"]])
-				if (complete) {
-					print( paste("Completed plot for otuLevel:", otuLevel, " and binary attribute:", biAtt))
+			#
+			# rSquared piggy-backs on effects size for selection and ordering, 
+			#   so IF both are plotted, they are ploted in the same order.
+			# Even if it is not a binary attribute, the splitOTU should have AT LEAST 2 tables
+			if (doEffectSize | doRSquared){ 
+				# r2vals
+				r2vals=r2Table[,reportField]
+				names(r2vals) = row.names(r2Table)
+				# normalized vals
+				splitOTU = split(otuTable[row.names(meta),], f=meta[,reportField])
+				# determine if an output table should be saved
+				saveRefTable = NULL
+				if (doEffectSize & isBinaryAtt){
+					saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, reportField, "effectSize.tsv", sep="_") )
 				}
-			}, error= function(err) {
-				if( doDebug() ){print(err)}
-				origErr = as.character(err)
-				trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) # error messages that I create in addFoldChangePlot start with "Stop Plotting"
-				msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
-										 "\nusing attribute: ", biAtt)
-				if (doDebug() | nchar(trimmedErr) < nchar(origErr)){
-					msg = paste0(msg, "\n", trimmedErr)
-				}
-				plotPlainText(msg)
-			})
+				# toPlot
+				tryCatch(expr={
+					if( doDebug() ) print( paste("Effect size: Calling calcBarSizes for otuLevel:", otuLevel, " and binary attribute:", reportField) )
+					calculations = calcBarSizes(effectType=c("effectSize","rSquared"), r2vals = r2vals,
+																			numGroupVals=splitOTU[[2]], denGroupVals=splitOTU[[1]],
+																			numGroupName=names(splitOTU)[2], denGroupName=names(splitOTU)[1],
+																			pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
+																			orderByColumn=ifelse(doEffectSize & isBinaryAtt, "effectSize", "rSquared"),
+																			saveRefTable=saveRefTable)
+					#
+					if (doRSquared){ # does not need to be a binary attribute
+						resetPar()
+						complete = drawPlot(toPlot=calculations[["toPlot"]][,c("pvalue","rSquared")], 
+																barSizeColumn="rSquared",
+																xAxisLab="r-squared", title=reportField,
+																pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"), 
+																comments=calculations[["comments"]][c(1,3)])
+						if (complete) {
+							print( paste("Completed r-squared plot for otuLevel:", otuLevel, " and report field:", reportField))
+						}
+					}
+					#
+					if (doEffectSize & isBinaryAtt){
+						if( doDebug() ) print( paste("Effect size: Calling drawPlot for otuLevel:", otuLevel, " and binary attribute:", reportField) )
+						resetPar()
+						complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="effectSize",
+																xAxisLab="Effect Size", title=reportField,
+																pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
+																xAxisLab2 = calculations[["xAxisLab2"]],
+																comments=calculations[["comments"]][c(1,2)])
+						if (complete) {
+							print( paste("Completed effect size plot for otuLevel:", otuLevel, " and binary attribute:", reportField))
+						}
+					}
+				}, error = function(err) {
+					errorHandler1(err, otuLevel=otuLevel, reportField=reportField)
+				})
+			}
+			#
+			if (doFoldChange & !is.null(relAbundance)){
+				tryCatch(expr={
+					# relAbundance vals
+					splitRelAbund = split(relAbundance[row.names(meta),], f=meta[,reportField])
+					if( doDebug() ) print( paste("Fold change: Calling calcBarSizes for otuLevel:", otuLevel, " and binary attribute:", reportField) )
+					calculations = calcBarSizes(effectType = "foldChange",
+																			numGroupVals=splitRelAbund[[2]], denGroupVals=splitRelAbund[[1]],
+																			numGroupName=names(splitRelAbund)[2], denGroupName=names(splitRelAbund)[1],
+																			pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
+																			saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"foldChange.tsv", sep="_") ),
+																			scale.fun=scale.fun)
+					if( doDebug() ) print( paste("Fold change: Calling drawPlot for otuLevel:", otuLevel, " and binary attribute:", reportField) )
+					resetPar()
+					complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="effectSize",
+															xAxisLab="Effect Size", title=biAtt,
+															pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
+															xAxisLab2 = calculations[["xAxisLab2"]],
+															comments=calculations[["comments"]])
+					if (complete) {
+						print( paste("Completed effect size plot for otuLevel:", otuLevel, " and binary attribute:", reportField))
+					}
+				}, error = function(err) {
+					errorHandler1(err, otuLevel=otuLevel, reportField=reportField)
+				})
+			}
 		}
 		dev.off()
-		print( paste( "Saved fold change plot to file:", outFileName ) )
+		print( paste( "Saved plot(s) to file:", outFileName ) )
 		if( doDebug() ) sink()
 	}
 }
+	
 
 # Read the counts from the parser module; this requires the BiolockJ pipeline environment.
 # returns a list with each otuLevel as an element.
 readRawCounts <- function(otuLevels=getProperty("report.taxonomyLevels")){
 	parserModule = getProperty("internal.parserModule")
+	if (is.null(parserModule)){
+		stop("No parser module found in master properties (internal.parserModule).")
+		}
 	parserOutput = file.path(parserModule, "output")
 	counts = list()
 	names(counts) = otuLevels
@@ -145,6 +219,20 @@ normalize <- function(otuTable){
 	normFactor = rowSums(otuTable)
 	normed = otuTable/normFactor
 	return(normed)
+}
+
+
+# error handler designed for calcBarSizes and drawPlot
+errorHandler1 = function(err, otuLevel, reportField) {
+	if( doDebug() ){print(err)}
+	origErr = as.character(err)
+	trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) # error messages that I create in addFoldChangePlot start with "Stop Plotting"
+	msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
+							 "\nusing attribute: ", reportField)
+	if (doDebug() | nchar(trimmedErr) < nchar(origErr)){
+		msg = paste0(msg, "\n", trimmedErr)
+	}
+	plotPlainText(msg)
 }
 
 
@@ -482,8 +570,8 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
 	row.names(bp) = row.names(toPlot)
 	#
 	# plot the stars
-	if (!is.null(pvalStar) & !is.null(toPlot$pvals)){
-		starOTUs = row.names(toPlot)[toPlot$pvals <= pvalStar]
+	if (!is.null(pvalStar) & !is.null(toPlot$pvalue)){
+		starOTUs = row.names(toPlot)[toPlot$pvalue <= pvalStar]
 		starChar = "*"
 		if ( length(starOTUs) > 0 ){
 			starBarGap = 0.03 * par("usr")[2]
