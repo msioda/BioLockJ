@@ -86,18 +86,18 @@ getMetaDataFile <- function(){
 
 # Return a data frame of the metadata.  Note that biolockj assumes that the first column is the sample id
 # and that the sample id is unique within the file, so the first row is used as rownames in the returned dataframe.
-getMetaData <- function(useMetaMerged=FALSE){
+getMetaData <- function(useMetaMerged=TRUE){
 	file = getMetaDataFile()
 	if (is.null(file) | useMetaMerged){
 		inputFile = getPipelineFile( "*_metaMerged.tsv" )
-		otuTable = read.table( inputFile, check.names=FALSE, 
+		otuTable = read.table( inputFile, check.names=FALSE,
 													 na.strings=getProperty("metadata.nullValue", "NA"), 
 													 comment.char=getProperty("metadata.commentChar", ""), 
-													 header=TRUE, sep="\t" )
+													 header=TRUE, sep="\t", row.names = 1 )
 		firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
 		meta = otuTable[firstMetaCol:ncol(otuTable)]
 	}else{
-		importMetaDataModule = grep("ImportMetadata", dir(dirname(file)), value=T)
+		importMetaDataModule = grep("ImportMetadata", dir(dirname(file)), value=TRUE)
 		processedMetaFile = file.path(dirname(file), importMetaDataModule, "output", basename(file))
 		if (file.exists(processedMetaFile)){
 			meta = read.delim(file=processedMetaFile, check.names=FALSE, 
