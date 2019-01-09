@@ -187,6 +187,29 @@ public class ModuleUtil
 
 		return null;
 	}
+	
+	/**
+	 * Method checks if preReq is configured to run prior to the bioModule.
+	 * 
+	 * @param bioModule BioModule
+	 * @param preReq Prerequisite BioModule
+	 * @return TRUE if preReq is found 
+	 * @throws Exception if errors occur
+	 */
+	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
+	{
+		BioModule previousModule = getPreviousModule( bioModule );
+		while( previousModule != null )
+		{
+			if( previousModule.getClass().getName().equals( preReq ) )
+			{
+				return true;
+			}
+			previousModule = getPreviousModule( bioModule );
+		}
+		
+		return false;
+	}
 
 	/**
 	 * BioModules are run in the order configured. Return the module configured just before the bioModule param.

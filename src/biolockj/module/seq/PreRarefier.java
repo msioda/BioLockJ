@@ -65,19 +65,27 @@ public class PreRarefier extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * This method always requires the prerequisite module: {@link biolockj.module.implicit.RegisterNumReads}. If paired
+	 * This method always requires a prerequisite module with a "number of reads" count such as: 
+	 * {@link biolockj.module.implicit.RegisterNumReads}. If paired
 	 * reads found, also return a 2nd module: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
 	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		preReqs.add( RegisterNumReads.class );
+		
+		String pairedReadMod = BioModuleFactory.getDefaultMergePairedReadsConverter();
+		if( !ModuleUtil.preReqModuleExists( this, SeqFileValidator.class.getName() ) && !ModuleUtil.preReqModuleExists( this, pairedReadMod )
+				&& !ModuleUtil.preReqModuleExists( this, TrimPrimers.class.getName() ) )
+		{
+			preReqs.add( RegisterNumReads.class );
+		}
+		
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
+			preReqs.add( Class.forName( pairedReadMod ) );
 		}
-
+		
 		return preReqs;
 	}
 
