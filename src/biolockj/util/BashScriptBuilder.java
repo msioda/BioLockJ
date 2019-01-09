@@ -514,7 +514,7 @@ public class BashScriptBuilder
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
 	{
 		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
-				+ scriptModule.getModuleDir().getName() + ".sh" ).getAbsolutePath();
+				+ scriptModule.getModuleDir().getName() + BioLockJ.SH_EXT ).getAbsolutePath();
 	}
 
 	private static Integer getNumThreads( final ScriptModule module ) throws Exception

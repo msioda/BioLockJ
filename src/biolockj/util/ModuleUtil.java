@@ -18,9 +18,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.*;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.implicit.parser.ParserModule;
@@ -74,7 +72,21 @@ public class ModuleUtil
 						&& !f.getName().endsWith( Pipeline.SCRIPT_SUCCESS )
 						&& !f.getName().endsWith( Pipeline.SCRIPT_STARTED ) )
 				{
-					return f;
+					if( module instanceof R_Module )
+					{
+						if( !RuntimeParamUtil.isDockerMode() && f.getName().endsWith( R_Module.R_EXT ) )
+						{
+							return f;
+						}
+						else if( RuntimeParamUtil.isDockerMode() && f.getName().endsWith( BioLockJ.SH_EXT ) )
+						{
+							return f;
+						}
+					}
+					else
+					{
+						return f;
+					}
 				}
 			}
 		}

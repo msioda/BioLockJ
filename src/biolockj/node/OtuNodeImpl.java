@@ -85,7 +85,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 
 		if( taxaMap.get( level ) != null )
 		{
-			Log.warn( getClass(),
+			Log.debug( getClass(),
 					sampleId + " overwriting OTU: " + taxaMap.get( level ) + " with " + taxa + "  --> Line = " + line );
 		}
 

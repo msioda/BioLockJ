@@ -114,7 +114,8 @@ public class BioLockJ
 	{
 		try
 		{
-			System.out.println( "Staring BioLockj..." );			
+			System.out.println( "Staring BioLockj..." );	
+			MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 			RuntimeParamUtil.registerRuntimeParameters( args );
 			Config.initialize( RuntimeParamUtil.getConfigFile() );
 			Config.setConfigProperty( Config.INTERNAL_PIPELINE_NAME, getProjectName() );
@@ -183,7 +184,6 @@ public class BioLockJ
 
 				markProjectStatus( Pipeline.BLJ_COMPLETE );
 			}
-
 		}
 		catch( final Exception ex )
 		{

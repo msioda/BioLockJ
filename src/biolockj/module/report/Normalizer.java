@@ -100,7 +100,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 			normalize( file );
 		}
 
-		summary = "Output " + getInputFiles().size();
+		summary = "Output " + getOutputDir().listFiles().length;
 	}
 
 	/**

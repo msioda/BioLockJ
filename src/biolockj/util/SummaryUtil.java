@@ -281,16 +281,15 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-
-			if( ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR ) == null )
+			File scriptDir = ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR );
+			if( scriptDir == null )
 			{
-				return "";
+				return "Module \"script\" directory not found in --> " + scriptModule.getModuleDir().getAbsolutePath() + RETURN;
 			}
 
-			if( ModuleUtil.getMainScript( scriptModule ) == null
-					|| scriptModule.getScriptDir().listFiles().length == 0 )
+			if( ModuleUtil.getMainScript( scriptModule ) == null )
 			{
-				return "No scripts found!" + RETURN;
+				return "Module MAIN script not found in -->" + scriptModule.getScriptDir().getAbsolutePath() + RETURN;
 			}
 
 			final IOFileFilter ff0 = new WildcardFileFilter( "*" + BioLockJ.SH_EXT );

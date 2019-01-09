@@ -52,9 +52,10 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		if( getMetadata().exists() )
+		File metadata = getMetadata();
+		if( metadata.exists() )
 		{
-			MetaUtil.setFile( getMetadata() );
+			MetaUtil.setFile( metadata );
 			MetaUtil.refreshCache();
 			addMetadataToConfigIgnoreInputFiles();
 			if( ModuleUtil.hasRModules() )
@@ -64,7 +65,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		}
 		else
 		{
-			throw new Exception( "Failed to import metadata filels" );
+			throw new Exception( "Metadata not found ---> " + metadata.getAbsolutePath() );
 		}
 	}
 

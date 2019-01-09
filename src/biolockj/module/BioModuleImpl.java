@@ -166,14 +166,15 @@ public abstract class BioModuleImpl implements BioModule
 		{
 			if( previousModule == null )
 			{
-				Log.debug( getClass(), "Previous module is null...pull input.dirPaths data" );
+				Log.debug( getClass(), "Previous module is NULL.  Return pipleline input from: " + Config.INPUT_DIRS );
 				files.addAll( BioLockJUtil.getPipelineInputFiles() );
 				validInput = true;
 			}
 			else
 			{
 				Log.debug( getClass(),
-						"Check previous module for valid input files... # " + previousModule.getClass().getName() );
+						"Check previous module for valid input files... # " + previousModule.getClass().getName() +
+						" ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
 				validInput = isValidInputModule( previousModule );
 				if( validInput )
 				{
@@ -182,12 +183,11 @@ public abstract class BioModuleImpl implements BioModule
 									+ previousModule.getOutputDir().getAbsolutePath() );
 					files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
 							HiddenFileFilter.VISIBLE ) );
+					Log.debug( getClass(), "# Files found: " + files.size() );
 				}
 				else
 				{
 					previousModule = ModuleUtil.getPreviousModule( previousModule );
-					// List<File> prevInput = previousModule.getInputFiles();
-					// files.addAll( prevInput );
 				}
 			}
 		}
