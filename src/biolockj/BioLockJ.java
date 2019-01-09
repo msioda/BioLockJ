@@ -114,14 +114,10 @@ public class BioLockJ
 	{
 		try
 		{
-			MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
-
+			System.out.println( "Staring BioLockj..." );			
 			RuntimeParamUtil.registerRuntimeParameters( args );
-
 			Config.initialize( RuntimeParamUtil.getConfigFile() );
-
 			Config.setConfigProperty( Config.INTERNAL_PIPELINE_NAME, getProjectName() );
-
 			MetaUtil.initialize();
 
 			if( RuntimeParamUtil.doChangePassword() )
@@ -304,79 +300,6 @@ public class BioLockJ
 		}
 	}
 
-	// /**
-	// * Method called if restart flag passed to BioLockJ to look in $DOCKER_PROJ for the most recent pipeline sharing
-	// the
-	// * same project name. Delete status indicator if {@value biolockj.Pipeline#BLJ_FAILED} found in root directory.
-	// *
-	// * @return File - the existing pipeline root directory to restart
-	// * @throws Exception thrown if the most recent pipeline with the same project name is not found or ran
-	// successfully
-	// */
-	// protected static File getRestartDir() throws Exception
-	// {
-	// File restartDir = null;
-	// GregorianCalendar mostRecent = null;
-	// Log.info( BioLockJ.class,
-	// "Looking for most recent pipeline for: " + Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
-	// final FileFilter ff = new WildcardFileFilter( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "*" );
-	// final File[] dirs = RuntimeParamUtil.getBaseDir().listFiles( ff );
-	//
-	// for( final File d: dirs )
-	// {
-	// if( !d.isDirectory()
-	// || d.getName().length() != Config.requireString( Config.INTERNAL_PIPELINE_NAME ).length() + 10 )
-	// {
-	// continue;
-	// }
-	//
-	// final String name = d.getName();
-	// final int len = name.length();
-	// final String year = name.substring( len - 9, len - 5 );
-	// final String mon = name.substring( len - 5, len - 2 );
-	// final String day = name.substring( len - 2 );
-	// final Date date = new SimpleDateFormat( "yyyyMMMdd" ).parse( year + mon + day );
-	// final GregorianCalendar projectDate = new GregorianCalendar();
-	// projectDate.setTime( date );
-	//
-	// // Value > 0 if projectDate has a more recent date than mostRecent
-	// if( mostRecent == null || projectDate.compareTo( mostRecent ) > 0 )
-	// {
-	// Log.info( BioLockJ.class, "Found previous pipeline run = " + d.getAbsolutePath() );
-	// restartDir = d;
-	// mostRecent = projectDate;
-	// }
-	// }
-	//
-	// if( restartDir == null )
-	// {
-	// throw new Exception(
-	// "Unalbe to locate restart directory in --> " + RuntimeParamUtil.getBaseDir().getAbsolutePath() );
-	// }
-	//
-	// if( isPipelineComplete( restartDir ) )
-	// {
-	// throw new Exception(
-	// "RESTART FAILED! Pipeline already ran successfully: " + restartDir.getAbsolutePath() );
-	// }
-	// else
-	// {
-	// final File f = new File( restartDir.getAbsolutePath() + File.separator + Pipeline.BLJ_FAILED );
-	// if( f.exists() )
-	// {
-	// BioLockJUtil.deleteWithRetry( f, 5 );
-	// }
-	// }
-	//
-	// Log.warn( BioLockJ.class, RETURN );
-	// Log.warn( BioLockJ.class, Log.LOG_SPACER );
-	// Log.warn( BioLockJ.class, "RESTART PROJECT DIR --> " + restartDir.getAbsolutePath() );
-	// Log.warn( BioLockJ.class, Log.LOG_SPACER );
-	// Log.warn( BioLockJ.class, RETURN );
-	//
-	// return restartDir;
-	// }
-
 	/**
 	 * Create indicator file in pipeline root directory, with name = status parameter.
 	 * {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}.
@@ -529,8 +452,7 @@ public class BioLockJ
 			}
 
 			int index = 0;
-			final String prefix = ( RuntimeParamUtil.isDockerMode() ? RuntimeParamUtil.getBaseDir().getAbsolutePath()
-					: "~" ) + File.separator;
+			final String prefix = ( RuntimeParamUtil.isDockerMode() ? DockerUtil.CONTAINER_OUTPUT_DIR : "~" ) + File.separator;
 			File errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + LOG_EXT ) );
 			while( errFile.exists() )
 			{

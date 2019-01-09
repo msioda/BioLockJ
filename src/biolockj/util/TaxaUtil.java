@@ -293,7 +293,7 @@ public class TaxaUtil
 	 */
 	public static List<String> initTaxaLevels() throws ConfigNotFoundException, ConfigFormatException
 	{
-		final List<String> levels = new ArrayList<>();
+		configLevels = new ArrayList<>();
 		final String errorMsg = "Property only accepts valid taxonomy levels ==>  "
 				+ BioLockJUtil.getCollectionAsString( allLevels );
 		final Set<String> configuredLevels = new HashSet<>();
@@ -314,40 +314,40 @@ public class TaxaUtil
 
 		if( configuredLevels.contains( DOMAIN ) )
 		{
-			levels.add( DOMAIN );
+			configLevels.add( DOMAIN );
 		}
 		if( configuredLevels.contains( PHYLUM ) )
 		{
-			levels.add( PHYLUM );
+			configLevels.add( PHYLUM );
 		}
 		if( configuredLevels.contains( CLASS ) )
 		{
-			levels.add( CLASS );
+			configLevels.add( CLASS );
 		}
 		if( configuredLevels.contains( ORDER ) )
 		{
-			levels.add( ORDER );
+			configLevels.add( ORDER );
 		}
 		if( configuredLevels.contains( FAMILY ) )
 		{
-			levels.add( FAMILY );
+			configLevels.add( FAMILY );
 		}
 		if( configuredLevels.contains( GENUS ) )
 		{
-			levels.add( GENUS );
+			configLevels.add( GENUS );
 		}
 		if( configuredLevels.contains( SPECIES ) )
 		{
-			levels.add( SPECIES );
+			configLevels.add( SPECIES );
 		}
 
-		if( levels.isEmpty() )
+		if( configLevels.isEmpty() )
 		{
 			throw new ConfigFormatException( REPORT_TAXONOMY_LEVELS, "No valid options configured.  " + errorMsg );
 		}
 
-		Config.setConfigProperty( REPORT_TAXONOMY_LEVELS, levels );
-		return levels;
+		Config.setConfigProperty( REPORT_TAXONOMY_LEVELS, configLevels );
+		return configLevels;
 	}
 
 	/**

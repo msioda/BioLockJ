@@ -66,7 +66,7 @@ public class BioModuleFactory
 		{
 			info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] & [ "
 					+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
-					+ " --> Adding module: " + RegisterNumReads.class.getName() );
+					+ " ] --> Adding module: " + RegisterNumReads.class.getName() );
 			bioModules.add( getModule( RegisterNumReads.class.getName() ) );
 		}
 

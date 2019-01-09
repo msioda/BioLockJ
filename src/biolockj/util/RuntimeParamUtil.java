@@ -284,6 +284,11 @@ public class RuntimeParamUtil
 		}
 
 		parseParams( simplifyArgs( args ) );
+		
+		if( isDockerMode() )
+		{
+			reassignDockerConfig();
+		}
 
 		if( isDirectMode() )
 		{
@@ -295,10 +300,7 @@ public class RuntimeParamUtil
 			assignRestartConfig();
 		}
 
-		if( isDockerMode() )
-		{
-			reassignDockerConfig();
-		}
+		
 
 		validateParams();
 	}

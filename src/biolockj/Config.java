@@ -407,7 +407,7 @@ public class Config
 	 */
 	public static void initialize( final File file ) throws Exception
 	{
-		Log.debug( Config.class, "Initialize Config: " + file.getAbsolutePath() );
+		Log.info( Config.class, "Initialize Config: " + file.getAbsolutePath() );
 		configFile = file;
 		props = Properties.loadProperties( configFile );
 		TaxaUtil.initTaxaLevels();
