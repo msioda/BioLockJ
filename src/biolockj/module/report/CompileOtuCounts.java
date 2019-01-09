@@ -133,6 +133,11 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 		return combinedOtuCounts;
 	}
 
+	/**
+	 * Find the maximum OTU count per sample.
+	 * 
+	 * @return Max OTU per sample.
+	 */
 	protected String getMaxOtusPerSample()
 	{
 		final TreeSet<String> ids = new TreeSet<>();
@@ -154,6 +159,11 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 				+ BioLockJUtil.getCollectionAsString( ids );
 	}
 
+	/**
+	 * Find the minimum OTU count per sample.
+	 * 
+	 * @return Min OTU per sample.
+	 */
 	protected String getMinOtusPerSample()
 	{
 		final TreeSet<String> ids = new TreeSet<>();

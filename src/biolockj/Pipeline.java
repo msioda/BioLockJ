@@ -84,16 +84,10 @@ public class Pipeline
 	{
 		Log.info( Pipeline.class, "Run Direct BioModule: " + moduleName );
 		final BioModule module = ModuleUtil.getModule( moduleName );
-		if( module instanceof JavaModule )
-		{
-			( (JavaModule) module ).runModule();
-			refreshOutputMetadata( module );
-			module.cleanUp();
-		}
-		else
-		{
-			executeScript( (ScriptModule) module );
-		}
+
+		( (JavaModule) module ).runModule();
+		refreshOutputMetadata( module );
+		module.cleanUp();
 	}
 
 	/**
@@ -318,11 +312,11 @@ public class Pipeline
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
 		scriptFiles.remove( mainScript );
 
-//		Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
-//		for( final File f: scriptFiles )
-//		{
-//			Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
-//		}
+		// Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
+		// for( final File f: scriptFiles )
+		// {
+		// Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
+		// }
 
 		if( is_R )
 		{
@@ -346,7 +340,8 @@ public class Pipeline
 		}
 
 		final String logMsg = mainScript.getName() + " Status (Total=" + numScripts + "): Success=" + numSuccess
-				+ "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) + "; Queued=" + ( numScripts - numStarted );
+				+ "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) + "; Queued="
+				+ ( numScripts - numStarted );
 
 		if( !statusMsg.equals( logMsg ) )
 		{
@@ -409,16 +404,6 @@ public class Pipeline
 		}
 	}
 
-	private static void executeScript( final ScriptModule module ) throws Exception
-	{
-		ModuleUtil.markStarted( module );
-		module.executeTask();
-		Job.submit( module );
-		pollAndSpin( module );
-		refreshOutputMetadata( module );
-		module.cleanUp();
-	}
-
 	private static void info( final String msg ) throws Exception
 	{
 		if( !RuntimeParamUtil.isDirectMode() )
@@ -426,31 +411,31 @@ public class Pipeline
 			Log.info( Pipeline.class, msg );
 		}
 	}
-	
+
 	private static void logScriptTimeOutMsg( final ScriptModule module ) throws Exception
 	{
-		String prompt = "------> ";
+		final String prompt = "------> ";
 		Log.info( Pipeline.class, prompt + "Java program wakes every 60 seconds to check execution progress" );
-		Log.info( Pipeline.class, prompt + 
-				"Status determined by existance of indicator files in " + module.getScriptDir().getAbsolutePath() );
-		Log.info( Pipeline.class, prompt +  "Indicator files end with: \"_" + SCRIPT_STARTED + "\", \"_" + SCRIPT_SUCCESS
+		Log.info( Pipeline.class, prompt + "Status determined by existance of indicator files in "
+				+ module.getScriptDir().getAbsolutePath() );
+		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + SCRIPT_STARTED + "\", \"_" + SCRIPT_SUCCESS
 				+ "\", or \"_" + SCRIPT_FAILURES + "\"" );
-		Log.info( Pipeline.class, prompt +  "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
+		Log.info( Pipeline.class,
+				prompt + "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
 		if( module.getTimeout() == null || module.getTimeout() > 10 )
 		{
-			Log.info( Pipeline.class,
-					prompt + "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
+			Log.info( Pipeline.class, prompt
+					+ "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
 		}
-		
+
 		if( module.getTimeout() != null )
 		{
-			Log.info( Pipeline.class,
-					prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = " + module.getTimeout() );
+			Log.info( Pipeline.class, prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = "
+					+ module.getTimeout() );
 		}
 		else
 		{
-			Log.info( Pipeline.class,
-					prompt + "Running scripts will NEVER TIME OUT." );
+			Log.info( Pipeline.class, prompt + "Running scripts will NEVER TIME OUT." );
 		}
 	}
 

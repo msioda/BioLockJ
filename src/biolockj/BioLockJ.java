@@ -114,7 +114,7 @@ public class BioLockJ
 	{
 		try
 		{
-			System.out.println( "Staring BioLockj..." );	
+			System.out.println( "Staring BioLockj..." );
 			MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 			RuntimeParamUtil.registerRuntimeParameters( args );
 			Config.initialize( RuntimeParamUtil.getConfigFile() );
@@ -452,7 +452,8 @@ public class BioLockJ
 			}
 
 			int index = 0;
-			final String prefix = ( RuntimeParamUtil.isDockerMode() ? DockerUtil.CONTAINER_OUTPUT_DIR : "~" ) + File.separator;
+			final String prefix = ( RuntimeParamUtil.isDockerMode() ? DockerUtil.CONTAINER_OUTPUT_DIR: "~" )
+					+ File.separator;
 			File errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + LOG_EXT ) );
 			while( errFile.exists() )
 			{

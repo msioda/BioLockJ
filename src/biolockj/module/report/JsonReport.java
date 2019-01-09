@@ -61,7 +61,6 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		verifyInput();
 		final JsonNode root = new JsonNode( ROOT_NODE, 0, null, null );
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = buildJsonMap( root );
 		root.addCount( totalOtuCount );
@@ -76,6 +75,13 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		summary = "Report generated " + numberOfNodes + " nodes " + summary;
 	}
 
+	/**
+	 * Build JsonMap from the {@link biolockj.module.report.CompileOtuCounts} output directory.
+	 * 
+	 * @param rootNode Root JsonNode is top of the hierarchy
+	 * @return Map(level, Set(JsonNode)) of nodes by level
+	 * @throws Exception if errors occur
+	 */
 	protected LinkedHashMap<String, TreeSet<JsonNode>> buildJsonMap( final JsonNode rootNode ) throws Exception
 	{
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = initJsonMap();
@@ -171,15 +177,16 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		return jsonMap;
 	}
 
-	protected void verifyInput() throws Exception
-	{
-		if( getInputFiles().size() != 1 )
-		{
-			throw new Exception( CompileOtuCounts.class.getName() + " should have exactly 1 output file, but found "
-					+ getInputFiles().size() );
-		}
-	}
-
+	/**
+	 * Build lines of text output for the Json Report file.
+	 * 
+	 * @param node JsonNode is the parent node
+	 * @param hasPeer boolean is true if node has peer nodes
+	 * @param jsonMap LinkedHashMap(level,Set(JsonNode)) all nodes by level
+	 * @param nodeLevel {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @return Json Report lines
+	 * @throws Exception if errors occur
+	 */
 	protected String writeNodeAndChildren( final JsonNode node, final boolean hasPeer,
 			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final int nodeLevel ) throws Exception
 	{

@@ -204,8 +204,8 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	}
 
 	/**
-	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} if only
-	 * one taxonomy level is to be reported, otherwise report all levels.
+	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} if
+	 * only one taxonomy level is to be reported, otherwise report all levels.
 	 */
 	private void setRankSwitch()
 	{

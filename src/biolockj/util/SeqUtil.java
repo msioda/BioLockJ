@@ -595,7 +595,8 @@ public class SeqUtil
 	}
 
 	/**
-	 * Set {@value biolockj.Config#INPUT_IGNORE_FILES}, {@value #INTERNAL_SEQ_HEADER_CHAR}, and {@value #INTERNAL_SEQ_TYPE}
+	 * Set {@value biolockj.Config#INPUT_IGNORE_FILES}, {@value #INTERNAL_SEQ_HEADER_CHAR}, and
+	 * {@value #INTERNAL_SEQ_TYPE}
 	 * <ul>
 	 * <li>Ignore the metadata file {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_FILE_PATH}
 	 * <li>If {@link biolockj.Config} pipeline contains {@link biolockj.module.seq} or

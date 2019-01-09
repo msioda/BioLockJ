@@ -32,6 +32,12 @@ public class OtuUtil
 	 */
 	public static class OtuCountLine
 	{
+		/**
+		 * Each OTU count file line has 2 parts: OTU Name and OTU Count
+		 * 
+		 * @param line OTU count file line
+		 * @throws Exception if errors occur
+		 */
 		public OtuCountLine( final String line ) throws Exception
 		{
 			final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
@@ -44,18 +50,27 @@ public class OtuUtil
 			count = Integer.valueOf( st.nextToken() );
 		}
 
+		/**
+		 * Get OTU count
+		 * 
+		 * @return OTU count
+		 */
 		public Integer getCount()
 		{
 			return count;
 		}
 
+		/**
+		 * Get OTU name
+		 * 
+		 * @return OTU name
+		 */
 		public String getOtu()
 		{
 			return otu;
 		}
 
 		private Integer count = null;
-
 		private String otu = null;
 	}
 
@@ -64,11 +79,11 @@ public class OtuUtil
 	{}
 
 	/**
-	 * Build taxa name into OTU path, returns: level + {@value DELIM_SEP} + taxa
+	 * Build taxa name into OTU path, returns: level + {@value biolockj.util.TaxaUtil#DELIM_SEP} + taxa
 	 * 
 	 * @param level Taxonomy level
 	 * @param taxa Taxa name
-	 * @return level + {@value DELIM_SEP} + taxa
+	 * @return level + {@value biolockj.util.TaxaUtil#DELIM_SEP} + taxa
 	 * @throws Exception if errors occur
 	 */
 	public static String buildOtuTaxa( final String level, final String taxa ) throws Exception

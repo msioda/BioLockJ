@@ -589,16 +589,21 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	public static final String NUM_VALID_READS = "Num_Valid_Reads";
 
 	/**
-	 * {@link biolockj.Config} property {@value #INPUT_SEQ_MAX} defines the maximum number of reads per file
+	 * {@link biolockj.Config} Integer property {@value #INPUT_SEQ_MAX} defines the maximum number of reads per file
 	 */
 	protected static final String INPUT_SEQ_MAX = "seqFileVal.seqMaxLen";
 
 	/**
-	 * {@link biolockj.Config} property {@value #INPUT_SEQ_MIN} defines the minimum number of reads per file
+	 * {@link biolockj.Config} Integer property {@value #INPUT_SEQ_MIN} defines the minimum number of reads per file
 	 */
 	protected static final String INPUT_SEQ_MIN = "seqFileVal.seqMinLen";
 
+	/**
+	 * {@link biolockj.Config} Boolean property {@value #REQUIRE_EUQL_NUM_PAIRS} determines if module requires equal
+	 * number of forward and reverse reads (simple check).
+	 */
 	protected static final String REQUIRE_EUQL_NUM_PAIRS = "seqFileVal.requireEqualNumPairs";
+
 	private static final int INDEX_AVG_FW_READ_LEN = 6;
 	private static final int INDEX_AVG_RV_READ_LEN = 7;
 	private static final int INDEX_MAX_READS = 2;

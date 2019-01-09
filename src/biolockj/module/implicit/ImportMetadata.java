@@ -52,7 +52,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		File metadata = getMetadata();
+		final File metadata = getMetadata();
 		if( metadata.exists() )
 		{
 			MetaUtil.setFile( metadata );

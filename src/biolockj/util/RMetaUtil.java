@@ -46,16 +46,12 @@ public final class RMetaUtil
 	 * </ul>
 	 * <p>
 	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_READS} = {@value biolockj.Config#TRUE}, add the
-	 * last read count field in the metadata file as a numeric field:
-	 * <ul>
-	 * <li>{@value biolockj.module.implicit.RegisterNumReads#NUM_READS}
-	 * <li>{@value biolockj.module.seq.TrimPrimers#NUM_TRIMMED_READS}
-	 * <li>{@value biolockj.module.seq.SeqFileValidator#NUM_VALID_READS}
-	 * <li>{@value biolockj.module.seq.PreRarefier#NUM_RAREFIED_READS}
-	 * </ul>
+	 * last read count field in the metadata file as a numeric field store in {link
+	 * biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}
+	 * 
 	 * <p>
 	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_HITS} = {@value biolockj.Config#TRUE}, add the
-	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_OTUS} field as a numeric field.
+	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getOtuCountField()} field as a numeric field.
 	 * <p>
 	 * Perform validations:
 	 * <ul>

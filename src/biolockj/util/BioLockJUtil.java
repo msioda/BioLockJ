@@ -174,6 +174,12 @@ public class BioLockJUtil
 		return percentage + "%";
 	}
 
+	/**
+	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
+	 * 
+	 * @return Collection( File ) input files
+	 * @throws Exception if errors occur
+	 */
 	public static Collection<File> getBasicInputFiles() throws Exception
 	{
 		if( inputFiles.isEmpty() )
@@ -470,7 +476,7 @@ public class BioLockJUtil
 	/**
 	 * Remove all single and double quotation marks found in value.
 	 * 
-	 * @param value Possibly quoted value 
+	 * @param value Possibly quoted value
 	 * @return value with no quotes
 	 * @throws Exception if errors occur
 	 */

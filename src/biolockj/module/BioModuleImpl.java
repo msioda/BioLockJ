@@ -173,8 +173,8 @@ public abstract class BioModuleImpl implements BioModule
 			else
 			{
 				Log.debug( getClass(),
-						"Check previous module for valid input files... # " + previousModule.getClass().getName() +
-						" ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
+						"Check previous module for valid input files... # " + previousModule.getClass().getName()
+								+ " ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
 				validInput = isValidInputModule( previousModule );
 				if( validInput )
 				{

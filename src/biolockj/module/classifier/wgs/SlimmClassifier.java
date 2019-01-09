@@ -313,7 +313,8 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	}
 	/**
 	 * Override
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN} value
+	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN}
+	 * value
 	 */
 	public static final String SLIMM_DOMAIN_DELIM = "superkingdom";
 

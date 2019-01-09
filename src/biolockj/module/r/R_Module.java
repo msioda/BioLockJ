@@ -42,7 +42,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		dockerScriptLines.add( innerList );
 		return dockerScriptLines;
 	}
-	
 
 	/**
 	 * Not needed for R script modules.
@@ -178,7 +177,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 */
 	public File getPrimaryScript() throws Exception
 	{
-		return new File( getScriptDir().getAbsolutePath() + File.separator + MAIN_SCRIPT_PREFIX + getModuleScriptName() );
+		return new File(
+				getScriptDir().getAbsolutePath() + File.separator + MAIN_SCRIPT_PREFIX + getModuleScriptName() );
 	}
 
 	/**
@@ -354,7 +354,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		errors.append( INDENT + rSpacer + RETURN );
 		return errors.toString();
 	}
-
 
 	private String getModuleScriptName() throws Exception
 	{

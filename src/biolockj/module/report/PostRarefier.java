@@ -138,6 +138,14 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 		}
 	}
 
+	/**
+	 * Get OTU count data for the given sampleId.
+	 * 
+	 * @param sampleId Sample ID
+	 * @param otuCounts All OTU counts
+	 * @return List of OTUs for the given sampleId
+	 * @throws Exception if errors occur
+	 */
 	protected List<String> getData( final String sampleId, final TreeMap<String, Integer> otuCounts ) throws Exception
 	{
 		final String metaField = MetaUtil.getField( sampleId, ParserModuleImpl.getOtuCountField() );
@@ -155,6 +163,12 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 		return otus;
 	}
 
+	/**
+	 * Return a list of low abundant samples, as defined by {@value #LOW_ABUNDANT_CUTOFF}
+	 * 
+	 * @return List of Sample IDs
+	 * @throws Exception if errors occur
+	 */
 	protected List<String> getLowAbundantSamples() throws Exception
 	{
 		final List<String> sampleIds = MetaUtil.getSampleIds();
@@ -239,6 +253,14 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 		return data.get( index );
 	}
 
+	/**
+	 * Select random OTUs based on the quantileNum from the list of OTUs in data.
+	 * 
+	 * @param data List( OTUs )
+	 * @param quantileNum Qunatile (range: 0.0 - 1.0)
+	 * @return List of randomly selected OTUs up to the given quantile
+	 * @throws Exception if errors occur
+	 */
 	protected List<String> getRandomQuantileOtus( List<String> data, final int quantileNum ) throws Exception
 	{
 		Collections.shuffle( data );
@@ -309,6 +331,11 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 
 	private Map<String, String> hitsPerSample = new HashMap<>();
 	private final Set<String> sampleIds = new HashSet<>();
+
+	/**
+	 * {@link biolockj.Config} Posivite Double property to define minimum percentage of samples that must contain an
+	 * OTU. Low abundance OTUs will be removed: {@value #LOW_ABUNDANT_CUTOFF}
+	 */
 	protected static final String LOW_ABUNDANT_CUTOFF = "postRarefier.lowAbundantCutoff";
 
 	/**

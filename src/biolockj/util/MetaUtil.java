@@ -352,6 +352,12 @@ public class MetaUtil
 		return ids;
 	}
 
+	/**
+	 * Check if columnName exists in the current metadata file.
+	 * 
+	 * @param columnName Column name
+	 * @return TRUE if columnName exists in hearder row of metadata file
+	 */
 	public static boolean hasColumn( final String columnName )
 	{
 		try

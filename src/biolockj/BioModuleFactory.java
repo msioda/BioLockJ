@@ -60,7 +60,8 @@ public class BioModuleFactory
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_READS ) && !listedModules.contains( SeqFileValidator.class.getName() )
-				&& !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ).equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
+				&& !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
+						.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
 		{
 			info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] & [ "
 					+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )

@@ -187,32 +187,6 @@ public class ModuleUtil
 
 		return null;
 	}
-	
-	/**
-	 * Method checks if preReq is configured to run prior to the bioModule.
-	 * 
-	 * @param bioModule BioModule
-	 * @param preReq Prerequisite BioModule
-	 * @return TRUE if preReq is found 
-	 * @throws Exception if errors occur
-	 */
-	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
-	{
-		boolean foundCurrentModule = false;
-		for( final String module: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
-		{
-			if( !foundCurrentModule && module.equals( bioModule.getClass().getName() ) )
-			{
-				foundCurrentModule = true;
-			}
-			else if( module.equals( preReq ) ) 
-			{
-				return true;
-			}
-		}
-		
-		return false;
-	}
 
 	/**
 	 * BioModules are run in the order configured. Return the module configured just before the bioModule param.
@@ -477,6 +451,32 @@ public class ModuleUtil
 	public static boolean moduleExists( final String moduleName ) throws Exception
 	{
 		return getModule( moduleName ) != null;
+	}
+
+	/**
+	 * Method checks if preReq is configured to run prior to the bioModule.
+	 * 
+	 * @param bioModule BioModule
+	 * @param preReq Prerequisite BioModule
+	 * @return TRUE if preReq is found
+	 * @throws Exception if errors occur
+	 */
+	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
+	{
+		boolean foundCurrentModule = false;
+		for( final String module: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
+		{
+			if( !foundCurrentModule && module.equals( bioModule.getClass().getName() ) )
+			{
+				foundCurrentModule = true;
+			}
+			else if( module.equals( preReq ) )
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

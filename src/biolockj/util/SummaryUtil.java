@@ -281,10 +281,11 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			File scriptDir = ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR );
+			final File scriptDir = ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR );
 			if( scriptDir == null )
 			{
-				return "Module \"script\" directory not found in --> " + scriptModule.getModuleDir().getAbsolutePath() + RETURN;
+				return "Module \"script\" directory not found in --> " + scriptModule.getModuleDir().getAbsolutePath()
+						+ RETURN;
 			}
 
 			if( ModuleUtil.getMainScript( scriptModule ) == null )
