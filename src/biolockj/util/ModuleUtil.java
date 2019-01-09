@@ -198,14 +198,17 @@ public class ModuleUtil
 	 */
 	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
 	{
-		BioModule previousModule = getPreviousModule( bioModule );
-		while( previousModule != null )
+		boolean foundCurrentModule = false;
+		for( final String module: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
 		{
-			if( previousModule.getClass().getName().equals( preReq ) )
+			if( !foundCurrentModule && module.equals( bioModule.getClass().getName() ) )
+			{
+				foundCurrentModule = true;
+			}
+			else if( module.equals( preReq ) ) 
 			{
 				return true;
 			}
-			previousModule = getPreviousModule( bioModule );
 		}
 		
 		return false;
