@@ -33,7 +33,6 @@ public class BuildEffectSizePlots extends R_Module implements ScriptModule
 	{
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
 		preReqs.add( CalculateStats.class );
-		preReqs.add( ParserModule.class );
 		return preReqs;
 	}
 
