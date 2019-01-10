@@ -287,9 +287,8 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	header = c(header, paste("infDown: was the OTU flagged for having all-0-counts only in the", numGroupName, "group."))
 	if (!is.null(pvals)){
 		toPlot$pvalue = pvals[row.names(toPlot)]
-		header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", 
-															pvalIncludeBar,") and if OTU got a star (if under ", pvalStar, 
-															"),  thresholds controlled by r.FCplot.pvalIncludeBar and r.pvalCutoff properties respectively.",
+		header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", pvalIncludeBar,
+															") and if OTU got a star (if under <pvalStar>thresholds controlled by r.FCplot.pvalIncludeBar and r.pvalCutoff properties respectively.",
 															" See also: r.FCplot.pvalType property"))
 	}
 	xAxisLab2="" #just make sure it exists; it is defined in if statements
