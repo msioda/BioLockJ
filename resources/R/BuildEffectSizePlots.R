@@ -6,11 +6,12 @@
 # See calcBarSizes
 
 ### custom config options:
-# r.FCplot.pvalType=
-# r.FCplot.pvalIncludeBar=
-# r.FCplot.userOTUs=
-# r.FCplot.maxBars=
-# r.FCplot.effectSizeType=effectSize, foldChange, rSquared
+# r.EffectSizePlot.pvalType=
+# r.EffectSizePlot.pvalIncludeBar=
+# r.EffectSizePlot.userOTUs=
+# r.EffectSizePlot.maxBars=
+# r.EffectSizePlot.effectSizeType=effectSize, foldChange, rSquared
+# r.EffectSizePlot.scale.fun=log2
 ### also uses:
 # r.pvalCutoff
 # internal.numMetaCols
@@ -23,12 +24,13 @@
 # It handles pulling data from other modules and options from the BiolockJ properties.
 main <- function(){
 	# get config option for pvalStar, pvalIncludeBar, maxBars, userOTUs, 
+	pvalFileIdentifier = getProperty("r.EffectSizePlot.pvalType", "_adjNonParPvals.tsv")
 	pvalStar = getProperty("r.pvalCutoff", 0.05)
-	pvalIncludeBar = getProperty("r.FCplot.pvalIncludeBar", 1)
-	maxBars = getProperty("r.FCplot.maxBars", 40)
-	userOTUs = getProperty("r.FCplot.userOTUs", NULL)
-	scale.fun="log2"
-	effectType = getProperty("r.FCplot.effectSizeType", c("effectSize", "foldChange", "rSquared"))
+	pvalIncludeBar = getProperty("r.EffectSizePlot.pvalIncludeBar", 1)
+	maxBars = getProperty("r.EffectSizePlot.maxBars", 40)
+	userOTUs = getProperty("r.EffectSizePlot.userOTUs", NULL)
+	scale.fun=getProperty("r.EffectSizePlot.scale.fun", "log2")
+	effectType = getProperty("r.EffectSizePlot.effectSizeType", c("effectSize", "foldChange", "rSquared"))
 	doFoldChange = "foldChange" %in% effectType
 	doEffectSize = "effectSize" %in% effectType
 	doRSquared = "rSquared" %in% effectType
@@ -61,7 +63,6 @@ main <- function(){
 		if( doDebug() ){ print( paste0("otuTable has ", nrow(otuTable), " rows and ", ncol(otuTable), " columns."))}
 		#
 		# get pvals from calc stats
-		pvalFileIdentifier = getProperty(name = "r.FCplot.pvalType", "_adjNonParPvals.tsv")
 		pvalFile = getPipelineFile( paste0(otuLevel, pvalFileIdentifier) )
 		if( doDebug() ) print( paste( "p-value file:", pvalFile ) )
 		pvalTable = read.table( pvalFile, check.names=FALSE, header=TRUE, sep="\t", row.names = 1)
@@ -288,8 +289,8 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	if (!is.null(pvals)){
 		toPlot$pvalue = pvals[row.names(toPlot)]
 		header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", pvalIncludeBar,
-															") and if OTU got a star (if under <pvalStar>thresholds controlled by r.FCplot.pvalIncludeBar and r.pvalCutoff properties respectively.",
-															" See also: r.FCplot.pvalType property"))
+															") and if OTU got a star (if under <pvalStar>thresholds controlled by r.EffectSizePlot.pvalIncludeBar and r.pvalCutoff properties respectively.",
+															" See also: r.EffectSizePlot.pvalType property"))
 	}
 	xAxisLab2="" #just make sure it exists; it is defined in if statements
 	if ("effectSize" %in% effectType){
@@ -335,7 +336,7 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	toPlot = toPlot[order(abs(toPlot[,orderByColumn]), decreasing = T),] #highest abs on top
 	maxBars = min(c(maxBars, nrow(toPlot)))
 	toPlot$plotPriority = 1:nrow(toPlot)
-	header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r.FCplot.maxBars or over-riden using r.FCplot.userOTUs.'))
+	header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r.EffectSizePlot.maxBars or over-riden using r.EffectSizePlot.userOTUs.'))
 	toPlot$includeInPlot = toPlot$plotPriority <= maxBars
 	comments[1] = paste0("Showing top ", maxBars, " most changed OTUs ", viableOTUs[["comment"]])
 	header = c(header, "includeInPlot: will this otu be included in the plot.")
