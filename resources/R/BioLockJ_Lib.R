@@ -250,9 +250,9 @@ parseConfig <- function( name, defaultVal=NULL ) {
 }
 
 
-plotPlainText <- function(textToPrint){
+plotPlainText <- function(textToPrint, cex=1){
   plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
-  text(labels=textToPrint, x = 0.5, y = 0.5, cex = 1.6, col = "black")
+  text(labels=textToPrint, x = 0.5, y = 0.5, cex = cex, col = "black")
 }
 
 # Create status indicator file by appending suffix of _Success or _Failure if any error messages logged
