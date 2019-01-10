@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import biolockj.Config;
 import biolockj.module.ScriptModule;
-import biolockj.module.implicit.parser.ParserModule;
 import biolockj.util.ModuleUtil;
 
 /**
@@ -56,8 +55,14 @@ public class BuildEffectSizePlots extends R_Module implements ScriptModule
 	{
 		// TODO Auto-generated method stub
 		super.executeTask();
-		Config.setConfigProperty( Config.INTERNAL_PARSER_MODULE,
-				ModuleUtil.getParserModule().getOutputDir().toString() );
+		if( Config.getList( "r.EffectSizePlot.effectSizeType" ).contains( "foldChange" ) )
+		{
+			if( ModuleUtil.getParserModule() != null )
+			{
+				Config.setConfigProperty( Config.INTERNAL_PARSER_MODULE,
+						ModuleUtil.getParserModule().getOutputDir().toString() );
+			}
+		}
 	}
 
 }
