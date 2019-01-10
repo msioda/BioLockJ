@@ -3,7 +3,7 @@
 ### assumes library(BioLockJ_Lib.R)
 
 ### NOTE: The header printed on the reference table serves as built-in documentation for this module. 
-# See saveRefTableWithHeader
+# See calcBarSizes
 
 ### custom config options:
 # r.FCplot.pvalType=
@@ -263,6 +263,8 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	##   the bar values values: probably log2 or log10.
 	# orderByColumn - the name of the column to use in ordering the final output rows.
 	#
+	# Keep a running header of documentation
+	header = "Plot Reference"
 	# Select viable OTUs to plot
 	viableOTUs = selectViableOTUs(group1=names(numGroupVals), group2= names(denGroupVals), 
 																pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs)
@@ -280,8 +282,15 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 											numMeans = numMeans, denMeans = denMeans,
 											infUp = numMeans > 0 & denMeans == 0, #In the table, these are Inf
 											infDown = numMeans == 0 & denMeans > 0) #In the table, these are 0
+	header = c(header, "<group name>.mean: the mean value for each group.")
+	header = c(header, paste("infUp: was the fold change flagged for having all-0-counts only in the", denGroupName, "group."))
+	header = c(header, paste("infDown: was the fold change flagged for having all-0-counts only in the", numGroupName, "group."))
 	if (!is.null(pvals)){
 		toPlot$pvalue = pvals[row.names(toPlot)]
+		header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", 
+															pvalIncludeBar,") and if OTU got a star (if under ", pvalStar, 
+															"),  thresholds controlled by r.FCplot.pvalIncludeBar and r.pvalCutoff properties respectively.",
+															" See also: r.FCplot.pvalType property"))
 	}
 	xAxisLab2="" #just make sure it exists; it is defined in if statements
 	if ("effectSize" %in% effectType){
@@ -296,14 +305,17 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 		if (length(effectType) > 1){
 			comments = c(comments, paste("Effect size is", xAxisLab2))
 		}
+		header = c(header, paste("effectSize:", xAxisLab2))
 	}
 	if ("foldChange" %in% effectType){
 		toPlot$foldChange = numMeans / denMeans
 		toPlot$scaledFC = do.call(scale.fun, list(x=toPlot$foldChange))
 		xAxisLab2 = paste0(numGroupName, " (n=", max(numGroupN), ") relative to ", denGroupName, " (n=", max(denGroupN), ")")
 		if (length(effectType) > 1){
-			comments = c(comments, paste("Fold change is", xAxisLab2))
+			comments = c(comments, paste("Fold change is", xAxisLab2, "on a", scale.fun, "scale."))
 		}
+		header = c(header, paste("foldChange:", xAxisLab2))
+		header = c(header, paste("scaledFC:", xAxisLab2, "on a", scale.fun, "scale."))
 	}
 	if ("rSquared" %in% effectType){
 		if (is.null(r2vals)){
@@ -311,9 +323,11 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 		}else{
 			toPlot$rSquared = r2vals[row.names(toPlot)]
 			xAxisLab2 = ""
+			r2comment = "r-squared values are taken from the CalculateStats module."
 			if (length(effectType) > 1){
-				comments = c(comments, "r-squared values are taken from the CalculateStats module.")
+				comments = c(comments, r2comment)
 			}
+			header = c(header, paste("rSquared:", r2comment))
 		}
 	}
 	#
@@ -322,8 +336,10 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	toPlot = toPlot[order(abs(toPlot[,orderByColumn]), decreasing = T),] #highest abs on top
 	maxBars = min(c(maxBars, nrow(toPlot)))
 	toPlot$plotPriority = 1:nrow(toPlot)
+	header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r.FCplot.maxBars or over-riden using r.FCplot.userOTUs.'))
 	toPlot$includeInPlot = toPlot$plotPriority <= maxBars
 	comments[1] = paste0("Showing top ", maxBars, " most changed OTUs ", viableOTUs[["comment"]])
+	header = c(header, "includeInPlot: will this otu be included in the plot.")
 	#
 	# order OTUs to plot
 	ordNames = row.names(toPlot)[order(toPlot[,orderByColumn])]
@@ -331,11 +347,16 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	#
 	# save a table the user can reference
 	if (!is.null(saveRefTable)){
-		headerArgsList = list(numGroupName=numGroupName, denGroupName=denGroupName, 
-													scale.fun=scale.fun, pvalIncludeBar=pvalIncludeBar, pvalStar=pvalStar)
-		saveRefTableWithHeader(saveRefTable=saveRefTable, toPrint=toPlot, 
-													 ordNames=ordNames, 
-													 headerArgsList=headerArgsList)
+		toPrint=toPlot
+		names(toPrint)[2:3] = paste(c(numGroupName, denGroupName), "mean", sep=".")
+		header = c(header, "plot.location: vertical location of the bar in the plot")
+		toPrint$plot.location = NA
+		toPrint[1:sum(toPrint$includeInPlot),"plot.location"] = sum(toPrint$includeInPlot):1
+		toPrint = toPrint[order(toPrint$plot.location),]
+		header = paste("#", header)
+		writeLines(header, con=saveRefTable)
+		suppressWarnings(write.table(toPrint, file=saveRefTable, quote=FALSE, sep="\t", row.names = FALSE, append = TRUE))
+		print(paste("Saved reference table to", saveRefTable))
 	}
 	#
 	# get rid of the rows that will not be plotted
@@ -388,43 +409,6 @@ calcPooledSD <- function(group.n, group.sd){
 
 calc2GroupPooledSD <- function(group1.n, group2.n, group1.sd, group2.sd){
 	return(calcPooledSD(group.n=c(group1.n, group2.n), group.sd=c(group1.sd, group2.sd)))
-}
-
-
-
-# The header printed on the reference table serves as built-in documentation for this method.
-saveRefTableWithHeader <- function(saveRefTable, toPrint, skipColumns=NULL,
-																	 ordNames=NULL,
-																	 headerArgsList=NULL){
-	# saveRefTable - file name to save the table to
-	# toPrint - data frame of values to save
-	# skipColumns - colunns to NOT include in the saved file
-	# ordNames, infUp, infDown ---- soon to be removed argument
-	# headerArgsList - named list with values that might be used in the header
-	header = "Fold Change Plot Reference"
-	if (!is.null(skipColumns)){
-		keepCols = setdiff(names(toPrint), skipColumns)
-		toPrint = toPrint[,keepCols]
-	}
-	header = c(header, "<group name>.mean: the mean value for each group used to calculate the fold change.",
-						 paste("foldChange: ratio of the mean of one group over the other,", headerArgsList$numGroupName, "over", headerArgsList$denGroupName), 
-						 paste0("scaledFC: the ", headerArgsList$scale.fun, "-scaled fold change, this is the bar length shown in the plot"),
-						 'plotPriority: the rank of this OTU when determineing the "most changed" using abs(scaledFC); number of OTUs plotted can configured with r.FCplot.maxBars or over-riden using r.FCplot.userOTUs.')
-	names(toPrint)[2:3] = paste(c(headerArgsList$numGroupName, headerArgsList$denGroupName), "mean", sep=".")
-	header = c(header, "plot.location: vertical location of the bar in the plot")
-	toPrint$plot.location = NA
-	toPrint[ordNames,"plot.location"] = nrow(toPrint):1
-	toPrint = toPrint[order(toPrint$plot.location),]
-	header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", 
-														headerArgsList$pvalIncludeBar,") and if OTU got a star (if under ", headerArgsList$pvalStar, 
-														"),  thresholds controlled by r.FCplot.pvalIncludeBar and r.pvalCutoff properties respectively.",
-														" See also: r.FCplot.pvalType property"))
-	header = c(header, paste("infUp: was the fold change flagged for having all-0-counts only in the", headerArgsList$denGroupName, "group."))
-	header = c(header, paste("infDown: was the fold change flagged for having all-0-counts only in the", headerArgsList$numGroupName, "group."))
-	header = paste("#", header)
-	writeLines(header, con=saveRefTable)
-	suppressWarnings(write.table(toPrint, file=saveRefTable, quote=FALSE, sep="\t", row.names = FALSE, append = TRUE))
-	print(paste("Saved reference table to", saveRefTable))
 }
 
 
