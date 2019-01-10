@@ -23,7 +23,7 @@ import biolockj.util.ModuleUtil;
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
  * field. A pdf is created for each taxonomy level.
  */
-public class BuildFoldChangePlots extends R_Module implements ScriptModule
+public class BuildEffectSizePlots extends R_Module implements ScriptModule
 {
 	/**
 	 * Add prerequisite module: {@link biolockj.module.r.CalculateStats}.

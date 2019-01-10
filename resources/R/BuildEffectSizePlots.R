@@ -1,4 +1,4 @@
-# Module script for: biolockj.module.r.BuildFoldChangePlots
+# Module script for: biolockj.module.r.BuildEffectSizePlots
 
 ### assumes library(BioLockJ_Lib.R)
 
@@ -38,10 +38,10 @@ main <- function(){
 	meta = getMetaData()
 	#
 	for (otuLevel in getProperty("report.taxonomyLevels") ) {
-		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildFoldChangePlots_", otuLevel, ".log") ) )
+		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildEffectSizePlots_", otuLevel, ".log") ) )
 		if( doDebug() ) print( paste( "processing otuLevel:", otuLevel ) )
 		# make a new pdf output file, specify page size
-		outFileName = getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU-foldChangePlots.pdf") )
+		outFileName = getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU-EffectSizePlots.pdf") )
 		if( doDebug() ) print( paste( "Creating file:", outFileName ) )
 		height=10
 		pdf(file=outFileName, paper="letter", width=7.5, height=height, onefile=TRUE)
@@ -226,7 +226,7 @@ normalize <- function(otuTable){
 errorHandler1 = function(err, otuLevel, reportField) {
 	if( doDebug() ){print(err)}
 	origErr = as.character(err)
-	trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) # error messages that I create in addFoldChangePlot start with "Stop Plotting"
+	trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) # error messages that I create in calcBarSizes and drawPlot start with "Stop Plotting"
 	msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
 							 "\nusing attribute: ", reportField)
 	if (doDebug() | nchar(trimmedErr) < nchar(origErr)){
@@ -273,7 +273,7 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	numGroupVals = numGroupVals[plotOTUs]
 	denGroupVals = denGroupVals[plotOTUs]
 	#
-	# assemble data frame of plot values. Calc and scale fold changes
+	# assemble data frame of plot values.
 	numGroupN = sapply(numGroupVals, function(x){sum(!is.na(x))})
 	denGroupN = sapply(denGroupVals, function(x){sum(!is.na(x))})
 	numMeans = colMeans(numGroupVals, na.rm=TRUE)
@@ -283,8 +283,8 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 											infUp = numMeans > 0 & denMeans == 0, #In the table, these are Inf
 											infDown = numMeans == 0 & denMeans > 0) #In the table, these are 0
 	header = c(header, "<group name>.mean: the mean value for each group.")
-	header = c(header, paste("infUp: was the fold change flagged for having all-0-counts only in the", denGroupName, "group."))
-	header = c(header, paste("infDown: was the fold change flagged for having all-0-counts only in the", numGroupName, "group."))
+	header = c(header, paste("infUp: was the OTU flagged for having all-0-counts only in the", denGroupName, "group."))
+	header = c(header, paste("infDown: was the OTU flagged for having all-0-counts only in the", numGroupName, "group."))
 	if (!is.null(pvals)){
 		toPlot$pvalue = pvals[row.names(toPlot)]
 		header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", 
