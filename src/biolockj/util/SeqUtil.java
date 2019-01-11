@@ -88,6 +88,24 @@ public class SeqUtil
 		return count / getNumLinesPerRead();
 	}
 
+	// public static String getHeader( String line )
+	// {
+	// line = line.trim();
+	// final boolean hasFwDelim = line.contains( ILLUMINA_FW_READ_IND );
+	// final boolean hasRvDelim = line.contains( ILLUMINA_RV_READ_IND );
+	// final String delim = hasFwDelim ? ILLUMINA_FW_READ_IND: hasRvDelim ? ILLUMINA_RV_READ_IND: null;
+	// if( delim != null )
+	// {
+	// int index = line.indexOf( delim );
+	// return line.substring( 0, index ) + "[12]" + line.substring( index + 1 );
+	// }
+	// else
+	// {
+	// return line.trim();
+	// }
+	//
+	// }
+
 	/**
 	 * Extract the header from the first line of a read (parse to first space). This part of the header line will be
 	 * identical on forward and reverse reads, so can be used to find matching pairs of reads.
