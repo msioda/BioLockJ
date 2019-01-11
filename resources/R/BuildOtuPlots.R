@@ -24,13 +24,19 @@ addBoxPlot <- function( otuColName, otuColVals, metaColName, metaColVals, barCol
 }
 
 # Add text at the top of the plot in the margin
-addPvalueNote <- function(parPval, nonParPval, cutoff=getProperty("r.pvalCutoff",-1)){
-	mtext(text="Adjusted p-values:", line=1.4, 
+addPvalueNote <- function(parPval, nonParPval, r2, cutoff=getProperty("r.pvalCutoff",-1)){
+	lineNumbers = c(0.2, 1.4, 2.6)
+	names(lineNumbers) = c("low", "mid", "top")
+	mtext(text="Adjusted p-values:", line=lineNumbers["top"], 
 				at=par("usr")[1], side=3, adj=0, cex=par("cex"))
-	mtext(text=paste("Parametric:", parPval), line=0.2, 
+	mtext(text=paste("Parametric:", parPval), line=lineNumbers["mid"], 
 				at=par("usr")[1], side=3, adj=0, cex=par("cex"), col=getColor(parPval))
-	mtext(text=paste("Non-Parametric:", nonParPval), line=0.2, 
-				at=par("usr")[2], side=3, adj=1, cex=par("cex"), col=getColor(nonParPval))
+	mtext(text=paste("Non-Parametric:", nonParPval), line=lineNumbers["low"], 
+				at=par("usr")[1], side=3, adj=0, cex=par("cex"), col=getColor(nonParPval))
+	mtext(text="r-squared:", line=lineNumbers["mid"], 
+				at=par("usr")[2], side=3, adj=1, cex=par("cex"))
+	mtext(text=round(r2, 3), line=lineNumbers["low"], 
+				at=par("usr")[2], side=3, adj=1, cex=par("cex"))
 }
 
 
@@ -130,6 +136,11 @@ main <- function() {
 		nonParStats = read.table( adjNonParInputFile, check.names=FALSE, 
 															header=TRUE, sep="\t", row.names = 1 )
 		
+		# r-squared values
+		rSquareFile = getPipelineFile( paste0(otuLevel, "_rSquaredVals.tsv") )
+		r2Stats = read.table( rSquareFile, check.names=FALSE, 
+													header=TRUE, sep="\t", row.names = 1 )
+		
 		# select colors for box plots so each box is different even across different metadata fields
 		numBoxes = sapply(otuTable[,c(binaryCols, nominalCols)], function(x){length(levels(as.factor(x)))})
 		boxColors = getColors( sum(numBoxes))
@@ -155,6 +166,7 @@ main <- function() {
 			cutoffValue = cutoffValue * nrow(otuTable)
 		}
 		
+		if (testing){lastOtuCol=12} ### !!! just for testing !!!s
 		for( otuCol in names(otuTable)[1:lastOtuCol] ) {
 			if( sum( otuTable[,otuCol] > 0 ) >=  cutoffValue ) {
 				par( mfrow = par("mfrow") ) # step to next page, even if the last page is not full
@@ -175,12 +187,13 @@ main <- function() {
 						addScatterPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
 														metaColName=metaCol, metaColVals=otuTable[,metaCol] )
 					}
-					addPvalueNote(parPval, nonParPval)
+					addPvalueNote(parPval, nonParPval, r2=r2Stats[ otuCol, metaCol])
 					mtext(metaCol, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5, col=getColor(c(parPval, nonParPval)))
 					# page title
 					position = position + 1
 					if (position == 2) { 
-						title(main=otuCol, outer = TRUE, line=2)
+						#title(main=otuCol, outer = TRUE, line=2)
+						mtext(otuCol, side=3, outer = TRUE, font=par("font.main"), cex=par("cex.main"), line=2)
 						titlePart2 = ifelse( page == 1, paste( "taxonomic level:", otuLevel), paste("page", page))
 						title(main=titlePart2, outer = TRUE, line=1)
 						}
