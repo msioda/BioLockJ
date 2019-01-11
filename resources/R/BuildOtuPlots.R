@@ -95,14 +95,13 @@ main <- function() {
 	
 	for( otuLevel in getProperty("report.taxonomyLevels") ) {
 		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildOtuPlots_", otuLevel, ".log") ) )
-		pdf( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU_plots.pdf") ) )
-		par( mfrow=c(2, 2), las=1 )
-		
+
+		# get input
 		inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
 		if( doDebug() ) print( paste( "inputFile:", inputFile ) )
 		if( length( inputFile ) == 0 ) { next }
-		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
-		rownames(otuTable) = otuTable[, 1]
+		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), 
+													 comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1 )
 		lastOtuCol = ncol(otuTable) - getProperty("internal.numMetaCols")
 		
 		binaryCols = getColIndexes( otuTable, getBinaryFields() )
@@ -120,6 +119,18 @@ main <- function() {
 		if( doDebug() ) print( paste( "adjNonParInputFile:", adjNonParInputFile ) )
 		nonParStats = read.table( adjNonParInputFile, check.names=FALSE, header=TRUE, sep="\t" )
 		
+		# create empty ouptut file
+		plotsPerOTU = sum(c(length(binaryCols), length(nominalCols), length(numericCols)))
+		outputFile = getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU_plots.pdf") )
+		if( doDebug() ) print( paste( "CSaving plots to", outputFile ) )
+		if (plotsPerOTU < 5 ) {
+			pdf( outputFile, width = 7, height = 7)
+			par( mfrow=c(2, 2) )
+		}else{
+			pdf( outputFile, paper="letter", width=7, height=10.5 )
+			par( mfrow=c(3, 2) )
+		}
+		par(las=1, oma=c(0,1,4,0), mar=c(5, 4, 2, 2))
 		
 		# if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of otuTable rows
 		cutoffValue = getProperty("r.rareOtuThreshold", 1)
@@ -127,7 +138,8 @@ main <- function() {
 			cutoffValue = cutoffValue * nrow(otuTable)
 		}
 		
-		for( otuCol in 2:lastOtuCol ) {
+		if (testing){lastOtuCol = 12} ####!!!! just for testing !!!!
+		for( otuCol in 1:lastOtuCol ) {
 			if( sum( otuTable[,otuCol] > 0 ) >=  cutoffValue ) {
 				for( metaCol in binaryCols )
 				{
