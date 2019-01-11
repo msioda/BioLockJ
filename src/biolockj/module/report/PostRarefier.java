@@ -326,7 +326,7 @@ public class PostRarefier extends JavaModuleImpl implements JavaModule
 
 	private String getMetaColName() throws Exception
 	{
-		return "OTU_COUNT_rareQuant" + new Double( Config.requirePositiveDouble( QUANTILE ) * 100 ).intValue();
+		return "postRareQ" + new Double( Config.requirePositiveDouble( QUANTILE ) * 100 ).intValue();
 	}
 
 	private Map<String, String> hitsPerSample = new HashMap<>();

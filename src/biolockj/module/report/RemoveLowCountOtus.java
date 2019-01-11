@@ -234,7 +234,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 
 	private String getMetaColName() throws Exception
 	{
-		return "OTU_COUNT_min" + Config.requirePositiveInteger( MIN_OTU_COUNT );
+		return "min" + Config.requirePositiveInteger( MIN_OTU_COUNT );
 	}
 
 	private Map<String, File> fileMap = null;
