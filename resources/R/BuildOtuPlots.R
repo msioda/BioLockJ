@@ -2,12 +2,12 @@
 
 # Output box-plot illustrating OTU-nominal metadata field relationship
 # Print adjusted P-values in pot header
-addBoxPlot <- function( otuColName, otuColVals, metaColName, metaColVals) #, otuTable, otuCol, metaCol, parPval, nonParPval
+addBoxPlot <- function( otuColName, otuColVals, metaColName, metaColVals, barColors) #, otuTable, otuCol, metaCol, parPval, nonParPval
 	{
 	if( doDebug() ) print( paste( "Createing box plot for otu:", otuCol, "metadata column:", metaCol ) )
 	metaColVals = as.factor( metaColVals )
 	factors = split(otuColVals, f=metaColVals) # getFactorGroups( otuTable, metaColVals, otuCol )
-	barColors = getColors( length(factors) )
+	#barColors = getColors( length(factors) )
 	# select some graphical parameters
 	cexAxis = getCexAxis( levels(metaColVals) )
 	if( doDebug() ) print( paste( "cexAxis = getCexAxis( levels(metaColVals) ):", cexAxis ) )
@@ -130,6 +130,12 @@ main <- function() {
 		nonParStats = read.table( adjNonParInputFile, check.names=FALSE, 
 															header=TRUE, sep="\t", row.names = 1 )
 		
+		# select colors for box plots so each box is different even across different metadata fields
+		numBoxes = sapply(otuTable[,c(binaryCols, nominalCols)], function(x){length(levels(as.factor(x)))})
+		boxColors = getColors( sum(numBoxes))
+		metaColColors = split(boxColors, f=as.vector(mapply(x=names(numBoxes), each=numBoxes, rep)))
+		
+		
 		# create empty ouptut file
 		plotsPerOTU = length(reportFields)
 		outputFile = getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU_plots.pdf") )
@@ -149,7 +155,6 @@ main <- function() {
 			cutoffValue = cutoffValue * nrow(otuTable)
 		}
 		
-		if (testing){lastOtuCol = 12} ####!!!! just for testing !!!!
 		for( otuCol in names(otuTable)[1:lastOtuCol] ) {
 			if( sum( otuTable[,otuCol] > 0 ) >=  cutoffValue ) {
 				par( mfrow = par("mfrow") ) # step to next page, even if the last page is not full
@@ -164,7 +169,7 @@ main <- function() {
 					# add a plot
 					if ( metaCol %in% binaryCols | metaCol %in% nominalCols){
 						addBoxPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
-												metaColName=metaCol, metaColVals=otuTable[,metaCol])
+												metaColName=metaCol, metaColVals=otuTable[,metaCol], barColors=metaColColors[[metaCol]])
 					}
 					if ( metaCol %in% numericCols ) {
 						addScatterPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
