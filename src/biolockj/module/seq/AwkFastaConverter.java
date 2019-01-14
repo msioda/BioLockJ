@@ -43,7 +43,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 
 			String filePath = f.getAbsolutePath();
 
-			if( f.getName().toLowerCase().endsWith( ".gz" ) )
+			if( SeqUtil.isGzipped( f.getName() ) )
 			{
 				filePath = ( SeqUtil.isFastQ() || isMultiLine ? tempDir: outDir ) + fileId + dirExt + ext;
 				lines.add( unzip( f, filePath ) );
@@ -58,7 +58,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 				lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
 			}
 
-			if( !f.getName().toLowerCase().endsWith( ".gz" ) && SeqUtil.isFastA() )
+			if( !SeqUtil.isGzipped( f.getName() ) && SeqUtil.isFastA() )
 			{
 				Log.warn( getClass(), "Remove this BioModule from Config:  "
 						+ " Files are already in decompressed FastA format!  It is unnecessary to make duplicate files..." );
@@ -150,7 +150,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 	{
 		for( final File f: getInputFiles() )
 		{
-			if( f.getName().toLowerCase().endsWith( ".gz" ) )
+			if( SeqUtil.isGzipped( f.getName() ) )
 			{
 				return true;
 			}

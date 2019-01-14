@@ -33,7 +33,7 @@ public class Gunzipper extends ScriptModuleImpl implements ScriptModule
 		for( final File f: files )
 		{
 			final ArrayList<String> lines = new ArrayList<>();
-			if( f.getName().toLowerCase().endsWith( ".gz" ) )
+			if( SeqUtil.isGzipped( f.getName() ) )
 			{
 				lines.add( unzip( f ) );
 			}

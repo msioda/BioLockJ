@@ -533,6 +533,11 @@ public class BioLockJ
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */
 	public static final String LOG_EXT = ".log";
+	
+	/**
+	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
+	 */
+	public static final String GZIP_EXT = ".gz";
 
 	/**
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}

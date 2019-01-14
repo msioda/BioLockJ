@@ -284,7 +284,7 @@ public class BioLockJUtil
 	 */
 	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException
 	{
-		return file.getName().toLowerCase().endsWith( ".gz" )
+		return SeqUtil.isGzipped( file.getName() )
 				? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
 				: new BufferedReader( new FileReader( file ) );
 	}

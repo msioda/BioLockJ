@@ -123,7 +123,7 @@ public class BioModuleFactory
 		{
 			for( final File file: BioLockJUtil.getPipelineInputFiles() )
 			{
-				if( file.getName().toLowerCase().endsWith( ".gz" ) )
+				if( SeqUtil.isGzipped( file.getName() ) )
 				{
 					final List<BioModule> tempModules = bioModules;
 					bioModules.clear();
@@ -131,7 +131,7 @@ public class BioModuleFactory
 					{
 						if( mod.getClass().getName().equals( firstSeqProcMod.getClass().getName() ) )
 						{
-							info( "Qiime does not accept .gz format, so adding pre-req module: "
+							info( "Qiime does not accept \"" + BioLockJ.GZIP_EXT + "\" format, so adding pre-req module: "
 									+ Gunzipper.class.getName() + " before " + firstSeqProcMod.getClass().getName() );
 							bioModules.add( getModule( Gunzipper.class.getName() ) );
 						}

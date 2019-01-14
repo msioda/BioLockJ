@@ -11,9 +11,7 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
@@ -29,6 +27,18 @@ public class SeqUtil
 	// Prevent instantiation
 	private SeqUtil()
 	{}
+	
+	/**
+	 * Determine if file is gzipped based on its file extension.<br>
+	 * Any file ending with {@value biolockj.BioLockJ#GZIP_EXT} is treated as a gzipped file.
+	 * 
+	 * @param fileName File name
+	 * @return TRUE if file name ends with .gz
+	 */
+	public static boolean isGzipped( String fileName )
+	{
+		return fileName != null && fileName.toLowerCase().endsWith( BioLockJ.GZIP_EXT );
+	}
 
 	/**
 	 * Create a copy of the sequence files in property {@value biolockj.Config#INPUT_DIRS}, output to a directory named
@@ -398,7 +408,7 @@ public class SeqUtil
 			{
 				id = value;
 				// trim .gz extension
-				if( id.toLowerCase().endsWith( ".gz" ) )
+				if( isGzipped( id ) )
 				{
 					id = id.substring( 0, id.length() - 3 ); // 9_R2.fastq
 				}

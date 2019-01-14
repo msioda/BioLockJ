@@ -354,7 +354,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	private String getFileName( final File dir, String name ) throws Exception
 	{
 		// trim .gz extension
-		if( name.toLowerCase().endsWith( ".gz" ) )
+		if( SeqUtil.isGzipped( name ) )
 		{
 			name = name.substring( 0, name.length() - 3 );
 		}

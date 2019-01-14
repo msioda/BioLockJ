@@ -482,6 +482,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			final double cutoff = getBarcodeCutoff();
 			final String displayCutoff = BioLockJUtil.formatPercentage( Math.round( cutoff * 100 ), 100L );
 
+			Log.info( getClass(), "DEMUX FILE #Lines/Read = " + SeqUtil.getNumLinesPerRead() );
+
 			final long totalNumReads = Long
 					.valueOf( Integer.valueOf( Job.runCommandWithResults( getWcArgs( testFile ) ).get( 0 ) )
 							/ SeqUtil.getNumLinesPerRead() );
@@ -492,6 +494,10 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			long totalRvCount = 0;
 
 			final List<String> codes = MetaUtil.getFieldValues( MetaUtil.META_BARCODE_COLUMN );
+			
+			
+			
+			
 			for( final String code: codes )
 			{
 				final String rvCompl = SeqUtil.reverseComplement( code );
@@ -603,9 +609,27 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 		return suffix + "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
 	}
-
+	
+	private String[] getGrepGzArgs( final File file, final String code ) throws Exception
+	{
+		final String[] args = new String[ 6 ];
+		args[ 0 ] = "zcat";
+		args[ 1 ] = file.getAbsolutePath();
+		args[ 2 ] = "|";
+		args[ 3 ] = "grep";
+		args[ 4 ] = "-c";
+		args[ 5 ] = code;
+		return args;
+	}
+	
+	
 	private String[] getGrepArgs( final File file, final String code ) throws Exception
 	{
+		if( SeqUtil.isGzipped( file.getName() ) )
+		{
+			return getGrepGzArgs( file, code );
+		}
+		
 		final String[] args = new String[ 4 ];
 		args[ 0 ] = "grep";
 		args[ 1 ] = "-c";
@@ -659,7 +683,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	private String[] getWcArgs( final File file ) throws Exception
 	{
 		final String[] args = new String[ 5 ];
-		args[ 0 ] = "cat";
+		args[ 0 ] = SeqUtil.isGzipped( file.getName() ) ? "zcat" : "cat";
 		args[ 1 ] = file.getAbsolutePath();
 		args[ 2 ] = "|";
 		args[ 3 ] = "wc";

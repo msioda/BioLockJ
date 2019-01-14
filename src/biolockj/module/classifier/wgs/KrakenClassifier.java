@@ -227,7 +227,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			switches.put( "--paired", "" );
 		}
 
-		if( !getInputFiles().isEmpty() && getInputFiles().get( 0 ).getName().toLowerCase().endsWith( ".gz" ) )
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 		{
 			if( getDefaultSwitches().indexOf( "--bzip2-compressed " ) > -1 )
 			{
