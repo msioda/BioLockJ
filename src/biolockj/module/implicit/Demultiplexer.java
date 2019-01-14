@@ -482,12 +482,37 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			final double cutoff = getBarcodeCutoff();
 			final String displayCutoff = BioLockJUtil.formatPercentage( Math.round( cutoff * 100 ), 100L );
 
-			Log.info( getClass(), "DEMUX FILE #Lines/Read = " + SeqUtil.getNumLinesPerRead() );
+			Log.info( getClass(), "Detected #Lines/Read = " + SeqUtil.getNumLinesPerRead() );
 
-			final long totalNumReads = Long
-					.valueOf( Integer.valueOf( Job.runCommandWithResults( getWcArgs( testFile ) ).get( 0 ) )
-							/ SeqUtil.getNumLinesPerRead() );
-
+			List<String> res = Job.runCommandWithResults( getWcArgs( testFile ) );
+			int numLines = 0;
+			if( res == null )
+			{
+				throw new Exception( "Command return NULL ---> " + getWcArgs( testFile ) );
+			}
+			else if( res.isEmpty() )
+			{
+				throw new Exception( "Command return empty String ---> " + getWcArgs( testFile ) );
+			}
+			else
+			{
+				Log.info( getClass(), "Command returned #Lines = " + res.size() );
+				for( int i=0; i<res.size(); i++ )
+				{
+					String val = res.get( i ).trim();
+					Log.info( getClass(), "Command returned LINE = " + res.get( i ) );
+					if( !val.isEmpty() )
+					{
+						Log.info( getClass(), "MUST BE #Lines = " + val );
+						numLines = Integer.valueOf( val );
+						Log.info( getClass(), "Set numLines = " + numLines);
+					}
+				}
+			}
+			
+			Integer numReads = Math.round( numLines / SeqUtil.getNumLinesPerRead() );
+			Log.info( getClass(), "Set numReads = " + numReads);
+			long totalNumReads = Long.valueOf( numReads.toString() );
 			Log.info( getClass(), "Found total # lines in" + +totalNumReads );
 			Log.info( getClass(), "Checking to find required percentage of lines with barcode" + displayCutoff );
 			long totalFwCount = 0;

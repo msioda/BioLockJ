@@ -83,6 +83,7 @@ public class Job
 			if( !s.trim().isEmpty() )
 			{
 				results.add( s );
+				Log.info( Job.class, "[Command returns]: " + s );
 			}
 		}
 
