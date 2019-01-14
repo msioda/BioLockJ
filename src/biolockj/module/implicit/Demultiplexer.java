@@ -165,12 +165,12 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			if( line.contains( code ) )
 			{
-				Log.info( getClass(), "Found barcode[ " + code + "] in line: " + line );
+				//Log.info( getClass(), "Found barcode[ " + code + "] in line: " + line );
 				return 1;
 			}
 			else if( line.contains( SeqUtil.reverseComplement( code ) ) )
 			{
-				Log.info( getClass(), "Found REVERSE COMPLIMENT of barcode[ " + SeqUtil.reverseComplement( code )  + "] in line: " + line );
+				//Log.info( getClass(), "Found REVERSE COMPLIMENT of barcode[ " + SeqUtil.reverseComplement( code )  + "] in line: " + line );
 				return 2;
 			}
 		}
