@@ -220,21 +220,28 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			try
 			{
 				final List<String> seqLines = new ArrayList<>();
+				final List<String> read = new ArrayList<>();
 				int i = 0;
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-					seqLines.add( line );
+					read.add( line );
 					
-					if( testFile == null && ( ( seqLines.size() == 1 && DemuxUtil.barcodeInHeader() ) || ( seqLines.size() == 2 && DemuxUtil.barcodeInSeq() ) ) )
+					if( testFile == null && ( ( read.size() == 1 && DemuxUtil.barcodeInHeader() ) || ( read.size() == 2 && DemuxUtil.barcodeInSeq() ) ) )
 					{
 						int testBarcodes = hasBarcode( line );
 						if( testBarcodes == 1 ) fileFwBarcodes++;
 						else if( testBarcodes == 2 ) fileRvBarcodes++;
 					}
+					
+					if( read.size() == SeqUtil.getNumLinesPerRead() )
+					{
+						if( testFile == null ) fileReads++;
+						seqLines.addAll( read );
+						read.clear();
+					}
 
 					if( seqLines.size() >= NUM_LINES_TEMP_FILE )
 					{
-						if( testFile == null ) fileReads++;
 						writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
 						seqLines.clear();
 					}
