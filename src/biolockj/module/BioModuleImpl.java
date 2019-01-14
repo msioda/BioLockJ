@@ -245,7 +245,7 @@ public abstract class BioModuleImpl implements BioModule
 	/**
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
 	 */
-	public static final String PDF_EXT = BioLockJ.TAB_DELIM;
+	public static final String PDF_EXT = BioLockJ.PDF_EXT;
 
 	/**
 	 * Return character constant *backslash-n*
