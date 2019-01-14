@@ -211,7 +211,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				final String stat = stats.next();
 				final String name = stat.startsWith( CalculateStats.R_SQUARED_VALS ) ? stat: prefix + "(" + stat + ")";
 				sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
-				sb.append( ( stats.hasNext() || childNodes.isEmpty() ? ",": "" ) + RETURN );
+				sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
 			}
 		}
 
