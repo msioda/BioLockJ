@@ -378,21 +378,21 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	private static String getStatsType( final File file ) throws Exception
 	{
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + TSV_EXT ) )
-		{
-			return CalculateStats.P_VALS_PAR;
-		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP + TSV_EXT ) )
-		{
-			return CalculateStats.P_VALS_NP;
-		}
 		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_PAR_ADJ;
 		}
+		else if( file.getName().endsWith( CalculateStats.P_VALS_PAR + TSV_EXT ) )
+		{
+			return CalculateStats.P_VALS_PAR;
+		}
 		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_NP_ADJ;
+		}
+		else if( file.getName().endsWith( CalculateStats.P_VALS_NP + TSV_EXT ) )
+		{
+			return CalculateStats.P_VALS_NP;
 		}
 		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + TSV_EXT ) )
 		{
