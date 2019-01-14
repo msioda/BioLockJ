@@ -157,6 +157,17 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 		return super.getSummary() + sb.toString();
 	}
+	
+	
+	private int hasBarcode( String line ) throws Exception
+	{
+		for( final String code: MetaUtil.getFieldValues( MetaUtil.META_BARCODE_COLUMN ) )
+		{
+			if( line.contains( code ) ) return 1;
+			if( line.contains( SeqUtil.reverseComplement( code ) ) ) return 2;
+		}
+		return 0;
+	}
 
 	/**
 	 * Module execution summary:<br>
@@ -175,8 +186,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		setBarcodeReverseIfNeeded();
 		breakUpFiles();
+		setBarcodeReverseIfNeeded();
 
 		demultiplex( getValidHeaders() );
 	}
@@ -189,12 +200,15 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	 */
 	protected void breakUpFiles() throws Exception
 	{
+		
 		for( final File file: getInputFiles() )
 		{
 			Log.info( getClass(),
 					"Break multiplexed file [ " + file.getAbsolutePath() + " ] into files with a max #lines = [ "
 							+ NUM_LINES_TEMP_FILE + " ] to avoid memory issues while processing" );
-
+			Integer fileReads = 0;
+			Integer fileFwBarcodes = 0;
+			Integer fileRvBarcodes = 0;
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try
 			{
@@ -203,11 +217,21 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
 					seqLines.add( line );
+					
+					if( testFile == null && ( ( seqLines.size() == 1 && DemuxUtil.barcodeInHeader() ) || ( seqLines.size() == 2 && DemuxUtil.barcodeInSeq() ) ) )
+					{
+						fileReads++;
+						int testBarcodes = hasBarcode( line );
+						if( testBarcodes == 1 ) fileFwBarcodes++;
+						else if( testBarcodes == 2 ) fileRvBarcodes++;
+					}
+
 					if( seqLines.size() >= NUM_LINES_TEMP_FILE )
 					{
 						writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
 						seqLines.clear();
 					}
+
 				}
 
 				if( !seqLines.isEmpty() )
@@ -229,6 +253,14 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			}
 
 			Log.info( getClass(), "Done splitting file: " + file.getAbsolutePath() );
+			
+			if( testFile == null )
+			{
+				testFile = file.getAbsolutePath();
+				numReads = fileReads;
+				fwBarcodes = fileFwBarcodes;
+				rvBarcodes = fileRvBarcodes;
+			}
 		}
 
 		Log.info( getClass(), "Number of temp files created: " + getSplitDir().listFiles().length );
@@ -476,83 +508,39 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	protected void setBarcodeReverseIfNeeded() throws Exception
 	{
 		if( DemuxUtil.demuxWithBarcode() && Config.getString( DemuxUtil.BARCODE_USE_REV_COMP ) == null
-				&& getBarcodeCutoff() != null )
+				&& getBarcodeCutoff() != null && numReads > 0  && testFile != null )
 		{
-			final File testFile = getInputFiles().get( 0 );
 			final double cutoff = getBarcodeCutoff();
 			final String displayCutoff = BioLockJUtil.formatPercentage( Math.round( cutoff * 100 ), 100L );
-
-			Log.info( getClass(), "Detected #Lines/Read = " + SeqUtil.getNumLinesPerRead() );
-
-			List<String> res = Job.runCommandWithResults( getWcArgs( testFile ) );
-			int numLines = 0;
-			if( res == null )
-			{
-				throw new Exception( "Command return NULL ---> " + getWcArgs( testFile ) );
-			}
-			else if( res.isEmpty() )
-			{
-				throw new Exception( "Command return empty String ---> " + getWcArgs( testFile ) );
-			}
-			else
-			{
-				Log.info( getClass(), "Command returned #Lines = " + res.size() );
-				for( int i=0; i<res.size(); i++ )
-				{
-					String val = res.get( i ).trim();
-					Log.info( getClass(), "Command returned LINE = " + res.get( i ) );
-					if( !val.isEmpty() )
-					{
-						Log.info( getClass(), "MUST BE #Lines = " + val );
-						numLines = Integer.valueOf( val );
-						Log.info( getClass(), "Set numLines = " + numLines);
-					}
-				}
-			}
-			
-			Integer numReads = Math.round( numLines / SeqUtil.getNumLinesPerRead() );
-			Log.info( getClass(), "Set numReads = " + numReads);
-			long totalNumReads = Long.valueOf( numReads.toString() );
-			Log.info( getClass(), "Found total # lines in" + +totalNumReads );
+			Log.info( getClass(), "Detected #Lines/Read = " + SeqUtil.getNumLinesPerRead() + " in TEST FILE: " + testFile );
+			Log.info( getClass(), "Found total # lines in" + numReads + " in TEST FILE: " + testFile );
 			Log.info( getClass(), "Checking to find required percentage of lines with barcode" + displayCutoff );
-			long totalFwCount = 0;
-			long totalRvCount = 0;
 
-			final List<String> codes = MetaUtil.getFieldValues( MetaUtil.META_BARCODE_COLUMN );
+			final double fwPer = fwBarcodes / numReads;
+			final double rvPer = rvBarcodes / numReads;
+
+			final String displayFwPer = BioLockJUtil.formatPercentage( fwBarcodes, numReads );
+			final String displayRvPer = BioLockJUtil.formatPercentage( rvBarcodes, numReads );
+
+			Log.info( getClass(), "Total #Reads w/ valid barcode: " + fwBarcodes );
+			Log.info( getClass(), "Total #Reads w/ valid REVERSE COMPLIMENT( barcode ): " + rvBarcodes );
 			
-			
-			
-			
-			for( final String code: codes )
+			Log.info( getClass(), "Found total # lines in" + rvBarcodes + " in TEST FILE: " + testFile  );
+
+			if( (fwPer > cutoff) && (rvPer > cutoff) )
 			{
-				final String rvCompl = SeqUtil.reverseComplement( code );
-				totalFwCount += Integer.valueOf( Job.runCommandWithResults( getGrepArgs( testFile, code ) ).get( 0 ) );
-				totalRvCount += Integer
-						.valueOf( Job.runCommandWithResults( getGrepArgs( testFile, rvCompl ) ).get( 0 ) );
-			}
-
-			final double fwPer = totalFwCount / totalNumReads;
-			final double rvPer = totalRvCount / totalNumReads;
-
-			final String displayFwPer = BioLockJUtil.formatPercentage( totalFwCount, totalNumReads );
-			final String displayRvPer = BioLockJUtil.formatPercentage( totalRvCount, totalNumReads );
-
-			Log.info( getClass(), "Found total # lines in" + totalFwCount + " in: " + testFile.getAbsolutePath() );
-			Log.info( getClass(), "Found total # lines in" + totalRvCount + " in: " + testFile.getAbsolutePath() );
-
-			if( fwPer > cutoff && rvPer > cutoff )
-			{
-				throw new Exception( "Cannot auto-detect if barcodes in" + testFile.getAbsolutePath()
+				throw new Exception( "Cannot auto-detect if barcodes in" + testFile
 						+ " require reverse compliment or not: fw = " + displayFwPer + " & rv = " + displayRvPer );
 			}
 			else if( rvPer > cutoff )
 			{
+				Log.info( getClass(), "Using reverse compliment barcodes!" );
 				Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, Config.TRUE );
 			}
 			else
 			{
 				throw new Exception( "Barcodes and their reverse compliments found in less than Config cuttoff: "
-						+ cutoff + "=" + displayCutoff + " of " + testFile.getAbsolutePath() );
+						+ cutoff + " = " + displayCutoff + " of " + testFile + " reads" );
 			}
 		}
 	}
@@ -782,6 +770,12 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		writer.close();
 	}
 
+	
+	private int fwBarcodes = 0;
+	private int rvBarcodes = 0;
+	private int numReads = 0;
+	private String testFile = null;
+	
 	private long numTotalFwReads = 0L;
 	private long numTotalRvReads = 0L;
 	private long numValidFwReads = 0L;
