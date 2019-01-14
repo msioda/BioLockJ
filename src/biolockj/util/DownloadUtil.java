@@ -208,13 +208,12 @@ public final class DownloadUtil
 	 */
 	protected static String getExts( final R_Module module ) throws Exception
 	{
-
 		if( module == null )
 		{
 			String ext = BioLockJ.LOG_EXT.substring( 1 ) + "," + BioLockJ.TXT_EXT.substring( 1 );
 			if( Config.getConfigFileExt() != null )
 			{
-				ext += "," + Config.getConfigFileExt();
+				ext += "," + Config.getConfigFileExt().substring( 1 );
 			}
 
 			if( ModuleUtil.hasRModules() )

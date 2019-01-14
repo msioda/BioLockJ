@@ -557,11 +557,6 @@ public class BioLockJ
 	public static final String PROJECT_DELETE_TEMP_FILES = "project.deleteTempFiles";
 
 	/**
-	 * BioLockJ properties file extension constant: {@value #PROP_EXT}
-	 */
-	public static final String PROP_EXT = ".properties";
-
-	/**
 	 * Return character constant *backslash-n*
 	 */
 	public static final String RETURN = "\n";
