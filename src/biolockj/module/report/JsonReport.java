@@ -382,7 +382,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		{
 			return CalculateStats.P_VALS_PAR_ADJ;
 		}
-		else if( file.getName().endsWith( CalculateStats.P_VALS_PAR + TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_PAR;
 		}
@@ -390,7 +390,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		{
 			return CalculateStats.P_VALS_NP_ADJ;
 		}
-		else if( file.getName().endsWith( CalculateStats.P_VALS_NP + TSV_EXT ) )
+		if( file.getName().endsWith( CalculateStats.P_VALS_NP + TSV_EXT ) )
 		{
 			return CalculateStats.P_VALS_NP;
 		}
