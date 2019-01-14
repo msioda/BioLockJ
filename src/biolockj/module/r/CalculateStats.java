@@ -87,7 +87,7 @@ public class CalculateStats extends R_Module implements BioModule
 	/**
 	 * Non parametric adjusted p-value identifier: {@value #P_VALS_NP_ADJ}
 	 */
-	public static final String P_VALS_NP_ADJ = P_VALS_NP + "Adj";
+	public static final String P_VALS_NP_ADJ = "adjParPvals";
 
 	/**
 	 * Parametric p-value identifier: {@value #P_VALS_PAR}
@@ -97,7 +97,7 @@ public class CalculateStats extends R_Module implements BioModule
 	/**
 	 * Parametric adjusted p-value identifier: {@value #P_VALS_PAR_ADJ}
 	 */
-	public static final String P_VALS_PAR_ADJ = P_VALS_PAR + "Adj";
+	public static final String P_VALS_PAR_ADJ = "adjNonParPvals";
 
 	/**
 	 * R^2 identifier: {@value #R_SQUARED_VALS}
