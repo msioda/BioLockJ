@@ -284,8 +284,7 @@ public class SummaryUtil
 			final File scriptDir = ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR );
 			if( scriptDir == null )
 			{
-				return "Module \"script\" directory not found in --> " + scriptModule.getModuleDir().getAbsolutePath()
-						+ RETURN;
+				return "";
 			}
 
 			if( ModuleUtil.getMainScript( scriptModule ) == null )

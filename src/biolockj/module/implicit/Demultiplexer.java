@@ -163,8 +163,16 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	{
 		for( final String code: MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ) )
 		{
-			if( line.contains( code ) ) return 1;
-			if( line.contains( SeqUtil.reverseComplement( code ) ) ) return 2;
+			if( line.contains( code ) )
+			{
+				Log.info( getClass(), "Found barcode[ " + code + "] in line: " + line );
+				return 1;
+			}
+			else if( line.contains( SeqUtil.reverseComplement( code ) ) )
+			{
+				Log.info( getClass(), "Found REVERSE COMPLIMENT of barcode[ " + SeqUtil.reverseComplement( code )  + "] in line: " + line );
+				return 2;
+			}
 		}
 		return 0;
 	}
@@ -188,7 +196,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	{
 		breakUpFiles();
 		setBarcodeReverseIfNeeded();
-
 		demultiplex( getValidHeaders() );
 	}
 
@@ -206,9 +213,9 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			Log.info( getClass(),
 					"Break multiplexed file [ " + file.getAbsolutePath() + " ] into files with a max #lines = [ "
 							+ NUM_LINES_TEMP_FILE + " ] to avoid memory issues while processing" );
-			Integer fileReads = 0;
-			Integer fileFwBarcodes = 0;
-			Integer fileRvBarcodes = 0;
+			int fileReads = 0;
+			int fileFwBarcodes = 0;
+			int fileRvBarcodes = 0;
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try
 			{
@@ -220,7 +227,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 					
 					if( testFile == null && ( ( seqLines.size() == 1 && DemuxUtil.barcodeInHeader() ) || ( seqLines.size() == 2 && DemuxUtil.barcodeInSeq() ) ) )
 					{
-						fileReads++;
 						int testBarcodes = hasBarcode( line );
 						if( testBarcodes == 1 ) fileFwBarcodes++;
 						else if( testBarcodes == 2 ) fileRvBarcodes++;
@@ -228,6 +234,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 					if( seqLines.size() >= NUM_LINES_TEMP_FILE )
 					{
+						if( testFile == null ) fileReads++;
 						writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
 						seqLines.clear();
 					}
@@ -512,20 +519,17 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			final double cutoff = getBarcodeCutoff();
 			final String displayCutoff = BioLockJUtil.formatPercentage( Math.round( cutoff * 100 ), 100L );
-			Log.info( getClass(), "Detected #Lines/Read = " + SeqUtil.getNumLinesPerRead() + " in TEST FILE: " + testFile );
-			Log.info( getClass(), "Found total # lines in" + numReads + " in TEST FILE: " + testFile );
-			Log.info( getClass(), "Checking to find required percentage of lines with barcode" + displayCutoff );
-
 			final double fwPer = fwBarcodes / numReads;
 			final double rvPer = rvBarcodes / numReads;
-
 			final String displayFwPer = BioLockJUtil.formatPercentage( fwBarcodes, numReads );
 			final String displayRvPer = BioLockJUtil.formatPercentage( rvBarcodes, numReads );
-
+			
+			Log.info( getClass(), "Detected #Lines/Read = " + SeqUtil.getNumLinesPerRead() + " in TEST FILE: " + testFile );
+			Log.info( getClass(), "Checking to find required percentage of lines with barcode: " + displayCutoff );
+			Log.info( getClass(), "Total #Reads in TEST FILE: " + numReads );
 			Log.info( getClass(), "Total #Reads w/ valid barcode: " + fwBarcodes );
 			Log.info( getClass(), "Total #Reads w/ valid REVERSE COMPLIMENT( barcode ): " + rvBarcodes );
 			
-			Log.info( getClass(), "Found total # lines in" + rvBarcodes + " in TEST FILE: " + testFile  );
 
 			if( (fwPer > cutoff) && (rvPer > cutoff) )
 			{
@@ -539,8 +543,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			}
 			else
 			{
-				throw new Exception( "Barcodes and their reverse compliments found in less than Config cuttoff: "
-						+ cutoff + " = " + displayCutoff + " of " + testFile + " reads" );
+				throw new Exception( "Barcodes and their reverse compliments found in " + rvBarcodes + " reads --> less than the Config cuttoff: "
+						+ displayCutoff + " of the " + numReads + " reads in: " + testFile );
 			}
 		}
 	}
@@ -622,34 +626,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 		return suffix + "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
 	}
-	
-	private String[] getGrepGzArgs( final File file, final String code ) throws Exception
-	{
-		final String[] args = new String[ 6 ];
-		args[ 0 ] = "zcat";
-		args[ 1 ] = file.getAbsolutePath();
-		args[ 2 ] = "|";
-		args[ 3 ] = "grep";
-		args[ 4 ] = "-c";
-		args[ 5 ] = code;
-		return args;
-	}
-	
-	
-	private String[] getGrepArgs( final File file, final String code ) throws Exception
-	{
-		if( SeqUtil.isGzipped( file.getName() ) )
-		{
-			return getGrepGzArgs( file, code );
-		}
-		
-		final String[] args = new String[ 4 ];
-		args[ 0 ] = "grep";
-		args[ 1 ] = "-c";
-		args[ 2 ] = code;
-		args[ 3 ] = file.getAbsolutePath();
-		return args;
-	}
 
 	private String getNoMatchFileName( final String fileName, final String header ) throws Exception
 	{
@@ -691,17 +667,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		suffix += "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
 
 		return getSplitDir().getAbsolutePath() + File.separator + "split_" + i + suffix;
-	}
-
-	private String[] getWcArgs( final File file ) throws Exception
-	{
-		final String[] args = new String[ 5 ];
-		args[ 0 ] = SeqUtil.isGzipped( file.getName() ) ? "zcat" : "cat";
-		args[ 1 ] = file.getAbsolutePath();
-		args[ 2 ] = "|";
-		args[ 3 ] = "wc";
-		args[ 4 ] = "-l";
-		return args;
 	}
 
 	private void incrementCounts( final String name, final String header ) throws Exception
