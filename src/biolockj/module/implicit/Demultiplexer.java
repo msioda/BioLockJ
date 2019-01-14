@@ -161,7 +161,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	
 	private int hasBarcode( String line ) throws Exception
 	{
-		for( final String code: MetaUtil.getFieldValues( MetaUtil.META_BARCODE_COLUMN ) )
+		for( final String code: MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ) )
 		{
 			if( line.contains( code ) ) return 1;
 			if( line.contains( SeqUtil.reverseComplement( code ) ) ) return 2;
