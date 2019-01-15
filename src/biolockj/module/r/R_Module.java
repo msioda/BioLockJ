@@ -20,7 +20,7 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
-import biolockj.module.report.AddMetaToTaxonomyTables;
+import biolockj.module.report.*;
 import biolockj.util.*;
 
 /**
@@ -161,7 +161,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		if( SeqUtil.requireSeqInput() )
+		List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		if( SeqUtil.requireSeqInput() || mods.contains( BuildTaxonomyTables.class.getName() ) 
+				|| mods.contains( Normalizer.class.getName() ) || mods.contains( LogTransformer.class.getName() ) )
 		{
 			preReqs.add( AddMetaToTaxonomyTables.class );
 		}
