@@ -131,8 +131,9 @@ public class BioModuleFactory
 					{
 						if( mod.getClass().getName().equals( firstSeqProcMod.getClass().getName() ) )
 						{
-							info( "Qiime does not accept \"" + BioLockJ.GZIP_EXT + "\" format, so adding pre-req module: "
-									+ Gunzipper.class.getName() + " before " + firstSeqProcMod.getClass().getName() );
+							info( "Qiime does not accept \"" + BioLockJ.GZIP_EXT
+									+ "\" format, so adding pre-req module: " + Gunzipper.class.getName() + " before "
+									+ firstSeqProcMod.getClass().getName() );
 							bioModules.add( getModule( Gunzipper.class.getName() ) );
 						}
 

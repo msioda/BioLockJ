@@ -159,22 +159,11 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 		return lines;
 	}
 
-	private String getMetaColName() throws Exception
-	{
-		if( otuColName == null )
-		{
-			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_MERGED_READS );
-		}
-
-		return otuColName;
-	}
-
- 
 	/**
-	 * Get optional formatted PEAR switches if provided in {@link biolockj.Config}
-	 * properties: {@value #EXE_PEAR_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
+	 * Get optional formatted PEAR switches if provided in {@link biolockj.Config} properties: {@value #EXE_PEAR_PARAMS}
+	 * and {@value #SCRIPT_NUM_THREADS}.
 	 *
-	 * @return Formatted PEAR switches 
+	 * @return Formatted PEAR switches
 	 * @throws Exception if errors occur
 	 */
 	protected String getPearSwitches() throws Exception
@@ -186,6 +175,16 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 		}
 
 		return formattedSwitches;
+	}
+
+	private String getMetaColName() throws Exception
+	{
+		if( otuColName == null )
+		{
+			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_MERGED_READS );
+		}
+
+		return otuColName;
 	}
 
 	private String otuColName = null;

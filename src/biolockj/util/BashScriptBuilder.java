@@ -18,7 +18,6 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.classifier.ClassifierModuleImpl;
 
 /**
  * This utility class generates the bash script files using the lines provided and {@link biolockj.Config} script
@@ -291,7 +290,7 @@ public class BashScriptBuilder
 		final List<String> lines = new ArrayList<>();
 		if( Config.isOnCluster() && getJobHeader( module ) != null )
 		{
-			lines.add( getTopHeader() + RETURN + getJobHeader( module ) + RETURN );
+			lines.add( getTopHeader() + getJobHeader( module ) + RETURN );
 		}
 		else if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
@@ -497,24 +496,27 @@ public class BashScriptBuilder
 
 		return false;
 	}
-	
-	private static String getTopHeader() throws Exception
-	{
-		String topHeader = Config.getString( SCRIPT_TOP_HEADER );
-		return topHeader == null ? "" : topHeader;
-	}
 
 	private static String getJobHeader( final ScriptModule module ) throws Exception
 	{
-		return isClassifier( module ) && Config.getString( CLASSIFIER_JOB_HEADER ) != null
-				? Config.getString( CLASSIFIER_JOB_HEADER )
-				: Config.requireString( SCRIPT_JOB_HEADER );
+		final String header = getModuleHeader( module );
+		if( header != null )
+		{
+			Log.info( BashScriptBuilder.class, "Found module specific job header: " + header );
+			return header;
+		}
+		return Config.requireString( SCRIPT_JOB_HEADER );
 	}
 
 	private static String getJobHeaderParam( final ScriptModule module ) throws Exception
 	{
-		return isClassifier( module ) && Config.getString( CLASSIFIER_JOB_HEADER ) != null ? CLASSIFIER_JOB_HEADER
-				: SCRIPT_JOB_HEADER;
+		final String header = getModuleHeader( module );
+		if( header != null )
+		{
+			return getModuleHeaderPropertyName( module );
+		}
+
+		return SCRIPT_JOB_HEADER;
 	}
 
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
@@ -523,15 +525,56 @@ public class BashScriptBuilder
 				+ scriptModule.getModuleDir().getName() + BioLockJ.SH_EXT ).getAbsolutePath();
 	}
 
+	private static String getModuleHeader( final ScriptModule module )
+	{
+		try
+		{
+			return Config.getString( getModuleHeaderPropertyName( module ) );
+		}
+		catch( final Exception ex )
+		{
+			// FAIL SILENTLY
+			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+		}
+		return null;
+	}
+
+	private static String getModuleHeaderPropertyName( final ScriptModule module )
+	{
+		return module.getClass().getSimpleName() + JOB_HEADER;
+	}
+
+	private static Integer getModuleNumThreads( final ScriptModule module )
+	{
+		try
+		{
+			return Config.getPositiveInteger( module.getClass().getSimpleName() + ScriptModule.NUM_THREADS );
+		}
+		catch( final Exception ex )
+		{
+			// FAIL SILENTLY
+			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+		}
+		return null;
+	}
+
 	private static Integer getNumThreads( final ScriptModule module ) throws Exception
 	{
-		return isClassifier( module ) ? ClassifierModuleImpl.getNumThreads()
-				: Config.requirePositiveInteger( ScriptModule.SCRIPT_NUM_THREADS );
+		final Integer moduleThreads = getModuleNumThreads( module );
+		return moduleThreads == null ? Config.requirePositiveInteger( ScriptModule.SCRIPT_NUM_THREADS ): moduleThreads;
 	}
 
 	private static String getNumThreadsParam( final ScriptModule module ) throws Exception
 	{
-		return isClassifier( module ) ? ClassifierModuleImpl.getNumThreadsParam(): ScriptModule.SCRIPT_NUM_THREADS;
+		final Integer moduleThreads = getModuleNumThreads( module );
+		return moduleThreads == null ? ScriptModule.SCRIPT_NUM_THREADS
+				: module.getClass().getSimpleName() + ScriptModule.NUM_THREADS;
+	}
+
+	private static String getTopHeader() throws Exception
+	{
+		final String topHeader = Config.getString( SCRIPT_TOP_HEADER );
+		return topHeader == null ? "": topHeader + RETURN;
 	}
 
 	private static String getWorkerId( final int scriptNum, final int digits )
@@ -619,13 +662,6 @@ public class BashScriptBuilder
 	}
 
 	/**
-	 * {@link biolockj.Config} property to use in cluster jobHeader .<br>
-	 * : {@value #CLASSIFIER_JOB_HEADER}<br>
-	 * Header written at top of QIIME OTU picking worker scripts
-	 */
-	protected static final String CLASSIFIER_JOB_HEADER = "cluster.classifierHeader";
-
-	/**
 	 * {@link biolockj.Config} String property: {@value #CLUSTER_BATCH_COMMAND}<br>
 	 * Terminal command used to submit jobs on the cluster.
 	 */
@@ -665,16 +701,15 @@ public class BashScriptBuilder
 	 * Header written at top of worker scripts
 	 */
 	protected static final String SCRIPT_JOB_HEADER = "cluster.jobHeader";
-	
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #SCRIPT_TOP_HEADER}<br>
 	 * Header written at top of worker scripts above {@value #SCRIPT_JOB_HEADER}
 	 */
 	protected static final String SCRIPT_TOP_HEADER = "cluster.topHeader";
-	
-	
 
 	private static final String INDENT = "    ";
+	private static final String JOB_HEADER = ".jobHeader";
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final List<File> workerScripts = new ArrayList<>();
 

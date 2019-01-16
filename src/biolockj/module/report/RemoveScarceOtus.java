@@ -300,8 +300,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 
 	private String getMetaColName() throws Exception
 	{
-		return "scarce" + new Double( Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) * 100 ).intValue()
-				+ "%";
+		return "scarce" + new Double( Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) * 100 ).intValue() + "%";
 	}
 
 	private File getScareOtuLogFile() throws Exception

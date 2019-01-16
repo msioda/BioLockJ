@@ -17,8 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
-import biolockj.exception.ConfigFormatException;
-import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.implicit.parser.ParserModule;
@@ -250,40 +248,6 @@ public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements C
 
 		return "r16s";
 
-	}
-
-	/**
-	 * Get classifier specific number of threads property value, if defined. Otherwise, return the standard number of
-	 * threads property value.
-	 * 
-	 * @return Positive integer value
-	 * @throws ConfigFormatException if property is not a positive integer
-	 * @throws ConfigNotFoundException if properties are undefined
-	 */
-	public static Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException
-	{
-		if( Config.getPositiveInteger( CLASSIFIER_NUM_THREADS ) != null )
-		{
-			return Config.getPositiveInteger( CLASSIFIER_NUM_THREADS );
-		}
-
-		return Config.requirePositiveInteger( SCRIPT_NUM_THREADS );
-	}
-
-	/**
-	 * Get classifier number of threads property name.
-	 * 
-	 * @return Number of threads property name
-	 * @throws ConfigFormatException if property is not a positive integer
-	 */
-	public static String getNumThreadsParam() throws ConfigFormatException
-	{
-		if( Config.getPositiveInteger( CLASSIFIER_NUM_THREADS ) != null )
-		{
-			return CLASSIFIER_NUM_THREADS;
-		}
-
-		return SCRIPT_NUM_THREADS;
 	}
 
 	private String classifierExe = null;

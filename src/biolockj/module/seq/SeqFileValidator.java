@@ -417,12 +417,12 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 			}
 
 			sb.append( "Discarded reads stored in: " + getTempDir().getAbsolutePath() + RETURN );
-		
+
 			if( !longReads.isEmpty() )
 			{
 				sb.append( "Trimmed long reads from: " + shortReads + RETURN );
 			}
-	
+
 			final int max = maxSeqFound.keySet().iterator().next();
 			final TreeSet<String> ids = new TreeSet<>( maxSeqFound.values().iterator().next() );
 			sb.append( "IDs w/ ORIGINAL max read len [ " + max + " ]: " + ids + RETURN );

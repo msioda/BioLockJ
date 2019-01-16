@@ -14,6 +14,7 @@ package biolockj.module;
 import java.io.File;
 import java.util.List;
 import biolockj.exception.ConfigFormatException;
+import biolockj.exception.ConfigNotFoundException;
 
 /**
  * Classes that implement this interface are <br>
@@ -54,6 +55,16 @@ public interface ScriptModule extends BioModule
 	public String[] getJobParams() throws Exception;
 
 	/**
+	 * Get module specific number of threads property value, if defined. Otherwise, return the standard number of
+	 * threads property value: {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS}
+	 * 
+	 * @return Positive integer value
+	 * @throws ConfigFormatException if property is not a positive integer
+	 * @throws ConfigNotFoundException if properties are undefined
+	 */
+	public Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException;
+
+	/**
 	 * ScriptModules that generate scripts to complete their task, create script files in this directory.<br>
 	 * The main script must begin with prefix {@value #MAIN_SCRIPT_PREFIX} and there must only be one main script.<br>
 	 * The main script executes, or submits to the job queue, each of the other scripts in this directory.<br>
@@ -81,10 +92,9 @@ public interface ScriptModule extends BioModule
 	public List<String> getWorkerScriptFunctions() throws Exception;
 
 	/**
-	 * {@link biolockj.Config} Integer property: {@value #CLASSIFIER_NUM_THREADS}<br>
-	 * Used to reserve cluster resources and passed to classifier applications call that accepts a numThreads parameter.
+	 * Suffix for module specific number of threads parameter: {@value #NUM_THREADS}<br>
 	 */
-	public static final String CLASSIFIER_NUM_THREADS = "cluster.numClassifierThreads";
+	public static final String NUM_THREADS = ".numThreads";
 
 	/**
 	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_BATCH_SIZE}<br>
@@ -121,4 +131,5 @@ public interface ScriptModule extends BioModule
 	 * Sets # of minutes before worker scripts times out.
 	 */
 	public static final String SCRIPT_TIMEOUT = "script.timeout";
+
 }

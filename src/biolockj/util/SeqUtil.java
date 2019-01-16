@@ -11,7 +11,9 @@
  */
 package biolockj.util;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
@@ -27,18 +29,6 @@ public class SeqUtil
 	// Prevent instantiation
 	private SeqUtil()
 	{}
-	
-	/**
-	 * Determine if file is gzipped based on its file extension.<br>
-	 * Any file ending with {@value biolockj.BioLockJ#GZIP_EXT} is treated as a gzipped file.
-	 * 
-	 * @param fileName File name
-	 * @return TRUE if file name ends with .gz
-	 */
-	public static boolean isGzipped( String fileName )
-	{
-		return fileName != null && fileName.toLowerCase().endsWith( BioLockJ.GZIP_EXT );
-	}
 
 	/**
 	 * Create a copy of the sequence files in property {@value biolockj.Config#INPUT_DIRS}, output to a directory named
@@ -98,24 +88,6 @@ public class SeqUtil
 		return count / getNumLinesPerRead();
 	}
 
-	// public static String getHeader( String line )
-	// {
-	// line = line.trim();
-	// final boolean hasFwDelim = line.contains( ILLUMINA_FW_READ_IND );
-	// final boolean hasRvDelim = line.contains( ILLUMINA_RV_READ_IND );
-	// final String delim = hasFwDelim ? ILLUMINA_FW_READ_IND: hasRvDelim ? ILLUMINA_RV_READ_IND: null;
-	// if( delim != null )
-	// {
-	// int index = line.indexOf( delim );
-	// return line.substring( 0, index ) + "[12]" + line.substring( index + 1 );
-	// }
-	// else
-	// {
-	// return line.trim();
-	// }
-	//
-	// }
-
 	/**
 	 * Extract the header from the first line of a read (parse to first space). This part of the header line will be
 	 * identical on forward and reverse reads, so can be used to find matching pairs of reads.
@@ -141,6 +113,24 @@ public class SeqUtil
 		}
 
 	}
+
+	// public static String getHeader( String line )
+	// {
+	// line = line.trim();
+	// final boolean hasFwDelim = line.contains( ILLUMINA_FW_READ_IND );
+	// final boolean hasRvDelim = line.contains( ILLUMINA_RV_READ_IND );
+	// final String delim = hasFwDelim ? ILLUMINA_FW_READ_IND: hasRvDelim ? ILLUMINA_RV_READ_IND: null;
+	// if( delim != null )
+	// {
+	// int index = line.indexOf( delim );
+	// return line.substring( 0, index ) + "[12]" + line.substring( index + 1 );
+	// }
+	// else
+	// {
+	// return line.trim();
+	// }
+	//
+	// }
 
 	/**
 	 * Return the header of each read in the sequence file.
@@ -559,6 +549,18 @@ public class SeqUtil
 		}
 
 		return true;
+	}
+
+	/**
+	 * Determine if file is gzipped based on its file extension.<br>
+	 * Any file ending with {@value biolockj.BioLockJ#GZIP_EXT} is treated as a gzipped file.
+	 * 
+	 * @param fileName File name
+	 * @return TRUE if file name ends with .gz
+	 */
+	public static boolean isGzipped( final String fileName )
+	{
+		return fileName != null && fileName.toLowerCase().endsWith( BioLockJ.GZIP_EXT );
 	}
 
 	/**

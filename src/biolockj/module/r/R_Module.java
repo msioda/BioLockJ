@@ -161,8 +161,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
-		if( SeqUtil.requireSeqInput() || mods.contains( BuildTaxonomyTables.class.getName() ) 
+		final List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		if( SeqUtil.requireSeqInput() || mods.contains( BuildTaxonomyTables.class.getName() )
 				|| mods.contains( Normalizer.class.getName() ) || mods.contains( LogTransformer.class.getName() ) )
 		{
 			preReqs.add( AddMetaToTaxonomyTables.class );

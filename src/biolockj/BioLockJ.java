@@ -530,14 +530,14 @@ public class BioLockJ
 	public static final long APP_START_TIME = System.currentTimeMillis();
 
 	/**
-	 * BioLockJ log file extension constant: {@value #LOG_EXT}
-	 */
-	public static final String LOG_EXT = ".log";
-	
-	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
+
+	/**
+	 * BioLockJ log file extension constant: {@value #LOG_EXT}
+	 */
+	public static final String LOG_EXT = ".log";
 
 	/**
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}

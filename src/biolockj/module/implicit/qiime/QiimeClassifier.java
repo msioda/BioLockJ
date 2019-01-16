@@ -71,8 +71,8 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( Config.getString( QIIME_ALPHA_DIVERSITY_METRICS ) != null )
 		{
 			final File newMapping = new File( tempDir + MetaUtil.getMetadataFileName() );
-			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics() 
-				+ " -o " + tempDir + ALPHA_DIVERSITY_TABLE );
+			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics()
+					+ " -o " + tempDir + ALPHA_DIVERSITY_TABLE );
 
 			lines.add( SCRIPT_ADD_ALPHA_DIVERSITY + " -m " + MetaUtil.getFile().getAbsolutePath() + " -i " + tempDir
 					+ ALPHA_DIVERSITY_TABLE + " -o " + newMapping );
@@ -82,18 +82,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		data.add( lines );
 
 		return data;
-	}
-	
-	private String getAlphaDiversityMetrics() throws Exception
-	{
-		StringBuffer sb = new StringBuffer();
-		Iterator<String> metrics = Config.requireList( QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
-		sb.append( metrics.next() );
-		while( metrics.hasNext() )
-		{
-			sb.append( "," ).append( metrics.next() );
-		}
-		return sb.toString();
 	}
 
 	/**
@@ -430,6 +418,18 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	private void addHardCodedSwitches() throws Exception
 	{
 		switches += "-aO" + " " + getNumThreads() + " ";
+	}
+
+	private String getAlphaDiversityMetrics() throws Exception
+	{
+		final StringBuffer sb = new StringBuffer();
+		final Iterator<String> metrics = Config.requireList( QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
+		sb.append( metrics.next() );
+		while( metrics.hasNext() )
+		{
+			sb.append( "," ).append( metrics.next() );
+		}
+		return sb.toString();
 	}
 
 	/**
