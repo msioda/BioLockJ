@@ -290,7 +290,7 @@ public class BashScriptBuilder
 		final List<String> lines = new ArrayList<>();
 		if( Config.isOnCluster() && getJobHeader( module ) != null )
 		{
-			lines.add( getTopHeader() + getJobHeader( module ) + RETURN );
+			lines.add( getJobHeader( module ) + RETURN );
 		}
 		else if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
@@ -571,12 +571,6 @@ public class BashScriptBuilder
 				: module.getClass().getSimpleName() + ScriptModule.NUM_THREADS;
 	}
 
-	private static String getTopHeader() throws Exception
-	{
-		final String topHeader = Config.getString( SCRIPT_TOP_HEADER );
-		return topHeader == null ? "": topHeader + RETURN;
-	}
-
 	private static String getWorkerId( final int scriptNum, final int digits )
 	{
 		return String.format( "%0" + digits + "d", scriptNum );
@@ -701,12 +695,6 @@ public class BashScriptBuilder
 	 * Header written at top of worker scripts
 	 */
 	protected static final String SCRIPT_JOB_HEADER = "cluster.jobHeader";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #SCRIPT_TOP_HEADER}<br>
-	 * Header written at top of worker scripts above {@value #SCRIPT_JOB_HEADER}
-	 */
-	protected static final String SCRIPT_TOP_HEADER = "cluster.topHeader";
 
 	private static final String INDENT = "    ";
 	private static final String JOB_HEADER = ".jobHeader";
