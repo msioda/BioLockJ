@@ -71,7 +71,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	{
 		Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
 		Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
-
+		getPearSwitches();
 		super.checkDependencies();
 		if( !SeqUtil.isFastQ() )
 		{
@@ -152,8 +152,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_PEAR_MERGE + "() {" );
-		lines.add( Config.getExe( EXE_PEAR ) + " -f $2 -r $3 -o $4" + File.separator + "$1 "
-				+ getPearSwitches( Config.getList( EXE_PEAR_PARAMS ) ) );
+		lines.add( Config.getExe( EXE_PEAR ) + getPearSwitches() + "-f $2 -r $3 -o $4" + File.separator + "$1" );
 		lines.add( "mv $4" + File.separator + "$1.assembled." + SeqUtil.FASTQ + " $5" + File.separator + "$1."
 				+ SeqUtil.FASTQ );
 		lines.add( "}" );
@@ -170,17 +169,18 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 		return otuColName;
 	}
 
+ 
 	/**
-	 * Get formatted pear switches as provided in prop file (if any).
+	 * Get optional formatted PEAR switches if provided in {@link biolockj.Config}
+	 * properties: {@value #EXE_PEAR_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
 	 *
-	 * @param switches
-	 * @return
-	 * @throws Exception
+	 * @return Formatted PEAR switches 
+	 * @throws Exception if errors occur
 	 */
-	private String getPearSwitches( final List<String> switches ) throws Exception
+	protected String getPearSwitches() throws Exception
 	{
 		String formattedSwitches = " -j " + Config.requirePositiveInteger( SCRIPT_NUM_THREADS ) + " ";
-		for( final String string: switches )
+		for( final String string: Config.getList( EXE_PEAR_PARAMS ) )
 		{
 			formattedSwitches += "-" + string + " ";
 		}
