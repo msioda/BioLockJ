@@ -300,32 +300,32 @@ public class DemuxUtil
 	 * sequence headers to barcodes. The barcodes found in metadata file
 	 * {@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} can be used to match sample IDs to sequences.
 	 */
-	protected static final String MAPPING_FILE = "demux.mapping";
+	public static final String MAPPING_FILE = "demux.mapping";
 
 	/**
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} option: {@value #OPTION_BARCODE_IN_HEADER}
 	 */
-	protected static final String OPTION_BARCODE_IN_HEADER = "barcode_in_header";
+	public static final String OPTION_BARCODE_IN_HEADER = "barcode_in_header";
 
 	/**
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} option: {@value #OPTION_BARCODE_IN_MAPPING}
 	 */
-	protected static final String OPTION_BARCODE_IN_MAPPING = "barcode_in_mapping";
+	public static final String OPTION_BARCODE_IN_MAPPING = "barcode_in_mapping";
 
 	/**
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} option: {@value #OPTION_BARCODE_IN_SEQ}
 	 */
-	protected static final String OPTION_BARCODE_IN_SEQ = "barcode_in_seq";
+	public static final String OPTION_BARCODE_IN_SEQ = "barcode_in_seq";
 
 	/**
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} option: {@value #OPTION_DO_NOT_DEMUX}
 	 */
-	protected static final String OPTION_DO_NOT_DEMUX = "do_not_demux";
+	public static final String OPTION_DO_NOT_DEMUX = "do_not_demux";
 
 	/**
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} option: {@value #OPTION_ID_IN_HEADER}
 	 */
-	protected static final String OPTION_ID_IN_HEADER = "id_in_header";
+	public static final String OPTION_ID_IN_HEADER = "id_in_header";
 
 	// private static final Map<String, String> headerFileMap = new HashMap<>();
 	private static final Map<String, String> idMap = new HashMap<>();

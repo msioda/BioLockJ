@@ -321,8 +321,7 @@ public class BashScriptBuilder
 	 * <ol>
 	 * <li>Require property {@value #SCRIPT_JOB_HEADER}
 	 * <li>Require property {@value #CLUSTER_BATCH_COMMAND} sets #cores param (ppn or procs) =
-	 * {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or
-	 * {@value biolockj.module.ScriptModule#CLASSIFIER_NUM_THREADS}
+	 * {@link biolockj.module.ScriptModule#getNumThreads()} or
 	 * </ol>
 	 * <p>
 	 * Current format #1 (2018) for UNCC HPC Cluster: #PBS -l procs=1,mem=8GB,walltime=8:00:00<br>
@@ -603,11 +602,6 @@ public class BashScriptBuilder
 		return false;
 	}
 
-	private static boolean isClassifier( final ScriptModule module ) throws Exception
-	{
-		return module.getClass().getPackage().getName().startsWith( "biolockj.module.classifier" )
-				|| module.getClass().getName().toLowerCase().endsWith( "classifier" );
-	}
 
 	/**
 	 * Return lines to script that load cluster modules based on {@link biolockj.Config}.{@value #CLUSTER_MODULES}
@@ -676,7 +670,7 @@ public class BashScriptBuilder
 	 * {@link biolockj.Config} Boolean property: {@value #CLUSTER_VALIDATE_PARAMS}<br>
 	 * If set to {@value biolockj.Config#TRUE}, validate {@value #SCRIPT_JOB_HEADER} param cluster number of processors
 	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or
-	 * {@value biolockj.module.ScriptModule#CLASSIFIER_NUM_THREADS}
+	 * {@link biolockj.module.ScriptModule#getNumThreads()}
 	 */
 	protected static final String CLUSTER_VALIDATE_PARAMS = "cluster.validateParams";
 

@@ -29,7 +29,7 @@ public class ConfigViolationException extends ConfigException
 	 */
 	public ConfigViolationException( final String propertyName, final String msg )
 	{
-		super( propertyName, "Violation", msg );
+		super( propertyName, msg );
 	}
 
 	private static final long serialVersionUID = -5659243602699272132L;
