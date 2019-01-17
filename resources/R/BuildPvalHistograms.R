@@ -40,32 +40,52 @@ getCexMain<- function( labels=NULL ) {
 }
 
 
-# Return name of statistical test used to generate P-Values
-getTestName <- function( attName, isParametric ) {
-	if( attName %in% getBinaryFields() && isParametric ) return ( "T-Test" )
-	if( attName %in% getBinaryFields() && !isParametric ) return ( "Wilcox" )
-	if( attName %in% getNominalFields() && isParametric ) return ( "ANOVA" )
-	if( attName %in% getNominalFields() && !isParametric ) return ( "Kruskal" )
-	if( attName %in% getNumericFields() && isParametric ) return ( "Pearson" )
-	if( attName %in% getNumericFields() && !isParametric ) return ( "Kendall" )
-}
+# Return name of statistical test used to generate P-Values for a given attribute
+# If returnColors==TRUE, then return a color used for color-coding this test
+# or a named color vector if the specific attribute is not given.
+getTestName <- function( attName=NULL, isParametric=c(TRUE, FALSE), returnColors=FALSE ) {
+	testOptions = data.frame(
+		testName = c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall"),
+		fieldType = c("binary", "binary", "nominal", "nominal", "numeric", "numeric" ),
+		isParametric = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
+		color = c("coral", "dodgerblue2", "darkgoldenrod1", "cornflowerblue", "tan1", "aquamarine3"),
+		stringsAsFactors = FALSE
+	)
 
-
-# Return a color for each type of statistical test
-getTestColor <- function(testName){
-	colors = c("coral", "dodgerblue2", "darkgoldenrod1", "cornflowerblue", "tan1", "aquamarine3")
-	names(colors) = c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall")
-	return(colors[testName])
+	fieldType = c(unique(testOptions$fieldType))
+	if (!is.null(attName)){
+		if( attName %in% getBinaryFields() ) {fieldType = "binary"}
+		if( attName %in% getNominalFields() ) {fieldType = "nominal"}
+		if( attName %in% getNumericFields() ) {fieldType = "numeric"}
+		if (length(fieldType) > 1){
+			stop(paste("Cannot determine field type for attribute:", attName))
+		}
+	}
+	
+	whichTest = which(testOptions$fieldType %in% fieldType & 
+											testOptions$isParametric %in% isParametric)
+	
+	if (returnColors){
+		cols = testOptions[whichTest,"color"]
+		names(cols) = testOptions[whichTest,"testName"]
+		return(cols)
+	}else{
+		return(testOptions[whichTest,"testName"])
+	}
 }
 
 # This graphic can be printed with the histograms, 
 # used for documentation, or just as a reference check when chaning the colors.
 printColorCode <- function(){
-	colors = getTestColor(c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall"))
+	parColors = getTestName(isParametric = TRUE, returnColors = TRUE)
+	nonParColors = getTestName(isParametric = FALSE, returnColors = TRUE)
+	colors = c(parColors, nonParColors)
 	plot(1,1, ylim=c(0,4), xlim=c(.5,2.5), type="n", axes=FALSE, xlab="", ylab="")
 	title(main="Color Coding", line=0)
-	symbols(x=rep(1:2,3), y=rep(3:1, each=2), rectangles = matrix(ncol=2,byrow=TRUE,data=rep(c(1,1),6)), fg=colors, bg=colors, inches=FALSE, add=TRUE)
-	text(x=rep(1:2,3), y=rep(3:1, each=2), labels=names(colors))
+	x=rep(1:2, each=3)
+	y=rep(3:1, 2)
+	symbols(x=x, y=y, rectangles = matrix(ncol=2,byrow=TRUE,data=rep(c(1,1),6)), fg=colors, bg=colors, inches=FALSE, add=TRUE)
+	text(x=x, y=y, labels=names(colors))
 	text(x=1, y=3.5, labels="parametric", pos=3)
 	text(x=2, y=3.5, labels="non-parametric", pos=3)
 }
