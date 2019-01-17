@@ -33,11 +33,23 @@ public class KneadDataSanitizer extends ScriptModuleImpl implements ScriptModule
 		final List<List<String>> data = new ArrayList<>();
 		for( final File seqFile: files )
 		{
+			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( seqFile.getName() ) )
+			{
+				continue;
+			}
+			
 			final ArrayList<String> lines = new ArrayList<>();
-			final String fileId = SeqUtil.getSampleId( seqFile.getName() );
-			final String dirExt = SeqUtil.getReadDirectionSuffix( seqFile );
-			lines.add( sanatize( seqFile ) );
-			lines.add( copyToOutputDir( seqFile ) );
+			
+			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+			{
+				lines.add( sanatize( seqFile, SeqUtil.getPairedReads( files ).get( seqFile ) ) );
+			}
+			else 
+			{
+				lines.add( sanatize( seqFile, null ) );
+			}
+
+			lines.addAll( copyToOutputDir( SeqUtil.getSampleId( seqFile.getName() ) ) );
 
 			data.add( lines );
 		}
@@ -59,16 +71,35 @@ public class KneadDataSanitizer extends ScriptModuleImpl implements ScriptModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_SANATIZE + "() {" );
-		lines.add( Config.getExe( EXE_KNEADDATA ) + " " + getKneadDataSwitches() + INPUT_PARAM + " $1 " + OUTPUT_PARAM
-				+ " " + getTempDir().getAbsolutePath() );
+		lines.add( Config.getExe( EXE_KNEADDATA ) + " " + getKneadDataSwitches() + OUTPUT_FILE_PREFIX_PARAM + " $1 "
+			+ INPUT_PARAM + " $2 " + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 " : "" ) 
+				+ OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
 		lines.add( "}" );
 		return lines;
 	}
 
-	private String copyToOutputDir( final File seqFile ) throws Exception
+	private List<String> copyToOutputDir( final String sampleId ) throws Exception
 	{
-		return "cp " + getSanatizedFileName( seqFile ) + " " + getOutputDir().getAbsolutePath();
+		List<String> lines = new ArrayList<>();
+		String fileSuffix = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			String fwSuffix = Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
+			String rvSuffix = Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
+			File fwOutFile = new File( getOutputDir().getAbsolutePath() + File.separator + sampleId + fwSuffix + fileSuffix );
+			File rvOutFile = new File( getOutputDir().getAbsolutePath() + File.separator + sampleId + rvSuffix + fileSuffix );
+			lines.add( "mv " + getSanatizedFile( sampleId, false ).getAbsolutePath() + " " + fwOutFile.getAbsolutePath() );
+			lines.add( "mv " + getSanatizedFile( sampleId, true ).getAbsolutePath() + " " + rvOutFile.getAbsolutePath() );
+		}
+		else
+		{
+			File outFile = new File( getOutputDir().getAbsolutePath() + File.separator + sampleId + fileSuffix );
+			lines.add( "mv " + getSanatizedFile( sampleId, null ).getAbsolutePath() + " " + outFile.getAbsolutePath() );
+		}
+
+		return lines;
 	}
+	
 
 	/**
 	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
@@ -79,7 +110,7 @@ public class KneadDataSanitizer extends ScriptModuleImpl implements ScriptModule
 	 */
 	private String getKneadDataSwitches() throws Exception
 	{
-		String formattedSwitches = "-t " + Config.requirePositiveInteger( SCRIPT_NUM_THREADS ) + " ";
+		String formattedSwitches = "-t " +  getNumThreads() + " " + getDbParams();
 		for( final String string: Config.getList( EXE_KNEADDATA_PARAMS ) )
 		{
 			formattedSwitches += "-" + string + " ";
@@ -87,15 +118,35 @@ public class KneadDataSanitizer extends ScriptModuleImpl implements ScriptModule
 
 		return formattedSwitches;
 	}
-
-	private String getSanatizedFileName( final File seqFile ) throws Exception
+	
+	// TODO --> add comma separated list with no spaces
+	private String getDbParams() throws Exception
 	{
-		return seqFile.getName();
+		String params = "";
+		for( String db: Config.requireList( KNEAD_DBS ) )
+		{
+			params += DB_PARAM + " " + db + " ";
+		}
+		
+		return params; 
 	}
 
-	private String sanatize( final File seqFile ) throws Exception
+	private File getSanatizedFile( final String sampleId, Boolean isRvRead ) throws Exception
 	{
-		return FUNCTION_SANATIZE + " " + seqFile.getAbsolutePath();
+		String suffix = KNEADDATA_SUFFIX;
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			suffix += isRvRead ? RV_OUTPUT_SUFFIX : FW_OUTPUT_SUFFIX;
+		}
+		 
+		suffix += "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix );
+	}
+
+	private String sanatize( final File seqFile, final File rvRead ) throws Exception
+	{
+		return FUNCTION_SANATIZE + " " + SeqUtil.getSampleId( seqFile.getName() ) + " " + seqFile.getAbsolutePath()
+			+ ( rvRead == null ? "" : " " + rvRead.getAbsolutePath());
 	}
 
 	/**
@@ -110,11 +161,22 @@ public class KneadDataSanitizer extends ScriptModuleImpl implements ScriptModule
 	protected static final String EXE_KNEADDATA_PARAMS = "exe.kneaddataParams";
 
 	/**
+	 * {@link biolockj.Config} required property to the contaminent databases {@value #KNEAD_DBS}:
+	 */
+	protected static final String KNEAD_DBS = "kneaddata.dbs";
+	
+	
+	/**
 	 * Name of the bash function used to decompress gzipped files: {@value #FUNCTION_SANATIZE}
 	 */
 	protected static final String FUNCTION_SANATIZE = "sanatizeData";
 
-	private static final String INPUT_PARAM = "--input";
+	private static final String FW_OUTPUT_SUFFIX = "_paired_1";
+	private static final String RV_OUTPUT_SUFFIX = "_paired_2";
+	private static final String KNEADDATA_SUFFIX = "_kneaddata";
+	private static final String INPUT_PARAM = "-i";
 	private static final String OUTPUT_PARAM = "-o";
+	private static final String DB_PARAM = "-db";
+	private static final String OUTPUT_FILE_PREFIX_PARAM = "--output-prefix";
 
 }
