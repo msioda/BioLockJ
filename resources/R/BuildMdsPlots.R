@@ -50,6 +50,10 @@ main <- function() {
 			numAxis = min(c(numAxis, ncol(myMDS$CA$u)))
 			for (x in 1:(numAxis-1)) {
 				for (y in (x+1):numAxis) {
+					if (position > prod(par("mfrow") ) ) {
+						position = 1
+						page = page + 1
+					}
 					plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste(y, "vs", x),
 								xlab=getMdsLabel( x, percentVariance[x] ),
 								ylab=getMdsLabel( y, percentVariance[y] ),
@@ -64,18 +68,14 @@ main <- function() {
 									 col=colorKey, pch=getProperty("r.pch"), bty="n")
 						# this is the best time to add the page title
 						title(main="Multidimensional Scaling Plots", outer = TRUE, line=1.2, cex=1.5)
-						titlePart2 = ifelse( page == 1, paste( "taxonomic level:", otuLevel), paste("page", page))
+						titlePart2 = ifelse( page == 1, paste( "taxonomic level:", otuLevel), paste(otuLevel, "page", page))
 						title(main=titlePart2, outer = TRUE, line=0, cex=.5)
 						position = position + 1
-					}
-					if (position > prod(par("mfrow") ) ) {
-						position = 1
-						page = page + 1
 					}
 				}
 			}
 		}
-		plotPlainText(paste("Each set of", page, ifelse(page==1, "page", "pages"), "is identical.\nOnly the color scheme/legend changes."))
+		plotPlainText(paste("Each", paste0(page, "-page"), "set is identical.\nOnly the color scheme/legend changes."))
 		if( doDebug() ) sink()
 		dev.off()
 	}
@@ -100,5 +100,8 @@ plotRelativeVariance <- function(percentVariance, numAxis){
 	heights = percentVariance[1:numBars]
 	bp = barplot(heights, col="dodgerblue1", ylim=c(0,100), names=1:numBars,
 							 xlab="axis", ylab="variance explained per axis", main="")
-	text(x=bp, y=heights, labels = paste(round(heights), "%"), pos=3, xpd=TRUE)
+	labels = round(heights)
+	near0 = which(labels < 1)
+	labels[near0] = "<1"
+	text(x=bp, y=heights, labels = paste(labels, "%"), pos=3, xpd=TRUE)
 }
