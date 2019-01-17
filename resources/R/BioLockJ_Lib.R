@@ -199,6 +199,40 @@ getProperty <- function( name, defaultVal=NULL ) {
 getReportFields <- function() {
    return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
 }
+
+# Return the name of statistical test used to generate P-Values for a given attribute
+# If returnColors==TRUE, then return a color used for color-coding this test
+# or a named color vector if the specific attribute or isParametric is not given.
+getTestName <- function( attName=NULL, isParametric=c(TRUE, FALSE), returnColors=FALSE ) {
+	testOptions = data.frame(
+		testName = c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall"),
+		fieldType = c("binary", "binary", "nominal", "nominal", "numeric", "numeric" ),
+		isParametric = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
+		color = c("coral", "dodgerblue2", "darkgoldenrod1", "cornflowerblue", "tan1", "aquamarine3"),
+		stringsAsFactors = FALSE
+	)
+	
+	fieldType = c(unique(testOptions$fieldType))
+	if (!is.null(attName)){
+		if( attName %in% getBinaryFields() ) {fieldType = "binary"}
+		if( attName %in% getNominalFields() ) {fieldType = "nominal"}
+		if( attName %in% getNumericFields() ) {fieldType = "numeric"}
+		if (length(fieldType) > 1){
+			stop(paste("Cannot determine field type for attribute:", attName))
+		}
+	}
+	
+	whichTest = which(testOptions$fieldType %in% fieldType & 
+											testOptions$isParametric %in% isParametric)
+	
+	if (returnColors){
+		cols = testOptions[whichTest,"color"]
+		names(cols) = testOptions[whichTest,"testName"]
+		return(cols)
+	}else{
+		return(testOptions[whichTest,"testName"])
+	}
+}
     
 # Return named vector values for the given name
 getValuesByName <- function( vals, name ) {

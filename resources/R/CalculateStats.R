@@ -59,7 +59,12 @@ calculateStats <- function( otuTable ) {
          if( doDebug() ) print( paste0( "otuNames[", length(otuNames), "]: ", otuNames[ length(otuNames) ] ) )
          
          if( length( binaryCols ) > 0 ) {
-            if( doDebug() ) print( "Calculate BINARY P_VALS" )
+            if( doDebug() ) {
+            	print( "Calculate BINARY P_VALS" )
+            	parTestName = getTestName(attName = names(otuTable)[binaryCols[1]], isParametric = TRUE)
+            	nonParTestName = getTestName(attName = names(otuTable)[binaryCols[1]], isParametric = FALSE)
+            	print( paste("Using parametric test:", parTestName, "and non-parametric test:", nonParTestName) )
+            }
             for( metaCol in binaryCols ) {
                if( doDebug() ) print( paste( "metaCol:", metaCol ) )
                attName = names( otuTable )[metaCol]
@@ -82,7 +87,12 @@ calculateStats <- function( otuTable ) {
          }
          
          if( length( nominalCols ) > 0 ) {
-            if( doDebug() ) print( "Calculate NOMINAL P_VALS" )
+         	if( doDebug() ) {
+         		print( "Calculate NOMINAL P_VALS" )
+         		parTestName = getTestName(attName = names(otuTable)[nominalCols[1]], isParametric = TRUE)
+         		nonParTestName = getTestName(attName = names(otuTable)[nominalCols[1]], isParametric = FALSE)
+         		print( paste("Using parametric test:", parTestName, "and non-parametric test:", nonParTestName) )
+         	}
             for( metaCol in nominalCols ) {
                if( doDebug() ) print( paste( "metaCol:", metaCol ) )
                attName = names( otuTable )[metaCol]
@@ -108,7 +118,12 @@ calculateStats <- function( otuTable ) {
          }
          
          if( length( numericCols ) > 0 ) {
-            if( doDebug() ) print( "Calculate NUMERIC P_VALS" )
+         	if( doDebug() ) {
+         		print( "Calculate NUMERIC P_VALS" )
+         		parTestName = getTestName(attName = names(otuTable)[numericCols[1]], isParametric = TRUE)
+         		nonParTestName = getTestName(attName = names(otuTable)[numericCols[1]], isParametric = FALSE)
+         		print( paste("Using parametric test:", parTestName, "and non-parametric test:", nonParTestName) )
+         	}
             for( metaCol in numericCols ) {
                if( doDebug() ) print( paste( "metaCol:", metaCol ) )
                attName = names( otuTable )[metaCol]
