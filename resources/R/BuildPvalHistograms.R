@@ -79,7 +79,7 @@ main <- function() {
 	for( otuLevel in getProperty("report.taxonomyLevels") ) {
 		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildPvalHistograms_", otuLevel, ".log") ) )
 		pdf( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_histograms.pdf") ) )
-		par( mfrow=c(2, 2), las=1 )
+		par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
 		parInputFile = getPipelineFile( paste0( otuLevel, "_parametricPvals.tsv" ) )
 		if( doDebug() ) print( paste( "parInputFile:", parInputFile ) )
 		parStats = read.table( parInputFile, check.names=FALSE, header=TRUE, sep="\t", row.names=1 )
@@ -98,8 +98,9 @@ main <- function() {
 			ranks[attName,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=parStats[, attName], pvalCutoff)
 			ranks[attName,"NonParametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=nonParStats[, attName], pvalCutoff)
 		}
-		# order attributes based on the fraction of tests with a parametric p-value below <pvalCutoff>
-		ranks = ranks[order(ranks$Parametric.FractionPvalsUnderCutoff, decreasing=TRUE),]
+		# order attributes based on the fraction of tests with a p-value below <pvalCutoff>
+		orderBy = apply(ranks[2:3],1, max, na.rm=TRUE)
+		ranks = ranks[order(orderBy, decreasing=TRUE),]
 		fname = getPath( file.path(getModuleDir(), "temp"), paste0(otuLevel, "_fractionBelow-", pvalCutoff, ".tsv") )
 		write.table(ranks, file=fname, sep="\t", quote=FALSE, row.names=FALSE)
 		
@@ -110,20 +111,27 @@ main <- function() {
 			# parametric
 			parTestName = getTestName(attName, TRUE)
 			xLabelPar = paste( parTestName, "P-Values" )
-			addHistogram( v=parStats[, attName], title=getPlotTitle("Parametric", attName), 
+			addHistogram( v=parStats[, attName], title="",
 										xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
 										col=getTestColor(parTestName) )
+			title(main="Parametric", line=1.5)
 			# nonParametric
 			nonParTestName = getTestName(attName, FALSE)
 			xLabelNonPar = paste( nonParTestName, "P-Values" )
-			addHistogram( v=nonParStats[, attName], title=getPlotTitle("Non-Parametric", attName), 
+			addHistogram( v=nonParStats[, attName], title="",
 										xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
 										col=getTestColor(nonParTestName) )
+			title(main="Non-Parametric", line=1.5)
+			# shared title
+			plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
+			shiftByPoints = par("mai")[2] * plotPointPerInch
+			centerAt = par("usr")[1] - shiftByPoints
+			mtext(text=attName, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
 		}
 		# at the end, add the color code reference
 		printColorCode()
 		plotPlainText(paste0("Histograms are ordered by \nthe fraction of tests below ", 
-												 pvalCutoff, "\nin the parametric test."))
+												 pvalCutoff, "\nin the parametric or non-parametric test, \nwhichever was greater."))
 		dev.off()
 		
 		if( doDebug() ) sink()
