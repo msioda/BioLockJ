@@ -514,29 +514,28 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	 */
 	protected void setBarcodeReverseIfNeeded() throws Exception
 	{
+		final Double cutoff = getBarcodeCutoff();
 		if( DemuxUtil.demuxWithBarcode() && Config.getString( DemuxUtil.BARCODE_USE_REV_COMP ) == null
-				&& getBarcodeCutoff() != null && numReads > 0 && testFile != null )
+				&& cutoff != null && numReads > 0 && testFile != null )
 		{
-			final double cutoff = getBarcodeCutoff();
-			final String displayCutoff = BioLockJUtil.formatPercentage( Math.round( cutoff * 100 ), 100L );
-			final double fwPer = fwBarcodes / numReads;
-			final double rvPer = rvBarcodes / numReads;
+			Integer cutoffNumReads = new Long( Math.round( cutoff * numReads ) ).intValue();
+			final String displayCutoff = new Long( Math.round( cutoff * 100 ) ).toString() + "%";
 			final String displayFwPer = BioLockJUtil.formatPercentage( fwBarcodes, numReads );
 			final String displayRvPer = BioLockJUtil.formatPercentage( rvBarcodes, numReads );
 
 			Log.info( getClass(),
 					"Detected #Lines/Read = " + SeqUtil.getNumLinesPerRead() + " in TEST FILE: " + testFile );
-			Log.info( getClass(), "Checking to find required percentage of lines with barcode: " + displayCutoff );
-			Log.info( getClass(), "Total #Reads in TEST FILE: " + numReads );
+			Log.info( getClass(), "Checking to find required percentage ["+displayCutoff+"] of reads with barcode out of a total #reads = " + numReads );
+			Log.info( getClass(), "Total #reads needed to make cutoff = " + cutoffNumReads );
 			Log.info( getClass(), "Total #Reads w/ valid barcode: " + fwBarcodes );
 			Log.info( getClass(), "Total #Reads w/ valid REVERSE COMPLIMENT( barcode ): " + rvBarcodes );
 
-			if( fwPer > cutoff && rvPer > cutoff )
+			if( fwBarcodes > cutoffNumReads && rvBarcodes > cutoffNumReads )
 			{
 				throw new Exception( "Cannot auto-detect if barcodes in" + testFile
 						+ " require reverse compliment or not: fw = " + displayFwPer + " & rv = " + displayRvPer );
 			}
-			else if( rvPer > cutoff )
+			else if( rvBarcodes > cutoffNumReads )
 			{
 				Log.info( getClass(), "Using reverse compliment barcodes!" );
 				Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, Config.TRUE );
@@ -544,7 +543,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			else
 			{
 				throw new Exception( "Barcodes and their reverse compliments found in " + rvBarcodes
-						+ " reads --> less than the Config cuttoff: " + displayCutoff + " of the " + numReads
+						+ " reads --> less than the Config cuttoff: " + displayCutoff + " of reads = " + numReads
 						+ " reads in: " + testFile );
 			}
 		}
