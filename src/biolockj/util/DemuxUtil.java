@@ -198,7 +198,7 @@ public class DemuxUtil
 	public static boolean sampleIdInHeader() throws ConfigNotFoundException
 	{
 		return Config.getString( DEMUX_STRATEGY ) != null
-				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
+				&& Config.getString( DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
 	}
 
 	/**
