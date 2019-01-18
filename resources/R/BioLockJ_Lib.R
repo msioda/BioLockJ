@@ -7,6 +7,39 @@ addNamedVectorElement <- function( v, name, value ) {
    return( v )
 }
 
+# This method builds the file names output by CalculateStats.R
+# There are 5 stats tables output for each of the report.taxonomyLevels
+# 1. Parametric P-Value table  -->  buildStatsFileEnding( TRUE, FALSE, level )
+# 2. Nonparameteric P-Value table -->  buildStatsFileEnding( FALSE, FALSE, level )
+# 3. Adjusted Parametric P-Value table -->  buildStatsFileEnding( TRUE, TRUE, level )
+# 4. Adjusted Nonparameteric P-Value table -->  buildStatsFileEnding( FALSE, TRUE, level )
+# 5. R^2 Value table -->  buildStatsFileEnding( NULL, level=level )
+# The beginning of the file may be include additional text such as the pipeline name,
+# This ending is what is used by both CalculateStats to make the file 
+# and by other modules to find the file, so this much of the file name should remain intact.
+buildStatsFileEnding <- function( parametric, adjusted=TRUE, level=NULL ) {
+	ext = ".tsv"
+	prefix="_"
+	if (!is.na(level)){
+		prefix = paste0( prefix, level, "_" )
+	}
+	if( is.null( parametric ) ) {
+		return( paste0( prefix, "rSquaredVals", ext) )
+	}
+	else if( adjusted && parametric ) {
+		return( paste0( prefix, "adjParPvals", ext) )
+	}
+	else if( adjusted && !parametric ) {
+		return( paste0( prefix, "adjNonParPvals", ext) )
+	}
+	else if( !adjusted & parametric ) {
+		return( paste0( prefix, "parametricPvals", ext) )
+	}
+	else if( !adjusted & !parametric )  {
+		return( paste0( prefix, "nonParametricPvals", ext) )
+	}
+}
+
 # Return P value formated with sprintf as defined in MASTER Config r.pValFormat, otherwise use %1.2g default
 displayPval <- function( pval ) {
    return( paste( sprintf(getProperty("r.pValFormat", "%1.2g"), pval) ) )

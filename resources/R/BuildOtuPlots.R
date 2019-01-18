@@ -132,19 +132,19 @@ main <- function() {
 		reportFields = names(otuTable)[(lastOtuCol+1):ncol(otuTable)]
 		
 		# adjusted parametric pvalues
-		adjParInputFile = getPipelineFile( paste0(otuLevel, "_adjParPvals.tsv") )
+		adjParInputFile = getPipelineFile( buildStatsFileEnding(parametric=TRUE, adjusted=TRUE, level=otuLevel) )
 		if( doDebug() ) print( paste( "adjParInputFile:", adjParInputFile ) )
 		parStats = read.table( adjParInputFile, check.names=FALSE, 
 													 header=TRUE, sep="\t", row.names = 1 )
 		
 		# adjusted non-parametric pvalues
-		adjNonParInputFile = getPipelineFile( paste0(otuLevel, "_adjNonParPvals.tsv") )
+		adjNonParInputFile = getPipelineFile( buildStatsFileEnding(parametric=FALSE, adjusted=TRUE, level=otuLevel) )
 		if( doDebug() ) print( paste( "adjNonParInputFile:", adjNonParInputFile ) )
 		nonParStats = read.table( adjNonParInputFile, check.names=FALSE, 
 															header=TRUE, sep="\t", row.names = 1 )
 		
 		# r-squared values
-		rSquareFile = getPipelineFile( paste0(otuLevel, "_rSquaredVals.tsv") )
+		rSquareFile = getPipelineFile( buildStatsFileEnding(parametric=NA, level=otuLevel) )
 		r2Stats = read.table( rSquareFile, check.names=FALSE, 
 													header=TRUE, sep="\t", row.names = 1 )
 		

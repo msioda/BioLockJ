@@ -8,13 +8,21 @@
 # 5. R^2 Value table
 buildSummaryTables <- function( reportStats, otuLevel ) {
    attNames = unique( names(reportStats[[2]]) )
-   for( i in 2:length( reportStats ) ) {
-      fileName = getPath( file.path(getModuleDir(), "output"), paste0( otuLevel, "_", names(reportStats)[i], ".tsv" ) )
+   prefix = paste0( getProperty("internal.pipelineName"), "_" )
+   # the names of fileNameEndings is expected to match the names of elements in reportStats
+   fileNameEnding = c(parametricPvals = buildStatsFileEnding(parametric=TRUE, adjusted=FALSE, level=otuLevel),
+   									 nonParametricPvals = buildStatsFileEnding(parametric=FALSE, adjusted=FALSE, level=otuLevel),
+   									 adjParPvals = buildStatsFileEnding(parametric=TRUE, adjusted=TRUE, level=otuLevel),
+   									 adjNonParPvals = buildStatsFileEnding(parametric=FALSE, adjusted=TRUE, level=otuLevel),
+   									 rSquaredVals = buildStatsFileEnding(parametric=NA, level=otuLevel))
+   reportSets = names(fileNameEnding)
+   for( reportSet in reportSets ) {
+      fileName = getPath( file.path(getModuleDir(), "output"), paste0( prefix, fileNameEnding[reportSet] ) )
       df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
       df[, 1] = reportStats[[1]]
       names(df)[1] = names( reportStats )[1]
       for( j in 1:length( attNames ) ) {
-         df[, length(df)+1] = getValuesByName( reportStats[[i]], attNames[j] )
+         df[, length(df)+1] = getValuesByName( reportStats[[reportSet]], attNames[j] )
          names(df)[length(df)] = attNames[j]
       }
       write.table( df, file=fileName, sep="\t", row.names=FALSE )
