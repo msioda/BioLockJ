@@ -24,19 +24,26 @@ addBoxPlot <- function( otuColName, otuColVals, metaColName, metaColVals, barCol
 }
 
 # Add text at the top of the plot in the margin
-addPvalueNote <- function(parPval, nonParPval, r2, cutoff=getProperty("r.pvalCutoff",-1)){
+addPvalueNote <- function(parPval, nonParPval, r2, 
+													cutoff=getProperty("r.pvalCutoff",-1),
+													attName=NULL){
 	lineNumbers = c(0.2, 1.4, 2.6)
 	names(lineNumbers) = c("low", "mid", "top")
-	mtext(text="Adjusted p-values:", line=lineNumbers["top"], 
+	parTestName=""
+	nonParTestName=""
+	if (!is.null(attName)){
+		parTestName = paste0(" (", getTestName(attName, isParametric = TRUE), ")")
+		nonParTestName = paste0(" (", getTestName(attName, isParametric = FALSE), ")")
+	}
+	mtext(text=paste("r-squared:", round(r2, 3)), 
+				line=lineNumbers["top"], 
 				at=par("usr")[1], side=3, adj=0, cex=par("cex"))
-	mtext(text=paste("Parametric:", parPval), line=lineNumbers["mid"], 
-				at=par("usr")[1], side=3, adj=0, cex=par("cex"), col=getColor(parPval))
-	mtext(text=paste("Non-Parametric:", nonParPval), line=lineNumbers["low"], 
-				at=par("usr")[1], side=3, adj=0, cex=par("cex"), col=getColor(nonParPval))
-	mtext(text="r-squared:", line=lineNumbers["mid"], 
-				at=par("usr")[2], side=3, adj=1, cex=par("cex"))
-	mtext(text=round(r2, 3), line=lineNumbers["low"], 
-				at=par("usr")[2], side=3, adj=1, cex=par("cex"))
+	mtext(text=paste0("adjusted parametric", parTestName, " p-value: ", displayPval(parPval)), 
+				line=lineNumbers["mid"], col=getColor(parPval), 
+				at=par("usr")[1], side=3, adj=0, cex=par("cex"))
+	mtext(text=paste0("adjusted non-parametric", nonParTestName, " p-value: ", displayPval(nonParPval)), 
+				line=lineNumbers["low"], col=getColor(nonParPval), 
+				at=par("usr")[1], side=3, adj=0, cex=par("cex"))
 }
 
 
@@ -117,11 +124,11 @@ main <- function() {
 		
 		# metadata columns
 		binaryCols = getBinaryFields() #getColIndexes( otuTable, getBinaryFields() )
-		if( doDebug() ) print( paste( c("binaryCols:", binaryCols), collapse= ", " ) )
+		if( doDebug() ) print( paste( "binaryCols:", paste0(binaryCols, collapse= ", ") ) )
 		nominalCols = getNominalFields() #getColIndexes( otuTable, getNominalFields() )
-		if( doDebug() ) print( paste( c("nominalCols:", nominalCols), collapse= ", " ) )
+		if( doDebug() ) print( paste( "nominalCols:", paste0(nominalCols, collapse= ", ") ) )
 		numericCols = getNumericFields() #getColIndexes( otuTable, getNumericFields() )
-		if( doDebug() ) print( paste( c("numericCols:", numericCols), collapse= ", " ) )
+		if( doDebug() ) print( paste( "numericCols:", paste0(numericCols, collapse= ", ") ) )
 		reportFields = names(otuTable)[(lastOtuCol+1):ncol(otuTable)]
 		
 		# adjusted parametric pvalues
@@ -150,7 +157,7 @@ main <- function() {
 		# create empty ouptut file
 		plotsPerOTU = length(reportFields)
 		outputFile = getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU_plots.pdf") )
-		if( doDebug() ) print( paste( "CSaving plots to", outputFile ) )
+		if( doDebug() ) print( paste( "Saving plots to", outputFile ) )
 		if (plotsPerOTU < 5 ) {
 			pdf( outputFile, width = 7, height = 7)
 			par( mfrow=c(2, 2) )
@@ -173,11 +180,6 @@ main <- function() {
 				position = 1
 				page = 1
 				for( metaCol in reportFields)	{
-					# get pvalues
-					parPval = displayPval( parStats[ otuCol, metaCol ] )
-					if( doDebug() ) print( paste("parPval:", parPval ) )
-					nonParPval = displayPval( nonParStats[ otuCol, metaCol ] )
-					if( doDebug() ) print( paste("nonParPval:", nonParPval ) )
 					# add a plot
 					if ( metaCol %in% binaryCols | metaCol %in% nominalCols){
 						addBoxPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
@@ -187,8 +189,12 @@ main <- function() {
 						addScatterPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
 														metaColName=metaCol, metaColVals=otuTable[,metaCol] )
 					}
-					addPvalueNote(parPval, nonParPval, r2=r2Stats[ otuCol, metaCol])
-					mtext(metaCol, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5, col=getColor(c(parPval, nonParPval)))
+					# add p-values
+					addPvalueNote(parPval = nonParStats[ otuCol, metaCol ], 
+												nonParPval = nonParStats[ otuCol, metaCol ], 
+												r2=r2Stats[ otuCol, metaCol], attName=metaCol)
+					# Add plot title
+					mtext(metaCol, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5) #col=getColor(c(parPval, nonParPval))
 					# page title
 					position = position + 1
 					if (position == 2) { 
