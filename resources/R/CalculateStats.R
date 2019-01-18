@@ -10,11 +10,11 @@ buildSummaryTables <- function( reportStats, otuLevel ) {
    attNames = unique( names(reportStats[[2]]) )
    prefix = paste0( getProperty("internal.pipelineName"), "_" )
    # the names of fileNameEndings is expected to match the names of elements in reportStats
-   fileNameEnding = c(parametricPvals = buildStatsFileEnding(parametric=TRUE, adjusted=FALSE, level=otuLevel),
-   									 nonParametricPvals = buildStatsFileEnding(parametric=FALSE, adjusted=FALSE, level=otuLevel),
-   									 adjParPvals = buildStatsFileEnding(parametric=TRUE, adjusted=TRUE, level=otuLevel),
-   									 adjNonParPvals = buildStatsFileEnding(parametric=FALSE, adjusted=TRUE, level=otuLevel),
-   									 rSquaredVals = buildStatsFileEnding(parametric=NA, level=otuLevel))
+   fileNameEnding = c(parametricPvals = buildStatsFileSuffix(parametric=TRUE, adjusted=FALSE, level=otuLevel),
+   									 nonParametricPvals = buildStatsFileSuffix(parametric=FALSE, adjusted=FALSE, level=otuLevel),
+   									 adjParPvals = buildStatsFileSuffix(parametric=TRUE, adjusted=TRUE, level=otuLevel),
+   									 adjNonParPvals = buildStatsFileSuffix(parametric=FALSE, adjusted=TRUE, level=otuLevel),
+   									 rSquaredVals = buildStatsFileSuffix(parametric=NA, level=otuLevel))
    reportSets = names(fileNameEnding)
    for( reportSet in reportSets ) {
       fileName = getPath( file.path(getModuleDir(), "output"), paste0( prefix, fileNameEnding[reportSet] ) )

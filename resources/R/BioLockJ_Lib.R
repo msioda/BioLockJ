@@ -9,15 +9,15 @@ addNamedVectorElement <- function( v, name, value ) {
 
 # This method builds the file names output by CalculateStats.R
 # There are 5 stats tables output for each of the report.taxonomyLevels
-# 1. Parametric P-Value table  -->  buildStatsFileEnding( TRUE, FALSE, level )
-# 2. Nonparameteric P-Value table -->  buildStatsFileEnding( FALSE, FALSE, level )
-# 3. Adjusted Parametric P-Value table -->  buildStatsFileEnding( TRUE, TRUE, level )
-# 4. Adjusted Nonparameteric P-Value table -->  buildStatsFileEnding( FALSE, TRUE, level )
-# 5. R^2 Value table -->  buildStatsFileEnding( NULL, level=level )
+# 1. Parametric P-Value table  -->  buildStatsFileSuffix( TRUE, FALSE, level )
+# 2. Nonparameteric P-Value table -->  buildStatsFileSuffix( FALSE, FALSE, level )
+# 3. Adjusted Parametric P-Value table -->  buildStatsFileSuffix( TRUE, TRUE, level )
+# 4. Adjusted Nonparameteric P-Value table -->  buildStatsFileSuffix( FALSE, TRUE, level )
+# 5. R^2 Value table -->  buildStatsFileSuffix( parametric=NA, level=level )
 # The beginning of the file may be include additional text such as the pipeline name,
 # This ending is what is used by both CalculateStats to make the file 
 # and by other modules to find the file, so this much of the file name should remain intact.
-buildStatsFileEnding <- function( parametric, adjusted=TRUE, level=NULL ) {
+buildStatsFileSuffix <- function( parametric, adjusted=TRUE, level=NULL ) {
 	ext = ".tsv"
 	prefix="_"
 	if (!is.na(level)){

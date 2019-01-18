@@ -64,7 +64,7 @@ main <- function(){
 		if( doDebug() ){ print( paste0("otuTable has ", nrow(otuTable), " rows and ", ncol(otuTable), " columns."))}
 		#
 		# get pvals from calc stats
-		pvalFile = getPipelineFile( buildStatsFileEnding(parametric=useParametric, adjusted=useAdjustedPs, level=otuLevel) )
+		pvalFile = getPipelineFile( buildStatsFileSuffix(parametric=useParametric, adjusted=useAdjustedPs, level=otuLevel) )
 		if( doDebug() ) print( paste( "p-value file:", pvalFile ) )
 		pvalTable = read.table( pvalFile, check.names=FALSE, header=TRUE, sep="\t", row.names = 1)
 		if( doDebug() ){ print( paste0("pvalTable has ", nrow(pvalTable), " rows and ", ncol(pvalTable), " columns."))}
@@ -72,7 +72,7 @@ main <- function(){
 		# get r-squared values from calc stats
 		if (doRSquared){
 			if( doDebug() ) print( paste( "Prepareing r-squared plot for each of", length(getReportFields()), "report fields.") )
-			r2File = getPipelineFile( buildStatsFileEnding(parametric=NA, level=otuLevel) )
+			r2File = getPipelineFile( buildStatsFileSuffix(parametric=NA, level=otuLevel) )
 			if( doDebug() ) print( paste( "r-squared file:", r2File ) )
 			r2Table = read.table( r2File, check.names=FALSE, header=TRUE, sep="\t", row.names = 1)
 			if( doDebug() ){ print( paste0("r-squared table has ", nrow(r2Table), " rows and ", ncol(r2Table), " columns."))}
