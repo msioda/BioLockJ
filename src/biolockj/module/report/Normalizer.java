@@ -89,7 +89,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return TaxaUtil.outputHasTaxonomyTables( previousModule );
+		return TaxaUtil.isTaxaModule( previousModule );
 	}
 
 	@Override

@@ -167,26 +167,59 @@ public class ModuleUtil
 				bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
 		return getRunTime( System.currentTimeMillis() - started.lastModified() );
 	}
+	
+	/**
+	 * Get the previous module names configured.
+	 * If the pipeline is pully initialized we check against {@link biolockj.Pipeline#getModules()}
+	 * Otherwise, only check the modules listed in the {@link biolockj.Config} file.
+	 * 
+	 * @param bioModule BioModule 
+	 * @return List of modules configured prior to the given bioModule parameter
+	 * @throws Exception if errors occur
+	 */
+	public static List<String> getPreviousModuleNames( final BioModule bioModule ) throws Exception
+	{
+		final List<String> previousModules = new ArrayList<>();
+		for( String moduleName: getModuleNames() )
+		{
+			if( bioModule.getClass().getName().equals( moduleName ) )
+			{
+				break;
+			}
+			previousModules.add( moduleName );
+		}
+		
+		return previousModules;
+	}
+	
+	private static List<String> getModuleNames() throws Exception
+	{
+		final List<String> names = new ArrayList<>();
+		if( Pipeline.getModules() == null )
+		{
+			return Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		}
+		for( BioModule module: Pipeline.getModules() )
+		{
+			names.add( module.getClass().getName() );
+		}
+		return names;
+	}
+	
 
 	/**
-	 * Returns the PerserModule, if configured. If more than 1 exists (due to new modules re-using Parser suffix), the
-	 * first configured is returned.
-	 *
-	 * @return PerserModule if configured, otherwise null
-	 * @throws Exception if unable to get the list of configured BioModules
+	 * Method checks if preReq is configured to run prior to the bioModule.
+	 * 
+	 * @param bioModule BioModule
+	 * @param preReq Prerequisite BioModule
+	 * @return TRUE if preReq is found
+	 * @throws Exception if errors occur
 	 */
-	public static ParserModule getParserModule() throws Exception
+	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
 	{
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( m instanceof ParserModule )
-			{
-				return (ParserModule) m;
-			}
-		}
-
-		return null;
+		return getPreviousModuleNames( bioModule ).contains( preReq );
 	}
+
 
 	/**
 	 * BioModules are run in the order configured. Return the module configured just before the bioModule param.
@@ -451,32 +484,6 @@ public class ModuleUtil
 	public static boolean moduleExists( final String moduleName ) throws Exception
 	{
 		return getModule( moduleName ) != null;
-	}
-
-	/**
-	 * Method checks if preReq is configured to run prior to the bioModule.
-	 * 
-	 * @param bioModule BioModule
-	 * @param preReq Prerequisite BioModule
-	 * @return TRUE if preReq is found
-	 * @throws Exception if errors occur
-	 */
-	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
-	{
-		boolean foundCurrentModule = false;
-		for( final String module: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
-		{
-			if( !foundCurrentModule && module.equals( bioModule.getClass().getName() ) )
-			{
-				foundCurrentModule = true;
-			}
-			else if( module.equals( preReq ) )
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	/**

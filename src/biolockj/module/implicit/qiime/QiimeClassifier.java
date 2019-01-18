@@ -251,7 +251,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		{
 			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
 		}
-		if( !SeqUtil.isFastA() )
+		if( SeqUtil.requireSeqInput() && !SeqUtil.isFastA() )
 		{
 			preReqs.add( Class.forName( BioModuleFactory.getDefaultFastaConverter() ) );
 		}

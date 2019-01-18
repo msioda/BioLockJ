@@ -357,10 +357,9 @@ public class TaxaUtil
 	 * @return boolean TRUE if file is a taxonomy count file
 	 * @throws Exception if errors occur
 	 */
-	public static boolean isTaxonomyTable( final File file ) throws Exception
+	public static boolean isTaxaFile( final File file ) throws Exception
 	{
-		if( file.getName()
-				.startsWith( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + TAXA_TABLE + "_" ) )
+		if( file.getName().contains( "_" + TAXA_TABLE + "_" ) )
 		{
 			for( final String level: getTaxaLevels() )
 			{
@@ -380,7 +379,7 @@ public class TaxaUtil
 	 * @return TRUE if module generated taxonomy table files
 	 * @throws Exception if errors occur
 	 */
-	public static boolean outputHasTaxonomyTables( final BioModule module ) throws Exception
+	public static boolean isTaxaModule( final BioModule module ) throws Exception
 	{
 		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
 				HiddenFileFilter.VISIBLE );
@@ -394,7 +393,7 @@ public class TaxaUtil
 		{
 			if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
 			{
-				return TaxaUtil.isTaxonomyTable( f );
+				return TaxaUtil.isTaxaFile( f );
 			}
 		}
 

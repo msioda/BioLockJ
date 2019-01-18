@@ -66,7 +66,7 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return OtuUtil.outputHasOtuCountFiles( previousModule );
+		return OtuUtil.isOtuModule( previousModule );
 	}
 
 	@Override
@@ -198,5 +198,9 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 	}
 
 	private final Map<String, Integer> uniqueOtuPerSample = new HashMap<>();
-	private static final String SUMMARY = "summary";
+	
+	/**
+	 * Output file prefix: {@value #SUMMARY}
+	 */
+	public static final String SUMMARY = "summary";
 }

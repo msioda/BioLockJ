@@ -42,7 +42,7 @@ public class BioModuleFactory
 	public static List<BioModule> buildModules() throws Exception
 	{
 		final List<BioModule> bioModules = new ArrayList<>();
-		final List<String> listedModules = Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		final List<String> configModules = Config.requireList( Config.INTERNAL_BLJ_MODULE );
 
 		info( "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
 
@@ -59,7 +59,7 @@ public class BioModuleFactory
 			bioModules.add( getModule( getDefaultFastaConverter() ) );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_READS ) && !listedModules.contains( SeqFileValidator.class.getName() )
+		if( Config.getBoolean( Config.REPORT_NUM_READS ) && !configModules.contains( SeqFileValidator.class.getName() )
 				&& !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
 						.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
 		{
@@ -69,9 +69,9 @@ public class BioModuleFactory
 			bioModules.add( getModule( RegisterNumReads.class.getName() ) );
 		}
 
-		for( int i = 0; i < listedModules.size(); i++ )
+		for( int i = 0; i < configModules.size(); i++ )
 		{
-			final BioModule module = getModule( listedModules.get( i ) );
+			final BioModule module = getModule( configModules.get( i ) );
 
 			if( bioModules.contains( module ) )
 			{

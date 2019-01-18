@@ -92,7 +92,7 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return TaxaUtil.outputHasTaxonomyTables( previousModule );
+		return TaxaUtil.isTaxaModule( previousModule );
 	}
 
 	/**

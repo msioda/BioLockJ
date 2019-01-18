@@ -69,7 +69,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
-		return OtuUtil.outputHasOtuCountFiles( previousModule );
+		return OtuUtil.isOtuModule( previousModule );
 	}
 
 	@Override

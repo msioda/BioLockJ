@@ -12,8 +12,11 @@
 package biolockj.module.r;
 
 import java.io.File;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.BioModule;
@@ -53,51 +56,104 @@ public class CalculateStats extends R_Module implements BioModule
 		set.add( TSV_EXT.substring( 1 ) );
 		return set;
 	}
+	
+	private static List<File> getStatsFileDirs() throws Exception
+	{
+		if( ModuleUtil.moduleExists( CalculateStats.class.getName() ) )
+		{
+			List<File> dirs = new ArrayList<>();
+			dirs.add( ModuleUtil.getModule( CalculateStats.class.getName() ).getOutputDir() );
+			return dirs;
+		}
+		
+		return Config.requireExistingDirs( Config.INPUT_DIRS );
+	}
 
 	/**
-	 * Get the stats file for the given fileType and otuLevel.
+	 * Get the stats file for the given fileType and taxonomy level.
 	 * 
-	 * @param otuLevel OTU level
-	 * @param fileType (parametric/non-parametric) (adjusted/non-adjusted)
-	 * @return File with stats for fileType
-	 * @throws Exception if CalculateStats not found
+	 * @param level Taxonomy level
+	 * @param isParametric Boolean TRUE to query for parametric file
+	 * @param isAdjusted Boolean TRUE to query for adjusted p-value file
+	 * @return File Table of statistics or null
+	 * @throws Exception if errors occur
 	 */
-	public static File getStatsFile( final String otuLevel, final String fileType ) throws Exception
+	public static File getStatsFile( final String level, final Boolean isParametric, final Boolean isAdjusted ) throws Exception
 	{
-		final BioModule mod = ModuleUtil.getModule( CalculateStats.class.getName() );
-		final String fileName = mod.getOutputDir().getAbsolutePath() + File.separator
-				+ Config.getString( Config.INTERNAL_PIPELINE_NAME ) + "_" + otuLevel + "_" + fileType
-				+ R_Module.TSV_EXT;
-
-		Log.info( CalculateStats.class, "Find stats file: " + fileName );
-		final File file = new File( fileName );
-		if( file.exists() )
+		final String querySuffix = "_" + level + "_" + getSuffix(isParametric, isAdjusted ) + TSV_EXT;
+		final Set<File> results = new HashSet<>();
+		final IOFileFilter ff = new WildcardFileFilter( "*" + querySuffix );
+		for( File dir: getStatsFileDirs() )
 		{
-			return file;
+			final Collection<File> files = FileUtils.listFiles( dir, ff, HiddenFileFilter.VISIBLE );
+			if( files.size() > 1 )
+			{
+				results.addAll( files );
+			}
 		}
-
-		return null;
+		
+		int count = results.size();
+		if( count == 0 )
+		{
+			return null;
+		}
+		else if( count == 1 )
+		{
+			File statsFile = results.iterator().next();
+			Log.info( CalculateStats.class, "Return stats file: " + statsFile.getAbsolutePath() );
+			return statsFile;
+		}
+		
+		throw new Exception( "Only 1 " + CalculateStats.class.getSimpleName() + " output file with suffix = \"" + querySuffix+
+				"\" should exist.  Found " + count + " files --> " + results );
+	
+	}
+	
+	private static String getSuffix( final Boolean isParametric, final Boolean isAdjusted  ) throws Exception
+	{
+		if( isParametric == null )
+		{
+			return R_SQUARED_VALS;
+		}
+		else if( isParametric && isAdjusted != null && isAdjusted )
+		{
+			return P_VALS_PAR_ADJ;
+		}
+		else if( isParametric )
+		{
+			return P_VALS_PAR;
+		}
+		else if( !isParametric && isAdjusted != null && isAdjusted )
+		{
+			return P_VALS_NP_ADJ;
+		}
+		else if( !isParametric )
+		{
+			return P_VALS_NP;
+		}
+		
+		throw new Exception( "BUG DETECTED! Logic error in getSuffix( isParametric, isAdjusted)" );	
 	}
 
 	/**
 	 * Non parametric p-value identifier: {@value #P_VALS_NP}
 	 */
-	public static final String P_VALS_NP = "nonParametricPvals";
+	protected static final String P_VALS_NP = "nonParametricPvals";
 
 	/**
 	 * Non parametric adjusted p-value identifier: {@value #P_VALS_NP_ADJ}
 	 */
-	public static final String P_VALS_NP_ADJ = "adjParPvals";
+	protected static final String  P_VALS_NP_ADJ = "adjNonParPvals";
 
 	/**
 	 * Parametric p-value identifier: {@value #P_VALS_PAR}
 	 */
-	public static final String P_VALS_PAR = "parametricPvals";
+	protected static final String P_VALS_PAR = "parametricPvals";
 
 	/**
 	 * Parametric adjusted p-value identifier: {@value #P_VALS_PAR_ADJ}
 	 */
-	public static final String P_VALS_PAR_ADJ = "adjNonParPvals";
+	protected static final String P_VALS_PAR_ADJ = "adjParPvals";
 
 	/**
 	 * R^2 identifier: {@value #R_SQUARED_VALS}
