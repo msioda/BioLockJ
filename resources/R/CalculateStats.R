@@ -9,6 +9,7 @@
 buildSummaryTables <- function( reportStats, otuLevel ) {
    attNames = unique( names(reportStats[[2]]) )
    prefix = paste0( getProperty("internal.pipelineName"), "_" )
+   if( doDebug() ) print( paste( "Using prefix:", prefix ) )
    # the names of fileNameEndings is expected to match the names of elements in reportStats
    fileNameEnding = c(parametricPvals = buildStatsFileSuffix(parametric=TRUE, adjusted=FALSE, level=otuLevel),
    									 nonParametricPvals = buildStatsFileSuffix(parametric=FALSE, adjusted=FALSE, level=otuLevel),
@@ -112,10 +113,8 @@ calculateStats <- function( otuTable ) {
                if( doDebug() ) print( paste( c("vals = levels( att ):", vals), collapse= " " ) )
                myLm = lm( otuTable[,otuCol] ~ att, na.action=na.exclude )
                if( doDebug() ) print( "myLm = lm( otuTable[,otuCol] ~ att, na.action=na.exclude )" )
-               if( doDebug() ) print( myLm )
                myAnova = anova( myLm )
                if( doDebug() ) print( "myAnova = anova( myLm )" )
-               if( doDebug() ) print( myAnova )
                parametricPvals = addNamedVectorElement( parametricPvals, attName, myAnova$"Pr(>F)"[1] )
                if( doDebug() ) print( paste( "Add parametricPval:", parametricPvals[length(parametricPvals)] ) )
                nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, kruskal.test( otuTable[,otuCol] ~ att, na.action=na.exclude )$p.value )
@@ -221,9 +220,12 @@ main <- function() {
       if( is.null( reportStats ) ) {
          if( doDebug() ) print( paste( otuLevel, "is empty, verify contents of table:", inputFile ) )
       } else {
+      	 if( doDebug() ) print( "Building summary Tables ... " )
          buildSummaryTables( reportStats, otuLevel )
       }
+      if( doDebug() ) print( paste( "Done with", otuLevel ) )
    }
+	 if( doDebug() ) print( "Done!" )
    if( doDebug() ) sink()
 }
 

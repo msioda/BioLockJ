@@ -20,10 +20,10 @@ addNamedVectorElement <- function( v, name, value ) {
 buildStatsFileSuffix <- function( parametric, adjusted=TRUE, level=NULL ) {
 	ext = ".tsv"
 	prefix="_"
-	if (!is.na(level)){
+	if (!is.null(level)){
 		prefix = paste0( prefix, level, "_" )
 	}
-	if( is.null( parametric ) ) {
+	if( is.na( parametric ) ) {
 		return( paste0( prefix, "rSquaredVals", ext) )
 	}
 	else if( adjusted && parametric ) {
