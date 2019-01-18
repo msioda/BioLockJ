@@ -18,6 +18,7 @@ buildSummaryTables <- function( reportStats, otuLevel ) {
    reportSets = names(fileNameEnding)
    for( reportSet in reportSets ) {
       fileName = getPath( file.path(getModuleDir(), "output"), paste0( prefix, fileNameEnding[reportSet] ) )
+      if ( do.debug() ) print( paste( "Saving output file:", fileName ) )
       df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
       df[, 1] = reportStats[[1]]
       names(df)[1] = names( reportStats )[1]

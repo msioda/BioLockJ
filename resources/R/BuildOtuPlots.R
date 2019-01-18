@@ -173,7 +173,6 @@ main <- function() {
 			cutoffValue = cutoffValue * nrow(otuTable)
 		}
 		
-		if (testing){lastOtuCol=12} ### !!! just for testing !!!s
 		for( otuCol in names(otuTable)[1:lastOtuCol] ) {
 			if( sum( otuTable[,otuCol] > 0 ) >=  cutoffValue ) {
 				par( mfrow = par("mfrow") ) # step to next page, even if the last page is not full
