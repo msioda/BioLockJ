@@ -148,11 +148,11 @@ main <- function() {
 		r2Stats = read.table( rSquareFile, check.names=FALSE, 
 													header=TRUE, sep="\t", row.names = 1 )
 		
-		# select colors for box plots so each box is different even across different metadata fields
-		numBoxes = sapply(otuTable[,c(binaryCols, nominalCols)], function(x){length(levels(as.factor(x)))})
-		boxColors = getColors( sum(numBoxes))
-		metaColColors = split(boxColors, f=as.vector(mapply(x=names(numBoxes), each=numBoxes, rep)))
-		
+		# # select colors for box plots so each box is different even across different metadata fields
+		# numBoxes = sapply(otuTable[,c(binaryCols, nominalCols)], function(x){length(levels(as.factor(x)))})
+		# boxColors = getColors( sum(numBoxes))
+		# metaColColors = split(boxColors, f=as.vector(mapply(x=names(numBoxes), each=numBoxes, rep)))
+		metaColColors = getColorsByCategory(otuTable[,c(binaryCols, nominalCols)])
 		
 		# create empty ouptut file
 		plotsPerOTU = length(reportFields)

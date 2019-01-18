@@ -48,6 +48,27 @@ getColors <- function( n ) {
    return( get_palette( getProperty("r.colorPalette", "npg"), n ) )
 }
 
+# Select colors for each category so each category is different even across different metadata fields
+# Giving no arguments will cause the function to the project metadata,
+# this is ensures that different modules get the same colors (for example MDS plots and OTU plots).
+# Supplying the metaTable may save time.
+getColorsByCategory <- function(metaTable=NULL){
+	if (is.null(metaTable)){
+		metaTable = getMetaData()
+	}
+	categoricals = c(getBinaryFields(), getNominalFields())
+	metaTable = metaTable[names(metaTable) %in% categoricals]
+	if (ncol(metaTable) < 1){
+		print("No categorical metadata fields.  Returning null.")
+		return(NULL)
+	}
+	numBoxes = sapply(metaTable, function(x){length(levels(as.factor(x)))})
+	boxColors = getColors( sum(numBoxes))
+	if ( doDebug() ) print(paste("Selected", length(boxColors), "colors to describe", ncol(metaTable), "categorical variables."))
+	metaColColors = split(boxColors, f=as.vector(mapply(x=names(numBoxes), each=numBoxes, rep)))
+	return(metaColColors)
+}
+
 # Return list, each record contains the OTUs associated with a unique value for the given nominal metadata field (metaCol)
 getFactorGroups <- function( otuTable, metaCol, otuCol ) {
    vals = list()
