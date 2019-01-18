@@ -65,7 +65,11 @@ getColorsByCategory <- function(metaTable=NULL){
 	numBoxes = sapply(metaTable, function(x){length(levels(as.factor(x)))})
 	boxColors = getColors( sum(numBoxes))
 	if ( doDebug() ) print(paste("Selected", length(boxColors), "colors to describe", ncol(metaTable), "categorical variables."))
-	metaColColors = split(boxColors, f=as.vector(mapply(x=names(numBoxes), each=numBoxes, rep)))
+	f = mapply(x=names(numBoxes), each=numBoxes, rep, SIMPLIFY = FALSE)
+	metaColColors = split(boxColors, f=do.call(c, f))
+	for (field in names(metaColColors)){
+		names(metaColColors[[field]]) = levels(as.factor(metaTable[,field]))
+	}
 	return(metaColColors)
 }
 

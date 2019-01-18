@@ -152,7 +152,7 @@ main <- function() {
 		# numBoxes = sapply(otuTable[,c(binaryCols, nominalCols)], function(x){length(levels(as.factor(x)))})
 		# boxColors = getColors( sum(numBoxes))
 		# metaColColors = split(boxColors, f=as.vector(mapply(x=names(numBoxes), each=numBoxes, rep)))
-		metaColColors = getColorsByCategory(otuTable[,c(binaryCols, nominalCols)])
+		metaColColors = getColorsByCategory()
 		
 		# create empty ouptut file
 		plotsPerOTU = length(reportFields)

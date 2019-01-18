@@ -6,6 +6,7 @@ main <- function() {
 	importLibs( c( "vegan" ) )
 	numAxis = getProperty("rMds.numAxis")
 	mdsAtts = getProperty( "rMds.reportFields", c( getBinaryFields(), getNominalFields() )  )
+	metaColColors = getColorsByCategory()
 	for( otuLevel in getProperty("report.taxonomyLevels") ) {
 		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", otuLevel, ".log") ) )
 		# get input data
@@ -44,7 +45,8 @@ main <- function() {
 			metaColVals = as.character(otuTable[,attName])
 			par(mfrow = par("mfrow"))
 			att = as.factor(metaColVals)
-			colorKey = getMdsColorKey( metaColVals )
+			colorKey = metaColColors[[attName]]
+			if( doDebug() ) print( paste( "Using colors: ", paste(colorKey, collapse = ", "), "for", paste(names(colorKey), collapse = ", "), "respectively." ) )
 			position = 1
 			page = 1
 			numAxis = min(c(numAxis, ncol(myMDS$CA$u)))
@@ -68,7 +70,7 @@ main <- function() {
 									 col=colorKey, pch=getProperty("r.pch"), bty="n")
 						# this is the best time to add the page title
 						title(main="Multidimensional Scaling Plots", outer = TRUE, line=1.2, cex=1.5)
-						titlePart2 = ifelse( page == 1, paste( "taxonomic level:", otuLevel), paste(otuLevel, "page", page))
+						titlePart2 = ifelse( page == 1, paste( "taxonomic level:", otuLevel), paste(attName, "page", page))
 						title(main=titlePart2, outer = TRUE, line=0, cex=.5)
 						position = position + 1
 					}
@@ -84,15 +86,6 @@ main <- function() {
 getMdsLabel <- function( axisNum, variance ) { 
 	return( paste0("Axis ", axisNum, " (", paste0( round( variance ), "%)" ) ) )
 }
-
-getMdsColorKey <- function( metaColVals ) { 
-	tableVals = as.factor( metaColVals )
-	factors = levels( tableVals )
-	colors = getColors( length( factors ) )
-	names(colors) = levels( tableVals )
-	return( colors )
-}
-
 
 plotRelativeVariance <- function(percentVariance, numAxis){
 	numBars = min(c(length(percentVariance), 6)) # arbitrary choice, don't show more than 6
