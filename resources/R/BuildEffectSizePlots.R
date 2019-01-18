@@ -6,12 +6,13 @@
 # See calcBarSizes
 
 ### custom config options:
-# r.EffectSizePlot.pvalType=
-# r.EffectSizePlot.pvalIncludeBar=
-# r.EffectSizePlot.userOTUs=
-# r.EffectSizePlot.maxBars=
-# r.EffectSizePlot.effectSizeType=effectSize, foldChange, rSquared
-# r.EffectSizePlot.scale.fun=log2
+# r.plotEffectSize.parametricPval: Y/N should the parametric (vs the nonParametric) pvalue be used
+# r.plotEffectSize.excludePvalAbove=
+# r.plotEffectSize.taxa=
+# r.plotEffectSize.maxNumTaxa=
+# r.plotEffectSize.cohensD=Y
+# r.plotEffectSize.rSquared=Y
+# r.plotEffectSize.foldChange=N
 ### also uses:
 # r.pvalCutoff
 # internal.numMetaCols
@@ -24,16 +25,14 @@
 # It handles pulling data from other modules and options from the BiolockJ properties.
 main <- function(){
 	# get config option for pvalStar, pvalIncludeBar, maxBars, userOTUs, 
-	pvalFileIdentifier = getProperty("r.EffectSizePlot.pvalType", "_adjNonParPvals.tsv")
+	pvalFileIdentifier = ifelse(getProperty("r.plotEffectSize.parametricPval", TRUE),"_adjParPvals.tsv","_adjNonParPvals.tsv")
 	pvalStar = getProperty("r.pvalCutoff", 0.05)
-	pvalIncludeBar = getProperty("r.EffectSizePlot.pvalIncludeBar", 1)
-	maxBars = getProperty("r.EffectSizePlot.maxBars", 40)
-	userOTUs = getProperty("r.EffectSizePlot.userOTUs", NULL)
-	scale.fun=getProperty("r.EffectSizePlot.scale.fun", "log2")
-	effectType = getProperty("r.EffectSizePlot.effectSizeType", c("effectSize", "foldChange", "rSquared"))
-	doFoldChange = "foldChange" %in% effectType
-	doEffectSize = "effectSize" %in% effectType
-	doRSquared = "rSquared" %in% effectType
+	pvalIncludeBar = getProperty("r.plotEffectSize.excludePvalAbove", 1)
+	maxBars = getProperty("r.plotEffectSize.maxNumTaxa", 40)
+	userOTUs = getProperty("r.plotEffectSize.taxa", NULL)
+	doFoldChange = getProperty("r.plotEffectSize.foldChange", FALSE) 
+	doCohensD = getProperty("r.plotEffectSize.cohensD", TRUE) 
+	doRSquared = getProperty("r.plotEffectSize.rSquared", TRUE) 
 	#
 	# get metadata
 	if( doDebug() ) print( paste( "metadata file:", getMetaDataFile() ) )
@@ -77,7 +76,7 @@ main <- function(){
 			if( doDebug() ){ print( paste0("r-squared table has ", nrow(r2Table), " rows and ", ncol(r2Table), " columns."))}
 		}
 		# 
-		if (doEffectSize){
+		if (doCohensD){
 			if( doDebug() ) print( paste( "Prepareing effect size plot for each of", length(getBinaryFields()), "report fields.") )
 		}
 		#
@@ -106,7 +105,7 @@ main <- function(){
 			# rSquared piggy-backs on effects size for selection and ordering, 
 			#   so IF both are plotted, they are ploted in the same order.
 			# Even if it is not a binary attribute, the splitOTU should have AT LEAST 2 tables
-			if (doEffectSize | doRSquared){ 
+			if (doCohensD | doRSquared){ 
 				# r2vals
 				r2vals=r2Table[,reportField]
 				names(r2vals) = row.names(r2Table)
@@ -114,17 +113,17 @@ main <- function(){
 				splitOTU = split(otuTable[row.names(meta),], f=meta[,reportField])
 				# determine if an output table should be saved
 				saveRefTable = NULL
-				if (doEffectSize & isBinaryAtt){
+				if (doCohensD & isBinaryAtt){
 					saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, reportField, "effectSize.tsv", sep="_") )
 				}
 				# toPlot
 				tryCatch(expr={
-					if( doDebug() ) print( paste("Effect size: Calling calcBarSizes for otuLevel:", otuLevel, " and binary attribute:", reportField) )
-					calculations = calcBarSizes(effectType=c("effectSize","rSquared"), r2vals = r2vals,
+					if( doDebug() ) print( paste("CohensD: Calling calcBarSizes for otuLevel:", otuLevel, " and binary attribute:", reportField) )
+					calculations = calcBarSizes(effectType=c("CohensD","rSquared"), r2vals = r2vals,
 																			numGroupVals=splitOTU[[2]], denGroupVals=splitOTU[[1]],
 																			numGroupName=names(splitOTU)[2], denGroupName=names(splitOTU)[1],
 																			pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
-																			orderByColumn=ifelse(doEffectSize & isBinaryAtt, "effectSize", "rSquared"),
+																			orderByColumn=ifelse(doCohensD & isBinaryAtt, "CohensD", "rSquared"),
 																			saveRefTable=saveRefTable)
 					#
 					if (doRSquared){ # does not need to be a binary attribute
@@ -139,16 +138,16 @@ main <- function(){
 						}
 					}
 					#
-					if (doEffectSize & isBinaryAtt){
+					if (doCohensD & isBinaryAtt){
 						if( doDebug() ) print( paste("Effect size: Calling drawPlot for otuLevel:", otuLevel, " and binary attribute:", reportField) )
 						resetPar()
-						complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="effectSize",
-																xAxisLab="Effect Size", title=reportField,
+						complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="CohensD",
+																xAxisLab="Effect Size (Cohen's d)", title=reportField,
 																pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
 																xAxisLab2 = calculations[["xAxisLab2"]],
 																comments=calculations[["comments"]][c(1,2)])
 						if (complete) {
-							print( paste("Completed effect size plot for otuLevel:", otuLevel, " and binary attribute:", reportField))
+							print( paste("Completed CohensD plot for otuLevel:", otuLevel, " and binary attribute:", reportField))
 						}
 					}
 				}, error = function(err) {
@@ -165,12 +164,11 @@ main <- function(){
 																			numGroupVals=splitRelAbund[[2]], denGroupVals=splitRelAbund[[1]],
 																			numGroupName=names(splitRelAbund)[2], denGroupName=names(splitRelAbund)[1],
 																			pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
-																			saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"foldChange.tsv", sep="_") ),
-																			scale.fun=scale.fun)
+																			saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"foldChange.tsv", sep="_") ) )
 					if( doDebug() ) print( paste("Fold change: Calling drawPlot for otuLevel:", otuLevel, " and binary attribute:", reportField) )
 					resetPar()
-					complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="effectSize",
-															xAxisLab="Effect Size", title=biAtt,
+					complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="foldChange",
+															xAxisLab="Fold Change", title=biAtt,
 															pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
 															xAxisLab2 = calculations[["xAxisLab2"]],
 															comments=calculations[["comments"]])
@@ -242,14 +240,14 @@ errorHandler1 = function(err, otuLevel, reportField) {
 #  comment - a string(s) that should be included in the plot to inform the user about this step
 calcBarSizes <- function(numGroupVals, denGroupVals, 
 												 numGroupName, denGroupName,
-												 effectType="effectSize", r2vals=NULL,
+												 effectType="CohensD", r2vals=NULL,
 												 pvals=NULL, pvalIncludeBar=0.05, maxBars=30, userOTUs=NULL,
 												 saveRefTable=NULL, scale.fun="log2", orderByColumn=effectType[1]){
 	# numGroupVals, denGroupVals - each a data frame, where OTUs are column names and rows are samples
 	##   these should have different row names (samples are from different groups) but matching column names.
 	# numGroupName, denGroupName - Strings used in comments (and later in plot)
 	# effectType - what type of impact should be calculated
-	##   effectSize (default) is the difference of the means devided by the pooled standard deviation
+	##   CohensD (default) is the difference of the means devided by the pooled standard deviation
 	##   foldChange is the ratio of the means
 	##   rSquared is taken from the calculate stats module
 	# r2vals - (optional) named vector of r-squared values from a statistical test to use for bar sizes.
@@ -289,23 +287,23 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	if (!is.null(pvals)){
 		toPlot$pvalue = pvals[row.names(toPlot)]
 		header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", pvalIncludeBar,
-															") and if OTU got a star (if under <pvalStar>thresholds controlled by r.EffectSizePlot.pvalIncludeBar and r.pvalCutoff properties respectively.",
-															" See also: r.EffectSizePlot.pvalType property"))
+															") and if OTU got a star (if under <pvalStar>thresholds controlled by r.plotEffectSize.excludePvalAbove and r.pvalCutoff properties respectively.",
+															" See also: r.plotEffectSize.parametricPval property"))
 	}
 	xAxisLab2="" #just make sure it exists; it is defined in if statements
-	if ("effectSize" %in% effectType){
+	if ("CohensD" %in% effectType){
 		numGroupSD = sapply(numGroupVals, sd, na.rm=TRUE)
 		denGroupSD = sapply(denGroupVals, sd, na.rm=TRUE)
 		pooledSD = mapply(calc2GroupPooledSD, 
 											group1.n=numGroupN, group2.n=denGroupN, 
 											group1.sd=numGroupSD, group2.sd=denGroupSD, 
 											USE.NAMES = TRUE)
-		toPlot$effectSize = (denMeans - numMeans) / pooledSD
+		toPlot$CohensD = (denMeans - numMeans) / pooledSD
 		xAxisLab2 = paste0("difference of the means, ", denGroupName, " (n=", max(numGroupN), ") minus ", numGroupName, " (n=", max(denGroupN), "), over pooled sd")
 		if (length(effectType) > 1){
-			comments = c(comments, paste("Effect size is", xAxisLab2))
+			comments = c(comments, paste("Cohen's d is", xAxisLab2))
 		}
-		header = c(header, paste("effectSize:", xAxisLab2))
+		header = c(header, paste("CohensD:", xAxisLab2))
 	}
 	if ("foldChange" %in% effectType){
 		toPlot$foldChange = numMeans / denMeans
@@ -336,7 +334,7 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 	toPlot = toPlot[order(abs(toPlot[,orderByColumn]), decreasing = T),] #highest abs on top
 	maxBars = min(c(maxBars, nrow(toPlot)))
 	toPlot$plotPriority = 1:nrow(toPlot)
-	header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r.EffectSizePlot.maxBars or over-riden using r.EffectSizePlot.userOTUs.'))
+	header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r.plotEffectSize.maxNumTaxa or over-riden using r.plotEffectSize.taxa.'))
 	toPlot$includeInPlot = toPlot$plotPriority <= maxBars
 	comments[1] = paste0("Showing top ", maxBars, " most changed OTUs ", viableOTUs[["comment"]])
 	header = c(header, "includeInPlot: will this otu be included in the plot.")

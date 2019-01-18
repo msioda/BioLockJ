@@ -55,7 +55,7 @@ public class BuildEffectSizePlots extends R_Module implements ScriptModule
 	{
 		// TODO Auto-generated method stub
 		super.executeTask();
-		if( Config.getList( "r.EffectSizePlot.effectSizeType" ).contains( "foldChange" ) )
+		if( Config.getBoolean( "r.plotEffectSize.foldChange" ) )
 		{
 			if( ModuleUtil.getParserModule() != null )
 			{
