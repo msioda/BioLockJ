@@ -12,8 +12,7 @@
 package biolockj.module.seq;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import biolockj.Config;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
@@ -100,7 +99,7 @@ public class KneadDataSanitizer extends ScriptModuleImpl implements ScriptModule
 		return lines;
 	}
 	
-
+	
 	/**
 	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
 	 * {@value #EXE_KNEADDATA_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
@@ -110,13 +109,37 @@ public class KneadDataSanitizer extends ScriptModuleImpl implements ScriptModule
 	 */
 	private String getKneadDataSwitches() throws Exception
 	{
+		final List<String> switches = Config.getList( EXE_KNEADDATA_PARAMS );
 		String formattedSwitches = "-t " +  getNumThreads() + " " + getDbParams();
-		for( final String string: Config.getList( EXE_KNEADDATA_PARAMS ) )
+		
+		final List<String> singleDashParams = getSingleDashParams();
+		
+		final Iterator<String> it = switches.iterator();
+		while( it.hasNext() )
 		{
-			formattedSwitches += "-" + string + " ";
+			final String param = it.next();
+			final StringTokenizer sToken = new StringTokenizer( param, " " );
+			if( singleDashParams.contains( sToken.nextToken() ) )
+			{
+				formattedSwitches += "-" + param + " ";
+			}
+			else
+			{
+				formattedSwitches += "--" + param + " ";
+			}
 		}
 
 		return formattedSwitches;
+	}
+	
+	private List<String> getSingleDashParams() throws Exception
+	{
+		final List<String> params = new ArrayList<>();
+		for( final String param: singleDashParams )
+		{
+			params.add( param );
+		}
+		return params;
 	}
 	
 	// TODO --> add comma separated list with no spaces
@@ -178,5 +201,6 @@ public class KneadDataSanitizer extends ScriptModuleImpl implements ScriptModule
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String DB_PARAM = "-db";
 	private static final String OUTPUT_FILE_PREFIX_PARAM = "--output-prefix";
+	private static final String[] singleDashParams = { "p", "q", "v" };
 
 }

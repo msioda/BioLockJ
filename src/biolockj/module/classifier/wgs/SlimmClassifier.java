@@ -110,11 +110,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	@Override
 	public String getClassifierParams() throws Exception
 	{
-		final List<String> singleDashParamList = new ArrayList<>();
-		for( final String x: singleDashParams )
-		{
-			singleDashParamList.add( x );
-		}
+		final List<String> singleDashParams = getSingleDashParams();
 
 		String formattedSwitches = " ";
 		final List<String> switches = Config.getList( EXE_CLASSIFIER_PARAMS );
@@ -123,7 +119,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		{
 			final String token = it.next();
 			final StringTokenizer sToken = new StringTokenizer( token, " " );
-			if( singleDashParamList.contains( sToken.nextToken() ) )
+			if( singleDashParams.contains( sToken.nextToken() ) )
 			{
 				formattedSwitches += "-" + token + " ";
 			}
@@ -298,6 +294,16 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 			slimmSwitches += "-r " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
 		}
 	}
+	
+	private List<String> getSingleDashParams() throws Exception
+	{
+		final List<String> params = new ArrayList<>();
+		for( final String param: singleDashParams )
+		{
+			params.add( param );
+		}
+		return params;
+	}
 
 	private String bowtieSwitches = null;
 	private String slimmSwitches = null;
@@ -349,6 +355,6 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String REF_GENOME_INDEX = "slimm.refGenomeIndex";
 
 	private static final String[] singleDashParams = { "r", "c", "s", "u", "5", "3", "N", "L", "i", "k", "a", "D", "R",
-			"I", "X", "t", "" };
+			"I", "X", "t" };
 
 }
