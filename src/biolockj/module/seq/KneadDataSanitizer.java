@@ -90,7 +90,7 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	protected List<String> buildScriptLinesToMoveValidSeqsToOutputDir( final String sampleId ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		final String fileSuffix = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		final String fileSuffix = getFileExt();
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			final String fwSuffix = Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
@@ -148,7 +148,7 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	private String getFileExt() throws Exception
 	{
 		final String ext = Config.getString( SeqUtil.INTERNAL_SEQ_TYPE );
-		return ext == null ? SeqUtil.FASTQ: ext;
+		return "." + ( ext == null ? SeqUtil.FASTQ: ext );
 	}
 
 	/**
