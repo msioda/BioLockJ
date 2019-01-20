@@ -866,31 +866,39 @@ public class SeqUtil
 	 */
 	private static void registerDemuxStatus() throws Exception
 	{
+		int count = BioLockJUtil.getBasicInputFiles().size();
+		Log.info( SeqUtil.class, "Register Demux Status for: " + count + " input files." );
 		boolean isMultiplexed = false;
-
 		if( !DemuxUtil.doDemux() )
 		{
 			Log.debug( SeqUtil.class, "Do not demux!" );
 		}
-		else if( BioLockJUtil.getBasicInputFiles().size() == 1 )
+		else if( count == 1 )
 		{
 			Log.info( SeqUtil.class, "Must demultiplex data!  Found exactly 1 input file" );
 			isMultiplexed = true;
 		}
-		else if( BioLockJUtil.getBasicInputFiles().size() == 2 )
+		else if( count == 2 )
 		{
+			
 			boolean foundFw = false;
 			boolean foundRv = false;
 			final String fwRead = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
 			final String rvRead = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
+			Set<String> suffixes = new HashSet<>();
+			if( fwRead != null ) suffixes.add( fwRead );
+			if( rvRead != null ) suffixes.add( rvRead );
+			Log.info( SeqUtil.class, "Checking 2 input files for paired read suffix values: " + suffixes );
 			for( final File file: BioLockJUtil.getBasicInputFiles() )
 			{
 				if( fwRead != null && file.getName().contains( fwRead ) )
 				{
+					Log.info( SeqUtil.class, "Found forward read: " + file.getName() );
 					foundFw = true;
 				}
 				else if( rvRead != null && file.getName().contains( rvRead ) )
 				{
+					Log.info( SeqUtil.class, "Found reverse read: " + file.getName() );
 					foundRv = true;
 				}
 			}
@@ -906,7 +914,7 @@ public class SeqUtil
 
 		if( isMultiplexed && numMultiSeqLines == null )
 		{
-			throw new Exception( "Multi-line sequence files must be demultiplexed before analyzed by BioLockJ" );
+			throw new Exception( "Multi-line sequence files must be demultiplexed before analyzed by BioLockJ because the number of lines per read is inconsistant." );
 		}
 	}
 

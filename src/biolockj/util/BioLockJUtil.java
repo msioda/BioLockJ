@@ -192,7 +192,7 @@ public class BioLockJUtil
 			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
 			for( final File file: files )
 			{
-				if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+				if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
 				{
 					inputFiles.add( file );
 				}
