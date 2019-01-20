@@ -279,6 +279,7 @@ public class BioLockJ
 
 		Log.warn( BioLockJ.class, RETURN + Log.LOG_SPACER + RETURN + "RESTART PROJECT DIR --> "
 				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN + Log.LOG_SPACER + RETURN );
+		Log.info( BioLockJ.class, "Initializing Pipeline..." );
 
 		SummaryUtil.updateNumAttempts();
 		if( isPipelineComplete( RuntimeParamUtil.getRestartDir() ) )
