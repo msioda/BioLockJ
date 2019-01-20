@@ -58,7 +58,13 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		getBarcodeCutoff();
 		final String demuxStrategy = "Config property [ " + DemuxUtil.DEMUX_STRATEGY + "="
 				+ Config.getString( DemuxUtil.DEMUX_STRATEGY ) + " ]";
-		if( DemuxUtil.demuxWithBarcode() )
+		
+		if( Config.getString( DemuxUtil.DEMUX_STRATEGY ) == null )
+		{
+			Log.info( getClass(), DemuxUtil.DEMUX_STRATEGY + " is undefined for a multiplexed dataset.  Demultiplexer will analyze the file to determine if Sample IDs or barcodes "
+					+ "should be used for demultiplexing.  Demultiplexer will also determine if reverse compliment barcodes are needed and set: " + DemuxUtil.BARCODE_USE_REV_COMP );
+		}
+		else if( DemuxUtil.demuxWithBarcode() )
 		{
 			if( MetaUtil.getFile() == null || !MetaUtil.getFile().exists() )
 			{

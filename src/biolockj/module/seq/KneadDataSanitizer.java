@@ -59,6 +59,10 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
+		if( !SeqUtil.isFastQ() )
+		{
+			throw new Exception( getClass().getName() + " requires FASTQ format!" );
+		}
 		getKneadDataSwitches();
 	}
 
@@ -90,7 +94,7 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	protected List<String> buildScriptLinesToMoveValidSeqsToOutputDir( final String sampleId ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		final String fileSuffix = getFileExt();
+		final String fileSuffix = fastqExt();
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			final String fwSuffix = Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
@@ -118,19 +122,18 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	 * 
 	 * @param sampleId Sample ID
 	 * @param isRvRead Boolean TRUE to return the file containing reverse reads
-	 * @return File with sanitized sequencess
+	 * @return File with sanitized sequences
 	 * @throws Exception if errors occur
 	 */
 	protected File getSanatizedFile( final String sampleId, final Boolean isRvRead ) throws Exception
 	{
-		// String suffix = KNEADDATA_SUFFIX;
 		String suffix = "";
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			suffix += isRvRead ? RV_OUTPUT_SUFFIX: FW_OUTPUT_SUFFIX;
 		}
 
-		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix + getFileExt() );
+		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix + fastqExt() );
 	}
 
 	// TODO --> add comma separated list with no spaces
@@ -145,10 +148,9 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		return params;
 	}
 
-	private String getFileExt() throws Exception
+	private String fastqExt() throws Exception
 	{
-		final String ext = Config.getString( SeqUtil.INTERNAL_SEQ_TYPE );
-		return "." + ( ext == null ? SeqUtil.FASTQ: ext );
+		return "." + SeqUtil.FASTQ;
 	}
 
 	/**
@@ -222,7 +224,6 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 
 	private static final String DB_PARAM = "-db";
 	private static final String FW_OUTPUT_SUFFIX = "_paired_1";
-	// private static final String KNEADDATA_SUFFIX = "_kneaddata";
 	private static final String INPUT_PARAM = "-i";
 	private static final String OUTPUT_FILE_PREFIX_PARAM = "--output-prefix";
 	private static final String OUTPUT_PARAM = "-o";
