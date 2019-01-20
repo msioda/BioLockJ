@@ -126,10 +126,17 @@ public class DemuxUtil
 	 * @return boolean
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
-	public static boolean doDemux() throws ConfigNotFoundException
+	public static Boolean doDemux() throws ConfigNotFoundException
 	{
-		return Config.getString( DEMUX_STRATEGY ) != null
-				&& !Config.requireString( DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX );
+		if( Config.getString( DEMUX_STRATEGY ) == null )
+		{
+			return null;
+		}
+		else if( Config.requireString( DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX ) )
+		{
+			return true;
+		}
+		return false;
 	}
 
 	/**

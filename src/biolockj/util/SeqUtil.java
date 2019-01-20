@@ -869,9 +869,10 @@ public class SeqUtil
 		int count = BioLockJUtil.getBasicInputFiles().size();
 		Log.info( SeqUtil.class, "Register Demux Status for: " + count + " input files." );
 		boolean isMultiplexed = false;
-		if( !DemuxUtil.doDemux() )
+		if( DemuxUtil.doDemux() != null && !DemuxUtil.doDemux() )
 		{
 			Log.debug( SeqUtil.class, "Do not demux!" );
+			Log.info( SeqUtil.class, "TEMP INFO --> Do not demux!" );
 		}
 		else if( count == 1 )
 		{
