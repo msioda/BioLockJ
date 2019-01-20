@@ -17,7 +17,8 @@ import biolockj.BioModuleFactory;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.ScriptModule;
-import biolockj.module.ScriptModuleImpl;
+import biolockj.module.SeqModule;
+import biolockj.module.SeqModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
@@ -43,7 +44,7 @@ import biolockj.util.SeqUtil;
  * <li>Rename the validated mapping file to the original metadata file name and save to the module output directory.
  * </ol>
  */
-public class BuildQiimeMapping extends ScriptModuleImpl implements ScriptModule
+public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 {
 
 	/**

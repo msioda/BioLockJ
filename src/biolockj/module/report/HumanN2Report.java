@@ -9,13 +9,14 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.seq;
+package biolockj.module.report;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import biolockj.Config;
-import biolockj.module.SeqModule;
-import biolockj.module.SeqModuleImpl;
+import biolockj.module.ScriptModule;
+import biolockj.module.ScriptModuleImpl;
 import biolockj.util.SeqUtil;
 
 /**
@@ -23,7 +24,7 @@ import biolockj.util.SeqUtil;
  * Multiple contaminent DNA databases can be used to filter reads simultaniously.<br>
  * Common contaminents include Human, Viral, and Plasmid DNA.<br>
  */
-public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
+public class HumanN2Report extends ScriptModuleImpl implements ScriptModule
 {
 
 	@Override
@@ -48,7 +49,7 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 				lines.add( sanatize( seqFile, null ) );
 			}
 
-			lines.addAll( buildScriptLinesToMoveValidSeqsToOutputDir( SeqUtil.getSampleId( seqFile.getName() ) ) );
+			lines.addAll( copyToOutputDir( SeqUtil.getSampleId( seqFile.getName() ) ) );
 
 			data.add( lines );
 		}
@@ -78,16 +79,7 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		return lines;
 	}
 
-	/**
-	 * Move 1 file named /"Sample_ID.fastq/" if module input consists of forward reads only.<br>
-	 * If module input contains paired reads, move 2 files named /"Sample_ID_paired_1.fastq/" and
-	 * /"Sample_ID_paired_2.fastq/" to the module output directory (after renaming them to BioLockJ standards).
-	 * 
-	 * @param sampleId Sample ID
-	 * @return Script lines to move the file or files
-	 * @throws Exception if errors occur building lines
-	 */
-	protected List<String> buildScriptLinesToMoveValidSeqsToOutputDir( final String sampleId ) throws Exception
+	private List<String> copyToOutputDir( final String sampleId ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
 		final String fileSuffix = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
@@ -113,26 +105,6 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		return lines;
 	}
 
-	/**
-	 * Return sanitized sequence data file.
-	 * 
-	 * @param sampleId Sample ID
-	 * @param isRvRead Boolean TRUE to return the file containing reverse reads
-	 * @return File with sanitized sequencess
-	 * @throws Exception if errors occur
-	 */
-	protected File getSanatizedFile( final String sampleId, final Boolean isRvRead ) throws Exception
-	{
-		// String suffix = KNEADDATA_SUFFIX;
-		String suffix = "";
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			suffix += isRvRead ? RV_OUTPUT_SUFFIX: FW_OUTPUT_SUFFIX;
-		}
-
-		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix + getFileExt() );
-	}
-
 	// TODO --> add comma separated list with no spaces
 	private String getDbParams() throws Exception
 	{
@@ -145,12 +117,6 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		return params;
 	}
 
-	private String getFileExt() throws Exception
-	{
-		final String ext = Config.getString( SeqUtil.INTERNAL_SEQ_TYPE );
-		return ext == null ? SeqUtil.FASTQ: ext;
-	}
-
 	/**
 	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
 	 * {@value #EXE_KNEADDATA_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
@@ -160,37 +126,25 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	 */
 	private String getKneadDataSwitches() throws Exception
 	{
-		final List<String> switches = Config.getList( EXE_KNEADDATA_PARAMS );
 		String formattedSwitches = "-t " + getNumThreads() + " " + getDbParams();
-
-		final List<String> singleDashParams = getSingleDashParams();
-
-		final Iterator<String> it = switches.iterator();
-		while( it.hasNext() )
+		for( final String string: Config.getList( EXE_KNEADDATA_PARAMS ) )
 		{
-			final String param = it.next();
-			final StringTokenizer sToken = new StringTokenizer( param, " " );
-			if( singleDashParams.contains( sToken.nextToken() ) )
-			{
-				formattedSwitches += "-" + param + " ";
-			}
-			else
-			{
-				formattedSwitches += "--" + param + " ";
-			}
+			formattedSwitches += "-" + string + " ";
 		}
 
 		return formattedSwitches;
 	}
 
-	private List<String> getSingleDashParams() throws Exception
+	private File getSanatizedFile( final String sampleId, final Boolean isRvRead ) throws Exception
 	{
-		final List<String> params = new ArrayList<>();
-		for( final String param: singleDashParams )
+		String suffix = KNEADDATA_SUFFIX;
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
-			params.add( param );
+			suffix += isRvRead ? RV_OUTPUT_SUFFIX: FW_OUTPUT_SUFFIX;
 		}
-		return params;
+
+		suffix += "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix );
 	}
 
 	private String sanatize( final File seqFile, final File rvRead ) throws Exception
@@ -222,11 +176,10 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 
 	private static final String DB_PARAM = "-db";
 	private static final String FW_OUTPUT_SUFFIX = "_paired_1";
-	// private static final String KNEADDATA_SUFFIX = "_kneaddata";
 	private static final String INPUT_PARAM = "-i";
+	private static final String KNEADDATA_SUFFIX = "_kneaddata";
 	private static final String OUTPUT_FILE_PREFIX_PARAM = "--output-prefix";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String RV_OUTPUT_SUFFIX = "_paired_2";
-	private static final String[] singleDashParams = { "p", "q", "v" };
 
 }

@@ -20,6 +20,7 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
 
@@ -27,8 +28,9 @@ import biolockj.util.*;
  * This BioModule imposes a minimum and/or maximum number of reads per sample. Samples below the minimum are discarded.
  * Samples above the maximum are limited by selecting random reads up to the maximum value.
  */
-public class PreRarefier extends JavaModuleImpl implements JavaModule
+public class PreRarefier extends JavaModuleImpl implements JavaModule, SeqModule
 {
+
 	/**
 	 * Validate module dependencies
 	 * <ol>
@@ -88,6 +90,12 @@ public class PreRarefier extends JavaModuleImpl implements JavaModule
 		}
 
 		return preReqs;
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
 	}
 
 	/**

@@ -16,9 +16,7 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.Pipeline;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
+import biolockj.module.*;
 import biolockj.module.report.Email;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
@@ -29,8 +27,9 @@ import biolockj.util.SeqUtil;
  * identifying barcode (if defined in the metatata) is stored in the sequence header.<br>
  * BioLockJ is designed to run on demultiplexed data so this must be the last module to run before the Summary module.
  */
-public class Multiplexer extends JavaModuleImpl implements JavaModule
+public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
+
 	/**
 	 * Validate module dependencies:
 	 * <ol>
@@ -47,6 +46,12 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 		Log.warn( getClass(), "BioLockJ requires demultiplexed data, so this must be the last module except Email" );
 
 		validateModuleOrder();
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
 	}
 
 	/**

@@ -121,7 +121,7 @@ public class BioModuleFactory
 		final BioModule firstSeqProcMod = getFirstSeqProcessingModule( bioModules );
 		if( firstSeqProcMod != null && firstSeqProcMod.getClass().getName().contains( "qiime" ) )
 		{
-			for( final File file: BioLockJUtil.getPipelineInputFiles() )
+			for( final File file: BioLockJUtil.getBasicInputFiles() )
 			{
 				if( SeqUtil.isGzipped( file.getName() ) )
 				{

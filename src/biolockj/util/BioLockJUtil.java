@@ -21,7 +21,6 @@ import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.exception.ConfigPathException;
-import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
 
 /**
@@ -326,57 +325,6 @@ public class BioLockJUtil
 		}
 		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
 				+ MASTER_PREFIX + configName );
-	}
-
-	/**
-	 * Recursively get files located in the directories listed in
-	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS} after removing
-	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_IGNORE_FILES}
-	 * 
-	 * @return Pipeline input files
-	 * @throws ConfigViolationException if sequence files without valid metadata are detected
-	 * @throws Exception if no input files are found
-	 */
-	public static List<File> getPipelineInputFiles() throws Exception
-	{
-		if( filteredInputFiles.isEmpty() )
-		{
-			final List<File> seqsWithoutMetaId = new ArrayList<>();
-			for( final File file: BioLockJUtil.getBasicInputFiles() )
-			{
-				if( !SeqUtil.requireSeqInput() || Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
-						|| MetaUtil.getMetadata() == null
-						|| MetaUtil.getSampleIds().contains( SeqUtil.getSampleId( file.getName() ) ) )
-				{
-					filteredInputFiles.add( file );
-				}
-				else if( Config.getBoolean( MetaUtil.META_REQUIRED ) ) // metadata required
-				{
-					seqsWithoutMetaId.add( file );
-					throw new ConfigViolationException( MetaUtil.META_REQUIRED,
-							"Sample ID not found in metadata file: " + file.getAbsolutePath() );
-				}
-				else
-				{
-					Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
-							+ MetaUtil.META_REQUIRED + "=" + Config.FALSE + " ]: " + file.getAbsolutePath() );
-				}
-			}
-
-			if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( MetaUtil.META_REQUIRED ) )
-			{
-				throw new ConfigViolationException( MetaUtil.META_REQUIRED,
-						"No metadata found for the following files: " + BioLockJ.RETURN
-								+ BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
-			}
-
-			if( filteredInputFiles.isEmpty() )
-			{
-				throw new Exception( "No valid files found in: " + Config.INPUT_DIRS );
-			}
-		}
-
-		return filteredInputFiles;
 	}
 
 	/**
@@ -722,8 +670,6 @@ public class BioLockJUtil
 	 */
 	public static final String MASTER_PREFIX = "MASTER_";
 	private static final String DEFAULT_CONFIG_FLAG = "# ----> Default Config: ";
-	private static final List<File> filteredInputFiles = new ArrayList<>();
-
 	private static final List<File> inputFiles = new ArrayList<>();
 	private static final String ORIG_CONFIG_FLAG = "# ----> Project Config: ";
 	private static final String RETURN = BioLockJ.RETURN;

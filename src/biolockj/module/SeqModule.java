@@ -2,7 +2,7 @@
  * @UNCC Fodor Lab
  * @author Michael Sioda
  * @email msioda@uncc.edu
- * @date Feb 9, 2017
+ * @date Jan 20, 2019
  * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
  * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
  * later version, provided that any use properly credits the author. This program is distributed in the hope that it
@@ -11,30 +11,24 @@
  */
 package biolockj.module;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
+
 /**
- * Classes that implement this interface are pure Java modules.<br>
+ * Classes that implement this interface requires sequence files for input.<br>
  */
-public interface JavaModule extends ScriptModule
+public interface SeqModule extends ScriptModule
 {
 
 	/**
-	 * This method will create the success flag file so the next module can run.
-	 *
-	 * @throws Exception thrown if any runtime error occurs
+	 * Return only sequence files for sample IDs found in the metadata file.<br>
+	 * If {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_REQUIRED} = {@value biolockj.Configl#TRUE}, an
+	 * error is thrown to list the files that cannot be matched to a metadata row.
+	 * 
+	 * @return Module input sequence files
+	 * @throws Exception if no input files are found
 	 */
-	public void moduleComplete() throws Exception;
+	public List<File> getSeqFiles( Collection<File> files ) throws Exception;
 
-	/**
-	 * This method will create the fail flag file so the pipeline can move on..
-	 *
-	 * @throws Exception thrown if any runtime error occurs
-	 */
-	public void moduleFailed() throws Exception;
-
-	/**
-	 * This method executes the modules primary Java routine.
-	 *
-	 * @throws Exception thrown if any runtime error occurs
-	 */
-	public void runModule() throws Exception;
 }

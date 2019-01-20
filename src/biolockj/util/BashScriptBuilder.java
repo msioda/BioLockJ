@@ -602,7 +602,6 @@ public class BashScriptBuilder
 		return false;
 	}
 
-
 	/**
 	 * Return lines to script that load cluster modules based on {@link biolockj.Config}.{@value #CLUSTER_MODULES}
 	 *
@@ -648,6 +647,12 @@ public class BashScriptBuilder
 			Log.error( BashScriptBuilder.class, "Error occurred printing script to log file: " + filePath, ex );
 		}
 	}
+
+	/**
+	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
+	 * {@value biolockj.Config#TRUE} will run Java module as a script instead of running on the head node.
+	 */
+	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScriptModule";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #CLUSTER_BATCH_COMMAND}<br>

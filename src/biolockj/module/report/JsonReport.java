@@ -14,8 +14,7 @@ import biolockj.node.JsonNode;
 import biolockj.util.*;
 
 /**
- * This BioModule is used to build a JSON file (summary.json) compiled from all OTUs
- * in the dataset.
+ * This BioModule is used to build a JSON file (summary.json) compiled from all OTUs in the dataset.
  */
 public class JsonReport extends JavaModuleImpl implements JavaModule
 {
@@ -29,43 +28,18 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
 		if( BioLockJUtil.getBasicInputFiles().size() == 1 )
 		{
-			File inFile = BioLockJUtil.getBasicInputFiles().iterator().next();
+			final File inFile = BioLockJUtil.getBasicInputFiles().iterator().next();
 			if( inFile.getName().endsWith( getInputFileSuffix() ) )
 			{
 				return preReqs;
 			}
 		}
-		
+
 		preReqs.add( CompileOtuCounts.class );
-		
+
 		return preReqs;
 	}
-	
-	/**
-	 * Check pipeline input to see if OTU summary file is the only pipeline input file.
-	 * 
-	 * @return TRUE if pipeline input
-	 * @throws Exception
-	 */
-	protected boolean pipelineInputIsOtuSummaryFile() throws Exception
-	{
-		if( BioLockJUtil.getBasicInputFiles().size() == 1 )
-		{
-			File inFile = BioLockJUtil.getBasicInputFiles().iterator().next();
-			if( inFile.getName().endsWith( getInputFileSuffix() ) )
-			{
-				return true;
-			}
-		}
-		
-		return false;
-	}
-	
-	private String getInputFileSuffix() throws Exception
-	{
-		return CompileOtuCounts.SUMMARY + OtuUtil.OTU_COUNT + TSV_EXT;
-	}
-	
+
 	@Override
 	public String getSummary() throws Exception
 	{
@@ -156,6 +130,26 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
+	 * Check pipeline input to see if OTU summary file is the only pipeline input file.
+	 * 
+	 * @return TRUE if pipeline input
+	 * @throws Exception
+	 */
+	protected boolean pipelineInputIsOtuSummaryFile() throws Exception
+	{
+		if( BioLockJUtil.getBasicInputFiles().size() == 1 )
+		{
+			final File inFile = BioLockJUtil.getBasicInputFiles().iterator().next();
+			if( inFile.getName().endsWith( getInputFileSuffix() ) )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Add stats from {@link biolockj.module.r.CalculateStats} into all of the {@link biolockj.node.JsonNode}s.
 	 * 
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode))
@@ -166,8 +160,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * @throws Exception if errors occur
 	 */
 	protected LinkedHashMap<String, TreeSet<JsonNode>> updateNodeStats(
-			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final File stats, final String level, final String label )
-			throws Exception
+			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final File stats, final String level,
+			final String label ) throws Exception
 	{
 		Log.info( getClass(), "Adding " + label + " stats from: " + stats.getAbsolutePath() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( stats );
@@ -276,10 +270,10 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		Log.info( getClass(), "Adding stats to JSON nodes..." );
 		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
-			Map<String, File> statReports = getStatReports( level );
+			final Map<String, File> statReports = getStatReports( level );
 			for( final String name: statReports.keySet() )
 			{
-				File file = statReports.get( name );
+				final File file = statReports.get( name );
 				if( file != null )
 				{
 					jsonMap = updateNodeStats( jsonMap, file, level, name );
@@ -309,6 +303,11 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			}
 		}
 		return childNodes;
+	}
+
+	private String getInputFileSuffix() throws Exception
+	{
+		return CompileOtuCounts.SUMMARY + OtuUtil.OTU_COUNT + TSV_EXT;
 	}
 
 	private JsonNode getJsonNode( final String otu, final Set<JsonNode> jsonNodes, final String level )
@@ -412,7 +411,6 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	}
 
-
 	private int numberOfNodes = 1; // root always created
 
 	private String summary = "";
@@ -421,6 +419,6 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	private static final String JSON_SUMMARY = "otuSummary.json";
 	private static final String NUM_SEQS = "numSeqs";
 	private static final String OTU_LEVEL = "taxaLevel";
-	private static final String TAXA = "taxa";
 	private static final String ROOT_NODE = "root";
+	private static final String TAXA = "taxa";
 }

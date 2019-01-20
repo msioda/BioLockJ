@@ -12,7 +12,7 @@
 package biolockj.module.classifier;
 
 import biolockj.BioLockJ;
-import biolockj.module.ScriptModule;
+import biolockj.module.SeqModule;
 
 /**
  * Classifier {@link biolockj.module.BioModule}s build one or more bash scripts to call the application on sequence
@@ -20,7 +20,7 @@ import biolockj.module.ScriptModule;
  * to get classifier command (loaded module, executable file path, or in the $USER $PATH) and optional command line
  * parameters, read from {@link biolockj.Config}.{@value #EXE_CLASSIFIER_PARAMS}
  */
-public interface ClassifierModule extends ScriptModule
+public interface ClassifierModule extends SeqModule
 {
 	/**
 	 * Get the executable from {@link biolockj.Config} {@value #EXE_CLASSIFIER} required to classify the samples.

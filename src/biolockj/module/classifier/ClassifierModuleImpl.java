@@ -18,13 +18,13 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
-import biolockj.module.ScriptModuleImpl;
+import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.parser.ParserModule;
 
 /**
  * This is the superclass for all WGS and 16S biolockj.module.classifier BioModules.
  */
-public abstract class ClassifierModuleImpl extends ScriptModuleImpl implements ClassifierModule
+public abstract class ClassifierModuleImpl extends SeqModuleImpl implements ClassifierModule
 {
 	/**
 	 * Validate module dependencies:

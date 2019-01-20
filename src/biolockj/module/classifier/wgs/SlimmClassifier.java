@@ -220,6 +220,16 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		return switches + formatDerivedBowtieSwitches();
 	}
 
+	private List<String> getSingleDashParams() throws Exception
+	{
+		final List<String> params = new ArrayList<>();
+		for( final String param: singleDashParams )
+		{
+			params.add( param );
+		}
+		return params;
+	}
+
 	private void registerDefaultSwitches() throws Exception
 	{
 		setDefaultBowtieSwitches();
@@ -293,16 +303,6 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		{
 			slimmSwitches += "-r " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
 		}
-	}
-	
-	private List<String> getSingleDashParams() throws Exception
-	{
-		final List<String> params = new ArrayList<>();
-		for( final String param: singleDashParams )
-		{
-			params.add( param );
-		}
-		return params;
 	}
 
 	private String bowtieSwitches = null;

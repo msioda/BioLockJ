@@ -21,7 +21,6 @@ import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.r.R_Module;
 
 /**
@@ -167,59 +166,6 @@ public class ModuleUtil
 				bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
 		return getRunTime( System.currentTimeMillis() - started.lastModified() );
 	}
-	
-	/**
-	 * Get the previous module names configured.
-	 * If the pipeline is pully initialized we check against {@link biolockj.Pipeline#getModules()}
-	 * Otherwise, only check the modules listed in the {@link biolockj.Config} file.
-	 * 
-	 * @param bioModule BioModule 
-	 * @return List of modules configured prior to the given bioModule parameter
-	 * @throws Exception if errors occur
-	 */
-	public static List<String> getPreviousModuleNames( final BioModule bioModule ) throws Exception
-	{
-		final List<String> previousModules = new ArrayList<>();
-		for( String moduleName: getModuleNames() )
-		{
-			if( bioModule.getClass().getName().equals( moduleName ) )
-			{
-				break;
-			}
-			previousModules.add( moduleName );
-		}
-		
-		return previousModules;
-	}
-	
-	private static List<String> getModuleNames() throws Exception
-	{
-		final List<String> names = new ArrayList<>();
-		if( Pipeline.getModules() == null )
-		{
-			return Config.requireList( Config.INTERNAL_BLJ_MODULE );
-		}
-		for( BioModule module: Pipeline.getModules() )
-		{
-			names.add( module.getClass().getName() );
-		}
-		return names;
-	}
-	
-
-	/**
-	 * Method checks if preReq is configured to run prior to the bioModule.
-	 * 
-	 * @param bioModule BioModule
-	 * @param preReq Prerequisite BioModule
-	 * @return TRUE if preReq is found
-	 * @throws Exception if errors occur
-	 */
-	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
-	{
-		return getPreviousModuleNames( bioModule ).contains( preReq );
-	}
-
 
 	/**
 	 * BioModules are run in the order configured. Return the module configured just before the bioModule param.
@@ -241,6 +187,30 @@ public class ModuleUtil
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get the previous module names configured. If the pipeline is pully initialized we check against
+	 * {@link biolockj.Pipeline#getModules()} Otherwise, only check the modules listed in the {@link biolockj.Config}
+	 * file.
+	 * 
+	 * @param bioModule BioModule
+	 * @return List of modules configured prior to the given bioModule parameter
+	 * @throws Exception if errors occur
+	 */
+	public static List<String> getPreviousModuleNames( final BioModule bioModule ) throws Exception
+	{
+		final List<String> previousModules = new ArrayList<>();
+		for( final String moduleName: getModuleNames() )
+		{
+			if( bioModule.getClass().getName().equals( moduleName ) )
+			{
+				break;
+			}
+			previousModules.add( moduleName );
+		}
+
+		return previousModules;
 	}
 
 	/**
@@ -487,6 +457,19 @@ public class ModuleUtil
 	}
 
 	/**
+	 * Method checks if preReq is configured to run prior to the bioModule.
+	 * 
+	 * @param bioModule BioModule
+	 * @param preReq Prerequisite BioModule
+	 * @return TRUE if preReq is found
+	 * @throws Exception if errors occur
+	 */
+	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
+	{
+		return getPreviousModuleNames( bioModule ).contains( preReq );
+	}
+
+	/**
 	 * Get BioModule subdirectory File object with given name. If directory doesn't exist, create it.
 	 *
 	 * @param bioModule BioModule
@@ -515,6 +498,20 @@ public class ModuleUtil
 	{
 		final File dir = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + subDirName );
 		return dir.exists();
+	}
+
+	private static List<String> getModuleNames() throws Exception
+	{
+		final List<String> names = new ArrayList<>();
+		if( Pipeline.getModules() == null )
+		{
+			return Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		}
+		for( final BioModule module: Pipeline.getModules() )
+		{
+			names.add( module.getClass().getName() );
+		}
+		return names;
 	}
 
 }

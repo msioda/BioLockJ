@@ -114,24 +114,6 @@ public class SeqUtil
 
 	}
 
-	// public static String getHeader( String line )
-	// {
-	// line = line.trim();
-	// final boolean hasFwDelim = line.contains( ILLUMINA_FW_READ_IND );
-	// final boolean hasRvDelim = line.contains( ILLUMINA_RV_READ_IND );
-	// final String delim = hasFwDelim ? ILLUMINA_FW_READ_IND: hasRvDelim ? ILLUMINA_RV_READ_IND: null;
-	// if( delim != null )
-	// {
-	// int index = line.indexOf( delim );
-	// return line.substring( 0, index ) + "[12]" + line.substring( index + 1 );
-	// }
-	// else
-	// {
-	// return line.trim();
-	// }
-	//
-	// }
-
 	/**
 	 * Return the header of each read in the sequence file.
 	 * 
@@ -444,6 +426,44 @@ public class SeqUtil
 		}
 
 		return id;
+	}
+
+	/**
+	 * Return only sequence files for sample IDs found in the metadata file.<br>
+	 * If {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_REQUIRED} = {@value biolockj.Configl#TRUE}, an
+	 * error is thrown to list the files that cannot be matched to a metadata row.
+	 * 
+	 * @return Module input sequence files
+	 * @throws Exception if no input files are found
+	 */
+	public static List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		final List<File> seqFiles = new ArrayList<>();
+		final List<File> seqsWithoutMetaId = new ArrayList<>();
+		for( final File file: files )
+		{
+			if( MetaUtil.getSampleIds().contains( SeqUtil.getSampleId( file.getName() ) ) )
+			{
+				seqFiles.add( file );
+			}
+			else if( Config.getBoolean( MetaUtil.META_REQUIRED ) ) // metadata required
+			{
+				seqsWithoutMetaId.add( file );
+			}
+			else
+			{
+				Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
+						+ MetaUtil.META_REQUIRED + "=" + Config.FALSE + " ]: " + file.getAbsolutePath() );
+			}
+		}
+
+		if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( MetaUtil.META_REQUIRED ) )
+		{
+			throw new ConfigViolationException( MetaUtil.META_REQUIRED, "No metadata found for the following files: "
+					+ BioLockJ.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
+		}
+
+		return seqFiles;
 	}
 
 	/**
@@ -770,7 +790,7 @@ public class SeqUtil
 		boolean foundPairedReads = false;
 		if( Config.getBoolean( Config.INTERNAL_MULTIPLEXED ) )
 		{
-			if( BioLockJUtil.getPipelineInputFiles().size() > 1 )
+			if( BioLockJUtil.getBasicInputFiles().size() > 1 )
 			{
 				foundPairedReads = true;
 			}
@@ -778,12 +798,12 @@ public class SeqUtil
 			{
 				boolean foundFw = false;
 				boolean foundRv = false;
-				final BufferedReader reader = BioLockJUtil
-						.getFileReader( BioLockJUtil.getPipelineInputFiles().get( 0 ) );
+				final File testFile = BioLockJUtil.getBasicInputFiles().iterator().next();
+				final BufferedReader reader = BioLockJUtil.getFileReader( testFile );
 				try
 				{
-					Log.info( SeqUtil.class, "Reading multiplexed file to check for paired reads: "
-							+ BioLockJUtil.getPipelineInputFiles().get( 0 ).getAbsolutePath() );
+					Log.info( SeqUtil.class,
+							"Reading multiplexed file to check for paired reads: " + testFile.getAbsolutePath() );
 					final List<String> seqLines = new ArrayList<>();
 					for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					{
@@ -828,7 +848,7 @@ public class SeqUtil
 		}
 		else // not multiplexed
 		{
-			foundPairedReads = !getPairedReads( BioLockJUtil.getPipelineInputFiles() ).isEmpty();
+			foundPairedReads = !getPairedReads( BioLockJUtil.getBasicInputFiles() ).isEmpty();
 		}
 
 		Log.info( SeqUtil.class,

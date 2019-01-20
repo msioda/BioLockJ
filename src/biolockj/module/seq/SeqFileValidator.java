@@ -18,13 +18,14 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
 
 /**
  * This BioModule validates fasta/fastq file formats are valid and enforces min/max read lengths.
  */
-public class SeqFileValidator extends JavaModuleImpl implements JavaModule
+public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqModule
 {
 
 	/**
@@ -35,6 +36,12 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule
 	{
 		super.cleanUp();
 		RegisterNumReads.setNumReadFieldName( getMetaColName() );
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
 	}
 
 	/**

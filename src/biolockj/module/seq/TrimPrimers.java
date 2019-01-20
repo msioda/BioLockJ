@@ -19,6 +19,7 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
 
@@ -27,8 +28,9 @@ import biolockj.util.*;
  * The primers are defined using regular expressions in a separate file.
  * 
  */
-public class TrimPrimers extends JavaModuleImpl implements JavaModule
+public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 {
+
 	/**
 	 * Validates the file that defines the REGEX primers. If primers are located at start of read, add REGEX line anchor
 	 * "^" to the start of the primer sequence in {@value #INPUT_TRIM_SEQ_FILE}.
@@ -55,6 +57,12 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	{
 		super.cleanUp();
 		RegisterNumReads.setNumReadFieldName( getMetaColName() );
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
 	}
 
 	/**

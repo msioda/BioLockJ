@@ -31,8 +31,8 @@ public abstract class ConfigException extends Exception
 	}
 
 	/**
-	 * Abstract {@link biolockj.Config} exception calls {@link #buildMessage(String, String)} to generate a
-	 * standard error message for Configuration file errors, passing an empty string for the msg parameter.
+	 * Abstract {@link biolockj.Config} exception calls {@link #buildMessage(String, String)} to generate a standard
+	 * error message for Configuration file errors, passing an empty string for the msg parameter.
 	 *
 	 * @param propertyName {@link biolockj.Config} property name
 	 * @param msg Exception type
@@ -41,7 +41,6 @@ public abstract class ConfigException extends Exception
 	{
 		super( buildMessage( propertyName, msg ) );
 	}
-
 
 	/**
 	 * Build a standard error message for Configuration file errors.

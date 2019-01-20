@@ -198,7 +198,7 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 	}
 
 	private final Map<String, Integer> uniqueOtuPerSample = new HashMap<>();
-	
+
 	/**
 	 * Output file prefix: {@value #SUMMARY}
 	 */

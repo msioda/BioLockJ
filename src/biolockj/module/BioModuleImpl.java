@@ -30,6 +30,28 @@ public abstract class BioModuleImpl implements BioModule
 {
 
 	/**
+	 * Cache the input files for quick access on subsequent calls to {@linke #getInputFiles()}
+	 * 
+	 * @param files Input files
+	 * @throws Exception if errors occur
+	 */
+	public void cacheInputFiles( final Collection<File> files ) throws Exception
+	{
+		if( files == null || files.isEmpty() )
+		{
+			throw new Exception( "No input files found!" );
+		}
+
+		inputFiles.addAll( files );
+		Collections.sort( inputFiles );
+		Log.info( getClass(), "# Input Files: " + inputFiles.size() );
+		for( int i = 0; i < inputFiles.size(); i++ )
+		{
+			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
+		}
+	}
+
+	/**
 	 * If restarting or running a direct pipeline execute the cleanup for completed modules.
 	 */
 	@Override
@@ -53,12 +75,12 @@ public abstract class BioModuleImpl implements BioModule
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
-		if( inputFiles.isEmpty() )
+		if( inputFileCache().isEmpty() )
 		{
-			initInputFiles();
+			cacheInputFiles( findModuleInputFiles() );
 		}
 
-		return inputFiles;
+		return inputFileCache();
 	}
 
 	/**
@@ -149,25 +171,26 @@ public abstract class BioModuleImpl implements BioModule
 	}
 
 	/**
-	 * Called upon first access of input files to return sorted list of files from all inputDirs.<br>
-	 * Hidden files (starting with ".") are ignored.<br>
-	 * {@link #isValidInputModule(BioModule)} is called to determine if the previous module output is acceptable input
-	 * for the current module. If not, it checks the previous module recursively until valid input is found.
+	 * Called upon first access of input files to return sorted list of files from all
+	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS}<br>
+	 * Hidden files (starting with ".") are ignored<br>
+	 * Call {@link #isValidInputModule(BioModule)} on each previous module until acceptable input files are found<br>
 	 * 
+	 * @return Set of input files
 	 * @throws Exception if errors occur
 	 */
-	protected void initInputFiles() throws Exception
+	protected Set<File> findModuleInputFiles() throws Exception
 	{
+		final Set<File> moduleInputFiles = new HashSet<>();
 		Log.debug( getClass(), "Initialize input files..." );
 		boolean validInput = false;
-		final Set<File> files = new HashSet<>();
 		BioModule previousModule = ModuleUtil.getPreviousModule( this );
 		while( !validInput )
 		{
 			if( previousModule == null )
 			{
 				Log.debug( getClass(), "Previous module is NULL.  Return pipleline input from: " + Config.INPUT_DIRS );
-				files.addAll( BioLockJUtil.getPipelineInputFiles() );
+				moduleInputFiles.addAll( BioLockJUtil.getBasicInputFiles() );
 				validInput = true;
 			}
 			else
@@ -181,9 +204,9 @@ public abstract class BioModuleImpl implements BioModule
 					Log.debug( getClass(),
 							"Found VALID input in the output dir of: " + previousModule.getClass().getName() + " --> "
 									+ previousModule.getOutputDir().getAbsolutePath() );
-					files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
-							HiddenFileFilter.VISIBLE ) );
-					Log.debug( getClass(), "# Files found: " + files.size() );
+					moduleInputFiles.addAll( FileUtils.listFiles( previousModule.getOutputDir(),
+							HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+					Log.debug( getClass(), "# Files found: " + moduleInputFiles.size() );
 				}
 				else
 				{
@@ -192,30 +215,12 @@ public abstract class BioModuleImpl implements BioModule
 			}
 		}
 
-		for( final File f: files )
-		{
-			if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
-			{
-				inputFiles.add( f );
-			}
-			else
-			{
-				Log.debug( getClass(), "Ignore file " + f.getAbsolutePath() );
-			}
-		}
+		return removeIgnoredFiles( moduleInputFiles );
+	}
 
-		if( inputFiles.isEmpty() )
-		{
-			throw new Exception( "No input files found!" );
-		}
-
-		Collections.sort( inputFiles );
-
-		Log.info( getClass(), "# Input Files: " + inputFiles.size() );
-		for( int i = 0; i < inputFiles.size(); i++ )
-		{
-			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
-		}
+	protected List<File> inputFileCache()
+	{
+		return inputFiles;
 	}
 
 	/**
@@ -232,6 +237,23 @@ public abstract class BioModuleImpl implements BioModule
 		{
 			throw new Exception( "File names must be unique!  Duplicate file: " + file.getAbsolutePath() );
 		}
+	}
+
+	private Set<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
+	{
+		final Set<File> validInputFiles = new HashSet<>();
+		for( final File f: files )
+		{
+			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			{
+				validInputFiles.add( f );
+			}
+			else
+			{
+				Log.debug( getClass(), "Ignore file " + f.getAbsolutePath() );
+			}
+		}
+		return validInputFiles;
 	}
 
 	private final List<File> inputFiles = new ArrayList<>();

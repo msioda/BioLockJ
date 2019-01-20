@@ -15,8 +15,8 @@ import java.io.File;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.ScriptModule;
-import biolockj.module.ScriptModuleImpl;
+import biolockj.module.SeqModule;
+import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
 
@@ -26,7 +26,7 @@ import biolockj.util.*;
  * <a href="https://sco.h-its.org/exelixis/web/software/pear/doc.html" target=
  * "_top">https://sco.h-its.org/exelixis/web/software/pear/doc.html</a>
  */
-public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
+public class PearMergeReads extends SeqModuleImpl implements SeqModule
 {
 	/**
 	 * Build the script lines for each sample as a nested list. PAIR program will be called once for each pair of files
