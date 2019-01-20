@@ -199,7 +199,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			Log.info( getClass(),
 					"Break multiplexed file [ " + file.getAbsolutePath() + " ] into files with a max #lines = [ "
-							+ NUM_LINES_TEMP_FILE + " ] to avoid memory issues while processing" );
+							+ NUM_LINES_TEMP_FILE + " ] to avoid memory issues while processing." );
+			Log.info( getClass(), "Found #lines/read = " + SeqUtil.getNumLinesPerRead() );
 			long numReads = 0L;
 			long headerFwBarcodes = 0L;
 			long headerRvBarcodes = 0L;
@@ -253,11 +254,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 						writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
 						seqLines.clear();
 					}
-				}
-
-				if( !seqLines.isEmpty() )
-				{
-					writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
 				}
 
 				if( !seqLines.isEmpty() )
