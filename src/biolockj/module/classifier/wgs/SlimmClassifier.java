@@ -273,6 +273,5 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String REF_GENOME_INDEX = "slimm.refGenomeIndex";
 
 	private static final String BOWTIE_NUM_THREADS_PARAM = "-p";
-
 	private static final String SLIMM_OUTPUT_PARAM = "-o";
 }

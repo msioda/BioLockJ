@@ -305,7 +305,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 					+ "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
 		}
 
-		switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
+		switches = " " + getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
 	}
 
 	/**

@@ -47,6 +47,13 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 
 		return data;
 	}
+	
+	@Override
+	public void checkDependencies() throws Exception
+	{
+		super.checkDependencies();
+		getRuntimeParams( getClassifierParams(), null );
+	}
 
 	/**
 	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.
@@ -71,7 +78,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines.add( Config.getExe( EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getClassifierExe() + " " + getClassifierParams() + OUTPUT_PARAM + " $2 $1" );
+		lines.add( Config.getExe( EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getClassifierExe() + " " + getRuntimeParams( getClassifierParams(), null ) + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" );
 		return lines;
 	}

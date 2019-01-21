@@ -115,7 +115,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		final String params = "$1 $2" + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " $3": "" );
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
-		lines.add( getClassifierExe() + getParams() + "--output " + params );
+		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" );
 		lines.add( "function " + FUNCTION_TRANSLATE + "() {" );
 		lines.add( getClassifierExe() + "-translate --db " + getDB() + " --mpa-format $1 > $2" );
@@ -150,6 +150,36 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			return FASTQ_PARAM;
 		}
 	}
+	
+	
+	
+	private String getWorkerFunctionParams() throws Exception
+	{
+		String params = " " + getParams();
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			params += PAIRED_PARAM;
+		}
+
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
+		{
+			params += GZIP_PARAM;
+		}
+		
+		params = DB_PARAM + getDB() + " " + getInputSwitch();
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			params += PAIRED_PARAM;
+		}
+
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
+		{
+			params += GZIP_PARAM;
+		}
+		return params;
+	}
+	
+	
 
 	private String getParams() throws Exception
 	{
@@ -201,18 +231,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 				throw new Exception(
 						"Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
-
-			params = DB_PARAM + getDB() + " " + getInputSwitch();
-			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
-			{
-				params += PAIRED_PARAM;
-			}
-
-			if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
-			{
-				params += GZIP_PARAM;
-			}
-
+			
 			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + params;
 		}
 

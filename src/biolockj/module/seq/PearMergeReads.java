@@ -153,7 +153,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_PEAR_MERGE + "() {" );
-		lines.add( Config.getExe( EXE_PEAR ) + getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 " 
+		lines.add( Config.getExe( EXE_PEAR ) + " " + getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 " 
 				+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
 		lines.add( "mv $4" + File.separator + "$1.assembled." + SeqUtil.FASTQ + " $5" + File.separator + "$1."
 				+ SeqUtil.FASTQ );
@@ -174,7 +174,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	private String otuColName = null;
 	private Map<String, String> readsPerSample = new HashMap<>();
 	private final Set<String> sampleIds = new HashSet<>();
-	private static final String NUM_THREADS_PARAM = "-j ";
+	private static final String NUM_THREADS_PARAM = "-j";
 	private static final String FW_READ_PARAM = "-f ";
 	private static final String RV_READ_PARAM = "-r ";
 	private static final String OUTPUT_PARAM = "-o ";

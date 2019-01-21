@@ -85,7 +85,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		getDefaultSwitches();
+		getParams();
 	}
 
 	/**
@@ -96,10 +96,15 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_METAPHLAN + "() {" );
-		lines.add( Config.getExe( EXE_PYTHON ) + " " + getClassifierExe() + " " + getDefaultSwitches()
+		lines.add( Config.getExe( EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
 				+ "$1 --bowtie2out $2 > $3" );
 		lines.add( "}" );
 		return lines;
+	}
+	
+	private String getWorkerFunctionParams() throws Exception
+	{
+		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 	}
 
 	/**
@@ -111,7 +116,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	 * @return runtime parameters
 	 * @throws Exception if errors occur
 	 */
-	protected String getDefaultSwitches() throws Exception
+	protected String getParams() throws Exception
 	{
 		if( defaultSwitches == null )
 		{
@@ -154,15 +159,12 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 						+ "). BioLockJ outputs results to: " + getOutputDir().getAbsolutePath() + File.separator );
 			}
 
-			defaultSwitches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
+			defaultSwitches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + "-t rel_ab_w_read_stats ";
 
 			if( TaxaUtil.getTaxaLevels().size() == 1 )
 			{
 				defaultSwitches += "--tax_lev " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
 			}
-
-			defaultSwitches += "--input_type " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
-					+ " -t rel_ab_w_read_stats ";
 		}
 
 		return defaultSwitches;
@@ -205,4 +207,6 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	private static final String METAPHLAN_PHYLUM = "p";
 	private static final String METAPHLAN_SPECIES = "s";
 	private static final String NUM_THREADS_PARAM = "--nproc";
+	private static final String INPUT_TYPE_PARAM = "--input_type ";
+	
 }
