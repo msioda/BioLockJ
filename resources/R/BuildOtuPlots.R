@@ -60,11 +60,21 @@ addScatterPlot <- function( otuColName, otuColVals, metaColName, metaColVals ) #
 				ylab=otuColName, xlab="", main="")
 }
 
-# error handler for tryCatch in main
+# error handler for tryCatch in main that wraps each OTU plot set
 errorHandlerOtuPlots <- function(err, otuLevel, otuCol){
-	origErr = as.character(err)
+	if( doDebug() ){print(err)}
 	msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
 							 "\nusing OTU column: ", otuCol)
+	if( doDebug() ){print(msg)}
+	plotPlainText(msg)
+}
+
+# error handler for tryCatch in main that wraps each meta data column plot
+errorHandlerOtuSubPlots <- function(err, otuLevel, otuCol, metaCol){
+	if( doDebug() ){print(err)}
+	msg = paste0("Failed to create plot for \ntaxonomy level: ", otuLevel, 
+							 "\nOTU column: ", otuCol,
+							 "\nmeta data column: ", metaCol)
 	if( doDebug() ){print(msg)}
 	plotPlainText(msg)
 }
@@ -189,6 +199,8 @@ main <- function() {
 					position = 1
 					page = 1
 					for( metaCol in reportFields)	{
+						
+						tryCatch(expr={
 						# add a plot
 						if ( metaCol %in% binaryCols | metaCol %in% nominalCols){
 							addBoxPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
@@ -204,6 +216,10 @@ main <- function() {
 													r2=r2Stats[ otuCol, metaCol], attName=metaCol)
 						# Add plot title
 						mtext(metaCol, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5) #col=getColor(c(parPval, nonParPval))
+						}, error = function(err) {
+							errorHandlerOtuSubPlots(err, otuLevel=otuLevel, otuCol=otuCol, metaCol=metaCol)
+						})
+						
 						# page title
 						position = position + 1
 						if (position == 2) { 
