@@ -8,10 +8,12 @@
 addHistogram <- function( v, title, xLabel, size, pvalCutoff=NULL, col="dodgerblue2" ) {
 	if ( !all(is.nan( v )) && !all(is.na( v )) ) {
 		hist( v, breaks=20, xlab=xLabel, main=title, cex.main=size, col=col, xlim=c(0,1))
-	}
-	if (!is.null(pvalCutoff)){
-		abline(v=pvalCutoff, col=gray(.5), lty=2)
-		mtext(at=pvalCutoff, side=3, text=pvalCutoff, col=gray(.5))
+		if (!is.null(pvalCutoff)){
+			abline(v=pvalCutoff, col=gray(.5), lty=2)
+			mtext(at=pvalCutoff, side=3, text=pvalCutoff, col=gray(.5))
+		}
+	}else{
+		plotPlainText("All values are NA or NaN.")
 	}
 }
 
@@ -25,10 +27,11 @@ calcSigFraction <- function(pvals, pvalCutoff){
 # error handler for tryCatch in main
 errorHandlerPValHist <- function(err, otuLevel, reportField){
 	origErr = as.character(err)
-	msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
+	msg = paste0("Failed to create plot for \ntaxonomy level: ", otuLevel, 
 							 "\nusing attribute: ", reportField)
 	if( doDebug() ){print(msg)}
 	plotPlainText(msg)
+	plotPlainText(msg) # twice because it has to cover two plot spots to maintain the paired plot layout.
 }
 
 # Return main.cex parameter between 0.65 and 1.2 based on longest report field name
