@@ -73,6 +73,8 @@ main <- function() {
 	
 	for( otuLevel in getProperty("report.taxonomyLevels") ) {
 		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildPvalHistograms_", otuLevel, ".log") ) )
+		
+		# create empty pdf
 		pdf( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_histograms.pdf") ) )
 		par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
 		parInputFile = getPipelineFile( buildStatsFileSuffix(parametric=TRUE, adjusted=FALSE, level=otuLevel) )
@@ -105,18 +107,18 @@ main <- function() {
 			tryCatch({
 				stopifnot( attName %in% names(nonParStats) & attName %in% names(parStats) )
 				# parametric
-				parTestName = getTestName(attName, TRUE)
+				parTestName = getTestName(attName, isParametric=TRUE)
 				xLabelPar = paste( parTestName, "P-Values" )
 				addHistogram( v=parStats[, attName], title="",
 											xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
-											col=getTestColor(parTestName) )
+											col=getTestName(attName, isParametric=TRUE, returnColors=TRUE) )
 				title(main="Parametric", line=1.5)
 				# nonParametric
-				nonParTestName = getTestName(attName, FALSE)
+				nonParTestName = getTestName(attName, isParametric=FALSE)
 				xLabelNonPar = paste( nonParTestName, "P-Values" )
 				addHistogram( v=nonParStats[, attName], title="",
 											xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
-											col=getTestColor(nonParTestName) )
+											col=getTestName(attName, isParametric=FALSE, returnColors=TRUE) )
 				title(main="Non-Parametric", line=1.5)
 				# shared title
 				plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
