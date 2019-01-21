@@ -317,15 +317,13 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 */
 	protected File getInputFileDir() throws Exception
 	{
-		final String inDir = getInputFiles().get( 0 ).getAbsolutePath();
-		final int i = inDir.indexOf( File.separator + getInputFiles().get( 0 ).getName() );
-		final File dir = new File( inDir.substring( 0, i ) );
-		if( !dir.exists() )
+		BioModule prevModule = ModuleUtil.getPreviousModule( this );
+		if( prevModule != null )
 		{
-			throw new Exception( "Module input directory not found! --> " + dir.getAbsolutePath() );
+			return prevModule.getOutputDir();
 		}
 
-		return dir;
+		throw new Exception( "Module input directory not found!" );
 	}
 
 	/**

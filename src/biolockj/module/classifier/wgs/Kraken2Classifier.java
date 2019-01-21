@@ -205,7 +205,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 						+ Config.INPUT_DIRS );
 			}
 
-			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getDB() + USE_NAMES_PARAM + USE_MPA_PARAM;;
+			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getDB() + " " + USE_NAMES_PARAM + USE_MPA_PARAM;;
 		}
 
 		return defaultSwitches;

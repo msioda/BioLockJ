@@ -104,7 +104,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	
 	private String getWorkerFunctionParams() throws Exception
 	{
-		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
 	}
 
 	/**

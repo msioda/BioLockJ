@@ -118,7 +118,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" );
 		lines.add( "function " + FUNCTION_TRANSLATE + "() {" );
-		lines.add( getClassifierExe() + "-translate --db " + getDB() + " --mpa-format $1 > $2" );
+		lines.add( getClassifierExe() + "-translate " + DB_PARAM + getDB() + " --mpa-format $1 > $2" );
 		lines.add( "}" );
 		return lines;
 	}
@@ -166,7 +166,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			params += GZIP_PARAM;
 		}
 		
-		params = DB_PARAM + getDB() + " " + getInputSwitch();
+		params += DB_PARAM + getDB() + " " + getInputSwitch();
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
