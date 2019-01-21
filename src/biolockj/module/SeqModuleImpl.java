@@ -30,12 +30,12 @@ public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModul
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
-		if( inputFileCache().isEmpty() )
+		if( getFileCache().isEmpty() )
 		{
 			cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
 		}
 
-		return inputFileCache();
+		return getFileCache();
 	}
 
 	@Override

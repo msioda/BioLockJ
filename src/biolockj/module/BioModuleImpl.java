@@ -70,17 +70,17 @@ public abstract class BioModuleImpl implements BioModule
 	public abstract void executeTask() throws Exception;
 
 	/**
-	 * BioModule {@link #initInputFiles()} is called to initialize upon first call and cached.
+	 * BioModule {@link #getInputFiles()} is called to initialize upon first call and cached.
 	 */
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
-		if( inputFileCache().isEmpty() )
+		if( getFileCache().isEmpty() )
 		{
 			cacheInputFiles( findModuleInputFiles() );
 		}
 
-		return inputFileCache();
+		return getFileCache();
 	}
 
 	/**
@@ -146,7 +146,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * false if the previousModule only produced a new metadata file, such as
 	 * {@link biolockj.module.implicit.ImportMetadata} or {@link biolockj.module.implicit.RegisterNumReads}.
 	 * 
-	 * When {@link #initInputFiles()} is called, this method determines if the previousModule output is valid input for
+	 * When {@link #getInputFiles()} is called, this method determines if the previousModule output is valid input for
 	 * the current BioModule. The default implementation of this method returns FALSE if the previousModule only
 	 * generates a new metadata file.
 	 */
@@ -179,7 +179,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * @return Set of input files
 	 * @throws Exception if errors occur
 	 */
-	protected Set<File> findModuleInputFiles() throws Exception
+	protected List<File> findModuleInputFiles() throws Exception
 	{
 		final Set<File> moduleInputFiles = new HashSet<>();
 		Log.debug( getClass(), "Initialize input files..." );
@@ -218,7 +218,12 @@ public abstract class BioModuleImpl implements BioModule
 		return removeIgnoredFiles( moduleInputFiles );
 	}
 
-	protected List<File> inputFileCache()
+	/**
+	 * Get cached input files
+	 * 
+	 * @return List of input files
+	 */
+	protected List<File> getFileCache()
 	{
 		return inputFiles;
 	}
@@ -239,9 +244,16 @@ public abstract class BioModuleImpl implements BioModule
 		}
 	}
 
-	private Set<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
+	/**
+	 * Remove ignore files from the input files.
+	 * 
+	 * @param files Collection of files
+	 * @return valid files
+	 * @throws Exception if errors occur
+	 */
+	protected List<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
 	{
-		final Set<File> validInputFiles = new HashSet<>();
+		final List<File> validInputFiles = new ArrayList<>();
 		for( final File f: files )
 		{
 			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
