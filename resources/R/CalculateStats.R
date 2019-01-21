@@ -8,7 +8,7 @@
 # 5. R^2 Value table
 buildSummaryTables <- function( reportStats, otuLevel ) {
    attNames = unique( names(reportStats[[2]]) )
-   prefix = paste0( getProperty("internal.pipelineName"), "_" )
+   prefix = getProperty("internal.pipelineName")
    if( doDebug() ) print( paste( "Using prefix:", prefix ) )
    # the names of fileNameEndings is expected to match the names of elements in reportStats
    fileNameEnding = c(parametricPvals = buildStatsFileSuffix(parametric=TRUE, adjusted=FALSE, level=otuLevel),
@@ -18,7 +18,8 @@ buildSummaryTables <- function( reportStats, otuLevel ) {
    									 rSquaredVals = buildStatsFileSuffix(parametric=NA, level=otuLevel))
    reportSets = names(fileNameEnding)
    for( reportSet in reportSets ) {
-      fileName = getPath( file.path(getModuleDir(), "output"), paste0( prefix, fileNameEnding[reportSet] ) )
+   	  path=file.path(getModuleDir(), "output")
+      fileName = file.path( path, paste0( prefix, fileNameEnding[reportSet] ) )
       if ( doDebug() ) print( paste( "Saving output file:", fileName ) )
       df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
       df[, 1] = reportStats[[1]]
