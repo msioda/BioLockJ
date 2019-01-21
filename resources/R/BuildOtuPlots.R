@@ -3,7 +3,7 @@
 # Output box-plot illustrating OTU-nominal metadata field relationship
 # Print adjusted P-values in pot header
 addBoxPlot <- function( otuColName, otuColVals, metaColName, metaColVals, barColors) #, otuTable, otuCol, metaCol, parPval, nonParPval
-	{
+{
 	if( doDebug() ) print( paste( "Createing box plot for otu:", otuCol, "metadata column:", metaCol ) )
 	metaColVals = as.factor( metaColVals )
 	factors = split(otuColVals, f=metaColVals) # getFactorGroups( otuTable, metaColVals, otuCol )
@@ -58,6 +58,15 @@ addScatterPlot <- function( otuColName, otuColVals, metaColName, metaColVals ) #
 	plot( metaColVals, otuColVals, pch=getProperty("r.pch"), 
 				col=getProperty("r.colorPoint", "black"), #xaxt="n", col.lab=color, cex.main=1, col.main=color,
 				ylab=otuColName, xlab="", main="")
+}
+
+# error handler for tryCatch in main
+errorHandlerOtuPlots <- function(err, otuLevel, otuCol){
+	origErr = as.character(err)
+	msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
+							 "\nusing OTU column: ", otuCol)
+	if( doDebug() ){print(msg)}
+	plotPlainText(msg)
 }
 
 # Return nominal group names truncated for display on X-axis of box plot
@@ -174,40 +183,44 @@ main <- function() {
 		}
 		
 		for( otuCol in names(otuTable)[1:lastOtuCol] ) {
-			if( sum( otuTable[,otuCol] > 0 ) >=  cutoffValue ) {
-				par( mfrow = par("mfrow") ) # step to next page, even if the last page is not full
-				position = 1
-				page = 1
-				for( metaCol in reportFields)	{
-					# add a plot
-					if ( metaCol %in% binaryCols | metaCol %in% nominalCols){
-						addBoxPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
-												metaColName=metaCol, metaColVals=otuTable[,metaCol], barColors=metaColColors[[metaCol]])
-					}
-					if ( metaCol %in% numericCols ) {
-						addScatterPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
-														metaColName=metaCol, metaColVals=otuTable[,metaCol] )
-					}
-					# add p-values
-					addPvalueNote(parPval = nonParStats[ otuCol, metaCol ], 
-												nonParPval = nonParStats[ otuCol, metaCol ], 
-												r2=r2Stats[ otuCol, metaCol], attName=metaCol)
-					# Add plot title
-					mtext(metaCol, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5) #col=getColor(c(parPval, nonParPval))
-					# page title
-					position = position + 1
-					if (position == 2) { 
-						#title(main=otuCol, outer = TRUE, line=2)
-						mtext(otuCol, side=3, outer = TRUE, font=par("font.main"), cex=par("cex.main"), line=2)
-						titlePart2 = ifelse( page == 1, paste( "taxonomic level:", otuLevel), paste("page", page))
-						title(main=titlePart2, outer = TRUE, line=1)
+			tryCatch(expr={
+				if( sum( otuTable[,otuCol] > 0 ) >=  cutoffValue ) {
+					par( mfrow = par("mfrow") ) # step to next page, even if the last page is not full
+					position = 1
+					page = 1
+					for( metaCol in reportFields)	{
+						# add a plot
+						if ( metaCol %in% binaryCols | metaCol %in% nominalCols){
+							addBoxPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
+													metaColName=metaCol, metaColVals=otuTable[,metaCol], barColors=metaColColors[[metaCol]])
 						}
-					if (position > prod(par("mfrow") ) ) {
-						position = 1
-						page = page + 1
+						if ( metaCol %in% numericCols ) {
+							addScatterPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
+															metaColName=metaCol, metaColVals=otuTable[,metaCol] )
+						}
+						# add p-values
+						addPvalueNote(parPval = nonParStats[ otuCol, metaCol ], 
+													nonParPval = nonParStats[ otuCol, metaCol ], 
+													r2=r2Stats[ otuCol, metaCol], attName=metaCol)
+						# Add plot title
+						mtext(metaCol, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5) #col=getColor(c(parPval, nonParPval))
+						# page title
+						position = position + 1
+						if (position == 2) { 
+							#title(main=otuCol, outer = TRUE, line=2)
+							mtext(otuCol, side=3, outer = TRUE, font=par("font.main"), cex=par("cex.main"), line=2)
+							titlePart2 = ifelse( page == 1, paste( "taxonomic level:", otuLevel), paste("page", page))
+							title(main=titlePart2, outer = TRUE, line=1)
+						}
+						if (position > prod(par("mfrow") ) ) {
+							position = 1
+							page = page + 1
+						}
 					}
 				}
-			}
+			}, error = function(err) {
+				errorHandlerOtuPlots(err, otuLevel=otuLevel, otuCol=otuCol)
+			})
 		}
 		dev.off()
 		if( doDebug() ) sink()
