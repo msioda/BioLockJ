@@ -77,8 +77,18 @@ getColor <- function( v ) {
 }
 
 # Return n colors using the palette defined in the MASTER Config
-getColors <- function( n ) {
-   return( get_palette( getProperty("r.colorPalette", "npg"), n ) )
+getColors <- function( n, reorder=TRUE) {
+	palette = getProperty("r.colorPalette", "npg")
+	colors = get_palette( palette, n )
+	# If the r.colorPalette property is a palette name rather than a list of colors
+	# rearrange the colors so that very similar colors are not less likley to 
+	# be next to each other, thus less likely to be the alternatives in the same category.
+	if (length(palette) == 1 & reorder){
+		flipFrom = (1:length(colors))[(1:length(colors)%%2)==0]
+		flipTo = flipFrom[length(flipFrom):1]
+		colors[flipTo] = colors[flipFrom]
+	}
+   return( colors )
 }
 
 # Select colors for each category so each category is different even across different metadata fields
@@ -146,9 +156,10 @@ getMetaDataFile <- function(){
 # and that the sample id is unique within the file, so the first row is used as rownames in the returned dataframe.
 getMetaData <- function(useMetaMerged=TRUE){
 	file = getMetaDataFile()
+	metaMergedFile = getPipelineFile( "*_metaMerged.tsv" )
+	if (is.null(metaMergedFile)) { useMetaMerged = FALSE }
 	if (is.null(file) | useMetaMerged){
-		inputFile = getPipelineFile( "*_metaMerged.tsv" )
-		otuTable = read.table( inputFile, check.names=FALSE,
+		otuTable = read.table( metaMergedFile, check.names=FALSE,
 													 na.strings=getProperty("metadata.nullValue", "NA"), 
 													 comment.char=getProperty("metadata.commentChar", ""), 
 													 header=TRUE, sep="\t", row.names = 1 )
@@ -341,7 +352,8 @@ parseConfig <- function( name, defaultVal=NULL ) {
    return( str_trim( prop ) )
 }
 
-
+# Create an empty plot and add text. 
+# Ideal when explaining why a plot is blank, or plot explainations within a plot document.
 plotPlainText <- function(textToPrint, cex=1){
   plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
   text(labels=textToPrint, x = 0.5, y = 0.5, cex = cex, col = "black")
