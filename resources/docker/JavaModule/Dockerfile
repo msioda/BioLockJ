@@ -1,6 +1,6 @@
 # Deployment path:  $BLJ/resources/docker/JavaModule
 
-FROM biolockj/base
+FROM base
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
