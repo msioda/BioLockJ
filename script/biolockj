@@ -125,7 +125,7 @@ if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ] && [ "$initPipeline" == "
 	echo "Restarted pipeline:  $pipelineDir"
 elif [ ${#restart} -eq 0 ] && [ "$initPipeline" != "$pipelineDir" ]; then
 	echo "Started new pipeline:  $pipelineDir"
-else
+elif [ ${#restart} -eq 0 ] 
 	echo "BioLockJ may have failed on: exec( \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\" )"
 	echo "Check $BLJ_PROJ for new pipeline directory"
 	exit 1
