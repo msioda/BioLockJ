@@ -13,7 +13,6 @@ package biolockj.module.classifier;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.util.Iterator;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
@@ -38,9 +37,8 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		classifierExe = getClassifierExe();
-		classifierParams = getClassifierParams();
-		getNumThreads();
+		getClassifierExe();
+		getClassifierParams();
 		validateModuleOrder();
 		super.checkDependencies();
 	}
@@ -58,7 +56,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	@Override
 	public String getClassifierExe() throws Exception
 	{
-		if( classifierExe == null || classifierExe.isEmpty() )
+		if( classifierExe == null )
 		{
 			classifierExe = Config.getString( EXE_CLASSIFIER );
 			if( classifierExe == null || classifierExe.isEmpty() )
@@ -66,7 +64,6 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 				final String defaultProp = getClassifierType() + "." + EXE_CLASSIFIER.substring( 4 );
 
 				classifierExe = Config.getString( defaultProp );
-
 				if( classifierExe != null && !classifierExe.isEmpty() )
 				{
 					Log.info( getClass(), "Using default classifier property: " + defaultProp + " = " + classifierExe );
@@ -76,16 +73,6 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 					classifierExe = getClassifierType();
 				}
 			}
-
-			// DO NOT VERIFY FILE EXISTS --> EXECUTABLE MAY BE CLUSTER MODULE OR ALIAS
-			// if( !BashScriptBuilder.clusterModuleExists( classifierExe ) && !RuntimeParamUtil.isDockerMode() )
-			// {
-			// final File f = new File( Config.getSystemFilePath( classifierExe ) );
-			// if( !f.exists() )
-			// {
-			// Config.requireExistingFile( EXE_CLASSIFIER );
-			// }
-			// }
 		}
 
 		return classifierExe;
@@ -99,36 +86,26 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 * rdp.classifier will be used in place of exe.classifier. This allows all classifiers to be defined in
 	 * standard.properties.
 	 *
-	 * @return String containing formatted switches to append to the executable
+	 * @return List of classifier runtime parameters
 	 * @throws Exception if runtime errors occur
 	 */
 	@Override
-	public String getClassifierParams() throws Exception
+	public List<String> getClassifierParams() throws Exception
 	{
-		if( classifierParams == null || classifierParams.isEmpty() )
+		if( classifierParams == null )
 		{
-			classifierParams = " ";
-			List<String> paramList = Config.getList( EXE_CLASSIFIER_PARAMS );
-			if( paramList == null || paramList.isEmpty() )
+			String prop = EXE_CLASSIFIER_PARAMS;
+			classifierParams = Config.getList( prop );
+			if( classifierParams.isEmpty() )
 			{
-				final String defaultProp = getClassifierType() + "." + EXE_CLASSIFIER_PARAMS.substring( 4 );
-				paramList = Config.getList( defaultProp );
-				if( paramList != null && !paramList.isEmpty() )
+				prop = getClassifierType() + "." + EXE_CLASSIFIER_PARAMS.substring( 4 );
+				classifierParams = Config.getList( prop );
+				if( !classifierParams.isEmpty() )
 				{
-					Log.info( getClass(), "Loading default classifier property: " + defaultProp );
-				}
-			}
-
-			if( paramList != null && !paramList.isEmpty() )
-			{
-				final Iterator<String> it = paramList.iterator();
-				while( it.hasNext() )
-				{
-					classifierParams += "--" + it.next() + " ";
+					Log.info( getClass(), "Loading default classifier property: " + prop + " = " + classifierParams );
 				}
 			}
 		}
-
 		return classifierParams;
 	}
 
@@ -191,16 +168,14 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	/**
 	 * This method returns the classifier class name in lower case, after "classifier" is removed.<br>
 	 * The remaining text should uniquely identify the name of the program.<br>
-	 * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan, or slimm).<br>
+	 * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan, humann2, or slimm).<br>
 	 * <p>
 	 * The purpose of this method is to allow users to configure multiple classifiers in a default properties file.<br>
 	 * Instead of setting the property {@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER} in the
 	 * {@link biolockj.Config} file, leave this value blank and configure the default properties file one time with:
-	 * "rdp.classifier", "qiime.classifier", "kraken.classifier", "metaphlan.classifier", and "slimm.classifier".<br>
-	 * The same approach should be taken with
-	 * {@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}.
+	 * "rdp.classifier", "qiime.classifier", "kraken.classifier", etc.<br>
 	 *
-	 * @return String rdp, qiime, kraken, metaphlan, slimm
+	 * @return String - options { rdp, qiime, kraken, kraken2, metaphlan, humann2, slimm }
 	 */
 	protected String getClassifierType()
 	{
@@ -251,5 +226,5 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	}
 
 	private String classifierExe = null;
-	private String classifierParams = null;
+	private List<String> classifierParams = null;
 }

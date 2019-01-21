@@ -14,20 +14,21 @@ package biolockj.module.classifier.wgs;
 import java.io.File;
 import java.util.*;
 import biolockj.Config;
-import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
 
 /**
- * This BioModule runs biobakery humann2 program to generate the  HMP Unified Metabolic Analysis Network<br>
- * HUMAnN is a pipeline for efficiently and accurately profiling the presence/absence and abundance of microbial pathways in a community 
- * from metagenomic or metatranscriptomic sequencing data (typically millions of short DNA/RNA reads). This process, referred to as functional 
- * profiling, aims to describe the metabolic potential of a microbial community and its members. 
- * More generally, functional profiling answers the question "What are the microbes in my community-of-interest doing (or capable of doing)?
+ * This BioModule runs biobakery humann2 program to generate the HMP Unified Metabolic Analysis Network<br>
+ * HUMAnN is a pipeline for efficiently and accurately profiling the presence/absence and abundance of microbial
+ * pathways in a community from metagenomic or metatranscriptomic sequencing data (typically millions of short DNA/RNA
+ * reads). This process, referred to as functional profiling, aims to describe the metabolic potential of a microbial
+ * community and its members. More generally, functional profiling answers the question "What are the microbes in my
+ * community-of-interest doing (or capable of doing)?
  * 
- * For more information, please review the BioBakery instruction manual: 
+ * For more information, please review the BioBakery instruction manual:
  * <a href= "https://bitbucket.org/biobakery/humann2" target="_top">https://bitbucket.org/biobakery/humann2</a><br>
  */
 public class HumanN2Classifier extends ClassifierModuleImpl implements ClassifierModule
@@ -39,64 +40,50 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 		final List<List<String>> data = new ArrayList<>();
 		for( final File file: files )
 		{
-			final String fileId = SeqUtil.getSampleId( file.getName() );
-			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
-			final String outputFile = getOutputDir().getAbsolutePath() + File.separator + fileId + PROCESSED;
-			final ArrayList<String> lines = new ArrayList<>( 2 );
-			lines.add( FUNCTION_KRAKEN + " " + tempFile + " " + file.getAbsolutePath() );
-			lines.add( FUNCTION_TRANSLATE + " " + tempFile + " " + outputFile );
+			File hn2InputSeq = file;
+			final ArrayList<String> lines = new ArrayList<>();
+			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+			{
+				lines.add( getMergeReadLine( file ) );
+				hn2InputSeq = getMergedReadFile( file );
+			}
+
+			lines.add( getHumanN2Line( hn2InputSeq ) );
 			data.add( lines );
 		}
 
 		return data;
 	}
 
-	/**
-	 * Build bash script lines to classify paired WGS reads with Kraken. The inner list contains 2 bash script lines
-	 * used to classify 1 sample (2 files: forward and reverse reads).
-	 * <p>
-	 * Example lines:
-	 * <ol>
-	 * <li>kraken --paired --fasta-input --only-classified-output --threads 8 --db /database/kraken --output
-	 * ./temp/sample42_kraken.txt ./input/sample42_R1.fasta ./input/sample42_R2.fasta<br>
-	 * <li>kraken-translate --db /database/kraken --mpa-format ./temp/sample42_kraken.txt &gt;
-	 * ./output/sample42_reported.tsv
-	 * </ol>
-	 */
 	@Override
-	public List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception
+	public List<List<String>> buildScriptForPairedReads( List<File> files ) throws Exception
 	{
-		final List<List<String>> data = new ArrayList<>();
-		final Map<File, File> map = SeqUtil.getPairedReads( files );
-		for( final File file: map.keySet() )
-		{
-			final String fileId = SeqUtil.getSampleId( file.getName() );
-			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
-			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId + PROCESSED;
-			final ArrayList<String> lines = new ArrayList<>( 2 );
-			lines.add( FUNCTION_KRAKEN + " " + tempFile + " " + file.getAbsolutePath() + " "
-					+ map.get( file ).getAbsolutePath() );
-			lines.add( FUNCTION_TRANSLATE + " " + tempFile + " " + krakenOutput );
-			data.add( lines );
-		}
-
-		return data;
+		files = new ArrayList<>( getPairedReads().keySet() );
+		Collections.sort( files );
+		return buildScript( files );
 	}
 
 	/**
 	 * Verify that none of the derived command line parameters are included in
 	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}. Also verify:
 	 * <ul>
-	 * <li>{@link biolockj.Config}.{@value #KRAKEN_DATABASE} is a valid file path valid parameters
-	 * 
+	 * <li>{@link biolockj.Config}.{@value #NUCL_DB} is a valid directory
+	 * <li>{@link biolockj.Config}.{@value #PROT_DB} is a valid directory
 	 * </ul>
 	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		getDB();
-		getDefaultSwitches();
+		getRuntimeParams();
+
+	}
+
+	@Override
+	public void cleanUp() throws Exception
+	{
+		super.cleanUp();
+		pairedReads = null;
 	}
 
 	/**
@@ -105,194 +92,154 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final String params = "$1 $2" + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " $3": "" );
 		final List<String> lines = super.getWorkerScriptFunctions();
-		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
-		lines.add( getClassifierExe() + getRuntimeParams() + "--output " + params );
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			lines.add( "function " + FUNCTION_CONCAT_PAIRED_READS + "() {" );
+			lines.add( "cat $1 $2 > " + getMergeDir().getAbsolutePath() + File.separator + "$3" );
+			lines.add( "}" );
+		}
+
+		lines.add( "function " + FUNCTION_RUN_HN2 + "() {" );
+		lines.add( getClassifierExe() + getRuntimeParams() + INPUT_PARAM + " $1" );
 		lines.add( "}" );
-		lines.add( "function " + FUNCTION_TRANSLATE + "() {" );
-		lines.add( getClassifierExe() + "-translate --db " + getDB() + " --mpa-format $1 > $2" );
-		lines.add( "}" );
+
 		return lines;
 	}
 
 	/**
-	 * Format hard coded defaultSwitches to classifier defaultSwitches value.
-	 * 
-	 * @return Formatted Kraken runtime parameters
+	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
+	 * {@value #EXE_KNEADDATA_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
+	 *
+	 * @return Formatted KneadData switches
+	 * @throws Exception if errors occur
 	 */
-	private String formatHardCodedSwitches() throws Exception
+	protected String getRuntimeParams() throws Exception
 	{
-		String switches = "";
-		final Map<String, String> hardCodedSwitches = getHardCodedKrakenSwitches();
-		for( final String key: hardCodedSwitches.keySet() )
-		{
-			String val = hardCodedSwitches.get( key ).trim();
-			if( val.length() > 0 )
-			{
-				val = " " + val;
-			}
-			switches += key + val + " ";
-		}
-
-		return switches;
+		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + NUCL_DB_PARAM + " " + getNuclDB() + " "
+				+ PROT_DB_PARAM + " " + getProtDB() + " " + OUTPUT_PARAM + " " + getOutputDir().getAbsolutePath();
 	}
 
-	private String getDB() throws Exception
+	private String getHumanN2Line( final File file ) throws Exception
+	{
+		return FUNCTION_RUN_HN2 + " " + INPUT_PARAM + " " + file.getAbsolutePath() + " " + NUCL_DB_PARAM + " "
+				+ getNuclDB() + " " + PROT_DB_PARAM + " " + getProtDB() + " " + OUTPUT_PARAM + " "
+				+ getOutputDir().getAbsolutePath();
+	}
+
+	private File getMergeDir() throws Exception
+	{
+		final File dir = new File( getTempDir().getAbsolutePath() + File.separator + TEMP_MERGE_READ_DIR );
+		if( !dir.exists() )
+		{
+			dir.mkdirs();
+		}
+		return dir;
+	}
+
+	private File getMergedReadFile( final File file ) throws Exception
+	{
+		return new File( getMergeDir().getAbsoluteFile() + File.separator + SeqUtil.getSampleId( file.getName() )
+				+ BioLockJUtil.fileExt( file ) );
+	}
+
+	private String getMergeReadLine( final File file ) throws Exception
+	{
+		return FUNCTION_CONCAT_PAIRED_READS + " " + file.getAbsolutePath() + " "
+				+ getPairedReads().get( file ).getAbsolutePath() + " " + SeqUtil.getSampleId( file.getName() )
+				+ BioLockJUtil.fileExt( file );
+	}
+
+	private String getNuclDB() throws Exception
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( KRAKEN_DATABASE );
+			return Config.requireString( HN2_NUCL_DB );
 		}
 
-		return Config.requireExistingDir( KRAKEN_DATABASE ).getAbsolutePath();
+		return Config.requireExistingDir( HN2_NUCL_DB ).getAbsolutePath();
 	}
 
-	private String getDefaultSwitches() throws Exception
+	private Map<File, File> getPairedReads() throws Exception
 	{
-		if( defaultSwitches == null )
+		if( pairedReads == null && Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
-			defaultSwitches = getClassifierParams();
-
-			if( defaultSwitches.indexOf( "--fasta-input " ) > -1 )
-			{
-				defaultSwitches.replaceAll( "--fasta-input", "" );
-			}
-			if( defaultSwitches.indexOf( "--fastq-input " ) > -1 )
-			{
-				defaultSwitches.replaceAll( "--fastq-input", "" );
-			}
-			if( defaultSwitches.indexOf( "--threads " ) > -1 )
-			{
-				throw new Exception( "Invalid classifier option (--threads) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ derives this value from property: " + getNumThreadsParam() );
-			}
-			if( defaultSwitches.indexOf( "--paired " ) > -1 )
-			{
-				throw new Exception( "Invalid classifier option (--paired) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ derives this value by analyzing input sequence files" );
-			}
-			if( defaultSwitches.indexOf( "--output " ) > -1 )
-			{
-				throw new Exception( "Invalid classifier option (--output) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ hard codes this file path based on sequence files names in: "
-						+ Config.INPUT_DIRS );
-			}
-			if( defaultSwitches.indexOf( "--db " ) > -1 )
-			{
-				throw new Exception( "Invalid classifier option (--db) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
-			}
-			if( defaultSwitches.indexOf( "--help " ) > -1 )
-			{
-				throw new Exception(
-						"Invalid classifier option (--help) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
-			}
-			if( defaultSwitches.indexOf( "--version " ) > -1 )
-			{
-				throw new Exception(
-						"Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
-			}
+			pairedReads = SeqUtil.getPairedReads( getInputFiles() );
 		}
 
-		if( defaultSwitches == null )
-		{
-			defaultSwitches = "";
-		}
-
-		return defaultSwitches;
+		return pairedReads;
 	}
 
-	/**
-	 * All calls to classifier requires setting number of threads, type of input files, set paired switch if needed, and
-	 * finally, set the database parameter.
-	 *
-	 * @return hard-coded Kraken defaultSwitches
-	 * @throws Exception if any validation fails
-	 */
-	private Map<String, String> getHardCodedKrakenSwitches() throws Exception
+	private String getProtDB() throws Exception
 	{
-		final Map<String, String> switches = new HashMap<>();
-		switches.put( "--db", getDB() );
-		switches.put( "--threads", getNumThreads().toString() );
-		switches.put( getInputSwitch(), "" );
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( RuntimeParamUtil.isDockerMode() )
 		{
-			switches.put( "--paired", "" );
+			return Config.requireString( HN2_PROT_DB );
 		}
 
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
-		{
-			if( getDefaultSwitches().indexOf( "--bzip2-compressed " ) > -1 )
-			{
-				Log.warn( getClass(),
-						"VERIFY THIS PROPERTY IS CORRECT!  Setting user specified \"--bzip2-compressed\" - even though file ends with .gz (possibly mis-named)" );
-				switches.put( "--bzip2-compressed", "" );
-			}
-			else
-			{
-				switches.put( "--gzip-compressed", "" );
-			}
-		}
-
-		return switches;
+		return Config.requireExistingDir( HN2_PROT_DB ).getAbsolutePath();
 	}
 
-	/**
-	 * Set the input switch based reading a sample input file.
-	 *
-	 * @return file type switch
-	 * @throws Exception
-	 */
-	private String getInputSwitch() throws Exception
-	{
-		if( SeqUtil.isFastA() )
-		{
-			return "--fasta-input";
-		}
-		else
-		{
-			return "--fastq-input";
-		}
-	}
-
-	private String getRuntimeParams() throws Exception
-	{
-		String switches = getDefaultSwitches();
-		String hardCodedSwitches = formatHardCodedSwitches();
-		if( !switches.endsWith( " " ) )
-		{
-			switches += " ";
-		}
-		if( !hardCodedSwitches.endsWith( " " ) )
-		{
-			hardCodedSwitches += " ";
-		}
-
-		return switches + hardCodedSwitches;
-	}
-
-	private String defaultSwitches = null;
+	private Map<File, File> pairedReads = null;
 
 	/**
-	 * Name of the kraken function used to assign taxonomy: {@value #FUNCTION_KRAKEN}
+	 * Name of the function used to concatenate forward and reverse read into a single file to use as input into humann2
+	 * command: {@value #FUNCTION_CONCAT_PAIRED_READS}
 	 */
-	protected static final String FUNCTION_KRAKEN = "runKraken";
+	protected static final String FUNCTION_CONCAT_PAIRED_READS = "mergePairedReads";
 
 	/**
-	 * Name of the translate function used to convert mpa-format to standard format: {@value #FUNCTION_TRANSLATE}
+	 * Name of the function used to join HumanN2 output for all of the samples initial HumanN2 analysis:
+	 * {@value #FUNCTION_JOIN_HN2_TABLES}
 	 */
-	protected static final String FUNCTION_TRANSLATE = "translate";
+	protected static final String FUNCTION_JOIN_HN2_TABLES = "joinHn2Tables";
 
 	/**
-	 * {@link biolockj.Config} property must contain file path to Kraken kmer database directory:
-	 * {@value #KRAKEN_DATABASE}
+	 * Name of the function used to renormalize HumanN2 tables: {@value #FUNCTION_RENORM_HN2_TABLES}
 	 */
-	protected static final String KRAKEN_DATABASE = "kraken.db";
+	protected static final String FUNCTION_RENORM_HN2_TABLES = "renormHn2Tables";
 
 	/**
-	 * File suffix added by BioLockJ to kraken output files (before translation): {@value #KRAKEN_FILE}
+	 * Name of the function used to run initial HumanN2 analysis: {@value #FUNCTION_RUN_HN2}
 	 */
-	protected static final String KRAKEN_FILE = "_kraken_out" + TXT_EXT;
+	protected static final String FUNCTION_RUN_HN2 = "runHn2";
 
+	/**
+	 * {@link biolockj.Config} Directory property may contain multiple nucleotide database files: {@value #HN2_NUCL_DB}
+	 */
+	protected static final String HN2_NUCL_DB = "humann2.nuclDB";
+
+	/**
+	 * {@link biolockj.Config} Directory property may contain protein nucleotide database files:
+	 * {@value #HN2_PROT_DB2_NUCL_DB}
+	 */
+	protected static final String HN2_PROT_DB = "humann2.protDB";
+
+	/**
+	 * Renormalize HumanN2 table --mode option: {@value #RENORM_MODE_OPTION_COMMUNITY}
+	 */
+	protected static final String RENORM_MODE_OPTION_COMMUNITY = "community";
+
+	/**
+	 * Renormalize HumanN2 table --mode option: {@value #RENORM_MODE_OPTION_LEVELWISE}
+	 */
+	protected static final String RENORM_MODE_OPTION_LEVELWISE = "levelwise";
+
+	/**
+	 * Renormalize HumanN2 table --units option "Copies Per Million": {@value #HN2_RENORM_OPTION_CPM}
+	 */
+	protected static final String RENORM_UNITS_OPTION_CPM = "cpm";
+
+	/**
+	 * Renormalize HumanN2 table --units option "Relative Abundance": {@value #RENORM_UNITS_OPTION_RELAB}
+	 */
+	protected static final String RENORM_UNITS_OPTION_RELAB = "relab";
+	private static final String INPUT_PARAM = "-i";
+	private static final String NUCL_DB_PARAM = "--nucleotide-database";
+	private static final String NUM_THREADS_PARAM = "--threads";
+	private static final String OUTPUT_PARAM = "-o";
+	private static final String PROT_DB_PARAM = "--protein-database";
+	private static final String RENORM_MODE_PARAM = "-m";
+	private static final String RENORM_UNITS_PARAM = "--units";
+	private static final String TEMP_MERGE_READ_DIR = "merged";
 }

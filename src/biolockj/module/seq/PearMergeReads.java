@@ -69,10 +69,11 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
+		super.checkDependencies();
 		Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
 		Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
-		getPearSwitches();
-		super.checkDependencies();
+		getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
+		
 		if( !SeqUtil.isFastQ() )
 		{
 			throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
@@ -152,29 +153,12 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_PEAR_MERGE + "() {" );
-		lines.add( Config.getExe( EXE_PEAR ) + getPearSwitches() + "-f $2 -r $3 -o $4" + File.separator + "$1" );
+		lines.add( Config.getExe( EXE_PEAR ) + getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 " 
+				+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
 		lines.add( "mv $4" + File.separator + "$1.assembled." + SeqUtil.FASTQ + " $5" + File.separator + "$1."
 				+ SeqUtil.FASTQ );
 		lines.add( "}" );
 		return lines;
-	}
-
-	/**
-	 * Get optional formatted PEAR switches if provided in {@link biolockj.Config} properties: {@value #EXE_PEAR_PARAMS}
-	 * and {@value #SCRIPT_NUM_THREADS}.
-	 *
-	 * @return Formatted PEAR switches
-	 * @throws Exception if errors occur
-	 */
-	protected String getPearSwitches() throws Exception
-	{
-		String formattedSwitches = " -j " + Config.requirePositiveInteger( SCRIPT_NUM_THREADS ) + " ";
-		for( final String string: Config.getList( EXE_PEAR_PARAMS ) )
-		{
-			formattedSwitches += "-" + string + " ";
-		}
-
-		return formattedSwitches;
 	}
 
 	private String getMetaColName() throws Exception
@@ -190,6 +174,10 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	private String otuColName = null;
 	private Map<String, String> readsPerSample = new HashMap<>();
 	private final Set<String> sampleIds = new HashSet<>();
+	private static final String NUM_THREADS_PARAM = "-j ";
+	private static final String FW_READ_PARAM = "-f ";
+	private static final String RV_READ_PARAM = "-r ";
+	private static final String OUTPUT_PARAM = "-o ";
 
 	/**
 	 * Metadata column name for column that holds number of reads per sample after merging: {@value #NUM_MERGED_READS}
@@ -206,10 +194,6 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	 */
 	protected static final String EXE_PEAR_PARAMS = "exe.pearParams";
 
-	/**
-	 * {@link biolockj.Config} property {@value #FUNCTION_PEAR_MERGE} is used to set the PEAR executable runtime
-	 * parameters
-	 */
 	/**
 	 * Name of the bash function that merges files with PEAR: {@value #FUNCTION_PEAR_MERGE}
 	 */

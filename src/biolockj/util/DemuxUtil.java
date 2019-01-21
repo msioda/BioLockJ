@@ -132,7 +132,7 @@ public class DemuxUtil
 		{
 			return null;
 		}
-		else if( Config.requireString( DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX ) )
+		else if( !Config.requireString( DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX ) )
 		{
 			return true;
 		}

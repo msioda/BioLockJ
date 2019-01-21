@@ -190,25 +190,9 @@ public class SeqUtil
 	 * @return Map with key=fwRead and val=rvRead
 	 * @throws ConfigViolationException if unpaired reads are found and
 	 * {@link biolockj.Config}.{@value #INPUT_REQUIRE_COMPLETE_PAIRS} = {@value biolockj.Config#TRUE}
-	 * @throws Exception if unable to find paired reads
+	 * @throws Exception if other errors occur
 	 */
 	public static Map<File, File> getPairedReads( final Collection<File> files ) throws Exception
-	{
-		return getPairedReads( files, true );
-	}
-
-	/**
-	 * Paired reads must have a unique file suffix to identify forward and reverse reads. Parameter files read and a map
-	 * with forward read file names as keys and matching reverse reads as the map return value
-	 *
-	 * @param files List of paired read files
-	 * @param fwReadAsKey boolean if true map uses forward read file as key and reverse as value; if false, this is
-	 * reversed.
-	 * @return Map with key=fwRead and val=rvRead, or the reverse if fwReadAsKey is false.
-	 * @throws Exception if unable to find paired reads
-	 */
-	public static Map<File, File> getPairedReads( final Collection<File> files, final boolean fwReadAsKey )
-			throws Exception
 	{
 		Log.debug( SeqUtil.class, "Looking for paired reads in " + ( files == null ? 0: files.size() ) + " files " );
 		final Map<File, File> map = new HashMap<>();
@@ -240,14 +224,7 @@ public class SeqUtil
 
 			if( rvRead != null )
 			{
-				if( fwReadAsKey )
-				{
-					map.put( fwRead, rvRead );
-				}
-				else
-				{
-					map.put( rvRead, fwRead );
-				}
+				map.put( fwRead, rvRead );
 			}
 			else
 			{
@@ -866,7 +843,7 @@ public class SeqUtil
 	 */
 	private static void registerDemuxStatus() throws Exception
 	{
-		int count = BioLockJUtil.getBasicInputFiles().size();
+		final int count = BioLockJUtil.getBasicInputFiles().size();
 		Log.info( SeqUtil.class, "Register Demux Status for: " + count + " input files." );
 		boolean isMultiplexed = false;
 		if( DemuxUtil.doDemux() != null && !DemuxUtil.doDemux() )
@@ -881,14 +858,20 @@ public class SeqUtil
 		}
 		else if( count == 2 )
 		{
-			
+
 			boolean foundFw = false;
 			boolean foundRv = false;
 			final String fwRead = Config.getString( Config.INPUT_FORWARD_READ_SUFFIX );
 			final String rvRead = Config.getString( Config.INPUT_REVERSE_READ_SUFFIX );
-			Set<String> suffixes = new HashSet<>();
-			if( fwRead != null ) suffixes.add( fwRead );
-			if( rvRead != null ) suffixes.add( rvRead );
+			final Set<String> suffixes = new HashSet<>();
+			if( fwRead != null )
+			{
+				suffixes.add( fwRead );
+			}
+			if( rvRead != null )
+			{
+				suffixes.add( rvRead );
+			}
 			Log.info( SeqUtil.class, "Checking 2 input files for paired read suffix values: " + suffixes );
 			for( final File file: BioLockJUtil.getBasicInputFiles() )
 			{
@@ -915,7 +898,8 @@ public class SeqUtil
 
 		if( isMultiplexed && numMultiSeqLines == null )
 		{
-			throw new Exception( "Multi-line sequence files must be demultiplexed before analyzed by BioLockJ because the number of lines per read is inconsistant." );
+			throw new Exception(
+					"Multi-line sequence files must be demultiplexed before analyzed by BioLockJ because the number of lines per read is inconsistant." );
 		}
 	}
 

@@ -191,34 +191,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	}
 
 	/**
-	 * Get optional list of parameters from {@link biolockj.Config}
-	 * {@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS} to append whenever the OTU picking
-	 * script is used.
-	 */
-	@Override
-	public String getClassifierParams() throws Exception
-	{
-		String formattedSwitches = " ";
-		final List<String> switches = Config.getList( EXE_CLASSIFIER_PARAMS );
-		final Iterator<String> it = switches.iterator();
-		while( it.hasNext() )
-		{
-			final String token = it.next();
-			final StringTokenizer sToken = new StringTokenizer( token, " " );
-			if( sToken.nextToken().length() == 1 )
-			{
-				formattedSwitches += "-" + token + " ";
-			}
-			else
-			{
-				formattedSwitches += "--" + token + " ";
-			}
-		}
-
-		return formattedSwitches;
-	}
-
-	/**
 	 * Subclasses of QiimeClassifier add post-requisite module: {@link biolockj.module.implicit.qiime.QiimeClassifier}.
 	 * Only the QiimeClassifier itself adds the QiimeParser as a post-requisite module.
 	 */
@@ -311,29 +283,29 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 */
 	protected void checkOtuPickingDependencies() throws Exception
 	{
-		switches = getClassifierParams();
-		if( switches.indexOf( "-i " ) > -1 || switches.indexOf( "--input_fp " ) > -1 )
+		final String params = BioLockJUtil.join( getClassifierParams() );
+		if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
 		{
 			throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
 					+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Config.INPUT_DIRS );
 		}
-		if( switches.indexOf( "-o " ) > -1 || switches.indexOf( "--output_dir " ) > -1 )
+		if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
 		{
 			throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY ("
 					+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
 		}
-		if( switches.indexOf( "-a " ) > -1 || switches.indexOf( "-O " ) > -1 )
+		if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
 		{
 			throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
-					+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + getNumThreadsParam() );
+					+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + NUM_THREADS );
 		}
-		if( switches.indexOf( "-f " ) > -1 )
+		if( params.indexOf( "-f " ) > -1 )
 		{
 			throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
 					+ "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
 		}
 
-		addHardCodedSwitches();
+		switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
 	}
 
 	/**
@@ -380,23 +352,14 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	}
 
 	/**
-	 * Get Vsearch params from the prop file and format switches for the bash script.
-	 *
-	 * @return Formatted vsearch parameters, if any, else an empty string
+	 * Return runtime parameters for {@value #EXE_VSEARCH_PARAMS}
+	 * 
+	 * @return Vsearch runtime parameters
 	 * @throws Exception if errors occur
 	 */
 	protected String getVsearchParams() throws Exception
 	{
-		String formattedSwitches = " ";
-		final List<String> params = Config.requireList( EXE_VSEARCH_PARAMS );
-		for( final String string: params )
-		{
-			formattedSwitches += "--" + string + " ";
-		}
-
-		formattedSwitches += "--threads " + getNumThreads() + " ";
-
-		return formattedSwitches;
+		return getRuntimeParams( Config.getList( EXE_VSEARCH_PARAMS ), VSEARCH_NUM_THREADS_PARAM );
 	}
 
 	/**
@@ -407,17 +370,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected void validateFileNameUnique( final Set<String> fileNames, final File file ) throws Exception
 	{
 		// Not needed for QIIME. Multiple file named otu_table.biom & others exist.
-	}
-
-	/**
-	 * Set the number of threads used in QIIME scripts as defined in
-	 * {@link biolockj.Config}.{@value biolockj.Config#SCRIPT_NUM_THREADS}.
-	 *
-	 * @throws Exception if errors occur
-	 */
-	private void addHardCodedSwitches() throws Exception
-	{
-		switches += "-aO" + " " + getNumThreads() + " ";
 	}
 
 	private String getAlphaDiversityMetrics() throws Exception
@@ -584,6 +536,9 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * BioLockJ parsers expect clear text files in the module output directory, so the biom files must be excluded.
 	 */
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
+
+	private static final String NUM_THREADS_PARAM = "-aO";
+	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 
 	// OTHER SCRIPT THAT MAY BE ADDED IN THE FUTURE
 	// public static final String VALIDATED_MAPPING = "_corrected.txt";

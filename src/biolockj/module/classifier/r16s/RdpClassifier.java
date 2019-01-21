@@ -71,7 +71,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines.add( Config.getExe( EXE_JAVA ) + " -jar " + getClassifierExe() + getClassifierParams() + "-o $2 $1" );
+		lines.add( Config.getExe( EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getClassifierExe() + " " + getClassifierParams() + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" );
 		return lines;
 	}
@@ -85,5 +85,8 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * Name of the RdpClassifier bash script function used to assign taxonomy: {@value #FUNCTION_RDP}
 	 */
 	protected static final String FUNCTION_RDP = "runRdp";
+	
+	private static final String OUTPUT_PARAM = "-o";
+	private static final String JAVA_JAR_PARAM = "-jar";
 
 }

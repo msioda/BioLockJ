@@ -12,7 +12,8 @@
 package biolockj.module.seq;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import biolockj.Config;
 import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
@@ -63,7 +64,7 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		{
 			throw new Exception( getClass().getName() + " requires FASTQ format!" );
 		}
-		getKneadDataSwitches();
+		getParams();
 	}
 
 	/**
@@ -74,10 +75,9 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_SANATIZE + "() {" );
-		lines.add( Config.getExe( EXE_KNEADDATA ) + " " + getKneadDataSwitches() + OUTPUT_FILE_PREFIX_PARAM + " $1 "
-				+ INPUT_PARAM + " $2 "
-				+ ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" ) + OUTPUT_PARAM + " "
-				+ getTempDir().getAbsolutePath() );
+		lines.add( Config.getExe( EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 " + INPUT_PARAM
+				+ " $2 " + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
+				+ OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
 		lines.add( "}" );
 		return lines;
 	}
@@ -136,62 +136,19 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix + fastqExt() );
 	}
 
-	// TODO --> add comma separated list with no spaces
-	private String getDbParams() throws Exception
-	{
-		String params = "";
-		for( final String db: Config.requireList( KNEAD_DBS ) )
-		{
-			params += DB_PARAM + " " + db + " ";
-		}
-
-		return params;
-	}
-
 	private String fastqExt() throws Exception
 	{
 		return "." + SeqUtil.FASTQ;
 	}
 
-	/**
-	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
-	 * {@value #EXE_KNEADDATA_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
-	 *
-	 * @return Formatted KneadData switches
-	 * @throws Exception if errors occur
-	 */
-	private String getKneadDataSwitches() throws Exception
+	private String getParams() throws Exception
 	{
-		final List<String> switches = Config.getList( EXE_KNEADDATA_PARAMS );
-		String formattedSwitches = "-t " + getNumThreads() + " " + getDbParams();
-
-		final List<String> singleDashParams = getSingleDashParams();
-
-		final Iterator<String> it = switches.iterator();
-		while( it.hasNext() )
+		String params = getRuntimeParams( Config.getList( EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM );
+		for( final String db: Config.requireList( KNEAD_DBS ) )
 		{
-			final String param = it.next();
-			final StringTokenizer sToken = new StringTokenizer( param, " " );
-			if( singleDashParams.contains( sToken.nextToken() ) )
-			{
-				formattedSwitches += "-" + param + " ";
-			}
-			else
-			{
-				formattedSwitches += "--" + param + " ";
-			}
+			params += DB_PARAM + " " + db + " ";
 		}
 
-		return formattedSwitches;
-	}
-
-	private List<String> getSingleDashParams() throws Exception
-	{
-		final List<String> params = new ArrayList<>();
-		for( final String param: singleDashParams )
-		{
-			params.add( param );
-		}
 		return params;
 	}
 
@@ -225,9 +182,8 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	private static final String DB_PARAM = "-db";
 	private static final String FW_OUTPUT_SUFFIX = "_paired_1";
 	private static final String INPUT_PARAM = "-i";
+	private static final String NUM_THREADS_PARAM = "-t";
 	private static final String OUTPUT_FILE_PREFIX_PARAM = "--output-prefix";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String RV_OUTPUT_SUFFIX = "_paired_2";
-	private static final String[] singleDashParams = { "p", "q", "v" };
-
 }

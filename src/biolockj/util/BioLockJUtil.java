@@ -104,6 +104,30 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Return the file extension - but ignore {@value biolockj.BioLockJ#GZIP_EXT}.
+	 * 
+	 * @param file File
+	 * @return File extension
+	 * @throws Exception if errors occur.
+	 */
+	public static String fileExt( final File file ) throws Exception
+	{
+		String ext = file.getName();
+		int index = ext.lastIndexOf( BioLockJ.GZIP_EXT );
+		if( SeqUtil.isGzipped( ext ) && index > 0 )
+		{
+			ext = ext.substring( 0, index );
+		}
+		index = ext.lastIndexOf( "." );
+		if( index > 0 )
+		{
+			ext = ext.substring( index );
+		}
+
+		return ext;
+	}
+
+	/**
 	 * This method formats the input number to have a length of at least numDigits.<br>
 	 * Simply add leading zeros until numDigits is reached.
 	 *
@@ -376,6 +400,22 @@ public class BioLockJUtil
 		}
 
 		return missingMsg;
+	}
+
+	public static String join( final Collection<?> collection ) throws Exception
+	{
+		if( collection == null )
+		{
+			return "";
+		}
+
+		final StringBuilder sb = new StringBuilder();
+		for( final Object item: collection )
+		{
+			sb.append( item.toString().trim() ).append( " " );
+		}
+
+		return sb.toString();
 	}
 
 	/**

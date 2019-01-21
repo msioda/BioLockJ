@@ -260,6 +260,11 @@ public abstract class BioModuleImpl implements BioModule
 	private File moduleDir = null;
 
 	/**
+	 * BioLockJ gzip file extension constant: {@value #GZIP_EXT}
+	 */
+	public static final String GZIP_EXT = BioLockJ.GZIP_EXT;
+
+	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */
 	public static final String LOG_EXT = BioLockJ.LOG_EXT;
@@ -293,4 +298,5 @@ public abstract class BioModuleImpl implements BioModule
 	 * BioLockJ tab delimited text file extension constant: {@value #TXT_EXT}
 	 */
 	public static final String TXT_EXT = BioLockJ.TXT_EXT;
+
 }

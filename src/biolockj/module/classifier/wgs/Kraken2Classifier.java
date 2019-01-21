@@ -12,11 +12,13 @@
 package biolockj.module.classifier.wgs;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import biolockj.Config;
-import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
 
@@ -96,8 +98,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		getDB();
-		getDefaultSwitches();
+		getParams();
 	}
 
 	/**
@@ -109,31 +110,9 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		final String inFiles = "$3" + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " $4": "" );
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
-		lines.add( getClassifierExe() + getRuntimeParams() + "--report $1 " + "--output $2 " + inFiles );
+		lines.add( getClassifierExe() + getParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 " + inFiles );
 		lines.add( "}" );
 		return lines;
-	}
-
-	/**
-	 * Format hard coded defaultSwitches to classifier defaultSwitches value.
-	 * 
-	 * @return Formatted Kraken runtime parameters
-	 */
-	private String formatHardCodedSwitches() throws Exception
-	{
-		String switches = "";
-		final Map<String, String> hardCodedSwitches = getHardCodedKrakenSwitches();
-		for( final String key: hardCodedSwitches.keySet() )
-		{
-			String val = hardCodedSwitches.get( key ).trim();
-			if( val.length() > 0 )
-			{
-				val = " " + val;
-			}
-			switches += key + val + " ";
-		}
-
-		return switches;
 	}
 
 	private String getDB() throws Exception
@@ -146,125 +125,86 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		return Config.requireExistingDir( KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
-	private String getDefaultSwitches() throws Exception
+	private String getParams() throws Exception
 	{
 		if( defaultSwitches == null )
 		{
-			defaultSwitches = getClassifierParams();
+			final List<String> classifierParams = getClassifierParams();
+			String params = BioLockJUtil.join( classifierParams );
 
-			if( defaultSwitches.indexOf( "--fasta-input " ) > -1 )
+			if( params.contains( FASTA_PARAM ) )
 			{
-				defaultSwitches.replaceAll( "--fasta-input", "" );
+				classifierParams.remove( FASTA_PARAM );
 			}
-			if( defaultSwitches.indexOf( "--fastq-input " ) > -1 )
+			if( params.contains( FASTQ_PARAM ) )
 			{
-				defaultSwitches.replaceAll( "--fastq-input", "" );
+				classifierParams.remove( FASTQ_PARAM );
 			}
-			if( defaultSwitches.indexOf( "--use-names " ) > -1 )
+			if( params.contains( USE_NAMES_PARAM ) )
 			{
-				defaultSwitches.replaceAll( "--use-names ", "" );
+				classifierParams.remove( USE_NAMES_PARAM );
 			}
-			if( defaultSwitches.indexOf( "--use-mpa-style " ) > -1 )
+			if( params.contains( USE_MPA_PARAM ) )
 			{
-				defaultSwitches.replaceAll( "--use-mpa-style ", "" );
+				classifierParams.remove( USE_MPA_PARAM );
 			}
-			if( defaultSwitches.indexOf( "--threads " ) > -1 )
+			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--threads) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ derives this value from property: " + getNumThreadsParam() );
+				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
+						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: "
+						+ SCRIPT_NUM_THREADS );
 			}
-			if( defaultSwitches.indexOf( "--paired " ) > -1 )
+			if( params.indexOf( PAIRED_PARAM ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--paired) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ derives this value by analyzing input sequence files" );
+				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property("
+						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value by analyzing input sequence files" );
 			}
-			if( defaultSwitches.indexOf( "--output " ) > -1 )
+			if( params.indexOf( OUTPUT_PARAM ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--output) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ hard codes this file path based on sequence files names in: "
-						+ Config.INPUT_DIRS );
+				throw new Exception(
+						"Invalid classifier option (" + OUTPUT_PARAM + ") found in property(" + EXE_CLASSIFIER_PARAMS
+								+ "). BioLockJ hard codes this file path based on sequence files names in: "
+								+ Config.INPUT_DIRS );
 			}
-			if( defaultSwitches.indexOf( "--db " ) > -1 )
+			if( params.indexOf( DB_PARAM ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--db) found in property(" + EXE_CLASSIFIER_PARAMS
+				throw new Exception( "Invalid classifier option (" + DB_PARAM + ") found in property("
+						+ EXE_CLASSIFIER_PARAMS
 						+ "). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
 			}
-			if( defaultSwitches.indexOf( "--help " ) > -1 )
+			if( params.indexOf( "--help " ) > -1 )
 			{
 				throw new Exception(
 						"Invalid classifier option (--help) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
-			if( defaultSwitches.indexOf( "--version " ) > -1 )
+			if( params.indexOf( "--version " ) > -1 )
 			{
 				throw new Exception(
 						"Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
-			if( defaultSwitches.indexOf( "--report " ) > -1 )
+			if( params.indexOf( REPORT_PARAM ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--report) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ hard codes this value based on Sample IDs found in: " + Config.INPUT_DIRS );
+				throw new Exception( "Invalid classifier option (" + REPORT_PARAM + ") found in property("
+						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ hard codes this value based on Sample IDs found in: "
+						+ Config.INPUT_DIRS );
 			}
-		}
 
-		if( defaultSwitches == null )
-		{
-			defaultSwitches = "";
+			params = DB_PARAM + getDB() + USE_NAMES_PARAM + USE_MPA_PARAM;
+			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+			{
+				params += PAIRED_PARAM;
+			}
+
+			if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
+			{
+				params += GZIP_PARAM;
+			}
+
+			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + params;
+
 		}
 
 		return defaultSwitches;
-	}
-
-	/**
-	 * All calls to classifier requires setting number of threads, type of input files, set paired switch if needed, and
-	 * finally, set the database parameter.
-	 *
-	 * @return hard-coded Kraken defaultSwitches
-	 * @throws Exception if any validation fails
-	 */
-	private Map<String, String> getHardCodedKrakenSwitches() throws Exception
-	{
-		final Map<String, String> switches = new HashMap<>();
-		switches.put( "--use-names", "" ); // needed for output style expected by Kraken2Parser
-		switches.put( "--use-mpa-style", "" ); // needed for output style expected by Kraken2Parser
-		switches.put( "--db", getDB() );
-		switches.put( "--threads", getNumThreads().toString() );
-		// switches.put( getInputSwitch(), "" );
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			switches.put( "--paired", "" );
-		}
-
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
-		{
-			if( getDefaultSwitches().indexOf( "--bzip2-compressed " ) > -1 )
-			{
-				Log.warn( getClass(),
-						"VERIFY THIS PROPERTY IS CORRECT!  Setting user specified \"--bzip2-compressed\" - even though file ends with .gz (possibly mis-named)" );
-				switches.put( "--gzip-compressed", "" );
-			}
-			else
-			{
-				switches.put( "--gzip-compressed", "" );
-			}
-		}
-
-		return switches;
-	}
-
-	private String getRuntimeParams() throws Exception
-	{
-		String switches = getDefaultSwitches();
-		String hardCodedSwitches = formatHardCodedSwitches();
-		if( !switches.endsWith( " " ) )
-		{
-			switches += " ";
-		}
-		if( !hardCodedSwitches.endsWith( " " ) )
-		{
-			hardCodedSwitches += " ";
-		}
-
-		return switches + hardCodedSwitches;
 	}
 
 	private String defaultSwitches = null;
@@ -284,4 +224,15 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	 * File suffix added by BioLockJ to kraken output files (before translation): {@value #KRAKEN_FILE}
 	 */
 	protected static final String KRAKEN_FILE = "_kraken2_out" + TXT_EXT;
+
+	private static final String DB_PARAM = "--db ";
+	private static final String FASTA_PARAM = "--fasta-input ";
+	private static final String FASTQ_PARAM = "--fastq-input ";
+	private static final String GZIP_PARAM = "--gzip-compressed ";
+	private static final String NUM_THREADS_PARAM = "--threads";
+	private static final String OUTPUT_PARAM = "--output ";
+	private static final String PAIRED_PARAM = "--paired ";
+	private static final String REPORT_PARAM = "--report ";
+	private static final String USE_MPA_PARAM = "--use-mpa-style ";
+	private static final String USE_NAMES_PARAM = "--use-names ";
 }

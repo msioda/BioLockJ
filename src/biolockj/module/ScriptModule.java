@@ -14,7 +14,6 @@ package biolockj.module;
 import java.io.File;
 import java.util.List;
 import biolockj.exception.ConfigFormatException;
-import biolockj.exception.ConfigNotFoundException;
 
 /**
  * Classes that implement this interface are <br>
@@ -53,16 +52,6 @@ public interface ScriptModule extends BioModule
 	 * @throws Exception if unable to build the job parameters
 	 */
 	public String[] getJobParams() throws Exception;
-
-	/**
-	 * Get module specific number of threads property value, if defined. Otherwise, return the standard number of
-	 * threads property value: {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS}
-	 * 
-	 * @return Positive integer value
-	 * @throws ConfigFormatException if property is not a positive integer
-	 * @throws ConfigNotFoundException if properties are undefined
-	 */
-	public Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException;
 
 	/**
 	 * ScriptModules that generate scripts to complete their task, create script files in this directory.<br>

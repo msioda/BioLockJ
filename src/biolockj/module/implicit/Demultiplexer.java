@@ -58,11 +58,13 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		getBarcodeCutoff();
 		final String demuxStrategy = "Config property [ " + DemuxUtil.DEMUX_STRATEGY + "="
 				+ Config.getString( DemuxUtil.DEMUX_STRATEGY ) + " ]";
-		
+
 		if( Config.getString( DemuxUtil.DEMUX_STRATEGY ) == null )
 		{
-			Log.info( getClass(), DemuxUtil.DEMUX_STRATEGY + " is undefined for a multiplexed dataset.  Demultiplexer will analyze the file to determine if Sample IDs or barcodes "
-					+ "should be used for demultiplexing.  Demultiplexer will also determine if reverse compliment barcodes are needed and set: " + DemuxUtil.BARCODE_USE_REV_COMP );
+			Log.info( getClass(), DemuxUtil.DEMUX_STRATEGY
+					+ " is undefined for a multiplexed dataset.  Demultiplexer will analyze the file to determine if Sample IDs or barcodes "
+					+ "should be used for demultiplexing.  Demultiplexer will also determine if reverse compliment barcodes are needed and set: "
+					+ DemuxUtil.BARCODE_USE_REV_COMP );
 		}
 		else if( DemuxUtil.demuxWithBarcode() )
 		{
@@ -548,14 +550,13 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	private void buildSummaryAndSetConfig( final File file, final long numReads, final long headerFwBarcodes,
 			final long seqFwBarcodes, final long headerRvBarcodes, final long seqRvBarcodes ) throws Exception
 	{
-		summary += "Use this Test File to get barcode counts: " + file.getAbsolutePath() + RETURN;
-		summary += "# Reads in test file: " + numReads + RETURN;
-		summary += "# Header barcodes: " + headerFwBarcodes + RETURN;
-		summary += "# Sequence barcodes: " + seqFwBarcodes + RETURN;
-		summary += "# Header REVERSE COMPLIMENT( barcodes ): " + headerRvBarcodes + RETURN;
-		summary += "# Sequence REVERSE COMPLIMENT( barcodes ): " + seqRvBarcodes + RETURN;
-
-		Log.info( getClass(), "Test file summary: " + RETURN + Log.LOG_SPACER + RETURN + summary );
+		summary += "Compre #BC (BarCode) vs. #rcBC (Reverse Compliment BC) in Headers vs. Sequences" + RETURN;
+		summary += "Test Sequence File: " + file.getAbsolutePath() + RETURN;
+		summary += "# Total Reads:              " + numReads + RETURN;
+		summary += "#BC Headers:          " + headerFwBarcodes + RETURN;
+		summary += "#rcBC Headers: " + headerRvBarcodes + RETURN;
+		summary += "#BC Sequences: " + seqFwBarcodes + RETURN;
+		summary += "#rcBC Sequences: " + seqRvBarcodes + RETURN;
 
 		final boolean useRevComp = useRevCompBarcodes( headerFwBarcodes + seqFwBarcodes,
 				headerRvBarcodes + seqRvBarcodes );
@@ -578,13 +579,13 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			if( strategyConfigSet() && !DemuxUtil.sampleIdInHeader() )
 			{
-				throw new Exception(
-						strategy + " however no baracodes found in multiplexed file: " + file.getAbsolutePath() );
+				throw new Exception( strategy + " however no baracodes or Sample IDs found in test file: "
+						+ file.getAbsolutePath() );
 			}
 			else if( !strategyConfigSet() )
 			{
-				summary += "Analyzed to assign: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_ID_IN_HEADER
-						+ RETURN;
+				summary += "Set: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_ID_IN_HEADER
+						+ " based on #BC & #rcBC counts" + RETURN;
 				Config.setConfigProperty( DemuxUtil.DEMUX_STRATEGY, DemuxUtil.OPTION_ID_IN_HEADER );
 			}
 		}
@@ -592,30 +593,31 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			if( DemuxUtil.barcodeInHeader() && useSeqBarcodes )
 			{
-				Log.warn( getClass(), strategy + " however more barcodes found in sequence lines (" + numSeqBarcodes
-						+ ")  than in header lines (" + numHeaderBarcodes + ") for :" + file.getAbsolutePath() );
+				summary += "WARNING: [" + strategy + "]  --> but [" + numSeqBarcodes + "] sequence BC > ["
+						+ numHeaderBarcodes + "] header BC in";
 			}
 			else if( DemuxUtil.barcodeInSeq() && !useSeqBarcodes )
 			{
-				Log.warn( getClass(), strategy + " however more barcodes found in header lines (" + numHeaderBarcodes
-						+ ") than in sequence lines (" + numSeqBarcodes + ") for :" + file.getAbsolutePath() );
+
+				summary += "WARNING: [" + strategy + "] --> but [" + numHeaderBarcodes + "] header BC > ["
+						+ numSeqBarcodes + "] sequence BC";
 			}
 			else if( numHeaderBarcodes == numSeqBarcodes )
 			{
-				Log.warn( getClass(), strategy
-						+ " Note sequences header lines and sequence lines both found the same number of barcodes" );
+				summary += "WARNING: [" + numHeaderBarcodes + "] header BC = [" + numSeqBarcodes
+						+ "] sequence BC --> TrimPrimers Module can be used to remove sequence BC if located at very start of sequence.";
 			}
 		}
 		else if( useSeqBarcodes )
 		{
-			summary += "Analyzed to assign: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_BARCODE_IN_SEQ
-					+ RETURN;
+			summary += "Set: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_BARCODE_IN_SEQ
+					+ " based on BC counts" + RETURN;
 			Config.setConfigProperty( DemuxUtil.DEMUX_STRATEGY, DemuxUtil.OPTION_BARCODE_IN_SEQ );
 		}
 		else
 		{
-			summary += "Analyzed to assign: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_BARCODE_IN_HEADER
-					+ RETURN;
+			summary += "Set: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_BARCODE_IN_HEADER
+					+ " based on BC counts" + RETURN;
 			Config.setConfigProperty( DemuxUtil.DEMUX_STRATEGY, DemuxUtil.OPTION_BARCODE_IN_HEADER );
 
 		}
@@ -624,10 +626,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			if( Config.getBoolean( DemuxUtil.BARCODE_USE_REV_COMP ) && !useRevComp )
 			{
-				Log.warn( getClass(),
-						revCompAssign + " however a greater # standard barcodes found (" + numFwBarcodes
-								+ ")  than # reverse compliment barcodes (" + numRvBarcodes + ") for :"
-								+ file.getAbsolutePath() );
+				summary += "WARNING: [" + revCompAssign + "] --> but [" + numFwBarcodes + "] BC > [" + numRvBarcodes
+						+ "] rcBC" + RETURN;
 			}
 		}
 		else
@@ -639,14 +639,14 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 				if( numBarcodes < cutoffNumReads )
 				{
 					final String displayCutoff = new Long( Math.round( cutoff * 100 ) ).toString() + "%";
-					throw new Exception( "Total # barcodes: " + numBarcodes + " < " + displayCutoff + " of reads [ "
-							+ cutoffNumReads + " ]" + RETURN + " Review Summary -- > " + summary );
+					throw new Exception(
+							"Total # barcodes: " + numBarcodes + " < cutoff [ " + displayCutoff + " of reads = "
+									+ cutoffNumReads + " ]" + RETURN + " Review Summary -- > " + RETURN + summary );
 				}
-
 			}
-			summary += "Analyzed to assign: " + DemuxUtil.BARCODE_USE_REV_COMP + "="
-					+ ( useRevComp ? Config.TRUE: Config.FALSE ) + RETURN;
-			Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, useRevComp ? Config.TRUE: Config.FALSE );
+			final String val = useRevComp ? Config.TRUE: Config.FALSE;
+			summary += "Set: " + DemuxUtil.BARCODE_USE_REV_COMP + "=" + val + " based on #BC & #rcBC counts" + RETURN;
+			Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, val );
 		}
 	}
 
@@ -683,34 +683,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	{
 		return getOutputDir().getAbsolutePath() + File.separator + sampleId + getFileSuffix( fileName, header );
 	}
-
-	// /**
-	// * REMVED THIS METHOD - NOW HANDLED IN SeqModuleImpl
-	// *
-	// * Verify that each sequence file has a corresponding record in the metadata file.
-	// *
-	// * @throws Exception if errors occur
-	// */
-	// protected void verifySeqMetadata() throws Exception
-	// {
-	// final StringBuffer sb = new StringBuffer();
-	// long x = 0L;
-	// for( final File seq: getOutputDir().listFiles() )
-	// {
-	// final String id = SeqUtil.getSampleId( seq.getName() );
-	// if( SeqUtil.isForwardRead( seq.getName() ) && !MetaUtil.getSampleIds().contains( id ) )
-	// {
-	// x++;
-	// sb.append( sb.toString().isEmpty() ? "": ", " ).append( id );
-	// }
-	// }
-	//
-	// if( !sb.toString().isEmpty() )
-	// {
-	// throw new ConfigViolationException( MetaUtil.META_REQUIRED,
-	// "Metadata row is missing for the following " + x + " samples IDs: " + sb.toString() );
-	// }
-	// }
 
 	private String getSampleId( final String header, final Map<String, Set<String>> validHeaders ) throws Exception
 	{

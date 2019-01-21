@@ -11,6 +11,7 @@
  */
 package biolockj.module.classifier;
 
+import java.util.List;
 import biolockj.BioLockJ;
 import biolockj.module.SeqModule;
 
@@ -34,10 +35,10 @@ public interface ClassifierModule extends SeqModule
 	 * Get optional list of parameters from {@link biolockj.Config} {@value #EXE_CLASSIFIER_PARAMS} to append whenever
 	 * the classifier executable is called.
 	 *
-	 * @return Program switches formatted with "-" or "--" as required by executable
+	 * @return Runtime parameters
 	 * @throws Exception thrown if parameters defined are invalid
 	 */
-	public String getClassifierParams() throws Exception;
+	public List<String> getClassifierParams() throws Exception;
 
 	/**
 	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
