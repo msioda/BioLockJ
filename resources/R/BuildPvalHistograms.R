@@ -22,6 +22,15 @@ calcSigFraction <- function(pvals, pvalCutoff){
 	return( belowCutoff / total )
 }
 
+# error handler for tryCatch in main
+errorHandlerPValHist <- function(err, otuLevel, reportField){
+	origErr = as.character(err)
+	msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
+							 "\nusing attribute: ", reportField)
+	if( doDebug() ){print(msg)}
+	plotPlainText(msg)
+}
+
 # Return main.cex parameter between 0.65 and 1.2 based on longest report field name
 getCexMain<- function( labels=NULL ) {
 	cexMax = 1.2
@@ -93,26 +102,30 @@ main <- function() {
 		# plot histograms in the same order they have in the ranks table
 		for( attName in ranks$AttributeName ) {
 			if( doDebug() ) print( paste("processing attribute:", attName) )
-			stopifnot( attName %in% names(nonParStats) & attName %in% names(parStats) )
-			# parametric
-			parTestName = getTestName(attName, TRUE)
-			xLabelPar = paste( parTestName, "P-Values" )
-			addHistogram( v=parStats[, attName], title="",
-										xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
-										col=getTestColor(parTestName) )
-			title(main="Parametric", line=1.5)
-			# nonParametric
-			nonParTestName = getTestName(attName, FALSE)
-			xLabelNonPar = paste( nonParTestName, "P-Values" )
-			addHistogram( v=nonParStats[, attName], title="",
-										xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
-										col=getTestColor(nonParTestName) )
-			title(main="Non-Parametric", line=1.5)
-			# shared title
-			plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
-			shiftByPoints = par("mai")[2] * plotPointPerInch
-			centerAt = par("usr")[1] - shiftByPoints
-			mtext(text=attName, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+			tryCatch({
+				stopifnot( attName %in% names(nonParStats) & attName %in% names(parStats) )
+				# parametric
+				parTestName = getTestName(attName, TRUE)
+				xLabelPar = paste( parTestName, "P-Values" )
+				addHistogram( v=parStats[, attName], title="",
+											xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
+											col=getTestColor(parTestName) )
+				title(main="Parametric", line=1.5)
+				# nonParametric
+				nonParTestName = getTestName(attName, FALSE)
+				xLabelNonPar = paste( nonParTestName, "P-Values" )
+				addHistogram( v=nonParStats[, attName], title="",
+											xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
+											col=getTestColor(nonParTestName) )
+				title(main="Non-Parametric", line=1.5)
+				# shared title
+				plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
+				shiftByPoints = par("mai")[2] * plotPointPerInch
+				centerAt = par("usr")[1] - shiftByPoints
+				mtext(text=attName, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+			}, error = function(err) {
+				errorHandlerPValHist(err, otuLevel=otuLevel, reportField=attName)
+			})
 		}
 		# at the end, add the color code reference
 		printColorCode()
