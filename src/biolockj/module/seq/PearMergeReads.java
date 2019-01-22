@@ -73,7 +73,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 		Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
 		Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
 		getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
-		
+
 		if( !SeqUtil.isFastQ() )
 		{
 			throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
@@ -153,7 +153,8 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_PEAR_MERGE + "() {" );
-		lines.add( Config.getExe( EXE_PEAR ) + " " + getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 " 
+		lines.add( Config.getExe( EXE_PEAR ) + " "
+				+ getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 "
 				+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
 		lines.add( "mv $4" + File.separator + "$1.assembled." + SeqUtil.FASTQ + " $5" + File.separator + "$1."
 				+ SeqUtil.FASTQ );
@@ -174,29 +175,29 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	private String otuColName = null;
 	private Map<String, String> readsPerSample = new HashMap<>();
 	private final Set<String> sampleIds = new HashSet<>();
-	private static final String NUM_THREADS_PARAM = "-j";
-	private static final String FW_READ_PARAM = "-f ";
-	private static final String RV_READ_PARAM = "-r ";
-	private static final String OUTPUT_PARAM = "-o ";
-
 	/**
 	 * Metadata column name for column that holds number of reads per sample after merging: {@value #NUM_MERGED_READS}
 	 */
 	public static final String NUM_MERGED_READS = "Num_Merged_Reads";
-
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_PEAR} defines the command line PEAR executable
 	 */
 	protected static final String EXE_PEAR = "exe.pear";
-
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_PEAR_PARAMS} is used to set the PEAR executable runtime parameters
 	 */
 	protected static final String EXE_PEAR_PARAMS = "exe.pearParams";
-
 	/**
 	 * Name of the bash function that merges files with PEAR: {@value #FUNCTION_PEAR_MERGE}
 	 */
 	protected static final String FUNCTION_PEAR_MERGE = "mergeReads";
+
+	private static final String FW_READ_PARAM = "-f ";
+
+	private static final String NUM_THREADS_PARAM = "-j";
+
+	private static final String OUTPUT_PARAM = "-o ";
+
+	private static final String RV_READ_PARAM = "-r ";
 
 }

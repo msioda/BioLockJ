@@ -150,43 +150,13 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			return FASTQ_PARAM;
 		}
 	}
-	
-	
-	
-	private String getWorkerFunctionParams() throws Exception
-	{
-		String params = " " + getParams();
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			params += PAIRED_PARAM;
-		}
-
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
-		{
-			params += GZIP_PARAM;
-		}
-		
-		params += DB_PARAM + getDB() + " " + getInputSwitch();
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			params += PAIRED_PARAM;
-		}
-
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
-		{
-			params += GZIP_PARAM;
-		}
-		return params;
-	}
-	
-	
 
 	private String getParams() throws Exception
 	{
 		if( defaultSwitches == null )
 		{
 			final List<String> classifierParams = getClassifierParams();
-			String params = BioLockJUtil.join( classifierParams );
+			final String params = BioLockJUtil.join( classifierParams );
 
 			if( params.indexOf( FASTA_PARAM ) > -1 )
 			{
@@ -230,11 +200,37 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 				throw new Exception(
 						"Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
-			
+
 			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM );
 		}
 
 		return defaultSwitches;
+	}
+
+	private String getWorkerFunctionParams() throws Exception
+	{
+		String params = " " + getParams();
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			params += PAIRED_PARAM;
+		}
+
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
+		{
+			params += GZIP_PARAM;
+		}
+
+		params += DB_PARAM + getDB() + " " + getInputSwitch();
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			params += PAIRED_PARAM;
+		}
+
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
+		{
+			params += GZIP_PARAM;
+		}
+		return params;
 	}
 
 	private String defaultSwitches = null;

@@ -674,8 +674,7 @@ public class BashScriptBuilder
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #CLUSTER_VALIDATE_PARAMS}<br>
 	 * If set to {@value biolockj.Config#TRUE}, validate {@value #SCRIPT_JOB_HEADER} param cluster number of processors
-	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or
-	 * {@link biolockj.module.ScriptModule#NUM_THREADS}
+	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or {@link biolockj.module.ScriptModule#NUM_THREADS}
 	 */
 	protected static final String CLUSTER_VALIDATE_PARAMS = "cluster.validateParams";
 

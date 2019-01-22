@@ -95,27 +95,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 						+ " should be added your pipeline Config: " + Config.getConfigFileName() );
 	}
 
-	
-	@Override
-	public List<File> getInputFiles() throws Exception
-	{
-		if( getFileCache().isEmpty() )
-		{
-			if( getClass().getName().equals( QiimeClassifier.class.getName() ) )
-			{
-				cacheInputFiles( findModuleInputFiles() );
-			}
-			else
-			{
-				cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
-			}
-		}
-
-		return getFileCache();
-	}
-	
-	
-
 	@Override
 	public void checkDependencies() throws Exception
 	{
@@ -211,6 +190,24 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		return null;
 	}
 
+	@Override
+	public List<File> getInputFiles() throws Exception
+	{
+		if( getFileCache().isEmpty() )
+		{
+			if( getClass().getName().equals( QiimeClassifier.class.getName() ) )
+			{
+				cacheInputFiles( findModuleInputFiles() );
+			}
+			else
+			{
+				cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+			}
+		}
+
+		return getFileCache();
+	}
+
 	/**
 	 * Subclasses of QiimeClassifier add post-requisite module: {@link biolockj.module.implicit.qiime.QiimeClassifier}.
 	 * Only the QiimeClassifier itself adds the QiimeParser as a post-requisite module.
@@ -295,53 +292,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	}
 
 	/**
-	 * Subclasses call this method to check dependencies before picking OTUs to validate
-	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}
-	 * @return TODO
-	 *
-	 * @throws Exception if
-	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS} contains
-	 * invalid parameters
-	 */
-	protected String getParams() throws Exception
-	{
-		if( switches == null )
-		{
-			String params = BioLockJUtil.join( getClassifierParams() );
-			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
-			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Config.INPUT_DIRS );
-			}
-			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
-			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
-			}
-			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
-			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
-						+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + NUM_THREADS );
-			}
-			if( params.indexOf( "-f " ) > -1 )
-			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
-						+ "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
-			}
-	
-			switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
-			if( switches == null || switches.trim().isEmpty() )
-			{
-				throw new Exception( "No threads + no exe.classifierParams found!" );
-			}
-
-			Log.info( getClass(), "Set Qiime params: \"" + switches + "\"" );
-		}
-		
-		return " " + switches;
-	}
-
-	/**
 	 * Module input directories are set to the previous module output directory.<br>
 	 * To ensure we use the correct path, get path from {@link #getInputFiles()}
 	 *
@@ -359,6 +309,54 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 
 		return dir;
+	}
+
+	/**
+	 * Subclasses call this method to check dependencies before picking OTUs to validate
+	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}
+	 * 
+	 * @return TODO
+	 *
+	 * @throws Exception if
+	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS} contains
+	 * invalid parameters
+	 */
+	protected String getParams() throws Exception
+	{
+		if( switches == null )
+		{
+			final String params = BioLockJUtil.join( getClassifierParams() );
+			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
+			{
+				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
+						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Config.INPUT_DIRS );
+			}
+			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
+			{
+				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY ("
+						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
+			}
+			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
+			{
+				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
+						+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + NUM_THREADS );
+			}
+			if( params.indexOf( "-f " ) > -1 )
+			{
+				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY ("
+						+ EXE_CLASSIFIER_PARAMS + "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
+			}
+
+			switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
+			if( switches == null || switches.trim().isEmpty() )
+			{
+				throw new Exception( "No threads + no exe.classifierParams found!" );
+			}
+
+			Log.info( getClass(), "Set Qiime params: \"" + switches + "\"" );
+		}
+
+		return " " + switches;
 	}
 
 	/**

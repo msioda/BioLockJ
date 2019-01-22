@@ -645,14 +645,17 @@ public class SeqUtil
 			try
 			{
 				String line = reader.readLine().trim();
-				testChar = line.substring( 0, 1 );
-
 				int numLines = 0;
 				do
 				{
 					line = reader.readLine();
 					if( line != null && !line.isEmpty() )
 					{
+						if( testChar == null )
+						{
+							testChar = line.substring( 0, 1 );  // set only once
+						}
+						
 						final String lineChar = line.trim().substring( 0, 1 );
 						if( !lineChar.equals( "+" ) && !FASTA_HEADER_DELIMS.contains( lineChar )
 								&& !lineChar.equals( FASTQ_HEADER_DELIM ) )

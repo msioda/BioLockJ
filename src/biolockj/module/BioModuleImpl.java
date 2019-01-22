@@ -229,22 +229,6 @@ public abstract class BioModuleImpl implements BioModule
 	}
 
 	/**
-	 * Validate files in {@link biolockj.Config#INPUT_DIRS} have unique names. BioModules that expect duplicates must
-	 * override this method.
-	 *
-	 * @param fileNames A registry of module input file names added so far
-	 * @param file Next file to validate
-	 * @throws Exception if a duplicate file name found
-	 */
-	protected void validateFileNameUnique( final Set<String> fileNames, final File file ) throws Exception
-	{
-		if( fileNames.contains( file.getName() ) )
-		{
-			throw new Exception( "File names must be unique!  Duplicate file: " + file.getAbsolutePath() );
-		}
-	}
-
-	/**
 	 * Remove ignore files from the input files.
 	 * 
 	 * @param files Collection of files
@@ -266,6 +250,22 @@ public abstract class BioModuleImpl implements BioModule
 			}
 		}
 		return validInputFiles;
+	}
+
+	/**
+	 * Validate files in {@link biolockj.Config#INPUT_DIRS} have unique names. BioModules that expect duplicates must
+	 * override this method.
+	 *
+	 * @param fileNames A registry of module input file names added so far
+	 * @param file Next file to validate
+	 * @throws Exception if a duplicate file name found
+	 */
+	protected void validateFileNameUnique( final Set<String> fileNames, final File file ) throws Exception
+	{
+		if( fileNames.contains( file.getName() ) )
+		{
+			throw new Exception( "File names must be unique!  Duplicate file: " + file.getAbsolutePath() );
+		}
 	}
 
 	private final List<File> inputFiles = new ArrayList<>();

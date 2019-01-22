@@ -110,7 +110,8 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		final String inFiles = "$3" + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " $4": "" );
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
-		lines.add( getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 " + inFiles );
+		lines.add( getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 "
+				+ inFiles );
 		lines.add( "}" );
 		return lines;
 	}
@@ -124,29 +125,13 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 
 		return Config.requireExistingDir( KRAKEN_DATABASE ).getAbsolutePath();
 	}
-	
-	// method calculates mean need by the module.
-	private String getWorkerFunctionParams() throws Exception
-	{
-		String params = " " + getParams();
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			params += PAIRED_PARAM;
-		}
-
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
-		{
-			params += GZIP_PARAM;
-		}
-		return params;
-	}
 
 	private String getParams() throws Exception
 	{
 		if( defaultSwitches == null )
 		{
 			final List<String> classifierParams = getClassifierParams();
-			String params = BioLockJUtil.join( classifierParams );
+			final String params = BioLockJUtil.join( classifierParams );
 
 			if( params.contains( FASTA_PARAM ) )
 			{
@@ -205,10 +190,27 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 						+ Config.INPUT_DIRS );
 			}
 
-			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getDB() + " " + USE_NAMES_PARAM + USE_MPA_PARAM;;
+			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getDB() + " "
+					+ USE_NAMES_PARAM + USE_MPA_PARAM;;
 		}
 
 		return defaultSwitches;
+	}
+
+	// method calculates mean need by the module.
+	private String getWorkerFunctionParams() throws Exception
+	{
+		String params = " " + getParams();
+		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		{
+			params += PAIRED_PARAM;
+		}
+
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
+		{
+			params += GZIP_PARAM;
+		}
+		return params;
 	}
 
 	private String defaultSwitches = null;

@@ -196,7 +196,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 				skipNumLines++;
 				line = reader.readLine();
 			}
-			
+
 			if( line == null )
 			{
 				badFiles.add( outputFile );
@@ -204,7 +204,8 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 			}
 			else if( skipNumLines != 0 )
 			{
-				Log.warn( getClass(), "Skipped [ " + skipNumLines + " ] empty lines at the top of ---> " + file.getAbsolutePath() );
+				Log.warn( getClass(),
+						"Skipped [ " + skipNumLines + " ] empty lines at the top of ---> " + file.getAbsolutePath() );
 			}
 
 			do
@@ -218,13 +219,14 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 					String headerChar = "";
 					if( headerLen == 0 )
 					{
-						Log.warn( getClass(), "Sequence #" + seqNum + " has an empty header & seq len = " + seqLen + " in ---> " + file.getAbsolutePath() );
+						Log.warn( getClass(), "Sequence #" + seqNum + " has an empty header & seq len = " + seqLen
+								+ " in ---> " + file.getAbsolutePath() );
 					}
 					else
 					{
 						headerChar = seqLines.get( 0 ).substring( 0, 1 );
 					}
-					
+
 					if( !SeqUtil.getSeqHeaderChars().contains( headerChar ) )
 					{
 						stats[ INDEX_NUM_READS_INVALID_FORMAT ]++;

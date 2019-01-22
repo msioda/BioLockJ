@@ -101,11 +101,6 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 		lines.add( "}" );
 		return lines;
 	}
-	
-	private String getWorkerFunctionParams() throws Exception
-	{
-		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
-	}
 
 	/**
 	 * Metaphlan queries require standard parameters: --input_type, --nproc, -t<br>
@@ -170,6 +165,11 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 		return defaultSwitches;
 	}
 
+	private String getWorkerFunctionParams() throws Exception
+	{
+		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
+	}
+
 	private String defaultSwitches = null;
 
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
@@ -199,6 +199,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	 */
 	protected static final String FUNCTION_RUN_METAPHLAN = "runMetaphlan";
 
+	private static final String INPUT_TYPE_PARAM = "--input_type ";
 	private static final String METAPHLAN_CLASS = "c";
 	private static final String METAPHLAN_DOMAIN = "k";
 	private static final String METAPHLAN_FAMILY = "f";
@@ -207,6 +208,5 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	private static final String METAPHLAN_PHYLUM = "p";
 	private static final String METAPHLAN_SPECIES = "s";
 	private static final String NUM_THREADS_PARAM = "--nproc";
-	private static final String INPUT_TYPE_PARAM = "--input_type ";
-	
+
 }
