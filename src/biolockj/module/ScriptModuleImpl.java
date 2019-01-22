@@ -130,15 +130,15 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * Return all collectionProperty values separated by a space. If numThreadsParam is not null, append the numThreads
 	 * param and value.
 	 * 
-	 * @param collectionProperty
-	 * @param numThreadsParam
-	 * @return
-	 * @throws Exception
+	 * @param params Runtime parameter
+	 * @param numThreadsParam Number of threads parameter name
+	 * @return all runtime parameters
+	 * @throws Exception if errors occur
 	 */
 	protected String getRuntimeParams( final List<String> params, final String numThreadsParam ) throws Exception
 	{
-		return ( numThreadsParam == null ? "": numThreadsParam + " " + getNumThreads() + " " )
-				+ ( params == null ? "": BioLockJUtil.join( params ) )
+		return ( numThreadsParam == null ? " ": numThreadsParam + " " + getNumThreads() + " " )
+				+ ( params == null || params.isEmpty() ? " ": BioLockJUtil.join( params ) )
 
 		;
 	}
