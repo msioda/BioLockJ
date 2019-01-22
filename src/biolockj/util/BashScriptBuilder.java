@@ -321,7 +321,7 @@ public class BashScriptBuilder
 	 * <ol>
 	 * <li>Require property {@value #SCRIPT_JOB_HEADER}
 	 * <li>Require property {@value #CLUSTER_BATCH_COMMAND} sets #cores param (ppn or procs) =
-	 * {@link biolockj.module.ScriptModule#getNumThreads()} or
+	 * {@link biolockj.module.ScriptModule#NUM_THREADS} or
 	 * </ol>
 	 * <p>
 	 * Current format #1 (2018) for UNCC HPC Cluster: #PBS -l procs=1,mem=8GB,walltime=8:00:00<br>
@@ -675,7 +675,7 @@ public class BashScriptBuilder
 	 * {@link biolockj.Config} Boolean property: {@value #CLUSTER_VALIDATE_PARAMS}<br>
 	 * If set to {@value biolockj.Config#TRUE}, validate {@value #SCRIPT_JOB_HEADER} param cluster number of processors
 	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or
-	 * {@link biolockj.module.ScriptModule#getNumThreads()}
+	 * {@link biolockj.module.ScriptModule#NUM_THREADS}
 	 */
 	protected static final String CLUSTER_VALIDATE_PARAMS = "cluster.validateParams";
 

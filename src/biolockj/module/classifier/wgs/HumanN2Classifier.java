@@ -67,8 +67,8 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	 * Verify that none of the derived command line parameters are included in
 	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}. Also verify:
 	 * <ul>
-	 * <li>{@link biolockj.Config}.{@value #NUCL_DB} is a valid directory
-	 * <li>{@link biolockj.Config}.{@value #PROT_DB} is a valid directory
+	 * <li>{@link biolockj.Config}.{@value #HN2_NUCL_DB} is a valid directory
+	 * <li>{@link biolockj.Config}.{@value #HN2_PROT_DB} is a valid directory
 	 * </ul>
 	 */
 	@Override
@@ -87,7 +87,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-	 * This method generates the required bash functions: {@value #FUNCTION_TRANSLATE} and {@value #FUNCTION_KRAKEN}
+	 * This method generates the required bash functions: {@value #FUNCTION_CONCAT_PAIRED_READS} and {@value #FUNCTION_RUN_HN2}
 	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
@@ -109,7 +109,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 
 	/**
 	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
-	 * {@value #EXE_KNEADDATA_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
+	 * {@value #EXE_CLASSIFIER_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
 	 *
 	 * @return Formatted KneadData switches
 	 * @throws Exception if errors occur
