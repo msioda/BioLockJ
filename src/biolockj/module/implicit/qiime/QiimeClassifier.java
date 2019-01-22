@@ -297,36 +297,48 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	/**
 	 * Subclasses call this method to check dependencies before picking OTUs to validate
 	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}
+	 * @return TODO
 	 *
 	 * @throws Exception if
 	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS} contains
 	 * invalid parameters
 	 */
-	protected void checkOtuPickingDependencies() throws Exception
+	protected String getParams() throws Exception
 	{
-		final String params = BioLockJUtil.join( getClassifierParams() );
-		if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
+		if( switches == null )
 		{
-			throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
-					+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Config.INPUT_DIRS );
-		}
-		if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
-		{
-			throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY ("
-					+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
-		}
-		if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
-		{
-			throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
-					+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + NUM_THREADS );
-		}
-		if( params.indexOf( "-f " ) > -1 )
-		{
-			throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
-					+ "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
-		}
+			String params = BioLockJUtil.join( getClassifierParams() );
+			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
+			{
+				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
+						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Config.INPUT_DIRS );
+			}
+			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
+			{
+				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY ("
+						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
+			}
+			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
+			{
+				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
+						+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + NUM_THREADS );
+			}
+			if( params.indexOf( "-f " ) > -1 )
+			{
+				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
+						+ "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
+			}
+	
+			switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
+			if( switches == null || switches.trim().isEmpty() )
+			{
+				throw new Exception( "No threads + no exe.classifierParams found!" );
+			}
 
-		switches = " " + getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
+			Log.info( getClass(), "Set Qiime params: \"" + switches + "\"" );
+		}
+		
+		return " " + switches;
 	}
 
 	/**
@@ -338,13 +350,15 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 */
 	protected File getInputFileDir() throws Exception
 	{
-		BioModule prevModule = ModuleUtil.getPreviousModule( this );
-		if( prevModule != null )
+		final String inDir = getInputFiles().get( 0 ).getAbsolutePath();
+		final int i = inDir.indexOf( File.separator + getInputFiles().get( 0 ).getName() );
+		final File dir = new File( inDir.substring( 0, i ) );
+		if( !dir.exists() )
 		{
-			return prevModule.getOutputDir();
+			throw new Exception( "Module input directory not found! --> " + dir.getAbsolutePath() );
 		}
 
-		throw new Exception( "Module input directory not found!" );
+		return dir;
 	}
 
 	/**
@@ -357,16 +371,17 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * @param mapping File-path of mapping file
 	 * @param outputDir Directory to output {@value #COMBINED_FNA}
 	 * @return 2 script lines for the bash script
+	 * @throws Exception if errors occur
 	 */
 	protected List<String> getPickOtuLines( final String otuPickingScript, final File fastaDir, final String mapping,
-			final File outputDir )
+			final File outputDir ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
 		lines.add( "sleep 5s" );
 		lines.add( SCRIPT_ADD_LABELS + " -n 1 -i " + fastaDir.getAbsolutePath() + " -m " + mapping + " -c "
 				+ DEMUX_COLUMN + " -o " + outputDir.getAbsolutePath() );
 		final String fnaFile = outputDir + File.separator + COMBINED_FNA;
-		lines.add( otuPickingScript + switches + "-i " + fnaFile + " -fo " + outputDir );
+		lines.add( otuPickingScript + getParams() + "-i " + fnaFile + " -fo " + outputDir );
 		return lines;
 	}
 
@@ -378,7 +393,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 */
 	protected String getVsearchParams() throws Exception
 	{
-		return getRuntimeParams( Config.getList( EXE_VSEARCH_PARAMS ), VSEARCH_NUM_THREADS_PARAM );
+		return " " + getRuntimeParams( Config.getList( EXE_VSEARCH_PARAMS ), VSEARCH_NUM_THREADS_PARAM );
 	}
 
 	/**

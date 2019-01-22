@@ -183,7 +183,6 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 
 	private String getParams() throws Exception
 	{
-
 		if( defaultSwitches == null )
 		{
 			final List<String> classifierParams = getClassifierParams();
@@ -232,7 +231,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 						"Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
 			}
 			
-			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + params;
+			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM );
 		}
 
 		return defaultSwitches;

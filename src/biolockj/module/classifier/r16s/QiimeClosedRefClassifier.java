@@ -83,7 +83,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		checkOtuPickingDependencies();
+		getParams();
 	}
 
 	/**

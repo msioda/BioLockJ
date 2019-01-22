@@ -402,9 +402,16 @@ public class BioLockJUtil
 		return missingMsg;
 	}
 
+	/**
+	 * Merge the collection into a String with 1 space between each element.toString() value.
+	 * 
+	 * @param collection Collection of objects
+	 * @return Joined values
+	 * @throws Exception if errors occur
+	 */
 	public static String join( final Collection<?> collection ) throws Exception
 	{
-		if( collection == null )
+		if( collection == null || collection.isEmpty() )
 		{
 			return "";
 		}
