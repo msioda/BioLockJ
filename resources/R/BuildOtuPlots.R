@@ -2,12 +2,11 @@
 
 # Output box-plot illustrating OTU-nominal metadata field relationship
 # Print adjusted P-values in pot header
-addBoxPlot <- function( otuColName, otuColVals, metaColName, metaColVals, barColors) #, otuTable, otuCol, metaCol, parPval, nonParPval
+addBoxPlot <- function( otuColName, otuColVals, metaColName, metaColVals, barColors) 
 {
-	if( doDebug() ) print( paste( "Createing box plot for otu:", otuCol, "metadata column:", metaCol ) )
+	if( doDebug() ) print( paste( "Createing box plot for otu:", otuColName, "metadata column:", metaColName ) )
 	metaColVals = as.factor( metaColVals )
-	factors = split(otuColVals, f=metaColVals) # getFactorGroups( otuTable, metaColVals, otuCol )
-	#barColors = getColors( length(factors) )
+	factors = split(otuColVals, f=metaColVals) 
 	# select some graphical parameters
 	cexAxis = getCexAxis( levels(metaColVals) )
 	if( doDebug() ) print( paste( "cexAxis = getCexAxis( levels(metaColVals) ):", cexAxis ) )
