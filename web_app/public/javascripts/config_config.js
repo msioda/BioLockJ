@@ -633,56 +633,12 @@ for (const launch of document.getElementsByClassName("openLaunchModal")) {
 
           })
         });
-
-      // var request = new XMLHttpRequest();
-      // request.open('POST', '/checkProjectExists', true);
-      // request.setRequestHeader("Content-Type", "application/json");
-      // request.send(JSON.stringify({
-      //   projectName : currentConfig.paramValues[currentConfig.paramKeys.indexOf('project.configFile')]
-      //   //additional parameters for launch
-      // }));
-      //   request.onreadystatechange = function() {
-        // if (request.readyState == XMLHttpRequest.DONE) {
-        //   console.log(request.responseText);
-        //   if (request.responseText !== ''){
-        //     const checkedParams = JSON.parse(request.responseText);
-        //     console.log('checkedParams: ', checkedParams);
-        //     currentConfig.prevProjectName = checkedParams.projectName;
-        //     currentConfig.prevProjectPath = checkedParams.projectPath;
-        //     const rOrEText = document.getElementById('restartOrEraseText');
-        //     rOrEText.innerHTML = `Your current project, ${currentConfig.prevProjectName}, has the same name as a previous project.  Would you like to restart the pipeline or erase the old one and rerun from your new configuration file? (Click only once)`;
-        //     const rOrE = document.getElementById('restartOrErase');
-        //     if (rOrE.classList.contains('hidden')){
-        //       rOrE.classList.remove('hidden');
-        //       }
-        //     const restartProject = document.getElementById('restartProject');
-        //     restartProject.addEventListener('click', function(){
-        //       console.log('inrestart event');
-        //       console.log(this);
-        //       launcher(launchAction = 'restartProject', restartProjectPath = currentConfig.prevProjectPath);
-        //     });
-        //     const eraseRestart = document.getElementById('eraseRestart');
-        //     eraseRestart.addEventListener('click', function(){
-        //       console.log('launching erarse terstart ', currentConfig.prevProjectPath);
-        //       launcher(launchAction = 'eraseRestart', projectNameToDelete = currentConfig.prevProjectPath)
-        //     })
-        //   }else{
-        //     document.getElementById('launchBlj').classList.remove('hidden');
-        //   }
-        //   }
-        // }
       }
     } catch (e) {
       alert(e)
     }
   });//end eventlistener
 };//end forloop
-
-// const launchBlj = document.getElementById('launchBlj');
-// launchBlj.addEventListener("click", function(event){
-//   event.preventDefault();
-//   launcher();
-// });
 
 //for autosave
 const configFormInputs = Array.from(document.getElementById('configForm').getElementsByTagName('input'));
@@ -957,6 +913,7 @@ function retreiveDefaultProps(dpropPath) {
 document.getElementById('submitAWS').addEventListener('click', function(evt){
   evt.preventDefault();
   let formData = {};
+  console.log(document.getElementById('AwsForm'));
   let AwsForm = new FormData(document.getElementById('AwsForm'));
   for (var i of AwsForm.entries()) {
     console.log(i);
