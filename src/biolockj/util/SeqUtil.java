@@ -644,27 +644,42 @@ public class SeqUtil
 			final BufferedReader reader = BioLockJUtil.getFileReader( f );
 			try
 			{
-				String line = reader.readLine().trim();
+				int skipNumLines = 0;
+				String line = reader.readLine();
+				while( line != null && line.isEmpty() )
+				{
+					skipNumLines++;
+					line = reader.readLine();
+				}
+				
+				if( line == null )
+				{
+					throw new Exception( "Input dir contains empty file: " + f.getAbsolutePath() );
+				}
+				else if( skipNumLines != 0 )
+				{
+					Log.warn( SeqUtil.class,
+							"Skipped [ " + skipNumLines + " ] empty lines at the top of ---> " + f.getAbsolutePath() );
+				}
+				
 				int numLines = 0;
 				do
 				{
-					line = reader.readLine();
-					if( line != null && !line.isEmpty() )
+					line = line.trim();
+					if( testChar == null )
 					{
-						if( testChar == null )
-						{
-							testChar = line.substring( 0, 1 );  // set only once
-						}
-						
+						testChar = line.substring( 0, 1 );  // set only once
+					}
+					else
+					{
 						final String lineChar = line.trim().substring( 0, 1 );
-						if( !lineChar.equals( "+" ) && !FASTA_HEADER_DELIMS.contains( lineChar )
-								&& !lineChar.equals( FASTQ_HEADER_DELIM ) )
+						if( !lineChar.equals( "+" ) && !lineChar.equals( testChar ) )
 						{
 							numLines++;
 							if( numLines > 1 )
 							{
-								Log.debug( SeqUtil.class, f.getName() + " --> Line[" + numLines
-										+ "] after TEST CHARACTER: " + testChar + " = #" + numLines );
+								Log.debug( SeqUtil.class, f.getName() + " --> Line [ " + numLines
+										+ " ] after TEST CHARACTER: " + testChar + " = #" + numLines );
 							}
 						}
 						else
@@ -672,11 +687,12 @@ public class SeqUtil
 							break;
 						}
 					}
+					
+					line = reader.readLine();
 				}
 				while( line != null );
-
-				Log.debug( SeqUtil.class, f.getAbsolutePath() + " TEST CHARACTER: " + testChar + ": " + numLines );
-
+				
+				Log.info( SeqUtil.class, f.getAbsolutePath() + " header char: " + testChar + " --> #lines/read: " + numLines );
 				if( numLines > 1 && Config.getString( Config.INTERNAL_IS_MULTI_LINE_SEQ ) == null
 						&& ( FASTA_HEADER_DELIMS.contains( testChar ) || testChar.equals( FASTQ_HEADER_DELIM ) ) )
 				{
