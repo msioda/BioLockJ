@@ -94,18 +94,27 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 				"QIIME does not support paired reads!  Prerequisite BioModule " + PearMergeReads.class.getName()
 						+ " should be added your pipeline Config: " + Config.getConfigFileName() );
 	}
+
 	
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
-		if( getClass().getName().equals( QiimeClassifier.class.getName() ) )
+		if( getFileCache().isEmpty() )
 		{
-			List<File> files = Arrays.asList( getInputFileDir().listFiles() );
-			return removeIgnoredFiles( files );
+			if( getClass().getName().equals( QiimeClassifier.class.getName() ) )
+			{
+				cacheInputFiles( findModuleInputFiles() );
+			}
+			else
+			{
+				cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+			}
 		}
-		
-		return super.getInputFiles();
+
+		return getFileCache();
 	}
+	
+	
 
 	@Override
 	public void checkDependencies() throws Exception
