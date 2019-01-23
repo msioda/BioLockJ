@@ -16,12 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.r16s.RdpClassifier;
-import biolockj.module.classifier.wgs.KrakenClassifier;
-import biolockj.module.implicit.Demultiplexer;
-import biolockj.module.implicit.ImportMetadata;
-import biolockj.module.implicit.RegisterNumReads;
+import biolockj.module.implicit.*;
 import biolockj.module.seq.*;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.RuntimeParamUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This class initializes pipeline modules, startign with those in the Config file and adding the prerequisite and
@@ -44,29 +43,33 @@ public class BioModuleFactory
 		final List<BioModule> bioModules = new ArrayList<>();
 		final List<String> configModules = Config.requireList( Config.INTERNAL_BLJ_MODULE );
 
-		info( "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
-
-		bioModules.add( getModule( ImportMetadata.class.getName() ) );
-
-		if( Config.getBoolean( Config.INTERNAL_MULTIPLEXED ) )
+		if( !Config.getBoolean( DISABLE_IMPLICIT_MODULES ) )
 		{
-			info( "Set required 2nd module (for multiplexed data): " + Demultiplexer.class.getName() );
-			bioModules.add( getModule( getDefaultDemultiplexer() ) );
-		}
+			info( "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
+			bioModules.add( getModule( ImportMetadata.class.getName() ) );
 
-		if( Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ ) )
-		{
-			bioModules.add( getModule( getDefaultFastaConverter() ) );
-		}
+			if( Config.getBoolean( Config.INTERNAL_MULTIPLEXED ) )
+			{
+				info( "Set required 2nd module (for multiplexed data): " + Demultiplexer.class.getName() );
+				bioModules.add( getModule( getDefaultDemultiplexer() ) );
+			}
 
-		if( Config.getBoolean( Config.REPORT_NUM_READS ) && !configModules.contains( SeqFileValidator.class.getName() )
-				&& !Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
-						.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
-		{
-			info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] & [ "
-					+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
-					+ " ] --> Adding module: " + RegisterNumReads.class.getName() );
-			bioModules.add( getModule( RegisterNumReads.class.getName() ) );
+			if( Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ ) )
+			{
+				bioModules.add( getModule( getDefaultFastaConverter() ) );
+			}
+
+			if( SeqUtil.piplineHasSeqInput() && Config.getBoolean( Config.REPORT_NUM_READS )
+					&& !Config.getBoolean( Config.INTERNAL_PAIRED_READS )
+					&& !configModules.contains( SeqFileValidator.class.getName() )
+					&& !configModules.contains( TrimPrimers.class.getName() ) )
+			{
+				info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] & [ "
+						+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
+						+ " ] --> Adding module: " + RegisterNumReads.class.getName() );
+				bioModules.add( getModule( RegisterNumReads.class.getName() ) );
+			}
+
 		}
 
 		for( int i = 0; i < configModules.size(); i++ )
@@ -78,24 +81,27 @@ public class BioModuleFactory
 				warn( module.getClass().getName()
 						+ " is skipped where configured since it has already been added to the pipeline." );
 			}
-			else if( isImplicitModule( module.getClass().getName() ) && !Config.getBoolean( ALLOW_IMPLICIT_MODULES ) )
+			else if( isImplicitModule( module.getClass().getName() ) && !Config.getBoolean( DISABLE_IMPLICIT_MODULES ) )
 			{
 
 				warn( "Ignoring configured module [" + module.getClass().getName()
 						+ "] since implicit BioModules are added to the pipeline by the system if needed.  "
 						+ "To override this behavior and ignore implicit designation, udpate project Config: ["
-						+ ALLOW_IMPLICIT_MODULES + "=" + Config.TRUE + "]" );
+						+ DISABLE_IMPLICIT_MODULES + "=" + Config.TRUE + "]" );
 
 			}
 			else
 			{
-				safetyCount = 0;
-				for( final String preReqModule: getPreRequisites( module, bioModules ) )
+				if( !Config.getBoolean( DISABLE_PRE_REQ_MODULES ) )
 				{
-					if( !moduleInList( bioModules, preReqModule ) )
+					safetyCount = 0;
+					for( final String preReqModule: getPreRequisites( module ) )
 					{
-						info( "Add pre-req module: " + preReqModule );
-						bioModules.add( getModule( preReqModule ) );
+						if( !moduleInList( bioModules, preReqModule ) )
+						{
+							info( "Add pre-req module: " + preReqModule );
+							bioModules.add( getModule( preReqModule ) );
+						}
 					}
 				}
 
@@ -107,7 +113,7 @@ public class BioModuleFactory
 				}
 
 				safetyCount = 0;
-				for( final String postReqModule: getPostRequisites( module, bioModules ) )
+				for( final String postReqModule: getPostRequisites( module ) )
 				{
 					if( !moduleInList( bioModules, postReqModule ) )
 					{
@@ -119,28 +125,24 @@ public class BioModuleFactory
 		}
 
 		final BioModule firstSeqProcMod = getFirstSeqProcessingModule( bioModules );
-		if( firstSeqProcMod != null && firstSeqProcMod.getClass().getName().contains( "qiime" ) )
+		if( firstSeqProcMod != null && firstSeqProcMod.getClass().getName().toLowerCase().contains( "qiime" )
+				&& !BioLockJUtil.getPipelineInputFiles().isEmpty() )
 		{
-			for( final File file: BioLockJUtil.getBasicInputFiles() )
+			final File file = BioLockJUtil.getPipelineInputFiles().iterator().next();
+			if( SeqUtil.isGzipped( file.getName() ) )
 			{
-				if( SeqUtil.isGzipped( file.getName() ) )
+				final List<BioModule> tempModules = bioModules;
+				bioModules.clear();
+				for( final BioModule mod: tempModules )
 				{
-					final List<BioModule> tempModules = bioModules;
-					bioModules.clear();
-					for( final BioModule mod: tempModules )
+					if( mod.getClass().getName().equals( firstSeqProcMod.getClass().getName() ) )
 					{
-						if( mod.getClass().getName().equals( firstSeqProcMod.getClass().getName() ) )
-						{
-							info( "Qiime does not accept \"" + BioLockJ.GZIP_EXT
-									+ "\" format, so adding pre-req module: " + Gunzipper.class.getName() + " before "
-									+ firstSeqProcMod.getClass().getName() );
-							bioModules.add( getModule( Gunzipper.class.getName() ) );
-						}
-
-						bioModules.add( mod );
+						info( "Qiime does not accept \"" + BioLockJ.GZIP_EXT + "\" format, so adding pre-req module: "
+								+ Gunzipper.class.getName() + " before " + firstSeqProcMod.getClass().getName() );
+						bioModules.add( getModule( Gunzipper.class.getName() ) );
 					}
 
-					break;
+					bioModules.add( mod );
 				}
 			}
 		}
@@ -198,8 +200,7 @@ public class BioModuleFactory
 	 * @return List of post-requisite module names
 	 * @throws Exception if runtime errors occur
 	 */
-	protected static List<String> getPostRequisites( final BioModule module, final List<BioModule> bioModules )
-			throws Exception
+	protected static List<String> getPostRequisites( final BioModule module ) throws Exception
 	{
 		verifySafetyCount( module );
 		final List<String> postReqs = new ArrayList<>();
@@ -208,8 +209,7 @@ public class BioModuleFactory
 		{
 			for( final Class<?> modClass: modPostReqs )
 			{
-				final List<String> postReqPreReqModules = getPreRequisites( getModule( modClass.getName() ),
-						bioModules );
+				final List<String> postReqPreReqModules = getPreRequisites( getModule( modClass.getName() ) );
 				for( final String preReq: postReqPreReqModules )
 				{
 					if( !postReqs.contains( preReq ) )
@@ -220,8 +220,7 @@ public class BioModuleFactory
 
 				postReqs.add( modClass.getName() );
 
-				final List<String> postReqPostReqModules = getPostRequisites( getModule( modClass.getName() ),
-						bioModules );
+				final List<String> postReqPostReqModules = getPostRequisites( getModule( modClass.getName() ) );
 				for( final String postReq: postReqPostReqModules )
 				{
 					if( !postReqs.contains( postReq ) )
@@ -238,41 +237,35 @@ public class BioModuleFactory
 	/**
 	 * This method returns all module prerequisites (including prerequisites and post-requisites for the prerequisites).
 	 * 
-	 * @param bioModules prior BioModules
 	 * @param module Current BioModule
 	 * @return List of prerequisite module names
 	 * @throws Exception if runtime errors occur
 	 */
-	protected static List<String> getPreRequisites( final BioModule module, final List<BioModule> bioModules )
-			throws Exception
+	protected static List<String> getPreRequisites( final BioModule module ) throws Exception
 	{
 		verifySafetyCount( module );
 		final List<String> preReqs = new ArrayList<>();
-		final List<Class<?>> modPreReqs = module.getPreRequisiteModules( bioModules );
+		final List<Class<?>> modPreReqs = module.getPreRequisiteModules();
 		if( modPreReqs != null )
 		{
 			for( final Class<?> modClass: modPreReqs )
 			{
-				final List<String> preReqPreReqModules = getPreRequisites( getModule( modClass.getName() ),
-						bioModules );
+				final List<String> preReqPreReqModules = getPreRequisites( getModule( modClass.getName() ) );
 				for( final String preReq: preReqPreReqModules )
 				{
 					if( !preReqs.contains( preReq ) )
 					{
-						bioModules.add( getModule( preReq ) );
 						preReqs.add( preReq );
 					}
 				}
 
 				preReqs.add( modClass.getName() );
 
-				final List<String> preReqPostReqModules = getPostRequisites( getModule( modClass.getName() ),
-						bioModules );
+				final List<String> preReqPostReqModules = getPostRequisites( getModule( modClass.getName() ) );
 				for( final String postReq: preReqPostReqModules )
 				{
 					if( !preReqs.contains( postReq ) )
 					{
-						bioModules.add( getModule( postReq ) );
 						preReqs.add( postReq );
 					}
 				}
@@ -303,13 +296,14 @@ public class BioModuleFactory
 
 	private static BioModule getFirstSeqProcessingModule( final List<BioModule> bioModules ) throws Exception
 	{
+		final String seqPackage = PearMergeReads.class.getPackage().getName();
+		final String classifierPackage = RdpClassifier.class.getPackage().getName().replaceAll( "r16s", "" );
 		for( final BioModule module: bioModules )
 		{
-			if( module.getClass().getName().startsWith( PearMergeReads.class.getPackage().getName() )
-					|| module.getClass().getName().startsWith( RdpClassifier.class.getPackage().getName() )
-					|| module.getClass().getName().startsWith( KrakenClassifier.class.getPackage().getName() ) )
+			final String name = module.getClass().getName();
+			if( name.startsWith( seqPackage ) || name.startsWith( classifierPackage ) )
 			{
-				info( "Identify 1st sequence processing BioModule: " + module.getClass().getName() );
+				info( "Identified 1st sequence processing BioModule: " + module.getClass().getName() );
 				return module;
 			}
 		}
@@ -369,13 +363,6 @@ public class BioModuleFactory
 	}
 
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #ALLOW_IMPLICIT_MODULES}<br>
-	 * If set to {@value biolockj.Config#TRUE}, implicit modules can be directly configured. Otherwise, these modules
-	 * can only by automatically added to pipelines by BioLockJ.
-	 */
-	protected static final String ALLOW_IMPLICIT_MODULES = "project.allowImplicitModules";
-
-	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data
 	 */
 	protected static final String DEFAULT_MOD_DEMUX = "project.defaultModuleDemultiplexer";
@@ -390,6 +377,18 @@ public class BioModuleFactory
 	 * {@link biolockj.Config} String property: Java class name for default module used combined paired read files
 	 */
 	protected static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultModuleSeqMerger";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_IMPLICIT_MODULES}<br>
+	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
+	 */
+	protected static final String DISABLE_IMPLICIT_MODULES = "project.disableImplicitModules";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_PRE_REQ_MODULES}<br>
+	 * If set to {@value biolockj.Config#TRUE}, prerequisite modules will not be added to the pipeline.
+	 */
+	protected static final String DISABLE_PRE_REQ_MODULES = "project.disablePreReqModules";
 
 	private static int safetyCount = 0;
 }

@@ -339,7 +339,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 						for( int i = 1; i <= seq.length(); i++ )
 						{
 							final String base = seq.substring( i - 1, i );
-							final String iupac = getIupacBase( base );
+							final String iupac = SeqUtil.getIupacBase( base );
 							regexSeq = regexSeq + iupac;
 							if( !base.equals( iupac ) )
 							{
@@ -742,15 +742,6 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 		printReports( missingRvPrimers, "missingRvPrimers" );
 	}
 
-	private static String getIupacBase( final String base )
-	{
-		if( DNA_BASE_MAP.keySet().contains( base ) )
-		{
-			return DNA_BASE_MAP.get( base );
-		}
-		return base;
-	}
-
 	private final DecimalFormat df = new DecimalFormat( "##.##" );
 
 	private boolean foundPaired = false;
@@ -781,24 +772,6 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	 * without a primer should be kept or discarded
 	 */
 	protected static final String INPUT_REQUIRE_PRIMER = "trimPrimers.requirePrimer";
-	private static final Map<String, String> DNA_BASE_MAP = new HashMap<>();
 	private static Set<String> substitutions = new HashSet<>();
 	private static final List<String> summaryMsgs = new ArrayList<>();
-	static
-	{
-		// IUPAC DNA BASE Substitutions
-		// http://www.dnabaser.com/articles/IUPAC%20ambiguity%20codes.html
-		DNA_BASE_MAP.put( "Y", "[CT]" );
-		DNA_BASE_MAP.put( "R", "[AG]" );
-		DNA_BASE_MAP.put( "W", "[AT]" );
-		DNA_BASE_MAP.put( "S", "[GC]" );
-		DNA_BASE_MAP.put( "K", "[TG]" );
-		DNA_BASE_MAP.put( "M", "[CA]" );
-		DNA_BASE_MAP.put( "D", "[AGT]" );
-		DNA_BASE_MAP.put( "V", "[ACG]" );
-		DNA_BASE_MAP.put( "H", "[ACT]" );
-		DNA_BASE_MAP.put( "B", "[CGT]" );
-		DNA_BASE_MAP.put( "N", "[ACGT]" );
-		DNA_BASE_MAP.put( "X", "[ACGT]" );
-	}
 }

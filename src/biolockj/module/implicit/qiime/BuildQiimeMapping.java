@@ -13,10 +13,11 @@ package biolockj.module.implicit.qiime;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioModuleFactory;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.*;
+import biolockj.module.ScriptModule;
+import biolockj.module.SeqModule;
+import biolockj.module.SeqModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
@@ -167,26 +168,6 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		initMetaFile = MetaUtil.getFile();
 		data.add( createQiimeCorrectedMapping() );
 		return data;
-	}
-
-	/**
-	 * If paired reads found, add prerequisite module: {@link biolockj.module.seq.PearMergeReads}. If sequence files are
-	 * not in fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}.
-	 */
-	@Override
-	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
-	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
-		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
-		}
-		if( SeqUtil.requireSeqInput() && !SeqUtil.isFastA() )
-		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultFastaConverter() ) );
-		}
-
-		return preReqs;
 	}
 
 	/**

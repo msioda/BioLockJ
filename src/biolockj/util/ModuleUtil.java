@@ -382,7 +382,8 @@ public class ModuleUtil
 	{
 		boolean foundMeta = false;
 		boolean foundOther = false;
-		final List<File> files = SeqUtil.removeIgnoredFiles( Arrays.asList( module.getOutputDir().listFiles() ) );
+		final List<File> files = SeqUtil
+				.removeIgnoredAndEmptyFiles( Arrays.asList( module.getOutputDir().listFiles() ) );
 		for( final File f: files )
 		{
 			if( f.getName().equals( MetaUtil.getMetadataFileName() ) )
@@ -473,8 +474,8 @@ public class ModuleUtil
 	 * Get BioModule subdirectory File object with given name. If directory doesn't exist, create it.
 	 *
 	 * @param bioModule BioModule
-	 * @param subDirName BioModule subdirectory name
-	 * @return BioModule subdirectory File object
+	 * @param subDirName BioModule sub-directory name
+	 * @return BioModule sub-directory File object
 	 */
 	public static File requireSubDir( final BioModule bioModule, final String subDirName )
 	{
@@ -488,11 +489,11 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Return TRUE if BioModule subdirectory exists
+	 * Return TRUE if BioModule sub-directory exists
 	 *
 	 * @param bioModule BioModule
-	 * @param subDirName BioModule subdirectory name
-	 * @return TRUE if BioModule subdirectory exists
+	 * @param subDirName BioModule sub-directory name
+	 * @return TRUE if BioModule sub-directory exists
 	 */
 	public static boolean subDirExists( final BioModule bioModule, final String subDirName )
 	{

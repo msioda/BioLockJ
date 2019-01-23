@@ -111,7 +111,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * By default, no prerequisites are required.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
 		return new ArrayList<>();
 	}
@@ -174,19 +174,6 @@ public abstract class BioModuleImpl implements BioModule
 	}
 
 	/**
-	 * Check modules for a BioModule with the given name
-	 * 
-	 * @param modules List of BioModules
-	 * @param name Name of BioModule
-	 * @return TRUE if name found in modules
-	 * @throws Exception if errors occur
-	 */
-	protected boolean contains( final List<BioModule> modules, final String name ) throws Exception
-	{
-		return BioLockJUtil.join( modules ).indexOf( name ) > -1;
-	}
-
-	/**
 	 * Called upon first access of input files to return sorted list of files from all
 	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS}<br>
 	 * Hidden files (starting with ".") are ignored<br>
@@ -206,7 +193,7 @@ public abstract class BioModuleImpl implements BioModule
 			if( previousModule == null )
 			{
 				Log.debug( getClass(), "Previous module is NULL.  Return pipleline input from: " + Config.INPUT_DIRS );
-				moduleInputFiles.addAll( BioLockJUtil.getBasicInputFiles() );
+				moduleInputFiles.addAll( BioLockJUtil.getPipelineInputFiles() );
 				validInput = true;
 			}
 			else
@@ -253,7 +240,7 @@ public abstract class BioModuleImpl implements BioModule
 	 */
 	protected List<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
 	{
-		return SeqUtil.removeIgnoredFiles( files );
+		return SeqUtil.removeIgnoredAndEmptyFiles( files );
 	}
 
 	/**

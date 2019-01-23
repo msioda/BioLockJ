@@ -378,7 +378,7 @@ public final class RMetaUtil
 	 */
 	public static boolean isMetaMergeModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredFiles(
+		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
 		if( files.isEmpty() )
@@ -395,6 +395,19 @@ public final class RMetaUtil
 		}
 
 		return false;
+	}
+
+	/**
+	 * Method analyzes the file name to determine if the file could be output from the BioModule
+	 * {@link biolockj.module.report.AddMetaToTaxonomyTables}
+	 * 
+	 * @param file Ambiguous file
+	 * @return TRUE if named like a meta merged file
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isMetaMergeTable( final File file ) throws Exception
+	{
+		return file.getName().endsWith( AddMetaToTaxonomyTables.META_MERGED );
 	}
 
 	/**
@@ -452,11 +465,6 @@ public final class RMetaUtil
 		}
 
 		return false;
-	}
-
-	private static boolean isMetaMergeTable( final File file ) throws Exception
-	{
-		return file.getName().endsWith( AddMetaToTaxonomyTables.META_MERGED );
 	}
 
 	private static boolean isQiimeMetric( final String field )
@@ -518,7 +526,7 @@ public final class RMetaUtil
 	/**
 	 * Name of R script variable with metadata column count
 	 */
-	protected static final String NUM_META_COLS = "internal.numMetaCols";
+	protected static final String NUM_META_COLS = "R_internal.numMetaCols";
 
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_EXCLUDE_FIELDS}<br>
@@ -544,11 +552,11 @@ public final class RMetaUtil
 	 */
 	protected static final String R_REPORT_FIELDS = "r.reportFields";
 
-	private static final String BINARY_FIELDS = "internal.binaryFields";
+	private static final String BINARY_FIELDS = "R_internal.binaryFields";
 	private static final Set<String> binaryFields = new TreeSet<>();
 	private static final Set<String> mdsFields = new TreeSet<>();
-	private static final String NOMINAL_FIELDS = "internal.nominalFields";
+	private static final String NOMINAL_FIELDS = "R_internal.nominalFields";
 	private static final Set<String> nominalFields = new TreeSet<>();
-	private static final String NUMERIC_FIELDS = "internal.numericFields";
+	private static final String NUMERIC_FIELDS = "R_internal.numericFields";
 	private static final Set<String> numericFields = new TreeSet<>();
 }

@@ -20,7 +20,7 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
-import biolockj.module.report.*;
+import biolockj.module.report.AddMetaToTaxonomyTables;
 import biolockj.util.*;
 
 /**
@@ -158,10 +158,10 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * All R modules require combined OTU-metadata tables.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
-		if( requireMetaMergeModule() )
+		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
 			preReqs.add( AddMetaToTaxonomyTables.class );
 		}
@@ -308,17 +308,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		return set;
 	}
 
-	protected boolean requireStatsModule() throws Exception
-	{
-		final List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
-		if( SeqUtil.requireSeqInput() || mods.contains( BuildTaxonomyTables.class.getName() )
-				|| mods.contains( Normalizer.class.getName() ) || mods.contains( LogTransformer.class.getName() ) )
-		{
-			return true;
-		}
-		return false;
-	}
-
 	/**
 	 * Initialize the R script by creating the MAIN R script that calls source on the BaseScript and adds the R code for
 	 * the runProgarm() method.
@@ -369,17 +358,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	private String getModuleScriptName() throws Exception
 	{
 		return getClass().getSimpleName() + R_EXT;
-	}
-
-	private boolean requireMetaMergeModule() throws Exception
-	{
-		final List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
-		if( SeqUtil.requireSeqInput() || mods.contains( BuildTaxonomyTables.class.getName() )
-				|| mods.contains( Normalizer.class.getName() ) || mods.contains( LogTransformer.class.getName() ) )
-		{
-			return true;
-		}
-		return false;
 	}
 
 	/**

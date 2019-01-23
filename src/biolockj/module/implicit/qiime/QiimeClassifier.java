@@ -230,22 +230,22 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * If paired reads found, add prerequisite module: {@link biolockj.module.seq.PearMergeReads}. If sequences are not
-	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}. Subclasses of
+	 * fasta format, add prerequisite module: {@link biolockj.module.implicit.AwkFastaConverter}. Subclasses of
 	 * QiimeClassifier add prerequisite module: {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
+		final List<Class<?>> preReqs = super.getPreRequisiteModules();
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
 		}
-		if( SeqUtil.requireSeqInput() && !SeqUtil.isFastA() )
+		if( SeqUtil.piplineHasSeqInput() && !SeqUtil.isFastA() )
 		{
 			preReqs.add( Class.forName( BioModuleFactory.getDefaultFastaConverter() ) );
 		}
-		if( !getClass().equals( QiimeClassifier.class ) )
+		if( !getClass().equals( QiimeClassifier.class ) ) // must be a classifier
 		{
 			preReqs.add( BuildQiimeMapping.class );
 		}

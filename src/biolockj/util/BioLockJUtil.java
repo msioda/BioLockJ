@@ -20,8 +20,11 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
+import biolockj.module.classifier.ClassifierModule;
+import biolockj.module.r.CalculateStats;
 
 /**
  * Simple utility containing String manipulation and formatting functions.
@@ -198,30 +201,6 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
-	 * 
-	 * @return Collection( File ) input files
-	 * @throws Exception if errors occur
-	 */
-	public static Collection<File> getBasicInputFiles() throws Exception
-	{
-		if( inputFiles.isEmpty() )
-		{
-			final Collection<File> files = new HashSet<>();
-			for( final File dir: getInputDirs() )
-			{
-				Log.info( SeqUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
-				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-			}
-			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
-
-			inputFiles.addAll( SeqUtil.removeIgnoredFiles( files ) );
-		}
-
-		return inputFiles;
-	}
-
-	/**
 	 * Return an ordered list of the class names from the input collection.
 	 * 
 	 * @param objs Objects
@@ -343,6 +322,33 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
+	 * 
+	 * @return Collection of pipeline input files
+	 * @throws Exception if errors occur
+	 */
+	public static Collection<File> getPipelineInputFiles() throws Exception
+	{
+		if( inputFiles.isEmpty() )
+		{
+			final Collection<File> files = new HashSet<>();
+			for( final File dir: getInputDirs() )
+			{
+				Log.info( SeqUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
+				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+			}
+			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
+
+			inputFiles.addAll( SeqUtil.removeIgnoredAndEmptyFiles( files ) );
+
+			setPipelineInputFileType();
+
+		}
+
+		return inputFiles;
+	}
+
+	/**
 	 * Get the program source (either the jar path or main class biolockj.BioLockJ);
 	 * 
 	 * @return java source parameter (either Jar or main class with classpath)
@@ -414,6 +420,18 @@ public class BioLockJUtil
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Convenience method to check pipeline input file type.
+	 * 
+	 * @param type Pipeline input file type
+	 * @return TRUE if type = {@link biolockj.Config}.{@value #INTERNAL_PIPELINE_INPUT_TYPES}
+	 * @throws ConfigNotFoundException if {@value #INTERNAL_PIPELINE_INPUT_TYPES} is undefined
+	 */
+	public static boolean pipelineInputType( final String type ) throws ConfigNotFoundException
+	{
+		return Config.requireSet( INTERNAL_PIPELINE_INPUT_TYPES ).contains( type );
 	}
 
 	/**
@@ -543,20 +561,15 @@ public class BioLockJUtil
 
 			final Map<String, String> map = new HashMap<>( Config.getProperties() );
 			map.remove( Config.INTERNAL_BLJ_MODULE );
-			map.remove( Config.INTERNAL_PIPELINE_DIR );
-			map.remove( Config.INTERNAL_DEFAULT_CONFIG );
-			map.remove( Config.INTERNAL_PAIRED_READS );
-			map.remove( Config.INTERNAL_ALL_MODULES );
-			map.remove( Config.INTERNAL_MULTIPLEXED );
-			map.remove( SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
-			map.remove( SeqUtil.INTERNAL_SEQ_TYPE );
 			map.remove( Config.PROJECT_DEFAULT_PROPS );
-			map.remove( Config.INTERNAL_IS_MULTI_LINE_SEQ );
 
 			final Set<String> keys = new TreeSet<>( map.keySet() );
 			for( final String key: keys )
 			{
-				writer.write( key + "=" + map.get( key ) + RETURN );
+				if( !key.startsWith( INTERNAL_PREFIX ) )
+				{
+					writer.write( key + "=" + map.get( key ) + RETURN );
+				}
 			}
 		}
 		finally
@@ -703,15 +716,136 @@ public class BioLockJUtil
 		return newLines;
 	}
 
+	private static void setPipelineInputFileType() throws Exception
+	{
+		final Set<String> fileTypes = new HashSet<>();
+
+		for( final File file: inputFiles )
+		{
+			if( OtuUtil.isOtuFile( file ) )
+			{
+				fileTypes.add( PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE );
+			}
+			else if( TaxaUtil.isTaxaFile( file ) )
+			{
+				fileTypes.add( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+			}
+			else if( RMetaUtil.isMetaMergeTable( file ) )
+			{
+				fileTypes.add( PIPELINE_R_INPUT_TYPE );
+			}
+			else if( CalculateStats.isStatsFile( file ) )
+			{
+				fileTypes.add( PIPELINE_STATS_TABLE_INPUT_TYPE );
+			}
+			else if( file.getName().endsWith( ClassifierModule.PROCESSED ) )
+			{
+				fileTypes.add( PIPELINE_PARSER_INPUT_TYPE );
+			}
+			else if( SeqUtil.isSeqFile( file ) )
+			{
+				fileTypes.add( PIPELINE_SEQ_INPUT_TYPE );
+			}
+		}
+
+		Config.setConfigProperty( INTERNAL_PIPELINE_INPUT_TYPES, fileTypes );
+
+	}
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_INPUT_TYPES}<br>
+	 *
+	 * This value is set after parsing the input files from {@link biolockj.Config} property:
+	 * {@value biolockj.Config#INPUT_DIRS} in the method: {@link #getPipelineInputFiles()}. The primary purpose of
+	 * storing this value is to determine if {@link biolockj.module.BioModule#getPreRequisiteModules(List)} are
+	 * appropriate to add during pipeline initialization.<br>
+	 * <br>
+	 * 
+	 * {@link biolockj.module.BioModule#getPreRequisiteModules(List)} are add dependent modules if missing from the
+	 * {@link biolockj.Config}. This ensures the current module will have the correct input files and is a convenient
+	 * way to manage the size and readability of {@link biolockj.Config} files. Prerequisite modules are always
+	 * appropriate for full pipelines with sequence input file, however if the output from a prerequisite module is used
+	 * as the input for a new pipeline via {@value biolockj.Config#INPUT_DIRS}, adding the prerequisite module will
+	 * cause FATAL pipeline errors.<br>
+	 * <br>
+	 * 
+	 * New pipelines can be run starting with any module, so BioLockJ must be prepared to accept the input files
+	 * required for any module. All BioModules require input files from one of the following 6 categories:<br>
+	 * <ul>
+	 * <li>{@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_PARSER_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_R_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_SEQ_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_STATS_TABLE_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE}
+	 * </ul>
+	 * 
+	 * In rare cases, such as running R plot modules, the input directories must contain multiple data types.<br>
+	 * For example:<br>
+	 * <ul>
+	 * <li>{@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_R_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_STATS_TABLE_INPUT_TYPE}
+	 * </ul>
+	 * With this input a user can run a pipeline with only 2 modules:<br>
+	 * <ol>
+	 * <li>{@link biolockj.module.report.JsonReport}
+	 * <li>{@link biolockj.module.r.BuildOtuPlots}
+	 * </ol>
+	 * 
+	 */
+	public static final String INTERNAL_PIPELINE_INPUT_TYPES = "internal.pipelineInputTypes";
+
 	/**
 	 * Prefix added to the master Config file: {@value #MASTER_PREFIX}
 	 */
 	public static final String MASTER_PREFIX = "MASTER_";
 
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for OTU count files that meet the file requirements
+	 * to pass {@link biolockj.util.OtuUtil#isOtuFile(File)}.
+	 */
+	public static final String PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE = "otu_count";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_PARSER_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for classifier output files.
+	 */
+	public static final String PIPELINE_PARSER_INPUT_TYPE = "classifier_output";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_R_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} if input files are some type of count table merged
+	 * with the metadata such as those output by {@link biolockj.module.report.AddMetaToTaxonomyTables}. These files can
+	 * be input into any {@biolockj.module.r.R_Module}.
+	 */
+	public static final String PIPELINE_R_INPUT_TYPE = "R";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_SEQ_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for sequence input files.
+	 */
+	public static final String PIPELINE_SEQ_INPUT_TYPE = "seq";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_STATS_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} if input files are tables of statistics such as those
+	 * output by {@link biolockj.module.r.CalculateStats}.
+	 */
+	public static final String PIPELINE_STATS_TABLE_INPUT_TYPE = "stats";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for OTU count files that meet the file requirements
+	 * to pass {@link biolockj.util.TaxaUtil#isTaxaFile(File)}.
+	 */
+	public static final String PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count";
+
 	private static final String DEFAULT_CONFIG_FLAG = "# ----> Default Config: ";
 	private static final List<File> inputFiles = new ArrayList<>();
+	private static final String INTERNAL_PREFIX = "internal.";
 	private static final String ORIG_CONFIG_FLAG = "# ----> Project Config: ";
-	private static String pipelinInputType = null;
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final String TEMP_PREFIX = ".TEMP_";
 	private static final String VERSION_FILE = ".version";

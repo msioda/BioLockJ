@@ -23,12 +23,13 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * Module prerequisite: {@link biolockj.module.report.CompileOtuCounts}
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
-		if( BioLockJUtil.getBasicInputFiles().size() == 1 )
+		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		if( BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE )
+				&& BioLockJUtil.getPipelineInputFiles().size() == 1 )
 		{
-			final File inFile = BioLockJUtil.getBasicInputFiles().iterator().next();
+			final File inFile = BioLockJUtil.getPipelineInputFiles().iterator().next();
 			if( inFile.getName().endsWith( getInputFileSuffix() ) )
 			{
 				return preReqs;
@@ -36,7 +37,6 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		}
 
 		preReqs.add( CompileOtuCounts.class );
-
 		return preReqs;
 	}
 
@@ -137,9 +137,9 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 */
 	protected boolean pipelineInputIsOtuSummaryFile() throws Exception
 	{
-		if( BioLockJUtil.getBasicInputFiles().size() == 1 )
+		if( BioLockJUtil.getPipelineInputFiles().size() == 1 )
 		{
-			final File inFile = BioLockJUtil.getBasicInputFiles().iterator().next();
+			final File inFile = BioLockJUtil.getPipelineInputFiles().iterator().next();
 			if( inFile.getName().endsWith( getInputFileSuffix() ) )
 			{
 				return true;

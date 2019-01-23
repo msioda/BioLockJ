@@ -160,6 +160,29 @@ public class SeqUtil
 	}
 
 	/**
+	 * Return regex version of IUPAC DNA substitution bases so that only ACGT values are used. For example, if base =
+	 * "Y", return "[CT]", if base = "A", return "A".<br>
+	 * Function returns base in the same case as the input parameter.
+	 * 
+	 * @param base DNA Base
+	 * @return
+	 */
+	public static String getIupacBase( final String base )
+	{
+		final String upperCaseBase = base.toUpperCase();
+		if( DNA_BASE_MAP.keySet().contains( upperCaseBase ) )
+		{
+			String regexBase = DNA_BASE_MAP.get( upperCaseBase );
+			if( !base.equals( upperCaseBase ) )
+			{
+				regexBase = regexBase.toLowerCase();
+			}
+			return regexBase;
+		}
+		return base;
+	}
+
+	/**
 	 * Return number of lines per read (for fasta return 2, for fastq return 4)
 	 * 
 	 * @return 2 or 4
@@ -473,15 +496,13 @@ public class SeqUtil
 	 */
 	public static void initialize() throws Exception
 	{
-		if( requireSeqInput() )
+		if( piplineHasSeqInput() )
 		{
 			initSeqParams();
 			registerDemuxStatus();
 			registerPairedReadStatus();
 
-			if( MetaUtil.hasColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ) )
-					&& ( Config.getString( Config.INPUT_TRIM_PREFIX ) != null
-							|| Config.getString( Config.INPUT_TRIM_SUFFIX ) != null ) )
+			if( mapSampleIdWithMetaFileNameCol() && hasInputTrimConfig() )
 			{
 				Log.warn( SeqUtil.class,
 						"The properties " + Config.INPUT_TRIM_PREFIX + " and " + Config.INPUT_TRIM_SUFFIX
@@ -490,7 +511,6 @@ public class SeqUtil
 				Config.setConfigProperty( Config.INPUT_TRIM_PREFIX, "" );
 				Config.setConfigProperty( Config.INPUT_TRIM_SUFFIX, "" );
 			}
-
 		}
 		else
 		{
@@ -562,50 +582,84 @@ public class SeqUtil
 	}
 
 	/**
-	 * Remove ignore files from the input files.
+	 * Verify 1st character of sequence header and mask 1st sequence for valid DNA/RNA bases "acgtu"
+	 * 
+	 * @param file File
+	 * @return TRUE if file is a squence file
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isSeqFile( final File file ) throws Exception
+	{
+		boolean isSeq = false;
+		final BufferedReader reader = BioLockJUtil.getFileReader( file );
+		try
+		{
+			final String header = SeqUtil.scanFirstLine( reader, file );
+			final String idChar = header.substring( 0, 1 );
+			String seq = reader.readLine();
+			if( FASTA_HEADER_DELIMS.contains( idChar ) || idChar.equals( FASTQ_HEADER_DELIM ) )
+			{
+				if( seq != null && !seq.trim().isEmpty() )
+				{
+					seq = seq.trim().toLowerCase().replaceAll( "a", "" ).replaceAll( "c", "" ).replaceAll( "g", "" )
+							.replaceAll( "t", "" ).replaceAll( "u", "" );
+					isSeq = seq.isEmpty();
+				}
+			}
+			else
+			{
+				Log.info( SeqUtil.class, file.getAbsolutePath() + " is not a sequence file! " + BioLockJ.RETURN
+						+ "Line 1: [ " + header + " ]" + BioLockJ.RETURN + "Line 2= [ " + seq + " ]" );
+			}
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
+		return isSeq;
+	}
+
+	/**
+	 * Return TRUE if pipeline input files are sequence files.
+	 * 
+	 * @return TRUE if pipeline input files are sequence files.
+	 * @throws Exception if errors occur
+	 */
+	public static boolean piplineHasSeqInput() throws Exception
+	{
+		return BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_SEQ_INPUT_TYPE );
+	}
+
+	/**
+	 * Remove ignored and empty files from the input files.
 	 * 
 	 * @param files Collection of files
 	 * @return valid files
 	 * @throws Exception if errors occur
 	 */
-	public static List<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
+	public static List<File> removeIgnoredAndEmptyFiles( final Collection<File> files ) throws Exception
 	{
 		final List<File> validInputFiles = new ArrayList<>();
-		for( final File f: files )
+		for( final File file: files )
 		{
-			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			final boolean isEmpty = FileUtils.sizeOf( file ) < 1;
+			if( isEmpty )
 			{
-				validInputFiles.add( f );
+				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
+			}
+			else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+			{
+				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
 			}
 			else
 			{
-				Log.debug( SeqUtil.class, "Ignore file " + f.getAbsolutePath() );
+				validInputFiles.add( file );
 			}
 		}
 		return validInputFiles;
-	}
-
-	/**
-	 * Most pipelines have {@value #FASTA} or {@value #FASTQ} files in {@value biolockj.Config#INPUT_DIRS}. However,
-	 * some pipeline {@value biolockj.Config#INPUT_DIRS} contain files that are not sequence files, such as from a
-	 * {@link biolockj.module.implicit.parser.ParserModule} output directory. This method returns
-	 * {@value biolockj.Config#TRUE} if a {@link biolockj.module.BioModule} is found from one of the 2 packages that
-	 * require sequence data input: {@link biolockj.module.classifier} and {@link biolockj.module.seq}.
-	 *
-	 * @return boolean {@value biolockj.Config#TRUE} if classifier or seq {@link biolockj.module.BioModule} are found
-	 * @throws Exception if errors occur
-	 */
-	public static boolean requireSeqInput() throws Exception
-	{
-		for( final String modName: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
-		{
-			if( modName.startsWith( "biolockj.module.classifier" ) || modName.startsWith( "biolockj.module.seq" ) )
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	/**
@@ -647,6 +701,37 @@ public class SeqUtil
 	}
 
 	/**
+	 * This method returns the 1st non-empty line and moves the BufferedReader pointer to this line. By passing the
+	 * reader, subsequent calls to reader.readLine() will pick up from here.
+	 * 
+	 * @param reader BufferedReader reader for sequence file
+	 * @param file Sequence file read by the BufferedReader (used for log and error messages)
+	 * @return String First non-empty line
+	 * @throws Exception if errors occur
+	 */
+	public static String scanFirstLine( final BufferedReader reader, final File file ) throws Exception
+	{
+		Integer i = 0;
+		String line = reader.readLine();
+		while( line != null && line.isEmpty() )
+		{
+			i++;
+			line = reader.readLine();
+		}
+
+		if( line == null )
+		{
+			throw new Exception( "Input dir contains empty file: " + file.getAbsolutePath() );
+		}
+		if( i != 0 )
+		{
+			Log.warn( SeqUtil.class, "Skipped [ " + i + " ] empty lines at the top of ---> " + file.getAbsolutePath() );
+		}
+
+		return line.trim();
+	}
+
+	/**
 	 * Set {@value biolockj.Config#INPUT_IGNORE_FILES}, {@value #INTERNAL_SEQ_HEADER_CHAR}, and
 	 * {@value #INTERNAL_SEQ_TYPE}
 	 * <ul>
@@ -663,31 +748,14 @@ public class SeqUtil
 		String foundFasta = null;
 		String foundFastq = null;
 		String testChar = null;
-		for( final File f: BioLockJUtil.getBasicInputFiles() )
+		for( final File f: BioLockJUtil.getPipelineInputFiles() )
 		{
 			final BufferedReader reader = BioLockJUtil.getFileReader( f );
 			try
 			{
-				int skipNumLines = 0;
-				String line = reader.readLine();
-				while( line != null && line.isEmpty() )
-				{
-					skipNumLines++;
-					line = reader.readLine();
-				}
-
-				if( line == null )
-				{
-					throw new Exception( "Input dir contains empty file: " + f.getAbsolutePath() );
-				}
-				else if( skipNumLines != 0 )
-				{
-					Log.warn( SeqUtil.class,
-							"Skipped [ " + skipNumLines + " ] empty lines at the top of ---> " + f.getAbsolutePath() );
-				}
-
+				String line = scanFirstLine( reader, f );
 				int numLines = 0;
-				do
+				while( line != null )
 				{
 					line = line.trim();
 					if( testChar == null )
@@ -714,7 +782,6 @@ public class SeqUtil
 
 					line = reader.readLine();
 				}
-				while( line != null );
 
 				Log.info( SeqUtil.class,
 						f.getAbsolutePath() + " header char: " + testChar + " --> #lines/read: " + numLines );
@@ -812,7 +879,7 @@ public class SeqUtil
 		boolean foundPairedReads = false;
 		if( Config.getBoolean( Config.INTERNAL_MULTIPLEXED ) )
 		{
-			if( BioLockJUtil.getBasicInputFiles().size() > 1 )
+			if( BioLockJUtil.getPipelineInputFiles().size() > 1 )
 			{
 				foundPairedReads = true;
 			}
@@ -820,7 +887,7 @@ public class SeqUtil
 			{
 				boolean foundFw = false;
 				boolean foundRv = false;
-				final File testFile = BioLockJUtil.getBasicInputFiles().iterator().next();
+				final File testFile = BioLockJUtil.getPipelineInputFiles().iterator().next();
 				final BufferedReader reader = BioLockJUtil.getFileReader( testFile );
 				try
 				{
@@ -870,12 +937,25 @@ public class SeqUtil
 		}
 		else // not multiplexed
 		{
-			foundPairedReads = !getPairedReads( BioLockJUtil.getBasicInputFiles() ).isEmpty();
+			foundPairedReads = !getPairedReads( BioLockJUtil.getPipelineInputFiles() ).isEmpty();
 		}
 
 		Log.info( SeqUtil.class,
 				"Set " + Config.INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Config.TRUE: Config.FALSE ) );
 		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, foundPairedReads ? Config.TRUE: Config.FALSE );
+	}
+
+	private static boolean hasInputTrimConfig() throws Exception
+	{
+		final String prefix = Config.getString( Config.INPUT_TRIM_PREFIX );
+		final String suffix = Config.getString( Config.INPUT_TRIM_SUFFIX );
+		return prefix != null && !prefix.isEmpty() || suffix != null && !suffix.isEmpty();
+	}
+
+	private static boolean mapSampleIdWithMetaFileNameCol() throws Exception
+	{
+		final String metaCol = Config.getString( MetaUtil.META_FILENAME_COLUMN );
+		return metaCol != null && MetaUtil.hasColumn( metaCol ) && !MetaUtil.getFieldValues( metaCol ).isEmpty();
 	}
 
 	/**
@@ -888,7 +968,7 @@ public class SeqUtil
 	 */
 	private static void registerDemuxStatus() throws Exception
 	{
-		final int count = BioLockJUtil.getBasicInputFiles().size();
+		final int count = BioLockJUtil.getPipelineInputFiles().size();
 		Log.info( SeqUtil.class, "Register Demux Status for: " + count + " input files." );
 		boolean isMultiplexed = false;
 		if( DemuxUtil.doDemux() != null && !DemuxUtil.doDemux() )
@@ -918,7 +998,7 @@ public class SeqUtil
 				suffixes.add( rvRead );
 			}
 			Log.info( SeqUtil.class, "Checking 2 input files for paired read suffix values: " + suffixes );
-			for( final File file: BioLockJUtil.getBasicInputFiles() )
+			for( final File file: BioLockJUtil.getPipelineInputFiles() )
 			{
 				if( fwRead != null && file.getName().contains( fwRead ) )
 				{
@@ -1002,6 +1082,26 @@ public class SeqUtil
 	 */
 	public static final String INTERNAL_SEQ_TYPE = "internal.seqType";
 
+	private static final Map<String, String> DNA_BASE_MAP = new HashMap<>();
+
 	private static Integer numMultiSeqLines = 0;
+
+	static
+	{
+		// IUPAC DNA BASE Substitutions
+		// http://www.dnabaser.com/articles/IUPAC%20ambiguity%20codes.html
+		DNA_BASE_MAP.put( "Y", "[CT]" );
+		DNA_BASE_MAP.put( "R", "[AG]" );
+		DNA_BASE_MAP.put( "W", "[AT]" );
+		DNA_BASE_MAP.put( "S", "[GC]" );
+		DNA_BASE_MAP.put( "K", "[TG]" );
+		DNA_BASE_MAP.put( "M", "[CA]" );
+		DNA_BASE_MAP.put( "D", "[AGT]" );
+		DNA_BASE_MAP.put( "V", "[ACG]" );
+		DNA_BASE_MAP.put( "H", "[ACT]" );
+		DNA_BASE_MAP.put( "B", "[CGT]" );
+		DNA_BASE_MAP.put( "N", "[ACGT]" );
+		DNA_BASE_MAP.put( "X", "[ACGT]" );
+	}
 
 }

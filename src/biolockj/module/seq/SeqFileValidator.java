@@ -189,28 +189,21 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outputFile ) );
 		try
 		{
-			int skipNumLines = 0;
-			String line = reader.readLine();
-			while( line != null && line.isEmpty() )
-			{
-				skipNumLines++;
-				line = reader.readLine();
-			}
+			String line = null;
 
-			if( line == null )
+			try
+			{
+				line = SeqUtil.scanFirstLine( reader, file );
+			}
+			catch( final Exception scanEx )
 			{
 				badFiles.add( outputFile );
 				return;
 			}
-			else if( skipNumLines != 0 )
-			{
-				Log.warn( getClass(),
-						"Skipped [ " + skipNumLines + " ] empty lines at the top of ---> " + file.getAbsolutePath() );
-			}
 
 			do
 			{
-				seqLines.add( line );
+				seqLines.add( line.trim() );
 				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 				{
 					seqNum++;

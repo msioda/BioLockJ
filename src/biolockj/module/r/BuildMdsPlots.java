@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import biolockj.Config;
-import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
+import biolockj.util.BioLockJUtil;
 
 /**
  * This BioModule is used to build the R script used to generate MDS plots for each report field and each taxonomy level
@@ -43,10 +43,13 @@ public class BuildMdsPlots extends R_Module implements ScriptModule
 	 * Add prerequisite module: {@link biolockj.module.r.CalculateStats}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
-		preReqs.add( CalculateStats.class );
+		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
+		{
+			preReqs.add( CalculateStats.class );
+		}
 		return preReqs;
 	}
 

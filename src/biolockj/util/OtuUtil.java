@@ -276,7 +276,7 @@ public class OtuUtil
 	 */
 	public static boolean isOtuModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredFiles(
+		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
 		if( files.isEmpty() )

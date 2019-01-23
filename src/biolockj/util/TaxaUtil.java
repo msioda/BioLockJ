@@ -381,7 +381,7 @@ public class TaxaUtil
 	 */
 	public static boolean isTaxaModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredFiles(
+		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
 		if( files.isEmpty() )

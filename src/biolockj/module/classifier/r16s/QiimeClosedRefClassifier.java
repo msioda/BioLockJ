@@ -105,7 +105,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	{
 		final List<Class<?>> postReqs = new ArrayList<>();
 		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
-				|| BioLockJUtil.getBasicInputFiles().size() > Config.requireInteger( SCRIPT_BATCH_SIZE ) ) )
+				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( SCRIPT_BATCH_SIZE ) ) )
 		{
 			postReqs.add( MergeOtuTables.class );
 		}

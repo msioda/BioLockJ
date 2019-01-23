@@ -21,7 +21,6 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.util.ModuleUtil;
-import biolockj.util.RMetaUtil;
 
 /**
  * This BioModule is used to build the R script used to generate taxonomy statistics and plots.
@@ -42,15 +41,6 @@ public class CalculateStats extends R_Module implements BioModule
 		super.checkDependencies();
 		Config.requireString( R_ADJ_PVALS_SCOPE );
 		Config.requireString( R_PVAL_ADJ_METHOD );
-	}
-
-	/**
-	 * Require metadata merged count tables as input
-	 */
-	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
-	{
-		return RMetaUtil.isMetaMergeModule( previousModule );
 	}
 
 	/**
@@ -106,6 +96,25 @@ public class CalculateStats extends R_Module implements BioModule
 		throw new Exception( "Only 1 " + CalculateStats.class.getSimpleName() + " output file with suffix = \""
 				+ querySuffix + "\" should exist.  Found " + count + " files --> " + results );
 
+	}
+
+	/**
+	 * Analyze file name for key strings to determine if file is a stats file output by this module.
+	 * 
+	 * @param file Ambiguous file
+	 * @return TRUE if file name is formatted as if output by this module
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isStatsFile( final File file ) throws Exception
+	{
+		for( final String suffix: statSuffixSet )
+		{
+			if( file.getName().contains( suffix ) && file.getName().endsWith( TSV_EXT ) )
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static List<File> getStatsFileDirs() throws Exception
@@ -208,4 +217,15 @@ public class CalculateStats extends R_Module implements BioModule
 	 * p.adjust.methods = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")
 	 */
 	protected static final String R_PVAL_ADJ_METHOD = "rStats.pAdjustMethod";
+
+	private static final Set<String> statSuffixSet = new HashSet<>();
+
+	static
+	{
+		statSuffixSet.add( P_VALS_NP );
+		statSuffixSet.add( P_VALS_NP_ADJ );
+		statSuffixSet.add( P_VALS_PAR );
+		statSuffixSet.add( P_VALS_PAR_ADJ );
+		statSuffixSet.add( R_SQUARED_VALS );
+	}
 }

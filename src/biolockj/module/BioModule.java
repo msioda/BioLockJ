@@ -106,11 +106,10 @@ public interface BioModule
 	 * BioModules returned by this method will be added to the pipeline before the current BioModule. If multiple
 	 * prerequisites are returned, the modules will be added in the order listed.
 	 * 
-	 * @param modules list of prior modules
 	 * @return List of BioModules
 	 * @throws Exception if invalid Class names are returned as prerequisites
 	 */
-	public List<Class<?>> getPreRequisiteModules( List<BioModule> modules ) throws Exception;
+	public List<Class<?>> getPreRequisiteModules() throws Exception;
 
 	/**
 	 * Gets the BioModule execution summary, this is sent as part of the notification email, if configured.<br>

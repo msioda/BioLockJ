@@ -32,10 +32,10 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 	 * Require taxonomy table module as pre-requisit
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
+	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
-		if( requireBuildTaxonomy() )
+		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
 		{
 			preReqs.add( BuildTaxonomyTables.class );
 		}
@@ -234,20 +234,8 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 		return sb.toString();
 	}
 
-	private boolean requireBuildTaxonomy() throws Exception
-	{
-		final List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
-		if( SeqUtil.requireSeqInput() || mods.contains( Normalizer.class.getName() )
-				|| mods.contains( LogTransformer.class.getName() ) )
-		{
-			return true;
-		}
-		return false;
-	}
-
 	private final Map<String, String> hitRatioPerSample = new HashMap<>();
 	private String mergeHeaderLine = null;
-
 	private String mergeSampleLine = null;
 
 	/**
