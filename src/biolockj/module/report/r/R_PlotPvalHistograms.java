@@ -12,7 +12,6 @@
 package biolockj.module.report.r;
 
 import java.util.List;
-import java.util.TreeSet;
 import biolockj.Config;
 import biolockj.module.ScriptModule;
 
@@ -38,18 +37,4 @@ public class R_PlotPvalHistograms extends R_Module implements ScriptModule
 		return getStatPreReqs();
 	}
 
-	/**
-	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil} Add
-	 * {@value #PDF_EXT} to super class set.
-	 * 
-	 * @return Set of file extensions
-	 * @throws Exception if errors occur
-	 */
-	@Override
-	public TreeSet<String> scpExtensions() throws Exception
-	{
-		final TreeSet<String> set = super.scpExtensions();
-		set.add( PDF_EXT.substring( 1 ) );
-		return set;
-	}
 }

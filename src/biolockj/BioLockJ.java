@@ -216,8 +216,9 @@ public class BioLockJ
 	 * <ol>
 	 * <li>Initialize {@link biolockj.Log} file using the name of the pipeline root directory
 	 * <li>Update summary #Attempts count
-	 * <li>If pipeline status = {@value biolockj.Constants#BLJ_COMPLETE}
 	 * <li>Delete status file {@value biolockj.Constants#BLJ_FAILED} in pipeline root directory
+	 * <li>If pipeline status = {@value biolockj.Constants#BLJ_COMPLETE}
+	 * <li>Delete file {@value biolockj.util.DownloadUtil#DOWNLOAD_LIST} in pipeline root directory
 	 * </ol>
 	 * 
 	 * @throws Exception if errors occur
@@ -230,6 +231,10 @@ public class BioLockJ
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
+		if (Config.isOnCluster()) {
+			DownloadUtil.getDownloadListFile().delete();
+		}
+		
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
 		if( f.exists() )
 		{

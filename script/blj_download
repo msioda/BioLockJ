@@ -1,7 +1,7 @@
 #!/bin/bash
 ############################################################################
 ##                                                                        ##
-##  This script prints the scp command needed to download analysis.       ##
+##  This script prints the command needed to download analysis.           ##
 ##  If the current directory is not a BioLockJ pipeline, print the        ##
 ##  scp command for the most recent pipeline executed.                    ##
 ##                                                                        ##
@@ -14,10 +14,10 @@ pipeline=$(most_recent_pipeline)
 SUM=summary.txt
 MSG=
 if [ -f $SUM ]; then
-	val=$(grep -B 1 "mkdir" $SUM)
+	val=$(grep -B 3 "rsync" $SUM)
 	[ ${#val} -gt 0 ] && MSG="$val"
 elif [ ${#pipeline} -gt 0 ]; then
-	val=$(grep -B 1 "mkdir" "$pipeline/$SUM")
+	val=$(grep -B 3 "rsync" "$pipeline/$SUM")
 	[ ${#val} -gt 0 ] && MSG="$val"
 else
 	MSG="No completed pipelines found in BLJ_PROJ: $BLJ_PROJ"
