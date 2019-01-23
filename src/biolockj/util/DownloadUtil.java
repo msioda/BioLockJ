@@ -11,13 +11,22 @@
  */
 package biolockj.util;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -25,6 +34,7 @@ import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.r.R_Module;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
+import biolockj.module.report.taxa.BuildTaxaTables;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -36,7 +46,50 @@ public final class DownloadUtil
 	{}
 
 	/**
-	 * If running on cluster, build scp command for user to download pipeline analysis.<br>
+	 * Add files to {@value biolockj.util.DownloadUtil#DOWNLOAD_LIST} in pipeline root directory. If doDownlaod = false,
+	 * then the file and its size are noted in the download file in a commented out line. This makes it easy for the
+	 * user to see how big the files is and add it to the list ad-hoc.
+	 * 
+	 * @param files - files to add to the download list
+	 * @param doDownload - true/false
+	 * @throws Exception
+	 */
+	private static void addToDownloadList( Collection<File> files ) throws Exception
+	{
+		final File dlFile = getDownloadListFile();
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( dlFile, true ) );
+
+		final File pipeRoot = new File( Config.pipelinePath() );
+		for( File file: files )
+		{
+			if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory())
+			{
+				String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
+				String sizeString = RSYNC_COMMENT + relPath + " --> "
+						+ FileUtils.byteCountToDisplaySize( FileUtils.sizeOf( file ) );
+				writer.write( sizeString + RETURN );
+				writer.write( relPath + RETURN );
+			}
+		}
+		writer.close();
+	}
+
+	/**
+	 * Get a directory name filter to include output and (optionally) script folders in file searches.
+	 * @param includeScript
+	 * @return a file name filter
+	 * @throws Exception
+	 */
+	protected static IOFileFilter getDirFilter( boolean includeScript ) throws Exception
+	{
+		ArrayList<String> dirFilter = new ArrayList<String>();
+		if (includeScript) { dirFilter.add( "script" ); }
+		dirFilter.add( "output" );
+		return new NameFileFilter( dirFilter );
+	}
+
+	/**
+	 * If running on cluster, build command for user to download pipeline analysis.<br>
 	 * <p>
 	 * The pipeline analysis is extracted from the last module output directory (except Email).<br>
 	 * Download target = ModuleUtil.getDownloadDir() on the local workstation.<br>
@@ -51,55 +104,106 @@ public final class DownloadUtil
 		final List<BioModule> modules = getDownloadModules();
 		if( Config.isOnCluster() && modules != null && getDownloadDirPath() != null )
 		{
-			String status = "Complete";
+			final File pipeRoot = new File( Config.pipelinePath() );
 
-			String targets = getSrc( getExts( null, false ) );
-			BigInteger downloadSize = FileUtils.sizeOfAsBigInteger( Log.getFile() );
-			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( SummaryUtil.getSummaryFile() ) );
-			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( PropUtil.getMasterConfig() ) );
-
-			if( modules.get( modules.size() - 1 ) instanceof R_Module )
-			{
-				final File runAll = makeRunAllScript( modules );
-				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( runAll ) );
-			}
 			boolean hasRmods = false;
+			String status = "completed";
+			Set<File> files = new TreeSet<File>();
 			for( final BioModule module: modules )
 			{
-				final String modNum = BioLockJUtil.formatDigits( module.getID(), 2 );
-				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getOutputDir() ) );
+				Log.info( DownloadUtil.class, "Updating download list for " + module.getClass().getSimpleName() );		
 				if( module instanceof R_Module )
 				{
 					hasRmods = true;
-					targets += " " + getSrc(
-							modNum + "*" + File.separator + "*" + File.separator + getExts( (R_Module) module, true ) );
-					downloadSize = downloadSize
-							.add( FileUtils.sizeOfAsBigInteger( ( (ScriptModule) module ).getScriptDir() ) );
-					downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getTempDir() ) );
-				}
+					files.addAll( FileUtils.listFiles( module.getModuleDir(), new WildcardFileFilter( "*" ),
+							getDirFilter( true ) ) );
+				} 
 				else
 				{
-					targets += " " + getSrc( modNum + "*" + File.separator + "output" + File.separator + "*" );
+					files.addAll( FileUtils.listFiles( module.getModuleDir(), new WildcardFileFilter( "*" ),
+							getDirFilter( false ) ) );
 				}
-
 				if( !ModuleUtil.isComplete( module ) )
 				{
-					status = "Failed";
+					status = "failed";
 				}
 			}
-			final String pipeRoot = Config.pipelinePath();
-			final String label = status + ( getDownloadModules().size() > 1 ? " Modules --> ": " Module --> " );
-			final String displaySize = FileUtils.byteCountToDisplaySize( downloadSize );
-			final String rDirs = hasRmods
-					? "; mkdir -p " + getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR )
-					: "";
-			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + rDirs + "; scp -rp "
-					+ getClusterUser() + "@" + Config.requireString( Email.CLUSTER_HOST ) + ":\"" + targets + "\" "
-					+ DEST;
+
+			if( hasRmods )
+			{
+				makeRunAllScript( modules );
+			}
+			
+			files.addAll( Arrays.asList(pipeRoot.listFiles() ) );
+
+			addToDownloadList( files );
+
+			final String label = status + " pipeline -->";
+			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize() );
+			final String cmd = SOURCE + "=" + pipeRoot.getAbsolutePath() + RETURN + "out=" + getDownloadDirPath()
+					+ RETURN + "rsync --times --files-from=:$" + SOURCE + File.separator
+					+ pipeRoot.toURI().relativize( getDownloadListFile().toURI() ) + " " + getClusterUser() + "@"
+					+ Config.requireString( Email.CLUSTER_HOST ) + ":$" + SOURCE + " $" + DEST;
 			return "Download " + label + " [" + displaySize + "]:" + RETURN + cmd;
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get the file that has the download list.
+	 * 
+	 * @return File containing list of files to download
+	 * @throws Exception
+	 */
+	public static File getDownloadListFile() throws Exception
+	{
+		final File downloadList = new File( Config.pipelinePath() + File.separator + DOWNLOAD_LIST );
+		if( !downloadList.exists() )
+		{
+			downloadList.createNewFile();
+			final BufferedWriter writer = new BufferedWriter( new FileWriter( downloadList, true ) );
+			final String header = RSYNC_COMMENT + "Use this file with the --files-from argument to rsync." + RETURN
+					+ RSYNC_COMMENT + "See \"" + SummaryUtil.getSummaryFile().getName() + "\" or call "
+					+ DOWNLOAD_SCRIPT + " for full rsync command." + RETURN + RSYNC_COMMENT + "Lines that begin with \""
+					+ RSYNC_COMMENT + "\" are ignored." + RETURN + RSYNC_COMMENT
+					+ "This file is regenerated with each restart; any manual edits are lost." + RETURN + RSYNC_COMMENT
+					+ RETURN + RSYNC_COMMENT;
+			writer.write( header + RETURN );
+			writer.close();
+		}
+		return downloadList;
+	}
+
+	/**
+	 * Get the total size of all files that would be included in download.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	public static BigInteger getDownloadSize() throws Exception
+	{
+		String pipeRoot = Config.pipelinePath();
+
+		BigInteger downloadSize = FileUtils.sizeOfAsBigInteger( Log.getFile() );
+
+		File dlFile = getDownloadListFile();
+
+		BufferedReader reader = new BufferedReader( new FileReader( dlFile ) );
+		String readLine;
+		while( ( readLine = reader.readLine() ) != null )
+		{
+			if( !readLine.startsWith( RSYNC_COMMENT ) )
+			{
+				File f = new File( pipeRoot + File.separator + readLine );
+				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( f ) );
+			}
+		}
+
+		reader.close();
+
+		return downloadSize;
+
 	}
 
 	/**
@@ -149,10 +253,10 @@ public final class DownloadUtil
 	 * Get the modules to download. Some modules are always included:
 	 * <ul>
 	 * <li>{@link biolockj.module.report.taxa.AddMetadataToTaxaTables}
+	 * <li>{@link biolockj.module.report.taxa.BuildTaxaTables}
 	 * <li>{@link biolockj.module.report.JsonReport}
-	 * <li>Any module that implements {@link biolockj.module.report.r.R_Module} interface
+	 * <li>Any module that inherits from {@link biolockj.module.report.r.R_Module}
 	 * </ul>
-	 * If R modules have run, build local output directory to be included in download via scp command.<br>
 	 *
 	 * @return BioModules to download
 	 */
@@ -161,36 +265,15 @@ public final class DownloadUtil
 		final List<BioModule> modules = new ArrayList<>();
 		try
 		{
-			BioModule lastModule = null;
-			final List<BioModule> rModules = new ArrayList<>();
 			for( final BioModule module: Pipeline.getModules() )
 			{
-				if( ModuleUtil.hasExecuted( module ) && module instanceof JsonReport
-						|| module instanceof AddMetadataToTaxaTables )
+				boolean downloadableType = module instanceof JsonReport || module instanceof AddMetadataToTaxaTables
+						|| module instanceof BuildTaxaTables || module instanceof R_Module;
+				if( ModuleUtil.hasExecuted( module ) && downloadableType )
 				{
 					modules.add( module );
 				}
-				else if( ModuleUtil.hasExecuted( module ) && module instanceof R_Module )
-				{
-					rModules.add( module );
-				}
-
-				if( ModuleUtil.hasExecuted( module ) && !( module instanceof Email ) )
-				{
-					lastModule = module;
-				}
 			}
-
-			if( lastModule != null && !rModules.isEmpty() )
-			{
-				modules.addAll( rModules );
-			}
-
-			if( !modules.contains( lastModule ) )
-			{
-				modules.add( lastModule );
-			}
-
 			return modules;
 		}
 		catch( final Exception ex )
@@ -200,45 +283,10 @@ public final class DownloadUtil
 		return null;
 	}
 
-	/**
-	 * Get file extensions for each R module to include in scp download command
-	 * 
-	 * @param module R_Module
-	 * @param harRmods Boolean TRUE if R modules in pipeline
-	 * @return REGEX to scp specific file extensions
-	 * @throws Exception if errors occur
-	 */
-	protected static String getExts( final R_Module module, final boolean harRmods ) throws Exception
+	public static File getRunAllRScriptName() throws Exception
 	{
-		if( module == null )
-		{
-			String ext = Constants.LOG_EXT.substring( 1 ) + "," + Constants.TXT_EXT.substring( 1 );
-			if( Config.getConfigFileExt() != null )
-			{
-				ext += "," + Config.getConfigFileExt().substring( 1 );
-			}
-
-			if( harRmods )
-			{
-				return "*.{" + ext + "," + Constants.SH_EXT.substring( 1 ) + "}";
-			}
-			else
-			{
-				return "*.{" + ext + "}";
-			}
-		}
-		else if( module.scpExtensions() == null || module.scpExtensions().isEmpty() )
-		{
-			return "*";
-		}
-
-		final StringBuffer sb = new StringBuffer();
-		for( final String ext: module.scpExtensions() )
-		{
-			sb.append( sb.toString().isEmpty() ? "*.{": "," ).append( ext );
-		}
-		sb.append( "}" );
-		return sb.toString();
+		final File script = new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
+		return script;
 	}
 
 	/**
@@ -251,8 +299,9 @@ public final class DownloadUtil
 	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception
 	{
 
-		final File script = new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
+		final File pipeRoot = new File( Config.pipelinePath() );
+		final File script = getRunAllRScriptName();
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( script, true ) );
 
 		if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
@@ -265,9 +314,11 @@ public final class DownloadUtil
 		{
 			if( mod instanceof R_Module )
 			{
+				String relPath = pipeRoot.toURI().relativize( ( (R_Module) mod ).getPrimaryScript().toURI() )
+						.toString();
 				// do not use exe.Rscript config option, this is a convenience for the users local system not for the
 				// system where biolockj ran.
-				writer.write( "Rscript " + ( (R_Module) mod ).getPrimaryScript().getName() + RETURN );
+				writer.write( "Rscript " + relPath + RETURN );
 			}
 		}
 
@@ -276,25 +327,32 @@ public final class DownloadUtil
 		return script;
 	}
 
-	private static String getDest( final String val )
-	{
-		return DEST + File.separator + val;
-	}
-
-	private static String getSrc( final String val ) throws Exception
-	{
-		return SOURCE + File.separator + val;
-	}
-
 	/**
 	 * {@link biolockj.Config} String property: {@value #DOWNLOAD_DIR}<br>
 	 * Sets the local directory targeted by the scp command.
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
 
-	private static final String DEST = "$out";
+	private static final String DEST = "out";
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
-	private static final String SOURCE = "$src";
+	private static final String DOWNLOAD_LIST = "downloadList.txt";
+	private static final String SOURCE = "src";
+	private static final String RSYNC_COMMENT = "# ";
+	private static final String DOWNLOAD_SCRIPT = "blj_download";
 
+	/**
+	 * String to remove from cluster.<config option> to make it specific to a given module.
+	 */
+	private static final String PROPERTY_PREFIX = "cluster";
+
+	/**
+	 * Configurable property for listing file extensions to download
+	 */
+	protected static final String DOWNLOAD_EXT = "cluster.downloadExts";
+
+	/**
+	 * Configurable property for listing file extensions to NOT download; this overrides anything in DOWNLOAD_EXT.
+	 */
+	protected static final String DOWNLOAD_EXT_DISABLE = "cluster.downloadExtsDisable";
 }

@@ -11,7 +11,6 @@
  */
 package biolockj.module.report.r;
 
-import java.util.TreeSet;
 import biolockj.Config;
 import biolockj.module.ScriptModule;
 
@@ -35,28 +34,6 @@ public class R_PlotMds extends R_Module implements ScriptModule
 			throw new Exception( "Config property [" + R_MDS_NUM_AXIS + "] must be > 2" );
 		}
 	}
-
-	/**
-	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil} Add
-	 * {@value #PDF_EXT} to super class set.
-	 * 
-	 * @return Set of file extensions
-	 * @throws Exception if errors occur
-	 */
-	@Override
-	public TreeSet<String> scpExtensions() throws Exception
-	{
-		final TreeSet<String> set = super.scpExtensions();
-		set.add( PDF_EXT.substring( 1 ) );
-		set.add( TSV_EXT.substring( 1 ) );
-		return set;
-	}
-
-	/**
-	 * {@link biolockj.Config} List property: {@value #MDS_REPORT_FIELDS}<br>
-	 * List metadata fields to generate MDS ordination plots.
-	 */
-	public static final String R_MDS_REPORT_FIELDS = "r_PlotMds.reportFields";
 
 	/**
 	 * {@link biolockj.Config} property: {@value #R_MDS_DISTANCE} defines the distance index to use in the capscale
