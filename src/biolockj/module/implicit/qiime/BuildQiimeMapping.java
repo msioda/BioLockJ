@@ -16,9 +16,7 @@ import java.util.*;
 import biolockj.BioModuleFactory;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.ScriptModule;
-import biolockj.module.SeqModule;
-import biolockj.module.SeqModuleImpl;
+import biolockj.module.*;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.SeqUtil;
@@ -176,9 +174,9 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 * not in fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );

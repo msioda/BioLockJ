@@ -11,7 +11,10 @@
  */
 package biolockj.util;
 
+import java.io.File;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.Config;
 import biolockj.Log;
@@ -367,6 +370,34 @@ public final class RMetaUtil
 	}
 
 	/**
+	 * Check module for metadata merged output in hte module output directory.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if module contains metaMerged.tsv files
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isMetaMergeModule( final BioModule module ) throws Exception
+	{
+		final Collection<File> files = SeqUtil.removeIgnoredFiles(
+				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+
+		if( files.isEmpty() )
+		{
+			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
+		}
+
+		for( final File f: files )
+		{
+			if( isMetaMergeTable( f ) )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * The override property: {@link biolockj.Config}.{@value #R_REPORT_FIELDS} can be used to list the metadata
 	 * reportable fields for use in the R modules. If undefined, report all fields.
 	 * 
@@ -421,6 +452,11 @@ public final class RMetaUtil
 		}
 
 		return false;
+	}
+
+	private static boolean isMetaMergeTable( final File file ) throws Exception
+	{
+		return file.getName().endsWith( AddMetaToTaxonomyTables.META_MERGED );
 	}
 
 	private static boolean isQiimeMetric( final String field )

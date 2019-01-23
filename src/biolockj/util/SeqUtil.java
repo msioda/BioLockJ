@@ -562,6 +562,30 @@ public class SeqUtil
 	}
 
 	/**
+	 * Remove ignore files from the input files.
+	 * 
+	 * @param files Collection of files
+	 * @return valid files
+	 * @throws Exception if errors occur
+	 */
+	public static List<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
+	{
+		final List<File> validInputFiles = new ArrayList<>();
+		for( final File f: files )
+		{
+			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			{
+				validInputFiles.add( f );
+			}
+			else
+			{
+				Log.debug( SeqUtil.class, "Ignore file " + f.getAbsolutePath() );
+			}
+		}
+		return validInputFiles;
+	}
+
+	/**
 	 * Most pipelines have {@value #FASTA} or {@value #FASTQ} files in {@value biolockj.Config#INPUT_DIRS}. However,
 	 * some pipeline {@value biolockj.Config#INPUT_DIRS} contain files that are not sequence files, such as from a
 	 * {@link biolockj.module.implicit.parser.ParserModule} output directory. This method returns
@@ -651,7 +675,7 @@ public class SeqUtil
 					skipNumLines++;
 					line = reader.readLine();
 				}
-				
+
 				if( line == null )
 				{
 					throw new Exception( "Input dir contains empty file: " + f.getAbsolutePath() );
@@ -661,14 +685,14 @@ public class SeqUtil
 					Log.warn( SeqUtil.class,
 							"Skipped [ " + skipNumLines + " ] empty lines at the top of ---> " + f.getAbsolutePath() );
 				}
-				
+
 				int numLines = 0;
 				do
 				{
 					line = line.trim();
 					if( testChar == null )
 					{
-						testChar = line.substring( 0, 1 );  // set only once
+						testChar = line.substring( 0, 1 ); // set only once
 					}
 					else
 					{
@@ -687,12 +711,13 @@ public class SeqUtil
 							break;
 						}
 					}
-					
+
 					line = reader.readLine();
 				}
 				while( line != null );
-				
-				Log.info( SeqUtil.class, f.getAbsolutePath() + " header char: " + testChar + " --> #lines/read: " + numLines );
+
+				Log.info( SeqUtil.class,
+						f.getAbsolutePath() + " header char: " + testChar + " --> #lines/read: " + numLines );
 				if( numLines > 1 && Config.getString( Config.INTERNAL_IS_MULTI_LINE_SEQ ) == null
 						&& ( FASTA_HEADER_DELIMS.contains( testChar ) || testChar.equals( FASTQ_HEADER_DELIM ) ) )
 				{

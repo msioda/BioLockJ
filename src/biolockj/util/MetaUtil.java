@@ -415,7 +415,7 @@ public class MetaUtil
 
 		if( Config.getString( META_FILE_PATH ) != null )
 		{
-			final Set<String> ignore = Config.getTreeSet( Config.INPUT_IGNORE_FILES );
+			final Set<String> ignore = Config.getSet( Config.INPUT_IGNORE_FILES );
 			ignore.add( MetaUtil.getMetadataFileName() );
 			Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
 			setFile( MetaUtil.getMetadata() );

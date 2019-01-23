@@ -250,7 +250,7 @@ public class OtuUtil
 			}
 			catch( final Exception ex )
 			{
-				Log.debug( OtuUtil.class, "File is not an OTU count file: " + file.getAbsolutePath() );
+				Log.debug( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
 				return false;
 			}
 			finally
@@ -276,19 +276,19 @@ public class OtuUtil
 	 */
 	public static boolean isOtuModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
-				HiddenFileFilter.VISIBLE );
+		final Collection<File> files = SeqUtil.removeIgnoredFiles(
+				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-		if( files == null || files.isEmpty() )
+		if( files.isEmpty() )
 		{
 			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
 		}
 
 		for( final File f: files )
 		{
-			if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			if( isOtuFile( f ) )
 			{
-				return OtuUtil.isOtuFile( f );
+				return true;
 			}
 		}
 

@@ -141,11 +141,12 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 		lines.add( HN2_BASH_COMMENT );
 		lines.add( "function " + FUNCTION_RENORM_HN2_TABLES + "() {" );
 		lines.add( "if [ ${#4} -gt 0 ]; then" );
-		lines.add( getJoinTableCmd() + " " + INPUT_PARAM + "$1 " + OUTPUT_PARAM + "$2 " + RENORM_UNITS_PARAM + "$3 " + RENORM_MODE_PARAM + "$4" );
+		lines.add( getJoinTableCmd() + " " + INPUT_PARAM + "$1 " + OUTPUT_PARAM + "$2 " + RENORM_UNITS_PARAM + "$3 "
+				+ RENORM_MODE_PARAM + "$4" );
 		lines.add( "else" );
 		lines.add( getJoinTableCmd() + " " + INPUT_PARAM + "$1 " + OUTPUT_PARAM + "$2 " + RENORM_UNITS_PARAM + "$3" );
 		lines.add( "fi" + RETURN );
-		
+
 		lines.add( "}" );
 
 		return lines;
@@ -320,18 +321,18 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	 * {@value #RENORM_TABLE_CMD_SUFFIX}
 	 */
 	protected static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table ";
-	
-	private static final String HN2_BASH_COMMENT = "# Run sample through HMP Unified Metabolic Analysis Network";
-	private static final String RENORM_BASH_COMMENT = "";
-	private static final String JOIN_BASH_COMMENT = "";
 
 	private static final String FILE_NAME_PARAM = "--file_name ";
+	private static final String HN2_BASH_COMMENT = "# Run sample through HMP Unified Metabolic Analysis Network";
 	private static final String INPUT_PARAM = "-i ";
+
+	private static final String JOIN_BASH_COMMENT = "";
 	private static final String NUCL_DB_PARAM = "--nucleotide-database ";
 	private static final String NUM_THREADS_PARAM = "--threads";
 	private static final String OUTPUT_PARAM = "-o ";
 	private static final String PATH_ABUNDANCE = "pathabundance";
 	private static final String PROT_DB_PARAM = "--protein-database ";
+	private static final String RENORM_BASH_COMMENT = "";
 	private static final String RENORM_MODE_OPTION_COMMUNITY = "community";
 	private static final String RENORM_MODE_OPTION_LEVELWISE = "levelwise";
 	private static final String RENORM_MODE_PARAM = "-m ";

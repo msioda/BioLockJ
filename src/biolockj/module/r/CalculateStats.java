@@ -21,6 +21,7 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.util.ModuleUtil;
+import biolockj.util.RMetaUtil;
 
 /**
  * This BioModule is used to build the R script used to generate taxonomy statistics and plots.
@@ -41,6 +42,15 @@ public class CalculateStats extends R_Module implements BioModule
 		super.checkDependencies();
 		Config.requireString( R_ADJ_PVALS_SCOPE );
 		Config.requireString( R_PVAL_ADJ_METHOD );
+	}
+
+	/**
+	 * Require metadata merged count tables as input
+	 */
+	@Override
+	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	{
+		return RMetaUtil.isMetaMergeModule( previousModule );
 	}
 
 	/**

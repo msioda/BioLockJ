@@ -158,12 +158,10 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * All R modules require combined OTU-metadata tables.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		final List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
-		if( SeqUtil.requireSeqInput() || mods.contains( BuildTaxonomyTables.class.getName() )
-				|| mods.contains( Normalizer.class.getName() ) || mods.contains( LogTransformer.class.getName() ) )
+		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
+		if( requireMetaMergeModule() )
 		{
 			preReqs.add( AddMetaToTaxonomyTables.class );
 		}
@@ -310,6 +308,17 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		return set;
 	}
 
+	protected boolean requireStatsModule() throws Exception
+	{
+		final List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		if( SeqUtil.requireSeqInput() || mods.contains( BuildTaxonomyTables.class.getName() )
+				|| mods.contains( Normalizer.class.getName() ) || mods.contains( LogTransformer.class.getName() ) )
+		{
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Initialize the R script by creating the MAIN R script that calls source on the BaseScript and adds the R code for
 	 * the runProgarm() method.
@@ -360,6 +369,17 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	private String getModuleScriptName() throws Exception
 	{
 		return getClass().getSimpleName() + R_EXT;
+	}
+
+	private boolean requireMetaMergeModule() throws Exception
+	{
+		final List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		if( SeqUtil.requireSeqInput() || mods.contains( BuildTaxonomyTables.class.getName() )
+				|| mods.contains( Normalizer.class.getName() ) || mods.contains( LogTransformer.class.getName() ) )
+		{
+			return true;
+		}
+		return false;
 	}
 
 	/**

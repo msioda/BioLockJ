@@ -381,19 +381,19 @@ public class TaxaUtil
 	 */
 	public static boolean isTaxaModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
-				HiddenFileFilter.VISIBLE );
+		final Collection<File> files = SeqUtil.removeIgnoredFiles(
+				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-		if( files == null || files.isEmpty() )
+		if( files.isEmpty() )
 		{
 			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
 		}
 
 		for( final File f: files )
 		{
-			if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			if( isTaxaFile( f ) )
 			{
-				return TaxaUtil.isTaxaFile( f );
+				return true;
 			}
 		}
 

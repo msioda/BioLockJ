@@ -18,9 +18,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * Superclass for standard BioModules (classifiers, parsers, etc). Sets standard behavior for many of the BioModule
@@ -28,7 +26,6 @@ import biolockj.util.SummaryUtil;
  */
 public abstract class BioModuleImpl implements BioModule
 {
-
 	/**
 	 * Cache the input files for quick access on subsequent calls to {@linke #getInputFiles()}
 	 * 
@@ -114,7 +111,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * By default, no prerequisites are required.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
 	{
 		return new ArrayList<>();
 	}
@@ -168,6 +165,25 @@ public abstract class BioModuleImpl implements BioModule
 			moduleDir.mkdirs();
 			Log.info( getClass(), "Create BioModule root directory: " + moduleDir.getAbsolutePath() );
 		}
+	}
+
+	@Override
+	public String toString()
+	{
+		return getClass().getName();
+	}
+
+	/**
+	 * Check modules for a BioModule with the given name
+	 * 
+	 * @param modules List of BioModules
+	 * @param name Name of BioModule
+	 * @return TRUE if name found in modules
+	 * @throws Exception if errors occur
+	 */
+	protected boolean contains( final List<BioModule> modules, final String name ) throws Exception
+	{
+		return BioLockJUtil.join( modules ).indexOf( name ) > -1;
 	}
 
 	/**
@@ -237,19 +253,7 @@ public abstract class BioModuleImpl implements BioModule
 	 */
 	protected List<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
 	{
-		final List<File> validInputFiles = new ArrayList<>();
-		for( final File f: files )
-		{
-			if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
-			{
-				validInputFiles.add( f );
-			}
-			else
-			{
-				Log.debug( getClass(), "Ignore file " + f.getAbsolutePath() );
-			}
-		}
-		return validInputFiles;
+		return SeqUtil.removeIgnoredFiles( files );
 	}
 
 	/**

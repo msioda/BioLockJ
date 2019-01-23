@@ -12,9 +12,7 @@
 package biolockj.util;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.*;
 import org.apache.commons.lang.math.NumberUtils;
@@ -378,18 +376,20 @@ public class ModuleUtil
 	 * 
 	 * @param module BioModule in question
 	 * @return TRUE if module produced exactly 1 file (metadata file)
+	 * @throws Exception if errors occur
 	 */
-	public static boolean isMetadataModule( final BioModule module )
+	public static boolean isMetadataModule( final BioModule module ) throws Exception
 	{
 		boolean foundMeta = false;
 		boolean foundOther = false;
-		for( final File f: module.getOutputDir().listFiles() )
+		final List<File> files = SeqUtil.removeIgnoredFiles( Arrays.asList( module.getOutputDir().listFiles() ) );
+		for( final File f: files )
 		{
 			if( f.getName().equals( MetaUtil.getMetadataFileName() ) )
 			{
 				foundMeta = true;
 			}
-			else if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			else
 			{
 				foundOther = true;
 			}

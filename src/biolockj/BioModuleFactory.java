@@ -90,7 +90,7 @@ public class BioModuleFactory
 			else
 			{
 				safetyCount = 0;
-				for( final String preReqModule: getPreRequisites( module ) )
+				for( final String preReqModule: getPreRequisites( module, bioModules ) )
 				{
 					if( !moduleInList( bioModules, preReqModule ) )
 					{
@@ -107,7 +107,7 @@ public class BioModuleFactory
 				}
 
 				safetyCount = 0;
-				for( final String postReqModule: getPostRequisites( module ) )
+				for( final String postReqModule: getPostRequisites( module, bioModules ) )
 				{
 					if( !moduleInList( bioModules, postReqModule ) )
 					{
@@ -198,7 +198,8 @@ public class BioModuleFactory
 	 * @return List of post-requisite module names
 	 * @throws Exception if runtime errors occur
 	 */
-	protected static List<String> getPostRequisites( final BioModule module ) throws Exception
+	protected static List<String> getPostRequisites( final BioModule module, final List<BioModule> bioModules )
+			throws Exception
 	{
 		verifySafetyCount( module );
 		final List<String> postReqs = new ArrayList<>();
@@ -207,7 +208,8 @@ public class BioModuleFactory
 		{
 			for( final Class<?> modClass: modPostReqs )
 			{
-				final List<String> postReqPreReqModules = getPreRequisites( getModule( modClass.getName() ) );
+				final List<String> postReqPreReqModules = getPreRequisites( getModule( modClass.getName() ),
+						bioModules );
 				for( final String preReq: postReqPreReqModules )
 				{
 					if( !postReqs.contains( preReq ) )
@@ -218,7 +220,8 @@ public class BioModuleFactory
 
 				postReqs.add( modClass.getName() );
 
-				final List<String> postReqPostReqModules = getPostRequisites( getModule( modClass.getName() ) );
+				final List<String> postReqPostReqModules = getPostRequisites( getModule( modClass.getName() ),
+						bioModules );
 				for( final String postReq: postReqPostReqModules )
 				{
 					if( !postReqs.contains( postReq ) )
@@ -235,35 +238,41 @@ public class BioModuleFactory
 	/**
 	 * This method returns all module prerequisites (including prerequisites and post-requisites for the prerequisites).
 	 * 
+	 * @param bioModules prior BioModules
 	 * @param module Current BioModule
 	 * @return List of prerequisite module names
 	 * @throws Exception if runtime errors occur
 	 */
-	protected static List<String> getPreRequisites( final BioModule module ) throws Exception
+	protected static List<String> getPreRequisites( final BioModule module, final List<BioModule> bioModules )
+			throws Exception
 	{
 		verifySafetyCount( module );
 		final List<String> preReqs = new ArrayList<>();
-		final List<Class<?>> modPreReqs = module.getPreRequisiteModules();
+		final List<Class<?>> modPreReqs = module.getPreRequisiteModules( bioModules );
 		if( modPreReqs != null )
 		{
 			for( final Class<?> modClass: modPreReqs )
 			{
-				final List<String> preReqPreReqModules = getPreRequisites( getModule( modClass.getName() ) );
+				final List<String> preReqPreReqModules = getPreRequisites( getModule( modClass.getName() ),
+						bioModules );
 				for( final String preReq: preReqPreReqModules )
 				{
 					if( !preReqs.contains( preReq ) )
 					{
+						bioModules.add( getModule( preReq ) );
 						preReqs.add( preReq );
 					}
 				}
 
 				preReqs.add( modClass.getName() );
 
-				final List<String> preReqPostReqModules = getPostRequisites( getModule( modClass.getName() ) );
+				final List<String> preReqPostReqModules = getPostRequisites( getModule( modClass.getName() ),
+						bioModules );
 				for( final String postReq: preReqPostReqModules )
 				{
 					if( !preReqs.contains( postReq ) )
 					{
+						bioModules.add( getModule( postReq ) );
 						preReqs.add( postReq );
 					}
 				}

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import biolockj.Config;
+import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 
 /**
@@ -42,9 +43,9 @@ public class BuildMdsPlots extends R_Module implements ScriptModule
 	 * Add prerequisite module: {@link biolockj.module.r.CalculateStats}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
 		preReqs.add( CalculateStats.class );
 		return preReqs;
 	}

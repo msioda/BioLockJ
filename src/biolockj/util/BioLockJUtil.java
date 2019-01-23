@@ -214,17 +214,8 @@ public class BioLockJUtil
 				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 			}
 			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
-			for( final File file: files )
-			{
-				if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
-				{
-					inputFiles.add( file );
-				}
-				else
-				{
-					Log.warn( SeqUtil.class, "Ignoring file: " + file.getName() );
-				}
-			}
+
+			inputFiles.addAll( SeqUtil.removeIgnoredFiles( files ) );
 		}
 
 		return inputFiles;
@@ -716,9 +707,11 @@ public class BioLockJUtil
 	 * Prefix added to the master Config file: {@value #MASTER_PREFIX}
 	 */
 	public static final String MASTER_PREFIX = "MASTER_";
+
 	private static final String DEFAULT_CONFIG_FLAG = "# ----> Default Config: ";
 	private static final List<File> inputFiles = new ArrayList<>();
 	private static final String ORIG_CONFIG_FLAG = "# ----> Project Config: ";
+	private static String pipelinInputType = null;
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final String TEMP_PREFIX = ".TEMP_";
 	private static final String VERSION_FILE = ".version";

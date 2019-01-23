@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.BioModuleFactory;
 import biolockj.Config;
+import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.SeqUtil;
@@ -59,9 +60,9 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );

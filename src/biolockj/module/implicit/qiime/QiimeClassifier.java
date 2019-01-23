@@ -234,9 +234,9 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * QiimeClassifier add prerequisite module: {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
 		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );

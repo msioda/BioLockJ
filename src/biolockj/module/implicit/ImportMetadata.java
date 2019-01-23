@@ -421,9 +421,9 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	private void addMetadataToConfigIgnoreInputFiles() throws Exception
 	{
 		final Set<String> ignore = new HashSet<>();
-		if( Config.getTreeSet( Config.INPUT_IGNORE_FILES ) != null )
+		if( Config.getSet( Config.INPUT_IGNORE_FILES ) != null )
 		{
-			ignore.addAll( Config.getTreeSet( Config.INPUT_IGNORE_FILES ) );
+			ignore.addAll( Config.getSet( Config.INPUT_IGNORE_FILES ) );
 		}
 
 		ignore.add( MetaUtil.getMetadataFileName() );

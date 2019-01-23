@@ -18,9 +18,7 @@ import org.apache.commons.lang.math.NumberUtils;
 import biolockj.BioModuleFactory;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
-import biolockj.module.SeqModule;
+import biolockj.module.*;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
 
@@ -72,14 +70,13 @@ public class PreRarefier extends JavaModuleImpl implements JavaModule, SeqModule
 	 * {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-
+		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
+		final String mods = BioLockJUtil.join( modules );
 		final String pairedReadMod = BioModuleFactory.getDefaultMergePairedReadsConverter();
-		if( !ModuleUtil.preReqModuleExists( this, SeqFileValidator.class.getName() )
-				&& !ModuleUtil.preReqModuleExists( this, pairedReadMod )
-				&& !ModuleUtil.preReqModuleExists( this, TrimPrimers.class.getName() ) )
+		if( !contains( modules, SeqFileValidator.class.getName() ) && !contains( modules, TrimPrimers.class.getName() )
+				&& !contains( modules, pairedReadMod ) )
 		{
 			preReqs.add( RegisterNumReads.class );
 		}

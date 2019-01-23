@@ -23,9 +23,9 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * Module prerequisite: {@link biolockj.module.report.CompileOtuCounts}
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
 		if( BioLockJUtil.getBasicInputFiles().size() == 1 )
 		{
 			final File inFile = BioLockJUtil.getBasicInputFiles().iterator().next();

@@ -28,6 +28,20 @@ import biolockj.util.*;
  */
 public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModule
 {
+	/**
+	 * Require taxonomy table module as pre-requisit
+	 */
+	@Override
+	public List<Class<?>> getPreRequisiteModules( final List<BioModule> modules ) throws Exception
+	{
+		final List<Class<?>> preReqs = super.getPreRequisiteModules( modules );
+		if( requireBuildTaxonomy() )
+		{
+			preReqs.add( BuildTaxonomyTables.class );
+		}
+
+		return preReqs;
+	}
 
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
@@ -89,6 +103,9 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 		return super.getSummary() + sb.toString();
 	}
 
+	/**
+	 * Require taxa table input files
+	 */
 	@Override
 	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
 	{
@@ -217,7 +234,20 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 		return sb.toString();
 	}
 
+	private boolean requireBuildTaxonomy() throws Exception
+	{
+		final List<String> mods = Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		if( SeqUtil.requireSeqInput() || mods.contains( Normalizer.class.getName() )
+				|| mods.contains( LogTransformer.class.getName() ) )
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private final Map<String, String> hitRatioPerSample = new HashMap<>();
 	private String mergeHeaderLine = null;
+
 	private String mergeSampleLine = null;
 
 	/**
@@ -226,10 +256,8 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 	 * {@link biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}: {@value #HIT_RATIO}.
 	 */
 	public static final String HIT_RATIO = "Hit_Ratio";
-
 	/**
 	 * File suffix added to OTU table file name once merged with metadata.
 	 */
 	public static final String META_MERGED = "_metaMerged" + TSV_EXT;
-	private static final Map<String, String> hitRatioPerSample = new HashMap<>();
 }
