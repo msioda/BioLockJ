@@ -23,7 +23,13 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       console.dir(this);
 
       //set items in local storage
-      localStorage.setItem(file.name, JSON.stringify(this));
+      //localStorage.setItem(file.name, JSON.stringify(this));
+
+      saveConfigToGui({
+          configName : file.name,
+          configText : this.formatAsFlatFile(),
+      });
+
 
       //hide used file reader from user
       document.getElementById("openConfig").style.display = "none";
@@ -35,68 +41,72 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
   }//end load localhost
 
   this.sendConfigDataToForms = function(){
-    if (this.paramKeys.length != this.paramValues.length){
-      alert('Your paramKeys should be the same length as your paramValues.  Find the error');
-      return false;
-    }
-    //reorder module list elements to match the config
-    myModules = orderModulesFromLocalFiles(this.modules, myModules);
-    runModuleFunctions();
-
-    //get all input elements for adding values too
-    const selects = Array.from(document.getElementsByTagName('select'));
-    const inputs = Array.from(document.getElementsByTagName('input'));
-    const texts = inputs.filter(inp => inp.type === 'text');
-    const radios = inputs.filter(inp => inp.type === 'radio');
-    const checkboxs = inputs.filter(inp => inp.type === 'checkbox');
-    const numbers = inputs.filter(inp => inp.type === 'number');
-
-    //first step, loop through modules and show them
-    for (mod of this.modules){
-      var domModule = document.getElementById('module');
-      var domModuleLi = domModule.getElementsByTagName('li');
-      for (var b = 0; b < domModuleLi.length; b++) {//for mod in mod li
-        if (mod == domModuleLi[b].innerHTML) {
-          try{
-          domModuleLi[b].click();//add('modChoosen');
-          }catch(err) {
-            alert(err);
-          }finally{
-            }
-        };//end if
-      };//end for-loop over domModuleLi
-    }//end this.modules for loop
-
-    //Add parameter values to page inputs
-    for (let i = 0; i < this.paramKeys.length; i++) {
-      const key = this.paramKeys[i];
-      const valueOfKey = this.paramValues[i];
-      try {
-        if (checkboxs.map(check => check.name).includes(key)){
-          const checkTargets = checkboxs.filter(check => check.name == key);
-          const cachedChecks = valueOfKey.split(',');
-          cachedChecks.forEach(val => {
-            checkTargets.find(check => check.value === val).checked = true;
-          });
-        }else{
-          var targetInput = document.getElementById(key);
-          if (targetInput.tagName == 'SELECT'){
-            //console.log(targetInput);
-            var select = selects.find(sel => sel.id == key);
-            var opt =
-            Array.apply(null, select.options).find(option => option.value === valueOfKey);
-            if (opt.value != undefined){ opt.setAttribute('selected', true); };//select opt if not undefined
-            }
-          else if (targetInput.type == 'text' || targetInput.type == 'number'){
-            targetInput.value = valueOfKey;
-            }
-          }//end else
-        document.getElementById("mainMenu").style.display = "block";
-      } catch (err) {
-        alert(err + "\n problem with " + key + ".")
-      } finally{
+    console.log('in currentConfig.sendConfigDataToForms()');
+    try {
+      if (this.paramKeys.length != this.paramValues.length){
+        alert('Your paramKeys should be the same length as your paramValues.  Find the error');
+        return false;
       }
-    }; //end for-loop over keys/parameters
+      //reorder module list elements to match the config
+      myModules = orderModulesFromLocalFiles(this.modules, myModules);
+      runModuleFunctions();
+
+      //get all input elements for adding values too
+      const selects = Array.from(document.getElementsByTagName('select'));
+      const inputs = Array.from(document.getElementsByTagName('input'));
+      const texts = inputs.filter(inp => inp.type === 'text');
+      const radios = inputs.filter(inp => inp.type === 'radio');
+      const checkboxs = inputs.filter(inp => inp.type === 'checkbox');
+      const numbers = inputs.filter(inp => inp.type === 'number');
+
+      //first step, loop through modules and show them
+      for (mod of this.modules){
+        var domModule = document.getElementById('module');
+        var domModuleLi = domModule.getElementsByTagName('li');
+        for (var b = 0; b < domModuleLi.length; b++) {//for mod in mod li
+          if (mod == domModuleLi[b].innerHTML) {
+            try{
+            domModuleLi[b].click();//add('modChoosen');
+            }catch(err) {
+              alert(err);
+            }finally{
+              }
+          };//end if
+        };//end for-loop over domModuleLi
+      }//end this.modules for loop
+
+      //Add parameter values to page inputs
+      for (let i = 0; i < this.paramKeys.length; i++) {
+        const key = this.paramKeys[i];
+        const valueOfKey = this.paramValues[i];
+        try {
+          if (checkboxs.map(check => check.name).includes(key)){
+            const checkTargets = checkboxs.filter(check => check.name == key);
+            const cachedChecks = valueOfKey.split(',');
+            cachedChecks.forEach(val => {
+              checkTargets.find(check => check.value === val).checked = true;
+            });
+          }else{
+            var targetInput = document.getElementById(key);
+            if (targetInput.tagName == 'SELECT'){
+              var select = selects.find(sel => sel.id == key);
+              var opt =
+              Array.apply(null, select.options).find(option => option.value === valueOfKey);
+              if (opt.value != undefined){ opt.setAttribute('selected', true); };//select opt if not undefined
+              }
+            else if (targetInput.type == 'text' || targetInput.type == 'number'){
+              targetInput.value = valueOfKey;
+              }
+            }//end else
+          document.getElementById("mainMenu").style.display = "block";
+        } catch (err) {
+          alert(err + "\n problem with " + key + ".")
+        }
+      }; //end for-loop over keys/parameters
+    } catch (e) {
+      console.error(e);
+    }
+
   }//end this.sendConfigDataToForms
 
   this.saveConfigParamsForm = function (){
@@ -126,7 +136,17 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     };
     _this.modulesToCurrentConfig();
     console.log('configFile.value', configFile.value);
-    localStorage.setItem(configFile.value, JSON.stringify(_this));
+    console.log(JSON.stringify({
+        configName : configFile.value,
+        configText : _this.formatAsFlatFile(),
+    }));
+    //var save = saveConfigToGui({test : "test"});
+    saveConfigToGui({
+        configName : configFile.value,
+        configText : _this.formatAsFlatFile(),
+    });
+    // localStorage.setItem(configFile.value, JSON.stringify(_this));
+
     console.log('saved');
     console.dir(_this);
   };//end this.saveConfigParams
@@ -140,7 +160,11 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       };
     };
     console.log("this.paramKeys.indexOf('project.configFile'): ", this.paramKeys.indexOf('project.configFile'));
-    localStorage.setItem(this.paramValues[this.paramKeys.indexOf('project.configFile')], JSON.stringify(this));
+    saveConfigToGui({
+        configName : this.paramValues[this.paramKeys.indexOf('project.configFile')],
+        configText : this.formatAsFlatFile(),
+    });
+    //localStorage.setItem(this.paramValues[this.paramKeys.indexOf('project.configFile')], JSON.stringify(this));
   };//end modulesToCurrentConfig
 
   this.validateConfig = function() {
@@ -513,25 +537,34 @@ document.getElementById('localFile').addEventListener('change', currentConfig.lo
 //Adding all eventlisteners
 //eventlistener for adding the recent config files to "recent"
 document.getElementById("recent").addEventListener("mouseover", function() {
-  const recentMenuChoices = Object.keys(localStorage);
-  for (var i = 0; i < recentMenuChoices.length; i++) {
-    let opt = document.createElement('a');
-    opt.setAttribute("name", recentMenuChoices[i]);
-    var text = document.createTextNode(recentMenuChoices[i].toString());
-    opt.addEventListener("click", function() {
-     const tempConfig = JSON.parse(localStorage.getItem(this.name));
-      console.log(tempConfig);
-      currentConfig = new Config(tempConfig.modules, tempConfig.paramKeys, tempConfig.paramValues);
-      currentConfig.sendConfigDataToForms();
-      console.log(currentConfig);
-    });
-    opt.appendChild(text);
-    opt.setAttribute('position', 'relative');
-    opt.setAttribute('display', 'block');
-    opt.classList.add('recentConfigs');
-    let proj = document.getElementById("projects");
-    proj.appendChild(opt);
-  };
+    const configs = retrieveConfigs();
+    configs.then(retrievedConfigs => {
+      console.log(retrievedConfigs);
+      for (var i = 0; i < retrievedConfigs.length; i++) {
+        let opt = document.createElement('a');
+        opt.setAttribute("name", retrievedConfigs[i]);
+        var text = document.createTextNode(retrievedConfigs[i].toString());
+        opt.addEventListener("click", function() {
+          console.log(JSON.stringify({propertiesFile : this.name}))
+          const tempConfig = retrievePropertiesFile({propertiesFile : this.name.concat('.properties')});
+          tempConfig.then( propertiesFile => {
+            console.log(propertiesFile);
+            currentConfig = new Config();
+            currentConfig.loadFromText(propertiesFile.data);
+            currentConfig.paramKeys.push('project.configFile');
+            currentConfig.paramValues.push(this.name);
+            currentConfig.sendConfigDataToForms();
+            console.log(currentConfig);
+          })
+        });
+        opt.appendChild(text);
+        opt.setAttribute('position', 'relative');
+        opt.setAttribute('display', 'block');
+        opt.classList.add('recentConfigs');
+        let proj = document.getElementById("projects");
+        proj.appendChild(opt);
+    };
+  })
 }, {
  once: true
 });
@@ -561,57 +594,51 @@ for (const launch of document.getElementsByClassName("openLaunchModal")) {
       if ( currentConfig.validateConfig() === true ){
       launchModal.style.display = "block";
 
-      var request = new XMLHttpRequest();
-      request.open('POST', '/checkProjectExists', true);
-      request.setRequestHeader("Content-Type", "application/json");
-      request.send(JSON.stringify({
-        projectName : currentConfig.paramValues[currentConfig.paramKeys.indexOf('project.configFile')]
-        //additional parameters for launch
-      }));
-        console.log('check request sent');
-        request.onreadystatechange = function() {
-          console.log('this.status: ', this.status);
-        if (request.readyState == XMLHttpRequest.DONE) {
-          console.log(request.responseText);
-          if (request.responseText !== ''){
-            const checkedParams = JSON.parse(request.responseText);
-            console.log('checkedParams: ', checkedParams);
-            currentConfig.prevProjectName = checkedParams.projectName;
-            currentConfig.prevProjectPath = checkedParams.projectPath;
-            const rOrEText = document.getElementById('restartOrEraseText');
-            rOrEText.innerHTML = `Your current project, ${currentConfig.prevProjectName}, has the same name as a previous project.  Would you like to restart the pipeline or erase the old one and rerun from your new configuration file? (Click only once)`;
-            const rOrE = document.getElementById('restartOrErase');
-            if (rOrE.classList.contains('hidden')){
-              rOrE.classList.remove('hidden');
-              }
-            const restartProject = document.getElementById('restartProject');
-            restartProject.addEventListener('click', function(){
-              console.log('inrestart event');
-              console.log(this);
-              launcher(launchAction = 'restartProject', restartProjectPath = currentConfig.prevProjectPath);
-            });
-            const eraseRestart = document.getElementById('eraseRestart');
-            eraseRestart.addEventListener('click', function(){
-              console.log('launching erarse terstart ', currentConfig.prevProjectPath);
-              launcher(launchAction = 'eraseRestart', projectNameToDelete = currentConfig.prevProjectPath)
-            })
-          }else{
-            document.getElementById('launchBlj').classList.remove('hidden');
+        const projectFolderNames = retrieveProjects();
+        projectFolderNames.then((projNames) => {
+
+          //erase old restart options
+          const optionalProj = document.getElementById('projOptFieldSet');
+          optionalProj.innerHTML = '';
+
+          //add line
+          let hr = document.createElement('hr');
+          //l.innerHTML = 'Current Projects';
+          optionalProj.appendChild(hr);
+
+          //get all projects as options for restart
+          for (var i = 0; i < projNames.length; i++) {
+            let newRadio = document.createElement('input');
+            newRadio.setAttribute('type', 'radio');
+            newRadio.setAttribute('name', 'projLaunch');
+            newRadio.setAttribute('value', projNames[i]);
+            newRadio.setAttribute('name', 'projLaunch');
+            newRadio.setAttribute('class', 'projLaunch');
+            let newP = document.createElement('p');
+            newP.innerHTML = `Use this configuration to restart ${projNames[i]}`;
+            newP.appendChild(newRadio);
+            optionalProj.appendChild(newP);
           }
-          }
-        }
+
+          const projLaunchOptionsForm = document.getElementById('projectLaunchOptions');
+
+          document.getElementById('launchBlj').addEventListener('click', function(){
+            const projRadios = projLaunchOptionsForm.elements['projLaunch'];
+            const launchAction = projLaunchOptionsForm.elements['restartOption']
+            if (projRadios.value === 'launchNew'){
+              launcher(projRadios.value);
+            }else{
+              launcher(launchAction.value, projRadios.value)
+            }
+
+          })
+        });
       }
     } catch (e) {
       alert(e)
     }
   });//end eventlistener
 };//end forloop
-
-const launchBlj = document.getElementById('launchBlj');
-launchBlj.addEventListener("click", function(event){
-  event.preventDefault();
-  launcher();
-});
 
 //for autosave
 const configFormInputs = Array.from(document.getElementById('configForm').getElementsByTagName('input'));
@@ -811,52 +838,52 @@ function tableToCurrentConfig(){
   console.log('paramKeys len: ', paramKeys.length);
   currentConfig.paramKeys = paramKeys;
   currentConfig.paramValues = paramValues;
-  alert(currentConfig.paramKeys.length);
+  //alert(currentConfig.paramKeys.length);
   currentConfig.sendConfigDataToForms();
   currentConfig.saveConfigParamsForm();
   table.classList.add('hidden');
 }//function tableToCurrentConfig...
 
-//retrieves chain of default props without user input, not used anymore
-// function resolveDefaultProps(config, docker = false){
-//   const dpropPath = config.paramValues[config.paramKeys.indexOf('project.defaultProps')];
-//   console.log('dpropPath ', dpropPath);
-//   // if (!config.paramKeys.includes('project.defaultProps')){
-//   //   console.error('no default props found');
-//   //   return;
-//   // }
-//   const defaultConfig = new Config();
-//   const dprop = retreiveDefaultProps(dpropPath, docker);
-//   dprop.then( retreived => {
-//     defaultConfig.loadFromText( retreived );
-//     console.log('defaultConfig ', defaultConfig);
-//     const defaultConfigDPath = defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')];
-//     console.log('dpropPat ',dpropPath);
-//     console.log('defaultConfigDPat ',defaultConfigDPath);
-//     if (defaultConfigDPath && defaultConfigDPath !== dpropPath){
-//       console.log('need to resolve again');
-//       return resolveDefaultProps(defaultConfig);
-//     }
-//     for (let i = 0; i < defaultConfig.paramKeys.length; i++) {
-//       const dfKey = defaultConfig.paramKeys[i]
-//       if (dfKey !== 'project.configFile' && !config.paramKeys.includes(dfKey)){
-//         config.paramKeys.push(defaultConfig.paramKeys[i]);
-//         config.paramValues.push(defaultConfig.paramValues[i])
-//       }
-//     }
-//     return config;
-//   });
-// }
+// retrieves chain of default props without user input, not used anymore
+function resolveDefaultProps(config, docker = false){
+  const dpropPath = config.paramValues[config.paramKeys.indexOf('project.defaultProps')];
+  console.log('dpropPath ', dpropPath);
+  // if (!config.paramKeys.includes('project.defaultProps')){
+  //   console.error('no default props found');
+  //   return;
+  // }
+  const defaultConfig = new Config();
+  const dprop = retreiveDefaultProps(dpropPath, docker);
+  dprop.then( retreived => {
+    defaultConfig.loadFromText( retreived );
+    console.log('defaultConfig ', defaultConfig);
+    const defaultConfigDPath = defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')];
+    console.log('dpropPat ',dpropPath);
+    console.log('defaultConfigDPat ',defaultConfigDPath);
+    if (defaultConfigDPath && defaultConfigDPath !== dpropPath){
+      console.log('need to resolve again');
+      return resolveDefaultProps(defaultConfig);
+    }
+    for (let i = 0; i < defaultConfig.paramKeys.length; i++) {
+      const dfKey = defaultConfig.paramKeys[i]
+      if (dfKey !== 'project.configFile' && !config.paramKeys.includes(dfKey)){
+        config.paramKeys.push(defaultConfig.paramKeys[i]);
+        config.paramValues.push(defaultConfig.paramValues[i])
+      }
+    }
+    return config;
+  });
+}
 
 //returns config flat file
-function retreiveDefaultProps(dpropPath, docker = false) {
+function retreiveDefaultProps(dpropPath) {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('POST', '/defaultproperties', true);
     request.setRequestHeader("Content-Type", "application/json");
     request.send(JSON.stringify({
       file : dpropPath,
-      docker : docker,// can get rid of this
+      //docker : docker,// can get rid of this
       //additional parameters for launch
     }));
     request.onreadystatechange = function() {
@@ -883,6 +910,41 @@ function retreiveDefaultProps(dpropPath, docker = false) {
 //         launchModal.style.display = "none";
 //     }
 // }
+document.getElementById('submitAWS').addEventListener('click', function(evt){
+  evt.preventDefault();
+  let formData = {};
+  console.log(document.getElementById('AwsForm'));
+  let AwsForm = new FormData(document.getElementById('AwsForm'));
+  for (var i of AwsForm.entries()) {
+    console.log(i);
+    formData[i[0]] = i[1];
+  }
+  var request = new XMLHttpRequest();
+  request.open('POST', '/startAws', true);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.send(JSON.stringify({formData}));
+    request.onreadystatechange = function() {
+    if (request.readyState == XMLHttpRequest.DONE) {
+      console.log(request.responseText);
+    }
+  }
+})//document.getElementById('submitAWS')
+
+
+document.getElementById('project.env').addEventListener('click', function(evt){
+  const AwsButton = document.getElementById('AwsButton');
+  switch (this.value) {
+    case 'aws':
+      AwsButton.classList.remove('hidden');
+      AwsButton.click();
+      break;
+    default:
+      AwsButton.classList.add('hidden');
+  }
+});
+
+
+
 if(typeof(EventSource) !== "undefined") {
 	console.log('EventSource Works');
 		// Yes! Server-sent events support!
@@ -902,7 +964,6 @@ if(typeof(EventSource) !== "undefined") {
 	StreamLog.onmessage = function(event) {
 		document.getElementById("log").innerHTML += event.data + "<br>";
 	};
-
 	//for getting progress from blj
 	var streamProgress = new EventSource("/streamProgress",{ withCredentials: true });
 	streamProgress.addEventListener("message", function(e) {
@@ -944,10 +1005,10 @@ if(typeof(EventSource) !== "undefined") {
     // Sorry! No server-sent events support..
 }
 
-function launcher(launchAction = 'launch', restartProjectPath, projectNameToDelete){
+function launcher(launchAction = 'launchNew', restartProjectPath){
   event.preventDefault();
   //launchModal.style.display = "block";
-  requestParams = {
+  let requestParams = {
     modules : currentConfig.modules,
     paramKeys : currentConfig.paramKeys,
     paramValues : currentConfig.paramValues,
@@ -955,13 +1016,14 @@ function launcher(launchAction = 'launch', restartProjectPath, projectNameToDele
     launchAction : launchAction,
     //additional parameters for launch
   }
-  if (launchAction === 'restartProject' || launchAction === 'eraseRestart' ){
+  if (launchAction === 'restartFromCheckPoint' || launchAction === 'eraseThenRestart' ){
     requestParams['restartProjectPath'] = restartProjectPath;
     console.log(requestParams);
-  }else if (launchAction === 'eraseRestart') {
-    requestParams['projectNameToDelete'] = projectNameToDelete;
-    console.log(requestParams);
   }
+  // else if (launchAction === 'eraseThenRestart') {
+  //   requestParams['projectNameToDelete'] = projectNameToDelete;
+  //   console.log(requestParams);
+  // }
 
   var request = new XMLHttpRequest();
   request.open('POST', '/launch', true);
@@ -978,3 +1040,5 @@ function launcher(launchAction = 'launch', restartProjectPath, projectNameToDele
   }
   console.log(request.responseText);
 }
+
+
