@@ -25,7 +25,7 @@ import biolockj.module.BioModule;
 /**
  * This utility helps work individual Taxa names, not full OTU path files which need {@link biolockj.util.OtuUtil}.<br>
  * Taxa files containing sample taxa counts for a given taxonomy level as output by
- * {@link biolockj.module.report.BuildTaxonomyTables}.
+ * {@link biolockj.module.report.taxa.BuildTaxaTables}.
  */
 public class TaxaUtil
 {

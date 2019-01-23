@@ -510,7 +510,7 @@ public class BioLockJ
 	private static void setSingleModeStatus() throws Exception
 	{
 		Log.info( BioLockJ.class, "Reporting Direct module status" );
-		final JavaModule module = (JavaModuleImpl) ModuleUtil.getModule( RuntimeParamUtil.getDirectModule() );
+		final JavaModule module = (JavaModuleImpl) ModuleUtil.getFirstModule( RuntimeParamUtil.getDirectModule() );
 		if( singleModeSuccess )
 		{
 			Log.info( BioLockJ.class, "Save success status" );

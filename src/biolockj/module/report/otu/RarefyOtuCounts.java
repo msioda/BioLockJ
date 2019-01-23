@@ -1,4 +1,4 @@
-package biolockj.module.report;
+package biolockj.module.report.otu;
 
 /**
  * @UNCC Fodor Lab
@@ -33,7 +33,7 @@ import biolockj.util.*;
  * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
  */
-public class PostRarefier extends JavaModuleImpl implements JavaModule
+public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 {
 
 	@Override

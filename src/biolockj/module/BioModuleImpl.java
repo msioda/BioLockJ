@@ -26,6 +26,7 @@ import biolockj.util.*;
  */
 public abstract class BioModuleImpl implements BioModule
 {
+
 	/**
 	 * Cache the input files for quick access on subsequent calls to {@linke #getInputFiles()}
 	 * 
@@ -63,8 +64,32 @@ public abstract class BioModuleImpl implements BioModule
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
 	}
 
+	/**
+	 * Compared based on ID
+	 */
+	@Override
+	public boolean equals( final Object o )
+	{
+		if( o == this )
+		{
+			return true;
+		}
+		else if( !( o instanceof BioModule ) )
+		{
+			return false;
+		}
+
+		return ( (BioModule) o ).getID().equals( getID() );
+	}
+
 	@Override
 	public abstract void executeTask() throws Exception;
+
+	@Override
+	public String getID()
+	{
+		return moduleId;
+	}
 
 	/**
 	 * BioModule {@link #getInputFiles()} is called to initialize upon first call and cached.
@@ -138,6 +163,28 @@ public abstract class BioModuleImpl implements BioModule
 	}
 
 	/**
+	 * This method must be called immediately upon instantiation.
+	 * 
+	 * @param id Module ID.
+	 * @throws Exception if errors occur
+	 */
+	@Override
+	public void init( final String id ) throws Exception
+	{
+		Log.info( getClass(), "Construct module [ " + id + " ] " + getClass().getName() );
+
+		moduleId = id;
+		moduleDir = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+				+ File.separator + moduleId + "_" + getClass().getSimpleName() );
+
+		if( !moduleDir.exists() )
+		{
+			moduleDir.mkdirs();
+			Log.info( getClass(), "Create BioModule root directory: " + moduleDir.getAbsolutePath() );
+		}
+	}
+
+	/**
 	 * In the early stages of the pipeline, starting with the very 1st module
 	 * {@link biolockj.module.implicit.ImportMetadata}, most modules expect sequence files as input. This method returns
 	 * false if the previousModule only produced a new metadata file, such as
@@ -151,20 +198,6 @@ public abstract class BioModuleImpl implements BioModule
 	public boolean isValidInputModule( final BioModule module ) throws Exception
 	{
 		return !ModuleUtil.isMetadataModule( module );
-	}
-
-	/**
-	 * Creates the BioModule root directory if it doesn't exist and sets moduleDir member variable.
-	 */
-	@Override
-	public void setModuleDir( final String filePath )
-	{
-		moduleDir = new File( filePath );
-		if( !moduleDir.exists() )
-		{
-			moduleDir.mkdirs();
-			Log.info( getClass(), "Create BioModule root directory: " + moduleDir.getAbsolutePath() );
-		}
 	}
 
 	@Override
@@ -261,7 +294,7 @@ public abstract class BioModuleImpl implements BioModule
 
 	private final List<File> inputFiles = new ArrayList<>();
 	private File moduleDir = null;
-
+	private String moduleId = null;
 	/**
 	 * BioLockJ gzip file extension constant: {@value #GZIP_EXT}
 	 */

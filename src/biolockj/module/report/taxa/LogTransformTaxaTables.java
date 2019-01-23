@@ -9,7 +9,7 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.report;
+package biolockj.module.report.taxa;
 
 import java.io.*;
 import java.util.*;
@@ -27,7 +27,7 @@ import biolockj.util.TaxaUtil;
 /**
  * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.
  */
-public class LogTransformer extends JavaModuleImpl implements JavaModule
+public class LogTransformTaxaTables extends JavaModuleImpl implements JavaModule
 {
 
 	/**
@@ -71,7 +71,7 @@ public class LogTransformer extends JavaModuleImpl implements JavaModule
 	 * Log transform the data
 	 *
 	 * @param otuTable OTU raw count table
-	 * @throws Exception if unable to construct DataNormalizer
+	 * @throws Exception if unable to construct LogTransformTaxaTables
 	 */
 	protected void transform( final File otuTable ) throws Exception
 	{

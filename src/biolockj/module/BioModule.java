@@ -63,6 +63,15 @@ public interface BioModule
 	public void executeTask() throws Exception;
 
 	/**
+	 * Some BioModules may be added to a pipeline multiple times so must be identified by an ID.<br>
+	 * This is the same value as the directory folder prefix when run.<br>
+	 * The 1st module ID is 0 (or 00 if there are more than 10 modules.
+	 * 
+	 * @return Module ID
+	 */
+	public String getID();
+
+	/**
 	 * Each BioModule takes the previous BioModule output as input:<br>
 	 * BioModule[ n ].getInputFiles() = BioModule[ n - 1 ].getOutputDir().listFiles()<br>
 	 * Special cases:<br>
@@ -132,6 +141,14 @@ public interface BioModule
 	public File getTempDir();
 
 	/**
+	 * Initialize a new module by passing a unique ID.
+	 * 
+	 * @param id 2-digit number starting at 00 to identify modules
+	 * @throws Exception if errors occur
+	 */
+	public void init( String id ) throws Exception;
+
+	/**
 	 * BioModules {@link #getInputFiles()} method typically, but not always, return the previousModule output files.
 	 * This method checks the output directory from the previous module to check for input deemed acceptable by the
 	 * current module. The conditions coded in this method will be checked on each previous module in the pipeline until
@@ -145,16 +162,6 @@ public interface BioModule
 	 * @throws Exception if unexpected errors occur
 	 */
 	public boolean isValidInputModule( BioModule previousModule ) throws Exception;
-
-	/**
-	 * {@link biolockj.Pipeline} calls this method to set the name of each BioModule root directory.<br>
-	 * Module root directories are created directly under the {@value biolockj.Config#INTERNAL_PIPELINE_DIR} pipeline
-	 * root directory.<br>
-	 * Modules are numbered in order included in the {@link biolockj.Config} and named after the Java class name.<br>
-	 *
-	 * @param filePath String filePath of the module directory
-	 */
-	public void setModuleDir( final String filePath );
 
 	/**
 	 * Script prefix appended to start of file name to indicate the main script in the script directory. BioModules that

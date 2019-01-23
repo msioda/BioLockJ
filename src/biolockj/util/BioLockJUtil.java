@@ -331,7 +331,7 @@ public class BioLockJUtil
 	{
 		if( inputFiles.isEmpty() )
 		{
-			final Collection<File> files = new HashSet<>();
+			Collection<File> files = new HashSet<>();
 			for( final File dir: getInputDirs() )
 			{
 				Log.info( SeqUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
@@ -339,10 +339,12 @@ public class BioLockJUtil
 			}
 			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
 
+			files = SeqUtil.removeIgnoredAndEmptyFiles( files );
 			inputFiles.addAll( SeqUtil.removeIgnoredAndEmptyFiles( files ) );
 
-			setPipelineInputFileType();
+			Log.info( SeqUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 
+			setPipelineInputFileType();
 		}
 
 		return inputFiles;
@@ -817,8 +819,8 @@ public class BioLockJUtil
 	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_R_INPUT_TYPE}<br>
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} if input files are some type of count table merged
-	 * with the metadata such as those output by {@link biolockj.module.report.AddMetaToTaxonomyTables}. These files can
-	 * be input into any {@biolockj.module.r.R_Module}.
+	 * with the metadata such as those output by {@link biolockj.module.report.taxa.AddMetadataToTaxaTables}. These
+	 * files can be input into any {@biolockj.module.r.R_Module}.
 	 */
 	public static final String PIPELINE_R_INPUT_TYPE = "R";
 

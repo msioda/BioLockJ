@@ -9,7 +9,7 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.report;
+package biolockj.module.report.taxa;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ import biolockj.util.TaxaUtil;
  * model" <a href= "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/" target=
  * "_top">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/</a>
  */
-public class Normalizer extends JavaModuleImpl implements JavaModule
+public class NormalizeTaxaTables extends JavaModuleImpl implements JavaModule
 {
 
 	/**
@@ -107,7 +107,7 @@ public class Normalizer extends JavaModuleImpl implements JavaModule
 	 * Populate normalized OTU counts with the formula: (RC/n)*((SUM(x))/N)+1
 	 *
 	 * @param taxaTable OTU raw count table
-	 * @throws Exception if unable to construct DataNormalizer
+	 * @throws Exception if unable to construct NormalizeTaxaTables
 	 */
 	protected void normalize( final File taxaTable ) throws Exception
 	{

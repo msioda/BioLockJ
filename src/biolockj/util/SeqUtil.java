@@ -496,6 +496,8 @@ public class SeqUtil
 	 */
 	public static void initialize() throws Exception
 	{
+		// 1st call to BioLockJUtil.getPipelineInputFiles() initializes PIPELINE_SEQ_INPUT_TYPE
+		BioLockJUtil.getPipelineInputFiles();
 		if( piplineHasSeqInput() )
 		{
 			initSeqParams();
@@ -590,6 +592,7 @@ public class SeqUtil
 	 */
 	public static boolean isSeqFile( final File file ) throws Exception
 	{
+		Log.warn( SeqUtil.class, "Check if input file is a SEQ file: " + file.getAbsolutePath() );
 		boolean isSeq = false;
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try
@@ -597,13 +600,19 @@ public class SeqUtil
 			final String header = SeqUtil.scanFirstLine( reader, file );
 			final String idChar = header.substring( 0, 1 );
 			String seq = reader.readLine();
+			Log.warn( SeqUtil.class, "header: " + header );
+			Log.warn( SeqUtil.class, "idChar: " + idChar );
+			Log.warn( SeqUtil.class, "seq: " + seq );
 			if( FASTA_HEADER_DELIMS.contains( idChar ) || idChar.equals( FASTQ_HEADER_DELIM ) )
 			{
 				if( seq != null && !seq.trim().isEmpty() )
 				{
 					seq = seq.trim().toLowerCase().replaceAll( "a", "" ).replaceAll( "c", "" ).replaceAll( "g", "" )
 							.replaceAll( "t", "" ).replaceAll( "u", "" );
-					isSeq = seq.isEmpty();
+					Log.warn( SeqUtil.class, "After removing acgtu from the seq (what is left?) ---> " + seq );
+					Log.warn( SeqUtil.class, "Is seq empty? ---> " + seq.isEmpty() );
+					Log.warn( SeqUtil.class, "Is seq.trim() empty? ---> " + seq.trim().isEmpty() );
+					isSeq = seq.trim().isEmpty();
 				}
 			}
 			else
@@ -645,12 +654,12 @@ public class SeqUtil
 		final List<File> validInputFiles = new ArrayList<>();
 		for( final File file: files )
 		{
-			final boolean isEmpty = FileUtils.sizeOf( file ) < 1;
+			final boolean isEmpty = FileUtils.sizeOf( file ) < 1L;
 			if( isEmpty )
 			{
 				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
 			}
-			else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+			else if( Config.getSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
 			{
 				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
 			}

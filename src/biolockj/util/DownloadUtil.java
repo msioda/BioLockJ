@@ -22,9 +22,9 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.r.R_Module;
-import biolockj.module.report.AddMetaToTaxonomyTables;
 import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
+import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -69,16 +69,15 @@ public final class DownloadUtil
 				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getOutputDir() ) );
 				if( module instanceof R_Module )
 				{
-					targets += " " + getSrc( ModuleUtil.getModuleNum( module ) + "*" + File.separator + "*"
-							+ File.separator + getExts( (R_Module) module ) );
+					targets += " " + getSrc( module.getID() + "*" + File.separator + "*" + File.separator
+							+ getExts( (R_Module) module ) );
 					downloadSize = downloadSize
 							.add( FileUtils.sizeOfAsBigInteger( ( (ScriptModule) module ).getScriptDir() ) );
 					downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getTempDir() ) );
 				}
 				else
 				{
-					targets += " " + getSrc( ModuleUtil.getModuleNum( module ) + "*" + File.separator + "output"
-							+ File.separator + "*" );
+					targets += " " + getSrc( module.getID() + "*" + File.separator + "output" + File.separator + "*" );
 				}
 
 				if( !ModuleUtil.isComplete( module ) )
@@ -147,7 +146,7 @@ public final class DownloadUtil
 	/**
 	 * Get the modules to download. Some modules are always included:
 	 * <ul>
-	 * <li>{@link biolockj.module.report.AddMetaToTaxonomyTables}
+	 * <li>{@link biolockj.module.report.taxa.AddMetadataToTaxaTables}
 	 * <li>{@link biolockj.module.report.JsonReport}
 	 * <li>Any module that implements {@link biolockj.module.r.R_Module} interface
 	 * </ul>
@@ -165,7 +164,7 @@ public final class DownloadUtil
 			for( final BioModule module: Pipeline.getModules() )
 			{
 				if( ModuleUtil.hasExecuted( module ) && module instanceof JsonReport
-						|| module instanceof AddMetaToTaxonomyTables )
+						|| module instanceof AddMetadataToTaxaTables )
 				{
 					modules.add( module );
 				}

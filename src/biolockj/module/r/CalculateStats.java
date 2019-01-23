@@ -60,19 +60,20 @@ public class CalculateStats extends R_Module implements BioModule
 	/**
 	 * Get the stats file for the given fileType and taxonomy level.
 	 * 
+	 * @param id Calling module ID
 	 * @param level Taxonomy level
 	 * @param isParametric Boolean TRUE to query for parametric file
 	 * @param isAdjusted Boolean TRUE to query for adjusted p-value file
 	 * @return File Table of statistics or null
 	 * @throws Exception if errors occur
 	 */
-	public static File getStatsFile( final String level, final Boolean isParametric, final Boolean isAdjusted )
-			throws Exception
+	public static File getStatsFile( final String id, final String level, final Boolean isParametric,
+			final Boolean isAdjusted ) throws Exception
 	{
 		final String querySuffix = "_" + level + "_" + getSuffix( isParametric, isAdjusted ) + TSV_EXT;
 		final Set<File> results = new HashSet<>();
 		final IOFileFilter ff = new WildcardFileFilter( "*" + querySuffix );
-		for( final File dir: getStatsFileDirs() )
+		for( final File dir: getStatsFileDirs( id ) )
 		{
 			final Collection<File> files = FileUtils.listFiles( dir, ff, HiddenFileFilter.VISIBLE );
 			if( files.size() > 1 )
@@ -117,12 +118,12 @@ public class CalculateStats extends R_Module implements BioModule
 		return false;
 	}
 
-	private static List<File> getStatsFileDirs() throws Exception
+	private static List<File> getStatsFileDirs( final String id ) throws Exception
 	{
 		if( ModuleUtil.moduleExists( CalculateStats.class.getName() ) )
 		{
 			final List<File> dirs = new ArrayList<>();
-			dirs.add( ModuleUtil.getModule( CalculateStats.class.getName() ).getOutputDir() );
+			dirs.add( ModuleUtil.getPreviousModule( id, CalculateStats.class.getName() ).getOutputDir() );
 			return dirs;
 		}
 

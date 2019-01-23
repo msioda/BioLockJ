@@ -28,7 +28,7 @@ import biolockj.util.*;
  * This BioModule imposes a minimum and/or maximum number of reads per sample. Samples below the minimum are discarded.
  * Samples above the maximum are limited by selecting random reads up to the maximum value.
  */
-public class PreRarefier extends JavaModuleImpl implements JavaModule, SeqModule
+public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 {
 
 	/**
@@ -50,7 +50,7 @@ public class PreRarefier extends JavaModuleImpl implements JavaModule, SeqModule
 				|| rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
 		{
 			throw new Exception(
-					"Invalid parameters!  PreRarefier requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
+					"Invalid parameters!  RarefySeqs requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
 		}
 	}
 
@@ -260,11 +260,11 @@ public class PreRarefier extends JavaModuleImpl implements JavaModule, SeqModule
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_RAREFYING_MAX} defines the maximum number of reads per file
 	 */
-	protected static final String INPUT_RAREFYING_MAX = "preRarefier.max";
+	protected static final String INPUT_RAREFYING_MAX = "rarefySeqs.max";
 
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_RAREFYING_MIN} defines the minimum number of reads per file
 	 */
-	protected static final String INPUT_RAREFYING_MIN = "preRarefier.min";
+	protected static final String INPUT_RAREFYING_MIN = "rarefySeqs.min";
 
 }

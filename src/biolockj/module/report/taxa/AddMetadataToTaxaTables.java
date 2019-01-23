@@ -9,7 +9,7 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.report;
+package biolockj.module.report.taxa;
 
 import java.io.*;
 import java.util.*;
@@ -26,10 +26,10 @@ import biolockj.util.*;
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
-public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModule
+public class AddMetadataToTaxaTables extends JavaModuleImpl implements JavaModule
 {
 	/**
-	 * Require taxonomy table module as pre-requisit
+	 * Require taxonomy table module as prerequisite
 	 */
 	@Override
 	public List<Class<?>> getPreRequisiteModules() throws Exception
@@ -37,7 +37,7 @@ public class AddMetaToTaxonomyTables extends JavaModuleImpl implements JavaModul
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( BuildTaxonomyTables.class );
+			preReqs.add( BuildTaxaTables.class );
 		}
 
 		return preReqs;

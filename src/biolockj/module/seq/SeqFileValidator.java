@@ -635,4 +635,5 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 	private static final int INDEX_NUM_READS_TOO_SHORT = 5;
 	private static final int INDEX_NUM_TRIMMED_READS = 3;
 	private static final int INDEX_NUM_VALID_READS = 0;
+
 }

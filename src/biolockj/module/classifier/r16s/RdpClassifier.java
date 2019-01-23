@@ -25,6 +25,7 @@ import biolockj.util.SeqUtil;
  */
 public class RdpClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
+
 	/**
 	 * Build bash script lines to classify unpaired reads with RDP. The inner list contains the bash script lines
 	 * required to classify 1 sample (call java to run RDP jar on sample).

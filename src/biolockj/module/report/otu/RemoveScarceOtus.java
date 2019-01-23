@@ -1,4 +1,4 @@
-package biolockj.module.report;
+package biolockj.module.report.otu;
 
 /**
  * @UNCC Fodor Lab

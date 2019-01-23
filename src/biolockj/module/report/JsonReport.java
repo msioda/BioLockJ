@@ -10,6 +10,7 @@ import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.r.CalculateStats;
+import biolockj.module.report.otu.CompileOtuCounts;
 import biolockj.node.JsonNode;
 import biolockj.util.*;
 
@@ -20,7 +21,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 {
 
 	/**
-	 * Module prerequisite: {@link biolockj.module.report.CompileOtuCounts}
+	 * Module prerequisite: {@link biolockj.module.report.otu.CompileOtuCounts}
 	 */
 	@Override
 	public List<Class<?>> getPreRequisiteModules() throws Exception
@@ -54,8 +55,15 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 */
 	public boolean hasStats() throws Exception
 	{
+		final BioModule mod = ModuleUtil.getPreviousModule( getID(), CalculateStats.class.getName() );
+
+		if( mod != null )
+		{
+
+		}
+
 		return ModuleUtil.moduleExists( CalculateStats.class.getName() )
-				&& ModuleUtil.isComplete( ModuleUtil.getModule( CalculateStats.class.getName() ) );
+				&& ModuleUtil.isComplete( ModuleUtil.getFirstModule( CalculateStats.class.getName() ) );
 	}
 
 	@Override
@@ -86,7 +94,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Build JsonMap from the {@link biolockj.module.report.CompileOtuCounts} output directory.
+	 * Build JsonMap from the {@link biolockj.module.report.otu.CompileOtuCounts} output directory.
 	 * 
 	 * @param rootNode Root JsonNode is top of the hierarchy
 	 * @return Map(level, Set(JsonNode)) of nodes by level
@@ -347,11 +355,11 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	private Map<String, File> getStatReports( final String level ) throws Exception
 	{
 		final Map<String, File> statReports = new LinkedHashMap<>();
-		statReports.put( "parPval", CalculateStats.getStatsFile( level, true, false ) );
-		statReports.put( "nonParPval", CalculateStats.getStatsFile( level, false, false ) );
-		statReports.put( "adjParPval", CalculateStats.getStatsFile( level, true, true ) );
-		statReports.put( "adjNonParPval", CalculateStats.getStatsFile( level, false, true ) );
-		statReports.put( "rSquared", CalculateStats.getStatsFile( level, false, false ) );
+		statReports.put( "parPval", CalculateStats.getStatsFile( getID(), level, true, false ) );
+		statReports.put( "nonParPval", CalculateStats.getStatsFile( getID(), level, false, false ) );
+		statReports.put( "adjParPval", CalculateStats.getStatsFile( getID(), level, true, true ) );
+		statReports.put( "adjNonParPval", CalculateStats.getStatsFile( getID(), level, false, true ) );
+		statReports.put( "rSquared", CalculateStats.getStatsFile( getID(), level, false, false ) );
 		return statReports;
 	}
 

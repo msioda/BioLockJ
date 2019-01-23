@@ -20,7 +20,7 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
-import biolockj.module.report.AddMetaToTaxonomyTables;
+import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.util.*;
 
 /**
@@ -163,7 +163,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			preReqs.add( AddMetaToTaxonomyTables.class );
+			preReqs.add( AddMetadataToTaxaTables.class );
 		}
 
 		return preReqs;

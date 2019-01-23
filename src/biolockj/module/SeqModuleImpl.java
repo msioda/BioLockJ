@@ -21,7 +21,6 @@ import biolockj.util.SeqUtil;
  */
 public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModule
 {
-
 	/**
 	 * Return {@link #getSeqFiles(Collection)} to filter standard module input files.
 	 *

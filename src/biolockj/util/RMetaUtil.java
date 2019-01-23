@@ -24,7 +24,7 @@ import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.module.report.AddMetaToTaxonomyTables;
+import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -178,15 +178,15 @@ public final class RMetaUtil
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, AddMetaToTaxonomyTables.HIT_RATIO ) )
+				&& isValidNumericField( metaFields, AddMetadataToTaxaTables.HIT_RATIO ) )
 		{
-			rScriptFields.add( AddMetaToTaxonomyTables.HIT_RATIO );
-			numericFields.add( AddMetaToTaxonomyTables.HIT_RATIO );
+			rScriptFields.add( AddMetadataToTaxaTables.HIT_RATIO );
+			numericFields.add( AddMetadataToTaxaTables.HIT_RATIO );
 		}
 		else
 		{
-			rScriptFields.remove( AddMetaToTaxonomyTables.HIT_RATIO );
-			numericFields.remove( AddMetaToTaxonomyTables.HIT_RATIO );
+			rScriptFields.remove( AddMetadataToTaxaTables.HIT_RATIO );
+			numericFields.remove( AddMetadataToTaxaTables.HIT_RATIO );
 		}
 
 		if( reportAllFields() && !RuntimeParamUtil.isDirectMode() )
@@ -399,7 +399,7 @@ public final class RMetaUtil
 
 	/**
 	 * Method analyzes the file name to determine if the file could be output from the BioModule
-	 * {@link biolockj.module.report.AddMetaToTaxonomyTables}
+	 * {@link biolockj.module.report.taxa.AddMetadataToTaxaTables}
 	 * 
 	 * @param file Ambiguous file
 	 * @return TRUE if named like a meta merged file
@@ -407,7 +407,7 @@ public final class RMetaUtil
 	 */
 	public static boolean isMetaMergeTable( final File file ) throws Exception
 	{
-		return file.getName().endsWith( AddMetaToTaxonomyTables.META_MERGED );
+		return file.getName().endsWith( AddMetadataToTaxaTables.META_MERGED );
 	}
 
 	/**
