@@ -1,6 +1,6 @@
 # Deployment path: $BLJ/resources/docker/webapp
 
-FROM biolockj/manager
+FROM manager
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
