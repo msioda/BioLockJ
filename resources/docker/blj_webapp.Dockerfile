@@ -1,11 +1,11 @@
-# Deployment path: $BLJ/resources/docker/webapp
+# Deployment path: $BLJ/resources/docker/blj_webapp.Dockerfile
 
-FROM manager
+FROM blj_manager
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
 ENV NODE_VERSION 8.11.3
-ENV NODE_URL=https://deb.nodesource.com/setup_8.x
+ENV NODE_URL="https://deb.nodesource.com/setup_8.x"
 
 #2.) ============ Install Ubuntu Prereqs =================
 RUN apt-get update && \
@@ -18,7 +18,7 @@ RUN cp $BLJ/web_app/package*.json ./
 #4.) ================= Install npm  =================
 RUN apt-get update && \
 	apt-get install -y npm && \
-	npm install --only=production 
+	npm install --only=production
     #Remove "--only=production" if adding new packages (maybe) MS 11/1
 
 #5.) ================= Expose Port 8080 =================
@@ -32,10 +32,10 @@ RUN cp -r $BLJ/web_app/* ./
 
 # 7.) =======================  Cleanup  ==========================
 RUN	apt-get clean && \
+	rm -rf /tmp/* && \
+	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
-	rm -rf var/cache/* && \
-	rm -rf var/log/* && \
-	rm -rf tmp/* 
+	rm -rf /var/log/*
 
 #8.) ================= Define command = npm start =================
 #define the command to run your app using CMD which defines your runtime. Here we will use the basic npm start which will run node server.js to start your server:

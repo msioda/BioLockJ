@@ -90,9 +90,11 @@ public class LogUtil
 	{
 		if( profile.isEmpty() )
 		{
+			String userProfile = "Config property [" + USER_PROFILE + "] is undefined.  Bash users typically use: ~/.bash_profile";
 			try
 			{
-				final File bashProfile = new File( Config.getSystemFilePath( "~/.bash_profile" ) );
+				userProfile = Config.requireString( USER_PROFILE );
+				final File bashProfile = new File( Config.getSystemFilePath( userProfile ) );
 				if( bashProfile.exists() )
 				{
 					profile.addAll( cacheLog( bashProfile ) );
@@ -100,7 +102,7 @@ public class LogUtil
 			}
 			catch( final Exception ex )
 			{
-				Log.warn( LogUtil.class, "Unable to find ~/.bash_profile" );
+				Log.warn( LogUtil.class, "Unable to find " + userProfile );
 			}
 		}
 		return profile;
@@ -134,4 +136,10 @@ public class LogUtil
 	}
 
 	private static final List<String> profile = new ArrayList<>();
+	
+	/**
+	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
+	 * Bash users typically use ~/.bash_profile.
+	 */
+	public static final String USER_PROFILE = "project.userProfile";
 }

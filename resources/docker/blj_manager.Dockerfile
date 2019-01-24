@@ -1,6 +1,6 @@
-# Deployment path: $BLJ/resources/docker/manager
+# Deployment path: $BLJ/resources/docker/manager.Dockerfile
 
-FROM javamodule
+FROM java_module
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive

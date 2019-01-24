@@ -1,12 +1,13 @@
-# Deployment path: $BLJ/resources/docker
+# Deployment path: $BLJ/resources/docker/blj_basic.Dockerfile
 
 FROM ubuntu:18.04
 
-#1.) ================= Setup Env =================
+#1.) ================= Setup Env ==================================
 ARG DEBIAN_FRONTEND=noninteractive
 ENV BLJ=/app/biolockj
 ENV BLJ_PROJ=/pipeline
-RUN mkdir /input && mkdir /pipeline && mkdir /app && mkdir /meta && mkdir /primer && mkdir /config  && mkdir /log  
+RUN mkdir /input && mkdir /pipeline && mkdir /app && mkdir /meta && \
+	mkdir /primer && mkdir /config && mkdir /log
 
 #2.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
@@ -29,11 +30,13 @@ RUN apt-get update && \
 	apt-get install -y build-essential apt-utils gawk gzip tar tzdata wget
 
 #4.) ================= Set the timezone =================
-RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
-	
+RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
+	dpkg-reconfigure -f noninteractive tzdata
+
 #5.) =======================  Cleanup  ==========================
 RUN	apt-get clean && \
-	rm -rf var/cache/* && \
-	rm -rf tmp/* && \
-	rm -rf usr/games 
-
+	rm -rf /tmp/* && \
+	rm -rf /var/cache/* && \
+	rm -rf /usr/games && \
+	rm -rf /var/lib/apt/lists/* && \
+	rm -rf /var/log/*

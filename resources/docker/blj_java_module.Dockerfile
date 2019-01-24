@@ -1,13 +1,14 @@
-# Deployment path:  $BLJ/resources/docker/JavaModule
+# Deployment path:  $BLJ/resources/docker/java_module.Dockerfile
 
-FROM base
+FROM blj_basic
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
 ARG BLJ_DATE
 ARG BLJ_VERSION
+ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
 ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tgz
-ENV BLJ_RELEASE_URL=https://github.com/msioda/BioLockJ/releases/download/${BLJ_VERSION}/$BLJ_TAR
+ENV BLJ_RELEASE=$BLJ_URL/${BLJ_VERSION}/$BLJ_TAR
 
 #2.) ============ Install Ubuntu Prereqs =================
 RUN apt-get update && \
@@ -24,13 +25,13 @@ RUN echo ${BLJ_DATE} && \
 	chmod -R 770 $BLJ && \
 	rm -f $BLJ_TAR && rm -rf $BLJ/[lip]* && rm -rf $BLJ/src && rm -rf $BLJ/resources/[blid]*
 
-#4.) =======================  Cleanup  ========================== 
+#4.) =======================  Cleanup  ==========================
 RUN	apt-get clean && \
-	find / -name *python* | xargs rm -rf && \
+	rm -rf /tmp/* && \
+	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
-	rm -rf var/log/* && \
-	rm -rf tmp/* && \
-	rm -rf usr/games
+	rm -rf /var/log/* && \
+	find / -name *python* | xargs rm -rf
 
 #5.) ================= Container Command =================
 CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS
