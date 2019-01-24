@@ -147,7 +147,8 @@ main <- function() {
 		if( doDebug() ) print( paste( "nominalCols:", paste0(nominalCols, collapse= ", ") ) )
 		numericCols = getNumericFields() #getColIndexes( otuTable, getNumericFields() )
 		if( doDebug() ) print( paste( "numericCols:", paste0(numericCols, collapse= ", ") ) )
-		reportFields = getReportFields()
+		allMetaCols = names(otuTable)[(lastOtuCol+1):ncol(otuTable)] # report on fields in the order they appear in the metadata file
+		reportFields = allMetaCols[allMetaCols %in% getReportFields()]
 		
 		# adjusted parametric pvalues
 		adjParInputFile = getPipelineFile( buildStatsFileSuffix(parametric=TRUE, adjusted=TRUE, level=otuLevel) )
