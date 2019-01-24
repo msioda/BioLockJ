@@ -147,7 +147,7 @@ main <- function() {
 		if( doDebug() ) print( paste( "nominalCols:", paste0(nominalCols, collapse= ", ") ) )
 		numericCols = getNumericFields() #getColIndexes( otuTable, getNumericFields() )
 		if( doDebug() ) print( paste( "numericCols:", paste0(numericCols, collapse= ", ") ) )
-		reportFields = names(otuTable)[(lastOtuCol+1):ncol(otuTable)]
+		reportFields = getReportFields()
 		
 		# adjusted parametric pvalues
 		adjParInputFile = getPipelineFile( buildStatsFileSuffix(parametric=TRUE, adjusted=TRUE, level=otuLevel) )
