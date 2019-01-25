@@ -1,21 +1,35 @@
 # Deployment path: $BLJ/resources/docker/blj_webapp.Dockerfile
 
-FROM blj_manager
+FROM blj_basic_python2
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
+ARG BLJ_DATE
+ARG BLJ_VERSION
+ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
+ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tgz
+ENV BLJ_RELEASE=$BLJ_URL/${BLJ_VERSION}/$BLJ_TAR
 ENV NODE_VERSION 8.11.3
 ENV NODE_URL="https://deb.nodesource.com/setup_8.x"
 
-#2.) ============ Install Ubuntu Prereqs =================
-RUN apt-get update && \
-	apt-get install -y build-essential ca-certificates nodejs aptitude && \
-    wget $NODE_URL | bash -
+#2.) ================= Install BioLockJ =================
+RUN echo ${BLJ_DATE} && \
+	mkdir $BLJ && \
+	cd $BLJ && \
+	wget $BLJ_RELEASE_URL && \
+	tar -xzf $BLJ_TAR && \
+	chmod -R 770 $BLJ && \
+	rm -f $BLJ_TAR && rm -rf $BLJ/[lip]* && rm -rf $BLJ/src && rm -rf $BLJ/resources/[blid]*
 
 #3.) ================= Move json packages to container root dir =================
 RUN cp $BLJ/web_app/package*.json ./
 
-#4.) ================= Install npm  =================
+#4.) ============ Install Ubuntu Prereqs =================
+RUN apt-get update && \
+	apt-get install -y ca-certificates nodejs aptitude npm && \
+    wget $NODE_URL | bash -
+
+#5.) ================= Install npm  =================
 RUN apt-get update && \
 	apt-get install -y npm && \
 	npm install --only=production
@@ -27,8 +41,6 @@ RUN apt-get update && \
 #Your app binds to port 8080 so you'll use the EXPOSE instruction to have it mapped by the docker daemon:
 EXPOSE 8080
 
-#6.) =================  Bundle app source  =================
-RUN cp -r $BLJ/web_app/* ./
 
 # 7.) =======================  Cleanup  ==========================
 RUN	apt-get clean && \

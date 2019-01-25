@@ -276,7 +276,7 @@ public class DockerUtil
 	/**
 	 * Docker manager module name variable holding the name of the Config file: {@value #MANAGER}
 	 */
-	public static final String MANAGER = "manager";
+	public static final String MANAGER = "blj_manager";
 
 	/**
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}

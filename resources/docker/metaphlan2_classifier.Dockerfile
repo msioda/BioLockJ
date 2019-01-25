@@ -1,36 +1,9 @@
-# Deployment path:  $BLJ/resources/docker/classifier/wgs/MetaphlanClassifier
+# Deployment path:  $BLJ/resources/docker/classifier/wgs/metaphlan2_classifier
 
-FROM ubuntu:18.04
+FROM blj_basic_python2
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
-RUN mkdir /input && mkdir /pipeline && mkdir /app && mkdir /meta && mkdir /primer && mkdir /config  
-
-#2.) ============ Install Ubuntu Prereqs & python/metaphlan =================
-RUN apt-get update && \
-	apt-get install -y build-essential \
-	apt-utils \
-	wget \
-	gzip \
-	unzip  \
-	python2.7-dev \
-	python-pip \
-	python-tk
-
-#3.) ============ Update Ubuntu ~/.bashrc =================
-RUN echo 'force_color_prompt=yes' >> ~/.bashrc && \
-	echo 'alias ..="cd .."' >> ~/.bashrc && \
-	echo 'alias ls="ls -lh --color=auto"' >> ~/.bashrc && \
-	echo 'alias h="head -n 8"' >> ~/.bashrc && \
-	echo 'alias t="tail -n 8"' >> ~/.bashrc && \
-	echo 'alias f="find . -name"' >> ~/.bashrc && \
-	echo 'alias cab="cat ~/.bashrc"' >> ~/.bashrc && \
-	echo 'alias tlog="tail -1000f *.log"' >> ~/.bashrc && \
-	echo 'alias rf="source ~/.bashrc"' >> ~/.bashrc && \
-	echo ' ' >> ~/.bashrc && \
-	echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
-	echo '    . /etc/bash_completion' >> ~/.bashrc && \
-	echo 'fi' >> ~/.bashrc
 
 #4.) ============ Install numpy & biopython =================
 RUN pip install numpy && \

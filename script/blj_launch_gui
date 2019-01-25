@@ -1,11 +1,9 @@
 ###################################################################
 ##                                                               ##
-##  This script launches Docker containder biolockj/webapp       ##
-##                                                               ##
+##  This script launches Docker webapp container                 ##
 ##  Must map volume to /config to save new BLJ Config files      ##
 ##                                                               ##
 ###################################################################
-
 
 # check for options to start the browser		
 startBrowser() {
@@ -30,7 +28,7 @@ docker run --rm -p 8080:3000 \
   -v $BLJ_PROJ:/pipeline:delegated  \
   -v $BLJ/web_app/logs:/log:delegated  \
   -e "HOST_BLJ_PROJ=$BLJ_PROJ" \
-  -d biolockj/webapp
+  -d $DOCKER_HUB_USER/blj_webapp
   
 startBrowser
 		

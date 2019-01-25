@@ -12,15 +12,15 @@ export blj_profile=~/.bash_profile
 
 bljDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ ! -f "$bashProfile" ]; then
-	printf '%s\n' '#BioLockJ generated bash profile' > $bashProfile
-	echo "    Created profile: $bashProfile"
+if [ ! -f "$blj_profile" ]; then
+	printf '%s\n' '#BioLockJ generated bash profile' > $blj_profile
+	echo "    Created profile: $blj_profile"
 else
-	cp $bashProfile $bashProfile~
-	echo "    Saved backup:  $bashProfile~"
+	cp $blj_profile $blj_profile~
+	echo "    Saved backup:  $blj_profile~"
 fi
 
-echo '[ -x "$bljDir/script/blj_config" ] && . $bljDir/script/blj_config' >> $bashProfile
-source $bashProfile
-echo "    Saved profile:  $bashProfile"
+echo '[ -x "$bljDir/script/blj_config" ] && . $bljDir/script/blj_config' >> $blj_profile
+source $blj_profile
+echo "    Saved profile:  $blj_profile"
 echo "BioLockJ installation complete!"
