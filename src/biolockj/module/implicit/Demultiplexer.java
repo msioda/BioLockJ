@@ -218,39 +218,43 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 				{
 					read.add( line );
 
-					if( testFile == null && read.size() == 1 )
-					{
-						numReads++;
-						final int testBarcodes = hasBarcode( line );
-						if( testBarcodes == 1 )
+					List<String> vals = MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) );
+					if( Config.getString( MetaUtil.META_BARCODE_COLUMN ) != null && !vals.isEmpty() )
+					{	
+						if( testFile == null && read.size() == 1 )
 						{
-							headerFwBarcodes++;
+							numReads++;
+							final int testBarcodes = hasBarcode( line );
+							if( testBarcodes == 1 )
+							{
+								headerFwBarcodes++;
+							}
+							else if( testBarcodes == 2 )
+							{
+								headerRvBarcodes++;
+							}
 						}
-						else if( testBarcodes == 2 )
+	
+						if( testFile == null && read.size() == 2 )
 						{
-							headerRvBarcodes++;
+							final int testBarcodes = hasBarcode( line );
+							if( testBarcodes == 1 )
+							{
+								seqFwBarcodes++;
+							}
+							else if( testBarcodes == 2 )
+							{
+								seqRvBarcodes++;
+							}
+						}
+
+						if( read.size() == SeqUtil.getNumLinesPerRead() )
+						{
+							seqLines.addAll( read );
+							read.clear();
 						}
 					}
-
-					if( testFile == null && read.size() == 2 )
-					{
-						final int testBarcodes = hasBarcode( line );
-						if( testBarcodes == 1 )
-						{
-							seqFwBarcodes++;
-						}
-						else if( testBarcodes == 2 )
-						{
-							seqRvBarcodes++;
-						}
-					}
-
-					if( read.size() == SeqUtil.getNumLinesPerRead() )
-					{
-						seqLines.addAll( read );
-						read.clear();
-					}
-
+					
 					if( seqLines.size() >= NUM_LINES_TEMP_FILE )
 					{
 						writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
