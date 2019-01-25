@@ -14,13 +14,15 @@ package biolockj.module.r;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import biolockj.Config;
 import biolockj.module.ScriptModule;
+import biolockj.util.ModuleUtil;
 
 /**
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
  * field. A pdf is created for each taxonomy level.
  */
-public class BuildFoldChangePlots extends R_Module implements ScriptModule
+public class BuildEffectSizePlots extends R_Module implements ScriptModule
 {
 	/**
 	 * Add prerequisite module: {@link biolockj.module.r.CalculateStats}.
@@ -47,4 +49,20 @@ public class BuildFoldChangePlots extends R_Module implements ScriptModule
 		set.add( PDF_EXT.substring( 1 ) );
 		return set;
 	}
+
+	@Override
+	public void executeTask() throws Exception
+	{
+		// TODO Auto-generated method stub
+		super.executeTask();
+		if( Config.getBoolean( "r.plotEffectSize.foldChange" ) )
+		{
+			if( ModuleUtil.getParserModule() != null )
+			{
+				Config.setConfigProperty( Config.INTERNAL_PARSER_MODULE,
+						ModuleUtil.getParserModule().getOutputDir().toString() );
+			}
+		}
+	}
+
 }

@@ -824,6 +824,12 @@ public class Config
 	 * Set to true if paired reads are found, set by the application runtime code.
 	 */
 	public static final String INTERNAL_PAIRED_READS = "internal.pairedReads";
+	
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_PAIRED_READS}<br>
+	 * Set to true if paired reads are found, set by the application runtime code.
+	 */
+	public static final String INTERNAL_PARSER_MODULE = "internal.parserModule";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_DIR}<br>
