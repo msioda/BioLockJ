@@ -4,25 +4,6 @@ FROM ubuntu:18.04
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
-RUN mkdir /input && \
-    mkdir /pipeline && \
-    mkdir /app && \
-    mkdir /meta && \
-    mkdir /primer && \
-    mkdir /config && \
-    mkdir /db
-    
-
-#2.) ============ Install Ubuntu Prereqs =================
-RUN apt-get update && \
-  apt-get install -y build-essential \
-  checkinstall \
-  apt-utils \
-  wget \
-  gzip \
-  bsdtar \
-  rsync
-  
   
 #3.) ================ Install Kraken ================ 
 ENV KRAKEN_VER=2.0.7-beta

@@ -7,7 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 #2.) =======================  Cleanup =================
 RUN	find / -name *python* | xargs rm -rf && \
-	rm -rf usr/share/*
+	rm -rf /usr/share/*
 
 #3.) ================= Container Command =================
 ENTRYPOINT [ "bash", "$COMPUTE_SCRIPT" ]

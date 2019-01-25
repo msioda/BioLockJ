@@ -6,8 +6,15 @@ FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
 ENV BLJ=/app/biolockj
 ENV BLJ_PROJ=/pipeline
-RUN mkdir /input && mkdir /pipeline && mkdir /app && mkdir /meta && \
-	mkdir /primer && mkdir /config && mkdir /log
+ENV BLJ_JAR=$BLJ/dist/BioLockJ.jar
+
+#2.) ============ Make standard dirs 
+RUN mkdir /config && \
+	mkdir /input && \
+	mkdir /log && \
+	mkdir /meta && \
+	mkdir /pipeline && \
+	mkdir /primer
 
 #2.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
@@ -18,7 +25,8 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo 'alias t="tail -n 8"' >> ~/.bashrc && \
 	echo 'alias f="find . -name"' >> ~/.bashrc && \
 	echo 'alias cab="cat ~/.bashrc"' >> ~/.bashrc && \
-	echo 'alias tlog="tail -1000f *.log"' >> ~/.bashrc && \
+	echo 'alias tlog="tail -1000 *.log"' >> ~/.bashrc && \
+	echo 'alias tlogf="tail -1000f *.log"' >> ~/.bashrc && \
 	echo 'alias rf="source ~/.bashrc"' >> ~/.bashrc && \
 	echo ' ' >> ~/.bashrc && \
 	echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
@@ -27,16 +35,22 @@ RUN echo ' '  >> ~/.bashrc && \
 
 #3.) ============ Install Ubuntu Prereqs =================
 RUN apt-get update && \
-	apt-get install -y build-essential apt-utils gawk gzip tar tzdata wget
+	apt-get install -y \
+		build-essential \
+		apt-utils \
+		bsdtar \
+		gawk \
+		tzdata \
+		wget
 
 #4.) ================= Set the timezone =================
 RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
 	dpkg-reconfigure -f noninteractive tzdata
 
 #5.) =======================  Cleanup  ==========================
-RUN	apt-get clean && \
-	rm -rf /tmp/* && \
-	rm -rf /var/cache/* && \
+RUN	rm -rf /tmp/* && \
 	rm -rf /usr/games && \
-	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
+
+#6.) =======================  Command  ==========================
+ENTRYPOINT [ "/bin/bash" ]

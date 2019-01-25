@@ -1,6 +1,6 @@
 # Deployment path: $BLJ/resources/docker/blj_webapp.Dockerfile
 
-FROM blj_basic_python2
+FROM blj_basic_py2
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
@@ -52,4 +52,4 @@ RUN	apt-get clean && \
 #8.) ================= Define command = npm start =================
 #define the command to run your app using CMD which defines your runtime. Here we will use the basic npm start which will run node server.js to start your server:
 # ENTRYPOINT npm start  <-- try the [] way as in next line next build
-ENTRYPOINT [ "npm", "start" ]
+CMD [ "npm", "start" ]
