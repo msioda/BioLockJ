@@ -20,6 +20,29 @@ const bljDir = process.env.BLJ;
 console.log('bljDir ', bljDir);
 const HOST_BLJ = process.env.HOST_BLJ;
 
+let morgan = require('morgan');
+// NOTE: Morgan would be installed in app.js by convention, but I installed here so that I could write my errors to the same file.
+//   // create a write stream (in append mode)
+const accessLogStream = fs.createWriteStream(createLogFile(), { flags: 'a' })
+
+// log only 4xx and 5xx responses to console
+router.use(morgan('dev', {
+  skip: function (req, res) { return res.statusCode < 400 }
+}))
+
+// setup the logger
+router.use(morgan(':method :url :status [:date[web]] :req[body] :req[header] :req[_body] :response-time[digits] :res[content-length]', { stream: {
+  write: function(str)
+    {
+      try {
+        accessLogStream.write(str);
+      } catch (e) {
+        console.error(e);
+        accessLogStream.write(e);
+      }
+    }
+  }}));
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Welcome to BioLockJ' });
@@ -84,6 +107,7 @@ router.post('/retrieveConfigs', function(req, res, next) {
 
 router.post('/retrievePropertiesFile', function(req, res, next){
   try {
+    accessLogStream.write(req.body.propertiesFile);
     fs.readFile(path.join('/','config', req.body.propertiesFile), 'utf8', function (err,data) {
       if (err){
         console.log(err);
@@ -100,6 +124,7 @@ router.post('/retrievePropertiesFile', function(req, res, next){
 
 router.post('/javadocsmodulegetter', function(req, res, next) {
   try {
+    accessLogStream.write(req.body.moduleJavaClassPath + '\n');
     console.log(req.body.moduleJavaClassPath);
     let modPathString = req.body.moduleJavaClassPath;
     modPathString = modPathString.concat('.html');
@@ -109,7 +134,7 @@ router.post('/javadocsmodulegetter', function(req, res, next) {
       if (err){
         console.log(err);
       }else{
-        console.log(data);
+        //console.log(data);
         res.setHeader("Content-Type", "text/html");
         res.write(data);
         res.end();
@@ -301,6 +326,34 @@ router.get('/streamProgress', function(request, response){
   });
 });
 
+
+router.post('/startAws', function(req, res, next) {
+  /*
+  The components of the formData should be:
+  AWSACCESSKEYID, AWSSECRETACCESSKEY, REGION, OUTPUTFORMAT, PROFILE
+  */
+  console.log('in AWS');
+  try {
+    console.dir(req.body.formData);
+    const sys = require('util');
+    const exec = require('child_process').exec;
+    exec('git clone https://github.com/mjzapata/AWSBatchGenomicsStack.git', function(err, stdout, stderr) {
+      console.log(stdout);
+      console.error(err);
+      console.error(stderr);
+    });
+    exec(`AWSBatchGenomicsStack/webapp/writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
+      console.log(stdout);
+      console.error(err);
+      console.error(stderr);
+    })
+    res.setHeader('Content-Type', 'text/html');
+    res.write('Server Response: AWS launched!');
+    res.end();
+  } catch (e) {
+    console.error(e);
+  }
+});
 // fs.watch('/config', (eventType, filename) => {
 //   console.log(`Filename: ${filename}, Event: ${eventType}`);
 //   console.log(`Filename: ${filename}, Event: ${eventType}`);
@@ -335,33 +388,25 @@ function pipelineProjectName(configName){//gets the name of the BLJ created pipe
   return projectPipelinePath;
 }
 
-router.post('/startAws', function(req, res, next) {
-  /*
-  The components of the formData should be:
-  AWSACCESSKEYID, AWSSECRETACCESSKEY, REGION, OUTPUTFORMAT, PROFILE
-  */
-  console.log('in AWS');
-  try {
-    console.dir(req.body.formData);
-    const sys = require('util');
-    const exec = require('child_process').exec;
-    exec('git clone https://github.com/mjzapata/AWSBatchGenomicsStack.git', function(err, stdout, stderr) {
-      console.log(stdout);
-      console.error(err);
-      console.error(stderr);
+function createLogFile(){//creates file and returns file name
+  let now = new Date();
+  let year = now.getYear() + 1900;
+  let month = now.toLocaleString("en-us", {
+    month: "short"
     });
-    exec(`AWSBatchGenomicsStack/webapp/writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
-      console.log(stdout);
-      console.error(err);
-      console.error(stderr);
-    })
-    res.setHeader('Content-Type', 'text/html');
-    res.write('Server Response: AWS launched!');
-    res.end();
-  } catch (e) {
-    console.error(e);
-  }
+  let day = now.getDate();
+  let hour = now.getHours();
+  let min = now.getMinutes();
+  let c = ['webapp_log', year, month, day, hour, min].join('_');
+  let p = path.join(__dirname, '..', 'logs', c)
+  fs.writeFile(p, "Log for BLJ webapp", function(err) {
+    if(err) {
+      return console.log(err);
+    }
+    console.log(`created ${c}`);
 });
+  return p;
+}// end of function loggerFileName()
 
 console.log(process.env.BLJ.toString());
 
