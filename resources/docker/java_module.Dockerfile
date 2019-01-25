@@ -6,18 +6,15 @@ FROM blj_basic_java
 ARG DEBIAN_FRONTEND=noninteractive
 ARG BLJ_DATE
 ARG BLJ_VERSION
+ENV BLJ=/app/biolockj
+ENV BLJ_PROJ=/pipeline
+ENV BLJ_JAR=$BLJ/dist/BioLockJ.jar
 ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
 ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tgz
 ENV BLJ_RELEASE=$BLJ_URL/${BLJ_VERSION}/$BLJ_TAR
 
 ENV PEAR_VERSION="pear-0.9.10-bin-64"
 ENV PEAR_URL="https://github.com/mikesioda/BioLockJ_Dev/releases/download/v1.0"
-
-#2.) ================= Install PEAR =================
-RUN mkdir -p /app/pear && cd /app/pear && \
-	wget $PEAR_URL/$PEAR_VERSION.gz && \
-	gzip -df $PEAR_VERSION.gz && \
-	chmod +x /app/pear/$PEAR_VERSION
 
 #2.) ============ Install Ubuntu Prereqs =================
 RUN apt-get update && \

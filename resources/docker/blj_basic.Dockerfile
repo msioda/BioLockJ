@@ -4,9 +4,6 @@ FROM ubuntu:18.04
 
 #1.) ================= Setup Env ==================================
 ARG DEBIAN_FRONTEND=noninteractive
-ENV BLJ=/app/biolockj
-ENV BLJ_PROJ=/pipeline
-ENV BLJ_JAR=$BLJ/dist/BioLockJ.jar
 
 #2.) ============ Make standard dirs 
 RUN mkdir /config && \
