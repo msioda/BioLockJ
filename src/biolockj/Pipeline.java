@@ -66,101 +66,102 @@ public class Pipeline
 	{
 		bioModules = BioModuleFactory.buildModules();
 		Config.setConfigProperty( Config.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
-
-		info( "Pipeline Module Execution Order:" );
-		final List<String> ids = new ArrayList<>();
-		int branchScore = 0;
-		int prevScore = 0;
-		String branchType = Branch.SEQ_TYPE;
-		String prevType = null;
-		final Iterator<BioModule> it = bioModules.iterator();
-		while( it.hasNext() )
-		{
-			final BioModule module = it.next();
-			final String name = module.getClass().getName();
-			info( "BioModule [ " + module.getID() + " ] = " + name );
-
-			// boolean isEmailMod = isEmailModule( module ); // -1 (can be run anytime)
-			final boolean isSeqMod = isSeqModule( module ); // 0
-			final boolean isClassifierMod = isClassifierModule( module ); // 1
-			// boolean isQiimeMod = isQiimeModule( module ); // NA
-
-			final boolean isParserMod = isParserModule( module ); // 2
-			final boolean isOtuMod = isOtuModule( module ); // 2
-			final boolean isTaxaMod = isTaxaModule( module ); // 2 ~fuzzy 3 (requires at least one 2 or 3 has run)
-
-			final boolean isStatsMod = isStatsModule( module ); // 3 ~fuzzy 3 (requires at least one 4 has run)
-			final boolean isReportMod = isReportModule( module ); // 4 ~fuzzy 3 (Json requires 2 or 3 has run, Email can
-																	// run ANYTIME)
-
-			final boolean isRMod = isRModule( module ); // 4 ~fuzzy 3
-
-			if( isSeqMod && !branches.isEmpty() )
-			{
-				throw new Exception( "BioLockJ only supports branched pipelines for a single dataset."
-						+ "All sequence preparation modules must run prior to running the 1st classifier" );
-			}
-			else if( isClassifierMod )
-			{
-				branchType = Branch.CLASSIFIER_TYPE;
-				branchScore = 1;
-			}
-			else if( isParserMod || isOtuMod || isTaxaMod || isReportMod )
-			{
-				branchType = isReportMod ? Branch.REPORT_TYPE
-						: isTaxaMod ? Branch.TAXA_COUNT_TYPE: Branch.OTU_COUNT_TYPE;
-				branchScore = 2;
-			}
-			else if( isStatsMod )
-			{
-				branchType = Branch.STATS_TYPE;
-				branchScore = 3;
-			}
-			else if( isRMod )
-			{
-				branchType = Branch.R_TYPE;
-				branchScore = 4;
-			}
-			// else --> No changes to score or type for an implicit module like MergeOtuTables
-
-			if( !ids.isEmpty() )
-			{
-				// 1st branch is frequently sequence preparation
-				// If branchScore is lower, this is the 2nd classifier to run
-				if( isClassifierMod && prevType.equals( Branch.SEQ_TYPE ) || branchScore < prevScore )
-				{
-					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
-					ids.clear();
-				}
-				else if( isStatsMod && prevType.equals( Branch.CLASSIFIER_TYPE ) ) // Create next branch = From
-																					// classifier to just before stats
-				{
-					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
-					ids.clear();
-				}
-				else if( isStatsMod && prevType.equals( Branch.R_TYPE ) ) // Create next branch = From classifier to
-																			// just before stats
-				{
-					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
-					ids.clear();
-				}
-
-				if( !it.hasNext() ) // No more modules, dump remaining modules into branchMap
-				{
-					ids.add( module.getID() );
-					branches.add( new Branch( branchType, new ArrayList<>( ids ) ) );
-				}
-			}
-
-			prevType = branchType;
-			prevScore = branchScore;
-			ids.add( module.getID() );
-		}
-
-		for( final Branch b: branches )
-		{
-			Log.info( Pipeline.class, "Branch #" + 2 + " [" + b.getBranchType() + "] = " + b.getIds() );
-		}
+		initializeModules();
+//
+//		info( "Pipeline Module Execution Order:" );
+//		final List<String> ids = new ArrayList<>();
+//		int branchScore = 0;
+//		int prevScore = 0;
+//		String branchType = Branch.SEQ_TYPE;
+//		String prevType = null;
+//		final Iterator<BioModule> it = bioModules.iterator();
+//		while( it.hasNext() )
+//		{
+//			final BioModule module = it.next();
+//			final String name = module.getClass().getName();
+//			info( "BioModule [ " + module.getID() + " ] = " + name );
+//
+//			// boolean isEmailMod = isEmailModule( module ); // -1 (can be run anytime)
+//			final boolean isSeqMod = isSeqModule( module ); // 0
+//			final boolean isClassifierMod = isClassifierModule( module ); // 1
+//			// boolean isQiimeMod = isQiimeModule( module ); // NA
+//
+//			final boolean isParserMod = isParserModule( module ); // 2
+//			final boolean isOtuMod = isOtuModule( module ); // 2
+//			final boolean isTaxaMod = isTaxaModule( module ); // 2 ~fuzzy 3 (requires at least one 2 or 3 has run)
+//
+//			final boolean isStatsMod = isStatsModule( module ); // 3 ~fuzzy 3 (requires at least one 4 has run)
+//			final boolean isReportMod = isReportModule( module ); // 4 ~fuzzy 3 (Json requires 2 or 3 has run, Email can
+//																	// run ANYTIME)
+//
+//			final boolean isRMod = isRModule( module ); // 4 ~fuzzy 3
+//
+//			if( isSeqMod && !branches.isEmpty() )
+//			{
+//				throw new Exception( "BioLockJ only supports branched pipelines for a single dataset."
+//						+ "All sequence preparation modules must run prior to running the 1st classifier" );
+//			}
+//			else if( isClassifierMod )
+//			{
+//				branchType = Branch.CLASSIFIER_TYPE;
+//				branchScore = 1;
+//			}
+//			else if( isParserMod || isOtuMod || isTaxaMod || isReportMod )
+//			{
+//				branchType = isReportMod ? Branch.REPORT_TYPE
+//						: isTaxaMod ? Branch.TAXA_COUNT_TYPE: Branch.OTU_COUNT_TYPE;
+//				branchScore = 2;
+//			}
+//			else if( isStatsMod )
+//			{
+//				branchType = Branch.STATS_TYPE;
+//				branchScore = 3;
+//			}
+//			else if( isRMod )
+//			{
+//				branchType = Branch.R_TYPE;
+//				branchScore = 4;
+//			}
+//			// else --> No changes to score or type for an implicit module like MergeOtuTables
+//
+//			if( !ids.isEmpty() )
+//			{
+//				// 1st branch is frequently sequence preparation
+//				// If branchScore is lower, this is the 2nd classifier to run
+//				if( isClassifierMod && prevType.equals( Branch.SEQ_TYPE ) || branchScore < prevScore )
+//				{
+//					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
+//					ids.clear();
+//				}
+//				else if( isStatsMod && prevType.equals( Branch.CLASSIFIER_TYPE ) ) // Create next branch = From
+//																					// classifier to just before stats
+//				{
+//					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
+//					ids.clear();
+//				}
+//				else if( isStatsMod && prevType.equals( Branch.R_TYPE ) ) // Create next branch = From classifier to
+//																			// just before stats
+//				{
+//					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
+//					ids.clear();
+//				}
+//
+//				if( !it.hasNext() ) // No more modules, dump remaining modules into branchMap
+//				{
+//					ids.add( module.getID() );
+//					branches.add( new Branch( branchType, new ArrayList<>( ids ) ) );
+//				}
+//			}
+//
+//			prevType = branchType;
+//			prevScore = branchScore;
+//			ids.add( module.getID() );
+//		}
+//
+//		for( final Branch b: branches )
+//		{
+//			Log.info( Pipeline.class, "Branch #" + 2 + " [" + b.getBranchType() + "] = " + b.getIds() );
+//		}
 
 		initializeModules();
 	}
