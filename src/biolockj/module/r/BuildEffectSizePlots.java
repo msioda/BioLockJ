@@ -20,12 +20,9 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.Config;
-import biolockj.Pipeline;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.classifier.r16s.QiimeOpenRefClassifier;
 import biolockj.module.report.taxa.BuildTaxaTables;
-import biolockj.util.ModuleUtil;
 
 /**
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
