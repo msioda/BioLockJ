@@ -2,6 +2,8 @@
 
 FROM blj_basic_py2
 
+java_module
+
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
 ARG BLJ_DATE

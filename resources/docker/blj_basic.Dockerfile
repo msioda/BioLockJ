@@ -5,6 +5,7 @@ FROM ubuntu:18.04
 #1.) ================= Setup Env ==================================
 ARG DEBIAN_FRONTEND=noninteractive
 
+
 #2.) ============ Make standard dirs 
 RUN mkdir /config && \
 	mkdir /input && \
@@ -29,9 +30,9 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo ' ' >> ~/.bashrc && \
 	echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
-	echo 'fi' >> ~/.bashrc
+	echo 'fi' >> ~/.bashrc && \
 
-#3.) ============ Install Ubuntu Prereqs =================
+#4.) ============ Install Ubuntu Prereqs =================
 RUN apt-get update && \
 	apt-get install -y \
 		build-essential \
@@ -41,14 +42,14 @@ RUN apt-get update && \
 		tzdata \
 		wget
 
-#4.) ================= Set the timezone =================
+#5.) ================= Set the timezone =================
 RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
 	dpkg-reconfigure -f noninteractive tzdata
 
-#5.) =======================  Cleanup  ==========================
+#6.) =======================  Cleanup  ==========================
 RUN	rm -rf /tmp/* && \
 	rm -rf /usr/games && \
 	rm -rf /var/log/*
 
-#6.) =======================  Command  ==========================
+#7.) =======================  Command  ==========================
 ENTRYPOINT [ "/bin/bash" ]

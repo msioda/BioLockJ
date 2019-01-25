@@ -9,7 +9,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get install -y software-properties-common && \
 	apt-get upgrade -y && \
    	apt-get install -y openjdk-8-jre-headless
-	
-#3.) =======================  Cleanup =================
+
+#3.) ============== Cleanup =================
 RUN	rm -rf /tmp/* && \
 	rm -rf /var/log/* 
