@@ -247,5 +247,5 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	 * {@link biolockj.Config} Positive Integer property {@value #MIN_OTU_COUNT} defines the minimum number of OTUs
 	 * allowed, if a count less that this value is found, it is set to 0.
 	 */
-	protected static final String MIN_OTU_COUNT = "removeLowCounts.minOtuCount";
+	protected static final String MIN_OTU_COUNT = "removeLowCountOtus.minCount";
 }

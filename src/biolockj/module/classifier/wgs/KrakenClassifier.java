@@ -112,7 +112,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final String params = "$1 $2" + ( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " $3": "" );
+		final String params = "$1 $2" + ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " $3": "" );
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
@@ -210,7 +210,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	private String getWorkerFunctionParams() throws Exception
 	{
 		String params = " " + getParams();
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}
@@ -221,7 +221,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		}
 
 		params += DB_PARAM + getDB() + " " + getInputSwitch();
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}

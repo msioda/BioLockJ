@@ -37,7 +37,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			inputDelim = TAB_DELIM;
 		}
 
-		if( Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
+		if( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED )
 				&& ( MetaUtil.getFile() == null || !MetaUtil.getFile().exists() ) )
 		{
 			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: "
@@ -248,7 +248,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	protected TreeSet<String> getSampleIds() throws Exception
 	{
 		final TreeSet<String> ids = new TreeSet<>();
-		final Collection<File> inputFiles = Config.getBoolean( Config.INTERNAL_PAIRED_READS )
+		final Collection<File> inputFiles = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS )
 				? new TreeSet<>( SeqUtil.getPairedReads( getInputFiles() ).keySet() )
 				: getInputFiles();
 
@@ -433,7 +433,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	private boolean doIdToSeqVerifiction() throws Exception
 	{
 		return Config.getBoolean( MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() )
-				&& !Config.getBoolean( Config.INTERNAL_MULTIPLEXED );
+				&& !Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED );
 	}
 
 	private File getMetadata()

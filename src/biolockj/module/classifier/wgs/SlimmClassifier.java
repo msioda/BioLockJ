@@ -111,8 +111,8 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 
-		final String inputs = Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
-		int index = Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? 3: 2;
+		final String inputs = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
+		int index = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? 3: 2;
 
 		lines.add( "function " + FUNCTION_ALIGN + "() {" );
 		lines.add( Config.getExe( EXE_BOWTIE2 ) + getRuntimeBowtieParams() + inputs + " 2> " + "$" + index++ + " | "

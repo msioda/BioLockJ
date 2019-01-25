@@ -293,37 +293,86 @@ public class Config
 	}
 
 	/**
-	 * Get property value as String. Empty strings return null.
+	 * Get property value as String. Empty strings return null.<br>
+	 * If $BLJ or $BLJ_SUP or $USER or $HOME was used, it would already be converted
+	 * to the actual file path by {@link biolockj.Properties} before this method is called.
 	 *
 	 * @param propertyName {@link biolockj.Config} file property name
 	 * @return String value or null
 	 */
-	public static String getString( final String propertyName )
+	public static String getString( String propertyName )
 	{
+		String val = null;
 		final Object obj = props.getProperty( propertyName );
 		if( obj == null )
 		{
 			return null;
 		}
 
-		final String val = obj.toString().trim();
+		val = obj.toString().trim();
 
-		// allow statements like x = $someOtherDir to avoid re-typing paths
-		if( val.startsWith( "$" ) )
+		/*
+		 * Allow internal references to avoid re-typing paths.  For example:
+		 * 
+		 * project.dataDir=/projects/data/internal/research_labs
+		 * project.experimentID=1987209C
+		 * project.labUrl=$project.dataDir/fodor_lab/$project.experimentID
+		 * reportBuilder.massSpecReportHeading=Mass Spec $project.labID
+		 */
+		if( val.contains( "${" ) && val.contains( "}" ) )
 		{
-			final String localProp = props.getProperty( val.substring( 1 ) );
-
-			if( localProp != null )
-			{
-				return localProp.trim();
-			}
+			val = getInternalRefProp( val );
 		}
 
 		if( val.isEmpty() )
 		{
 			return null;
 		}
+		
+		
+		usedProps.add( propertyName );
 
+		return val;
+	}
+	
+	private static String getInternalRefProp( String propName )
+	{
+		String origPropName = propName;
+		String val = "";
+		try
+		{
+			int startIndex = propName.indexOf( "${" );
+			int endIndex = propName.indexOf( "}" );
+			
+			while( startIndex > -1 && endIndex > -1 )
+			{
+				val += propName.substring( 0, startIndex );
+				String internalProp = propName.substring( startIndex + 2, endIndex );
+				String internalVal = props.getProperty( internalProp );
+				if( internalVal == null )
+				{
+					throw new Exception( "Could not find internal references (in ${val} format) of property: " + origPropName );
+				}
+				propName = propName.substring( endIndex + 1 );
+				val += internalVal;
+				startIndex = propName.indexOf( "${" );
+				endIndex = propName.indexOf( "}" );
+			}
+			
+			if( propName != null )
+			{
+				val += propName;
+			}
+			
+			System.out.println( "FINAL NAME: ===> " + propName );
+
+		}
+		catch( Exception ex )
+		{
+			Log.warn( Config.class, ex.getMessage() );
+			return origPropName;
+		}
+		
 		return val;
 	}
 
@@ -759,35 +808,11 @@ public class Config
 	public static final String INPUT_DIRS = "input.dirPaths";
 
 	/**
-	 * {@link biolockj.Config} String property: {@value #INPUT_FORWARD_READ_SUFFIX}<br>
-	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
-	 */
-	public static final String INPUT_FORWARD_READ_SUFFIX = "input.suffixFw";
-
-	/**
 	 * {@link biolockj.Config} List property: {@value #INPUT_IGNORE_FILES}<br>
 	 * Set file names to ignore if found in {@value #INPUT_DIRS}
 	 */
 	public static final String INPUT_IGNORE_FILES = "input.ignoreFiles";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #INPUT_REVERSE_READ_SUFFIX}<br>
-	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
-	 */
-	public static final String INPUT_REVERSE_READ_SUFFIX = "input.suffixRv";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_PREFIX}<br>
-	 * Set value of prefix to trim from sequence file names or headers to obtain Sample ID.
-	 */
-	public static final String INPUT_TRIM_PREFIX = "input.trimPrefix";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_SUFFIX}<br>
-	 * Set value of suffix to trim from sequence file names or headers to obtain Sample ID.
-	 */
-	public static final String INPUT_TRIM_SUFFIX = "input.trimSuffix";
-
+	
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_ALL_MODULES}<br>
 	 * List of all configured, implicit, and pre/post-requisite modules for the pipeline.<br>
@@ -806,24 +831,6 @@ public class Config
 	 * List of all nested default config files.<br>
 	 */
 	public static final String INTERNAL_DEFAULT_CONFIG = "internal.defaultConfig";
-
-	/**
-	 * {@link biolockj.Config} Internal Boolean property: {@value #INTERNAL_IS_MULTI_LINE_SEQ}<br>
-	 * Store TRUE if {@link biolockj.util.SeqUtil} determines input sequences are multi-line format.
-	 */
-	public static final String INTERNAL_IS_MULTI_LINE_SEQ = "internal.isMultiLineSeq";
-
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_MULTIPLEXED}<br>
-	 * Set to true if multiplexed reads are found, set by the application runtime code.
-	 */
-	public static final String INTERNAL_MULTIPLEXED = "internal.multiplexed";
-
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_PAIRED_READS}<br>
-	 * Set to true if paired reads are found, set by the application runtime code.
-	 */
-	public static final String INTERNAL_PAIRED_READS = "internal.pairedReads";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_DIR}<br>
@@ -899,4 +906,7 @@ public class Config
 	// public static final String REPORT_ADD_GENUS_NAME_TO_SPECIES = "report.addGenusToSpeciesName";
 	// public static final String REPORT_FULL_TAXONOMY_NAMES = "report.fullTaxonomyNames";
 	// public static final String REPORT_USE_GENUS_FIRST_INITIAL = "report.useGenusFirstInitial";
+	
+	private static final Set<String> usedProps = new HashSet<String>();
+			
 }

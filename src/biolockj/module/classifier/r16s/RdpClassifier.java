@@ -63,7 +63,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	public List<Class<?>> getPreRequisiteModules() throws Exception
 	{
 		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
 		}

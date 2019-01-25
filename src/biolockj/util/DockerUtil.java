@@ -20,7 +20,7 @@ import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
-import biolockj.module.implicit.qiime.MergeOtuTables;
+import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.module.r.R_Module;
 
@@ -140,7 +140,7 @@ public class DockerUtil
 	 */
 	protected static String getDockerImage( final BioModule module ) throws Exception
 	{
-		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeOtuTables
+		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
 				|| module instanceof QiimeClassifier;
 
 		final boolean isR = module instanceof R_Module;

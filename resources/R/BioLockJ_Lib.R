@@ -7,6 +7,39 @@ addNamedVectorElement <- function( v, name, value ) {
    return( v )
 }
 
+# This method builds the file names output by CalculateStats.R
+# There are 5 stats tables output for each of the report.taxonomyLevels
+# 1. Parametric P-Value table  -->  buildStatsFileSuffix( TRUE, FALSE, level )
+# 2. Nonparameteric P-Value table -->  buildStatsFileSuffix( FALSE, FALSE, level )
+# 3. Adjusted Parametric P-Value table -->  buildStatsFileSuffix( TRUE, TRUE, level )
+# 4. Adjusted Nonparameteric P-Value table -->  buildStatsFileSuffix( FALSE, TRUE, level )
+# 5. R^2 Value table -->  buildStatsFileSuffix( parametric=NA, level=level )
+# The beginning of the file may be include additional text such as the pipeline name,
+# This ending is what is used by both CalculateStats to make the file 
+# and by other modules to find the file, so this much of the file name should remain intact.
+buildStatsFileSuffix <- function( parametric, adjusted=TRUE, level=NULL ) {
+	ext = ".tsv"
+	prefix="_"
+	if (!is.null(level)){
+		prefix = paste0( prefix, level, "_" )
+	}
+	if( is.na( parametric ) ) {
+		return( paste0( prefix, "rSquaredVals", ext) )
+	}
+	else if( adjusted && parametric ) {
+		return( paste0( prefix, "adjParPvals", ext) )
+	}
+	else if( adjusted && !parametric ) {
+		return( paste0( prefix, "adjNonParPvals", ext) )
+	}
+	else if( !adjusted & parametric ) {
+		return( paste0( prefix, "parametricPvals", ext) )
+	}
+	else if( !adjusted & !parametric )  {
+		return( paste0( prefix, "nonParametricPvals", ext) )
+	}
+}
+
 # Return P value formated with sprintf as defined in MASTER Config r.pValFormat, otherwise use %1.2g default
 displayPval <- function( pval ) {
    return( paste( sprintf(getProperty("r.pValFormat", "%1.2g"), pval) ) )
@@ -44,8 +77,43 @@ getColor <- function( v ) {
 }
 
 # Return n colors using the palette defined in the MASTER Config
-getColors <- function( n ) {
-   return( get_palette( getProperty("r.colorPalette", "npg"), n ) )
+getColors <- function( n, reorder=TRUE) {
+	palette = getProperty("r.colorPalette", "npg")
+	colors = get_palette( palette, n )
+	# If the r.colorPalette property is a palette name rather than a list of colors
+	# rearrange the colors so that very similar colors are not less likley to 
+	# be next to each other, thus less likely to be the alternatives in the same category.
+	if (length(palette) == 1 & reorder){
+		flipFrom = (1:length(colors))[(1:length(colors)%%2)==0]
+		flipTo = flipFrom[length(flipFrom):1]
+		colors[flipTo] = colors[flipFrom]
+	}
+   return( colors )
+}
+
+# Select colors for each category so each category is different even across different metadata fields
+# Giving no arguments will cause the function to the project metadata,
+# this is ensures that different modules get the same colors (for example MDS plots and OTU plots).
+# Supplying the metaTable may save time.
+getColorsByCategory <- function(metaTable=NULL){
+	if (is.null(metaTable)){
+		metaTable = getMetaData()
+	}
+	categoricals = c(getBinaryFields(), getNominalFields())
+	metaTable = metaTable[names(metaTable) %in% categoricals]
+	if (ncol(metaTable) < 1){
+		print("No categorical metadata fields.  Returning null.")
+		return(NULL)
+	}
+	numBoxes = sapply(metaTable, function(x){length(levels(as.factor(x)))})
+	boxColors = getColors( sum(numBoxes))
+	if ( doDebug() ) print(paste("Selected", length(boxColors), "colors to describe", ncol(metaTable), "categorical variables."))
+	f = mapply(x=names(numBoxes), each=numBoxes, rep, SIMPLIFY = FALSE)
+	metaColColors = split(boxColors, f=do.call(c, f))
+	for (field in names(metaColColors)){
+		names(metaColColors[[field]]) = levels(as.factor(metaTable[,field]))
+	}
+	return(metaColColors)
 }
 
 # Return list, each record contains the OTUs associated with a unique value for the given nominal metadata field (metaCol)
@@ -86,17 +154,33 @@ getMetaDataFile <- function(){
 
 # Return a data frame of the metadata.  Note that biolockj assumes that the first column is the sample id
 # and that the sample id is unique within the file, so the first row is used as rownames in the returned dataframe.
-getMetaData <- function(){
-  file = getMetaDataFile()
-  if (is.null(file)){
-    inputFile = getPipelineFile( "*_metaMerged.tsv" )
-    otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
-    firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
-    meta = otuTable[firstMetaCol:ncol(otuTable)]
-  }else{
-    meta = read.delim(file=file, comment.char = getProperty("metadata.commentChar",""), row.names = 1)
-  }
-  return(meta)
+getMetaData <- function(useMetaMerged=TRUE){
+	file = getMetaDataFile()
+	metaMergedFile = getPipelineFile( "*_metaMerged.tsv" )
+	if (is.null(metaMergedFile)) { useMetaMerged = FALSE }
+	if (is.null(file) | useMetaMerged){
+		otuTable = read.table( metaMergedFile, check.names=FALSE,
+													 na.strings=getProperty("metadata.nullValue", "NA"), 
+													 comment.char=getProperty("metadata.commentChar", ""), 
+													 header=TRUE, sep="\t", row.names = 1 )
+		firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
+		meta = otuTable[firstMetaCol:ncol(otuTable)]
+	}else{
+		importMetaDataModule = grep("ImportMetadata", dir(dirname(file)), value=TRUE)
+		processedMetaFile = file.path(dirname(file), importMetaDataModule, "output", basename(file))
+		if (file.exists(processedMetaFile)){
+			meta = read.delim(file=processedMetaFile, check.names=FALSE, 
+												na.strings=getProperty("metadata.nullValue", "NA"), 
+												comment.char=getProperty("metadata.commentChar", ""), 
+												header=TRUE, sep="\t", row.names = 1)
+		}else{
+			meta = read.delim(file=file, check.names=FALSE, 
+												na.strings=getProperty("metadata.nullValue", "NA"), 
+												comment.char=getProperty("metadata.commentChar", ""), 
+												header=TRUE, sep="\t", row.names = 1)
+		}
+	}
+	return(meta)
 }
 
 
@@ -184,6 +268,40 @@ getProperty <- function( name, defaultVal=NULL ) {
 getReportFields <- function() {
    return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
 }
+
+# Return the name of statistical test used to generate P-Values for a given attribute
+# If returnColors==TRUE, then return a color used for color-coding this test
+# or a named color vector if the specific attribute or isParametric is not given.
+getTestName <- function( attName=NULL, isParametric=c(TRUE, FALSE), returnColors=FALSE ) {
+	testOptions = data.frame(
+		testName = c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall"),
+		fieldType = c("binary", "binary", "nominal", "nominal", "numeric", "numeric" ),
+		isParametric = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
+		color = c("coral", "dodgerblue2", "darkgoldenrod1", "cornflowerblue", "tan1", "aquamarine3"),
+		stringsAsFactors = FALSE
+	)
+	
+	fieldType = c(unique(testOptions$fieldType))
+	if (!is.null(attName)){
+		if( attName %in% getBinaryFields() ) {fieldType = "binary"}
+		if( attName %in% getNominalFields() ) {fieldType = "nominal"}
+		if( attName %in% getNumericFields() ) {fieldType = "numeric"}
+		if (length(fieldType) > 1){
+			stop(paste("Cannot determine field type for attribute:", attName))
+		}
+	}
+	
+	whichTest = which(testOptions$fieldType %in% fieldType & 
+											testOptions$isParametric %in% isParametric)
+	
+	if (returnColors){
+		cols = testOptions[whichTest,"color"]
+		names(cols) = testOptions[whichTest,"testName"]
+		return(cols)
+	}else{
+		return(testOptions[whichTest,"testName"])
+	}
+}
     
 # Return named vector values for the given name
 getValuesByName <- function( vals, name ) {
@@ -234,10 +352,11 @@ parseConfig <- function( name, defaultVal=NULL ) {
    return( str_trim( prop ) )
 }
 
-
-plotPlainText <- function(textToPrint){
+# Create an empty plot and add text. 
+# Ideal when explaining why a plot is blank, or plot explainations within a plot document.
+plotPlainText <- function(textToPrint, cex=1){
   plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
-  text(labels=textToPrint, x = 0.5, y = 0.5, cex = 1.6, col = "black")
+  text(labels=textToPrint, x = 0.5, y = 0.5, cex = cex, col = "black")
 }
 
 # Create status indicator file by appending suffix of _Success or _Failure if any error messages logged

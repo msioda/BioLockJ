@@ -25,7 +25,7 @@ import biolockj.util.ModuleUtil;
 /**
  * This BioModule will run immediately after QiimeClosedRefClassifier if multiple otu_table.biom files were created.
  */
-public class MergeOtuTables extends ScriptModuleImpl implements ScriptModule
+public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModule
 {
 
 	/**

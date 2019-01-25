@@ -43,7 +43,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 		{
 			File hn2InputSeq = file;
 			final ArrayList<String> lines = new ArrayList<>();
-			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				lines.add( getMergeReadLine( file ) );
 				hn2InputSeq = getMergedReadFile( file );
@@ -118,7 +118,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			lines.add( "function " + FUNCTION_CONCAT_PAIRED_READS + "() {" );
 			lines.add(
@@ -200,7 +200,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 
 	private Map<File, File> getPairedReads() throws Exception
 	{
-		if( pairedReads == null && Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( pairedReads == null && Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			pairedReads = SeqUtil.getPairedReads( getInputFiles() );
 		}

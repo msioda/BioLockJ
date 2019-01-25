@@ -478,7 +478,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 		{
 			for( final File f: seqsWithPrimersTrimmed.keySet() )
 			{
-				if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
+				if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
 				{
 					validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
 							Long.toString( seqsWithPrimersTrimmed.get( f ) ) );

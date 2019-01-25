@@ -95,13 +95,13 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		else
 		{
 			Log.info( getClass(),
-					demuxStrategy + " so Demultiplexer will use the Config properties [" + Config.INPUT_TRIM_PREFIX
-							+ " & " + Config.INPUT_TRIM_SUFFIX
+					demuxStrategy + " so Demultiplexer will use the Config properties [" + SeqUtil.INPUT_TRIM_PREFIX
+							+ " & " + SeqUtil.INPUT_TRIM_SUFFIX
 							+ "] to extract the Sample ID from the sequence header" );
-			Log.info( getClass(), "Config property [ " + Config.INPUT_TRIM_PREFIX + " ] = "
-					+ Config.getString( Config.INPUT_TRIM_PREFIX ) );
-			Log.info( getClass(), "Config property [ " + Config.INPUT_TRIM_SUFFIX + " ] = "
-					+ Config.getString( Config.INPUT_TRIM_SUFFIX ) );
+			Log.info( getClass(), "Config property [ " + SeqUtil.INPUT_TRIM_PREFIX + " ] = "
+					+ Config.getString( SeqUtil.INPUT_TRIM_PREFIX ) );
+			Log.info( getClass(), "Config property [ " + SeqUtil.INPUT_TRIM_SUFFIX + " ] = "
+					+ Config.getString( SeqUtil.INPUT_TRIM_SUFFIX ) );
 
 		}
 		super.checkDependencies();
@@ -116,7 +116,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		Config.setConfigProperty( Config.INTERNAL_MULTIPLEXED, Config.FALSE );
+		Config.setConfigProperty( SeqUtil.INTERNAL_MULTIPLEXED, Config.FALSE );
 		// * If {@value biolockj.util.MetaUtil#META_REQUIRED}, verify each sequence has a metadata record.
 		// if( Config.getBoolean( MetaUtil.META_REQUIRED ) )
 		// {
@@ -133,7 +133,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				sb.append( "# Forward Reads: " + numTotalFwReads + RETURN );
 				sb.append( "# Reverse Reads: " + numTotalRvReads + RETURN );
@@ -369,7 +369,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	protected Map<String, Set<String>> getValidFwHeaders() throws Exception
 	{
 		final Map<String, Set<String>> validHeaders = new HashMap<>();
-		final boolean isPaird = Config.getBoolean( Config.INTERNAL_PAIRED_READS );
+		final boolean isPaird = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS );
 		final boolean isCombined = isPaird && getInputFiles().size() == 1;
 
 		Log.info( getClass(), "Get FW Headers from temp files "
@@ -426,7 +426,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		}
 
 		String msg = " # valid reads = ";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.requireBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			msg = " # valid fw read headers = ";
 		}
@@ -449,7 +449,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	protected Map<String, Set<String>> getValidHeaders() throws Exception
 	{
 		final Map<String, Set<String>> validFwHeaders = getValidFwHeaders();
-		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			Log.info( getClass(), "Demultiplexing unpaired reads...# " + validFwHeaders.size() );
 			return validFwHeaders;
@@ -532,17 +532,17 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			final String defaultSeqHeadChar = Config.requireString( SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
 
-			if( Config.getString( Config.INPUT_TRIM_PREFIX ) == null )
+			if( Config.getString( SeqUtil.INPUT_TRIM_PREFIX ) == null )
 			{
-				Config.setConfigProperty( Config.INPUT_TRIM_PREFIX, defaultSeqHeadChar );
-				Log.info( getClass(), "====> Set: " + Config.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
+				Config.setConfigProperty( SeqUtil.INPUT_TRIM_PREFIX, defaultSeqHeadChar );
+				Log.info( getClass(), "====> Set: " + SeqUtil.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
 			}
 
-			if( Config.getString( Config.INPUT_TRIM_SUFFIX ) == null )
+			if( Config.getString( SeqUtil.INPUT_TRIM_SUFFIX ) == null )
 			{
-				Config.setConfigProperty( Config.INPUT_TRIM_SUFFIX, SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
+				Config.setConfigProperty( SeqUtil.INPUT_TRIM_SUFFIX, SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
 				Log.info( getClass(),
-						"====> Set: " + Config.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
+						"====> Set: " + SeqUtil.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
 			}
 		}
 	}
@@ -663,10 +663,10 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	private String getFileSuffix( final String name, final String header ) throws Exception
 	{
 		String suffix = "";
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			suffix = isForwardRead( name, header ) ? Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX )
-					: Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
+			suffix = isForwardRead( name, header ) ? Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX )
+					: Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX );
 		}
 
 		return suffix + "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
@@ -747,7 +747,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 	private boolean isForwardRead( final String name, final String header ) throws Exception
 	{
-		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			return true;
 		}

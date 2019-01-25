@@ -17,7 +17,7 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
-import biolockj.module.implicit.qiime.MergeOtuTables;
+import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.util.*;
 
@@ -104,10 +104,10 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	public List<Class<?>> getPostRequisiteModules() throws Exception
 	{
 		final List<Class<?>> postReqs = new ArrayList<>();
-		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
+		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED )
 				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( SCRIPT_BATCH_SIZE ) ) )
 		{
-			postReqs.add( MergeOtuTables.class );
+			postReqs.add( MergeQiimeOtuTables.class );
 		}
 
 		postReqs.addAll( super.getPostRequisiteModules() );

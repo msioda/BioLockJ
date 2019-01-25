@@ -134,7 +134,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 		removeBadFiles();
 
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			verifyPairedSeqs();
 		}

@@ -30,7 +30,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
 	{
 		final List<List<String>> data = new ArrayList<>();
-		final boolean isMultiLine = Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ );
+		final boolean isMultiLine = Config.getBoolean( SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ );
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 		// final String ext = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
@@ -49,7 +49,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 				lines.add( unzip( f, filePath ) );
 			}
 
-			if( Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
 			{
 				lines.add( convert454( filePath, fileId + dirExt, outDir ) );
 			}
@@ -109,7 +109,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
 			lines.add( "}" );
 		}
 
-		if( Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
 		{
 			lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
 			lines.add( "cat $1 | " + Config.getExe( Config.EXE_AWK )

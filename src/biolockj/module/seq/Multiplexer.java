@@ -216,7 +216,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	private long getNumReads( final File file ) throws Exception
 	{
 		Long numReads = null;
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			numReads = rvMap.get( file.getName() );
 		}
@@ -278,7 +278,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		Long numReads = getNumReads( file );
 		numReads++;
 
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			rvMap.put( file.getName(), numReads );
 			totalNumRvReads++;

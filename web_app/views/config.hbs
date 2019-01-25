@@ -2,7 +2,7 @@
 <link rel="stylesheet" type="text/css" href="./stylesheets/config.css" />
 <div class="nav-bar">
   <div class="dropdown">
-    <button class="dropbtn" onclick="projectOptions()">Projects</button>
+    <button class="dropbtn" onclick="projectOptions()">Projects (Click here to start)</button>
     <div class="dropdown-content" id="projects">
       <a onclick="newProj()" href="#">New</a>
       <a onclick="openProjDisplay()" href="#">Open local config file</a>
@@ -15,7 +15,7 @@
 
 <div id="openConfig" class="menu">
   <form class='' id=localFileForm>
-    Select BiolockJ configuration file
+    Select BioLockJ configuration file
     <input type="file" accept=".txt,.properties" id="localFile">
   </form>
 </div>
@@ -39,6 +39,7 @@
     <button class="tablinks" onclick="openTab(event, 'kraken2Tab')">Kraken2</button>
     <button class="tablinks" onclick="openTab(event, 'metaphlanTab')">MetaPhlAn</button>
     <button class="tablinks" onclick="openTab(event, 'slimmTab')">SLIMM</button>
+    <button id='AwsButton' class="tablinks hidden" onclick="openTab(event, 'AWS')">AWS</button>
   </div>
   <!--tabbed menu-->
 <form id="configForm" class="" action="" method="post">
@@ -626,7 +627,51 @@ For fastq, typically “@”.)<h5></p>
 
 </form> <!--End of configForm -->
 
-</div>
+  <div id="AWS" class="tabcontent">
+    <fieldset>
+      <legend>AWS Set-up</legend>
+    <form id='AwsForm' class="" action="#" method="post">
+      <p>*AWS Secret Key ID:*<input type="text" name="AWSACCESSKEYID"></p>
+      <p>AWS Secret Access Key <input required type="text" name="AWSSECRETACCESSKEY"></p>
+      <p>Please select the geographic area in which you live. Subsequent configuration
+    questions will narrow this down by presenting a list of cities, representing
+    the time zones in which they are located.
+      <select class="" name="REGION">
+        <option default value="us-east-1">us-east-1</option>
+        <option value="1">Africa</option>
+        <option value="2">America</option>
+        <option value="3">Antarctica</option>
+        <option value="4">Australia</option>
+        <option value="5">Arctic</option>
+        <option value="6">Asia</option>
+        <option value="7">Atlantic</option>
+        <option value="8">Europe</option>
+        <option value="9">Indian</option>
+        <option value="10">Pacific</option>
+        <option value="11">SystemV</option>
+        <option value="10">Pacific</option>
+        <option value="11">SystemV</option>
+        <option value="12">US</option>
+        <option value="13">Etc</option>
+      </select>
+      </p>
+      <p>Default Output Format: <select class="" name="OUTPUTFORMAT">
+        <option default value="text">text</option>
+      </select></p>
+      <p>Profile:
+        <select required class="" name="PROFILE">
+          <option value="default">default</option>
+        </select>
+      </p>
+      <p id="AWSOutput"></p>
+      <button type="button" id='submitAWS' name="button">Start AWS Service</button>
+    </form>
+  </fieldset>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+</div><!-- End Menu tab -->
 
 <!-- The Modal that appears after ready to launch button is pressed -->
 <div id="launchConsole" class="modal">
@@ -635,13 +680,23 @@ For fastq, typically “@”.)<h5></p>
     <span class="closeModal">&times;</span>
     <div id='progress'></div>
     <div id='log'></div>
-
-  <div id="restartOrErase" class="hidden">
-    <span id="restartOrEraseText"></span><br>
-    <button type="button" id='restartProject' name="restartProject">Restart project from last check point</button>
-    <button type="button" id="eraseRestart" name="eraseRestart">Erase previsous project with this name and then launch BioLockJ</button>
-  </div>
-    <button type="button" class='hidden' id="launchBlj" name="launchBlj">Launch</button>
+  <form id="projectLaunchOptions">
+    <fieldset>
+      <legend>Project Launch Options</legend>
+      Use this configuation to start a new project.
+      <input type="radio" name="projLaunch" value="launchNew" checked>
+      <p id="projOptFieldSet"></p>
+    </fieldset>
+    <fieldset>
+      <legend>If restarting, you may restart from last checkpoint (keep previous progress) or from beginning (remove all progress).</legend>
+      <select class="" name="restartOption">
+        <option value="">Options for restarting a project</option>
+        <option value="restartFromCheckPoint">Restart from last checkpoint (keep previous progress)</option>
+        <option value="eraseThenRestart">Restart from beginning (erase all current progress)</option>
+      </select>
+    </fieldset>
+  </form>
+    <button type="button" class='' id="launchBlj" name="launchBlj">Launch</button>
   </div>
 
 </div><!-- end launch console -->
@@ -679,6 +734,8 @@ For fastq, typically “@”.)<h5></p>
   <span class='hidden' id='hackForDownload'></span>
   <!-- <button form='configForm' type="submit" name="button" class='hidden'></button> -->
 </div>
+
+
 
 <script type="text/javascript" src="./javascripts/config_menus.js"></script>
 <script type="text/javascript" src="./javascripts/config_config.js"></script>

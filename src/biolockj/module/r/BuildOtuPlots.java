@@ -12,7 +12,6 @@
 package biolockj.module.r;
 
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 import biolockj.module.ScriptModule;
 import biolockj.util.BioLockJUtil;
@@ -45,7 +44,7 @@ public class BuildOtuPlots extends R_Module implements ScriptModule
 	 * @throws Exception if errors occur
 	 */
 	@Override
-	public Set<String> scpExtensions() throws Exception
+	public TreeSet<String> scpExtensions() throws Exception
 	{
 		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
 		set.add( PDF_EXT.substring( 1 ) );

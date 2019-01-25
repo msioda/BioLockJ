@@ -70,8 +70,8 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
-		Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
+		Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX );
+		Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX );
 		getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
 
 		if( !SeqUtil.isFastQ() )
@@ -79,13 +79,13 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 			throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
 		}
 
-		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			throw new Exception( getClass().getName()
 					+ " requires paired input data as a combined multiplexed file or as separate files named with "
 					+ " matching sample IDs ending in the forward & reverse file suffix values: "
-					+ Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX ) + " & "
-					+ Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX ) );
+					+ Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX ) + " & "
+					+ Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX ) );
 		}
 	}
 
@@ -98,7 +98,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	{
 		final String metaColName = getMetaColName();
 		super.cleanUp();
-		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, Config.FALSE );
+		Config.setConfigProperty( SeqUtil.INTERNAL_PAIRED_READS, Config.FALSE );
 
 		final File updatedMeta = new File(
 				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );

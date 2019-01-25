@@ -50,21 +50,21 @@ public class BioModuleFactory
 			bioModules.addAll( constructModule( ImportMetadata.class.getName() ) );
 			configModules.remove( ImportMetadata.class.getName() );
 
-			if( Config.getBoolean( Config.INTERNAL_MULTIPLEXED ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED ) )
 			{
 				info( "Set required 2nd module (for multiplexed data): " + getDefaultDemultiplexer() );
 				bioModules.addAll( constructModule( getDefaultDemultiplexer() ) );
 				configModules.remove( getDefaultDemultiplexer() );
 			}
 
-			if( Config.getBoolean( Config.INTERNAL_IS_MULTI_LINE_SEQ ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
 			{
 				bioModules.addAll( constructModule( getDefaultFastaConverter() ) );
 				configModules.remove( getDefaultFastaConverter() );
 			}
 
 			if( SeqUtil.piplineHasSeqInput() && Config.getBoolean( Config.REPORT_NUM_READS )
-					&& !Config.getBoolean( Config.INTERNAL_PAIRED_READS )
+					&& !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS )
 					&& !configModules.contains( SeqFileValidator.class.getName() )
 					&& !configModules.contains( TrimPrimers.class.getName() ) )
 			{

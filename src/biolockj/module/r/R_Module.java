@@ -292,7 +292,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @return Set of file extensions
 	 * @throws Exception if errors occur
 	 */
-	public Set<String> scpExtensions() throws Exception
+	public TreeSet<String> scpExtensions() throws Exception
 	{
 		final TreeSet<String> set = new TreeSet<>();
 		set.add( R_EXT.substring( 1 ) );

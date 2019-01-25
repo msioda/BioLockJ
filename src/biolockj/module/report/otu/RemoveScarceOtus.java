@@ -318,6 +318,6 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 	 * {@link biolockj.Config} Positive Double property {@value #MIN_OTU_THRESHOLD} defines minimum percentage of
 	 * samples that must contain an OTU for it to be kept.
 	 */
-	protected static final String MIN_OTU_THRESHOLD = "removeScarceOtus.minOtuThreshold";
+	protected static final String MIN_OTU_THRESHOLD = "removeScarceOtus.cutoffPct";
 
 }

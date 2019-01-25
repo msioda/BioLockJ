@@ -50,7 +50,7 @@ public class CalculateStats extends R_Module implements BioModule
 	 * @throws Exception if errors occur
 	 */
 	@Override
-	public Set<String> scpExtensions() throws Exception
+	public TreeSet<String> scpExtensions() throws Exception
 	{
 		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
 		set.add( TSV_EXT.substring( 1 ) );
