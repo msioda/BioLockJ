@@ -247,12 +247,12 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 								seqRvBarcodes++;
 							}
 						}
-
-						if( read.size() == SeqUtil.getNumLinesPerRead() )
-						{
-							seqLines.addAll( read );
-							read.clear();
-						}
+					}
+					
+					if( read.size() == SeqUtil.getNumLinesPerRead() )
+					{
+						seqLines.addAll( read );
+						read.clear();
 					}
 					
 					if( seqLines.size() >= NUM_LINES_TEMP_FILE )
