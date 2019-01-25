@@ -11,9 +11,21 @@
  */
 package biolockj.module.r;
 
+import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
+import biolockj.Config;
+import biolockj.Pipeline;
+import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
+import biolockj.module.classifier.r16s.QiimeOpenRefClassifier;
+import biolockj.module.report.taxa.BuildTaxaTables;
+import biolockj.util.ModuleUtil;
 
 /**
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
@@ -46,4 +58,39 @@ public class BuildEffectSizePlots extends R_Module implements ScriptModule
 		set.add( PDF_EXT.substring( 1 ) );
 		return set;
 	}
+	
+	
+
+	@Override
+	public void executeTask() throws Exception
+	{
+		// TODO Auto-generated method stub
+		super.executeTask();
+		if( Config.getBoolean( "r.plotEffectSize.foldChange" ) )
+		{
+
+			
+	
+			Config.setConfigProperty( "internal.parserModule", getTaxaTablePath() );
+			
+		}
+	}
+	
+	
+	private  String getTaxaTablePath() throws Exception
+	{
+		final IOFileFilter ff = new WildcardFileFilter( "*" + BuildTaxaTables.class.getSimpleName() );
+		Collection<File> files = FileUtils.listFiles( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ),
+				ff, HiddenFileFilter.VISIBLE );
+		
+		if( !files.isEmpty() )
+		{
+			File f = files.iterator().next();
+			return f.getAbsolutePath() + File.separator + BioModule.OUTPUT_DIR;
+		}
+
+		
+		return "";
+	}
+
 }
