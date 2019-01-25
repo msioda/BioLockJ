@@ -5,31 +5,31 @@ FROM blj_basic_java
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
 ARG BLJ_DATE
-ARG BLJ_VERSION
+ARG VER
 ENV BLJ=/app/biolockj
-ENV BLJ_PROJ=/pipeline
-ENV BLJ_JAR=$BLJ/dist/BioLockJ.jar
+ENV BLJ_PROJ=/pipelines
 ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
-ENV BLJ_TAR=biolockj_${BLJ_VERSION}.tgz
-ENV BLJ_RELEASE=$BLJ_URL/${BLJ_VERSION}/$BLJ_TAR
+ENV BLJ_TAR=biolockj_${VER}.tgz
 
-ENV PEAR_VERSION="pear-0.9.10-bin-64"
-ENV PEAR_URL="https://github.com/mikesioda/BioLockJ_Dev/releases/download/v1.0"
-
-#2.) ============ Install Ubuntu Prereqs =================
-RUN apt-get update && \
-	apt-get install -y software-properties-common && \
-	apt-get upgrade -y && \
-   	apt-get install -y openjdk-8-jre-headless
-
-#3.) ================= Install BioLockJ =================
+#2.) ================= Install BioLockJ =================
 RUN echo ${BLJ_DATE} && \
 	mkdir $BLJ && \
 	cd $BLJ && \
-	wget $BLJ_RELEASE_URL && \
-	tar -xzf $BLJ_TAR && \
-	chmod -R 770 $BLJ && \
-	rm -f $BLJ_TAR && rm -rf $BLJ/[slip]* && rm -rf $BLJ/resources/[blid]*
+	wget -qO- $BLJ_URL/${VER}/$BLJ_TAR | bsdtar -xzf- && \
+	rm -rf $BLJ/[lip]* && rm -rf $BLJ/resources/[blid]* && rm -rf $BLJ/src && \
+	cp $BLJ/script/* /usr/local/bin
+	
+	
+	
+RUN cd /usr/local/bin && \
+	wget -qO- $PEAR_URL/${VER}.tgz | bsdtar -xzf- && \
+	mv pear/* . && \
+	rm -rf pear && \
+	mv ${VER} pear
+	
+#3.) ============ Update Ubuntu ~/.bashrc =================
+echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc
+echo 'alias goblj=blj_go' >> ~/.bashrc
 
 #4.) =======================  Cleanup  ==========================
 RUN	apt-get clean && \
@@ -42,4 +42,4 @@ RUN	apt-get clean && \
 	
 
 #5.) ================= Container Command =================
-CMD [ "java", "-jar", "$BLJ_JAR", "$BLJ_OPTIONS" ]
+CMD [ "biolockj", "$BLJ_OPTIONS" ]

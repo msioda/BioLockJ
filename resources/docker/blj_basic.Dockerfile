@@ -10,11 +10,12 @@ RUN mkdir /config && \
 	mkdir /input && \
 	mkdir /log && \
 	mkdir /meta && \
-	mkdir /pipeline && \
+	mkdir /pipelines && \
 	mkdir /primer
 
 #2.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
+	echo 'export PS1='> $(basename $PWD): ' >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \
 	echo 'alias ..="cd .."' >> ~/.bashrc && \
 	echo 'alias ls="ls -lh --color=auto"' >> ~/.bashrc && \

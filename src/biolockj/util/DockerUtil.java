@@ -253,9 +253,9 @@ public class DockerUtil
 	public static final String CONTAINER_META_DIR = File.separator + "meta";
 
 	/**
-	 * All containers mount {@value biolockj.Config#INTERNAL_PIPELINE_DIR} to the container "pipeline" volume
+	 * All containers mount {@value biolockj.Config#INTERNAL_PIPELINE_DIR} to the container "pipelines" volume
 	 */
-	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipeline";
+	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipelines";
 
 	/**
 	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer"

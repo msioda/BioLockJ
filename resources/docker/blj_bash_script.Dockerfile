@@ -4,20 +4,19 @@ FROM blj_basic
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
-ENV PEAR_VERSION="pear-0.9.10-bin-64"
+ARG VER
 ENV PEAR_URL="https://github.com/mikesioda/BioLockJ_Dev/releases/download/v1.0"
 
 #2.) ================= Install PEAR =================
 RUN cd /usr/local/bin && \
-	wget -qO- $PEAR_URL/${PEAR_VERSION}.tgz | bsdtar -xzf- && \
+	wget -qO- $PEAR_URL/${VER}.tgz | bsdtar -xzf- && \
 	mv pear/* . && \
 	rm -rf pear && \
-	mv ${PEAR_VERSION} pear
+	mv ${VER} pear
 	
-
 #3.) =======================  Cleanup =================
 RUN	find / -name *python* | xargs rm -rf && \
 	rm -rf /usr/share/*
 
 #4.) ================= Container Command =================
-ENTRYPOINT [ "bash", "$COMPUTE_SCRIPT" ]
+CMD [ "$COMPUTE_SCRIPT" ]

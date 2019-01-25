@@ -25,7 +25,7 @@ startBrowser() {
 docker run --rm -p 8080:3000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $BLJ/resources/config/gui:/config  \
-  -v $BLJ_PROJ:/pipeline:delegated  \
+  -v $BLJ_PROJ:/pipelines:delegated  \
   -v $BLJ/web_app/logs:/log:delegated  \
   -e "HOST_BLJ_PROJ=$BLJ_PROJ" \
   -d $DOCKER_HUB_USER/blj_webapp
