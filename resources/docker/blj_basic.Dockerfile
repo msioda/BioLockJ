@@ -4,10 +4,13 @@ FROM ubuntu:18.04
 
 #1.) ================= Setup Env ==================================
 ARG DEBIAN_FRONTEND=noninteractive
-
+ENV BLJ=/app/biolockj
+ENV BLJ_PROJ=/pipelines
+ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
 
 #2.) ============ Make standard dirs 
-RUN mkdir /config && \
+RUN mkdir /app && \
+	mkdir /config && \
 	mkdir /input && \
 	mkdir /log && \
 	mkdir /meta && \
@@ -31,6 +34,8 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc && \
+	RUN echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
+	echo 'alias goblj=blj_go' >> ~/.bashrc
 
 #4.) ============ Install Ubuntu Prereqs =================
 RUN apt-get update && \
@@ -39,6 +44,7 @@ RUN apt-get update && \
 		apt-utils \
 		bsdtar \
 		gawk \
+		nano \
 		tzdata \
 		wget
 

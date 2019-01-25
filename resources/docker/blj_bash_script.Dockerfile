@@ -15,8 +15,11 @@ RUN cd /usr/local/bin && \
 	mv ${VER} pear
 	
 #3.) =======================  Cleanup =================
-RUN	find / -name *python* | xargs rm -rf && \
-	rm -rf /usr/share/*
-
+RUN	apt-get clean && \
+	find / -name *python* | xargs rm -rf
+	rm -rf /usr/share/* && \
+	rm -rf /var/cache/* && \
+	rm -rf /var/lib/apt/lists/* 
+	
 #4.) ================= Container Command =================
 CMD [ "$COMPUTE_SCRIPT" ]
