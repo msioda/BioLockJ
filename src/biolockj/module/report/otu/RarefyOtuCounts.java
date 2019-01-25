@@ -336,13 +336,13 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 	 * {@link biolockj.Config} Posivite Double property to define minimum percentage of samples that must contain an
 	 * OTU. Low abundance OTUs will be removed: {@value #LOW_ABUNDANT_CUTOFF}
 	 */
-	protected static final String LOW_ABUNDANT_CUTOFF = "postRarefier.lowAbundantCutoff";
+	protected static final String LOW_ABUNDANT_CUTOFF = "rarefyOtuCounts.lowAbundantCutoff";
 
 	/**
 	 * {@link biolockj.Config} Positive Integer property {@value #NUM_ITERATIONS} defines the number of iterations to
 	 * randomly select the {@value #QUANTILE}% of OTUs.
 	 */
-	protected static final String NUM_ITERATIONS = "postRarefier.iterations";
+	protected static final String NUM_ITERATIONS = "rarefyOtuCounts.iterations";
 
 	/**
 	 * {@link biolockj.Config} Positive Double property {@value #QUANTILE} defines quantile for rarefication. The number
@@ -350,11 +350,11 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 	 * replacement until they have the same number of OTUs as the quantile sample value. A quantile of 0.50 returns the
 	 * median value.
 	 */
-	protected static final String QUANTILE = "postRarefier.quantile";
+	protected static final String QUANTILE = "rarefyOtuCounts.quantile";
 
 	/**
 	 * {@link biolockj.Config} Boolean property {@value #REMOVE_LOW_ABUNDANT_SAMPLES} if TRUE, all samples below the
 	 * quantile sample are removed.
 	 */
-	protected static final String REMOVE_LOW_ABUNDANT_SAMPLES = "postRarefier.removeSamplesBelowQuantile";
+	protected static final String REMOVE_LOW_ABUNDANT_SAMPLES = "rarefyOtuCounts.removeSamplesBelowQuantile";
 }
