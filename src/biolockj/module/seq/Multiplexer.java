@@ -18,9 +18,7 @@ import biolockj.Log;
 import biolockj.Pipeline;
 import biolockj.module.*;
 import biolockj.module.report.Email;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule will merge sequence files into a single combined sequence file, with either the sample ID or an
@@ -97,7 +95,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	public void runModule() throws Exception
 	{
 		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
-		if( !hasValidBarcodes() )
+		if( !DemuxUtil.hasValidBarcodes() )
 		{
 			Log.info( getClass(),
 					"Multiplexer setting Sample ID in sequence header for identification since valid barcodes are not provided" );
@@ -124,7 +122,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		final String headerChar = seqLines.get( 0 ).substring( 0, 1 );
 		final String sampleId = SeqUtil.getSampleId( file.getName() );
 		final long numReads = incrementNumReads( file );
-		if( hasValidBarcodes() )
+		if( DemuxUtil.hasValidBarcodes() )
 		{
 			final String barcode = MetaUtil.getField( sampleId, Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
 			if( header.contains( barcode ) )
@@ -232,46 +230,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		return numReads;
 	}
 
-	private boolean hasValidBarcodes()
-	{
-		if( useBarcode != null )
-		{
-			return useBarcode;
-		}
-		try
-		{
-			useBarcode = false;
-			final String barCodeCol = Config.getString( MetaUtil.META_BARCODE_COLUMN );
-			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) )
-			{
-				final Set<String> sampleIds = new HashSet<>( MetaUtil.getSampleIds() );
-				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol ) );
-				sampleIds.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-				vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-				if( sampleIds.size() != vals.size() )
-				{
-					Log.warn( getClass(),
-							"Multiplexer setting Sample ID in output instead of barcode because dataset contains "
-									+ sampleIds.size() + " unique Sample IDs but only " + vals.size()
-									+ " unique barcodes" );
-					for( final String id: MetaUtil.getSampleIds() )
-					{
-						Log.warn( getClass(), "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
-					}
-				}
-				else
-				{
-					useBarcode = true;
-				}
-			}
-		}
-		catch( final Exception ex )
-		{
-			Log.error( getClass(), "" + ex.getMessage(), ex );
-		}
-
-		return useBarcode;
-	}
+	
 
 	private long incrementNumReads( final File file ) throws Exception
 	{
@@ -297,6 +256,5 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	private final Map<String, Long> rvMap = new HashMap<>();
 	private long totalNumFwReads = 0L;
 	private long totalNumRvReads = 0L;
-	private Boolean useBarcode = null;
 	private static final String ID_COL = "multiplexer.idCol";
 }

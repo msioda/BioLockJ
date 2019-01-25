@@ -218,8 +218,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 				{
 					read.add( line );
 
-					if( Config.getString( MetaUtil.META_BARCODE_COLUMN ) != null && 
-							!MetaUtil.getFieldValues( Config.getString( MetaUtil.META_BARCODE_COLUMN ) ).isEmpty() )
+					if( DemuxUtil.hasValidBarcodes() )
 					{	
 						if( testFile == null && read.size() == 1 )
 						{
