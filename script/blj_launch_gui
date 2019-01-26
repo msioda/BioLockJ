@@ -7,7 +7,7 @@
 ###################################################################
 
 
-# check for options to start the browser		
+# check for options to start the browser
 startBrowser() {
   sleep 2
   #usefull: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
@@ -27,10 +27,10 @@ startBrowser() {
 docker run --rm -p 8080:3000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $BLJ/resources/config/gui:/config  \
+  -v $BLJ/web_app/logs:/app/biolockj/web_app/logs  \
   -v $BLJ_PROJ:/pipeline:delegated  \
   -v $BLJ/web_app/logs:/log:delegated  \
   -e "HOST_BLJ_PROJ=$BLJ_PROJ" \
   -d biolockj/webapp
-  
+
 startBrowser
-		
