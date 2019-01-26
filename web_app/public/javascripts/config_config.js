@@ -931,7 +931,7 @@ document.getElementById('submitAWS').addEventListener('click', function(evt){
 })//document.getElementById('submitAWS')
 
 
-document.getElementById('project.env').addEventListener('click', function(evt){
+document.getElementById('project.env').addEventListener('select', function(evt){
   const AwsButton = document.getElementById('AwsButton');
   switch (this.value) {
     case 'aws':
