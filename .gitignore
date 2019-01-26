@@ -8,5 +8,10 @@ BioLockJ.jar
 *_not4git*
 .Rproj.user
 .Rhistory
+<<<<<<< HEAD
 .RData
 *.Rproj
+=======
+/web_app/logs/*
+/resources/config/gui/*
+>>>>>>> Keep web_app error logs and GUI generated .properties files from being added to git repository
