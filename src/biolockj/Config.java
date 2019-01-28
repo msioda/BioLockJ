@@ -302,6 +302,8 @@ public class Config
 	 */
 	public static String getString( String propertyName )
 	{
+		usedProps.add( propertyName );
+		
 		String val = null;
 		final Object obj = props.getProperty( propertyName );
 		if( obj == null )
@@ -328,9 +330,6 @@ public class Config
 		{
 			return null;
 		}
-		
-		
-		usedProps.add( propertyName );
 
 		return val;
 	}
@@ -833,16 +832,16 @@ public class Config
 	public static final String INTERNAL_DEFAULT_CONFIG = "internal.defaultConfig";
 
 	/**
-	 * {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_DIR}<br>
+	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_DIR}<br>
 	 * Stores the path of the pipeline root directory path set by the application runtime code.
 	 */
-	public static final String INTERNAL_PIPELINE_DIR = "internal.pipelineDir";
+	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
 
 	/**
-	 * {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_NAME}<br>
+	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_NAME}<br>
 	 * Stores the root name of the pipeline (derived from the configuration file name).
 	 */
-	public static final String INTERNAL_PIPELINE_NAME = "internal.pipelineName";
+	public static final String PROJECT_PIPELINE_NAME = "project.pipelineName";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>

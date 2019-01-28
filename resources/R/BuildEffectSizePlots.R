@@ -16,235 +16,203 @@
 # r.plotEffectSize.foldChange=N
 ### also uses:
 # r.pvalCutoff
-# internal.numMetaCols
+# R_internal.numMetaCols
 # internal.parserModule # if doing fold change
 ###
 
-
+getMetaData() <- function(){
+	return( NULL )
+}
 
 # The main method is designed to integrate this module with BiolockJ.  
 # It handles pulling data from other modules and options from the BiolockJ properties.
 main <- function(){
 	# get config option for pvalStar, pvalIncludeBar, maxBars, userOTUs, 
-	useParametric = getProperty("r.plotEffectSize.parametricPval", TRUE)
-	useAdjustedPs = getProperty("r.plotEffectSize.useAdjustedPvals", TRUE)
+	useParametric = getProperty("r.plotEffectSize.parametricPval", FALSE)
+	useAdjustedPs = getProperty("r.plotEffectSize.useAdjustedPvals", FALSE)
 	pvalStar = getProperty("r.pvalCutoff", 0.05)
 	pvalIncludeBar = getProperty("r.plotEffectSize.excludePvalAbove", 1)
 	maxBars = getProperty("r.plotEffectSize.maxNumTaxa", 40)
 	userOTUs = getProperty("r.plotEffectSize.taxa", NULL)
 	doFoldChange = getProperty("r.plotEffectSize.foldChange", FALSE) 
-	doCohensD = getProperty("r.plotEffectSize.cohensD", TRUE) 
-	doRSquared = getProperty("r.plotEffectSize.rSquared", TRUE) 
-	#
+	doCohensD = getProperty("r.plotEffectSize.cohensD", FALSE) 
+	doRSquared = getProperty("r.plotEffectSize.rSquared", FALSE) 
+	
 	# get metadata
-	if( doDebug() ) print( paste( "metadata file:", getMetaDataFile() ) )
 	meta = getMetaData()
-	#
-	for (otuLevel in getProperty("report.taxonomyLevels") ) {
-		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildEffectSizePlots_", otuLevel, ".log") ) )
-		if( doDebug() ) print( paste( "processing otuLevel:", otuLevel ) )
+	
+	for (level in taxaLevels() ) {
+		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildEffectSizePlots_", level, ".log") ) )
+		logInfo( "Processing level", level )
 		# make a new pdf output file, specify page size
-		outFileName = getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU-EffectSizePlots.pdf") )
-		if( doDebug() ) print( paste( "Creating file:", outFileName ) )
+		outFileName = getPath( file.path(getModuleDir(), "output"), paste0(level, "_OTU-EffectSizePlots.pdf") )
+		logInfo( "Creating file", outFileName )
 		height=10
 		pdf(file=outFileName, paper="letter", width=7.5, height=height, onefile=TRUE)
 		par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
 		p = par(no.readonly = TRUE)
-		resetPar <- function(){ # use this to reset par to the values it has as of right now.
+		# use this to reset par to the values it has as of right now
+		resetPar <- function(){ 
 			par(p)
 		}
-		#
+
 		# get normalized OTU vals
-		inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
-		if( doDebug() ) print( paste( "inputFile:", inputFile ) )
-		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"),
-													 comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1)
-		lastOtuCol = ncol(otuTable) - getProperty("internal.numMetaCols")
-		otuTable = otuTable[1:lastOtuCol]
-		if( doDebug() ){ print( paste0("otuTable has ", nrow(otuTable), " rows and ", ncol(otuTable), " columns."))}
-		#
+		taxaTable = getTaxaTable( level )
+		if( is.null( taxaTable ) ) { next }
+		
+		lastOtuCol = ncol(taxaTable) - numMetaCols()
+		taxaTable = taxaTable[1:lastOtuCol]
+		logInfo( c("taxaTable has", nrow(taxaTable), "rows and", ncol(taxaTable), "columns.") )
+		
 		# get pvals from calc stats
-		pvalFile = getPipelineFile( buildStatsFileSuffix(parametric=useParametric, adjusted=useAdjustedPs, level=otuLevel) )
-		if( doDebug() ) print( paste( "p-value file:", pvalFile ) )
-		pvalTable = read.table( pvalFile, check.names=FALSE, header=TRUE, sep="\t", row.names = 1)
-		if( doDebug() ){ print( paste0("pvalTable has ", nrow(pvalTable), " rows and ", ncol(pvalTable), " columns."))}
-		#
+		pvalTable = getStatsTable( level, useParametric, useAdjustedPs )
+		logInfo( c( "pvalTable has", nrow(pvalTable), "rows and", ncol(pvalTable), "columns." ) )
+		
 		# get r-squared values from calc stats
 		if (doRSquared){
-			if( doDebug() ) print( paste( "Prepareing r-squared plot for each of", length(getReportFields()), "report fields.") )
-			r2File = getPipelineFile( buildStatsFileSuffix(parametric=NA, level=otuLevel) )
-			if( doDebug() ) print( paste( "r-squared file:", r2File ) )
-			r2Table = read.table( r2File, check.names=FALSE, header=TRUE, sep="\t", row.names = 1)
-			if( doDebug() ){ print( paste0("r-squared table has ", nrow(r2Table), " rows and ", ncol(r2Table), " columns."))}
+			r2Table = getStatsTable( level )
+			logInfo( c( "r-squared table has", nrow(r2Table), "rows and", ncol(r2Table), "columns" ) )
 		}
-		# 
-		if (doCohensD){
-			if( doDebug() ) print( paste( "Prepareing effect size plot for each of", length(getBinaryFields()), "report fields.") )
+		 
+		if ( doCohensD ){
+			logInfo( c( "Preparing effect size plot for each of", length(getBinaryFields()), "report fields." ) )
 		}
-		#
+		
 		# Get the raw counts from the parser and calc simple relative abundance---only if a parser module is given.
 		# Don't bother with this unless we will use it, ie: there are binary attributes and we plan to do fold change
 		if (!is.null(getProperty("internal.parserModule")) & length(getBinaryFields()) > 0 & doFoldChange){
-			if( doDebug() ) print( paste( "Prepareing fold change plot for each of", length(getBinaryFields()), "report fields.") )
-			if( doDebug() ) print( "retrieving raw counts..." )
-			relAbundance = normalize(readRawCounts(otuLevel)[[1]])
+			logInfo( "Preparing fold change plot for each of", length(getBinaryFields()), "report fields." ) )
+			logInfo( "retrieving raw counts..." )
+			relAbundance = normalize(readRawCounts(level)[[1]])
 		}else{
 			relAbundance=NULL
 		}
-		#
-		if( doDebug() ) print( paste( "Prepareing plot for each of", length(getReportFields()), "report fields. ",
-																	length(getBinaryFields()), "are binary attributes.") )
+		
+		logInfo( c( "Preparing plot for each of", length(getReportFields()), "report fields. ", length(getBinaryFields()), "are binary attributes." ) )
 		if (length(getReportFields()) == 0){
-			plotPlainText("No reportable fields.")
+			plotPlainText( "No reportable fields." )
 		}
 		for (reportField in getReportFields()){
 			isBinaryAtt = reportField %in% getBinaryFields()
-			if( doDebug() ) print( paste0( "Processing report field: ", reportField, ", which ", ifelse(isBinaryAtt, "is", "is not"), " a binary attribute." ) )
-			# pvals
+			logInfo( "Processing report field", c( reportField, ", which", ifelse(isBinaryAtt, "is", "is not"), "a binary attribute." ) )
+
 			pvals = pvalTable[,reportField]
 			names(pvals) = row.names(pvalTable)
-			#
+			
 			# rSquared piggy-backs on effects size for selection and ordering, 
-			#   so IF both are plotted, they are ploted in the same order.
-			# Even if it is not a binary attribute, the splitOTU should have AT LEAST 2 tables
+			# so IF both are plotted, they are ploted in the same order.
+			# Even if it is not a binary attribute, the normalizedPvals should have AT LEAST 2 tables
 			if (doCohensD | doRSquared){ 
-				# r2vals
+	
 				r2vals=r2Table[,reportField]
 				names(r2vals) = row.names(r2Table)
-				# normalized vals
-				splitOTU = split(otuTable[row.names(meta),], f=meta[,reportField])
-				# determine if an output table should be saved
+				normalizedPvals = split(taxaTable[row.names(meta),], f=meta[,reportField])
+
 				saveRefTable = NULL
 				if (doCohensD & isBinaryAtt){
-					saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, reportField, "effectSize.tsv", sep="_") )
+					saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(level, reportField, "effectSize.tsv", sep="_") )
 				}
-				# toPlot
-				tryCatch(expr={
-					if( doDebug() ) print( paste("CohensD: Calling calcBarSizes for otuLevel:", otuLevel, " and binary attribute:", reportField) )
-					calculations = calcBarSizes(effectType=c("CohensD","rSquared"), r2vals = r2vals,
-																			numGroupVals=splitOTU[[2]], denGroupVals=splitOTU[[1]],
-																			numGroupName=names(splitOTU)[2], denGroupName=names(splitOTU)[1],
-																			pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
-																			orderByColumn=ifelse(doCohensD & isBinaryAtt, "CohensD", "rSquared"),
-																			saveRefTable=saveRefTable)
-					#
-					if (doRSquared){ # does not need to be a binary attribute
-						resetPar()
-						complete = drawPlot(toPlot=calculations[["toPlot"]][,c("pvalue","rSquared")], 
-																barSizeColumn="rSquared",
-																xAxisLab="r-squared", title=reportField,
-																pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"), 
-																comments=calculations[["comments"]][c(1,3)])
-						if (complete) {
-							print( paste("Completed r-squared plot for otuLevel:", otuLevel, " and report field:", reportField))
-						}
+
+				logInfo( "CohensD", c( "Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
+				calculations = calcBarSizes( c("CohensD","rSquared"), r2vals, normalizedPvals[[2]], normalizedPvals[[1]],
+					names(normalizedPvals)[2], names(normalizedPvals)[1], pvals, pvalIncludeBar, userOTUs, maxBars,
+					orderByColumn=ifelse(doCohensD & isBinaryAtt, "CohensD", "rSquared"), saveRefTable)
+				#
+				if (doRSquared){ # does not need to be a binary attribute
+					resetPar()
+					complete = drawPlot(toPlot=calculations[["toPlot"]][,c("pvalue","rSquared")], 
+						barSizeColumn="rSquared",
+															xAxisLab="r-squared", title=reportField,
+															pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"), 
+															comments=calculations[["comments"]][c(1,3)])
+					if (complete) {
+						logInfo( c("Completed r-squared plot for level:", level, "and report field:", reportField) )
 					}
-					#
-					if (doCohensD & isBinaryAtt){
-						if( doDebug() ) print( paste("Effect size: Calling drawPlot for otuLevel:", otuLevel, " and binary attribute:", reportField) )
-						resetPar()
-						complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="CohensD",
-																xAxisLab="Effect Size (Cohen's d)", title=reportField,
-																pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
-																xAxisLab2 = calculations[["xAxisLab2"]],
-																comments=calculations[["comments"]][c(1,2)])
-						if (complete) {
-							print( paste("Completed CohensD plot for otuLevel:", otuLevel, " and binary attribute:", reportField))
-						}
+				}
+				#
+				if (doCohensD & isBinaryAtt){
+					logInfo( c( "Effect size: Calling drawPlot for level:", level,  "and binary attribute:", reportField ) )
+					resetPar()
+					complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="CohensD",
+							xAxisLab="Effect Size (Cohen's d)", title=reportField,
+							pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
+							xAxisLab2 = calculations[["xAxisLab2"]],
+							comments=calculations[["comments"]][c(1,2)])
+					if (complete) {
+						logInfo( c( "Completed CohensD plot for level:", level, "and binary attribute:", reportField ) )
 					}
-				}, error = function(err) {
-					errorHandler1(err, otuLevel=otuLevel, reportField=reportField)
-				})
+				}
+				
 			}
 			#
 			if (doFoldChange & !is.null(relAbundance)){
-				tryCatch(expr={
-					# relAbundance vals
-					splitRelAbund = split(relAbundance[row.names(meta),], f=meta[,reportField])
-					if( doDebug() ) print( paste("Fold change: Calling calcBarSizes for otuLevel:", otuLevel, " and binary attribute:", reportField) )
-					calculations = calcBarSizes(effectType = "foldChange",
-																			numGroupVals=splitRelAbund[[2]], denGroupVals=splitRelAbund[[1]],
-																			numGroupName=names(splitRelAbund)[2], denGroupName=names(splitRelAbund)[1],
-																			pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
-																			saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(otuLevel, biAtt,"foldChange.tsv", sep="_") ) )
-					if( doDebug() ) print( paste("Fold change: Calling drawPlot for otuLevel:", otuLevel, " and binary attribute:", reportField) )
-					resetPar()
-					complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="foldChange",
-															xAxisLab="Fold Change", title=biAtt,
-															pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
-															xAxisLab2 = calculations[["xAxisLab2"]],
-															comments=calculations[["comments"]])
-					if (complete) {
-						print( paste("Completed effect size plot for otuLevel:", otuLevel, " and binary attribute:", reportField))
-					}
-				}, error = function(err) {
-					errorHandler1(err, otuLevel=otuLevel, reportField=reportField)
-				})
+				# relAbundance vals
+				splitRelAbund = split(relAbundance[row.names(meta),], f=meta[,reportField])
+				logInfo( c ("Fold change: Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
+				calculations = calcBarSizes(effectType = "foldChange",
+																		numGroupVals=splitRelAbund[[2]], denGroupVals=splitRelAbund[[1]],
+																		numGroupName=names(splitRelAbund)[2], denGroupName=names(splitRelAbund)[1],
+																		pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
+																		saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(level, biAtt,"foldChange.tsv", sep="_") ) )
+				logInfo( c( "Fold change: Calling drawPlot for level:", level, "and binary attribute:", reportField ) )
+				resetPar()
+				complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="foldChange",
+														xAxisLab="Fold Change", title=biAtt,
+														pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
+														xAxisLab2 = calculations[["xAxisLab2"]],
+														comments=calculations[["comments"]])
+				if (complete) {
+					logInfo( c( "Completed effect size plot for level:", level, "and binary attribute:", reportField ) )
+				}
+				
 			}
 		}
 		dev.off()
-		print( paste( "Saved plot(s) to file:", outFileName ) )
+		logInfo( "Saved plot(s) to file", outFileName )
 		if( doDebug() ) sink()
 	}
 }
 	
 
 # Read the counts from the parser module; this requires the BiolockJ pipeline environment.
-# returns a list with each otuLevel as an element.
-readRawCounts <- function(otuLevels=getProperty("report.taxonomyLevels")){
+# returns a list with each level as an element.
+readRawCounts <- function(){
 	parserModule = getProperty("internal.parserModule")
 	if (is.null(parserModule)){
 		stop("No parser module found in master properties (internal.parserModule).")
 		}
 	parserOutput = file.path(parserModule, "output")
 	counts = list()
-	names(counts) = otuLevels
-	for (level in otuLevels){
+	names(counts) = taxaLevels()
+	for (level in taxaLevels() ){
 		fileName = dir(path=parserOutput, pattern=level)
 		if (length(fileName) > 1){
 			stop(paste("Ambiguous file for", level))
 		}
 		if (length(fileName) < 1){
-			print(paste("no file found for", level))
+			logInfo("No file found for", level)
 		}
 		counts[level] = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), 
-																comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1)
+			comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1)
 	}
 	return(counts)
 }
 
 
 # normalize otu counts by simple relative abundance
-normalize <- function(otuTable){
-	# otuTable - data frame with a row for each sample and a column for each OTU
-	normFactor = rowSums(otuTable)
-	normed = otuTable/normFactor
+normalize <- function(taxaTable){
+	# taxaTable - data frame with a row for each sample and a column for each OTU
+	normFactor = rowSums(taxaTable)
+	normed = taxaTable/normFactor
 	return(normed)
 }
-
-
-# error handler designed for calcBarSizes and drawPlot
-errorHandler1 = function(err, otuLevel, reportField) {
-	if( doDebug() ){print(err)}
-	origErr = as.character(err)
-	trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) # error messages that I create in calcBarSizes and drawPlot start with "Stop Plotting"
-	msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
-							 "\nusing attribute: ", reportField)
-	if (doDebug() | nchar(trimmedErr) < nchar(origErr)){
-		msg = paste0(msg, "\n", trimmedErr)
-	}
-	plotPlainText(msg)
-}
-
 
 # returns a list of 2:
 #  toPlot - a dataframe with values to plot and info for each bar
 #  comment - a string(s) that should be included in the plot to inform the user about this step
-calcBarSizes <- function(numGroupVals, denGroupVals, 
-												 numGroupName, denGroupName,
-												 effectType="CohensD", r2vals=NULL,
-												 pvals=NULL, pvalIncludeBar=0.05, maxBars=30, userOTUs=NULL,
-												 saveRefTable=NULL, scale.fun="log2", orderByColumn=effectType[1]){
+calcBarSizes <- function(numGroupVals, denGroupVals, numGroupName, denGroupName,
+						effectType="CohensD", r2vals=NULL, pvals=NULL, pvalIncludeBar=0.05, maxBars=30, userOTUs=NULL,
+						saveRefTable=NULL, scale.fun="log2", orderByColumn=effectType[1]){
 	# numGroupVals, denGroupVals - each a data frame, where OTUs are column names and rows are samples
 	##   these should have different row names (samples are from different groups) but matching column names.
 	# numGroupName, denGroupName - Strings used in comments (and later in plot)
@@ -356,7 +324,7 @@ calcBarSizes <- function(numGroupVals, denGroupVals,
 		header = paste("#", header)
 		writeLines(header, con=saveRefTable)
 		suppressWarnings(write.table(toPrint, file=saveRefTable, quote=FALSE, sep="\t", row.names = FALSE, append = TRUE))
-		print(paste("Saved reference table to", saveRefTable))
+		logInfo( "Saved reference table to", saveRefTable )
 	}
 	#
 	# get rid of the rows that will not be plotted
@@ -475,18 +443,18 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
 			inchesForBars = nrow(toPlot) * fixedBarHeightInches
 			inchesToRemove = plotRegionHeightInches - plotMarginsHeightInches - inchesForBars
 		}else{
-			print("Argument fixedBarHeightInches should be a numeric value >= 0.")
+			logInfo( "Argument fixedBarHeightInches should be a numeric value >= 0." )
 		}
 		if (inchesToRemove > 0){
 			mais = par("mai")
 			mais[1] = mais[1] + inchesToRemove
 			par(mai=mais)
 		}else{
-			print(paste0("Not enough space in plot for ", nrow(toPlot), " bars with ", 
-									 fixedBarHeightInches, " for each bar. Bar widths will be set to fit the space."))
+			logInfo( c( "Not enough space in plot for", nrow(toPlot), "bars with", fixedBarHeightInches, 
+				" for each bar. Bar widths will be set to fit the space.") )
 		}
 	}
-	#
+	
 	# determine plot dimensions
 	xmin = min(toPlot[,barSizeColumn])
 	xmax = max(toPlot[,barSizeColumn])
@@ -504,7 +472,7 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
 	bp = barplot(toPlot[,barSizeColumn], horiz=TRUE, plot=FALSE, width = barWidth, space = barSpace) # this one is not plotted, its just a reference
 	row.names(bp) = row.names(toPlot)
 	# check xlims
-	# print(paste("xmin, xmax: ", xmin, ", ", xmax))
+	# logInfo(c("xmin, xmax:", xmin, ",", xmax))
 	#
 	# plot area and outer text
 	plot(x=0, y=1, type='n', 

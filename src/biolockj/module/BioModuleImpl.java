@@ -171,16 +171,18 @@ public abstract class BioModuleImpl implements BioModule
 	@Override
 	public void init( final String id ) throws Exception
 	{
-		Log.info( getClass(), "Construct module [ " + id + " ] " + getClass().getName() );
-
 		moduleId = id;
-		moduleDir = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+		moduleDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 				+ File.separator + moduleId + "_" + getClass().getSimpleName() );
 
 		if( !moduleDir.exists() )
 		{
 			moduleDir.mkdirs();
 			Log.info( getClass(), "Create BioModule root directory: " + moduleDir.getAbsolutePath() );
+		}
+		else
+		{
+			Log.info( getClass(), "Construct module [ " + id + " ] " + moduleDir.getAbsolutePath() );
 		}
 	}
 

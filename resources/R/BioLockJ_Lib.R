@@ -7,60 +7,27 @@ addNamedVectorElement <- function( v, name, value ) {
    return( v )
 }
 
-# This method builds the file names output by CalculateStats.R
-# There are 5 stats tables output for each of the report.taxonomyLevels
-# 1. Parametric P-Value table  -->  buildStatsFileSuffix( TRUE, FALSE, level )
-# 2. Nonparameteric P-Value table -->  buildStatsFileSuffix( FALSE, FALSE, level )
-# 3. Adjusted Parametric P-Value table -->  buildStatsFileSuffix( TRUE, TRUE, level )
-# 4. Adjusted Nonparameteric P-Value table -->  buildStatsFileSuffix( FALSE, TRUE, level )
-# 5. R^2 Value table -->  buildStatsFileSuffix( parametric=NA, level=level )
-# The beginning of the file may be include additional text such as the pipeline name,
-# This ending is what is used by both CalculateStats to make the file 
-# and by other modules to find the file, so this much of the file name should remain intact.
-buildStatsFileSuffix <- function( parametric, adjusted=TRUE, level=NULL ) {
-	ext = ".tsv"
-	prefix="_"
-	if (!is.null(level)){
-		prefix = paste0( prefix, level, "_" )
-	}
-	if( is.na( parametric ) ) {
-		return( paste0( prefix, "rSquaredVals", ext) )
-	}
-	else if( adjusted && parametric ) {
-		return( paste0( prefix, "adjParPvals", ext) )
-	}
-	else if( adjusted && !parametric ) {
-		return( paste0( prefix, "adjNonParPvals", ext) )
-	}
-	else if( !adjusted & parametric ) {
-		return( paste0( prefix, "parametricPvals", ext) )
-	}
-	else if( !adjusted & !parametric )  {
-		return( paste0( prefix, "nonParametricPvals", ext) )
-	}
-}
-
 # Return P value formated with sprintf as defined in MASTER Config r.pValFormat, otherwise use %1.2g default
 displayPval <- function( pval ) {
    return( paste( sprintf(getProperty("r.pValFormat", "%1.2g"), pval) ) )
 }
 
-# Return TRUE if BioLock Config indicates debug files should be generated for R scripts
+# Return TRUE if BioLock property r.debug=Y, otherwise return FALSE
 doDebug <- function() {
-  return( getProperty("r.debug", FALSE) )
+  return( getProperty( "r.debug", FALSE ) )
 }
 
 # Return vector of binary fields or an empty vector
 getBinaryFields <- function() {
-   return( getProperty("internal.binaryFields", vector( mode="character" ) ) )
+   return( getProperty("R_internal.binaryFields", vector( mode="character" ) ) )
 }
 
-# Return otuTable column indexes for the given colNames
-getColIndexes <- function( otuTable, colNames ) {
+# Return taxaTable column indexes for the given colNames
+getColIndexes <- function( taxaTable, colNames ) {
    cols = vector( mode="integer" )
    if( length(colNames) > 0 ) {
       for( i in 1:length(colNames) ) {
-         cols[i] = grep(TRUE, colnames(otuTable)==colNames[i])
+         cols[i] = grep(TRUE, colnames(taxaTable)==colNames[i])
       }
    }
    return( cols )
@@ -77,12 +44,13 @@ getColor <- function( v ) {
 }
 
 # Return n colors using the palette defined in the MASTER Config
+# If the r.colorPalette property is a palette name rather than a list of colors
+# rearrange the colors so that very similar colors are not less likley to 
+# be next to each other, thus less likely to be the alternatives in the same category.
 getColors <- function( n, reorder=TRUE) {
 	palette = getProperty("r.colorPalette", "npg")
 	colors = get_palette( palette, n )
-	# If the r.colorPalette property is a palette name rather than a list of colors
-	# rearrange the colors so that very similar colors are not less likley to 
-	# be next to each other, thus less likely to be the alternatives in the same category.
+	
 	if (length(palette) == 1 & reorder){
 		flipFrom = (1:length(colors))[(1:length(colors)%%2)==0]
 		flipTo = flipFrom[length(flipFrom):1]
@@ -91,37 +59,74 @@ getColors <- function( n, reorder=TRUE) {
    return( colors )
 }
 
+###################################################################################################################
+######################################      TEMPORARILY DISABLED      #############################################
+###################################################################################################################
 # Select colors for each category so each category is different even across different metadata fields
 # Giving no arguments will cause the function to the project metadata,
 # this is ensures that different modules get the same colors (for example MDS plots and OTU plots).
 # Supplying the metaTable may save time.
 getColorsByCategory <- function(metaTable=NULL){
-	if (is.null(metaTable)){
-		metaTable = getMetaData()
+  categoricals = c(getBinaryFields(), getNominalFields())
+  metaTable = metaTable[names(metaTable) %in% categoricals]
+  if (ncol(metaTable) < 1){
+    logInfo( "No categorical metadata fields.  Returning null." )
+    return(NULL)
+  }
+  numBoxes = sapply(metaTable, function(x){length(levels(as.factor(x)))})
+  boxColors = getColors( sum(numBoxes))
+  logInfo( label, info )
+  logInfo ( paste( "Selected", length(boxColors), "colors to describe", ncol(metaTable), "categorical variables." ) )
+  f = mapply(x=names(numBoxes), each=numBoxes, rep, SIMPLIFY = FALSE)
+  metaColColors = split(boxColors, f=do.call(c, f))
+  for (field in names(metaColColors)){
+    names(metaColColors[[field]]) = levels(as.factor(metaTable[,field]))
+  }
+  return(metaColColors)
+}
+###################################################################################################################
+######################################      TEMPORARILY DISABLED      #############################################
+###################################################################################################################
+
+
+# Parse MASTER config for property value, if undefined return default defaultVal
+# save all properties in propCache upon 1st request
+getConfig <- function( name, defaultVal=NULL ) {
+	if( is.null( propCache ) ) {
+	   propCache = read.properties( getMasterConfigFile() )
 	}
-	categoricals = c(getBinaryFields(), getNominalFields())
-	metaTable = metaTable[names(metaTable) %in% categoricals]
-	if (ncol(metaTable) < 1){
-		print("No categorical metadata fields.  Returning null.")
-		return(NULL)
+	
+	prop = propCache[[ name ]]
+	
+	if( is.null( prop ) ) {
+		return( defaultVal )
+ 	}
+	
+	if( str_trim( prop ) == "Y" ) {
+		return( TRUE )
 	}
-	numBoxes = sapply(metaTable, function(x){length(levels(as.factor(x)))})
-	boxColors = getColors( sum(numBoxes))
-	if ( doDebug() ) print(paste("Selected", length(boxColors), "colors to describe", ncol(metaTable), "categorical variables."))
-	f = mapply(x=names(numBoxes), each=numBoxes, rep, SIMPLIFY = FALSE)
-	metaColColors = split(boxColors, f=do.call(c, f))
-	for (field in names(metaColColors)){
-		names(metaColColors[[field]]) = levels(as.factor(metaTable[,field]))
+	if( str_trim( prop ) == "N" ) {
+		return( FALSE )
 	}
-	return(metaColColors)
+	if( !is.na( as.numeric( prop ) ) && grepl( ",", prop ) ) {
+		return( as.numeric( unlist( strsplit( prop, "," ) ) ) )
+	}
+	if( is.character( prop ) && grepl( ",", prop ) ) {
+		return( str_trim( unlist( strsplit( prop, "," ) ) ) )
+	}
+	if( !is.na( as.numeric( prop ) ) ) {
+		return( as.numeric( prop ) )
+	}
+
+	return( str_trim( prop ) )
 }
 
 # Return list, each record contains the OTUs associated with a unique value for the given nominal metadata field (metaCol)
-getFactorGroups <- function( otuTable, metaCol, otuCol ) {
+getFactorGroups <- function( taxaTable, metaCol, taxaCol ) {
    vals = list()
    options = levels( metaCol )
    for( i in 1:length(options) ) {
-      vals[[i]] = otuTable[metaCol==options[i], otuCol]
+      vals[[i]] = taxaTable[metaCol==options[i], taxaCol]
    }
    return( vals )
 }
@@ -140,50 +145,6 @@ getMasterConfigFile <- function() {
    return( propFile )
 }
 
-getMetaDataFile <- function(){
-  origFile = getProperty("metadata.filePath")
-  if (is.null(origFile)){
-    #getPipelineFile("ImportMetadata/output/")
-    return(NULL)
-  }else{
-    fileName = basename(origFile)
-    localCopy = file.path(getPipelineDir(), fileName)
-  }
-  return(localCopy)
-}
-
-# Return a data frame of the metadata.  Note that biolockj assumes that the first column is the sample id
-# and that the sample id is unique within the file, so the first row is used as rownames in the returned dataframe.
-getMetaData <- function(useMetaMerged=TRUE){
-	file = getMetaDataFile()
-	metaMergedFile = getPipelineFile( "*_metaMerged.tsv" )
-	if (is.null(metaMergedFile)) { useMetaMerged = FALSE }
-	if (is.null(file) | useMetaMerged){
-		otuTable = read.table( metaMergedFile, check.names=FALSE,
-													 na.strings=getProperty("metadata.nullValue", "NA"), 
-													 comment.char=getProperty("metadata.commentChar", ""), 
-													 header=TRUE, sep="\t", row.names = 1 )
-		firstMetaCol = ncol(otuTable) - getProperty("internal.numMetaCols") + 1
-		meta = otuTable[firstMetaCol:ncol(otuTable)]
-	}else{
-		importMetaDataModule = grep("ImportMetadata", dir(dirname(file)), value=TRUE)
-		processedMetaFile = file.path(dirname(file), importMetaDataModule, "output", basename(file))
-		if (file.exists(processedMetaFile)){
-			meta = read.delim(file=processedMetaFile, check.names=FALSE, 
-												na.strings=getProperty("metadata.nullValue", "NA"), 
-												comment.char=getProperty("metadata.commentChar", ""), 
-												header=TRUE, sep="\t", row.names = 1)
-		}else{
-			meta = read.delim(file=file, check.names=FALSE, 
-												na.strings=getProperty("metadata.nullValue", "NA"), 
-												comment.char=getProperty("metadata.commentChar", ""), 
-												header=TRUE, sep="\t", row.names = 1)
-		}
-	}
-	return(meta)
-}
-
-
 # If downloaded with scp, all files share 1 directory, so return getPipelineDir() 
 # Otherwise, script path like: piplineDir/moduleDir/script/MAIN*.R, so return moduleDir (the dir 2 levels above script)  
 getModuleDir <- function() {
@@ -195,59 +156,22 @@ getModuleDir <- function() {
 
 # Return vector of nominal fields or an empty vector
 getNominalFields <- function() {
-   return( getProperty("internal.nominalFields", vector( mode="character" ) ) )
+   return( getProperty("R_internal.nominalFields", vector( mode="character" ) ) )
 }
 
 # Return vector of numeric fields or an empty vector
 getNumericFields <- function() {
-   return( getProperty("internal.numericFields", vector( mode="character" ) ) )
+   return( getProperty("R_internal.numericFields", vector( mode="character" ) ) )
 }
 
 # Return file path of file in rootDir, with the pipeline name appended as a prefix to name
 getPath <- function( rootDir, name ) {
-   return( file.path( rootDir, paste0( getProperty("internal.pipelineName"), "_", name ) ) )
+   return( file.path( rootDir, paste0( getProperty("project.pipelineName"), "_", name ) ) )
 }
 
 # Return the pipeline root directory
 getPipelineDir <- function() {
    return( dirname( getMasterConfigFile() ) )
-}
-
-# Return a file matching the pattern underwhere under the pipeline root directory
-# If multiple results are found, return the most recent version
-# If dir is undefined, look in pipeline dir
-# If no results, check in Config property input.dirPaths
-getPipelineFile <- function( pattern, dir=getPipelineDir() ) {
-    
-    if( length( dir ) > 1 ) {
-        for( i in 1:length( dir ) ) {
-            inputDirResults = getPipelineFile( pattern, dir[i] )
-            if( !is.null( inputDirResults ) ) {
-                return( inputDirResults )
-            }
-        }
-        writeErrors( getModuleScript(), c( paste0( "getPipelineFile(", pattern, ",", dir, ")" ) ) )
-    }
-    
-    print( paste( "Search:", dir, " for input files matching pattern:", pattern ) )
-    results = list.files( dir, pattern, full.names=TRUE, recursive=TRUE )
-    if( length( results ) == 0 ) {
-        if( ! dir %in% getProperty("input.dirPaths") ) {
-            return( getPipelineFile( pattern, getProperty("input.dirPaths") ) ) 
-        }
-        else {
-            return( NULL )
-        }
-    }
-    
-    returnFile = NULL
-    for( i in 1:length( results ) ) {
-        if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
-            returnFile = results[i] 
-        }
-    }
-    
-    return( returnFile )
 }
 
 # Return the PDF plot label based on r.plotWidth, standar.properties default assumes 4 plots/page 
@@ -261,12 +185,55 @@ getPlotTitle <- function( line1, line2 ) {
 
 # Return property value from MASTER Config file, otherwise return the defaultVal
 getProperty <- function( name, defaultVal=NULL ) {
-   return ( suppressWarnings( parseConfig( name, defaultVal ) ) )
+   return ( suppressWarnings( getConfig( name, defaultVal ) ) )
 }
 
 # Return vector that includs all binary, nominal, and numeric fields or an empty vector
 getReportFields <- function() {
    return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
+}
+
+# Return the most recent stats file at the given level based on the suffix returned by statsFileSuffix()
+getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
+	statsFile = pipelineFile( paste0( level, ".*", statsFileSuffix( parametric, adjusted ) ) )
+    if( is.null( statsFile )  ) {
+		logInfo( paste0( "BioLockJ_Lib.R function --> getStatsTable( level=", level, 
+			", parametric=", parametric, ", adjusted=", adjusted, " ) returned NULL" ) )
+		return( NULL )
+	}
+	
+  	statsTable = read.table( statsFile, header=TRUE, sep="\t", row.names=1, check.names=FALSE )
+	if( nrow( statsTable ) == 0 ) {
+		logInfo( paste0( "BioLockJ_Lib.R function --> getStatsTable( level=", level, ", parametric=", parametric, ", adjusted=", adjusted, " ) returned an empty table with only the header row:", colnames( statsTable ) ) )
+		return( NULL )
+	}
+
+	logInfo( "Read stats table", statsFile )
+	return( statsTable )
+}
+
+# Returns BioLockJ generated Table with a standard format:
+# 1. 1st column contains Sample IDs
+# 2. Next group of columns contain numeric count data (derived from sample analysis)
+# 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
+getTaxaTable <- function( level ) {
+
+	taxaFile = pipelineFile( paste0( level, ".*", TAXA_TABLE_SUFFIX ) )
+  	if( is.null( taxaFile )  ) {
+		logInfo( c( "BioLockJ_Lib.R function --> getTaxaTable(", level, ") returned NULL" ) )
+		return( NULL )
+	}
+	
+ 	taxaTable = read.table( taxaFile, header=TRUE, sep="\t", row.names=1, na.strings=getProperty( "metadata.nullValue" ), 
+ 		check.names=FALSE, comment.char=getProperty( "metadata.commentChar", "" ) )
+	
+	if( nrow( taxaTable ) == 0 ) {
+		logInfo( c( "BioLockJ_Lib.R function --> getTaxaTable(", level, ") returned an empty table with only the header row:", colnames( taxaTable ) ) )
+		return( NULL )
+	}
+	
+	logInfo( "Read taxa table", taxaFile )
+	return( taxaTable )
 }
 
 # Return the name of statistical test used to generate P-Values for a given attribute
@@ -291,8 +258,7 @@ getTestName <- function( attName=NULL, isParametric=c(TRUE, FALSE), returnColors
 		}
 	}
 	
-	whichTest = which(testOptions$fieldType %in% fieldType & 
-											testOptions$isParametric %in% isParametric)
+	whichTest = which(testOptions$fieldType %in% fieldType & testOptions$isParametric %in% isParametric)
 	
 	if (returnColors){
 		cols = testOptions[whichTest,"color"]
@@ -318,100 +284,91 @@ importLibs <- function( libs ) {
    }   
    
    if( length( errors ) > 0 ) {
-      writeErrors( getModuleScript(), errors )
+      writeErrors( errors )
    }
 }
 
-# Parse MASTER config for property value, if undefined return default defaultVal
-parseConfig <- function( name, defaultVal=NULL ) {
-   config = read.properties( getMasterConfigFile() )
-   prop = config[[ name ]]
+# Log the msg if Config property r.debug=Y, otherwise do nothing
+# Append semicolon to label, unless it already exists
+logInfo <- function( info, msg=NULL ) {
+	if( doDebug() ) {
+		if( is.null( msg ) ){
+			msg = info
+		} else {
+			if( !endsWith( trimws( info ), ":" ) ) info = paste0( trimws( info ), ":" )
+			msg = c( trimws( info ), msg )
+		}
+		cat( msg, "\n" )
+	}
+}
 
-   if( is.null( prop ) ) {
-      return( defaultVal )
-   }
-   if( is.null( prop ) ) {
-      return( NULL )
-   } 
-   if( str_trim( prop ) == "Y" ) {
-      return( TRUE )
-   }
-   if( str_trim( prop ) == "N" ) {
-      return( FALSE )
-   }
-   if( !is.na( as.numeric( prop ) ) && grepl( ",", prop ) ) {
-      return( as.numeric( unlist( strsplit( prop, "," ) ) ) )
-   }
-   if( is.character( prop ) && grepl( ",", prop ) ) {
-      return( str_trim( unlist( strsplit( prop, "," ) ) ) )
-   }
-   if( !is.na( as.numeric( prop ) ) ) {
-      return( as.numeric( prop ) )
-   }
+# Return number of metadata columns appended to sample count tables
+numMetaCols <- function() {
+    return( getProperty( "R_internal.numMetaCols" ) )
+}
 
-   return( str_trim( prop ) )
+# Return a file matching the pattern underwhere under the pipeline root directory
+# If multiple results are found, return the most recent version
+# If dir is undefined, look in pipeline dir
+# If no results, check in Config property input.dirPaths
+pipelineFile <- function( pattern, dir=getPipelineDir() ) {
+    
+    if( length( dir ) > 1 ) {
+        for( i in 1:length( dir ) ) {
+            inputDirResults = pipelineFile( pattern, dir[i] )
+            if( !is.null( inputDirResults ) ) {
+                return( inputDirResults )
+            }
+        }
+        writeErrors( c( paste0( "pipelineFile(", pattern, ",", dir, ") returned NULL" ) ) )
+    }
+    
+    logInfo( c( "Search:", dir, "for input files matching pattern:", pattern ) )
+    results = list.files( dir, pattern, full.names=TRUE, recursive=TRUE )
+    if( length( results ) == 0 ) {
+        if( ! dir %in% getProperty("input.dirPaths") ) {
+            return( pipelineFile( pattern, getProperty("input.dirPaths") ) ) 
+        }
+        else {
+            return( NULL )
+        }
+    }
+    
+    returnFile = NULL
+    for( i in 1:length( results ) ) {
+        if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
+            returnFile = results[i] 
+        }
+    }
+    
+    return( returnFile )
 }
 
 # Create an empty plot and add text. 
-# Ideal when explaining why a plot is blank, or plot explainations within a plot document.
+# Ideal when explaining why a plot is blank, or plot explanations within a plot document.
 plotPlainText <- function(textToPrint, cex=1){
   plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
   text(labels=textToPrint, x = 0.5, y = 0.5, cex = cex, col = "black")
 }
 
-# Create status indicator file by appending suffix of _Success or _Failure if any error messages logged
-# BioLockJ Java program checks for existance of new file named as R script + status indicator
-# Messages logged to _Warning file are generally spurious so file is deleted after processing
-# Save MAIN script R data if r.saveRData configured and print session info
-reportStatus <- function( script ) {
-   conn = file( paste0( script, "_Warnings" ), open="r" )
-   warnings = readLines( conn )
-   close( conn )
-   errors = vector( mode="character" )
-   if( length( errors ) > 0 ) {
-      for ( i in 1:length( warnings ) ) {
-         if( grepl( "Error", warnings[i] ) ) {
-            errors[ length( errors ) + 1 ] = warnings[i]
-         }
-      }
-   }
 
-   if( file.exists( paste0( script, "_Warnings" ) ) ) {
-         file.remove( paste0( script, "_Warnings" ) )
-   }
-
-   if( length( errors ) > 0 ) {
-      writeErrors( script, errors )
-   } else {
-      file.create( paste0( script, "_Success" ) )
-      if ( getProperty( "r.saveRData", FALSE ) ){
-         moduleBaseName = sub( "^MAIN_", "", basename( getModuleScript() ) )
-         save.image( file.path( dirname( script ), paste0( moduleBaseName, "Data" ) ) )
-      }
-   }
-
-   sessionInfo()
+# This method returns 1 of 5 possible CalculateStats.R output file suffix values
+# Use TRUE/FALSE params to obtain the correct p-value statistics file
+# To retrieve the r^2 effect size file, use: buildStatsFileSuffix()
+statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
+    if( is.null( parametric ) ) return( paste0( "rSquaredVals", ".tsv" ) )
+    if( parametric && adjusted ) return( paste0( "adjParPvals", ".tsv" ) )
+    if( parametric ) return( paste0( "parametricPvals", ".tsv" ) )
+    if( adjusted ) return( paste0( "adjNonParPvals", ".tsv" ) )
+    return( paste0( "nonParametricPvals", ".tsv" ) )
 }
-
-# MAIN R scripts all must call this method to wrap execution in sink() to catch error messages
-# Call reportStatus( script ) when executin is complete
-runProgram <- function( script ) {
-   log = file( paste0( script, "_Warnings" ), open="wt" )
-   sink( log, type="message" )
-   print( paste( "Run script:", script, "in pipeline dir:", getPipelineDir() ) )
-   try( main() )
-   sink( type="message" )
-   close( log )
-   reportStatus( script )
-}
-
-# Method writes error msgs to the script _Failures file and aborts R program
-writeErrors <- function( script, msgs ) {
-   errorConn = file( paste0( script, "_Failures" ), open="wt" )
-   writeLines( msgs, errorConn )
-   close( errorConn )
-   stop( paste( "Check error file to see runtime errors:", paste0( script, "_Failures" ) ) )
+ 
+ # Return number of metadata columns appended to sample count tables
+taxaLevels <- function() {
+    return( getProperty( "report.taxonomyLevels" ) )
 }
 
 # Import standard shared libraries
 importLibs( c( "properties", "stringr", "ggpubr" ) )
+TAXA_TABLE_SUFFIX = "_metaMerged.tsv"
+propCache = NULL

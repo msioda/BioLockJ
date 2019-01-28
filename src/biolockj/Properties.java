@@ -69,7 +69,7 @@ public class Properties extends java.util.Properties
 	 * @throws IOException if {@link org.apache.commons.io.FileUtils} is unable to copy the configFile
 	 *
 	 * public static void copyConfigToPipelineRootDir() throws ConfigNotFoundException, ConfigPathException, IOException
-	 * { final File projectDir = Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ); if( defaultConfigFiles !=
+	 * { final File projectDir = Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ); if( defaultConfigFiles !=
 	 * null && !defaultConfigFiles.isEmpty() ) { Config.setConfigProperty( Config.INTERNAL_DEFAULT_CONFIG,
 	 * defaultConfigFiles ); for( final File f: defaultConfigFiles ) { FileUtils.copyFileToDirectory( f, projectDir ); }
 	 * }

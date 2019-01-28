@@ -253,7 +253,7 @@ public class DockerUtil
 	public static final String CONTAINER_META_DIR = File.separator + "meta";
 
 	/**
-	 * All containers mount {@value biolockj.Config#INTERNAL_PIPELINE_DIR} to the container "pipelines" volume
+	 * All containers mount {@value biolockj.Config#PROJECT_PIPELINE_DIR} to the container "pipelines" volume
 	 */
 	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipelines";
 

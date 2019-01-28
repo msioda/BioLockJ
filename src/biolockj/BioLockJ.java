@@ -43,11 +43,11 @@ public class BioLockJ
 	 */
 	public static void copyFileToPipelineRoot( final File file ) throws Exception
 	{
-		final String rootPath = Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath();
+		final String rootPath = Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath();
 		final File localFile = new File( rootPath + File.separator + file.getName() );
 		if( !localFile.exists() )
 		{
-			FileUtils.copyFileToDirectory( file, Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ) );
+			FileUtils.copyFileToDirectory( file, Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ) );
 			if( !localFile.exists() )
 			{
 				throw new Exception( "Unable to copy file to pipeline root directory: " + file.getAbsolutePath() );
@@ -66,9 +66,9 @@ public class BioLockJ
 	{
 		try
 		{
-			return RETURN + "Usage java biolockj.BioLockJ -b path_to_pipeline_output parent_directory "
-					+ "-c path_to_properties_file " + RETURN + "See https://github.com/msioda/BioLockJ/wiki" + RETURN
-					+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath(): "" ) + RETURN;
+			return RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + RETURN 
+					+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath() + RETURN: "" ) 
+					+ "For more information, please visit the BioLockJ Wiki:" + BLJ_WIKI + RETURN;
 		}
 		catch( final Exception ex )
 		{
@@ -91,10 +91,10 @@ public class BioLockJ
 	 * <li>Call {@link biolockj.Config#initialize(File)} to load project properties
 	 * <li>Call {@link biolockj.util.MetaUtil#initialize()} to verify metadata dependencies
 	 * <li>Copy {@link biolockj.Config} file and nested {@value biolockj.Config#PROJECT_DEFAULT_PROPS} files into
-	 * {@value biolockj.Config#INTERNAL_PIPELINE_DIR} to preserve the state of these files at runtime.
+	 * {@value biolockj.Config#PROJECT_PIPELINE_DIR} to preserve the state of these files at runtime.
 	 * <li>Initialize {@link Log} using /resources/log4J.properties
 	 * <li>If {@value #PROJECT_COPY_FILES} = {@value biolockj.Config#TRUE}, copy input files into a new "input"
-	 * directory under {@value biolockj.Config#INTERNAL_PIPELINE_DIR}
+	 * directory under {@value biolockj.Config#PROJECT_PIPELINE_DIR}
 	 * <li>Call {@link biolockj.util.SeqUtil#initialize()} to set Config parameters based on sequence files
 	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
 	 * <li>Call {@link biolockj.Pipeline#runPipeline()} or {@link biolockj.Pipeline#runDirectModule(String)} to execute
@@ -118,29 +118,31 @@ public class BioLockJ
 			MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 			RuntimeParamUtil.registerRuntimeParameters( args );
 			Config.initialize( RuntimeParamUtil.getConfigFile() );
-			Config.setConfigProperty( Config.INTERNAL_PIPELINE_NAME, getProjectName() );
+			initProjectProps();
 			MetaUtil.initialize();
-
+			
+			if( RuntimeParamUtil.isDirectMode() )
+			{
+				Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModule() ) );
+			}
+			else
+			{
+				Log.initialize( Config.requireString( Config.PROJECT_PIPELINE_NAME ) );
+			}
+			
+			Log.info( BioLockJ.class, "Project name: " + Config.requireString( Config.PROJECT_PIPELINE_NAME ) );
+			Log.info( BioLockJ.class, "Project directory: " + 
+					Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() );
+			
 			if( RuntimeParamUtil.doChangePassword() )
 			{
 				Email.encryptAndStoreEmailPassword( RuntimeParamUtil.getConfigFile(),
 						RuntimeParamUtil.getAdminEmailPassword() );
 				System.exit( 0 );
 			}
-			else if( RuntimeParamUtil.isDirectMode() )
-			{
-				Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR,
-						RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
-				Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModule() ) );
-			}
 			else if( RuntimeParamUtil.doRestart() )
 			{
 				initRestart();
-			}
-			else
-			{
-				Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, createPipelineDirectory().getAbsolutePath() );
-				Log.initialize( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
 			}
 		}
 		catch( final Exception ex )
@@ -208,11 +210,11 @@ public class BioLockJ
 
 			try
 			{
-				final String pipelineRoot = Config.getString( Config.INTERNAL_PIPELINE_DIR );
+				final String pipelineRoot = Config.getString( Config.PROJECT_PIPELINE_DIR );
 				final String perm = Config.getString( PROJECT_PERMISSIONS );
 				if( pipelineRoot != null && perm != null )
 				{
-					Job.setFilePermissions( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ), perm );
+					Job.setFilePermissions( Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ), perm );
 				}
 			}
 			catch( final Exception ex )
@@ -224,7 +226,7 @@ public class BioLockJ
 
 	/**
 	 * Create the pipeline root directory under $DOCKER_PROJ and save the path to
-	 * {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}.
+	 * {@link biolockj.Config}.{@value biolockj.Config#PROJECT_PIPELINE_DIR}.
 	 * <p>
 	 * For example, the following {@link biolockj.Config} settings will create:
 	 * <b>/projects/MicrobeProj_2018Jan01</b><br>
@@ -242,8 +244,7 @@ public class BioLockJ
 		final String year = String.valueOf( new GregorianCalendar().get( Calendar.YEAR ) );
 		final String month = new GregorianCalendar().getDisplayName( Calendar.MONTH, Calendar.SHORT, Locale.ENGLISH );
 		final String day = BioLockJUtil.formatDigits( new GregorianCalendar().get( Calendar.DATE ), 2 );
-		final String baseString = RuntimeParamUtil.getBaseDir().getAbsolutePath() + File.separator
-				+ Config.requireString( Config.INTERNAL_PIPELINE_NAME );
+		final String baseString = RuntimeParamUtil.getBaseDir().getAbsolutePath() + File.separator + getProjectName();
 		final String dateString = "_" + year + month + day;
 		File projectDir = new File( baseString + dateString );
 
@@ -263,8 +264,7 @@ public class BioLockJ
 	/**
 	 * Initialize restarted pipeline by:
 	 * <ol>
-	 * <li>Set {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}
-	 * <li>Initialize {@link biolockj.Log} file, name after {@value biolockj.Config#INTERNAL_PIPELINE_NAME}
+	 * <li>Initialize {@link biolockj.Log} file, name after {@value biolockj.Config#PROJECT_PIPELINE_NAME}
 	 * <li>Update summary #Attempts count
 	 * <li>If pipeline status = {@value biolockj.Pipeline#BLJ_COMPLETE}
 	 * <li>Delete status file {@value biolockj.Pipeline#BLJ_FAILED} in pipeline root directory
@@ -274,9 +274,7 @@ public class BioLockJ
 	 */
 	protected static void initRestart() throws Exception
 	{
-		Config.setConfigProperty( Config.INTERNAL_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
-		Log.initialize( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) );
-
+		Log.initialize( Config.requireString( Config.PROJECT_PIPELINE_NAME ) );
 		Log.warn( BioLockJ.class, RETURN + Log.LOG_SPACER + RETURN + "RESTART PROJECT DIR --> "
 				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN + Log.LOG_SPACER + RETURN );
 		Log.info( BioLockJ.class, "Initializing Pipeline..." );
@@ -300,10 +298,29 @@ public class BioLockJ
 			}
 		}
 	}
+	
+	/**
+	 * Set the {@value biolockj.Config#PROJECT_PIPELINE_NAME} and {@value biolockj.Config#PROJECT_PIPELINE_DIR}
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected static void initProjectProps() throws Exception
+	{
+		if( RuntimeParamUtil.doRestart() )
+		{
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+		}
+		else
+		{
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, createPipelineDirectory().getAbsolutePath() );
+		}
+		
+		Config.setConfigProperty( Config.PROJECT_PIPELINE_NAME, Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName() );
+	}
 
 	/**
 	 * Create indicator file in pipeline root directory, with name = status parameter.
-	 * {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}.
+	 * {@link biolockj.Config}.{@value biolockj.Config#PROJECT_PIPELINE_DIR}.
 	 * 
 	 * @param status Status indicator file name
 	 */
@@ -312,9 +329,9 @@ public class BioLockJ
 		try
 		{
 			Log.info( BioLockJ.class,
-					"BioLockJ Pipeline [" + Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "] = " + status );
+					"BioLockJ Pipeline [" + Config.requireString( Config.PROJECT_PIPELINE_NAME ) + "] = " + status );
 
-			final File f = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+			final File f = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 					+ File.separator + status );
 			final FileWriter writer = new FileWriter( f );
 			writer.close();
@@ -352,7 +369,7 @@ public class BioLockJ
 	{
 		final ScriptModule module = (ScriptModule) Class.forName( className ).newInstance();
 		final String name = module.getClass().getSimpleName();
-		final File pipelinDir = Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR );
+		final File pipelinDir = Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR );
 		final Collection<File> dirs = FileUtils.listFilesAndDirs( pipelinDir, FalseFileFilter.INSTANCE,
 				TrueFileFilter.INSTANCE );
 		for( final File moduleDir: dirs )
@@ -373,7 +390,7 @@ public class BioLockJ
 	{
 		String name = RuntimeParamUtil.getConfigFile().getName();
 		final String[] exts = { ".ascii", ".asc", ".plain", ".rft", ".tab", ".text", ".tsv", ".txt", ".properties",
-				".prop", ".config" };
+				".prop", ".props", ".config" };
 
 		for( final String ext: exts )
 		{
@@ -388,7 +405,6 @@ public class BioLockJ
 			name = name.replace( BioLockJUtil.MASTER_PREFIX, "" );
 		}
 
-		Log.info( BioLockJ.class, "Set project name to: " + name );
 		return name;
 	}
 
@@ -434,9 +450,9 @@ public class BioLockJ
 			String suffix = null;
 			try
 			{
-				if( Config.getString( Config.INTERNAL_PIPELINE_NAME ) != null )
+				if( Config.getString( Config.PROJECT_PIPELINE_NAME ) != null )
 				{
-					suffix = Config.getString( Config.INTERNAL_PIPELINE_NAME );
+					suffix = Config.getString( Config.PROJECT_PIPELINE_NAME );
 				}
 				else if( RuntimeParamUtil.getConfigFile() != null )
 				{
@@ -581,6 +597,8 @@ public class BioLockJ
 	 * BioLockJ standard text file extension constant: {@value #TXT_EXT}
 	 */
 	public static final String TXT_EXT = ".txt";
+	
+	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
 
 	/**
 	 * {@link biolockj.Config} property to define permission setttings when running chmod on pipeline root dir:

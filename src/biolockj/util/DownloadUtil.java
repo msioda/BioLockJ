@@ -85,7 +85,7 @@ public final class DownloadUtil
 					status = "Failed";
 				}
 			}
-			final String pipeRoot = Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath();
+			final String pipeRoot = Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath();
 			final String label = status + ( getDownloadModules().size() > 1 ? " Modules --> ": " Module --> " );
 			final String displaySize = FileUtils.byteCountToDisplaySize( downloadSize );
 			final String rDirs = ModuleUtil.hasRModules()
@@ -116,7 +116,7 @@ public final class DownloadUtil
 				dir = dir + File.separator;
 			}
 
-			return dir + Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName();
+			return dir + Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName();
 		}
 
 		return null;
@@ -248,7 +248,7 @@ public final class DownloadUtil
 	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception
 	{
 
-		final File script = new File( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+		final File script = new File( Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 				+ File.separator + RUN_ALL_SCRIPT );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( script, true ) );
 

@@ -91,7 +91,7 @@ public class BioLockJUtil
 				{
 					FileUtils.forceDelete( file );
 				}
-
+				Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) deleted: " + file.getAbsolutePath() );
 				return true;
 			}
 			catch( final IOException ex )
@@ -246,7 +246,7 @@ public class BioLockJUtil
 	 */
 	public static String getDirectModuleParam( final BioModule module ) throws Exception
 	{
-		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName()
+		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName()
 				+ ":" + module.getClass().getName();
 	}
 
@@ -317,7 +317,7 @@ public class BioLockJUtil
 		{
 			configName = configName.replaceAll( MASTER_PREFIX, "" );
 		}
-		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
+		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
 				+ MASTER_PREFIX + configName );
 	}
 
@@ -688,7 +688,7 @@ public class BioLockJUtil
 
 	private static File getTempConfig() throws Exception
 	{
-		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
+		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
 				+ TEMP_PREFIX + Config.getConfigFileName() );
 	}
 

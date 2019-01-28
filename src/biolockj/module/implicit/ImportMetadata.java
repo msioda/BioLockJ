@@ -436,7 +436,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 				&& !Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED );
 	}
 
-	private File getMetadata()
+	private File getMetadata() throws Exception
 	{
 		return new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
 	}

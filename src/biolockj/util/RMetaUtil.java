@@ -328,7 +328,7 @@ public final class RMetaUtil
 		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
 		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
 
-		if( numCols != null && numCols >= numMetaCols )
+		if( numCols != null && numCols == numMetaCols )
 		{
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
 			return props;

@@ -258,7 +258,7 @@ public class TaxaUtil
 			suffix = "_";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
+		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
 				+ "_" + TAXA_TABLE + suffix + level + BioLockJ.TSV_EXT );
 	}
 

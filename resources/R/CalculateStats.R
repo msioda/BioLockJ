@@ -1,42 +1,33 @@
 # Module script for: biolockj.module.r.CalculateStats
 
-# There are 5 summary tables are output for each report.taxonomyLevels
+# There are 5 summary tables are output for each taxaLevels()
 # 1. Parametric P-Value table
-# 2. Nonparameteric P-Value table 
+# 2. Non-parametric P-Value table 
 # 3. Adjusted Parametric P-Value table
-# 4. Adjusted Nonparameteric P-Value table 
+# 4. Adjusted Non-parametric P-Value table 
 # 5. R^2 Value table
-buildSummaryTables <- function( reportStats, otuLevel ) {
-   attNames = unique( names(reportStats[[2]]) )
-   prefix = getProperty("internal.pipelineName")
-   if( doDebug() ) print( paste( "Using prefix:", prefix ) )
-   # the names of fileNameEndings is expected to match the names of elements in reportStats
-   fileNameEnding = c( parametricPvals = buildStatsFileSuffix(TRUE, FALSE, tuLevel),
-   									 nonParametricPvals = buildStatsFileSuffix(FALSE, FALSE, otuLevel),
-   									 adjParPvals = buildStatsFileSuffix(TRUE, TRUE, otuLevel),
-   									 adjNonParPvals = buildStatsFileSuffix(FALSE, TRUE, otuLevel),
-   									 rSquaredVals = buildStatsFileSuffix(NA, otuLevel) )
-   reportSets = names(fileNameEnding)
-   for( reportSet in reportSets ) {
-   	path=file.path(getModuleDir(), "output")
-      fileName = file.path( path, paste0( prefix, fileNameEnding[reportSet] ) )
-      if ( doDebug() ) print( paste( "Saving output file:", fileName ) )
-      df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
-      df[, 1] = reportStats[[1]]
-      names(df)[1] = names( reportStats )[1]
-      for( j in 1:length( attNames ) ) {
-         df[, length(df)+1] = getValuesByName( reportStats[[reportSet]], attNames[j] )
-         names(df)[length(df)] = attNames[j]
-      }
-      write.table( df, fileName, "\t", FALSE )
-   }
-}
+buildSummaryTables <- function( reportStats, level ) {
+	attNames = unique( names(reportStats[[2]]) )
+	for( i in 2:length( reportStats ) ) {
+		df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
+		df[, 1] = reportStats[[1]]
+		names(df)[1] = names( reportStats )[1]
+		for( j in 1:length( attNames ) ) {
+			df[, length(df)+1] = getValuesByName( reportStats[[i]], attNames[j] )
+			names(df)[length(df)] = attNames[j]
+		}
+		fileName = getPath( file.path( getModuleDir(), "output" ), paste0( level, "_", names(reportStats)[i] ) )
+		logInfo( paste( "Saving output file", fileName ) )
+		write.table( df, file=fileName, sep="\t", row.names=FALSE )
+	}
+}  
 
-# Build list of reportStats for the taxonomy level specific otuTable with the following columns:
+
+# Build list of reportStats for the taxonomy level specific taxaTable with the following columns:
 # "OTU", "parametricPvals", "nonParametricPvals", "adjParPvals", "adjNonParPvals", "rSquaredVals"
-# First, parametric & nonparametric p-values are calculated for each attribute type
+# First, parametric & non-parametric p-values are calculated for each attribute type
 # Then the p-values are adjusted using method defined in r.pAdjust
-calculateStats <- function( otuTable ) {
+calculateStats <- function( taxaTable ) {
    # Loop through the OTUs to assign P-value & R^2 values
    otuNames = vector( mode="character" )
    parametricPvals = vector( mode="double" )
@@ -44,133 +35,118 @@ calculateStats <- function( otuTable ) {
    rSquaredVals = vector( mode="double" )
    adjParPvals = vector( mode="double" )
    adjNonParPvals = vector( mode="double" )
-   lastOtuCol = ncol(otuTable) - getProperty("internal.numMetaCols")
+   lastOtuCol = ncol(taxaTable) - numMetaCols() 
 
-   binaryCols = getColIndexes( otuTable, getBinaryFields() )
-   nominalCols = getColIndexes( otuTable, getNominalFields() )
-   numericCols = getColIndexes( otuTable, getNumericFields() )
+   binaryCols = getColIndexes( taxaTable, getBinaryFields() )
+   nominalCols = getColIndexes( taxaTable, getNominalFields() )
+   numericCols = getColIndexes( taxaTable, getNumericFields() )
+   logInfo( "binaryCols", binaryCols )
+   logInfo( "nominalCols", nominalCols )
+   logInfo( "numericCols", numericCols )
+	
+	logInfo( "numMetaCols", numMetaCols() )
+	logInfo( "ncol(taxaTable)", ncol(taxaTable) )
+	logInfo( "lastOtuCol", lastOtuCol )
 
-   if( doDebug() ) print( paste( c("binaryCols:", binaryCols), collapse= " " ) )
-   if( doDebug() ) print( paste( c("nominalCols:", nominalCols), collapse= " " ) )
-   if( doDebug() ) print( paste( c("numericCols:", numericCols), collapse= " " ) )
-   if( doDebug() ) print( paste( "internal.numMetaCols:", getProperty("internal.numMetaCols") ) )
-   if( doDebug() ) print( paste( "ncol(otuTable):", ncol(otuTable) ) )
-   if( doDebug() ) print( paste( "lastOtuCol:", lastOtuCol ) )
-
-   # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of otuTable rows
+   # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of taxaTable rows
    cutoffValue = getProperty("r.rareOtuThreshold", 1)
    if( cutoffValue < 1 ) {
-      cutoffValue = cutoffValue * nrow(otuTable)
+      cutoffValue = cutoffValue * nrow(taxaTable)
    }
-   if( doDebug() ) print( paste( "cutoffValue:", cutoffValue ) )
+   logInfo( "cutoffValue", cutoffValue )
    
-   for( otuCol in 2:lastOtuCol ) {
-      if( sum( otuTable[,otuCol] > 0 ) >= cutoffValue ) {
-         otuNames[length(otuNames)+1] = names(otuTable)[otuCol]
-         if( doDebug() ) print( paste0( "otuNames[", length(otuNames), "]: ", otuNames[ length(otuNames) ] ) )
+   for( taxaCol in 1:lastOtuCol ) {
+      if( sum( taxaTable[,taxaCol] > 0 ) >= cutoffValue ) {
+         otuNames[length(otuNames)+1] = names(taxaTable)[taxaCol]
+         logInfo( c( "otuNames[", length(otuNames), "]", otuNames[ length(otuNames) ] ) )
          
          if( length( binaryCols ) > 0 ) {
-            if( doDebug() ) {
-            	print( "Calculate BINARY P_VALS" )
-            	parTestName = getTestName(attName = names(otuTable)[binaryCols[1]], isParametric = TRUE)
-            	nonParTestName = getTestName(attName = names(otuTable)[binaryCols[1]], isParametric = FALSE)
-            	print( paste("Using parametric test:", parTestName, "and non-parametric test:", nonParTestName) )
-            }
+            	logInfo( "Calculate BINARY P_VALS" )
             for( metaCol in binaryCols ) {
-               if( doDebug() ) print( paste( "metaCol:", metaCol ) )
-               attName = names( otuTable )[metaCol]
-               if( doDebug() ) print( paste( "attName = names( otuTable )[metaCol]:", attName ) )
-               att = as.factor( otuTable[,metaCol] )
-               if( doDebug() ) print( paste( c("att = otuTable[,metaCol]:", att), collapse= " " ) )
+               logInfo( "metaCol:", metaCol )
+               attName = names( taxaTable )[metaCol]
+               logInfo( "attName = names( taxaTable )[metaCol]", attName ) 
+               att = as.factor( taxaTable[,metaCol] )
+               logInfo( "att = taxaTable[,metaCol]", att)
                vals = levels( att )
-               if( doDebug() ) print( paste( c("vals = levels( att ):", vals), collapse= " " ) )
-               myLm = lm( otuTable[,otuCol] ~ att, na.action=na.exclude )
-               if( doDebug() ) print( "myLm = lm( otuTable[,otuCol] ~ att, na.action=na.exclude )" )
-               if( doDebug() ) print( myLm )
-               parametricPvals = addNamedVectorElement( parametricPvals, attName, t.test( otuTable[att==vals[1], otuCol], otuTable[att==vals[2], otuCol] )$p.value )
-               if( doDebug() ) print( paste( "Add parametricPval:", parametricPvals[length(parametricPvals)] ) )
-               nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, pvalue( wilcox_test( otuTable[att==vals[1], otuCol], otuTable[att==vals[2], otuCol] ) ) )
-               if( doDebug() ) print( paste( "Add nonParametricPval:", nonParametricPvals[length(nonParametricPvals)] ) )
+               logInfo( "vals = levels( att )", vals )
+               myLm = lm( taxaTable[,taxaCol] ~ att, na.action=na.exclude )
+               logInfo( "myLm = lm( taxaTable[,taxaCol] ~ att, na.action=na.exclude )" )
+               print( myLm )
+               parametricPvals = addNamedVectorElement( parametricPvals, attName, t.test( taxaTable[att==vals[1], taxaCol], taxaTable[att==vals[2], taxaCol] )$p.value )
+               logInfo( "Add parametricPval", parametricPvals[length(parametricPvals)] )
+               nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, pvalue( wilcox_test( taxaTable[att==vals[1], taxaCol], taxaTable[att==vals[2], taxaCol] ) ) )
+               logInfo( "Add nonParametricPval", nonParametricPvals[length(nonParametricPvals)] )
                rSquaredVals = addNamedVectorElement( rSquaredVals, attName, summary( myLm )$r.squared )
-               if( doDebug() ) print( paste( "Add rSquaredVal:", rSquaredVals[length(rSquaredVals)] ) )
+               logInfo( "Add rSquaredVal", rSquaredVals[length(rSquaredVals)] )
 
             }
          }
          
          if( length( nominalCols ) > 0 ) {
-         	if( doDebug() ) {
-         		print( "Calculate NOMINAL P_VALS" )
-         		parTestName = getTestName(attName = names(otuTable)[nominalCols[1]], isParametric = TRUE)
-         		nonParTestName = getTestName(attName = names(otuTable)[nominalCols[1]], isParametric = FALSE)
-         		print( paste("Using parametric test:", parTestName, "and non-parametric test:", nonParTestName) )
-         	}
+         	logInfo( "Calculate NOMINAL P_VALS" )
             for( metaCol in nominalCols ) {
-               if( doDebug() ) print( paste( "metaCol:", metaCol ) )
-               attName = names( otuTable )[metaCol]
-               if( doDebug() ) print( paste( "attName = names( otuTable )[metaCol]:", attName ) )
-               att = as.factor( otuTable[,metaCol] )
-               if( doDebug() ) print( paste( c("att = otuTable[,metaCol]:", att), collapse= " " ) )
+               logInfo( "metaCol:", metaCol )
+               attName = names( taxaTable )[metaCol]
+               logInfo( "attName = names( taxaTable )[metaCol]", attName )
+               att = as.factor( taxaTable[,metaCol] )
+               logInfo( "att = taxaTable[,metaCol]", att )
                vals = levels( att )
-               if( doDebug() ) print( paste( c("vals = levels( att ):", vals), collapse= " " ) )
-               myLm = lm( otuTable[,otuCol] ~ att, na.action=na.exclude )
-               if( doDebug() ) print( "myLm = lm( otuTable[,otuCol] ~ att, na.action=na.exclude )" )
+               logInfo( "vals = levels( att )", vals )
+               myLm = lm( taxaTable[,taxaCol] ~ att, na.action=na.exclude )
+               logInfo( "myLm = lm( taxaTable[,taxaCol] ~ att, na.action=na.exclude )" )
                myAnova = anova( myLm )
-               if( doDebug() ) print( "myAnova = anova( myLm )" )
+               logInfo( "myAnova = anova( myLm )" )
                parametricPvals = addNamedVectorElement( parametricPvals, attName, myAnova$"Pr(>F)"[1] )
-               if( doDebug() ) print( paste( "Add parametricPval:", parametricPvals[length(parametricPvals)] ) )
-               nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, kruskal.test( otuTable[,otuCol] ~ att, na.action=na.exclude )$p.value )
-               if( doDebug() ) print( paste( "Add nonParametricPval:", nonParametricPvals[length(nonParametricPvals)] ) )
+               logInfo( "Add parametricPval", parametricPvals[length(parametricPvals)] )
+               nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, kruskal.test( taxaTable[,taxaCol] ~ att, na.action=na.exclude )$p.value )
+               logInfo( "Add nonParametricPval", nonParametricPvals[length(nonParametricPvals)] )
                rSquaredVals = addNamedVectorElement( rSquaredVals, attName, summary( myLm )$r.squared )
-               if( doDebug() ) print( paste( "Add rSquaredVal:", rSquaredVals[length(rSquaredVals)] ) )
+               logInfo( "Add rSquaredVal", rSquaredVals[length(rSquaredVals)] )
 
             }
          }
          
          if( length( numericCols ) > 0 ) {
-         	if( doDebug() ) {
-         		print( "Calculate NUMERIC P_VALS" )
-         		parTestName = getTestName(attName = names(otuTable)[numericCols[1]], isParametric = TRUE)
-         		nonParTestName = getTestName(attName = names(otuTable)[numericCols[1]], isParametric = FALSE)
-         		print( paste("Using parametric test:", parTestName, "and non-parametric test:", nonParTestName) )
-         	}
+         	logInfo( "Calculate NUMERIC P_VALS" )
             for( metaCol in numericCols ) {
-               if( doDebug() ) print( paste( "metaCol:", metaCol ) )
-               attName = names( otuTable )[metaCol]
-               if( doDebug() ) print( paste( "attName = names( otuTable )[metaCol]:", attName ) )
-               att = otuTable[,metaCol]
-               if( doDebug() ) print( paste( c("att = otuTable[,metaCol]:", att), collapse= " " ) )
-               parametricPvals = addNamedVectorElement( parametricPvals, attName, Kendall( otuTable[,otuCol], att )$sl[1] )
-               if( doDebug() ) print( paste( "Add parametricPval:", parametricPvals[length(parametricPvals)] ) )
-               nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, cor.test( otuTable[,otuCol], att )$p.value )
-               if( doDebug() ) print( paste( "Add nonParametricPval:", nonParametricPvals[length(nonParametricPvals)] ) )
-               rSquaredVals = addNamedVectorElement( rSquaredVals, attName, cor( otuTable[,otuCol], att, use="na.or.complete", method="kendall" )^2 )
-               if( doDebug() ) print( paste( "Add rSquaredVal:", rSquaredVals[length(rSquaredVals)] ) )
+               logInfo( "metaCol", metaCol )
+               attName = names( taxaTable )[metaCol]
+               logInfo( "attName = names( taxaTable )[metaCol]", attName ) 
+               att = taxaTable[,metaCol]
+               logInfo( "att = taxaTable[,metaCol]", att )
+               parametricPvals = addNamedVectorElement( parametricPvals, attName, Kendall( taxaTable[,taxaCol], att )$sl[1] )
+			   logInfo( "Add parametricPval", parametricPvals[length(parametricPvals)] )               
+			   nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, cor.test( taxaTable[,taxaCol], att )$p.value )
+               logInfo( "Add nonParametricPval", nonParametricPvals[length(nonParametricPvals)] )
+               rSquaredVals = addNamedVectorElement( rSquaredVals, attName, cor( taxaTable[,taxaCol], att, use="na.or.complete", method="kendall" )^2 )
+               logInfo( "Add rSquaredVal", rSquaredVals[length(rSquaredVals)] )
             }
          }
       }
    }
 
    if( length( otuNames ) == 0 ) {
-      if( doDebug() ) print( paste("No OTU Names found, should print empty vector:", otuNames) )
+      logInfo( "No OTU Names found, verify empty vector", otuNames )
       return( NULL )
    }
 
-   if( doDebug() ) print( "Calculate ADJUSTED P_VALS" )
+   logInfo( "Calculate ADJUSTED P_VALS" )
    adjParDF = data.frame( vector(mode="double", length=length(otuNames)) )
    adjNonParDF = data.frame( vector(mode="double", length=length(otuNames)) )
    for( i in 1:length( getReportFields() ) ) {
-      if( doDebug() ) print( paste( "getReportFields()[i]:", getReportFields()[i] ) )
+      logInfo( "getReportFields()[i]", getReportFields()[i] )
       parPvals = getValuesByName( parametricPvals, getReportFields()[i] )
-      if( doDebug() ) print( paste( c("parPvals:", parPvals), collapse= " " ) )
+      logInfo("parPvals:", parPvals )
       npPvals = getValuesByName( nonParametricPvals, getReportFields()[i] )
-      if( doDebug() ) print( paste( c("npPvals:", npPvals), collapse= " " ) )
+      logInfo( "npPval:", npPvals )
       adjParDF[,i] = p.adjust( parPvals, method=getProperty("rStats.pAdjustMethod"), n=getP_AdjustLen(otuNames) )
       adjNonParDF[,i] = p.adjust( npPvals, method=getProperty("rStats.pAdjustMethod"), n=getP_AdjustLen(otuNames) )
       names(adjParDF)[i] = getReportFields()[i]
       names(adjNonParDF)[i] = getReportFields()[i]
    }
 
-   if( doDebug() ) print( "Convert ADJUSTED P_VALS data.frame --> named vector" )
+   logInfo( "Convert ADJUSTED P_VALS data.frame --> named vector" )
    adjParPvals = as.vector( as.matrix(adjParDF) )
    adjNonParPvals = as.vector( as.matrix(adjNonParDF) )
    for( i in 1:length( getReportFields() ) ) {
@@ -179,11 +155,12 @@ calculateStats <- function( otuTable ) {
       names( adjParPvals )[x:y] = rep( getReportFields()[i], length( otuNames ) )
       names( adjNonParPvals )[x:y] = rep( getReportFields()[i], length( otuNames ) )
    }
-   if( doDebug() ) print( paste( c("otuNames:", otuNames), collapse= " " ) )
-   if( doDebug() ) print( paste( c("adjParPvals:", adjParPvals), collapse= " " ) )
-   if( doDebug() ) print( paste( c("adjNonParPvals:", adjNonParPvals), collapse= " " ) )
+   logInfo( "otuNames", otuNames )
+   logInfo( "adjParPvals:", adjParPvals )
+   logInfo( "adjNonParPvals:", adjNonParPvals )
    reportStats = list( otuNames, parametricPvals, nonParametricPvals, adjParPvals, adjNonParPvals, rSquaredVals )
-   names(reportStats) = c( "OTU", "parametricPvals", "nonParametricPvals", "adjParPvals", "adjNonParPvals", "rSquaredVals" )
+   names( reportStats ) = c( "OTU", statsFileSuffix( TRUE, FALSE ), statsFileSuffix( FALSE, FALSE ),
+		statsFileSuffix( TRUE ), statsFileSuffix( FALSE ), statsFileSuffix() )
    return( reportStats )
 }
 
@@ -194,9 +171,9 @@ calculateStats <- function( otuTable ) {
 # GLOBAL adjusts p-values for a all OTUs and all attributes and all taxonomy levels
 getP_AdjustLen <- function( otuNames ) {
    if( getProperty("rStats.pAdjustScope") == "GLOBAL" ) {
-      return( length(otuNames) * length( getProperty("report.taxonomyLevels") ) * length(getReportFields()) )
+      return( length(otuNames) * length( taxaLevels() ) * length( getReportFields() ) )
    } else if( getProperty("rStats.pAdjustScope") == "ATTRIBUTE" ) {
-      return( length(otuNames) * length( getProperty("report.taxonomyLevels") ) )
+      return( length(otuNames) * length( taxaLevels() ) )
    } else if( getProperty("rStats.pAdjustScope") == "TAXA" ) {
       return( length(otuNames) * length(getReportFields()) )
    } else {
@@ -208,23 +185,21 @@ getP_AdjustLen <- function( otuNames ) {
 # Generates the reportStats list with p-value and R^2 metrics 
 # Outputs summary tables for each metric at each taxonomyLevel
 main <- function() {
-   importLibs( c( "coin", "Kendall" ) ) 
-   for( otuLevel in getProperty("report.taxonomyLevels") ) {
-      if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_CalculateStats_", otuLevel, ".log") ) )
-      inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
-      if( doDebug() ) print( paste( "inputFile:", inputFile ) )
-      if( length( inputFile ) == 0 ) { next }
-      otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t" )
-      reportStats = calculateStats( otuTable )
-      if( is.null( reportStats ) ) {
-         if( doDebug() ) print( paste( otuLevel, "is empty, verify contents of table:", inputFile ) )
-      } else {
-      	 if( doDebug() ) print( "Building summary Tables ... " )
-         buildSummaryTables( reportStats, otuLevel )
-      }
-   }
-	 if( doDebug() ) print( "Done!" )
-   if( doDebug() ) sink()
+	importLibs( c( "coin", "Kendall" ) ) 
+	for( level in taxaLevels() ) {
+		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_CalculateStats_", level, ".log") ) )
+		taxaTable = getTaxaTable( level )
+		if( is.null( taxaTable ) ) { next }
+		reportStats = calculateStats( taxaTable )
+		if( is.null( reportStats ) ) {
+			logInfo( c( level, "is empty, verify contents of table:", inputFile ) )
+		} else {
+			logInfo( "Building summary Tables ... " )
+			buildSummaryTables( reportStats, level )
+		}
+	}
+	logInfo( "Done!" )
+	if( doDebug() ) sink()
 }
 
 # Method wilcox_test is from the coin package

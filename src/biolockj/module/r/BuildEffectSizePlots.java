@@ -77,7 +77,7 @@ public class BuildEffectSizePlots extends R_Module implements ScriptModule
 	private  String getTaxaTablePath() throws Exception
 	{
 		final IOFileFilter ff = new WildcardFileFilter( "*" + BuildTaxaTables.class.getSimpleName() );
-		Collection<File> files = FileUtils.listFiles( Config.getExistingDir( Config.INTERNAL_PIPELINE_DIR ),
+		Collection<File> files = FileUtils.listFiles( Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ),
 				ff, HiddenFileFilter.VISIBLE );
 		
 		if( !files.isEmpty() )

@@ -173,7 +173,7 @@ public class Log
 
 	/**
 	 * Called by {@link biolockj.BioLockJ#main(String[]) BioLockJ.main()} after {@link biolockj.Config} is initialized.
-	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}, named after
+	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Config#PROJECT_PIPELINE_DIR}, named after
 	 * the project.
 	 * <ul>
 	 * <li>Set and store {@link #LOG_FILE} and {@link #LOG_APPEND} in {@link System} properties to be used by
@@ -188,7 +188,7 @@ public class Log
 	 */
 	public static void initialize( final String name ) throws Exception
 	{
-		logFile = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
+		logFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
 				+ name + BioLockJ.LOG_EXT );
 
 		System.setProperty( LOG_FILE, logFile.getAbsolutePath() );

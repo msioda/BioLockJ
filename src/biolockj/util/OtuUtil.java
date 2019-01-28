@@ -180,7 +180,7 @@ public class OtuUtil
 			sampleId = "";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
+		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
 				+ prefix + OTU_COUNT + sampleId + BioLockJ.TSV_EXT );
 	}
 

@@ -148,7 +148,7 @@ public class RuntimeParamUtil
 	/**
 	 * Runtime property getter for Docker host pipeline dir
 	 * 
-	 * @return Host {@value biolockj.Config#INTERNAL_PIPELINE_DIR} directory
+	 * @return Host {@value biolockj.Config#PROJECT_PIPELINE_DIR} directory
 	 */
 	public static String getDockerHostPipelineDir()
 	{

@@ -96,21 +96,6 @@ public class MetaUtil
 		return getFile() != null && getFile().exists();
 	}
 
-	/**
-	 * Get the comment delimeter (or default empty string)
-	 * 
-	 * @return Comment char
-	 */
-	public static String getCommentChar()
-	{
-		String commentDelim = Config.getString( META_COMMENT_CHAR );
-		if( commentDelim == null )
-		{
-			commentDelim = "";
-		}
-
-		return DEFAULT_COMMENT_CHAR;
-	}
 
 	/**
 	 * Get metadata field value for given sampleId.
@@ -286,8 +271,9 @@ public class MetaUtil
 	 * Get the metadata file name, if it exists, otherwise return projectName.tsv
 	 *
 	 * @return Name of metadata file, or a default name if no metadata file exists
+	 * #throws Exception if errors occur
 	 */
-	public static String getMetadataFileName()
+	public static String getMetadataFileName() throws Exception
 	{
 		try
 		{
@@ -307,7 +293,7 @@ public class MetaUtil
 			ex.printStackTrace();
 		}
 
-		return Config.getString( Config.INTERNAL_PIPELINE_NAME ) + BioLockJ.TSV_EXT;
+		return Config.requireString( Config.PROJECT_PIPELINE_NAME ) + BioLockJ.TSV_EXT;
 
 	}
 
@@ -392,25 +378,17 @@ public class MetaUtil
 		{
 			Config.setConfigProperty( META_COLUMN_DELIM, DEFAULT_COL_DELIM );
 		}
-
-		if( getCommentChar().length() > 1 )
+		
+		if( Config.getString( META_COMMENT_CHAR ) == null )
 		{
-			throw new Exception(
-					META_COMMENT_CHAR + " must be a single character of length = 1.  Current property value is "
-							+ getCommentChar().length() + " characters in length, value=\"" + getCommentChar() + "\"" );
+			Config.setConfigProperty( META_COMMENT_CHAR, DEFAULT_COMMENT_CHAR );
 		}
 
-		final Set<String> metaProps = new HashSet<>();
-		metaProps.add( Config.requireString( META_NULL_VALUE ) );
-		metaProps.add( Config.requireString( META_COLUMN_DELIM ) );
-		metaProps.add( getCommentChar() );
-
-		if( metaProps.size() < 3 )
+		String commentChar = Config.getString( MetaUtil.META_COMMENT_CHAR );
+		if( commentChar != null && commentChar.length() > 1 )
 		{
-			throw new Exception( "BioLockJ requires 3 unique values for config properties: (" + META_NULL_VALUE + ", "
-					+ META_COLUMN_DELIM + ", " + META_COMMENT_CHAR + ") | Current values = (\""
-					+ Config.requireString( META_NULL_VALUE ) + "\", \"" + Config.requireString( META_COLUMN_DELIM )
-					+ "\", \"" + getCommentChar() + "\")" );
+			throw new Exception( META_COMMENT_CHAR + " property must be a single character.  Config value = \""
+							+ commentChar + "\"" );
 		}
 
 		if( Config.getString( META_FILE_PATH ) != null )
@@ -465,7 +443,7 @@ public class MetaUtil
 	{
 		if( fileDir == null )
 		{
-			fileDir = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+			fileDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 					+ File.separator + ".temp" );
 			if( !fileDir.exists() )
 			{
@@ -650,9 +628,10 @@ public class MetaUtil
 
 	private static String removeComments( String val ) throws Exception
 	{
-		if( getCommentChar().length() > 0 )
+		final String commentChar = Config.getString( META_COMMENT_CHAR );
+		if( commentChar != null && commentChar.length() > 0 )
 		{
-			final int index = val.indexOf( getCommentChar() );
+			final int index = val.indexOf( commentChar );
 			if( index > -1 )
 			{
 				val = val.substring( 0, index );

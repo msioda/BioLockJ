@@ -32,13 +32,13 @@ public class SeqUtil
 
 	/**
 	 * Create a copy of the sequence files in property {@value biolockj.Config#INPUT_DIRS}, output to a directory named
-	 * {@value biolockj.Config#INTERNAL_PIPELINE_DIR}/input.
+	 * {@value biolockj.Config#PROJECT_PIPELINE_DIR}/input.
 	 *
 	 * @throws Exception if unable to copy the files
 	 */
 	public static void copyInputData() throws Exception
 	{
-		final File inputFileDir = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+		final File inputFileDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 				+ File.separator + "input" );
 
 		if( !inputFileDir.exists() )
@@ -600,18 +600,18 @@ public class SeqUtil
 			final String header = SeqUtil.scanFirstLine( reader, file );
 			final String idChar = header.substring( 0, 1 );
 			String seq = reader.readLine();
-			Log.warn( SeqUtil.class, "header: " + header );
-			Log.warn( SeqUtil.class, "idChar: " + idChar );
-			Log.warn( SeqUtil.class, "seq: " + seq );
+			Log.info( SeqUtil.class, "header: " + header );
+			Log.info( SeqUtil.class, "idChar: " + idChar );
+			Log.info( SeqUtil.class, "seq: " + seq );
 			if( FASTA_HEADER_DELIMS.contains( idChar ) || idChar.equals( FASTQ_HEADER_DELIM ) )
 			{
 				if( seq != null && !seq.trim().isEmpty() )
 				{
 					seq = seq.trim().toLowerCase().replaceAll( "a", "" ).replaceAll( "c", "" ).replaceAll( "g", "" )
 							.replaceAll( "t", "" ).replaceAll( "u", "" );
-					Log.warn( SeqUtil.class, "After removing acgtu from the seq (what is left?) ---> " + seq );
-					Log.warn( SeqUtil.class, "Is seq empty? ---> " + seq.isEmpty() );
-					Log.warn( SeqUtil.class, "Is seq.trim() empty? ---> " + seq.trim().isEmpty() );
+					Log.debug( SeqUtil.class, "After removing acgtu from the seq (what is left?) ---> " + seq );
+					Log.debug( SeqUtil.class, "Is seq empty? ---> " + seq.isEmpty() );
+					Log.debug( SeqUtil.class, "Is seq.trim() empty? ---> " + seq.trim().isEmpty() );
 					isSeq = seq.trim().isEmpty();
 				}
 			}
@@ -756,54 +756,55 @@ public class SeqUtil
 	{
 		String foundFasta = null;
 		String foundFastq = null;
-		String testChar = null;
+		String headerChar = null;
 		for( final File f: BioLockJUtil.getPipelineInputFiles() )
 		{
 			final BufferedReader reader = BioLockJUtil.getFileReader( f );
 			try
 			{
 				String line = scanFirstLine( reader, f );
-				int numLines = 0;
+				int numSeqLines = 0;
 				while( line != null )
 				{
 					line = line.trim();
-					if( testChar == null )
+					if( headerChar == null )
 					{
-						testChar = line.substring( 0, 1 ); // set only once
+						headerChar = line.substring( 0, 1 ); // set only once
+						Log.debug( SeqUtil.class, " --> 1st headerChar = " + headerChar );
 					}
 					else
 					{
-						final String lineChar = line.trim().substring( 0, 1 );
-						if( !lineChar.equals( "+" ) && !lineChar.equals( testChar ) )
+						Log.debug( SeqUtil.class, f.getName() + " --> Line["+(numSeqLines+1)+"] = " + line );
+						final String testChar = line.trim().substring( 0, 1 );
+						if( !testChar.equals( headerChar ) && !testChar.equals( "+" ) )
 						{
-							numLines++;
-							if( numLines > 1 )
+							numSeqLines++;
+							if( numSeqLines > 1 )
 							{
-								Log.debug( SeqUtil.class, f.getName() + " --> Line [ " + numLines
-										+ " ] after TEST CHARACTER: " + testChar + " = #" + numLines );
+								Log.warn( SeqUtil.class, f.getName() + " --> Line [ " + ( numSeqLines + 1 )
+										+ " ] after TEST CHARACTER: " + headerChar + " = #seq lines = " + numSeqLines );
 							}
 						}
 						else
 						{
+							if( numSeqLines == 0 ) numSeqLines++;
 							break;
 						}
 					}
-
 					line = reader.readLine();
 				}
 
-				Log.info( SeqUtil.class,
-						f.getAbsolutePath() + " header char: " + testChar + " --> #lines/read: " + numLines );
-				if( numLines > 1 && Config.getString( INTERNAL_IS_MULTI_LINE_SEQ ) == null
-						&& ( FASTA_HEADER_DELIMS.contains( testChar ) || testChar.equals( FASTQ_HEADER_DELIM ) ) )
+				Log.info( SeqUtil.class, f.getAbsolutePath() + " --> #lines/read: " + (numSeqLines + 1) );
+				if( numSeqLines > 1 && Config.getString( INTERNAL_IS_MULTI_LINE_SEQ ) == null
+						&& ( FASTA_HEADER_DELIMS.contains( headerChar ) || headerChar.equals( FASTQ_HEADER_DELIM ) ) )
 				{
-					Log.info( SeqUtil.class, "Multi-line input file detected: # lines/seq: " + numLines );
+					Log.info( SeqUtil.class, "Multi-line input file detected: # lines/seq: " + numSeqLines );
 					Config.setConfigProperty( INTERNAL_IS_MULTI_LINE_SEQ, Config.TRUE );
 					if( numMultiSeqLines != null && numMultiSeqLines == 0 )
 					{
-						numMultiSeqLines = numLines;
+						numMultiSeqLines = numSeqLines;
 					}
-					else if( numMultiSeqLines != null && numMultiSeqLines != numLines )
+					else if( numMultiSeqLines != null && numMultiSeqLines != numSeqLines )
 					{
 						Log.warn( SeqUtil.class, "Multi-line input file has inconsistant number of lines per read" );
 						numMultiSeqLines = null;
@@ -822,19 +823,19 @@ public class SeqUtil
 				}
 			}
 
-			if( FASTA_HEADER_DELIMS.contains( testChar ) )
+			if( FASTA_HEADER_DELIMS.contains( headerChar ) )
 			{
 				foundFasta = f.getAbsolutePath();
 				Log.debug( SeqUtil.class, "detected FASTA: " + foundFasta );
 			}
-			else if( testChar.equals( FASTQ_HEADER_DELIM ) )
+			else if( headerChar.equals( FASTQ_HEADER_DELIM ) )
 			{
 				foundFastq = f.getAbsolutePath();
 				Log.debug( SeqUtil.class, "detected FASTQ: " + foundFastq );
 			}
 			else
 			{
-				throw new Exception( "Invalid sequence file format (1st character = " + testChar + ") in: "
+				throw new Exception( "Invalid sequence file format (1st character = " + headerChar + ") in: "
 						+ f.getAbsolutePath() + BioLockJ.RETURN + "FASTA files must begin with either character: "
 						+ BioLockJUtil.getCollectionAsString( FASTA_HEADER_DELIMS )
 						+ " and FASTQ files must begin with \"" + FASTQ_HEADER_DELIM + "\"" );
@@ -848,9 +849,9 @@ public class SeqUtil
 					+ foundFasta + BioLockJ.RETURN + "FASTQ file found: " + foundFastq );
 		}
 
-		if( testChar != null )
+		if( headerChar != null )
 		{
-			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, testChar );
+			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, headerChar );
 		}
 
 		final String seqType = Config.getString( INTERNAL_SEQ_TYPE );
@@ -1076,7 +1077,7 @@ public class SeqUtil
 	 * {@link biolockj.Config} Boolean property: {@value #INPUT_REQUIRE_COMPLETE_PAIRS}<br>
 	 * Require 100% sequence input files are matching paired reads
 	 */
-	public static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
+	protected static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
 
 	/**
 	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>

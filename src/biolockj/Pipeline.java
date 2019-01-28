@@ -319,8 +319,9 @@ public class Pipeline
 	 *
 	 * @param bioModule BioModule
 	 * @return New metadata file (or null)
+	 * @throws Exception if errors occur
 	 */
-	protected static File getMetadata( final BioModule bioModule )
+	protected static File getMetadata( final BioModule bioModule ) throws Exception
 	{
 		if( bioModule != null )
 		{
@@ -339,7 +340,7 @@ public class Pipeline
 	/**
 	 * Initialization occurs by calling {@link biolockj.module.BioModule} methods on configured modules<br>
 	 * <ol>
-	 * <li>Create module sub-directories under {@value biolockj.Config#INTERNAL_PIPELINE_DIR} as ordered in
+	 * <li>Create module sub-directories under {@value biolockj.Config#PROJECT_PIPELINE_DIR} as ordered in
 	 * {@link biolockj.Config} file.<br>
 	 * <li>Reset the {@link biolockj.util.SummaryUtil} module so previous summary descriptions can be used for completed
 	 * modules
@@ -610,13 +611,13 @@ public class Pipeline
 	}
 
 	/**
-	 * Name of the file created in the BioModule or {@value biolockj.Config#INTERNAL_PIPELINE_DIR} root directory to
+	 * Name of the file created in the BioModule or {@value biolockj.Config#PROJECT_PIPELINE_DIR} root directory to
 	 * indicate execution was successful: {@value #BLJ_COMPLETE}
 	 */
 	public static final String BLJ_COMPLETE = "biolockjComplete";
 
 	/**
-	 * Name of the file created in the {@value biolockj.Config#INTERNAL_PIPELINE_DIR} root directory to indicate fatal
+	 * Name of the file created in the {@value biolockj.Config#PROJECT_PIPELINE_DIR} root directory to indicate fatal
 	 * application errors halted execution: {@value #BLJ_FAILED}
 	 */
 	public static final String BLJ_FAILED = "biolockjFailed";

@@ -24,16 +24,6 @@ calcSigFraction <- function(pvals, pvalCutoff){
 	return( belowCutoff / total )
 }
 
-# error handler for tryCatch in main
-errorHandlerPValHist <- function(err, otuLevel, reportField){
-	origErr = as.character(err)
-	msg = paste0("Failed to create plot for \ntaxonomy level: ", otuLevel, 
-							 "\nusing attribute: ", reportField)
-	if( doDebug() ){print(msg)}
-	plotPlainText(msg)
-	plotPlainText(msg) # twice because it has to cover two plot spots to maintain the paired plot layout.
-}
-
 # Return main.cex parameter between 0.65 and 1.2 based on longest report field name
 getCexMain<- function( labels=NULL ) {
 	cexMax = 1.2
@@ -69,25 +59,23 @@ printColorCode <- function(){
 }
 
 
-# Main function generates reports for each each report.taxonomyLevels
+# Main function generates reports for each each taxaLevels()
 # Each taxonomy report includes 2 histograms for each report field (1 parametric, 1 non-parametric) 
 main <- function() {
 	pvalCutoff = getProperty("r.pvalCutoff", 0.05)
 	
-	for( otuLevel in getProperty("report.taxonomyLevels") ) {
-		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildPvalHistograms_", otuLevel, ".log") ) )
+	for( level in taxaLevels() ) {
+		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildPvalHistograms_", level, ".log") ) )
 		
 		# create empty pdf
-		pdf( getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_histograms.pdf") ) )
+		pdf( getPath( file.path(getModuleDir(), "output"), paste0(level, "_histograms.pdf") ) )
 		par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
-		parInputFile = getPipelineFile( buildStatsFileSuffix(parametric=TRUE, adjusted=FALSE, level=otuLevel) )
-		if( doDebug() ) print( paste( "parInputFile:", parInputFile ) )
-		parStats = read.table( parInputFile, check.names=FALSE, header=TRUE, sep="\t", row.names=1 )
-		nonParInputFile = getPipelineFile( buildStatsFileSuffix(parametric=FALSE, adjusted=FALSE, level=otuLevel) )
-		if( doDebug() ) print( paste( "nonParInputFile:", nonParInputFile ) )
-		nonParStats = read.table( nonParInputFile, check.names=FALSE, header=TRUE, sep="\t", row.names=1  )
+		
+		
+		parStats = getStatsTable( level, TRUE, FALSE )
+		nonParStats = getStatsTable( level, FALSE, FALSE )
 		size = getCexMain( colnames(parStats) )
-		if( doDebug() ) print( paste("size = getCexMain( colnames(parStats) ):", size ) )
+		logInfo( "size = getCexMain( colnames(parStats) )", size )
 		
 		# create ranks table
 		ranks = data.frame(AttributeName=names(parStats),
@@ -101,36 +89,33 @@ main <- function() {
 		# order attributes based on the fraction of tests with a p-value below <pvalCutoff>
 		orderBy = apply(ranks[2:3],1, max, na.rm=TRUE)
 		ranks = ranks[order(orderBy, decreasing=TRUE),]
-		fname = getPath( file.path(getModuleDir(), "temp"), paste0(otuLevel, "_fractionBelow-", pvalCutoff, ".tsv") )
+		fname = getPath( file.path(getModuleDir(), "temp"), paste0(level, "_fractionBelow-", pvalCutoff, ".tsv") )
 		write.table(ranks, file=fname, sep="\t", quote=FALSE, row.names=FALSE)
 		
 		# plot histograms in the same order they have in the ranks table
 		for( attName in ranks$AttributeName ) {
-			if( doDebug() ) print( paste("processing attribute:", attName) )
-			tryCatch({
-				stopifnot( attName %in% names(nonParStats) & attName %in% names(parStats) )
-				# parametric
-				parTestName = getTestName(attName, isParametric=TRUE)
-				xLabelPar = paste( parTestName, "P-Values" )
-				addHistogram( v=parStats[, attName], title="",
-											xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
-											col=getTestName(attName, isParametric=TRUE, returnColors=TRUE) )
-				title(main="Parametric", line=1.5)
-				# nonParametric
-				nonParTestName = getTestName(attName, isParametric=FALSE)
-				xLabelNonPar = paste( nonParTestName, "P-Values" )
-				addHistogram( v=nonParStats[, attName], title="",
-											xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
-											col=getTestName(attName, isParametric=FALSE, returnColors=TRUE) )
-				title(main="Non-Parametric", line=1.5)
-				# shared title
-				plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
-				shiftByPoints = par("mai")[2] * plotPointPerInch
-				centerAt = par("usr")[1] - shiftByPoints
-				mtext(text=attName, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
-			}, error = function(err) {
-				errorHandlerPValHist(err, otuLevel=otuLevel, reportField=attName)
-			})
+			logInfo("processing attribute:", attName )
+			stopifnot( attName %in% names(nonParStats) & attName %in% names(parStats) )
+
+			parTestName = getTestName(attName, isParametric=TRUE)
+			xLabelPar = paste( parTestName, "P-Values" )
+			addHistogram( v=parStats[, attName], title="",
+										xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
+										col=getTestName(attName, isParametric=TRUE, returnColors=TRUE) )
+			title(main="Parametric", line=1.5)
+
+			nonParTestName = getTestName(attName, isParametric=FALSE)
+			xLabelNonPar = paste( nonParTestName, "P-Values" )
+			addHistogram( v=nonParStats[, attName], title="",
+										xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
+										col=getTestName(attName, isParametric=FALSE, returnColors=TRUE) )
+			title(main="Non-Parametric", line=1.5)
+			# shared title
+			plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
+			shiftByPoints = par("mai")[2] * plotPointPerInch
+			centerAt = par("usr")[1] - shiftByPoints
+			mtext(text=attName, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+			
 		}
 		# at the end, add the color code reference
 		printColorCode()
