@@ -61,7 +61,7 @@ calculateStats <- function( taxaTable ) {
          logInfo( c( "otuNames[", length(otuNames), "]", otuNames[ length(otuNames) ] ) )
          
          if( length( binaryCols ) > 0 ) {
-            	logInfo( "Calculate BINARY P_VALS" )
+            logInfo( "Calculate BINARY P_VALS" )
             for( metaCol in binaryCols ) {
                logInfo( "metaCol:", metaCol )
                attName = names( taxaTable )[metaCol]
