@@ -751,7 +751,6 @@ public class BioLockJUtil
 		}
 
 		Config.setConfigProperty( INTERNAL_PIPELINE_INPUT_TYPES, fileTypes );
-
 	}
 
 	/**
