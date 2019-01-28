@@ -608,7 +608,7 @@ public class SeqUtil
 				if( seq != null && !seq.trim().isEmpty() )
 				{
 					seq = seq.trim().toLowerCase().replaceAll( "a", "" ).replaceAll( "c", "" ).replaceAll( "g", "" )
-							.replaceAll( "t", "" ).replaceAll( "u", "" ).replaceAll( "n", "" );
+							.replaceAll( "t", "" ).replaceAll( "n", "" );
 					Log.debug( SeqUtil.class, "After removing acgtu from the seq (what is left?) ---> " + seq );
 					Log.debug( SeqUtil.class, "Is seq empty? ---> " + seq.isEmpty() );
 					Log.debug( SeqUtil.class, "Is seq.trim() empty? ---> " + seq.trim().isEmpty() );

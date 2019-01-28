@@ -87,11 +87,6 @@ runModule <- function()
 	if( file.exists( warningFile() ) ) file.remove( warningFile() )
 	if( file.exists( errorFile() ) ) file.remove( errorFile() )
 	executeTask( "Import BioLockJ_Lib.R", importLib() )
-	
-
-	// ADD bljParams = c ( "name=value", ...) 
-	
-	
 	executeTask( paste( "Import", moduleScriptName() ), importModuleScript() )
 	print( paste( "All", basename( getMainScript() ), "subscripts successfully imported from:", dirname( getMainScript() ) ) )
 	executeTask( paste0( "Execute[ ", moduleScriptName(), ":main() ]" ), main() )

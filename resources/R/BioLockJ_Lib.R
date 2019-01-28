@@ -218,7 +218,7 @@ getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
 # 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
 getTaxaTable <- function( level ) {
 
-	taxaFile = pipelineFile( paste0( level, ".*", TAXA_TABLE_SUFFIX ) )
+	taxaFile = pipelineFile( paste0( level, ".*_metaMerged.tsv" ) )
   	if( is.null( taxaFile )  ) {
 		logInfo( c( "BioLockJ_Lib.R function --> getTaxaTable(", level, ") returned NULL" ) )
 		return( NULL )
@@ -370,5 +370,5 @@ taxaLevels <- function() {
 
 # Import standard shared libraries
 importLibs( c( "properties", "stringr", "ggpubr" ) )
-TAXA_TABLE_SUFFIX = "_metaMerged.tsv"
 propCache = NULL
+
