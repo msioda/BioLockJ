@@ -194,7 +194,6 @@ public class Log
 	{
 		logFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
 				+ name + BioLockJ.LOG_EXT );
-		logWelcomeMsg();
 		System.setProperty( LOG_FILE, logFile.getAbsolutePath() );
 		System.setProperty( LOG_LEVEL_PROPERTY, validateLogLevel() );
 		System.setProperty( LOG_APPEND, String.valueOf( logFile.exists() ) );
@@ -203,7 +202,7 @@ public class Log
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
-
+			logWelcomeMsg();
 			for( final String m: Log.logMesseges )
 			{
 				Log.info( Log.class, m );
