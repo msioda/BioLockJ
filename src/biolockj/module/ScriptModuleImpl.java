@@ -97,29 +97,33 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public File getMainScript() throws Exception
 	{
-		for( final File file: getScriptDir().listFiles() )
+		File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		if( scriptDir.exists() )
 		{
-			final String name = file.getName();
-			if( name.startsWith( MAIN_SCRIPT_PREFIX ) )
+			for( final File file: getScriptDir().listFiles() )
 			{
-				if( this instanceof R_Module && !RuntimeParamUtil.isDockerMode() )
+				final String name = file.getName();
+				if( name.startsWith( MAIN_SCRIPT_PREFIX ) )
 				{
-					if( name.endsWith( R_Module.R_EXT ) )
+					if( this instanceof R_Module && !RuntimeParamUtil.isDockerMode() )
+					{
+						if( name.endsWith( R_Module.R_EXT ) )
+						{
+							return file;
+						}
+						else if( name.endsWith( SH_EXT ) )
+						{
+							return file;
+						}
+					}
+					else if( file.getName().endsWith( SH_EXT ) )
 					{
 						return file;
 					}
-					else if( name.endsWith( SH_EXT ) )
-					{
-						return file;
-					}
-				}
-				else if( file.getName().endsWith( SH_EXT ) )
-				{
-					return file;
 				}
 			}
 		}
-
+		
 		return null;
 	}
 
