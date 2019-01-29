@@ -243,7 +243,7 @@ public class Config
 	// timestamp.getTime()
 	public static File getOrigConfig() throws Exception
 	{
-		if( origConfigFile.exists() )
+		if( origConfigFile != null && origConfigFile.exists() )
 		{
 			return origConfigFile;
 		}
@@ -251,16 +251,14 @@ public class Config
 		{
 			origConfigFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 					+ File.separator + ORIG_PREFIX + configFile.getName() );
-			final FileWriter writer = new FileWriter( origConfigFile );
-			writer.close();
 		}
-		if( origConfigFile.exists() )
+		if( !origConfigFile.exists() )
 		{
 			final FileWriter writer = new FileWriter( origConfigFile );
 			writer.close();
 		}
-
-		return null;
+		
+		return origConfigFile;
 	}
 
 	/**
