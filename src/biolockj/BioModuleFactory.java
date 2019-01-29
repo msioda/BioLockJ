@@ -391,7 +391,6 @@ public class BioModuleFactory
 	 */
 	protected static final String DEFAULT_STATS_MODULE = "project.defaultStatsModule";
 
-
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_PRE_REQ_MODULES}<br>
 	 * If set to {@value biolockj.Config#TRUE}, prerequisite modules will not be added to the pipeline.

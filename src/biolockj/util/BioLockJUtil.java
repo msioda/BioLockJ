@@ -92,8 +92,10 @@ public class BioLockJUtil
 				{
 					FileUtils.forceDelete( file );
 				}
-				if( i > 1)
+				if( i > 1 )
+				{
 					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) deleted: " + file.getAbsolutePath() );
+				}
 				return true;
 			}
 			catch( final IOException ex )
@@ -513,7 +515,6 @@ public class BioLockJUtil
 	{
 		final Map<String, String> nonNullProps = new HashMap<>();;
 		final Map<String, String> usedProps = Config.getUsedProps();
-	
 
 		if( !Log.doDebug() )
 		{
@@ -528,7 +529,7 @@ public class BioLockJUtil
 		for( final String key: usedProps.keySet() )
 		{
 			final String val = usedProps.get( key );
-			if(  val == null || val.trim().isEmpty() )
+			if( val == null || val.trim().isEmpty() )
 			{
 				Log.debug( BioLockJUtil.class,
 						"Remove unused property from sanatized MASTER Config: " + key + "=" + val );
@@ -538,97 +539,20 @@ public class BioLockJUtil
 				nonNullProps.put( key, val );
 			}
 		}
-		
+
 		Log.info( BioLockJUtil.class,
 				"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
+		Log.info( BioLockJUtil.class, "The original version of project Config contained: "
+				+ Config.getInitialProperties().size() + " properties" );
 		Log.info( BioLockJUtil.class,
-				"The original version of project Config contained: " + Config.getInitialProperties().size() + " properties" );
-		Log.info( BioLockJUtil.class, "The final version of MASTER Config contains: " + nonNullProps.size() + " properties" );
-		
+				"The final version of MASTER Config contains: " + nonNullProps.size() + " properties" );
+
 		saveNewMasterConfig( nonNullProps );
 	}
-	
-	private static void writeCompleteHeader( final BufferedWriter writer, final Map<String, String> props  ) throws Exception
-	{
-		writer.write( "####################################################################################" + RETURN );
-		writer.write( "#" + RETURN );
-		writer.write( "#   Based on the above configuration, the following pipeline was run." + RETURN );
-		writer.write( "#   The additional BioModules were added as required pre/postrequisits or as " + RETURN );
-		writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
-		writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
-		writer.write( "#" + RETURN );
-		for( final String mod: Config.requireList( Config.INTERNAL_ALL_MODULES ) )
-		{
-			writer.write( "#      " + Config.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
-		}
-		writer.write( "#" + RETURN );
-		writer.write( "####################################################################################" + RETURN );
-		
-		if( Log.doDebug() )
-		{
-		
-			writer.write( "###" + RETURN );
-			writer.write( "###   Pipline = DEBUG mode so printing internal properties - FYI only." + RETURN );
-			writer.write( "###   Internal properties are discarded at runtime & refenerated as needed." + RETURN );
-			writer.write( "###" + RETURN );
-			writer.write( "###   [ "+ Config.ALLOW_IMPLICIT_MODULES + "="+Config.TRUE
-					+" ] to run this full list because it includes the implicit BioModules" + RETURN );
-			writer.write( "###" + RETURN );
-			TreeSet<String> keys = new TreeSet<>( props.keySet() );
-			for( final String key: keys )
-			{
-				String val = props.get( key );
-				if( key.startsWith( INTERNAL_PREFIX ) && val != null && !val.isEmpty() )
-				{
-					
-					writer.write( "###     " + key + "=" + props.get( key ) + RETURN );
-				}
-			}
-			writer.write( "###" + RETURN );
-			writer.write( "####################################################################################" + RETURN );
-		}
-		writer.write( RETURN );
-	}
-	
 
-	private static void writeConfigHeaders( final BufferedWriter writer ) throws Exception
-	{
-		writer.write( "# The MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
-		writer.write( "# The MASTER Config file was generated from the following Config files: " + RETURN );
-		final List<String> initConfig = getInitConfig();
-		if( initConfig == null )
-		{
-			writer.write( ORIG_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
-
-			final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
-			if( defaults != null && !defaults.isEmpty() )
-			{
-				for( final String defConfig: Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) )
-				{
-					writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
-				}
-			}
-		}
-		else
-		{
-			for( final String line: initConfig )
-			{
-				writer.write( line + RETURN );
-			}
-		}
-
-		writer.write( RETURN );
-		for( final String module: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
-		{
-			writer.write( Config.INTERNAL_BLJ_MODULE + " " + module + RETURN );
-		}
-		writer.write( RETURN );
-	}
-	
-	
 	/**
-	 * Save a single version of the config file by combing with default config files, if any exist.
-	 * If props are provided, then only include these proerty values from the Config.
+	 * Save a single version of the config file by combing with default config files, if any exist. If props are
+	 * provided, then only include these proerty values from the Config.
 	 * 
 	 * @throws Exception if errors occur
 	 */
@@ -665,7 +589,7 @@ public class BioLockJUtil
 			{
 				writeCompleteHeader( writer, props );
 			}
-			
+
 			if( props == null )
 			{
 				props = Config.getProperties();
@@ -705,7 +629,7 @@ public class BioLockJUtil
 	 * @param props Collection of config props
 	 * @throws Exception if errors occur
 	 */
-	public static void updateMasterConfig( final Map<String, String> props )throws Exception
+	public static void updateMasterConfig( final Map<String, String> props ) throws Exception
 	{
 		final List<String> configLinesNotInProps = parseConfigForUnchangedLines( props.keySet() );
 		if( configLinesNotInProps == null || props == null || props.isEmpty() )
@@ -721,8 +645,9 @@ public class BioLockJUtil
 			{
 				final StringTokenizer st = new StringTokenizer( line, "=" );
 				final int numTokens = st.countTokens();
-				final boolean headingLine = !st.nextToken().trim().endsWith( "=" ) && numTokens == 1;
-				if( headingLine  )
+				final String token = st.nextToken();
+				final boolean headingLine = ( token != null ) && !token.trim().endsWith( "=" ) && ( numTokens == 1 );
+				if( headingLine )
 				{
 					writer.write( line + RETURN );
 				}
@@ -821,7 +746,8 @@ public class BioLockJUtil
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, "=" );
-				if( line != null && !line.trim().isEmpty() && ( st.countTokens() < 2 || !props.contains( st.nextToken() ) ) )
+				if( line != null && !line.trim().isEmpty()
+						&& ( st.countTokens() < 2 || !props.contains( st.nextToken() ) ) )
 				{
 					lines.add( line );
 				}
@@ -871,6 +797,84 @@ public class BioLockJUtil
 		}
 
 		Config.setConfigProperty( INTERNAL_PIPELINE_INPUT_TYPES, fileTypes );
+	}
+
+	private static void writeCompleteHeader( final BufferedWriter writer, final Map<String, String> props )
+			throws Exception
+	{
+		writer.write( "####################################################################################" + RETURN );
+		writer.write( "#" + RETURN );
+		writer.write( "#   Based on the above configuration, the following pipeline was run." + RETURN );
+		writer.write( "#   The additional BioModules were added as required pre/postrequisits or as " + RETURN );
+		writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
+		writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
+		writer.write( "#" + RETURN );
+		for( final String mod: Config.requireList( Config.INTERNAL_ALL_MODULES ) )
+		{
+			writer.write( "#      " + Config.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
+		}
+		writer.write( "#" + RETURN );
+		writer.write( "####################################################################################" + RETURN );
+
+		if( Log.doDebug() )
+		{
+
+			writer.write( "###" + RETURN );
+			writer.write( "###   Pipline = DEBUG mode so printing internal properties - FYI only." + RETURN );
+			writer.write( "###   Internal properties are discarded at runtime & refenerated as needed." + RETURN );
+			writer.write( "###" + RETURN );
+			writer.write( "###   [ " + Config.ALLOW_IMPLICIT_MODULES + "=" + Config.TRUE
+					+ " ] to run this full list because it includes the implicit BioModules" + RETURN );
+			writer.write( "###" + RETURN );
+			final TreeSet<String> keys = new TreeSet<>( props.keySet() );
+			for( final String key: keys )
+			{
+				final String val = props.get( key );
+				if( key.startsWith( INTERNAL_PREFIX ) && val != null && !val.isEmpty() )
+				{
+
+					writer.write( "###     " + key + "=" + props.get( key ) + RETURN );
+				}
+			}
+			writer.write( "###" + RETURN );
+			writer.write(
+					"####################################################################################" + RETURN );
+		}
+		writer.write( RETURN );
+	}
+
+	private static void writeConfigHeaders( final BufferedWriter writer ) throws Exception
+	{
+		writer.write( "# The MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
+		writer.write( "# The MASTER Config file was generated from the following Config files: " + RETURN );
+		final List<String> initConfig = getInitConfig();
+		if( initConfig == null )
+		{
+			writer.write( ORIG_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
+
+			final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
+			if( defaults != null && !defaults.isEmpty() )
+			{
+				for( final String defConfig: Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) )
+				{
+					writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
+				}
+			}
+		}
+		else
+		{
+			for( final String line: initConfig )
+			{
+				writer.write( line + RETURN );
+			}
+		}
+
+		writer.write( RETURN );
+		for( final String module: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
+		{
+			writer.write( Config.INTERNAL_BLJ_MODULE + " " + module + RETURN );
+		}
+		writer.write( RETURN );
 	}
 
 	/**

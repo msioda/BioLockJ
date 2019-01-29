@@ -11,9 +11,7 @@
  */
 package biolockj;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.exception.ConfigFormatException;
@@ -244,13 +242,12 @@ public class Config
 	// timestamp.getTime()
 	public static File getOrigConfig() throws Exception
 	{
-		if( origConfigFile == null  )
+		if( origConfigFile == null )
 		{
 			origConfigFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 					+ File.separator + ORIG_PREFIX + configFile.getName() );
 		}
-		
-		
+
 		return origConfigFile;
 	}
 
@@ -446,17 +443,16 @@ public class Config
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = Properties.loadProperties( configFile );
 		initProjectProps();
-		for( Object key: props.keySet() )
+		for( final Object key: props.keySet() )
 		{
-			Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String)key ) );
+			Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String) key ) );
 		}
-		
+
 		Log.debug( Properties.class, "# initial props: " + props.size() );
 		unmodifiedInputProps.putAll( props );
 		Log.debug( Properties.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
 		TaxaUtil.initTaxaLevels();
 	}
-
 
 	/**
 	 * Check if running on cluster
@@ -869,6 +865,12 @@ public class Config
 	}
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #ALLOW_IMPLICIT_MODULES}<br>
+	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
+	 */
+	public static final String ALLOW_IMPLICIT_MODULES = "project.allowImplicitModules";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
 	 */
@@ -983,12 +985,6 @@ public class Config
 	 * If set to {@value #TRUE} and NUM_READS exists in metadata file, NUM_READS will be included in the R reports
 	 */
 	public static final String REPORT_NUM_READS = "report.numReads";
-	
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #ALLOW_IMPLICIT_MODULES}<br>
-	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
-	 */
-	public static final String ALLOW_IMPLICIT_MODULES = "project.allowImplicitModules";
 
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}
