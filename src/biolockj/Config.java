@@ -12,12 +12,14 @@
 package biolockj;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.RuntimeParamUtil;
 import biolockj.util.TaxaUtil;
 
 /**
@@ -43,6 +45,7 @@ public class Config
 		}
 		else if( getString( propertyName ) == null )
 		{
+			Config.setConfigProperty( propertyName, FALSE );
 			Log.debug( Config.class, propertyName + " is undefined, so return: " + FALSE );
 		}
 		else if( !getString( propertyName ).equalsIgnoreCase( FALSE ) )
@@ -189,6 +192,16 @@ public class Config
 	}
 
 	/**
+	 * Get initial properties ordered by propertyName
+	 *
+	 * @return map ordered by propertyName
+	 */
+	public static TreeMap<String, String> getInitialProperties()
+	{
+		return convertToMap( unmodifiedInputProps );
+	}
+
+	/**
 	 * Parse comma delimited property value to return list
 	 *
 	 * @param propertyName Property name
@@ -227,6 +240,29 @@ public class Config
 		return val;
 	}
 
+	// timestamp.getTime()
+	public static File getOrigConfig() throws Exception
+	{
+		if( origConfigFile.exists() )
+		{
+			return origConfigFile;
+		}
+		if( origConfigFile == null )
+		{
+			origConfigFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
+					+ File.separator + ORIG_PREFIX + configFile.getName() );
+			final FileWriter writer = new FileWriter( origConfigFile );
+			writer.close();
+		}
+		if( origConfigFile.exists() )
+		{
+			final FileWriter writer = new FileWriter( origConfigFile );
+			writer.close();
+		}
+
+		return null;
+	}
+
 	/**
 	 * Parse property as positive double value
 	 *
@@ -263,20 +299,13 @@ public class Config
 	}
 
 	/**
-	 * Get properties ordered by propertyName
+	 * Get current properties ordered by propertyName
 	 *
 	 * @return map ordered by propertyName
 	 */
 	public static TreeMap<String, String> getProperties()
 	{
-		final TreeMap<String, String> map = new TreeMap<>();
-		final Iterator<String> it = props.stringPropertyNames().iterator();
-		while( it.hasNext() )
-		{
-			final String key = it.next();
-			map.put( key, props.getProperty( key ) );
-		}
-		return map;
+		return convertToMap( props );
 	}
 
 	/**
@@ -302,12 +331,12 @@ public class Config
 	 */
 	public static String getString( final String propertyName )
 	{
-		usedProps.add( propertyName );
 
 		String val = null;
 		final Object obj = props.getProperty( propertyName );
 		if( obj == null )
 		{
+			usedProps.put( propertyName, null );
 			return null;
 		}
 
@@ -327,8 +356,11 @@ public class Config
 
 		if( val.isEmpty() )
 		{
+			usedProps.put( propertyName, "" );
 			return null;
 		}
+
+		usedProps.put( propertyName, val );
 
 		return val;
 	}
@@ -405,22 +437,30 @@ public class Config
 		return set;
 	}
 
-	public static TreeSet<String> getUsedProps()
+	public static Map<String, String> getUsedProps()
 	{
-		return usedProps;
+		getString( Config.PROJECT_DEFAULT_PROPS );
+		return new HashMap<>( usedProps );
 	}
 
 	/**
 	 * Initialize Config by reading in props from file and setting taxonomy as an ordered list.
 	 * 
-	 * @param file Config file
 	 * @throws Exception if unable to load Props
 	 */
-	public static void initialize( final File file ) throws Exception
+	public static void initialize() throws Exception
 	{
-		Log.info( Config.class, "Initialize Config: " + file.getAbsolutePath() );
-		configFile = file;
+		configFile = RuntimeParamUtil.getConfigFile();
+		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = Properties.loadProperties( configFile );
+		if( initProjectProps() )
+		{
+			origConfigFile = getOrigConfig();
+			Log.enableLogs( false );
+			unmodifiedInputProps = Properties.loadProperties( configFile );
+			Log.enableLogs( true );
+		}
+
 		TaxaUtil.initTaxaLevels();
 	}
 
@@ -716,6 +756,50 @@ public class Config
 	}
 
 	/**
+	 * Set the {@value biolockj.Config#PROJECT_PIPELINE_NAME} and {@value biolockj.Config#PROJECT_PIPELINE_DIR} Create a
+	 * pipeline root directory if the pipeline is new.
+	 * 
+	 * @return TRUE if a new pipeline directory was created
+	 * @throws Exception if errors occur
+	 */
+	protected static boolean initProjectProps() throws Exception
+	{
+		boolean isNew = false;
+		if( RuntimeParamUtil.doRestart() )
+		{
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+		}
+		else if( RuntimeParamUtil.isDirectMode() )
+		{
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR,
+					RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
+		}
+		else
+		{
+			isNew = true;
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR,
+					BioLockJ.createPipelineDirectory().getAbsolutePath() );
+		}
+
+		Config.setConfigProperty( Config.PROJECT_PIPELINE_NAME,
+				Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName() );
+
+		return isNew;
+	}
+
+	private static TreeMap<String, String> convertToMap( final Properties bljProps )
+	{
+		final TreeMap<String, String> map = new TreeMap<>();
+		final Iterator<String> it = bljProps.stringPropertyNames().iterator();
+		while( it.hasNext() )
+		{
+			final String key = it.next();
+			map.put( key, bljProps.getProperty( key ) );
+		}
+		return map;
+	}
+
+	/**
 	 * Parse property value as integer
 	 *
 	 * @param propertyName Property name
@@ -752,15 +836,15 @@ public class Config
 			while( startIndex > -1 && endIndex > -1 )
 			{
 				val += propName.substring( 0, startIndex );
-				final String internalProp = propName.substring( startIndex + 2, endIndex );
-				final String internalVal = props.getProperty( internalProp );
-				if( internalVal == null )
+				final String refProp = propName.substring( startIndex + 2, endIndex );
+				final String refVal = props.getProperty( refProp );
+				if( refVal == null )
 				{
 					throw new Exception(
-							"Could not find internal references (in ${val} format) of property: " + origPropName );
+							"Could not find Config.prop references (in ${val} format) of property: " + origPropName );
 				}
 				propName = propName.substring( endIndex + 1 );
-				val += internalVal;
+				val += refVal;
 				startIndex = propName.indexOf( "${" );
 				endIndex = propName.indexOf( "}" );
 			}
@@ -904,13 +988,11 @@ public class Config
 	public static final String TRUE = "Y";
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
-
-	// public static final String REPORT_ADD_GENUS_NAME_TO_SPECIES = "report.addGenusToSpeciesName";
-	// public static final String REPORT_FULL_TAXONOMY_NAMES = "report.fullTaxonomyNames";
-	// public static final String REPORT_USE_GENUS_FIRST_INITIAL = "report.useGenusFirstInitial";
-
+	private static final String ORIG_PREFIX = ".ORIG_";
+	private static File origConfigFile = null;
 	private static Properties props = null;
+	private static Properties unmodifiedInputProps = null;
 
-	private static final TreeSet<String> usedProps = new TreeSet<>();
+	private static final Map<String, String> usedProps = new HashMap<>();
 
 }

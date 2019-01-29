@@ -179,8 +179,7 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 
 		final String otuCountField = ParserModuleImpl.getOtuCountField();
 		if( otuCountField == null || !MetaUtil.getFieldNames().contains( otuCountField )
-				|| MetaUtil.getFieldValues( otuCountField ) == null
-				|| MetaUtil.getFieldValues( otuCountField ).isEmpty() )
+				|| MetaUtil.getFieldValues( otuCountField, true ).isEmpty() )
 		{
 			Log.warn( getClass(),
 					"Cannot remove low abundant fields without OTU Count files, field is empty: " + otuCountField );

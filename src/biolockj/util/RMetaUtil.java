@@ -198,8 +198,8 @@ public final class RMetaUtil
 
 		for( final String field: rScriptFields )
 		{
-			final Set<String> data = getUniqueValues( field );
-			final int count = countUniqueValues( field );
+			final Set<String> data = MetaUtil.getUniqueFieldValues( field, true );
+			final int count = data.size();
 			if( !RuntimeParamUtil.isDirectMode() )
 			{
 				Log.info( RMetaUtil.class, "Metadata field [" + field + "] has " + count + " unique non-null values." );
@@ -441,18 +441,6 @@ public final class RMetaUtil
 		}
 	}
 
-	private static int countUniqueValues( final String att ) throws Exception
-	{
-		return getUniqueValues( att ).size();
-	}
-
-	private static Set<String> getUniqueValues( final String att ) throws Exception
-	{
-		final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( att ) );
-		vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-		return vals;
-	}
-
 	private static boolean hasQiimeMapping() throws Exception
 	{
 		for( final BioModule module: Pipeline.getModules() )
@@ -490,7 +478,7 @@ public final class RMetaUtil
 	{
 		if( field != null && metaFields.contains( field ) )
 		{
-			final int count = countUniqueValues( field );
+			final int count = MetaUtil.getUniqueFieldValues( field, true ).size();
 			if( count > 1 )
 			{
 				return true;

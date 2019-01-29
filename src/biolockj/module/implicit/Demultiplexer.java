@@ -81,7 +81,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 						+ " ] is not found in the metadata: " + MetaUtil.getFile().getAbsolutePath() );
 			}
 
-			if( MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ).isEmpty() )
+			if( MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 			{
 				throw new Exception( demuxStrategy + " but the barcode column configured [ "
 						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( MetaUtil.META_BARCODE_COLUMN )
@@ -726,7 +726,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 	private int hasBarcode( final String line ) throws Exception
 	{
-		for( final String code: MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ) )
+		for( final String code: MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ) )
 		{
 			if( line.contains( code ) )
 			{

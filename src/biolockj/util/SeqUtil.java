@@ -345,12 +345,13 @@ public class SeqUtil
 		String revValue = "";
 		try
 		{
-			if( MetaUtil.hasColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ) ) )
+			final String fileNameCol = Config.getString( MetaUtil.META_FILENAME_COLUMN );
+			if( MetaUtil.hasColumn( fileNameCol ) )
 			{
 				int ind;
 				if( isForwardRead( value ) )
 				{
-					ind = MetaUtil.getFieldValues( Config.getString( MetaUtil.META_FILENAME_COLUMN ) ).indexOf( value );
+					ind = MetaUtil.getFieldValues( fileNameCol, false ).indexOf( value );
 				}
 
 				else
@@ -361,14 +362,12 @@ public class SeqUtil
 					revValue = value.substring( 0, value.lastIndexOf( rvReadSuffix ) ) + fwReadSuffix
 							+ value.substring( value.lastIndexOf( rvReadSuffix ) + rvReadSuffix.length() );
 					Log.debug( SeqUtil.class, value + " is a reverse read. Seeking sample id for file: " + revValue );
-					ind = MetaUtil.getFieldValues( Config.getString( MetaUtil.META_FILENAME_COLUMN ) )
-							.indexOf( revValue );
+					ind = MetaUtil.getFieldValues( fileNameCol, false ).indexOf( revValue );
 				}
 				if( ind == -1 )
 				{
 					Log.info( SeqUtil.class, "Filename [" + ( isForwardRead( value ) ? value: revValue )
-							+ "] does not appear in column [" + Config.getString( MetaUtil.META_FILENAME_COLUMN )
-							+ "]. This file will be ignored." );
+							+ "] does not appear in column [" + fileNameCol + "]. This file will be ignored." );
 					id = "";
 				}
 				else
@@ -504,18 +503,30 @@ public class SeqUtil
 			registerDemuxStatus();
 			registerPairedReadStatus();
 
-			if( mapSampleIdWithMetaFileNameCol() && hasInputTrimConfig() )
+			if( mapSampleIdWithMetaFileNameCol() )
 			{
-				Log.warn( SeqUtil.class,
-						"The properties " + INPUT_TRIM_PREFIX + " and " + INPUT_TRIM_SUFFIX
-								+ " will be ignored. Samples will be matched to file names useing the \""
-								+ Config.getString( MetaUtil.META_FILENAME_COLUMN ) + "\" column in the metadata." );
+				final String colName = Config.requireString( MetaUtil.META_FILENAME_COLUMN );
+				final int numVals = MetaUtil.getFieldValues( colName, true ).size();
+				final int numUniqueVals = MetaUtil.getUniqueFieldValues( colName, true ).size();
+				if( numVals != numUniqueVals )
+				{
+					throw new ConfigViolationException( colName, "File paths must be unique for this metadata column: "
+							+ colName + numUniqueVals + " unique values found in " + numVals + " non-null records." );
+				}
+
+				DemuxUtil.clearDemuxConfig();
 				Config.setConfigProperty( INPUT_TRIM_PREFIX, "" );
 				Config.setConfigProperty( INPUT_TRIM_SUFFIX, "" );
+
+			}
+			else
+			{
+				Config.setConfigProperty( MetaUtil.META_FILENAME_COLUMN, "" );
 			}
 		}
 		else
 		{
+			Config.setConfigProperty( MetaUtil.META_FILENAME_COLUMN, "" );
 			Config.setConfigProperty( INTERNAL_SEQ_TYPE, Config.requireString( MetaUtil.META_NULL_VALUE ) );
 		}
 	}
@@ -958,17 +969,10 @@ public class SeqUtil
 		Config.setConfigProperty( INTERNAL_PAIRED_READS, foundPairedReads ? Config.TRUE: Config.FALSE );
 	}
 
-	private static boolean hasInputTrimConfig() throws Exception
-	{
-		final String prefix = Config.getString( INPUT_TRIM_PREFIX );
-		final String suffix = Config.getString( INPUT_TRIM_SUFFIX );
-		return prefix != null && !prefix.isEmpty() || suffix != null && !suffix.isEmpty();
-	}
-
 	private static boolean mapSampleIdWithMetaFileNameCol() throws Exception
 	{
 		final String metaCol = Config.getString( MetaUtil.META_FILENAME_COLUMN );
-		return metaCol != null && MetaUtil.hasColumn( metaCol ) && !MetaUtil.getFieldValues( metaCol ).isEmpty();
+		return metaCol != null && MetaUtil.hasColumn( metaCol ) && !MetaUtil.getFieldValues( metaCol, true ).isEmpty();
 	}
 
 	/**

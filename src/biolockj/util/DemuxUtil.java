@@ -60,6 +60,15 @@ public class DemuxUtil
 				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
 	}
 
+	public static void clearDemuxConfig() throws Exception
+	{
+		Config.setConfigProperty( MetaUtil.META_BARCODE_COLUMN, "" );
+		Config.setConfigProperty( DemuxUtil.BARCODE_CUTOFF, "" );
+		Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, "" );
+		Config.setConfigProperty( DemuxUtil.DEMUX_STRATEGY, "" );
+		Config.setConfigProperty( DemuxUtil.MAPPING_FILE, "" );
+	}
+
 	/**
 	 * Return TRUE if barcode column is defined in the Config file and is populated in the metadata file
 	 * 
@@ -70,7 +79,7 @@ public class DemuxUtil
 	{
 		if( ( barcodeInHeader() || barcodeInSeq() || barcodeInMapping() )
 				&& MetaUtil.getFieldNames().contains( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) )
-				&& !MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ).isEmpty() )
+				&& !MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 		{
 			return true;
 		}
@@ -212,13 +221,12 @@ public class DemuxUtil
 			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) )
 			{
 				final Set<String> sampleIds = new HashSet<>( MetaUtil.getSampleIds() );
-				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol ) );
+				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol, true ) );
 				sampleIds.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-				vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
 				if( sampleIds.size() != vals.size() )
 				{
 					Log.warn( DemuxUtil.class,
-							"Multiplexer setting Sample ID in output instead of barcode because dataset contains "
+							"Multiplexer adding Sample ID to sequence headers instead of barcode because dataset contains "
 									+ sampleIds.size() + " unique Sample IDs but only " + vals.size()
 									+ " unique barcodes" );
 					for( final String id: MetaUtil.getSampleIds() )

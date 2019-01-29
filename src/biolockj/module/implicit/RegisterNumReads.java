@@ -60,7 +60,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 		sampleIds.addAll( MetaUtil.getSampleIds() );
 		if( MetaUtil.getFieldNames().contains( NUM_READS ) )
 		{
-			if( MetaUtil.getFieldValues( NUM_READS ).size() == MetaUtil.getSampleIds().size() )
+			if( MetaUtil.getFieldValues( NUM_READS, false ).size() == MetaUtil.getSampleIds().size() )
 			{
 				Log.warn( getClass(), NUM_READS + " column already fully populated in metadata file :"
 						+ MetaUtil.getFile().getAbsolutePath() );

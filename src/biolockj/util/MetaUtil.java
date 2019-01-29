@@ -98,19 +98,35 @@ public class MetaUtil
 	}
 
 	/**
+	 * Determine if the given field has only unique values.
+	 * 
+	 * @param field Metadata column
+	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
+	 * @return boolean if field values are unique
+	 * @throws Exception
+	 */
+	public static boolean fieldValuesAreUnique( final String field, final boolean ignoreNulls ) throws Exception
+	{
+		final int numVals = getFieldValues( field, ignoreNulls ).size();
+		final int numUnique = getUniqueFieldValues( field, ignoreNulls ).size();
+
+		return numVals != numUnique;
+	}
+
+	/**
 	 * Get metadata field value for given sampleId.
 	 *
 	 * @param sampleId Sample ID
-	 * @param attName Field Name (column name in metadata file)
+	 * @param field Field Name (column name in metadata file)
 	 * @return Metadata field value
 	 * @throws Exception if parameters are invalid
 	 */
-	public static String getField( final String sampleId, final String attName ) throws Exception
+	public static String getField( final String sampleId, final String field ) throws Exception
 	{
-		if( !getFieldNames().contains( attName ) )
+		if( !getFieldNames().contains( field ) )
 		{
 			throw new Exception(
-					"Invalid field [" + attName + "] not found in Metadata = " + getFile().getAbsolutePath() );
+					"Invalid field [" + field + "] not found in Metadata = " + getFile().getAbsolutePath() );
 		}
 
 		if( getMetadataRecord( sampleId ) == null )
@@ -119,7 +135,7 @@ public class MetaUtil
 					"Invalid Sample ID [" + sampleId + "] not found in Metadata = " + getFile().getAbsolutePath() );
 		}
 
-		return getMetadataRecord( sampleId ).get( getFieldNames().indexOf( attName ) );
+		return getMetadataRecord( sampleId ).get( getFieldNames().indexOf( field ) );
 	}
 
 	/**
@@ -154,25 +170,30 @@ public class MetaUtil
 	/**
 	 * Get metadata column for given field name.
 	 *
-	 * @param attName Column name
+	 * @param field Column name
+	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
 	 * @return List of Column values for sample ID
 	 * @throws Exception if metadata file or column name not found
 	 */
-	public static List<String> getFieldValues( final String attName ) throws Exception
+	public static List<String> getFieldValues( final String field, final boolean ignoreNulls ) throws Exception
 	{
-		if( !getFieldNames().contains( attName ) )
+		if( !getFieldNames().contains( field ) )
 		{
-			throw new Exception( "Invalid field [" + attName + "] in Metadata = " + getFile().getAbsolutePath() );
+			throw new Exception( "Invalid field [" + field + "] in Metadata = " + getFile().getAbsolutePath() );
 		}
 
 		final List<String> vals = new ArrayList<>();
 
 		for( final String id: getSampleIds() )
 		{
-			final String val = getField( id, attName );
+			final String val = getField( id, field );
 			if( val != null && val.trim().length() > 0 )
 			{
-				vals.add( val );
+				final boolean isNullVal = val.equals( Config.requireString( META_NULL_VALUE ) );
+				if( !isNullVal || !ignoreNulls )
+				{
+					vals.add( val );
+				}
 			}
 		}
 
@@ -204,8 +225,7 @@ public class MetaUtil
 		String testName = name;
 		while( getFieldNames().contains( testName ) )
 		{
-			final Set<String> testSet = new HashSet<>( getFieldValues( testName ) );
-			testSet.remove( Config.requireString( META_NULL_VALUE ) );
+			final Set<String> testSet = new HashSet<>( getFieldValues( testName, true ) );
 			if( testSet.isEmpty() )
 			{
 				MetaUtil.removeColumn( testName, null );
@@ -365,6 +385,19 @@ public class MetaUtil
 	}
 
 	/**
+	 * Count the number of unique values in the given field.
+	 * 
+	 * @param field Column header
+	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
+	 * @return Number of unique values
+	 * @throws Exception if errors occur
+	 */
+	public static Set<String> getUniqueFieldValues( final String field, final boolean ignoreNulls ) throws Exception
+	{
+		return new HashSet<>( getFieldValues( field, ignoreNulls ) );
+	}
+
+	/**
 	 * Check if columnName exists in the current metadata file.
 	 * 
 	 * @param columnName Column name
@@ -424,10 +457,6 @@ public class MetaUtil
 			Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
 			setFile( MetaUtil.getMetadata() );
 			refreshCache();
-
-			// verify that values in columns used as identifiers are unique per sample.
-			checkUniqueVals( META_BARCODE_COLUMN );
-			checkUniqueVals( META_FILENAME_COLUMN );
 		}
 	}
 
@@ -583,37 +612,6 @@ public class MetaUtil
 				}
 
 				metadataMap.put( id, row );
-			}
-		}
-	}
-
-	/**
-	 * Verify that a column in the metadata is unique for each sample
-	 * 
-	 * @param columnAttr {@link biolockj.Config} property giving the name of the column.
-	 * @throws Exception if number of unique values in the column does not match number of samples
-	 */
-	private static void checkUniqueVals( final String columnAttr ) throws Exception
-	{
-		final String columnName = Config.getString( columnAttr );
-		if( columnName != null )
-		{
-			if( MetaUtil.getFieldNames().contains( columnName ) )
-			{
-				final int lenSamples = new HashSet<>( getSampleIds() ).size();
-				final int lenVals = new HashSet<>( getFieldValues( columnName ) ).size(); // get unique values
-				if( lenSamples != lenVals )
-				{
-					throw new Exception( "Should have exactly 1 unique value per sample in column " + columnName
-							+ ". Found " + lenVals + " unique values for " + lenSamples + " samples." );
-				}
-				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
-						+ "] gives a column of unique values in the meta data file." );
-			}
-			else
-			{
-				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
-						+ "] is ignored because it does not appear as a header in the meta data file." );
 			}
 		}
 	}

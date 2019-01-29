@@ -78,6 +78,30 @@ public class BioLockJ
 	}
 
 	/**
+	 * Set the {@value biolockj.Config#PROJECT_PIPELINE_NAME} and {@value biolockj.Config#PROJECT_PIPELINE_DIR}
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	public static void initProjectProps() throws Exception
+	{
+		if( RuntimeParamUtil.doRestart() )
+		{
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+		}
+		else if( RuntimeParamUtil.isDirectMode() )
+		{
+
+		}
+		else
+		{
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, createPipelineDirectory().getAbsolutePath() );
+		}
+
+		Config.setConfigProperty( Config.PROJECT_PIPELINE_NAME,
+				Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName() );
+	}
+
+	/**
 	 * {@link biolockj.BioLockJ} is the BioLockj.jar Main-Class, so this main method is the first method executed when
 	 * BioLockJ runs. The biolockj shell script always passed the project directory path $DOCKER_PROJ as 1st param.<br>
 	 * The program requires a single user-provided parameter, the path to a {@link biolockj.Config} file.<br>
@@ -117,7 +141,7 @@ public class BioLockJ
 			System.out.println( "Staring BioLockj..." );
 			MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 			RuntimeParamUtil.registerRuntimeParameters( args );
-			Config.initialize( RuntimeParamUtil.getConfigFile() );
+			Config.initialize();
 			initProjectProps();
 			MetaUtil.initialize();
 
@@ -260,26 +284,6 @@ public class BioLockJ
 
 		projectDir.mkdirs();
 		return projectDir;
-	}
-
-	/**
-	 * Set the {@value biolockj.Config#PROJECT_PIPELINE_NAME} and {@value biolockj.Config#PROJECT_PIPELINE_DIR}
-	 * 
-	 * @throws Exception if errors occur
-	 */
-	protected static void initProjectProps() throws Exception
-	{
-		if( RuntimeParamUtil.doRestart() )
-		{
-			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
-		}
-		else
-		{
-			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, createPipelineDirectory().getAbsolutePath() );
-		}
-
-		Config.setConfigProperty( Config.PROJECT_PIPELINE_NAME,
-				Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName() );
 	}
 
 	/**

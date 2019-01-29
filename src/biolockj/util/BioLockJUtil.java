@@ -510,12 +510,22 @@ public class BioLockJUtil
 
 	public static void sanitizeMasterConfig() throws Exception
 	{
-		final Map<String, String> origProps = Config.getProperties();
+		final Map<String, String> deltaProps = new HashMap<>();;
+		final Map<String, String> origProps = Config.getInitialProperties();
+		final Map<String, String> usedProps = Config.getUsedProps();
+		if( Config.getString( Config.PROJECT_DEFAULT_PROPS ) != null )
+		{
+			origProps.put( Config.PROJECT_DEFAULT_PROPS, Config.getString( Config.PROJECT_DEFAULT_PROPS ) );
+		}
+
 		Log.info( BioLockJUtil.class,
-				"Sanitizing MASTER Config file to save only the properties used during Pipeline execution." );
-		Log.info( BioLockJUtil.class, "The orig MASTER Config orignally contained: " + origProps.size() );
-		Log.info( BioLockJUtil.class, "The new MASTER Config contains: " + Config.getUsedProps().size() );
-		if( Log.doDebug() )
+				"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
+		Log.info( BioLockJUtil.class,
+				"The original project Config was archived as: " + Config.getOrigConfig().getAbsolutePath() );
+		Log.info( BioLockJUtil.class,
+				"The original version of project Config orignally contained: " + origProps.size() );
+		Log.info( BioLockJUtil.class, "The final version of MASTER Config contains: " + usedProps.size() );
+		if( !Log.doDebug() )
 		{
 			Log.info( BioLockJUtil.class, "To view the list of removed Config properties in future runs, enable: "
 					+ Log.LOG_LEVEL_PROPERTY + "=" + Config.TRUE );
@@ -525,19 +535,31 @@ public class BioLockJUtil
 							+ Log.LIMIT_DEBUG_CLASSES + "=" + BioLockJUtil.class.getName() );
 		}
 
-		final Map<String, String> props = new TreeMap<>();
-		for( final String key: Config.getUsedProps() )
+		for( final String key: usedProps.keySet() )
 		{
-			props.put( key, origProps.get( key ) );
-		}
+			final String origVal = origProps.get( key );
+			final String newVal = usedProps.get( key );
+			if( origVal == null && newVal == null
+					|| origVal != null && newVal != null && origVal.trim().equals( newVal.trim() )
+					|| origVal == null && newVal.trim().isEmpty() || newVal == null && origVal.trim().isEmpty() )
+			{
+				Log.debug( BioLockJUtil.class,
+						"Remove unused property to build sanatized MASTER Config: " + key + "=" + origVal );
+			}
+			else if( newVal == null )
+			{
+				deltaProps.put( key, "" );
+			}
+			else
+			{
+				deltaProps.put( key, newVal );
+			}
 
-		for( final String key: origProps.keySet() )
-		{
 			Log.debug( BioLockJUtil.class, "Remove unused Config property from the sanitized MASTER Config: " + key
 					+ "=" + origProps.get( key ) );
 		}
 
-		updateMasterConfig( props, true );
+		updateMasterConfig( deltaProps, true );
 	}
 
 	/**
@@ -666,8 +688,39 @@ public class BioLockJUtil
 				}
 			}
 
-			for( final String name: props.keySet() )
+			final TreeSet<String> keys = new TreeSet<>( props.keySet() );
+
+			if( newPropsOnly )
 			{
+				writer.write( "##########################################################################" + RETURN );
+				writer.write( "#" + RETURN );
+				writer.write( "# Based on the above configured BioModules, the following pipeline was run" + RETURN );
+				writer.write( "# The additional BioModules were added as required pre/postrequisits or as " + RETURN );
+				writer.write( "# implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
+				writer.write(
+						"# standard or input file requirments for the initially configured BioModules." + RETURN );
+				writer.write( "#" + RETURN );
+				for( final String mod: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
+				{
+					writer.write( "#  " + Config.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
+				}
+				writer.write( "#" + RETURN );
+				writer.write( "##########################################################################" + RETURN );
+
+				writer.write( "##########################################################################" + RETURN );
+				writer.write( "#" + RETURN );
+				writer.write( "# BioLockJ generats " + RETURN );
+				writer.write( "#" + RETURN );
+				writer.write( "#" + RETURN );
+				writer.write( "#" + RETURN );
+				writer.write( "##########################################################################" + RETURN );
+
+				props.remove( Config.INTERNAL_BLJ_MODULE );
+			}
+
+			for( final String name: keys )
+			{
+
 				Log.info( BioLockJUtil.class, "Update MASTER config property: " + name + "=" + props.get( name ) );
 				writer.write( name + "=" + props.get( name ) + RETURN );
 			}
@@ -709,6 +762,40 @@ public class BioLockJUtil
 			throw new Exception( "Error occurred updating MASTER config.  File has been deleted, please recover using: "
 					+ getTempConfig().getAbsolutePath() );
 		}
+	}
+
+	/**
+	 * Return the lines that are not properties (comments + modules) from top of the the propFile
+	 */
+	private static List<String> getHeaders( final File propFile ) throws Exception
+	{
+		final List<String> lines = new ArrayList<>();
+		final BufferedReader reader = BioLockJUtil.getFileReader( propFile );
+		try
+		{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			{
+				final StringTokenizer st = new StringTokenizer( line, "=" );
+				final int numTokens = st.countTokens();
+				if( numTokens < 2 )
+				{
+					lines.add( line );
+				}
+				else if( numTokens == 2 )
+				{
+					break;
+				}
+			}
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
+
+		return lines;
 	}
 
 	private static List<String> getInitConfig() throws Exception
