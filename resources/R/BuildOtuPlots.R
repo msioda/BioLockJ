@@ -19,8 +19,6 @@ addBoxPlot <- function( taxa, taxaVals, metaVals, barColors)
 		vertical=TRUE, pch=20, add=TRUE )
 }
 
-}
-
 # Add text at the top of the plot in the margin
 addPvalueNote <- function(parPval, nonParPval, r2, attName=NULL){
 	lineNumbers = c(0.2, 1.4, 2.6)
