@@ -142,7 +142,6 @@ public class BioLockJ
 			MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 			RuntimeParamUtil.registerRuntimeParameters( args );
 			Config.initialize();
-			initProjectProps();
 			MetaUtil.initialize();
 
 			if( RuntimeParamUtil.isDirectMode() )
