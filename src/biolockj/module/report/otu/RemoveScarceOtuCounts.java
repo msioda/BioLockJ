@@ -28,7 +28,7 @@ import biolockj.util.*;
  * This BioModule removes scarce OTUs not found in enough samples.<br>
  * The OTU must be found in a configurable percentage of samples.
  */
-public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
+public class RemoveScarceOtuCounts extends JavaModuleImpl implements JavaModule
 {
 
 	@Override
@@ -93,7 +93,7 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 		final TreeMap<String, TreeSet<String>> scarceTaxa = findScarceTaxa( sampleOtuCounts, uniqueOtus );
 		final TreeMap<String, TreeSet<String>> scarceOtus = findScarceOtus( sampleOtuCounts, uniqueOtus, scarceTaxa );
 		logScarceOtus( scarceOtus.keySet() );
-		removeScarceOtus( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
+		removeScarceOtuCounts( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
@@ -249,7 +249,8 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 	 * @param updatedOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @throws Exception if errors occur
 	 */
-	protected void removeScarceOtus( final TreeMap<String, TreeMap<String, Integer>> updatedOtuCounts ) throws Exception
+	protected void removeScarceOtuCounts( final TreeMap<String, TreeMap<String, Integer>> updatedOtuCounts )
+			throws Exception
 	{
 		for( final String sampleId: updatedOtuCounts.keySet() )
 		{
@@ -318,6 +319,6 @@ public class RemoveScarceOtus extends JavaModuleImpl implements JavaModule
 	 * {@link biolockj.Config} Positive Double property {@value #MIN_OTU_THRESHOLD} defines minimum percentage of
 	 * samples that must contain an OTU for it to be kept.
 	 */
-	protected static final String MIN_OTU_THRESHOLD = "removeScarceOtus.cutoffPct";
+	protected static final String MIN_OTU_THRESHOLD = "removeScarceOtuCounts.cutoffPct";
 
 }

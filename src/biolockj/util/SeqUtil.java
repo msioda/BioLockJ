@@ -38,8 +38,8 @@ public class SeqUtil
 	 */
 	public static void copyInputData() throws Exception
 	{
-		final File inputFileDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
-				+ File.separator + "input" );
+		final File inputFileDir = new File(
+				Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator + "input" );
 
 		if( !inputFileDir.exists() )
 		{
@@ -279,8 +279,8 @@ public class SeqUtil
 			msg += "Unpaired RV Reads: " + BioLockJUtil.printLongFormList( rvReads );
 		}
 
-		if( Config.getString( INTERNAL_PAIRED_READS ) != null
-				&& Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
+		if( Config.getString( INTERNAL_PAIRED_READS ) != null && Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS )
+				&& !msg.isEmpty() )
 		{
 			throw new ConfigViolationException( INPUT_REQUIRE_COMPLETE_PAIRS, msg );
 		}
@@ -774,7 +774,7 @@ public class SeqUtil
 					}
 					else
 					{
-						Log.debug( SeqUtil.class, f.getName() + " --> Line["+(numSeqLines+1)+"] = " + line );
+						Log.debug( SeqUtil.class, f.getName() + " --> Line[" + ( numSeqLines + 1 ) + "] = " + line );
 						final String testChar = line.trim().substring( 0, 1 );
 						if( !testChar.equals( headerChar ) && !testChar.equals( "+" ) )
 						{
@@ -787,14 +787,17 @@ public class SeqUtil
 						}
 						else
 						{
-							if( numSeqLines == 0 ) numSeqLines++;
+							if( numSeqLines == 0 )
+							{
+								numSeqLines++;
+							}
 							break;
 						}
 					}
 					line = reader.readLine();
 				}
 
-				Log.info( SeqUtil.class, f.getAbsolutePath() + " --> #lines/read: " + (numSeqLines + 1) );
+				Log.info( SeqUtil.class, f.getAbsolutePath() + " --> #lines/read: " + ( numSeqLines + 1 ) );
 				if( numSeqLines > 1 && Config.getString( INTERNAL_IS_MULTI_LINE_SEQ ) == null
 						&& ( FASTA_HEADER_DELIMS.contains( headerChar ) || headerChar.equals( FASTQ_HEADER_DELIM ) ) )
 				{
@@ -844,9 +847,9 @@ public class SeqUtil
 
 		if( foundFasta != null && foundFastq != null )
 		{
-			throw new Exception( "Input files from: " + INPUT_DIRS
-					+ " must all be of a single type (FASTA or FASTQ)." + BioLockJ.RETURN + "FASTA file found: "
-					+ foundFasta + BioLockJ.RETURN + "FASTQ file found: " + foundFastq );
+			throw new Exception( "Input files from: " + INPUT_DIRS + " must all be of a single type (FASTA or FASTQ)."
+					+ BioLockJ.RETURN + "FASTA file found: " + foundFasta + BioLockJ.RETURN + "FASTQ file found: "
+					+ foundFastq );
 		}
 
 		if( headerChar != null )
@@ -1074,23 +1077,11 @@ public class SeqUtil
 	public static final String ILLUMINA_RV_READ_IND = " 2:N:";
 
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #INPUT_REQUIRE_COMPLETE_PAIRS}<br>
-	 * Require 100% sequence input files are matching paired reads
-	 */
-	protected static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
-
-	/**
-	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>
-	 * The property holds the 1st character used in the sequence header for the given dataset
-	 */
-	public static final String INTERNAL_SEQ_HEADER_CHAR = "internal.seqHeaderChar";
-
-	/**
 	 * {@link biolockj.Config} List property: {@value #INPUT_DIRS}<br>
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
-	
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_FORWARD_READ_SUFFIX}<br>
 	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
@@ -1140,11 +1131,23 @@ public class SeqUtil
 	public static final String INTERNAL_PAIRED_READS = "internal.pairedReads";
 
 	/**
+	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>
+	 * The property holds the 1st character used in the sequence header for the given dataset
+	 */
+	public static final String INTERNAL_SEQ_HEADER_CHAR = "internal.seqHeaderChar";
+
+	/**
 	 * {@link biolockj.Config} Internal property: {@value #INTERNAL_SEQ_TYPE}<br>
 	 * The sequence type requires either {@value #FASTA} or {@value #FASTQ}<br>
 	 * System will auto-detect if not configured
 	 */
 	public static final String INTERNAL_SEQ_TYPE = "internal.seqType";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #INPUT_REQUIRE_COMPLETE_PAIRS}<br>
+	 * Require 100% sequence input files are matching paired reads
+	 */
+	protected static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
 
 	private static final Map<String, String> DNA_BASE_MAP = new HashMap<>();
 

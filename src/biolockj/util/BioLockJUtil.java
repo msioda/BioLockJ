@@ -12,6 +12,7 @@
 package biolockj.util;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -201,6 +202,34 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Get the program source (either the jar path or main class biolockj.BioLockJ);
+	 * 
+	 * @return java source parameter (either Jar or main class with classpath)
+	 * @throws ConfigPathException if unable to determine $BLJ source
+	 */
+	public static File getBljDir() throws ConfigPathException
+	{
+		try
+		{
+			final File f = getSource();
+			// source will return JAR path or MAIN class file in bin dir
+			if( f.isFile() ) // must be jar
+			{
+				return f.getParentFile().getParentFile();
+			}
+			else if( f.isDirectory() && f.getName().equals( "bin" ) )
+			{
+				return f.getParentFile();
+			}
+		}
+		catch( final Exception ex )
+		{
+			throw new ConfigPathException( "Unable to decode $BLJ environment variable." );
+		}
+		return null;
+	}
+
+	/**
 	 * Return an ordered list of the class names from the input collection.
 	 * 
 	 * @param objs Objects
@@ -247,7 +276,7 @@ public class BioLockJUtil
 	public static String getDirectModuleParam( final BioModule module ) throws Exception
 	{
 		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName()
-				+ ":" + module.getClass().getName();
+				+ ":" + module.getID();
 	}
 
 	/**
@@ -351,31 +380,14 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Get the program source (either the jar path or main class biolockj.BioLockJ);
+	 * Get the source of the java runtime classes ( /bin directory or JAR file ).
 	 * 
-	 * @return java source parameter (either Jar or main class with classpath)
-	 * @throws ConfigPathException if unable to determine $BLJ source
+	 * @return File object
+	 * @throws URISyntaxException if unable to locate the Java source
 	 */
-	public static File getSource() throws ConfigPathException
+	public static File getSource() throws URISyntaxException
 	{
-		try
-		{
-			final File f = new File( BioLockJUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
-			// source will return JAR path or MAIN class file in bin dir
-			if( f.isFile() ) // must be jar
-			{
-				return f.getParentFile().getParentFile();
-			}
-			else if( f.isDirectory() && f.getName().equals( "bin" ) )
-			{
-				return f.getParentFile();
-			}
-		}
-		catch( final Exception ex )
-		{
-			throw new ConfigPathException( "Unable to decode $BLJ environment variable." );
-		}
-		return null;
+		return new File( BioLockJUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
 	}
 
 	/**
@@ -387,7 +399,7 @@ public class BioLockJUtil
 	public static String getVersion() throws Exception
 	{
 		final String missingMsg = "undetermined - mission $BLJ/.version file";
-		final File file = new File( getSource().getAbsoluteFile() + File.separator + VERSION_FILE );
+		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
 		if( file.exists() )
 		{
 			final BufferedReader reader = getFileReader( file );

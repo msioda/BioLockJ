@@ -32,14 +32,14 @@ public class AddMetadataToTaxaTables extends JavaModuleImpl implements JavaModul
 	 * Require taxonomy table module as prerequisite
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( BuildTaxaTables.class );
+			preReqs.add( BuildTaxaTables.class.getName() );
 		}
-
+		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
 

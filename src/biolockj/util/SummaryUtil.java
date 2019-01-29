@@ -112,8 +112,8 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.requireString( Config.PROJECT_PIPELINE_NAME ) + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
-		sb.append( getLabel( PIPELINE_RUNTIME )
-				+ ModuleUtil.getRunTime( System.currentTimeMillis() - BioLockJ.APP_START_TIME ) + RETURN );
+		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( System.currentTimeMillis() - BioLockJ.APP_START_TIME )
+				+ RETURN );
 
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    "
 				+ Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + RETURN );
@@ -198,6 +198,20 @@ public class SummaryUtil
 	}
 
 	/**
+	 * Return duration bioModule ran based on modified data of started file, formatted for display (as hours, minutes,
+	 * seconds).
+	 *
+	 * @param bioModule BioModule
+	 * @return Formatted bioModule runtime
+	 */
+	public static String getModuleRunTime( final BioModule bioModule )
+	{
+		final File started = new File(
+				bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
+		return getRunTime( System.currentTimeMillis() - started.lastModified() );
+	}
+
+	/**
 	 * Return summary of {@link biolockj.module.BioModule} output directory, with metrics:
 	 * <ul>
 	 * <li>Number of output files
@@ -263,6 +277,31 @@ public class SummaryUtil
 	}
 
 	/**
+	 * Get runtime message (formatted as hours, minutes, seconds) based on startTime passed.
+	 *
+	 * @param duration Milliseconds of run time
+	 * @return Formatted runtime as XX hours : XX minutes: XX seconds
+	 */
+	public static String getRunTime( final long duration )
+	{
+		final String format = String.format( "%%0%dd", 2 );
+		long elapsedTime = duration / 1000;
+		if( elapsedTime < 0 )
+		{
+			elapsedTime = 0;
+		}
+		final String hours = String.format( format, elapsedTime / 3600 );
+		final String minutes = String.format( format, elapsedTime % 3600 / 60 );
+		String seconds = String.format( format, elapsedTime % 60 );
+		if( hours.equals( "00" ) && minutes.equals( "00" ) && seconds.equals( "00" ) )
+		{
+			seconds = "01";
+		}
+
+		return hours + " hours : " + minutes + " minutes : " + seconds + " seconds";
+	}
+
+	/**
 	 * Return summary of the {@link biolockj.module.ScriptModule} script directory with metrics:
 	 * <ul>
 	 * <li>Print main script name
@@ -273,23 +312,17 @@ public class SummaryUtil
 	 * <li>Longest running workers script names/duration
 	 * </ul>
 	 *
-	 * @param scriptModule ScriptModule to summarize
+	 * @param module ScriptModule to summarize
 	 * @return Summary of bioModule script directory
 	 */
-	public static String getScriptDirSummary( final ScriptModule scriptModule )
+	public static String getScriptDirSummary( final ScriptModule module )
 	{
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			final File scriptDir = ModuleUtil.getSubDir( scriptModule, ScriptModule.SCRIPT_DIR );
-			if( scriptDir == null )
+			if( module.getMainScript() == null )
 			{
-				return "";
-			}
-
-			if( ModuleUtil.getMainScript( scriptModule ) == null )
-			{
-				return "Module MAIN script not found in -->" + scriptModule.getScriptDir().getAbsolutePath() + RETURN;
+				return "Module MAIN script not found in -->" + module.getScriptDir().getAbsolutePath() + RETURN;
 			}
 
 			final IOFileFilter ff0 = new WildcardFileFilter( "*" + BioLockJ.SH_EXT );
@@ -300,21 +333,20 @@ public class SummaryUtil
 			final IOFileFilter ffFailed = new WildcardFileFilter(
 					"*" + BioLockJ.SH_EXT + "_" + Pipeline.SCRIPT_FAILURES );
 
-			final Collection<File> scripts = FileUtils.listFiles( scriptModule.getScriptDir(), ff0, null );
-			final Collection<File> scriptsStarted = FileUtils.listFiles( scriptModule.getScriptDir(), ffStarted, null );
-			final Collection<File> scriptsFailed = FileUtils.listFiles( scriptModule.getScriptDir(), ffFailed, null );
-			final Collection<File> scriptsSuccess = FileUtils.listFiles( scriptModule.getScriptDir(), ffSuccess, null );
+			final Collection<File> scripts = FileUtils.listFiles( module.getScriptDir(), ff0, null );
+			final Collection<File> scriptsStarted = FileUtils.listFiles( module.getScriptDir(), ffStarted, null );
+			final Collection<File> scriptsFailed = FileUtils.listFiles( module.getScriptDir(), ffFailed, null );
+			final Collection<File> scriptsSuccess = FileUtils.listFiles( module.getScriptDir(), ffSuccess, null );
 
 			final File mainSuccess = new File(
-					ModuleUtil.getMainScript( scriptModule ).getAbsolutePath() + "_" + Pipeline.SCRIPT_SUCCESS );
+					module.getMainScript().getAbsolutePath() + "_" + Pipeline.SCRIPT_SUCCESS );
 
-			final File mainFail = new File(
-					ModuleUtil.getMainScript( scriptModule ).getAbsolutePath() + "_" + Pipeline.SCRIPT_FAILURES );
+			final File mainFail = new File( module.getMainScript().getAbsolutePath() + "_" + Pipeline.SCRIPT_FAILURES );
 
 			final File mainStarted = new File(
-					ModuleUtil.getMainScript( scriptModule ).getAbsolutePath() + "_" + Pipeline.SCRIPT_STARTED );
+					module.getMainScript().getAbsolutePath() + "_" + Pipeline.SCRIPT_STARTED );
 
-			scripts.remove( ModuleUtil.getMainScript( scriptModule ) );
+			scripts.remove( module.getMainScript() );
 			scriptsFailed.remove( mainFail );
 			scriptsSuccess.remove( mainSuccess );
 			scriptsStarted.remove( mainStarted );
@@ -382,7 +414,7 @@ public class SummaryUtil
 
 			final Long avgRunTime = numCompleted > 0 ? totalRunTime / numCompleted: null;
 			final int numInc = scriptsStarted.size() - numCompleted;
-			sb.append( "Main Script: " + ModuleUtil.getMainScript( scriptModule ).getAbsolutePath() + RETURN );
+			sb.append( "Main Script: " + module.getMainScript().getAbsolutePath() + RETURN );
 			sb.append( "Executed " + scriptsStarted.size() + "/" + scripts.size() + " worker scripts [" );
 			sb.append( scriptsSuccess.size() + " successful" );
 			sb.append( scriptsFailed.isEmpty() ? "": "; " + scriptsFailed.size() + " failed" );
@@ -416,8 +448,8 @@ public class SummaryUtil
 		}
 		catch( final Exception ex )
 		{
-			final String msg = "Unable to produce module scriptDir summary for: " + scriptModule.getClass().getName()
-					+ " : " + ex.getMessage();
+			final String msg = "Unable to produce module scriptDir summary for: " + module.getClass().getName() + " : "
+					+ ex.getMessage();
 			Log.warn( SummaryUtil.class, msg );
 			sb.append( msg + RETURN );
 		}
@@ -537,7 +569,7 @@ public class SummaryUtil
 			}
 
 			sb.append( getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName() + RETURN );
-			sb.append( getLabel( RUN_TIME ) + gap + ModuleUtil.getModuleRunTime( module ) + RETURN );
+			sb.append( getLabel( RUN_TIME ) + gap + getModuleRunTime( module ) + RETURN );
 			Log.info( SummaryUtil.class, "Add BioModule summary " + module.getClass().getName() );
 			final String summary = module.getSummary();
 			if( summary != null && !summary.isEmpty() )

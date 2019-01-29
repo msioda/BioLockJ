@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.module.BioModule;
 
 /**
  * This utility is used to read, modify, or create a metadata file for the sequence data. The 1st row must hold the
@@ -95,7 +96,6 @@ public class MetaUtil
 	{
 		return getFile() != null && getFile().exists();
 	}
-
 
 	/**
 	 * Get metadata field value for given sampleId.
@@ -270,8 +270,7 @@ public class MetaUtil
 	/**
 	 * Get the metadata file name, if it exists, otherwise return projectName.tsv
 	 *
-	 * @return Name of metadata file, or a default name if no metadata file exists
-	 * #throws Exception if errors occur
+	 * @return Name of metadata file, or a default name if no metadata file exists #throws Exception if errors occur
 	 */
 	public static String getMetadataFileName() throws Exception
 	{
@@ -339,6 +338,33 @@ public class MetaUtil
 	}
 
 	/**
+	 * Return a system generated metadata column name based on the module status.
+	 * 
+	 * @param module BioModule
+	 * @param col Column name
+	 * @return Metadata column name
+	 * @throws Exception if errors occur
+	 */
+	public static String getSystemMetaCol( final BioModule module, final String col ) throws Exception
+	{
+		final File outputMeta = new File(
+				module.getOutputDir().getAbsolutePath() + File.separator + getMetadataFileName() );
+		if( ModuleUtil.isComplete( module ) || outputMeta.exists() )
+		{
+			if( outputMeta.exists() )
+			{
+				setFile( outputMeta );
+				refreshCache();
+			}
+			return getLatestColumnName( col );
+		}
+		else
+		{
+			return getForcedColumnName( col );
+		}
+	}
+
+	/**
 	 * Check if columnName exists in the current metadata file.
 	 * 
 	 * @param columnName Column name
@@ -378,17 +404,17 @@ public class MetaUtil
 		{
 			Config.setConfigProperty( META_COLUMN_DELIM, DEFAULT_COL_DELIM );
 		}
-		
+
 		if( Config.getString( META_COMMENT_CHAR ) == null )
 		{
 			Config.setConfigProperty( META_COMMENT_CHAR, DEFAULT_COMMENT_CHAR );
 		}
 
-		String commentChar = Config.getString( MetaUtil.META_COMMENT_CHAR );
+		final String commentChar = Config.getString( MetaUtil.META_COMMENT_CHAR );
 		if( commentChar != null && commentChar.length() > 1 )
 		{
 			throw new Exception( META_COMMENT_CHAR + " property must be a single character.  Config value = \""
-							+ commentChar + "\"" );
+					+ commentChar + "\"" );
 		}
 
 		if( Config.getString( META_FILE_PATH ) != null )

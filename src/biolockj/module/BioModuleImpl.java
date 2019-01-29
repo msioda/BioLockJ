@@ -86,7 +86,7 @@ public abstract class BioModuleImpl implements BioModule
 	public abstract void executeTask() throws Exception;
 
 	@Override
-	public String getID()
+	public Integer getID()
 	{
 		return moduleId;
 	}
@@ -127,7 +127,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * By default, no post-requisites are required.
 	 */
 	@Override
-	public List<Class<?>> getPostRequisiteModules() throws Exception
+	public List<String> getPostRequisiteModules() throws Exception
 	{
 		return new ArrayList<>();
 	}
@@ -136,7 +136,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * By default, no prerequisites are required.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
 		return new ArrayList<>();
 	}
@@ -165,24 +165,24 @@ public abstract class BioModuleImpl implements BioModule
 	/**
 	 * This method must be called immediately upon instantiation.
 	 * 
-	 * @param id Module ID.
 	 * @throws Exception if errors occur
 	 */
 	@Override
-	public void init( final String id ) throws Exception
+	public void init() throws Exception
 	{
-		moduleId = id;
+		moduleId = nextId++;
 		moduleDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
-				+ File.separator + moduleId + "_" + getClass().getSimpleName() );
+				+ File.separator + BioLockJUtil.formatDigits( moduleId, ModuleUtil.maxNumModules().toString().length() )
+				+ "_" + getClass().getSimpleName() );
 
 		if( !moduleDir.exists() )
 		{
 			moduleDir.mkdirs();
-			Log.info( getClass(), "Create BioModule root directory: " + moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Construct module [ " + moduleId + " ] for new" + moduleDir.getAbsolutePath() );
 		}
 		else
 		{
-			Log.info( getClass(), "Construct module [ " + id + " ] " + moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Construct module [ " + moduleId + " ] for existing" + moduleDir.getAbsolutePath() );
 		}
 	}
 
@@ -205,7 +205,7 @@ public abstract class BioModuleImpl implements BioModule
 	@Override
 	public String toString()
 	{
-		return getClass().getName();
+		return getClass().getName() + "_" + getID();
 	}
 
 	/**
@@ -295,13 +295,13 @@ public abstract class BioModuleImpl implements BioModule
 	}
 
 	private final List<File> inputFiles = new ArrayList<>();
+
 	private File moduleDir = null;
-	private String moduleId = null;
+	private Integer moduleId;
 	/**
 	 * BioLockJ gzip file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = BioLockJ.GZIP_EXT;
-
 	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */
@@ -336,5 +336,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * BioLockJ tab delimited text file extension constant: {@value #TXT_EXT}
 	 */
 	public static final String TXT_EXT = BioLockJ.TXT_EXT;
+
+	private static Integer nextId = 0;
 
 }

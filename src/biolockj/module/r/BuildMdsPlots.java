@@ -11,11 +11,9 @@
  */
 package biolockj.module.r;
 
-import java.util.List;
 import java.util.TreeSet;
 import biolockj.Config;
 import biolockj.module.ScriptModule;
-import biolockj.util.BioLockJUtil;
 
 /**
  * This BioModule is used to build the R script used to generate MDS plots for each report field and each taxonomy level
@@ -39,20 +37,6 @@ public class BuildMdsPlots extends R_Module implements ScriptModule
 	}
 
 	/**
-	 * Add prerequisite module: {@link biolockj.module.r.CalculateStats}.
-	 */
-	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
-	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
-		{
-			preReqs.add( CalculateStats.class );
-		}
-		return preReqs;
-	}
-
-	/**
 	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil} Add
 	 * {@value #PDF_EXT} to super class set.
 	 * 
@@ -62,7 +46,7 @@ public class BuildMdsPlots extends R_Module implements ScriptModule
 	@Override
 	public TreeSet<String> scpExtensions() throws Exception
 	{
-		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
+		final TreeSet<String> set = super.scpExtensions();
 		set.add( PDF_EXT.substring( 1 ) );
 		set.add( TSV_EXT.substring( 1 ) );
 		return set;

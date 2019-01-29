@@ -66,8 +66,8 @@ public class BioLockJ
 	{
 		try
 		{
-			return RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + RETURN 
-					+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath() + RETURN: "" ) 
+			return RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + RETURN
+					+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath() + RETURN: "" )
 					+ "For more information, please visit the BioLockJ Wiki:" + BLJ_WIKI + RETURN;
 		}
 		catch( final Exception ex )
@@ -120,7 +120,7 @@ public class BioLockJ
 			Config.initialize( RuntimeParamUtil.getConfigFile() );
 			initProjectProps();
 			MetaUtil.initialize();
-			
+
 			if( RuntimeParamUtil.isDirectMode() )
 			{
 				Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModule() ) );
@@ -129,11 +129,11 @@ public class BioLockJ
 			{
 				Log.initialize( Config.requireString( Config.PROJECT_PIPELINE_NAME ) );
 			}
-			
+
 			Log.info( BioLockJ.class, "Project name: " + Config.requireString( Config.PROJECT_PIPELINE_NAME ) );
-			Log.info( BioLockJ.class, "Project directory: " + 
-					Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() );
-			
+			Log.info( BioLockJ.class, "Project directory: "
+					+ Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() );
+
 			if( RuntimeParamUtil.doChangePassword() )
 			{
 				Email.encryptAndStoreEmailPassword( RuntimeParamUtil.getConfigFile(),
@@ -262,6 +262,26 @@ public class BioLockJ
 	}
 
 	/**
+	 * Set the {@value biolockj.Config#PROJECT_PIPELINE_NAME} and {@value biolockj.Config#PROJECT_PIPELINE_DIR}
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	protected static void initProjectProps() throws Exception
+	{
+		if( RuntimeParamUtil.doRestart() )
+		{
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+		}
+		else
+		{
+			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, createPipelineDirectory().getAbsolutePath() );
+		}
+
+		Config.setConfigProperty( Config.PROJECT_PIPELINE_NAME,
+				Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName() );
+	}
+
+	/**
 	 * Initialize restarted pipeline by:
 	 * <ol>
 	 * <li>Initialize {@link biolockj.Log} file, name after {@value biolockj.Config#PROJECT_PIPELINE_NAME}
@@ -297,25 +317,6 @@ public class BioLockJ
 				}
 			}
 		}
-	}
-	
-	/**
-	 * Set the {@value biolockj.Config#PROJECT_PIPELINE_NAME} and {@value biolockj.Config#PROJECT_PIPELINE_DIR}
-	 * 
-	 * @throws Exception if errors occur
-	 */
-	protected static void initProjectProps() throws Exception
-	{
-		if( RuntimeParamUtil.doRestart() )
-		{
-			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
-		}
-		else
-		{
-			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, createPipelineDirectory().getAbsolutePath() );
-		}
-		
-		Config.setConfigProperty( Config.PROJECT_PIPELINE_NAME, Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName() );
 	}
 
 	/**
@@ -526,7 +527,8 @@ public class BioLockJ
 	private static void setSingleModeStatus() throws Exception
 	{
 		Log.info( BioLockJ.class, "Reporting Direct module status" );
-		final JavaModule module = (JavaModuleImpl) ModuleUtil.getFirstModule( RuntimeParamUtil.getDirectModule() );
+		final JavaModule module = (JavaModuleImpl) Pipeline.getModules()
+				.get( Integer.valueOf( RuntimeParamUtil.getDirectModule() ) );
 		if( singleModeSuccess )
 		{
 			Log.info( BioLockJ.class, "Save success status" );
@@ -545,6 +547,8 @@ public class BioLockJ
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();
+
+	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
 
 	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
@@ -597,8 +601,6 @@ public class BioLockJ
 	 * BioLockJ standard text file extension constant: {@value #TXT_EXT}
 	 */
 	public static final String TXT_EXT = ".txt";
-	
-	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
 
 	/**
 	 * {@link biolockj.Config} property to define permission setttings when running chmod on pipeline root dir:

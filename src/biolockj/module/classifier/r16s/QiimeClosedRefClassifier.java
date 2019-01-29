@@ -101,13 +101,13 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<Class<?>> getPostRequisiteModules() throws Exception
+	public List<String> getPostRequisiteModules() throws Exception
 	{
-		final List<Class<?>> postReqs = new ArrayList<>();
+		final List<String> postReqs = new ArrayList<>();
 		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED )
 				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( SCRIPT_BATCH_SIZE ) ) )
 		{
-			postReqs.add( MergeQiimeOtuTables.class );
+			postReqs.add( MergeQiimeOtuTables.class.getName() );
 		}
 
 		postReqs.addAll( super.getPostRequisiteModules() );

@@ -90,7 +90,8 @@ public class LogUtil
 	{
 		if( profile.isEmpty() )
 		{
-			String userProfile = "Config property [" + USER_PROFILE + "] is undefined.  Bash users typically use: ~/.bash_profile";
+			String userProfile = "Config property [" + USER_PROFILE
+					+ "] is undefined.  Bash users typically use: ~/.bash_profile";
 			try
 			{
 				userProfile = Config.requireString( USER_PROFILE );
@@ -135,11 +136,11 @@ public class LogUtil
 		FileUtils.copyFile( tempLog, Log.getFile() );
 	}
 
-	private static final List<String> profile = new ArrayList<>();
-	
 	/**
 	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
 	 * Bash users typically use ~/.bash_profile.
 	 */
 	public static final String USER_PROFILE = "project.userProfile";
+
+	private static final List<String> profile = new ArrayList<>();
 }

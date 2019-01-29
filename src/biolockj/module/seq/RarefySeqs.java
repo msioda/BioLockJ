@@ -72,18 +72,16 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	 * {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<String> preReqs = super.getPreRequisiteModules();
 		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
+			preReqs.add( BioModuleFactory.getDefaultMergePairedReadsConverter() );
 		}
-		else if( SeqUtil.piplineHasSeqInput()
-				&& !ModuleUtil.preReqModuleExists( this, SeqFileValidator.class.getName() )
-				&& !ModuleUtil.preReqModuleExists( this, TrimPrimers.class.getName() ) )
+		else if( SeqUtil.piplineHasSeqInput() && needsCountModule() )
 		{
-			preReqs.add( RegisterNumReads.class );
+			preReqs.add( RegisterNumReads.class.getName() );
 		}
 
 		return preReqs;
@@ -242,10 +240,23 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		if( otuColName == null )
 		{
-			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_RAREFIED_READS );
+			otuColName = MetaUtil.getSystemMetaCol( this, NUM_RAREFIED_READS );
 		}
 
 		return otuColName;
+	}
+
+	private boolean needsCountModule() throws Exception
+	{
+		for( final String module: Config.requireList( Config.INTERNAL_BLJ_MODULE ).subList( 0, getID() ) )
+		{
+			if( module.equals( SeqFileValidator.class.getName() ) || module.equals( TrimPrimers.class.getName() ) )
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private String otuColName = null;

@@ -13,12 +13,11 @@ package biolockj.module.implicit;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
+import biolockj.module.r.R_Module;
 import biolockj.util.*;
 
 /**
@@ -58,7 +57,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			MetaUtil.setFile( metadata );
 			MetaUtil.refreshCache();
 			addMetadataToConfigIgnoreInputFiles();
-			if( ModuleUtil.hasRModules() )
+			if( hasRModules() )
 			{
 				RMetaUtil.classifyReportableMetadata();
 			}
@@ -85,7 +84,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		}
 		else
 		{
-			if( ModuleUtil.moduleExists( Demultiplexer.class.getName() )
+			if( ModuleUtil.getModule( this, Demultiplexer.class.getName(), true ) != null
 					&& MetaUtil.hasColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ) ) )
 			{
 				MetaUtil.removeColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ), getTempDir() );
@@ -439,6 +438,18 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	private File getMetadata() throws Exception
 	{
 		return new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+	}
+
+	private boolean hasRModules() throws Exception
+	{
+		for( final BioModule module: Pipeline.getModules() )
+		{
+			if( module instanceof R_Module )
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -24,20 +24,16 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * Module prerequisite: {@link biolockj.module.report.otu.CompileOtuCounts}
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		if( BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE )
-				&& BioLockJUtil.getPipelineInputFiles().size() == 1 )
+
+		final List<String> preReqs = new ArrayList<>();
+		if( !pipelineInputIsOtuSummaryFile() )
 		{
-			final File inFile = BioLockJUtil.getPipelineInputFiles().iterator().next();
-			if( inFile.getName().endsWith( getInputFileSuffix() ) )
-			{
-				return preReqs;
-			}
+			preReqs.add( CompileOtuCounts.class.getName() );
 		}
 
-		preReqs.add( CompileOtuCounts.class );
+		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
 
@@ -47,29 +43,10 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		return super.getSummary() + summary;
 	}
 
-	/**
-	 * Return TRUE if {biolockj.module.r.CalculateStats} is part of the pipeline.
-	 * 
-	 * @return boolean
-	 * @throws Exception if errors occur
-	 */
-	public boolean hasStats() throws Exception
-	{
-		final BioModule mod = ModuleUtil.getPreviousModule( getID(), CalculateStats.class.getName() );
-
-		if( mod != null )
-		{
-
-		}
-
-		return ModuleUtil.moduleExists( CalculateStats.class.getName() )
-				&& ModuleUtil.isComplete( ModuleUtil.getFirstModule( CalculateStats.class.getName() ) );
-	}
-
 	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	public boolean isValidInputModule( final BioModule module ) throws Exception
 	{
-		return previousModule instanceof CompileOtuCounts;
+		return module instanceof CompileOtuCounts;
 	}
 
 	/**
@@ -141,7 +118,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * Check pipeline input to see if OTU summary file is the only pipeline input file.
 	 * 
 	 * @return TRUE if pipeline input
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	protected boolean pipelineInputIsOtuSummaryFile() throws Exception
 	{
@@ -355,12 +332,17 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	private Map<String, File> getStatReports( final String level ) throws Exception
 	{
 		final Map<String, File> statReports = new LinkedHashMap<>();
-		statReports.put( "parPval", CalculateStats.getStatsFile( getID(), level, true, false ) );
-		statReports.put( "nonParPval", CalculateStats.getStatsFile( getID(), level, false, false ) );
-		statReports.put( "adjParPval", CalculateStats.getStatsFile( getID(), level, true, true ) );
-		statReports.put( "adjNonParPval", CalculateStats.getStatsFile( getID(), level, false, true ) );
-		statReports.put( "rSquared", CalculateStats.getStatsFile( getID(), level, false, false ) );
+		statReports.put( "parPval", CalculateStats.getStatsFile( this, level, true, false ) );
+		statReports.put( "nonParPval", CalculateStats.getStatsFile( this, level, false, false ) );
+		statReports.put( "adjParPval", CalculateStats.getStatsFile( this, level, true, true ) );
+		statReports.put( "adjNonParPval", CalculateStats.getStatsFile( this, level, false, true ) );
+		statReports.put( "rSquared", CalculateStats.getStatsFile( this, level, false, false ) );
 		return statReports;
+	}
+
+	private boolean hasStats() throws Exception
+	{
+		return ModuleUtil.getModule( this, CalculateStats.class.getName(), false ) != null;
 	}
 
 	private LinkedHashMap<String, TreeSet<JsonNode>> initJsonMap() throws Exception

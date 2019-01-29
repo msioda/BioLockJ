@@ -13,6 +13,7 @@ package biolockj.module.classifier;
 
 import java.io.File;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
@@ -116,12 +117,12 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 * For example RdpClassifier, will return the RdpParser.
 	 */
 	@Override
-	public List<Class<?>> getPostRequisiteModules() throws Exception
+	public List<String> getPostRequisiteModules() throws Exception
 	{
-		final List<Class<?>> postReqs = super.getPostRequisiteModules();
+		final List<String> postReqs = new ArrayList<>();
 		final String type = getClassifierType().substring( 0, 1 ).toUpperCase() + getClassifierType().substring( 1 );
-		postReqs.add( Class
-				.forName( ParserModule.class.getPackage().getName() + "." + getSeqType() + "." + type + "Parser" ) );
+		postReqs.add( ParserModule.class.getPackage().getName() + "." + getSeqType() + "." + type + "Parser" );
+		postReqs.addAll( super.getPostRequisiteModules() );
 		return postReqs;
 	}
 

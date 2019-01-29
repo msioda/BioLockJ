@@ -12,17 +12,16 @@
 package biolockj;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.module.*;
-import biolockj.module.classifier.ClassifierModule;
-import biolockj.module.implicit.parser.ParserModule;
+import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
+import biolockj.module.ScriptModule;
 import biolockj.module.r.R_Module;
 import biolockj.module.report.Email;
-import biolockj.module.report.otu.CompileOtuCounts;
-import biolockj.module.report.taxa.BuildTaxaTables;
 import biolockj.util.*;
 
 /**
@@ -67,118 +66,19 @@ public class Pipeline
 		bioModules = BioModuleFactory.buildModules();
 		Config.setConfigProperty( Config.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
-//
-//		info( "Pipeline Module Execution Order:" );
-//		final List<String> ids = new ArrayList<>();
-//		int branchScore = 0;
-//		int prevScore = 0;
-//		String branchType = Branch.SEQ_TYPE;
-//		String prevType = null;
-//		final Iterator<BioModule> it = bioModules.iterator();
-//		while( it.hasNext() )
-//		{
-//			final BioModule module = it.next();
-//			final String name = module.getClass().getName();
-//			info( "BioModule [ " + module.getID() + " ] = " + name );
-//
-//			// boolean isEmailMod = isEmailModule( module ); // -1 (can be run anytime)
-//			final boolean isSeqMod = isSeqModule( module ); // 0
-//			final boolean isClassifierMod = isClassifierModule( module ); // 1
-//			// boolean isQiimeMod = isQiimeModule( module ); // NA
-//
-//			final boolean isParserMod = isParserModule( module ); // 2
-//			final boolean isOtuMod = isOtuModule( module ); // 2
-//			final boolean isTaxaMod = isTaxaModule( module ); // 2 ~fuzzy 3 (requires at least one 2 or 3 has run)
-//
-//			final boolean isStatsMod = isStatsModule( module ); // 3 ~fuzzy 3 (requires at least one 4 has run)
-//			final boolean isReportMod = isReportModule( module ); // 4 ~fuzzy 3 (Json requires 2 or 3 has run, Email can
-//																	// run ANYTIME)
-//
-//			final boolean isRMod = isRModule( module ); // 4 ~fuzzy 3
-//
-//			if( isSeqMod && !branches.isEmpty() )
-//			{
-//				throw new Exception( "BioLockJ only supports branched pipelines for a single dataset."
-//						+ "All sequence preparation modules must run prior to running the 1st classifier" );
-//			}
-//			else if( isClassifierMod )
-//			{
-//				branchType = Branch.CLASSIFIER_TYPE;
-//				branchScore = 1;
-//			}
-//			else if( isParserMod || isOtuMod || isTaxaMod || isReportMod )
-//			{
-//				branchType = isReportMod ? Branch.REPORT_TYPE
-//						: isTaxaMod ? Branch.TAXA_COUNT_TYPE: Branch.OTU_COUNT_TYPE;
-//				branchScore = 2;
-//			}
-//			else if( isStatsMod )
-//			{
-//				branchType = Branch.STATS_TYPE;
-//				branchScore = 3;
-//			}
-//			else if( isRMod )
-//			{
-//				branchType = Branch.R_TYPE;
-//				branchScore = 4;
-//			}
-//			// else --> No changes to score or type for an implicit module like MergeOtuTables
-//
-//			if( !ids.isEmpty() )
-//			{
-//				// 1st branch is frequently sequence preparation
-//				// If branchScore is lower, this is the 2nd classifier to run
-//				if( isClassifierMod && prevType.equals( Branch.SEQ_TYPE ) || branchScore < prevScore )
-//				{
-//					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
-//					ids.clear();
-//				}
-//				else if( isStatsMod && prevType.equals( Branch.CLASSIFIER_TYPE ) ) // Create next branch = From
-//																					// classifier to just before stats
-//				{
-//					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
-//					ids.clear();
-//				}
-//				else if( isStatsMod && prevType.equals( Branch.R_TYPE ) ) // Create next branch = From classifier to
-//																			// just before stats
-//				{
-//					branches.add( new Branch( prevType, new ArrayList<>( ids ) ) );
-//					ids.clear();
-//				}
-//
-//				if( !it.hasNext() ) // No more modules, dump remaining modules into branchMap
-//				{
-//					ids.add( module.getID() );
-//					branches.add( new Branch( branchType, new ArrayList<>( ids ) ) );
-//				}
-//			}
-//
-//			prevType = branchType;
-//			prevScore = branchScore;
-//			ids.add( module.getID() );
-//		}
-//
-//		for( final Branch b: branches )
-//		{
-//			Log.info( Pipeline.class, "Branch #" + 2 + " [" + b.getBranchType() + "] = " + b.getIds() );
-//		}
-
-		initializeModules();
 	}
 
 	/**
 	 * If moduleName is null, run all modules, otherwise only run the specified module.
 	 * 
-	 * @param moduleName Name of a single module to run
+	 * @param moduleId ID of a single module to run
 	 * @throws Exception if any fatal error occurs during execution
 	 */
-	public static void runDirectModule( final String moduleName ) throws Exception
+	public static void runDirectModule( final String moduleId ) throws Exception
 	{
-		Log.info( Pipeline.class, "Run Direct BioModule: " + moduleName );
-		final BioModule module = ModuleUtil.getFirstModule( moduleName );
-
-		( (JavaModule) module ).runModule();
-		refreshOutputMetadata( module );
+		Log.info( Pipeline.class, "Run Direct BioModule ID[ " + moduleId + "] = " );
+		final JavaModule module = (JavaModule) Pipeline.getModules().get( Integer.valueOf( moduleId ) );
+		refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
 		module.cleanUp();
 	}
 
@@ -196,20 +96,41 @@ public class Pipeline
 		}
 		catch( final Exception ex )
 		{
-			Log.error( Pipeline.class, "Pipeline failed! " + ex.getMessage(), ex );
-			pipelineException = ex;
-			SummaryUtil.reportFailure( ex );
 			try
 			{
-				final BioModule emailMod = ModuleUtil.getFirstModule( Email.class.getName() );
-				if( emailMod != null && !ModuleUtil.isIncomplete( emailMod ) )
+				Log.error( Pipeline.class, "Pipeline failed! " + ex.getMessage(), ex );
+				pipelineException = ex;
+				SummaryUtil.reportFailure( ex );
+			}
+			catch( final Exception ex2 )
+			{
+				Log.error( Pipeline.class, "Attempt to update summary has failed: " + ex2.getMessage(), ex2 );
+			}
+
+			try
+			{
+				BioModule emailMod = null;
+				boolean foundIncomplete = false;
+				for( final BioModule module: Pipeline.getModules() )
 				{
-					emailMod.executeTask();
+					if( module instanceof Email )
+					{
+						emailMod = module;
+					}
+					if( !foundIncomplete && !ModuleUtil.isComplete( module ) )
+					{
+						foundIncomplete = true;
+					}
+					if( foundIncomplete && emailMod != null )
+					{
+						Log.warn( Pipeline.class, "Attempting to send failure notification with Email module: "
+								+ emailMod.getModuleDir().getName() );
+						emailMod.executeTask();
+						Log.warn( Pipeline.class, "Attempt appears to be a success!" );
+						break;
+					}
 				}
-				else
-				{
-					Log.error( Pipeline.class, "Email module failed! " + ex.getMessage(), ex );
-				}
+
 			}
 			catch( final Exception innerEx )
 			{
@@ -286,7 +207,8 @@ public class Pipeline
 				module.executeTask();
 
 				final boolean isJava = module instanceof JavaModule;
-				final boolean runScripts = ModuleUtil.getMainScript( module ) != null;
+				final boolean isScript = module instanceof ScriptModule;
+				final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
 
 				if( runScripts )
 				{
@@ -400,7 +322,7 @@ public class Pipeline
 	protected static boolean poll( final ScriptModule module ) throws Exception
 	{
 		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
-		final File mainScript = ModuleUtil.getMainScript( module );
+		final File mainScript = module.getMainScript();
 		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? R_Module.R_EXT: BioLockJ.SH_EXT ) );
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
 		scriptFiles.remove( mainScript );
@@ -450,8 +372,7 @@ public class Pipeline
 		final File mainFailed = new File( mainScript.getAbsolutePath() + "_" + SCRIPT_FAILURES );
 		if( mainFailed.exists() || numFailed > 0 )
 		{
-			final String failMsg = "SCRIPT FAILED: "
-					+ BioLockJUtil.getCollectionAsString( ModuleUtil.getScriptErrors( module ) );
+			final String failMsg = "SCRIPT FAILED: " + BioLockJUtil.getCollectionAsString( module.getScriptErrors() );
 			Log.warn( Pipeline.class, failMsg );
 			throw new Exception( failMsg );
 		}
@@ -505,56 +426,6 @@ public class Pipeline
 		}
 	}
 
-	private static boolean isClassifierModule( final BioModule module ) throws Exception
-	{
-		return module instanceof ClassifierModule;
-	}
-
-	private static boolean isEmailModule( final BioModule module ) throws Exception
-	{
-		return module instanceof Email;
-	}
-
-	private static boolean isOtuModule( final BioModule module ) throws Exception
-	{
-		return module.getClass().getPackage().getName().startsWith( CompileOtuCounts.class.getPackage().getName() );
-	}
-
-	private static boolean isParserModule( final BioModule module ) throws Exception
-	{
-		return module instanceof ParserModule;
-	}
-
-	private static boolean isQiimeModule( final BioModule module ) throws Exception
-	{
-		return module.getClass().getName().toLowerCase().contains( "qiime" );
-	}
-
-	private static boolean isReportModule( final BioModule module ) throws Exception
-	{
-		return module.getClass().getPackage().getName().startsWith( Email.class.getPackage().getName() );
-	}
-
-	private static boolean isRModule( final BioModule module ) throws Exception
-	{
-		return module instanceof R_Module;
-	}
-
-	private static boolean isSeqModule( final BioModule module ) throws Exception
-	{
-		return module instanceof SeqModule;
-	}
-
-	private static boolean isStatsModule( final BioModule module ) throws Exception
-	{
-		return module.getClass().getName().equals( BioModuleFactory.getDefaultStatsModule() );
-	}
-
-	private static boolean isTaxaModule( final BioModule module ) throws Exception
-	{
-		return module.getClass().getPackage().getName().startsWith( BuildTaxaTables.class.getPackage().getName() );
-	}
-
 	private static void logScriptTimeOutMsg( final ScriptModule module ) throws Exception
 	{
 		final String prompt = "------> ";
@@ -591,7 +462,6 @@ public class Pipeline
 	private static void pollAndSpin( final ScriptModule module ) throws Exception
 	{
 		logScriptTimeOutMsg( module );
-
 		int numMinutes = 0;
 		boolean finished = false;
 		while( !finished )
@@ -601,8 +471,8 @@ public class Pipeline
 			{
 				if( module.getTimeout() != null && module.getTimeout() > 0 && numMinutes++ >= module.getTimeout() )
 				{
-					throw new Exception( ModuleUtil.getMainScript( module ).getAbsolutePath() + " timed out after "
-							+ numMinutes + " minutes." );
+					throw new Exception(
+							module.getMainScript().getAbsolutePath() + " timed out after " + numMinutes + " minutes." );
 				}
 
 				Thread.sleep( POLL_TIME * 1000 );
@@ -643,7 +513,6 @@ public class Pipeline
 	public static final String SCRIPT_SUCCESS = "Success";
 
 	private static List<BioModule> bioModules = null;
-	private static List<Branch> branches = new ArrayList<>();
 	private static Exception pipelineException = null;
 	private static final int POLL_TIME = 60;
 	private static int pollCount = 0;

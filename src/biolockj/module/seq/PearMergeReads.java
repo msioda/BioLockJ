@@ -166,7 +166,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	{
 		if( otuColName == null )
 		{
-			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_MERGED_READS );
+			otuColName = MetaUtil.getSystemMetaCol( this, NUM_MERGED_READS );
 		}
 
 		return otuColName;

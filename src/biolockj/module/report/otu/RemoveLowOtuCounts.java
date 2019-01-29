@@ -27,7 +27,7 @@ import biolockj.util.*;
 /**
  * This BioModule
  */
-public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
+public class RemoveLowOtuCounts extends JavaModuleImpl implements JavaModule
 {
 
 	@Override
@@ -78,7 +78,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 		sampleIds.addAll( MetaUtil.getSampleIds() );
 		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 
-		final TreeMap<String, TreeSet<String>> lowCountOtus = removeLowCountOtus( sampleOtuCounts );
+		final TreeMap<String, TreeSet<String>> lowCountOtus = removeLowOtuCounts( sampleOtuCounts );
 		logLowCountOtus( lowCountOtus );
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
@@ -132,7 +132,7 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	 * @return TreeMap(SampleId, TreeMap(OTU, count)) Updated sampleOtuCounts after removal of low counts.
 	 * @throws Exception if errors occur
 	 */
-	protected TreeMap<String, TreeSet<String>> removeLowCountOtus(
+	protected TreeMap<String, TreeSet<String>> removeLowOtuCounts(
 			final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts ) throws Exception
 	{
 		final TreeMap<String, TreeSet<String>> lowCountOtus = new TreeMap<>();
@@ -247,5 +247,5 @@ public class RemoveLowCountOtus extends JavaModuleImpl implements JavaModule
 	 * {@link biolockj.Config} Positive Integer property {@value #MIN_OTU_COUNT} defines the minimum number of OTUs
 	 * allowed, if a count less that this value is found, it is set to 0.
 	 */
-	protected static final String MIN_OTU_COUNT = "removeLowCountOtus.minOtuCount";
+	protected static final String MIN_OTU_COUNT = "removeLowOtuCounts.minOtuCount";
 }

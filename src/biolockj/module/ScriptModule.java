@@ -54,6 +54,14 @@ public interface ScriptModule extends BioModule
 	public String[] getJobParams() throws Exception;
 
 	/**
+	 * Method returns MAIN module script that calls each of the worker scripts.
+	 * 
+	 * @return Bash script lines for the functions
+	 * @throws Exception if errors occur
+	 */
+	public File getMainScript() throws Exception;
+
+	/**
 	 * ScriptModules that generate scripts to complete their task, create script files in this directory.<br>
 	 * The main script must begin with prefix {@value #MAIN_SCRIPT_PREFIX} and there must only be one main script.<br>
 	 * The main script executes, or submits to the job queue, each of the other scripts in this directory.<br>
@@ -64,6 +72,14 @@ public interface ScriptModule extends BioModule
 	public File getScriptDir();
 
 	/**
+	 * Return a list of the error messages saved the failure scripts in the module script directory.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	public List<String> getScriptErrors() throws Exception;
+
+	/**
 	 * ScriptModule that run scripts can opt to set a timeout (such as used by the R script).
 	 *
 	 * @return Number of minutes before script is cancelled due to timeout
@@ -72,11 +88,10 @@ public interface ScriptModule extends BioModule
 	public Integer getTimeout() throws ConfigFormatException;
 
 	/**
-	 * Method returns bash functions to add to the worker scripts.<br>
-	 * The default behavior is that no bash functions are needed.
+	 * Method returns bash script lines used to build the functions called by the worker scripts.
 	 * 
 	 * @return Bash script lines for the functions
-	 * @throws Exception if unable to generate script lines
+	 * @throws Exception if errors occur
 	 */
 	public List<String> getWorkerScriptFunctions() throws Exception;
 

@@ -11,16 +11,14 @@
  */
 package biolockj.util;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Log;
+import biolockj.Pipeline;
 import biolockj.module.BioModule;
-import biolockj.module.ScriptModule;
 import biolockj.module.classifier.ClassifierModule;
-import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.r.R_Module;
 
 /**
@@ -34,326 +32,71 @@ public class ModuleUtil
 	{}
 
 	/**
-	 * Return 1st module with given name. If not found, return null.
-	 *
-	 * @param name Name of BioModule
-	 * @return BioModule with given name, else null
-	 * @throws Exception if unable to determine list of BioModules
-	 */
-	public static BioModule getFirstModule( final String name ) throws Exception
-	{
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( name != null && m.getClass().getName().equals( name ) )
-			{
-				return m;
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Return first R module configured in pipeline.
+	 * Get a classifier module<br>
+	 * Use checkAhead parameter to determine if we look forward or backwards starting from the given module.
 	 * 
-	 * @return First {@link biolockj.module.r.R_Module} or NULL
-	 * @throws Exception if errors occur
-	 */
-	public static R_Module getFirstRModule() throws Exception
-	{
-		for( final BioModule module: Pipeline.getModules() )
-		{
-			if( module instanceof R_Module )
-			{
-				return (R_Module) module;
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get the main script file in the bioModule script directory, with prefix:
-	 * {@value biolockj.module.BioModule#MAIN_SCRIPT_PREFIX}
-	 *
-	 * @param module BioModule that may be a ScriptModule
-	 * @return Main script file
-	 */
-	public static File getMainScript( final BioModule module )
-	{
-		final File scriptDir = ModuleUtil.getSubDir( module, ScriptModule.SCRIPT_DIR );
-		if( scriptDir != null )
-		{
-			for( final File f: scriptDir.listFiles() )
-			{
-				if( f.getName().startsWith( BioModule.MAIN_SCRIPT_PREFIX )
-						&& !f.getName().endsWith( Pipeline.SCRIPT_FAILURES )
-						&& !f.getName().endsWith( Pipeline.SCRIPT_SUCCESS )
-						&& !f.getName().endsWith( Pipeline.SCRIPT_STARTED ) )
-				{
-					if( module instanceof R_Module )
-					{
-						if( !RuntimeParamUtil.isDockerMode() && f.getName().endsWith( R_Module.R_EXT ) )
-						{
-							return f;
-						}
-						else if( RuntimeParamUtil.isDockerMode() && f.getName().endsWith( BioLockJ.SH_EXT ) )
-						{
-							return f;
-						}
-					}
-					else
-					{
-						return f;
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Return duration bioModule ran based on modified data of started file, formatted for display (as hours, minutes,
-	 * seconds).
-	 *
-	 * @param bioModule BioModule
-	 * @return Formatted bioModule runtime
-	 */
-	public static String getModuleRunTime( final BioModule bioModule )
-	{
-		final File started = new File(
-				bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
-		return getRunTime( System.currentTimeMillis() - started.lastModified() );
-	}
-
-	public static BioModule getNextClassifier( final BioModule module ) throws Exception
-	{
-		boolean foundSelf = false;
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( foundSelf && m instanceof ClassifierModule )
-			{
-				return module;
-			}
-			else if( m.getID().equals( module.getID() ) )
-			{
-				foundSelf = true;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Get next module with given className after the id module in the pipeline.
-	 * 
-	 * @param id Module ID
-	 * @param className Target Module name
+	 * @param module Calling BioModule
+	 * @param checkAhead Boolean TRUE to check for NEXT, set FALSE to check BEHIND
 	 * @return BioModule
 	 * @throws Exception if errors occur
 	 */
-	public static BioModule getNextModule( String id, final String className ) throws Exception
+	public static BioModule getClassifier( final BioModule module, final boolean checkAhead ) throws Exception
 	{
-		for( final BioModule m: Pipeline.getModules() )
+		for( final BioModule m: getModules( module, checkAhead ) )
 		{
-			if( id == null && m.getClass().getName().equals( className ) )
-			{
-				return m;
-			}
-			else if( id != null && m.getID().equals( id ) )
-			{
-				id = null;
-			}
-		}
-		return null;
-	}
-
-	public static BioModule getNextParser( final BioModule module ) throws Exception
-	{
-		boolean foundSelf = false;
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( foundSelf && m instanceof ParserModule )
+			if( m instanceof ClassifierModule )
 			{
 				return module;
-			}
-			else if( m.getID().equals( module.getID() ) )
-			{
-				foundSelf = true;
 			}
 		}
 		return null;
 	}
 
 	/**
-	 * BioModules are run in the order configured. Return the module configured just before the bioModule param.
+	 * Get a module with given className unless a classifier module is found 1st.<br>
+	 * Use checkAhead parameter to determine if we look forward or backwards starting from the given module.
+	 * 
+	 * @param module Calling BioModule
+	 * @param className Target BioModule class name
+	 * @param checkAhead Boolean TRUE to check for NEXT, set FALSE to check BEHIND
+	 * @return BioModule
+	 * @throws Exception if errors occur
+	 */
+	public static BioModule getModule( final BioModule module, final String className, final boolean checkAhead )
+			throws Exception
+	{
+		final BioModule classifier = getClassifier( module, checkAhead );
+		for( final BioModule m: getModules( module, checkAhead ) )
+		{
+			if( m.getClass().getName().equals( className ) )
+			{
+				if( classifier == null || m.getID() < classifier.getID() )
+				{
+					return m;
+				}
+
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * BioModules are run in the order configured.<br>
+	 * Return the module configured to run before the given module.
 	 *
-	 * @param bioModule BioModule
+	 * @param module BioModule
 	 * @return Previous BioModule
-	 * @throws Exception if unable to get the list of configured BioModules
+	 * @throws Exception if module not found in the pipeline
 	 */
-	public static BioModule getPreviousModule( final BioModule bioModule ) throws Exception
+	public static BioModule getPreviousModule( final BioModule module ) throws Exception
 	{
-		BioModule previousModule = null;
-		for( final BioModule module: Pipeline.getModules() )
-		{
-			if( previousModule != null && module.equals( bioModule ) )
-			{
-				return previousModule;
-			}
-			previousModule = module;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get previous module with given className before the id module in the pipeline.
-	 * 
-	 * @param id Module ID
-	 * @param className Target Module name
-	 * @return BioModule
-	 * @throws Exception if errors occur
-	 */
-	public static BioModule getPreviousModule( final String id, final String className ) throws Exception
-	{
-		BioModule targetModule = null;
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( m.getID().equals( id ) )
-			{
-				return targetModule;
-			}
-			else if( m.getClass().getName().equals( className ) )
-			{
-				targetModule = m;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Get the previous module names configured. If the pipeline is pully initialized we check against
-	 * {@link biolockj.Pipeline#getModules()} Otherwise, only check the modules listed in the {@link biolockj.Config}
-	 * file.
-	 * 
-	 * @param bioModule BioModule
-	 * @return List of modules configured prior to the given bioModule parameter
-	 * @throws Exception if errors occur
-	 */
-	public static List<String> getPreviousModuleNames( final BioModule bioModule ) throws Exception
-	{
-		final List<String> previousModules = new ArrayList<>();
-		for( final String moduleName: getModuleNames() )
-		{
-			if( bioModule.getClass().getName().equals( moduleName ) )
-			{
-				break;
-			}
-			previousModules.add( moduleName );
-		}
-
-		return previousModules;
-	}
-
-	/**
-	 * Get runtime message (formatted as hours, minutes, seconds) based on startTime passed.
-	 *
-	 * @param duration Milliseconds of run time
-	 * @return Formatted runtime as XX hours : XX minutes: XX seconds
-	 */
-	public static String getRunTime( final long duration )
-	{
-		final String format = String.format( "%%0%dd", 2 );
-		long elapsedTime = duration / 1000;
-		if( elapsedTime < 0 )
-		{
-			elapsedTime = 0;
-		}
-		final String hours = String.format( format, elapsedTime / 3600 );
-		final String minutes = String.format( format, elapsedTime % 3600 / 60 );
-		String seconds = String.format( format, elapsedTime % 60 );
-		if( hours.equals( "00" ) && minutes.equals( "00" ) && seconds.equals( "00" ) )
-		{
-			seconds = "01";
-		}
-
-		return hours + " hours : " + minutes + " minutes : " + seconds + " seconds";
-	}
-
-	/**
-	 * This method returns all of the lines from any failure files found in the script directory.
-	 * 
-	 * @param module ScriptModule
-	 * @return List of script errors
-	 * @throws IOException if errors occur reading failure files
-	 */
-	public static List<String> getScriptErrors( final ScriptModule module ) throws IOException
-	{
-		final List<String> errors = new ArrayList<>();
-		final IOFileFilter ffFailed = new WildcardFileFilter( "*_" + Pipeline.SCRIPT_FAILURES );
-		final Collection<File> failedScripts = FileUtils.listFiles( module.getScriptDir(), ffFailed, null );
-		for( final File script: failedScripts )
-		{
-			final BufferedReader reader = BioLockJUtil.getFileReader( script );
-			try
-			{
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
-					errors.add( script.getName() + " | " + line );
-				}
-			}
-			finally
-			{
-				reader.close();
-			}
-		}
-
-		return errors;
-	}
-
-	/**
-	 * Get BioModule subdirectory File object with given name.
-	 *
-	 * @param bioModule BioModule
-	 * @param subDirName BioModule subdirectory name
-	 * @return BioModule subdirectory File object
-	 */
-	public static File getSubDir( final BioModule bioModule, final String subDirName )
-	{
-		final File dir = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + subDirName );
-		if( !dir.exists() )
+		if( module.getID() == 0 )
 		{
 			return null;
 		}
 
-		return dir;
-	}
-
-	/**
-	 * Return a system generated metadata column name based on the module status.
-	 * 
-	 * @param module BioModule
-	 * @param col Column name
-	 * @return Metadata column name
-	 * @throws Exception if errors occur
-	 */
-	public static String getSystemMetaCol( final BioModule module, final String col ) throws Exception
-	{
-		final File outputMeta = new File(
-				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-		if( ModuleUtil.isComplete( module ) || outputMeta.exists() )
-		{
-			if( outputMeta.exists() )
-			{
-				MetaUtil.setFile( outputMeta );
-				MetaUtil.refreshCache();
-			}
-			return MetaUtil.getLatestColumnName( col );
-		}
-		else
-		{
-			return MetaUtil.getForcedColumnName( col );
-		}
+		return Pipeline.getModules().get( module.getID() - 1 );
 	}
 
 	/**
@@ -365,17 +108,6 @@ public class ModuleUtil
 	public static boolean hasExecuted( final BioModule bioModule )
 	{
 		return isComplete( bioModule ) || isIncomplete( bioModule );
-	}
-
-	/**
-	 * Check pipeline for configured {@link biolockj.module.r.R_Module}s.
-	 * 
-	 * @return TRUE if {@link biolockj.module.r.R_Module} is found
-	 * @throws Exception if errors occur
-	 */
-	public static boolean hasRModules() throws Exception
-	{
-		return getFirstRModule() != null;
 	}
 
 	/**
@@ -394,13 +126,45 @@ public class ModuleUtil
 	 * Test if module is the first {@link biolockj.module.r.R_Module} configured in the pipeline.
 	 * 
 	 * @param module BioModule to test
-	 * @return TRUE if module is 1st {@link biolockj.module.r.R_Module}
+	 * @return TRUE if module is 1st {@link biolockj.module.r.R_Module} in this branch
 	 * @throws Exception if errors occur
 	 */
 	public static boolean isFirstRModule( final BioModule module ) throws Exception
 	{
-		return module != null && hasRModules()
-				&& module.getClass().getName().equals( getFirstRModule().getClass().getName() );
+		final List<Integer> rIds = getRModulesIds();
+		final List<Integer> filteredR_ids = new ArrayList<>( rIds );
+		Log.info( ModuleUtil.class, "Checking for 1st R modue, total #R_Module found = " + rIds.size() );
+		if( rIds.contains( module.getID() ) )
+		{
+			final List<Integer> cIds = getClassifierIds();
+			Log.info( ModuleUtil.class, "Total #ClassifierModules found = " + cIds.size() );
+			if( !cIds.isEmpty() )
+			{
+				final BioModule prevClassMod = getClassifier( module, false );
+				final BioModule nextClassMod = getClassifier( module, true );
+				for( final Integer rId: rIds )
+				{
+					if( prevClassMod != null && rId < prevClassMod.getID() )
+					{
+						filteredR_ids.remove( rId );
+					}
+					if( nextClassMod != null && rId > nextClassMod.getID() )
+					{
+						filteredR_ids.remove( rId );
+					}
+				}
+
+				Log.info( ModuleUtil.class, "Removed out-of-scope IDs, leaving valid R IDs = " + filteredR_ids.size() );
+			}
+
+			if( !filteredR_ids.isEmpty() )
+			{
+				return filteredR_ids.get( 0 ).equals( module.getID() );
+
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -489,28 +253,37 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Return true if moduleName is configured to run in pipeline
-	 *
-	 * @param moduleName Name of module to check
-	 * @return true if moduleName is configured to run in pipeline, else false
-	 * @throws Exception if propagated by {@link #getFirstModule( String )}
-	 */
-	public static boolean moduleExists( final String moduleName ) throws Exception
-	{
-		return getFirstModule( moduleName ) != null;
-	}
-
-	/**
-	 * Method checks if preReq is configured to run prior to the bioModule.
+	 * Overestimate the max number of modules that will be created in total, after all implicit and pre/post-requisite
+	 * modules have been added.
 	 * 
-	 * @param bioModule BioModule
-	 * @param preReq Prerequisite BioModule
-	 * @return TRUE if preReq is found
-	 * @throws Exception if errors occur
+	 * @return Estimate Max
 	 */
-	public static boolean preReqModuleExists( final BioModule bioModule, final String preReq ) throws Exception
+	public static Integer maxNumModules()
 	{
-		return getPreviousModuleNames( bioModule ).contains( preReq );
+		Integer count = 8;
+		try
+		{
+			for( String mod: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
+			{
+				mod = mod.toLowerCase();
+				if( mod.contains( "qiime" ) && mod.contains( "classifier" ) )
+				{
+					count = count + 5;
+				}
+				else if( mod.toLowerCase().contains( "humann2" ) && mod.contains( "classifier" ) )
+				{
+					count = count + 5;
+				}
+				count++;
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.error( ModuleUtil.class, "Unable to effectively estiamte count" );
+			count = 100;
+		}
+
+		return count;
 	}
 
 	/**
@@ -544,18 +317,48 @@ public class ModuleUtil
 		return dir.exists();
 	}
 
-	private static List<String> getModuleNames() throws Exception
+	private static List<Integer> getClassifierIds() throws Exception
 	{
-		final List<String> names = new ArrayList<>();
-		if( Pipeline.getModules() == null )
+		final List<Integer> ids = new ArrayList<>();
+		for( final BioModule m: Pipeline.getModules() )
 		{
-			return Config.requireList( Config.INTERNAL_BLJ_MODULE );
+			if( m instanceof ClassifierModule )
+			{
+				ids.add( m.getID() );
+			}
 		}
-		for( final BioModule module: Pipeline.getModules() )
-		{
-			names.add( module.getClass().getName() );
-		}
-		return names;
+		return ids;
 	}
 
+	/**
+	 * Return pipeline modules after the given module if checkAhead = TRUE<br>
+	 * Otherwise return pipeline modules before the given module.<br>
+	 * If returning the prior modules, return the pipeline modules in reverse order, so the 1st item in the list is the
+	 * module immediately preceding the given module.
+	 * 
+	 */
+	private static List<BioModule> getModules( final BioModule module, final Boolean checkAhead ) throws Exception
+	{
+		if( checkAhead )
+		{
+			return Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() );
+		}
+
+		final List<BioModule> modules = Pipeline.getModules().subList( 0, module.getID() );
+		Collections.reverse( modules );
+		return modules;
+	}
+
+	private static List<Integer> getRModulesIds() throws Exception
+	{
+		final List<Integer> ids = new ArrayList<>();
+		for( final BioModule m: Pipeline.getModules() )
+		{
+			if( m instanceof R_Module )
+			{
+				ids.add( m.getID() );
+			}
+		}
+		return ids;
+	}
 }

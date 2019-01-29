@@ -64,9 +64,9 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 	}
 
 	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	public boolean isValidInputModule( final BioModule module ) throws Exception
 	{
-		return OtuUtil.isOtuModule( previousModule );
+		return OtuUtil.isOtuModule( module );
 	}
 
 	@Override

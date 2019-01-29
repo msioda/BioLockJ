@@ -195,13 +195,13 @@ public class BioModuleFactory
 	{
 		verifySafetyCount( module );
 		final List<String> postReqs = new ArrayList<>();
-		final List<Class<?>> modPostReqs = module.getPostRequisiteModules();
+		final List<String> modPostReqs = module.getPostRequisiteModules();
 		if( modPostReqs != null )
 		{
-			for( final Class<?> modClass: modPostReqs )
+			for( final String postReq: modPostReqs )
 			{
-				final List<String> postReqPreReqModules = getPreRequisites( getModule( modClass.getName() ) );
-				for( final String preReq: postReqPreReqModules )
+				final List<String> prePostReqs = getPreRequisites( getModule( postReq ) );
+				for( final String preReq: prePostReqs )
 				{
 					if( !postReqs.contains( preReq ) )
 					{
@@ -209,14 +209,14 @@ public class BioModuleFactory
 					}
 				}
 
-				postReqs.add( modClass.getName() );
+				postReqs.add( postReq );
 
-				final List<String> postReqPostReqModules = getPostRequisites( getModule( modClass.getName() ) );
-				for( final String postReq: postReqPostReqModules )
+				final List<String> postPostReqMs = getPostRequisites( getModule( postReq ) );
+				for( final String postPostReq: postPostReqMs )
 				{
-					if( !postReqs.contains( postReq ) )
+					if( !postReqs.contains( postPostReq ) )
 					{
-						postReqs.add( postReq );
+						postReqs.add( postPostReq );
 					}
 				}
 			}
@@ -236,28 +236,28 @@ public class BioModuleFactory
 	{
 		verifySafetyCount( module );
 		final List<String> preReqs = new ArrayList<>();
-		final List<Class<?>> modPreReqs = module.getPreRequisiteModules();
+		final List<String> modPreReqs = module.getPreRequisiteModules();
 		if( modPreReqs != null )
 		{
-			for( final Class<?> modClass: modPreReqs )
+			for( final String preReq: modPreReqs )
 			{
-				final List<String> preReqPreReqModules = getPreRequisites( getModule( modClass.getName() ) );
-				for( final String preReq: preReqPreReqModules )
+				final List<String> prePreReqs = getPreRequisites( getModule( preReq ) );
+				for( final String prePreReq: prePreReqs )
 				{
-					if( !preReqs.contains( preReq ) )
+					if( !preReqs.contains( prePreReq ) )
 					{
-						preReqs.add( preReq );
+						preReqs.add( prePreReq );
 					}
 				}
 
-				preReqs.add( modClass.getName() );
+				preReqs.add( preReq );
 
-				final List<String> preReqPostReqModules = getPostRequisites( getModule( modClass.getName() ) );
-				for( final String postReq: preReqPostReqModules )
+				final List<String> postPreReqs = getPostRequisites( getModule( preReq ) );
+				for( final String postPreReq: postPreReqs )
 				{
-					if( !preReqs.contains( postReq ) )
+					if( !preReqs.contains( postPreReq ) )
 					{
-						preReqs.add( postReq );
+						preReqs.add( postPreReq );
 					}
 				}
 			}
@@ -286,11 +286,7 @@ public class BioModuleFactory
 		try
 		{
 			int id = moduleMap.size();
-			// Class<?>[] constParamTypes = new Class[1];
-			// constParamTypes[0] = String.class;
 			final Constructor<?> constructor = Class.forName( moduleName ).getDeclaredConstructor();
-			// Object[] params = new Object[ 1 ];
-			// params[0] = BioLockJUtil.formatDigits( id, 2 );
 
 			if( !foundFirstModuleToProcessSeqs && isSeqProcessingModule( moduleName ) && SeqUtil.piplineHasSeqInput() )
 			{
@@ -305,7 +301,7 @@ public class BioModuleFactory
 
 					final String gz = Gunzipper.class.getName();
 					final BioModule mod = (BioModule) constructor.newInstance();
-					mod.init( BioLockJUtil.formatDigits( id, 2 ) );
+					mod.init();
 					bioModules.add( mod );
 					moduleMap.put( id, gz );
 					id = moduleMap.size();
@@ -313,7 +309,7 @@ public class BioModuleFactory
 			}
 
 			final BioModule mod = (BioModule) constructor.newInstance();
-			mod.init( BioLockJUtil.formatDigits( id, 2 ) );
+			mod.init();
 			bioModules.add( mod );
 			moduleMap.put( id, moduleName );
 		}

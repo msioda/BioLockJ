@@ -53,7 +53,7 @@ public final class DownloadUtil
 		{
 			String status = "Complete";
 
-			String targets = getSrc( getExts( null ) );
+			String targets = getSrc( getExts( null, false ) );
 			BigInteger downloadSize = FileUtils.sizeOfAsBigInteger( Log.getFile() );
 			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( SummaryUtil.getSummaryFile() ) );
 			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( BioLockJUtil.getMasterConfig() ) );
@@ -63,14 +63,15 @@ public final class DownloadUtil
 				final File runAll = makeRunAllScript( modules );
 				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( runAll ) );
 			}
-
+			boolean hasRmods = false;
 			for( final BioModule module: modules )
 			{
 				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getOutputDir() ) );
 				if( module instanceof R_Module )
 				{
+					hasRmods = true;
 					targets += " " + getSrc( module.getID() + "*" + File.separator + "*" + File.separator
-							+ getExts( (R_Module) module ) );
+							+ getExts( (R_Module) module, true ) );
 					downloadSize = downloadSize
 							.add( FileUtils.sizeOfAsBigInteger( ( (ScriptModule) module ).getScriptDir() ) );
 					downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getTempDir() ) );
@@ -88,7 +89,7 @@ public final class DownloadUtil
 			final String pipeRoot = Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath();
 			final String label = status + ( getDownloadModules().size() > 1 ? " Modules --> ": " Module --> " );
 			final String displaySize = FileUtils.byteCountToDisplaySize( downloadSize );
-			final String rDirs = ModuleUtil.hasRModules()
+			final String rDirs = hasRmods
 					? "; mkdir -p " + getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR )
 					: "";
 			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + rDirs + "; scp -rp "
@@ -202,10 +203,11 @@ public final class DownloadUtil
 	 * Get file extensions for each R module to include in scp download command
 	 * 
 	 * @param module R_Module
-	 * @return REGEX to scp specific file estensions
+	 * @param harRmods Boolean TRUE if R modules in pipeline
+	 * @return REGEX to scp specific file extensions
 	 * @throws Exception if errors occur
 	 */
-	protected static String getExts( final R_Module module ) throws Exception
+	protected static String getExts( final R_Module module, final boolean harRmods ) throws Exception
 	{
 		if( module == null )
 		{
@@ -215,7 +217,7 @@ public final class DownloadUtil
 				ext += "," + Config.getConfigFileExt().substring( 1 );
 			}
 
-			if( ModuleUtil.hasRModules() )
+			if( harRmods )
 			{
 				return "*.{" + ext + "," + BioLockJ.SH_EXT.substring( 1 ) + "}";
 			}

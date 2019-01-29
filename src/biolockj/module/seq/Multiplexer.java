@@ -230,8 +230,6 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		return numReads;
 	}
 
-	
-
 	private long incrementNumReads( final File file ) throws Exception
 	{
 		Long numReads = getNumReads( file );

@@ -144,7 +144,7 @@ public class DockerUtil
 				|| module instanceof QiimeClassifier;
 
 		final boolean isR = module instanceof R_Module;
-		
+
 		final String name = isR ? R_Module.class.getSimpleName()
 				: isQiime ? QiimeClassifier.class.getSimpleName()
 						: isDockerScriptModule( module ) ? module.getClass().getSimpleName()
@@ -152,37 +152,36 @@ public class DockerUtil
 
 		return " " + dockerHubUser( name ) + "/" + buildImageName( name );
 	}
-	
-	private static String dockerHubUser( String className ) throws Exception
+
+	private static String buildImageName( final String className ) throws Exception
+	{
+		final StringBuffer imageName = new StringBuffer();
+		imageName.append( className.substring( 0, 1 ).toLowerCase() );
+
+		for( int i = 2; i < className.length(); i++ )
+		{
+			final String val = className.substring( i - 1, i );
+			final String upperCase = val.toUpperCase();
+			if( val.equals( upperCase ) )
+			{
+				imageName.append( DOCK_IMAGE_NAME_DELIM );
+			}
+		}
+
+		Log.info( DockerUtil.class, "User Docker image name: " + imageName.toString() );
+
+		return imageName.toString();
+	}
+
+	private static String dockerHubUser( final String className ) throws Exception
 	{
 		String user = Config.getString( DOCKER_HUB_USER );
 		if( user == null )
 		{
 			user = DEFAULT_DOCKER_HUB_USER;
 		}
-		
+
 		return user;
-	}
-	
-	
-	private static String buildImageName( String className ) throws Exception
-	{
-		StringBuffer imageName = new StringBuffer();
-		imageName.append( className.substring( 0, 1 ).toLowerCase() );
-
-		for( int i=2; i<className.length(); i++ )
-		{
-			String val = className.substring( i-1, i );
-			String upperCase = val.toUpperCase();
-			if( val.equals( upperCase ) )
-			{
-				imageName.append( DOCK_IMAGE_NAME_DELIM );
-			}
-		}
-		
-		Log.info( DockerUtil.class, "User Docker image name: " + imageName.toString() );
-
-		return imageName.toString();
 	}
 
 	private static String getBljOptions( final BioModule module ) throws Exception
@@ -264,14 +263,14 @@ public class DockerUtil
 	public static final String CONTAINER_PRIMER_DIR = File.separator + "primer";
 
 	/**
-	 * Docker socket path: {@value #DOCKER_SOCKET}
-	 */
-	public static final String DOCKER_SOCKET = "/var/run/docker.sock";
-
-	/**
 	 * Name of the BioLockJ Docker account ID: {@value #DEFAULT_DOCKER_HUB_USER}
 	 */
 	public static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
+
+	/**
+	 * Docker socket path: {@value #DOCKER_SOCKET}
+	 */
+	public static final String DOCKER_SOCKET = "/var/run/docker.sock";
 
 	/**
 	 * Docker manager module name variable holding the name of the Config file: {@value #MANAGER}
@@ -287,7 +286,7 @@ public class DockerUtil
 	 * {@link biolockj.Config} property sets --rm flag on docker run command if set to TRUE: {@value #DELETE_ON_EXIT}
 	 */
 	protected static final String DELETE_ON_EXIT = "docker.deleteContainerOnExit";
-	
+
 	/**
 	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
 	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
@@ -296,8 +295,8 @@ public class DockerUtil
 	 */
 	protected static final String DOCKER_HUB_USER = "docker.dockerHubUser";
 
-	private static final String DOCK_RM_FLAG = "--rm";
 	private static final String DOCK_IMAGE_NAME_DELIM = "_";
+	private static final String DOCK_RM_FLAG = "--rm";
 
 	/**
 	 * Update Config file paths to use the container paths in place of host paths

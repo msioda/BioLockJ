@@ -154,7 +154,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 			double ratio = Double.valueOf( df.format( 100 * ( (double) a / ( a + b ) ) ) );
 			String per = BioLockJUtil.formatPercentage( a, a + b );
 
-			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				ratio = Double.valueOf( df.format( 100 * ( (double) v / ( a + b ) ) ) );
 				per = BioLockJUtil.formatPercentage( v, a + b );
@@ -222,7 +222,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 			}
 		}
 
-		if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			summaryMsgs.add( "Max % reads kept in Forward Read = " + maxFileFw + " = " + maxFwDisplay );
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
@@ -255,7 +255,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 
-			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				summaryMsgs.add( "Mean % Forward reads with primer = " + totalPrimerF + "/" + totalF + " = "
 						+ BioLockJUtil.formatPercentage( totalPrimerF, totalF ) );
@@ -399,7 +399,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		if( otuColName == null )
 		{
-			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_TRIMMED_READS );
+			otuColName = MetaUtil.getSystemMetaCol( this, NUM_TRIMMED_READS );
 		}
 
 		return otuColName;
@@ -672,8 +672,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 
 				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 				{
-					// seqLines.set( 0, SeqUtil.getHeader( seqLines.get( 0 ) ) );
-					final boolean validRecord = found && ( ModuleUtil.moduleExists( PearMergeReads.class.getName() )
+					final boolean validRecord = found && ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS )
 							? validHeaders.contains( seqLines.get( 0 ) )
 							: true );
 
@@ -707,17 +706,17 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	private void trimSeqs() throws Exception
 	{
 		final Set<String> primers = getPrimers( true );
-		final boolean mergeModuleExists = ModuleUtil.moduleExists( PearMergeReads.class.getName() );
-		final Map<File, File> pairedReads = mergeModuleExists ? SeqUtil.getPairedReads( getInputFiles() ): null;
-		final List<File> files = mergeModuleExists ? new ArrayList<>( pairedReads.keySet() ): getInputFiles();
+		final boolean hasPairedReads = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS );
+		final Map<File, File> pairedReads = hasPairedReads ? SeqUtil.getPairedReads( getInputFiles() ): null;
+		final List<File> files = hasPairedReads ? new ArrayList<>( pairedReads.keySet() ): getInputFiles();
 		final int count = files == null ? 0: files.size();
 		int i = 0;
-		Log.info( getClass(), "Trimming primers from " + ( mergeModuleExists ? 2 * count: count ) + " files..." );
+		Log.info( getClass(), "Trimming primers from " + ( hasPairedReads ? 2 * count: count ) + " files..." );
 		for( final File file: files )
 		{
 
 			final Set<String> validReads = getValidHeaders( file, primers );
-			if( mergeModuleExists )
+			if( hasPairedReads )
 			{
 				validReads.retainAll( getValidHeaders( pairedReads.get( file ), primers ) );
 				processFile( file, validReads, primers );
@@ -731,11 +730,11 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 			if( ( i++ + 1 ) % 25 == 0 )
 			{
 				Log.info( getClass(),
-						"Done trimming " + i + "/" + count + ( mergeModuleExists ? " file pairs": " files" ) );
+						"Done trimming " + i + "/" + count + ( hasPairedReads ? " file pairs": " files" ) );
 			}
 		}
 
-		Log.info( getClass(), "Done trimming " + i + "/" + count + ( mergeModuleExists ? " file pairs": " files" ) );
+		Log.info( getClass(), "Done trimming " + i + "/" + count + ( hasPairedReads ? " file pairs": " files" ) );
 
 		printReports( missingBothPrimers, "missingBothPrimers" );
 		printReports( missingFwPrimers, "missingFwPrimers" );

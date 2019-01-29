@@ -69,7 +69,7 @@ public interface BioModule
 	 * 
 	 * @return Module ID
 	 */
-	public String getID();
+	public Integer getID();
 
 	/**
 	 * Each BioModule takes the previous BioModule output as input:<br>
@@ -108,17 +108,17 @@ public interface BioModule
 	 * @return List of BioModules
 	 * @throws Exception if invalid Class names are returned as post-requisites
 	 */
-	public List<Class<?>> getPostRequisiteModules() throws Exception;
+	public List<String> getPostRequisiteModules() throws Exception;
 
 	/**
 	 * {@link biolockj.Pipeline} calls this method when building the list of pipeline BioModules to execute. Any
 	 * BioModules returned by this method will be added to the pipeline before the current BioModule. If multiple
 	 * prerequisites are returned, the modules will be added in the order listed.
 	 * 
-	 * @return List of BioModules
+	 * @return List of BioModule Class Names
 	 * @throws Exception if invalid Class names are returned as prerequisites
 	 */
-	public List<Class<?>> getPreRequisiteModules() throws Exception;
+	public List<String> getPreRequisiteModules() throws Exception;
 
 	/**
 	 * Gets the BioModule execution summary, this is sent as part of the notification email, if configured.<br>
@@ -141,12 +141,11 @@ public interface BioModule
 	public File getTempDir();
 
 	/**
-	 * Initialize a new module by passing a unique ID.
+	 * Initialize a new module to generate a unique ID and module directory.
 	 * 
-	 * @param id 2-digit number starting at 00 to identify modules
 	 * @throws Exception if errors occur
 	 */
-	public void init( String id ) throws Exception;
+	public void init() throws Exception;
 
 	/**
 	 * BioModules {@link #getInputFiles()} method typically, but not always, return the previousModule output files.

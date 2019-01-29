@@ -219,7 +219,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 					read.add( line );
 
 					if( DemuxUtil.hasValidBarcodes() )
-					{	
+					{
 						if( testFile == null && read.size() == 1 )
 						{
 							numReads++;
@@ -233,7 +233,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 								headerRvBarcodes++;
 							}
 						}
-	
+
 						if( testFile == null && read.size() == 2 )
 						{
 							final int testBarcodes = hasBarcode( line );
@@ -247,13 +247,13 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 							}
 						}
 					}
-					
+
 					if( read.size() == SeqUtil.getNumLinesPerRead() )
 					{
 						seqLines.addAll( read );
 						read.clear();
 					}
-					
+
 					if( seqLines.size() >= NUM_LINES_TEMP_FILE )
 					{
 						writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );

@@ -57,17 +57,17 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	}
 
 	/**
-	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.
+	 * If paired reads found, add prerequisite: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<String> preReqs = new ArrayList<>();
 		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
+			preReqs.add( BioModuleFactory.getDefaultMergePairedReadsConverter() );
 		}
-
+		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
 

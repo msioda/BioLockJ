@@ -21,7 +21,9 @@ import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
-import biolockj.util.*;
+import biolockj.util.BashScriptBuilder;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.RuntimeParamUtil;
 
 /**
  * This BioModule is the superclass for R script generating modules.
@@ -106,18 +108,19 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public String[] getJobParams() throws Exception
 	{
-		Log.info( getClass(), "Executing Script: " + ModuleUtil.getMainScript( this ).getName() );
+		Log.info( getClass(), "Run MAIN Script: " + getMainScript().getName() );
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return new String[] { ModuleUtil.getMainScript( this ).getAbsolutePath() };
+			return super.getJobParams();
 		}
 		else
 		{
 			final String[] cmd = new String[ 2 ];
 			cmd[ 0 ] = Config.getExe( EXE_RSCRIPT );
-			cmd[ 1 ] = ModuleUtil.getMainScript( this ).getAbsolutePath();
+			cmd[ 1 ] = getMainScript().getAbsolutePath();
 			return cmd;
 		}
+
 	}
 
 	/**
@@ -158,14 +161,14 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * All R modules require combined OTU-metadata tables.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			preReqs.add( AddMetadataToTaxaTables.class );
+			preReqs.add( AddMetadataToTaxaTables.class.getName() );
 		}
-
+		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
 
@@ -309,6 +312,19 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
+	 * Add {@link biolockj.module.r.CalculateStats} to standard {@link #getPreRequisiteModules()}
+	 */
+	protected List<String> getStatPreReqs() throws Exception
+	{
+		final List<String> preReqs = super.getPreRequisiteModules();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
+		{
+			preReqs.add( CalculateStats.class.getName() );
+		}
+		return preReqs;
+	}
+
+	/**
 	 * Initialize the R script by creating the MAIN R script that calls source on the BaseScript and adds the R code for
 	 * the runProgarm() method.
 	 *
@@ -368,7 +384,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 */
 	public static String getRTemplateDir() throws Exception
 	{
-		return BioLockJUtil.getSource().getAbsolutePath() + File.separator + "resources" + File.separator + "R"
+		return BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + "resources" + File.separator + "R"
 				+ File.separator;
 	}
 

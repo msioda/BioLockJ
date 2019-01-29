@@ -14,7 +14,6 @@ package biolockj.module.r;
 import java.util.List;
 import java.util.TreeSet;
 import biolockj.module.ScriptModule;
-import biolockj.util.BioLockJUtil;
 
 /**
  * This BioModule is used to build the R script used to generate OTU-metadata box-plots and scatter-plots for each
@@ -23,17 +22,12 @@ import biolockj.util.BioLockJUtil;
 public class BuildOtuPlots extends R_Module implements ScriptModule
 {
 	/**
-	 * Add prerequisite module: {@link biolockj.module.r.CalculateStats}.
+	 * Returns {@link #getStatPreReqs()}
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
-		{
-			preReqs.add( CalculateStats.class );
-		}
-		return preReqs;
+		return getStatPreReqs();
 	}
 
 	/**
@@ -46,7 +40,7 @@ public class BuildOtuPlots extends R_Module implements ScriptModule
 	@Override
 	public TreeSet<String> scpExtensions() throws Exception
 	{
-		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
+		final TreeSet<String> set = super.scpExtensions();
 		set.add( PDF_EXT.substring( 1 ) );
 		return set;
 	}

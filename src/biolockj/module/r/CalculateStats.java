@@ -52,7 +52,7 @@ public class CalculateStats extends R_Module implements BioModule
 	@Override
 	public TreeSet<String> scpExtensions() throws Exception
 	{
-		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
+		final TreeSet<String> set = super.scpExtensions();
 		set.add( TSV_EXT.substring( 1 ) );
 		return set;
 	}
@@ -60,20 +60,20 @@ public class CalculateStats extends R_Module implements BioModule
 	/**
 	 * Get the stats file for the given fileType and taxonomy level.
 	 * 
-	 * @param id Calling module ID
+	 * @param module Calling module
 	 * @param level Taxonomy level
 	 * @param isParametric Boolean TRUE to query for parametric file
 	 * @param isAdjusted Boolean TRUE to query for adjusted p-value file
 	 * @return File Table of statistics or null
 	 * @throws Exception if errors occur
 	 */
-	public static File getStatsFile( final String id, final String level, final Boolean isParametric,
+	public static File getStatsFile( final BioModule module, final String level, final Boolean isParametric,
 			final Boolean isAdjusted ) throws Exception
 	{
 		final String querySuffix = "_" + level + "_" + getSuffix( isParametric, isAdjusted ) + TSV_EXT;
 		final Set<File> results = new HashSet<>();
 		final IOFileFilter ff = new WildcardFileFilter( "*" + querySuffix );
-		for( final File dir: getStatsFileDirs( id ) )
+		for( final File dir: getStatsFileDirs( module ) )
 		{
 			final Collection<File> files = FileUtils.listFiles( dir, ff, HiddenFileFilter.VISIBLE );
 			if( files.size() > 1 )
@@ -118,12 +118,13 @@ public class CalculateStats extends R_Module implements BioModule
 		return false;
 	}
 
-	private static List<File> getStatsFileDirs( final String id ) throws Exception
+	private static List<File> getStatsFileDirs( final BioModule module ) throws Exception
 	{
-		if( ModuleUtil.moduleExists( CalculateStats.class.getName() ) )
+		final BioModule statsModule = ModuleUtil.getModule( module, CalculateStats.class.getName(), false );
+		if( statsModule != null )
 		{
 			final List<File> dirs = new ArrayList<>();
-			dirs.add( ModuleUtil.getPreviousModule( id, CalculateStats.class.getName() ).getOutputDir() );
+			dirs.add( statsModule.getOutputDir() );
 			return dirs;
 		}
 

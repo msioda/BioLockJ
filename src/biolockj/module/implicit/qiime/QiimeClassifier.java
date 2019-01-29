@@ -213,17 +213,15 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * Only the QiimeClassifier itself adds the QiimeParser as a post-requisite module.
 	 */
 	@Override
-	public List<Class<?>> getPostRequisiteModules() throws Exception
+	public List<String> getPostRequisiteModules() throws Exception
 	{
-		final List<Class<?>> postReqs = new ArrayList<>();
+		final List<String> postReqs = new ArrayList<>();
 		if( !getClass().equals( QiimeClassifier.class ) )
 		{
-			postReqs.add( QiimeClassifier.class );
+			postReqs.add( QiimeClassifier.class.getName() );
 		}
-		else
-		{
-			postReqs.addAll( super.getPostRequisiteModules() );
-		}
+
+		postReqs.addAll( super.getPostRequisiteModules() );
 
 		return postReqs;
 	}
@@ -234,21 +232,23 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * QiimeClassifier add prerequisite module: {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
+		final List<String> preReqs = new ArrayList<>();
+		preReqs.addAll( super.getPreRequisiteModules() );
 		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
+			preReqs.add( BioModuleFactory.getDefaultMergePairedReadsConverter() );
 		}
 		if( SeqUtil.piplineHasSeqInput() && !SeqUtil.isFastA() )
 		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultFastaConverter() ) );
+			preReqs.add( BioModuleFactory.getDefaultFastaConverter() );
 		}
-		if( !getClass().equals( QiimeClassifier.class ) ) // must be a classifier
+		if( !getClass().equals( QiimeClassifier.class.getName() ) ) // must be a classifier
 		{
-			preReqs.add( BuildQiimeMapping.class );
+			preReqs.add( BuildQiimeMapping.class.getName() );
 		}
+
 		return preReqs;
 	}
 

@@ -11,12 +11,15 @@
  */
 package biolockj.module;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
+import biolockj.Pipeline;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
+import biolockj.module.r.R_Module;
 import biolockj.util.*;
 
 /**
@@ -81,7 +84,43 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public String[] getJobParams() throws Exception
 	{
-		return new String[] { ModuleUtil.getMainScript( this ).getAbsolutePath() };
+		return new String[] { getMainScript().getAbsolutePath() };
+	}
+
+	/**
+	 * Get the main script file in the bioModule script directory, with prefix:
+	 * {@value biolockj.module.BioModule#MAIN_SCRIPT_PREFIX}. R_Modules not running in a docker container end in
+	 * {@value biolockj.module.r.R_Module#R_EXT}, otherwise must end with {@value #SH_EXT}
+	 *
+	 * @return Main script file
+	 */
+	@Override
+	public File getMainScript() throws Exception
+	{
+		for( final File file: getScriptDir().listFiles() )
+		{
+			final String name = file.getName();
+			if( name.startsWith( MAIN_SCRIPT_PREFIX ) )
+			{
+				if( this instanceof R_Module && !RuntimeParamUtil.isDockerMode() )
+				{
+					if( name.endsWith( R_Module.R_EXT ) )
+					{
+						return file;
+					}
+					else if( name.endsWith( SH_EXT ) )
+					{
+						return file;
+					}
+				}
+				else if( file.getName().endsWith( SH_EXT ) )
+				{
+					return file;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -91,6 +130,39 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	public File getScriptDir()
 	{
 		return ModuleUtil.requireSubDir( this, SCRIPT_DIR );
+	}
+
+	/**
+	 * This method returns all of the lines from any failure files found in the script directory.
+	 * 
+	 * @return List of script errors
+	 * @throws Exception if errors occur reading failure files
+	 */
+	@Override
+	public List<String> getScriptErrors() throws Exception
+	{
+		final List<String> errors = new ArrayList<>();
+		for( final File script: getScriptDir().listFiles() )
+		{
+			if( !script.getName().endsWith( Pipeline.SCRIPT_FAILURES ) )
+			{
+				continue;
+			}
+			final BufferedReader reader = BioLockJUtil.getFileReader( script );
+			try
+			{
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
+				{
+					errors.add( script.getName() + " | " + line );
+				}
+			}
+			finally
+			{
+				reader.close();
+			}
+		}
+
+		return errors;
 	}
 
 	/**

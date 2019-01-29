@@ -59,51 +59,22 @@ public class DemuxUtil
 		return Config.getString( DEMUX_STRATEGY ) != null
 				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
 	}
-	
-	/**
-	 * Check for the existance of the barcode column.
-	 * 
-	 * @return Boolean TRUE if barcode column exists and is populated.
-	 */
-	public static boolean hasValidBarcodes()
-	{
-		if( useBarcode != null )
-		{
-			return useBarcode;
-		}
-		try
-		{
-			useBarcode = false;
-			final String barCodeCol = Config.getString( MetaUtil.META_BARCODE_COLUMN );
-			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) )
-			{
-				final Set<String> sampleIds = new HashSet<>( MetaUtil.getSampleIds() );
-				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol ) );
-				sampleIds.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-				vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-				if( sampleIds.size() != vals.size() )
-				{
-					Log.warn( DemuxUtil.class,
-							"Multiplexer setting Sample ID in output instead of barcode because dataset contains "
-									+ sampleIds.size() + " unique Sample IDs but only " + vals.size()
-									+ " unique barcodes" );
-					for( final String id: MetaUtil.getSampleIds() )
-					{
-						Log.warn( DemuxUtil.class, "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
-					}
-				}
-				else
-				{
-					useBarcode = true;
-				}
-			}
-		}
-		catch( final Exception ex )
-		{
-			Log.error( DemuxUtil.class, "" + ex.getMessage(), ex );
-		}
 
-		return useBarcode;
+	/**
+	 * Return TRUE if barcode column is defined in the Config file and is populated in the metadata file
+	 * 
+	 * @return TRUE or FALSE
+	 * @throws Exception if unable to access metadata file or Config
+	 */
+	public static boolean demuxWithBarcode() throws Exception
+	{
+		if( ( barcodeInHeader() || barcodeInSeq() || barcodeInMapping() )
+				&& MetaUtil.getFieldNames().contains( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) )
+				&& !MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ).isEmpty() )
+		{
+			return true;
+		}
+		return false;
 	}
 
 	// /**
@@ -146,23 +117,6 @@ public class DemuxUtil
 	// }
 	// }
 	// }
-
-	/**
-	 * Return TRUE if barcode column is defined in the Config file and is populated in the metadata file
-	 * 
-	 * @return TRUE or FALSE
-	 * @throws Exception if unable to access metadata file or Config
-	 */
-	public static boolean demuxWithBarcode() throws Exception
-	{
-		if( ( barcodeInHeader() || barcodeInSeq() || barcodeInMapping() )
-				&& MetaUtil.getFieldNames().contains( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) )
-				&& !MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ).isEmpty() )
-		{
-			return true;
-		}
-		return false;
-	}
 
 	/**
 	 * Return TRUE if Config is setup to demux the sequence data.
@@ -238,6 +192,52 @@ public class DemuxUtil
 
 		return SeqUtil.getSampleId( seqLines.get( 0 ) );
 
+	}
+
+	/**
+	 * Check for the existance of the barcode column.
+	 * 
+	 * @return Boolean TRUE if barcode column exists and is populated.
+	 */
+	public static boolean hasValidBarcodes()
+	{
+		if( useBarcode != null )
+		{
+			return useBarcode;
+		}
+		try
+		{
+			useBarcode = false;
+			final String barCodeCol = Config.getString( MetaUtil.META_BARCODE_COLUMN );
+			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) )
+			{
+				final Set<String> sampleIds = new HashSet<>( MetaUtil.getSampleIds() );
+				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol ) );
+				sampleIds.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
+				vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
+				if( sampleIds.size() != vals.size() )
+				{
+					Log.warn( DemuxUtil.class,
+							"Multiplexer setting Sample ID in output instead of barcode because dataset contains "
+									+ sampleIds.size() + " unique Sample IDs but only " + vals.size()
+									+ " unique barcodes" );
+					for( final String id: MetaUtil.getSampleIds() )
+					{
+						Log.warn( DemuxUtil.class, "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
+					}
+				}
+				else
+				{
+					useBarcode = true;
+				}
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.error( DemuxUtil.class, "" + ex.getMessage(), ex );
+		}
+
+		return useBarcode;
 	}
 
 	/**
@@ -378,7 +378,7 @@ public class DemuxUtil
 	 */
 	public static final String OPTION_ID_IN_HEADER = "id_in_header";
 
-	private static Boolean useBarcode = null;
 	// private static final Map<String, String> headerFileMap = new HashMap<>();
 	private static final Map<String, String> idMap = new HashMap<>();
+	private static Boolean useBarcode = null;
 }

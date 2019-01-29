@@ -294,16 +294,16 @@ public class Config
 
 	/**
 	 * Get property value as String. Empty strings return null.<br>
-	 * If $BLJ or $BLJ_SUP or $USER or $HOME was used, it would already be converted
-	 * to the actual file path by {@link biolockj.Properties} before this method is called.
+	 * If $BLJ or $BLJ_SUP or $USER or $HOME was used, it would already be converted to the actual file path by
+	 * {@link biolockj.Properties} before this method is called.
 	 *
 	 * @param propertyName {@link biolockj.Config} file property name
 	 * @return String value or null
 	 */
-	public static String getString( String propertyName )
+	public static String getString( final String propertyName )
 	{
 		usedProps.add( propertyName );
-		
+
 		String val = null;
 		final Object obj = props.getProperty( propertyName );
 		if( obj == null )
@@ -314,12 +314,11 @@ public class Config
 		val = obj.toString().trim();
 
 		/*
-		 * Allow internal references to avoid re-typing paths.  For example:
+		 * Allow internal references to avoid re-typing paths. For example:
 		 * 
-		 * project.dataDir=/projects/data/internal/research_labs
-		 * project.experimentID=1987209C
-		 * project.labUrl=$project.dataDir/fodor_lab/$project.experimentID
-		 * reportBuilder.massSpecReportHeading=Mass Spec $project.labID
+		 * project.dataDir=/projects/data/internal/research_labs project.experimentID=1987209C
+		 * project.labUrl=$project.dataDir/fodor_lab/$project.experimentID reportBuilder.massSpecReportHeading=Mass Spec
+		 * $project.labID
 		 */
 		if( val.contains( "${" ) && val.contains( "}" ) )
 		{
@@ -331,47 +330,6 @@ public class Config
 			return null;
 		}
 
-		return val;
-	}
-	
-	private static String getInternalRefProp( String propName )
-	{
-		String origPropName = propName;
-		String val = "";
-		try
-		{
-			int startIndex = propName.indexOf( "${" );
-			int endIndex = propName.indexOf( "}" );
-			
-			while( startIndex > -1 && endIndex > -1 )
-			{
-				val += propName.substring( 0, startIndex );
-				String internalProp = propName.substring( startIndex + 2, endIndex );
-				String internalVal = props.getProperty( internalProp );
-				if( internalVal == null )
-				{
-					throw new Exception( "Could not find internal references (in ${val} format) of property: " + origPropName );
-				}
-				propName = propName.substring( endIndex + 1 );
-				val += internalVal;
-				startIndex = propName.indexOf( "${" );
-				endIndex = propName.indexOf( "}" );
-			}
-			
-			if( propName != null )
-			{
-				val += propName;
-			}
-			
-			System.out.println( "FINAL NAME: ===> " + propName );
-
-		}
-		catch( Exception ex )
-		{
-			Log.warn( Config.class, ex.getMessage() );
-			return origPropName;
-		}
-		
 		return val;
 	}
 
@@ -411,7 +369,7 @@ public class Config
 		if( filePath != null && filePath.contains( "$BLJ_SUP" ) )
 		{
 			final File bljSup = new File(
-					BioLockJUtil.getSource().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
+					BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
 			if( bljSup.exists() && bljSup.isDirectory() )
 			{
 				Log.debug( Config.class, "Replacing $BLJ_SUP in file-path: " + filePath );
@@ -427,7 +385,7 @@ public class Config
 		else if( filePath != null && filePath.contains( "$BLJ" ) )
 		{
 			Log.debug( Config.class, "Replacing $BLJ in file-path: " + filePath );
-			filePath = filePath.replace( "$BLJ", BioLockJUtil.getSource().getAbsolutePath() );
+			filePath = filePath.replace( "$BLJ", BioLockJUtil.getBljDir().getAbsolutePath() );
 			Log.debug( Config.class, "Updated file-path: " + filePath );
 		}
 
@@ -777,6 +735,48 @@ public class Config
 		return null;
 	}
 
+	private static String getInternalRefProp( String propName )
+	{
+		final String origPropName = propName;
+		String val = "";
+		try
+		{
+			int startIndex = propName.indexOf( "${" );
+			int endIndex = propName.indexOf( "}" );
+
+			while( startIndex > -1 && endIndex > -1 )
+			{
+				val += propName.substring( 0, startIndex );
+				final String internalProp = propName.substring( startIndex + 2, endIndex );
+				final String internalVal = props.getProperty( internalProp );
+				if( internalVal == null )
+				{
+					throw new Exception(
+							"Could not find internal references (in ${val} format) of property: " + origPropName );
+				}
+				propName = propName.substring( endIndex + 1 );
+				val += internalVal;
+				startIndex = propName.indexOf( "${" );
+				endIndex = propName.indexOf( "}" );
+			}
+
+			if( propName != null )
+			{
+				val += propName;
+			}
+
+			System.out.println( "FINAL NAME: ===> " + propName );
+
+		}
+		catch( final Exception ex )
+		{
+			Log.warn( Config.class, ex.getMessage() );
+			return origPropName;
+		}
+
+		return val;
+	}
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
@@ -811,7 +811,7 @@ public class Config
 	 * Set file names to ignore if found in {@value #INPUT_DIRS}
 	 */
 	public static final String INPUT_IGNORE_FILES = "input.ignoreFiles";
-	
+
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_ALL_MODULES}<br>
 	 * List of all configured, implicit, and pre/post-requisite modules for the pipeline.<br>
@@ -830,18 +830,6 @@ public class Config
 	 * List of all nested default config files.<br>
 	 */
 	public static final String INTERNAL_DEFAULT_CONFIG = "internal.defaultConfig";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_DIR}<br>
-	 * Stores the path of the pipeline root directory path set by the application runtime code.
-	 */
-	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_NAME}<br>
-	 * Stores the root name of the pipeline (derived from the configuration file name).
-	 */
-	public static final String PROJECT_PIPELINE_NAME = "project.pipelineName";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
@@ -875,6 +863,18 @@ public class Config
 	public static final String PROJECT_ENV_LOCAL = "local";
 
 	/**
+	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_DIR}<br>
+	 * Stores the path of the pipeline root directory path set by the application runtime code.
+	 */
+	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_NAME}<br>
+	 * Stores the root name of the pipeline (derived from the configuration file name).
+	 */
+	public static final String PROJECT_PIPELINE_NAME = "project.pipelineName";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>
 	 * Required to be set to "e" or "10" to build log normalized reports.
 	 */
@@ -905,7 +905,7 @@ public class Config
 	// public static final String REPORT_ADD_GENUS_NAME_TO_SPECIES = "report.addGenusToSpeciesName";
 	// public static final String REPORT_FULL_TAXONOMY_NAMES = "report.fullTaxonomyNames";
 	// public static final String REPORT_USE_GENUS_FIRST_INITIAL = "report.useGenusFirstInitial";
-	
-	private static final Set<String> usedProps = new HashSet<String>();
-			
+
+	private static final Set<String> usedProps = new HashSet<>();
+
 }

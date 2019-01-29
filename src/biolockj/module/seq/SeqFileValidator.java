@@ -389,7 +389,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 	{
 		if( otuColName == null )
 		{
-			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_VALID_READS );
+			otuColName = MetaUtil.getSystemMetaCol( this, NUM_VALID_READS );
 		}
 
 		return otuColName;

@@ -97,7 +97,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		getDB();
 		registerDefaultSwitches();
 
-		if( ModuleUtil.getNextModule( getID(), JsonReport.class.getName() ) != null )
+		if( ModuleUtil.getModule( this, JsonReport.class.getName(), true ) != null )
 		{
 			throw new Exception( "SLIMM does not return OTU tree so cannot run the JsonReport module." );
 		}
