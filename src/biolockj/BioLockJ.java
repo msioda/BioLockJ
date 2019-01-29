@@ -16,8 +16,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FalseFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import biolockj.module.*;
 import biolockj.module.report.Email;
 import biolockj.util.*;
@@ -123,7 +121,7 @@ public class BioLockJ
 
 			if( RuntimeParamUtil.isDirectMode() )
 			{
-				Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModule() ) );
+				Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
 			}
 			else
 			{
@@ -167,7 +165,7 @@ public class BioLockJ
 
 			if( RuntimeParamUtil.isDirectMode() )
 			{
-				Pipeline.runDirectModule( RuntimeParamUtil.getDirectModule() );
+				Pipeline.runDirectModule( RuntimeParamUtil.getDirectModuleDir() );
 				singleModeSuccess = true;
 			}
 			else
@@ -185,6 +183,7 @@ public class BioLockJ
 				}
 
 				markProjectStatus( Pipeline.BLJ_COMPLETE );
+				BioLockJUtil.sanitizeMasterConfig();
 			}
 		}
 		catch( final Exception ex )
@@ -366,25 +365,25 @@ public class BioLockJ
 		}
 	}
 
-	private static String getDirectLogName( final String className ) throws Exception
+	private static String getDirectLogName( final String moduleDir ) throws Exception
 	{
-		final ScriptModule module = (ScriptModule) Class.forName( className ).newInstance();
-		final String name = module.getClass().getSimpleName();
-		final File pipelinDir = Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR );
-		final Collection<File> dirs = FileUtils.listFilesAndDirs( pipelinDir, FalseFileFilter.INSTANCE,
-				TrueFileFilter.INSTANCE );
-		for( final File moduleDir: dirs )
+		File modDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() 
+				+ File.separator + moduleDir );
+		if( !modDir.exists() )
 		{
-			if( moduleDir.getName().endsWith( "_" + name ) )
-			{
-				final File tempDir = new File( moduleDir.getAbsolutePath() + File.separator + BioModule.TEMP_DIR );
-				tempDir.mkdir();
-				return moduleDir.getName() + File.separator + BioModule.TEMP_DIR + File.separator + name;
-			}
+			throw new Exception( "Direct module directory not found --> " + modDir.getAbsolutePath() );
+		}		
+			
+		File tempDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() 
+				+ File.separator + moduleDir + BioModule.TEMP_DIR );
+		
+		if( !tempDir.exists() )
+		{
+			tempDir.mkdir();
 		}
 
-		throw new Exception(
-				"Unable to find module [" + className + "] directory under " + pipelinDir.getAbsolutePath() );
+		return BioModule.TEMP_DIR + File.separator + moduleDir;
+		
 	}
 
 	private static String getProjectName() throws Exception
@@ -528,15 +527,15 @@ public class BioLockJ
 	{
 		Log.info( BioLockJ.class, "Reporting Direct module status" );
 		final JavaModule module = (JavaModuleImpl) Pipeline.getModules()
-				.get( Integer.valueOf( RuntimeParamUtil.getDirectModule() ) );
+				.get( Integer.valueOf( RuntimeParamUtil.getDirectModuleDir() ) );
 		if( singleModeSuccess )
 		{
-			Log.info( BioLockJ.class, "Save success status" );
+			Log.info( BioLockJ.class, "Save success status for direct module: " + module.getClass().getName() );
 			module.moduleComplete();
 		}
 		else
 		{
-			Log.info( BioLockJ.class, "Save failure status" );
+			Log.info( BioLockJ.class, "Save failure status for direct module: " + module.getClass().getName() );
 			module.moduleFailed();
 		}
 

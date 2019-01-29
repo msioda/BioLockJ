@@ -83,7 +83,7 @@ public class RuntimeParamUtil
 	 * 
 	 * @return Direct module BioModule class name
 	 */
-	public static String getDirectModule()
+	public static String getDirectModuleDir()
 	{
 		return params.get( DIRECT_FLAG );
 	}
@@ -98,21 +98,6 @@ public class RuntimeParamUtil
 	{
 		return params.get( DIRECT_PIPELINE_DIR ) == null ? null
 				: new File( Config.getSystemFilePath( params.get( DIRECT_PIPELINE_DIR ) ) );
-	}
-
-	/**
-	 * Returns the name of the Docker container running the current module.
-	 * 
-	 * @return Name of the Docker container
-	 */
-	public static String getDockerContainerName()
-	{
-		if( isDirectMode() )
-		{
-			return getName( getDirectModule() );
-		}
-
-		return DockerUtil.MANAGER;
 	}
 
 	/**
@@ -216,7 +201,7 @@ public class RuntimeParamUtil
 	 */
 	public static boolean isDirectMode()
 	{
-		return getDirectModule() != null;
+		return getDirectModuleDir() != null;
 	}
 
 	/**
@@ -306,14 +291,14 @@ public class RuntimeParamUtil
 	private static void assignDirectPipelineDir() throws Exception
 	{
 		Log.info( RuntimeParamUtil.class,
-				"Separating pipeline dir name and module name from: \"" + DIRECT_FLAG + "\" " + getDirectModule() );
-		final StringTokenizer st = new StringTokenizer( getDirectModule(), ":" );
+				"Separating pipeline dir name and module name from: \"" + DIRECT_FLAG + "\" " + getDirectModuleDir() );
+		final StringTokenizer st = new StringTokenizer( getDirectModuleDir(), ":" );
 		if( st.countTokens() != 2 )
 		{
 			throw new Exception(
-					"Direct module param format requires pipelineDir name & BioModule class name to be separated"
-							+ " with a colon \":\" which should appear exactly once but was found " + st.countTokens()
-							+ " times in the param [ " + getDirectModule() + " ]" );
+					"Direct module param format requires pipelineDir name & BioModule directory name are separated"
+							+ " by a colon \":\" which should appear exactly once but was found " + st.countTokens()
+							+ " times in the param [ " + getDirectModuleDir() + " ]" );
 		}
 
 		final String pipelineName = st.nextToken();
@@ -350,14 +335,6 @@ public class RuntimeParamUtil
 		{
 			params.put( CONFIG_FLAG, getRestartConfigFile() );
 		}
-	}
-
-	private static String getName( final String javaClassName )
-	{
-		final int len = javaClassName.lastIndexOf( "." ) + 1;
-		return javaClassName.lastIndexOf( "." ) > 0
-				? len < javaClassName.length() ? javaClassName.substring( len ): null
-				: null;
 	}
 
 	private static String getRestartConfigFile() throws Exception
@@ -541,22 +518,11 @@ public class RuntimeParamUtil
 						+ INPUT_DIR_FLAG + RETURN + RETURN + "PROGRAM TERMINATED!" );
 			}
 
-			if( isDirectMode() && !( Class.forName( getDirectModule() ).newInstance() instanceof BioModule ) )
-			{
-				throw new Exception( "Docker direct runtime parameter module does not exist: " + getDirectModule()
-						+ RETURN + RETURN + "PROGRAM TERMINATED!" );
-			}
-
 			if( getDockerHostConfigDir() == null )
 			{
 				throw new Exception( "Docker host config directory enviroment variable must be passed in Docker mode:"
 						+ CONFIG_DIR_FLAG + RETURN + RETURN + "PROGRAM TERMINATED!" );
 			}
-		}
-		else if( isDirectMode() && !( Class.forName( getDirectModule() ).newInstance() instanceof JavaModule ) )
-		{
-			throw new Exception( "Direct runtime parameter module is not a JavaModule: " + getDirectModule() + RETURN
-					+ RETURN + "PROGRAM TERMINATED!" );
 		}
 	}
 

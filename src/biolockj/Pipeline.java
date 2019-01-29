@@ -291,7 +291,7 @@ public class Pipeline
 				refreshRCacheIfNeeded( module );
 			}
 			else if( !RuntimeParamUtil.isDockerMode() || DockerUtil.isManager() || RuntimeParamUtil.isDirectMode()
-					&& RuntimeParamUtil.getDirectModule().equals( module.getClass().getName() ) )
+					&& RuntimeParamUtil.getDirectModuleDir().equals( module.getModuleDir().getName() ) )
 			{
 				info( "Check dependencies for: " + module.getClass().getName() );
 				module.checkDependencies();
@@ -414,7 +414,7 @@ public class Pipeline
 		{
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
 			RMetaUtil.classifyReportableMetadata();
-			BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig() );
+			BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig(), false );
 		}
 	}
 

@@ -13,18 +13,26 @@ package biolockj.module.implicit;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.util.SeqUtil;
 
 /**
  * This BioModule uses awk and gzip to convert input sequence files into a decompressed fasta file format.
  */
-public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule
+public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule, SeqModule
 {
+	
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
+	}
 
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception

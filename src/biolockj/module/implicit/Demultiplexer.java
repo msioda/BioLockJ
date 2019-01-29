@@ -19,6 +19,7 @@ import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.util.*;
 
 /**
@@ -38,8 +39,15 @@ import biolockj.util.*;
  * "1:N:" and "2:N:"
  * </ol>
  */
-public class Demultiplexer extends JavaModuleImpl implements JavaModule
+public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return findModuleInputFiles();
+	}
+	
+	
 	/**
 	 * Validate module dependencies:
 	 * <ol>

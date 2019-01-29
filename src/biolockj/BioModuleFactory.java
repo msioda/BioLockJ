@@ -15,6 +15,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import biolockj.module.BioModule;
+import biolockj.module.SeqModule;
 import biolockj.module.classifier.r16s.RdpClassifier;
 import biolockj.module.implicit.*;
 import biolockj.module.r.CalculateStats;
@@ -310,6 +311,11 @@ public class BioModuleFactory
 
 			final BioModule mod = (BioModule) constructor.newInstance();
 			mod.init();
+			
+			if( mod instanceof SeqModule ) {
+				foundFirstModuleToProcessSeqs = true;
+			}
+			
 			bioModules.add( mod );
 			moduleMap.put( id, moduleName );
 		}

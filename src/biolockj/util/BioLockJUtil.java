@@ -276,7 +276,7 @@ public class BioLockJUtil
 	public static String getDirectModuleParam( final BioModule module ) throws Exception
 	{
 		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName()
-				+ ":" + module.getID();
+				+ ":" + module.getModuleDir().getName();
 	}
 
 	/**
@@ -601,27 +601,63 @@ public class BioLockJUtil
 			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
 		}
 	}
+	
+	
+	public static void sanitizeMasterConfig() throws Exception
+	{
+		final Map<String, String> origProps = Config.getProperties();
+		Log.info( BioLockJUtil.class, "Sanitizing MASTER Config file to save only the properties used during Pipeline execution." );
+		Log.info( BioLockJUtil.class, "The orig MASTER Config orignally contained: " + origProps.size() );
+		Log.info( BioLockJUtil.class, "The new MASTER Config contains: " + Config.getUsedProps().size() );
+		if( Log.doDebug() )
+		{
+			Log.info( BioLockJUtil.class, "To view the list of removed Config properties in future runs, enable: " + Log.LOG_LEVEL_PROPERTY + "="+ Config.TRUE );
+			Log.info( BioLockJUtil.class, "To add DEBUG statements for only this utility class, add the property (this is a list property so multiple"
+					+" class names could be provided - in this example, wee add a single class): " + Log.LIMIT_DEBUG_CLASSES + "="+ BioLockJUtil.class.getName() );
+		}
+		
+		Map<String, String> props = new TreeMap<>();
+		for( String key: Config.getUsedProps() )
+		{
+			props.put( key, origProps.get( key ) );
+		}
+		
+		for( String key: origProps.keySet() )
+		{
+			Log.debug( BioLockJUtil.class, "Remove unused Config property from the sanitized MASTER Config: " + key + "=" + origProps.get( key ) );
+		}
+		
+		updateMasterConfig( props, true );
+	}
 
 	/**
-	 * This method removes any given props and then adds the new values.
+	 * This method removes any given props and then adds the new values.<br>
+	 * If overwrite = TRUE, make a new Config with only these given properties, otherwise, add the new props, or replace the old values.
 	 * 
-	 * @param props List of config props
+	 * @param props Collection of config props
+	 * @param newPropsOnly Boolean if TRUE, only use the given props
 	 * @throws Exception if errors occur
 	 */
-	public static void updateMasterConfig( final Map<String, String> props ) throws Exception
+	public static void updateMasterConfig( final Map<String, String> props, boolean newPropsOnly ) throws Exception
 	{
-		final List<String> configLines = readMasterConfig( props );
-		if( configLines == null || props == null || props.isEmpty() )
+		final List<String> configLinesNotInProps = parseConfigForUnchangedLines( props.keySet() );
+		if( configLinesNotInProps == null || props == null || props.isEmpty() )
 		{
+			Log.warn( BioLockJUtil.class, "Calling updateMasterConfig() but no changes have been detected!"  );
 			return;
 		}
 
 		BufferedWriter writer = new BufferedWriter( new FileWriter( getTempConfig() ) );
 		try
 		{
-			for( final String line: configLines )
+			for( final String line: configLinesNotInProps )
 			{
-				writer.write( line + RETURN );
+				final StringTokenizer st = new StringTokenizer( line, "=" );
+				boolean headingLine = st.countTokens() < 2;
+				if( headingLine || !newPropsOnly )
+				{
+					writer.write( line + RETURN );
+				}
 			}
 
 			for( final String name: props.keySet() )
@@ -649,7 +685,7 @@ public class BioLockJUtil
 			else if( getTempConfig().exists() )
 			{
 				throw new Exception(
-						"Error occurred updating MASTER config.  File has been deleted, please recover from: "
+						"Error occurred updating MASTER config.  Orig MASTER was deleted, please recover using the backup file: "
 								+ getTempConfig().getAbsolutePath() );
 			}
 
@@ -704,18 +740,21 @@ public class BioLockJUtil
 				+ TEMP_PREFIX + Config.getConfigFileName() );
 	}
 
-	private static List<String> readMasterConfig( final Map<String, String> props ) throws Exception
+	/**
+	 * Return the lines that are not properties (comments + modules) and all Config properties not listed in the given props
+	 */
+	private static List<String> parseConfigForUnchangedLines( final Collection<String> props ) throws Exception
 	{
-		final List<String> newLines = new ArrayList<>();
+		final List<String> lines = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( getMasterConfig() );
 		try
 		{
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, "=" );
-				if( st.countTokens() < 2 || !props.keySet().contains( st.nextToken() ) )
+				if( st.countTokens() < 2 || !props.contains( st.nextToken() ) )
 				{
-					newLines.add( line );
+					lines.add( line );
 				}
 			}
 		}
@@ -727,7 +766,7 @@ public class BioLockJUtil
 			}
 		}
 
-		return newLines;
+		return lines;
 	}
 
 	private static void setPipelineInputFileType() throws Exception

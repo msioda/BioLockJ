@@ -906,6 +906,11 @@ public class Config
 	// public static final String REPORT_FULL_TAXONOMY_NAMES = "report.fullTaxonomyNames";
 	// public static final String REPORT_USE_GENUS_FIRST_INITIAL = "report.useGenusFirstInitial";
 
-	private static final Set<String> usedProps = new HashSet<>();
+	private static final TreeSet<String> usedProps = new TreeSet<>();
 
+	public static TreeSet<String> getUsedProps()
+	{
+		return usedProps;
+	}
+	
 }

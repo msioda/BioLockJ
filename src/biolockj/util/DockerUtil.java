@@ -127,8 +127,7 @@ public class DockerUtil
 	 */
 	public static boolean isManager()
 	{
-		return RuntimeParamUtil.getDockerContainerName() != null
-				&& RuntimeParamUtil.getDockerContainerName().equals( MANAGER );
+		return !RuntimeParamUtil.isDirectMode();
 	}
 
 	/**
@@ -297,30 +296,4 @@ public class DockerUtil
 
 	private static final String DOCK_IMAGE_NAME_DELIM = "_";
 	private static final String DOCK_RM_FLAG = "--rm";
-
-	/**
-	 * Update Config file paths to use the container paths in place of host paths
-	 * 
-	 * @throws Exception if errors occur
-	 * 
-	 * public static void updateDockerConfig() throws Exception { if( RuntimeParamUtil.getDockerHostMetaDir() != null )
-	 * { updateDockerProperty( MetaUtil.META_FILE_PATH, CONTAINER_META_DIR );
-	 * 
-	 * } if( RuntimeParamUtil.getDockerHostPrimerDir() != null ) { updateDockerProperty(
-	 * TrimPrimers.INPUT_TRIM_SEQ_FILE, CONTAINER_PRIMER_DIR ); } }
-	 */
-
-	/**
-	 * Update a Config property by setting the container path in place of the host path.
-	 * 
-	 * @param prop Config property
-	 * @param containerDir Container directory path
-	 * @throws Exception if errors occur
-	 *
-	 * protected static void updateDockerProperty( final String prop, final String containerDir ) throws Exception {
-	 * final File hostFile = new File( Config.requireString( prop ) ); final String newPath = File.separator +
-	 * containerDir + File.separator + hostFile.getName(); Config.requireExistingFile( newPath );
-	 * Config.setConfigProperty( prop, newPath ); }
-	 */
-
 }
