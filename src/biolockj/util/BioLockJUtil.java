@@ -508,6 +508,38 @@ public class BioLockJUtil
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
+	public static void sanitizeMasterConfig() throws Exception
+	{
+		final Map<String, String> origProps = Config.getProperties();
+		Log.info( BioLockJUtil.class,
+				"Sanitizing MASTER Config file to save only the properties used during Pipeline execution." );
+		Log.info( BioLockJUtil.class, "The orig MASTER Config orignally contained: " + origProps.size() );
+		Log.info( BioLockJUtil.class, "The new MASTER Config contains: " + Config.getUsedProps().size() );
+		if( Log.doDebug() )
+		{
+			Log.info( BioLockJUtil.class, "To view the list of removed Config properties in future runs, enable: "
+					+ Log.LOG_LEVEL_PROPERTY + "=" + Config.TRUE );
+			Log.info( BioLockJUtil.class,
+					"To add DEBUG statements for only this utility class, add the property (this is a list property so multiple"
+							+ " class names could be provided - in this example, wee add a single class): "
+							+ Log.LIMIT_DEBUG_CLASSES + "=" + BioLockJUtil.class.getName() );
+		}
+
+		final Map<String, String> props = new TreeMap<>();
+		for( final String key: Config.getUsedProps() )
+		{
+			props.put( key, origProps.get( key ) );
+		}
+
+		for( final String key: origProps.keySet() )
+		{
+			Log.debug( BioLockJUtil.class, "Remove unused Config property from the sanitized MASTER Config: " + key
+					+ "=" + origProps.get( key ) );
+		}
+
+		updateMasterConfig( props, true );
+	}
+
 	/**
 	 * Save a single version of the config file by combing with default config files, if any exist.
 	 * 
@@ -601,49 +633,23 @@ public class BioLockJUtil
 			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
 		}
 	}
-	
-	
-	public static void sanitizeMasterConfig() throws Exception
-	{
-		final Map<String, String> origProps = Config.getProperties();
-		Log.info( BioLockJUtil.class, "Sanitizing MASTER Config file to save only the properties used during Pipeline execution." );
-		Log.info( BioLockJUtil.class, "The orig MASTER Config orignally contained: " + origProps.size() );
-		Log.info( BioLockJUtil.class, "The new MASTER Config contains: " + Config.getUsedProps().size() );
-		if( Log.doDebug() )
-		{
-			Log.info( BioLockJUtil.class, "To view the list of removed Config properties in future runs, enable: " + Log.LOG_LEVEL_PROPERTY + "="+ Config.TRUE );
-			Log.info( BioLockJUtil.class, "To add DEBUG statements for only this utility class, add the property (this is a list property so multiple"
-					+" class names could be provided - in this example, wee add a single class): " + Log.LIMIT_DEBUG_CLASSES + "="+ BioLockJUtil.class.getName() );
-		}
-		
-		Map<String, String> props = new TreeMap<>();
-		for( String key: Config.getUsedProps() )
-		{
-			props.put( key, origProps.get( key ) );
-		}
-		
-		for( String key: origProps.keySet() )
-		{
-			Log.debug( BioLockJUtil.class, "Remove unused Config property from the sanitized MASTER Config: " + key + "=" + origProps.get( key ) );
-		}
-		
-		updateMasterConfig( props, true );
-	}
 
 	/**
 	 * This method removes any given props and then adds the new values.<br>
-	 * If overwrite = TRUE, make a new Config with only these given properties, otherwise, add the new props, or replace the old values.
+	 * If overwrite = TRUE, make a new Config with only these given properties, otherwise, add the new props, or replace
+	 * the old values.
 	 * 
 	 * @param props Collection of config props
 	 * @param newPropsOnly Boolean if TRUE, only use the given props
 	 * @throws Exception if errors occur
 	 */
-	public static void updateMasterConfig( final Map<String, String> props, boolean newPropsOnly ) throws Exception
+	public static void updateMasterConfig( final Map<String, String> props, final boolean newPropsOnly )
+			throws Exception
 	{
 		final List<String> configLinesNotInProps = parseConfigForUnchangedLines( props.keySet() );
 		if( configLinesNotInProps == null || props == null || props.isEmpty() )
 		{
-			Log.warn( BioLockJUtil.class, "Calling updateMasterConfig() but no changes have been detected!"  );
+			Log.warn( BioLockJUtil.class, "Calling updateMasterConfig() but no changes have been detected!" );
 			return;
 		}
 
@@ -653,7 +659,7 @@ public class BioLockJUtil
 			for( final String line: configLinesNotInProps )
 			{
 				final StringTokenizer st = new StringTokenizer( line, "=" );
-				boolean headingLine = st.countTokens() < 2;
+				final boolean headingLine = st.countTokens() < 2;
 				if( headingLine || !newPropsOnly )
 				{
 					writer.write( line + RETURN );
@@ -741,7 +747,8 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Return the lines that are not properties (comments + modules) and all Config properties not listed in the given props
+	 * Return the lines that are not properties (comments + modules) and all Config properties not listed in the given
+	 * props
 	 */
 	private static List<String> parseConfigForUnchangedLines( final Collection<String> props ) throws Exception
 	{

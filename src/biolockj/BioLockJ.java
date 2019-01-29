@@ -16,7 +16,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import biolockj.module.*;
+import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
+import biolockj.module.JavaModuleImpl;
 import biolockj.module.report.Email;
 import biolockj.util.*;
 
@@ -367,23 +369,23 @@ public class BioLockJ
 
 	private static String getDirectLogName( final String moduleDir ) throws Exception
 	{
-		File modDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() 
+		final File modDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 				+ File.separator + moduleDir );
 		if( !modDir.exists() )
 		{
 			throw new Exception( "Direct module directory not found --> " + modDir.getAbsolutePath() );
-		}		
-			
-		File tempDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() 
+		}
+
+		final File tempDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 				+ File.separator + moduleDir + BioModule.TEMP_DIR );
-		
+
 		if( !tempDir.exists() )
 		{
 			tempDir.mkdir();
 		}
 
 		return BioModule.TEMP_DIR + File.separator + moduleDir;
-		
+
 	}
 
 	private static String getProjectName() throws Exception

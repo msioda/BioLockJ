@@ -16,8 +16,6 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
 
 /**
  * This utility processes the application runtime parameters passed to BioLockJ.

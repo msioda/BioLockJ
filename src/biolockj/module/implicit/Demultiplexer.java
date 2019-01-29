@@ -41,13 +41,6 @@ import biolockj.util.*;
  */
 public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
-	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
-	{
-		return findModuleInputFiles();
-	}
-	
-	
 	/**
 	 * Validate module dependencies:
 	 * <ol>
@@ -130,6 +123,12 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 		// {
 		// verifySeqMetadata();
 		// }
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return findModuleInputFiles();
 	}
 
 	/**

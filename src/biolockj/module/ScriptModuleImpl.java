@@ -97,7 +97,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public File getMainScript() throws Exception
 	{
-		File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
 		if( scriptDir.exists() )
 		{
 			for( final File file: getScriptDir().listFiles() )
@@ -123,7 +123,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 				}
 			}
 		}
-		
+
 		return null;
 	}
 

@@ -405,6 +405,11 @@ public class Config
 		return set;
 	}
 
+	public static TreeSet<String> getUsedProps()
+	{
+		return usedProps;
+	}
+
 	/**
 	 * Initialize Config by reading in props from file and setting taxonomy as an ordered list.
 	 * 
@@ -897,20 +902,15 @@ public class Config
 	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}
 	 */
 	public static final String TRUE = "Y";
-
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
-	private static Properties props = null;
 
 	// public static final String REPORT_ADD_GENUS_NAME_TO_SPECIES = "report.addGenusToSpeciesName";
 	// public static final String REPORT_FULL_TAXONOMY_NAMES = "report.fullTaxonomyNames";
 	// public static final String REPORT_USE_GENUS_FIRST_INITIAL = "report.useGenusFirstInitial";
 
+	private static Properties props = null;
+
 	private static final TreeSet<String> usedProps = new TreeSet<>();
 
-	public static TreeSet<String> getUsedProps()
-	{
-		return usedProps;
-	}
-	
 }

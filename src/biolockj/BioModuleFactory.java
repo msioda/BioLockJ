@@ -311,11 +311,12 @@ public class BioModuleFactory
 
 			final BioModule mod = (BioModule) constructor.newInstance();
 			mod.init();
-			
-			if( mod instanceof SeqModule ) {
+
+			if( mod instanceof SeqModule )
+			{
 				foundFirstModuleToProcessSeqs = true;
 			}
-			
+
 			bioModules.add( mod );
 			moduleMap.put( id, moduleName );
 		}

@@ -27,12 +27,6 @@ import biolockj.util.SeqUtil;
  */
 public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule, SeqModule
 {
-	
-	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
-	{
-		return SeqUtil.getSeqFiles( files );
-	}
 
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
@@ -93,6 +87,12 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule,
 		super.cleanUp();
 		Config.setConfigProperty( SeqUtil.INTERNAL_SEQ_TYPE, SeqUtil.FASTA );
 		Config.setConfigProperty( SeqUtil.INTERNAL_SEQ_HEADER_CHAR, SeqUtil.FASTA_HEADER_DEFAULT_DELIM );
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
 	}
 
 	/**
