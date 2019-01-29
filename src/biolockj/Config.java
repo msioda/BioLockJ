@@ -11,6 +11,7 @@
  */
 package biolockj;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
@@ -243,20 +244,12 @@ public class Config
 	// timestamp.getTime()
 	public static File getOrigConfig() throws Exception
 	{
-		if( origConfigFile != null && origConfigFile.exists() )
-		{
-			return origConfigFile;
-		}
-		if( origConfigFile == null )
+		if( origConfigFile == null  )
 		{
 			origConfigFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 					+ File.separator + ORIG_PREFIX + configFile.getName() );
 		}
-		if( !origConfigFile.exists() )
-		{
-			final FileWriter writer = new FileWriter( origConfigFile );
-			writer.close();
-		}
+		
 		
 		return origConfigFile;
 	}
@@ -453,14 +446,14 @@ public class Config
 		props = Properties.loadProperties( configFile );
 		if( initProjectProps() )
 		{
-			origConfigFile = getOrigConfig();
-			Log.enableLogs( false );
-			unmodifiedInputProps = Properties.loadProperties( configFile );
-			Log.enableLogs( true );
+			//Log.enableLogs( false );
+			unmodifiedInputProps.putAll( props );
+			//Log.enableLogs( true );
 		}
 
 		TaxaUtil.initTaxaLevels();
 	}
+
 
 	/**
 	 * Check if running on cluster
@@ -979,6 +972,12 @@ public class Config
 	 * If set to {@value #TRUE} and NUM_READS exists in metadata file, NUM_READS will be included in the R reports
 	 */
 	public static final String REPORT_NUM_READS = "report.numReads";
+	
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_IMPLICIT_MODULES}<br>
+	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
+	 */
+	public static final String DISABLE_IMPLICIT_MODULES = "project.disableImplicitModules";
 
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}

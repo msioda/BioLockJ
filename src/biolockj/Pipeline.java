@@ -414,7 +414,7 @@ public class Pipeline
 		{
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
 			RMetaUtil.classifyReportableMetadata();
-			BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig(), false );
+			BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig() );
 		}
 	}
 

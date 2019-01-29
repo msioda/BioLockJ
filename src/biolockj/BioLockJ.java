@@ -185,7 +185,7 @@ public class BioLockJ
 
 			if( !RuntimeParamUtil.isDirectMode() )
 			{
-				BioLockJUtil.saveNewMasterConfig();
+				BioLockJUtil.saveNewMasterConfig( null );
 			}
 
 			if( RuntimeParamUtil.isDirectMode() )

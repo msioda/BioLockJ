@@ -45,7 +45,7 @@ public class BioModuleFactory
 		final List<BioModule> bioModules = new ArrayList<>();
 		final List<String> configModules = Config.requireList( Config.INTERNAL_BLJ_MODULE );
 
-		if( !Config.getBoolean( DISABLE_IMPLICIT_MODULES ) )
+		if( !Config.getBoolean( Config.DISABLE_IMPLICIT_MODULES ) )
 		{
 			info( "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
 			bioModules.addAll( constructModule( ImportMetadata.class.getName() ) );
@@ -83,12 +83,12 @@ public class BioModuleFactory
 			final String moduleName = configModules.get( i );
 			final BioModule module = getModule( moduleName );
 
-			if( isImplicitModule( moduleName ) && !Config.getBoolean( DISABLE_IMPLICIT_MODULES ) )
+			if( isImplicitModule( moduleName ) && !Config.getBoolean( Config.DISABLE_IMPLICIT_MODULES ) )
 			{
 				warn( "Ignoring configured module [" + moduleName
 						+ "] since implicit BioModules are added to the pipeline by the system if needed.  "
 						+ "To override this behavior and ignore implicit designation, udpate project Config: ["
-						+ DISABLE_IMPLICIT_MODULES + "=" + Config.TRUE + "]" );
+						+ Config.DISABLE_IMPLICIT_MODULES + "=" + Config.TRUE + "]" );
 			}
 			else
 			{
@@ -391,11 +391,6 @@ public class BioModuleFactory
 	 */
 	protected static final String DEFAULT_STATS_MODULE = "project.defaultStatsModule";
 
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_IMPLICIT_MODULES}<br>
-	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
-	 */
-	protected static final String DISABLE_IMPLICIT_MODULES = "project.disableImplicitModules";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_PRE_REQ_MODULES}<br>
