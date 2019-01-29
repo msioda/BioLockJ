@@ -821,7 +821,7 @@ public class BioLockJUtil
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, "=" );
-				if( st.countTokens() < 2 || !props.contains( st.nextToken() ) )
+				if( line != null && !line.trim().isEmpty() && ( st.countTokens() < 2 || !props.contains( st.nextToken() ) ) )
 				{
 					lines.add( line );
 				}

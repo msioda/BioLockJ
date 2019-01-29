@@ -446,6 +446,10 @@ public class Config
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = Properties.loadProperties( configFile );
 		initProjectProps();
+		for( Object key: props.keySet() )
+		{
+			Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String)key ) );
+		}
 		
 		Log.debug( Properties.class, "# initial props: " + props.size() );
 		unmodifiedInputProps.putAll( props );
