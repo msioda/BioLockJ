@@ -92,7 +92,8 @@ public class BioLockJUtil
 				{
 					FileUtils.forceDelete( file );
 				}
-				Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) deleted: " + file.getAbsolutePath() );
+				if( i > 1)
+					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) deleted: " + file.getAbsolutePath() );
 				return true;
 			}
 			catch( final IOException ex )
@@ -510,13 +511,9 @@ public class BioLockJUtil
 
 	public static void sanitizeMasterConfig() throws Exception
 	{
-		final Map<String, String> deltaProps = new HashMap<>();;
-		final Map<String, String> origProps = Config.getInitialProperties();
+		final Map<String, String> nonNullProps = new HashMap<>();;
 		final Map<String, String> usedProps = Config.getUsedProps();
-		if( Config.getString( Config.PROJECT_DEFAULT_PROPS ) != null )
-		{
-			origProps.put( Config.PROJECT_DEFAULT_PROPS, Config.getString( Config.PROJECT_DEFAULT_PROPS ) );
-		}
+	
 
 		if( !Log.doDebug() )
 		{
@@ -530,74 +527,65 @@ public class BioLockJUtil
 
 		for( final String key: usedProps.keySet() )
 		{
-			final String origVal = origProps.get( key );
-			final String newVal = usedProps.get( key );
-			if( origVal == null && newVal == null
-					|| origVal != null && newVal != null && origVal.trim().equals( newVal.trim() )
-					|| origVal == null && newVal.trim().isEmpty() || newVal == null && origVal.trim().isEmpty() )
+			final String val = usedProps.get( key );
+			if(  val == null || val.trim().isEmpty() )
 			{
 				Log.debug( BioLockJUtil.class,
-						"Remove unused property to build sanatized MASTER Config: " + key + "=" + origVal );
-			}
-			else if( newVal == null )
-			{
-				deltaProps.put( key, "" );
+						"Remove unused property from sanatized MASTER Config: " + key + "=" + val );
 			}
 			else
 			{
-				deltaProps.put( key, newVal );
+				nonNullProps.put( key, val );
 			}
-
-			Log.debug( BioLockJUtil.class, "Remove unused Config property from the sanitized MASTER Config: " + key
-					+ "=" + origProps.get( key ) );
 		}
 		
 		Log.info( BioLockJUtil.class,
 				"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
 		Log.info( BioLockJUtil.class,
-				"The original project Config was archived as: " + Config.getOrigConfig().getAbsolutePath() );
-		Log.info( BioLockJUtil.class,
-				"The original version of project Config orignally contained: " + origProps.size() + " properties" );
-		Log.info( BioLockJUtil.class, "The final version of MASTER Config contains: " + deltaProps.size() + " properties" );
+				"The original version of project Config contained: " + Config.getInitialProperties().size() + " properties" );
+		Log.info( BioLockJUtil.class, "The final version of MASTER Config contains: " + nonNullProps.size() + " properties" );
 		
-		saveNewMasterConfig( deltaProps );
+		saveNewMasterConfig( nonNullProps );
 	}
 	
 	private static void writeCompleteHeader( final BufferedWriter writer, final Map<String, String> props  ) throws Exception
 	{
-		writer.write( "##########################################################################" + RETURN );
+		writer.write( "####################################################################################" + RETURN );
 		writer.write( "#" + RETURN );
-		writer.write( "# Based on the above configuration, the following pipeline was run." + RETURN );
-		writer.write( "# The additional BioModules were added as required pre/postrequisits or as " + RETURN );
-		writer.write( "# implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
-		writer.write( "# standard requirements or BioModule input file format requirments." + RETURN );
+		writer.write( "#   Based on the above configuration, the following pipeline was run." + RETURN );
+		writer.write( "#   The additional BioModules were added as required pre/postrequisits or as " + RETURN );
+		writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
+		writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
 		writer.write( "#" + RETURN );
 		for( final String mod: Config.requireList( Config.INTERNAL_ALL_MODULES ) )
 		{
-			writer.write( "#  " + Config.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
+			writer.write( "#      " + Config.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
 		}
 		writer.write( "#" + RETURN );
-		writer.write( "##########################################################################" + RETURN );
+		writer.write( "####################################################################################" + RETURN );
 		
 		if( Log.doDebug() )
 		{
 		
-			writer.write( "## " + RETURN );
-			writer.write( "### Pipline = DEBUG mode so printing internal properties - FYI only." + RETURN );
-			writer.write( "### Internal properties are discarded at runtime & refenerated as needed." + RETURN );
-			writer.write( "### " + RETURN );
+			writer.write( "###" + RETURN );
+			writer.write( "###   Pipline = DEBUG mode so printing internal properties - FYI only." + RETURN );
+			writer.write( "###   Internal properties are discarded at runtime & refenerated as needed." + RETURN );
+			writer.write( "###" + RETURN );
+			writer.write( "###   [ "+ Config.ALLOW_IMPLICIT_MODULES + "="+Config.TRUE
+					+" ] to run this full list because it includes the implicit BioModules" + RETURN );
+			writer.write( "###" + RETURN );
 			TreeSet<String> keys = new TreeSet<>( props.keySet() );
 			for( final String key: keys )
 			{
 				String val = props.get( key );
-				if( !key.startsWith( INTERNAL_PREFIX ) && val != null && !val.isEmpty() )
+				if( key.startsWith( INTERNAL_PREFIX ) && val != null && !val.isEmpty() )
 				{
 					
 					writer.write( "###     " + key + "=" + props.get( key ) + RETURN );
 				}
 			}
 			writer.write( "###" + RETURN );
-			writer.write( "##########################################################################" + RETURN );
+			writer.write( "####################################################################################" + RETURN );
 		}
 		writer.write( RETURN );
 	}
@@ -676,11 +664,6 @@ public class BioLockJUtil
 			if( props != null )
 			{
 				writeCompleteHeader( writer, props );
-			
-
-			writer.write( "Property [ "+ Config.DISABLE_IMPLICIT_MODULES + "="+Config.TRUE
-					+" ] is set to enable this file to list the implicit modules." + RETURN );
-
 			}
 			
 			if( props == null )

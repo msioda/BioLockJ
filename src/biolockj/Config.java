@@ -430,7 +430,8 @@ public class Config
 
 	public static Map<String, String> getUsedProps()
 	{
-		getString( Config.PROJECT_DEFAULT_PROPS );
+		getString( PROJECT_DEFAULT_PROPS );
+
 		return new HashMap<>( usedProps );
 	}
 
@@ -444,14 +445,11 @@ public class Config
 		configFile = RuntimeParamUtil.getConfigFile();
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = Properties.loadProperties( configFile );
-		if( initProjectProps() )
-		{
-			//Log.enableLogs( false );
-			unmodifiedInputProps = new Properties();
-			unmodifiedInputProps.putAll( props );
-			//Log.enableLogs( true );
-		}
-
+		initProjectProps();
+		
+		Log.debug( Properties.class, "# initial props: " + props.size() );
+		unmodifiedInputProps.putAll( props );
+		Log.debug( Properties.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
 		TaxaUtil.initTaxaLevels();
 	}
 
@@ -707,6 +705,10 @@ public class Config
 			val = BioLockJUtil.getCollectionAsString( data );
 
 		}
+		if( val != null && !val.isEmpty() )
+		{
+			usedProps.put( propertyName, val );
+		}
 		props.setProperty( propertyName, val );
 		Log.info( Config.class, "Set Config property [" + propertyName + "] = " + val );
 	}
@@ -717,10 +719,14 @@ public class Config
 	 * @param propertyName Property name
 	 * @param propertyValue Value to assign to propertyName
 	 */
-	public static void setConfigProperty( final String propertyName, final String propertyValue )
+	public static void setConfigProperty( final String propertyName, final String val )
 	{
-		props.setProperty( propertyName, propertyValue );
-		Log.info( Config.class, "Set Config property [" + propertyName + "] = " + propertyValue );
+		if( val != null && !val.isEmpty() )
+		{
+			usedProps.put( propertyName, val );
+		}
+		props.setProperty( propertyName, val );
+		Log.info( Config.class, "Set Config property [" + propertyName + "] = " + val );
 	}
 
 	/**
@@ -975,10 +981,10 @@ public class Config
 	public static final String REPORT_NUM_READS = "report.numReads";
 	
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_IMPLICIT_MODULES}<br>
+	 * {@link biolockj.Config} Boolean property: {@value #ALLOW_IMPLICIT_MODULES}<br>
 	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
 	 */
-	public static final String DISABLE_IMPLICIT_MODULES = "project.disableImplicitModules";
+	public static final String ALLOW_IMPLICIT_MODULES = "project.allowImplicitModules";
 
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}
@@ -989,7 +995,7 @@ public class Config
 	private static final String ORIG_PREFIX = ".ORIG_";
 	private static File origConfigFile = null;
 	private static Properties props = null;
-	private static Properties unmodifiedInputProps = null;
+	private static Properties unmodifiedInputProps = new Properties();
 
 	private static final Map<String, String> usedProps = new HashMap<>();
 
