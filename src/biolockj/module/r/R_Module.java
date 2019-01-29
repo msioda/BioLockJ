@@ -56,13 +56,17 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	/**
 	 * Validate configuration file properties used to build the R report:
-	 * Get positive integer {@link biolockj.Config}.{@value #R_TIMEOUT}
+	 * <ol>
+	 * <li>Get positive integer {@link biolockj.Config}.{@value #R_TIMEOUT}
+	 * <li>Get positive integer {@link biolockj.Config}.{@value #R_PLOT_WIDTH}
+	 * </ol>
 	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
 		Config.getPositiveInteger( R_TIMEOUT );
+		Config.requirePositiveInteger( R_PLOT_WIDTH );
 	}
 
 	/**
@@ -458,6 +462,12 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * File extension of BioLockJ generated R Scripts: {@value #R_EXT}
 	 */
 	public static final String R_EXT = ".R";
+
+	/**
+	 * R function to get module script file path: {@value #R_FUNCTION_GET_MOD_SCRIPT}
+	 */
+	public static final String R_FUNCTION_GET_MOD_SCRIPT = "getModuleScript";
+
 	/**
 	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}
 	 */
@@ -482,6 +492,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * {@link biolockj.Config} boolean property {@value #R_DEBUG} sets the debug log function endabled
 	 */
 	protected static final String R_DEBUG = "r.debug";
+
+	/**
+	 * {@link biolockj.Config} Integer property {@value #R_PLOT_WIDTH} sets the plot width in the PDF reports.
+	 */
+	protected static final String R_PLOT_WIDTH = "r.plotWidth";
 
 	/**
 	 * {@link biolockj.Config} property {@value #R_TIMEOUT} defines the number of minutes before R script fails due to
