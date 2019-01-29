@@ -447,6 +447,7 @@ public class Config
 		if( initProjectProps() )
 		{
 			//Log.enableLogs( false );
+			unmodifiedInputProps = new Properties();
 			unmodifiedInputProps.putAll( props );
 			//Log.enableLogs( true );
 		}

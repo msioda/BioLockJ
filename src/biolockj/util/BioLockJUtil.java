@@ -648,7 +648,7 @@ public class BioLockJUtil
 	{
 		final File masterConfig = getMasterConfig();
 		final boolean masterExists = masterConfig.exists();
-		if( masterExists && !RuntimeParamUtil.doRestart() )
+		if( props == null && masterExists && !RuntimeParamUtil.doRestart() )
 		{
 			throw new Exception( "MASTER Config should not exist unless restarting a failed pipeline, but was found: "
 					+ masterConfig.getAbsolutePath() );
