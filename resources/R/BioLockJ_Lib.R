@@ -174,15 +174,6 @@ getPipelineDir <- function() {
    return( dirname( getMasterConfigFile() ) )
 }
 
-# Return the PDF plot label based on r.plotWidth, standar.properties default assumes 4 plots/page 
-getPlotTitle <- function( line1, line2 ) {
-   if( (nchar(line1) + nchar(line2) ) > getProperty("r.plotWidth") ) {
-      return( paste0( line1, "\n", line2 ) )
-   }
-   return( paste( line1, line2 ) )
-}
-
-
 # Return property value from MASTER Config file, otherwise return the defaultVal
 getProperty <- function( name, defaultVal=NULL ) {
    return ( suppressWarnings( getConfig( name, defaultVal ) ) )

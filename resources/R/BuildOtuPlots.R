@@ -48,41 +48,6 @@ addScatterPlot <- function( taxa, taxaVals, metaVals )
 				ylab=taxa, xlab="" )
 }
 
-# Return nominal group names truncated for display on X-axis of box plot
-getBoxPlotLabels <- function( labels ) {
-	if( getCexAxis(labels) == getCexAxis(returnMin=T) ) {
-		nchars = sum(nchar(labels)) + length(labels) - 1
-		maxSize = ((getProperty("r.plotWidth")*2)+2)/length(labels)
-		return( strtrim(labels, floor(maxSize) ) )
-	}
-	return( labels )
-}
-
-# Return plot cex.axis parameter to set x-y axis text size based on total number of characters in all labels
-getCexAxis <- function( labels=NULL, returnMax=FALSE, returnMin=FALSE) {
-	cexAxisMax = 1
-	cexAxisMin = 0.65
-	if (returnMax){
-		return(cexAxisMax)
-	}
-	if (returnMin){
-		return(cexAxisMin)
-	}
-	nchars = sum(nchar(labels)) + length(labels) - 1
-	if( nchars < getProperty("r.plotWidth")) {
-		return( cexAxisMax )
-	}
-	else if( nchars < (getProperty("r.plotWidth")+7) ) {
-		return( 0.9 )
-	}
-	else if( nchars < (getProperty("r.plotWidth")+15) ) {
-		return( 0.8 )
-	}
-	else if( nchars < (getProperty("r.plotWidth")+24) ) {
-		return( 0.7 )
-	}
-	return( cexAxisMin )
-}
 
 # Return plot las parameter value to horizontal orientation by default.
 # Return las vertical orientation only if more than 5 lables found with an average lable length > 3 chars.
