@@ -71,13 +71,14 @@ public class Pipeline
 	/**
 	 * If moduleName is null, run all modules, otherwise only run the specified module.
 	 * 
-	 * @param moduleId ID of a single module to run
+	 * @param moduleID of a single module to run
 	 * @throws Exception if any fatal error occurs during execution
 	 */
-	public static void runDirectModule( final String moduleId ) throws Exception
+	public static void runDirectModule( final Integer moduleID ) throws Exception
 	{
-		Log.info( Pipeline.class, "Run Direct BioModule ID[ " + moduleId + "] = " );
-		final JavaModule module = (JavaModule) Pipeline.getModules().get( Integer.valueOf( moduleId ) );
+		Log.info( Pipeline.class, "Run Direct BioModule ID[ " + moduleID + "] = " 
+				+ Pipeline.getModules().get( moduleID ) );
+		final JavaModule module = (JavaModule) Pipeline.getModules().get( moduleID );
 		refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
 		module.cleanUp();
 	}

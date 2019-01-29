@@ -112,7 +112,7 @@ public class BioLockJ
 	 * <ol>
 	 * <li>Call {@link biolockj.util.RuntimeParamUtil#registerRuntimeParameters(String[])} to validate runtime
 	 * parameters
-	 * <li>Call {@link biolockj.Config#initialize(File)} to load project properties
+	 * <li>Call {@link biolockj.Config#initialize()} to load project properties
 	 * <li>Call {@link biolockj.util.MetaUtil#initialize()} to verify metadata dependencies
 	 * <li>Copy {@link biolockj.Config} file and nested {@value biolockj.Config#PROJECT_DEFAULT_PROPS} files into
 	 * {@value biolockj.Config#PROJECT_PIPELINE_DIR} to preserve the state of these files at runtime.
@@ -121,7 +121,7 @@ public class BioLockJ
 	 * directory under {@value biolockj.Config#PROJECT_PIPELINE_DIR}
 	 * <li>Call {@link biolockj.util.SeqUtil#initialize()} to set Config parameters based on sequence files
 	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
-	 * <li>Call {@link biolockj.Pipeline#runPipeline()} or {@link biolockj.Pipeline#runDirectModule(String)} to execute
+	 * <li>Call {@link biolockj.Pipeline#runPipeline()} or {@link biolockj.Pipeline#runDirectModule(Integer)} to execute
 	 * pipeline modules.
 	 * <li>Call {@link #removeTempFiles()} to complete clean up operation, and if
 	 * {@link biolockj.Config}.{@value #PROJECT_DELETE_TEMP_FILES} = {@value biolockj.Config#TRUE}, delete temp
@@ -190,7 +190,7 @@ public class BioLockJ
 
 			if( RuntimeParamUtil.isDirectMode() )
 			{
-				Pipeline.runDirectModule( RuntimeParamUtil.getDirectModuleDir() );
+				Pipeline.runDirectModule( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
 				singleModeSuccess = true;
 			}
 			else
@@ -248,6 +248,12 @@ public class BioLockJ
 		}
 	}
 
+	
+	private static Integer getDirectModuleID( String moduleDir ) throws Exception
+	{
+		return Integer.valueOf( moduleDir.substring( 0, moduleDir.indexOf( "_" ) ) );
+	}
+	
 	/**
 	 * Create the pipeline root directory under $DOCKER_PROJ and save the path to
 	 * {@link biolockj.Config}.{@value biolockj.Config#PROJECT_PIPELINE_DIR}.
@@ -532,7 +538,7 @@ public class BioLockJ
 	{
 		Log.info( BioLockJ.class, "Reporting Direct module status" );
 		final JavaModule module = (JavaModuleImpl) Pipeline.getModules()
-				.get( Integer.valueOf( RuntimeParamUtil.getDirectModuleDir() ) );
+				.get( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
 		if( singleModeSuccess )
 		{
 			Log.info( BioLockJ.class, "Save success status for direct module: " + module.getClass().getName() );
@@ -552,6 +558,9 @@ public class BioLockJ
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();
 
+	/**
+	 * URL to the BioLockJ WIKI
+	 */
 	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
 
 	/**

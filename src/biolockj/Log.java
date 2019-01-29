@@ -86,6 +86,10 @@ public class Log
 		return Config.requireString( LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
 	}
 
+	/**
+	 * Boolean toggle to enable/disable all log messages
+	 * @param enable
+	 */
 	public static void enableLogs( final boolean enable )
 	{
 		suppressLogs = !enable;

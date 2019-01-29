@@ -239,18 +239,6 @@ public class Config
 		return val;
 	}
 
-	// timestamp.getTime()
-	public static File getOrigConfig() throws Exception
-	{
-		if( origConfigFile == null )
-		{
-			origConfigFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
-					+ File.separator + ORIG_PREFIX + configFile.getName() );
-		}
-
-		return origConfigFile;
-	}
-
 	/**
 	 * Parse property as positive double value
 	 *
@@ -425,10 +413,13 @@ public class Config
 		return set;
 	}
 
+	/**
+	 * Cache of the properties used in this pipeline.
+	 * @return list of properties
+	 */
 	public static Map<String, String> getUsedProps()
 	{
 		getString( PROJECT_DEFAULT_PROPS );
-
 		return new HashMap<>( usedProps );
 	}
 
@@ -685,10 +676,10 @@ public class Config
 	/**
 	 * Sets a property value in the props cache as a list
 	 *
-	 * @param propertyName Property name
+	 * @param name Property name
 	 * @param data Collection of data to store using the key = propertyName
 	 */
-	public static void setConfigProperty( final String propertyName, final Collection<?> data )
+	public static void setConfigProperty( final String name, final Collection<?> data )
 	{
 		String val = null;
 		if( data != null && !data.isEmpty() && data.iterator().next() instanceof File )
@@ -707,26 +698,26 @@ public class Config
 		}
 		if( val != null && !val.isEmpty() )
 		{
-			usedProps.put( propertyName, val );
+			usedProps.put( name, val );
 		}
-		props.setProperty( propertyName, val );
-		Log.info( Config.class, "Set Config property [" + propertyName + "] = " + val );
+		props.setProperty( name, val );
+		Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 	}
 
 	/**
 	 * Sets a property value in the props cache
 	 *
-	 * @param propertyName Property name
-	 * @param propertyValue Value to assign to propertyName
+	 * @param name Property name
+	 * @param val Value to assign to propertyName
 	 */
-	public static void setConfigProperty( final String propertyName, final String val )
+	public static void setConfigProperty( final String name, final String val )
 	{
 		if( val != null && !val.isEmpty() )
 		{
-			usedProps.put( propertyName, val );
+			usedProps.put( name, val );
 		}
-		props.setProperty( propertyName, val );
-		Log.info( Config.class, "Set Config property [" + propertyName + "] = " + val );
+		props.setProperty( name, val );
+		Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 	}
 
 	/**
@@ -754,7 +745,7 @@ public class Config
 	}
 
 	/**
-	 * Set the {@value biolockj.Config#PROJECT_PIPELINE_NAME} and {@value biolockj.Config#PROJECT_PIPELINE_DIR} Create a
+	 * Set the {@value #PROJECT_PIPELINE_NAME} and {@value #PROJECT_PIPELINE_DIR} Create a
 	 * pipeline root directory if the pipeline is new.
 	 * 
 	 * @return TRUE if a new pipeline directory was created
@@ -765,22 +756,22 @@ public class Config
 		boolean isNew = false;
 		if( RuntimeParamUtil.doRestart() )
 		{
-			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+			setConfigProperty( PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
 		}
 		else if( RuntimeParamUtil.isDirectMode() )
 		{
-			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR,
+			setConfigProperty( PROJECT_PIPELINE_DIR,
 					RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
 		}
 		else
 		{
 			isNew = true;
-			Config.setConfigProperty( Config.PROJECT_PIPELINE_DIR,
+			setConfigProperty( PROJECT_PIPELINE_DIR,
 					BioLockJ.createPipelineDirectory().getAbsolutePath() );
 		}
 
-		Config.setConfigProperty( Config.PROJECT_PIPELINE_NAME,
-				Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName() );
+		setConfigProperty( PROJECT_PIPELINE_NAME,
+				Config.requireExistingDir( PROJECT_PIPELINE_DIR ).getName() );
 
 		return isNew;
 	}
@@ -992,8 +983,6 @@ public class Config
 	public static final String TRUE = "Y";
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
-	private static final String ORIG_PREFIX = ".ORIG_";
-	private static File origConfigFile = null;
 	private static Properties props = null;
 	private static Properties unmodifiedInputProps = new Properties();
 
