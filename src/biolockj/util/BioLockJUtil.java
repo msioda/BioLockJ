@@ -554,6 +554,7 @@ public class BioLockJUtil
 	 * Save a single version of the config file by combing with default config files, if any exist. If props are
 	 * provided, then only include these proerty values from the Config.
 	 * 
+	 * @param props Properties map
 	 * @throws Exception if errors occur
 	 */
 	public static void saveNewMasterConfig( Map<String, String> props ) throws Exception

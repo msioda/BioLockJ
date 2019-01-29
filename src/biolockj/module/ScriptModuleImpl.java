@@ -63,7 +63,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
 	 * the worker scripts. If running Docker, return {@link biolockj.util.DockerUtil#buildDockerScript()}, else
 	 * pass{@link #getInputFiles()} to either {@link #buildScript(List)} or {@link #buildScriptForPairedReads(List)}
-	 * based on {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PAIRED_READS}.
+	 * based on {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_PAIRED_READS}.
 	 */
 	@Override
 	public void executeTask() throws Exception
@@ -85,6 +85,14 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	public String[] getJobParams() throws Exception
 	{
 		return new String[] { getMainScript().getAbsolutePath() };
+	}
+	
+	
+	private boolean hasScripts() throws Exception
+	{
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		return scriptDir.exists();
+
 	}
 
 	/**
@@ -176,7 +184,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public String getSummary() throws Exception
 	{
-		return super.getSummary() + SummaryUtil.getScriptDirSummary( this );
+		return super.getSummary() + ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ) : "" );
 	}
 
 	/**
