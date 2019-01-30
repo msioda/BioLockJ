@@ -11,24 +11,22 @@ addBoxPlot <- function( taxa, taxaVals, metaVals, barColors)
 	orient = getLas( levels(metaVals) )
 	
 	boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=getProperty("r.pch"), 
-		ylab=taxa, xlab="", cex.axis=cexAxis )
+					 ylab=taxa, xlab="", cex.axis=cexAxis )
 	stripchart( taxaVals ~ metaVals, data=data.frame(taxaVals, metaVals), method="jitter", 
-		vertical=TRUE, pch=getProperty("r.pch"), add=TRUE )
+							vertical=TRUE, pch=getProperty("r.pch"), add=TRUE )
 }
-
 
 plotHeading <- function(parPval, nonParPval, r2, att) {
 	HEAD_1 = 0.2; HEAD_2 = 1.4; LEFT = 0; RIGHT = 1; TOP = 3;
-
+	
 	title1_A = paste( "Adj.", getTestName(att, TRUE), "P-value: ", displayCalc(parPval) )
 	title1_B = bquote( paste( R^2, ": ", .( displayCalc(parPval) ) ) )
 	title2 = paste( "Adj.", getTestName(att, FALSE), "P-value: ", displayCalc(nonParPval) )
-
+	
 	mtext( title1_A, TOP, HEAD_1, col=getColor( parPval ), cex=0.75, adj=LEFT )
 	mtext( title1_B, TOP, HEAD_1, cex=0.75, adj=RIGHT )
 	mtext( title2, TOP, HEAD_2, col=getColor( nonParPval ), cex=0.75, adj=LEFT )
 }
-
 
 addScatterPlot <- function( taxa, taxaVals, metaVals )
 {
@@ -62,7 +60,7 @@ getCexAxis <- function( labels=NULL, returnMax=FALSE, returnMin=FALSE) {
 	if( nchars < (getProperty("r.plotWidth") +7 ) ) return( 0.9 )
 	if( nchars < (getProperty("r.plotWidth") + 15 ) ) return( 0.8 )
 	if( nchars < (getProperty("r.plotWidth") + 24 ) ) return( 0.7 )
-
+	
 	return( cexAxisMin )
 }
 
@@ -84,25 +82,26 @@ main <- function() {
 		
 		taxaTable = getTaxaTable( level )
 		if( is.null( taxaTable ) ) { next }
+		metaTable = getMetaData( level )
 		
-		lastOtuCol = ncol(taxaTable) - numMetaCols()
-		binaryCols = getColIndexes( taxaTable, getBinaryFields() )
-		nominalCols = getColIndexes( taxaTable, getNominalFields() )
-		numericCols = getColIndexes( taxaTable, getNumericFields() )
+		binaryCols = getBinaryFields()
+		nominalCols = getNominalFields()
+		numericCols = getNumericFields()
 		
 		logInfo( "binaryCols", binaryCols )
 		logInfo( "nominalCols", nominalCols )
 		logInfo( "numericCols", numericCols )
 		
-		reportCols = c( binaryCols, nominalCols, numericCols )
+		reportCols = getReportFields()
 
 		parStats = getStatsTable( level, TRUE )
 		nonParStats = getStatsTable( level, FALSE )
 		r2Stats = getStatsTable( level )
-		metaColColors = getColors( length( reportCols ) )
+
+		metaColColors = getColorsByCategory( metaTable )
 		
 		outputFile = getPath( file.path(getModuleDir(), "output"), paste0(level, "_OTU_plots.pdf") )
-
+		
 		if( length( reportCols ) < 5 ) {
 			pdf( outputFile, width = 7, height = 7)
 			par( mfrow=c(2, 2) )
@@ -110,45 +109,46 @@ main <- function() {
 			pdf( outputFile, paper="letter", width=7, height=10.5 )
 			par( mfrow=c(3, 2) )
 		}
-		par(las=1, oma=c(0,1,5,0), mar=c(4, 4, 5, 2), cex=1)
+		par(las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
+		multiPageSet = 0
 		
 		# if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of taxaTable rows
 		cutoffValue = getProperty("r.rareOtuThreshold", 1)
 		if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow(taxaTable)
 		
-		for( taxaCol in 1:lastOtuCol ) {
-			if( sum( taxaTable[,taxaCol] > 0 ) >=  cutoffValue ) {
+		for( taxa in names(taxaTable) ) {
+			multiPageSet = multiPageSet + 1
+			if( sum( taxaTable[,taxa] > 0 ) >=  cutoffValue ) {
 				par( mfrow = par("mfrow") ) # step to next pageNum, even if the last page is not full
 				position = 1
 				pageNum = 1
-				taxa = colnames(taxaTable)[taxaCol]
-				taxaVals = taxaTable[,taxaCol]
-				logInfo( paste( "Plot TaxaTable Col# [", taxaCol, "] =", taxa ) )
-
-				for( metaCol in reportCols )	{
-					meta = colnames(taxaTable)[metaCol]
-					metaVals = taxaTable[,metaCol]
-					
-					if( metaCol %in% binaryCols || metaCol %in% nominalCols ) {
+				taxaVals = taxaTable[,taxa]
+				logInfo( paste( "Taxa Name =", taxa ), taxaVals ) 
+				
+				for( meta in reportCols )  {
+					metaVals = metaTable[,meta]
+					logInfo( paste( "Meta Name =", meta ), metaVals ) 
+					if( meta %in% binaryCols || meta %in% nominalCols ) {
 						logInfo( c( "Plot Box-Plot [", taxa, "~", meta, "]" ) )
-						addBoxPlot( taxa, taxaVals, metaVals, "#90F6FF" )
+						addBoxPlot( taxa, taxaVals, metaVals, metaColColors[[meta]] )
+						logInfo( "Basic plot complete - next add headings" )
 					}
-					else if( metaCol %in% numericCols ) {
+					else if( meta %in% numericCols ) {
 						logInfo( c( "Plot Scatter-Plot [", taxa, "~", meta, "]" ) )
 						addScatterPlot( taxa, taxaVals, metaVals )
 					}
-
-					plotHeading( parStats[ taxa, meta ], nonParStats[ taxa, meta ], r2Stats[ taxa, meta], meta )
-
-					# META LABEL
-					mtext(meta, side=1, font=1, cex=1, line=2.5)
 					
-					# page title
+					plotHeading( parStats[ taxa, meta ], nonParStats[ taxa, meta ], r2Stats[ taxa, meta], meta )
+					mtext(meta, side=1, font=1, cex=1, line=2.5)
 					position = position + 1
-		
-					# TITLE 2
+					
 					if(position == 2) { 
-						title(main=paste0( taxa, ifelse( pageNum > 1, paste0( " - page #", pageNum ), "" ) ), cex=1, font=2, outer=TRUE, line=0.5, cex.main=1.75)
+						addPageTitle(taxa)
+						if ( length(reportCols) > prod(par("mfrow")) ){
+							addPageFooter(level, pageNum, multiPageSet)
+						}else{
+							addPageFooter(level, multiPageSet)
+						}
 					}
 					if(position > prod( par("mfrow") ) ) {
 						position = 1

@@ -7,19 +7,16 @@ main <- function() {
 	numAxis = getProperty("r_PlotMds.numAxis")
 	mdsAtts = getProperty( "r_PlotMds.reportFields", c( getBinaryFields(), getNominalFields() )  )
 	
-	##############################################################################
-	#######  TEMP COLOR SUBSTITUTE   #############################################
-	##############################################################################
-	metaColColors = getColors( length( mdsAtts ) )
-	##############################################################################
 	for( level in taxaLevels() ) {
 		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", level, ".log") ) )
-
+		
 		taxaTable = getTaxaTable( level )
 		if( is.null( taxaTable ) ) { next }
-		lastOtuCol = ncol(taxaTable) - numMetaCols()
-		myMDS = capscale( taxaTable[,1:lastOtuCol]~1, distance=getProperty("r_PlotMds.distance") )
+		myMDS = capscale( taxaTable~1, distance=getProperty("r_PlotMds.distance") )
 		
+		metaTable = getMetaData( level )
+		metaColColors = getColorsByCategory( metaTable )
+
 		pcoaFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(level, "_pcoa") ), ".tsv" )
 		write.table( cbind(id=row.names(myMDS$CA$u), as.data.frame(myMDS$CA$u)), file=pcoaFileName, col.names=TRUE, row.names=FALSE, sep="\t" )
 		logInfo( "Save PCoA table", pcoaFileName )
@@ -30,7 +27,7 @@ main <- function() {
 		
 		# Make plots
 		outputFile = paste0( getPath( file.path(getModuleDir(), "output"), paste0(level, "_MDS.pdf" ) ) )
-
+		
 		if (numAxis < 4 ) {
 			pdf( outputFile, width = 7, height = 7)
 			par( mfrow=c(2, 2) )
@@ -38,17 +35,19 @@ main <- function() {
 			pdf( outputFile, paper="letter", width=7, height=10.5 )
 			par( mfrow=c(3, 2) )
 		}
-		par(las=1, oma=c(0,1,4,0), mar=c(5, 4, 2, 2))
+		par(las=1, oma=c(2,1,4,3), mar=c(5, 4, 2, 2))
 		percentVariance = as.numeric(eigenvals(myMDS)/sum( eigenvals(myMDS) ) ) * 100
+		multiPageSet = 0
 		
-		#for (attName in mdsAtts){
-		for(i in 1:length(mdsAtts) ){
-			attName = mdsAtts[i]
-			metaColVals = as.character(taxaTable[,attName])
+		for (attName in mdsAtts){
+			logInfo( "mdsAtts", mdsAtts )
+			multiPageSet = multiPageSet + 1
+			metaColVals = as.character(metaTable[,attName])
+			logInfo( "metaColVals", metaColVals )
 			par(mfrow = par("mfrow"))
 			att = as.factor(metaColVals)
-			#colorKey = metaColColors[[attName]]
-			logInfo( c( "Using colors:", metaColColors, "for", mdsAtts, "respectively." ) )
+			colorKey = metaColColors[[attName]]
+			logInfo( c( "Using colors: ", paste(colorKey, "for", names(colorKey), collapse= ", ")) )
 			position = 1
 			pageNum = 1
 			numAxis = min(c(numAxis, ncol(myMDS$CA$u)))
@@ -58,21 +57,27 @@ main <- function() {
 						position = 1
 						pageNum = pageNum + 1
 					}
+					pch=getProperty("r.pch", 20)
 					plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste("MDS [", x, "vs", y, "]" ),
 								xlab=getMdsLabel( x, percentVariance[x] ),
 								ylab=getMdsLabel( y, percentVariance[y] ),
-								cex=0.5, pch=getProperty("r.pch"), col=metaColColors[x], font=1, main.cex=5 )
+								cex=1.2, pch=pch, col=colorKey[metaColVals] )
 					position = position + 1
 					if ( position == 2 ){ 
-						logInfo( "metaColVals", metaColVals )
-						logInfo( "mdsAtts", mdsAtts )
+						addPageTitle( attName, line=1 )
+						if ( numAxis > 3 ){
+							addPageFooter(level, pageNum, multiPageSet)
+						}else{
+							addPageFooter(level, multiPageSet)
+						}
 						# put this plot at the upper right position
 						# that puts the legend in a nice white space, and it makes axis 1 in line with itself in two plots (same for axis3)
 						plotRelativeVariance(percentVariance, numAxis)
-						legend(x="topright", title="",legend=mdsAtts, col=metaColColors, pch=getProperty("r.pch"), bty="n")
-						# this is the best time to add the page title
-						title(main=paste0( attName, ifelse( pageNum > 1, paste0( " - ", pageNum ), "" ) ), outer = TRUE, line=0.5, cex=5)
 						position = position + 1
+						title("Multidimensional Scaling")
+						legend(x="topright", title=attName,
+									 legend = paste0(names(colorKey), " (n=", table(metaColVals)[names(colorKey)], ")"), 
+									 col=colorKey, pch=pch, bty="n")
 					}
 				}
 			}

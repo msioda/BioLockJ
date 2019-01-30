@@ -13,7 +13,10 @@ package biolockj.module.report.r;
 
 import java.util.List;
 import java.util.TreeSet;
+import biolockj.Config;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.ScriptModule;
+import biolockj.module.report.taxa.BuildTaxaTables;
 
 /**
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
@@ -22,12 +25,34 @@ import biolockj.module.ScriptModule;
 public class R_PlotEffectSize extends R_Module implements ScriptModule
 {
 	/**
+	 * At least one of the available plot types should NOT be disabled.
+	 */
+	@Override
+	public void checkDependencies() throws Exception
+	{
+		super.checkDependencies();
+		boolean allDisabled = Config.getBoolean( NO_FOLD_CHANGE ) & Config.getBoolean( NO_COHENS_D )
+				& Config.getBoolean( NO_R2 );
+		if( allDisabled )
+		{
+			throw new ConfigViolationException( NO_COHENS_D,
+					"When using " + this.getClass().getName() + " at least one of " + NO_COHENS_D + ", " + NO_R2
+							+ ", or " + NO_FOLD_CHANGE + " must not be true." );
+		}
+	}
+
+	/**
 	 * Returns {@link #getStatPreReqs()}
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
 	{
-		return getStatPreReqs();
+		List<String> preReqs = getStatPreReqs();
+		if( !Config.getBoolean( NO_FOLD_CHANGE ) )
+		{
+			preReqs.add( BuildTaxaTables.class.getName() );
+		}
+		return preReqs;
 	}
 
 	/**
@@ -44,4 +69,8 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 		set.add( PDF_EXT.substring( 1 ) );
 		return set;
 	}
+
+	private final String NO_FOLD_CHANGE = "r.plotEffectSize.disableFoldChange";
+	private final String NO_COHENS_D = "r.plotEffectSize.disableCohensD";
+	private final String NO_R2 = "r.plotEffectSize.disableRSquared";
 }
