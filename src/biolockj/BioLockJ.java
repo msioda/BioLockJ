@@ -477,7 +477,7 @@ public class BioLockJ
 	private static File pipelineSuccessFile() throws Exception
 	{
 		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ Pipeline.SCRIPT_SUCCESS );
+				+ Constants.BLJ_COMPLETE );
 	}
 
 	/**
