@@ -77,7 +77,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		checkOtuPickingDependencies();
+		getParams();
 
 		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) )
 		{

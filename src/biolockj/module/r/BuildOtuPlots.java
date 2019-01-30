@@ -12,7 +12,6 @@
 package biolockj.module.r;
 
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 import biolockj.module.ScriptModule;
 
@@ -23,14 +22,12 @@ import biolockj.module.ScriptModule;
 public class BuildOtuPlots extends R_Module implements ScriptModule
 {
 	/**
-	 * Add prerequisite module: {@link biolockj.module.r.CalculateStats}.
+	 * Returns {@link #getStatPreReqs()}
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		preReqs.add( CalculateStats.class );
-		return preReqs;
+		return getStatPreReqs();
 	}
 
 	/**
@@ -41,9 +38,9 @@ public class BuildOtuPlots extends R_Module implements ScriptModule
 	 * @throws Exception if errors occur
 	 */
 	@Override
-	public Set<String> scpExtensions() throws Exception
+	public TreeSet<String> scpExtensions() throws Exception
 	{
-		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
+		final TreeSet<String> set = super.scpExtensions();
 		set.add( PDF_EXT.substring( 1 ) );
 		return set;
 	}

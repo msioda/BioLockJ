@@ -76,8 +76,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 			lines.add( FUNCTION_ALIGN + " " + file.getAbsolutePath() + " " + map.get( file ).getAbsolutePath() + " "
 					+ getTempDir().getAbsolutePath() + File.separator + fileId + "_alignmentReport" + TXT_EXT + " "
 					+ alignFile );
-			lines.add( getClassifierExe() + slimmSwitches + "-m " + getDB() + " -o " + getOutputDir().getAbsolutePath()
-					+ File.separator + " " + alignFile );
+			lines.add( FUNCTION_SLIMM + " " + alignFile );
 			data.add( lines );
 		}
 
@@ -96,44 +95,12 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		super.checkDependencies();
 		getDB();
-		getRefGenomeIndex();
 		registerDefaultSwitches();
-		formatDerivedBowtieSwitches();
 
-		if( ModuleUtil.getModule( JsonReport.class.getName() ) != null )
+		if( ModuleUtil.getModule( this, JsonReport.class.getName(), true ) != null )
 		{
 			throw new Exception( "SLIMM does not return OTU tree so cannot run the JsonReport module." );
 		}
-
-	}
-
-	@Override
-	public String getClassifierParams() throws Exception
-	{
-		final List<String> singleDashParamList = new ArrayList<>();
-		for( final String x: singleDashParams )
-		{
-			singleDashParamList.add( x );
-		}
-
-		String formattedSwitches = " ";
-		final List<String> switches = Config.getList( EXE_CLASSIFIER_PARAMS );
-		final Iterator<String> it = switches.iterator();
-		while( it.hasNext() )
-		{
-			final String token = it.next();
-			final StringTokenizer sToken = new StringTokenizer( token, " " );
-			if( singleDashParamList.contains( sToken.nextToken() ) )
-			{
-				formattedSwitches += "-" + token + " ";
-			}
-			else
-			{
-				formattedSwitches += "--" + token + " ";
-			}
-		}
-
-		return formattedSwitches;
 	}
 
 	/**
@@ -144,34 +111,20 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 
-		final String inputs = Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
-		int index = Config.getBoolean( Config.INTERNAL_PAIRED_READS ) ? 3: 2;
+		final String inputs = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
+		int index = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? 3: 2;
 
 		lines.add( "function " + FUNCTION_ALIGN + "() {" );
-		lines.add( Config.getExe( EXE_BOWTIE2 ) + getRuntimeBowtieParams() + "-x " + getRefGenomeIndex() + inputs
-				+ " 2> " + "$" + index++ + " | " + Config.getExe( EXE_SAMTOOLS ) + " view -bS -> $" + index );
+		lines.add( Config.getExe( EXE_BOWTIE2 ) + getRuntimeBowtieParams() + inputs + " 2> " + "$" + index++ + " | "
+				+ Config.getExe( EXE_SAMTOOLS ) + " view -bS -> $" + index );
 		lines.add( "}" );
+		lines.add( "function " + FUNCTION_SLIMM + "() {" );
+		lines.add( getClassifierExe() + getRuntimeSlimmParams() + SLIMM_OUTPUT_PARAM + getOutputDir().getAbsolutePath()
+				+ File.separator + " $1" );
+		lines.add( "}" );
+		lines.add( getClassifierExe() + slimmSwitches + " -o " );
+
 		return lines;
-	}
-
-	/**
-	 * Format derived switches for call to Bowtie.
-	 */
-	private String formatDerivedBowtieSwitches() throws Exception
-	{
-		String switches = "";
-		final Map<String, String> hardCodedSwitches = getDerivedBowtieSwitches();
-		for( final String key: hardCodedSwitches.keySet() )
-		{
-			String val = hardCodedSwitches.get( key ).trim();
-			if( val.length() > 0 )
-			{
-				val = " " + val;
-			}
-			switches += key + val + " ";
-		}
-
-		return switches;
 	}
 
 	private String getDB() throws Exception
@@ -184,50 +137,33 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		return Config.requireExistingDir( DATABASE ).getAbsolutePath();
 	}
 
-	/**
-	 * Get derived switches for call to Bowtie.
-	 */
-	private Map<String, String> getDerivedBowtieSwitches() throws Exception
-	{
-		final Map<String, String> bowtieSwitches = new HashMap<>();
-		bowtieSwitches.put( getInputTypeSwitch(), "" );
-		bowtieSwitches.put( "-p", getNumThreads().toString() );
-		bowtieSwitches.put( "--mm", "" );
-		return bowtieSwitches;
-	}
-
 	private String getInputTypeSwitch() throws Exception
 	{
 		if( SeqUtil.isFastQ() )
 		{
-			return "-q";
+			return "-q ";
 		}
 		else
 		{
-			return "-f";
+			return "-f ";
 		}
-	}
-
-	private String getRefGenomeIndex() throws Exception
-	{
-		return Config.requireString( REF_GENOME_INDEX );
 	}
 
 	private String getRuntimeBowtieParams() throws Exception
 	{
-		String switches = bowtieSwitches;
-		if( !switches.endsWith( " " ) )
-		{
-			switches += " ";
-		}
+		return bowtieSwitches + getInputTypeSwitch();
+	}
 
-		return switches + formatDerivedBowtieSwitches();
+	private String getRuntimeSlimmParams() throws Exception
+	{
+		return slimmSwitches;
 	}
 
 	private void registerDefaultSwitches() throws Exception
 	{
-		setDefaultBowtieSwitches();
-		slimmSwitches = getClassifierParams();
+		bowtieSwitches = BioLockJUtil.join( Config.getList( EXE_BOWTIE_PARAMS ) );
+
+		slimmSwitches = BioLockJUtil.join( getClassifierParams() );
 
 		if( bowtieSwitches.indexOf( "--mm " ) > -1 )
 		{
@@ -237,7 +173,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( bowtieSwitches.indexOf( "-p " ) > -1 || bowtieSwitches.indexOf( "--threads " ) > -1 )
 		{
 			throw new Exception( "Invalid classifier option (-p or --threads) found in property(" + EXE_BOWTIE_PARAMS
-					+ "). BioLockJ sets these values based on: " + getNumThreadsParam() );
+					+ "). BioLockJ sets these values based on: " + SCRIPT_NUM_THREADS );
 		}
 		if( bowtieSwitches.indexOf( "-q " ) > -1 || bowtieSwitches.indexOf( "-f " ) > -1 )
 		{
@@ -252,47 +188,29 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 		if( slimmSwitches.indexOf( "-o " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-o) found in property(" + EXE_BOWTIE_PARAMS
+			throw new Exception( "Invalid SLIMM option (-o) found in property(" + EXE_CLASSIFIER_PARAMS
 					+ "). BioLockJ hard codes this value to: " + getOutputDir().getAbsolutePath() + File.separator );
 		}
 		if( slimmSwitches.indexOf( "-m " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-m) found in property(" + EXE_BOWTIE_PARAMS
+			throw new Exception( "Invalid SLIMM option (-m) found in property(" + EXE_CLASSIFIER_PARAMS
 					+ "). BioLockJ sets these values based on: " + DATABASE );
 		}
 		if( slimmSwitches.indexOf( "-d " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-d) found in property(" + EXE_BOWTIE_PARAMS
+			throw new Exception( "Invalid SLIMM option (-d) found in property(" + EXE_CLASSIFIER_PARAMS
 					+ "). BioLockJ sends individual input files to SLIMM from: " + getTempDir().getAbsolutePath() );
 		}
 		if( slimmSwitches.indexOf( "-r " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-r) found in property(" + EXE_BOWTIE_PARAMS
+			throw new Exception( "Invalid SLIMM option (-r) found in property(" + EXE_CLASSIFIER_PARAMS
 					+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 		}
 
-		setSlimmRankSwitch();
-		formatDerivedBowtieSwitches();
-	}
+		bowtieSwitches = getRuntimeParams( Config.getList( EXE_BOWTIE_PARAMS ), BOWTIE_NUM_THREADS_PARAM ) + "-x "
+				+ Config.requireString( REF_GENOME_INDEX ) + "--mm ";
 
-	/**
-	 * Add user configured switches for call to Bowtie.
-	 */
-	private void setDefaultBowtieSwitches() throws Exception
-	{
-		bowtieSwitches = " ";
-		final List<String> switches = Config.getList( EXE_BOWTIE_PARAMS );
-		for( final String next: switches )
-		{
-			bowtieSwitches += "--" + next + " ";
-		}
-	}
-
-	/**
-	 * Add single rank switch if only one taxonomy level configured in prop file.
-	 */
-	private void setSlimmRankSwitch() throws Exception
-	{
+		slimmSwitches = getRuntimeParams( getClassifierParams(), null ) + "-m " + getDB() + " ";
 		if( TaxaUtil.getTaxaLevels().size() == 1 )
 		{
 			slimmSwitches += "-r " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
@@ -300,7 +218,9 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	}
 
 	private String bowtieSwitches = null;
+
 	private String slimmSwitches = null;
+
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
 	{
 		taxaLevelMap.put( TaxaUtil.SPECIES, TaxaUtil.SPECIES );
@@ -313,15 +233,14 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	}
 	/**
 	 * Override
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN} value
+	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN}
+	 * value
 	 */
 	public static final String SLIMM_DOMAIN_DELIM = "superkingdom";
-
 	/**
 	 * {@link biolockj.Config} property to directory holding SLIMM database: {@value #DATABASE}
 	 */
 	protected static final String DATABASE = "slimm.db";
-
 	/**
 	 * {@link biolockj.Config} property to set bowtie2 parameters: {@value #EXE_BOWTIE_PARAMS}
 	 */
@@ -338,16 +257,20 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String EXE_SAMTOOLS = "exe.samtools";
 
 	/**
-	 * Function name used to classify sequences with SLIMM: {@value #FUNCTION_ALIGN}
+	 * Function name used to align sequences with bowtie2: {@value #FUNCTION_ALIGN}
 	 */
-	protected static final String FUNCTION_ALIGN = "align";
+	protected static final String FUNCTION_ALIGN = "bowTieAlign";
+
+	/**
+	 * Function name used to run SLIMM: {@value #FUNCTION_SLIMM}
+	 */
+	protected static final String FUNCTION_SLIMM = "runSlimm";
 
 	/**
 	 * {@link biolockj.Config} property to set SLIMM bowtie2 large reference index {@value #REF_GENOME_INDEX}
 	 */
 	protected static final String REF_GENOME_INDEX = "slimm.refGenomeIndex";
 
-	private static final String[] singleDashParams = { "r", "c", "s", "u", "5", "3", "N", "L", "i", "k", "a", "D", "R",
-			"I", "X", "t", "" };
-
+	private static final String BOWTIE_NUM_THREADS_PARAM = "-p";
+	private static final String SLIMM_OUTPUT_PARAM = "-o";
 }

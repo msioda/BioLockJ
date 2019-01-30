@@ -63,6 +63,15 @@ public interface BioModule
 	public void executeTask() throws Exception;
 
 	/**
+	 * Some BioModules may be added to a pipeline multiple times so must be identified by an ID.<br>
+	 * This is the same value as the directory folder prefix when run.<br>
+	 * The 1st module ID is 0 (or 00 if there are more than 10 modules.
+	 * 
+	 * @return Module ID
+	 */
+	public Integer getID();
+
+	/**
 	 * Each BioModule takes the previous BioModule output as input:<br>
 	 * BioModule[ n ].getInputFiles() = BioModule[ n - 1 ].getOutputDir().listFiles()<br>
 	 * Special cases:<br>
@@ -99,17 +108,17 @@ public interface BioModule
 	 * @return List of BioModules
 	 * @throws Exception if invalid Class names are returned as post-requisites
 	 */
-	public List<Class<?>> getPostRequisiteModules() throws Exception;
+	public List<String> getPostRequisiteModules() throws Exception;
 
 	/**
 	 * {@link biolockj.Pipeline} calls this method when building the list of pipeline BioModules to execute. Any
 	 * BioModules returned by this method will be added to the pipeline before the current BioModule. If multiple
 	 * prerequisites are returned, the modules will be added in the order listed.
 	 * 
-	 * @return List of BioModules
+	 * @return List of BioModule Class Names
 	 * @throws Exception if invalid Class names are returned as prerequisites
 	 */
-	public List<Class<?>> getPreRequisiteModules() throws Exception;
+	public List<String> getPreRequisiteModules() throws Exception;
 
 	/**
 	 * Gets the BioModule execution summary, this is sent as part of the notification email, if configured.<br>
@@ -132,6 +141,13 @@ public interface BioModule
 	public File getTempDir();
 
 	/**
+	 * Initialize a new module to generate a unique ID and module directory.
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	public void init() throws Exception;
+
+	/**
 	 * BioModules {@link #getInputFiles()} method typically, but not always, return the previousModule output files.
 	 * This method checks the output directory from the previous module to check for input deemed acceptable by the
 	 * current module. The conditions coded in this method will be checked on each previous module in the pipeline until
@@ -145,16 +161,6 @@ public interface BioModule
 	 * @throws Exception if unexpected errors occur
 	 */
 	public boolean isValidInputModule( BioModule previousModule ) throws Exception;
-
-	/**
-	 * {@link biolockj.Pipeline} calls this method to set the name of each BioModule root directory.<br>
-	 * Module root directories are created directly under the {@value biolockj.Config#INTERNAL_PIPELINE_DIR} pipeline
-	 * root directory.<br>
-	 * Modules are numbered in order included in the {@link biolockj.Config} and named after the Java class name.<br>
-	 *
-	 * @param filePath String filePath of the module directory
-	 */
-	public void setModuleDir( final String filePath );
 
 	/**
 	 * Script prefix appended to start of file name to indicate the main script in the script directory. BioModules that

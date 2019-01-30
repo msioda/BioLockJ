@@ -15,8 +15,8 @@ import java.io.File;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.ScriptModule;
-import biolockj.module.ScriptModuleImpl;
+import biolockj.module.SeqModule;
+import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
 
@@ -26,7 +26,7 @@ import biolockj.util.*;
  * <a href="https://sco.h-its.org/exelixis/web/software/pear/doc.html" target=
  * "_top">https://sco.h-its.org/exelixis/web/software/pear/doc.html</a>
  */
-public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
+public class PearMergeReads extends SeqModuleImpl implements SeqModule
 {
 	/**
 	 * Build the script lines for each sample as a nested list. PAIR program will be called once for each pair of files
@@ -69,22 +69,23 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX );
-		Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
-
 		super.checkDependencies();
+		Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX );
+		Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX );
+		getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
+
 		if( !SeqUtil.isFastQ() )
 		{
 			throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
 		}
 
-		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			throw new Exception( getClass().getName()
 					+ " requires paired input data as a combined multiplexed file or as separate files named with "
 					+ " matching sample IDs ending in the forward & reverse file suffix values: "
-					+ Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX ) + " & "
-					+ Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX ) );
+					+ Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX ) + " & "
+					+ Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX ) );
 		}
 	}
 
@@ -97,7 +98,7 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	{
 		final String metaColName = getMetaColName();
 		super.cleanUp();
-		Config.setConfigProperty( Config.INTERNAL_PAIRED_READS, Config.FALSE );
+		Config.setConfigProperty( SeqUtil.INTERNAL_PAIRED_READS, Config.FALSE );
 
 		final File updatedMeta = new File(
 				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
@@ -152,8 +153,9 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_PEAR_MERGE + "() {" );
-		lines.add( Config.getExe( EXE_PEAR ) + " -f $2 -r $3 -o $4" + File.separator + "$1 "
-				+ getPearSwitches( Config.getList( EXE_PEAR_PARAMS ) ) );
+		lines.add( Config.getExe( EXE_PEAR ) + " "
+				+ getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 "
+				+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
 		lines.add( "mv $4" + File.separator + "$1.assembled." + SeqUtil.FASTQ + " $5" + File.separator + "$1."
 				+ SeqUtil.FASTQ );
 		lines.add( "}" );
@@ -164,56 +166,38 @@ public class PearMergeReads extends ScriptModuleImpl implements ScriptModule
 	{
 		if( otuColName == null )
 		{
-			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_MERGED_READS );
+			otuColName = MetaUtil.getSystemMetaCol( this, NUM_MERGED_READS );
 		}
 
 		return otuColName;
 	}
 
-	/**
-	 * Get formatted pear switches as provided in prop file (if any).
-	 *
-	 * @param switches
-	 * @return
-	 * @throws Exception
-	 */
-	private String getPearSwitches( final List<String> switches ) throws Exception
-	{
-		String formattedSwitches = " -j " + Config.requirePositiveInteger( SCRIPT_NUM_THREADS ) + " ";
-		for( final String string: switches )
-		{
-			formattedSwitches += "-" + string + " ";
-		}
-
-		return formattedSwitches;
-	}
-
 	private String otuColName = null;
 	private Map<String, String> readsPerSample = new HashMap<>();
 	private final Set<String> sampleIds = new HashSet<>();
-
 	/**
 	 * Metadata column name for column that holds number of reads per sample after merging: {@value #NUM_MERGED_READS}
 	 */
 	public static final String NUM_MERGED_READS = "Num_Merged_Reads";
-
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_PEAR} defines the command line PEAR executable
 	 */
 	protected static final String EXE_PEAR = "exe.pear";
-
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_PEAR_PARAMS} is used to set the PEAR executable runtime parameters
 	 */
 	protected static final String EXE_PEAR_PARAMS = "exe.pearParams";
-
-	/**
-	 * {@link biolockj.Config} property {@value #FUNCTION_PEAR_MERGE} is used to set the PEAR executable runtime
-	 * parameters
-	 */
 	/**
 	 * Name of the bash function that merges files with PEAR: {@value #FUNCTION_PEAR_MERGE}
 	 */
 	protected static final String FUNCTION_PEAR_MERGE = "mergeReads";
+
+	private static final String FW_READ_PARAM = "-f ";
+
+	private static final String NUM_THREADS_PARAM = "-j";
+
+	private static final String OUTPUT_PARAM = "-o ";
+
+	private static final String RV_READ_PARAM = "-r ";
 
 }

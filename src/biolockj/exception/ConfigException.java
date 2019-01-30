@@ -31,44 +31,26 @@ public abstract class ConfigException extends Exception
 	}
 
 	/**
-	 * Abstract {@link biolockj.Config} exception calls {@link #buildMessage(String, String, String)} to generate a
-	 * standard error message for Configuration file errors, passing an empty string for the msg parameter.
+	 * Abstract {@link biolockj.Config} exception calls {@link #buildMessage(String, String)} to generate a standard
+	 * error message for Configuration file errors, passing an empty string for the msg parameter.
 	 *
 	 * @param propertyName {@link biolockj.Config} property name
-	 * @param type Exception type
+	 * @param msg Exception type
 	 */
-	public ConfigException( final String propertyName, final String type )
+	public ConfigException( final String propertyName, final String msg )
 	{
-		super( buildMessage( propertyName, type, "" ) );
-	}
-
-	/**
-	 * Abstract {@link biolockj.Config} exception calls {@link #buildMessage(String, String, String)} to generate a
-	 * standard error message for Configuration file errors.
-	 *
-	 * @param propertyName {@link biolockj.Config} property name
-	 * @param type Exception type
-	 * @param msg Exception message details
-	 */
-	public ConfigException( final String propertyName, final String type, final String msg )
-	{
-		super( buildMessage( propertyName, type, msg ) );
+		super( buildMessage( propertyName, msg ) );
 	}
 
 	/**
 	 * Build a standard error message for Configuration file errors.
 	 * 
 	 * @param propertyName Property name
-	 * @param type Error type
-	 * @param msg Exception details
+	 * @param msg Failure details
 	 * @return Exception message that will be passed to superclass {@link java.lang.Exception} via super()
 	 */
-	protected static String buildMessage( final String propertyName, String type, String msg )
+	protected static String buildMessage( final String propertyName, String msg )
 	{
-		if( type != null && !type.isEmpty() )
-		{
-			type += " " + type;
-		}
 		if( !msg.isEmpty() )
 		{
 			msg = msg + BioLockJ.RETURN;
@@ -80,7 +62,7 @@ public abstract class ConfigException extends Exception
 			val = "{undefined}";
 		}
 
-		return "Config" + type + " Exception [ " + propertyName + "=" + val + " ] " + BioLockJ.RETURN + msg
+		return "[ " + propertyName + "=" + val + " ] " + BioLockJ.RETURN + msg
 				+ "Restart pipeline after updating application inputs or Config " + propertyName + " value in: "
 				+ Config.getConfigFileName();
 	}

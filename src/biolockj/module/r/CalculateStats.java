@@ -12,8 +12,11 @@
 package biolockj.module.r;
 
 import java.io.File;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.BioModule;
@@ -47,57 +50,112 @@ public class CalculateStats extends R_Module implements BioModule
 	 * @throws Exception if errors occur
 	 */
 	@Override
-	public Set<String> scpExtensions() throws Exception
+	public TreeSet<String> scpExtensions() throws Exception
 	{
-		final TreeSet<String> set = (TreeSet<String>) super.scpExtensions();
+		final TreeSet<String> set = super.scpExtensions();
 		set.add( TSV_EXT.substring( 1 ) );
 		return set;
 	}
 
 	/**
-	 * Get the stats file for the given fileType and otuLevel.
+	 * Get the stats file for the given fileType and taxonomy level.
 	 * 
-	 * @param otuLevel OTU level
-	 * @param fileType (parametric/non-parametric) (adjusted/non-adjusted)
-	 * @return File with stats for fileType
-	 * @throws Exception if CalculateStats not found
+	 * @param module Calling module
+	 * @param level Taxonomy level
+	 * @param isParametric Boolean TRUE to query for parametric file
+	 * @param isAdjusted Boolean TRUE to query for adjusted p-value file
+	 * @return File Table of statistics or null
+	 * @throws Exception if errors occur
 	 */
-	public static File getStatsFile( final String otuLevel, final String fileType ) throws Exception
+	public static File getStatsFile( final BioModule module, final String level, final Boolean isParametric,
+			final Boolean isAdjusted ) throws Exception
 	{
-		final BioModule mod = ModuleUtil.getModule( CalculateStats.class.getName() );
-		final String fileName = mod.getOutputDir().getAbsolutePath() + File.separator
-				+ Config.getString( Config.INTERNAL_PIPELINE_NAME ) + "_" + otuLevel + "_" + fileType
-				+ R_Module.TSV_EXT;
-
-		Log.info( CalculateStats.class, "Find stats file: " + fileName );
-		final File file = new File( fileName );
-		if( file.exists() )
+		final String querySuffix = "_" + level + "_" + getSuffix( isParametric, isAdjusted ) + TSV_EXT;
+		final Set<File> results = new HashSet<>();
+		final IOFileFilter ff = new WildcardFileFilter( "*" + querySuffix );
+		for( final File dir: getStatsFileDirs( module ) )
 		{
-			return file;
+			final Collection<File> files = FileUtils.listFiles( dir, ff, HiddenFileFilter.VISIBLE );
+			if( files.size() > 1 )
+			{
+				results.addAll( files );
+			}
 		}
 
-		return null;
+		final int count = results.size();
+		if( count == 0 )
+		{
+			return null;
+		}
+		else if( count == 1 )
+		{
+			final File statsFile = results.iterator().next();
+			Log.info( CalculateStats.class, "Return stats file: " + statsFile.getAbsolutePath() );
+			return statsFile;
+		}
+
+		throw new Exception( "Only 1 " + CalculateStats.class.getSimpleName() + " output file with suffix = \""
+				+ querySuffix + "\" should exist.  Found " + count + " files --> " + results );
+
 	}
 
 	/**
-	 * Non parametric p-value identifier: {@value #P_VALS_NP}
+	 * Analyze file name for key strings to determine if file is a stats file output by this module.
+	 * 
+	 * @param file Ambiguous file
+	 * @return TRUE if file name is formatted as if output by this module
+	 * @throws Exception if errors occur
 	 */
-	public static final String P_VALS_NP = "nonParametricPvals";
+	public static boolean isStatsFile( final File file ) throws Exception
+	{
+		for( final String suffix: statSuffixSet )
+		{
+			if( file.getName().contains( suffix ) && file.getName().endsWith( TSV_EXT ) )
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
-	/**
-	 * Non parametric adjusted p-value identifier: {@value #P_VALS_NP_ADJ}
-	 */
-	public static final String P_VALS_NP_ADJ = P_VALS_NP + "Adj";
+	private static List<File> getStatsFileDirs( final BioModule module ) throws Exception
+	{
+		final BioModule statsModule = ModuleUtil.getModule( module, CalculateStats.class.getName(), false );
+		if( statsModule != null )
+		{
+			final List<File> dirs = new ArrayList<>();
+			dirs.add( statsModule.getOutputDir() );
+			return dirs;
+		}
 
-	/**
-	 * Parametric p-value identifier: {@value #P_VALS_PAR}
-	 */
-	public static final String P_VALS_PAR = "parametricPvals";
+		return Config.requireExistingDirs( Config.INPUT_DIRS );
+	}
 
-	/**
-	 * Parametric adjusted p-value identifier: {@value #P_VALS_PAR_ADJ}
-	 */
-	public static final String P_VALS_PAR_ADJ = P_VALS_PAR + "Adj";
+	private static String getSuffix( final Boolean isParametric, final Boolean isAdjusted ) throws Exception
+	{
+		if( isParametric == null )
+		{
+			return R_SQUARED_VALS;
+		}
+		else if( isParametric && isAdjusted != null && isAdjusted )
+		{
+			return P_VALS_PAR_ADJ;
+		}
+		else if( isParametric )
+		{
+			return P_VALS_PAR;
+		}
+		else if( !isParametric && isAdjusted != null && isAdjusted )
+		{
+			return P_VALS_NP_ADJ;
+		}
+		else if( !isParametric )
+		{
+			return P_VALS_NP;
+		}
+
+		throw new Exception( "BUG DETECTED! Logic error in getSuffix( isParametric, isAdjusted)" );
+	}
 
 	/**
 	 * R^2 identifier: {@value #R_SQUARED_VALS}
@@ -125,6 +183,26 @@ public class CalculateStats extends R_Module implements BioModule
 	protected static final String ADJ_PVAL_TAXA = "TAXA";
 
 	/**
+	 * Non parametric p-value identifier: {@value #P_VALS_NP}
+	 */
+	protected static final String P_VALS_NP = "nonParametricPvals";
+
+	/**
+	 * Non parametric adjusted p-value identifier: {@value #P_VALS_NP_ADJ}
+	 */
+	protected static final String P_VALS_NP_ADJ = "adjNonParPvals";
+
+	/**
+	 * Parametric p-value identifier: {@value #P_VALS_PAR}
+	 */
+	protected static final String P_VALS_PAR = "parametricPvals";
+
+	/**
+	 * Parametric adjusted p-value identifier: {@value #P_VALS_PAR_ADJ}
+	 */
+	protected static final String P_VALS_PAR_ADJ = "adjParPvals";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #R_ADJ_PVALS_SCOPE} defines R p.adjust( n ) parameter. There are
 	 * 4 supported options:
 	 * <ol>
@@ -141,4 +219,15 @@ public class CalculateStats extends R_Module implements BioModule
 	 * p.adjust.methods = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")
 	 */
 	protected static final String R_PVAL_ADJ_METHOD = "rStats.pAdjustMethod";
+
+	private static final Set<String> statSuffixSet = new HashSet<>();
+
+	static
+	{
+		statSuffixSet.add( P_VALS_NP );
+		statSuffixSet.add( P_VALS_NP_ADJ );
+		statSuffixSet.add( P_VALS_PAR );
+		statSuffixSet.add( P_VALS_PAR_ADJ );
+		statSuffixSet.add( R_SQUARED_VALS );
+	}
 }

@@ -50,7 +50,7 @@ get_named_arg() {
 	done
 }
 
-# Return $HOST_BLJ_PROJ if called from within a docker container (like biolockj/webapp), otherwise return $BLJ_PROJ
+# Return $HOST_BLJ_PROJ if called from within a docker container (like webapp), otherwise return $BLJ_PROJ
 get_blj_proj() {
 	
 	bljProj=$BLJ_PROJ
@@ -102,7 +102,7 @@ validate_input() {
 }
 
 get_restart_dir() {
-	echo "/pipeline/${restartPipeline#$(get_blj_proj)/}"
+	echo "/pipelines/${restartPipeline#$(get_blj_proj)/}"
 }
 
 # Populates the docker run BLJ_OPTIONS parameter
@@ -124,15 +124,15 @@ get_blj_options() {
 get_status_msg() {
 	msg=""
 	if [ ${#inDockerContainer} -gt 0 ]; then
-		msg="Docker biolockj/webapp GUI"
+		msg="Docker $DOCKER_HUB_USER/webapp GUI"
 	else
 		msg="Host machine $BLJ/web_app GUI" 
 	fi
 	
 	if [ ${#restartPipeline} -gt 0 ]; then 
-		msg+=" restarting biolockj/manager Docker container"
+		msg+=" restarting $DOCKER_HUB_USER/manager Docker container"
 	else
-		msg+=" starting biolockj/manager Docker container"
+		msg+=" starting $DOCKER_HUB_USER/manager Docker container"
 	fi
 	
 	echo "$msg with BLJ_OPTIONS=$(get_blj_options)"
@@ -154,23 +154,23 @@ echo $(get_status_msg)
 
 if [ ${#metadataFilePath} -gt 0 ] && [ ${#trimPrimersFilePath} -gt 0 ]; then
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(get_blj_proj):/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
+		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta -v $trimPrimersFilePath:/primer \
-		--rm biolockj/manager
+		--rm $DOCKER_HUB_USER/blj_manager
 elif [ ${#metadataFilePath} -gt 0 ]; then	
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(get_blj_proj):/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
+		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta \
-		--rm biolockj/manager 
+		--rm $DOCKER_HUB_USER/blj_manager 
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then	
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(get_blj_proj):/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
+		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $trimPrimersFilePath:/primer \
-		--rm biolockj/manager 
+		--rm $DOCKER_HUB_USER/blj_manager 
 else
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(get_blj_proj):/pipeline:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
-		--rm biolockj/manager 
+		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
+		--rm $DOCKER_HUB_USER/blj_manager 
 fi
 
 [ $? -ne 0 ] && echo "Exit script - docker run command failed"  

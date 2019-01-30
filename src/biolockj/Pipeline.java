@@ -65,35 +65,22 @@ public class Pipeline
 	{
 		bioModules = BioModuleFactory.buildModules();
 		Config.setConfigProperty( Config.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
-		int modNum = 0;
-		info( "Pipeline Module Execution Order:" );
-		for( final BioModule bioModule: bioModules )
-		{
-			info( "BioModule[" + modNum++ + "] = " + bioModule.getClass().getName() );
-		}
 		initializeModules();
 	}
 
 	/**
 	 * If moduleName is null, run all modules, otherwise only run the specified module.
 	 * 
-	 * @param moduleName Name of a single module to run
+	 * @param moduleID of a single module to run
 	 * @throws Exception if any fatal error occurs during execution
 	 */
-	public static void runDirectModule( final String moduleName ) throws Exception
+	public static void runDirectModule( final Integer moduleID ) throws Exception
 	{
-		Log.info( Pipeline.class, "Run Direct BioModule: " + moduleName );
-		final BioModule module = ModuleUtil.getModule( moduleName );
-		if( module instanceof JavaModule )
-		{
-			( (JavaModule) module ).runModule();
-			refreshOutputMetadata( module );
-			module.cleanUp();
-		}
-		else
-		{
-			executeScript( (ScriptModule) module );
-		}
+		Log.info( Pipeline.class,
+				"Run Direct BioModule ID[ " + moduleID + "] = " + Pipeline.getModules().get( moduleID ) );
+		final JavaModule module = (JavaModule) Pipeline.getModules().get( moduleID );
+		refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
+		module.cleanUp();
 	}
 
 	/**
@@ -110,20 +97,41 @@ public class Pipeline
 		}
 		catch( final Exception ex )
 		{
-			Log.error( Pipeline.class, "Pipeline failed! " + ex.getMessage(), ex );
-			pipelineException = ex;
-			SummaryUtil.reportFailure( ex );
 			try
 			{
-				final BioModule emailMod = ModuleUtil.getModule( Email.class.getName() );
-				if( emailMod != null && !ModuleUtil.isIncomplete( emailMod ) )
+				Log.error( Pipeline.class, "Pipeline failed! " + ex.getMessage(), ex );
+				pipelineException = ex;
+				SummaryUtil.reportFailure( ex );
+			}
+			catch( final Exception ex2 )
+			{
+				Log.error( Pipeline.class, "Attempt to update summary has failed: " + ex2.getMessage(), ex2 );
+			}
+
+			try
+			{
+				BioModule emailMod = null;
+				boolean foundIncomplete = false;
+				for( final BioModule module: Pipeline.getModules() )
 				{
-					emailMod.executeTask();
+					if( module instanceof Email )
+					{
+						emailMod = module;
+					}
+					if( !foundIncomplete && !ModuleUtil.isComplete( module ) )
+					{
+						foundIncomplete = true;
+					}
+					if( foundIncomplete && emailMod != null )
+					{
+						Log.warn( Pipeline.class, "Attempting to send failure notification with Email module: "
+								+ emailMod.getModuleDir().getName() );
+						emailMod.executeTask();
+						Log.warn( Pipeline.class, "Attempt appears to be a success!" );
+						break;
+					}
 				}
-				else
-				{
-					Log.error( Pipeline.class, "Email module failed! " + ex.getMessage(), ex );
-				}
+
 			}
 			catch( final Exception innerEx )
 			{
@@ -149,9 +157,10 @@ public class Pipeline
 	protected static void deleteIncompleteModule( final BioModule module ) throws Exception
 	{
 		Log.info( Pipeline.class, "Reset incomplete module: " + module.getModuleDir().getAbsolutePath() );
+		final File moduleDir = module.getModuleDir();
 		if( BioLockJUtil.deleteWithRetry( module.getModuleDir(), 10 ) )
 		{
-			module.setModuleDir( ModuleUtil.getModuleRootDir( module ) ); // recreate deleted directory
+			moduleDir.mkdirs(); // recreate deleted directory
 		}
 		else if( module.getModuleDir().listFiles().length > 0 )
 		{
@@ -172,16 +181,16 @@ public class Pipeline
 	/**
 	 * This method executes all new and incomplete modules<br>
 	 * Before/after a module is executed, set persistent module status by creating status indicator files. Incomplete
-	 * modules have an empty file {@value #BLJ_STARTED} in the module directory.<br>
-	 * Complete modules have an empty file {@value #BLJ_COMPLETE} in the module directory.<br>
+	 * modules have an empty file {@value Constants#BLJ_STARTED} in the module directory.<br>
+	 * Complete modules have an empty file {@value BioLockJ#BLJ_COMPLETE} in the module directory.<br>
 	 * {@link biolockj.module.BioModule}s are run in the order listed in the {@link biolockj.Config} file.<br>
 	 * <p>
 	 * Execution steps:
 	 * <ol>
-	 * <li>File {@value #BLJ_STARTED} is added to the module directory
+	 * <li>File {@value Constants#BLJ_STARTED} is added to the module directory
 	 * <li>Execute {@link #refreshOutputMetadata(BioModule)} to cache updated metadata, if generatede.
 	 * <li>Run module scripts, if any, polling 1/minute for status until all scripts complete or time out.
-	 * <li>File {@value #BLJ_STARTED} is replaced by {@value #BLJ_COMPLETE} as status indicator
+	 * <li>File {@value Constants#BLJ_STARTED} is replaced by {@value BioLockJ#BLJ_COMPLETE} as status indicator
 	 * </ol>
 	 *
 	 * @throws Exception if script errors occur
@@ -199,7 +208,8 @@ public class Pipeline
 				module.executeTask();
 
 				final boolean isJava = module instanceof JavaModule;
-				final boolean runScripts = ModuleUtil.getMainScript( module ) != null;
+				final boolean isScript = module instanceof ScriptModule;
+				final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
 
 				if( runScripts )
 				{
@@ -232,8 +242,9 @@ public class Pipeline
 	 *
 	 * @param bioModule BioModule
 	 * @return New metadata file (or null)
+	 * @throws Exception if errors occur
 	 */
-	protected static File getMetadata( final BioModule bioModule )
+	protected static File getMetadata( final BioModule bioModule ) throws Exception
 	{
 		if( bioModule != null )
 		{
@@ -252,7 +263,7 @@ public class Pipeline
 	/**
 	 * Initialization occurs by calling {@link biolockj.module.BioModule} methods on configured modules<br>
 	 * <ol>
-	 * <li>Create module sub-directories under {@value biolockj.Config#INTERNAL_PIPELINE_DIR} as ordered in
+	 * <li>Create module sub-directories under {@value biolockj.Config#PROJECT_PIPELINE_DIR} as ordered in
 	 * {@link biolockj.Config} file.<br>
 	 * <li>Reset the {@link biolockj.util.SummaryUtil} module so previous summary descriptions can be used for completed
 	 * modules
@@ -270,7 +281,6 @@ public class Pipeline
 	{
 		for( final BioModule module: getModules() )
 		{
-			module.setModuleDir( ModuleUtil.getModuleRootDir( module ) );
 			if( ModuleUtil.isIncomplete( module ) && ( !RuntimeParamUtil.isDirectMode() || module instanceof Email ) )
 			{
 				deleteIncompleteModule( module );
@@ -282,7 +292,7 @@ public class Pipeline
 				refreshRCacheIfNeeded( module );
 			}
 			else if( !RuntimeParamUtil.isDockerMode() || DockerUtil.isManager() || RuntimeParamUtil.isDirectMode()
-					&& RuntimeParamUtil.getDirectModule().equals( module.getClass().getName() ) )
+					&& RuntimeParamUtil.getDirectModuleDir().equals( module.getModuleDir().getName() ) )
 			{
 				info( "Check dependencies for: " + module.getClass().getName() );
 				module.checkDependencies();
@@ -313,16 +323,16 @@ public class Pipeline
 	protected static boolean poll( final ScriptModule module ) throws Exception
 	{
 		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
-		final File mainScript = ModuleUtil.getMainScript( module );
-		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? R_Module.R_EXT: BioLockJ.SH_EXT ) );
+		final File mainScript = module.getMainScript();
+		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? R_Module.R_EXT: Constants.SH_EXT ) );
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
 		scriptFiles.remove( mainScript );
 
-//		Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
-//		for( final File f: scriptFiles )
-//		{
-//			Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
-//		}
+		// Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
+		// for( final File f: scriptFiles )
+		// {
+		// Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
+		// }
 
 		if( is_R )
 		{
@@ -346,7 +356,8 @@ public class Pipeline
 		}
 
 		final String logMsg = mainScript.getName() + " Status (Total=" + numScripts + "): Success=" + numSuccess
-				+ "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) + "; Queued=" + ( numScripts - numStarted );
+				+ "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) + "; Queued="
+				+ ( numScripts - numStarted );
 
 		if( !statusMsg.equals( logMsg ) )
 		{
@@ -362,8 +373,7 @@ public class Pipeline
 		final File mainFailed = new File( mainScript.getAbsolutePath() + "_" + SCRIPT_FAILURES );
 		if( mainFailed.exists() || numFailed > 0 )
 		{
-			final String failMsg = "SCRIPT FAILED: "
-					+ BioLockJUtil.getCollectionAsString( ModuleUtil.getScriptErrors( module ) );
+			final String failMsg = "SCRIPT FAILED: " + BioLockJUtil.getCollectionAsString( module.getScriptErrors() );
 			Log.warn( Pipeline.class, failMsg );
 			throw new Exception( failMsg );
 		}
@@ -405,18 +415,7 @@ public class Pipeline
 		{
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
 			RMetaUtil.classifyReportableMetadata();
-			BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig() );
 		}
-	}
-
-	private static void executeScript( final ScriptModule module ) throws Exception
-	{
-		ModuleUtil.markStarted( module );
-		module.executeTask();
-		Job.submit( module );
-		pollAndSpin( module );
-		refreshOutputMetadata( module );
-		module.cleanUp();
 	}
 
 	private static void info( final String msg ) throws Exception
@@ -426,31 +425,31 @@ public class Pipeline
 			Log.info( Pipeline.class, msg );
 		}
 	}
-	
+
 	private static void logScriptTimeOutMsg( final ScriptModule module ) throws Exception
 	{
-		String prompt = "------> ";
+		final String prompt = "------> ";
 		Log.info( Pipeline.class, prompt + "Java program wakes every 60 seconds to check execution progress" );
-		Log.info( Pipeline.class, prompt + 
-				"Status determined by existance of indicator files in " + module.getScriptDir().getAbsolutePath() );
-		Log.info( Pipeline.class, prompt +  "Indicator files end with: \"_" + SCRIPT_STARTED + "\", \"_" + SCRIPT_SUCCESS
+		Log.info( Pipeline.class, prompt + "Status determined by existance of indicator files in "
+				+ module.getScriptDir().getAbsolutePath() );
+		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + SCRIPT_STARTED + "\", \"_" + SCRIPT_SUCCESS
 				+ "\", or \"_" + SCRIPT_FAILURES + "\"" );
-		Log.info( Pipeline.class, prompt +  "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
+		Log.info( Pipeline.class,
+				prompt + "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
 		if( module.getTimeout() == null || module.getTimeout() > 10 )
 		{
-			Log.info( Pipeline.class,
-					prompt + "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
+			Log.info( Pipeline.class, prompt
+					+ "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
 		}
-		
+
 		if( module.getTimeout() != null )
 		{
-			Log.info( Pipeline.class,
-					prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = " + module.getTimeout() );
+			Log.info( Pipeline.class, prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = "
+					+ module.getTimeout() );
 		}
 		else
 		{
-			Log.info( Pipeline.class,
-					prompt + "Running scripts will NEVER TIME OUT." );
+			Log.info( Pipeline.class, prompt + "Running scripts will NEVER TIME OUT." );
 		}
 	}
 
@@ -463,7 +462,6 @@ public class Pipeline
 	private static void pollAndSpin( final ScriptModule module ) throws Exception
 	{
 		logScriptTimeOutMsg( module );
-
 		int numMinutes = 0;
 		boolean finished = false;
 		while( !finished )
@@ -473,31 +471,14 @@ public class Pipeline
 			{
 				if( module.getTimeout() != null && module.getTimeout() > 0 && numMinutes++ >= module.getTimeout() )
 				{
-					throw new Exception( ModuleUtil.getMainScript( module ).getAbsolutePath() + " timed out after "
-							+ numMinutes + " minutes." );
+					throw new Exception(
+							module.getMainScript().getAbsolutePath() + " timed out after " + numMinutes + " minutes." );
 				}
 
 				Thread.sleep( POLL_TIME * 1000 );
 			}
 		}
 	}
-
-	/**
-	 * Name of the file created in the BioModule or {@value biolockj.Config#INTERNAL_PIPELINE_DIR} root directory to
-	 * indicate execution was successful: {@value #BLJ_COMPLETE}
-	 */
-	public static final String BLJ_COMPLETE = "biolockjComplete";
-
-	/**
-	 * Name of the file created in the {@value biolockj.Config#INTERNAL_PIPELINE_DIR} root directory to indicate fatal
-	 * application errors halted execution: {@value #BLJ_FAILED}
-	 */
-	public static final String BLJ_FAILED = "biolockjFailed";
-
-	/**
-	 * Name of the file created in the BioModule root directory to indicate execution has started: {@value #BLJ_STARTED}
-	 */
-	public static final String BLJ_STARTED = "biolockjStarted";
 
 	/**
 	 * File suffix appended to failed scripts: {@value #SCRIPT_FAILURES}

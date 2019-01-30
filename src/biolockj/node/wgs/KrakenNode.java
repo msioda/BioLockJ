@@ -13,6 +13,7 @@ package biolockj.node.wgs;
 
 import java.util.StringTokenizer;
 import biolockj.BioLockJ;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
@@ -38,7 +39,7 @@ public class KrakenNode extends OtuNodeImpl implements OtuNode
 	 */
 	public KrakenNode( final String id, final String line ) throws Exception
 	{
-		final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+		final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 		if( st.countTokens() == 2 )
 		{
 			st.nextToken(); // skip the header

@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.util.*;
 import biolockj.BioLockJ;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -150,7 +151,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	 */
 	protected int getFileNameColumn( final String line ) throws Exception
 	{
-		final StringTokenizer header = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+		final StringTokenizer header = new StringTokenizer( line, Constants.TAB_DELIM );
 		int colNum = 0;
 		while( header.hasMoreTokens() )
 		{
@@ -269,7 +270,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 
 		for( String line = reader.readLine(); line != null; line = reader.readLine() )
 		{
-			final String qiimeId = new StringTokenizer( line, BioLockJ.TAB_DELIM ).nextToken();
+			final String qiimeId = new StringTokenizer( line, Constants.TAB_DELIM ).nextToken();
 			if( isHeaderRow )
 			{
 				isHeaderRow = false;

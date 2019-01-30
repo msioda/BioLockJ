@@ -11,8 +11,10 @@
  */
 package biolockj.module.classifier;
 
+import java.util.List;
 import biolockj.BioLockJ;
-import biolockj.module.ScriptModule;
+import biolockj.Constants;
+import biolockj.module.SeqModule;
 
 /**
  * Classifier {@link biolockj.module.BioModule}s build one or more bash scripts to call the application on sequence
@@ -20,7 +22,7 @@ import biolockj.module.ScriptModule;
  * to get classifier command (loaded module, executable file path, or in the $USER $PATH) and optional command line
  * parameters, read from {@link biolockj.Config}.{@value #EXE_CLASSIFIER_PARAMS}
  */
-public interface ClassifierModule extends ScriptModule
+public interface ClassifierModule extends SeqModule
 {
 	/**
 	 * Get the executable from {@link biolockj.Config} {@value #EXE_CLASSIFIER} required to classify the samples.
@@ -34,10 +36,10 @@ public interface ClassifierModule extends ScriptModule
 	 * Get optional list of parameters from {@link biolockj.Config} {@value #EXE_CLASSIFIER_PARAMS} to append whenever
 	 * the classifier executable is called.
 	 *
-	 * @return Program switches formatted with "-" or "--" as required by executable
+	 * @return Runtime parameters
 	 * @throws Exception thrown if parameters defined are invalid
 	 */
-	public String getClassifierParams() throws Exception;
+	public List<String> getClassifierParams() throws Exception;
 
 	/**
 	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
@@ -52,5 +54,5 @@ public interface ClassifierModule extends ScriptModule
 	/**
 	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
 	 */
-	public static final String PROCESSED = "_reported" + BioLockJ.TSV_EXT;
+	public static final String PROCESSED = "_reported" + Constants.TSV_EXT;
 }

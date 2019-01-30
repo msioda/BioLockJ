@@ -11,11 +11,15 @@
  */
 package biolockj.module;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
+import biolockj.Pipeline;
 import biolockj.exception.ConfigFormatException;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.module.r.R_Module;
 import biolockj.util.*;
 
 /**
@@ -59,7 +63,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
 	 * the worker scripts. If running Docker, return {@link biolockj.util.DockerUtil#buildDockerScript()}, else
 	 * pass{@link #getInputFiles()} to either {@link #buildScript(List)} or {@link #buildScriptForPairedReads(List)}
-	 * based on {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PAIRED_READS}.
+	 * based on {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_PAIRED_READS}.
 	 */
 	@Override
 	public void executeTask() throws Exception
@@ -70,7 +74,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		}
 		else
 		{
-			final List<List<String>> data = Config.getBoolean( Config.INTERNAL_PAIRED_READS )
+			final List<List<String>> data = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS )
 					? buildScriptForPairedReads( getInputFiles() )
 					: buildScript( getInputFiles() );
 			BashScriptBuilder.buildScripts( this, data, Config.requireInteger( ScriptModule.SCRIPT_BATCH_SIZE ) );
@@ -80,7 +84,47 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public String[] getJobParams() throws Exception
 	{
-		return new String[] { ModuleUtil.getMainScript( this ).getAbsolutePath() };
+		return new String[] { getMainScript().getAbsolutePath() };
+	}
+
+	/**
+	 * Get the main script file in the bioModule script directory, with prefix:
+	 * {@value biolockj.module.BioModule#MAIN_SCRIPT_PREFIX}. R_Modules not running in a docker container end in
+	 * {@value biolockj.module.r.R_Module#R_EXT}, otherwise must end with {@value #SH_EXT}
+	 *
+	 * @return Main script file
+	 */
+	@Override
+	public File getMainScript() throws Exception
+	{
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		if( scriptDir.exists() )
+		{
+			for( final File file: getScriptDir().listFiles() )
+			{
+				final String name = file.getName();
+				if( name.startsWith( MAIN_SCRIPT_PREFIX ) )
+				{
+					if( this instanceof R_Module && !RuntimeParamUtil.isDockerMode() )
+					{
+						if( name.endsWith( R_Module.R_EXT ) )
+						{
+							return file;
+						}
+						else if( name.endsWith( SH_EXT ) )
+						{
+							return file;
+						}
+					}
+					else if( file.getName().endsWith( SH_EXT ) )
+					{
+						return file;
+					}
+				}
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -93,13 +137,46 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	}
 
 	/**
+	 * This method returns all of the lines from any failure files found in the script directory.
+	 * 
+	 * @return List of script errors
+	 * @throws Exception if errors occur reading failure files
+	 */
+	@Override
+	public List<String> getScriptErrors() throws Exception
+	{
+		final List<String> errors = new ArrayList<>();
+		for( final File script: getScriptDir().listFiles() )
+		{
+			if( !script.getName().endsWith( Pipeline.SCRIPT_FAILURES ) )
+			{
+				continue;
+			}
+			final BufferedReader reader = BioLockJUtil.getFileReader( script );
+			try
+			{
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
+				{
+					errors.add( script.getName() + " | " + line );
+				}
+			}
+			finally
+			{
+				reader.close();
+			}
+		}
+
+		return errors;
+	}
+
+	/**
 	 * Returns summary message to be displayed by Email module so must not contain confidential info. ModuleUtil
 	 * provides summary metrics on output files
 	 */
 	@Override
 	public String getSummary() throws Exception
 	{
-		return super.getSummary() + SummaryUtil.getScriptDirSummary( this );
+		return super.getSummary() + ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
 	}
 
 	/**
@@ -123,6 +200,62 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		}
 
 		return new ArrayList<>();
+	}
+
+	/**
+	 * Return all collectionProperty values separated by a space. If numThreadsParam is not null, append the numThreads
+	 * param and value.
+	 * 
+	 * @param params Runtime parameter
+	 * @param numThreadsParam Number of threads parameter name
+	 * @return all runtime parameters
+	 * @throws Exception if errors occur
+	 */
+	protected String getRuntimeParams( final List<String> params, final String numThreadsParam ) throws Exception
+	{
+		final String threadsParam = numThreadsParam == null ? "": numThreadsParam + " " + getNumThreads();
+		final String paramVals = params == null || params.isEmpty() ? "": BioLockJUtil.join( params );
+		String returnVal = null;
+		if( !threadsParam.isEmpty() && !paramVals.isEmpty() )
+		{
+			returnVal = threadsParam + " " + paramVals;
+		}
+		else
+		{
+			returnVal = threadsParam + paramVals;
+		}
+		return returnVal + " ";
+	}
+
+	private Integer getModuleNumThreads()
+	{
+		try
+		{
+			return Config.getPositiveInteger( getClass().getSimpleName() + NUM_THREADS );
+		}
+		catch( final Exception ex )
+		{
+			// FAIL SILENTLY
+			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+		}
+		return null;
+	}
+
+	private Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException
+	{
+		if( getModuleNumThreads() != null )
+		{
+			return getModuleNumThreads();
+		}
+
+		return Config.requirePositiveInteger( SCRIPT_NUM_THREADS );
+	}
+
+	private boolean hasScripts() throws Exception
+	{
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		return scriptDir.exists();
+
 	}
 
 }

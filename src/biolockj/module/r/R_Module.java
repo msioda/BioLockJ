@@ -20,8 +20,10 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
-import biolockj.module.report.AddMetaToTaxonomyTables;
-import biolockj.util.*;
+import biolockj.module.report.taxa.AddMetadataToTaxaTables;
+import biolockj.util.BashScriptBuilder;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.RuntimeParamUtil;
 
 /**
  * This BioModule is the superclass for R script generating modules.
@@ -42,7 +44,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		dockerScriptLines.add( innerList );
 		return dockerScriptLines;
 	}
-	
 
 	/**
 	 * Not needed for R script modules.
@@ -107,18 +108,19 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public String[] getJobParams() throws Exception
 	{
-		Log.info( getClass(), "Executing Script: " + ModuleUtil.getMainScript( this ).getName() );
+		Log.info( getClass(), "Run MAIN Script: " + getMainScript().getName() );
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return new String[] { ModuleUtil.getMainScript( this ).getAbsolutePath() };
+			return super.getJobParams();
 		}
 		else
 		{
 			final String[] cmd = new String[ 2 ];
 			cmd[ 0 ] = Config.getExe( EXE_RSCRIPT );
-			cmd[ 1 ] = ModuleUtil.getMainScript( this ).getAbsolutePath();
+			cmd[ 1 ] = getMainScript().getAbsolutePath();
 			return cmd;
 		}
+
 	}
 
 	/**
@@ -159,14 +161,14 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * All R modules require combined OTU-metadata tables.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		if( SeqUtil.requireSeqInput() )
+		final List<String> preReqs = new ArrayList<>();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			preReqs.add( AddMetaToTaxonomyTables.class );
+			preReqs.add( AddMetadataToTaxaTables.class.getName() );
 		}
-
+		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
 
@@ -178,7 +180,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 */
 	public File getPrimaryScript() throws Exception
 	{
-		return new File( getScriptDir().getAbsolutePath() + File.separator + MAIN_SCRIPT_PREFIX + getModuleScriptName() );
+		return new File(
+				getScriptDir().getAbsolutePath() + File.separator + MAIN_SCRIPT_PREFIX + getModuleScriptName() );
 	}
 
 	/**
@@ -292,7 +295,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @return Set of file extensions
 	 * @throws Exception if errors occur
 	 */
-	public Set<String> scpExtensions() throws Exception
+	public TreeSet<String> scpExtensions() throws Exception
 	{
 		final TreeSet<String> set = new TreeSet<>();
 		set.add( R_EXT.substring( 1 ) );
@@ -300,12 +303,25 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		{
 			set.add( R_DATA_EXT.substring( 1 ) );
 		}
-		if( !Config.getBoolean( BioLockJ.PROJECT_DELETE_TEMP_FILES ) && Config.getBoolean( R_Module.R_DEBUG ) )
+		if( !Config.getBoolean( Constants.PROJECT_DELETE_TEMP_FILES ) && Config.getBoolean( R_Module.R_DEBUG ) )
 		{
 			set.add( LOG_EXT.substring( 1 ) );
 		}
 
 		return set;
+	}
+
+	/**
+	 * Add {@link biolockj.module.r.CalculateStats} to standard {@link #getPreRequisiteModules()}
+	 */
+	protected List<String> getStatPreReqs() throws Exception
+	{
+		final List<String> preReqs = super.getPreRequisiteModules();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
+		{
+			preReqs.add( CalculateStats.class.getName() );
+		}
+		return preReqs;
 	}
 
 	/**
@@ -355,7 +371,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		return errors.toString();
 	}
 
-
 	private String getModuleScriptName() throws Exception
 	{
 		return getClass().getSimpleName() + R_EXT;
@@ -369,7 +384,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 */
 	public static String getRTemplateDir() throws Exception
 	{
-		return BioLockJUtil.getSource().getAbsolutePath() + File.separator + "resources" + File.separator + "R"
+		return BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + "resources" + File.separator + "R"
 				+ File.separator;
 	}
 

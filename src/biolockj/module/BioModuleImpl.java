@@ -15,12 +15,8 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.*;
+import biolockj.util.*;
 
 /**
  * Superclass for standard BioModules (classifiers, parsers, etc). Sets standard behavior for many of the BioModule
@@ -28,6 +24,28 @@ import biolockj.util.SummaryUtil;
  */
 public abstract class BioModuleImpl implements BioModule
 {
+
+	/**
+	 * Cache the input files for quick access on subsequent calls to {@linke #getInputFiles()}
+	 * 
+	 * @param files Input files
+	 * @throws Exception if errors occur
+	 */
+	public void cacheInputFiles( final Collection<File> files ) throws Exception
+	{
+		if( files == null || files.isEmpty() )
+		{
+			throw new Exception( "No input files found!" );
+		}
+
+		inputFiles.addAll( files );
+		Collections.sort( inputFiles );
+		Log.info( getClass(), "# Input Files: " + inputFiles.size() );
+		for( int i = 0; i < inputFiles.size(); i++ )
+		{
+			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
+		}
+	}
 
 	/**
 	 * If restarting or running a direct pipeline execute the cleanup for completed modules.
@@ -44,21 +62,45 @@ public abstract class BioModuleImpl implements BioModule
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
 	}
 
+	/**
+	 * Compared based on ID
+	 */
+	@Override
+	public boolean equals( final Object o )
+	{
+		if( o == this )
+		{
+			return true;
+		}
+		else if( !( o instanceof BioModule ) )
+		{
+			return false;
+		}
+
+		return ( (BioModule) o ).getID().equals( getID() );
+	}
+
 	@Override
 	public abstract void executeTask() throws Exception;
 
+	@Override
+	public Integer getID()
+	{
+		return moduleId;
+	}
+
 	/**
-	 * BioModule {@link #initInputFiles()} is called to initialize upon first call and cached.
+	 * BioModule {@link #getInputFiles()} is called to initialize upon first call and cached.
 	 */
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
-		if( inputFiles.isEmpty() )
+		if( getFileCache().isEmpty() )
 		{
-			initInputFiles();
+			cacheInputFiles( findModuleInputFiles() );
 		}
 
-		return inputFiles;
+		return getFileCache();
 	}
 
 	/**
@@ -83,7 +125,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * By default, no post-requisites are required.
 	 */
 	@Override
-	public List<Class<?>> getPostRequisiteModules() throws Exception
+	public List<String> getPostRequisiteModules() throws Exception
 	{
 		return new ArrayList<>();
 	}
@@ -92,7 +134,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * By default, no prerequisites are required.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
 		return new ArrayList<>();
 	}
@@ -119,12 +161,36 @@ public abstract class BioModuleImpl implements BioModule
 	}
 
 	/**
+	 * This method must be called immediately upon instantiation.
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	@Override
+	public void init() throws Exception
+	{
+		moduleId = nextId++;
+		moduleDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
+				+ File.separator + BioLockJUtil.formatDigits( moduleId, ModuleUtil.maxNumModules().toString().length() )
+				+ "_" + getClass().getSimpleName() );
+
+		if( !moduleDir.exists() )
+		{
+			moduleDir.mkdirs();
+			Log.info( getClass(), "Construct module [ " + moduleId + " ] for new" + moduleDir.getAbsolutePath() );
+		}
+		else
+		{
+			Log.info( getClass(), "Construct module [ " + moduleId + " ] for existing" + moduleDir.getAbsolutePath() );
+		}
+	}
+
+	/**
 	 * In the early stages of the pipeline, starting with the very 1st module
 	 * {@link biolockj.module.implicit.ImportMetadata}, most modules expect sequence files as input. This method returns
 	 * false if the previousModule only produced a new metadata file, such as
 	 * {@link biolockj.module.implicit.ImportMetadata} or {@link biolockj.module.implicit.RegisterNumReads}.
 	 * 
-	 * When {@link #initInputFiles()} is called, this method determines if the previousModule output is valid input for
+	 * When {@link #getInputFiles()} is called, this method determines if the previousModule output is valid input for
 	 * the current BioModule. The default implementation of this method returns FALSE if the previousModule only
 	 * generates a new metadata file.
 	 */
@@ -134,56 +200,49 @@ public abstract class BioModuleImpl implements BioModule
 		return !ModuleUtil.isMetadataModule( module );
 	}
 
-	/**
-	 * Creates the BioModule root directory if it doesn't exist and sets moduleDir member variable.
-	 */
 	@Override
-	public void setModuleDir( final String filePath )
+	public String toString()
 	{
-		moduleDir = new File( filePath );
-		if( !moduleDir.exists() )
-		{
-			moduleDir.mkdirs();
-			Log.info( getClass(), "Create BioModule root directory: " + moduleDir.getAbsolutePath() );
-		}
+		return getClass().getName() + "_" + getID();
 	}
 
 	/**
-	 * Called upon first access of input files to return sorted list of files from all inputDirs.<br>
-	 * Hidden files (starting with ".") are ignored.<br>
-	 * {@link #isValidInputModule(BioModule)} is called to determine if the previous module output is acceptable input
-	 * for the current module. If not, it checks the previous module recursively until valid input is found.
+	 * Called upon first access of input files to return sorted list of files from all
+	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS}<br>
+	 * Hidden files (starting with ".") are ignored<br>
+	 * Call {@link #isValidInputModule(BioModule)} on each previous module until acceptable input files are found<br>
 	 * 
+	 * @return Set of input files
 	 * @throws Exception if errors occur
 	 */
-	protected void initInputFiles() throws Exception
+	protected List<File> findModuleInputFiles() throws Exception
 	{
+		final Set<File> moduleInputFiles = new HashSet<>();
 		Log.debug( getClass(), "Initialize input files..." );
 		boolean validInput = false;
-		final Set<File> files = new HashSet<>();
 		BioModule previousModule = ModuleUtil.getPreviousModule( this );
 		while( !validInput )
 		{
 			if( previousModule == null )
 			{
 				Log.debug( getClass(), "Previous module is NULL.  Return pipleline input from: " + Config.INPUT_DIRS );
-				files.addAll( BioLockJUtil.getPipelineInputFiles() );
+				moduleInputFiles.addAll( BioLockJUtil.getPipelineInputFiles() );
 				validInput = true;
 			}
 			else
 			{
 				Log.debug( getClass(),
-						"Check previous module for valid input files... # " + previousModule.getClass().getName() +
-						" ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
+						"Check previous module for valid input files... # " + previousModule.getClass().getName()
+								+ " ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
 				validInput = isValidInputModule( previousModule );
 				if( validInput )
 				{
 					Log.debug( getClass(),
 							"Found VALID input in the output dir of: " + previousModule.getClass().getName() + " --> "
 									+ previousModule.getOutputDir().getAbsolutePath() );
-					files.addAll( FileUtils.listFiles( previousModule.getOutputDir(), HiddenFileFilter.VISIBLE,
-							HiddenFileFilter.VISIBLE ) );
-					Log.debug( getClass(), "# Files found: " + files.size() );
+					moduleInputFiles.addAll( FileUtils.listFiles( previousModule.getOutputDir(),
+							HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+					Log.debug( getClass(), "# Files found: " + moduleInputFiles.size() );
 				}
 				else
 				{
@@ -192,30 +251,29 @@ public abstract class BioModuleImpl implements BioModule
 			}
 		}
 
-		for( final File f: files )
-		{
-			if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
-			{
-				inputFiles.add( f );
-			}
-			else
-			{
-				Log.debug( getClass(), "Ignore file " + f.getAbsolutePath() );
-			}
-		}
+		return removeIgnoredFiles( moduleInputFiles );
+	}
 
-		if( inputFiles.isEmpty() )
-		{
-			throw new Exception( "No input files found!" );
-		}
+	/**
+	 * Get cached input files
+	 * 
+	 * @return List of input files
+	 */
+	protected List<File> getFileCache()
+	{
+		return inputFiles;
+	}
 
-		Collections.sort( inputFiles );
-
-		Log.info( getClass(), "# Input Files: " + inputFiles.size() );
-		for( int i = 0; i < inputFiles.size(); i++ )
-		{
-			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
-		}
+	/**
+	 * Remove ignore files from the input files.
+	 * 
+	 * @param files Collection of files
+	 * @return valid files
+	 * @throws Exception if errors occur
+	 */
+	protected List<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.removeIgnoredAndEmptyFiles( files );
 	}
 
 	/**
@@ -235,40 +293,48 @@ public abstract class BioModuleImpl implements BioModule
 	}
 
 	private final List<File> inputFiles = new ArrayList<>();
-	private File moduleDir = null;
 
+	private File moduleDir = null;
+	private Integer moduleId;
+	/**
+	 * BioLockJ gzip file extension constant: {@value #GZIP_EXT}
+	 */
+	public static final String GZIP_EXT = Constants.GZIP_EXT;
 	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */
-	public static final String LOG_EXT = BioLockJ.LOG_EXT;
+	public static final String LOG_EXT = Constants.LOG_EXT;
 
 	/**
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
 	 */
-	public static final String PDF_EXT = BioLockJ.TAB_DELIM;
+	public static final String PDF_EXT = Constants.PDF_EXT;
 
 	/**
 	 * Return character constant *backslash-n*
 	 */
-	public static final String RETURN = BioLockJ.RETURN;
+	public static final String RETURN = Constants.RETURN;
 
 	/**
 	 * BioLockJ shell script file extension constant: {@value #SH_EXT}
 	 */
-	public static final String SH_EXT = BioLockJ.SH_EXT;
+	public static final String SH_EXT = Constants.SH_EXT;
 
 	/**
 	 * BioLockJ tab character constant: {@value #TAB_DELIM}
 	 */
-	public static final String TAB_DELIM = BioLockJ.TAB_DELIM;
+	public static final String TAB_DELIM = Constants.TAB_DELIM;
 
 	/**
 	 * BioLockJ tab delimited text file extension constant: {@value #TSV_EXT}
 	 */
-	public static final String TSV_EXT = BioLockJ.TSV_EXT;
+	public static final String TSV_EXT = Constants.TSV_EXT;
 
 	/**
 	 * BioLockJ tab delimited text file extension constant: {@value #TXT_EXT}
 	 */
-	public static final String TXT_EXT = BioLockJ.TXT_EXT;
+	public static final String TXT_EXT = Constants.TXT_EXT;
+
+	private static Integer nextId = 0;
+
 }

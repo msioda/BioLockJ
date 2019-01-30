@@ -13,9 +13,8 @@ package biolockj.util;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
+import biolockj.module.BioModule;
 
 /**
  * This utility is used to read, modify, or create a metadata file for the sequence data. The 1st row must hold the
@@ -56,20 +55,20 @@ public class MetaUtil
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
 		try
 		{
-			writer.write( reader.readLine() + BioLockJ.TAB_DELIM + colName + BioLockJ.RETURN );
+			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + BioLockJ.RETURN );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 
 				final String id = st.nextToken();
 				if( sampleIds.contains( id ) )
 				{
-					writer.write( line + BioLockJ.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
+					writer.write( line + Constants.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
 				}
 				else if( !removeMissingIds )
 				{
 					writer.write(
-							line + BioLockJ.TAB_DELIM + Config.requireString( META_NULL_VALUE ) + BioLockJ.RETURN );
+							line + Constants.TAB_DELIM + Config.requireString( META_NULL_VALUE ) + BioLockJ.RETURN );
 				}
 				else
 				{
@@ -97,35 +96,35 @@ public class MetaUtil
 	}
 
 	/**
-	 * Get the comment delimeter (or default empty string)
+	 * Determine if the given field has only unique values.
 	 * 
-	 * @return Comment char
+	 * @param field Metadata column
+	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
+	 * @return boolean if field values are unique
+	 * @throws Exception
 	 */
-	public static String getCommentChar()
+	public static boolean fieldValuesAreUnique( final String field, final boolean ignoreNulls ) throws Exception
 	{
-		String commentDelim = Config.getString( META_COMMENT_CHAR );
-		if( commentDelim == null )
-		{
-			commentDelim = "";
-		}
+		final int numVals = getFieldValues( field, ignoreNulls ).size();
+		final int numUnique = getUniqueFieldValues( field, ignoreNulls ).size();
 
-		return DEFAULT_COMMENT_CHAR;
+		return numVals != numUnique;
 	}
 
 	/**
 	 * Get metadata field value for given sampleId.
 	 *
 	 * @param sampleId Sample ID
-	 * @param attName Field Name (column name in metadata file)
+	 * @param field Field Name (column name in metadata file)
 	 * @return Metadata field value
 	 * @throws Exception if parameters are invalid
 	 */
-	public static String getField( final String sampleId, final String attName ) throws Exception
+	public static String getField( final String sampleId, final String field ) throws Exception
 	{
-		if( !getFieldNames().contains( attName ) )
+		if( !getFieldNames().contains( field ) )
 		{
 			throw new Exception(
-					"Invalid field [" + attName + "] not found in Metadata = " + getFile().getAbsolutePath() );
+					"Invalid field [" + field + "] not found in Metadata = " + getFile().getAbsolutePath() );
 		}
 
 		if( getMetadataRecord( sampleId ) == null )
@@ -134,7 +133,7 @@ public class MetaUtil
 					"Invalid Sample ID [" + sampleId + "] not found in Metadata = " + getFile().getAbsolutePath() );
 		}
 
-		return getMetadataRecord( sampleId ).get( getFieldNames().indexOf( attName ) );
+		return getMetadataRecord( sampleId ).get( getFieldNames().indexOf( field ) );
 	}
 
 	/**
@@ -169,25 +168,30 @@ public class MetaUtil
 	/**
 	 * Get metadata column for given field name.
 	 *
-	 * @param attName Column name
+	 * @param field Column name
+	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
 	 * @return List of Column values for sample ID
 	 * @throws Exception if metadata file or column name not found
 	 */
-	public static List<String> getFieldValues( final String attName ) throws Exception
+	public static List<String> getFieldValues( final String field, final boolean ignoreNulls ) throws Exception
 	{
-		if( !getFieldNames().contains( attName ) )
+		if( !getFieldNames().contains( field ) )
 		{
-			throw new Exception( "Invalid field [" + attName + "] in Metadata = " + getFile().getAbsolutePath() );
+			throw new Exception( "Invalid field [" + field + "] in Metadata = " + getFile().getAbsolutePath() );
 		}
 
 		final List<String> vals = new ArrayList<>();
 
 		for( final String id: getSampleIds() )
 		{
-			final String val = getField( id, attName );
+			final String val = getField( id, field );
 			if( val != null && val.trim().length() > 0 )
 			{
-				vals.add( val );
+				final boolean isNullVal = val.equals( Config.requireString( META_NULL_VALUE ) );
+				if( !isNullVal || !ignoreNulls )
+				{
+					vals.add( val );
+				}
 			}
 		}
 
@@ -219,8 +223,7 @@ public class MetaUtil
 		String testName = name;
 		while( getFieldNames().contains( testName ) )
 		{
-			final Set<String> testSet = new HashSet<>( getFieldValues( testName ) );
-			testSet.remove( Config.requireString( META_NULL_VALUE ) );
+			final Set<String> testSet = new HashSet<>( getFieldValues( testName, true ) );
 			if( testSet.isEmpty() )
 			{
 				MetaUtil.removeColumn( testName, null );
@@ -285,9 +288,9 @@ public class MetaUtil
 	/**
 	 * Get the metadata file name, if it exists, otherwise return projectName.tsv
 	 *
-	 * @return Name of metadata file, or a default name if no metadata file exists
+	 * @return Name of metadata file, or a default name if no metadata file exists #throws Exception if errors occur
 	 */
-	public static String getMetadataFileName()
+	public static String getMetadataFileName() throws Exception
 	{
 		try
 		{
@@ -307,7 +310,7 @@ public class MetaUtil
 			ex.printStackTrace();
 		}
 
-		return Config.getString( Config.INTERNAL_PIPELINE_NAME ) + BioLockJ.TSV_EXT;
+		return Config.requireString( Config.PROJECT_PIPELINE_NAME ) + Constants.TSV_EXT;
 
 	}
 
@@ -352,6 +355,52 @@ public class MetaUtil
 		return ids;
 	}
 
+	/**
+	 * Return a system generated metadata column name based on the module status.
+	 * 
+	 * @param module BioModule
+	 * @param col Column name
+	 * @return Metadata column name
+	 * @throws Exception if errors occur
+	 */
+	public static String getSystemMetaCol( final BioModule module, final String col ) throws Exception
+	{
+		final File outputMeta = new File(
+				module.getOutputDir().getAbsolutePath() + File.separator + getMetadataFileName() );
+		if( ModuleUtil.isComplete( module ) || outputMeta.exists() )
+		{
+			if( outputMeta.exists() )
+			{
+				setFile( outputMeta );
+				refreshCache();
+			}
+			return getLatestColumnName( col );
+		}
+		else
+		{
+			return getForcedColumnName( col );
+		}
+	}
+
+	/**
+	 * Count the number of unique values in the given field.
+	 * 
+	 * @param field Column header
+	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
+	 * @return Number of unique values
+	 * @throws Exception if errors occur
+	 */
+	public static Set<String> getUniqueFieldValues( final String field, final boolean ignoreNulls ) throws Exception
+	{
+		return new HashSet<>( getFieldValues( field, ignoreNulls ) );
+	}
+
+	/**
+	 * Check if columnName exists in the current metadata file.
+	 * 
+	 * @param columnName Column name
+	 * @return TRUE if columnName exists in hearder row of metadata file
+	 */
 	public static boolean hasColumn( final String columnName )
 	{
 		try
@@ -387,37 +436,25 @@ public class MetaUtil
 			Config.setConfigProperty( META_COLUMN_DELIM, DEFAULT_COL_DELIM );
 		}
 
-		if( getCommentChar().length() > 1 )
+		if( Config.getString( META_COMMENT_CHAR ) == null )
 		{
-			throw new Exception(
-					META_COMMENT_CHAR + " must be a single character of length = 1.  Current property value is "
-							+ getCommentChar().length() + " characters in length, value=\"" + getCommentChar() + "\"" );
+			Config.setConfigProperty( META_COMMENT_CHAR, DEFAULT_COMMENT_CHAR );
 		}
 
-		final Set<String> metaProps = new HashSet<>();
-		metaProps.add( Config.requireString( META_NULL_VALUE ) );
-		metaProps.add( Config.requireString( META_COLUMN_DELIM ) );
-		metaProps.add( getCommentChar() );
-
-		if( metaProps.size() < 3 )
+		final String commentChar = Config.getString( MetaUtil.META_COMMENT_CHAR );
+		if( commentChar != null && commentChar.length() > 1 )
 		{
-			throw new Exception( "BioLockJ requires 3 unique values for config properties: (" + META_NULL_VALUE + ", "
-					+ META_COLUMN_DELIM + ", " + META_COMMENT_CHAR + ") | Current values = (\""
-					+ Config.requireString( META_NULL_VALUE ) + "\", \"" + Config.requireString( META_COLUMN_DELIM )
-					+ "\", \"" + getCommentChar() + "\")" );
+			throw new Exception( META_COMMENT_CHAR + " property must be a single character.  Config value = \""
+					+ commentChar + "\"" );
 		}
 
 		if( Config.getString( META_FILE_PATH ) != null )
 		{
-			final Set<String> ignore = Config.getTreeSet( Config.INPUT_IGNORE_FILES );
+			final Set<String> ignore = Config.getSet( Config.INPUT_IGNORE_FILES );
 			ignore.add( MetaUtil.getMetadataFileName() );
 			Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
 			setFile( MetaUtil.getMetadata() );
 			refreshCache();
-
-			// verify that values in columns used as identifiers are unique per sample.
-			checkUniqueVals( META_BARCODE_COLUMN );
-			checkUniqueVals( META_FILENAME_COLUMN );
 		}
 	}
 
@@ -459,7 +496,7 @@ public class MetaUtil
 	{
 		if( fileDir == null )
 		{
-			fileDir = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath()
+			fileDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
 					+ File.separator + ".temp" );
 			if( !fileDir.exists() )
 			{
@@ -492,14 +529,14 @@ public class MetaUtil
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				int i = 1;
-				final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 				writer.write( st.nextToken() );
 				while( st.hasMoreTokens() )
 				{
 					final String token = st.nextToken();
 					if( i++ != index )
 					{
-						writer.write( BioLockJ.TAB_DELIM + token );
+						writer.write( Constants.TAB_DELIM + token );
 					}
 				}
 				writer.write( BioLockJ.RETURN );
@@ -577,37 +614,6 @@ public class MetaUtil
 		}
 	}
 
-	/**
-	 * Verify that a column in the metadata is unique for each sample
-	 * 
-	 * @param columnAttr {@link biolockj.Config} property giving the name of the column.
-	 * @throws Exception if number of unique values in the column does not match number of samples
-	 */
-	private static void checkUniqueVals( final String columnAttr ) throws Exception
-	{
-		final String columnName = Config.getString( columnAttr );
-		if( columnName != null )
-		{
-			if( MetaUtil.getFieldNames().contains( columnName ) )
-			{
-				final int lenSamples = new HashSet<>( getSampleIds() ).size();
-				final int lenVals = new HashSet<>( getFieldValues( columnName ) ).size(); // get unique values
-				if( lenSamples != lenVals )
-				{
-					throw new Exception( "Should have exactly 1 unique value per sample in column " + columnName
-							+ ". Found " + lenVals + " unique values for " + lenSamples + " samples." );
-				}
-				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
-						+ "] gives a column of unique values in the meta data file." );
-			}
-			else
-			{
-				Log.info( MetaUtil.class, "Parameter [" + columnAttr + "] with value [" + columnName
-						+ "] is ignored because it does not appear as a header in the meta data file." );
-			}
-		}
-	}
-
 	private static boolean isUpdated()
 	{
 		return metadataFile != null && metadataFile.exists() && reportedMetadata == null
@@ -631,7 +637,7 @@ public class MetaUtil
 				Log.debug( MetaUtil.class, "===> Meta line: " + line );
 			}
 			final ArrayList<String> record = new ArrayList<>();
-			final String[] cells = line.split( BioLockJ.TAB_DELIM, -1 );
+			final String[] cells = line.split( Constants.TAB_DELIM, -1 );
 			for( final String cell: cells )
 			{
 				record.add( removeComments( setNullValueIfEmpty( cell ) ) );
@@ -644,9 +650,10 @@ public class MetaUtil
 
 	private static String removeComments( String val ) throws Exception
 	{
-		if( getCommentChar().length() > 0 )
+		final String commentChar = Config.getString( META_COMMENT_CHAR );
+		if( commentChar != null && commentChar.length() > 0 )
 		{
-			final int index = val.indexOf( getCommentChar() );
+			final int index = val.indexOf( commentChar );
 			if( index > -1 )
 			{
 				val = val.substring( 0, index );
@@ -732,7 +739,7 @@ public class MetaUtil
 	/**
 	 * Default column delimiter = tab character
 	 */
-	protected static final String DEFAULT_COL_DELIM = BioLockJ.TAB_DELIM;
+	protected static final String DEFAULT_COL_DELIM = Constants.TAB_DELIM;
 
 	/**
 	 * Default comment character for any new metadata file created by a BioModule: {@value #DEFAULT_COMMENT_CHAR}

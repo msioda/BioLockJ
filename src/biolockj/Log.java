@@ -24,10 +24,10 @@ import biolockj.util.*;
  * "_top">log4j.properties</a><br>
  * Every Java class that prints to the Java log file, will do so by calling:
  * <ul>
- * <li>{@link biolockj.Log#get(Class)}.{@link #get(Class)}.debug( logMessage )
- * <li>{@link biolockj.Log#get(Class)}.{@link #get(Class)}.info( logMessage )
- * <li>{@link biolockj.Log#get(Class)}.{@link #get(Class)}.warn( logMessage )
- * <li>{@link biolockj.Log#get(Class)}.{@link #get(Class)}.error( logMessage, exception )
+ * <li>{@link biolockj.Log#out(Class)}.{@link #out(Class)}.debug( logMessage )
+ * <li>{@link biolockj.Log#out(Class)}.{@link #out(Class)}.info( logMessage )
+ * <li>{@link biolockj.Log#out(Class)}.{@link #out(Class)}.warn( logMessage )
+ * <li>{@link biolockj.Log#out(Class)}.{@link #out(Class)}.error( logMessage, exception )
  * </ul>
  */
 public class Log
@@ -46,6 +46,10 @@ public class Log
 	 */
 	public static void debug( final Class<?> loggingClass, final String msg )
 	{
+		if( suppressLogs )
+		{
+			return;
+		}
 		if( isInitialized() && !debugClasses().isEmpty() && !debugClasses().contains( loggingClass.getName() ) )
 		{
 			if( !gaveDebugWarning )
@@ -67,13 +71,29 @@ public class Log
 		}
 		else
 		{
-			get( loggingClass ).debug( msg );
+			out( loggingClass ).debug( msg );
 		}
 	}
 
+	/**
+	 * Return TRUE if {@value #LOG_LEVEL_PROPERTY} = DEBUG.
+	 * 
+	 * @return TRUE if DEBUG
+	 * @throws Exception if errors occur
+	 */
 	public static boolean doDebug() throws Exception
 	{
 		return Config.requireString( LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
+	}
+
+	/**
+	 * Boolean toggle to enable/disable all log messages
+	 * 
+	 * @param enable
+	 */
+	public static void enableLogs( final boolean enable )
+	{
+		suppressLogs = !enable;
 	}
 
 	/**
@@ -84,6 +104,10 @@ public class Log
 	 */
 	public static void error( final Class<?> myClass, final String msg )
 	{
+		if( suppressLogs )
+		{
+			return;
+		}
 		error( myClass, msg, null );
 	}
 
@@ -96,35 +120,22 @@ public class Log
 	 */
 	public static void error( final Class<?> myClass, final String msg, final Exception exception )
 	{
+		if( suppressLogs )
+		{
+			return;
+		}
 		if( logFile == null )
 		{
 			logMesseges.add( msg );
 		}
 		else if( exception != null )
 		{
-			get( myClass ).error( msg, exception );
+			out( myClass ).error( msg, exception );
 		}
 		else
 		{
-			get( myClass ).error( msg );
+			out( myClass ).error( msg );
 		}
-	}
-
-	/**
-	 * Returns the Logger for the callingClass. Each class has its own Logger since the callingClass name can be
-	 * appended to the log file without impacting performance.
-	 *
-	 * @param callingClass Java class in need of Logger
-	 * @return Logger for callingClass
-	 */
-	public static Logger get( final Class<?> callingClass )
-	{
-		if( loggers.get( callingClass.getName() ) == null )
-		{
-			loggers.put( callingClass.getName(), LoggerFactory.getLogger( callingClass ) );
-		}
-
-		return loggers.get( callingClass.getName() );
 	}
 
 	/**
@@ -155,19 +166,23 @@ public class Log
 	 */
 	public static void info( final Class<?> myClass, final String msg )
 	{
+		if( suppressLogs )
+		{
+			return;
+		}
 		if( logFile == null )
 		{
 			logMesseges.add( msg );
 		}
 		else
 		{
-			get( myClass ).info( msg );
+			out( myClass ).info( msg );
 		}
 	}
 
 	/**
 	 * Called by {@link biolockj.BioLockJ#main(String[]) BioLockJ.main()} after {@link biolockj.Config} is initialized.
-	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_PIPELINE_DIR}, named after
+	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Config#PROJECT_PIPELINE_DIR}, named after
 	 * the project.
 	 * <ul>
 	 * <li>Set and store {@link #LOG_FILE} and {@link #LOG_APPEND} in {@link System} properties to be used by
@@ -182,9 +197,8 @@ public class Log
 	 */
 	public static void initialize( final String name ) throws Exception
 	{
-		logFile = new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ name + BioLockJ.LOG_EXT );
-
+		logFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
+				+ name + Constants.LOG_EXT );
 		System.setProperty( LOG_FILE, logFile.getAbsolutePath() );
 		System.setProperty( LOG_LEVEL_PROPERTY, validateLogLevel() );
 		System.setProperty( LOG_APPEND, String.valueOf( logFile.exists() ) );
@@ -193,6 +207,7 @@ public class Log
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
+			logWelcomeMsg();
 			for( final String m: Log.logMesseges )
 			{
 				Log.info( Log.class, m );
@@ -210,9 +225,48 @@ public class Log
 	}
 
 	/**
+	 * Returns the Logger for the callingClass. Each class has its own Logger since the callingClass name can be
+	 * appended to the log file without impacting performance.
+	 *
+	 * @param callingClass Java class in need of Logger
+	 * @return Logger for callingClass
+	 */
+	public static Logger out( final Class<?> callingClass )
+	{
+		if( loggers.get( callingClass.getName() ) == null )
+		{
+			loggers.put( callingClass.getName(), LoggerFactory.getLogger( callingClass ) );
+		}
+
+		return loggers.get( callingClass.getName() );
+	}
+
+	/**
+	 * Print log level WARN message.
+	 * 
+	 * @param myClass Logging class
+	 * @param msg Message to log
+	 */
+	public static void warn( final Class<?> myClass, final String msg )
+	{
+		if( suppressLogs )
+		{
+			return;
+		}
+		if( logFile == null )
+		{
+			logMesseges.add( msg );
+		}
+		else
+		{
+			out( myClass ).warn( msg );
+		}
+	}
+
+	/**
 	 * Prints {@link biolockj.Config} properties to the Java log file.
 	 */
-	public static void logConfig()
+	protected static void logConfig()
 	{
 		Log.info( Log.class, Log.LOG_SPACER );
 		Log.info( Log.class, "Pipeline Project Config File: " + Config.getConfigFilePath() );
@@ -230,24 +284,6 @@ public class Log
 	}
 
 	/**
-	 * Print log level WARN message.
-	 * 
-	 * @param myClass Logging class
-	 * @param msg Message to log
-	 */
-	public static void warn( final Class<?> myClass, final String msg )
-	{
-		if( logFile == null )
-		{
-			logMesseges.add( msg );
-		}
-		else
-		{
-			get( myClass ).warn( msg );
-		}
-	}
-
-	/**
 	 * Print welcome message.<br>
 	 * Message includes BioLockJ version {@link biolockj.util.BioLockJUtil#getVersion()}, lab citation, and freeware
 	 * blurb.
@@ -258,7 +294,7 @@ public class Log
 	{
 		Log.info( Log.class, LOG_SPACER );
 		Log.info( Log.class,
-				"Launching BioLockJ " + BioLockJUtil.getVersion() + " ~ Distributed by UNCC Fodor Lab @2018" );
+				"Launching BioLockJ " + BioLockJUtil.getVersion() + " ~ Distributed by UNCC Fodor Lab @2019" );
 		Log.info( Log.class, LOG_SPACER );
 		Log.info( Log.class, "This code is free software; you can redistribute and/or modify it" );
 		Log.info( Log.class, "under the terms of the GNU General Public License as published by" );
@@ -383,4 +419,5 @@ public class Log
 	private static File logFile = null;
 	private static Map<String, Logger> loggers = new HashMap<>();
 	private static final List<String> logMesseges = new ArrayList<>();
+	private static boolean suppressLogs = false;
 }

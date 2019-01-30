@@ -13,12 +13,11 @@ package biolockj.module.implicit;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
+import biolockj.module.r.R_Module;
 import biolockj.util.*;
 
 /**
@@ -37,7 +36,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			inputDelim = TAB_DELIM;
 		}
 
-		if( Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
+		if( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED )
 				&& ( MetaUtil.getFile() == null || !MetaUtil.getFile().exists() ) )
 		{
 			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: "
@@ -52,13 +51,13 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		File metadata = getMetadata();
+		final File metadata = getMetadata();
 		if( metadata.exists() )
 		{
 			MetaUtil.setFile( metadata );
 			MetaUtil.refreshCache();
 			addMetadataToConfigIgnoreInputFiles();
-			if( ModuleUtil.hasRModules() )
+			if( hasRModules() )
 			{
 				RMetaUtil.classifyReportableMetadata();
 			}
@@ -85,16 +84,6 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		}
 		else
 		{
-			if( ModuleUtil.moduleExists( Demultiplexer.class.getName() )
-					&& MetaUtil.hasColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ) ) )
-			{
-				MetaUtil.removeColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ), getTempDir() );
-				Log.warn( ImportMetadata.class,
-						"The " + MetaUtil.META_FILENAME_COLUMN
-								+ " option is incompatible with using the demultiplexer module. The supplied value \""
-								+ Config.getString( MetaUtil.META_FILENAME_COLUMN ) + "\" will be ignored." );
-				Config.setConfigProperty( MetaUtil.META_FILENAME_COLUMN, "" );
-			}
 			Log.info( getClass(),
 					"Importing metadata (column delim=" + Config.requireString( MetaUtil.META_COLUMN_DELIM ) + "): "
 							+ MetaUtil.getFile().getAbsolutePath() );
@@ -248,7 +237,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	protected TreeSet<String> getSampleIds() throws Exception
 	{
 		final TreeSet<String> ids = new TreeSet<>();
-		final Collection<File> inputFiles = Config.getBoolean( Config.INTERNAL_PAIRED_READS )
+		final Collection<File> inputFiles = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS )
 				? new TreeSet<>( SeqUtil.getPairedReads( getInputFiles() ).keySet() )
 				: getInputFiles();
 
@@ -421,9 +410,9 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	private void addMetadataToConfigIgnoreInputFiles() throws Exception
 	{
 		final Set<String> ignore = new HashSet<>();
-		if( Config.getTreeSet( Config.INPUT_IGNORE_FILES ) != null )
+		if( Config.getSet( Config.INPUT_IGNORE_FILES ) != null )
 		{
-			ignore.addAll( Config.getTreeSet( Config.INPUT_IGNORE_FILES ) );
+			ignore.addAll( Config.getSet( Config.INPUT_IGNORE_FILES ) );
 		}
 
 		ignore.add( MetaUtil.getMetadataFileName() );
@@ -433,12 +422,24 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	private boolean doIdToSeqVerifiction() throws Exception
 	{
 		return Config.getBoolean( MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() )
-				&& !Config.getBoolean( Config.INTERNAL_MULTIPLEXED );
+				&& !Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED );
 	}
 
-	private File getMetadata()
+	private File getMetadata() throws Exception
 	{
 		return new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+	}
+
+	private boolean hasRModules() throws Exception
+	{
+		for( final BioModule module: Pipeline.getModules() )
+		{
+			if( module instanceof R_Module )
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

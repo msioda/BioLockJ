@@ -17,14 +17,22 @@ import org.apache.commons.io.FileUtils;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.util.*;
 
 /**
  * This BioModule parses sequence file to count the number of reads per sample. The data is stored in a new column
  * Num_Reads. If no metadata file exists, it is created with 2 columns: SampleID and Num_Reads.
  */
-public class RegisterNumReads extends JavaModuleImpl implements JavaModule
+public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqModule
 {
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
+	}
+
 	/**
 	 * Produce summary message with min, max, mean, and median number of reads.
 	 */
@@ -52,7 +60,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule
 		sampleIds.addAll( MetaUtil.getSampleIds() );
 		if( MetaUtil.getFieldNames().contains( NUM_READS ) )
 		{
-			if( MetaUtil.getFieldValues( NUM_READS ).size() == MetaUtil.getSampleIds().size() )
+			if( MetaUtil.getFieldValues( NUM_READS, false ).size() == MetaUtil.getSampleIds().size() )
 			{
 				Log.warn( getClass(), NUM_READS + " column already fully populated in metadata file :"
 						+ MetaUtil.getFile().getAbsolutePath() );

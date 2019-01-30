@@ -37,10 +37,4 @@ public interface JavaModule extends ScriptModule
 	 * @throws Exception thrown if any runtime error occurs
 	 */
 	public void runModule() throws Exception;
-
-	/**
-	 * {@link biolockj.Config} Boolean property {@value #JAVA_RUN_AS_SCRIPT} if set = {@value biolockj.Config#TRUE} will
-	 * run Java module as a script instead of running on the head node.
-	 */
-	public static final String JAVA_RUN_AS_SCRIPT = "cluster.runJavaAsScriptModule";
 }

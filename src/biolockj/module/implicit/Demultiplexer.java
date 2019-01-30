@@ -16,9 +16,10 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.exception.ConfigViolationException;
+import biolockj.exception.ConfigFormatException;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.util.*;
 
 /**
@@ -38,7 +39,7 @@ import biolockj.util.*;
  * "1:N:" and "2:N:"
  * </ol>
  */
-public class Demultiplexer extends JavaModuleImpl implements JavaModule
+public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
 	/**
 	 * Validate module dependencies:
@@ -47,15 +48,26 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	 * demux, validate metadata column named {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_BARCODE_COLUMN}
 	 * exists
 	 * <li>Call {@link #setMultiplexedConfig()} to set multiplexed Config if needed
+	 * <li>If {@link biolockj.Config}.{@value biolockj.util.DemuxUtil#BARCODE_CUTOFF} defined, validate between 0.0 -
+	 * 1.0
 	 * </ol>
 	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		setMultiplexedConfig();
+		getBarcodeCutoff();
 		final String demuxStrategy = "Config property [ " + DemuxUtil.DEMUX_STRATEGY + "="
 				+ Config.getString( DemuxUtil.DEMUX_STRATEGY ) + " ]";
-		if( DemuxUtil.demuxWithBarcode() )
+
+		if( Config.getString( DemuxUtil.DEMUX_STRATEGY ) == null )
+		{
+			Log.info( getClass(), DemuxUtil.DEMUX_STRATEGY
+					+ " is undefined for a multiplexed dataset.  Demultiplexer will analyze the file to determine if Sample IDs or barcodes "
+					+ "should be used for demultiplexing.  Demultiplexer will also determine if reverse compliment barcodes are needed and set: "
+					+ DemuxUtil.BARCODE_USE_REV_COMP );
+		}
+		else if( DemuxUtil.demuxWithBarcode() )
 		{
 			if( MetaUtil.getFile() == null || !MetaUtil.getFile().exists() )
 			{
@@ -69,7 +81,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 						+ " ] is not found in the metadata: " + MetaUtil.getFile().getAbsolutePath() );
 			}
 
-			if( MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ).isEmpty() )
+			if( MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 			{
 				throw new Exception( demuxStrategy + " but the barcode column configured [ "
 						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( MetaUtil.META_BARCODE_COLUMN )
@@ -84,21 +96,20 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		else
 		{
 			Log.info( getClass(),
-					demuxStrategy + " so Demultiplexer will use the Config properties [" + Config.INPUT_TRIM_PREFIX
-							+ " & " + Config.INPUT_TRIM_SUFFIX
+					demuxStrategy + " so Demultiplexer will use the Config properties [" + SeqUtil.INPUT_TRIM_PREFIX
+							+ " & " + SeqUtil.INPUT_TRIM_SUFFIX
 							+ "] to extract the Sample ID from the sequence header" );
-			Log.info( getClass(), "Config property [ " + Config.INPUT_TRIM_PREFIX + " ] = "
-					+ Config.getString( Config.INPUT_TRIM_PREFIX ) );
-			Log.info( getClass(), "Config property [ " + Config.INPUT_TRIM_SUFFIX + " ] = "
-					+ Config.getString( Config.INPUT_TRIM_SUFFIX ) );
+			Log.info( getClass(), "Config property [ " + SeqUtil.INPUT_TRIM_PREFIX + " ] = "
+					+ Config.getString( SeqUtil.INPUT_TRIM_PREFIX ) );
+			Log.info( getClass(), "Config property [ " + SeqUtil.INPUT_TRIM_SUFFIX + " ] = "
+					+ Config.getString( SeqUtil.INPUT_TRIM_SUFFIX ) );
 
 		}
 		super.checkDependencies();
 	}
 
 	/**
-	 * Update SeqUtil to indicate data has been demuxed.<br>
-	 * If {@value biolockj.util.MetaUtil#META_REQUIRED}, verify each sequence has a metadata record.
+	 * Update SeqUtil to indicate data has been demultiplexed.<br>
 	 * 
 	 * @throws Exception if unable to modify property
 	 */
@@ -106,11 +117,18 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		Config.setConfigProperty( Config.INTERNAL_MULTIPLEXED, Config.FALSE );
-		if( Config.getBoolean( MetaUtil.META_REQUIRED ) )
-		{
-			verifySeqMetadata();
-		}
+		Config.setConfigProperty( SeqUtil.INTERNAL_MULTIPLEXED, Config.FALSE );
+		// * If {@value biolockj.util.MetaUtil#META_REQUIRED}, verify each sequence has a metadata record.
+		// if( Config.getBoolean( MetaUtil.META_REQUIRED ) )
+		// {
+		// verifySeqMetadata();
+		// }
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return findModuleInputFiles();
 	}
 
 	/**
@@ -122,7 +140,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				sb.append( "# Forward Reads: " + numTotalFwReads + RETURN );
 				sb.append( "# Reverse Reads: " + numTotalRvReads + RETURN );
@@ -136,7 +154,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 					sb.append( "# Valid Reverse Reads (matched to a sample): " + numValidRvReads + RETURN );
 				}
-
 			}
 			else
 			{
@@ -150,11 +167,11 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		catch( final Exception ex )
 		{
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
-			sb.append( msg + RETURN );
+			sb.append( msg + summary + RETURN );
 			Log.warn( getClass(), msg );
 		}
 
-		return super.getSummary() + sb.toString();
+		return super.getSummary() + sb.toString() + summary;
 	}
 
 	/**
@@ -175,12 +192,6 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	public void runModule() throws Exception
 	{
 		breakUpFiles();
-
-		// if( DemuxUtil.barcodeInMapping() )
-		// {
-		// DemuxUtil.buildHeaderRefs();
-		// }
-
 		demultiplex( getValidHeaders() );
 	}
 
@@ -192,32 +203,92 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	 */
 	protected void breakUpFiles() throws Exception
 	{
+		File testFile = null;
 		for( final File file: getInputFiles() )
 		{
 			Log.info( getClass(),
 					"Break multiplexed file [ " + file.getAbsolutePath() + " ] into files with a max #lines = [ "
-							+ NUM_LINES_TEMP_FILE + " ] to avoid memory issues while processing" );
-
+							+ NUM_LINES_TEMP_FILE + " ] to avoid memory issues while processing." );
+			Log.info( getClass(), "Found #lines/read = " + SeqUtil.getNumLinesPerRead() );
+			long numReads = 0L;
+			long headerFwBarcodes = 0L;
+			long headerRvBarcodes = 0L;
+			long seqFwBarcodes = 0L;
+			long seqRvBarcodes = 0L;
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			final List<String> seqLines = new ArrayList<>();
-			int i = 0;
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			try
 			{
-				seqLines.add( line );
-				if( seqLines.size() >= NUM_LINES_TEMP_FILE )
+				final List<String> seqLines = new ArrayList<>();
+				final List<String> read = new ArrayList<>();
+				int i = 0;
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
+				{
+					read.add( line );
+
+					if( DemuxUtil.hasValidBarcodes() )
+					{
+						if( testFile == null && read.size() == 1 )
+						{
+							numReads++;
+							final int testBarcodes = hasBarcode( line );
+							if( testBarcodes == 1 )
+							{
+								headerFwBarcodes++;
+							}
+							else if( testBarcodes == 2 )
+							{
+								headerRvBarcodes++;
+							}
+						}
+
+						if( testFile == null && read.size() == 2 )
+						{
+							final int testBarcodes = hasBarcode( line );
+							if( testBarcodes == 1 )
+							{
+								seqFwBarcodes++;
+							}
+							else if( testBarcodes == 2 )
+							{
+								seqRvBarcodes++;
+							}
+						}
+					}
+
+					if( read.size() == SeqUtil.getNumLinesPerRead() )
+					{
+						seqLines.addAll( read );
+						read.clear();
+					}
+
+					if( seqLines.size() >= NUM_LINES_TEMP_FILE )
+					{
+						writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
+						seqLines.clear();
+					}
+				}
+
+				if( !seqLines.isEmpty() )
 				{
 					writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
-					seqLines.clear();
+				}
+			}
+			finally
+			{
+				if( reader != null )
+				{
+					reader.close();
 				}
 			}
 
-			if( !seqLines.isEmpty() )
-			{
-				writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
-			}
-
-			reader.close();
 			Log.info( getClass(), "Done splitting file: " + file.getAbsolutePath() );
+
+			if( testFile == null && numReads > 0 )
+			{
+				testFile = file;
+				buildSummaryAndSetConfig( testFile, numReads, headerFwBarcodes, seqFwBarcodes, headerRvBarcodes,
+						seqRvBarcodes );
+			}
 		}
 
 		Log.info( getClass(), "Number of temp files created: " + getSplitDir().listFiles().length );
@@ -244,57 +315,58 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 			final List<String> seqLines = new ArrayList<>();
 			final Map<String, List<String>> output = new HashMap<>();
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			try
 			{
-				seqLines.add( line );
-				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-					final String header = SeqUtil.getHeader( seqLines.get( 0 ) );
-					final String sampleId = getSampleId( header, validHeaders );
-
-					String otu = null;
-
-					if( sampleId == null )
+					seqLines.add( line );
+					if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 					{
-						otu = getNoMatchFileName( file.getName(), seqLines.get( 0 ) );
-					}
-					else
-					{
-						otu = getOutputFileName( sampleId, file.getName(), seqLines.get( 0 ) );
-						incrementCounts( file.getName(), seqLines.get( 0 ) );
+						final String header = SeqUtil.getHeader( seqLines.get( 0 ) );
+						final String sampleId = getSampleId( header, validHeaders );
 
-						if( doPrint )
+						String otu = null;
+
+						if( sampleId == null )
 						{
-							doPrint = false;
-							Log.info( getClass(), "EXAMPLE Demultiplexed Sample ID: " + sampleId );
-							Log.info( getClass(), "EXAMPLE Demultiplexed sequence file: " + otu );
+							otu = getNoMatchFileName( file.getName(), seqLines.get( 0 ) );
 						}
-					}
+						else
+						{
+							otu = getOutputFileName( sampleId, file.getName(), seqLines.get( 0 ) );
+							incrementCounts( file.getName(), seqLines.get( 0 ) );
 
-					if( !output.keySet().contains( otu ) )
-					{
-						output.put( otu, new ArrayList<>() );
-					}
+							if( doPrint )
+							{
+								doPrint = false;
+								Log.info( getClass(), "EXAMPLE Demultiplexed Sample ID: " + sampleId );
+								Log.info( getClass(), "EXAMPLE Demultiplexed sequence file: " + otu );
+							}
+						}
 
-					output.get( otu ).addAll( seqLines );
-					seqLines.clear();
+						if( !output.keySet().contains( otu ) )
+						{
+							output.put( otu, new ArrayList<>() );
+						}
+
+						output.get( otu ).addAll( seqLines );
+						seqLines.clear();
+					}
 				}
 
-				// if( count++ == 10000 )
-				// {
-				// loopCount++;
-				// count = 0;
-				// Log.info( getClass(), "Checked: " + ( 10000 * loopCount) + " lines so far" );
-				// }
+				for( final String outName: output.keySet() )
+				{
+					Log.debug( getClass(), outName + " adding # lines = " + output.get( outName ).size() );
+					writeSample( output.get( outName ), outName );
+				}
 			}
-
-			for( final String outName: output.keySet() )
+			finally
 			{
-				Log.debug( getClass(), outName + " adding # lines = " + output.get( outName ).size() );
-				writeSample( output.get( outName ), outName );
+				if( reader != null )
+				{
+					reader.close();
+				}
 			}
-
-			reader.close();
 		}
 	}
 
@@ -307,7 +379,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	protected Map<String, Set<String>> getValidFwHeaders() throws Exception
 	{
 		final Map<String, Set<String>> validHeaders = new HashMap<>();
-		final boolean isPaird = Config.getBoolean( Config.INTERNAL_PAIRED_READS );
+		final boolean isPaird = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS );
 		final boolean isCombined = isPaird && getInputFiles().size() == 1;
 
 		Log.info( getClass(), "Get FW Headers from temp files "
@@ -326,37 +398,45 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 			final List<String> seqLines = new ArrayList<>();
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			try
 			{
-				seqLines.add( line );
-				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-
-					// if not combined must be a file of only forward reads due to continue above
-					if( !isCombined || seqLines.get( 0 ).contains( SeqUtil.ILLUMINA_FW_READ_IND ) )
+					seqLines.add( line );
+					if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 					{
-						numTotalFwReads++;
-						final String sampleId = DemuxUtil.getSampleId( seqLines );
-						if( sampleId != null )
+						// if not combined must be a file of only forward reads due to continue above
+						if( !isCombined || seqLines.get( 0 ).contains( SeqUtil.ILLUMINA_FW_READ_IND ) )
 						{
-							if( validHeaders.get( sampleId ) == null )
+							numTotalFwReads++;
+							final String sampleId = DemuxUtil.getSampleId( seqLines );
+							if( sampleId != null )
 							{
-								validHeaders.put( sampleId, new HashSet<>() );
+								if( validHeaders.get( sampleId ) == null )
+								{
+									validHeaders.put( sampleId, new HashSet<>() );
+								}
+								final String header = SeqUtil.getHeader( seqLines.get( 0 ) );
+								validHeaders.get( sampleId ).add( header );
 							}
-							final String header = SeqUtil.getHeader( seqLines.get( 0 ) );
-							validHeaders.get( sampleId ).add( header );
 						}
-					}
 
-					seqLines.clear();
+						seqLines.clear();
+					}
+				}
+			}
+			finally
+			{
+				if( reader != null )
+				{
+					reader.close();
 				}
 			}
 
-			reader.close();
 		}
 
 		String msg = " # valid reads = ";
-		if( Config.requireBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.requireBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			msg = " # valid fw read headers = ";
 		}
@@ -379,7 +459,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 	protected Map<String, Set<String>> getValidHeaders() throws Exception
 	{
 		final Map<String, Set<String>> validFwHeaders = getValidFwHeaders();
-		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			Log.info( getClass(), "Demultiplexing unpaired reads...# " + validFwHeaders.size() );
 			return validFwHeaders;
@@ -401,37 +481,42 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 			final List<String> seqLines = new ArrayList<>();
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			try
 			{
-				seqLines.add( line );
-				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-					// if not combined must be a file of only reverse reads due to continue above
-					if( !isForwardRead( file.getName(), seqLines.get( 0 ) ) )
+					seqLines.add( line );
+					if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 					{
-						final String header = SeqUtil.getHeader( seqLines.get( 0 ) );
-						numTotalRvReads++;
-
-						for( final String sampleId: validFwHeaders.keySet() )
+						// if not combined must be a file of only reverse reads due to continue above
+						if( !isForwardRead( file.getName(), seqLines.get( 0 ) ) )
 						{
-							if( validFwHeaders.get( sampleId ).contains( header ) )
-							{
-								if( validHeaders.get( sampleId ) == null )
-								{
-									validHeaders.put( sampleId, new HashSet<>() );
-								}
+							final String header = SeqUtil.getHeader( seqLines.get( 0 ) );
+							numTotalRvReads++;
 
-								validHeaders.get( sampleId ).add( header );
-								break;
+							for( final String sampleId: validFwHeaders.keySet() )
+							{
+								if( validFwHeaders.get( sampleId ).contains( header ) )
+								{
+									if( validHeaders.get( sampleId ) == null )
+									{
+										validHeaders.put( sampleId, new HashSet<>() );
+									}
+
+									validHeaders.get( sampleId ).add( header );
+									break;
+								}
 							}
 						}
-					}
 
-					seqLines.clear();
+						seqLines.clear();
+					}
 				}
 			}
-
-			reader.close();
+			finally
+			{
+				reader.close();
+			}
 		}
 
 		for( final String sampleId: validHeaders.keySet() )
@@ -457,54 +542,141 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		{
 			final String defaultSeqHeadChar = Config.requireString( SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
 
-			if( Config.getString( Config.INPUT_TRIM_PREFIX ) == null )
+			if( Config.getString( SeqUtil.INPUT_TRIM_PREFIX ) == null )
 			{
-				Config.setConfigProperty( Config.INPUT_TRIM_PREFIX, defaultSeqHeadChar );
-				Log.info( getClass(), "====> Set: " + Config.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
+				Config.setConfigProperty( SeqUtil.INPUT_TRIM_PREFIX, defaultSeqHeadChar );
+				Log.info( getClass(), "====> Set: " + SeqUtil.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
 			}
 
-			if( Config.getString( Config.INPUT_TRIM_SUFFIX ) == null )
+			if( Config.getString( SeqUtil.INPUT_TRIM_SUFFIX ) == null )
 			{
-				Config.setConfigProperty( Config.INPUT_TRIM_SUFFIX, SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
+				Config.setConfigProperty( SeqUtil.INPUT_TRIM_SUFFIX, SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
 				Log.info( getClass(),
-						"====> Set: " + Config.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
+						"====> Set: " + SeqUtil.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
 			}
 		}
 	}
 
-	/**
-	 * Verify that each sequence file has a corresponding record in the metadata file.
-	 * 
-	 * @throws Exception if errors occur
-	 */
-	protected void verifySeqMetadata() throws Exception
+	private void buildSummaryAndSetConfig( final File file, final long numReads, final long headerFwBarcodes,
+			final long seqFwBarcodes, final long headerRvBarcodes, final long seqRvBarcodes ) throws Exception
 	{
-		final StringBuffer sb = new StringBuffer();
-		int x = 0;
-		for( final File seq: getOutputDir().listFiles() )
+		summary += "Compre #BC (BarCode) vs. #rcBC (Reverse Compliment BC) in Headers vs. Sequences" + RETURN;
+		summary += "Test Sequence File: " + file.getAbsolutePath() + RETURN;
+		summary += "# Total Reads:              " + numReads + RETURN;
+		summary += "#BC Headers:          " + headerFwBarcodes + RETURN;
+		summary += "#rcBC Headers: " + headerRvBarcodes + RETURN;
+		summary += "#BC Sequences: " + seqFwBarcodes + RETURN;
+		summary += "#rcBC Sequences: " + seqRvBarcodes + RETURN;
+
+		final boolean useRevComp = useRevCompBarcodes( headerFwBarcodes + seqFwBarcodes,
+				headerRvBarcodes + seqRvBarcodes );
+		final boolean useSeqBarcodes = useSeqBarcodes( headerFwBarcodes + headerRvBarcodes,
+				seqFwBarcodes + seqRvBarcodes );
+		final long numBarcodes = useRevComp ? useSeqBarcodes ? seqRvBarcodes: headerRvBarcodes
+				: useSeqBarcodes ? seqFwBarcodes: headerFwBarcodes;
+		final long numHeaderBarcodes = headerFwBarcodes + headerRvBarcodes;
+		final long numSeqBarcodes = seqFwBarcodes + seqRvBarcodes;
+		final long numFwBarcodes = headerFwBarcodes + seqFwBarcodes;
+		final long numRvBarcodes = headerRvBarcodes + seqRvBarcodes;
+
+		final String rc = Config.getString( DemuxUtil.BARCODE_USE_REV_COMP );
+		final String st = Config.getString( DemuxUtil.DEMUX_STRATEGY );
+		final String strategy = "Config." + DemuxUtil.DEMUX_STRATEGY + "=" + ( st == null ? "UNDEFINED": st );
+		final String revCompAssign = "Config." + DemuxUtil.BARCODE_USE_REV_COMP + "="
+				+ ( rc == null ? "UNDEFINED": rc );
+
+		if( numBarcodes == 0 )
 		{
-			final String id = SeqUtil.getSampleId( seq.getName() );
-			if( SeqUtil.isForwardRead( seq.getName() ) && !MetaUtil.getSampleIds().contains( id ) )
+			if( strategyConfigSet() && !DemuxUtil.sampleIdInHeader() )
 			{
-				x++;
-				sb.append( sb.toString().isEmpty() ? "": ", " ).append( id );
+				throw new Exception( strategy + " however no baracodes or Sample IDs found in test file: "
+						+ file.getAbsolutePath() );
+			}
+			else if( !strategyConfigSet() )
+			{
+				summary += "Set: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_ID_IN_HEADER
+						+ " based on #BC & #rcBC counts" + RETURN;
+				Config.setConfigProperty( DemuxUtil.DEMUX_STRATEGY, DemuxUtil.OPTION_ID_IN_HEADER );
 			}
 		}
-
-		if( !sb.toString().isEmpty() )
+		else if( strategyConfigSet() )
 		{
-			throw new ConfigViolationException( MetaUtil.META_REQUIRED,
-					"Metadata row is missing for the following " + x + " samples IDs: " + sb.toString() );
+			if( DemuxUtil.barcodeInHeader() && useSeqBarcodes )
+			{
+				summary += "WARNING: [" + strategy + "]  --> but [" + numSeqBarcodes + "] sequence BC > ["
+						+ numHeaderBarcodes + "] header BC in";
+			}
+			else if( DemuxUtil.barcodeInSeq() && !useSeqBarcodes )
+			{
+
+				summary += "WARNING: [" + strategy + "] --> but [" + numHeaderBarcodes + "] header BC > ["
+						+ numSeqBarcodes + "] sequence BC";
+			}
+			else if( numHeaderBarcodes == numSeqBarcodes )
+			{
+				summary += "WARNING: [" + numHeaderBarcodes + "] header BC = [" + numSeqBarcodes
+						+ "] sequence BC --> TrimPrimers Module can be used to remove sequence BC if located at very start of sequence.";
+			}
 		}
+		else if( useSeqBarcodes )
+		{
+			summary += "Set: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_BARCODE_IN_SEQ
+					+ " based on BC counts" + RETURN;
+			Config.setConfigProperty( DemuxUtil.DEMUX_STRATEGY, DemuxUtil.OPTION_BARCODE_IN_SEQ );
+		}
+		else
+		{
+			summary += "Set: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_BARCODE_IN_HEADER
+					+ " based on BC counts" + RETURN;
+			Config.setConfigProperty( DemuxUtil.DEMUX_STRATEGY, DemuxUtil.OPTION_BARCODE_IN_HEADER );
+
+		}
+
+		if( useRevCompConfigSet() )
+		{
+			if( Config.getBoolean( DemuxUtil.BARCODE_USE_REV_COMP ) && !useRevComp )
+			{
+				summary += "WARNING: [" + revCompAssign + "] --> but [" + numFwBarcodes + "] BC > [" + numRvBarcodes
+						+ "] rcBC" + RETURN;
+			}
+		}
+		else
+		{
+			final Double cutoff = getBarcodeCutoff();
+			if( cutoff != null )
+			{
+				final Long cutoffNumReads = new Long( Math.round( cutoff * numReads ) );
+				if( numBarcodes < cutoffNumReads )
+				{
+					final String displayCutoff = new Long( Math.round( cutoff * 100 ) ).toString() + "%";
+					throw new Exception(
+							"Total # barcodes: " + numBarcodes + " < cutoff [ " + displayCutoff + " of reads = "
+									+ cutoffNumReads + " ]" + RETURN + " Review Summary -- > " + RETURN + summary );
+				}
+			}
+			final String val = useRevComp ? Config.TRUE: Config.FALSE;
+			summary += "Set: " + DemuxUtil.BARCODE_USE_REV_COMP + "=" + val + " based on #BC & #rcBC counts" + RETURN;
+			Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, val );
+		}
+	}
+
+	private Double getBarcodeCutoff() throws Exception
+	{
+		final Double val = Config.getPositiveDoubleVal( DemuxUtil.BARCODE_CUTOFF );
+		if( val != null && val > 1 )
+		{
+			throw new ConfigFormatException( DemuxUtil.BARCODE_CUTOFF, "Must be between 0.0 - 1.0" );
+		}
+		return val;
 	}
 
 	private String getFileSuffix( final String name, final String header ) throws Exception
 	{
 		String suffix = "";
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			suffix = isForwardRead( name, header ) ? Config.requireString( Config.INPUT_FORWARD_READ_SUFFIX )
-					: Config.requireString( Config.INPUT_REVERSE_READ_SUFFIX );
+			suffix = isForwardRead( name, header ) ? Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX )
+					: Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX );
 		}
 
 		return suffix + "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
@@ -552,6 +724,25 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		return getSplitDir().getAbsolutePath() + File.separator + "split_" + i + suffix;
 	}
 
+	private int hasBarcode( final String line ) throws Exception
+	{
+		for( final String code: MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ) )
+		{
+			if( line.contains( code ) )
+			{
+				// Log.info( getClass(), "Found barcode[ " + code + "] in line: " + line );
+				return 1;
+			}
+			else if( line.contains( SeqUtil.reverseComplement( code ) ) )
+			{
+				// Log.info( getClass(), "Found REVERSE COMPLIMENT of barcode[ " + SeqUtil.reverseComplement( code ) +
+				// "] in line: " + line );
+				return 2;
+			}
+		}
+		return 0;
+	}
+
 	private void incrementCounts( final String name, final String header ) throws Exception
 	{
 		if( isForwardRead( name, header ) )
@@ -566,7 +757,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 
 	private boolean isForwardRead( final String name, final String header ) throws Exception
 	{
-		if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			return true;
 		}
@@ -606,70 +797,54 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule
 		Log.info( getClass(), "Number valid reads = " + size );
 	}
 
-	//
-	// /**
-	// * Add barcode to seq header after 1st character, or return null if the header isn't listed
-	// *
-	// * @return Header line with barcode seq inserted
-	// * @throws Exception if errors occur
-	// */
-	// protected String addBarcodeToSeqHeader( String header ) throws Exception
-	// {
-	// final BufferedReader reader = BioLockJUtil.getFileReader( DemuxUtil.getMapping() );
-	// try
-	// {
-	//// if( results == null || results.size() == 0 )
-	//// {
-	//// throw new Exception( "Seq header [ " + header + " ] not found!" );
-	//// }
-	//// else if( results.size() == 2 )
-	//// {
-	//// Iterator<GrepResult> it = results.iterator();
-	//// GrepResult seqHeader = it.next();
-	//// GrepResult barcode = it.next();
-	////
-	//// Log.info( getClass(), "seqHeader HEADER: " + seqHeader.getHeaderInformation() );
-	//// Log.info( getClass(), "seqHeader TEXT: " + seqHeader.getText() );
-	//// Log.info( getClass(), "barcode HEADER: " + barcode.getHeaderInformation() );
-	//// Log.info( getClass(), "barcode TEXT: " + barcode.getText() );
-	//// return header.substring( 0, 1 ) + barcode.toString().trim() + header.substring( 1 );
-	//// }
-	//// else
-	//// {
-	//// throw new Exception( "Seq header [ " + header + " ] returned too many results! --> #Lines=" + results.size() );
-	//// }
-	// }
-	// finally
-	// {
-	// if( reader != null ) reader.close();
-	// }
-	// }
+	private boolean strategyConfigSet() throws Exception
+	{
+		return Config.getString( DemuxUtil.DEMUX_STRATEGY ) != null;
+	}
+
+	private boolean useRevCompBarcodes( final long numBarcodes, final long numReverseComplimentBarcodes )
+			throws Exception
+	{
+		if( useRevCompConfigSet() )
+		{
+			return Config.getBoolean( DemuxUtil.BARCODE_USE_REV_COMP );
+		}
+		return numReverseComplimentBarcodes > numBarcodes;
+	}
+
+	private boolean useRevCompConfigSet() throws Exception
+	{
+		return Config.getString( DemuxUtil.BARCODE_USE_REV_COMP ) != null;
+	}
+
+	private boolean useSeqBarcodes( final long headerBarcodes, final long seqBarcodes ) throws Exception
+	{
+		if( strategyConfigSet() )
+		{
+			return DemuxUtil.barcodeInSeq();
+		}
+		return seqBarcodes > headerBarcodes;
+	}
 
 	private void writeSample( final List<String> lines, final String fileName ) throws Exception
 	{
 		final File outFile = new File( fileName );
 		final boolean exists = outFile.exists();
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile, exists ) );
-		int i = 0;
 		for( final String line: lines )
 		{
-
-			if( i++ == 0 && DemuxUtil.barcodeInMapping() )
-			{
-				// writer.write( addBarcodeToSeqHeader( line ) + BioLockJ.RETURN );
-			}
-			else
-			{
-				writer.write( line + BioLockJ.RETURN );
-			}
+			writer.write( line + BioLockJ.RETURN );
 		}
 		writer.close();
 	}
 
 	private long numTotalFwReads = 0L;
 	private long numTotalRvReads = 0L;
+
 	private long numValidFwReads = 0L;
 	private long numValidRvReads = 0L;
+
+	private String summary = "";
 
 	/**
 	 * Module splits multiplexed file into smaller files with this number of lines: {@value #NUM_LINES_TEMP_FILE}

@@ -14,6 +14,8 @@ package biolockj;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import biolockj.module.ScriptModule;
 
@@ -61,15 +63,34 @@ public class Job
 		p.destroy();
 	}
 
-	private String getArgsAsString( final String[] args )
+	/**
+	 * This method returns the all output lines from the command.
+	 * 
+	 * @param args Terminal command created from args (adds 1 space between each array element)
+	 * @return Output from the command
+	 * @throws Exception if errors occur during execution
+	 */
+	public static List<String> runCommandWithResults( final String[] args ) throws Exception
 	{
-		final StringBuffer sb = new StringBuffer();
-		for( final String arg: args )
+		final List<String> results = new ArrayList<>();
+		Log.info( Job.class, "[Run Command]: " + getArgsAsString( args ) );
+		final Runtime r = Runtime.getRuntime();
+		final Process p = r.exec( args );
+		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
+		String s;
+		while( ( s = br.readLine() ) != null )
 		{
-			sb.append( arg + " " );
+			if( !s.trim().isEmpty() )
+			{
+				results.add( s );
+				Log.info( Job.class, "[Command returns]: " + s );
+			}
 		}
 
-		return sb.toString();
+		p.waitFor();
+		p.destroy();
+
+		return results;
 	}
 
 	/**
@@ -118,6 +139,17 @@ public class Job
 	public static void submit( final String[] args ) throws Exception
 	{
 		new Job( args );
+	}
+
+	private static String getArgsAsString( final String[] args )
+	{
+		final StringBuffer sb = new StringBuffer();
+		for( final String arg: args )
+		{
+			sb.append( arg + " " );
+		}
+
+		return sb.toString();
 	}
 
 }

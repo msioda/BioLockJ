@@ -12,7 +12,17 @@
 		<fileset dir="lib"/>
 	</path>
 	
-	<target name="init">
+	<target name="clear-bin">
+		<if><available file="bin"/>
+			<then>
+				<delete includeemptydirs="true">
+			  		<fileset dir="bin" includes="**/*"/>
+				</delete>
+			</then>
+		</if>
+	</target>
+	
+	<target name="init" depends="clear-bin">
 		<if><available file="bin"/>
 			<then>
 				<delete includeemptydirs="true">
@@ -60,6 +70,13 @@
 		<delete>
 			<fileset dir="dist" includes="*.tgz"/>
 		</delete>
+		<if><available file="bin"/>
+			<then>
+				<delete includeemptydirs="true">
+			  		<fileset dir="bin" includes="**/*"/>
+				</delete>
+			</then>
+		</if>
 		<tar compression="gzip" destfile="${release_tar}">
 			<tarfileset dir="." filemode="770" dirmode="770">
 				<exclude name="/bin"/>
@@ -74,5 +91,9 @@
 		</tar>	
 		<chmod file="${release_tar}" perm="770"/>	
 	</target>
+	
+	
+	
+	
 	
 </project>

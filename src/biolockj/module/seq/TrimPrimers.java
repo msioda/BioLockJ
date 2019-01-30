@@ -19,6 +19,7 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
 
@@ -27,8 +28,9 @@ import biolockj.util.*;
  * The primers are defined using regular expressions in a separate file.
  * 
  */
-public class TrimPrimers extends JavaModuleImpl implements JavaModule
+public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 {
+
 	/**
 	 * Validates the file that defines the REGEX primers. If primers are located at start of read, add REGEX line anchor
 	 * "^" to the start of the primer sequence in {@value #INPUT_TRIM_SEQ_FILE}.
@@ -55,6 +57,12 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	{
 		super.cleanUp();
 		RegisterNumReads.setNumReadFieldName( getMetaColName() );
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
 	}
 
 	/**
@@ -146,7 +154,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			double ratio = Double.valueOf( df.format( 100 * ( (double) a / ( a + b ) ) ) );
 			String per = BioLockJUtil.formatPercentage( a, a + b );
 
-			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				ratio = Double.valueOf( df.format( 100 * ( (double) v / ( a + b ) ) ) );
 				per = BioLockJUtil.formatPercentage( v, a + b );
@@ -214,7 +222,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			}
 		}
 
-		if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			summaryMsgs.add( "Max % reads kept in Forward Read = " + maxFileFw + " = " + maxFwDisplay );
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
@@ -247,7 +255,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 
-			if( ModuleUtil.moduleExists( PearMergeReads.class.getName() ) )
+			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				summaryMsgs.add( "Mean % Forward reads with primer = " + totalPrimerF + "/" + totalF + " = "
 						+ BioLockJUtil.formatPercentage( totalPrimerF, totalF ) );
@@ -331,7 +339,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 						for( int i = 1; i <= seq.length(); i++ )
 						{
 							final String base = seq.substring( i - 1, i );
-							final String iupac = getIupacBase( base );
+							final String iupac = SeqUtil.getIupacBase( base );
 							regexSeq = regexSeq + iupac;
 							if( !base.equals( iupac ) )
 							{
@@ -391,7 +399,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	{
 		if( otuColName == null )
 		{
-			otuColName = ModuleUtil.getSystemMetaCol( this, NUM_TRIMMED_READS );
+			otuColName = MetaUtil.getSystemMetaCol( this, NUM_TRIMMED_READS );
 		}
 
 		return otuColName;
@@ -470,7 +478,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 		{
 			for( final File f: seqsWithPrimersTrimmed.keySet() )
 			{
-				if( !Config.getBoolean( Config.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
+				if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
 				{
 					validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
 							Long.toString( seqsWithPrimersTrimmed.get( f ) ) );
@@ -664,8 +672,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 
 				if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
 				{
-					// seqLines.set( 0, SeqUtil.getHeader( seqLines.get( 0 ) ) );
-					final boolean validRecord = found && ( ModuleUtil.moduleExists( PearMergeReads.class.getName() )
+					final boolean validRecord = found && ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS )
 							? validHeaders.contains( seqLines.get( 0 ) )
 							: true );
 
@@ -699,17 +706,17 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	private void trimSeqs() throws Exception
 	{
 		final Set<String> primers = getPrimers( true );
-		final boolean mergeModuleExists = ModuleUtil.moduleExists( PearMergeReads.class.getName() );
-		final Map<File, File> pairedReads = mergeModuleExists ? SeqUtil.getPairedReads( getInputFiles() ): null;
-		final List<File> files = mergeModuleExists ? new ArrayList<>( pairedReads.keySet() ): getInputFiles();
+		final boolean hasPairedReads = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS );
+		final Map<File, File> pairedReads = hasPairedReads ? SeqUtil.getPairedReads( getInputFiles() ): null;
+		final List<File> files = hasPairedReads ? new ArrayList<>( pairedReads.keySet() ): getInputFiles();
 		final int count = files == null ? 0: files.size();
 		int i = 0;
-		Log.info( getClass(), "Trimming primers from " + ( mergeModuleExists ? 2 * count: count ) + " files..." );
+		Log.info( getClass(), "Trimming primers from " + ( hasPairedReads ? 2 * count: count ) + " files..." );
 		for( final File file: files )
 		{
 
 			final Set<String> validReads = getValidHeaders( file, primers );
-			if( mergeModuleExists )
+			if( hasPairedReads )
 			{
 				validReads.retainAll( getValidHeaders( pairedReads.get( file ), primers ) );
 				processFile( file, validReads, primers );
@@ -723,24 +730,15 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 			if( ( i++ + 1 ) % 25 == 0 )
 			{
 				Log.info( getClass(),
-						"Done trimming " + i + "/" + count + ( mergeModuleExists ? " file pairs": " files" ) );
+						"Done trimming " + i + "/" + count + ( hasPairedReads ? " file pairs": " files" ) );
 			}
 		}
 
-		Log.info( getClass(), "Done trimming " + i + "/" + count + ( mergeModuleExists ? " file pairs": " files" ) );
+		Log.info( getClass(), "Done trimming " + i + "/" + count + ( hasPairedReads ? " file pairs": " files" ) );
 
 		printReports( missingBothPrimers, "missingBothPrimers" );
 		printReports( missingFwPrimers, "missingFwPrimers" );
 		printReports( missingRvPrimers, "missingRvPrimers" );
-	}
-
-	private static String getIupacBase( final String base )
-	{
-		if( DNA_BASE_MAP.keySet().contains( base ) )
-		{
-			return DNA_BASE_MAP.get( base );
-		}
-		return base;
 	}
 
 	private final DecimalFormat df = new DecimalFormat( "##.##" );
@@ -773,24 +771,6 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule
 	 * without a primer should be kept or discarded
 	 */
 	protected static final String INPUT_REQUIRE_PRIMER = "trimPrimers.requirePrimer";
-	private static final Map<String, String> DNA_BASE_MAP = new HashMap<>();
 	private static Set<String> substitutions = new HashSet<>();
 	private static final List<String> summaryMsgs = new ArrayList<>();
-	static
-	{
-		// IUPAC DNA BASE Substitutions
-		// http://www.dnabaser.com/articles/IUPAC%20ambiguity%20codes.html
-		DNA_BASE_MAP.put( "Y", "[CT]" );
-		DNA_BASE_MAP.put( "R", "[AG]" );
-		DNA_BASE_MAP.put( "W", "[AT]" );
-		DNA_BASE_MAP.put( "S", "[GC]" );
-		DNA_BASE_MAP.put( "K", "[TG]" );
-		DNA_BASE_MAP.put( "M", "[CA]" );
-		DNA_BASE_MAP.put( "D", "[AGT]" );
-		DNA_BASE_MAP.put( "V", "[ACG]" );
-		DNA_BASE_MAP.put( "H", "[ACT]" );
-		DNA_BASE_MAP.put( "B", "[CGT]" );
-		DNA_BASE_MAP.put( "N", "[ACGT]" );
-		DNA_BASE_MAP.put( "X", "[ACGT]" );
-	}
 }

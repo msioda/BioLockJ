@@ -2,30 +2,25 @@
 
 # Output box-plot illustrating OTU-nominal metadata field relationship
 # Print adjusted P-values in pot header
-addBoxPlot <- function( otuColName, otuColVals, metaColName, metaColVals, barColors) 
+addBoxPlot <- function( taxa, taxaVals, metaVals, barColors) 
 {
-	if( doDebug() ) print( paste( "Createing box plot for otu:", otuColName, "metadata column:", metaColName ) )
-	metaColVals = as.factor( metaColVals )
-	factors = split(otuColVals, f=metaColVals) 
-	# select some graphical parameters
-	cexAxis = getCexAxis( levels(metaColVals) )
-	if( doDebug() ) print( paste( "cexAxis = getCexAxis( levels(metaColVals) ):", cexAxis ) )
-	labels = getBoxPlotLabels( levels(metaColVals) )
-	if( doDebug() ) print( paste( c("X axis labels = getBoxPlotLabels( levels(metaColVals) ):", labels), collapse= " " ) )
-	orient = getLas( levels(metaColVals) )
-	if( doDebug() ) print( paste( "orient = getLas( levels(metaColVals) ):", orient ) )
-	# draw plot
-	boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, 
-					 pch=getProperty("r.pch"), ylab=otuColName, xlab="", main="", #cex=0.2, 
-					 cex.axis=cexAxis ) #col.lab=color, col.main=color, cex.main=1, 
-	stripchart( otuColVals ~ metaColVals, data=data.frame(otuColVals, metaColVals), 
-							method="jitter", vertical=TRUE, pch=20, add=TRUE ) #ces=0.5, 
+	metaVals = as.factor( metaVals )
+	factors = split( taxaVals, metaVals ) 
+	cexAxis = getCexAxis( levels(metaVals) )
+	logInfo( "cexAxis = getCexAxis( levels(metaVals) )", cexAxis )
+	labels = getBoxPlotLabels( levels(metaVals) )
+	logInfo( "X axis labels = getBoxPlotLabels( levels(metaVals) )", labels )
+	orient = getLas( levels(metaVals) )
+	logInfo( "orient = getLas( levels(metaVals) )", orient )
+
+	boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=getProperty("r.pch"), 
+		ylab=taxa, xlab="", cex.axis=cexAxis )
+	stripchart( taxaVals ~ metaVals, data=data.frame(taxaVals, metaVals), method="jitter", 
+		vertical=TRUE, pch=20, add=TRUE )
 }
 
 # Add text at the top of the plot in the margin
-addPvalueNote <- function(parPval, nonParPval, r2, 
-													cutoff=getProperty("r.pvalCutoff",-1),
-													attName=NULL){
+addPvalueNote <- function(parPval, nonParPval, r2, attName=NULL){
 	lineNumbers = c(0.2, 1.4, 2.6)
 	names(lineNumbers) = c("low", "mid", "top")
 	parTestName=""
@@ -34,53 +29,27 @@ addPvalueNote <- function(parPval, nonParPval, r2,
 		parTestName = paste0(" (", getTestName(attName, isParametric = TRUE), ")")
 		nonParTestName = paste0(" (", getTestName(attName, isParametric = FALSE), ")")
 	}
-	mtext(text=paste("r-squared:", round(r2, 3)), 
-				line=lineNumbers["top"], 
+	mtext(text=paste("r-squared:", round(r2, 3)), line=lineNumbers["top"], 
 				at=par("usr")[1], side=3, adj=0, cex=par("cex"))
 	mtext(text=paste0("adjusted parametric", parTestName, " p-value: ", displayPval(parPval)), 
-				line=lineNumbers["mid"], col=getColor(parPval), 
-				at=par("usr")[1], side=3, adj=0, cex=par("cex"))
+				line=lineNumbers["mid"], col=getColor(parPval), at=par("usr")[1], side=3, adj=0, cex=par("cex"))
 	mtext(text=paste0("adjusted non-parametric", nonParTestName, " p-value: ", displayPval(nonParPval)), 
-				line=lineNumbers["low"], col=getColor(nonParPval), 
-				at=par("usr")[1], side=3, adj=0, cex=par("cex"))
+				line=lineNumbers["low"], col=getColor(nonParPval), at=par("usr")[1], side=3, adj=0, cex=par("cex"))
 }
 
 
 # Output scatter-plot illustrating OTU-numeric metadata field relationship
 # Print adjusted P-values in pot header
-addScatterPlot <- function( otuColName, otuColVals, metaColName, metaColVals ) #, parPval, nonParPval
+addScatterPlot <- function( taxa, taxaVals, metaVals )
 {
-	if( doDebug() ) print( paste( "Createing scatter plot for otu:", otuColName, "metadata column:", metaColName ) )
-	# color = getColor( c(parPval, nonParPval) )
-	# if( doDebug() ) print( paste( "color = getColor( c(parPval, nonParPval) ):", color ) )
-	pointColors = getColors( length(metaColVals) )
-	plot( metaColVals, otuColVals, pch=getProperty("r.pch"), 
-				col=getProperty("r.colorPoint", "black"), #xaxt="n", col.lab=color, cex.main=1, col.main=color,
-				ylab=otuColName, xlab="", main="")
-}
-
-# error handler for tryCatch in main that wraps each OTU plot set
-errorHandlerOtuPlots <- function(err, otuLevel, otuCol){
-	if( doDebug() ){print(err)}
-	msg = paste0("Failed to create plot for taxonomy level: ", otuLevel, 
-							 "\nusing OTU column: ", otuCol)
-	if( doDebug() ){print(msg)}
-	plotPlainText(msg)
-}
-
-# error handler for tryCatch in main that wraps each meta data column plot
-errorHandlerOtuSubPlots <- function(err, otuLevel, otuCol, metaCol){
-	if( doDebug() ){print(err)}
-	msg = paste0("Failed to create plot for \ntaxonomy level: ", otuLevel, 
-							 "\nOTU column: ", otuCol,
-							 "\nmeta data column: ", metaCol)
-	if( doDebug() ){print(msg)}
-	plotPlainText(msg)
+	pointColors = getColors( length(metaVals) )
+	plot( metaVals, taxaVals, pch=getProperty("r.pch"), col=getProperty("r.colorPoint", "black"), 
+				ylab=taxa, xlab="" )
 }
 
 # Return nominal group names truncated for display on X-axis of box plot
 getBoxPlotLabels <- function( labels ) {
-	if( getCexAxis(labels) == getCexAxis(returnMin=T) ) {
+	if( getCexAxis(labels) == getCexAxis(returnMin=TRUE) ) {
 		nchars = sum(nchar(labels)) + length(labels) - 1
 		maxSize = ((getProperty("r.plotWidth")*2)+2)/length(labels)
 		return( strtrim(labels, floor(maxSize) ) )
@@ -129,54 +98,30 @@ getLas <- function( labels ) {
 # Called by BioLockJ_Lib.R runProgram() to execute this script
 main <- function() {
 	
-	for( otuLevel in getProperty("report.taxonomyLevels") ) {
-		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildOtuPlots_", otuLevel, ".log") ) )
+	for( level in taxaLevels() ) {
+		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildOtuPlots_", level, ".log") ) )
 		
-		# get input
-		inputFile = getPipelineFile( paste0(otuLevel, ".*_metaMerged.tsv") )
-		if( doDebug() ) print( paste( "inputFile:", inputFile ) )
-		if( length( inputFile ) == 0 ) { next }
-		otuTable = read.table( inputFile, check.names=FALSE, na.strings=getProperty("metadata.nullValue", "NA"), 
-													 comment.char=getProperty("metadata.commentChar", ""), header=TRUE, sep="\t", row.names=1 )
-		lastOtuCol = ncol(otuTable) - getProperty("internal.numMetaCols")
+		taxaTable = getTaxaTable( level )
+		if( is.null( taxaTable ) ) { next }
 		
-		# metadata columns
-		binaryCols = getBinaryFields() #getColIndexes( otuTable, getBinaryFields() )
-		if( doDebug() ) print( paste( "binaryCols:", paste0(binaryCols, collapse= ", ") ) )
-		nominalCols = getNominalFields() #getColIndexes( otuTable, getNominalFields() )
-		if( doDebug() ) print( paste( "nominalCols:", paste0(nominalCols, collapse= ", ") ) )
-		numericCols = getNumericFields() #getColIndexes( otuTable, getNumericFields() )
-		if( doDebug() ) print( paste( "numericCols:", paste0(numericCols, collapse= ", ") ) )
-		allMetaCols = names(otuTable)[(lastOtuCol+1):ncol(otuTable)] # report on fields in the order they appear in the metadata file
-		reportFields = allMetaCols[allMetaCols %in% getReportFields()]
+		lastOtuCol = ncol(taxaTable) - numMetaCols()
+		binaryCols = getColIndexes( taxaTable, getBinaryFields() )
+		logInfo( "binaryCols", binaryCols )
+		nominalCols = getColIndexes( taxaTable, getNominalFields() )
+		logInfo( "nominalCols", nominalCols )
+		numericCols = getColIndexes( taxaTable, getNumericFields() )
+		logInfo( "numericCols", numericCols )
+		reportCols = c( binaryCols, nominalCols, numericCols )
+		logInfo( "reportCols", reportCols )
 		
-		# adjusted parametric pvalues
-		adjParInputFile = getPipelineFile( buildStatsFileSuffix(parametric=TRUE, adjusted=TRUE, level=otuLevel) )
-		if( doDebug() ) print( paste( "adjParInputFile:", adjParInputFile ) )
-		parStats = read.table( adjParInputFile, check.names=FALSE, 
-													 header=TRUE, sep="\t", row.names = 1 )
+		parStats = getStatsTable( level, TRUE )
+		nonParStats = getStatsTable( level, FALSE )
+		r2Stats = getStatsTable( level )
+		metaColColors = getColors( length( reportCols ) )
 		
-		# adjusted non-parametric pvalues
-		adjNonParInputFile = getPipelineFile( buildStatsFileSuffix(parametric=FALSE, adjusted=TRUE, level=otuLevel) )
-		if( doDebug() ) print( paste( "adjNonParInputFile:", adjNonParInputFile ) )
-		nonParStats = read.table( adjNonParInputFile, check.names=FALSE, 
-															header=TRUE, sep="\t", row.names = 1 )
-		
-		# r-squared values
-		rSquareFile = getPipelineFile( buildStatsFileSuffix(parametric=NA, level=otuLevel) )
-		r2Stats = read.table( rSquareFile, check.names=FALSE, 
-													header=TRUE, sep="\t", row.names = 1 )
-		
-		# # select colors for box plots so each box is different even across different metadata fields
-		# numBoxes = sapply(otuTable[,c(binaryCols, nominalCols)], function(x){length(levels(as.factor(x)))})
-		# boxColors = getColors( sum(numBoxes))
-		# metaColColors = split(boxColors, f=as.vector(mapply(x=names(numBoxes), each=numBoxes, rep)))
-		metaColColors = getColorsByCategory()
-		
-		# create empty ouptut file
-		plotsPerOTU = length(reportFields)
-		outputFile = getPath( file.path(getModuleDir(), "output"), paste0(otuLevel, "_OTU_plots.pdf") )
-		if( doDebug() ) print( paste( "Saving plots to", outputFile ) )
+		plotsPerOTU = length( reportCols )
+		outputFile = getPath( file.path(getModuleDir(), "output"), paste0(level, "_OTU_plots.pdf") )
+
 		if (plotsPerOTU < 5 ) {
 			pdf( outputFile, width = 7, height = 7)
 			par( mfrow=c(2, 2) )
@@ -186,57 +131,52 @@ main <- function() {
 		}
 		par(las=1, oma=c(0,1,5,0), mar=c(4, 4, 5, 2), cex=1)
 		
-		# if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of otuTable rows
+		# if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of taxaTable rows
 		cutoffValue = getProperty("r.rareOtuThreshold", 1)
-		if( cutoffValue < 1 ) {
-			cutoffValue = cutoffValue * nrow(otuTable)
-		}
+		if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow(taxaTable)
 		
-		for( otuCol in names(otuTable)[1:lastOtuCol] ) {
-			tryCatch(expr={
-				if( sum( otuTable[,otuCol] > 0 ) >=  cutoffValue ) {
-					par( mfrow = par("mfrow") ) # step to next page, even if the last page is not full
-					position = 1
-					page = 1
-					for( metaCol in reportFields)	{
-						
-						tryCatch(expr={
-						# add a plot
-						if ( metaCol %in% binaryCols | metaCol %in% nominalCols){
-							addBoxPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
-													metaColName=metaCol, metaColVals=otuTable[,metaCol], barColors=metaColColors[[metaCol]])
-						}
-						if ( metaCol %in% numericCols ) {
-							addScatterPlot( otuColName=otuCol, otuColVals=otuTable[,otuCol],
-															metaColName=metaCol, metaColVals=otuTable[,metaCol] )
-						}
-						# add p-values
-						addPvalueNote(parPval = nonParStats[ otuCol, metaCol ], 
-													nonParPval = nonParStats[ otuCol, metaCol ], 
-													r2=r2Stats[ otuCol, metaCol], attName=metaCol)
-						# Add plot title
-						mtext(metaCol, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5) #col=getColor(c(parPval, nonParPval))
-						}, error = function(err) {
-							errorHandlerOtuSubPlots(err, otuLevel=otuLevel, otuCol=otuCol, metaCol=metaCol)
-						})
-						
-						# page title
-						position = position + 1
-						if (position == 2) { 
-							#title(main=otuCol, outer = TRUE, line=2)
-							mtext(otuCol, side=3, outer = TRUE, font=par("font.main"), cex=par("cex.main"), line=2)
-							titlePart2 = ifelse( page == 1, paste( "taxonomic level:", otuLevel), paste("page", page))
-							title(main=titlePart2, outer = TRUE, line=1)
-						}
-						if (position > prod(par("mfrow") ) ) {
-							position = 1
-							page = page + 1
-						}
+		for( taxaCol in 1:lastOtuCol ) {
+			if( sum( taxaTable[,taxaCol] > 0 ) >=  cutoffValue ) {
+				par( mfrow = par("mfrow") ) # step to next page, even if the last page is not full
+				position = 1
+				page = 1
+				taxa = colnames(taxaTable)[taxaCol]
+				taxaVals = taxaTable[,taxaCol]
+				logInfo( paste( "Taxa Name[col#] =", taxa, "[", taxaCol, "]" ), taxaVals ) 
+
+				for( metaCol in reportCols )	{
+					meta = colnames(taxaTable)[metaCol]
+					metaVals = taxaTable[,metaCol]
+					logInfo( paste( "Meta Name[col#] =", meta, "[", metaCol, "]" ), metaVals ) 
+					
+					if( metaCol %in% binaryCols || metaCol %in% nominalCols ) {
+						logInfo( c( "Plot Box-Plot [", taxa, "~", meta, "]" ) )
+						addBoxPlot( taxa, taxaVals, metaVals, "#90F6FF" )
+						logInfo( "Basic plot complete!" )
+					}
+					else if( metaCol %in% numericCols ) {
+						logInfo( c( "Plot Scatter-Plot [", taxa, "~", meta, "]" ) )
+						addScatterPlot( taxa, taxaVals, metaVals )
+						logInfo( "Basic plot complete!" )
+					}
+
+					addPvalueNote( nonParStats[ taxa, meta ], nonParStats[ taxa, meta ], r2Stats[ taxa, meta], meta )
+					mtext(meta, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5)
+					
+					# page title
+					position = position + 1
+					if(position == 2) { 
+						#title(main=taxaCol, outer = TRUE, line=2)
+						mtext(taxaCol, side=3, outer = TRUE, font=par("font.main"), cex=par("cex.main"), line=2)
+						titlePart2 = ifelse( page == 1, paste( "taxonomic level:", level), paste("page", page))
+						title(main=titlePart2, outer = TRUE, line=1)
+					}
+					if(position > prod( par("mfrow") ) ) {
+						position = 1
+						page = page + 1
 					}
 				}
-			}, error = function(err) {
-				errorHandlerOtuPlots(err, otuLevel=otuLevel, otuCol=otuCol)
-			})
+			}
 		}
 		dev.off()
 		if( doDebug() ) sink()

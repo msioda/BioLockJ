@@ -15,9 +15,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
@@ -36,7 +34,7 @@ public class LogUtil
 	 */
 	public static void syncModuleLogs( final ScriptModule module ) throws Exception
 	{
-		if( module instanceof JavaModule && Config.getBoolean( JavaModule.JAVA_RUN_AS_SCRIPT ) )
+		if( module instanceof JavaModule && Config.getBoolean( BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT ) )
 		{
 			merge( cacheLog( getModuleLog( module ) ) );
 		}
@@ -82,17 +80,20 @@ public class LogUtil
 
 	private static File getModuleLog( final BioModule module ) throws Exception
 	{
-		return new File( ModuleUtil.getModuleRootDir( module ) + File.separator + BioModule.TEMP_DIR + File.separator
-				+ module.getClass().getSimpleName() + BioLockJ.LOG_EXT );
+		return new File( module.getTempDir().getAbsolutePath() + File.separator + module.getClass().getSimpleName()
+				+ Constants.LOG_EXT );
 	}
 
 	private static List<String> getProfile()
 	{
 		if( profile.isEmpty() )
 		{
+			String userProfile = "Config property [" + USER_PROFILE
+					+ "] is undefined.  Bash users typically use: ~/.bash_profile";
 			try
 			{
-				final File bashProfile = new File( Config.getSystemFilePath( "~/.bash_profile" ) );
+				userProfile = Config.requireString( USER_PROFILE );
+				final File bashProfile = new File( Config.getSystemFilePath( userProfile ) );
 				if( bashProfile.exists() )
 				{
 					profile.addAll( cacheLog( bashProfile ) );
@@ -100,7 +101,7 @@ public class LogUtil
 			}
 			catch( final Exception ex )
 			{
-				Log.warn( LogUtil.class, "Unable to find ~/.bash_profile" );
+				Log.warn( LogUtil.class, "Unable to find " + userProfile );
 			}
 		}
 		return profile;
@@ -132,6 +133,12 @@ public class LogUtil
 		}
 		FileUtils.copyFile( tempLog, Log.getFile() );
 	}
+
+	/**
+	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
+	 * Bash users typically use ~/.bash_profile.
+	 */
+	public static final String USER_PROFILE = "project.userProfile";
 
 	private static final List<String> profile = new ArrayList<>();
 }

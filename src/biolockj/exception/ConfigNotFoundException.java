@@ -23,7 +23,7 @@ public class ConfigNotFoundException extends ConfigException
 	 */
 	public ConfigNotFoundException( final String propertyName )
 	{
-		super( propertyName, "Not Found" );
+		super( propertyName );
 	}
 
 	private static final long serialVersionUID = 1677388490031911310L;

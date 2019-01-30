@@ -14,6 +14,7 @@ package biolockj.node.r16s;
 import java.util.StringTokenizer;
 import biolockj.BioLockJ;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.module.implicit.parser.r16s.RdpParser;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
@@ -70,7 +71,7 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 			return;
 		}
 
-		final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+		final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 		setSampleId( id );
 		setLine( line );
 		setCount( 1 );

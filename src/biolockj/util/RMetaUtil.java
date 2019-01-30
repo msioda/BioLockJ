@@ -11,7 +11,10 @@
  */
 package biolockj.util;
 
+import java.io.File;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.Config;
 import biolockj.Log;
@@ -21,7 +24,7 @@ import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.module.report.AddMetaToTaxonomyTables;
+import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -46,16 +49,12 @@ public final class RMetaUtil
 	 * </ul>
 	 * <p>
 	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_READS} = {@value biolockj.Config#TRUE}, add the
-	 * last read count field in the metadata file as a numeric field:
-	 * <ul>
-	 * <li>{@value biolockj.module.implicit.RegisterNumReads#NUM_READS}
-	 * <li>{@value biolockj.module.seq.TrimPrimers#NUM_TRIMMED_READS}
-	 * <li>{@value biolockj.module.seq.SeqFileValidator#NUM_VALID_READS}
-	 * <li>{@value biolockj.module.seq.PreRarefier#NUM_RAREFIED_READS}
-	 * </ul>
+	 * last read count field in the metadata file as a numeric field store in {link
+	 * biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}
+	 * 
 	 * <p>
 	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_HITS} = {@value biolockj.Config#TRUE}, add the
-	 * {@value biolockj.module.implicit.parser.ParserModuleImpl#NUM_OTUS} field as a numeric field.
+	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getOtuCountField()} field as a numeric field.
 	 * <p>
 	 * Perform validations:
 	 * <ul>
@@ -179,15 +178,15 @@ public final class RMetaUtil
 		}
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, AddMetaToTaxonomyTables.HIT_RATIO ) )
+				&& isValidNumericField( metaFields, AddMetadataToTaxaTables.HIT_RATIO ) )
 		{
-			rScriptFields.add( AddMetaToTaxonomyTables.HIT_RATIO );
-			numericFields.add( AddMetaToTaxonomyTables.HIT_RATIO );
+			rScriptFields.add( AddMetadataToTaxaTables.HIT_RATIO );
+			numericFields.add( AddMetadataToTaxaTables.HIT_RATIO );
 		}
 		else
 		{
-			rScriptFields.remove( AddMetaToTaxonomyTables.HIT_RATIO );
-			numericFields.remove( AddMetaToTaxonomyTables.HIT_RATIO );
+			rScriptFields.remove( AddMetadataToTaxaTables.HIT_RATIO );
+			numericFields.remove( AddMetadataToTaxaTables.HIT_RATIO );
 		}
 
 		if( reportAllFields() && !RuntimeParamUtil.isDirectMode() )
@@ -199,8 +198,8 @@ public final class RMetaUtil
 
 		for( final String field: rScriptFields )
 		{
-			final Set<String> data = getUniqueValues( field );
-			final int count = countUniqueValues( field );
+			final Set<String> data = MetaUtil.getUniqueFieldValues( field, true );
+			final int count = data.size();
 			if( !RuntimeParamUtil.isDirectMode() )
 			{
 				Log.info( RMetaUtil.class, "Metadata field [" + field + "] has " + count + " unique non-null values." );
@@ -329,7 +328,7 @@ public final class RMetaUtil
 		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
 		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
 
-		if( numCols != null && numCols >= numMetaCols )
+		if( numCols != null && numCols == numMetaCols )
 		{
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
 			return props;
@@ -371,6 +370,47 @@ public final class RMetaUtil
 	}
 
 	/**
+	 * Check module for metadata merged output in hte module output directory.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if module contains metaMerged.tsv files
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isMetaMergeModule( final BioModule module ) throws Exception
+	{
+		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+
+		if( files.isEmpty() )
+		{
+			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
+		}
+
+		for( final File f: files )
+		{
+			if( isMetaMergeTable( f ) )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Method analyzes the file name to determine if the file could be output from the BioModule
+	 * {@link biolockj.module.report.taxa.AddMetadataToTaxaTables}
+	 * 
+	 * @param file Ambiguous file
+	 * @return TRUE if named like a meta merged file
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isMetaMergeTable( final File file ) throws Exception
+	{
+		return file.getName().endsWith( AddMetadataToTaxaTables.META_MERGED );
+	}
+
+	/**
 	 * The override property: {@link biolockj.Config}.{@value #R_REPORT_FIELDS} can be used to list the metadata
 	 * reportable fields for use in the R modules. If undefined, report all fields.
 	 * 
@@ -399,18 +439,6 @@ public final class RMetaUtil
 						+ "] not found in metadata: " + MetaUtil.getFile().getAbsolutePath() );
 			}
 		}
-	}
-
-	private static int countUniqueValues( final String att ) throws Exception
-	{
-		return getUniqueValues( att ).size();
-	}
-
-	private static Set<String> getUniqueValues( final String att ) throws Exception
-	{
-		final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( att ) );
-		vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-		return vals;
 	}
 
 	private static boolean hasQiimeMapping() throws Exception
@@ -450,7 +478,7 @@ public final class RMetaUtil
 	{
 		if( field != null && metaFields.contains( field ) )
 		{
-			final int count = countUniqueValues( field );
+			final int count = MetaUtil.getUniqueFieldValues( field, true ).size();
 			if( count > 1 )
 			{
 				return true;
@@ -486,7 +514,7 @@ public final class RMetaUtil
 	/**
 	 * Name of R script variable with metadata column count
 	 */
-	protected static final String NUM_META_COLS = "internal.numMetaCols";
+	protected static final String NUM_META_COLS = "R_internal.numMetaCols";
 
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_EXCLUDE_FIELDS}<br>
@@ -512,11 +540,11 @@ public final class RMetaUtil
 	 */
 	protected static final String R_REPORT_FIELDS = "r.reportFields";
 
-	private static final String BINARY_FIELDS = "internal.binaryFields";
+	private static final String BINARY_FIELDS = "R_internal.binaryFields";
 	private static final Set<String> binaryFields = new TreeSet<>();
 	private static final Set<String> mdsFields = new TreeSet<>();
-	private static final String NOMINAL_FIELDS = "internal.nominalFields";
+	private static final String NOMINAL_FIELDS = "R_internal.nominalFields";
 	private static final Set<String> nominalFields = new TreeSet<>();
-	private static final String NUMERIC_FIELDS = "internal.numericFields";
+	private static final String NUMERIC_FIELDS = "R_internal.numericFields";
 	private static final Set<String> numericFields = new TreeSet<>();
 }

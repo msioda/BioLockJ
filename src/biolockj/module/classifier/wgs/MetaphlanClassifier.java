@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.SeqUtil;
 import biolockj.util.TaxaUtil;
 
@@ -84,8 +85,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		getDefaultSwitches();
-		formatDerivedSwitches();
+		getParams();
 	}
 
 	/**
@@ -96,123 +96,78 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_METAPHLAN + "() {" );
-		lines.add( Config.getExe( EXE_PYTHON ) + " " + getClassifierExe() + getRuntimeParams()
-				+ " $1 --bowtie2out $2 > $3" );
+		lines.add( Config.getExe( EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
+				+ "$1 --bowtie2out $2 > $3" );
 		lines.add( "}" );
 		return lines;
 	}
 
 	/**
-	 * Metaphlan queries require standard parameters: --input_type, --nproc, -t
-	 *
-	 * @return Metaphlan command line parameters: --input_type, --nproc, -t
+	 * Metaphlan queries require standard parameters: --input_type, --nproc, -t<br>
+	 * Verify no invalid runtime params are passed and add rankSwitch if needed.<br>
+	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} if
+	 * only one taxonomy level is to be reported, otherwise report all levels.
+	 * 
+	 * @return runtime parameters
 	 * @throws Exception if errors occur
 	 */
-	protected Map<String, String> getMetaphlanDerivedSwitches() throws Exception
-	{
-		final Map<String, String> metaphlanSwitches = new HashMap<>();
-		metaphlanSwitches.put( "--input_type", Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
-		metaphlanSwitches.put( "--nproc", getNumThreads().toString() );
-		metaphlanSwitches.put( "-t", "rel_ab_w_read_stats" );
-		return metaphlanSwitches;
-	}
-
-	/**
-	 * Add getMetaphlanHardCodedSwitches() to switches value.
-	 */
-	private String formatDerivedSwitches() throws Exception
-	{
-		String switches = "";
-		final Map<String, String> hardCodedSwitches = getMetaphlanDerivedSwitches();
-		for( final String key: hardCodedSwitches.keySet() )
-		{
-			String val = hardCodedSwitches.get( key ).trim();
-			if( val.length() > 0 )
-			{
-				val = " " + val;
-			}
-			switches += key + val + " ";
-		}
-
-		return switches;
-	}
-
-	private String getDefaultSwitches() throws Exception
+	protected String getParams() throws Exception
 	{
 		if( defaultSwitches == null )
 		{
-			defaultSwitches = getClassifierParams();
+			final String params = BioLockJUtil.join( getClassifierParams() );
 
-			if( defaultSwitches.indexOf( "--input_type " ) > -1 )
+			if( params.indexOf( "--input_type " ) > -1 )
 			{
 				throw new Exception(
 						"Invalid classifier option (--input_type) found in property(" + EXE_CLASSIFIER_PARAMS
 								+ "). BioLockJ derives this value by examinging one of the input files." );
 			}
-			if( defaultSwitches.indexOf( "--nproc " ) > -1 )
+			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--nproc) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ derives this value from property: " + getNumThreadsParam() );
+				throw new Exception( "Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
+						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: " + NUM_THREADS );
 			}
-			if( defaultSwitches.indexOf( "--bowtie2out " ) > -1 )
+			if( params.indexOf( "--bowtie2out " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--bowtie2out) found in property("
 						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ outputs bowtie2out files to MetaphlanClassifier/temp." );
 			}
-			if( defaultSwitches.indexOf( "-t rel_ab_w_read_stats " ) > -1 )
+			if( params.indexOf( "-t rel_ab_w_read_stats " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (-t rel_ab_w_read_stats). BioLockJ hard codes this "
 						+ "option for MetaPhlAn so must not be included in the property file." );
 			}
-			if( defaultSwitches.indexOf( "--tax_lev " ) > -1 )
+			if( params.indexOf( "--tax_lev " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + EXE_CLASSIFIER_PARAMS
 						+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 			}
-			if( defaultSwitches.indexOf( "-s " ) > -1 )
+			if( params.indexOf( "-s " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (-s) found in property(" + EXE_CLASSIFIER_PARAMS
 						+ "). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
 			}
-			if( defaultSwitches.indexOf( "-o " ) > -1 )
+			if( params.indexOf( "-o " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (-o) found in property(" + EXE_CLASSIFIER_PARAMS
 						+ "). BioLockJ outputs results to: " + getOutputDir().getAbsolutePath() + File.separator );
 			}
 
-			setRankSwitch();
-			formatDerivedSwitches();
-		}
+			defaultSwitches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + "-t rel_ab_w_read_stats ";
 
-		if( defaultSwitches == null )
-		{
-			defaultSwitches = "";
+			if( TaxaUtil.getTaxaLevels().size() == 1 )
+			{
+				defaultSwitches += "--tax_lev " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
+			}
 		}
 
 		return defaultSwitches;
 	}
 
-	private String getRuntimeParams() throws Exception
+	private String getWorkerFunctionParams() throws Exception
 	{
-		String switches = getDefaultSwitches();
-		if( !switches.endsWith( " " ) )
-		{
-			switches += " ";
-		}
-
-		return switches + formatDerivedSwitches();
-	}
-
-	/**
-	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} if only
-	 * one taxonomy level is to be reported, otherwise report all levels.
-	 */
-	private void setRankSwitch()
-	{
-		if( TaxaUtil.getTaxaLevels().size() == 1 )
-		{
-			defaultSwitches += "--tax_lev " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
-		}
+		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
 	}
 
 	private String defaultSwitches = null;
@@ -244,6 +199,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	 */
 	protected static final String FUNCTION_RUN_METAPHLAN = "runMetaphlan";
 
+	private static final String INPUT_TYPE_PARAM = "--input_type ";
 	private static final String METAPHLAN_CLASS = "c";
 	private static final String METAPHLAN_DOMAIN = "k";
 	private static final String METAPHLAN_FAMILY = "f";
@@ -251,4 +207,6 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	private static final String METAPHLAN_ORDER = "o";
 	private static final String METAPHLAN_PHYLUM = "p";
 	private static final String METAPHLAN_SPECIES = "s";
+	private static final String NUM_THREADS_PARAM = "--nproc";
+
 }

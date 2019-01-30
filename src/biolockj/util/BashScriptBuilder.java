@@ -18,7 +18,6 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.classifier.ClassifierModuleImpl;
 
 /**
  * This utility class generates the bash script files using the lines provided and {@link biolockj.Config} script
@@ -322,8 +321,7 @@ public class BashScriptBuilder
 	 * <ol>
 	 * <li>Require property {@value #SCRIPT_JOB_HEADER}
 	 * <li>Require property {@value #CLUSTER_BATCH_COMMAND} sets #cores param (ppn or procs) =
-	 * {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or
-	 * {@value biolockj.module.ScriptModule#CLASSIFIER_NUM_THREADS}
+	 * {@link biolockj.module.ScriptModule#NUM_THREADS} or
 	 * </ol>
 	 * <p>
 	 * Current format #1 (2018) for UNCC HPC Cluster: #PBS -l procs=1,mem=8GB,walltime=8:00:00<br>
@@ -500,32 +498,76 @@ public class BashScriptBuilder
 
 	private static String getJobHeader( final ScriptModule module ) throws Exception
 	{
-		return isClassifier( module ) && Config.getString( CLASSIFIER_JOB_HEADER ) != null
-				? Config.getString( CLASSIFIER_JOB_HEADER )
-				: Config.requireString( SCRIPT_JOB_HEADER );
+		final String header = getModuleHeader( module );
+		if( header != null )
+		{
+			Log.info( BashScriptBuilder.class, "Found module specific job header: " + header );
+			return header;
+		}
+		return Config.requireString( SCRIPT_JOB_HEADER );
 	}
 
 	private static String getJobHeaderParam( final ScriptModule module ) throws Exception
 	{
-		return isClassifier( module ) && Config.getString( CLASSIFIER_JOB_HEADER ) != null ? CLASSIFIER_JOB_HEADER
-				: SCRIPT_JOB_HEADER;
+		final String header = getModuleHeader( module );
+		if( header != null )
+		{
+			return getModuleHeaderPropertyName( module );
+		}
+
+		return SCRIPT_JOB_HEADER;
 	}
 
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
 	{
 		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
-				+ scriptModule.getModuleDir().getName() + BioLockJ.SH_EXT ).getAbsolutePath();
+				+ scriptModule.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
+	}
+
+	private static String getModuleHeader( final ScriptModule module )
+	{
+		try
+		{
+			return Config.getString( getModuleHeaderPropertyName( module ) );
+		}
+		catch( final Exception ex )
+		{
+			// FAIL SILENTLY
+			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+		}
+		return null;
+	}
+
+	private static String getModuleHeaderPropertyName( final ScriptModule module )
+	{
+		return module.getClass().getSimpleName() + JOB_HEADER;
+	}
+
+	private static Integer getModuleNumThreads( final ScriptModule module )
+	{
+		try
+		{
+			return Config.getPositiveInteger( module.getClass().getSimpleName() + ScriptModule.NUM_THREADS );
+		}
+		catch( final Exception ex )
+		{
+			// FAIL SILENTLY
+			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+		}
+		return null;
 	}
 
 	private static Integer getNumThreads( final ScriptModule module ) throws Exception
 	{
-		return isClassifier( module ) ? ClassifierModuleImpl.getNumThreads()
-				: Config.requirePositiveInteger( ScriptModule.SCRIPT_NUM_THREADS );
+		final Integer moduleThreads = getModuleNumThreads( module );
+		return moduleThreads == null ? Config.requirePositiveInteger( ScriptModule.SCRIPT_NUM_THREADS ): moduleThreads;
 	}
 
 	private static String getNumThreadsParam( final ScriptModule module ) throws Exception
 	{
-		return isClassifier( module ) ? ClassifierModuleImpl.getNumThreadsParam(): ScriptModule.SCRIPT_NUM_THREADS;
+		final Integer moduleThreads = getModuleNumThreads( module );
+		return moduleThreads == null ? ScriptModule.SCRIPT_NUM_THREADS
+				: module.getClass().getSimpleName() + ScriptModule.NUM_THREADS;
 	}
 
 	private static String getWorkerId( final int scriptNum, final int digits )
@@ -558,12 +600,6 @@ public class BashScriptBuilder
 		}
 
 		return false;
-	}
-
-	private static boolean isClassifier( final ScriptModule module ) throws Exception
-	{
-		return module.getClass().getPackage().getName().startsWith( "biolockj.module.classifier" )
-				|| module.getClass().getName().toLowerCase().endsWith( "classifier" );
 	}
 
 	/**
@@ -613,11 +649,10 @@ public class BashScriptBuilder
 	}
 
 	/**
-	 * {@link biolockj.Config} property to use in cluster jobHeader .<br>
-	 * : {@value #CLASSIFIER_JOB_HEADER}<br>
-	 * Header written at top of QIIME OTU picking worker scripts
+	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
+	 * {@value biolockj.Config#TRUE} will run Java module as a script instead of running on the head node.
 	 */
-	protected static final String CLASSIFIER_JOB_HEADER = "cluster.classifierHeader";
+	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScriptModule";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #CLUSTER_BATCH_COMMAND}<br>
@@ -639,8 +674,7 @@ public class BashScriptBuilder
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #CLUSTER_VALIDATE_PARAMS}<br>
 	 * If set to {@value biolockj.Config#TRUE}, validate {@value #SCRIPT_JOB_HEADER} param cluster number of processors
-	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or
-	 * {@value biolockj.module.ScriptModule#CLASSIFIER_NUM_THREADS}
+	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or {@link biolockj.module.ScriptModule#NUM_THREADS}
 	 */
 	protected static final String CLUSTER_VALIDATE_PARAMS = "cluster.validateParams";
 
@@ -661,6 +695,7 @@ public class BashScriptBuilder
 	protected static final String SCRIPT_JOB_HEADER = "cluster.jobHeader";
 
 	private static final String INDENT = "    ";
+	private static final String JOB_HEADER = ".jobHeader";
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final List<File> workerScripts = new ArrayList<>();
 

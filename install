@@ -1,22 +1,26 @@
 #!/bin/bash
-##################################################################################
-#                                                                                #
-#  This script will call blj_config from ~/.bash_profile                         #
-#  If profile exists: backup to ~/.bash_profile~, else create ~/.bash_profile.   #
-#                                                                                #
-##################################################################################
-bashProfile=~/.bash_profile
+###################################################################################
+##                                                                               ##
+##  This script update user profile to run $BLJ/script/blj_config.               ##
+##  If using bash, $blj_profile=~/.bash_profile (set on 11 as the default val).  ##
+##  If using another env, like zsh, update blj_profile value on line 11 below.   ##
+##  If profile exists: backup as $blj_profile~, else create a new $blj_profile.  ##
+##                                                                               ##
+###################################################################################
+
+export blj_profile=~/.bash_profile
+
 bljDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ ! -f "$bashProfile" ]; then
-	printf '%s\n' '#BioLockJ generated bash profile' > $bashProfile
-	echo "    Created profile: $bashProfile"
+if [ ! -f "$blj_profile" ]; then
+	printf '%s\n' '#BioLockJ generated bash profile' > $blj_profile
+	echo "    Created profile: $blj_profile"
 else
-	cp $bashProfile $bashProfile~
-	echo "    Saved backup:  $bashProfile~"
+	cp $blj_profile $blj_profile~
+	echo "    Saved backup:  $blj_profile~"
 fi
 
-echo '[ -x "$bljDir/script/blj_config" ] && . $bljDir/script/blj_config' >> $bashProfile
-source $bashProfile
-echo "    Saved profile:  $bashProfile"
+echo '[ -x "$bljDir/script/blj_config" ] && . $bljDir/script/blj_config' >> $blj_profile
+source $blj_profile
+echo "    Saved profile:  $blj_profile"
 echo "BioLockJ installation complete!"

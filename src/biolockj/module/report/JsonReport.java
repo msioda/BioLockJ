@@ -3,30 +3,35 @@ package biolockj.module.report;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.r.CalculateStats;
+import biolockj.module.report.otu.CompileOtuCounts;
 import biolockj.node.JsonNode;
 import biolockj.util.*;
 
 /**
- * This BioModule is used to build a JSON file (summary.json) from pipeline OTU-metadata tables.
+ * This BioModule is used to build a JSON file (summary.json) compiled from all OTUs in the dataset.
  */
 public class JsonReport extends JavaModuleImpl implements JavaModule
 {
 
 	/**
-	 * Module prerequisite: {@link biolockj.module.report.CompileOtuCounts}
+	 * Module prerequisite: {@link biolockj.module.report.otu.CompileOtuCounts}
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		preReqs.add( CompileOtuCounts.class );
+
+		final List<String> preReqs = new ArrayList<>();
+		if( !pipelineInputIsOtuSummaryFile() )
+		{
+			preReqs.add( CompileOtuCounts.class.getName() );
+		}
+
+		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
 
@@ -36,22 +41,10 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		return super.getSummary() + summary;
 	}
 
-	/**
-	 * Return TRUE if {biolockj.module.r.CalculateStats} is part of the pipeline.
-	 * 
-	 * @return boolean
-	 * @throws Exception if errors occur
-	 */
-	public boolean hasStats() throws Exception
-	{
-		return ModuleUtil.moduleExists( CalculateStats.class.getName() )
-				&& ModuleUtil.isComplete( ModuleUtil.getModule( CalculateStats.class.getName() ) );
-	}
-
 	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	public boolean isValidInputModule( final BioModule module ) throws Exception
 	{
-		return previousModule instanceof CompileOtuCounts;
+		return module instanceof CompileOtuCounts;
 	}
 
 	/**
@@ -61,10 +54,9 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		verifyInput();
 		final JsonNode root = new JsonNode( ROOT_NODE, 0, null, null );
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = buildJsonMap( root );
-		root.addCount( totalOtuCount );
+		root.addCount( totalTaxaCount );
 		if( hasStats() )
 		{
 			summary += "with summary statistics";
@@ -76,6 +68,13 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		summary = "Report generated " + numberOfNodes + " nodes " + summary;
 	}
 
+	/**
+	 * Build JsonMap from the {@link biolockj.module.report.otu.CompileOtuCounts} output directory.
+	 * 
+	 * @param rootNode Root JsonNode is top of the hierarchy
+	 * @return Map(level, Set(JsonNode)) of nodes by level
+	 * @throws Exception if errors occur
+	 */
 	protected LinkedHashMap<String, TreeSet<JsonNode>> buildJsonMap( final JsonNode rootNode ) throws Exception
 	{
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = initJsonMap();
@@ -107,10 +106,30 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				parent = jsonNode;
 			}
 
-			totalOtuCount += otuCount;
+			totalTaxaCount += otuCount;
 		}
 
 		return jsonMap;
+	}
+
+	/**
+	 * Check pipeline input to see if OTU summary file is the only pipeline input file.
+	 * 
+	 * @return TRUE if pipeline input
+	 * @throws Exception if errors occur
+	 */
+	protected boolean pipelineInputIsOtuSummaryFile() throws Exception
+	{
+		if( BioLockJUtil.getPipelineInputFiles().size() == 1 )
+		{
+			final File inFile = BioLockJUtil.getPipelineInputFiles().iterator().next();
+			if( inFile.getName().endsWith( getInputFileSuffix() ) )
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -119,14 +138,15 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode))
 	 * @param stats Stats file
 	 * @param level {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @param label Label to use in node statistics
 	 * @return LinkedHashMap(level,Set(JsonNode))
 	 * @throws Exception if errors occur
 	 */
 	protected LinkedHashMap<String, TreeSet<JsonNode>> updateNodeStats(
-			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final File stats, final String level )
-			throws Exception
+			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final File stats, final String level,
+			final String label ) throws Exception
 	{
-		Log.info( getClass(), "Adding stats from: " + stats.getAbsolutePath() );
+		Log.info( getClass(), "Adding " + label + " stats from: " + stats.getAbsolutePath() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( stats );
 		try
 		{
@@ -147,9 +167,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 						final String token = st.nextToken();
 						if( NumberUtils.isNumber( token ) )
 						{
-							final double val = Double.parseDouble( token );
-							final String statName = getStatsType( stats ) + "_" + columnNames.get( ++i );
-							jsonNode.updateStats( statName, val );
+							jsonNode.updateStats( label + "_" + columnNames.get( ++i ), Double.parseDouble( token ) );
 						}
 					}
 				}
@@ -171,15 +189,16 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		return jsonMap;
 	}
 
-	protected void verifyInput() throws Exception
-	{
-		if( getInputFiles().size() != 1 )
-		{
-			throw new Exception( CompileOtuCounts.class.getName() + " should have exactly 1 output file, but found "
-					+ getInputFiles().size() );
-		}
-	}
-
+	/**
+	 * Build lines of text output for the Json Report file.
+	 * 
+	 * @param node JsonNode is the parent node
+	 * @param hasPeer boolean is true if node has peer nodes
+	 * @param jsonMap LinkedHashMap(level,Set(JsonNode)) all nodes by level
+	 * @param nodeLevel {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @return Json Report lines
+	 * @throws Exception if errors occur
+	 */
 	protected String writeNodeAndChildren( final JsonNode node, final boolean hasPeer,
 			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final int nodeLevel ) throws Exception
 	{
@@ -192,7 +211,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 		final StringBuffer sb = new StringBuffer();
 		sb.append( "{" + RETURN );
-		sb.append( "\"" + OTU_NAME + "\": \"" + node.getTaxa() + "\"," + RETURN );
+		sb.append( "\"" + TAXA + "\": \"" + node.getTaxa() + "\"," + RETURN );
 		sb.append( "\"" + OTU_LEVEL + "\": \"" + taxaLevel + "\"," + RETURN );
 		sb.append( "\"" + NUM_SEQS + "\": " + node.getCount()
 				+ ( node.getStats().isEmpty() && childNodes.isEmpty() ? "": "," ) + RETURN );
@@ -204,7 +223,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				final String stat = stats.next();
 				final String name = stat.startsWith( CalculateStats.R_SQUARED_VALS ) ? stat: prefix + "(" + stat + ")";
 				sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
-				sb.append( ( stats.hasNext() || childNodes.isEmpty() ? ",": "" ) + RETURN );
+				sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
 			}
 		}
 
@@ -234,12 +253,13 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		Log.info( getClass(), "Adding stats to JSON nodes..." );
 		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
-			final File[] statReports = getStatReports( level );
-			for( final File stats: statReports )
+			final Map<String, File> statReports = getStatReports( level );
+			for( final String name: statReports.keySet() )
 			{
-				if( stats != null )
+				final File file = statReports.get( name );
+				if( file != null )
 				{
-					jsonMap = updateNodeStats( jsonMap, stats, level );
+					jsonMap = updateNodeStats( jsonMap, file, level, name );
 				}
 			}
 		}
@@ -266,6 +286,11 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			}
 		}
 		return childNodes;
+	}
+
+	private String getInputFileSuffix() throws Exception
+	{
+		return CompileOtuCounts.SUMMARY + OtuUtil.OTU_COUNT + TSV_EXT;
 	}
 
 	private JsonNode getJsonNode( final String otu, final Set<JsonNode> jsonNodes, final String level )
@@ -302,15 +327,20 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * @return File log normalized report
 	 * @throws Exception if unable to obtain the report due to propagated exceptions
 	 */
-	private File[] getStatReports( final String level ) throws Exception
+	private Map<String, File> getStatReports( final String level ) throws Exception
 	{
-		final File[] statReports = new File[ 5 ];
-		statReports[ PAR_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_PAR );
-		statReports[ NON_PAR_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_NP );
-		statReports[ ADJ_PAR_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_PAR_ADJ );
-		statReports[ ADJ_NON_PAR_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.P_VALS_NP_ADJ );
-		statReports[ R2_PVAL_INDEX ] = CalculateStats.getStatsFile( level, CalculateStats.R_SQUARED_VALS );
+		final Map<String, File> statReports = new LinkedHashMap<>();
+		statReports.put( "parPval", CalculateStats.getStatsFile( this, level, true, false ) );
+		statReports.put( "nonParPval", CalculateStats.getStatsFile( this, level, false, false ) );
+		statReports.put( "adjParPval", CalculateStats.getStatsFile( this, level, true, true ) );
+		statReports.put( "adjNonParPval", CalculateStats.getStatsFile( this, level, false, true ) );
+		statReports.put( "rSquared", CalculateStats.getStatsFile( this, level, false, false ) );
 		return statReports;
+	}
+
+	private boolean hasStats() throws Exception
+	{
+		return ModuleUtil.getModule( this, CalculateStats.class.getName(), false ) != null;
 	}
 
 	private LinkedHashMap<String, TreeSet<JsonNode>> initJsonMap() throws Exception
@@ -348,7 +378,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				int i = 0;
 				while( i++ < indentCount )
 				{
-					writer.write( BioLockJ.TAB_DELIM );
+					writer.write( Constants.TAB_DELIM );
 				}
 
 				writer.write( line + BioLockJ.RETURN );
@@ -369,45 +399,14 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	}
 
-	private static String getStatsType( final File file ) throws Exception
-	{
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR + TSV_EXT ) )
-		{
-			return CalculateStats.P_VALS_PAR;
-		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP + TSV_EXT ) )
-		{
-			return CalculateStats.P_VALS_NP;
-		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_PAR_ADJ + TSV_EXT ) )
-		{
-			return CalculateStats.P_VALS_PAR_ADJ;
-		}
-		if( file.getName().endsWith( CalculateStats.P_VALS_NP_ADJ + TSV_EXT ) )
-		{
-			return CalculateStats.P_VALS_NP_ADJ;
-		}
-		if( file.getName().endsWith( CalculateStats.R_SQUARED_VALS + TSV_EXT ) )
-		{
-			return CalculateStats.R_SQUARED_VALS;
-		}
-
-		throw new Exception( "Invalid Stats file: " + file.getAbsolutePath() );
-	}
-
 	private int numberOfNodes = 1; // root always created
 
 	private String summary = "";
-	private int totalOtuCount = 0;
-	private static final int ADJ_NON_PAR_PVAL_INDEX = 3;
-	private static final int ADJ_PAR_PVAL_INDEX = 2;
+	private int totalTaxaCount = 0;
 	private static final String CHILDREN = "children";
 	private static final String JSON_SUMMARY = "otuSummary.json";
-	private static final int NON_PAR_PVAL_INDEX = 1;
 	private static final String NUM_SEQS = "numSeqs";
 	private static final String OTU_LEVEL = "taxaLevel";
-	private static final String OTU_NAME = "otu";
-	private static final int PAR_PVAL_INDEX = 0;
-	private static final int R2_PVAL_INDEX = 4;
 	private static final String ROOT_NODE = "root";
+	private static final String TAXA = "taxa";
 }

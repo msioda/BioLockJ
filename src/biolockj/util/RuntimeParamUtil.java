@@ -16,8 +16,6 @@ import java.util.*;
 import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
 
 /**
  * This utility processes the application runtime parameters passed to BioLockJ.
@@ -83,7 +81,7 @@ public class RuntimeParamUtil
 	 * 
 	 * @return Direct module BioModule class name
 	 */
-	public static String getDirectModule()
+	public static String getDirectModuleDir()
 	{
 		return params.get( DIRECT_FLAG );
 	}
@@ -98,21 +96,6 @@ public class RuntimeParamUtil
 	{
 		return params.get( DIRECT_PIPELINE_DIR ) == null ? null
 				: new File( Config.getSystemFilePath( params.get( DIRECT_PIPELINE_DIR ) ) );
-	}
-
-	/**
-	 * Returns the name of the Docker container running the current module.
-	 * 
-	 * @return Name of the Docker container
-	 */
-	public static String getDockerContainerName()
-	{
-		if( isDirectMode() )
-		{
-			return getName( getDirectModule() );
-		}
-
-		return DockerUtil.MANAGER;
 	}
 
 	/**
@@ -148,7 +131,7 @@ public class RuntimeParamUtil
 	/**
 	 * Runtime property getter for Docker host pipeline dir
 	 * 
-	 * @return Host {@value biolockj.Config#INTERNAL_PIPELINE_DIR} directory
+	 * @return Host {@value biolockj.Config#PROJECT_PIPELINE_DIR} directory
 	 */
 	public static String getDockerHostPipelineDir()
 	{
@@ -216,7 +199,7 @@ public class RuntimeParamUtil
 	 */
 	public static boolean isDirectMode()
 	{
-		return getDirectModule() != null;
+		return getDirectModuleDir() != null;
 	}
 
 	/**
@@ -284,7 +267,7 @@ public class RuntimeParamUtil
 		}
 
 		parseParams( simplifyArgs( args ) );
-		
+
 		if( isDockerMode() )
 		{
 			reassignDockerConfig();
@@ -300,22 +283,20 @@ public class RuntimeParamUtil
 			assignRestartConfig();
 		}
 
-		
-
 		validateParams();
 	}
 
 	private static void assignDirectPipelineDir() throws Exception
 	{
 		Log.info( RuntimeParamUtil.class,
-				"Separating pipeline dir name and module name from: \"" + DIRECT_FLAG + "\" " + getDirectModule() );
-		final StringTokenizer st = new StringTokenizer( getDirectModule(), ":" );
+				"Separating pipeline dir name and module name from: \"" + DIRECT_FLAG + "\" " + getDirectModuleDir() );
+		final StringTokenizer st = new StringTokenizer( getDirectModuleDir(), ":" );
 		if( st.countTokens() != 2 )
 		{
 			throw new Exception(
-					"Direct module param format requires pipelineDir name & BioModule class name to be separated"
-							+ " with a colon \":\" which should appear exactly once but was found " + st.countTokens()
-							+ " times in the param [ " + getDirectModule() + " ]" );
+					"Direct module param format requires pipelineDir name & BioModule directory name are separated"
+							+ " by a colon \":\" which should appear exactly once but was found " + st.countTokens()
+							+ " times in the param [ " + getDirectModuleDir() + " ]" );
 		}
 
 		final String pipelineName = st.nextToken();
@@ -354,14 +335,6 @@ public class RuntimeParamUtil
 		}
 	}
 
-	private static String getName( final String javaClassName )
-	{
-		final int len = javaClassName.lastIndexOf( "." ) + 1;
-		return javaClassName.lastIndexOf( "." ) > 0
-				? len < javaClassName.length() ? javaClassName.substring( len ): null
-				: null;
-	}
-
 	private static String getRestartConfigFile() throws Exception
 	{
 		if( getRestartDir() != null && getRestartDir().isDirectory() )
@@ -372,7 +345,7 @@ public class RuntimeParamUtil
 			{
 				for( final File f: getRestartDir().listFiles() )
 				{
-					if( f.getName().startsWith( BioLockJUtil.MASTER_PREFIX ) )
+					if( f.getName().startsWith( PropUtil.MASTER_PREFIX ) )
 					{
 						return f.getAbsolutePath();
 					}
@@ -543,22 +516,11 @@ public class RuntimeParamUtil
 						+ INPUT_DIR_FLAG + RETURN + RETURN + "PROGRAM TERMINATED!" );
 			}
 
-			if( isDirectMode() && !( Class.forName( getDirectModule() ).newInstance() instanceof BioModule ) )
-			{
-				throw new Exception( "Docker direct runtime parameter module does not exist: " + getDirectModule()
-						+ RETURN + RETURN + "PROGRAM TERMINATED!" );
-			}
-
 			if( getDockerHostConfigDir() == null )
 			{
 				throw new Exception( "Docker host config directory enviroment variable must be passed in Docker mode:"
 						+ CONFIG_DIR_FLAG + RETURN + RETURN + "PROGRAM TERMINATED!" );
 			}
-		}
-		else if( isDirectMode() && !( Class.forName( getDirectModule() ).newInstance() instanceof JavaModule ) )
-		{
-			throw new Exception( "Direct runtime parameter module is not a JavaModule: " + getDirectModule() + RETURN
-					+ RETURN + "PROGRAM TERMINATED!" );
 		}
 	}
 
@@ -623,25 +585,4 @@ public class RuntimeParamUtil
 	private static final String RESTART_FLAG_EXT = "--restart";
 	private static final String RETURN = BioLockJ.RETURN;
 	private static boolean useSystemOut = false;
-
-	// private static void checkDirectoryForSingleFile( final String prop ) throws Exception
-	// {
-	// final File testFile = new File( params.get( prop ) );
-	// if( !testFile.isFile() )
-	// {
-	// if( testFile.isDirectory() && testFile.list( HiddenFileFilter.VISIBLE ).length == 1 )
-	// {
-	// final String newPath = testFile.list( HiddenFileFilter.VISIBLE )[ 0 ];
-	// Log.info( RuntimeParamUtil.class, "Runtime parameter [" + prop
-	// + "] is a directory containing only one file, so setting this file as the property value: "
-	// + newPath );
-	// params.put( CONFIG_FLAG, newPath );
-	// }
-	// else
-	// {
-	// throw new Exception( testFile.getAbsolutePath() + " is not a valid system file!" );
-	// }
-	// }
-	// }
-
 }

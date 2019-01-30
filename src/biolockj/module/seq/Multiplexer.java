@@ -16,28 +16,25 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.Pipeline;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
+import biolockj.module.*;
 import biolockj.module.report.Email;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule will merge sequence files into a single combined sequence file, with either the sample ID or an
  * identifying barcode (if defined in the metatata) is stored in the sequence header.<br>
  * BioLockJ is designed to run on demultiplexed data so this must be the last module to run before the Summary module.
  */
-public class Multiplexer extends JavaModuleImpl implements JavaModule
+public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
+
 	/**
 	 * Validate module dependencies:
 	 * <ol>
 	 * <li>Validate this is the last module to run (excluding {@link biolockj.module.report.Email})
 	 * </ol>
 	 * If this module was completed on a previous run, update the property:
-	 * {@link biolockj.Config}.{@value biolockj.Config#INTERNAL_MULTIPLEXED} = {@value biolockj.Config#TRUE}
+	 * {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_MULTIPLEXED} = {@value biolockj.Config#TRUE}
 	 * 
 	 */
 	@Override
@@ -47,6 +44,12 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 		Log.warn( getClass(), "BioLockJ requires demultiplexed data, so this must be the last module except Email" );
 
 		validateModuleOrder();
+	}
+
+	@Override
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
+	{
+		return SeqUtil.getSeqFiles( files );
 	}
 
 	/**
@@ -92,7 +95,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 	public void runModule() throws Exception
 	{
 		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
-		if( !hasValidBarcodes() )
+		if( !DemuxUtil.hasValidBarcodes() )
 		{
 			Log.info( getClass(),
 					"Multiplexer setting Sample ID in sequence header for identification since valid barcodes are not provided" );
@@ -119,7 +122,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 		final String headerChar = seqLines.get( 0 ).substring( 0, 1 );
 		final String sampleId = SeqUtil.getSampleId( file.getName() );
 		final long numReads = incrementNumReads( file );
-		if( hasValidBarcodes() )
+		if( DemuxUtil.hasValidBarcodes() )
 		{
 			final String barcode = MetaUtil.getField( sampleId, Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
 			if( header.contains( barcode ) )
@@ -204,14 +207,14 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 
 	private String getMutliplexeFileName( final File file ) throws Exception
 	{
-		return getOutputDir().getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
+		return getOutputDir().getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
 				+ SeqUtil.getReadDirectionSuffix( file ) + "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 	}
 
 	private long getNumReads( final File file ) throws Exception
 	{
 		Long numReads = null;
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			numReads = rvMap.get( file.getName() );
 		}
@@ -227,53 +230,12 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 		return numReads;
 	}
 
-	private boolean hasValidBarcodes()
-	{
-		if( useBarcode != null )
-		{
-			return useBarcode;
-		}
-		try
-		{
-			useBarcode = false;
-			final String barCodeCol = Config.getString( MetaUtil.META_BARCODE_COLUMN );
-			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) )
-			{
-				final Set<String> sampleIds = new HashSet<>( MetaUtil.getSampleIds() );
-				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol ) );
-				sampleIds.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-				vals.remove( Config.requireString( MetaUtil.META_NULL_VALUE ) );
-				if( sampleIds.size() != vals.size() )
-				{
-					Log.warn( getClass(),
-							"Multiplexer setting Sample ID in output instead of barcode because dataset contains "
-									+ sampleIds.size() + " unique Sample IDs but only " + vals.size()
-									+ " unique barcodes" );
-					for( final String id: MetaUtil.getSampleIds() )
-					{
-						Log.warn( getClass(), "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
-					}
-				}
-				else
-				{
-					useBarcode = true;
-				}
-			}
-		}
-		catch( final Exception ex )
-		{
-			Log.error( getClass(), "" + ex.getMessage(), ex );
-		}
-
-		return useBarcode;
-	}
-
 	private long incrementNumReads( final File file ) throws Exception
 	{
 		Long numReads = getNumReads( file );
 		numReads++;
 
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			rvMap.put( file.getName(), numReads );
 			totalNumRvReads++;
@@ -292,6 +254,5 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule
 	private final Map<String, Long> rvMap = new HashMap<>();
 	private long totalNumFwReads = 0L;
 	private long totalNumRvReads = 0L;
-	private Boolean useBarcode = null;
 	private static final String ID_COL = "multiplexer.idCol";
 }

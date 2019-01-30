@@ -18,6 +18,7 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.RuntimeParamUtil;
 import biolockj.util.TaxaUtil;
 
 /**
@@ -43,6 +44,7 @@ public class Config
 		}
 		else if( getString( propertyName ) == null )
 		{
+			Config.setConfigProperty( propertyName, FALSE );
 			Log.debug( Config.class, propertyName + " is undefined, so return: " + FALSE );
 		}
 		else if( !getString( propertyName ).equalsIgnoreCase( FALSE ) )
@@ -189,6 +191,16 @@ public class Config
 	}
 
 	/**
+	 * Get initial properties ordered by propertyName
+	 *
+	 * @return map ordered by propertyName
+	 */
+	public static TreeMap<String, String> getInitialProperties()
+	{
+		return convertToMap( unmodifiedInputProps );
+	}
+
+	/**
 	 * Parse comma delimited property value to return list
 	 *
 	 * @param propertyName Property name
@@ -263,20 +275,13 @@ public class Config
 	}
 
 	/**
-	 * Get properties ordered by propertyName
+	 * Get current properties ordered by propertyName
 	 *
 	 * @return map ordered by propertyName
 	 */
 	public static TreeMap<String, String> getProperties()
 	{
-		final TreeMap<String, String> map = new TreeMap<>();
-		final Iterator<String> it = props.stringPropertyNames().iterator();
-		while( it.hasNext() )
-		{
-			final String key = it.next();
-			map.put( key, props.getProperty( key ) );
-		}
-		return map;
+		return convertToMap( props );
 	}
 
 	/**
@@ -293,36 +298,45 @@ public class Config
 	}
 
 	/**
-	 * Get property value as String. Empty strings return null.
+	 * Get property value as String. Empty strings return null.<br>
+	 * If $BLJ or $BLJ_SUP or $USER or $HOME was used, it would already be converted to the actual file path by
+	 * {@link biolockj.Properties} before this method is called.
 	 *
 	 * @param propertyName {@link biolockj.Config} file property name
 	 * @return String value or null
 	 */
 	public static String getString( final String propertyName )
 	{
+
+		String val = null;
 		final Object obj = props.getProperty( propertyName );
 		if( obj == null )
 		{
+			usedProps.put( propertyName, null );
 			return null;
 		}
 
-		final String val = obj.toString().trim();
+		val = obj.toString().trim();
 
-		// allow statements like x = $someOtherDir to avoid re-typing paths
-		if( val.startsWith( "$" ) )
+		/*
+		 * Allow internal references to avoid re-typing paths. For example:
+		 * 
+		 * project.dataDir=/projects/data/internal/research_labs project.experimentID=1987209C
+		 * project.labUrl=$project.dataDir/fodor_lab/$project.experimentID reportBuilder.massSpecReportHeading=Mass Spec
+		 * $project.labID
+		 */
+		if( val.contains( "${" ) && val.contains( "}" ) )
 		{
-			final String localProp = props.getProperty( val.substring( 1 ) );
-
-			if( localProp != null )
-			{
-				return localProp.trim();
-			}
+			val = getInternalRefProp( val );
 		}
 
 		if( val.isEmpty() )
 		{
+			usedProps.put( propertyName, "" );
 			return null;
 		}
+
+		usedProps.put( propertyName, val );
 
 		return val;
 	}
@@ -363,7 +377,7 @@ public class Config
 		if( filePath != null && filePath.contains( "$BLJ_SUP" ) )
 		{
 			final File bljSup = new File(
-					BioLockJUtil.getSource().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
+					BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
 			if( bljSup.exists() && bljSup.isDirectory() )
 			{
 				Log.debug( Config.class, "Replacing $BLJ_SUP in file-path: " + filePath );
@@ -379,7 +393,7 @@ public class Config
 		else if( filePath != null && filePath.contains( "$BLJ" ) )
 		{
 			Log.debug( Config.class, "Replacing $BLJ in file-path: " + filePath );
-			filePath = filePath.replace( "$BLJ", BioLockJUtil.getSource().getAbsolutePath() );
+			filePath = filePath.replace( "$BLJ", BioLockJUtil.getBljDir().getAbsolutePath() );
 			Log.debug( Config.class, "Updated file-path: " + filePath );
 		}
 
@@ -400,16 +414,35 @@ public class Config
 	}
 
 	/**
+	 * Cache of the properties used in this pipeline.
+	 * 
+	 * @return list of properties
+	 */
+	public static Map<String, String> getUsedProps()
+	{
+		getString( PROJECT_DEFAULT_PROPS );
+		return new HashMap<>( usedProps );
+	}
+
+	/**
 	 * Initialize Config by reading in props from file and setting taxonomy as an ordered list.
 	 * 
-	 * @param file Config file
 	 * @throws Exception if unable to load Props
 	 */
-	public static void initialize( final File file ) throws Exception
+	public static void initialize() throws Exception
 	{
-		Log.info( Config.class, "Initialize Config: " + file.getAbsolutePath() );
-		configFile = file;
+		configFile = RuntimeParamUtil.getConfigFile();
+		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = Properties.loadProperties( configFile );
+		initProjectProps();
+		for( final Object key: props.keySet() )
+		{
+			Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String) key ) );
+		}
+
+		Log.debug( Properties.class, "# initial props: " + props.size() );
+		unmodifiedInputProps.putAll( props );
+		Log.debug( Properties.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
 		TaxaUtil.initTaxaLevels();
 	}
 
@@ -644,10 +677,10 @@ public class Config
 	/**
 	 * Sets a property value in the props cache as a list
 	 *
-	 * @param propertyName Property name
+	 * @param name Property name
 	 * @param data Collection of data to store using the key = propertyName
 	 */
-	public static void setConfigProperty( final String propertyName, final Collection<?> data )
+	public static void setConfigProperty( final String name, final Collection<?> data )
 	{
 		String val = null;
 		if( data != null && !data.isEmpty() && data.iterator().next() instanceof File )
@@ -664,20 +697,28 @@ public class Config
 			val = BioLockJUtil.getCollectionAsString( data );
 
 		}
-		props.setProperty( propertyName, val );
-		Log.info( Config.class, "Set Config property [" + propertyName + "] = " + val );
+		if( val != null && !val.isEmpty() )
+		{
+			usedProps.put( name, val );
+		}
+		props.setProperty( name, val );
+		Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 	}
 
 	/**
 	 * Sets a property value in the props cache
 	 *
-	 * @param propertyName Property name
-	 * @param propertyValue Value to assign to propertyName
+	 * @param name Property name
+	 * @param val Value to assign to propertyName
 	 */
-	public static void setConfigProperty( final String propertyName, final String propertyValue )
+	public static void setConfigProperty( final String name, final String val )
 	{
-		props.setProperty( propertyName, propertyValue );
-		Log.info( Config.class, "Set Config property [" + propertyName + "] = " + propertyValue );
+		if( val != null && !val.isEmpty() )
+		{
+			usedProps.put( name, val );
+		}
+		props.setProperty( name, val );
+		Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 	}
 
 	/**
@@ -705,6 +746,47 @@ public class Config
 	}
 
 	/**
+	 * Set the {@value #PROJECT_PIPELINE_NAME} and {@value #PROJECT_PIPELINE_DIR} Create a pipeline root directory if
+	 * the pipeline is new.
+	 * 
+	 * @return TRUE if a new pipeline directory was created
+	 * @throws Exception if errors occur
+	 */
+	protected static boolean initProjectProps() throws Exception
+	{
+		boolean isNew = false;
+		if( RuntimeParamUtil.doRestart() )
+		{
+			setConfigProperty( PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+		}
+		else if( RuntimeParamUtil.isDirectMode() )
+		{
+			setConfigProperty( PROJECT_PIPELINE_DIR, RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
+		}
+		else
+		{
+			isNew = true;
+			setConfigProperty( PROJECT_PIPELINE_DIR, BioLockJ.createPipelineDirectory().getAbsolutePath() );
+		}
+
+		setConfigProperty( PROJECT_PIPELINE_NAME, Config.requireExistingDir( PROJECT_PIPELINE_DIR ).getName() );
+
+		return isNew;
+	}
+
+	private static TreeMap<String, String> convertToMap( final Properties bljProps )
+	{
+		final TreeMap<String, String> map = new TreeMap<>();
+		final Iterator<String> it = bljProps.stringPropertyNames().iterator();
+		while( it.hasNext() )
+		{
+			final String key = it.next();
+			map.put( key, bljProps.getProperty( key ) );
+		}
+		return map;
+	}
+
+	/**
 	 * Parse property value as integer
 	 *
 	 * @param propertyName Property name
@@ -728,6 +810,54 @@ public class Config
 
 		return null;
 	}
+
+	private static String getInternalRefProp( String propName )
+	{
+		final String origPropName = propName;
+		String val = "";
+		try
+		{
+			int startIndex = propName.indexOf( "${" );
+			int endIndex = propName.indexOf( "}" );
+
+			while( startIndex > -1 && endIndex > -1 )
+			{
+				val += propName.substring( 0, startIndex );
+				final String refProp = propName.substring( startIndex + 2, endIndex );
+				final String refVal = props.getProperty( refProp );
+				if( refVal == null )
+				{
+					throw new Exception(
+							"Could not find Config.prop references (in ${val} format) of property: " + origPropName );
+				}
+				propName = propName.substring( endIndex + 1 );
+				val += refVal;
+				startIndex = propName.indexOf( "${" );
+				endIndex = propName.indexOf( "}" );
+			}
+
+			if( propName != null )
+			{
+				val += propName;
+			}
+
+			System.out.println( "FINAL NAME: ===> " + propName );
+
+		}
+		catch( final Exception ex )
+		{
+			Log.warn( Config.class, ex.getMessage() );
+			return origPropName;
+		}
+
+		return val;
+	}
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #ALLOW_IMPLICIT_MODULES}<br>
+	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
+	 */
+	public static final String ALLOW_IMPLICIT_MODULES = "project.allowImplicitModules";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
@@ -759,34 +889,10 @@ public class Config
 	public static final String INPUT_DIRS = "input.dirPaths";
 
 	/**
-	 * {@link biolockj.Config} String property: {@value #INPUT_FORWARD_READ_SUFFIX}<br>
-	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
-	 */
-	public static final String INPUT_FORWARD_READ_SUFFIX = "input.suffixFw";
-
-	/**
 	 * {@link biolockj.Config} List property: {@value #INPUT_IGNORE_FILES}<br>
 	 * Set file names to ignore if found in {@value #INPUT_DIRS}
 	 */
 	public static final String INPUT_IGNORE_FILES = "input.ignoreFiles";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #INPUT_REVERSE_READ_SUFFIX}<br>
-	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
-	 */
-	public static final String INPUT_REVERSE_READ_SUFFIX = "input.suffixRv";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_PREFIX}<br>
-	 * Set value of prefix to trim from sequence file names or headers to obtain Sample ID.
-	 */
-	public static final String INPUT_TRIM_PREFIX = "input.trimPrefix";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_SUFFIX}<br>
-	 * Set value of suffix to trim from sequence file names or headers to obtain Sample ID.
-	 */
-	public static final String INPUT_TRIM_SUFFIX = "input.trimSuffix";
 
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_ALL_MODULES}<br>
@@ -806,42 +912,6 @@ public class Config
 	 * List of all nested default config files.<br>
 	 */
 	public static final String INTERNAL_DEFAULT_CONFIG = "internal.defaultConfig";
-
-	/**
-	 * {@link biolockj.Config} Internal Boolean property: {@value #INTERNAL_IS_MULTI_LINE_SEQ}<br>
-	 * Store TRUE if {@link biolockj.util.SeqUtil} determines input sequences are multi-line format.
-	 */
-	public static final String INTERNAL_IS_MULTI_LINE_SEQ = "internal.isMultiLineSeq";
-
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_MULTIPLEXED}<br>
-	 * Set to true if multiplexed reads are found, set by the application runtime code.
-	 */
-	public static final String INTERNAL_MULTIPLEXED = "internal.multiplexed";
-
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_PAIRED_READS}<br>
-	 * Set to true if paired reads are found, set by the application runtime code.
-	 */
-	public static final String INTERNAL_PAIRED_READS = "internal.pairedReads";
-	
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_PAIRED_READS}<br>
-	 * Set to true if paired reads are found, set by the application runtime code.
-	 */
-	public static final String INTERNAL_PARSER_MODULE = "internal.parserModule";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_DIR}<br>
-	 * Stores the path of the pipeline root directory path set by the application runtime code.
-	 */
-	public static final String INTERNAL_PIPELINE_DIR = "internal.pipelineDir";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_NAME}<br>
-	 * Stores the root name of the pipeline (derived from the configuration file name).
-	 */
-	public static final String INTERNAL_PIPELINE_NAME = "internal.pipelineName";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
@@ -875,6 +945,18 @@ public class Config
 	public static final String PROJECT_ENV_LOCAL = "local";
 
 	/**
+	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_DIR}<br>
+	 * Stores the path of the pipeline root directory path set by the application runtime code.
+	 */
+	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_NAME}<br>
+	 * Stores the root name of the pipeline (derived from the configuration file name).
+	 */
+	public static final String PROJECT_PIPELINE_NAME = "project.pipelineName";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>
 	 * Required to be set to "e" or "10" to build log normalized reports.
 	 */
@@ -901,8 +983,6 @@ public class Config
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
 	private static Properties props = null;
-
-	// public static final String REPORT_ADD_GENUS_NAME_TO_SPECIES = "report.addGenusToSpeciesName";
-	// public static final String REPORT_FULL_TAXONOMY_NAMES = "report.fullTaxonomyNames";
-	// public static final String REPORT_USE_GENUS_FIRST_INITIAL = "report.useGenusFirstInitial";
+	private static Properties unmodifiedInputProps = new Properties();
+	private static final Map<String, String> usedProps = new HashMap<>();
 }

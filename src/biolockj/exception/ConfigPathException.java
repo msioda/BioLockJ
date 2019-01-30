@@ -39,8 +39,7 @@ public class ConfigPathException extends ConfigException
 	 */
 	public ConfigPathException( final String propertyName, final String fileType )
 	{
-		super( propertyName, "Invalid Path",
-				"Current value \"" + Config.getString( propertyName ) + "\" is not a valid " + fileType );
+		super( propertyName, "Current value \"" + Config.getString( propertyName ) + "\" is not a valid " + fileType );
 	}
 
 	/**

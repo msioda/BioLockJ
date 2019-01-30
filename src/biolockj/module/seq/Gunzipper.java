@@ -16,14 +16,14 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.ScriptModule;
-import biolockj.module.ScriptModuleImpl;
+import biolockj.module.SeqModule;
+import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
 /**
  * This BioModule uses gzip to decompress input sequence files.
  */
-public class Gunzipper extends ScriptModuleImpl implements ScriptModule
+public class Gunzipper extends SeqModuleImpl implements SeqModule
 {
 
 	@Override
@@ -33,7 +33,7 @@ public class Gunzipper extends ScriptModuleImpl implements ScriptModule
 		for( final File f: files )
 		{
 			final ArrayList<String> lines = new ArrayList<>();
-			if( f.getName().toLowerCase().endsWith( ".gz" ) )
+			if( SeqUtil.isGzipped( f.getName() ) )
 			{
 				lines.add( unzip( f ) );
 			}

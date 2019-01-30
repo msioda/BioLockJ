@@ -16,9 +16,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 
 /**
@@ -32,9 +30,15 @@ public class OtuUtil
 	 */
 	public static class OtuCountLine
 	{
+		/**
+		 * Each OTU count file line has 2 parts: OTU Name and OTU Count
+		 * 
+		 * @param line OTU count file line
+		 * @throws Exception if errors occur
+		 */
 		public OtuCountLine( final String line ) throws Exception
 		{
-			final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+			final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 			if( st.countTokens() != 2 )
 			{
 				throw new Exception(
@@ -44,18 +48,27 @@ public class OtuUtil
 			count = Integer.valueOf( st.nextToken() );
 		}
 
+		/**
+		 * Get OTU count
+		 * 
+		 * @return OTU count
+		 */
 		public Integer getCount()
 		{
 			return count;
 		}
 
+		/**
+		 * Get OTU name
+		 * 
+		 * @return OTU name
+		 */
 		public String getOtu()
 		{
 			return otu;
 		}
 
 		private Integer count = null;
-
 		private String otu = null;
 	}
 
@@ -64,11 +77,11 @@ public class OtuUtil
 	{}
 
 	/**
-	 * Build taxa name into OTU path, returns: level + {@value DELIM_SEP} + taxa
+	 * Build taxa name into OTU path, returns: level + {@value biolockj.util.TaxaUtil#DELIM_SEP} + taxa
 	 * 
 	 * @param level Taxonomy level
 	 * @param taxa Taxa name
-	 * @return level + {@value DELIM_SEP} + taxa
+	 * @return level + {@value biolockj.util.TaxaUtil#DELIM_SEP} + taxa
 	 * @throws Exception if errors occur
 	 */
 	public static String buildOtuTaxa( final String level, final String taxa ) throws Exception
@@ -165,8 +178,8 @@ public class OtuUtil
 			sampleId = "";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
-				+ prefix + OTU_COUNT + sampleId + BioLockJ.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
+				+ prefix + OTU_COUNT + sampleId + Constants.TSV_EXT );
 	}
 
 	/**
@@ -184,7 +197,7 @@ public class OtuUtil
 			throw new Exception( "Unexpected format!  Missing \"_\" from input file name: " + otuCountFile.getName() );
 		}
 		return otuCountFile.getName().substring( otuCountFile.getName().lastIndexOf( OTU_COUNT + "_" ) + 9,
-				otuCountFile.getName().length() - BioLockJ.TSV_EXT.length() );
+				otuCountFile.getName().length() - Constants.TSV_EXT.length() );
 	}
 
 	/**
@@ -223,8 +236,7 @@ public class OtuUtil
 	public static boolean isOtuFile( final File file ) throws Exception
 	{
 		final String name = file.getName();
-		if( name.startsWith( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) )
-				&& name.endsWith( BioLockJ.TSV_EXT ) && name.contains( "_" + OTU_COUNT + "_" ) )
+		if( name.contains( "_" + OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) )
 		{
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try
@@ -236,7 +248,7 @@ public class OtuUtil
 			}
 			catch( final Exception ex )
 			{
-				Log.debug( OtuUtil.class, "File is not an OTU count file: " + file.getAbsolutePath() );
+				Log.debug( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
 				return false;
 			}
 			finally
@@ -260,21 +272,21 @@ public class OtuUtil
 	 * @return TRUE if module generated OTU count files
 	 * @throws Exception if errors occur
 	 */
-	public static boolean outputHasOtuCountFiles( final BioModule module ) throws Exception
+	public static boolean isOtuModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
-				HiddenFileFilter.VISIBLE );
+		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-		if( files == null || files.isEmpty() )
+		if( files.isEmpty() )
 		{
 			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
 		}
 
 		for( final File f: files )
 		{
-			if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			if( isOtuFile( f ) )
 			{
-				return OtuUtil.isOtuFile( f );
+				return true;
 			}
 		}
 

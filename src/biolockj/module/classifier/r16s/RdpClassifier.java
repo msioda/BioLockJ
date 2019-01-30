@@ -25,6 +25,7 @@ import biolockj.util.SeqUtil;
  */
 public class RdpClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
+
 	/**
 	 * Build bash script lines to classify unpaired reads with RDP. The inner list contains the bash script lines
 	 * required to classify 1 sample (call java to run RDP jar on sample).
@@ -48,18 +49,25 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 		return data;
 	}
 
+	@Override
+	public void checkDependencies() throws Exception
+	{
+		super.checkDependencies();
+		getRuntimeParams( getClassifierParams(), null );
+	}
+
 	/**
-	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.
+	 * If paired reads found, add prerequisite: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<Class<?>> getPreRequisiteModules() throws Exception
+	public List<String> getPreRequisiteModules() throws Exception
 	{
-		final List<Class<?>> preReqs = super.getPreRequisiteModules();
-		if( Config.getBoolean( Config.INTERNAL_PAIRED_READS ) )
+		final List<String> preReqs = new ArrayList<>();
+		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			preReqs.add( Class.forName( BioModuleFactory.getDefaultMergePairedReadsConverter() ) );
+			preReqs.add( BioModuleFactory.getDefaultMergePairedReadsConverter() );
 		}
-
+		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
 
@@ -71,7 +79,8 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines.add( Config.getExe( EXE_JAVA ) + " -jar " + getClassifierExe() + getClassifierParams() + "-o $2 $1" );
+		lines.add( Config.getExe( EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getClassifierExe() + " "
+				+ getRuntimeParams( getClassifierParams(), null ) + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" );
 		return lines;
 	}
@@ -85,5 +94,8 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * Name of the RdpClassifier bash script function used to assign taxonomy: {@value #FUNCTION_RDP}
 	 */
 	protected static final String FUNCTION_RDP = "runRdp";
+
+	private static final String JAVA_JAR_PARAM = "-jar";
+	private static final String OUTPUT_PARAM = "-o";
 
 }

@@ -45,7 +45,7 @@ public class UpdateJavaDocs
 			for( final File file: files )
 			{
 				lines.clear();
-				System.out.println( "Reading file [ " + i++ + "] --> " + file.getAbsolutePath() );
+				System.out.println( "Reading file [" + i++ + "] --> " + file.getAbsolutePath() );
 				reader = BioLockJUtil.getFileReader( file );
 				boolean updatedFile = false;
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )

@@ -62,24 +62,6 @@ public class Properties extends java.util.Properties
 	}
 
 	/**
-	 * Copy the Config files to the pipeline root directory.
-	 *
-	 * @throws ConfigNotFoundException is pipeline root directory has not been set
-	 * @throws ConfigPathException is pipeline root directory is defined, but the path is invalid
-	 * @throws IOException if {@link org.apache.commons.io.FileUtils} is unable to copy the configFile
-	 *
-	 * public static void copyConfigToPipelineRootDir() throws ConfigNotFoundException, ConfigPathException, IOException
-	 * { final File projectDir = Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ); if( defaultConfigFiles !=
-	 * null && !defaultConfigFiles.isEmpty() ) { Config.setConfigProperty( Config.INTERNAL_DEFAULT_CONFIG,
-	 * defaultConfigFiles ); for( final File f: defaultConfigFiles ) { FileUtils.copyFileToDirectory( f, projectDir ); }
-	 * }
-	 * 
-	 * final File newConfigFile = new File( projectDir.getAbsolutePath() + File.separator + configFile.getName() ); if(
-	 * !configFile.equals( newConfigFile ) ) { FileUtils.copyFileToDirectory( configFile, projectDir ); configFile =
-	 * newConfigFile; } }
-	 */
-
-	/**
 	 * Instantiate {@link biolockj.Properties} via {@link #buildConfig(File)}
 	 *
 	 * @param file of {@link biolockj.Properties} file

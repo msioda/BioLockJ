@@ -54,6 +54,14 @@ public interface ScriptModule extends BioModule
 	public String[] getJobParams() throws Exception;
 
 	/**
+	 * Method returns MAIN module script that calls each of the worker scripts.
+	 * 
+	 * @return Bash script lines for the functions
+	 * @throws Exception if errors occur
+	 */
+	public File getMainScript() throws Exception;
+
+	/**
 	 * ScriptModules that generate scripts to complete their task, create script files in this directory.<br>
 	 * The main script must begin with prefix {@value #MAIN_SCRIPT_PREFIX} and there must only be one main script.<br>
 	 * The main script executes, or submits to the job queue, each of the other scripts in this directory.<br>
@@ -64,6 +72,14 @@ public interface ScriptModule extends BioModule
 	public File getScriptDir();
 
 	/**
+	 * Return a list of the error messages saved the failure scripts in the module script directory.
+	 * 
+	 * @return List of error messages or empty list
+	 * @throws Exception
+	 */
+	public List<String> getScriptErrors() throws Exception;
+
+	/**
 	 * ScriptModule that run scripts can opt to set a timeout (such as used by the R script).
 	 *
 	 * @return Number of minutes before script is cancelled due to timeout
@@ -72,19 +88,17 @@ public interface ScriptModule extends BioModule
 	public Integer getTimeout() throws ConfigFormatException;
 
 	/**
-	 * Method returns bash functions to add to the worker scripts.<br>
-	 * The default behavior is that no bash functions are needed.
+	 * Method returns bash script lines used to build the functions called by the worker scripts.
 	 * 
 	 * @return Bash script lines for the functions
-	 * @throws Exception if unable to generate script lines
+	 * @throws Exception if errors occur
 	 */
 	public List<String> getWorkerScriptFunctions() throws Exception;
 
 	/**
-	 * {@link biolockj.Config} Integer property: {@value #CLASSIFIER_NUM_THREADS}<br>
-	 * Used to reserve cluster resources and passed to classifier applications call that accepts a numThreads parameter.
+	 * Suffix for module specific number of threads parameter: {@value #NUM_THREADS}<br>
 	 */
-	public static final String CLASSIFIER_NUM_THREADS = "cluster.numClassifierThreads";
+	public static final String NUM_THREADS = ".numThreads";
 
 	/**
 	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_BATCH_SIZE}<br>
@@ -121,4 +135,5 @@ public interface ScriptModule extends BioModule
 	 * Sets # of minutes before worker scripts times out.
 	 */
 	public static final String SCRIPT_TIMEOUT = "script.timeout";
+
 }

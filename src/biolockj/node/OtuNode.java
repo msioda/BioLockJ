@@ -24,8 +24,8 @@ public interface OtuNode
 {
 	/**
 	 * Add {@link biolockj.node.OtuNode} taxa names for the
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} level mapped by the classifier specific
-	 * levelDelim parameter: .
+	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} level mapped by the classifier
+	 * specific levelDelim parameter: .
 	 * 
 	 * @param taxa Classifier Taxa name
 	 * @param levelDelim Classifier specific taxonomy level indicator

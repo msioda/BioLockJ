@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
@@ -25,7 +23,7 @@ import biolockj.module.BioModule;
 /**
  * This utility helps work individual Taxa names, not full OTU path files which need {@link biolockj.util.OtuUtil}.<br>
  * Taxa files containing sample taxa counts for a given taxonomy level as output by
- * {@link biolockj.module.report.BuildTaxonomyTables}.
+ * {@link biolockj.module.report.taxa.BuildTaxaTables}.
  */
 public class TaxaUtil
 {
@@ -258,8 +256,8 @@ public class TaxaUtil
 			suffix = "_";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.INTERNAL_PIPELINE_NAME )
-				+ "_" + TAXA_TABLE + suffix + level + BioLockJ.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
+				+ "_" + TAXA_TABLE + suffix + level + Constants.TSV_EXT );
 	}
 
 	/**
@@ -273,7 +271,7 @@ public class TaxaUtil
 	{
 		for( final String level: getTaxaLevels() )
 		{
-			if( file.getName().endsWith( level + BioLockJ.TSV_EXT ) )
+			if( file.getName().endsWith( level + Constants.TSV_EXT ) )
 			{
 				return level;
 			}
@@ -357,14 +355,13 @@ public class TaxaUtil
 	 * @return boolean TRUE if file is a taxonomy count file
 	 * @throws Exception if errors occur
 	 */
-	public static boolean isTaxonomyTable( final File file ) throws Exception
+	public static boolean isTaxaFile( final File file ) throws Exception
 	{
-		if( file.getName()
-				.startsWith( Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + "_" + TAXA_TABLE + "_" ) )
+		if( file.getName().contains( "_" + TAXA_TABLE + "_" ) )
 		{
 			for( final String level: getTaxaLevels() )
 			{
-				if( file.getName().endsWith( level + BioLockJ.TSV_EXT ) )
+				if( file.getName().endsWith( level + Constants.TSV_EXT ) )
 				{
 					return true;
 				}
@@ -380,20 +377,21 @@ public class TaxaUtil
 	 * @return TRUE if module generated taxonomy table files
 	 * @throws Exception if errors occur
 	 */
-	public static boolean outputHasTaxonomyTables( final BioModule module ) throws Exception
+	public static boolean isTaxaModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE );
-		
-		if( files == null || files.isEmpty() )
+		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+
+		if( files.isEmpty() )
 		{
 			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
 		}
 
 		for( final File f: files )
 		{
-			if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+			if( isTaxaFile( f ) )
 			{
-				return TaxaUtil.isTaxonomyTable( f );
+				return true;
 			}
 		}
 

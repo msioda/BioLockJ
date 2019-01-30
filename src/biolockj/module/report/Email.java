@@ -213,7 +213,7 @@ public class Email extends BioModuleImpl implements BioModule
 		message.setFrom( new InternetAddress( Config.requireString( EMAIL_FROM ) ) );
 		message.addRecipients( Message.RecipientType.TO, InternetAddress.parse( getRecipients() ) );
 		message.setSubject(
-				"BioLockJ " + Config.requireString( Config.INTERNAL_PIPELINE_NAME ) + " " + Pipeline.getStatus() );
+				"BioLockJ " + Config.requireString( Config.PROJECT_PIPELINE_NAME ) + " " + Pipeline.getStatus() );
 		message.setContent( getContent( emailBody ), "text/plain; charset=utf-8" );
 		return message;
 	}

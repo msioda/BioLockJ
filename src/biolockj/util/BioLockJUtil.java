@@ -12,17 +12,18 @@
 package biolockj.util;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
+import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
-import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
+import biolockj.module.classifier.ClassifierModule;
+import biolockj.module.r.CalculateStats;
 
 /**
  * Simple utility containing String manipulation and formatting functions.
@@ -89,7 +90,10 @@ public class BioLockJUtil
 				{
 					FileUtils.forceDelete( file );
 				}
-
+				if( i > 1 )
+				{
+					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) deleted: " + file.getAbsolutePath() );
+				}
 				return true;
 			}
 			catch( final IOException ex )
@@ -102,6 +106,30 @@ public class BioLockJUtil
 		Log.warn( BioLockJUtil.class, "Failed to delete file: " + file.getAbsolutePath() );
 
 		return false;
+	}
+
+	/**
+	 * Return the file extension - but ignore {@value biolockj.BioLockJ#GZIP_EXT}.
+	 * 
+	 * @param file File
+	 * @return File extension
+	 * @throws Exception if errors occur.
+	 */
+	public static String fileExt( final File file ) throws Exception
+	{
+		String ext = file.getName();
+		int index = ext.lastIndexOf( Constants.GZIP_EXT );
+		if( SeqUtil.isGzipped( ext ) && index > 0 )
+		{
+			ext = ext.substring( 0, index );
+		}
+		index = ext.lastIndexOf( "." );
+		if( index > 0 )
+		{
+			ext = ext.substring( index );
+		}
+
+		return ext;
 	}
 
 	/**
@@ -174,31 +202,32 @@ public class BioLockJUtil
 		return percentage + "%";
 	}
 
-	public static Collection<File> getBasicInputFiles() throws Exception
+	/**
+	 * Get the program source (either the jar path or main class biolockj.BioLockJ);
+	 * 
+	 * @return java source parameter (either Jar or main class with classpath)
+	 * @throws ConfigPathException if unable to determine $BLJ source
+	 */
+	public static File getBljDir() throws ConfigPathException
 	{
-		if( inputFiles.isEmpty() )
+		try
 		{
-			final Collection<File> files = new HashSet<>();
-			for( final File dir: getInputDirs() )
+			final File f = getSource();
+			// source will return JAR path or MAIN class file in bin dir
+			if( f.isFile() ) // must be jar
 			{
-				Log.info( SeqUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
-				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+				return f.getParentFile().getParentFile();
 			}
-			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
-			for( final File file: files )
+			else if( f.isDirectory() && f.getName().equals( "bin" ) )
 			{
-				if( !Config.getTreeSet( Config.INPUT_IGNORE_FILES ).contains( file.getName() ) )
-				{
-					inputFiles.add( file );
-				}
-				else
-				{
-					Log.warn( SeqUtil.class, "Ignoring file: " + file.getName() );
-				}
+				return f.getParentFile();
 			}
 		}
-
-		return inputFiles;
+		catch( final Exception ex )
+		{
+			throw new ConfigPathException( "Unable to decode $BLJ environment variable." );
+		}
+		return null;
 	}
 
 	/**
@@ -247,8 +276,8 @@ public class BioLockJUtil
 	 */
 	public static String getDirectModuleParam( final BioModule module ) throws Exception
 	{
-		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getName()
-				+ ":" + module.getClass().getName();
+		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName()
+				+ ":" + module.getModuleDir().getName();
 	}
 
 	/**
@@ -278,7 +307,7 @@ public class BioLockJUtil
 	 */
 	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException
 	{
-		return file.getName().toLowerCase().endsWith( ".gz" )
+		return SeqUtil.isGzipped( file.getName() )
 				? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
 				: new BufferedReader( new FileReader( file ) );
 	}
@@ -306,99 +335,43 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Return the MASTER config file.
+	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
 	 * 
-	 * @return MASTER config
-	 * @throws Exception if errors occur building the path
+	 * @return Collection of pipeline input files
+	 * @throws Exception if errors occur
 	 */
-	public static File getMasterConfig() throws Exception
+	public static Collection<File> getPipelineInputFiles() throws Exception
 	{
-		String configName = Config.getConfigFileName();
-		if( configName.startsWith( MASTER_PREFIX ) )
+		if( inputFiles.isEmpty() )
 		{
-			configName = configName.replaceAll( MASTER_PREFIX, "" );
+			Collection<File> files = new HashSet<>();
+			for( final File dir: getInputDirs() )
+			{
+				Log.info( SeqUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
+				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+			}
+			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
+
+			files = SeqUtil.removeIgnoredAndEmptyFiles( files );
+			inputFiles.addAll( SeqUtil.removeIgnoredAndEmptyFiles( files ) );
+
+			Log.info( SeqUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
+
+			setPipelineInputFileType();
 		}
-		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ MASTER_PREFIX + configName );
+
+		return inputFiles;
 	}
 
 	/**
-	 * Recursively get files located in the directories listed in
-	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS} after removing
-	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_IGNORE_FILES}
+	 * Get the source of the java runtime classes ( /bin directory or JAR file ).
 	 * 
-	 * @return Pipeline input files
-	 * @throws ConfigViolationException if sequence files without valid metadata are detected
-	 * @throws Exception if no input files are found
+	 * @return File object
+	 * @throws URISyntaxException if unable to locate the Java source
 	 */
-	public static List<File> getPipelineInputFiles() throws Exception
+	public static File getSource() throws URISyntaxException
 	{
-		if( filteredInputFiles.isEmpty() )
-		{
-			final List<File> seqsWithoutMetaId = new ArrayList<>();
-			for( final File file: BioLockJUtil.getBasicInputFiles() )
-			{
-				if( !SeqUtil.requireSeqInput() || Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
-						|| MetaUtil.getMetadata() == null
-						|| MetaUtil.getSampleIds().contains( SeqUtil.getSampleId( file.getName() ) ) )
-				{
-					filteredInputFiles.add( file );
-				}
-				else if( Config.getBoolean( MetaUtil.META_REQUIRED ) ) // metadata required
-				{
-					seqsWithoutMetaId.add( file );
-					throw new ConfigViolationException( MetaUtil.META_REQUIRED,
-							"Sample ID not found in metadata file: " + file.getAbsolutePath() );
-				}
-				else
-				{
-					Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
-							+ MetaUtil.META_REQUIRED + "=" + Config.FALSE + " ]: " + file.getAbsolutePath() );
-				}
-			}
-
-			if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( MetaUtil.META_REQUIRED ) )
-			{
-				throw new ConfigViolationException( MetaUtil.META_REQUIRED,
-						"No metadata found for the following files: " + BioLockJ.RETURN
-								+ BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
-			}
-
-			if( filteredInputFiles.isEmpty() )
-			{
-				throw new Exception( "No valid files found in: " + Config.INPUT_DIRS );
-			}
-		}
-
-		return filteredInputFiles;
-	}
-
-	/**
-	 * Get the program source (either the jar path or main class biolockj.BioLockJ);
-	 * 
-	 * @return java source parameter (either Jar or main class with classpath)
-	 * @throws ConfigPathException if unable to determine $BLJ source
-	 */
-	public static File getSource() throws ConfigPathException
-	{
-		try
-		{
-			final File f = new File( BioLockJUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
-			// source will return JAR path or MAIN class file in bin dir
-			if( f.isFile() ) // must be jar
-			{
-				return f.getParentFile().getParentFile();
-			}
-			else if( f.isDirectory() && f.getName().equals( "bin" ) )
-			{
-				return f.getParentFile();
-			}
-		}
-		catch( final Exception ex )
-		{
-			throw new ConfigPathException( "Unable to decode $BLJ environment variable." );
-		}
-		return null;
+		return new File( BioLockJUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
 	}
 
 	/**
@@ -410,7 +383,7 @@ public class BioLockJUtil
 	public static String getVersion() throws Exception
 	{
 		final String missingMsg = "undetermined - mission $BLJ/.version file";
-		final File file = new File( getSource().getAbsoluteFile() + File.separator + VERSION_FILE );
+		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
 		if( file.exists() )
 		{
 			final BufferedReader reader = getFileReader( file );
@@ -422,6 +395,41 @@ public class BioLockJUtil
 		}
 
 		return missingMsg;
+	}
+
+	/**
+	 * Merge the collection into a String with 1 space between each element.toString() value.
+	 * 
+	 * @param collection Collection of objects
+	 * @return Joined values
+	 * @throws Exception if errors occur
+	 */
+	public static String join( final Collection<?> collection ) throws Exception
+	{
+		if( collection == null || collection.isEmpty() )
+		{
+			return "";
+		}
+
+		final StringBuilder sb = new StringBuilder();
+		for( final Object item: collection )
+		{
+			sb.append( item.toString().trim() ).append( " " );
+		}
+
+		return sb.toString();
+	}
+
+	/**
+	 * Convenience method to check pipeline input file type.
+	 * 
+	 * @param type Pipeline input file type
+	 * @return TRUE if type = {@link biolockj.Config}.{@value #INTERNAL_PIPELINE_INPUT_TYPES}
+	 * @throws ConfigNotFoundException if {@value #INTERNAL_PIPELINE_INPUT_TYPES} is undefined
+	 */
+	public static boolean pipelineInputType( final String type ) throws ConfigNotFoundException
+	{
+		return Config.requireSet( INTERNAL_PIPELINE_INPUT_TYPES ).contains( type );
 	}
 
 	/**
@@ -470,7 +478,7 @@ public class BioLockJUtil
 	/**
 	 * Remove all single and double quotation marks found in value.
 	 * 
-	 * @param value Possibly quoted value 
+	 * @param value Possibly quoted value
 	 * @return value with no quotes
 	 * @throws Exception if errors occur
 	 */
@@ -484,243 +492,126 @@ public class BioLockJUtil
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
+	private static void setPipelineInputFileType() throws Exception
+	{
+		final Set<String> fileTypes = new HashSet<>();
+
+		for( final File file: inputFiles )
+		{
+			if( OtuUtil.isOtuFile( file ) )
+			{
+				fileTypes.add( PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE );
+			}
+			else if( TaxaUtil.isTaxaFile( file ) )
+			{
+				fileTypes.add( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+			}
+			else if( RMetaUtil.isMetaMergeTable( file ) )
+			{
+				fileTypes.add( PIPELINE_R_INPUT_TYPE );
+			}
+			else if( CalculateStats.isStatsFile( file ) )
+			{
+				fileTypes.add( PIPELINE_STATS_TABLE_INPUT_TYPE );
+			}
+			else if( file.getName().endsWith( ClassifierModule.PROCESSED ) )
+			{
+				fileTypes.add( PIPELINE_PARSER_INPUT_TYPE );
+			}
+			else if( SeqUtil.isSeqFile( file ) )
+			{
+				fileTypes.add( PIPELINE_SEQ_INPUT_TYPE );
+			}
+		}
+
+		Config.setConfigProperty( INTERNAL_PIPELINE_INPUT_TYPES, fileTypes );
+	}
+
 	/**
-	 * Save a single version of the config file by combing with default config files, if any exist.
+	 * Internal {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_INPUT_TYPES}<br>
+	 *
+	 * This value is set after parsing the input files from {@link biolockj.Config} property:
+	 * {@value biolockj.Config#INPUT_DIRS} in the method: {@link #getPipelineInputFiles()}. The primary purpose of
+	 * storing this value is to determine if {@link biolockj.module.BioModule#getPreRequisiteModules()} are appropriate
+	 * to add during pipeline initialization.<br>
+	 * <br>
 	 * 
-	 * @throws Exception if errors occur
-	 */
-	public static void saveNewMasterConfig() throws Exception
-	{
-		final File masterConfig = getMasterConfig();
-		final boolean masterExists = masterConfig.exists();
-		if( masterExists && !RuntimeParamUtil.doRestart() )
-		{
-			throw new Exception( "MASTER Config should not exist unless restarting a failed pipeline, but was found: "
-					+ masterConfig.getAbsolutePath() );
-		}
-
-		final List<String> initConfig = getInitConfig();
-		if( masterExists )
-		{
-			if( getTempConfig().exists() )
-			{
-				deleteTempConfigFile();
-			}
-
-			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
-			if( getMasterConfig().exists() )
-			{
-				throw new Exception(
-						"Moved MASTER Config to " + getTempConfig().getAbsolutePath() + " but MASTER still exists!" );
-			}
-		}
-
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( masterConfig ) );
-		try
-		{
-			writer.write( "# The MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
-			writer.write( "# The MASTER Config file was generated from the following Config files: " + RETURN );
-
-			if( initConfig == null )
-			{
-				writer.write( ORIG_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
-
-				final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
-				if( defaults != null && !defaults.isEmpty() )
-				{
-					for( final String defConfig: Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) )
-					{
-						writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
-					}
-				}
-			}
-			else
-			{
-				for( final String line: initConfig )
-				{
-					writer.write( line + RETURN );
-				}
-			}
-
-			writer.write( RETURN );
-			for( final String module: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
-			{
-				writer.write( Config.INTERNAL_BLJ_MODULE + " " + module + RETURN );
-			}
-			writer.write( RETURN );
-
-			final Map<String, String> map = new HashMap<>( Config.getProperties() );
-			map.remove( Config.INTERNAL_BLJ_MODULE );
-			map.remove( Config.INTERNAL_PIPELINE_DIR );
-			map.remove( Config.INTERNAL_DEFAULT_CONFIG );
-			map.remove( Config.INTERNAL_PAIRED_READS );
-			map.remove( Config.INTERNAL_ALL_MODULES );
-			map.remove( Config.INTERNAL_MULTIPLEXED );
-			map.remove( SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
-			map.remove( SeqUtil.INTERNAL_SEQ_TYPE );
-			map.remove( Config.PROJECT_DEFAULT_PROPS );
-			map.remove( Config.INTERNAL_IS_MULTI_LINE_SEQ );
-
-			final Set<String> keys = new TreeSet<>( map.keySet() );
-			for( final String key: keys )
-			{
-				writer.write( key + "=" + map.get( key ) + RETURN );
-			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
-
-			deleteTempConfigFile();
-		}
-
-		if( !masterConfig.exists() )
-		{
-			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
-		}
-	}
-
-	/**
-	 * This method removes any given props and then adds the new values.
+	 * {@link biolockj.module.BioModule#getPreRequisiteModules()} are add dependent modules if missing from the
+	 * {@link biolockj.Config}. This ensures the current module will have the correct input files and is a convenient
+	 * way to manage the size and readability of {@link biolockj.Config} files. Prerequisite modules are always
+	 * appropriate for full pipelines with sequence input file, however if the output from a prerequisite module is used
+	 * as the input for a new pipeline via {@value biolockj.Config#INPUT_DIRS}, adding the prerequisite module will
+	 * cause FATAL pipeline errors.<br>
+	 * <br>
 	 * 
-	 * @param props List of config props
-	 * @throws Exception if errors occur
+	 * New pipelines can be run starting with any module, so BioLockJ must be prepared to accept the input files
+	 * required for any module. All BioModules require input files from one of the following 6 categories:<br>
+	 * <ul>
+	 * <li>{@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_PARSER_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_R_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_SEQ_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_STATS_TABLE_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE}
+	 * </ul>
+	 * 
+	 * In rare cases, such as running R plot modules, the input directories must contain multiple data types.<br>
+	 * For example:<br>
+	 * <ul>
+	 * <li>{@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_R_INPUT_TYPE}
+	 * <li>{@value #PIPELINE_STATS_TABLE_INPUT_TYPE}
+	 * </ul>
+	 * With this input a user can run a pipeline with only 2 modules:<br>
+	 * <ol>
+	 * <li>{@link biolockj.module.report.JsonReport}
+	 * <li>{@link biolockj.module.r.BuildOtuPlots}
+	 * </ol>
+	 * 
 	 */
-	public static void updateMasterConfig( final Map<String, String> props ) throws Exception
-	{
-		final List<String> configLines = readMasterConfig( props );
-		if( configLines == null || props == null || props.isEmpty() )
-		{
-			return;
-		}
-
-		BufferedWriter writer = new BufferedWriter( new FileWriter( getTempConfig() ) );
-		try
-		{
-			for( final String line: configLines )
-			{
-				writer.write( line + RETURN );
-			}
-
-			for( final String name: props.keySet() )
-			{
-				Log.info( BioLockJUtil.class, "Update MASTER config property: " + name + "=" + props.get( name ) );
-				writer.write( name + "=" + props.get( name ) + RETURN );
-			}
-
-			writer.close();
-			writer = null;
-
-			BioLockJUtil.deleteWithRetry( getMasterConfig(), 10 );
-			FileUtils.moveFile( getTempConfig(), getMasterConfig() );
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
-			if( getTempConfig().exists() && getMasterConfig().exists() )
-			{
-				BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
-			}
-			else if( getTempConfig().exists() )
-			{
-				throw new Exception(
-						"Error occurred updating MASTER config.  File has been deleted, please recover from: "
-								+ getTempConfig().getAbsolutePath() );
-			}
-
-		}
-	}
-
-	private static void deleteTempConfigFile() throws Exception
-	{
-		if( getTempConfig().exists() && getMasterConfig().exists() )
-		{
-			BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
-		}
-		else if( getTempConfig().exists() )
-		{
-			throw new Exception( "Error occurred updating MASTER config.  File has been deleted, please recover using: "
-					+ getTempConfig().getAbsolutePath() );
-		}
-	}
-
-	private static List<String> getInitConfig() throws Exception
-	{
-		final File masterConfig = getMasterConfig();
-		if( !masterConfig.exists() || !Config.getConfigFilePath().equals( masterConfig.getAbsolutePath() ) )
-		{
-			return null;
-		}
-		final List<String> initConfig = new ArrayList<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( masterConfig );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				if( line.startsWith( ORIG_CONFIG_FLAG ) || line.startsWith( DEFAULT_CONFIG_FLAG ) )
-				{
-					initConfig.add( line );
-				}
-			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
-				reader.close();
-			}
-		}
-		return initConfig;
-	}
-
-	private static File getTempConfig() throws Exception
-	{
-		return new File( Config.requireExistingDir( Config.INTERNAL_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ TEMP_PREFIX + Config.getConfigFileName() );
-	}
-
-	private static List<String> readMasterConfig( final Map<String, String> props ) throws Exception
-	{
-		final List<String> newLines = new ArrayList<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( getMasterConfig() );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				final StringTokenizer st = new StringTokenizer( line, "=" );
-				if( st.countTokens() < 2 || !props.keySet().contains( st.nextToken() ) )
-				{
-					newLines.add( line );
-				}
-			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
-				reader.close();
-			}
-		}
-
-		return newLines;
-	}
+	public static final String INTERNAL_PIPELINE_INPUT_TYPES = "internal.pipelineInputTypes";
 
 	/**
-	 * Prefix added to the master Config file: {@value #MASTER_PREFIX}
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for OTU count files that meet the file requirements
+	 * to pass {@link biolockj.util.OtuUtil#isOtuFile(File)}.
 	 */
-	public static final String MASTER_PREFIX = "MASTER_";
-	private static final String DEFAULT_CONFIG_FLAG = "# ----> Default Config: ";
-	private static final List<File> filteredInputFiles = new ArrayList<>();
+	public static final String PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE = "otu_count";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_PARSER_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for classifier output files.
+	 */
+	public static final String PIPELINE_PARSER_INPUT_TYPE = "classifier_output";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_R_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} if input files are some type of count table merged
+	 * with the metadata such as those output by {@link biolockj.module.report.taxa.AddMetadataToTaxaTables}. These
+	 * files can be input into any {@biolockj.module.r.R_Module}.
+	 */
+	public static final String PIPELINE_R_INPUT_TYPE = "R";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_SEQ_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for sequence input files.
+	 */
+	public static final String PIPELINE_SEQ_INPUT_TYPE = "seq";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_STATS_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} if input files are tables of statistics such as those
+	 * output by {@link biolockj.module.r.CalculateStats}.
+	 */
+	public static final String PIPELINE_STATS_TABLE_INPUT_TYPE = "stats";
+
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for OTU count files that meet the file requirements
+	 * to pass {@link biolockj.util.TaxaUtil#isTaxaFile(File)}.
+	 */
+	public static final String PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count";
 
 	private static final List<File> inputFiles = new ArrayList<>();
-	private static final String ORIG_CONFIG_FLAG = "# ----> Project Config: ";
-	private static final String RETURN = BioLockJ.RETURN;
-	private static final String TEMP_PREFIX = ".TEMP_";
 	private static final String VERSION_FILE = ".version";
 }

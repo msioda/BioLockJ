@@ -20,7 +20,7 @@ import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
-import biolockj.module.implicit.qiime.MergeOtuTables;
+import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.module.r.R_Module;
 
@@ -127,19 +127,19 @@ public class DockerUtil
 	 */
 	public static boolean isManager()
 	{
-		return RuntimeParamUtil.getDockerContainerName() != null
-				&& RuntimeParamUtil.getDockerContainerName().equals( MANAGER );
+		return !RuntimeParamUtil.isDirectMode();
 	}
 
 	/**
-	 * Get the name of the Docker image
+	 * Get the name of the Docker image.
 	 * 
 	 * @param module BioModule
 	 * @return Docker image name
+	 * @throws Exception if errors occur
 	 */
-	protected static String getDockerImage( final BioModule module )
+	protected static String getDockerImage( final BioModule module ) throws Exception
 	{
-		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeOtuTables
+		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
 				|| module instanceof QiimeClassifier;
 
 		final boolean isR = module instanceof R_Module;
@@ -149,7 +149,38 @@ public class DockerUtil
 						: isDockerScriptModule( module ) ? module.getClass().getSimpleName()
 								: JavaModule.class.getSimpleName();
 
-		return " " + DOCKER_USER + "/" + name.toLowerCase();
+		return " " + dockerHubUser( name ) + "/" + buildImageName( name );
+	}
+
+	private static String buildImageName( final String className ) throws Exception
+	{
+		final StringBuffer imageName = new StringBuffer();
+		imageName.append( className.substring( 0, 1 ).toLowerCase() );
+
+		for( int i = 2; i < className.length(); i++ )
+		{
+			final String val = className.substring( i - 1, i );
+			final String upperCase = val.toUpperCase();
+			if( val.equals( upperCase ) )
+			{
+				imageName.append( DOCK_IMAGE_NAME_DELIM );
+			}
+		}
+
+		Log.info( DockerUtil.class, "User Docker image name: " + imageName.toString() );
+
+		return imageName.toString();
+	}
+
+	private static String dockerHubUser( final String className ) throws Exception
+	{
+		String user = Config.getString( DOCKER_HUB_USER );
+		if( user == null )
+		{
+			user = DEFAULT_DOCKER_HUB_USER;
+		}
+
+		return user;
 	}
 
 	private static String getBljOptions( final BioModule module ) throws Exception
@@ -220,9 +251,9 @@ public class DockerUtil
 	public static final String CONTAINER_META_DIR = File.separator + "meta";
 
 	/**
-	 * All containers mount {@value biolockj.Config#INTERNAL_PIPELINE_DIR} to the container "pipeline" volume
+	 * All containers mount {@value biolockj.Config#PROJECT_PIPELINE_DIR} to the container "pipelines" volume
 	 */
-	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipeline";
+	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipelines";
 
 	/**
 	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer"
@@ -231,19 +262,19 @@ public class DockerUtil
 	public static final String CONTAINER_PRIMER_DIR = File.separator + "primer";
 
 	/**
+	 * Name of the BioLockJ Docker account ID: {@value #DEFAULT_DOCKER_HUB_USER}
+	 */
+	public static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
+
+	/**
 	 * Docker socket path: {@value #DOCKER_SOCKET}
 	 */
 	public static final String DOCKER_SOCKET = "/var/run/docker.sock";
 
 	/**
-	 * Name of the BioLockJ Docker account ID: {@value #DOCKER_USER}
-	 */
-	public static final String DOCKER_USER = "biolockj";
-
-	/**
 	 * Docker manager module name variable holding the name of the Config file: {@value #MANAGER}
 	 */
-	public static final String MANAGER = "manager";
+	public static final String MANAGER = "blj_manager";
 
 	/**
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
@@ -255,31 +286,14 @@ public class DockerUtil
 	 */
 	protected static final String DELETE_ON_EXIT = "docker.deleteContainerOnExit";
 
+	/**
+	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
+	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
+	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
+	 * versions of these modules and add new modules in their own Docker Hub account.
+	 */
+	protected static final String DOCKER_HUB_USER = "docker.dockerHubUser";
+
+	private static final String DOCK_IMAGE_NAME_DELIM = "_";
 	private static final String DOCK_RM_FLAG = "--rm";
-
-	/**
-	 * Update Config file paths to use the container paths in place of host paths
-	 * 
-	 * @throws Exception if errors occur
-	 * 
-	 * public static void updateDockerConfig() throws Exception { if( RuntimeParamUtil.getDockerHostMetaDir() != null )
-	 * { updateDockerProperty( MetaUtil.META_FILE_PATH, CONTAINER_META_DIR );
-	 * 
-	 * } if( RuntimeParamUtil.getDockerHostPrimerDir() != null ) { updateDockerProperty(
-	 * TrimPrimers.INPUT_TRIM_SEQ_FILE, CONTAINER_PRIMER_DIR ); } }
-	 */
-
-	/**
-	 * Update a Config property by setting the container path in place of the host path.
-	 * 
-	 * @param prop Config property
-	 * @param containerDir Container directory path
-	 * @throws Exception if errors occur
-	 *
-	 * protected static void updateDockerProperty( final String prop, final String containerDir ) throws Exception {
-	 * final File hostFile = new File( Config.requireString( prop ) ); final String newPath = File.separator +
-	 * containerDir + File.separator + hostFile.getName(); Config.requireExistingFile( newPath );
-	 * Config.setConfigProperty( prop, newPath ); }
-	 */
-
 }

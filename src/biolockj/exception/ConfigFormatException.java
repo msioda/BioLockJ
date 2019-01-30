@@ -27,7 +27,7 @@ public class ConfigFormatException extends ConfigException
 	 */
 	public ConfigFormatException( final String propertyName, final String msg )
 	{
-		super( propertyName, "Format", "Current value \"" + Config.getString( propertyName )
+		super( propertyName, "Current value \"" + Config.getString( propertyName )
 				+ "\" does not meet format requirements!" + BioLockJ.RETURN + msg );
 	}
 

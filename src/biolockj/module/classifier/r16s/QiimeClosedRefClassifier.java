@@ -17,7 +17,7 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
-import biolockj.module.implicit.qiime.MergeOtuTables;
+import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.util.*;
 
@@ -83,7 +83,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		checkOtuPickingDependencies();
+		getParams();
 	}
 
 	/**
@@ -101,13 +101,13 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<Class<?>> getPostRequisiteModules() throws Exception
+	public List<String> getPostRequisiteModules() throws Exception
 	{
-		final List<Class<?>> postReqs = new ArrayList<>();
-		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( Config.INTERNAL_MULTIPLEXED )
+		final List<String> postReqs = new ArrayList<>();
+		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED )
 				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( SCRIPT_BATCH_SIZE ) ) )
 		{
-			postReqs.add( MergeOtuTables.class );
+			postReqs.add( MergeQiimeOtuTables.class.getName() );
 		}
 
 		postReqs.addAll( super.getPostRequisiteModules() );
