@@ -14,9 +14,7 @@ package biolockj.util;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.r.R_Module;
@@ -118,7 +116,7 @@ public class ModuleUtil
 	 */
 	public static boolean isComplete( final BioModule bioModule )
 	{
-		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_COMPLETE );
+		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		return f.exists();
 	}
 
@@ -175,7 +173,7 @@ public class ModuleUtil
 	 */
 	public static boolean isIncomplete( final BioModule bioModule )
 	{
-		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
+		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		return f.exists();
 	}
 
@@ -207,15 +205,15 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Method creates a file named {@value biolockj.Pipeline#BLJ_COMPLETE} in bioModule root directory to document
-	 * bioModule has completed successfully. Also clean up by removing file {@value biolockj.Pipeline#BLJ_STARTED}.
+	 * Method creates a file named {@value biolockj.BioLockJ#BLJ_COMPLETE} in bioModule root directory to document
+	 * bioModule has completed successfully. Also clean up by removing file {@value biolockj.Constants#BLJ_STARTED}.
 	 *
 	 * @param bioModule BioModule
-	 * @throws Exception if unable to create {@value biolockj.Pipeline#BLJ_COMPLETE} file
+	 * @throws Exception if unable to create {@value biolockj.BioLockJ#BLJ_COMPLETE} file
 	 */
 	public static void markComplete( final BioModule bioModule ) throws Exception
 	{
-		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_COMPLETE );
+		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		final FileWriter writer = new FileWriter( f );
 		writer.close();
 		if( !f.exists() )
@@ -223,7 +221,7 @@ public class ModuleUtil
 			throw new Exception( "Unable to create " + f.getAbsolutePath() );
 		}
 		final File startFile = new File(
-				bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
+				bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		BioLockJUtil.deleteWithRetry( startFile, 5 );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 		Log.info( ModuleUtil.class, "FINISHED " + bioModule.getClass().getName() );
@@ -231,16 +229,16 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Method creates a file named {@value biolockj.Pipeline#BLJ_STARTED} in bioModule root directory to document
+	 * Method creates a file named {@value biolockj.Constants#BLJ_STARTED} in bioModule root directory to document
 	 * bioModule has completed successfully. Also sets the start time and caches module name to list of executed modules
 	 * so we can check later if it ran during this pipeline execution (as opposed to a previous failed run).
 	 *
 	 * @param bioModule BioModule
-	 * @throws Exception if unable to create {@value biolockj.Pipeline#BLJ_STARTED} file
+	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_STARTED} file
 	 */
 	public static void markStarted( final BioModule bioModule ) throws Exception
 	{
-		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
+		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		final FileWriter writer = new FileWriter( f );
 		writer.close();
 		if( !f.exists() )

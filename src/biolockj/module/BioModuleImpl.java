@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.util.*;
 
 /**
@@ -301,41 +299,41 @@ public abstract class BioModuleImpl implements BioModule
 	/**
 	 * BioLockJ gzip file extension constant: {@value #GZIP_EXT}
 	 */
-	public static final String GZIP_EXT = BioLockJ.GZIP_EXT;
+	public static final String GZIP_EXT = Constants.GZIP_EXT;
 	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */
-	public static final String LOG_EXT = BioLockJ.LOG_EXT;
+	public static final String LOG_EXT = Constants.LOG_EXT;
 
 	/**
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
 	 */
-	public static final String PDF_EXT = BioLockJ.PDF_EXT;
+	public static final String PDF_EXT = Constants.PDF_EXT;
 
 	/**
 	 * Return character constant *backslash-n*
 	 */
-	public static final String RETURN = BioLockJ.RETURN;
+	public static final String RETURN = Constants.RETURN;
 
 	/**
 	 * BioLockJ shell script file extension constant: {@value #SH_EXT}
 	 */
-	public static final String SH_EXT = BioLockJ.SH_EXT;
+	public static final String SH_EXT = Constants.SH_EXT;
 
 	/**
 	 * BioLockJ tab character constant: {@value #TAB_DELIM}
 	 */
-	public static final String TAB_DELIM = BioLockJ.TAB_DELIM;
+	public static final String TAB_DELIM = Constants.TAB_DELIM;
 
 	/**
 	 * BioLockJ tab delimited text file extension constant: {@value #TSV_EXT}
 	 */
-	public static final String TSV_EXT = BioLockJ.TSV_EXT;
+	public static final String TSV_EXT = Constants.TSV_EXT;
 
 	/**
 	 * BioLockJ tab delimited text file extension constant: {@value #TXT_EXT}
 	 */
-	public static final String TXT_EXT = BioLockJ.TXT_EXT;
+	public static final String TXT_EXT = Constants.TXT_EXT;
 
 	private static Integer nextId = 0;
 

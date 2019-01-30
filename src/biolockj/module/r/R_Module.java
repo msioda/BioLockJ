@@ -303,7 +303,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		{
 			set.add( R_DATA_EXT.substring( 1 ) );
 		}
-		if( !Config.getBoolean( BioLockJ.PROJECT_DELETE_TEMP_FILES ) && Config.getBoolean( R_Module.R_DEBUG ) )
+		if( !Config.getBoolean( Constants.PROJECT_DELETE_TEMP_FILES ) && Config.getBoolean( R_Module.R_DEBUG ) )
 		{
 			set.add( LOG_EXT.substring( 1 ) );
 		}

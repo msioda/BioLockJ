@@ -3,9 +3,7 @@ package biolockj.module.report;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
@@ -380,7 +378,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				int i = 0;
 				while( i++ < indentCount )
 				{
-					writer.write( BioLockJ.TAB_DELIM );
+					writer.write( Constants.TAB_DELIM );
 				}
 
 				writer.write( line + BioLockJ.RETURN );

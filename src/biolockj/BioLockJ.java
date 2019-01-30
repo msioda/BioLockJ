@@ -68,7 +68,7 @@ public class BioLockJ
 		{
 			return RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + RETURN
 					+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath() + RETURN: "" )
-					+ "For more information, please visit the BioLockJ Wiki:" + BLJ_WIKI + RETURN;
+					+ "For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + RETURN;
 		}
 		catch( final Exception ex )
 		{
@@ -117,14 +117,14 @@ public class BioLockJ
 	 * <li>Copy {@link biolockj.Config} file and nested {@value biolockj.Config#PROJECT_DEFAULT_PROPS} files into
 	 * {@value biolockj.Config#PROJECT_PIPELINE_DIR} to preserve the state of these files at runtime.
 	 * <li>Initialize {@link Log} using /resources/log4J.properties
-	 * <li>If {@value #PROJECT_COPY_FILES} = {@value biolockj.Config#TRUE}, copy input files into a new "input"
+	 * <li>If {@value #Constants.PROJECT_COPY_FILES} = {@value biolockj.Config#TRUE}, copy input files into a new "input"
 	 * directory under {@value biolockj.Config#PROJECT_PIPELINE_DIR}
 	 * <li>Call {@link biolockj.util.SeqUtil#initialize()} to set Config parameters based on sequence files
 	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
 	 * <li>Call {@link biolockj.Pipeline#runPipeline()} or {@link biolockj.Pipeline#runDirectModule(Integer)} to execute
 	 * pipeline modules.
 	 * <li>Call {@link #removeTempFiles()} to complete clean up operation, and if
-	 * {@link biolockj.Config}.{@value #PROJECT_DELETE_TEMP_FILES} = {@value biolockj.Config#TRUE}, delete temp
+	 * {@link biolockj.Config}.{@value #Constants.PROJECT_DELETE_TEMP_FILES} = {@value biolockj.Config#TRUE}, delete temp
 	 * directories
 	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status
 	 * </ol>
@@ -191,25 +191,25 @@ public class BioLockJ
 			else
 			{
 				PropUtil.saveNewMasterConfig( null );
-				if( Config.getBoolean( PROJECT_COPY_FILES ) )
+				if( Config.getBoolean( Constants.PROJECT_COPY_FILES ) )
 				{
 					SeqUtil.copyInputData();
 				}
 
 				Pipeline.runPipeline();
 
-				if( Config.getBoolean( PROJECT_DELETE_TEMP_FILES ) )
+				if( Config.getBoolean( Constants.PROJECT_DELETE_TEMP_FILES ) )
 				{
 					removeTempFiles();
 				}
 
-				markProjectStatus( Pipeline.BLJ_COMPLETE );
+				markProjectStatus( Constants.BLJ_COMPLETE );
 				PropUtil.sanitizeMasterConfig();
 			}
 		}
 		catch( final Exception ex )
 		{
-			markProjectStatus( Pipeline.BLJ_FAILED );
+			markProjectStatus( Constants.BLJ_FAILED );
 			logFinalException( args, ex );
 			SummaryUtil.addSummaryFooterForFailedPipeline( getHelpInfo( null ) );
 		}
@@ -261,8 +261,8 @@ public class BioLockJ
 	 * <ol>
 	 * <li>Initialize {@link biolockj.Log} file, name after {@value biolockj.Config#PROJECT_PIPELINE_NAME}
 	 * <li>Update summary #Attempts count
-	 * <li>If pipeline status = {@value biolockj.Pipeline#BLJ_COMPLETE}
-	 * <li>Delete status file {@value biolockj.Pipeline#BLJ_FAILED} in pipeline root directory
+	 * <li>If pipeline status = {@value biolockj.BioLockJ#BLJ_COMPLETE}
+	 * <li>Delete status file {@value biolockj.Constants#BLJ_FAILED} in pipeline root directory
 	 * </ol>
 	 * 
 	 * @throws Exception if errors occur
@@ -277,13 +277,13 @@ public class BioLockJ
 		SummaryUtil.updateNumAttempts();
 		if( isPipelineComplete( RuntimeParamUtil.getRestartDir() ) )
 		{
-			throw new Exception( "RESTART FAILED!  Restart pipeline still shows status as: " + Pipeline.BLJ_COMPLETE
+			throw new Exception( "RESTART FAILED!  Restart pipeline still shows status as: " + Constants.BLJ_COMPLETE
 					+ " --> Check restart directory: " + RuntimeParamUtil.getRestartDir().getAbsolutePath() );
 		}
 		else
 		{
 			final File f = new File(
-					RuntimeParamUtil.getRestartDir().getAbsolutePath() + File.separator + Pipeline.BLJ_FAILED );
+					RuntimeParamUtil.getRestartDir().getAbsolutePath() + File.separator + Constants.BLJ_FAILED );
 			if( f.exists() )
 			{
 				if( !BioLockJUtil.deleteWithRetry( f, 5 ) )
@@ -395,15 +395,15 @@ public class BioLockJ
 	}
 
 	/**
-	 * Determine project status based on existence of {@value biolockj.Pipeline#BLJ_COMPLETE} in pipeline root
+	 * Determine project status based on existence of {@value biolockj.BioLockJ#BLJ_COMPLETE} in pipeline root
 	 * directory.
 	 *
 	 * @param projDir File path for the pipeline
-	 * @return true if {@value biolockj.Pipeline#BLJ_COMPLETE} exists in the pipeline root directory, otherwise false
+	 * @return true if {@value biolockj.BioLockJ#BLJ_COMPLETE} exists in the pipeline root directory, otherwise false
 	 */
 	private static boolean isPipelineComplete( final File projDir )
 	{
-		final File f = new File( projDir.getAbsolutePath() + File.separator + Pipeline.BLJ_COMPLETE );
+		final File f = new File( projDir.getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		return f.exists();
 	}
 
@@ -456,7 +456,7 @@ public class BioLockJ
 			}
 			else
 			{
-				final String perm = Config.getString( PROJECT_PERMISSIONS );
+				final String perm = Config.getString( Constants.PROJECT_PERMISSIONS );
 				if( perm != null )
 				{
 					Job.setFilePermissions( Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ), perm );
@@ -519,11 +519,11 @@ public class BioLockJ
 			int index = 0;
 			final String prefix = ( RuntimeParamUtil.isDockerMode() ? DockerUtil.CONTAINER_OUTPUT_DIR: "~" )
 					+ File.separator;
-			File errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + LOG_EXT ) );
+			File errFile = new File( Config.getSystemFilePath( prefix + Constants.FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
 			while( errFile.exists() )
 			{
-				errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
-						+ new Integer( ++index ).toString() + LOG_EXT ) );
+				errFile = new File( Config.getSystemFilePath( prefix + Constants.FATAL_ERROR_FILE_PREFIX + suffix + "_"
+						+ new Integer( ++index ).toString() + Constants.LOG_EXT ) );
 			}
 
 			Log.error( BioLockJ.class, Log.LOG_SPACER );
@@ -580,75 +580,7 @@ public class BioLockJ
 		return singleModeSuccess;
 	}
 
-	/**
-	 * Captures the application start time
-	 */
-	public static final long APP_START_TIME = System.currentTimeMillis();
-
-	/**
-	 * URL to the BioLockJ WIKI
-	 */
-	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
-
-	/**
-	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
-	 */
-	public static final String GZIP_EXT = ".gz";
-
-	/**
-	 * BioLockJ log file extension constant: {@value #LOG_EXT}
-	 */
-	public static final String LOG_EXT = ".log";
-
-	/**
-	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
-	 */
-	public static final String PDF_EXT = ".pdf";
-
-	/**
-	 * {@link biolockj.Config} property set to copy input files into pipeline root directory:
-	 * {@value #PROJECT_COPY_FILES}
-	 */
-	public static final String PROJECT_COPY_FILES = "project.copyInput";
-
-	/**
-	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
-	 * {@value #PROJECT_DELETE_TEMP_FILES}
-	 */
-	public static final String PROJECT_DELETE_TEMP_FILES = "project.deleteTempFiles";
-
-	/**
-	 * Return character constant *backslash-n*
-	 */
-	public static final String RETURN = "\n";
-
-	/**
-	 * BioLockJ shell script file extension constant: {@value #SH_EXT}
-	 */
-	public static final String SH_EXT = ".sh";
-
-	/**
-	 * BioLockJ tab character constant: {@value #TAB_DELIM}
-	 */
-	public static final String TAB_DELIM = "\t";
-
-	/**
-	 * BioLockJ tab delimited text file extension constant: {@value #TSV_EXT}
-	 */
-	public static final String TSV_EXT = ".tsv";
-
-	/**
-	 * BioLockJ standard text file extension constant: {@value #TXT_EXT}
-	 */
-	public static final String TXT_EXT = ".txt";
-
-	/**
-	 * {@link biolockj.Config} property to define permission setttings when running chmod on pipeline root dir:
-	 * {@value #PROJECT_PERMISSIONS}
-	 */
-	protected static final String PROJECT_PERMISSIONS = "project.permissions";
-
-	private static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
+	public static final String RETURN = Constants.RETURN;
 	private static boolean printedFinalExcp = false;
 	private static Boolean singleModeSuccess = null;
 }

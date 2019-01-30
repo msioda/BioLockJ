@@ -18,9 +18,7 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
@@ -120,7 +118,7 @@ public class BioLockJUtil
 	public static String fileExt( final File file ) throws Exception
 	{
 		String ext = file.getName();
-		int index = ext.lastIndexOf( BioLockJ.GZIP_EXT );
+		int index = ext.lastIndexOf( Constants.GZIP_EXT );
 		if( SeqUtil.isGzipped( ext ) && index > 0 )
 		{
 			ext = ext.substring( 0, index );

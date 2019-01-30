@@ -112,7 +112,7 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.requireString( Config.PROJECT_PIPELINE_NAME ) + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
-		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( System.currentTimeMillis() - BioLockJ.APP_START_TIME )
+		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( System.currentTimeMillis() - Constants.APP_START_TIME )
 				+ RETURN );
 
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    "
@@ -207,7 +207,7 @@ public class SummaryUtil
 	public static String getModuleRunTime( final BioModule bioModule )
 	{
 		final File started = new File(
-				bioModule.getModuleDir().getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
+				bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		return getRunTime( System.currentTimeMillis() - started.lastModified() );
 	}
 
@@ -325,13 +325,13 @@ public class SummaryUtil
 				return "Module MAIN script not found in -->" + module.getScriptDir().getAbsolutePath() + RETURN;
 			}
 
-			final IOFileFilter ff0 = new WildcardFileFilter( "*" + BioLockJ.SH_EXT );
+			final IOFileFilter ff0 = new WildcardFileFilter( "*" + Constants.SH_EXT );
 			final IOFileFilter ffStarted = new WildcardFileFilter(
-					"*" + BioLockJ.SH_EXT + "_" + Pipeline.SCRIPT_STARTED );
+					"*" + Constants.SH_EXT + "_" + Pipeline.SCRIPT_STARTED );
 			final IOFileFilter ffSuccess = new WildcardFileFilter(
-					"*" + BioLockJ.SH_EXT + "_" + Pipeline.SCRIPT_SUCCESS );
+					"*" + Constants.SH_EXT + "_" + Pipeline.SCRIPT_SUCCESS );
 			final IOFileFilter ffFailed = new WildcardFileFilter(
-					"*" + BioLockJ.SH_EXT + "_" + Pipeline.SCRIPT_FAILURES );
+					"*" + Constants.SH_EXT + "_" + Pipeline.SCRIPT_FAILURES );
 
 			final Collection<File> scripts = FileUtils.listFiles( module.getScriptDir(), ff0, null );
 			final Collection<File> scriptsStarted = FileUtils.listFiles( module.getScriptDir(), ffStarted, null );
@@ -526,7 +526,7 @@ public class SummaryUtil
 		{
 			for( final StackTraceElement ste: ex.getStackTrace() )
 			{
-				sb.append( BioLockJ.TAB_DELIM + ste.toString() + RETURN );
+				sb.append( Constants.TAB_DELIM + ste.toString() + RETURN );
 			}
 		}
 
@@ -834,12 +834,12 @@ public class SummaryUtil
 	/**
 	 * Name of the summary file created in pipeline root directory: {@value #SUMMARY_FILE}
 	 */
-	protected static final String SUMMARY_FILE = "summary" + BioLockJ.TXT_EXT;
+	protected static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
 
 	/**
 	 * Name of the temp file created in pipeline root directory: {@value #TEMP_SUMMARY_FILE}
 	 */
-	protected static final String TEMP_SUMMARY_FILE = ".tempSummary" + BioLockJ.TXT_EXT;
+	protected static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String NUM_ATTEMPTS = "# Attempts";
 	private static final String NUM_MODULES = "# Modules";

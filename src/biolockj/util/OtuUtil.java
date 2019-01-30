@@ -16,9 +16,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 
 /**
@@ -40,7 +38,7 @@ public class OtuUtil
 		 */
 		public OtuCountLine( final String line ) throws Exception
 		{
-			final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+			final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 			if( st.countTokens() != 2 )
 			{
 				throw new Exception(
@@ -181,7 +179,7 @@ public class OtuUtil
 		}
 
 		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
-				+ prefix + OTU_COUNT + sampleId + BioLockJ.TSV_EXT );
+				+ prefix + OTU_COUNT + sampleId + Constants.TSV_EXT );
 	}
 
 	/**
@@ -199,7 +197,7 @@ public class OtuUtil
 			throw new Exception( "Unexpected format!  Missing \"_\" from input file name: " + otuCountFile.getName() );
 		}
 		return otuCountFile.getName().substring( otuCountFile.getName().lastIndexOf( OTU_COUNT + "_" ) + 9,
-				otuCountFile.getName().length() - BioLockJ.TSV_EXT.length() );
+				otuCountFile.getName().length() - Constants.TSV_EXT.length() );
 	}
 
 	/**
@@ -238,7 +236,7 @@ public class OtuUtil
 	public static boolean isOtuFile( final File file ) throws Exception
 	{
 		final String name = file.getName();
-		if( name.contains( "_" + OTU_COUNT + "_" ) && name.endsWith( BioLockJ.TSV_EXT ) )
+		if( name.contains( "_" + OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) )
 		{
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try

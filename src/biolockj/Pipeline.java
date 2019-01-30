@@ -181,16 +181,16 @@ public class Pipeline
 	/**
 	 * This method executes all new and incomplete modules<br>
 	 * Before/after a module is executed, set persistent module status by creating status indicator files. Incomplete
-	 * modules have an empty file {@value #BLJ_STARTED} in the module directory.<br>
-	 * Complete modules have an empty file {@value #BLJ_COMPLETE} in the module directory.<br>
+	 * modules have an empty file {@value Constants#BLJ_STARTED} in the module directory.<br>
+	 * Complete modules have an empty file {@value BioLockJ#BLJ_COMPLETE} in the module directory.<br>
 	 * {@link biolockj.module.BioModule}s are run in the order listed in the {@link biolockj.Config} file.<br>
 	 * <p>
 	 * Execution steps:
 	 * <ol>
-	 * <li>File {@value #BLJ_STARTED} is added to the module directory
+	 * <li>File {@value Constants#BLJ_STARTED} is added to the module directory
 	 * <li>Execute {@link #refreshOutputMetadata(BioModule)} to cache updated metadata, if generatede.
 	 * <li>Run module scripts, if any, polling 1/minute for status until all scripts complete or time out.
-	 * <li>File {@value #BLJ_STARTED} is replaced by {@value #BLJ_COMPLETE} as status indicator
+	 * <li>File {@value Constants#BLJ_STARTED} is replaced by {@value BioLockJ#BLJ_COMPLETE} as status indicator
 	 * </ol>
 	 *
 	 * @throws Exception if script errors occur
@@ -324,7 +324,7 @@ public class Pipeline
 	{
 		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
 		final File mainScript = module.getMainScript();
-		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? R_Module.R_EXT: BioLockJ.SH_EXT ) );
+		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? R_Module.R_EXT: Constants.SH_EXT ) );
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
 		scriptFiles.remove( mainScript );
 
@@ -479,23 +479,6 @@ public class Pipeline
 			}
 		}
 	}
-
-	/**
-	 * Name of the file created in the BioModule or {@value biolockj.Config#PROJECT_PIPELINE_DIR} root directory to
-	 * indicate execution was successful: {@value #BLJ_COMPLETE}
-	 */
-	public static final String BLJ_COMPLETE = "biolockjComplete";
-
-	/**
-	 * Name of the file created in the {@value biolockj.Config#PROJECT_PIPELINE_DIR} root directory to indicate fatal
-	 * application errors halted execution: {@value #BLJ_FAILED}
-	 */
-	public static final String BLJ_FAILED = "biolockjFailed";
-
-	/**
-	 * Name of the file created in the BioModule root directory to indicate execution has started: {@value #BLJ_STARTED}
-	 */
-	public static final String BLJ_STARTED = "biolockjStarted";
 
 	/**
 	 * File suffix appended to failed scripts: {@value #SCRIPT_FAILURES}

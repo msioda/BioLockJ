@@ -15,9 +15,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
@@ -83,7 +81,7 @@ public class LogUtil
 	private static File getModuleLog( final BioModule module ) throws Exception
 	{
 		return new File( module.getTempDir().getAbsolutePath() + File.separator + module.getClass().getSimpleName()
-				+ BioLockJ.LOG_EXT );
+				+ Constants.LOG_EXT );
 	}
 
 	private static List<String> getProfile()

@@ -46,7 +46,7 @@ public class SeqUtil
 			inputFileDir.mkdirs();
 		}
 
-		final File startedFlag = new File( inputFileDir.getAbsolutePath() + File.separator + Pipeline.BLJ_STARTED );
+		final File startedFlag = new File( inputFileDir.getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		if( startedFlag.exists() )
 		{
 			BioLockJUtil.deleteWithRetry( inputFileDir, 10 );
@@ -58,7 +58,7 @@ public class SeqUtil
 			FileUtils.copyDirectory( dir, inputFileDir );
 		}
 
-		final File completeFlag = new File( inputFileDir.getAbsolutePath() + File.separator + Pipeline.BLJ_COMPLETE );
+		final File completeFlag = new File( inputFileDir.getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		final FileWriter writer = new FileWriter( completeFlag );
 		writer.close();
 		if( !completeFlag.exists() )
@@ -591,7 +591,7 @@ public class SeqUtil
 	 */
 	public static boolean isGzipped( final String fileName )
 	{
-		return fileName != null && fileName.toLowerCase().endsWith( BioLockJ.GZIP_EXT );
+		return fileName != null && fileName.toLowerCase().endsWith( Constants.GZIP_EXT );
 	}
 
 	/**

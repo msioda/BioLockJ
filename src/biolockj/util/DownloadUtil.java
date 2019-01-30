@@ -211,7 +211,7 @@ public final class DownloadUtil
 	{
 		if( module == null )
 		{
-			String ext = BioLockJ.LOG_EXT.substring( 1 ) + "," + BioLockJ.TXT_EXT.substring( 1 );
+			String ext = Constants.LOG_EXT.substring( 1 ) + "," + Constants.TXT_EXT.substring( 1 );
 			if( Config.getConfigFileExt() != null )
 			{
 				ext += "," + Config.getConfigFileExt().substring( 1 );
@@ -219,7 +219,7 @@ public final class DownloadUtil
 
 			if( harRmods )
 			{
-				return "*.{" + ext + "," + BioLockJ.SH_EXT.substring( 1 ) + "}";
+				return "*.{" + ext + "," + Constants.SH_EXT.substring( 1 ) + "}";
 			}
 			else
 			{
@@ -294,7 +294,7 @@ public final class DownloadUtil
 
 	private static final String DEST = "$out";
 	private static final String RETURN = BioLockJ.RETURN;
-	private static final String RUN_ALL_SCRIPT = "Run_All_R" + BioLockJ.SH_EXT;
+	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
 	private static final String SOURCE = "$src";
 
 }

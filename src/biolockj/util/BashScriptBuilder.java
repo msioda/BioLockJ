@@ -521,7 +521,7 @@ public class BashScriptBuilder
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
 	{
 		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
-				+ scriptModule.getModuleDir().getName() + BioLockJ.SH_EXT ).getAbsolutePath();
+				+ scriptModule.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
 	}
 
 	private static String getModuleHeader( final ScriptModule module )

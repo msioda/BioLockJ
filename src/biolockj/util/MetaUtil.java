@@ -13,9 +13,7 @@ package biolockj.util;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 
 /**
@@ -57,20 +55,20 @@ public class MetaUtil
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
 		try
 		{
-			writer.write( reader.readLine() + BioLockJ.TAB_DELIM + colName + BioLockJ.RETURN );
+			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + BioLockJ.RETURN );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 
 				final String id = st.nextToken();
 				if( sampleIds.contains( id ) )
 				{
-					writer.write( line + BioLockJ.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
+					writer.write( line + Constants.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
 				}
 				else if( !removeMissingIds )
 				{
 					writer.write(
-							line + BioLockJ.TAB_DELIM + Config.requireString( META_NULL_VALUE ) + BioLockJ.RETURN );
+							line + Constants.TAB_DELIM + Config.requireString( META_NULL_VALUE ) + BioLockJ.RETURN );
 				}
 				else
 				{
@@ -312,7 +310,7 @@ public class MetaUtil
 			ex.printStackTrace();
 		}
 
-		return Config.requireString( Config.PROJECT_PIPELINE_NAME ) + BioLockJ.TSV_EXT;
+		return Config.requireString( Config.PROJECT_PIPELINE_NAME ) + Constants.TSV_EXT;
 
 	}
 
@@ -531,14 +529,14 @@ public class MetaUtil
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				int i = 1;
-				final StringTokenizer st = new StringTokenizer( line, BioLockJ.TAB_DELIM );
+				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 				writer.write( st.nextToken() );
 				while( st.hasMoreTokens() )
 				{
 					final String token = st.nextToken();
 					if( i++ != index )
 					{
-						writer.write( BioLockJ.TAB_DELIM + token );
+						writer.write( Constants.TAB_DELIM + token );
 					}
 				}
 				writer.write( BioLockJ.RETURN );
@@ -639,7 +637,7 @@ public class MetaUtil
 				Log.debug( MetaUtil.class, "===> Meta line: " + line );
 			}
 			final ArrayList<String> record = new ArrayList<>();
-			final String[] cells = line.split( BioLockJ.TAB_DELIM, -1 );
+			final String[] cells = line.split( Constants.TAB_DELIM, -1 );
 			for( final String cell: cells )
 			{
 				record.add( removeComments( setNullValueIfEmpty( cell ) ) );
@@ -741,7 +739,7 @@ public class MetaUtil
 	/**
 	 * Default column delimiter = tab character
 	 */
-	protected static final String DEFAULT_COL_DELIM = BioLockJ.TAB_DELIM;
+	protected static final String DEFAULT_COL_DELIM = Constants.TAB_DELIM;
 
 	/**
 	 * Default comment character for any new metadata file created by a BioModule: {@value #DEFAULT_COMMENT_CHAR}

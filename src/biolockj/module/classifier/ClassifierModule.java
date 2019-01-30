@@ -13,6 +13,7 @@ package biolockj.module.classifier;
 
 import java.util.List;
 import biolockj.BioLockJ;
+import biolockj.Constants;
 import biolockj.module.SeqModule;
 
 /**
@@ -53,5 +54,5 @@ public interface ClassifierModule extends SeqModule
 	/**
 	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
 	 */
-	public static final String PROCESSED = "_reported" + BioLockJ.TSV_EXT;
+	public static final String PROCESSED = "_reported" + Constants.TSV_EXT;
 }

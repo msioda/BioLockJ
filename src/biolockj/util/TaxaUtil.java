@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
@@ -259,7 +257,7 @@ public class TaxaUtil
 		}
 
 		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
-				+ "_" + TAXA_TABLE + suffix + level + BioLockJ.TSV_EXT );
+				+ "_" + TAXA_TABLE + suffix + level + Constants.TSV_EXT );
 	}
 
 	/**
@@ -273,7 +271,7 @@ public class TaxaUtil
 	{
 		for( final String level: getTaxaLevels() )
 		{
-			if( file.getName().endsWith( level + BioLockJ.TSV_EXT ) )
+			if( file.getName().endsWith( level + Constants.TSV_EXT ) )
 			{
 				return level;
 			}
@@ -363,7 +361,7 @@ public class TaxaUtil
 		{
 			for( final String level: getTaxaLevels() )
 			{
-				if( file.getName().endsWith( level + BioLockJ.TSV_EXT ) )
+				if( file.getName().endsWith( level + Constants.TSV_EXT ) )
 				{
 					return true;
 				}

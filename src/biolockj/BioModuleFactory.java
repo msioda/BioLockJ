@@ -296,7 +296,7 @@ public class BioModuleFactory
 				final File file = BioLockJUtil.getPipelineInputFiles().iterator().next();
 				if( isQiime && SeqUtil.isGzipped( file.getName() ) )
 				{
-					info( "Qiime does not accept \"" + BioLockJ.GZIP_EXT
+					info( "Qiime does not accept \"" + Constants.GZIP_EXT
 							+ "\" format, so adding required pre-req module: " + Gunzipper.class.getName() + " before "
 							+ moduleName );
 

@@ -12,6 +12,7 @@
 package biolockj.node.wgs;
 
 import biolockj.BioLockJ;
+import biolockj.Constants;
 import biolockj.module.classifier.wgs.SlimmClassifier;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
@@ -42,7 +43,7 @@ public class SlimmNode extends OtuNodeImpl implements OtuNode
 	 */
 	public SlimmNode( final String fileName, final String line ) throws Exception
 	{
-		final String[] parts = line.split( BioLockJ.TAB_DELIM );
+		final String[] parts = line.split( Constants.TAB_DELIM );
 		final String taxa = parts[ 1 ];
 		final String level = getLevel( fileName );
 		if( level != null ) // will skip unsupported levels such as superkingdom

@@ -15,9 +15,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
@@ -122,7 +120,7 @@ public class NormalizeTaxaTables extends JavaModuleImpl implements JavaModule
 		int totalCounts = 0;
 		while( nextLine != null )
 		{
-			final StringTokenizer st = new StringTokenizer( nextLine, BioLockJ.TAB_DELIM );
+			final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
 			final String sampleName = st.nextToken();
 			final List<Double> innerList = new ArrayList<>();
 			sampleNames.add( sampleName );
@@ -198,7 +196,7 @@ public class NormalizeTaxaTables extends JavaModuleImpl implements JavaModule
 	private List<String> getOtuNames( final String firstLine ) throws Exception
 	{
 		final List<String> otuNames = new ArrayList<>();
-		final StringTokenizer st = new StringTokenizer( firstLine, BioLockJ.TAB_DELIM );
+		final StringTokenizer st = new StringTokenizer( firstLine, Constants.TAB_DELIM );
 		st.nextToken(); // skip ID & then strip quotes
 		while( st.hasMoreTokens() )
 		{
@@ -217,7 +215,7 @@ public class NormalizeTaxaTables extends JavaModuleImpl implements JavaModule
 
 		for( final String s: otuNames )
 		{
-			writer.write( BioLockJ.TAB_DELIM + s );
+			writer.write( Constants.TAB_DELIM + s );
 		}
 
 		writer.write( BioLockJ.RETURN );
@@ -229,7 +227,7 @@ public class NormalizeTaxaTables extends JavaModuleImpl implements JavaModule
 
 			for( int y = 0; y < otuNames.size(); y++ )
 			{
-				writer.write( BioLockJ.TAB_DELIM + otuCounts.get( x ).get( y ) );
+				writer.write( Constants.TAB_DELIM + otuCounts.get( x ).get( y ) );
 			}
 
 			if( x + 1 != size )
