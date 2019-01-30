@@ -345,7 +345,7 @@ public class RuntimeParamUtil
 			{
 				for( final File f: getRestartDir().listFiles() )
 				{
-					if( f.getName().startsWith( BioLockJUtil.MASTER_PREFIX ) )
+					if( f.getName().startsWith( PropUtil.MASTER_PREFIX ) )
 					{
 						return f.getAbsolutePath();
 					}
@@ -585,25 +585,4 @@ public class RuntimeParamUtil
 	private static final String RESTART_FLAG_EXT = "--restart";
 	private static final String RETURN = BioLockJ.RETURN;
 	private static boolean useSystemOut = false;
-
-	// private static void checkDirectoryForSingleFile( final String prop ) throws Exception
-	// {
-	// final File testFile = new File( params.get( prop ) );
-	// if( !testFile.isFile() )
-	// {
-	// if( testFile.isDirectory() && testFile.list( HiddenFileFilter.VISIBLE ).length == 1 )
-	// {
-	// final String newPath = testFile.list( HiddenFileFilter.VISIBLE )[ 0 ];
-	// Log.info( RuntimeParamUtil.class, "Runtime parameter [" + prop
-	// + "] is a directory containing only one file, so setting this file as the property value: "
-	// + newPath );
-	// params.put( CONFIG_FLAG, newPath );
-	// }
-	// else
-	// {
-	// throw new Exception( testFile.getAbsolutePath() + " is not a valid system file!" );
-	// }
-	// }
-	// }
-
 }

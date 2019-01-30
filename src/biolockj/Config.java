@@ -415,6 +415,7 @@ public class Config
 
 	/**
 	 * Cache of the properties used in this pipeline.
+	 * 
 	 * @return list of properties
 	 */
 	public static Map<String, String> getUsedProps()
@@ -745,8 +746,8 @@ public class Config
 	}
 
 	/**
-	 * Set the {@value #PROJECT_PIPELINE_NAME} and {@value #PROJECT_PIPELINE_DIR} Create a
-	 * pipeline root directory if the pipeline is new.
+	 * Set the {@value #PROJECT_PIPELINE_NAME} and {@value #PROJECT_PIPELINE_DIR} Create a pipeline root directory if
+	 * the pipeline is new.
 	 * 
 	 * @return TRUE if a new pipeline directory was created
 	 * @throws Exception if errors occur
@@ -760,18 +761,15 @@ public class Config
 		}
 		else if( RuntimeParamUtil.isDirectMode() )
 		{
-			setConfigProperty( PROJECT_PIPELINE_DIR,
-					RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
+			setConfigProperty( PROJECT_PIPELINE_DIR, RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
 		}
 		else
 		{
 			isNew = true;
-			setConfigProperty( PROJECT_PIPELINE_DIR,
-					BioLockJ.createPipelineDirectory().getAbsolutePath() );
+			setConfigProperty( PROJECT_PIPELINE_DIR, BioLockJ.createPipelineDirectory().getAbsolutePath() );
 		}
 
-		setConfigProperty( PROJECT_PIPELINE_NAME,
-				Config.requireExistingDir( PROJECT_PIPELINE_DIR ).getName() );
+		setConfigProperty( PROJECT_PIPELINE_NAME, Config.requireExistingDir( PROJECT_PIPELINE_DIR ).getName() );
 
 		return isNew;
 	}
@@ -981,11 +979,10 @@ public class Config
 	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}
 	 */
 	public static final String TRUE = "Y";
+
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
 	private static Properties props = null;
 	private static Properties unmodifiedInputProps = new Properties();
-
 	private static final Map<String, String> usedProps = new HashMap<>();
-
 }

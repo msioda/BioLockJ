@@ -88,6 +88,7 @@ public class Log
 
 	/**
 	 * Boolean toggle to enable/disable all log messages
+	 * 
 	 * @param enable
 	 */
 	public static void enableLogs( final boolean enable )

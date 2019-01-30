@@ -56,7 +56,7 @@ public final class DownloadUtil
 			String targets = getSrc( getExts( null, false ) );
 			BigInteger downloadSize = FileUtils.sizeOfAsBigInteger( Log.getFile() );
 			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( SummaryUtil.getSummaryFile() ) );
-			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( BioLockJUtil.getMasterConfig() ) );
+			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( PropUtil.getMasterConfig() ) );
 
 			if( modules.get( modules.size() - 1 ) instanceof R_Module )
 			{

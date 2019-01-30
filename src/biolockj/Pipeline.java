@@ -76,8 +76,8 @@ public class Pipeline
 	 */
 	public static void runDirectModule( final Integer moduleID ) throws Exception
 	{
-		Log.info( Pipeline.class, "Run Direct BioModule ID[ " + moduleID + "] = " 
-				+ Pipeline.getModules().get( moduleID ) );
+		Log.info( Pipeline.class,
+				"Run Direct BioModule ID[ " + moduleID + "] = " + Pipeline.getModules().get( moduleID ) );
 		final JavaModule module = (JavaModule) Pipeline.getModules().get( moduleID );
 		refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
 		module.cleanUp();
@@ -415,7 +415,6 @@ public class Pipeline
 		{
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
 			RMetaUtil.classifyReportableMetadata();
-			BioLockJUtil.updateMasterConfig( RMetaUtil.getUpdatedRConfig() );
 		}
 	}
 

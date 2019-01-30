@@ -86,14 +86,6 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	{
 		return new String[] { getMainScript().getAbsolutePath() };
 	}
-	
-	
-	private boolean hasScripts() throws Exception
-	{
-		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
-		return scriptDir.exists();
-
-	}
 
 	/**
 	 * Get the main script file in the bioModule script directory, with prefix:
@@ -184,7 +176,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public String getSummary() throws Exception
 	{
-		return super.getSummary() + ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ) : "" );
+		return super.getSummary() + ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
 	}
 
 	/**
@@ -257,6 +249,13 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		}
 
 		return Config.requirePositiveInteger( SCRIPT_NUM_THREADS );
+	}
+
+	private boolean hasScripts() throws Exception
+	{
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		return scriptDir.exists();
+
 	}
 
 }
