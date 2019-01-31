@@ -12,7 +12,6 @@
 package biolockj.module.classifier;
 
 import java.util.List;
-import biolockj.BioLockJ;
 import biolockj.Constants;
 import biolockj.module.SeqModule;
 

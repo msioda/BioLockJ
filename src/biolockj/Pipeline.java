@@ -63,7 +63,7 @@ public class Pipeline
 	 */
 	public static void initializePipeline() throws Exception
 	{
-		bioModules = BioModuleFactory.buildModules();
+		bioModules = BioModuleFactory.buildPipeline();
 		Config.setConfigProperty( Config.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
 	}

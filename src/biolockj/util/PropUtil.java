@@ -14,9 +14,7 @@ package biolockj.util;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 
 /**
  * Simple utility containing String manipulation and formatting functions.
@@ -369,7 +367,7 @@ public class PropUtil
 			writer.write( "###   Pipline = DEBUG mode so printing internal properties - FYI only." + RETURN );
 			writer.write( "###   Internal properties are discarded at runtime & refenerated as needed." + RETURN );
 			writer.write( "###" + RETURN );
-			writer.write( "###   [ " + Config.ALLOW_IMPLICIT_MODULES + "=" + Config.TRUE
+			writer.write( "###   [ " + Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Config.TRUE
 					+ " ] to run this full list because it includes the implicit BioModules" + RETURN );
 			writer.write( "###" + RETURN );
 			final TreeSet<String> keys = new TreeSet<>( props.keySet() );

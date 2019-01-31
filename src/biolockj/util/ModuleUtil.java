@@ -17,7 +17,11 @@ import java.util.*;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
+import biolockj.module.implicit.Demultiplexer;
+import biolockj.module.r.CalculateStats;
 import biolockj.module.r.R_Module;
+import biolockj.module.seq.AwkFastaConverter;
+import biolockj.module.seq.PearMergeReads;
 
 /**
  * This utility holds general methods useful for BioModule interaction and management.
@@ -48,6 +52,41 @@ public class ModuleUtil
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Get the Java Class name for the default Demultiplexer module
+	 * 
+	 * @return Demultiplexer module Java class name
+	 */
+	public static String getDefaultDemultiplexer()
+	{
+		return getDefaultModule( Constants.DEFAULT_MOD_DEMUX, Demultiplexer.class.getName() );
+	}
+
+	/**
+	 * Get the Java Class name for the default Fasta converter module
+	 * 
+	 * @return Fasta converter module Java class name
+	 */
+	public static String getDefaultFastaConverter()
+	{
+		return getDefaultModule( Constants.DEFAULT_MOD_FASTA_CONV, AwkFastaConverter.class.getName() );
+	}
+
+	/**
+	 * Get the Java Class name for the default Merge paired read module
+	 * 
+	 * @return Merge paired read module Java class name
+	 */
+	public static String getDefaultMergePairedReadsConverter()
+	{
+		return getDefaultModule( Constants.DEFAULT_MOD_SEQ_MERGER, PearMergeReads.class.getName() );
+	}
+
+	public static String getDefaultStatsModule()
+	{
+		return getDefaultModule( Constants.DEFAULT_STATS_MODULE, CalculateStats.class.getName() );
 	}
 
 	/**
@@ -328,6 +367,17 @@ public class ModuleUtil
 		return ids;
 	}
 
+	private static String getDefaultModule( final String name, final String className )
+	{
+		String defaultModule = Config.getString( name );
+		if( defaultModule == null )
+		{
+			defaultModule = className;
+		}
+
+		return defaultModule;
+	}
+
 	/**
 	 * Return pipeline modules after the given module if checkAhead = TRUE<br>
 	 * Otherwise return pipeline modules before the given module.<br>
@@ -359,4 +409,5 @@ public class ModuleUtil
 		}
 		return ids;
 	}
+
 }

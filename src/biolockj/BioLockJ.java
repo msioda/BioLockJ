@@ -76,7 +76,6 @@ public class BioLockJ
 		return "";
 	}
 
-
 	/**
 	 * {@link biolockj.BioLockJ} is the BioLockj.jar Main-Class, so this main method is the first method executed when
 	 * BioLockJ runs. The biolockj shell script always passed the project directory path $DOCKER_PROJ as 1st param.<br>
@@ -93,15 +92,15 @@ public class BioLockJ
 	 * <li>Copy {@link biolockj.Config} file and nested {@value biolockj.Config#PROJECT_DEFAULT_PROPS} files into
 	 * {@value biolockj.Config#PROJECT_PIPELINE_DIR} to preserve the state of these files at runtime.
 	 * <li>Initialize {@link Log} using /resources/log4J.properties
-	 * <li>If {@value biolockj.Constants#PROJECT_COPY_FILES} = {@value biolockj.Config#TRUE}, copy input files into a new "input"
-	 * directory under {@value biolockj.Config#PROJECT_PIPELINE_DIR}
+	 * <li>If {@value biolockj.Constants#PROJECT_COPY_FILES} = {@value biolockj.Config#TRUE}, copy input files into a
+	 * new "input" directory under {@value biolockj.Config#PROJECT_PIPELINE_DIR}
 	 * <li>Call {@link biolockj.util.SeqUtil#initialize()} to set Config parameters based on sequence files
 	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
 	 * <li>Call {@link biolockj.Pipeline#runPipeline()} or {@link biolockj.Pipeline#runDirectModule(Integer)} to execute
 	 * pipeline modules.
 	 * <li>Call {@link #removeTempFiles()} to complete clean up operation, and if
-	 * {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_DELETE_TEMP_FILES} = {@value biolockj.Config#TRUE}, delete temp
-	 * directories
+	 * {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_DELETE_TEMP_FILES} = {@value biolockj.Config#TRUE},
+	 * delete temp directories
 	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status
 	 * </ol>
 	 * <p>
@@ -118,13 +117,13 @@ public class BioLockJ
 			MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 			RuntimeParamUtil.registerRuntimeParameters( args );
 			Config.initialize();
-			
+
 			if( isPipelineComplete() )
 			{
-				throw new Exception( "RESTART FAILED!  Restart pipeline still shows status as: " + Constants.BLJ_COMPLETE
-						+ " --> Check restart directory: " + pipelineDir().getAbsolutePath() );
+				throw new Exception( "RESTART FAILED!  Restart pipeline still shows status as: "
+						+ Constants.BLJ_COMPLETE + " --> Check restart directory: " + pipelineDir().getAbsolutePath() );
 			}
-			
+
 			MetaUtil.initialize();
 
 			if( RuntimeParamUtil.isDirectMode() )
@@ -163,6 +162,9 @@ public class BioLockJ
 			}
 
 			SeqUtil.initialize();
+
+			// HERE I HAVE TO DETERMINE IF WE ARE RUNNING AWS --> NEXTFLOW
+			// IF SO, BUILD main.nf
 			Pipeline.initializePipeline();
 
 			if( RuntimeParamUtil.isDirectMode() )
@@ -251,7 +253,7 @@ public class BioLockJ
 		Log.warn( BioLockJ.class, RETURN + Log.LOG_SPACER + RETURN + "RESTART PROJECT DIR --> "
 				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN + Log.LOG_SPACER + RETURN );
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
-	
+
 		SummaryUtil.updateNumAttempts();
 		final File f = new File( pipelineDir().getAbsolutePath() + File.separator + Constants.BLJ_FAILED );
 		if( f.exists() )
@@ -375,7 +377,7 @@ public class BioLockJ
 		{
 			f = new File( pipelineDir().getAbsolutePath() + Constants.BLJ_COMPLETE );
 		}
-		catch( Exception ex )
+		catch( final Exception ex )
 		{
 			return false;
 		}
@@ -421,6 +423,11 @@ public class BioLockJ
 		printedFinalExcp = true;
 	}
 
+	private static File pipelineDir() throws Exception
+	{
+		return Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR );
+	}
+
 	private static void pipelineShutDown( final String[] args )
 	{
 		try
@@ -449,13 +456,8 @@ public class BioLockJ
 			System.exit( 1 );
 		}
 	}
-	
-	private static File pipelineDir() throws Exception
-	{
-		return Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR );
-	}
 
-	private static File pipelineSuccessFile( String status ) throws Exception
+	private static File pipelineSuccessFile( final String status ) throws Exception
 	{
 		return new File( pipelineDir().getAbsolutePath() + File.separator + status );
 	}
@@ -499,7 +501,8 @@ public class BioLockJ
 			int index = 0;
 			final String prefix = ( RuntimeParamUtil.isDockerMode() ? DockerUtil.CONTAINER_OUTPUT_DIR: "~" )
 					+ File.separator;
-			File errFile = new File( Config.getSystemFilePath( prefix + Constants.FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
+			File errFile = new File( Config
+					.getSystemFilePath( prefix + Constants.FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
 			while( errFile.exists() )
 			{
 				errFile = new File( Config.getSystemFilePath( prefix + Constants.FATAL_ERROR_FILE_PREFIX + suffix + "_"

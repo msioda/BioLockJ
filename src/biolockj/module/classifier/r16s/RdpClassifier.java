@@ -14,10 +14,10 @@ package biolockj.module.classifier.r16s;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import biolockj.BioModuleFactory;
 import biolockj.Config;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
+import biolockj.util.ModuleUtil;
 import biolockj.util.SeqUtil;
 
 /**
@@ -65,7 +65,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 		final List<String> preReqs = new ArrayList<>();
 		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			preReqs.add( BioModuleFactory.getDefaultMergePairedReadsConverter() );
+			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;

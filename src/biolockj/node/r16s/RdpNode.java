@@ -12,7 +12,6 @@
 package biolockj.node.r16s;
 
 import java.util.StringTokenizer;
-import biolockj.BioLockJ;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.module.implicit.parser.r16s.RdpParser;

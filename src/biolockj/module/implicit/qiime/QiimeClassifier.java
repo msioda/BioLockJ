@@ -13,7 +13,9 @@ package biolockj.module.implicit.qiime;
 
 import java.io.*;
 import java.util.*;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Log;
+import biolockj.Pipeline;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -238,13 +240,13 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		preReqs.addAll( super.getPreRequisiteModules() );
 		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			preReqs.add( BioModuleFactory.getDefaultMergePairedReadsConverter() );
+			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
 		if( SeqUtil.piplineHasSeqInput() && !SeqUtil.isFastA() )
 		{
-			preReqs.add( BioModuleFactory.getDefaultFastaConverter() );
+			preReqs.add( ModuleUtil.getDefaultFastaConverter() );
 		}
-		if( !getClass().equals( QiimeClassifier.class.getName() ) ) // must be a classifier
+		if( !getClass().getName().equals( QiimeClassifier.class.getName() ) ) // must be a classifier
 		{
 			preReqs.add( BuildQiimeMapping.class.getName() );
 		}

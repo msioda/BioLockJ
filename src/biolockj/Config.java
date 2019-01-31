@@ -854,12 +854,6 @@ public class Config
 	}
 
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #ALLOW_IMPLICIT_MODULES}<br>
-	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
-	 */
-	public static final String ALLOW_IMPLICIT_MODULES = "project.allowImplicitModules";
-
-	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
 	 */

@@ -11,7 +11,6 @@
  */
 package biolockj.node.wgs;
 
-import biolockj.BioLockJ;
 import biolockj.Constants;
 import biolockj.module.classifier.wgs.SlimmClassifier;
 import biolockj.node.OtuNode;
