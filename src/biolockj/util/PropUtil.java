@@ -159,9 +159,10 @@ public class PropUtil
 	 * This method removes any given props and then adds the new values.<br>
 	 * 
 	 * @param props Collection of config props
+	 * @param singleModeSuccess Module status
 	 * @throws Exception if errors occur
 	 */
-	public static void updateMasterConfig( final Map<String, String> props )
+	public static void updateMasterConfig( final Map<String, String> props, final Boolean singleModeSuccess )
 			throws Exception
 	{
 		final List<String> configLinesNotInProps = getHeaderLines( props.keySet() );
