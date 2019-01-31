@@ -19,14 +19,14 @@ import biolockj.module.seq.*;
 import biolockj.util.*;
 
 /**
- * This class initializes pipeline modules, startign with those in the Config file and adding the prerequisite and
+ * This class initializes pipeline modules, starting with those in the Config file and adding the prerequisite and
  * post-requisite modules.
  */
 public class BioModuleFactory
 {
 	private BioModuleFactory() throws Exception
 	{
-		moduleCache = initModules();
+		initModules();
 	}
 
 	/**
@@ -119,13 +119,13 @@ public class BioModuleFactory
 	/**
 	 * Register the complete list of Java class.getSimpleName() values for the configured modules.
 	 * 
-	 * @return List of BioModule 
 	 * @throws Exception
 	 */
-	private List<String> initModules() throws Exception
+	private void initModules() throws Exception
 	{
-		final List<String> modules = new ArrayList<>();
 		final List<String> configModules = getConfigModules();
+		List<String> branchModules = new ArrayList<>();
+		
 		for( final String className: configModules )
 		{
 			safteyCheck = SAFE_MAX;
@@ -134,23 +134,64 @@ public class BioModuleFactory
 			{
 				for( final String mod: getPreRequisites( module ) )
 				{
-					modules.add( mod );
+					if( !branchModules.contains( mod ) )
+					{
+						branchModules.add( addModule( mod ) );
+					}
 				}
 			}
 
-			modules.add( className );
+			if( !branchModules.contains( className ) )
+			{
+				branchModules.add( addModule( className ) );
+			}
 
 			if( !module.getPostRequisiteModules().isEmpty() )
 			{
 				for( final String mod: module.getPostRequisiteModules() )
 				{
-					modules.add( mod );
+					if( !branchModules.contains( mod ) )
+					{
+						branchModules.add( addModule( mod ) );
+					}
 				}
 			}
+ //foundClassifier && 
+			
+			if( foundClassifier && branchClassifier )
+			{
+				branchClassifier = false;
+				foundClassifier = false;
+				moduleCache.addAll( branchModules );
+				branchModules = new ArrayList<>();
+			}
+			else if( branchClassifier )
+			{
+				foundClassifier = true;
+				branchClassifier = false;
+			}
+			
 		}
-		return insertConditionalModules( modules );
+		
+		if( !branchModules.isEmpty() )
+		{
+			moduleCache.addAll( branchModules );
+		}
+		
+		insertConditionalModules();
 	}
 	
+	private String addModule( String className )
+	{
+		if( className.startsWith( Constants.MODULE_CLASSIFIER_PACKAGE ) )
+		{
+			branchClassifier = true;
+		}
+		
+		return className;
+	}
+
+
 	
 	/**
 	 * This method returns all module prerequisites (including prerequisites and post-requisites for the prerequisites).
@@ -159,7 +200,7 @@ public class BioModuleFactory
 	 * @return List of prerequisite module names
 	 * @throws Exception if runtime errors occur
 	 */
-	protected static List<String> getPreRequisites( final BioModule module ) throws Exception
+	protected List<String> getPreRequisites( final BioModule module ) throws Exception
 	{
 		if( --safteyCheck == 0 )
 		{
@@ -187,25 +228,25 @@ public class BioModuleFactory
 	}
 	
 
-	private boolean requireCountMod( final List<String> modules ) throws Exception
+	private boolean requireCountMod() throws Exception
 	{
-		return !foundCountMod && Collections.disjoint( modules, getCountModules() ) 
+		return !foundCountMod && Collections.disjoint( moduleCache, getCountModules() ) 
 				&& Config.getBoolean( Config.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
 	}
 	
 	
-	private int getCountModIndex( final List<String> modules ) throws Exception
+	private int getCountModIndex() throws Exception
 	{
 		int i = -1;
-		boolean addMod = requireCountMod( modules );
+		boolean addMod = requireCountMod();
 		if( addMod )
 		{
 			
-			if( ( modules.size() == 1 ) || !modules.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
+			if( ( moduleCache.size() == 1 ) || !moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
 			{
 				i = 1;
 			}
-			else if( modules.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
+			else if( moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
 			{
 				i = 2;
 			}
@@ -216,12 +257,11 @@ public class BioModuleFactory
 		return i;
 	}
 
-	private List<String> insertConditionalModules( final List<String> modules ) throws Exception
+	private void insertConditionalModules() throws Exception
 	{
 		final List<String> finalModules = new ArrayList<>();
-		
-		int i = getCountModIndex( modules );
-		for( final String module: modules )
+		int i = getCountModIndex();
+		for( final String module: moduleCache )
 		{
 			if( finalModules.size() == i )
 			{
@@ -242,7 +282,7 @@ public class BioModuleFactory
 			finalModules.add( module );
 		}
 
-		return finalModules;
+		moduleCache = finalModules;
 	}
 	
 	private List<String> getCountModules()
@@ -298,7 +338,6 @@ public class BioModuleFactory
 	public static void destroy()
 	{
 		factory = null;
-		moduleCache = null;
 	}
 
 	/**
@@ -310,10 +349,10 @@ public class BioModuleFactory
 	public static List<String> registerModuleList() throws Exception
 	{
 		factory = new BioModuleFactory();
-		return moduleCache;
+		return factory.getModuleCache();
 	}
 
-	private static void warn( final String msg ) throws Exception
+	private void warn( final String msg ) throws Exception
 	{
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -321,16 +360,22 @@ public class BioModuleFactory
 		}
 	}
 	
-	private static BioModule getModule( final String moduleName ) throws Exception
+	private BioModule getModule( final String moduleName ) throws Exception
 	{
 		return (BioModule) Class.forName( moduleName ).newInstance();
 	}
 	
+	public List<String> getModuleCache()
+	{
+		return moduleCache;
+	}
 	
-	private static int SAFE_MAX = 10;
-	private static int safteyCheck = 0;
+	private static final int SAFE_MAX = 10;
+	private int safteyCheck = 0;
+	private boolean foundClassifier = false;
+	private boolean branchClassifier = false;
 	private static BioModuleFactory factory = null;
 	private boolean foundSeqMod = false;
 	private boolean foundCountMod = false;
-	private static List<String> moduleCache = null;
+	private List<String> moduleCache = new ArrayList<>();
 }
