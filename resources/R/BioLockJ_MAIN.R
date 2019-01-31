@@ -1,5 +1,11 @@
 # MAIN.R (MAIN_<Rmodule>.R)
 
+getInteractiveMain <- function() {
+	filePath = list.files( getwd(),  paste0( "MAIN.*R$" ), full.names=TRUE, recursive=TRUE )
+    if( length( filePath ) == 1 ) return( filePath )
+	return( NULL )
+}
+
 # Create script status indicator file by appending suffix indicating pass/fail
 # BioLockJ Java program checks for existence of new file named R script + status indicator
 # Warnings are generally unimportant so are saved as a hidden file: .warning 
@@ -38,22 +44,30 @@ executeTask <- function( name, expr ) {
 	print( paste( "Task Complete [", name, "]" ) )
 }
 
+
 # Return full path and name of this script
 getModuleScript <- function() {
 	if( is.null( moduleScript ) ) {
 		initial.options = commandArgs(trailingOnly=FALSE)
 		script.name <- sub("--file=", "", initial.options[grep("--file=", initial.options)])
 		if( length( script.name ) == 0 ) {
-			msg0 = "\n\n---> BioLockJ R scripts are not interactive - getModuleScript() retrieves its absolute path from the \"--file\" runtime parameter.\n"
-			msg1 = "---> Run \"Rscript <script.path>\" to execute the script, or hack a temporary solution into your local version of the module MAIN script.\n"
-			msg2 = "---> To do so, modify getModuleScript() to return the hard coded absolute file path for your module MAIN script.\n"
-			msg3 = "---> For more information, please visit the BioLockJ Wiki:  https://github.com/msioda/BioLockJ/wiki\n\n"
-			stop( paste0( msg0, msg1, msg2, msg3 ) )
+		
+			if( init( getInteractiveMain() ) ) {
+				script.name = getInteractiveMain() 
+			}
+			else {
+				msg0 = "\n\n---> BioLockJ R scripts are not interactive - getModuleScript() retrieves its absolute path from the \"--file\" runtime parameter.\n"
+				msg1 = "---> Run \"Rscript <script.path>\" to execute the script, or hack a temporary solution into your local version of the module MAIN script.\n"
+				msg2 = "---> To do so, modify getModuleScript() to return the hard coded absolute file path for your module MAIN script.\n"
+				msg3 = "---> For more information, please visit the BioLockJ Wiki:  https://github.com/msioda/BioLockJ/wiki\n\n"
+				stop( paste0( msg0, msg1, msg2, msg3 ) )
+			}
 		}
 		moduleScript <<- normalizePath( script.name )
 	}
 	return( moduleScript )
 }
+
 
 # Initialize MAIN script core functions, failures will return FALSE.
 init <- function( expr )
@@ -116,4 +130,4 @@ writeErrors <- function( msgs ) {
 
 moduleScript = NULL
 
-runModule()
+#runModule()

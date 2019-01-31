@@ -50,13 +50,13 @@ main <- function() {
 			#colorKey = metaColColors[[attName]]
 			logInfo( c( "Using colors:", metaColColors, "for", mdsAtts, "respectively." ) )
 			position = 1
-			page = 1
+			pageNum = 1
 			numAxis = min(c(numAxis, ncol(myMDS$CA$u)))
 			for (x in 1:(numAxis-1)) {
 				for (y in (x+1):numAxis) {
 					if (position > prod(par("mfrow") ) ) {
 						position = 1
-						page = page + 1
+						pageNum = pageNum + 1
 					}
 					plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste(y, "vs", x),
 								xlab=getMdsLabel( x, percentVariance[x] ),
@@ -67,19 +67,17 @@ main <- function() {
 						# put this plot at the upper right position
 						# that puts the legend in a nice white space, and it makes axis 1 in line with itself in two plots (same for axis3)
 						plotRelativeVariance(percentVariance, numAxis)
-						legend(x="topright", title=attName,
-									 legend = paste0(mdsAtts, " (n=", table(metaColVals)[mdsAtts], ")"), 
+						legend(x="topright", title="",
+									 legend = paste0(mdsAtts, " (n=", table(metaColVals, useNA="no")[mdsAtts], ")"), 
 									 col=metaColColors, pch=getProperty("r.pch"), bty="n")
 						# this is the best time to add the page title
-						title(main="Multidimensional Scaling Plots", outer = TRUE, line=1.2, cex=1.5)
-						titlePart2 = ifelse( page == 1, paste( "taxonomic level:", level), paste(attName, "page", page))
-						title(main=titlePart2, outer = TRUE, line=0, cex=.5)
+						title(main=paste0( "MDS Plot [ ", attName, " ]", ifelse( pageNum > 1, paste0( ":", pageNum ), "" ) ), outer = TRUE, line=0.5, cex=1.5)
 						position = position + 1
 					}
 				}
 			}
 		}
-		plotPlainText(paste("Each", paste0(page, "-page"), "set is identical.\nOnly the color scheme/legend changes."))
+		plotPlainText( paste( " Each", paste0(pageNum, "-page"), "set is identical.\n Only the color scheme/legend changes." ), 0.8)
 		if( doDebug() ) sink()
 		dev.off()
 	}
@@ -94,7 +92,7 @@ plotRelativeVariance <- function(percentVariance, numAxis){
 	numBars = max(numBars, numAxis)
 	heights = percentVariance[1:numBars]
 	bp = barplot(heights, col="dodgerblue1", ylim=c(0,100), names=1:numBars,
-							 xlab="axis", ylab="variance explained per axis", main="")
+							 xlab="Axis", ylab="Variance" )
 	labels = round(heights)
 	near0 = which(labels < 1)
 	labels[near0] = "<1"
