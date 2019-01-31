@@ -94,7 +94,7 @@ public class BashScriptBuilder
 	{
 		if( clusterModuleName != null )
 		{
-			for( final String module: Config.getTreeSet( CLUSTER_MODULES ) )
+			for( final String module: Config.getSet( CLUSTER_MODULES ) )
 			{
 				if( exists( Config.requireString( CLUSTER_BATCH_COMMAND ) ) && module.contains( clusterModuleName ) )
 				{
@@ -611,7 +611,7 @@ public class BashScriptBuilder
 	private static List<String> loadModules() throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		for( final String module: Config.getTreeSet( CLUSTER_MODULES ) )
+		for( final String module: Config.getList( CLUSTER_MODULES ) )
 		{
 			lines.add( "module load " + module );
 		}

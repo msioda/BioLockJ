@@ -166,7 +166,7 @@ public class PropUtil
 			throws Exception
 	{
 		final List<String> configLinesNotInProps = getHeaderLines( props.keySet() );
-		final Map<String, String> prevProps = getProps( getMasterConfig() );
+	//	final Map<String, String> prevProps = getProps( getMasterConfig() );
 		if( props == null || props.isEmpty() )
 		{
 			Log.warn( PropUtil.class, "Calling updateMasterConfig() but no changes have been detected!" );

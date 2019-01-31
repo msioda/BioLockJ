@@ -135,16 +135,11 @@ public class Pipeline
 			}
 			catch( final Exception innerEx )
 			{
-				Log.error( Pipeline.class,
-						"Attempt to send Email after pipeline failure has also failed!  " + innerEx.getMessage(),
+				Log.error( Pipeline.class, "Attempt to Email pipeline failure info --> also failed!  " + innerEx.getMessage(),
 						innerEx );
 			}
 
 			throw ex;
-		}
-		finally
-		{
-			Log.info( Pipeline.class, "Log Pipeline Summary" + BioLockJ.RETURN + SummaryUtil.getSummary() );
 		}
 	}
 

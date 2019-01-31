@@ -41,21 +41,15 @@ public class BioModuleFactory
 	private List<BioModule> buildModules() throws Exception
 	{
 		final List<BioModule> bioModules = new ArrayList<>();
-		for( final String module: moduleCache )
+		for( final String className: moduleCache )
 		{
-			constructModule( module );
+			final BioModule module = (BioModule) Class.forName( className ).getDeclaredConstructor().newInstance();
+			module.init();
+			bioModules.add( module );
 		}
 
 		return bioModules;
 	}
-
-	private void constructModule( final String name ) throws Exception
-	{
-		final BioModule module = (BioModule) Class.forName( name ).getDeclaredConstructor().newInstance();
-		module.init();
-	}
-	
-
 	
 
 	/**
@@ -154,9 +148,7 @@ public class BioModuleFactory
 				}
 			}
 		}
-
-
-		return insertGunzipperIfNeeded( modules );
+		return insertConditionalModules( modules );
 	}
 	
 	
@@ -197,35 +189,55 @@ public class BioModuleFactory
 
 	private boolean requireCountMod( final List<String> modules ) throws Exception
 	{
-		return !foundCountMod && SeqUtil.piplineHasSeqInput() && !Collections.disjoint( modules, getCountModules() );
+		return !foundCountMod && Collections.disjoint( modules, getCountModules() ) 
+				&& Config.getBoolean( Config.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
+	}
+	
+	
+	private int getCountModIndex( final List<String> modules ) throws Exception
+	{
+		int i = -1;
+		boolean addMod = requireCountMod( modules );
+		if( addMod )
+		{
+			
+			if( ( modules.size() == 1 ) || !modules.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
+			{
+				i = 1;
+			}
+			else if( modules.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
+			{
+				i = 2;
+			}
+		}
+		
+		Log.debug( getClass(), addMod ? "ADD count module at index: " + i : "No need to add count mdoule"  );
+		
+		return i;
 	}
 
-	private List<String> insertGunzipperIfNeeded( final List<String> modules ) throws Exception
+	private List<String> insertConditionalModules( final List<String> modules ) throws Exception
 	{
-		
 		final List<String> finalModules = new ArrayList<>();
+		
+		int i = getCountModIndex( modules );
 		for( final String module: modules )
 		{
-			if( requireCountMod( modules ) )
+			if( finalModules.size() == i )
 			{
+				finalModules.add( SeqFileValidator.class.getName() );
 				info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] & [ "
 						+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
 						+ " ] --> Adding module: " + SeqFileValidator.class.getName() );
-
-				foundCountMod = true;
-				finalModules.add( SeqFileValidator.class.getName() );
 			}
-
 			if( requireGunzip( module ) )
 			{
-
 				info( "Qiime does not accept \"" + Constants.GZIP_EXT + "\" format, so adding required pre-req module: "
 						+ Gunzipper.class.getName() + " before " + module );
 
 				foundSeqMod = true;
 				finalModules.add( Gunzipper.class.getName() );
 			}
-			
 
 			finalModules.add( module );
 		}

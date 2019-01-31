@@ -390,6 +390,8 @@ public class BioLockJ
 		{
 			return;
 		}
+		
+		markProjectStatus( Constants.BLJ_FAILED );
 
 		if( Log.getFile() != null )
 		{
@@ -449,10 +451,19 @@ public class BioLockJ
 		{
 			logFinalException( args, ex );
 		}
+		
+		try
+		{
+			Log.info( BioLockJ.class, "Log Pipeline Summary" + BioLockJ.RETURN + SummaryUtil.getSummary() );
+		}
+		catch( final Exception ex )
+		{
+			logFinalException( args, ex );
+		}
 
+		Log.info( BioLockJ.class, "Code #42 - Exit Program" );
 		if( !isPipelineComplete() )
 		{
-			markProjectStatus( Constants.BLJ_FAILED );
 			System.exit( 1 );
 		}
 	}

@@ -57,7 +57,7 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName() );
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + OtuUtil.OTU_COUNT );
 	}
 
 	/**
@@ -91,7 +91,7 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 	public void runModule() throws Exception
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
-		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() );
+		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_" + OtuUtil.OTU_COUNT );
 		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 		final Integer quantileNum = getNumOtusForQuantile( sampleOtuCounts );
 
@@ -108,7 +108,7 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName(), hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
 	}
 

@@ -44,7 +44,7 @@ public class RemoveLowOtuCounts extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName() );
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName()  + "_" + OtuUtil.OTU_COUNT );
 	}
 
 	/**
@@ -82,7 +82,7 @@ public class RemoveLowOtuCounts extends JavaModuleImpl implements JavaModule
 		logLowCountOtus( lowCountOtus );
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName(), hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName()  + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
 	}
 
