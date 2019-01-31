@@ -30,13 +30,12 @@ RUN cd /app && \
 	
 #6.) =======================  Cleanup  ========================== 
 RUN	apt-get clean && \
+	rm -rf /tmp/* && \
+	rm -rf /usr/share/* && \
+	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
-	rm -rf var/cache/* && \
-	rm -rf var/log/* && \
-	rm -rf tmp/* && \
-	rm -rf usr/games && \
-	rm -rf usr/share/*
+	rm -rf /var/log/*
 
 #7.) ================= Container Command =================
 ENV PATH=$PATH:/app/metaphlan2:/app/bowtie2-2.2.9
-CMD bash $COMPUTE_SCRIPT
+CMD [ "$COMPUTE_SCRIPT" ]

@@ -19,7 +19,7 @@ RUN mkdir /app && \
 
 #2.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
-	echo 'export PS1='> $(basename $PWD): ' >> ~/.bashrc && \
+	echo 'export PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h\[\033[33;1m\]..$(basename "$(dirname $PWD)")/$(basename $PWD)\[\033[m\]~$ ' >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \
 	echo 'alias ..="cd .."' >> ~/.bashrc && \
 	echo 'alias ls="ls -lh --color=auto"' >> ~/.bashrc && \

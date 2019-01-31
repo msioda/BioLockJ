@@ -25,7 +25,7 @@ RUN echo ${BLJ_DATE} && mkdir $BLJ && cd $BLJ && \
 	
 #4.) =======================  Cleanup  ===========
 RUN	apt-get clean && \
-	find / -name *python* | xargs rm -rf
+	find / -name *python* | xargs rm -rf && \
 	rm -rf /tmp/* && \
 	rm -rf /usr/share/* && \
 	rm -rf /var/cache/* && \

@@ -16,7 +16,7 @@ RUN cd /usr/local/bin && \
 	
 #3.) =======================  Cleanup =================
 RUN	apt-get clean && \
-	find / -name *python* | xargs rm -rf
+	find / -name *python* | xargs rm -rf && \
 	rm -rf /usr/share/* && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* 
