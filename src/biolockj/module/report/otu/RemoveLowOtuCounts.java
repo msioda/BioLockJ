@@ -27,7 +27,7 @@ import biolockj.util.*;
 /**
  * This BioModule
  */
-public class RemoveLowOtuCounts extends JavaModuleImpl implements JavaModule
+public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountModule
 {
 
 	@Override
@@ -64,12 +64,6 @@ public class RemoveLowOtuCounts extends JavaModuleImpl implements JavaModule
 		}
 		hitsPerSample = null;
 		return super.getSummary() + summary;
-	}
-
-	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
-	{
-		return OtuUtil.isOtuModule( previousModule );
 	}
 
 	@Override

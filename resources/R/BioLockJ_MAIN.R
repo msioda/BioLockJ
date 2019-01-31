@@ -70,8 +70,7 @@ getModuleScript <- function() {
 
 
 # Initialize MAIN script core functions, failures will return FALSE.
-init <- function( expr )
-{
+init <- function( expr ) {
 	return( !is.null( tryCatch( withCallingHandlers( expr ), error=function(e) { FALSE } ) ) )
 }
 
@@ -130,4 +129,4 @@ writeErrors <- function( msgs ) {
 
 moduleScript = NULL
 
-#runModule()
+runModule()

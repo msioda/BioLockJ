@@ -223,23 +223,29 @@ public class ModuleUtil
 	 * @return TRUE if module produced exactly 1 file (metadata file)
 	 * @throws Exception if errors occur
 	 */
-	public static boolean isMetadataModule( final BioModule module ) throws Exception
+	public static boolean isMetadataModule( final BioModule module )
 	{
 		boolean foundMeta = false;
 		boolean foundOther = false;
-		final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
-		for( final File f: files )
+		try
 		{
-			if( f.getName().equals( MetaUtil.getMetadataFileName() ) )
+			final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
+			for( final File f: files )
 			{
-				foundMeta = true;
-			}
-			else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
-			{
-				foundOther = true;
+				if( f.getName().equals( MetaUtil.getMetadataFileName() ) )
+				{
+					foundMeta = true;
+				}
+				else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+				{
+					foundOther = true;
+				}
 			}
 		}
-
+		catch(Exception ex )
+		{
+			return false;
+		}
 		return foundMeta && !foundOther;
 	}
 
@@ -387,13 +393,17 @@ public class ModuleUtil
 	 */
 	private static List<BioModule> getModules( final BioModule module, final Boolean checkAhead ) throws Exception
 	{
+		List<BioModule> modules = null;
 		if( checkAhead )
 		{
-			return Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() );
+			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
+		}
+		else
+		{
+			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( 0, module.getID() ) ) );
+			Collections.reverse( modules );
 		}
 
-		final List<BioModule> modules = Pipeline.getModules().subList( 0, module.getID() );
-		Collections.reverse( modules );
 		return modules;
 	}
 

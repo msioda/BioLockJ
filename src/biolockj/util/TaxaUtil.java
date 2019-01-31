@@ -377,21 +377,26 @@ public class TaxaUtil
 	 * 
 	 * @param module BioModule
 	 * @return TRUE if module generated taxonomy table files
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isTaxaModule( final BioModule module ) throws Exception
+	public static boolean isTaxaModule( final BioModule module ) 
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
-				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-
-		for( final File f: files )
+		try
 		{
-			if( isTaxaFile( f ) )
+			final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+	
+			for( final File f: files )
 			{
-				return true;
+				if( isTaxaFile( f ) )
+				{
+					return true;
+				}
 			}
 		}
-
+		catch( Exception ex )
+		{
+			// RETURN FALSE
+		}
 		return false;
 	}
 

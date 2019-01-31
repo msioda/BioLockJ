@@ -85,12 +85,6 @@ public class NormalizeTaxaTables extends JavaModuleImpl implements JavaModule
 	}
 
 	@Override
-	public boolean isValidInputModule( final BioModule module ) throws Exception
-	{
-		return TaxaUtil.isTaxaModule( module );
-	}
-
-	@Override
 	public void runModule() throws Exception
 	{
 		for( final File file: getInputFiles() )

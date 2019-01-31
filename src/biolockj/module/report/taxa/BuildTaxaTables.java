@@ -33,13 +33,7 @@ public class BuildTaxaTables extends JavaModuleImpl implements JavaModule
 	{
 		return super.getSummary() + summary;
 	}
-
-	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
-	{
-		return OtuUtil.isOtuModule( previousModule );
-	}
-
+	
 	@Override
 	public void runModule() throws Exception
 	{

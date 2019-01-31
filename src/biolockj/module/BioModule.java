@@ -158,9 +158,8 @@ public interface BioModule
 	 * 
 	 * @param previousModule BioModule that ran before the current BioModule
 	 * @return boolean TRUE if the previousModule output is acceptable input for the current BioModule
-	 * @throws Exception if unexpected errors occur
 	 */
-	public boolean isValidInputModule( BioModule previousModule ) throws Exception;
+	public boolean isValidInputModule( BioModule previousModule );
 
 	/**
 	 * Script prefix appended to start of file name to indicate the main script in the script directory. BioModules that

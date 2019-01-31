@@ -274,19 +274,25 @@ public class OtuUtil
 	 * @return TRUE if module generated OTU count files
 	 * @throws Exception if errors occur
 	 */
-	public static boolean isOtuModule( final BioModule module ) throws Exception
+	public static boolean isOtuModule( final BioModule module )
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
-				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-
-		for( final File f: files )
+		try
 		{
-			if( isOtuFile( f ) )
+			final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+	
+			for( final File f: files )
 			{
-				return true;
+				if( isOtuFile( f ) )
+				{
+					return true;
+				}
 			}
 		}
-
+		catch( Exception ex )
+		{
+			// RETURN FALSE
+		}
 		return false;
 	}
 

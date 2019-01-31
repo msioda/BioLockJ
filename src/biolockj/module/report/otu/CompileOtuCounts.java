@@ -25,7 +25,7 @@ import biolockj.util.OtuUtil;
  * This BioModule compiles the counts from all OTU count files into a single summary OTU count file containing OTU
  * counts for the entire dataset.
  */
-public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
+public class CompileOtuCounts extends OtuCountModuleImpl implements OtuCountModule
 {
 
 	/**
@@ -63,11 +63,7 @@ public class CompileOtuCounts extends JavaModuleImpl implements JavaModule
 		return super.getSummary() + msg;
 	}
 
-	@Override
-	public boolean isValidInputModule( final BioModule module ) throws Exception
-	{
-		return OtuUtil.isOtuModule( module );
-	}
+	
 
 	@Override
 	public void runModule() throws Exception

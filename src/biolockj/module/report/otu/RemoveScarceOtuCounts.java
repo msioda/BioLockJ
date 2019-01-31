@@ -28,7 +28,7 @@ import biolockj.util.*;
  * This BioModule removes scarce OTUs not found in enough samples.<br>
  * The OTU must be found in a configurable percentage of samples.
  */
-public class RemoveScarceOtuCounts extends JavaModuleImpl implements JavaModule
+public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCountModule
 {
 
 	@Override
@@ -69,12 +69,6 @@ public class RemoveScarceOtuCounts extends JavaModuleImpl implements JavaModule
 		}
 		hitsPerSample = null;
 		return super.getSummary() + summary;
-	}
-
-	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
-	{
-		return OtuUtil.isOtuModule( previousModule );
 	}
 
 	@Override

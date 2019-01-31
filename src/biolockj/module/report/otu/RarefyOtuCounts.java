@@ -33,7 +33,7 @@ import biolockj.util.*;
  * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
  */
-public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
+public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModule
 {
 
 	@Override
@@ -76,11 +76,6 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 		return super.getSummary() + summary;
 	}
 
-	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
-	{
-		return OtuUtil.isOtuModule( previousModule );
-	}
 
 	/**
 	 * Apply the quantile Config to the number of OTUs per sample to calculate the maximum OTU count per sample. For
