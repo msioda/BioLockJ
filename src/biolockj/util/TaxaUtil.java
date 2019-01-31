@@ -384,11 +384,6 @@ public class TaxaUtil
 		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-		if( files.isEmpty() )
-		{
-			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
-		}
-
 		for( final File f: files )
 		{
 			if( isTaxaFile( f ) )

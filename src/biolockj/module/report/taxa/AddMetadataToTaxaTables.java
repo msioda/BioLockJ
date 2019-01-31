@@ -107,9 +107,9 @@ public class AddMetadataToTaxaTables extends JavaModuleImpl implements JavaModul
 	 * Require taxa table input files
 	 */
 	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
+	public boolean isValidInputModule( final BioModule module ) throws Exception
 	{
-		return TaxaUtil.isTaxaModule( previousModule );
+		return TaxaUtil.isTaxaModule( module );
 	}
 
 	/**

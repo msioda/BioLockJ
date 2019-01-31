@@ -181,10 +181,7 @@ public class PropUtil
 			for( final String line: configLinesNotInProps )
 			{
 				final StringTokenizer st = new StringTokenizer( line, "=" );
-				final int numTokens = st.countTokens();
-				final String token = st.nextToken();
-				final boolean headingLine = token != null && !token.trim().endsWith( "=" ) && numTokens == 1;
-				if( headingLine )
+				if( st.countTokens() > 0 )
 				{
 					writer.write( line + RETURN );
 				}

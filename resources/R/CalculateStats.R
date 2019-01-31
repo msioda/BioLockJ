@@ -113,7 +113,7 @@ calculateStats <- function( taxaTable ) {
                logInfo( "metaCol", metaCol )
                attName = names( taxaTable )[metaCol]
                logInfo( "attName = names( taxaTable )[metaCol]", attName ) 
-               att = taxaTable[,metaCol]
+               att = as.numeric( taxaTable[,metaCol] )
                logInfo( "att = taxaTable[,metaCol]", att )
                parametricPvals = addNamedVectorElement( parametricPvals, attName, Kendall( taxaTable[,taxaCol], att )$sl[1] )
 			   logInfo( "Add parametricPval", parametricPvals[length(parametricPvals)] )               
