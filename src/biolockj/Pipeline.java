@@ -63,7 +63,7 @@ public class Pipeline
 	 */
 	public static void initializePipeline() throws Exception
 	{
-		bioModules = BioModuleFactory.buildModules();
+		bioModules = BioModuleFactory.buildPipeline();
 		Config.setConfigProperty( Config.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
 	}
@@ -135,16 +135,11 @@ public class Pipeline
 			}
 			catch( final Exception innerEx )
 			{
-				Log.error( Pipeline.class,
-						"Attempt to send Email after pipeline failure has also failed!  " + innerEx.getMessage(),
+				Log.error( Pipeline.class, "Attempt to Email pipeline failure info --> also failed!  " + innerEx.getMessage(),
 						innerEx );
 			}
 
 			throw ex;
-		}
-		finally
-		{
-			Log.info( Pipeline.class, "Log Pipeline Summary" + BioLockJ.RETURN + SummaryUtil.getSummary() );
 		}
 	}
 
@@ -411,6 +406,7 @@ public class Pipeline
 	 */
 	protected static void refreshRCacheIfNeeded( final BioModule module ) throws Exception
 	{
+		Log.info( Pipeline.class, "Checking for 1st R module: " + module.getClass().getName() );
 		if( ModuleUtil.isFirstRModule( module ) )
 		{
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );

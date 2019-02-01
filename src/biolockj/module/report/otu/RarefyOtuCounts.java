@@ -33,7 +33,7 @@ import biolockj.util.*;
  * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
  */
-public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
+public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModule
 {
 
 	@Override
@@ -57,7 +57,7 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName() );
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + OtuUtil.OTU_COUNT );
 	}
 
 	/**
@@ -76,11 +76,6 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 		return super.getSummary() + summary;
 	}
 
-	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
-	{
-		return OtuUtil.isOtuModule( previousModule );
-	}
 
 	/**
 	 * Apply the quantile Config to the number of OTUs per sample to calculate the maximum OTU count per sample. For
@@ -91,7 +86,7 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 	public void runModule() throws Exception
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
-		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() );
+		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_" + OtuUtil.OTU_COUNT );
 		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 		final Integer quantileNum = getNumOtusForQuantile( sampleOtuCounts );
 
@@ -108,7 +103,7 @@ public class RarefyOtuCounts extends JavaModuleImpl implements JavaModule
 
 		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName(), hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
 	}
 

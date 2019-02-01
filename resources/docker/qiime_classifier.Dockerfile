@@ -31,4 +31,4 @@ RUN cd /app && \
 RUN	rm -rf usr/share/*
 
 #5.) ================= Container Command =================
-CMD bash $COMPUTE_SCRIPT
+CMD [ "$COMPUTE_SCRIPT" ]

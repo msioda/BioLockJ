@@ -15,7 +15,6 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.IntStream;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.BioModuleFactory;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
@@ -77,7 +76,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 		final List<String> preReqs = super.getPreRequisiteModules();
 		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			preReqs.add( BioModuleFactory.getDefaultMergePairedReadsConverter() );
+			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
 		else if( SeqUtil.piplineHasSeqInput() && needsCountModule() )
 		{

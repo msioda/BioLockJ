@@ -15,14 +15,17 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
+import biolockj.node.JsonNode;
 import biolockj.util.*;
 
 /**
  * Superclass for standard BioModules (classifiers, parsers, etc). Sets standard behavior for many of the BioModule
  * interface methods.
  */
-public abstract class BioModuleImpl implements BioModule
+public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 {
 
 	/**
@@ -37,14 +40,9 @@ public abstract class BioModuleImpl implements BioModule
 		{
 			throw new Exception( "No input files found!" );
 		}
-
+		inputFiles.clear();
 		inputFiles.addAll( files );
 		Collections.sort( inputFiles );
-		Log.info( getClass(), "# Input Files: " + inputFiles.size() );
-		for( int i = 0; i < inputFiles.size(); i++ )
-		{
-			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
-		}
 	}
 
 	/**
@@ -60,6 +58,14 @@ public abstract class BioModuleImpl implements BioModule
 	public void cleanUp() throws Exception
 	{
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
+	}
+	
+
+	
+	@Override
+	public int compareTo( final BioModule module )
+	{
+		return getID().compareTo( module.getID() );
 	}
 
 	/**
@@ -99,8 +105,20 @@ public abstract class BioModuleImpl implements BioModule
 		{
 			cacheInputFiles( findModuleInputFiles() );
 		}
+		
+		printInputFiles();
 
 		return getFileCache();
+	}
+	
+	
+	private void printInputFiles() throws Exception
+	{
+		Log.info( getClass(), "# Input Files: " + getFileCache().size() );
+		for( int i = 0; i < getFileCache().size(); i++ )
+		{
+			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
+		}
 	}
 
 	/**
@@ -195,7 +213,7 @@ public abstract class BioModuleImpl implements BioModule
 	 * generates a new metadata file.
 	 */
 	@Override
-	public boolean isValidInputModule( final BioModule module ) throws Exception
+	public boolean isValidInputModule( final BioModule module )
 	{
 		return !ModuleUtil.isMetadataModule( module );
 	}

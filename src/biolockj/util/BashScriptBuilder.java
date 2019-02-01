@@ -94,7 +94,7 @@ public class BashScriptBuilder
 	{
 		if( clusterModuleName != null )
 		{
-			for( final String module: Config.getTreeSet( CLUSTER_MODULES ) )
+			for( final String module: Config.getSet( CLUSTER_MODULES ) )
 			{
 				if( exists( Config.requireString( CLUSTER_BATCH_COMMAND ) ) && module.contains( clusterModuleName ) )
 				{
@@ -265,7 +265,7 @@ public class BashScriptBuilder
 		{
 			lines.add( "# Submit job script" );
 			lines.add( "function " + FUNCTION_RUN_JOB + "() {" );
-			lines.add( Config.requireString( CLUSTER_BATCH_COMMAND ) + " $1" );
+			lines.add( getJobCmd( module ) + " $1" );
 			lines.add( "}" );
 		}
 
@@ -495,6 +495,19 @@ public class BashScriptBuilder
 
 		return false;
 	}
+	
+	
+	
+	private static String getJobCmd( final ScriptModule module ) throws Exception
+	{
+		final String cmd = getModuleCmd( module );
+		if( cmd != null )
+		{
+			Log.info( BashScriptBuilder.class, "Found module specific batch submit command: " + cmd );
+			return cmd;
+		}
+		return Config.requireString( CLUSTER_BATCH_COMMAND );
+	}
 
 	private static String getJobHeader( final ScriptModule module ) throws Exception
 	{
@@ -536,6 +549,27 @@ public class BashScriptBuilder
 			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
 		}
 		return null;
+	}
+	
+	private static String getModuleCmd( final ScriptModule module )
+	{
+		try
+		{
+			return Config.getString( getModuleCmdPropertyName( module ) );
+		}
+		catch( final Exception ex )
+		{
+			// FAIL SILENTLY
+			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+		}
+		return null;
+	}
+	
+	
+	
+	private static String getModuleCmdPropertyName( final ScriptModule module )
+	{
+		return module.getClass().getSimpleName() + JOB_CMD;
 	}
 
 	private static String getModuleHeaderPropertyName( final ScriptModule module )
@@ -611,7 +645,7 @@ public class BashScriptBuilder
 	private static List<String> loadModules() throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		for( final String module: Config.getTreeSet( CLUSTER_MODULES ) )
+		for( final String module: Config.getList( CLUSTER_MODULES ) )
 		{
 			lines.add( "module load " + module );
 		}
@@ -696,6 +730,8 @@ public class BashScriptBuilder
 
 	private static final String INDENT = "    ";
 	private static final String JOB_HEADER = ".jobHeader";
+	private static final String JOB_CMD = ".batchCommand";
+	
 	private static final String RETURN = BioLockJ.RETURN;
 	private static final List<File> workerScripts = new ArrayList<>();
 

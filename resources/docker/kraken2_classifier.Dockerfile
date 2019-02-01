@@ -21,14 +21,13 @@ RUN cd /app && \
 COPY miniKraken2_20181027 /db/miniKraken2
 
 #6.) =============== Cleanup ================================
-RUN apt-get clean && \
-  rm -rf /var/lib/apt/lists/* && \
-  find / -name *python* | xargs rm -rf && \
-  rm -rf var/cache/* && \
-  rm -rf var/log/* && \
-  rm -rf tmp/* && \
-  rm -rf usr/games && \
-  rm -rf usr/share/*
+RUN	apt-get clean && \
+	find / -name *python* | xargs rm -rf && \
+	rm -rf /tmp/* && \
+	rm -rf /usr/share/* && \
+	rm -rf /var/cache/* && \
+	rm -rf /var/lib/apt/lists/* && \
+	rm -rf /var/log/*
 
 #7.) ================= Container Command =================
-CMD bash $COMPUTE_SCRIPT
+CMD [ "$COMPUTE_SCRIPT" ]

@@ -47,12 +47,6 @@ public class LogTransformTaxaTables extends JavaModuleImpl implements JavaModule
 		super.checkDependencies();
 	}
 
-	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
-	{
-		return TaxaUtil.isTaxaModule( previousModule );
-	}
-
 	/**
 	 * 
 	 */

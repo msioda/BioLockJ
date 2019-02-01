@@ -15,7 +15,9 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
@@ -375,26 +377,26 @@ public class TaxaUtil
 	 * 
 	 * @param module BioModule
 	 * @return TRUE if module generated taxonomy table files
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isTaxaModule( final BioModule module ) throws Exception
+	public static boolean isTaxaModule( final BioModule module ) 
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
-				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-
-		if( files.isEmpty() )
+		try
 		{
-			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
-		}
-
-		for( final File f: files )
-		{
-			if( isTaxaFile( f ) )
+			final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+	
+			for( final File f: files )
 			{
-				return true;
+				if( isTaxaFile( f ) )
+				{
+					return true;
+				}
 			}
 		}
-
+		catch( Exception ex )
+		{
+			// RETURN FALSE
+		}
 		return false;
 	}
 

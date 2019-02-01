@@ -103,14 +103,6 @@ public class AddMetadataToTaxaTables extends JavaModuleImpl implements JavaModul
 		return super.getSummary() + sb.toString();
 	}
 
-	/**
-	 * Require taxa table input files
-	 */
-	@Override
-	public boolean isValidInputModule( final BioModule previousModule ) throws Exception
-	{
-		return TaxaUtil.isTaxaModule( previousModule );
-	}
 
 	/**
 	 * This method matches records from the OTU table and the metadata file by matching the sample ID value in the very

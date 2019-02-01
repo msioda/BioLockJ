@@ -16,7 +16,9 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.BioModule;
 
 /**
@@ -272,24 +274,25 @@ public class OtuUtil
 	 * @return TRUE if module generated OTU count files
 	 * @throws Exception if errors occur
 	 */
-	public static boolean isOtuModule( final BioModule module ) throws Exception
+	public static boolean isOtuModule( final BioModule module )
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
-				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-
-		if( files.isEmpty() )
+		try
 		{
-			throw new Exception( module.getClass().getSimpleName() + " has no output!" );
-		}
-
-		for( final File f: files )
-		{
-			if( isOtuFile( f ) )
+			final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+	
+			for( final File f: files )
 			{
-				return true;
+				if( isOtuFile( f ) )
+				{
+					return true;
+				}
 			}
 		}
-
+		catch( Exception ex )
+		{
+			// RETURN FALSE
+		}
 		return false;
 	}
 

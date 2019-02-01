@@ -113,11 +113,11 @@ calculateStats <- function( taxaTable ) {
                logInfo( "metaCol", metaCol )
                attName = names( taxaTable )[metaCol]
                logInfo( "attName = names( taxaTable )[metaCol]", attName ) 
-               att = taxaTable[,metaCol]
+               att = as.numeric( taxaTable[,metaCol] )
                logInfo( "att = taxaTable[,metaCol]", att )
-               parametricPvals = addNamedVectorElement( parametricPvals, attName, Kendall( taxaTable[,taxaCol], att )$sl[1] )
+               parametricPvals = addNamedVectorElement( parametricPvals, attName, Kendall( taxaTable[,taxaCol], att)$sl[1] )
 			   logInfo( "Add parametricPval", parametricPvals[length(parametricPvals)] )               
-			   nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, cor.test( taxaTable[,taxaCol], att )$p.value )
+			   nonParametricPvals = addNamedVectorElement( nonParametricPvals, attName, cor.test( taxaTable[,taxaCol], att, na.action=na.exclude )$p.value )
                logInfo( "Add nonParametricPval", nonParametricPvals[length(nonParametricPvals)] )
                rSquaredVals = addNamedVectorElement( rSquaredVals, attName, cor( taxaTable[,taxaCol], att, use="na.or.complete", method="kendall" )^2 )
                logInfo( "Add rSquaredVal", rSquaredVals[length(rSquaredVals)] )

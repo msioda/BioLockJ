@@ -76,7 +76,7 @@ public class CalculateStats extends R_Module implements BioModule
 		for( final File dir: getStatsFileDirs( module ) )
 		{
 			final Collection<File> files = FileUtils.listFiles( dir, ff, HiddenFileFilter.VISIBLE );
-			if( files.size() > 1 )
+			if( files.size() > 0 )
 			{
 				results.addAll( files );
 			}

@@ -17,7 +17,11 @@ import java.util.*;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
+import biolockj.module.implicit.Demultiplexer;
+import biolockj.module.r.CalculateStats;
 import biolockj.module.r.R_Module;
+import biolockj.module.seq.AwkFastaConverter;
+import biolockj.module.seq.PearMergeReads;
 
 /**
  * This utility holds general methods useful for BioModule interaction and management.
@@ -28,6 +32,25 @@ public class ModuleUtil
 	// Prevent instantiation
 	private ModuleUtil()
 	{}
+	
+	/**
+	 * Check if a module was in the pipeline at least once.
+	 * @param className
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean moduleExists( final String className ) throws Exception
+	{
+		for( final BioModule m: Pipeline.getModules() )
+		{
+			if( m.getClass().getName().equals( className ) )
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
 
 	/**
 	 * Get a classifier module<br>
@@ -48,6 +71,41 @@ public class ModuleUtil
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Get the Java Class name for the default Demultiplexer module
+	 * 
+	 * @return Demultiplexer module Java class name
+	 */
+	public static String getDefaultDemultiplexer()
+	{
+		return getDefaultModule( Constants.DEFAULT_MOD_DEMUX, Demultiplexer.class.getName() );
+	}
+
+	/**
+	 * Get the Java Class name for the default Fasta converter module
+	 * 
+	 * @return Fasta converter module Java class name
+	 */
+	public static String getDefaultFastaConverter()
+	{
+		return getDefaultModule( Constants.DEFAULT_MOD_FASTA_CONV, AwkFastaConverter.class.getName() );
+	}
+
+	/**
+	 * Get the Java Class name for the default Merge paired read module
+	 * 
+	 * @return Merge paired read module Java class name
+	 */
+	public static String getDefaultMergePairedReadsConverter()
+	{
+		return getDefaultModule( Constants.DEFAULT_MOD_SEQ_MERGER, PearMergeReads.class.getName() );
+	}
+
+	public static String getDefaultStatsModule()
+	{
+		return getDefaultModule( Constants.DEFAULT_STATS_MODULE, CalculateStats.class.getName() );
 	}
 
 	/**
@@ -184,23 +242,29 @@ public class ModuleUtil
 	 * @return TRUE if module produced exactly 1 file (metadata file)
 	 * @throws Exception if errors occur
 	 */
-	public static boolean isMetadataModule( final BioModule module ) throws Exception
+	public static boolean isMetadataModule( final BioModule module )
 	{
 		boolean foundMeta = false;
 		boolean foundOther = false;
-		final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
-		for( final File f: files )
+		try
 		{
-			if( f.getName().equals( MetaUtil.getMetadataFileName() ) )
+			final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
+			for( final File f: files )
 			{
-				foundMeta = true;
-			}
-			else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
-			{
-				foundOther = true;
+				if( f.getName().equals( MetaUtil.getMetadataFileName() ) )
+				{
+					foundMeta = true;
+				}
+				else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+				{
+					foundOther = true;
+				}
 			}
 		}
-
+		catch(Exception ex )
+		{
+			return false;
+		}
 		return foundMeta && !foundOther;
 	}
 
@@ -328,6 +392,17 @@ public class ModuleUtil
 		return ids;
 	}
 
+	private static String getDefaultModule( final String name, final String className )
+	{
+		String defaultModule = Config.getString( name );
+		if( defaultModule == null )
+		{
+			defaultModule = className;
+		}
+
+		return defaultModule;
+	}
+
 	/**
 	 * Return pipeline modules after the given module if checkAhead = TRUE<br>
 	 * Otherwise return pipeline modules before the given module.<br>
@@ -337,13 +412,17 @@ public class ModuleUtil
 	 */
 	private static List<BioModule> getModules( final BioModule module, final Boolean checkAhead ) throws Exception
 	{
+		List<BioModule> modules = null;
 		if( checkAhead )
 		{
-			return Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() );
+			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
+		}
+		else
+		{
+			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( 0, module.getID() ) ) );
+			Collections.reverse( modules );
 		}
 
-		final List<BioModule> modules = Pipeline.getModules().subList( 0, module.getID() );
-		Collections.reverse( modules );
 		return modules;
 	}
 
@@ -359,4 +438,5 @@ public class ModuleUtil
 		}
 		return ids;
 	}
+
 }

@@ -42,7 +42,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	}
 
 	@Override
-	public boolean isValidInputModule( final BioModule module ) throws Exception
+	public boolean isValidInputModule( final BioModule module )
 	{
 		return module instanceof CompileOtuCounts;
 	}

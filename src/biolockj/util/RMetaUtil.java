@@ -71,26 +71,28 @@ public final class RMetaUtil
 	{
 		Log.info( RMetaUtil.class, "Validate reportable metadata fields: " + MetaUtil.getFile().getAbsolutePath() );
 
-		final Set<String> rScriptFields = new HashSet<>();
+		final Set<String> rScriptFields = Config.getSet( R_REPORT_FIELDS );
 		binaryFields.clear();
 		mdsFields.clear();
 		nominalFields.clear();
 		numericFields.clear();
 
-		nominalFields.addAll( Config.getTreeSet( R_NOMINAL_FIELDS ) );
-		numericFields.addAll( Config.getTreeSet( R_NUMERIC_FIELDS ) );
-		mdsFields.addAll( Config.getTreeSet( MDS_REPORT_FIELDS ) );
-
-		final Set<String> excludeFields = Config.getTreeSet( R_EXCLUDE_FIELDS );
+		nominalFields.addAll( Config.getList( R_NOMINAL_FIELDS ) );
+		numericFields.addAll( Config.getList( R_NUMERIC_FIELDS ) );
+		mdsFields.addAll( Config.getList( MDS_REPORT_FIELDS ) );
+		
+		final List<String> excludeFields = Config.getList( R_EXCLUDE_FIELDS );
 
 		nominalFields.removeAll( excludeFields );
 		numericFields.removeAll( excludeFields );
 		mdsFields.removeAll( excludeFields );
+		rScriptFields.addAll( nominalFields );
+		rScriptFields.addAll( numericFields );
 
 		final List<String> metaFields = MetaUtil.getFieldNames();
 
 		verifyMetadataFieldsExist( R_EXCLUDE_FIELDS, excludeFields );
-		verifyMetadataFieldsExist( R_REPORT_FIELDS, Config.getTreeSet( R_REPORT_FIELDS ) );
+		verifyMetadataFieldsExist( R_REPORT_FIELDS, rScriptFields );
 		verifyMetadataFieldsExist( R_NUMERIC_FIELDS, numericFields );
 		verifyMetadataFieldsExist( R_NOMINAL_FIELDS, nominalFields );
 		verifyMetadataFieldsExist( MDS_REPORT_FIELDS, mdsFields );
@@ -102,8 +104,6 @@ public final class RMetaUtil
 			Log.debug( RMetaUtil.class,
 					"List override numeric fields: " + BioLockJUtil.getCollectionAsString( numericFields ) );
 		}
-
-		rScriptFields.addAll( Config.getTreeSet( R_REPORT_FIELDS ) );
 
 		if( reportAllFields() )
 		{
@@ -267,6 +267,12 @@ public final class RMetaUtil
 				}
 			}
 		}
+		
+		if( updateRConfig() )
+		{
+			PropUtil.saveMasterConfig( Config.getProperties() );
+		}
+		
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -322,19 +328,18 @@ public final class RMetaUtil
 	 * @return map of R props by data type
 	 * @throws Exception if errors occur
 	 */
-	public static Map<String, String> getUpdatedRConfig() throws Exception
+	public static boolean updateRConfig() throws Exception
 	{
-		final Map<String, String> props = new HashMap<>();
 		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
 		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
 
 		if( numCols != null && numCols == numMetaCols )
 		{
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
-			return props;
+			return false;
 		}
 
-		props.put( NUM_META_COLS, numMetaCols.toString() );
+		Config.setConfigProperty( NUM_META_COLS, numMetaCols.toString() );
 		Log.info( RMetaUtil.class, "Set " + NUM_META_COLS + " = " + numMetaCols );
 
 		if( !binaryFields.isEmpty() )
@@ -343,7 +348,7 @@ public final class RMetaUtil
 			if( Config.getString( BINARY_FIELDS ) == null || !val.equals( Config.getString( BINARY_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
-				props.put( BINARY_FIELDS, val );
+				Config.setConfigProperty( BINARY_FIELDS, val );
 			}
 
 		}
@@ -353,7 +358,7 @@ public final class RMetaUtil
 			if( Config.getString( NOMINAL_FIELDS ) == null || !val.equals( Config.getString( NOMINAL_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
-				props.put( NOMINAL_FIELDS, val );
+				Config.setConfigProperty( NOMINAL_FIELDS, val );
 			}
 		}
 		if( !numericFields.isEmpty() )
@@ -362,11 +367,11 @@ public final class RMetaUtil
 			if( Config.getString( NUMERIC_FIELDS ) == null || !val.equals( Config.getString( NUMERIC_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
-				props.put( NUMERIC_FIELDS, val );
+				Config.setConfigProperty( NUMERIC_FIELDS, val );
 			}
 		}
 
-		return props;
+		return true;
 	}
 
 	/**
@@ -418,7 +423,7 @@ public final class RMetaUtil
 	 */
 	public static boolean reportAllFields()
 	{
-		return Config.getTreeSet( R_REPORT_FIELDS ).isEmpty();
+		return Config.getSet( R_REPORT_FIELDS ).isEmpty();
 	}
 
 	/**
@@ -428,7 +433,7 @@ public final class RMetaUtil
 	 * @param fields Set of metadata fields
 	 * @throws Exception if the metadata column does not exist
 	 */
-	public static void verifyMetadataFieldsExist( final String prop, final Set<String> fields ) throws Exception
+	public static void verifyMetadataFieldsExist( final String prop, final Collection<String> fields ) throws Exception
 	{
 		for( final String field: fields )
 		{
@@ -457,7 +462,7 @@ public final class RMetaUtil
 
 	private static boolean isQiimeMetric( final String field )
 	{
-		final Set<String> alphaDivMetrics = Config.getTreeSet( QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
+		final Set<String> alphaDivMetrics = Config.getSet( QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( !alphaDivMetrics.isEmpty() )
 		{
 			for( final String metric: alphaDivMetrics )
