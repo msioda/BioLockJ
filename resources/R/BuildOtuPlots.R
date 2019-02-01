@@ -23,18 +23,16 @@ addBoxPlot <- function( taxa, taxaVals, metaVals, barColors)
 addPvalueNote <- function(parPval, nonParPval, r2, attName=NULL){
 	lineNumbers = c(0.2, 1.4, 2.6)
 	names(lineNumbers) = c("low", "mid", "top")
-	parTestName=""
-	nonParTestName=""
-	if (!is.null(attName)){
-		parTestName = paste0(" (", getTestName(attName, isParametric = TRUE), ")")
-		nonParTestName = paste0(" (", getTestName(attName, isParametric = FALSE), ")")
-	}
-	mtext(text=paste("r-squared:", round(r2, 3)), line=lineNumbers["top"], 
+	parTestName = getTestName(attName, TRUE)
+	nonParTestName = getTestName(attName, FALSE)
+
+	logInfo( "OTU Label CEX size: ", par("cex") )
+	mtext(text=paste("R^2:", round(r2, 3)), line=lineNumbers["top"], 
 				at=par("usr")[1], side=3, adj=0, cex=par("cex"))
-	mtext(text=paste0("adjusted parametric", parTestName, " p-value: ", displayPval(parPval)), 
-				line=lineNumbers["mid"], col=getColor(parPval), at=par("usr")[1], side=3, adj=0, cex=par("cex"))
-	mtext(text=paste0("adjusted non-parametric", nonParTestName, " p-value: ", displayPval(nonParPval)), 
-				line=lineNumbers["low"], col=getColor(nonParPval), at=par("usr")[1], side=3, adj=0, cex=par("cex"))
+	mtext(text=paste( parTestName, "Adjusted P-value:  ", displayPval(parPval) ), 
+				line=lineNumbers["mid"], col=getColor(parPval), at=par("usr")[1], side=3, adj=0.5, cex=par("cex"))
+	mtext(text=paste( nonParTestName, "Adjusted P-value:  ", displayPval(nonParPval) ), 
+				line=lineNumbers["low"], col=getColor(nonParPval), at=par("usr")[1], side=3, adj=0.5, cex=par("cex"))
 }
 
 

@@ -324,7 +324,7 @@ public final class RMetaUtil
 	 */
 	public static Map<String, String> getUpdatedRConfig() throws Exception
 	{
-		final Map<String, String> props = new HashMap<>();
+		final Map<String, String> props = Config.getProperties();
 		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
 		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
 

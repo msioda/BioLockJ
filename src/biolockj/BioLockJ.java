@@ -434,9 +434,12 @@ public class BioLockJ
 	{
 		try
 		{
-			if( RuntimeParamUtil.isDirectMode() )
+			if( !RuntimeParamUtil.isDirectMode() )
 			{
-				PropUtil.updateMasterConfig( Config.getUsedProps(), setSingleModeStatus() );
+				if( !RuntimeParamUtil.doRestart() )
+				{
+					PropUtil.updateMasterConfig( Config.getUsedProps() );
+				}
 			}
 			else
 			{

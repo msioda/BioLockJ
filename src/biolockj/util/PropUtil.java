@@ -159,26 +159,23 @@ public class PropUtil
 	 * This method removes any given props and then adds the new values.<br>
 	 * 
 	 * @param props Collection of config props
-	 * @param singleModeSuccess Module status
 	 * @throws Exception if errors occur
 	 */
-	public static void updateMasterConfig( final Map<String, String> props, final Boolean singleModeSuccess )
-			throws Exception
+	public static void updateMasterConfig( final Map<String, String> props ) throws Exception
 	{
-		final List<String> configLinesNotInProps = getHeaderLines( props.keySet() );
-	//	final Map<String, String> prevProps = getProps( getMasterConfig() );
-		if( props == null || props.isEmpty() )
+		final List<String> header = getHeaderLines( props.keySet() );
+		if( props == null || header == null || props.isEmpty() || header.isEmpty() )
 		{
-			Log.warn( PropUtil.class, "Calling updateMasterConfig() but no changes have been detected!" );
+			Log.warn( PropUtil.class, "No MASTER Config changes detected" );
 			return;
 		}
 		
-		Log.info( PropUtil.class, "Update MASTER config va updateMasterConfig()" );
+		Log.info( PropUtil.class, "Update MASTER config : " + getMasterConfig().getAbsolutePath() );
 
 		BufferedWriter writer = new BufferedWriter( new FileWriter( getTempConfig() ) );
 		try
 		{
-			for( final String line: configLinesNotInProps )
+			for( final String line: header )
 			{
 				final StringTokenizer st = new StringTokenizer( line, "=" );
 				if( st.countTokens() > 0 )
