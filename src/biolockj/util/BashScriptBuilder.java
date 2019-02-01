@@ -265,7 +265,7 @@ public class BashScriptBuilder
 		{
 			lines.add( "# Submit job script" );
 			lines.add( "function " + FUNCTION_RUN_JOB + "() {" );
-			lines.add( Config.requireString( CLUSTER_BATCH_COMMAND ) + " $1" );
+			lines.add( getJobCmd( module ) + " $1" );
 			lines.add( "}" );
 		}
 
