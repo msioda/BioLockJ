@@ -278,6 +278,10 @@ public class BioModuleFactory
 				foundSeqMod = true;
 				finalModules.add( Gunzipper.class.getName() );
 			}
+			else if( isSeqProcessingModule( module )  )
+			{
+				foundSeqMod = true;
+			}
 
 			finalModules.add( module );
 		}
