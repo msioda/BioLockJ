@@ -1,8 +1,13 @@
 # MAIN.R (MAIN_<Rmodule>.R)
 
+# SET TO SCRIPT DIRECTORY WITH THIS MAIN.R SCRIPT TO RUN IN INTERACTIVE MORE
+R_PATH = NULL
+
 getInteractiveMain <- function() {
-	filePath = list.files( getwd(),  paste0( "MAIN.*R$" ), full.names=TRUE, recursive=TRUE )
-    if( length( filePath ) == 1 ) return( filePath )
+	if( !is.null( R_PATH ) ) {
+		filePath = list.files( R_PATH,  paste0( "MAIN.*R$" ), full.names=TRUE, recursive=TRUE )
+    		if( length( filePath ) == 1 ) return( filePath )
+	}
 	return( NULL )
 }
 

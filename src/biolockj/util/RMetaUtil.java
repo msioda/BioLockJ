@@ -267,6 +267,12 @@ public final class RMetaUtil
 				}
 			}
 		}
+		
+		if( updateRConfig() )
+		{
+			PropUtil.saveMasterConfig( Config.getProperties() );
+		}
+		
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -322,19 +328,18 @@ public final class RMetaUtil
 	 * @return map of R props by data type
 	 * @throws Exception if errors occur
 	 */
-	public static Map<String, String> getUpdatedRConfig() throws Exception
+	public static boolean updateRConfig() throws Exception
 	{
-		final Map<String, String> props = Config.getProperties();
 		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
 		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
 
 		if( numCols != null && numCols == numMetaCols )
 		{
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
-			return props;
+			return false;
 		}
 
-		props.put( NUM_META_COLS, numMetaCols.toString() );
+		Config.setConfigProperty( NUM_META_COLS, numMetaCols.toString() );
 		Log.info( RMetaUtil.class, "Set " + NUM_META_COLS + " = " + numMetaCols );
 
 		if( !binaryFields.isEmpty() )
@@ -343,7 +348,7 @@ public final class RMetaUtil
 			if( Config.getString( BINARY_FIELDS ) == null || !val.equals( Config.getString( BINARY_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
-				props.put( BINARY_FIELDS, val );
+				Config.setConfigProperty( BINARY_FIELDS, val );
 			}
 
 		}
@@ -353,7 +358,7 @@ public final class RMetaUtil
 			if( Config.getString( NOMINAL_FIELDS ) == null || !val.equals( Config.getString( NOMINAL_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
-				props.put( NOMINAL_FIELDS, val );
+				Config.setConfigProperty( NOMINAL_FIELDS, val );
 			}
 		}
 		if( !numericFields.isEmpty() )
@@ -362,11 +367,11 @@ public final class RMetaUtil
 			if( Config.getString( NUMERIC_FIELDS ) == null || !val.equals( Config.getString( NUMERIC_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
-				props.put( NUMERIC_FIELDS, val );
+				Config.setConfigProperty( NUMERIC_FIELDS, val );
 			}
 		}
 
-		return props;
+		return true;
 	}
 
 	/**

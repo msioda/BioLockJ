@@ -32,6 +32,25 @@ public class ModuleUtil
 	// Prevent instantiation
 	private ModuleUtil()
 	{}
+	
+	/**
+	 * Check if a module was in the pipeline at least once.
+	 * @param className
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean moduleExists( final String className ) throws Exception
+	{
+		for( final BioModule m: Pipeline.getModules() )
+		{
+			if( m.getClass().getName().equals( className ) )
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
 
 	/**
 	 * Get a classifier module<br>

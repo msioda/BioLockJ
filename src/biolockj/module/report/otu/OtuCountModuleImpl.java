@@ -29,23 +29,18 @@ public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCo
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
-		Log.info( getClass(), "Calling getInputFiles() ..." );
-		Log.info( getClass(), "getFileCache().isEmpty() ?  ..." + getFileCache().isEmpty() );
 		if( getFileCache().isEmpty() )
 		{
 			List<File> files = new ArrayList<>();
 			for( File f: super.findModuleInputFiles() )
 			{
-				Log.info( getClass(), "Check file: " + f.getAbsolutePath() );
 				if( OtuUtil.isOtuFile( f ) )
 				{
-					Log.info( getClass(), "GOOD FILE! -->  " + f.getAbsolutePath() );
 					files.add( f );
 				}
 			}
 			cacheInputFiles( files );
 		}
-
 		return( getFileCache() );
 	}
 	

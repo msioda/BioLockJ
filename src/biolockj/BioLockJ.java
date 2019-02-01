@@ -174,7 +174,7 @@ public class BioLockJ
 			}
 			else
 			{
-				PropUtil.saveNewMasterConfig( null );
+				PropUtil.saveMasterConfig( null );
 				if( Config.getBoolean( Constants.PROJECT_COPY_FILES ) )
 				{
 					SeqUtil.copyInputData();
@@ -434,14 +434,7 @@ public class BioLockJ
 	{
 		try
 		{
-			if( !RuntimeParamUtil.isDirectMode() )
-			{
-				if( !RuntimeParamUtil.doRestart() )
-				{
-					PropUtil.updateMasterConfig( Config.getUsedProps() );
-				}
-			}
-			else
+			if( !RuntimeParamUtil.isDirectMode() && !RuntimeParamUtil.doRestart() )
 			{
 				final String perm = Config.getString( Constants.PROJECT_PERMISSIONS );
 				if( perm != null )

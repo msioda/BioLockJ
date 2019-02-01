@@ -58,20 +58,20 @@ main <- function() {
 						position = 1
 						pageNum = pageNum + 1
 					}
-					plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste(y, "vs", x),
+					plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste("MDS [", x, "vs", y, "]" ),
 								xlab=getMdsLabel( x, percentVariance[x] ),
 								ylab=getMdsLabel( y, percentVariance[y] ),
-								cex=1.2, pch=getProperty("r.pch"), col=metaColColors[x] )
+								cex=0.5, pch=getProperty("r.pch"), col=metaColColors[x], font=1, main.cex=5 )
 					position = position + 1
 					if ( position == 2 ){ 
+						logInfo( "metaColVals", metaColVals )
+						logInfo( "mdsAtts", mdsAtts )
 						# put this plot at the upper right position
 						# that puts the legend in a nice white space, and it makes axis 1 in line with itself in two plots (same for axis3)
 						plotRelativeVariance(percentVariance, numAxis)
-						legend(x="topright", title="",
-									 legend = paste0(mdsAtts, " (n=", table(metaColVals, useNA="no")[mdsAtts], ")"), 
-									 col=metaColColors, pch=getProperty("r.pch"), bty="n")
+						legend(x="topright", title="",legend=mdsAtts, col=metaColColors, pch=getProperty("r.pch"), bty="n")
 						# this is the best time to add the page title
-						title(main=paste0( "MDS Plot [ ", attName, " ]", ifelse( pageNum > 1, paste0( ":", pageNum ), "" ) ), outer = TRUE, line=0.5, cex=1.5)
+						title(main=paste0( attName, ifelse( pageNum > 1, paste0( " - ", pageNum ), "" ) ), outer = TRUE, line=0.5, cex=5)
 						position = position + 1
 					}
 				}

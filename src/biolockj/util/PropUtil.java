@@ -38,6 +38,22 @@ public class PropUtil
 		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
 				+ MASTER_PREFIX + configName );
 	}
+	
+	/**
+	 * And a few props & remove a few props that are always needed.
+	 * @return
+	 * @throws Exception
+	 */
+	private static Map<String, String> getUsedProps() throws Exception
+	{
+		final Map<String, String> props = Config.getProperties();
+		props.get( Config.PROJECT_PIPELINE_DIR  );
+		props.get( Config.PROJECT_PIPELINE_NAME  );
+
+		final Map<String, String> usedProps = Config.getUsedProps();
+
+		return usedProps;
+	}
 
 	/**
 	 * 
@@ -45,8 +61,8 @@ public class PropUtil
 	 */
 	public static void sanitizeMasterConfig() throws Exception
 	{
-		final Map<String, String> nonNullProps = new HashMap<>();;
-		final Map<String, String> usedProps = Config.getUsedProps();
+		final Map<String, String> props = new HashMap<>();
+		final Map<String, String> usedProps = getUsedProps();
 
 		if( !Log.doDebug() )
 		{
@@ -57,7 +73,7 @@ public class PropUtil
 							+ " class names could be provided - in this example, wee add a single class): "
 							+ Log.LIMIT_DEBUG_CLASSES + "=" + PropUtil.class.getName() );
 		}
-
+		
 		for( final String key: usedProps.keySet() )
 		{
 			final String val = usedProps.get( key );
@@ -65,9 +81,9 @@ public class PropUtil
 			{
 				Log.debug( PropUtil.class, "Remove unused property from sanatized MASTER Config: " + key + "=" + val );
 			}
-			else
+			else if( !key.startsWith( INTERNAL_PREFIX ) )
 			{
-				nonNullProps.put( key, val );
+				props.put( key, val );
 			}
 		}
 
@@ -76,9 +92,9 @@ public class PropUtil
 		Log.info( PropUtil.class, "The original version of project Config contained: "
 				+ Config.getInitialProperties().size() + " properties" );
 		Log.info( PropUtil.class,
-				"The final version of MASTER Config contains: " + nonNullProps.size() + " properties" );
+				"The final version of MASTER Config contains: " + props.size() + " properties" );
 
-		saveNewMasterConfig( nonNullProps );
+		saveMasterConfig( props );
 	}
 
 	/**
@@ -88,28 +104,17 @@ public class PropUtil
 	 * @param props Properties map
 	 * @throws Exception if errors occur
 	 */
-	public static void saveNewMasterConfig( Map<String, String> props ) throws Exception
+	public static void saveMasterConfig( Map<String, String> props ) throws Exception
 	{
 		final File masterConfig = getMasterConfig();
 		final boolean masterExists = masterConfig.exists();
-		if( props == null && masterExists && !RuntimeParamUtil.doRestart() )
-		{
-			throw new Exception( "MASTER Config should not exist unless restarting a failed pipeline, but was found: "
-					+ masterConfig.getAbsolutePath() );
-		}
-
 		if( masterExists )
 		{
-			if( getTempConfig().exists() )
-			{
-				deleteTempConfigFile();
-			}
-
 			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
 			if( getMasterConfig().exists() )
 			{
 				throw new Exception(
-						"Moved MASTER Config to " + getTempConfig().getAbsolutePath() + " but MASTER still exists!" );
+						"Cannot backup MASTER before modifying - trying to save as: " + getTempConfig().getAbsolutePath()  );
 			}
 		}
 
@@ -117,25 +122,25 @@ public class PropUtil
 		try
 		{
 			writeConfigHeaders( writer );
-			if( props != null )
-			{
-				writeCompleteHeader( writer, props );
-			}
-
 			if( props == null )
 			{
 				props = Config.getProperties();
 			}
-			final TreeMap<String, String> map = new TreeMap<>( props );
-			map.remove( Config.INTERNAL_BLJ_MODULE );
-			map.remove( Config.PROJECT_DEFAULT_PROPS );
+			else
+			{
+				writeCompleteHeader( writer, props );
+			}
+			
 
-			final Set<String> keys = new TreeSet<>( map.keySet() );
+			props.remove( Config.INTERNAL_BLJ_MODULE );
+			props.remove( Config.PROJECT_DEFAULT_PROPS );
+
+			final Set<String> keys = new TreeSet<>( props.keySet() );
 			for( final String key: keys )
 			{
 				if( !key.startsWith( INTERNAL_PREFIX ) )
 				{
-					writer.write( key + "=" + map.get( key ) + RETURN );
+					writer.write( key + "=" + props.get( key ) + RETURN );
 				}
 			}
 		}
@@ -155,67 +160,7 @@ public class PropUtil
 		}
 	}
 
-	/**
-	 * This method removes any given props and then adds the new values.<br>
-	 * 
-	 * @param props Collection of config props
-	 * @throws Exception if errors occur
-	 */
-	public static void updateMasterConfig( final Map<String, String> props ) throws Exception
-	{
-		final List<String> header = getHeaderLines( props.keySet() );
-		if( props == null || header == null || props.isEmpty() || header.isEmpty() )
-		{
-			Log.warn( PropUtil.class, "No MASTER Config changes detected" );
-			return;
-		}
-		
-		Log.info( PropUtil.class, "Update MASTER config : " + getMasterConfig().getAbsolutePath() );
-
-		BufferedWriter writer = new BufferedWriter( new FileWriter( getTempConfig() ) );
-		try
-		{
-			for( final String line: header )
-			{
-				final StringTokenizer st = new StringTokenizer( line, "=" );
-				if( st.countTokens() > 0 )
-				{
-					writer.write( line + RETURN );
-				}
-			}
-
-			final TreeSet<String> keys = new TreeSet<>( props.keySet() );
-			for( final String key: keys )
-			{
-				Log.info( PropUtil.class, "Update MASTER config property: " + key + "=" + props.get( key ) );
-				writer.write( key + "=" + props.get( key ) + RETURN );
-			}
-
-			writer.close();
-			writer = null;
-
-			BioLockJUtil.deleteWithRetry( getMasterConfig(), 10 );
-			FileUtils.moveFile( getTempConfig(), getMasterConfig() );
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
-			if( getTempConfig().exists() && getMasterConfig().exists() )
-			{
-				BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
-			}
-			else if( getTempConfig().exists() )
-			{
-				throw new Exception(
-						"Error occurred updating MASTER config.  Orig MASTER was deleted, please recover using the backup file: "
-								+ getTempConfig().getAbsolutePath() );
-			}
-		}
-	}
-
+	
 	private static void deleteTempConfigFile() throws Exception
 	{
 		if( getTempConfig().exists() && getMasterConfig().exists() )
@@ -229,51 +174,6 @@ public class PropUtil
 		}
 	}
 
-	/**
-	 * Return the lines that are not properties (comments + modules). Will throw error if none found, it will never
-	 * return null or empty list
-	 */
-	private static List<String> getHeaderLines( final Collection<String> props ) throws Exception
-	{
-		final List<String> lines = new ArrayList<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( getMasterConfig() );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				if( line != null )
-				{
-					final StringTokenizer st = new StringTokenizer( line, "=" );
-					final int numTokens = st.countTokens();
-					if( numTokens < 2 || !props.contains( st.nextToken() ) )
-					{
-						lines.add( line );
-					}
-				}
-			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
-				reader.close();
-			}
-		}
-
-		if( lines.isEmpty() )
-		{
-			final File masterProps = getMasterConfig();
-			final String displayVal = masterProps == null || !masterProps.exists() ? "<FILE NOT FOUND>"
-					: masterProps.getAbsolutePath();
-			if( masterProps == null || !masterProps.exists() )
-			{
-				throw new Exception( "MASTER Config properties is empty! --> " + displayVal );
-			}
-			throw new Exception( "Failed Attempt to update " );
-		}
-
-		return lines;
-	}
 
 	private static List<String> getInitConfig() throws Exception
 	{
@@ -304,35 +204,7 @@ public class PropUtil
 		return initConfig;
 	}
 
-	private static Map<String, String> getProps( final File file ) throws Exception
-	{
-		final Map<String, String> props = new HashMap<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( getMasterConfig() );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				if( line != null )
-				{
-					final int index = line.indexOf( "=" );
-					if( index > -1 )
-					{
-						props.put( line.substring( 0, index ), line.substring( index + 1 ) );
-					}
-				}
-			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
-				reader.close();
-			}
-		}
-
-		return props;
-	}
-
+	
 	private static File getTempConfig() throws Exception
 	{
 		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
@@ -385,13 +257,11 @@ public class PropUtil
 
 	private static void writeConfigHeaders( final BufferedWriter writer ) throws Exception
 	{
-		writer.write( "# The MASTER Config file can be used to fully reproduce all pipeline analysis." + RETURN );
 		writer.write( "# The MASTER Config file was generated from the following Config files: " + RETURN );
 		final List<String> initConfig = getInitConfig();
 		if( initConfig == null )
 		{
 			writer.write( PROJ_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
-
 			final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
 			if( defaults != null && !defaults.isEmpty() )
 			{

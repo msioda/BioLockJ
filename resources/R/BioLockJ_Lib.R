@@ -8,7 +8,7 @@ addNamedVectorElement <- function( v, name, value ) {
 }
 
 # Return P value formated with sprintf as defined in MASTER Config r.pValFormat, otherwise use %1.2g default
-displayPval <- function( pval ) {
+displayCalc <- function( pval ) {
    return( paste( sprintf(getProperty("r.pValFormat", "%1.2g"), pval) ) )
 }
 
