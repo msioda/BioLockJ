@@ -6,17 +6,19 @@ FROM blj_basic_python2
 ARG DEBIAN_FRONTEND=noninteractive
 ENV QIIME_VERSION=1.9.1
 ENV VSEARCH_TGZ="vsearch-2.8.1-linux-x86_64.tar.gz"
-ENV VSEARCH_URL="https://github.com/torognes/vsearch/releases/download/v2.8.1"
+
 
 #2.) ============ Install numpy/qiime  =================
 RUN pip install --upgrade qiime==$QIIME_VERSION && \
 	pip install qiime-default-reference 
 
 #3.) ============ Install vSearch  =================
+ENV VSEARCH_URL="https://github.com/torognes/vsearch/releases/download/v2.8.1"
+ENV VSEARCH_VER="2.8.1"
+ENV VSEARCH_TGZ="vsearch-${VSEARCH_VER}-linux-x86_64.tar.gz"
+ENV VSEARCH_URL="https://github.com/torognes/vsearch/releases/download"
 RUN cd /app && \  
-	wget $VSEARCH_URL/$VSEARCH_TGZ && \
-	tar -xzf $VSEARCH_TGZ && \
-	rm $VSEARCH_TGZ
+	wget -qO- ${VSEARCH_URL}/v${VSEARCH_VER}/$VSEARCH_TGZ | bsdtar -xf-
 
 #3.5 ) ============ Optional Install Silva DB  =================
 #RUN cd /db && \  
@@ -28,7 +30,10 @@ RUN cd /app && \
 #	echo 'assign_taxonomy_id_to_taxonomy_fp /db/SILVA_132_QIIME_release/taxonomy/16S_only/97/majority_taxonomy_7_levels.txt' >> ~/.qiime_config
 
 #4. ) =============== Cleanup ================================
-RUN	rm -rf usr/share/*
+RUN	apt-get clean && \
+	rm -rf /usr/share/* && \
+	rm -rf /var/cache/* && \
+	rm -rf /var/lib/apt/lists/* 
 
 #5.) ================= Container Command =================
 CMD [ "$COMPUTE_SCRIPT" ]
