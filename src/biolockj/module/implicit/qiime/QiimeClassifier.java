@@ -13,9 +13,7 @@ package biolockj.module.implicit.qiime;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -76,7 +74,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics()
 					+ " -o " + tempDir + ALPHA_DIVERSITY_TABLE );
 
-			lines.add( SCRIPT_ADD_ALPHA_DIVERSITY + " -m " + MetaUtil.getFile().getAbsolutePath() + " -i " + tempDir
+			lines.add( SCRIPT_ADD_ALPHA_DIVERSITY + " -m " + MetaUtil.getPath() + " -i " + tempDir
 					+ ALPHA_DIVERSITY_TABLE + " -o " + newMapping );
 			MetaUtil.setFile( newMapping );
 		}
@@ -331,7 +329,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
 			{
 				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Config.INPUT_DIRS );
+						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Constants.INPUT_DIRS );
 			}
 			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
 			{
@@ -341,7 +339,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
 			{
 				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
-						+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + NUM_THREADS );
+						+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( "-f " ) > -1 )
 			{

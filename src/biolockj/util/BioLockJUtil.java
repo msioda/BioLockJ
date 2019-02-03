@@ -276,8 +276,7 @@ public class BioLockJUtil
 	 */
 	public static String getDirectModuleParam( final BioModule module ) throws Exception
 	{
-		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName()
-				+ ":" + module.getModuleDir().getName();
+		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
 	}
 
 	/**
@@ -331,7 +330,7 @@ public class BioLockJUtil
 			dirs.add( dir );
 			return dirs;
 		}
-		return Config.requireExistingDirs( Config.INPUT_DIRS );
+		return Config.requireExistingDirs( Constants.INPUT_DIRS );
 	}
 
 	/**

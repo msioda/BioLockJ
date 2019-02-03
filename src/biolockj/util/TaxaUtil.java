@@ -258,8 +258,8 @@ public class TaxaUtil
 			suffix = "_";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
-				+ "_" + TAXA_TABLE + suffix + level + Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + suffix
+				+ level + Constants.TSV_EXT );
 	}
 
 	/**
@@ -378,13 +378,13 @@ public class TaxaUtil
 	 * @param module BioModule
 	 * @return TRUE if module generated taxonomy table files
 	 */
-	public static boolean isTaxaModule( final BioModule module ) 
+	public static boolean isTaxaModule( final BioModule module )
 	{
 		try
 		{
 			final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
 					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-	
+
 			for( final File f: files )
 			{
 				if( isTaxaFile( f ) )
@@ -393,7 +393,7 @@ public class TaxaUtil
 				}
 			}
 		}
-		catch( Exception ex )
+		catch( final Exception ex )
 		{
 			// RETURN FALSE
 		}

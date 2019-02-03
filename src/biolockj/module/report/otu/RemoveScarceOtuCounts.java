@@ -16,11 +16,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -89,7 +87,7 @@ public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCoun
 		logScarceOtus( scarceOtus.keySet() );
 		removeScarceOtuCounts( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
 
-		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
 		{
 			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}

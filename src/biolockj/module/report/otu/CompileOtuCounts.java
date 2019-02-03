@@ -14,9 +14,6 @@ package biolockj.module.report.otu;
 import java.io.*;
 import java.util.*;
 import biolockj.Log;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.OtuUtil;
@@ -62,8 +59,6 @@ public class CompileOtuCounts extends OtuCountModuleImpl implements OtuCountModu
 		msg += getMaxOtusPerSample() + RETURN;
 		return super.getSummary() + msg;
 	}
-
-	
 
 	@Override
 	public void runModule() throws Exception

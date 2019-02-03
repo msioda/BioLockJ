@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.BioLockJUtil;
@@ -107,12 +108,13 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final String inFiles = "$3" + ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " $4": "" );
 		final List<String> lines = super.getWorkerScriptFunctions();
+		final String inFiles = "$3" + ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " $4": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 "
 				+ inFiles );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
+
 		return lines;
 	}
 
@@ -165,7 +167,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 				throw new Exception(
 						"Invalid classifier option (" + OUTPUT_PARAM + ") found in property(" + EXE_CLASSIFIER_PARAMS
 								+ "). BioLockJ hard codes this file path based on sequence files names in: "
-								+ Config.INPUT_DIRS );
+								+ Constants.INPUT_DIRS );
 			}
 			if( params.indexOf( DB_PARAM ) > -1 )
 			{
@@ -187,7 +189,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 			{
 				throw new Exception( "Invalid classifier option (" + REPORT_PARAM + ") found in property("
 						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ hard codes this value based on Sample IDs found in: "
-						+ Config.INPUT_DIRS );
+						+ Constants.INPUT_DIRS );
 			}
 
 			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getDB() + " "

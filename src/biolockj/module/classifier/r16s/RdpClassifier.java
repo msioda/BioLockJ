@@ -81,7 +81,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 		lines.add( "function " + FUNCTION_RDP + "() {" );
 		lines.add( Config.getExe( EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getClassifierExe() + " "
 				+ getRuntimeParams( getClassifierParams(), null ) + OUTPUT_PARAM + " $2 $1" );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 

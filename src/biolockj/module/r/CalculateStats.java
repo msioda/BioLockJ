@@ -18,6 +18,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.util.ModuleUtil;
@@ -128,7 +129,7 @@ public class CalculateStats extends R_Module implements BioModule
 			return dirs;
 		}
 
-		return Config.requireExistingDirs( Config.INPUT_DIRS );
+		return Config.requireExistingDirs( Constants.INPUT_DIRS );
 	}
 
 	private static String getSuffix( final Boolean isParametric, final Boolean isAdjusted ) throws Exception

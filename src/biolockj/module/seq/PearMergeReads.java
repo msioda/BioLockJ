@@ -14,6 +14,7 @@ package biolockj.module.seq;
 import java.io.File;
 import java.util.*;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
@@ -98,7 +99,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	{
 		final String metaColName = getMetaColName();
 		super.cleanUp();
-		Config.setConfigProperty( SeqUtil.INTERNAL_PAIRED_READS, Config.FALSE );
+		Config.setConfigProperty( SeqUtil.INTERNAL_PAIRED_READS, Constants.FALSE );
 
 		final File updatedMeta = new File(
 				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
@@ -124,7 +125,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 		else
 		{
 			Log.warn( getClass(), "Counts for # merged reads/sample already found in metadata, not re-counting "
-					+ MetaUtil.getFile().getAbsolutePath() );
+					+ MetaUtil.getPath() );
 		}
 		RegisterNumReads.setNumReadFieldName( metaColName );
 	}
@@ -158,7 +159,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 				+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
 		lines.add( "mv $4" + File.separator + "$1.assembled." + SeqUtil.FASTQ + " $5" + File.separator + "$1."
 				+ SeqUtil.FASTQ );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 

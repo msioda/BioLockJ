@@ -18,7 +18,6 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.node.JsonNode;
 import biolockj.util.*;
 
 /**
@@ -27,23 +26,6 @@ import biolockj.util.*;
  */
 public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 {
-
-	/**
-	 * Cache the input files for quick access on subsequent calls to {@linke #getInputFiles()}
-	 * 
-	 * @param files Input files
-	 * @throws Exception if errors occur
-	 */
-	public void cacheInputFiles( final Collection<File> files ) throws Exception
-	{
-		if( files == null || files.isEmpty() )
-		{
-			throw new Exception( "No input files found!" );
-		}
-		inputFiles.clear();
-		inputFiles.addAll( files );
-		Collections.sort( inputFiles );
-	}
 
 	/**
 	 * If restarting or running a direct pipeline execute the cleanup for completed modules.
@@ -59,9 +41,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	{
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
 	}
-	
 
-	
 	@Override
 	public int compareTo( final BioModule module )
 	{
@@ -105,20 +85,10 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		{
 			cacheInputFiles( findModuleInputFiles() );
 		}
-		
+
 		printInputFiles();
 
 		return getFileCache();
-	}
-	
-	
-	private void printInputFiles() throws Exception
-	{
-		Log.info( getClass(), "# Input Files: " + getFileCache().size() );
-		for( int i = 0; i < getFileCache().size(); i++ )
-		{
-			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
-		}
 	}
 
 	/**
@@ -157,6 +127,12 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		return new ArrayList<>();
 	}
 
+	@Override
+	public String getProperty( final String property )
+	{
+		return Config.getModuleProp( getClass().getSimpleName(), property );
+	}
+
 	/**
 	 * Returns summary message to be displayed by Email module so must not contain confidential info. ModuleUtil
 	 * provides summary metrics on output files
@@ -187,9 +163,9 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	public void init() throws Exception
 	{
 		moduleId = nextId++;
-		moduleDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
-				+ File.separator + BioLockJUtil.formatDigits( moduleId, ModuleUtil.maxNumModules().toString().length() )
-				+ "_" + getClass().getSimpleName() );
+		moduleDir = new File( Config.pipelinePath() + File.separator
+				+ BioLockJUtil.formatDigits( moduleId, ModuleUtil.maxNumModules().toString().length() ) + "_"
+				+ getClass().getSimpleName() );
 
 		if( !moduleDir.exists() )
 		{
@@ -225,6 +201,23 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	}
 
 	/**
+	 * Cache the input files for quick access on subsequent calls to {@linke #getInputFiles()}
+	 * 
+	 * @param files Input files
+	 * @throws Exception if errors occur
+	 */
+	protected void cacheInputFiles( final Collection<File> files ) throws Exception
+	{
+		if( files == null || files.isEmpty() )
+		{
+			throw new Exception( "No input files found!" );
+		}
+		inputFiles.clear();
+		inputFiles.addAll( files );
+		Collections.sort( inputFiles );
+	}
+
+	/**
 	 * Called upon first access of input files to return sorted list of files from all
 	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS}<br>
 	 * Hidden files (starting with ".") are ignored<br>
@@ -243,7 +236,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		{
 			if( previousModule == null )
 			{
-				Log.debug( getClass(), "Previous module is NULL.  Return pipleline input from: " + Config.INPUT_DIRS );
+				Log.debug( getClass(),
+						"Previous module is NULL.  Return pipleline input from: " + Constants.INPUT_DIRS );
 				moduleInputFiles.addAll( BioLockJUtil.getPipelineInputFiles() );
 				validInput = true;
 			}
@@ -307,6 +301,15 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		if( fileNames.contains( file.getName() ) )
 		{
 			throw new Exception( "File names must be unique!  Duplicate file: " + file.getAbsolutePath() );
+		}
+	}
+
+	private void printInputFiles() throws Exception
+	{
+		Log.info( getClass(), "# Input Files: " + getFileCache().size() );
+		for( int i = 0; i < getFileCache().size(); i++ )
+		{
+			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
 		}
 	}
 

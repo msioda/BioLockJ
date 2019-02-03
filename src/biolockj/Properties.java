@@ -73,8 +73,8 @@ public class Properties extends java.util.Properties
 		Log.debug( Properties.class, "Run loadProperties for Config: " + file.getAbsolutePath() );
 		configFile = file;
 		props = buildConfig( configFile );
-		props.setProperty( Config.INTERNAL_BLJ_MODULE, BioLockJUtil.getCollectionAsString( getListedModules() ) );
-		props.setProperty( Config.INTERNAL_DEFAULT_CONFIG,
+		props.setProperty( Constants.INTERNAL_BLJ_MODULE, BioLockJUtil.getCollectionAsString( getListedModules() ) );
+		props.setProperty( Constants.INTERNAL_DEFAULT_CONFIG,
 				BioLockJUtil.getCollectionAsString( BioLockJUtil.getFilePaths( defaultConfigFiles ) ) );
 		return props;
 	}
@@ -149,7 +149,7 @@ public class Properties extends java.util.Properties
 			final StringTokenizer st = new StringTokenizer( line, "=" );
 			if( st.countTokens() > 1 )
 			{
-				if( st.nextToken().trim().equals( Config.PROJECT_DEFAULT_PROPS ) )
+				if( st.nextToken().trim().equals( Constants.PROJECT_DEFAULT_PROPS ) )
 				{
 					final File defaultConfig = Config.getExistingFileObject( st.nextToken().trim() );
 					reader.close();
@@ -186,7 +186,7 @@ public class Properties extends java.util.Properties
 		{
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				if( line.startsWith( Config.INTERNAL_BLJ_MODULE ) )
+				if( line.startsWith( Constants.INTERNAL_BLJ_MODULE ) )
 				{
 					final String moduleName = line.trim().substring( line.indexOf( " " ) + 1 );
 					Log.info( Properties.class, "Found configured BioModule: " + moduleName );

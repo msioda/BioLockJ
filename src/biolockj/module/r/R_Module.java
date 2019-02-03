@@ -202,7 +202,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 				{
 					continue;
 				}
-				else if( file.getName().indexOf( "." ) > 0 )
+				else if( file.getName().indexOf( "." ) > -1 )
 				{
 					final String ext = file.getName().substring( file.getName().lastIndexOf( "." ) + 1 );
 					if( map.get( ext ) == null )
@@ -284,7 +284,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_R + "() {" );
 		lines.add( Config.getExe( EXE_RSCRIPT ) + " $1" );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 

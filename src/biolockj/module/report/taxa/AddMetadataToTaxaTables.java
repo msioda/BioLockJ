@@ -16,12 +16,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.MetaUtil;
+import biolockj.util.SummaryUtil;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
@@ -102,7 +103,6 @@ public class AddMetadataToTaxaTables extends JavaModuleImpl implements JavaModul
 
 		return super.getSummary() + sb.toString();
 	}
-
 
 	/**
 	 * This method matches records from the OTU table and the metadata file by matching the sample ID value in the very
@@ -209,8 +209,7 @@ public class AddMetadataToTaxaTables extends JavaModuleImpl implements JavaModul
 		}
 		else
 		{
-			Log.warn( getClass(),
-					"Missing record for: " + sampleId + " in metadata: " + MetaUtil.getFile().getAbsolutePath() );
+			Log.warn( getClass(), "Missing record for: " + sampleId + " in metadata: " + MetaUtil.getPath() );
 			return null;
 		}
 

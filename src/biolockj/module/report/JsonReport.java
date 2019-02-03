@@ -202,7 +202,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	protected String writeNodeAndChildren( final JsonNode node, final boolean hasPeer,
 			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final int nodeLevel ) throws Exception
 	{
-		final String logBase = Config.getString( Config.REPORT_LOG_BASE );
+		final String logBase = Config.getString( Constants.REPORT_LOG_BASE );
 		final String prefix = logBase == null ? "": "log" + logBase;
 
 		final String taxaLevel = nodeLevel == 0 ? ROOT_NODE: TaxaUtil.getTaxaLevels().get( nodeLevel - 1 );

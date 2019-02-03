@@ -180,8 +180,8 @@ public class OtuUtil
 			sampleId = "";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
-				+ prefix + OTU_COUNT + sampleId + Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + prefix + OTU_COUNT + sampleId
+				+ Constants.TSV_EXT );
 	}
 
 	/**
@@ -280,7 +280,7 @@ public class OtuUtil
 		{
 			final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
 					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-	
+
 			for( final File f: files )
 			{
 				if( isOtuFile( f ) )
@@ -289,7 +289,7 @@ public class OtuUtil
 				}
 			}
 		}
-		catch( Exception ex )
+		catch( final Exception ex )
 		{
 			// RETURN FALSE
 		}

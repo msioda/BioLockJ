@@ -32,25 +32,6 @@ public class ModuleUtil
 	// Prevent instantiation
 	private ModuleUtil()
 	{}
-	
-	/**
-	 * Check if a module was in the pipeline at least once.
-	 * @param className
-	 * @return
-	 * @throws Exception
-	 */
-	public static boolean moduleExists( final String className ) throws Exception
-	{
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( m.getClass().getName().equals( className ) )
-			{
-				return true;
-			}
-		}
-		
-		return false;
-	}
 
 	/**
 	 * Get a classifier module<br>
@@ -135,6 +116,11 @@ public class ModuleUtil
 		}
 
 		return null;
+	}
+
+	public static BioModule getModule( final String className ) throws Exception
+	{
+		return (BioModule) Class.forName( className ).newInstance();
 	}
 
 	/**
@@ -255,13 +241,13 @@ public class ModuleUtil
 				{
 					foundMeta = true;
 				}
-				else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+				else if( !Config.getSet( Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) )
 				{
 					foundOther = true;
 				}
 			}
 		}
-		catch(Exception ex )
+		catch( final Exception ex )
 		{
 			return false;
 		}
@@ -325,7 +311,7 @@ public class ModuleUtil
 		Integer count = 8;
 		try
 		{
-			for( String mod: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
+			for( String mod: Config.requireList( Constants.INTERNAL_BLJ_MODULE ) )
 			{
 				mod = mod.toLowerCase();
 				if( mod.contains( "qiime" ) && mod.contains( "classifier" ) )
@@ -346,6 +332,26 @@ public class ModuleUtil
 		}
 
 		return count;
+	}
+
+	/**
+	 * Check if a module was in the pipeline at least once.
+	 * 
+	 * @param className
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean moduleExists( final String className ) throws Exception
+	{
+		for( final BioModule m: Pipeline.getModules() )
+		{
+			if( m.getClass().getName().equals( className ) )
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -415,7 +421,8 @@ public class ModuleUtil
 		List<BioModule> modules = null;
 		if( checkAhead )
 		{
-			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
+			modules = new ArrayList<>( new TreeSet<>(
+					Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
 		}
 		else
 		{

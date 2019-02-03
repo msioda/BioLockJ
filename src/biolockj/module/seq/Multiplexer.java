@@ -207,7 +207,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 
 	private String getMutliplexeFileName( final File file ) throws Exception
 	{
-		return getOutputDir().getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
+		return getOutputDir().getAbsolutePath() + File.separator + Config.pipelineName()
 				+ SeqUtil.getReadDirectionSuffix( file ) + "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
 	}
 

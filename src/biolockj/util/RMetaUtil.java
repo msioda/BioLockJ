@@ -16,9 +16,7 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -69,7 +67,7 @@ public final class RMetaUtil
 	 */
 	public static void classifyReportableMetadata() throws Exception
 	{
-		Log.info( RMetaUtil.class, "Validate reportable metadata fields: " + MetaUtil.getFile().getAbsolutePath() );
+		Log.info( RMetaUtil.class, "Validate reportable metadata fields: " + MetaUtil.getPath() );
 
 		final Set<String> rScriptFields = Config.getSet( R_REPORT_FIELDS );
 		binaryFields.clear();
@@ -80,7 +78,7 @@ public final class RMetaUtil
 		nominalFields.addAll( Config.getList( R_NOMINAL_FIELDS ) );
 		numericFields.addAll( Config.getList( R_NUMERIC_FIELDS ) );
 		mdsFields.addAll( Config.getList( MDS_REPORT_FIELDS ) );
-		
+
 		final List<String> excludeFields = Config.getList( R_EXCLUDE_FIELDS );
 
 		nominalFields.removeAll( excludeFields );
@@ -153,7 +151,7 @@ public final class RMetaUtil
 			}
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_READS )
+		if( Config.getBoolean( Constants.REPORT_NUM_READS )
 				&& isValidNumericField( metaFields, RegisterNumReads.getNumReadFieldName() ) )
 		{
 			rScriptFields.add( RegisterNumReads.getNumReadFieldName() );
@@ -165,7 +163,7 @@ public final class RMetaUtil
 			numericFields.remove( RegisterNumReads.getNumReadFieldName() );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_HITS )
+		if( Config.getBoolean( Constants.REPORT_NUM_HITS )
 				&& isValidNumericField( metaFields, ParserModuleImpl.getOtuCountField() ) )
 		{
 			rScriptFields.add( ParserModuleImpl.getOtuCountField() );
@@ -177,7 +175,7 @@ public final class RMetaUtil
 			numericFields.remove( ParserModuleImpl.getOtuCountField() );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_HITS )
+		if( Config.getBoolean( Constants.REPORT_NUM_HITS )
 				&& isValidNumericField( metaFields, AddMetadataToTaxaTables.HIT_RATIO ) )
 		{
 			rScriptFields.add( AddMetadataToTaxaTables.HIT_RATIO );
@@ -267,12 +265,11 @@ public final class RMetaUtil
 				}
 			}
 		}
-		
+
 		if( updateRConfig() )
 		{
 			PropUtil.saveMasterConfig( Config.getProperties() );
 		}
-		
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -320,58 +317,6 @@ public final class RMetaUtil
 	public static Set<String> getNumericFields()
 	{
 		return numericFields;
-	}
-
-	/**
-	 * Get updated R config props
-	 * 
-	 * @return map of R props by data type
-	 * @throws Exception if errors occur
-	 */
-	public static boolean updateRConfig() throws Exception
-	{
-		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
-		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
-
-		if( numCols != null && numCols == numMetaCols )
-		{
-			Log.info( RMetaUtil.class, "R Config unchanged..." );
-			return false;
-		}
-
-		Config.setConfigProperty( NUM_META_COLS, numMetaCols.toString() );
-		Log.info( RMetaUtil.class, "Set " + NUM_META_COLS + " = " + numMetaCols );
-
-		if( !binaryFields.isEmpty() )
-		{
-			final String val = BioLockJUtil.getCollectionAsString( binaryFields );
-			if( Config.getString( BINARY_FIELDS ) == null || !val.equals( Config.getString( BINARY_FIELDS ) ) )
-			{
-				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
-				Config.setConfigProperty( BINARY_FIELDS, val );
-			}
-
-		}
-		if( !nominalFields.isEmpty() )
-		{
-			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
-			if( Config.getString( NOMINAL_FIELDS ) == null || !val.equals( Config.getString( NOMINAL_FIELDS ) ) )
-			{
-				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
-				Config.setConfigProperty( NOMINAL_FIELDS, val );
-			}
-		}
-		if( !numericFields.isEmpty() )
-		{
-			final String val = BioLockJUtil.getCollectionAsString( numericFields );
-			if( Config.getString( NUMERIC_FIELDS ) == null || !val.equals( Config.getString( NUMERIC_FIELDS ) ) )
-			{
-				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
-				Config.setConfigProperty( NUMERIC_FIELDS, val );
-			}
-		}
-
-		return true;
 	}
 
 	/**
@@ -427,6 +372,58 @@ public final class RMetaUtil
 	}
 
 	/**
+	 * Get updated R config props
+	 * 
+	 * @return map of R props by data type
+	 * @throws Exception if errors occur
+	 */
+	public static boolean updateRConfig() throws Exception
+	{
+		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
+		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
+
+		if( numCols != null && numCols == numMetaCols )
+		{
+			Log.info( RMetaUtil.class, "R Config unchanged..." );
+			return false;
+		}
+
+		Config.setConfigProperty( NUM_META_COLS, numMetaCols.toString() );
+		Log.info( RMetaUtil.class, "Set " + NUM_META_COLS + " = " + numMetaCols );
+
+		if( !binaryFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( binaryFields );
+			if( Config.getString( BINARY_FIELDS ) == null || !val.equals( Config.getString( BINARY_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
+				Config.setConfigProperty( BINARY_FIELDS, val );
+			}
+
+		}
+		if( !nominalFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
+			if( Config.getString( NOMINAL_FIELDS ) == null || !val.equals( Config.getString( NOMINAL_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
+				Config.setConfigProperty( NOMINAL_FIELDS, val );
+			}
+		}
+		if( !numericFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( numericFields );
+			if( Config.getString( NUMERIC_FIELDS ) == null || !val.equals( Config.getString( NUMERIC_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
+				Config.setConfigProperty( NUMERIC_FIELDS, val );
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * This method verifies the fields given exist in the metadata file.
 	 * 
 	 * @param prop Config property name
@@ -441,7 +438,7 @@ public final class RMetaUtil
 			{
 
 				throw new Exception( "Config property [ " + prop + "] contians a field [" + field
-						+ "] not found in metadata: " + MetaUtil.getFile().getAbsolutePath() );
+						+ "] not found in metadata: " + MetaUtil.getPath() );
 			}
 		}
 	}

@@ -98,7 +98,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 		lines.add( "function " + FUNCTION_RUN_METAPHLAN + "() {" );
 		lines.add( Config.getExe( EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
 				+ "$1 --bowtie2out $2 > $3" );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 
@@ -126,7 +126,8 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 			{
 				throw new Exception( "Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: " + NUM_THREADS );
+						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: "
+						+ SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( "--bowtie2out " ) > -1 )
 			{

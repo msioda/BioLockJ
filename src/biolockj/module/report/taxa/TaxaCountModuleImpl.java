@@ -13,11 +13,9 @@ package biolockj.module.report.taxa;
 
 import java.io.File;
 import java.util.ArrayList;
-
 import java.util.List;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.util.OtuUtil;
 import biolockj.util.TaxaUtil;
 
 /**
@@ -31,8 +29,8 @@ public abstract class TaxaCountModuleImpl extends JavaModuleImpl implements Taxa
 	{
 		if( getFileCache().isEmpty() )
 		{
-			List<File> files = new ArrayList<>();
-			for( File f: super.findModuleInputFiles() )
+			final List<File> files = new ArrayList<>();
+			for( final File f: super.findModuleInputFiles() )
 			{
 				if( TaxaUtil.isTaxaFile( f ) )
 				{
@@ -42,9 +40,9 @@ public abstract class TaxaCountModuleImpl extends JavaModuleImpl implements Taxa
 			cacheInputFiles( files );
 		}
 
-		return( getFileCache() );
+		return getFileCache();
 	}
-	
+
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{

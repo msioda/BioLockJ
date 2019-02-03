@@ -129,8 +129,7 @@ public class BashScriptBuilder
 				+ Pipeline.SCRIPT_FAILURES + "\"" );
 		lines.add( "exit $statusCode" );
 		lines.add( "fi" );
-		lines.add( "}" );
-		lines.add( "" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 
@@ -207,7 +206,7 @@ public class BashScriptBuilder
 		{
 			wrappedLines.add( FUNCTION_EXECUTE + " \"" + line + "\" $LINENO" );
 		}
-
+		wrappedLines.add( "" );
 		return wrappedLines;
 	}
 
@@ -265,7 +264,7 @@ public class BashScriptBuilder
 		{
 			lines.add( "# Submit job script" );
 			lines.add( "function " + FUNCTION_RUN_JOB + "() {" );
-			lines.add( getJobCmd( module ) + " $1" );
+			lines.add( Config.requireString( module.getProperty( CLUSTER_BATCH_COMMAND ) ) + " $1" );
 			lines.add( "}" );
 		}
 
@@ -288,9 +287,10 @@ public class BashScriptBuilder
 			throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		if( Config.isOnCluster() && getJobHeader( module ) != null )
+		final String header = Config.getString( module.getProperty( SCRIPT_JOB_HEADER ) );
+		if( Config.isOnCluster() && header != null )
 		{
-			lines.add( getJobHeader( module ) + RETURN );
+			lines.add( header + RETURN );
 		}
 		else if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
@@ -341,21 +341,22 @@ public class BashScriptBuilder
 
 		if( !Config.getBoolean( CLUSTER_VALIDATE_PARAMS ) )
 		{
-			Log.warn( BashScriptBuilder.class, CLUSTER_VALIDATE_PARAMS + "=" + Config.FALSE
-					+ " --  Will NOT enforce cluster #cores  = " + getNumThreadsParam( module ) );
+			Log.warn( BashScriptBuilder.class, CLUSTER_VALIDATE_PARAMS + "=" + Constants.FALSE
+					+ " --  Will NOT enforce cluster #cores  = " + ScriptModule.SCRIPT_NUM_THREADS );
+			// + getNumThreadsParam( module ) );
 			return;
 		}
-
-		final String jobScriptHeader = getJobHeader( module );
+		final String jobHeaderParam = module.getProperty( SCRIPT_JOB_HEADER );
+		final String jobScriptHeader = Config.requireString( jobHeaderParam );
 
 		if( !jobScriptHeader.startsWith( "#PBS" ) )
 		{
-			throw new ConfigFormatException( getJobHeaderParam( module ), "Must begin with \"#PBS\"" );
+			throw new ConfigFormatException( SCRIPT_JOB_HEADER, "Must begin with \"#PBS\"" );
 		}
 
 		if( !hasNumCoresParam( jobScriptHeader ) )
 		{
-			Log.warn( BashScriptBuilder.class, getJobHeaderParam( module ) + " does not have #cores param defined" );
+			Log.warn( BashScriptBuilder.class, SCRIPT_JOB_HEADER + " does not have #cores param defined" );
 			return;
 		}
 
@@ -380,13 +381,15 @@ public class BashScriptBuilder
 					}
 					else
 					{
-						if( Integer.valueOf( token ) != getNumThreads( module ) )
+
+						final String numThreadsParam = module.getProperty( ScriptModule.SCRIPT_NUM_THREADS );
+						final int numThreads = Config.requirePositiveInteger( numThreadsParam );
+						if( Integer.valueOf( token ) != numThreads )
 						{
-							throw new ConfigFormatException( getJobHeaderParam( module ),
-									"Inconsistent config values. " + getNumThreadsParam( module ) + "="
-											+ getNumThreads( module ) + " & " + getJobHeaderParam( module ) + "="
-											+ jobScriptHeader + " --> (#" + CLUSTER_NUM_PROCESSORS + "="
-											+ Integer.valueOf( token ) + ")" );
+							throw new ConfigFormatException( jobHeaderParam,
+									"Inconsistent config values. " + numThreadsParam + "=" + numThreads + " & "
+											+ jobHeaderParam + "=" + jobScriptHeader + " --> (#"
+											+ CLUSTER_NUM_PROCESSORS + "=" + Integer.valueOf( token ) + ")" );
 						}
 						break;
 					}
@@ -417,7 +420,7 @@ public class BashScriptBuilder
 			int i = 0;
 			while( i++ < indentCount )
 			{
-				writer.write( INDENT );
+				writer.write( Constants.INDENT );
 			}
 
 			writer.write( line + RETURN );
@@ -495,41 +498,6 @@ public class BashScriptBuilder
 
 		return false;
 	}
-	
-	
-	
-	private static String getJobCmd( final ScriptModule module ) throws Exception
-	{
-		final String cmd = getModuleCmd( module );
-		if( cmd != null )
-		{
-			Log.info( BashScriptBuilder.class, "Found module specific batch submit command: " + cmd );
-			return cmd;
-		}
-		return Config.requireString( CLUSTER_BATCH_COMMAND );
-	}
-
-	private static String getJobHeader( final ScriptModule module ) throws Exception
-	{
-		final String header = getModuleHeader( module );
-		if( header != null )
-		{
-			Log.info( BashScriptBuilder.class, "Found module specific job header: " + header );
-			return header;
-		}
-		return Config.requireString( SCRIPT_JOB_HEADER );
-	}
-
-	private static String getJobHeaderParam( final ScriptModule module ) throws Exception
-	{
-		final String header = getModuleHeader( module );
-		if( header != null )
-		{
-			return getModuleHeaderPropertyName( module );
-		}
-
-		return SCRIPT_JOB_HEADER;
-	}
 
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
 	{
@@ -537,72 +505,98 @@ public class BashScriptBuilder
 				+ scriptModule.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
 	}
 
-	private static String getModuleHeader( final ScriptModule module )
-	{
-		try
-		{
-			return Config.getString( getModuleHeaderPropertyName( module ) );
-		}
-		catch( final Exception ex )
-		{
-			// FAIL SILENTLY
-			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
-		}
-		return null;
-	}
-	
-	private static String getModuleCmd( final ScriptModule module )
-	{
-		try
-		{
-			return Config.getString( getModuleCmdPropertyName( module ) );
-		}
-		catch( final Exception ex )
-		{
-			// FAIL SILENTLY
-			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
-		}
-		return null;
-	}
-	
-	
-	
-	private static String getModuleCmdPropertyName( final ScriptModule module )
-	{
-		return module.getClass().getSimpleName() + JOB_CMD;
-	}
-
-	private static String getModuleHeaderPropertyName( final ScriptModule module )
-	{
-		return module.getClass().getSimpleName() + JOB_HEADER;
-	}
-
-	private static Integer getModuleNumThreads( final ScriptModule module )
-	{
-		try
-		{
-			return Config.getPositiveInteger( module.getClass().getSimpleName() + ScriptModule.NUM_THREADS );
-		}
-		catch( final Exception ex )
-		{
-			// FAIL SILENTLY
-			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
-		}
-		return null;
-	}
-
-	private static Integer getNumThreads( final ScriptModule module ) throws Exception
-	{
-		final Integer moduleThreads = getModuleNumThreads( module );
-		return moduleThreads == null ? Config.requirePositiveInteger( ScriptModule.SCRIPT_NUM_THREADS ): moduleThreads;
-	}
-
-	private static String getNumThreadsParam( final ScriptModule module ) throws Exception
-	{
-		final Integer moduleThreads = getModuleNumThreads( module );
-		return moduleThreads == null ? ScriptModule.SCRIPT_NUM_THREADS
-				: module.getClass().getSimpleName() + ScriptModule.NUM_THREADS;
-	}
+	// private static String getJobHeader( final ScriptModule module ) throws Exception
+	// {
+	// final String header = getModuleHeader( module );
+	// if( header != null )
+	// {
+	// Log.info( BashScriptBuilder.class, "Found module specific job header: " + header );
+	// return header;
+	// }
+	// return Config.requireString( SCRIPT_JOB_HEADER );
+	// }
+	// private static String getJobHeaderParam( final ScriptModule module ) throws Exception
+	// {
+	//
+	// final String header = getModuleHeader( module );
+	// if( header != null )
+	// {
+	// return getModuleHeaderPropertyName( module );
+	// }
+	//
+	// return SCRIPT_JOB_HEADER;
+	// }
+	// private static String getJobCmd( final ScriptModule module ) throws Exception
+	// {
+	// final String cmd = getModuleCmd( module );
+	// if( cmd != null )
+	// {
+	// Log.info( BashScriptBuilder.class, "Found module specific batch submit command: " + cmd );
+	// return cmd;
+	// }
+	// return Config.requireString( CLUSTER_BATCH_COMMAND );
+	// }
+	// private static String getModuleHeader( final ScriptModule module )
+	// {
+	// try
+	// {
+	// return Config.getString( getModuleHeaderPropertyName( module ) );
+	// }
+	// catch( final Exception ex )
+	// {
+	// // FAIL SILENTLY
+	// // EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+	// }
+	// return null;
+	// }
+	// private static String getModuleCmd( final ScriptModule module )
+	// {
+	// try
+	// {
+	// return Config.getString( getModuleCmdPropertyName( module ) );
+	// }
+	// catch( final Exception ex )
+	// {
+	// // FAIL SILENTLY
+	// // EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+	// }
+	// return null;
+	// }
+	// private static String getModuleCmdPropertyName( final ScriptModule module )
+	// {
+	// return module.getClass().getSimpleName() + JOB_CMD;
+	// }
+	//
+	// private static String getModuleHeaderPropertyName( final ScriptModule module )
+	// {
+	// return module.getClass().getSimpleName() + JOB_HEADER;
+	// }
+	// private static Integer getModuleNumThreads( final ScriptModule module )
+	// {
+	// try
+	// {
+	// return Config.getPositiveInteger( module.getClass().getSimpleName() + ScriptModule.NUM_THREADS );
+	// }
+	// catch( final Exception ex )
+	// {
+	// // FAIL SILENTLY
+	// // EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
+	// }
+	// return null;
+	// }
+	// private static Integer getNumThreads( final ScriptModule module ) throws Exception
+	// {
+	// final Integer moduleThreads = getModuleNumThreads( module );
+	// return moduleThreads == null ? Config.requirePositiveInteger( ScriptModule.SCRIPT_NUM_THREADS ): moduleThreads;
+	// }
+	// private static String getNumThreadsParam( final ScriptModule module ) throws Exception
+	// {
+	// return Config.getModuleProp( module, ScriptModule.SCRIPT_NUM_THREADS );
+	//
+	// final Integer moduleThreads = getModuleNumThreads( module );
+	// return moduleThreads == null ? ScriptModule.SCRIPT_NUM_THREADS
+	// : module.getClass().getSimpleName() + ScriptModule.NUM_THREADS;
+	// }
 
 	private static String getWorkerId( final int scriptNum, final int digits )
 	{
@@ -728,11 +722,7 @@ public class BashScriptBuilder
 	 */
 	protected static final String SCRIPT_JOB_HEADER = "cluster.jobHeader";
 
-	private static final String INDENT = "    ";
-	private static final String JOB_HEADER = ".jobHeader";
-	private static final String JOB_CMD = ".batchCommand";
-	
-	private static final String RETURN = BioLockJ.RETURN;
+	private static final String RETURN = Constants.RETURN;
 	private static final List<File> workerScripts = new ArrayList<>();
 
 }

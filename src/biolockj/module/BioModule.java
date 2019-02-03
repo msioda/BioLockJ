@@ -121,6 +121,17 @@ public interface BioModule
 	public List<String> getPreRequisiteModules() throws Exception;
 
 	/**
+	 * Check {@link biolockj.Config} file for a module specific version of a property, if not found, return given
+	 * property name. Module specific properties can be set in the {@link biolockj.Config} file by replacing the
+	 * property name prefix with the BioModule's simple Java class name.
+	 * 
+	 * @param property A {@link biolockj.Config} property name
+	 * @return A {@link biolockj.Config} property name
+	 * @throws Exception if throws by {@link biolockj.Config}
+	 */
+	public String getProperty( String property ) throws Exception;
+
+	/**
 	 * Gets the BioModule execution summary, this is sent as part of the notification email, if configured.<br>
 	 * Summary should not include data content, to avoid unintentional publication of confidential information.<br>
 	 * However, meta-data such as number/size of files can be helpful during debug.<br>

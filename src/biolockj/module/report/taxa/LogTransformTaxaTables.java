@@ -15,7 +15,6 @@ import java.io.*;
 import java.util.*;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.BioLockJUtil;
@@ -37,11 +36,11 @@ public class LogTransformTaxaTables extends JavaModuleImpl implements JavaModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		logBase = Config.requireString( Config.REPORT_LOG_BASE );
+		logBase = Config.requireString( Constants.REPORT_LOG_BASE );
 
 		if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
 		{
-			throw new ConfigFormatException( Config.REPORT_LOG_BASE, "Property only accepts value \"10\" or \"e\"" );
+			throw new ConfigFormatException( Constants.REPORT_LOG_BASE, "Property only accepts value \"10\" or \"e\"" );
 		}
 
 		super.checkDependencies();

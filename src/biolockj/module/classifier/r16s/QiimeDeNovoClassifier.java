@@ -44,8 +44,7 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outputDir = getOutputDir().getAbsolutePath() + File.separator;
 
-		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getFile().getAbsolutePath(),
-				getTempDir() ) );
+		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 
 		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) )
 		{

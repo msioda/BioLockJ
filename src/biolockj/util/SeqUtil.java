@@ -38,8 +38,7 @@ public class SeqUtil
 	 */
 	public static void copyInputData() throws Exception
 	{
-		final File inputFileDir = new File(
-				Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator + "input" );
+		final File inputFileDir = new File( Config.pipelinePath() + File.separator + "input" );
 
 		if( !inputFileDir.exists() )
 		{
@@ -287,7 +286,7 @@ public class SeqUtil
 		else if( Config.getString( INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
 		{
 			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ "
-					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Config.FALSE + " ]" + BioLockJ.RETURN + msg );
+					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Constants.FALSE + " ]" + BioLockJ.RETURN + msg );
 		}
 
 		return map;
@@ -453,7 +452,7 @@ public class SeqUtil
 			else
 			{
 				Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
-						+ MetaUtil.META_REQUIRED + "=" + Config.FALSE + " ]: " + file.getAbsolutePath() );
+						+ MetaUtil.META_REQUIRED + "=" + Constants.FALSE + " ]: " + file.getAbsolutePath() );
 			}
 		}
 
@@ -813,7 +812,7 @@ public class SeqUtil
 						&& ( FASTA_HEADER_DELIMS.contains( headerChar ) || headerChar.equals( FASTQ_HEADER_DELIM ) ) )
 				{
 					Log.info( SeqUtil.class, "Multi-line input file detected: # lines/seq: " + numSeqLines );
-					Config.setConfigProperty( INTERNAL_IS_MULTI_LINE_SEQ, Config.TRUE );
+					Config.setConfigProperty( INTERNAL_IS_MULTI_LINE_SEQ, Constants.TRUE );
 					if( numMultiSeqLines != null && numMultiSeqLines == 0 )
 					{
 						numMultiSeqLines = numSeqLines;
@@ -965,8 +964,8 @@ public class SeqUtil
 		}
 
 		Log.info( SeqUtil.class,
-				"Set " + INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Config.TRUE: Config.FALSE ) );
-		Config.setConfigProperty( INTERNAL_PAIRED_READS, foundPairedReads ? Config.TRUE: Config.FALSE );
+				"Set " + INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Constants.TRUE: Constants.FALSE ) );
+		Config.setConfigProperty( INTERNAL_PAIRED_READS, foundPairedReads ? Constants.TRUE: Constants.FALSE );
 	}
 
 	private static boolean mapSampleIdWithMetaFileNameCol() throws Exception
@@ -1036,7 +1035,7 @@ public class SeqUtil
 			}
 		}
 
-		Config.setConfigProperty( INTERNAL_MULTIPLEXED, isMultiplexed ? Config.TRUE: Config.FALSE );
+		Config.setConfigProperty( INTERNAL_MULTIPLEXED, isMultiplexed ? Constants.TRUE: Constants.FALSE );
 
 		if( isMultiplexed && numMultiSeqLines == null )
 		{

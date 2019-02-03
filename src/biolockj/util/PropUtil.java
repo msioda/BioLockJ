@@ -35,24 +35,7 @@ public class PropUtil
 		{
 			configName = configName.replaceAll( MASTER_PREFIX, "" );
 		}
-		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ MASTER_PREFIX + configName );
-	}
-	
-	/**
-	 * And a few props & remove a few props that are always needed.
-	 * @return
-	 * @throws Exception
-	 */
-	private static Map<String, String> getUsedProps() throws Exception
-	{
-		final Map<String, String> props = Config.getProperties();
-		props.get( Config.PROJECT_PIPELINE_DIR  );
-		props.get( Config.PROJECT_PIPELINE_NAME  );
-
-		final Map<String, String> usedProps = Config.getUsedProps();
-
-		return usedProps;
+		return new File( Config.pipelinePath() + File.separator + MASTER_PREFIX + configName );
 	}
 
 	/**
@@ -62,18 +45,18 @@ public class PropUtil
 	public static void sanitizeMasterConfig() throws Exception
 	{
 		final Map<String, String> props = new HashMap<>();
-		final Map<String, String> usedProps = getUsedProps();
+		final Map<String, String> usedProps = Config.getUsedProps();
 
 		if( !Log.doDebug() )
 		{
 			Log.info( PropUtil.class, "To view the list of removed Config properties in future runs, enable: "
-					+ Log.LOG_LEVEL_PROPERTY + "=" + Config.TRUE );
+					+ Log.LOG_LEVEL_PROPERTY + "=" + Constants.TRUE );
 			Log.info( PropUtil.class,
 					"To add DEBUG statements for only this utility class, add the property (this is a list property so multiple"
 							+ " class names could be provided - in this example, wee add a single class): "
 							+ Log.LIMIT_DEBUG_CLASSES + "=" + PropUtil.class.getName() );
 		}
-		
+
 		for( final String key: usedProps.keySet() )
 		{
 			final String val = usedProps.get( key );
@@ -91,8 +74,7 @@ public class PropUtil
 				"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
 		Log.info( PropUtil.class, "The original version of project Config contained: "
 				+ Config.getInitialProperties().size() + " properties" );
-		Log.info( PropUtil.class,
-				"The final version of MASTER Config contains: " + props.size() + " properties" );
+		Log.info( PropUtil.class, "The final version of MASTER Config contains: " + props.size() + " properties" );
 
 		saveMasterConfig( props );
 	}
@@ -113,8 +95,8 @@ public class PropUtil
 			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
 			if( getMasterConfig().exists() )
 			{
-				throw new Exception(
-						"Cannot backup MASTER before modifying - trying to save as: " + getTempConfig().getAbsolutePath()  );
+				throw new Exception( "Cannot backup MASTER before modifying - trying to save as: "
+						+ getTempConfig().getAbsolutePath() );
 			}
 		}
 
@@ -130,10 +112,9 @@ public class PropUtil
 			{
 				writeCompleteHeader( writer, props );
 			}
-			
 
-			props.remove( Config.INTERNAL_BLJ_MODULE );
-			props.remove( Config.PROJECT_DEFAULT_PROPS );
+			props.remove( Constants.INTERNAL_BLJ_MODULE );
+			props.remove( Constants.PROJECT_DEFAULT_PROPS );
 
 			final Set<String> keys = new TreeSet<>( props.keySet() );
 			for( final String key: keys )
@@ -160,7 +141,6 @@ public class PropUtil
 		}
 	}
 
-	
 	private static void deleteTempConfigFile() throws Exception
 	{
 		if( getTempConfig().exists() && getMasterConfig().exists() )
@@ -173,7 +153,6 @@ public class PropUtil
 					+ getTempConfig().getAbsolutePath() );
 		}
 	}
-
 
 	private static List<String> getInitConfig() throws Exception
 	{
@@ -204,11 +183,9 @@ public class PropUtil
 		return initConfig;
 	}
 
-	
 	private static File getTempConfig() throws Exception
 	{
-		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ TEMP_PREFIX + Config.getConfigFileName() );
+		return new File( Config.pipelinePath() + File.separator + TEMP_PREFIX + Config.getConfigFileName() );
 	}
 
 	private static void writeCompleteHeader( final BufferedWriter writer, final Map<String, String> props )
@@ -221,9 +198,9 @@ public class PropUtil
 		writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
 		writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
 		writer.write( "#" + RETURN );
-		for( final String mod: Config.requireList( Config.INTERNAL_ALL_MODULES ) )
+		for( final String mod: Config.requireList( Constants.INTERNAL_ALL_MODULES ) )
 		{
-			writer.write( "#      " + Config.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
+			writer.write( "#      " + Constants.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
 		}
 		writer.write( "#" + RETURN );
 		writer.write( "####################################################################################" + RETURN );
@@ -235,7 +212,7 @@ public class PropUtil
 			writer.write( "###   Pipline = DEBUG mode so printing internal properties - FYI only." + RETURN );
 			writer.write( "###   Internal properties are discarded at runtime & refenerated as needed." + RETURN );
 			writer.write( "###" + RETURN );
-			writer.write( "###   [ " + Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Config.TRUE
+			writer.write( "###   [ " + Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE
 					+ " ] to run this full list because it includes the implicit BioModules" + RETURN );
 			writer.write( "###" + RETURN );
 			final TreeSet<String> keys = new TreeSet<>( props.keySet() );
@@ -262,10 +239,10 @@ public class PropUtil
 		if( initConfig == null )
 		{
 			writer.write( PROJ_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
-			final List<String> defaults = Config.getList( Config.INTERNAL_DEFAULT_CONFIG );
+			final List<String> defaults = Config.getList( Constants.INTERNAL_DEFAULT_CONFIG );
 			if( defaults != null && !defaults.isEmpty() )
 			{
-				for( final String defConfig: Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) )
+				for( final String defConfig: Config.getList( Constants.INTERNAL_DEFAULT_CONFIG ) )
 				{
 					writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
 				}
@@ -280,9 +257,9 @@ public class PropUtil
 		}
 
 		writer.write( RETURN );
-		for( final String module: Config.getList( Config.INTERNAL_BLJ_MODULE ) )
+		for( final String module: Config.getList( Constants.INTERNAL_BLJ_MODULE ) )
 		{
-			writer.write( Config.INTERNAL_BLJ_MODULE + " " + module + RETURN );
+			writer.write( Constants.INTERNAL_BLJ_MODULE + " " + module + RETURN );
 		}
 		writer.write( RETURN );
 	}

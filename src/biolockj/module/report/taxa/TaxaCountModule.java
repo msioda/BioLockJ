@@ -12,7 +12,6 @@
 package biolockj.module.report.taxa;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
@@ -25,7 +24,7 @@ public interface TaxaCountModule extends JavaModule
 
 	@Override
 	public List<File> getInputFiles() throws Exception;
-	
+
 	@Override
 	public boolean isValidInputModule( final BioModule module );
 

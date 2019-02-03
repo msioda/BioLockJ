@@ -14,9 +14,7 @@ package biolockj.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
@@ -54,7 +52,6 @@ public class DockerUtil
 	 */
 	public static List<String> buildRunDockerFunction( final BioModule module ) throws Exception
 	{
-
 		final List<String> lines = new ArrayList<>();
 		if( isDockerJavaModule( module ) )
 		{
@@ -63,15 +60,39 @@ public class DockerUtil
 		}
 
 		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
-
 		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
 
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
-		lines.add( Config.getExe( Config.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
+		lines.add( Config.getExe( Constants.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
 				+ getDockerVolumes() + getDockerImage( module ) );
-		lines.add( "}" + BioLockJ.RETURN );
+		lines.add( "}" );
 		return lines;
+	}
+
+	/**
+	 * Get the name of the Docker image.
+	 * 
+	 * @param module BioModule
+	 * @return Docker image name
+	 * @throws Exception if errors occur
+	 */
+	public static String getDockerImage( final BioModule module ) throws Exception
+	{
+		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
+				|| module instanceof QiimeClassifier;
+
+		final boolean isR = module instanceof R_Module;
+
+		final String name = isR ? R_Module.class.getSimpleName()
+				: isQiime ? QiimeClassifier.class.getSimpleName()
+						: isDockerScriptModule( module ) ? module.getClass().getSimpleName()
+								: JavaModule.class.getSimpleName();
+
+		String user = Config.getString( module.getProperty( DOCKER_HUB_USER ) );
+		user = user == null ? DEFAULT_DOCKER_HUB_USER: user;
+
+		return " " + user + "/" + getImageName( name ) + ":" + getImageVersion( module );
 	}
 
 	/**
@@ -96,6 +117,56 @@ public class DockerUtil
 					"Container missing mapped " + label + " volume system path: " + newFile.getAbsolutePath() );
 		}
 		return newFile;
+	}
+
+	/**
+	 * Return the Docker Image name for the given class name.<br>
+	 * Class names contain no spaces, words are separated via CamelCaseConvension.<br>
+	 * Docker image names cannot contain upper case letters, so this method substitutes "_" before the lower-case
+	 * version of each capital letter.<br>
+	 * <br>
+	 * Example: JavaModule becomes java_module
+	 * 
+	 * @param className
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getImageName( final String className ) throws Exception
+	{
+		final StringBuffer imageName = new StringBuffer();
+		imageName.append( className.substring( 0, 1 ).toLowerCase() );
+
+		for( int i = 2; i < className.length(); i++ )
+		{
+			final String val = className.substring( i - 1, i );
+			final String upperCase = val.toUpperCase();
+			if( val.equals( upperCase ) )
+			{
+				imageName.append( IMAGE_NAME_DELIM ).append( val );
+			}
+		}
+
+		Log.info( DockerUtil.class, "Use Docker image: " + imageName.toString() );
+
+		return imageName.toString();
+	}
+
+	/**
+	 * Get the Docker image version if defined in the {@link biolockj.Config} file<br>
+	 * If not found, return the default version "latest"
+	 * 
+	 * @param module
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getImageVersion( final BioModule module ) throws Exception
+	{
+		String ver = Config.getString( module.getProperty( Constants.DOCKER_IMG_VERSION ) );
+		if( ver == null )
+		{
+			ver = DOCKER_LATEST;
+		}
+		return ver;
 	}
 
 	/**
@@ -128,59 +199,6 @@ public class DockerUtil
 	public static boolean isManager()
 	{
 		return !RuntimeParamUtil.isDirectMode();
-	}
-
-	/**
-	 * Get the name of the Docker image.
-	 * 
-	 * @param module BioModule
-	 * @return Docker image name
-	 * @throws Exception if errors occur
-	 */
-	protected static String getDockerImage( final BioModule module ) throws Exception
-	{
-		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
-				|| module instanceof QiimeClassifier;
-
-		final boolean isR = module instanceof R_Module;
-
-		final String name = isR ? R_Module.class.getSimpleName()
-				: isQiime ? QiimeClassifier.class.getSimpleName()
-						: isDockerScriptModule( module ) ? module.getClass().getSimpleName()
-								: JavaModule.class.getSimpleName();
-
-		return " " + dockerHubUser( name ) + "/" + buildImageName( name );
-	}
-
-	private static String buildImageName( final String className ) throws Exception
-	{
-		final StringBuffer imageName = new StringBuffer();
-		imageName.append( className.substring( 0, 1 ).toLowerCase() );
-
-		for( int i = 2; i < className.length(); i++ )
-		{
-			final String val = className.substring( i - 1, i );
-			final String upperCase = val.toUpperCase();
-			if( val.equals( upperCase ) )
-			{
-				imageName.append( DOCK_IMAGE_NAME_DELIM );
-			}
-		}
-
-		Log.info( DockerUtil.class, "User Docker image name: " + imageName.toString() );
-
-		return imageName.toString();
-	}
-
-	private static String dockerHubUser( final String className ) throws Exception
-	{
-		String user = Config.getString( DOCKER_HUB_USER );
-		if( user == null )
-		{
-			user = DEFAULT_DOCKER_HUB_USER;
-		}
-
-		return user;
 	}
 
 	private static String getBljOptions( final BioModule module ) throws Exception
@@ -292,8 +310,9 @@ public class DockerUtil
 	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
 	 * versions of these modules and add new modules in their own Docker Hub account.
 	 */
-	protected static final String DOCKER_HUB_USER = "docker.dockerHubUser";
+	protected static final String DOCKER_HUB_USER = "docker.user";
 
-	private static final String DOCK_IMAGE_NAME_DELIM = "_";
 	private static final String DOCK_RM_FLAG = "--rm";
+	private static final String DOCKER_LATEST = "latest";
+	private static final String IMAGE_NAME_DELIM = "_";
 }

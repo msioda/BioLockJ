@@ -13,9 +13,7 @@ package biolockj.module.implicit;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
@@ -78,14 +76,14 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 			{
 				throw new Exception( demuxStrategy + " but the barcode column configured [ "
 						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( MetaUtil.META_BARCODE_COLUMN )
-						+ " ] is not found in the metadata: " + MetaUtil.getFile().getAbsolutePath() );
+						+ " ] is not found in the metadata: " + MetaUtil.getPath() );
 			}
 
 			if( MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 			{
 				throw new Exception( demuxStrategy + " but the barcode column configured [ "
 						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( MetaUtil.META_BARCODE_COLUMN )
-						+ " ] is empty in the metadata file: " + MetaUtil.getFile().getAbsolutePath() );
+						+ " ] is empty in the metadata file: " + MetaUtil.getPath() );
 			}
 
 			if( DemuxUtil.barcodeInSeq() )
@@ -117,12 +115,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		Config.setConfigProperty( SeqUtil.INTERNAL_MULTIPLEXED, Config.FALSE );
-		// * If {@value biolockj.util.MetaUtil#META_REQUIRED}, verify each sequence has a metadata record.
-		// if( Config.getBoolean( MetaUtil.META_REQUIRED ) )
-		// {
-		// verifySeqMetadata();
-		// }
+		Config.setConfigProperty( SeqUtil.INTERNAL_MULTIPLEXED, Constants.FALSE );
 	}
 
 	@Override
@@ -654,7 +647,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 									+ cutoffNumReads + " ]" + RETURN + " Review Summary -- > " + RETURN + summary );
 				}
 			}
-			final String val = useRevComp ? Config.TRUE: Config.FALSE;
+			final String val = useRevComp ? Constants.TRUE: Constants.FALSE;
 			summary += "Set: " + DemuxUtil.BARCODE_USE_REV_COMP + "=" + val + " based on #BC & #rcBC counts" + RETURN;
 			Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, val );
 		}

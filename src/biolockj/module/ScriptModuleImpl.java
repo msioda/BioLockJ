@@ -194,12 +194,15 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
+		final List<String> lines = new ArrayList<>();
 		if( DockerUtil.isDockerJavaModule( this ) )
 		{
-			return DockerUtil.buildRunDockerFunction( this );
+			lines.addAll( DockerUtil.buildRunDockerFunction( this ) );
 		}
 
-		return new ArrayList<>();
+		lines.add( "" );
+
+		return lines;
 	}
 
 	/**
@@ -227,28 +230,9 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		return returnVal + " ";
 	}
 
-	private Integer getModuleNumThreads()
-	{
-		try
-		{
-			return Config.getPositiveInteger( getClass().getSimpleName() + NUM_THREADS );
-		}
-		catch( final Exception ex )
-		{
-			// FAIL SILENTLY
-			// EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
-		}
-		return null;
-	}
-
 	private Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException
 	{
-		if( getModuleNumThreads() != null )
-		{
-			return getModuleNumThreads();
-		}
-
-		return Config.requirePositiveInteger( SCRIPT_NUM_THREADS );
+		return Config.requirePositiveInteger( getProperty( SCRIPT_NUM_THREADS ) );
 	}
 
 	private boolean hasScripts() throws Exception

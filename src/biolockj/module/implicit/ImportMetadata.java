@@ -84,9 +84,8 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		}
 		else
 		{
-			Log.info( getClass(),
-					"Importing metadata (column delim=" + Config.requireString( MetaUtil.META_COLUMN_DELIM ) + "): "
-							+ MetaUtil.getFile().getAbsolutePath() );
+			Log.info( getClass(), "Importing metadata (column delim="
+					+ Config.requireString( MetaUtil.META_COLUMN_DELIM ) + "): " + MetaUtil.getPath() );
 
 			final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
@@ -368,7 +367,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
 					"This property requires every Sample ID in the metadata file " + MetaUtil.getMetadataFileName()
 							+ " map to one of the sequence files in an input directory: "
-							+ Config.getString( Config.INPUT_DIRS ) + BioLockJ.RETURN + "The following " + ids.size()
+							+ Config.getString( Constants.INPUT_DIRS ) + BioLockJ.RETURN + "The following " + ids.size()
 							+ " Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
 		}
 	}
@@ -410,13 +409,13 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	private void addMetadataToConfigIgnoreInputFiles() throws Exception
 	{
 		final Set<String> ignore = new HashSet<>();
-		if( Config.getSet( Config.INPUT_IGNORE_FILES ) != null )
+		if( Config.getSet( Constants.INPUT_IGNORE_FILES ) != null )
 		{
-			ignore.addAll( Config.getSet( Config.INPUT_IGNORE_FILES ) );
+			ignore.addAll( Config.getSet( Constants.INPUT_IGNORE_FILES ) );
 		}
 
 		ignore.add( MetaUtil.getMetadataFileName() );
-		Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
+		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
 	}
 
 	private boolean doIdToSeqVerifiction() throws Exception

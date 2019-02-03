@@ -17,10 +17,8 @@ import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -44,7 +42,7 @@ public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountMo
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName()  + "_" + OtuUtil.OTU_COUNT );
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + OtuUtil.OTU_COUNT );
 	}
 
 	/**
@@ -74,9 +72,9 @@ public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountMo
 
 		final TreeMap<String, TreeSet<String>> lowCountOtus = removeLowOtuCounts( sampleOtuCounts );
 		logLowCountOtus( lowCountOtus );
-		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName()  + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
 	}
 

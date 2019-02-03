@@ -13,9 +13,7 @@ package biolockj.module.report.otu;
 
 import java.io.File;
 import java.util.ArrayList;
-
 import java.util.List;
-import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.OtuUtil;
@@ -31,8 +29,8 @@ public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCo
 	{
 		if( getFileCache().isEmpty() )
 		{
-			List<File> files = new ArrayList<>();
-			for( File f: super.findModuleInputFiles() )
+			final List<File> files = new ArrayList<>();
+			for( final File f: super.findModuleInputFiles() )
 			{
 				if( OtuUtil.isOtuFile( f ) )
 				{
@@ -41,9 +39,9 @@ public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCo
 			}
 			cacheInputFiles( files );
 		}
-		return( getFileCache() );
+		return getFileCache();
 	}
-	
+
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{

@@ -123,7 +123,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 			lines.add( "function " + FUNCTION_CONCAT_PAIRED_READS + "() {" );
 			lines.add(
 					"cat $1 $2 > " + getTempSubDir( TEMP_MERGE_READ_DIR ).getAbsolutePath() + File.separator + "$3" );
-			lines.add( "}" );
+			lines.add( "}" + RETURN );
 		}
 
 		lines.add( HN2_BASH_COMMENT );
@@ -145,9 +145,8 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 				+ RENORM_MODE_PARAM + "$4" );
 		lines.add( "else" );
 		lines.add( getJoinTableCmd() + " " + INPUT_PARAM + "$1 " + OUTPUT_PARAM + "$2 " + RENORM_UNITS_PARAM + "$3" );
-		lines.add( "fi" + RETURN );
-
-		lines.add( "}" );
+		lines.add( "fi" );
+		lines.add( "}" + RETURN );
 
 		return lines;
 	}

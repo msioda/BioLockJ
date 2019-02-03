@@ -11,7 +11,8 @@
  */
 package biolockj.module.report;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.Properties;
@@ -22,13 +23,13 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.mail.*;
 import javax.mail.internet.*;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.PropertiesConfigurationLayout;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.Pipeline;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
+import biolockj.util.PropUtil;
+import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SummaryUtil;
 
 /**
@@ -212,8 +213,7 @@ public class Email extends BioModuleImpl implements BioModule
 		final Message message = new MimeMessage( getSession() );
 		message.setFrom( new InternetAddress( Config.requireString( EMAIL_FROM ) ) );
 		message.addRecipients( Message.RecipientType.TO, InternetAddress.parse( getRecipients() ) );
-		message.setSubject(
-				"BioLockJ " + Config.requireString( Config.PROJECT_PIPELINE_NAME ) + " " + Pipeline.getStatus() );
+		message.setSubject( "BioLockJ " + Config.pipelineName() + " " + Pipeline.getStatus() );
 		message.setContent( getContent( emailBody ), "text/plain; charset=utf-8" );
 		return message;
 	}
@@ -240,23 +240,39 @@ public class Email extends BioModuleImpl implements BioModule
 	}
 
 	/**
-	 * Used to obtain a new encrypted password hash when the service email password is set.
+	 * Read clear-text password by call to {@link biolockj.util.RuntimeParamUtil#getAdminEmailPassword()}<br>
+	 * Encrypt password by call to {@link #encrypt(String)}
 	 *
-	 * @param propFile File path to store encrypted password as Java property
-	 * @param val Clear text password
 	 * @throws Exception if unable to encrypt or store password
 	 */
-	public static void encryptAndStoreEmailPassword( final File propFile, final String val ) throws Exception
+	public static void encryptAndStoreEmailPassword() throws Exception
 	{
-		Log.info( Email.class, "About to encrypt and store new admin email password in Config: " + propFile );
-		final String encryptedPassword = encrypt( val );
-		final PropertiesConfigurationLayout layout = new PropertiesConfigurationLayout( new PropertiesConfiguration() );
-		layout.load( new InputStreamReader( new FileInputStream( propFile ) ) );
-		final biolockj.Properties props = biolockj.Properties.readProps( propFile, null );
-		props.setProperty( EMAIL_ENCRYPTED_PASSWORD, encryptedPassword );
-		layout.save( new FileWriter( propFile, false ) );
-		Log.info( Email.class, "New admin email password [" + EMAIL_ENCRYPTED_PASSWORD + "=" + encryptedPassword
-				+ "] set in Config: " + propFile );
+		Log.info( Email.class,
+				"About to encrypt and store new admin email password in Config: " + Config.getConfigFilePath() );
+		Config.setConfigProperty( EMAIL_ENCRYPTED_PASSWORD, encrypt( RuntimeParamUtil.getAdminEmailPassword() ) );
+		PropUtil.saveMasterConfig( Config.getProperties() );
+		Log.info( Email.class,
+				"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
+						+ Config.requireString( EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
+						+ PropUtil.getMasterConfig().getAbsolutePath() );
+	}
+
+	/**
+	 * Encrypt clear-text password
+	 *
+	 * @param password Clear-text password
+	 * @return Encrypted password
+	 * @throws GeneralSecurityException Encryption error
+	 * @throws UnsupportedEncodingException Encryption error
+	 */
+	protected static String encrypt( final String password )
+			throws GeneralSecurityException, UnsupportedEncodingException
+	{
+		final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
+		final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
+		final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
+		pbeCipher.init( Cipher.ENCRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
+		return base64Encode( pbeCipher.doFinal( password.getBytes( "UTF-8" ) ) );
 	}
 
 	private static byte[] base64Decode( final String encodedPassword ) throws IOException
@@ -267,23 +283,6 @@ public class Email extends BioModuleImpl implements BioModule
 	private static String base64Encode( final byte[] bytes )
 	{
 		return Base64.getEncoder().encodeToString( bytes );
-	}
-
-	/**
-	 * Encrypts the password
-	 *
-	 * @param password
-	 * @return encypted password
-	 * @throws GeneralSecurityException
-	 * @throws UnsupportedEncodingException
-	 */
-	private static String encrypt( final String password ) throws GeneralSecurityException, UnsupportedEncodingException
-	{
-		final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
-		final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
-		final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
-		pbeCipher.init( Cipher.ENCRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
-		return base64Encode( pbeCipher.doFinal( password.getBytes( "UTF-8" ) ) );
 	}
 
 	/**

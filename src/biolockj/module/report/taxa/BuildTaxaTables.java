@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import biolockj.Log;
-import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.*;
@@ -33,7 +32,7 @@ public class BuildTaxaTables extends JavaModuleImpl implements JavaModule
 	{
 		return super.getSummary() + summary;
 	}
-	
+
 	@Override
 	public void runModule() throws Exception
 	{

@@ -97,13 +97,13 @@ public class Job
 	 * Set file permissions by executing chmod {@value biolockj.module.ScriptModule#SCRIPT_PERMISSIONS} on generated
 	 * bash scripts.
 	 *
-	 * @param dir Target directory
+	 * @param dir Target directory path
 	 * @param permissions Set the chmod security bits (ex 764)
 	 * @throws Exception if chmod command command fails
 	 */
-	public static void setFilePermissions( final File dir, final String permissions ) throws Exception
+	public static void setFilePermissions( final String path, final String permissions ) throws Exception
 	{
-		final StringTokenizer st = new StringTokenizer( "chmod -R " + permissions + " " + dir.getAbsolutePath() );
+		final StringTokenizer st = new StringTokenizer( "chmod -R " + permissions + " " + path );
 		final String[] args = new String[ st.countTokens() ];
 		for( int i = 0; i < args.length; i++ )
 		{
@@ -124,7 +124,8 @@ public class Job
 	 */
 	public static void submit( final ScriptModule module ) throws Exception
 	{
-		setFilePermissions( module.getScriptDir(), Config.requireString( ScriptModule.SCRIPT_PERMISSIONS ) );
+		setFilePermissions( module.getScriptDir().getAbsolutePath(),
+				Config.requireString( ScriptModule.SCRIPT_PERMISSIONS ) );
 		new Job( module );
 	}
 
