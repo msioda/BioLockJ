@@ -1,6 +1,6 @@
 # Deployment path: $BLJ/resources/docker/blj_webapp.Dockerfile
 
-FROM blj_basic_py2
+FROM biolockj/blj_basic_py2
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive

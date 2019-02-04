@@ -1,6 +1,6 @@
 # Deployment path: $BLJ/resources/docker/blj_bash_script.Dockerfile
 
-FROM blj_basic
+FROM biolockj/blj_basic
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive

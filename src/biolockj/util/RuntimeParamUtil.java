@@ -109,7 +109,7 @@ public class RuntimeParamUtil
 	/**
 	 * Runtime property getter for {@value #INPUT_DIR_FLAG}
 	 * 
-	 * @return Host {@value biolockj.Config#INPUT_DIRS} directory
+	 * @return Host {@value biolockj.Constants#INPUT_DIRS} directory
 	 */
 	public static String getDockerHostInputDir()
 	{

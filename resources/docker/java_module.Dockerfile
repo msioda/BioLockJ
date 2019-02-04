@@ -1,6 +1,6 @@
 # Deployment path:  $BLJ/resources/docker/java_module.Dockerfile
 
-FROM blj_basic_java
+FROM biolockj/blj_basic_java
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive

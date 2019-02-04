@@ -19,7 +19,6 @@ RUN mkdir /app && \
 
 #2.) ============ Update Ubuntu ~/.bashrc =================
 RUN echo ' '  >> ~/.bashrc && \
-	echo 'export PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h\[\033[33;1m\]..$(basename "$(dirname $PWD)")/$(basename $PWD)\[\033[m\]~$ ' >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \
 	echo 'alias ..="cd .."' >> ~/.bashrc && \
 	echo 'alias ls="ls -lh --color=auto"' >> ~/.bashrc && \
@@ -34,7 +33,8 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc && \
-	RUN echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
+	echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
+	echo 'export PS1="\\[\\033[36m\\]\\u\\[\\033[m\\]@\\[\\033[32m\\]\\h\\[\\033[33;1m\\]..$(basename "$(dirname $PWD)")/$(basename $PWD)\\[\\033[m\\]~$ "' >> ~/.bashrc && \	
 	echo 'alias goblj=blj_go' >> ~/.bashrc
 
 #4.) ============ Install Ubuntu Prereqs =================

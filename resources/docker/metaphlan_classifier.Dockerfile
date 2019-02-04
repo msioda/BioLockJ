@@ -1,6 +1,6 @@
 # Deployment path:  $BLJ/resources/docker/classifier/wgs/metaphlan_classifier
 
-FROM blj_basic_python2
+FROM blj_basic_py2
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive

@@ -80,7 +80,7 @@ public class BioLockJ
 	 * {@link biolockj.BioLockJ} is the BioLockj.jar Main-Class, and is the first method executed.<br>
 	 * Execution summary:<br>
 	 * <ol>
-	 * <li>Call {@link #createPipelineDirAndLogFile(String[])} to assign pipeline root dir and log file
+	 * <li>Call {@link #initBioLockJ(String[])} to assign pipeline root dir and log file
 	 * <li>If change password pipeline, call {@link biolockj.module.report.Email#encryptAndStoreEmailPassword()}
 	 * <li>Otherwise execute {@link #runPipeline()}
 	 * </ol>
@@ -127,7 +127,7 @@ public class BioLockJ
 
 	/**
 	 * Create the pipeline root directory under $DOCKER_PROJ and save the path to
-	 * {@link biolockj.Config}.{@value biolockj.Config#PROJECT_PIPELINE_DIR}.
+	 * {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_PIPELINE_DIR}.
 	 * <p>
 	 * For example, the following {@link biolockj.Config} settings will create:
 	 * <b>/projects/MicrobeProj_2018Jan01</b><br>
@@ -173,6 +173,7 @@ public class BioLockJ
 	 * <p>
 	 *
 	 * @param args - String[] runtime parameters passed to the Java program when launching BioLockJ
+	 * @throws Exception if errors occur
 	 */
 	protected static void initBioLockJ( final String[] args ) throws Exception
 	{
@@ -213,7 +214,7 @@ public class BioLockJ
 	/**
 	 * Initialize restarted pipeline by:
 	 * <ol>
-	 * <li>Initialize {@link biolockj.Log} file, name after {@value biolockj.Config#PROJECT_PIPELINE_NAME}
+	 * <li>Initialize {@link biolockj.Log} file using the name of the pipeline root directory
 	 * <li>Update summary #Attempts count
 	 * <li>If pipeline status = {@value biolockj.Constants#BLJ_COMPLETE}
 	 * <li>Delete status file {@value biolockj.Constants#BLJ_FAILED} in pipeline root directory
@@ -241,7 +242,7 @@ public class BioLockJ
 
 	/**
 	 * Create indicator file in pipeline root directory, with name = status parameter.
-	 * {@link biolockj.Config}.{@value biolockj.Config#PROJECT_PIPELINE_DIR}.
+	 * {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_PIPELINE_DIR}.
 	 * 
 	 * @param status Status indicator file name
 	 */
@@ -297,7 +298,7 @@ public class BioLockJ
 	 * <li>For direct module execution call {@link biolockj.Pipeline#runDirectModule(Integer)}
 	 * <li>Otherwise execute {@link biolockj.Pipeline#runPipeline()}
 	 * <li>If {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_DELETE_TEMP_FILES} =
-	 * {@value biolockj.Config#TRUE}, Call {@link #removeTempFiles()} to delete tem files
+	 * {@value biolockj.Constants#TRUE}, Call {@link #removeTempFiles()} to delete tem files
 	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status as successful
 	 * </ol>
 	 * 
@@ -336,12 +337,18 @@ public class BioLockJ
 	{
 		try
 		{
-			Pipeline.runDirectModule( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
+			Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
+			Pipeline.runDirectModule( id );
 			reportDirectModuleSucess();
 		}
 		catch( Exception ex )
 		{
+			ex.printStackTrace();
 			reportDirectModuleFailure( ex );
+		}
+		finally
+		{
+			
 		}
 	}
 
@@ -353,13 +360,13 @@ public class BioLockJ
 			throw new Exception( "Direct module directory not found --> " + modDir.getAbsolutePath() );
 		}
 
-		final File tempDir = new File( modDir.getAbsoluteFile() + BioModule.TEMP_DIR );
+		final File tempDir = new File( modDir.getAbsoluteFile() + File.separator + BioModule.TEMP_DIR );
 		if( !tempDir.exists() )
 		{
 			tempDir.mkdir();
 		}
 
-		return BioModule.TEMP_DIR + File.separator + moduleDir;
+		return modDir.getName() + File.separator + tempDir.getName() + File.separator + moduleDir;
 
 	}
 
@@ -573,6 +580,7 @@ public class BioLockJ
 		Log.info( BioLockJ.class, "Save failure status for direct module: " + module.getClass().getName() );
 		SummaryUtil.reportFailure( ex );
 		module.moduleFailed();
+		System.exit( 1 );
 	}
 
 	private static void reportDirectModuleSucess() throws Exception
@@ -583,6 +591,7 @@ public class BioLockJ
 		Log.info( BioLockJ.class, "Save success status for direct module: " + module.getClass().getName() );
 		SummaryUtil.reportSuccess( module );
 		module.moduleComplete();
+		System.exit( 0 );
 	}
 
 	public static final String RETURN = Constants.RETURN;
