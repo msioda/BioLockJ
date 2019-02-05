@@ -388,6 +388,56 @@ public final class RMetaUtil
 			return false;
 		}
 
+		for( final String field: MetaUtil.getFieldNames() )
+		{
+			final Set<String> data = new HashSet<>( MetaUtil.getFieldValues( field, true ) );
+			final int count = data.size();
+			if( isQiimeMetric( field ) && field.endsWith( QIIME_ALPHA_METRIC_LABEL_SUFFIX ) )
+			{
+				final String name = field.replace( QIIME_ALPHA_METRIC_LABEL_SUFFIX, "" );
+				if( count == 0 )
+				{
+					Log.warn( RMetaUtil.class,
+							"QIIME Alpha diversity metric [ " + field + " ] is undefined for all sampels" );
+				}
+				else if( count == 1 )
+				{
+					Log.warn( RMetaUtil.class,
+							"QIIME Alpha diversity metric [ " + name + " ] all fall withint the same 25% quantile: "
+									+ MetaUtil.getUniqueFieldValues( field, true ) );
+				}
+				else if( count == 2 )
+				{
+					binaryFields.add( field );
+				}
+				else if( count > 2 )
+				{
+					nominalFields.add( field );
+				}
+			}
+			else if( isQiimeMetric( field ) && !field.endsWith( QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX ) )
+			{
+				final String name = field.replace( QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX, "" );
+				if( count == 0 )
+				{
+					Log.warn( RMetaUtil.class,
+							"QIIME Alpha diversity metric [ " + field + " ] is undefined for all sampels" );
+				}
+				else if( count == 1 )
+				{
+					Log.warn( RMetaUtil.class,
+							"QIIME Alpha diversity metric [ " + name
+									+ " ] all have the same alpha diversity mesurement: "
+									+ MetaUtil.getUniqueFieldValues( field, true ) );
+				}
+				else if( count > 2 )
+				{
+					verifyNumericData( field, data );
+					numericFields.add( field );
+				}
+			}
+		}
+
 		Config.setConfigProperty( NUM_META_COLS, numMetaCols.toString() );
 		Log.info( RMetaUtil.class, "Set " + NUM_META_COLS + " = " + numMetaCols );
 
@@ -506,6 +556,10 @@ public final class RMetaUtil
 			}
 		}
 	}
+
+	public static final String QIIME_ALPHA_METRIC_LABEL_SUFFIX = "_alpha_label";
+
+	public static final String QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX = "_normalized_alpha";
 
 	/**
 	 * {@link biolockj.Config} List property: {@value #MDS_REPORT_FIELDS}<br>

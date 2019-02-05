@@ -331,26 +331,6 @@ public class BioLockJ
 			markProjectStatus( Constants.BLJ_COMPLETE );
 		}
 	}
-	
-	
-	private static void runDirectPipeline() throws Exception
-	{
-		try
-		{
-			Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
-			Pipeline.runDirectModule( id );
-			reportDirectModuleSucess();
-		}
-		catch( Exception ex )
-		{
-			ex.printStackTrace();
-			reportDirectModuleFailure( ex );
-		}
-		finally
-		{
-			
-		}
-	}
 
 	private static String getDirectLogName( final String moduleDir ) throws Exception
 	{
@@ -475,7 +455,7 @@ public class BioLockJ
 			{
 				logFinalException( args, ex );
 			}
-	
+
 			try
 			{
 				Log.info( BioLockJ.class, "Log Pipeline Summary" + BioLockJ.RETURN + SummaryUtil.getSummary() );
@@ -485,7 +465,7 @@ public class BioLockJ
 				logFinalException( args, ex );
 			}
 		}
-		
+
 		Log.info( BioLockJ.class, "Code #42 - Exit Program" );
 		if( !isPipelineComplete() )
 		{
@@ -572,8 +552,8 @@ public class BioLockJ
 			pipelineShutDown( args );
 		}
 	}
-	
-	private static void reportDirectModuleFailure( Exception ex ) throws Exception
+
+	private static void reportDirectModuleFailure( final Exception ex ) throws Exception
 	{
 		final JavaModule module = (JavaModuleImpl) Pipeline.getModules()
 				.get( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
@@ -587,11 +567,30 @@ public class BioLockJ
 	{
 		final JavaModule module = (JavaModuleImpl) Pipeline.getModules()
 				.get( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
-		
+
 		Log.info( BioLockJ.class, "Save success status for direct module: " + module.getClass().getName() );
 		SummaryUtil.reportSuccess( module );
 		module.moduleComplete();
 		System.exit( 0 );
+	}
+
+	private static void runDirectPipeline() throws Exception
+	{
+		try
+		{
+			final Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
+			Pipeline.runDirectModule( id );
+			reportDirectModuleSucess();
+		}
+		catch( final Exception ex )
+		{
+			ex.printStackTrace();
+			reportDirectModuleFailure( ex );
+		}
+		finally
+		{
+
+		}
 	}
 
 	public static final String RETURN = Constants.RETURN;

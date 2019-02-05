@@ -73,7 +73,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			final File newMapping = new File( tempDir + MetaUtil.getMetadataFileName() );
 			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics()
 					+ " -o " + tempDir + ALPHA_DIVERSITY_TABLE );
-
 			lines.add( SCRIPT_ADD_ALPHA_DIVERSITY + " -m " + MetaUtil.getPath() + " -i " + tempDir
 					+ ALPHA_DIVERSITY_TABLE + " -o " + newMapping );
 			MetaUtil.setFile( newMapping );
@@ -132,6 +131,10 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
 				|| Config.requireString( MetaUtil.META_NULL_VALUE ).equals( ALPHA_DIV_NULL_VALUE ) )
 		{
+			if( !metrics.isEmpty() )
+			{
+				MetaUtil.refreshCache();
+			}
 			return; // nothing to do
 		}
 
@@ -175,8 +178,9 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		{
 			reader.close();
 			writer.close();
-			MetaUtil.refreshCache(); // to print out the new alpha metric fields
+			MetaUtil.refreshCache(); // to add new null values in alpha metric field values
 		}
+
 	}
 
 	/**
