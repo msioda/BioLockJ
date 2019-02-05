@@ -16,8 +16,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import biolockj.Config;
 import biolockj.Log;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.BioLockJUtil;
@@ -27,7 +25,7 @@ import biolockj.util.SummaryUtil;
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
-public class AddMetadataToTaxaTables extends JavaModuleImpl implements JavaModule
+public class AddMetadataToTaxaTables extends TaxaCountModuleImpl implements TaxaCountModule
 {
 	/**
 	 * Require taxonomy table module as prerequisite

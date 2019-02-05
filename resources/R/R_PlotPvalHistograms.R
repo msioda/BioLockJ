@@ -1,13 +1,13 @@
-# Module script for: biolockj.module.r.BuildPvalHistograms
+# Module script for: biolockj.module.report.r.R_PlotPvalHistograms
 
 # save table output
 # save favMetacols
 # color by test type
 
 # Add one histogram to the report
-addHistogram <- function( v, title, xLabel, size, pvalCutoff=NULL, col="dodgerblue2" ) {
+addHistogram <- function( v, xLabel, size, pvalCutoff=NULL, col="dodgerblue2" ) {
 	if ( !all(is.nan( v )) && !all(is.na( v )) ) {
-		hist( v, breaks=20, xlab=xLabel, main=title, cex.main=size, col=col, xlim=c(0,1))
+		hist( v, breaks=20, xlab=xLabel, main="", cex.main=size, col=col )
 		if (!is.null(pvalCutoff)){
 			abline(v=pvalCutoff, col=gray(.5), lty=2)
 			mtext(at=pvalCutoff, side=3, text=pvalCutoff, col=gray(.5))
@@ -94,22 +94,25 @@ main <- function() {
 		
 		# plot histograms in the same order they have in the ranks table
 		for( attName in ranks$AttributeName ) {
+		
+			if( ! attName %in% getReportFields() ){ next }
+			
 			logInfo("processing attribute:", attName )
 			stopifnot( attName %in% names(nonParStats) & attName %in% names(parStats) )
 
 			parTestName = getTestName(attName, isParametric=TRUE)
 			xLabelPar = paste( parTestName, "P-Values" )
-			addHistogram( v=parStats[, attName], title="",
+			addHistogram( v=parStats[, attName], 
 										xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
 										col=getTestName(attName, isParametric=TRUE, returnColors=TRUE) )
-			title(main="Parametric", line=1.5)
+	
 
 			nonParTestName = getTestName(attName, isParametric=FALSE)
 			xLabelNonPar = paste( nonParTestName, "P-Values" )
-			addHistogram( v=nonParStats[, attName], title="",
+			addHistogram( v=nonParStats[, attName], 
 										xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
 										col=getTestName(attName, isParametric=FALSE, returnColors=TRUE) )
-			title(main="Non-Parametric", line=1.5)
+
 			# shared title
 			plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
 			shiftByPoints = par("mai")[2] * plotPointPerInch

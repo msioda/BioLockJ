@@ -20,7 +20,7 @@ import biolockj.module.JavaModule;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.module.r.R_Module;
+import biolockj.module.report.r.R_Module;
 
 /**
  * DockerUtil for Docker integration.

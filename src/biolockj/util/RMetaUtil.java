@@ -22,6 +22,7 @@ import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.QiimeClassifier;
+import biolockj.module.report.r.R_PlotMds;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 
 /**
@@ -77,13 +78,14 @@ public final class RMetaUtil
 
 		nominalFields.addAll( Config.getList( R_NOMINAL_FIELDS ) );
 		numericFields.addAll( Config.getList( R_NUMERIC_FIELDS ) );
-		mdsFields.addAll( Config.getList( MDS_REPORT_FIELDS ) );
+		mdsFields.addAll( Config.getList( R_PlotMds.R_MDS_REPORT_FIELDS ) );
 
 		final List<String> excludeFields = Config.getList( R_EXCLUDE_FIELDS );
 
 		nominalFields.removeAll( excludeFields );
 		numericFields.removeAll( excludeFields );
 		mdsFields.removeAll( excludeFields );
+		rScriptFields.removeAll( excludeFields );
 		rScriptFields.addAll( nominalFields );
 		rScriptFields.addAll( numericFields );
 
@@ -93,7 +95,7 @@ public final class RMetaUtil
 		verifyMetadataFieldsExist( R_REPORT_FIELDS, rScriptFields );
 		verifyMetadataFieldsExist( R_NUMERIC_FIELDS, numericFields );
 		verifyMetadataFieldsExist( R_NOMINAL_FIELDS, nominalFields );
-		verifyMetadataFieldsExist( MDS_REPORT_FIELDS, mdsFields );
+		verifyMetadataFieldsExist( R_PlotMds.R_MDS_REPORT_FIELDS, mdsFields );
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -328,7 +330,7 @@ public final class RMetaUtil
 	 */
 	public static boolean isMetaMergeModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+		final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
 		if( files.isEmpty() )
@@ -514,9 +516,9 @@ public final class RMetaUtil
 		{
 			for( final String metric: alphaDivMetrics )
 			{
-				String m0 = metric + QIIME_ALPHA_METRIC_SUFFIX;
-				String m1 = metric + QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX;
-				String m2 = metric + QIIME_ALPHA_METRIC_LABEL_SUFFIX;
+				final String m0 = metric + QIIME_ALPHA_METRIC_SUFFIX;
+				final String m1 = metric + QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX;
+				final String m2 = metric + QIIME_ALPHA_METRIC_LABEL_SUFFIX;
 				if( field.equals( m0 ) || field.equals( m1 ) || field.equals( m2 ) )
 				{
 					Log.info( RMetaUtil.class,
@@ -560,16 +562,12 @@ public final class RMetaUtil
 		}
 	}
 
-	public static final String QIIME_ALPHA_METRIC_SUFFIX = "_alpha";
 	public static final String QIIME_ALPHA_METRIC_LABEL_SUFFIX = "_alpha_label";
+	public static final String QIIME_ALPHA_METRIC_SUFFIX = "_alpha";
 
 	public static final String QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX = "_normalized_alpha";
 
-	/**
-	 * {@link biolockj.Config} List property: {@value #MDS_REPORT_FIELDS}<br>
-	 * List metadata fields to generate MDS ordination plots.
-	 */
-	protected static final String MDS_REPORT_FIELDS = "rMds.reportFields";
+	
 
 	/**
 	 * Name of R script variable with metadata column count

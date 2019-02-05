@@ -9,17 +9,17 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.r;
+package biolockj.module.report.r;
 
 import java.util.List;
 import java.util.TreeSet;
 import biolockj.module.ScriptModule;
 
 /**
- * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
- * field. A pdf is created for each taxonomy level.
+ * This BioModule is used to build the R script used to generate OTU-metadata box-plots and scatter-plots for each
+ * report field and taxonomy level.
  */
-public class BuildEffectSizePlots extends R_Module implements ScriptModule
+public class R_PlotOtus extends R_Module implements ScriptModule
 {
 	/**
 	 * Returns {@link #getStatPreReqs()}

@@ -18,15 +18,13 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.ScriptModule;
-import biolockj.module.ScriptModuleImpl;
-import biolockj.module.SeqModule;
+import biolockj.module.*;
 import biolockj.util.SeqUtil;
 
 /**
  * This BioModule uses awk and gzip to convert input sequence files into a decompressed fasta file format.
  */
-public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule, SeqModule
+public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 {
 
 	@Override
@@ -36,7 +34,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule,
 		final boolean isMultiLine = Config.getBoolean( SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ );
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
-		// final String ext = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+
 		final String ext = "." + ( isMultiLine ? SeqUtil.FASTA: Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
 		for( final File f: files )
 		{

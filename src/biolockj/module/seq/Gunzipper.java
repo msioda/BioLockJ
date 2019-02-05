@@ -79,5 +79,5 @@ public class Gunzipper extends SeqModuleImpl implements SeqModule
 	/**
 	 * Name of the bash function used to decompress gzipped files: {@value #FUNCTION_GUNZIP}
 	 */
-	protected static final String FUNCTION_GUNZIP = "decompressGzip";
+	protected static final String FUNCTION_GUNZIP = "openZip";
 }

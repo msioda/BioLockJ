@@ -15,7 +15,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.node.OtuNode;
@@ -180,28 +182,23 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	}
 
 	/**
-	 * Validate {@link biolockj.module.implicit.parser} modules run after {@link biolockj.module.classifier} and
-	 * {@link biolockj.module.seq} modules.
+	 * Validate that no {@link biolockj.module.seq} modules run after this parser unless a new classifier branch is
+	 * started.
 	 * 
 	 * @throws Exception if modules are out of order
 	 */
 	protected void validateModuleOrder() throws Exception
 	{
-		boolean found = false;
-		for( final BioModule module: Pipeline.getModules() )
+		for( final BioModule module: ModuleUtil.getModules( this, true ) )
 		{
-			if( found )
+			if( module.equals( ModuleUtil.getClassifier( this, true ) ) )
 			{
-				if( module.getClass().getName().startsWith( "biolockj.module.seq" )
-						|| module.getClass().getName().startsWith( "biolockj.module.classifier" ) )
-				{
-					throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
-							+ " must run before any " + getClass().getPackage().getName() + " BioModule." );
-				}
+				break;
 			}
-			else if( module.getClass().equals( getClass() ) )
+			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
 			{
-				found = true;
+				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
+						+ " must run before the ParserModule." );
 			}
 		}
 	}

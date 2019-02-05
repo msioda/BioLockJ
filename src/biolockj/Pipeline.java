@@ -20,8 +20,8 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.r.R_Module;
 import biolockj.module.report.Email;
+import biolockj.module.report.r.R_Module;
 import biolockj.util.*;
 
 /**
@@ -71,6 +71,7 @@ public class Pipeline
 			NextFlowUtil.buildNextFlowMain( bioModules );
 		}
 	}
+	
 
 	/**
 	 * If moduleName is null, run all modules, otherwise only run the specified module.

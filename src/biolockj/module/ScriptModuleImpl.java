@@ -19,7 +19,7 @@ import biolockj.Config;
 import biolockj.Pipeline;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
-import biolockj.module.r.R_Module;
+import biolockj.module.report.r.R_Module;
 import biolockj.util.*;
 
 /**
@@ -90,7 +90,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	/**
 	 * Get the main script file in the bioModule script directory, with prefix:
 	 * {@value biolockj.module.BioModule#MAIN_SCRIPT_PREFIX}. R_Modules not running in a docker container end in
-	 * {@value biolockj.module.r.R_Module#R_EXT}, otherwise must end with {@value #SH_EXT}
+	 * {@value biolockj.module.report.r.R_Module#R_EXT}, otherwise must end with {@value #SH_EXT}
 	 *
 	 * @return Main script file
 	 */

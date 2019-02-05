@@ -20,6 +20,7 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.parser.ParserModule;
+import biolockj.util.ModuleUtil;
 
 /**
  * This is the superclass for all WGS and 16S biolockj.module.classifier BioModules.
@@ -190,27 +191,23 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	}
 
 	/**
-	 * Validate {@link biolockj.module.classifier} modules run after {@link biolockj.module.seq} modules.
+	 * Validate that no {@link biolockj.module.seq} modules run after this classifier unless a new classifier branch is
+	 * started.
 	 * 
 	 * @throws Exception if modules are out of order
 	 */
 	protected void validateModuleOrder() throws Exception
 	{
-		boolean found = false;
-		for( final BioModule module: Pipeline.getModules() )
+		for( final BioModule module: ModuleUtil.getModules( this, true ) )
 		{
-			if( found )
+			if( module.equals( ModuleUtil.getClassifier( this, true ) ) )
 			{
-				if( module.getClass().getName().contains( "biolockj.module.seq" ) )
-				{
-					throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
-							+ " must run before any " + getClass().getPackage().getName() + " BioModule." );
-				}
+				break;
 			}
-
-			if( module.getClass().equals( getClass() ) )
+			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
 			{
-				found = true;
+				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
+						+ " must run before the ParserModule." );
 			}
 		}
 	}

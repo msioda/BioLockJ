@@ -7,8 +7,8 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.module.r.CalculateStats;
 import biolockj.module.report.otu.CompileOtuCounts;
+import biolockj.module.report.r.R_CalculateStats;
 import biolockj.node.JsonNode;
 import biolockj.util.*;
 
@@ -133,7 +133,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Add stats from {@link biolockj.module.r.CalculateStats} into all of the {@link biolockj.node.JsonNode}s.
+	 * Add stats from {@link biolockj.module.report.r.R_CalculateStats} into all of the {@link biolockj.node.JsonNode}s.
 	 * 
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode))
 	 * @param stats Stats file
@@ -173,8 +173,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				}
 				else
 				{
-					Log.warn( getClass(),
-							"Missing Taxa " + level + ": " + otu + " from CalculateStats: " + stats.getAbsolutePath() );
+					Log.warn( getClass(), "Missing Taxa " + level + ": " + otu + " from R_CalculateStats: "
+							+ stats.getAbsolutePath() );
 				}
 			}
 		}
@@ -221,7 +221,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			for( final Iterator<String> stats = node.getStats().keySet().iterator(); stats.hasNext(); )
 			{
 				final String stat = stats.next();
-				final String name = stat.startsWith( CalculateStats.R_SQUARED_VALS ) ? stat: prefix + "(" + stat + ")";
+				final String name = stat.startsWith( R_CalculateStats.R_SQUARED_VALS ) ? stat
+						: prefix + "(" + stat + ")";
 				sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
 				sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
 			}
@@ -241,8 +242,9 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Statistics can be found for all taxonomy levels in the output from {@link biolockj.module.r.CalculateStats},
-	 * which is also the JsonReport inputDir() since it must be configured as the
+	 * Statistics can be found for all taxonomy levels in the output from
+	 * {@link biolockj.module.report.r.R_CalculateStats}, which is also the JsonReport inputDir() since it must be
+	 * configured as the
 	 *
 	 * @param LinkedHashMap jsonMap (key=level)
 	 * @param root JsonNode
@@ -321,7 +323,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	}
 
 	/**
-	 * Get the taxonomy level reports from {@link biolockj.module.r.CalculateStats} for the given level
+	 * Get the taxonomy level reports from {@link biolockj.module.report.r.R_CalculateStats} for the given level
 	 *
 	 * @param String level
 	 * @return File log normalized report
@@ -330,17 +332,17 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	private Map<String, File> getStatReports( final String level ) throws Exception
 	{
 		final Map<String, File> statReports = new LinkedHashMap<>();
-		statReports.put( "parPval", CalculateStats.getStatsFile( this, level, true, false ) );
-		statReports.put( "nonParPval", CalculateStats.getStatsFile( this, level, false, false ) );
-		statReports.put( "adjParPval", CalculateStats.getStatsFile( this, level, true, true ) );
-		statReports.put( "adjNonParPval", CalculateStats.getStatsFile( this, level, false, true ) );
-		statReports.put( "rSquared", CalculateStats.getStatsFile( this, level, false, false ) );
+		statReports.put( "parPval", R_CalculateStats.getStatsFile( this, level, true, false ) );
+		statReports.put( "nonParPval", R_CalculateStats.getStatsFile( this, level, false, false ) );
+		statReports.put( "adjParPval", R_CalculateStats.getStatsFile( this, level, true, true ) );
+		statReports.put( "adjNonParPval", R_CalculateStats.getStatsFile( this, level, false, true ) );
+		statReports.put( "rSquared", R_CalculateStats.getStatsFile( this, level, false, false ) );
 		return statReports;
 	}
 
 	private boolean hasStats() throws Exception
 	{
-		return ModuleUtil.getModule( this, CalculateStats.class.getName(), false ) != null;
+		return ModuleUtil.getModule( this, R_CalculateStats.class.getName(), false ) != null;
 	}
 
 	private LinkedHashMap<String, TreeSet<JsonNode>> initJsonMap() throws Exception

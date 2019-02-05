@@ -134,17 +134,11 @@ public class Config
 			throw new Exception( "Config.getExe() can be called for properties that begin with \"exe.\"" );
 		}
 
-		// return name of property after trimming "exe.", for example if exe.pear is undefined, return "pear"
+		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
 		if( getString( propertyName ) == null || getString( propertyName ).equals( propertyName.substring( 4 ) ) )
 		{
 			return propertyName.substring( 4 );
 		}
-
-		// DO NOT VERIFY FILE EXISTS --> EXECUTABLE MAY BE CLUSTER MODULE OR ALIAS
-		// if( !RuntimeParamUtil.isDockerMode() && !BashScriptBuilder.clusterModuleExists( getString( propertyName ) ) )
-		// {
-		// return requireExistingFile( propertyName ).getAbsolutePath();
-		// }
 
 		return getString( propertyName );
 	}
@@ -163,6 +157,12 @@ public class Config
 		{
 			throw new ConfigPathException( propertyName, ConfigPathException.DIRECTORY );
 		}
+		
+		if( f != null)
+		{
+			Config.setConfigProperty( propertyName, f.getAbsolutePath() );
+		}
+		
 		return f;
 	}
 
@@ -175,18 +175,26 @@ public class Config
 	 */
 	public static File getExistingFile( final String propertyName ) throws ConfigPathException
 	{
-		final File f = getExistingFileObject( getString( propertyName ) );
+		File f = getExistingFileObject( getString( propertyName ) );
 		if( f != null && !f.isFile() )
 		{
 			if( f.isDirectory() && f.list( HiddenFileFilter.VISIBLE ).length == 1 )
 			{
 				Log.warn( Config.class,
 						propertyName + " is a directory with only 1 valid file.  Return the lone file within." );
-				return new File( f.list( HiddenFileFilter.VISIBLE )[ 0 ] );
+				f = new File( f.list( HiddenFileFilter.VISIBLE )[ 0 ] );
 			}
-
-			throw new ConfigPathException( propertyName, ConfigPathException.FILE );
+			else
+			{
+				throw new ConfigPathException( propertyName, ConfigPathException.FILE );
+			}
 		}
+		
+		if( f != null)
+		{
+			Config.setConfigProperty( propertyName, f.getAbsolutePath() );
+		}
+
 		return f;
 	}
 
@@ -477,6 +485,8 @@ public class Config
 	{
 		return getPipelineDir().getAbsolutePath();
 	}
+	
+	
 
 	/**
 	 * Required to return a valid boolean {@value #TRUE} or {@value #FALSE}
@@ -562,9 +572,14 @@ public class Config
 			{
 				throw new ConfigPathException( propertyName, ConfigPathException.DIRECTORY );
 			}
+			
 			returnDirs.add( dir );
 		}
-
+		
+		if( returnDirs != null && !returnDirs.isEmpty() )
+		{
+			Config.setConfigProperty( propertyName, returnDirs );
+		}
 		return returnDirs;
 	}
 
@@ -879,16 +894,18 @@ public class Config
 
 	private static File getPipelineDir()
 	{
-		try
+		if( pipelineDir == null )
 		{
-			return requireExistingDir( Constants.PROJECT_PIPELINE_DIR );
+			try
+			{
+				pipelineDir = requireExistingDir( Constants.PROJECT_PIPELINE_DIR );
+			}
+			catch( final Exception ex )
+			{
+				ex.printStackTrace();
+			}
 		}
-		catch( final Exception ex )
-		{
-			ex.printStackTrace();
-		}
-
-		return null;
+		return pipelineDir;
 	}
 
 	private static String suffix( final String prop )
@@ -898,6 +915,7 @@ public class Config
 
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
+	private static File pipelineDir = null;
 	private static Properties props = null;
 	private static Properties unmodifiedInputProps = new Properties();
 	private static final Map<String, String> usedProps = new HashMap<>();

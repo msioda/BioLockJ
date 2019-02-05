@@ -17,7 +17,7 @@ import biolockj.*;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
-import biolockj.module.r.R_Module;
+import biolockj.module.report.r.R_Module;
 import biolockj.util.*;
 
 /**

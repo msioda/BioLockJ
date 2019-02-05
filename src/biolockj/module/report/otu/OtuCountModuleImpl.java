@@ -13,9 +13,14 @@ package biolockj.module.report.otu;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
+import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.OtuUtil;
 
 /**
@@ -45,7 +50,37 @@ public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCo
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{
-		return OtuUtil.isOtuModule( module );
+		return isOtuModule( module );
+	}
+
+	/**
+	 * Check the module to determine if it generated OTU count files.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if module generated OTU count files
+	 * @throws Exception if errors occur
+	 */
+	protected boolean isOtuModule( final BioModule module )
+	{
+		try
+		{
+			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+
+			for( final File f: files )
+			{
+				if( OtuUtil.isOtuFile( f ) )
+				{
+					return true;
+				}
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.warn( getClass(), "Error occurred while inspecting module output files: " + module );
+			ex.printStackTrace();
+		}
+		return false;
 	}
 
 }

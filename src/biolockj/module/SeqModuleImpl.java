@@ -14,6 +14,10 @@ package biolockj.module;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
+import biolockj.Log;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.SeqUtil;
 
 /**
@@ -41,5 +45,11 @@ public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModul
 	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
 	{
 		return SeqUtil.getSeqFiles( files );
+	}
+
+	@Override
+	public boolean isValidInputModule( final BioModule module )
+	{
+		return SeqUtil.isSeqModule( module );
 	}
 }

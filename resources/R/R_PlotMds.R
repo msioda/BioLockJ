@@ -1,11 +1,11 @@
-# Module script for: biolockj.module.r.BuildMdsPlots
+# Module script for: biolockj.module.report.r.R_PlotMds
 
 # Import vegan library for distance plot support
 # Main function generates 3 MDS plots for each attribute at each level in taxaLevels()
 main <- function() { 
 	importLibs( c( "vegan" ) )
-	numAxis = getProperty("rMds.numAxis")
-	mdsAtts = getProperty( "rMds.reportFields", c( getBinaryFields(), getNominalFields() )  )
+	numAxis = getProperty("r_PlotMds.numAxis")
+	mdsAtts = getProperty( "r_PlotMds.reportFields", c( getBinaryFields(), getNominalFields() )  )
 	
 	##############################################################################
 	#######  TEMP COLOR SUBSTITUTE   #############################################
@@ -18,7 +18,7 @@ main <- function() {
 		taxaTable = getTaxaTable( level )
 		if( is.null( taxaTable ) ) { next }
 		lastOtuCol = ncol(taxaTable) - numMetaCols()
-		myMDS = capscale( taxaTable[,1:lastOtuCol]~1, distance=getProperty("rMds.distance") )
+		myMDS = capscale( taxaTable[,1:lastOtuCol]~1, distance=getProperty("r_PlotMds.distance") )
 		
 		pcoaFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(level, "_pcoa") ), ".tsv" )
 		write.table( cbind(id=row.names(myMDS$CA$u), as.data.frame(myMDS$CA$u)), file=pcoaFileName, col.names=TRUE, row.names=FALSE, sep="\t" )

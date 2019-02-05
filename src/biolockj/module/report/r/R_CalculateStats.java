@@ -9,7 +9,7 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.r;
+package biolockj.module.report.r;
 
 import java.io.File;
 import java.util.*;
@@ -26,7 +26,7 @@ import biolockj.util.ModuleUtil;
 /**
  * This BioModule is used to build the R script used to generate taxonomy statistics and plots.
  */
-public class CalculateStats extends R_Module implements BioModule
+public class R_CalculateStats extends R_Module implements BioModule
 {
 	/**
 	 * Validate configuration file properties used to build the R report:
@@ -91,11 +91,11 @@ public class CalculateStats extends R_Module implements BioModule
 		else if( count == 1 )
 		{
 			final File statsFile = results.iterator().next();
-			Log.info( CalculateStats.class, "Return stats file: " + statsFile.getAbsolutePath() );
+			Log.info( R_CalculateStats.class, "Return stats file: " + statsFile.getAbsolutePath() );
 			return statsFile;
 		}
 
-		throw new Exception( "Only 1 " + CalculateStats.class.getSimpleName() + " output file with suffix = \""
+		throw new Exception( "Only 1 " + R_CalculateStats.class.getSimpleName() + " output file with suffix = \""
 				+ querySuffix + "\" should exist.  Found " + count + " files --> " + results );
 
 	}
@@ -121,7 +121,7 @@ public class CalculateStats extends R_Module implements BioModule
 
 	private static List<File> getStatsFileDirs( final BioModule module ) throws Exception
 	{
-		final BioModule statsModule = ModuleUtil.getModule( module, CalculateStats.class.getName(), false );
+		final BioModule statsModule = ModuleUtil.getModule( module, R_CalculateStats.class.getName(), false );
 		if( statsModule != null )
 		{
 			final List<File> dirs = new ArrayList<>();
@@ -213,13 +213,13 @@ public class CalculateStats extends R_Module implements BioModule
 	 * <li>{@value #ADJ_PVAL_LOCAL} n = number of all pVal tests for 1 field at 1 taxonomy level
 	 * </ol>
 	 */
-	protected static final String R_ADJ_PVALS_SCOPE = "rStats.pAdjustScope";
+	protected static final String R_ADJ_PVALS_SCOPE = "r_CalculateStats.pAdjustScope";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #R_PVAL_ADJ_METHOD} defines p.adjust( method ) parameter.
 	 * p.adjust.methods = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")
 	 */
-	protected static final String R_PVAL_ADJ_METHOD = "rStats.pAdjustMethod";
+	protected static final String R_PVAL_ADJ_METHOD = "r_CalculateStats.pAdjustMethod";
 
 	private static final Set<String> statSuffixSet = new HashSet<>();
 

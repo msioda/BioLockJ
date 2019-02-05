@@ -18,7 +18,9 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.ModuleUtil;
+import biolockj.util.SummaryUtil;
 
 /**
  * Superclass for standard BioModules (classifiers, parsers, etc). Sets standard behavior for many of the BioModule
@@ -263,7 +265,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 			}
 		}
 
-		return removeIgnoredFiles( moduleInputFiles );
+		return BioLockJUtil.removeIgnoredAndEmptyFiles( moduleInputFiles );
 	}
 
 	/**
@@ -274,18 +276,6 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	protected List<File> getFileCache()
 	{
 		return inputFiles;
-	}
-
-	/**
-	 * Remove ignore files from the input files.
-	 * 
-	 * @param files Collection of files
-	 * @return valid files
-	 * @throws Exception if errors occur
-	 */
-	protected List<File> removeIgnoredFiles( final Collection<File> files ) throws Exception
-	{
-		return SeqUtil.removeIgnoredAndEmptyFiles( files );
 	}
 
 	/**

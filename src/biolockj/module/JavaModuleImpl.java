@@ -19,9 +19,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
-import biolockj.util.BashScriptBuilder;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.RuntimeParamUtil;
+import biolockj.util.*;
 
 /**
  * Superclass for Java BioModules that will be called in separate instances of the application.
@@ -88,6 +86,19 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 
 	@Override
 	public abstract void runModule() throws Exception;
+	
+	/**
+	 * If module is a {@link biolockj.module.SeqModule} input must contain sequence data.
+	 */
+	@Override
+	public boolean isValidInputModule( final BioModule module )
+	{
+		if( this instanceof SeqModule )
+		{
+			return SeqUtil.isSeqModule( module );
+		}
+		return super.isValidInputModule( module );
+	}
 
 	/**
 	 * Get the program source (either the jar path or main class biolockj.BioLockJ);

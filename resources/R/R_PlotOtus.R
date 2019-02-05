@@ -1,4 +1,4 @@
-# Module script for: biolockj.module.r.BuildOtuPlots
+# Module script for: biolockj.module.report.r.R_PlotOtus
 
 # Output box-plot illustrating OTU-nominal metadata field relationship
 # Print adjusted P-values in pot header
@@ -7,11 +7,8 @@ addBoxPlot <- function( taxa, taxaVals, metaVals, barColors)
 	metaVals = as.factor( metaVals )
 	factors = split( taxaVals, metaVals ) 
 	cexAxis = getCexAxis( levels(metaVals) )
-	logInfo( "cexAxis = getCexAxis( levels(metaVals) )", cexAxis )
 	labels = getBoxPlotLabels( levels(metaVals) )
-	logInfo( "X axis labels = getBoxPlotLabels( levels(metaVals) )", labels )
 	orient = getLas( levels(metaVals) )
-	logInfo( "orient = getLas( levels(metaVals) )", orient )
 	
 	boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=getProperty("r.pch"), 
 		ylab=taxa, xlab="", cex.axis=cexAxis )
@@ -24,7 +21,7 @@ plotHeading <- function(parPval, nonParPval, r2, att) {
 	HEAD_1 = 0.2; HEAD_2 = 1.4; LEFT = 0; RIGHT = 1; TOP = 3;
 
 	title1_A = paste( "Adj.", getTestName(att, TRUE), "P-value: ", displayCalc(parPval) )
-	title1_B = bquote( paste( R^2, ": ", .( parPval ) ) )
+	title1_B = bquote( paste( R^2, ": ", .( displayCalc(parPval) ) ) )
 	title2 = paste( "Adj.", getTestName(att, FALSE), "P-value: ", displayCalc(nonParPval) )
 
 	mtext( title1_A, TOP, HEAD_1, col=getColor( parPval ), cex=0.75, adj=LEFT )
@@ -126,35 +123,25 @@ main <- function() {
 				pageNum = 1
 				taxa = colnames(taxaTable)[taxaCol]
 				taxaVals = taxaTable[,taxaCol]
-				logInfo( paste( "Taxa Name[col#] =", taxa, "[", taxaCol, "]" ), taxaVals ) 
+				logInfo( paste( "Plot TaxaTable Col# [", taxaCol, "] =", taxa ) )
 
 				for( metaCol in reportCols )	{
 					meta = colnames(taxaTable)[metaCol]
 					metaVals = taxaTable[,metaCol]
-					logInfo( paste( "Meta Name[col#] =", meta, "[", metaCol, "]" ), metaVals ) 
 					
 					if( metaCol %in% binaryCols || metaCol %in% nominalCols ) {
 						logInfo( c( "Plot Box-Plot [", taxa, "~", meta, "]" ) )
 						addBoxPlot( taxa, taxaVals, metaVals, "#90F6FF" )
-						logInfo( "Basic plot complete - next add headings" )
 					}
 					else if( metaCol %in% numericCols ) {
 						logInfo( c( "Plot Scatter-Plot [", taxa, "~", meta, "]" ) )
 						addScatterPlot( taxa, taxaVals, metaVals )
-						logInfo( "Basic plot complete - next add headings" )
 					}
 
 					plotHeading( parStats[ taxa, meta ], nonParStats[ taxa, meta ], r2Stats[ taxa, meta], meta )
-					
-					print( paste( "par cex.main: 1.2",  par("cex.main") ) )
-         			 print( paste( "par cex: 0.66",  par("cex") ) )
-         			 print( paste( "par font: 	",  par("font") ) )
 
 					# META LABEL
 					mtext(meta, side=1, font=1, cex=1, line=2.5)
-					#mtext(meta, side=1,line=2.5)
-					#ME mtext(meta, side=1, font=2, cex=0.9, line=2.5)
-					#IV mtext(meta, side=1, font=par("font.main"), cex=par("cex.main"), line=2.5)
 					
 					# page title
 					position = position + 1
@@ -162,9 +149,6 @@ main <- function() {
 					# TITLE 2
 					if(position == 2) { 
 						title(main=paste0( taxa, ifelse( pageNum > 1, paste0( " - page #", pageNum ), "" ) ), cex=1, font=2, outer=TRUE, line=0.5, cex.main=1.75)
-						#ME mtext(meta, side=1, font=2, cex=0.9, line=2.5)
-						#IV mtext(otuCol, side=3, outer = TRUE, font=par("font.main"), cex=par("cex.main"), line=2)
-					
 					}
 					if(position > prod( par("mfrow") ) ) {
 						position = 1
