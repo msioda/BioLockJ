@@ -166,7 +166,7 @@ getNumericFields <- function() {
 
 # Return file path of file in rootDir, with the pipeline name appended as a prefix to name
 getPath <- function( rootDir, name ) {
-   return( file.path( rootDir, paste0( getProperty("project.pipelineName"), "_", name ) ) )
+   return( file.path( rootDir, paste0( basename( getPipelineDir() ), "_", name ) ) )
 }
 
 # Return the pipeline root directory
