@@ -294,6 +294,23 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 		return super.getSummary();
 	}
+	
+	/**
+	 * If superclass is fed by another QiimeClassifier, it must be a subclass with biom output.
+	 * Otherwise, if a subclass, it must expect sequence file input.
+	 */
+	@Override
+	public boolean isValidInputModule( final BioModule module )
+	{
+		if( getClass().getName().equals( QiimeClassifier.class.getName() ) &&
+				module.getClass().getName().toLowerCase().contains( Constants.QIIME ) &&
+				module instanceof ClassifierModule )
+		{
+			return true;
+		}
+	
+		return super.isValidInputModule( module );
+	}
 
 	/**
 	 * Module input directories are set to the previous module output directory.<br>
