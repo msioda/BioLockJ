@@ -110,16 +110,14 @@ public class SummaryUtil
 	public static String getFooter() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();
-		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.requireString( Config.PROJECT_PIPELINE_NAME ) + RETURN );
+		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
 		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( System.currentTimeMillis() - Constants.APP_START_TIME )
 				+ RETURN );
 
-		sb.append( getLabel( PIPELINE_OUTPUT ) + "    "
-				+ Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + RETURN );
+		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
 		sb.append( getLabel( PIPELINE_CONFIG ) + " " + Config.getConfigFilePath() + RETURN );
-		sb.append( getLabel( PIPELINE_META ) + "  "
-				+ ( MetaUtil.exists() ? MetaUtil.getFile().getAbsolutePath(): "N/A" ) + RETURN );
+		sb.append( getLabel( PIPELINE_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
 
 		final String downloadCmd = DownloadUtil.getDownloadCmd();
 		if( downloadCmd != null )
@@ -499,8 +497,7 @@ public class SummaryUtil
 	 */
 	public static File getSummaryFile() throws Exception
 	{
-		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ SUMMARY_FILE );
+		return new File( Config.pipelinePath() + File.separator + SUMMARY_FILE );
 	}
 
 	/**
@@ -790,8 +787,7 @@ public class SummaryUtil
 	private static String getHeading() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();
-		sb.append( RETURN + SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  "
-				+ Config.requireString( Config.PROJECT_PIPELINE_NAME ) + RETURN );
+		sb.append( RETURN + SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( PIPELINE_CONFIG ) + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
 		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
@@ -812,8 +808,7 @@ public class SummaryUtil
 
 	private static File getTempFile() throws Exception
 	{
-		return new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ TEMP_SUMMARY_FILE );
+		return new File( Config.pipelinePath() + File.separator + TEMP_SUMMARY_FILE );
 	}
 
 	/**

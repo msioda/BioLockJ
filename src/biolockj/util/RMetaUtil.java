@@ -16,14 +16,13 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.QiimeClassifier;
+import biolockj.module.report.r.R_PlotMds;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 
 /**
@@ -69,7 +68,7 @@ public final class RMetaUtil
 	 */
 	public static void classifyReportableMetadata() throws Exception
 	{
-		Log.info( RMetaUtil.class, "Validate reportable metadata fields: " + MetaUtil.getFile().getAbsolutePath() );
+		Log.info( RMetaUtil.class, "Validate reportable metadata fields: " + MetaUtil.getPath() );
 
 		final Set<String> rScriptFields = Config.getSet( R_REPORT_FIELDS );
 		binaryFields.clear();
@@ -79,13 +78,14 @@ public final class RMetaUtil
 
 		nominalFields.addAll( Config.getList( R_NOMINAL_FIELDS ) );
 		numericFields.addAll( Config.getList( R_NUMERIC_FIELDS ) );
-		mdsFields.addAll( Config.getList( MDS_REPORT_FIELDS ) );
-		
+		mdsFields.addAll( Config.getList( R_PlotMds.R_MDS_REPORT_FIELDS ) );
+
 		final List<String> excludeFields = Config.getList( R_EXCLUDE_FIELDS );
 
 		nominalFields.removeAll( excludeFields );
 		numericFields.removeAll( excludeFields );
 		mdsFields.removeAll( excludeFields );
+		rScriptFields.removeAll( excludeFields );
 		rScriptFields.addAll( nominalFields );
 		rScriptFields.addAll( numericFields );
 
@@ -95,7 +95,7 @@ public final class RMetaUtil
 		verifyMetadataFieldsExist( R_REPORT_FIELDS, rScriptFields );
 		verifyMetadataFieldsExist( R_NUMERIC_FIELDS, numericFields );
 		verifyMetadataFieldsExist( R_NOMINAL_FIELDS, nominalFields );
-		verifyMetadataFieldsExist( MDS_REPORT_FIELDS, mdsFields );
+		verifyMetadataFieldsExist( R_PlotMds.R_MDS_REPORT_FIELDS, mdsFields );
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -153,7 +153,7 @@ public final class RMetaUtil
 			}
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_READS )
+		if( Config.getBoolean( Constants.REPORT_NUM_READS )
 				&& isValidNumericField( metaFields, RegisterNumReads.getNumReadFieldName() ) )
 		{
 			rScriptFields.add( RegisterNumReads.getNumReadFieldName() );
@@ -165,7 +165,7 @@ public final class RMetaUtil
 			numericFields.remove( RegisterNumReads.getNumReadFieldName() );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_HITS )
+		if( Config.getBoolean( Constants.REPORT_NUM_HITS )
 				&& isValidNumericField( metaFields, ParserModuleImpl.getOtuCountField() ) )
 		{
 			rScriptFields.add( ParserModuleImpl.getOtuCountField() );
@@ -177,7 +177,7 @@ public final class RMetaUtil
 			numericFields.remove( ParserModuleImpl.getOtuCountField() );
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_HITS )
+		if( Config.getBoolean( Constants.REPORT_NUM_HITS )
 				&& isValidNumericField( metaFields, AddMetadataToTaxaTables.HIT_RATIO ) )
 		{
 			rScriptFields.add( AddMetadataToTaxaTables.HIT_RATIO );
@@ -267,12 +267,11 @@ public final class RMetaUtil
 				}
 			}
 		}
-		
+
 		if( updateRConfig() )
 		{
 			PropUtil.saveMasterConfig( Config.getProperties() );
 		}
-		
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -323,58 +322,6 @@ public final class RMetaUtil
 	}
 
 	/**
-	 * Get updated R config props
-	 * 
-	 * @return map of R props by data type
-	 * @throws Exception if errors occur
-	 */
-	public static boolean updateRConfig() throws Exception
-	{
-		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
-		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
-
-		if( numCols != null && numCols == numMetaCols )
-		{
-			Log.info( RMetaUtil.class, "R Config unchanged..." );
-			return false;
-		}
-
-		Config.setConfigProperty( NUM_META_COLS, numMetaCols.toString() );
-		Log.info( RMetaUtil.class, "Set " + NUM_META_COLS + " = " + numMetaCols );
-
-		if( !binaryFields.isEmpty() )
-		{
-			final String val = BioLockJUtil.getCollectionAsString( binaryFields );
-			if( Config.getString( BINARY_FIELDS ) == null || !val.equals( Config.getString( BINARY_FIELDS ) ) )
-			{
-				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
-				Config.setConfigProperty( BINARY_FIELDS, val );
-			}
-
-		}
-		if( !nominalFields.isEmpty() )
-		{
-			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
-			if( Config.getString( NOMINAL_FIELDS ) == null || !val.equals( Config.getString( NOMINAL_FIELDS ) ) )
-			{
-				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
-				Config.setConfigProperty( NOMINAL_FIELDS, val );
-			}
-		}
-		if( !numericFields.isEmpty() )
-		{
-			final String val = BioLockJUtil.getCollectionAsString( numericFields );
-			if( Config.getString( NUMERIC_FIELDS ) == null || !val.equals( Config.getString( NUMERIC_FIELDS ) ) )
-			{
-				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
-				Config.setConfigProperty( NUMERIC_FIELDS, val );
-			}
-		}
-
-		return true;
-	}
-
-	/**
 	 * Check module for metadata merged output in hte module output directory.
 	 * 
 	 * @param module BioModule
@@ -383,7 +330,7 @@ public final class RMetaUtil
 	 */
 	public static boolean isMetaMergeModule( final BioModule module ) throws Exception
 	{
-		final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
+		final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
 		if( files.isEmpty() )
@@ -427,6 +374,108 @@ public final class RMetaUtil
 	}
 
 	/**
+	 * Get updated R config props
+	 * 
+	 * @return map of R props by data type
+	 * @throws Exception if errors occur
+	 */
+	public static boolean updateRConfig() throws Exception
+	{
+		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
+		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
+
+		if( numCols != null && numCols == numMetaCols || numMetaCols == 0 )
+		{
+			Log.info( RMetaUtil.class, "R Config unchanged..." );
+			return false;
+		}
+
+		for( final String field: MetaUtil.getFieldNames() )
+		{
+			final Set<String> data = new HashSet<>( MetaUtil.getFieldValues( field, true ) );
+			final int count = data.size();
+			if( isQiimeMetric( field ) && field.endsWith( QIIME_ALPHA_METRIC_LABEL_SUFFIX ) )
+			{
+				final String name = field.replace( QIIME_ALPHA_METRIC_LABEL_SUFFIX, "" );
+				if( count == 0 )
+				{
+					Log.warn( RMetaUtil.class,
+							"QIIME Alpha diversity metric [ " + field + " ] is undefined for all sampels" );
+				}
+				else if( count == 1 )
+				{
+					Log.warn( RMetaUtil.class,
+							"QIIME Alpha diversity metric [ " + name + " ] all fall withint the same 25% quantile: "
+									+ MetaUtil.getUniqueFieldValues( field, true ) );
+				}
+				else if( count == 2 )
+				{
+					binaryFields.add( field );
+				}
+				else if( count > 2 )
+				{
+					nominalFields.add( field );
+				}
+			}
+			else if( isQiimeMetric( field ) && field.endsWith( QIIME_ALPHA_METRIC_SUFFIX ) )
+			{
+				final String name = field.replace( QIIME_ALPHA_METRIC_SUFFIX, "" );
+				if( count == 0 )
+				{
+					Log.warn( RMetaUtil.class,
+							"QIIME Alpha diversity metric [ " + field + " ] is undefined for all sampels" );
+				}
+				else if( count == 1 )
+				{
+					Log.warn( RMetaUtil.class,
+							"QIIME Alpha diversity metric [ " + name
+									+ " ] all have the same alpha diversity mesurement: "
+									+ MetaUtil.getUniqueFieldValues( field, true ) );
+				}
+				else if( count > 2 )
+				{
+					verifyNumericData( field, data );
+					numericFields.add( field );
+				}
+			}
+		}
+
+		Config.setConfigProperty( NUM_META_COLS, numMetaCols.toString() );
+		Log.info( RMetaUtil.class, "Set " + NUM_META_COLS + " = " + numMetaCols );
+
+		if( !binaryFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( binaryFields );
+			if( Config.getString( BINARY_FIELDS ) == null || !val.equals( Config.getString( BINARY_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
+				Config.setConfigProperty( BINARY_FIELDS, val );
+			}
+
+		}
+		if( !nominalFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
+			if( Config.getString( NOMINAL_FIELDS ) == null || !val.equals( Config.getString( NOMINAL_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
+				Config.setConfigProperty( NOMINAL_FIELDS, val );
+			}
+		}
+		if( !numericFields.isEmpty() )
+		{
+			final String val = BioLockJUtil.getCollectionAsString( numericFields );
+			if( Config.getString( NUMERIC_FIELDS ) == null || !val.equals( Config.getString( NUMERIC_FIELDS ) ) )
+			{
+				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
+				Config.setConfigProperty( NUMERIC_FIELDS, val );
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * This method verifies the fields given exist in the metadata file.
 	 * 
 	 * @param prop Config property name
@@ -441,7 +490,7 @@ public final class RMetaUtil
 			{
 
 				throw new Exception( "Config property [ " + prop + "] contians a field [" + field
-						+ "] not found in metadata: " + MetaUtil.getFile().getAbsolutePath() );
+						+ "] not found in metadata: " + MetaUtil.getPath() );
 			}
 		}
 	}
@@ -467,7 +516,10 @@ public final class RMetaUtil
 		{
 			for( final String metric: alphaDivMetrics )
 			{
-				if( field.indexOf( metric ) > -1 )
+				final String m0 = metric + QIIME_ALPHA_METRIC_SUFFIX;
+				final String m1 = metric + QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX;
+				final String m2 = metric + QIIME_ALPHA_METRIC_LABEL_SUFFIX;
+				if( field.equals( m0 ) || field.equals( m1 ) || field.equals( m2 ) )
 				{
 					Log.info( RMetaUtil.class,
 							"Metadata validation of field(" + field + ") --> found QIIME metric: " + metric );
@@ -510,11 +562,10 @@ public final class RMetaUtil
 		}
 	}
 
-	/**
-	 * {@link biolockj.Config} List property: {@value #MDS_REPORT_FIELDS}<br>
-	 * List metadata fields to generate MDS ordination plots.
-	 */
-	protected static final String MDS_REPORT_FIELDS = "rMds.reportFields";
+	public static final String QIIME_ALPHA_METRIC_LABEL_SUFFIX = "_alpha_label";
+	public static final String QIIME_ALPHA_METRIC_SUFFIX = "_alpha";
+
+	public static final String QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX = "_normalized_alpha";
 
 	/**
 	 * Name of R script variable with metadata column count

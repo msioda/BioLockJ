@@ -9,7 +9,7 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.r;
+package biolockj.module.report.r;
 
 import java.util.List;
 import java.util.TreeSet;
@@ -19,7 +19,7 @@ import biolockj.module.ScriptModule;
  * This BioModule is used to build the R script used to generate p-value histograms for each report field and each
  * taxonomy level configured.
  */
-public class BuildPvalHistograms extends R_Module implements ScriptModule
+public class R_PlotPvalHistograms extends R_Module implements ScriptModule
 {
 
 	/**

@@ -16,9 +16,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigViolationException;
+import biolockj.module.BioModule;
 
 /**
  * This utility helps interact with FastA and FastQ sequence files.
@@ -38,8 +40,7 @@ public class SeqUtil
 	 */
 	public static void copyInputData() throws Exception
 	{
-		final File inputFileDir = new File(
-				Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator + "input" );
+		final File inputFileDir = new File( Config.pipelinePath() + File.separator + "input" );
 
 		if( !inputFileDir.exists() )
 		{
@@ -287,7 +288,7 @@ public class SeqUtil
 		else if( Config.getString( INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
 		{
 			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ "
-					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Config.FALSE + " ]" + BioLockJ.RETURN + msg );
+					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Constants.FALSE + " ]" + BioLockJ.RETURN + msg );
 		}
 
 		return map;
@@ -453,7 +454,7 @@ public class SeqUtil
 			else
 			{
 				Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
-						+ MetaUtil.META_REQUIRED + "=" + Config.FALSE + " ]: " + file.getAbsolutePath() );
+						+ MetaUtil.META_REQUIRED + "=" + Constants.FALSE + " ]: " + file.getAbsolutePath() );
 			}
 		}
 
@@ -620,9 +621,6 @@ public class SeqUtil
 				{
 					seq = seq.trim().toLowerCase().replaceAll( "a", "" ).replaceAll( "c", "" ).replaceAll( "g", "" )
 							.replaceAll( "t", "" ).replaceAll( "n", "" );
-					Log.debug( SeqUtil.class, "After removing acgtu from the seq (what is left?) ---> " + seq );
-					Log.debug( SeqUtil.class, "Is seq empty? ---> " + seq.isEmpty() );
-					Log.debug( SeqUtil.class, "Is seq.trim() empty? ---> " + seq.trim().isEmpty() );
 					isSeq = seq.trim().isEmpty();
 				}
 			}
@@ -643,6 +641,36 @@ public class SeqUtil
 	}
 
 	/**
+	 * Check the module to determine if it generated sequence file output.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if module generated OTU count files
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isSeqModule( final BioModule module )
+	{
+		try
+		{
+			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+
+			for( final File f: files )
+			{
+				if( SeqUtil.isSeqFile( f ) )
+				{
+					return true;
+				}
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.warn( SeqUtil.class, "Error occurred while inspecting module output files: " + module );
+			ex.printStackTrace();
+		}
+		return false;
+	}
+
+	/**
 	 * Return TRUE if pipeline input files are sequence files.
 	 * 
 	 * @return TRUE if pipeline input files are sequence files.
@@ -651,35 +679,6 @@ public class SeqUtil
 	public static boolean piplineHasSeqInput() throws Exception
 	{
 		return BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_SEQ_INPUT_TYPE );
-	}
-
-	/**
-	 * Remove ignored and empty files from the input files.
-	 * 
-	 * @param files Collection of files
-	 * @return valid files
-	 * @throws Exception if errors occur
-	 */
-	public static List<File> removeIgnoredAndEmptyFiles( final Collection<File> files ) throws Exception
-	{
-		final List<File> validInputFiles = new ArrayList<>();
-		for( final File file: files )
-		{
-			final boolean isEmpty = FileUtils.sizeOf( file ) < 1L;
-			if( isEmpty )
-			{
-				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
-			}
-			else if( Config.getSet( INPUT_IGNORE_FILES ).contains( file.getName() ) )
-			{
-				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
-			}
-			else
-			{
-				validInputFiles.add( file );
-			}
-		}
-		return validInputFiles;
 	}
 
 	/**
@@ -813,7 +812,7 @@ public class SeqUtil
 						&& ( FASTA_HEADER_DELIMS.contains( headerChar ) || headerChar.equals( FASTQ_HEADER_DELIM ) ) )
 				{
 					Log.info( SeqUtil.class, "Multi-line input file detected: # lines/seq: " + numSeqLines );
-					Config.setConfigProperty( INTERNAL_IS_MULTI_LINE_SEQ, Config.TRUE );
+					Config.setConfigProperty( INTERNAL_IS_MULTI_LINE_SEQ, Constants.TRUE );
 					if( numMultiSeqLines != null && numMultiSeqLines == 0 )
 					{
 						numMultiSeqLines = numSeqLines;
@@ -965,8 +964,8 @@ public class SeqUtil
 		}
 
 		Log.info( SeqUtil.class,
-				"Set " + INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Config.TRUE: Config.FALSE ) );
-		Config.setConfigProperty( INTERNAL_PAIRED_READS, foundPairedReads ? Config.TRUE: Config.FALSE );
+				"Set " + INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Constants.TRUE: Constants.FALSE ) );
+		Config.setConfigProperty( INTERNAL_PAIRED_READS, foundPairedReads ? Constants.TRUE: Constants.FALSE );
 	}
 
 	private static boolean mapSampleIdWithMetaFileNameCol() throws Exception
@@ -990,8 +989,7 @@ public class SeqUtil
 		boolean isMultiplexed = false;
 		if( DemuxUtil.doDemux() != null && !DemuxUtil.doDemux() )
 		{
-			Log.debug( SeqUtil.class, "Do not demux!" );
-			Log.info( SeqUtil.class, "TEMP INFO --> Do not demux!" );
+			Log.debug( SeqUtil.class, "Do not demultiplex!" );
 		}
 		else if( count == 1 )
 		{
@@ -1036,7 +1034,7 @@ public class SeqUtil
 			}
 		}
 
-		Config.setConfigProperty( INTERNAL_MULTIPLEXED, isMultiplexed ? Config.TRUE: Config.FALSE );
+		Config.setConfigProperty( INTERNAL_MULTIPLEXED, isMultiplexed ? Constants.TRUE: Constants.FALSE );
 
 		if( isMultiplexed && numMultiSeqLines == null )
 		{

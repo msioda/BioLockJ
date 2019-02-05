@@ -16,16 +16,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.ScriptModule;
-import biolockj.module.ScriptModuleImpl;
 import biolockj.module.SeqModule;
+import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
 /**
  * This BioModule uses awk and gzip to convert input sequence files into a decompressed fasta file format.
  */
-public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule, SeqModule
+public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 {
 
 	@Override
@@ -35,7 +35,7 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule,
 		final boolean isMultiLine = Config.getBoolean( SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ );
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
-		// final String ext = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+
 		final String ext = "." + ( isMultiLine ? SeqUtil.FASTA: Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
 		for( final File f: files )
 		{
@@ -107,22 +107,22 @@ public class AwkFastaConverter extends ScriptModuleImpl implements ScriptModule,
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_CONVERT_TO_FASTA + "() {" );
-		lines.add( "cat $1 | " + Config.getExe( Config.EXE_AWK )
+		lines.add( "cat $1 | " + Config.getExe( Constants.EXE_AWK )
 				+ " '{ if(NR%4==1) { printf( \">%s \\n\",substr($0,2) ); } else if(NR%4==2) print; }' > $2 " );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
 		if( hasGzipped() )
 		{
 			lines.add( "function " + FUNCTION_GUNZIP + "() {" );
-			lines.add( Config.getExe( Config.EXE_GZIP ) + " -cd $1 > $2" );
-			lines.add( "}" );
+			lines.add( Config.getExe( Constants.EXE_GZIP ) + " -cd $1 > $2" );
+			lines.add( "}" + RETURN );
 		}
 
 		if( Config.getBoolean( SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
 		{
 			lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
-			lines.add( "cat $1 | " + Config.getExe( Config.EXE_AWK )
+			lines.add( "cat $1 | " + Config.getExe( Constants.EXE_AWK )
 					+ " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf;}' > $2 " );
-			lines.add( "}" );
+			lines.add( "}" + RETURN );
 		}
 		return lines;
 	}

@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.ModuleUtil;
@@ -40,7 +41,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 		for( final File file: files )
 		{
 			final String outputFile = getOutputDir().getAbsolutePath() + File.separator
-					+ SeqUtil.getSampleId( file.getName() ) + PROCESSED;
+					+ SeqUtil.getSampleId( file.getName() ) + Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>();
 			lines.add( FUNCTION_RDP + " " + file.getAbsolutePath() + " " + outputFile );
 			data.add( lines );
@@ -81,7 +82,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 		lines.add( "function " + FUNCTION_RDP + "() {" );
 		lines.add( Config.getExe( EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getClassifierExe() + " "
 				+ getRuntimeParams( getClassifierParams(), null ) + OUTPUT_PARAM + " $2 $1" );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 

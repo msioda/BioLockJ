@@ -13,9 +13,7 @@ package biolockj.module.implicit;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
@@ -26,9 +24,10 @@ import biolockj.util.*;
  * This BioModule splits multiplexed data into a separate file or pair of files (for paired reads) for each sample. The
  * sample ID, or an identification barcode must be included in the header of each read. Barcodes are matched to Sample
  * IDs using the metadata column configured via property "metadata.barcodeColumn".<br>
- * If demux.strategy=barcode_in_header, register a match if the barcode is found anywhere in the sequence header.<br>
- * If demux.strategy=barcode_in_seq, register a match if the sequence itself starts with any of the barcodes. The output
- * multiplexed file will have barcodes removed from the sequences since they no longer serve any purpose.<br>
+ * If demultiplexer.strategy=barcode_in_header, register a match if the barcode is found anywhere in the sequence
+ * header.<br>
+ * If demultiplexer.strategy=barcode_in_seq, register a match if the sequence itself starts with any of the barcodes.
+ * The output multiplexed file will have barcodes removed from the sequences since they no longer serve any purpose.<br>
  * Sequences with no matching barcode, or without a matching paired header (if paired), are output to a "NO_MATCH" file
  * in the module temp directory.<br>
  * Paired reads are accepted in 2 multiplexed formats:
@@ -45,8 +44,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	 * Validate module dependencies:
 	 * <ol>
 	 * <li>If {@link biolockj.Config}.{@value biolockj.util.DemuxUtil#DEMUX_STRATEGY} indicates use of barcodes to
-	 * demux, validate metadata column named {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_BARCODE_COLUMN}
-	 * exists
+	 * demultiplexer, validate metadata column named
+	 * {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} exists
 	 * <li>Call {@link #setMultiplexedConfig()} to set multiplexed Config if needed
 	 * <li>If {@link biolockj.Config}.{@value biolockj.util.DemuxUtil#BARCODE_CUTOFF} defined, validate between 0.0 -
 	 * 1.0
@@ -78,14 +77,14 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 			{
 				throw new Exception( demuxStrategy + " but the barcode column configured [ "
 						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( MetaUtil.META_BARCODE_COLUMN )
-						+ " ] is not found in the metadata: " + MetaUtil.getFile().getAbsolutePath() );
+						+ " ] is not found in the metadata: " + MetaUtil.getPath() );
 			}
 
 			if( MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 			{
 				throw new Exception( demuxStrategy + " but the barcode column configured [ "
 						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( MetaUtil.META_BARCODE_COLUMN )
-						+ " ] is empty in the metadata file: " + MetaUtil.getFile().getAbsolutePath() );
+						+ " ] is empty in the metadata file: " + MetaUtil.getPath() );
 			}
 
 			if( DemuxUtil.barcodeInSeq() )
@@ -117,18 +116,13 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		Config.setConfigProperty( SeqUtil.INTERNAL_MULTIPLEXED, Config.FALSE );
-		// * If {@value biolockj.util.MetaUtil#META_REQUIRED}, verify each sequence has a metadata record.
-		// if( Config.getBoolean( MetaUtil.META_REQUIRED ) )
-		// {
-		// verifySeqMetadata();
-		// }
+		Config.setConfigProperty( SeqUtil.INTERNAL_MULTIPLEXED, Constants.FALSE );
 	}
 
 	@Override
 	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
 	{
-		return findModuleInputFiles();
+		return getInputFiles();
 	}
 
 	/**
@@ -203,6 +197,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	 */
 	protected void breakUpFiles() throws Exception
 	{
+		final boolean useBarcodes = DemuxUtil.hasValidBarcodes();
 		File testFile = null;
 		for( final File file: getInputFiles() )
 		{
@@ -225,7 +220,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 				{
 					read.add( line );
 
-					if( DemuxUtil.hasValidBarcodes() )
+					if( useBarcodes )
 					{
 						if( testFile == null && read.size() == 1 )
 						{
@@ -654,7 +649,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 									+ cutoffNumReads + " ]" + RETURN + " Review Summary -- > " + RETURN + summary );
 				}
 			}
-			final String val = useRevComp ? Config.TRUE: Config.FALSE;
+			final String val = useRevComp ? Constants.TRUE: Constants.FALSE;
 			summary += "Set: " + DemuxUtil.BARCODE_USE_REV_COMP + "=" + val + " based on #BC & #rcBC counts" + RETURN;
 			Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, val );
 		}

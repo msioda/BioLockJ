@@ -310,7 +310,7 @@ public class MetaUtil
 			ex.printStackTrace();
 		}
 
-		return Config.requireString( Config.PROJECT_PIPELINE_NAME ) + Constants.TSV_EXT;
+		return Config.pipelineName() + Constants.TSV_EXT;
 
 	}
 
@@ -331,6 +331,20 @@ public class MetaUtil
 		{
 			throw new Exception( "Invalid ID: " + sampleId );
 		}
+	}
+
+	/**
+	 * Return the metadata file path
+	 * 
+	 * @return
+	 */
+	public static String getPath()
+	{
+		if( metadataFile == null )
+		{
+			return "";
+		}
+		return metadataFile.getAbsolutePath();
 	}
 
 	/**
@@ -450,9 +464,9 @@ public class MetaUtil
 
 		if( Config.getString( META_FILE_PATH ) != null )
 		{
-			final Set<String> ignore = Config.getSet( Config.INPUT_IGNORE_FILES );
+			final Set<String> ignore = Config.getSet( Constants.INPUT_IGNORE_FILES );
 			ignore.add( MetaUtil.getMetadataFileName() );
-			Config.setConfigProperty( Config.INPUT_IGNORE_FILES, ignore );
+			Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
 			setFile( MetaUtil.getMetadata() );
 			refreshCache();
 		}
@@ -496,8 +510,7 @@ public class MetaUtil
 	{
 		if( fileDir == null )
 		{
-			fileDir = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
-					+ File.separator + ".temp" );
+			fileDir = new File( Config.pipelinePath() + File.separator + ".temp" );
 			if( !fileDir.exists() )
 			{
 				fileDir.mkdir();

@@ -14,6 +14,7 @@ package biolockj.module.implicit.qiime;
 import java.io.*;
 import java.util.*;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.ScriptModule;
 import biolockj.module.SeqModule;
@@ -190,38 +191,39 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
+		final List<String> lines = super.getWorkerScriptFunctions();
 		if( metaColumns == null )
 		{
-			return null;
+			return lines;
 		}
 
 		final List<Integer> skip = Arrays.asList(
 				new Integer[] { metaColumns.indexOf( BARCODE_SEQUENCE ), metaColumns.indexOf( LINKER_PRIMER_SEQUENCE ),
 						metaColumns.indexOf( DEMUX_COLUMN ), metaColumns.indexOf( DESCRIPTION ) } );
 
-		final StringBuffer sb = new StringBuffer();
-		sb.append( Config.getExe( Config.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
+		String awkBody = "";
+		awkBody += Config.getExe( Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
 				+ "\" '{ print $1," + colIndex( metaColumns, BARCODE_SEQUENCE ) + ","
-				+ colIndex( metaColumns, LINKER_PRIMER_SEQUENCE ) + "," );
+				+ colIndex( metaColumns, LINKER_PRIMER_SEQUENCE ) + ",";
 
 		for( int i = 1; i < metaColumns.size(); i++ )
 		{
 			if( !skip.contains( i ) )
 			{
-				sb.append( " $" + ( i + 1 ) + "," );
+				awkBody += " $" + ( i + 1 ) + ",";
 			}
 		}
 
-		sb.append( colIndex( metaColumns, DEMUX_COLUMN ) + "," );
-		sb.append( colIndex( metaColumns, DESCRIPTION ) );
-		sb.append( " }' " + initMetaFile.getAbsolutePath() + " > " + getOrderedMapping().getAbsolutePath() );
+		awkBody += colIndex( metaColumns, DEMUX_COLUMN ) + ",";
+		awkBody += colIndex( metaColumns, DESCRIPTION );
+		awkBody += " }' " + initMetaFile.getAbsolutePath() + " > " + getOrderedMapping().getAbsolutePath();
 
-		Log.debug( getClass(), FUNCTION_REORDER_FIELDS + " will update column order using awk --> " + sb.toString() );
+		Log.debug( getClass(), FUNCTION_REORDER_FIELDS + " will update column order using awk --> " + awkBody );
 
-		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_REORDER_FIELDS + "() {" );
-		lines.add( sb.toString() );
-		lines.add( "}" );
+		lines.add( awkBody );
+		lines.add( "}" + RETURN );
+
 		return lines;
 
 	}
@@ -335,8 +337,8 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 */
 	private String validateMapping() throws Exception
 	{
-		return SCRIPT_VALIDATE_MAPPING + " -p -b -m " + MetaUtil.getFile().getAbsolutePath() + " -o " + getMappingDir()
-				+ " -j " + DEMUX_COLUMN;
+		return SCRIPT_VALIDATE_MAPPING + " -p -b -m " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
+				+ DEMUX_COLUMN;
 	}
 
 	private File initMetaFile = null;

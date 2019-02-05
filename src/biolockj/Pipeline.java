@@ -20,8 +20,8 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.r.R_Module;
 import biolockj.module.report.Email;
+import biolockj.module.report.r.R_Module;
 import biolockj.util.*;
 
 /**
@@ -64,8 +64,12 @@ public class Pipeline
 	public static void initializePipeline() throws Exception
 	{
 		bioModules = BioModuleFactory.buildPipeline();
-		Config.setConfigProperty( Config.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
+		Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
+		if( runAws() )
+		{
+			NextFlowUtil.buildNextFlowMain( bioModules );
+		}
 	}
 
 	/**
@@ -77,8 +81,9 @@ public class Pipeline
 	public static void runDirectModule( final Integer moduleID ) throws Exception
 	{
 		Log.info( Pipeline.class,
-				"Run Direct BioModule ID[ " + moduleID + "] = " + Pipeline.getModules().get( moduleID ) );
+				"Run Direct BioModule ID[ " + moduleID + " ] = " + Pipeline.getModules().get( moduleID ) );
 		final JavaModule module = (JavaModule) Pipeline.getModules().get( moduleID );
+		module.runModule();
 		refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
 		module.cleanUp();
 	}
@@ -135,8 +140,8 @@ public class Pipeline
 			}
 			catch( final Exception innerEx )
 			{
-				Log.error( Pipeline.class, "Attempt to Email pipeline failure info --> also failed!  " + innerEx.getMessage(),
-						innerEx );
+				Log.error( Pipeline.class,
+						"Attempt to Email pipeline failure info --> also failed!  " + innerEx.getMessage(), innerEx );
 			}
 
 			throw ex;
@@ -474,6 +479,11 @@ public class Pipeline
 				Thread.sleep( POLL_TIME * 1000 );
 			}
 		}
+	}
+
+	private static boolean runAws() throws Exception
+	{
+		return Config.requireString( Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
 	}
 
 	/**

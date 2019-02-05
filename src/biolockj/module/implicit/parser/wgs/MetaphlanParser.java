@@ -13,7 +13,7 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.module.classifier.ClassifierModule;
+import biolockj.Constants;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.wgs.MetaphlanNode;
@@ -52,8 +52,7 @@ public class MetaphlanParser extends ParserModuleImpl implements ParserModule
 				{
 					if( !line.startsWith( "#" ) )
 					{
-						addOtuNode(
-								new MetaphlanNode( file.getName().replace( ClassifierModule.PROCESSED, "" ), line ) );
+						addOtuNode( new MetaphlanNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
 					}
 				}
 			}

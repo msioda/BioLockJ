@@ -14,12 +14,9 @@ package biolockj.util;
 import java.io.BufferedReader;
 import java.io.File;
 import java.util.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.BioModule;
 
 /**
  * This utility helps work with OTU count files as formatted by the
@@ -180,8 +177,8 @@ public class OtuUtil
 			sampleId = "";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
-				+ prefix + OTU_COUNT + sampleId + Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + prefix + OTU_COUNT + sampleId
+				+ Constants.TSV_EXT );
 	}
 
 	/**
@@ -264,35 +261,6 @@ public class OtuUtil
 			return true;
 		}
 
-		return false;
-	}
-
-	/**
-	 * Check the module to determine if it generated OTU count files.
-	 * 
-	 * @param module BioModule
-	 * @return TRUE if module generated OTU count files
-	 * @throws Exception if errors occur
-	 */
-	public static boolean isOtuModule( final BioModule module )
-	{
-		try
-		{
-			final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
-					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-	
-			for( final File f: files )
-			{
-				if( isOtuFile( f ) )
-				{
-					return true;
-				}
-			}
-		}
-		catch( Exception ex )
-		{
-			// RETURN FALSE
-		}
 		return false;
 	}
 

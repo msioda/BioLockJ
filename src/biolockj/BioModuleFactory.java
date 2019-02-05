@@ -11,7 +11,9 @@
  */
 package biolockj;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import biolockj.module.BioModule;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.implicit.RegisterNumReads;
@@ -27,6 +29,84 @@ public class BioModuleFactory
 	private BioModuleFactory() throws Exception
 	{
 		initModules();
+	}
+
+	/**
+	 * This method returns all module post-requisites (including post-requisites of the post-requisites).
+	 * 
+	 * @param module Current BioModule
+	 * @return List of post-requisite module names
+	 * @throws Exception if runtime errors occur
+	 */
+	protected List<String> getPostRequisites( final BioModule module ) throws Exception
+	{
+		if( --safteyCheck == 0 )
+		{
+			throw new Exception( "Too many calls [" + SAFE_MAX + "] to getPostRequisites( module )" );
+		}
+		final List<String> postReqs = new ArrayList<>();
+		for( final String postReq: module.getPostRequisiteModules() )
+		{
+			if( !postReqs.contains( postReq ) )
+			{
+				postReqs.add( postReq );
+			}
+
+			final List<String> postPostReqs = getPostRequisites( ModuleUtil.getModule( postReq ) );
+			for( final String postPostReq: postPostReqs )
+			{
+				if( !postReqs.contains( postPostReq ) )
+				{
+					postReqs.add( postPostReq );
+				}
+			}
+		}
+
+		return postReqs;
+	}
+
+	/**
+	 * This method returns all module prerequisites (including prerequisites of the prerequisites).
+	 * 
+	 * @param module Current BioModule
+	 * @return List of prerequisite module names
+	 * @throws Exception if runtime errors occur
+	 */
+	protected List<String> getPreRequisites( final BioModule module ) throws Exception
+	{
+		if( --safteyCheck == 0 )
+		{
+			throw new Exception( "Too many calls [" + SAFE_MAX + "] to getPreRequisites( module )" );
+		}
+		final List<String> preReqs = new ArrayList<>();
+		for( final String preReq: module.getPreRequisiteModules() )
+		{
+			final List<String> prePreReqs = getPreRequisites( ModuleUtil.getModule( preReq ) );
+			for( final String prePreReq: prePreReqs )
+			{
+				if( !preReqs.contains( prePreReq ) )
+				{
+					preReqs.add( prePreReq );
+				}
+			}
+
+			if( !preReqs.contains( preReq ) )
+			{
+				preReqs.add( preReq );
+			}
+		}
+
+		return preReqs;
+	}
+
+	private String addModule( final String className )
+	{
+		if( className.startsWith( Constants.MODULE_CLASSIFIER_PACKAGE ) )
+		{
+			branchClassifier = true;
+		}
+
+		return className;
 	}
 
 	/**
@@ -50,14 +130,13 @@ public class BioModuleFactory
 
 		return bioModules;
 	}
-	
 
 	/**
 	 * Get the configured modules + implicit modules if configured.
 	 */
 	private List<String> getConfigModules() throws Exception
 	{
-		final List<String> configModules = Config.requireList( Config.INTERNAL_BLJ_MODULE );
+		final List<String> configModules = Config.requireList( Constants.INTERNAL_BLJ_MODULE );
 		final List<String> modules = new ArrayList<>();
 		if( !Config.getBoolean( Constants.DISABLE_ADD_IMPLICIT_MODULES ) )
 		{
@@ -89,7 +168,7 @@ public class BioModuleFactory
 				warn( "Ignoring configured module [" + module
 						+ "] since implicit BioModules are added to the pipeline by the system if needed.  "
 						+ "To override this behavior and ignore implicit designation, udpate project Config: ["
-						+ Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Config.TRUE + "]" );
+						+ Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE + "]" );
 			}
 			else
 			{
@@ -100,7 +179,38 @@ public class BioModuleFactory
 		return modules;
 	}
 
+	private int getCountModIndex() throws Exception
+	{
+		int i = -1;
+		final boolean addMod = requireCountMod();
+		if( addMod )
+		{
 
+			if( moduleCache.size() == 1 || !moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
+			{
+				i = 1;
+			}
+			else if( moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
+			{
+				i = 2;
+			}
+		}
+
+		Log.debug( getClass(), addMod ? "ADD count module at index: " + i: "No need to add count mdoule" );
+
+		return i;
+	}
+
+	private List<String> getCountModules()
+	{
+		final List<String> mods = new ArrayList<>();
+		mods.add( RegisterNumReads.class.getName() );
+		mods.add( SeqFileValidator.class.getName() );
+		mods.add( TrimPrimers.class.getName() );
+		mods.add( PearMergeReads.class.getName() );
+		return mods;
+
+	}
 
 	private boolean hasGzippedInput() throws Exception
 	{
@@ -125,12 +235,12 @@ public class BioModuleFactory
 	{
 		final List<String> configModules = getConfigModules();
 		List<String> branchModules = new ArrayList<>();
-		
+
 		for( final String className: configModules )
 		{
 			safteyCheck = SAFE_MAX;
-			BioModule module = getModule( className );
-			if( !Config.getBoolean( Constants.DISABLE_PRE_REQ_MODULES )  )
+			final BioModule module = ModuleUtil.getModule( className );
+			if( !Config.getBoolean( Constants.DISABLE_PRE_REQ_MODULES ) )
 			{
 				for( final String mod: getPreRequisites( module ) )
 				{
@@ -146,9 +256,10 @@ public class BioModuleFactory
 				branchModules.add( addModule( className ) );
 			}
 
+			safteyCheck = SAFE_MAX;
 			if( !module.getPostRequisiteModules().isEmpty() )
 			{
-				for( final String mod: module.getPostRequisiteModules() )
+				for( final String mod: getPostRequisites( module ) )
 				{
 					if( !branchModules.contains( mod ) )
 					{
@@ -156,10 +267,10 @@ public class BioModuleFactory
 					}
 				}
 			}
- //foundClassifier && 
-			
+
 			if( foundClassifier && branchClassifier )
 			{
+				Log.info( getClass(), "Found another classifier: reset branch" );
 				branchClassifier = false;
 				foundClassifier = false;
 				moduleCache.addAll( branchModules );
@@ -170,103 +281,27 @@ public class BioModuleFactory
 				foundClassifier = true;
 				branchClassifier = false;
 			}
-			
+
 		}
-		
+
 		if( !branchModules.isEmpty() )
 		{
 			moduleCache.addAll( branchModules );
 		}
-		
+
 		insertConditionalModules();
-	}
-	
-	private String addModule( String className )
-	{
-		if( className.startsWith( Constants.MODULE_CLASSIFIER_PACKAGE ) )
-		{
-			branchClassifier = true;
-		}
-		
-		return className;
-	}
-
-
-	
-	/**
-	 * This method returns all module prerequisites (including prerequisites and post-requisites for the prerequisites).
-	 * 
-	 * @param module Current BioModule
-	 * @return List of prerequisite module names
-	 * @throws Exception if runtime errors occur
-	 */
-	protected List<String> getPreRequisites( final BioModule module ) throws Exception
-	{
-		if( --safteyCheck == 0 )
-		{
-			throw new Exception( "Too many calls ["+SAFE_MAX+"] to getPreRequisites( module )" );
-		}
-		final List<String> preReqs = new ArrayList<>();
-		for( final String preReq: module.getPreRequisiteModules() )
-		{
-			final List<String> prePreReqs = getPreRequisites( getModule( preReq ) );
-			for( final String prePreReq: prePreReqs )
-			{
-				if( !preReqs.contains( prePreReq ) )
-				{
-					preReqs.add( prePreReq );
-				}
-			}
-			
-			if( !preReqs.contains( preReq ) )
-			{
-				preReqs.add( preReq );
-			}
-		}
-		
-		return preReqs;
-	}
-	
-
-	private boolean requireCountMod() throws Exception
-	{
-		return !foundCountMod && Collections.disjoint( moduleCache, getCountModules() ) 
-				&& Config.getBoolean( Config.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
-	}
-	
-	
-	private int getCountModIndex() throws Exception
-	{
-		int i = -1;
-		boolean addMod = requireCountMod();
-		if( addMod )
-		{
-			
-			if( ( moduleCache.size() == 1 ) || !moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
-			{
-				i = 1;
-			}
-			else if( moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) )
-			{
-				i = 2;
-			}
-		}
-		
-		Log.debug( getClass(), addMod ? "ADD count module at index: " + i : "No need to add count mdoule"  );
-		
-		return i;
 	}
 
 	private void insertConditionalModules() throws Exception
 	{
 		final List<String> finalModules = new ArrayList<>();
-		int i = getCountModIndex();
+		final int i = getCountModIndex();
 		for( final String module: moduleCache )
 		{
 			if( finalModules.size() == i )
 			{
 				finalModules.add( SeqFileValidator.class.getName() );
-				info( "Config property [ " + Config.REPORT_NUM_READS + "=" + Config.TRUE + " ] & [ "
+				info( "Config property [ " + Constants.REPORT_NUM_READS + "=" + Constants.TRUE + " ] & [ "
 						+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
 						+ " ] --> Adding module: " + SeqFileValidator.class.getName() );
 			}
@@ -278,7 +313,7 @@ public class BioModuleFactory
 				foundSeqMod = true;
 				finalModules.add( Gunzipper.class.getName() );
 			}
-			else if( isSeqProcessingModule( module )  )
+			else if( isSeqProcessingModule( module ) )
 			{
 				foundSeqMod = true;
 			}
@@ -287,17 +322,6 @@ public class BioModuleFactory
 		}
 
 		moduleCache = finalModules;
-	}
-	
-	private List<String> getCountModules()
-	{
-		final List<String> mods = new ArrayList<>();
-		mods.add( RegisterNumReads.class.getName() );
-		mods.add( SeqFileValidator.class.getName() );
-		mods.add( TrimPrimers.class.getName() );
-		mods.add( PearMergeReads.class.getName() );
-		return mods;
-		
 	}
 
 	private boolean isImplicitModule( final String moduleName ) throws ClassNotFoundException
@@ -314,9 +338,24 @@ public class BioModuleFactory
 				|| name.startsWith( Constants.MODULE_CLASSIFIER_PACKAGE );
 	}
 
+	private boolean requireCountMod() throws Exception
+	{
+		return !foundCountMod && Collections.disjoint( moduleCache, getCountModules() )
+				&& Config.getBoolean( Constants.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
+	}
+
 	private boolean requireGunzip( final String module ) throws Exception
 	{
-		return !foundSeqMod && hasGzippedInput() && isSeqProcessingModule( module ) && module.toLowerCase().contains( "qiime" );
+		return !foundSeqMod && hasGzippedInput() && isSeqProcessingModule( module )
+				&& module.toLowerCase().contains( "qiime" );
+	}
+
+	private void warn( final String msg ) throws Exception
+	{
+		if( !RuntimeParamUtil.isDirectMode() )
+		{
+			Log.warn( NextFlowUtil.class, msg );
+		}
 	}
 
 	/**
@@ -329,19 +368,15 @@ public class BioModuleFactory
 	{
 		if( factory == null )
 		{
-			registerModuleList();
+			initFactory();
 		}
-		final List<BioModule> modules = factory.buildModules();
-		destroy();
-		return modules;
+
+		return factory.buildModules();
 	}
 
-	/**
-	 * Destroy the factory
-	 */
-	public static void destroy()
+	public static List<String> geModuleList()
 	{
-		factory = null;
+		return factory.moduleCache;
 	}
 
 	/**
@@ -350,36 +385,17 @@ public class BioModuleFactory
 	 * @return List of Module Java class names
 	 * @throws Exception if errors occur
 	 */
-	public static List<String> registerModuleList() throws Exception
+	public static void initFactory() throws Exception
 	{
 		factory = new BioModuleFactory();
-		return factory.getModuleCache();
 	}
 
-	private void warn( final String msg ) throws Exception
-	{
-		if( !RuntimeParamUtil.isDirectMode() )
-		{
-			Log.warn( NextFlowUtil.class, msg );
-		}
-	}
-	
-	private BioModule getModule( final String moduleName ) throws Exception
-	{
-		return (BioModule) Class.forName( moduleName ).newInstance();
-	}
-	
-	public List<String> getModuleCache()
-	{
-		return moduleCache;
-	}
-	
-	private static final int SAFE_MAX = 10;
-	private int safteyCheck = 0;
-	private boolean foundClassifier = false;
 	private boolean branchClassifier = false;
-	private static BioModuleFactory factory = null;
+	private boolean foundClassifier = false;
+	private final boolean foundCountMod = false;
 	private boolean foundSeqMod = false;
-	private boolean foundCountMod = false;
 	private List<String> moduleCache = new ArrayList<>();
+	private int safteyCheck = 0;
+	private static BioModuleFactory factory = null;
+	private static final int SAFE_MAX = 10;
 }

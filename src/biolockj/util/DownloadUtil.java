@@ -21,9 +21,9 @@ import org.apache.commons.io.FileUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.r.R_Module;
 import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
+import biolockj.module.report.r.R_Module;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 
 /**
@@ -66,19 +66,20 @@ public final class DownloadUtil
 			boolean hasRmods = false;
 			for( final BioModule module: modules )
 			{
+				final String modNum = BioLockJUtil.formatDigits( module.getID(), 2 );
 				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getOutputDir() ) );
 				if( module instanceof R_Module )
 				{
 					hasRmods = true;
-					targets += " " + getSrc( module.getID() + "*" + File.separator + "*" + File.separator
-							+ getExts( (R_Module) module, true ) );
+					targets += " " + getSrc(
+							modNum + "*" + File.separator + "*" + File.separator + getExts( (R_Module) module, true ) );
 					downloadSize = downloadSize
 							.add( FileUtils.sizeOfAsBigInteger( ( (ScriptModule) module ).getScriptDir() ) );
 					downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getTempDir() ) );
 				}
 				else
 				{
-					targets += " " + getSrc( module.getID() + "*" + File.separator + "output" + File.separator + "*" );
+					targets += " " + getSrc( modNum + "*" + File.separator + "output" + File.separator + "*" );
 				}
 
 				if( !ModuleUtil.isComplete( module ) )
@@ -86,7 +87,7 @@ public final class DownloadUtil
 					status = "Failed";
 				}
 			}
-			final String pipeRoot = Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath();
+			final String pipeRoot = Config.pipelinePath();
 			final String label = status + ( getDownloadModules().size() > 1 ? " Modules --> ": " Module --> " );
 			final String displaySize = FileUtils.byteCountToDisplaySize( downloadSize );
 			final String rDirs = hasRmods
@@ -117,7 +118,7 @@ public final class DownloadUtil
 				dir = dir + File.separator;
 			}
 
-			return dir + Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName();
+			return dir + Config.pipelineName();
 		}
 
 		return null;
@@ -149,7 +150,7 @@ public final class DownloadUtil
 	 * <ul>
 	 * <li>{@link biolockj.module.report.taxa.AddMetadataToTaxaTables}
 	 * <li>{@link biolockj.module.report.JsonReport}
-	 * <li>Any module that implements {@link biolockj.module.r.R_Module} interface
+	 * <li>Any module that implements {@link biolockj.module.report.r.R_Module} interface
 	 * </ul>
 	 * If R modules have run, build local output directory to be included in download via scp command.<br>
 	 *
@@ -250,9 +251,8 @@ public final class DownloadUtil
 	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception
 	{
 
-		final File script = new File( Config.getExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath()
-				+ File.separator + RUN_ALL_SCRIPT );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( script, true ) );
+		final File script = new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
 
 		if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{

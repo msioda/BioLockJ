@@ -197,8 +197,7 @@ public class Log
 	 */
 	public static void initialize( final String name ) throws Exception
 	{
-		logFile = new File( Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getAbsolutePath() + File.separator
-				+ name + Constants.LOG_EXT );
+		logFile = new File( Config.pipelinePath() + File.separator + name + Constants.LOG_EXT );
 		System.setProperty( LOG_FILE, logFile.getAbsolutePath() );
 		System.setProperty( LOG_LEVEL_PROPERTY, validateLogLevel() );
 		System.setProperty( LOG_APPEND, String.valueOf( logFile.exists() ) );
@@ -270,7 +269,7 @@ public class Log
 	{
 		Log.info( Log.class, Log.LOG_SPACER );
 		Log.info( Log.class, "Pipeline Project Config File: " + Config.getConfigFilePath() );
-		Log.info( Log.class, "Pipeline Default Config Files: " + Config.getList( Config.INTERNAL_DEFAULT_CONFIG ) );
+		Log.info( Log.class, "Pipeline Default Config Files: " + Config.getList( Constants.INTERNAL_DEFAULT_CONFIG ) );
 		Log.info( Log.class, Log.LOG_SPACER );
 		Log.info( Log.class, "===> List All Configured Properties:" );
 		Log.info( Log.class, Log.LOG_SPACER );

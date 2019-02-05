@@ -1,18 +1,18 @@
-# Deployment path: $BLJ/resources/docker/blj_bash_script.Dockerfile
+# Deployment path: $BLJ/resources/docker/blj_bash.Dockerfile
 
-FROM blj_basic
+FROM biolockj/blj_basic
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
-ARG VER
-ENV PEAR_URL="https://github.com/mikesioda/BioLockJ_Dev/releases/download/v1.0"
 
 #2.) ================= Install PEAR =================
+ENV VER="pear-0.9.10-bin-64"
+ENV PEAR_URL="https://github.com/mikesioda/BioLockJ_Dev/releases/download/v1.0"
 RUN cd /usr/local/bin && \
-	wget -qO- $PEAR_URL/${VER}.tgz | bsdtar -xzf- && \
-	mv pear/* . && \
-	rm -rf pear && \
-	mv ${VER} pear
+	wget $PEAR_URL/$VER.gz && \
+	gunzip $VER.gz && \
+	chmod o+x $VER && \
+	mv $VER pear
 	
 #3.) =======================  Cleanup =================
 RUN	apt-get clean && \
@@ -22,4 +22,4 @@ RUN	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* 
 	
 #4.) ================= Container Command =================
-CMD [ "$COMPUTE_SCRIPT" ]
+CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]

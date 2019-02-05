@@ -22,8 +22,7 @@ import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
-import biolockj.module.classifier.ClassifierModule;
-import biolockj.module.r.CalculateStats;
+import biolockj.module.report.r.R_CalculateStats;
 
 /**
  * Simple utility containing String manipulation and formatting functions.
@@ -92,14 +91,15 @@ public class BioLockJUtil
 				}
 				if( i > 1 )
 				{
-					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) deleted: " + file.getAbsolutePath() );
+					Log.warn( BioLockJUtil.class, "Attempt #" + i + " succeeded in deleting file: "
+							+ file.getAbsolutePath() + "  --> with FileUtils.forceDelete( file )" );
 				}
 				return true;
 			}
 			catch( final IOException ex )
 			{
-				Log.info( BioLockJUtil.class,
-						"Waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
+				Log.info( BioLockJUtil.class, "Failed while still waiting for resource to become free [" + i + "]: "
+						+ file.getAbsolutePath() );
 			}
 		}
 
@@ -276,8 +276,7 @@ public class BioLockJUtil
 	 */
 	public static String getDirectModuleParam( final BioModule module ) throws Exception
 	{
-		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.requireExistingDir( Config.PROJECT_PIPELINE_DIR ).getName()
-				+ ":" + module.getModuleDir().getName();
+		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
 	}
 
 	/**
@@ -331,7 +330,7 @@ public class BioLockJUtil
 			dirs.add( dir );
 			return dirs;
 		}
-		return Config.requireExistingDirs( Config.INPUT_DIRS );
+		return Config.requireExistingDirs( Constants.INPUT_DIRS );
 	}
 
 	/**
@@ -347,17 +346,17 @@ public class BioLockJUtil
 			Collection<File> files = new HashSet<>();
 			for( final File dir: getInputDirs() )
 			{
-				Log.info( SeqUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
+				Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
 				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 			}
-			Log.info( SeqUtil.class, "# Initial input files found: " + files.size() );
+			Log.info( BioLockJUtil.class, "# Initial input files found: " + files.size() );
 
-			files = SeqUtil.removeIgnoredAndEmptyFiles( files );
-			inputFiles.addAll( SeqUtil.removeIgnoredAndEmptyFiles( files ) );
+			files = removeIgnoredAndEmptyFiles( files );
+			inputFiles.addAll( files );
 
 			Log.info( SeqUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 
-			setPipelineInputFileType();
+			setPipelineInputFileTypes();
 		}
 
 		return inputFiles;
@@ -454,6 +453,35 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Remove ignored and empty files from the input files.
+	 * 
+	 * @param files Collection of files
+	 * @return valid files
+	 * @throws Exception if errors occur
+	 */
+	public static List<File> removeIgnoredAndEmptyFiles( final Collection<File> files ) throws Exception
+	{
+		final List<File> validInputFiles = new ArrayList<>();
+		for( final File file: files )
+		{
+			final boolean isEmpty = FileUtils.sizeOf( file ) < 1L;
+			if( isEmpty )
+			{
+				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
+			}
+			else if( Config.getSet( SeqUtil.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+			{
+				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
+			}
+			else
+			{
+				validInputFiles.add( file );
+			}
+		}
+		return validInputFiles;
+	}
+
+	/**
 	 * Remove the outer single or double quotes of the given value.<br>
 	 * Quotes are only removed if quotes are found as very 1st and last characters.
 	 * 
@@ -492,7 +520,7 @@ public class BioLockJUtil
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
-	private static void setPipelineInputFileType() throws Exception
+	private static void setPipelineInputFileTypes() throws Exception
 	{
 		final Set<String> fileTypes = new HashSet<>();
 
@@ -510,11 +538,11 @@ public class BioLockJUtil
 			{
 				fileTypes.add( PIPELINE_R_INPUT_TYPE );
 			}
-			else if( CalculateStats.isStatsFile( file ) )
+			else if( R_CalculateStats.isStatsFile( file ) )
 			{
 				fileTypes.add( PIPELINE_STATS_TABLE_INPUT_TYPE );
 			}
-			else if( file.getName().endsWith( ClassifierModule.PROCESSED ) )
+			else if( file.getName().endsWith( Constants.PROCESSED ) )
 			{
 				fileTypes.add( PIPELINE_PARSER_INPUT_TYPE );
 			}
@@ -565,7 +593,7 @@ public class BioLockJUtil
 	 * With this input a user can run a pipeline with only 2 modules:<br>
 	 * <ol>
 	 * <li>{@link biolockj.module.report.JsonReport}
-	 * <li>{@link biolockj.module.r.BuildOtuPlots}
+	 * <li>{@link biolockj.module.report.r.R_PlotOtus}
 	 * </ol>
 	 * 
 	 */
@@ -601,7 +629,7 @@ public class BioLockJUtil
 	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_STATS_TABLE_INPUT_TYPE}<br>
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} if input files are tables of statistics such as those
-	 * output by {@link biolockj.module.r.CalculateStats}.
+	 * output by {@link biolockj.module.report.r.R_CalculateStats}.
 	 */
 	public static final String PIPELINE_STATS_TABLE_INPUT_TYPE = "stats";
 

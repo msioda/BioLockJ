@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
@@ -247,7 +248,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 
 	private boolean needsCountModule() throws Exception
 	{
-		for( final String module: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
+		for( final String module: Config.requireList( Constants.INTERNAL_BLJ_MODULE ) )
 		{
 			if( module.equals( SeqFileValidator.class.getName() ) || module.equals( TrimPrimers.class.getName() ) )
 			{

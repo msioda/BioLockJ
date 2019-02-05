@@ -262,7 +262,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	 */
 	protected void initializeMaps() throws Exception
 	{
-		Log.info( getClass(), "Initialize QIIME_ID to SAMPLE_ID Maps for: " + MetaUtil.getFile().getAbsolutePath() );
+		Log.info( getClass(), "Initialize QIIME_ID to SAMPLE_ID Maps for: " + MetaUtil.getPath() );
 		int fileNameCol = 0;
 		boolean isHeaderRow = true;
 		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );

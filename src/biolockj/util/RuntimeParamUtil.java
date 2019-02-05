@@ -13,9 +13,7 @@ package biolockj.util;
 
 import java.io.File;
 import java.util.*;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Log;
+import biolockj.*;
 
 /**
  * This utility processes the application runtime parameters passed to BioLockJ.
@@ -111,7 +109,7 @@ public class RuntimeParamUtil
 	/**
 	 * Runtime property getter for {@value #INPUT_DIR_FLAG}
 	 * 
-	 * @return Host {@value biolockj.Config#INPUT_DIRS} directory
+	 * @return Host {@value biolockj.Constants#INPUT_DIRS} directory
 	 */
 	public static String getDockerHostInputDir()
 	{
@@ -173,7 +171,7 @@ public class RuntimeParamUtil
 			else
 			{
 				sb.append( ( sb.toString().isEmpty() ? "": " " ) + key );
-				sb.append( args.get( key ).equals( Config.TRUE ) ? "": " " + args.get( key ) );
+				sb.append( args.get( key ).equals( Constants.TRUE ) ? "": " " + args.get( key ) );
 			}
 		}
 
@@ -375,7 +373,7 @@ public class RuntimeParamUtil
 		{
 			if( arg.equals( DOCKER_FLAG ) )
 			{
-				params.put( DOCKER_FLAG, Config.TRUE );
+				params.put( DOCKER_FLAG, Constants.TRUE );
 			}
 			else if( prevParam.equals( RESTART_FLAG ) )
 			{

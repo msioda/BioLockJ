@@ -9,7 +9,7 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.r;
+package biolockj.module.report.r;
 
 import java.io.*;
 import java.util.*;
@@ -21,9 +21,7 @@ import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
-import biolockj.util.BashScriptBuilder;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.RuntimeParamUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule is the superclass for R script generating modules.
@@ -202,7 +200,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 				{
 					continue;
 				}
-				else if( file.getName().indexOf( "." ) > 0 )
+				else if( file.getName().indexOf( "." ) > -1 )
 				{
 					final String ext = file.getName().substring( file.getName().lastIndexOf( "." ) + 1 );
 					if( map.get( ext ) == null )
@@ -284,7 +282,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_R + "() {" );
 		lines.add( Config.getExe( EXE_RSCRIPT ) + " $1" );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 
@@ -312,14 +310,14 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Add {@link biolockj.module.r.CalculateStats} to standard {@link #getPreRequisiteModules()}
+	 * Add {@link biolockj.module.report.r.R_CalculateStats} to standard {@link #getPreRequisiteModules()}
 	 */
 	protected List<String> getStatPreReqs() throws Exception
 	{
 		final List<String> preReqs = super.getPreRequisiteModules();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( CalculateStats.class.getName() );
+			preReqs.add( ModuleUtil.getDefaultStatsModule() );
 		}
 		return preReqs;
 	}

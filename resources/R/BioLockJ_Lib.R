@@ -166,7 +166,7 @@ getNumericFields <- function() {
 
 # Return file path of file in rootDir, with the pipeline name appended as a prefix to name
 getPath <- function( rootDir, name ) {
-   return( file.path( rootDir, paste0( getProperty("project.pipelineName"), "_", name ) ) )
+   return( file.path( rootDir, paste0( basename( getPipelineDir() ), "_", name ) ) )
 }
 
 # Return the pipeline root directory
@@ -209,7 +209,7 @@ getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
 # 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
 getTaxaTable <- function( level ) {
 
-	taxaFile = pipelineFile( paste0( level, ".*_metaMerged.tsv" ) )
+	taxaFile = pipelineFile( paste0( ".*_", level, "_metaMerged.tsv" ) )
   	if( is.null( taxaFile )  ) {
 		logInfo( c( "BioLockJ_Lib.R function --> getTaxaTable(", level, ") returned NULL" ) )
 		return( NULL )

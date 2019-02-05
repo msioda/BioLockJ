@@ -13,9 +13,8 @@ package biolockj.module.implicit.qiime;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
+import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -68,15 +67,14 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		final List<String> lines = new ArrayList<>();
 		lines.add( SCRIPT_PRINT_CONFIG + " -t" );
 		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L "
-				+ getQiimeTaxaLevels() + " -o " + outDir );
+				+ getLowestQiimeTaxaLevel() + " -o " + outDir );
 		lines.add( SCRIPT_SUMMARIZE_BIOM + " -i " + files.get( 0 ) + " -o " + tempDir + OTU_SUMMARY_FILE );
 		if( Config.getString( QIIME_ALPHA_DIVERSITY_METRICS ) != null )
 		{
 			final File newMapping = new File( tempDir + MetaUtil.getMetadataFileName() );
 			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics()
 					+ " -o " + tempDir + ALPHA_DIVERSITY_TABLE );
-
-			lines.add( SCRIPT_ADD_ALPHA_DIVERSITY + " -m " + MetaUtil.getFile().getAbsolutePath() + " -i " + tempDir
+			lines.add( SCRIPT_ADD_ALPHA_DIVERSITY + " -m " + MetaUtil.getPath() + " -i " + tempDir
 					+ ALPHA_DIVERSITY_TABLE + " -o " + newMapping );
 			MetaUtil.setFile( newMapping );
 		}
@@ -134,6 +132,10 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
 				|| Config.requireString( MetaUtil.META_NULL_VALUE ).equals( ALPHA_DIV_NULL_VALUE ) )
 		{
+			if( !metrics.isEmpty() )
+			{
+				MetaUtil.refreshCache();
+			}
 			return; // nothing to do
 		}
 
@@ -177,8 +179,9 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		{
 			reader.close();
 			writer.close();
-			MetaUtil.refreshCache(); // to print out the new alpha metric fields
+			MetaUtil.refreshCache(); // to add new null values in alpha metric field values
 		}
+
 	}
 
 	/**
@@ -294,6 +297,22 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	}
 
 	/**
+	 * If superclass is fed by another QiimeClassifier, it must be a subclass with biom output. Otherwise, if a
+	 * subclass, it must expect sequence file input.
+	 */
+	@Override
+	public boolean isValidInputModule( final BioModule module )
+	{
+		if( getClass().getName().equals( QiimeClassifier.class.getName() )
+				&& module.getClass().getName().toLowerCase().contains( Constants.QIIME ) )
+		{
+			return true;
+		}
+
+		return super.isValidInputModule( module );
+	}
+
+	/**
 	 * Module input directories are set to the previous module output directory.<br>
 	 * To ensure we use the correct path, get path from {@link #getInputFiles()}
 	 *
@@ -331,22 +350,24 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
 			{
 				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Config.INPUT_DIRS );
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: "
+						+ Constants.INPUT_DIRS );
 			}
 			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
 			{
 				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
 			}
 			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
 			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
-						+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + NUM_THREADS );
+				throw new Exception(
+						"INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + Constants.EXE_CLASSIFIER_PARAMS
+								+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( "-f " ) > -1 )
 			{
 				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
 			}
 
 			switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
@@ -418,44 +439,41 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		return sb.toString();
 	}
 
-	/**
-	 * Set the taxonomy level indicators.
-	 *
-	 * @return QIIME taxonomy level numbers as a comma separated list
-	 */
-	private String getQiimeTaxaLevels()
-	{
-		String levels = "";
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.DOMAIN ) )
-		{
-			levels += "1";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.PHYLUM ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "2";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.CLASS ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "3";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.ORDER ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "4";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.FAMILY ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "5";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.GENUS ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "6";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.SPECIES ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "7";
-		}
 
-		return levels;
+	private String getLowestQiimeTaxaLevel() throws Exception
+	{
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.SPECIES ) )
+		{
+			return "7";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.GENUS ) )
+		{
+			return "6";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.FAMILY ) )
+		{
+			return "5";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.ORDER ) )
+		{
+			return "4";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.CLASS ) )
+		{
+			return "3";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.PHYLUM ) )
+		{
+			return "2";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.DOMAIN ) )
+		{
+			return "1";
+		}
+		
+		throw new Exception( "Should not be possible to reach this error, value based on required field: " 
+				+ TaxaUtil.REPORT_TAXONOMY_LEVELS );
+		
 	}
 
 	private String switches = null;

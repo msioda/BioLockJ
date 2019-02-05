@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
@@ -43,8 +44,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		if( RuntimeParamUtil.isDockerMode() || Config.requirePositiveInteger( SCRIPT_BATCH_SIZE ) >= files.size() )
 		{
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
-			lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getFile().getAbsolutePath(),
-					getTempDir() ) );
+			lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 			lines.add( copyBatchOtuTableToOutputDir( getTempDir(), null ) );
 			data.add( lines );
 		}
@@ -120,10 +120,9 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_CREATE_BATCH_MAPPING + "() {" );
-		lines.add( Config.getExe( Config.EXE_AWK ) + " 'NR==1' " + MetaUtil.getFile().getAbsolutePath() + " > $1" );
-		lines.add( Config.getExe( Config.EXE_AWK ) + " 'NR>'$2'&&NR<='$3 " + MetaUtil.getFile().getAbsolutePath()
-				+ " >> $1" );
-		lines.add( "}" );
+		lines.add( Config.getExe( Constants.EXE_AWK ) + " 'NR==1' " + MetaUtil.getPath() + " > $1" );
+		lines.add( Config.getExe( Constants.EXE_AWK ) + " 'NR>'$2'&&NR<='$3 " + MetaUtil.getPath() + " >> $1" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 

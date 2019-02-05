@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
@@ -58,8 +59,8 @@ public class Gunzipper extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_GUNZIP + "() {" );
-		lines.add( Config.getExe( Config.EXE_GZIP ) + " -cd $1 > $2" );
-		lines.add( "}" );
+		lines.add( Config.getExe( Constants.EXE_GZIP ) + " -cd $1 > $2" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 
@@ -78,5 +79,5 @@ public class Gunzipper extends SeqModuleImpl implements SeqModule
 	/**
 	 * Name of the bash function used to decompress gzipped files: {@value #FUNCTION_GUNZIP}
 	 */
-	protected static final String FUNCTION_GUNZIP = "decompressGzip";
+	protected static final String FUNCTION_GUNZIP = "openZip";
 }

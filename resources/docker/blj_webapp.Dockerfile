@@ -1,6 +1,6 @@
 # Deployment path: $BLJ/resources/docker/blj_webapp.Dockerfile
 
-FROM blj_basic_py2
+FROM biolockj/blj_basic_py2
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
@@ -28,13 +28,20 @@ RUN cd /usr/local/bin && \
 ARG BLJ_DATE
 ARG VER
 ENV BLJ_TAR=biolockj_${VER}.tgz
-RUN echo ${BLJ_DATE} && mkdir $BLJ && cd $BLJ && \
-	wget -qO- $BLJ_URL/${VER}/$BLJ_TAR | bsdtar -xzf- && \
-	rm -rf $BLJ/[bilp]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/src \
+ENV WGET_URL="$BLJ_URL/${VER}/$BLJ_TAR"
+RUN echo ${BLJ_DATE} && \
+	mkdir $BLJ && \
+	cd $BLJ && \
+	wget -qO- $WGET_URL | bsdtar -xzf- && \
+	rm -rf $BLJ/[bilp]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/src && \
 	cp $BLJ/script/* /usr/local/bin
+	
 
 #5.) ================= Install npm  =================
+RUN cp $BLJ/web_app/package*.json ./
 RUN npm install --only=production
+RUN cp -r $BLJ/web_app/* ./
+
 
 #6.) =======================  Cleanup  ==========================
 RUN	apt-get clean && \

@@ -14,6 +14,7 @@ package biolockj.node.r16s;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import biolockj.Constants;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 import biolockj.util.TaxaUtil;
@@ -78,11 +79,15 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 */
 	protected String getLevel( final String taxa ) throws Exception
 	{
-		if( taxa.startsWith( SILVA_AMBIGUOUS_DELIM ) )
+		for( String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA )
 		{
-			return null;
+			if( taxa.startsWith( abmiguousDelim ) )
+			{
+				return null;
+			}
 		}
-		else if( delimToLevelMap.isEmpty() )
+		
+		if( delimToLevelMap.isEmpty() )
 		{
 			if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null )
 			{
@@ -114,10 +119,6 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 */
 	protected static final String QIIME_DOMAIN_DELIM = "k__";
 
-	/**
-	 * Silva ambiguous OTU delim: {@value #SILVA_AMBIGUOUS_DELIM}
-	 */
-	protected static final String SILVA_AMBIGUOUS_DELIM = "Ambiguous_taxa";
 
 	/**
 	 * Silva class taxonomy level delimiter: {@value #SILVA_CLASS_DELIM}

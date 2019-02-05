@@ -42,4 +42,10 @@ public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModul
 	{
 		return SeqUtil.getSeqFiles( files );
 	}
+
+	@Override
+	public boolean isValidInputModule( final BioModule module )
+	{
+		return SeqUtil.isSeqModule( module );
+	}
 }

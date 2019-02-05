@@ -13,20 +13,39 @@ package biolockj.module.seq;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import java.util.zip.GZIPOutputStream;
+import biolockj.*;
 import biolockj.module.*;
+import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.report.Email;
 import biolockj.util.*;
 
 /**
  * This BioModule will merge sequence files into a single combined sequence file, with either the sample ID or an
- * identifying barcode (if defined in the metatata) is stored in the sequence header.<br>
- * BioLockJ is designed to run on demultiplexed data so this must be the last module to run before the Summary module.
+ * identifying bar-code (if defined in the metatata) is stored in the sequence header.<br>
+ * BioLockJ is designed to run on demultiplexed data so this must be the last module to run in its branch.
+ * 
  */
 public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
+
+	// /**
+	// * If enabled, gzip the multiplexed output file.
+	// */
+	// @Override
+	// public List<List<String>> buildScript( final List<File> files ) throws Exception
+	// {
+	// final List<List<String>> script = super.buildScript( files );
+	// if( Config.getBoolean( DO_GZIP ) )
+	// {
+	// final List<String> lines = script.get( script.size() - 1 );
+	// lines.add( FUNCTION_GZIP );
+	// script.clear();
+	// script.remove( script.size() - 1 );
+	// script.add( lines );
+	// }
+	// return script;
+	// }
 
 	/**
 	 * Validate module dependencies:
@@ -42,7 +61,6 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		super.checkDependencies();
 		Log.warn( getClass(), "BioLockJ requires demultiplexed data, so this must be the last module except Email" );
-
 		validateModuleOrder();
 	}
 
@@ -77,6 +95,12 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 			{
 				sb.append( "Module incomplete - no output produced!" + RETURN );
 			}
+
+			if( rcCount > 0 )
+			{
+				sb.append( "# Reads saved with existing reverse compliment header barcode: " + rcCount + RETURN );
+			}
+
 		}
 		catch( final Exception ex )
 		{
@@ -88,6 +112,24 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		return super.getSummary() + sb.toString();
 	}
 
+	// /**
+	// * This method generates the bash function: {@value #FUNCTION_GUNZIP}.
+	// */
+	// @Override
+	// public List<String> getWorkerScriptFunctions() throws Exception
+	// {
+	// final List<String> lines = super.getWorkerScriptFunctions();
+	// if( Config.getBoolean( DO_GZIP ) )
+	// {
+	// lines.add( "function " + FUNCTION_GZIP + "() {" );
+	// lines.add( Config.getExe( Constants.EXE_GZIP ) + " " + getOutputDir().getAbsolutePath() + File.separator
+	// + "*" );
+	// lines.add( "}" + RETURN );
+	// }
+	//
+	// return lines;
+	// }
+
 	/**
 	 * Execute {@link #multiplex(File)} on each input file
 	 */
@@ -95,16 +137,17 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	public void runModule() throws Exception
 	{
 		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
-		if( !DemuxUtil.hasValidBarcodes() )
-		{
-			Log.info( getClass(),
-					"Multiplexer setting Sample ID in sequence header for identification since valid barcodes are not provided" );
-
-		}
 
 		for( final File f: getInputFiles() )
 		{
 			multiplex( f );
+		}
+
+		if( Config.getBoolean( DO_GZIP ) )
+		{
+			Log.warn( getClass(), "BioLockJ gzip data in: " + muxFiles );
+			compressData();
+			removeDecompressedFiles();
 		}
 	}
 
@@ -118,27 +161,37 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 */
 	protected String getHeader( final File file, final List<String> seqLines ) throws Exception
 	{
-		final String header = seqLines.get( 0 );
-		final String headerChar = seqLines.get( 0 ).substring( 0, 1 );
+		final String header = seqLines.get( 0 ).trim();
+		final String headerChar = header.substring( 0, 1 );
 		final String sampleId = SeqUtil.getSampleId( file.getName() );
 		final long numReads = incrementNumReads( file );
-		if( DemuxUtil.hasValidBarcodes() )
+
+		if( DemuxUtil.barcodeInHeader() )
+		{
+			return header;
+		}
+		else if( DemuxUtil.hasValidBarcodes() )
 		{
 			final String barcode = MetaUtil.getField( sampleId, Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
+			final String rc = SeqUtil.reverseComplement( barcode );
+
 			if( header.contains( barcode ) )
 			{
 				return header;
 			}
+			else if( header.contains( rc ) )
+			{
+				rcCount++;
+				return header;
+			}
 			else
 			{
-				return header + ":" + barcode;
+				return header + " " + barcode;
 			}
 		}
 		else
 		{
-			final String idCol = Config.getString( ID_COL );
-			final String id = idCol == null ? sampleId: MetaUtil.getField( sampleId, idCol );
-			return headerChar + id + "_" + id + "." + numReads + ":" + header.substring( 1 );
+			return headerChar + sampleId + "_" + sampleId + "." + numReads + ":" + header.substring( 1 );
 		}
 	}
 
@@ -153,25 +206,33 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	protected void multiplex( final File sample ) throws Exception
 	{
 		Log.info( getClass(), "Multiplexing file  = " + sample.getAbsolutePath() );
+		final File muxFile = new File( getMutliplexeFileName( sample ) );
 		final List<String> seqLines = new ArrayList<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( sample );
-		final BufferedWriter writer = new BufferedWriter(
-				new FileWriter( new File( getMutliplexeFileName( sample ) ), true ) );
-		for( String line = reader.readLine(); line != null; line = reader.readLine() )
+		BufferedReader reader = null;
+		BufferedWriter writer = null;
+		try
 		{
-			seqLines.add( line );
-			if( seqLines.size() == SeqUtil.getNumLinesPerRead() ) // full read
+			reader = BioLockJUtil.getFileReader( sample );
+			writer = new BufferedWriter( new FileWriter( muxFile, true ) );
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				writer.write( getHeader( sample, seqLines ) + RETURN );
-				for( int i = 1; i < seqLines.size(); i++ )
+				seqLines.add( line );
+				if( seqLines.size() == SeqUtil.getNumLinesPerRead() ) // full read
 				{
-					writer.write( seqLines.get( i ) + RETURN );
+					writer.write( getHeader( sample, seqLines ) + RETURN );
+					for( int i = 1; i < seqLines.size(); i++ )
+					{
+						writer.write( seqLines.get( i ) + RETURN );
+					}
+					seqLines.clear();
 				}
-				seqLines.clear();
 			}
 		}
-		writer.close();
-		reader.close();
+		finally
+		{
+			writer.close();
+			reader.close();
+		}
 	}
 
 	/**
@@ -182,33 +243,65 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 */
 	protected void validateModuleOrder() throws Exception
 	{
-		boolean invalid = false;
-		boolean found = false;
-		for( final BioModule bioModule: Pipeline.getModules() )
-		{
-			if( found && !( bioModule instanceof Email ) )
-			{
-				invalid = true;
-			}
-			else if( bioModule.getClass().equals( getClass() ) )
-			{
-				found = true;
-			}
-		}
+		final int modCount = Pipeline.getModules().size();
+		final BioModule nextModule = ModuleUtil.getNextModule( this );
+		final BioModule lastModule = Pipeline.getModules().get( modCount - 1 );
+		final BioModule penultimateModule = modCount > 1 ? Pipeline.getModules().get( modCount - 2 ): null;
 
-		if( invalid )
+		if( lastModule.equals( this ) )
+		{
+			Log.info( getClass(), "Multiplexing seqs as final step in pipeline." );
+		}
+		else if( lastModule instanceof Email && penultimateModule.equals( this ) )
+		{
+			Log.info( getClass(), "Multiplexing seqs  as final step before sending email notification" );
+		}
+		else if( nextModule instanceof ClassifierModule )
+		{
+			Log.info( getClass(), "Multiplexing seqs, before branching pipeline with new classifier" );
+		}
+		else
 		{
 			throw new Exception( "Invalid BioModule configuration! " + getClass().getName()
-					+ " must be the last module executed (or last before Email)." + RETURN
-					+ "All other BioLockJ modules are designed to only run on demultiplexed data." );
+					+ " must be the last module executed in the pipeline branch (or last before Email)." + RETURN
+					+ "All other BioLockJ modules require demultiplexed data." );
+		}
+	}
 
+	private void compressData() throws Exception
+	{
+		for( final String path: muxFiles )
+		{
+			FileInputStream fis = null;
+			FileOutputStream fos = null;
+			GZIPOutputStream gzipOS = null;
+			try
+			{
+				fis = new FileInputStream( path );
+				fos = new FileOutputStream( path + Constants.GZIP_EXT );
+				gzipOS = new GZIPOutputStream( fos );
+				final byte[] buffer = new byte[ 1024 ];
+				int len;
+				while( ( len = fis.read( buffer ) ) != -1 )
+				{
+					gzipOS.write( buffer, 0, len );
+				}
+			}
+			finally
+			{
+				gzipOS.close();
+				fos.close();
+				fis.close();
+			}
 		}
 	}
 
 	private String getMutliplexeFileName( final File file ) throws Exception
 	{
-		return getOutputDir().getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
+		final String path = getOutputDir().getAbsolutePath() + File.separator + Config.pipelineName()
 				+ SeqUtil.getReadDirectionSuffix( file ) + "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		muxFiles.add( path );
+		return path;
 	}
 
 	private long getNumReads( final File file ) throws Exception
@@ -249,10 +342,24 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		return numReads;
 	}
 
-	private final Map<String, Long> fwMap = new HashMap<>();
+	private void removeDecompressedFiles() throws Exception
+	{
+		for( final String path: muxFiles )
+		{
+			BioLockJUtil.deleteWithRetry( new File( path ), 5 );
+		}
+	}
 
+	private final Map<String, Long> fwMap = new HashMap<>();
+	private final Set<String> muxFiles = new HashSet<>();
+	private int rcCount = 0;
 	private final Map<String, Long> rvMap = new HashMap<>();
 	private long totalNumFwReads = 0L;
 	private long totalNumRvReads = 0L;
-	private static final String ID_COL = "multiplexer.idCol";
+	/**
+	 * {@link biolockj.Config} boolean property that if enabled will gzip the multiplexed output: {@value #DO_GZIP}:
+	 */
+	protected static final String DO_GZIP = "multiplexer.gzip";
+
+	// private static final String FUNCTION_GZIP = "gZip";
 }

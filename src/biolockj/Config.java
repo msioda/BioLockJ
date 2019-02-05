@@ -38,19 +38,19 @@ public class Config
 	 */
 	public static boolean getBoolean( final String propertyName ) throws ConfigFormatException
 	{
-		if( getString( propertyName ) != null && getString( propertyName ).equalsIgnoreCase( TRUE ) )
+		if( getString( propertyName ) != null && getString( propertyName ).equalsIgnoreCase( Constants.TRUE ) )
 		{
 			return true;
 		}
 		else if( getString( propertyName ) == null )
 		{
-			Config.setConfigProperty( propertyName, FALSE );
-			Log.debug( Config.class, propertyName + " is undefined, so return: " + FALSE );
+			setConfigProperty( propertyName, Constants.FALSE );
+			Log.debug( Config.class, propertyName + " is undefined, so return: " + Constants.FALSE );
 		}
-		else if( !getString( propertyName ).equalsIgnoreCase( FALSE ) )
+		else if( !getString( propertyName ).equalsIgnoreCase( Constants.FALSE ) )
 		{
-			throw new ConfigFormatException( propertyName, "Boolean properties must be set to either " + TRUE + " or "
-					+ FALSE + ".  Update this property in your Config file to a valid option." );
+			throw new ConfigFormatException( propertyName, "Boolean properties must be set to either " + Constants.TRUE
+					+ " or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
 		}
 
 		return false;
@@ -134,17 +134,11 @@ public class Config
 			throw new Exception( "Config.getExe() can be called for properties that begin with \"exe.\"" );
 		}
 
-		// return name of property after trimming "exe.", for example if exe.pear is undefined, return "pear"
+		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
 		if( getString( propertyName ) == null || getString( propertyName ).equals( propertyName.substring( 4 ) ) )
 		{
 			return propertyName.substring( 4 );
 		}
-
-		// DO NOT VERIFY FILE EXISTS --> EXECUTABLE MAY BE CLUSTER MODULE OR ALIAS
-		// if( !RuntimeParamUtil.isDockerMode() && !BashScriptBuilder.clusterModuleExists( getString( propertyName ) ) )
-		// {
-		// return requireExistingFile( propertyName ).getAbsolutePath();
-		// }
 
 		return getString( propertyName );
 	}
@@ -163,6 +157,12 @@ public class Config
 		{
 			throw new ConfigPathException( propertyName, ConfigPathException.DIRECTORY );
 		}
+
+		if( f != null )
+		{
+			Config.setConfigProperty( propertyName, f.getAbsolutePath() );
+		}
+
 		return f;
 	}
 
@@ -175,18 +175,26 @@ public class Config
 	 */
 	public static File getExistingFile( final String propertyName ) throws ConfigPathException
 	{
-		final File f = getExistingFileObject( getString( propertyName ) );
+		File f = getExistingFileObject( getString( propertyName ) );
 		if( f != null && !f.isFile() )
 		{
 			if( f.isDirectory() && f.list( HiddenFileFilter.VISIBLE ).length == 1 )
 			{
 				Log.warn( Config.class,
 						propertyName + " is a directory with only 1 valid file.  Return the lone file within." );
-				return new File( f.list( HiddenFileFilter.VISIBLE )[ 0 ] );
+				f = new File( f.list( HiddenFileFilter.VISIBLE )[ 0 ] );
 			}
-
-			throw new ConfigPathException( propertyName, ConfigPathException.FILE );
+			else
+			{
+				throw new ConfigPathException( propertyName, ConfigPathException.FILE );
+			}
 		}
+
+		if( f != null )
+		{
+			Config.setConfigProperty( propertyName, f.getAbsolutePath() );
+		}
+
 		return f;
 	}
 
@@ -220,6 +228,18 @@ public class Config
 		}
 
 		return list;
+	}
+
+	public static String getModuleProp( final String module, final String prop )
+	{
+		final String moduleProp = suffix( module ) + "." + suffix( prop );
+		final String val = Config.getString( moduleProp );
+		if( val == null )
+		{
+			return prop;
+		}
+		Log.info( Config.class, "Found module specific property: [ " + moduleProp + "=" + val + " ]" );
+		return moduleProp;
 	}
 
 	/**
@@ -307,7 +327,6 @@ public class Config
 	 */
 	public static String getString( final String propertyName )
 	{
-
 		String val = null;
 		final Object obj = props.getProperty( propertyName );
 		if( obj == null )
@@ -420,7 +439,7 @@ public class Config
 	 */
 	public static Map<String, String> getUsedProps()
 	{
-		getString( PROJECT_DEFAULT_PROPS );
+		getString( Constants.PROJECT_DEFAULT_PROPS );
 		return new HashMap<>( usedProps );
 	}
 
@@ -440,9 +459,9 @@ public class Config
 			Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String) key ) );
 		}
 
-		Log.debug( Properties.class, "# initial props: " + props.size() );
+		Log.debug( Config.class, "# initial props: " + props.size() );
 		unmodifiedInputProps.putAll( props );
-		Log.debug( Properties.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
+		Log.debug( Config.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
 		TaxaUtil.initTaxaLevels();
 	}
 
@@ -453,7 +472,18 @@ public class Config
 	 */
 	public static boolean isOnCluster()
 	{
-		return getString( PROJECT_ENV ) != null && getString( PROJECT_ENV ).equals( PROJECT_ENV_CLUSTER );
+		return getString( Constants.PROJECT_ENV ) != null
+				&& getString( Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_CLUSTER );
+	}
+
+	public static String pipelineName()
+	{
+		return getPipelineDir().getName();
+	}
+
+	public static String pipelinePath()
+	{
+		return getPipelineDir().getAbsolutePath();
 	}
 
 	/**
@@ -468,17 +498,17 @@ public class Config
 			throws ConfigNotFoundException, ConfigFormatException
 	{
 		final String val = requireString( propertyName );
-		if( val.equalsIgnoreCase( TRUE ) )
+		if( val.equalsIgnoreCase( Constants.TRUE ) )
 		{
 			return true;
 		}
-		if( val.equalsIgnoreCase( FALSE ) )
+		if( val.equalsIgnoreCase( Constants.FALSE ) )
 		{
 			return false;
 		}
 
 		throw new ConfigFormatException( propertyName,
-				"Property only accepts boolean values: " + TRUE + " or " + FALSE );
+				"Property only accepts boolean values: " + Constants.TRUE + " or " + Constants.FALSE );
 	}
 
 	/**
@@ -540,9 +570,14 @@ public class Config
 			{
 				throw new ConfigPathException( propertyName, ConfigPathException.DIRECTORY );
 			}
+
 			returnDirs.add( dir );
 		}
 
+		if( returnDirs != null && !returnDirs.isEmpty() )
+		{
+			Config.setConfigProperty( propertyName, returnDirs );
+		}
 		return returnDirs;
 	}
 
@@ -757,19 +792,21 @@ public class Config
 		boolean isNew = false;
 		if( RuntimeParamUtil.doRestart() )
 		{
-			setConfigProperty( PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+			setConfigProperty( Constants.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
 		}
 		else if( RuntimeParamUtil.isDirectMode() )
 		{
-			setConfigProperty( PROJECT_PIPELINE_DIR, RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
+			setConfigProperty( Constants.PROJECT_PIPELINE_DIR,
+					RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
 		}
 		else
 		{
 			isNew = true;
-			setConfigProperty( PROJECT_PIPELINE_DIR, BioLockJ.createPipelineDirectory().getAbsolutePath() );
+			setConfigProperty( Constants.PROJECT_PIPELINE_DIR, BioLockJ.createPipelineDirectory().getAbsolutePath() );
 		}
 
-		setConfigProperty( PROJECT_PIPELINE_NAME, Config.requireExistingDir( PROJECT_PIPELINE_DIR ).getName() );
+		Log.info( Config.class,
+				"Init pipeline dir: " + requireExistingDir( Constants.PROJECT_PIPELINE_DIR ).getAbsolutePath() );
 
 		return isNew;
 	}
@@ -853,129 +890,30 @@ public class Config
 		return val;
 	}
 
-	/**
-	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
-	 * Set command line executable awk.
-	 */
-	public static final String EXE_AWK = "exe.awk";
+	private static File getPipelineDir()
+	{
+		if( pipelineDir == null )
+		{
+			try
+			{
+				pipelineDir = requireExistingDir( Constants.PROJECT_PIPELINE_DIR );
+			}
+			catch( final Exception ex )
+			{
+				ex.printStackTrace();
+			}
+		}
+		return pipelineDir;
+	}
 
-	/**
-	 * {@link biolockj.Config} String property {@value #EXE_DOCKER}<br>
-	 * Set command line executable docker
-	 */
-	public static final String EXE_DOCKER = "exe.docker";
-
-	/**
-	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
-	 * Set command line executable gzip
-	 */
-	public static final String EXE_GZIP = "exe.gzip";
-
-	/**
-	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
-	 */
-	public static final String FALSE = "N";
-
-	/**
-	 * {@link biolockj.Config} List property: {@value #INPUT_DIRS}<br>
-	 * Set sequence file directories
-	 */
-	public static final String INPUT_DIRS = "input.dirPaths";
-
-	/**
-	 * {@link biolockj.Config} List property: {@value #INPUT_IGNORE_FILES}<br>
-	 * Set file names to ignore if found in {@value #INPUT_DIRS}
-	 */
-	public static final String INPUT_IGNORE_FILES = "input.ignoreFiles";
-
-	/**
-	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_ALL_MODULES}<br>
-	 * List of all configured, implicit, and pre/post-requisite modules for the pipeline.<br>
-	 * Example: biolockj.module.ImportMetadata, etc.
-	 */
-	public static final String INTERNAL_ALL_MODULES = "internal.allModules";
-
-	/**
-	 * Set BioModule tag in {@link biolockj.Config} file to include in pipeline: {@value #INTERNAL_BLJ_MODULE}<br>
-	 * Example: #BioModule biolockj.module.ImportMetadata
-	 */
-	public static final String INTERNAL_BLJ_MODULE = "#BioModule";
-
-	/**
-	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_DEFAULT_CONFIG}<br>
-	 * List of all nested default config files.<br>
-	 */
-	public static final String INTERNAL_DEFAULT_CONFIG = "internal.defaultConfig";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
-	 * Set file path of default property file. Nested default properties are supported (so the default property file can
-	 * also have a default, and so on).
-	 */
-	public static final String PROJECT_DEFAULT_PROPS = "project.defaultProps";
-
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #PROJECT_ENV}<br>
-	 * Options: {@value #PROJECT_ENV_CLUSTER}, {@value #PROJECT_ENV_AWS}, {@value #PROJECT_ENV_LOCAL}
-	 */
-	public static final String PROJECT_ENV = "project.env";
-
-	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running as an Amazon web service: {@value #PROJECT_ENV_AWS}
-	 */
-	public static final String PROJECT_ENV_AWS = "aws";
-
-	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running on the cluster: {@value #PROJECT_ENV_CLUSTER}
-	 */
-	public static final String PROJECT_ENV_CLUSTER = "cluster";
-
-	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running on a local machine (laptop, etc): {@value #PROJECT_ENV_LOCAL}
-	 */
-	public static final String PROJECT_ENV_LOCAL = "local";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_DIR}<br>
-	 * Stores the path of the pipeline root directory path set by the application runtime code.
-	 */
-	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_NAME}<br>
-	 * Stores the root name of the pipeline (derived from the configuration file name).
-	 */
-	public static final String PROJECT_PIPELINE_NAME = "project.pipelineName";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>
-	 * Required to be set to "e" or "10" to build log normalized reports.
-	 */
-	public static final String REPORT_LOG_BASE = "report.logBase";
-
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #REPORT_NUM_HITS}<br>
-	 * If set to {@value #TRUE}, NUM_OTUS will be added to metadata file by
-	 * {@link biolockj.module.implicit.parser.ParserModuleImpl} and included in R reports
-	 */
-	public static final String REPORT_NUM_HITS = "report.numHits";
-
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #REPORT_NUM_READS}<br>
-	 * If set to {@value #TRUE} and NUM_READS exists in metadata file, NUM_READS will be included in the R reports
-	 */
-	public static final String REPORT_NUM_READS = "report.numReads";
-
-	/**
-	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}
-	 */
-	public static final String TRUE = "Y";
+	private static String suffix( final String prop )
+	{
+		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
+	}
 
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
+	private static File pipelineDir = null;
 	private static Properties props = null;
 	private static Properties unmodifiedInputProps = new Properties();
 	private static final Map<String, String> usedProps = new HashMap<>();

@@ -18,8 +18,8 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.Demultiplexer;
-import biolockj.module.r.CalculateStats;
-import biolockj.module.r.R_Module;
+import biolockj.module.report.r.R_CalculateStats;
+import biolockj.module.report.r.R_Module;
 import biolockj.module.seq.AwkFastaConverter;
 import biolockj.module.seq.PearMergeReads;
 
@@ -32,25 +32,6 @@ public class ModuleUtil
 	// Prevent instantiation
 	private ModuleUtil()
 	{}
-	
-	/**
-	 * Check if a module was in the pipeline at least once.
-	 * @param className
-	 * @return
-	 * @throws Exception
-	 */
-	public static boolean moduleExists( final String className ) throws Exception
-	{
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( m.getClass().getName().equals( className ) )
-			{
-				return true;
-			}
-		}
-		
-		return false;
-	}
 
 	/**
 	 * Get a classifier module<br>
@@ -105,7 +86,7 @@ public class ModuleUtil
 
 	public static String getDefaultStatsModule()
 	{
-		return getDefaultModule( Constants.DEFAULT_STATS_MODULE, CalculateStats.class.getName() );
+		return getDefaultModule( Constants.DEFAULT_STATS_MODULE, R_CalculateStats.class.getName() );
 	}
 
 	/**
@@ -137,13 +118,64 @@ public class ModuleUtil
 		return null;
 	}
 
+	public static BioModule getModule( final String className ) throws Exception
+	{
+		return (BioModule) Class.forName( className ).newInstance();
+	}
+
+	/**
+	 * Return pipeline modules after the given module if checkAhead = TRUE<br>
+	 * Otherwise return pipeline modules before the given module.<br>
+	 * If returning the prior modules, return the pipeline modules in reverse order, so the 1st item in the list is the
+	 * module immediately preceding the given module.
+	 * 
+	 * @param module Reference BioModule
+	 * @param checkAhead Set TRUE to return modules after the given reference module
+	 * @return List of BioModules before/after the current module, as determined by checkAhead parameter
+	 * @throws Exception if errors occur
+	 */
+	public static List<BioModule> getModules( final BioModule module, final Boolean checkAhead ) throws Exception
+	{
+		List<BioModule> modules = null;
+		if( checkAhead )
+		{
+			modules = new ArrayList<>( new TreeSet<>(
+					Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
+		}
+		else
+		{
+			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( 0, module.getID() ) ) );
+			Collections.reverse( modules );
+		}
+
+		return modules;
+	}
+
+	/**
+	 * BioModules are run in the order configured.<br>
+	 * Return the module configured to run after the given module.
+	 *
+	 * @param module BioModule
+	 * @return Next BioModule
+	 * @throws Exception if input module not found in the pipeline
+	 */
+	public static BioModule getNextModule( final BioModule module ) throws Exception
+	{
+		if( module.getID() + 1 == Pipeline.getModules().size() )
+		{
+			return null;
+		}
+
+		return Pipeline.getModules().get( module.getID() + 1 );
+	}
+
 	/**
 	 * BioModules are run in the order configured.<br>
 	 * Return the module configured to run before the given module.
 	 *
 	 * @param module BioModule
 	 * @return Previous BioModule
-	 * @throws Exception if module not found in the pipeline
+	 * @throws Exception if input module not found in the pipeline
 	 */
 	public static BioModule getPreviousModule( final BioModule module ) throws Exception
 	{
@@ -179,10 +211,10 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Test if module is the first {@link biolockj.module.r.R_Module} configured in the pipeline.
+	 * Test if module is the first {@link biolockj.module.report.r.R_Module} configured in the pipeline.
 	 * 
 	 * @param module BioModule to test
-	 * @return TRUE if module is 1st {@link biolockj.module.r.R_Module} in this branch
+	 * @return TRUE if module is 1st {@link biolockj.module.report.r.R_Module} in this branch
 	 * @throws Exception if errors occur
 	 */
 	public static boolean isFirstRModule( final BioModule module ) throws Exception
@@ -255,13 +287,13 @@ public class ModuleUtil
 				{
 					foundMeta = true;
 				}
-				else if( !Config.getSet( Config.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+				else if( !Config.getSet( Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) )
 				{
 					foundOther = true;
 				}
 			}
 		}
-		catch(Exception ex )
+		catch( final Exception ex )
 		{
 			return false;
 		}
@@ -315,37 +347,23 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Overestimate the max number of modules that will be created in total, after all implicit and pre/post-requisite
-	 * modules have been added.
+	 * Check if a module was in the pipeline at least once.
 	 * 
-	 * @return Estimate Max
+	 * @param className
+	 * @return
+	 * @throws Exception
 	 */
-	public static Integer maxNumModules()
+	public static boolean moduleExists( final String className ) throws Exception
 	{
-		Integer count = 8;
-		try
+		for( final BioModule m: Pipeline.getModules() )
 		{
-			for( String mod: Config.requireList( Config.INTERNAL_BLJ_MODULE ) )
+			if( m.getClass().getName().equals( className ) )
 			{
-				mod = mod.toLowerCase();
-				if( mod.contains( "qiime" ) && mod.contains( "classifier" ) )
-				{
-					count = count + 5;
-				}
-				else if( mod.toLowerCase().contains( "humann2" ) && mod.contains( "classifier" ) )
-				{
-					count = count + 5;
-				}
-				count++;
+				return true;
 			}
 		}
-		catch( final Exception ex )
-		{
-			Log.error( ModuleUtil.class, "Unable to effectively estiamte count" );
-			count = 100;
-		}
 
-		return count;
+		return false;
 	}
 
 	/**
@@ -401,29 +419,6 @@ public class ModuleUtil
 		}
 
 		return defaultModule;
-	}
-
-	/**
-	 * Return pipeline modules after the given module if checkAhead = TRUE<br>
-	 * Otherwise return pipeline modules before the given module.<br>
-	 * If returning the prior modules, return the pipeline modules in reverse order, so the 1st item in the list is the
-	 * module immediately preceding the given module.
-	 * 
-	 */
-	private static List<BioModule> getModules( final BioModule module, final Boolean checkAhead ) throws Exception
-	{
-		List<BioModule> modules = null;
-		if( checkAhead )
-		{
-			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
-		}
-		else
-		{
-			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( 0, module.getID() ) ) );
-			Collections.reverse( modules );
-		}
-
-		return modules;
 	}
 
 	private static List<Integer> getRModulesIds() throws Exception

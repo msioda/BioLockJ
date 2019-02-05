@@ -13,14 +13,11 @@ package biolockj.util;
 
 import java.io.File;
 import java.util.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
-import biolockj.module.BioModule;
 
 /**
  * This utility helps work individual Taxa names, not full OTU path files which need {@link biolockj.util.OtuUtil}.<br>
@@ -258,8 +255,8 @@ public class TaxaUtil
 			suffix = "_";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.requireString( Config.PROJECT_PIPELINE_NAME )
-				+ "_" + TAXA_TABLE + suffix + level + Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + suffix
+				+ level + Constants.TSV_EXT );
 	}
 
 	/**
@@ -368,34 +365,6 @@ public class TaxaUtil
 					return true;
 				}
 			}
-		}
-		return false;
-	}
-
-	/**
-	 * Check the module to determine if it generated taxonomy table files.
-	 * 
-	 * @param module BioModule
-	 * @return TRUE if module generated taxonomy table files
-	 */
-	public static boolean isTaxaModule( final BioModule module ) 
-	{
-		try
-		{
-			final Collection<File> files = SeqUtil.removeIgnoredAndEmptyFiles(
-					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-	
-			for( final File f: files )
-			{
-				if( isTaxaFile( f ) )
-				{
-					return true;
-				}
-			}
-		}
-		catch( Exception ex )
-		{
-			// RETURN FALSE
 		}
 		return false;
 	}

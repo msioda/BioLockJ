@@ -47,8 +47,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 		final String outputDir = getOutputDir().getAbsolutePath() + File.separator;
 		final String biomFile = "$(ls -t " + tempDir + "*.biom | head -1)";
 
-		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getFile().getAbsolutePath(),
-				getTempDir() ) );
+		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 
 		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) )
 		{

@@ -1,4 +1,4 @@
-# Module script for: biolockj.module.r.BuildEffectSizePlots
+# Module script for: biolockj.module.report.r.R_PlotEffectSize
 
 ### assumes library(BioLockJ_Lib.R)
 
@@ -6,14 +6,14 @@
 # See calcBarSizes
 
 ### custom config options:
-# r.plotEffectSize.parametricPval: Y/N should the parametric (vs the nonParametric) pvalue be used
-# r.plotEffectSize.useAdjustedPvals=
-# r.plotEffectSize.excludePvalAbove=
-# r.plotEffectSize.taxa=
-# r.plotEffectSize.maxNumTaxa=
-# r.plotEffectSize.cohensD=Y
-# r.plotEffectSize.rSquared=Y
-# r.plotEffectSize.foldChange=N
+# r_PlotEffectSize.parametricPval: Y/N should the parametric (vs the nonParametric) pvalue be used
+# r_PlotEffectSize.useAdjustedPvals=
+# r_PlotEffectSize.excludePvalAbove=
+# r_PlotEffectSize.taxa=
+# r_PlotEffectSize.maxNumTaxa=
+# r_PlotEffectSize.cohensD=Y
+# r_PlotEffectSize.rSquared=Y
+# r_PlotEffectSize.foldChange=N
 ### also uses:
 # r.pvalCutoff
 # R_internal.numMetaCols
@@ -28,15 +28,15 @@ getMetaData() <- function(){
 # It handles pulling data from other modules and options from the BiolockJ properties.
 main <- function(){
 	# get config option for pvalStar, pvalIncludeBar, maxBars, userOTUs, 
-	useParametric = getProperty("r.plotEffectSize.parametricPval", FALSE)
-	useAdjustedPs = getProperty("r.plotEffectSize.useAdjustedPvals", FALSE)
+	useParametric = getProperty("r_PlotEffectSize.parametricPval", FALSE)
+	useAdjustedPs = getProperty("r_PlotEffectSize.useAdjustedPvals", FALSE)
 	pvalStar = getProperty("r.pvalCutoff", 0.05)
-	pvalIncludeBar = getProperty("r.plotEffectSize.excludePvalAbove", 1)
-	maxBars = getProperty("r.plotEffectSize.maxNumTaxa", 40)
-	userOTUs = getProperty("r.plotEffectSize.taxa", NULL)
-	doFoldChange = getProperty("r.plotEffectSize.foldChange", FALSE) 
-	doCohensD = getProperty("r.plotEffectSize.cohensD", FALSE) 
-	doRSquared = getProperty("r.plotEffectSize.rSquared", FALSE) 
+	pvalIncludeBar = getProperty("r_PlotEffectSize.excludePvalAbove", 1)
+	maxBars = getProperty("r_PlotEffectSize.maxNumTaxa", 40)
+	userOTUs = getProperty("r_PlotEffectSize.taxa", NULL)
+	doFoldChange = getProperty("r_PlotEffectSize.foldChange", FALSE) 
+	doCohensD = getProperty("r_PlotEffectSize.cohensD", FALSE) 
+	doRSquared = getProperty("r_PlotEffectSize.rSquared", FALSE) 
 	
 	# get metadata
 	meta = getMetaData()
@@ -257,8 +257,8 @@ calcBarSizes <- function(numGroupVals, denGroupVals, numGroupName, denGroupName,
 	if (!is.null(pvals)){
 		toPlot$pvalue = pvals[row.names(toPlot)]
 		header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", pvalIncludeBar,
-															") and if OTU got a star (if under <pvalStar>thresholds controlled by r.plotEffectSize.excludePvalAbove and r.pvalCutoff properties respectively.",
-															" See also: r.plotEffectSize.parametricPval property"))
+															") and if OTU got a star (if under <pvalStar>thresholds controlled by r_PlotEffectSize.excludePvalAbove and r.pvalCutoff properties respectively.",
+															" See also: r_PlotEffectSize.parametricPval property"))
 	}
 	xAxisLab2="" #just make sure it exists; it is defined in if statements
 	if ("CohensD" %in% effectType){
@@ -304,7 +304,7 @@ calcBarSizes <- function(numGroupVals, denGroupVals, numGroupName, denGroupName,
 	toPlot = toPlot[order(abs(toPlot[,orderByColumn]), decreasing = T),] #highest abs on top
 	maxBars = min(c(maxBars, nrow(toPlot)))
 	toPlot$plotPriority = 1:nrow(toPlot)
-	header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r.plotEffectSize.maxNumTaxa or over-riden using r.plotEffectSize.taxa.'))
+	header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r_PlotEffectSize.maxNumTaxa or over-riden using r_PlotEffectSize.taxa.'))
 	toPlot$includeInPlot = toPlot$plotPriority <= maxBars
 	comments[1] = paste0("Showing top ", maxBars, " most changed OTUs ", viableOTUs[["comment"]])
 	header = c(header, "includeInPlot: will this otu be included in the plot.")

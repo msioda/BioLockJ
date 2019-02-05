@@ -16,11 +16,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.JavaModuleImpl;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -76,7 +74,6 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 		return super.getSummary() + summary;
 	}
 
-
 	/**
 	 * Apply the quantile Config to the number of OTUs per sample to calculate the maximum OTU count per sample. For
 	 * each sample rarefy the configured number of times and output a file with the average counts. Update the metadata
@@ -86,7 +83,8 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 	public void runModule() throws Exception
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
-		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_" + OtuUtil.OTU_COUNT );
+		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_"
+				+ OtuUtil.OTU_COUNT );
 		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 		final Integer quantileNum = getNumOtusForQuantile( sampleOtuCounts );
 
@@ -101,7 +99,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 			}
 		}
 
-		if( Config.getBoolean( Config.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
 		{
 			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}

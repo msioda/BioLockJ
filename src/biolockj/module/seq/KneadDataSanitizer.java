@@ -78,7 +78,7 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		lines.add( Config.getExe( EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 " + INPUT_PARAM
 				+ " $2 " + ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
 				+ OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
-		lines.add( "}" );
+		lines.add( "}" + RETURN );
 		return lines;
 	}
 

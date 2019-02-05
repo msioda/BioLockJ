@@ -96,11 +96,6 @@ public interface ScriptModule extends BioModule
 	public List<String> getWorkerScriptFunctions() throws Exception;
 
 	/**
-	 * Suffix for module specific number of threads parameter: {@value #NUM_THREADS}<br>
-	 */
-	public static final String NUM_THREADS = ".numThreads";
-
-	/**
 	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_BATCH_SIZE}<br>
 	 * Set number of samples to process per script (if parallel processing)
 	 */
