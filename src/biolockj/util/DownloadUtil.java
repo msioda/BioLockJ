@@ -66,8 +66,7 @@ public final class DownloadUtil
 			boolean hasRmods = false;
 			for( final BioModule module: modules )
 			{
-				final String modNum = BioLockJUtil.formatDigits( module.getID(),
-						ModuleUtil.maxNumModules().toString().length() );
+				final String modNum = BioLockJUtil.formatDigits( module.getID(), 2 );
 				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getOutputDir() ) );
 				if( module instanceof R_Module )
 				{

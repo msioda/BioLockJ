@@ -166,8 +166,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	{
 		moduleId = nextId++;
 		moduleDir = new File( Config.pipelinePath() + File.separator
-				+ BioLockJUtil.formatDigits( moduleId, ModuleUtil.maxNumModules().toString().length() ) + "_"
-				+ getClass().getSimpleName() );
+				+ BioLockJUtil.formatDigits( moduleId, 2 ) + "_" + getClass().getSimpleName() );
 
 		if( !moduleDir.exists() )
 		{

@@ -346,39 +346,6 @@ public class ModuleUtil
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 	}
 
-	/**
-	 * Overestimate the max number of modules that will be created in total, after all implicit and pre/post-requisite
-	 * modules have been added.
-	 * 
-	 * @return Estimate Max
-	 */
-	public static Integer maxNumModules()
-	{
-		Integer count = 8;
-		try
-		{
-			for( String mod: Config.requireList( Constants.INTERNAL_BLJ_MODULE ) )
-			{
-				mod = mod.toLowerCase();
-				if( mod.contains( "qiime" ) && mod.contains( "classifier" ) )
-				{
-					count = count + 5;
-				}
-				else if( mod.toLowerCase().contains( "humann2" ) && mod.contains( "classifier" ) )
-				{
-					count = count + 5;
-				}
-				count++;
-			}
-		}
-		catch( final Exception ex )
-		{
-			Log.error( ModuleUtil.class, "Unable to effectively estiamte count" );
-			count = 100;
-		}
-
-		return count;
-	}
 
 	/**
 	 * Check if a module was in the pipeline at least once.

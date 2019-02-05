@@ -221,16 +221,14 @@ public class BashScriptBuilder
 	 */
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception
 	{
-		String modIndex = new Integer( Pipeline.getModules().indexOf( module ) ).toString();
-		while( modIndex.length() < Integer.valueOf( Pipeline.getModules().size() ).toString().length() )
-		{
-			modIndex = "0" + modIndex;
-		}
 
+		
+		String modId = BioLockJUtil.formatDigits( module.getID(), 2 );
+				
 		final String modPrefix = new File( getMainScriptPath( module ) ).getName()
 				.replaceAll( BioModule.MAIN_SCRIPT_PREFIX, "" );
 
-		final String jobName = modIndex + "." + workerId + modPrefix.substring( modIndex.length() );
+		final String jobName = modId + "." + workerId + modPrefix.substring( 2 );
 
 		return module.getScriptDir().getAbsolutePath() + File.separator + jobName;
 	}
@@ -505,98 +503,6 @@ public class BashScriptBuilder
 				+ scriptModule.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
 	}
 
-	// private static String getJobHeader( final ScriptModule module ) throws Exception
-	// {
-	// final String header = getModuleHeader( module );
-	// if( header != null )
-	// {
-	// Log.info( BashScriptBuilder.class, "Found module specific job header: " + header );
-	// return header;
-	// }
-	// return Config.requireString( SCRIPT_JOB_HEADER );
-	// }
-	// private static String getJobHeaderParam( final ScriptModule module ) throws Exception
-	// {
-	//
-	// final String header = getModuleHeader( module );
-	// if( header != null )
-	// {
-	// return getModuleHeaderPropertyName( module );
-	// }
-	//
-	// return SCRIPT_JOB_HEADER;
-	// }
-	// private static String getJobCmd( final ScriptModule module ) throws Exception
-	// {
-	// final String cmd = getModuleCmd( module );
-	// if( cmd != null )
-	// {
-	// Log.info( BashScriptBuilder.class, "Found module specific batch submit command: " + cmd );
-	// return cmd;
-	// }
-	// return Config.requireString( CLUSTER_BATCH_COMMAND );
-	// }
-	// private static String getModuleHeader( final ScriptModule module )
-	// {
-	// try
-	// {
-	// return Config.getString( getModuleHeaderPropertyName( module ) );
-	// }
-	// catch( final Exception ex )
-	// {
-	// // FAIL SILENTLY
-	// // EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
-	// }
-	// return null;
-	// }
-	// private static String getModuleCmd( final ScriptModule module )
-	// {
-	// try
-	// {
-	// return Config.getString( getModuleCmdPropertyName( module ) );
-	// }
-	// catch( final Exception ex )
-	// {
-	// // FAIL SILENTLY
-	// // EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
-	// }
-	// return null;
-	// }
-	// private static String getModuleCmdPropertyName( final ScriptModule module )
-	// {
-	// return module.getClass().getSimpleName() + JOB_CMD;
-	// }
-	//
-	// private static String getModuleHeaderPropertyName( final ScriptModule module )
-	// {
-	// return module.getClass().getSimpleName() + JOB_HEADER;
-	// }
-	// private static Integer getModuleNumThreads( final ScriptModule module )
-	// {
-	// try
-	// {
-	// return Config.getPositiveInteger( module.getClass().getSimpleName() + ScriptModule.NUM_THREADS );
-	// }
-	// catch( final Exception ex )
-	// {
-	// // FAIL SILENTLY
-	// // EXCEPTION ONLY INDICATES MODULE SPECIFIC HEADER DOES NOT EXIST
-	// }
-	// return null;
-	// }
-	// private static Integer getNumThreads( final ScriptModule module ) throws Exception
-	// {
-	// final Integer moduleThreads = getModuleNumThreads( module );
-	// return moduleThreads == null ? Config.requirePositiveInteger( ScriptModule.SCRIPT_NUM_THREADS ): moduleThreads;
-	// }
-	// private static String getNumThreadsParam( final ScriptModule module ) throws Exception
-	// {
-	// return Config.getModuleProp( module, ScriptModule.SCRIPT_NUM_THREADS );
-	//
-	// final Integer moduleThreads = getModuleNumThreads( module );
-	// return moduleThreads == null ? ScriptModule.SCRIPT_NUM_THREADS
-	// : module.getClass().getSimpleName() + ScriptModule.NUM_THREADS;
-	// }
 
 	private static String getWorkerId( final int scriptNum, final int digits )
 	{
