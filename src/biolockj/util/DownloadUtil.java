@@ -66,11 +66,12 @@ public final class DownloadUtil
 			boolean hasRmods = false;
 			for( final BioModule module: modules )
 			{
+				String modNum =  BioLockJUtil.formatDigits( module.getID(), ModuleUtil.maxNumModules().toString().length() );
 				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( module.getOutputDir() ) );
 				if( module instanceof R_Module )
 				{
 					hasRmods = true;
-					targets += " " + getSrc( module.getID() + "*" + File.separator + "*" + File.separator
+					targets += " " + getSrc( modNum + "*" + File.separator + "*" + File.separator
 							+ getExts( (R_Module) module, true ) );
 					downloadSize = downloadSize
 							.add( FileUtils.sizeOfAsBigInteger( ( (ScriptModule) module ).getScriptDir() ) );
@@ -78,7 +79,7 @@ public final class DownloadUtil
 				}
 				else
 				{
-					targets += " " + getSrc( module.getID() + "*" + File.separator + "output" + File.separator + "*" );
+					targets += " " + getSrc( modNum + "*" + File.separator + "output" + File.separator + "*" );
 				}
 
 				if( !ModuleUtil.isComplete( module ) )
