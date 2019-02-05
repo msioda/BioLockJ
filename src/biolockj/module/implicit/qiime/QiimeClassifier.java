@@ -303,8 +303,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	public boolean isValidInputModule( final BioModule module )
 	{
 		if( getClass().getName().equals( QiimeClassifier.class.getName() )
-				&& module.getClass().getName().toLowerCase().contains( Constants.QIIME )
-				&& module instanceof ClassifierModule )
+				&& module.getClass().getName().toLowerCase().contains( Constants.QIIME ) )
 		{
 			return true;
 		}
