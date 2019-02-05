@@ -47,6 +47,11 @@ public class BioModuleFactory
 		final List<String> postReqs = new ArrayList<>();
 		for( final String postReq: module.getPostRequisiteModules() )
 		{
+			if( !postReqs.contains( postReq ) )
+			{
+				postReqs.add( postReq );
+			}
+			
 			final List<String> postPostReqs = getPostRequisites( ModuleUtil.getModule( postReq ) );
 			for( final String postPostReq: postPostReqs )
 			{
@@ -54,11 +59,6 @@ public class BioModuleFactory
 				{
 					postReqs.add( postPostReq );
 				}
-			}
-
-			if( !postReqs.contains( postReq ) )
-			{
-				postReqs.add( postReq );
 			}
 		}
 
@@ -270,6 +270,7 @@ public class BioModuleFactory
 
 			if( foundClassifier && branchClassifier )
 			{
+				Log.info( getClass(), "Found another classifier: reset branch"  );
 				branchClassifier = false;
 				foundClassifier = false;
 				moduleCache.addAll( branchModules );
