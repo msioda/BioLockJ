@@ -9,10 +9,13 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG BLJ_DATE
 ARG VER
 ENV BLJ_TAR=biolockj_${VER}.tgz
-RUN echo ${BLJ_DATE} && mkdir $BLJ && cd $BLJ && \
-	wget -qO- $BLJ_URL/${VER}/$BLJ_TAR | bsdtar -xzf- && \
-	rm -rf $BLJ/[bilpw]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/docs && rm -rf $BLJ/src \
-	cp $BLJ/script/* /usr/local/bin
+ENV WGET_URL="$BLJ_URL/${VER}/$BLJ_TAR"
+RUN echo ${BLJ_DATE} && \
+	mkdir $BLJ && \
+	cd $BLJ && \
+	wget -qO- $WGET_URL | bsdtar -xzf- && \
+	rm -rf $BLJ/[bilpw]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/docs && rm -rf $BLJ/src && \
+	cp $BLJ/script/* /usr/local/bin 
 
 #3.) =======================  Cleanup  ===========
 RUN	apt-get clean && \
@@ -24,4 +27,4 @@ RUN	apt-get clean && \
 	rm -rf /var/log/*
 
 #4.) ================= Container Command =================
-CMD [ "biolockj", "$BLJ_OPTIONS" ]
+CMD [ "/bin/bash", "biolockj", "$BLJ_OPTIONS" ]

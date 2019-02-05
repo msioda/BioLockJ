@@ -14,6 +14,7 @@ package biolockj.module.implicit.qiime;
 import java.io.*;
 import java.util.*;
 import biolockj.*;
+import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -66,7 +67,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		final List<String> lines = new ArrayList<>();
 		lines.add( SCRIPT_PRINT_CONFIG + " -t" );
 		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L "
-				+ getQiimeTaxaLevels() + " -o " + outDir );
+				+ getLowestQiimeTaxaLevel() + " -o " + outDir );
 		lines.add( SCRIPT_SUMMARIZE_BIOM + " -i " + files.get( 0 ) + " -o " + tempDir + OTU_SUMMARY_FILE );
 		if( Config.getString( QIIME_ALPHA_DIVERSITY_METRICS ) != null )
 		{
@@ -438,44 +439,41 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		return sb.toString();
 	}
 
-	/**
-	 * Set the taxonomy level indicators.
-	 *
-	 * @return QIIME taxonomy level numbers as a comma separated list
-	 */
-	private String getQiimeTaxaLevels()
-	{
-		String levels = "";
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.DOMAIN ) )
-		{
-			levels += "1";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.PHYLUM ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "2";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.CLASS ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "3";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.ORDER ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "4";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.FAMILY ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "5";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.GENUS ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "6";
-		}
-		if( TaxaUtil.getTaxaLevels().contains( TaxaUtil.SPECIES ) )
-		{
-			levels += ( levels.isEmpty() ? "": "," ) + "7";
-		}
 
-		return levels;
+	private String getLowestQiimeTaxaLevel() throws Exception
+	{
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.SPECIES ) )
+		{
+			return "7";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.GENUS ) )
+		{
+			return "6";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.FAMILY ) )
+		{
+			return "5";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.ORDER ) )
+		{
+			return "4";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.CLASS ) )
+		{
+			return "3";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.PHYLUM ) )
+		{
+			return "2";
+		}
+		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.DOMAIN ) )
+		{
+			return "1";
+		}
+		
+		throw new Exception( "Should not be possible to reach this error, value based on required field: " 
+				+ TaxaUtil.REPORT_TAXONOMY_LEVELS );
+		
 	}
 
 	private String switches = null;

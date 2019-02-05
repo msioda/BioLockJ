@@ -37,4 +37,4 @@ RUN	apt-get clean && \
 
 #6.) ================= Container Command =================
 ENV PATH=$PATH:/app/metaphlan2:/app/bowtie2-2.2.9
-CMD [ "$COMPUTE_SCRIPT" ]
+CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]

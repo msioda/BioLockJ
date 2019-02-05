@@ -1,8 +1,16 @@
 package biolockj;
 
+
 public class Constants
 {
-
+	/**
+	 * Qiime may find ambiguous taxa identified in various formats in different databases.
+	 * The following accounts for Green Genes 13.8 and Silva 132: {@value #QIIME_AMBIGUOUS_TAXA}
+	 */
+	public static final String[] QIIME_AMBIGUOUS_TAXA =  { "Ambiguous_taxa", "Other", "Unassigned" };
+	
+	
+	
 	/**
 	 * Captures the application start time
 	 */

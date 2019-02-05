@@ -32,4 +32,4 @@ RUN	apt-get clean && \
 	rm -rf /var/log/*
 		
 #5.) ================= Container Command =================
-CMD [ "$COMPUTE_SCRIPT" ]
+CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]

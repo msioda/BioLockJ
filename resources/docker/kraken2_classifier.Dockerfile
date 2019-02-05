@@ -10,7 +10,7 @@ ENV KRAKEN_VER=2.0.7-beta
 ENV KRAKEN_URL="https://github.com/DerrickWood/kraken2/archive/v"
 ENV BUILD_DIR=/usr/local/bin
 RUN cd /app && \
-	wget -qO- ${KRAKEN_URL}${KRAKEN_VER}.tar.gz | bsdtar -xf- && \
+	wget -qO- ${KRAKEN_URL}${KRAKEN_VER}.tar.gz | bsdtar -xzf- && \
 	cd kraken2-${KRAKEN_VER} && \
 	./install_kraken2.sh $BUILD_DIR && \
 	chmod o+x -R $BUILD_DIR && \
@@ -29,4 +29,4 @@ RUN	apt-get clean && \
 	rm -rf /var/log/*
 
 #5.) ================= Container Command =================
-CMD [ "$COMPUTE_SCRIPT" ]
+CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]
