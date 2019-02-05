@@ -415,9 +415,9 @@ public final class RMetaUtil
 					nominalFields.add( field );
 				}
 			}
-			else if( isQiimeMetric( field ) && !field.endsWith( QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX ) )
+			else if( isQiimeMetric( field ) && field.endsWith( QIIME_ALPHA_METRIC_SUFFIX ) )
 			{
-				final String name = field.replace( QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX, "" );
+				final String name = field.replace( QIIME_ALPHA_METRIC_SUFFIX, "" );
 				if( count == 0 )
 				{
 					Log.warn( RMetaUtil.class,
@@ -514,7 +514,10 @@ public final class RMetaUtil
 		{
 			for( final String metric: alphaDivMetrics )
 			{
-				if( field.indexOf( metric ) > -1 )
+				String m0 = metric + QIIME_ALPHA_METRIC_SUFFIX;
+				String m1 = metric + QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX;
+				String m2 = metric + QIIME_ALPHA_METRIC_LABEL_SUFFIX;
+				if( field.equals( m0 ) || field.equals( m1 ) || field.equals( m2 ) )
 				{
 					Log.info( RMetaUtil.class,
 							"Metadata validation of field(" + field + ") --> found QIIME metric: " + metric );
@@ -557,6 +560,7 @@ public final class RMetaUtil
 		}
 	}
 
+	public static final String QIIME_ALPHA_METRIC_SUFFIX = "_alpha";
 	public static final String QIIME_ALPHA_METRIC_LABEL_SUFFIX = "_alpha_label";
 
 	public static final String QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX = "_normalized_alpha";
