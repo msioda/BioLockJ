@@ -14,8 +14,8 @@ package biolockj.module.implicit.parser.r16s;
 import java.io.BufferedReader;
 import java.io.File;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.OtuNode;
@@ -53,7 +53,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 			{
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
-					addOtuNode( new RdpNode( file.getName().replace( ClassifierModule.PROCESSED, "" ), line ) );
+					addOtuNode( new RdpNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
 				}
 			}
 			finally

@@ -188,22 +188,22 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 		if( slimmSwitches.indexOf( "-o " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-o) found in property(" + EXE_CLASSIFIER_PARAMS
+			throw new Exception( "Invalid SLIMM option (-o) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
 					+ "). BioLockJ hard codes this value to: " + getOutputDir().getAbsolutePath() + File.separator );
 		}
 		if( slimmSwitches.indexOf( "-m " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-m) found in property(" + EXE_CLASSIFIER_PARAMS
+			throw new Exception( "Invalid SLIMM option (-m) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
 					+ "). BioLockJ sets these values based on: " + DATABASE );
 		}
 		if( slimmSwitches.indexOf( "-d " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-d) found in property(" + EXE_CLASSIFIER_PARAMS
+			throw new Exception( "Invalid SLIMM option (-d) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
 					+ "). BioLockJ sends individual input files to SLIMM from: " + getTempDir().getAbsolutePath() );
 		}
 		if( slimmSwitches.indexOf( "-r " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-r) found in property(" + EXE_CLASSIFIER_PARAMS
+			throw new Exception( "Invalid SLIMM option (-r) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
 					+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 		}
 

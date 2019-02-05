@@ -222,9 +222,8 @@ public class BashScriptBuilder
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception
 	{
 
-		
-		String modId = BioLockJUtil.formatDigits( module.getID(), 2 );
-				
+		final String modId = BioLockJUtil.formatDigits( module.getID(), 2 );
+
 		final String modPrefix = new File( getMainScriptPath( module ) ).getName()
 				.replaceAll( BioModule.MAIN_SCRIPT_PREFIX, "" );
 
@@ -502,7 +501,6 @@ public class BashScriptBuilder
 		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
 				+ scriptModule.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
 	}
-
 
 	private static String getWorkerId( final int scriptNum, final int digits )
 	{

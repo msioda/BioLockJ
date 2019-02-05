@@ -60,10 +60,10 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	{
 		if( classifierExe == null )
 		{
-			classifierExe = Config.getString( EXE_CLASSIFIER );
+			classifierExe = Config.getString( Constants.EXE_CLASSIFIER );
 			if( classifierExe == null || classifierExe.isEmpty() )
 			{
-				final String defaultProp = getClassifierType() + "." + EXE_CLASSIFIER.substring( 4 );
+				final String defaultProp = getClassifierType() + "." + Constants.EXE_CLASSIFIER.substring( 4 );
 
 				classifierExe = Config.getString( defaultProp );
 				if( classifierExe != null && !classifierExe.isEmpty() )
@@ -96,11 +96,11 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	{
 		if( classifierParams == null )
 		{
-			String prop = EXE_CLASSIFIER_PARAMS;
+			String prop = Constants.EXE_CLASSIFIER_PARAMS;
 			classifierParams = Config.getList( prop );
 			if( classifierParams.isEmpty() )
 			{
-				prop = getClassifierType() + "." + EXE_CLASSIFIER_PARAMS.substring( 4 );
+				prop = getClassifierType() + "." + Constants.EXE_CLASSIFIER_PARAMS.substring( 4 );
 				classifierParams = Config.getList( prop );
 				if( !classifierParams.isEmpty() )
 				{

@@ -31,37 +31,6 @@ public class SeqUtil
 	// Prevent instantiation
 	private SeqUtil()
 	{}
-	
-	
-	/**
-	 * Check the module to determine if it generated sequence file output.
-	 * 
-	 * @param module BioModule
-	 * @return TRUE if module generated OTU count files
-	 * @throws Exception if errors occur
-	 */
-	public static boolean isSeqModule( final BioModule module )
-	{
-		try
-		{
-			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
-					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-
-			for( final File f: files )
-			{
-				if( SeqUtil.isSeqFile( f ) )
-				{
-					return true;
-				}
-			}
-		}
-		catch( final Exception ex )
-		{
-			Log.warn( SeqUtil.class, "Error occurred while inspecting module output files: " + module );
-			ex.printStackTrace();
-		}
-		return false;
-	}
 
 	/**
 	 * Create a copy of the sequence files in property {@value biolockj.Config#INPUT_DIRS}, output to a directory named
@@ -669,6 +638,36 @@ public class SeqUtil
 			}
 		}
 		return isSeq;
+	}
+
+	/**
+	 * Check the module to determine if it generated sequence file output.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if module generated OTU count files
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isSeqModule( final BioModule module )
+	{
+		try
+		{
+			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+
+			for( final File f: files )
+			{
+				if( SeqUtil.isSeqFile( f ) )
+				{
+					return true;
+				}
+			}
+		}
+		catch( final Exception ex )
+		{
+			Log.warn( SeqUtil.class, "Error occurred while inspecting module output files: " + module );
+			ex.printStackTrace();
+		}
+		return false;
 	}
 
 	/**

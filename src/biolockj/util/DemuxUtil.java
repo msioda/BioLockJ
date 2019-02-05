@@ -237,7 +237,8 @@ public class DemuxUtil
 		}
 		catch( final Exception ex )
 		{
-			Log.error( DemuxUtil.class, "Error occurred checking metadata file for valid barcodes" + ex.getMessage(), ex );
+			Log.error( DemuxUtil.class, "Error occurred checking metadata file for valid barcodes" + ex.getMessage(),
+					ex );
 		}
 
 		return false;

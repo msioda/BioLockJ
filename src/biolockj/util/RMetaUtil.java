@@ -384,7 +384,7 @@ public final class RMetaUtil
 		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
 		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
 
-		if( numCols != null && numCols == numMetaCols || numMetaCols == 0  )
+		if( numCols != null && numCols == numMetaCols || numMetaCols == 0 )
 		{
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
 			return false;
@@ -566,8 +566,6 @@ public final class RMetaUtil
 	public static final String QIIME_ALPHA_METRIC_SUFFIX = "_alpha";
 
 	public static final String QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX = "_normalized_alpha";
-
-	
 
 	/**
 	 * Name of R script variable with metadata column count

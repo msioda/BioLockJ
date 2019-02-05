@@ -12,7 +12,6 @@
 package biolockj.module.classifier;
 
 import java.util.List;
-import biolockj.Constants;
 import biolockj.module.SeqModule;
 
 /**
@@ -39,19 +38,4 @@ public interface ClassifierModule extends SeqModule
 	 * @throws Exception thrown if parameters defined are invalid
 	 */
 	public List<String> getClassifierParams() throws Exception;
-
-	/**
-	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
-	 */
-	public static final String EXE_CLASSIFIER = "exe.classifier";
-
-	/**
-	 * {@link biolockj.Config} property for classifier program optional parameters: {@value #EXE_CLASSIFIER_PARAMS}
-	 */
-	public static final String EXE_CLASSIFIER_PARAMS = "exe.classifierParams";
-
-	/**
-	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
-	 */
-	public static final String PROCESSED = "_reported" + Constants.TSV_EXT;
 }

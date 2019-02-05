@@ -7,8 +7,11 @@ public class Constants
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();
+
 	public static final String AWS_EFS_DIR = "aws.efsDir";
+
 	public static final String AWS_RAM = "aws.ram";
+
 	public static final String AWS_STACK = "aws.stack";
 	/**
 	 * Name of the file created in the BioModule or {@value biolockj.Config##PROJECT_PIPELINE_DIR} root directory to
@@ -38,7 +41,6 @@ public class Constants
 	 * {@value #DEFAULT_MOD_FASTA_CONV} format
 	 */
 	public static final String DEFAULT_MOD_FASTA_CONV = "project.defaultModuleFastaConverter";
-
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used combined paired read files:
 	 * {@value #DEFAULT_MOD_SEQ_MERGER}
@@ -68,16 +70,24 @@ public class Constants
 	public static final String EXE_AWK = "exe.awk";
 
 	/**
+	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
+	 */
+	public static final String EXE_CLASSIFIER = "exe.classifier";
+	/**
+	 * {@link biolockj.Config} property for classifier program optional parameters: {@value #EXE_CLASSIFIER_PARAMS}
+	 */
+	public static final String EXE_CLASSIFIER_PARAMS = "exe.classifierParams";
+	/**
 	 * {@link biolockj.Config} String property {@value #EXE_DOCKER}<br>
 	 * Set command line executable docker
 	 */
 	public static final String EXE_DOCKER = "exe.docker";
+
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
 	 * Set command line executable gzip
 	 */
 	public static final String EXE_GZIP = "exe.gzip";
-
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
@@ -140,6 +150,11 @@ public class Constants
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
 	 */
 	public static final String PDF_EXT = ".pdf";
+
+	/**
+	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
+	 */
+	public static final String PROCESSED = "_reported" + Constants.TSV_EXT;
 
 	/**
 	 * {@link biolockj.Config} property set to copy input files into pipeline root directory:

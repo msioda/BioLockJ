@@ -71,7 +71,6 @@ public class Pipeline
 			NextFlowUtil.buildNextFlowMain( bioModules );
 		}
 	}
-	
 
 	/**
 	 * If moduleName is null, run all modules, otherwise only run the specified module.

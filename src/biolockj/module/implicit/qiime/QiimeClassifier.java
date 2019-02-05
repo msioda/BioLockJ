@@ -294,21 +294,21 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 		return super.getSummary();
 	}
-	
+
 	/**
-	 * If superclass is fed by another QiimeClassifier, it must be a subclass with biom output.
-	 * Otherwise, if a subclass, it must expect sequence file input.
+	 * If superclass is fed by another QiimeClassifier, it must be a subclass with biom output. Otherwise, if a
+	 * subclass, it must expect sequence file input.
 	 */
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{
-		if( getClass().getName().equals( QiimeClassifier.class.getName() ) &&
-				module.getClass().getName().toLowerCase().contains( Constants.QIIME ) &&
-				module instanceof ClassifierModule )
+		if( getClass().getName().equals( QiimeClassifier.class.getName() )
+				&& module.getClass().getName().toLowerCase().contains( Constants.QIIME )
+				&& module instanceof ClassifierModule )
 		{
 			return true;
 		}
-	
+
 		return super.isValidInputModule( module );
 	}
 
@@ -350,22 +350,24 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
 			{
 				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Constants.INPUT_DIRS );
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: "
+						+ Constants.INPUT_DIRS );
 			}
 			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
 			{
 				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
 			}
 			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
 			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + EXE_CLASSIFIER_PARAMS
-						+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
+				throw new Exception(
+						"INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + Constants.EXE_CLASSIFIER_PARAMS
+								+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( "-f " ) > -1 )
 			{
 				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY ("
-						+ EXE_CLASSIFIER_PARAMS + "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
 			}
 
 			switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );

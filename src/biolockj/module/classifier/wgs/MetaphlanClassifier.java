@@ -14,6 +14,7 @@ package biolockj.module.classifier.wgs;
 import java.io.File;
 import java.util.*;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.BioLockJUtil;
@@ -40,7 +41,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 		for( final File file: files )
 		{
 			final String fileId = SeqUtil.getSampleId( file.getName() );
-			final String outputFile = getOutputDir().getAbsolutePath() + File.separator + fileId + PROCESSED;
+			final String outputFile = getOutputDir().getAbsolutePath() + File.separator + fileId + Constants.PROCESSED;
 			final String bowtie2Out = getTempDir().getAbsolutePath() + File.separator + fileId + bowtie2ext;
 			final ArrayList<String> lines = new ArrayList<>();
 			lines.add( FUNCTION_RUN_METAPHLAN + " " + file.getAbsolutePath() + " " + bowtie2Out + " " + outputFile );
@@ -66,7 +67,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 		for( final File file: map.keySet() )
 		{
 			final String fileId = SeqUtil.getSampleId( file.getName() );
-			final String outputFile = getOutputDir().getAbsolutePath() + File.separator + fileId + PROCESSED;
+			final String outputFile = getOutputDir().getAbsolutePath() + File.separator + fileId + Constants.PROCESSED;
 			final String bowtie2Out = getTempDir().getAbsolutePath() + File.separator + fileId + bowtie2ext;
 			final ArrayList<String> lines = new ArrayList<>();
 			lines.add( FUNCTION_RUN_METAPHLAN + " " + file.getAbsolutePath() + "," + map.get( file ).getAbsolutePath()
@@ -120,19 +121,20 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 			if( params.indexOf( "--input_type " ) > -1 )
 			{
 				throw new Exception(
-						"Invalid classifier option (--input_type) found in property(" + EXE_CLASSIFIER_PARAMS
+						"Invalid classifier option (--input_type) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
 								+ "). BioLockJ derives this value by examinging one of the input files." );
 			}
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 			{
 				throw new Exception( "Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: "
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: "
 						+ SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( "--bowtie2out " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--bowtie2out) found in property("
-						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ outputs bowtie2out files to MetaphlanClassifier/temp." );
+				throw new Exception(
+						"Invalid classifier option (--bowtie2out) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
+								+ "). BioLockJ outputs bowtie2out files to MetaphlanClassifier/temp." );
 			}
 			if( params.indexOf( "-t rel_ab_w_read_stats " ) > -1 )
 			{
@@ -141,18 +143,21 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 			}
 			if( params.indexOf( "--tax_lev " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
+				throw new Exception(
+						"Invalid classifier option (--tax_lev) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
+								+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 			}
 			if( params.indexOf( "-s " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (-s) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
+				throw new Exception(
+						"Invalid classifier option (-s) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
+								+ "). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
 			}
 			if( params.indexOf( "-o " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (-o) found in property(" + EXE_CLASSIFIER_PARAMS
-						+ "). BioLockJ outputs results to: " + getOutputDir().getAbsolutePath() + File.separator );
+				throw new Exception( "Invalid classifier option (-o) found in property("
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). BioLockJ outputs results to: "
+						+ getOutputDir().getAbsolutePath() + File.separator );
 			}
 
 			defaultSwitches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + "-t rel_ab_w_read_stats ";

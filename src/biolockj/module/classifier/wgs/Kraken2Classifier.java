@@ -48,7 +48,8 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		{
 			final String fileId = SeqUtil.getSampleId( file.getName() );
 			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
-			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId + PROCESSED;
+			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId
+					+ Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>( 1 );
 			lines.add( FUNCTION_KRAKEN + " " + krakenOutput + " " + tempFile + " " + file.getAbsolutePath() );
 			data.add( lines );
@@ -77,7 +78,8 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		{
 			final String fileId = SeqUtil.getSampleId( file.getName() );
 			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
-			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId + PROCESSED;
+			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId
+					+ Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>( 1 );
 			lines.add( FUNCTION_KRAKEN + " " + krakenOutput + " " + tempFile + " " + file.getAbsolutePath() + " "
 					+ map.get( file ).getAbsolutePath() );
@@ -154,42 +156,43 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: "
+						+ Constants.EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: "
 						+ SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( PAIRED_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property("
-						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value by analyzing input sequence files" );
+						+ Constants.EXE_CLASSIFIER_PARAMS
+						+ "). BioLockJ derives this value by analyzing input sequence files" );
 			}
 			if( params.indexOf( OUTPUT_PARAM ) > -1 )
 			{
-				throw new Exception(
-						"Invalid classifier option (" + OUTPUT_PARAM + ") found in property(" + EXE_CLASSIFIER_PARAMS
-								+ "). BioLockJ hard codes this file path based on sequence files names in: "
-								+ Constants.INPUT_DIRS );
+				throw new Exception( "Invalid classifier option (" + OUTPUT_PARAM + ") found in property("
+						+ Constants.EXE_CLASSIFIER_PARAMS
+						+ "). BioLockJ hard codes this file path based on sequence files names in: "
+						+ Constants.INPUT_DIRS );
 			}
 			if( params.indexOf( DB_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + DB_PARAM + ") found in property("
-						+ EXE_CLASSIFIER_PARAMS
+						+ Constants.EXE_CLASSIFIER_PARAMS
 						+ "). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
 			}
 			if( params.indexOf( "--help " ) > -1 )
 			{
-				throw new Exception(
-						"Invalid classifier option (--help) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
+				throw new Exception( "Invalid classifier option (--help) found in property("
+						+ Constants.EXE_CLASSIFIER_PARAMS + ")." );
 			}
 			if( params.indexOf( "--version " ) > -1 )
 			{
-				throw new Exception(
-						"Invalid classifier option (--version) found in property(" + EXE_CLASSIFIER_PARAMS + ")." );
+				throw new Exception( "Invalid classifier option (--version) found in property("
+						+ Constants.EXE_CLASSIFIER_PARAMS + ")." );
 			}
 			if( params.indexOf( REPORT_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + REPORT_PARAM + ") found in property("
-						+ EXE_CLASSIFIER_PARAMS + "). BioLockJ hard codes this value based on Sample IDs found in: "
-						+ Constants.INPUT_DIRS );
+						+ Constants.EXE_CLASSIFIER_PARAMS
+						+ "). BioLockJ hard codes this value based on Sample IDs found in: " + Constants.INPUT_DIRS );
 			}
 
 			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getDB() + " "

@@ -47,27 +47,26 @@ public class PropUtil
 	{
 		final Map<String, String> props = new HashMap<>();
 		final Map<String, String> usedProps = Config.getUsedProps();
-		
-		String defaultDemux = ModuleUtil.getDefaultDemultiplexer();
-		String defaultFaCon = ModuleUtil.getDefaultFastaConverter();
-		String defaultMerger = ModuleUtil.getDefaultMergePairedReadsConverter();
-		String defaultStats = ModuleUtil.getDefaultStatsModule();
-		Set<String> configMods = Config.requireSet( Constants.INTERNAL_BLJ_MODULE );
+
+		final String defaultDemux = ModuleUtil.getDefaultDemultiplexer();
+		final String defaultFaCon = ModuleUtil.getDefaultFastaConverter();
+		final String defaultMerger = ModuleUtil.getDefaultMergePairedReadsConverter();
+		final String defaultStats = ModuleUtil.getDefaultStatsModule();
+		final Set<String> configMods = Config.requireSet( Constants.INTERNAL_BLJ_MODULE );
 		boolean foundQiime = false;
-		for( String mod: configMods )
+		for( final String mod: configMods )
 		{
 			if( mod.toLowerCase().contains( "qiime" ) )
 			{
 				foundQiime = true;
 			}
 		}
-		
+
 		if( !foundQiime )
 		{
-			usedProps.remove( QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS  );
+			usedProps.remove( QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
 		}
-		
-		
+
 		if( !ModuleUtil.moduleExists( defaultDemux ) && !configMods.contains( defaultDemux ) )
 		{
 			usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
@@ -75,17 +74,17 @@ public class PropUtil
 			usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
 			usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
 		}
-		
+
 		if( !ModuleUtil.moduleExists( defaultFaCon ) && !configMods.contains( defaultFaCon ) )
 		{
 			usedProps.remove( Constants.DEFAULT_MOD_FASTA_CONV );
 		}
-		
+
 		if( !ModuleUtil.moduleExists( defaultMerger ) && !configMods.contains( defaultMerger ) )
 		{
 			usedProps.remove( Constants.DEFAULT_MOD_SEQ_MERGER );
 		}
-		
+
 		if( !configMods.contains( defaultStats ) && !ModuleUtil.moduleExists( defaultStats ) )
 		{
 			usedProps.remove( Constants.DEFAULT_STATS_MODULE );

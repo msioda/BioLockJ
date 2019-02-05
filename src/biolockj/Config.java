@@ -157,12 +157,12 @@ public class Config
 		{
 			throw new ConfigPathException( propertyName, ConfigPathException.DIRECTORY );
 		}
-		
-		if( f != null)
+
+		if( f != null )
 		{
 			Config.setConfigProperty( propertyName, f.getAbsolutePath() );
 		}
-		
+
 		return f;
 	}
 
@@ -189,8 +189,8 @@ public class Config
 				throw new ConfigPathException( propertyName, ConfigPathException.FILE );
 			}
 		}
-		
-		if( f != null)
+
+		if( f != null )
 		{
 			Config.setConfigProperty( propertyName, f.getAbsolutePath() );
 		}
@@ -485,8 +485,6 @@ public class Config
 	{
 		return getPipelineDir().getAbsolutePath();
 	}
-	
-	
 
 	/**
 	 * Required to return a valid boolean {@value #TRUE} or {@value #FALSE}
@@ -572,10 +570,10 @@ public class Config
 			{
 				throw new ConfigPathException( propertyName, ConfigPathException.DIRECTORY );
 			}
-			
+
 			returnDirs.add( dir );
 		}
-		
+
 		if( returnDirs != null && !returnDirs.isEmpty() )
 		{
 			Config.setConfigProperty( propertyName, returnDirs );

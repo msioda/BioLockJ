@@ -18,7 +18,8 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.*;
+import biolockj.module.SeqModule;
+import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
 /**

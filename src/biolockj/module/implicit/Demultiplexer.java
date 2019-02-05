@@ -24,9 +24,10 @@ import biolockj.util.*;
  * This BioModule splits multiplexed data into a separate file or pair of files (for paired reads) for each sample. The
  * sample ID, or an identification barcode must be included in the header of each read. Barcodes are matched to Sample
  * IDs using the metadata column configured via property "metadata.barcodeColumn".<br>
- * If demultiplexer.strategy=barcode_in_header, register a match if the barcode is found anywhere in the sequence header.<br>
- * If demultiplexer.strategy=barcode_in_seq, register a match if the sequence itself starts with any of the barcodes. The output
- * multiplexed file will have barcodes removed from the sequences since they no longer serve any purpose.<br>
+ * If demultiplexer.strategy=barcode_in_header, register a match if the barcode is found anywhere in the sequence
+ * header.<br>
+ * If demultiplexer.strategy=barcode_in_seq, register a match if the sequence itself starts with any of the barcodes.
+ * The output multiplexed file will have barcodes removed from the sequences since they no longer serve any purpose.<br>
  * Sequences with no matching barcode, or without a matching paired header (if paired), are output to a "NO_MATCH" file
  * in the module temp directory.<br>
  * Paired reads are accepted in 2 multiplexed formats:
@@ -43,8 +44,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	 * Validate module dependencies:
 	 * <ol>
 	 * <li>If {@link biolockj.Config}.{@value biolockj.util.DemuxUtil#DEMUX_STRATEGY} indicates use of barcodes to
-	 * demultiplexer, validate metadata column named {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_BARCODE_COLUMN}
-	 * exists
+	 * demultiplexer, validate metadata column named
+	 * {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} exists
 	 * <li>Call {@link #setMultiplexedConfig()} to set multiplexed Config if needed
 	 * <li>If {@link biolockj.Config}.{@value biolockj.util.DemuxUtil#BARCODE_CUTOFF} defined, validate between 0.0 -
 	 * 1.0

@@ -14,10 +14,6 @@ package biolockj.module;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.Log;
-import biolockj.util.BioLockJUtil;
 import biolockj.util.SeqUtil;
 
 /**

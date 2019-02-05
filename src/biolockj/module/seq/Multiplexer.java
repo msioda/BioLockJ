@@ -29,23 +29,23 @@ import biolockj.util.*;
 public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
 
-//	/**
-//	 * If enabled, gzip the multiplexed output file.
-//	 */
-//	@Override
-//	public List<List<String>> buildScript( final List<File> files ) throws Exception
-//	{
-//		final List<List<String>> script = super.buildScript( files );
-//		if( Config.getBoolean( DO_GZIP ) )
-//		{
-//			final List<String> lines = script.get( script.size() - 1 );
-//			lines.add( FUNCTION_GZIP );
-//			script.clear();
-//			script.remove( script.size() - 1 );
-//			script.add( lines );
-//		}
-//		return script;
-//	}
+	// /**
+	// * If enabled, gzip the multiplexed output file.
+	// */
+	// @Override
+	// public List<List<String>> buildScript( final List<File> files ) throws Exception
+	// {
+	// final List<List<String>> script = super.buildScript( files );
+	// if( Config.getBoolean( DO_GZIP ) )
+	// {
+	// final List<String> lines = script.get( script.size() - 1 );
+	// lines.add( FUNCTION_GZIP );
+	// script.clear();
+	// script.remove( script.size() - 1 );
+	// script.add( lines );
+	// }
+	// return script;
+	// }
 
 	/**
 	 * Validate module dependencies:
@@ -95,14 +95,12 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 			{
 				sb.append( "Module incomplete - no output produced!" + RETURN );
 			}
-			
+
 			if( rcCount > 0 )
 			{
 				sb.append( "# Reads saved with existing reverse compliment header barcode: " + rcCount + RETURN );
 			}
-			
-			
-			
+
 		}
 		catch( final Exception ex )
 		{
@@ -114,23 +112,23 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		return super.getSummary() + sb.toString();
 	}
 
-//	/**
-//	 * This method generates the bash function: {@value #FUNCTION_GUNZIP}.
-//	 */
-//	@Override
-//	public List<String> getWorkerScriptFunctions() throws Exception
-//	{
-//		final List<String> lines = super.getWorkerScriptFunctions();
-//		if( Config.getBoolean( DO_GZIP ) )
-//		{
-//			lines.add( "function " + FUNCTION_GZIP + "() {" );
-//			lines.add( Config.getExe( Constants.EXE_GZIP ) + " " + getOutputDir().getAbsolutePath() + File.separator
-//					+ "*" );
-//			lines.add( "}" + RETURN );
-//		}
-//
-//		return lines;
-//	}
+	// /**
+	// * This method generates the bash function: {@value #FUNCTION_GUNZIP}.
+	// */
+	// @Override
+	// public List<String> getWorkerScriptFunctions() throws Exception
+	// {
+	// final List<String> lines = super.getWorkerScriptFunctions();
+	// if( Config.getBoolean( DO_GZIP ) )
+	// {
+	// lines.add( "function " + FUNCTION_GZIP + "() {" );
+	// lines.add( Config.getExe( Constants.EXE_GZIP ) + " " + getOutputDir().getAbsolutePath() + File.separator
+	// + "*" );
+	// lines.add( "}" + RETURN );
+	// }
+	//
+	// return lines;
+	// }
 
 	/**
 	 * Execute {@link #multiplex(File)} on each input file
@@ -175,10 +173,10 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		else if( DemuxUtil.hasValidBarcodes() )
 		{
 			final String barcode = MetaUtil.getField( sampleId, Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
-			String rc = SeqUtil.reverseComplement( barcode );
-			
-			if( header.contains( barcode )  )
-			{ 
+			final String rc = SeqUtil.reverseComplement( barcode );
+
+			if( header.contains( barcode ) )
+			{
 				return header;
 			}
 			else if( header.contains( rc ) )
@@ -269,14 +267,6 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 					+ "All other BioLockJ modules require demultiplexed data." );
 		}
 	}
-	
-	private void removeDecompressedFiles() throws Exception
-	{
-		for( final String path: muxFiles )
-		{
-			BioLockJUtil.deleteWithRetry( new File( path ), 5 );
-		}
-	}
 
 	private void compressData() throws Exception
 	{
@@ -352,6 +342,14 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		return numReads;
 	}
 
+	private void removeDecompressedFiles() throws Exception
+	{
+		for( final String path: muxFiles )
+		{
+			BioLockJUtil.deleteWithRetry( new File( path ), 5 );
+		}
+	}
+
 	private final Map<String, Long> fwMap = new HashMap<>();
 	private final Set<String> muxFiles = new HashSet<>();
 	private int rcCount = 0;
@@ -363,5 +361,5 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 */
 	protected static final String DO_GZIP = "multiplexer.gzip";
 
-	//private static final String FUNCTION_GZIP = "gZip";
+	// private static final String FUNCTION_GZIP = "gZip";
 }

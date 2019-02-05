@@ -51,8 +51,7 @@ public class R_PlotMds extends R_Module implements ScriptModule
 		set.add( TSV_EXT.substring( 1 ) );
 		return set;
 	}
-	
-	
+
 	/**
 	 * {@link biolockj.Config} List property: {@value #MDS_REPORT_FIELDS}<br>
 	 * List metadata fields to generate MDS ordination plots.

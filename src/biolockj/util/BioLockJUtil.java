@@ -22,7 +22,6 @@ import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
-import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.report.r.R_CalculateStats;
 
 /**
@@ -92,14 +91,15 @@ public class BioLockJUtil
 				}
 				if( i > 1 )
 				{
-					Log.warn( BioLockJUtil.class, "Attempt #" + i + " succeeded in deleting file: " + file.getAbsolutePath() + "  --> with FileUtils.forceDelete( file )" );
+					Log.warn( BioLockJUtil.class, "Attempt #" + i + " succeeded in deleting file: "
+							+ file.getAbsolutePath() + "  --> with FileUtils.forceDelete( file )" );
 				}
 				return true;
 			}
 			catch( final IOException ex )
 			{
-				Log.info( BioLockJUtil.class,
-						"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
+				Log.info( BioLockJUtil.class, "Failed while still waiting for resource to become free [" + i + "]: "
+						+ file.getAbsolutePath() );
 			}
 		}
 
@@ -542,7 +542,7 @@ public class BioLockJUtil
 			{
 				fileTypes.add( PIPELINE_STATS_TABLE_INPUT_TYPE );
 			}
-			else if( file.getName().endsWith( ClassifierModule.PROCESSED ) )
+			else if( file.getName().endsWith( Constants.PROCESSED ) )
 			{
 				fileTypes.add( PIPELINE_PARSER_INPUT_TYPE );
 			}

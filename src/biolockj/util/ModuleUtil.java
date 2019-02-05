@@ -346,7 +346,6 @@ public class ModuleUtil
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 	}
 
-
 	/**
 	 * Check if a module was in the pipeline at least once.
 	 * 
