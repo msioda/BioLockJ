@@ -49,7 +49,7 @@ printColorCode <- function(){
    nonParColors = getTestName(isParametric = FALSE, returnColors = TRUE)
    colors = c(parColors, nonParColors)
    plot(1,1, ylim=c(0,4), xlim=c(.5,2.5), type="n", axes=FALSE, xlab="", ylab="")
-   title(main="Color Coding", line=0)
+   title(main="Color Coding", line=0.5)
    x=rep(1:2, each=3)
    y=rep(3:1, 2)
    symbols(x=x, y=y, rectangles = matrix(ncol=2,byrow=TRUE,data=rep(c(1,1),6)), fg=colors, bg=colors, inches=FALSE, add=TRUE)
@@ -66,14 +66,12 @@ main <- function() {
 
    for( level in taxaLevels() ) {
 
-      parStats = getStatsTable( level, TRUE, FALSE )
-      nonParStats = getStatsTable( level, FALSE, FALSE )
-      if( is.null(parStats) || is.null(nonParStats) ) { next }
-      if( doDebug() ) sink( getLogFile( level ) )
-
       # create empty pdf
-      pdf( getPath( getOutputDir(), paste0(level, "_histograms.pdf") ) )
-      par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
+      outputFile = getPath( file.path(getModuleDir(), "output"), paste0(level, "_histograms.pdf") )
+      pdf( outputFile, paper="letter", width=7.5, height=10.5  )
+      par( mfrow=c(3, 2), las=1, mar=c(5,4,3,1)+.1, oma=c(1,1,1,0), cex=1)
+      pageNum = 1
+      position = 1
 
       size = getCexMain( colnames(parStats) )
       logInfo( "size = getCexMain( colnames(parStats) )", size )
@@ -106,18 +104,27 @@ main <- function() {
          addHistogram( v=parStats[, field],
                               xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
                               col=getTestName(field, isParametric=TRUE, returnColors=TRUE) )
+         position = position + 1
 
          nonParTestName = getTestName(field, isParametric=FALSE)
          xLabelNonPar = paste( nonParTestName, "P-Values" )
          addHistogram( v=nonParStats[, field],
                               xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
                               col=getTestName(field, isParametric=FALSE, returnColors=TRUE) )
+         position = position + 1
 
          # shared title
          plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
          shiftByPoints = par("mai")[2] * plotPointPerInch
          centerAt = par("usr")[1] - shiftByPoints
-         mtext(text=field, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+         mtext(text=attName, side=3, line=1.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+         
+         if (position > prod( par("mfrow") ) ){
+           addPageNumber( pageNum )
+           addPageFooter(paste("P-Value Histograms", displayLevel( level ), sep = " - "))
+           position = 1
+           pageNum = pageNum + 1
+         }
 
       }
       # at the end, add the color code reference
@@ -125,6 +132,8 @@ main <- function() {
       plotPlainText( c("Histograms are ordered by", paste("the fraction of tests below", pvalCutoff), 
                        "in the parametric or non-parametric test,", "whichever was greater.", " ", 
                        "All p-values are unadjusted."), align="right")
+      addPageNumber( pageNum )
+      addPageFooter(paste("P-Value Histograms", displayLevel( level ), sep = " - "))
       dev.off()
 
       if( doDebug() ) sink()
