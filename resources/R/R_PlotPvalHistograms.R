@@ -123,7 +123,8 @@ main <- function() {
       # at the end, add the color code reference
       printColorCode()
       plotPlainText( c("Histograms are ordered by", paste("the fraction of tests below", pvalCutoff), 
-                       "in the parametric or non-parametric test,", "whichever was greater."))
+                       "in the parametric or non-parametric test,", "whichever was greater.", " ", 
+                       "All p-values are unadjusted."), align="right")
       dev.off()
 
       if( doDebug() ) sink()
