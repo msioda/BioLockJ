@@ -27,15 +27,8 @@ main <- function() {
       
       # Make plots
       outputFile = paste0( getPath( getOutputDir(), paste0(level, "_MDS.pdf" ) ) )
-
-      if (numAxis < 4 ) {
-         pdf( outputFile, width = 7, height = 7)
-         par( mfrow=c(2, 2) )
-      }else{
-         pdf( outputFile, paper="letter", width=7, height=10.5 )
-         par( mfrow=c(3, 2) )
-      }
-      par(las=1, oma=c(2,1,4,3), mar=c(5, 4, 2, 2))
+      pdf( outputFile, paper="letter", width=7, height=10.5 )
+      par(mfrow=c(3, 2), las=1, oma=c(2,1,4,3), mar=c(5, 4, 2, 2))
       percentVariance = as.numeric(eigenvals(myMDS)/sum( eigenvals(myMDS) ) ) * 100
       pageNum = 0
       
