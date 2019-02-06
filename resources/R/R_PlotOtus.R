@@ -101,15 +101,9 @@ main <- function() {
       metaColColors = getColorsByCategory( metaTable )
 
       outputFile = getPath( getOutputDir(), paste0(level, "_OTU_plots.pdf") )
-
-      if( length( reportCols ) < 5 ) {
-         pdf( outputFile, width = 7, height = 7)
-         par( mfrow=c(2, 2) )
-      }else{
-         pdf( outputFile, paper="letter", width=7, height=10.5 )
-         par( mfrow=c(3, 2) )
-      }
-      par(las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
+      pdf( outputFile, paper="letter", width=7, height=10.5 )
+      
+      par(mfrow=c(3, 2), las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
       pageNum = 0
 
       # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countTable rows
