@@ -13,6 +13,8 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import biolockj.Constants;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -48,12 +50,14 @@ public class MetaphlanParser extends ParserModuleImpl implements ParserModule
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try
 			{
+				List<String> lines = new ArrayList<>();
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
 					if( !line.startsWith( "#" ) )
 					{
-						addOtuNode( new MetaphlanNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
+						
 					}
+					lines.add( line );
 				}
 			}
 			finally
