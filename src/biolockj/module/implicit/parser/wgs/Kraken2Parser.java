@@ -26,11 +26,10 @@ import biolockj.util.MemoryUtil;
  */
 public class Kraken2Parser extends ParserModuleImpl implements ParserModule
 {
-
 	/**
 	 * Parse all {@link biolockj.module.classifier.wgs.Kraken2Classifier} reports in the input directory.<br>
 	 * Build an {@link biolockj.node.wgs.Kraken2Node} for each line.<br>
-	 * If {@link #isValid(OtuNode)},<br>
+	 * If {@link #isValid(OtuNode)}: <br>
 	 * <ol>
 	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.KrakenNode#getSampleId()} if not
 	 * yet created.
