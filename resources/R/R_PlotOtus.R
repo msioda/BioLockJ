@@ -110,18 +110,17 @@ main <- function() {
          par( mfrow=c(3, 2) )
       }
       par(las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
-      multiPageSet = 0
+      pageNum = 0
 
       # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countTable rows
       cutoffValue = getProperty("r.rareOtuThreshold", 1)
       if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow(countTable)
 
       for( item in names(countTable) ) {
-         multiPageSet = multiPageSet + 1
          if( sum( countTable[,item] > 0 ) >=  cutoffValue ) {
             par( mfrow = par("mfrow") ) # step to next pageNum, even if the last page is not full
             position = 1
-            pageNum = 1
+            pageNum = pageNum + 1
             taxaVals = countTable[,item]
 
             for( meta in reportCols ) {
@@ -141,11 +140,7 @@ main <- function() {
 
                if(position == 2) {
                   addPageTitle( item )
-                  if ( length(reportCols) > prod( par("mfrow") ) ) {
-                     addPageFooter( level, pageNum, multiPageSet )
-                  }else{
-                     addPageFooter( level, multiPageSet )
-                  }
+                  addPageNumber( pageNum )
                }
                if( position > prod( par("mfrow") ) ) {
                   position = 1

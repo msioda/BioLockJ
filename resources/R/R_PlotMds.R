@@ -37,11 +37,11 @@ main <- function() {
       }
       par(las=1, oma=c(2,1,4,3), mar=c(5, 4, 2, 2))
       percentVariance = as.numeric(eigenvals(myMDS)/sum( eigenvals(myMDS) ) ) * 100
-      multiPageSet = 0
+      pageNum = 0
       
       for( field in mdsFields ){
         logInfo( "mdsFields", mdsFields )
-         multiPageSet = multiPageSet + 1
+        pageNum = pageNum + 1
          metaColVals = as.character(metaTable[,field])
          logInfo( "metaColVals", metaColVals )
          par(mfrow = par("mfrow"))
@@ -65,11 +65,7 @@ main <- function() {
                position = position + 1
                if ( position == 2 ){ 
                   addPageTitle( field, line=1 )
-                  if ( numAxis > 3 ){
-                     addPageFooter(level, pageNum, multiPageSet)
-                  }else{
-                     addPageFooter(level, multiPageSet)
-                  }
+                  addPageNumber( pageNum )
                   # put this plot at the upper right position
                   # that puts the legend in a nice white space, and it makes axis 1 in line with itself in two plots (same for axis3)
                   plotRelativeVariance(percentVariance, numAxis)
@@ -82,7 +78,6 @@ main <- function() {
             }
          }
       }
-      plotPlainText( paste( " Each", paste0(pageNum, "-page"), "set is identical.\n Only the color scheme/legend changes." ), 0.8)
       if( doDebug() ) sink()
       dev.off()
    }

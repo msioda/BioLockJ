@@ -7,15 +7,14 @@ addNamedVectorElement <- function( v, name, value ) {
 	return( v )
 }
 
-# Add a footer with title, level and page number
-addPageFooter <- function (level, pageNum, multiPageSet=NULL){
-	if (!is.null(multiPageSet)){
-		pageString = paste(multiPageSet, pageNum, sep="-")
-	}else{
-		pageString = pageNum
-	}
-	pageNumberText = paste(displayLevel(level), paste("page", pageString), sep=" - ")
-	mtext(pageNumberText, side=1, outer=TRUE, line=0, adj = 1)
+# Add a page number in the lower right corner of the page
+addPageNumber <- function (pageNum, line=0){
+	mtext(pageNum, side=1, outer=TRUE, line=line, adj = 1)
+}
+
+# Add text to the bottom of the page, centered
+addPageFooter <- function(text, line=0){
+	mtext(text, side=1, outer=TRUE, line=line, adj = .5)
 }
 
 # Add a page title
