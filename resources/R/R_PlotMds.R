@@ -66,11 +66,12 @@ main <- function() {
                if ( position == 2 ){ 
                   addPageTitle( field, line=1 )
                   addPageNumber( pageNum )
+                  addPageFooter( "Multidimensional Scaling" )
                   # put this plot at the upper right position
                   # that puts the legend in a nice white space, and it makes axis 1 in line with itself in two plots (same for axis3)
                   plotRelativeVariance(percentVariance, numAxis)
                   position = position + 1
-                  title("Multidimensional Scaling")
+                  title( displayLevel( level ) )
                   legend(x="topright", title=field,
                             legend = paste0(names(colorKey), " (n=", table(metaColVals)[names(colorKey)], ")"), 
                             col=colorKey, pch=pch, bty="n")
