@@ -10,6 +10,8 @@ addNamedVectorElement <- function( v, name, value ) {
 # Add a page number in the lower right corner of the page
 addPageNumber <- function (pageNum, line=0){
 	mtext(pageNum, side=1, outer=TRUE, line=line, adj = 1)
+	# optional return value
+	if (is.numeric(pageNum) ) pageNum + 1
 }
 
 # Add text to the bottom of the page, centered
