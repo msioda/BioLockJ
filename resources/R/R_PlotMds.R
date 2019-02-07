@@ -27,8 +27,8 @@ main <- function() {
       
       # Make plots
       outputFile = paste0( getPath( getOutputDir(), paste0(level, "_MDS.pdf" ) ) )
-      pdf( outputFile, paper="letter", width=7, height=10.5 )
-      par(mfrow=c(3, 2), las=1, oma=c(2,1,4,3), mar=c(5, 4, 2, 2))
+      pdf( outputFile, paper="letter", width=7.5, height=10.5 )
+      par(mfrow=c(3, 2), las=1, oma=c(1,0,2,1), mar=c(5, 4, 2, 2), cex=.95)
       percentVariance = as.numeric(eigenvals(myMDS)/sum( eigenvals(myMDS) ) ) * 100
       pageNum = 0
       
@@ -37,7 +37,7 @@ main <- function() {
         pageNum = pageNum + 1
          metaColVals = as.character(metaTable[,field])
          logInfo( "metaColVals", metaColVals )
-         par(mfrow = par("mfrow"))
+         par(mfrow = par("mfrow"), cex = par("cex"))
          att = as.factor(metaColVals)
          colorKey = metaColColors[[field]]
          logInfo( c( "Using colors: ", paste(colorKey, "for", names(colorKey), collapse= ", ")) )
@@ -75,7 +75,7 @@ main <- function() {
                     numDropped = length(colorKey) - length(legendKey) + 1
                     legendLabels = c(legendLabels[1:maxInLegend], paste("(", numDropped, "other labels )"))
                   }
-                  legend(x="topright", title=attName, legend = legendLabels, col=legendKey, pch=pch, bty="n")
+                  legend(x="topright", title=field, legend = legendLabels, col=legendKey, pch=pch, bty="n")
                }
             }
          }

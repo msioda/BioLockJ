@@ -181,7 +181,7 @@ main <- function() {
 	}
 }
 
-buildReport <- function( key ) {
+buildReport <- function( level ) {
 	if( doDebug() ) sink( getLogFile( level ) )
 	reportStats = calculateStats( level )
 	if( is.null( reportStats ) ) {

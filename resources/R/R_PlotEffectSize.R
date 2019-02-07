@@ -8,7 +8,7 @@ getRawCountTable <- function( level ){
   rcAbund = pipelineFile( paste0( "_pAbund_", level, ".tsv$" ) )
   effectPlots = pipelineFile( paste0( level, "_EffectSizePlots.pdf$" ) )
   latestFile = pickLatestFile( c( rcTaxa, rcAbund, effectPlots ) )
-  if( !is.null( latestFile ) &&  is.null( effectPlots )  || !grepl( effectPlots, latestFile ) ) {
+  if( !is.null( latestFile ) &&  !is.null( effectPlots )  || !grepl( effectPlots, latestFile ) ) {
     return( latestFile )
   }
   return( NULL )

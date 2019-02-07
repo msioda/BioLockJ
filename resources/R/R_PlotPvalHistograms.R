@@ -65,6 +65,10 @@ main <- function() {
    pvalCutoff = getProperty("r.pvalCutoff", 0.05)
 
    for( level in taxaLevels() ) {
+     parStats = getStatsTable( level, TRUE, FALSE )
+     nonParStats = getStatsTable( level, FALSE, FALSE )
+     if( is.null(parStats) || is.null(nonParStats) ) { next }
+     if( doDebug() ) sink( getLogFile( level ) )
 
       # create empty pdf
       outputFile = getPath( file.path(getModuleDir(), "output"), paste0(level, "_histograms.pdf") )
@@ -77,11 +81,13 @@ main <- function() {
       logInfo( "size = getCexMain( colnames(parStats) )", size )
 
       # create ranks table
-      ranks = data.frame(AttributeName=names(parStats),
+      fields = names(parStats)[ names(parStats) %in% getReportFields()]
+      logInfo("fields", getReportFields())
+      ranks = data.frame(AttributeName=fields,
                                   Parametric.FractionPvalsUnderCutoff=rep(NA, ncol(parStats)),
                                   NonParametric.FractionPvalsUnderCutoff=rep(NA, ncol(nonParStats)))
-      row.names(ranks) = ranks$AttributeName
-      for( field in names(parStats) ) {
+      row.names(ranks) = fields
+      for( field in fields ) {
          ranks[field,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=parStats[, field], pvalCutoff)
          ranks[field,"NonParametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=nonParStats[, field], pvalCutoff)
       }
@@ -117,7 +123,7 @@ main <- function() {
          plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
          shiftByPoints = par("mai")[2] * plotPointPerInch
          centerAt = par("usr")[1] - shiftByPoints
-         mtext(text=attName, side=3, line=1.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+         mtext(text=field, side=3, line=1.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
          
          if (position > prod( par("mfrow") ) ){
            addPageNumber( pageNum )

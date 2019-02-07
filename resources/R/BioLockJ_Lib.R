@@ -300,7 +300,7 @@ getTestName <- function( field=NULL, isParametric=c(TRUE, FALSE), returnColors=F
 		}
 	}
 	
-	whichTest = which(testOptions$fieldType %in% fieldType && testOptions$isParametric %in% isParametric)
+	whichTest = which(testOptions$fieldType %in% fieldType & testOptions$isParametric %in% isParametric)
 	
 	if (returnColors){
 		cols = testOptions[whichTest,"color"]
