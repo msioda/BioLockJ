@@ -51,7 +51,7 @@ main <- function() {
                   pageNum = pageNum + 1
                }
                pch=getProperty("r.pch", 20)
-               plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste("MDS [", x, "vs", y, "]" ),
+               plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste("Axes", x, "vs", y),
                         xlab=getMdsLabel( x, percentVariance[x] ),
                         ylab=getMdsLabel( y, percentVariance[y] ),
                         cex=1.2, pch=pch, col=colorKey[metaColVals] )
@@ -65,9 +65,17 @@ main <- function() {
                   plotRelativeVariance(percentVariance, numAxis)
                   position = position + 1
                   title( displayLevel( level ) )
-                  legend(x="topright", title=field,
-                            legend = paste0(names(colorKey), " (n=", table(metaColVals)[names(colorKey)], ")"), 
-                            col=colorKey, pch=pch, bty="n")
+                  # Add legend
+                  legendKey = colorKey
+                  legendLabels = paste0(names(legendKey), " (n=", table(metaColVals)[names(legendKey)], ")")
+                  legendKey = legendKey[ order(table(metaColVals)[names(colorKey)]) ]
+                  maxInLegend = 6
+                  if (length(colorKey) > (maxInLegend + 1)){
+                    legendKey = c( colorKey[ 1:maxInLegend], NA)
+                    numDropped = length(colorKey) - length(legendKey) + 1
+                    legendLabels = c(legendLabels[1:maxInLegend], paste("(", numDropped, "other labels )"))
+                  }
+                  legend(x="topright", title=attName, legend = legendLabels, col=legendKey, pch=pch, bty="n")
                }
             }
          }
@@ -90,5 +98,6 @@ plotRelativeVariance <- function(percentVariance, numAxis){
    labels = round(heights)
    near0 = which(labels < 1)
    labels[near0] = "<1"
-   text(x=bp, y=heights, labels = paste(labels, "%"), pos=3, xpd=TRUE)
+   if (numBars <= 6){ labels = paste(labels, "%") }
+   text(x=bp, y=heights, labels = labels, pos=3, xpd=TRUE)
 }
