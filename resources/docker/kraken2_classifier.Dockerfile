@@ -1,6 +1,6 @@
 # Deployment path:  $BLJ/resources/docker/classifier/wgs/Kraken2Classifier
 
-FROM blj_basic
+FROM biolockj/blj_basic
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
@@ -17,7 +17,12 @@ RUN cd /app && \
 	rm -rf /app/kraken2-${KRAKEN_VER}
     
 #3.) ================= Copy 4GB database =================
-COPY miniKraken2_20181027 /db/miniKraken2
+ENV KRAKEN_DB_URL="https://www.ccb.jhu.edu/software/kraken2/dl/minikraken2_v1_8GB.tgz"
+RUN cd /db && \
+	wget -qO- $KRAKEN_DB_URL | bsdtar -xzf- && \
+	mv minikraken*/* . && \
+	rm -rf minikraken*
+
 
 #4.) =============== Cleanup ================================
 RUN	apt-get clean && \

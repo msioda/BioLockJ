@@ -5,9 +5,9 @@
 # color by test type
 
 # Add one histogram to the report
-addHistogram <- function( v, xLabel, size, pvalCutoff=NULL, col="dodgerblue2" ) {
+addHistogram <- function( v, xLabel, size, pvalCutoff=NULL, col ) {
 	if ( !all(is.nan( v )) && !all(is.na( v )) ) {
-		hist( v, breaks=20, xlab=xLabel, main="", cex.main=size, col=col )
+		hist( v, breaks = seq(0, 1, 0.05), xlab=xLabel, main="", cex.main=size, col=col, xlim=c(0,1))
 		if (!is.null(pvalCutoff)){
 			abline(v=pvalCutoff, col=gray(.5), lty=2)
 			mtext(at=pvalCutoff, side=3, text=pvalCutoff, col=gray(.5))
@@ -28,16 +28,16 @@ calcSigFraction <- function(pvals, pvalCutoff){
 getCexMain<- function( labels=NULL ) {
 	cexMax = 1.2
 	cexMin = 0.65
-	
+
 	maxLabelSize = 1
 	for( i in 1:length(labels) ) {
 		if( nchar(labels[i]) > maxLabelSize ) maxLabelSize = nchar(labels[i])
 	}
-	
+
 	size = 25/maxLabelSize
 	if ( size > cexMax ) size = cexMax
 	if ( size < cexMin ) size = cexMin
-	
+
 	return( size )
 }
 
@@ -63,20 +63,20 @@ printColorCode <- function(){
 # Each taxonomy report includes 2 histograms for each report field (1 parametric, 1 non-parametric) 
 main <- function() {
 	pvalCutoff = getProperty("r.pvalCutoff", 0.05)
-	
+
 	for( level in taxaLevels() ) {
 		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildPvalHistograms_", level, ".log") ) )
-		
+
 		# create empty pdf
 		pdf( getPath( file.path(getModuleDir(), "output"), paste0(level, "_histograms.pdf") ) )
 		par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
-		
-		
+
+
 		parStats = getStatsTable( level, TRUE, FALSE )
 		nonParStats = getStatsTable( level, FALSE, FALSE )
 		size = getCexMain( colnames(parStats) )
 		logInfo( "size = getCexMain( colnames(parStats) )", size )
-		
+
 		# create ranks table
 		ranks = data.frame(AttributeName=names(parStats),
 											 Parametric.FractionPvalsUnderCutoff=rep(NA, ncol(parStats)),
@@ -91,25 +91,24 @@ main <- function() {
 		ranks = ranks[order(orderBy, decreasing=TRUE),]
 		fname = getPath( file.path(getModuleDir(), "temp"), paste0(level, "_fractionBelow-", pvalCutoff, ".tsv") )
 		write.table(ranks, file=fname, sep="\t", quote=FALSE, row.names=FALSE)
-		
+
 		# plot histograms in the same order they have in the ranks table
 		for( attName in ranks$AttributeName ) {
-		
+
 			if( ! attName %in% getReportFields() ){ next }
-			
+
 			logInfo("processing attribute:", attName )
 			stopifnot( attName %in% names(nonParStats) & attName %in% names(parStats) )
 
 			parTestName = getTestName(attName, isParametric=TRUE)
 			xLabelPar = paste( parTestName, "P-Values" )
-			addHistogram( v=parStats[, attName], 
+			addHistogram( v=parStats[, attName],
 										xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
 										col=getTestName(attName, isParametric=TRUE, returnColors=TRUE) )
-	
 
 			nonParTestName = getTestName(attName, isParametric=FALSE)
 			xLabelNonPar = paste( nonParTestName, "P-Values" )
-			addHistogram( v=nonParStats[, attName], 
+			addHistogram( v=nonParStats[, attName],
 										xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
 										col=getTestName(attName, isParametric=FALSE, returnColors=TRUE) )
 
@@ -118,15 +117,14 @@ main <- function() {
 			shiftByPoints = par("mai")[2] * plotPointPerInch
 			centerAt = par("usr")[1] - shiftByPoints
 			mtext(text=attName, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
-			
+
 		}
 		# at the end, add the color code reference
 		printColorCode()
 		plotPlainText(paste0("Histograms are ordered by \nthe fraction of tests below ", 
 												 pvalCutoff, "\nin the parametric or non-parametric test, \nwhichever was greater."))
 		dev.off()
-		
+
 		if( doDebug() ) sink()
 	}
 }
-

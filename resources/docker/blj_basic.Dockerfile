@@ -11,6 +11,7 @@ ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
 #2.) ============ Make standard dirs 
 RUN mkdir /app && \
 	mkdir /config && \
+	mkdir /db && \
 	mkdir /input && \
 	mkdir /log && \
 	mkdir /meta && \
@@ -34,7 +35,7 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc && \
 	echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
-	echo 'export PS1="biolockj> "' >> ~/.bashrc && \	
+	echo 'export PS1="${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' >> ~/.bashrc && \	
 	echo 'alias goblj=blj_go' >> ~/.bashrc
 
 #4.) ============ Install Ubuntu Prereqs =================

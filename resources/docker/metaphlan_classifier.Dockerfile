@@ -1,6 +1,6 @@
 # Deployment path:  $BLJ/resources/docker/classifier/wgs/metaphlan_classifier
 
-FROM blj_basic_py2
+FROM biolockj/blj_basic_py2
 
 #1.) ================= Setup Env =================
 ARG DEBIAN_FRONTEND=noninteractive
@@ -13,19 +13,26 @@ RUN pip install numpy && \
 #3.) ============ Install bowtie 2.2.9  =================
 ENV BOWTIE_URL="https://sourceforge.net/projects/bowtie-bio/files/bowtie2"
 ENV BOWTIE_VER=2.2.9
-ENV BOWTIE_PREFIX=bowtie2-${BOWTIE_VER}
-ENV BOWTIE_ZIP=${BOWTIE_PREFIX}-linux-x86_64.zip
-RUN cd /app && \
-	wget -qO- $BOWTIE_URL/$BOWTIE_VER/$BOWTIE_ZIP | bsdtar -xf- && \
-	rm -rf $BOWTIE_PREFIX/example
+ENV BOWTIE=bowtie2-${BOWTIE_VER}
+ENV B_URL=$BOWTIE_URL/$BOWTIE_VER/${BOWTIE}-linux-x86_64.zip
+RUN cd /usr/local/bin && \
+	wget  -qO- $B_URL | bsdtar -xf- && \
+	chmod 777 -R $BOWTIE && \
+	rm -rf $BOWTIE/*-debug && \
+	mv $BOWTIE/[bs]* . && \
+	rm -rf $BOWTIE
 
 
 #4.) ============ Install metaphlan2 =================
-ENV mpa_dir=/app/metaphlan2
-ENV META_ZIP=metaphlan2.zip
-ENV META_URL="https://www.dropbox.com/s/ztqr8qgbo727zpn/"
-RUN cd /app && \
-	wget -qO- $META_URL/${META_ZIP} | bsdtar -xf-
+ENV mpa_dir=/usr/local/bin
+ENV META_URL="https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip"
+ENV M_URL=$META_URL
+RUN cd $mpa_dir && \
+	wget -qO- $META_URL | bsdtar -xf- && \
+	chmod 777 -R metaphlan2 && \
+	mv metaphlan2/* . && \
+	rm -rf metaphlan2  
+	
 	
 #5.) =======================  Cleanup  ========================== 
 RUN	apt-get clean && \
@@ -36,5 +43,4 @@ RUN	apt-get clean && \
 	rm -rf /var/log/*
 
 #6.) ================= Container Command =================
-ENV PATH=$PATH:/app/metaphlan2:/app/bowtie2-2.2.9
 CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]
