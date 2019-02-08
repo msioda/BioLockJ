@@ -78,7 +78,7 @@ public final class RMetaUtil
 
 		nominalFields.addAll( Config.getList( R_NOMINAL_FIELDS ) );
 		numericFields.addAll( Config.getList( R_NUMERIC_FIELDS ) );
-		mdsFields.addAll( Config.getList( R_PlotMds.R_MDS_REPORT_FIELDS ) );
+		mdsFields.addAll( Config.getList( R_MDS_REPORT_FIELDS ) );
 
 		final List<String> excludeFields = Config.getList( R_EXCLUDE_FIELDS );
 
@@ -95,7 +95,7 @@ public final class RMetaUtil
 		verifyMetadataFieldsExist( R_REPORT_FIELDS, rScriptFields );
 		verifyMetadataFieldsExist( R_NUMERIC_FIELDS, numericFields );
 		verifyMetadataFieldsExist( R_NOMINAL_FIELDS, nominalFields );
-		verifyMetadataFieldsExist( R_PlotMds.R_MDS_REPORT_FIELDS, mdsFields );
+		verifyMetadataFieldsExist( R_MDS_REPORT_FIELDS, mdsFields );
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -577,6 +577,13 @@ public final class RMetaUtil
 	 * R reports must contain at least one valid nominal or numeric metadata field.
 	 */
 	protected static final String R_EXCLUDE_FIELDS = "r.excludeFields";
+	
+	/**
+	 * {@link biolockj.Config} List property: {@value #R_MDS_REPORT_FIELDS}<br>
+	 * Fields listed here must exist in the metadata file.
+	 * 
+	 */
+	protected static final String R_MDS_REPORT_FIELDS = "r_PlotMds.reportFields";
 
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_NOMINAL_FIELDS}<br>
