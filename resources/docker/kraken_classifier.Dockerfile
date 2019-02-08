@@ -1,6 +1,6 @@
 # Deployment path:  $BLJ/resources/docker/kraken_classifier.Dockerfile
 
-FROM biolockj/kraken_classifier_noDB
+FROM biolockj/kraken_classifier_dbfree
 ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Ubuntu Software 

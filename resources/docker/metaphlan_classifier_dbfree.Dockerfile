@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/metaphlan_classifier_noDB.Dockerfile
+# Deployment path:  $BLJ/resources/docker/metaphlan_classifier_dbfree.Dockerfile
 
 FROM biolockj/metaphlan_classifier
 ARG DEBIAN_FRONTEND=noninteractive

@@ -1,6 +1,6 @@
 # Deployment path:  $BLJ/resources/docker/kraken2_classifier.Dockerfile
 
-FROM biolockj/kraken2_classifier_noDB
+FROM biolockj/kraken2_classifier_dbfree
 ARG DEBIAN_FRONTEND=noninteractive
   
 #1.) Update Ubuntu Software 

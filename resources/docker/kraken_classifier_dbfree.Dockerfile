@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/kraken_classifier_noDB.Dockerfile
+# Deployment path:  $BLJ/resources/docker/kraken_classifier_dbfree.Dockerfile
 
 FROM biolockj/blj_basic
 ARG DEBIAN_FRONTEND=noninteractive
