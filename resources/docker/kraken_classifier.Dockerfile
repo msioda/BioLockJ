@@ -7,17 +7,17 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 #2.) ================ Install Kraken ================ 
 ENV KRAKEN_VER=0.10.5-beta
-ENV KRAKEN_URL="https://github.com/DerrickWood/kraken/archive/v"
-ENV K_URL=${KRAKEN_URL}${KRAKEN_VER}.zip
-ENV K_DIR=kraken-${KRAKEN_VER}
+ENV BASE_URL="https://github.com/DerrickWood/kraken/archive/v"
+ENV KRAKEN_URL=${BASE_URL}${KRAKEN_VER}.tar.gz
+ENV KRAKEN=kraken-${KRAKEN_VER}
 ENV BUILD_DIR=/usr/local/bin
-RUN cd /app && \
-	wget -qO- $K_URL | bsdtar -xf- && \
-	chmod o+x -R $K_DIR && \
-	cd $K_DIR && \
+RUN cd $BUILD_DIR && \
+	wget -qO- $KRAKEN_URL | bsdtar -xf- && \
+	chmod o+x -R $KRAKEN && \
+	cd $KRAKEN && \
   	./install_kraken.sh $BUILD_DIR && \
   	chmod o+x -R $BUILD_DIR && \
-  	rm -rf /app/kraken2-${KRAKEN_VER}
+  	rm -rf $KRAKEN
 
 #3.) ================ Install Kraken DB ================
 ENV KRAKEN_DB_URL="https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_8GB_dustmasked.tgz"
