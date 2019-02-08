@@ -44,9 +44,13 @@ RUN cp -r $BLJ/web_app/* ./
 #5.) Cleanup
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
+	#rm -rf /usr/share/* && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
+	
+  
+
 
 #6.) Start npm Command (Ready to open web-browser localhost:8080)
 WORKDIR $BLJ/web_app/

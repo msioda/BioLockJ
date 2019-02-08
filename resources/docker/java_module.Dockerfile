@@ -17,12 +17,8 @@ RUN echo ${BLJ_DATE} && \
 
 #2.) Cleanup
 RUN	apt-get clean && \
-	find / -name *python* | xargs rm -rf && \
 	rm -rf /tmp/* && \
 	rm -rf /usr/share/* && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
-
-#3.) Run BioLockJ Command
-CMD [ "/bin/bash", "biolockj", "$BLJ_OPTIONS" ]

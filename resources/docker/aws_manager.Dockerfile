@@ -5,8 +5,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Ubuntu Software (including AWS Client)
 RUN apt-get install -y \
-	python2.7 \
-	python-pip && \
+		python2.7 \
+		python-pip && \
 	pip install awscli
 
 
@@ -33,6 +33,3 @@ RUN	apt-get clean && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
-
-#4.) Run BioLockJ Command
-CMD [ "/bin/bash", "biolockj", "$BLJ_OPTIONS" ]
