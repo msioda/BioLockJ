@@ -9,7 +9,7 @@
 # The main method is designed to integrate this module with BiolockJ.  
 # It handles pulling data from other modules and options from the BiolockJ properties.
 main <- function(){
-   # get config option for pvalStar, pvalIncludeBar, maxBars, userOTUs, 
+  # get config option for pvalStar, pvalIncludeBar, maxBars, userOTUs, 
   useParametric = getProperty("r_plotEffectSize.parametricPval", FALSE)
   useAdjustedPs = !getProperty("r_plotEffectSize.disablePvalAdjustment", FALSE)
   pvalStar = getProperty("r.pvalCutoff")
@@ -19,14 +19,14 @@ main <- function(){
   doFoldChange = !getProperty("r_plotEffectSize.disableFoldChange", FALSE) 
   doCohensD = !getProperty("r_plotEffectSize.disableCohensD", FALSE)
   doRSquared = !getProperty("r_plotEffectSize.disableRSquared", FALSE)
-   
-   successfulPlots = 0
-   
-   for (level in taxaLevels() ) {
-    if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildEffectSizePlots_", level, ".log") ) )
+  
+  successfulPlots = 0
+  
+  for (level in taxaLevels() ) {
+    if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildEffectSizePlots_", level, ".log") ) )
     logInfo( "Processing level", level )
     # make a new pdf output file, specify page size
-    outFileName = getPath( file.path(getModuleDir(), "output"), paste0(level, "_EffectSizePlots.pdf") )
+    outFileName = getPath( getOutputDir(), paste0(level, "_EffectSizePlots.pdf") )
     logInfo( "Creating file", outFileName )
     height=10
     pdf(file=outFileName, paper="letter", width=7.5, height=height, onefile=TRUE)
@@ -44,7 +44,7 @@ main <- function(){
     
     meta = getMetaData( level )
     logInfo( c("countTable has", nrow(meta), "rows and", ncol(meta), "columns.") )
-
+    
     # get pvals from calc stats
     pvalTable = getStatsTable( level, useParametric, useAdjustedPs )
     logInfo( c( "pvalTable has", nrow(pvalTable), "rows and", ncol(pvalTable), "columns." ) )
@@ -85,77 +85,77 @@ main <- function(){
       # so IF both are plotted, they are ploted in the same order.
       # Even if it is not a binary attribute, the normalizedPvals should have AT LEAST 2 tables
       if (doCohensD | doRSquared){ 
-         tryCatch(expr={
-        
-        r2vals=r2Table[,reportField]
-        names(r2vals) = row.names(r2Table)
-        normalizedPvals = split(countTable[row.names(meta),], f=meta[,reportField])
-        
-        saveRefTable = NULL
-        if (doCohensD & isBinaryAtt){
-          saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(level, reportField, "effectSize.tsv", sep="_") )
-        }
-        
-        logInfo( "CohensD", c( "Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
-        calculations = calcBarSizes( c("CohensD","rSquared"), r2vals, normalizedPvals[[2]], normalizedPvals[[1]],
-                                     names(normalizedPvals)[2], names(normalizedPvals)[1], pvals, pvalIncludeBar, userOTUs, maxBars,
-                                     orderByColumn=ifelse(doCohensD & isBinaryAtt, "CohensD", "rSquared"), saveRefTable)
-        #
-        if (doRSquared){ # does not need to be a binary attribute
-          resetPar()
-          complete = drawPlot(toPlot=calculations[["toPlot"]][,c("pvalue","rSquared")], 
-                              barSizeColumn="rSquared",
-                              xAxisLab="r-squared", title=reportField,
-                              pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"), 
-                              comments=calculations[["comments"]][c(1,3)])
-          if (complete) {
-            logInfo( c("Completed r-squared plot for level:", level, "and report field:", reportField) )
-          }
-        }
-        #
-        if (doCohensD & isBinaryAtt){
-          logInfo( c( "Effect size: Calling drawPlot for level:", level,  "and binary attribute:", reportField ) )
-          resetPar()
-          complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="CohensD",
-                              xAxisLab="Effect Size (Cohen's d)", title=reportField,
-                              pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
-                              xAxisLab2 = calculations[["xAxisLab2"]],
-                              comments=calculations[["comments"]][c(1,2)])
-          if (complete) {
-            successfulPlots = successfulPlots + 1
-            logInfo( c( "Completed CohensD plot for level:", level, "and binary attribute:", reportField ) )
+        tryCatch(expr={
+          
+          r2vals=r2Table[,reportField]
+          names(r2vals) = row.names(r2Table)
+          normalizedPvals = split(countTable[row.names(meta),], f=meta[,reportField])
+          
+          saveRefTable = NULL
+          if (doCohensD & isBinaryAtt){
+            saveRefTable=getPath( getTempDir(), paste(level, reportField, "effectSize.tsv", sep="_") )
           }
           
-        }
-         }, error = function(err) {
-            errorHandler1(err, level, reportField)
-         })
+          logInfo( "CohensD", c( "Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
+          calculations = calcBarSizes( c("CohensD","rSquared"), r2vals, normalizedPvals[[2]], normalizedPvals[[1]],
+                                       names(normalizedPvals)[2], names(normalizedPvals)[1], pvals, pvalIncludeBar, userOTUs, maxBars,
+                                       orderByColumn=ifelse(doCohensD & isBinaryAtt, "CohensD", "rSquared"), saveRefTable)
+          #
+          if (doRSquared){ # does not need to be a binary attribute
+            resetPar()
+            complete = drawPlot(toPlot=calculations[["toPlot"]][,c("pvalue","rSquared")], 
+                                barSizeColumn="rSquared",
+                                xAxisLab="r-squared", title=reportField,
+                                pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"), 
+                                comments=calculations[["comments"]][c(1,3)])
+            if (complete) {
+              logInfo( c("Completed r-squared plot for level:", level, "and report field:", reportField) )
+            }
+          }
+          #
+          if (doCohensD & isBinaryAtt){
+            logInfo( c( "Effect size: Calling drawPlot for level:", level,  "and binary attribute:", reportField ) )
+            resetPar()
+            complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="CohensD",
+                                xAxisLab="Effect Size (Cohen's d)", title=reportField,
+                                pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
+                                xAxisLab2 = calculations[["xAxisLab2"]],
+                                comments=calculations[["comments"]][c(1,2)])
+            if (complete) {
+              successfulPlots = successfulPlots + 1
+              logInfo( c( "Completed CohensD plot for level:", level, "and binary attribute:", reportField ) )
+            }
+            
+          }
+        }, error = function(err) {
+          errorHandler1(err, level, reportField)
+        })
       }
       #
       if (doFoldChange & !is.null(relAbundance)){
-         tryCatch(expr={
-            # relAbundance vals
-            splitRelAbund = split(relAbundance[row.names(meta),], f=meta[,reportField])
-            logInfo( c ("Fold change: Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
-            calculations = calcBarSizes(effectType = "foldChange",
-                                                      numGroupVals=splitRelAbund[[2]], denGroupVals=splitRelAbund[[1]],
-                                                      numGroupName=names(splitRelAbund)[2], denGroupName=names(splitRelAbund)[1],
-                                                      pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
-                                                      saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(level, reportField,"foldChange.tsv", sep="_") ) )
-            logInfo( c( "Fold change: Calling drawPlot for level:", level, "and binary attribute:", reportField ) )
-            resetPar()
-            complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="foldChange",
-                                          xAxisLab="Fold Change", title=reportField,
-                                          pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
-                                          xAxisLab2 = calculations[["xAxisLab2"]],
-                                          comments=calculations[["comments"]])
-            if (complete) {
-               successfulPlots = successfulPlots + 1
-               logInfo( c( "Completed effect size plot for level:", level, "and binary attribute:", reportField ) )
-            }
-         }, error = function(err) {
-            errorHandler1(err, level, reportField)
-         })
+        tryCatch(expr={
+          # relAbundance vals
+          splitRelAbund = split(relAbundance[row.names(meta),], f=meta[,reportField])
+          logInfo( c ("Fold change: Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
+          calculations = calcBarSizes(effectType = "foldChange",
+                                      numGroupVals=splitRelAbund[[2]], denGroupVals=splitRelAbund[[1]],
+                                      numGroupName=names(splitRelAbund)[2], denGroupName=names(splitRelAbund)[1],
+                                      pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
+                                      saveRefTable=getPath( getTempDir(), paste(level, reportField,"foldChange.tsv", sep="_") ) )
+          logInfo( c( "Fold change: Calling drawPlot for level:", level, "and binary attribute:", reportField ) )
+          resetPar()
+          complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="foldChange",
+                              xAxisLab="Fold Change", title=reportField,
+                              pvalStar=pvalStar, starColor=getProperty("r.colorHighlight", "red"),
+                              xAxisLab2 = calculations[["xAxisLab2"]],
+                              comments=calculations[["comments"]])
+          if (complete) {
+            successfulPlots = successfulPlots + 1
+            logInfo( c( "Completed effect size plot for level:", level, "and binary attribute:", reportField ) )
+          }
+        }, error = function(err) {
+          errorHandler1(err, level, reportField)
+        })
       }
     }
     dev.off()
@@ -163,7 +163,7 @@ main <- function(){
     if( doDebug() ) sink()
   }
   if (successfulPlots == 0){
-   writeErrors("No successful plots.")
+    writeErrors("No successful plots.")
   }
 }
 
@@ -177,21 +177,21 @@ normalize <- function(countTable){
 
 # error handler designed for calcBarSizes and drawPlot
 errorHandler1 = function(err, level, reportField) {
-   if( doDebug() ){print(err)}
-   origErr = as.character(err)
-   # error messages that I create in calcBarSizes and drawPlot start with "Stop Plotting"
-   trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) 
-   msg = paste0("Failed to create plot for taxonomy level: ", level, 
-                      "\nusing attribute: ", reportField)
-   if (doDebug() | nchar(trimmedErr) < nchar(origErr)){
-      # show error in plot file and move on to next plot.
-      msg = paste0(msg, "\n", trimmedErr)
-      plotPlainText(msg)
-   }else{
-      # pass error to biolockj to fail module
-      msg = paste0(msg, "\n", origErr)
-      writeErrors(msg)
-   }
+  if( doDebug() ){print(err)}
+  origErr = as.character(err)
+  # error messages that I create in calcBarSizes and drawPlot start with "Stop Plotting"
+  trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) 
+  msg = paste0("Failed to create plot for taxonomy level: ", level, 
+               "\nusing attribute: ", reportField)
+  if (doDebug() | nchar(trimmedErr) < nchar(origErr)){
+    # show error in plot file and move on to next plot.
+    msg = paste0(msg, "\n", trimmedErr)
+    plotPlainText(msg)
+  }else{
+    # pass error to biolockj to fail module
+    msg = paste0(msg, "\n", origErr)
+    writeErrors(msg)
+  }
 }
 
 # returns a list of 2:
