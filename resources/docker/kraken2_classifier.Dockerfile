@@ -1,40 +1,21 @@
-# Deployment path:  $BLJ/resources/docker/classifier/wgs/Kraken2Classifier
+# Deployment path:  $BLJ/resources/docker/kraken2_classifier.Dockerfile
 
-FROM biolockj/blj_basic
-
-#1.) ================= Setup Env =================
+FROM biolockj/kraken2_classifier_noDB
 ARG DEBIAN_FRONTEND=noninteractive
   
-#2.) ================ Install Kraken ================ 
-ENV KRAKEN_VER=2.0.7-beta
-ENV BASE_URL="https://github.com/DerrickWood/kraken2/archive/v"
-ENV KRAKEN2_URL=${BASE_URL}${KRAKEN_VER}.tar.gz
-ENV KRAKEN2="kraken2-${KRAKEN_VER}"
-ENV BUILD_DIR=/usr/local/bin
-RUN cd $BUILD_DIR && \
-	wget -qO- $KRAKEN2_URL | bsdtar -xzf- && \
-	chmod o+x -R $KRAKEN2 && \
-	cd $KRAKEN2 && \
-	./install_kraken2.sh $BUILD_DIR && \
-	chmod o+x -R $BUILD_DIR && \
-	rm -rf $KRAKEN2
-    
-#3.) ================= Copy 4GB database =================
+#1.) Update Ubuntu Software 
+RUN apt-get update
+ 
+#2.) Download 8GB miniKraken2 DB
 ENV KRAKEN_DB_URL="https://ccb.jhu.edu/software/kraken2/dl/minikraken2_v1_8GB.tgz"
 RUN cd /db && \
 	wget -qO- $KRAKEN_DB_URL | bsdtar -xzf- && \
-	chmod o+x * 
-	#mv minikraken*/* . && \
-	#rm -rf minikraken*
+	chmod o+x *
 
-#4.) =============== Cleanup ================================
-RUN	apt-get clean && \
-	find / -name *python* | xargs rm -rf && \
-	rm -rf /tmp/* && \
-	rm -rf /usr/share/* && \
-	rm -rf /var/cache/* && \
-	rm -rf /var/lib/apt/lists/* && \
-	rm -rf /var/log/*
-
-#5.) ================= Container Command =================
-CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]
+#3.) Cleanup
+#RUN apt-get clean && \
+#	rm -rf /tmp/* && \
+#	rm -rf /usr/share/* && \
+#	rm -rf /var/cache/* && \
+#	rm -rf /var/lib/apt/lists/* && \
+#	rm -rf /var/log/*

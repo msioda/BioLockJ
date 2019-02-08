@@ -1,14 +1,14 @@
 # Deployment path: $BLJ/resources/docker/blj_basic.Dockerfile
 
 FROM ubuntu:18.04
-
-#1.) ================= Setup Env ==================================
 ARG DEBIAN_FRONTEND=noninteractive
+
+#1.) Setup Env
 ENV BLJ=/app/biolockj
 ENV BLJ_PROJ=/pipelines
 ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
 
-#2.) ============ Make standard dirs 
+#2.) Build Standard Directories 
 RUN mkdir /app && \
 	mkdir /config && \
 	mkdir /db && \
@@ -18,7 +18,7 @@ RUN mkdir /app && \
 	mkdir /pipelines && \
 	mkdir /primer
 
-#2.) ============ Update Ubuntu ~/.bashrc =================
+#2.) Update  ~/.bashrc
 RUN echo ' '  >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \
 	echo 'alias ..="cd .."' >> ~/.bashrc && \
@@ -38,7 +38,7 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo 'export PS1="${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' >> ~/.bashrc && \	
 	echo 'alias goblj=blj_go' >> ~/.bashrc
 
-#4.) ============ Install Ubuntu Prereqs =================
+#4.) Install Ubuntu Software 
 RUN apt-get update && \
 	apt-get install -y \
 		build-essential \
@@ -49,14 +49,14 @@ RUN apt-get update && \
 		tzdata \
 		wget
 
-#5.) ================= Set the timezone =================
+#5.) Set the timezone to EST
 RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
 	dpkg-reconfigure -f noninteractive tzdata
 
-#6.) =======================  Cleanup  ==========================
+#6.) Cleanup
 RUN	rm -rf /tmp/* && \
 	rm -rf /usr/games && \
 	rm -rf /var/log/*
 
-#7.) =======================  Command  ==========================
-CMD [ "/bin/bash" ]
+#7.) Set Default Command
+CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]
