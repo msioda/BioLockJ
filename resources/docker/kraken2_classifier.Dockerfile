@@ -23,11 +23,9 @@ RUN cd $BUILD_DIR && \
 ENV KRAKEN_DB_URL="https://ccb.jhu.edu/software/kraken2/dl/minikraken2_v1_8GB.tgz"
 RUN cd /db && \
 	wget -qO- $KRAKEN_DB_URL | bsdtar -xzf- && \
-	chmod o+x * && \
-	echo "list contents of $PWD" && \
-	ls && \
-	mv minikraken*/* . && \
-	rm -rf minikraken*
+	chmod o+x * 
+	#mv minikraken*/* . && \
+	#rm -rf minikraken*
 
 #4.) =============== Cleanup ================================
 RUN	apt-get clean && \
