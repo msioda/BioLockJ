@@ -21,7 +21,9 @@ RUN cd $BUILD_DIR && \
 RUN	apt-get clean && \
 	find / -name *python* | xargs rm -rf && \
 	rm -rf /tmp/* && \
+	mv /usr/share/ca-certificates ~ && \
 	rm -rf /usr/share/* && \
+	mv ~/ca-certificates /usr/share && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*

@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/qiime_classifier_dbfree.Dockerfile
+# Deployment path:  $BLJ/resources/docker/qiime_classifier.Dockerfile
 
 FROM biolockj/blj_basic_py2
 ARG DEBIAN_FRONTEND=noninteractive
@@ -7,12 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV QIIME_VERSION=1.9.1
 RUN apt-get update && \
 	pip install numpy && \
-	pip install --upgrade qiime==$QIIME_VERSION && \
-	rm -rf /usr/local/lib/python2.7/dist-packages/qiime_default_reference/gg_13_8_otus && \
-  	echo "pick_otus_reference_seqs_fp /db" >> ~/.qiime_config && \
-  	echo "pynast_template_alignment_fp /db" >> ~/.qiime_config && \
-  	echo "assign_taxonomy_reference_seqs_fp /db" >> ~/.qiime_config && \
-  	echo "assign_taxonomy_id_to_taxonomy_fp /db" >> ~/.qiime_config
+	pip install --upgrade qiime==$QIIME_VERSION
 
 #2.) Install vSearch 
 ENV VSEARCH_URL="https://github.com/torognes/vsearch/releases/download/v"

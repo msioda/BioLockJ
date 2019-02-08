@@ -3,7 +3,7 @@
 FROM biolockj/blj_basic_java
 ARG DEBIAN_FRONTEND=noninteractive
 
-#1.) Install Ubuntu Software 
+#1.) Activate Ubuntu Software
 RUN apt-get update
 
 #2.) Install RDP
