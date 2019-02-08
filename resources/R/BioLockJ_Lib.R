@@ -8,7 +8,7 @@ addNamedVectorElement <- function( v, name, value ) {
 }
 
 # Add a footer with title, level and page number
-addPageFooter <- function( level, pageNum, multiPageSet=NULL ){
+addPageFooter <- function (level, pageNum, multiPageSet=NULL){
 	if (!is.null(multiPageSet)){
 		pageString = paste(multiPageSet, pageNum, sep="-")
 	}else{
@@ -19,9 +19,9 @@ addPageFooter <- function( level, pageNum, multiPageSet=NULL ){
 }
 
 # Add a page title
-addPageTitle <- function( main, level=NULL, line=2 ){
+addPageTitle <- function (main, level=NULL, line=2){
 	mtext(main, side=3, outer = TRUE, font=par("font.main"), cex=par("cex.main"), line=line)
-	if ( !is.null(level) ) {
+	if (!is.null(level)){
 		titlePart2 = displayLevel( level )
 		title(main=titlePart2, outer = TRUE, line=(line-1))
 	}
@@ -33,17 +33,17 @@ displayCalc <- function( pval ) {
 }
 
 displayLevel <- function(level){
-	return( str_to_title( paste( level, "Level" ) ) )
+	return( str_to_title( paste(level,"Level") ) )
 }
 
 # Return TRUE if BioLock property r.debug=Y, otherwise return FALSE
 doDebug <- function() {
-  return( getProperty( "r.debug", FALSE ) )
+	return( getProperty( "r.debug", FALSE ) )
 }
 
 # Return vector of binary fields or an empty vector
 getBinaryFields <- function() {
-  return( getProperty( "R_internal.binaryFields", vector( mode="character" ) ) )
+	return( getProperty("R_internal.binaryFields", vector( mode="character" ) ) )
 }
 
 # Return taxaTable column indexes for the given colNames
@@ -62,9 +62,9 @@ getColor <- function( v ) {
 	for( i in 1:length(v) ) {
 		if( grepl("e", v[i]) || !is.na(v[i]) && !is.nan(v[i]) && ( v[i] <= getProperty("r.pvalCutoff", 0.05) ) ) {
 			return( getProperty("r.colorHighlight", "black") )
-		}
+		} 
 	}
-	return( getProperty( "r.colorBase", "black" ) )
+	return( getProperty("r.colorBase", "black") )
 }
 
 # Return n colors using the palette defined in the MASTER Config
@@ -74,11 +74,11 @@ getColor <- function( v ) {
 getColors <- function( n, reorder=TRUE) {
 	palette = getProperty("r.colorPalette", "npg")
 	colors = get_palette( palette, n )
-  
+	
 	if (length(palette) == 1 & reorder){
-		flipFrom = ( 1:length(colors) )[ ( 1:length(colors) %%2 )==0 ]
-		flipTo = flipFrom[ length( flipFrom ):1 ]
-		colors[ flipTo ] = colors[ flipFrom ]
+		flipFrom = (1:length(colors))[(1:length(colors)%%2)==0]
+		flipTo = flipFrom[length(flipFrom):1]
+		colors[flipTo] = colors[flipFrom]
 	}
 	return( colors )
 }
@@ -87,10 +87,10 @@ getColors <- function( n, reorder=TRUE) {
 # Returns a named list (named for meta data columns) of named vecotors (named for levels in column)
 getColorsByCategory <- function( metaTable ){
 	categoricals = c(getBinaryFields(), getNominalFields())
-	metaTable = metaTable[ names(metaTable) %in% categoricals ]
+	metaTable = metaTable[names(metaTable) %in% categoricals]
 	if (ncol(metaTable) < 1){
 		logInfo( "No categorical metadata fields.  Returning null." )
-		return ( NULL )
+		return(NULL)
 	}
 	numBoxes = sapply(metaTable, function(x){length(levels(as.factor(x)))})
 	boxColors = getColors( sum(numBoxes))
@@ -98,9 +98,9 @@ getColorsByCategory <- function( metaTable ){
 	f = mapply(x=names(numBoxes), each=numBoxes, rep, SIMPLIFY = FALSE)
 	metaColColors = split(boxColors, f=do.call(c, f))
 	for (field in names(metaColColors)){
-		names( metaColColors[ [ field ] ] ) = levels( as.factor( metaTable[,field] ) )
+		names(metaColColors[[field]]) = levels(as.factor(metaTable[,field]))
 	}
-	return( metaColColors )
+	return(metaColColors)
 }
 
 # Parse MASTER config for property value, if undefined return default defaultVal
@@ -109,13 +109,13 @@ getConfig <- function( name, defaultVal=NULL ) {
 	if( is.null( propCache ) ) {
 		propCache = read.properties( getMasterConfigFile() )
 	}
-
-	prop = propCache[ [ name ] ]
-
+	
+	prop = propCache[[ name ]]
+	
 	if( is.null( prop ) ) {
-    	return( defaultVal )
+		return( defaultVal )
 	}
-
+	
 	if( str_trim( prop ) == "Y" ) {
 		return( TRUE )
 	}
@@ -131,6 +131,7 @@ getConfig <- function( name, defaultVal=NULL ) {
 	if( !is.na( as.numeric( prop ) ) ) {
 		return( as.numeric( prop ) )
 	}
+	
 	return( str_trim( prop ) )
 }
 
@@ -161,8 +162,8 @@ getMasterConfigFile <- function() {
 # Return a data frame of the metadata from a biolockj data table with merged metadata.
 getMetaData <- function( level ){
 	fullTable = getTaxaMetaTable( level )
-	firstMetaCol = ncol( fullTable ) - numMetaCols() + 1
-	return( fullTable[ firstMetaCol:ncol( fullTable ) ] )
+	firstMetaCol = ncol(fullTable) - numMetaCols() + 1
+	return( fullTable[firstMetaCol:ncol(fullTable)] )
 }
 
 # If downloaded with scp, all files share 1 directory, so return getPipelineDir() 
@@ -209,24 +210,24 @@ getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
 	statsFile = pipelineFile( paste0( level, ".*", statsFileSuffix( parametric, adjusted ) ) )
 	if( is.null( statsFile )  ) {
 		logInfo( paste0( "BioLockJ_Lib.R function --> getStatsTable( level=", level, 
-			", parametric=", parametric, ", adjusted=", adjusted, " ) returned NULL" ) )
+										 ", parametric=", parametric, ", adjusted=", adjusted, " ) returned NULL" ) )
 		return( NULL )
 	}
-
+	
 	statsTable = read.table( statsFile, header=TRUE, sep="\t", row.names=1, check.names=FALSE )
 	if( nrow( statsTable ) == 0 ) {
 		logInfo( paste0( "BioLockJ_Lib.R function --> getStatsTable( level=", level, ", parametric=", parametric, ", adjusted=", adjusted, " ) returned an empty table with only the header row:", colnames( statsTable ) ) )
 		return( NULL )
 	}
-
+	
 	logInfo( "Read stats table", statsFile )
 	return( statsTable )
 }
 
 getTaxaTable <- function( level ){
 	fullTable = getTaxaMetaTable( level )
-	lastOtuCol = ncol( fullTable ) - numMetaCols()
-	return ( fullTable[ 1:lastOtuCol ] )
+	lastOtuCol = ncol(fullTable) - numMetaCols()
+	return ( fullTable[1:lastOtuCol] )
 }
 
 # Returns BioLockJ generated Table with a standard format:
@@ -239,14 +240,14 @@ getTaxaMetaTable <- function( level ) {
 		logInfo( c( "BioLockJ_Lib.R function --> getTaxaTable(", level, ") returned NULL" ) )
 		return( NULL )
 	}
-
+	
 	taxaTable = readBljTable( taxaFile )
-
+	
 	if( nrow( taxaTable ) == 0 ) {
 		logInfo( c( "BioLockJ_Lib.R function --> getTaxaTable(", level, ") returned an empty table with only the header row:", colnames( taxaTable ) ) )
 		return( NULL )
-  	}
-
+	}
+	
 	logInfo( "Read taxa table", taxaFile )
 	return( taxaTable )
 }
@@ -256,24 +257,25 @@ getTaxaMetaTable <- function( level ) {
 # or a named color vector if the specific attribute or isParametric is not given.
 getTestName <- function( attName=NULL, isParametric=c(TRUE, FALSE), returnColors=FALSE ) {
 	testOptions = data.frame(
-	testName = c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall"),
-	fieldType = c("binary", "binary", "nominal", "nominal", "numeric", "numeric" ),
-	isParametric = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
-	color = c("coral", "dodgerblue2", "darkgoldenrod1", "cornflowerblue", "tan1", "aquamarine3"),
-	stringsAsFactors = FALSE )
-
-	fieldType = c( unique( testOptions$fieldType ) )
+		testName = c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall"),
+		fieldType = c("binary", "binary", "nominal", "nominal", "numeric", "numeric" ),
+		isParametric = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
+		color = c("coral", "dodgerblue2", "darkgoldenrod1", "cornflowerblue", "tan1", "aquamarine3"),
+		stringsAsFactors = FALSE
+	)
+	
+	fieldType = c(unique(testOptions$fieldType))
 	if (!is.null(attName)){
-		if( attName %in% getBinaryFields() ) { fieldType = "binary" }
-		if( attName %in% getNominalFields() ) { fieldType = "nominal" }
-		if( attName %in% getNumericFields() ) { fieldType = "numeric" }
-		if ( length( fieldType ) > 1 ){
-			stop( paste( "Cannot determine field type for attribute:", attName ) )
+		if( attName %in% getBinaryFields() ) {fieldType = "binary"}
+		if( attName %in% getNominalFields() ) {fieldType = "nominal"}
+		if( attName %in% getNumericFields() ) {fieldType = "numeric"}
+		if (length(fieldType) > 1){
+			stop(paste("Cannot determine field type for attribute:", attName))
 		}
 	}
-
+	
 	whichTest = which(testOptions$fieldType %in% fieldType & testOptions$isParametric %in% isParametric)
-
+	
 	if (returnColors){
 		cols = testOptions[whichTest,"color"]
 		names(cols) = testOptions[whichTest,"testName"]
@@ -285,7 +287,7 @@ getTestName <- function( attName=NULL, isParametric=c(TRUE, FALSE), returnColors
 
 # Return named vector values for the given name
 getValuesByName <- function( vals, name ) {
-	return( as.vector( vals[ names(vals)==name ] ) )
+	return( as.vector( vals[names(vals)==name] ) )
 }
 
 # Import libraries and abort program with descriptive error
@@ -295,7 +297,8 @@ importLibs <- function( libs ) {
 		if ( !library( libs[i], logical.return=TRUE, character.only=TRUE ) ) {
 			errors[ length( errors ) + 1 ] = paste0( "Missing R library, please run install.packages(\"", libs[i], "\") from within R" )
 		}
-	}
+	}   
+	
 	if( length( errors ) > 0 ) {
 		writeErrors( errors )
 	}
@@ -304,20 +307,20 @@ importLibs <- function( libs ) {
 # Log the msg if Config property r.debug=Y, otherwise do nothing
 # Append semicolon to label, unless it already exists
 logInfo <- function( info, msg=NULL ) {
-  if( doDebug() ) {
-    if( is.null( msg ) ){
-      msg = info
-    } else {
-      if( !endsWith( trimws( info ), ":" ) ) info = paste0( trimws( info ), ":" )
-      msg = c( trimws( info ), msg )
-    }
-    cat( msg, "\n" )
-  }
+	if( doDebug() ) {
+		if( is.null( msg ) ){
+			msg = info
+		} else {
+			if( !endsWith( trimws( info ), ":" ) ) info = paste0( trimws( info ), ":" )
+			msg = c( trimws( info ), msg )
+		}
+		cat( msg, "\n" )
+	}
 }
 
 # Return number of metadata columns appended to sample count tables
 numMetaCols <- function() {
-  return( getProperty( "R_internal.numMetaCols" ) )
+	return( getProperty( "R_internal.numMetaCols" ) )
 }
 
 # Return a file matching the pattern underwhere under the pipeline root directory
@@ -325,7 +328,7 @@ numMetaCols <- function() {
 # If dir is undefined, look in pipeline dir
 # If no results, check in Config property input.dirPaths
 pipelineFile <- function( pattern, dir=getPipelineDir() ) {
-
+	
 	if( length( dir ) > 1 ) {
 		for( i in 1:length( dir ) ) {
 			inputDirResults = pipelineFile( pattern, dir[i] )
@@ -335,7 +338,7 @@ pipelineFile <- function( pattern, dir=getPipelineDir() ) {
 		}
 		writeErrors( c( paste0( "pipelineFile(", pattern, ",", dir, ") returned NULL" ) ) )
 	}
-
+	
 	logInfo( c( "Search:", dir, "for input files matching pattern:", pattern ) )
 	results = list.files( dir, pattern, full.names=TRUE, recursive=TRUE )
 	if( length( results ) == 0 ) {
@@ -346,28 +349,28 @@ pipelineFile <- function( pattern, dir=getPipelineDir() ) {
 			return( NULL )
 		}
 	}
-
+	
 	returnFile = NULL
 	for( i in 1:length( results ) ) {
 		if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
 			returnFile = results[i] 
 		}
 	}
-
+	
 	return( returnFile )
 }
 
 # Create an empty plot and add text. 
 # Ideal when explaining why a plot is blank, or plot explanations within a plot document.
 plotPlainText <- function(textToPrint, cex=1){
-  plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
-  text(labels=textToPrint, x = 0.5, y = 0.5, cex = cex, col = "black")
+	plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
+	text(labels=textToPrint, x = 0.5, y = 0.5, cex = cex, col = "black")
 }
 
 # Read a table using the biolockj standards
 readBljTable <- function( file ){
 	return( read.table( file, header=TRUE, sep="\t", row.names=1, na.strings=getProperty( "metadata.nullValue" ), 
-		check.names=FALSE, comment.char=getProperty( "metadata.commentChar", "" ) ))
+							check.names=FALSE, comment.char=getProperty( "metadata.commentChar", "" ) ))
 }
 
 # This method returns 1 of 5 possible CalculateStats.R output file suffix values
@@ -389,3 +392,4 @@ taxaLevels <- function() {
 # Import standard shared libraries
 importLibs( c( "properties", "stringr", "ggpubr" ) )
 propCache = NULL
+

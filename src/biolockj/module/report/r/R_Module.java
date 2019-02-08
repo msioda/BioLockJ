@@ -65,6 +65,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		super.checkDependencies();
 		Config.getPositiveInteger( R_TIMEOUT );
 		Config.requirePositiveInteger( R_PLOT_WIDTH );
+		Config.requirePositiveDouble( P_VAL_CUTOFF );
 	}
 
 	/**
@@ -501,6 +502,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * timeout. If undefined, no timeout is used.
 	 */
 	protected static final String R_TIMEOUT = "r.timeout";
+	
+	/**
+	 * {@link biolockj.Config} property {@value #P_VAL_CUTOFF} defines the p-value cutoff for significance
+	 */
+	protected static final String P_VAL_CUTOFF = "r.pvalCutoff";
 
 	private static final String DEBUG_LOG_PREFIX = "debug_";
 	private static final String FUNCTION_RUN_R = "runScript";

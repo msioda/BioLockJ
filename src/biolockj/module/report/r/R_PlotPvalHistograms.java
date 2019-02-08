@@ -13,6 +13,7 @@ package biolockj.module.report.r;
 
 import java.util.List;
 import java.util.TreeSet;
+import biolockj.Config;
 import biolockj.module.ScriptModule;
 
 /**
@@ -21,6 +22,13 @@ import biolockj.module.ScriptModule;
  */
 public class R_PlotPvalHistograms extends R_Module implements ScriptModule
 {
+	
+	@Override
+	public void checkDependencies() throws Exception
+	{
+		super.checkDependencies();
+		Config.requireString( P_VAL_CUTOFF );
+	}
 
 	/**
 	 * Returns {@link #getStatPreReqs()}
