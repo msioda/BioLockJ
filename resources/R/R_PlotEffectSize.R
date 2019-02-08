@@ -42,10 +42,10 @@ main <- function(){
 	meta = getMetaData()
 	
 	for (level in taxaLevels() ) {
-		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildEffectSizePlots_", level, ".log") ) )
+		if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildEffectSizePlots_", level, ".log") ) )
 		logInfo( "Processing level", level )
 		# make a new pdf output file, specify page size
-		outFileName = getPath( file.path(getModuleDir(), "output"), paste0(level, "_OTU-EffectSizePlots.pdf") )
+		outFileName = getPath( getOutputDir(), paste0(level, "_OTU-EffectSizePlots.pdf") )
 		logInfo( "Creating file", outFileName )
 		height=10
 		pdf(file=outFileName, paper="letter", width=7.5, height=height, onefile=TRUE)
@@ -110,7 +110,7 @@ main <- function(){
 
 				saveRefTable = NULL
 				if (doCohensD & isBinaryAtt){
-					saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(level, reportField, "effectSize.tsv", sep="_") )
+					saveRefTable=getPath( getTempDir(), paste(level, reportField, "effectSize.tsv", sep="_") )
 				}
 
 				logInfo( "CohensD", c( "Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
@@ -153,7 +153,7 @@ main <- function(){
 																		numGroupVals=splitRelAbund[[2]], denGroupVals=splitRelAbund[[1]],
 																		numGroupName=names(splitRelAbund)[2], denGroupName=names(splitRelAbund)[1],
 																		pvals=pvals, pvalIncludeBar=pvalIncludeBar, userOTUs=userOTUs, maxBars=maxBars,
-																		saveRefTable=getPath( file.path(getModuleDir(), "temp"), paste(level, biAtt,"foldChange.tsv", sep="_") ) )
+																		saveRefTable=getPath( getTempDir(), paste(level, biAtt,"foldChange.tsv", sep="_") ) )
 				logInfo( c( "Fold change: Calling drawPlot for level:", level, "and binary attribute:", reportField ) )
 				resetPar()
 				complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="foldChange",

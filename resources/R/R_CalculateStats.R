@@ -16,7 +16,7 @@ buildSummaryTables <- function( reportStats, level ) {
 			df[, length(df)+1] = getValuesByName( reportStats[[i]], attNames[j] )
 			names(df)[length(df)] = attNames[j]
 		}
-		fileName = getPath( file.path( getModuleDir(), "output" ), paste0( level, "_", names(reportStats)[i] ) )
+		fileName = getPath( getOutputDir(), paste0( level, "_", names(reportStats)[i] ) )
 		logInfo( paste( "Saving output file", fileName ) )
 		write.table( df, file=fileName, sep="\t", row.names=FALSE )
 	}
@@ -159,7 +159,7 @@ getP_AdjustLen <- function( otuNames ) {
 main <- function() {
 	importLibs( c( "coin", "Kendall" ) ) 
 	for( level in taxaLevels() ) {
-		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_CalculateStats_", level, ".log") ) )
+		if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_CalculateStats_", level, ".log") ) )
 		taxaTable = getTaxaTable( level )
 		if( is.null( taxaTable ) ) { next }
 		reportStats = calculateStats( taxaTable )

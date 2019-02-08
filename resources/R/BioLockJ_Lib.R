@@ -164,6 +164,15 @@ getNumericFields <- function() {
    return( getProperty("R_internal.numericFields", vector( mode="character" ) ) )
 }
 
+# Get the temp dir for the current module, if it does not exist, create it.
+getOutputDir <- function(){
+	path = file.path( file.path(getModuleDir(), "output") )
+	if ( !dir.exists(path)){
+		dir.create( path )
+	}
+	return( path )
+}
+
 # Return file path of file in rootDir, with the pipeline name appended as a prefix to name
 getPath <- function( rootDir, name ) {
    return( file.path( rootDir, paste0( basename( getPipelineDir() ), "_", name ) ) )
@@ -225,6 +234,15 @@ getTaxaTable <- function( level ) {
 	
 	logInfo( "Read taxa table", taxaFile )
 	return( taxaTable )
+}
+
+# Get the temp dir for the current module, if it does not exist, create it.
+getTempDir <- function(){
+	path = file.path( file.path(getModuleDir(), "temp") )
+	if ( !dir.exists(path)){
+		dir.create( path )
+	}
+	return( path )
 }
 
 # Return the name of statistical test used to generate P-Values for a given attribute

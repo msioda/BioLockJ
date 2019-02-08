@@ -13,23 +13,23 @@ main <- function() {
 	metaColColors = getColors( length( mdsAtts ) )
 	##############################################################################
 	for( level in taxaLevels() ) {
-		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", level, ".log") ) )
+		if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildMdsPlots_", level, ".log") ) )
 
 		taxaTable = getTaxaTable( level )
 		if( is.null( taxaTable ) ) { next }
 		lastOtuCol = ncol(taxaTable) - numMetaCols()
 		myMDS = capscale( taxaTable[,1:lastOtuCol]~1, distance=getProperty("r_PlotMds.distance") )
 		
-		pcoaFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(level, "_pcoa") ), ".tsv" )
+		pcoaFileName = paste0( getPath( getTempDir(), paste0(level, "_pcoa") ), ".tsv" )
 		write.table( cbind(id=row.names(myMDS$CA$u), as.data.frame(myMDS$CA$u)), file=pcoaFileName, col.names=TRUE, row.names=FALSE, sep="\t" )
 		logInfo( "Save PCoA table", pcoaFileName )
 		
-		eigenFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(level, "_eigenValues") ), ".tsv" )
+		eigenFileName = paste0( getPath( getTempDir(), paste0(level, "_eigenValues") ), ".tsv" )
 		write.table( data.frame(mds=names(myMDS$CA$eig), eig=myMDS$CA$eig), file=eigenFileName, col.names=FALSE, row.names=FALSE, sep="\t")
 		logInfo( "Save Eigen value table", pcoaFileName )
 		
 		# Make plots
-		outputFile = paste0( getPath( file.path(getModuleDir(), "output"), paste0(level, "_MDS.pdf" ) ) )
+		outputFile = paste0( getPath( getOutputDir(), paste0(level, "_MDS.pdf" ) ) )
 
 		if (numAxis < 4 ) {
 			pdf( outputFile, width = 7, height = 7)
