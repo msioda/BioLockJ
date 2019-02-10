@@ -43,7 +43,7 @@ exports.saveConfigToLocal = function(configName, configText){
   if (!configName.endsWith('.properties')){
     configName = configName.concat('.properties')
   }
-  const configPath = path.join('/config/', configName);
+  const configPath = path.join('/', 'config', configName);
   //console.log(configPath.toString());
   fs.writeFile(configPath, configText,function(err) {
     if(err) {
