@@ -186,9 +186,9 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		{
 			type = "qiime";
 		}
-		if( type.contains( "Humann2" ) )
+		if( type.contains( "humann2" ) )
 		{
-			type = type.replace( "Humann2", "HumanN2" );
+			type = type.replace( "humann2", "humanN2" );
 		}
 
 		return type;
