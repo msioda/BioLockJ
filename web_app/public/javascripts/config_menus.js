@@ -16,6 +16,7 @@ function newProj() {
   for (var s = 0; s < selects.length; s++){
     selects[s].value = '';
   }
+  runModuleFunctions();
 }
 
 //function for clicking tabs
@@ -86,10 +87,6 @@ function moduleLiHoverTextfromJavadocs(moduleJavaClassPath){
     }));
   })
 }//end moduleLiHoverTextfromJavadocs
-
-function makeInnerHtml(myModulesKey){
-
-}
 
 function parseBljModuleJavaClass(text){//gets text java documentation from Java class
   // TODO: This has some extra div tagged to the begining and the end.  This could be trimmed off.
@@ -256,7 +253,7 @@ function dropped(evt) {//function for dropping dragged modules
 }
 
 //Creating a Map object for module information
-myModules = new Map(Object.entries({
+let myModules = new Map(Object.entries({
   'biolockj/module/implicit/ImportMetadata' :
   { cssClass : ['implicit','hidden'], label : 'Metadata Importer', category : 'implicit'},
 
@@ -300,16 +297,16 @@ myModules = new Map(Object.entries({
   { cssClass : ['slimmClass', 'classifierUnique'], counter : 'slimmModuleCounter', category : 'classifier'},
 
   'biolockj/module/implicit/parser/wgs/KrakenParser' :
-  { cssClass : ['krakenClass', 'classifierUnique'], counter : 'krakenModuleCounter', category : 'implicit.parser'},
+  { cssClass : ['krakenClass', 'classifierUnique', 'implicit', 'hidden'], counter : 'krakenModuleCounter', category : 'implicit.parser'},
 
   'biolockj/module/implicit/parser/wgs/Kraken2Parser' :
-  { cssClass : ['kraken2Class', 'classifierUnique'], counter : 'kraken2ModuleCounter', category : 'implicit.parser'},
+  { cssClass : ['kraken2Class', 'classifierUnique','implicit', 'hidden'], counter : 'kraken2ModuleCounter', category : 'implicit.parser'},
 
   'biolockj/module/implicit/parser/wgs/MetaphlanParser' :
-  { cssClass : ['metaphlanClass', 'classifierUnique'], counter : 'metaphlanModuleCounter', category : 'implicit.parser'},
+  { cssClass : ['metaphlanClass', 'classifierUnique','implicit', 'hidden'], counter : 'metaphlanModuleCounter', category : 'implicit.parser'},
 
   'biolockj/module/implicit/parser/wgs/SlimmParser' :
-  { cssClass : ['slimmClass', 'classifierUnique'], counter : 'slimmModuleCounter', category : 'implicit.parser'},
+  { cssClass : ['slimmClass', 'classifierUnique','implicit', 'hidden'], counter : 'slimmModuleCounter', category : 'implicit.parser'},
 
   'biolockj/module/report/Normalizer' : { cssClass : [], category : 'report'},
 
@@ -355,10 +352,12 @@ function orderModulesFromLocalFiles(selectedModulesArray, defaultOrderMap){
     return defaultOrderMap;
   }
 
+  //check for unknown modules
   for (let mod  of selectedModulesArray){
-    if (Array.from(defaultOrderMap.keys()).includes( mod )){
+    if (!Array.from(defaultOrderMap.keys()).includes( mod.replace( /\./g,'/' ) )){
     alert('Unknown modules in local file: ' + mod);
-    return false;
+    console.error('Unknown modules in local file: ' + mod);
+    break;
     }
   }
 
@@ -369,15 +368,15 @@ function orderModulesFromLocalFiles(selectedModulesArray, defaultOrderMap){
     return false;
   }
 
-  let reorderedMods = new Map()//
+  let reorderedMods = new Map();
 
   while (defaultOrderMap.size > 0){
     for (let mod of defaultOrderMap.keys()){
-
-      if (!selectedModulesArray.includes(mod)){
+      const modPeriod = mod.replace( /\//g,'.' );
+      if (!selectedModulesArray.includes(modPeriod)){
         reorderedMods.set(mod, defaultOrderMap.get(mod));
         defaultOrderMap.delete(mod);
-      }else if (mod == selectedModulesArray[0]){
+      }else if (modPeriod == selectedModulesArray[0]){
         reorderedMods.set(mod, defaultOrderMap.get(mod));
         defaultOrderMap.delete(mod);
         selectedModulesArray.shift();
@@ -385,6 +384,7 @@ function orderModulesFromLocalFiles(selectedModulesArray, defaultOrderMap){
     }//end for
   }//end while
 
+  console.log(reorderedMods);
   return reorderedMods;
 }//end orderModulesFromLocalFiles
 //let test = orderModulesFromLocalFiles(['biolockj/module/r/BuildPvalHistograms', 'biolockj/module/r/BuildPvalHistograms', 'biolockj/module/r/CalculateStats', 'biolockj/module/report/Normalizer'], myModules)
@@ -416,16 +416,17 @@ function runModuleFunctions() {//large function to build module li and counters
   };// end toggleSelectModule
 
   function makeModuleLi(link, classes){
+    // console.log('link: ', link);
     try {
-      console.log('makeModuleLi link: ', link);
-      var mod = document.createElement('li');
+      let mod = document.createElement('li');
       for (var c = 0; c < classes.length; c++){
         mod.classList.add(classes[c])
       }//  ^this function is a hack because classList.add() adds commas between the css classes, making them unreadable to css
       mod.setAttribute('draggable', true);
-      mod.innerHTML = link.split('.')[0].replace(/\//g,'.');//remove .java then replace / with .
+      mod.setAttribute('data-link', link.replace(/\//g,'.'));
+      mod.innerHTML = modNameFromLinkNoCamelCase(link);
       try {
-        var text = moduleLiHoverTextfromJavadocs(link);
+        let text = moduleLiHoverTextfromJavadocs(link);
         //console.log('makeModuleLi link: ', text);
         text.then(result => {
           //console.log('result: ', result);
@@ -436,7 +437,6 @@ function runModuleFunctions() {//large function to build module li and counters
       } catch (e) {
         console.error(e);
       }
-      mod.setAttribute('data-link', link);
       mod.addEventListener('dragstart', function(){dragStarted(event)});
       mod.addEventListener('dragover', function(){draggingOver(event)});
       mod.addEventListener('drop',function(){dropped(event)});
@@ -445,6 +445,16 @@ function runModuleFunctions() {//large function to build module li and counters
     } catch (e) {
       console.error(e);
     }
+    function modNameFromLinkNoCamelCase(link) {
+      const temp = link;
+      if (link.startsWith('biolockj/module/')) {
+        link = link.slice(16).split('/').pop();//remove 'biolockj/module/' and then remove the 'seq,', 'report', etc.
+      }
+      const noCamel = link.split(/(?=[A-Z])/).join(' ');
+      //console.log(temp, '\t', link, '\t', noCamel, '\n');
+      // makingModList += `${temp}\t${link}\t${noCamel}\n`
+      return noCamel;
+    }
   };//end makeModuleLi
 
   var modUl = document.getElementById('module_ul');
@@ -452,9 +462,9 @@ function runModuleFunctions() {//large function to build module li and counters
   while (modUl.firstChild) {//clear out the old module list elements
   modUl.removeChild(modUl.firstChild);
 }
-
   for (let mod of myModules.keys()){
     try {
+      console.log('myModules.get(mod).cssClass): ', mod, myModules.get(mod).cssClass);
       makeModuleLi(mod, myModules.get(mod).cssClass);
     } catch (e) {
       console.error(e);
@@ -483,7 +493,6 @@ function runModuleFunctions() {//large function to build module li and counters
     }else{implicits.forEach(imp => imp.classList.add('hidden'));}
   });
 };//end runModuleFunctions
-runModuleFunctions();
 
  // Close the dropdown if the user clicks outside of it
  window.onclick = function(e) {
