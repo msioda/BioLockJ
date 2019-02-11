@@ -1,3 +1,10 @@
+/**
+Author: Aaron Yerke
+Purpose: Javascript for the portion of the web app that builds configuration files and runs them
+Notes:
+  This file contains most of the js related to the configuration object.
+  config_menus.js contains the js for controlling the menu, which includes building the module selection
+*/
 function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
   this.modules = modules;
   this.paramKeys = paramKeys;
@@ -30,13 +37,13 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
           configText : this.formatAsFlatFile(),
       });
 
-
       //hide used file reader from user
       document.getElementById("openConfig").style.display = "none";
 
       this.sendConfigDataToForms();
     } catch (e) {
       alert(e);
+      console.error(e);
     }
   }//end load localhost
 
@@ -48,7 +55,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         return false;
       }
       //reorder module list elements to match the config
-      myModules = orderModulesFromLocalFiles(this.modules, myModules);
+      myModules = orderModulesFromLocalFiles(this.modules.slice(), myModules);
       runModuleFunctions();
 
       //get all input elements for adding values too
@@ -64,13 +71,13 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         var domModule = document.getElementById('module');
         var domModuleLi = domModule.getElementsByTagName('li');
         for (var b = 0; b < domModuleLi.length; b++) {//for mod in mod li
-          if (mod == domModuleLi[b].innerHTML) {
+          if (mod == domModuleLi[b].getAttribute('data-link')) {
             try{
             domModuleLi[b].click();//add('modChoosen');
             }catch(err) {
               alert(err);
-            }finally{
-              }
+              console.error(err);
+            }
           };//end if
         };//end for-loop over domModuleLi
       }//end this.modules for loop
@@ -101,6 +108,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
           document.getElementById("mainMenu").style.display = "block";
         } catch (err) {
           alert(err + "\n problem with " + key + ".")
+          console.error(err + "\n problem with " + key + ".");
         }
       }; //end for-loop over keys/parameters
     } catch (e) {
@@ -135,11 +143,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       };
     };
     _this.modulesToCurrentConfig();
-    console.log('configFile.value', configFile.value);
-    console.log(JSON.stringify({
-        configName : configFile.value,
-        configText : _this.formatAsFlatFile(),
-    }));
     //var save = saveConfigToGui({test : "test"});
     saveConfigToGui({
         configName : configFile.value,
@@ -156,7 +159,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     this.modules = [];
     for (var i = 0; i < mods.length; i++) {
       if (mods[i].classList.contains('modChoosen')) {
-        this.modules.push( mods[i].innerHTML);
+        this.modules.push( mods[i].getAttribute('data-link'));
       };
     };
     console.log("this.paramKeys.indexOf('project.configFile'): ", this.paramKeys.indexOf('project.configFile'));
@@ -306,14 +309,11 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         for (let para of dependencyMap.keys()){
           console.log(para);
           if (!(currentConfig.paramKeys.includes(para))){
-            //resetAnimation(requiredParamIds[r]);
             console.log(para);
             const currentMenuTab = getCurrentMenuTab();
             console.log(menuTabsArray.indexOf(currentMenuTab));
-            // console.log(currentMenuTab);
             currentMenuTab.style.display = 'none';
             menuTabButtons[menuTabsArray.indexOf(getParentDiv(para))].click();
-            //getParentDiv(para).style.display='block';
             alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
             highlightRequiredParam(para);
             return false;
@@ -537,32 +537,32 @@ document.getElementById('localFile').addEventListener('change', currentConfig.lo
 //Adding all eventlisteners
 //eventlistener for adding the recent config files to "recent"
 document.getElementById("recent").addEventListener("mouseover", function() {
-    const configs = retrieveConfigs();
-    configs.then(retrievedConfigs => {
-      console.log(retrievedConfigs);
-      for (var i = 0; i < retrievedConfigs.length; i++) {
-        let opt = document.createElement('a');
-        opt.setAttribute("name", retrievedConfigs[i]);
-        var text = document.createTextNode(retrievedConfigs[i].toString());
-        opt.addEventListener("click", function() {
-          console.log(JSON.stringify({propertiesFile : this.name}))
-          const tempConfig = retrievePropertiesFile({propertiesFile : this.name.concat('.properties')});
-          tempConfig.then( propertiesFile => {
-            console.log(propertiesFile);
-            currentConfig = new Config();
-            currentConfig.loadFromText(propertiesFile.data);
-            currentConfig.paramKeys.push('project.configFile');
-            currentConfig.paramValues.push(this.name);
-            currentConfig.sendConfigDataToForms();
-            console.log(currentConfig);
-          })
-        });
-        opt.appendChild(text);
-        opt.setAttribute('position', 'relative');
-        opt.setAttribute('display', 'block');
-        opt.classList.add('recentConfigs');
-        let proj = document.getElementById("projects");
-        proj.appendChild(opt);
+  const configs = retrieveConfigs();
+  configs.then(retrievedConfigs => {
+    console.log(retrievedConfigs);
+    for (var i = 0; i < retrievedConfigs.length; i++) {
+      let opt = document.createElement('a');
+      opt.setAttribute("name", retrievedConfigs[i]);
+      var text = document.createTextNode(retrievedConfigs[i].toString());
+      opt.addEventListener("click", function() {
+        //console.log(JSON.stringify({propertiesFile : this.name}))
+        const tempConfig = retrievePropertiesFile({propertiesFile : this.name.concat('.properties')});
+        tempConfig.then( propertiesFile => {
+          console.log(propertiesFile);
+          currentConfig = new Config();
+          currentConfig.loadFromText(propertiesFile.data);
+          currentConfig.paramKeys.push('project.configFile');
+          currentConfig.paramValues.push(this.name);
+          currentConfig.sendConfigDataToForms();
+          console.log(currentConfig);
+        })
+      });
+      opt.appendChild(text);
+      opt.setAttribute('position', 'relative');
+      opt.setAttribute('display', 'block');
+      opt.classList.add('recentConfigs');
+      let proj = document.getElementById("projects");
+      proj.appendChild(opt);
     };
   })
 }, {
@@ -635,7 +635,7 @@ for (const launch of document.getElementsByClassName("openLaunchModal")) {
         });
       }
     } catch (e) {
-      alert(e)
+      console.error(e);
     }
   });//end eventlistener
 };//end forloop
@@ -731,13 +731,14 @@ document.getElementById('seeResolvedDefaultProperties').addEventListener('click'
 })
 
 function getAllDefaultProps(dfpath){
-  console.log('defaultConfigs getAllDefaultProps', defaultConfigs);
+
   const defaultFlatFile = retreiveDefaultProps(dfpath);
+
   defaultFlatFile.then( flatFile => {
     const defaultConfig = new Config();
     defaultConfig.loadFromText(flatFile);
     const splitPath = dfpath.split('/');
-    console.log('splitPath: ', splitPath);
+
 
     //most config files won't have the file name as a property so we need to add it.
     defaultConfig.paramKeys.push('project.configFile');
@@ -910,17 +911,17 @@ function retreiveDefaultProps(dpropPath) {
 //         launchModal.style.display = "none";
 //     }
 // }
-document.getElementById('submitAWS').addEventListener('click', function(evt){
+document.getElementById('submitConfigureAWS').addEventListener('click', function(evt){
   evt.preventDefault();
   let formData = {};
-  console.log(document.getElementById('AwsForm'));
-  let AwsForm = new FormData(document.getElementById('AwsForm'));
+  console.log(document.getElementById('configureAwsForm'));
+  let AwsForm = new FormData(document.getElementById('configureAwsForm'));
   for (var i of AwsForm.entries()) {
     console.log(i);
     formData[i[0]] = i[1];
   }
   var request = new XMLHttpRequest();
-  request.open('POST', '/startAws', true);
+  request.open('POST', '/configureAws', true);
   request.setRequestHeader("Content-Type", "application/json");
   request.send(JSON.stringify({formData}));
     request.onreadystatechange = function() {
@@ -931,18 +932,53 @@ document.getElementById('submitAWS').addEventListener('click', function(evt){
 })//document.getElementById('submitAWS')
 
 
-document.getElementById('project.env').addEventListener('select', function(evt){
-  const AwsButton = document.getElementById('AwsButton');
-  switch (this.value) {
-    case 'aws':
-      AwsButton.classList.remove('hidden');
-      AwsButton.click();
-      break;
-    default:
-      AwsButton.classList.add('hidden');
-  }
+const projEnvInput = document.getElementById('project.env');
+['change','load', 'input'].forEach( evt =>
+    projEnvInput.addEventListener(evt, function(){
+      const AwsButton = document.getElementById('AwsButton');
+      console.log(document.getElementById('project.env'));
+      switch (document.getElementById('project.env').value) {
+        case 'aws':
+          AwsButton.classList.remove('hidden');
+          AwsButton.click();
+          break;
+        default:
+          AwsButton.classList.add('hidden');
+      }
+    }, false)
+);
+
+document.getElementById("manageConfigs").addEventListener("click", function() {
+  console.log("manageConfigs clicked");
+  updateConfigManager();
 });
 
+document.getElementById('submitDeleteConfig').addEventListener('click', event => {
+  console.log(event);
+  const datForm = new FormData(document.getElementById('configManagerForm'));
+  datForm.forEach( input => {
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        try {
+          if (request.responseText === `deleted : ${input}`){
+            const inputs = document.getElementsByName(input);
+            inputs.forEach( delInput => {
+              console.log(delInput);
+              delInput.parentNode.remove();
+            })
+            updateConfigManager();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    request.open('POST', '/deleteConfig', true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(JSON.stringify({ configFileName : input }));
+  });//end forEach
+})//end submitDeleteConfig').addEventListener(
 
 
 if(typeof(EventSource) !== "undefined") {
@@ -1005,6 +1041,33 @@ if(typeof(EventSource) !== "undefined") {
     // Sorry! No server-sent events support..
 }
 
+function updateConfigManager() {
+  const manager = document.getElementById('configManager');
+  const deleteDiv = document.getElementById('deleteConfigsDiv');
+  const configs = retrieveConfigs();
+  let br = document.createElement("br");
+  deleteDiv.innerHTML = "";
+
+  deleteDiv.innerHTML = "Please select the configuation files to delete: ";
+
+  configs.then(configs => {
+    for (var i = 0; i < configs.length; i++) {
+      const checkbox = document.createElement('input');
+      const deleteP = document.createElement('p');
+
+      checkbox.setAttribute('type', 'checkbox');
+      checkbox.setAttribute('value', configs[i]);
+      checkbox.setAttribute('name', 'deleteConfigs');
+      deleteP.innerHTML = configs[i];
+      deleteP.appendChild(checkbox);
+      deleteDiv.appendChild(deleteP)
+      deleteDiv.appendChild(br);
+      //managerForm.appendChild(p);
+    }
+    manager.style.display = "block";
+  })
+}
+
 function launcher(launchAction = 'launchNew', restartProjectPath){
   event.preventDefault();
   //launchModal.style.display = "block";
@@ -1041,4 +1104,20 @@ function launcher(launchAction = 'launchNew', restartProjectPath){
   console.log(request.responseText);
 }
 
-
+//delete config flat file
+function deleteConfig(configFileName) {
+  console.log(configFileName);
+  const request = new XMLHttpRequest();
+  request.onreadystatechange = function() {
+    if (request.readyState === XMLHttpRequest.DONE) {
+      try {
+        console.log(request.responseText);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+  request.open('POST', '/deleteConfig', true);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.send(JSON.stringify({configFileName : configFileName}));
+}//end deleteConfig(configFileName)
