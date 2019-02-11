@@ -411,7 +411,6 @@ public class Pipeline
 	 */
 	protected static void refreshRCacheIfNeeded( final BioModule module ) throws Exception
 	{
-		Log.info( Pipeline.class, "Checking for 1st R module: " + module.getClass().getName() );
 		if( ModuleUtil.isFirstRModule( module ) )
 		{
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );

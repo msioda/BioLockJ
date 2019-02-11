@@ -9,7 +9,7 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.report.taxa;
+package biolockj.module.report.humann2;
 
 import java.io.*;
 import java.util.*;
@@ -26,7 +26,7 @@ import biolockj.util.SummaryUtil;
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
-public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModule
+public class AddMetadataToPathwayTables extends HumanN2CountModule implements JavaModule
 {
 	/**
 	 * Require taxonomy table module as prerequisite
@@ -35,9 +35,9 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			// preReqs.add( BuildTaxaTables.class.getName() );
+			preReqs.add( BuildTaxaTables.class.getName() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
@@ -57,6 +57,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 
 			if( !hitRatioPerSample.isEmpty() )
 			{
+
 				for( final String key: hitRatioPerSample.keySet() )
 				{
 					if( hitRatioPerSample.get( key ) == null

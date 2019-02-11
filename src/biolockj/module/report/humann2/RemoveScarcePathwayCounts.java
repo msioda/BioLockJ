@@ -253,7 +253,7 @@ public class RemoveScarcePathwayCounts extends HumanN2CountModule implements Jav
 		{
 			if( pathMap.isEmpty() )
 			{
-				pathways = record.subList( 1, record.size() );
+				pathways = record;
 				for( int i = 1; i < record.size(); i++ )
 				{
 					pathMap.put( record.get( i ), 0 );
@@ -275,7 +275,8 @@ public class RemoveScarcePathwayCounts extends HumanN2CountModule implements Jav
 
 		for( final String pathway: pathways )
 		{
-			if( pathMap.get( pathway ) < getCutoff() )
+			Integer count = pathMap.get( pathway );
+			if( count != null && count < getCutoff() )
 			{
 				scarcePathways.add( pathway );
 			}
