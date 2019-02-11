@@ -1,20 +1,23 @@
 var projectsViewer = document.getElementById('projectsViewer');
 
-var handleBarsTest = {test : 'testing handlebars'}
-
 var projects = retrieveProjects();
 projects.then(proj => {
   console.log(proj);
   distributeIcons(projectsViewer, proj)
 });
 
-function distributeIcons(containerDiv, iconFileNames){
-  console.log(iconFileNames);
-  console.log(containerDiv);
-  for (var i = 0; i < iconFileNames.length; i++) {
+function distributeIcons(containerDiv, iconFileNamesAndDescrip){
+  console.log(iconFileNamesAndDescrip);
+  const projNames = iconFileNamesAndDescrip.names;
+  const projDescrip = iconFileNamesAndDescrip.descrip;
+  for (var i = 0; i < projNames.length; i++) {
     const spn = document.createElement('span');
     spn.classList.add('projectIcon');
-    spn.innerHTML = iconFileNames[i];
+    spn.innerHTML = projNames[i];
+
+    const descripDiv = document.createElement('div');
+    descripDiv.innerHTML = projDescrip[i];
+    descripDiv.classList.add('projectDescrip');
 
     const selecter = document.createElement('SELECT');
     const opt1 = document.createElement('option');
@@ -22,10 +25,15 @@ function distributeIcons(containerDiv, iconFileNames){
     opt1.innerHTML = 'View interactive visualization 1';
     opt2.innerHTML = 'View interactive visualization 2';
 
+    const mother = document.createElement('div');
+    mother.classList.add('iconContainer');
+
     selecter.appendChild(opt1);
     selecter.appendChild(opt2);
-    spn.appendChild(selecter);
-    containerDiv.appendChild(spn);
+    mother.appendChild(spn);
+    mother.appendChild(selecter);
+    mother.appendChild(descripDiv);
+    containerDiv.appendChild(mother);
   }
 };
 function saveConfigToGui(configTextandNameObject){
