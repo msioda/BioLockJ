@@ -33,8 +33,8 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       //localStorage.setItem(file.name, JSON.stringify(this));
 
       saveConfigToGui({
-          configName : file.name,
-          configText : this.formatAsFlatFile(),
+        configName : file.name,
+        configText : this.formatAsFlatFile(),
       });
 
       //hide used file reader from user
