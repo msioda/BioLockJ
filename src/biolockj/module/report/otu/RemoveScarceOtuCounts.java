@@ -19,6 +19,7 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.JavaModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -26,17 +27,16 @@ import biolockj.util.*;
  * This BioModule removes scarce OTUs not found in enough samples.<br>
  * The OTU must be found in a configurable percentage of samples.
  */
-public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCountModule
+public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 {
 
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		final double val = Config.requirePositiveDouble( MIN_OTU_THRESHOLD );
-		if( val > 1 )
+		if( getScarceCutoff() > 1 )
 		{
-			throw new ConfigFormatException( MIN_OTU_THRESHOLD, "Required range 0 < " + MIN_OTU_THRESHOLD + " < 1 " );
+			throw new ConfigFormatException( getScarceProp(), "Required range 0.0 < " + getScarceProp() + " < 1.0 " );
 		}
 	}
 
@@ -47,7 +47,7 @@ public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCoun
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + OtuUtil.OTU_COUNT );
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
 	}
 
 	/**
@@ -79,8 +79,8 @@ public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCoun
 		final TreeSet<String> uniqueOtus = OtuUtil.findUniqueOtus( sampleOtuCounts );
 		Log.info( getClass(),
 				"Searching " + uniqueOtus.size() + " unique OTUs in " + sampleOtuCounts.size()
-						+ " samples for OTUs found in less than the cutoff percentage [ "
-						+ Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) + " ] = " + getCutoff() + " samples." );
+						+ " samples for OTUs found in less than the cutoff percentage [ " + getScarceCutoff() + " ] = "
+						+ getCutoff() + " samples." );
 
 		final TreeMap<String, TreeSet<String>> scarceTaxa = findScarceTaxa( sampleOtuCounts, uniqueOtus );
 		final TreeMap<String, TreeSet<String>> scarceOtus = findScarceOtus( sampleOtuCounts, uniqueOtus, scarceTaxa );
@@ -89,7 +89,7 @@ public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCoun
 
 		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
 	}
 
@@ -283,9 +283,7 @@ public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCoun
 	{
 		if( cutoff == null )
 		{
-			cutoff = new Double(
-					Math.ceil( MetaUtil.getSampleIds().size() * Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) ) )
-							.intValue();
+			cutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCutoff() ) ).intValue();
 		}
 
 		return cutoff;
@@ -293,7 +291,21 @@ public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCoun
 
 	private String getMetaColName() throws Exception
 	{
-		return "scarce" + new Double( Config.requirePositiveDouble( MIN_OTU_THRESHOLD ) * 100 ).intValue() + "%";
+		return "scarce" + new Double( getScarceCutoff() * 100 ).intValue() + "%";
+	}
+
+	private Double getScarceCutoff() throws Exception
+	{
+		return Config.requirePositiveDouble( getScarceProp() );
+	}
+
+	private String getScarceProp() throws Exception
+	{
+		if( prop == null )
+		{
+			prop = getProperty( Constants.REPORT_SCARCE_CUTOFF );
+		}
+		return prop;
 	}
 
 	private File getScareOtuLogFile() throws Exception
@@ -301,16 +313,10 @@ public class RemoveScarceOtuCounts extends OtuCountModuleImpl implements OtuCoun
 		return new File( getTempDir().getAbsolutePath() + File.separator + "scarceOtus" + TXT_EXT );
 	}
 
+	private String prop = null;
 	private Integer cutoff = null;
 	private Map<String, String> hitsPerSample = new HashMap<>();
 	private final TreeSet<String> sampleIds = new TreeSet<>();
 	private int totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();
-
-	/**
-	 * {@link biolockj.Config} Positive Double property {@value #MIN_OTU_THRESHOLD} defines minimum percentage of
-	 * samples that must contain an OTU for it to be kept.
-	 */
-	protected static final String MIN_OTU_THRESHOLD = "removeScarceOtuCounts.cutoffPct";
-
 }

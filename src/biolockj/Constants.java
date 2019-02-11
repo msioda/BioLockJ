@@ -18,11 +18,13 @@ public class Constants
 	 * indicate execution was successful: {@value #BLJ_COMPLETE}
 	 */
 	public static final String BLJ_COMPLETE = "biolockjComplete";
+
 	/**
 	 * Name of the file created in the {@value biolockj.Config#PROJECT_PIPELINE_DIR} root directory to indicate fatal
 	 * application errors halted execution: {@value #BLJ_FAILED}
 	 */
 	public static final String BLJ_FAILED = "biolockjFailed";
+
 	/**
 	 * Name of the file created in the BioModule root directory to indicate execution has started: {@value #BLJ_STARTED}
 	 */
@@ -36,21 +38,30 @@ public class Constants
 	 * {@value #DEFAULT_MOD_DEMUX}
 	 */
 	public static final String DEFAULT_MOD_DEMUX = "project.defaultModuleDemultiplexer";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to convert files into fasta:
 	 * {@value #DEFAULT_MOD_FASTA_CONV} format
 	 */
 	public static final String DEFAULT_MOD_FASTA_CONV = "project.defaultModuleFastaConverter";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used combined paired read files:
 	 * {@value #DEFAULT_MOD_SEQ_MERGER}
 	 */
 	public static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultModuleSeqMerger";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used generate p-value and other
 	 * stats: {@value #DEFAULT_STATS_MODULE}
 	 */
 	public static final String DEFAULT_STATS_MODULE = "project.defaultStatsModule";
+
+	/**
+	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
+	 * with {@value #DELIM_SEP}
+	 */
+	public static final String DELIM_SEP = "__";
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
 	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
@@ -61,7 +72,6 @@ public class Constants
 	 * If set to {@value biolockj.Config#TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
-
 	public static final String DOCKER_IMG_VERSION = "docker.imgVersion";
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
@@ -72,7 +82,6 @@ public class Constants
 	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
 	 */
 	public static final String EXE_CLASSIFIER = "exe.classifier";
-
 	/**
 	 * {@link biolockj.Config} property for classifier program optional parameters: {@value #EXE_CLASSIFIER_PARAMS}
 	 */
@@ -87,18 +96,20 @@ public class Constants
 	 * Set command line executable gzip
 	 */
 	public static final String EXE_GZIP = "exe.gzip";
-
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
 	public static final String FALSE = "N";
-	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 
+	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
+	public static final String HN2_FULL_REPORT = "fullReport";
 
+	public static final String HN2_PATH_ABUND_TABLE = "pathabundance";
+	public static final String HN2_PATHWAY_REPORT = "pathwayReport";
 	public static final String INDENT = "    ";
 
 	/**
@@ -106,7 +117,6 @@ public class Constants
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
-
 	/**
 	 * {@link biolockj.Config} List property: {@value #INPUT_IGNORE_FILES}<br>
 	 * Set file names to ignore if found in {@value #INPUT_DIRS}
@@ -144,6 +154,11 @@ public class Constants
 	public static final String MODULE_R_PACKAGE = "biolockj.module.r";
 
 	public static final String MODULE_SEQ_PACKAGE = "biolockj.module.seq";
+
+	/**
+	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
+	 */
+	public static final String OTU_COUNT = "otuCount";
 
 	/**
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
@@ -219,6 +234,12 @@ public class Constants
 	public static final String REPORT_LOG_BASE = "report.logBase";
 
 	/**
+	 * {@link biolockj.Config} Positive Integer property {@value #REPORT_MIN_COUNT} defines the minimum table count
+	 * allowed, if a count less that this value is found, it is set to 0.
+	 */
+	public static final String REPORT_MIN_COUNT = "report.minCount";
+
+	/**
 	 * {@link biolockj.Config} Boolean property: {@value #REPORT_NUM_HITS}<br>
 	 * If set to {@value #TRUE}, NUM_OTUS will be added to metadata file by
 	 * {@link biolockj.module.implicit.parser.ParserModuleImpl} and included in R reports
@@ -232,9 +253,20 @@ public class Constants
 	public static final String REPORT_NUM_READS = "report.numReads";
 
 	/**
+	 * {@link biolockj.Config} Positive Double property {@value #REPORT_SCARCE_CUTOFF} defines minimum percentage of
+	 * samples that must contain a count value for it to be kept.
+	 */
+	public static final String REPORT_SCARCE_CUTOFF = "report.scarceCountCutoff";
+
+	/**
 	 * Return character constant *backslash-n*
 	 */
 	public static final String RETURN = "\n";
+
+	/**
+	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
+	 */
+	public static final String SEPARATOR = "|";
 
 	/**
 	 * BioLockJ shell script file extension constant: {@value #SH_EXT}

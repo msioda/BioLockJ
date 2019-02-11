@@ -214,13 +214,13 @@ public class TaxaUtil
 	 */
 	public static String getTaxaName( final String otu, final String level ) throws Exception
 	{
-		final StringTokenizer st = new StringTokenizer( otu, SEPARATOR );
+		final StringTokenizer st = new StringTokenizer( otu, Constants.SEPARATOR );
 		while( st.hasMoreTokens() )
 		{
 			final String levelOtu = st.nextToken();
-			if( levelOtu.startsWith( level + DELIM_SEP ) )
+			if( levelOtu.startsWith( level + Constants.DELIM_SEP ) )
 			{
-				return levelOtu.replaceFirst( level + DELIM_SEP, "" );
+				return levelOtu.replaceFirst( level + Constants.DELIM_SEP, "" );
 			}
 		}
 		return null;
@@ -410,12 +410,6 @@ public class TaxaUtil
 	public static final String CLASS = "class";
 
 	/**
-	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
-	 * with {@value #DELIM_SEP}
-	 */
-	public static final String DELIM_SEP = OtuUtil.DELIM_SEP;
-
-	/**
 	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #DOMAIN}
 	 */
 	public static final String DOMAIN = "domain";
@@ -448,11 +442,6 @@ public class TaxaUtil
 	 * {@value #GENUS}, {@value #SPECIES}
 	 */
 	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
-
-	/**
-	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
-	 */
-	public static final String SEPARATOR = OtuUtil.SEPARATOR;
 
 	/**
 	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #SPECIES}

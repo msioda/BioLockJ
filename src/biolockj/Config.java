@@ -478,6 +478,10 @@ public class Config
 
 	public static String pipelineName()
 	{
+		if( getPipelineDir() == null )
+		{
+			return null;
+		}
 		return getPipelineDir().getName();
 	}
 

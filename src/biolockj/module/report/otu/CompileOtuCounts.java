@@ -14,6 +14,7 @@ package biolockj.module.report.otu;
 import java.io.*;
 import java.util.*;
 import biolockj.Log;
+import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.OtuUtil;
@@ -22,7 +23,7 @@ import biolockj.util.OtuUtil;
  * This BioModule compiles the counts from all OTU count files into a single summary OTU count file containing OTU
  * counts for the entire dataset.
  */
-public class CompileOtuCounts extends OtuCountModuleImpl implements OtuCountModule
+public class CompileOtuCounts extends OtuCountModule implements JavaModule
 {
 
 	/**

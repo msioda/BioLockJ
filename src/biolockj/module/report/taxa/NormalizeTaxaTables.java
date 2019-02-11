@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.TaxaUtil;
@@ -40,7 +41,7 @@ import biolockj.util.TaxaUtil;
  * model" <a href= "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/" target=
  * "_top">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/</a>
  */
-public class NormalizeTaxaTables extends TaxaCountModuleImpl implements TaxaCountModule
+public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 {
 
 	/**

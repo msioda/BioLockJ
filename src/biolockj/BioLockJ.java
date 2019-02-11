@@ -405,7 +405,10 @@ public class BioLockJ
 			return;
 		}
 
-		markProjectStatus( Constants.BLJ_FAILED );
+		if( Config.pipelineName() != null )
+		{
+			markProjectStatus( Constants.BLJ_FAILED );
+		}
 
 		if( Log.getFile() != null )
 		{

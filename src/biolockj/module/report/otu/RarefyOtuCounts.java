@@ -19,6 +19,7 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.JavaModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -31,7 +32,7 @@ import biolockj.util.*;
  * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
  */
-public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModule
+public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 {
 
 	@Override
@@ -55,7 +56,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + OtuUtil.OTU_COUNT );
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
 	}
 
 	/**
@@ -84,7 +85,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
 		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_"
-				+ OtuUtil.OTU_COUNT );
+				+ Constants.OTU_COUNT );
 		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 		final Integer quantileNum = getNumOtusForQuantile( sampleOtuCounts );
 
@@ -101,7 +102,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 
 		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
 	}
 

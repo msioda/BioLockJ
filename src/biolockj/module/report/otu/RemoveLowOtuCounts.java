@@ -19,20 +19,23 @@ import org.apache.commons.io.FileUtils;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.module.JavaModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.util.*;
+import biolockj.util.MetaUtil;
+import biolockj.util.OtuUtil;
+import biolockj.util.SummaryUtil;
 
 /**
  * This BioModule
  */
-public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountModule
+public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 {
 
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.requirePositiveInteger( MIN_OTU_COUNT );
+		getMinCount();
 	}
 
 	/**
@@ -42,7 +45,7 @@ public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountMo
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + OtuUtil.OTU_COUNT );
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
 	}
 
 	/**
@@ -58,7 +61,7 @@ public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountMo
 		sampleIds.removeAll( hitsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary += "Removed empty samples: " + sampleIds;
 		}
 		hitsPerSample = null;
 		return super.getSummary() + summary;
@@ -74,12 +77,12 @@ public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountMo
 		logLowCountOtus( lowCountOtus );
 		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
 	}
 
 	/**
-	 * Save a list of scarce OTUs to the module temp directory.
+	 * Save a list of low count OTUs to the module temp directory.
 	 * 
 	 * @param lowCountOtus TreeMap(sampleId, TreeSet(OTU)) of OTUs found in too few samples
 	 * @throws Exception if errors occur
@@ -141,7 +144,7 @@ public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountMo
 			for( final String otu: otuCounts.keySet() )
 			{
 				final int count = otuCounts.get( otu );
-				if( count < Config.requirePositiveInteger( MIN_OTU_COUNT ) )
+				if( count < getMinCount() )
 				{
 					uniqueOtuRemoved.add( otu );
 					totalOtuRemoved += count;
@@ -175,10 +178,8 @@ public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountMo
 				else
 				{
 
-					Log.warn( getClass(),
-							sampleId + ": Removed " + badOtus.size() + " low OTU counts (below " + MIN_OTU_COUNT + "="
-									+ Config.requirePositiveInteger( MIN_OTU_COUNT ) + ") --> "
-									+ BioLockJUtil.getCollectionAsString( badOtus ) );
+					Log.warn( getClass(), sampleId + ": Removed " + badOtus.size() + " low OTU counts (below "
+							+ getProp() + "=" + getMinCount() + ") --> " + badOtus );
 
 					final File otuFile = OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName() );
 					final BufferedWriter writer = new BufferedWriter( new FileWriter( otuFile ) );
@@ -226,18 +227,27 @@ public class RemoveLowOtuCounts extends OtuCountModuleImpl implements OtuCountMo
 
 	private String getMetaColName() throws Exception
 	{
-		return "min" + Config.requirePositiveInteger( MIN_OTU_COUNT );
+		return "min" + getMinCount();
 	}
 
+	private Integer getMinCount() throws Exception
+	{
+		return Config.requirePositiveInteger( getProp() );
+	}
+	
+	private String getProp() throws Exception
+	{
+		if( prop == null )
+		{
+			prop = getProperty( Constants.REPORT_MIN_COUNT );
+		}
+		return prop;
+	}
+
+	private String prop = null;
 	private Map<String, File> fileMap = null;
 	private Map<String, String> hitsPerSample = new HashMap<>();
 	private final Set<String> sampleIds = new HashSet<>();
 	private int totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();
-
-	/**
-	 * {@link biolockj.Config} Positive Integer property {@value #MIN_OTU_COUNT} defines the minimum number of OTUs
-	 * allowed, if a count less that this value is found, it is set to 0.
-	 */
-	protected static final String MIN_OTU_COUNT = "removeLowOtuCounts.minOtuCount";
 }

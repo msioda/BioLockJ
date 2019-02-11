@@ -13,6 +13,7 @@ package biolockj.node;
 
 import java.util.HashMap;
 import java.util.Map;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.util.OtuUtil;
 import biolockj.util.TaxaUtil;
@@ -161,7 +162,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 
 				if( !otu.toString().isEmpty() )
 				{
-					otu.append( OtuUtil.SEPARATOR );
+					otu.append( Constants.SEPARATOR );
 				}
 
 				otu.append( OtuUtil.buildOtuTaxa( level, name ) );

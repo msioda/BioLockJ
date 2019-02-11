@@ -11,11 +11,13 @@
  */
 package biolockj.module.implicit.parser.wgs;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
-import biolockj.Config;
 import biolockj.Constants;
+import biolockj.module.BioModule;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
@@ -25,15 +27,15 @@ import biolockj.util.*;
  * Samples IDs are found in the column headers starting with the 2nd column.<br>
  * The count type depends on the HumanN2 config properties.
  */
-public class HumanN2Parser2 extends ParserModuleImpl implements ParserModule
+public class HumanN2Parser extends ParserModuleImpl implements ParserModule
 {
-	
+
 	@Override
-	public void runModule() throws Exception
+	public boolean isValidInputModule( final BioModule module )
 	{
-		parseSamples();
+		return PathwayUtil.isPathwayModule( module );
 	}
-	
+
 	/**
 	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.HumanN2Classifier}.
 	 * 
@@ -46,37 +48,22 @@ public class HumanN2Parser2 extends ParserModuleImpl implements ParserModule
 	@Override
 	public void parseSamples() throws Exception
 	{
-		MemoryUtil.reportMemoryUsage( "Parse pathway abundance file" );
 		for( final File file: getInputFiles() )
 		{
-			final String[][] data = transpose( parsePathAbundanceFile( file ) );
-
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( getOutputFile( file ) ) );
+			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
+			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), Constants.HN2_FULL_REPORT );
+			final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 			try
 			{
-				boolean firstRecord = true;
 				for( final String[] record: data )
 				{
 					boolean newRecord = true;
 					for( final String cell: record )
 					{
-						if( !newRecord )
-						{
-							newRecord = false;
-							writer.write( Constants.TAB_DELIM );
-						}
-						if( firstRecord && !cell.equals( HN2_PATHWAY ) )
-						{
-							
-							writer.write( getSampleID( cell ) );
-						}
-						else
-						{
-							writer.write( cell );
-						}
+						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + cell );
+						newRecord = false;
 					}
 					writer.write( Constants.RETURN );
-					firstRecord = false;
 				}
 			}
 			finally
@@ -87,50 +74,58 @@ public class HumanN2Parser2 extends ParserModuleImpl implements ParserModule
 				}
 			}
 
-			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
+			MemoryUtil.reportMemoryUsage( "Parsed " + file.getAbsolutePath() );
 		}
 	}
 
-	private File getOutputFile( final File inputFile ) throws Exception
+	@Override
+	public void runModule() throws Exception
 	{
-		return new File( getOutputDir().getAbsolutePath() + File.separator + Config.pipelineName() + "_"
-				+ inputFile.getName().replaceAll( Constants.TSV_EXT, "" ) + Constants.PROCESSED );
+		parseSamples();
 	}
 
-	/**
-	 * Read in path abundance file, each inner lists represents 1 line from the file. Each cell in the tab delimited
-	 * file is storeda as 1 element in the inner lists.
-	 * 
-	 * @param file Path abundance file
-	 * @return List of Lists - each inner list 1 line
-	 * @throws Exception if errors occur
-	 */
-	protected static List<List<String>> parsePathAbundanceFile( final File file ) throws Exception
+	private List<List<String>> assignSampleIDs( final List<List<String>> data ) throws Exception
 	{
-		final List<List<String>> data = new ArrayList<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( file );
-		try
+		final List<List<String>> output = new ArrayList<>();
+		boolean firstRecord = true;
+		for( final List<String> row: data )
 		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			final ArrayList<String> record = new ArrayList<>();
+			if( firstRecord )
 			{
-				final ArrayList<String> record = new ArrayList<>();
-				final String[] cells = line.split( Constants.TAB_DELIM, -1 );
-				for( final String cell: cells )
+				for( final String cell: row )
 				{
-					record.add( cell );
+					record.add( record.isEmpty() ? MetaUtil.getID(): getSampleID( cell ) );
 				}
-				data.add( record );
 			}
-		}
-		finally
-		{
-			if( reader != null )
+			else
 			{
-				reader.close();
+				record.addAll( row );
 			}
+
+			output.add( record );
+			firstRecord = false;
 		}
 
-		return data;
+		return output;
+	}
+
+	private String getSampleID( String name ) throws Exception
+	{
+		if( name.contains( PAIRED_SUFFIX ) )
+		{
+			name = name.replace( PAIRED_SUFFIX, "" );
+		}
+		if( name.contains( KD_SUFFIX ) )
+		{
+			name = name.replace( KD_SUFFIX, "" );
+		}
+		if( name.contains( ABUND_SUFFIX ) )
+		{
+			name = name.replace( ABUND_SUFFIX, "" );
+		}
+
+		return name;
 	}
 
 	private static String[][] transpose( final List<List<String>> data ) throws Exception
@@ -158,29 +153,8 @@ public class HumanN2Parser2 extends ParserModuleImpl implements ParserModule
 
 		return transpose;
 	}
-	
-	private String getSampleID( String name ) throws Exception
-	{
-		if( name.contains( PAIRED_SUFFIX ) )
-		{
-			name = name.replace( PAIRED_SUFFIX, "" );
-		}
-		if( name.contains( KD_SUFFIX ) )
-		{
-			name = name.replace( KD_SUFFIX, "" );
-		}
-		if( name.contains( ABUND_SUFFIX ) )
-		{
-			name = name.replace( ABUND_SUFFIX, "" );
-		}
 
-		return name;
-	}
-
-	public static final String ABUND_SUFFIX = "_Abundance";
-	public static final String PAIRED_SUFFIX = "_paired_merged";
-	public static final String KD_SUFFIX = "_kneaddata";
-	public static final String HN2_PATHWAY = "# Pathway";
-	public static final String HN2_UNINTEGRATED = "UNINTEGRATED";
-	public static final String HN2_UNMAPPED = "UNMAPPED";
+	private static final String ABUND_SUFFIX = "_Abundance";
+	private static final String KD_SUFFIX = "_kneaddata";
+	private static final String PAIRED_SUFFIX = "_paired_merged";
 }

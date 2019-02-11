@@ -9,7 +9,7 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-package biolockj.module.report.otu;
+package biolockj.module.report.humann2;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -19,30 +19,33 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Log;
 import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.BioLockJUtil;
-import biolockj.util.OtuUtil;
+import biolockj.util.PathwayUtil;
 
 /**
  * TBD
  */
-public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCountModule
+public abstract class HumanN2CountModule extends JavaModuleImpl implements JavaModule
 {
-
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
 		if( getFileCache().isEmpty() )
 		{
 			final List<File> files = new ArrayList<>();
-			for( final File f: super.findModuleInputFiles() )
+			for( final File f: findModuleInputFiles() )
 			{
-				if( OtuUtil.isOtuFile( f ) )
+				if( PathwayUtil.isPathwayFile( f ) )
 				{
 					files.add( f );
 				}
 			}
 			cacheInputFiles( files );
+
+			validateInput( files );
+
 		}
 		return getFileCache();
 	}
@@ -50,7 +53,7 @@ public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCo
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{
-		return isOtuModule( module );
+		return isHumanN2CountModule( module );
 	}
 
 	/**
@@ -60,7 +63,7 @@ public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCo
 	 * @return TRUE if module generated OTU count files
 	 * @throws Exception if errors occur
 	 */
-	protected boolean isOtuModule( final BioModule module )
+	protected boolean isHumanN2CountModule( final BioModule module )
 	{
 		try
 		{
@@ -69,7 +72,7 @@ public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCo
 
 			for( final File f: files )
 			{
-				if( OtuUtil.isOtuFile( f ) )
+				if( PathwayUtil.isPathwayFile( f ) )
 				{
 					return true;
 				}
@@ -81,6 +84,16 @@ public abstract class OtuCountModuleImpl extends JavaModuleImpl implements OtuCo
 			ex.printStackTrace();
 		}
 		return false;
+	}
+
+	private void validateInput( final List<File> files ) throws Exception
+	{
+		if( files.size() > 1 )
+		{
+			throw new Exception(
+					"Current HumanN2 Implementation supports reporting on 1 pathway abundance file per pipeline.  "
+							+ "Total of [" + files.size() + "] input files found: " + files );
+		}
 	}
 
 }

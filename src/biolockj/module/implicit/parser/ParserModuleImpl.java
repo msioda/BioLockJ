@@ -163,7 +163,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		{
 			MetaUtil.addColumn( NUM_OTUS, hitsPerSample, getOutputDir(), true );
 		}
-
 	}
 
 	/**
