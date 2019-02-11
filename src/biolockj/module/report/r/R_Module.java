@@ -167,8 +167,12 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			BioModule module = ModuleUtil.getClassifier( this, false );
-			if( module instanceof HumanN2Classifier )
+			Boolean isHn2 = isHumanN2();
+			if( isHn2 == null )
+			{
+				return super.getPreRequisiteModules();
+			}
+			else if( isHn2 )
 			{
 				preReqs.add( AddMetadataToPathwayTables.class.getName() );
 			}
@@ -181,6 +185,42 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
+	
+	
+	private Boolean isHumanN2() throws Exception
+	{
+		String prevClassifier = null;
+		int foundSelf = 0;
+		boolean hasPathwayInputs = BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE );
+		boolean hasTaxaInputs = BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+		for( final String mod: Config.requireList( this, Constants.INTERNAL_BLJ_MODULE ) )
+		{
+			boolean isClassifier = mod.toLowerCase().contains( "classifier" );
+			boolean isHn2 = isClassifier && mod.toLowerCase().contains( "humann2" );
+			if( mod.equals( getClass().getName() ) )
+			{
+				foundSelf++;
+			}
+
+			if( foundSelf > 0 &&  foundSelf > numInit++ )
+			{
+				
+				if( (prevClassifier == null && hasTaxaInputs) || (!isHn2 && isClassifier)  )
+				{
+					return false;
+				}
+				if( (prevClassifier == null && hasPathwayInputs) || isHn2 )
+				{
+					return true;
+				}
+				
+				return null;
+			}
+		}
+		return null;
+	}
+	
+	private static int numInit = 0;
 
 	/**
 	 * Get the primary R script
