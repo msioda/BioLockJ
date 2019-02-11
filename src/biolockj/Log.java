@@ -356,7 +356,7 @@ public class Log
 
 	/**
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when
-	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Config#TRUE}
+	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Constants#TRUE}
 	 */
 	public static final String LIMIT_DEBUG_CLASSES = "project.limitDebugClasses";
 

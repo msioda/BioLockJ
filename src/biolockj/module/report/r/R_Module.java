@@ -488,6 +488,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	protected static final String EXE_RSCRIPT = "exe.Rscript";
 
 	/**
+	 * {@link biolockj.Config} property {@value #P_VAL_CUTOFF} defines the p-value cutoff for significance
+	 */
+	protected static final String P_VAL_CUTOFF = "r.pvalCutoff";
+
+	/**
 	 * {@link biolockj.Config} boolean property {@value #R_DEBUG} sets the debug log function endabled
 	 */
 	protected static final String R_DEBUG = "r.debug";
@@ -502,11 +507,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * timeout. If undefined, no timeout is used.
 	 */
 	protected static final String R_TIMEOUT = "r.timeout";
-	
-	/**
-	 * {@link biolockj.Config} property {@value #P_VAL_CUTOFF} defines the p-value cutoff for significance
-	 */
-	protected static final String P_VAL_CUTOFF = "r.pvalCutoff";
 
 	private static final String DEBUG_LOG_PREFIX = "debug_";
 	private static final String FUNCTION_RUN_R = "runScript";

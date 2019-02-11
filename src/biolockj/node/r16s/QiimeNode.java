@@ -79,14 +79,14 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 */
 	protected String getLevel( final String taxa ) throws Exception
 	{
-		for( String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA )
+		for( final String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA )
 		{
 			if( taxa.startsWith( abmiguousDelim ) )
 			{
 				return null;
 			}
 		}
-		
+
 		if( delimToLevelMap.isEmpty() )
 		{
 			if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null )
@@ -118,7 +118,6 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 * QIIME domain taxonomy level delimiter: {@value #QIIME_DOMAIN_DELIM}
 	 */
 	protected static final String QIIME_DOMAIN_DELIM = "k__";
-
 
 	/**
 	 * Silva class taxonomy level delimiter: {@value #SILVA_CLASS_DELIM}

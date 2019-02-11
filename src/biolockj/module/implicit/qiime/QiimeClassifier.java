@@ -14,7 +14,6 @@ package biolockj.module.implicit.qiime;
 import java.io.*;
 import java.util.*;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -439,7 +438,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		return sb.toString();
 	}
 
-
 	private String getLowestQiimeTaxaLevel() throws Exception
 	{
 		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.SPECIES ) )
@@ -470,10 +468,10 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		{
 			return "1";
 		}
-		
-		throw new Exception( "Should not be possible to reach this error, value based on required field: " 
+
+		throw new Exception( "Should not be possible to reach this error, value based on required field: "
 				+ TaxaUtil.REPORT_TAXONOMY_LEVELS );
-		
+
 	}
 
 	private String switches = null;

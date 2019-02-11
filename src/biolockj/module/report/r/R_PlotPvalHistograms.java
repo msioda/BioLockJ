@@ -22,7 +22,7 @@ import biolockj.module.ScriptModule;
  */
 public class R_PlotPvalHistograms extends R_Module implements ScriptModule
 {
-	
+
 	@Override
 	public void checkDependencies() throws Exception
 	{

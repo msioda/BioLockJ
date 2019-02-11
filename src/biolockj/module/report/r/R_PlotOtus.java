@@ -26,7 +26,7 @@ public class R_PlotOtus extends R_Module implements ScriptModule
 	{
 		super.checkDependencies();
 	}
-	
+
 	/**
 	 * Returns {@link #getStatPreReqs()}
 	 */

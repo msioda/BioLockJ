@@ -1,18 +1,7 @@
 package biolockj;
 
-
 public class Constants
 {
-	/**
-	 * Qiime may find ambiguous taxa identified in various formats in different databases.
-	 * The following accounts for Green Genes 13.8 and Silva 132: {@value #QIIME_AMBIGUOUS_TAXA}
-	 */
-	public static final String[] QIIME_AMBIGUOUS_TAXA =  { "Ambiguous_taxa", "Other", "Unassigned" };
-	
-	
-	
-	
-	
 	/**
 	 * Captures the application start time
 	 */
@@ -23,6 +12,7 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	public static final String AWS_STACK = "aws.stack";
+
 	/**
 	 * Name of the file created in the BioModule or {@value biolockj.Config##PROJECT_PIPELINE_DIR} root directory to
 	 * indicate execution was successful: {@value #BLJ_COMPLETE}
@@ -66,23 +56,23 @@ public class Constants
 	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_ADD_IMPLICIT_MODULES = "project.disableAddImplicitModules";
-
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_PRE_REQ_MODULES}<br>
 	 * If set to {@value biolockj.Config#TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
+
 	public static final String DOCKER_IMG_VERSION = "docker.imgVersion";
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
 	 */
 	public static final String EXE_AWK = "exe.awk";
-
 	/**
 	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
 	 */
 	public static final String EXE_CLASSIFIER = "exe.classifier";
+
 	/**
 	 * {@link biolockj.Config} property for classifier program optional parameters: {@value #EXE_CLASSIFIER_PARAMS}
 	 */
@@ -92,17 +82,16 @@ public class Constants
 	 * Set command line executable docker
 	 */
 	public static final String EXE_DOCKER = "exe.docker";
-
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
 	 * Set command line executable gzip
 	 */
 	public static final String EXE_GZIP = "exe.gzip";
+
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
 	public static final String FALSE = "N";
-
 	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 
 	/**
@@ -216,6 +205,12 @@ public class Constants
 	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
 
 	public static final String QIIME = "qiime";
+
+	/**
+	 * Qiime may find ambiguous taxa identified in various formats in different databases. The following accounts for
+	 * Green Genes 13.8 and Silva 132: {@value #QIIME_AMBIGUOUS_TAXA}
+	 */
+	public static final String[] QIIME_AMBIGUOUS_TAXA = { "Ambiguous_taxa", "Other", "Unassigned" };
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>

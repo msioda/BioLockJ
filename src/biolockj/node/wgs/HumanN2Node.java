@@ -18,8 +18,8 @@ import biolockj.node.OtuNodeImpl;
 /**
  * This class represents one line of {@link biolockj.module.classifier.wgs.HumanN2Classifier} output.<br>
  * 1st cell format: [Pathway_ID]:[Pathway_Descr] | g__[genus_taxa].s__[species_taxa]<br>
- * Example:  ARO-PWY: chorismate biosynthesis I|g__Acidaminococcus.s__Acidaminococcus_intestini
- * Samples IDs are found in the column headers starting with the 2nd column.<br>
+ * Example: ARO-PWY: chorismate biosynthesis I|g__Acidaminococcus.s__Acidaminococcus_intestini Samples IDs are found in
+ * the column headers starting with the 2nd column.<br>
  * The count type depends on the HumanN2 config properties.
  */
 public class HumanN2Node extends OtuNodeImpl implements OtuNode
