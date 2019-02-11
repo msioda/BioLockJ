@@ -121,12 +121,12 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 				writer.write( key + TAB_DELIM );
 				if( !hasQm1 )
 				{
-					writer.write( Config.requireString( MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
+					writer.write( Config.requireString( this, MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
 				}
 
 				if( !hasQm2 )
 				{
-					writer.write( Config.requireString( MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
+					writer.write( Config.requireString( this, MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
 				}
 
 				final StringTokenizer st = new StringTokenizer( metaLines.get( key ), TAB_DELIM );
@@ -202,7 +202,7 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 						metaColumns.indexOf( DEMUX_COLUMN ), metaColumns.indexOf( DESCRIPTION ) } );
 
 		String awkBody = "";
-		awkBody += Config.getExe( Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
+		awkBody += Config.getExe( this, Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
 				+ "\" '{ print $1," + colIndex( metaColumns, BARCODE_SEQUENCE ) + ","
 				+ colIndex( metaColumns, LINKER_PRIMER_SEQUENCE ) + ",";
 

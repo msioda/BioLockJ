@@ -97,7 +97,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_METAPHLAN + "() {" );
-		lines.add( Config.getExe( EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
+		lines.add( Config.getExe( this, EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
 				+ "$1 --bowtie2out $2 > $3" );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -173,7 +173,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 
 	private String getWorkerFunctionParams() throws Exception
 	{
-		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
+		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
 	}
 
 	private String defaultSwitches = null;

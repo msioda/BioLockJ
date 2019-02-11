@@ -80,8 +80,8 @@ main <- function() {
 	for( level in taxaLevels() ) {
 		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildOtuPlots_", level, ".log") ) )
 		
-		taxaTable = getTaxaTable( level )
-		if( is.null( taxaTable ) ) { next }
+		countMetaTable = getCountMetaTable( level )
+		if( is.null( countMetaTable ) ) { next }
 		metaTable = getMetaData( level )
 
 		binaryCols = getBinaryFields()
@@ -112,17 +112,17 @@ main <- function() {
 		par(las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
 		multiPageSet = 0
 
-		# if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of taxaTable rows
+		# if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countMetaTable rows
 		cutoffValue = getProperty("r.rareOtuThreshold", 1)
-		if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow(taxaTable)
+		if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow(countMetaTable)
 
-		for( taxa in names(taxaTable) ) {
+		for( taxa in names(countMetaTable) ) {
 			multiPageSet = multiPageSet + 1
-			if( sum( taxaTable[,taxa] > 0 ) >=  cutoffValue ) {
+			if( sum( countMetaTable[,taxa] > 0 ) >=  cutoffValue ) {
 				par( mfrow = par("mfrow") ) # step to next pageNum, even if the last page is not full
 				position = 1
 				pageNum = 1
-				taxaVals = taxaTable[,taxa]
+				taxaVals = countMetaTable[,taxa]
 
 				for( meta in reportCols ) {
 					metaVals = metaTable[,meta]

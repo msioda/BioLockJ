@@ -42,13 +42,13 @@ public class ModuleUtil
 	 * @return BioModule
 	 * @throws Exception if errors occur
 	 */
-	public static BioModule getClassifier( final BioModule module, final boolean checkAhead ) throws Exception
+	public static ClassifierModule getClassifier( final BioModule module, final boolean checkAhead ) throws Exception
 	{
 		for( final BioModule m: getModules( module, checkAhead ) )
 		{
 			if( m instanceof ClassifierModule )
 			{
-				return module;
+				return (ClassifierModule) module;
 			}
 		}
 		return null;
@@ -102,7 +102,7 @@ public class ModuleUtil
 	public static BioModule getModule( final BioModule module, final String className, final boolean checkAhead )
 			throws Exception
 	{
-		final BioModule classifier = getClassifier( module, checkAhead );
+		final ClassifierModule classifier = getClassifier( module, checkAhead );
 		for( final BioModule m: getModules( module, checkAhead ) )
 		{
 			if( m.getClass().getName().equals( className ) )
@@ -287,7 +287,7 @@ public class ModuleUtil
 				{
 					foundMeta = true;
 				}
-				else if( !Config.getSet( Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) )
+				else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) )
 				{
 					foundOther = true;
 				}
@@ -412,7 +412,7 @@ public class ModuleUtil
 
 	private static String getDefaultModule( final String name, final String className )
 	{
-		String defaultModule = Config.getString( name );
+		String defaultModule = Config.getString( null, name );
 		if( defaultModule == null )
 		{
 			defaultModule = className;

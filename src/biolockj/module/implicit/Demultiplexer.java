@@ -57,9 +57,9 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 		setMultiplexedConfig();
 		getBarcodeCutoff();
 		final String demuxStrategy = "Config property [ " + DemuxUtil.DEMUX_STRATEGY + "="
-				+ Config.getString( DemuxUtil.DEMUX_STRATEGY ) + " ]";
+				+ Config.getString( this, DemuxUtil.DEMUX_STRATEGY ) + " ]";
 
-		if( Config.getString( DemuxUtil.DEMUX_STRATEGY ) == null )
+		if( Config.getString( this, DemuxUtil.DEMUX_STRATEGY ) == null )
 		{
 			Log.info( getClass(), DemuxUtil.DEMUX_STRATEGY
 					+ " is undefined for a multiplexed dataset.  Demultiplexer will analyze the file to determine if Sample IDs or barcodes "
@@ -73,17 +73,17 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 				throw new Exception( demuxStrategy + " but metadata file is undefined" );
 			}
 
-			if( !MetaUtil.getFieldNames().contains( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) ) )
+			if( !MetaUtil.getFieldNames().contains( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ) ) )
 			{
 				throw new Exception( demuxStrategy + " but the barcode column configured [ "
-						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( MetaUtil.META_BARCODE_COLUMN )
+						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( this, MetaUtil.META_BARCODE_COLUMN )
 						+ " ] is not found in the metadata: " + MetaUtil.getPath() );
 			}
 
-			if( MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
+			if( MetaUtil.getFieldValues( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 			{
 				throw new Exception( demuxStrategy + " but the barcode column configured [ "
-						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( MetaUtil.META_BARCODE_COLUMN )
+						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( this, MetaUtil.META_BARCODE_COLUMN )
 						+ " ] is empty in the metadata file: " + MetaUtil.getPath() );
 			}
 
@@ -99,9 +99,9 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 							+ " & " + SeqUtil.INPUT_TRIM_SUFFIX
 							+ "] to extract the Sample ID from the sequence header" );
 			Log.info( getClass(), "Config property [ " + SeqUtil.INPUT_TRIM_PREFIX + " ] = "
-					+ Config.getString( SeqUtil.INPUT_TRIM_PREFIX ) );
+					+ Config.getString( this, SeqUtil.INPUT_TRIM_PREFIX ) );
 			Log.info( getClass(), "Config property [ " + SeqUtil.INPUT_TRIM_SUFFIX + " ] = "
-					+ Config.getString( SeqUtil.INPUT_TRIM_SUFFIX ) );
+					+ Config.getString( this, SeqUtil.INPUT_TRIM_SUFFIX ) );
 
 		}
 		super.checkDependencies();
@@ -134,7 +134,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+			if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				sb.append( "# Forward Reads: " + numTotalFwReads + RETURN );
 				sb.append( "# Reverse Reads: " + numTotalRvReads + RETURN );
@@ -374,7 +374,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	protected Map<String, Set<String>> getValidFwHeaders() throws Exception
 	{
 		final Map<String, Set<String>> validHeaders = new HashMap<>();
-		final boolean isPaird = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS );
+		final boolean isPaird = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS );
 		final boolean isCombined = isPaird && getInputFiles().size() == 1;
 
 		Log.info( getClass(), "Get FW Headers from temp files "
@@ -431,7 +431,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 		}
 
 		String msg = " # valid reads = ";
-		if( Config.requireBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.requireBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			msg = " # valid fw read headers = ";
 		}
@@ -454,7 +454,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	protected Map<String, Set<String>> getValidHeaders() throws Exception
 	{
 		final Map<String, Set<String>> validFwHeaders = getValidFwHeaders();
-		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			Log.info( getClass(), "Demultiplexing unpaired reads...# " + validFwHeaders.size() );
 			return validFwHeaders;
@@ -535,15 +535,15 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	{
 		if( DemuxUtil.sampleIdInHeader() )
 		{
-			final String defaultSeqHeadChar = Config.requireString( SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
+			final String defaultSeqHeadChar = Config.requireString( this, SeqUtil.INTERNAL_SEQ_HEADER_CHAR );
 
-			if( Config.getString( SeqUtil.INPUT_TRIM_PREFIX ) == null )
+			if( Config.getString( this, SeqUtil.INPUT_TRIM_PREFIX ) == null )
 			{
 				Config.setConfigProperty( SeqUtil.INPUT_TRIM_PREFIX, defaultSeqHeadChar );
 				Log.info( getClass(), "====> Set: " + SeqUtil.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
 			}
 
-			if( Config.getString( SeqUtil.INPUT_TRIM_SUFFIX ) == null )
+			if( Config.getString( this, SeqUtil.INPUT_TRIM_SUFFIX ) == null )
 			{
 				Config.setConfigProperty( SeqUtil.INPUT_TRIM_SUFFIX, SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
 				Log.info( getClass(),
@@ -574,8 +574,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 		final long numFwBarcodes = headerFwBarcodes + seqFwBarcodes;
 		final long numRvBarcodes = headerRvBarcodes + seqRvBarcodes;
 
-		final String rc = Config.getString( DemuxUtil.BARCODE_USE_REV_COMP );
-		final String st = Config.getString( DemuxUtil.DEMUX_STRATEGY );
+		final String rc = Config.getString( this, DemuxUtil.BARCODE_USE_REV_COMP );
+		final String st = Config.getString( this, DemuxUtil.DEMUX_STRATEGY );
 		final String strategy = "Config." + DemuxUtil.DEMUX_STRATEGY + "=" + ( st == null ? "UNDEFINED": st );
 		final String revCompAssign = "Config." + DemuxUtil.BARCODE_USE_REV_COMP + "="
 				+ ( rc == null ? "UNDEFINED": rc );
@@ -629,7 +629,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 		if( useRevCompConfigSet() )
 		{
-			if( Config.getBoolean( DemuxUtil.BARCODE_USE_REV_COMP ) && !useRevComp )
+			if( Config.getBoolean( this, DemuxUtil.BARCODE_USE_REV_COMP ) && !useRevComp )
 			{
 				summary += "WARNING: [" + revCompAssign + "] --> but [" + numFwBarcodes + "] BC > [" + numRvBarcodes
 						+ "] rcBC" + RETURN;
@@ -657,7 +657,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 	private Double getBarcodeCutoff() throws Exception
 	{
-		final Double val = Config.getPositiveDoubleVal( DemuxUtil.BARCODE_CUTOFF );
+		final Double val = Config.getPositiveDoubleVal( this, DemuxUtil.BARCODE_CUTOFF );
 		if( val != null && val > 1 )
 		{
 			throw new ConfigFormatException( DemuxUtil.BARCODE_CUTOFF, "Must be between 0.0 - 1.0" );
@@ -668,10 +668,10 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	private String getFileSuffix( final String name, final String header ) throws Exception
 	{
 		String suffix = "";
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			suffix = isForwardRead( name, header ) ? Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX )
-					: Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX );
+			suffix = isForwardRead( name, header ) ? Config.requireString( this, SeqUtil.INPUT_FORWARD_READ_SUFFIX )
+					: Config.requireString( this, SeqUtil.INPUT_REVERSE_READ_SUFFIX );
 		}
 
 		return suffix + "." + ( SeqUtil.isFastA() ? SeqUtil.FASTA: SeqUtil.FASTQ );
@@ -721,7 +721,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 	private int hasBarcode( final String line ) throws Exception
 	{
-		for( final String code: MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ) )
+		for( final String code: MetaUtil.getFieldValues( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ), true ) )
 		{
 			if( line.contains( code ) )
 			{
@@ -752,7 +752,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 	private boolean isForwardRead( final String name, final String header ) throws Exception
 	{
-		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			return true;
 		}
@@ -794,7 +794,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 	private boolean strategyConfigSet() throws Exception
 	{
-		return Config.getString( DemuxUtil.DEMUX_STRATEGY ) != null;
+		return Config.getString( this, DemuxUtil.DEMUX_STRATEGY ) != null;
 	}
 
 	private boolean useRevCompBarcodes( final long numBarcodes, final long numReverseComplimentBarcodes )
@@ -802,14 +802,14 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	{
 		if( useRevCompConfigSet() )
 		{
-			return Config.getBoolean( DemuxUtil.BARCODE_USE_REV_COMP );
+			return Config.getBoolean( this, DemuxUtil.BARCODE_USE_REV_COMP );
 		}
 		return numReverseComplimentBarcodes > numBarcodes;
 	}
 
 	private boolean useRevCompConfigSet() throws Exception
 	{
-		return Config.getString( DemuxUtil.BARCODE_USE_REV_COMP ) != null;
+		return Config.getString( this, DemuxUtil.BARCODE_USE_REV_COMP ) != null;
 	}
 
 	private boolean useSeqBarcodes( final long headerBarcodes, final long seqBarcodes ) throws Exception

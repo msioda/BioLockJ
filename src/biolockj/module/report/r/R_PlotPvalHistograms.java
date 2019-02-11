@@ -22,12 +22,11 @@ import biolockj.module.ScriptModule;
  */
 public class R_PlotPvalHistograms extends R_Module implements ScriptModule
 {
-
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.requireString( P_VAL_CUTOFF );
+		Config.requireString( this, P_VAL_CUTOFF );
 	}
 
 	/**

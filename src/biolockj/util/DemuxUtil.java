@@ -32,8 +32,8 @@ public class DemuxUtil
 	 */
 	public static boolean barcodeInHeader() throws ConfigNotFoundException
 	{
-		return Config.getString( DEMUX_STRATEGY ) != null
-				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_HEADER );
+		return Config.getString( null, DEMUX_STRATEGY ) != null
+				&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_HEADER );
 	}
 
 	/**
@@ -44,8 +44,8 @@ public class DemuxUtil
 	 */
 	public static boolean barcodeInMapping() throws ConfigNotFoundException
 	{
-		return Config.getString( DEMUX_STRATEGY ) != null
-				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_MAPPING );
+		return Config.getString( null, DEMUX_STRATEGY ) != null
+				&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_MAPPING );
 	}
 
 	/**
@@ -56,8 +56,8 @@ public class DemuxUtil
 	 */
 	public static boolean barcodeInSeq() throws ConfigNotFoundException
 	{
-		return Config.getString( DEMUX_STRATEGY ) != null
-				&& Config.requireString( DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
+		return Config.getString( null, DEMUX_STRATEGY ) != null
+				&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
 	}
 
 	public static void clearDemuxConfig() throws Exception
@@ -78,8 +78,8 @@ public class DemuxUtil
 	public static boolean demuxWithBarcode() throws Exception
 	{
 		if( ( barcodeInHeader() || barcodeInSeq() || barcodeInMapping() )
-				&& MetaUtil.getFieldNames().contains( Config.requireString( MetaUtil.META_BARCODE_COLUMN ) )
-				&& !MetaUtil.getFieldValues( Config.requireString( MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
+				&& MetaUtil.getFieldNames().contains( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) )
+				&& !MetaUtil.getFieldValues( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 		{
 			return true;
 		}
@@ -135,11 +135,11 @@ public class DemuxUtil
 	 */
 	public static Boolean doDemux() throws ConfigNotFoundException
 	{
-		if( Config.getString( DEMUX_STRATEGY ) == null )
+		if( Config.getString( null, DEMUX_STRATEGY ) == null )
 		{
 			return null;
 		}
-		else if( !Config.requireString( DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX ) )
+		else if( !Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX ) )
 		{
 			return true;
 		}
@@ -158,7 +158,7 @@ public class DemuxUtil
 	{
 		if( barcodeInMapping() )
 		{
-			return Config.requireExistingFile( MAPPING_FILE );
+			return Config.requireExistingFile( null, MAPPING_FILE );
 		}
 		return null;
 	}
@@ -212,7 +212,7 @@ public class DemuxUtil
 	{
 		try
 		{
-			final String barCodeCol = Config.getString( MetaUtil.META_BARCODE_COLUMN );
+			final String barCodeCol = Config.getString( null, MetaUtil.META_BARCODE_COLUMN );
 			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) )
 			{
 				final Set<String> sampleIds = new HashSet<>( MetaUtil.getSampleIds() );
@@ -252,8 +252,8 @@ public class DemuxUtil
 	 */
 	public static boolean sampleIdInHeader() throws ConfigNotFoundException
 	{
-		return Config.getString( DEMUX_STRATEGY ) != null
-				&& Config.getString( DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
+		return Config.getString( null, DEMUX_STRATEGY ) != null
+				&& Config.getString( null, DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
 	}
 
 	/**
@@ -274,12 +274,12 @@ public class DemuxUtil
 		if( demuxWithBarcode() )
 		{
 			Log.info( DemuxUtil.class,
-					"Detected Config." + BARCODE_USE_REV_COMP + " = " + Config.getBoolean( BARCODE_USE_REV_COMP ) );
+					"Detected Config." + BARCODE_USE_REV_COMP + " = " + Config.getBoolean( null, BARCODE_USE_REV_COMP ) );
 
 			Log.info( DemuxUtil.class,
 					"Building Barcode-SampleID Map using the "
-							+ ( Config.getBoolean( BARCODE_USE_REV_COMP ) ? "reverse compliment of ": "" )
-							+ "metadata column = " + Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
+							+ ( Config.getBoolean( null, BARCODE_USE_REV_COMP ) ? "reverse compliment of ": "" )
+							+ "metadata column = " + Config.getString( null, MetaUtil.META_BARCODE_COLUMN ) );
 		}
 		else
 		{
@@ -289,9 +289,9 @@ public class DemuxUtil
 
 		for( final String id: MetaUtil.getSampleIds() )
 		{
-			String val = MetaUtil.getField( id, Config.requireString( MetaUtil.META_BARCODE_COLUMN ) );
+			String val = MetaUtil.getField( id, Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) );
 
-			if( Config.getBoolean( BARCODE_USE_REV_COMP ) )
+			if( Config.getBoolean( null, BARCODE_USE_REV_COMP ) )
 			{
 				val = SeqUtil.reverseComplement( val );
 			}

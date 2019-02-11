@@ -34,7 +34,7 @@ public class LogUtil
 	 */
 	public static void syncModuleLogs( final ScriptModule module ) throws Exception
 	{
-		if( module instanceof JavaModule && Config.getBoolean( BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT ) )
+		if( module instanceof JavaModule && Config.getBoolean( module, BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT ) )
 		{
 			merge( cacheLog( getModuleLog( module ) ) );
 		}
@@ -92,7 +92,7 @@ public class LogUtil
 					+ "] is undefined.  Bash users typically use: ~/.bash_profile";
 			try
 			{
-				userProfile = Config.requireString( USER_PROFILE );
+				userProfile = Config.requireString( null, USER_PROFILE );
 				final File bashProfile = new File( Config.getSystemFilePath( userProfile ) );
 				if( bashProfile.exists() )
 				{

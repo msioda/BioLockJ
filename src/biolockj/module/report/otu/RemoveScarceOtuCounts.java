@@ -87,7 +87,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 		logScarceOtus( scarceOtus.keySet() );
 		removeScarceOtuCounts( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
 
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 		{
 			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
@@ -296,14 +296,14 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 
 	private Double getScarceCutoff() throws Exception
 	{
-		return Config.requirePositiveDouble( getScarceProp() );
+		return Config.requirePositiveDouble( this, getScarceProp() );
 	}
 
 	private String getScarceProp() throws Exception
 	{
 		if( prop == null )
 		{
-			prop = getProperty( Constants.REPORT_SCARCE_CUTOFF );
+			prop = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
 		}
 		return prop;
 	}

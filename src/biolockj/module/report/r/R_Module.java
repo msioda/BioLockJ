@@ -20,6 +20,8 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
+import biolockj.module.classifier.wgs.HumanN2Classifier;
+import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.util.*;
 
@@ -63,9 +65,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.getPositiveInteger( R_TIMEOUT );
-		Config.requirePositiveInteger( R_PLOT_WIDTH );
-		Config.requirePositiveDouble( P_VAL_CUTOFF );
+		Config.getPositiveInteger( this, R_TIMEOUT );
+		Config.requirePositiveInteger( this, R_PLOT_WIDTH );
+		Config.requirePositiveDouble( this, P_VAL_CUTOFF );
 	}
 
 	/**
@@ -115,7 +117,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		else
 		{
 			final String[] cmd = new String[ 2 ];
-			cmd[ 0 ] = Config.getExe( EXE_RSCRIPT );
+			cmd[ 0 ] = Config.getExe( this, EXE_RSCRIPT );
 			cmd[ 1 ] = getMainScript().getAbsolutePath();
 			return cmd;
 		}
@@ -157,7 +159,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * All R modules require combined OTU-metadata tables.
+	 * Require combined count-metadata tables as input.
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
@@ -165,7 +167,16 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			preReqs.add( AddMetadataToTaxaTables.class.getName() );
+			BioModule module = ModuleUtil.getClassifier( this, false );
+			if( module instanceof HumanN2Classifier )
+			{
+				preReqs.add( AddMetadataToPathwayTables.class.getName() );
+			}
+			else
+			{
+				preReqs.add( AddMetadataToTaxaTables.class.getName() );
+			}
+			
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
@@ -237,7 +248,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 					sb.append( "Generated " + map.get( ext ) + " " + ext + " files" + RETURN );
 				}
 
-				if( Config.getBoolean( R_DEBUG ) )
+				if( Config.getBoolean( this, R_DEBUG ) )
 				{
 					final IOFileFilter ff = new WildcardFileFilter( "*" + DEBUG_LOG_PREFIX + "*" + LOG_EXT );
 					final Collection<File> debugLogs = FileUtils.listFiles( getTempDir(), ff, null );
@@ -265,7 +276,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		try
 		{
-			return Config.getPositiveInteger( R_TIMEOUT );
+			return Config.getPositiveInteger( this, R_TIMEOUT );
 		}
 		catch( final Exception ex )
 		{
@@ -282,7 +293,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_R + "() {" );
-		lines.add( Config.getExe( EXE_RSCRIPT ) + " $1" );
+		lines.add( Config.getExe( this, EXE_RSCRIPT ) + " $1" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
@@ -298,11 +309,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		final TreeSet<String> set = new TreeSet<>();
 		set.add( R_EXT.substring( 1 ) );
-		if( Config.getBoolean( R_Module.R_SAVE_R_DATA ) )
+		if( Config.getBoolean( this, R_Module.R_SAVE_R_DATA ) )
 		{
 			set.add( R_DATA_EXT.substring( 1 ) );
 		}
-		if( !Config.getBoolean( Constants.PROJECT_DELETE_TEMP_FILES ) && Config.getBoolean( R_Module.R_DEBUG ) )
+		if( !Config.getBoolean( this, Constants.PROJECT_DELETE_TEMP_FILES ) && Config.getBoolean( this, R_Module.R_DEBUG ) )
 		{
 			set.add( LOG_EXT.substring( 1 ) );
 		}

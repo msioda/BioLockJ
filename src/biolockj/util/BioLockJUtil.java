@@ -330,7 +330,7 @@ public class BioLockJUtil
 			dirs.add( dir );
 			return dirs;
 		}
-		return Config.requireExistingDirs( Constants.INPUT_DIRS );
+		return Config.requireExistingDirs( null, Constants.INPUT_DIRS );
 	}
 
 	/**
@@ -466,7 +466,7 @@ public class BioLockJUtil
 	 */
 	public static boolean pipelineInputType( final String type ) throws ConfigNotFoundException
 	{
-		return Config.requireSet( INTERNAL_PIPELINE_INPUT_TYPES ).contains( type );
+		return Config.requireSet( null, INTERNAL_PIPELINE_INPUT_TYPES ).contains( type );
 	}
 
 	/**
@@ -507,7 +507,7 @@ public class BioLockJUtil
 			{
 				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
 			}
-			else if( Config.getSet( SeqUtil.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+			else if( Config.getSet( null, SeqUtil.INPUT_IGNORE_FILES ).contains( file.getName() ) )
 			{
 				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
 			}

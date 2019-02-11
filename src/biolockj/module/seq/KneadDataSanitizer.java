@@ -33,14 +33,14 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		final List<List<String>> data = new ArrayList<>();
 		for( final File seqFile: files )
 		{
-			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( seqFile.getName() ) )
+			if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( seqFile.getName() ) )
 			{
 				continue;
 			}
 
 			final ArrayList<String> lines = new ArrayList<>();
 
-			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+			if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				lines.add( sanatize( seqFile, SeqUtil.getPairedReads( files ).get( seqFile ) ) );
 			}
@@ -75,8 +75,8 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_SANATIZE + "() {" );
-		lines.add( Config.getExe( EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 " + INPUT_PARAM
-				+ " $2 " + ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
+		lines.add( Config.getExe( this, EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 " + INPUT_PARAM
+				+ " $2 " + ( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
 				+ OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -95,10 +95,10 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = new ArrayList<>();
 		final String fileSuffix = fastqExt();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
-			final String fwSuffix = Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX );
-			final String rvSuffix = Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX );
+			final String fwSuffix = Config.requireString( this, SeqUtil.INPUT_FORWARD_READ_SUFFIX );
+			final String rvSuffix = Config.requireString( this, SeqUtil.INPUT_REVERSE_READ_SUFFIX );
 			final File fwOutFile = new File(
 					getOutputDir().getAbsolutePath() + File.separator + sampleId + fwSuffix + fileSuffix );
 			final File rvOutFile = new File(
@@ -128,7 +128,7 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	protected File getSanatizedFile( final String sampleId, final Boolean isRvRead ) throws Exception
 	{
 		String suffix = "";
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			suffix += isRvRead ? RV_OUTPUT_SUFFIX: FW_OUTPUT_SUFFIX;
 		}
@@ -143,8 +143,8 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 
 	private String getParams() throws Exception
 	{
-		String params = getRuntimeParams( Config.getList( EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM );
-		for( final String db: Config.requireList( KNEAD_DBS ) )
+		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM );
+		for( final String db: Config.requireList( this, KNEAD_DBS ) )
 		{
 			params += DB_PARAM + " " + db + " ";
 		}

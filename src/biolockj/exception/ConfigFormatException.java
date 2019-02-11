@@ -15,19 +15,19 @@ import biolockj.BioLockJ;
 import biolockj.Config;
 
 /**
- * ConfigFormatException is thrown if propertyName is defined but the format is invalid.
+ * ConfigFormatException is thrown if property is defined but the format is invalid.
  */
 public class ConfigFormatException extends ConfigException
 {
 	/**
-	 * ConfigFormatException is thrown if propertyName is defined but the format is invalid.
+	 * ConfigFormatException is thrown if property is defined but the format is invalid.
 	 *
-	 * @param propertyName {@link biolockj.Config} property name
+	 * @param property {@link biolockj.Config} property name
 	 * @param msg Exception message details
 	 */
-	public ConfigFormatException( final String propertyName, final String msg )
+	public ConfigFormatException( final String property, final String msg )
 	{
-		super( propertyName, "Current value \"" + Config.getString( propertyName )
+		super( property, "Current value \"" + Config.getString( null, property )
 				+ "\" does not meet format requirements!" + BioLockJ.RETURN + msg );
 	}
 

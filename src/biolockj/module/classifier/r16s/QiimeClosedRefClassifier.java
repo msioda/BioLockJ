@@ -41,7 +41,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		Log.info( getClass(), "Processing " + ( files == null ? 0: files.size() ) + " files" );
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
-		if( RuntimeParamUtil.isDockerMode() || Config.requirePositiveInteger( SCRIPT_BATCH_SIZE ) >= files.size() )
+		if( RuntimeParamUtil.isDockerMode() || Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= files.size() )
 		{
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
 			lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
@@ -51,7 +51,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		else
 		{
 			Log.info( getClass(),
-					"Pick closed ref OTUs in batches of size: " + Config.requirePositiveInteger( SCRIPT_BATCH_SIZE ) );
+					"Pick closed ref OTUs in batches of size: " + Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) );
 			int startIndex = 1;
 			int batchNum = 0;
 			int sampleCount = 0;
@@ -61,7 +61,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 				if( doAddNextBatch( ++sampleCount ) )
 				{
 					data.add( getBatch( lines, batchNum++, startIndex ) );
-					startIndex = startIndex + Config.requirePositiveInteger( SCRIPT_BATCH_SIZE );
+					startIndex = startIndex + Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
 					lines = new ArrayList<>();
 				}
 			}
@@ -104,8 +104,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	public List<String> getPostRequisiteModules() throws Exception
 	{
 		final List<String> postReqs = new ArrayList<>();
-		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED )
-				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( SCRIPT_BATCH_SIZE ) ) )
+		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( this, SeqUtil.INTERNAL_MULTIPLEXED )
+				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( this, SCRIPT_BATCH_SIZE ) ) )
 		{
 			postReqs.add( MergeQiimeOtuTables.class.getName() );
 		}
@@ -120,8 +120,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_CREATE_BATCH_MAPPING + "() {" );
-		lines.add( Config.getExe( Constants.EXE_AWK ) + " 'NR==1' " + MetaUtil.getPath() + " > $1" );
-		lines.add( Config.getExe( Constants.EXE_AWK ) + " 'NR>'$2'&&NR<='$3 " + MetaUtil.getPath() + " >> $1" );
+		lines.add( Config.getExe( this, Constants.EXE_AWK ) + " 'NR==1' " + MetaUtil.getPath() + " > $1" );
+		lines.add( Config.getExe( this, Constants.EXE_AWK ) + " 'NR>'$2'&&NR<='$3 " + MetaUtil.getPath() + " >> $1" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
@@ -150,7 +150,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	 */
 	protected boolean doAddNextBatch( final int sampleCount ) throws Exception
 	{
-		if( sampleCount % Config.requirePositiveInteger( SCRIPT_BATCH_SIZE ) == 0 )
+		if( sampleCount % Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) == 0 )
 		{
 			return true;
 		}
@@ -170,7 +170,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	{
 		final File batchDir = getBatchDir( batchNum );
 		final String mapping = batchDir.getAbsolutePath() + File.separator + BATCH_MAPPING;
-		final int endIndex = index + Config.requirePositiveInteger( SCRIPT_BATCH_SIZE );
+		final int endIndex = index + Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
 		lines.add( FUNCTION_CREATE_BATCH_MAPPING + " " + mapping + " " + index + " " + endIndex );
 		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getBatchFastaDir( batchNum ), mapping, batchDir ) );
 		lines.add( copyBatchOtuTableToOutputDir( batchDir, batchNum ) );
@@ -222,7 +222,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	 */
 	private boolean addFinalBatch( final int sampleCount ) throws Exception
 	{
-		if( sampleCount % Config.requirePositiveInteger( SCRIPT_BATCH_SIZE ) != 0 )
+		if( sampleCount % Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) != 0 )
 		{
 			return true;
 		}

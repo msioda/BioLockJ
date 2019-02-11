@@ -125,7 +125,7 @@ public class Job
 	public static void submit( final ScriptModule module ) throws Exception
 	{
 		setFilePermissions( module.getScriptDir().getAbsolutePath(),
-				Config.requireString( ScriptModule.SCRIPT_PERMISSIONS ) );
+				Config.requireString( module, ScriptModule.SCRIPT_PERMISSIONS ) );
 		new Job( module );
 	}
 

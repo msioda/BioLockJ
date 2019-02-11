@@ -43,8 +43,8 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		final Integer rarefyingMax = Config.getPositiveInteger( INPUT_RAREFYING_MAX );
-		final Integer rarefyingMin = Config.getNonNegativeInteger( INPUT_RAREFYING_MIN );
+		final Integer rarefyingMax = Config.getPositiveInteger( this, INPUT_RAREFYING_MAX );
+		final Integer rarefyingMin = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
 
 		if( rarefyingMin == null && rarefyingMax == null
 				|| rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
@@ -75,7 +75,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = super.getPreRequisiteModules();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
@@ -142,7 +142,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
 		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
-		final String fileExt = "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+		final String fileExt = "." + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
 		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
 				+ fileExt;
 		final File output = new File( name );
@@ -198,13 +198,13 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	 */
 	protected void rarefy( final File seqFile ) throws Exception
 	{
-		int max = Config.getNonNegativeInteger( INPUT_RAREFYING_MAX );
+		int max = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MAX );
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
 		final int numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
 		final int count = Integer.parseInt( Long.toString( numReads ) );
 		max = count < max ? count: max;
 		Log.debug( getClass(), "Sample[" + sampleId + "]  numReads = " + numReads );
-		if( numReads >= Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) )
+		if( numReads >= Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) )
 		{
 			final int[] range = IntStream.rangeClosed( 0, numReads - 1 ).toArray();
 			final List<Integer> indexes = new ArrayList<>();
@@ -218,7 +218,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 			Log.info( getClass(),
 					"Remove sample [" + sampleId + "] - contains (" + numReads
 							+ ") reads, which is less than minimum # reads ("
-							+ Config.getNonNegativeInteger( INPUT_RAREFYING_MIN ) + ")" );
+							+ Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
 		}
 	}
 
@@ -248,7 +248,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 
 	private boolean needsCountModule() throws Exception
 	{
-		for( final String module: Config.requireList( Constants.INTERNAL_BLJ_MODULE ) )
+		for( final String module: Config.requireList( this, Constants.INTERNAL_BLJ_MODULE ) )
 		{
 			if( module.equals( SeqFileValidator.class.getName() ) || module.equals( TrimPrimers.class.getName() ) )
 			{

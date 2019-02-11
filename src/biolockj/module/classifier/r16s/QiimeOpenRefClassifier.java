@@ -49,10 +49,10 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 
 		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 
-		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) )
+		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) )
 		{
 			final String otusToFilter = tempDir + "chimeras.fasta";
-			lines.add( Config.getExe( EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET + ".fna"
+			lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET + ".fna"
 					+ " --chimeras " + otusToFilter + " --nonchimeras " + tempDir + "nochimeras.fasta" );
 			lines.add(
 					SCRIPT_FILTER_OTUS + " -i " + biomFile + " -e " + otusToFilter + " -o " + outputDir + OTU_TABLE );
@@ -78,7 +78,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 		super.checkDependencies();
 		getParams();
 
-		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) )
+		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) )
 		{
 			getVsearchParams();
 		}

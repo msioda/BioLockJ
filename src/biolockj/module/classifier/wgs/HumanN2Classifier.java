@@ -14,6 +14,7 @@ package biolockj.module.classifier.wgs;
 import java.io.File;
 import java.util.*;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -43,7 +44,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 		{
 			File hn2InputSeq = file;
 			final ArrayList<String> lines = new ArrayList<>();
-			if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+			if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 			{
 				lines.add( getMergeReadLine( file ) );
 				hn2InputSeq = getMergedReadFile( file );
@@ -51,16 +52,16 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 
 			lines.add( FUNCTION_RUN_HN2 + " " + hn2InputSeq.getAbsolutePath() );
 			lines.add( FUNCTION_JOIN_HN2_TABLES + " " + getTempSubDir( TEMP_HN2_OUTPUT_DIR ).getAbsoluteFile() + " "
-					+ outputPath( PATH_ABUNDANCE ) + PATH_ABUNDANCE );
+					+ outputPath( Constants.HN2_PATH_ABUND ) + " " + Constants.HN2_PATH_ABUND  );
 
-			for( final String unit: Config.getSet( HN2_RENORM_UNITS ) )
+			for( final String unit: Config.getSet( this, HN2_RENORM_UNITS ) )
 			{
-				lines.add( FUNCTION_RENORM_HN2_TABLES + " " + outputPath( PATH_ABUNDANCE ) + getRenormPath( unit, null )
+				lines.add( FUNCTION_RENORM_HN2_TABLES + " " + outputPath( Constants.HN2_PATH_ABUND ) + getRenormPath( unit, null )
 						+ RENORM_UNITS_OPTION_CPM );
 
-				for( final String mode: Config.getSet( HN2_RENORM_MODES ) )
+				for( final String mode: Config.getSet( this, HN2_RENORM_MODES ) )
 				{
-					lines.add( FUNCTION_RENORM_HN2_TABLES + " " + outputPath( PATH_ABUNDANCE )
+					lines.add( FUNCTION_RENORM_HN2_TABLES + " " + outputPath( Constants.HN2_PATH_ABUND )
 							+ getRenormPath( unit, mode ) + unit + " " + mode );
 				}
 
@@ -118,7 +119,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			lines.add( "function " + FUNCTION_CONCAT_PAIRED_READS + "() {" );
 			lines.add(
@@ -191,15 +192,15 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( HN2_NUCL_DB );
+			return Config.requireString( this, HN2_NUCL_DB );
 		}
 
-		return Config.requireExistingDir( HN2_NUCL_DB ).getAbsolutePath();
+		return Config.requireExistingDir( this, HN2_NUCL_DB ).getAbsolutePath();
 	}
 
 	private Map<File, File> getPairedReads() throws Exception
 	{
-		if( pairedReads == null && Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( pairedReads == null && Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			pairedReads = SeqUtil.getPairedReads( getInputFiles() );
 		}
@@ -211,15 +212,15 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( HN2_PROT_DB );
+			return Config.requireString( this, HN2_PROT_DB );
 		}
 
-		return Config.requireExistingDir( HN2_PROT_DB ).getAbsolutePath();
+		return Config.requireExistingDir( this, HN2_PROT_DB ).getAbsolutePath();
 	}
 
 	private String getRenormPath( final String units, final String mode ) throws Exception
 	{
-		return outputPath( PATH_ABUNDANCE + "_" + units + ( mode == null ? "": "_" + mode ) );
+		return outputPath( Constants.HN2_PATH_ABUND + "_" + units + ( mode == null ? "": "_" + mode ) );
 	}
 
 	private String getRenormTableCmd() throws Exception
@@ -244,7 +245,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 
 	private void validateRenormModes() throws Exception
 	{
-		for( final String val: Config.getSet( HN2_RENORM_MODES ) )
+		for( final String val: Config.getSet( this, HN2_RENORM_MODES ) )
 		{
 			if( !val.equals( RENORM_MODE_OPTION_COMMUNITY ) && !val.equals( RENORM_MODE_OPTION_LEVELWISE ) )
 			{
@@ -256,7 +257,7 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 
 	private void validateRenormUnits() throws Exception
 	{
-		for( final String val: Config.getSet( HN2_RENORM_UNITS ) )
+		for( final String val: Config.getSet( this, HN2_RENORM_UNITS ) )
 		{
 			if( !val.equals( RENORM_UNITS_OPTION_CPM ) && !val.equals( RENORM_UNITS_OPTION_RELAB ) )
 			{
@@ -329,7 +330,6 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	private static final String NUCL_DB_PARAM = "--nucleotide-database ";
 	private static final String NUM_THREADS_PARAM = "--threads";
 	private static final String OUTPUT_PARAM = "-o ";
-	private static final String PATH_ABUNDANCE = "pathabundance";
 	private static final String PROT_DB_PARAM = "--protein-database ";
 	private static final String RENORM_BASH_COMMENT = "";
 	private static final String RENORM_MODE_OPTION_COMMUNITY = "community";

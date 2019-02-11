@@ -108,7 +108,7 @@ get_restart_dir() {
 # Populates the docker run BLJ_OPTIONS parameter
 # Include -D to run BioLockJ in a Docker container
 # Include Docker container path to required Config file
-# Include all directory paths the manager may need to map volumes in spawned Docker compute node instances
+# Include all directory paths the blj_manager may need to map volumes in spawned Docker compute node instances
 get_blj_options() {
 	options="-D -b $(get_blj_proj)" 
 	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -gt 0 ] && options="$options -C $(dirname $config) -r $(get_restart_dir) -c /config/$(basename $config)"
@@ -130,9 +130,9 @@ get_status_msg() {
 	fi
 	
 	if [ ${#restartPipeline} -gt 0 ]; then 
-		msg+=" restarting $DOCKER_HUB_USER/manager Docker container"
+		msg+=" restarting $DOCKER_HUB_USER/blj_manager Docker container"
 	else
-		msg+=" starting $DOCKER_HUB_USER/manager Docker container"
+		msg+=" starting $DOCKER_HUB_USER/blj_manager Docker container"
 	fi
 	
 	echo "$msg with BLJ_OPTIONS=$(get_blj_options)"

@@ -291,16 +291,9 @@ public class Pipeline
 				refreshOutputMetadata( module );
 				refreshRCacheIfNeeded( module );
 			}
-			else if( !RuntimeParamUtil.isDockerMode() || DockerUtil.isManager() || RuntimeParamUtil.isDirectMode()
-					&& RuntimeParamUtil.getDirectModuleDir().equals( module.getModuleDir().getName() ) )
-			{
-				info( "Check dependencies for: " + module.getClass().getName() );
-				module.checkDependencies();
-			}
-			else
-			{
-				Log.debug( Pipeline.class, "No initialization for: " + module.getClass().getName() );
-			}
+			
+			info( "Check dependencies for: " + module.getClass().getName() );
+			module.checkDependencies();
 		}
 
 		return true;
@@ -414,7 +407,7 @@ public class Pipeline
 		if( ModuleUtil.isFirstRModule( module ) )
 		{
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
-			RMetaUtil.classifyReportableMetadata();
+			RMetaUtil.classifyReportableMetadata( module );
 		}
 	}
 
@@ -482,7 +475,7 @@ public class Pipeline
 
 	private static boolean runAws() throws Exception
 	{
-		return Config.requireString( Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
+		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
 	}
 
 	/**

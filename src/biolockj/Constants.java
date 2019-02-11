@@ -12,6 +12,11 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	public static final String AWS_STACK = "aws.stack";
+	
+	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
+	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";
+	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
+	public static final String HN2_UNMAPPED_COUNT = "Unmapped_Count";
 
 	/**
 	 * Name of the file created in the BioModule or {@value biolockj.Config##PROJECT_PIPELINE_DIR} root directory to
@@ -108,7 +113,7 @@ public class Constants
 	public static final String GZIP_EXT = ".gz";
 	public static final String HN2_FULL_REPORT = "fullReport";
 
-	public static final String HN2_PATH_ABUND_TABLE = "pathabundance";
+	public static final String HN2_PATH_ABUND = "pAbund";
 	public static final String HN2_PATHWAY_REPORT = "pathwayReport";
 	public static final String INDENT = "    ";
 
@@ -258,6 +263,12 @@ public class Constants
 	 */
 	public static final String REPORT_SCARCE_CUTOFF = "report.scarceCountCutoff";
 
+	/**
+	 * {@link biolockj.Config} Positive Double property {@value #REPORT_SAMPLE_CUTOFF} defines minimum percentage of
+	 * data columns must be non-zero to keep the sample.
+	 */
+	public static final String REPORT_SAMPLE_CUTOFF = "report.scarceSampleCutoff";
+	
 	/**
 	 * Return character constant *backslash-n*
 	 */

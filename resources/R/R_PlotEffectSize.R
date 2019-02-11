@@ -57,12 +57,12 @@ main <- function(){
 		}
 
 		# get normalized OTU vals
-		taxaTable = getTaxaTable( level )
-		if( is.null( taxaTable ) ) { next }
+		countMetaTable = getCountMetaTable( level )
+		if( is.null( countMetaTable ) ) { next }
 		
-		lastOtuCol = ncol(taxaTable) - numMetaCols()
-		taxaTable = taxaTable[1:lastOtuCol]
-		logInfo( c("taxaTable has", nrow(taxaTable), "rows and", ncol(taxaTable), "columns.") )
+		lastCountCol = ncol(countMetaTable) - numMetaCols()
+		countMetaTable = countMetaTable[1:lastCountCol]
+		logInfo( c("countMetaTable has", nrow(countMetaTable), "rows and", ncol(countMetaTable), "columns.") )
 		
 		# get pvals from calc stats
 		pvalTable = getStatsTable( level, useParametric, useAdjustedPs )
@@ -106,7 +106,7 @@ main <- function(){
 	
 				r2vals=r2Table[,reportField]
 				names(r2vals) = row.names(r2Table)
-				normalizedPvals = split(taxaTable[row.names(meta),], f=meta[,reportField])
+				normalizedPvals = split(countMetaTable[row.names(meta),], f=meta[,reportField])
 
 				saveRefTable = NULL
 				if (doCohensD & isBinaryAtt){
@@ -200,10 +200,10 @@ readRawCounts <- function(){
 
 
 # normalize otu counts by simple relative abundance
-normalize <- function(taxaTable){
-	# taxaTable - data frame with a row for each sample and a column for each OTU
-	normFactor = rowSums(taxaTable)
-	normed = taxaTable/normFactor
+normalize <- function(countMetaTable){
+	# countMetaTable - data frame with a row for each sample and a column for each OTU
+	normFactor = rowSums(countMetaTable)
+	normed = countMetaTable/normFactor
 	return(normed)
 }
 

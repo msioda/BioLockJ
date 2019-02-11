@@ -30,17 +30,17 @@ public class PathwayUtil
 	{}
 
 	/**
-	 * Return a pathway abundance file path in the given dir with the given suffix (if provided).
+	 * Return a pathway abundance file path in the given dir with the given prefix (if provided).
 	 * 
 	 * @param dir Directory for pathway file
-	 * @param suffix Optional suffix
+	 * @param prefix Optional prefix
 	 * @return Pathway count file
 	 * @throws Exception if errors occur
 	 */
-	public static File getPathwayCountFile( final File dir, String suffix ) throws Exception
+	public static File getPathwayCountFile( final File dir, String prefix ) throws Exception
 	{
-		suffix = suffix == null ? "": "_" + suffix;
-		final String name = Config.pipelineName() + "_" + Constants.HN2_PATH_ABUND_TABLE + suffix + Constants.TSV_EXT;
+		prefix = (prefix == null ? "" : prefix);
+		final String name = Config.pipelineName()  + prefix + pathwayFileSuffix();
 		return new File( dir.getAbsolutePath() + File.separator + name );
 	}
 
@@ -48,17 +48,27 @@ public class PathwayUtil
 	 * Check the file name to determine if it is a pathway abundance table file.
 	 * 
 	 * @param file File to test
-	 * @return boolean TRUE if file is a athway abundance file
+	 * @return boolean TRUE if file is a pathway abundance file
 	 * @throws Exception if errors occur
 	 */
 	public static boolean isPathwayFile( final File file ) throws Exception
 	{
-		final String name = file.getName();
-		if( name.contains( "_" + Constants.HN2_PATH_ABUND_TABLE ) && name.endsWith( Constants.TSV_EXT ) )
+		if( file.getName().endsWith( pathwayFileSuffix() ) )
 		{
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * Identification file suffix for Pathway Reports
+	 * 
+	 * @return file suffix for every BioLockJ Pathway file
+	 * @throws Exception if errors occur
+	 */
+	public static String pathwayFileSuffix()
+	{
+		return "_" + Constants.HN2_PATH_ABUND + "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
 	}
 
 	/**

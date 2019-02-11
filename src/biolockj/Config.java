@@ -17,6 +17,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
+import biolockj.module.BioModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.TaxaUtil;
@@ -32,24 +33,25 @@ public class Config
 	/**
 	 * Parse property value (Y or N) to return boolean, if not found, return false;
 	 *
-	 * @param propertyName Property name
+	 * @param module Source BioModule calling this function 
+	 * @param property Property name
 	 * @return boolean value
 	 * @throws ConfigFormatException if property value is not null but also not Y or N.
 	 */
-	public static boolean getBoolean( final String propertyName ) throws ConfigFormatException
+	public static boolean getBoolean( final BioModule module, final String property ) throws ConfigFormatException
 	{
-		if( getString( propertyName ) != null && getString( propertyName ).equalsIgnoreCase( Constants.TRUE ) )
+		if( getString( module,property ) != null && getString( module,property ).equalsIgnoreCase( Constants.TRUE ) )
 		{
 			return true;
 		}
-		else if( getString( propertyName ) == null )
+		else if( getString( module,property ) == null )
 		{
-			setConfigProperty( propertyName, Constants.FALSE );
-			Log.debug( Config.class, propertyName + " is undefined, so return: " + Constants.FALSE );
+			setConfigProperty( property, Constants.FALSE );
+			Log.debug( Config.class, property + " is undefined, so return: " + Constants.FALSE );
 		}
-		else if( !getString( propertyName ).equalsIgnoreCase( Constants.FALSE ) )
+		else if( !getString( module,property ).equalsIgnoreCase( Constants.FALSE ) )
 		{
-			throw new ConfigFormatException( propertyName, "Boolean properties must be set to either " + Constants.TRUE
+			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE
 					+ " or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
 		}
 
@@ -99,22 +101,22 @@ public class Config
 	/**
 	 * Parse property for numeric (double) value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Double value or null
-	 * @throws ConfigFormatException if propertyName is defined, but set with a non-numeric value
+	 * @throws ConfigFormatException if property is defined, but set with a non-numeric value
 	 */
-	public static Double getDoubleVal( final String propertyName ) throws ConfigFormatException
+	public static Double getDoubleVal( final BioModule module, final String property ) throws ConfigFormatException
 	{
-		if( getString( propertyName ) != null )
+		if( getString( module, property ) != null )
 		{
 			try
 			{
-				final Double val = Double.parseDouble( getString( propertyName ) );
+				final Double val = Double.parseDouble( getString( module, property ) );
 				return val;
 			}
 			catch( final Exception ex )
 			{
-				throw new ConfigFormatException( propertyName, "Property only accepts numeric values" );
+				throw new ConfigFormatException( property, "Property only accepts numeric values" );
 			}
 		}
 		return null;
@@ -123,44 +125,44 @@ public class Config
 	/**
 	 * Get exe.* property name. If null, return the property name (without the "exe." prefix)
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return String value of executable
-	 * @throws Exception if propertyName does not start with "exe."
+	 * @throws Exception if property does not start with "exe."
 	 */
-	public static String getExe( final String propertyName ) throws Exception
+	public static String getExe( final BioModule module, final String property ) throws Exception
 	{
-		if( !propertyName.startsWith( "exe." ) )
+		if( !property.startsWith( "exe." ) )
 		{
 			throw new Exception( "Config.getExe() can be called for properties that begin with \"exe.\"" );
 		}
 
 		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
-		if( getString( propertyName ) == null || getString( propertyName ).equals( propertyName.substring( 4 ) ) )
+		if( getString(  module, property ) == null || getString(  module, property ).equals( property.substring( 4 ) ) )
 		{
-			return propertyName.substring( 4 );
+			return property.substring( 4 );
 		}
 
-		return getString( propertyName );
+		return getString( module, property );
 	}
 
 	/**
 	 * Get a valid File directory or return null
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return File directory or null
 	 * @throws ConfigPathException if path is defined but is not an existing directory
 	 */
-	public static File getExistingDir( final String propertyName ) throws ConfigPathException
+	public static File getExistingDir( final BioModule module, final String property ) throws ConfigPathException
 	{
-		final File f = getExistingFileObject( getString( propertyName ) );
+		final File f = getExistingFileObject( getString( module, property ) );
 		if( f != null && !f.isDirectory() )
 		{
-			throw new ConfigPathException( propertyName, ConfigPathException.DIRECTORY );
+			throw new ConfigPathException( property, ConfigPathException.DIRECTORY );
 		}
 
 		if( f != null )
 		{
-			Config.setConfigProperty( propertyName, f.getAbsolutePath() );
+			Config.setConfigProperty( property, f.getAbsolutePath() );
 		}
 
 		return f;
@@ -169,39 +171,39 @@ public class Config
 	/**
 	 * Get a valid File or return null. If path is a directory containing exactly 1 file, return that file.
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return File (not directory) or null
 	 * @throws ConfigPathException if path is defined but is not an existing file
 	 */
-	public static File getExistingFile( final String propertyName ) throws ConfigPathException
+	public static File getExistingFile( final BioModule module, final String property ) throws ConfigPathException
 	{
-		File f = getExistingFileObject( getString( propertyName ) );
+		File f = getExistingFileObject( getString(  module, property ) );
 		if( f != null && !f.isFile() )
 		{
 			if( f.isDirectory() && f.list( HiddenFileFilter.VISIBLE ).length == 1 )
 			{
 				Log.warn( Config.class,
-						propertyName + " is a directory with only 1 valid file.  Return the lone file within." );
+						property + " is a directory with only 1 valid file.  Return the lone file within." );
 				f = new File( f.list( HiddenFileFilter.VISIBLE )[ 0 ] );
 			}
 			else
 			{
-				throw new ConfigPathException( propertyName, ConfigPathException.FILE );
+				throw new ConfigPathException( property, ConfigPathException.FILE );
 			}
 		}
 
 		if( f != null )
 		{
-			Config.setConfigProperty( propertyName, f.getAbsolutePath() );
+			Config.setConfigProperty( property, f.getAbsolutePath() );
 		}
 
 		return f;
 	}
 
 	/**
-	 * Get initial properties ordered by propertyName
+	 * Get initial properties ordered by property
 	 *
-	 * @return map ordered by propertyName
+	 * @return map ordered by property
 	 */
 	public static TreeMap<String, String> getInitialProperties()
 	{
@@ -211,13 +213,13 @@ public class Config
 	/**
 	 * Parse comma delimited property value to return list
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return List of String values (or an empty list)
 	 */
-	public static List<String> getList( final String propertyName )
+	public static List<String> getList( final BioModule module, final String property )
 	{
 		final List<String> list = new ArrayList<>();
-		final String val = getString( propertyName );
+		final String val = getString( module, property );
 		if( val != null )
 		{
 			final StringTokenizer st = new StringTokenizer( val, "," );
@@ -230,31 +232,31 @@ public class Config
 		return list;
 	}
 
-	public static String getModuleProp( final String module, final String prop )
+	public static String getModuleProp( final BioModule module, final String prop )
 	{
-		final String moduleProp = suffix( module ) + "." + suffix( prop );
-		final String val = Config.getString( moduleProp );
+		final String moduleProp = module.getClass().getSimpleName() + "." + suffix( prop );
+		final String val = Config.getString( null, moduleProp );
 		if( val == null )
 		{
 			return prop;
 		}
-		Log.info( Config.class, "Found module specific property: [ " + moduleProp + "=" + val + " ]" );
+		Log.debug( Config.class, "Found module specific property: [ " + moduleProp + "=" + val + " ]" );
 		return moduleProp;
 	}
 
 	/**
 	 * Parse property as non-negative integer value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Non-negative integer or null
 	 * @throws ConfigFormatException if defined but is not a non-negative integer value
 	 */
-	public static Integer getNonNegativeInteger( final String propertyName ) throws ConfigFormatException
+	public static Integer getNonNegativeInteger( final BioModule module, final String property ) throws ConfigFormatException
 	{
-		final Integer val = getIntegerProp( propertyName );
+		final Integer val = getIntegerProp( module, property );
 		if( val != null && val < 0 )
 		{
-			throw new ConfigFormatException( propertyName, "Property only accepts non-negative integer values" );
+			throw new ConfigFormatException( property, "Property only accepts non-negative integer values" );
 		}
 		return val;
 	}
@@ -262,16 +264,16 @@ public class Config
 	/**
 	 * Parse property as positive double value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Positive Double value or null
-	 * @throws ConfigFormatException if propertyName is defined, but not set with a positive number
+	 * @throws ConfigFormatException if property is defined, but not set with a positive number
 	 */
-	public static Double getPositiveDoubleVal( final String propertyName ) throws ConfigFormatException
+	public static Double getPositiveDoubleVal( final BioModule module, final String property ) throws ConfigFormatException
 	{
-		final Double val = getDoubleVal( propertyName );
+		final Double val = getDoubleVal( module, property );
 		if( val != null && val <= 0 )
 		{
-			throw new ConfigFormatException( propertyName, "Property only accepts positive numeric values" );
+			throw new ConfigFormatException( property, "Property only accepts positive numeric values" );
 		}
 
 		return val;
@@ -280,24 +282,24 @@ public class Config
 	/**
 	 * Parse property as positive integer value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Positive Integer value or null
-	 * @throws ConfigFormatException if propertyName is defined, but not set with a positive integer
+	 * @throws ConfigFormatException if property is defined, but not set with a positive integer
 	 */
-	public static Integer getPositiveInteger( final String propertyName ) throws ConfigFormatException
+	public static Integer getPositiveInteger( final BioModule module, final String property ) throws ConfigFormatException
 	{
-		final Integer val = getIntegerProp( propertyName );
+		final Integer val = getIntegerProp( module, property );
 		if( val != null && val <= 0 )
 		{
-			throw new ConfigFormatException( propertyName, "Property only accepts positive integer values" );
+			throw new ConfigFormatException( property, "Property only accepts positive integer values" );
 		}
 		return val;
 	}
 
 	/**
-	 * Get current properties ordered by propertyName
+	 * Get current properties ordered by property
 	 *
-	 * @return map ordered by propertyName
+	 * @return map ordered by property
 	 */
 	public static TreeMap<String, String> getProperties()
 	{
@@ -307,13 +309,13 @@ public class Config
 	/**
 	 * Parse comma-separated property value to build an unordered Set
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Set of values or an empty set (if no values)
 	 */
-	public static Set<String> getSet( final String propertyName )
+	public static Set<String> getSet( final BioModule module, final String property )
 	{
 		final Set<String> set = new HashSet<>();
-		set.addAll( getList( propertyName ) );
+		set.addAll( getList(  module, property ) );
 		return set;
 	}
 
@@ -322,16 +324,31 @@ public class Config
 	 * If $BLJ or $BLJ_SUP or $USER or $HOME was used, it would already be converted to the actual file path by
 	 * {@link biolockj.Properties} before this method is called.
 	 *
-	 * @param propertyName {@link biolockj.Config} file property name
+	 * @param property {@link biolockj.Config} file property name
 	 * @return String value or null
 	 */
-	public static String getString( final String propertyName )
+	public static String getString( final BioModule module, String property )
 	{
+		Object obj = null;
 		String val = null;
-		final Object obj = props.getProperty( propertyName );
+		if( module != null )
+		{
+			String modProperty = Config.getModuleProp( module, property );
+			obj = props.getProperty( modProperty );
+			if( obj != null )
+			{
+				property = modProperty;
+			}
+		}
+		
 		if( obj == null )
 		{
-			usedProps.put( propertyName, null );
+			obj = props.getProperty( property );
+		}
+		
+		if( obj == null )
+		{
+			usedProps.put( property, null );
 			return null;
 		}
 
@@ -351,11 +368,11 @@ public class Config
 
 		if( val.isEmpty() )
 		{
-			usedProps.put( propertyName, "" );
+			usedProps.put( property, "" );
 			return null;
 		}
 
-		usedProps.put( propertyName, val );
+		usedProps.put( property, val );
 
 		return val;
 	}
@@ -422,13 +439,13 @@ public class Config
 	/**
 	 * Parse comma-separated property value to build an ordered Set
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Set of values or an empty set (if no values)
 	 */
-	public static Set<String> getTreeSet( final String propertyName )
+	public static Set<String> getTreeSet( final BioModule module, final String property )
 	{
 		final Set<String> set = new TreeSet<>();
-		set.addAll( getList( propertyName ) );
+		set.addAll( getList( module, property ) );
 		return set;
 	}
 
@@ -439,7 +456,7 @@ public class Config
 	 */
 	public static Map<String, String> getUsedProps()
 	{
-		getString( Constants.PROJECT_DEFAULT_PROPS );
+		getString( null, Constants.PROJECT_DEFAULT_PROPS );
 		return new HashMap<>( usedProps );
 	}
 
@@ -472,8 +489,8 @@ public class Config
 	 */
 	public static boolean isOnCluster()
 	{
-		return getString( Constants.PROJECT_ENV ) != null
-				&& getString( Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_CLUSTER );
+		return getString( null, Constants.PROJECT_ENV ) != null
+				&& getString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_CLUSTER );
 	}
 
 	public static String pipelineName()
@@ -493,15 +510,15 @@ public class Config
 	/**
 	 * Required to return a valid boolean {@value #TRUE} or {@value #FALSE}
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return boolean {@value #TRUE} or {@value #FALSE}
-	 * @throws ConfigNotFoundException if propertyName is undefined
-	 * @throws ConfigFormatException if propertyName is defined, but not set to a boolean value
+	 * @throws ConfigNotFoundException if property is undefined
+	 * @throws ConfigFormatException if property is defined, but not set to a boolean value
 	 */
-	public static boolean requireBoolean( final String propertyName )
+	public static boolean requireBoolean( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
-		final String val = requireString( propertyName );
+		final String val = requireString( module, property );
 		if( val.equalsIgnoreCase( Constants.TRUE ) )
 		{
 			return true;
@@ -511,25 +528,25 @@ public class Config
 			return false;
 		}
 
-		throw new ConfigFormatException( propertyName,
+		throw new ConfigFormatException( property,
 				"Property only accepts boolean values: " + Constants.TRUE + " or " + Constants.FALSE );
 	}
 
 	/**
 	 * Requires valid double value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Double value
-	 * @throws ConfigNotFoundException if propertyName is undefined
-	 * @throws ConfigFormatException if propertyName is defined, but set with a non-numeric value
+	 * @throws ConfigNotFoundException if property is undefined
+	 * @throws ConfigFormatException if property is defined, but set with a non-numeric value
 	 */
-	public static Double requireDoubleVal( final String propertyName )
+	public static Double requireDoubleVal( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
-		final Double val = getDoubleVal( propertyName );
+		final Double val = getDoubleVal( module, property );
 		if( val == null )
 		{
-			throw new ConfigNotFoundException( propertyName );
+			throw new ConfigNotFoundException( property );
 		}
 
 		return val;
@@ -538,18 +555,18 @@ public class Config
 	/**
 	 * Requires valid existing directory.
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return File directory
-	 * @throws ConfigNotFoundException if propertyName is undefined
-	 * @throws ConfigPathException if propertyName is not a valid directory path
+	 * @throws ConfigNotFoundException if property is undefined
+	 * @throws ConfigPathException if property is not a valid directory path
 	 */
-	public static File requireExistingDir( final String propertyName )
+	public static File requireExistingDir( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigPathException
 	{
-		final File f = getExistingDir( propertyName );
+		final File f = getExistingDir( module, property );
 		if( f == null )
 		{
-			throw new ConfigNotFoundException( propertyName );
+			throw new ConfigNotFoundException( property );
 		}
 
 		return f;
@@ -558,21 +575,21 @@ public class Config
 	/**
 	 * Requires valid list of file directories
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return List of File directories
-	 * @throws ConfigNotFoundException if propertyName is undefined
-	 * @throws ConfigPathException if propertyName is not a valid directory path
+	 * @throws ConfigNotFoundException if property is undefined
+	 * @throws ConfigPathException if property is not a valid directory path
 	 */
-	public static List<File> requireExistingDirs( final String propertyName )
+	public static List<File> requireExistingDirs( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigPathException
 	{
 		final List<File> returnDirs = new ArrayList<>();
-		for( final String d: requireSet( propertyName ) )
+		for( final String d: requireSet( module, property ) )
 		{
 			final File dir = getExistingFileObject( d );
 			if( dir != null && !dir.isDirectory() )
 			{
-				throw new ConfigPathException( propertyName, ConfigPathException.DIRECTORY );
+				throw new ConfigPathException( property, ConfigPathException.DIRECTORY );
 			}
 
 			returnDirs.add( dir );
@@ -580,7 +597,7 @@ public class Config
 
 		if( returnDirs != null && !returnDirs.isEmpty() )
 		{
-			Config.setConfigProperty( propertyName, returnDirs );
+			Config.setConfigProperty( property, returnDirs );
 		}
 		return returnDirs;
 	}
@@ -588,18 +605,18 @@ public class Config
 	/**
 	 * Require valid existing file
 	 *
-	 * @param propertyName Property name
-	 * @return File with filename defined by propertyName
-	 * @throws ConfigNotFoundException if propertyName is undefined
-	 * @throws ConfigPathException if propertyName is not a valid file path
+	 * @param property Property name
+	 * @return File with filename defined by property
+	 * @throws ConfigNotFoundException if property is undefined
+	 * @throws ConfigPathException if property is not a valid file path
 	 */
-	public static File requireExistingFile( final String propertyName )
+	public static File requireExistingFile( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigPathException
 	{
-		final File f = getExistingFile( propertyName );
+		final File f = getExistingFile( module, property );
 		if( f == null )
 		{
-			throw new ConfigNotFoundException( propertyName );
+			throw new ConfigNotFoundException( property );
 		}
 		return f;
 	}
@@ -607,17 +624,17 @@ public class Config
 	/**
 	 * Requires valid integer value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Integer value
-	 * @throws ConfigNotFoundException if propertyName is undefined
-	 * @throws ConfigFormatException if propertyName is not a valid integer
+	 * @throws ConfigNotFoundException if property is undefined
+	 * @throws ConfigFormatException if property is not a valid integer
 	 */
-	public static int requireInteger( final String propertyName ) throws ConfigNotFoundException, ConfigFormatException
+	public static int requireInteger( final BioModule module, final String property ) throws ConfigNotFoundException, ConfigFormatException
 	{
-		final Integer val = getIntegerProp( propertyName );
+		final Integer val = getIntegerProp( module, property );
 		if( val == null )
 		{
-			throw new ConfigNotFoundException( propertyName );
+			throw new ConfigNotFoundException( property );
 		}
 
 		return val;
@@ -626,16 +643,16 @@ public class Config
 	/**
 	 * Require valid list property
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return List
-	 * @throws ConfigNotFoundException if propertyName is undefined
+	 * @throws ConfigNotFoundException if property is undefined
 	 */
-	public static List<String> requireList( final String propertyName ) throws ConfigNotFoundException
+	public static List<String> requireList( final BioModule module, final String property ) throws ConfigNotFoundException
 	{
-		final List<String> val = getList( propertyName );
+		final List<String> val = getList( module, property );
 		if( val == null || val.isEmpty() )
 		{
-			throw new ConfigNotFoundException( propertyName );
+			throw new ConfigNotFoundException( property );
 		}
 		return val;
 	}
@@ -643,18 +660,18 @@ public class Config
 	/**
 	 * Require valid positive double value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Positive Double
-	 * @throws ConfigNotFoundException if propertyName is undefined
-	 * @throws ConfigFormatException if propertyName is defined, but not set to a positive numeric value
+	 * @throws ConfigNotFoundException if property is undefined
+	 * @throws ConfigFormatException if property is defined, but not set to a positive numeric value
 	 */
-	public static Double requirePositiveDouble( final String propertyName )
+	public static Double requirePositiveDouble( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
-		final Double val = requireDoubleVal( propertyName );
+		final Double val = requireDoubleVal( module, property );
 		if( val <= 0 )
 		{
-			throw new ConfigFormatException( propertyName, "Property only accepts positive numeric values" );
+			throw new ConfigFormatException( property, "Property only accepts positive numeric values" );
 		}
 
 		return val;
@@ -663,18 +680,18 @@ public class Config
 	/**
 	 * Require valid positive integer value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Positive Integer
-	 * @throws ConfigNotFoundException if propertyName is undefined
-	 * @throws ConfigFormatException if propertyName is defined, but not set to a positive integer value
+	 * @throws ConfigNotFoundException if property is undefined
+	 * @throws ConfigFormatException if property is defined, but not set to a positive integer value
 	 */
-	public static int requirePositiveInteger( final String propertyName )
+	public static int requirePositiveInteger( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
-		final int val = requireInteger( propertyName );
+		final int val = requireInteger( module, property );
 		if( val <= 0 )
 		{
-			throw new ConfigFormatException( propertyName, "Property only accepts positive integers" );
+			throw new ConfigFormatException( property, "Property only accepts positive integers" );
 		}
 		return val;
 	}
@@ -682,16 +699,16 @@ public class Config
 	/**
 	 * Require valid Set value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return Set of values
-	 * @throws ConfigNotFoundException if propertyName is undefined
+	 * @throws ConfigNotFoundException if property is undefined
 	 */
-	public static Set<String> requireSet( final String propertyName ) throws ConfigNotFoundException
+	public static Set<String> requireSet( final BioModule module, final String property ) throws ConfigNotFoundException
 	{
-		final Set<String> val = getTreeSet( propertyName );
+		final Set<String> val = getTreeSet( module,  property );
 		if( val == null || val.isEmpty() )
 		{
-			throw new ConfigNotFoundException( propertyName );
+			throw new ConfigNotFoundException( property );
 		}
 		return val;
 	}
@@ -699,25 +716,25 @@ public class Config
 	/**
 	 * Require valid String value
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return String value
-	 * @throws ConfigNotFoundException if propertyName is undefined
+	 * @throws ConfigNotFoundException if property is undefined
 	 */
-	public static String requireString( final String propertyName ) throws ConfigNotFoundException
+	public static String requireString( final BioModule module, final String property ) throws ConfigNotFoundException
 	{
-		if( getString( propertyName ) == null )
+		if( getString( module, property ) == null )
 		{
-			throw new ConfigNotFoundException( propertyName );
+			throw new ConfigNotFoundException( property );
 		}
 
-		return getString( propertyName ).trim();
+		return getString( module, property ).trim();
 	}
 
 	/**
 	 * Sets a property value in the props cache as a list
 	 *
 	 * @param name Property name
-	 * @param data Collection of data to store using the key = propertyName
+	 * @param data Collection of data to store using the key = property
 	 */
 	public static void setConfigProperty( final String name, final Collection<?> data )
 	{
@@ -748,7 +765,7 @@ public class Config
 	 * Sets a property value in the props cache
 	 *
 	 * @param name Property name
-	 * @param val Value to assign to propertyName
+	 * @param val Value to assign to property
 	 */
 	public static void setConfigProperty( final String name, final String val )
 	{
@@ -810,7 +827,7 @@ public class Config
 		}
 
 		Log.info( Config.class,
-				"Init pipeline dir: " + requireExistingDir( Constants.PROJECT_PIPELINE_DIR ).getAbsolutePath() );
+				"Init pipeline dir: " + requireExistingDir( null, Constants.PROJECT_PIPELINE_DIR ).getAbsolutePath() );
 
 		return isNew;
 	}
@@ -830,22 +847,22 @@ public class Config
 	/**
 	 * Parse property value as integer
 	 *
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @return integer value or null
-	 * @throws ConfigFormatException if propertyName is defined, but does not return an integer
+	 * @throws ConfigFormatException if property is defined, but does not return an integer
 	 */
-	private static Integer getIntegerProp( final String propertyName ) throws ConfigFormatException
+	private static Integer getIntegerProp( final BioModule module, final String property ) throws ConfigFormatException
 	{
-		if( getString( propertyName ) != null )
+		if( getString( module, property ) != null )
 		{
 			try
 			{
-				final Integer val = Integer.parseInt( getString( propertyName ) );
+				final Integer val = Integer.parseInt( getString(module, property ) );
 				return val;
 			}
 			catch( final Exception ex )
 			{
-				throw new ConfigFormatException( propertyName, "Property only accepts integer values" );
+				throw new ConfigFormatException( property, "Property only accepts integer values" );
 			}
 		}
 
@@ -900,7 +917,7 @@ public class Config
 		{
 			try
 			{
-				pipelineDir = requireExistingDir( Constants.PROJECT_PIPELINE_DIR );
+				pipelineDir = requireExistingDir( null, Constants.PROJECT_PIPELINE_DIR );
 			}
 			catch( final Exception ex )
 			{

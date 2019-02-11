@@ -39,7 +39,7 @@ public class HumanN2Parser extends ParserModuleImpl implements ParserModule
 	/**
 	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.HumanN2Classifier}.
 	 * 
-	 * Sample HumanN2 report line (head output_pathabundance.tsv):<br>
+	 * Sample HumanN2 report line (head output_pAbund.tsv):<br>
 	 * 1st cell format: [Pathway_ID]:[Pathway_Descr] | g__[genus_taxa].s__[species_taxa]<br>
 	 * Example: ARO-PWY: chorismate biosynthesis I|g__Acidaminococcus.s__Acidaminococcus_intestini #SampleID
 	 * Metaphlan2_Analysis #clade_name relative_abundance coverage average_genome_length_in_the_clade
@@ -60,7 +60,7 @@ public class HumanN2Parser extends ParserModuleImpl implements ParserModule
 					boolean newRecord = true;
 					for( final String cell: record )
 					{
-						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + cell );
+						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + stripQuotes( cell ) );
 						newRecord = false;
 					}
 					writer.write( Constants.RETURN );
@@ -76,6 +76,11 @@ public class HumanN2Parser extends ParserModuleImpl implements ParserModule
 
 			MemoryUtil.reportMemoryUsage( "Parsed " + file.getAbsolutePath() );
 		}
+	}
+	
+	private String stripQuotes( String val ) throws Exception
+	{
+		return val.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
 	@Override

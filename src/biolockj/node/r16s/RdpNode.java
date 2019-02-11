@@ -90,7 +90,7 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 			final Integer nextScore = st.hasMoreTokens() ? calculateScore( st.nextToken().trim() ): null;
 
 			if( level == null || nextScore == null
-					|| nextScore < Config.requirePositiveInteger( RdpParser.RDP_THRESHOLD_SCORE ) )
+					|| nextScore < Config.requirePositiveInteger( null, RdpParser.RDP_THRESHOLD_SCORE ) )
 			{
 				return;
 			}

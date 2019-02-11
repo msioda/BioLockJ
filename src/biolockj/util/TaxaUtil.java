@@ -296,7 +296,7 @@ public class TaxaUtil
 		final Set<String> configuredLevels = new HashSet<>();
 		final List<String> validOptions = allTaxonomyLevels();
 
-		for( final String element: Config.requireList( REPORT_TAXONOMY_LEVELS ) )
+		for( final String element: Config.requireList( null, REPORT_TAXONOMY_LEVELS ) )
 		{
 			if( validOptions.contains( element.toLowerCase() ) )
 			{

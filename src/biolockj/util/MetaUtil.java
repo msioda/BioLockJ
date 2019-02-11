@@ -68,7 +68,7 @@ public class MetaUtil
 				else if( !removeMissingIds )
 				{
 					writer.write(
-							line + Constants.TAB_DELIM + Config.requireString( META_NULL_VALUE ) + BioLockJ.RETURN );
+							line + Constants.TAB_DELIM + Config.requireString( null, META_NULL_VALUE ) + BioLockJ.RETURN );
 				}
 				else
 				{
@@ -187,7 +187,7 @@ public class MetaUtil
 			final String val = getField( id, field );
 			if( val != null && val.trim().length() > 0 )
 			{
-				final boolean isNullVal = val.equals( Config.requireString( META_NULL_VALUE ) );
+				final boolean isNullVal = val.equals( Config.requireString( null, META_NULL_VALUE ) );
 				if( !isNullVal || !ignoreNulls )
 				{
 					vals.add( val );
@@ -273,16 +273,16 @@ public class MetaUtil
 	 */
 	public static File getMetadata() throws Exception
 	{
-		if( Config.getString( META_FILE_PATH ) == null )
+		if( Config.getString( null, META_FILE_PATH ) == null )
 		{
 			return null;
 		}
 
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.CONTAINER_META_DIR, "metadata" );
+			return DockerUtil.getDockerVolumeFile( Config.getString( null, META_FILE_PATH ), DockerUtil.CONTAINER_META_DIR, "metadata" );
 		}
-		return Config.requireExistingFile( META_FILE_PATH );
+		return Config.requireExistingFile( null, META_FILE_PATH );
 	}
 
 	/**
@@ -440,31 +440,31 @@ public class MetaUtil
 	 */
 	public static void initialize() throws Exception
 	{
-		if( Config.getString( META_NULL_VALUE ) == null )
+		if( Config.getString( null, META_NULL_VALUE ) == null )
 		{
 			Config.setConfigProperty( META_NULL_VALUE, DEFAULT_NULL_VALUE );
 		}
 
-		if( Config.getString( META_COLUMN_DELIM ) == null )
+		if( Config.getString( null, META_COLUMN_DELIM ) == null )
 		{
 			Config.setConfigProperty( META_COLUMN_DELIM, DEFAULT_COL_DELIM );
 		}
 
-		if( Config.getString( META_COMMENT_CHAR ) == null )
+		if( Config.getString( null, META_COMMENT_CHAR ) == null )
 		{
 			Config.setConfigProperty( META_COMMENT_CHAR, DEFAULT_COMMENT_CHAR );
 		}
 
-		final String commentChar = Config.getString( MetaUtil.META_COMMENT_CHAR );
+		final String commentChar = Config.getString( null, MetaUtil.META_COMMENT_CHAR );
 		if( commentChar != null && commentChar.length() > 1 )
 		{
 			throw new Exception( META_COMMENT_CHAR + " property must be a single character.  Config value = \""
 					+ commentChar + "\"" );
 		}
 
-		if( Config.getString( META_FILE_PATH ) != null )
+		if( Config.getString( null, META_FILE_PATH ) != null )
 		{
-			final Set<String> ignore = Config.getSet( Constants.INPUT_IGNORE_FILES );
+			final Set<String> ignore = Config.getSet( null, Constants.INPUT_IGNORE_FILES );
 			ignore.add( MetaUtil.getMetadataFileName() );
 			Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
 			setFile( MetaUtil.getMetadata() );
@@ -614,7 +614,7 @@ public class MetaUtil
 				Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
 			}
 
-			if( id != null && !id.equals( Config.requireString( META_NULL_VALUE ) ) )
+			if( id != null && !id.equals( Config.requireString( null, META_NULL_VALUE ) ) )
 			{
 				row.remove( 0 );
 				if( isUpdated() )
@@ -663,7 +663,7 @@ public class MetaUtil
 
 	private static String removeComments( String val ) throws Exception
 	{
-		final String commentChar = Config.getString( META_COMMENT_CHAR );
+		final String commentChar = Config.getString( null, META_COMMENT_CHAR );
 		if( commentChar != null && commentChar.length() > 0 )
 		{
 			final int index = val.indexOf( commentChar );
@@ -696,7 +696,7 @@ public class MetaUtil
 	{
 		if( val == null || val.trim().isEmpty() )
 		{
-			return Config.requireString( META_NULL_VALUE );
+			return Config.requireString( null, META_NULL_VALUE );
 		}
 		return val.trim();
 	}

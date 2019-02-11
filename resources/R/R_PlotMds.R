@@ -15,10 +15,10 @@ main <- function() {
 	for( level in taxaLevels() ) {
 		if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", level, ".log") ) )
 
-		taxaTable = getTaxaTable( level )
-		if( is.null( taxaTable ) ) { next }
-		lastOtuCol = ncol(taxaTable) - numMetaCols()
-		myMDS = capscale( taxaTable[,1:lastOtuCol]~1, distance=getProperty("r_PlotMds.distance") )
+		countMetaTable = getCountMetaTable( level )
+		if( is.null( countMetaTable ) ) { next }
+		lastCountCol = ncol(countMetaTable) - numMetaCols()
+		myMDS = capscale( countMetaTable[,1:lastCountCol]~1, distance=getProperty("r_PlotMds.distance") )
 		
 		pcoaFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(level, "_pcoa") ), ".tsv" )
 		write.table( cbind(id=row.names(myMDS$CA$u), as.data.frame(myMDS$CA$u)), file=pcoaFileName, col.names=TRUE, row.names=FALSE, sep="\t" )
@@ -41,13 +41,13 @@ main <- function() {
 		par(las=1, oma=c(0,1,4,0), mar=c(5, 4, 2, 2))
 		percentVariance = as.numeric(eigenvals(myMDS)/sum( eigenvals(myMDS) ) ) * 100
 		
-		#for (attName in mdsAtts){
+		#for (field in mdsAtts){
 		for(i in 1:length(mdsAtts) ){
-			attName = mdsAtts[i]
-			metaColVals = as.character(taxaTable[,attName])
+			field = mdsAtts[i]
+			metaColVals = as.character(countMetaTable[,field])
 			par(mfrow = par("mfrow"))
 			att = as.factor(metaColVals)
-			#colorKey = metaColColors[[attName]]
+			#colorKey = metaColColors[[field]]
 			logInfo( c( "Using colors:", metaColColors, "for", mdsAtts, "respectively." ) )
 			position = 1
 			pageNum = 1
@@ -71,7 +71,7 @@ main <- function() {
 						plotRelativeVariance(percentVariance, numAxis)
 						legend(x="topright", title="",legend=mdsAtts, col=metaColColors, pch=getProperty("r.pch"), bty="n")
 						# this is the best time to add the page title
-						title(main=paste0( attName, ifelse( pageNum > 1, paste0( " - ", pageNum ), "" ) ), outer = TRUE, line=0.5, cex=5)
+						title(main=paste0( field, ifelse( pageNum > 1, paste0( " - ", pageNum ), "" ) ), outer = TRUE, line=0.5, cex=5)
 						position = position + 1
 					}
 				}

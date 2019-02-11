@@ -35,7 +35,7 @@ public class LogTransformTaxaTables extends TaxaCountModule implements JavaModul
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		logBase = Config.requireString( Constants.REPORT_LOG_BASE );
+		logBase = Config.requireString( this, Constants.REPORT_LOG_BASE );
 
 		if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
 		{

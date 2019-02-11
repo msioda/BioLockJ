@@ -37,16 +37,16 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 	@Override
 	public String getSummary() throws Exception
 	{
-		int labelSize = Math.max( UNIQUE_PATH_COUNT.length(), UNINTEGRATED_COUNT.length() );
-		labelSize = Math.max( labelSize, UNMAPPED_COUNT.length() );
-		labelSize = Math.max( labelSize, TOTAL_PATH_COUNT.length() );
+		int labelSize = Math.max( Constants.HN2_UNIQUE_PATH_COUNT.length(), Constants.HN2_UNINTEGRATED_COUNT.length() );
+		labelSize = Math.max( labelSize, Constants.HN2_UNMAPPED_COUNT.length() );
+		labelSize = Math.max( labelSize, Constants.HN2_TOTAL_PATH_COUNT.length() );
 
 		String summary = "Total # Unique Pathways:         " + pathways.size() + RETURN;
 
-		summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, UNIQUE_PATH_COUNT, labelSize, false );
-		summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, TOTAL_PATH_COUNT, labelSize, true );
-		summary += SummaryUtil.getCountSummary( unintegratedPerSample, UNINTEGRATED_COUNT, labelSize, true );
-		summary += SummaryUtil.getCountSummary( unmappedPerSample, UNMAPPED_COUNT, labelSize, true );
+		summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, Constants.HN2_UNIQUE_PATH_COUNT, labelSize, false );
+		summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, Constants.HN2_TOTAL_PATH_COUNT, labelSize, true );
+		summary += SummaryUtil.getCountSummary( unintegratedPerSample, Constants.HN2_UNINTEGRATED_COUNT, labelSize, true );
+		summary += SummaryUtil.getCountSummary( unmappedPerSample, Constants.HN2_UNMAPPED_COUNT, labelSize, true );
 		freeMemory();
 		return super.getSummary() + summary;
 	}
@@ -63,18 +63,18 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 		final File file = getInputFiles().get( 0 );
 		writePathwayReport( parseFullReport( file, validColIndexes( file ) ) );
 
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 		{
 			final File unintegratedTemp = new File(
-					getTempDir().getAbsolutePath() + File.separator + UNINTEGRATED_COUNT );
+					getTempDir().getAbsolutePath() + File.separator + Constants.HN2_UNINTEGRATED_COUNT );
 			if( !unintegratedTemp.exists() )
 			{
 				unintegratedTemp.mkdirs();
 			}
 
-			MetaUtil.addColumn( UNINTEGRATED_COUNT, unintegratedPerSample, unintegratedTemp, true );
-			MetaUtil.addColumn( UNMAPPED_COUNT, unmappedPerSample, getTempDir(), true );
-			MetaUtil.addColumn( UNIQUE_PATH_COUNT, uniquePathwaysPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( Constants.HN2_UNINTEGRATED_COUNT, unintegratedPerSample, unintegratedTemp, true );
+			MetaUtil.addColumn( Constants.HN2_UNMAPPED_COUNT, unmappedPerSample, getTempDir(), true );
+			MetaUtil.addColumn( Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample, getOutputDir(), true );
 		}
 	}
 
@@ -282,9 +282,10 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 		pathways = null;
 	}
 
-	private String fullPathwayReportSuffix() throws Exception
+	
+	public static String fullPathwayReportSuffix() throws Exception
 	{
-		return Constants.HN2_PATH_ABUND_TABLE + "_" + Constants.HN2_FULL_REPORT + TSV_EXT;
+		return "_" + Constants.HN2_FULL_REPORT + PathwayUtil.pathwayFileSuffix();
 	}
 
 	private Integer getCount( final String val )
@@ -310,8 +311,5 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 	private Map<String, String> unmappedPerSample = new HashMap<>();
 	private static final String HN2_UNINTEGRATED = "UNINTEGRATED";
 	private static final String HN2_UNMAPPED = "UNMAPPED";
-	private static final String TOTAL_PATH_COUNT = "Total_Pathway_Count";
-	private static final String UNINTEGRATED_COUNT = "Unintegrated_Count";
-	private static final String UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
-	private static final String UNMAPPED_COUNT = "Unmapped_Count";
+	
 }

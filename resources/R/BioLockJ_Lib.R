@@ -46,12 +46,12 @@ getBinaryFields <- function() {
 	return( getProperty("R_internal.binaryFields", vector( mode="character" ) ) )
 }
 
-# Return taxaTable column indexes for the given colNames
-getColIndexes <- function( taxaTable, colNames ) {
+# Return countTable column indexes for the given colNames
+getColIndexes <- function( countTable, colNames ) {
 	cols = vector( mode="integer" )
 	if( length(colNames) > 0 ) {
 		for( i in 1:length(colNames) ) {
-			cols[i] = grep(TRUE, colnames(taxaTable)==colNames[i])
+			cols[i] = grep(TRUE, colnames(countTable)==colNames[i])
 		}
 	}
 	return( cols )
@@ -135,12 +135,12 @@ getConfig <- function( name, defaultVal=NULL ) {
 	return( str_trim( prop ) )
 }
 
-# Return list, each record contains the OTUs associated with a unique value for the given nominal metadata field (metaCol)
-getFactorGroups <- function( taxaTable, metaCol, taxaCol ) {
+# Return list, each record contains the count-data  associated with a unique value for the given nominal metadata field (metaCol)
+getFactorGroups <- function( countMetaTable, metaCol, taxaCol ) {
 	vals = list()
 	options = levels( metaCol )
 	for( i in 1:length(options) ) {
-		vals[[i]] = taxaTable[metaCol==options[i], taxaCol]
+		vals[[i]] = countMetaTable[metaCol==options[i], taxaCol]
 	}
 	return( vals )
 }
@@ -161,7 +161,7 @@ getMasterConfigFile <- function() {
 
 # Return a data frame of the metadata from a biolockj data table with merged metadata.
 getMetaData <- function( level ){
-	fullTable = getTaxaMetaTable( level )
+	fullTable = getCountMetaTable( level )
 	firstMetaCol = ncol(fullTable) - numMetaCols() + 1
 	return( fullTable[firstMetaCol:ncol(fullTable)] )
 }
@@ -224,38 +224,41 @@ getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
 	return( statsTable )
 }
 
-getTaxaTable <- function( level ){
-	fullTable = getTaxaMetaTable( level )
-	lastOtuCol = ncol(fullTable) - numMetaCols()
-	return ( fullTable[1:lastOtuCol] )
+getCountTable <- function( level ){
+	fullTable = getCountMetaTable( level )
+	lastCountCol = ncol(fullTable) - numMetaCols()
+	return ( fullTable[1:lastCountCol] )
 }
 
-# Returns BioLockJ generated Table with a standard format:
+# Returns BioLockJ generated Count + Metadata Table with a standard format:
 # 1. 1st column contains Sample IDs
 # 2. Next group of columns contain numeric count data (derived from sample analysis)
 # 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
-getTaxaMetaTable <- function( level ) {
-	taxaFile = pipelineFile( paste0( ".*_", level, "_metaMerged.tsv" ) )
-	if( is.null( taxaFile )  ) {
-		logInfo( c( "BioLockJ_Lib.R function --> getTaxaTable(", level, ") returned NULL" ) )
+getCountMetaTable <- function( level=NULL ) {
+	if( is.null( level ) ) {
+		level = ""
+	}
+	countMetaFile = pipelineFile( paste0( ".*", level, "_metaMerged.tsv" ) )
+	if( is.null( countMetaFile )  ) {
+		logInfo( c( "BioLockJ_Lib.R function --> getCountMetaTable(", level, ") returned NULL" ) )
 		return( NULL )
 	}
 	
-	taxaTable = readBljTable( taxaFile )
+	countMetaTable = readBljTable( countMetaFile )
 	
-	if( nrow( taxaTable ) == 0 ) {
-		logInfo( c( "BioLockJ_Lib.R function --> getTaxaTable(", level, ") returned an empty table with only the header row:", colnames( taxaTable ) ) )
+	if( nrow( countMetaTable ) == 0 ) {
+		logInfo( c( "BioLockJ_Lib.R function --> getCountMetaTable(", level, ") returned an empty table with only the header row:", colnames( countMetaTable ) ) )
 		return( NULL )
 	}
 	
-	logInfo( "Read taxa table", taxaFile )
-	return( taxaTable )
+	logInfo( "Read count table", countMetaFile )
+	return( countMetaTable )
 }
 
 # Return the name of statistical test used to generate P-Values for a given attribute
 # If returnColors==TRUE, then return a color used for color-coding this test
 # or a named color vector if the specific attribute or isParametric is not given.
-getTestName <- function( attName=NULL, isParametric=c(TRUE, FALSE), returnColors=FALSE ) {
+getTestName <- function( field=NULL, isParametric=c(TRUE, FALSE), returnColors=FALSE ) {
 	testOptions = data.frame(
 		testName = c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall"),
 		fieldType = c("binary", "binary", "nominal", "nominal", "numeric", "numeric" ),
@@ -265,12 +268,12 @@ getTestName <- function( attName=NULL, isParametric=c(TRUE, FALSE), returnColors
 	)
 	
 	fieldType = c(unique(testOptions$fieldType))
-	if (!is.null(attName)){
-		if( attName %in% getBinaryFields() ) {fieldType = "binary"}
-		if( attName %in% getNominalFields() ) {fieldType = "nominal"}
-		if( attName %in% getNumericFields() ) {fieldType = "numeric"}
+	if (!is.null(field)){
+		if( field %in% getBinaryFields() ) {fieldType = "binary"}
+		if( field %in% getNominalFields() ) {fieldType = "nominal"}
+		if( field %in% getNumericFields() ) {fieldType = "numeric"}
 		if (length(fieldType) > 1){
-			stop(paste("Cannot determine field type for attribute:", attName))
+			stop(paste("Cannot determine field type for attribute:", field))
 		}
 	}
 	

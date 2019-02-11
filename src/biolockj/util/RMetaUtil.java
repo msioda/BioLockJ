@@ -18,6 +18,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
+import biolockj.module.classifier.wgs.HumanN2Classifier;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
@@ -63,24 +64,25 @@ public final class RMetaUtil
 	 * <p>
 	 * Save MASTER {@link biolockj.Config} properties to store lists of binary, nominal, and numeric fields
 	 * 
+	 * @param module BioModule 
 	 * @throws Exception if {@link biolockj.Config} lists invalid metadata fields or metadata filed has less than 2
 	 * unique values
 	 */
-	public static void classifyReportableMetadata() throws Exception
+	public static void classifyReportableMetadata( final BioModule module ) throws Exception
 	{
 		Log.info( RMetaUtil.class, "Validate reportable metadata fields: " + MetaUtil.getPath() );
 
-		final Set<String> rScriptFields = Config.getSet( R_REPORT_FIELDS );
+		Set<String> rScriptFields = Config.getSet( module, R_REPORT_FIELDS );
 		binaryFields.clear();
 		mdsFields.clear();
 		nominalFields.clear();
 		numericFields.clear();
 
-		nominalFields.addAll( Config.getList( R_NOMINAL_FIELDS ) );
-		numericFields.addAll( Config.getList( R_NUMERIC_FIELDS ) );
-		mdsFields.addAll( Config.getList( R_PlotMds.R_MDS_REPORT_FIELDS ) );
+		nominalFields.addAll( Config.getList( module, R_NOMINAL_FIELDS ) );
+		numericFields.addAll( Config.getList( module, R_NUMERIC_FIELDS ) );
+		mdsFields.addAll( Config.getList( module, R_PlotMds.R_MDS_REPORT_FIELDS ) );
 
-		final List<String> excludeFields = Config.getList( R_EXCLUDE_FIELDS );
+		final List<String> excludeFields = Config.getList( module, R_EXCLUDE_FIELDS );
 
 		nominalFields.removeAll( excludeFields );
 		numericFields.removeAll( excludeFields );
@@ -88,14 +90,12 @@ public final class RMetaUtil
 		rScriptFields.removeAll( excludeFields );
 		rScriptFields.addAll( nominalFields );
 		rScriptFields.addAll( numericFields );
-
-		final List<String> metaFields = MetaUtil.getFieldNames();
-
-		verifyMetadataFieldsExist( R_EXCLUDE_FIELDS, excludeFields );
-		verifyMetadataFieldsExist( R_REPORT_FIELDS, rScriptFields );
-		verifyMetadataFieldsExist( R_NUMERIC_FIELDS, numericFields );
-		verifyMetadataFieldsExist( R_NOMINAL_FIELDS, nominalFields );
-		verifyMetadataFieldsExist( R_PlotMds.R_MDS_REPORT_FIELDS, mdsFields );
+		
+		verifyMetadataFieldsExist( module, R_EXCLUDE_FIELDS, excludeFields );
+		verifyMetadataFieldsExist( module, R_REPORT_FIELDS, rScriptFields );
+		verifyMetadataFieldsExist( module, R_NUMERIC_FIELDS, numericFields );
+		verifyMetadataFieldsExist( module, R_NOMINAL_FIELDS, nominalFields );
+		verifyMetadataFieldsExist( module, R_PlotMds.R_MDS_REPORT_FIELDS, mdsFields );
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
@@ -105,17 +105,17 @@ public final class RMetaUtil
 					"List override numeric fields: " + BioLockJUtil.getCollectionAsString( numericFields ) );
 		}
 
-		if( reportAllFields() )
+		if( reportAllFields( module ) )
 		{
 			rScriptFields.addAll( MetaUtil.getFieldNames() );
 			rScriptFields.removeAll( excludeFields );
-			if( Config.getString( MetaUtil.META_BARCODE_COLUMN ) != null )
+			if( Config.getString( module, MetaUtil.META_BARCODE_COLUMN ) != null )
 			{
-				rScriptFields.remove( Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
+				rScriptFields.remove( Config.getString( module, MetaUtil.META_BARCODE_COLUMN ) );
 			}
-			if( MetaUtil.hasColumn( Config.getString( MetaUtil.META_FILENAME_COLUMN ) ) )
+			if( MetaUtil.hasColumn( Config.getString( module, MetaUtil.META_FILENAME_COLUMN ) ) )
 			{
-				rScriptFields.remove( Config.getString( MetaUtil.META_FILENAME_COLUMN ) );
+				rScriptFields.remove( Config.getString( module, MetaUtil.META_FILENAME_COLUMN ) );
 			}
 
 			// remove BLJ generated fields since inclusion depends upon the report.num* properties
@@ -152,44 +152,22 @@ public final class RMetaUtil
 				rScriptFields.remove( BuildQiimeMapping.BARCODE_SEQUENCE );
 			}
 		}
+		
+		boolean reportReads = Config.getBoolean( module, Constants.REPORT_NUM_READS );
+		boolean reportHits = Config.getBoolean( module, Constants.REPORT_NUM_HITS );
+		rScriptFields = updateNumericData( RegisterNumReads.getNumReadFieldName(), rScriptFields, reportReads );
+		rScriptFields = updateNumericData( ParserModuleImpl.getOtuCountField(), rScriptFields, reportHits );
+		rScriptFields = updateNumericData( AddMetadataToTaxaTables.HIT_RATIO, rScriptFields, reportHits );
 
-		if( Config.getBoolean( Constants.REPORT_NUM_READS )
-				&& isValidNumericField( metaFields, RegisterNumReads.getNumReadFieldName() ) )
+		if( ModuleUtil.getClassifier( module, false ) instanceof HumanN2Classifier )
 		{
-			rScriptFields.add( RegisterNumReads.getNumReadFieldName() );
-			numericFields.add( RegisterNumReads.getNumReadFieldName() );
-		}
-		else
-		{
-			rScriptFields.remove( RegisterNumReads.getNumReadFieldName() );
-			numericFields.remove( RegisterNumReads.getNumReadFieldName() );
-		}
-
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, ParserModuleImpl.getOtuCountField() ) )
-		{
-			rScriptFields.add( ParserModuleImpl.getOtuCountField() );
-			numericFields.add( ParserModuleImpl.getOtuCountField() );
-		}
-		else
-		{
-			rScriptFields.remove( ParserModuleImpl.getOtuCountField() );
-			numericFields.remove( ParserModuleImpl.getOtuCountField() );
+			rScriptFields = updateNumericData( Constants.HN2_UNMAPPED_COUNT, rScriptFields, reportHits );
+			rScriptFields = updateNumericData( Constants.HN2_UNIQUE_PATH_COUNT, rScriptFields, reportHits );
+			rScriptFields = updateNumericData( Constants.HN2_TOTAL_PATH_COUNT, rScriptFields, reportHits );
+			rScriptFields = updateNumericData( Constants.HN2_UNINTEGRATED_COUNT, rScriptFields, reportHits );
 		}
 
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS )
-				&& isValidNumericField( metaFields, AddMetadataToTaxaTables.HIT_RATIO ) )
-		{
-			rScriptFields.add( AddMetadataToTaxaTables.HIT_RATIO );
-			numericFields.add( AddMetadataToTaxaTables.HIT_RATIO );
-		}
-		else
-		{
-			rScriptFields.remove( AddMetadataToTaxaTables.HIT_RATIO );
-			numericFields.remove( AddMetadataToTaxaTables.HIT_RATIO );
-		}
-
-		if( reportAllFields() && !RuntimeParamUtil.isDirectMode() )
+		if( reportAllFields( module ) && !RuntimeParamUtil.isDirectMode() )
 		{
 			Log.info( RMetaUtil.class, "R_Modules will report on the all [" + rScriptFields.size()
 					+ "] metadata fields since Config property: " + R_REPORT_FIELDS + " is undefined." );
@@ -268,7 +246,7 @@ public final class RMetaUtil
 			}
 		}
 
-		if( updateRConfig() )
+		if( updateRConfig( module ) )
 		{
 			PropUtil.saveMasterConfig( Config.getProperties() );
 		}
@@ -279,6 +257,22 @@ public final class RMetaUtil
 			Log.info( RMetaUtil.class, "Reportable metadata field validations complete for: " + rScriptFields );
 			Log.info( RMetaUtil.class, Log.LOG_SPACER );
 		}
+	}
+	
+	private static Set<String> updateNumericData( String field, final Set<String> rScriptFields, boolean doUpdate  ) throws Exception
+	{
+		if( doUpdate && isValidNumericField( field ) )
+		{
+			rScriptFields.add( field );
+			numericFields.add( field );
+		}
+		else
+		{
+			rScriptFields.remove( field );
+			numericFields.remove( field);
+		}
+		
+		return rScriptFields;
 	}
 
 	/**
@@ -366,22 +360,24 @@ public final class RMetaUtil
 	 * The override property: {@link biolockj.Config}.{@value #R_REPORT_FIELDS} can be used to list the metadata
 	 * reportable fields for use in the R modules. If undefined, report all fields.
 	 * 
+	 * @param module BioModule
 	 * @return true if {@value #R_REPORT_FIELDS} is empty
 	 */
-	public static boolean reportAllFields()
+	public static boolean reportAllFields( final BioModule module )
 	{
-		return Config.getSet( R_REPORT_FIELDS ).isEmpty();
+		return Config.getSet( module, R_REPORT_FIELDS ).isEmpty();
 	}
 
 	/**
 	 * Get updated R config props
 	 * 
+	 * @param module BioModule
 	 * @return map of R props by data type
 	 * @throws Exception if errors occur
 	 */
-	public static boolean updateRConfig() throws Exception
+	public static boolean updateRConfig( final BioModule module ) throws Exception
 	{
-		final Integer numCols = Config.getPositiveInteger( RMetaUtil.NUM_META_COLS );
+		final Integer numCols = Config.getPositiveInteger( module, RMetaUtil.NUM_META_COLS );
 		final Integer numMetaCols = new Integer( MetaUtil.getFieldNames().size() );
 
 		if( numCols != null && numCols == numMetaCols || numMetaCols == 0 )
@@ -394,7 +390,7 @@ public final class RMetaUtil
 		{
 			final Set<String> data = new HashSet<>( MetaUtil.getFieldValues( field, true ) );
 			final int count = data.size();
-			if( isQiimeMetric( field ) && field.endsWith( QIIME_ALPHA_METRIC_LABEL_SUFFIX ) )
+			if( isQiimeMetric( module, field ) && field.endsWith( QIIME_ALPHA_METRIC_LABEL_SUFFIX ) )
 			{
 				final String name = field.replace( QIIME_ALPHA_METRIC_LABEL_SUFFIX, "" );
 				if( count == 0 )
@@ -417,7 +413,7 @@ public final class RMetaUtil
 					nominalFields.add( field );
 				}
 			}
-			else if( isQiimeMetric( field ) && field.endsWith( QIIME_ALPHA_METRIC_SUFFIX ) )
+			else if( isQiimeMetric( module, field ) && field.endsWith( QIIME_ALPHA_METRIC_SUFFIX ) )
 			{
 				final String name = field.replace( QIIME_ALPHA_METRIC_SUFFIX, "" );
 				if( count == 0 )
@@ -446,7 +442,7 @@ public final class RMetaUtil
 		if( !binaryFields.isEmpty() )
 		{
 			final String val = BioLockJUtil.getCollectionAsString( binaryFields );
-			if( Config.getString( BINARY_FIELDS ) == null || !val.equals( Config.getString( BINARY_FIELDS ) ) )
+			if( Config.getString( null, BINARY_FIELDS ) == null || !val.equals( Config.getString( null, BINARY_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
 				Config.setConfigProperty( BINARY_FIELDS, val );
@@ -456,7 +452,7 @@ public final class RMetaUtil
 		if( !nominalFields.isEmpty() )
 		{
 			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
-			if( Config.getString( NOMINAL_FIELDS ) == null || !val.equals( Config.getString( NOMINAL_FIELDS ) ) )
+			if( Config.getString( null, NOMINAL_FIELDS ) == null || !val.equals( Config.getString( null, NOMINAL_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
 				Config.setConfigProperty( NOMINAL_FIELDS, val );
@@ -465,7 +461,7 @@ public final class RMetaUtil
 		if( !numericFields.isEmpty() )
 		{
 			final String val = BioLockJUtil.getCollectionAsString( numericFields );
-			if( Config.getString( NUMERIC_FIELDS ) == null || !val.equals( Config.getString( NUMERIC_FIELDS ) ) )
+			if( Config.getString( null, NUMERIC_FIELDS ) == null || !val.equals( Config.getString( null, NUMERIC_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
 				Config.setConfigProperty( NUMERIC_FIELDS, val );
@@ -478,15 +474,16 @@ public final class RMetaUtil
 	/**
 	 * This method verifies the fields given exist in the metadata file.
 	 * 
+	 * @param module Source BioModule calling this utility 
 	 * @param prop Config property name
 	 * @param fields Set of metadata fields
 	 * @throws Exception if the metadata column does not exist
 	 */
-	public static void verifyMetadataFieldsExist( final String prop, final Collection<String> fields ) throws Exception
+	public static void verifyMetadataFieldsExist( final BioModule module, final String prop, final Collection<String> fields ) throws Exception
 	{
 		for( final String field: fields )
 		{
-			if( !MetaUtil.getFieldNames().contains( field ) && !isQiimeMetric( field ) )
+			if( !MetaUtil.getFieldNames().contains( field ) && !isQiimeMetric( module, field ) )
 			{
 
 				throw new Exception( "Config property [ " + prop + "] contians a field [" + field
@@ -509,9 +506,9 @@ public final class RMetaUtil
 		return false;
 	}
 
-	private static boolean isQiimeMetric( final String field )
+	private static boolean isQiimeMetric( final BioModule module, final String field )
 	{
-		final Set<String> alphaDivMetrics = Config.getSet( QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
+		final Set<String> alphaDivMetrics = Config.getSet( module, QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( !alphaDivMetrics.isEmpty() )
 		{
 			for( final String metric: alphaDivMetrics )
@@ -531,9 +528,9 @@ public final class RMetaUtil
 		return false;
 	}
 
-	private static boolean isValidNumericField( final List<String> metaFields, final String field ) throws Exception
+	private static boolean isValidNumericField( final String field ) throws Exception
 	{
-		if( field != null && metaFields.contains( field ) )
+		if( field != null && MetaUtil.getFieldNames().contains( field ) )
 		{
 			final int count = MetaUtil.getUniqueFieldValues( field, true ).size();
 			if( count > 1 )

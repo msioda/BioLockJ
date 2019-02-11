@@ -129,12 +129,6 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		return new ArrayList<>();
 	}
 
-	@Override
-	public String getProperty( final String property )
-	{
-		return Config.getModuleProp( getClass().getSimpleName(), property );
-	}
-
 	/**
 	 * Returns summary message to be displayed by Email module so must not contain confidential info. ModuleUtil
 	 * provides summary metrics on output files

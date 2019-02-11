@@ -82,9 +82,9 @@ main <- function() {
 											 Parametric.FractionPvalsUnderCutoff=rep(NA, ncol(parStats)),
 											 NonParametric.FractionPvalsUnderCutoff=rep(NA, ncol(nonParStats)))
 		row.names(ranks) = ranks$AttributeName
-		for( attName in names(parStats) ) {
-			ranks[attName,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=parStats[, attName], pvalCutoff)
-			ranks[attName,"NonParametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=nonParStats[, attName], pvalCutoff)
+		for( field in names(parStats) ) {
+			ranks[field,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=parStats[, field], pvalCutoff)
+			ranks[field,"NonParametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=nonParStats[, field], pvalCutoff)
 		}
 		# order attributes based on the fraction of tests with a p-value below <pvalCutoff>
 		orderBy = apply(ranks[2:3],1, max, na.rm=TRUE)
@@ -93,30 +93,30 @@ main <- function() {
 		write.table(ranks, file=fname, sep="\t", quote=FALSE, row.names=FALSE)
 
 		# plot histograms in the same order they have in the ranks table
-		for( attName in ranks$AttributeName ) {
+		for( field in ranks$AttributeName ) {
 
-			if( ! attName %in% getReportFields() ){ next }
+			if( ! field %in% getReportFields() ){ next }
 
-			logInfo("processing attribute:", attName )
-			stopifnot( attName %in% names(nonParStats) & attName %in% names(parStats) )
+			logInfo("processing attribute:", field )
+			stopifnot( field %in% names(nonParStats) & field %in% names(parStats) )
 
-			parTestName = getTestName(attName, isParametric=TRUE)
+			parTestName = getTestName(field, isParametric=TRUE)
 			xLabelPar = paste( parTestName, "P-Values" )
-			addHistogram( v=parStats[, attName],
+			addHistogram( v=parStats[, field],
 										xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
-										col=getTestName(attName, isParametric=TRUE, returnColors=TRUE) )
+										col=getTestName(field, isParametric=TRUE, returnColors=TRUE) )
 
-			nonParTestName = getTestName(attName, isParametric=FALSE)
+			nonParTestName = getTestName(field, isParametric=FALSE)
 			xLabelNonPar = paste( nonParTestName, "P-Values" )
-			addHistogram( v=nonParStats[, attName],
+			addHistogram( v=nonParStats[, field],
 										xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
-										col=getTestName(attName, isParametric=FALSE, returnColors=TRUE) )
+										col=getTestName(field, isParametric=FALSE, returnColors=TRUE) )
 
 			# shared title
 			plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
 			shiftByPoints = par("mai")[2] * plotPointPerInch
 			centerAt = par("usr")[1] - shiftByPoints
-			mtext(text=attName, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+			mtext(text=field, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
 
 		}
 		# at the end, add the color code reference

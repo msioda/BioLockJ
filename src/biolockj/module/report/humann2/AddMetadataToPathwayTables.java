@@ -13,15 +13,10 @@ package biolockj.module.report.humann2;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
-import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
-import biolockj.module.implicit.RegisterNumReads;
-import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
-import biolockj.util.SummaryUtil;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
@@ -35,9 +30,9 @@ public class AddMetadataToPathwayTables extends HumanN2CountModule implements Ja
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( BuildTaxaTables.class.getName() );
+			preReqs.add( HumanN2ExtractPathwayCounts.class.getName() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
@@ -52,46 +47,7 @@ public class AddMetadataToPathwayTables extends HumanN2CountModule implements Ja
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			sb.append( "# Samples: " + MetaUtil.getSampleIds().size() + RETURN );
-			sb.append( "# Fields:  " + MetaUtil.getFieldNames().size() + RETURN );
-
-			if( !hitRatioPerSample.isEmpty() )
-			{
-
-				for( final String key: hitRatioPerSample.keySet() )
-				{
-					if( hitRatioPerSample.get( key ) == null
-							|| hitRatioPerSample.get( key ).equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
-					{
-						hitRatioPerSample.put( key, "0.0" );
-					}
-				}
-
-				if( !hitRatioPerSample.isEmpty() )
-				{
-					final TreeSet<Double> vals = new TreeSet<>( hitRatioPerSample.values().stream()
-							.map( Double::parseDouble ).collect( Collectors.toSet() ) );
-
-					sb.append( "Min. Hit Ratio:   " + vals.first() + RETURN );
-					sb.append( "Max. Hit Ratio:   " + vals.last() + RETURN );
-					sb.append( "Mean Hit Ratio:   " + SummaryUtil.getMean( vals, true ) + RETURN );
-					sb.append( "Median Hit Ratio: " + SummaryUtil.getMedian( vals, true ) + RETURN );
-
-					if( !vals.first().equals( vals.last() ) )
-					{
-						final Set<String> minSamples = new HashSet<>();
-						for( final String id: hitRatioPerSample.keySet() )
-						{
-							if( hitRatioPerSample.get( id ).equals( vals.first().toString() ) )
-							{
-								minSamples.add( id );
-							}
-						}
-
-						sb.append( "Samples w/ Min. Hit Ratio: " + minSamples + RETURN );
-					}
-				}
-			}
+		
 		}
 		catch( final Exception ex )
 		{
@@ -104,56 +60,16 @@ public class AddMetadataToPathwayTables extends HumanN2CountModule implements Ja
 	}
 
 	/**
-	 * This method matches records from the OTU table and the metadata file by matching the sample ID value in the very
-	 * 1st column.
+	 * This method matches records from the Pathway Abundance table and the metadata file by matching the 
+	 * sample ID value in the very 1st column (regardless of column title).
 	 */
 	@Override
 	public void runModule() throws Exception
 	{
-		final String numReadsCol = RegisterNumReads.getNumReadFieldName();
-		final String numHitsCol = ParserModuleImpl.getOtuCountField();
-		if( numReadsCol != null && numHitsCol != null && MetaUtil.getFieldNames().contains( numReadsCol )
-				&& MetaUtil.getFieldNames().contains( numHitsCol ) )
-		{
-			addHitRatioToMetadata();
-		}
-
 		generateMergedTables();
-
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
-		Log.info( getClass(), "Direct runModule() complete!" );
-	}
-
-	/**
-	 * Add Num_Hits/Num_Reads as Hit_Ratio column to the metadata file
-	 * 
-	 * @throws Exception if unable to build the new metadata column
-	 */
-	protected void addHitRatioToMetadata() throws Exception
-	{
-		for( final String id: MetaUtil.getSampleIds() )
-		{
-			final String numReadsField = MetaUtil.getField( id, RegisterNumReads.getNumReadFieldName() );
-			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getOtuCountField() );
-
-			if( numReadsField == null || numHitsField == null
-					|| numReadsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) )
-					|| numHitsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
-			{
-				hitRatioPerSample.put( id, Config.requireString( MetaUtil.META_NULL_VALUE ) );
-			}
-			else
-			{
-				final long numReads = Long.valueOf( numReadsField );
-				final long numHits = Long.valueOf( numHitsField );
-				Log.info( getClass(),
-						HIT_RATIO + " for: [" + id + "] ==> " + BioLockJUtil.formatPercentage( numHits, numReads ) );
-				hitRatioPerSample.put( id, Double.valueOf( (double) numHits / numReads ).toString() );
-			}
-		}
-
-		MetaUtil.addColumn( HIT_RATIO, hitRatioPerSample, getOutputDir(), true );
+		Log.info( getClass(), "Metadata has been appended to the pathway abundance table" );
 	}
 
 	/**
@@ -224,16 +140,9 @@ public class AddMetadataToPathwayTables extends HumanN2CountModule implements Ja
 		return sb.toString();
 	}
 
-	private final Map<String, String> hitRatioPerSample = new HashMap<>();
 	private String mergeHeaderLine = null;
 	private String mergeSampleLine = null;
 
-	/**
-	 * Metadata column name for column that stores the calculation for:
-	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getOtuCountField()}/
-	 * {@link biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}: {@value #HIT_RATIO}.
-	 */
-	public static final String HIT_RATIO = "Hit_Ratio";
 	/**
 	 * File suffix added to OTU table file name once merged with metadata.
 	 */

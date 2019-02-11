@@ -52,10 +52,10 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		Config.requireString( SCRIPT_PERMISSIONS );
-		Config.requirePositiveInteger( SCRIPT_BATCH_SIZE );
-		Config.requirePositiveInteger( SCRIPT_NUM_THREADS );
-		Config.getPositiveInteger( SCRIPT_TIMEOUT );
+		Config.requireString( this, SCRIPT_PERMISSIONS );
+		Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
+		Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
+		Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
 	}
 
 	/**
@@ -74,10 +74,10 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		}
 		else
 		{
-			final List<List<String>> data = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS )
+			final List<List<String>> data = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
 					? buildScriptForPairedReads( getInputFiles() )
 					: buildScript( getInputFiles() );
-			BashScriptBuilder.buildScripts( this, data, Config.requireInteger( ScriptModule.SCRIPT_BATCH_SIZE ) );
+			BashScriptBuilder.buildScripts( this, data, Config.requireInteger( this, ScriptModule.SCRIPT_BATCH_SIZE ) );
 		}
 	}
 
@@ -185,7 +185,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public Integer getTimeout() throws ConfigFormatException
 	{
-		return Config.getPositiveInteger( SCRIPT_TIMEOUT );
+		return Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
 	}
 
 	/**
@@ -232,7 +232,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 
 	private Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException
 	{
-		return Config.requirePositiveInteger( getProperty( SCRIPT_NUM_THREADS ) );
+		return Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
 	}
 
 	private boolean hasScripts() throws Exception

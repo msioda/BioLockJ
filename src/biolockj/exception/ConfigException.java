@@ -34,36 +34,36 @@ public abstract class ConfigException extends Exception
 	 * Abstract {@link biolockj.Config} exception calls {@link #buildMessage(String, String)} to generate a standard
 	 * error message for Configuration file errors, passing an empty string for the msg parameter.
 	 *
-	 * @param propertyName {@link biolockj.Config} property name
+	 * @param property {@link biolockj.Config} property name
 	 * @param msg Exception type
 	 */
-	public ConfigException( final String propertyName, final String msg )
+	public ConfigException( final String property, final String msg )
 	{
-		super( buildMessage( propertyName, msg ) );
+		super( buildMessage( property, msg ) );
 	}
 
 	/**
 	 * Build a standard error message for Configuration file errors.
 	 * 
-	 * @param propertyName Property name
+	 * @param property Property name
 	 * @param msg Failure details
 	 * @return Exception message that will be passed to superclass {@link java.lang.Exception} via super()
 	 */
-	protected static String buildMessage( final String propertyName, String msg )
+	protected static String buildMessage( final String property, String msg )
 	{
 		if( !msg.isEmpty() )
 		{
 			msg = msg + BioLockJ.RETURN;
 		}
 
-		String val = Config.getString( propertyName );
+		String val = Config.getString( null, property );
 		if( val == null )
 		{
 			val = "{undefined}";
 		}
 
-		return "[ " + propertyName + "=" + val + " ] " + BioLockJ.RETURN + msg
-				+ "Restart pipeline after updating application inputs or Config " + propertyName + " value in: "
+		return "[ " + property + "=" + val + " ] " + BioLockJ.RETURN + msg
+				+ "Restart pipeline after updating application inputs or Config " + property + " value in: "
 				+ Config.getConfigFileName();
 	}
 

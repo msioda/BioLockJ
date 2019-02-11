@@ -14,7 +14,7 @@ package biolockj.exception;
 import biolockj.Config;
 
 /**
- * ConfigPathException is thrown if propertyName is invalid file paths are encountered when processing the BioLockJ
+ * ConfigPathException is thrown if property is invalid file paths are encountered when processing the BioLockJ
  * configuration file.
  */
 public class ConfigPathException extends ConfigException
@@ -34,12 +34,12 @@ public class ConfigPathException extends ConfigException
 	 * ConfigPathException is thrown if the path does not exist or is not the proper file type: {@value #FILE} or
 	 * {@value #DIRECTORY}.
 	 *
-	 * @param propertyName {@link biolockj.Config} property name
+	 * @param property {@link biolockj.Config} property name
 	 * @param fileType File type must be {@value #FILE} or {@value #DIRECTORY}
 	 */
-	public ConfigPathException( final String propertyName, final String fileType )
+	public ConfigPathException( final String property, final String fileType )
 	{
-		super( propertyName, "Current value \"" + Config.getString( propertyName ) + "\" is not a valid " + fileType );
+		super( property, "Current value \"" + Config.getString( null, property ) + "\" is not a valid " + fileType );
 	}
 
 	/**

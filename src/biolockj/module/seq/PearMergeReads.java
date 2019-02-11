@@ -71,22 +71,22 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX );
-		Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX );
-		getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
+		Config.requireString( this, SeqUtil.INPUT_FORWARD_READ_SUFFIX );
+		Config.requireString( this, SeqUtil.INPUT_REVERSE_READ_SUFFIX );
+		getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
 
 		if( !SeqUtil.isFastQ() )
 		{
 			throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
 		}
 
-		if( !Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			throw new Exception( getClass().getName()
 					+ " requires paired input data as a combined multiplexed file or as separate files named with "
 					+ " matching sample IDs ending in the forward & reverse file suffix values: "
-					+ Config.requireString( SeqUtil.INPUT_FORWARD_READ_SUFFIX ) + " & "
-					+ Config.requireString( SeqUtil.INPUT_REVERSE_READ_SUFFIX ) );
+					+ Config.requireString( this, SeqUtil.INPUT_FORWARD_READ_SUFFIX ) + " & "
+					+ Config.requireString( this, SeqUtil.INPUT_REVERSE_READ_SUFFIX ) );
 		}
 	}
 
@@ -154,8 +154,8 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_PEAR_MERGE + "() {" );
-		lines.add( Config.getExe( EXE_PEAR ) + " "
-				+ getRuntimeParams( Config.getList( EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 "
+		lines.add( Config.getExe( this, EXE_PEAR ) + " "
+				+ getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 "
 				+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
 		lines.add( "mv $4" + File.separator + "$1.assembled." + SeqUtil.FASTQ + " $5" + File.separator + "$1."
 				+ SeqUtil.FASTQ );

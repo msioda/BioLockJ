@@ -78,7 +78,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	{
 		try
 		{
-			if( ( (RdpNode) node ).getScore() >= Config.requirePositiveInteger( RDP_THRESHOLD_SCORE ) )
+			if( ( (RdpNode) node ).getScore() >= Config.requirePositiveInteger( this, RDP_THRESHOLD_SCORE ) )
 			{
 				return super.isValid( node );
 			}

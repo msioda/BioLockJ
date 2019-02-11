@@ -75,7 +75,7 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 
 		final TreeMap<String, TreeSet<String>> lowCountOtus = removeLowOtuCounts( sampleOtuCounts );
 		logLowCountOtus( lowCountOtus );
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 		{
 			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
@@ -232,14 +232,14 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 
 	private Integer getMinCount() throws Exception
 	{
-		return Config.requirePositiveInteger( getProp() );
+		return Config.requirePositiveInteger( this, getProp() );
 	}
 	
 	private String getProp() throws Exception
 	{
 		if( prop == null )
 		{
-			prop = getProperty( Constants.REPORT_MIN_COUNT );
+			prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
 		}
 		return prop;
 	}

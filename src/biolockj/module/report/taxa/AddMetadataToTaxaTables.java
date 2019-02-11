@@ -60,7 +60,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 				for( final String key: hitRatioPerSample.keySet() )
 				{
 					if( hitRatioPerSample.get( key ) == null
-							|| hitRatioPerSample.get( key ).equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
+							|| hitRatioPerSample.get( key ).equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
 					{
 						hitRatioPerSample.put( key, "0.0" );
 					}
@@ -137,10 +137,10 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getOtuCountField() );
 
 			if( numReadsField == null || numHitsField == null
-					|| numReadsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) )
-					|| numHitsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
+					|| numReadsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) )
+					|| numHitsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
 			{
-				hitRatioPerSample.put( id, Config.requireString( MetaUtil.META_NULL_VALUE ) );
+				hitRatioPerSample.put( id, Config.requireString( this, MetaUtil.META_NULL_VALUE ) );
 			}
 			else
 			{

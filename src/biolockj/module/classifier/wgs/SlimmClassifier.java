@@ -112,12 +112,12 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 
-		final String inputs = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
-		int index = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? 3: 2;
+		final String inputs = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
+		int index = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? 3: 2;
 
 		lines.add( "function " + FUNCTION_ALIGN + "() {" );
-		lines.add( Config.getExe( EXE_BOWTIE2 ) + getRuntimeBowtieParams() + inputs + " 2> " + "$" + index++ + " | "
-				+ Config.getExe( EXE_SAMTOOLS ) + " view -bS -> $" + index );
+		lines.add( Config.getExe( this, EXE_BOWTIE2 ) + getRuntimeBowtieParams() + inputs + " 2> " + "$" + index++ + " | "
+				+ Config.getExe( this, EXE_SAMTOOLS ) + " view -bS -> $" + index );
 		lines.add( "}" + RETURN );
 		lines.add( "function " + FUNCTION_SLIMM + "() {" );
 		lines.add( getClassifierExe() + getRuntimeSlimmParams() + SLIMM_OUTPUT_PARAM + getOutputDir().getAbsolutePath()
@@ -131,10 +131,10 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( DATABASE );
+			return Config.requireString( this, DATABASE );
 		}
 
-		return Config.requireExistingDir( DATABASE ).getAbsolutePath();
+		return Config.requireExistingDir( this, DATABASE ).getAbsolutePath();
 	}
 
 	private String getInputTypeSwitch() throws Exception
@@ -161,7 +161,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	private void registerDefaultSwitches() throws Exception
 	{
-		bowtieSwitches = BioLockJUtil.join( Config.getList( EXE_BOWTIE_PARAMS ) );
+		bowtieSwitches = BioLockJUtil.join( Config.getList( this, EXE_BOWTIE_PARAMS ) );
 
 		slimmSwitches = BioLockJUtil.join( getClassifierParams() );
 
@@ -207,8 +207,8 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 					+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 		}
 
-		bowtieSwitches = getRuntimeParams( Config.getList( EXE_BOWTIE_PARAMS ), BOWTIE_NUM_THREADS_PARAM ) + "-x "
-				+ Config.requireString( REF_GENOME_INDEX ) + "--mm ";
+		bowtieSwitches = getRuntimeParams( Config.getList( this, EXE_BOWTIE_PARAMS ), BOWTIE_NUM_THREADS_PARAM ) + "-x "
+				+ Config.requireString( this, REF_GENOME_INDEX ) + "--mm ";
 
 		slimmSwitches = getRuntimeParams( getClassifierParams(), null ) + "-m " + getDB() + " ";
 		if( TaxaUtil.getTaxaLevels().size() == 1 )

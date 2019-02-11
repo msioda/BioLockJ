@@ -53,7 +53,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		logBase = Config.getString( Constants.REPORT_LOG_BASE );
+		logBase = Config.getString( this, Constants.REPORT_LOG_BASE );
 		if( logBase != null )
 		{
 			if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
@@ -73,9 +73,9 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		if( Config.getString( Constants.REPORT_LOG_BASE ) != null )
+		if( Config.getString( this, Constants.REPORT_LOG_BASE ) != null )
 		{
-			summary += " Log(" + Config.getString( Constants.REPORT_LOG_BASE ) + ")";
+			summary += " Log(" + Config.getString( this, Constants.REPORT_LOG_BASE ) + ")";
 		}
 
 		summary += " normalized tables";

@@ -15,6 +15,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
+import org.apache.commons.lang.math.NumberUtils;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
@@ -27,14 +28,29 @@ import biolockj.util.*;
  */
 public class RemoveScarcePathwayCounts extends HumanN2CountModule implements JavaModule
 {
+	
+	/**
+	 * Require taxonomy table module as prerequisite
+	 */
+	@Override
+	public List<String> getPreRequisiteModules() throws Exception
+	{
+		final List<String> preReqs = new ArrayList<>();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
+		{
+			preReqs.add( HumanN2ExtractPathwayCounts.class.getName() );
+		}
+		preReqs.addAll( super.getPreRequisiteModules() );
+		return preReqs;
+	}
 
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		if( getScarceCutoff() > 1 )
+		if( getScarceCountCutoff() > 1 )
 		{
-			throw new ConfigFormatException( getScarceProp(), "Required range 0.0 < " + getScarceProp() + " < 1.0 " );
+			throw new ConfigFormatException( getScarceCountProp(), "Required range 0.0 < " + getScarceCountProp() + " < 1.0 " );
 		}
 	}
 
@@ -61,29 +77,33 @@ public class RemoveScarcePathwayCounts extends HumanN2CountModule implements Jav
 	public void runModule() throws Exception
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
-		final TreeMap<String, TreeSet<String>> scarceCounts = removeScarcePathwayCounts( getScarcePathways() );
-		logScarcePathways( scarceCounts );
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
+		final File inputFile = getInputFiles().iterator().next();
+		final List<List<String>> table = BioLockJUtil.parseCountTable( inputFile );
+
+		logScarceData( removeScarcePathwayCounts( getScarcePathways( table ) ),  getScarcePathwayLogFile() );
+		logScarceData( removeScarceSamples( getScarceSampleIds( table ) ),  getScarceSampleLogFile() );
+
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName(), uniquePathwaysPerSample, getTempDir(), true );
-			MetaUtil.addColumn( getMetaColName(), totalPathwaysPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + "Unique_Pathways", uniquePathwaysPerSample, getTempDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + "Total_Pathways", totalPathwaysPerSample, getOutputDir(), true );
 		}
 	}
 
 	/**
-	 * Save a list of low count pathways to the module temp directory.
+	 * Save a list of low count pathways or samples to the module temp directory.
 	 * 
-	 * @param map TreeMap(sampleId, TreeSet(Pathway)) of Pathways found in too few samples
+	 * @param map TreeMap(sampleId, TreeSet(data)) of Pathways found in too few samples or pathways
 	 * @throws Exception if errors occur
 	 */
-	protected void logScarcePathways( final TreeMap<String, TreeSet<String>> map ) throws Exception
+	protected void logScarceData( final TreeMap<String, TreeSet<String>> map, final File file ) throws Exception
 	{
 		if( map == null || map.isEmpty() )
 		{
 			Log.info( getClass(), "No low-count pathways detected" );
 			return;
 		}
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getScarcePathwayLogFile() ) );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( file ) );
 		try
 		{
 			for( final String id: map.keySet() )
@@ -105,6 +125,45 @@ public class RemoveScarcePathwayCounts extends HumanN2CountModule implements Jav
 		Log.info( getClass(),
 				"Found " + map.size() + " samples with scarce pathways to removed- Pathway list saved to --> "
 						+ getScarcePathwayLogFile().getAbsolutePath() );
+	}
+	
+	
+	protected TreeMap<String, TreeSet<String>> removeScarceSamples( final Set<String> scarceIds )
+			throws Exception
+	{
+		final TreeMap<String, TreeSet<String>> scarceSampleMap = new TreeMap<>();
+		final File inputFile = getInputFiles().iterator().next();
+		final List<List<String>> table = BioLockJUtil.parseCountTable( inputFile );
+		final List<List<String>> output = new ArrayList<>();
+		List<String> pathways = null;
+		for( final List<String> record: table )
+		{
+			final String id = record.get( 0 );
+			if( id.equals( MetaUtil.getID() ) )
+			{
+				pathways = record.subList( 1, record.size() );
+			}
+			
+			if( scarceIds.contains( id ) )
+			{
+				scarceSampleMap.put( id, new TreeSet<>() );
+				for( int i=1; i<record.size(); i++  )
+				{
+					if( !record.get( i ).equals( "0" ) )
+					{
+						scarceSampleMap.get( id ).add( pathways.get( i ) );
+					}	
+				}
+			}
+			else
+			{
+				output.add( record );
+			}
+		}
+
+		buildOutputTable( output );
+
+		return scarceSampleMap;
 	}
 
 	/**
@@ -175,7 +234,7 @@ public class RemoveScarcePathwayCounts extends HumanN2CountModule implements Jav
 			{
 				scarcePathMap.put( id, badSamplePathways );
 				Log.warn( getClass(), id + ": Removed " + badSamplePathways.size() + " low Pathway counts (below "
-						+ getScarceProp() + "=" + getMetaColName() + ") --> " + badSamplePathways );
+						+ getScarceCountProp() + "=" + getMetaColName() + ") --> " + badSamplePathways );
 			}
 		}
 
@@ -186,7 +245,8 @@ public class RemoveScarcePathwayCounts extends HumanN2CountModule implements Jav
 
 	private void buildOutputTable( final List<List<String>> data ) throws Exception
 	{
-		final File file = PathwayUtil.getPathwayCountFile( getOutputDir(), getMetaColName() );
+		final String cutoff = "_" + getMetaColName().replaceAll( "%", "per" );
+		final File file = PathwayUtil.getPathwayCountFile( getOutputDir(), cutoff ) ;
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( file ) );
 		try
 		{
@@ -219,34 +279,89 @@ public class RemoveScarcePathwayCounts extends HumanN2CountModule implements Jav
 
 	private int getCutoff() throws Exception
 	{
-		if( cutoff == null )
+		if( scarceCountCutoff == null )
 		{
-			cutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCutoff() ) ).intValue();
+			scarceCountCutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCountCutoff() ) ).intValue();
 		}
 
-		return cutoff;
+		return scarceCountCutoff;
+	}
+	
+	private int getSampleCutoff() throws Exception
+	{
+		if( scarceSampleCutoff == null )
+		{
+			scarceSampleCutoff = new Double( Math.ceil( MetaUtil.getFieldNames().size() * getScarceSampleCutoff() ) ).intValue();
+		}
+
+		return scarceSampleCutoff;
 	}
 
 	private String getMetaColName() throws Exception
 	{
-		return "scarcePathway" + new Double( getScarceCutoff() * 100 ).intValue() + "%";
+		return "scarce" + new Double( getScarceCountCutoff() * 100 ).intValue() + "%";
 	}
 
-	private Double getScarceCutoff() throws Exception
+	private Double getScarceCountCutoff() throws Exception
 	{
-		return Config.requirePositiveDouble( getScarceProp() );
+		return Config.requirePositiveDouble( this, getScarceCountProp() );
+	}
+	
+	private Double getScarceSampleCutoff() throws Exception
+	{
+		return Config.requirePositiveDouble( this, getScarceSampleProp() );
 	}
 
 	private File getScarcePathwayLogFile() throws Exception
 	{
 		return new File( getTempDir().getAbsolutePath() + File.separator + "scarcePathways" + TXT_EXT );
 	}
+	
+	private File getScarceSampleLogFile() throws Exception
+	{
+		return new File( getTempDir().getAbsolutePath() + File.separator + "scarceSamples" + TXT_EXT );
+	}
+	
+	private Set<String> getScarceSampleIds( final List<List<String>> table ) throws Exception
+	{
+		final Set<String> scarceIds = new HashSet<>();
+		table.remove( 0 );
+		for( final List<String> record: table )
+		{
+			String id = null;
+			int count = 0;
+			boolean newRecord = true;
+			for( String cell: record )
+			{
+				if( newRecord )
+				{
+					id = cell;
+					if( id.equals( TARGET ) )
+					{
+						Log.info( getClass(), "TARGET " + TARGET + " located!" );
+					}
+				}
+				else if( NumberUtils.isNumber( cell ) && Double.valueOf( cell ) > 0 )
+				{
+					count++;
+				}
+				newRecord = false;
+			}
+			
+			if( count < getSampleCutoff() )
+			{
+				scarceIds.add( id );
+				totalPathwaysPerSample.remove( id );
+				uniquePathwaysPerSample.remove( id );
+			}
+		}
 
-	private Set<String> getScarcePathways() throws Exception
+		return scarceIds;
+	}
+
+	private Set<String> getScarcePathways( final List<List<String>> table ) throws Exception
 	{
 		final Set<String> scarcePathways = new HashSet<>();
-		final File inputFile = getInputFiles().iterator().next();
-		final List<List<String>> table = BioLockJUtil.parseCountTable( inputFile );
 		final Map<String, Integer> pathMap = new HashMap<>();
 		List<String> pathways = null;
 		for( final List<String> record: table )
@@ -285,17 +400,30 @@ public class RemoveScarcePathwayCounts extends HumanN2CountModule implements Jav
 		return scarcePathways;
 	}
 
-	private String getScarceProp() throws Exception
+	private String getScarceCountProp() throws Exception
 	{
-		if( prop == null )
+		if( scarceCountCutoffProp == null )
 		{
-			prop = getProperty( Constants.REPORT_SCARCE_CUTOFF );
+			scarceCountCutoffProp = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
 		}
-		return prop;
+		return scarceCountCutoffProp;
 	}
-
-	private String prop = null;
-	private Integer cutoff = null;
+	
+	private String getScarceSampleProp() throws Exception
+	{
+		if( scarceSampleCutoffProp == null )
+		{
+			scarceSampleCutoffProp = Config.getModuleProp( this, Constants.REPORT_SAMPLE_CUTOFF );
+		}
+		return scarceSampleCutoffProp;
+	}
+	
+	private String TARGET = "AOX7";
+	
+	private String scarceSampleCutoffProp = null;
+	private String scarceCountCutoffProp = null;
+	private Integer scarceCountCutoff = null;
+	private Integer scarceSampleCutoff = null;
 	private final Set<String> sampleIds = new HashSet<>();
 	private Map<String, String> totalPathwaysPerSample = new HashMap<>();
 	private Map<String, String> uniquePathwaysPerSample = new HashMap<>();

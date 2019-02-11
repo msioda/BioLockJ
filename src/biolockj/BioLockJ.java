@@ -315,14 +315,14 @@ public class BioLockJ
 		else
 		{
 			PropUtil.saveMasterConfig( null );
-			if( Config.getBoolean( Constants.PROJECT_COPY_FILES ) )
+			if( Config.getBoolean( null, Constants.PROJECT_COPY_FILES ) )
 			{
 				SeqUtil.copyInputData();
 			}
 
 			Pipeline.runPipeline();
 
-			if( Config.getBoolean( Constants.PROJECT_DELETE_TEMP_FILES ) )
+			if( Config.getBoolean( null, Constants.PROJECT_DELETE_TEMP_FILES ) )
 			{
 				removeTempFiles();
 			}
@@ -448,7 +448,7 @@ public class BioLockJ
 		{
 			try
 			{
-				final String perm = Config.getString( Constants.PROJECT_PERMISSIONS );
+				final String perm = Config.getString( null, Constants.PROJECT_PERMISSIONS );
 				if( perm != null )
 				{
 					Job.setFilePermissions( Config.pipelinePath(), perm );

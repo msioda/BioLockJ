@@ -26,6 +26,21 @@ import biolockj.util.*;
  */
 public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaModule
 {
+	
+	/**
+	 * Require taxonomy table module as prerequisite
+	 */
+	@Override
+	public List<String> getPreRequisiteModules() throws Exception
+	{
+		final List<String> preReqs = new ArrayList<>();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
+		{
+			preReqs.add( HumanN2ExtractPathwayCounts.class.getName() );
+		}
+		preReqs.addAll( super.getPreRequisiteModules() );
+		return preReqs;
+	}
 
 	@Override
 	public void checkDependencies() throws Exception
@@ -57,13 +72,12 @@ public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaMo
 	public void runModule() throws Exception
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
-
 		final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts();
 		logLowCountPathways( lowCounts );
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName(), uniquePathwaysPerSample, getTempDir(), true );
-			MetaUtil.addColumn( getMetaColName(), totalPathwaysPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + "Unique Pathways", uniquePathwaysPerSample, getTempDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + "Total Pathways", totalPathwaysPerSample, getOutputDir(), true );
 		}
 	}
 
@@ -254,19 +268,19 @@ public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaMo
 
 	private String getMetaColName() throws Exception
 	{
-		return "minPathway" + getMinCount();
+		return "minCount" + getMinCount();
 	}
 
 	private Integer getMinCount() throws Exception
 	{
-		return Config.requirePositiveInteger( getProp() );
+		return Config.requirePositiveInteger( this, getProp() );
 	}
 	
 	private String getProp() throws Exception
 	{
 		if( prop == null )
 		{
-			prop = getProperty( Constants.REPORT_MIN_COUNT );
+			prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
 		}
 		return prop;
 	}

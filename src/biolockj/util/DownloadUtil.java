@@ -94,7 +94,7 @@ public final class DownloadUtil
 					? "; mkdir -p " + getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR )
 					: "";
 			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + rDirs + "; scp -rp "
-					+ getClusterUser() + "@" + Config.requireString( Email.CLUSTER_HOST ) + ":\"" + targets + "\" "
+					+ getClusterUser() + "@" + Config.requireString( null, Email.CLUSTER_HOST ) + ":\"" + targets + "\" "
 					+ DEST;
 			return "Download " + label + " [" + displaySize + "]:" + RETURN + cmd;
 		}
@@ -110,7 +110,7 @@ public final class DownloadUtil
 	 */
 	public static String getDownloadDirPath() throws Exception
 	{
-		String dir = Config.getString( DOWNLOAD_DIR );
+		String dir = Config.getString( null, DOWNLOAD_DIR );
 		if( dir != null )
 		{
 			if( !dir.endsWith( File.separator ) )
@@ -254,9 +254,9 @@ public final class DownloadUtil
 		final File script = new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
 
-		if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
+		if( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
-			writer.write( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN + RETURN );
+			writer.write( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN + RETURN );
 		}
 
 		writer.write( "# Use this script to locally run R modules." + RETURN );

@@ -116,7 +116,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
-		final String params = "$1 $2" + ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " $3": "" );
+		final String params = "$1 $2" + ( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " $3": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" + RETURN );
@@ -130,10 +130,10 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( KRAKEN_DATABASE );
+			return Config.requireString( this, KRAKEN_DATABASE );
 		}
 
-		return Config.requireExistingDir( KRAKEN_DATABASE ).getAbsolutePath();
+		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
 	/**
@@ -214,7 +214,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	private String getWorkerFunctionParams() throws Exception
 	{
 		String params = " " + getParams();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}
@@ -225,7 +225,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		}
 
 		params += DB_PARAM + getDB() + " " + getInputSwitch();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}

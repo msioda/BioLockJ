@@ -136,15 +136,15 @@ public class BioModuleFactory
 	 */
 	private List<String> getConfigModules() throws Exception
 	{
-		final List<String> configModules = Config.requireList( Constants.INTERNAL_BLJ_MODULE );
+		final List<String> configModules = Config.requireList( null, Constants.INTERNAL_BLJ_MODULE );
 		final List<String> modules = new ArrayList<>();
-		if( !Config.getBoolean( Constants.DISABLE_ADD_IMPLICIT_MODULES ) )
+		if( !Config.getBoolean( null, Constants.DISABLE_ADD_IMPLICIT_MODULES ) )
 		{
 			Log.info( getClass(), "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
 			configModules.remove( ImportMetadata.class.getName() );
 			modules.add( ImportMetadata.class.getName() );
 
-			if( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED ) )
+			if( Config.getBoolean( null, SeqUtil.INTERNAL_MULTIPLEXED ) )
 			{
 				Log.info( getClass(),
 						"Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
@@ -152,7 +152,7 @@ public class BioModuleFactory
 				modules.add( ModuleUtil.getDefaultDemultiplexer() );
 			}
 
-			if( Config.getBoolean( SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
+			if( Config.getBoolean( null, SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
 			{
 				Log.info( getClass(), "Set required module (for multi seq-line fasta files ): "
 						+ ModuleUtil.getDefaultFastaConverter() );
@@ -163,7 +163,7 @@ public class BioModuleFactory
 
 		for( final String module: configModules )
 		{
-			if( isImplicitModule( module ) && !Config.getBoolean( Constants.DISABLE_ADD_IMPLICIT_MODULES ) )
+			if( isImplicitModule( module ) && !Config.getBoolean( null, Constants.DISABLE_ADD_IMPLICIT_MODULES ) )
 			{
 				warn( "Ignoring configured module [" + module
 						+ "] since implicit BioModules are added to the pipeline by the system if needed.  "
@@ -240,7 +240,7 @@ public class BioModuleFactory
 		{
 			safteyCheck = SAFE_MAX;
 			final BioModule module = ModuleUtil.getModule( className );
-			if( !Config.getBoolean( Constants.DISABLE_PRE_REQ_MODULES ) )
+			if( !Config.getBoolean( null, Constants.DISABLE_PRE_REQ_MODULES ) )
 			{
 				for( final String mod: getPreRequisites( module ) )
 				{
@@ -302,7 +302,7 @@ public class BioModuleFactory
 			{
 				finalModules.add( SeqFileValidator.class.getName() );
 				info( "Config property [ " + Constants.REPORT_NUM_READS + "=" + Constants.TRUE + " ] & [ "
-						+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE )
+						+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( null, SeqUtil.INTERNAL_SEQ_TYPE )
 						+ " ] --> Adding module: " + SeqFileValidator.class.getName() );
 			}
 			if( requireGunzip( module ) )
@@ -341,7 +341,7 @@ public class BioModuleFactory
 	private boolean requireCountMod() throws Exception
 	{
 		return !foundCountMod && Collections.disjoint( moduleCache, getCountModules() )
-				&& Config.getBoolean( Constants.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
+				&& Config.getBoolean( null, Constants.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
 	}
 
 	private boolean requireGunzip( final String module ) throws Exception
