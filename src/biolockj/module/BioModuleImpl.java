@@ -141,8 +141,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	}
 
 	/**
-	 * Returns moduleDir/temp for intermediate files. If {@link biolockj.BioLockJ#PROJECT_DELETE_TEMP_FILES} =
-	 * {@value biolockj.Config#TRUE}, this directory is deleted after pipeline completes successfully.
+	 * Returns moduleDir/temp for intermediate files. If {@link biolockj.Constants#PROJECT_DELETE_TEMP_FILES} =
+	 * {@value biolockj.Constants#TRUE}, this directory is deleted after pipeline completes successfully.
 	 */
 	@Override
 	public File getTempDir()
@@ -196,7 +196,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	}
 
 	/**
-	 * Cache the input files for quick access on subsequent calls to {@linke #getInputFiles()}
+	 * Cache the input files for quick access on subsequent calls to {@link #getInputFiles()}
 	 * 
 	 * @param files Input files
 	 * @throws Exception if errors occur
@@ -214,7 +214,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 
 	/**
 	 * Called upon first access of input files to return sorted list of files from all
-	 * {@link biolockj.Config}.{@value biolockj.Config#INPUT_DIRS}<br>
+	 * {@link biolockj.Config}.{@value biolockj.Constants#INPUT_DIRS}<br>
 	 * Hidden files (starting with ".") are ignored<br>
 	 * Call {@link #isValidInputModule(BioModule)} on each previous module until acceptable input files are found<br>
 	 * 
@@ -272,7 +272,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	}
 
 	/**
-	 * Validate files in {@link biolockj.Config#INPUT_DIRS} have unique names. BioModules that expect duplicates must
+	 * Validate files in {@link biolockj.Constants#INPUT_DIRS} have unique names. BioModules that expect duplicates must
 	 * override this method.
 	 *
 	 * @param fileNames A registry of module input file names added so far

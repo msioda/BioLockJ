@@ -182,7 +182,7 @@ public class Pipeline
 	 * This method executes all new and incomplete modules<br>
 	 * Before/after a module is executed, set persistent module status by creating status indicator files. Incomplete
 	 * modules have an empty file {@value Constants#BLJ_STARTED} in the module directory.<br>
-	 * Complete modules have an empty file {@value BioLockJ#BLJ_COMPLETE} in the module directory.<br>
+	 * Complete modules have an empty file {@value Constants#BLJ_COMPLETE} in the module directory.<br>
 	 * {@link biolockj.module.BioModule}s are run in the order listed in the {@link biolockj.Config} file.<br>
 	 * <p>
 	 * Execution steps:
@@ -190,7 +190,7 @@ public class Pipeline
 	 * <li>File {@value Constants#BLJ_STARTED} is added to the module directory
 	 * <li>Execute {@link #refreshOutputMetadata(BioModule)} to cache updated metadata, if generatede.
 	 * <li>Run module scripts, if any, polling 1/minute for status until all scripts complete or time out.
-	 * <li>File {@value Constants#BLJ_STARTED} is replaced by {@value BioLockJ#BLJ_COMPLETE} as status indicator
+	 * <li>File {@value Constants#BLJ_STARTED} is replaced by {@value Constants#BLJ_COMPLETE} as status indicator
 	 * </ol>
 	 *
 	 * @throws Exception if script errors occur
@@ -263,7 +263,7 @@ public class Pipeline
 	/**
 	 * Initialization occurs by calling {@link biolockj.module.BioModule} methods on configured modules<br>
 	 * <ol>
-	 * <li>Create module sub-directories under {@value biolockj.Config#PROJECT_PIPELINE_DIR} as ordered in
+	 * <li>Create module sub-directories under {@value biolockj.Constants#PROJECT_PIPELINE_DIR} as ordered in
 	 * {@link biolockj.Config} file.<br>
 	 * <li>Reset the {@link biolockj.util.SummaryUtil} module so previous summary descriptions can be used for completed
 	 * modules

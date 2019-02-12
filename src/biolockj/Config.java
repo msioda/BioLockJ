@@ -522,12 +522,12 @@ public class Config
 	}
 
 	/**
-	 * Required to return a valid boolean {@value #TRUE} or {@value #FALSE}
+	 * Required to return a valid boolean {@value Constants#TRUE} or {@value Constants#FALSE}
 	 *
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
-	 * @return boolean {@value #TRUE} or {@value #FALSE}
-	 * @throws ConfigNotFoundException if property is undefined
+	 * @return boolean {@value Constants#TRUE} or {@value Constants#FALSE}
+	 * @throws ConfigNotFoundException if propertyName is undefined
 	 * @throws ConfigFormatException if property is defined, but not set to a boolean value
 	 */
 	public static boolean requireBoolean( final BioModule module, final String property )
@@ -840,7 +840,7 @@ public class Config
 	}
 
 	/**
-	 * Set the {@value #PROJECT_PIPELINE_NAME} and {@value #PROJECT_PIPELINE_DIR} Create a pipeline root directory if
+	 * Set {@value Constants#PROJECT_PIPELINE_DIR} Create a pipeline root directory if
 	 * the pipeline is new.
 	 * 
 	 * @return TRUE if a new pipeline directory was created

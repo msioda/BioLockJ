@@ -309,7 +309,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 	/**
 	 * Verify equal number of forward and reverse read files.<br>
-	 * if {@value #REQUIRE_EUQL_NUM_PAIRS}={@value biolockj.Config#TRUE}, verify forward and reverse read files have an
+	 * if {@value #REQUIRE_EUQL_NUM_PAIRS}={@value biolockj.Constants#TRUE}, verify forward and reverse read files have an
 	 * equal number of reads.
 	 * 
 	 * @throws Exception if validations fail or errors occur

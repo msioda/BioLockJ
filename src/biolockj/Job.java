@@ -12,7 +12,6 @@
 package biolockj;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +96,7 @@ public class Job
 	 * Set file permissions by executing chmod {@value biolockj.module.ScriptModule#SCRIPT_PERMISSIONS} on generated
 	 * bash scripts.
 	 *
-	 * @param dir Target directory path
+	 * @param path Target directory path
 	 * @param permissions Set the chmod security bits (ex 764)
 	 * @throws Exception if chmod command command fails
 	 */
@@ -116,7 +115,7 @@ public class Job
 	/**
 	 * This method is called by script generating {@link biolockj.module.ScriptModule}s to update the script
 	 * file-permissions to ensure they are executable by the program. Once file permissions are set, the main script
-	 * (passed in the args param) is executed. Calls {@link #setFilePermissions(File, String)} and
+	 * (passed in the args param) is executed. Calls {@link #setFilePermissions(String, String)} and
 	 * {@link #submit(ScriptModule)}
 	 *
 	 * @param module ScriptModule that is submitting its main script as a Job

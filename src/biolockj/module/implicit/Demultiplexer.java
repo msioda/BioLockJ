@@ -527,8 +527,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	/**
 	 * Set the {@link biolockj.Config} properties needed to read the sample IDs from a multiplexed file if no barcode is
 	 * provided<br>
-	 * Set {@link biolockj.Config}.{@value biolockj.Config#INPUT_TRIM_PREFIX} = 1st sequence header character.<br>
-	 * Set {@link biolockj.Config}.{@value biolockj.Config#INPUT_TRIM_SUFFIX}
+	 * Set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INPUT_TRIM_PREFIX} = 1st sequence header character.<br>
+	 * Set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INPUT_TRIM_SUFFIX}
 	 * ={@value #SAMPLE_ID_SUFFIX_TRIM_DEFAULT}<br>
 	 * 
 	 * @throws Exception if unable to update the property values
@@ -852,7 +852,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	/**
 	 * Multiplexed files created by BioLockJ may add sample ID to the sequence header if no barcode is provided.<br>
 	 * If sample ID is added, it is immediately followed by the character: {@value #SAMPLE_ID_SUFFIX_TRIM_DEFAULT}<br>
-	 * This value can be used then to set {@link biolockj.Config}.{@value biolockj.Config#INPUT_TRIM_SUFFIX}
+	 * This value can be used then to set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INPUT_TRIM_SUFFIX}
 	 */
 	protected static final String SAMPLE_ID_SUFFIX_TRIM_DEFAULT = "_";
 

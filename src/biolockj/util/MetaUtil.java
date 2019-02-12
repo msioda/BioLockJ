@@ -101,8 +101,8 @@ public class MetaUtil
 	 * @param field Metadata column
 	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
 	 * @return boolean if field values are unique
-	 * @throws Exception
-	 */
+	 * @throws Exception if runtime errors occur
+	 */ 
 	public static boolean fieldValuesAreUnique( final String field, final boolean ignoreNulls ) throws Exception
 	{
 		final int numVals = getFieldValues( field, ignoreNulls ).size();
@@ -290,6 +290,7 @@ public class MetaUtil
 	 * Get the metadata file name, if it exists, otherwise return projectName.tsv
 	 *
 	 * @return Name of metadata file, or a default name if no metadata file exists #throws Exception if errors occur
+	 * @throws Exception if runtime errors occur
 	 */
 	public static String getMetadataFileName() throws Exception
 	{
@@ -337,7 +338,7 @@ public class MetaUtil
 	/**
 	 * Return the metadata file path
 	 * 
-	 * @return
+	 * @return String the metadata file path
 	 */
 	public static String getPath()
 	{
@@ -738,7 +739,7 @@ public class MetaUtil
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #META_REQUIRED}<br>
-	 * If Y, require metadata row for each sample with sequence data in {@value biolockj.Config#INPUT_DIRS}.<br>
+	 * If Y, require metadata row for each sample with sequence data in {@value biolockj.Constants#INPUT_DIRS}.<br>
 	 * If N, samples without metadata are ignored.
 	 */
 	public static final String META_REQUIRED = "metadata.required";

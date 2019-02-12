@@ -115,7 +115,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan2, humann2, or slimm).<br>
 	 * <p>
 	 * The purpose of this method is to allow users to configure multiple classifiers in a default properties file.<br>
-	 * Instead of setting the property {@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER} in the
+	 * Instead of setting the property {@value biolockj.Constants#EXE_CLASSIFIER} in the
 	 * {@link biolockj.Config} file, leave this value blank and configure the default properties file one time with:
 	 * "rdp.classifier", "qiime.classifier", "kraken.classifier", etc.<br>
 	 *

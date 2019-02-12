@@ -63,10 +63,12 @@ public class SummaryUtil
 	}
 
 	/**
-	 * Retun the min/max/mean/median summary stats for the given metadata numeric column
+	 * Return the min/max/mean/median summary stats for the given metadata numeric column
 	 * 
 	 * @param map Map(sampleId,count)
 	 * @param label Context label
+	 * @param numSpaces number of spaces used in padding
+	 * @param addTotal include line giving the total 
 	 * @return Summary lines
 	 * @throws Exception if errors occur
 	 */

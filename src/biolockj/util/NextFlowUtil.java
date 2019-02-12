@@ -49,12 +49,7 @@ public class NextFlowUtil
 		return lines;
 	}
 
-	/**
-	 * 
-	 * @param module
-	 * @return
-	 * @throws Exception
-	 */
+
 	protected static List<String> getProcessLines( final BioModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();

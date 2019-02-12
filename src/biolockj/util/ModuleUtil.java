@@ -272,7 +272,6 @@ public class ModuleUtil
 	 * 
 	 * @param module BioModule in question
 	 * @return TRUE if module produced exactly 1 file (metadata file)
-	 * @throws Exception if errors occur
 	 */
 	public static boolean isMetadataModule( final BioModule module )
 	{
@@ -301,11 +300,11 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Method creates a file named {@value biolockj.BioLockJ#BLJ_COMPLETE} in bioModule root directory to document
+	 * Method creates a file named {@value biolockj.Constants#BLJ_COMPLETE} in bioModule root directory to document
 	 * bioModule has completed successfully. Also clean up by removing file {@value biolockj.Constants#BLJ_STARTED}.
 	 *
 	 * @param bioModule BioModule
-	 * @throws Exception if unable to create {@value biolockj.BioLockJ#BLJ_COMPLETE} file
+	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_COMPLETE} file
 	 */
 	public static void markComplete( final BioModule bioModule ) throws Exception
 	{
@@ -349,9 +348,9 @@ public class ModuleUtil
 	/**
 	 * Check if a module was in the pipeline at least once.
 	 * 
-	 * @param className
-	 * @return
-	 * @throws Exception
+	 * @param className module simple name
+	 * @return boolean
+	 * @throws Exception if runtime errors occur
 	 */
 	public static boolean moduleExists( final String className ) throws Exception
 	{

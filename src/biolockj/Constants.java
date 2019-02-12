@@ -14,12 +14,12 @@ public class Constants
 	public static final String AWS_STACK = "aws.stack";
 
 	/**
-	 * Name of the file created in the BioModule or {@value biolockj.Config##PROJECT_PIPELINE_DIR} root directory to
+	 * Name of the file created in the BioModule or {@value #PROJECT_PIPELINE_DIR} root directory to
 	 * indicate execution was successful: {@value #BLJ_COMPLETE}
 	 */
 	public static final String BLJ_COMPLETE = "biolockjComplete";
 	/**
-	 * Name of the file created in the {@value biolockj.Config#PROJECT_PIPELINE_DIR} root directory to indicate fatal
+	 * Name of the file created in the {@value #PROJECT_PIPELINE_DIR} root directory to indicate fatal
 	 * application errors halted execution: {@value #BLJ_FAILED}
 	 */
 	public static final String BLJ_FAILED = "biolockjFailed";
@@ -62,13 +62,13 @@ public class Constants
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
-	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
+	 * If set to {@value #TRUE}, implicit modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_ADD_IMPLICIT_MODULES = "project.disableAddImplicitModules";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_PRE_REQ_MODULES}<br>
-	 * If set to {@value biolockj.Config#TRUE}, prerequisite modules will not be added to the pipeline.
+	 * If set to {@value #TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
 
@@ -310,7 +310,7 @@ public class Constants
 	public static final String TXT_EXT = ".txt";
 
 	/**
-	 * {@link biolockj.Config} property to define permission setttings when running chmod on pipeline root dir:
+	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:
 	 * {@value #PROJECT_PERMISSIONS}
 	 */
 	protected static final String PROJECT_PERMISSIONS = "project.permissions";

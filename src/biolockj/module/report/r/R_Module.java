@@ -17,7 +17,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.*;
-import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
@@ -103,7 +102,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	/**
 	 * If running Docker, run the Docker bash script, otherwise:<br>
 	 * Run {@link biolockj.Config}.{@value #EXE_RSCRIPT} command on the generated R Script:
-	 * {@link biolockj.util.ModuleUtil#getMainScript(BioModule)}.
+	 * {@link ScriptModuleImpl#getMainScript()}.
 	 */
 	@Override
 	public String[] getJobParams() throws Exception

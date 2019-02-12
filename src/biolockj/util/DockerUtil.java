@@ -127,9 +127,9 @@ public class DockerUtil
 	 * <br>
 	 * Example: JavaModule becomes java_module
 	 * 
-	 * @param className
-	 * @return
-	 * @throws Exception
+	 * @param className class name with no spaces
+	 * @return String the Docker image name
+	 * @throws Exception if runtime errors occur
 	 */
 	public static String getImageName( final String className ) throws Exception
 	{
@@ -155,9 +155,9 @@ public class DockerUtil
 	 * Get the Docker image version if defined in the {@link biolockj.Config} file<br>
 	 * If not found, return the default version "latest"
 	 * 
-	 * @param module
-	 * @return
-	 * @throws Exception
+	 * @param module check for {@link biolockj.Config} options specific to this module
+	 * @return String Docker image version
+	 * @throws Exception if runtime errors occur
 	 */
 	public static String getImageVersion( final BioModule module ) throws Exception
 	{
@@ -259,7 +259,7 @@ public class DockerUtil
 	public static final String CONTAINER_CONFIG_DIR = File.separator + "config";
 
 	/**
-	 * All containers mount the host {@value biolockj.Config#INPUT_DIRS} to the container "input" volume
+	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume
 	 */
 	public static final String CONTAINER_INPUT_DIR = File.separator + "input";
 
@@ -269,7 +269,7 @@ public class DockerUtil
 	public static final String CONTAINER_META_DIR = File.separator + "meta";
 
 	/**
-	 * All containers mount {@value biolockj.Config#PROJECT_PIPELINE_DIR} to the container "pipelines" volume
+	 * All containers mount {@value biolockj.Constants#PROJECT_PIPELINE_DIR} to the container "pipelines" volume
 	 */
 	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipelines";
 

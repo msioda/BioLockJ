@@ -382,7 +382,6 @@ public class BioModuleFactory
 	/**
 	 * Register the complete list of modules to run.
 	 * 
-	 * @return List of Module Java class names
 	 * @throws Exception if errors occur
 	 */
 	public static void initFactory() throws Exception

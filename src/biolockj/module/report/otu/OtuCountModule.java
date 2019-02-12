@@ -59,7 +59,6 @@ public abstract class OtuCountModule extends JavaModuleImpl implements JavaModul
 	 * 
 	 * @param module BioModule
 	 * @return TRUE if module generated OTU count files
-	 * @throws Exception if errors occur
 	 */
 	protected boolean isOtuModule( final BioModule module )
 	{

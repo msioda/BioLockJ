@@ -69,7 +69,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 	/**
 	 * Call {@link biolockj.module.implicit.qiime.QiimeClassifier} checkOtuPickingDependencies() method to verify OTU
 	 * picking script parameters. If not in Docker mode and property
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Config#TRUE},
+	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Constants#TRUE},
 	 * verify {@value biolockj.module.implicit.qiime.QiimeClassifier#EXE_VSEARCH_PARAMS}.
 	 */
 	@Override

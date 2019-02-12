@@ -109,7 +109,7 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Return the file extension - but ignore {@value biolockj.BioLockJ#GZIP_EXT}.
+	 * Return the file extension - but ignore {@value biolockj.Constants#GZIP_EXT}.
 	 * 
 	 * @param file File
 	 * @return File extension
@@ -601,7 +601,7 @@ public class BioLockJUtil
 	 * Internal {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_INPUT_TYPES}<br>
 	 *
 	 * This value is set after parsing the input files from {@link biolockj.Config} property:
-	 * {@value biolockj.Config#INPUT_DIRS} in the method: {@link #getPipelineInputFiles()}. The primary purpose of
+	 * {@value biolockj.Constants#INPUT_DIRS} in the method: {@link #getPipelineInputFiles()}. The primary purpose of
 	 * storing this value is to determine if {@link biolockj.module.BioModule#getPreRequisiteModules()} are appropriate
 	 * to add during pipeline initialization.<br>
 	 * <br>
@@ -610,7 +610,7 @@ public class BioLockJUtil
 	 * {@link biolockj.Config}. This ensures the current module will have the correct input files and is a convenient
 	 * way to manage the size and readability of {@link biolockj.Config} files. Prerequisite modules are always
 	 * appropriate for full pipelines with sequence input file, however if the output from a prerequisite module is used
-	 * as the input for a new pipeline via {@value biolockj.Config#INPUT_DIRS}, adding the prerequisite module will
+	 * as the input for a new pipeline via {@value biolockj.Constants#INPUT_DIRS}, adding the prerequisite module will
 	 * cause FATAL pipeline errors.<br>
 	 * <br>
 	 * 
@@ -660,7 +660,7 @@ public class BioLockJUtil
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_R_INPUT_TYPE}<br>
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} if input files are some type of count table merged
 	 * with the metadata such as those output by {@link biolockj.module.report.taxa.AddMetadataToTaxaTables}. These
-	 * files can be input into any {@biolockj.module.r.R_Module}.
+	 * files can be input into any {@link biolockj.module.report.r.R_Module}.
 	 */
 	public static final String PIPELINE_R_INPUT_TYPE = "R";
 

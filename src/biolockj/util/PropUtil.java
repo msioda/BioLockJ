@@ -39,10 +39,6 @@ public class PropUtil
 		return new File( Config.pipelinePath() + File.separator + MASTER_PREFIX + configName );
 	}
 
-	/**
-	 * 
-	 * @throws Exception
-	 */
 	public static void sanitizeMasterConfig() throws Exception
 	{
 		final Map<String, String> props = new HashMap<>();

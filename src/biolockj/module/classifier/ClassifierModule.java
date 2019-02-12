@@ -18,12 +18,12 @@ import biolockj.module.SeqModule;
  * Classifier {@link biolockj.module.BioModule}s build one or more bash scripts to call the application on sequence
  * files. Contains methods to build bash scripts for taxonomic assignment of paired and unpaired reads. Contains methods
  * to get classifier command (loaded module, executable file path, or in the $USER $PATH) and optional command line
- * parameters, read from {@link biolockj.Config}.{@value #EXE_CLASSIFIER_PARAMS}
+ * parameters, read from {@link biolockj.Config}.{@value biolockj.Constants#EXE_CLASSIFIER_PARAMS}
  */
 public interface ClassifierModule extends SeqModule
 {
 	/**
-	 * Get the executable from {@link biolockj.Config} {@value #EXE_CLASSIFIER} required to classify the samples.
+	 * Get the executable from {@link biolockj.Config} {@value biolockj.Constants#EXE_CLASSIFIER} required to classify the samples.
 	 *
 	 * @return Command to execute classifier program
 	 * @throws Exception if the classifier program undefined or invalid
@@ -31,7 +31,7 @@ public interface ClassifierModule extends SeqModule
 	public String getClassifierExe() throws Exception;
 
 	/**
-	 * Get optional list of parameters from {@link biolockj.Config} {@value #EXE_CLASSIFIER_PARAMS} to append whenever
+	 * Get optional list of parameters from {@link biolockj.Config} {@value biolockj.Constants#EXE_CLASSIFIER_PARAMS} to append whenever
 	 * the classifier executable is called.
 	 *
 	 * @return Runtime parameters
