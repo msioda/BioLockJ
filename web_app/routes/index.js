@@ -487,7 +487,7 @@ function createLogFile(){//creates file and returns file name
   let hour = now.getHours();
   let min = now.getMinutes();
   let c = ['webapp_log', year, month, day, hour, min].join('_');
-  let p = path.join(__dirname, '..', 'logs', c)
+  let p = path.join('/','log', c)
   fs.writeFile(p, "Log for BLJ webapp\n", function(err) {
     if(err) {
       accessLogStream.write(err);
