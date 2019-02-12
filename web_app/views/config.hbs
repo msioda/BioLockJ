@@ -5,8 +5,9 @@
     <button class="dropbtn" onclick="projectOptions()">Projects (Click here to start)</button>
     <div class="dropdown-content" id="projects">
       <a onclick="newProj()" href="#">New</a>
-      <a onclick="openProjDisplay()" href="#">Open local config file</a>
-      <a id="recent" href="#">Recent</a>
+      <a onclick="openProjDisplay()" href="#">Open BLJ config with file picker</a>
+      <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
+      <a id="recent" href="#">(Auto)Saved configs</a>
     </div>
   </div>
 </div>
@@ -48,7 +49,9 @@
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Project name:
-        <input name='project.configFile' id='project.configFile' name='project.configFile' type="text" size='35'></p>
+        <input id='project.configFile' name='project.configFile' type="text" size='35'></p>
+      <p>Project description (for your own records):
+        <input id='project.description' name='project.description' type="text" size='200'></p>
       <p>Copy input files into the parent directory:
         <select id='project.copyInput' name='project.copyInput'>
           <option selected default value="">Click for options</option>
@@ -124,7 +127,7 @@
       <div id='moduleInfo'>
         <center>Hover mouse over module for more information.</center><br>
         <div id='moduleInfoDiv'>
-          <div>Info will display here!</div>
+          <div>Info about modules will display here!</div>
           <!--inner div for adding information to-->
         </div>
       </div>
@@ -628,50 +631,103 @@ For fastq, typically “@”.)<h5></p>
 </form> <!--End of configForm -->
 
   <div id="AWS" class="tabcontent">
-    <fieldset>
-      <legend>AWS Set-up</legend>
-    <form id='AwsForm' class="" action="#" method="post">
-      <p>*AWS Secret Key ID:*<input type="text" name="AWSACCESSKEYID"></p>
-      <p>AWS Secret Access Key <input required type="text" name="AWSSECRETACCESSKEY"></p>
-      <p>Please select the geographic area in which you live. Subsequent configuration
-    questions will narrow this down by presenting a list of cities, representing
-    the time zones in which they are located.
-      <select class="" name="REGION">
-        <option default value="us-east-1">us-east-1</option>
-        <option value="1">Africa</option>
-        <option value="2">America</option>
-        <option value="3">Antarctica</option>
-        <option value="4">Australia</option>
-        <option value="5">Arctic</option>
-        <option value="6">Asia</option>
-        <option value="7">Atlantic</option>
-        <option value="8">Europe</option>
-        <option value="9">Indian</option>
-        <option value="10">Pacific</option>
-        <option value="11">SystemV</option>
-        <option value="10">Pacific</option>
-        <option value="11">SystemV</option>
-        <option value="12">US</option>
-        <option value="13">Etc</option>
-      </select>
-      </p>
-      <p>Default Output Format: <select class="" name="OUTPUTFORMAT">
-        <option default value="text">text</option>
-      </select></p>
-      <p>Profile:
-        <select required class="" name="PROFILE">
-          <option value="default">default</option>
+    <form id='configureAwsForm' class="" action="#" method="#">
+      <fieldset>
+        <legend>Configure AWS Credentials</legend>
+        <p>*AWS Secret Key ID:*<input type="text" name="AWSACCESSKEYID"></p>
+        <p>AWS Secret Access Key <input required type="text" name="AWSSECRETACCESSKEY"></p>
+        <p>Please select the geographic area in which you live. Subsequent configuration
+      questions will narrow this down by presenting a list of cities, representing
+      the time zones in which they are located.
+        <select class="" name="REGION">
+          <option default value="us-east-1">us-east-1</option>
+          <option value="1">Africa</option>
+          <option value="2">America</option>
+          <option value="3">Antarctica</option>
+          <option value="4">Australia</option>
+          <option value="5">Arctic</option>
+          <option value="6">Asia</option>
+          <option value="7">Atlantic</option>
+          <option value="8">Europe</option>
+          <option value="9">Indian</option>
+          <option value="10">Pacific</option>
+          <option value="11">SystemV</option>
+          <option value="10">Pacific</option>
+          <option value="11">SystemV</option>
+          <option value="12">US</option>
+          <option value="13">Etc</option>
         </select>
-      </p>
-      <p id="AWSOutput"></p>
-      <button type="button" id='submitAWS' name="button">Start AWS Service</button>
+        </p>
+        <p>Default Output Format: <select class="" name="OUTPUTFORMAT">
+          <option default value="text">text</option>
+        </select></p>
+        <p>Profile:
+          <select required class="" name="PROFILE">
+            <option value="default">default</option>
+          </select>
+        </p>
+        <p id="AWSOutput"></p>
+        <button type="button" id='submitConfigureAWS' name="button">Set AWS Configuration</button>
+        deploy stack
+        deploy headnode
+      </fieldset>
     </form>
-  </fieldset>
+    <form class="" id='AwsStack' action="#" method="">
+      <fieldset>
+        <legend>Deploy AWS Stack</legend>
+        <p>Stackname: <input type="text" name="Stackname" value="">
+        </p>
+        <p>Docker repository (for both jobs) <input type="text" name="dockerRepository" value="">
+        </p>
+        <p>S3bucket: <input type="text" name="s3bucket" value="" placeholder='autogerate'>
+        </p>
+        <p>You can view your S3 bucket here <a href="#"></a>.
+        </p>
+        <button type="button" name="deployComputeStack">Deploy Compute Stack</button>
+      </fieldset>
+    </form>
+    <form id="launchEc2HeadNode"class="" action="#" method="">
+      <fieldset>
+        <legend>EC2 headnode</legend>
+        <p>Launch action:
+          <select class="" name="launchAction">
+            <option default value="runscript">runscript</option>
+            <option value="directconnect">directconnect</option>
+          </select>
+        </p>
+        <p>instanceType:
+          <input type="text" list="awsInstanceType" />
+          <datalist name='awsInstanceType' id="awsInstanceType">
+            <option value="t2.micro">1GB</opt>
+            <option value="t2.small">2GB</opt>
+            <option value="t2.medium">4GB</opt>
+            <option value="t2.large">8GB</opt>
+            <option value="t2.xlarge">16GB</opt>
+          </datalist>
+        </p>
+        <button type="button" name="launchHeadNode">Launch EC2 headnode</button>
+      </fieldset>
+    </form>
+
+
+
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div>
+  </div><!-- end AWS div -->
 </div><!-- End Menu tab -->
+
+<div id='configManager' class="modal">
+  <div class="modal-content">
+    <span class="closeModal">×</span>
+    <form id='configManagerForm' action="#" method="#">
+      <div id='deleteConfigsDiv' class="">
+
+      </div>
+      <button type="button" id='submitDeleteConfig' name="submitDelete">Delete Selected</button>
+    </form>
+  </div>
+</div>
 
 <!-- The Modal that appears after ready to launch button is pressed -->
 <div id="launchConsole" class="modal">
@@ -731,7 +787,6 @@ For fastq, typically “@”.)<h5></p>
     <text x="69" y="43" dx="0" font-family="Times">J</text>
     <!--<path d="M70,30 L80,30  M75,30 L75,35 " fill="none" stroke="rgb(0,112,60)" stroke-width="2"/>-->
   </svg>
-  <span class='hidden' id='hackForDownload'></span>
   <!-- <button form='configForm' type="submit" name="button" class='hidden'></button> -->
 </div>
 
