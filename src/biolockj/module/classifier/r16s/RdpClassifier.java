@@ -124,7 +124,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	/**
 	 * {@link biolockj.Config} List property for RDP java executable JAR runtime params: {@value #RDP_PARAMS}
 	 */
-	protected static final String RDP_PARAMS = "rdp.classifierParams";
+	protected static final String RDP_PARAMS = "exe.rdpParams";
 
 	private static final String JAVA_JAR_PARAM = "-jar";
 	private static final String OUTPUT_PARAM = "-o";
