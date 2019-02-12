@@ -264,10 +264,11 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/seq/TrimPrimers' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/PreRarefier' : { cssClass : [], category : 'seq'},
-
   'biolockj/module/classifier/r16s/QiimeClosedRefClassifier' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
+
+  'biolockj/module/classifier/wgs/HumanN2Classifier' :
+  { cssClass : ['humann2Class', 'classifierUnique'], label : "WGS Classifier: HumanN2", counter : 'humann2ModuleCounter' , category : 'classifier'},
 
   'biolockj/module/classifier/r16s/RdpClassifier' :
   { cssClass : ['rdpClass', 'classifierUnique'], label : "16S Classifier: RDP", counter : 'rdpModuleCounter' , category : 'classifier'},
@@ -283,6 +284,9 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/classifier/r16s/QiimeOpenRefClassifier' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
+
+  'biolockj/module/implicit/parser/wgs/HumanN2Parser' :
+  { cssClass : ['humann2Class', , 'classifierUnique', 'implicit', 'hidden'], counter : 'humann2ModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/classifier/wgs/KrakenClassifier' :
   { cssClass : ['krakenClass', 'classifierUnique'], counter : 'krakenModuleCounter', category : 'classifier'},
@@ -308,35 +312,56 @@ let myModules = new Map(Object.entries({
   'biolockj/module/implicit/parser/wgs/SlimmParser' :
   { cssClass : ['slimmClass', 'classifierUnique','implicit', 'hidden'], counter : 'slimmModuleCounter', category : 'implicit.parser'},
 
-  'biolockj/module/report/Normalizer' : { cssClass : [], category : 'report'},
+  'biolockj/module/implicit/qiime/BuildQiimeMapping' :
+  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'qiime'},
 
-  'biolockj/module/r/BuildMdsPlots' : { cssClass : [], category : 'r'},
+  'biolockj/module/implicit/qiime/MergeQiimeOtuTables' :
+  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'qiime'},
+  //what is this?
+  'biolockj/module/implicit/qiime/QiimeClassifier' :
+  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
-  'biolockj/module/r/BuildOtuPlots' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotMds' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/r/BuildPvalHistograms' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotOtus' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/r/CalculateStats' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotPvalHistograms' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/report/AddMetaToTaxonomyTables' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : [], category : 'r'},
+
+  'biolockj/module/report/r/R_CalculateStats' : { cssClass : [], category : 'r'},
+
+  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : [], category : 'r'},
+
+  'biolockj/module/report/taxa/AddMetaToTaxonomyTables' : { cssClass : [], category : 'report'},
+
+  'biolockj/module/report/taxa/BuildTaxaTables' : { cssClass : [], category : 'report'},
+
+  'biolockj/module/report/taxa/NormalizeTaxaTables' : { cssClass : [], category : 'report'},
+
+  'biolockj/module/report/otu/CompileOtuCounts' : { cssClass : [], category : 'report'},
 
   'biolockj/module/report/JsonReport' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/RemoveLowCountOtus' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/otu/RemoveLowOtuCounts' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/RemoveScarceOtus' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/otu/RemoveScarceOtuCounts' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/PostRarefier' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/otu/RarefyOtuCounts.java' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/LogTransformer' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/taxa/LogTransformTaxaTables' : { cssClass : [], category : 'report'},
 
   'biolockj/module/report/CompileOtuCounts' : { cssClass : [], category : 'report'},
 
   'biolockj/module/seq/AwkFastaConverter' : { cssClass : [], category : 'seq'},
 
+  'biolockj/module/seq/KneadDataSanitizer' : { cssClass : [], category : 'seq'},
+
   'biolockj/module/seq/Multiplexer' : { cssClass : [], category : 'seq'},
 
   'biolockj/module/seq/PearMergeReads' : { cssClass : [], category : 'seq'},
+
+  'biolockj/module/seq/RarefySeqs' : { cssClass : [], category : 'seq'},
 
   'biolockj/module/seq/Gunzipper' : { cssClass : [], category : 'seq'},
 
@@ -405,6 +430,8 @@ function runModuleFunctions() {//large function to build module li and counters
       slimmModuleCounter.modClassSelected(target)
     }else if (target.classList.contains("metaphlanClass")) {
       metaphlanModuleCounter.modClassSelected(target)
+    }else if (target.classList.contains("humann2Class")) {
+      humann2ModuleCounter.modClassSelected(target)
     }else{
       //for all modules that are not a classifier
       if (target.classList.contains("modChoosen")) {
@@ -478,6 +505,7 @@ function runModuleFunctions() {//large function to build module li and counters
   var kraken2ClassModNodes = Array.from(document.getElementsByClassName("kraken2Class"));
   var rdpClassModNodes = Array.from(document.getElementsByClassName("rdpClass"));
   var metaphlanClassModNodes = Array.from(document.getElementsByClassName("metaphlanClass"));
+  var humann2ClassModNodes = Array.from(document.getElementsByClassName("humann2"));
 
   //moduleCounters instanciated with nodes that they will disable
   var qiimeModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes]);
