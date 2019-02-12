@@ -75,16 +75,18 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 			if( !MetaUtil.getFieldNames().contains( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ) ) )
 			{
-				throw new Exception( demuxStrategy + " but the barcode column configured [ "
-						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( this, MetaUtil.META_BARCODE_COLUMN )
-						+ " ] is not found in the metadata: " + MetaUtil.getPath() );
+				throw new Exception(
+						demuxStrategy + " but the barcode column configured [ " + MetaUtil.META_BARCODE_COLUMN + "="
+								+ Config.requireString( this, MetaUtil.META_BARCODE_COLUMN )
+								+ " ] is not found in the metadata: " + MetaUtil.getPath() );
 			}
 
 			if( MetaUtil.getFieldValues( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 			{
-				throw new Exception( demuxStrategy + " but the barcode column configured [ "
-						+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( this, MetaUtil.META_BARCODE_COLUMN )
-						+ " ] is empty in the metadata file: " + MetaUtil.getPath() );
+				throw new Exception(
+						demuxStrategy + " but the barcode column configured [ " + MetaUtil.META_BARCODE_COLUMN + "="
+								+ Config.requireString( this, MetaUtil.META_BARCODE_COLUMN )
+								+ " ] is empty in the metadata file: " + MetaUtil.getPath() );
 			}
 
 			if( DemuxUtil.barcodeInSeq() )
@@ -721,7 +723,8 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 	private int hasBarcode( final String line ) throws Exception
 	{
-		for( final String code: MetaUtil.getFieldValues( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ), true ) )
+		for( final String code: MetaUtil.getFieldValues( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ),
+				true ) )
 		{
 			if( line.contains( code ) )
 			{

@@ -27,7 +27,7 @@ import biolockj.util.PathwayUtil;
 /**
  * TBD
  */
-public abstract class HumanN2CountModule extends JavaModuleImpl implements JavaModule
+public abstract class Humann2CountModule extends JavaModuleImpl implements JavaModule
 {
 	@Override
 	public List<File> getInputFiles() throws Exception
@@ -53,7 +53,7 @@ public abstract class HumanN2CountModule extends JavaModuleImpl implements JavaM
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{
-		return isHumanN2CountModule( module );
+		return isHumann2CountModule( module );
 	}
 
 	/**
@@ -63,7 +63,7 @@ public abstract class HumanN2CountModule extends JavaModuleImpl implements JavaM
 	 * @return TRUE if module generated OTU count files
 	 * @throws Exception if errors occur
 	 */
-	protected boolean isHumanN2CountModule( final BioModule module )
+	protected boolean isHumann2CountModule( final BioModule module )
 	{
 		try
 		{

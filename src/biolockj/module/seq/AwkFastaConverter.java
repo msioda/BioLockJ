@@ -36,7 +36,8 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 
-		final String ext = "." + ( isMultiLine ? SeqUtil.FASTA: Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) );
+		final String ext = "."
+				+ ( isMultiLine ? SeqUtil.FASTA: Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) );
 		for( final File f: files )
 		{
 			final ArrayList<String> lines = new ArrayList<>();

@@ -409,7 +409,8 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return DockerUtil.getDockerVolumeFile( Config.getString( null, INPUT_TRIM_SEQ_FILE ), DockerUtil.CONTAINER_PRIMER_DIR, "primer" );
+			return DockerUtil.getDockerVolumeFile( Config.getString( null, INPUT_TRIM_SEQ_FILE ),
+					DockerUtil.CONTAINER_PRIMER_DIR, "primer" );
 		}
 		return Config.requireExistingFile( null, INPUT_TRIM_SEQ_FILE );
 	}
@@ -417,7 +418,8 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	private String getTrimFilePath( final File file ) throws Exception
 	{
 		return getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( file.getName() )
-				+ SeqUtil.getReadDirectionSuffix( file ) + "." + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
+				+ SeqUtil.getReadDirectionSuffix( file ) + "."
+				+ Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
 	}
 
 	private Set<String> getValidHeaders( final File file, final Set<String> primers ) throws Exception

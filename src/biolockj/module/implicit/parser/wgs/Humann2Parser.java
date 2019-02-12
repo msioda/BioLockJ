@@ -23,11 +23,11 @@ import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
 /**
- * This BioModules parses HumanN2Classifier output reports to build standard OTU abundance tables.<br>
+ * This BioModules parses Humann2Classifier output reports to build standard OTU abundance tables.<br>
  * Samples IDs are found in the column headers starting with the 2nd column.<br>
  * The count type depends on the HumanN2 config properties.
  */
-public class HumanN2Parser extends ParserModuleImpl implements ParserModule
+public class Humann2Parser extends ParserModuleImpl implements ParserModule
 {
 
 	@Override
@@ -37,7 +37,7 @@ public class HumanN2Parser extends ParserModuleImpl implements ParserModule
 	}
 
 	/**
-	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.HumanN2Classifier}.
+	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.Humann2Classifier}.
 	 * 
 	 * Sample HumanN2 report line (head output_pAbund.tsv):<br>
 	 * 1st cell format: [Pathway_ID]:[Pathway_Descr] | g__[genus_taxa].s__[species_taxa]<br>
@@ -76,11 +76,6 @@ public class HumanN2Parser extends ParserModuleImpl implements ParserModule
 
 			MemoryUtil.reportMemoryUsage( "Parsed " + file.getAbsolutePath() );
 		}
-	}
-	
-	private String stripQuotes( String val ) throws Exception
-	{
-		return val.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
 	@Override
@@ -131,6 +126,11 @@ public class HumanN2Parser extends ParserModuleImpl implements ParserModule
 		}
 
 		return name;
+	}
+
+	private String stripQuotes( final String val ) throws Exception
+	{
+		return val.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
 	private static String[][] transpose( final List<List<String>> data ) throws Exception

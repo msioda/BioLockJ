@@ -167,8 +167,8 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	{
 		final List<String> sampleIds = MetaUtil.getSampleIds();
 		final int numToRemove = Double
-				.valueOf( Math
-						.ceil( new Double( Config.requirePositiveDouble( this, LOW_ABUNDANT_CUTOFF ) * sampleIds.size() ) ) )
+				.valueOf( Math.ceil(
+						new Double( Config.requirePositiveDouble( this, LOW_ABUNDANT_CUTOFF ) * sampleIds.size() ) ) )
 				.intValue();
 
 		final String otuCountField = ParserModuleImpl.getOtuCountField();

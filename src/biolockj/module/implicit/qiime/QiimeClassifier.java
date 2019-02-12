@@ -180,18 +180,24 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			writer.close();
 			MetaUtil.refreshCache(); // to add new null values in alpha metric field values
 		}
-
 	}
 
 	/**
-	 * QIIME does not use this method, instead specific scripts are called based on OTU picking method.
-	 *
-	 * @return null
+	 * QIIME calls python scripts, so no special command is required
 	 */
 	@Override
 	public String getClassifierExe() throws Exception
 	{
 		return null;
+	}
+
+	/**
+	 * Obtain the QIIME runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_QIIME_PARAMS );
 	}
 
 	@Override
@@ -232,7 +238,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * If paired reads found, add prerequisite module: {@link biolockj.module.seq.PearMergeReads}. If sequences are not
-	 * fasta format, add prerequisite module: {@link biolockj.module.implicit.AwkFastaConverter}. Subclasses of
+	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}. Subclasses of
 	 * QiimeClassifier add prerequisite module: {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
 	 */
 	@Override
@@ -576,6 +582,11 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String ALPHA_DIV_NULL_VALUE = "N/A";
 
 	/**
+	 * {@link biolockj.Config} List property used to obtain the QIIME executable params
+	 */
+	protected static final String EXE_QIIME_PARAMS = "exe.qiimeParams";
+
+	/**
 	 * Directory created by {@value biolockj.module.classifier.r16s.QiimeDeNovoClassifier#PICK_OTU_SCRIPT} and
 	 * {@value biolockj.module.classifier.r16s.QiimeOpenRefClassifier#PICK_OTU_SCRIPT}: {@value #REP_SET}
 	 */
@@ -586,8 +597,8 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * BioLockJ parsers expect clear text files in the module output directory, so the biom files must be excluded.
 	 */
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
-
 	private static final String NUM_THREADS_PARAM = "-aO";
+
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 
 	// OTHER SCRIPT THAT MAY BE ADDED IN THE FUTURE

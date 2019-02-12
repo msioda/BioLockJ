@@ -234,7 +234,7 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	{
 		return Config.requirePositiveInteger( this, getProp() );
 	}
-	
+
 	private String getProp() throws Exception
 	{
 		if( prop == null )
@@ -244,9 +244,9 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 		return prop;
 	}
 
-	private String prop = null;
 	private Map<String, File> fileMap = null;
 	private Map<String, String> hitsPerSample = new HashMap<>();
+	private String prop = null;
 	private final Set<String> sampleIds = new HashSet<>();
 	private int totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();

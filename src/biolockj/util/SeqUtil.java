@@ -280,8 +280,8 @@ public class SeqUtil
 			msg += "Unpaired RV Reads: " + BioLockJUtil.printLongFormList( rvReads );
 		}
 
-		if( Config.getString( null, INTERNAL_PAIRED_READS ) != null && Config.getBoolean( null, INPUT_REQUIRE_COMPLETE_PAIRS )
-				&& !msg.isEmpty() )
+		if( Config.getString( null, INTERNAL_PAIRED_READS ) != null
+				&& Config.getBoolean( null, INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
 		{
 			throw new ConfigViolationException( INPUT_REQUIRE_COMPLETE_PAIRS, msg );
 		}
@@ -888,7 +888,8 @@ public class SeqUtil
 		else
 		{
 			Config.setConfigProperty( INTERNAL_SEQ_TYPE, Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
-			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
+			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR,
+					Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
 		}
 	}
 

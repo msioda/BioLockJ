@@ -30,6 +30,7 @@ import biolockj.util.SeqUtil;
  */
 public class KrakenClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
+
 	/**
 	 * Build bash script lines to classify unpaired WGS reads with Kraken. The inner list contains 2 bash script lines
 	 * used to classify 1 sample.
@@ -107,6 +108,24 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	{
 		super.checkDependencies();
 		getParams();
+	}
+
+	/**
+	 * Get kraken executable command: {@value #EXE_KRAKEN}
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return Config.getExe( this, EXE_KRAKEN );
+	}
+
+	/**
+	 * Obtain the kraken runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_KRAKEN_PARAMS );
 	}
 
 	/**
@@ -238,6 +257,16 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	}
 
 	private String defaultSwitches = null;
+
+	/**
+	 * {@link biolockj.Config} exe property for kraken executable: {@value #EXE_KRAKEN}
+	 */
+	protected static final String EXE_KRAKEN = "exe.kraken";
+
+	/**
+	 * {@link biolockj.Config} List property used to obtain the kraken executable params
+	 */
+	protected static final String EXE_KRAKEN_PARAMS = "exe.krakenParams";
 
 	/**
 	 * Name of the kraken function used to assign taxonomy: {@value #FUNCTION_KRAKEN}

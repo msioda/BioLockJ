@@ -12,7 +12,9 @@
 package biolockj.module.report.humann2;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
@@ -21,7 +23,7 @@ import biolockj.util.MetaUtil;
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
-public class AddMetadataToPathwayTables extends HumanN2CountModule implements JavaModule
+public class AddMetadataToPathwayTables extends Humann2CountModule implements JavaModule
 {
 	/**
 	 * Require taxonomy table module as prerequisite
@@ -32,7 +34,7 @@ public class AddMetadataToPathwayTables extends HumanN2CountModule implements Ja
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( HumanN2ExtractPathwayCounts.class.getName() );
+			preReqs.add( Humann2ExtractPathways.class.getName() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
@@ -47,7 +49,7 @@ public class AddMetadataToPathwayTables extends HumanN2CountModule implements Ja
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-		
+
 		}
 		catch( final Exception ex )
 		{
@@ -60,8 +62,8 @@ public class AddMetadataToPathwayTables extends HumanN2CountModule implements Ja
 	}
 
 	/**
-	 * This method matches records from the Pathway Abundance table and the metadata file by matching the 
-	 * sample ID value in the very 1st column (regardless of column title).
+	 * This method matches records from the Pathway Abundance table and the metadata file by matching the sample ID
+	 * value in the very 1st column (regardless of column title).
 	 */
 	@Override
 	public void runModule() throws Exception

@@ -269,7 +269,8 @@ public class Log
 	{
 		Log.info( Log.class, Log.LOG_SPACER );
 		Log.info( Log.class, "Pipeline Project Config File: " + Config.getConfigFilePath() );
-		Log.info( Log.class, "Pipeline Default Config Files: " + Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG ) );
+		Log.info( Log.class,
+				"Pipeline Default Config Files: " + Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG ) );
 		Log.info( Log.class, Log.LOG_SPACER );
 		Log.info( Log.class, "===> List All Configured Properties:" );
 		Log.info( Log.class, Log.LOG_SPACER );

@@ -272,7 +272,8 @@ public class BashScriptBuilder
 		}
 
 		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = "
-				+ new Integer( Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE ) ).toString() + RETURN );
+				+ new Integer( Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE ) ).toString()
+				+ RETURN );
 
 		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules( module ) );
@@ -456,7 +457,6 @@ public class BashScriptBuilder
 				workerScripts.size() + " WORKER scripts created for: " + module.getClass().getName() );
 		Log.info( BashScriptBuilder.class, Log.LOG_SPACER );
 	}
-
 
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
 	{

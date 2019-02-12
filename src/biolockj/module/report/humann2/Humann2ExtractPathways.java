@@ -8,13 +8,13 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
-import biolockj.module.implicit.parser.wgs.HumanN2Parser;
+import biolockj.module.implicit.parser.wgs.Humann2Parser;
 import biolockj.util.*;
 
 /**
  * This BioModule is used to build a JSON file (summary.json) compiled from all OTUs in the dataset.
  */
-public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements JavaModule
+public class Humann2ExtractPathways extends Humann2CountModule implements JavaModule
 {
 	/**
 	 * Module prerequisite: {@link biolockj.module.report.otu.CompileOtuCounts}
@@ -25,7 +25,7 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 		final List<String> preReqs = super.getPreRequisiteModules();
 		if( !pipelineInputContainsFullPathwayReport() )
 		{
-			preReqs.add( HumanN2Parser.class.getName() );
+			preReqs.add( Humann2Parser.class.getName() );
 		}
 
 		return preReqs;
@@ -43,9 +43,12 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 
 		String summary = "Total # Unique Pathways:         " + pathways.size() + RETURN;
 
-		summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, Constants.HN2_UNIQUE_PATH_COUNT, labelSize, false );
-		summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, Constants.HN2_TOTAL_PATH_COUNT, labelSize, true );
-		summary += SummaryUtil.getCountSummary( unintegratedPerSample, Constants.HN2_UNINTEGRATED_COUNT, labelSize, true );
+		summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, Constants.HN2_UNIQUE_PATH_COUNT, labelSize,
+				false );
+		summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, Constants.HN2_TOTAL_PATH_COUNT, labelSize,
+				true );
+		summary += SummaryUtil.getCountSummary( unintegratedPerSample, Constants.HN2_UNINTEGRATED_COUNT, labelSize,
+				true );
 		summary += SummaryUtil.getCountSummary( unmappedPerSample, Constants.HN2_UNMAPPED_COUNT, labelSize, true );
 		freeMemory();
 		return super.getSummary() + summary;
@@ -54,7 +57,7 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{
-		return module instanceof HumanN2Parser;
+		return module instanceof Humann2Parser;
 	}
 
 	@Override
@@ -282,12 +285,6 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 		pathways = null;
 	}
 
-	
-	public static String fullPathwayReportSuffix() throws Exception
-	{
-		return "_" + Constants.HN2_FULL_REPORT + PathwayUtil.pathwayFileSuffix();
-	}
-
 	private Integer getCount( final String val )
 	{
 		try
@@ -304,6 +301,11 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 		return 0;
 	}
 
+	public static String fullPathwayReportSuffix() throws Exception
+	{
+		return "_" + Constants.HN2_FULL_REPORT + PathwayUtil.pathwayFileSuffix();
+	}
+
 	private Set<String> pathways = new HashSet<>();
 	private Map<String, String> totalPathwaysPerSample = new HashMap<>();
 	private Map<String, String> unintegratedPerSample = new HashMap<>();
@@ -311,5 +313,5 @@ public class HumanN2ExtractPathwayCounts extends HumanN2CountModule implements J
 	private Map<String, String> unmappedPerSample = new HashMap<>();
 	private static final String HN2_UNINTEGRATED = "UNINTEGRATED";
 	private static final String HN2_UNMAPPED = "UNMAPPED";
-	
+
 }

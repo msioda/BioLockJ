@@ -16,7 +16,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import biolockj.*;
+import biolockj.BioLockJ;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.parser.ParserModule;
@@ -45,71 +47,11 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		super.checkDependencies();
 	}
 
-	/**
-	 * Get the classifier executable command from the Config. Verify command is either loaded as a cluster module or is
-	 * a valid file path. To simplify the Config, default values for exe.classifier can be defined by replacing "exe"
-	 * with a classifier type (rdp, qiime, kraken, metaphlan, or slimm). For example, if exe.classifer is missing or
-	 * blank and getClassifierType() returns "rdp" the property rdp.classifier will be used in place of exe.classifier.
-	 * This allows all classifiers to be defined in a file such as standard.properties.
-	 *
-	 * @return Classifier command to use in bash scripts
-	 * @throws Exception if the executable is undefined or invalid
-	 */
 	@Override
-	public String getClassifierExe() throws Exception
-	{
-		if( classifierExe == null )
-		{
-			classifierExe = Config.getString( this, Constants.EXE_CLASSIFIER );
-			if( classifierExe == null || classifierExe.isEmpty() )
-			{
-				final String defaultProp = getClassifierType() + "." + Constants.EXE_CLASSIFIER.substring( 4 );
+	public abstract String getClassifierExe() throws Exception;
 
-				classifierExe = Config.getString( this, defaultProp );
-				if( classifierExe != null && !classifierExe.isEmpty() )
-				{
-					Log.info( getClass(), "Using default classifier property: " + defaultProp + " = " + classifierExe );
-				}
-				else
-				{
-					classifierExe = getClassifierType();
-				}
-			}
-		}
-
-		return classifierExe;
-	}
-
-	/**
-	 * Get optional classifier switches by appending "--" to each value in the list parameter if defined in the Config
-	 * file. Classifiers that use a single "-" must be override this method. To simplify the Config, default values for
-	 * exe.classifier can be defined by replacing "exe" with a classifier type (rdp, qiime, kraken, metaphlan, or
-	 * slimm). For example, if exe.classifer is missing or blank and getClassifierType() returns "rdp" the property
-	 * rdp.classifier will be used in place of exe.classifier. This allows all classifiers to be defined in
-	 * standard.properties.
-	 *
-	 * @return List of classifier runtime parameters
-	 * @throws Exception if runtime errors occur
-	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception
-	{
-		if( classifierParams == null )
-		{
-			String prop = Constants.EXE_CLASSIFIER_PARAMS;
-			classifierParams = Config.getList( this, prop );
-			if( classifierParams.isEmpty() )
-			{
-				prop = getClassifierType() + "." + Constants.EXE_CLASSIFIER_PARAMS.substring( 4 );
-				classifierParams = Config.getList( this, prop );
-				if( !classifierParams.isEmpty() )
-				{
-					Log.info( getClass(), "Loading default classifier property: " + prop + " = " + classifierParams );
-				}
-			}
-		}
-		return classifierParams;
-	}
+	public abstract List<String> getClassifierParams() throws Exception;
 
 	/**
 	 * This method returns the corresponding Parser module associated with the classifier. The Parser module name is
@@ -186,10 +128,6 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		{
 			type = "qiime";
 		}
-		if( type.contains( "humann2" ) )
-		{
-			type = type.replace( "humann2", "humanN2" );
-		}
 
 		return type;
 	}
@@ -226,7 +164,4 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		return "r16s";
 
 	}
-
-	private String classifierExe = null;
-	private List<String> classifierParams = null;
 }

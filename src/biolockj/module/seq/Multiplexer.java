@@ -172,7 +172,8 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		}
 		else if( DemuxUtil.hasValidBarcodes() )
 		{
-			final String barcode = MetaUtil.getField( sampleId, Config.getString( this, MetaUtil.META_BARCODE_COLUMN ) );
+			final String barcode = MetaUtil.getField( sampleId,
+					Config.getString( this, MetaUtil.META_BARCODE_COLUMN ) );
 			final String rc = SeqUtil.reverseComplement( barcode );
 
 			if( header.contains( barcode ) )
@@ -299,7 +300,8 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	private String getMutliplexeFileName( final File file ) throws Exception
 	{
 		final String path = getOutputDir().getAbsolutePath() + File.separator + Config.pipelineName()
-				+ SeqUtil.getReadDirectionSuffix( file ) + "." + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
+				+ SeqUtil.getReadDirectionSuffix( file ) + "."
+				+ Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
 		muxFiles.add( path );
 		return path;
 	}

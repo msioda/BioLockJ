@@ -39,8 +39,8 @@ public class PathwayUtil
 	 */
 	public static File getPathwayCountFile( final File dir, String prefix ) throws Exception
 	{
-		prefix = (prefix == null ? "" : prefix);
-		final String name = Config.pipelineName()  + prefix + pathwayFileSuffix();
+		prefix = prefix == null ? "": prefix;
+		final String name = Config.pipelineName() + prefix + pathwayFileSuffix();
 		return new File( dir.getAbsolutePath() + File.separator + name );
 	}
 
@@ -58,17 +58,6 @@ public class PathwayUtil
 			return true;
 		}
 		return false;
-	}
-	
-	/**
-	 * Identification file suffix for Pathway Reports
-	 * 
-	 * @return file suffix for every BioLockJ Pathway file
-	 * @throws Exception if errors occur
-	 */
-	public static String pathwayFileSuffix()
-	{
-		return "_" + Constants.HN2_PATH_ABUND + "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
 	}
 
 	/**
@@ -99,5 +88,16 @@ public class PathwayUtil
 			ex.printStackTrace();
 		}
 		return false;
+	}
+
+	/**
+	 * Identification file suffix for Pathway Reports
+	 * 
+	 * @return file suffix for every BioLockJ Pathway file
+	 * @throws Exception if errors occur
+	 */
+	public static String pathwayFileSuffix()
+	{
+		return "_" + Constants.HN2_PATH_ABUND + "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
 	}
 }

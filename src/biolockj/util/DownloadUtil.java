@@ -94,8 +94,8 @@ public final class DownloadUtil
 					? "; mkdir -p " + getDest( BioModule.OUTPUT_DIR ) + "; mkdir " + getDest( BioModule.TEMP_DIR )
 					: "";
 			final String cmd = "src=" + pipeRoot + "; out=" + getDownloadDirPath() + rDirs + "; scp -rp "
-					+ getClusterUser() + "@" + Config.requireString( null, Email.CLUSTER_HOST ) + ":\"" + targets + "\" "
-					+ DEST;
+					+ getClusterUser() + "@" + Config.requireString( null, Email.CLUSTER_HOST ) + ":\"" + targets
+					+ "\" " + DEST;
 			return "Download " + label + " [" + displaySize + "]:" + RETURN + cmd;
 		}
 

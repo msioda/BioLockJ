@@ -80,13 +80,31 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 
 	/**
 	 * Verify none of the derived command line parameters are included in
-	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#EXE_CLASSIFIER_PARAMS}
 	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
 		getParams();
+	}
+
+	/**
+	 * Metaphlan runs python scripts, so no special command is required
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return Config.requireString( this, EXE_METAPHLAN );
+	}
+
+	/**
+	 * Obtain the metaphlan runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_METAPHLAN_PARAMS );
 	}
 
 	/**
@@ -196,7 +214,17 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	protected static final String bowtie2ext = ".bowtie2.bz2";
 
 	/**
-	 * {@link biolockj.Config} property to python executable
+	 * {@link biolockj.Config} exe property used to obtain the metaphlan2 executable
+	 */
+	protected static final String EXE_METAPHLAN = "exe.metaphlan";
+
+	/**
+	 * {@link biolockj.Config} List property used to obtain the metaphlan2 executable params
+	 */
+	protected static final String EXE_METAPHLAN_PARAMS = "exe.metaphlanParams";
+
+	/**
+	 * {@link biolockj.Config} exe property used to obtain the python executable
 	 */
 	protected static final String EXE_PYTHON = "exe.python";
 

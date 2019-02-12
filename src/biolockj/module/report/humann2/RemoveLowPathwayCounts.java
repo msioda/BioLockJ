@@ -24,9 +24,16 @@ import biolockj.util.*;
 /**
  * This BioModule
  */
-public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaModule
+public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaModule
 {
-	
+
+	@Override
+	public void checkDependencies() throws Exception
+	{
+		super.checkDependencies();
+		getMinCount();
+	}
+
 	/**
 	 * Require taxonomy table module as prerequisite
 	 */
@@ -36,17 +43,10 @@ public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaMo
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( HumanN2ExtractPathwayCounts.class.getName() );
+			preReqs.add( Humann2ExtractPathways.class.getName() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
-	}
-
-	@Override
-	public void checkDependencies() throws Exception
-	{
-		super.checkDependencies();
-		getMinCount();
 	}
 
 	/**
@@ -76,8 +76,10 @@ public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaMo
 		logLowCountPathways( lowCounts );
 		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName() + "_" + "Unique Pathways", uniquePathwaysPerSample, getTempDir(), true );
-			MetaUtil.addColumn( getMetaColName() + "_" + "Total Pathways", totalPathwaysPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + "Unique Pathways", uniquePathwaysPerSample, getTempDir(),
+					true );
+			MetaUtil.addColumn( getMetaColName() + "_" + "Total Pathways", totalPathwaysPerSample, getOutputDir(),
+					true );
 		}
 	}
 
@@ -183,10 +185,8 @@ public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaMo
 			if( !badSamplePathways.isEmpty() )
 			{
 				lowCountPathways.put( sampleId, badSamplePathways );
-				Log.warn( getClass(),
-						sampleId + ": Removed " + badSamplePathways.size() + " low Pathway counts (below "
-								+ getProp() + "=" + getMinCount() + ") --> "
-								+ badSamplePathways );
+				Log.warn( getClass(), sampleId + ": Removed " + badSamplePathways.size() + " low Pathway counts (below "
+						+ getProp() + "=" + getMinCount() + ") --> " + badSamplePathways );
 			}
 		}
 
@@ -196,8 +196,7 @@ public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaMo
 		{
 			Log.warn( getClass(),
 					"Completely Remove " + allRemovedPathways.size() + " Pathways (all samples below threshold"
-							+ getProp() + "=" + getMinCount() + ") --> "
-							+ allRemovedPathways );
+							+ getProp() + "=" + getMinCount() + ") --> " + allRemovedPathways );
 		}
 
 		buildOutputTable( output, allRemovedPathways );
@@ -275,7 +274,7 @@ public class RemoveLowPathwayCounts extends HumanN2CountModule implements JavaMo
 	{
 		return Config.requirePositiveInteger( this, getProp() );
 	}
-	
+
 	private String getProp() throws Exception
 	{
 		if( prop == null )

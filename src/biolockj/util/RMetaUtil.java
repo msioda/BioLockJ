@@ -18,7 +18,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
-import biolockj.module.classifier.wgs.HumanN2Classifier;
+import biolockj.module.classifier.wgs.Humann2Classifier;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
@@ -64,7 +64,7 @@ public final class RMetaUtil
 	 * <p>
 	 * Save MASTER {@link biolockj.Config} properties to store lists of binary, nominal, and numeric fields
 	 * 
-	 * @param module BioModule 
+	 * @param module BioModule
 	 * @throws Exception if {@link biolockj.Config} lists invalid metadata fields or metadata filed has less than 2
 	 * unique values
 	 */
@@ -90,7 +90,7 @@ public final class RMetaUtil
 		rScriptFields.removeAll( excludeFields );
 		rScriptFields.addAll( nominalFields );
 		rScriptFields.addAll( numericFields );
-		
+
 		verifyMetadataFieldsExist( module, R_EXCLUDE_FIELDS, excludeFields );
 		verifyMetadataFieldsExist( module, R_REPORT_FIELDS, rScriptFields );
 		verifyMetadataFieldsExist( module, R_NUMERIC_FIELDS, numericFields );
@@ -152,14 +152,14 @@ public final class RMetaUtil
 				rScriptFields.remove( BuildQiimeMapping.BARCODE_SEQUENCE );
 			}
 		}
-		
-		boolean reportReads = Config.getBoolean( module, Constants.REPORT_NUM_READS );
-		boolean reportHits = Config.getBoolean( module, Constants.REPORT_NUM_HITS );
+
+		final boolean reportReads = Config.getBoolean( module, Constants.REPORT_NUM_READS );
+		final boolean reportHits = Config.getBoolean( module, Constants.REPORT_NUM_HITS );
 		rScriptFields = updateNumericData( RegisterNumReads.getNumReadFieldName(), rScriptFields, reportReads );
 		rScriptFields = updateNumericData( ParserModuleImpl.getOtuCountField(), rScriptFields, reportHits );
 		rScriptFields = updateNumericData( AddMetadataToTaxaTables.HIT_RATIO, rScriptFields, reportHits );
 
-		if( ModuleUtil.getClassifier( module, false ) instanceof HumanN2Classifier )
+		if( ModuleUtil.getClassifier( module, false ) instanceof Humann2Classifier )
 		{
 			rScriptFields = updateNumericData( Constants.HN2_UNMAPPED_COUNT, rScriptFields, reportHits );
 			rScriptFields = updateNumericData( Constants.HN2_UNIQUE_PATH_COUNT, rScriptFields, reportHits );
@@ -257,22 +257,6 @@ public final class RMetaUtil
 			Log.info( RMetaUtil.class, "Reportable metadata field validations complete for: " + rScriptFields );
 			Log.info( RMetaUtil.class, Log.LOG_SPACER );
 		}
-	}
-	
-	private static Set<String> updateNumericData( String field, final Set<String> rScriptFields, boolean doUpdate  ) throws Exception
-	{
-		if( doUpdate && isValidNumericField( field ) )
-		{
-			rScriptFields.add( field );
-			numericFields.add( field );
-		}
-		else
-		{
-			rScriptFields.remove( field );
-			numericFields.remove( field);
-		}
-		
-		return rScriptFields;
 	}
 
 	/**
@@ -442,7 +426,8 @@ public final class RMetaUtil
 		if( !binaryFields.isEmpty() )
 		{
 			final String val = BioLockJUtil.getCollectionAsString( binaryFields );
-			if( Config.getString( null, BINARY_FIELDS ) == null || !val.equals( Config.getString( null, BINARY_FIELDS ) ) )
+			if( Config.getString( null, BINARY_FIELDS ) == null
+					|| !val.equals( Config.getString( null, BINARY_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
 				Config.setConfigProperty( BINARY_FIELDS, val );
@@ -452,7 +437,8 @@ public final class RMetaUtil
 		if( !nominalFields.isEmpty() )
 		{
 			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
-			if( Config.getString( null, NOMINAL_FIELDS ) == null || !val.equals( Config.getString( null, NOMINAL_FIELDS ) ) )
+			if( Config.getString( null, NOMINAL_FIELDS ) == null
+					|| !val.equals( Config.getString( null, NOMINAL_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
 				Config.setConfigProperty( NOMINAL_FIELDS, val );
@@ -461,7 +447,8 @@ public final class RMetaUtil
 		if( !numericFields.isEmpty() )
 		{
 			final String val = BioLockJUtil.getCollectionAsString( numericFields );
-			if( Config.getString( null, NUMERIC_FIELDS ) == null || !val.equals( Config.getString( null, NUMERIC_FIELDS ) ) )
+			if( Config.getString( null, NUMERIC_FIELDS ) == null
+					|| !val.equals( Config.getString( null, NUMERIC_FIELDS ) ) )
 			{
 				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
 				Config.setConfigProperty( NUMERIC_FIELDS, val );
@@ -474,12 +461,13 @@ public final class RMetaUtil
 	/**
 	 * This method verifies the fields given exist in the metadata file.
 	 * 
-	 * @param module Source BioModule calling this utility 
+	 * @param module Source BioModule calling this utility
 	 * @param prop Config property name
 	 * @param fields Set of metadata fields
 	 * @throws Exception if the metadata column does not exist
 	 */
-	public static void verifyMetadataFieldsExist( final BioModule module, final String prop, final Collection<String> fields ) throws Exception
+	public static void verifyMetadataFieldsExist( final BioModule module, final String prop,
+			final Collection<String> fields ) throws Exception
 	{
 		for( final String field: fields )
 		{
@@ -545,6 +533,23 @@ public final class RMetaUtil
 		}
 
 		return false;
+	}
+
+	private static Set<String> updateNumericData( final String field, final Set<String> rScriptFields,
+			final boolean doUpdate ) throws Exception
+	{
+		if( doUpdate && isValidNumericField( field ) )
+		{
+			rScriptFields.add( field );
+			numericFields.add( field );
+		}
+		else
+		{
+			rScriptFields.remove( field );
+			numericFields.remove( field );
+		}
+
+		return rScriptFields;
 	}
 
 	private static void verifyNumericData( final String field, final Set<String> data ) throws Exception

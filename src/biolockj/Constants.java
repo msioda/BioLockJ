@@ -12,24 +12,17 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	public static final String AWS_STACK = "aws.stack";
-	
-	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
-	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";
-	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
-	public static final String HN2_UNMAPPED_COUNT = "Unmapped_Count";
 
 	/**
 	 * Name of the file created in the BioModule or {@value biolockj.Config##PROJECT_PIPELINE_DIR} root directory to
 	 * indicate execution was successful: {@value #BLJ_COMPLETE}
 	 */
 	public static final String BLJ_COMPLETE = "biolockjComplete";
-
 	/**
 	 * Name of the file created in the {@value biolockj.Config#PROJECT_PIPELINE_DIR} root directory to indicate fatal
 	 * application errors halted execution: {@value #BLJ_FAILED}
 	 */
 	public static final String BLJ_FAILED = "biolockjFailed";
-
 	/**
 	 * Name of the file created in the BioModule root directory to indicate execution has started: {@value #BLJ_STARTED}
 	 */
@@ -38,6 +31,7 @@ public class Constants
 	 * URL to the BioLockJ WIKI
 	 */
 	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
 	 * {@value #DEFAULT_MOD_DEMUX}
@@ -55,29 +49,31 @@ public class Constants
 	 * {@value #DEFAULT_MOD_SEQ_MERGER}
 	 */
 	public static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultModuleSeqMerger";
-
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used generate p-value and other
 	 * stats: {@value #DEFAULT_STATS_MODULE}
 	 */
 	public static final String DEFAULT_STATS_MODULE = "project.defaultStatsModule";
-
 	/**
 	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
 	 * with {@value #DELIM_SEP}
 	 */
 	public static final String DELIM_SEP = "__";
+
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
 	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_ADD_IMPLICIT_MODULES = "project.disableAddImplicitModules";
+
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_PRE_REQ_MODULES}<br>
 	 * If set to {@value biolockj.Config#TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
+
 	public static final String DOCKER_IMG_VERSION = "docker.imgVersion";
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
@@ -105,16 +101,20 @@ public class Constants
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
 	public static final String FALSE = "N";
-
 	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
 	public static final String HN2_FULL_REPORT = "fullReport";
-
 	public static final String HN2_PATH_ABUND = "pAbund";
+
 	public static final String HN2_PATHWAY_REPORT = "pathwayReport";
+	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
+	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";
+
+	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
+	public static final String HN2_UNMAPPED_COUNT = "Unmapped_Count";
 	public static final String INDENT = "    ";
 
 	/**
@@ -258,17 +258,17 @@ public class Constants
 	public static final String REPORT_NUM_READS = "report.numReads";
 
 	/**
+	 * {@link biolockj.Config} Positive Double property {@value #REPORT_SAMPLE_CUTOFF} defines minimum percentage of
+	 * data columns must be non-zero to keep the sample.
+	 */
+	public static final String REPORT_SAMPLE_CUTOFF = "report.scarceSampleCutoff";
+
+	/**
 	 * {@link biolockj.Config} Positive Double property {@value #REPORT_SCARCE_CUTOFF} defines minimum percentage of
 	 * samples that must contain a count value for it to be kept.
 	 */
 	public static final String REPORT_SCARCE_CUTOFF = "report.scarceCountCutoff";
 
-	/**
-	 * {@link biolockj.Config} Positive Double property {@value #REPORT_SAMPLE_CUTOFF} defines minimum percentage of
-	 * data columns must be non-zero to keep the sample.
-	 */
-	public static final String REPORT_SAMPLE_CUTOFF = "report.scarceSampleCutoff";
-	
 	/**
 	 * Return character constant *backslash-n*
 	 */

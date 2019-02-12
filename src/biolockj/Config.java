@@ -33,23 +33,23 @@ public class Config
 	/**
 	 * Parse property value (Y or N) to return boolean, if not found, return false;
 	 *
-	 * @param module Source BioModule calling this function 
+	 * @param module Source BioModule calling this function
 	 * @param property Property name
 	 * @return boolean value
 	 * @throws ConfigFormatException if property value is not null but also not Y or N.
 	 */
 	public static boolean getBoolean( final BioModule module, final String property ) throws ConfigFormatException
 	{
-		if( getString( module,property ) != null && getString( module,property ).equalsIgnoreCase( Constants.TRUE ) )
+		if( getString( module, property ) != null && getString( module, property ).equalsIgnoreCase( Constants.TRUE ) )
 		{
 			return true;
 		}
-		else if( getString( module,property ) == null )
+		else if( getString( module, property ) == null )
 		{
 			setConfigProperty( property, Constants.FALSE );
 			Log.debug( Config.class, property + " is undefined, so return: " + Constants.FALSE );
 		}
-		else if( !getString( module,property ).equalsIgnoreCase( Constants.FALSE ) )
+		else if( !getString( module, property ).equalsIgnoreCase( Constants.FALSE ) )
 		{
 			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE
 					+ " or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
@@ -137,9 +137,9 @@ public class Config
 		}
 
 		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
-		if( getString(  module, property ) == null || getString(  module, property ).equals( property.substring( 4 ) ) )
+		if( getString( module, property ) == null || getString( module, property ).equals( property.substring( 4 ) ) )
 		{
-			return property.substring( 4 );
+			return property.substring( property.indexOf( "." ) );
 		}
 
 		return getString( module, property );
@@ -177,7 +177,7 @@ public class Config
 	 */
 	public static File getExistingFile( final BioModule module, final String property ) throws ConfigPathException
 	{
-		File f = getExistingFileObject( getString(  module, property ) );
+		File f = getExistingFileObject( getString( module, property ) );
 		if( f != null && !f.isFile() )
 		{
 			if( f.isDirectory() && f.list( HiddenFileFilter.VISIBLE ).length == 1 )
@@ -251,7 +251,8 @@ public class Config
 	 * @return Non-negative integer or null
 	 * @throws ConfigFormatException if defined but is not a non-negative integer value
 	 */
-	public static Integer getNonNegativeInteger( final BioModule module, final String property ) throws ConfigFormatException
+	public static Integer getNonNegativeInteger( final BioModule module, final String property )
+			throws ConfigFormatException
 	{
 		final Integer val = getIntegerProp( module, property );
 		if( val != null && val < 0 )
@@ -268,7 +269,8 @@ public class Config
 	 * @return Positive Double value or null
 	 * @throws ConfigFormatException if property is defined, but not set with a positive number
 	 */
-	public static Double getPositiveDoubleVal( final BioModule module, final String property ) throws ConfigFormatException
+	public static Double getPositiveDoubleVal( final BioModule module, final String property )
+			throws ConfigFormatException
 	{
 		final Double val = getDoubleVal( module, property );
 		if( val != null && val <= 0 )
@@ -286,7 +288,8 @@ public class Config
 	 * @return Positive Integer value or null
 	 * @throws ConfigFormatException if property is defined, but not set with a positive integer
 	 */
-	public static Integer getPositiveInteger( final BioModule module, final String property ) throws ConfigFormatException
+	public static Integer getPositiveInteger( final BioModule module, final String property )
+			throws ConfigFormatException
 	{
 		final Integer val = getIntegerProp( module, property );
 		if( val != null && val <= 0 )
@@ -315,7 +318,7 @@ public class Config
 	public static Set<String> getSet( final BioModule module, final String property )
 	{
 		final Set<String> set = new HashSet<>();
-		set.addAll( getList(  module, property ) );
+		set.addAll( getList( module, property ) );
 		return set;
 	}
 
@@ -333,19 +336,19 @@ public class Config
 		String val = null;
 		if( module != null )
 		{
-			String modProperty = Config.getModuleProp( module, property );
+			final String modProperty = Config.getModuleProp( module, property );
 			obj = props.getProperty( modProperty );
 			if( obj != null )
 			{
 				property = modProperty;
 			}
 		}
-		
+
 		if( obj == null )
 		{
 			obj = props.getProperty( property );
 		}
-		
+
 		if( obj == null )
 		{
 			usedProps.put( property, null );
@@ -629,7 +632,8 @@ public class Config
 	 * @throws ConfigNotFoundException if property is undefined
 	 * @throws ConfigFormatException if property is not a valid integer
 	 */
-	public static int requireInteger( final BioModule module, final String property ) throws ConfigNotFoundException, ConfigFormatException
+	public static int requireInteger( final BioModule module, final String property )
+			throws ConfigNotFoundException, ConfigFormatException
 	{
 		final Integer val = getIntegerProp( module, property );
 		if( val == null )
@@ -647,7 +651,8 @@ public class Config
 	 * @return List
 	 * @throws ConfigNotFoundException if property is undefined
 	 */
-	public static List<String> requireList( final BioModule module, final String property ) throws ConfigNotFoundException
+	public static List<String> requireList( final BioModule module, final String property )
+			throws ConfigNotFoundException
 	{
 		final List<String> val = getList( module, property );
 		if( val == null || val.isEmpty() )
@@ -705,7 +710,7 @@ public class Config
 	 */
 	public static Set<String> requireSet( final BioModule module, final String property ) throws ConfigNotFoundException
 	{
-		final Set<String> val = getTreeSet( module,  property );
+		final Set<String> val = getTreeSet( module, property );
 		if( val == null || val.isEmpty() )
 		{
 			throw new ConfigNotFoundException( property );
@@ -857,7 +862,7 @@ public class Config
 		{
 			try
 			{
-				final Integer val = Integer.parseInt( getString(module, property ) );
+				final Integer val = Integer.parseInt( getString( module, property ) );
 				return val;
 			}
 			catch( final Exception ex )

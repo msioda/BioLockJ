@@ -79,7 +79,8 @@ public class DemuxUtil
 	{
 		if( ( barcodeInHeader() || barcodeInSeq() || barcodeInMapping() )
 				&& MetaUtil.getFieldNames().contains( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) )
-				&& !MetaUtil.getFieldValues( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
+				&& !MetaUtil.getFieldValues( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ), true )
+						.isEmpty() )
 		{
 			return true;
 		}
@@ -273,8 +274,8 @@ public class DemuxUtil
 
 		if( demuxWithBarcode() )
 		{
-			Log.info( DemuxUtil.class,
-					"Detected Config." + BARCODE_USE_REV_COMP + " = " + Config.getBoolean( null, BARCODE_USE_REV_COMP ) );
+			Log.info( DemuxUtil.class, "Detected Config." + BARCODE_USE_REV_COMP + " = "
+					+ Config.getBoolean( null, BARCODE_USE_REV_COMP ) );
 
 			Log.info( DemuxUtil.class,
 					"Building Barcode-SampleID Map using the "

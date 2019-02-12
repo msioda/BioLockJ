@@ -33,7 +33,7 @@ import biolockj.util.SeqUtil;
  * For more information, please review the BioBakery instruction manual:
  * <a href= "https://bitbucket.org/biobakery/humann2" target="_top">https://bitbucket.org/biobakery/humann2</a><br>
  */
-public class HumanN2Classifier extends ClassifierModuleImpl implements ClassifierModule
+public class Humann2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {
 
 	@Override
@@ -52,12 +52,12 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 
 			lines.add( FUNCTION_RUN_HN2 + " " + hn2InputSeq.getAbsolutePath() );
 			lines.add( FUNCTION_JOIN_HN2_TABLES + " " + getTempSubDir( TEMP_HN2_OUTPUT_DIR ).getAbsoluteFile() + " "
-					+ outputPath( Constants.HN2_PATH_ABUND ) + " " + Constants.HN2_PATH_ABUND  );
+					+ outputPath( Constants.HN2_PATH_ABUND ) + " " + Constants.HN2_PATH_ABUND );
 
 			for( final String unit: Config.getSet( this, HN2_RENORM_UNITS ) )
 			{
-				lines.add( FUNCTION_RENORM_HN2_TABLES + " " + outputPath( Constants.HN2_PATH_ABUND ) + getRenormPath( unit, null )
-						+ RENORM_UNITS_OPTION_CPM );
+				lines.add( FUNCTION_RENORM_HN2_TABLES + " " + outputPath( Constants.HN2_PATH_ABUND )
+						+ getRenormPath( unit, null ) + RENORM_UNITS_OPTION_CPM );
 
 				for( final String mode: Config.getSet( this, HN2_RENORM_MODES ) )
 				{
@@ -109,6 +109,24 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	{
 		super.cleanUp();
 		pairedReads = null;
+	}
+
+	/**
+	 * Get kraken executable command: {@value #EXE_HUMANN2}
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return Config.getExe( this, EXE_HUMANN2 );
+	}
+
+	/**
+	 * Obtain the humann2 runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_HUMANN2_PARAMS );
 	}
 
 	/**
@@ -268,6 +286,16 @@ public class HumanN2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	private Map<File, File> pairedReads = null;
+
+	/**
+	 * {@link biolockj.Config} exe property for humnan2 executable: {@value #EXE_HUMANN2}
+	 */
+	protected static final String EXE_HUMANN2 = "exe.humann2";
+
+	/**
+	 * {@link biolockj.Config} List property used to obtain the humann2 executable params
+	 */
+	protected static final String EXE_HUMANN2_PARAMS = "exe.humann2Params";
 
 	/**
 	 * Name of the function used to concatenate forward and reverse read into a single file to use as input into humann2

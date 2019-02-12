@@ -20,7 +20,6 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
-import biolockj.module.classifier.wgs.HumanN2Classifier;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.util.*;
@@ -167,7 +166,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			Boolean isHn2 = isHumanN2();
+			final Boolean isHn2 = isHumanN2();
 			if( isHn2 == null )
 			{
 				return super.getPreRequisiteModules();
@@ -180,47 +179,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 			{
 				preReqs.add( AddMetadataToTaxaTables.class.getName() );
 			}
-			
+
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
-	
-	
-	private Boolean isHumanN2() throws Exception
-	{
-		String prevClassifier = null;
-		int foundSelf = 0;
-		boolean hasPathwayInputs = BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE );
-		boolean hasTaxaInputs = BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
-		for( final String mod: Config.requireList( this, Constants.INTERNAL_BLJ_MODULE ) )
-		{
-			boolean isClassifier = mod.toLowerCase().contains( "classifier" );
-			boolean isHn2 = isClassifier && mod.toLowerCase().contains( "humann2" );
-			if( mod.equals( getClass().getName() ) )
-			{
-				foundSelf++;
-			}
-
-			if( foundSelf > 0 &&  foundSelf > numInit++ )
-			{
-				
-				if( (prevClassifier == null && hasTaxaInputs) || (!isHn2 && isClassifier)  )
-				{
-					return false;
-				}
-				if( (prevClassifier == null && hasPathwayInputs) || isHn2 )
-				{
-					return true;
-				}
-				
-				return null;
-			}
-		}
-		return null;
-	}
-	
-	private static int numInit = 0;
 
 	/**
 	 * Get the primary R script
@@ -353,7 +316,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		{
 			set.add( R_DATA_EXT.substring( 1 ) );
 		}
-		if( !Config.getBoolean( this, Constants.PROJECT_DELETE_TEMP_FILES ) && Config.getBoolean( this, R_Module.R_DEBUG ) )
+		if( !Config.getBoolean( this, Constants.PROJECT_DELETE_TEMP_FILES )
+				&& Config.getBoolean( this, R_Module.R_DEBUG ) )
 		{
 			set.add( LOG_EXT.substring( 1 ) );
 		}
@@ -424,6 +388,41 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	private String getModuleScriptName() throws Exception
 	{
 		return getClass().getSimpleName() + R_EXT;
+	}
+
+	private Boolean isHumanN2() throws Exception
+	{
+		final String prevClassifier = null;
+		int foundSelf = 0;
+		final boolean hasPathwayInputs = BioLockJUtil
+				.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE );
+		final boolean hasTaxaInputs = BioLockJUtil
+				.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+		for( final String mod: Config.requireList( this, Constants.INTERNAL_BLJ_MODULE ) )
+		{
+			final boolean isClassifier = mod.toLowerCase().contains( "classifier" );
+			final boolean isHn2 = isClassifier && mod.toLowerCase().contains( "humann2" );
+			if( mod.equals( getClass().getName() ) )
+			{
+				foundSelf++;
+			}
+
+			if( foundSelf > 0 && foundSelf > numInit++ )
+			{
+
+				if( prevClassifier == null && hasTaxaInputs || !isHn2 && isClassifier )
+				{
+					return false;
+				}
+				if( prevClassifier == null && hasPathwayInputs || isHn2 )
+				{
+					return true;
+				}
+
+				return null;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -560,6 +559,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	protected static final String R_TIMEOUT = "r.timeout";
 
 	private static final String DEBUG_LOG_PREFIX = "debug_";
+
 	private static final String FUNCTION_RUN_R = "runScript";
 	private static final String INDENT = "   ";
+	private static int numInit = 0;
 }

@@ -33,7 +33,8 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 		final List<List<String>> data = new ArrayList<>();
 		for( final File seqFile: files )
 		{
-			if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( seqFile.getName() ) )
+			if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
+					&& !SeqUtil.isForwardRead( seqFile.getName() ) )
 			{
 				continue;
 			}
@@ -75,9 +76,10 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_SANATIZE + "() {" );
-		lines.add( Config.getExe( this, EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 " + INPUT_PARAM
-				+ " $2 " + ( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
-				+ OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
+		lines.add( Config.getExe( this, EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 "
+				+ INPUT_PARAM + " $2 "
+				+ ( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" ) + OUTPUT_PARAM
+				+ " " + getTempDir().getAbsolutePath() );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
@@ -144,9 +146,9 @@ public class KneadDataSanitizer extends SeqModuleImpl implements SeqModule
 	private String getParams() throws Exception
 	{
 		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM );
-		for( final String db: Config.requireList( this, KNEAD_DBS ) )
+		for( final File db: Config.requireExistingDirs( this, KNEAD_DBS ) )
 		{
-			params += DB_PARAM + " " + db + " ";
+			params += DB_PARAM + " " + db.getAbsolutePath() + " ";
 		}
 
 		return params;

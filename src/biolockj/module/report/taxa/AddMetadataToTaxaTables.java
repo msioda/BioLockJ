@@ -59,8 +59,8 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 			{
 				for( final String key: hitRatioPerSample.keySet() )
 				{
-					if( hitRatioPerSample.get( key ) == null
-							|| hitRatioPerSample.get( key ).equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
+					if( hitRatioPerSample.get( key ) == null || hitRatioPerSample.get( key )
+							.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
 					{
 						hitRatioPerSample.put( key, "0.0" );
 					}

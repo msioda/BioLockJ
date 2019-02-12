@@ -41,7 +41,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		Log.info( getClass(), "Processing " + ( files == null ? 0: files.size() ) + " files" );
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
-		if( RuntimeParamUtil.isDockerMode() || Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= files.size() )
+		if( RuntimeParamUtil.isDockerMode()
+				|| Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= files.size() )
 		{
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
 			lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
@@ -50,8 +51,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		}
 		else
 		{
-			Log.info( getClass(),
-					"Pick closed ref OTUs in batches of size: " + Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) );
+			Log.info( getClass(), "Pick closed ref OTUs in batches of size: "
+					+ Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) );
 			int startIndex = 1;
 			int batchNum = 0;
 			int sampleCount = 0;

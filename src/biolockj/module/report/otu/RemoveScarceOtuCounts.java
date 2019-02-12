@@ -313,9 +313,9 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 		return new File( getTempDir().getAbsolutePath() + File.separator + "scarceOtus" + TXT_EXT );
 	}
 
-	private String prop = null;
 	private Integer cutoff = null;
 	private Map<String, String> hitsPerSample = new HashMap<>();
+	private String prop = null;
 	private final TreeSet<String> sampleIds = new TreeSet<>();
 	private int totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();

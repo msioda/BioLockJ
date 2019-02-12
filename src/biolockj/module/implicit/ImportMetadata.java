@@ -367,8 +367,9 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
 					"This property requires every Sample ID in the metadata file " + MetaUtil.getMetadataFileName()
 							+ " map to one of the sequence files in an input directory: "
-							+ Config.getString( this, Constants.INPUT_DIRS ) + BioLockJ.RETURN + "The following " + ids.size()
-							+ " Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
+							+ Config.getString( this, Constants.INPUT_DIRS ) + BioLockJ.RETURN + "The following "
+							+ ids.size() + " Sample IDs  do not map to a sequence file: "
+							+ BioLockJUtil.printLongFormList( ids ) );
 		}
 	}
 

@@ -105,6 +105,24 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
+	 * Get kraken executable command: {@value #EXE_KRAKEN2}
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return Config.getExe( this, EXE_KRAKEN2 );
+	}
+
+	/**
+	 * Obtain the kraken2 runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_KRAKEN2_PARAMS );
+	}
+
+	/**
 	 * This method generates the required bash function: {@value #FUNCTION_KRAKEN}
 	 */
 	@Override
@@ -219,6 +237,16 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	private String defaultSwitches = null;
+
+	/**
+	 * {@link biolockj.Config} exe property for kraken2 executable: {@value #EXE_KRAKEN2}
+	 */
+	protected static final String EXE_KRAKEN2 = "exe.kraken2";
+
+	/**
+	 * {@link biolockj.Config} List property used to obtain the kraken2 executable params
+	 */
+	protected static final String EXE_KRAKEN2_PARAMS = "exe.kraken2Params";
 
 	/**
 	 * Name of the kraken function used to assign taxonomy: {@value #FUNCTION_KRAKEN}
