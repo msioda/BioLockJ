@@ -180,7 +180,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	protected String getRuntimeParams() throws Exception
 	{
 		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + NUCL_DB_PARAM + " " + getNuclDB() + " "
-				+ PROT_DB_PARAM + " " + getProtDB() + " " + OUTPUT_PARAM + " " + getOutputDir().getAbsolutePath();
+				+ PROT_DB_PARAM + " " + getProtDB() + " " + OUTPUT_PARAM + " " + getOutputDir().getAbsolutePath() + " ";
 	}
 
 	private String getJoinTableCmd() throws Exception
