@@ -32,10 +32,12 @@ router.get('/config', function(req, res, next) {
   res.render('config', { title: 'Configuration' });
 });
 
+//retrieve project and discriptions
 router.post('/retrieveProjects', function(req, res, next) {
   console.log('retrieveProjects');
   try {
-    let projects = [];
+    let names = [];
+    let descrip = [];
     fs.readdir(path.join('/', 'pipeline'), (err, files) => {
       if (err) {
         console.error(err);
@@ -45,13 +47,40 @@ router.post('/retrieveProjects', function(req, res, next) {
         console.log(file);
         const checkFile = fs.lstatSync(path.join('/','pipeline',file));
           if (checkFile.isDirectory()) {
-            projects.push(file);
-            // console.log(projects);
-          };
+            names.push(file);
+
+            //go into folder
+            const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipeline', file));
+
+            //get master config and read description
+            for (var i = 0; i < nestedFolderFiles.length; i++) {
+              if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
+                console.log(nestedFolderFiles[i]);
+
+                const propFile = fs
+                  .readFileSync(path.join('/', 'pipeline', file, nestedFolderFiles[i]), 'utf8')
+                  .split('\n');
+
+                let projDescrp = 'Project description is empty'
+
+                for (var i = 0; i < propFile.length; i++) {
+                  if (propFile[i].startsWith('project.description=')) {
+                    console.log(propFile[i].slice(20));
+                    projDescrp = propFile[i].slice(20);
+                  }
+                }//end propFile for loop
+                descrip.push(projDescrp);
+              }
+            }//end nestedFolderFiles for loop
+          };//end if dir
         });
-        console.log(projects);
+        // console.log(projects);
+        console.log(descrip);
         res.setHeader("Content-Type", "text/html");
-        res.write(JSON.stringify(projects));
+        res.write(JSON.stringify({
+          names : names,
+          descrip : descrip,
+        }));
         res.end();
       });
   } catch (e) {
@@ -179,9 +208,39 @@ router.post('/checkProjectExists', function(req, res, next) {
     }
   } catch (e) {
     console.log(e);
-    accessLogStream.write(e.stack + '\n');;
+    accessLogStream.write(e.stack + '\n');
   }
 });// end outer.post('/checkProjectExists',
+
+router.post('/deleteConfig', function(req, res, next) {
+  try {
+    let dotProperties = false;
+    console.log(req.body.configFileName);
+    let deleteThis = req.body.configFileName;
+      if (deleteThis.includes('/')){
+        res.setHeader('Content-Type', 'text/html');
+        res.write('illegal character:, "/"');
+        res.end();
+        return;
+      }
+      if (!deleteThis.endsWith('.properties')){
+        deleteThis += '.properties';
+        dotProperties = true;
+      }
+      //delete deleteThis
+      fs.unlinkSync(path.join('/', 'config', deleteThis ));
+      //report deleted to browser
+      if (dotProperties === true) {
+        deleteThis = deleteThis.slice(0,-11);
+      }
+      res.setHeader('Content-Type', 'text/html');
+      res.write(`deleted : ${deleteThis}`);
+      res.end();
+  } catch (e) {
+    console.error(e);
+    accessLogStream.write(e.stack + '\n');
+  }
+});
 
 router.post('/launch', function(req, res, next) {
   console.log('entered /launch');
@@ -298,29 +357,39 @@ router.get('/streamProgress', function(request, response){
 });
 
 
-router.post('/startAws', function(req, res, next) {
+router.post('/configureAws', function(req, res, next) {
   /*
   The components of the formData should be:
   AWSACCESSKEYID, AWSSECRETACCESSKEY, REGION, OUTPUTFORMAT, PROFILE
   */
-  console.log('in AWS');
+  console.log('configureAws');
   try {
+    console.log('req.body.form: ', req.body.form);
     console.dir(req.body.formData);
     const sys = require('util');
     const exec = require('child_process').exec;
     exec('git clone https://github.com/mjzapata/AWSBatchGenomicsStack.git', function(err, stdout, stderr) {
+      if (err){
+        console.error(err);
+        res.setHeader('Content-Type', 'text/html');
+        res.write('Server Response: AWS Configured!');
+        res.end();
+        return;
+      }
       console.log(stdout);
-      console.error(err);
       console.error(stderr);
+
+      //then write credentials
+      exec(`AWSBatchGenomicsStack/webapp/writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
+        console.log(stdout);
+        console.error(err);
+        console.error(stderr);
+        res.setHeader('Content-Type', 'text/html');
+        res.write(`Server Response: ${stout}`);
+        res.end();
+      })
     });
-    exec(`AWSBatchGenomicsStack/webapp/writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
-      console.log(stdout);
-      console.error(err);
-      console.error(stderr);
-    })
-    res.setHeader('Content-Type', 'text/html');
-    res.write('Server Response: AWS launched!');
-    res.end();
+
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
     console.error(e);
