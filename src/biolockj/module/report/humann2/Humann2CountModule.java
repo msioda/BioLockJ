@@ -52,9 +52,6 @@ public abstract class Humann2CountModule extends JavaModuleImpl implements JavaM
 				}
 			}
 			cacheInputFiles( files );
-
-			validateInput( files );
-
 		}
 		return getFileCache();
 	}
@@ -101,15 +98,4 @@ public abstract class Humann2CountModule extends JavaModuleImpl implements JavaM
 		}
 		return false;
 	}
-
-	private void validateInput( final List<File> files ) throws Exception
-	{
-		if( files.size() > 1 )
-		{
-			throw new Exception(
-					"Current HumanN2 Implementation supports reporting on 1 pathway abundance file per pipeline.  "
-							+ "Total of [" + files.size() + "] input files found: " + files );
-		}
-	}
-
 }

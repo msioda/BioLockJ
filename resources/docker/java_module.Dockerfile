@@ -12,7 +12,7 @@ RUN echo ${BLJ_DATE} && \
 	mkdir $BLJ && \
 	cd $BLJ && \
 	wget -qO- $WGET_URL | bsdtar -xzf- && \
-	rm -rf $BLJ/[bilpw]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/docs && rm -rf $BLJ/src && \
+	rm -rf $BLJ/[bilw]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/docs && rm -rf $BLJ/src && \
 	cp $BLJ/script/* /usr/local/bin 
 
 #2.) Cleanup

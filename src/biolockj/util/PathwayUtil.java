@@ -97,7 +97,6 @@ public class PathwayUtil
 	 * 
 	 * @param root Root file indicates type of coverage, abundance, or gene
 	 * @return file suffix for every BioLockJ Pathway file
-	 * @throws Exception if errors occur
 	 */
 	public static String pathwayFileSuffix( final File root )
 	{

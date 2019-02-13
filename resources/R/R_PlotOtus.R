@@ -142,7 +142,7 @@ main <- function() {
                if(position == 2) { 
                   addPageTitle( item )
                   if ( length(reportCols) > prod( par("mfrow") ) ) {
-                     addPageFooter( item, level, pageNum, multiPageSet )
+                     addPageFooter( level, pageNum, multiPageSet )
                   }else{
                      addPageFooter( level, multiPageSet )
                   }

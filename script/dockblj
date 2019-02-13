@@ -149,6 +149,8 @@ inDockerContainer=$(arg_exists "$@" "-docker")
 # Call function to verify input parameters are vaild
 validate_input
 
+#echo "BLJ_OPTIONS=$(get_blj_options)"
+
 # Call function to print status message
 echo $(get_status_msg)
 
@@ -161,7 +163,7 @@ elif [ ${#metadataFilePath} -gt 0 ]; then
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta \
-		--rm $DOCKER_HUB_USER/blj_manager 
+		--rm $DOCKER_HUB_USER/blj_manager /bin/bash
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then	
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
