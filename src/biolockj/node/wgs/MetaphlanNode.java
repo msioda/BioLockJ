@@ -16,7 +16,7 @@ import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 
 /**
- * This class represents one line of {@link biolockj.module.classifier.wgs.MetaphlanClassifier} output. For a full
+ * This class represents one line of {@link biolockj.module.classifier.wgs.Metaphlan2Classifier} output. For a full
  * description of the output file format
  * <a href= "https://bitbucket.org/biobakery/biobakery/wiki/metaphlan2#rst-header-output-files" target=
  * "_top">https://bitbucket.org/biobakery/biobakery/wiki/metaphlan2#rst-header-output-files</a> Each line can represent

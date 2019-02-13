@@ -24,7 +24,7 @@ import biolockj.util.TaxaUtil;
 /**
  * This BioModule builds the bash scripts used to execute metaphlan2.py to classify WGS sequences.
  */
-public class MetaphlanClassifier extends ClassifierModuleImpl implements ClassifierModule
+public class Metaphlan2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {
 	/**
 	 * Build bash script lines to classify unpaired WGS reads with Metaphlan. The inner list contains 1 bash script line
@@ -152,7 +152,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 			{
 				throw new Exception(
 						"Invalid classifier option (--bowtie2out) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
-								+ "). BioLockJ outputs bowtie2out files to MetaphlanClassifier/temp." );
+								+ "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
 			}
 			if( params.indexOf( "-t rel_ab_w_read_stats " ) > -1 )
 			{

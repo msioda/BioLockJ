@@ -49,7 +49,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	 * Sample HumanN2 report line (head output_pAbund.tsv):<br>
 	 * 1st cell format: [Pathway_ID]:[Pathway_Descr] | g__[genus_taxa].s__[species_taxa]<br>
 	 * Example: ARO-PWY: chorismate biosynthesis I|g__Acidaminococcus.s__Acidaminococcus_intestini #SampleID
-	 * Metaphlan2_Analysis #clade_name relative_abundance coverage average_genome_length_in_the_clade
+	 * Metaphlan22_Analysis #clade_name relative_abundance coverage average_genome_length_in_the_clade
 	 * estimated_number_of_reads_from_the_clade k__Bacteria|p__Bacteroidetes 14.68863 0.137144143537 4234739 580770
 	 */
 	@Override
