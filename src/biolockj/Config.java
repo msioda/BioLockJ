@@ -137,9 +137,9 @@ public class Config
 		}
 
 		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
-		if( getString( module, property ) == null || getString( module, property ).equals( property.substring( 4 ) ) )
+		if( getString( module, property ) == null )
 		{
-			return property.substring( property.indexOf( "." ) );
+			return property.substring( property.indexOf( "." ) + 1 );
 		}
 
 		return getString( module, property );
