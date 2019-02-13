@@ -315,7 +315,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 			lines.add( getJoinTableLine( Constants.HN2_GENE_FAMILIES ) );
 			lines.add( getRenormTableLine( Constants.HN2_GENE_FAMILIES ) );
 		}
-		lines.add( "echo " + READY );
 		lines.add( "}" + RETURN );
 		return lines;
 	}

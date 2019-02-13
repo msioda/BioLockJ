@@ -111,9 +111,9 @@ public class PathwayUtil
 
 	public static void verifyConfig( final BioModule module ) throws Exception
 	{
-		if( !Config.getBoolean( module, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-				&& !Config.getBoolean( module, Constants.HN2_DISABLE_PATH_COVERAGE )
-				&& !Config.getBoolean( module, Constants.HN2_DISABLE_GENE_FAMILIES ) )
+		if( Config.getBoolean( module, Constants.HN2_DISABLE_PATH_ABUNDANCE )
+				&& Config.getBoolean( module, Constants.HN2_DISABLE_PATH_COVERAGE )
+				&& Config.getBoolean( module, Constants.HN2_DISABLE_GENE_FAMILIES ) )
 		{
 			throw new ConfigViolationException(
 					"Must enable at least one type of HumanN2 report.  All 3 reports are disable via Config properties: "
