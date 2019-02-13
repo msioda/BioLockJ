@@ -57,7 +57,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		}
 
 		final ArrayList<String> lines = new ArrayList<>();
-		lines.add( "if [ $(" + FUNCTION_BUILD_SUMMARY_TABLES + ") == \"" + READY + "\" ]; then" );
+		lines.add( FUNCTION_BUILD_SUMMARY_TABLES );
 		
 		lines.add( "fi" );
 		data.add( lines );
