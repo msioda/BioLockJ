@@ -373,7 +373,7 @@ plotPlainText <- function(textToPrint, cex=1){
 # Read a table using the biolockj standards
 readBljTable <- function( file ){
 	return( read.table( file, header=TRUE, sep="\t", row.names=1, na.strings=getProperty( "metadata.nullValue" ), 
-							check.names=FALSE, comment.char=getProperty( "metadata.commentChar", "" ) ))
+		check.names=FALSE, comment.char=getProperty( "metadata.commentChar", "" ) ) )
 }
 
 # This method returns 1 of 5 possible CalculateStats.R output file suffix values

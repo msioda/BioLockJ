@@ -55,7 +55,7 @@ public class PathwayUtil
 	 */
 	public static boolean isPathwayFile( final File file ) throws Exception
 	{
-		if( file.getName().endsWith( pathwayFileSuffix( file ) ) )
+		if( file.getName().endsWith( pathwayFileSuffix( null ) ) )
 		{
 			return true;
 		}

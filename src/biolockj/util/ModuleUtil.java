@@ -48,7 +48,7 @@ public class ModuleUtil
 		{
 			if( m instanceof ClassifierModule )
 			{
-				return (ClassifierModule) module;
+				return (ClassifierModule) m;
 			}
 		}
 		return null;

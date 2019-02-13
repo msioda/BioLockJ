@@ -198,13 +198,24 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	 */
 	protected void rarefy( final File seqFile ) throws Exception
 	{
-		int max = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MAX );
+		Integer max = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MAX );
+		Integer min = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
 		final int numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
 		final int count = Integer.parseInt( Long.toString( numReads ) );
-		max = count < max ? count: max;
+		
+		if( max != null )
+		{
+			max = count < max ? count: max;
+		}
+		
+		if( min == null )
+		{
+			min = 1;
+		}
+		
 		Log.debug( getClass(), "Sample[" + sampleId + "]  numReads = " + numReads );
-		if( numReads >= Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) )
+		if( numReads >= min )
 		{
 			final int[] range = IntStream.rangeClosed( 0, numReads - 1 ).toArray();
 			final List<Integer> indexes = new ArrayList<>();
