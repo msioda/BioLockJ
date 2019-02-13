@@ -86,6 +86,7 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 	 * Each cell in the tab delimited file is stored as 1 element in the inner lists.
 	 * 
 	 * @param file Path abundance file
+	 * @param valid columns
 	 * @return List of Lists - each inner list 1 line
 	 * @throws Exception if errors occur
 	 */
@@ -211,7 +212,7 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 	 * Check column headers for valid pathway indexes (avoid columns with genus/species info).
 	 * 
 	 * @param file Module input pathway abundance full report as output by HumanN2 parser.
-	 * @return
+	 * @return Ordered set of valid col indexes
 	 * @throws Exception if errors occur
 	 */
 	protected TreeSet<Integer> validColIndexes( final File file ) throws Exception
@@ -239,8 +240,7 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 				reader.close();
 			}
 		}
-		Log.info( getClass(), "Valid pathway columns: " + validCols );
-
+		
 		return validCols;
 	}
 

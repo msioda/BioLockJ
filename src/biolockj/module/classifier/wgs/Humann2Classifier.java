@@ -51,7 +51,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 			}
 
 			lines.add( FUNCTION_RUN_HN2 + " " + hn2InputSeq.getAbsolutePath() );
-			lines.add( FUNCTION_JOIN_HN2_TABLES + " " + getTempSubDir( TEMP_HN2_OUTPUT_DIR ).getAbsoluteFile() + " "
+			lines.add( getJoinTableLine( SeqUtil.getSampleId( file.getName() ) ) + " " + getTempDir().getAbsoluteFile() + " "
 					+ outputPath( Constants.HN2_PATH_ABUND ) + " " + Constants.HN2_PATH_ABUND );
 
 			for( final String unit: Config.getSet( this, HN2_RENORM_UNITS ) )
@@ -147,13 +147,13 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 
 		lines.add( HN2_BASH_COMMENT );
 		lines.add( "function " + FUNCTION_RUN_HN2 + "() {" );
-		lines.add( getClassifierExe() + " " + getRuntimeParams() + INPUT_PARAM + "$1 " + " " + OUTPUT_PARAM
-				+ getTempSubDir( TEMP_HN2_OUTPUT_DIR ).getAbsoluteFile() );
+		lines.add( getClassifierExe() + " " + getRuntimeParams() + INPUT_PARAM + "$1 " + OUTPUT_PARAM
+				+ getTempDir().getAbsoluteFile() );
 		lines.add( "}" + RETURN );
 
 		lines.add( HN2_BASH_COMMENT );
 		lines.add( "function " + FUNCTION_JOIN_HN2_TABLES + "() {" );
-		lines.add( getJoinTableCmd() + " " + INPUT_PARAM + "$1 " + OUTPUT_PARAM + "$2 " + FILE_NAME_PARAM + "$3" );
+		lines.add( getJoinTableCmd() + " " + SEARCH_SUBDIR_PARAM + INPUT_PARAM + "$1 " + OUTPUT_PARAM + "$2 " + FILE_NAME_PARAM + "$3" );
 		lines.add( "}" + RETURN );
 
 		lines.add( HN2_BASH_COMMENT );
@@ -354,10 +354,11 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private static final String INPUT_PARAM = "-i ";
 
 	private static final String JOIN_BASH_COMMENT = "";
-	private static final String NUCL_DB_PARAM = "--nucleotide-database ";
+	private static final String NUCL_DB_PARAM = "--nucleotide-database";
 	private static final String NUM_THREADS_PARAM = "--threads";
 	private static final String OUTPUT_PARAM = "-o ";
-	private static final String PROT_DB_PARAM = "--protein-database ";
+	private static final String SEARCH_SUBDIR_PARAM = "-s";
+	private static final String PROT_DB_PARAM = "--protein-database";
 	private static final String RENORM_BASH_COMMENT = "";
 	private static final String RENORM_MODE_OPTION_COMMUNITY = "community";
 	private static final String RENORM_MODE_OPTION_LEVELWISE = "levelwise";
@@ -366,6 +367,5 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private static final String RENORM_UNITS_OPTION_RELAB = "relab";
 	private static final String RENORM_UNITS_PARAM = "--units ";
 	private static final String SUMMARY_PREFIX = "summary_";
-	private static final String TEMP_HN2_OUTPUT_DIR = "humann2_cmd_output";
 	private static final String TEMP_MERGE_READ_DIR = "merged";
 }
