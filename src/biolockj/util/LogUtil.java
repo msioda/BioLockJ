@@ -121,7 +121,7 @@ public class LogUtil
 		{
 			for( final String line: lines )
 			{
-				writer.write( line + BioLockJ.RETURN );
+				writer.write( line + Constants.RETURN );
 			}
 		}
 		finally

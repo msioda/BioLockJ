@@ -94,7 +94,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 			}
 			inAvg = inAvg.divide( BigInteger.valueOf( numIn ) );
 
-			sb.append( "# Input files: " + numIn + BioLockJ.RETURN );
+			sb.append( "# Input files: " + numIn + Constants.RETURN );
 			sb.append( "Mean input file size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
 			return sb.toString() + super.getSummary();
 

@@ -55,12 +55,12 @@ public class DockerUtil
 		final List<String> lines = new ArrayList<>();
 		if( isDockerJavaModule( module ) )
 		{
-			lines.add( getBljOptions( module ) + BioLockJ.RETURN );
-			Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + BioLockJ.RETURN );
+			lines.add( getBljOptions( module ) + Constants.RETURN );
+			Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + Constants.RETURN );
 		}
 
-		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
-		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
+		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + Constants.RETURN );
+		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + Constants.RETURN );
 
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );

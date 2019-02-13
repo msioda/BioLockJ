@@ -831,7 +831,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile, exists ) );
 		for( final String line: lines )
 		{
-			writer.write( line + BioLockJ.RETURN );
+			writer.write( line + Constants.RETURN );
 		}
 		writer.close();
 	}

@@ -98,6 +98,14 @@ public class Constants
 	 */
 	public static final String EXE_GZIP = "exe.gzip";
 	/**
+	 * {@link biolockj.Config} property for java executable: {@value #EXE_JAVA}
+	 */
+	public static final String EXE_JAVA = "exe.java";
+	/**
+	 * {@link biolockj.Config} property to python executable
+	 */
+	public static final String EXE_PYTHON = "exe.python";
+	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
 	public static final String FALSE = "N";

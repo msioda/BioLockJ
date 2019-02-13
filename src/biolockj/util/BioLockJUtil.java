@@ -480,10 +480,10 @@ public class BioLockJUtil
 		final StringBuffer sb = new StringBuffer();
 		if( data != null && !data.isEmpty() )
 		{
-			sb.append( BioLockJ.RETURN );
+			sb.append( Constants.RETURN );
 			for( final Object val: data )
 			{
-				sb.append( val ).append( BioLockJ.RETURN );
+				sb.append( val ).append( Constants.RETURN );
 			}
 		}
 

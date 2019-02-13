@@ -11,7 +11,7 @@
  */
 package biolockj.exception;
 
-import biolockj.BioLockJ;
+import biolockj.Constants;
 import biolockj.Config;
 
 /**
@@ -53,7 +53,7 @@ public abstract class ConfigException extends Exception
 	{
 		if( !msg.isEmpty() )
 		{
-			msg = msg + BioLockJ.RETURN;
+			msg = msg + Constants.RETURN;
 		}
 
 		String val = Config.getString( null, property );
@@ -61,8 +61,8 @@ public abstract class ConfigException extends Exception
 		{
 			val = "{undefined}";
 		}
-
-		return "[ " + property + "=" + val + " ] " + BioLockJ.RETURN + msg
+		
+		return "[ " + property + "=" + val + " ] " + Constants.RETURN + msg
 				+ "Restart pipeline after updating application inputs or Config " + property + " value in: "
 				+ Config.getConfigFileName();
 	}

@@ -288,7 +288,7 @@ public class SeqUtil
 		else if( Config.getString( null, INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
 		{
 			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ "
-					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Constants.FALSE + " ]" + BioLockJ.RETURN + msg );
+					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Constants.FALSE + " ]" + Constants.RETURN + msg );
 		}
 
 		return map;
@@ -461,7 +461,7 @@ public class SeqUtil
 		if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( null, MetaUtil.META_REQUIRED ) )
 		{
 			throw new ConfigViolationException( MetaUtil.META_REQUIRED, "No metadata found for the following files: "
-					+ BioLockJ.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
+					+ Constants.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
 		}
 
 		return seqFiles;
@@ -626,8 +626,8 @@ public class SeqUtil
 			}
 			else
 			{
-				Log.info( SeqUtil.class, file.getAbsolutePath() + " is not a sequence file! " + BioLockJ.RETURN
-						+ "Line 1: [ " + header + " ]" + BioLockJ.RETURN + "Line 2= [ " + seq + " ]" );
+				Log.info( SeqUtil.class, file.getAbsolutePath() + " is not a sequence file! " + Constants.RETURN
+						+ "Line 1: [ " + header + " ]" + Constants.RETURN + "Line 2= [ " + seq + " ]" );
 			}
 		}
 		finally
@@ -848,7 +848,7 @@ public class SeqUtil
 			else
 			{
 				throw new Exception( "Invalid sequence file format (1st character = " + headerChar + ") in: "
-						+ f.getAbsolutePath() + BioLockJ.RETURN + "FASTA files must begin with either character: "
+						+ f.getAbsolutePath() + Constants.RETURN + "FASTA files must begin with either character: "
 						+ BioLockJUtil.getCollectionAsString( FASTA_HEADER_DELIMS )
 						+ " and FASTQ files must begin with \"" + FASTQ_HEADER_DELIM + "\"" );
 			}
@@ -857,7 +857,7 @@ public class SeqUtil
 		if( foundFasta != null && foundFastq != null )
 		{
 			throw new Exception( "Input files from: " + INPUT_DIRS + " must all be of a single type (FASTA or FASTQ)."
-					+ BioLockJ.RETURN + "FASTA file found: " + foundFasta + BioLockJ.RETURN + "FASTQ file found: "
+					+ Constants.RETURN + "FASTA file found: " + foundFasta + Constants.RETURN + "FASTQ file found: "
 					+ foundFastq );
 		}
 

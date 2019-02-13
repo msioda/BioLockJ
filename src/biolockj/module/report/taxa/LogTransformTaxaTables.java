@@ -164,7 +164,7 @@ public class LogTransformTaxaTables extends TaxaCountModule implements JavaModul
 			writer.write( Constants.TAB_DELIM + s );
 		}
 
-		writer.write( BioLockJ.RETURN );
+		writer.write( Constants.RETURN );
 
 		final int size = sampleNames.size();
 		for( int x = 0; x < size; x++ )
@@ -178,7 +178,7 @@ public class LogTransformTaxaTables extends TaxaCountModule implements JavaModul
 
 			if( x + 1 != size )
 			{
-				writer.write( BioLockJ.RETURN );
+				writer.write( Constants.RETURN );
 			}
 		}
 

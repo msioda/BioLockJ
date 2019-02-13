@@ -333,8 +333,8 @@ public final class DownloadUtil
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
 
-	private static final String DEST = "out";
-	private static final String RETURN = BioLockJ.RETURN;
+	private static final String DEST = "$out";
+	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
 	private static final String DOWNLOAD_LIST = "downloadList.txt";
 	private static final String SOURCE = "src";

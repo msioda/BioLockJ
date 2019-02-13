@@ -154,11 +154,11 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( meta ) );
 		try
 		{
-			writer.write( MetaUtil.getID() + BioLockJ.RETURN );
+			writer.write( MetaUtil.getID() + Constants.RETURN );
 
 			for( final String id: getSampleIds() )
 			{
-				writer.write( id + BioLockJ.RETURN );
+				writer.write( id + Constants.RETURN );
 			}
 		}
 		finally
@@ -367,7 +367,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
 					"This property requires every Sample ID in the metadata file " + MetaUtil.getMetadataFileName()
 							+ " map to one of the sequence files in an input directory: "
-							+ Config.getString( this, Constants.INPUT_DIRS ) + BioLockJ.RETURN + "The following "
+							+ Config.getString( this, Constants.INPUT_DIRS ) + Constants.RETURN + "The following "
 							+ ids.size() + " Sample IDs  do not map to a sequence file: "
 							+ BioLockJUtil.printLongFormList( ids ) );
 		}

@@ -321,6 +321,6 @@ public class PropUtil
 	private static final String DEFAULT_CONFIG_FLAG = "# ----> Default Config: ";
 	private static final String INTERNAL_PREFIX = "internal.";
 	private static final String PROJ_CONFIG_FLAG = "# ----> Project Config: ";
-	private static final String RETURN = BioLockJ.RETURN;
+	private static final String RETURN = Constants.RETURN;
 	private static final String TEMP_PREFIX = ".TEMP_";
 }

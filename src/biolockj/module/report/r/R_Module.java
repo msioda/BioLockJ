@@ -429,7 +429,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	private static void writeScript( final BufferedWriter writer, final String rCode ) throws Exception
 	{
 		int indentCount = 0;
-		final StringTokenizer st = new StringTokenizer( rCode, BioLockJ.RETURN );
+		final StringTokenizer st = new StringTokenizer( rCode, Constants.RETURN );
 		while( st.hasMoreTokens() )
 		{
 			final String line = st.nextToken();
@@ -445,7 +445,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 				writer.write( INDENT );
 			}
 
-			writer.write( line + BioLockJ.RETURN );
+			writer.write( line + Constants.RETURN );
 
 			if( line.endsWith( "{" ) )
 			{

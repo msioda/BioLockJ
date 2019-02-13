@@ -107,5 +107,5 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 	/**
 	 * De novo OTU picking script
 	 */
-	public static final String PICK_OTU_SCRIPT = "pick_de_novo_otus.py";
+	protected static final String PICK_OTU_SCRIPT = "pick_de_novo_otus.py";
 }

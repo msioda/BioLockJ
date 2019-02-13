@@ -13,7 +13,7 @@ package biolockj.module.seq;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioLockJ;
+import biolockj.Constants;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
@@ -272,7 +272,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 						for( final String seqLine: seqLines )
 						{
-							writer.write( seqLine + BioLockJ.RETURN );
+							writer.write( seqLine + Constants.RETURN );
 						}
 					}
 

@@ -54,7 +54,7 @@ public class Properties extends java.util.Properties
 		while( in.hasNext() )
 		{
 			out.write( in.nextLine().replace( "\\", "\\\\" ).getBytes() );
-			out.write( BioLockJ.RETURN.getBytes() );
+			out.write( Constants.RETURN.getBytes() );
 		}
 		in.close();
 		final InputStream is = new ByteArrayInputStream( out.toByteArray() );

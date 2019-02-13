@@ -55,7 +55,7 @@ public class MetaUtil
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
 		try
 		{
-			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + BioLockJ.RETURN );
+			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + Constants.RETURN );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
@@ -63,12 +63,12 @@ public class MetaUtil
 				final String id = st.nextToken();
 				if( sampleIds.contains( id ) )
 				{
-					writer.write( line + Constants.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
+					writer.write( line + Constants.TAB_DELIM + map.get( id ) + Constants.RETURN );
 				}
 				else if( !removeMissingIds )
 				{
 					writer.write( line + Constants.TAB_DELIM + Config.requireString( null, META_NULL_VALUE )
-							+ BioLockJ.RETURN );
+							+ Constants.RETURN );
 				}
 				else
 				{
@@ -554,7 +554,7 @@ public class MetaUtil
 						writer.write( Constants.TAB_DELIM + token );
 					}
 				}
-				writer.write( BioLockJ.RETURN );
+				writer.write( Constants.RETURN );
 			}
 		}
 		finally
