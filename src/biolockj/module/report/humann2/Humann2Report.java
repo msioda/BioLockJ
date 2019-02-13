@@ -3,7 +3,6 @@ package biolockj.module.report.humann2;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
@@ -14,10 +13,10 @@ import biolockj.util.*;
 /**
  * This BioModule is used to build a JSON file (summary.json) compiled from all OTUs in the dataset.
  */
-public class Humann2ExtractPathways extends Humann2CountModule implements JavaModule
+public class Humann2Report extends Humann2CountModule implements JavaModule
 {
 	/**
-	 * Module prerequisite: {@link biolockj.module.report.otu.CompileOtuCounts}
+	 * Module prerequisite: {@link biolockj.module.implicit.parser.wgs.Humann2Parser}
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
@@ -37,19 +36,22 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 	@Override
 	public String getSummary() throws Exception
 	{
-		int labelSize = Math.max( Constants.HN2_UNIQUE_PATH_COUNT.length(), Constants.HN2_UNINTEGRATED_COUNT.length() );
-		labelSize = Math.max( labelSize, Constants.HN2_UNMAPPED_COUNT.length() );
-		labelSize = Math.max( labelSize, Constants.HN2_TOTAL_PATH_COUNT.length() );
-
-		String summary = "Total # Unique Pathways:         " + pathways.size() + RETURN;
-
-		summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, Constants.HN2_UNIQUE_PATH_COUNT, labelSize,
-				false );
-		summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, Constants.HN2_TOTAL_PATH_COUNT, labelSize,
-				true );
-		summary += SummaryUtil.getCountSummary( unintegratedPerSample, Constants.HN2_UNINTEGRATED_COUNT, labelSize,
-				true );
-		summary += SummaryUtil.getCountSummary( unmappedPerSample, Constants.HN2_UNMAPPED_COUNT, labelSize, true );
+		String summary = "";
+		if( hasAbund() )
+		{
+			int labelSize = Math.max( Constants.HN2_UNIQUE_PATH_COUNT.length(), Constants.HN2_UNINTEGRATED_COUNT.length() );
+			labelSize = Math.max( labelSize, Constants.HN2_UNMAPPED_COUNT.length() );
+			labelSize = Math.max( labelSize, Constants.HN2_TOTAL_PATH_COUNT.length() );
+			
+			summary += "Total # Unique Pathways:         " + pathways.size() + RETURN;
+			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, Constants.HN2_UNIQUE_PATH_COUNT, labelSize,
+					false );
+			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, Constants.HN2_TOTAL_PATH_COUNT, labelSize,
+					true );
+			summary += SummaryUtil.getCountSummary( unintegratedPerSample, Constants.HN2_UNINTEGRATED_COUNT, labelSize,
+					true );
+			summary += SummaryUtil.getCountSummary( unmappedPerSample, Constants.HN2_UNMAPPED_COUNT, labelSize, true );
+		}
 		freeMemory();
 		return super.getSummary() + summary;
 	}
@@ -63,21 +65,23 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 	@Override
 	public void runModule() throws Exception
 	{
-		final File file = getInputFiles().get( 0 );
-		writePathwayReport( parseFullReport( file, validColIndexes( file ) ) );
-
-		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
+		for( final File file: getInputFiles() )
 		{
-			final File unintegratedTemp = new File(
-					getTempDir().getAbsolutePath() + File.separator + Constants.HN2_UNINTEGRATED_COUNT );
-			if( !unintegratedTemp.exists() )
-			{
-				unintegratedTemp.mkdirs();
-			}
+			writePathwayReport( file, parseFullReport( file, validColIndexes( file ) ) );
 
-			MetaUtil.addColumn( Constants.HN2_UNINTEGRATED_COUNT, unintegratedPerSample, unintegratedTemp, true );
-			MetaUtil.addColumn( Constants.HN2_UNMAPPED_COUNT, unmappedPerSample, getTempDir(), true );
-			MetaUtil.addColumn( Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample, getOutputDir(), true );
+			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			{
+				final File unintegratedTemp = new File(
+						getTempDir().getAbsolutePath() + File.separator + Constants.HN2_UNINTEGRATED_COUNT );
+				if( !unintegratedTemp.exists() )
+				{
+					unintegratedTemp.mkdirs();
+				}
+
+				MetaUtil.addColumn( Constants.HN2_UNINTEGRATED_COUNT, unintegratedPerSample, unintegratedTemp, true );
+				MetaUtil.addColumn( Constants.HN2_UNMAPPED_COUNT, unmappedPerSample, getTempDir(), true );
+				MetaUtil.addColumn( Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample, getOutputDir(), true );
+			}
 		}
 	}
 
@@ -124,11 +128,11 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 						{
 							unIntegratedIndex = i;
 						}
-						else if( i == unMappedIndex )
+						else if( i == unMappedIndex && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
 						{
 							unmappedPerSample.put( id, getCount( cell ).toString() );
 						}
-						else if( i == unIntegratedIndex )
+						else if( i == unIntegratedIndex && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
 						{
 							unintegratedPerSample.put( id, getCount( cell ).toString() );
 						}
@@ -136,7 +140,7 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 						{
 							if( firstRecord )
 							{
-								if( !cell.equals( MetaUtil.getID() ) )
+								if( !cell.equals( MetaUtil.getID() ) && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
 								{
 									pathways.add( cell );
 								}
@@ -167,9 +171,8 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 					i++;
 				}
 
-				if( !firstRecord )
+				if( !firstRecord && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
 				{
-
 					totalPathwaysPerSample.put( id, sampleTotalPathways.toString() );
 					uniquePathwaysPerSample.put( id, sampleUniquePathways.toString() );
 				}
@@ -240,19 +243,20 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 				reader.close();
 			}
 		}
-		
+
 		return validCols;
 	}
 
 	/**
 	 * Write the pathway report with the input data.
 	 * 
+	 * @param file Root file
 	 * @param data List of lines, each inner list contains a row of cells for spreadsheet
 	 * @throws Exception if errors occur
 	 */
-	protected void writePathwayReport( final List<List<String>> data ) throws Exception
+	protected void writePathwayReport( final File file, final List<List<String>> data ) throws Exception
 	{
-		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), Constants.HN2_PATHWAY_REPORT );
+		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PATHWAY_REPORT );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 		try
 		{
@@ -303,7 +307,7 @@ public class Humann2ExtractPathways extends Humann2CountModule implements JavaMo
 
 	public static String fullPathwayReportSuffix() throws Exception
 	{
-		return "_" + Constants.HN2_FULL_REPORT + PathwayUtil.pathwayFileSuffix();
+		return "_" + Constants.HN2_FULL_REPORT + PathwayUtil.pathwayFileSuffix( null );
 	}
 
 	private Set<String> pathways = new HashSet<>();

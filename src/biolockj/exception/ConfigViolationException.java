@@ -19,6 +19,11 @@ package biolockj.exception;
  */
 public class ConfigViolationException extends ConfigException
 {
+	public ConfigViolationException( final String msg )
+	{
+		super( msg );
+	}
+
 	/**
 	 * ConfigViolationException is thrown application detects a violation due to a {@link biolockj.Config} property
 	 * setting, such as finding Sample IDs with no corresponding sequence file enforced by

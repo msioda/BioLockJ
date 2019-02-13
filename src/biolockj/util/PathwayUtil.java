@@ -18,6 +18,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
 
 /**
@@ -33,14 +34,15 @@ public class PathwayUtil
 	 * Return a pathway abundance file path in the given dir with the given prefix (if provided).
 	 * 
 	 * @param dir Directory for pathway file
+	 * @param root Root file indicates type of coverage, abundance, or gene
 	 * @param prefix Optional prefix
 	 * @return Pathway count file
 	 * @throws Exception if errors occur
 	 */
-	public static File getPathwayCountFile( final File dir, String prefix ) throws Exception
+	public static File getPathwayCountFile( final File dir, final File root, String prefix ) throws Exception
 	{
 		prefix = prefix == null ? "": prefix;
-		final String name = Config.pipelineName() + prefix + pathwayFileSuffix();
+		final String name = Config.pipelineName() + prefix + pathwayFileSuffix( root );
 		return new File( dir.getAbsolutePath() + File.separator + name );
 	}
 
@@ -53,7 +55,7 @@ public class PathwayUtil
 	 */
 	public static boolean isPathwayFile( final File file ) throws Exception
 	{
-		if( file.getName().endsWith( pathwayFileSuffix() ) )
+		if( file.getName().endsWith( pathwayFileSuffix( file ) ) )
 		{
 			return true;
 		}
@@ -93,11 +95,31 @@ public class PathwayUtil
 	/**
 	 * Identification file suffix for Pathway Reports
 	 * 
+	 * @param root Root file indicates type of coverage, abundance, or gene
 	 * @return file suffix for every BioLockJ Pathway file
 	 * @throws Exception if errors occur
 	 */
-	public static String pathwayFileSuffix()
+	public static String pathwayFileSuffix( final File root )
 	{
-		return "_" + Constants.HN2_PATH_ABUND + "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
+		String name = "";
+		if( root != null )
+		{
+			name = root.getName().replaceAll( Constants.TSV_EXT, "" ) + "_";
+		}
+		return "_" + name + TaxaUtil.SPECIES + Constants.TSV_EXT;
+	}
+
+	public static void verifyConfig( final BioModule module ) throws Exception
+	{
+		if( !Config.getBoolean( module, Constants.HN2_DISABLE_PATH_ABUNDANCE )
+				&& !Config.getBoolean( module, Constants.HN2_DISABLE_PATH_COVERAGE )
+				&& !Config.getBoolean( module, Constants.HN2_DISABLE_GENE_FAMILIES ) )
+		{
+			throw new ConfigViolationException(
+					"Must enable at least one type of HumanN2 report.  All 3 reports are disable via Config properties: "
+							+ Constants.HN2_DISABLE_PATH_ABUNDANCE + "=" + Constants.FALSE + ", "
+							+ Constants.HN2_DISABLE_PATH_COVERAGE + "=" + Constants.FALSE + ", "
+							+ Constants.HN2_DISABLE_GENE_FAMILIES + "=" + Constants.FALSE );
+		}
 	}
 }

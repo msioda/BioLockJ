@@ -31,6 +31,13 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 {
 
 	@Override
+	public void checkDependencies() throws Exception
+	{
+		super.checkDependencies();
+		PathwayUtil.verifyConfig( this );
+	}
+
+	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{
 		return PathwayUtil.isPathwayModule( module );
@@ -51,7 +58,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		for( final File file: getInputFiles() )
 		{
 			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
-			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), Constants.HN2_FULL_REPORT );
+			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_FULL_REPORT );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 			try
 			{
@@ -124,6 +131,14 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		{
 			name = name.replace( ABUND_SUFFIX, "" );
 		}
+		if( name.contains( COVERAGE_SUFFIX ) )
+		{
+			name = name.replace( COVERAGE_SUFFIX, "" );
+		}
+		if( name.contains( RPK_SUFFIX ) )
+		{
+			name = name.replace( RPK_SUFFIX, "" );
+		}
 
 		return name;
 	}
@@ -160,6 +175,8 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	}
 
 	private static final String ABUND_SUFFIX = "_Abundance";
+	private static final String COVERAGE_SUFFIX = "_Coverage";
 	private static final String KD_SUFFIX = "_kneaddata";
 	private static final String PAIRED_SUFFIX = "_paired_merged";
+	private static final String RPK_SUFFIX = "-RPKs";
 }

@@ -26,7 +26,7 @@ import biolockj.util.MetaUtil;
 public class AddMetadataToPathwayTables extends Humann2CountModule implements JavaModule
 {
 	/**
-	 * Require taxonomy table module as prerequisite
+	 * Module prerequisite: {@link biolockj.module.report.humann2.Humann2Report}
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
@@ -34,7 +34,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( Humann2ExtractPathways.class.getName() );
+			preReqs.add( Humann2Report.class.getName() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;

@@ -515,6 +515,11 @@ public class BashScriptBuilder
 		{
 			lines.add( "" );
 		}
+		final String prologue = Config.getString( module, CLUSTER_PROLOGUE );
+		if( prologue != null )
+		{
+			lines.add( prologue + RETURN );
+		}
 
 		return lines;
 	}
@@ -565,6 +570,12 @@ public class BashScriptBuilder
 	 * One parameter of the {@link biolockj.Config} String property {@value #SCRIPT_JOB_HEADER} to set number of cores.
 	 */
 	protected static final List<String> CLUSTER_NUM_PROCESSORS = Arrays.asList( new String[] { "procs", "ppn" } );
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #CLUSTER_PROLOGUE}<br>
+	 * To run at the start of every script after loading cluster modules (if any)
+	 */
+	protected static final String CLUSTER_PROLOGUE = "cluster.prologue";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #CLUSTER_VALIDATE_PARAMS}<br>
