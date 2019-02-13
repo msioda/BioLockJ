@@ -57,22 +57,8 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		}
 
 		final ArrayList<String> lines = new ArrayList<>();
-		lines.add( "if [ $(" + FUNCTION_WORKERS_READY + ") == \"" + READY + "\" ]; then" );
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_PATH_ABUNDANCE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE ) );
-		}
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_PATH_COVERAGE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_COVERAGE ) );
-		}
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_GENE_FAMILIES ) );
-			lines.add( getRenormTableLine( Constants.HN2_GENE_FAMILIES ) );
-		}
+		lines.add( "if [ $(" + FUNCTION_BUILD_SUMMARY_TABLES + ") == \"" + READY + "\" ]; then" );
+		
 		lines.add( "fi" );
 		data.add( lines );
 		return data;
@@ -190,7 +176,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		lines.add( getRenormTableCmd() + getParams( EXE_HUMANN2_RENORM_PARAMS ) + INPUT_PARAM + " $1 " + OUTPUT_PARAM
 				+ " $2" );
 		lines.add( "}" + RETURN );
-		lines.addAll( getWorkersReadyFunction() );
+		lines.addAll( getBuildSummaryFunction() );
 		return lines;
 	}
 
@@ -301,11 +287,11 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return dir;
 	}
 
-	private List<String> getWorkersReadyFunction() throws Exception
+	private List<String> getBuildSummaryFunction() throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		lines.add( WORKERS_READY_BASH_COMMENT );
-		lines.add( "function " + FUNCTION_WORKERS_READY + "() {" );
+		lines.add( BUILD_SUMMARY_BASH_COMMENT );
+		lines.add( "function " + FUNCTION_BUILD_SUMMARY_TABLES + "() {" );
 		lines.add( "numStarted=1" );
 		lines.add( "numComplete=0" );
 		lines.add( "while [ $numStarted != $numComplete ]; do " );
@@ -316,6 +302,21 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		lines.add( "let \"numComplete++\"" );
 		lines.add( "[ $numStarted != $numComplete ] && sleep 30" );
 		lines.add( "done" );
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
+		{
+			lines.add( getJoinTableLine( Constants.HN2_PATH_ABUNDANCE ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE ) );
+		}
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
+		{
+			lines.add( getJoinTableLine( Constants.HN2_PATH_COVERAGE ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_COVERAGE ) );
+		}
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
+		{
+			lines.add( getJoinTableLine( Constants.HN2_GENE_FAMILIES ) );
+			lines.add( getRenormTableLine( Constants.HN2_GENE_FAMILIES ) );
+		}
 		lines.add( "echo " + READY );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -362,7 +363,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private static final String FUNCTION_JOIN_HN2_TABLES = "joinHn2Tables";
 	private static final String FUNCTION_RENORM_HN2_TABLES = "renormHn2Tables";
 	private static final String FUNCTION_RUN_HN2 = "runHn2";
-	private static final String FUNCTION_WORKERS_READY = "workersReady";
+	private static final String FUNCTION_BUILD_SUMMARY_TABLES = "buildSummaryTables";
 	private static final String HN2_BASH_COMMENT = "# Run sample through HMP Unified Metabolic Analysis Network";
 	private static final String INPUT_PARAM = "-i";
 	private static final String JOIN_BASH_COMMENT = "# Pool data of a given type output for each individual sample";
@@ -381,5 +382,5 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table";
 	private static final String SUMMARY = "summary_";
 	private static final String TEMP_MERGE_READ_DIR = "merged";
-	private static final String WORKERS_READY_BASH_COMMENT = "# Wait until all worker scripts are complete";
+	private static final String BUILD_SUMMARY_BASH_COMMENT = "# Wait until all worker scripts are complete to build summary tables";
 }
