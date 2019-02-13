@@ -57,6 +57,7 @@ main <- function() {
                   position = 1
                   pageNum = pageNum + 1
                }
+               pch=getProperty("r.pch", 20)
                plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste("MDS [", x, "vs", y, "]" ),
                         xlab=getMdsLabel( x, percentVariance[x] ),
                         ylab=getMdsLabel( y, percentVariance[y] ),
