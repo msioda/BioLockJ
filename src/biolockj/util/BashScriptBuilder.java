@@ -387,7 +387,7 @@ public class BashScriptBuilder
 		for( final String line: lines )
 		{
 			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.equals( "elif" )
-					|| line.equals( "else" ) )
+					|| line.equals( "else" ) || line.equals( "do" ) )
 			{
 				indentCount--;
 			}

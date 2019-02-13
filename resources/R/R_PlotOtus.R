@@ -128,7 +128,7 @@ main <- function() {
 					metaVals = metaTable[,meta]
 					if( meta %in% binaryCols || meta %in% nominalCols ) {
 						logInfo( c( "Plot Box-Plot [", taxa, "~", meta, "]" ) )
-						addBoxPlot( taxa, taxaVals, metaVals, metaColColors[ [meta] ] )
+						addBoxPlot( taxa, taxaVals, metaVals, metaColColors[[meta]] )
 					}
 					else if( meta %in% numericCols ) {
 						logInfo( c( "Plot Scatter-Plot [", taxa, "~", meta, "]" ) )

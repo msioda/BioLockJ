@@ -311,8 +311,9 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		lines.add( "while [ $numStarted != $numComplete ]; do " );
 		lines.add( "numStarted=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "*"
 				+ Pipeline.SCRIPT_STARTED + "\" | wc -l)" );
-		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "*"
-				+ Pipeline.SCRIPT_SUCCESS + "\" | wc -l)" );
+		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
+				+ Pipeline.SCRIPT_SUCCESS + " | wc -l)" );
+		lines.add( "let \"numComplete++\"" );
 		lines.add( "[ $numStarted != $numComplete ] && sleep 30" );
 		lines.add( "done" );
 		lines.add( "echo " + READY );
