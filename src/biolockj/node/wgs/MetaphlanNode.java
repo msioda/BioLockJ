@@ -47,7 +47,7 @@ public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 		{
 			throw new Exception( "INVALID FILE FORMAT.  Line should have 5 parts.  LINE =  (" + line
 					+ ") METAPHLAN CLASSIFICATION NOT RUN WITH SWITCH: -t (ANALYSIS_TYPE) rel_ab_w_read_stats.  Add "
-					+ " \"-t rel_ab_w_read_stats\" when calling metaphlan." );
+					+ " \"-t rel_ab_w_read_stats\" when calling metaphlan2." );
 		}
 
 		try

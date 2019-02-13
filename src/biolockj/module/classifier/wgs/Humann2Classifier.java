@@ -48,10 +48,10 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 
 			lines.add( FUNCTION_RUN_HN2 + " " + hn2InputSeq.getAbsolutePath() );
 
-			// #copying metaphlan tables into metaphlan_output
-			// find . -iname *list.tsv -exec cp '{}' ./metaphlan_output \;
-			// #Merging metaphlan files
-			// humann2_join_tables -i metaphlan_output -o metaphlan.tsv --file_name bugs_list
+			// #copying metaphlan2 tables into metaphlan2_output
+			// find . -iname *list.tsv -exec cp '{}' ./metaphlan2_output \;
+			// #Merging metaphlan2 files
+			// humann2_join_tables -i metaphlan2_output -o metaphlan2.tsv --file_name bugs_list
 
 			data.add( lines );
 		}

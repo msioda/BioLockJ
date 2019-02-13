@@ -99,7 +99,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	}
 
 	/**
-	 * Obtain the metaphlan runtime params
+	 * Obtain the metaphlan2 runtime params
 	 */
 	@Override
 	public List<String> getClassifierParams() throws Exception
@@ -209,19 +209,19 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	}
 
 	/**
-	 * File suffix for intermediate bowtie2 index created by metaphlan
+	 * File suffix for intermediate bowtie2 index created by metaphlan2
 	 */
 	protected static final String bowtie2ext = ".bowtie2.bz2";
 
 	/**
 	 * {@link biolockj.Config} exe property used to obtain the metaphlan2 executable
 	 */
-	protected static final String EXE_METAPHLAN = "exe.metaphlan";
+	protected static final String EXE_METAPHLAN = "exe.metaphlan2";
 
 	/**
 	 * {@link biolockj.Config} List property used to obtain the metaphlan2 executable params
 	 */
-	protected static final String EXE_METAPHLAN_PARAMS = "exe.metaphlanParams";
+	protected static final String EXE_METAPHLAN_PARAMS = "exe.metaphlan2Params";
 
 	/**
 	 * {@link biolockj.Config} exe property used to obtain the python executable
