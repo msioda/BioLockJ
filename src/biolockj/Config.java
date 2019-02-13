@@ -743,6 +743,9 @@ public class Config
 	 */
 	public static void setConfigProperty( final String name, final Collection<?> data )
 	{
+		String origProp = usedProps.get( name );
+		origProp = ( origProp != null && origProp.isEmpty() ) ? null : origProp;
+
 		String val = null;
 		if( data != null && !data.isEmpty() && data.iterator().next() instanceof File )
 		{
@@ -758,12 +761,15 @@ public class Config
 			val = BioLockJUtil.getCollectionAsString( data );
 
 		}
-		if( val != null && !val.isEmpty() )
+		
+		props.setProperty( name, val );
+		
+		boolean hasVal = val != null && !val.isEmpty();
+		if( ( origProp == null && hasVal ) || ( origProp != null && !hasVal ) || ( origProp != null && hasVal && !origProp.equals( val ) ) )
 		{
+			Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 			usedProps.put( name, val );
 		}
-		props.setProperty( name, val );
-		Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 	}
 
 	/**
@@ -774,12 +780,17 @@ public class Config
 	 */
 	public static void setConfigProperty( final String name, final String val )
 	{
-		if( val != null && !val.isEmpty() )
+		String origProp = usedProps.get( name );
+		origProp = ( origProp != null && origProp.isEmpty() ) ? null : origProp;
+
+		props.setProperty( name, val );
+
+		boolean hasVal = val != null && !val.isEmpty();
+		if( ( origProp == null && hasVal ) || ( origProp != null && !hasVal ) || ( origProp != null && hasVal && !origProp.equals( val ) ) )
 		{
+			Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 			usedProps.put( name, val );
 		}
-		props.setProperty( name, val );
-		Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 	}
 
 	/**

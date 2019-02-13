@@ -166,12 +166,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			final Boolean isHn2 = isHumanN2();
-			if( isHn2 == null )
-			{
-				return super.getPreRequisiteModules();
-			}
-			else if( isHn2 )
+			final boolean isHn2 = isHumanN2();
+			if( isHn2 )
 			{
 				preReqs.add( AddMetadataToPathwayTables.class.getName() );
 			}
@@ -418,11 +414,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 				{
 					return true;
 				}
-
-				return null;
 			}
 		}
-		return null;
+		return false;
 	}
 
 	/**
