@@ -8,3 +8,5 @@ BioLockJ.jar
 *_not4git*
 .Rproj.user
 .Rhistory
+.RData
+*.Rproj
