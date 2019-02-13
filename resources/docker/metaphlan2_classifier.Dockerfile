@@ -4,7 +4,7 @@ FROM biolockj/metaphlan2_classifier_dbfree
 ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Download MetaPhlAn2 Bowtie2 & MPA_v20 DBs
-ENV BT_URL="https://bitbucket.org/nsegata/metaphlan2/raw/f353151d84e317672a86eef624c51258888e9388/bowtie2db"
+ENV BT_URL="https://bitbucket.org/nsegata/metaphlan/raw/f353151d84e317672a86eef624c51258888e9388/bowtie2db"
 ENV MPA_V20_URL="https://bitbucket.org/biobakery/metaphlan2/downloads/mpa_v20_m200.tar"
 ENV DB=/usr/local/bin/mpa_v20
 RUN mkdir $DB && \
