@@ -19,17 +19,22 @@ package biolockj.exception;
  */
 public class ConfigViolationException extends ConfigException
 {
+	public ConfigViolationException( final String msg )
+	{
+		super( msg );
+	}
+
 	/**
 	 * ConfigViolationException is thrown application detects a violation due to a {@link biolockj.Config} property
 	 * setting, such as finding Sample IDs with no corresponding sequence file enforced by
 	 * {@link biolockj.Config}.{@value biolockj.util.MetaUtil#USE_EVERY_ROW} = {@value biolockj.Config#TRUE}
 	 *
-	 * @param propertyName {@link biolockj.Config} property name
+	 * @param property {@link biolockj.Config} property name
 	 * @param msg Exception message details
 	 */
-	public ConfigViolationException( final String propertyName, final String msg )
+	public ConfigViolationException( final String property, final String msg )
 	{
-		super( propertyName, msg );
+		super( property, msg );
 	}
 
 	private static final long serialVersionUID = -5659243602699272132L;

@@ -30,13 +30,13 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		inputDelim = Config.requireString( MetaUtil.META_COLUMN_DELIM );
+		inputDelim = Config.requireString( this, MetaUtil.META_COLUMN_DELIM );
 		if( inputDelim.equals( "\\t" ) )
 		{
 			inputDelim = TAB_DELIM;
 		}
 
-		if( Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_MULTIPLEXED )
 				&& ( MetaUtil.getFile() == null || !MetaUtil.getFile().exists() ) )
 		{
 			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: "
@@ -59,7 +59,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			addMetadataToConfigIgnoreInputFiles();
 			if( hasRModules() )
 			{
-				RMetaUtil.classifyReportableMetadata();
+				RMetaUtil.classifyReportableMetadata( this );
 			}
 		}
 		else
@@ -85,7 +85,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		else
 		{
 			Log.info( getClass(), "Importing metadata (column delim="
-					+ Config.requireString( MetaUtil.META_COLUMN_DELIM ) + "): " + MetaUtil.getPath() );
+					+ Config.requireString( this, MetaUtil.META_COLUMN_DELIM ) + "): " + MetaUtil.getPath() );
 
 			final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
@@ -236,7 +236,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	protected TreeSet<String> getSampleIds() throws Exception
 	{
 		final TreeSet<String> ids = new TreeSet<>();
-		final Collection<File> inputFiles = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS )
+		final Collection<File> inputFiles = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
 				? new TreeSet<>( SeqUtil.getPairedReads( getInputFiles() ).keySet() )
 				: getInputFiles();
 
@@ -316,7 +316,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 				if( colNames.isEmpty() )
 				{
 					cell = formatMetaId( cell );
-					if( cell == null || cell.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
+					if( cell == null || cell.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
 					{
 						continue;
 					}
@@ -325,7 +325,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			}
 			else if( cell.isEmpty() )
 			{
-				cell = Config.requireString( MetaUtil.META_NULL_VALUE );
+				cell = Config.requireString( this, MetaUtil.META_NULL_VALUE );
 				Log.debug( getClass(), "====> Set Row#[" + rowNum + "] - Column#[" + colNum + "] = " + cell );
 			}
 
@@ -367,8 +367,9 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
 					"This property requires every Sample ID in the metadata file " + MetaUtil.getMetadataFileName()
 							+ " map to one of the sequence files in an input directory: "
-							+ Config.getString( Constants.INPUT_DIRS ) + BioLockJ.RETURN + "The following " + ids.size()
-							+ " Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
+							+ Config.getString( this, Constants.INPUT_DIRS ) + BioLockJ.RETURN + "The following "
+							+ ids.size() + " Sample IDs  do not map to a sequence file: "
+							+ BioLockJUtil.printLongFormList( ids ) );
 		}
 	}
 
@@ -409,9 +410,9 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	private void addMetadataToConfigIgnoreInputFiles() throws Exception
 	{
 		final Set<String> ignore = new HashSet<>();
-		if( Config.getSet( Constants.INPUT_IGNORE_FILES ) != null )
+		if( Config.getSet( this, Constants.INPUT_IGNORE_FILES ) != null )
 		{
-			ignore.addAll( Config.getSet( Constants.INPUT_IGNORE_FILES ) );
+			ignore.addAll( Config.getSet( this, Constants.INPUT_IGNORE_FILES ) );
 		}
 
 		ignore.add( MetaUtil.getMetadataFileName() );
@@ -420,8 +421,8 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 
 	private boolean doIdToSeqVerifiction() throws Exception
 	{
-		return Config.getBoolean( MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() )
-				&& !Config.getBoolean( SeqUtil.INTERNAL_MULTIPLEXED );
+		return Config.getBoolean( this, MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() )
+				&& !Config.getBoolean( this, SeqUtil.INTERNAL_MULTIPLEXED );
 	}
 
 	private File getMetadata() throws Exception

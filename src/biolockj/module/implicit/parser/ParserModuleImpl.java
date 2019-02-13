@@ -159,11 +159,10 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 
 		buildOtuCountFiles();
 
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 		{
 			MetaUtil.addColumn( NUM_OTUS, hitsPerSample, getOutputDir(), true );
 		}
-
 	}
 
 	/**

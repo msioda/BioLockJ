@@ -25,6 +25,7 @@ import biolockj.util.*;
  */
 public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
+
 	/**
 	 * Build 2 bash script lines per sample to classify unpaired WGS reads.
 	 * <p>
@@ -41,13 +42,11 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		final List<List<String>> data = new ArrayList<>();
 		for( final File file: files )
 		{
-			final String fileId = SeqUtil.getSampleId( file.getName() );
-			final String alignFile = getTempDir().getAbsolutePath() + File.separator + fileId + ".bam";
+			final String id = SeqUtil.getSampleId( file.getName() );
 			final ArrayList<String> lines = new ArrayList<>( 2 );
-			lines.add( FUNCTION_ALIGN + " " + file.getAbsolutePath() + " " + getTempDir().getAbsolutePath()
-					+ File.separator + fileId + "_alignmentReport" + TXT_EXT + " " + alignFile );
-			lines.add( getClassifierExe() + slimmSwitches + "-m " + getDB() + " -o " + getOutputDir().getAbsolutePath()
-					+ File.separator + " " + alignFile );
+			lines.add( FUNCTION_ALIGN + " " + file.getAbsolutePath() + " " + getAlignReport( id ) + " "
+					+ getAlignFile( id ) );
+			lines.add( getClassifierExe() + " " + getAlignFile( id ) );
 			data.add( lines );
 		}
 
@@ -71,13 +70,11 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		final Map<File, File> map = SeqUtil.getPairedReads( files );
 		for( final File file: map.keySet() )
 		{
-			final String fileId = SeqUtil.getSampleId( file.getName() );
-			final String alignFile = getTempDir().getAbsolutePath() + File.separator + fileId + ".bam";
+			final String id = SeqUtil.getSampleId( file.getName() );
 			final ArrayList<String> lines = new ArrayList<>( 2 );
 			lines.add( FUNCTION_ALIGN + " " + file.getAbsolutePath() + " " + map.get( file ).getAbsolutePath() + " "
-					+ getTempDir().getAbsolutePath() + File.separator + fileId + "_alignmentReport" + TXT_EXT + " "
-					+ alignFile );
-			lines.add( FUNCTION_SLIMM + " " + alignFile );
+					+ getAlignReport( id ) + " " + getAlignFile( id ) );
+			lines.add( FUNCTION_SLIMM + " " + getAlignFile( id ) );
 			data.add( lines );
 		}
 
@@ -95,13 +92,28 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		getDB();
-		registerDefaultSwitches();
+		getRuntimeSlimmParams();
+		getRuntimeBowtieParams();
 
 		if( ModuleUtil.getModule( this, JsonReport.class.getName(), true ) != null )
 		{
 			throw new Exception( "SLIMM does not return OTU tree so cannot run the JsonReport module." );
 		}
+	}
+
+	/**
+	 * Call SLIMM executabl
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return Config.getExe( this, EXE_SLIMM );
+	}
+
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_SLIMM_PARAMS );
 	}
 
 	/**
@@ -112,58 +124,56 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 
-		final String inputs = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
-		int index = Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? 3: 2;
+		final String inputs = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
+		int index = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? 3: 2;
 
 		lines.add( "function " + FUNCTION_ALIGN + "() {" );
-		lines.add( Config.getExe( EXE_BOWTIE2 ) + getRuntimeBowtieParams() + inputs + " 2> " + "$" + index++ + " | "
-				+ Config.getExe( EXE_SAMTOOLS ) + " view -bS -> $" + index );
+		lines.add( Config.getExe( this, EXE_BOWTIE2 ) + " " + getRuntimeBowtieParams() + inputs + " 2> $" + index++
+				+ " | " + Config.getExe( this, EXE_SAMTOOLS ) + " view -bS -> $" + index );
 		lines.add( "}" + RETURN );
 		lines.add( "function " + FUNCTION_SLIMM + "() {" );
-		lines.add( getClassifierExe() + getRuntimeSlimmParams() + SLIMM_OUTPUT_PARAM + getOutputDir().getAbsolutePath()
-				+ File.separator + " $1" );
+		lines.add( getClassifierExe() + " " + getRuntimeSlimmParams() + SLIMM_OUTPUT_PARAM
+				+ getOutputDir().getAbsolutePath() + File.separator + " $1" );
 		lines.add( "}" + RETURN );
 
 		return lines;
+	}
+
+	private String getAlignFile( final String id ) throws Exception
+	{
+		return getTempDir().getAbsolutePath() + File.separator + id + ".bam";
+	}
+
+	private String getAlignReport( final String id ) throws Exception
+	{
+		return getTempDir().getAbsolutePath() + File.separator + id + "_alignmentReport" + TXT_EXT;
 	}
 
 	private String getDB() throws Exception
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( DATABASE );
+			return Config.requireString( this, DATABASE );
 		}
 
-		return Config.requireExistingDir( DATABASE ).getAbsolutePath();
+		return Config.requireExistingDir( this, DATABASE ).getAbsolutePath();
 	}
 
 	private String getInputTypeSwitch() throws Exception
 	{
 		if( SeqUtil.isFastQ() )
 		{
-			return "-q ";
+			return "-q";
 		}
 		else
 		{
-			return "-f ";
+			return "-f";
 		}
 	}
 
 	private String getRuntimeBowtieParams() throws Exception
 	{
-		return bowtieSwitches + getInputTypeSwitch();
-	}
-
-	private String getRuntimeSlimmParams() throws Exception
-	{
-		return slimmSwitches;
-	}
-
-	private void registerDefaultSwitches() throws Exception
-	{
-		bowtieSwitches = BioLockJUtil.join( Config.getList( EXE_BOWTIE_PARAMS ) );
-
-		slimmSwitches = BioLockJUtil.join( getClassifierParams() );
+		String bowtieSwitches = " " + BioLockJUtil.join( Config.getList( this, EXE_BOWTIE_PARAMS ) );
 
 		if( bowtieSwitches.indexOf( "--mm " ) > -1 )
 		{
@@ -180,12 +190,22 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 			throw new Exception( "Invalid classifier option (-q or -f) found in property(" + EXE_BOWTIE_PARAMS
 					+ "). BioLockJ derives this value by examinging one of the input files." );
 		}
-		if( bowtieSwitches.indexOf( "-1 " ) > -1 || slimmSwitches.indexOf( "-2 " ) > -1
-				|| slimmSwitches.indexOf( "-U " ) > -1 )
+		if( bowtieSwitches.indexOf( "-1 " ) > -1 || bowtieSwitches.indexOf( "-2 " ) > -1
+				|| bowtieSwitches.indexOf( "-U " ) > -1 )
 		{
 			throw new Exception( "Invalid Bowtie2 option (-1 or -2 or -U) found in property(" + EXE_BOWTIE_PARAMS
 					+ "). BioLockJ sets these values based on: " + Constants.INPUT_DIRS );
 		}
+
+		bowtieSwitches = getRuntimeParams( Config.getList( this, EXE_BOWTIE_PARAMS ), BOWTIE_NUM_THREADS_PARAM ) + "-x "
+				+ Config.requireString( this, REF_GENOME_INDEX ) + " --mm " + getInputTypeSwitch() + " ";
+
+		return bowtieSwitches;
+	}
+
+	private String getRuntimeSlimmParams() throws Exception
+	{
+		String slimmSwitches = " " + BioLockJUtil.join( getClassifierParams() );
 		if( slimmSwitches.indexOf( "-o " ) > -1 )
 		{
 			throw new Exception( "Invalid SLIMM option (-o) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
@@ -207,19 +227,14 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 					+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 		}
 
-		bowtieSwitches = getRuntimeParams( Config.getList( EXE_BOWTIE_PARAMS ), BOWTIE_NUM_THREADS_PARAM ) + "-x "
-				+ Config.requireString( REF_GENOME_INDEX ) + "--mm ";
-
 		slimmSwitches = getRuntimeParams( getClassifierParams(), null ) + "-m " + getDB() + " ";
 		if( TaxaUtil.getTaxaLevels().size() == 1 )
 		{
 			slimmSwitches += "-r " + taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
 		}
+
+		return slimmSwitches;
 	}
-
-	private String bowtieSwitches = null;
-
-	private String slimmSwitches = null;
 
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
 	{
@@ -255,6 +270,16 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * {@link biolockj.Config} property to set samtools executable: {@value #EXE_SAMTOOLS}
 	 */
 	protected static final String EXE_SAMTOOLS = "exe.samtools";
+
+	/**
+	 * {@link biolockj.Config} property to call slimm executable: {@value #EXE_SLIMM}
+	 */
+	protected static final String EXE_SLIMM = "exe.slimm";
+
+	/**
+	 * {@link biolockj.Config} property to call slimm executable: {@value #EXE_SLIMM_PARAMS}
+	 */
+	protected static final String EXE_SLIMM_PARAMS = "exe.slimmParams";
 
 	/**
 	 * Function name used to align sequences with bowtie2: {@value #FUNCTION_ALIGN}

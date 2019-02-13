@@ -84,29 +84,6 @@ public class BashScriptBuilder
 	}
 
 	/**
-	 * Returns TRUE if cluster module configured in {@link biolockj.Config} property file.
-	 *
-	 * @param clusterModuleName Name of cluster module
-	 * @return TRUE if clusterModuleName found in {@link biolockj.Config}.{@value #CLUSTER_MODULES}
-	 * @throws Exception if property {@value #CLUSTER_MODULES} is missing or invalid
-	 */
-	public static boolean clusterModuleExists( final String clusterModuleName ) throws Exception
-	{
-		if( clusterModuleName != null )
-		{
-			for( final String module: Config.getSet( CLUSTER_MODULES ) )
-			{
-				if( exists( Config.requireString( CLUSTER_BATCH_COMMAND ) ) && module.contains( clusterModuleName ) )
-				{
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/**
 	 * Create bash worker script function: {@value #FUNCTION_EXECUTE}.<br>
 	 * Failure details written to the failure script file if any occur.
 	 * <ol>
@@ -244,9 +221,9 @@ public class BashScriptBuilder
 	{
 		final List<String> lines = new ArrayList<>();
 
-		if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
+		if( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
-			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
+			lines.add( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
 		}
 
 		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) + RETURN );
@@ -261,7 +238,7 @@ public class BashScriptBuilder
 		{
 			lines.add( "# Submit job script" );
 			lines.add( "function " + FUNCTION_RUN_JOB + "() {" );
-			lines.add( Config.requireString( module.getProperty( CLUSTER_BATCH_COMMAND ) ) + " $1" );
+			lines.add( Config.requireString( module, CLUSTER_BATCH_COMMAND ) + " $1" );
 			lines.add( "}" );
 		}
 
@@ -284,21 +261,22 @@ public class BashScriptBuilder
 			throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		final String header = Config.getString( module.getProperty( SCRIPT_JOB_HEADER ) );
+		final String header = Config.getString( module, SCRIPT_JOB_HEADER );
 		if( Config.isOnCluster() && header != null )
 		{
 			lines.add( header + RETURN );
 		}
-		else if( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
+		else if( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
-			lines.add( Config.getString( ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
+			lines.add( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
 		}
 
 		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = "
-				+ new Integer( Config.requirePositiveInteger( ScriptModule.SCRIPT_BATCH_SIZE ) ).toString() + RETURN );
+				+ new Integer( Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE ) ).toString()
+				+ RETURN );
 
 		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED + RETURN );
-		lines.addAll( loadModules() );
+		lines.addAll( loadModules( module ) );
 
 		final List<String> bashFunctions = module.getWorkerScriptFunctions();
 		if( bashFunctions != null && !bashFunctions.isEmpty() )
@@ -334,17 +312,17 @@ public class BashScriptBuilder
 			return;
 		}
 
-		Config.requireString( CLUSTER_BATCH_COMMAND );
+		Config.requireString( module, CLUSTER_BATCH_COMMAND );
 
-		if( !Config.getBoolean( CLUSTER_VALIDATE_PARAMS ) )
+		if( !Config.getBoolean( null, CLUSTER_VALIDATE_PARAMS ) )
 		{
 			Log.warn( BashScriptBuilder.class, CLUSTER_VALIDATE_PARAMS + "=" + Constants.FALSE
 					+ " --  Will NOT enforce cluster #cores  = " + ScriptModule.SCRIPT_NUM_THREADS );
 			// + getNumThreadsParam( module ) );
 			return;
 		}
-		final String jobHeaderParam = module.getProperty( SCRIPT_JOB_HEADER );
-		final String jobScriptHeader = Config.requireString( jobHeaderParam );
+		final String jobHeaderParam = Config.getModuleProp( module, SCRIPT_JOB_HEADER );
+		final String jobScriptHeader = Config.requireString( module, jobHeaderParam );
 
 		if( !jobScriptHeader.startsWith( "#PBS" ) )
 		{
@@ -379,8 +357,8 @@ public class BashScriptBuilder
 					else
 					{
 
-						final String numThreadsParam = module.getProperty( ScriptModule.SCRIPT_NUM_THREADS );
-						final int numThreads = Config.requirePositiveInteger( numThreadsParam );
+						final String numThreadsParam = Config.getModuleProp( module, ScriptModule.SCRIPT_NUM_THREADS );
+						final int numThreads = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_NUM_THREADS );
 						if( Integer.valueOf( token ) != numThreads )
 						{
 							throw new ConfigFormatException( jobHeaderParam,
@@ -409,7 +387,7 @@ public class BashScriptBuilder
 		for( final String line: lines )
 		{
 			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.equals( "elif" )
-					|| line.equals( "else" ) )
+					|| line.equals( "else" ) || line.equals( "do" ) )
 			{
 				indentCount--;
 			}
@@ -480,22 +458,6 @@ public class BashScriptBuilder
 		Log.info( BashScriptBuilder.class, Log.LOG_SPACER );
 	}
 
-	/**
-	 * Convenience methods that validates property exists.
-	 *
-	 * @param propName Name of {@link biolockj.Config} property
-	 * @return
-	 */
-	private static boolean exists( final String propName )
-	{
-		if( propName != null && propName.trim().length() > 0 )
-		{
-			return true;
-		}
-
-		return false;
-	}
-
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
 	{
 		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
@@ -537,20 +499,26 @@ public class BashScriptBuilder
 	/**
 	 * Return lines to script that load cluster modules based on {@link biolockj.Config}.{@value #CLUSTER_MODULES}
 	 *
+	 * @param module ScriptModule
 	 * @return Bash Script lines to load cluster modules
 	 * @throws Exception if {@value #CLUSTER_MODULES} undefined or invalid
 	 */
-	private static List<String> loadModules() throws Exception
+	private static List<String> loadModules( final ScriptModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		for( final String module: Config.getList( CLUSTER_MODULES ) )
+		for( final String clusterMod: Config.getList( module, CLUSTER_MODULES ) )
 		{
-			lines.add( "module load " + module );
+			lines.add( "module load " + clusterMod );
 		}
 
 		if( !lines.isEmpty() )
 		{
 			lines.add( "" );
+		}
+		final String prologue = Config.getString( module, CLUSTER_PROLOGUE );
+		if( prologue != null )
+		{
+			lines.add( prologue + RETURN );
 		}
 
 		return lines;
@@ -602,6 +570,12 @@ public class BashScriptBuilder
 	 * One parameter of the {@link biolockj.Config} String property {@value #SCRIPT_JOB_HEADER} to set number of cores.
 	 */
 	protected static final List<String> CLUSTER_NUM_PROCESSORS = Arrays.asList( new String[] { "procs", "ppn" } );
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #CLUSTER_PROLOGUE}<br>
+	 * To run at the start of every script after loading cluster modules (if any)
+	 */
+	protected static final String CLUSTER_PROLOGUE = "cluster.prologue";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #CLUSTER_VALIDATE_PARAMS}<br>

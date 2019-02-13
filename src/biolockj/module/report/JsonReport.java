@@ -24,9 +24,8 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
 	{
-
 		final List<String> preReqs = new ArrayList<>();
-		if( !pipelineInputIsOtuSummaryFile() )
+		if( !pipelineInputContainsOtuSummary() )
 		{
 			preReqs.add( CompileOtuCounts.class.getName() );
 		}
@@ -118,17 +117,16 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * @return TRUE if pipeline input
 	 * @throws Exception if errors occur
 	 */
-	protected boolean pipelineInputIsOtuSummaryFile() throws Exception
+	protected boolean pipelineInputContainsOtuSummary() throws Exception
 	{
-		if( BioLockJUtil.getPipelineInputFiles().size() == 1 )
+		final Iterator<File> it = BioLockJUtil.getPipelineInputFiles().iterator();
+		while( it.hasNext() )
 		{
-			final File inFile = BioLockJUtil.getPipelineInputFiles().iterator().next();
-			if( inFile.getName().endsWith( getInputFileSuffix() ) )
+			if( it.next().getName().endsWith( getInputFileSuffix() ) )
 			{
 				return true;
 			}
 		}
-
 		return false;
 	}
 
@@ -202,7 +200,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	protected String writeNodeAndChildren( final JsonNode node, final boolean hasPeer,
 			final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final int nodeLevel ) throws Exception
 	{
-		final String logBase = Config.getString( Constants.REPORT_LOG_BASE );
+		final String logBase = Config.getString( this, Constants.REPORT_LOG_BASE );
 		final String prefix = logBase == null ? "": "log" + logBase;
 
 		final String taxaLevel = nodeLevel == 0 ? ROOT_NODE: TaxaUtil.getTaxaLevels().get( nodeLevel - 1 );
@@ -292,7 +290,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	private String getInputFileSuffix() throws Exception
 	{
-		return CompileOtuCounts.SUMMARY + OtuUtil.OTU_COUNT + TSV_EXT;
+		return CompileOtuCounts.SUMMARY + Constants.OTU_COUNT + TSV_EXT;
 	}
 
 	private JsonNode getJsonNode( final String otu, final Set<JsonNode> jsonNodes, final String level )

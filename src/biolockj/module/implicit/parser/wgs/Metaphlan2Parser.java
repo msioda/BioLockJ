@@ -13,6 +13,8 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import biolockj.Constants;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -21,22 +23,22 @@ import biolockj.util.BioLockJUtil;
 import biolockj.util.MemoryUtil;
 
 /**
- * This BioModules parses MetaphlanClassifier output reports to build standard OTU abundance tables.
+ * This BioModules parses Metaphlan2Classifier output reports to build standard OTU abundance tables.
  */
-public class MetaphlanParser extends ParserModuleImpl implements ParserModule
+public class Metaphlan2Parser extends ParserModuleImpl implements ParserModule
 {
 
 	/**
-	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.MetaphlanClassifier}:
+	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.Metaphlan2Classifier}:
 	 * <ol>
-	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.MetaphlanNode#getSampleId()} if
+	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.Metaphlan2Node#getSampleId()} if
 	 * not yet created.
-	 * <li>Add the {@link biolockj.node.wgs.MetaphlanNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU
+	 * <li>Add the {@link biolockj.node.wgs.Metaphlan2Node#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU
 	 * count.
 	 * </ol>
 	 * <p>
-	 * Sample Metaphlan report line (head 7A_1_reported.tsv) :<br>
-	 * #SampleID Metaphlan2_Analysis #clade_name relative_abundance coverage average_genome_length_in_the_clade
+	 * Sample Metaphlan2 report line (head 7A_1_reported.tsv) :<br>
+	 * #SampleID Metaphlan22_Analysis #clade_name relative_abundance coverage average_genome_length_in_the_clade
 	 * estimated_number_of_reads_from_the_clade k__Bacteria|p__Bacteroidetes 14.68863 0.137144143537 4234739 580770
 	 */
 	@Override

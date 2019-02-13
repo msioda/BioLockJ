@@ -1,16 +1,7 @@
 package biolockj;
 
-
 public class Constants
 {
-	/**
-	 * Qiime may find ambiguous taxa identified in various formats in different databases.
-	 * The following accounts for Green Genes 13.8 and Silva 132: {@value #QIIME_AMBIGUOUS_TAXA}
-	 */
-	public static final String[] QIIME_AMBIGUOUS_TAXA =  { "Ambiguous_taxa", "Other", "Unassigned" };
-	
-	
-	
 	/**
 	 * Captures the application start time
 	 */
@@ -21,6 +12,7 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	public static final String AWS_STACK = "aws.stack";
+
 	/**
 	 * Name of the file created in the BioModule or {@value biolockj.Config##PROJECT_PIPELINE_DIR} root directory to
 	 * indicate execution was successful: {@value #BLJ_COMPLETE}
@@ -39,16 +31,19 @@ public class Constants
 	 * URL to the BioLockJ WIKI
 	 */
 	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
 	 * {@value #DEFAULT_MOD_DEMUX}
 	 */
 	public static final String DEFAULT_MOD_DEMUX = "project.defaultModuleDemultiplexer";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to convert files into fasta:
 	 * {@value #DEFAULT_MOD_FASTA_CONV} format
 	 */
 	public static final String DEFAULT_MOD_FASTA_CONV = "project.defaultModuleFastaConverter";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used combined paired read files:
 	 * {@value #DEFAULT_MOD_SEQ_MERGER}
@@ -60,6 +55,12 @@ public class Constants
 	 */
 	public static final String DEFAULT_STATS_MODULE = "project.defaultStatsModule";
 	/**
+	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
+	 * with {@value #DELIM_SEP}
+	 */
+	public static final String DELIM_SEP = "__";
+
+	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
 	 * If set to {@value biolockj.Config#TRUE}, implicit modules will not be added to the pipeline.
 	 */
@@ -70,13 +71,14 @@ public class Constants
 	 * If set to {@value biolockj.Config#TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
+
 	public static final String DOCKER_IMG_VERSION = "docker.imgVersion";
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
 	 */
 	public static final String EXE_AWK = "exe.awk";
-
 	/**
 	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
 	 */
@@ -90,7 +92,6 @@ public class Constants
 	 * Set command line executable docker
 	 */
 	public static final String EXE_DOCKER = "exe.docker";
-
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
 	 * Set command line executable gzip
@@ -100,14 +101,25 @@ public class Constants
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
 	public static final String FALSE = "N";
-
 	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
-
 	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
+	public static final String HN2_DISABLE_GENE_FAMILIES = "humann2.disableGeneFamilies";
+	public static final String HN2_DISABLE_PATH_ABUNDANCE = "humann2.disablePathAbundance";
+	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
+	public static final String HN2_FULL_REPORT = "fullReport";
 
+	public static final String HN2_GENE_FAMILIES = "genefamilies";
+	public static final String HN2_PATH_ABUNDANCE = "pathabundance";
+	public static final String HN2_PATH_COVERAGE = "pathcoverage";
+
+	public static final String HN2_PATHWAY_REPORT = "pathwayReport";
+	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
+	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";
+	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
+	public static final String HN2_UNMAPPED_COUNT = "Unmapped_Count";
 	public static final String INDENT = "    ";
 
 	/**
@@ -115,7 +127,6 @@ public class Constants
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
-
 	/**
 	 * {@link biolockj.Config} List property: {@value #INPUT_IGNORE_FILES}<br>
 	 * Set file names to ignore if found in {@value #INPUT_DIRS}
@@ -153,6 +164,11 @@ public class Constants
 	public static final String MODULE_R_PACKAGE = "biolockj.module.r";
 
 	public static final String MODULE_SEQ_PACKAGE = "biolockj.module.seq";
+
+	/**
+	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
+	 */
+	public static final String OTU_COUNT = "otuCount";
 
 	/**
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
@@ -216,10 +232,22 @@ public class Constants
 	public static final String QIIME = "qiime";
 
 	/**
+	 * Qiime may find ambiguous taxa identified in various formats in different databases. The following accounts for
+	 * Green Genes 13.8 and Silva 132: {@value #QIIME_AMBIGUOUS_TAXA}
+	 */
+	public static final String[] QIIME_AMBIGUOUS_TAXA = { "Ambiguous_taxa", "Other", "Unassigned" };
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>
 	 * Required to be set to "e" or "10" to build log normalized reports.
 	 */
 	public static final String REPORT_LOG_BASE = "report.logBase";
+
+	/**
+	 * {@link biolockj.Config} Positive Integer property {@value #REPORT_MIN_COUNT} defines the minimum table count
+	 * allowed, if a count less that this value is found, it is set to 0.
+	 */
+	public static final String REPORT_MIN_COUNT = "report.minCount";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #REPORT_NUM_HITS}<br>
@@ -235,9 +263,26 @@ public class Constants
 	public static final String REPORT_NUM_READS = "report.numReads";
 
 	/**
+	 * {@link biolockj.Config} Positive Double property {@value #REPORT_SAMPLE_CUTOFF} defines minimum percentage of
+	 * data columns must be non-zero to keep the sample.
+	 */
+	public static final String REPORT_SAMPLE_CUTOFF = "report.scarceSampleCutoff";
+
+	/**
+	 * {@link biolockj.Config} Positive Double property {@value #REPORT_SCARCE_CUTOFF} defines minimum percentage of
+	 * samples that must contain a count value for it to be kept.
+	 */
+	public static final String REPORT_SCARCE_CUTOFF = "report.scarceCountCutoff";
+
+	/**
 	 * Return character constant *backslash-n*
 	 */
 	public static final String RETURN = "\n";
+
+	/**
+	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
+	 */
+	public static final String SEPARATOR = "|";
 
 	/**
 	 * BioLockJ shell script file extension constant: {@value #SH_EXT}

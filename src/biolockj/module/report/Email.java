@@ -55,15 +55,15 @@ public class Email extends BioModuleImpl implements BioModule
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		Config.requireString( EMAIL_HOST );
-		Config.requireString( EMAIL_PORT );
-		Config.requireBoolean( EMAIL_SMTP_AUTH );
-		Config.requireBoolean( EMAIL_START_TLS_ENABLE );
-		Config.requireString( EMAIL_ENCRYPTED_PASSWORD );
-		Config.getString( CLUSTER_HOST );
+		Config.requireString( this, EMAIL_HOST );
+		Config.requireString( this, EMAIL_PORT );
+		Config.requireBoolean( this, EMAIL_SMTP_AUTH );
+		Config.requireBoolean( this, EMAIL_START_TLS_ENABLE );
+		Config.requireString( this, EMAIL_ENCRYPTED_PASSWORD );
+		Config.getString( this, CLUSTER_HOST );
 
-		new InternetAddress( Config.requireString( EMAIL_FROM ) ).validate();
-		for( final String email: Config.requireList( EMAIL_TO ) )
+		new InternetAddress( Config.requireString( this, EMAIL_FROM ) ).validate();
+		for( final String email: Config.requireList( this, EMAIL_TO ) )
 		{
 			new InternetAddress( email ).validate();
 		}
@@ -120,11 +120,11 @@ public class Email extends BioModuleImpl implements BioModule
 	{
 		String startTls = "false";
 		String smtpAuth = "false";
-		if( Config.getBoolean( EMAIL_SMTP_AUTH ) )
+		if( Config.getBoolean( this, EMAIL_SMTP_AUTH ) )
 		{
 			smtpAuth = "true";
 		}
-		if( Config.getBoolean( EMAIL_START_TLS_ENABLE ) )
+		if( Config.getBoolean( this, EMAIL_START_TLS_ENABLE ) )
 		{
 			startTls = "true";
 		}
@@ -132,8 +132,8 @@ public class Email extends BioModuleImpl implements BioModule
 		final Properties props = new Properties();
 		props.put( EMAIL_SMTP_AUTH, smtpAuth );
 		props.put( EMAIL_START_TLS_ENABLE, startTls );
-		props.put( EMAIL_HOST, Config.requireString( EMAIL_HOST ) );
-		props.put( EMAIL_PORT, Config.requireString( EMAIL_PORT ) );
+		props.put( EMAIL_HOST, Config.requireString( this, EMAIL_HOST ) );
+		props.put( EMAIL_PORT, Config.requireString( this, EMAIL_PORT ) );
 
 		final Session session = Session.getInstance( props, new Authenticator()
 		{
@@ -142,8 +142,8 @@ public class Email extends BioModuleImpl implements BioModule
 			{
 				try
 				{
-					return new PasswordAuthentication( Config.requireString( EMAIL_FROM ),
-							decrypt( Config.requireString( EMAIL_ENCRYPTED_PASSWORD ) ) );
+					return new PasswordAuthentication( Config.requireString( null, EMAIL_FROM ),
+							decrypt( Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) ) );
 				}
 				catch( final Exception ex )
 				{
@@ -211,7 +211,7 @@ public class Email extends BioModuleImpl implements BioModule
 	private Message getMimeMessage( final String emailBody ) throws Exception
 	{
 		final Message message = new MimeMessage( getSession() );
-		message.setFrom( new InternetAddress( Config.requireString( EMAIL_FROM ) ) );
+		message.setFrom( new InternetAddress( Config.requireString( this, EMAIL_FROM ) ) );
 		message.addRecipients( Message.RecipientType.TO, InternetAddress.parse( getRecipients() ) );
 		message.setSubject( "BioLockJ " + Config.pipelineName() + " " + Pipeline.getStatus() );
 		message.setContent( getContent( emailBody ), "text/plain; charset=utf-8" );
@@ -227,7 +227,7 @@ public class Email extends BioModuleImpl implements BioModule
 	private String getRecipients() throws Exception
 	{
 		final StringBuffer addys = new StringBuffer();
-		for( final String to: Config.requireList( EMAIL_TO ) )
+		for( final String to: Config.requireList( this, EMAIL_TO ) )
 		{
 			if( addys.length() != 0 )
 			{
@@ -253,7 +253,7 @@ public class Email extends BioModuleImpl implements BioModule
 		PropUtil.saveMasterConfig( Config.getProperties() );
 		Log.info( Email.class,
 				"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
-						+ Config.requireString( EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
+						+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
 						+ PropUtil.getMasterConfig().getAbsolutePath() );
 	}
 

@@ -21,6 +21,12 @@ import biolockj.module.ScriptModule;
  */
 public class R_PlotOtus extends R_Module implements ScriptModule
 {
+	@Override
+	public void checkDependencies() throws Exception
+	{
+		super.checkDependencies();
+	}
+
 	/**
 	 * Returns {@link #getStatPreReqs()}
 	 */

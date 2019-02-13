@@ -52,7 +52,7 @@ public class PropUtil
 		final String defaultFaCon = ModuleUtil.getDefaultFastaConverter();
 		final String defaultMerger = ModuleUtil.getDefaultMergePairedReadsConverter();
 		final String defaultStats = ModuleUtil.getDefaultStatsModule();
-		final Set<String> configMods = Config.requireSet( Constants.INTERNAL_BLJ_MODULE );
+		final Set<String> configMods = Config.requireSet( null, Constants.INTERNAL_BLJ_MODULE );
 		boolean foundQiime = false;
 		for( final String mod: configMods )
 		{
@@ -234,30 +234,40 @@ public class PropUtil
 	private static void writeCompleteHeader( final BufferedWriter writer, final Map<String, String> props )
 			throws Exception
 	{
-		writer.write( "####################################################################################" + RETURN );
-		writer.write( "#" + RETURN );
-		writer.write( "#   Based on the above configuration, the following pipeline was run." + RETURN );
-		writer.write( "#   The additional BioModules were added as required pre/postrequisits or as " + RETURN );
-		writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
-		writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
-		writer.write( "#" + RETURN );
-		for( final String mod: Config.requireList( Constants.INTERNAL_ALL_MODULES ) )
-		{
-			writer.write( "#      " + Constants.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
-		}
-		writer.write( "#" + RETURN );
-		writer.write( "####################################################################################" + RETURN );
 
+		final Set<String> configProps = Config.getSet( null, Constants.INTERNAL_BLJ_MODULE );
+		final Set<String> allProps = Config.getSet( null, Constants.INTERNAL_ALL_MODULES );
+
+		if( !configProps.equals( allProps ) )
+		{
+			writer.write(
+					"####################################################################################" + RETURN );
+			writer.write( "#" + RETURN );
+			writer.write( "#   Based on the above configuration, the following pipeline was run." + RETURN );
+			writer.write( "#   The additional BioModules were added as required pre/postrequisits or as " + RETURN );
+			writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
+			writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
+			writer.write( "#" + RETURN );
+			for( final String mod: Config.requireList( null, Constants.INTERNAL_ALL_MODULES ) )
+			{
+				writer.write( "#      " + Constants.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
+			}
+			writer.write( "#" + RETURN );
+			writer.write(
+					"####################################################################################" + RETURN );
+		}
 		if( Log.doDebug() )
 		{
-
 			writer.write( "###" + RETURN );
 			writer.write( "###   Pipline = DEBUG mode so printing internal properties - FYI only." + RETURN );
 			writer.write( "###   Internal properties are discarded at runtime & refenerated as needed." + RETURN );
 			writer.write( "###" + RETURN );
-			writer.write( "###   [ " + Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE
-					+ " ] to run this full list because it includes the implicit BioModules" + RETURN );
-			writer.write( "###" + RETURN );
+			if( !configProps.equals( allProps ) )
+			{
+				writer.write( "###  Set [ " + Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE
+						+ " ] to run this full list because it includes the implicit BioModules" + RETURN );
+				writer.write( "###" + RETURN );
+			}
 			final TreeSet<String> keys = new TreeSet<>( props.keySet() );
 			for( final String key: keys )
 			{
@@ -282,10 +292,10 @@ public class PropUtil
 		if( initConfig == null )
 		{
 			writer.write( PROJ_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
-			final List<String> defaults = Config.getList( Constants.INTERNAL_DEFAULT_CONFIG );
+			final List<String> defaults = Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG );
 			if( defaults != null && !defaults.isEmpty() )
 			{
-				for( final String defConfig: Config.getList( Constants.INTERNAL_DEFAULT_CONFIG ) )
+				for( final String defConfig: Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG ) )
 				{
 					writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
 				}
@@ -300,7 +310,7 @@ public class PropUtil
 		}
 
 		writer.write( RETURN );
-		for( final String module: Config.getList( Constants.INTERNAL_BLJ_MODULE ) )
+		for( final String module: Config.getList( null, Constants.INTERNAL_BLJ_MODULE ) )
 		{
 			writer.write( Constants.INTERNAL_BLJ_MODULE + " " + module + RETURN );
 		}

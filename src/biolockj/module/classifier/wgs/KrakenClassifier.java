@@ -30,6 +30,7 @@ import biolockj.util.SeqUtil;
  */
 public class KrakenClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
+
 	/**
 	 * Build bash script lines to classify unpaired WGS reads with Kraken. The inner list contains 2 bash script lines
 	 * used to classify 1 sample.
@@ -110,13 +111,31 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	}
 
 	/**
+	 * Get kraken executable command: {@value #EXE_KRAKEN}
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return Config.getExe( this, EXE_KRAKEN );
+	}
+
+	/**
+	 * Obtain the kraken runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_KRAKEN_PARAMS );
+	}
+
+	/**
 	 * This method generates the required bash functions: {@value #FUNCTION_TRANSLATE} and {@value #FUNCTION_KRAKEN}
 	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
-		final String params = "$1 $2" + ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " $3": "" );
+		final String params = "$1 $2" + ( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " $3": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" + RETURN );
@@ -130,10 +149,10 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( KRAKEN_DATABASE );
+			return Config.requireString( this, KRAKEN_DATABASE );
 		}
 
-		return Config.requireExistingDir( KRAKEN_DATABASE ).getAbsolutePath();
+		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
 	/**
@@ -214,7 +233,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	private String getWorkerFunctionParams() throws Exception
 	{
 		String params = " " + getParams();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}
@@ -225,7 +244,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		}
 
 		params += DB_PARAM + getDB() + " " + getInputSwitch();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}
@@ -238,6 +257,16 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	}
 
 	private String defaultSwitches = null;
+
+	/**
+	 * {@link biolockj.Config} exe property for kraken executable: {@value #EXE_KRAKEN}
+	 */
+	protected static final String EXE_KRAKEN = "exe.kraken";
+
+	/**
+	 * {@link biolockj.Config} List property used to obtain the kraken executable params
+	 */
+	protected static final String EXE_KRAKEN_PARAMS = "exe.krakenParams";
 
 	/**
 	 * Name of the kraken function used to assign taxonomy: {@value #FUNCTION_KRAKEN}

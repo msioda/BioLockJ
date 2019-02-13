@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import biolockj.Config;
 import biolockj.Log;
+import biolockj.module.JavaModule;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.BioLockJUtil;
@@ -25,7 +26,7 @@ import biolockj.util.SummaryUtil;
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
-public class AddMetadataToTaxaTables extends TaxaCountModuleImpl implements TaxaCountModule
+public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModule
 {
 	/**
 	 * Require taxonomy table module as prerequisite
@@ -34,9 +35,9 @@ public class AddMetadataToTaxaTables extends TaxaCountModuleImpl implements Taxa
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( BuildTaxaTables.class.getName() );
+			// preReqs.add( BuildTaxaTables.class.getName() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
@@ -56,11 +57,10 @@ public class AddMetadataToTaxaTables extends TaxaCountModuleImpl implements Taxa
 
 			if( !hitRatioPerSample.isEmpty() )
 			{
-
 				for( final String key: hitRatioPerSample.keySet() )
 				{
-					if( hitRatioPerSample.get( key ) == null
-							|| hitRatioPerSample.get( key ).equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
+					if( hitRatioPerSample.get( key ) == null || hitRatioPerSample.get( key )
+							.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
 					{
 						hitRatioPerSample.put( key, "0.0" );
 					}
@@ -137,10 +137,10 @@ public class AddMetadataToTaxaTables extends TaxaCountModuleImpl implements Taxa
 			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getOtuCountField() );
 
 			if( numReadsField == null || numHitsField == null
-					|| numReadsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) )
-					|| numHitsField.equals( Config.requireString( MetaUtil.META_NULL_VALUE ) ) )
+					|| numReadsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) )
+					|| numHitsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
 			{
-				hitRatioPerSample.put( id, Config.requireString( MetaUtil.META_NULL_VALUE ) );
+				hitRatioPerSample.put( id, Config.requireString( this, MetaUtil.META_NULL_VALUE ) );
 			}
 			else
 			{

@@ -59,7 +59,7 @@ public class Gunzipper extends SeqModuleImpl implements SeqModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_GUNZIP + "() {" );
-		lines.add( Config.getExe( Constants.EXE_GZIP ) + " -cd $1 > $2" );
+		lines.add( Config.getExe( this, Constants.EXE_GZIP ) + " -cd $1 > $2" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
@@ -73,7 +73,7 @@ public class Gunzipper extends SeqModuleImpl implements SeqModule
 	{
 		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() + File.separator
 				+ SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
-				+ Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+				+ Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
 	}
 
 	/**

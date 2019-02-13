@@ -36,7 +36,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	// public List<List<String>> buildScript( final List<File> files ) throws Exception
 	// {
 	// final List<List<String>> script = super.buildScript( files );
-	// if( Config.getBoolean( DO_GZIP ) )
+	// if( Config.getBoolean( this, DO_GZIP ) )
 	// {
 	// final List<String> lines = script.get( script.size() - 1 );
 	// lines.add( FUNCTION_GZIP );
@@ -119,10 +119,10 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	// public List<String> getWorkerScriptFunctions() throws Exception
 	// {
 	// final List<String> lines = super.getWorkerScriptFunctions();
-	// if( Config.getBoolean( DO_GZIP ) )
+	// if( Config.getBoolean( this, DO_GZIP ) )
 	// {
 	// lines.add( "function " + FUNCTION_GZIP + "() {" );
-	// lines.add( Config.getExe( Constants.EXE_GZIP ) + " " + getOutputDir().getAbsolutePath() + File.separator
+	// lines.add( Config.getExe( this, Constants.EXE_GZIP ) + " " + getOutputDir().getAbsolutePath() + File.separator
 	// + "*" );
 	// lines.add( "}" + RETURN );
 	// }
@@ -136,14 +136,14 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	@Override
 	public void runModule() throws Exception
 	{
-		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) );
+		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) );
 
 		for( final File f: getInputFiles() )
 		{
 			multiplex( f );
 		}
 
-		if( Config.getBoolean( DO_GZIP ) )
+		if( Config.getBoolean( this, DO_GZIP ) )
 		{
 			Log.warn( getClass(), "BioLockJ gzip data in: " + muxFiles );
 			compressData();
@@ -172,7 +172,8 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		}
 		else if( DemuxUtil.hasValidBarcodes() )
 		{
-			final String barcode = MetaUtil.getField( sampleId, Config.getString( MetaUtil.META_BARCODE_COLUMN ) );
+			final String barcode = MetaUtil.getField( sampleId,
+					Config.getString( this, MetaUtil.META_BARCODE_COLUMN ) );
 			final String rc = SeqUtil.reverseComplement( barcode );
 
 			if( header.contains( barcode ) )
@@ -299,7 +300,8 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	private String getMutliplexeFileName( final File file ) throws Exception
 	{
 		final String path = getOutputDir().getAbsolutePath() + File.separator + Config.pipelineName()
-				+ SeqUtil.getReadDirectionSuffix( file ) + "." + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE );
+				+ SeqUtil.getReadDirectionSuffix( file ) + "."
+				+ Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
 		muxFiles.add( path );
 		return path;
 	}
@@ -307,7 +309,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	private long getNumReads( final File file ) throws Exception
 	{
 		Long numReads = null;
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			numReads = rvMap.get( file.getName() );
 		}
@@ -328,7 +330,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		Long numReads = getNumReads( file );
 		numReads++;
 
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			rvMap.put( file.getName(), numReads );
 			totalNumRvReads++;

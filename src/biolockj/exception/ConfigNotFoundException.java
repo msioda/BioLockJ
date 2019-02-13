@@ -19,11 +19,11 @@ public class ConfigNotFoundException extends ConfigException
 	/**
 	 * ConfigNotFoundException is thrown if a required {@link biolockj.Config} property is undefined.
 	 *
-	 * @param propertyName {@link biolockj.Config} property name
+	 * @param property {@link biolockj.Config} property name
 	 */
-	public ConfigNotFoundException( final String propertyName )
+	public ConfigNotFoundException( final String property )
 	{
-		super( propertyName );
+		super( property );
 	}
 
 	private static final long serialVersionUID = 1677388490031911310L;

@@ -14,7 +14,6 @@ package biolockj.module.implicit.qiime;
 import java.io.*;
 import java.util.*;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -69,7 +68,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L "
 				+ getLowestQiimeTaxaLevel() + " -o " + outDir );
 		lines.add( SCRIPT_SUMMARIZE_BIOM + " -i " + files.get( 0 ) + " -o " + tempDir + OTU_SUMMARY_FILE );
-		if( Config.getString( QIIME_ALPHA_DIVERSITY_METRICS ) != null )
+		if( Config.getString( this, QIIME_ALPHA_DIVERSITY_METRICS ) != null )
 		{
 			final File newMapping = new File( tempDir + MetaUtil.getMetadataFileName() );
 			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics()
@@ -128,9 +127,9 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		final List<String> metrics = Config.getList( QIIME_ALPHA_DIVERSITY_METRICS );
+		final List<String> metrics = Config.getList( this, QIIME_ALPHA_DIVERSITY_METRICS );
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
-				|| Config.requireString( MetaUtil.META_NULL_VALUE ).equals( ALPHA_DIV_NULL_VALUE ) )
+				|| Config.requireString( this, MetaUtil.META_NULL_VALUE ).equals( ALPHA_DIV_NULL_VALUE ) )
 		{
 			if( !metrics.isEmpty() )
 			{
@@ -168,7 +167,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 					String token = st.nextToken();
 					if( token.equals( ALPHA_DIV_NULL_VALUE ) )
 					{
-						token = Config.requireString( MetaUtil.META_NULL_VALUE );
+						token = Config.requireString( this, MetaUtil.META_NULL_VALUE );
 					}
 					writer.write( TAB_DELIM + token );
 				}
@@ -181,18 +180,24 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			writer.close();
 			MetaUtil.refreshCache(); // to add new null values in alpha metric field values
 		}
-
 	}
 
 	/**
-	 * QIIME does not use this method, instead specific scripts are called based on OTU picking method.
-	 *
-	 * @return null
+	 * QIIME calls python scripts, so no special command is required
 	 */
 	@Override
 	public String getClassifierExe() throws Exception
 	{
 		return null;
+	}
+
+	/**
+	 * Obtain the QIIME runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_QIIME_PARAMS );
 	}
 
 	@Override
@@ -233,7 +238,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * If paired reads found, add prerequisite module: {@link biolockj.module.seq.PearMergeReads}. If sequences are not
-	 * fasta format, add prerequisite module: {@link biolockj.module.implicit.AwkFastaConverter}. Subclasses of
+	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}. Subclasses of
 	 * QiimeClassifier add prerequisite module: {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
 	 */
 	@Override
@@ -241,7 +246,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> preReqs = new ArrayList<>();
 		preReqs.addAll( super.getPreRequisiteModules() );
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
@@ -414,7 +419,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 */
 	protected String getVsearchParams() throws Exception
 	{
-		return " " + getRuntimeParams( Config.getList( EXE_VSEARCH_PARAMS ), VSEARCH_NUM_THREADS_PARAM );
+		return " " + getRuntimeParams( Config.getList( this, EXE_VSEARCH_PARAMS ), VSEARCH_NUM_THREADS_PARAM );
 	}
 
 	/**
@@ -430,7 +435,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	private String getAlphaDiversityMetrics() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();
-		final Iterator<String> metrics = Config.requireList( QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
+		final Iterator<String> metrics = Config.requireList( this, QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
 		sb.append( metrics.next() );
 		while( metrics.hasNext() )
 		{
@@ -438,7 +443,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 		return sb.toString();
 	}
-
 
 	private String getLowestQiimeTaxaLevel() throws Exception
 	{
@@ -470,10 +474,10 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		{
 			return "1";
 		}
-		
-		throw new Exception( "Should not be possible to reach this error, value based on required field: " 
+
+		throw new Exception( "Should not be possible to reach this error, value based on required field: "
 				+ TaxaUtil.REPORT_TAXONOMY_LEVELS );
-		
+
 	}
 
 	private String switches = null;
@@ -578,6 +582,11 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String ALPHA_DIV_NULL_VALUE = "N/A";
 
 	/**
+	 * {@link biolockj.Config} List property used to obtain the QIIME executable params
+	 */
+	protected static final String EXE_QIIME_PARAMS = "exe.qiimeParams";
+
+	/**
 	 * Directory created by {@value biolockj.module.classifier.r16s.QiimeDeNovoClassifier#PICK_OTU_SCRIPT} and
 	 * {@value biolockj.module.classifier.r16s.QiimeOpenRefClassifier#PICK_OTU_SCRIPT}: {@value #REP_SET}
 	 */
@@ -588,8 +597,8 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * BioLockJ parsers expect clear text files in the module output directory, so the biom files must be excluded.
 	 */
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
-
 	private static final String NUM_THREADS_PARAM = "-aO";
+
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 
 	// OTHER SCRIPT THAT MAY BE ADDED IN THE FUTURE

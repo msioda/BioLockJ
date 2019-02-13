@@ -1,30 +1,29 @@
 # Deployment path:  $BLJ/resources/docker/qiime_classifier.Dockerfile
 
-FROM blj_basic_python2
-
-#1.) ================= Setup Env =================
+FROM biolockj/blj_basic_py2
 ARG DEBIAN_FRONTEND=noninteractive
+
+#1.) Install numpy/QIIME + QIIME Default DB
 ENV QIIME_VERSION=1.9.1
-ENV VSEARCH_TGZ="vsearch-2.8.1-linux-x86_64.tar.gz"
+RUN apt-get update && \
+	pip install numpy && \
+	pip install --upgrade qiime==$QIIME_VERSION
 
-
-#2.) ============ Install numpy/qiime  =================
-RUN pip install --upgrade qiime==$QIIME_VERSION && \
-	pip install qiime-default-reference 
-
-#3.) ============ Install vSearch  =================
-ENV VSEARCH_URL="https://github.com/torognes/vsearch/releases/download/v2.8.1"
+#2.) Install vSearch 
+ENV VSEARCH_URL="https://github.com/torognes/vsearch/releases/download/v"
 ENV VSEARCH_VER="2.8.1"
-ENV VSEARCH_TGZ="vsearch-${VSEARCH_VER}-linux-x86_64.tar.gz"
-ENV VSEARCH_URL="https://github.com/torognes/vsearch/releases/download"
-RUN cd /app && \  
-	wget -qO- ${VSEARCH_URL}/v${VSEARCH_VER}/$VSEARCH_TGZ | bsdtar -xzf-
+ENV VSEARCH="vsearch-${VSEARCH_VER}-linux-x86_64"
+ENV VSEARCH_TGZ="$VSEARCH.tar.gz"
+ENV V_URL=${VSEARCH_URL}${VSEARCH_VER}/$VSEARCH_TGZ
+RUN cd /usr/local/bin && \  
+	wget -qO- $V_URL | bsdtar -xzf- && \
+	mv vsearch*/bin/* . && \
+	rm -rf $VSEARCH
 
-#4. ) =============== Cleanup ================================
+#3.) Cleanup 
 RUN	apt-get clean && \
+	rm -rf /tmp/* && \
 	rm -rf /usr/share/* && \
 	rm -rf /var/cache/* && \
-	rm -rf /var/lib/apt/lists/* 
-
-#5.) ================= Container Command =================
-CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]
+	rm -rf /var/lib/apt/lists/* && \
+	rm -rf /var/log/*

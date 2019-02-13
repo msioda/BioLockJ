@@ -59,24 +59,42 @@ public class SummaryUtil
 	 */
 	public static String getCountSummary( final Map<String, String> map, final String label ) throws Exception
 	{
-		String msg = "# Samples:    " + BioLockJUtil.addLeadingSpaces( "", label.length() )
+		return getCountSummary( map, label, label.length(), true );
+	}
+
+	/**
+	 * Retun the min/max/mean/median summary stats for the given metadata numeric column
+	 * 
+	 * @param map Map(sampleId,count)
+	 * @param label Context label
+	 * @return Summary lines
+	 * @throws Exception if errors occur
+	 */
+	public static String getCountSummary( final Map<String, String> map, final String label, final int numSpaces,
+			final boolean addTotal ) throws Exception
+	{
+		String msg = "# Samples:    " + BioLockJUtil.addLeadingSpaces( "", numSpaces )
 				+ BioLockJUtil.formatNumericOutput( map.size() ) + RETURN;
 		if( !map.isEmpty() )
 		{
+			final String labelPad = BioLockJUtil.addLeadingSpaces( "", numSpaces - label.length() );
 			final TreeSet<Integer> vals = new TreeSet<>(
 					map.values().stream().map( Integer::parseInt ).collect( Collectors.toSet() ) );
-			msg += "# " + label + " (min):     " + BioLockJUtil.formatNumericOutput( vals.first() ) + RETURN;
-			msg += "# " + label + " (median):  "
+			msg += "# " + label + " (min):     " + labelPad + BioLockJUtil.formatNumericOutput( vals.first() ) + RETURN;
+			msg += "# " + label + " (median):  " + labelPad
 					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMedian( vals, false ) ) )
 					+ RETURN;
-			msg += "# " + label + " (mean):    "
+			msg += "# " + label + " (mean):    " + labelPad
 					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMean( vals, false ) ) )
 					+ RETURN;
-			msg += "# " + label + " (max):     " + BioLockJUtil.formatNumericOutput( vals.last() ) + RETURN;
-			msg += "# " + label + " (total):   "
-					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( vals.stream().mapToInt( i -> i ).sum() ) )
-					+ RETURN;
+			msg += "# " + label + " (max):     " + labelPad + BioLockJUtil.formatNumericOutput( vals.last() ) + RETURN;
 
+			if( addTotal )
+			{
+				msg += "# " + label + " (total):   " + labelPad
+						+ BioLockJUtil.formatNumericOutput( Integer.valueOf( vals.stream().mapToInt( i -> i ).sum() ) )
+						+ RETURN;
+			}
 			if( !vals.first().equals( vals.last() ) )
 			{
 				final Set<String> minSamples = new HashSet<>();
@@ -93,8 +111,8 @@ public class SummaryUtil
 					}
 				}
 
-				msg += "IDs w/ min " + label + ":  " + minSamples + RETURN;
-				msg += "IDs w/ max " + label + ":  " + maxSamples + RETURN;
+				msg += "IDs w/ min " + label + ":  " + labelPad + minSamples + RETURN;
+				msg += "IDs w/ max " + label + ":  " + labelPad + maxSamples + RETURN;
 			}
 		}
 

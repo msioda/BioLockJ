@@ -64,7 +64,7 @@ public class DockerUtil
 
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
-		lines.add( Config.getExe( Constants.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
+		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
 				+ getDockerVolumes() + getDockerImage( module ) );
 		lines.add( "}" );
 		return lines;
@@ -89,7 +89,7 @@ public class DockerUtil
 						: isDockerScriptModule( module ) ? module.getClass().getSimpleName()
 								: JavaModule.class.getSimpleName();
 
-		String user = Config.getString( module.getProperty( DOCKER_HUB_USER ) );
+		String user = Config.getString( module, DOCKER_HUB_USER );
 		user = user == null ? DEFAULT_DOCKER_HUB_USER: user;
 
 		return " " + user + "/" + getImageName( name ) + ":" + getImageVersion( module );
@@ -99,16 +99,16 @@ public class DockerUtil
 	 * Get mapped Docker system path from {@link biolockj.Config} property by replacing the host system path with the
 	 * mapped container path.
 	 * 
-	 * @param prop {@link biolockj.Config} property
+	 * @param path {@link biolockj.Config} property
 	 * @param containerPath Local container path
 	 * @param label Path label
 	 * @return Docker volume file object
 	 * @throws Exception if errors occur
 	 */
-	public static File getDockerVolumeFile( final String prop, final String containerPath, final String label )
+	public static File getDockerVolumeFile( final String path, final String containerPath, final String label )
 			throws Exception
 	{
-		final File hostFile = new File( Config.getString( prop ) );
+		final File hostFile = new File( path );
 		final String newPath = containerPath + File.separator + hostFile.getName();
 		final File newFile = new File( newPath );
 		if( !newFile.exists() )
@@ -161,7 +161,7 @@ public class DockerUtil
 	 */
 	public static String getImageVersion( final BioModule module ) throws Exception
 	{
-		String ver = Config.getString( module.getProperty( Constants.DOCKER_IMG_VERSION ) );
+		String ver = Config.getString( module, Constants.DOCKER_IMG_VERSION );
 		if( ver == null )
 		{
 			ver = DOCKER_LATEST;
@@ -240,7 +240,7 @@ public class DockerUtil
 
 	private static final String rmFlag() throws Exception
 	{
-		return Config.getBoolean( DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
+		return Config.getBoolean( null, DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
 	}
 
 	/**

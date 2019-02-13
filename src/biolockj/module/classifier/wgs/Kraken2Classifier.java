@@ -105,13 +105,31 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
+	 * Get kraken executable command: {@value #EXE_KRAKEN2}
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return Config.getExe( this, EXE_KRAKEN2 );
+	}
+
+	/**
+	 * Obtain the kraken2 runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_KRAKEN2_PARAMS );
+	}
+
+	/**
 	 * This method generates the required bash function: {@value #FUNCTION_KRAKEN}
 	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
-		final String inFiles = "$3" + ( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) ? " $4": "" );
+		final String inFiles = "$3" + ( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " $4": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 "
 				+ inFiles );
@@ -124,10 +142,10 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( KRAKEN_DATABASE );
+			return Config.requireString( this, KRAKEN_DATABASE );
 		}
 
-		return Config.requireExistingDir( KRAKEN_DATABASE ).getAbsolutePath();
+		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
 	private String getParams() throws Exception
@@ -206,7 +224,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	private String getWorkerFunctionParams() throws Exception
 	{
 		String params = " " + getParams();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}
@@ -219,6 +237,16 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	private String defaultSwitches = null;
+
+	/**
+	 * {@link biolockj.Config} exe property for kraken2 executable: {@value #EXE_KRAKEN2}
+	 */
+	protected static final String EXE_KRAKEN2 = "exe.kraken2";
+
+	/**
+	 * {@link biolockj.Config} List property used to obtain the kraken2 executable params
+	 */
+	protected static final String EXE_KRAKEN2_PARAMS = "exe.kraken2Params";
 
 	/**
 	 * Name of the kraken function used to assign taxonomy: {@value #FUNCTION_KRAKEN}

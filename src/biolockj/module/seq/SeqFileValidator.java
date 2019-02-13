@@ -134,7 +134,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 		removeBadFiles();
 
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			verifyPairedSeqs();
 		}
@@ -247,7 +247,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 					{
 						stats[ INDEX_NUM_VALID_READS ]++;
 						setMaxSeq( SeqUtil.getSampleId( file.getName() ), seqLen );
-						final Integer seqMax = Config.getPositiveInteger( INPUT_SEQ_MAX );
+						final Integer seqMax = Config.getPositiveInteger( this, INPUT_SEQ_MAX );
 						if( seqMax != null && seqMax > 0 && seqLen > seqMax )
 						{
 							stats[ INDEX_NUM_TRIMMED_READS ]++;
@@ -337,7 +337,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 				throw new Exception( "Unpaired reverse reads: " + keys2 );
 			}
 
-			if( Config.getBoolean( REQUIRE_EUQL_NUM_PAIRS ) )
+			if( Config.getBoolean( this, REQUIRE_EUQL_NUM_PAIRS ) )
 			{
 				final Set<String> unequalNumReads = new TreeSet<>();
 				for( final String sampleId: rvReadsPerSample.keySet() )
@@ -397,7 +397,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 	private String getSeqLenRange() throws Exception
 	{
-		final Integer max = Config.getPositiveInteger( INPUT_SEQ_MAX );
+		final Integer max = Config.getPositiveInteger( this, INPUT_SEQ_MAX );
 		return "Valid SEQ Len Range --> min( " + minReadLen() + " ) - max( " + ( max == null ? "UNLIMITED": max )
 				+ " )";
 	}
@@ -473,7 +473,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 	private int minReadLen() throws Exception
 	{
-		Integer seqMin = Config.getPositiveInteger( INPUT_SEQ_MIN );
+		Integer seqMin = Config.getPositiveInteger( this, INPUT_SEQ_MIN );
 		if( seqMin == null )
 		{
 			seqMin = 1;

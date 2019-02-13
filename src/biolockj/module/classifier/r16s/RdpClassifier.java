@@ -58,13 +58,28 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	}
 
 	/**
+	 * RDP uses java to run a JAR file, so no special command is required
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return null;
+	}
+
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, RDP_PARAMS );
+	}
+
+	/**
 	 * If paired reads found, add prerequisite: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = new ArrayList<>();
-		if( Config.getBoolean( SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
@@ -80,10 +95,15 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines.add( Config.getExe( EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getClassifierExe() + " "
+		lines.add( Config.getExe( this, EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getJar() + " "
 				+ getRuntimeParams( getClassifierParams(), null ) + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" + RETURN );
 		return lines;
+	}
+
+	private String getJar() throws Exception
+	{
+		return Config.getExistingFile( this, RDP_JAR ).getAbsolutePath();
 	}
 
 	/**
@@ -95,6 +115,16 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * Name of the RdpClassifier bash script function used to assign taxonomy: {@value #FUNCTION_RDP}
 	 */
 	protected static final String FUNCTION_RDP = "runRdp";
+
+	/**
+	 * {@link biolockj.Config} File property for RDP java executable JAR: {@value #RDP_JAR}
+	 */
+	protected static final String RDP_JAR = "rdp.jar";
+
+	/**
+	 * {@link biolockj.Config} List property for RDP java executable JAR runtime params: {@value #RDP_PARAMS}
+	 */
+	protected static final String RDP_PARAMS = "exe.rdpParams";
 
 	private static final String JAVA_JAR_PARAM = "-jar";
 	private static final String OUTPUT_PARAM = "-o";

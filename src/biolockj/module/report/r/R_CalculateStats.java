@@ -40,8 +40,8 @@ public class R_CalculateStats extends R_Module implements BioModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.requireString( R_ADJ_PVALS_SCOPE );
-		Config.requireString( R_PVAL_ADJ_METHOD );
+		Config.requireString( this, R_ADJ_PVALS_SCOPE );
+		Config.requireString( this, R_PVAL_ADJ_METHOD );
 	}
 
 	/**
@@ -129,7 +129,7 @@ public class R_CalculateStats extends R_Module implements BioModule
 			return dirs;
 		}
 
-		return Config.requireExistingDirs( Constants.INPUT_DIRS );
+		return Config.requireExistingDirs( module, Constants.INPUT_DIRS );
 	}
 
 	private static String getSuffix( final Boolean isParametric, final Boolean isAdjusted ) throws Exception

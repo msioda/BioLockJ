@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.TaxaUtil;
@@ -22,7 +23,7 @@ import biolockj.util.TaxaUtil;
 /**
  * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.
  */
-public class LogTransformTaxaTables extends TaxaCountModuleImpl implements TaxaCountModule
+public class LogTransformTaxaTables extends TaxaCountModule implements JavaModule
 {
 
 	/**
@@ -34,7 +35,7 @@ public class LogTransformTaxaTables extends TaxaCountModuleImpl implements TaxaC
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		logBase = Config.requireString( Constants.REPORT_LOG_BASE );
+		logBase = Config.requireString( this, Constants.REPORT_LOG_BASE );
 
 		if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
 		{

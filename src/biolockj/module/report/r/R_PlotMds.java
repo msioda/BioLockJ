@@ -29,8 +29,8 @@ public class R_PlotMds extends R_Module implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.requireString( R_MDS_DISTANCE );
-		if( Config.requirePositiveInteger( R_MDS_NUM_AXIS ) < 2 )
+		Config.requireString( this, R_MDS_DISTANCE );
+		if( Config.requirePositiveInteger( this, R_MDS_NUM_AXIS ) < 2 )
 		{
 			throw new Exception( "Config property [" + R_MDS_NUM_AXIS + "] must be > 2" );
 		}

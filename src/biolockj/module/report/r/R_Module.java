@@ -20,6 +20,7 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
+import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.util.*;
 
@@ -63,8 +64,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.getPositiveInteger( R_TIMEOUT );
-		Config.requirePositiveInteger( R_PLOT_WIDTH );
+		Config.getPositiveInteger( this, R_TIMEOUT );
+		Config.requirePositiveInteger( this, R_PLOT_WIDTH );
+		Config.requirePositiveDouble( this, P_VAL_CUTOFF );
 	}
 
 	/**
@@ -114,7 +116,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		else
 		{
 			final String[] cmd = new String[ 2 ];
-			cmd[ 0 ] = Config.getExe( EXE_RSCRIPT );
+			cmd[ 0 ] = Config.getExe( this, EXE_RSCRIPT );
 			cmd[ 1 ] = getMainScript().getAbsolutePath();
 			return cmd;
 		}
@@ -156,7 +158,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * All R modules require combined OTU-metadata tables.
+	 * Require combined count-metadata tables as input.
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
@@ -164,7 +166,16 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			preReqs.add( AddMetadataToTaxaTables.class.getName() );
+			final boolean isHn2 = isHumanN2();
+			if( isHn2 )
+			{
+				preReqs.add( AddMetadataToPathwayTables.class.getName() );
+			}
+			else
+			{
+				preReqs.add( AddMetadataToTaxaTables.class.getName() );
+			}
+
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
@@ -236,7 +247,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 					sb.append( "Generated " + map.get( ext ) + " " + ext + " files" + RETURN );
 				}
 
-				if( Config.getBoolean( R_DEBUG ) )
+				if( Config.getBoolean( this, R_DEBUG ) )
 				{
 					final IOFileFilter ff = new WildcardFileFilter( "*" + DEBUG_LOG_PREFIX + "*" + LOG_EXT );
 					final Collection<File> debugLogs = FileUtils.listFiles( getTempDir(), ff, null );
@@ -264,7 +275,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		try
 		{
-			return Config.getPositiveInteger( R_TIMEOUT );
+			return Config.getPositiveInteger( this, R_TIMEOUT );
 		}
 		catch( final Exception ex )
 		{
@@ -281,7 +292,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_R + "() {" );
-		lines.add( Config.getExe( EXE_RSCRIPT ) + " $1" );
+		lines.add( Config.getExe( this, EXE_RSCRIPT ) + " $1" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
@@ -297,11 +308,12 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		final TreeSet<String> set = new TreeSet<>();
 		set.add( R_EXT.substring( 1 ) );
-		if( Config.getBoolean( R_Module.R_SAVE_R_DATA ) )
+		if( Config.getBoolean( this, R_Module.R_SAVE_R_DATA ) )
 		{
 			set.add( R_DATA_EXT.substring( 1 ) );
 		}
-		if( !Config.getBoolean( Constants.PROJECT_DELETE_TEMP_FILES ) && Config.getBoolean( R_Module.R_DEBUG ) )
+		if( !Config.getBoolean( this, Constants.PROJECT_DELETE_TEMP_FILES )
+				&& Config.getBoolean( this, R_Module.R_DEBUG ) )
 		{
 			set.add( LOG_EXT.substring( 1 ) );
 		}
@@ -372,6 +384,39 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	private String getModuleScriptName() throws Exception
 	{
 		return getClass().getSimpleName() + R_EXT;
+	}
+
+	private Boolean isHumanN2() throws Exception
+	{
+		final String prevClassifier = null;
+		int foundSelf = 0;
+		final boolean hasPathwayInputs = BioLockJUtil
+				.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE );
+		final boolean hasTaxaInputs = BioLockJUtil
+				.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+		for( final String mod: Config.requireList( this, Constants.INTERNAL_BLJ_MODULE ) )
+		{
+			final boolean isClassifier = mod.toLowerCase().contains( "classifier" );
+			final boolean isHn2 = isClassifier && mod.toLowerCase().contains( "humann2" );
+			if( mod.equals( getClass().getName() ) )
+			{
+				foundSelf++;
+			}
+
+			if( foundSelf > 0 && foundSelf > numInit++ )
+			{
+
+				if( prevClassifier == null && hasTaxaInputs || !isHn2 && isClassifier )
+				{
+					return false;
+				}
+				if( prevClassifier == null && hasPathwayInputs || isHn2 )
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -487,6 +532,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	protected static final String EXE_RSCRIPT = "exe.Rscript";
 
 	/**
+	 * {@link biolockj.Config} property {@value #P_VAL_CUTOFF} defines the p-value cutoff for significance
+	 */
+	protected static final String P_VAL_CUTOFF = "r.pvalCutoff";
+
+	/**
 	 * {@link biolockj.Config} boolean property {@value #R_DEBUG} sets the debug log function endabled
 	 */
 	protected static final String R_DEBUG = "r.debug";
@@ -503,6 +553,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	protected static final String R_TIMEOUT = "r.timeout";
 
 	private static final String DEBUG_LOG_PREFIX = "debug_";
+
 	private static final String FUNCTION_RUN_R = "runScript";
 	private static final String INDENT = "   ";
+	private static int numInit = 0;
 }

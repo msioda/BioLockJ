@@ -13,6 +13,7 @@ package biolockj.node;
 
 import java.io.Serializable;
 import java.util.*;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.util.OtuUtil;
 import biolockj.util.TaxaUtil;
@@ -131,7 +132,7 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 						}
 						else if( parentTaxa != null )
 						{
-							otu += OtuUtil.SEPARATOR
+							otu += Constants.SEPARATOR
 									+ OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
 						}
 					}

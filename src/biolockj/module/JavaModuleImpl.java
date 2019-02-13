@@ -57,7 +57,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public void executeTask() throws Exception
 	{
 		final boolean buildClusterScript = !RuntimeParamUtil.isDockerMode() && Config.isOnCluster()
-				&& Config.getBoolean( BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT );
+				&& Config.getBoolean( this, BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT );
 		final boolean buildDockerSciprt = RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode();
 		if( buildClusterScript || buildDockerSciprt )
 		{

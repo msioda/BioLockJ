@@ -46,10 +46,10 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 
 		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 
-		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) )
+		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) )
 		{
 			final String otusToFilter = tempDir + "chimeras.fasta";
-			lines.add( Config.getExe( EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET
+			lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET
 					+ File.separator + "*.fasta" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir
 					+ "nochimeras.fasta" );
 			lines.add( SCRIPT_FILTER_OTUS + " -i " + tempDir + OTU_TABLE + " -e " + otusToFilter + " -o " + outputDir
@@ -75,7 +75,7 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 	{
 		super.checkDependencies();
 		getParams();
-		if( Config.getBoolean( QIIME_REMOVE_CHIMERAS ) )
+		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) )
 		{
 			getVsearchParams();
 		}

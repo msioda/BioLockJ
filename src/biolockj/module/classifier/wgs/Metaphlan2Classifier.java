@@ -24,7 +24,7 @@ import biolockj.util.TaxaUtil;
 /**
  * This BioModule builds the bash scripts used to execute metaphlan2.py to classify WGS sequences.
  */
-public class MetaphlanClassifier extends ClassifierModuleImpl implements ClassifierModule
+public class Metaphlan2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {
 	/**
 	 * Build bash script lines to classify unpaired WGS reads with Metaphlan. The inner list contains 1 bash script line
@@ -80,13 +80,31 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 
 	/**
 	 * Verify none of the derived command line parameters are included in
-	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#EXE_CLASSIFIER_PARAMS}
 	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
 		getParams();
+	}
+
+	/**
+	 * Metaphlan runs python scripts, so no special command is required
+	 */
+	@Override
+	public String getClassifierExe() throws Exception
+	{
+		return Config.requireString( this, EXE_METAPHLAN );
+	}
+
+	/**
+	 * Obtain the metaphlan2 runtime params
+	 */
+	@Override
+	public List<String> getClassifierParams() throws Exception
+	{
+		return Config.getList( this, EXE_METAPHLAN_PARAMS );
 	}
 
 	/**
@@ -97,7 +115,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_METAPHLAN + "() {" );
-		lines.add( Config.getExe( EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
+		lines.add( Config.getExe( this, EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
 				+ "$1 --bowtie2out $2 > $3" );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -134,7 +152,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 			{
 				throw new Exception(
 						"Invalid classifier option (--bowtie2out) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
-								+ "). BioLockJ outputs bowtie2out files to MetaphlanClassifier/temp." );
+								+ "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
 			}
 			if( params.indexOf( "-t rel_ab_w_read_stats " ) > -1 )
 			{
@@ -173,7 +191,7 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 
 	private String getWorkerFunctionParams() throws Exception
 	{
-		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
+		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
 	}
 
 	private String defaultSwitches = null;
@@ -191,12 +209,22 @@ public class MetaphlanClassifier extends ClassifierModuleImpl implements Classif
 	}
 
 	/**
-	 * File suffix for intermediate bowtie2 index created by metaphlan
+	 * File suffix for intermediate bowtie2 index created by metaphlan2
 	 */
 	protected static final String bowtie2ext = ".bowtie2.bz2";
 
 	/**
-	 * {@link biolockj.Config} property to python executable
+	 * {@link biolockj.Config} exe property used to obtain the metaphlan2 executable
+	 */
+	protected static final String EXE_METAPHLAN = "exe.metaphlan2";
+
+	/**
+	 * {@link biolockj.Config} List property used to obtain the metaphlan2 executable params
+	 */
+	protected static final String EXE_METAPHLAN_PARAMS = "exe.metaphlan2Params";
+
+	/**
+	 * {@link biolockj.Config} exe property used to obtain the python executable
 	 */
 	protected static final String EXE_PYTHON = "exe.python";
 

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.TaxaUtil;
@@ -40,7 +41,7 @@ import biolockj.util.TaxaUtil;
  * model" <a href= "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/" target=
  * "_top">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/</a>
  */
-public class NormalizeTaxaTables extends TaxaCountModuleImpl implements TaxaCountModule
+public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 {
 
 	/**
@@ -52,7 +53,7 @@ public class NormalizeTaxaTables extends TaxaCountModuleImpl implements TaxaCoun
 	@Override
 	public void checkDependencies() throws Exception
 	{
-		logBase = Config.getString( Constants.REPORT_LOG_BASE );
+		logBase = Config.getString( this, Constants.REPORT_LOG_BASE );
 		if( logBase != null )
 		{
 			if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
@@ -72,9 +73,9 @@ public class NormalizeTaxaTables extends TaxaCountModuleImpl implements TaxaCoun
 	@Override
 	public String getSummary() throws Exception
 	{
-		if( Config.getString( Constants.REPORT_LOG_BASE ) != null )
+		if( Config.getString( this, Constants.REPORT_LOG_BASE ) != null )
 		{
-			summary += " Log(" + Config.getString( Constants.REPORT_LOG_BASE ) + ")";
+			summary += " Log(" + Config.getString( this, Constants.REPORT_LOG_BASE ) + ")";
 		}
 
 		summary += " normalized tables";

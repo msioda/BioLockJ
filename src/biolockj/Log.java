@@ -83,7 +83,7 @@ public class Log
 	 */
 	public static boolean doDebug() throws Exception
 	{
-		return Config.requireString( LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
+		return Config.requireString( null, LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
 	}
 
 	/**
@@ -269,7 +269,8 @@ public class Log
 	{
 		Log.info( Log.class, Log.LOG_SPACER );
 		Log.info( Log.class, "Pipeline Project Config File: " + Config.getConfigFilePath() );
-		Log.info( Log.class, "Pipeline Default Config Files: " + Config.getList( Constants.INTERNAL_DEFAULT_CONFIG ) );
+		Log.info( Log.class,
+				"Pipeline Default Config Files: " + Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG ) );
 		Log.info( Log.class, Log.LOG_SPACER );
 		Log.info( Log.class, "===> List All Configured Properties:" );
 		Log.info( Log.class, Log.LOG_SPACER );
@@ -314,7 +315,7 @@ public class Log
 	 */
 	protected static String validateLogLevel() throws Exception
 	{
-		final String logLevel = Config.requireString( LOG_LEVEL_PROPERTY ).toUpperCase();
+		final String logLevel = Config.requireString( null, LOG_LEVEL_PROPERTY ).toUpperCase();
 		if( !logLevel.equals( "DEBUG" ) && !logLevel.equals( "INFO" ) && !logLevel.equals( "WARN" )
 				&& !logLevel.equals( "ERROR" ) )
 		{
@@ -334,7 +335,7 @@ public class Log
 	{
 		if( debugClasses == null )
 		{
-			debugClasses = Config.getSet( LIMIT_DEBUG_CLASSES );
+			debugClasses = Config.getSet( null, LIMIT_DEBUG_CLASSES );
 			if( !debugClasses.isEmpty() )
 			{
 				debugClasses.add( BioLockJ.class.getName() );
@@ -356,7 +357,7 @@ public class Log
 
 	/**
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when
-	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Config#TRUE}
+	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Constants#TRUE}
 	 */
 	public static final String LIMIT_DEBUG_CLASSES = "project.limitDebugClasses";
 

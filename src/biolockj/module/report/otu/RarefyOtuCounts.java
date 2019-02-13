@@ -19,6 +19,7 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
+import biolockj.module.JavaModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -31,20 +32,20 @@ import biolockj.util.*;
  * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
  */
-public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModule
+public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 {
 
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		if( Config.requirePositiveDouble( QUANTILE ) > 1 )
+		if( Config.requirePositiveDouble( this, QUANTILE ) > 1 )
 		{
 			throw new ConfigFormatException( QUANTILE, "This value must be x, wehre x: { 0.0 < x < 1.0 }" );
 		}
-		Config.requirePositiveInteger( NUM_ITERATIONS );
-		Config.getBoolean( REMOVE_LOW_ABUNDANT_SAMPLES );
-		Config.requirePositiveDouble( LOW_ABUNDANT_CUTOFF );
+		Config.requirePositiveInteger( this, NUM_ITERATIONS );
+		Config.getBoolean( this, REMOVE_LOW_ABUNDANT_SAMPLES );
+		Config.requirePositiveDouble( this, LOW_ABUNDANT_CUTOFF );
 
 	}
 
@@ -55,7 +56,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + OtuUtil.OTU_COUNT );
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
 	}
 
 	/**
@@ -84,7 +85,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
 		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_"
-				+ OtuUtil.OTU_COUNT );
+				+ Constants.OTU_COUNT );
 		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 		final Integer quantileNum = getNumOtusForQuantile( sampleOtuCounts );
 
@@ -99,9 +100,9 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 			}
 		}
 
-		if( Config.getBoolean( Constants.REPORT_NUM_HITS ) )
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 		{
-			MetaUtil.addColumn( getMetaColName() + "_" + OtuUtil.OTU_COUNT, hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, hitsPerSample, getOutputDir(), true );
 		}
 	}
 
@@ -166,8 +167,8 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 	{
 		final List<String> sampleIds = MetaUtil.getSampleIds();
 		final int numToRemove = Double
-				.valueOf( Math
-						.ceil( new Double( Config.requirePositiveDouble( LOW_ABUNDANT_CUTOFF ) * sampleIds.size() ) ) )
+				.valueOf( Math.ceil(
+						new Double( Config.requirePositiveDouble( this, LOW_ABUNDANT_CUTOFF ) * sampleIds.size() ) ) )
 				.intValue();
 
 		final String otuCountField = ParserModuleImpl.getOtuCountField();
@@ -240,7 +241,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 		final List<Integer> data = new ArrayList<>( countMap.values() );
 		Collections.sort( data );
 
-		final int index = new Double( Config.requirePositiveDouble( QUANTILE ) * countMap.size() ).intValue();
+		final int index = new Double( Config.requirePositiveDouble( this, QUANTILE ) * countMap.size() ).intValue();
 
 		return data.get( index );
 	}
@@ -278,13 +279,13 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 
 		final TreeMap<String, Integer> otuCount = new TreeMap<>();
 		final List<String> data = getData( sampleId, otuCounts );
-		if( Config.getBoolean( REMOVE_LOW_ABUNDANT_SAMPLES ) && data.size() < quantileNum )
+		if( Config.getBoolean( this, REMOVE_LOW_ABUNDANT_SAMPLES ) && data.size() < quantileNum )
 		{
 			Log.info( getClass(), "REMOVE LOW ABUNDANT sample: " + sampleId );
 			return null;
 		}
 
-		for( int i = 0; i < Config.requirePositiveInteger( NUM_ITERATIONS ); i++ )
+		for( int i = 0; i < Config.requirePositiveInteger( this, NUM_ITERATIONS ); i++ )
 		{
 			Log.debug( getClass(), sampleId + " iteration[ " + i + " ]" );
 			for( final String otu: getRandomQuantileOtus( data, quantileNum ) )
@@ -303,7 +304,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 		int i = 0;
 		for( final String otu: otuCount.keySet() )
 		{
-			final int avg = Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( NUM_ITERATIONS ) );
+			final int avg = Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) );
 			if( avg > 0 )
 			{
 				meanCountValues.put( otu, avg );
@@ -318,7 +319,7 @@ public class RarefyOtuCounts extends OtuCountModuleImpl implements OtuCountModul
 
 	private String getMetaColName() throws Exception
 	{
-		return "postRareQ" + new Double( Config.requirePositiveDouble( QUANTILE ) * 100 ).intValue();
+		return "postRareQ" + new Double( Config.requirePositiveDouble( this, QUANTILE ) * 100 ).intValue();
 	}
 
 	private Map<String, String> hitsPerSample = new HashMap<>();

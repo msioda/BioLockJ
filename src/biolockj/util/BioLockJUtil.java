@@ -330,7 +330,7 @@ public class BioLockJUtil
 			dirs.add( dir );
 			return dirs;
 		}
-		return Config.requireExistingDirs( Constants.INPUT_DIRS );
+		return Config.requireExistingDirs( null, Constants.INPUT_DIRS );
 	}
 
 	/**
@@ -420,6 +420,44 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Read in BioLockJ count table, each inner lists represents 1 line from the file.<br>
+	 * Each cell in the tab delimited file is stored as 1 element in the inner lists.
+	 * 
+	 * @param file Path abundance file
+	 * @return List of Lists - each inner list 1 line
+	 * @throws Exception if errors occur
+	 */
+	public static List<List<String>> parseCountTable( final File file ) throws Exception
+	{
+		final List<List<String>> data = new ArrayList<>();
+		final BufferedReader reader = BioLockJUtil.getFileReader( file );
+		try
+		{
+			boolean firstRecord = true;
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			{
+				final ArrayList<String> record = new ArrayList<>();
+				final String[] cells = line.split( Constants.TAB_DELIM, -1 );
+				for( final String cell: cells )
+				{
+					record.add( firstRecord && record.isEmpty() ? MetaUtil.getID(): cell );
+				}
+				data.add( record );
+				firstRecord = false;
+			}
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
+
+		return data;
+	}
+
+	/**
 	 * Convenience method to check pipeline input file type.
 	 * 
 	 * @param type Pipeline input file type
@@ -428,7 +466,7 @@ public class BioLockJUtil
 	 */
 	public static boolean pipelineInputType( final String type ) throws ConfigNotFoundException
 	{
-		return Config.requireSet( INTERNAL_PIPELINE_INPUT_TYPES ).contains( type );
+		return Config.requireSet( null, INTERNAL_PIPELINE_INPUT_TYPES ).contains( type );
 	}
 
 	/**
@@ -469,7 +507,7 @@ public class BioLockJUtil
 			{
 				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
 			}
-			else if( Config.getSet( SeqUtil.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+			else if( Config.getSet( null, SeqUtil.INPUT_IGNORE_FILES ).contains( file.getName() ) )
 			{
 				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
 			}
@@ -533,6 +571,10 @@ public class BioLockJUtil
 			else if( TaxaUtil.isTaxaFile( file ) )
 			{
 				fileTypes.add( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+			}
+			else if( PathwayUtil.isPathwayFile( file ) )
+			{
+				fileTypes.add( PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE );
 			}
 			else if( RMetaUtil.isMetaMergeTable( file ) )
 			{
@@ -611,6 +653,8 @@ public class BioLockJUtil
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for classifier output files.
 	 */
 	public static final String PIPELINE_PARSER_INPUT_TYPE = "classifier_output";
+
+	public static final String PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE = "path_abundance";
 
 	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_R_INPUT_TYPE}<br>

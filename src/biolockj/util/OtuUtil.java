@@ -85,7 +85,7 @@ public class OtuUtil
 	 */
 	public static String buildOtuTaxa( final String level, final String taxa ) throws Exception
 	{
-		return level + DELIM_SEP + BioLockJUtil.removeQuotes( taxa );
+		return level + Constants.DELIM_SEP + BioLockJUtil.removeQuotes( taxa );
 	}
 
 	/**
@@ -177,8 +177,8 @@ public class OtuUtil
 			sampleId = "";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + prefix + OTU_COUNT + sampleId
-				+ Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + prefix + Constants.OTU_COUNT
+				+ sampleId + Constants.TSV_EXT );
 	}
 
 	/**
@@ -195,7 +195,7 @@ public class OtuUtil
 		{
 			throw new Exception( "Unexpected format!  Missing \"_\" from input file name: " + otuCountFile.getName() );
 		}
-		return otuCountFile.getName().substring( otuCountFile.getName().lastIndexOf( OTU_COUNT + "_" ) + 9,
+		return otuCountFile.getName().substring( otuCountFile.getName().lastIndexOf( Constants.OTU_COUNT + "_" ) + 9,
 				otuCountFile.getName().length() - Constants.TSV_EXT.length() );
 	}
 
@@ -213,9 +213,9 @@ public class OtuUtil
 		final TreeMap<String, TreeMap<String, Integer>> otuCountsBySample = new TreeMap<>();
 		for( final File file: files )
 		{
-			if( !file.getName().contains( "_" + OTU_COUNT + "_" ) )
+			if( !file.getName().contains( "_" + Constants.OTU_COUNT + "_" ) )
 			{
-				throw new Exception( "Module input files must contain sample OTU counts with \"_" + OTU_COUNT
+				throw new Exception( "Module input files must contain sample OTU counts with \"_" + Constants.OTU_COUNT
 						+ "_\" as part of the file name.  Found file: " + file.getAbsolutePath() );
 			}
 
@@ -235,7 +235,7 @@ public class OtuUtil
 	public static boolean isOtuFile( final File file ) throws Exception
 	{
 		final String name = file.getName();
-		if( name.contains( "_" + OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) )
+		if( name.contains( "_" + Constants.OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) )
 		{
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try
@@ -264,19 +264,4 @@ public class OtuUtil
 		return false;
 	}
 
-	/**
-	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
-	 * with {@value #DELIM_SEP}
-	 */
-	public static final String DELIM_SEP = "__";
-
-	/**
-	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
-	 */
-	public static final String OTU_COUNT = "otuCount";
-
-	/**
-	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
-	 */
-	public static final String SEPARATOR = "|";
 }

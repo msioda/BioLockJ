@@ -280,12 +280,12 @@ public class SeqUtil
 			msg += "Unpaired RV Reads: " + BioLockJUtil.printLongFormList( rvReads );
 		}
 
-		if( Config.getString( INTERNAL_PAIRED_READS ) != null && Config.getBoolean( INPUT_REQUIRE_COMPLETE_PAIRS )
-				&& !msg.isEmpty() )
+		if( Config.getString( null, INTERNAL_PAIRED_READS ) != null
+				&& Config.getBoolean( null, INPUT_REQUIRE_COMPLETE_PAIRS ) && !msg.isEmpty() )
 		{
 			throw new ConfigViolationException( INPUT_REQUIRE_COMPLETE_PAIRS, msg );
 		}
-		else if( Config.getString( INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
+		else if( Config.getString( null, INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
 		{
 			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ "
 					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Constants.FALSE + " ]" + BioLockJ.RETURN + msg );
@@ -315,15 +315,15 @@ public class SeqUtil
 	 */
 	public static String getReadDirectionSuffix( final String fileName ) throws Exception
 	{
-		if( Config.getBoolean( INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( null, INTERNAL_PAIRED_READS ) )
 		{
 			if( SeqUtil.isForwardRead( fileName ) )
 			{
-				return Config.requireString( INPUT_FORWARD_READ_SUFFIX );
+				return Config.requireString( null, INPUT_FORWARD_READ_SUFFIX );
 			}
 			else
 			{
-				return Config.requireString( INPUT_REVERSE_READ_SUFFIX );
+				return Config.requireString( null, INPUT_REVERSE_READ_SUFFIX );
 			}
 		}
 
@@ -346,7 +346,7 @@ public class SeqUtil
 		String revValue = "";
 		try
 		{
-			final String fileNameCol = Config.getString( MetaUtil.META_FILENAME_COLUMN );
+			final String fileNameCol = Config.getString( null, MetaUtil.META_FILENAME_COLUMN );
 			if( MetaUtil.hasColumn( fileNameCol ) )
 			{
 				int ind;
@@ -358,8 +358,8 @@ public class SeqUtil
 				else
 				{
 					// if this file name is a reverse file, look up the corresponding forward file name.
-					final String fwReadSuffix = Config.getString( INPUT_FORWARD_READ_SUFFIX );
-					final String rvReadSuffix = Config.getString( INPUT_REVERSE_READ_SUFFIX );
+					final String fwReadSuffix = Config.getString( null, INPUT_FORWARD_READ_SUFFIX );
+					final String rvReadSuffix = Config.getString( null, INPUT_REVERSE_READ_SUFFIX );
 					revValue = value.substring( 0, value.lastIndexOf( rvReadSuffix ) ) + fwReadSuffix
 							+ value.substring( value.lastIndexOf( rvReadSuffix ) + rvReadSuffix.length() );
 					Log.debug( SeqUtil.class, value + " is a reverse read. Seeking sample id for file: " + revValue );
@@ -392,10 +392,10 @@ public class SeqUtil
 				}
 			}
 			// trim directional suffix
-			if( !Config.getBoolean( INTERNAL_MULTIPLEXED ) ) // must be a file name
+			if( !Config.getBoolean( null, INTERNAL_MULTIPLEXED ) ) // must be a file name
 			{
-				final String fwReadSuffix = Config.getString( INPUT_FORWARD_READ_SUFFIX );
-				final String rvReadSuffix = Config.getString( INPUT_REVERSE_READ_SUFFIX );
+				final String fwReadSuffix = Config.getString( null, INPUT_FORWARD_READ_SUFFIX );
+				final String rvReadSuffix = Config.getString( null, INPUT_REVERSE_READ_SUFFIX );
 				if( fwReadSuffix != null && isForwardRead( id ) && id.lastIndexOf( fwReadSuffix ) > 0 )
 				{
 					id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
@@ -407,8 +407,8 @@ public class SeqUtil
 			}
 
 			// trim user defined file prefix and/or suffix patterns
-			final String trimPrefix = Config.getString( INPUT_TRIM_PREFIX );
-			final String trimSuffix = Config.getString( INPUT_TRIM_SUFFIX );
+			final String trimPrefix = Config.getString( null, INPUT_TRIM_PREFIX );
+			final String trimSuffix = Config.getString( null, INPUT_TRIM_SUFFIX );
 			if( trimPrefix != null && !trimPrefix.isEmpty() && id.indexOf( trimPrefix ) > -1 )
 			{
 				id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
@@ -447,7 +447,7 @@ public class SeqUtil
 			{
 				seqFiles.add( file );
 			}
-			else if( Config.getBoolean( MetaUtil.META_REQUIRED ) ) // metadata required
+			else if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) ) // metadata required
 			{
 				seqsWithoutMetaId.add( file );
 			}
@@ -458,7 +458,7 @@ public class SeqUtil
 			}
 		}
 
-		if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( MetaUtil.META_REQUIRED ) )
+		if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( null, MetaUtil.META_REQUIRED ) )
 		{
 			throw new ConfigViolationException( MetaUtil.META_REQUIRED, "No metadata found for the following files: "
 					+ BioLockJ.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
@@ -506,7 +506,7 @@ public class SeqUtil
 
 			if( mapSampleIdWithMetaFileNameCol() )
 			{
-				final String colName = Config.requireString( MetaUtil.META_FILENAME_COLUMN );
+				final String colName = Config.requireString( null, MetaUtil.META_FILENAME_COLUMN );
 				final int numVals = MetaUtil.getFieldValues( colName, true ).size();
 				final int numUniqueVals = MetaUtil.getUniqueFieldValues( colName, true ).size();
 				if( numVals != numUniqueVals )
@@ -528,7 +528,7 @@ public class SeqUtil
 		else
 		{
 			Config.setConfigProperty( MetaUtil.META_FILENAME_COLUMN, "" );
-			Config.setConfigProperty( INTERNAL_SEQ_TYPE, Config.requireString( MetaUtil.META_NULL_VALUE ) );
+			Config.setConfigProperty( INTERNAL_SEQ_TYPE, Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
 		}
 	}
 
@@ -540,7 +540,7 @@ public class SeqUtil
 	 */
 	public static boolean isFastA() throws Exception
 	{
-		if( Config.requireString( INTERNAL_SEQ_TYPE ).equals( FASTA ) )
+		if( Config.requireString( null, INTERNAL_SEQ_TYPE ).equals( FASTA ) )
 		{
 			return true;
 		}
@@ -556,7 +556,7 @@ public class SeqUtil
 	 */
 	public static boolean isFastQ() throws Exception
 	{
-		if( Config.requireString( INTERNAL_SEQ_TYPE ).equals( FASTQ ) )
+		if( Config.requireString( null, INTERNAL_SEQ_TYPE ).equals( FASTQ ) )
 		{
 			return true;
 		}
@@ -574,7 +574,7 @@ public class SeqUtil
 	 */
 	public static boolean isForwardRead( final String name ) throws Exception
 	{
-		final String suffix = Config.getString( INPUT_REVERSE_READ_SUFFIX );
+		final String suffix = Config.getString( null, INPUT_REVERSE_READ_SUFFIX );
 		if( suffix != null && name.contains( suffix ) )
 		{
 			return false;
@@ -808,7 +808,7 @@ public class SeqUtil
 				}
 
 				Log.info( SeqUtil.class, f.getAbsolutePath() + " --> #lines/read: " + ( numSeqLines + 1 ) );
-				if( numSeqLines > 1 && Config.getString( INTERNAL_IS_MULTI_LINE_SEQ ) == null
+				if( numSeqLines > 1 && Config.getString( null, INTERNAL_IS_MULTI_LINE_SEQ ) == null
 						&& ( FASTA_HEADER_DELIMS.contains( headerChar ) || headerChar.equals( FASTQ_HEADER_DELIM ) ) )
 				{
 					Log.info( SeqUtil.class, "Multi-line input file detected: # lines/seq: " + numSeqLines );
@@ -867,7 +867,7 @@ public class SeqUtil
 			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, headerChar );
 		}
 
-		final String seqType = Config.getString( INTERNAL_SEQ_TYPE );
+		final String seqType = Config.getString( null, INTERNAL_SEQ_TYPE );
 		if( seqType != null )
 		{
 			if( !seqType.toLowerCase().equals( FASTA ) && !seqType.toLowerCase().equals( FASTQ ) )
@@ -887,8 +887,9 @@ public class SeqUtil
 		}
 		else
 		{
-			Config.setConfigProperty( INTERNAL_SEQ_TYPE, Config.requireString( MetaUtil.META_NULL_VALUE ) );
-			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR, Config.requireString( MetaUtil.META_NULL_VALUE ) );
+			Config.setConfigProperty( INTERNAL_SEQ_TYPE, Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
+			Config.setConfigProperty( INTERNAL_SEQ_HEADER_CHAR,
+					Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
 		}
 	}
 
@@ -900,7 +901,7 @@ public class SeqUtil
 	protected static void registerPairedReadStatus() throws Exception
 	{
 		boolean foundPairedReads = false;
-		if( Config.getBoolean( INTERNAL_MULTIPLEXED ) )
+		if( Config.getBoolean( null, INTERNAL_MULTIPLEXED ) )
 		{
 			if( BioLockJUtil.getPipelineInputFiles().size() > 1 )
 			{
@@ -970,7 +971,7 @@ public class SeqUtil
 
 	private static boolean mapSampleIdWithMetaFileNameCol() throws Exception
 	{
-		final String metaCol = Config.getString( MetaUtil.META_FILENAME_COLUMN );
+		final String metaCol = Config.getString( null, MetaUtil.META_FILENAME_COLUMN );
 		return metaCol != null && MetaUtil.hasColumn( metaCol ) && !MetaUtil.getFieldValues( metaCol, true ).isEmpty();
 	}
 
@@ -1001,8 +1002,8 @@ public class SeqUtil
 
 			boolean foundFw = false;
 			boolean foundRv = false;
-			final String fwRead = Config.getString( INPUT_FORWARD_READ_SUFFIX );
-			final String rvRead = Config.getString( INPUT_REVERSE_READ_SUFFIX );
+			final String fwRead = Config.getString( null, INPUT_FORWARD_READ_SUFFIX );
+			final String rvRead = Config.getString( null, INPUT_REVERSE_READ_SUFFIX );
 			final Set<String> suffixes = new HashSet<>();
 			if( fwRead != null )
 			{
