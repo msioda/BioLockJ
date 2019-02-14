@@ -100,7 +100,8 @@ public class Config
 
 	/**
 	 * Parse property for numeric (double) value
-	 *
+	 * 
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Double value or null
 	 * @throws ConfigFormatException if property is defined, but set with a non-numeric value
@@ -125,6 +126,7 @@ public class Config
 	/**
 	 * Get exe.* property name. If null, return the property name (without the "exe." prefix)
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return String value of executable
 	 * @throws Exception if property does not start with "exe."
@@ -148,6 +150,7 @@ public class Config
 	/**
 	 * Get a valid File directory or return null
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File directory or null
 	 * @throws ConfigPathException if path is defined but is not an existing directory
@@ -171,6 +174,7 @@ public class Config
 	/**
 	 * Get a valid File or return null. If path is a directory containing exactly 1 file, return that file.
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File (not directory) or null
 	 * @throws ConfigPathException if path is defined but is not an existing file
@@ -213,6 +217,7 @@ public class Config
 	/**
 	 * Parse comma delimited property value to return list
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return List of String values (or an empty list)
 	 */
@@ -247,6 +252,7 @@ public class Config
 	/**
 	 * Parse property as non-negative integer value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Non-negative integer or null
 	 * @throws ConfigFormatException if defined but is not a non-negative integer value
@@ -265,6 +271,7 @@ public class Config
 	/**
 	 * Parse property as positive double value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Positive Double value or null
 	 * @throws ConfigFormatException if property is defined, but not set with a positive number
@@ -284,6 +291,7 @@ public class Config
 	/**
 	 * Parse property as positive integer value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Positive Integer value or null
 	 * @throws ConfigFormatException if property is defined, but not set with a positive integer
@@ -312,6 +320,7 @@ public class Config
 	/**
 	 * Parse comma-separated property value to build an unordered Set
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Set of values or an empty set (if no values)
 	 */
@@ -327,6 +336,7 @@ public class Config
 	 * If $BLJ or $BLJ_SUP or $USER or $HOME was used, it would already be converted to the actual file path by
 	 * {@link biolockj.Properties} before this method is called.
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property {@link biolockj.Config} file property name
 	 * @return String value or null
 	 */
@@ -442,6 +452,7 @@ public class Config
 	/**
 	 * Parse comma-separated property value to build an ordered Set
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Set of values or an empty set (if no values)
 	 */
@@ -513,6 +524,7 @@ public class Config
 	/**
 	 * Required to return a valid boolean {@value #TRUE} or {@value #FALSE}
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return boolean {@value #TRUE} or {@value #FALSE}
 	 * @throws ConfigNotFoundException if property is undefined
@@ -538,6 +550,7 @@ public class Config
 	/**
 	 * Requires valid double value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Double value
 	 * @throws ConfigNotFoundException if property is undefined
@@ -558,6 +571,7 @@ public class Config
 	/**
 	 * Requires valid existing directory.
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File directory
 	 * @throws ConfigNotFoundException if property is undefined
@@ -578,6 +592,7 @@ public class Config
 	/**
 	 * Requires valid list of file directories
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return List of File directories
 	 * @throws ConfigNotFoundException if property is undefined
@@ -608,6 +623,7 @@ public class Config
 	/**
 	 * Require valid existing file
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File with filename defined by property
 	 * @throws ConfigNotFoundException if property is undefined
@@ -627,6 +643,7 @@ public class Config
 	/**
 	 * Requires valid integer value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Integer value
 	 * @throws ConfigNotFoundException if property is undefined
@@ -647,6 +664,7 @@ public class Config
 	/**
 	 * Require valid list property
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return List
 	 * @throws ConfigNotFoundException if property is undefined
@@ -665,6 +683,7 @@ public class Config
 	/**
 	 * Require valid positive double value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Positive Double
 	 * @throws ConfigNotFoundException if property is undefined
@@ -685,6 +704,7 @@ public class Config
 	/**
 	 * Require valid positive integer value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Positive Integer
 	 * @throws ConfigNotFoundException if property is undefined
@@ -704,6 +724,7 @@ public class Config
 	/**
 	 * Require valid Set value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return Set of values
 	 * @throws ConfigNotFoundException if property is undefined
@@ -721,6 +742,7 @@ public class Config
 	/**
 	 * Require valid String value
 	 *
+	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return String value
 	 * @throws ConfigNotFoundException if property is undefined
