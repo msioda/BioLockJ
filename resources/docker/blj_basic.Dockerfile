@@ -59,4 +59,4 @@ RUN	rm -rf /tmp/* && \
 	rm -rf /var/log/*
 
 #7.) Set Default Command
-CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]
+CMD /bin/bash $COMPUTE_SCRIPT

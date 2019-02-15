@@ -133,7 +133,7 @@ public class Config
 	{
 		if( !property.startsWith( "exe." ) )
 		{
-			throw new Exception( "Config.getExe() can be called for properties that begin with \"exe.\"" );
+			throw new Exception( "Config.getExe() can only be called for properties that begin with \"exe.\"" );
 		}
 
 		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
@@ -143,6 +143,37 @@ public class Config
 		}
 
 		return getString( module, property );
+	}
+	
+	/**
+	 * Call this function to get the parameters configured for this property.<br>
+	 * Make sure the last character for non-null resultss is an empty character for use in bash
+	 * scripts calling the corresponding executable.
+	 * 
+	 * @param module Calling module
+	 * @param property exe parameter name
+	 * @return Executable program parameters
+	 * @throws Exception if errors occur
+	 */
+	public static String getExeParams( final BioModule module, String property ) throws Exception
+	{
+		if( !property.startsWith( "exe." ) )
+		{
+			throw new Exception( "Config.getExeParams() can only be called for properties that begin with \"exe.\"" );
+		}
+
+ 		property = property + Constants.PARAMS;
+		if( getString( module, property ) == null )
+		{
+			return "";
+		}
+
+ 		String val = getString( module, property );
+		if( val != null && !val.isEmpty() && !val.endsWith( " " ) );
+		{
+			val = val + " ";
+		}
+		return val;
 	}
 
 	/**

@@ -20,4 +20,4 @@ RUN	apt-get clean && \
 	rm -rf /var/log/*
 	
 #3.) Set Default Command
-CMD [ "/bin/bash", "$COMPUTE_SCRIPT" ]
+CMD /bin/bash $COMPUTE_SCRIPT

@@ -14,6 +14,7 @@ package biolockj.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
@@ -136,15 +137,25 @@ public class DockerUtil
 		final StringBuffer imageName = new StringBuffer();
 		imageName.append( className.substring( 0, 1 ).toLowerCase() );
 
-		for( int i = 2; i < className.length(); i++ )
+		for( int i = 2; i < className.length() + 1; i++ )
 		{
+			int len = imageName.toString().length();
+			final String prevChar = imageName.toString().substring( len - 1, len );
 			final String val = className.substring( i - 1, i );
-			final String upperCase = val.toUpperCase();
-			if( val.equals( upperCase ) )
+			if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) 
+					&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
 			{
-				imageName.append( IMAGE_NAME_DELIM ).append( val );
+				imageName.append( IMAGE_NAME_DELIM ).append( val.toLowerCase() );
 			}
-		}
+			else if( prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
+			{
+				imageName.append( val.toLowerCase() );
+			}
+			else if( !prevChar.equals( IMAGE_NAME_DELIM ) )
+			{
+				imageName.append( val.toLowerCase() );
+			}
+		}		
 
 		Log.info( DockerUtil.class, "Use Docker image: " + imageName.toString() );
 

@@ -95,10 +95,15 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines.add( Config.getExe( this, EXE_JAVA ) + " " + JAVA_JAR_PARAM + " " + getJar() + " "
+		lines.add( Config.getExe( this, EXE_JAVA ) + " " + getJavaParams() + JAVA_JAR_PARAM + " " + getJar() + " "
 				+ getRuntimeParams( getClassifierParams(), null ) + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" + RETURN );
 		return lines;
+	}
+	
+	private String getJavaParams() throws Exception
+	{
+		return Config.getExeParams( this, EXE_JAVA );
 	}
 
 	private String getJar() throws Exception

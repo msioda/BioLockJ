@@ -129,8 +129,8 @@ get_status_msg() {
 		msg="Host machine $BLJ/web_app GUI" 
 	fi
 	
-	if [ ${#restartPipeline} -gt 0 ]; then 
-		msg+=" restarting $DOCKER_HUB_USER/blj_manager Docker container"
+	if [ ${#restartPipeline} -gt 0 ]; then
+		msg+=" restarting $(get_restart_dir) in $DOCKER_HUB_USER/blj_manager Docker container"
 	else
 		msg+=" starting $DOCKER_HUB_USER/blj_manager Docker container"
 	fi
@@ -148,8 +148,6 @@ inDockerContainer=$(arg_exists "$@" "-docker")
 
 # Call function to verify input parameters are vaild
 validate_input
-
-#echo "BLJ_OPTIONS=$(get_blj_options)"
 
 # Call function to print status message
 echo $(get_status_msg)

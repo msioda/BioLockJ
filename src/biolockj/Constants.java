@@ -12,6 +12,11 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	public static final String AWS_STACK = "aws.stack";
+	
+	/**
+	 * {@link biolockj.Config} property suffix for exe.* properties, used to set optional parameters: {@value #PARAMS}
+	 */	
+	public static final String PARAMS = "Params";
 
 	/**
 	 * Name of the file created in the BioModule or {@value biolockj.Config##PROJECT_PIPELINE_DIR} root directory to
@@ -79,14 +84,7 @@ public class Constants
 	 * Set command line executable awk.
 	 */
 	public static final String EXE_AWK = "exe.awk";
-	/**
-	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
-	 */
-	public static final String EXE_CLASSIFIER = "exe.classifier";
-	/**
-	 * {@link biolockj.Config} property for classifier program optional parameters: {@value #EXE_CLASSIFIER_PARAMS}
-	 */
-	public static final String EXE_CLASSIFIER_PARAMS = "exe.classifierParams";
+
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_DOCKER}<br>
 	 * Set command line executable docker
