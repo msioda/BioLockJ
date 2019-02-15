@@ -302,6 +302,12 @@ public class Constants
 	public static final String[] QIIME_AMBIGUOUS_TAXA = { "Ambiguous_taxa", "Other", "Unassigned" };
 
 	/**
+	 * {@link biolockj.Config} String property: {@value #RDP_THRESHOLD_SCORE}<br>
+	 * RdpParser will ignore OTU assignments below the threshold score (0-100)
+	 */
+	public static final String RDP_THRESHOLD_SCORE = "rdp.minThresholdScore";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>
 	 * Required to be set to "e" or "10" to build log normalized reports.
 	 */

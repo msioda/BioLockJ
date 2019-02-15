@@ -78,7 +78,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	{
 		try
 		{
-			if( ( (RdpNode) node ).getScore() >= Config.requirePositiveInteger( this, RDP_THRESHOLD_SCORE ) )
+			if( ( (RdpNode) node ).getScore() >= Config.requirePositiveInteger( this, Constants.RDP_THRESHOLD_SCORE ) )
 			{
 				return super.isValid( node );
 			}
@@ -98,11 +98,5 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	 * sb.toString() + super.getSummary(); } catch( final Exception ex ) { Log.error( RdpParser.class, "Unable to
 	 * produce module summary! " + ex.getMessage(), ex ); } return super.getSummary(); }
 	 */
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #RDP_THRESHOLD_SCORE}<br>
-	 * RdpParser will ignore OTU assignments below the threshold score (0-100)
-	 */
-	public static final String RDP_THRESHOLD_SCORE = "rdp.minThresholdScore";
 
 }
