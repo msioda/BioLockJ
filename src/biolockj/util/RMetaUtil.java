@@ -22,7 +22,6 @@ import biolockj.module.classifier.wgs.Humann2Classifier;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
-import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.module.report.r.R_PlotMds;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 
@@ -146,10 +145,10 @@ public final class RMetaUtil
 			}
 			if( hasQiimeMapping() )
 			{
-				rScriptFields.remove( BuildQiimeMapping.DESCRIPTION );
-				rScriptFields.remove( BuildQiimeMapping.DEMUX_COLUMN );
-				rScriptFields.remove( BuildQiimeMapping.LINKER_PRIMER_SEQUENCE );
-				rScriptFields.remove( BuildQiimeMapping.BARCODE_SEQUENCE );
+				rScriptFields.remove( BuildQiimeMapping.getDescriptionColumn() );
+				rScriptFields.remove( BuildQiimeMapping.getDemuxColumn() );
+				rScriptFields.remove( BuildQiimeMapping.getLinkerPrimerSequenceColumn() );
+				rScriptFields.remove( BuildQiimeMapping.getBarcodeSequenceColumn() );
 			}
 		}
 
@@ -494,7 +493,7 @@ public final class RMetaUtil
 
 	private static boolean isQiimeMetric( final BioModule module, final String field )
 	{
-		final Set<String> alphaDivMetrics = Config.getSet( module, QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
+		final Set<String> alphaDivMetrics = Config.getSet( module, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( !alphaDivMetrics.isEmpty() )
 		{
 			for( final String metric: alphaDivMetrics )

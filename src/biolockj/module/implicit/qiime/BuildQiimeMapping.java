@@ -282,6 +282,42 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		lines.add( copyMappingToOutputDir() );
 		return lines;
 	}
+	
+	/**
+	 * Return {@link #BARCODE_SEQUENCE}
+	 * @return {@value #BARCODE_SEQUENCE}
+	 */
+	public static String getBarcodeSequenceColumn()
+	{
+		return BARCODE_SEQUENCE;
+	}
+
+	/**
+	 * Return {@link #DEMUX_COLUMN}
+	 * @return {@value #DEMUX_COLUMN}
+	 */
+	public static String getDemuxColumn()
+	{
+		return DEMUX_COLUMN;
+	}
+
+	/**
+	 * Return {@link #DESCRIPTION}
+	 * @return {@value #DESCRIPTION}
+	 */
+	public static String getDescriptionColumn()
+	{
+		return DESCRIPTION;
+	}
+
+	/**
+	 * Return {@link #LINKER_PRIMER_SEQUENCE}
+	 * @return {@value #LINKER_PRIMER_SEQUENCE}
+	 */
+	public static String getLinkerPrimerSequenceColumn()
+	{
+		return LINKER_PRIMER_SEQUENCE;
+	}
 
 	/**
 	 * Get mapping dir, called "mapping" which is the directory the new mapping is output by Qiime
@@ -347,42 +383,42 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	/**
 	 * QIIME mapping file required 2nd column name
 	 */
-	public static final String BARCODE_SEQUENCE = "BarcodeSequence";
+	protected static final String BARCODE_SEQUENCE = "BarcodeSequence";
 
 	/**
 	 * QIIME mapping file column that holds the name of the sample demultiplexed sequence file.
 	 */
-	public static final String DEMUX_COLUMN = QiimeClassifier.DEMUX_COLUMN;
+	protected static final String DEMUX_COLUMN = QiimeClassifier.DEMUX_COLUMN;
 
 	/**
 	 * QIIME mapping file required name of last column
 	 */
-	public static final String DESCRIPTION = "Description";
+	protected static final String DESCRIPTION = "Description";
 
 	/**
 	 * QIIME mapping file required 3rd column name
 	 */
-	public static final String LINKER_PRIMER_SEQUENCE = "LinkerPrimerSequence";
+	protected static final String LINKER_PRIMER_SEQUENCE = "LinkerPrimerSequence";
 
 	/**
 	 * Comment used to populate {@value #DESCRIPTION} column
 	 */
-	public static final String QIIME_COMMENT = "BioLockJ Generated Mapping";
+	protected static final String QIIME_COMMENT = "BioLockJ Generated Mapping";
 
 	/**
 	 * QIIME mapping file required 1st column name, containing the sample ID
 	 */
-	public static final String QIIME_ID = "#SampleID";
+	protected static final String QIIME_ID = "#SampleID";
 
 	/**
 	 * QIIME script used to validate the QIIME mapping file format
 	 */
-	public static final String SCRIPT_VALIDATE_MAPPING = "validate_mapping_file.py";
+	protected static final String SCRIPT_VALIDATE_MAPPING = "validate_mapping_file.py";
 
 	/**
 	 * Suffix appended to the validate QIIME mapping file output to temp/mapping dir by bash script
 	 */
-	public static final String VALIDATED_MAPPING = "_corrected" + TXT_EXT;
+	protected static final String VALIDATED_MAPPING = "_corrected" + TXT_EXT;
 
 	/**
 	 * Name of the bash function that reorders metadata columns: {@value #FUNCTION_REORDER_FIELDS}

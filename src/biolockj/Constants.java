@@ -294,6 +294,15 @@ public class Constants
 	 * QIIME application: {@value #QIIME}
 	 */
 	public static final String QIIME = "qiime";
+	
+	/**
+	 * {@link biolockj.Config} list property to calculate alpha diversity metrics.<br>
+	 * For complete list of skbio.diversity.alpha options, see
+	 * <a href= "http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html" target=
+	 * "_top">http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html</a><br>
+	 * {@value #QIIME_ALPHA_DIVERSITY_METRICS}
+	 */
+	public static final String QIIME_ALPHA_DIVERSITY_METRICS = "qiime.alphaMetrics";
 
 	/**
 	 * Qiime may find ambiguous taxa identified in various formats in different databases. The following accounts for

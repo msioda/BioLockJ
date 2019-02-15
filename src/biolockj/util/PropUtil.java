@@ -14,10 +14,7 @@ package biolockj.util;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
-import biolockj.module.implicit.qiime.QiimeClassifier;
+import biolockj.*;
 
 /**
  * Simple utility containing String manipulation and formatting functions.
@@ -67,7 +64,7 @@ public class PropUtil
 
 		if( !foundQiime )
 		{
-			usedProps.remove( QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
+			usedProps.remove( Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		}
 
 		if( !ModuleUtil.moduleExists( defaultDemux ) && !configMods.contains( defaultDemux ) )
@@ -96,11 +93,11 @@ public class PropUtil
 		if( !Log.doDebug() )
 		{
 			Log.info( PropUtil.class, "To view the list of removed Config properties in future runs, enable: "
-					+ Log.LOG_LEVEL_PROPERTY + "=" + Constants.TRUE );
+					+ Constants.LOG_LEVEL_PROPERTY + "=" + Constants.TRUE );
 			Log.info( PropUtil.class,
 					"To add DEBUG statements for only this utility class, add the property (this is a list property so multiple"
 							+ " class names could be provided - in this example, wee add a single class): "
-							+ Log.LIMIT_DEBUG_CLASSES + "=" + PropUtil.class.getName() );
+							+ Constants.LIMIT_DEBUG_CLASSES + "=" + PropUtil.class.getName() );
 		}
 
 		for( final String key: usedProps.keySet() )
