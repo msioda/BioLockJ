@@ -214,7 +214,6 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	protected static final String bowtie2ext = ".bowtie2.bz2";
 
 	/**
-<<<<<<< HEAD:src/biolockj/module/classifier/wgs/Metaphlan2Classifier.java
 	 * {@link biolockj.Config} exe property used to obtain the metaphlan2 executable
 	 */
 	protected static final String EXE_METAPHLAN = "exe.metaphlan2";
@@ -225,13 +224,6 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	protected static final String EXE_METAPHLAN_PARAMS = "exe.metaphlan2Params";
 
 	/**
-	 * {@link biolockj.Config} exe property used to obtain the python executable
-	 */
-	protected static final String EXE_PYTHON = "exe.python";
-
-	/**
-=======
->>>>>>> Refactored constants in biolockj.module.classifier.wgs.:src/biolockj/module/classifier/wgs/MetaphlanClassifier.java
 	 * Function name of the translate function used to classify sequences with Metaphlan.
 	 */
 	protected static final String FUNCTION_RUN_METAPHLAN = "runMetaphlan";

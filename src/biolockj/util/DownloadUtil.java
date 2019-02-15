@@ -76,9 +76,9 @@ public final class DownloadUtil
 
 	/**
 	 * Get a directory name filter to include output and (optionally) script folders in file searches.
-	 * @param includeScript
+	 * @param includeScript include the script directory
 	 * @return a file name filter
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	protected static IOFileFilter getDirFilter( boolean includeScript ) throws Exception
 	{
@@ -140,7 +140,7 @@ public final class DownloadUtil
 
 			final String label = status + " pipeline -->";
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize() );
-			final String cmd = SOURCE + "=" + pipeRoot.getAbsolutePath() + RETURN + "out=" + getDownloadDirPath()
+			final String cmd = SOURCE + "=" + pipeRoot.getAbsolutePath() + RETURN + DEST +"=" + getDownloadDirPath()
 					+ RETURN + "rsync --times --files-from=:$" + SOURCE + File.separator
 					+ pipeRoot.toURI().relativize( getDownloadListFile().toURI() ) + " " + getClusterUser() + "@"
 					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SOURCE + " $" + DEST;
@@ -154,7 +154,7 @@ public final class DownloadUtil
 	 * Get the file that has the download list.
 	 * 
 	 * @return File containing list of files to download
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	public static File getDownloadListFile() throws Exception
 	{
@@ -178,8 +178,8 @@ public final class DownloadUtil
 	/**
 	 * Get the total size of all files that would be included in download.
 	 * 
-	 * @return
-	 * @throws Exception
+	 * @return BigInteger  total download size
+	 * @throws Exception if errors occur
 	 */
 	public static BigInteger getDownloadSize() throws Exception
 	{
@@ -283,6 +283,11 @@ public final class DownloadUtil
 		return null;
 	}
 
+	/**
+	 * Get the file name to use for creating the script to run all R modules locally.
+	 * @return file name
+	 * @throws Exception if errors occur
+	 */
 	public static File getRunAllRScriptName() throws Exception
 	{
 		final File script = new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
@@ -333,7 +338,7 @@ public final class DownloadUtil
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
 
-	private static final String DEST = "$out";
+	private static final String DEST = "out";
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
 	private static final String DOWNLOAD_LIST = "downloadList.txt";
@@ -341,18 +346,4 @@ public final class DownloadUtil
 	private static final String RSYNC_COMMENT = "# ";
 	private static final String DOWNLOAD_SCRIPT = "blj_download";
 
-	/**
-	 * String to remove from cluster.<config option> to make it specific to a given module.
-	 */
-	private static final String PROPERTY_PREFIX = "cluster";
-
-	/**
-	 * Configurable property for listing file extensions to download
-	 */
-	protected static final String DOWNLOAD_EXT = "cluster.downloadExts";
-
-	/**
-	 * Configurable property for listing file extensions to NOT download; this overrides anything in DOWNLOAD_EXT.
-	 */
-	protected static final String DOWNLOAD_EXT_DISABLE = "cluster.downloadExtsDisable";
 }
