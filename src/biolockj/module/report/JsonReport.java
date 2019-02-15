@@ -221,7 +221,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			for( final Iterator<String> stats = node.getStats().keySet().iterator(); stats.hasNext(); )
 			{
 				final String stat = stats.next();
-				final String name = stat.startsWith( R_CalculateStats.R_SQUARED_VALS ) ? stat
+				final String name = stat.startsWith( R_CalculateStats.getSuffix(null, false) ) ? stat
 						: prefix + "(" + stat + ")";
 				sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
 				sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
