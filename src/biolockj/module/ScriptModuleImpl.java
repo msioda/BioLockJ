@@ -101,7 +101,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 				{
 					if( this instanceof R_Module && !RuntimeParamUtil.isDockerMode() )
 					{
-						if( name.endsWith( R_Module.R_EXT ) )
+						if( name.endsWith( Constants.R_EXT ) )
 						{
 							return file;
 						}

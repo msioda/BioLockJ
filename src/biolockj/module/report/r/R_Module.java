@@ -374,7 +374,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	private String getModuleScriptName() throws Exception
 	{
-		return getClass().getSimpleName() + R_EXT;
+		return getClass().getSimpleName() + biolockj.Constants.R_EXT;
 	}
 
 	private Boolean isHumanN2() throws Exception
@@ -523,49 +523,19 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Method name in BioLockJ_Lib.R to report status of script: {@value #METHOD_REPORT_STATUS}
-	 */
-	public static final String METHOD_REPORT_STATUS = "reportStatus";
-
-	/**
-	 * Method name in BioLockJ_Lib.R to run script program: {@value #METHOD_RUN_PROGRAM}
-	 */
-	public static final String METHOD_RUN_PROGRAM = "runProgram";
-
-	/**
-	 * This directory is added to the MAIN script: {@value #MODULE_DIR}
-	 */
-	public static final String MODULE_DIR = "moduleDir";
-
-	/**
-	 * File extension for R save.image() command output: {@value #R_DATA_EXT}
-	 */
-	public static final String R_DATA_EXT = ".RData";
-
-	/**
-	 * File extension of BioLockJ generated R Scripts: {@value #R_EXT}
-	 */
-	public static final String R_EXT = ".R";
-
-	/**
-	 * R function to get module script file path: {@value #R_FUNCTION_GET_MOD_SCRIPT}
-	 */
-	public static final String R_FUNCTION_GET_MOD_SCRIPT = "getModuleScript";
-
-	/**
 	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}
 	 */
-	public static final String R_FUNCTION_LIB = "BioLockJ_Lib.R";
+	protected static final String R_FUNCTION_LIB = "BioLockJ_Lib.R";
 
 	/**
 	 * This main R script that sources helper libraries and calls modules main method function: {@value #R_MAIN_SCRIPT}
 	 */
-	public static final String R_MAIN_SCRIPT = "BioLockJ_MAIN.R";
+	protected static final String R_MAIN_SCRIPT = "BioLockJ_MAIN.R";
 
 	/**
 	 * {@link biolockj.Config} boolean property {@value #R_SAVE_R_DATA} enables the .RData file to save.
 	 */
-	public static final String R_SAVE_R_DATA = "r.saveRData";
+	protected static final String R_SAVE_R_DATA = "r.saveRData";
 
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_RSCRIPT} defines the command line executable to call RScript

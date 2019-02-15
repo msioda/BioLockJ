@@ -320,7 +320,7 @@ public class Pipeline
 	{
 		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
 		final File mainScript = module.getMainScript();
-		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? R_Module.R_EXT: Constants.SH_EXT ) );
+		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? Constants.R_EXT: Constants.SH_EXT ) );
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
 		scriptFiles.remove( mainScript );
 

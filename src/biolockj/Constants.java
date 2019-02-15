@@ -342,6 +342,11 @@ public class Constants
 	 * Return character constant *backslash-n*
 	 */
 	public static final String RETURN = "\n";
+	
+	/**
+	 * File extension of BioLockJ generated R Scripts: {@value #R_EXT}
+	 */
+	public static final String R_EXT = ".R";
 
 	/**
 	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
