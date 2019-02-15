@@ -1,0 +1,72 @@
+#!/bin/bash
+################################################################################
+##                                                                            ##
+##  Build Nexflow main.nf template                                            ##
+##  Query for SEARCH_KEY in all java files under $BLJ/src/biolockj/module     ##
+##  For each valid file, trim the file path & file extension                  ##
+##  Remaining value = Java class name module.getClass().getSimpleName()       ##
+##                                                                            ##
+################################################################################
+. $BLJ/script/blj_functions
+
+modules=
+SEPARATOR="%"
+MAIN_NF="$BLJ/resources/docker/nextflow/nextflow_template_main.nf"
+
+get_modules() {
+	FILE_TYPE=".java"
+	SEARCH_KEY="public class"
+	modules=$(find $BLJ/src/biolockj/module -print | grep $FILE_TYPE | xargs grep -il "$SEARCH_KEY" | sed 's:.*/::' | sed 's/'$FILE_TYPE'//')
+	modules=$(echo ${modules}|tr " " "\n"|sort|tr " " "\n")
+	modules=( $modules )
+	echo ${modules[*]}
+}
+
+if [ $# -gt 0 ]; then
+	MAIN_NF=$1
+fi
+if [ $# -eq 2 ]; then
+	modules=$2
+	modules=${modules//./ }
+	modules=( $modules )
+	modules=${modules[*]}
+else
+	modules=$(get_modules)
+fi
+
+
+numModules=$(echo $modules | wc -w | xargs)
+summaryMsg="BioLockJ $(get_version) generated Nextflow Template with ${numModules} BioModule processes"
+
+echo "// $summaryMsg" > $MAIN_NF
+echo "// Path: $MAIN_NF" >> $MAIN_NF
+echo "" >> $MAIN_NF
+echo 'aws.efs = $aws.efs' >> $MAIN_NF
+echo 'aws.stack = $aws.stack' >> $MAIN_NF
+echo 'aws.s3 = $aws.s3' >> $MAIN_NF
+echo 'project.pipelineName = $project.pipelineName' >> $MAIN_NF
+echo 'project.pipelineDir = "${aws.efs}/${project.pipelineName}"' >> $MAIN_NF
+echo "" >> $MAIN_NF
+
+for module in ${modules[@]}; do
+	#echo "Add process for: $module"
+	echo "process ${module} {" >> $MAIN_NF
+	echo '	echo 	true' >> $MAIN_NF
+	echo '	cpus 	$nextflow.cpus' >> $MAIN_NF
+	echo '	memory 	$nextflow.memory' >> $MAIN_NF
+	echo '	label 	$nextflow.dockerImage' >> $MAIN_NF
+	echo '	input:' >> $MAIN_NF
+	printf "	val worker from Channel.watchPath( '" >> $MAIN_NF
+	printf '${project.pipelineDir}' >> $MAIN_NF
+	echo "/**_${module}/script/*.sh' )" >> $MAIN_NF
+	echo '	"""' >> $MAIN_NF
+	echo '	#!/bin/bash' >> $MAIN_NF
+	echo '	bash ${worker}' >> $MAIN_NF
+	echo '	"""' >> $MAIN_NF
+	echo '}' >> $MAIN_NF
+done
+
+echo "-----------------------------------------------------------------------------------------"
+[ -f $MAIN_NF ] && echo "Success!  $summaryMsg" && echo "Deployed: $MAIN_NF"  
+# cat $MAIN_NF
+echo "-----------------------------------------------------------------------------------------"

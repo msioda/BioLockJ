@@ -18,17 +18,21 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
+import biolockj.Job;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
+import biolockj.module.implicit.ImportMetadata;
+import biolockj.module.report.Email;
 
 /**
- * S
+ * 
  */
 public class NextFlowUtil
 {
 
 	public static void buildNextFlowMain( final List<BioModule> modules ) throws Exception
 	{
+		buildInitialTemplate( flattenList( modules ) );
 		writeNextFlowMainNF( getNextFlowLines( modules ) );
 	}
 
@@ -47,6 +51,34 @@ public class NextFlowUtil
 			lines.addAll( getProcessLines( module ) );
 		}
 		return lines;
+	}
+	
+	private static File buildTemplateScript() throws Exception
+	{
+		return new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR + File.separator + MAKE_NEXTFLOW_SCRIPT );
+	}
+	
+	private static String flattenList( final List<BioModule> modules ) throws Exception
+	{
+		String flatMods = "";
+		for( BioModule module: modules )
+		{
+			if( !( module instanceof ImportMetadata ) && ! ( module instanceof Email ) )
+			{
+				flatMods += ( flatMods.isEmpty() ? "" : SEPARATOR ) + module.getClass().getSimpleName();
+			}
+		}
+		
+		return flatMods;
+	}
+	
+	private static void buildInitialTemplate( final String modules ) throws Exception
+	{
+		String[] args = new String[ 3 ];
+		args[ 0 ] = buildTemplateScript().getAbsolutePath();
+		args[ 1 ] = getFile().getAbsolutePath();
+		args[ 2 ] = modules;
+		Job.submit( args );
 	}
 
 	/**
@@ -124,7 +156,7 @@ public class NextFlowUtil
 
 	private static File getFile() throws Exception
 	{
-		return new File( Config.pipelinePath() + File.separator + NEXT_FLOW_MAIN_NF );
+		return new File( Config.pipelinePath() + File.separator + MAIN_NF );
 	}
 
 	private static List<String> getInputLines( final BioModule module ) throws Exception
@@ -132,7 +164,7 @@ public class NextFlowUtil
 		final List<String> lines = new ArrayList<>();
 		lines.add( AWS_PROC_INPUT );
 		lines.add( "val " + AWS_WORKER + " from Channel.watchPath( '" + getProp( Constants.PROJECT_PIPELINE_DIR )
-				+ File.separator + module.getModuleDir().getName() + File.separator + ScriptModule.SCRIPT_DIR
+				+ File.separator + module.getModuleDir().getName() + File.separator + Constants.SCRIPT_DIR
 				+ "*.sh'" );
 		return lines;
 	}
@@ -147,6 +179,7 @@ public class NextFlowUtil
 		return "${" + prop + "}";
 	}
 
+	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
 	private static final String AWS_BASH_SCRIPT_DELIM = "\"\"\"";
 	private static final String AWS_PROC_INPUT = "input:";
 	private static final String AWS_WORKER = "worker";
@@ -155,6 +188,7 @@ public class NextFlowUtil
 	private static final String CPUS = "cpus";
 	private static final String JOB_DEF = "job-definition";
 	private static final String MEMORY = "memory";
-	private static final String NEXT_FLOW_MAIN_NF = "main.nf";
+	private static final String MAIN_NF = "main.nf";
 	private static final String PROCESS = "process";
+	private static final String SEPARATOR = ".";
 }

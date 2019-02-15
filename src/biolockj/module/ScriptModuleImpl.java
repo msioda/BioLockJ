@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Pipeline;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
@@ -97,7 +98,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public File getMainScript() throws Exception
 	{
-		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		if( scriptDir.exists() )
 		{
 			for( final File file: getScriptDir().listFiles() )
@@ -133,7 +134,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public File getScriptDir()
 	{
-		return ModuleUtil.requireSubDir( this, SCRIPT_DIR );
+		return ModuleUtil.requireSubDir( this, Constants.SCRIPT_DIR );
 	}
 
 	/**
@@ -237,7 +238,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 
 	private boolean hasScripts() throws Exception
 	{
-		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		return scriptDir.exists();
 
 	}

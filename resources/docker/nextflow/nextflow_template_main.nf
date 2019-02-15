@@ -11,7 +11,7 @@ process AddMetadataToPathwayTables {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_AddMetadataToPathwayTables/script/*.sh' )
 	"""
@@ -23,7 +23,7 @@ process AddMetadataToTaxaTables {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_AddMetadataToTaxaTables/script/*.sh' )
 	"""
@@ -35,7 +35,7 @@ process AwkFastaConverter {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_AwkFastaConverter/script/*.sh' )
 	"""
@@ -47,7 +47,7 @@ process BuildQiimeMapping {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_BuildQiimeMapping/script/*.sh' )
 	"""
@@ -59,7 +59,7 @@ process BuildTaxaTables {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_BuildTaxaTables/script/*.sh' )
 	"""
@@ -71,7 +71,7 @@ process CompileOtuCounts {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_CompileOtuCounts/script/*.sh' )
 	"""
@@ -83,7 +83,7 @@ process Demultiplexer {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Demultiplexer/script/*.sh' )
 	"""
@@ -95,7 +95,7 @@ process Email {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Email/script/*.sh' )
 	"""
@@ -107,7 +107,7 @@ process Gunzipper {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Gunzipper/script/*.sh' )
 	"""
@@ -119,7 +119,7 @@ process Humann2Classifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Humann2Classifier/script/*.sh' )
 	"""
@@ -131,7 +131,7 @@ process Humann2Parser {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Humann2Parser/script/*.sh' )
 	"""
@@ -143,7 +143,7 @@ process Humann2Report {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Humann2Report/script/*.sh' )
 	"""
@@ -155,7 +155,7 @@ process ImportMetadata {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_ImportMetadata/script/*.sh' )
 	"""
@@ -167,7 +167,7 @@ process JsonReport {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_JsonReport/script/*.sh' )
 	"""
@@ -179,7 +179,7 @@ process KneadDataSanitizer {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_KneadDataSanitizer/script/*.sh' )
 	"""
@@ -191,7 +191,7 @@ process Kraken2Classifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Kraken2Classifier/script/*.sh' )
 	"""
@@ -203,7 +203,7 @@ process Kraken2Parser {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Kraken2Parser/script/*.sh' )
 	"""
@@ -215,7 +215,7 @@ process KrakenClassifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_KrakenClassifier/script/*.sh' )
 	"""
@@ -227,7 +227,7 @@ process KrakenParser {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_KrakenParser/script/*.sh' )
 	"""
@@ -239,7 +239,7 @@ process LogTransformTaxaTables {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_LogTransformTaxaTables/script/*.sh' )
 	"""
@@ -251,7 +251,7 @@ process MergeQiimeOtuTables {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_MergeQiimeOtuTables/script/*.sh' )
 	"""
@@ -263,7 +263,7 @@ process Metaphlan2Classifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Metaphlan2Classifier/script/*.sh' )
 	"""
@@ -275,7 +275,7 @@ process Metaphlan2Parser {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Metaphlan2Parser/script/*.sh' )
 	"""
@@ -287,7 +287,7 @@ process Multiplexer {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_Multiplexer/script/*.sh' )
 	"""
@@ -299,7 +299,7 @@ process NormalizeTaxaTables {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_NormalizeTaxaTables/script/*.sh' )
 	"""
@@ -311,7 +311,7 @@ process PearMergeReads {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_PearMergeReads/script/*.sh' )
 	"""
@@ -323,7 +323,7 @@ process QiimeClassifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeClassifier/script/*.sh' )
 	"""
@@ -335,7 +335,7 @@ process QiimeClosedRefClassifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeClosedRefClassifier/script/*.sh' )
 	"""
@@ -347,7 +347,7 @@ process QiimeDeNovoClassifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeDeNovoClassifier/script/*.sh' )
 	"""
@@ -359,7 +359,7 @@ process QiimeOpenRefClassifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeOpenRefClassifier/script/*.sh' )
 	"""
@@ -371,7 +371,7 @@ process QiimeParser {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeParser/script/*.sh' )
 	"""
@@ -383,7 +383,7 @@ process R_CalculateStats {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_CalculateStats/script/*.sh' )
 	"""
@@ -395,7 +395,7 @@ process R_PlotEffectSize {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_PlotEffectSize/script/*.sh' )
 	"""
@@ -407,7 +407,7 @@ process R_PlotMds {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_PlotMds/script/*.sh' )
 	"""
@@ -419,7 +419,7 @@ process R_PlotOtus {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_PlotOtus/script/*.sh' )
 	"""
@@ -431,7 +431,7 @@ process R_PlotPvalHistograms {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_PlotPvalHistograms/script/*.sh' )
 	"""
@@ -443,7 +443,7 @@ process RarefyOtuCounts {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RarefyOtuCounts/script/*.sh' )
 	"""
@@ -455,7 +455,7 @@ process RarefySeqs {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RarefySeqs/script/*.sh' )
 	"""
@@ -467,7 +467,7 @@ process RdpClassifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RdpClassifier/script/*.sh' )
 	"""
@@ -479,7 +479,7 @@ process RdpParser {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RdpParser/script/*.sh' )
 	"""
@@ -491,7 +491,7 @@ process RegisterNumReads {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RegisterNumReads/script/*.sh' )
 	"""
@@ -503,7 +503,7 @@ process RemoveLowOtuCounts {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RemoveLowOtuCounts/script/*.sh' )
 	"""
@@ -515,7 +515,7 @@ process RemoveLowPathwayCounts {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RemoveLowPathwayCounts/script/*.sh' )
 	"""
@@ -527,7 +527,7 @@ process RemoveScarceOtuCounts {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RemoveScarceOtuCounts/script/*.sh' )
 	"""
@@ -539,7 +539,7 @@ process RemoveScarcePathwayCounts {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_RemoveScarcePathwayCounts/script/*.sh' )
 	"""
@@ -551,7 +551,7 @@ process SeqFileValidator {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_SeqFileValidator/script/*.sh' )
 	"""
@@ -563,7 +563,7 @@ process SlimmClassifier {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_SlimmClassifier/script/*.sh' )
 	"""
@@ -575,7 +575,7 @@ process SlimmParser {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_SlimmParser/script/*.sh' )
 	"""
@@ -587,7 +587,7 @@ process TrimPrimers {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
-	label 	$nextflow.dockerimage
+	label 	$nextflow.dockerImage
 	input:
 	val worker from Channel.watchPath( '${project.pipelineDir}/**_TrimPrimers/script/*.sh' )
 	"""

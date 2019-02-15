@@ -13,6 +13,12 @@ public class Constants
 
 	public static final String AWS_STACK = "aws.stack";
 	
+	
+	/**
+	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
+	 */
+	public static final String SCRIPT_DIR = "script";
+	
 	/**
 	 * {@link biolockj.Config} property suffix for exe.* properties, used to set optional parameters: {@value #PARAMS}
 	 */	
