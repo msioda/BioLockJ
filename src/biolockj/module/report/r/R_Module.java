@@ -298,30 +298,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil} Add
-	 * {@value #TSV_EXT} to super class set.
-	 * 
-	 * @return Set of file extensions
-	 * @throws Exception if errors occur
-	 */
-	public TreeSet<String> scpExtensions() throws Exception
-	{
-		final TreeSet<String> set = new TreeSet<>();
-		set.add( R_EXT.substring( 1 ) );
-		if( Config.getBoolean( this, R_Module.R_SAVE_R_DATA ) )
-		{
-			set.add( R_DATA_EXT.substring( 1 ) );
-		}
-		if( !Config.getBoolean( this, Constants.PROJECT_DELETE_TEMP_FILES )
-				&& Config.getBoolean( this, R_Module.R_DEBUG ) )
-		{
-			set.add( LOG_EXT.substring( 1 ) );
-		}
-
-		return set;
-	}
-
-	/**
 	 * Add {@link biolockj.module.report.r.R_CalculateStats} to standard {@link #getPreRequisiteModules()}
 	 */
 	protected List<String> getStatPreReqs() throws Exception

@@ -8,7 +8,7 @@ main <- function() {
    mdsFields = getProperty( "r_PlotMds.reportFields", c( getBinaryFields(), getNominalFields() )  )
 
    for( level in taxaLevels() ) {
-      if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildMdsPlots_", level, ".log") ) )
+      if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildMdsPlots_", level, ".log") ) )
 
       countTable = getCountTable( level )
       if( is.null( countTable ) ) { next }
@@ -26,7 +26,7 @@ main <- function() {
       logInfo( "Save Eigen value table", pcoaFileName )
       
       # Make plots
-      outputFile = paste0( getPath( file.path(getModuleDir(), "output"), paste0(level, "_MDS.pdf" ) ) )
+      outputFile = paste0( getPath( getOutputDir(), paste0(level, "_MDS.pdf" ) ) )
 
       if (numAxis < 4 ) {
          pdf( outputFile, width = 7, height = 7)

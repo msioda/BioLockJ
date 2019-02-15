@@ -45,20 +45,6 @@ public class R_CalculateStats extends R_Module implements BioModule
 	}
 
 	/**
-	 * Return the set of file extensions available for download by {@link biolockj.util.DownloadUtil}
-	 * 
-	 * @return Set of file extensions
-	 * @throws Exception if errors occur
-	 */
-	@Override
-	public TreeSet<String> scpExtensions() throws Exception
-	{
-		final TreeSet<String> set = super.scpExtensions();
-		set.add( TSV_EXT.substring( 1 ) );
-		return set;
-	}
-
-	/**
 	 * Get the stats file for the given fileType and taxonomy level.
 	 * 
 	 * @param module Calling module

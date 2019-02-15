@@ -76,9 +76,9 @@ getLas <- function( labels ) {
 
 # Called by BioLockJ_Lib.R runProgram() to execute this script
 main <- function() {
-   
+
    for( level in taxaLevels() ) {
-      if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildOtuPlots_", level, ".log") ) )
+      if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildOtuPlots_", level, ".log") ) )
       
       countTable = getCountTable( level )
       if( is.null( countTable ) ) { next }
@@ -100,7 +100,7 @@ main <- function() {
 
       metaColColors = getColorsByCategory( metaTable )
 
-      outputFile = getPath( file.path(getModuleDir(), "output"), paste0(level, "_OTU_plots.pdf") )
+      outputFile = getPath( getOutputDir(), paste0(level, "_OTU_plots.pdf") )
 
       if( length( reportCols ) < 5 ) {
          pdf( outputFile, width = 7, height = 7)

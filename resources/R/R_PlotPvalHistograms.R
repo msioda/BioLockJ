@@ -65,10 +65,10 @@ main <- function() {
    pvalCutoff = getProperty("r.pvalCutoff", 0.05)
 
    for( level in taxaLevels() ) {
-      if( doDebug() ) sink( file.path( getModuleDir(), "temp", paste0("debug_BuildPvalHistograms_", level, ".log") ) )
+      if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildPvalHistograms_", level, ".log") ) )
 
       # create empty pdf
-      pdf( getPath( file.path(getModuleDir(), "output"), paste0(level, "_histograms.pdf") ) )
+     pdf( getPath( getOutputDir(), paste0(level, "_histograms.pdf") ) )
       par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
 
 
@@ -89,7 +89,7 @@ main <- function() {
       # order attributes based on the fraction of tests with a p-value below <pvalCutoff>
       orderBy = apply(ranks[2:3],1, max, na.rm=TRUE)
       ranks = ranks[order(orderBy, decreasing=TRUE),]
-      fname = getPath( file.path(getModuleDir(), "temp"), paste0(level, "_fractionBelow-", pvalCutoff, ".tsv") )
+      fname = getPath( getTempDir(), paste0(level, "_fractionBelow-", pvalCutoff, ".tsv") )
       write.table(ranks, file=fname, sep="\t", quote=FALSE, row.names=FALSE)
 
       # plot histograms in the same order they have in the ranks table
