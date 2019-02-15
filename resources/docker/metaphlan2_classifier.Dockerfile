@@ -11,7 +11,7 @@ ENV DB_URL="https://bitbucket.org/nsegata/metaphlan/get/default.zip"
 RUN cd /app && \
 	wget -qO- $DB_URL | bsdtar -xf- && \
 	mv nsegata*/bowtie2db/* /db && \
-	mkdir $MPA_DIR &&
+	mkdir $MPA_DIR && \
 	cd $MPA_DIR && \
 	wget -qO- $MPA_V20_URL | bsdtar -xf- && \
 	bzip2 -d *.bz2
