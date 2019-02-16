@@ -15,4 +15,4 @@ RUN	apt-get clean && \
 	rm -rf /var/log/* 
 
 #3.) Run BioLockJ Command
-CMD [ "/bin/bash", "biolockj", "$BLJ_OPTIONS" ]
+CMD /bin/bash java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS
