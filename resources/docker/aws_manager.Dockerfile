@@ -1,6 +1,7 @@
 # Deployment path: $DOCKER_FILE_PATH/aws_manager.Dockerfile
 
-FROM $DOCKER_HUB_USER/blj_basic_java
+FROM biolockj/blj_basic_java
+ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Ubuntu Software (including AWS Client)
 RUN apt-get install -y \
@@ -24,7 +25,7 @@ RUN echo ${BLJ_DATE} && \
 	rm -rf $BLJ/[bilw]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/docs && rm -rf $BLJ/src && \
 	cp $BLJ/script/* /usr/local/bin
 	
-#3.) Cleanup
+#4.) Cleanup
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
 	rm -rf /usr/share/* && \
