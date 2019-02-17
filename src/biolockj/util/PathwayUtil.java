@@ -108,6 +108,16 @@ public class PathwayUtil
 		return "_" + name + TaxaUtil.SPECIES + Constants.TSV_EXT;
 	}
 
+	/**
+	 * Verify the HumanN2 Config contains at least one of the following reports are enabled:<br>
+	 * <ul>
+	 * <li>{@valud biolockj.Constants#HN2_DISABLE_GENE_FAMILIES}
+	 * <li>{@valud biolockj.Constants#HN2_DISABLE_PATH_COVERAGE}
+	 * <li>{@valud biolockj.Constants#HN2_DISABLE_GENE_FAMILIES}
+	 * </ul>
+	 * @param module HumanN2 module
+	 * @throws Exception
+	 */
 	public static void verifyConfig( final BioModule module ) throws Exception
 	{
 		if( Config.getBoolean( module, Constants.HN2_DISABLE_PATH_ABUNDANCE )

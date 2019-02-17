@@ -285,15 +285,18 @@ public class Pipeline
 			{
 				deleteIncompleteModule( module );
 			}
-			else if( ModuleUtil.isComplete( module ) )
+			
+			if( ModuleUtil.isComplete( module ) )
 			{
 				module.cleanUp();
 				refreshOutputMetadata( module );
 				refreshRCacheIfNeeded( module );
 			}
-
-			info( "Check dependencies for: " + module.getClass().getName() );
-			module.checkDependencies();
+			else
+			{
+				info( "Check dependencies for: " + module.getClass().getName() );
+				module.checkDependencies();
+			}
 		}
 
 		return true;

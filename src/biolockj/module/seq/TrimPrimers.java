@@ -409,7 +409,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return DockerUtil.getDockerVolumeFile( Config.getString( null, INPUT_TRIM_SEQ_FILE ),
+			return DockerUtil.getDockerVolumeFile( Config.getString( this, INPUT_TRIM_SEQ_FILE ),
 					DockerUtil.CONTAINER_PRIMER_DIR, "primer" );
 		}
 		return Config.requireExistingFile( null, INPUT_TRIM_SEQ_FILE );

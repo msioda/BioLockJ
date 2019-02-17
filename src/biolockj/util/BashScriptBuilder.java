@@ -51,7 +51,7 @@ public class BashScriptBuilder
 					getWorkerId( scriptCount++, digits ) ) );
 		}
 
-		mainScriptLines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_SUCCESS );
+		mainScriptLines.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_SUCCESS );
 		createScript( getMainScriptPath( module ), mainScriptLines );
 		workerScripts.clear();
 	}
@@ -232,7 +232,7 @@ public class BashScriptBuilder
 
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			lines.addAll( DockerUtil.buildRunDockerFunction( module ) );
+			lines.addAll( DockerUtil.buildSpawnDockerContainerFunction( module ) );
 		}
 		else if( Config.isOnCluster() )
 		{

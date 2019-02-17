@@ -18,10 +18,16 @@ import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
+import biolockj.module.classifier.wgs.Humann2Classifier;
+import biolockj.module.implicit.parser.wgs.Humann2Parser;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
+import biolockj.module.report.humann2.Humann2CountModule;
 import biolockj.module.report.r.R_Module;
+import biolockj.module.seq.AwkFastaConverter;
+import biolockj.module.seq.Gunzipper;
+import biolockj.module.seq.PearMergeReads;
 
 /**
  * DockerUtil for Docker integration.
@@ -36,23 +42,23 @@ public class DockerUtil
 	 * @return Bash function to run docker
 	 * @throws Exception if unable to build the function
 	 */
-	public static List<String> buildRunDockerFunction( final BioModule module ) throws Exception
+	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
 
-		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
-		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
+		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + Constants.RETURN );
+		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + Constants.RETURN );
 
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
 		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
 				+ getDockerVolumes() + getDockerImage( module ) );
-		lines.add( "}" );
+		lines.add( "}" + Constants.RETURN );
 		return lines;
 	}
 
 	/**
-	 * Get the name of the Docker image.
+	 * Return the name of the Docker image needed for the given module.
 	 * 
 	 * @param module BioModule
 	 * @return Docker image name
@@ -63,14 +69,10 @@ public class DockerUtil
 		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
 				|| module instanceof QiimeClassifier;
 
-		final boolean isR = module instanceof R_Module;
-
-		final String name = isR ? R_Module.class.getSimpleName()
-				: isQiime ? QiimeClassifier.class.getSimpleName()
-						: module instanceof JavaModule ? JavaModule.class.getSimpleName() 
-								: module.getClass().getSimpleName();
-
-		
+		final String name = isQiime ? QiimeClassifier.class.getSimpleName()
+				: module instanceof R_Module ? R_Module.class.getSimpleName()
+				: module instanceof JavaModule ? JavaModule.class.getSimpleName() 
+				: module.getClass().getSimpleName();
 
 		return " " + getDockerUser( module.getClass().getSimpleName() ) + "/" + getImageName( name ) + ":" + getImageVersion( module.getClass().getSimpleName() );
 	}
@@ -78,7 +80,7 @@ public class DockerUtil
 	/**
 	 * Return the Docker Hub user ID.  If none configured, return biolockj.
 	 * 
-	 * @param module Calling module
+	 * @param moduleName Calling module
 	 * @return Docker Hub User ID 
 	 * @throws Exception if errors occur
 	 */
@@ -123,9 +125,19 @@ public class DockerUtil
 	{
 		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
 	}
+	
+	
+	
+	private static boolean useBasicBashImg( final String className ) throws Exception
+	{
+		return className.contains( PearMergeReads.class.getSimpleName() ) ||
+				className.contains( AwkFastaConverter.class.getSimpleName() ) ||
+				className.contains( Gunzipper.class.getSimpleName() );
+	}
 
 	/**
 	 * Return the Docker Image name for the given class name.<br>
+	 * Return {@value #BLJ_BASH} for simple bash script modules that don't rely on special software<br>
 	 * Class names contain no spaces, words are separated via CamelCaseConvension.<br>
 	 * Docker image names cannot contain upper case letters, so this method substitutes "_" before the lower-case
 	 * version of each capital letter.<br>
@@ -139,30 +151,36 @@ public class DockerUtil
 	public static String getImageName( final String className ) throws Exception
 	{
 		final StringBuffer imageName = new StringBuffer();
-		imageName.append( className.substring( 0, 1 ).toLowerCase() );
-
-		for( int i = 2; i < className.length() + 1; i++ )
+		
+		if( useBasicBashImg( className ) )
 		{
-			int len = imageName.toString().length();
-			final String prevChar = imageName.toString().substring( len - 1, len );
-			final String val = className.substring( i - 1, i );
-			if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) 
-					&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
+			imageName.append( BLJ_BASH );
+		}
+		else
+		{
+			imageName.append( className.substring( 0, 1 ).toLowerCase() );
+	
+			for( int i = 2; i < className.length() + 1; i++ )
 			{
-				imageName.append( IMAGE_NAME_DELIM ).append( val.toLowerCase() );
-			}
-			else if( prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
-			{
-				imageName.append( val.toLowerCase() );
-			}
-			else if( !prevChar.equals( IMAGE_NAME_DELIM ) )
-			{
-				imageName.append( val.toLowerCase() );
-			}
-		}		
-
-		Log.info( DockerUtil.class, "Use Docker image: " + imageName.toString() );
-
+				int len = imageName.toString().length();
+				final String prevChar = imageName.toString().substring( len - 1, len );
+				final String val = className.substring( i - 1, i );
+				if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) 
+						&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
+				{
+					imageName.append( IMAGE_NAME_DELIM ).append( val.toLowerCase() );
+				}
+				else if( prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
+				{
+					imageName.append( val.toLowerCase() );
+				}
+				else if( !prevChar.equals( IMAGE_NAME_DELIM ) )
+				{
+					imageName.append( val.toLowerCase() );
+				}
+			}		
+		}
+		Log.info( DockerUtil.class, "Map: Class ["+className+"] <--> Docker Image [ " + imageName.toString() + " ]" );
 		return imageName.toString();
 	}
 
@@ -232,7 +250,7 @@ public class DockerUtil
 	/**
 	 * Docker environment variable holding the name of the compute script file: {@value #COMPUTE_SCRIPT}
 	 */
-	public static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
+	protected static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
 
 	/**
 	 * All containers mount the host {@link biolockj.Config} directory to the container"config" volume
@@ -240,7 +258,7 @@ public class DockerUtil
 	public static final String CONTAINER_CONFIG_DIR = File.separator + "config";
 
 	/**
-	 * All containers mount the host {@value biolockj.Config#INPUT_DIRS} to the container "input" volume
+	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume
 	 */
 	public static final String CONTAINER_INPUT_DIR = File.separator + "input";
 
@@ -250,7 +268,7 @@ public class DockerUtil
 	public static final String CONTAINER_META_DIR = File.separator + "meta";
 
 	/**
-	 * All containers mount {@value biolockj.Config#PROJECT_PIPELINE_DIR} to the container "pipelines" volume
+	 * All containers mount {@value biolockj.Constants#PROJECT_PIPELINE_DIR} to the container "pipelines" volume
 	 */
 	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipelines";
 
@@ -263,17 +281,12 @@ public class DockerUtil
 	/**
 	 * Name of the BioLockJ Docker account ID: {@value #DEFAULT_DOCKER_HUB_USER}
 	 */
-	public static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
+	protected static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
 
 	/**
-	 * Docker socket path: {@value #DOCKER_SOCKET}
+	 * Docker image name for simple bash scripts (awk,gzip,pear).
 	 */
-	public static final String DOCKER_SOCKET = "/var/run/docker.sock";
-
-	/**
-	 * Docker manager module name variable holding the name of the Config file: {@value #MANAGER}
-	 */
-	public static final String MANAGER = "blj_manager";
+	protected static final String BLJ_BASH = "blj_bash";
 
 	/**
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
@@ -293,6 +306,7 @@ public class DockerUtil
 	 */
 	protected static final String DOCKER_HUB_USER = "docker.user";
 
+	private static final String DOCKER_SOCKET = "/var/run/docker.sock";
 	private static final String DOCK_RM_FLAG = "--rm";
 	private static final String DOCKER_LATEST = "latest";
 	private static final String IMAGE_NAME_DELIM = "_";

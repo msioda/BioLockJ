@@ -162,21 +162,21 @@ if [ ${#metadataFilePath} -gt 0 ] && [ ${#trimPrimersFilePath} -gt 0 ]; then
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta -v $trimPrimersFilePath:/primer \
-		--rm $DOCKER_HUB_USER/blj_manager
+		--rm -d $DOCKER_HUB_USER/blj_manager
 elif [ ${#metadataFilePath} -gt 0 ]; then	
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta \
-		--rm $DOCKER_HUB_USER/blj_manager
+		--rm -d $DOCKER_HUB_USER/blj_manager
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then	
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $trimPrimersFilePath:/primer \
-		--rm $DOCKER_HUB_USER/blj_manager 
+		--rm -d $DOCKER_HUB_USER/blj_manager 
 else
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
-		--rm $DOCKER_HUB_USER/blj_manager 
+		--rm -d $DOCKER_HUB_USER/blj_manager 
 fi
 
 [ $? -ne 0 ] && echo "Exit script - docker run command failed"  

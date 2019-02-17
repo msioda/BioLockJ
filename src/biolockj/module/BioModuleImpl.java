@@ -88,8 +88,6 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 			cacheInputFiles( findModuleInputFiles() );
 		}
 
-		printInputFiles();
-
 		return getFileCache();
 	}
 
@@ -210,6 +208,9 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		inputFiles.clear();
 		inputFiles.addAll( files );
 		Collections.sort( inputFiles );
+		
+		printInputFiles();
+		
 	}
 
 	/**
