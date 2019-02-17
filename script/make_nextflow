@@ -7,6 +7,7 @@
 ##  Remaining value = Java class name module.getClass().getSimpleName()       ##
 ##                                                                            ##
 ################################################################################
+. $BLJ/script/blj_functions
 
 modules=
 SEPARATOR="%"

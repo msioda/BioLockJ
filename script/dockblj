@@ -18,6 +18,7 @@
 ##  Docker flag:            -docker                                         ##
 ##                                                                          ##
 ##############################################################################
+. $BLJ/script/blj_functions
 
 [ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
 

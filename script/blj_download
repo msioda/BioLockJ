@@ -8,6 +8,7 @@
 ##  Users can copy the command and execute it from a local workstation.   ##
 ##                                                                        ##
 ############################################################################
+. $BLJ/script/blj_functions
 
 pipeline=$(most_recent_pipeline)
 SUM=summary.txt

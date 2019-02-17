@@ -5,6 +5,7 @@
 ##  pipeline and lists the current directory                ##
 ##                                                          ##
 ##############################################################
+. $BLJ/script/blj_functions
 
 [ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
 

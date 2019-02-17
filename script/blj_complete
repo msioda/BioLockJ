@@ -4,6 +4,7 @@
 ##  This script manually completes current module and pipeline status.       ##
 ##                                                                           ##
 ###############################################################################
+. $BLJ/script/blj_functions
 
 parentDir="$(dirname $PWD)"
 currentDir="$(basename $PWD)"

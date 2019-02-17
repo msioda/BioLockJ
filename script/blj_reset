@@ -5,6 +5,7 @@
 ##  All modules numbered higher than the current module will also be reset.  ##
 ##                                                                           ##
 ###############################################################################
+. $BLJ/script/blj_functions
 
 parentDir="$(dirname $PWD)"
 currentDir="$(basename $PWD)"

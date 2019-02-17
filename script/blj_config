@@ -11,7 +11,6 @@
 ##  6. Add env. variable $DOCKER_VER = "docker-18.09.2"               ##
 ##  7. Add env. variable $BLJ_VER = BioLockJ build version            ##
 ##  8. Add alias blj_go to "cd" into latest pipeline directory        ##
-##  0. Add $BLJ/script/blj_functions into the $USER $PATH             ##
 ##                                                                    ##
 ########################################################################
 
@@ -30,8 +29,6 @@ BLJ_PARENT="$(dirname $BLJ)"
 [ -d "$BLJ_PARENT/blj_support/script" ] && BLJ_SUP="$BLJ_PARENT/blj_support" 
 
 alias blj_go=". $SCRIPT_DIR/blj_go"
-
-. $BLJ/script/blj_functions
 
 [ ! -d "$BLJ_SUP" ] && echo "BLJ_SUP not found" && echo "Add $SCRIPT_DIR to PATH" && exit 0
 
