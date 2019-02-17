@@ -1,14 +1,12 @@
 # Deployment path: $DOCKER_FILE_PATH/aws_manager.Dockerfile
 
-FROM biolockj/blj_basic_java
-ARG DEBIAN_FRONTEND=noninteractive
+FROM $DOCKER_HUB_USER/blj_basic_java
 
 #1.) Install Ubuntu Software (including AWS Client)
 RUN apt-get install -y \
 		python2.7 \
 		python-pip && \
 	pip install awscli
-
 
 #2.) Install Nextflow Client
 RUN cd /usr/local/bin && \

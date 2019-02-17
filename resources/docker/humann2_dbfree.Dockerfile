@@ -1,7 +1,6 @@
 # Deployment path:  $DOCKER_FILE_PATH/humann2_classifier_dbfree.Dockerfile
 
 FROM biolockj/blj_basic_py2
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install numpy & biopython
 RUN pip install numpy && \

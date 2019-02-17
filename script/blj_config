@@ -16,7 +16,7 @@
 ########################################################################
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export PATH="$scriptDir:$PATH"
+export PATH="$SCRIPT_DIR:$PATH"
 
 export BLJ="$(dirname $SCRIPT_DIR)"
 export BLJ_PROJ="$BLJ/pipelines"
@@ -25,9 +25,17 @@ export DOCKER_HUB_USER="biolockj"
 export DOCKER_FILE_PATH="$BLJ/resources/docker"
 export DOCKER_VER="docker-18.09.2"
 
+BLJ_SUP=
 BLJ_PARENT="$(dirname $BLJ)"
-[ ! -d "$BLJ_SUP" ] && [ -d "$BLJ_PARENT/blj_support/script" ] && export BLJ_SUP="$BLJ_PARENT/blj_support" && export PATH="$BLJ_SUP/script:$PATH"
+[ -d "$BLJ_PARENT/blj_support/script" ] && BLJ_SUP="$BLJ_PARENT/blj_support" 
 
 alias blj_go=". $SCRIPT_DIR/blj_go"
 
 . $BLJ/script/blj_functions
+
+[ ! -d "$BLJ_SUP" ] && echo "BLJ_SUP not found" && echo "Add $SCRIPT_DIR to PATH" && exit 0
+
+export BLJ_SUP=$BLJ_SUP
+export PATH="$BLJ_SUP/script:$PATH"
+
+echo "Add $SCRIPT_DIR:$BLJ_SUP/script to PATH"

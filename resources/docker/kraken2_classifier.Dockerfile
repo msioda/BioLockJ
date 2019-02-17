@@ -1,7 +1,6 @@
 # Deployment path:  $DOCKER_FILE_PATH/kraken2_classifier.Dockerfile
 
 FROM biolockj/kraken2_classifier_dbfree
-ARG DEBIAN_FRONTEND=noninteractive
  
 #1.) Download 8GB miniKraken2 DB
 ENV KRAKEN_DB_URL="https://ccb.jhu.edu/software/kraken2/dl/minikraken2_v1_8GB.tgz"

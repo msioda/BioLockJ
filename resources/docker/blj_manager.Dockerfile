@@ -1,7 +1,6 @@
 # Deployment path: $DOCKER_FILE_PATH/blj_manager.Dockerfile
 
 FROM biolockj/blj_basic_java
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Docker Client
 ARG DOCKER_CLIENT

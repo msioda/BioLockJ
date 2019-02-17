@@ -1,7 +1,6 @@
 # Deployment path:  $DOCKER_FILE_PATH/kraken_classifier_dbfree.Dockerfile
 
 FROM biolockj/blj_basic
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Kraken
 ENV KRAKEN_VER=0.10.5-beta

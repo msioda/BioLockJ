@@ -4,6 +4,17 @@
 ##                                                               ##
 ###################################################################
 
+# Remove old Docker images
+clearDock() {
+	echo "Stop/remove all containers & remove old images..."
+	docker kill $(docker ps -q)
+	docker rm $(docker ps -aq)
+	docker rmi $(docker images -f "dangling=true" -q) 
+	echo "Verify all containers & old images are removed..."
+	docker images
+	docker container ls --all
+}
+
 # Return absolute path of current pipeline if in a pipeline directory
 current_pipeline() {
 	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then

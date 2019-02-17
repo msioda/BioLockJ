@@ -1,7 +1,6 @@
 # Deployment path:  $DOCKER_FILE_PATH/metaphlan2_classifier.Dockerfile
 
 FROM biolockj/metaphlan2_classifier_dbfree
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Remove DB-less MetaPhlAn2
 RUN	cd /usr/local/bin && \

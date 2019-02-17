@@ -1,7 +1,6 @@
 # Deployment path: $DOCKER_FILE_PATH/blj_webapp.Dockerfile
 
 FROM biolockj/blj_basic_py2
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Ubuntu Software
 ENV NODE_VERSION 8.11.3

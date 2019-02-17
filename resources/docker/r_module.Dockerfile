@@ -1,7 +1,6 @@
 # Deployment path: $DOCKER_FILE_PATH/r_module.Dockerfile
 
 FROM biolockj/blj_basic
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Ubuntu Software 
 RUN apt-get update && \

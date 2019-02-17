@@ -1,7 +1,6 @@
 # Deployment path:  $DOCKER_FILE_PATH/dock.Dockerfile
 
 FROM biolockj/blj_basic_java
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install RDP
 ENV RDP="rdp_classifier_2.12"

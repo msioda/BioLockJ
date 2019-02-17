@@ -1,7 +1,6 @@
 # Deployment path:  $DOCKER_FILE_PATH/metaphlan2_classifier_dbfree.Dockerfile
 
 FROM biolockj/blj_basic_py2
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install numpy & biopython
 RUN pip install numpy && \
@@ -27,7 +26,8 @@ RUN cd $mpa_dir && \
 	wget -qO- $META_URL | bsdtar -xf- && \
 	mv biobakery*/* . && \
 	rm -rf biobakery*  && \
-	chmod o+x -R *.py
+	chmod o+x -R *.py && \
+	ln -s metaphlan2.py metaphlan2
 	
 #4.) Cleanup
 RUN	apt-get clean && \

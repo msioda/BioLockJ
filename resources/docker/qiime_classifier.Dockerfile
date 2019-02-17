@@ -1,7 +1,6 @@
 # Deployment path:  $DOCKER_FILE_PATH/qiime_classifier.Dockerfile
 
 FROM biolockj/blj_basic_py2
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install numpy/QIIME + QIIME Default DB
 ENV QIIME_VERSION=1.9.1

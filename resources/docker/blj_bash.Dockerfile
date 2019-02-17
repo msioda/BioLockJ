@@ -1,7 +1,6 @@
 # Deployment path: $DOCKER_FILE_PATH/blj_bash.Dockerfile
 
 FROM biolockj/blj_basic
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install PEAR
 ENV VER="pear-0.9.10-bin-64"
