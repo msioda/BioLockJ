@@ -152,6 +152,12 @@ validate_input
 # Call function to print status message
 echo $(get_status_msg)
 
+#echo "config: $(dirname $config)"
+#echo "inputDir: $inputDirPaths"
+#echo "metadataFilePath: $metadataFilePath"
+#echo "BLJ_PROJ: $(get_blj_proj)"
+#echo "BLJ_OPTIONS: $(get_blj_options)"
+
 if [ ${#metadataFilePath} -gt 0 ] && [ ${#trimPrimersFilePath} -gt 0 ]; then
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
@@ -161,7 +167,7 @@ elif [ ${#metadataFilePath} -gt 0 ]; then
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
 		-v $metadataFilePath:/meta \
-		--rm $DOCKER_HUB_USER/blj_manager /bin/bash
+		--rm $DOCKER_HUB_USER/blj_manager
 elif [ ${#trimPrimersFilePath} -gt 0 ]; then	
 	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \

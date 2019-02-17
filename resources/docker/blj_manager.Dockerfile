@@ -30,3 +30,6 @@ RUN	apt-get clean && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
+
+#4.) Set Default Command
+CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS

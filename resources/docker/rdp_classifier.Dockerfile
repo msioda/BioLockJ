@@ -5,10 +5,10 @@ FROM biolockj/blj_basic_java
 #1.) Install RDP
 ENV RDP="rdp_classifier_2.12"
 ENV RDP_URL="https://sourceforge.net/projects/rdp-classifier/files/rdp-classifier"
-RUN cd /usr/local/bin && \
+RUN cd /app  && \
 	wget -qO- $RDP_URL/$RDP.zip | bsdtar -xf-  && \
-	mv /usr/local/bin/rdp*/dist/* . && \
-	rm -rf /usr/local/bin/rdp*
+	mv /app/$RDP/dist/* . && \
+	rm -rf /app/$RDP
 
 #2.) Cleanup
 RUN	apt-get clean && \

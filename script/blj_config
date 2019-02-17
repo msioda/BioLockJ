@@ -24,6 +24,8 @@ export DOCKER_HUB_USER="biolockj"
 export DOCKER_FILE_PATH="$BLJ/resources/docker"
 export DOCKER_VER="docker-18.09.2"
 
+. $BLJ/script/blj_functions
+
 BLJ_SUP=
 BLJ_PARENT="$(dirname $BLJ)"
 [ -d "$BLJ_PARENT/blj_support/script" ] && BLJ_SUP="$BLJ_PARENT/blj_support" 
