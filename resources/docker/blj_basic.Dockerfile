@@ -1,4 +1,4 @@
-# Deployment path: $BLJ/resources/docker/blj_basic.Dockerfile
+# Deployment path: $DOCKER_FILE_PATH/blj_basic.Dockerfile
 
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive

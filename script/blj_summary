@@ -6,7 +6,6 @@
 ##  summary of the most recent pipeline executed.                         ##
 ##                                                                        ##
 ############################################################################
-. $BLJ/script/blj_functions
 
 pipeline=$(most_recent_pipeline)
 SUM=summary.txt

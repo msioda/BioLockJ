@@ -1,4 +1,4 @@
-# Deployment path: $BLJ/resources/docker/webapp
+# Deployment path: $DOCKER_FILE_PATH/webapp
 
 FROM ubuntu:18.04
 

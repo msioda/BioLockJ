@@ -1,4 +1,4 @@
-# Deployment path:  $BLJ/resources/docker/humann2_classifier_dbfree.Dockerfile
+# Deployment path:  $DOCKER_FILE_PATH/humann2_classifier_dbfree.Dockerfile
 
 FROM biolockj/blj_basic_py2
 ARG DEBIAN_FRONTEND=noninteractive

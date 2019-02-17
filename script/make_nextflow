@@ -7,11 +7,10 @@
 ##  Remaining value = Java class name module.getClass().getSimpleName()       ##
 ##                                                                            ##
 ################################################################################
-. $BLJ/script/blj_functions
 
 modules=
 SEPARATOR="%"
-MAIN_NF="$BLJ/resources/docker/nextflow/nextflow_template_main.nf"
+MAIN_NF="$DOCKER_FILE_PATH/nextflow/nextflow_template_main.nf"
 
 get_modules() {
 	FILE_TYPE=".java"

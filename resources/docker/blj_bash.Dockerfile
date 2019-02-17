@@ -1,4 +1,4 @@
-# Deployment path: $BLJ/resources/docker/blj_bash.Dockerfile
+# Deployment path: $DOCKER_FILE_PATH/blj_bash.Dockerfile
 
 FROM biolockj/blj_basic
 ARG DEBIAN_FRONTEND=noninteractive
