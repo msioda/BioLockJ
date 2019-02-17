@@ -354,7 +354,7 @@ public class BioModuleFactory
 	{
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
-			Log.warn( NextFlowUtil.class, msg );
+			Log.warn( NextflowUtil.class, msg );
 		}
 	}
 

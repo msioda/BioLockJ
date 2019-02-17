@@ -69,17 +69,10 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public void executeTask() throws Exception
 	{
-		if( DockerUtil.isDockerJavaModule( this ) )
-		{
-			BashScriptBuilder.buildScripts( this, DockerUtil.buildDockerScript(), 1 );
-		}
-		else
-		{
-			final List<List<String>> data = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
-					? buildScriptForPairedReads( getInputFiles() )
-					: buildScript( getInputFiles() );
-			BashScriptBuilder.buildScripts( this, data, Config.requireInteger( this, ScriptModule.SCRIPT_BATCH_SIZE ) );
-		}
+		final List<List<String>> data = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
+				? buildScriptForPairedReads( getInputFiles() ) : buildScript( getInputFiles() );
+		BashScriptBuilder.buildScripts( this, data, Config.requireInteger( this, ScriptModule.SCRIPT_BATCH_SIZE ) );
+		
 	}
 
 	@Override
@@ -195,15 +188,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final List<String> lines = new ArrayList<>();
-		if( DockerUtil.isDockerJavaModule( this ) )
-		{
-			lines.addAll( DockerUtil.buildRunDockerFunction( this ) );
-		}
-
-		lines.add( "" );
-
-		return lines;
+		return new ArrayList<>();
 	}
 
 	/**

@@ -35,10 +35,17 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	{
 		final List<List<String>> data = new ArrayList<>();
 		final ArrayList<String> lines = new ArrayList<>();
-
-		lines.add( "java" + getSource() + " " + BioLockJUtil.getDirectModuleParam( this ) + " "
-				+ RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getBaseDir().getAbsolutePath() + " "
-				+ RuntimeParamUtil.CONFIG_FLAG + " " + Config.getConfigFilePath() );
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			lines.add( "java" + getSource() + " $" + DockerUtil.BLJ_OPTIONS );
+		}
+		else
+		{
+			lines.add( "java" + getSource() + " " + BioLockJUtil.getDirectModuleParam( this ) + " "
+					+ RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getBaseDir().getAbsolutePath() + " "
+					+ RuntimeParamUtil.CONFIG_FLAG + " " + Config.getConfigFilePath() );
+		}
+		
 
 		data.add( lines );
 		return data;
@@ -58,8 +65,8 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	{
 		final boolean buildClusterScript = !RuntimeParamUtil.isDockerMode() && Config.isOnCluster()
 				&& Config.getBoolean( this, BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT );
-		final boolean buildDockerSciprt = RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode();
-		if( buildClusterScript || buildDockerSciprt )
+		final boolean buildDockerScript = RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode();
+		if( buildClusterScript || buildDockerScript )
 		{
 			super.executeTask();
 		}

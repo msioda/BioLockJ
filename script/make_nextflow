@@ -51,8 +51,8 @@ for module in ${modules[@]}; do
 	#echo "Add process for: $module"
 	echo "process ${module} {" >> $MAIN_NF
 	echo '	echo 	true' >> $MAIN_NF
-	echo '	cpus 	$nextflow.cpus' >> $MAIN_NF
-	echo '	memory 	$nextflow.memory' >> $MAIN_NF
+	echo '	cpus 	$script.numThreads' >> $MAIN_NF
+	echo '	memory 	$aws.ram' >> $MAIN_NF
 	echo '	label 	$nextflow.dockerImage' >> $MAIN_NF
 	echo '	input:' >> $MAIN_NF
 	printf "	val worker from Channel.watchPath( '" >> $MAIN_NF

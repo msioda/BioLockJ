@@ -29,21 +29,6 @@ import biolockj.module.report.r.R_Module;
 public class DockerUtil
 {
 	/**
-	 * Build a docker bash script.
-	 * 
-	 * @return Bash script lines for the docker script
-	 * @throws Exception if errors occur
-	 */
-	public static List<List<String>> buildDockerScript() throws Exception
-	{
-		final List<List<String>> dockerScriptLines = new ArrayList<>();
-		final List<String> innerList = new ArrayList<>();
-		innerList.add( SPAWN_DOCKER_CONTAINER );
-		dockerScriptLines.add( innerList );
-		return dockerScriptLines;
-	}
-
-	/**
 	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script
 	 * path parameters.
 	 * 
@@ -54,7 +39,7 @@ public class DockerUtil
 	public static List<String> buildRunDockerFunction( final BioModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		if( isDockerJavaModule( module ) )
+		if( module instanceof JavaModule )
 		{
 			lines.add( getBljOptions( module ) + BioLockJ.RETURN );
 			Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + BioLockJ.RETURN );
@@ -87,13 +72,26 @@ public class DockerUtil
 
 		final String name = isR ? R_Module.class.getSimpleName()
 				: isQiime ? QiimeClassifier.class.getSimpleName()
-						: isDockerScriptModule( module ) ? module.getClass().getSimpleName()
-								: JavaModule.class.getSimpleName();
+						: module instanceof JavaModule ? JavaModule.class.getSimpleName() 
+								: module.getClass().getSimpleName();
 
-		String user = Config.getString( module, DOCKER_HUB_USER );
+		
+
+		return " " + getDockerUser( module.getClass().getSimpleName() ) + "/" + getImageName( name ) + ":" + getImageVersion( module.getClass().getSimpleName() );
+	}
+	
+	/**
+	 * Return the Docker Hub user ID.  If none configured, return biolockj.
+	 * 
+	 * @param module Calling module
+	 * @return Docker Hub User ID 
+	 * @throws Exception if errors occur
+	 */
+	public static String getDockerUser( final String moduleName ) throws Exception
+	{
+		String user = Config.getString( null, Config.getModuleProp( moduleName, DOCKER_HUB_USER ) );
 		user = user == null ? DEFAULT_DOCKER_HUB_USER: user;
-
-		return " " + user + "/" + getImageName( name ) + ":" + getImageVersion( module );
+		return user;
 	}
 
 	/**
@@ -119,6 +117,17 @@ public class DockerUtil
 		}
 		return newFile;
 	}
+	
+	/**
+	 * Return TRUE if running on AWS (based on Config props).
+	 * 
+	 * @return TRUE if project.env=aws
+	 * @throws Exception if errors occur
+	 */
+	public static boolean runAws() throws Exception
+	{
+		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
+	}
 
 	/**
 	 * Return the Docker Image name for the given class name.<br>
@@ -128,9 +137,9 @@ public class DockerUtil
 	 * <br>
 	 * Example: JavaModule becomes java_module
 	 * 
-	 * @param className
-	 * @return
-	 * @throws Exception
+	 * @param className BioModule class name
+	 * @return Image Name
+	 * @throws Exception if errors occur
 	 */
 	public static String getImageName( final String className ) throws Exception
 	{
@@ -166,13 +175,13 @@ public class DockerUtil
 	 * Get the Docker image version if defined in the {@link biolockj.Config} file<br>
 	 * If not found, return the default version "latest"
 	 * 
-	 * @param module
-	 * @return
-	 * @throws Exception
+	 * @param moduleName BioModule name
+	 * @return Docker image version
+	 * @throws Exception if errors occur
 	 */
-	public static String getImageVersion( final BioModule module ) throws Exception
+	public static String getImageVersion( final String moduleName ) throws Exception
 	{
-		String ver = Config.getString( module, Constants.DOCKER_IMG_VERSION );
+		String ver = Config.getString( null, Config.getModuleProp( moduleName, Constants.DOCKER_IMG_VERSION ) );
 		if( ver == null )
 		{
 			ver = DOCKER_LATEST;
@@ -180,27 +189,8 @@ public class DockerUtil
 		return ver;
 	}
 
-	/**
-	 * Method to indicate module is a Docker Java module
-	 * 
-	 * @param module BioModule
-	 * @return TRUE if module is a Docker Java module
-	 */
-	public static boolean isDockerJavaModule( final BioModule module )
-	{
-		return RuntimeParamUtil.isDockerMode() && module instanceof JavaModule;
-	}
+	
 
-	/**
-	 * Boolean to determine if running Docker compute node. Return TRUE if inDocker() and not a JavaModule.
-	 * 
-	 * @param module BioModule
-	 * @return TRUE if running in a Docker container.
-	 */
-	public static boolean isDockerScriptModule( final BioModule module )
-	{
-		return RuntimeParamUtil.isDockerMode() && !isDockerJavaModule( module );
-	}
 
 	/**
 	 * Boolean to determine if running Docker manager module.
@@ -221,12 +211,14 @@ public class DockerUtil
 
 	private static final String getDockerEnvVars( final BioModule module ) throws Exception
 	{
-		if( isDockerScriptModule( module ) )
+		if( module instanceof JavaModule )
 		{
-			return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
+			return " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
 		}
+		
+		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 
-		return " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
+		
 	}
 
 	private static final String getDockerVolumes() throws Exception

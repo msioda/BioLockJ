@@ -25,26 +25,17 @@ import biolockj.module.ScriptModule;
  */
 public class Job
 {
-	private Job( final ScriptModule module ) throws Exception
-	{
-		Log.info( getClass(), "[Run Command]: " + getArgsAsString( module.getJobParams() ) );
-		final Runtime r = Runtime.getRuntime();
-		final Process p = r.exec( module.getJobParams() );
-		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
-		String s;
-		while( ( s = br.readLine() ) != null )
-		{
-			if( !s.trim().isEmpty() )
-			{
-				Log.info( getClass(), "[" + module.getClass().getSimpleName() + "] " + s );
-			}
-		}
 
-		p.waitFor();
-		p.destroy();
-	}
-
-	private Job( final String[] args ) throws Exception
+	private Job() {};
+	
+	/**
+	 * Execute the command args and log ouput with label.
+	 * 
+	 * @param args Command args
+	 * @param label Log label
+	 * @throws Exception
+	 */
+	public void runJob( final String[] args, final String label ) throws Exception
 	{
 		Log.info( getClass(), "[Run Command]: " + getArgsAsString( args ) );
 		final Runtime r = Runtime.getRuntime();
@@ -55,7 +46,7 @@ public class Job
 		{
 			if( !s.trim().isEmpty() )
 			{
-				Log.info( getClass(), "[Process] " + s );
+				Log.info( getClass(), "[" + label + "] " + s );
 			}
 		}
 
@@ -63,35 +54,7 @@ public class Job
 		p.destroy();
 	}
 
-	/**
-	 * This method returns the all output lines from the command.
-	 * 
-	 * @param args Terminal command created from args (adds 1 space between each array element)
-	 * @return Output from the command
-	 * @throws Exception if errors occur during execution
-	 */
-	public static List<String> runCommandWithResults( final String[] args ) throws Exception
-	{
-		final List<String> results = new ArrayList<>();
-		Log.info( Job.class, "[Run Command]: " + getArgsAsString( args ) );
-		final Runtime r = Runtime.getRuntime();
-		final Process p = r.exec( args );
-		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
-		String s;
-		while( ( s = br.readLine() ) != null )
-		{
-			if( !s.trim().isEmpty() )
-			{
-				results.add( s );
-				Log.info( Job.class, "[Command returns]: " + s );
-			}
-		}
 
-		p.waitFor();
-		p.destroy();
-
-		return results;
-	}
 
 	/**
 	 * Set file permissions by executing chmod {@value biolockj.module.ScriptModule#SCRIPT_PERMISSIONS} on generated
@@ -120,13 +83,14 @@ public class Job
 	 * {@link #submit(ScriptModule)}
 	 *
 	 * @param module ScriptModule that is submitting its main script as a Job
+	 * 
 	 * @throws Exception if errors occur during execution
 	 */
 	public static void submit( final ScriptModule module ) throws Exception
 	{
 		setFilePermissions( module.getScriptDir().getAbsolutePath(),
 				Config.requireString( module, ScriptModule.SCRIPT_PERMISSIONS ) );
-		new Job( module );
+		new Job().runJob( module.getJobParams(), module.getClass().getSimpleName() );
 	}
 
 	/**
@@ -139,7 +103,7 @@ public class Job
 	 */
 	public static void submit( final String[] args ) throws Exception
 	{
-		new Job( args );
+		 new Job().runJob( args, "Process" );
 	}
 
 	private static String getArgsAsString( final String[] args )
@@ -152,5 +116,4 @@ public class Job
 
 		return sb.toString();
 	}
-
 }

@@ -66,9 +66,9 @@ public class Pipeline
 		bioModules = BioModuleFactory.buildPipeline();
 		Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
-		if( runAws() )
+		if( DockerUtil.runAws() )
 		{
-			NextFlowUtil.buildNextFlowMain( bioModules );
+			NextflowUtil.buildNextFlowMain( bioModules );
 		}
 	}
 
@@ -473,10 +473,7 @@ public class Pipeline
 		}
 	}
 
-	private static boolean runAws() throws Exception
-	{
-		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
-	}
+	
 
 	/**
 	 * File suffix appended to failed scripts: {@value #SCRIPT_FAILURES}

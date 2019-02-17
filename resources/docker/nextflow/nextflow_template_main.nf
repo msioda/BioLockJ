@@ -2,8 +2,6 @@
 // Path: /Users/mike/git/BioLockJ/resources/docker/nextflow/nextflow_template_main.nf
 
 aws.efs = $aws.efs
-aws.stack = $aws.stack
-aws.s3 = $aws.s3
 project.pipelineName = $project.pipelineName
 project.pipelineDir = "${aws.efs}/${project.pipelineName}"
 

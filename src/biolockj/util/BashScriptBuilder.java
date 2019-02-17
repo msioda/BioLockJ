@@ -154,7 +154,7 @@ public class BashScriptBuilder
 	{
 		final StringBuffer line = new StringBuffer();
 
-		if( DockerUtil.isDockerScriptModule( module ) )
+		if( RuntimeParamUtil.isDockerMode() )
 		{
 			line.append( DockerUtil.SPAWN_DOCKER_CONTAINER + " " );
 		}
@@ -230,7 +230,7 @@ public class BashScriptBuilder
 		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED + RETURN );
 		lines.add( "cd " + module.getScriptDir().getAbsolutePath() + RETURN );
 
-		if( DockerUtil.isDockerScriptModule( module ) )
+		if( RuntimeParamUtil.isDockerMode() )
 		{
 			lines.addAll( DockerUtil.buildRunDockerFunction( module ) );
 		}

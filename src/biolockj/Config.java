@@ -263,9 +263,28 @@ public class Config
 		return list;
 	}
 
+	/**
+	 * Return module specific property if configured, otherwise use the given prop.
+	 * 
+	 * @param module BioModule
+	 * @param prop Property
+	 * @return Config property
+	 */
 	public static String getModuleProp( final BioModule module, final String prop )
 	{
-		final String moduleProp = module.getClass().getSimpleName() + "." + suffix( prop );
+		return( getModuleProp(module.getClass().getSimpleName(), prop ) );
+	}
+		
+	/**
+	 * Return module specific property if configured, otherwise use the given prop.
+	 * 
+	 * @param module Name of BioModule
+	 * @param prop Property
+	 * @return Config property
+	 */
+	public static String getModuleProp( final String moduleName, final String prop )
+	{	
+		final String moduleProp = moduleName + "." + suffix( prop );
 		final String val = Config.getString( null, moduleProp );
 		if( val == null )
 		{
@@ -663,7 +682,7 @@ public class Config
 	 * @throws ConfigNotFoundException if property is undefined
 	 * @throws ConfigFormatException if property is not a valid integer
 	 */
-	public static int requireInteger( final BioModule module, final String property )
+	public static Integer requireInteger( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
 		final Integer val = getIntegerProp( module, property );
@@ -721,10 +740,10 @@ public class Config
 	 * @throws ConfigNotFoundException if property is undefined
 	 * @throws ConfigFormatException if property is defined, but not set to a positive integer value
 	 */
-	public static int requirePositiveInteger( final BioModule module, final String property )
+	public static Integer requirePositiveInteger( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
-		final int val = requireInteger( module, property );
+		final Integer val = requireInteger( module, property );
 		if( val <= 0 )
 		{
 			throw new ConfigFormatException( property, "Property only accepts positive integers" );
