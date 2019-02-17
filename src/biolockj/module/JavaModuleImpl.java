@@ -203,9 +203,6 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		return lines;
 	}
 
-	
-	
-
 	/**
 	 * Docker environment variable holding the Docker program switches: {@value #BLJ_OPTIONS}
 	 */
