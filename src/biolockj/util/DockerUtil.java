@@ -39,11 +39,6 @@ public class DockerUtil
 	public static List<String> buildRunDockerFunction( final BioModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		if( module instanceof JavaModule )
-		{
-			lines.add( getBljOptions( module ) + BioLockJ.RETURN );
-			Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + BioLockJ.RETURN );
-		}
 
 		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + BioLockJ.RETURN );
 		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + BioLockJ.RETURN );
@@ -202,23 +197,10 @@ public class DockerUtil
 		return !RuntimeParamUtil.isDirectMode();
 	}
 
-	private static String getBljOptions( final BioModule module ) throws Exception
-	{
-		final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " + BioLockJUtil.getDirectModuleParam( module );
-
-		return BLJ_OPTIONS + "=\"" + args + "\"";
-	}
 
 	private static final String getDockerEnvVars( final BioModule module ) throws Exception
 	{
-		if( module instanceof JavaModule )
-		{
-			return " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
-		}
-		
 		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
-
-		
 	}
 
 	private static final String getDockerVolumes() throws Exception
@@ -246,10 +228,6 @@ public class DockerUtil
 		return Config.getBoolean( null, DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
 	}
 
-	/**
-	 * Docker environment variable holding the Docker program switches: {@value #BLJ_OPTIONS}
-	 */
-	public static final String BLJ_OPTIONS = "BLJ_OPTIONS";
 
 	/**
 	 * Docker environment variable holding the name of the compute script file: {@value #COMPUTE_SCRIPT}

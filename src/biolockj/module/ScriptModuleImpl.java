@@ -182,9 +182,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		return Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
 	}
 
-	/**
-	 * Build the docker run command to launch a JavaModule in a Docker container.
-	 */
+
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{

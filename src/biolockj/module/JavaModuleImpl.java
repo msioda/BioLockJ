@@ -37,7 +37,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		final ArrayList<String> lines = new ArrayList<>();
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			lines.add( "java" + getSource() + " $" + DockerUtil.BLJ_OPTIONS );
+			lines.add( "java" + getSource() + " $" + BLJ_OPTIONS );
 		}
 		else
 		{
@@ -186,4 +186,28 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 			}
 		}
 	}
+	
+	/**
+	 * Build the docker run command to launch a JavaModule in a Docker container.
+	 */
+	@Override
+	public List<String> getWorkerScriptFunctions() throws Exception
+	{
+		List<String> lines = new ArrayList<>();
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " + BioLockJUtil.getDirectModuleParam( this );
+			lines.add( BLJ_OPTIONS + "=\"" + args + "\"" + BioLockJ.RETURN );
+		}
+		
+		return lines;
+	}
+
+	
+	
+
+	/**
+	 * Docker environment variable holding the Docker program switches: {@value #BLJ_OPTIONS}
+	 */
+	public static final String BLJ_OPTIONS = "BLJ_OPTIONS";
 }

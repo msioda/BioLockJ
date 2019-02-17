@@ -54,6 +54,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
+		Config.requireString( this, RDP_JAR );
 		getRuntimeParams( getClassifierParams(), null );
 	}
 
@@ -108,7 +109,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 
 	private String getJar() throws Exception
 	{
-		return Config.getExistingFile( this, RDP_JAR ).getAbsolutePath();
+		return Config.requireString( this, RDP_JAR );
 	}
 
 	/**
