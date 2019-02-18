@@ -224,6 +224,18 @@ public class ModuleUtil
 		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		return f.exists();
 	}
+	
+	/**
+	 * Return the module ID as a 2 digit display number (add leading zero if needed).
+	 * 
+	 * @param module BioModule
+	 * @return ID display value
+	 * @throws Exception if errors occur
+	 */
+	public static String displayID( final BioModule module ) throws Exception
+	{
+		return BioLockJUtil.formatDigits( module.getID(), 2 );
+	}
 
 	/**
 	 * Test if module is the first {@link biolockj.module.report.r.R_Module} configured in the pipeline.
@@ -287,7 +299,6 @@ public class ModuleUtil
 	 * 
 	 * @param module BioModule in question
 	 * @return TRUE if module produced exactly 1 file (metadata file)
-	 * @throws Exception if errors occur
 	 */
 	public static boolean isMetadataModule( final BioModule module )
 	{
@@ -316,15 +327,15 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Method creates a file named {@value biolockj.BioLockJ#BLJ_COMPLETE} in bioModule root directory to document
+	 * Method creates a file named {@value biolockj.Constants#BLJ_COMPLETE} in bioModule root directory to document
 	 * bioModule has completed successfully. Also clean up by removing file {@value biolockj.Constants#BLJ_STARTED}.
 	 *
-	 * @param bioModule BioModule
-	 * @throws Exception if unable to create {@value biolockj.BioLockJ#BLJ_COMPLETE} file
+	 * @param module BioModule
+	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_COMPLETE} file
 	 */
-	public static void markComplete( final BioModule bioModule ) throws Exception
+	public static void markComplete( final BioModule module ) throws Exception
 	{
-		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
+		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		final FileWriter writer = new FileWriter( f );
 		writer.close();
 		if( !f.exists() )
@@ -332,10 +343,10 @@ public class ModuleUtil
 			throw new Exception( "Unable to create " + f.getAbsolutePath() );
 		}
 		final File startFile = new File(
-				bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
+				module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		BioLockJUtil.deleteWithRetry( startFile, 5 );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
-		Log.info( ModuleUtil.class, "FINISHED " + bioModule.getClass().getName() );
+		Log.info( ModuleUtil.class, "FINISHED [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 	}
 
@@ -344,12 +355,12 @@ public class ModuleUtil
 	 * bioModule has completed successfully. Also sets the start time and caches module name to list of executed modules
 	 * so we can check later if it ran during this pipeline execution (as opposed to a previous failed run).
 	 *
-	 * @param bioModule BioModule
+	 * @param module module
 	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_STARTED} file
 	 */
-	public static void markStarted( final BioModule bioModule ) throws Exception
+	public static void markStarted( final BioModule module ) throws Exception
 	{
-		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
+		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		final FileWriter writer = new FileWriter( f );
 		writer.close();
 		if( !f.exists() )
@@ -357,7 +368,7 @@ public class ModuleUtil
 			throw new Exception( "Unable to create " + f.getAbsolutePath() );
 		}
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
-		Log.info( ModuleUtil.class, "STARTING " + bioModule.getClass().getName() );
+		Log.info( ModuleUtil.class, "STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 	}
 

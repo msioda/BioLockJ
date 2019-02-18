@@ -157,17 +157,17 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	public void init() throws Exception
 	{
 		moduleId = nextId++;
-		moduleDir = new File( Config.pipelinePath() + File.separator + BioLockJUtil.formatDigits( moduleId, 2 ) + "_"
+		moduleDir = new File( Config.pipelinePath() + File.separator + ModuleUtil.displayID( this ) + "_"
 				+ getClass().getSimpleName() );
 
 		if( !moduleDir.exists() )
 		{
 			moduleDir.mkdirs();
-			Log.info( getClass(), "Construct module [ " + moduleId + " ] for new" + moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new" + moduleDir.getAbsolutePath() );
 		}
 		else
 		{
-			Log.info( getClass(), "Construct module [ " + moduleId + " ] for existing" + moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing" + moduleDir.getAbsolutePath() );
 		}
 	}
 
@@ -189,8 +189,17 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 
 	@Override
 	public String toString()
-	{
-		return getClass().getName() + "_" + getID();
+	{	
+		String val = getID() + "_" + getClass().getName();
+		try
+		{
+			val = ModuleUtil.displayID( this ) + "_" + getClass().getName();
+		}
+		catch(Exception ex )
+		{
+			Log.error( getClass(), "Unable to find ID for: " + getClass().getName(), ex );
+		}
+		return val;
 	}
 
 	/**
