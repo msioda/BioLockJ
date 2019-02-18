@@ -15,20 +15,6 @@ import biolockj.util.*;
  */
 public class Humann2Report extends Humann2CountModule implements JavaModule
 {
-	/**
-	 * Module prerequisite: {@link biolockj.module.implicit.parser.wgs.Humann2Parser}
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		final List<String> preReqs = super.getPreRequisiteModules();
-		if( !pipelineInputContainsFullPathwayReport() )
-		{
-			preReqs.add( Humann2Parser.class.getName() );
-		}
-
-		return preReqs;
-	}
 
 	private String spaces( int x )
 	{
@@ -202,24 +188,6 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 		return data;
 	}
 
-	/**
-	 * Check pipeline input for module input file type.
-	 * 
-	 * @return TRUE if pipeline input contains module input
-	 * @throws Exception if errors occur
-	 */
-	protected boolean pipelineInputContainsFullPathwayReport() throws Exception
-	{
-		final Iterator<File> it = BioLockJUtil.getPipelineInputFiles().iterator();
-		while( it.hasNext() )
-		{
-			if( it.next().getName().endsWith( PathwayUtil.fullPathwayReportSuffix() ) )
-			{
-				return true;
-			}
-		}
-		return false;
-	}
 
 	/**
 	 * Check column headers for valid pathway indexes (avoid columns with genus/species info).

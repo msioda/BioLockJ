@@ -17,29 +17,16 @@ import java.util.List;
 import java.util.StringTokenizer;
 import biolockj.Log;
 import biolockj.module.JavaModule;
+import biolockj.module.implicit.parser.wgs.Humann2Parser;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
+import biolockj.util.PathwayUtil;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  */
 public class AddMetadataToPathwayTables extends Humann2CountModule implements JavaModule
 {
-	/**
-	 * Module prerequisite: {@link biolockj.module.report.humann2.Humann2Report}
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
-		{
-			preReqs.add( Humann2Report.class.getName() );
-		}
-		preReqs.addAll( super.getPreRequisiteModules() );
-		return preReqs;
-	}
-
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
 	 */
@@ -85,7 +72,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		for( final File file: getInputFiles() )
 		{
 			final String name = file.getName().replaceAll( TSV_EXT, "" ) + META_MERGED;
-			Log.info( getClass(), "Merge OTU table + Metadata file: " + outDir + name );
+			Log.info( getClass(), "Merge HumanN2 " + PathwayUtil.getHn2Type( file )  + " table with metadata: " + outDir + name );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
 
@@ -148,5 +135,5 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 	/**
 	 * File suffix added to OTU table file name once merged with metadata.
 	 */
-	public static final String META_MERGED = "_metaMerged" + TSV_EXT;
+	private static final String META_MERGED = "_metaMerged" + TSV_EXT;
 }

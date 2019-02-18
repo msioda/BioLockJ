@@ -34,20 +34,6 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 		getMinCount();
 	}
 
-	/**
-	 * Module prerequisite: {@link biolockj.module.report.humann2.Humann2Report}
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
-		{
-			preReqs.add( Humann2Report.class.getName() );
-		}
-		preReqs.addAll( super.getPreRequisiteModules() );
-		return preReqs;
-	}
 
 	/**
 	 * Produce summary message with min, max, mean, and median number of pathways.

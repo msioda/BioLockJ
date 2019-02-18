@@ -137,18 +137,6 @@ process Humann2Parser {
 	bash ${worker}
 	"""
 }
-process Humann2Report {
-	echo 	true
-	cpus 	$nextflow.cpus
-	memory 	$nextflow.memory
-	label 	$nextflow.dockerImage
-	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Humann2Report/script/*.sh' )
-	"""
-	#!/bin/bash
-	bash ${worker}
-	"""
-}
 process ImportMetadata {
 	echo 	true
 	cpus 	$nextflow.cpus

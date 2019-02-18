@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Constants;
 import biolockj.module.BioModule;
+import biolockj.module.classifier.wgs.Humann2Classifier;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
@@ -40,7 +41,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{
-		return PathwayUtil.isPathwayModule( module );
+		return module instanceof Humann2Classifier;
 	}
 
 	/**
@@ -148,10 +149,10 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 		return transpose;
 	}
-
-	private static final String ABUND_SUFFIX = "_Abundance";
-	private static final String COVERAGE_SUFFIX = "_Coverage";
-	private static final String KD_SUFFIX = "_kneaddata";
-	private static final String PAIRED_SUFFIX = "_paired_merged";
-	private static final String RPK_SUFFIX = "-RPKs";
+//
+//	private static final String ABUND_SUFFIX = "_Abundance";
+//	private static final String COVERAGE_SUFFIX = "_Coverage";
+//	private static final String KD_SUFFIX = "_kneaddata";
+//	private static final String PAIRED_SUFFIX = "_paired_merged";
+//	private static final String RPK_SUFFIX = "-RPKs";
 }
