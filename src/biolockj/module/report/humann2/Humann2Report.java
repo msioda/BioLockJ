@@ -30,6 +30,16 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 		return preReqs;
 	}
 
+	private String spaces( int x )
+	{
+		String val = "";
+		for(int y=0;y<x;y++)
+		{
+			val += " ";
+		}
+		return val;
+	}
+	
 	/**
 	 * Produce summary message with min, max, mean, and median number of reads.
 	 */
@@ -43,7 +53,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 			labelSize = Math.max( labelSize, Constants.HN2_UNMAPPED_COUNT.length() );
 			labelSize = Math.max( labelSize, Constants.HN2_TOTAL_PATH_COUNT.length() );
 			
-			summary += "Total # Unique Pathways:         " + pathways.size() + RETURN;
+			summary += "Total # Unique Pathways:" + spaces( 11 - new Integer( pathways.size() ).toString().length() ) + pathways.size() + RETURN;
 			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, Constants.HN2_UNIQUE_PATH_COUNT, labelSize,
 					false );
 			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, Constants.HN2_TOTAL_PATH_COUNT, labelSize,

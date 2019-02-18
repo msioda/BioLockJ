@@ -49,7 +49,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-
+			// TODO
 		}
 		catch( final Exception ex )
 		{

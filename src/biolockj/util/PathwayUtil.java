@@ -55,7 +55,12 @@ public class PathwayUtil
 	 */
 	public static boolean isPathwayFile( final File file ) throws Exception
 	{
-		if( file.getName().endsWith( pathwayFileSuffix( null ) ) )
+		boolean isPathAund = file.getName().contains( Constants.HN2_PATH_ABUNDANCE );
+		boolean isPathCovg = file.getName().contains( Constants.HN2_PATH_COVERAGE );
+		boolean isGeneFaml = file.getName().contains( Constants.HN2_GENE_FAMILIES );
+		
+		if( file.getName().endsWith( pathwayFileSuffix( null ) ) &&
+				( isPathAund || isPathCovg || isGeneFaml ) )
 		{
 			return true;
 		}

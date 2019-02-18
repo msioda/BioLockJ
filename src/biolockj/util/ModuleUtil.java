@@ -248,11 +248,9 @@ public class ModuleUtil
 	{
 		final List<Integer> rIds = getRModulesIds();
 		final List<Integer> filteredR_ids = new ArrayList<>( rIds );
-		Log.info( ModuleUtil.class, "Checking for 1st R modue, total #R_Module found = " + rIds.size() );
 		if( rIds.contains( module.getID() ) )
 		{
 			final List<Integer> cIds = getClassifierIds();
-			Log.info( ModuleUtil.class, "Total #ClassifierModules found = " + cIds.size() );
 			if( !cIds.isEmpty() )
 			{
 				final BioModule prevClassMod = getClassifier( module, false );

@@ -272,7 +272,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private String getRenormTableLine( final String key ) throws Exception
 	{
 		return FUNCTION_RENORM_HN2_TABLES + " " + summaryFile( getTempSubDir( JOIN_OUT_DIR ), key ) + " "
-				+ summaryFile( getOutputDir(), key );
+				+ summaryFile( getOutputDir(), key + "_" + TaxaUtil.SPECIES );
 	}
 
 	private File getTempSubDir( final String name ) throws Exception
