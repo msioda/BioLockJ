@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_FILE_PATH/kneaddata_dbfree.Dockerfile
+# Deployment path:  $DOCKER_FILE_PATH/knead_data_dbfree.Dockerfile
 
 FROM biolockj/blj_basic_py2
 ARG DEBIAN_FRONTEND=noninteractive

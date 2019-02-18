@@ -1,6 +1,6 @@
-# Deployment path:  $DOCKER_FILE_PATH/kneaddata.Dockerfile
+# Deployment path:  $DOCKER_FILE_PATH/knead_data.Dockerfile
 
-FROM biolockj/kneaddata_dbfree
+FROM biolockj/knead_data_dbfree
 
 #1.) Install kneaddata human DNA contaminant DB
 RUN kneaddata_database --download human_genome bowtie2 /db
