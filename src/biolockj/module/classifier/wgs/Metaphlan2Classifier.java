@@ -95,7 +95,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	@Override
 	public String getClassifierExe() throws Exception
 	{
-		return Config.requireString( this, EXE_METAPHLAN );
+		return Config.getExe( this, EXE_METAPHLAN );
 	}
 
 	/**
@@ -115,8 +115,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_METAPHLAN + "() {" );
-		lines.add( Config.getExe( this, EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
-				+ "$1 --bowtie2out $2 > $3" );
+		lines.add( getClassifierExe() + getWorkerFunctionParams() + "$1 --bowtie2out $2 > $3" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
