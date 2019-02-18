@@ -2,7 +2,7 @@
 
 FROM biolockj/kneaddata_dbfree
 
-#1.) Install kneaddata human DNA contaminent DB
+#1.) Install kneaddata human DNA contaminant DB
 RUN kneaddata_database --download human_genome bowtie2 /db
 
 #2.) Cleanup
