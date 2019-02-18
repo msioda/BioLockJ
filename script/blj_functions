@@ -7,10 +7,14 @@
 # Remove old Docker images
 clearDock() {
 	echo "Stop/remove all containers & remove old images..."
-	docker kill $(docker ps -q)
-	docker rm $(docker ps -aq)
+	procs=$(docker ps -q)
+	if [ ${#procs} -gt 0 ]; then
+		docker kill $(docker ps -q)
+		docker rm $(docker ps -aq)
+	fi
+
 	docker rmi $(docker images -f "dangling=true" -q) 
-	echo "Verify all containers & old images are removed..."
+	echo "Verify old containers & images have been removed..."
 	docker images
 	docker container ls --all
 }
