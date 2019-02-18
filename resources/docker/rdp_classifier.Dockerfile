@@ -6,8 +6,9 @@ FROM biolockj/blj_basic_java
 ENV RDP="rdp_classifier_2.12"
 ENV RDP_URL="https://sourceforge.net/projects/rdp-classifier/files/rdp-classifier"
 RUN cd /app  && \
-	wget -qO- $RDP_URL/$RDP.zip | bsdtar -xf-  && \
-	mv /app/$RDP/dist/* . && \
+	wget -qO- $RDP_URL/$RDP.zip | bsdtar -xf- && \
+	mv /app/$RDP/dist/classifier.jar /app  && \
+	mv /app/$RDP/dist/lib /app  && \
 	rm -rf /app/$RDP
 
 #2.) Cleanup
