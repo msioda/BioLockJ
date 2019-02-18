@@ -91,7 +91,7 @@ public class PathwayUtil
 		{
 			prefix = Config.pipelineName() + "_" + prefix;
 		}
-		final String name = prefix + getHn2Type( hn2OutputFile ) + pathwayFileSuffix();
+		final String name = prefix + "_" + getHn2Type( hn2OutputFile ) + pathwayFileSuffix();
 		return new File( dir.getAbsolutePath() + File.separator + name );
 	}
 

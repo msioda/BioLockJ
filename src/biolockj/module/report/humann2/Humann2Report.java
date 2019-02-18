@@ -234,7 +234,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 	 */
 	protected void writePathwayReport( final File file, final List<List<String>> data ) throws Exception
 	{
-		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PATHWAY_REPORT );
+		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PARSED );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 		try
 		{

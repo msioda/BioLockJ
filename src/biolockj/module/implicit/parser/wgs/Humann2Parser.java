@@ -59,7 +59,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		for( final File file: getInputFiles() )
 		{
 			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
-			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PATHWAY_REPORT );
+			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PARSED );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 			try
 			{

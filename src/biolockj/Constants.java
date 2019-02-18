@@ -114,7 +114,7 @@ public class Constants
 	public static final String HN2_DISABLE_PATH_ABUNDANCE = "humann2.disablePathAbundance";
 	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
 
-	public static final String HN2_PATHWAY_REPORT = "pathwayReport";
+	public static final String HN2_PARSED = "HnN2";
 	
 	
 	public static final String HN2_GENE_FAM_SUM = "geneFam";
