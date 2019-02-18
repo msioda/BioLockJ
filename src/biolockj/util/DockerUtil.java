@@ -132,7 +132,7 @@ public class DockerUtil
 	 * Example: JavaModule becomes java_module
 	 * 
 	 * @param className BioModule class name
-	 * @return Image Name
+	 * @return Docker Image Name
 	 * @throws Exception if errors occur
 	 */
 	public static String getImageName( final String className ) throws Exception

@@ -65,9 +65,9 @@ public class BioLockJ
 	{
 		try
 		{
-			return RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + RETURN
-					+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath() + RETURN: "" )
-					+ "For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + RETURN;
+			return Constants.RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + Constants.RETURN
+					+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath() + Constants.RETURN: "" )
+					+ "For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + Constants.RETURN;
 		}
 		catch( final Exception ex )
 		{
@@ -227,8 +227,8 @@ public class BioLockJ
 	protected static void initRestart() throws Exception
 	{
 		Log.initialize( Config.pipelineName() );
-		Log.warn( BioLockJ.class, RETURN + Log.LOG_SPACER + RETURN + "RESTART PROJECT DIR --> "
-				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN + Log.LOG_SPACER + RETURN );
+		Log.warn( BioLockJ.class, Constants.RETURN + Log.LOG_SPACER + Constants.RETURN + "RESTART PROJECT DIR --> "
+				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Log.LOG_SPACER + Constants.RETURN );
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
@@ -420,9 +420,9 @@ public class BioLockJ
 		{
 			Log.error( BioLockJ.class, Log.LOG_SPACER );
 			Log.error( BioLockJ.class,
-					RETURN + "FATAL APPLICATION ERROR - " + ex.getMessage()
+					Constants.RETURN + "FATAL APPLICATION ERROR - " + ex.getMessage()
 							+ ( args == null ? ""
-									: " -->" + RETURN + " Program args: "
+									: " -->" + Constants.RETURN + " Program args: "
 											+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) ),
 					ex );
 			Log.error( BioLockJ.class, Log.LOG_SPACER );
@@ -434,9 +434,9 @@ public class BioLockJ
 		else
 		{
 			System.out.println( Log.LOG_SPACER );
-			System.out.println( RETURN + "FATAL APPLICATION ERROR - " + ex.getMessage()
+			System.out.println( Constants.RETURN + "FATAL APPLICATION ERROR - " + ex.getMessage()
 					+ ( args == null ? ""
-							: " -->" + RETURN + " Program args: "
+							: " -->" + Constants.RETURN + " Program args: "
 									+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) ) );
 			System.out.println( Log.LOG_SPACER );
 			ex.printStackTrace();
@@ -467,7 +467,7 @@ public class BioLockJ
 
 			try
 			{
-				Log.info( BioLockJ.class, "Log Pipeline Summary" + BioLockJ.RETURN + SummaryUtil.getSummary() );
+				Log.info( BioLockJ.class, "Log Pipeline Summary" + Constants.RETURN + SummaryUtil.getSummary() );
 			}
 			catch( final Exception ex )
 			{
@@ -539,7 +539,7 @@ public class BioLockJ
 			{
 				for( final String msg: Log.getMsgs() )
 				{
-					writer.write( msg + RETURN );
+					writer.write( msg + Constants.RETURN );
 				}
 			}
 			finally
@@ -602,6 +602,5 @@ public class BioLockJ
 		}
 	}
 
-	public static final String RETURN = Constants.RETURN;
 	private static boolean printedFinalExcp = false;
 }

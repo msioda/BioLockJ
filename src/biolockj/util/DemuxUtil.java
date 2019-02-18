@@ -112,7 +112,7 @@ public class DemuxUtil
 	// {
 	// final BufferedWriter writer = new BufferedWriter(
 	// new FileWriter( getHeaderFile( barcode ), true ) );
-	// writer.write( header + BioLockJ.RETURN );
+	// writer.write( header + Constants.RETURN );
 	// writer.close();
 	// }
 	// }

@@ -223,9 +223,9 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	protected static final String EXE_METAPHLAN = "exe.metaphlan2";
 
 	/**
-	 * {@link biolockj.Config} exe property used to obtain the python executable
+	 * {@link biolockj.Config} List property used to obtain the metaphlan2 executable params
 	 */
-	protected static final String EXE_PYTHON = "exe.python";
+	protected static final String EXE_METAPHLAN_PARAMS = "exe.metaphlan2Params";
 
 	/**
 	 * Function name of the translate function used to classify sequences with Metaphlan.
@@ -241,5 +241,4 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	private static final String METAPHLAN_PHYLUM = "p";
 	private static final String METAPHLAN_SPECIES = "s";
 	private static final String NUM_THREADS_PARAM = "--nproc";
-
 }

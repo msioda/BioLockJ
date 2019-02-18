@@ -238,8 +238,9 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * If paired reads found, add prerequisite module: {@link biolockj.module.seq.PearMergeReads}. If sequences are not
-	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}. Subclasses of
-	 * QiimeClassifier add prerequisite module: {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
+	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}, or similar module specified by
+	 * {@value biolockj.Constants#DEFAULT_MOD_FASTA_CONV}. Subclasses of QiimeClassifier add prerequisite module:
+	 * {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception

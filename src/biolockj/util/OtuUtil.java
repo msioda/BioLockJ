@@ -76,11 +76,11 @@ public class OtuUtil
 	{}
 
 	/**
-	 * Build taxa name into OTU path, returns: level + {@value biolockj.util.TaxaUtil#DELIM_SEP} + taxa
+	 * Build taxa name into OTU path, returns: level + {@value biolockj.Constants#DELIM_SEP} + taxa
 	 * 
 	 * @param level Taxonomy level
 	 * @param taxa Taxa name
-	 * @return level + {@value biolockj.util.TaxaUtil#DELIM_SEP} + taxa
+	 * @return level + {@value biolockj.Constants#DELIM_SEP} + taxa
 	 * @throws Exception if errors occur
 	 */
 	public static String buildOtuTaxa( final String level, final String taxa ) throws Exception
@@ -145,7 +145,7 @@ public class OtuUtil
 
 	/**
 	 * Build OTU count file using a standard format in the directory given.<br>
-	 * Format: pipeline_name + prefix + {@value #OTU_COUNT} + sampleId + {@value biolockj.BioLockJ#TSV_EXT}
+	 * Format: pipeline_name + prefix + {@value biolockj.Constants#OTU_COUNT} + sampleId + {@value biolockj.Constants#TSV_EXT}
 	 * 
 	 * @param dir File directory
 	 * @param sampleId Sample ID
@@ -185,7 +185,7 @@ public class OtuUtil
 	 * Extract the sampleId from the OTU count file name.<br>
 	 * Input files should include a file name just before the .tsv file extension.
 	 * 
-	 * @param otuCountFile {@value #OTU_COUNT} file
+	 * @param otuCountFile {@value biolockj.Constants#OTU_COUNT} file
 	 * @return Sample ID
 	 * @throws Exception if errors occur
 	 */
@@ -205,7 +205,7 @@ public class OtuUtil
 	 * 
 	 * @param files Collection of OTU count files
 	 * @return TreeMap(SampleID, TreeMap(OTU, count)) OTU counts by sample
-	 * @throws Exception if any of the input file names are missing "_{@value #OTU_COUNT}_"
+	 * @throws Exception if any of the input file names are missing "_{@value biolockj.Constants#OTU_COUNT}_"
 	 */
 	public static TreeMap<String, TreeMap<String, Integer>> getSampleOtuCounts( final Collection<File> files )
 			throws Exception

@@ -48,12 +48,12 @@ public final class RMetaUtil
 	 * <li>Fields with nominal or mixed nominal/numeric data are classified as nominal data.
 	 * </ul>
 	 * <p>
-	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_READS} = {@value biolockj.Config#TRUE}, add the
+	 * If {@link biolockj.Config}.{@value biolockj.Constants#REPORT_NUM_READS} = {@value biolockj.Constants#TRUE}, add the
 	 * last read count field in the metadata file as a numeric field store in {link
 	 * biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}
 	 * 
 	 * <p>
-	 * If {@link biolockj.Config}.{@value biolockj.Config#REPORT_NUM_HITS} = {@value biolockj.Config#TRUE}, add the
+	 * If {@link biolockj.Config}.{@value biolockj.Constants#REPORT_NUM_HITS} = {@value biolockj.Constants#TRUE}, add the
 	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getOtuCountField()} field as a numeric field.
 	 * <p>
 	 * Perform validations:
@@ -270,7 +270,7 @@ public final class RMetaUtil
 	}
 
 	/**
-	 * Get the {@link biolockj.Config}.{@value #MDS_REPORT_FIELDS} fields.
+	 * Get the {@link biolockj.Config}.{@value R_PlotMds#R_MDS_REPORT_FIELDS} fields.
 	 *
 	 * @return Set of MDS fields
 	 */

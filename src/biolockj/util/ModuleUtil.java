@@ -373,9 +373,9 @@ public class ModuleUtil
 	/**
 	 * Check if a module was in the pipeline at least once.
 	 * 
-	 * @param className
-	 * @return
-	 * @throws Exception
+	 * @param className module simple name
+	 * @return boolean
+	 * @throws Exception if runtime errors occur
 	 */
 	public static boolean moduleExists( final String className ) throws Exception
 	{

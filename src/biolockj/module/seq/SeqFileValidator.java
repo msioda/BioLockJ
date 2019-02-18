@@ -13,7 +13,7 @@ package biolockj.module.seq;
 
 import java.io.*;
 import java.util.*;
-import biolockj.BioLockJ;
+import biolockj.Constants;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.JavaModule;
@@ -272,7 +272,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 						for( final String seqLine: seqLines )
 						{
-							writer.write( seqLine + BioLockJ.RETURN );
+							writer.write( seqLine + Constants.RETURN );
 						}
 					}
 
@@ -309,7 +309,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 	/**
 	 * Verify equal number of forward and reverse read files.<br>
-	 * if {@value #REQUIRE_EUQL_NUM_PAIRS}={@value biolockj.Config#TRUE}, verify forward and reverse read files have an
+	 * if {@value #REQUIRE_EUQL_NUM_PAIRS}={@value biolockj.Constants#TRUE}, verify forward and reverse read files have an
 	 * equal number of reads.
 	 * 
 	 * @throws Exception if validations fail or errors occur

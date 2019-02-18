@@ -17,7 +17,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.*;
-import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
@@ -104,7 +103,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	/**
 	 * If running Docker, run the Docker bash script, otherwise:<br>
 	 * Run {@link biolockj.Config}.{@value #EXE_RSCRIPT} command on the generated R Script:
-	 * {@link biolockj.util.ModuleUtil#getMainScript(BioModule)}.
+	 * {@link ScriptModuleImpl#getMainScript()}.
 	 */
 	@Override
 	public String[] getJobParams() throws Exception
@@ -494,7 +493,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	private static void writeScript( final BufferedWriter writer, final String rCode ) throws Exception
 	{
 		int indentCount = 0;
-		final StringTokenizer st = new StringTokenizer( rCode, BioLockJ.RETURN );
+		final StringTokenizer st = new StringTokenizer( rCode, Constants.RETURN );
 		while( st.hasMoreTokens() )
 		{
 			final String line = st.nextToken();
@@ -510,7 +509,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 				writer.write( INDENT );
 			}
 
-			writer.write( line + BioLockJ.RETURN );
+			writer.write( line + Constants.RETURN );
 
 			if( line.endsWith( "{" ) )
 			{

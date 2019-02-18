@@ -55,7 +55,7 @@ public class MetaUtil
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
 		try
 		{
-			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + BioLockJ.RETURN );
+			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + Constants.RETURN );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
@@ -63,12 +63,12 @@ public class MetaUtil
 				final String id = st.nextToken();
 				if( sampleIds.contains( id ) )
 				{
-					writer.write( line + Constants.TAB_DELIM + map.get( id ) + BioLockJ.RETURN );
+					writer.write( line + Constants.TAB_DELIM + map.get( id ) + Constants.RETURN );
 				}
 				else if( !removeMissingIds )
 				{
 					writer.write( line + Constants.TAB_DELIM + Config.requireString( null, META_NULL_VALUE )
-							+ BioLockJ.RETURN );
+							+ Constants.RETURN );
 				}
 				else
 				{
@@ -101,8 +101,8 @@ public class MetaUtil
 	 * @param field Metadata column
 	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
 	 * @return boolean if field values are unique
-	 * @throws Exception
-	 */
+	 * @throws Exception if runtime errors occur
+	 */ 
 	public static boolean fieldValuesAreUnique( final String field, final boolean ignoreNulls ) throws Exception
 	{
 		final int numVals = getFieldValues( field, ignoreNulls ).size();
@@ -290,6 +290,7 @@ public class MetaUtil
 	 * Get the metadata file name, if it exists, otherwise return projectName.tsv
 	 *
 	 * @return Name of metadata file, or a default name if no metadata file exists #throws Exception if errors occur
+	 * @throws Exception if runtime errors occur
 	 */
 	public static String getMetadataFileName() throws Exception
 	{
@@ -337,7 +338,7 @@ public class MetaUtil
 	/**
 	 * Return the metadata file path
 	 * 
-	 * @return
+	 * @return String the metadata file path
 	 */
 	public static String getPath()
 	{
@@ -553,7 +554,7 @@ public class MetaUtil
 						writer.write( Constants.TAB_DELIM + token );
 					}
 				}
-				writer.write( BioLockJ.RETURN );
+				writer.write( Constants.RETURN );
 			}
 		}
 		finally
@@ -738,7 +739,7 @@ public class MetaUtil
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #META_REQUIRED}<br>
-	 * If Y, require metadata row for each sample with sequence data in {@value biolockj.Config#INPUT_DIRS}.<br>
+	 * If Y, require metadata row for each sample with sequence data in {@value biolockj.Constants#INPUT_DIRS}.<br>
 	 * If N, samples without metadata are ignored.
 	 */
 	public static final String META_REQUIRED = "metadata.required";

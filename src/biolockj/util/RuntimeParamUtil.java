@@ -129,7 +129,7 @@ public class RuntimeParamUtil
 	/**
 	 * Runtime property getter for Docker host pipeline dir
 	 * 
-	 * @return Host {@value biolockj.Config#PROJECT_PIPELINE_DIR} directory
+	 * @return Host {@value biolockj.Constants#PROJECT_PIPELINE_DIR} directory
 	 */
 	public static String getDockerHostPipelineDir()
 	{
@@ -581,6 +581,6 @@ public class RuntimeParamUtil
 	private static final Map<String, String> params = new HashMap<>();
 	private static final String PASSWORD_FLAG_EXT = "--password";
 	private static final String RESTART_FLAG_EXT = "--restart";
-	private static final String RETURN = BioLockJ.RETURN;
+	private static final String RETURN = Constants.RETURN;
 	private static boolean useSystemOut = false;
 }

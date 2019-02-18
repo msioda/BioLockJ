@@ -63,10 +63,12 @@ public class SummaryUtil
 	}
 
 	/**
-	 * Retun the min/max/mean/median summary stats for the given metadata numeric column
+	 * Return the min/max/mean/median summary stats for the given metadata numeric column
 	 * 
 	 * @param map Map(sampleId,count)
 	 * @param label Context label
+	 * @param numSpaces number of spaces used in padding
+	 * @param addTotal include line giving the total 
 	 * @return Summary lines
 	 * @throws Exception if errors occur
 	 */
@@ -867,7 +869,7 @@ public class SummaryUtil
 	private static final String PIPELINE_OUTPUT = "Pipeline Dir";
 	private static final String PIPELINE_RUNTIME = "Pipeline Runtime";
 	private static final String PIPELINE_STATUS = "Pipeline Status";
-	private static final String RETURN = BioLockJ.RETURN;
+	private static final String RETURN = Constants.RETURN;
 	private static final String SPACER = "---------------------------------------------------------------------";
 	private static final String SPACER_2X = SPACER + SPACER;
 }

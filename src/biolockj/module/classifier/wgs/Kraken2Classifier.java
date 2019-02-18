@@ -91,7 +91,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 
 	/**
 	 * Verify that none of the derived command line parameters are included in
-	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}. Also verify:
+	 * {@link biolockj.Config}.{@value biolockj.Constants#EXE_CLASSIFIER_PARAMS}. Also verify:
 	 * <ul>
 	 * <li>{@link biolockj.Config}.{@value #KRAKEN_DATABASE} is a valid file path valid parameters
 	 * 
