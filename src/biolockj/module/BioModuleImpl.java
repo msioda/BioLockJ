@@ -163,11 +163,13 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		if( !moduleDir.exists() )
 		{
 			moduleDir.mkdirs();
-			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new" + moduleDir.getAbsolutePath() );
+			Log.info( getClass(),
+					"Construct module [ " + ModuleUtil.displayID( this ) + " ] for new" + moduleDir.getAbsolutePath() );
 		}
 		else
 		{
-			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing" + moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing"
+					+ moduleDir.getAbsolutePath() );
 		}
 	}
 
@@ -189,13 +191,13 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 
 	@Override
 	public String toString()
-	{	
+	{
 		String val = getID() + "_" + getClass().getName();
 		try
 		{
 			val = ModuleUtil.displayID( this ) + "_" + getClass().getName();
 		}
-		catch(Exception ex )
+		catch( final Exception ex )
 		{
 			Log.error( getClass(), "Unable to find ID for: " + getClass().getName(), ex );
 		}
@@ -217,9 +219,9 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		inputFiles.clear();
 		inputFiles.addAll( files );
 		Collections.sort( inputFiles );
-		
+
 		printInputFiles();
-		
+
 	}
 
 	/**

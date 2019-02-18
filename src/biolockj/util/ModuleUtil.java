@@ -34,6 +34,18 @@ public class ModuleUtil
 	{}
 
 	/**
+	 * Return the module ID as a 2 digit display number (add leading zero if needed).
+	 * 
+	 * @param module BioModule
+	 * @return ID display value
+	 * @throws Exception if errors occur
+	 */
+	public static String displayID( final BioModule module ) throws Exception
+	{
+		return BioLockJUtil.formatDigits( module.getID(), 2 );
+	}
+
+	/**
 	 * Get a classifier module<br>
 	 * Use checkAhead parameter to determine if we look forward or backwards starting from the given module.
 	 * 
@@ -84,6 +96,11 @@ public class ModuleUtil
 		return getDefaultModule( Constants.DEFAULT_MOD_SEQ_MERGER, PearMergeReads.class.getName() );
 	}
 
+	/**
+	 * Return the class name of the default R statistics BioModule
+	 * 
+	 * @return default stats module
+	 */
 	public static String getDefaultStatsModule()
 	{
 		return getDefaultModule( Constants.DEFAULT_STATS_MODULE, R_CalculateStats.class.getName() );
@@ -104,18 +121,19 @@ public class ModuleUtil
 	{
 		if( module instanceof ClassifierModule )
 		{
-			throw new Exception( "ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: " 
-					+ module.getClass().getName() );
+			throw new Exception(
+					"ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: "
+							+ module.getClass().getName() );
 		}
-		
+
 		final ClassifierModule classifier = getClassifier( module, checkAhead );
 		for( final BioModule m: getModules( module, checkAhead ) )
 		{
 			if( m.getClass().getName().equals( className ) )
 			{
-				boolean targetBeforeClassifier = m.getID() < classifier.getID();
-				boolean targetAfterClassifier = m.getID() > classifier.getID();
-				if( classifier == null || ( checkAhead && targetBeforeClassifier ) || ( !checkAhead && targetAfterClassifier ) )
+				final boolean targetBeforeClassifier = m.getID() < classifier.getID();
+				final boolean targetAfterClassifier = m.getID() > classifier.getID();
+				if( classifier == null || checkAhead && targetBeforeClassifier || !checkAhead && targetAfterClassifier )
 				{
 					return m;
 				}
@@ -127,7 +145,7 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Construct a  BioModule based on its className.
+	 * Construct a BioModule based on its className.
 	 * 
 	 * @param className BioModule class name
 	 * @return BioModule module
@@ -223,18 +241,6 @@ public class ModuleUtil
 	{
 		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		return f.exists();
-	}
-	
-	/**
-	 * Return the module ID as a 2 digit display number (add leading zero if needed).
-	 * 
-	 * @param module BioModule
-	 * @return ID display value
-	 * @throws Exception if errors occur
-	 */
-	public static String displayID( final BioModule module ) throws Exception
-	{
-		return BioLockJUtil.formatDigits( module.getID(), 2 );
 	}
 
 	/**
@@ -344,7 +350,8 @@ public class ModuleUtil
 				module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		BioLockJUtil.deleteWithRetry( startFile, 5 );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
-		Log.info( ModuleUtil.class, "FINISHED [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
+		Log.info( ModuleUtil.class,
+				"FINISHED [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 	}
 
@@ -366,7 +373,8 @@ public class ModuleUtil
 			throw new Exception( "Unable to create " + f.getAbsolutePath() );
 		}
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
-		Log.info( ModuleUtil.class, "STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
+		Log.info( ModuleUtil.class,
+				"STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Log.LOG_SPACER );
 	}
 

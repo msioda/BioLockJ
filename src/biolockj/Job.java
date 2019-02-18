@@ -13,8 +13,6 @@ package biolockj;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.StringTokenizer;
 import biolockj.module.ScriptModule;
 
@@ -25,14 +23,15 @@ import biolockj.module.ScriptModule;
 public class Job
 {
 
-	private Job() {};
-	
+	private Job()
+	{};
+
 	/**
-	 * Execute the command args and log ouput with label.
+	 * Execute the command args and log output with label.
 	 * 
 	 * @param args Command args
 	 * @param label Log label
-	 * @throws Exception
+	 * @throws Exception if errors occur in the Job
 	 */
 	public void runJob( final String[] args, final String label ) throws Exception
 	{
@@ -52,8 +51,6 @@ public class Job
 		p.waitFor();
 		p.destroy();
 	}
-
-
 
 	/**
 	 * Set file permissions by executing chmod {@value biolockj.module.ScriptModule#SCRIPT_PERMISSIONS} on generated
@@ -102,7 +99,7 @@ public class Job
 	 */
 	public static void submit( final String[] args ) throws Exception
 	{
-		 new Job().runJob( args, "Process" );
+		new Job().runJob( args, "Process" );
 	}
 
 	private static String getArgsAsString( final String[] args )

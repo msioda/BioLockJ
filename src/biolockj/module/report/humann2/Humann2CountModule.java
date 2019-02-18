@@ -32,21 +32,6 @@ import biolockj.util.PathwayUtil;
  */
 public abstract class Humann2CountModule extends JavaModuleImpl implements JavaModule
 {
-	/**
-	 * Module prerequisite: {@link biolockj.module.implicit.parser.wgs.Humann2Parser}
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
-		{
-			preReqs.add( Humann2Parser.class.getName() );
-		}
-		preReqs.addAll( super.getPreRequisiteModules() );
-		return preReqs;
-	}
-	
 	@Override
 	public void checkDependencies() throws Exception
 	{
@@ -70,6 +55,21 @@ public abstract class Humann2CountModule extends JavaModuleImpl implements JavaM
 			cacheInputFiles( files );
 		}
 		return getFileCache();
+	}
+
+	/**
+	 * Module prerequisite: {@link biolockj.module.implicit.parser.wgs.Humann2Parser}
+	 */
+	@Override
+	public List<String> getPreRequisiteModules() throws Exception
+	{
+		final List<String> preReqs = new ArrayList<>();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) )
+		{
+			preReqs.add( Humann2Parser.class.getName() );
+		}
+		preReqs.addAll( super.getPreRequisiteModules() );
+		return preReqs;
 	}
 
 	@Override

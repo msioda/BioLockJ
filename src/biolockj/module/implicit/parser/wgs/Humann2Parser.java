@@ -59,7 +59,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		for( final File file: getInputFiles() )
 		{
 			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
-			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PARSED );
+			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, HN2_PARSED );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 			try
 			{
@@ -117,7 +117,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 		return output;
 	}
-	
+
 	private String getSampleID( String name ) throws Exception
 	{
 		if( name.contains( PAIRED_SUFFIX ) )
@@ -143,7 +143,6 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 		return name;
 	}
-
 
 	private String stripQuotes( final String val ) throws Exception
 	{
@@ -178,6 +177,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 	private static final String ABUND_SUFFIX = "_Abundance";
 	private static final String COVERAGE_SUFFIX = "_Coverage";
+	private static final String HN2_PARSED = "hnn2";
 	private static final String KD_SUFFIX = "_kneaddata";
 	private static final String PAIRED_SUFFIX = "_paired_merged";
 	private static final String RPK_SUFFIX = "-RPKs";

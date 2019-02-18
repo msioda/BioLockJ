@@ -145,7 +145,8 @@ public class OtuUtil
 
 	/**
 	 * Build OTU count file using a standard format in the directory given.<br>
-	 * Format: pipeline_name + prefix + {@value biolockj.Constants#OTU_COUNT} + sampleId + {@value biolockj.Constants#TSV_EXT}
+	 * Format: pipeline_name + prefix + {@value biolockj.Constants#OTU_COUNT} + sampleId +
+	 * {@value biolockj.Constants#TSV_EXT}
 	 * 
 	 * @param dir File directory
 	 * @param sampleId Sample ID

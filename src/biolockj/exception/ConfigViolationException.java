@@ -19,6 +19,11 @@ package biolockj.exception;
  */
 public class ConfigViolationException extends ConfigException
 {
+	/**
+	 * Generic exception message.
+	 * 
+	 * @param msg Error message
+	 */
 	public ConfigViolationException( final String msg )
 	{
 		super( msg );

@@ -60,6 +60,11 @@ public class DemuxUtil
 				&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
 	}
 
+	/**
+	 * Clear demultiplexer related fields
+	 * 
+	 * @throws Exception if errors occur
+	 */
 	public static void clearDemuxConfig() throws Exception
 	{
 		Config.setConfigProperty( MetaUtil.META_BARCODE_COLUMN, "" );

@@ -285,7 +285,7 @@ public class Pipeline
 			{
 				deleteIncompleteModule( module );
 			}
-			
+
 			if( ModuleUtil.isComplete( module ) )
 			{
 				module.cleanUp();
@@ -475,8 +475,6 @@ public class Pipeline
 			}
 		}
 	}
-
-	
 
 	/**
 	 * File suffix appended to failed scripts: {@value #SCRIPT_FAILURES}

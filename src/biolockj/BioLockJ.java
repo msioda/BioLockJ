@@ -227,15 +227,18 @@ public class BioLockJ
 	protected static void initRestart() throws Exception
 	{
 		Log.initialize( Config.pipelineName() );
-		Log.warn( BioLockJ.class, Constants.RETURN + Log.LOG_SPACER + Constants.RETURN + "RESTART PROJECT DIR --> "
-				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Log.LOG_SPACER + Constants.RETURN );
+		Log.warn( BioLockJ.class,
+				Constants.RETURN + Log.LOG_SPACER + Constants.RETURN + "RESTART PROJECT DIR --> "
+						+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Log.LOG_SPACER
+						+ Constants.RETURN );
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
-		if (Config.isOnCluster()) {
+		if( Config.isOnCluster() )
+		{
 			DownloadUtil.getDownloadListFile().delete();
 		}
-		
+
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
 		if( f.exists() )
 		{
@@ -521,11 +524,11 @@ public class BioLockJ
 			int index = 0;
 			final String prefix = ( RuntimeParamUtil.isDockerMode() ? DockerUtil.CONTAINER_OUTPUT_DIR: "~" )
 					+ File.separator;
-			File errFile = new File( Config
-					.getSystemFilePath( prefix + Constants.FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
+			File errFile = new File(
+					Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
 			while( errFile.exists() )
 			{
-				errFile = new File( Config.getSystemFilePath( prefix + Constants.FATAL_ERROR_FILE_PREFIX + suffix + "_"
+				errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
 						+ new Integer( ++index ).toString() + Constants.LOG_EXT ) );
 			}
 
@@ -602,5 +605,6 @@ public class BioLockJ
 		}
 	}
 
+	private static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 	private static boolean printedFinalExcp = false;
 }

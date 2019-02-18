@@ -91,8 +91,8 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	}
 
 	/**
-	 * Set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_PAIRED_READS} = {@value biolockj.Constants#FALSE} and
-	 * register number of reads.
+	 * Set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_PAIRED_READS} =
+	 * {@value biolockj.Constants#FALSE} and register number of reads.
 	 */
 	@Override
 	public void cleanUp() throws Exception

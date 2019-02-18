@@ -68,7 +68,7 @@ public class SummaryUtil
 	 * @param map Map(sampleId,count)
 	 * @param label Context label
 	 * @param numSpaces number of spaces used in padding
-	 * @param addTotal include line giving the total 
+	 * @param addTotal include line giving the total
 	 * @return Summary lines
 	 * @throws Exception if errors occur
 	 */
@@ -129,16 +129,14 @@ public class SummaryUtil
 	 */
 	public static String getFooter() throws Exception
 	{
-		long duration = System.currentTimeMillis() - Constants.APP_START_TIME;
+		final long duration = System.currentTimeMillis() - Constants.APP_START_TIME;
 		Log.info( SummaryUtil.class, "App Runtime start time (as long): " + Constants.APP_START_TIME );
 		Log.info( SummaryUtil.class, "App Runtime end time   (as long): " + System.currentTimeMillis() );
-		
-		
+
 		final StringBuffer sb = new StringBuffer();
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
-		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration )
-				+ RETURN );
+		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration ) + RETURN );
 
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
 		sb.append( getLabel( PIPELINE_CONFIG ) + " " + Config.getConfigFilePath() + RETURN );

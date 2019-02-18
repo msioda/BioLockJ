@@ -41,7 +41,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		Log.info( getClass(), "Processing " + ( files == null ? 0: files.size() ) + " files" );
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
-		if( ( RuntimeParamUtil.isDockerMode() && !DockerUtil.runAws() )
+		if( RuntimeParamUtil.isDockerMode() && !DockerUtil.runAws()
 				|| Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= files.size() )
 		{
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
@@ -86,7 +86,6 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		super.checkDependencies();
 		getParams();
 	}
-
 
 	/**
 	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.

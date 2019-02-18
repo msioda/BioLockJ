@@ -12,7 +12,6 @@
 package biolockj.node.wgs;
 
 import java.util.StringTokenizer;
-import biolockj.BioLockJ;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.node.OtuNode;

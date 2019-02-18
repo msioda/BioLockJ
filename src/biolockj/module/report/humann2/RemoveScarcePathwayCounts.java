@@ -40,8 +40,6 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		}
 	}
 
-	
-
 	/**
 	 * Produce summary message with min, max, mean, and median number of pathways.
 	 */
@@ -89,6 +87,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 	 * Save a list of low count pathways or samples to the module temp directory.
 	 * 
 	 * @param map TreeMap(sampleId, TreeSet(data)) of Pathways found in too few samples or pathways
+	 * @param file Output file
 	 * @throws Exception if errors occur
 	 */
 	protected void logScarceData( final TreeMap<String, TreeSet<String>> map, final File file ) throws Exception
@@ -126,6 +125,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 	 * Remove Pathway Counts below the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_MIN_COUNT}
 	 * 
 	 * @param file input file
+	 * @param scarcePathways Set of pathway names to be eliminated
 	 * @return TreeMap(SampleId, TreeMap(Pathway)) Map removed pathways to sample ID
 	 * @throws Exception if errors occur
 	 */

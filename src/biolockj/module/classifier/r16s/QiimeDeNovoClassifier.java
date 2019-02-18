@@ -17,7 +17,6 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.util.BashScriptBuilder;
 import biolockj.util.MetaUtil;
 
 /**
@@ -80,7 +79,6 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 			getVsearchParams();
 		}
 	}
-
 
 	/**
 	 * The method returns 1 bash script line that will copy the batch

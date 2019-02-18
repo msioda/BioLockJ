@@ -48,13 +48,13 @@ public final class RMetaUtil
 	 * <li>Fields with nominal or mixed nominal/numeric data are classified as nominal data.
 	 * </ul>
 	 * <p>
-	 * If {@link biolockj.Config}.{@value biolockj.Constants#REPORT_NUM_READS} = {@value biolockj.Constants#TRUE}, add the
-	 * last read count field in the metadata file as a numeric field store in {link
+	 * If {@link biolockj.Config}.{@value biolockj.Constants#REPORT_NUM_READS} = {@value biolockj.Constants#TRUE}, add
+	 * the last read count field in the metadata file as a numeric field store in {link
 	 * biolockj.module.implicit.RegisterNumReads#getNumReadFieldName()}
 	 * 
 	 * <p>
-	 * If {@link biolockj.Config}.{@value biolockj.Constants#REPORT_NUM_HITS} = {@value biolockj.Constants#TRUE}, add the
-	 * {@link biolockj.module.implicit.parser.ParserModuleImpl#getOtuCountField()} field as a numeric field.
+	 * If {@link biolockj.Config}.{@value biolockj.Constants#REPORT_NUM_HITS} = {@value biolockj.Constants#TRUE}, add
+	 * the {@link biolockj.module.implicit.parser.ParserModuleImpl#getOtuCountField()} field as a numeric field.
 	 * <p>
 	 * Perform validations:
 	 * <ul>
@@ -161,10 +161,8 @@ public final class RMetaUtil
 
 		if( ModuleUtil.getClassifier( module, false ) instanceof Humann2Classifier )
 		{
-			rScriptFields = updateNumericData( Constants.HN2_UNMAPPED_COUNT, rScriptFields, reportHits );
 			rScriptFields = updateNumericData( Constants.HN2_UNIQUE_PATH_COUNT, rScriptFields, reportHits );
 			rScriptFields = updateNumericData( Constants.HN2_TOTAL_PATH_COUNT, rScriptFields, reportHits );
-			rScriptFields = updateNumericData( Constants.HN2_UNINTEGRATED_COUNT, rScriptFields, reportHits );
 		}
 
 		if( reportAllFields( module ) && !RuntimeParamUtil.isDirectMode() )
@@ -484,7 +482,7 @@ public final class RMetaUtil
 	{
 		for( final BioModule module: Pipeline.getModules() )
 		{
-			if( module.getClass().getName().toLowerCase().contains( "qiime" ) )
+			if( module.getClass().getName().toLowerCase().contains( Constants.QIIME ) )
 			{
 				Log.debug( RMetaUtil.class, "Found Qiime Module: " + module.getClass().getName() );
 				return true;
@@ -564,22 +562,15 @@ public final class RMetaUtil
 		}
 	}
 
-	public static final String QIIME_ALPHA_METRIC_LABEL_SUFFIX = "_alpha_label";
-	public static final String QIIME_ALPHA_METRIC_SUFFIX = "_alpha";
-
-	public static final String QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX = "_normalized_alpha";
-
 	/**
 	 * Name of R script variable with metadata column count
 	 */
 	protected static final String NUM_META_COLS = "R_internal.numMetaCols";
-
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_EXCLUDE_FIELDS}<br>
 	 * R reports must contain at least one valid nominal or numeric metadata field.
 	 */
 	protected static final String R_EXCLUDE_FIELDS = "r.excludeFields";
-	
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_MDS_REPORT_FIELDS}<br>
 	 * Fields listed here must exist in the metadata file.
@@ -606,10 +597,16 @@ public final class RMetaUtil
 	protected static final String R_REPORT_FIELDS = "r.reportFields";
 
 	private static final String BINARY_FIELDS = "R_internal.binaryFields";
+
 	private static final Set<String> binaryFields = new TreeSet<>();
+
 	private static final Set<String> mdsFields = new TreeSet<>();
+
 	private static final String NOMINAL_FIELDS = "R_internal.nominalFields";
 	private static final Set<String> nominalFields = new TreeSet<>();
 	private static final String NUMERIC_FIELDS = "R_internal.numericFields";
 	private static final Set<String> numericFields = new TreeSet<>();
+	private static final String QIIME_ALPHA_METRIC_LABEL_SUFFIX = "_alpha_label";
+	private static final String QIIME_ALPHA_METRIC_SUFFIX = "_alpha";
+	private static final String QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX = "_normalized_alpha";
 }

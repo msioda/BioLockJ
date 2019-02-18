@@ -1,43 +1,55 @@
+/**
+ * @UNCC Fodor Lab
+ * @author Michael Sioda
+ * @email msioda@uncc.edu
+ * @date Feb 02, 2019
+ * @disclaimer This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+ * later version, provided that any use properly credits the author. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
+ */
 package biolockj;
 
+/**
+ * 
+ * @author mike
+ *
+ */
 public class Constants
-{	
+{
 	/**
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();
 
+	/**
+	 * {@link biolockj.Config} String property: AWS EFS directory set in Nextflow main.nf: {@value #AWS_EFS_DIR}
+	 */
 	public static final String AWS_EFS_DIR = "aws.efsDir";
 
+	/**
+	 * {@link biolockj.Config} String property: AWS memory set in Nextflow main.nf: {@value #AWS_RAM}
+	 */
 	public static final String AWS_RAM = "aws.ram";
 
-	public static final String AWS_STACK = "aws.stack";
-	
-	
 	/**
-	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
-	 */
-	public static final String SCRIPT_DIR = "script";
-	
-	/**
-	 * {@link biolockj.Config} property suffix for exe.* properties, used to set optional parameters: {@value #PARAMS}
-	 */	
-	public static final String PARAMS = "Params";
-
-	/**
-	 * Name of the file created in the BioModule or {@value #PROJECT_PIPELINE_DIR} root directory to
-	 * indicate execution was successful: {@value #BLJ_COMPLETE}
+	 * Name of the file created in the BioModule or {@value #PROJECT_PIPELINE_DIR} root directory to indicate execution
+	 * was successful: {@value #BLJ_COMPLETE}
 	 */
 	public static final String BLJ_COMPLETE = "biolockjComplete";
+
 	/**
-	 * Name of the file created in the {@value #PROJECT_PIPELINE_DIR} root directory to indicate fatal
-	 * application errors halted execution: {@value #BLJ_FAILED}
+	 * Name of the file created in the {@value #PROJECT_PIPELINE_DIR} root directory to indicate fatal application
+	 * errors halted execution: {@value #BLJ_FAILED}
 	 */
 	public static final String BLJ_FAILED = "biolockjFailed";
+
 	/**
 	 * Name of the file created in the BioModule root directory to indicate execution has started: {@value #BLJ_STARTED}
 	 */
 	public static final String BLJ_STARTED = "biolockjStarted";
+
 	/**
 	 * URL to the BioLockJ WIKI
 	 */
@@ -60,11 +72,13 @@ public class Constants
 	 * {@value #DEFAULT_MOD_SEQ_MERGER}
 	 */
 	public static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultModuleSeqMerger";
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used generate p-value and other
 	 * stats: {@value #DEFAULT_STATS_MODULE}
 	 */
 	public static final String DEFAULT_STATS_MODULE = "project.defaultStatsModule";
+
 	/**
 	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
 	 * with {@value #DELIM_SEP}
@@ -83,11 +97,8 @@ public class Constants
 	 */
 	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
 
-	public static final String DOCKER_IMG_VERSION = "docker.imgVersion";
-
 	/**
-	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
-	 * Set command line executable awk.
+	 * {@link biolockj.Config} String property: to the awk executable {@value #EXE_AWK}<br>
 	 */
 	public static final String EXE_AWK = "exe.awk";
 
@@ -96,11 +107,13 @@ public class Constants
 	 * Set command line executable docker
 	 */
 	public static final String EXE_DOCKER = "exe.docker";
+
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
 	 * Set command line executable gzip
 	 */
 	public static final String EXE_GZIP = "exe.gzip";
+
 	/**
 	 * {@link biolockj.Config} property for java executable: {@value #EXE_JAVA}
 	 */
@@ -113,31 +126,58 @@ public class Constants
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
 	public static final String FALSE = "N";
-	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
+
 	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
+
+	/**
+	 * {@link biolockj.Config} Boolean property to disable HumanN2 Gene Family report:
+	 * {@value #HN2_DISABLE_GENE_FAMILIES}
+	 */
 	public static final String HN2_DISABLE_GENE_FAMILIES = "humann2.disableGeneFamilies";
+
+	/**
+	 * {@link biolockj.Config} Boolean property to disable HumanN2 Pathway Abundance report:
+	 * {@value #HN2_DISABLE_PATH_ABUNDANCE}
+	 */
 	public static final String HN2_DISABLE_PATH_ABUNDANCE = "humann2.disablePathAbundance";
+
+	/**
+	 * {@link biolockj.Config} Boolean property to disable HumanN2 Pathway Coverage report:
+	 * {@value #HN2_DISABLE_PATH_COVERAGE}
+	 */
 	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
 
-	public static final String HN2_PARSED = "HnN2";
-	
-	
+	/**
+	 * HumanN2 file suffix identifier for Gene Family Summary report: {@value #HN2_GENE_FAM_SUM}
+	 */
 	public static final String HN2_GENE_FAM_SUM = "geneFam";
+
+	/**
+	 * HumanN2 file suffix identifier for Pathway Abundance Summary report: {@value #HN2_PATH_ABUND_SUM}
+	 */
 	public static final String HN2_PATH_ABUND_SUM = "pAbund";
+
+	/**
+	 * HumanN2 file suffix identifier for Pathway Coverage Summary report: {@value #HN2_PATH_COVG_SUM}
+	 */
 	public static final String HN2_PATH_COVG_SUM = "pCovg";
-	
-	
-	public static final String HN2_GENE_FAMILIES = "genefamilies";
-	public static final String HN2_PATH_ABUNDANCE = "pathabundance";
-	public static final String HN2_PATH_COVERAGE = "pathcoverage";
-	
+
+	/**
+	 * HumanN2 meta column to store the total pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
+	 */
 	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
-	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";
+
+	/**
+	 * HumanN2 meta column to store the unique pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
+	 */
 	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
-	public static final String HN2_UNMAPPED_COUNT = "Unmapped_Count";
+
+	/**
+	 * Standard indent = 4 spaces.
+	 */
 	public static final String INDENT = "    ";
 
 	/**
@@ -145,6 +185,7 @@ public class Constants
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
+
 	/**
 	 * {@link biolockj.Config} List property: {@value #INPUT_IGNORE_FILES}<br>
 	 * Set file names to ignore if found in {@value #INPUT_DIRS}
@@ -175,18 +216,20 @@ public class Constants
 	 */
 	public static final String LOG_EXT = ".log";
 
-	public static final String MODULE_CLASSIFIER_PACKAGE = "biolockj.module.classifier";
-
-	public static final String MODULE_IMPLICIT_PACKAGE = "biolockj.module.implicit";
-
-	public static final String MODULE_R_PACKAGE = "biolockj.module.r";
-
+	/**
+	 * Biolockj SEQ module package: {@value #MODULE_SEQ_PACKAGE}
+	 */
 	public static final String MODULE_SEQ_PACKAGE = "biolockj.module.seq";
 
 	/**
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
 	 */
 	public static final String OTU_COUNT = "otuCount";
+
+	/**
+	 * {@link biolockj.Config} property suffix for exe.* properties, used to set optional parameters: {@value #PARAMS}
+	 */
+	public static final String PARAMS = "Params";
 
 	/**
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
@@ -247,13 +290,16 @@ public class Constants
 	 */
 	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
 
+	/**
+	 * QIIME application: {@value #QIIME}
+	 */
 	public static final String QIIME = "qiime";
 
 	/**
 	 * Qiime may find ambiguous taxa identified in various formats in different databases. The following accounts for
 	 * Green Genes 13.8 and Silva 132: "Ambiguous_taxa", "Other", "Unassigned"
 	 */
-	public static final String[] QIIME_AMBIGUOUS_TAXA =  { "Ambiguous_taxa", "Other", "Unassigned" };
+	public static final String[] QIIME_AMBIGUOUS_TAXA = { "Ambiguous_taxa", "Other", "Unassigned" };
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>
@@ -298,6 +344,11 @@ public class Constants
 	public static final String RETURN = "\n";
 
 	/**
+	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
+	 */
+	public static final String SCRIPT_DIR = "script";
+
+	/**
 	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
 	 */
 	public static final String SEPARATOR = "|";
@@ -332,5 +383,4 @@ public class Constants
 	 * {@value #PROJECT_PERMISSIONS}
 	 */
 	protected static final String PROJECT_PERMISSIONS = "project.permissions";
-
 }

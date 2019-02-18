@@ -33,6 +33,7 @@ public class PathwayUtil
 	/**
 	 * Check pipeline input contains Humann2Parser module output.
 	 * 
+	 * @param files Files to test
 	 * @return TRUE if pipeline input contains module input
 	 */
 	public static boolean containsHn2ParserOutput( final Collection<File> files )
@@ -51,11 +52,37 @@ public class PathwayUtil
 		return false;
 	}
 
-	public static String getHn2ClassifierOutput( final String key )
+	/**
+	 * Humann2 classifier outputs 3 types of files:
+	 * <ul>
+	 * <li>{@value biolockj.Constants#HN2_PATH_ABUND_SUM}
+	 * <li>{@value biolockj.Constants#HN2_PATH_COVG_SUM}
+	 * <li>{@value biolockj.Constants#HN2_GENE_FAM_SUM}
+	 * </ul>
+	 * Given the type, this method retuns the output file name.
+	 * 
+	 * @param type Humann2 classifier output type
+	 * @return Name of humann2 output file of the given type
+	 */
+	public static String getHn2ClassifierOutput( final String type )
 	{
-		return Config.pipelineName() + "_" + key + "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
+		return Config.pipelineName() + "_" + type + "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
 	}
 
+	/**
+	 * Humann2 classifier outputs 3 types of files:
+	 * <ul>
+	 * <li>{@value biolockj.Constants#HN2_PATH_ABUND_SUM}
+	 * <li>{@value biolockj.Constants#HN2_PATH_COVG_SUM}
+	 * <li>{@value biolockj.Constants#HN2_GENE_FAM_SUM}
+	 * </ul>
+	 * This method returns the type included in the given file name.
+	 * 
+	 * 
+	 * @param file Humann2 classifier output type
+	 * @return Name of humann2 output file of the given type
+	 * @throws Exception if unable to determine the type
+	 */
 	public static String getHn2Type( final File file ) throws Exception
 	{
 		if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
@@ -144,22 +171,16 @@ public class PathwayUtil
 		return false;
 	}
 
-
-	private static String pathwayFileSuffix()
-	{
-		return "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
-	}
-
 	/**
 	 * Verify the HumanN2 Config contains at least one of the following reports are enabled:<br>
 	 * <ul>
-	 * <li>{@valud biolockj.Constants#HN2_DISABLE_GENE_FAMILIES}
-	 * <li>{@valud biolockj.Constants#HN2_DISABLE_PATH_COVERAGE}
-	 * <li>{@valud biolockj.Constants#HN2_DISABLE_GENE_FAMILIES}
+	 * <li>{@value biolockj.Constants#HN2_DISABLE_GENE_FAMILIES}
+	 * <li>{@value biolockj.Constants#HN2_DISABLE_PATH_COVERAGE}
+	 * <li>{@value biolockj.Constants#HN2_DISABLE_GENE_FAMILIES}
 	 * </ul>
 	 * 
 	 * @param module HumanN2 module
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	public static void verifyConfig( final BioModule module ) throws Exception
 	{
@@ -173,6 +194,11 @@ public class PathwayUtil
 							+ Constants.HN2_DISABLE_PATH_COVERAGE + "=" + Constants.FALSE + ", "
 							+ Constants.HN2_DISABLE_GENE_FAMILIES + "=" + Constants.FALSE );
 		}
+	}
+
+	private static String pathwayFileSuffix()
+	{
+		return "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
 	}
 
 	private static String validFormats = "[ " + Constants.HN2_PATH_ABUND_SUM + ", " + Constants.HN2_PATH_COVG_SUM + ", "

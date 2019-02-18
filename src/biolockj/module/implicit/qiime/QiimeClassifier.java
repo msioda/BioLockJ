@@ -238,8 +238,8 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * If paired reads found, add prerequisite module: {@link biolockj.module.seq.PearMergeReads}. If sequences are not
-	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}, or similar module specified by
-	 * {@value biolockj.Constants#DEFAULT_MOD_FASTA_CONV}. Subclasses of QiimeClassifier add prerequisite module:
+	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}, or similar module specified
+	 * by {@value biolockj.Constants#DEFAULT_MOD_FASTA_CONV}. Subclasses of QiimeClassifier add prerequisite module:
 	 * {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
 	 */
 	@Override
@@ -342,6 +342,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * Subclasses call this method to check dependencies before picking OTUs to validate
 	 * {@link biolockj.Config}.{@value #QIIME_PARAMS}
 	 *
+	 * @return Validated QIIME runtime parameters
 	 * @throws Exception if {@value #QIIME_PARAMS} contains invalid parameters
 	 */
 	protected String getParams() throws Exception
@@ -351,25 +352,23 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			final String params = BioLockJUtil.join( getClassifierParams() );
 			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
 			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY ("
-						+ QIIME_PARAMS + "). PLEASE REMOVE.  INPUT DETERMINED BY: "
-						+ Constants.INPUT_DIRS );
+				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY (" + QIIME_PARAMS
+						+ "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Constants.INPUT_DIRS );
 			}
 			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
 			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY ("
-						+ QIIME_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
+				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY (" + QIIME_PARAMS
+						+ "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
 			}
 			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
 			{
-				throw new Exception(
-						"INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + QIIME_PARAMS
-								+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
+				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + QIIME_PARAMS
+						+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( "-f " ) > -1 )
 			{
-				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY ("
-						+ QIIME_PARAMS + "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
+				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY (" + QIIME_PARAMS
+						+ "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
 			}
 
 			switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
@@ -582,7 +581,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * {@link biolockj.Config} List property used to obtain the QIIME executable params
 	 */
 	protected static final String QIIME_PARAMS = "qiime.params";
-	
+
 	/**
 	 * Directory created by {@value biolockj.module.classifier.r16s.QiimeDeNovoClassifier#PICK_OTU_SCRIPT} and
 	 * {@value biolockj.module.classifier.r16s.QiimeOpenRefClassifier#PICK_OTU_SCRIPT}: {@value #REP_SET}

@@ -182,8 +182,8 @@ public class Log
 
 	/**
 	 * Called by {@link biolockj.BioLockJ#main(String[]) BioLockJ.main()} after {@link biolockj.Config} is initialized.
-	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_PIPELINE_DIR}, named after
-	 * the project.
+	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_PIPELINE_DIR}, named
+	 * after the project.
 	 * <ul>
 	 * <li>Set and store {@link #LOG_FILE} and {@link #LOG_APPEND} in {@link System} properties to be used by
 	 * <a href="https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=

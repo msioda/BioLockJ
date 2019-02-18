@@ -71,8 +71,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-	 * Verify that none of the derived command line parameters are included in
-	 * {@link biolockj.Config}.{@value biolockj.Constants#EXE_CLASSIFIER_PARAMS}. Also verify:
+	 * Verify that none of the derived command line parameters are included in classifier parameters. Also verify:
 	 * <ul>
 	 * <li>{@link biolockj.Config}.{@value #HN2_NUCL_DB} is a valid directory
 	 * <li>{@link biolockj.Config}.{@value #HN2_PROT_DB} is a valid directory
@@ -198,16 +197,49 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
-	 * {@value biolockj.Constants#EXE_CLASSIFIER_PARAMS} and {@value #SCRIPT_NUM_THREADS}.
+	 * Get formatted runtime parameters and {@value #SCRIPT_NUM_THREADS}
 	 *
-	 * @return Formatted KneadData switches
+	 * @return Formatted runtime switches
 	 * @throws Exception if errors occur
 	 */
 	protected String getRuntimeParams() throws Exception
 	{
-		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " + NUCL_DB_PARAM + " " + getNuclDB() + " "
-				+ PROT_DB_PARAM + " " + getProtDB() + " ";
+		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " + NUCL_DB_PARAM
+				+ " " + getNuclDB() + " " + PROT_DB_PARAM + " " + getProtDB() + " ";
+	}
+
+	private List<String> getBuildSummaryFunction() throws Exception
+	{
+		final List<String> lines = new ArrayList<>();
+		lines.add( BUILD_SUMMARY_BASH_COMMENT );
+		lines.add( "function " + FUNCTION_BUILD_SUMMARY_TABLES + "() {" );
+		lines.add( "numStarted=1" );
+		lines.add( "numComplete=0" );
+		lines.add( "while [ $numStarted != $numComplete ]; do " );
+		lines.add( "numStarted=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
+				+ Pipeline.SCRIPT_STARTED + " | wc -l)" );
+		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
+				+ Pipeline.SCRIPT_SUCCESS + " | wc -l)" );
+		lines.add( "let \"numComplete++\"" );
+		lines.add( "[ $numStarted != $numComplete ] && sleep 30" );
+		lines.add( "done" );
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
+		{
+			lines.add( getJoinTableLine( HN2_PATH_ABUNDANCE ) );
+			lines.add( getRenormTableLine( HN2_PATH_ABUNDANCE, Constants.HN2_PATH_ABUND_SUM ) );
+		}
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
+		{
+			lines.add( getJoinTableLine( HN2_PATH_COVERAGE ) );
+			lines.add( getRenormTableLine( HN2_PATH_COVERAGE, Constants.HN2_PATH_COVG_SUM ) );
+		}
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
+		{
+			lines.add( getJoinTableLine( HN2_GENE_FAMILIES ) );
+			lines.add( getRenormTableLine( HN2_GENE_FAMILIES, Constants.HN2_GENE_FAM_SUM ) );
+		}
+		lines.add( "}" + RETURN );
+		return lines;
 	}
 
 	private String getJoinTableCmd() throws Exception
@@ -285,40 +317,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return dir;
 	}
 
-	private List<String> getBuildSummaryFunction() throws Exception
-	{
-		final List<String> lines = new ArrayList<>();
-		lines.add( BUILD_SUMMARY_BASH_COMMENT );
-		lines.add( "function " + FUNCTION_BUILD_SUMMARY_TABLES + "() {" );
-		lines.add( "numStarted=1" );
-		lines.add( "numComplete=0" );
-		lines.add( "while [ $numStarted != $numComplete ]; do " );
-		lines.add( "numStarted=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
-				+ Pipeline.SCRIPT_STARTED + " | wc -l)" );
-		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
-				+ Pipeline.SCRIPT_SUCCESS + " | wc -l)" );
-		lines.add( "let \"numComplete++\"" );
-		lines.add( "[ $numStarted != $numComplete ] && sleep 30" );
-		lines.add( "done" );
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_PATH_ABUNDANCE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE, Constants.HN2_PATH_ABUND_SUM ) );
-		}
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_PATH_COVERAGE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_COVERAGE, Constants.HN2_PATH_COVG_SUM ) );
-		}
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_DISABLE_GENE_FAMILIES ) );
-			lines.add( getRenormTableLine( Constants.HN2_DISABLE_GENE_FAMILIES, Constants.HN2_GENE_FAM_SUM ) );
-		}
-		lines.add( "}" + RETURN );
-		return lines;
-	}
-
 	private String summaryFile( final File dir, final String key ) throws Exception
 	{
 		return dir + File.separator + Config.pipelineName() + "_" + key + TSV_EXT;
@@ -355,18 +353,19 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	 * {@link biolockj.Config} Directory property may contain protein nucleotide database files: {@value #HN2_PROT_DB}
 	 */
 	protected static final String HN2_PROT_DB = "humann2.protDB";
-	
-	
-	
-	private static final String RM_STRATIFIED_OUTPUT = "--remove-stratified-output";
-	
+
+	private static final String BUILD_SUMMARY_BASH_COMMENT = "# Wait until all worker scripts are complete to build summary tables";
+
 	private static final String FILE_NAME_PARAM = "--file_name";
+	private static final String FUNCTION_BUILD_SUMMARY_TABLES = "buildSummaryTables";
 	private static final String FUNCTION_CONCAT_PAIRED_READS = "mergePairedReads";
 	private static final String FUNCTION_JOIN_HN2_TABLES = "joinHn2Tables";
 	private static final String FUNCTION_RENORM_HN2_TABLES = "renormHn2Tables";
 	private static final String FUNCTION_RUN_HN2 = "runHn2";
-	private static final String FUNCTION_BUILD_SUMMARY_TABLES = "buildSummaryTables";
 	private static final String HN2_BASH_COMMENT = "# Run sample through HMP Unified Metabolic Analysis Network";
+	private static final String HN2_GENE_FAMILIES = "genefamilies";
+	private static final String HN2_PATH_ABUNDANCE = "pathabundance";
+	private static final String HN2_PATH_COVERAGE = "pathcoverage";
 	private static final String INPUT_PARAM = "-i";
 	private static final String JOIN_BASH_COMMENT = "# Pool data of a given type output for each individual sample";
 	private static final String JOIN_OUT_DIR = "joined_tables";
@@ -383,6 +382,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 			+ "# Renorm mode options: community (default) or levelwise";
 	private static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table";
 
+	private static final String RM_STRATIFIED_OUTPUT = "--remove-stratified-output";
 	private static final String TEMP_MERGE_READ_DIR = "merged";
-	private static final String BUILD_SUMMARY_BASH_COMMENT = "# Wait until all worker scripts are complete to build summary tables";
 }

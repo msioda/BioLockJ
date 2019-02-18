@@ -146,11 +146,11 @@ public class Config
 
 		return getString( module, property );
 	}
-	
+
 	/**
 	 * Call this function to get the parameters configured for this property.<br>
-	 * Make sure the last character for non-null resultss is an empty character for use in bash
-	 * scripts calling the corresponding executable.
+	 * Make sure the last character for non-null resultss is an empty character for use in bash scripts calling the
+	 * corresponding executable.
 	 * 
 	 * @param module Calling module
 	 * @param property exe parameter name
@@ -164,14 +164,17 @@ public class Config
 			throw new Exception( "Config.getExeParams() can only be called for properties that begin with \"exe.\"" );
 		}
 
- 		property = property + Constants.PARAMS;
+		property = property + Constants.PARAMS;
 		if( getString( module, property ) == null )
 		{
 			return "";
 		}
 
- 		String val = getString( module, property );
-		if( val != null && !val.isEmpty() && !val.endsWith( " " ) );
+		String val = getString( module, property );
+		if( val != null && !val.isEmpty() && !val.endsWith( " " ) )
+		{
+			;
+		}
 		{
 			val = val + " ";
 		}
@@ -277,18 +280,18 @@ public class Config
 	 */
 	public static String getModuleProp( final BioModule module, final String prop )
 	{
-		return( getModuleProp(module.getClass().getSimpleName(), prop ) );
+		return getModuleProp( module.getClass().getSimpleName(), prop );
 	}
-		
+
 	/**
 	 * Return module specific property if configured, otherwise use the given prop.
 	 * 
-	 * @param module Name of BioModule
+	 * @param moduleName BioModule name
 	 * @param prop Property
-	 * @return Config property
+	 * @return property name
 	 */
 	public static String getModuleProp( final String moduleName, final String prop )
-	{	
+	{
 		final String moduleProp = moduleName + "." + suffix( prop );
 		final String val = Config.getString( null, moduleProp );
 		if( val == null )
@@ -557,6 +560,11 @@ public class Config
 				&& getString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_CLUSTER );
 	}
 
+	/**
+	 * Get the current pipeline name (root folder name)
+	 * 
+	 * @return Pipeline name
+	 */
 	public static String pipelineName()
 	{
 		if( getPipelineDir() == null )
@@ -566,6 +574,11 @@ public class Config
 		return getPipelineDir().getName();
 	}
 
+	/**
+	 * Get the current pipeline absolute directory path (root folder path)
+	 * 
+	 * @return Pipeline directory path
+	 */
 	public static String pipelinePath()
 	{
 		return getPipelineDir().getAbsolutePath();
@@ -816,7 +829,7 @@ public class Config
 	public static void setConfigProperty( final String name, final Collection<?> data )
 	{
 		String origProp = usedProps.get( name );
-		origProp = ( origProp != null && origProp.isEmpty() ) ? null : origProp;
+		origProp = origProp != null && origProp.isEmpty() ? null: origProp;
 
 		String val = null;
 		if( data != null && !data.isEmpty() && data.iterator().next() instanceof File )
@@ -833,11 +846,12 @@ public class Config
 			val = BioLockJUtil.getCollectionAsString( data );
 
 		}
-		
+
 		props.setProperty( name, val );
-		
-		boolean hasVal = val != null && !val.isEmpty();
-		if( ( origProp == null && hasVal ) || ( origProp != null && !hasVal ) || ( origProp != null && hasVal && !origProp.equals( val ) ) )
+
+		final boolean hasVal = val != null && !val.isEmpty();
+		if( origProp == null && hasVal || origProp != null && !hasVal
+				|| origProp != null && hasVal && !origProp.equals( val ) )
 		{
 			Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 			usedProps.put( name, val );
@@ -853,12 +867,13 @@ public class Config
 	public static void setConfigProperty( final String name, final String val )
 	{
 		String origProp = usedProps.get( name );
-		origProp = ( origProp != null && origProp.isEmpty() ) ? null : origProp;
+		origProp = origProp != null && origProp.isEmpty() ? null: origProp;
 
 		props.setProperty( name, val );
 
-		boolean hasVal = val != null && !val.isEmpty();
-		if( ( origProp == null && hasVal ) || ( origProp != null && !hasVal ) || ( origProp != null && hasVal && !origProp.equals( val ) ) )
+		final boolean hasVal = val != null && !val.isEmpty();
+		if( origProp == null && hasVal || origProp != null && !hasVal
+				|| origProp != null && hasVal && !origProp.equals( val ) )
 		{
 			Log.info( Config.class, "Set Config property [" + name + "] = " + val );
 			usedProps.put( name, val );
@@ -890,8 +905,7 @@ public class Config
 	}
 
 	/**
-	 * Set {@value Constants#PROJECT_PIPELINE_DIR} Create a pipeline root directory if
-	 * the pipeline is new.
+	 * Set {@value Constants#PROJECT_PIPELINE_DIR} Create a pipeline root directory if the pipeline is new.
 	 * 
 	 * @return TRUE if a new pipeline directory was created
 	 * @throws Exception if errors occur

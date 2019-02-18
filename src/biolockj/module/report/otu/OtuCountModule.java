@@ -21,14 +21,12 @@ import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.module.report.taxa.BuildTaxaTables;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.OtuUtil;
 
 /**
  * OtuCount modules reads OTU count assignment tables (1 file/sample) with 2 columns.<br>
- * Col1: Full OTU pathway spanning top to bottom level
- * Col2: Count (# of reads) for the sample.
+ * Col1: Full OTU pathway spanning top to bottom level Col2: Count (# of reads) for the sample.
  */
 public abstract class OtuCountModule extends JavaModuleImpl implements JavaModule
 {

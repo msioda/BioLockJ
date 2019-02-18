@@ -51,7 +51,8 @@ public class BashScriptBuilder
 					getWorkerId( scriptCount++, digits ) ) );
 		}
 
-		mainScriptLines.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_SUCCESS );
+		mainScriptLines
+				.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_SUCCESS );
 		createScript( getMainScriptPath( module ), mainScriptLines );
 		workerScripts.clear();
 	}
@@ -63,14 +64,13 @@ public class BashScriptBuilder
 	 * @param data Bash script lines
 	 * @throws Exception if any error occurs
 	 */
-	public static void buildScripts( final ScriptModule module, final List<List<String>> data )
-			throws Exception
+	public static void buildScripts( final ScriptModule module, final List<List<String>> data ) throws Exception
 	{
 		if( data == null || data.size() < 1 )
 		{
 			throw new Exception( "Cannot build empty scripts for: " + module.getClass().getName() );
 		}
-		
+
 		verifyConfig( module );
 		setBatchSize( module, data );
 
@@ -240,19 +240,6 @@ public class BashScriptBuilder
 		return lines;
 	}
 
-	private static void setBatchSize( final ScriptModule module, List<List<String>> data ) throws Exception
-	{
-		if( DockerUtil.isBljManager() )
-		{
-			batchSize = data.size();
-		}
-		else
-		{
-			batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
-		}
-	}
-	
-	
 	/**
 	 * Create the numbered worker scripts. Leading zeros added if needed so all worker scripts names are the same
 	 * length. If run on cluster and cluster.jobHeader is defined, add cluster.jobHeader as header for worker scripts.
@@ -278,7 +265,8 @@ public class BashScriptBuilder
 			lines.add( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
 		}
 
-		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = " + batchSize + RETURN );
+		lines.add(
+				"#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = " + batchSize + RETURN );
 
 		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules( module ) );
@@ -406,8 +394,8 @@ public class BashScriptBuilder
 			writer.write( line + RETURN );
 
 			if( line.trim().endsWith( "{" ) || line.trim().equals( "elif" ) || line.trim().equals( "else" )
-					|| ( line.trim().startsWith( "if" ) && line.trim().endsWith( "then" ) )
-					|| ( line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) ) )
+					|| line.trim().startsWith( "if" ) && line.trim().endsWith( "then" )
+					|| line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) )
 			{
 				indentCount++;
 			}
@@ -553,6 +541,18 @@ public class BashScriptBuilder
 		}
 	}
 
+	private static void setBatchSize( final ScriptModule module, final List<List<String>> data ) throws Exception
+	{
+		if( DockerUtil.isBljManager() )
+		{
+			batchSize = data.size();
+		}
+		else
+		{
+			batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
+		}
+	}
+
 	/**
 	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
 	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
@@ -584,8 +584,9 @@ public class BashScriptBuilder
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #CLUSTER_VALIDATE_PARAMS}<br>
-	 * If set to {@value biolockj.Constants#TRUE}, validate {@value #SCRIPT_JOB_HEADER} param cluster number of processors
-	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or {@link biolockj.module.ScriptModule#SCRIPT_NUM_THREADS}
+	 * If set to {@value biolockj.Constants#TRUE}, validate {@value #SCRIPT_JOB_HEADER} param cluster number of
+	 * processors = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or
+	 * {@link biolockj.module.ScriptModule#SCRIPT_NUM_THREADS}
 	 */
 	protected static final String CLUSTER_VALIDATE_PARAMS = "cluster.validateParams";
 
@@ -605,7 +606,7 @@ public class BashScriptBuilder
 	 */
 	protected static final String SCRIPT_JOB_HEADER = "cluster.jobHeader";
 
+	private static int batchSize = 0;
 	private static final String RETURN = Constants.RETURN;
 	private static final List<File> workerScripts = new ArrayList<>();
-	private static int batchSize = 0;
 }

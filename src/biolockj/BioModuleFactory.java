@@ -101,7 +101,7 @@ public class BioModuleFactory
 
 	private String addModule( final String className )
 	{
-		if( className.startsWith( Constants.MODULE_CLASSIFIER_PACKAGE ) )
+		if( className.startsWith( MODULE_CLASSIFIER_PACKAGE ) )
 		{
 			branchClassifier = true;
 		}
@@ -326,7 +326,7 @@ public class BioModuleFactory
 
 	private boolean isImplicitModule( final String moduleName ) throws ClassNotFoundException
 	{
-		return moduleName.startsWith( Constants.MODULE_IMPLICIT_PACKAGE );
+		return moduleName.startsWith( MODULE_IMPLICIT_PACKAGE );
 	}
 
 	/**
@@ -334,8 +334,7 @@ public class BioModuleFactory
 	 */
 	private boolean isSeqProcessingModule( final String name )
 	{
-		return name.startsWith( Constants.MODULE_SEQ_PACKAGE )
-				|| name.startsWith( Constants.MODULE_CLASSIFIER_PACKAGE );
+		return name.startsWith( Constants.MODULE_SEQ_PACKAGE ) || name.startsWith( MODULE_CLASSIFIER_PACKAGE );
 	}
 
 	private boolean requireCountMod() throws Exception
@@ -347,7 +346,7 @@ public class BioModuleFactory
 	private boolean requireGunzip( final String module ) throws Exception
 	{
 		return !foundSeqMod && hasGzippedInput() && isSeqProcessingModule( module )
-				&& module.toLowerCase().contains( "qiime" );
+				&& module.toLowerCase().contains( Constants.QIIME );
 	}
 
 	private void warn( final String msg ) throws Exception
@@ -374,11 +373,6 @@ public class BioModuleFactory
 		return factory.buildModules();
 	}
 
-	public static List<String> geModuleList()
-	{
-		return factory.moduleCache;
-	}
-
 	/**
 	 * Register the complete list of modules to run.
 	 * 
@@ -396,5 +390,7 @@ public class BioModuleFactory
 	private List<String> moduleCache = new ArrayList<>();
 	private int safteyCheck = 0;
 	private static BioModuleFactory factory = null;
+	private static final String MODULE_CLASSIFIER_PACKAGE = "biolockj.module.classifier";
+	private static final String MODULE_IMPLICIT_PACKAGE = "biolockj.module.implicit";
 	private static final int SAFE_MAX = 10;
 }

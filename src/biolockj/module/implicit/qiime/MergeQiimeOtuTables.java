@@ -19,7 +19,6 @@ import biolockj.Log;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.classifier.r16s.QiimeClosedRefClassifier;
-import biolockj.util.BashScriptBuilder;
 import biolockj.util.ModuleUtil;
 
 /**
@@ -75,8 +74,8 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 
 	/**
 	 * Call {@link #buildScript(List)} to create bash script lines needed to merge
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}s with {@value #SCRIPT_MERGE_OTU_TABLES} 
-	 * unless only 1 input file found, in which case, just copy it to the output dir.
+	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}s with {@value #SCRIPT_MERGE_OTU_TABLES} unless
+	 * only 1 input file found, in which case, just copy it to the output dir.
 	 */
 	@Override
 	public void executeTask() throws Exception

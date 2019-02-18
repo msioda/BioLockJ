@@ -30,7 +30,7 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		boolean allDisabled = Config.getBoolean( this, NO_FOLD_CHANGE ) & Config.getBoolean( this, NO_COHENS_D )
+		final boolean allDisabled = Config.getBoolean( this, NO_FOLD_CHANGE ) & Config.getBoolean( this, NO_COHENS_D )
 				& Config.getBoolean( this, NO_R2 );
 		if( allDisabled )
 		{
@@ -46,7 +46,7 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
 	{
-		List<String> preReqs = getStatPreReqs();
+		final List<String> preReqs = getStatPreReqs();
 		if( !Config.getBoolean( this, NO_FOLD_CHANGE ) )
 		{
 			preReqs.add( BuildTaxaTables.class.getName() );
@@ -54,8 +54,8 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 		return preReqs;
 	}
 
-	private final String NO_FOLD_CHANGE = "r.plotEffectSize.disableFoldChange";
 	private final String NO_COHENS_D = "r.plotEffectSize.disableCohensD";
+	private final String NO_FOLD_CHANGE = "r.plotEffectSize.disableFoldChange";
 	private final String NO_R2 = "r.plotEffectSize.disableRSquared";
-	
+
 }

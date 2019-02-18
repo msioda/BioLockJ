@@ -17,7 +17,6 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.util.BashScriptBuilder;
 import biolockj.util.MetaUtil;
 
 /**
@@ -83,7 +82,6 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 			getVsearchParams();
 		}
 	}
-
 
 	/**
 	 * Open reference OTU picking script

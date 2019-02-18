@@ -79,8 +79,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	}
 
 	/**
-	 * Verify none of the derived command line parameters are included in
-	 * {@link biolockj.Config}.{@value biolockj.Constants#EXE_CLASSIFIER_PARAMS}
+	 * Verify that none of the derived command line parameters are included in {@link #getParams}. 
 	 */
 	@Override
 	public void checkDependencies() throws Exception
@@ -137,21 +136,18 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 
 			if( params.indexOf( "--input_type " ) > -1 )
 			{
-				throw new Exception(
-						"Invalid classifier option (--input_type) found in property(" + getExeParamName()
-								+ "). BioLockJ derives this value by examinging one of the input files." );
+				throw new Exception( "Invalid classifier option (--input_type) found in property(" + getExeParamName()
+						+ "). BioLockJ derives this value by examinging one of the input files." );
 			}
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 			{
 				throw new Exception( "Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-						+ getExeParamName() + "). BioLockJ derives this value from property: "
-						+ SCRIPT_NUM_THREADS );
+						+ getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( "--bowtie2out " ) > -1 )
 			{
-				throw new Exception(
-						"Invalid classifier option (--bowtie2out) found in property(" + getExeParamName()
-								+ "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
+				throw new Exception( "Invalid classifier option (--bowtie2out) found in property(" + getExeParamName()
+						+ "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
 			}
 			if( params.indexOf( "-t rel_ab_w_read_stats " ) > -1 )
 			{
@@ -160,21 +156,18 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 			}
 			if( params.indexOf( "--tax_lev " ) > -1 )
 			{
-				throw new Exception(
-						"Invalid classifier option (--tax_lev) found in property(" + getExeParamName()
-								+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
+				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + getExeParamName()
+						+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 			}
 			if( params.indexOf( "-s " ) > -1 )
 			{
-				throw new Exception(
-						"Invalid classifier option (-s) found in property(" + getExeParamName()
-								+ "). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
+				throw new Exception( "Invalid classifier option (-s) found in property(" + getExeParamName()
+						+ "). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
 			}
 			if( params.indexOf( "-o " ) > -1 )
 			{
-				throw new Exception( "Invalid classifier option (-o) found in property("
-						+ getExeParamName() + "). BioLockJ outputs results to: "
-						+ getOutputDir().getAbsolutePath() + File.separator );
+				throw new Exception( "Invalid classifier option (-o) found in property(" + getExeParamName()
+						+ "). BioLockJ outputs results to: " + getOutputDir().getAbsolutePath() + File.separator );
 			}
 
 			defaultSwitches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + "-t rel_ab_w_read_stats ";
@@ -187,7 +180,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 
 		return defaultSwitches;
 	}
-	
+
 	private String getExeParamName()
 	{
 		return EXE_METAPHLAN + Constants.PARAMS;

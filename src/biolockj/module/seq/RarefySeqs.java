@@ -203,17 +203,17 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
 		final int numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
 		final int count = Integer.parseInt( Long.toString( numReads ) );
-		
+
 		if( max != null )
 		{
 			max = count < max ? count: max;
 		}
-		
+
 		if( min == null )
 		{
 			min = 1;
 		}
-		
+
 		Log.debug( getClass(), "Sample[" + sampleId + "]  numReads = " + numReads );
 		if( numReads >= min )
 		{

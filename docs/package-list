@@ -9,7 +9,6 @@ biolockj.module.implicit.parser
 biolockj.module.implicit.parser.r16s
 biolockj.module.implicit.parser.wgs
 biolockj.module.implicit.qiime
-biolockj.module.r
 biolockj.module.report
 biolockj.module.seq
 biolockj.node
