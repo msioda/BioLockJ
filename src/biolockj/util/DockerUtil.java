@@ -50,7 +50,7 @@ public class DockerUtil
 
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
-		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
+		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run" + rmFlag( module ) + getDockerEnvVars( module )
 				+ getDockerVolumes() + getDockerImage( module ) );
 		lines.add( "}" + Constants.RETURN );
 		return lines;
@@ -215,9 +215,9 @@ public class DockerUtil
 		return dockerVolumes;
 	}
 
-	private static final String rmFlag() throws Exception
+	private static final String rmFlag( final BioModule module ) throws Exception
 	{
-		return Config.getBoolean( null, DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
+		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "" : " " + DOCK_RM_FLAG;
 	}
 	
 	
@@ -301,9 +301,9 @@ public class DockerUtil
 	public static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
 
 	/**
-	 * {@link biolockj.Config} property sets --rm flag on docker run command if set to TRUE: {@value #DELETE_ON_EXIT}
+	 * {@link biolockj.Config} property removed the default --rm flag on docker run command if set to TRUE: {@value #SAVE_CONTAINER_ON_EXIT}
 	 */
-	protected static final String DELETE_ON_EXIT = "docker.deleteContainerOnExit";
+	protected static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
 
 	/**
 	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
