@@ -11,8 +11,8 @@
  */
 package biolockj.exception;
 
-import biolockj.Constants;
 import biolockj.Config;
+import biolockj.Constants;
 
 /**
  * ConfigFormatException is thrown if property is defined but the format is invalid.

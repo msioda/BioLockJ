@@ -18,7 +18,9 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
@@ -574,7 +576,7 @@ public class BioLockJUtil
 			}
 			else if( PathwayUtil.isPathwayFile( file ) )
 			{
-				fileTypes.add( PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE );
+				fileTypes.add( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE );
 			}
 			else if( RMetaUtil.isMetaMergeTable( file ) )
 			{
@@ -642,6 +644,11 @@ public class BioLockJUtil
 	public static final String INTERNAL_PIPELINE_INPUT_TYPES = "internal.pipelineInputTypes";
 
 	/**
+	 * Pipeline input file type indicating the file is Humann2 generated
+	 */
+	public static final String PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE = "hn2";
+
+	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}<br>
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for OTU count files that meet the file requirements
 	 * to pass {@link biolockj.util.OtuUtil#isOtuFile(File)}.
@@ -653,8 +660,6 @@ public class BioLockJUtil
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for classifier output files.
 	 */
 	public static final String PIPELINE_PARSER_INPUT_TYPE = "classifier_output";
-
-	public static final String PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE = "path_abundance";
 
 	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_R_INPUT_TYPE}<br>

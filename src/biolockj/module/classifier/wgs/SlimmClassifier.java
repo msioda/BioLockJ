@@ -159,6 +159,11 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		return Config.requireExistingDir( this, DATABASE ).getAbsolutePath();
 	}
 
+	private String getExeParamName()
+	{
+		return EXE_SLIMM + Constants.PARAMS;
+	}
+
 	private String getInputTypeSwitch() throws Exception
 	{
 		if( SeqUtil.isFastQ() )
@@ -235,10 +240,15 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 		return slimmSwitches;
 	}
-	
-	private String getExeParamName()
+
+	/**
+	 * Return the Slimm domain.
+	 * 
+	 * @return String {@value #SLIMM_DOMAIN_DELIM}
+	 */
+	public static final String getSlimmDomainDelim()
 	{
-		return EXE_SLIMM + Constants.PARAMS;
+		return SLIMM_DOMAIN_DELIM;
 	}
 
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
@@ -252,19 +262,6 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		taxaLevelMap.put( TaxaUtil.DOMAIN, SLIMM_DOMAIN_DELIM );
 	}
 	/**
-	 * Return the Slimm domain.
-	 * @return String {@value #SLIMM_DOMAIN_DELIM}
-	 */
-	public static final String getSlimmDomainDelim () {
-		return SLIMM_DOMAIN_DELIM;
-	}
-	/**
-	 * Override
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN}
-	 * value
-	 */
-	private static final String SLIMM_DOMAIN_DELIM = "superkingdom";
-	/**
 	 * {@link biolockj.Config} property to directory holding SLIMM database: {@value #DATABASE}
 	 */
 	protected static final String DATABASE = "slimm.db";
@@ -272,7 +269,6 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * {@link biolockj.Config} property to set bowtie2 parameters: {@value #EXE_BOWTIE_PARAMS}
 	 */
 	protected static final String EXE_BOWTIE_PARAMS = "exe.bowtie2Params";
-
 	/**
 	 * {@link biolockj.Config} property to set bowtie2 executable: {@value #EXE_BOWTIE2}
 	 */
@@ -304,5 +300,12 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String REF_GENOME_INDEX = "slimm.refGenomeIndex";
 
 	private static final String BOWTIE_NUM_THREADS_PARAM = "-p";
+
+	/**
+	 * Override
+	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN}
+	 * value
+	 */
+	private static final String SLIMM_DOMAIN_DELIM = "superkingdom";
 	private static final String SLIMM_OUTPUT_PARAM = "-o";
 }

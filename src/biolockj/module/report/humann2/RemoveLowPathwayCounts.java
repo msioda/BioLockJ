@@ -34,7 +34,6 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 		getMinCount();
 	}
 
-
 	/**
 	 * Produce summary message with min, max, mean, and median number of pathways.
 	 */
@@ -166,7 +165,6 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 				}
 			}
 
-			
 			output.add( line );
 
 			final TreeSet<String> badSamplePathways = new TreeSet<>( validPathways );
@@ -179,13 +177,13 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 				totalPathwaysPerSample.put( sampleId, String.valueOf( totalPathwayCount ) );
 				uniquePathwaysPerSample.put( sampleId, String.valueOf( foundSamplePathways.size() ) );
 			}
-			
 
 			if( !badSamplePathways.isEmpty() )
 			{
 				lowCountPathways.put( sampleId, badSamplePathways );
-				Log.debug( getClass(), sampleId + ": Removed " + badSamplePathways.size() + " low Pathway counts (below "
-						+ getProp() + "=" + getMinCount() + ") --> " + badSamplePathways );
+				Log.debug( getClass(),
+						sampleId + ": Removed " + badSamplePathways.size() + " low Pathway counts (below " + getProp()
+								+ "=" + getMinCount() + ") --> " + badSamplePathways );
 			}
 		}
 
@@ -238,6 +236,14 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 						{
 							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + record.get( i ) );
 						}
+						newRecord = false;
+					}
+				}
+				else
+				{
+					for( final String pathway: record )
+					{
+						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
 						newRecord = false;
 					}
 				}

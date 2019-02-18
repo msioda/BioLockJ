@@ -12,12 +12,9 @@
 package biolockj.module.report.humann2;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.StringTokenizer;
 import biolockj.Log;
 import biolockj.module.JavaModule;
-import biolockj.module.implicit.parser.wgs.Humann2Parser;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.PathwayUtil;
@@ -72,7 +69,8 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		for( final File file: getInputFiles() )
 		{
 			final String name = file.getName().replaceAll( TSV_EXT, "" ) + META_MERGED;
-			Log.info( getClass(), "Merge HumanN2 " + PathwayUtil.getHn2Type( file )  + " table with metadata: " + outDir + name );
+			Log.info( getClass(),
+					"Merge HumanN2 " + PathwayUtil.getHn2Type( file ) + " table with metadata: " + outDir + name );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
 

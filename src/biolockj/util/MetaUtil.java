@@ -13,7 +13,9 @@ package biolockj.util;
 
 import java.io.*;
 import java.util.*;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.BioModule;
 
 /**
@@ -102,7 +104,7 @@ public class MetaUtil
 	 * @param ignoreNulls if TRUE ignore duplicate {@value #META_NULL_VALUE} values
 	 * @return boolean if field values are unique
 	 * @throws Exception if runtime errors occur
-	 */ 
+	 */
 	public static boolean fieldValuesAreUnique( final String field, final boolean ignoreNulls ) throws Exception
 	{
 		final int numVals = getFieldValues( field, ignoreNulls ).size();

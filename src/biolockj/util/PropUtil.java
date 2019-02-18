@@ -14,7 +14,9 @@ package biolockj.util;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 
 /**
@@ -39,6 +41,11 @@ public class PropUtil
 		return new File( Config.pipelinePath() + File.separator + MASTER_PREFIX + configName );
 	}
 
+	/**
+	 * Remove unused properties from the MASTER config file.
+	 * 
+	 * @throws Exception if runtime errors occur
+	 */
 	public static void sanitizeMasterConfig() throws Exception
 	{
 		final Map<String, String> props = new HashMap<>();
@@ -52,7 +59,7 @@ public class PropUtil
 		boolean foundQiime = false;
 		for( final String mod: configMods )
 		{
-			if( mod.toLowerCase().contains( "qiime" ) )
+			if( mod.toLowerCase().contains( Constants.QIIME ) )
 			{
 				foundQiime = true;
 			}

@@ -29,21 +29,6 @@ import biolockj.util.TaxaUtil;
  */
 public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModule
 {
-	
-	/**
-	 * Require taxonomy table module as prerequisite
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
-		{
-			preReqs.add( BuildTaxaTables.class.getName() );
-		}
-		preReqs.addAll( super.getPreRequisiteModules() );
-		return preReqs;
-	}
 
 	@Override
 	public List<File> getInputFiles() throws Exception
@@ -62,6 +47,21 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 		}
 
 		return getFileCache();
+	}
+
+	/**
+	 * Require taxonomy table module as prerequisite
+	 */
+	@Override
+	public List<String> getPreRequisiteModules() throws Exception
+	{
+		final List<String> preReqs = new ArrayList<>();
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
+		{
+			preReqs.add( BuildTaxaTables.class.getName() );
+		}
+		preReqs.addAll( super.getPreRequisiteModules() );
+		return preReqs;
 	}
 
 	/**

@@ -17,7 +17,9 @@ import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
@@ -33,8 +35,8 @@ public class SeqUtil
 	{}
 
 	/**
-	 * Create a copy of the sequence files in property {@value biolockj.Constants#INPUT_DIRS}, output to a directory named
-	 * {@value biolockj.Constants#PROJECT_PIPELINE_DIR}/input.
+	 * Create a copy of the sequence files in property {@value biolockj.Constants#INPUT_DIRS}, output to a directory
+	 * named {@value biolockj.Constants#PROJECT_PIPELINE_DIR}/input.
 	 *
 	 * @throws Exception if unable to copy the files
 	 */
@@ -424,7 +426,7 @@ public class SeqUtil
 			Log.error( SeqUtil.class, "Unable to extract Sample ID from: " + value, ex );
 			throw ex;
 		}
-		
+
 		if( id == null || id.isEmpty() )
 		{
 			throw new Exception( "Unable to extract a valid Sample ID from: " + value );
@@ -453,7 +455,7 @@ public class SeqUtil
 				SeqUtil.getSampleId( file.getName() );
 				seqFiles.add( file );
 			}
-			catch(Exception ex )
+			catch( final Exception ex )
 			{
 				if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) )
 				{

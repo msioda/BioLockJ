@@ -13,7 +13,9 @@ package biolockj.module.report.taxa;
 
 import java.io.*;
 import java.util.*;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;

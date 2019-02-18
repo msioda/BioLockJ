@@ -16,7 +16,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import biolockj.BioLockJ;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
@@ -113,20 +112,15 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 * This method returns the classifier class name in lower case, after "classifier" is removed.<br>
 	 * The remaining text should uniquely identify the name of the program.<br>
 	 * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan2, humann2, or slimm).<br>
-	 * <p>
-	 * The purpose of this method is to allow users to configure multiple classifiers in a default properties file.<br>
-	 * Instead of setting the property {@value biolockj.Constants#EXE_CLASSIFIER} in the
-	 * {@link biolockj.Config} file, leave this value blank and configure the default properties file one time with:
-	 * "rdp.classifier", "qiime.classifier", "kraken.classifier", etc.<br>
 	 *
 	 * @return String - options { rdp, qiime, kraken, kraken2, metaphlan2, humann2, slimm }
 	 */
 	protected String getClassifierType()
 	{
 		String type = getClass().getSimpleName().toLowerCase().replaceAll( "classifier", "" );
-		if( type.startsWith( "qiime" ) )
+		if( type.startsWith( Constants.QIIME ) )
 		{
-			type = "qiime";
+			type = Constants.QIIME;
 		}
 
 		return type;

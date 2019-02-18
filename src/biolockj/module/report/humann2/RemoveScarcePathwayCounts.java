@@ -40,8 +40,6 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		}
 	}
 
-	
-
 	/**
 	 * Produce summary message with min, max, mean, and median number of pathways.
 	 */
@@ -89,6 +87,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 	 * Save a list of low count pathways or samples to the module temp directory.
 	 * 
 	 * @param map TreeMap(sampleId, TreeSet(data)) of Pathways found in too few samples or pathways
+	 * @param file Output file
 	 * @throws Exception if errors occur
 	 */
 	protected void logScarceData( final TreeMap<String, TreeSet<String>> map, final File file ) throws Exception
@@ -126,12 +125,17 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 	 * Remove Pathway Counts below the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_MIN_COUNT}
 	 * 
 	 * @param file input file
+	 * @param scarcePathways Set of pathway names to be eliminated
 	 * @return TreeMap(SampleId, TreeMap(Pathway)) Map removed pathways to sample ID
 	 * @throws Exception if errors occur
 	 */
 	protected TreeMap<String, TreeSet<String>> removeScarcePathwayCounts( final File file,
 			final Set<String> scarcePathways ) throws Exception
 	{
+		if( scarcePathways.isEmpty() )
+		{
+			return null;
+		}
 		final TreeMap<String, TreeSet<String>> scarcePathMap = new TreeMap<>();
 		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
 		final List<List<String>> output = new ArrayList<>();
@@ -348,7 +352,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		for( final String pathway: pathways )
 		{
 			final Double count = pathMap.get( pathway );
-			if( count != null && count < getCutoff() )
+			if( count != null &&  count > 0 && count < getCutoff() )
 			{
 				scarcePathways.add( pathway );
 			}

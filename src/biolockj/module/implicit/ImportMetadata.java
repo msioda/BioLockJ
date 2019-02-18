@@ -247,11 +247,11 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			{
 				id = SeqUtil.getSampleId( file.getName() );
 			}
-			catch( Exception ex )
-			{ 
-				// Silent failure handled in next statement 
+			catch( final Exception ex )
+			{
+				// Silent failure handled in next statement
 			}
-			
+
 			if( id == null || id.length() < 1 )
 			{
 				throw new Exception( "No Sample ID found in metadata for file: " + file.getAbsolutePath() );
