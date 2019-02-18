@@ -161,13 +161,13 @@ process JsonReport {
 	bash ${worker}
 	"""
 }
-process KneadDataSanitizer {
+process KneadData {
 	echo 	true
 	cpus 	$nextflow.cpus
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_KneadDataSanitizer/script/*.sh' )
+	val worker from Channel.watchPath( '${project.pipelineDir}/**_KneadData/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
