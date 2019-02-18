@@ -391,8 +391,8 @@ public class BashScriptBuilder
 
 		for( final String line: lines )
 		{
-			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.equals( "elif" )
-					|| line.equals( "else" ) || line.equals( "do" ) )
+			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.trim().equals( "elif" )
+					|| line.trim().equals( "else" ) || line.trim().equals( "done" ) )
 			{
 				indentCount--;
 			}
@@ -405,8 +405,9 @@ public class BashScriptBuilder
 
 			writer.write( line + RETURN );
 
-			if( line.endsWith( "{" ) || line.equals( "elif" ) || line.equals( "else" )
-					|| line.startsWith( "if" ) && line.endsWith( "then" ) )
+			if( line.trim().endsWith( "{" ) || line.trim().equals( "elif" ) || line.trim().equals( "else" )
+					|| ( line.trim().startsWith( "if" ) && line.trim().endsWith( "then" ) )
+					|| ( line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) ) )
 			{
 				indentCount++;
 			}
