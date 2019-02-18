@@ -13,8 +13,6 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import biolockj.Constants;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
@@ -31,9 +29,9 @@ public class Metaphlan2Parser extends ParserModuleImpl implements ParserModule
 	/**
 	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.Metaphlan2Classifier}:
 	 * <ol>
-	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.Metaphlan2Node#getSampleId()} if
+	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.MetaphlanNode#getSampleId()} if
 	 * not yet created.
-	 * <li>Add the {@link biolockj.node.wgs.Metaphlan2Node#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU
+	 * <li>Add the {@link biolockj.node.wgs.MetaphlanNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU
 	 * count.
 	 * </ol>
 	 * <p>

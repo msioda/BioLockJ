@@ -27,7 +27,7 @@ public class LogTransformTaxaTables extends TaxaCountModule implements JavaModul
 {
 
 	/**
-	 * Verify {@link biolockj.Config}.{@value biolockj.Config#REPORT_LOG_BASE} property is valid (if defined) with a
+	 * Verify {@link biolockj.Config}.{@value biolockj.Constants#REPORT_LOG_BASE} property is valid (if defined) with a
 	 * value = (e or 10).
 	 *
 	 * @throws ConfigFormatException if REPORT_LOG_BASE is not set to a valid option (e or 10)
@@ -164,7 +164,7 @@ public class LogTransformTaxaTables extends TaxaCountModule implements JavaModul
 			writer.write( Constants.TAB_DELIM + s );
 		}
 
-		writer.write( BioLockJ.RETURN );
+		writer.write( Constants.RETURN );
 
 		final int size = sampleNames.size();
 		for( int x = 0; x < size; x++ )
@@ -178,7 +178,7 @@ public class LogTransformTaxaTables extends TaxaCountModule implements JavaModul
 
 			if( x + 1 != size )
 			{
-				writer.write( BioLockJ.RETURN );
+				writer.write( Constants.RETURN );
 			}
 		}
 
@@ -243,12 +243,12 @@ public class LogTransformTaxaTables extends TaxaCountModule implements JavaModul
 	private String logBase = "";
 
 	/**
-	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Config#REPORT_LOG_BASE}
+	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
 	 */
 	protected static final String LOG_10 = "10";
 
 	/**
-	 * Log e display string as 1/2 supported values for: {@value biolockj.Config#REPORT_LOG_BASE}
+	 * Log e display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
 	 */
 	protected static final String LOG_E = "e";
 }

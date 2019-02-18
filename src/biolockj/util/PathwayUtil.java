@@ -67,7 +67,6 @@ public class PathwayUtil
 	 * 
 	 * @param module BioModule
 	 * @return TRUE if module generated OTU count files
-	 * @throws Exception if errors occur
 	 */
 	public static boolean isPathwayModule( final BioModule module )
 	{

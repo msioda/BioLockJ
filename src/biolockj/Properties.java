@@ -32,9 +32,9 @@ public class Properties extends java.util.Properties
 	}
 
 	/**
-	 * Constructor called when {@value biolockj.Config#PROJECT_DEFAULT_PROPS} contains a valid file-path
+	 * Constructor called when {@value biolockj.Constants#PROJECT_DEFAULT_PROPS} contains a valid file-path
 	 *
-	 * @param defaultConfig Config built from {@value biolockj.Config#PROJECT_DEFAULT_PROPS} property
+	 * @param defaultConfig Config built from {@value biolockj.Constants#PROJECT_DEFAULT_PROPS} property
 	 */
 	public Properties( final Properties defaultConfig )
 	{
@@ -54,7 +54,7 @@ public class Properties extends java.util.Properties
 		while( in.hasNext() )
 		{
 			out.write( in.nextLine().replace( "\\", "\\\\" ).getBytes() );
-			out.write( BioLockJ.RETURN.getBytes() );
+			out.write( Constants.RETURN.getBytes() );
 		}
 		in.close();
 		final InputStream is = new ByteArrayInputStream( out.toByteArray() );
@@ -131,7 +131,7 @@ public class Properties extends java.util.Properties
 	}
 
 	/**
-	 * Parse property file for the property {@value biolockj.Config#PROJECT_DEFAULT_PROPS}.<br>
+	 * Parse property file for the property {@value biolockj.Constants#PROJECT_DEFAULT_PROPS}.<br>
 	 * project.defaultProps=/app/biolockj_v1.0/resources/config/default/docker.properties
 	 * 
 	 * @param configFile BioLockJ Config file

@@ -63,7 +63,7 @@ public class KrakenNode extends OtuNodeImpl implements OtuNode
 				Log.warn( getClass(), "Extra Kraken token [ more than expected 2! ]: " + st.nextToken() );
 			}
 
-			throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + BioLockJ.RETURN
+			throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + Constants.RETURN
 					+ "Kraken output must have exactly 2 tab delimited columns per line. " );
 		}
 	}

@@ -115,7 +115,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_METAPHLAN + "() {" );
-		lines.add( Config.getExe( this, EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
+		lines.add( Config.getExe( this, Constants.EXE_PYTHON ) + " " + getClassifierExe() + getWorkerFunctionParams()
 				+ "$1 --bowtie2out $2 > $3" );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -222,11 +222,6 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	 * {@link biolockj.Config} List property used to obtain the metaphlan2 executable params
 	 */
 	protected static final String EXE_METAPHLAN_PARAMS = "exe.metaphlan2Params";
-
-	/**
-	 * {@link biolockj.Config} exe property used to obtain the python executable
-	 */
-	protected static final String EXE_PYTHON = "exe.python";
 
 	/**
 	 * Function name of the translate function used to classify sequences with Metaphlan.

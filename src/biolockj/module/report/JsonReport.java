@@ -366,7 +366,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		try
 		{
 			int indentCount = 0;
-			final StringTokenizer st = new StringTokenizer( code, BioLockJ.RETURN );
+			final StringTokenizer st = new StringTokenizer( code, Constants.RETURN );
 			while( st.hasMoreTokens() )
 			{
 				final String line = st.nextToken();
@@ -381,7 +381,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 					writer.write( Constants.TAB_DELIM );
 				}
 
-				writer.write( line + BioLockJ.RETURN );
+				writer.write( line + Constants.RETURN );
 
 				if( line.endsWith( "{" ) )
 				{

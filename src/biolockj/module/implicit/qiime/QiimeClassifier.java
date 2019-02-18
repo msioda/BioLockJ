@@ -238,8 +238,9 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * If paired reads found, add prerequisite module: {@link biolockj.module.seq.PearMergeReads}. If sequences are not
-	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}. Subclasses of
-	 * QiimeClassifier add prerequisite module: {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
+	 * fasta format, add prerequisite module: {@link biolockj.module.seq.AwkFastaConverter}, or similar module specified by
+	 * {@value biolockj.Constants#DEFAULT_MOD_FASTA_CONV}. Subclasses of QiimeClassifier add prerequisite module:
+	 * {@link biolockj.module.implicit.qiime.BuildQiimeMapping}.
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
@@ -339,12 +340,12 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * Subclasses call this method to check dependencies before picking OTUs to validate
-	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#EXE_CLASSIFIER_PARAMS}
 	 * 
 	 * @return TODO
 	 *
 	 * @throws Exception if
-	 * {@link biolockj.Config}.{@value biolockj.module.classifier.ClassifierModule#EXE_CLASSIFIER_PARAMS} contains
+	 * {@link biolockj.Config}.{@value biolockj.Constants#EXE_CLASSIFIER_PARAMS} contains
 	 * invalid parameters
 	 */
 	protected String getParams() throws Exception

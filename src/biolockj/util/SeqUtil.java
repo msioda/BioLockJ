@@ -33,8 +33,8 @@ public class SeqUtil
 	{}
 
 	/**
-	 * Create a copy of the sequence files in property {@value biolockj.Config#INPUT_DIRS}, output to a directory named
-	 * {@value biolockj.Config#PROJECT_PIPELINE_DIR}/input.
+	 * Create a copy of the sequence files in property {@value biolockj.Constants#INPUT_DIRS}, output to a directory named
+	 * {@value biolockj.Constants#PROJECT_PIPELINE_DIR}/input.
 	 *
 	 * @throws Exception if unable to copy the files
 	 */
@@ -166,7 +166,7 @@ public class SeqUtil
 	 * Function returns base in the same case as the input parameter.
 	 * 
 	 * @param base DNA Base
-	 * @return
+	 * @return regex version of IUPAC DNA substitution bases
 	 */
 	public static String getIupacBase( final String base )
 	{
@@ -213,7 +213,7 @@ public class SeqUtil
 	 * @param files List of paired read files
 	 * @return Map with key=fwRead and val=rvRead
 	 * @throws ConfigViolationException if unpaired reads are found and
-	 * {@link biolockj.Config}.{@value #INPUT_REQUIRE_COMPLETE_PAIRS} = {@value biolockj.Config#TRUE}
+	 * {@link biolockj.Config}.{@value #INPUT_REQUIRE_COMPLETE_PAIRS} = {@value biolockj.Constants#TRUE}
 	 * @throws Exception if other errors occur
 	 */
 	public static Map<File, File> getPairedReads( final Collection<File> files ) throws Exception
@@ -288,7 +288,7 @@ public class SeqUtil
 		else if( Config.getString( null, INTERNAL_PAIRED_READS ) != null && !msg.isEmpty() )
 		{
 			Log.warn( SeqUtil.class, "Unpaired reads will be ignored because Config property [ "
-					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Constants.FALSE + " ]" + BioLockJ.RETURN + msg );
+					+ INPUT_REQUIRE_COMPLETE_PAIRS + "=" + Constants.FALSE + " ]" + Constants.RETURN + msg );
 		}
 
 		return map;
@@ -430,7 +430,7 @@ public class SeqUtil
 
 	/**
 	 * Return only sequence files for sample IDs found in the metadata file.<br>
-	 * If {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_REQUIRED} = {@value biolockj.Config#TRUE}, an
+	 * If {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_REQUIRED} = {@value biolockj.Constants#TRUE}, an
 	 * error is thrown to list the files that cannot be matched to a metadata row.
 	 * 
 	 * @param files List of input files
@@ -461,7 +461,7 @@ public class SeqUtil
 		if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( null, MetaUtil.META_REQUIRED ) )
 		{
 			throw new ConfigViolationException( MetaUtil.META_REQUIRED, "No metadata found for the following files: "
-					+ BioLockJ.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
+					+ Constants.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );
 		}
 
 		return seqFiles;
@@ -566,7 +566,7 @@ public class SeqUtil
 
 	/**
 	 * Return TRUE if reads are unpaired or if name does not contain the reverse read file suffix:
-	 * {@value biolockj.Config#INPUT_REVERSE_READ_SUFFIX}
+	 * {@value #INPUT_REVERSE_READ_SUFFIX}
 	 *
 	 * @param name Name of file
 	 * @return TRUE for unpaired or forward reads
@@ -585,7 +585,7 @@ public class SeqUtil
 
 	/**
 	 * Determine if file is gzipped based on its file extension.<br>
-	 * Any file ending with {@value biolockj.BioLockJ#GZIP_EXT} is treated as a gzipped file.
+	 * Any file ending with {@value biolockj.Constants#GZIP_EXT} is treated as a gzipped file.
 	 * 
 	 * @param fileName File name
 	 * @return TRUE if file name ends with .gz
@@ -626,8 +626,8 @@ public class SeqUtil
 			}
 			else
 			{
-				Log.info( SeqUtil.class, file.getAbsolutePath() + " is not a sequence file! " + BioLockJ.RETURN
-						+ "Line 1: [ " + header + " ]" + BioLockJ.RETURN + "Line 2= [ " + seq + " ]" );
+				Log.info( SeqUtil.class, file.getAbsolutePath() + " is not a sequence file! " + Constants.RETURN
+						+ "Line 1: [ " + header + " ]" + Constants.RETURN + "Line 2= [ " + seq + " ]" );
 			}
 		}
 		finally
@@ -645,7 +645,6 @@ public class SeqUtil
 	 * 
 	 * @param module BioModule
 	 * @return TRUE if module generated OTU count files
-	 * @throws Exception if errors occur
 	 */
 	public static boolean isSeqModule( final BioModule module )
 	{
@@ -751,16 +750,16 @@ public class SeqUtil
 	}
 
 	/**
-	 * Set {@value biolockj.Config#INPUT_IGNORE_FILES}, {@value #INTERNAL_SEQ_HEADER_CHAR}, and
+	 * Set {@value biolockj.Constants#INPUT_IGNORE_FILES}, {@value #INTERNAL_SEQ_HEADER_CHAR}, and
 	 * {@value #INTERNAL_SEQ_TYPE}
 	 * <ul>
 	 * <li>Ignore the metadata file {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_FILE_PATH}
 	 * <li>If {@link biolockj.Config} pipeline contains {@link biolockj.module.seq} or
 	 * {@link biolockj.module.classifier} {@link biolockj.module.BioModule}s, ignore non-(fasta/fastq) files found in
-	 * {@link biolockj.Config#INPUT_DIRS}
+	 * {@link #INPUT_DIRS}
 	 * </ul>
 	 *
-	 * @throws Exception if {@link biolockj.Config#INPUT_DIRS} undefined or file reader I/O Exception occurs
+	 * @throws Exception if {@link #INPUT_DIRS} undefined or file reader I/O Exception occurs
 	 */
 	protected static void initSeqParams() throws Exception
 	{
@@ -849,7 +848,7 @@ public class SeqUtil
 			else
 			{
 				throw new Exception( "Invalid sequence file format (1st character = " + headerChar + ") in: "
-						+ f.getAbsolutePath() + BioLockJ.RETURN + "FASTA files must begin with either character: "
+						+ f.getAbsolutePath() + Constants.RETURN + "FASTA files must begin with either character: "
 						+ BioLockJUtil.getCollectionAsString( FASTA_HEADER_DELIMS )
 						+ " and FASTQ files must begin with \"" + FASTQ_HEADER_DELIM + "\"" );
 			}
@@ -858,7 +857,7 @@ public class SeqUtil
 		if( foundFasta != null && foundFastq != null )
 		{
 			throw new Exception( "Input files from: " + INPUT_DIRS + " must all be of a single type (FASTA or FASTQ)."
-					+ BioLockJ.RETURN + "FASTA file found: " + foundFasta + BioLockJ.RETURN + "FASTQ file found: "
+					+ Constants.RETURN + "FASTA file found: " + foundFasta + Constants.RETURN + "FASTQ file found: "
 					+ foundFastq );
 		}
 

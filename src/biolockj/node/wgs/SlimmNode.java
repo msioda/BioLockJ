@@ -69,7 +69,7 @@ public class SlimmNode extends OtuNodeImpl implements OtuNode
 	// Override default taxonomy level delimiters set in OtuNodeImpl
 	static
 	{
-		DOMAIN_DELIM = SlimmClassifier.SLIMM_DOMAIN_DELIM;
+		DOMAIN_DELIM = SlimmClassifier.getSlimmDomainDelim();
 		CLASS_DELIM = TaxaUtil.CLASS;
 		FAMILY_DELIM = TaxaUtil.FAMILY;
 		GENUS_DELIM = TaxaUtil.GENUS;
