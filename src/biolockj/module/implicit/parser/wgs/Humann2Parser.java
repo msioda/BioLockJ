@@ -58,7 +58,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		for( final File file: getInputFiles() )
 		{
 			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
-			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_FULL_REPORT );
+			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PATHWAY_REPORT );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 			try
 			{
@@ -102,7 +102,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 			{
 				for( final String cell: row )
 				{
-					record.add( record.isEmpty() ? MetaUtil.getID(): getSampleID( cell ) );
+					record.add( record.isEmpty() ? MetaUtil.getID(): SeqUtil.getSampleId( cell ) );
 				}
 			}
 			else
@@ -117,31 +117,6 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		return output;
 	}
 
-	private String getSampleID( String name ) throws Exception
-	{
-		if( name.contains( PAIRED_SUFFIX ) )
-		{
-			name = name.replace( PAIRED_SUFFIX, "" );
-		}
-		if( name.contains( KD_SUFFIX ) )
-		{
-			name = name.replace( KD_SUFFIX, "" );
-		}
-		if( name.contains( ABUND_SUFFIX ) )
-		{
-			name = name.replace( ABUND_SUFFIX, "" );
-		}
-		if( name.contains( COVERAGE_SUFFIX ) )
-		{
-			name = name.replace( COVERAGE_SUFFIX, "" );
-		}
-		if( name.contains( RPK_SUFFIX ) )
-		{
-			name = name.replace( RPK_SUFFIX, "" );
-		}
-
-		return name;
-	}
 
 	private String stripQuotes( final String val ) throws Exception
 	{

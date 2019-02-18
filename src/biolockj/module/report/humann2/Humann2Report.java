@@ -79,7 +79,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 		{
 			writePathwayReport( file, parseFullReport( file, validColIndexes( file ) ) );
 
-			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				final File unintegratedTemp = new File(
 						getTempDir().getAbsolutePath() + File.separator + Constants.HN2_UNINTEGRATED_COUNT );
@@ -138,11 +138,11 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 						{
 							unIntegratedIndex = i;
 						}
-						else if( i == unMappedIndex && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+						else if( i == unMappedIndex && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 						{
 							unmappedPerSample.put( id, getCount( cell ).toString() );
 						}
-						else if( i == unIntegratedIndex && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+						else if( i == unIntegratedIndex && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 						{
 							unintegratedPerSample.put( id, getCount( cell ).toString() );
 						}
@@ -150,7 +150,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 						{
 							if( firstRecord )
 							{
-								if( !cell.equals( MetaUtil.getID() ) && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+								if( !cell.equals( MetaUtil.getID() ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 								{
 									pathways.add( cell );
 								}
@@ -181,7 +181,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 					i++;
 				}
 
-				if( !firstRecord && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+				if( !firstRecord && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 				{
 					totalPathwaysPerSample.put( id, sampleTotalPathways.toString() );
 					uniquePathwaysPerSample.put( id, sampleUniquePathways.toString() );
@@ -213,7 +213,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 		final Iterator<File> it = BioLockJUtil.getPipelineInputFiles().iterator();
 		while( it.hasNext() )
 		{
-			if( it.next().getName().endsWith( fullPathwayReportSuffix() ) )
+			if( it.next().getName().endsWith( PathwayUtil.fullPathwayReportSuffix() ) )
 			{
 				return true;
 			}
@@ -314,11 +314,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 		}
 		return 0;
 	}
-
-	public static String fullPathwayReportSuffix() throws Exception
-	{
-		return "_" + Constants.HN2_FULL_REPORT + PathwayUtil.pathwayFileSuffix( null );
-	}
+	
 
 	private Set<String> pathways = new HashSet<>();
 	private Map<String, String> totalPathwaysPerSample = new HashMap<>();

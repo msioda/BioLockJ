@@ -115,10 +115,14 @@ public class Constants
 	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
 	public static final String HN2_FULL_REPORT = "fullReport";
 
+	public static final String HN2_GENE_FAM_SUM = "geneFam";
+	public static final String HN2_PATH_ABUND_SUM = "pAbund";
+	public static final String HN2_PATH_COVG_SUM = "pCovg";
+	
+	
 	public static final String HN2_GENE_FAMILIES = "genefamilies";
 	public static final String HN2_PATH_ABUNDANCE = "pathabundance";
 	public static final String HN2_PATH_COVERAGE = "pathcoverage";
-
 	public static final String HN2_PATHWAY_REPORT = "pathwayReport";
 	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
 	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";

@@ -37,14 +37,38 @@ public class PathwayUtil
 	 * @param root Root file indicates type of coverage, abundance, or gene
 	 * @param prefix Optional prefix
 	 * @return Pathway count file
-	 * @throws Exception if errors occur
+	 * @throws Exception if invalid file name formats are found
 	 */
-	public static File getPathwayCountFile( final File dir, final File root, String prefix ) throws Exception
+	public static File getPathwayCountFile( final File dir, final File hn2OutputFile, String prefix ) throws Exception 
 	{
 		prefix = prefix == null ? "": prefix;
-		final String name = Config.pipelineName() + prefix + pathwayFileSuffix( root );
+		if( !prefix.startsWith( Config.pipelineName() ) )
+		{
+			prefix = Config.pipelineName() + "_" + prefix;
+		}
+		final String name = prefix + getHn2OutputType( hn2OutputFile ) + pathwayFileSuffix();
 		return new File( dir.getAbsolutePath() + File.separator + name );
 	}
+	
+	
+	public static String getHn2OutputType( File file ) throws Exception
+	{
+		if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
+		{
+			return Constants.HN2_PATH_ABUND_SUM;
+		}
+		if( file.getName().contains( Constants.HN2_PATH_COVG_SUM ) )
+		{
+			return Constants.HN2_PATH_COVG_SUM;
+		}
+		if( file.getName().contains( Constants.HN2_GENE_FAM_SUM ) )
+		{
+			return Constants.HN2_GENE_FAM_SUM;
+		}
+		throw new Exception( "Invalid Pathway file [ " + file.getAbsolutePath() + " ] name does not match HumanN2 output file name format.  Valid file suffixes contain: " + validFormats );
+	}
+	
+	private static String validFormats = "[ " + Constants.HN2_PATH_ABUND_SUM + ", " + Constants.HN2_PATH_COVG_SUM + ", " + Constants.HN2_GENE_FAM_SUM + " ]";
 
 	/**
 	 * Check the file name to determine if it is a pathway abundance table file.
@@ -55,16 +79,26 @@ public class PathwayUtil
 	 */
 	public static boolean isPathwayFile( final File file ) throws Exception
 	{
-		boolean isPathAund = file.getName().contains( Constants.HN2_PATH_ABUNDANCE );
-		boolean isPathCovg = file.getName().contains( Constants.HN2_PATH_COVERAGE );
-		boolean isGeneFaml = file.getName().contains( Constants.HN2_GENE_FAMILIES );
+		boolean isPathAund = file.getName().contains( Constants.HN2_PATH_ABUND_SUM );
+		boolean isPathCovg = file.getName().contains( Constants.HN2_PATH_COVG_SUM );
+		boolean isGeneFaml = file.getName().contains( Constants.HN2_GENE_FAM_SUM );
 		
-		if( file.getName().endsWith( pathwayFileSuffix( null ) ) &&
+		if( file.getName().endsWith( pathwayFileSuffix() ) &&
 				( isPathAund || isPathCovg || isGeneFaml ) )
 		{
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * Full Pathway report suffix with {@value biolockj.Constants#HN2_FULL_REPORT} appended as a prefix
+	 * 
+	 * @return Full Pathway Report file suffix 
+	 */
+	public static String fullPathwayReportSuffix()
+	{
+		return "_" + Constants.HN2_FULL_REPORT + PathwayUtil.pathwayFileSuffix();
 	}
 
 	/**
@@ -103,14 +137,9 @@ public class PathwayUtil
 	 * @param root Root file indicates type of coverage, abundance, or gene
 	 * @return file suffix for every BioLockJ Pathway file
 	 */
-	public static String pathwayFileSuffix( final File root )
+	public static String pathwayFileSuffix( )
 	{
-		String name = "";
-		if( root != null )
-		{
-			name = root.getName().replaceAll( Constants.TSV_EXT, "" ) + "_";
-		}
-		return "_" + name + TaxaUtil.SPECIES + Constants.TSV_EXT;
+		return "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
 	}
 
 	/**

@@ -269,10 +269,10 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return getClassifierExe() + RENORM_TABLE_CMD_SUFFIX;
 	}
 
-	private String getRenormTableLine( final String key ) throws Exception
+	private String getRenormTableLine( final String input, final String output ) throws Exception
 	{
-		return FUNCTION_RENORM_HN2_TABLES + " " + summaryFile( getTempSubDir( JOIN_OUT_DIR ), key ) + " "
-				+ summaryFile( getOutputDir(), key + "_" + TaxaUtil.SPECIES );
+		return FUNCTION_RENORM_HN2_TABLES + " " + summaryFile( getTempSubDir( JOIN_OUT_DIR ), input ) + " "
+				+ summaryFile( getOutputDir(), output + "_" + TaxaUtil.SPECIES );
 	}
 
 	private File getTempSubDir( final String name ) throws Exception
@@ -302,18 +302,18 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		lines.add( "done" );
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
 		{
-			lines.add( getJoinTableLine( Constants.HN2_PATH_ABUNDANCE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE ) );
+			lines.add( getJoinTableLine( Constants.HN2_PATH_ABUND_SUM ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE, Constants.HN2_PATH_ABUND_SUM ) );
 		}
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
 		{
-			lines.add( getJoinTableLine( Constants.HN2_PATH_COVERAGE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_COVERAGE ) );
+			lines.add( getJoinTableLine( Constants.HN2_PATH_COVG_SUM ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE, Constants.HN2_PATH_COVG_SUM ) );
 		}
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
 		{
-			lines.add( getJoinTableLine( Constants.HN2_GENE_FAMILIES ) );
-			lines.add( getRenormTableLine( Constants.HN2_GENE_FAMILIES ) );
+			lines.add( getJoinTableLine( Constants.HN2_GENE_FAM_SUM ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE, Constants.HN2_GENE_FAM_SUM ) );
 		}
 		lines.add( "}" + RETURN );
 		return lines;
@@ -321,7 +321,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 
 	private String summaryFile( final File dir, final String key ) throws Exception
 	{
-		return dir + File.separator + SUMMARY + key + TSV_EXT;
+		return dir + File.separator + Config.pipelineName() + key + TSV_EXT;
 	}
 
 	private Map<File, File> pairedReads = null;

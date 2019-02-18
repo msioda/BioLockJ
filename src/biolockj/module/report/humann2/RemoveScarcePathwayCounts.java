@@ -88,7 +88,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 			logScarceData( removeScarcePathwayCounts( file, getScarcePathways( table ) ), getScarcePathwayLogFile() );
 			logScarceData( removeScarceSamples( file, getScarceSampleIds( file, table ) ), getScarceSampleLogFile() );
 
-			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				MetaUtil.addColumn( getMetaColName() + "_" + "Unique_Pathways", uniquePathwaysPerSample, getTempDir(),
 						true );
@@ -401,7 +401,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 				newRecord = false;
 			}
 
-			if( count < getSampleCutoff() && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			if( count < getSampleCutoff() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				scarceIds.add( id );
 				totalPathwaysPerSample.remove( id );

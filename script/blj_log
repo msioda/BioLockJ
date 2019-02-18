@@ -21,7 +21,7 @@ if [ ${#pipeline} -gt 0 ]; then
 	if [ ${#1} -gt 0 ]; then
 		\tail $1 $pipeline/*.log 
 	else
-		\tail -1000 $pipeline/*.log 
+		\tail 1000 $pipeline/*.log 
 	fi
 else
 	echo "No pipelines found in BLJ_PROJ: $BLJ_PROJ"
