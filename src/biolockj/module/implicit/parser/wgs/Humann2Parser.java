@@ -103,7 +103,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 			{
 				for( final String cell: row )
 				{
-					record.add( record.isEmpty() ? MetaUtil.getID(): SeqUtil.getSampleId( cell ) );
+					record.add( record.isEmpty() ? MetaUtil.getID(): getSampleID( cell ) );
 				}
 			}
 			else
@@ -116,6 +116,32 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		}
 
 		return output;
+	}
+	
+	private String getSampleID( String name ) throws Exception
+	{
+		if( name.contains( PAIRED_SUFFIX ) )
+		{
+			name = name.replace( PAIRED_SUFFIX, "" );
+		}
+		if( name.contains( KD_SUFFIX ) )
+		{
+			name = name.replace( KD_SUFFIX, "" );
+		}
+		if( name.contains( ABUND_SUFFIX ) )
+		{
+			name = name.replace( ABUND_SUFFIX, "" );
+		}
+		if( name.contains( COVERAGE_SUFFIX ) )
+		{
+			name = name.replace( COVERAGE_SUFFIX, "" );
+		}
+		if( name.contains( RPK_SUFFIX ) )
+		{
+			name = name.replace( RPK_SUFFIX, "" );
+		}
+
+		return name;
 	}
 
 
@@ -149,10 +175,10 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 		return transpose;
 	}
-//
-//	private static final String ABUND_SUFFIX = "_Abundance";
-//	private static final String COVERAGE_SUFFIX = "_Coverage";
-//	private static final String KD_SUFFIX = "_kneaddata";
-//	private static final String PAIRED_SUFFIX = "_paired_merged";
-//	private static final String RPK_SUFFIX = "-RPKs";
+
+	private static final String ABUND_SUFFIX = "_Abundance";
+	private static final String COVERAGE_SUFFIX = "_Coverage";
+	private static final String KD_SUFFIX = "_kneaddata";
+	private static final String PAIRED_SUFFIX = "_paired_merged";
+	private static final String RPK_SUFFIX = "-RPKs";
 }
