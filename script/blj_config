@@ -11,6 +11,7 @@
 ##  6. Add env. variable $DOCKER_VER = "docker-18.09.2"               ##
 ##  7. Add env. variable $BLJ_VER = BioLockJ build version            ##
 ##  8. Add alias blj_go to "cd" into latest pipeline directory        ##
+##  9. Add $BLJ/script/blj_functions to runtime env                   ##
 ##                                                                    ##
 ########################################################################
 
