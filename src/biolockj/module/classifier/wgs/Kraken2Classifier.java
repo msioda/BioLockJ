@@ -119,7 +119,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	@Override
 	public List<String> getClassifierParams() throws Exception
 	{
-		return Config.getList( this, EXE_KRAKEN2_PARAMS );
+		return Config.getList( this, getExeParamName() );
 	}
 
 	/**
@@ -174,42 +174,42 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-						+ Constants.EXE_CLASSIFIER_PARAMS + "). BioLockJ derives this value from property: "
+						+ getExeParamName() + "). BioLockJ derives this value from property: "
 						+ SCRIPT_NUM_THREADS );
 			}
 			if( params.indexOf( PAIRED_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property("
-						+ Constants.EXE_CLASSIFIER_PARAMS
+						+ getExeParamName()
 						+ "). BioLockJ derives this value by analyzing input sequence files" );
 			}
 			if( params.indexOf( OUTPUT_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + OUTPUT_PARAM + ") found in property("
-						+ Constants.EXE_CLASSIFIER_PARAMS
+						+ getExeParamName()
 						+ "). BioLockJ hard codes this file path based on sequence files names in: "
 						+ Constants.INPUT_DIRS );
 			}
 			if( params.indexOf( DB_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + DB_PARAM + ") found in property("
-						+ Constants.EXE_CLASSIFIER_PARAMS
+						+ getExeParamName()
 						+ "). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
 			}
 			if( params.indexOf( "--help " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--help) found in property("
-						+ Constants.EXE_CLASSIFIER_PARAMS + ")." );
+						+ getExeParamName() + ")." );
 			}
 			if( params.indexOf( "--version " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--version) found in property("
-						+ Constants.EXE_CLASSIFIER_PARAMS + ")." );
+						+ getExeParamName() + ")." );
 			}
 			if( params.indexOf( REPORT_PARAM ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (" + REPORT_PARAM + ") found in property("
-						+ Constants.EXE_CLASSIFIER_PARAMS
+						+ getExeParamName()
 						+ "). BioLockJ hard codes this value based on Sample IDs found in: " + Constants.INPUT_DIRS );
 			}
 
@@ -218,6 +218,12 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		}
 
 		return defaultSwitches;
+	}
+	
+	
+	private String getExeParamName()
+	{
+		return EXE_KRAKEN2 + Constants.PARAMS;
 	}
 
 	// method calculates mean need by the module.
@@ -242,11 +248,6 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	 * {@link biolockj.Config} exe property for kraken2 executable: {@value #EXE_KRAKEN2}
 	 */
 	protected static final String EXE_KRAKEN2 = "exe.kraken2";
-
-	/**
-	 * {@link biolockj.Config} List property used to obtain the kraken2 executable params
-	 */
-	protected static final String EXE_KRAKEN2_PARAMS = "exe.kraken2Params";
 
 	/**
 	 * Name of the kraken function used to assign taxonomy: {@value #FUNCTION_KRAKEN}

@@ -40,20 +40,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		}
 	}
 
-	/**
-	 * Module prerequisite: {@link biolockj.module.report.humann2.Humann2Report}
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
-		{
-			preReqs.add( Humann2Report.class.getName() );
-		}
-		preReqs.addAll( super.getPreRequisiteModules() );
-		return preReqs;
-	}
+	
 
 	/**
 	 * Produce summary message with min, max, mean, and median number of pathways.
@@ -88,7 +75,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 			logScarceData( removeScarcePathwayCounts( file, getScarcePathways( table ) ), getScarcePathwayLogFile() );
 			logScarceData( removeScarceSamples( file, getScarceSampleIds( file, table ) ), getScarceSampleLogFile() );
 
-			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				MetaUtil.addColumn( getMetaColName() + "_" + "Unique_Pathways", uniquePathwaysPerSample, getTempDir(),
 						true );
@@ -181,7 +168,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 				final String pathway = pathways.get( i );
 				if( !scarcePathways.contains( pathway ) )
 				{
-					final Integer count = Integer.valueOf( record.get( i ) );
+					final Double count = Double.valueOf( record.get( i ) );
 					line.add( count.toString() );
 					totalPathwayCount += count;
 					if( count > 0 )
@@ -332,7 +319,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 	private Set<String> getScarcePathways( final List<List<String>> table ) throws Exception
 	{
 		final Set<String> scarcePathways = new HashSet<>();
-		final Map<String, Integer> pathMap = new HashMap<>();
+		final Map<String, Double> pathMap = new HashMap<>();
 		List<String> pathways = null;
 		for( final List<String> record: table )
 		{
@@ -341,7 +328,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 				pathways = record;
 				for( int i = 1; i < record.size(); i++ )
 				{
-					pathMap.put( record.get( i ), 0 );
+					pathMap.put( record.get( i ), 0.0 );
 				}
 
 				continue;
@@ -349,7 +336,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 
 			for( int i = 1; i < record.size(); i++ )
 			{
-				final Integer count = Integer.valueOf( record.get( i ) );
+				final Double count = Double.valueOf( record.get( i ) );
 				final String pathway = pathways.get( i );
 				if( count > 0 )
 				{
@@ -360,7 +347,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 
 		for( final String pathway: pathways )
 		{
-			final Integer count = pathMap.get( pathway );
+			final Double count = pathMap.get( pathway );
 			if( count != null && count < getCutoff() )
 			{
 				scarcePathways.add( pathway );
@@ -401,7 +388,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 				newRecord = false;
 			}
 
-			if( count < getSampleCutoff() && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			if( count < getSampleCutoff() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				scarceIds.add( id );
 				totalPathwaysPerSample.remove( id );

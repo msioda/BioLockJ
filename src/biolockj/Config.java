@@ -135,7 +135,7 @@ public class Config
 	{
 		if( !property.startsWith( "exe." ) )
 		{
-			throw new Exception( "Config.getExe() can be called for properties that begin with \"exe.\"" );
+			throw new Exception( "Config.getExe() can only be called for properties that begin with \"exe.\"" );
 		}
 
 		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
@@ -145,6 +145,37 @@ public class Config
 		}
 
 		return getString( module, property );
+	}
+	
+	/**
+	 * Call this function to get the parameters configured for this property.<br>
+	 * Make sure the last character for non-null resultss is an empty character for use in bash
+	 * scripts calling the corresponding executable.
+	 * 
+	 * @param module Calling module
+	 * @param property exe parameter name
+	 * @return Executable program parameters
+	 * @throws Exception if errors occur
+	 */
+	public static String getExeParams( final BioModule module, String property ) throws Exception
+	{
+		if( !property.startsWith( "exe." ) )
+		{
+			throw new Exception( "Config.getExeParams() can only be called for properties that begin with \"exe.\"" );
+		}
+
+ 		property = property + Constants.PARAMS;
+		if( getString( module, property ) == null )
+		{
+			return "";
+		}
+
+ 		String val = getString( module, property );
+		if( val != null && !val.isEmpty() && !val.endsWith( " " ) );
+		{
+			val = val + " ";
+		}
+		return val;
 	}
 
 	/**
@@ -237,9 +268,28 @@ public class Config
 		return list;
 	}
 
+	/**
+	 * Return module specific property if configured, otherwise use the given prop.
+	 * 
+	 * @param module BioModule
+	 * @param prop Property
+	 * @return Config property
+	 */
 	public static String getModuleProp( final BioModule module, final String prop )
 	{
-		final String moduleProp = module.getClass().getSimpleName() + "." + suffix( prop );
+		return( getModuleProp(module.getClass().getSimpleName(), prop ) );
+	}
+		
+	/**
+	 * Return module specific property if configured, otherwise use the given prop.
+	 * 
+	 * @param module Name of BioModule
+	 * @param prop Property
+	 * @return Config property
+	 */
+	public static String getModuleProp( final String moduleName, final String prop )
+	{	
+		final String moduleProp = moduleName + "." + suffix( prop );
 		final String val = Config.getString( null, moduleProp );
 		if( val == null )
 		{
@@ -649,7 +699,7 @@ public class Config
 	 * @throws ConfigNotFoundException if property is undefined
 	 * @throws ConfigFormatException if property is not a valid integer
 	 */
-	public static int requireInteger( final BioModule module, final String property )
+	public static Integer requireInteger( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
 		final Integer val = getIntegerProp( module, property );
@@ -710,10 +760,10 @@ public class Config
 	 * @throws ConfigNotFoundException if property is undefined
 	 * @throws ConfigFormatException if property is defined, but not set to a positive integer value
 	 */
-	public static int requirePositiveInteger( final BioModule module, final String property )
+	public static Integer requirePositiveInteger( final BioModule module, final String property )
 			throws ConfigNotFoundException, ConfigFormatException
 	{
-		final int val = requireInteger( module, property );
+		final Integer val = requireInteger( module, property );
 		if( val <= 0 )
 		{
 			throw new ConfigFormatException( property, "Property only accepts positive integers" );

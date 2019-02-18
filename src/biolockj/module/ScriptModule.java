@@ -108,11 +108,6 @@ public interface ScriptModule extends BioModule
 	public static final String SCRIPT_DEFAULT_HEADER = "script.defaultHeader";
 
 	/**
-	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
-	 */
-	public static final String SCRIPT_DIR = "script";
-
-	/**
 	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_NUM_THREADS}<br>
 	 * Used to reserve cluster resources and passed to any external application call that accepts a numThreads
 	 * parameter.

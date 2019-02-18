@@ -6,22 +6,20 @@
 ###############################################################################
 . $BLJ/script/blj_functions
 
-parentDir="$(dirname $PWD)"
-currentDir="$(basename $PWD)"
+pipelineDir="$(dirname $PWD)"
 
-if $(is_pipeline_dir $currentDir); then
-	parentDir=$currentDir
-elif ! $(is_pipeline_dir $parentDir); then 
+if $(is_pipeline_dir $PWD); then
+	pipelineDir=$PWD
+elif ! $(is_pipeline_dir $pipelineDir); then 
 	echo "ABORT: blj_complete must be executed from a pipeline directory" && exit 1
 fi
 
-echo "Update $parentDir status to: COMPLETE"
-[ ! -f "$parentDir/biolockjComplete" ] && touch "$parentDir/biolockjComplete" && echo "created $parentDir/biolockjComplete"
-[ -f "$parentDir/biolockjFailed" ] && rm "$parentDir/biolockjFailed" && echo "removed $parentDir/biolockjFailed"
+echo "Update $pipelineDir status to: COMPLETE"
+[ ! -f "$pipelineDir/biolockjComplete" ] && touch "$pipelineDir/biolockjComplete" && echo "created $pipelineDir/biolockjComplete"
+[ -f "$pipelineDir/biolockjFailed" ] && rm "$pipelineDir/biolockjFailed" && echo "removed $pipelineDir/biolockjFailed"
 
-
-for modDir in $parentDir/*; do
-	if [ -d "$modDir" ]; then
+for modDir in $pipelineDir/*; do
+	if $(is_module_dir "$modDir"); then
 		[ -f "$modDir/biolockjStarted" ] && rm "$modDir/biolockjStarted" && echo "deleted $modDir/biolockjStarted"
 		[ ! -f "$modDir/biolockjComplete" ] && touch "$modDir/biolockjComplete" && echo "created $modDir/biolockjComplete"
 	fi

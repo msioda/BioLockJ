@@ -1,7 +1,6 @@
-# Deployment path:  $BLJ/resources/docker/metaphlan2_classifier_dbfree.Dockerfile
+# Deployment path:  $DOCKER_FILE_PATH/metaphlan2_classifier_dbfree.Dockerfile
 
 FROM biolockj/blj_basic_py2
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install numpy & biopython
 RUN pip install numpy && \
@@ -15,10 +14,10 @@ ENV BOWTIE=bowtie2-${BOWTIE_VER}
 ENV B_URL=$BOWTIE_URL/$BOWTIE_VER/${BOWTIE}-linux-x86_64.zip
 RUN cd /usr/local/bin && \
 	wget -qO- $B_URL | bsdtar -xf- && \
-	chmod o+x -R $BOWTIE && \
-	rm -rf $BOWTIE/*-debug && \
-	mv $BOWTIE/[bs]* . && \
-	rm -rf $BOWTIE
+	chmod o+x -R /usr/local/bin/$BOWTIE && \
+	rm -rf /usr/local/bin/$BOWTIE/*-debug && \
+	mv /usr/local/bin/$BOWTIE/[bs]* . && \
+	rm -rf /usr/local/bin/$BOWTIE
 
 #3.) Install MetaPhlAn2
 ENV mpa_dir=/usr/local/bin
@@ -27,7 +26,8 @@ RUN cd $mpa_dir && \
 	wget -qO- $META_URL | bsdtar -xf- && \
 	mv biobakery*/* . && \
 	rm -rf biobakery*  && \
-	chmod o+x -R *.py
+	chmod o+x -R *.py && \
+	ln -s metaphlan2.py metaphlan2
 	
 #4.) Cleanup
 RUN	apt-get clean && \

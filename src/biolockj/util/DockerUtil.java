@@ -14,34 +14,26 @@ package biolockj.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
+import biolockj.module.classifier.wgs.Humann2Classifier;
+import biolockj.module.implicit.parser.wgs.Humann2Parser;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
+import biolockj.module.report.humann2.Humann2CountModule;
 import biolockj.module.report.r.R_Module;
+import biolockj.module.seq.AwkFastaConverter;
+import biolockj.module.seq.Gunzipper;
+import biolockj.module.seq.PearMergeReads;
 
 /**
  * DockerUtil for Docker integration.
  */
 public class DockerUtil
 {
-	/**
-	 * Build a docker bash script.
-	 * 
-	 * @return Bash script lines for the docker script
-	 * @throws Exception if errors occur
-	 */
-	public static List<List<String>> buildDockerScript() throws Exception
-	{
-		final List<List<String>> dockerScriptLines = new ArrayList<>();
-		final List<String> innerList = new ArrayList<>();
-		innerList.add( SPAWN_DOCKER_CONTAINER );
-		dockerScriptLines.add( innerList );
-		return dockerScriptLines;
-	}
-
 	/**
 	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script
 	 * path parameters.
@@ -50,28 +42,22 @@ public class DockerUtil
 	 * @return Bash function to run docker
 	 * @throws Exception if unable to build the function
 	 */
-	public static List<String> buildRunDockerFunction( final BioModule module ) throws Exception
+	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		if( isDockerJavaModule( module ) )
-		{
-			lines.add( getBljOptions( module ) + Constants.RETURN );
-			Log.info( DockerUtil.class, "BioLockJ parameters: " + getBljOptions( module ) + Constants.RETURN );
-		}
-
-		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + Constants.RETURN );
-		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + Constants.RETURN );
+		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() );
+		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ));
 
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
-		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run" + rmFlag() + getDockerEnvVars( module )
+		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run" + rmFlag( module ) + getDockerEnvVars( module )
 				+ getDockerVolumes() + getDockerImage( module ) );
-		lines.add( "}" );
+		lines.add( "}" + Constants.RETURN );
 		return lines;
 	}
 
 	/**
-	 * Get the name of the Docker image.
+	 * Return the name of the Docker image needed for the given module.
 	 * 
 	 * @param module BioModule
 	 * @return Docker image name
@@ -82,17 +68,26 @@ public class DockerUtil
 		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
 				|| module instanceof QiimeClassifier;
 
-		final boolean isR = module instanceof R_Module;
+		final String name = isQiime ? QiimeClassifier.class.getSimpleName()
+				: module instanceof R_Module ? R_Module.class.getSimpleName()
+				: module instanceof JavaModule ? JavaModule.class.getSimpleName() 
+				: module.getClass().getSimpleName();
 
-		final String name = isR ? R_Module.class.getSimpleName()
-				: isQiime ? QiimeClassifier.class.getSimpleName()
-						: isDockerScriptModule( module ) ? module.getClass().getSimpleName()
-								: JavaModule.class.getSimpleName();
-
-		String user = Config.getString( module, DOCKER_HUB_USER );
+		return " " + getDockerUser( module.getClass().getSimpleName() ) + "/" + getImageName( name ) + ":" + getImageVersion( module.getClass().getSimpleName() );
+	}
+	
+	/**
+	 * Return the Docker Hub user ID.  If none configured, return biolockj.
+	 * 
+	 * @param moduleName Calling module
+	 * @return Docker Hub User ID 
+	 * @throws Exception if errors occur
+	 */
+	public static String getDockerUser( final String moduleName ) throws Exception
+	{
+		String user = Config.getString( null, Config.getModuleProp( moduleName, DOCKER_HUB_USER ) );
 		user = user == null ? DEFAULT_DOCKER_HUB_USER: user;
-
-		return " " + user + "/" + getImageName( name ) + ":" + getImageVersion( module );
+		return user;
 	}
 
 	/**
@@ -118,36 +113,61 @@ public class DockerUtil
 		}
 		return newFile;
 	}
+	
+
+	private static boolean useBasicBashImg( final String className ) throws Exception
+	{
+		return className.contains( PearMergeReads.class.getSimpleName() ) ||
+				className.contains( AwkFastaConverter.class.getSimpleName() ) ||
+				className.contains( Gunzipper.class.getSimpleName() );
+	}
 
 	/**
 	 * Return the Docker Image name for the given class name.<br>
+	 * Return {@value #BLJ_BASH} for simple bash script modules that don't rely on special software<br>
 	 * Class names contain no spaces, words are separated via CamelCaseConvension.<br>
 	 * Docker image names cannot contain upper case letters, so this method substitutes "_" before the lower-case
 	 * version of each capital letter.<br>
 	 * <br>
 	 * Example: JavaModule becomes java_module
 	 * 
-	 * @param className class name with no spaces
-	 * @return String the Docker image name
-	 * @throws Exception if runtime errors occur
+	 * @param className BioModule class name
+	 * @return Docker Image Name
+	 * @throws Exception if errors occur
 	 */
 	public static String getImageName( final String className ) throws Exception
 	{
 		final StringBuffer imageName = new StringBuffer();
-		imageName.append( className.substring( 0, 1 ).toLowerCase() );
-
-		for( int i = 2; i < className.length(); i++ )
+		
+		if( useBasicBashImg( className ) )
 		{
-			final String val = className.substring( i - 1, i );
-			final String upperCase = val.toUpperCase();
-			if( val.equals( upperCase ) )
-			{
-				imageName.append( IMAGE_NAME_DELIM ).append( val );
-			}
+			imageName.append( BLJ_BASH );
 		}
-
-		Log.info( DockerUtil.class, "Use Docker image: " + imageName.toString() );
-
+		else
+		{
+			imageName.append( className.substring( 0, 1 ).toLowerCase() );
+	
+			for( int i = 2; i < className.length() + 1; i++ )
+			{
+				int len = imageName.toString().length();
+				final String prevChar = imageName.toString().substring( len - 1, len );
+				final String val = className.substring( i - 1, i );
+				if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) 
+						&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
+				{
+					imageName.append( IMAGE_NAME_DELIM ).append( val.toLowerCase() );
+				}
+				else if( prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
+				{
+					imageName.append( val.toLowerCase() );
+				}
+				else if( !prevChar.equals( IMAGE_NAME_DELIM ) )
+				{
+					imageName.append( val.toLowerCase() );
+				}
+			}		
+		}
+		Log.info( DockerUtil.class, "Map: Class ["+className+"] <--> Docker Image [ " + imageName.toString() + " ]" );
 		return imageName.toString();
 	}
 
@@ -155,13 +175,13 @@ public class DockerUtil
 	 * Get the Docker image version if defined in the {@link biolockj.Config} file<br>
 	 * If not found, return the default version "latest"
 	 * 
-	 * @param module check for {@link biolockj.Config} options specific to this module
-	 * @return String Docker image version
-	 * @throws Exception if runtime errors occur
+	 * @param moduleName BioModule name
+	 * @return Docker image version
+	 * @throws Exception if errors occur
 	 */
-	public static String getImageVersion( final BioModule module ) throws Exception
+	public static String getImageVersion( final String moduleName ) throws Exception
 	{
-		String ver = Config.getString( module, Constants.DOCKER_IMG_VERSION );
+		String ver = Config.getString( null, Config.getModuleProp( moduleName, Constants.DOCKER_IMG_VERSION ) );
 		if( ver == null )
 		{
 			ver = DOCKER_LATEST;
@@ -169,53 +189,10 @@ public class DockerUtil
 		return ver;
 	}
 
-	/**
-	 * Method to indicate module is a Docker Java module
-	 * 
-	 * @param module BioModule
-	 * @return TRUE if module is a Docker Java module
-	 */
-	public static boolean isDockerJavaModule( final BioModule module )
-	{
-		return RuntimeParamUtil.isDockerMode() && module instanceof JavaModule;
-	}
-
-	/**
-	 * Boolean to determine if running Docker compute node. Return TRUE if inDocker() and not a JavaModule.
-	 * 
-	 * @param module BioModule
-	 * @return TRUE if running in a Docker container.
-	 */
-	public static boolean isDockerScriptModule( final BioModule module )
-	{
-		return RuntimeParamUtil.isDockerMode() && !isDockerJavaModule( module );
-	}
-
-	/**
-	 * Boolean to determine if running Docker manager module.
-	 * 
-	 * @return TRUE if running the Docker manager module.
-	 */
-	public static boolean isManager()
-	{
-		return !RuntimeParamUtil.isDirectMode();
-	}
-
-	private static String getBljOptions( final BioModule module ) throws Exception
-	{
-		final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " + BioLockJUtil.getDirectModuleParam( module );
-
-		return BLJ_OPTIONS + "=\"" + args + "\"";
-	}
 
 	private static final String getDockerEnvVars( final BioModule module ) throws Exception
 	{
-		if( isDockerScriptModule( module ) )
-		{
-			return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
-		}
-
-		return " -e \"" + BLJ_OPTIONS + "=$" + BLJ_OPTIONS + "\"";
+		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
 
 	private static final String getDockerVolumes() throws Exception
@@ -238,20 +215,49 @@ public class DockerUtil
 		return dockerVolumes;
 	}
 
-	private static final String rmFlag() throws Exception
+	private static final String rmFlag( final BioModule module ) throws Exception
 	{
-		return Config.getBoolean( null, DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
+		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "" : " " + DOCK_RM_FLAG;
 	}
+	
+	
+	/**
+	 * Return TRUE if running on AWS (based on Config props).
+	 * 
+	 * @return TRUE if project.env=aws
+	 * @throws Exception if errors occur
+	 */
+	public static boolean runAws() throws Exception
+	{
+		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
+	}
+	
 
 	/**
-	 * Docker environment variable holding the Docker program switches: {@value #BLJ_OPTIONS}
+	 * Boolean to determine if running Docker blj_manager
+	 * 
+	 * @return TRUE if running Docker blj_manager
 	 */
-	public static final String BLJ_OPTIONS = "BLJ_OPTIONS";
+	public static boolean isBljManager() throws Exception
+	{
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !runAws();
+	}
+	
+	/**
+	 * Boolean to determine if running Docker blj_manager
+	 * 
+	 * @return TRUE if running Docker blj_manager
+	 */
+	public static boolean isAwsManager() throws Exception
+	{
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && runAws() ;
+	}
+	
 
 	/**
 	 * Docker environment variable holding the name of the compute script file: {@value #COMPUTE_SCRIPT}
 	 */
-	public static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
+	protected static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
 
 	/**
 	 * All containers mount the host {@link biolockj.Config} directory to the container"config" volume
@@ -282,17 +288,12 @@ public class DockerUtil
 	/**
 	 * Name of the BioLockJ Docker account ID: {@value #DEFAULT_DOCKER_HUB_USER}
 	 */
-	public static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
+	protected static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
 
 	/**
-	 * Docker socket path: {@value #DOCKER_SOCKET}
+	 * Docker image name for simple bash scripts (awk,gzip,pear).
 	 */
-	public static final String DOCKER_SOCKET = "/var/run/docker.sock";
-
-	/**
-	 * Docker manager module name variable holding the name of the Config file: {@value #MANAGER}
-	 */
-	public static final String MANAGER = "blj_manager";
+	protected static final String BLJ_BASH = "blj_bash";
 
 	/**
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
@@ -300,9 +301,9 @@ public class DockerUtil
 	public static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
 
 	/**
-	 * {@link biolockj.Config} property sets --rm flag on docker run command if set to TRUE: {@value #DELETE_ON_EXIT}
+	 * {@link biolockj.Config} property removed the default --rm flag on docker run command if set to TRUE: {@value #SAVE_CONTAINER_ON_EXIT}
 	 */
-	protected static final String DELETE_ON_EXIT = "docker.deleteContainerOnExit";
+	protected static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
 
 	/**
 	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
@@ -312,6 +313,7 @@ public class DockerUtil
 	 */
 	protected static final String DOCKER_HUB_USER = "docker.user";
 
+	private static final String DOCKER_SOCKET = "/var/run/docker.sock";
 	private static final String DOCK_RM_FLAG = "--rm";
 	private static final String DOCKER_LATEST = "latest";
 	private static final String IMAGE_NAME_DELIM = "_";

@@ -76,9 +76,10 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public void executeTask() throws Exception
 	{
 		writePrimaryScript();
+		
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			BashScriptBuilder.buildScripts( this, buildDockerBashScript(), 1 );
+			BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
 		}
 	}
 
@@ -162,11 +163,11 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
 	{
+		numInit++;
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			final boolean isHn2 = isHumanN2();
-			if( isHn2 )
+			if( isHumanN2() )
 			{
 				preReqs.add( AddMetadataToPathwayTables.class.getName() );
 			}
@@ -363,35 +364,98 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	private Boolean isHumanN2() throws Exception
 	{
-		final String prevClassifier = null;
-		int foundSelf = 0;
+		Log.debug( getClass(), "Check to see if R Module inherits Hn2 or Tax tables..." );
+		List<String> mods = Config.requireList( this, Constants.INTERNAL_BLJ_MODULE );
+		List<Integer> classifiers = new ArrayList<>();
+		List<Integer> parsers = new ArrayList<>();
+		List<Integer> hn2Classifiers = new ArrayList<>();
+		List<Integer> otherRModules = new ArrayList<>();
+		List<Integer> thisClass = new ArrayList<>();
+		for( int i=0; i<mods.size(); i++ )
+		{
+			final boolean isParser = mods.get( i ).toLowerCase().contains( "parser" );
+			final boolean isClassifier = mods.get( i ).toLowerCase().contains( "classifier" );
+			final boolean isHn2 = isClassifier && mods.get( i ).toLowerCase().contains( "humann2" );
+			if( mods.get( i ).equals( getClass().getName() ) )
+			{
+				thisClass.add( i );
+			}
+			else if( mods.get( i ).startsWith( "R_" ) )
+			{
+				otherRModules.add( i );
+			}
+			else if( isHn2 )
+			{
+				hn2Classifiers.add( i );
+			}
+			else if( isClassifier )
+			{
+				classifiers.add( i );
+			}
+			else if( isParser )
+			{
+				parsers.add( i );
+			}
+		}
+		
 		final boolean hasPathwayInputs = BioLockJUtil
 				.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE );
 		final boolean hasTaxaInputs = BioLockJUtil
 				.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
-		for( final String mod: Config.requireList( this, Constants.INTERNAL_BLJ_MODULE ) )
+		Log.debug( getClass(), "hasPathwayInputs: " + hasPathwayInputs );
+		Log.debug( getClass(), "hasTaxaInputs: " + hasTaxaInputs );
+		if( hn2Classifiers.isEmpty() && classifiers.isEmpty() )
 		{
-			final boolean isClassifier = mod.toLowerCase().contains( "classifier" );
-			final boolean isHn2 = isClassifier && mod.toLowerCase().contains( "humann2" );
-			if( mod.equals( getClass().getName() ) )
-			{
-				foundSelf++;
+			if( hasPathwayInputs && !hasTaxaInputs )
+			{	
+				Log.debug( getClass(), "No classifier modules --> hasPathwayInputs && !hasTaxaInputs: return( TRUE )" );
+				return true;
 			}
-
-			if( foundSelf > 0 && foundSelf > numInit++ )
+			Log.debug( getClass(), "No classifier modules --> !hasPathwayInputs || hasTaxaInputs: return( FALSE )" );
+			return false;
+		}
+		if( hn2Classifiers.isEmpty() )
+		{
+			Log.debug( getClass(), "No HN2 classifiers configured: return( FALSE )" );
+			return false;
+		}
+		if( classifiers.isEmpty() )
+		{
+			Log.debug( getClass(), "No standard classifiers configured: return( TRUE )" );
+			return true;
+		}
+		
+		Integer rIndex = thisClass.get( thisClass.size() == 1 ? 0 : numInit -1  );
+		Integer hn2Index = getClosestIndex( hn2Classifiers, rIndex );
+		Integer classifierIndex = getClosestIndex( classifiers, rIndex );
+		Integer parserIndex = getClosestIndex( parsers, rIndex );
+		Log.debug( getClass(), "rIndex: " + ( rIndex == null ? "N/A" : rIndex ) );
+		Log.debug( getClass(), "hn2Index: " + ( hn2Index == null ? "N/A" : hn2Index ) );
+		Log.debug( getClass(), "classifierIndex: " + ( classifierIndex == null ? "N/A" : classifierIndex ) );
+		Log.debug( getClass(), "parserIndex: " + ( parserIndex == null ? "N/A" : parserIndex ) );
+		
+		if( hn2Index == null )
+		{
+			Log.debug( getClass(), "No HN2 classifiers BEFORE R-module index so return( FALSE ): " +  rIndex );
+			return false;
+		}
+		boolean useHn2 = classifierIndex == null || ( classifierIndex < hn2Index );
+		useHn2 = useHn2 && ( parserIndex == null || ( parserIndex < hn2Index ) );
+		Log.debug( getClass(), "Final assessment --> use HumanN2 tables?  return( " + useHn2 + " ) ");
+		return useHn2;
+	}
+	
+	private Integer getClosestIndex( List<Integer> indexes, Integer target ) throws Exception
+	{
+		Integer hit = null;
+		for( Integer i: indexes )
+		{
+			if( i < target )
 			{
-
-				if( prevClassifier == null && hasTaxaInputs || !isHn2 && isClassifier )
-				{
-					return false;
-				}
-				if( prevClassifier == null && hasPathwayInputs || isHn2 )
-				{
-					return true;
-				}
+				hit = i;
 			}
 		}
-		return false;
+		return hit;
 	}
 
 	/**

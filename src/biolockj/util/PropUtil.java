@@ -240,8 +240,8 @@ public class PropUtil
 					"####################################################################################" + RETURN );
 			writer.write( "#" + RETURN );
 			writer.write( "#   Based on the above configuration, the following pipeline was run." + RETURN );
-			writer.write( "#   The additional BioModules were added as required pre/postrequisits or as " + RETURN );
-			writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ " + RETURN );
+			writer.write( "#   The additional BioModules were added as required pre/postrequisits or as" + RETURN );
+			writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ" + RETURN );
 			writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
 			writer.write( "#" + RETURN );
 			for( final String mod: Config.requireList( null, Constants.INTERNAL_ALL_MODULES ) )
@@ -283,7 +283,7 @@ public class PropUtil
 
 	private static void writeConfigHeaders( final BufferedWriter writer ) throws Exception
 	{
-		writer.write( "# The MASTER Config file was generated from the following Config files: " + RETURN );
+		writer.write( "# The MASTER Config file was generated from the following Config files:" + RETURN );
 		final List<String> initConfig = getInitConfig();
 		if( initConfig == null )
 		{

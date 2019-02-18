@@ -75,15 +75,15 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 
 	/**
 	 * Call {@link #buildScript(List)} to create bash script lines needed to merge
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}s with {@value #SCRIPT_MERGE_OTU_TABLES}. Pass
-	 * lines to {@link biolockj.util.BashScriptBuilder#buildScripts(biolockj.module.ScriptModule, List, int)}
+	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}s with {@value #SCRIPT_MERGE_OTU_TABLES} 
+	 * unless only 1 input file found, in which case, just copy it to the output dir.
 	 */
 	@Override
 	public void executeTask() throws Exception
 	{
 		if( getInputFiles().size() > 1 )
 		{
-			BashScriptBuilder.buildScripts( this, buildScript( getInputFiles() ), 1 );
+			super.executeTask();
 		}
 		else if( getInputFiles().size() == 1 )
 		{

@@ -35,10 +35,17 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	{
 		final List<List<String>> data = new ArrayList<>();
 		final ArrayList<String> lines = new ArrayList<>();
-
-		lines.add( "java" + getSource() + " " + BioLockJUtil.getDirectModuleParam( this ) + " "
-				+ RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getBaseDir().getAbsolutePath() + " "
-				+ RuntimeParamUtil.CONFIG_FLAG + " " + Config.getConfigFilePath() );
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			lines.add( "java" + getSource() + " $" + BLJ_OPTIONS );
+		}
+		else
+		{
+			lines.add( "java" + getSource() + " " + BioLockJUtil.getDirectModuleParam( this ) + " "
+					+ RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getBaseDir().getAbsolutePath() + " "
+					+ RuntimeParamUtil.CONFIG_FLAG + " " + Config.getConfigFilePath() );
+		}
+		
 
 		data.add( lines );
 		return data;
@@ -58,8 +65,8 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	{
 		final boolean buildClusterScript = !RuntimeParamUtil.isDockerMode() && Config.isOnCluster()
 				&& Config.getBoolean( this, BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT );
-		final boolean buildDockerSciprt = RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode();
-		if( buildClusterScript || buildDockerSciprt )
+		final boolean buildDockerScript = RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode();
+		if( buildClusterScript || buildDockerScript )
 		{
 			super.executeTask();
 		}
@@ -179,4 +186,25 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 			}
 		}
 	}
+	
+	/**
+	 * Build the docker run command to launch a JavaModule in a Docker container.
+	 */
+	@Override
+	public List<String> getWorkerScriptFunctions() throws Exception
+	{
+		List<String> lines = new ArrayList<>();
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " + BioLockJUtil.getDirectModuleParam( this );
+			lines.add( BLJ_OPTIONS + "=\"" + args + "\"" + Constants.RETURN );
+		}
+		
+		return lines;
+	}
+
+	/**
+	 * Docker environment variable holding the Docker program switches: {@value #BLJ_OPTIONS}
+	 */
+	public static final String BLJ_OPTIONS = "BLJ_OPTIONS";
 }

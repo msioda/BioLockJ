@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Pipeline;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
@@ -68,17 +69,10 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public void executeTask() throws Exception
 	{
-		if( DockerUtil.isDockerJavaModule( this ) )
-		{
-			BashScriptBuilder.buildScripts( this, DockerUtil.buildDockerScript(), 1 );
-		}
-		else
-		{
-			final List<List<String>> data = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
-					? buildScriptForPairedReads( getInputFiles() )
-					: buildScript( getInputFiles() );
-			BashScriptBuilder.buildScripts( this, data, Config.requireInteger( this, ScriptModule.SCRIPT_BATCH_SIZE ) );
-		}
+		final List<List<String>> data = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
+				? buildScriptForPairedReads( getInputFiles() ) : buildScript( getInputFiles() );
+		BashScriptBuilder.buildScripts( this, data );
+		
 	}
 
 	@Override
@@ -97,7 +91,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public File getMainScript() throws Exception
 	{
-		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		if( scriptDir.exists() )
 		{
 			for( final File file: getScriptDir().listFiles() )
@@ -133,7 +127,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public File getScriptDir()
 	{
-		return ModuleUtil.requireSubDir( this, SCRIPT_DIR );
+		return ModuleUtil.requireSubDir( this, Constants.SCRIPT_DIR );
 	}
 
 	/**
@@ -188,21 +182,11 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		return Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
 	}
 
-	/**
-	 * Build the docker run command to launch a JavaModule in a Docker container.
-	 */
+
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final List<String> lines = new ArrayList<>();
-		if( DockerUtil.isDockerJavaModule( this ) )
-		{
-			lines.addAll( DockerUtil.buildRunDockerFunction( this ) );
-		}
-
-		lines.add( "" );
-
-		return lines;
+		return new ArrayList<>();
 	}
 
 	/**
@@ -237,7 +221,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 
 	private boolean hasScripts() throws Exception
 	{
-		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + SCRIPT_DIR );
+		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		return scriptDir.exists();
 
 	}

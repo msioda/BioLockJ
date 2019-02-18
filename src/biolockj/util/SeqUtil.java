@@ -424,6 +424,11 @@ public class SeqUtil
 			Log.error( SeqUtil.class, "Unable to extract Sample ID from: " + value, ex );
 			throw ex;
 		}
+		
+		if( id == null || id.isEmpty() )
+		{
+			throw new Exception( "Unable to extract a valid Sample ID from: " + value );
+		}
 
 		return id;
 	}
@@ -443,22 +448,27 @@ public class SeqUtil
 		final List<File> seqsWithoutMetaId = new ArrayList<>();
 		for( final File file: files )
 		{
-			if( MetaUtil.getSampleIds().contains( SeqUtil.getSampleId( file.getName() ) ) )
+			try
 			{
+				SeqUtil.getSampleId( file.getName() );
 				seqFiles.add( file );
 			}
-			else if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) ) // metadata required
+			catch(Exception ex )
 			{
-				seqsWithoutMetaId.add( file );
+				if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) )
+				{
+					seqsWithoutMetaId.add( file );
+				}
+				else
+				{
+					Log.warn( SeqUtil.class, "Ignoring input file not found in metadata <-> Config property [ "
+							+ MetaUtil.META_REQUIRED + "=" + Constants.FALSE + " ]: " + file.getAbsolutePath() );
+				}
 			}
-			else
-			{
-				Log.warn( SeqUtil.class, "Ignoring input file not found in metadata because Config property [ "
-						+ MetaUtil.META_REQUIRED + "=" + Constants.FALSE + " ]: " + file.getAbsolutePath() );
-			}
+
 		}
 
-		if( !seqsWithoutMetaId.isEmpty() && Config.getBoolean( null, MetaUtil.META_REQUIRED ) )
+		if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) && !seqsWithoutMetaId.isEmpty() )
 		{
 			throw new ConfigViolationException( MetaUtil.META_REQUIRED, "No metadata found for the following files: "
 					+ Constants.RETURN + BioLockJUtil.printLongFormList( seqsWithoutMetaId ) );

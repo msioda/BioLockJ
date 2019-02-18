@@ -113,7 +113,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	@Override
 	public List<String> getClassifierParams() throws Exception
 	{
-		return Config.getList( this, EXE_SLIMM_PARAMS );
+		return Config.getList( this, getExeParamName() );
 	}
 
 	/**
@@ -208,22 +208,22 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		String slimmSwitches = " " + BioLockJUtil.join( getClassifierParams() );
 		if( slimmSwitches.indexOf( "-o " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-o) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
+			throw new Exception( "Invalid SLIMM option (-o) found in property(" + getExeParamName()
 					+ "). BioLockJ hard codes this value to: " + getOutputDir().getAbsolutePath() + File.separator );
 		}
 		if( slimmSwitches.indexOf( "-m " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-m) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
+			throw new Exception( "Invalid SLIMM option (-m) found in property(" + getExeParamName()
 					+ "). BioLockJ sets these values based on: " + DATABASE );
 		}
 		if( slimmSwitches.indexOf( "-d " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-d) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
+			throw new Exception( "Invalid SLIMM option (-d) found in property(" + getExeParamName()
 					+ "). BioLockJ sends individual input files to SLIMM from: " + getTempDir().getAbsolutePath() );
 		}
 		if( slimmSwitches.indexOf( "-r " ) > -1 )
 		{
-			throw new Exception( "Invalid SLIMM option (-r) found in property(" + Constants.EXE_CLASSIFIER_PARAMS
+			throw new Exception( "Invalid SLIMM option (-r) found in property(" + getExeParamName()
 					+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
 		}
 
@@ -234,6 +234,11 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 
 		return slimmSwitches;
+	}
+	
+	private String getExeParamName()
+	{
+		return EXE_SLIMM + Constants.PARAMS;
 	}
 
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
@@ -282,11 +287,6 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * {@link biolockj.Config} property to call slimm executable: {@value #EXE_SLIMM}
 	 */
 	protected static final String EXE_SLIMM = "exe.slimm";
-
-	/**
-	 * {@link biolockj.Config} property to call slimm executable: {@value #EXE_SLIMM_PARAMS}
-	 */
-	protected static final String EXE_SLIMM_PARAMS = "exe.slimmParams";
 
 	/**
 	 * Function name used to align sequences with bowtie2: {@value #FUNCTION_ALIGN}

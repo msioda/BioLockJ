@@ -1,7 +1,6 @@
-# Deployment path: $BLJ/resources/docker/blj_webapp.Dockerfile
+# Deployment path: $DOCKER_FILE_PATH/blj_webapp.Dockerfile
 
 FROM biolockj/blj_basic_py2
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Ubuntu Software
 ENV NODE_VERSION 8.11.3
@@ -34,12 +33,10 @@ RUN echo ${BLJ_DATE} && \
 	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/src && \
 	cp $BLJ/script/* /usr/local/bin
 	
-
 #4.) Install npm
 RUN cp $BLJ/web_app/package*.json ./
 RUN npm install --only=production
 RUN cp -r $BLJ/web_app/* ./
-
 
 #5.) Cleanup
 RUN	apt-get clean && \
@@ -49,9 +46,6 @@ RUN	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
 	
-  
-
-
 #6.) Start npm Command (Ready to open web-browser localhost:8080)
 WORKDIR $BLJ/web_app/
 EXPOSE 8080

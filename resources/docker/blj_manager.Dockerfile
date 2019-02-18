@@ -1,7 +1,6 @@
-# Deployment path: $BLJ/resources/docker/blj_manager.Dockerfile
+# Deployment path: $DOCKER_FILE_PATH/blj_manager.Dockerfile
 
 FROM biolockj/blj_basic_java
-ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Docker Client
 ARG DOCKER_CLIENT
@@ -31,3 +30,6 @@ RUN	apt-get clean && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
+
+#4.) Set Default Command
+CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS

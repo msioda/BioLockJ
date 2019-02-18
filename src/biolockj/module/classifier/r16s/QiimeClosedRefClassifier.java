@@ -41,7 +41,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		Log.info( getClass(), "Processing " + ( files == null ? 0: files.size() ) + " files" );
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
-		if( RuntimeParamUtil.isDockerMode()
+		if( ( RuntimeParamUtil.isDockerMode() && !DockerUtil.runAws() )
 				|| Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= files.size() )
 		{
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
@@ -87,16 +87,6 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		getParams();
 	}
 
-	/**
-	 * Call {@link #buildScript(List)} to create bash script lines needed to batch jobs for closed ref OTU picking. Pass
-	 * lines to {@link biolockj.util.BashScriptBuilder#buildScripts(biolockj.module.ScriptModule, List, int)} to create
-	 * the bash scripts
-	 */
-	@Override
-	public void executeTask() throws Exception
-	{
-		BashScriptBuilder.buildScripts( this, buildScript( getInputFiles() ), 1 );
-	}
 
 	/**
 	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.

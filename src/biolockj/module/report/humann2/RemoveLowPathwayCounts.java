@@ -34,20 +34,6 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 		getMinCount();
 	}
 
-	/**
-	 * Module prerequisite: {@link biolockj.module.report.humann2.Humann2Report}
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
-		{
-			preReqs.add( Humann2Report.class.getName() );
-		}
-		preReqs.addAll( super.getPreRequisiteModules() );
-		return preReqs;
-	}
 
 	/**
 	 * Produce summary message with min, max, mean, and median number of pathways.
@@ -79,7 +65,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 		{
 			final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts( file );
 			logLowCountPathways( lowCounts );
-			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				MetaUtil.addColumn( getMetaColName() + "_" + "Unique Pathways", uniquePathwaysPerSample, getTempDir(),
 						true );
@@ -137,8 +123,8 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 	 */
 	protected TreeMap<String, TreeSet<String>> removeLowPathwayCounts( final File file ) throws Exception
 	{
+		Log.info( getClass(), "Inspecting for Low Pathway count: " + file.getAbsolutePath() );
 		final TreeMap<String, TreeSet<String>> lowCountPathways = new TreeMap<>();
-
 		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
 		final List<List<String>> output = new ArrayList<>();
 
@@ -164,11 +150,11 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 			line.add( sampleId );
 			for( int i = 1; i < record.size(); i++ )
 			{
-				final Integer count = Integer.valueOf( record.get( i ) );
+				final Double count = Double.valueOf( record.get( i ) );
 				final String pathway = pathways.get( i );
 				if( count < getMinCount() )
 				{
-					line.add( "0" );
+					line.add( "0.0" );
 					Log.debug( getClass(), sampleId + ": Remove Low Pathway count: " + pathway + "=" + count );
 				}
 				else
@@ -180,13 +166,16 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 				}
 			}
 
+			
 			output.add( line );
 
 			final TreeSet<String> badSamplePathways = new TreeSet<>( validPathways );
 			badSamplePathways.removeAll( validSamplePathways );
 			foundSamplePathways.addAll( validSamplePathways );
-			if( file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
+				Log.info( getClass(), "Set totalPathwaysPerSample: " + sampleId + "=" + totalPathwayCount );
+				Log.info( getClass(), "Set uniquePathwaysPerSample: " + sampleId + "=" + foundSamplePathways.size() );
 				totalPathwaysPerSample.put( sampleId, String.valueOf( totalPathwayCount ) );
 				uniquePathwaysPerSample.put( sampleId, String.valueOf( foundSamplePathways.size() ) );
 			}
@@ -195,7 +184,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 			if( !badSamplePathways.isEmpty() )
 			{
 				lowCountPathways.put( sampleId, badSamplePathways );
-				Log.warn( getClass(), sampleId + ": Removed " + badSamplePathways.size() + " low Pathway counts (below "
+				Log.debug( getClass(), sampleId + ": Removed " + badSamplePathways.size() + " low Pathway counts (below "
 						+ getProp() + "=" + getMinCount() + ") --> " + badSamplePathways );
 			}
 		}

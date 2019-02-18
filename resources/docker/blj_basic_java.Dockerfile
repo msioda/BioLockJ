@@ -1,9 +1,9 @@
-# Deployment path:  $BLJ/resources/docker/blj_basic_java.Dockerfile
+# Deployment path:  $DOCKER_FILE_PATH/blj_basic_java.Dockerfile
 
 FROM biolockj/blj_basic
 ARG DEBIAN_FRONTEND=noninteractive
 
-#1.) Install Ubuntu Software 
+#1.) Install Java 
 RUN apt-get install -y software-properties-common && \
 	apt-get upgrade -y && \
    	apt-get install -y openjdk-8-jre-headless
@@ -13,6 +13,4 @@ RUN	apt-get clean && \
 	find / -name *python* | xargs rm -rf && \
 	rm -rf /tmp/* && \
 	rm -rf /var/log/* 
-
-#3.) Run BioLockJ Command
-CMD [ "/bin/bash", "biolockj", "$BLJ_OPTIONS" ]
+	

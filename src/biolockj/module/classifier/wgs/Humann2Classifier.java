@@ -206,7 +206,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	 */
 	protected String getRuntimeParams() throws Exception
 	{
-		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + NUCL_DB_PARAM + " " + getNuclDB() + " "
+		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " + NUCL_DB_PARAM + " " + getNuclDB() + " "
 				+ PROT_DB_PARAM + " " + getProtDB() + " ";
 	}
 
@@ -269,10 +269,10 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return getClassifierExe() + RENORM_TABLE_CMD_SUFFIX;
 	}
 
-	private String getRenormTableLine( final String key ) throws Exception
+	private String getRenormTableLine( final String input, final String output ) throws Exception
 	{
-		return FUNCTION_RENORM_HN2_TABLES + " " + summaryFile( getTempSubDir( JOIN_OUT_DIR ), key ) + " "
-				+ summaryFile( getOutputDir(), key );
+		return FUNCTION_RENORM_HN2_TABLES + " " + summaryFile( getTempSubDir( JOIN_OUT_DIR ), input ) + " "
+				+ getOutputDir().getAbsolutePath() + File.separator + PathwayUtil.getHn2ClassifierOutput( output );
 	}
 
 	private File getTempSubDir( final String name ) throws Exception
@@ -303,17 +303,17 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
 		{
 			lines.add( getJoinTableLine( Constants.HN2_PATH_ABUNDANCE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE, Constants.HN2_PATH_ABUND_SUM ) );
 		}
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
 		{
 			lines.add( getJoinTableLine( Constants.HN2_PATH_COVERAGE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_COVERAGE ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_COVERAGE, Constants.HN2_PATH_COVG_SUM ) );
 		}
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
 		{
-			lines.add( getJoinTableLine( Constants.HN2_GENE_FAMILIES ) );
-			lines.add( getRenormTableLine( Constants.HN2_GENE_FAMILIES ) );
+			lines.add( getJoinTableLine( Constants.HN2_DISABLE_GENE_FAMILIES ) );
+			lines.add( getRenormTableLine( Constants.HN2_DISABLE_GENE_FAMILIES, Constants.HN2_GENE_FAM_SUM ) );
 		}
 		lines.add( "}" + RETURN );
 		return lines;
@@ -321,7 +321,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 
 	private String summaryFile( final File dir, final String key ) throws Exception
 	{
-		return dir + File.separator + SUMMARY + key + TSV_EXT;
+		return dir + File.separator + Config.pipelineName() + "_" + key + TSV_EXT;
 	}
 
 	private Map<File, File> pairedReads = null;
@@ -355,6 +355,11 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	 * {@link biolockj.Config} Directory property may contain protein nucleotide database files: {@value #HN2_PROT_DB}
 	 */
 	protected static final String HN2_PROT_DB = "humann2.protDB";
+	
+	
+	
+	private static final String RM_STRATIFIED_OUTPUT = "--remove-stratified-output";
+	
 	private static final String FILE_NAME_PARAM = "--file_name";
 	private static final String FUNCTION_CONCAT_PAIRED_READS = "mergePairedReads";
 	private static final String FUNCTION_JOIN_HN2_TABLES = "joinHn2Tables";
@@ -372,12 +377,12 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private static final String NUM_THREADS_PARAM = "--threads";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String PROT_DB_PARAM = "--protein-database";
-	private static final String READY = "ready";
+
 	private static final String RENORM_BASH_COMMENT = "# Renormalize output summary tables" + RETURN
 			+ "# Renorm unit options: counts/million (default) or relative abundance" + RETURN
 			+ "# Renorm mode options: community (default) or levelwise";
 	private static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table";
-	private static final String SUMMARY = "summary_";
+
 	private static final String TEMP_MERGE_READ_DIR = "merged";
 	private static final String BUILD_SUMMARY_BASH_COMMENT = "# Wait until all worker scripts are complete to build summary tables";
 }

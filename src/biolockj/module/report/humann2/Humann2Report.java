@@ -15,21 +15,17 @@ import biolockj.util.*;
  */
 public class Humann2Report extends Humann2CountModule implements JavaModule
 {
-	/**
-	 * Module prerequisite: {@link biolockj.module.implicit.parser.wgs.Humann2Parser}
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
+
+	private String spaces( int x )
 	{
-		final List<String> preReqs = super.getPreRequisiteModules();
-		if( !pipelineInputContainsFullPathwayReport() )
+		String val = "";
+		for(int y=0;y<x;y++)
 		{
-			preReqs.add( Humann2Parser.class.getName() );
+			val += " ";
 		}
-
-		return preReqs;
+		return val;
 	}
-
+	
 	/**
 	 * Produce summary message with min, max, mean, and median number of reads.
 	 */
@@ -43,7 +39,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 			labelSize = Math.max( labelSize, Constants.HN2_UNMAPPED_COUNT.length() );
 			labelSize = Math.max( labelSize, Constants.HN2_TOTAL_PATH_COUNT.length() );
 			
-			summary += "Total # Unique Pathways:         " + pathways.size() + RETURN;
+			summary += "Total # Unique Pathways:" + spaces( 11 - new Integer( pathways.size() ).toString().length() ) + pathways.size() + RETURN;
 			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, Constants.HN2_UNIQUE_PATH_COUNT, labelSize,
 					false );
 			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, Constants.HN2_TOTAL_PATH_COUNT, labelSize,
@@ -69,7 +65,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 		{
 			writePathwayReport( file, parseFullReport( file, validColIndexes( file ) ) );
 
-			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				final File unintegratedTemp = new File(
 						getTempDir().getAbsolutePath() + File.separator + Constants.HN2_UNINTEGRATED_COUNT );
@@ -128,11 +124,11 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 						{
 							unIntegratedIndex = i;
 						}
-						else if( i == unMappedIndex && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+						else if( i == unMappedIndex && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 						{
 							unmappedPerSample.put( id, getCount( cell ).toString() );
 						}
-						else if( i == unIntegratedIndex && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+						else if( i == unIntegratedIndex && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 						{
 							unintegratedPerSample.put( id, getCount( cell ).toString() );
 						}
@@ -140,7 +136,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 						{
 							if( firstRecord )
 							{
-								if( !cell.equals( MetaUtil.getID() ) && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+								if( !cell.equals( MetaUtil.getID() ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 								{
 									pathways.add( cell );
 								}
@@ -171,7 +167,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 					i++;
 				}
 
-				if( !firstRecord && file.getName().contains( Constants.HN2_PATH_ABUNDANCE ) )
+				if( !firstRecord && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 				{
 					totalPathwaysPerSample.put( id, sampleTotalPathways.toString() );
 					uniquePathwaysPerSample.put( id, sampleUniquePathways.toString() );
@@ -192,24 +188,6 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 		return data;
 	}
 
-	/**
-	 * Check pipeline input for module input file type.
-	 * 
-	 * @return TRUE if pipeline input contains module input
-	 * @throws Exception if errors occur
-	 */
-	protected boolean pipelineInputContainsFullPathwayReport() throws Exception
-	{
-		final Iterator<File> it = BioLockJUtil.getPipelineInputFiles().iterator();
-		while( it.hasNext() )
-		{
-			if( it.next().getName().endsWith( fullPathwayReportSuffix() ) )
-			{
-				return true;
-			}
-		}
-		return false;
-	}
 
 	/**
 	 * Check column headers for valid pathway indexes (avoid columns with genus/species info).
@@ -256,7 +234,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 	 */
 	protected void writePathwayReport( final File file, final List<List<String>> data ) throws Exception
 	{
-		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PATHWAY_REPORT );
+		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, Constants.HN2_PARSED );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 		try
 		{
@@ -304,11 +282,7 @@ public class Humann2Report extends Humann2CountModule implements JavaModule
 		}
 		return 0;
 	}
-
-	public static String fullPathwayReportSuffix() throws Exception
-	{
-		return "_" + Constants.HN2_FULL_REPORT + PathwayUtil.pathwayFileSuffix( null );
-	}
+	
 
 	private Set<String> pathways = new HashSet<>();
 	private Map<String, String> totalPathwaysPerSample = new HashMap<>();

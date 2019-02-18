@@ -12,6 +12,17 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	public static final String AWS_STACK = "aws.stack";
+	
+	
+	/**
+	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
+	 */
+	public static final String SCRIPT_DIR = "script";
+	
+	/**
+	 * {@link biolockj.Config} property suffix for exe.* properties, used to set optional parameters: {@value #PARAMS}
+	 */	
+	public static final String PARAMS = "Params";
 
 	/**
 	 * Name of the file created in the BioModule or {@value #PROJECT_PIPELINE_DIR} root directory to
@@ -79,14 +90,7 @@ public class Constants
 	 * Set command line executable awk.
 	 */
 	public static final String EXE_AWK = "exe.awk";
-	/**
-	 * {@link biolockj.Config} property for classifier program executable: {@value #EXE_CLASSIFIER}
-	 */
-	public static final String EXE_CLASSIFIER = "exe.classifier";
-	/**
-	 * {@link biolockj.Config} property for classifier program optional parameters: {@value #EXE_CLASSIFIER_PARAMS}
-	 */
-	public static final String EXE_CLASSIFIER_PARAMS = "exe.classifierParams";
+
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_DOCKER}<br>
 	 * Set command line executable docker
@@ -117,13 +121,19 @@ public class Constants
 	public static final String HN2_DISABLE_GENE_FAMILIES = "humann2.disableGeneFamilies";
 	public static final String HN2_DISABLE_PATH_ABUNDANCE = "humann2.disablePathAbundance";
 	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
-	public static final String HN2_FULL_REPORT = "fullReport";
 
+	public static final String HN2_PARSED = "HnN2";
+	
+	
+	public static final String HN2_GENE_FAM_SUM = "geneFam";
+	public static final String HN2_PATH_ABUND_SUM = "pAbund";
+	public static final String HN2_PATH_COVG_SUM = "pCovg";
+	
+	
 	public static final String HN2_GENE_FAMILIES = "genefamilies";
 	public static final String HN2_PATH_ABUNDANCE = "pathabundance";
 	public static final String HN2_PATH_COVERAGE = "pathcoverage";
-
-	public static final String HN2_PATHWAY_REPORT = "pathwayReport";
+	
 	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
 	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";
 	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";

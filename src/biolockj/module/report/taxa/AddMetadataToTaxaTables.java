@@ -28,20 +28,6 @@ import biolockj.util.SummaryUtil;
  */
 public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModule
 {
-	/**
-	 * Require taxonomy table module as prerequisite
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE ) )
-		{
-			// preReqs.add( BuildTaxaTables.class.getName() );
-		}
-		preReqs.addAll( super.getPreRequisiteModules() );
-		return preReqs;
-	}
 
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
