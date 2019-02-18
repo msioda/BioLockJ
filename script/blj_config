@@ -21,10 +21,6 @@ export PATH="$SCRIPT_DIR:$PATH"
 export BLJ="$(dirname $SCRIPT_DIR)"
 export BLJ_PROJ="$BLJ/pipelines"
 
-export DOCKER_HUB_USER="biolockj"
-export DOCKER_FILE_PATH="$BLJ/resources/docker"
-export DOCKER_VER="docker-18.09.2"
-
 . $BLJ/script/blj_functions
 
 BLJ_SUP=
@@ -37,5 +33,7 @@ alias blj_go=". $SCRIPT_DIR/blj_go"
 
 export BLJ_SUP=$BLJ_SUP
 export PATH="$BLJ_SUP/script:$PATH"
+
+. $BLJ_SUP/script/docker_functions
 
 echo "Add $SCRIPT_DIR:$BLJ_SUP/script to PATH"
