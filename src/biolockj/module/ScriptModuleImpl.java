@@ -71,7 +71,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	{
 		final List<List<String>> data = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
 				? buildScriptForPairedReads( getInputFiles() ) : buildScript( getInputFiles() );
-		BashScriptBuilder.buildScripts( this, data, Config.requireInteger( this, ScriptModule.SCRIPT_BATCH_SIZE ) );
+		BashScriptBuilder.buildScripts( this, data );
 		
 	}
 

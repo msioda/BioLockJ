@@ -114,19 +114,7 @@ public class DockerUtil
 		return newFile;
 	}
 	
-	/**
-	 * Return TRUE if running on AWS (based on Config props).
-	 * 
-	 * @return TRUE if project.env=aws
-	 * @throws Exception if errors occur
-	 */
-	public static boolean runAws() throws Exception
-	{
-		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
-	}
-	
-	
-	
+
 	private static boolean useBasicBashImg( final String className ) throws Exception
 	{
 		return className.contains( PearMergeReads.class.getSimpleName() ) ||
@@ -201,19 +189,6 @@ public class DockerUtil
 		return ver;
 	}
 
-	
-
-
-	/**
-	 * Boolean to determine if running Docker manager module.
-	 * 
-	 * @return TRUE if running the Docker manager module.
-	 */
-	public static boolean isManager()
-	{
-		return !RuntimeParamUtil.isDirectMode();
-	}
-
 
 	private static final String getDockerEnvVars( final BioModule module ) throws Exception
 	{
@@ -244,7 +219,40 @@ public class DockerUtil
 	{
 		return Config.getBoolean( null, DELETE_ON_EXIT ) ? " " + DOCK_RM_FLAG: "";
 	}
+	
+	
+	/**
+	 * Return TRUE if running on AWS (based on Config props).
+	 * 
+	 * @return TRUE if project.env=aws
+	 * @throws Exception if errors occur
+	 */
+	public static boolean runAws() throws Exception
+	{
+		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
+	}
+	
 
+	/**
+	 * Boolean to determine if running Docker blj_manager
+	 * 
+	 * @return TRUE if running Docker blj_manager
+	 */
+	public static boolean isBljManager() throws Exception
+	{
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !runAws();
+	}
+	
+	/**
+	 * Boolean to determine if running Docker blj_manager
+	 * 
+	 * @return TRUE if running Docker blj_manager
+	 */
+	public static boolean isAwsManager() throws Exception
+	{
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && runAws() ;
+	}
+	
 
 	/**
 	 * Docker environment variable holding the name of the compute script file: {@value #COMPUTE_SCRIPT}

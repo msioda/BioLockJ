@@ -61,25 +61,20 @@ public class BashScriptBuilder
 	 * 
 	 * @param module ScriptModule
 	 * @param data Bash script lines
-	 * @param batchSize Number of samples to process per worker script
 	 * @throws Exception if any error occurs
 	 */
-	public static void buildScripts( final ScriptModule module, final List<List<String>> data, int batchSize )
+	public static void buildScripts( final ScriptModule module, final List<List<String>> data )
 			throws Exception
 	{
-		verifyConfig( module );
-
 		if( data == null || data.size() < 1 )
 		{
 			throw new Exception( "Cannot build empty scripts for: " + module.getClass().getName() );
 		}
+		
+		verifyConfig( module );
+		setBatchSize( module, data );
 
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			batchSize = data.size();
-		}
-
-		buildWorkerScripts( module, data, batchSize );
+		buildWorkerScripts( module, data );
 		buildMainScript( module );
 	}
 
@@ -198,8 +193,7 @@ public class BashScriptBuilder
 	 */
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception
 	{
-
-		final String modId = BioLockJUtil.formatDigits( module.getID(), 2 );
+		final String modId = ModuleUtil.displayID( module );
 
 		final String modPrefix = new File( getMainScriptPath( module ) ).getName()
 				.replaceAll( BioModule.MAIN_SCRIPT_PREFIX, "" );
@@ -246,6 +240,19 @@ public class BashScriptBuilder
 		return lines;
 	}
 
+	private static void setBatchSize( final ScriptModule module, List<List<String>> data ) throws Exception
+	{
+		if( DockerUtil.isBljManager() )
+		{
+			batchSize = data.size();
+		}
+		else
+		{
+			batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
+		}
+	}
+	
+	
 	/**
 	 * Create the numbered worker scripts. Leading zeros added if needed so all worker scripts names are the same
 	 * length. If run on cluster and cluster.jobHeader is defined, add cluster.jobHeader as header for worker scripts.
@@ -271,9 +278,7 @@ public class BashScriptBuilder
 			lines.add( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
 		}
 
-		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = "
-				+ new Integer( Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE ) ).toString()
-				+ RETURN );
+		lines.add( "#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = " + batchSize + RETURN );
 
 		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules( module ) );
@@ -410,8 +415,7 @@ public class BashScriptBuilder
 		writer.close();
 	}
 
-	private static void buildWorkerScripts( final ScriptModule module, final List<List<String>> data,
-			final int batchSize ) throws Exception
+	private static void buildWorkerScripts( final ScriptModule module, final List<List<String>> data ) throws Exception
 	{
 		workerScripts.clear();
 		int numWorkerScripts = batchSize == 0 ? 1: new Integer( data.size() / batchSize );
@@ -602,5 +606,5 @@ public class BashScriptBuilder
 
 	private static final String RETURN = Constants.RETURN;
 	private static final List<File> workerScripts = new ArrayList<>();
-
+	private static int batchSize = 0;
 }

@@ -81,16 +81,6 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 		}
 	}
 
-	/**
-	 * Call {@link #buildScript(List)} to create bash script lines for de novo OTU picking. Pass lines to
-	 * {@link biolockj.util.BashScriptBuilder#buildScripts(biolockj.module.ScriptModule, List, int)} to create the bash
-	 * script. Pass 1 as last parameter since all reads are processed in a single batch.
-	 */
-	@Override
-	public void executeTask() throws Exception
-	{
-		BashScriptBuilder.buildScripts( this, buildScript( getInputFiles() ), 1 );
-	}
 
 	/**
 	 * The method returns 1 bash script line that will copy the batch

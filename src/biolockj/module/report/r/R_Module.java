@@ -77,9 +77,10 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public void executeTask() throws Exception
 	{
 		writePrimaryScript();
+		
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			BashScriptBuilder.buildScripts( this, buildDockerBashScript(), 1 );
+			BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
 		}
 	}
 
