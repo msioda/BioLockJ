@@ -239,6 +239,14 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 						newRecord = false;
 					}
 				}
+				else
+				{
+					for( final String pathway: record )
+					{
+						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
+						newRecord = false;
+					}
+				}
 				firstRecord = false;
 				writer.write( RETURN );
 			}

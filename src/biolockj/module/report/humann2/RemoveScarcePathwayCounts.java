@@ -132,6 +132,10 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 	protected TreeMap<String, TreeSet<String>> removeScarcePathwayCounts( final File file,
 			final Set<String> scarcePathways ) throws Exception
 	{
+		if( scarcePathways.isEmpty() )
+		{
+			return null;
+		}
 		final TreeMap<String, TreeSet<String>> scarcePathMap = new TreeMap<>();
 		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
 		final List<List<String>> output = new ArrayList<>();
@@ -348,7 +352,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		for( final String pathway: pathways )
 		{
 			final Double count = pathMap.get( pathway );
-			if( count != null && count < getCutoff() )
+			if( count != null &&  count > 0 && count < getCutoff() )
 			{
 				scarcePathways.add( pathway );
 			}
