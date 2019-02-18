@@ -7,28 +7,30 @@
 ###############################################################################
 . $BLJ/script/blj_functions
 
-parentDir="$(dirname $PWD)"
+pipelineDir="$(dirname $PWD)"
 currentDir="$(basename $PWD)"
 targetNum=${currentDir%%_*}
 
-if $(is_pipeline_dir $currentDir); then
-	parentDir=$currentDir
+if $(is_pipeline_dir $PWD); then
+	pipelineDir=$PWD
 	targetNum=0
-elif ! $(is_pipeline_dir $parentDir) || [ ! -f "$PWD/biolockjComplete" ]; then 
+elif ! $(is_pipeline_dir $pipelineDir) || [ ! -f "$PWD/biolockjComplete" ]; then 
 	echo "ABORT: blj_reset must be executed within a biolockjComplete module directory" && exit 1
 fi
 
-echo "Reset $parentDir modules after and including step #$targetNum to status: STARTED"
+[ -f "$pipelineDir/biolockjComplete" ] && rm "$pipelineDir/biolockjComplete" && echo "deleted $pipelineDir/biolockjComplete"
+[ -f "$pipelineDir/biolockjFailed" ] && rm "$pipelineDir/biolockjFailed" && echo "deleted $pipelineDir/biolockjFailed"
 
-[ -f "$parentDir/biolockjComplete" ] && rm "$parentDir/biolockjComplete" && echo "deleted $parentDir/biolockjComplete"
-[ ! -f "$PWD/biolockjStarted" ] && touch "$PWD/biolockjStarted" && echo "created $PWD/biolockjStarted"
-rm "$PWD/biolockjComplete" && echo "deleted $PWD/biolockjComplete"
+if $(is_module_dir $PWD); then
+	[ ! -f "$PWD/biolockjStarted" ] && touch "$PWD/biolockjStarted" && echo "created $PWD/biolockjStarted"
+	[ -f "$PWD/biolockjComplete" ] && rm "$PWD/biolockjComplete" && echo "deleted $PWD/biolockjComplete"
+fi
 
-for modDir in $parentDir/*; do
-	if [ -d "$modDir" ]; then
+for modDir in $pipelineDir/*; do
+	if $(is_module_dir "$modDir") && ! $(is_empty $modDir); then
 		dirName="$(basename $modDir)"
 		modNum=${dirName%%_*}
-		if [ $((10#$modNum)) -gt $((10#$targetNum)) ] && ! $(is_empty $modDir); then
+		if [ $((10#$modNum)) -gt $((10#$targetNum)) ]; then
 			[ -f "$modDir/biolockjComplete" ] && rm "$modDir/biolockjComplete" && echo "deleted $modDir/biolockjComplete"
 			[ ! -f "$modDir/biolockjStarted" ] && ! $(is_empty $modDir) && touch "$modDir/biolockjStarted" && echo "created $modDir/biolockjStarted"
 		fi

@@ -45,9 +45,8 @@ public class DockerUtil
 	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-
-		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() + Constants.RETURN );
-		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) + Constants.RETURN );
+		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() );
+		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ));
 
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );

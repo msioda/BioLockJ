@@ -102,12 +102,20 @@ public class ModuleUtil
 	public static BioModule getModule( final BioModule module, final String className, final boolean checkAhead )
 			throws Exception
 	{
+		if( module instanceof ClassifierModule )
+		{
+			throw new Exception( "ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: " 
+					+ module.getClass().getName() );
+		}
+		
 		final ClassifierModule classifier = getClassifier( module, checkAhead );
 		for( final BioModule m: getModules( module, checkAhead ) )
 		{
 			if( m.getClass().getName().equals( className ) )
 			{
-				if( classifier == null || m.getID() < classifier.getID() )
+				boolean targetBeforeClassifier = m.getID() < classifier.getID();
+				boolean targetAfterClassifier = m.getID() > classifier.getID();
+				if( classifier == null || ( checkAhead && targetBeforeClassifier ) || ( !checkAhead && targetAfterClassifier ) )
 				{
 					return m;
 				}
@@ -118,6 +126,13 @@ public class ModuleUtil
 		return null;
 	}
 
+	/**
+	 * Construct a  BioModule based on its className.
+	 * 
+	 * @param className BioModule class name
+	 * @return BioModule module
+	 * @throws Exception if errors occur
+	 */
 	public static BioModule getModule( final String className ) throws Exception
 	{
 		return (BioModule) Class.forName( className ).newInstance();

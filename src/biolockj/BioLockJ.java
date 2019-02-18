@@ -177,7 +177,7 @@ public class BioLockJ
 	 */
 	protected static void initBioLockJ( final String[] args ) throws Exception
 	{
-		Log.info( BioLockJ.class, "Pipeline startime (as long): " + Constants.APP_START_TIME );
+		Log.info( BioLockJ.class, "App Runtime start time (as long): " + Constants.APP_START_TIME );
 		MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 		RuntimeParamUtil.registerRuntimeParameters( args );
 

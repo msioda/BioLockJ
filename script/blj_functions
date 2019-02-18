@@ -44,7 +44,7 @@ is_module_dir() {
 	modName=$(basename $1)
 	modNum=0
 	[ ${#modName} -gt 3 ] && modNum=$( echo ${modName:0:2} | egrep "^[0-9{2}]+$" )
-	if [ -d "$1" ] && [ ${modName:2:1} == "_" ] &&[ $modNum > 0 ]; then
+	if [ -d "$1" ] && [ ${modName:2:1} == "_" ] &&[ $modNum -gt 0 ]; then
 		echo TRUE
 	else
 		echo FALSE
@@ -62,13 +62,12 @@ is_pipeline_dir() {
 	mon1=$(echo ${dir: -5:1} | egrep "^[A-S]+$")
 	mon23=$(echo ${dir: -4:2} | egrep "^[b-y{2}]+$")
 	day=$(echo ${dir: -2} | egrep "^[0-9{2}]+$")
-	if [ -d "$1" ] && [ $prefix == "_" ] && [ $year > 0 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ $day > 0 ]; then
+	if [ -d "$1" ] && [ $prefix == "_" ] && [ ${#year} -eq 4 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ ${#day} -eq 2 ]; then
 		echo TRUE
 	else
 		echo FALSE
 	fi
 }
-
 
 # Return BioLockJ release version
 get_version() {
