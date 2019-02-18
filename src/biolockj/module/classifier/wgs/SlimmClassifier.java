@@ -252,11 +252,18 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		taxaLevelMap.put( TaxaUtil.DOMAIN, SLIMM_DOMAIN_DELIM );
 	}
 	/**
+	 * Return the Slimm domain.
+	 * @return String {@value #SLIMM_DOMAIN_DELIM}
+	 */
+	public static final String getSlimmDomainDelim () {
+		return SLIMM_DOMAIN_DELIM;
+	}
+	/**
 	 * Override
 	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN}
 	 * value
 	 */
-	public static final String SLIMM_DOMAIN_DELIM = "superkingdom";
+	private static final String SLIMM_DOMAIN_DELIM = "superkingdom";
 	/**
 	 * {@link biolockj.Config} property to directory holding SLIMM database: {@value #DATABASE}
 	 */

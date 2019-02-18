@@ -29,7 +29,7 @@ import biolockj.util.TaxaUtil;
  * <li>Relative abundance formula = Log(log_base) [ (RC/n)*((SUM(x))/N)+1 ]
  * </ul>
  * The code implementation supports (log_base = e) and (log_base = 10) which is configured via
- * {@link biolockj.Config#REPORT_LOG_BASE} property.
+ * {@link biolockj.Constants#REPORT_LOG_BASE} property.
  * <ul>
  * <li>RC = Sample OTU count read in from each Sample-OTU cell in the raw count file passed to the constructor
  * <li>n = number of sequences in the sample, read in as the row sum (sum of OTU counts for the sample)
@@ -45,7 +45,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 {
 
 	/**
-	 * Verify {@link biolockj.Config}.{@value biolockj.Config#REPORT_LOG_BASE} property is valid (if defined) with a
+	 * Verify {@link biolockj.Config}.{@value biolockj.Constants#REPORT_LOG_BASE} property is valid (if defined) with a
 	 * value = (e or 10).
 	 *
 	 * @throws ConfigFormatException if REPORT_LOG_BASE is not set to a valid option (e or 10)
@@ -210,7 +210,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 			writer.write( Constants.TAB_DELIM + s );
 		}
 
-		writer.write( BioLockJ.RETURN );
+		writer.write( Constants.RETURN );
 
 		final int size = sampleNames.size();
 		for( int x = 0; x < size; x++ )
@@ -224,7 +224,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 
 			if( x + 1 != size )
 			{
-				writer.write( BioLockJ.RETURN );
+				writer.write( Constants.RETURN );
 			}
 		}
 
@@ -294,12 +294,12 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	public static final String NORMAL = "_norm";
 
 	/**
-	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Config#REPORT_LOG_BASE}
+	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
 	 */
 	protected static final String LOG_10 = "10";
 
 	/**
-	 * Log e display string as 1/2 supported values for: {@value biolockj.Config#REPORT_LOG_BASE}
+	 * Log e display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
 	 */
 	protected static final String LOG_E = "e";
 }

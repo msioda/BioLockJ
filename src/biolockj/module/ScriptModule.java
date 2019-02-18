@@ -75,7 +75,7 @@ public interface ScriptModule extends BioModule
 	 * Return a list of the error messages saved the failure scripts in the module script directory.
 	 * 
 	 * @return List of error messages or empty list
-	 * @throws Exception
+	 * @throws Exception if runtime errors occur
 	 */
 	public List<String> getScriptErrors() throws Exception;
 

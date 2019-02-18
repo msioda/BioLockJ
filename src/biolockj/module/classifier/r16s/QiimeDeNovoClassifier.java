@@ -30,7 +30,7 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 	/**
 	 * Return bash script lines to pick de novo OTUs by calling {@link biolockj.module.implicit.qiime.QiimeClassifier}
 	 * getPickOtuLines() method. If property
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Config#TRUE},
+	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Constants#TRUE},
 	 * use vsearch to identify chimeras and call
 	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#SCRIPT_FILTER_OTUS} to remove them from
 	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}
@@ -67,7 +67,7 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 	/**
 	 * Call {@link biolockj.module.implicit.qiime.QiimeClassifier} checkOtuPickingDependencies() method to verify OTU
 	 * picking script parameters. If not in Docker mode and property
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Config#TRUE},
+	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Constants#TRUE},
 	 * verify {@value biolockj.module.implicit.qiime.QiimeClassifier#EXE_VSEARCH_PARAMS}.
 	 */
 	@Override
@@ -97,5 +97,5 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 	/**
 	 * De novo OTU picking script
 	 */
-	public static final String PICK_OTU_SCRIPT = "pick_de_novo_otus.py";
+	protected static final String PICK_OTU_SCRIPT = "pick_de_novo_otus.py";
 }

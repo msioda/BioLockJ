@@ -294,14 +294,14 @@ public class BashScriptBuilder
 	}
 
 	/**
-	 * If property {@value biolockj.Config#PROJECT_ENV} = cluster, require property {@value #CLUSTER_BATCH_COMMAND},
+	 * If property {@value biolockj.Constants#PROJECT_ENV} = cluster, require property {@value #CLUSTER_BATCH_COMMAND},
 	 * otherwise exit this method.
 	 * <p>
-	 * If running on the cluster and property {@value #CLUSTER_VALIDATE_PARAMS} = {@value biolockj.Config#TRUE}:
+	 * If running on the cluster and property {@value #CLUSTER_VALIDATE_PARAMS} = {@value biolockj.Constants#TRUE}:
 	 * <ol>
 	 * <li>Require property {@value #SCRIPT_JOB_HEADER}
 	 * <li>Require property {@value #CLUSTER_BATCH_COMMAND} sets #cores param (ppn or procs) =
-	 * {@link biolockj.module.ScriptModule#NUM_THREADS} or
+	 * {@link biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or
 	 * </ol>
 	 * <p>
 	 * Current format #1 (2018) for UNCC HPC Cluster: #PBS -l procs=1,mem=8GB,walltime=8:00:00<br>
@@ -555,7 +555,7 @@ public class BashScriptBuilder
 
 	/**
 	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
-	 * {@value biolockj.Config#TRUE} will run Java module as a script instead of running on the head node.
+	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
 	 */
 	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScriptModule";
 
@@ -584,8 +584,8 @@ public class BashScriptBuilder
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #CLUSTER_VALIDATE_PARAMS}<br>
-	 * If set to {@value biolockj.Config#TRUE}, validate {@value #SCRIPT_JOB_HEADER} param cluster number of processors
-	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or {@link biolockj.module.ScriptModule#NUM_THREADS}
+	 * If set to {@value biolockj.Constants#TRUE}, validate {@value #SCRIPT_JOB_HEADER} param cluster number of processors
+	 * = {@value biolockj.module.ScriptModule#SCRIPT_NUM_THREADS} or {@link biolockj.module.ScriptModule#SCRIPT_NUM_THREADS}
 	 */
 	protected static final String CLUSTER_VALIDATE_PARAMS = "cluster.validateParams";
 

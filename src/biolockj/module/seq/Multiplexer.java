@@ -53,7 +53,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 * <li>Validate this is the last module to run (excluding {@link biolockj.module.report.Email})
 	 * </ol>
 	 * If this module was completed on a previous run, update the property:
-	 * {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_MULTIPLEXED} = {@value biolockj.Config#TRUE}
+	 * {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_MULTIPLEXED} = {@value biolockj.Constants#TRUE}
 	 * 
 	 */
 	@Override

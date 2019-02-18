@@ -317,14 +317,14 @@ public class Email extends BioModuleImpl implements BioModule
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #EMAIL_SMTP_AUTH}<br>
-	 * {@link javax.mail.Session} SMTP authorization flag, set to {@value biolockj.Config#TRUE} if required by
+	 * {@link javax.mail.Session} SMTP authorization flag, set to {@value biolockj.Constants#TRUE} if required by
 	 * {@value #EMAIL_HOST}
 	 */
 	protected static final String EMAIL_SMTP_AUTH = "mail.smtp.auth";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #EMAIL_START_TLS_ENABLE}<br>
-	 * {@link javax.mail.Session} SMTP TLS enable flag, set to {@value biolockj.Config#TRUE} if required by
+	 * {@link javax.mail.Session} SMTP TLS enable flag, set to {@value biolockj.Constants#TRUE} if required by
 	 * {@value #EMAIL_HOST}
 	 */
 	protected static final String EMAIL_START_TLS_ENABLE = "mail.smtp.starttls.enable";

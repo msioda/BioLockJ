@@ -89,7 +89,7 @@ public class Log
 	/**
 	 * Boolean toggle to enable/disable all log messages
 	 * 
-	 * @param enable
+	 * @param enable boolean
 	 */
 	public static void enableLogs( final boolean enable )
 	{
@@ -182,7 +182,7 @@ public class Log
 
 	/**
 	 * Called by {@link biolockj.BioLockJ#main(String[]) BioLockJ.main()} after {@link biolockj.Config} is initialized.
-	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Config#PROJECT_PIPELINE_DIR}, named after
+	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_PIPELINE_DIR}, named after
 	 * the project.
 	 * <ul>
 	 * <li>Set and store {@link #LOG_FILE} and {@link #LOG_APPEND} in {@link System} properties to be used by

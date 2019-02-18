@@ -96,7 +96,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines.add( Config.getExe( this, EXE_JAVA ) + " " + getJavaParams() + JAVA_JAR_PARAM + " " + getJar() + " "
+		lines.add( Config.getExe( this, Constants.EXE_JAVA ) + " " + getJavaParams() + JAVA_JAR_PARAM + " " + getJar() + " "
 				+ getRuntimeParams( getClassifierParams(), null ) + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -104,18 +104,13 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	
 	private String getJavaParams() throws Exception
 	{
-		return Config.getExeParams( this, EXE_JAVA );
+		return Config.getExeParams( this, Constants.EXE_JAVA );
 	}
 
 	private String getJar() throws Exception
 	{
 		return Config.requireString( this, RDP_JAR );
 	}
-
-	/**
-	 * {@link biolockj.Config} property for java executable: {@value #EXE_JAVA}
-	 */
-	protected static final String EXE_JAVA = "exe.java";
 
 	/**
 	 * Name of the RdpClassifier bash script function used to assign taxonomy: {@value #FUNCTION_RDP}
