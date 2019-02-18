@@ -365,7 +365,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	private Boolean isHumanN2() throws Exception
 	{
-		Log.info( getClass(), "Check to see if R Module inherits Hn2 or Tax tables..." );
+		Log.debug( getClass(), "Check to see if R Module inherits Hn2 or Tax tables..." );
 		List<String> mods = Config.requireList( this, Constants.INTERNAL_BLJ_MODULE );
 		List<Integer> classifiers = new ArrayList<>();
 		List<Integer> parsers = new ArrayList<>();
@@ -403,26 +403,26 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 				.pipelineInputType( BioLockJUtil.PIPELINE_PATHWAY_COUNT_TABLE_INPUT_TYPE );
 		final boolean hasTaxaInputs = BioLockJUtil
 				.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
-		Log.info( getClass(), "hasPathwayInputs: " + hasPathwayInputs );
-		Log.info( getClass(), "hasTaxaInputs: " + hasTaxaInputs );
+		Log.debug( getClass(), "hasPathwayInputs: " + hasPathwayInputs );
+		Log.debug( getClass(), "hasTaxaInputs: " + hasTaxaInputs );
 		if( hn2Classifiers.isEmpty() && classifiers.isEmpty() )
 		{
 			if( hasPathwayInputs && !hasTaxaInputs )
 			{	
-				Log.info( getClass(), "No classifier modules --> hasPathwayInputs && !hasTaxaInputs: return( TRUE )" );
+				Log.debug( getClass(), "No classifier modules --> hasPathwayInputs && !hasTaxaInputs: return( TRUE )" );
 				return true;
 			}
-			Log.info( getClass(), "No classifier modules --> !hasPathwayInputs || hasTaxaInputs: return( FALSE )" );
+			Log.debug( getClass(), "No classifier modules --> !hasPathwayInputs || hasTaxaInputs: return( FALSE )" );
 			return false;
 		}
 		if( hn2Classifiers.isEmpty() )
 		{
-			Log.info( getClass(), "No HN2 classifiers configured: return( FALSE )" );
+			Log.debug( getClass(), "No HN2 classifiers configured: return( FALSE )" );
 			return false;
 		}
 		if( classifiers.isEmpty() )
 		{
-			Log.info( getClass(), "No standard classifiers configured: return( TRUE )" );
+			Log.debug( getClass(), "No standard classifiers configured: return( TRUE )" );
 			return true;
 		}
 		
@@ -430,19 +430,19 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		Integer hn2Index = getClosestIndex( hn2Classifiers, rIndex );
 		Integer classifierIndex = getClosestIndex( classifiers, rIndex );
 		Integer parserIndex = getClosestIndex( parsers, rIndex );
-		Log.info( getClass(), "rIndex: " + ( rIndex == null ? "N/A" : rIndex ) );
-		Log.info( getClass(), "hn2Index: " + ( hn2Index == null ? "N/A" : hn2Index ) );
-		Log.info( getClass(), "classifierIndex: " + ( classifierIndex == null ? "N/A" : classifierIndex ) );
-		Log.info( getClass(), "parserIndex: " + ( parserIndex == null ? "N/A" : parserIndex ) );
+		Log.debug( getClass(), "rIndex: " + ( rIndex == null ? "N/A" : rIndex ) );
+		Log.debug( getClass(), "hn2Index: " + ( hn2Index == null ? "N/A" : hn2Index ) );
+		Log.debug( getClass(), "classifierIndex: " + ( classifierIndex == null ? "N/A" : classifierIndex ) );
+		Log.debug( getClass(), "parserIndex: " + ( parserIndex == null ? "N/A" : parserIndex ) );
 		
 		if( hn2Index == null )
 		{
-			Log.info( getClass(), "No HN2 classifiers BEFORE R-module index so return( FALSE ): " +  rIndex );
+			Log.debug( getClass(), "No HN2 classifiers BEFORE R-module index so return( FALSE ): " +  rIndex );
 			return false;
 		}
 		boolean useHn2 = classifierIndex == null || ( classifierIndex < hn2Index );
 		useHn2 = useHn2 && ( parserIndex == null || ( parserIndex < hn2Index ) );
-		Log.info( getClass(), "Final assessment --> use HumanN2 tables?  return( " + useHn2 + " ) ");
+		Log.debug( getClass(), "Final assessment --> use HumanN2 tables?  return( " + useHn2 + " ) ");
 		return useHn2;
 	}
 	
