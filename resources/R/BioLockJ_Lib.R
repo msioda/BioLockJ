@@ -146,7 +146,7 @@ getFactorGroups <- function( countMetaTable, metaCol, taxaCol ) {
 }
 
 # Return the name of the R module level specific log file
-getLogFile <- function() {
+getLogFile <- function( level ) {
 	return( file.path( getTempDir(), paste0( moduleScriptName(), ".", level, ".log") ) )
 }
 
