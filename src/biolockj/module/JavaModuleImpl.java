@@ -41,9 +41,8 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		}
 		else
 		{
-			lines.add( "java" + getSource() + " " + BioLockJUtil.getDirectModuleParam( this ) + " "
-					+ RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getBaseDir().getAbsolutePath() + " "
-					+ RuntimeParamUtil.CONFIG_FLAG + " " + Config.getConfigFilePath() );
+			lines.add( "java" + getSource() + " " + RuntimeParamUtil.getDirectModuleParam( this ) + " "
+					+ RuntimeParamUtil.getBaseDirParam() + " " + RuntimeParamUtil.getConficFileParam() );
 		}
 
 		data.add( lines );
@@ -75,21 +74,21 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		}
 
 	}
-
+	
 	/**
 	 * Build the docker run command to launch a JavaModule in a Docker container.
 	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final List<String> lines = new ArrayList<>();
+		List<String> lines = new ArrayList<>();
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " "
-					+ BioLockJUtil.getDirectModuleParam( this );
+			final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " 
+		+ RuntimeParamUtil.getDirectModuleParam( this );
 			lines.add( BLJ_OPTIONS + "=\"" + args + "\"" + Constants.RETURN );
 		}
-
+		
 		return lines;
 	}
 

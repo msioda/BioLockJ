@@ -270,18 +270,6 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Direct module parameters contain 2 parts separated by a colon: (pipeline directory name):(module name)
-	 * 
-	 * @param module BioModule
-	 * @return Direct parameter flag + value
-	 * @throws Exception if errors occur
-	 */
-	public static String getDirectModuleParam( final BioModule module ) throws Exception
-	{
-		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
-	}
-
-	/**
 	 * Return an ordered list of absolute file paths from the input collection.
 	 * 
 	 * @param files Files

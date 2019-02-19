@@ -13,9 +13,8 @@ package biolockj.util;
 
 import java.io.File;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
+import biolockj.module.BioModule;
 
 /**
  * This utility processes the application runtime parameters passed to BioLockJ.
@@ -63,6 +62,15 @@ public class RuntimeParamUtil
 		return params.get( BASE_DIR_FLAG ) == null ? null
 				: new File( Config.getSystemFilePath( params.get( BASE_DIR_FLAG ) ) );
 	}
+	
+	/**
+	 * @return String
+	 * @throws Exception if errors occur
+	 */
+	public static String getBaseDirParam() throws Exception
+	{ 
+		return BASE_DIR_FLAG + " " + getBaseDir().getAbsolutePath();
+	}
 
 	/**
 	 * Runtime property getter for {@value #CONFIG_FLAG}
@@ -74,6 +82,15 @@ public class RuntimeParamUtil
 	{
 		return params.get( CONFIG_FLAG ) == null ? null
 				: new File( Config.getSystemFilePath( params.get( CONFIG_FLAG ) ) );
+	}
+	
+	/**
+	 * @return String
+	 * @throws Exception if errors occur
+	 */
+	public static String getConficFileParam() throws Exception
+	{
+		return CONFIG_FLAG + " " + Config.getConfigFilePath();
 	}
 
 	/**
@@ -325,6 +342,18 @@ public class RuntimeParamUtil
 			params.put( CONFIG_FLAG, param );
 		}
 	}
+	
+	/**
+	 * Direct module parameters contain 2 parts separated by a colon: (pipeline directory name):(module name)
+	 * 
+	 * @param module BioModule
+	 * @return Direct parameter flag + value
+	 * @throws Exception if errors occur
+	 */
+	public static String getDirectModuleParam( final BioModule module ) throws Exception
+	{
+		return DIRECT_FLAG + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
+	}
 
 	private static void assignRestartConfig() throws Exception
 	{
@@ -527,54 +556,54 @@ public class RuntimeParamUtil
 	/**
 	 * Pipeline parent directory file-path runtime parameter switch: {@value #BASE_DIR_FLAG}
 	 */
-	public static final String BASE_DIR_FLAG = "-b";
+	private static final String BASE_DIR_FLAG = "-b";
 
 	/**
 	 * {@link biolockj.Config} file directory path runtime parameter switch: {@value #CONFIG_DIR_FLAG}
 	 */
-	public static final String CONFIG_DIR_FLAG = "-C";
+	private static final String CONFIG_DIR_FLAG = "-C";
 
 	/**
 	 * {@link biolockj.Config} file path runtime parameter switch: {@value #CONFIG_FLAG}
 	 */
-	public static final String CONFIG_FLAG = "-c";
+	private static final String CONFIG_FLAG = "-c";
 
 	/**
 	 * Direct mode runtime parameter switch: {@value #DIRECT_FLAG}
 	 */
-	public static final String DIRECT_FLAG = "-d";
+	private static final String DIRECT_FLAG = "-d";
 
 	/**
 	 * Docker mode runtime parameter switch: {@value #DOCKER_FLAG}
 	 */
-	public static final String DOCKER_FLAG = "-D";
+	private static final String DOCKER_FLAG = "-D";
 
 	/**
 	 * Input directory file-path runtime parameter switch: {@value #INPUT_DIR_FLAG}
 	 */
-	public static final String INPUT_DIR_FLAG = "-i";
+	private static final String INPUT_DIR_FLAG = "-i";
 
 	/**
 	 * Metadata file directory path runtime parameter switch: {@value #META_DIR_FLAG}
 	 */
-	public static final String META_DIR_FLAG = "-m";
+	private static final String META_DIR_FLAG = "-m";
 
 	/**
 	 * Change password runtime parameter switch: {@value #PASSWORD_FLAG}
 	 */
-	public static final String PASSWORD_FLAG = "-p";
+	private static final String PASSWORD_FLAG = "-p";
 
 	/**
 	 * Primer file directory path runtime parameter switch: {@value #PRIMER_DIR_FLAG}
 	 */
-	public static final String PRIMER_DIR_FLAG = "-t";
+	private static final String PRIMER_DIR_FLAG = "-t";
 
 	/**
 	 * Restart pipeline runtime parameter switch: {@value #RESTART_FLAG}
 	 */
-	public static final String RESTART_FLAG = "-r";
+	private static final String RESTART_FLAG = "-r";
 
-	static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
+	private static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
 
 	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
 	private static final String CONFIG_FLAG_EXT = "--config";
