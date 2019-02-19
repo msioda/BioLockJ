@@ -35,19 +35,54 @@ router.get('/config', function(req, res, next) {
 router.post('/retrieveProjects', function(req, res, next) {
   console.log('retrieveProjects');
   try {
+<<<<<<< HEAD
     let projects = [];
     fs.readdir(path.join('/', 'pipeline'), (err, files) => {
+=======
+    let names = [];
+    let descrip = [];
+    fs.readdir(path.join('/', 'pipelines'), (err, files) => {
+>>>>>>> fix the AWS sections. projects and config project.properties returned at retrieve projects
       if (err) {
         console.error(err);
         accessLogStream.write(e.stack + '\n');;
       }
       files.forEach(file => {
         console.log(file);
-        const checkFile = fs.lstatSync(path.join('/','pipeline',file));
+        const checkFile = fs.lstatSync(path.join('/','pipelines',file));
           if (checkFile.isDirectory()) {
+<<<<<<< HEAD
             projects.push(file);
             // console.log(projects);
           };
+=======
+            names.push(file);
+
+            //go into folder
+            const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
+
+            //get master config and read description
+            for (var i = 0; i < nestedFolderFiles.length; i++) {
+              if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
+                console.log(nestedFolderFiles[i]);
+
+                const propFile = fs
+                  .readFileSync(path.join('/', 'pipelines', file, nestedFolderFiles[i]), 'utf8')
+                  .split('\n');
+
+                let projDescrp = 'Project description is empty'
+
+                for (var i = 0; i < propFile.length; i++) {
+                  if (propFile[i].startsWith('project.description=')) {
+                    console.log(propFile[i].slice(20));
+                    projDescrp = propFile[i].slice(20);
+                  }
+                }//end propFile for loop
+                descrip.push(projDescrp);
+              }
+            }//end nestedFolderFiles for loop
+          };//end if dir
+>>>>>>> fix the AWS sections. projects and config project.properties returned at retrieve projects
         });
         console.log(projects);
         res.setHeader("Content-Type", "text/html");
@@ -326,6 +361,88 @@ router.post('/startAws', function(req, res, next) {
     console.error(e);
   }
 });
+router.post('/configureAws', function(req, res, next) {
+  /*
+  The components of the formData should be:
+  AWSACCESSKEYID, AWSSECRETACCESSKEY, REGION, OUTPUTFORMAT, PROFILE
+  */
+  console.log('configureAws');
+  try {
+    console.log('req.body.form: ', req.body.form);
+    console.dir(req.body.formData);
+    const sys = require('util');
+    const exec = require('child_process').exec;
+    exec('git clone https://github.com/mjzapata/AWSBatchGenomicsStack.git', function(err, stdout, stderr) {
+      if (err){
+        console.error(err);
+        res.setHeader('Content-Type', 'text/html');
+        res.write('Server Response: AWS Configured!');
+        res.end();
+        return;
+      }
+      console.log(stdout);
+      console.error(stderr);
+
+      //then write credentials
+      exec(` ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
+        console.log(stdout);
+        console.error(err);
+        console.error(stderr);
+        res.setHeader('Content-Type', 'text/html');
+        res.write(`Server Response: ${stout}`);
+        res.end();
+      })
+    });
+
+  } catch (e) {
+    accessLogStream.write(e.stack + '\n');;
+    console.error(e);
+  }
+});
+router.post('/deployBatchEnv', function(req, res, next) {
+  /**
+  stackname: string,
+  dockerRepository: string,
+  s3bucket: string,
+  docker run --rm   --name pg-docker -e POSTGRES_PASSWORD=docker -d -p 5432:5432 -v /Users/aaronyerke/git/postgres:/var/lib/postgresql/data  postgres
+  */
+  console.log('deployBatchEnv');
+  try {
+    exec(`deployBatchEnv.sh ${req.body.formData.stackname}`, function(err, stdout, stderr) {
+      console.log(stdout);
+      console.error(err);
+      console.error(stderr);
+      res.setHeader('Content-Type', 'text/html');
+      res.write(`Server Response: ${stout}`);
+      res.end();
+    });
+
+  } catch (e) {
+    accessLogStream.write(e.stack + '\n');;
+    console.error(e);
+  }
+});
+router.post('/launchEc2HeadNode', function(req, res, next) {
+  /**
+  launchAction
+  awsInstanceType
+  */
+  console.log('launchEC2HeadNode.sh');
+  try {
+    exec(`launchEC2HeadNode.sh ${req.body.formData.instanceType} ${req.body.formData.scriptName}`, function(err, stdout, stderr) {
+      console.log(stdout);
+      console.error(err);
+      console.error(stderr);
+      res.setHeader('Content-Type', 'text/html');
+      res.write(`Server Response: ${stout}`);
+      res.end();
+    });
+
+  } catch (e) {
+    accessLogStream.write(e.stack + '\n');;
+    console.error(e);
+  }
+});
 // fs.watch('/config', (eventType, filename) => {
 //   console.log(`Filename: ${filename}, Event: ${eventType}`);
 //   console.log(`Filename: ${filename}, Event: ${eventType}`);
@@ -386,3 +503,14 @@ console.log(process.env.BLJ.toString());
 console.log('index.js started');
 
 //to actually run blj: https://stackoverflow.com/questions/1880198/how-to-execute-shell-command-in-javascript
+
+var pgp = require('pg-promise')(/*options*/)
+var db = pgp('postgres://username:password@host:port/database')
+
+db.one('SELECT $1 AS value', 123)
+  .then(function (data) {
+    console.log('DATA:', data.value)
+  })
+  .catch(function (error) {
+    console.log('ERROR:', error)
+  })
