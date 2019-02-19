@@ -1,12 +1,13 @@
 #For webapp development
-FROM biolockj/webapp
+FROM biolockj/blj_webapp
 RUN rm -r $BLJ/web_app/*
 COPY . $BLJ/web_app/
 ENV PROJECT_DIRS=$BLJ/web_app
 
 # Add AWS
 ARG DEBIAN_FRONTEND=noninteractive
-RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get update && apt-get install -y software-properties-common
+RUN apt-get update && add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y \
  python-dev \
  python-pip \
