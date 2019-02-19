@@ -39,7 +39,7 @@ public class R_PlotMds extends R_Module implements ScriptModule
 	 * {@link biolockj.Config} List property: {@value #R_MDS_REPORT_FIELDS}<br>
 	 * List metadata fields to generate MDS ordination plots.
 	 */
-	public static final String R_MDS_REPORT_FIELDS = "r_PlotMds.reportFields";
+	protected static final String R_MDS_REPORT_FIELDS = "r_PlotMds.reportFields";
 
 	/**
 	 * {@link biolockj.Config} property: {@value #R_MDS_DISTANCE} defines the distance index to use in the capscale

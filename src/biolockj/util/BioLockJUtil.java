@@ -270,18 +270,6 @@ public class BioLockJUtil
 	}
 
 	/**
-	 * Direct module parameters contain 2 parts separated by a colon: (pipeline directory name):(module name)
-	 * 
-	 * @param module BioModule
-	 * @return Direct parameter flag + value
-	 * @throws Exception if errors occur
-	 */
-	public static String getDirectModuleParam( final BioModule module ) throws Exception
-	{
-		return RuntimeParamUtil.DIRECT_FLAG + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
-	}
-
-	/**
 	 * Return an ordered list of absolute file paths from the input collection.
 	 * 
 	 * @param files Files
@@ -509,7 +497,7 @@ public class BioLockJUtil
 			{
 				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
 			}
-			else if( Config.getSet( null, SeqUtil.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+			else if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ).contains( file.getName() ) )
 			{
 				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
 			}

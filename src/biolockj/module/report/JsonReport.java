@@ -137,7 +137,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * 
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode))
 	 * @param stats Stats file
-	 * @param level {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @param label Label to use in node statistics
 	 * @return LinkedHashMap(level,Set(JsonNode))
 	 * @throws Exception if errors occur
@@ -195,7 +195,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * @param node JsonNode is the parent node
 	 * @param hasPeer boolean is true if node has peer nodes
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode)) all nodes by level
-	 * @param nodeLevel {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @param nodeLevel {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return Json Report lines
 	 * @throws Exception if errors occur
 	 */
@@ -221,7 +221,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			for( final Iterator<String> stats = node.getStats().keySet().iterator(); stats.hasNext(); )
 			{
 				final String stat = stats.next();
-				final String name = stat.startsWith( R_CalculateStats.R_SQUARED_VALS ) ? stat
+				final String name = stat.startsWith( R_CalculateStats.getSuffix(null, false) ) ? stat
 						: prefix + "(" + stat + ")";
 				sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
 				sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
@@ -246,7 +246,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * {@link biolockj.module.report.r.R_CalculateStats}, which is also the JsonReport inputDir() since it must be
 	 * configured as the
 	 *
-	 * @param LinkedHashMap jsonMap (key=level)
+	 * @param jsonMap jsonMap (key=level)
 	 * @param root JsonNode
 	 * @throws Exception if unable to parse report files
 	 */
@@ -325,7 +325,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	/**
 	 * Get the taxonomy level reports from {@link biolockj.module.report.r.R_CalculateStats} for the given level
 	 *
-	 * @param String level
+	 * @param level String
 	 * @return File log normalized report
 	 * @throws Exception if unable to obtain the report due to propagated exceptions
 	 */
@@ -358,7 +358,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	/**
 	 * This method formats the JSON code to indent code blocks surround by curly-braces "{ }"
 	 * 
-	 * @param code JSON syntax markup
+	 * @param code JSON syntax mark-up
 	 * @throws Exception if errors occur
 	 */
 	private void writeJson( final String code ) throws Exception

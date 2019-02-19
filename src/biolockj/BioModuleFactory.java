@@ -112,7 +112,7 @@ public class BioModuleFactory
 	/**
 	 * The method returns the ordered list of BioModules required as part of the runtime {@link biolockj.Config}
 	 * file.<br>
-	 * Each line the begins with {@value biolockj.Config#INTERNAL_BLJ_MODULE} should be followed by the full class name
+	 * Each line the begins with {@value biolockj.Constants#INTERNAL_BLJ_MODULE} should be followed by the full class name
 	 * of a Java class that implements the {@link biolockj.module.BioModule } interface.
 	 * 
 	 * @return List of BioModules
@@ -144,7 +144,7 @@ public class BioModuleFactory
 			configModules.remove( ImportMetadata.class.getName() );
 			modules.add( ImportMetadata.class.getName() );
 
-			if( Config.getBoolean( null, SeqUtil.INTERNAL_MULTIPLEXED ) )
+			if( Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED ) )
 			{
 				Log.info( getClass(),
 						"Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
@@ -152,7 +152,7 @@ public class BioModuleFactory
 				modules.add( ModuleUtil.getDefaultDemultiplexer() );
 			}
 
-			if( Config.getBoolean( null, SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
+			if( Config.getBoolean( null, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
 			{
 				Log.info( getClass(), "Set required module (for multi seq-line fasta files ): "
 						+ ModuleUtil.getDefaultFastaConverter() );
@@ -229,7 +229,7 @@ public class BioModuleFactory
 	/**
 	 * Register the complete list of Java class.getSimpleName() values for the configured modules.
 	 * 
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	private void initModules() throws Exception
 	{
@@ -302,7 +302,7 @@ public class BioModuleFactory
 			{
 				finalModules.add( SeqFileValidator.class.getName() );
 				info( "Config property [ " + Constants.REPORT_NUM_READS + "=" + Constants.TRUE + " ] & [ "
-						+ SeqUtil.INTERNAL_SEQ_TYPE + "=" + Config.requireString( null, SeqUtil.INTERNAL_SEQ_TYPE )
+						+ Constants.INTERNAL_SEQ_TYPE + "=" + Config.requireString( null, Constants.INTERNAL_SEQ_TYPE )
 						+ " ] --> Adding module: " + SeqFileValidator.class.getName() );
 			}
 			if( requireGunzip( module ) )

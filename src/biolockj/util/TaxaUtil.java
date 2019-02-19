@@ -32,7 +32,7 @@ public class TaxaUtil
 
 	/**
 	 * Returns a list of all taxonomy levels, not only the levels configured via
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.
+	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}.
 	 * 
 	 * @return Ordered List of all possible taxonomy levels
 	 */
@@ -43,7 +43,7 @@ public class TaxaUtil
 
 	/**
 	 * Return the bottom configured taxonomy level from
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * 
 	 * @return Taxonomy level
 	 * @throws Exception if errors occur
@@ -73,7 +73,7 @@ public class TaxaUtil
 	 * Extract taxonomy names at the given level from all given OTUs.
 	 * 
 	 * @param otus TreeSet of OTUs in {@link biolockj.module.implicit.parser.ParserModule} format
-	 * @param level {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return Ordered TreeSet of unique taxonomy names
 	 * @throws Exception if errors occur
 	 */
@@ -109,7 +109,7 @@ public class TaxaUtil
 	 * </ol>
 	 * 
 	 * @param sampleOtuCounts TreeMap(sampleId, TreeMap(OTU, count)) OTU counts for every sample
-	 * @param level {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return TreeMap(sampleId, TreeMap(taxa, count))
 	 * @throws Exception if errors occur
 	 */
@@ -176,7 +176,7 @@ public class TaxaUtil
 
 	/**
 	 * Return taxa levels from top to bottom level, including in-between levels not configured as part of
-	 * {@value #REPORT_TAXONOMY_LEVELS}
+	 * {@value Constants#REPORT_TAXONOMY_LEVELS}
 	 * 
 	 * @return List of taxonomy levels
 	 * @throws Exception if errors occur
@@ -208,7 +208,7 @@ public class TaxaUtil
 	 * Extract a taxonomy name at the given level from the given OTU.
 	 * 
 	 * @param otu OTU name in {@link biolockj.module.implicit.parser.ParserModule} format
-	 * @param level {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return Taxonomy name
 	 * @throws Exception if errors occur
 	 */
@@ -279,13 +279,13 @@ public class TaxaUtil
 	}
 
 	/**
-	 * Set taxonomy levels ordered by level, from highest to lowest. Require {@value #REPORT_TAXONOMY_LEVELS} property.
-	 * Accepts only valid options: {@value #DOMAIN}, {@value #PHYLUM}, {@value #CLASS}, {@value #ORDER},
-	 * {@value #FAMILY}, {@value #GENUS}, {@value #SPECIES}
+	 * Set taxonomy levels ordered by level, from highest to lowest. Require {@value Constants#REPORT_TAXONOMY_LEVELS} property.
+	 * Accepts only valid options: {@value Constants#DOMAIN}, {@value Constants#PHYLUM}, {@value Constants#CLASS}, {@value Constants#ORDER},
+	 * {@value Constants#FAMILY}, {@value Constants#GENUS}, {@value Constants#SPECIES}
 	 *
 	 * @return List of ordered taxonomy levels
-	 * @throws ConfigNotFoundException if {@value #REPORT_TAXONOMY_LEVELS} is undefined
-	 * @throws ConfigFormatException if {@value #REPORT_TAXONOMY_LEVELS} is defined, but does not contain any valid
+	 * @throws ConfigNotFoundException if {@value Constants#REPORT_TAXONOMY_LEVELS} is undefined
+	 * @throws ConfigFormatException if {@value Constants#REPORT_TAXONOMY_LEVELS} is defined, but does not contain any valid
 	 * taxonomy levels
 	 */
 	public static List<String> initTaxaLevels() throws ConfigNotFoundException, ConfigFormatException
@@ -296,7 +296,7 @@ public class TaxaUtil
 		final Set<String> configuredLevels = new HashSet<>();
 		final List<String> validOptions = allTaxonomyLevels();
 
-		for( final String element: Config.requireList( null, REPORT_TAXONOMY_LEVELS ) )
+		for( final String element: Config.requireList( null, Constants.REPORT_TAXONOMY_LEVELS ) )
 		{
 			if( validOptions.contains( element.toLowerCase() ) )
 			{
@@ -304,46 +304,46 @@ public class TaxaUtil
 			}
 			else
 			{
-				throw new ConfigFormatException( REPORT_TAXONOMY_LEVELS,
+				throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
 						"Invalid level defined [" + element + "]  " + errorMsg );
 			}
 		}
 
-		if( configuredLevels.contains( DOMAIN ) )
+		if( configuredLevels.contains( Constants.DOMAIN ) )
 		{
-			configLevels.add( DOMAIN );
+			configLevels.add( Constants.DOMAIN );
 		}
-		if( configuredLevels.contains( PHYLUM ) )
+		if( configuredLevels.contains( Constants.PHYLUM ) )
 		{
-			configLevels.add( PHYLUM );
+			configLevels.add( Constants.PHYLUM );
 		}
-		if( configuredLevels.contains( CLASS ) )
+		if( configuredLevels.contains( Constants.CLASS ) )
 		{
-			configLevels.add( CLASS );
+			configLevels.add( Constants.CLASS );
 		}
-		if( configuredLevels.contains( ORDER ) )
+		if( configuredLevels.contains( Constants.ORDER ) )
 		{
-			configLevels.add( ORDER );
+			configLevels.add( Constants.ORDER );
 		}
-		if( configuredLevels.contains( FAMILY ) )
+		if( configuredLevels.contains( Constants.FAMILY ) )
 		{
-			configLevels.add( FAMILY );
+			configLevels.add( Constants.FAMILY );
 		}
-		if( configuredLevels.contains( GENUS ) )
+		if( configuredLevels.contains( Constants.GENUS ) )
 		{
-			configLevels.add( GENUS );
+			configLevels.add( Constants.GENUS );
 		}
-		if( configuredLevels.contains( SPECIES ) )
+		if( configuredLevels.contains( Constants.SPECIES ) )
 		{
-			configLevels.add( SPECIES );
+			configLevels.add( Constants.SPECIES );
 		}
 
 		if( configLevels.isEmpty() )
 		{
-			throw new ConfigFormatException( REPORT_TAXONOMY_LEVELS, "No valid options configured.  " + errorMsg );
+			throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS, "No valid options configured.  " + errorMsg );
 		}
 
-		Config.setConfigProperty( REPORT_TAXONOMY_LEVELS, configLevels );
+		Config.setConfigProperty( Constants.REPORT_TAXONOMY_LEVELS, configLevels );
 		return configLevels;
 	}
 
@@ -390,7 +390,7 @@ public class TaxaUtil
 
 	/**
 	 * Return the top configured taxonomy level from
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * 
 	 * @return Taxonomy level
 	 * @throws Exception if errors occur
@@ -405,56 +405,13 @@ public class TaxaUtil
 	}
 
 	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #CLASS}
-	 */
-	public static final String CLASS = "class";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #DOMAIN}
-	 */
-	public static final String DOMAIN = "domain";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #FAMILY}
-	 */
-	public static final String FAMILY = "family";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #GENUS}
-	 */
-	public static final String GENUS = "genus";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #ORDER}
-	 */
-	public static final String ORDER = "order";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #PHYLUM}
-	 */
-	public static final String PHYLUM = "phylum";
-
-	/**
-	 * {@link biolockj.Config} List property: {@value #REPORT_TAXONOMY_LEVELS}<br>
-	 * This property drives a lot of BioLockJ functionality and determines which taxonomy-levels are reported. Note,
-	 * some classifiers do not identify {@value #SPECIES} level OTUs.<br>
-	 * Options = {@value #DOMAIN}, {@value #PHYLUM}, {@value #CLASS}, {@value #ORDER}, {@value #FAMILY},
-	 * {@value #GENUS}, {@value #SPECIES}
-	 */
-	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
-
-	/**
-	 * One of the {@value #REPORT_TAXONOMY_LEVELS} options: {@value #SPECIES}
-	 */
-	public static final String SPECIES = "species";
-
-	/**
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
 	 */
-	public static final String TAXA_TABLE = "taxaCount";
+	protected static final String TAXA_TABLE = "taxaCount";
 
 	private static final List<String> allLevels = Arrays
-			.asList( new String[] { DOMAIN, PHYLUM, CLASS, ORDER, FAMILY, GENUS, SPECIES } );
+			.asList( new String[] { Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS, Constants.ORDER,
+					Constants.FAMILY, Constants.GENUS, Constants.SPECIES } );
 
 	private static String bottomLevel = null;
 	private static List<String> configLevels = null;

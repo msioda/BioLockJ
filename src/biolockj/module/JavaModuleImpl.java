@@ -41,9 +41,8 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		}
 		else
 		{
-			lines.add( "java" + getSource() + " " + BioLockJUtil.getDirectModuleParam( this ) + " "
-					+ RuntimeParamUtil.BASE_DIR_FLAG + " " + RuntimeParamUtil.getBaseDir().getAbsolutePath() + " "
-					+ RuntimeParamUtil.CONFIG_FLAG + " " + Config.getConfigFilePath() );
+			lines.add( "java" + getSource() + " " + RuntimeParamUtil.getDirectModuleParam( this ) + " "
+					+ RuntimeParamUtil.getBaseDirParam() + " " + RuntimeParamUtil.getConficFileParam() );
 		}
 
 		data.add( lines );
@@ -55,7 +54,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	 * If in Docker mode and not in Direct mode, execute {@link biolockj.module.ScriptModule#executeTask()} to build the
 	 * bash script.<br>
 	 * If not in Docker mode AND on the cluster AND
-	 * {@link biolockj.Config}.{@value biolockj.util.BashScriptBuilder#CLUSTER_RUN_JAVA_AS_SCRIPT}={@value biolockj.Constants#TRUE}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#CLUSTER_RUN_JAVA_AS_SCRIPT}={@value biolockj.Constants#TRUE}
 	 * execute {@link biolockj.module.ScriptModule#executeTask()} to build the bash script<br>
 	 * Otherwise, execute {@link #runModule()} to run the Java code to execute module functionality.
 	 */
@@ -63,7 +62,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public void executeTask() throws Exception
 	{
 		final boolean buildClusterScript = !RuntimeParamUtil.isDockerMode() && Config.isOnCluster()
-				&& Config.getBoolean( this, BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT );
+				&& Config.getBoolean( this, Constants.CLUSTER_RUN_JAVA_AS_SCRIPT );
 		final boolean buildDockerScript = RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode();
 		if( buildClusterScript || buildDockerScript )
 		{
@@ -75,21 +74,21 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		}
 
 	}
-
+	
 	/**
 	 * Build the docker run command to launch a JavaModule in a Docker container.
 	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		final List<String> lines = new ArrayList<>();
+		List<String> lines = new ArrayList<>();
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " "
-					+ BioLockJUtil.getDirectModuleParam( this );
+			final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " 
+		+ RuntimeParamUtil.getDirectModuleParam( this );
 			lines.add( BLJ_OPTIONS + "=\"" + args + "\"" + Constants.RETURN );
 		}
-
+		
 		return lines;
 	}
 
@@ -109,14 +108,14 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	@Override
 	public void moduleComplete() throws Exception
 	{
-		markStatus( Pipeline.SCRIPT_SUCCESS );
+		markStatus( Constants.SCRIPT_SUCCESS );
 		Log.info( getClass(), "Direct module complete!  Terminate direct application instance." );
 	}
 
 	@Override
 	public void moduleFailed() throws Exception
 	{
-		markStatus( Pipeline.SCRIPT_FAILURES );
+		markStatus( Constants.SCRIPT_FAILURES );
 		Log.info( getClass(), "Direct module failed!  Terminate direct application instance." );
 	}
 

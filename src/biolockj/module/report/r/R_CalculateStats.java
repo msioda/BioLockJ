@@ -118,7 +118,14 @@ public class R_CalculateStats extends R_Module implements BioModule
 		return Config.requireExistingDirs( module, Constants.INPUT_DIRS );
 	}
 
-	private static String getSuffix( final Boolean isParametric, final Boolean isAdjusted ) throws Exception
+	/**
+	 * Get the file name suffix used to specify types of statistics.
+	 * @param isParametric boolean get the Parametric rather than the non-parametric suffix. If null, get the r-squared suffix.
+	 * @param isAdjusted boolean get the adjusted rather than the non-adjusted suffix
+	 * @return file name suffix
+	 * @throws Exception if errors occur
+	 */
+	public static String getSuffix( final Boolean isParametric, final Boolean isAdjusted ) throws Exception
 	{
 		if( isParametric == null )
 		{
@@ -147,7 +154,7 @@ public class R_CalculateStats extends R_Module implements BioModule
 	/**
 	 * R^2 identifier: {@value #R_SQUARED_VALS}
 	 */
-	public static final String R_SQUARED_VALS = "rSquaredVals";
+	protected static final String R_SQUARED_VALS = "rSquaredVals";
 
 	/**
 	 * This {@value #R_PVAL_ADJ_METHOD} option can be set in {@link biolockj.Config} file: {@value #ADJ_PVAL_ATTRIBUTE}

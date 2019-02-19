@@ -32,12 +32,12 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
 	{
 		final List<List<String>> data = new ArrayList<>();
-		final boolean isMultiLine = Config.getBoolean( this, SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ );
+		final boolean isMultiLine = Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ );
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 
 		final String ext = "."
-				+ ( isMultiLine ? SeqUtil.FASTA: Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) );
+				+ ( isMultiLine ? Constants.FASTA: Config.requireString( this, Constants.INTERNAL_SEQ_TYPE ) );
 		for( final File f: files )
 		{
 			final ArrayList<String> lines = new ArrayList<>();
@@ -52,7 +52,7 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 				lines.add( unzip( f, filePath ) );
 			}
 
-			if( Config.getBoolean( this, SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
+			if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
 			{
 				lines.add( convert454( filePath, fileId + dirExt, outDir ) );
 			}
@@ -75,9 +75,9 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 	}
 
 	/**
-	 * Set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_SEQ_TYPE} =
-	 * {@value biolockj.util.SeqUtil#FASTA}<br>
-	 * Set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_SEQ_HEADER_CHAR} =
+	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_TYPE} =
+	 * {@value biolockj.Constants#FASTA}<br>
+	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_HEADER_CHAR} =
 	 * {@link biolockj.util.SeqUtil#FASTA_HEADER_DEFAULT_DELIM}
 	 * 
 	 * @throws Exception if errors occur
@@ -86,8 +86,8 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		Config.setConfigProperty( SeqUtil.INTERNAL_SEQ_TYPE, SeqUtil.FASTA );
-		Config.setConfigProperty( SeqUtil.INTERNAL_SEQ_HEADER_CHAR, SeqUtil.FASTA_HEADER_DEFAULT_DELIM );
+		Config.setConfigProperty( Constants.INTERNAL_SEQ_TYPE, Constants.FASTA );
+		Config.setConfigProperty( Constants.INTERNAL_SEQ_HEADER_CHAR, SeqUtil.FASTA_HEADER_DEFAULT_DELIM );
 	}
 
 	@Override
@@ -118,7 +118,7 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 			lines.add( "}" + RETURN );
 		}
 
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_IS_MULTI_LINE_SEQ ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
 		{
 			lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
 			lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
@@ -142,12 +142,12 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 
 	private String convert2fastA( final String filePath, final String fileId, final String outDir ) throws Exception
 	{
-		return FUNCTION_CONVERT_TO_FASTA + " " + filePath + " " + outDir + fileId + "." + SeqUtil.FASTA;
+		return FUNCTION_CONVERT_TO_FASTA + " " + filePath + " " + outDir + fileId + "." + Constants.FASTA;
 	}
 
 	private String convert454( final String filePath, final String fileId, final String outDir ) throws Exception
 	{
-		return FUNCTION_CONVERT_454 + " " + filePath + " " + outDir + fileId + "." + SeqUtil.FASTA;
+		return FUNCTION_CONVERT_454 + " " + filePath + " " + outDir + fileId + "." + Constants.FASTA;
 	}
 
 	private String copyToOutputDir( final String source, final String target ) throws Exception

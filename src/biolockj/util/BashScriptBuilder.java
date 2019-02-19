@@ -52,7 +52,7 @@ public class BashScriptBuilder
 		}
 
 		mainScriptLines
-				.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_SUCCESS );
+				.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_SUCCESS );
 		createScript( getMainScriptPath( module ), mainScriptLines );
 		workerScripts.clear();
 	}
@@ -98,7 +98,7 @@ public class BashScriptBuilder
 		lines.add( "statusCode=$?" );
 		lines.add( "if [ $statusCode != 0 ]; then" );
 		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_"
-				+ Pipeline.SCRIPT_FAILURES + "\"" );
+				+ Constants.SCRIPT_FAILURES + "\"" );
 		lines.add( "exit $statusCode" );
 		lines.add( "fi" );
 		lines.add( "}" + RETURN );
@@ -221,7 +221,7 @@ public class BashScriptBuilder
 		}
 
 		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) + RETURN );
-		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED + RETURN );
+		lines.add( "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.add( "cd " + module.getScriptDir().getAbsolutePath() + RETURN );
 
 		if( RuntimeParamUtil.isDockerMode() )
@@ -268,7 +268,7 @@ public class BashScriptBuilder
 		lines.add(
 				"#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = " + batchSize + RETURN );
 
-		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED + RETURN );
+		lines.add( "touch " + scriptPath + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules( module ) );
 
 		final List<String> bashFunctions = module.getWorkerScriptFunctions();
@@ -438,17 +438,17 @@ public class BashScriptBuilder
 			{
 				if( !( module instanceof JavaModule ) )
 				{
-					subScriptLines.add( "touch " + workerScriptPath + "_" + Pipeline.SCRIPT_SUCCESS );
+					subScriptLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
 				}
 				workerScripts.add( createScript( workerScriptPath, subScriptLines ) );
 				samplesInScript = 0;
 			}
 		}
 
-		Log.info( BashScriptBuilder.class, Log.LOG_SPACER );
+		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
 		Log.info( BashScriptBuilder.class,
 				workerScripts.size() + " WORKER scripts created for: " + module.getClass().getName() );
-		Log.info( BashScriptBuilder.class, Log.LOG_SPACER );
+		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
 	}
 
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
@@ -520,7 +520,7 @@ public class BashScriptBuilder
 	/**
 	 * Print bash script lines to BioLockJ log file for debug purposes.
 	 *
-	 * @param file
+	 * @param filePath String
 	 */
 	private static void printScriptAsDebug( final String filePath )
 	{
@@ -552,12 +552,6 @@ public class BashScriptBuilder
 			batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
 		}
 	}
-
-	/**
-	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
-	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
-	 */
-	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScriptModule";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #CLUSTER_BATCH_COMMAND}<br>

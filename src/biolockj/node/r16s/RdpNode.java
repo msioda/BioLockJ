@@ -56,7 +56,7 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 	/**
 	 * Build the OtuNode by extracting the OTU names for each level from the line. Only OTUs with score above the
 	 * threshold are included. Score is set to the lowest score above
-	 * {@value biolockj.module.implicit.parser.r16s.RdpParser#RDP_THRESHOLD_SCORE}. If id = null, extract the ID from
+	 * {@value biolockj.Constants#RDP_THRESHOLD_SCORE}. If id = null, extract the ID from
 	 * the 1st token in the line. Remove single and double quotes if found around OTU name.
 	 *
 	 * @param id Sample ID
@@ -90,7 +90,7 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 			final Integer nextScore = st.hasMoreTokens() ? calculateScore( st.nextToken().trim() ): null;
 
 			if( level == null || nextScore == null
-					|| nextScore < Config.requirePositiveInteger( null, RdpParser.RDP_THRESHOLD_SCORE ) )
+					|| nextScore < Config.requirePositiveInteger( null, Constants.RDP_THRESHOLD_SCORE ) )
 			{
 				return;
 			}
@@ -152,12 +152,12 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 	// Override default taxonomy level delimiters set in OtuNodeImpl
 	static
 	{
-		DOMAIN_DELIM = TaxaUtil.DOMAIN;
-		CLASS_DELIM = TaxaUtil.CLASS;
-		FAMILY_DELIM = TaxaUtil.FAMILY;
-		GENUS_DELIM = TaxaUtil.GENUS;
-		ORDER_DELIM = TaxaUtil.ORDER;
-		PHYLUM_DELIM = TaxaUtil.PHYLUM;
-		SPECIES_DELIM = TaxaUtil.SPECIES;
+		DOMAIN_DELIM = Constants.DOMAIN;
+		CLASS_DELIM = Constants.CLASS;
+		FAMILY_DELIM = Constants.FAMILY;
+		GENUS_DELIM = Constants.GENUS;
+		ORDER_DELIM = Constants.ORDER;
+		PHYLUM_DELIM = Constants.PHYLUM;
+		SPECIES_DELIM = Constants.SPECIES;
 	}
 }

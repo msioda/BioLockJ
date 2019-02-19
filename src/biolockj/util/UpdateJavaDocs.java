@@ -145,18 +145,18 @@ public class UpdateJavaDocs
 		}
 	}
 
-	static final String BAD_INDEX_TITLE = "<title>Generated Documentation (Untitled)</title>";
-	static final String BAD_OVERVIEW_TITLE = "<h1 class=title>BioLockJ</h1>";
-	static final String INDEX = "index.html";
-	static final String NEW_INDEX_TITLE = "<title>BioLockJ Documentation</title>";
-	static final String NEW_OVERVIEW_TITLE = "<h1 class=\"title\">BioLockJ API Documentation</h1></div><table border=\"0\" cellpadding=\"3\" cellspacing=\"0\" summary=\"Text added after JavaDoc generation\"><tr><th><div style=\"font-weight:500\">&nbsp;&nbsp;&nbsp;&nbsp;Please visit the <a href=\"https://github.com/msioda/BioLockJ/wiki/\" target=\"_top\">BioLockJ Wiki</a> for the general user guide.</div></th></tr></table>";
-	static final String NEWLINE_1 = "<li>&nbsp;&nbsp;</li>";
-	static final String NEWLINE_2 = "<li><a href=\"https://github.com/msioda/BioLockJ/wiki\" target=\"_top\"><strong>RETURN to WIKI</strong></a></li>";
-	static final String OVERVIEW_SUMMARY = "overview-summary.html";
-	static final String PATH = "$BLJ/docs/";
-	static final String RETURN = "\n";
-	static final String TARGET = "help-doc.html\">Help</a></li>";
-	static final String TARGET_2 = "<li class=\"navBarCell1Rev\">Help</li>";
-	static List<String> updatedFiles = new ArrayList<>();
+	private static final String BAD_INDEX_TITLE = "<title>Generated Documentation (Untitled)</title>";
+	private static final String BAD_OVERVIEW_TITLE = "<h1 class=title>BioLockJ</h1>";
+	private static final String INDEX = "index.html";
+	private static final String NEW_INDEX_TITLE = "<title>BioLockJ Documentation</title>";
+	private static final String NEW_OVERVIEW_TITLE = "<h1 class=\"title\">BioLockJ API Documentation</h1></div><table border=\"0\" cellpadding=\"3\" cellspacing=\"0\" summary=\"Text added after JavaDoc generation\"><tr><th><div style=\"font-weight:500\">&nbsp;&nbsp;&nbsp;&nbsp;Please visit the <a href=\"https://github.com/msioda/BioLockJ/wiki/\" target=\"_top\">BioLockJ Wiki</a> for the general user guide.</div></th></tr></table>";
+	private static final String NEWLINE_1 = "<li>&nbsp;&nbsp;</li>";
+	private static final String NEWLINE_2 = "<li><a href=\"https://github.com/msioda/BioLockJ/wiki\" target=\"_top\"><strong>RETURN to WIKI</strong></a></li>";
+	private static final String OVERVIEW_SUMMARY = "overview-summary.html";
+	private static final String PATH = "$BLJ/docs/";
+	private static final String RETURN = "\n";
+	private static final String TARGET = "help-doc.html\">Help</a></li>";
+	private static final String TARGET_2 = "<li class=\"navBarCell1Rev\">Help</li>";
+	private static List<String> updatedFiles = new ArrayList<>();
 
 }

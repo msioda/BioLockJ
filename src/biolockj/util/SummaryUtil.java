@@ -348,11 +348,11 @@ public class SummaryUtil
 
 			final IOFileFilter ff0 = new WildcardFileFilter( "*" + Constants.SH_EXT );
 			final IOFileFilter ffStarted = new WildcardFileFilter(
-					"*" + Constants.SH_EXT + "_" + Pipeline.SCRIPT_STARTED );
+					"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_STARTED );
 			final IOFileFilter ffSuccess = new WildcardFileFilter(
-					"*" + Constants.SH_EXT + "_" + Pipeline.SCRIPT_SUCCESS );
+					"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_SUCCESS );
 			final IOFileFilter ffFailed = new WildcardFileFilter(
-					"*" + Constants.SH_EXT + "_" + Pipeline.SCRIPT_FAILURES );
+					"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_FAILURES );
 
 			final Collection<File> scripts = FileUtils.listFiles( module.getScriptDir(), ff0, null );
 			final Collection<File> scriptsStarted = FileUtils.listFiles( module.getScriptDir(), ffStarted, null );
@@ -360,12 +360,12 @@ public class SummaryUtil
 			final Collection<File> scriptsSuccess = FileUtils.listFiles( module.getScriptDir(), ffSuccess, null );
 
 			final File mainSuccess = new File(
-					module.getMainScript().getAbsolutePath() + "_" + Pipeline.SCRIPT_SUCCESS );
+					module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
 
-			final File mainFail = new File( module.getMainScript().getAbsolutePath() + "_" + Pipeline.SCRIPT_FAILURES );
+			final File mainFail = new File( module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
 
 			final File mainStarted = new File(
-					module.getMainScript().getAbsolutePath() + "_" + Pipeline.SCRIPT_STARTED );
+					module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
 
 			scripts.remove( module.getMainScript() );
 			scriptsFailed.remove( mainFail );
@@ -383,11 +383,11 @@ public class SummaryUtil
 
 			for( final File script: scripts )
 			{
-				final File started = new File( script.getAbsolutePath() + "_" + Pipeline.SCRIPT_STARTED );
-				File finish = new File( script.getAbsolutePath() + "_" + Pipeline.SCRIPT_SUCCESS );
+				final File started = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
+				File finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
 				if( !finish.exists() )
 				{
-					finish = new File( script.getAbsolutePath() + "_" + Pipeline.SCRIPT_FAILURES );
+					finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
 				}
 				if( finish.exists() )
 				{
@@ -821,7 +821,7 @@ public class SummaryUtil
 	/**
 	 * Simple method to format labels in email body. Adds a colon and 2 spaces to label.
 	 *
-	 * @param label
+	 * @param label String
 	 * @return Formatted label
 	 */
 	private static String getLabel( final String label )
@@ -837,27 +837,22 @@ public class SummaryUtil
 	/**
 	 * Summary label BioModule header: {@value #MODULE}
 	 */
-	protected static final String MODULE = "Module";
+	private static final String MODULE = "Module";
 
 	/**
 	 * Summary label for module/pipeline runtime: {@value #RUN_TIME}
 	 */
-	protected static final String RUN_TIME = "Runtime";
-
-	/**
-	 * Summary label for module/pipeline status: {@value #STATUS}
-	 */
-	protected static final String STATUS = "Status";
+	private static final String RUN_TIME = "Runtime";
 
 	/**
 	 * Name of the summary file created in pipeline root directory: {@value #SUMMARY_FILE}
 	 */
-	protected static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
+	private static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
 
 	/**
 	 * Name of the temp file created in pipeline root directory: {@value #TEMP_SUMMARY_FILE}
 	 */
-	protected static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
+	private static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String NUM_ATTEMPTS = "# Attempts";
 	private static final String NUM_MODULES = "# Modules";

@@ -43,10 +43,10 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * output/{@value #OTU_SUMMARY_FILE}
 	 * </ol>
 	 * <p>
-	 * If {@link biolockj.Config}.{@value #QIIME_ALPHA_DIVERSITY_METRICS} are defined, add lines to run additional
+	 * If {@link biolockj.Config}.{@value Constants#QIIME_ALPHA_DIVERSITY_METRICS} are defined, add lines to run additional
 	 * scripts:
 	 * <ol>
-	 * <li>{@value #SCRIPT_CALC_ALPHA_DIVERSITY} - calculates {@value #QIIME_ALPHA_DIVERSITY_METRICS} on
+	 * <li>{@value #SCRIPT_CALC_ALPHA_DIVERSITY} - calculates {@value Constants#QIIME_ALPHA_DIVERSITY_METRICS} on
 	 * {@value #OTU_TABLE} to create output/{@value #ALPHA_DIVERSITY_TABLE}
 	 * <li>{@value #SCRIPT_ADD_ALPHA_DIVERSITY} - adds {@value #ALPHA_DIVERSITY_TABLE} data to
 	 * {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_FILE_PATH}
@@ -68,7 +68,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L "
 				+ getLowestQiimeTaxaLevel() + " -o " + outDir );
 		lines.add( SCRIPT_SUMMARIZE_BIOM + " -i " + files.get( 0 ) + " -o " + tempDir + OTU_SUMMARY_FILE );
-		if( Config.getString( this, QIIME_ALPHA_DIVERSITY_METRICS ) != null )
+		if( Config.getString( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS ) != null )
 		{
 			final File newMapping = new File( tempDir + MetaUtil.getMetadataFileName() );
 			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics()
@@ -127,7 +127,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	public void cleanUp() throws Exception
 	{
 		super.cleanUp();
-		final List<String> metrics = Config.getList( this, QIIME_ALPHA_DIVERSITY_METRICS );
+		final List<String> metrics = Config.getList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
 				|| Config.requireString( this, MetaUtil.META_NULL_VALUE ).equals( ALPHA_DIV_NULL_VALUE ) )
 		{
@@ -247,7 +247,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> preReqs = new ArrayList<>();
 		preReqs.addAll( super.getPreRequisiteModules() );
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
@@ -401,7 +401,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		final List<String> lines = new ArrayList<>();
 		lines.add( "sleep 5s" );
 		lines.add( SCRIPT_ADD_LABELS + " -n 1 -i " + fastaDir.getAbsolutePath() + " -m " + mapping + " -c "
-				+ DEMUX_COLUMN + " -o " + outputDir.getAbsolutePath() );
+				+ getDemuxColumn() + " -o " + outputDir.getAbsolutePath() );
 		final String fnaFile = outputDir + File.separator + COMBINED_FNA;
 		lines.add( otuPickingScript + getParams() + "-i " + fnaFile + " -fo " + outputDir );
 		return lines;
@@ -431,7 +431,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	private String getAlphaDiversityMetrics() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();
-		final Iterator<String> metrics = Config.requireList( this, QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
+		final Iterator<String> metrics = Config.requireList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
 		sb.append( metrics.next() );
 		while( metrics.hasNext() )
 		{
@@ -442,37 +442,37 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	private String getLowestQiimeTaxaLevel() throws Exception
 	{
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.SPECIES ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.SPECIES ) )
 		{
 			return "7";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.GENUS ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.GENUS ) )
 		{
 			return "6";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.FAMILY ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.FAMILY ) )
 		{
 			return "5";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.ORDER ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.ORDER ) )
 		{
 			return "4";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.CLASS ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.CLASS ) )
 		{
 			return "3";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.PHYLUM ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.PHYLUM ) )
 		{
 			return "2";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.DOMAIN ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.DOMAIN ) )
 		{
 			return "1";
 		}
 
 		throw new Exception( "Should not be possible to reach this error, value based on required field: "
-				+ TaxaUtil.REPORT_TAXONOMY_LEVELS );
+				+ Constants.REPORT_TAXONOMY_LEVELS );
 
 	}
 
@@ -481,12 +481,12 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	/**
 	 * File produced by QIIME {@value #SCRIPT_CALC_ALPHA_DIVERSITY} script: {@value #ALPHA_DIVERSITY_TABLE}
 	 */
-	public static final String ALPHA_DIVERSITY_TABLE = "alphaDiversity" + TXT_EXT;
+	protected static final String ALPHA_DIVERSITY_TABLE = "alphaDiversity" + TXT_EXT;
 
 	/**
 	 * Multiplexed fasta file produced by QIIME {@value #SCRIPT_ADD_LABELS} script: {@value #COMBINED_FNA}
 	 */
-	public static final String COMBINED_FNA = "combined_seqs.fna";
+	protected static final String COMBINED_FNA = "combined_seqs.fna";
 
 	/**
 	 * QIIME mapping column created by {@link biolockj.module.implicit.qiime.BuildQiimeMapping} that stores the name of
@@ -495,82 +495,91 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	public static final String DEMUX_COLUMN = "BioLockJFileName";
 
 	/**
+	 * Return {@link #DEMUX_COLUMN}
+	 * @return {@value #DEMUX_COLUMN}
+	 */
+	public static String getDemuxColumn()
+	{
+		return DEMUX_COLUMN;
+	}
+
+	/**
 	 * {@link biolockj.Config} property for vsearch exectuable used for chimera detection: {@value #EXE_VSEARCH}
 	 */
-	public static final String EXE_VSEARCH = "exe.vsearch";
+	protected static final String EXE_VSEARCH = "exe.vsearch";
 
 	/**
 	 * {@link biolockj.Config} property for {@value #EXE_VSEARCH} parameters (such as alternate reference database
 	 * path): {@value #EXE_VSEARCH_PARAMS}
 	 */
-	public static final String EXE_VSEARCH_PARAMS = "exe.vsearchParams";
+	protected static final String EXE_VSEARCH_PARAMS = "exe.vsearchParams";
 
 	/**
 	 * File produced by QIIME {@value #SCRIPT_SUMMARIZE_BIOM} script: {@value #OTU_SUMMARY_FILE}
 	 */
-	public static final String OTU_SUMMARY_FILE = "otuSummary" + TXT_EXT;
+	protected static final String OTU_SUMMARY_FILE = "otuSummary" + TXT_EXT;
 
 	/**
 	 * File produced by OTU picking scripts holding read taxonomy assignments: {@value #OTU_TABLE}
 	 */
-	public static final String OTU_TABLE = "otu_table.biom";
+	protected static final String OTU_TABLE = "otu_table.biom";
 
 	/**
 	 * OTU table prefix: {@value #OTU_TABLE_PREFIX}
 	 */
-	public static final String OTU_TABLE_PREFIX = "otu_table";
+	private static final String OTU_TABLE_PREFIX = "otu_table";
 
 	/**
-	 * {@link biolockj.Config} list property to calculate alpha diversity metrics.<br>
-	 * For complete list of skbio.diversity.alpha options, see
-	 * <a href= "http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html" target=
-	 * "_top">http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html</a><br>
-	 * {@value #QIIME_ALPHA_DIVERSITY_METRICS}
+	 * Return {@link #OTU_TABLE_PREFIX}
+	 * @return {@value #OTU_TABLE_PREFIX}
 	 */
-	public static final String QIIME_ALPHA_DIVERSITY_METRICS = "qiime.alphaMetrics";
+	public static String getOtuTablePrefix()
+	{
+		return OTU_TABLE_PREFIX;
+	}
 
 	/**
 	 * {@link biolockj.Config} boolean property to indicate if {@value #EXE_VSEARCH} is needed for chimera removal:
 	 * {@value #QIIME_REMOVE_CHIMERAS}
 	 */
-	public static final String QIIME_REMOVE_CHIMERAS = "qiime.removeChimeras";
+	protected static final String QIIME_REMOVE_CHIMERAS = "qiime.removeChimeras";
 
 	/**
 	 * QIIME script to add {@value #ALPHA_DIVERSITY_TABLE} to the metadata file: {@value #SCRIPT_ADD_ALPHA_DIVERSITY}
 	 */
-	public static final String SCRIPT_ADD_ALPHA_DIVERSITY = "add_alpha_to_mapping_file.py";
+	protected static final String SCRIPT_ADD_ALPHA_DIVERSITY = "add_alpha_to_mapping_file.py";
 
 	/**
 	 * QIIME script that produces {@value #COMBINED_FNA}, the multiplexed fasta file: {@value #SCRIPT_ADD_LABELS}
 	 */
-	public static final String SCRIPT_ADD_LABELS = "add_qiime_labels.py";
+	protected static final String SCRIPT_ADD_LABELS = "add_qiime_labels.py";
 
 	/**
 	 * QIIME script that creates alpha diversity metrics file in output/{@value #ALPHA_DIVERSITY_TABLE}:
 	 * {@value #SCRIPT_CALC_ALPHA_DIVERSITY}
 	 */
-	public static final String SCRIPT_CALC_ALPHA_DIVERSITY = "alpha_diversity.py";
+	protected static final String SCRIPT_CALC_ALPHA_DIVERSITY = "alpha_diversity.py";
 
 	/**
 	 * QIIME script used to remove chimeras detected by {@value #EXE_VSEARCH}: {@value #SCRIPT_FILTER_OTUS}
 	 */
-	public static final String SCRIPT_FILTER_OTUS = "filter_otus_from_otu_table.py";
+	protected static final String SCRIPT_FILTER_OTUS = "filter_otus_from_otu_table.py";
 
 	/**
 	 * QIIME script to print environment configuration to qsub output file: {@value #SCRIPT_PRINT_CONFIG}
 	 */
-	public static final String SCRIPT_PRINT_CONFIG = "print_qiime_config.py";
+	protected static final String SCRIPT_PRINT_CONFIG = "print_qiime_config.py";
 
 	/**
 	 * Produces output/{@value #OTU_SUMMARY_FILE} summarizing dataset: {@value #SCRIPT_SUMMARIZE_BIOM}
 	 */
-	public static final String SCRIPT_SUMMARIZE_BIOM = "biom summarize-table";
+	protected static final String SCRIPT_SUMMARIZE_BIOM = "biom summarize-table";
 
 	/**
 	 * QIIME script used to produce taxonomy-level reports in the module output directory:
 	 * {@value #SCRIPT_SUMMARIZE_TAXA}
 	 */
-	public static final String SCRIPT_SUMMARIZE_TAXA = "summarize_taxa.py";
+	protected static final String SCRIPT_SUMMARIZE_TAXA = "summarize_taxa.py";
 
 	/**
 	 * Value output by {@value #SCRIPT_CALC_ALPHA_DIVERSITY} for null values: {@value #ALPHA_DIV_NULL_VALUE}

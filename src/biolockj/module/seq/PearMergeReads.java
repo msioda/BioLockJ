@@ -71,8 +71,8 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		Config.requireString( this, SeqUtil.INPUT_FORWARD_READ_SUFFIX );
-		Config.requireString( this, SeqUtil.INPUT_REVERSE_READ_SUFFIX );
+		Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX );
+		Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX );
 		getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
 
 		if( !SeqUtil.isFastQ() )
@@ -80,18 +80,18 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 			throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
 		}
 
-		if( !Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			throw new Exception( getClass().getName()
 					+ " requires paired input data as a combined multiplexed file or as separate files named with "
 					+ " matching sample IDs ending in the forward & reverse file suffix values: "
-					+ Config.requireString( this, SeqUtil.INPUT_FORWARD_READ_SUFFIX ) + " & "
-					+ Config.requireString( this, SeqUtil.INPUT_REVERSE_READ_SUFFIX ) );
+					+ Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX ) + " & "
+					+ Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX ) );
 		}
 	}
 
 	/**
-	 * Set {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_PAIRED_READS} =
+	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS} =
 	 * {@value biolockj.Constants#FALSE} and register number of reads.
 	 */
 	@Override
@@ -99,7 +99,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	{
 		final String metaColName = getMetaColName();
 		super.cleanUp();
-		Config.setConfigProperty( SeqUtil.INTERNAL_PAIRED_READS, Constants.FALSE );
+		Config.setConfigProperty( Constants.INTERNAL_PAIRED_READS, Constants.FALSE );
 
 		final File updatedMeta = new File(
 				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
@@ -157,8 +157,8 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 		lines.add( Config.getExe( this, EXE_PEAR ) + " "
 				+ getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 "
 				+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
-		lines.add( "mv $4" + File.separator + "$1.assembled." + SeqUtil.FASTQ + " $5" + File.separator + "$1."
-				+ SeqUtil.FASTQ );
+		lines.add( "mv $4" + File.separator + "$1.assembled." + Constants.FASTQ + " $5" + File.separator + "$1."
+				+ Constants.FASTQ );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
