@@ -5,7 +5,7 @@
 addBoxPlot <- function( item, taxaVals, metaVals, barColors)
 {
    metaVals = as.factor( metaVals )
-   factors = split( taxaVals, metaVals ) 
+   factors = split( taxaVals, metaVals )
    cexAxis = getCexAxis( levels(metaVals) )
    labels = getBoxPlotLabels( levels(metaVals) )
    orient = getLas( levels(metaVals) )
@@ -82,7 +82,7 @@ main <- function() {
       countTable = getCountTable( level )
       metaTable = getMetaData( level )
       if( is.null(countTable) || is.null(metaTable) ) { next }
-      if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) ) 
+      if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) )
 
       binaryCols = getBinaryFields()
       nominalCols = getNominalFields()

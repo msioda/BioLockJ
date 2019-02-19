@@ -42,7 +42,7 @@ getCexMain<- function( labels=NULL ) {
 }
 
 
-# This graphic can be printed with the histograms, 
+# This graphic can be printed with the histograms,
 # used for documentation, or just as a reference check when chaning the colors.
 printColorCode <- function(){
    parColors = getTestName(isParametric = TRUE, returnColors = TRUE)
@@ -60,7 +60,7 @@ printColorCode <- function(){
 
 
 # Main function generates reports for each each taxaLevels()
-# Each taxonomy report includes 2 histograms for each report field (1 parametric, 1 non-parametric) 
+# Each taxonomy report includes 2 histograms for each report field (1 parametric, 1 non-parametric)
 main <- function() {
    pvalCutoff = getProperty("r.pvalCutoff", 0.05)
 
@@ -122,7 +122,7 @@ main <- function() {
       }
       # at the end, add the color code reference
       printColorCode()
-      plotPlainText(paste0("Histograms are ordered by \nthe fraction of tests below ", 
+      plotPlainText(paste0("Histograms are ordered by \nthe fraction of tests below ",
                                      pvalCutoff, "\nin the parametric or non-parametric test, \nwhichever was greater."))
       dev.off()
 
