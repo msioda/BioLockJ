@@ -837,27 +837,22 @@ public class SummaryUtil
 	/**
 	 * Summary label BioModule header: {@value #MODULE}
 	 */
-	protected static final String MODULE = "Module";
+	private static final String MODULE = "Module";
 
 	/**
 	 * Summary label for module/pipeline runtime: {@value #RUN_TIME}
 	 */
-	protected static final String RUN_TIME = "Runtime";
-
-	/**
-	 * Summary label for module/pipeline status: {@value #STATUS}
-	 */
-	protected static final String STATUS = "Status";
+	private static final String RUN_TIME = "Runtime";
 
 	/**
 	 * Name of the summary file created in pipeline root directory: {@value #SUMMARY_FILE}
 	 */
-	protected static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
+	private static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
 
 	/**
 	 * Name of the temp file created in pipeline root directory: {@value #TEMP_SUMMARY_FILE}
 	 */
-	protected static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
+	private static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String NUM_ATTEMPTS = "# Attempts";
 	private static final String NUM_MODULES = "# Modules";
