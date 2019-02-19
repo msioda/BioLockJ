@@ -69,7 +69,7 @@ main <- function() {
       parStats = getStatsTable( level, TRUE, FALSE )
       nonParStats = getStatsTable( level, FALSE, FALSE )
       if( is.null(parStats) || is.null(nonParStats) ) { next }
-      if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) )
+      if( doDebug() ) sink( getLogFile( level ) )
 
       # create empty pdf
       pdf( getPath( getOutputDir(), paste0(level, "_histograms.pdf") ) )

@@ -28,7 +28,7 @@ main <- function(){
     countTable = getCountTable( level )
     metaTable = getMetaData( level )
     if( is.null(countTable) || is.null(metaTable) ) { next }
-    if( doDebug() ) sink( file.path( getTempDir(), paste0( moduleScriptName(), "_", level, ".log") ) )
+    if( doDebug() ) sink( getLogFile( level ) )
 
     logInfo( c( "Processing level table[", level, "] has", nrow(countTable), "rows and", ncol(countTable), "columns") )
     

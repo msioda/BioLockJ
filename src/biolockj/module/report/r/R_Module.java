@@ -239,7 +239,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 				if( Config.getBoolean( this, R_DEBUG ) )
 				{
-					final IOFileFilter ff = new WildcardFileFilter( "*" + DEBUG_LOG_PREFIX + "*" + LOG_EXT );
+					final IOFileFilter ff = new WildcardFileFilter( "*" + LOG_EXT );
 					final Collection<File> debugLogs = FileUtils.listFiles( getTempDir(), ff, null );
 					sb.append( "Generated " + debugLogs.size() + " log files" + RETURN );
 				}
@@ -454,8 +454,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * timeout. If undefined, no timeout is used.
 	 */
 	protected static final String R_TIMEOUT = "r.timeout";
-
-	private static final String DEBUG_LOG_PREFIX = "debug_";
 
 	private static final String FUNCTION_RUN_R = "runScript";
 	private static final String INDENT = "   ";

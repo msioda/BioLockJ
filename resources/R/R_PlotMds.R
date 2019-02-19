@@ -12,7 +12,7 @@ main <- function() {
       countTable = getCountTable( level )
       metaTable = getMetaData( level )
       if( is.null(countTable) || is.null(metaTable) ) { next }
-      if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) )
+      if( doDebug() ) sink( getLogFile( level ) )
       
       myMDS = capscale( countTable~1, distance=getProperty("r_PlotMds.distance") )
       metaColColors = getColorsByCategory( metaTable )

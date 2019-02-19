@@ -164,7 +164,7 @@ getP_AdjustLen <- function( names ) {
 main <- function() {
 	importLibs( c( "coin", "Kendall" ) ) 
 	for( level in taxaLevels() ) {
-	  if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) )
+	  if( doDebug() ) sink( getLogFile( level ) )
 	  reportStats = calculateStats( level )
 		if( is.null( reportStats ) ) {
 			logInfo( c( level, "table is empty" ) )
