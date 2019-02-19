@@ -911,32 +911,45 @@ function retreiveDefaultProps(dpropPath) {
 //         launchModal.style.display = "none";
 //     }
 // }
+
 document.getElementById('submitConfigureAWS').addEventListener('click', function(evt){
   evt.preventDefault();
+  sendFormToNode('submitConfigureAWS', '/configureAws')
+});
+document.getElementById('deployComputeStack').addEventListener('click', function(evt){
+  evt.preventDefault();
+  sendFormToNode('deployComputeStack', '/deployBatchEnv');
+});
+document.getElementById('launchEc2HeadNodeButton').addEventListener('click', function(evt) {
+  evt.preventDefault();
+  sendFormToNode('launchEc2HeadNodeButton', 'launchEc2HeadNode')
+});
+
+function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
   let formData = {};
-  console.log(document.getElementById('configureAwsForm'));
-  let AwsForm = new FormData(document.getElementById('configureAwsForm'));
-  for (var i of AwsForm.entries()) {
+  let myForm = new FormData(document.getElementById(formElementId));
+  for (var i of myForm.entries()) {
     console.log(i);
     formData[i[0]] = i[1];
   }
   var request = new XMLHttpRequest();
-  request.open('POST', '/configureAws', true);
+  request.open(requestMethod, nodeAddress, true);
   request.setRequestHeader("Content-Type", "application/json");
   request.send(JSON.stringify({formData}));
     request.onreadystatechange = function() {
     if (request.readyState == XMLHttpRequest.DONE) {
       console.log(request.responseText);
+      // callback;
     }
   }
-})//document.getElementById('submitAWS')
-
+};
 
 const projEnvInput = document.getElementById('project.env');
 ['change','load', 'input'].forEach( evt =>
-    projEnvInput.addEventListener(evt, function(){
+    projEnvInput.addEventListener(evt, function(event){
+      event.preventDefault();
       const AwsButton = document.getElementById('AwsButton');
-      console.log(document.getElementById('project.env'));
+      console.log(`adding ${evt} listener to ${document.getElementById('project.env')}`);
       switch (document.getElementById('project.env').value) {
         case 'aws':
           AwsButton.classList.remove('hidden');
