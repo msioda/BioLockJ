@@ -15,8 +15,6 @@ main <- function() {
       if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) )
       
       myMDS = capscale( countTable~1, distance=getProperty("r_PlotMds.distance") )
-      
-      
       metaColColors = getColorsByCategory( metaTable )
 
       pcoaFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(level, "_pcoa") ), ".tsv" )
