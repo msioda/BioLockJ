@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
@@ -38,14 +39,14 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 		String tables = "";
 		for( final File f: files )
 		{
-			if( f.getName().startsWith( QiimeClassifier.getOtuTablePrefix() ) )
+			if( f.getName().startsWith( Constants.OTU_TABLE_PREFIX ) )
 			{
 				tables += ( tables.isEmpty() ? "": "," ) + f.getAbsolutePath();
 			}
 			else
 			{
 				Log.warn( getClass(),
-						"Ignoring non-" + QiimeClassifier.getOtuTablePrefix() + " input file: " + f.getAbsolutePath() );
+						"Ignoring non-" + Constants.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
 			}
 		}
 
@@ -92,7 +93,7 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 		}
 		else
 		{
-			throw new Exception( "No " + QiimeClassifier.getOtuTablePrefix() + " files to merge" );
+			throw new Exception( "No " + Constants.OTU_TABLE_PREFIX + " files to merge" );
 		}
 	}
 

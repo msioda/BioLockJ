@@ -55,10 +55,10 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 */
 	public File addMissingFields() throws Exception
 	{
-		final boolean hasQm1 = MetaUtil.getFieldNames().contains( BARCODE_SEQUENCE );
-		final boolean hasQm2 = MetaUtil.getFieldNames().contains( LINKER_PRIMER_SEQUENCE );
-		final boolean hasQm3 = MetaUtil.getFieldNames().contains( QiimeClassifier.getDemuxColumn() );
-		final boolean hasQm4 = MetaUtil.getFieldNames().contains( DESCRIPTION );
+		final boolean hasQm1 = MetaUtil.getFieldNames().contains( Constants.QIIME_BARCODE_SEQ_COL );
+		final boolean hasQm2 = MetaUtil.getFieldNames().contains( Constants.QIIME_LINKER_PRIMER_SEQ_COL );
+		final boolean hasQm3 = MetaUtil.getFieldNames().contains( Constants.QIIME_DEMUX_COL );
+		final boolean hasQm4 = MetaUtil.getFieldNames().contains( Constants.QIIME_DESC_COL );
 
 		final Map<String, String> metaLines = new HashMap<>();
 		String header = null;
@@ -80,14 +80,14 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		writer.write( QIIME_ID );
 		if( !hasQm1 )
 		{
-			Log.info( getClass(), "Add required column(2) field = " + BARCODE_SEQUENCE );
-			writer.write( TAB_DELIM + BARCODE_SEQUENCE );
+			Log.info( getClass(), "Add required column(2) field = " + Constants.QIIME_BARCODE_SEQ_COL );
+			writer.write( TAB_DELIM + Constants.QIIME_BARCODE_SEQ_COL );
 		}
 
 		if( !hasQm2 )
 		{
-			Log.info( getClass(), "Add required column(3) field = " + LINKER_PRIMER_SEQUENCE );
-			writer.write( TAB_DELIM + LINKER_PRIMER_SEQUENCE );
+			Log.info( getClass(), "Add required column(3) field = " + Constants.QIIME_LINKER_PRIMER_SEQ_COL );
+			writer.write( TAB_DELIM + Constants.QIIME_LINKER_PRIMER_SEQ_COL );
 		}
 		final StringTokenizer ht = new StringTokenizer( header, TAB_DELIM );
 		ht.nextToken(); // skip the ID column
@@ -97,14 +97,14 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		}
 		if( !hasQm3 )
 		{
-			Log.info( getClass(), "Add required column(n-1) field = " + QiimeClassifier.getDemuxColumn() );
-			writer.write( TAB_DELIM + QiimeClassifier.getDemuxColumn() );
+			Log.info( getClass(), "Add required column(n-1) field = " + Constants.QIIME_DEMUX_COL );
+			writer.write( TAB_DELIM + Constants.QIIME_DEMUX_COL );
 		}
 
 		if( !hasQm4 )
 		{
-			Log.info( getClass(), "Add required column(n) field = " + DESCRIPTION );
-			writer.write( TAB_DELIM + DESCRIPTION );
+			Log.info( getClass(), "Add required column(n) field = " + Constants.QIIME_DESC_COL );
+			writer.write( TAB_DELIM + Constants.QIIME_DESC_COL );
 		}
 
 		writer.write( RETURN );
@@ -198,13 +198,13 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		}
 
 		final List<Integer> skip = Arrays.asList(
-				new Integer[] { metaColumns.indexOf( BARCODE_SEQUENCE ), metaColumns.indexOf( LINKER_PRIMER_SEQUENCE ),
-						metaColumns.indexOf( QiimeClassifier.getDemuxColumn() ), metaColumns.indexOf( DESCRIPTION ) } );
+				new Integer[] { metaColumns.indexOf( Constants.QIIME_BARCODE_SEQ_COL ), metaColumns.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ),
+						metaColumns.indexOf( Constants.QIIME_DEMUX_COL ), metaColumns.indexOf( Constants.QIIME_DESC_COL ) } );
 
 		String awkBody = "";
 		awkBody += Config.getExe( this, Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
-				+ "\" '{ print $1," + colIndex( metaColumns, BARCODE_SEQUENCE ) + ","
-				+ colIndex( metaColumns, LINKER_PRIMER_SEQUENCE ) + ",";
+				+ "\" '{ print $1," + colIndex( metaColumns, Constants.QIIME_BARCODE_SEQ_COL ) + ","
+				+ colIndex( metaColumns, Constants.QIIME_LINKER_PRIMER_SEQ_COL ) + ",";
 
 		for( int i = 1; i < metaColumns.size(); i++ )
 		{
@@ -214,8 +214,8 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 			}
 		}
 
-		awkBody += colIndex( metaColumns, QiimeClassifier.getDemuxColumn() ) + ",";
-		awkBody += colIndex( metaColumns, DESCRIPTION );
+		awkBody += colIndex( metaColumns, Constants.QIIME_DEMUX_COL ) + ",";
+		awkBody += colIndex( metaColumns, Constants.QIIME_DESC_COL );
 		awkBody += " }' " + initMetaFile.getAbsolutePath() + " > " + getOrderedMapping().getAbsolutePath();
 
 		Log.debug( getClass(), FUNCTION_REORDER_FIELDS + " will update column order using awk --> " + awkBody );
@@ -283,32 +283,6 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		return lines;
 	}
 	
-	/**
-	 * Return {@link #BARCODE_SEQUENCE}
-	 * @return {@value #BARCODE_SEQUENCE}
-	 */
-	public static String getBarcodeSequenceColumn()
-	{
-		return BARCODE_SEQUENCE;
-	}
-
-	/**
-	 * Return {@link #DESCRIPTION}
-	 * @return {@value #DESCRIPTION}
-	 */
-	public static String getDescriptionColumn()
-	{
-		return DESCRIPTION;
-	}
-
-	/**
-	 * Return {@link #LINKER_PRIMER_SEQUENCE}
-	 * @return {@value #LINKER_PRIMER_SEQUENCE}
-	 */
-	public static String getLinkerPrimerSequenceColumn()
-	{
-		return LINKER_PRIMER_SEQUENCE;
-	}
 
 	/**
 	 * Get mapping dir, called "mapping" which is the directory the new mapping is output by Qiime
@@ -334,8 +308,8 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		cols.add( MetaUtil.getID() );
 		cols.addAll( MetaUtil.getFieldNames() );
 
-		if( cols.indexOf( BARCODE_SEQUENCE ) == 1 && cols.indexOf( LINKER_PRIMER_SEQUENCE ) == 2
-				&& cols.indexOf( QiimeClassifier.getDemuxColumn() ) == cols.size() - 2 && cols.indexOf( DESCRIPTION ) == cols.size() - 1 )
+		if( cols.indexOf( Constants.QIIME_BARCODE_SEQ_COL ) == 1 && cols.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ) == 2
+				&& cols.indexOf( Constants.QIIME_DEMUX_COL ) == cols.size() - 2 && cols.indexOf( Constants.QIIME_DESC_COL ) == cols.size() - 1 )
 		{
 			return null;
 		}
@@ -365,29 +339,14 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	private String validateMapping() throws Exception
 	{
 		return SCRIPT_VALIDATE_MAPPING + " -p -b -m " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
-				+ QiimeClassifier.getDemuxColumn();
+				+ Constants.QIIME_DEMUX_COL;
 	}
 
 	private File initMetaFile = null;
 	private List<String> metaColumns = null;
 
 	/**
-	 * QIIME mapping file required 2nd column name
-	 */
-	protected static final String BARCODE_SEQUENCE = "BarcodeSequence";
-
-	/**
-	 * QIIME mapping file required name of last column
-	 */
-	protected static final String DESCRIPTION = "Description";
-
-	/**
-	 * QIIME mapping file required 3rd column name
-	 */
-	protected static final String LINKER_PRIMER_SEQUENCE = "LinkerPrimerSequence";
-
-	/**
-	 * Comment used to populate {@value #DESCRIPTION} column
+	 * Comment used to populate {@value biolockj.Constants#QIIME_DESC_COL} column
 	 */
 	protected static final String QIIME_COMMENT = "BioLockJ Generated Mapping";
 

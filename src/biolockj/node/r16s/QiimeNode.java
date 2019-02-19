@@ -17,13 +17,11 @@ import java.util.StringTokenizer;
 import biolockj.Constants;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
-import biolockj.util.TaxaUtil;
 
 /**
  * This class holds the OTU assignments from one line of {@link biolockj.module.implicit.qiime.QiimeClassifier} output.
  * <p>
- * 2 sample lines (header + 1st row) from otu_table_L*.txt output by QIIME script:
- * {@value biolockj.module.implicit.qiime.QiimeClassifier#SCRIPT_SUMMARIZE_TAXA} <br>
+ * 2 sample lines (header + 1st row) from otu_table_L*.txt output by QIIME script: summarize_taxa.py <br>
  * # Constructed from biom file #OTU ID 3A.1 7A.1 120A.1 <br>
  * 7A.1 k__Bacteria;p__Actinobacteria 419.0 26.0 90.0 70.0
  */

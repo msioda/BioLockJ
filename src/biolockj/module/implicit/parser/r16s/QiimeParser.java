@@ -18,12 +18,10 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.node.OtuNode;
 import biolockj.node.r16s.QiimeNode;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
 
 /**
  * This BioModules parses QiimeClassifier output reports to build standard OTU abundance tables.
@@ -49,7 +47,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 		for( final File file: super.getInputFiles() )
 		{
 			final Integer reportLevel = Integer.valueOf( file.getName()
-					.substring( QiimeClassifier.getOtuTablePrefix().length() + 2, file.getName().length() - 4 ) );
+					.substring( Constants.OTU_TABLE_PREFIX.length() + 2, file.getName().length() - 4 ) );
 
 			if( levelNum == null || levelNum < reportLevel )
 			{
@@ -141,12 +139,12 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 
 	/**
 	 * Examines the header line to find the column index for
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN} which holds the demultiplexed sample file
+	 * {@value biolockj.Constants#QIIME_DEMUX_COL} which holds the demultiplexed sample file
 	 * name.
 	 *
 	 * @param line Header line containing column names
-	 * @return Index of Qiime mapping column {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN}
-	 * @throws Exception If {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN} not found.
+	 * @return Index of Qiime mapping column {@value biolockj.Constants#QIIME_DEMUX_COL}
+	 * @throws Exception If {@value biolockj.Constants#QIIME_DEMUX_COL} not found.
 	 */
 	protected int getFileNameColumn( final String line ) throws Exception
 	{
@@ -156,15 +154,15 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 		{
 			final String token = header.nextToken();
 			Log.info( getClass(), "column(" + colNum + ") = " + token );
-			if( token.equals( QiimeClassifier.getDemuxColumn() ) )
+			if( token.equals( Constants.QIIME_DEMUX_COL ) )
 			{
-				Log.info( getClass(), "Found DEMUX_COLUMN, not checking remaining metadata columns!" );
+				Log.info( getClass(), "Found QIIME_DEMUX_COL, not checking remaining metadata columns!" );
 				return colNum;
 			}
 			colNum++;
 		}
 
-		throw new Exception( "Unable to find " + QiimeClassifier.getDemuxColumn() + " in header [ " + line + "]" );
+		throw new Exception( "Unable to find " + Constants.QIIME_DEMUX_COL + " in header [ " + line + "]" );
 	}
 
 	/**
@@ -202,8 +200,8 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	}
 
 	/**
-	 * Get the Sample ID from {@link #qiimeIdToSampleIdMap}. Qiime removes special characters with the script:
-	 * {@link biolockj.module.implicit.qiime.BuildQiimeMapping#SCRIPT_VALIDATE_MAPPING}, to create the qiimeId, which
+	 * Get the Sample ID from {@link #qiimeIdToSampleIdMap}. Qiime removes special characters by output of
+	 * {@link biolockj.module.implicit.qiime.BuildQiimeMapping}, to create the qiimeId, which
 	 * this method accepts as a parameter to lookup the Sample ID.
 	 *
 	 * @param qiimeId Qiime ID that was created from sample ID in a previous script
@@ -222,16 +220,13 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 
 	/**
 	 * The mapping file used the original sampleId when generating the demultipled files, as recorded in mapping file
-	 * column - {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN}. Example: sampleId = gutSample_42 /
-	 * qiimeId = gutSample.42 / {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN} =
-	 * gutSample_42.fasts
+	 * column - {@value biolockj.Constants#QIIME_DEMUX_COL}. Example: sampleId = gutSample_42 /
+	 * qiimeId = gutSample.42 / {@value biolockj.Constants#QIIME_DEMUX_COL} = gutSample_42.fasta
 	 *
 	 * @param qiimeId Qiime corrected ID
-	 * @param demuxIndex Qiime mapping column index for
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN}
-	 * @return Original sampleId extracted from {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN}
-	 * @throws Exception if unable to get sample ID from metadata file column
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN}
+	 * @param demuxIndex Qiime mapping column index for{@value biolockj.Constants#QIIME_DEMUX_COL}
+	 * @return Original sampleId extracted from {@value biolockj.Constants#QIIME_DEMUX_COL}
+	 * @throws Exception if unable to get sample ID from metadata file column {@value biolockj.Constants#QIIME_DEMUX_COL}
 	 */
 	protected String getSampleIdFromMappingFile( final String qiimeId, final int demuxIndex ) throws Exception
 	{
@@ -245,8 +240,8 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 
 	/**
 	 * Sample IDs in the original metadata file may contain restricted characters that will be replaced with a "." via
-	 * {@value biolockj.module.implicit.qiime.BuildQiimeMapping#SCRIPT_VALIDATE_MAPPING}. The
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#DEMUX_COLUMN} column will contain the original characters
+	 * {link biolockj.module.implicit.qiime.BuildQiimeMapping}. The
+	 * {@value biolockj.Constants#QIIME_DEMUX_COL} column will contain the original characters
 	 * (and are used in the file name).
 	 *
 	 * @see <a href= "http://qiime.org/scripts/validate_mapping_file.html" target=
@@ -274,7 +269,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 			{
 				isHeaderRow = false;
 				fileNameCol = getFileNameColumn( line );
-				Log.info( getClass(), "Header ID (" + qiimeId + ") has " + QiimeClassifier.getDemuxColumn() + " in column #"
+				Log.info( getClass(), "Header ID (" + qiimeId + ") has " + Constants.QIIME_DEMUX_COL + " in column #"
 						+ fileNameCol );
 			}
 			else

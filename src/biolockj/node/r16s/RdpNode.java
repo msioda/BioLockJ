@@ -14,10 +14,8 @@ package biolockj.node.r16s;
 import java.util.StringTokenizer;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.module.implicit.parser.r16s.RdpParser;
 import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
-import biolockj.util.TaxaUtil;
 
 /**
  * This class represents one line of {@link biolockj.module.classifier.r16s.RdpClassifier} output. RDP outputs the

@@ -21,9 +21,6 @@ import biolockj.module.BioModule;
 import biolockj.module.classifier.wgs.Humann2Classifier;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.module.implicit.qiime.BuildQiimeMapping;
-import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.module.report.r.R_PlotMds;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 
 /**
@@ -146,10 +143,10 @@ public final class RMetaUtil
 			}
 			if( hasQiimeMapping() )
 			{
-				rScriptFields.remove( BuildQiimeMapping.getDescriptionColumn() );
-				rScriptFields.remove( QiimeClassifier.getDemuxColumn() );
-				rScriptFields.remove( BuildQiimeMapping.getLinkerPrimerSequenceColumn() );
-				rScriptFields.remove( BuildQiimeMapping.getBarcodeSequenceColumn() );
+				rScriptFields.remove( Constants.QIIME_DESC_COL );
+				rScriptFields.remove( Constants.QIIME_DEMUX_COL );
+				rScriptFields.remove( Constants.QIIME_LINKER_PRIMER_SEQ_COL );
+				rScriptFields.remove( Constants.QIIME_BARCODE_SEQ_COL);
 			}
 		}
 
@@ -268,7 +265,7 @@ public final class RMetaUtil
 	}
 
 	/**
-	 * Get the {@link biolockj.Config}.{@value R_PlotMds#R_MDS_REPORT_FIELDS} fields.
+	 * Get the {@link biolockj.Config}.{@value #R_MDS_REPORT_FIELDS} fields.
 	 *
 	 * @return Set of MDS fields
 	 */
@@ -571,6 +568,7 @@ public final class RMetaUtil
 	 * R reports must contain at least one valid nominal or numeric metadata field.
 	 */
 	protected static final String R_EXCLUDE_FIELDS = "r.excludeFields";
+	
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_MDS_REPORT_FIELDS}<br>
 	 * Fields listed here must exist in the metadata file.

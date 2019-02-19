@@ -556,52 +556,52 @@ public class RuntimeParamUtil
 	/**
 	 * Pipeline parent directory file-path runtime parameter switch: {@value #BASE_DIR_FLAG}
 	 */
-	private static final String BASE_DIR_FLAG = "-b";
+	protected static final String BASE_DIR_FLAG = "-b";
 
 	/**
 	 * {@link biolockj.Config} file directory path runtime parameter switch: {@value #CONFIG_DIR_FLAG}
 	 */
-	private static final String CONFIG_DIR_FLAG = "-C";
+	protected static final String CONFIG_DIR_FLAG = "-C";
 
 	/**
 	 * {@link biolockj.Config} file path runtime parameter switch: {@value #CONFIG_FLAG}
 	 */
-	private static final String CONFIG_FLAG = "-c";
+	protected static final String CONFIG_FLAG = "-c";
 
 	/**
 	 * Direct mode runtime parameter switch: {@value #DIRECT_FLAG}
 	 */
-	private static final String DIRECT_FLAG = "-d";
+	protected static final String DIRECT_FLAG = "-d";
 
 	/**
 	 * Docker mode runtime parameter switch: {@value #DOCKER_FLAG}
 	 */
-	private static final String DOCKER_FLAG = "-D";
+	protected static final String DOCKER_FLAG = "-D";
 
 	/**
 	 * Input directory file-path runtime parameter switch: {@value #INPUT_DIR_FLAG}
 	 */
-	private static final String INPUT_DIR_FLAG = "-i";
+	protected static final String INPUT_DIR_FLAG = "-i";
 
 	/**
 	 * Metadata file directory path runtime parameter switch: {@value #META_DIR_FLAG}
 	 */
-	private static final String META_DIR_FLAG = "-m";
+	protected static final String META_DIR_FLAG = "-m";
 
 	/**
 	 * Change password runtime parameter switch: {@value #PASSWORD_FLAG}
 	 */
-	private static final String PASSWORD_FLAG = "-p";
+	protected static final String PASSWORD_FLAG = "-p";
 
 	/**
 	 * Primer file directory path runtime parameter switch: {@value #PRIMER_DIR_FLAG}
 	 */
-	private static final String PRIMER_DIR_FLAG = "-t";
+	protected static final String PRIMER_DIR_FLAG = "-t";
 
 	/**
 	 * Restart pipeline runtime parameter switch: {@value #RESTART_FLAG}
 	 */
-	private static final String RESTART_FLAG = "-r";
+	protected static final String RESTART_FLAG = "-r";
 
 	private static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
 

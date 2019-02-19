@@ -359,12 +359,12 @@ public class Log
 	 * Standard BioLockJ log format includes date, time, severity type, and calling class before the msg. Example:
 	 * 2018-05-27 19:53:04 INFO MetaUtil:
 	 */
-	private static final String DEFAULT_FORMAT = "%d{yyyy-MM-dd HH:mm:ss} %p %c{1}: %m%n";
+	protected static final String DEFAULT_FORMAT = "%d{yyyy-MM-dd HH:mm:ss} %p %c{1}: %m%n";
 
 	/**
 	 * Direct BioLockJ log prefix includes only the msg. Example: 2018-05-27 19:53:04 INFO MetaUtil:
 	 */
-	private static final String DIRECT_FORMAT = "%m%n";
+	protected static final String DIRECT_FORMAT = "%m%n";
 
 	/**
 	 * Set in {@link #initialize(String)} to true only if executing pipeline restart.<br>
@@ -372,7 +372,7 @@ public class Log
 	 * "_top">log4j.properties</a><br>
 	 * <i>log4j.appender.file.Append=${LOG_APPEND}</i>
 	 */
-	private static final String LOG_APPEND = "LOG_APPEND";
+	protected static final String LOG_APPEND = "LOG_APPEND";
 
 	/**
 	 * Set in {@link #initialize(String)} to file path of pipeline Java log file<br>
@@ -380,7 +380,7 @@ public class Log
 	 * "_top">log4j.properties</a><br>
 	 * <i>log4j.appender.file.File=${LOG_FILE}</i>
 	 */
-	private static final String LOG_FILE = "LOG_FILE";
+	protected static final String LOG_FILE = "LOG_FILE";
 
 	/**
 	 * Set in {@link #initialize(String)} to proper layout based on pipeline is direct or note<br>
