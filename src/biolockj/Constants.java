@@ -54,6 +54,12 @@ public class Constants
 	 * URL to the BioLockJ WIKI
 	 */
 	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
+	
+	/**
+	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
+	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
+	 */
+	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScriptModule";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
@@ -244,6 +250,17 @@ public class Constants
 	 * Spacer used to improve log file readability
 	 */
 	public static final String LOG_SPACER = "========================================================================";
+
+	/**
+	 * Prefix added to the master Config file: {@value #MASTER_PREFIX}
+	 */
+	public static final String MASTER_PREFIX = "MASTER_";
+
+	public static final String MODULE_CLASSIFIER_PACKAGE = "biolockj.module.classifier";
+
+	public static final String MODULE_IMPLICIT_PACKAGE = "biolockj.module.implicit";
+
+	public static final String MODULE_R_PACKAGE = "biolockj.module.r";
 
 	/**
 	 * Biolockj SEQ module package: {@value #MODULE_SEQ_PACKAGE}

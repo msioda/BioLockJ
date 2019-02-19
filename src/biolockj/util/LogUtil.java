@@ -36,7 +36,7 @@ public class LogUtil
 	 */
 	public static void syncModuleLogs( final ScriptModule module ) throws Exception
 	{
-		if( module instanceof JavaModule && Config.getBoolean( module, BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT ) )
+		if( module instanceof JavaModule && Config.getBoolean( module, Constants.CLUSTER_RUN_JAVA_AS_SCRIPT ) )
 		{
 			merge( cacheLog( getModuleLog( module ) ) );
 		}

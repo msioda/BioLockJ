@@ -55,7 +55,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	 * If in Docker mode and not in Direct mode, execute {@link biolockj.module.ScriptModule#executeTask()} to build the
 	 * bash script.<br>
 	 * If not in Docker mode AND on the cluster AND
-	 * {@link biolockj.Config}.{@value biolockj.util.BashScriptBuilder#CLUSTER_RUN_JAVA_AS_SCRIPT}={@value biolockj.Constants#TRUE}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#CLUSTER_RUN_JAVA_AS_SCRIPT}={@value biolockj.Constants#TRUE}
 	 * execute {@link biolockj.module.ScriptModule#executeTask()} to build the bash script<br>
 	 * Otherwise, execute {@link #runModule()} to run the Java code to execute module functionality.
 	 */
@@ -63,7 +63,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public void executeTask() throws Exception
 	{
 		final boolean buildClusterScript = !RuntimeParamUtil.isDockerMode() && Config.isOnCluster()
-				&& Config.getBoolean( this, BashScriptBuilder.CLUSTER_RUN_JAVA_AS_SCRIPT );
+				&& Config.getBoolean( this, Constants.CLUSTER_RUN_JAVA_AS_SCRIPT );
 		final boolean buildDockerScript = RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode();
 		if( buildClusterScript || buildDockerScript )
 		{

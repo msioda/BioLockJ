@@ -554,12 +554,6 @@ public class BashScriptBuilder
 	}
 
 	/**
-	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
-	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
-	 */
-	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScriptModule";
-
-	/**
 	 * {@link biolockj.Config} String property: {@value #CLUSTER_BATCH_COMMAND}<br>
 	 * Terminal command used to submit jobs on the cluster.
 	 */

@@ -31,11 +31,11 @@ public class PropUtil
 	public static File getMasterConfig() throws Exception
 	{
 		String configName = Config.getConfigFileName();
-		if( configName.startsWith( MASTER_PREFIX ) )
+		if( configName.startsWith( Constants.MASTER_PREFIX ) )
 		{
-			configName = configName.replaceAll( MASTER_PREFIX, "" );
+			configName = configName.replaceAll( Constants.MASTER_PREFIX, "" );
 		}
-		return new File( Config.pipelinePath() + File.separator + MASTER_PREFIX + configName );
+		return new File( Config.pipelinePath() + File.separator + Constants.MASTER_PREFIX + configName );
 	}
 
 	/**
@@ -316,11 +316,6 @@ public class PropUtil
 		}
 		writer.write( RETURN );
 	}
-
-	/**
-	 * Prefix added to the master Config file: {@value #MASTER_PREFIX}
-	 */
-	public static final String MASTER_PREFIX = "MASTER_";
 
 	private static final String DEFAULT_CONFIG_FLAG = "# ----> Default Config: ";
 	private static final String INTERNAL_PREFIX = "internal.";

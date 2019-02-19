@@ -345,7 +345,7 @@ public class RuntimeParamUtil
 			{
 				for( final File f: getRestartDir().listFiles() )
 				{
-					if( f.getName().startsWith( PropUtil.MASTER_PREFIX ) )
+					if( f.getName().startsWith( Constants.MASTER_PREFIX ) )
 					{
 						return f.getAbsolutePath();
 					}

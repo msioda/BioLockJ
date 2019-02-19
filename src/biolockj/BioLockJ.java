@@ -380,9 +380,9 @@ public class BioLockJ
 			}
 		}
 
-		if( name.startsWith( PropUtil.MASTER_PREFIX ) )
+		if( name.startsWith( Constants.MASTER_PREFIX ) )
 		{
-			name = name.replace( PropUtil.MASTER_PREFIX, "" );
+			name = name.replace( Constants.MASTER_PREFIX, "" );
 		}
 
 		return name;
