@@ -90,7 +90,6 @@ public abstract class Humann2CountModule extends JavaModuleImpl implements JavaM
 	 * 
 	 * @param module BioModule
 	 * @return TRUE if module generated OTU count files
-	 * @throws Exception if errors occur
 	 */
 	protected boolean isHumann2CountModule( final BioModule module )
 	{

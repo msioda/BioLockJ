@@ -640,8 +640,8 @@ public class MetaUtil
 	/**
 	 * The processed data is trimmed, with comments removed, and empty cells replaced with NA values.
 	 * 
-	 * @return
-	 * @throws Exception
+	 * @return List<List<String>>
+	 * @throws Exception if errros occur
 	 */
 	private static List<List<String>> parseMetadataFile() throws Exception
 	{
@@ -683,7 +683,7 @@ public class MetaUtil
 	/**
 	 * Report metadata sample IDs, field names, 1 example row.
 	 * 
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	private static void report() throws Exception
 	{

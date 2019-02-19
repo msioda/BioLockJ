@@ -349,10 +349,10 @@ public class ModuleUtil
 		final File startFile = new File(
 				module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		BioLockJUtil.deleteWithRetry( startFile, 5 );
-		Log.info( ModuleUtil.class, Log.LOG_SPACER );
-		Log.info( ModuleUtil.class,
+		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
+		Log.info( ModuleUtil.class, 
 				"FINISHED [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
-		Log.info( ModuleUtil.class, Log.LOG_SPACER );
+		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 	}
 
 	/**
@@ -372,10 +372,10 @@ public class ModuleUtil
 		{
 			throw new Exception( "Unable to create " + f.getAbsolutePath() );
 		}
-		Log.info( ModuleUtil.class, Log.LOG_SPACER );
-		Log.info( ModuleUtil.class,
+		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
+		Log.info( ModuleUtil.class, 
 				"STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
-		Log.info( ModuleUtil.class, Log.LOG_SPACER );
+		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 	}
 
 	/**

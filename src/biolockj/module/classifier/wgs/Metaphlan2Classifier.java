@@ -79,7 +79,8 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	}
 
 	/**
-	 * Verify that none of the derived command line parameters are included in {@link #getParams}. 
+	 * Verify none of the derived command line parameters are included in
+	 * {@link biolockj.Config}.{@value #EXE_METAPHLAN}{@value biolockj.Constants#PARAMS}
 	 */
 	@Override
 	public void checkDependencies() throws Exception
@@ -122,7 +123,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	/**
 	 * Metaphlan queries require standard parameters: --input_type, --nproc, -t<br>
 	 * Verify no invalid runtime params are passed and add rankSwitch if needed.<br>
-	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} if
+	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS} if
 	 * only one taxonomy level is to be reported, otherwise report all levels.
 	 * 
 	 * @return runtime parameters
@@ -157,7 +158,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 			if( params.indexOf( "--tax_lev " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + getExeParamName()
-						+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
+						+ "). BioLockJ sets this value based on: " + Constants.REPORT_TAXONOMY_LEVELS );
 			}
 			if( params.indexOf( "-s " ) > -1 )
 			{
@@ -188,7 +189,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 
 	private String getWorkerFunctionParams() throws Exception
 	{
-		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
+		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( this, Constants.INTERNAL_SEQ_TYPE ) + " ";
 	}
 
 	private String defaultSwitches = null;
@@ -196,13 +197,13 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
 
 	{
-		taxaLevelMap.put( TaxaUtil.SPECIES, METAPHLAN_SPECIES );
-		taxaLevelMap.put( TaxaUtil.GENUS, METAPHLAN_GENUS );
-		taxaLevelMap.put( TaxaUtil.FAMILY, METAPHLAN_FAMILY );
-		taxaLevelMap.put( TaxaUtil.ORDER, METAPHLAN_ORDER );
-		taxaLevelMap.put( TaxaUtil.CLASS, METAPHLAN_CLASS );
-		taxaLevelMap.put( TaxaUtil.PHYLUM, METAPHLAN_PHYLUM );
-		taxaLevelMap.put( TaxaUtil.DOMAIN, METAPHLAN_DOMAIN );
+		taxaLevelMap.put( Constants.SPECIES, METAPHLAN_SPECIES );
+		taxaLevelMap.put( Constants.GENUS, METAPHLAN_GENUS );
+		taxaLevelMap.put( Constants.FAMILY, METAPHLAN_FAMILY );
+		taxaLevelMap.put( Constants.ORDER, METAPHLAN_ORDER );
+		taxaLevelMap.put( Constants.CLASS, METAPHLAN_CLASS );
+		taxaLevelMap.put( Constants.PHYLUM, METAPHLAN_PHYLUM );
+		taxaLevelMap.put( Constants.DOMAIN, METAPHLAN_DOMAIN );
 	}
 
 	/**

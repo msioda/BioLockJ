@@ -49,7 +49,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 		for( final File file: super.getInputFiles() )
 		{
 			final Integer reportLevel = Integer.valueOf( file.getName()
-					.substring( QiimeClassifier.OTU_TABLE_PREFIX.length() + 2, file.getName().length() - 4 ) );
+					.substring( QiimeClassifier.getOtuTablePrefix().length() + 2, file.getName().length() - 4 ) );
 
 			if( levelNum == null || levelNum < reportLevel )
 			{
@@ -156,7 +156,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 		{
 			final String token = header.nextToken();
 			Log.info( getClass(), "column(" + colNum + ") = " + token );
-			if( token.equals( QiimeClassifier.DEMUX_COLUMN ) )
+			if( token.equals( QiimeClassifier.getDemuxColumn() ) )
 			{
 				Log.info( getClass(), "Found DEMUX_COLUMN, not checking remaining metadata columns!" );
 				return colNum;
@@ -164,7 +164,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 			colNum++;
 		}
 
-		throw new Exception( "Unable to find " + QiimeClassifier.DEMUX_COLUMN + " in header [ " + line + "]" );
+		throw new Exception( "Unable to find " + QiimeClassifier.getDemuxColumn() + " in header [ " + line + "]" );
 	}
 
 	/**
@@ -237,7 +237,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	{
 		if( demuxIndex != -1 )
 		{
-			return MetaUtil.getMetadataRecord( qiimeId ).get( demuxIndex - 1 ).replaceAll( "." + SeqUtil.FASTA, "" );
+			return MetaUtil.getMetadataRecord( qiimeId ).get( demuxIndex - 1 ).replaceAll( "." + Constants.FASTA, "" );
 		}
 
 		return qiimeId;
@@ -274,7 +274,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 			{
 				isHeaderRow = false;
 				fileNameCol = getFileNameColumn( line );
-				Log.info( getClass(), "Header ID (" + qiimeId + ") has " + QiimeClassifier.DEMUX_COLUMN + " in column #"
+				Log.info( getClass(), "Header ID (" + qiimeId + ") has " + QiimeClassifier.getDemuxColumn() + " in column #"
 						+ fileNameCol );
 			}
 			else

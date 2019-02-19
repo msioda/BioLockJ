@@ -38,14 +38,14 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 		String tables = "";
 		for( final File f: files )
 		{
-			if( f.getName().startsWith( QiimeClassifier.OTU_TABLE_PREFIX ) )
+			if( f.getName().startsWith( QiimeClassifier.getOtuTablePrefix() ) )
 			{
 				tables += ( tables.isEmpty() ? "": "," ) + f.getAbsolutePath();
 			}
 			else
 			{
 				Log.warn( getClass(),
-						"Ignoring non-" + QiimeClassifier.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
+						"Ignoring non-" + QiimeClassifier.getOtuTablePrefix() + " input file: " + f.getAbsolutePath() );
 			}
 		}
 
@@ -92,7 +92,7 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 		}
 		else
 		{
-			throw new Exception( "No " + QiimeClassifier.OTU_TABLE_PREFIX + " files to merge" );
+			throw new Exception( "No " + QiimeClassifier.getOtuTablePrefix() + " files to merge" );
 		}
 	}
 

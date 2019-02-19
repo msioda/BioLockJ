@@ -56,7 +56,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * Validate configuration file properties used to build the R report:
 	 * <ol>
 	 * <li>Get positive integer {@link biolockj.Config}.{@value #R_TIMEOUT}
-	 * <li>Get positive integer {@link biolockj.Config}.{@value #R_PLOT_WIDTH}
+	 * <li>Get positive integer {@link biolockj.Config}.{@value #P_VAL_CUTOFF}
 	 * </ol>
 	 */
 	@Override
@@ -64,7 +64,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	{
 		super.checkDependencies();
 		Config.getPositiveInteger( this, R_TIMEOUT );
-		Config.requirePositiveInteger( this, R_PLOT_WIDTH );
 		Config.requirePositiveDouble( this, P_VAL_CUTOFF );
 	}
 
@@ -343,7 +342,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	private String getErrors() throws Exception
 	{
-		final IOFileFilter ff = new WildcardFileFilter( "*" + Pipeline.SCRIPT_FAILURES );
+		final IOFileFilter ff = new WildcardFileFilter( "*" + Constants.SCRIPT_FAILURES );
 		final Collection<File> scriptsFailed = FileUtils.listFiles( getScriptDir(), ff, null );
 		if( scriptsFailed.isEmpty() )
 		{
@@ -375,7 +374,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	private String getModuleScriptName() throws Exception
 	{
-		return getClass().getSimpleName() + R_EXT;
+		return getClass().getSimpleName() + biolockj.Constants.R_EXT;
 	}
 
 	private Boolean isHumanN2() throws Exception
@@ -524,49 +523,19 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * Method name in BioLockJ_Lib.R to report status of script: {@value #METHOD_REPORT_STATUS}
-	 */
-	public static final String METHOD_REPORT_STATUS = "reportStatus";
-
-	/**
-	 * Method name in BioLockJ_Lib.R to run script program: {@value #METHOD_RUN_PROGRAM}
-	 */
-	public static final String METHOD_RUN_PROGRAM = "runProgram";
-
-	/**
-	 * This directory is added to the MAIN script: {@value #MODULE_DIR}
-	 */
-	public static final String MODULE_DIR = "moduleDir";
-
-	/**
-	 * File extension for R save.image() command output: {@value #R_DATA_EXT}
-	 */
-	public static final String R_DATA_EXT = ".RData";
-
-	/**
-	 * File extension of BioLockJ generated R Scripts: {@value #R_EXT}
-	 */
-	public static final String R_EXT = ".R";
-
-	/**
-	 * R function to get module script file path: {@value #R_FUNCTION_GET_MOD_SCRIPT}
-	 */
-	public static final String R_FUNCTION_GET_MOD_SCRIPT = "getModuleScript";
-
-	/**
 	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}
 	 */
-	public static final String R_FUNCTION_LIB = "BioLockJ_Lib.R";
+	protected static final String R_FUNCTION_LIB = "BioLockJ_Lib.R";
 
 	/**
 	 * This main R script that sources helper libraries and calls modules main method function: {@value #R_MAIN_SCRIPT}
 	 */
-	public static final String R_MAIN_SCRIPT = "BioLockJ_MAIN.R";
+	protected static final String R_MAIN_SCRIPT = "BioLockJ_MAIN.R";
 
 	/**
 	 * {@link biolockj.Config} boolean property {@value #R_SAVE_R_DATA} enables the .RData file to save.
 	 */
-	public static final String R_SAVE_R_DATA = "r.saveRData";
+	protected static final String R_SAVE_R_DATA = "r.saveRData";
 
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_RSCRIPT} defines the command line executable to call RScript
@@ -582,11 +551,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * {@link biolockj.Config} boolean property {@value #R_DEBUG} sets the debug log function endabled
 	 */
 	protected static final String R_DEBUG = "r.debug";
-
-	/**
-	 * {@link biolockj.Config} Integer property {@value #R_PLOT_WIDTH} sets the plot width in the PDF reports.
-	 */
-	protected static final String R_PLOT_WIDTH = "r.plotWidth";
 
 	/**
 	 * {@link biolockj.Config} property {@value #R_TIMEOUT} defines the number of minutes before R script fails due to

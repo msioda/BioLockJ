@@ -57,7 +57,7 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	{
 		final boolean hasQm1 = MetaUtil.getFieldNames().contains( BARCODE_SEQUENCE );
 		final boolean hasQm2 = MetaUtil.getFieldNames().contains( LINKER_PRIMER_SEQUENCE );
-		final boolean hasQm3 = MetaUtil.getFieldNames().contains( DEMUX_COLUMN );
+		final boolean hasQm3 = MetaUtil.getFieldNames().contains( QiimeClassifier.getDemuxColumn() );
 		final boolean hasQm4 = MetaUtil.getFieldNames().contains( DESCRIPTION );
 
 		final Map<String, String> metaLines = new HashMap<>();
@@ -97,8 +97,8 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		}
 		if( !hasQm3 )
 		{
-			Log.info( getClass(), "Add required column(n-1) field = " + DEMUX_COLUMN );
-			writer.write( TAB_DELIM + DEMUX_COLUMN );
+			Log.info( getClass(), "Add required column(n-1) field = " + QiimeClassifier.getDemuxColumn() );
+			writer.write( TAB_DELIM + QiimeClassifier.getDemuxColumn() );
 		}
 
 		if( !hasQm4 )
@@ -199,7 +199,7 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 
 		final List<Integer> skip = Arrays.asList(
 				new Integer[] { metaColumns.indexOf( BARCODE_SEQUENCE ), metaColumns.indexOf( LINKER_PRIMER_SEQUENCE ),
-						metaColumns.indexOf( DEMUX_COLUMN ), metaColumns.indexOf( DESCRIPTION ) } );
+						metaColumns.indexOf( QiimeClassifier.getDemuxColumn() ), metaColumns.indexOf( DESCRIPTION ) } );
 
 		String awkBody = "";
 		awkBody += Config.getExe( this, Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
@@ -214,7 +214,7 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 			}
 		}
 
-		awkBody += colIndex( metaColumns, DEMUX_COLUMN ) + ",";
+		awkBody += colIndex( metaColumns, QiimeClassifier.getDemuxColumn() ) + ",";
 		awkBody += colIndex( metaColumns, DESCRIPTION );
 		awkBody += " }' " + initMetaFile.getAbsolutePath() + " > " + getOrderedMapping().getAbsolutePath();
 
@@ -282,6 +282,33 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		lines.add( copyMappingToOutputDir() );
 		return lines;
 	}
+	
+	/**
+	 * Return {@link #BARCODE_SEQUENCE}
+	 * @return {@value #BARCODE_SEQUENCE}
+	 */
+	public static String getBarcodeSequenceColumn()
+	{
+		return BARCODE_SEQUENCE;
+	}
+
+	/**
+	 * Return {@link #DESCRIPTION}
+	 * @return {@value #DESCRIPTION}
+	 */
+	public static String getDescriptionColumn()
+	{
+		return DESCRIPTION;
+	}
+
+	/**
+	 * Return {@link #LINKER_PRIMER_SEQUENCE}
+	 * @return {@value #LINKER_PRIMER_SEQUENCE}
+	 */
+	public static String getLinkerPrimerSequenceColumn()
+	{
+		return LINKER_PRIMER_SEQUENCE;
+	}
 
 	/**
 	 * Get mapping dir, called "mapping" which is the directory the new mapping is output by Qiime
@@ -308,7 +335,7 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		cols.addAll( MetaUtil.getFieldNames() );
 
 		if( cols.indexOf( BARCODE_SEQUENCE ) == 1 && cols.indexOf( LINKER_PRIMER_SEQUENCE ) == 2
-				&& cols.indexOf( DEMUX_COLUMN ) == cols.size() - 2 && cols.indexOf( DESCRIPTION ) == cols.size() - 1 )
+				&& cols.indexOf( QiimeClassifier.getDemuxColumn() ) == cols.size() - 2 && cols.indexOf( DESCRIPTION ) == cols.size() - 1 )
 		{
 			return null;
 		}
@@ -338,7 +365,7 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	private String validateMapping() throws Exception
 	{
 		return SCRIPT_VALIDATE_MAPPING + " -p -b -m " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
-				+ DEMUX_COLUMN;
+				+ QiimeClassifier.getDemuxColumn();
 	}
 
 	private File initMetaFile = null;
@@ -347,42 +374,37 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	/**
 	 * QIIME mapping file required 2nd column name
 	 */
-	public static final String BARCODE_SEQUENCE = "BarcodeSequence";
-
-	/**
-	 * QIIME mapping file column that holds the name of the sample demultiplexed sequence file.
-	 */
-	public static final String DEMUX_COLUMN = QiimeClassifier.DEMUX_COLUMN;
+	protected static final String BARCODE_SEQUENCE = "BarcodeSequence";
 
 	/**
 	 * QIIME mapping file required name of last column
 	 */
-	public static final String DESCRIPTION = "Description";
+	protected static final String DESCRIPTION = "Description";
 
 	/**
 	 * QIIME mapping file required 3rd column name
 	 */
-	public static final String LINKER_PRIMER_SEQUENCE = "LinkerPrimerSequence";
+	protected static final String LINKER_PRIMER_SEQUENCE = "LinkerPrimerSequence";
 
 	/**
 	 * Comment used to populate {@value #DESCRIPTION} column
 	 */
-	public static final String QIIME_COMMENT = "BioLockJ Generated Mapping";
+	protected static final String QIIME_COMMENT = "BioLockJ Generated Mapping";
 
 	/**
 	 * QIIME mapping file required 1st column name, containing the sample ID
 	 */
-	public static final String QIIME_ID = "#SampleID";
+	protected static final String QIIME_ID = "#SampleID";
 
 	/**
 	 * QIIME script used to validate the QIIME mapping file format
 	 */
-	public static final String SCRIPT_VALIDATE_MAPPING = "validate_mapping_file.py";
+	protected static final String SCRIPT_VALIDATE_MAPPING = "validate_mapping_file.py";
 
 	/**
 	 * Suffix appended to the validate QIIME mapping file output to temp/mapping dir by bash script
 	 */
-	public static final String VALIDATED_MAPPING = "_corrected" + TXT_EXT;
+	protected static final String VALIDATED_MAPPING = "_corrected" + TXT_EXT;
 
 	/**
 	 * Name of the bash function that reorders metadata columns: {@value #FUNCTION_REORDER_FIELDS}

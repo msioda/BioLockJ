@@ -75,7 +75,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = super.getPreRequisiteModules();
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
@@ -142,7 +142,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
 		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
-		final String fileExt = "." + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
+		final String fileExt = "." + Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
 		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
 				+ fileExt;
 		final File output = new File( name );

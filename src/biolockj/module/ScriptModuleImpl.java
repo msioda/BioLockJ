@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.Pipeline;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.report.r.R_Module;
@@ -63,12 +62,12 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * 
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
 	 * the worker scripts.  Pass{@link #getInputFiles()} to either {@link #buildScript(List)} or {@link #buildScriptForPairedReads(List)}
-	 * based on {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_PAIRED_READS}.
+	 * based on {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS}.
 	 */
 	@Override
 	public void executeTask() throws Exception
 	{
-		final List<List<String>> data = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS )
+		final List<List<String>> data = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
 				? buildScriptForPairedReads( getInputFiles() )
 				: buildScript( getInputFiles() );
 		BashScriptBuilder.buildScripts( this, data );
@@ -84,7 +83,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	/**
 	 * Get the main script file in the bioModule script directory, with prefix:
 	 * {@value biolockj.module.BioModule#MAIN_SCRIPT_PREFIX}. R_Modules not running in a docker container end in
-	 * {@value biolockj.module.report.r.R_Module#R_EXT}, otherwise must end with {@value #SH_EXT}
+	 * {@value Constants#R_EXT}, otherwise must end with {@value #SH_EXT}
 	 *
 	 * @return Main script file
 	 */
@@ -101,7 +100,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 				{
 					if( this instanceof R_Module && !RuntimeParamUtil.isDockerMode() )
 					{
-						if( name.endsWith( R_Module.R_EXT ) )
+						if( name.endsWith( Constants.R_EXT ) )
 						{
 							return file;
 						}
@@ -142,7 +141,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		final List<String> errors = new ArrayList<>();
 		for( final File script: getScriptDir().listFiles() )
 		{
-			if( !script.getName().endsWith( Pipeline.SCRIPT_FAILURES ) )
+			if( !script.getName().endsWith( Constants.SCRIPT_FAILURES ) )
 			{
 				continue;
 			}

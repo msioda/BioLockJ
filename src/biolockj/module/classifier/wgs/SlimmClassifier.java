@@ -124,8 +124,8 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 
-		final String inputs = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
-		int index = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? 3: 2;
+		final String inputs = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
+		int index = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? 3: 2;
 
 		lines.add( "function " + FUNCTION_ALIGN + "() {" );
 		lines.add( Config.getExe( this, EXE_BOWTIE2 ) + " " + getRuntimeBowtieParams() + inputs + " 2> $" + index++
@@ -229,7 +229,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( slimmSwitches.indexOf( "-r " ) > -1 )
 		{
 			throw new Exception( "Invalid SLIMM option (-r) found in property(" + getExeParamName()
-					+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
+					+ "). BioLockJ sets this value based on: " + Constants.REPORT_TAXONOMY_LEVELS );
 		}
 
 		slimmSwitches = getRuntimeParams( getClassifierParams(), null ) + "-m " + getDB() + " ";
@@ -243,7 +243,6 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * Return the Slimm domain.
-	 * 
 	 * @return String {@value #SLIMM_DOMAIN_DELIM}
 	 */
 	public static final String getSlimmDomainDelim()
@@ -253,13 +252,13 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
 	{
-		taxaLevelMap.put( TaxaUtil.SPECIES, TaxaUtil.SPECIES );
-		taxaLevelMap.put( TaxaUtil.GENUS, TaxaUtil.GENUS );
-		taxaLevelMap.put( TaxaUtil.FAMILY, TaxaUtil.FAMILY );
-		taxaLevelMap.put( TaxaUtil.ORDER, TaxaUtil.ORDER );
-		taxaLevelMap.put( TaxaUtil.CLASS, TaxaUtil.CLASS );
-		taxaLevelMap.put( TaxaUtil.PHYLUM, TaxaUtil.PHYLUM );
-		taxaLevelMap.put( TaxaUtil.DOMAIN, SLIMM_DOMAIN_DELIM );
+		taxaLevelMap.put( Constants.SPECIES, Constants.SPECIES );
+		taxaLevelMap.put( Constants.GENUS, Constants.GENUS );
+		taxaLevelMap.put( Constants.FAMILY, Constants.FAMILY );
+		taxaLevelMap.put( Constants.ORDER, Constants.ORDER );
+		taxaLevelMap.put( Constants.CLASS, Constants.CLASS );
+		taxaLevelMap.put( Constants.PHYLUM, Constants.PHYLUM );
+		taxaLevelMap.put( Constants.DOMAIN, SLIMM_DOMAIN_DELIM );
 	}
 	/**
 	 * {@link biolockj.Config} property to directory holding SLIMM database: {@value #DATABASE}
@@ -303,7 +302,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * Override
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}.{@value biolockj.Constants#DOMAIN}
 	 * value
 	 */
 	private static final String SLIMM_DOMAIN_DELIM = "superkingdom";

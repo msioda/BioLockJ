@@ -59,13 +59,13 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	{
 		if( delimToLevelMap.isEmpty() )
 		{
-			delimToLevelMap.put( DOMAIN_DELIM, TaxaUtil.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, TaxaUtil.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, TaxaUtil.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, TaxaUtil.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, TaxaUtil.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, TaxaUtil.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, TaxaUtil.SPECIES );
+			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
+			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
+			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
+			delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
+			delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
+			delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
+			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
 		}
 		return delimToLevelMap;
 	}

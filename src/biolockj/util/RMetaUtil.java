@@ -146,10 +146,10 @@ public final class RMetaUtil
 			}
 			if( hasQiimeMapping() )
 			{
-				rScriptFields.remove( BuildQiimeMapping.DESCRIPTION );
-				rScriptFields.remove( BuildQiimeMapping.DEMUX_COLUMN );
-				rScriptFields.remove( BuildQiimeMapping.LINKER_PRIMER_SEQUENCE );
-				rScriptFields.remove( BuildQiimeMapping.BARCODE_SEQUENCE );
+				rScriptFields.remove( BuildQiimeMapping.getDescriptionColumn() );
+				rScriptFields.remove( QiimeClassifier.getDemuxColumn() );
+				rScriptFields.remove( BuildQiimeMapping.getLinkerPrimerSequenceColumn() );
+				rScriptFields.remove( BuildQiimeMapping.getBarcodeSequenceColumn() );
 			}
 		}
 
@@ -251,9 +251,9 @@ public final class RMetaUtil
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
-			Log.info( RMetaUtil.class, Log.LOG_SPACER );
+			Log.info( RMetaUtil.class, Constants.LOG_SPACER );
 			Log.info( RMetaUtil.class, "Reportable metadata field validations complete for: " + rScriptFields );
-			Log.info( RMetaUtil.class, Log.LOG_SPACER );
+			Log.info( RMetaUtil.class, Constants.LOG_SPACER );
 		}
 	}
 
@@ -494,7 +494,7 @@ public final class RMetaUtil
 
 	private static boolean isQiimeMetric( final BioModule module, final String field )
 	{
-		final Set<String> alphaDivMetrics = Config.getSet( module, QiimeClassifier.QIIME_ALPHA_DIVERSITY_METRICS );
+		final Set<String> alphaDivMetrics = Config.getSet( module, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( !alphaDivMetrics.isEmpty() )
 		{
 			for( final String metric: alphaDivMetrics )

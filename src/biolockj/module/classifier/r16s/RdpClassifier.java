@@ -80,7 +80,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = new ArrayList<>();
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}

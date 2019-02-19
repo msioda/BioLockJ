@@ -90,7 +90,8 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-	 * Verify that none of the derived command line parameters are included in {@link #getParams}. 
+	 * Verify that none of the derived command line parameters are included in
+	 * {@link biolockj.Config}.{@value #EXE_KRAKEN2}{@value biolockj.Constants#PARAMS}. 
 	 */
 	@Override
 	public void checkDependencies() throws Exception
@@ -124,7 +125,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
-		final String inFiles = "$3" + ( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " $4": "" );
+		final String inFiles = "$3" + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? " $4": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 "
 				+ inFiles );
@@ -221,7 +222,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	private String getWorkerFunctionParams() throws Exception
 	{
 		String params = " " + getParams();
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}
