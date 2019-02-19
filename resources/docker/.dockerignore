@@ -1,0 +1,6 @@
+.gitignore
+*not4git*
+.DS_Store
+.classpath
+.Rproj.user
+.Rhistory
