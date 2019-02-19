@@ -390,7 +390,6 @@ public class BioLockJ
 	 * Determine project status based on existence of {@value biolockj.Constants#BLJ_COMPLETE} in pipeline root
 	 * directory.
 	 *
-	 * @param projDir File path for the pipeline
 	 * @return true if {@value biolockj.Constants#BLJ_COMPLETE} exists in the pipeline root directory, otherwise false
 	 */
 	private static boolean isPipelineComplete()
@@ -486,7 +485,7 @@ public class BioLockJ
 	}
 
 	/**
-	 * Print the {@link biolockj.Log} messages saved via {@link biolockj.Log#addMsg(String)} and the exception stack
+	 * Print the {@link biolockj.Log} messages and the exception stack
 	 * trace info to the $USER $HOME directory.
 	 * 
 	 * @param fatalException Fatal application Exception

@@ -520,7 +520,7 @@ public class BashScriptBuilder
 	/**
 	 * Print bash script lines to BioLockJ log file for debug purposes.
 	 *
-	 * @param file
+	 * @param filePath String
 	 */
 	private static void printScriptAsDebug( final String filePath )
 	{

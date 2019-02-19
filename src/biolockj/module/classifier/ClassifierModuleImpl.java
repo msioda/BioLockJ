@@ -108,6 +108,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		return super.getSummary() + sb.toString();
 	}
 
+	//TODO: this method is out-dated with the new exe.<module>Params; update/remove all usages.
 	/**
 	 * This method returns the classifier class name in lower case, after "classifier" is removed.<br>
 	 * The remaining text should uniquely identify the name of the program.<br>

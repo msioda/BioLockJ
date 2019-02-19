@@ -450,10 +450,10 @@ public class Pipeline
 	}
 
 	/**
-	 * This method calls poll to check status of scripts and then sleeps for pollTime (60) seconds.
+	 * This method calls poll to check status of scripts and then sleeps for {@value #POLL_TIME} seconds.
 	 *
-	 * @param mainScript
-	 * @throws Exception
+	 * @param module ScriptModule
+	 * @throws Exception if errors occur
 	 */
 	private static void pollAndSpin( final ScriptModule module ) throws Exception
 	{

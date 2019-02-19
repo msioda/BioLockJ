@@ -990,7 +990,8 @@ public class SeqUtil
 	 * Unpaired reads must be multiplexed into a single file. Multiplexed paired reads must be contained in either 1
 	 * file, or 2 (1 file with forward reads and 1 file with reverse reads). Based on the number of files and file
 	 * names, we determine if the data is multiplexed. This function can be overridden by the Config property
-	 * {@value biolockj.module.implicit.Demultiplexer#INPUT_DO_NOT_DEMUX} to return false regardless of input file data.
+	 * {@value biolockj.util.DemuxUtil#DEMUX_STRATEGY} with option {@value biolockj.util.DemuxUtil#OPTION_DO_NOT_DEMUX}
+	 * to return false regardless of input file data.
 	 *
 	 * @throws Exception if validation fails
 	 */

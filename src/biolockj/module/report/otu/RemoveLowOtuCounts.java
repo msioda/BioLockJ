@@ -121,7 +121,7 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	}
 
 	/**
-	 * Remove OTUs below the {@link biolockj.Config}.{@value #MIN_OTU_COUNT}
+	 * Remove OTUs below the {@link biolockj.Config}.{@value Constants#REPORT_MIN_COUNT}
 	 * 
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @return TreeMap(SampleId, TreeMap(OTU, count)) Updated sampleOtuCounts after removal of low counts.

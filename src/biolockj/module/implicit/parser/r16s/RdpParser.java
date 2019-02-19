@@ -68,7 +68,7 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 
 	/**
 	 * If {@link biolockj.node.r16s.RdpNode#getScore()} is above the
-	 * {@link biolockj.Config}.{@value #RDP_THRESHOLD_SCORE}, continue with the standard {@link biolockj.node.OtuNode}
+	 * {@link biolockj.Config}.{@value Constants#RDP_THRESHOLD_SCORE}, continue with the standard {@link biolockj.node.OtuNode}
 	 * validation.
 	 *
 	 * @return true if {@link biolockj.node.OtuNode} is valid

@@ -79,7 +79,12 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	}
 
 	/**
+<<<<<<< HEAD
 	 * Verify that none of the derived command line parameters are included in {@link #getParams}. 
+=======
+	 * Verify none of the derived command line parameters are included in
+	 * {@link biolockj.Config}.{@value #EXE_METAPHLAN}{@value biolockj.Constants#PARAMS}
+>>>>>>> Cleanup javadocs to clear all blj_build javadoc warnings and most errors. (after PR #58)
 	 */
 	@Override
 	public void checkDependencies() throws Exception
@@ -122,7 +127,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	/**
 	 * Metaphlan queries require standard parameters: --input_type, --nproc, -t<br>
 	 * Verify no invalid runtime params are passed and add rankSwitch if needed.<br>
-	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS} if
+	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS} if
 	 * only one taxonomy level is to be reported, otherwise report all levels.
 	 * 
 	 * @return runtime parameters
@@ -188,7 +193,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 
 	private String getWorkerFunctionParams() throws Exception
 	{
-		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) + " ";
+		return " " + getParams() + INPUT_TYPE_PARAM + Config.requireString( this, Constants.INTERNAL_SEQ_TYPE ) + " ";
 	}
 
 	private String defaultSwitches = null;

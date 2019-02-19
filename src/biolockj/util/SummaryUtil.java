@@ -821,7 +821,7 @@ public class SummaryUtil
 	/**
 	 * Simple method to format labels in email body. Adds a colon and 2 spaces to label.
 	 *
-	 * @param label
+	 * @param label String
 	 * @return Formatted label
 	 */
 	private static String getLabel( final String label )

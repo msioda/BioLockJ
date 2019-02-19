@@ -247,7 +247,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> preReqs = new ArrayList<>();
 		preReqs.addAll( super.getPreRequisiteModules() );
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}

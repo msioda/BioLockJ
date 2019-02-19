@@ -40,7 +40,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		{
 			File hn2InputSeq = file;
 			final ArrayList<String> lines = new ArrayList<>();
-			if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 			{
 				lines.add( getPairedReadLine( file ) );
 				hn2InputSeq = getMergedReadFile( file );
@@ -71,7 +71,12 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
+<<<<<<< HEAD
 	 * Verify that none of the derived command line parameters are included in classifier parameters. Also verify:
+=======
+	 * Verify that none of the derived command line parameters are included in
+	 * {@link biolockj.Config}.{@value #EXE_HUMANN2}{@value biolockj.Constants#PARAMS}. Also verify:
+>>>>>>> Cleanup javadocs to clear all blj_build javadoc warnings and most errors. (after PR #58)
 	 * <ul>
 	 * <li>{@link biolockj.Config}.{@value #HN2_NUCL_DB} is a valid directory
 	 * <li>{@link biolockj.Config}.{@value #HN2_PROT_DB} is a valid directory
@@ -148,7 +153,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			lines.add( "function " + FUNCTION_CONCAT_PAIRED_READS + "() {" );
 			lines.add(
@@ -197,7 +202,12 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
+<<<<<<< HEAD
 	 * Get formatted runtime parameters and {@value #SCRIPT_NUM_THREADS}
+=======
+	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
+	 * {@value #EXE_HUMANN2}{@value biolockj.Constants#PARAMS} and {@value #SCRIPT_NUM_THREADS}.
+>>>>>>> Cleanup javadocs to clear all blj_build javadoc warnings and most errors. (after PR #58)
 	 *
 	 * @return Formatted runtime switches
 	 * @throws Exception if errors occur
@@ -217,9 +227,9 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		lines.add( "numComplete=0" );
 		lines.add( "while [ $numStarted != $numComplete ]; do " );
 		lines.add( "numStarted=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
-				+ Pipeline.SCRIPT_STARTED + " | wc -l)" );
+				+ Constants.SCRIPT_STARTED + " | wc -l)" );
 		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
-				+ Pipeline.SCRIPT_SUCCESS + " | wc -l)" );
+				+ Constants.SCRIPT_SUCCESS + " | wc -l)" );
 		lines.add( "let \"numComplete++\"" );
 		lines.add( "[ $numStarted != $numComplete ] && sleep 30" );
 		lines.add( "done" );
@@ -278,7 +288,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 
 	private Map<File, File> getPairedReads() throws Exception
 	{
-		if( pairedReads == null && Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( pairedReads == null && Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			pairedReads = SeqUtil.getPairedReads( getInputFiles() );
 		}

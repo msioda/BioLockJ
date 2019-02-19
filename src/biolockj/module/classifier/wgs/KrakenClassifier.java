@@ -96,7 +96,16 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	}
 
 	/**
+<<<<<<< HEAD
 	 * Verify that none of the derived command line parameters are included in {@link #getParams}. 
+=======
+	 * Verify that none of the derived command line parameters are included in
+	 * {@link biolockj.Config}.{@value #EXE_KRAKEN}{@value biolockj.Constants#PARAMS}. Also verify:
+	 * <ul>
+	 * <li>{@link biolockj.Config}.{@value #KRAKEN_DATABASE} is a valid file path valid parameters
+	 * 
+	 * </ul>
+>>>>>>> Cleanup javadocs to clear all blj_build javadoc warnings and most errors. (after PR #58)
 	 */
 	@Override
 	public void checkDependencies() throws Exception
@@ -130,7 +139,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
-		final String params = "$1 $2" + ( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " $3": "" );
+		final String params = "$1 $2" + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? " $3": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" + RETURN );
@@ -159,7 +168,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	 * Set the input switch based reading a sample input file.
 	 *
 	 * @return file type switch
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	private String getInputSwitch() throws Exception
 	{
@@ -230,7 +239,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	private String getWorkerFunctionParams() throws Exception
 	{
 		String params = " " + getParams();
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}
@@ -241,7 +250,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		}
 
 		params += DB_PARAM + getDB() + " " + getInputSwitch();
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;
 		}

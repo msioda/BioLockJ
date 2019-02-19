@@ -454,7 +454,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 	/**
 	 * Determine if quoted block has ended.
 	 *
-	 * @return true if quotedText cache has been cleared by {@value #getQuotedValue( String )}
+	 * @return true if quotedText cache has been cleared by {@link #getQuotedValue( String )}
 	 */
 	private boolean quoteEnded()
 	{

@@ -246,7 +246,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * {@link biolockj.module.report.r.R_CalculateStats}, which is also the JsonReport inputDir() since it must be
 	 * configured as the
 	 *
-	 * @param LinkedHashMap jsonMap (key=level)
+	 * @param jsonMap jsonMap (key=level)
 	 * @param root JsonNode
 	 * @throws Exception if unable to parse report files
 	 */
@@ -325,7 +325,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	/**
 	 * Get the taxonomy level reports from {@link biolockj.module.report.r.R_CalculateStats} for the given level
 	 *
-	 * @param String level
+	 * @param level String
 	 * @return File log normalized report
 	 * @throws Exception if unable to obtain the report due to propagated exceptions
 	 */
@@ -358,7 +358,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	/**
 	 * This method formats the JSON code to indent code blocks surround by curly-braces "{ }"
 	 * 
-	 * @param code JSON syntax markup
+	 * @param code JSON syntax mark-up
 	 * @throws Exception if errors occur
 	 */
 	private void writeJson( final String code ) throws Exception
