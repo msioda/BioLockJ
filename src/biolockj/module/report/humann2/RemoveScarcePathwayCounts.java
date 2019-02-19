@@ -242,7 +242,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 
 	private void buildOutputTable( final File file, final List<List<String>> data ) throws Exception
 	{
-		final String cutoff = "_" + getMetaColName().replaceAll( "%", "per" );
+		final String cutoff = getMetaColName().replaceAll( "%", "per" );
 		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, cutoff );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 		try

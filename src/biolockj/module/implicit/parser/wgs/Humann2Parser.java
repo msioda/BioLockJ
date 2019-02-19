@@ -68,7 +68,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 					boolean newRecord = true;
 					for( final String cell: record )
 					{
-						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + stripQuotes( cell ) );
+						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + BioLockJUtil.removeQuotes( cell ) );
 						newRecord = false;
 					}
 					writer.write( Constants.RETURN );
@@ -142,11 +142,6 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		}
 
 		return name;
-	}
-
-	private String stripQuotes( final String val ) throws Exception
-	{
-		return val.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
 	private static String[][] transpose( final List<List<String>> data ) throws Exception

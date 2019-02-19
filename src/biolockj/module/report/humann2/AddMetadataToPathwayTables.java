@@ -103,10 +103,10 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		final String sampleId = new StringTokenizer( line, TAB_DELIM ).nextToken();
 		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) )
 		{
-			sb.append( line );
+			sb.append( BioLockJUtil.removeQuotes( line ) );
 			for( final String field: MetaUtil.getMetadataRecord( sampleId ) )
 			{
-				sb.append( TAB_DELIM ).append( field.replaceAll( "'", "" ).replaceAll( "\"", "" ) );
+				sb.append( TAB_DELIM ).append( BioLockJUtil.removeQuotes( field ) );
 			}
 		}
 		else
