@@ -445,10 +445,10 @@ public class BashScriptBuilder
 			}
 		}
 
-		Log.info( BashScriptBuilder.class, Log.LOG_SPACER );
+		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
 		Log.info( BashScriptBuilder.class,
 				workerScripts.size() + " WORKER scripts created for: " + module.getClass().getName() );
-		Log.info( BashScriptBuilder.class, Log.LOG_SPACER );
+		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
 	}
 
 	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception

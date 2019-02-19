@@ -21,6 +21,7 @@ import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.report.Email;
 import biolockj.util.*;
+import biolockj.Constants;
 
 /**
  * This is the primary BioLockJ class - its main() method is executed when the jar is run.<br>
@@ -227,10 +228,11 @@ public class BioLockJ
 	protected static void initRestart() throws Exception
 	{
 		Log.initialize( Config.pipelineName() );
-		Log.warn( BioLockJ.class,
-				Constants.RETURN + Log.LOG_SPACER + Constants.RETURN + "RESTART PROJECT DIR --> "
-						+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Log.LOG_SPACER
-						+ Constants.RETURN );
+
+		Log.warn( BioLockJ.class, 
+				Constants.RETURN + Constants.LOG_SPACER + Constants.RETURN + "RESTART PROJECT DIR --> "
+				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Constants.LOG_SPACER 
+				+ Constants.RETURN );
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
@@ -420,31 +422,31 @@ public class BioLockJ
 
 		if( Log.getFile() != null )
 		{
-			Log.error( BioLockJ.class, Log.LOG_SPACER );
+			Log.error( BioLockJ.class, Constants.LOG_SPACER );
 			Log.error( BioLockJ.class,
 					Constants.RETURN + "FATAL APPLICATION ERROR - " + ex.getMessage()
 							+ ( args == null ? ""
 									: " -->" + Constants.RETURN + " Program args: "
 											+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) ),
 					ex );
-			Log.error( BioLockJ.class, Log.LOG_SPACER );
+			Log.error( BioLockJ.class, Constants.LOG_SPACER );
 			ex.printStackTrace();
-			Log.error( BioLockJ.class, Log.LOG_SPACER );
+			Log.error( BioLockJ.class, Constants.LOG_SPACER );
 			Log.error( BioLockJ.class, getHelpInfo( Log.getFile() ) );
-			Log.error( BioLockJ.class, Log.LOG_SPACER );
+			Log.error( BioLockJ.class, Constants.LOG_SPACER );
 		}
 		else
 		{
-			System.out.println( Log.LOG_SPACER );
+			System.out.println( Constants.LOG_SPACER );
 			System.out.println( Constants.RETURN + "FATAL APPLICATION ERROR - " + ex.getMessage()
 					+ ( args == null ? ""
 							: " -->" + Constants.RETURN + " Program args: "
 									+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) ) );
-			System.out.println( Log.LOG_SPACER );
+			System.out.println( Constants.LOG_SPACER );
 			ex.printStackTrace();
-			System.out.println( Log.LOG_SPACER );
+			System.out.println( Constants.LOG_SPACER );
 			System.out.println( getHelpInfo( null ) );
-			System.out.println( Log.LOG_SPACER );
+			System.out.println( Constants.LOG_SPACER );
 		}
 
 		printedFinalExcp = true;
@@ -531,9 +533,9 @@ public class BioLockJ
 						+ new Integer( ++index ).toString() + Constants.LOG_EXT ) );
 			}
 
-			Log.error( BioLockJ.class, Log.LOG_SPACER );
+			Log.error( BioLockJ.class, Constants.LOG_SPACER );
 			Log.error( BioLockJ.class, "Pipeline failed before root directory or Log file was created!" );
-			Log.error( BioLockJ.class, Log.LOG_SPACER );
+			Log.error( BioLockJ.class, Constants.LOG_SPACER );
 			logFinalException( args, fatalException );
 
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );

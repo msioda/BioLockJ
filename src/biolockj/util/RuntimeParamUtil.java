@@ -223,7 +223,7 @@ public class RuntimeParamUtil
 		try
 		{
 			useSystemOut = useSysOut;
-			info( RETURN + Log.LOG_SPACER );
+			info( RETURN + Constants.LOG_SPACER );
 			if( args != null && args.length > 0 )
 			{
 				info( "Application runtime args:" );
@@ -237,7 +237,7 @@ public class RuntimeParamUtil
 			{
 				info( "NO RUNTIME ARGS FOUND!" );
 			}
-			info( Log.LOG_SPACER );
+			info( Constants.LOG_SPACER );
 
 		}
 		catch( final Exception ex )

@@ -251,9 +251,9 @@ public final class RMetaUtil
 
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
-			Log.info( RMetaUtil.class, Log.LOG_SPACER );
+			Log.info( RMetaUtil.class, Constants.LOG_SPACER );
 			Log.info( RMetaUtil.class, "Reportable metadata field validations complete for: " + rScriptFields );
-			Log.info( RMetaUtil.class, Log.LOG_SPACER );
+			Log.info( RMetaUtil.class, Constants.LOG_SPACER );
 		}
 	}
 

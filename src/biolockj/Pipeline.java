@@ -45,7 +45,7 @@ public class Pipeline
 	}
 
 	/**
-	 * Return {@value #SCRIPT_SUCCESS} if no pipelineException has been thrown, otherwise return
+	 * Return {@value Constants#SCRIPT_SUCCESS} if no pipelineException has been thrown, otherwise return
 	 * {@value Constants#SCRIPT_FAILURES}
 	 *
 	 * @return pipeline status (success or failed)
@@ -306,7 +306,7 @@ public class Pipeline
 	 * The {@link biolockj.module.ScriptModule#getScriptDir()} will contain one main script and one ore more worker
 	 * scripts.<br>
 	 * An empty file with {@value Constants#SCRIPT_STARTED} appended to the script name is created when execution begins.<br>
-	 * If successful, an empty file with {@value #SCRIPT_SUCCESS} appended to the script name is created.<br>
+	 * If successful, an empty file with {@value Constants#SCRIPT_SUCCESS} appended to the script name is created.<br>
 	 * Upon failure, an empty file with {@value Constants#SCRIPT_FAILURES} appended to the script name is created.<br>
 	 * Script status is polled each minute, determining status by counting indicator files.<br>
 	 * {@link biolockj.Log} outputs the # of started, failed, and successful scripts (if any change).<br>

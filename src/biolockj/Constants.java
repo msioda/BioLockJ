@@ -214,11 +214,36 @@ public class Constants
 	 * List of all nested default config files.<br>
 	 */
 	public static final String INTERNAL_DEFAULT_CONFIG = "internal.defaultConfig";
+	
+	/**
+	 * {@link biolockj.Config} property used to limit classes that log debug statements when
+	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Constants#TRUE}
+	 */
+	public static final String LIMIT_DEBUG_CLASSES = "project.limitDebugClasses";
 
 	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */
 	public static final String LOG_EXT = ".log";
+	
+	/**
+	 * {@link biolockj.Config} property used to set log sensitivity in
+	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
+	 * "_top">log4j.properties</a><br>
+	 * <i>log4j.rootLogger=${project.logLevel}, file, stdout</i>
+	 * <ol>
+	 * <li>DEBUG - Log all messages
+	 * <li>INFO - Log info, warning and error messages
+	 * <li>WARN - Log warning and error messages
+	 * <li>ERROR - Log error messages only
+	 * </ol>
+	 */
+	public static final String LOG_LEVEL_PROPERTY = "project.logLevel";
+
+	/**
+	 * Spacer used to improve log file readability
+	 */
+	public static final String LOG_SPACER = "========================================================================";
 
 	/**
 	 * Biolockj SEQ module package: {@value #MODULE_SEQ_PACKAGE}
