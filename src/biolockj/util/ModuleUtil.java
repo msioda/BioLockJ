@@ -18,8 +18,10 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.Demultiplexer;
+import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_CalculateStats;
 import biolockj.module.report.r.R_Module;
+import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.module.seq.AwkFastaConverter;
 import biolockj.module.seq.PearMergeReads;
 
@@ -221,25 +223,25 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Return TRUE if bioModule has executed.
+	 * Return TRUE if module has executed.
 	 *
-	 * @param bioModule BioModule
-	 * @return TRUE if bioModule has executed
+	 * @param module BioModule
+	 * @return TRUE if module has executed
 	 */
-	public static boolean hasExecuted( final BioModule bioModule )
+	public static boolean hasExecuted( final BioModule module )
 	{
-		return isComplete( bioModule ) || isIncomplete( bioModule );
+		return isComplete( module ) || isIncomplete( module );
 	}
 
 	/**
-	 * Return TRUE if bioModule completed successfully.
+	 * Return TRUE if module completed successfully.
 	 *
-	 * @param bioModule BioModule
-	 * @return TRUE if bioModule has completed successfully.
+	 * @param module BioModule
+	 * @return TRUE if module has completed successfully.
 	 */
-	public static boolean isComplete( final BioModule bioModule )
+	public static boolean isComplete( final BioModule module )
 	{
-		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
+		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		return f.exists();
 	}
 
@@ -287,14 +289,14 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Return TRUE if bioModule started execution but is not complete.
+	 * Return TRUE if module started execution but is not complete.
 	 *
-	 * @param bioModule BioModule
-	 * @return TRUE if bioModule started execution but is not complete
+	 * @param module BioModule
+	 * @return TRUE if module started execution but is not complete
 	 */
-	public static boolean isIncomplete( final BioModule bioModule )
+	public static boolean isIncomplete( final BioModule module )
 	{
-		final File f = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
+		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		return f.exists();
 	}
 
@@ -331,8 +333,8 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Method creates a file named {@value biolockj.Constants#BLJ_COMPLETE} in bioModule root directory to document
-	 * bioModule has completed successfully. Also clean up by removing file {@value biolockj.Constants#BLJ_STARTED}.
+	 * Method creates a file named {@value biolockj.Constants#BLJ_COMPLETE} in module root directory to document
+	 * module has completed successfully. Also clean up by removing file {@value biolockj.Constants#BLJ_STARTED}.
 	 *
 	 * @param module BioModule
 	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_COMPLETE} file
@@ -356,8 +358,8 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Method creates a file named {@value biolockj.Constants#BLJ_STARTED} in bioModule root directory to document
-	 * bioModule has completed successfully. Also sets the start time and caches module name to list of executed modules
+	 * Method creates a file named {@value biolockj.Constants#BLJ_STARTED} in module root directory to document
+	 * module has completed successfully. Also sets the start time and caches module name to list of executed modules
 	 * so we can check later if it ran during this pipeline execution (as opposed to a previous failed run).
 	 *
 	 * @param module module
@@ -401,13 +403,13 @@ public class ModuleUtil
 	/**
 	 * Get BioModule subdirectory File object with given name. If directory doesn't exist, create it.
 	 *
-	 * @param bioModule BioModule
+	 * @param module BioModule
 	 * @param subDirName BioModule sub-directory name
 	 * @return BioModule sub-directory File object
 	 */
-	public static File requireSubDir( final BioModule bioModule, final String subDirName )
+	public static File requireSubDir( final BioModule module, final String subDirName )
 	{
-		final File dir = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + subDirName );
+		final File dir = new File( module.getModuleDir().getAbsolutePath() + File.separator + subDirName );
 		if( !dir.exists() )
 		{
 			dir.mkdirs();
@@ -419,14 +421,33 @@ public class ModuleUtil
 	/**
 	 * Return TRUE if BioModule sub-directory exists
 	 *
-	 * @param bioModule BioModule
+	 * @param module BioModule
 	 * @param subDirName BioModule sub-directory name
 	 * @return TRUE if BioModule sub-directory exists
 	 */
-	public static boolean subDirExists( final BioModule bioModule, final String subDirName )
+	public static boolean subDirExists( final BioModule module, final String subDirName )
 	{
-		final File dir = new File( bioModule.getModuleDir().getAbsolutePath() + File.separator + subDirName );
+		final File dir = new File( module.getModuleDir().getAbsolutePath() + File.separator + subDirName );
 		return dir.exists();
+	}
+	
+	/**
+	 * Get correct meta-merged BioModule type for the give module.  This is determined by examining previous
+	 * configured modules to see what type of raw count tables are generated.
+	 *  
+	 * @param module BioModule
+	 * @return MetaMerged BioModule
+	 * @throws Exception if errors occur
+	 */
+	public static String getMetaMergedModule( final BioModule module ) throws Exception
+	{
+		if( PathwayUtil.useHumann2RawCount( module ) )
+		{
+			return AddMetadataToPathwayTables.class.getName();
+		}
+
+		return AddMetadataToTaxaTables.class.getName();
+		
 	}
 
 	private static List<Integer> getClassifierIds() throws Exception
