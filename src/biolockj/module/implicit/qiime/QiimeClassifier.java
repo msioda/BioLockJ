@@ -401,7 +401,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		final List<String> lines = new ArrayList<>();
 		lines.add( "sleep 5s" );
 		lines.add( SCRIPT_ADD_LABELS + " -n 1 -i " + fastaDir.getAbsolutePath() + " -m " + mapping + " -c "
-				+ getDemuxColumn() + " -o " + outputDir.getAbsolutePath() );
+				+ Constants.QIIME_DEMUX_COL + " -o " + outputDir.getAbsolutePath() );
 		final String fnaFile = outputDir + File.separator + COMBINED_FNA;
 		lines.add( otuPickingScript + getParams() + "-i " + fnaFile + " -fo " + outputDir );
 		return lines;
@@ -489,21 +489,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String COMBINED_FNA = "combined_seqs.fna";
 
 	/**
-	 * QIIME mapping column created by {@link biolockj.module.implicit.qiime.BuildQiimeMapping} that stores the name of
-	 * the original fasta file associated with the sample: {@value #DEMUX_COLUMN}
-	 */
-	public static final String DEMUX_COLUMN = "BioLockJFileName";
-
-	/**
-	 * Return {@link #DEMUX_COLUMN}
-	 * @return {@value #DEMUX_COLUMN}
-	 */
-	public static String getDemuxColumn()
-	{
-		return DEMUX_COLUMN;
-	}
-
-	/**
 	 * {@link biolockj.Config} property for vsearch exectuable used for chimera detection: {@value #EXE_VSEARCH}
 	 */
 	protected static final String EXE_VSEARCH = "exe.vsearch";
@@ -523,20 +508,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * File produced by OTU picking scripts holding read taxonomy assignments: {@value #OTU_TABLE}
 	 */
 	protected static final String OTU_TABLE = "otu_table.biom";
-
-	/**
-	 * OTU table prefix: {@value #OTU_TABLE_PREFIX}
-	 */
-	private static final String OTU_TABLE_PREFIX = "otu_table";
-
-	/**
-	 * Return {@link #OTU_TABLE_PREFIX}
-	 * @return {@value #OTU_TABLE_PREFIX}
-	 */
-	public static String getOtuTablePrefix()
-	{
-		return OTU_TABLE_PREFIX;
-	}
 
 	/**
 	 * {@link biolockj.Config} boolean property to indicate if {@value #EXE_VSEARCH} is needed for chimera removal:

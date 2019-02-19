@@ -23,7 +23,6 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
-import biolockj.module.BioModule;
 import biolockj.module.report.r.R_CalculateStats;
 
 /**

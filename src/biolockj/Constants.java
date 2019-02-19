@@ -162,8 +162,6 @@ public class Constants
 	 */
 	public static final String FAMILY = "family";
 	
-	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
-
 	/**
 	 * File extension for fasta files = {@value #FASTA}
 	 */
@@ -214,29 +212,17 @@ public class Constants
 	/**
 	 * HumanN2 file suffix identifier for Pathway Coverage Summary report: {@value #HN2_PATH_COVG_SUM}
 	 */
-	
-	public static final String HN2_GENE_FAMILIES = "genefamilies";
-	public static final String HN2_PARSED = "HnN2";
-	
-	public static final String HN2_PATH_ABUNDANCE = "pathabundance";
-	public static final String HN2_PATH_COVERAGE = "pathcoverage";
 	public static final String HN2_PATH_COVG_SUM = "pCovg";
 
 	/**
 	 * HumanN2 meta column to store the total pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
-
 	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
 
 	/**
 	 * HumanN2 meta column to store the unique pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
 	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
-
-	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";
-
-
-	public static final String HN2_UNMAPPED_COUNT = "Unmapped_Count";
 
 	/**
 	 * Standard indent = 4 spaces.
@@ -248,12 +234,6 @@ public class Constants
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
-	
-	
-	
-	
-	
-	
 	
 	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_FORWARD_READ_SUFFIX}<br>
@@ -279,20 +259,12 @@ public class Constants
 	 */
 	public static final String INPUT_TRIM_PREFIX = "input.trimPrefix";
 	
-	
 	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_SUFFIX}<br>
 	 * Set value of suffix to trim from sequence file names or headers to obtain Sample ID.
 	 */
 	public static final String INPUT_TRIM_SUFFIX = "input.trimSuffix";
 	
-	
-	
-	
-	
-	
-	
-
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_ALL_MODULES}<br>
 	 * List of all configured, implicit, and pre/post-requisite modules for the pipeline.<br>
@@ -318,21 +290,11 @@ public class Constants
 	 */
 	public static final String INTERNAL_IS_MULTI_LINE_SEQ = "internal.isMultiLineSeq";
 
-
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_MULTIPLEXED}<br>
 	 * Set to true if multiplexed reads are found, set by the application runtime code.
 	 */
 	public static final String INTERNAL_MULTIPLEXED = "internal.multiplexed";
-
-	
-	
-	
-	
-	
-	
-	
-	
 
 	/**
 	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>
@@ -346,7 +308,6 @@ public class Constants
 	 * System will auto-detect if not configured
 	 */
 	public static final String INTERNAL_SEQ_TYPE = "internal.seqType";
-
 	
 	/**
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when
@@ -383,13 +344,6 @@ public class Constants
 	 */
 	public static final String MASTER_PREFIX = "MASTER_";
 
-	public static final String MODULE_CLASSIFIER_PACKAGE = "biolockj.module.classifier";
-
-	public static final String MODULE_IMPLICIT_PACKAGE = "biolockj.module.implicit";
-	
-
-	public static final String MODULE_R_PACKAGE = "biolockj.module.r";
-
 	/**
 	 * Biolockj SEQ module package: {@value #MODULE_SEQ_PACKAGE}
 	 */
@@ -404,6 +358,32 @@ public class Constants
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
 	 */
 	public static final String OTU_COUNT = "otuCount";
+	
+	/**
+	 * QIIME mapping column created by {@link biolockj.module.implicit.qiime.BuildQiimeMapping} that stores the name of
+	 * the original fasta file associated with the sample: {@value #QIIME_DEMUX_COL}
+	 */
+	public static final String QIIME_DEMUX_COL = "BioLockJFileName";
+	
+	/**
+	 * QIIME mapping file required 2nd column name
+	 */
+	public static final String QIIME_BARCODE_SEQ_COL = "BarcodeSequence";
+
+	/**
+	 * QIIME mapping file required name of last column
+	 */
+	public static final String QIIME_DESC_COL = "Description";
+
+	/**
+	 * QIIME mapping file required 3rd column name
+	 */
+	public static final String QIIME_LINKER_PRIMER_SEQ_COL = "LinkerPrimerSequence";
+	
+	/**
+	 * QIIME OTU table prefix: {@value #OTU_TABLE_PREFIX}
+	 */
+	public static final String OTU_TABLE_PREFIX = "otu_table";
 
 	/**
 	 * {@link biolockj.Config} property suffix for exe.* properties, used to set optional parameters: {@value #PARAMS}

@@ -126,7 +126,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	 */
 	protected String copyBatchOtuTableToOutputDir( final File batchDir, final Integer batchNum )
 	{
-		final String fileName = batchNum == null ? OTU_TABLE: getOtuTablePrefix() + "_" + batchNum + ".biom";
+		final String fileName = batchNum == null ? OTU_TABLE: Constants.OTU_TABLE_PREFIX + "_" + batchNum + ".biom";
 		return "cp " + batchDir.getAbsolutePath() + File.separator + OTU_TABLE + " " + getOutputDir().getAbsolutePath()
 				+ File.separator + fileName;
 	}
