@@ -230,8 +230,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	protected static final String FUNCTION_CREATE_BATCH_MAPPING = "createBatchMapping";
 
 	/**
-	 * Closed reference OTU picking script
+	 * Closed reference OTU picking script: {@value #PICK_OTU_SCRIPT}
 	 */
-	protected static final String PICK_OTU_SCRIPT = "pick_closed_reference_otus.py";
+	public static final String PICK_OTU_SCRIPT = "pick_closed_reference_otus.py";
 
 }

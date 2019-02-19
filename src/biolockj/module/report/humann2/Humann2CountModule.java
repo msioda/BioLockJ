@@ -17,8 +17,6 @@ import java.util.Collection;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.Config;
-import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
@@ -76,13 +74,6 @@ public abstract class Humann2CountModule extends JavaModuleImpl implements JavaM
 	public boolean isValidInputModule( final BioModule module )
 	{
 		return isHumann2CountModule( module );
-	}
-
-	protected boolean hasAbund() throws Exception
-	{
-		return Config.getBoolean( this, Constants.REPORT_NUM_HITS )
-				&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE );
-
 	}
 
 	/**

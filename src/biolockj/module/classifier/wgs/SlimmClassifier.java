@@ -301,10 +301,9 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	private static final String BOWTIE_NUM_THREADS_PARAM = "-p";
 
 	/**
-	 * Override
 	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}.{@value biolockj.Constants#DOMAIN}
-	 * value
 	 */
-	private static final String SLIMM_DOMAIN_DELIM = "superkingdom";
+	public static final String SLIMM_DOMAIN_DELIM = "superkingdom";
+	
 	private static final String SLIMM_OUTPUT_PARAM = "-o";
 }

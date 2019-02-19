@@ -334,12 +334,15 @@ public final class DownloadUtil
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
 
+	/**
+	 * Name of the file holding the list of pipeline files to include when running {@link biolockj.util.DownloadUtil}
+	 */
+	public static final String DOWNLOAD_LIST = "downloadList.txt";
+
 	private static final String DEST = "out";
-	private static final String DOWNLOAD_LIST = "downloadList.txt";
 	private static final String DOWNLOAD_SCRIPT = "blj_download";
 	private static final String RETURN = Constants.RETURN;
 	private static final String RSYNC_COMMENT = "# ";
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
 	private static final String SOURCE = "src";
-
 }

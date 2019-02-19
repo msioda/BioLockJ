@@ -123,7 +123,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Find scarce taxa found in less samples than the cutoff percentage:
-	 * {@link biolockj.Config}.{@value Constants#REPORT_SCARCE_CUTOFF }. Return a map of these scare taxa and a set of samples that
+	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_SCARCE_CUTOFF}. Return a map of these scare taxa and a set of samples that
 	 * need to remove them.
 	 * 
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample

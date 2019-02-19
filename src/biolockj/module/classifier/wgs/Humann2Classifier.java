@@ -141,10 +141,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return res;
 	}
 
-	/**
-	 * This method generates the required bash functions: {@value #FUNCTION_CONCAT_PAIRED_READS} and
-	 * {@value #FUNCTION_RUN_HN2}
-	 */
+
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
@@ -178,7 +175,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return lines;
 	}
 
-	protected String getParams( final String property ) throws Exception
+	private String getParams( final String property ) throws Exception
 	{
 		String params = " ";
 		for( final String val: Config.getList( this, property ) )
