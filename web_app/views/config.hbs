@@ -674,8 +674,8 @@ For fastq, typically “@”.)<h5></p>
     </form>
     <form class="" id='AwsStack' action="#" method="">
       <fieldset>
-        <legend>Deploy AWS Stack</legend>
-        <p>Stackname: <input type="text" name="Stackname" value="">
+        <legend>Deploy AWS Compute Stack</legend>
+        <p>Stackname: <input type="text" name="stackname" value="">
         </p>
         <p>Docker repository (for both jobs) <input type="text" name="dockerRepository" value="">
         </p>
@@ -683,7 +683,7 @@ For fastq, typically “@”.)<h5></p>
         </p>
         <p>You can view your S3 bucket here <a href="#"></a>.
         </p>
-        <button type="button" name="deployComputeStack">Deploy Compute Stack</button>
+        <button type="button" id='deployComputeStack' name="deployComputeStack">Deploy Compute Stack</button>
       </fieldset>
     </form>
     <form id="launchEc2HeadNode"class="" action="#" method="">
@@ -695,6 +695,8 @@ For fastq, typically “@”.)<h5></p>
             <option value="directconnect">directconnect</option>
           </select>
         </p>
+        <p>Script name:
+        <input type="text" name="scriptName" value="startHeadNodeGui.sh"></p>
         <p>instanceType:
           <input type="text" list="awsInstanceType" />
           <datalist name='awsInstanceType' id="awsInstanceType">
@@ -705,7 +707,7 @@ For fastq, typically “@”.)<h5></p>
             <option value="t2.xlarge">16GB</opt>
           </datalist>
         </p>
-        <button type="button" name="launchHeadNode">Launch EC2 headnode</button>
+        <button type="button" id='launchEc2HeadNodeButton' name="launchEc2HeadNodeButton">Launch EC2 headnode</button>
       </fieldset>
     </form>
 
