@@ -56,11 +56,16 @@ public class Constants
 	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
 	
 	/**
+	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #CLASS}
+	 */
+	public static final String CLASS = "class";
+	
+	/**
 	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
 	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
 	 */
 	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScriptModule";
-
+	
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
 	 * {@value #DEFAULT_MOD_DEMUX}
@@ -90,7 +95,6 @@ public class Constants
 	 * with {@value #DELIM_SEP}
 	 */
 	public static final String DELIM_SEP = "__";
-
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
 	 * If set to {@value #TRUE}, implicit modules will not be added to the pipeline.
@@ -104,7 +108,13 @@ public class Constants
 	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
 
 	/**
-	 * {@link biolockj.Config} String property: to the awk executable {@value #EXE_AWK}<br>
+	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #DOMAIN}
+	 */
+	public static final String DOMAIN = "domain";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
+	 * Set command line executable awk.
 	 */
 	public static final String EXE_AWK = "exe.awk";
 
@@ -135,8 +145,17 @@ public class Constants
 	 */
 	public static final String FALSE = "N";
 
+	/**
+	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #FAMILY}
+	 */
+	public static final String FAMILY = "family";
+	
 	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 
+	/**
+	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #GENUS}
+	 */
+	public static final String GENUS = "genus";
 	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
 	 */
@@ -178,12 +197,16 @@ public class Constants
 	/**
 	 * HumanN2 meta column to store the total pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
+
 	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
 
 	/**
 	 * HumanN2 meta column to store the unique pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
 	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
+
+
+	public static final String HN2_UNMAPPED_COUNT = "Unmapped_Count";
 
 	/**
 	 * Standard indent = 4 spaces.
@@ -208,7 +231,7 @@ public class Constants
 	 * Example: biolockj.module.ImportMetadata, etc.
 	 */
 	public static final String INTERNAL_ALL_MODULES = "internal.allModules";
-
+	
 	/**
 	 * Set BioModule tag in {@link biolockj.Config} file to include in pipeline: {@value #INTERNAL_BLJ_MODULE}<br>
 	 * Example: #BioModule biolockj.module.ImportMetadata
@@ -231,7 +254,7 @@ public class Constants
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */
 	public static final String LOG_EXT = ".log";
-	
+
 	/**
 	 * {@link biolockj.Config} property used to set log sensitivity in
 	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
@@ -259,6 +282,7 @@ public class Constants
 	public static final String MODULE_CLASSIFIER_PACKAGE = "biolockj.module.classifier";
 
 	public static final String MODULE_IMPLICIT_PACKAGE = "biolockj.module.implicit";
+	
 
 	public static final String MODULE_R_PACKAGE = "biolockj.module.r";
 
@@ -266,6 +290,11 @@ public class Constants
 	 * Biolockj SEQ module package: {@value #MODULE_SEQ_PACKAGE}
 	 */
 	public static final String MODULE_SEQ_PACKAGE = "biolockj.module.seq";
+
+	/**
+	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #ORDER}
+	 */
+	public static final String ORDER = "order";
 
 	/**
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
@@ -281,6 +310,11 @@ public class Constants
 	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
 	 */
 	public static final String PDF_EXT = ".pdf";
+
+	/**
+	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #PHYLUM}
+	 */
+	public static final String PHYLUM = "phylum";
 
 	/**
 	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
@@ -340,7 +374,7 @@ public class Constants
 	 * QIIME application: {@value #QIIME}
 	 */
 	public static final String QIIME = "qiime";
-	
+
 	/**
 	 * {@link biolockj.Config} list property to calculate alpha diversity metrics.<br>
 	 * For complete list of skbio.diversity.alpha options, see
@@ -357,11 +391,16 @@ public class Constants
 	public static final String[] QIIME_AMBIGUOUS_TAXA = { "Ambiguous_taxa", "Other", "Unassigned" };
 
 	/**
+	 * File extension of BioLockJ generated R Scripts: {@value #R_EXT}
+	 */
+	public static final String R_EXT = ".R";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #RDP_THRESHOLD_SCORE}<br>
 	 * RdpParser will ignore OTU assignments below the threshold score (0-100)
 	 */
 	public static final String RDP_THRESHOLD_SCORE = "rdp.minThresholdScore";
-
+	
 	/**
 	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>
 	 * Required to be set to "e" or "10" to build log normalized reports.
@@ -400,15 +439,24 @@ public class Constants
 	public static final String REPORT_SCARCE_CUTOFF = "report.scarceCountCutoff";
 
 	/**
+	 * {@link biolockj.Config} List property: {@value #REPORT_TAXONOMY_LEVELS}<br>
+	 * This property drives a lot of BioLockJ functionality and determines which taxonomy-levels are reported. Note,
+	 * some classifiers do not identify {@value #SPECIES} level OTUs.<br>
+	 * Options = {@value #DOMAIN}, {@value #PHYLUM}, {@value #CLASS}, {@value #ORDER}, {@value #FAMILY},
+	 * {@value #GENUS}, {@value #SPECIES}
+	 */
+	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
+
+	/**
 	 * Return character constant *backslash-n*
 	 */
 	public static final String RETURN = "\n";
-	
+
 	/**
-	 * File extension of BioLockJ generated R Scripts: {@value #R_EXT}
+	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
 	 */
-	public static final String R_EXT = ".R";
-	
+	public static final String SCRIPT_DIR = "script";
+
 	/**
 	 * File suffix appended to failed scripts: {@value #SCRIPT_FAILURES}
 	 */
@@ -425,24 +473,29 @@ public class Constants
 	public static final String SCRIPT_SUCCESS = "Success";
 
 	/**
-	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
-	 */
-	public static final String SCRIPT_DIR = "script";
-
-	/**
 	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
 	 */
 	public static final String SEPARATOR = "|";
-
+	
 	/**
 	 * BioLockJ shell script file extension constant: {@value #SH_EXT}
 	 */
 	public static final String SH_EXT = ".sh";
 
 	/**
+	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #SPECIES}
+	 */
+	public static final String SPECIES = "species";
+
+	/**
 	 * BioLockJ tab character constant: {@value #TAB_DELIM}
 	 */
 	public static final String TAB_DELIM = "\t";
+
+	/**
+	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
+	 */
+	public static final String TAXA_TABLE = "taxaCount";
 
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}
