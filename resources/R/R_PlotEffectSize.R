@@ -23,8 +23,15 @@ main <- function(){
   successfulPlots = 0
   
   for (level in taxaLevels() ) {
-    if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildEffectSizePlots_", level, ".log") ) )
-    logInfo( "Processing level", level )
+    
+    # get normalized taxa vals plus metadata
+    countTable = getCountTable( level )
+    metaTable = getMetaData( level )
+    if( is.null(countTable) || is.null(metaTable) ) { next }
+    if( doDebug() ) sink( file.path( getTempDir(), paste0( moduleScriptName(), "_", level, ".log") ) )
+
+    logInfo( c( "Processing level table[", level, "] has", nrow(countTable), "rows and", ncol(countTable), "columns") )
+    
     # make a new pdf output file, specify page size
     outFileName = getPath( getOutputDir(), paste0(level, "_EffectSizePlots.pdf") )
     logInfo( "Creating file", outFileName )
@@ -37,13 +44,6 @@ main <- function(){
       par(p)
     }
     
-    # get normalized taxa vals plus metadata
-    countTable = getCountTable( level )
-    if( is.null( countTable ) ) { next }
-    logInfo( c("countTable has", nrow(countTable), "rows and", ncol(countTable), "columns.") )
-    
-    meta = getMetaData( level )
-    logInfo( c("countTable has", nrow(meta), "rows and", ncol(meta), "columns.") )
     
     # get pvals from calc stats
     pvalTable = getStatsTable( level, useParametric, useAdjustedPs )
@@ -89,7 +89,7 @@ main <- function(){
           
           r2vals=r2Table[,reportField]
           names(r2vals) = row.names(r2Table)
-          normalizedPvals = split(countTable[row.names(meta),], f=meta[,reportField])
+          normalizedPvals = split(countTable[row.names(metaTable),], f=metaTable[,reportField])
           
           saveRefTable = NULL
           if (doCohensD & isBinaryAtt){
@@ -135,7 +135,7 @@ main <- function(){
       if (doFoldChange & !is.null(relAbundance)){
         tryCatch(expr={
           # relAbundance vals
-          splitRelAbund = split(relAbundance[row.names(meta),], f=meta[,reportField])
+          splitRelAbund = split(relAbundance[row.names(metaTable),], f=metaTable[,reportField])
           logInfo( c ("Fold change: Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
           calculations = calcBarSizes(effectType = "foldChange",
                                       numGroupVals=splitRelAbund[[2]], denGroupVals=splitRelAbund[[1]],

@@ -32,7 +32,7 @@ calculateStats <- function( level ) {
    countTable = getCountTable( level )
    metaTable = getMetaData( level )
    if ( is.null(countTable) || is.null(metaTable) ){
-      return(NULL)
+      return( NULL )
    }
 
    # Loop through the OTUs to assign P-value & R^2 values
@@ -164,10 +164,10 @@ getP_AdjustLen <- function( names ) {
 main <- function() {
 	importLibs( c( "coin", "Kendall" ) ) 
 	for( level in taxaLevels() ) {
-	  if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_CalculateStats_", level, ".log") ) )
+	  if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) )
 	  reportStats = calculateStats( level )
 		if( is.null( reportStats ) ) {
-			logInfo( c( level, "is empty, verify contents of table:", inputFile ) )
+			logInfo( c( level, "table is empty" ) )
 		} else {
 			logInfo( "Building summary Tables ... " )
 			buildSummaryTables( reportStats, level )

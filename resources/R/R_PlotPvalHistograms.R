@@ -65,15 +65,16 @@ main <- function() {
    pvalCutoff = getProperty("r.pvalCutoff", 0.05)
 
    for( level in taxaLevels() ) {
-      if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildPvalHistograms_", level, ".log") ) )
-
-      # create empty pdf
-     pdf( getPath( getOutputDir(), paste0(level, "_histograms.pdf") ) )
-      par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
-
 
       parStats = getStatsTable( level, TRUE, FALSE )
       nonParStats = getStatsTable( level, FALSE, FALSE )
+      if( is.null(countTable) || is.null(metaTable) ) { next }
+      if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) )
+
+      # create empty pdf
+      pdf( getPath( getOutputDir(), paste0(level, "_histograms.pdf") ) )
+      par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
+
       size = getCexMain( colnames(parStats) )
       logInfo( "size = getCexMain( colnames(parStats) )", size )
 

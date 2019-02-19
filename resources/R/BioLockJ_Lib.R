@@ -162,6 +162,7 @@ getMasterConfigFile <- function() {
 # Return a data frame of the metadata from a biolockj data table with merged metadata.
 getMetaData <- function( level ){
 	fullTable = getCountMetaTable( level )
+	if( is.null( fullTable ) ) return( NULL )
 	firstMetaCol = ncol(fullTable) - numMetaCols() + 1
 	return( fullTable[firstMetaCol:ncol(fullTable)] )
 }
@@ -235,6 +236,7 @@ getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
 
 getCountTable <- function( level ){
 	fullTable = getCountMetaTable( level )
+	if( is.null( fullTable ) ) return( NULL )
 	lastCountCol = ncol(fullTable) - numMetaCols()
 	return ( fullTable[1:lastCountCol] )
 }
@@ -244,19 +246,15 @@ getCountTable <- function( level ){
 # 2. Next group of columns contain numeric count data (derived from sample analysis)
 # 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
 getCountMetaTable <- function( level=NULL ) {
-	if( is.null( level ) ) {
-		level = ""
-	}
 	countMetaFile = pipelineFile( paste0( ".*", level, "_metaMerged.tsv" ) )
 	if( is.null( countMetaFile )  ) {
-		logInfo( c( "BioLockJ_Lib.R function --> getCountMetaTable(", level, ") returned NULL" ) )
+		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") found none!" ) )
 		return( NULL )
 	}
 	
 	countMetaTable = readBljTable( countMetaFile )
-	
 	if( nrow( countMetaTable ) == 0 ) {
-		logInfo( c( "BioLockJ_Lib.R function --> getCountMetaTable(", level, ") returned an empty table with only the header row:", colnames( countMetaTable ) ) )
+		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") returned an empty table with header row:", colnames( countMetaTable ) ) )
 		return( NULL )
 	}
 	
