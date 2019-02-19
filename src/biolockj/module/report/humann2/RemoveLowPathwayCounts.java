@@ -41,7 +41,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 	public String getSummary() throws Exception
 	{
 		String summary = "Remove Pathway counts below --> " + getMetaColName() + RETURN;
-		if( hasAbund() )
+		if(  !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
 		{
 			final String label = "Unique Pathways";
 			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, label, label.length(), false );
@@ -64,7 +64,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 		{
 			final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts( file );
 			logLowCountPathways( lowCounts );
-			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
+			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				MetaUtil.addColumn( getMetaColName() + "_" + "Unique Pathways", uniquePathwaysPerSample, getTempDir(),
 						true );

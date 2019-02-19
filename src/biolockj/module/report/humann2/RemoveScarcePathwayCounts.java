@@ -47,7 +47,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 	public String getSummary() throws Exception
 	{
 		String summary = "Remove rare Pathways found in less than " + getCutoff() + " samples" + RETURN;
-		if( hasAbund() )
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
 		{
 			final String label = "Unique Pathways";
 			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, label, label.length(), false );
@@ -73,7 +73,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 			logScarceData( removeScarcePathwayCounts( file, getScarcePathways( table ) ), getScarcePathwayLogFile() );
 			logScarceData( removeScarceSamples( file, getScarceSampleIds( file, table ) ), getScarceSampleLogFile() );
 
-			if( hasAbund() && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
+			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
 				MetaUtil.addColumn( getMetaColName() + "_" + "Unique_Pathways", uniquePathwaysPerSample, getTempDir(),
 						true );
@@ -203,7 +203,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		return scarcePathMap;
 	}
 
-	protected TreeMap<String, TreeSet<String>> removeScarceSamples( final File file, final Set<String> scarceIds )
+	private TreeMap<String, TreeSet<String>> removeScarceSamples( final File file, final Set<String> scarceIds )
 			throws Exception
 	{
 		final TreeMap<String, TreeSet<String>> scarceSampleMap = new TreeMap<>();

@@ -84,8 +84,8 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 	}
 
 	/**
-	 * Open reference OTU picking script
+	 * Open reference OTU picking script: {@value #PICK_OTU_SCRIPT}
 	 */
-	protected static final String PICK_OTU_SCRIPT = "pick_open_reference_otus.py";
+	public static final String PICK_OTU_SCRIPT = "pick_open_reference_otus.py";
 
 }
