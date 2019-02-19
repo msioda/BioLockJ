@@ -137,7 +137,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * 
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode))
 	 * @param stats Stats file
-	 * @param level {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @param label Label to use in node statistics
 	 * @return LinkedHashMap(level,Set(JsonNode))
 	 * @throws Exception if errors occur
@@ -195,7 +195,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * @param node JsonNode is the parent node
 	 * @param hasPeer boolean is true if node has peer nodes
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode)) all nodes by level
-	 * @param nodeLevel {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}
+	 * @param nodeLevel {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return Json Report lines
 	 * @throws Exception if errors occur
 	 */

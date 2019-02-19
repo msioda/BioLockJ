@@ -442,37 +442,37 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	private String getLowestQiimeTaxaLevel() throws Exception
 	{
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.SPECIES ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.SPECIES ) )
 		{
 			return "7";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.GENUS ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.GENUS ) )
 		{
 			return "6";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.FAMILY ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.FAMILY ) )
 		{
 			return "5";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.ORDER ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.ORDER ) )
 		{
 			return "4";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.CLASS ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.CLASS ) )
 		{
 			return "3";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.PHYLUM ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.PHYLUM ) )
 		{
 			return "2";
 		}
-		if( TaxaUtil.bottomTaxaLevel().equals( TaxaUtil.DOMAIN ) )
+		if( TaxaUtil.bottomTaxaLevel().equals( Constants.DOMAIN ) )
 		{
 			return "1";
 		}
 
 		throw new Exception( "Should not be possible to reach this error, value based on required field: "
-				+ TaxaUtil.REPORT_TAXONOMY_LEVELS );
+				+ Constants.REPORT_TAXONOMY_LEVELS );
 
 	}
 

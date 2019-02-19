@@ -28,7 +28,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 {
 	/**
 	 * If called for level not included in
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}, check if the top level taxonomy
+	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}, check if the top level taxonomy
 	 * level is already assigned. If so, populate missing levels by passing the parent taxa to
 	 * {@link biolockj.util.TaxaUtil#buildUnclassifiedTaxa(String)} until the given in level is assigned.<br>
 	 * <br>
@@ -113,13 +113,13 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 	{
 		if( delimToLevelMap.isEmpty() )
 		{
-			delimToLevelMap.put( DOMAIN_DELIM, TaxaUtil.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, TaxaUtil.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, TaxaUtil.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, TaxaUtil.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, TaxaUtil.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, TaxaUtil.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, TaxaUtil.SPECIES );
+			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
+			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
+			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
+			delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
+			delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
+			delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
+			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
 		}
 		return delimToLevelMap;
 	}

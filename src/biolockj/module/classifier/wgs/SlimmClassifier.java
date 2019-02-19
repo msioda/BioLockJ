@@ -229,7 +229,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( slimmSwitches.indexOf( "-r " ) > -1 )
 		{
 			throw new Exception( "Invalid SLIMM option (-r) found in property(" + getExeParamName()
-					+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
+					+ "). BioLockJ sets this value based on: " + Constants.REPORT_TAXONOMY_LEVELS );
 		}
 
 		slimmSwitches = getRuntimeParams( getClassifierParams(), null ) + "-m " + getDB() + " ";
@@ -253,13 +253,13 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
 	{
-		taxaLevelMap.put( TaxaUtil.SPECIES, TaxaUtil.SPECIES );
-		taxaLevelMap.put( TaxaUtil.GENUS, TaxaUtil.GENUS );
-		taxaLevelMap.put( TaxaUtil.FAMILY, TaxaUtil.FAMILY );
-		taxaLevelMap.put( TaxaUtil.ORDER, TaxaUtil.ORDER );
-		taxaLevelMap.put( TaxaUtil.CLASS, TaxaUtil.CLASS );
-		taxaLevelMap.put( TaxaUtil.PHYLUM, TaxaUtil.PHYLUM );
-		taxaLevelMap.put( TaxaUtil.DOMAIN, SLIMM_DOMAIN_DELIM );
+		taxaLevelMap.put( Constants.SPECIES, Constants.SPECIES );
+		taxaLevelMap.put( Constants.GENUS, Constants.GENUS );
+		taxaLevelMap.put( Constants.FAMILY, Constants.FAMILY );
+		taxaLevelMap.put( Constants.ORDER, Constants.ORDER );
+		taxaLevelMap.put( Constants.CLASS, Constants.CLASS );
+		taxaLevelMap.put( Constants.PHYLUM, Constants.PHYLUM );
+		taxaLevelMap.put( Constants.DOMAIN, SLIMM_DOMAIN_DELIM );
 	}
 	/**
 	 * {@link biolockj.Config} property to directory holding SLIMM database: {@value #DATABASE}

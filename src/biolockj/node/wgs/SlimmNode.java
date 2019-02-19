@@ -70,11 +70,11 @@ public class SlimmNode extends OtuNodeImpl implements OtuNode
 	static
 	{
 		DOMAIN_DELIM = SlimmClassifier.getSlimmDomainDelim();
-		CLASS_DELIM = TaxaUtil.CLASS;
-		FAMILY_DELIM = TaxaUtil.FAMILY;
-		GENUS_DELIM = TaxaUtil.GENUS;
-		ORDER_DELIM = TaxaUtil.ORDER;
-		PHYLUM_DELIM = TaxaUtil.PHYLUM;
-		SPECIES_DELIM = TaxaUtil.SPECIES;
+		CLASS_DELIM = Constants.CLASS;
+		FAMILY_DELIM = Constants.FAMILY;
+		GENUS_DELIM = Constants.GENUS;
+		ORDER_DELIM = Constants.ORDER;
+		PHYLUM_DELIM = Constants.PHYLUM;
+		SPECIES_DELIM = Constants.SPECIES;
 	}
 }

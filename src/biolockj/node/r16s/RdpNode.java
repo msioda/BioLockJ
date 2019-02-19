@@ -152,12 +152,12 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 	// Override default taxonomy level delimiters set in OtuNodeImpl
 	static
 	{
-		DOMAIN_DELIM = TaxaUtil.DOMAIN;
-		CLASS_DELIM = TaxaUtil.CLASS;
-		FAMILY_DELIM = TaxaUtil.FAMILY;
-		GENUS_DELIM = TaxaUtil.GENUS;
-		ORDER_DELIM = TaxaUtil.ORDER;
-		PHYLUM_DELIM = TaxaUtil.PHYLUM;
-		SPECIES_DELIM = TaxaUtil.SPECIES;
+		DOMAIN_DELIM = Constants.DOMAIN;
+		CLASS_DELIM = Constants.CLASS;
+		FAMILY_DELIM = Constants.FAMILY;
+		GENUS_DELIM = Constants.GENUS;
+		ORDER_DELIM = Constants.ORDER;
+		PHYLUM_DELIM = Constants.PHYLUM;
+		SPECIES_DELIM = Constants.SPECIES;
 	}
 }

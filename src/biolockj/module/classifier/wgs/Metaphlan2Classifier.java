@@ -79,12 +79,8 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	}
 
 	/**
-<<<<<<< HEAD
-	 * Verify that none of the derived command line parameters are included in {@link #getParams}. 
-=======
 	 * Verify none of the derived command line parameters are included in
 	 * {@link biolockj.Config}.{@value #EXE_METAPHLAN}{@value biolockj.Constants#PARAMS}
->>>>>>> Cleanup javadocs to clear all blj_build javadoc warnings and most errors. (after PR #58)
 	 */
 	@Override
 	public void checkDependencies() throws Exception
@@ -162,7 +158,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 			if( params.indexOf( "--tax_lev " ) > -1 )
 			{
 				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + getExeParamName()
-						+ "). BioLockJ sets this value based on: " + TaxaUtil.REPORT_TAXONOMY_LEVELS );
+						+ "). BioLockJ sets this value based on: " + Constants.REPORT_TAXONOMY_LEVELS );
 			}
 			if( params.indexOf( "-s " ) > -1 )
 			{
@@ -201,13 +197,13 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	private final Map<String, String> taxaLevelMap = new HashMap<>();
 
 	{
-		taxaLevelMap.put( TaxaUtil.SPECIES, METAPHLAN_SPECIES );
-		taxaLevelMap.put( TaxaUtil.GENUS, METAPHLAN_GENUS );
-		taxaLevelMap.put( TaxaUtil.FAMILY, METAPHLAN_FAMILY );
-		taxaLevelMap.put( TaxaUtil.ORDER, METAPHLAN_ORDER );
-		taxaLevelMap.put( TaxaUtil.CLASS, METAPHLAN_CLASS );
-		taxaLevelMap.put( TaxaUtil.PHYLUM, METAPHLAN_PHYLUM );
-		taxaLevelMap.put( TaxaUtil.DOMAIN, METAPHLAN_DOMAIN );
+		taxaLevelMap.put( Constants.SPECIES, METAPHLAN_SPECIES );
+		taxaLevelMap.put( Constants.GENUS, METAPHLAN_GENUS );
+		taxaLevelMap.put( Constants.FAMILY, METAPHLAN_FAMILY );
+		taxaLevelMap.put( Constants.ORDER, METAPHLAN_ORDER );
+		taxaLevelMap.put( Constants.CLASS, METAPHLAN_CLASS );
+		taxaLevelMap.put( Constants.PHYLUM, METAPHLAN_PHYLUM );
+		taxaLevelMap.put( Constants.DOMAIN, METAPHLAN_DOMAIN );
 	}
 
 	/**

@@ -66,7 +66,7 @@ public class PathwayUtil
 	 */
 	public static String getHn2ClassifierOutput( final String type )
 	{
-		return Config.pipelineName() + "_" + type + "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
+		return Config.pipelineName() + "_" + type + "_" + Constants.SPECIES + Constants.TSV_EXT;
 	}
 
 	/**
@@ -171,6 +171,11 @@ public class PathwayUtil
 		return false;
 	}
 
+	private static String pathwayFileSuffix()
+	{
+		return "_" + Constants.SPECIES + Constants.TSV_EXT;
+	}
+
 	/**
 	 * Verify the HumanN2 Config contains at least one of the following reports are enabled:<br>
 	 * <ul>
@@ -194,11 +199,6 @@ public class PathwayUtil
 							+ Constants.HN2_DISABLE_PATH_COVERAGE + "=" + Constants.FALSE + ", "
 							+ Constants.HN2_DISABLE_GENE_FAMILIES + "=" + Constants.FALSE );
 		}
-	}
-
-	private static String pathwayFileSuffix()
-	{
-		return "_" + TaxaUtil.SPECIES + Constants.TSV_EXT;
 	}
 
 	private static String validFormats = "[ " + Constants.HN2_PATH_ABUND_SUM + ", " + Constants.HN2_PATH_COVG_SUM + ", "

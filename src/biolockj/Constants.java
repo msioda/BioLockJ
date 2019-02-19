@@ -493,11 +493,6 @@ public class Constants
 	public static final String TAB_DELIM = "\t";
 
 	/**
-	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
-	 */
-	public static final String TAXA_TABLE = "taxaCount";
-
-	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #TRUE}
 	 */
 	public static final String TRUE = "Y";
