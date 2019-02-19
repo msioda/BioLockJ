@@ -68,7 +68,7 @@ main <- function() {
 
       parStats = getStatsTable( level, TRUE, FALSE )
       nonParStats = getStatsTable( level, FALSE, FALSE )
-      if( is.null(countTable) || is.null(metaTable) ) { next }
+      if( is.null(parStats) || is.null(nonParStats) ) { next }
       if( doDebug() ) sink( file.path( getTempDir(), paste0(moduleScriptName(), level, ".log") ) )
 
       # create empty pdf
