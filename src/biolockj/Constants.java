@@ -61,6 +61,18 @@ public class Constants
 	public static final String CLASS = "class";
 	
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_PAIRED_READS}<br>
+	 * Set to true if paired reads are found, set by the application runtime code.
+	 */
+	public static final String INTERNAL_PAIRED_READS = "internal.pairedReads";
+	
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #INPUT_REQUIRE_COMPLETE_PAIRS}<br>
+	 * Require 100% sequence input files are matching paired reads
+	 */
+	public static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
+	
+	/**
 	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
 	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
 	 */
@@ -153,9 +165,19 @@ public class Constants
 	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 
 	/**
+	 * File extension for fasta files = {@value #FASTA}
+	 */
+	public static final String FASTA = "fasta";
+	
+	/**
+	 * File extension for fastq files: {@value #FASTQ}
+	 */
+	public static final String FASTQ = "fastq";
+	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #GENUS}
 	 */
 	public static final String GENUS = "genus";
+
 	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
 	 */
@@ -192,6 +214,12 @@ public class Constants
 	/**
 	 * HumanN2 file suffix identifier for Pathway Coverage Summary report: {@value #HN2_PATH_COVG_SUM}
 	 */
+	
+	public static final String HN2_GENE_FAMILIES = "genefamilies";
+	public static final String HN2_PARSED = "HnN2";
+	
+	public static final String HN2_PATH_ABUNDANCE = "pathabundance";
+	public static final String HN2_PATH_COVERAGE = "pathcoverage";
 	public static final String HN2_PATH_COVG_SUM = "pCovg";
 
 	/**
@@ -204,6 +232,8 @@ public class Constants
 	 * HumanN2 meta column to store the unique pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
 	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
+
+	public static final String HN2_UNINTEGRATED_COUNT = "Unintegrated_Count";
 
 
 	public static final String HN2_UNMAPPED_COUNT = "Unmapped_Count";
@@ -218,12 +248,50 @@ public class Constants
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * {@link biolockj.Config} String property: {@value #INPUT_FORWARD_READ_SUFFIX}<br>
+	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
+	 */
+	public static final String INPUT_FORWARD_READ_SUFFIX = "input.suffixFw";
 
 	/**
 	 * {@link biolockj.Config} List property: {@value #INPUT_IGNORE_FILES}<br>
 	 * Set file names to ignore if found in {@value #INPUT_DIRS}
 	 */
 	public static final String INPUT_IGNORE_FILES = "input.ignoreFiles";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #INPUT_REVERSE_READ_SUFFIX}<br>
+	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
+	 */
+	public static final String INPUT_REVERSE_READ_SUFFIX = "input.suffixRv";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_PREFIX}<br>
+	 * Set value of prefix to trim from sequence file names or headers to obtain Sample ID.
+	 */
+	public static final String INPUT_TRIM_PREFIX = "input.trimPrefix";
+	
+	
+	/**
+	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_SUFFIX}<br>
+	 * Set value of suffix to trim from sequence file names or headers to obtain Sample ID.
+	 */
+	public static final String INPUT_TRIM_SUFFIX = "input.trimSuffix";
+	
+	
+	
+	
+	
+	
+	
 
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_ALL_MODULES}<br>
@@ -237,12 +305,48 @@ public class Constants
 	 * Example: #BioModule biolockj.module.ImportMetadata
 	 */
 	public static final String INTERNAL_BLJ_MODULE = "#BioModule";
-
+	
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_DEFAULT_CONFIG}<br>
 	 * List of all nested default config files.<br>
 	 */
 	public static final String INTERNAL_DEFAULT_CONFIG = "internal.defaultConfig";
+
+	/**
+	 * {@link biolockj.Config} Internal Boolean property: {@value #INTERNAL_IS_MULTI_LINE_SEQ}<br>
+	 * Store TRUE if {@link biolockj.util.SeqUtil} determines input sequences are multi-line format.
+	 */
+	public static final String INTERNAL_IS_MULTI_LINE_SEQ = "internal.isMultiLineSeq";
+
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_MULTIPLEXED}<br>
+	 * Set to true if multiplexed reads are found, set by the application runtime code.
+	 */
+	public static final String INTERNAL_MULTIPLEXED = "internal.multiplexed";
+
+	
+	
+	
+	
+	
+	
+	
+	
+
+	/**
+	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>
+	 * The property holds the 1st character used in the sequence header for the given dataset
+	 */
+	public static final String INTERNAL_SEQ_HEADER_CHAR = "internal.seqHeaderChar";
+	
+	/**
+	 * {@link biolockj.Config} Internal property: {@value #INTERNAL_SEQ_TYPE}<br>
+	 * The sequence type requires either {@value #FASTA} or {@value #FASTQ}<br>
+	 * System will auto-detect if not configured
+	 */
+	public static final String INTERNAL_SEQ_TYPE = "internal.seqType";
+
 	
 	/**
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when

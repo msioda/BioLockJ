@@ -53,7 +53,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 * <li>Validate this is the last module to run (excluding {@link biolockj.module.report.Email})
 	 * </ol>
 	 * If this module was completed on a previous run, update the property:
-	 * {@link biolockj.Config}.{@value biolockj.util.SeqUtil#INTERNAL_MULTIPLEXED} = {@value biolockj.Constants#TRUE}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_MULTIPLEXED} = {@value biolockj.Constants#TRUE}
 	 * 
 	 */
 	@Override
@@ -136,7 +136,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	@Override
 	public void runModule() throws Exception
 	{
-		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE ) );
+		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( this, Constants.INTERNAL_SEQ_TYPE ) );
 
 		for( final File f: getInputFiles() )
 		{
@@ -301,7 +301,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		final String path = getOutputDir().getAbsolutePath() + File.separator + Config.pipelineName()
 				+ SeqUtil.getReadDirectionSuffix( file ) + "."
-				+ Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
+				+ Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
 		muxFiles.add( path );
 		return path;
 	}
@@ -309,7 +309,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	private long getNumReads( final File file ) throws Exception
 	{
 		Long numReads = null;
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			numReads = rvMap.get( file.getName() );
 		}
@@ -330,7 +330,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 		Long numReads = getNumReads( file );
 		numReads++;
 
-		if( Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 		{
 			rvMap.put( file.getName(), numReads );
 			totalNumRvReads++;

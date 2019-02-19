@@ -73,7 +73,7 @@ public class Gunzipper extends SeqModuleImpl implements SeqModule
 	{
 		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() + File.separator
 				+ SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
-				+ Config.requireString( this, SeqUtil.INTERNAL_SEQ_TYPE );
+				+ Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
 	}
 
 	/**

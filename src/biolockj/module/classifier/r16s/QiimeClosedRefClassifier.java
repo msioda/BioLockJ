@@ -94,7 +94,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	public List<String> getPostRequisiteModules() throws Exception
 	{
 		final List<String> postReqs = new ArrayList<>();
-		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( this, SeqUtil.INTERNAL_MULTIPLEXED )
+		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( this, Constants.INTERNAL_MULTIPLEXED )
 				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( this, SCRIPT_BATCH_SIZE ) ) )
 		{
 			postReqs.add( MergeQiimeOtuTables.class.getName() );
@@ -194,7 +194,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	 */
 	protected File getBatchFastaDir( final int batchNum ) throws Exception
 	{
-		final File f = new File( getBatchDir( batchNum ) + File.separator + SeqUtil.FASTA );
+		final File f = new File( getBatchDir( batchNum ) + File.separator + Constants.FASTA );
 		if( !f.exists() )
 		{
 			f.mkdirs();

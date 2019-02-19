@@ -497,7 +497,7 @@ public class BioLockJUtil
 			{
 				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
 			}
-			else if( Config.getSet( null, SeqUtil.INPUT_IGNORE_FILES ).contains( file.getName() ) )
+			else if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ).contains( file.getName() ) )
 			{
 				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
 			}

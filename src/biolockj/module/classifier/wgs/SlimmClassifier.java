@@ -124,8 +124,8 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	{
 		final List<String> lines = super.getWorkerScriptFunctions();
 
-		final String inputs = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
-		int index = Config.getBoolean( this, SeqUtil.INTERNAL_PAIRED_READS ) ? 3: 2;
+		final String inputs = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? " -1 $1 -2 $2": " -U $1";
+		int index = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? 3: 2;
 
 		lines.add( "function " + FUNCTION_ALIGN + "() {" );
 		lines.add( Config.getExe( this, EXE_BOWTIE2 ) + " " + getRuntimeBowtieParams() + inputs + " 2> $" + index++
@@ -243,7 +243,6 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * Return the Slimm domain.
-	 * 
 	 * @return String {@value #SLIMM_DOMAIN_DELIM}
 	 */
 	public static final String getSlimmDomainDelim()
@@ -303,7 +302,7 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 
 	/**
 	 * Override
-	 * {@link biolockj.Config}.{@value biolockj.util.TaxaUtil#REPORT_TAXONOMY_LEVELS}.{@value biolockj.util.TaxaUtil#DOMAIN}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}.{@value biolockj.Constants#DOMAIN}
 	 * value
 	 */
 	private static final String SLIMM_DOMAIN_DELIM = "superkingdom";

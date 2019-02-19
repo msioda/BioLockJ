@@ -237,7 +237,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	{
 		if( demuxIndex != -1 )
 		{
-			return MetaUtil.getMetadataRecord( qiimeId ).get( demuxIndex - 1 ).replaceAll( "." + SeqUtil.FASTA, "" );
+			return MetaUtil.getMetadataRecord( qiimeId ).get( demuxIndex - 1 ).replaceAll( "." + Constants.FASTA, "" );
 		}
 
 		return qiimeId;
