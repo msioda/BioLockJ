@@ -306,8 +306,7 @@ public final class DownloadUtil
 	 * user to see how big the files is and add it to the list ad-hoc.
 	 * 
 	 * @param files - files to add to the download list
-	 * @param doDownload - true/false
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	private static void addToDownloadList( final Collection<File> files ) throws Exception
 	{

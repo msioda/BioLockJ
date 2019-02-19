@@ -96,16 +96,8 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	}
 
 	/**
-<<<<<<< HEAD
-	 * Verify that none of the derived command line parameters are included in {@link #getParams}. 
-=======
 	 * Verify that none of the derived command line parameters are included in
-	 * {@link biolockj.Config}.{@value #EXE_KRAKEN}{@value biolockj.Constants#PARAMS}. Also verify:
-	 * <ul>
-	 * <li>{@link biolockj.Config}.{@value #KRAKEN_DATABASE} is a valid file path valid parameters
-	 * 
-	 * </ul>
->>>>>>> Cleanup javadocs to clear all blj_build javadoc warnings and most errors. (after PR #58)
+	 * {@link biolockj.Config}.{@value #EXE_KRAKEN}{@value biolockj.Constants#PARAMS}. 
 	 */
 	@Override
 	public void checkDependencies() throws Exception

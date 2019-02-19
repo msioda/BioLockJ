@@ -198,12 +198,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-<<<<<<< HEAD
 	 * Get formatted runtime parameters and {@value #SCRIPT_NUM_THREADS}
-=======
-	 * Get formatted KneadData switches if provided in {@link biolockj.Config} properties:
-	 * {@value #EXE_HUMANN2}{@value biolockj.Constants#PARAMS} and {@value #SCRIPT_NUM_THREADS}.
->>>>>>> Cleanup javadocs to clear all blj_build javadoc warnings and most errors. (after PR #58)
 	 *
 	 * @return Formatted runtime switches
 	 * @throws Exception if errors occur
@@ -323,43 +318,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return dir;
 	}
 
-<<<<<<< HEAD
-=======
-	private List<String> getBuildSummaryFunction() throws Exception
-	{
-		final List<String> lines = new ArrayList<>();
-		lines.add( BUILD_SUMMARY_BASH_COMMENT );
-		lines.add( "function " + FUNCTION_BUILD_SUMMARY_TABLES + "() {" );
-		lines.add( "numStarted=1" );
-		lines.add( "numComplete=0" );
-		lines.add( "while [ $numStarted != $numComplete ]; do " );
-		lines.add( "numStarted=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
-				+ Constants.SCRIPT_STARTED + " | wc -l)" );
-		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
-				+ Constants.SCRIPT_SUCCESS + " | wc -l)" );
-		lines.add( "let \"numComplete++\"" );
-		lines.add( "[ $numStarted != $numComplete ] && sleep 30" );
-		lines.add( "done" );
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_PATH_ABUNDANCE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE, Constants.HN2_PATH_ABUND_SUM ) );
-		}
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_PATH_COVERAGE ) );
-			lines.add( getRenormTableLine( Constants.HN2_PATH_COVERAGE, Constants.HN2_PATH_COVG_SUM ) );
-		}
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
-		{
-			lines.add( getJoinTableLine( Constants.HN2_DISABLE_GENE_FAMILIES ) );
-			lines.add( getRenormTableLine( Constants.HN2_DISABLE_GENE_FAMILIES, Constants.HN2_GENE_FAM_SUM ) );
-		}
-		lines.add( "}" + RETURN );
-		return lines;
-	}
-
->>>>>>> Move success, started, failed flag constants to Constants.
 	private String summaryFile( final File dir, final String key ) throws Exception
 	{
 		return dir + File.separator + Config.pipelineName() + "_" + key + TSV_EXT;
