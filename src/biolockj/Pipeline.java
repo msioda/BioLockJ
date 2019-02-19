@@ -46,14 +46,14 @@ public class Pipeline
 
 	/**
 	 * Return {@value #SCRIPT_SUCCESS} if no pipelineException has been thrown, otherwise return
-	 * {@value #SCRIPT_FAILURES}
+	 * {@value Constants#SCRIPT_FAILURES}
 	 *
 	 * @return pipeline status (success or failed)
 	 * @throws Exception if unable to get status for all modules
 	 */
 	public static String getStatus() throws Exception
 	{
-		return pipelineException == null ? Pipeline.SCRIPT_SUCCESS: Pipeline.SCRIPT_FAILURES;
+		return pipelineException == null ? Constants.SCRIPT_SUCCESS: Constants.SCRIPT_FAILURES;
 	}
 
 	/**
@@ -305,9 +305,9 @@ public class Pipeline
 	/**
 	 * The {@link biolockj.module.ScriptModule#getScriptDir()} will contain one main script and one ore more worker
 	 * scripts.<br>
-	 * An empty file with {@value #SCRIPT_STARTED} appended to the script name is created when execution begins.<br>
+	 * An empty file with {@value Constants#SCRIPT_STARTED} appended to the script name is created when execution begins.<br>
 	 * If successful, an empty file with {@value #SCRIPT_SUCCESS} appended to the script name is created.<br>
-	 * Upon failure, an empty file with {@value #SCRIPT_FAILURES} appended to the script name is created.<br>
+	 * Upon failure, an empty file with {@value Constants#SCRIPT_FAILURES} appended to the script name is created.<br>
 	 * Script status is polled each minute, determining status by counting indicator files.<br>
 	 * {@link biolockj.Log} outputs the # of started, failed, and successful scripts (if any change).<br>
 	 * {@link biolockj.Log} repeats the previous message every 10 minutes if no status change is detected.<br>
@@ -343,9 +343,9 @@ public class Pipeline
 
 		for( final File f: scriptFiles )
 		{
-			final File testStarted = new File( f.getAbsolutePath() + "_" + SCRIPT_STARTED );
-			final File testSuccess = new File( f.getAbsolutePath() + "_" + SCRIPT_SUCCESS );
-			final File testFailure = new File( f.getAbsolutePath() + "_" + SCRIPT_FAILURES );
+			final File testStarted = new File( f.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
+			final File testSuccess = new File( f.getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
+			final File testFailure = new File( f.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
 			numStarted = numStarted + ( testStarted.exists() ? 1: 0 );
 			numSuccess = numSuccess + ( testSuccess.exists() ? 1: 0 );
 			numFailed = numFailed + ( testFailure.exists() ? 1: 0 );
@@ -366,7 +366,7 @@ public class Pipeline
 			Log.info( Pipeline.class, logMsg );
 		}
 
-		final File mainFailed = new File( mainScript.getAbsolutePath() + "_" + SCRIPT_FAILURES );
+		final File mainFailed = new File( mainScript.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
 		if( mainFailed.exists() || numFailed > 0 )
 		{
 			final String failMsg = "SCRIPT FAILED: " + BioLockJUtil.getCollectionAsString( module.getScriptErrors() );
@@ -428,8 +428,8 @@ public class Pipeline
 		Log.info( Pipeline.class, prompt + "Java program wakes every 60 seconds to check execution progress" );
 		Log.info( Pipeline.class, prompt + "Status determined by existance of indicator files in "
 				+ module.getScriptDir().getAbsolutePath() );
-		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + SCRIPT_STARTED + "\", \"_" + SCRIPT_SUCCESS
-				+ "\", or \"_" + SCRIPT_FAILURES + "\"" );
+		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + Constants.SCRIPT_STARTED + "\", \"_" + Constants.SCRIPT_SUCCESS
+				+ "\", or \"_" + Constants.SCRIPT_FAILURES + "\"" );
 		Log.info( Pipeline.class,
 				prompt + "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
 		if( module.getTimeout() == null || module.getTimeout() > 10 )
@@ -475,21 +475,6 @@ public class Pipeline
 			}
 		}
 	}
-
-	/**
-	 * File suffix appended to failed scripts: {@value #SCRIPT_FAILURES}
-	 */
-	public static final String SCRIPT_FAILURES = "Failures";
-
-	/**
-	 * File suffix appended to started script: {@value #SCRIPT_STARTED}
-	 */
-	public static final String SCRIPT_STARTED = "Started";
-
-	/**
-	 * File suffix appended to successful scripts: {@value #SCRIPT_SUCCESS}
-	 */
-	public static final String SCRIPT_SUCCESS = "Success";
 
 	private static List<BioModule> bioModules = null;
 	private static Exception pipelineException = null;

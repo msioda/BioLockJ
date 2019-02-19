@@ -118,14 +118,18 @@ public class Constants
 	 * {@link biolockj.Config} property for java executable: {@value #EXE_JAVA}
 	 */
 	public static final String EXE_JAVA = "exe.java";
+	
 	/**
 	 * {@link biolockj.Config} property to python executable
 	 */
 	public static final String EXE_PYTHON = "exe.python";
+	
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
 	public static final String FALSE = "N";
+
+	public static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
 
 	/**
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
@@ -362,6 +366,21 @@ public class Constants
 	 * File extension of BioLockJ generated R Scripts: {@value #R_EXT}
 	 */
 	public static final String R_EXT = ".R";
+	
+	/**
+	 * File suffix appended to failed scripts: {@value #SCRIPT_FAILURES}
+	 */
+	public static final String SCRIPT_FAILURES = "Failures";
+	
+	/**
+	 * File suffix appended to started script: {@value #SCRIPT_STARTED}
+	 */
+	public static final String SCRIPT_STARTED = "Started";
+	
+	/**
+	 * File suffix appended to successful scripts: {@value #SCRIPT_SUCCESS}
+	 */
+	public static final String SCRIPT_SUCCESS = "Success";
 
 	/**
 	 * Name of the script sub-directory: {@value #SCRIPT_DIR}

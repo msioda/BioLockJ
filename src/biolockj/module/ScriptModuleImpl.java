@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.Pipeline;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.report.r.R_Module;

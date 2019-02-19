@@ -71,12 +71,8 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	/**
-<<<<<<< HEAD
-	 * Verify that none of the derived command line parameters are included in classifier parameters. Also verify:
-=======
 	 * Verify that none of the derived command line parameters are included in
 	 * {@link biolockj.Config}.{@value #EXE_HUMANN2}{@value biolockj.Constants#PARAMS}. Also verify:
->>>>>>> Cleanup javadocs to clear all blj_build javadoc warnings and most errors. (after PR #58)
 	 * <ul>
 	 * <li>{@link biolockj.Config}.{@value #HN2_NUCL_DB} is a valid directory
 	 * <li>{@link biolockj.Config}.{@value #HN2_PROT_DB} is a valid directory
@@ -327,6 +323,43 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return dir;
 	}
 
+<<<<<<< HEAD
+=======
+	private List<String> getBuildSummaryFunction() throws Exception
+	{
+		final List<String> lines = new ArrayList<>();
+		lines.add( BUILD_SUMMARY_BASH_COMMENT );
+		lines.add( "function " + FUNCTION_BUILD_SUMMARY_TABLES + "() {" );
+		lines.add( "numStarted=1" );
+		lines.add( "numComplete=0" );
+		lines.add( "while [ $numStarted != $numComplete ]; do " );
+		lines.add( "numStarted=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
+				+ Constants.SCRIPT_STARTED + " | wc -l)" );
+		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
+				+ Constants.SCRIPT_SUCCESS + " | wc -l)" );
+		lines.add( "let \"numComplete++\"" );
+		lines.add( "[ $numStarted != $numComplete ] && sleep 30" );
+		lines.add( "done" );
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
+		{
+			lines.add( getJoinTableLine( Constants.HN2_PATH_ABUNDANCE ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_ABUNDANCE, Constants.HN2_PATH_ABUND_SUM ) );
+		}
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
+		{
+			lines.add( getJoinTableLine( Constants.HN2_PATH_COVERAGE ) );
+			lines.add( getRenormTableLine( Constants.HN2_PATH_COVERAGE, Constants.HN2_PATH_COVG_SUM ) );
+		}
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
+		{
+			lines.add( getJoinTableLine( Constants.HN2_DISABLE_GENE_FAMILIES ) );
+			lines.add( getRenormTableLine( Constants.HN2_DISABLE_GENE_FAMILIES, Constants.HN2_GENE_FAM_SUM ) );
+		}
+		lines.add( "}" + RETURN );
+		return lines;
+	}
+
+>>>>>>> Move success, started, failed flag constants to Constants.
 	private String summaryFile( final File dir, final String key ) throws Exception
 	{
 		return dir + File.separator + Config.pipelineName() + "_" + key + TSV_EXT;

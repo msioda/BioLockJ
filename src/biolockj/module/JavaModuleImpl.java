@@ -109,14 +109,14 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	@Override
 	public void moduleComplete() throws Exception
 	{
-		markStatus( Pipeline.SCRIPT_SUCCESS );
+		markStatus( Constants.SCRIPT_SUCCESS );
 		Log.info( getClass(), "Direct module complete!  Terminate direct application instance." );
 	}
 
 	@Override
 	public void moduleFailed() throws Exception
 	{
-		markStatus( Pipeline.SCRIPT_FAILURES );
+		markStatus( Constants.SCRIPT_FAILURES );
 		Log.info( getClass(), "Direct module failed!  Terminate direct application instance." );
 	}
 

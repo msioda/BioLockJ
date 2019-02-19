@@ -52,7 +52,7 @@ public class BashScriptBuilder
 		}
 
 		mainScriptLines
-				.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_SUCCESS );
+				.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_SUCCESS );
 		createScript( getMainScriptPath( module ), mainScriptLines );
 		workerScripts.clear();
 	}
@@ -98,7 +98,7 @@ public class BashScriptBuilder
 		lines.add( "statusCode=$?" );
 		lines.add( "if [ $statusCode != 0 ]; then" );
 		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_"
-				+ Pipeline.SCRIPT_FAILURES + "\"" );
+				+ Constants.SCRIPT_FAILURES + "\"" );
 		lines.add( "exit $statusCode" );
 		lines.add( "fi" );
 		lines.add( "}" + RETURN );
@@ -221,7 +221,7 @@ public class BashScriptBuilder
 		}
 
 		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) + RETURN );
-		lines.add( "touch " + getMainScriptPath( module ) + "_" + Pipeline.SCRIPT_STARTED + RETURN );
+		lines.add( "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.add( "cd " + module.getScriptDir().getAbsolutePath() + RETURN );
 
 		if( RuntimeParamUtil.isDockerMode() )
@@ -268,7 +268,7 @@ public class BashScriptBuilder
 		lines.add(
 				"#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = " + batchSize + RETURN );
 
-		lines.add( "touch " + scriptPath + "_" + Pipeline.SCRIPT_STARTED + RETURN );
+		lines.add( "touch " + scriptPath + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules( module ) );
 
 		final List<String> bashFunctions = module.getWorkerScriptFunctions();
@@ -438,7 +438,7 @@ public class BashScriptBuilder
 			{
 				if( !( module instanceof JavaModule ) )
 				{
-					subScriptLines.add( "touch " + workerScriptPath + "_" + Pipeline.SCRIPT_SUCCESS );
+					subScriptLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
 				}
 				workerScripts.add( createScript( workerScriptPath, subScriptLines ) );
 				samplesInScript = 0;
