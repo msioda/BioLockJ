@@ -30,6 +30,12 @@ public class PathwayUtil
 	private PathwayUtil()
 	{}
 	
+	/**
+	 * Determine if humann2 provided most recent raw count data, used to determine getPreReq modules.
+	 * @param module
+	 * @return TRUE if humann2 counts should be used
+	 * @throws Exception
+	 */
 	public static Boolean useHumann2RawCount( BioModule module ) throws Exception
 	{
 		Integer initCount = initMap.get( module.getClass().getName() );

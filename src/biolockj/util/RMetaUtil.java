@@ -18,7 +18,6 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
-import biolockj.module.classifier.wgs.Humann2Classifier;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;

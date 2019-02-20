@@ -13,7 +13,6 @@ package biolockj.module.report.r;
 
 import java.util.List;
 import biolockj.Config;
-import biolockj.Constants;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.ScriptModule;
 import biolockj.util.BioLockJUtil;
