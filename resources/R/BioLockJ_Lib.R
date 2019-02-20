@@ -75,7 +75,7 @@ getColors <- function( n, reorder=TRUE) {
 	palette = getProperty("r.colorPalette", "npg")
 	colors = get_palette( palette, n )
 	
-	if (length(palette) == 1 & reorder){
+	if (length(palette) == 1 && reorder){
 		flipFrom = (1:length(colors))[(1:length(colors)%%2)==0]
 		flipTo = flipFrom[length(flipFrom):1]
 		colors[flipTo] = colors[flipFrom]
@@ -299,7 +299,7 @@ getTestName <- function( field=NULL, isParametric=c(TRUE, FALSE), returnColors=F
 		}
 	}
 	
-	whichTest = which(testOptions$fieldType %in% fieldType & testOptions$isParametric %in% isParametric)
+	whichTest = which(testOptions$fieldType %in% fieldType && testOptions$isParametric %in% isParametric)
 	
 	if (returnColors){
 		cols = testOptions[whichTest,"color"]

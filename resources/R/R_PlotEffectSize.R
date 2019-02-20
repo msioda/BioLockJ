@@ -6,7 +6,7 @@
 # See calcBarSizes
 
 # Get the raw taxa or pathway abundance table
-getRawCountTable <- function( level ){
+getRawCountFilePath <- function( level ){
 
 	rcTaxa = pipelineFile( paste0( "_taxaCount_", level, ".tsv$" ) )
 	rcAbund = pipelineFile( paste0( "_pAbund_", level, ".tsv$" ) )
@@ -84,13 +84,15 @@ main <- function(){
     
     # Get the raw counts from the parser and calc simple relative abundance
     # Don't bother with this unless we will use it, ie: there are binary attributes and we plan to do fold change
-    if (length(getBinaryFields()) > 0 & doFoldChange){
+    relAbundance = NULL
+    if( doFoldChange && length( getBinaryFields() ) > 0 ) {
       logInfo( c( "Preparing fold change plot for each of", length(getBinaryFields()), "report fields." ))
       logInfo( "retrieving raw counts..." )
-      rawCounts = readBljTable( getRawCountTable( level ) )
-      relAbundance = normalize(rawCounts)
-    }else{
-      relAbundance=NULL
+      rawCountFilePath = getRawCountFilePath( level )
+      if( !is.null( rawCountFilePath ) ) {
+      	rawCounts = readBljTable( rawCountFilePath )
+      	if( !is.null( rawCounts ) ) relAbundance = normalize( rawCounts )
+      }
     }
     
     logInfo( paste( "Preparing plot for each of", length(getReportFields()), "report fields. ", length(getBinaryFields()), "are binary attributes." ) )
@@ -107,7 +109,7 @@ main <- function(){
       # rSquared piggy-backs on effects size for selection and ordering, 
       # so IF both are plotted, they are ploted in the same order.
       # Even if it is not a binary attribute, the normalizedPvals should have AT LEAST 2 tables
-      if (doCohensD | doRSquared){ 
+      if (doCohensD || doRSquared){ 
         tryCatch(expr={
           
           r2vals=r2Table[,reportField]
@@ -115,14 +117,14 @@ main <- function(){
           normalizedPvals = split(countTable[row.names(metaTable),], f=metaTable[,reportField])
           
           saveRefTable = NULL
-          if (doCohensD & isBinaryAtt){
+          if (doCohensD && isBinaryAtt){
             saveRefTable=getPath( getTempDir(), paste(level, reportField, "effectSize.tsv", sep="_") )
           }
           
           logInfo( "CohensD", c( "Calling calcBarSizes for level:", level, "and binary attribute:", reportField ) )
           calculations = calcBarSizes( c("CohensD","rSquared"), r2vals, normalizedPvals[[2]], normalizedPvals[[1]],
                                        names(normalizedPvals)[2], names(normalizedPvals)[1], pvals, pvalIncludeBar, userOTUs, maxBars,
-                                       orderByColumn=ifelse(doCohensD & isBinaryAtt, "CohensD", "rSquared"), saveRefTable)
+                                       orderByColumn=ifelse(doCohensD && isBinaryAtt, "CohensD", "rSquared"), saveRefTable)
           #
           if (doRSquared){ # does not need to be a binary attribute
             resetPar()
@@ -136,7 +138,7 @@ main <- function(){
             }
           }
           #
-          if (doCohensD & isBinaryAtt){
+          if (doCohensD && isBinaryAtt){
             logInfo( c( "Effect size: Calling drawPlot for level:", level,  "and binary attribute:", reportField ) )
             resetPar()
             complete = drawPlot(toPlot=calculations[["toPlot"]], barSizeColumn="CohensD",
@@ -155,7 +157,7 @@ main <- function(){
         })
       }
       #
-      if (doFoldChange & !is.null(relAbundance)){
+      if (doFoldChange && !is.null(relAbundance)){
         tryCatch(expr={
           # relAbundance vals
           splitRelAbund = split(relAbundance[row.names(metaTable),], f=metaTable[,reportField])
@@ -206,7 +208,7 @@ errorHandler1 = function(err, level, reportField) {
   trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) 
   msg = paste0("Failed to create plot for taxonomy level: ", level, 
                "\nusing attribute: ", reportField)
-  if (doDebug() | nchar(trimmedErr) < nchar(origErr)){
+  if (doDebug() || nchar(trimmedErr) < nchar(origErr)){
     # show error in plot file and move on to next plot.
     msg = paste0(msg, "\n", trimmedErr)
     plotPlainText(msg)
@@ -259,8 +261,8 @@ calcBarSizes <- function(numGroupVals, denGroupVals, numGroupName, denGroupName,
   denMeans = colMeans(denGroupVals, na.rm=TRUE)
   toPlot = data.frame(OTU=plotOTUs, row.names=plotOTUs,
                       numMeans = numMeans, denMeans = denMeans,
-                      infUp = numMeans > 0 & denMeans == 0, #In the table, these are Inf
-                      infDown = numMeans == 0 & denMeans > 0) #In the table, these are 0
+                      infUp = numMeans > 0 && denMeans == 0, #In the table, these are Inf
+                      infDown = numMeans == 0 && denMeans > 0) #In the table, these are 0
   header = c(header, "<group name>.mean: the mean value for each group.")
   header = c(header, paste("infUp: was the OTU flagged for having all-0-counts only in the", denGroupName, "group."))
   header = c(header, paste("infDown: was the OTU flagged for having all-0-counts only in the", numGroupName, "group."))
@@ -355,7 +357,7 @@ selectViableOTUs <- function(group1, group2, pvals=NULL, pvalIncludeBar=NULL, us
   ##   userOTUs may include OTUs that are not in the tables, only the intersect of both tables and userOTUs will be used.
   #
   sharedOTUs = intersect(group1, group2)
-  if (!is.null(pvals) & is.null(userOTUs)){
+  if (!is.null(pvals) && is.null(userOTUs)){
     sigOTUs = names(pvals)[pvals <= pvalIncludeBar]
     if (length(sigOTUs) == 0){
       stop(paste("Stop Plotting: Provided", length(pvals), "pvalues, \nwith", length(sigOTUs), "below the provided threshold:", pvalIncludeBar))
@@ -369,7 +371,7 @@ selectViableOTUs <- function(group1, group2, pvals=NULL, pvalIncludeBar=NULL, us
     plotOTUs = sharedOTUs
     comment=paste0("out of ", length(plotOTUs), " reported OTUs.")
   }
-  if(is.null(plotOTUs) | length(plotOTUs) == 0){
+  if(is.null(plotOTUs) || length(plotOTUs) == 0){
     stop("Stop Plotting: No qualifying OTUs to plot.")
   }
   return(list(plotOTUs=plotOTUs, comment=comment))
@@ -435,7 +437,7 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
   left = which(toPlot[,barSizeColumn] > 0) #where text goes on the left
   right = which(toPlot[,barSizeColumn] < 0)
   # cases where one group is all-zeros is plotted as 0 
-  toPlot[(toPlot$infUp | toPlot$infDown), barSizeColumn] = 0 # bar gets a space, but no visible bar is plotted.
+  toPlot[(toPlot$infUp || toPlot$infDown), barSizeColumn] = 0 # bar gets a space, but no visible bar is plotted.
   #
   # determine plot size based on number of bars to plot, and lower lines needed for axis label and comments
   if (!is.null(fixedBarHeightInches)){
@@ -532,7 +534,7 @@ drawPlot <- function(toPlot, barSizeColumn, xAxisLab=barSizeColumn, title="Impac
   row.names(bp) = row.names(toPlot)
   #
   # plot the stars
-  if (!is.null(pvalStar) & !is.null(toPlot$pvalue)){
+  if (!is.null(pvalStar) && !is.null(toPlot$pvalue)){
     starOTUs = row.names(toPlot)[toPlot$pvalue <= pvalStar]
     starChar = "*"
     if ( length(starOTUs) > 0 ){

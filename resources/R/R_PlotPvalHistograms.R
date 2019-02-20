@@ -99,7 +99,7 @@ main <- function() {
          if( ! field %in% getReportFields() ){ next }
 
          logInfo("processing attribute:", field )
-         stopifnot( field %in% names(nonParStats) & field %in% names(parStats) )
+         stopifnot( field %in% names(nonParStats) && field %in% names(parStats) )
 
          parTestName = getTestName(field, isParametric=TRUE)
          xLabelPar = paste( parTestName, "P-Values" )
