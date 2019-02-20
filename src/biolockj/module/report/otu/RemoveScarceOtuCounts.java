@@ -26,6 +26,7 @@ import biolockj.util.*;
 /**
  * This BioModule removes scarce OTUs not found in enough samples.<br>
  * The OTU must be found in a configurable percentage of samples.
+ * @web_desc Remove Low OTU Counts
  */
 public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 {
@@ -95,7 +96,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Find the scarce OTUs that contain the key values in scarceTaxa.
-	 * 
+	 *
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @param uniqueOtus TreeSet(OTU) contains all OTUs for all samples
 	 * @param scarceTaxa TreeMap(taxa, TreeSet(SampleId)) contains scarce taxa and their associated samples
@@ -125,7 +126,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	 * Find scarce taxa found in less samples than the cutoff percentage:
 	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_SCARCE_CUTOFF}. Return a map of these scare taxa and a set of samples that
 	 * need to remove them.
-	 * 
+	 *
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @param otus TreeSet of unique OTUs
 	 * @return TreeMap(taxa, TreeSet(SampleIds))
@@ -175,7 +176,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Remove scarce OTUs from the sampleOtuCounts and return it.
-	 * 
+	 *
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @param scarceOtus TreeMap(OTU, TreeSet(SampleId)) Scarce OTUs and the samples that list them
 	 * @return TreeMap(SampleId, TreeMap(OTU, count)) sampleOtuCounts after scarce OTUs have been removed
@@ -204,7 +205,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Save a list of scarce OTUs to the module temp directory.
-	 * 
+	 *
 	 * @param scarceOtus OTUs found in too few samples
 	 * @throws Exception if errors occur
 	 */
@@ -237,7 +238,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Output OTU count files with the updatedOtuCounts
-	 * 
+	 *
 	 * @param updatedOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @throws Exception if errors occur
 	 */

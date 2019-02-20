@@ -39,6 +39,7 @@ import biolockj.util.*;
  * <li>Forward and reverse reads can be combined in a single file with read direction indicated in the header by values
  * "1:N:" and "2:N:"
  * </ol>
+ * @web_desc Demultiplexer
  */
 public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
@@ -113,7 +114,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 	/**
 	 * Update SeqUtil to indicate data has been demultiplexed.<br>
-	 * 
+	 *
 	 * @throws Exception if unable to modify property
 	 */
 	@Override
@@ -196,7 +197,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	/**
 	 * Some multiplexed files can be very large. This method breaks each input file into smaller files, each
 	 * {@value #NUM_LINES_TEMP_FILE} lines in size to avoid memory issues while processing.
-	 * 
+	 *
 	 * @throws Exception if unexpected errors occur at runtime
 	 */
 	protected void breakUpFiles() throws Exception
@@ -371,7 +372,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 
 	/**
 	 * Get valid forward read headers that belong to reads with a valid barcode or sample identifier.
-	 * 
+	 *
 	 * @return Map sampleID to list of valid headers
 	 * @throws Exception if error occur
 	 */
@@ -451,7 +452,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	/**
 	 * This method obtains all valid headers for the forward reads, and returns only headers that also have a matching
 	 * reverse read
-	 * 
+	 *
 	 * @return Map of valid headers for each sample ID
 	 * @throws Exception if unable to obtain headers
 	 */
@@ -532,7 +533,7 @@ public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModu
 	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INPUT_TRIM_PREFIX} = 1st sequence header character.<br>
 	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INPUT_TRIM_SUFFIX}
 	 * ={@value #SAMPLE_ID_SUFFIX_TRIM_DEFAULT}<br>
-	 * 
+	 *
 	 * @throws Exception if unable to update the property values
 	 */
 	protected void setMultiplexedConfig() throws Exception

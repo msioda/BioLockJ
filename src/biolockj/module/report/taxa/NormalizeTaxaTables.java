@@ -42,6 +42,7 @@ import biolockj.util.TaxaUtil;
  * "Stochastic changes over time and not founder effects drive cage effects in microbial community assembly in a mouse
  * model" <a href= "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/" target=
  * "_top">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/</a>
+ * @web_desc Normalize Taxa Tables
  */
 public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 {

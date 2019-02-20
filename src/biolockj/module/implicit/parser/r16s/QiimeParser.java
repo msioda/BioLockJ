@@ -25,6 +25,7 @@ import biolockj.util.MetaUtil;
 
 /**
  * This BioModules parses QiimeClassifier output reports to build standard OTU abundance tables.
+ * @web_desc Qiime Parser
  */
 public class QiimeParser extends ParserModuleImpl implements ParserModule
 {
@@ -252,7 +253,7 @@ public class QiimeParser extends ParserModuleImpl implements ParserModule
 	 * <li>{@link #qiimeIdToSampleIdMap}
 	 * <li>{@link #sampleIdToQiimeIdMap}
 	 * </ul>
-	 * 
+	 *
 	 * @throws Exception if unable to initialize the maps
 	 */
 	protected void initializeMaps() throws Exception

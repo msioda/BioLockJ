@@ -31,6 +31,7 @@ import biolockj.util.*;
  * times and the average OTU count is used for each sample. Note that even if a previous module removed singletons, this
  * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
+ * @web_desc Rarefy OTU Counts
  */
 public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 {
@@ -108,7 +109,7 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Print the output file wit rarefied counts.
-	 * 
+	 *
 	 * @param file Output file
 	 * @param otuCounts TreeMap(OTU, count)
 	 * @throws Exception if errors occur
@@ -134,7 +135,7 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Get OTU count data for the given sampleId.
-	 * 
+	 *
 	 * @param sampleId Sample ID
 	 * @param otuCounts All OTU counts
 	 * @return List of OTUs for the given sampleId
@@ -159,7 +160,7 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Return a list of low abundant samples, as defined by {@value #LOW_ABUNDANT_CUTOFF}
-	 * 
+	 *
 	 * @return List of Sample IDs
 	 * @throws Exception if errors occur
 	 */
@@ -223,7 +224,7 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Get the quantile number of OTUs. If quantile = 0.5 the median value is returned.
-	 * 
+	 *
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @return quantile number of OTUs
 	 * @throws Exception if errors occur
@@ -248,7 +249,7 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Select random OTUs based on the quantileNum from the list of OTUs in data.
-	 * 
+	 *
 	 * @param data List( OTUs )
 	 * @param quantileNum Qunatile (range: 0.0 - 1.0)
 	 * @return List of randomly selected OTUs up to the given quantile
@@ -266,7 +267,7 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Rarefy the data by taking the average value of {@value #NUM_ITERATIONS}
-	 * 
+	 *
 	 * @param sampleId Sample ID
 	 * @param otuCounts OTU counts
 	 * @param quantileNum Maximum number
