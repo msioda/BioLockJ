@@ -39,7 +39,7 @@ addScatterPlot <- function( item, taxaVals, metaVals )
 getBoxPlotLabels <- function( labels ) {
    if( getCexAxis(labels) == getCexAxis(returnMin=TRUE) ) {
       nchars = sum(nchar(labels)) + length(labels) - 1
-      maxSize = ((getProperty("r.plotWidth")*2)+2)/length(labels)
+      maxSize = ((r.plotWidth*2)+2)/length(labels)
       return( strtrim(labels, floor(maxSize) ) )
    }
    return( labels )
@@ -56,10 +56,10 @@ getCexAxis <- function( labels=NULL, returnMax=FALSE, returnMin=FALSE) {
       return(cexAxisMin)
    }
    nchars = sum(nchar(labels)) + length(labels) - 1
-   if( nchars < getProperty("r.plotWidth") ) return( cexAxisMax )
-   if( nchars < (getProperty("r.plotWidth") +7 ) ) return( 0.9 )
-   if( nchars < (getProperty("r.plotWidth") + 15 ) ) return( 0.8 )
-   if( nchars < (getProperty("r.plotWidth") + 24 ) ) return( 0.7 )
+   if( nchars < r.plotWidth ) return( cexAxisMax )
+   if( nchars < ( r.plotWidth +7 ) ) return( 0.9 )
+   if( nchars < ( r.plotWidth + 15 ) ) return( 0.8 )
+   if( nchars < ( r.plotWidth + 24 ) ) return( 0.7 )
 
    return( cexAxisMin )
 }
@@ -158,3 +158,5 @@ main <- function() {
       if( doDebug() ) sink()
    }
 }
+
+r.plotWidth=23
