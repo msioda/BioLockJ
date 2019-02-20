@@ -530,6 +530,12 @@ public class Constants
 	 * {@value #GENUS}, {@value #SPECIES}
 	 */
 	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
+	
+	
+	/**
+	 * {@link biolockj.Config} Boolean property to signal R scripts to build HumanN2 reports
+	 */
+	public static final String R_INTERNAL_RUN_HN2 = "R_internal.runHumann2";
 
 	/**
 	 * Return character constant *backslash-n*

@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.implicit.RegisterNumReads;
@@ -108,6 +109,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
 		Log.info( getClass(), "Direct runModule() complete!" );
+		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
 	}
 
 	/**

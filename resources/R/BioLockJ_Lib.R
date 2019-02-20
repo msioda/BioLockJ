@@ -147,7 +147,7 @@ getCountTable <- function( level ){
 # 1. 1st column contains Sample IDs
 # 2. Next group of columns contain numeric count data (derived from sample analysis)
 # 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
-getCountMetaTable <- function( level=NULL ) {
+getCountMetaTable <- function( level ) {
 	countMetaFile = pipelineFile( paste0( level, "_metaMerged.tsv$" ) )
 	if( is.null( countMetaFile )  ) {
 		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") found none!" ) )
@@ -414,9 +414,22 @@ statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
 	return( "nonParametricPvals.tsv" )
 }
 
-# Return number of metadata columns appended to sample count tables
+# Return taxonomy levels or HumanN2 report types based on property R_internal.runHumann2
 taxaLevels <- function() {
-	return( getProperty( "report.taxonomyLevels" ) )
+	levels = getProperty( "report.taxonomyLevels" )
+	if( ( "species" %in% levels ) && getProperty( "R_internal.runHumann2", FALSE ) ) {
+		levels = c()
+		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
+			levels[length(levels) + 1] = "pAbund" 
+		}
+		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) {
+			levels[length(levels) + 1] = "pCovg" 
+		}
+		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
+			levels[length(levels) + 1] = "geneFam" 
+		}
+	}
+	return( levels )
 }
 
 # Import standard shared libraries

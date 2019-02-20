@@ -32,9 +32,9 @@ public class PathwayUtil
 	
 	/**
 	 * Determine if humann2 provided most recent raw count data, used to determine getPreReq modules.
-	 * @param module
+	 * @param module BioModule
 	 * @return TRUE if humann2 counts should be used
-	 * @throws Exception
+	 * @throws Exception if errors occur
 	 */
 	public static Boolean useHumann2RawCount( BioModule module ) throws Exception
 	{
@@ -164,7 +164,7 @@ public class PathwayUtil
 	 */
 	public static String getHn2ClassifierOutput( final String type )
 	{
-		return Config.pipelineName() + "_" + type + "_" + Constants.SPECIES + Constants.TSV_EXT;
+		return Config.pipelineName() + "_" + type + Constants.TSV_EXT;
 	}
 
 	/**
@@ -216,7 +216,7 @@ public class PathwayUtil
 		{
 			prefix = Config.pipelineName() + "_" + prefix;
 		}
-		final String name = prefix + "_" + getHn2Type( hn2OutputFile ) + pathwayFileSuffix();
+		final String name = prefix + "_" + getHn2Type( hn2OutputFile ) + Constants.TSV_EXT;
 		return new File( dir.getAbsolutePath() + File.separator + name );
 	}
 
@@ -229,11 +229,11 @@ public class PathwayUtil
 	 */
 	public static boolean isPathwayFile( final File file ) throws Exception
 	{
-		final boolean isPathAund = file.getName().contains( Constants.HN2_PATH_ABUND_SUM );
-		final boolean isPathCovg = file.getName().contains( Constants.HN2_PATH_COVG_SUM );
-		final boolean isGeneFaml = file.getName().contains( Constants.HN2_GENE_FAM_SUM );
+		final boolean isPathAund = file.getName().endsWith( "_" + Constants.HN2_PATH_ABUND_SUM + Constants.TSV_EXT );
+		final boolean isPathCovg = file.getName().contains( "_" + Constants.HN2_PATH_COVG_SUM + Constants.TSV_EXT );
+		final boolean isGeneFaml = file.getName().contains( "_" + Constants.HN2_GENE_FAM_SUM + Constants.TSV_EXT);
 
-		if( file.getName().endsWith( pathwayFileSuffix() ) && ( isPathAund || isPathCovg || isGeneFaml ) )
+		if( isPathAund || isPathCovg || isGeneFaml )
 		{
 			return true;
 		}
@@ -267,11 +267,6 @@ public class PathwayUtil
 			ex.printStackTrace();
 		}
 		return false;
-	}
-
-	private static String pathwayFileSuffix()
-	{
-		return "_" + Constants.SPECIES + Constants.TSV_EXT;
 	}
 
 	/**

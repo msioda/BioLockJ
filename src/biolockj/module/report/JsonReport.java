@@ -9,6 +9,8 @@ import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.classifier.ClassifierModule;
+import biolockj.module.classifier.wgs.Humann2Classifier;
 import biolockj.module.report.otu.CompileOtuCounts;
 import biolockj.module.report.r.R_CalculateStats;
 import biolockj.node.JsonNode;
@@ -255,7 +257,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		Log.info( getClass(), "Adding stats to JSON nodes..." );
 		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
-			final Map<String, File> statReports = getStatReports( level );
+			final Map<String, File> statReports = getAllStatReports( level );
 			for( final String name: statReports.keySet() )
 			{
 				final File file = statReports.get( name );
@@ -321,6 +323,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		}
 		return null;
 	}
+	
 
 	/**
 	 * Get the taxonomy level reports from {@link biolockj.module.report.r.R_CalculateStats} for the given level
@@ -329,16 +332,66 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	 * @return File log normalized report
 	 * @throws Exception if unable to obtain the report due to propagated exceptions
 	 */
-	private Map<String, File> getStatReports( final String level ) throws Exception
+	private Map<String, File> getAllStatReports( final String level ) throws Exception
 	{
-		final Map<String, File> statReports = new LinkedHashMap<>();
-		statReports.put( "parPval", R_CalculateStats.getStatsFile( this, level, true, false ) );
-		statReports.put( "nonParPval", R_CalculateStats.getStatsFile( this, level, false, false ) );
-		statReports.put( "adjParPval", R_CalculateStats.getStatsFile( this, level, true, true ) );
-		statReports.put( "adjNonParPval", R_CalculateStats.getStatsFile( this, level, false, true ) );
-		statReports.put( "rSquared", R_CalculateStats.getStatsFile( this, level, false, false ) );
+		Map<String, File> statReports = new LinkedHashMap<>();
+		final ClassifierModule classifier = ModuleUtil.getClassifier( this, false );
+		if( classifier != null && classifier instanceof Humann2Classifier )
+		{
+			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
+			{
+				Map<String, File> reports = getStatReports( Constants.HN2_PATH_ABUND_SUM + "_" + level );
+				for( String key : reports.keySet() )
+				{
+					statReports.put( key, reports.get( key ) );
+				}
+			}
+			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
+			{
+				Map<String, File> reports = getStatReports( Constants.HN2_PATH_COVG_SUM + "_" + level );
+				for( String key : reports.keySet() )
+				{
+					statReports.put( key, reports.get( key ) );
+				}
+			}
+			if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
+			{
+				Map<String, File> reports = getStatReports( Constants.HN2_GENE_FAM_SUM + "_" + level );
+				for( String key : reports.keySet() )
+				{
+					statReports.put( key, reports.get( key ) );
+				}
+			}
+		}
+		else
+		{
+			statReports = getStatReports( level );
+		}
+		
 		return statReports;
 	}
+	
+	private Map<String, File> getStatReports( final String type ) throws Exception
+	{
+		final Map<String, File> statReports = new LinkedHashMap<>();
+
+		final ClassifierModule classifier = ModuleUtil.getClassifier( this, false );
+		if( classifier != null && classifier instanceof Humann2Classifier )
+		{
+			statReports.put( "parPval", R_CalculateStats.getStatsFile( this, type, true, false ) );
+			statReports.put( "nonParPval", R_CalculateStats.getStatsFile( this, type, false, false ) );
+			statReports.put( "adjParPval", R_CalculateStats.getStatsFile( this, type, true, true ) );
+			statReports.put( "adjNonParPval", R_CalculateStats.getStatsFile( this, type, false, true ) );
+			statReports.put( "rSquared", R_CalculateStats.getStatsFile( this, type, false, false ) );
+		}
+		else
+		{
+			
+		}
+		
+		return statReports;
+	}
+	
 
 	private boolean hasStats() throws Exception
 	{
