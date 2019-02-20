@@ -410,8 +410,8 @@ statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
 	if( is.null( parametric ) ) return( "rSquaredVals.tsv" )
 	if( parametric && adjusted ) return( "adjParPvals.tsv" )
 	if( parametric ) return( "parametricPvals.tsv" )
-	if( adjusted ) return( "adjNonParPvals.tsv" ) )
-	return( "nonParametricPvals.tsv" ) )
+	if( adjusted ) return( "adjNonParPvals.tsv" )
+	return( "nonParametricPvals.tsv" )
 }
 
 # Return number of metadata columns appended to sample count tables
