@@ -23,6 +23,7 @@ import biolockj.util.*;
 
 /**
  * This BioModule
+ * @web_desc Remove Low Pathway Counts
  */
 public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaModule
 {
@@ -76,7 +77,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 
 	/**
 	 * Save a list of low count pathways to the module temp directory.
-	 * 
+	 *
 	 * @param map TreeMap(sampleId, TreeSet(Pathway)) of Pathways found in too few samples
 	 * @throws Exception if errors occur
 	 */
@@ -115,7 +116,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 
 	/**
 	 * Remove Pathway Counts below the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_MIN_COUNT}
-	 * 
+	 *
 	 * @param file Input file
 	 * @return TreeMap(SampleId, TreeMap(Pathway)) Map removed pathways to sample ID
 	 * @throws Exception if errors occur

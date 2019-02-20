@@ -27,6 +27,7 @@ import biolockj.util.*;
  * novo OTU picking scripts, which require a single multiplexed file for cluster analysis, closed reference OTU picking
  * can be run in batches (output/batch_0, output/batch_1, output/batch_2, etc.). The program awk is used to split the
  * metadata into separate batch-specific QIIME mapping files.
+ * @web_desc Qiime Closed Ref Classifier
  */
 public class QiimeClosedRefClassifier extends QiimeClassifier implements ClassifierModule
 {
@@ -119,7 +120,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	/**
 	 * The method returns 1 bash script line that will copy the batch
 	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE} from the batchDir to the output directory.
-	 * 
+	 *
 	 * @param batchDir Batch directory
 	 * @param batchNum Batch number used to name biom file, or null if processing 1 batch
 	 * @return Bash script line to copy temp/otu_table.biom to output/otu_table.biom
@@ -149,7 +150,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 
 	/**
 	 * Method returns batch script lines for one batch.
-	 * 
+	 *
 	 * @param lines Batch script lines to copy fasta to batch_#/fasta
 	 * @param batchNum Batch number
 	 * @param index Start index used to break up mapping file

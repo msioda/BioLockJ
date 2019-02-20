@@ -27,6 +27,7 @@ import biolockj.util.SummaryUtil;
 
 /**
  * This BioModule
+ * @web_desc Remove Low OTU Counts
  */
 public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 {
@@ -83,7 +84,7 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Save a list of low count OTUs to the module temp directory.
-	 * 
+	 *
 	 * @param lowCountOtus TreeMap(sampleId, TreeSet(OTU)) of OTUs found in too few samples
 	 * @throws Exception if errors occur
 	 */
@@ -122,7 +123,7 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Remove OTUs below the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_MIN_COUNT }
-	 * 
+	 *
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @return TreeMap(SampleId, TreeMap(OTU, count)) Updated sampleOtuCounts after removal of low counts.
 	 * @throws Exception if errors occur

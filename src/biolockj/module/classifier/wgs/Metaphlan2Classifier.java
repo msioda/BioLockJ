@@ -23,6 +23,7 @@ import biolockj.util.TaxaUtil;
 
 /**
  * This BioModule builds the bash scripts used to execute metaphlan2.py to classify WGS sequences.
+ * @web_desc MetaPhlAn2 Classifier
  */
 public class Metaphlan2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {
@@ -125,7 +126,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	 * Verify no invalid runtime params are passed and add rankSwitch if needed.<br>
 	 * Set the rankSwitch based on the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS} if
 	 * only one taxonomy level is to be reported, otherwise report all levels.
-	 * 
+	 *
 	 * @return runtime parameters
 	 * @throws Exception if errors occur
 	 */

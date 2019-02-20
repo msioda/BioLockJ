@@ -27,6 +27,7 @@ import biolockj.util.PathwayUtil;
 
 /**
  * TBD
+ * @web_desc HumanN2 Count Module
  */
 public abstract class Humann2CountModule extends JavaModuleImpl implements JavaModule
 {
@@ -78,7 +79,7 @@ public abstract class Humann2CountModule extends JavaModuleImpl implements JavaM
 
 	/**
 	 * Check the module to determine if it generated OTU count files.
-	 * 
+	 *
 	 * @param module BioModule
 	 * @return TRUE if module generated OTU count files
 	 */

@@ -24,7 +24,7 @@ import biolockj.util.*;
  * This BioModule will merge sequence files into a single combined sequence file, with either the sample ID or an
  * identifying bar-code (if defined in the metatata) is stored in the sequence header.<br>
  * BioLockJ is designed to run on demultiplexed data so this must be the last module to run in its branch.
- * 
+ * @web_desc Multiplexer
  */
 public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {
@@ -54,7 +54,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 * </ol>
 	 * If this module was completed on a previous run, update the property:
 	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_MULTIPLEXED} = {@value biolockj.Constants#TRUE}
-	 * 
+	 *
 	 */
 	@Override
 	public void checkDependencies() throws Exception
@@ -153,7 +153,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 
 	/**
 	 * Get the header for the sequence.
-	 * 
+	 *
 	 * @param file Sequence file in fasta or fastq format
 	 * @param seqLines Sequence lines for 1 read
 	 * @return the header row for the sequence
@@ -200,7 +200,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 * Add file sequences to the multiplexed file. If barcode is defined in the metadata file and set in the Config
 	 * file, it will be added to the header (if not already in the header line). If no barcode value is configured, the
 	 * sample ID will be used in the sequence headers.
-	 * 
+	 *
 	 * @param sample Sequence file in Fasta or Fastq format
 	 * @throws Exception if I/O errors occur creating multiplexed file
 	 */
@@ -239,7 +239,7 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	/**
 	 * This method ensures that the multiplexed data is not passed to other modules.<br>
 	 * This must be the last module, or last module before the Email.
-	 * 
+	 *
 	 * @throws Exception if not the last module before {@link biolockj.module.report.Email}
 	 */
 	protected void validateModuleOrder() throws Exception

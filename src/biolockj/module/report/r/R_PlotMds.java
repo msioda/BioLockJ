@@ -17,6 +17,7 @@ import biolockj.module.ScriptModule;
 /**
  * This BioModule is used to build the R script used to generate MDS plots for each report field and each taxonomy level
  * configured.
+ * @web_desc R Plot MDS
  */
 public class R_PlotMds extends R_Module implements ScriptModule
 {

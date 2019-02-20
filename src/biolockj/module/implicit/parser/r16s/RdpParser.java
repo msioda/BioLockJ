@@ -25,6 +25,7 @@ import biolockj.util.MemoryUtil;
 
 /**
  * This BioModule parses RDP output files to build standard OTU abundance tables.
+ * @web_desc RDP Parser
  */
 public class RdpParser extends ParserModuleImpl implements ParserModule
 {

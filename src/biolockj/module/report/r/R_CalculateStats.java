@@ -25,6 +25,7 @@ import biolockj.util.ModuleUtil;
 
 /**
  * This BioModule is used to build the R script used to generate taxonomy statistics and plots.
+ * @web_desc R Statistics Calculator
  */
 public class R_CalculateStats extends R_Module implements BioModule
 {
@@ -46,7 +47,7 @@ public class R_CalculateStats extends R_Module implements BioModule
 
 	/**
 	 * Get the stats file for the given fileType and taxonomy level.
-	 * 
+	 *
 	 * @param module Calling module
 	 * @param level Taxonomy level
 	 * @param isParametric Boolean TRUE to query for parametric file
@@ -88,7 +89,7 @@ public class R_CalculateStats extends R_Module implements BioModule
 
 	/**
 	 * Analyze file name for key strings to determine if file is a stats file output by this module.
-	 * 
+	 *
 	 * @param file Ambiguous file
 	 * @return TRUE if file name is formatted as if output by this module
 	 * @throws Exception if errors occur

@@ -24,6 +24,7 @@ import biolockj.util.SeqUtil;
  * This BioModule runs biobakery kneaddata program to remove contaminated DNA.<br>
  * Multiple contaminent DNA databases can be used to filter reads simultaniously.<br>
  * Common contaminents include Human, Viral, and Plasmid DNA.<br>
+ * @web_desc Knead Data Sanitizer
  */
 public class KneadData extends SeqModuleImpl implements SeqModule
 {
@@ -89,7 +90,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 	 * Move 1 file named /"Sample_ID.fastq/" if module input consists of forward reads only.<br>
 	 * If module input contains paired reads, move 2 files named /"Sample_ID_paired_1.fastq/" and
 	 * /"Sample_ID_paired_2.fastq/" to the module output directory (after renaming them to BioLockJ standards).
-	 * 
+	 *
 	 * @param sampleId Sample ID
 	 * @return Script lines to move the file or files
 	 * @throws Exception if errors occur building lines
@@ -122,7 +123,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 
 	/**
 	 * Return sanitized sequence data file.
-	 * 
+	 *
 	 * @param sampleId Sample ID
 	 * @param isRvRead Boolean TRUE to return the file containing reverse reads
 	 * @return File with sanitized sequences

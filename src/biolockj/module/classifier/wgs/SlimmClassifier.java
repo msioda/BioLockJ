@@ -22,6 +22,7 @@ import biolockj.util.*;
 
 /**
  * This BioModule builds the scripts used to call SLIMM for classification of WGS data.
+ * @web_desc Slimm Classifier
  */
 public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
@@ -304,6 +305,6 @@ public class SlimmClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}.{@value biolockj.Constants#DOMAIN}
 	 */
 	public static final String SLIMM_DOMAIN_DELIM = "superkingdom";
-	
+
 	private static final String SLIMM_OUTPUT_PARAM = "-o";
 }

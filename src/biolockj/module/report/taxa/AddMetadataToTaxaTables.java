@@ -25,6 +25,7 @@ import biolockj.util.SummaryUtil;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
+ * @web_desc Add Metadata to Taxa Tables
  */
 public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModule
 {
@@ -112,7 +113,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 
 	/**
 	 * Add Num_Hits/Num_Reads as Hit_Ratio column to the metadata file
-	 * 
+	 *
 	 * @throws Exception if unable to build the new metadata column
 	 */
 	protected void addHitRatioToMetadata() throws Exception
@@ -143,7 +144,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 
 	/**
 	 * Create the merged metadata tables.
-	 * 
+	 *
 	 * @throws Exception if unable to build tables
 	 */
 	protected void generateMergedTables() throws Exception

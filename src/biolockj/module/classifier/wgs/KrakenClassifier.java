@@ -27,6 +27,7 @@ import biolockj.util.SeqUtil;
  * This BioModule assigns taxonomy to WGS sequences and translates the results into mpa-format. Command line options are
  * defined in the online manual: <a href="http://ccb.jhu.edu/software/kraken/MANUAL.html" target=
  * "_top">http://ccb.jhu.edu/software/kraken/MANUAL.html</a>
+ * @web_desc Kraken Classifier
  */
 public class KrakenClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
@@ -97,7 +98,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 
 	/**
 	 * Verify that none of the derived command line parameters are included in
-	 * {@link biolockj.Config}.{@value #EXE_KRAKEN}{@value biolockj.Constants#PARAMS}. 
+	 * {@link biolockj.Config}.{@value #EXE_KRAKEN}{@value biolockj.Constants#PARAMS}.
 	 */
 	@Override
 	public void checkDependencies() throws Exception

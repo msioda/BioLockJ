@@ -23,6 +23,7 @@ import biolockj.util.*;
 /**
  * This BioModule parses sequence file to count the number of reads per sample. The data is stored in a new column
  * Num_Reads. If no metadata file exists, it is created with 2 columns: SampleID and Num_Reads.
+ * @web_desc Register Number of Reads
  */
 public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqModule
 {
@@ -108,7 +109,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 
 	/**
 	 * Getter for depricatedReadFields
-	 * 
+	 *
 	 * @return depricatedReadFields
 	 */
 	public static Set<String> getDepricatedReadFields()
@@ -118,7 +119,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 
 	/**
 	 * Getter for numReadFieldName
-	 * 
+	 *
 	 * @return numReadFieldName
 	 */
 	public static String getNumReadFieldName()
@@ -128,7 +129,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 
 	/**
 	 * When a module modifies the number of reads, the new counts must replace the old count fields.
-	 * 
+	 *
 	 * @param name Name of new number of reads metadata field
 	 * @throws Exception if null value passed
 	 */

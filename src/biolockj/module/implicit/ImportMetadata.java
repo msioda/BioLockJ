@@ -23,6 +23,7 @@ import biolockj.util.*;
 /**
  * This BioModule validates the contents/format of the project metadata file and the related Config properties. If
  * successful, the metadata is saved as a tab delimited text file.
+ * @web_desc Import metadata
  */
 public class ImportMetadata extends BioModuleImpl implements BioModule
 {
@@ -229,7 +230,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 
 	/**
 	 * Extract the sample IDs from the file names with {@link biolockj.util.SeqUtil#getSampleId(String)}
-	 * 
+	 *
 	 * @return Ordered set of Sample IDs
 	 * @throws Exception if any duplicate or invalid sample IDs are returned by {@link biolockj.util.SeqUtil}
 	 */
@@ -351,7 +352,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 
 	/**
 	 * Verify every row (every Sample ID) maps to a sequence file
-	 * 
+	 *
 	 * @param files List of sequence files
 	 * @throws ConfigViolationException if unmapped Sample IDs are found
 	 * @throws Exception if other errors occur
