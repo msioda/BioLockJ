@@ -111,9 +111,9 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	/**
 	 * This method returns the classifier class name in lower case, after "classifier" is removed.<br>
 	 * The remaining text should uniquely identify the name of the program.<br>
-	 * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan2, humann2, or slimm).<br>
+	 * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan2, or humann2).<br>
 	 *
-	 * @return String - options { rdp, qiime, kraken, kraken2, metaphlan2, humann2, slimm }
+	 * @return String - options { rdp, qiime, kraken, kraken2, metaphlan2, or humann2 }
 	 */
 	protected String getClassifierType()
 	{

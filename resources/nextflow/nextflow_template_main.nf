@@ -545,30 +545,6 @@ process SeqFileValidator {
 	bash ${worker}
 	"""
 }
-process SlimmClassifier {
-	echo 	true
-	cpus 	$nextflow.cpus
-	memory 	$nextflow.memory
-	label 	$nextflow.dockerImage
-	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_SlimmClassifier/script/*.sh' )
-	"""
-	#!/bin/bash
-	bash ${worker}
-	"""
-}
-process SlimmParser {
-	echo 	true
-	cpus 	$nextflow.cpus
-	memory 	$nextflow.memory
-	label 	$nextflow.dockerImage
-	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_SlimmParser/script/*.sh' )
-	"""
-	#!/bin/bash
-	bash ${worker}
-	"""
-}
 process TrimPrimers {
 	echo 	true
 	cpus 	$nextflow.cpus
