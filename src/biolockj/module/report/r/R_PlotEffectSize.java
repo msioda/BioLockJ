@@ -15,7 +15,8 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.ScriptModule;
-import biolockj.module.report.taxa.BuildTaxaTables;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.ModuleUtil;
 
 /**
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
@@ -31,9 +32,8 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		final boolean allDisabled = Config.getBoolean( this, NO_FOLD_CHANGE ) & Config.getBoolean( this, NO_COHENS_D )
-				& Config.getBoolean( this, NO_R2 );
-		if( allDisabled )
+		if( Config.getBoolean( this, NO_FOLD_CHANGE ) & Config.getBoolean( this, NO_COHENS_D )
+				& Config.getBoolean( this, NO_R2 ) )
 		{
 			throw new ConfigViolationException( NO_COHENS_D,
 					"When using " + this.getClass().getName() + " at least one of " + NO_COHENS_D + ", " + NO_R2
@@ -42,21 +42,22 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	}
 
 	/**
-	 * Returns {@link #getStatPreReqs()}
+	 * Returns {@link #getStatPreReqs()} and if fold change plots are to be generated, ensures
+	 * the correct metaMerged module/modules are generated
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = getStatPreReqs();
-		if( !Config.getBoolean( this, NO_FOLD_CHANGE ) )
+		if( !Config.getBoolean( this, NO_FOLD_CHANGE ) && !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			preReqs.add( BuildTaxaTables.class.getName() );
+			preReqs.add( ModuleUtil.getMetaMergedModule( this ) );
 		}
 		return preReqs;
 	}
 
-	private final String NO_COHENS_D = "r.plotEffectSize.disableCohensD";
-	private final String NO_FOLD_CHANGE = "r.plotEffectSize.disableFoldChange";
-	private final String NO_R2 = "r.plotEffectSize.disableRSquared";
+	private static final String NO_COHENS_D = "r.PlotEffectSize.disableCohensD";
+	private static final String NO_FOLD_CHANGE = "r.PlotEffectSize.disableFoldChange";
+	private static final String NO_R2 = "r.PlotEffectSize.disableRSquared";
 
 }

@@ -8,13 +8,13 @@ main <- function() {
    mdsFields = getProperty( "r_PlotMds.reportFields", c( getBinaryFields(), getNominalFields() )  )
 
    for( level in taxaLevels() ) {
-      if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildMdsPlots_", level, ".log") ) )
 
       countTable = getCountTable( level )
-      if( is.null( countTable ) ) { next }
-      myMDS = capscale( countTable~1, distance=getProperty("r_PlotMds.distance") )
-      
       metaTable = getMetaData( level )
+      if( is.null(countTable) || is.null(metaTable) ) { next }
+      if( doDebug() ) sink( getLogFile( level ) )
+      
+      myMDS = capscale( countTable~1, distance=getProperty("r_PlotMds.distance") )
       metaColColors = getColorsByCategory( metaTable )
 
       pcoaFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(level, "_pcoa") ), ".tsv" )

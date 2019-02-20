@@ -32,7 +32,7 @@ calculateStats <- function( level ) {
    countTable = getCountTable( level )
    metaTable = getMetaData( level )
    if ( is.null(countTable) || is.null(metaTable) ){
-      return(NULL)
+      return( NULL )
    }
 
    # Loop through the OTUs to assign P-value & R^2 values
@@ -43,14 +43,14 @@ calculateStats <- function( level ) {
    adjParPvals = vector( mode="double" )
    adjNonParPvals = vector( mode="double" )
 
-	binaryCols = getBinaryFields()
+   binaryCols = getBinaryFields()
    nominalCols = getNominalFields()
    numericCols = getNumericFields()
    logInfo( "binaryCols", binaryCols )
    logInfo( "nominalCols", nominalCols )
    logInfo( "numericCols", numericCols )
 	
-	logInfo( "number of metadata columns", ncol(metaTable) )
+   logInfo( "number of metadata columns", ncol(metaTable) )
    logInfo( "number of count-data columns", ncol(countTable) )
 
    # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countTable rows
@@ -163,22 +163,39 @@ getP_AdjustLen <- function( names ) {
 # Outputs summary tables for each metric at each taxonomyLevel
 main <- function() {
 	importLibs( c( "coin", "Kendall" ) ) 
-	for( level in taxaLevels() ) {
-	  if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_CalculateStats_", level, ".log") ) )
-	  reportStats = calculateStats( level )
-		if( is.null( reportStats ) ) {
-			logInfo( c( level, "is empty, verify contents of table:", inputFile ) )
-		} else {
-			logInfo( "Building summary Tables ... " )
-			buildSummaryTables( reportStats, level )
+	
+	if( ( "species" %in% taxaLevels() ) && getProperty( "R_internal.runHumann2", FALSE ) ) {
+		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
+			buildReport( "pAbund" )
 		}
+		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) {
+			buildReport( "pCovg" )
+		}
+		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
+			buildReport( "geneFam" )
+		}
+	} else {
+		for( level in taxaLevels() ) {
+			buildReport( level )
+		}
+	}
+}
+
+buildReport <- function( key ) {
+	if( doDebug() ) sink( getLogFile( level ) )
+	reportStats = calculateStats( level )
+	if( is.null( reportStats ) ) {
+		logInfo( c( level, "table is empty" ) )
+	} else {
+		logInfo( "Building summary Tables ... " )
+		buildSummaryTables( reportStats, level )
 	}
 	logInfo( "Done!" )
 	if( doDebug() ) sink()
 }
 
 # Method wilcox_test is from the coin package
-# Calcualates exact pvalues without using heuristic algorithm for better precision
+# Calculates exact p-values without using heuristic algorithm for better precision
 # Otherwise if ties are found the script may fail
 wilcox_test.default <- function( x, y, ... ) {
    data = data.frame( values = c(x, y), group = rep( c("x", "y"), c(length(x), length(y)) ) )

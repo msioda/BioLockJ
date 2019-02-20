@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.implicit.RegisterNumReads;
@@ -109,6 +110,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
 		Log.info( getClass(), "Direct runModule() complete!" );
+		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
 	}
 
 	/**
@@ -186,10 +188,10 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 		final String sampleId = new StringTokenizer( line, TAB_DELIM ).nextToken();
 		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) )
 		{
-			sb.append( line );
+			sb.append( BioLockJUtil.removeQuotes( line ) );
 			for( final String field: MetaUtil.getMetadataRecord( sampleId ) )
 			{
-				sb.append( TAB_DELIM ).append( field.replaceAll( "'", "" ).replaceAll( "\"", "" ) );
+				sb.append( TAB_DELIM ).append( BioLockJUtil.removeQuotes( field ) );
 			}
 		}
 		else

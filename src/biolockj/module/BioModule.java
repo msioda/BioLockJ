@@ -40,7 +40,6 @@ import java.util.List;
  */
 public interface BioModule
 {
-
 	/**
 	 * During pipeline initialization, all configured BioModules will run this method to validate dependencies.
 	 *

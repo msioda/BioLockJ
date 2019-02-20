@@ -12,7 +12,11 @@
 package biolockj.module.report.humann2;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
+import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
@@ -34,7 +38,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			// TODO
+			sb.append( "Merged metadata for " + types.size() + " HumanN2 reports: " + types );
 		}
 		catch( final Exception ex )
 		{
@@ -48,7 +52,8 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 
 	/**
 	 * This method matches records from the Pathway Abundance table and the metadata file by matching the sample ID
-	 * value in the very 1st column (regardless of column title).
+	 * value in the very 1st column (regardless of column title).<br><br>
+	 * Set 
 	 */
 	@Override
 	public void runModule() throws Exception
@@ -57,6 +62,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
 		Log.info( getClass(), "Metadata has been appended to the pathway abundance table" );
+		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.FALSE );
 	}
 
 	/**
@@ -70,6 +76,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		for( final File file: getInputFiles() )
 		{
 			final String name = file.getName().replaceAll( TSV_EXT, "" ) + META_MERGED;
+			types.add( PathwayUtil.getHn2Type( file ) );
 			Log.info( getClass(),
 					"Merge HumanN2 " + PathwayUtil.getHn2Type( file ) + " table with metadata: " + outDir + name );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
@@ -104,10 +111,10 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		final String sampleId = new StringTokenizer( line, TAB_DELIM ).nextToken();
 		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) )
 		{
-			sb.append( line );
+			sb.append( BioLockJUtil.removeQuotes( line ) );
 			for( final String field: MetaUtil.getMetadataRecord( sampleId ) )
 			{
-				sb.append( TAB_DELIM ).append( field.replaceAll( "'", "" ).replaceAll( "\"", "" ) );
+				sb.append( TAB_DELIM ).append( BioLockJUtil.removeQuotes( field ) );
 			}
 		}
 		else
@@ -131,8 +138,11 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 	private String mergeHeaderLine = null;
 	private String mergeSampleLine = null;
 
+
 	/**
 	 * File suffix added to OTU table file name once merged with metadata.
 	 */
 	private static final String META_MERGED = "_metaMerged" + TSV_EXT;
+	
+	private List<String> types = new ArrayList<>();
 }

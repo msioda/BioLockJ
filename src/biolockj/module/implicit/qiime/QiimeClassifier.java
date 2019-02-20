@@ -27,10 +27,10 @@ import biolockj.util.*;
  * For a complete list of available metrics, see:
  * <a href= "http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html" target=
  * "_top">http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html</a><br>
+ * @web_desc 
  */
 public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
-
 	/**
 	 * Generate bash script lines to summarize QIIME results, build taxonomy reports, and add alpha diversity metrics.
 	 * <p>

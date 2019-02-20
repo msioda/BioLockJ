@@ -217,12 +217,12 @@ public class Constants
 	/**
 	 * HumanN2 meta column to store the total pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
-	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
+	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathways";
 
 	/**
 	 * HumanN2 meta column to store the unique pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
-	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
+	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathways";
 
 	/**
 	 * Standard indent = 4 spaces.
@@ -530,6 +530,12 @@ public class Constants
 	 * {@value #GENUS}, {@value #SPECIES}
 	 */
 	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
+	
+	
+	/**
+	 * {@link biolockj.Config} Boolean property to signal R scripts to build HumanN2 reports
+	 */
+	public static final String R_INTERNAL_RUN_HN2 = "R_internal.runHumann2";
 
 	/**
 	 * Return character constant *backslash-n*

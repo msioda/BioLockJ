@@ -2,27 +2,27 @@
 
 # Output box-plot illustrating OTU-nominal metadata field relationship
 # Print adjusted P-values in pot header
-addBoxPlot <- function( item, taxaVals, metaVals, barColors) 
+addBoxPlot <- function( item, taxaVals, metaVals, barColors)
 {
    metaVals = as.factor( metaVals )
-   factors = split( taxaVals, metaVals ) 
+   factors = split( taxaVals, metaVals )
    cexAxis = getCexAxis( levels(metaVals) )
    labels = getBoxPlotLabels( levels(metaVals) )
    orient = getLas( levels(metaVals) )
-   
-   boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=getProperty("r.pch"), 
+
+   boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=getProperty("r.pch"),
                 ylab=item, xlab="", cex.axis=cexAxis )
-   stripchart( taxaVals ~ metaVals, data=data.frame(taxaVals, metaVals), method="jitter", 
+   stripchart( taxaVals ~ metaVals, data=data.frame(taxaVals, metaVals), method="jitter",
                      vertical=TRUE, pch=getProperty("r.pch"), add=TRUE )
 }
 
 plotHeading <- function(parPval, nonParPval, r2, att) {
    HEAD_1 = 0.2; HEAD_2 = 1.4; LEFT = 0; RIGHT = 1; TOP = 3;
-   
+
    title1_A = paste( "Adj.", getTestName(att, TRUE), "P-value: ", displayCalc(parPval) )
    title1_B = bquote( paste( R^2, ": ", .( displayCalc(parPval) ) ) )
    title2 = paste( "Adj.", getTestName(att, FALSE), "P-value: ", displayCalc(nonParPval) )
-   
+
    mtext( title1_A, TOP, HEAD_1, col=getColor( parPval ), cex=0.75, adj=LEFT )
    mtext( title1_B, TOP, HEAD_1, cex=0.75, adj=RIGHT )
    mtext( title2, TOP, HEAD_2, col=getColor( nonParPval ), cex=0.75, adj=LEFT )
@@ -39,7 +39,7 @@ addScatterPlot <- function( item, taxaVals, metaVals )
 getBoxPlotLabels <- function( labels ) {
    if( getCexAxis(labels) == getCexAxis(returnMin=TRUE) ) {
       nchars = sum(nchar(labels)) + length(labels) - 1
-      maxSize = ((getProperty("r.plotWidth")*2)+2)/length(labels)
+      maxSize = ((r.plotWidth*2)+2)/length(labels)
       return( strtrim(labels, floor(maxSize) ) )
    }
    return( labels )
@@ -56,10 +56,10 @@ getCexAxis <- function( labels=NULL, returnMax=FALSE, returnMin=FALSE) {
       return(cexAxisMin)
    }
    nchars = sum(nchar(labels)) + length(labels) - 1
-   if( nchars < getProperty("r.plotWidth") ) return( cexAxisMax )
-   if( nchars < (getProperty("r.plotWidth") +7 ) ) return( 0.9 )
-   if( nchars < (getProperty("r.plotWidth") + 15 ) ) return( 0.8 )
-   if( nchars < (getProperty("r.plotWidth") + 24 ) ) return( 0.7 )
+   if( nchars < r.plotWidth ) return( cexAxisMax )
+   if( nchars < ( r.plotWidth +7 ) ) return( 0.9 )
+   if( nchars < ( r.plotWidth + 15 ) ) return( 0.8 )
+   if( nchars < ( r.plotWidth + 24 ) ) return( 0.7 )
 
    return( cexAxisMin )
 }
@@ -78,11 +78,11 @@ getLas <- function( labels ) {
 main <- function() {
 
    for( level in taxaLevels() ) {
-      if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildOtuPlots_", level, ".log") ) )
-      
+
       countTable = getCountTable( level )
-      if( is.null( countTable ) ) { next }
       metaTable = getMetaData( level )
+      if( is.null(countTable) || is.null(metaTable) ) { next }
+      if( doDebug() ) sink( getLogFile( level ) )
 
       binaryCols = getBinaryFields()
       nominalCols = getNominalFields()
@@ -134,12 +134,12 @@ main <- function() {
                   logInfo( c( "Plot Scatter-Plot [", item, "~", meta, "]" ) )
                   addScatterPlot( item, taxaVals, metaVals )
                }
-               
+
                plotHeading( parStats[ item, meta ], nonParStats[ item, meta ], r2Stats[ item, meta], meta )
                mtext( meta, side=1, font=1, cex=1, line=2.5 )
                position = position + 1
-               
-               if(position == 2) { 
+
+               if(position == 2) {
                   addPageTitle( item )
                   if ( length(reportCols) > prod( par("mfrow") ) ) {
                      addPageFooter( level, pageNum, multiPageSet )
@@ -158,3 +158,5 @@ main <- function() {
       if( doDebug() ) sink()
    }
 }
+
+r.plotWidth=23

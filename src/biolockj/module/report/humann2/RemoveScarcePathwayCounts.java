@@ -74,11 +74,12 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 			logScarceData( removeScarcePathwayCounts( file, getScarcePathways( table ) ), getScarcePathwayLogFile() );
 			logScarceData( removeScarceSamples( file, getScarceSampleIds( file, table ) ), getScarceSampleLogFile() );
 
-			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
+			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) &&
+					!Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
-				MetaUtil.addColumn( getMetaColName() + "_" + "Unique_Pathways", uniquePathwaysPerSample, getTempDir(),
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample, getTempDir(),
 						true );
-				MetaUtil.addColumn( getMetaColName() + "_" + "Total_Pathways", totalPathwaysPerSample, getOutputDir(),
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT, totalPathwaysPerSample, getOutputDir(),
 						true );
 			}
 		}
@@ -243,7 +244,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 
 	private void buildOutputTable( final File file, final List<List<String>> data ) throws Exception
 	{
-		final String cutoff = "_" + getMetaColName().replaceAll( "%", "per" );
+		final String cutoff = getMetaColName().replaceAll( "%", "per" );
 		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, cutoff );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 		try

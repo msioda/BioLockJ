@@ -75,7 +75,7 @@ getColors <- function( n, reorder=TRUE) {
 	palette = getProperty("r.colorPalette", "npg")
 	colors = get_palette( palette, n )
 	
-	if (length(palette) == 1 & reorder){
+	if (length(palette) == 1 && reorder){
 		flipFrom = (1:length(colors))[(1:length(colors)%%2)==0]
 		flipTo = flipFrom[length(flipFrom):1]
 		colors[flipTo] = colors[flipFrom]
@@ -135,6 +135,35 @@ getConfig <- function( name, defaultVal=NULL ) {
 	return( str_trim( prop ) )
 }
 
+# Return the data columns (no metadata)
+getCountTable <- function( level ){
+	fullTable = getCountMetaTable( level )
+	if( is.null( fullTable ) ) return( NULL )
+	lastCountCol = ncol(fullTable) - numMetaCols()
+	return ( fullTable[1:lastCountCol] )
+}
+
+# Returns BioLockJ generated Count + Metadata Table with a standard format:
+# 1. 1st column contains Sample IDs
+# 2. Next group of columns contain numeric count data (derived from sample analysis)
+# 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
+getCountMetaTable <- function( level ) {
+	countMetaFile = pipelineFile( paste0( level, "_metaMerged.tsv$" ) )
+	if( is.null( countMetaFile )  ) {
+		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") found none!" ) )
+		return( NULL )
+	}
+	
+	countMetaTable = readBljTable( countMetaFile )
+	if( nrow( countMetaTable ) == 0 ) {
+		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") returned an empty table with header row:", colnames( countMetaTable ) ) )
+		return( NULL )
+	}
+	
+	logInfo( "Read count table", countMetaFile )
+	return( countMetaTable )
+}
+
 # Return list, each record contains the count-data  associated with a unique value for the given nominal metadata field (metaCol)
 getFactorGroups <- function( countMetaTable, metaCol, taxaCol ) {
 	vals = list()
@@ -143,6 +172,11 @@ getFactorGroups <- function( countMetaTable, metaCol, taxaCol ) {
 		vals[[i]] = countMetaTable[metaCol==options[i], taxaCol]
 	}
 	return( vals )
+}
+
+# Return the name of the R module level specific log file
+getLogFile <- function( level ) {
+	return( file.path( getTempDir(), paste0( moduleScriptName(), ".", level, ".log") ) )
 }
 
 # Return the name of the BioLockJ MASTER Config file
@@ -162,6 +196,7 @@ getMasterConfigFile <- function() {
 # Return a data frame of the metadata from a biolockj data table with merged metadata.
 getMetaData <- function( level ){
 	fullTable = getCountMetaTable( level )
+	if( is.null( fullTable ) ) return( NULL )
 	firstMetaCol = ncol(fullTable) - numMetaCols() + 1
 	return( fullTable[firstMetaCol:ncol(fullTable)] )
 }
@@ -216,7 +251,7 @@ getReportFields <- function() {
 
 # Return the most recent stats file at the given level based on the suffix returned by statsFileSuffix()
 getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
-	statsFile = pipelineFile( paste0( level, ".*", statsFileSuffix( parametric, adjusted ) ) )
+	statsFile = pipelineFile( paste0( level, "_", statsFileSuffix( parametric, adjusted ), "$" ) )
 	if( is.null( statsFile )  ) {
 		logInfo( paste0( "BioLockJ_Lib.R function --> getStatsTable( level=", level, 
 										 ", parametric=", parametric, ", adjusted=", adjusted, " ) returned NULL" ) )
@@ -231,37 +266,6 @@ getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
 	
 	logInfo( "Read stats table", statsFile )
 	return( statsTable )
-}
-
-getCountTable <- function( level ){
-	fullTable = getCountMetaTable( level )
-	lastCountCol = ncol(fullTable) - numMetaCols()
-	return ( fullTable[1:lastCountCol] )
-}
-
-# Returns BioLockJ generated Count + Metadata Table with a standard format:
-# 1. 1st column contains Sample IDs
-# 2. Next group of columns contain numeric count data (derived from sample analysis)
-# 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
-getCountMetaTable <- function( level=NULL ) {
-	if( is.null( level ) ) {
-		level = ""
-	}
-	countMetaFile = pipelineFile( paste0( ".*", level, "_metaMerged.tsv" ) )
-	if( is.null( countMetaFile )  ) {
-		logInfo( c( "BioLockJ_Lib.R function --> getCountMetaTable(", level, ") returned NULL" ) )
-		return( NULL )
-	}
-	
-	countMetaTable = readBljTable( countMetaFile )
-	
-	if( nrow( countMetaTable ) == 0 ) {
-		logInfo( c( "BioLockJ_Lib.R function --> getCountMetaTable(", level, ") returned an empty table with only the header row:", colnames( countMetaTable ) ) )
-		return( NULL )
-	}
-	
-	logInfo( "Read count table", countMetaFile )
-	return( countMetaTable )
 }
 
 # Get the temp dir for the current module, if it does not exist, create it.
@@ -295,7 +299,7 @@ getTestName <- function( field=NULL, isParametric=c(TRUE, FALSE), returnColors=F
 		}
 	}
 	
-	whichTest = which(testOptions$fieldType %in% fieldType & testOptions$isParametric %in% isParametric)
+	whichTest = which(testOptions$fieldType %in% fieldType && testOptions$isParametric %in% isParametric)
 	
 	if (returnColors){
 		cols = testOptions[whichTest,"color"]
@@ -344,6 +348,18 @@ numMetaCols <- function() {
 	return( getProperty( "R_internal.numMetaCols" ) )
 }
 
+
+# Given a vector of files, return the most recently modified
+pickLatestFile <- function( files ) {
+	newestFile = NULL
+	for( i in 1:length( files ) ) {
+		if( !is.null( files[i] ) && (is.null( newestFile ) || file.info( files[i] )[ "mtime" ] > file.info( newestFile )[ "mtime" ]) ) { 
+			newestFile = files[i] 
+		}
+	}
+	return( newestFile )
+}
+
 # Return a file matching the pattern underwhere under the pipeline root directory
 # If multiple results are found, return the most recent version
 # If dir is undefined, look in pipeline dir
@@ -371,14 +387,7 @@ pipelineFile <- function( pattern, dir=getPipelineDir() ) {
 		}
 	}
 	
-	returnFile = NULL
-	for( i in 1:length( results ) ) {
-		if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
-			returnFile = results[i] 
-		}
-	}
-	
-	return( returnFile )
+	return( pickLatestFile( results ) )
 }
 
 # Create an empty plot and add text. 
@@ -398,16 +407,29 @@ readBljTable <- function( file ){
 # Use TRUE/FALSE params to obtain the correct p-value statistics file
 # To retrieve the r^2 effect size file, use: buildStatsFileSuffix()
 statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
-	if( is.null( parametric ) ) return( paste0( "rSquaredVals", ".tsv" ) )
-	if( parametric && adjusted ) return( paste0( "adjParPvals", ".tsv" ) )
-	if( parametric ) return( paste0( "parametricPvals", ".tsv" ) )
-	if( adjusted ) return( paste0( "adjNonParPvals", ".tsv" ) )
-	return( paste0( "nonParametricPvals", ".tsv" ) )
+	if( is.null( parametric ) ) return( "rSquaredVals.tsv" )
+	if( parametric && adjusted ) return( "adjParPvals.tsv" )
+	if( parametric ) return( "parametricPvals.tsv" )
+	if( adjusted ) return( "adjNonParPvals.tsv" )
+	return( "nonParametricPvals.tsv" )
 }
 
-# Return number of metadata columns appended to sample count tables
+# Return taxonomy levels or HumanN2 report types based on property R_internal.runHumann2
 taxaLevels <- function() {
-	return( getProperty( "report.taxonomyLevels" ) )
+	levels = getProperty( "report.taxonomyLevels" )
+	if( ( "species" %in% levels ) && getProperty( "R_internal.runHumann2", FALSE ) ) {
+		levels = c()
+		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
+			levels[length(levels) + 1] = "pAbund" 
+		}
+		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) {
+			levels[length(levels) + 1] = "pCovg" 
+		}
+		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
+			levels[length(levels) + 1] = "geneFam" 
+		}
+	}
+	return( levels )
 }
 
 # Import standard shared libraries

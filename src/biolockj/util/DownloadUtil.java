@@ -23,6 +23,7 @@ import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
+import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.module.report.taxa.BuildTaxaTables;
@@ -228,9 +229,11 @@ public final class DownloadUtil
 	}
 
 	/**
-	 * Get the modules to download. Some modules are always included:
+	 * Get the modules to download. The following are downloaded if found in the pipeline:
 	 * <ul>
+	 * <li>{@link biolockj.module.implicit.parser.wgs.Humann2Parser}
 	 * <li>{@link biolockj.module.report.taxa.AddMetadataToTaxaTables}
+	 * <li>{@link biolockj.module.report.humann2.AddMetadataToPathwayTables}
 	 * <li>{@link biolockj.module.report.taxa.BuildTaxaTables}
 	 * <li>{@link biolockj.module.report.JsonReport}
 	 * <li>Any module that inherits from {@link biolockj.module.report.r.R_Module}
@@ -247,7 +250,7 @@ public final class DownloadUtil
 			{
 				final boolean downloadableType = module instanceof JsonReport
 						|| module instanceof AddMetadataToTaxaTables || module instanceof BuildTaxaTables
-						|| module instanceof R_Module;
+						|| module instanceof AddMetadataToPathwayTables || module instanceof R_Module;
 				if( ModuleUtil.hasExecuted( module ) && downloadableType )
 				{
 					modules.add( module );

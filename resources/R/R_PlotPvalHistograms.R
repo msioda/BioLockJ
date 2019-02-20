@@ -42,7 +42,7 @@ getCexMain<- function( labels=NULL ) {
 }
 
 
-# This graphic can be printed with the histograms, 
+# This graphic can be printed with the histograms,
 # used for documentation, or just as a reference check when chaning the colors.
 printColorCode <- function(){
    parColors = getTestName(isParametric = TRUE, returnColors = TRUE)
@@ -60,20 +60,21 @@ printColorCode <- function(){
 
 
 # Main function generates reports for each each taxaLevels()
-# Each taxonomy report includes 2 histograms for each report field (1 parametric, 1 non-parametric) 
+# Each taxonomy report includes 2 histograms for each report field (1 parametric, 1 non-parametric)
 main <- function() {
    pvalCutoff = getProperty("r.pvalCutoff", 0.05)
 
    for( level in taxaLevels() ) {
-      if( doDebug() ) sink( file.path( getTempDir(), paste0("debug_BuildPvalHistograms_", level, ".log") ) )
-
-      # create empty pdf
-     pdf( getPath( getOutputDir(), paste0(level, "_histograms.pdf") ) )
-      par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
-
 
       parStats = getStatsTable( level, TRUE, FALSE )
       nonParStats = getStatsTable( level, FALSE, FALSE )
+      if( is.null(parStats) || is.null(nonParStats) ) { next }
+      if( doDebug() ) sink( getLogFile( level ) )
+
+      # create empty pdf
+      pdf( getPath( getOutputDir(), paste0(level, "_histograms.pdf") ) )
+      par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
+
       size = getCexMain( colnames(parStats) )
       logInfo( "size = getCexMain( colnames(parStats) )", size )
 
@@ -98,7 +99,7 @@ main <- function() {
          if( ! field %in% getReportFields() ){ next }
 
          logInfo("processing attribute:", field )
-         stopifnot( field %in% names(nonParStats) & field %in% names(parStats) )
+         stopifnot( field %in% names(nonParStats) && field %in% names(parStats) )
 
          parTestName = getTestName(field, isParametric=TRUE)
          xLabelPar = paste( parTestName, "P-Values" )
@@ -121,7 +122,7 @@ main <- function() {
       }
       # at the end, add the color code reference
       printColorCode()
-      plotPlainText(paste0("Histograms are ordered by \nthe fraction of tests below ", 
+      plotPlainText(paste0("Histograms are ordered by \nthe fraction of tests below ",
                                      pvalCutoff, "\nin the parametric or non-parametric test, \nwhichever was greater."))
       dev.off()
 
