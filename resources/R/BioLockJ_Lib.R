@@ -251,7 +251,7 @@ getReportFields <- function() {
 
 # Return the most recent stats file at the given level based on the suffix returned by statsFileSuffix()
 getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
-	statsFile = pipelineFile( paste0( level, ".*", statsFileSuffix( parametric, adjusted ), "$" ) )
+	statsFile = pipelineFile( paste0( level, "_", statsFileSuffix( parametric, adjusted ), "$" ) )
 	if( is.null( statsFile )  ) {
 		logInfo( paste0( "BioLockJ_Lib.R function --> getStatsTable( level=", level, 
 										 ", parametric=", parametric, ", adjusted=", adjusted, " ) returned NULL" ) )
@@ -407,11 +407,11 @@ readBljTable <- function( file ){
 # Use TRUE/FALSE params to obtain the correct p-value statistics file
 # To retrieve the r^2 effect size file, use: buildStatsFileSuffix()
 statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
-	if( is.null( parametric ) ) return( paste0( "rSquaredVals", ".tsv" ) )
-	if( parametric && adjusted ) return( paste0( "adjParPvals", ".tsv" ) )
-	if( parametric ) return( paste0( "parametricPvals", ".tsv" ) )
-	if( adjusted ) return( paste0( "adjNonParPvals", ".tsv" ) )
-	return( paste0( "nonParametricPvals", ".tsv" ) )
+	if( is.null( parametric ) ) return( "rSquaredVals.tsv" )
+	if( parametric && adjusted ) return( "adjParPvals.tsv" )
+	if( parametric ) return( "parametricPvals.tsv" )
+	if( adjusted ) return( "adjNonParPvals.tsv" ) )
+	return( "nonParametricPvals.tsv" ) )
 }
 
 # Return number of metadata columns appended to sample count tables
