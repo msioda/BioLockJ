@@ -22,6 +22,7 @@ import biolockj.util.MetaUtil;
 /**
  * This module runs the QIIME pick_de_novo_otus.py script on FastA sequence files in a single script so it is important
  * to allocate sufficient job resources if running in a clustered environment.
+ * @web_desc Qiime de novo Classifier
  */
 public class QiimeDeNovoClassifier extends QiimeClassifier implements ClassifierModule
 {
@@ -83,7 +84,7 @@ public class QiimeDeNovoClassifier extends QiimeClassifier implements Classifier
 	/**
 	 * The method returns 1 bash script line that will copy the batch
 	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE} from the batchDir to the output directory.
-	 * 
+	 *
 	 * @return Bash script line to copy table to
 	 */
 	protected String copyTempOtuTableToOutputDir()

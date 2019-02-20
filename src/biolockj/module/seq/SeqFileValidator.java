@@ -24,6 +24,7 @@ import biolockj.util.*;
 
 /**
  * This BioModule validates fasta/fastq file formats are valid and enforces min/max read lengths.
+ * @web_desc Sequence File Validator
  */
 public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqModule
 {
@@ -144,7 +145,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 
 	/**
 	 * Remove sequence files in which all reads failed validation checks, leaving only an empty file.
-	 * 
+	 *
 	 * @throws Exception if errors occur
 	 */
 	protected void removeBadFiles() throws Exception
@@ -170,7 +171,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 	 * <li>Trim reads if above the maximum threshold: {@value #INPUT_SEQ_MAX}
 	 * </ol>
 	 * Invalid reads are saved to a file in the module temp directory for analysis/review.
-	 * 
+	 *
 	 * @param file Sequence file
 	 * @param fileCount Integer count
 	 * @throws Exception if I/O errors occur while processing sequence files
@@ -311,7 +312,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 	 * Verify equal number of forward and reverse read files.<br>
 	 * if {@value #REQUIRE_EUQL_NUM_PAIRS}={@value biolockj.Constants#TRUE}, verify forward and reverse read files have
 	 * an equal number of reads.
-	 * 
+	 *
 	 * @throws Exception if validations fail or errors occur
 	 */
 	protected void verifyPairedSeqs() throws Exception

@@ -22,6 +22,7 @@ import biolockj.util.OtuUtil;
 /**
  * This BioModule compiles the counts from all OTU count files into a single summary OTU count file containing OTU
  * counts for the entire dataset.
+ * @web_desc Compile OTU Counts
  */
 public class CompileOtuCounts extends OtuCountModule implements JavaModule
 {
@@ -69,7 +70,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Build Summary OTU count file for all samples.
-	 * 
+	 *
 	 * @param otuCounts OTU-count mapping
 	 * @throws Exception if errors occur
 	 */
@@ -97,7 +98,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Compile OTU counts from the individual sample OTU count files
-	 * 
+	 *
 	 * @param files Collection of OTU count files
 	 * @return TreeMap(OTU, count)
 	 * @throws Exception if errors occur
@@ -127,7 +128,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Find the maximum OTU count per sample.
-	 * 
+	 *
 	 * @return Max OTU per sample.
 	 */
 	protected String getMaxOtusPerSample()
@@ -153,7 +154,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Find the minimum OTU count per sample.
-	 * 
+	 *
 	 * @return Min OTU per sample.
 	 */
 	protected String getMinOtusPerSample()
@@ -180,7 +181,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Get the summary output file
-	 * 
+	 *
 	 * @return OTU summary file
 	 * @throws Exception if errors occur
 	 */

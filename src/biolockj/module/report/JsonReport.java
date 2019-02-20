@@ -16,6 +16,7 @@ import biolockj.util.*;
 
 /**
  * This BioModule is used to build a JSON file (summary.json) compiled from all OTUs in the dataset.
+ * @web_desc Json Report
  */
 public class JsonReport extends JavaModuleImpl implements JavaModule
 {
@@ -71,7 +72,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	/**
 	 * Build JsonMap from the {@link biolockj.module.report.otu.CompileOtuCounts} output directory.
-	 * 
+	 *
 	 * @param rootNode Root JsonNode is top of the hierarchy
 	 * @return Map(level, Set(JsonNode)) of nodes by level
 	 * @throws Exception if errors occur
@@ -115,7 +116,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	/**
 	 * Check pipeline input to see if OTU summary file is the only pipeline input file.
-	 * 
+	 *
 	 * @return TRUE if pipeline input
 	 * @throws Exception if errors occur
 	 */
@@ -134,7 +135,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	/**
 	 * Add stats from {@link biolockj.module.report.r.R_CalculateStats} into all of the {@link biolockj.node.JsonNode}s.
-	 * 
+	 *
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode))
 	 * @param stats Stats file
 	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
@@ -191,7 +192,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	/**
 	 * Build lines of text output for the Json Report file.
-	 * 
+	 *
 	 * @param node JsonNode is the parent node
 	 * @param hasPeer boolean is true if node has peer nodes
 	 * @param jsonMap LinkedHashMap(level,Set(JsonNode)) all nodes by level
@@ -357,7 +358,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 
 	/**
 	 * This method formats the JSON code to indent code blocks surround by curly-braces "{ }"
-	 * 
+	 *
 	 * @param code JSON syntax mark-up
 	 * @throws Exception if errors occur
 	 */

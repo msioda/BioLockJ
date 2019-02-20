@@ -20,6 +20,7 @@ import biolockj.util.MemoryUtil;
 
 /**
  * This BioModule parses SlimmClassifier output reports to build standard OTU abundance tables.
+ * @web_desc Slimm Parser
  */
 public class SlimmParser extends ParserModuleImpl
 {

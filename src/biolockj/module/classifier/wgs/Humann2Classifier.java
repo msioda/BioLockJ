@@ -25,9 +25,10 @@ import biolockj.util.*;
  * reads). This process, referred to as functional profiling, aims to describe the metabolic potential of a microbial
  * community and its members. More generally, functional profiling answers the question "What are the microbes in my
  * community-of-interest doing (or capable of doing)?
- * 
+ *
  * For more information, please review the BioBakery instruction manual:
  * <a href= "https://bitbucket.org/biobakery/humann2" target="_top">https://bitbucket.org/biobakery/humann2</a><br>
+ * @web_desc HumanN2 Classifier
  */
 public class Humann2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {

@@ -27,6 +27,7 @@ import biolockj.util.*;
  * This BioModules parses Humann2Classifier output reports to build standard OTU abundance tables.<br>
  * Samples IDs are found in the column headers starting with the 2nd column.<br>
  * The count type depends on the HumanN2 config properties.
+ * @web_desc HumanN2 Parser
  */
 public class Humann2Parser extends ParserModuleImpl implements ParserModule
 {
@@ -46,7 +47,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 	/**
 	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.Humann2Classifier}.
-	 * 
+	 *
 	 * Sample HumanN2 report line (head output_pAbund.tsv):<br>
 	 * 1st cell format: [Pathway_ID]:[Pathway_Descr] | g__[genus_taxa].s__[species_taxa]<br>
 	 * Example: ARO-PWY: chorismate biosynthesis I|g__Acidaminococcus.s__Acidaminococcus_intestini #SampleID
