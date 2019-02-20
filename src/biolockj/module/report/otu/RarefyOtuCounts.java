@@ -350,5 +350,5 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	 * {@link biolockj.Config} Boolean property {@value #REMOVE_LOW_ABUNDANT_SAMPLES} if TRUE, all samples below the
 	 * quantile sample are removed.
 	 */
-	protected static final String REMOVE_LOW_ABUNDANT_SAMPLES = "rarefyOtuCounts.removeSamplesBelowQuantile";
+	protected static final String REMOVE_LOW_ABUNDANT_SAMPLES = "rarefyOtuCounts.rmLowSamples";
 }

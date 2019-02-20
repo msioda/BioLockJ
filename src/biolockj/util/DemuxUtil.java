@@ -346,7 +346,7 @@ public class DemuxUtil
 	 * {@link biolockj.Config} boolean property {@value #BARCODE_USE_REV_COMP} will use the reverse compliment of
 	 * {@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} to match sample IDs to sequences.
 	 */
-	public static final String BARCODE_USE_REV_COMP = "demultiplexer.barcodeUseReverseCompliment";
+	public static final String BARCODE_USE_REV_COMP = "demultiplexer.barcodeRevComp";
 
 	/**
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} tells BioLockJ how to match sequences with Sample

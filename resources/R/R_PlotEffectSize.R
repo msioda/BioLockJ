@@ -44,7 +44,7 @@ main <- function(){
     relAbundance = getRelAbund( level )
     
     # get stats
-    pvalTable = getStatsTable( level, getProperty("r_PlotEffectSize.parametricPval", FALSE), !getProperty("r_PlotEffectSize.disablePvalAdjustment", FALSE) )
+    pvalTable = getStatsTable( level, getProperty("r_PlotEffectSize.parametricPval", FALSE), !getProperty("r_PlotEffectSize.disablePvalAdj", FALSE) )
     if( doRSquared ) r2Table = getStatsTable( level )
   
     logInfo( c( "Processing level table[", level, "] has", nrow(countTable), "rows and", ncol(countTable), "columns") )
