@@ -19,8 +19,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.*;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
-import biolockj.module.report.humann2.AddMetadataToPathwayTables;
-import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.util.*;
 
 /**

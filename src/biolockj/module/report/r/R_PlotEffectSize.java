@@ -13,9 +13,9 @@ package biolockj.module.report.r;
 
 import java.util.List;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.ScriptModule;
-import biolockj.module.report.taxa.BuildTaxaTables;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.ModuleUtil;
 
@@ -32,9 +32,8 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		final boolean allDisabled = Config.getBoolean( this, NO_FOLD_CHANGE ) & Config.getBoolean( this, NO_COHENS_D )
-				& Config.getBoolean( this, NO_R2 );
-		if( allDisabled )
+		if( Config.getBoolean( this, NO_FOLD_CHANGE ) & Config.getBoolean( this, NO_COHENS_D )
+				& Config.getBoolean( this, NO_R2 ) )
 		{
 			throw new ConfigViolationException( NO_COHENS_D,
 					"When using " + this.getClass().getName() + " at least one of " + NO_COHENS_D + ", " + NO_R2
@@ -57,8 +56,8 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 		return preReqs;
 	}
 
-	private final String NO_COHENS_D = "r.plotEffectSize.disableCohensD";
-	private final String NO_FOLD_CHANGE = "r.plotEffectSize.disableFoldChange";
-	private final String NO_R2 = "r.plotEffectSize.disableRSquared";
+	private static final String NO_COHENS_D = "r.PlotEffectSize.disableCohensD";
+	private static final String NO_FOLD_CHANGE = "r.PlotEffectSize.disableFoldChange";
+	private static final String NO_R2 = "r.PlotEffectSize.disableRSquared";
 
 }
