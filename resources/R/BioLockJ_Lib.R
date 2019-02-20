@@ -135,6 +135,35 @@ getConfig <- function( name, defaultVal=NULL ) {
 	return( str_trim( prop ) )
 }
 
+# Return the data columns (no metadata)
+getCountTable <- function( level ){
+	fullTable = getCountMetaTable( level )
+	if( is.null( fullTable ) ) return( NULL )
+	lastCountCol = ncol(fullTable) - numMetaCols()
+	return ( fullTable[1:lastCountCol] )
+}
+
+# Returns BioLockJ generated Count + Metadata Table with a standard format:
+# 1. 1st column contains Sample IDs
+# 2. Next group of columns contain numeric count data (derived from sample analysis)
+# 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
+getCountMetaTable <- function( level=NULL ) {
+	countMetaFile = pipelineFile( paste0( level, "_metaMerged.tsv$" ) )
+	if( is.null( countMetaFile )  ) {
+		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") found none!" ) )
+		return( NULL )
+	}
+	
+	countMetaTable = readBljTable( countMetaFile )
+	if( nrow( countMetaTable ) == 0 ) {
+		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") returned an empty table with header row:", colnames( countMetaTable ) ) )
+		return( NULL )
+	}
+	
+	logInfo( "Read count table", countMetaFile )
+	return( countMetaTable )
+}
+
 # Return list, each record contains the count-data  associated with a unique value for the given nominal metadata field (metaCol)
 getFactorGroups <- function( countMetaTable, metaCol, taxaCol ) {
 	vals = list()
@@ -222,7 +251,7 @@ getReportFields <- function() {
 
 # Return the most recent stats file at the given level based on the suffix returned by statsFileSuffix()
 getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
-	statsFile = pipelineFile( paste0( level, ".*", statsFileSuffix( parametric, adjusted ) ) )
+	statsFile = pipelineFile( paste0( level, ".*", statsFileSuffix( parametric, adjusted ), "$" ) )
 	if( is.null( statsFile )  ) {
 		logInfo( paste0( "BioLockJ_Lib.R function --> getStatsTable( level=", level, 
 										 ", parametric=", parametric, ", adjusted=", adjusted, " ) returned NULL" ) )
@@ -237,34 +266,6 @@ getStatsTable <- function( level, parametric=NULL, adjusted=TRUE ) {
 	
 	logInfo( "Read stats table", statsFile )
 	return( statsTable )
-}
-
-getCountTable <- function( level ){
-	fullTable = getCountMetaTable( level )
-	if( is.null( fullTable ) ) return( NULL )
-	lastCountCol = ncol(fullTable) - numMetaCols()
-	return ( fullTable[1:lastCountCol] )
-}
-
-# Returns BioLockJ generated Count + Metadata Table with a standard format:
-# 1. 1st column contains Sample IDs
-# 2. Next group of columns contain numeric count data (derived from sample analysis)
-# 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
-getCountMetaTable <- function( level=NULL ) {
-	countMetaFile = pipelineFile( paste0( ".*", level, "_metaMerged.tsv" ) )
-	if( is.null( countMetaFile )  ) {
-		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") found none!" ) )
-		return( NULL )
-	}
-	
-	countMetaTable = readBljTable( countMetaFile )
-	if( nrow( countMetaTable ) == 0 ) {
-		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") returned an empty table with header row:", colnames( countMetaTable ) ) )
-		return( NULL )
-	}
-	
-	logInfo( "Read count table", countMetaFile )
-	return( countMetaTable )
 }
 
 # Get the temp dir for the current module, if it does not exist, create it.
@@ -347,6 +348,18 @@ numMetaCols <- function() {
 	return( getProperty( "R_internal.numMetaCols" ) )
 }
 
+
+# Given a vector of files, return the most recently modified
+pickLatestFile <- function( files ) {
+	newestFile = NULL
+	for( i in 1:length( files ) ) {
+		if( !is.null( files[i] ) && (is.null( newestFile ) || file.info( files[i] )[ "mtime" ] > file.info( newestFile )[ "mtime" ]) ) { 
+			newestFile = files[i] 
+		}
+	}
+	return( newestFile )
+}
+
 # Return a file matching the pattern underwhere under the pipeline root directory
 # If multiple results are found, return the most recent version
 # If dir is undefined, look in pipeline dir
@@ -374,14 +387,7 @@ pipelineFile <- function( pattern, dir=getPipelineDir() ) {
 		}
 	}
 	
-	returnFile = NULL
-	for( i in 1:length( results ) ) {
-		if( is.null( returnFile ) || file.info( results[i] )[ "mtime" ] > file.info( returnFile )[ "mtime" ] ) { 
-			returnFile = results[i] 
-		}
-	}
-	
-	return( returnFile )
+	return( pickLatestFile( results ) )
 }
 
 # Create an empty plot and add text. 

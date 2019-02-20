@@ -64,11 +64,12 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 		{
 			final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts( file );
 			logLowCountPathways( lowCounts );
-			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
+			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) && 
+					!Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
-				MetaUtil.addColumn( getMetaColName() + "_" + "Unique Pathways", uniquePathwaysPerSample, getTempDir(),
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample, getTempDir(),
 						true );
-				MetaUtil.addColumn( getMetaColName() + "_" + "Total Pathways", totalPathwaysPerSample, getOutputDir(),
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT, totalPathwaysPerSample, getOutputDir(),
 						true );
 			}
 		}

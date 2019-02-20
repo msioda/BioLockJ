@@ -156,12 +156,6 @@ public final class RMetaUtil
 		rScriptFields = updateNumericData( ParserModuleImpl.getOtuCountField(), rScriptFields, reportHits );
 		rScriptFields = updateNumericData( AddMetadataToTaxaTables.HIT_RATIO, rScriptFields, reportHits );
 
-		if( ModuleUtil.getClassifier( module, false ) instanceof Humann2Classifier )
-		{
-			rScriptFields = updateNumericData( Constants.HN2_UNIQUE_PATH_COUNT, rScriptFields, reportHits );
-			rScriptFields = updateNumericData( Constants.HN2_TOTAL_PATH_COUNT, rScriptFields, reportHits );
-		}
-
 		if( reportAllFields( module ) && !RuntimeParamUtil.isDirectMode() )
 		{
 			Log.info( RMetaUtil.class, "R_Modules will report on the all [" + rScriptFields.size()

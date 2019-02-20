@@ -5,20 +5,43 @@
 ### NOTE: The header printed on the reference table serves as built-in documentation for this module. 
 # See calcBarSizes
 
+# Get the raw taxa or pathway abundance table
+getRawCountTable <- function( level ){
+
+	rcTaxa = pipelineFile( paste0( "_taxaCount_", level, ".tsv$" ) )
+	rcAbund = pipelineFile( paste0( "_pAbund_", level, ".tsv$" ) )
+	effectPlots = pipelineFile( paste0( level, "_EffectSizePlots.pdf$" ) )
+	
+	latestFile = pickLatestFile( c( rcTaxa, rcAbund, effectPlots ) )
+	if( is.null( effectPlots ) || !grepl( effectPlots, latestFile ) ) {
+		return( latestFile )
+	}
+	
+	return( NULL )
+	
+	# Get the raw taxa or up to 2 pathway count tables (path abundance and gene families)
+	#rcGeneFam = pipelineFile( paste0( "_geneFam_", level, ".tsv$" ) )
+	#tables = c( pickLatestFile( c( rcTaxa, rcAbund, rcGeneFam, effectPlots ) )
+	#if( !is.null( rcAbund ) && !is.null( rcGeneFam ) && ( grepl( rcAbund, tables[1] ) || grepl( rcGeneFam, tables[1] ) ) {
+	#	return c( rcAbund, rcGeneFam )
+	#} else if ( !is.null( rcTaxa ) && ( grepl( rcTaxa, tables[1] ) ) {
+	#	return c( rcTaxa )
+	#}
+}
 
 # The main method is designed to integrate this module with BiolockJ.  
 # It handles pulling data from other modules and options from the BiolockJ properties.
 main <- function(){
   # get config option for pvalStar, pvalIncludeBar, maxBars, userOTUs, 
-  useParametric = getProperty("r_plotEffectSize.parametricPval", FALSE)
-  useAdjustedPs = !getProperty("r_plotEffectSize.disablePvalAdjustment", FALSE)
+  useParametric = getProperty("r_PlotEffectSize.parametricPval", FALSE)
+  useAdjustedPs = !getProperty("r_PlotEffectSize.disablePvalAdjustment", FALSE)
   pvalStar = getProperty("r.pvalCutoff")
-  pvalIncludeBar = getProperty("r_plotEffectSize.excludePvalAbove", 1)
-  maxBars = getProperty("r_plotEffectSize.maxNumTaxa", 40)
-  userOTUs = getProperty("r_plotEffectSize.taxa", NULL)
-  doFoldChange = !getProperty("r_plotEffectSize.disableFoldChange", FALSE) 
-  doCohensD = !getProperty("r_plotEffectSize.disableCohensD", FALSE)
-  doRSquared = !getProperty("r_plotEffectSize.disableRSquared", FALSE)
+  pvalIncludeBar = getProperty("r_PlotEffectSize.excludePvalAbove", 1)
+  maxBars = getProperty("r_PlotEffectSize.maxNumTaxa", 40)
+  userOTUs = getProperty("r_PlotEffectSize.taxa", NULL)
+  doFoldChange = !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) 
+  doCohensD = !getProperty("r_PlotEffectSize.disableCohensD", FALSE)
+  doRSquared = !getProperty("r_PlotEffectSize.disableRSquared", FALSE)
   
   successfulPlots = 0
   
@@ -64,13 +87,13 @@ main <- function(){
     if (length(getBinaryFields()) > 0 & doFoldChange){
       logInfo( c( "Preparing fold change plot for each of", length(getBinaryFields()), "report fields." ))
       logInfo( "retrieving raw counts..." )
-      rawCounts = readBljTable( pipelineFile( paste0( "_taxaCount_", level, ".tsv" ) ) )
+      rawCounts = readBljTable( getRawCountTable( level ) )
       relAbundance = normalize(rawCounts)
     }else{
       relAbundance=NULL
     }
     
-    logInfo( paste0( "Preparing plot for each of", length(getReportFields()), "report fields. ", length(getBinaryFields()), "are binary attributes." ) )
+    logInfo( paste( "Preparing plot for each of", length(getReportFields()), "report fields. ", length(getBinaryFields()), "are binary attributes." ) )
     if (length(getReportFields()) == 0){
       plotPlainText( "No reportable fields." )
     }
@@ -163,7 +186,7 @@ main <- function(){
     if( doDebug() ) sink()
   }
   if (successfulPlots == 0){
-    writeErrors("No successful plots.")
+    writeErrors( c( "No successful plots." ) )
   }
 }
 
@@ -190,7 +213,7 @@ errorHandler1 = function(err, level, reportField) {
   }else{
     # pass error to biolockj to fail module
     msg = paste0(msg, "\n", origErr)
-    writeErrors(msg)
+    writeErrors( c( msg ) )
   }
 }
 
@@ -244,8 +267,8 @@ calcBarSizes <- function(numGroupVals, denGroupVals, numGroupName, denGroupName,
   if (!is.null(pvals)){
     toPlot$pvalue = pvals[row.names(toPlot)]
     header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", pvalIncludeBar,
-                              ") and if OTU got a star (if under <pvalStar>thresholds controlled by r_plotEffectSize.excludePvalAbove and r.pvalCutoff properties respectively.",
-                              " See also: r_plotEffectSize.parametricPval property"))
+                              ") and if OTU got a star (if under <pvalStar>thresholds controlled by r_PlotEffectSize.excludePvalAbove and r.pvalCutoff properties respectively.",
+                              " See also: r_PlotEffectSize.parametricPval property"))
   }
   xAxisLab2="" #just make sure it exists; it is defined in if statements
   if ("CohensD" %in% effectType){
@@ -291,7 +314,7 @@ calcBarSizes <- function(numGroupVals, denGroupVals, numGroupName, denGroupName,
   toPlot = toPlot[order(abs(toPlot[,orderByColumn]), decreasing = T),] #highest abs on top
   maxBars = min(c(maxBars, nrow(toPlot)))
   toPlot$plotPriority = 1:nrow(toPlot)
-  header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r_plotEffectSize.maxNumTaxa or over-riden using r_plotEffectSize.taxa.'))
+  header = c(header, paste0('plotPriority: the rank of this OTU when determineing the "most changed" using abs(',orderByColumn,'); number of OTUs plotted can configured with r_PlotEffectSize.maxNumTaxa or over-riden using r_PlotEffectSize.taxa.'))
   toPlot$includeInPlot = toPlot$plotPriority <= maxBars
   comments[1] = paste0("Showing top ", maxBars, " most changed OTUs ", viableOTUs[["comment"]])
   header = c(header, "includeInPlot: will this otu be included in the plot.")

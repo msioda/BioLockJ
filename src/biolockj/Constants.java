@@ -217,12 +217,12 @@ public class Constants
 	/**
 	 * HumanN2 meta column to store the total pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
-	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathway_Count";
+	public static final String HN2_TOTAL_PATH_COUNT = "Total_Pathways";
 
 	/**
 	 * HumanN2 meta column to store the unique pathway count/sample: {@value #HN2_TOTAL_PATH_COUNT}
 	 */
-	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathway_Count";
+	public static final String HN2_UNIQUE_PATH_COUNT = "Unique_Pathways";
 
 	/**
 	 * Standard indent = 4 spaces.
