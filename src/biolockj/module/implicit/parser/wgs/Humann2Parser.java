@@ -39,8 +39,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		String longestLabel = "# Abundance File Pathways:";
 		int pad = longestLabel.length() + 2;
 
-		
-		String summary = "# Samples: " + numSamples + RETURN;
+		String summary = SummaryUtil.getOutputDirSummary( this ) + ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
 		if( numPathwayAbund != null ) 
 		{
 			summary += BioLockJUtil.addTrailingSpaces( longestLabel, pad ) + numPathwayAbund + RETURN;

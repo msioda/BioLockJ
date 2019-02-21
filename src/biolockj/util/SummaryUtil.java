@@ -109,8 +109,8 @@ public class SummaryUtil
 					}
 				}
 
-				msg += BioLockJUtil.addTrailingSpaces( "IDs w/ min " + label + ":" , 25 ) + minSamples + RETURN;
-				msg += BioLockJUtil.addTrailingSpaces( "IDs w/ max " + label + ":" , 25 ) + maxSamples + RETURN;
+				msg += BioLockJUtil.addTrailingSpaces( "IDs w/ min " + label + ":" , pad ) + minSamples + RETURN;
+				msg += BioLockJUtil.addTrailingSpaces( "IDs w/ max " + label + ":" , pad ) + maxSamples + RETURN;
 			}
 		}
 
@@ -284,9 +284,12 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
+			String label = "Mean Output File Size:";
+			int pad = label.length() + 6;
+			
 			if( module.getOutputDir().listFiles().length == 0 )
 			{
-				return "# Files Output: 0" + RETURN;
+				return BioLockJUtil.addTrailingSpaces( "# Files Output:", pad ) + "0" + RETURN;
 			}
 
 			final Collection<File> outFiles = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
@@ -317,9 +320,9 @@ public class SummaryUtil
 				outAvg = outAvg.divide( BigInteger.valueOf( count ) );
 			}
 
-			sb.append( "# Files Output: " + count + RETURN );
-			sb.append( "Mean Output File Size: " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
-			sb.append( newMeta == null ? "": "New metadata:   " + newMeta.getAbsolutePath() + RETURN );
+			sb.append( BioLockJUtil.addTrailingSpaces( "# Files Output:", pad ) + count + RETURN );
+			sb.append( BioLockJUtil.addTrailingSpaces( label, pad )  + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
+			sb.append( newMeta == null ? "": BioLockJUtil.addTrailingSpaces( "New metadata:", pad ) + newMeta.getAbsolutePath() + RETURN );
 
 		}
 		catch( final Exception ex )

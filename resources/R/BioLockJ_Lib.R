@@ -416,9 +416,9 @@ statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
 
 # Return taxonomy levels or HumanN2 report types based on property R_internal.runHumann2
 taxaLevels <- function() {
-	levels = getProperty( "report.taxonomyLevels" )
+	levels = c()
+	errMsg = "No levels found"
 	if( ( "species" %in% levels ) && getProperty( "R_internal.runHumann2", FALSE ) ) {
-		levels = c()
 		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
 			levels[length(levels) + 1] = "pAbund" 
 		}
@@ -428,6 +428,12 @@ taxaLevels <- function() {
 		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
 			levels[length(levels) + 1] = "geneFam" 
 		}
+		errMsg = "No HumanN2 Pathway or Gene Family reports found"
+	} else {
+		levels = getProperty( "report.taxonomyLevels" )
+	}
+	if( length( levels ) == 0 ) {
+		writeErrors( c( errMsg ) )
 	}
 	return( levels )
 }

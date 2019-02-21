@@ -163,36 +163,18 @@ getP_AdjustLen <- function( names ) {
 # Outputs summary tables for each metric at each taxonomyLevel
 main <- function() {
 	importLibs( c( "coin", "Kendall" ) ) 
-	
-	if( ( "species" %in% taxaLevels() ) && getProperty( "R_internal.runHumann2", FALSE ) ) {
-		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
-			buildReport( "pAbund" )
+	for( level in taxaLevels() ) {
+		if( doDebug() ) sink( getLogFile( key ) )
+		reportStats = calculateStats( key )
+		if( is.null( reportStats ) ) {
+			logInfo( c( key, "table is empty" ) )
+		} else {
+			logInfo( "Building summary Tables ... " )
+			buildSummaryTables( reportStats, key )
 		}
-		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) {
-			buildReport( "pCovg" )
-		}
-		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
-			buildReport( "geneFam" )
-		}
-	} else {
-		for( level in taxaLevels() ) {
-			buildReport( level )
-		}
+		logInfo( "Done!" )
+		if( doDebug() ) sink()
 	}
-}
-
-# Build stats report for the given file key
-buildReport <- function( key ) {
-	if( doDebug() ) sink( getLogFile( key ) )
-	reportStats = calculateStats( key )
-	if( is.null( reportStats ) ) {
-		logInfo( c( key, "table is empty" ) )
-	} else {
-		logInfo( "Building summary Tables ... " )
-		buildSummaryTables( reportStats, key )
-	}
-	logInfo( "Done!" )
-	if( doDebug() ) sink()
 }
 
 # Method wilcox_test is from the coin package

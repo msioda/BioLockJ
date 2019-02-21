@@ -171,7 +171,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	{
 		return super.getSummary() + ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
 	}
-
+	
 	/**
 	 * Default behavior is for scripts to run indefinitely (no timeout).
 	 */
@@ -217,11 +217,15 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		return Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
 	}
 
-	private boolean hasScripts() throws Exception
+	/**
+	 * Check if module produced any scripts
+	 * @return boolean
+	 * @throws Exception if errors occur
+	 */
+	protected boolean hasScripts() throws Exception
 	{
 		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		return scriptDir.exists();
-
 	}
 
 }
