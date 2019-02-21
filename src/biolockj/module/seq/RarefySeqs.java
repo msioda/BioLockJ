@@ -100,11 +100,13 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String summary = SummaryUtil.getCountSummary( readsPerSample, "Reads" );
+		String label = "Reads";
+		int pad = SummaryUtil.getPad( label );
+		String summary = SummaryUtil.getCountSummary( readsPerSample, "Reads", true );
 		sampleIds.removeAll( readsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary +=  BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) + BioLockJUtil.getCollectionAsString( sampleIds );
 		}
 		readsPerSample = null;
 		return super.getSummary() + summary;

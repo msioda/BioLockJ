@@ -32,6 +32,26 @@ import biolockj.util.*;
  */
 public class Humann2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {
+	
+	
+	@Override
+	public String getSummary() throws Exception
+	{
+		final StringBuffer sb = new StringBuffer();
+		try
+		{
+			sb.append( "HumanN2 nucleotide DB: " + getNuclDB() );
+			sb.append( "HumanN2 protein DB: " + getProtDB() );
+		}
+		catch( final Exception ex )
+		{
+			final String msg = "Unable to complete module summary: " + ex.getMessage();
+			sb.append( msg + RETURN );
+			Log.warn( getClass(), msg );
+		}
+
+		return super.getSummary() + sb.toString();
+	}
 
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
@@ -375,7 +395,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private static final String NUM_THREADS_PARAM = "--threads";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String PROT_DB_PARAM = "--protein-database";
-
 	private static final String RENORM_BASH_COMMENT = "# Renormalize output summary tables" + RETURN
 			+ "# Renorm unit options: counts/million (default) or relative abundance" + RETURN
 			+ "# Renorm mode options: community (default) or levelwise";

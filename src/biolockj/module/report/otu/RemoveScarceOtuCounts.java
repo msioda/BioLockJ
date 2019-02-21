@@ -57,14 +57,16 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
+		String label = "OTUs";
+		int pad = SummaryUtil.getPad( label );
 		String summary = "Remove rare OTUs found in less than " + getCutoff() + " samples" + RETURN;
-		summary += "# Unique OTU removed:  " + uniqueOtuRemoved.size() + RETURN;
-		summary += "# Total OTU removed:   " + totalOtuRemoved + RETURN;
-		summary += SummaryUtil.getCountSummary( hitsPerSample, "OTUs" );
+		summary += BioLockJUtil.addTrailingSpaces( "# Unique OTU removed:", pad ) + uniqueOtuRemoved.size() + RETURN;
+		summary += BioLockJUtil.addTrailingSpaces( "# Total OTU removed:", pad ) + totalOtuRemoved + RETURN;
+		summary += SummaryUtil.getCountSummary( hitsPerSample, label, true );
 		sampleIds.removeAll( hitsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) + BioLockJUtil.getCollectionAsString( sampleIds );
 		}
 		hitsPerSample = null;
 		return super.getSummary() + summary;

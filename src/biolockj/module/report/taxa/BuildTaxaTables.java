@@ -49,11 +49,14 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 	protected void buildTaxonomyTables( final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts )
 			throws Exception
 	{
+		String label = "OTUs";
+		int pad = SummaryUtil.getPad( label );
+		
 		final TreeSet<String> otus = OtuUtil.findUniqueOtus( sampleOtuCounts );
 		Log.info( getClass(), "Write " + otus.size() + " unique OTUs for: " + sampleOtuCounts.size() + " samples" );
 		report( "OTU Count", sampleOtuCounts );
 		report( "Unique OTU", otus );
-		summary += "# Samples: " + BioLockJUtil.formatNumericOutput( sampleOtuCounts.size() ) + RETURN;
+		summary += BioLockJUtil.addTrailingSpaces( "# Samples:", pad ) + BioLockJUtil.formatNumericOutput( sampleOtuCounts.size(), false ) + RETURN;
 		int totalOtus = 0;
 		boolean topLevel = true;
 		for( final String level: TaxaUtil.getTaxaLevels() )
@@ -107,8 +110,8 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 					writer.write( RETURN );
 				}
 
-				summary += "# Unique " + BioLockJUtil.addTrailingSpaces( level, 6 ) + " OTUs: "
-						+ BioLockJUtil.formatNumericOutput( uniqueOtus.get( level ) ) + RETURN;
+				summary +=  BioLockJUtil.addTrailingSpaces( "# Unique " + level + " OTUs:", pad ) 
+						+ BioLockJUtil.formatNumericOutput( uniqueOtus.get( level ), false ) + RETURN;
 			}
 			finally
 			{
@@ -120,7 +123,7 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 			topLevel = false;
 		}
 
-		summary += "# Total OTUs: " + BioLockJUtil.formatNumericOutput( totalOtus );
+		summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs:", pad )  + BioLockJUtil.formatNumericOutput( totalOtus, false );
 	}
 
 	private void report( final String label, final Collection<String> col ) throws Exception

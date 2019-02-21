@@ -31,6 +31,31 @@ import biolockj.util.*;
  */
 public class Humann2Parser extends ParserModuleImpl implements ParserModule
 {
+	
+	
+	@Override
+	public String getSummary() throws Exception
+	{
+		String longestLabel = "# Abundance File Pathways:";
+		int pad = longestLabel.length() + 2;
+
+		
+		String summary = "# Samples: " + numSamples + RETURN;
+		if( numPathwayAbund != null ) 
+		{
+			summary += BioLockJUtil.addTrailingSpaces( longestLabel, pad ) + numPathwayAbund + RETURN;
+		}
+		if( numPathwayCovg != null ) 
+		{
+			summary += BioLockJUtil.addTrailingSpaces( "# Coverage File Pathways:", pad ) + numPathwayCovg + RETURN;
+		}
+		if( numGeneFamilies != null ) 
+		{
+			summary +=  BioLockJUtil.addTrailingSpaces( "# Gene Families:", pad ) + numGeneFamilies + RETURN;
+		}
+
+		return super.getSummary() + summary;
+	}
 
 	@Override
 	public void checkDependencies() throws Exception
@@ -57,6 +82,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	@Override
 	public void parseSamples() throws Exception
 	{
+		int count = 0;
 		for( final File file: getInputFiles() )
 		{
 			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
@@ -66,6 +92,10 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 			{
 				for( final String[] record: data )
 				{
+					if( numSamples == null )
+					{
+						count++;
+					}
 					boolean newRecord = true;
 					for( final String cell: record )
 					{
@@ -81,6 +111,19 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 				{
 					writer.close();
 				}
+			}
+			
+			if( numSamples == null ){
+				numSamples = count;
+			}
+			if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_ABUND_SUM ) ) {
+				numPathwayAbund = data[0].length - 1;
+			}
+			else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_COVG_SUM ) ) {
+				numPathwayCovg = data[0].length - 1;
+			}
+			else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_GENE_FAM_SUM ) ) {
+				numGeneFamilies = data[0].length - 1;
 			}
 
 			MemoryUtil.reportMemoryUsage( "Parsed " + file.getAbsolutePath() );
@@ -170,7 +213,11 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 		return transpose;
 	}
-
+	
+	private Integer numSamples = null;
+	private Integer numPathwayAbund = null;
+	private Integer numPathwayCovg = null;
+	private Integer numGeneFamilies = null;
 	private static final String ABUND_SUFFIX = "_Abundance";
 	private static final String COVERAGE_SUFFIX = "_Coverage";
 	private static final String HN2_PARSED = "hnn2";

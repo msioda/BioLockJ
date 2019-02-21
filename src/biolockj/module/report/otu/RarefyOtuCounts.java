@@ -66,11 +66,13 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String summary = SummaryUtil.getCountSummary( hitsPerSample, "OTUs" );
+		String label = "OTUs";
+		int pad = SummaryUtil.getPad( label );
+		String summary = SummaryUtil.getCountSummary( hitsPerSample, "OTUs", false );
 		sampleIds.removeAll( hitsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) + BioLockJUtil.getCollectionAsString( sampleIds );
 		}
 		hitsPerSample = null;
 		return super.getSummary() + summary;

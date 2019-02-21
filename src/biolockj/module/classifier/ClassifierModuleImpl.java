@@ -11,17 +11,14 @@
  */
 package biolockj.module.classifier;
 
-import java.io.File;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.io.FileUtils;
 import biolockj.Constants;
-import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.util.ModuleUtil;
+import biolockj.util.SummaryUtil;
 
 /**
  * This is the superclass for all WGS and 16S biolockj.module.classifier BioModules.
@@ -68,44 +65,11 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		return postReqs;
 	}
 
-	/**
-	 * This method extends the basic summary by adding metrics on the input files. Prints the number and type of
-	 * sequence files and the mean output file size.
-	 */
+
 	@Override
 	public String getSummary() throws Exception
 	{
-		final StringBuffer sb = new StringBuffer();
-		try
-		{
-			final int numIn = getInputFiles().size();
-			if( numIn < 1 )
-			{
-				return null;
-			}
-
-			BigInteger inAvg = BigInteger.valueOf( 0L );
-			for( final File f: getInputFiles() )
-			{
-				final BigInteger size = FileUtils.sizeOfAsBigInteger( f );
-				inAvg = inAvg.add( size );
-
-			}
-			inAvg = inAvg.divide( BigInteger.valueOf( numIn ) );
-
-			sb.append( "# Input files: " + numIn + Constants.RETURN );
-			sb.append( "Mean input file size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
-			return sb.toString() + super.getSummary();
-
-		}
-		catch( final Exception ex )
-		{
-			final String msg = "Unable to complete module summary: " + ex.getMessage();
-			sb.append( msg + RETURN );
-			Log.warn( getClass(), msg );
-		}
-
-		return super.getSummary() + sb.toString();
+		return super.getSummary() + SummaryUtil.getInputSummary( this );
 	}
 
 	/**

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
@@ -139,11 +140,31 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 
 		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix + fastqExt() );
 	}
+	
+	
+	@Override
+	public String getSummary() throws Exception
+	{
+		final StringBuffer sb = new StringBuffer();
+		try
+		{
+			sb.append( "Removed contaminents in DB: " + Config.getList( this, KNEAD_DBS ) );
+		}
+		catch( final Exception ex )
+		{
+			final String msg = "Unable to complete module summary: " + ex.getMessage();
+			sb.append( msg + RETURN );
+			Log.warn( getClass(), msg );
+		}
+
+		return super.getSummary() + sb.toString();
+	}
 
 	private String fastqExt() throws Exception
 	{
 		return "." + Constants.FASTQ;
 	}
+
 
 	private String getParams() throws Exception
 	{

@@ -48,18 +48,15 @@ public class SummaryUtil
 			Log.error( SummaryUtil.class, "Unable to update summary file: " + summaryFile, ex );
 		}
 	}
-
+	
 	/**
-	 * Retun the min/max/mean/median summary stats for the given metadata numeric column
-	 * 
-	 * @param map Map(sampleId,count)
-	 * @param label Context label
-	 * @return Summary lines
-	 * @throws Exception if errors occur
+	 * Summary count label padding as label length + 18
+	 * @param label Label
+	 * @return padding length
 	 */
-	public static String getCountSummary( final Map<String, String> map, final String label ) throws Exception
+	public static int getPad( final String label )
 	{
-		return getCountSummary( map, label, label.length(), true );
+		return label.length() + 18;
 	}
 
 	/**
@@ -67,35 +64,34 @@ public class SummaryUtil
 	 * 
 	 * @param map Map(sampleId,count)
 	 * @param label Context label
-	 * @param numSpaces number of spaces used in padding
-	 * @param addTotal include line giving the total
+	 * @param addTotal Boolean if should include total count
 	 * @return Summary lines
 	 * @throws Exception if errors occur
 	 */
-	public static String getCountSummary( final Map<String, String> map, final String label, final int numSpaces,
-			final boolean addTotal ) throws Exception
+	public static String getCountSummary( final Map<String, String> map, final String label, final boolean addTotal ) throws Exception
 	{
-		String msg = "# Samples:    " + BioLockJUtil.addLeadingSpaces( "", numSpaces )
-				+ BioLockJUtil.formatNumericOutput( map.size() ) + RETURN;
+		int pad = getPad( label );
+		String msg = BioLockJUtil.addTrailingSpaces( "# Samples:", pad ) + BioLockJUtil.formatNumericOutput( map.size(), false ) + RETURN;
+				
 		if( !map.isEmpty() )
 		{
-			final String labelPad = BioLockJUtil.addLeadingSpaces( "", numSpaces - label.length() );
 			final TreeSet<Integer> vals = new TreeSet<>(
 					map.values().stream().map( Integer::parseInt ).collect( Collectors.toSet() ) );
-			msg += "# " + label + " (min):     " + labelPad + BioLockJUtil.formatNumericOutput( vals.first() ) + RETURN;
-			msg += "# " + label + " (median):  " + labelPad
-					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMedian( vals, false ) ) )
-					+ RETURN;
-			msg += "# " + label + " (mean):    " + labelPad
-					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMean( vals, false ) ) )
-					+ RETURN;
-			msg += "# " + label + " (max):     " + labelPad + BioLockJUtil.formatNumericOutput( vals.last() ) + RETURN;
+			
+			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (min):", pad ) + BioLockJUtil.formatNumericOutput( vals.first(), false  ) + RETURN;
+			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (median):", pad ) + BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMedian( vals, false ) ), false ) + RETURN;
+			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (mean):", pad ) + BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMean( vals, false ) ), false ) + RETURN;
+			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (max):", pad ) + BioLockJUtil.formatNumericOutput( vals.last(), false  )  + RETURN;
 
+			Integer sum = 0;
+			for( int val: vals )
+			{
+				sum += val;
+			}
+			
 			if( addTotal )
 			{
-				msg += "# " + label + " (total):   " + labelPad
-						+ BioLockJUtil.formatNumericOutput( Integer.valueOf( vals.stream().mapToInt( i -> i ).sum() ) )
-						+ RETURN;
+				msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (total):", pad ) + BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
 			}
 			if( !vals.first().equals( vals.last() ) )
 			{
@@ -113,8 +109,8 @@ public class SummaryUtil
 					}
 				}
 
-				msg += "IDs w/ min " + label + ":  " + labelPad + minSamples + RETURN;
-				msg += "IDs w/ max " + label + ":  " + labelPad + maxSamples + RETURN;
+				msg += BioLockJUtil.addTrailingSpaces( "IDs w/ min " + label + ":" , 25 ) + minSamples + RETURN;
+				msg += BioLockJUtil.addTrailingSpaces( "IDs w/ max " + label + ":" , 25 ) + maxSamples + RETURN;
 			}
 		}
 
@@ -219,17 +215,57 @@ public class SummaryUtil
 	}
 
 	/**
-	 * Return duration bioModule ran based on modified data of started file, formatted for display (as hours, minutes,
+	 * Return duration module ran based on modified data of started file, formatted for display (as hours, minutes,
 	 * seconds).
 	 *
-	 * @param bioModule BioModule
-	 * @return Formatted bioModule runtime
+	 * @param module BioModule
+	 * @return Formatted module runtime
 	 */
-	public static String getModuleRunTime( final BioModule bioModule )
+	public static String getModuleRunTime( final BioModule module )
 	{
 		final File started = new File(
-				bioModule.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
+				module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		return getRunTime( System.currentTimeMillis() - started.lastModified() );
+	}
+	
+	/**
+	 * Build a summary of the input files for the given module
+	 * 
+	 * @param module BioModule to summarize
+	 * @return module input summary
+	 */
+	public static String getInputSummary( final BioModule module )
+	{
+		final StringBuffer sb = new StringBuffer();
+		try
+		{
+			final int numIn = module.getInputFiles().size();
+			if( numIn < 1 )
+			{
+				return null;
+			}
+
+			BigInteger inAvg = BigInteger.valueOf( 0L );
+			for( final File f: module.getInputFiles() )
+			{
+				final BigInteger size = FileUtils.sizeOfAsBigInteger( f );
+				inAvg = inAvg.add( size );
+
+			}
+			inAvg = inAvg.divide( BigInteger.valueOf( numIn ) );
+
+			sb.append( "# Input files: " + numIn + Constants.RETURN );
+			sb.append( "Mean Input File Size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
+		}
+		catch( final Exception ex )
+		{
+			final String msg = "Unable to produce module outputDir summary for: " + module.getClass().getName()
+					+ " : " + ex.getMessage();
+			sb.append( msg + RETURN );
+			Log.warn( SummaryUtil.class, msg );
+		}
+
+		return sb.toString();
 	}
 
 	/**
@@ -240,29 +276,29 @@ public class SummaryUtil
 	 * <li>Path of new metadata file if any created
 	 * </ul>
 	 *
-	 * @param bioModule BioModule to summarize
-	 * @return Summary of bioModule output directory
+	 * @param module BioModule to summarize
+	 * @return Summary of module output directory
 	 */
-	public static String getOutputDirSummary( final BioModule bioModule )
+	public static String getOutputDirSummary( final BioModule module )
 	{
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			if( bioModule.getOutputDir().listFiles().length == 0 )
+			if( module.getOutputDir().listFiles().length == 0 )
 			{
 				return "# Files Output: 0" + RETURN;
 			}
 
-			final Collection<File> outFiles = FileUtils.listFiles( bioModule.getOutputDir(), HiddenFileFilter.VISIBLE,
+			final Collection<File> outFiles = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
 					HiddenFileFilter.VISIBLE );
 			int count = outFiles.size();
 
-			BigInteger outAvg = FileUtils.sizeOfAsBigInteger( bioModule.getOutputDir() );
+			BigInteger outAvg = FileUtils.sizeOfAsBigInteger( module.getOutputDir() );
 
 			File newMeta = new File(
-					bioModule.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+					module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
 
-			if( newMeta.exists() && bioModule.getOutputDir().listFiles().length > 1 )
+			if( newMeta.exists() && module.getOutputDir().listFiles().length > 1 )
 			{
 				count--;
 				outAvg = outAvg.subtract( FileUtils.sizeOfAsBigInteger( newMeta ) );
@@ -282,13 +318,13 @@ public class SummaryUtil
 			}
 
 			sb.append( "# Files Output: " + count + RETURN );
-			sb.append( "Mean File Size: " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
+			sb.append( "Mean Output File Size: " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
 			sb.append( newMeta == null ? "": "New metadata:   " + newMeta.getAbsolutePath() + RETURN );
 
 		}
 		catch( final Exception ex )
 		{
-			final String msg = "Unable to produce module outputDir summary for: " + bioModule.getClass().getName()
+			final String msg = "Unable to produce module outputDir summary for: " + module.getClass().getName()
 					+ " : " + ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( SummaryUtil.class, msg );
@@ -334,7 +370,7 @@ public class SummaryUtil
 	 * </ul>
 	 *
 	 * @param module ScriptModule to summarize
-	 * @return Summary of bioModule script directory
+	 * @return Summary of module script directory
 	 */
 	public static String getScriptDirSummary( final ScriptModule module )
 	{

@@ -21,9 +21,7 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.JavaModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.util.MetaUtil;
-import biolockj.util.OtuUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule
@@ -55,10 +53,12 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
+		String label = "OTUs";
+		int pad = SummaryUtil.getPad( label );
 		String summary = "Remove OTU below count --> " + getMetaColName() + RETURN;
-		summary += "# Unique OTU removed:  " + uniqueOtuRemoved.size() + RETURN;
-		summary += "# Total OTU removed:   " + totalOtuRemoved + RETURN;
-		summary += SummaryUtil.getCountSummary( hitsPerSample, "OTUs" );
+		summary += BioLockJUtil.addTrailingSpaces( "# Unique OTUs removed:" , pad ) + uniqueOtuRemoved.size() + RETURN;
+		summary +=  BioLockJUtil.addTrailingSpaces( "# Total OTUs removed:" , pad ) + totalOtuRemoved + RETURN;
+		summary += SummaryUtil.getCountSummary( hitsPerSample, label, false );
 		sampleIds.removeAll( hitsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{

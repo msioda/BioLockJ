@@ -40,7 +40,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 	@Override
 	public String getSummary() throws Exception
 	{
-		String summary = SummaryUtil.getCountSummary( readsPerSample, "Reads" );
+		String summary = SummaryUtil.getCountSummary( readsPerSample, "Reads", true );
 		sampleIds.removeAll( readsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{

@@ -137,11 +137,13 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String summary = SummaryUtil.getCountSummary( readsPerSample, "Paired Reads" );
+		String label = "Paired Reads";
+		int pad = SummaryUtil.getPad( label );
+		String summary = SummaryUtil.getCountSummary( readsPerSample, "Paired Reads", true );
 		sampleIds.removeAll( readsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) + BioLockJUtil.getCollectionAsString( sampleIds );
 		}
 		readsPerSample = null;
 		return super.getSummary() + summary;

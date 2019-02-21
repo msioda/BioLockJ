@@ -6,7 +6,7 @@
 # 3. Adjusted Parametric P-Value table
 # 4. Adjusted Non-parametric P-Value table 
 # 5. R^2 Value table
-buildSummaryTables <- function( reportStats, level ) {
+buildSummaryTables <- function( reportStats, key ) {
 	fields = unique( names(reportStats[[2]]) )
 	for( i in 2:length( reportStats ) ) {
 		df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
@@ -16,21 +16,21 @@ buildSummaryTables <- function( reportStats, level ) {
 			df[, length(df)+1] = getValuesByName( reportStats[[i]], fields[j] )
 			names(df)[length(df)] = fields[j]
 		}
-		fileName = getPath( getOutputDir(), paste0( level, "_", names(reportStats)[i] ) )
+		fileName = getPath( getOutputDir(), paste0( key, "_", names(reportStats)[i] ) )
 		logInfo( paste( "Saving output file", fileName ) )
 		write.table( df, file=fileName, sep="\t", row.names=FALSE )
 	}
 }  
 
 
-# Build list of reportStats for the taxonomy level specific countTable with the following columns:
+# Build list of reportStats for the specific taxonomy/humann2 countTable with the following columns:
 # "OTU", "parametricPvals", "nonParametricPvals", "adjParPvals", "adjNonParPvals", "rSquaredVals"
 # First, parametric & non-parametric p-values are calculated for each attribute type
 # Then the p-values are adjusted using method defined in r.pAdjust
-calculateStats <- function( level ) {
+calculateStats <- function( key ) {
 
-   countTable = getCountTable( level )
-   metaTable = getMetaData( level )
+   countTable = getCountTable( key )
+   metaTable = getMetaData( key )
    if ( is.null(countTable) || is.null(metaTable) ){
       return( NULL )
    }
@@ -181,14 +181,15 @@ main <- function() {
 	}
 }
 
+# Build stats report for the given file key
 buildReport <- function( key ) {
-	if( doDebug() ) sink( getLogFile( level ) )
-	reportStats = calculateStats( level )
+	if( doDebug() ) sink( getLogFile( key ) )
+	reportStats = calculateStats( key )
 	if( is.null( reportStats ) ) {
-		logInfo( c( level, "table is empty" ) )
+		logInfo( c( key, "table is empty" ) )
 	} else {
 		logInfo( "Building summary Tables ... " )
-		buildSummaryTables( reportStats, level )
+		buildSummaryTables( reportStats, key )
 	}
 	logInfo( "Done!" )
 	if( doDebug() ) sink()

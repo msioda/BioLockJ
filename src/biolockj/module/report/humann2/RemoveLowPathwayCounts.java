@@ -45,8 +45,8 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 		if(  !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
 		{
 			final String label = "Unique Pathways";
-			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, label, label.length(), false );
-			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, "Total Pathways", label.length(), true );
+			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, label,  false );
+			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, "Total Pathways", true );
 			sampleIds.removeAll( totalPathwaysPerSample.keySet() );
 			if( !sampleIds.isEmpty() )
 			{

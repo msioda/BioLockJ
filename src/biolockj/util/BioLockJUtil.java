@@ -156,17 +156,16 @@ public class BioLockJUtil
 	 * This method formats the input number by adding commas.
 	 *
 	 * @param input Integer value
+	 * @param addCommas boolean if numeric output should be displayed using commas
 	 * @return number as String with commas
-	 * 
 	 */
-	@SuppressWarnings("unused")
-	public static String formatNumericOutput( final Integer input )
+	public static String formatNumericOutput( final Integer input, final boolean addCommas )
 	{
 		if( input == null )
 		{
 			return "0";
 		}
-		else if( true )
+		else if( !addCommas )
 		{
 			return input.toString();
 		}
