@@ -31,13 +31,11 @@ import biolockj.util.*;
  */
 public class Humann2Parser extends ParserModuleImpl implements ParserModule
 {
-	
-	
 	@Override
 	public String getSummary() throws Exception
 	{
 		String longestLabel = "# Abundance File Pathways:";
-		int pad = longestLabel.length() + 2;
+		int pad = longestLabel.length() + 4;
 
 		String summary = SummaryUtil.getOutputDirSummary( this ) + ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
 		if( numPathwayAbund != null ) 
@@ -53,7 +51,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 			summary +=  BioLockJUtil.addTrailingSpaces( "# Gene Families:", pad ) + numGeneFamilies + RETURN;
 		}
 
-		return super.getSummary() + summary;
+		return summary;
 	}
 
 	@Override

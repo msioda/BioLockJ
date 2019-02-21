@@ -6,7 +6,7 @@
 # 3. Adjusted Parametric P-Value table
 # 4. Adjusted Non-parametric P-Value table 
 # 5. R^2 Value table
-buildSummaryTables <- function( reportStats, key ) {
+buildSummaryTables <- function( reportStats, level ) {
 	fields = unique( names(reportStats[[2]]) )
 	for( i in 2:length( reportStats ) ) {
 		df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
@@ -16,7 +16,7 @@ buildSummaryTables <- function( reportStats, key ) {
 			df[, length(df)+1] = getValuesByName( reportStats[[i]], fields[j] )
 			names(df)[length(df)] = fields[j]
 		}
-		fileName = getPath( getOutputDir(), paste0( key, "_", names(reportStats)[i] ) )
+		fileName = getPath( getOutputDir(), paste0( level, "_", names(reportStats)[i] ) )
 		logInfo( paste( "Saving output file", fileName ) )
 		write.table( df, file=fileName, sep="\t", row.names=FALSE )
 	}
@@ -27,10 +27,10 @@ buildSummaryTables <- function( reportStats, key ) {
 # "OTU", "parametricPvals", "nonParametricPvals", "adjParPvals", "adjNonParPvals", "rSquaredVals"
 # First, parametric & non-parametric p-values are calculated for each attribute type
 # Then the p-values are adjusted using method defined in r.pAdjust
-calculateStats <- function( key ) {
+calculateStats <- function( level ) {
 
-   countTable = getCountTable( key )
-   metaTable = getMetaData( key )
+   countTable = getCountTable( level )
+   metaTable = getMetaData( level )
    if ( is.null(countTable) || is.null(metaTable) ){
       return( NULL )
    }
@@ -164,13 +164,13 @@ getP_AdjustLen <- function( names ) {
 main <- function() {
 	importLibs( c( "coin", "Kendall" ) ) 
 	for( level in taxaLevels() ) {
-		if( doDebug() ) sink( getLogFile( key ) )
-		reportStats = calculateStats( key )
+		if( doDebug() ) sink( getLogFile( level ) )
+		reportStats = calculateStats( level )
 		if( is.null( reportStats ) ) {
-			logInfo( c( key, "table is empty" ) )
+			logInfo( c( level, "table is empty" ) )
 		} else {
 			logInfo( "Building summary Tables ... " )
-			buildSummaryTables( reportStats, key )
+			buildSummaryTables( reportStats, level )
 		}
 		logInfo( "Done!" )
 		if( doDebug() ) sink()

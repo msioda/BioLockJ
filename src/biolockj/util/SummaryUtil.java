@@ -56,7 +56,7 @@ public class SummaryUtil
 	 */
 	public static int getPad( final String label )
 	{
-		return label.length() + 18;
+		return label.length() + 15;
 	}
 
 	/**
@@ -285,7 +285,7 @@ public class SummaryUtil
 		try
 		{
 			String label = "Mean Output File Size:";
-			int pad = label.length() + 6;
+			int pad = label.length() + 8;
 			
 			if( module.getOutputDir().listFiles().length == 0 )
 			{
