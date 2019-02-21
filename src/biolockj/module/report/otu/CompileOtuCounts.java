@@ -52,7 +52,6 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 				reader.close();
 			}
 		}
-		
 
 		msg += "# Unique OTUs: " + BioLockJUtil.formatNumericOutput( uniqueOtus, false ) + RETURN;
 		msg += "# Total OTUs:  " + BioLockJUtil.formatNumericOutput( totalOtus, false ) + RETURN;

@@ -90,6 +90,7 @@ main <- function(){
             resetPar()
             drawPlot( data[["toPlot"]][,c("pvalue","rSquared")], field, "rSquared", "R-squared", data[["comments"]][c(1,3)] )
             logInfo( c("Completed r-squared plot for level:", level, "and report field:", field) )
+            successfulPlots = successfulPlots + 1
           }
           
           if (doCohensD && isBinaryAtt){

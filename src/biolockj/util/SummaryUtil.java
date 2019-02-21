@@ -126,9 +126,6 @@ public class SummaryUtil
 	public static String getFooter() throws Exception
 	{
 		final long duration = System.currentTimeMillis() - Constants.APP_START_TIME;
-		Log.info( SummaryUtil.class, "App Runtime start time (as long): " + Constants.APP_START_TIME );
-		Log.info( SummaryUtil.class, "App Runtime end time   (as long): " + System.currentTimeMillis() );
-
 		final StringBuffer sb = new StringBuffer();
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );

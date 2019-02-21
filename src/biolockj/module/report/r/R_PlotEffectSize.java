@@ -56,8 +56,8 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 		return preReqs;
 	}
 
-	private static final String NO_COHENS_D = "r.PlotEffectSize.disableCohensD";
-	private static final String NO_FOLD_CHANGE = "r.PlotEffectSize.disableFoldChange";
-	private static final String NO_R2 = "r.PlotEffectSize.disableRSquared";
+	private static final String NO_COHENS_D = "r_PlotEffectSize.disableCohensD";
+	private static final String NO_FOLD_CHANGE = "r_PlotEffectSize.disableFoldChange";
+	private static final String NO_R2 = "r_PlotEffectSize.disableRSquared";
 
 }
