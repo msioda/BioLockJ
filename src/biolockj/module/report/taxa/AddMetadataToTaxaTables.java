@@ -110,6 +110,15 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
 		Log.info( getClass(), "runModule() complete!" );
+		
+	}
+	
+	/**
+	 * For R to report taxa levels (not HumanN2 reports)
+	 */
+	@Override
+	public void cleanUp() throws Exception
+	{
 		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.FALSE );
 	}
 
