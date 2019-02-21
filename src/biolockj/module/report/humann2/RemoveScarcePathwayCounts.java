@@ -51,7 +51,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
 		{
 			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, "Unique Pathways", false );
-			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, "Total Pathways", true );
+			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, "Total Pathways ", true );
 			sampleIds.removeAll( totalPathwaysPerSample.keySet() );
 			if( !sampleIds.isEmpty() )
 			{
