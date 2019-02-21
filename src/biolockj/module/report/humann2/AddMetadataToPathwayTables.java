@@ -62,7 +62,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
 		Log.info( getClass(), "Metadata has been appended to the pathway abundance table" );
-		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.FALSE );
+		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
 	}
 
 	/**
