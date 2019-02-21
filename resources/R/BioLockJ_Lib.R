@@ -418,7 +418,7 @@ statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
 taxaLevels <- function() {
 	levels = c()
 	errMsg = "No levels found"
-	if( ( "species" %in% levels ) && getProperty( "R_internal.runHumann2", FALSE ) ) {
+	if( getProperty( "R_internal.runHumann2", FALSE ) ) {
 		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
 			levels[length(levels) + 1] = "pAbund" 
 		}
