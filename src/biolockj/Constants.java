@@ -76,25 +76,25 @@ public class Constants
 	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
 	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
 	 */
-	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScriptModule";
+	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScript";
 	
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
 	 * {@value #DEFAULT_MOD_DEMUX}
 	 */
-	public static final String DEFAULT_MOD_DEMUX = "project.defaultModuleDemultiplexer";
+	public static final String DEFAULT_MOD_DEMUX = "project.defaultDemultiplexer";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to convert files into fasta:
 	 * {@value #DEFAULT_MOD_FASTA_CONV} format
 	 */
-	public static final String DEFAULT_MOD_FASTA_CONV = "project.defaultModuleFastaConverter";
+	public static final String DEFAULT_MOD_FASTA_CONV = "project.defaultFastaConverter";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used combined paired read files:
 	 * {@value #DEFAULT_MOD_SEQ_MERGER}
 	 */
-	public static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultModuleSeqMerger";
+	public static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultSeqMerger";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used generate p-value and other

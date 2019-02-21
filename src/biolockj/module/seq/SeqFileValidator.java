@@ -613,12 +613,12 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 	public static final String NUM_VALID_READS = "Num_Valid_Reads";
 
 	/**
-	 * {@link biolockj.Config} Integer property {@value #INPUT_SEQ_MAX} defines the maximum number of reads per file
+	 * {@link biolockj.Config} Integer property {@value #INPUT_SEQ_MAX} defines the maximum number of bases per read
 	 */
 	protected static final String INPUT_SEQ_MAX = "seqFileValidator.seqMaxLen";
 
 	/**
-	 * {@link biolockj.Config} Integer property {@value #INPUT_SEQ_MIN} defines the minimum number of reads per file
+	 * {@link biolockj.Config} Integer property {@value #INPUT_SEQ_MIN} defines the minimum number of bases per read
 	 */
 	protected static final String INPUT_SEQ_MIN = "seqFileValidator.seqMinLen";
 
