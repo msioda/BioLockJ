@@ -17,6 +17,7 @@ import biolockj.module.ScriptModule;
 /**
  * This BioModule is used to build the R script used to generate OTU-metadata box-plots and scatter-plots for each
  * report field and taxonomy level.
+ * 
  * @web_desc R Plot OTUs
  */
 public class R_PlotOtus extends R_Module implements ScriptModule

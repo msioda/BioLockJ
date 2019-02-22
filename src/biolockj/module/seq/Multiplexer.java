@@ -24,6 +24,7 @@ import biolockj.util.*;
  * This BioModule will merge sequence files into a single combined sequence file, with either the sample ID or an
  * identifying bar-code (if defined in the metatata) is stored in the sequence header.<br>
  * BioLockJ is designed to run on demultiplexed data so this must be the last module to run in its branch.
+ * 
  * @web_desc Multiplexer
  */
 public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule

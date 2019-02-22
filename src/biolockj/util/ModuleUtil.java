@@ -18,10 +18,8 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.Demultiplexer;
-import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_CalculateStats;
 import biolockj.module.report.r.R_Module;
-import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.module.seq.AwkFastaConverter;
 import biolockj.module.seq.PearMergeReads;
 
@@ -333,8 +331,8 @@ public class ModuleUtil
 	}
 
 	/**
-	 * Method creates a file named {@value biolockj.Constants#BLJ_COMPLETE} in module root directory to document
-	 * module has completed successfully. Also clean up by removing file {@value biolockj.Constants#BLJ_STARTED}.
+	 * Method creates a file named {@value biolockj.Constants#BLJ_COMPLETE} in module root directory to document module
+	 * has completed successfully. Also clean up by removing file {@value biolockj.Constants#BLJ_STARTED}.
 	 *
 	 * @param module BioModule
 	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_COMPLETE} file
@@ -352,15 +350,15 @@ public class ModuleUtil
 				module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		BioLockJUtil.deleteWithRetry( startFile, 5 );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
-		Log.info( ModuleUtil.class, 
+		Log.info( ModuleUtil.class,
 				"FINISHED [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 	}
 
 	/**
-	 * Method creates a file named {@value biolockj.Constants#BLJ_STARTED} in module root directory to document
-	 * module has completed successfully. Also sets the start time and caches module name to list of executed modules
-	 * so we can check later if it ran during this pipeline execution (as opposed to a previous failed run).
+	 * Method creates a file named {@value biolockj.Constants#BLJ_STARTED} in module root directory to document module
+	 * has completed successfully. Also sets the start time and caches module name to list of executed modules so we can
+	 * check later if it ran during this pipeline execution (as opposed to a previous failed run).
 	 *
 	 * @param module module
 	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_STARTED} file
@@ -375,7 +373,7 @@ public class ModuleUtil
 			throw new Exception( "Unable to create " + f.getAbsolutePath() );
 		}
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
-		Log.info( ModuleUtil.class, 
+		Log.info( ModuleUtil.class,
 				"STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 	}
@@ -429,24 +427,6 @@ public class ModuleUtil
 	{
 		final File dir = new File( module.getModuleDir().getAbsolutePath() + File.separator + subDirName );
 		return dir.exists();
-	}
-	
-	/**
-	 * Get correct meta-merged BioModule type for the give module.  This is determined by examining previous
-	 * configured modules to see what type of raw count tables are generated.
-	 *  
-	 * @param module BioModule
-	 * @return MetaMerged BioModule
-	 * @throws Exception if errors occur
-	 */
-	public static String getMetaMergedModule( final BioModule module ) throws Exception
-	{
-		if( PathwayUtil.useHumann2RawCount( module ) )
-		{
-			return AddMetadataToPathwayTables.class.getName();
-		}
-
-		return AddMetadataToTaxaTables.class.getName();
 	}
 
 	private static List<Integer> getClassifierIds() throws Exception

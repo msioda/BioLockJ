@@ -25,6 +25,7 @@ import biolockj.util.*;
 
 /**
  * This BioModule
+ * 
  * @web_desc Remove Scarce Pathway Counts
  */
 public class RemoveScarcePathwayCounts extends Humann2CountModule implements JavaModule
@@ -73,13 +74,14 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 			logScarceData( removeScarcePathwayCounts( file, getScarcePathways( table ) ), getScarcePathwayLogFile() );
 			logScarceData( removeScarceSamples( file, getScarceSampleIds( file, table ) ), getScarceSampleLogFile() );
 
-			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) &&
-					!Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
+			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS )
+					&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
+					&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
-				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample, getTempDir(),
-						true );
-				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT, totalPathwaysPerSample, getOutputDir(),
-						true );
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample,
+						getTempDir(), true );
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT, totalPathwaysPerSample,
+						getOutputDir(), true );
 			}
 		}
 	}
@@ -204,43 +206,6 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		return scarcePathMap;
 	}
 
-	private TreeMap<String, TreeSet<String>> removeScarceSamples( final File file, final Set<String> scarceIds )
-			throws Exception
-	{
-		final TreeMap<String, TreeSet<String>> scarceSampleMap = new TreeMap<>();
-		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
-		final List<List<String>> output = new ArrayList<>();
-		List<String> pathways = null;
-		for( final List<String> record: table )
-		{
-			final String id = record.get( 0 );
-			if( id.equals( MetaUtil.getID() ) )
-			{
-				pathways = record.subList( 1, record.size() );
-			}
-
-			if( scarceIds.contains( id ) )
-			{
-				scarceSampleMap.put( id, new TreeSet<>() );
-				for( int i = 1; i < record.size(); i++ )
-				{
-					if( !record.get( i ).equals( "0" ) )
-					{
-						scarceSampleMap.get( id ).add( pathways.get( i ) );
-					}
-				}
-			}
-			else
-			{
-				output.add( record );
-			}
-		}
-
-		buildOutputTable( file, output );
-
-		return scarceSampleMap;
-	}
-
 	private void buildOutputTable( final File file, final List<List<String>> data ) throws Exception
 	{
 		final String cutoff = getMetaColName().replaceAll( "%", "per" );
@@ -353,7 +318,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 		for( final String pathway: pathways )
 		{
 			final Double count = pathMap.get( pathway );
-			if( count != null &&  count > 0 && count < getCutoff() )
+			if( count != null && count > 0 && count < getCutoff() )
 			{
 				scarcePathways.add( pathway );
 			}
@@ -416,6 +381,43 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 			scarceSampleCutoffProp = Config.getModuleProp( this, Constants.REPORT_SAMPLE_CUTOFF );
 		}
 		return scarceSampleCutoffProp;
+	}
+
+	private TreeMap<String, TreeSet<String>> removeScarceSamples( final File file, final Set<String> scarceIds )
+			throws Exception
+	{
+		final TreeMap<String, TreeSet<String>> scarceSampleMap = new TreeMap<>();
+		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
+		final List<List<String>> output = new ArrayList<>();
+		List<String> pathways = null;
+		for( final List<String> record: table )
+		{
+			final String id = record.get( 0 );
+			if( id.equals( MetaUtil.getID() ) )
+			{
+				pathways = record.subList( 1, record.size() );
+			}
+
+			if( scarceIds.contains( id ) )
+			{
+				scarceSampleMap.put( id, new TreeSet<>() );
+				for( int i = 1; i < record.size(); i++ )
+				{
+					if( !record.get( i ).equals( "0" ) )
+					{
+						scarceSampleMap.get( id ).add( pathways.get( i ) );
+					}
+				}
+			}
+			else
+			{
+				output.add( record );
+			}
+		}
+
+		buildOutputTable( file, output );
+
+		return scarceSampleMap;
 	}
 
 	private final Set<String> sampleIds = new HashSet<>();

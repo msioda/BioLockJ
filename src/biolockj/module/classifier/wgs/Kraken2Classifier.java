@@ -27,6 +27,7 @@ import biolockj.util.SeqUtil;
  * This BioModule assigns taxonomy to WGS sequences and translates the results into mpa-format. Command line options are
  * defined in the online manual: <a href="http://ccb.jhu.edu/software/kraken/MANUAL.html" target=
  * "_top">http://ccb.jhu.edu/software/kraken/MANUAL.html</a>
+ * 
  * @web_desc Kraken2 Classifier
  */
 public class Kraken2Classifier extends ClassifierModuleImpl implements ClassifierModule

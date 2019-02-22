@@ -23,6 +23,7 @@ import biolockj.util.*;
 
 /**
  * This BioModule
+ * 
  * @web_desc Remove Low Pathway Counts
  */
 public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaModule
@@ -42,9 +43,9 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 	public String getSummary() throws Exception
 	{
 		String summary = "Remove Pathway counts below --> " + getMetaColName() + RETURN;
-		if(  !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
 		{
-			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, "Unique Pathways",  false );
+			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, "Unique Pathways", false );
 			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, "Total Pathways ", true );
 			sampleIds.removeAll( totalPathwaysPerSample.keySet() );
 			if( !sampleIds.isEmpty() )
@@ -64,13 +65,14 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 		{
 			final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts( file );
 			logLowCountPathways( lowCounts );
-			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) && 
-					!Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
+			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS )
+					&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
+					&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
 			{
-				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample, getTempDir(),
-						true );
-				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT, totalPathwaysPerSample, getOutputDir(),
-						true );
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample,
+						getTempDir(), true );
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT, totalPathwaysPerSample,
+						getOutputDir(), true );
 			}
 		}
 	}

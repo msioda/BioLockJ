@@ -27,10 +27,9 @@ import biolockj.util.TaxaUtil;
 public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode>
 {
 	/**
-	 * If called for level not included in
-	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}, check if the top level taxonomy
-	 * level is already assigned. If so, populate missing levels by passing the parent taxa to
-	 * {@link biolockj.util.TaxaUtil#buildUnclassifiedTaxa(String)} until the given in level is assigned.<br>
+	 * If called for level not included in {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS},
+	 * check if the top level taxonomy level is already assigned. If so, populate missing levels by passing the parent
+	 * taxa to {@link biolockj.util.TaxaUtil#buildUnclassifiedTaxa(String)} until the given in level is assigned.<br>
 	 * <br>
 	 * This method assumes it is called repeatedly for each OTU (once/level) and that each subsequent call passes a
 	 * lower taxonomy level than the previous.

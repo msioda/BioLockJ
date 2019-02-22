@@ -14,10 +14,7 @@ package biolockj.module.seq;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
-import biolockj.BioLockJ;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
@@ -27,6 +24,7 @@ import biolockj.util.*;
 /**
  * This BioModule removes sequence primers from demultiplexed files.<br>
  * The primers are defined using regular expressions in a separate file.
+ * 
  * @web_desc Trim Primers
  */
 public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
@@ -481,7 +479,8 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 		{
 			for( final File f: seqsWithPrimersTrimmed.keySet() )
 			{
-				if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
+				if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
+						|| SeqUtil.isForwardRead( f.getName() ) )
 				{
 					validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
 							Long.toString( seqsWithPrimersTrimmed.get( f ) ) );

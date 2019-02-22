@@ -65,7 +65,6 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		return postReqs;
 	}
 
-
 	@Override
 	public String getSummary() throws Exception
 	{

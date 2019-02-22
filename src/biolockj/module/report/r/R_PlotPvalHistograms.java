@@ -18,6 +18,7 @@ import biolockj.module.ScriptModule;
 /**
  * This BioModule is used to build the R script used to generate p-value histograms for each report field and each
  * taxonomy level configured.
+ * 
  * @web_desc R Plot P-value Histograms
  */
 public class R_PlotPvalHistograms extends R_Module implements ScriptModule

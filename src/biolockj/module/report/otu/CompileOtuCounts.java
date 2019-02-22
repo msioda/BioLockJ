@@ -15,11 +15,14 @@ import java.io.*;
 import java.util.*;
 import biolockj.Log;
 import biolockj.module.JavaModule;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.MetaUtil;
+import biolockj.util.OtuUtil;
 
 /**
  * This BioModule compiles the counts from all OTU count files into a single summary OTU count file containing OTU
  * counts for the entire dataset.
+ * 
  * @web_desc Compile OTU Counts
  */
 public class CompileOtuCounts extends OtuCountModule implements JavaModule
@@ -30,8 +33,9 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 	 */
 	@Override
 	public String getSummary() throws Exception
-	{                
-		String msg = "# Samples:     " + BioLockJUtil.formatNumericOutput( MetaUtil.getSampleIds().size(), false ) + RETURN;
+	{
+		String msg = "# Samples:     " + BioLockJUtil.formatNumericOutput( MetaUtil.getSampleIds().size(), false )
+				+ RETURN;
 		int uniqueOtus = 0;
 		int totalOtus = 0;
 		BufferedReader reader = null;

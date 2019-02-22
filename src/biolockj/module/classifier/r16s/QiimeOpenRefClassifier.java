@@ -22,6 +22,7 @@ import biolockj.util.MetaUtil;
 /**
  * This module runs the QIIME pick_open_reference_otus.py script on FastA sequence files in a single script so it is
  * important to allocate sufficient job resources if running in a clustered environment.
+ * 
  * @web_desc Qiime Open Ref Classifier
  */
 public class QiimeOpenRefClassifier extends QiimeClassifier implements ClassifierModule

@@ -640,6 +640,13 @@ public class BioLockJUtil
 	public static final String PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE = "hn2";
 
 	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for normalized taxa count files that meet the file
+	 * requirements to pass {@link biolockj.util.TaxaUtil#isNormalizedTaxaFile(File)}.
+	 */
+	public static final String PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count_norm";
+
+	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}<br>
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for OTU count files that meet the file requirements
 	 * to pass {@link biolockj.util.OtuUtil#isOtuFile(File)}.
@@ -679,13 +686,6 @@ public class BioLockJUtil
 	 * to pass {@link biolockj.util.TaxaUtil#isTaxaFile(File)}.
 	 */
 	public static final String PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count";
-	
-	/**
-	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
-	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for normalized taxa count files that meet the 
-	 * file requirements to pass {@link biolockj.util.TaxaUtil#isNormalizedTaxaFile(File)}.
-	 */
-	public static final String PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count_norm";
 
 	private static final List<File> inputFiles = new ArrayList<>();
 	private static final String VERSION_FILE = ".version";

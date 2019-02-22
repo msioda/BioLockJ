@@ -23,6 +23,7 @@ import biolockj.util.SeqUtil;
 
 /**
  * This BioModule uses gzip to decompress input sequence files.
+ * 
  * @web_desc Decompress .gz Files
  */
 public class Gunzipper extends SeqModuleImpl implements SeqModule

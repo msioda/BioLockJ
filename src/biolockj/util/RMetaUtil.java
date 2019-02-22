@@ -145,7 +145,7 @@ public final class RMetaUtil
 				rScriptFields.remove( Constants.QIIME_DESC_COL );
 				rScriptFields.remove( Constants.QIIME_DEMUX_COL );
 				rScriptFields.remove( Constants.QIIME_LINKER_PRIMER_SEQ_COL );
-				rScriptFields.remove( Constants.QIIME_BARCODE_SEQ_COL);
+				rScriptFields.remove( Constants.QIIME_BARCODE_SEQ_COL );
 			}
 		}
 
@@ -254,7 +254,7 @@ public final class RMetaUtil
 	 * @return Set of column names with only 2 non-numeric values
 	 * @throws Exception if unable to assing binary fields
 	 */
-	public static Set<String> getBinaryFields( BioModule module ) throws Exception
+	public static Set<String> getBinaryFields( final BioModule module ) throws Exception
 	{
 		if( binaryFields == null )
 		{
@@ -559,15 +559,21 @@ public final class RMetaUtil
 	}
 
 	/**
+	 * {@link biolockj.Config} Internal List property: {@value #BINARY_FIELDS}<br>
+	 * Binary fields contain only 2 unique non-NA options
+	 */
+	protected static final String BINARY_FIELDS = "R_internal.binaryFields";
+	/**
 	 * Name of R script variable with metadata column count
 	 */
 	protected static final String NUM_META_COLS = "R_internal.numMetaCols";
+
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_EXCLUDE_FIELDS}<br>
 	 * R reports must contain at least one valid nominal or numeric metadata field.
 	 */
 	protected static final String R_EXCLUDE_FIELDS = "r.excludeFields";
-	
+
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_MDS_REPORT_FIELDS}<br>
 	 * Fields listed here must exist in the metadata file.
@@ -592,12 +598,6 @@ public final class RMetaUtil
 	 * R reports must contain at least one valid field.
 	 */
 	protected static final String R_REPORT_FIELDS = "r.reportFields";
-
-	/**
-	 * {@link biolockj.Config} Internal List property: {@value #BINARY_FIELDS}<br>
-	 * Binary fields contain only 2 unique non-NA options
-	 */
-	protected static final String BINARY_FIELDS = "R_internal.binaryFields";
 
 	private static Set<String> binaryFields = null;
 	private static Set<String> mdsFields = null;

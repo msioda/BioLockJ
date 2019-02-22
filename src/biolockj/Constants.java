@@ -18,12 +18,7 @@ package biolockj;
  */
 public class Constants
 {
-	
-	/**
-	 * {@link biolockj.Config} Boolean property to disable fold change plots: {@value #R_PLOT_EFFECT_SIZE_DISABLE_FC}
-	 */
-	public static final String R_PLOT_EFFECT_SIZE_DISABLE_FC = "r_PlotEffectSize.disableFoldChange";
-	
+
 	/**
 	 * Captures the application start time
 	 */
@@ -60,30 +55,18 @@ public class Constants
 	 * URL to the BioLockJ WIKI
 	 */
 	public static final String BLJ_WIKI = "https://github.com/msioda/BioLockJ/wiki";
-	
+
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #CLASS}
 	 */
 	public static final String CLASS = "class";
-	
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_PAIRED_READS}<br>
-	 * Set to true if paired reads are found, set by the application runtime code.
-	 */
-	public static final String INTERNAL_PAIRED_READS = "internal.pairedReads";
-	
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #INPUT_REQUIRE_COMPLETE_PAIRS}<br>
-	 * Require 100% sequence input files are matching paired reads
-	 */
-	public static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
-	
+
 	/**
 	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
 	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
 	 */
 	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScript";
-	
+
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
 	 * {@value #DEFAULT_MOD_DEMUX}
@@ -113,6 +96,7 @@ public class Constants
 	 * with {@value #DELIM_SEP}
 	 */
 	public static final String DELIM_SEP = "__";
+
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
 	 * If set to {@value #TRUE}, implicit modules will not be added to the pipeline.
@@ -129,7 +113,6 @@ public class Constants
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #DOMAIN}
 	 */
 	public static final String DOMAIN = "domain";
-
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
@@ -152,12 +135,12 @@ public class Constants
 	 * {@link biolockj.Config} property for java executable: {@value #EXE_JAVA}
 	 */
 	public static final String EXE_JAVA = "exe.java";
-	
+
 	/**
 	 * {@link biolockj.Config} property to python executable
 	 */
 	public static final String EXE_PYTHON = "exe.python";
-	
+
 	/**
 	 * Boolean {@link biolockj.Config} property value option: {@value #FALSE}
 	 */
@@ -167,16 +150,17 @@ public class Constants
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #FAMILY}
 	 */
 	public static final String FAMILY = "family";
-	
+
 	/**
 	 * File extension for fasta files = {@value #FASTA}
 	 */
 	public static final String FASTA = "fasta";
-	
+
 	/**
 	 * File extension for fastq files: {@value #FASTQ}
 	 */
 	public static final String FASTQ = "fastq";
+
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #GENUS}
 	 */
@@ -192,7 +176,6 @@ public class Constants
 	 * {@value #HN2_DISABLE_GENE_FAMILIES}
 	 */
 	public static final String HN2_DISABLE_GENE_FAMILIES = "humann2.disableGeneFamilies";
-
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Pathway Abundance report:
 	 * {@value #HN2_DISABLE_PATH_ABUNDANCE}
@@ -240,7 +223,7 @@ public class Constants
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
-	
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_FORWARD_READ_SUFFIX}<br>
 	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
@@ -254,6 +237,12 @@ public class Constants
 	public static final String INPUT_IGNORE_FILES = "input.ignoreFiles";
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #INPUT_REQUIRE_COMPLETE_PAIRS}<br>
+	 * Require 100% sequence input files are matching paired reads
+	 */
+	public static final String INPUT_REQUIRE_COMPLETE_PAIRS = "input.requireCompletePairs";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_REVERSE_READ_SUFFIX}<br>
 	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
 	 */
@@ -264,26 +253,26 @@ public class Constants
 	 * Set value of prefix to trim from sequence file names or headers to obtain Sample ID.
 	 */
 	public static final String INPUT_TRIM_PREFIX = "input.trimPrefix";
-	
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_SUFFIX}<br>
 	 * Set value of suffix to trim from sequence file names or headers to obtain Sample ID.
 	 */
 	public static final String INPUT_TRIM_SUFFIX = "input.trimSuffix";
-	
+
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_ALL_MODULES}<br>
 	 * List of all configured, implicit, and pre/post-requisite modules for the pipeline.<br>
 	 * Example: biolockj.module.ImportMetadata, etc.
 	 */
 	public static final String INTERNAL_ALL_MODULES = "internal.allModules";
-	
+
 	/**
 	 * Set BioModule tag in {@link biolockj.Config} file to include in pipeline: {@value #INTERNAL_BLJ_MODULE}<br>
 	 * Example: #BioModule biolockj.module.ImportMetadata
 	 */
 	public static final String INTERNAL_BLJ_MODULE = "#BioModule";
-	
+
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_DEFAULT_CONFIG}<br>
 	 * List of all nested default config files.<br>
@@ -303,18 +292,24 @@ public class Constants
 	public static final String INTERNAL_MULTIPLEXED = "internal.multiplexed";
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #INTERNAL_PAIRED_READS}<br>
+	 * Set to true if paired reads are found, set by the application runtime code.
+	 */
+	public static final String INTERNAL_PAIRED_READS = "internal.pairedReads";
+
+	/**
 	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>
 	 * The property holds the 1st character used in the sequence header for the given dataset
 	 */
 	public static final String INTERNAL_SEQ_HEADER_CHAR = "internal.seqHeaderChar";
-	
+
 	/**
 	 * {@link biolockj.Config} Internal property: {@value #INTERNAL_SEQ_TYPE}<br>
 	 * The sequence type requires either {@value #FASTA} or {@value #FASTQ}<br>
 	 * System will auto-detect if not configured
 	 */
 	public static final String INTERNAL_SEQ_TYPE = "internal.seqType";
-	
+
 	/**
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when
 	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Constants#TRUE}
@@ -364,28 +359,7 @@ public class Constants
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
 	 */
 	public static final String OTU_COUNT = "otuCount";
-	
-	/**
-	 * QIIME mapping column created by {@link biolockj.module.implicit.qiime.BuildQiimeMapping} that stores the name of
-	 * the original fasta file associated with the sample: {@value #QIIME_DEMUX_COL}
-	 */
-	public static final String QIIME_DEMUX_COL = "BioLockJFileName";
-	
-	/**
-	 * QIIME mapping file required 2nd column name
-	 */
-	public static final String QIIME_BARCODE_SEQ_COL = "BarcodeSequence";
 
-	/**
-	 * QIIME mapping file required name of last column
-	 */
-	public static final String QIIME_DESC_COL = "Description";
-
-	/**
-	 * QIIME mapping file required 3rd column name
-	 */
-	public static final String QIIME_LINKER_PRIMER_SEQ_COL = "LinkerPrimerSequence";
-	
 	/**
 	 * QIIME OTU table prefix: {@value #OTU_TABLE_PREFIX}
 	 */
@@ -481,16 +455,47 @@ public class Constants
 	public static final String[] QIIME_AMBIGUOUS_TAXA = { "Ambiguous_taxa", "Other", "Unassigned" };
 
 	/**
+	 * QIIME mapping file required 2nd column name
+	 */
+	public static final String QIIME_BARCODE_SEQ_COL = "BarcodeSequence";
+
+	/**
+	 * QIIME mapping column created by {@link biolockj.module.implicit.qiime.BuildQiimeMapping} that stores the name of
+	 * the original fasta file associated with the sample: {@value #QIIME_DEMUX_COL}
+	 */
+	public static final String QIIME_DEMUX_COL = "BioLockJFileName";
+
+	/**
+	 * QIIME mapping file required name of last column
+	 */
+	public static final String QIIME_DESC_COL = "Description";
+
+	/**
+	 * QIIME mapping file required 3rd column name
+	 */
+	public static final String QIIME_LINKER_PRIMER_SEQ_COL = "LinkerPrimerSequence";
+
+	/**
 	 * File extension of BioLockJ generated R Scripts: {@value #R_EXT}
 	 */
 	public static final String R_EXT = ".R";
+
+	/**
+	 * {@link biolockj.Config} Boolean property to signal R scripts to build HumanN2 reports
+	 */
+	public static final String R_INTERNAL_RUN_HN2 = "R_internal.runHumann2";
+
+	/**
+	 * {@link biolockj.Config} Boolean property to disable fold change plots: {@value #R_PLOT_EFFECT_SIZE_DISABLE_FC}
+	 */
+	public static final String R_PLOT_EFFECT_SIZE_DISABLE_FC = "r_PlotEffectSize.disableFoldChange";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #RDP_THRESHOLD_SCORE}<br>
 	 * RdpParser will ignore OTU assignments below the threshold score (0-100)
 	 */
 	public static final String RDP_THRESHOLD_SCORE = "rdp.minThresholdScore";
-	
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #REPORT_LOG_BASE}<br>
 	 * Required to be set to "e" or "10" to build log normalized reports.
@@ -536,12 +541,6 @@ public class Constants
 	 * {@value #GENUS}, {@value #SPECIES}
 	 */
 	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
-	
-	
-	/**
-	 * {@link biolockj.Config} Boolean property to signal R scripts to build HumanN2 reports
-	 */
-	public static final String R_INTERNAL_RUN_HN2 = "R_internal.runHumann2";
 
 	/**
 	 * Return character constant *backslash-n*
@@ -557,12 +556,12 @@ public class Constants
 	 * File suffix appended to failed scripts: {@value #SCRIPT_FAILURES}
 	 */
 	public static final String SCRIPT_FAILURES = "Failures";
-	
+
 	/**
 	 * File suffix appended to started script: {@value #SCRIPT_STARTED}
 	 */
 	public static final String SCRIPT_STARTED = "Started";
-	
+
 	/**
 	 * File suffix appended to successful scripts: {@value #SCRIPT_SUCCESS}
 	 */
@@ -572,7 +571,7 @@ public class Constants
 	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
 	 */
 	public static final String SEPARATOR = "|";
-	
+
 	/**
 	 * BioLockJ shell script file extension constant: {@value #SH_EXT}
 	 */

@@ -305,7 +305,8 @@ public class Pipeline
 	/**
 	 * The {@link biolockj.module.ScriptModule#getScriptDir()} will contain one main script and one ore more worker
 	 * scripts.<br>
-	 * An empty file with {@value Constants#SCRIPT_STARTED} appended to the script name is created when execution begins.<br>
+	 * An empty file with {@value Constants#SCRIPT_STARTED} appended to the script name is created when execution
+	 * begins.<br>
 	 * If successful, an empty file with {@value Constants#SCRIPT_SUCCESS} appended to the script name is created.<br>
 	 * Upon failure, an empty file with {@value Constants#SCRIPT_FAILURES} appended to the script name is created.<br>
 	 * Script status is polled each minute, determining status by counting indicator files.<br>
@@ -428,8 +429,8 @@ public class Pipeline
 		Log.info( Pipeline.class, prompt + "Java program wakes every 60 seconds to check execution progress" );
 		Log.info( Pipeline.class, prompt + "Status determined by existance of indicator files in "
 				+ module.getScriptDir().getAbsolutePath() );
-		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + Constants.SCRIPT_STARTED + "\", \"_" + Constants.SCRIPT_SUCCESS
-				+ "\", or \"_" + Constants.SCRIPT_FAILURES + "\"" );
+		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + Constants.SCRIPT_STARTED + "\", \"_"
+				+ Constants.SCRIPT_SUCCESS + "\", or \"_" + Constants.SCRIPT_FAILURES + "\"" );
 		Log.info( Pipeline.class,
 				prompt + "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
 		if( module.getTimeout() == null || module.getTimeout() > 10 )

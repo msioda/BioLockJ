@@ -23,6 +23,7 @@ import biolockj.util.RMetaUtil;
 /**
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
  * field. A pdf is created for each taxonomy level.
+ * 
  * @web_desc R Plot Effect Size
  */
 public class R_PlotEffectSize extends R_Module implements ScriptModule
@@ -39,12 +40,14 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 		{
 			throw new ConfigViolationException( NO_COHENS_D,
 					"When using " + this.getClass().getName() + " at least one of " + NO_COHENS_D + ", " + NO_R2
-							+ ", or " + Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC  + " must not be true." );
+							+ ", or " + Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC + " must not be true." );
 		}
-		
-		if(!Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC ) && RMetaUtil.getBinaryFields( this ).isEmpty() )
+
+		if( !Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC )
+				&& RMetaUtil.getBinaryFields( this ).isEmpty() )
 		{
-			throw new ConfigViolationException( Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC , "Requires binary report fields" );
+			throw new ConfigViolationException( Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC,
+					"Requires binary report fields" );
 		}
 	}
 
@@ -56,8 +59,8 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = getStatPreReqs();
-		if( !Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC  ) && 
-				!BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) )
+		if( !Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC )
+				&& !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) )
 		{
 			preReqs.add( NormalizeTaxaTables.class.getName() );
 		}

@@ -25,6 +25,7 @@ import biolockj.util.ModuleUtil;
 
 /**
  * This BioModule is used to build the R script used to generate taxonomy statistics and plots.
+ * 
  * @web_desc R Statistics Calculator
  */
 public class R_CalculateStats extends R_Module implements BioModule
@@ -88,40 +89,10 @@ public class R_CalculateStats extends R_Module implements BioModule
 	}
 
 	/**
-	 * Analyze file name for key strings to determine if file is a stats file output by this module.
-	 *
-	 * @param file Ambiguous file
-	 * @return TRUE if file name is formatted as if output by this module
-	 * @throws Exception if errors occur
-	 */
-	public static boolean isStatsFile( final File file ) throws Exception
-	{
-		for( final String suffix: statSuffixSet )
-		{
-			if( file.getName().contains( suffix ) && file.getName().endsWith( TSV_EXT ) )
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static List<File> getStatsFileDirs( final BioModule module ) throws Exception
-	{
-		final BioModule statsModule = ModuleUtil.getModule( module, R_CalculateStats.class.getName(), false );
-		if( statsModule != null )
-		{
-			final List<File> dirs = new ArrayList<>();
-			dirs.add( statsModule.getOutputDir() );
-			return dirs;
-		}
-
-		return Config.requireExistingDirs( module, Constants.INPUT_DIRS );
-	}
-
-	/**
 	 * Get the file name suffix used to specify types of statistics.
-	 * @param isParametric boolean get the Parametric rather than the non-parametric suffix. If null, get the r-squared suffix.
+	 * 
+	 * @param isParametric boolean get the Parametric rather than the non-parametric suffix. If null, get the r-squared
+	 * suffix.
 	 * @param isAdjusted boolean get the adjusted rather than the non-adjusted suffix
 	 * @return file name suffix
 	 * @throws Exception if errors occur
@@ -153,9 +124,36 @@ public class R_CalculateStats extends R_Module implements BioModule
 	}
 
 	/**
-	 * R^2 identifier: {@value #R_SQUARED_VALS}
+	 * Analyze file name for key strings to determine if file is a stats file output by this module.
+	 *
+	 * @param file Ambiguous file
+	 * @return TRUE if file name is formatted as if output by this module
+	 * @throws Exception if errors occur
 	 */
-	protected static final String R_SQUARED_VALS = "rSquaredVals";
+	public static boolean isStatsFile( final File file ) throws Exception
+	{
+		for( final String suffix: statSuffixSet )
+		{
+			if( file.getName().contains( suffix ) && file.getName().endsWith( TSV_EXT ) )
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static List<File> getStatsFileDirs( final BioModule module ) throws Exception
+	{
+		final BioModule statsModule = ModuleUtil.getModule( module, R_CalculateStats.class.getName(), false );
+		if( statsModule != null )
+		{
+			final List<File> dirs = new ArrayList<>();
+			dirs.add( statsModule.getOutputDir() );
+			return dirs;
+		}
+
+		return Config.requireExistingDirs( module, Constants.INPUT_DIRS );
+	}
 
 	/**
 	 * This {@value #R_PVAL_ADJ_METHOD} option can be set in {@link biolockj.Config} file: {@value #ADJ_PVAL_ATTRIBUTE}
@@ -214,6 +212,11 @@ public class R_CalculateStats extends R_Module implements BioModule
 	 * p.adjust.methods = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")
 	 */
 	protected static final String R_PVAL_ADJ_METHOD = "r_CalculateStats.pAdjustMethod";
+
+	/**
+	 * R^2 identifier: {@value #R_SQUARED_VALS}
+	 */
+	protected static final String R_SQUARED_VALS = "rSquaredVals";
 
 	private static final Set<String> statSuffixSet = new HashSet<>();
 

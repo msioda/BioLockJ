@@ -25,10 +25,20 @@ import biolockj.util.PathwayUtil;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
+ * 
  * @web_desc Add Metadata to Pathway Tables
  */
 public class AddMetadataToPathwayTables extends Humann2CountModule implements JavaModule
 {
+	/**
+	 * For R to report HumanN2 reports instead of taxa levels
+	 */
+	@Override
+	public void cleanUp() throws Exception
+	{
+		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
+	}
+
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
 	 */
@@ -52,8 +62,9 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 
 	/**
 	 * This method matches records from the Pathway Abundance table and the metadata file by matching the sample ID
-	 * value in the very 1st column (regardless of column title).<br><br>
-	 * Set 
+	 * value in the very 1st column (regardless of column title).<br>
+	 * <br>
+	 * Set
 	 */
 	@Override
 	public void runModule() throws Exception
@@ -62,15 +73,6 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
 		Log.info( getClass(), "Metadata has been appended to the pathway abundance table" );
-	}
-	
-	/**
-	 * For R to report HumanN2 reports instead of taxa levels
-	 */
-	@Override
-	public void cleanUp() throws Exception
-	{
-		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
 	}
 
 	/**
@@ -146,11 +148,10 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 	private String mergeHeaderLine = null;
 	private String mergeSampleLine = null;
 
+	private final List<String> types = new ArrayList<>();
 
 	/**
 	 * File suffix added to OTU table file name once merged with metadata.
 	 */
 	private static final String META_MERGED = "_metaMerged" + TSV_EXT;
-	
-	private List<String> types = new ArrayList<>();
 }

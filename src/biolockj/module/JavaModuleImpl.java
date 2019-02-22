@@ -19,7 +19,8 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
-import biolockj.util.*;
+import biolockj.util.RuntimeParamUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * Superclass for Java BioModules that will be called in separate instances of the application.
@@ -74,21 +75,21 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		}
 
 	}
-	
+
 	/**
 	 * Build the docker run command to launch a JavaModule in a Docker container.
 	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		List<String> lines = new ArrayList<>();
+		final List<String> lines = new ArrayList<>();
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " " 
-		+ RuntimeParamUtil.getDirectModuleParam( this );
+			final String args = RuntimeParamUtil.getDockerRuntimeArgs() + " "
+					+ RuntimeParamUtil.getDirectModuleParam( this );
 			lines.add( BLJ_OPTIONS + "=\"" + args + "\"" + Constants.RETURN );
 		}
-		
+
 		return lines;
 	}
 

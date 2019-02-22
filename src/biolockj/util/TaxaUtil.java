@@ -279,14 +279,15 @@ public class TaxaUtil
 	}
 
 	/**
-	 * Set taxonomy levels ordered by level, from highest to lowest. Require {@value Constants#REPORT_TAXONOMY_LEVELS} property.
-	 * Accepts only valid options: {@value Constants#DOMAIN}, {@value Constants#PHYLUM}, {@value Constants#CLASS}, {@value Constants#ORDER},
-	 * {@value Constants#FAMILY}, {@value Constants#GENUS}, {@value Constants#SPECIES}
+	 * Set taxonomy levels ordered by level, from highest to lowest. Require {@value Constants#REPORT_TAXONOMY_LEVELS}
+	 * property. Accepts only valid options: {@value Constants#DOMAIN}, {@value Constants#PHYLUM},
+	 * {@value Constants#CLASS}, {@value Constants#ORDER}, {@value Constants#FAMILY}, {@value Constants#GENUS},
+	 * {@value Constants#SPECIES}
 	 *
 	 * @return List of ordered taxonomy levels
 	 * @throws ConfigNotFoundException if {@value Constants#REPORT_TAXONOMY_LEVELS} is undefined
-	 * @throws ConfigFormatException if {@value Constants#REPORT_TAXONOMY_LEVELS} is defined, but does not contain any valid
-	 * taxonomy levels
+	 * @throws ConfigFormatException if {@value Constants#REPORT_TAXONOMY_LEVELS} is defined, but does not contain any
+	 * valid taxonomy levels
 	 */
 	public static List<String> initTaxaLevels() throws ConfigNotFoundException, ConfigFormatException
 	{
@@ -340,11 +341,32 @@ public class TaxaUtil
 
 		if( configLevels.isEmpty() )
 		{
-			throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS, "No valid options configured.  " + errorMsg );
+			throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
+					"No valid options configured.  " + errorMsg );
 		}
 
 		Config.setConfigProperty( Constants.REPORT_TAXONOMY_LEVELS, configLevels );
 		return configLevels;
+	}
+
+	/**
+	 * Check the file name to determine if it is a normalized taxonomy table file.
+	 * 
+	 * @param file File to test
+	 * @return boolean TRUE if file is a normalized taxonomy count file
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isNormalizedTaxaFile( final File file ) throws Exception
+	{
+		final String suffix = "_" + TAXA_TABLE + "_" + NORMALIZED + "_";
+		for( final String level: getTaxaLevels() )
+		{
+			if( file.getName().endsWith( suffix + level + Constants.TSV_EXT ) )
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -364,26 +386,6 @@ public class TaxaUtil
 				{
 					return true;
 				}
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * Check the file name to determine if it is a normalized taxonomy table file.
-	 * 
-	 * @param file File to test
-	 * @return boolean TRUE if file is a normalized taxonomy count file
-	 * @throws Exception if errors occur
-	 */
-	public static boolean isNormalizedTaxaFile( final File file ) throws Exception
-	{
-		final String suffix = "_" + TAXA_TABLE + "_" + NORMALIZED + "_";
-		for( final String level: getTaxaLevels() )
-		{
-			if( file.getName().endsWith( suffix + level + Constants.TSV_EXT ) )
-			{
-				return true;
 			}
 		}
 		return false;
@@ -425,24 +427,23 @@ public class TaxaUtil
 	}
 
 	/**
+	 * File suffix appended to normalized taxa count tables: {@value #NORMALIZED}
+	 */
+	public static final String NORMALIZED = "norm";
+
+	/**
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
 	 */
 	protected static final String TAXA_TABLE = "taxaCount";
 
-	private static final List<String> allLevels = Arrays
-			.asList( new String[] { Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS, Constants.ORDER,
-					Constants.FAMILY, Constants.GENUS, Constants.SPECIES } );
-
+	private static final List<String> allLevels = Arrays.asList( new String[] { Constants.DOMAIN, Constants.PHYLUM,
+			Constants.CLASS, Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES } );
 	private static String bottomLevel = null;
 	private static List<String> configLevels = null;
 	private static List<String> levelSpan = null;
+
 	private static final String TAXA = "Taxa";
 
-	/**
-	 * File suffix appended to normalized taxa count tables: {@value #NORMALIZED}
-	 */
-	public static final String NORMALIZED = "norm";
-	
 	private static String topLevel = null;
 	private static final String UNCLASSIFIED = "Unclassified";
 }

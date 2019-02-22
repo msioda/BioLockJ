@@ -246,6 +246,7 @@ public final class DownloadUtil
 	 * <li>{@link biolockj.module.implicit.parser.wgs.Humann2Parser}
 	 * <li>{@link biolockj.module.report.taxa.BuildTaxaTables}
 	 * </ul>
+	 * 
 	 * @return BioModules to download
 	 */
 	protected static List<BioModule> getDownloadModules()
@@ -255,13 +256,13 @@ public final class DownloadUtil
 		{
 			for( final BioModule module: Pipeline.getModules() )
 			{
-				boolean includeRawCounts = ModuleUtil.moduleExists( R_PlotEffectSize.class.getName() ) &&
-						Config.getBoolean( module, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC );
-				
-				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module ||
-						module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables ||
-						( includeRawCounts && ( module instanceof BuildTaxaTables || module instanceof Humann2Parser ) );
-				
+				final boolean includeRawCounts = ModuleUtil.moduleExists( R_PlotEffectSize.class.getName() )
+						&& Config.getBoolean( module, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC );
+
+				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
+						|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
+						|| includeRawCounts && ( module instanceof BuildTaxaTables || module instanceof Humann2Parser );
+
 				if( ModuleUtil.hasExecuted( module ) && downloadableType )
 				{
 					modules.add( module );
@@ -343,15 +344,15 @@ public final class DownloadUtil
 	}
 
 	/**
+	 * Name of the file holding the list of pipeline files to include when running {@link biolockj.util.DownloadUtil}
+	 */
+	public static final String DOWNLOAD_LIST = "downloadList.txt";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #DOWNLOAD_DIR}<br>
 	 * Sets the local directory targeted by the scp command.
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
-
-	/**
-	 * Name of the file holding the list of pipeline files to include when running {@link biolockj.util.DownloadUtil}
-	 */
-	public static final String DOWNLOAD_LIST = "downloadList.txt";
 
 	private static final String DEST = "out";
 	private static final String DOWNLOAD_SCRIPT = "blj_download";
