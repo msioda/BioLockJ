@@ -121,6 +121,18 @@ public class BioLockJ
 		}
 		finally
 		{
+			if( isPipelineComplete() )
+			{
+				Log.info( BioLockJ.class, "PIPELINE SUCCESS!" );
+				Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+				Log.info( BioLockJ.class, "Analysis complete --> The answer to the ultimate question of life, the universe and everything is... [ 42 ]" );
+				Log.info( BioLockJ.class, "End program." );
+			}
+			else
+			{
+				Log.info( BioLockJ.class, "PIPELINE FAILED!" );
+			}
+			
 			pipelineShutDown( args );
 		}
 	}
@@ -469,24 +481,10 @@ public class BioLockJ
 			}
 		}
 		
-		if( isPipelineComplete() )
-		{
-			try
-			{
-				Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
-				Log.info( BioLockJ.class, "Analysis complete --> The answer to the ultimate question of life, the universe and everything is... [ 42 ]" );
-				Log.info( BioLockJ.class, "End program." );
-			}
-			catch( final Exception ex )
-			{
-				logFinalException( args, ex );
-			}
-		}
-		else
+		if( !isPipelineComplete() )
 		{
 			System.exit( 1 );
 		}
-		
 	}
 
 	/**

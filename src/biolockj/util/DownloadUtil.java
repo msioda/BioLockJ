@@ -153,8 +153,7 @@ public final class DownloadUtil
 
 	private static File getRunAllRScript() throws Exception
 	{
-		final File script = new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
-		return script;
+		return new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
 	}
 
 	/**
@@ -299,6 +298,7 @@ public final class DownloadUtil
 			{
 				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
 				{
+					downFiles.add(  file );
 					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
 					writer.write( relPath + RETURN );
 				}

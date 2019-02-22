@@ -134,7 +134,7 @@ public class SummaryUtil
 		sb.append( getLabel( PIPELINE_CONFIG ) + " " + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( PIPELINE_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
 
-		final String downloadCmd = DownloadUtil.getDownloadCmd();
+		final String downloadCmd = downloadCmd();
 		if( downloadCmd != null )
 		{
 			sb.append( SPACER_2X + RETURN );
@@ -143,6 +143,15 @@ public class SummaryUtil
 
 		sb.append( SPACER_2X + RETURN );
 		return sb.toString();
+	}
+	
+	private static String downloadCmd() throws Exception
+	{
+		if( downloadCommand == null )
+		{
+			downloadCommand = DownloadUtil.getDownloadCmd();
+		}
+		return downloadCommand;
 	}
 
 	/**
@@ -885,9 +894,7 @@ public class SummaryUtil
 
 	private static final String EXCEPTION_LABEL = "Exception:";
 
-	/**
-	 * Summary label BioModule header: {@value #MODULE}
-	 */
+	private static String downloadCommand = null;
 	private static final String MODULE = "Module";
 
 	private static final String NUM_ATTEMPTS = "# Attempts";
