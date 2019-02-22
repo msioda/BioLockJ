@@ -8,33 +8,23 @@ addNamedVectorElement <- function( v, name, value ) {
 }
 
 # Add a page number in the lower right corner of the page
-addPageNumber <- function (pageNum, line=0){
-	mtext(pageNum, side=1, outer=TRUE, line=line, adj = 1)
-	# optional return value
-	if (is.numeric(pageNum) ) pageNum + 1
+addPageNumber <- function( pageNum ){
+	mtext (pageNum, side=1, outer=TRUE, adj=1 )
 }
 
 # Add text to the bottom of the page, centered
 addPageFooter <- function(text, line=0){
-	mtext(text, side=1, outer=TRUE, line=line, adj = .5)
+	mtext(text, side=1, outer=TRUE, line=line, adj=0.5)
 }
 
 # Add a page title
-addPageTitle <- function (main, level=NULL, line=2){
-	mtext(main, side=3, outer = TRUE, font=par("font.main"), cex=par("cex.main"), line=line)
-	if (!is.null(level)){
-		titlePart2 = displayLevel( level )
-		title(main=titlePart2, outer = TRUE, line=(line-1))
-	}
+addPageTitle <- function( main ) {
+	mtext(main, side=3, outer=TRUE, font=par("font.main"), cex=par("cex.main"), line=1)
 }
 
 # Return P value formated with sprintf as defined in MASTER Config r.pValFormat, otherwise use %1.2g default
 displayCalc <- function( pval ) {
 	return( paste( sprintf(getProperty("r.pValFormat", "%1.2g"), pval) ) )
-}
-
-displayLevel <- function(level){
-	return( str_to_title( paste(level,"Level") ) )
 }
 
 # Return TRUE if BioLock property r.debug=Y, otherwise return FALSE
@@ -248,6 +238,11 @@ getProperty <- function( name, defaultVal=NULL ) {
 # Return vector that includs all binary, nominal, and numeric fields or an empty vector
 getReportFields <- function() {
 	return( c( getBinaryFields(), getNominalFields(), getNumericFields() ) )
+}
+
+# Display R^2 label and value
+displayR2 <- function( val ) {
+	return( bquote( paste( R^2, ": ", .( displayCalc( val ) ) ) ) )
 }
 
 # Return the most recent stats file at the given level based on the suffix returned by statsFileSuffix()

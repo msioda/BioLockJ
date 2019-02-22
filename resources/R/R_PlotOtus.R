@@ -16,15 +16,13 @@ addBoxPlot <- function( item, taxaVals, metaVals, barColors )
                      vertical=TRUE, pch=getProperty("r.pch"), add=TRUE )
 }
 
+# Display plot heading with 2 pvalues + R^2 effect size
 plotHeading <- function( parPval, nonParPval, r2, field ) {
    HEAD_1 = 0.2; HEAD_2 = 1.4; LEFT = 0; RIGHT = 1; TOP = 3;
-
-   title1_A = paste( "Adj.", getTestName( field ), "P-value:", displayCalc( parPval ) )
-   title1_B = bquote( paste( R^2, ": ", .( displayCalc( r2 ) ) ) )
+   title1 = paste( "Adj.", getTestName( field ), "P-value:", displayCalc( parPval ) )
    title2 = paste( "Adj.", getTestName( field, FALSE ), "P-value:", displayCalc( nonParPval ) )
-
-   mtext( title1_A, TOP, HEAD_1, col=getColor( parPval ), cex=0.75, adj=LEFT )
-   mtext( title1_B, TOP, HEAD_1, cex=0.75, adj=RIGHT )
+   mtext( title1, TOP, HEAD_1, col=getColor( parPval ), cex=0.75, adj=LEFT )
+   mtext( displayR2( r2 ), TOP, HEAD_1, cex=0.75, adj=RIGHT )
    mtext( title2, TOP, HEAD_2, col=getColor( nonParPval ), cex=0.75, adj=LEFT )
 }
 
@@ -48,12 +46,9 @@ getBoxPlotLabels <- function( labels ) {
 getCexAxis <- function( labels=NULL, returnMax=FALSE, returnMin=FALSE) {
    cexAxisMax = 1
    cexAxisMin = 0.65
-   if (returnMax){
-      return(cexAxisMax)
-   }
-   if (returnMin){
-      return(cexAxisMin)
-   }
+   if ( returnMax ) return( cexAxisMax )
+   if ( returnMin ) return( cexAxisMin )
+   
    nchars = sum(nchar(labels)) + length(labels) - 1
    if( nchars < r.plotWidth ) return( cexAxisMax )
    if( nchars < ( r.plotWidth +7 ) ) return( 0.9 )
@@ -86,58 +81,56 @@ main <- function() {
       binaryCols = getBinaryFields()
       nominalCols = getNominalFields()
       numericCols = getNumericFields()
-
       logInfo( "binaryCols", binaryCols )
       logInfo( "nominalCols", nominalCols )
       logInfo( "numericCols", numericCols )
-
-      reportCols = getReportFields()
-
+      
       parStats = getStatsTable( level, TRUE )
       nonParStats = getStatsTable( level, FALSE )
       r2Stats = getStatsTable( level )
-
       metaColColors = getColorsByCategory( metaTable )
 
       outputFile = getPath( getOutputDir(), paste0(level, "_OTU_plots.pdf") )
       pdf( outputFile, paper="letter", width=7, height=10.5 )
-      
       par(mfrow=c(3, 2), las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
       pageNum = 0
 
       # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countTable rows
       cutoffValue = getProperty("r.rareOtuThreshold", 1)
-      if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow(countTable)
+      if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow( countTable )
 
-      for( item in names(countTable) ) {
+      for( item in names( countTable ) ) {
          if( sum( countTable[,item] > 0 ) >=  cutoffValue ) {
-            par( mfrow = par("mfrow") ) # step to next pageNum, even if the last page is not full
+         	
+         	# Every item starts a new page
+            par( mfrow = par("mfrow") ) 
             position = 1
-            pageNum = pageNum + 1
+
             taxaVals = countTable[,item]
 
-            for( meta in reportCols ) {
+            for( meta in getReportFields() ) {
+            
                metaVals = metaTable[,meta]
                if( meta %in% binaryCols || meta %in% nominalCols ) {
-                  logInfo( c( "Plot Box-Plot [", item, "~", meta, "]" ) )
+                  logInfo( c( "Add Box-Plot [", item, "~", meta, "]" ) )
                   addBoxPlot( item, taxaVals, metaVals, metaColColors[[meta]] )
                }
-               else if( meta %in% numericCols ) {
-                  logInfo( c( "Plot Scatter-Plot [", item, "~", meta, "]" ) )
+               else {
+                  logInfo( c( "Add Scatter-Plot [", item, "~", meta, "]" ) )
                   addScatterPlot( item, taxaVals, metaVals )
                }
 
-               plotHeading( parStats[ item, meta ], nonParStats[ item, meta ], r2Stats[ item, meta], meta )
+               plotHeading( parStats[item, meta], nonParStats[item, meta], r2Stats[item, meta], meta )
                mtext( meta, side=1, font=1, cex=1, line=2.5 )
                position = position + 1
 
-               if(position == 2) {
-                  addPageTitle( item )
-                  addPageNumber( pageNum )
-               }
-               if( position > prod( par("mfrow") ) ) {
-                  position = 1
-                  pageNum = pageNum + 1
+			   if( position == 2 ) {
+			   		pageNum = pageNum + 1
+            		addHeaderFooter( item, level, pageNum )
+               } else if( position > prod( par("mfrow") ) ) {
+            		position = 1
+            		pageNum = pageNum + 1
+            		addHeaderFooter( item, level, pageNum )
                }
             }
          }
@@ -145,6 +138,13 @@ main <- function() {
       dev.off()
       if( doDebug() ) sink()
    }
+}
+
+# Add page title + footer with page number
+addHeaderFooter <- function( item, level, pageNum ) {
+	addPageTitle( item )
+	addPageNumber( pageNum )
+	addPageFooter( paste( str_to_title( level ), "Taxa Plots" ) )
 }
 
 r.plotWidth=23
