@@ -19,7 +19,7 @@ addBoxPlot <- function( item, taxaVals, metaVals, barColors )
 plotHeading <- function( parPval, nonParPval, r2, field ) {
    HEAD_1 = 0.2; HEAD_2 = 1.4; LEFT = 0; RIGHT = 1; TOP = 3;
 
-   title1_A = paste( "Adj.", getTestName( field, TRUE ), "P-value:", displayCalc( parPval ) )
+   title1_A = paste( "Adj.", getTestName( field ), "P-value:", displayCalc( parPval ) )
    title1_B = bquote( paste( "R^2:", .( displayCalc( r2 ) ) ) )
    title2 = paste( "Adj.", getTestName( field, FALSE ), "P-value:", displayCalc( nonParPval ) )
 
