@@ -7,15 +7,16 @@ addNamedVectorElement <- function( v, name, value ) {
 	return( v )
 }
 
-# Add a footer with title, level and page number
-addPageFooter <- function (level, pageNum, multiPageSet=NULL){
-	if (!is.null(multiPageSet)){
-		pageString = paste(multiPageSet, pageNum, sep="-")
-	}else{
-		pageString = pageNum
-	}
-	pageNumberText = paste(displayLevel(level), paste("page", pageString), sep=" - ")
-	mtext(pageNumberText, side=1, outer=TRUE, line=0, adj = 1)
+# Add a page number in the lower right corner of the page
+addPageNumber <- function (pageNum, line=0){
+	mtext(pageNum, side=1, outer=TRUE, line=line, adj = 1)
+	# optional return value
+	if (is.numeric(pageNum) ) pageNum + 1
+}
+
+# Add text to the bottom of the page, centered
+addPageFooter <- function(text, line=0){
+	mtext(text, side=1, outer=TRUE, line=line, adj = .5)
 }
 
 # Add a page title
@@ -277,6 +278,7 @@ getTempDir <- function(){
 	return( path )
 }
 
+
 # Return name of statistical test used to generate P-Values 
 # If att=NULL, return all tests as vector with test-color as element names
 getTestName <- function( field=NULL, isParametric=TRUE ) {
@@ -374,9 +376,31 @@ pipelineFile <- function( pattern, dir=getPipelineDir() ) {
 
 # Create an empty plot and add text. 
 # Ideal when explaining why a plot is blank, or plot explanations within a plot document.
-plotPlainText <- function(textToPrint, cex=1){
-	plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n', mar = c(0,0,0,0))
-	text(labels=textToPrint, x = 0.5, y = 0.5, cex = cex, col = "black")
+plotPlainText <- function(textToPrint, align="center", maxCharWidth=55, verticalLines=NULL, ... ){
+	# Args:
+	#  textToPrint - a vector of lines to print; long strings are subjected to crude text-wrapping.
+	#  align - the horizontal text alignment, options are "left", "center" or "right".
+	#  maxCharWidth - max number of character to allow per line, used to impose crude text wrapping.
+	#  verticalLines - number of vertical lines of space in the plot
+	#  ... - further parameters passed to text()
+	alignment = c(left=0, center=0.5, right=1)
+	# TODO: find a smarter function to replace this crude text wrapping
+	if (is.null(verticalLines)) {
+		# This estimates how many lines tall the plot is.
+		verticalLines = floor( par("pin")[2] / (max(par("mai") / par("mar"), na.rm=TRUE)) ) - 1
+	}
+	if (any(nchar(textToPrint) > maxCharWidth)){
+		# crude text-wrapping
+		bigNumber = max(nchar(textToPrint))*2
+		textToPrint = sapply(textToPrint, substring, first=seq(0,bigNumber,maxCharWidth), last = seq(maxCharWidth-1, bigNumber, maxCharWidth))
+		textToPrint = as.vector(textToPrint)
+		textToPrint = textToPrint[ nchar(textToPrint) > 0 ]
+	}
+	if (length(textToPrint) > verticalLines) { logInfo("plotPlainText", "textToPrint was truncated.") }
+	plot(c(0, 1), c(0, verticalLines+1), ann = FALSE, mar = c(0,0,0,0), 
+			 bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+	text(labels=textToPrint, adj=alignment[align], x = alignment[align], xpd=TRUE, 
+			 y = verticalLines:(verticalLines-length(textToPrint)+1), ... )
 }
 
 # Read a table using the biolockj standards

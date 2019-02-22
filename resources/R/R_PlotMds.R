@@ -27,24 +27,17 @@ main <- function() {
       
       # Make plots
       outputFile = paste0( getPath( getOutputDir(), paste0(level, "_MDS.pdf" ) ) )
-
-      if (numAxis < 4 ) {
-         pdf( outputFile, width = 7, height = 7)
-         par( mfrow=c(2, 2) )
-      }else{
-         pdf( outputFile, paper="letter", width=7, height=10.5 )
-         par( mfrow=c(3, 2) )
-      }
-      par(las=1, oma=c(2,1,4,3), mar=c(5, 4, 2, 2))
+      pdf( outputFile, paper="letter", width=7.5, height=10.5 )
+      par(mfrow=c(3, 2), las=1, oma=c(1,0,2,1), mar=c(5, 4, 2, 2), cex=.95)
       percentVariance = as.numeric(eigenvals(myMDS)/sum( eigenvals(myMDS) ) ) * 100
-      multiPageSet = 0
+      pageNum = 0
       
       for( field in mdsFields ){
         logInfo( "mdsFields", mdsFields )
-         multiPageSet = multiPageSet + 1
+        pageNum = pageNum + 1
          metaColVals = as.character(metaTable[,field])
          logInfo( "metaColVals", metaColVals )
-         par(mfrow = par("mfrow"))
+         par(mfrow = par("mfrow"), cex = par("cex"))
          att = as.factor(metaColVals)
          colorKey = metaColColors[[field]]
          logInfo( c( "Using colors: ", paste(colorKey, "for", names(colorKey), collapse= ", ")) )
@@ -58,31 +51,35 @@ main <- function() {
                   pageNum = pageNum + 1
                }
                pch=getProperty("r.pch", 20)
-               plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste("MDS [", x, "vs", y, "]" ),
+               plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste("Axes", x, "vs", y),
                         xlab=getMdsLabel( x, percentVariance[x] ),
                         ylab=getMdsLabel( y, percentVariance[y] ),
                         cex=1.2, pch=pch, col=colorKey[metaColVals] )
                position = position + 1
                if ( position == 2 ){ 
                   addPageTitle( field, line=1 )
-                  if ( numAxis > 3 ){
-                     addPageFooter(level, pageNum, multiPageSet)
-                  }else{
-                     addPageFooter(level, multiPageSet)
-                  }
+                  addPageNumber( pageNum )
+                  addPageFooter( "Multidimensional Scaling" )
                   # put this plot at the upper right position
                   # that puts the legend in a nice white space, and it makes axis 1 in line with itself in two plots (same for axis3)
                   plotRelativeVariance(percentVariance, numAxis)
                   position = position + 1
-                  title("Multidimensional Scaling")
-                  legend(x="topright", title=field,
-                            legend = paste0(names(colorKey), " (n=", table(metaColVals)[names(colorKey)], ")"), 
-                            col=colorKey, pch=pch, bty="n")
+                  title( displayLevel( level ) )
+                  # Add legend
+                  legendKey = colorKey
+                  legendLabels = paste0(names(legendKey), " (n=", table(metaColVals)[names(legendKey)], ")")
+                  legendKey = legendKey[ order(table(metaColVals)[names(colorKey)]) ]
+                  maxInLegend = 6
+                  if (length(colorKey) > (maxInLegend + 1)){
+                    legendKey = c( colorKey[ 1:maxInLegend], NA)
+                    numDropped = length(colorKey) - length(legendKey) + 1
+                    legendLabels = c(legendLabels[1:maxInLegend], paste("(", numDropped, "other labels )"))
+                  }
+                  legend(x="topright", title=field, legend = legendLabels, col=legendKey, pch=pch, bty="n")
                }
             }
          }
       }
-      plotPlainText( paste( " Each", paste0(pageNum, "-page"), "set is identical.\n Only the color scheme/legend changes." ), 0.8)
       if( doDebug() ) sink()
       dev.off()
    }
@@ -101,5 +98,6 @@ plotRelativeVariance <- function(percentVariance, numAxis){
    labels = round(heights)
    near0 = which(labels < 1)
    labels[near0] = "<1"
-   text(x=bp, y=heights, labels = paste(labels, "%"), pos=3, xpd=TRUE)
+   if (numBars <= 6){ labels = paste(labels, "%") }
+   text(x=bp, y=heights, labels = labels, pos=3, xpd=TRUE)
 }

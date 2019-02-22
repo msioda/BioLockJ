@@ -47,7 +47,7 @@ printColorCode <- function() {
    nonParTests = getTestName( isParametric=FALSE )
    colors = c( names(parTests), names(nonParTests) )
    plot(1,1, ylim=c(0,4), xlim=c(.5,2.5), type="n", axes=FALSE, xlab="", ylab="")
-   title(main="Color Coding", line=0)
+   title(main="Color Coding", line=0.5)
    x=rep(1:2, each=3)
    y=rep(3:1, 2)
    symbols(x=x, y=y, rectangles = matrix(ncol=2,byrow=TRUE,data=rep(c(1,1),6)), fg=colors, bg=colors, inches=FALSE, add=TRUE)
@@ -61,20 +61,25 @@ printColorCode <- function() {
 # Each taxonomy report includes 2 histograms for each report field (1 parametric, 1 non-parametric)
 main <- function() {
    for( level in taxaLevels() ) {
-
-      parStats = getStatsTable( level, TRUE, FALSE )
-      nonParStats = getStatsTable( level, FALSE, FALSE )
-      if( is.null(parStats) || is.null(nonParStats) ) { next }
-      if( doDebug() ) sink( getLogFile( level ) )
+     parStats = getStatsTable( level, TRUE, FALSE )
+     nonParStats = getStatsTable( level, FALSE, FALSE )
+     if( is.null(parStats) || is.null(nonParStats) ) { next }
+     if( doDebug() ) sink( getLogFile( level ) )
 
       # create empty pdf
-      pdf( getPath( getOutputDir(), paste0(level, "_histograms.pdf") ) )
-      par( mfrow=c(2, 2), las=1, mar=c(5,4,5,1)+.1 )
+      outputFile = getPath( file.path(getModuleDir(), "output"), paste0(level, "_histograms.pdf") )
+      pdf( outputFile, paper="letter", width=7.5, height=10.5  )
+      par( mfrow=c(3, 2), las=1, mar=c(5,4,3,1)+.1, oma=c(1,1,1,0), cex=1)
+      pageNum = 1
+      position = 1
 
       # create ranks table
-      ranks = data.frame(AttributeName=names(parStats),
+      fields = names(parStats)[ names(parStats) %in% getReportFields()]
+      logInfo("fields", getReportFields())
+      ranks = data.frame(AttributeName=fields,
                                   Parametric.FractionPvalsUnderCutoff=rep(NA, ncol(parStats)),
                                   NonParametric.FractionPvalsUnderCutoff=rep(NA, ncol(nonParStats)))
+
       row.names(ranks) = ranks$AttributeName
       for( field in names(parStats) ) {
          ranks[field,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=parStats[, field], getProperty("r.pvalCutoff"))
@@ -96,23 +101,37 @@ main <- function() {
 
          parTestName = getTestName( field )
          xLabelPar = paste( parTestName, "P-Values" )
+
          addHistogram( parStats[, field], xLabelPar, names(parTestName) )
+         position = position + 1
 
          nonParTestName = getTestName( field, FALSE )
          xLabelNonPar = paste( nonParTestName, "P-Values" )
          addHistogram( nonParStats[, field], xLabelNonPar, names(nonParTestName) )
+        position = position + 1
 
          # shared title
          plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
          shiftByPoints = par("mai")[2] * plotPointPerInch
          centerAt = par("usr")[1] - shiftByPoints
-         mtext(text=field, side=3, line=2.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+         mtext(text=field, side=3, line=1.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+         
+         if (position > prod( par("mfrow") ) ){
+           addPageNumber( pageNum )
+           addPageFooter(paste("P-Value Histograms", displayLevel( level ), sep = " - "))
+           position = 1
+           pageNum = pageNum + 1
+         }
 
       }
 
       printColorCode()
-      plotPlainText(paste0("Histograms are ordered by \nthe fraction of tests below ",
-                                     getProperty("r.pvalCutoff"), "\nin the parametric or non-parametric test, \nwhichever was greater."))
+      plotPlainText( c("Histograms are ordered by", paste("the fraction of tests below", getProperty("r.pvalCutoff")), 
+                       "in the parametric or non-parametric test,", "whichever was greater.", " ", 
+                       "All p-values are unadjusted."), align="right")
+      addPageNumber( pageNum )
+      addPageFooter(paste("P-Value Histograms", displayLevel( level ), sep = " - "))
+
       dev.off()
       if( doDebug() ) sink()
    }
