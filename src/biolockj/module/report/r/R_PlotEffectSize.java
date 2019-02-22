@@ -13,10 +13,12 @@ package biolockj.module.report.r;
 
 import java.util.List;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.ScriptModule;
+import biolockj.module.report.taxa.NormalizeTaxaTables;
 import biolockj.util.BioLockJUtil;
-import biolockj.util.ModuleUtil;
+import biolockj.util.RMetaUtil;
 
 /**
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
@@ -32,32 +34,37 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		if( Config.getBoolean( this, NO_FOLD_CHANGE ) & Config.getBoolean( this, NO_COHENS_D )
-				& Config.getBoolean( this, NO_R2 ) )
+		if( Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC ) && Config.getBoolean( this, NO_COHENS_D )
+				&& Config.getBoolean( this, NO_R2 ) )
 		{
 			throw new ConfigViolationException( NO_COHENS_D,
 					"When using " + this.getClass().getName() + " at least one of " + NO_COHENS_D + ", " + NO_R2
-							+ ", or " + NO_FOLD_CHANGE + " must not be true." );
+							+ ", or " + Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC  + " must not be true." );
+		}
+		
+		if(!Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC ) && RMetaUtil.getBinaryFields( this ).isEmpty() )
+		{
+			throw new ConfigViolationException( Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC , "Requires binary report fields" );
 		}
 	}
 
 	/**
-	 * Returns {@link #getStatPreReqs()} and if fold change plots are to be generated, ensures
-	 * the correct metaMerged module/modules are generated
+	 * Returns {@link #getStatPreReqs()} and if fold change plots are to be generated, add
+	 * {@link biolockj.module.report.taxa.NormalizeTaxaTables}
 	 */
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception
 	{
 		final List<String> preReqs = getStatPreReqs();
-		if( !Config.getBoolean( this, NO_FOLD_CHANGE ) && !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
+		if( !Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC  ) && 
+				!BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) )
 		{
-			preReqs.add( ModuleUtil.getMetaMergedModule( this ) );
+			preReqs.add( NormalizeTaxaTables.class.getName() );
 		}
 		return preReqs;
 	}
 
 	private static final String NO_COHENS_D = "r_PlotEffectSize.disableCohensD";
-	private static final String NO_FOLD_CHANGE = "r_PlotEffectSize.disableFoldChange";
 	private static final String NO_R2 = "r_PlotEffectSize.disableRSquared";
 
 }

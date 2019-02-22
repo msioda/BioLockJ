@@ -368,6 +368,26 @@ public class TaxaUtil
 		}
 		return false;
 	}
+	
+	/**
+	 * Check the file name to determine if it is a normalized taxonomy table file.
+	 * 
+	 * @param file File to test
+	 * @return boolean TRUE if file is a normalized taxonomy count file
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isNormalizedTaxaFile( final File file ) throws Exception
+	{
+		final String suffix = "_" + TAXA_TABLE + "_" + NORMALIZED + "_";
+		for( final String level: getTaxaLevels() )
+		{
+			if( file.getName().endsWith( suffix + level + Constants.TSV_EXT ) )
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Get parent level name of the given level parameter.
@@ -418,6 +438,11 @@ public class TaxaUtil
 	private static List<String> levelSpan = null;
 	private static final String TAXA = "Taxa";
 
+	/**
+	 * File suffix appended to normalized taxa count tables: {@value #NORMALIZED}
+	 */
+	public static final String NORMALIZED = "norm";
+	
 	private static String topLevel = null;
 	private static final String UNCLASSIFIED = "Unclassified";
 }

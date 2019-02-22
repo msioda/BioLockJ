@@ -18,6 +18,12 @@ package biolockj;
  */
 public class Constants
 {
+	
+	/**
+	 * {@link biolockj.Config} Boolean property to disable fold change plots: {@value #R_PLOT_EFFECT_SIZE_DISABLE_FC}
+	 */
+	public static final String R_PLOT_EFFECT_SIZE_DISABLE_FC = "r_PlotEffectSize.disableFoldChange";
+	
 	/**
 	 * Captures the application start time
 	 */

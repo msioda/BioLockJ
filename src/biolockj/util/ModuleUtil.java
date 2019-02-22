@@ -447,7 +447,6 @@ public class ModuleUtil
 		}
 
 		return AddMetadataToTaxaTables.class.getName();
-		
 	}
 
 	private static List<Integer> getClassifierIds() throws Exception

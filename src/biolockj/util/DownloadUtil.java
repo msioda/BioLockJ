@@ -21,10 +21,12 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
+import biolockj.module.implicit.parser.wgs.Humann2Parser;
 import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
+import biolockj.module.report.r.R_PlotEffectSize;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.module.report.taxa.BuildTaxaTables;
 
@@ -231,14 +233,19 @@ public final class DownloadUtil
 	/**
 	 * Get the modules to download. The following are downloaded if found in the pipeline:
 	 * <ul>
-	 * <li>{@link biolockj.module.implicit.parser.wgs.Humann2Parser}
 	 * <li>{@link biolockj.module.report.taxa.AddMetadataToTaxaTables}
 	 * <li>{@link biolockj.module.report.humann2.AddMetadataToPathwayTables}
-	 * <li>{@link biolockj.module.report.taxa.BuildTaxaTables}
 	 * <li>{@link biolockj.module.report.JsonReport}
 	 * <li>Any module that inherits from {@link biolockj.module.report.r.R_Module}
 	 * </ul>
-	 *
+	 * 
+	 * If pipeline contains {@link biolockj.module.report.r.R_PlotEffectSize} and
+	 * {@link biolockj.Config}.{@value biolockj.Constants#R_PLOT_EFFECT_SIZE_DISABLE_FC}={@value biolockj.Constants#FALSE}
+	 * include additional modules:
+	 * <ul>
+	 * <li>{@link biolockj.module.implicit.parser.wgs.Humann2Parser}
+	 * <li>{@link biolockj.module.report.taxa.BuildTaxaTables}
+	 * </ul>
 	 * @return BioModules to download
 	 */
 	protected static List<BioModule> getDownloadModules()
@@ -248,9 +255,13 @@ public final class DownloadUtil
 		{
 			for( final BioModule module: Pipeline.getModules() )
 			{
-				final boolean downloadableType = module instanceof JsonReport
-						|| module instanceof AddMetadataToTaxaTables || module instanceof BuildTaxaTables
-						|| module instanceof AddMetadataToPathwayTables || module instanceof R_Module;
+				boolean includeRawCounts = ModuleUtil.moduleExists( R_PlotEffectSize.class.getName() ) &&
+						Config.getBoolean( module, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC );
+				
+				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module ||
+						module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables ||
+						( includeRawCounts && ( module instanceof BuildTaxaTables || module instanceof Humann2Parser ) );
+				
 				if( ModuleUtil.hasExecuted( module ) && downloadableType )
 				{
 					modules.add( module );
