@@ -115,18 +115,21 @@ main <- function() {
          centerAt = par("usr")[1] - shiftByPoints
          mtext( field, side=3, line=1.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
          
-         if( position == 3 || position > prod( par("mfrow") ) ){
-			addReportFooter( level, pageNum )
+         if( position == 3 ) { 
+            addReportFooter( level, pageNum ) 
+         } else if( position > prod( par("mfrow") ) ) {
+			   addReportFooter( level, pageNum )
             position = 1
             pageNum = pageNum + 1
          }
       }
 		par()
-		addReportFooter( level, pageNum )
+		
 		printColorCode()
 		plotPlainText( c("Unadjusted P-value histograms are", "ordered by % tests below",
 			paste( "P-value significance threshold:", getProperty("r.pvalCutoff") ) ), align="right")
-
+      addReportFooter( level, pageNum )
+      
       dev.off()
       if( doDebug() ) sink()
 	}

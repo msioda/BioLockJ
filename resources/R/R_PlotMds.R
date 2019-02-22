@@ -34,7 +34,7 @@ main <- function() {
       
       for( field in mdsFields ){
 		par(mfrow = par("mfrow"), cex = par("cex"))
-        position = 1
+      position = 1
 
 		metaColVals = as.character(metaTable[,field])
 		colorKey = metaColColors[[field]]
@@ -80,7 +80,7 @@ addHeaderFooter <- function( field, level, pageNum ) {
 
 # Get variance plot label as percentage
 getMdsLabel <- function( axisNum, variance ) { 
-   return( paste0("Axis ", axisNum, " (", paste0( round( variance ), "%)" ) ) )
+   return( paste0("Axis-", axisNum, " ( ", paste0( round( variance ), "% )" ) ) )
 }
 
 # This plot is always put in the upper right corner of the page
@@ -101,12 +101,12 @@ plotRelativeVariance <- function( field, metaColVals, perVariance, level, numAxi
 	legendLabels = paste0(names(legendKey), " (n=", table(metaColVals)[names(legendKey)], ")")
 	legendKey = legendKey[ order(table(metaColVals)[names(colorKey)]) ]
 	
-	if (length(colorKey) > (maxInLegend + 1)){
+	if (length(colorKey) > maxInLegend){
 		legendKey = c( colorKey[ 1:maxInLegend], NA)
 	    numDropped = length(colorKey) - length(legendKey) + 1
 	    legendLabels = c(legendLabels[1:maxInLegend], paste("(", numDropped, "other labels )"))
 	}
-	legend( "topright", title=field, legend=legendLabels, col=legendKey, pch=getProperty("r.pch", 20), bty="n" )
+	legend( "topright", title=field, legend=legendLabels, cex=0.8 col=legendKey, pch=getProperty("r.pch", 20), bty="n" )
 }
 
 maxInLegend = 6

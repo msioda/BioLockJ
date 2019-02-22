@@ -104,7 +104,7 @@ main <- function() {
          	
          	# Every item starts a new page
             par( mfrow = par("mfrow") ) 
-            position = 1
+            position = 0
 
             taxaVals = countTable[,item]
 
@@ -124,13 +124,13 @@ main <- function() {
                mtext( meta, side=1, font=1, cex=1, line=2.5 )
                position = position + 1
 
-			   if( position == 2 ) {
+			   if( position == 1 ) {
 			   		pageNum = pageNum + 1
-            		addHeaderFooter( item, level, pageNum )
+            			addHeaderFooter( item, level, pageNum )
                } else if( position > prod( par("mfrow") ) ) {
-            		position = 1
-            		pageNum = pageNum + 1
-            		addHeaderFooter( item, level, pageNum )
+            			position = 1
+            			pageNum = pageNum + 1
+            			addHeaderFooter( item, level, pageNum )
                }
             }
          }

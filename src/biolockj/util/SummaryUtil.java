@@ -289,12 +289,10 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			final String label = "Mean Output File Size:";
-			final int pad = label.length() + 8;
 
 			if( module.getOutputDir().listFiles().length == 0 )
 			{
-				return BioLockJUtil.addTrailingSpaces( "# Files Output:", pad ) + "0" + RETURN;
+				return  "# Files Output:  0" + RETURN;
 			}
 
 			final Collection<File> outFiles = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
@@ -325,11 +323,9 @@ public class SummaryUtil
 				outAvg = outAvg.divide( BigInteger.valueOf( count ) );
 			}
 
-			sb.append( BioLockJUtil.addTrailingSpaces( "# Files Output:", pad ) + count + RETURN );
-			sb.append( BioLockJUtil.addTrailingSpaces( label, pad ) + FileUtils.byteCountToDisplaySize( outAvg )
-					+ RETURN );
-			sb.append( newMeta == null ? ""
-					: BioLockJUtil.addTrailingSpaces( "New metadata:", pad ) + newMeta.getAbsolutePath() + RETURN );
+			sb.append( "# Files Output:  " + count + RETURN );
+			sb.append( "Mean Output File Size:  " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
+			sb.append( newMeta == null ? "" : "New metadata:" + newMeta.getAbsolutePath() + RETURN );
 
 		}
 		catch( final Exception ex )

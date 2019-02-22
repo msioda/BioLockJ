@@ -292,11 +292,9 @@ public class Pipeline
 				refreshOutputMetadata( module );
 				refreshRCacheIfNeeded( module );
 			}
-			else
-			{
-				info( "Check dependencies for: " + module.getClass().getName() );
-				module.checkDependencies();
-			}
+			
+			info( "Check dependencies for: " + module.getClass().getName() );
+			module.checkDependencies();
 		}
 
 		return true;
