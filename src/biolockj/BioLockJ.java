@@ -393,7 +393,7 @@ public class BioLockJ
 	 *
 	 * @return true if {@value biolockj.Constants#BLJ_COMPLETE} exists in the pipeline root directory, otherwise false
 	 */
-	private static boolean isPipelineComplete()
+	public static boolean isPipelineComplete()
 	{
 		File f = null;
 		try
