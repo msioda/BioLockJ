@@ -13,7 +13,9 @@ package biolockj.util;
 
 import java.io.File;
 import java.util.*;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.BioModule;
 
 /**
@@ -62,14 +64,23 @@ public class RuntimeParamUtil
 		return params.get( BASE_DIR_FLAG ) == null ? null
 				: new File( Config.getSystemFilePath( params.get( BASE_DIR_FLAG ) ) );
 	}
-	
+
 	/**
 	 * @return String
 	 * @throws Exception if errors occur
 	 */
 	public static String getBaseDirParam() throws Exception
-	{ 
+	{
 		return BASE_DIR_FLAG + " " + getBaseDir().getAbsolutePath();
+	}
+
+	/**
+	 * @return String
+	 * @throws Exception if errors occur
+	 */
+	public static String getConficFileParam() throws Exception
+	{
+		return CONFIG_FLAG + " " + Config.getConfigFilePath();
 	}
 
 	/**
@@ -83,15 +94,6 @@ public class RuntimeParamUtil
 		return params.get( CONFIG_FLAG ) == null ? null
 				: new File( Config.getSystemFilePath( params.get( CONFIG_FLAG ) ) );
 	}
-	
-	/**
-	 * @return String
-	 * @throws Exception if errors occur
-	 */
-	public static String getConficFileParam() throws Exception
-	{
-		return CONFIG_FLAG + " " + Config.getConfigFilePath();
-	}
 
 	/**
 	 * Runtime property getter for {@value #DIRECT_FLAG}
@@ -101,6 +103,18 @@ public class RuntimeParamUtil
 	public static String getDirectModuleDir()
 	{
 		return params.get( DIRECT_FLAG );
+	}
+
+	/**
+	 * Direct module parameters contain 2 parts separated by a colon: (pipeline directory name):(module name)
+	 * 
+	 * @param module BioModule
+	 * @return Direct parameter flag + value
+	 * @throws Exception if errors occur
+	 */
+	public static String getDirectModuleParam( final BioModule module ) throws Exception
+	{
+		return DIRECT_FLAG + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
 	}
 
 	/**
@@ -341,18 +355,6 @@ public class RuntimeParamUtil
 		{
 			params.put( CONFIG_FLAG, param );
 		}
-	}
-	
-	/**
-	 * Direct module parameters contain 2 parts separated by a colon: (pipeline directory name):(module name)
-	 * 
-	 * @param module BioModule
-	 * @return Direct parameter flag + value
-	 * @throws Exception if errors occur
-	 */
-	public static String getDirectModuleParam( final BioModule module ) throws Exception
-	{
-		return DIRECT_FLAG + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
 	}
 
 	private static void assignRestartConfig() throws Exception
@@ -603,12 +605,12 @@ public class RuntimeParamUtil
 	 */
 	protected static final String RESTART_FLAG = "-r";
 
-	private static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
-
 	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
+
 	private static final String CONFIG_FLAG_EXT = "--config";
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
 	private static final List<String> extraParams = new ArrayList<>();
+	private static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
 	private static final Map<String, String> params = new HashMap<>();
 	private static final String PASSWORD_FLAG_EXT = "--password";
 	private static final String RESTART_FLAG_EXT = "--restart";

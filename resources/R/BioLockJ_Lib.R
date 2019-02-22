@@ -277,37 +277,19 @@ getTempDir <- function(){
 	return( path )
 }
 
-# Return the name of statistical test used to generate P-Values for a given attribute
-# If returnColors==TRUE, then return a color used for color-coding this test
-# or a named color vector if the specific attribute or isParametric is not given.
-getTestName <- function( field=NULL, isParametric=c(TRUE, FALSE), returnColors=FALSE ) {
-	testOptions = data.frame(
-		testName = c("T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall"),
-		fieldType = c("binary", "binary", "nominal", "nominal", "numeric", "numeric" ),
-		isParametric = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
-		color = c("coral", "dodgerblue2", "darkgoldenrod1", "cornflowerblue", "tan1", "aquamarine3"),
-		stringsAsFactors = FALSE
-	)
-	
-	fieldType = c(unique(testOptions$fieldType))
-	if (!is.null(field)){
-		if( field %in% getBinaryFields() ) {fieldType = "binary"}
-		if( field %in% getNominalFields() ) {fieldType = "nominal"}
-		if( field %in% getNumericFields() ) {fieldType = "numeric"}
-		if (length(fieldType) > 1){
-			stop(paste("Cannot determine field type for attribute:", field))
-		}
-	}
-	
-	whichTest = which(testOptions$fieldType %in% fieldType && testOptions$isParametric %in% isParametric)
-	
-	if (returnColors){
-		cols = testOptions[whichTest,"color"]
-		names(cols) = testOptions[whichTest,"testName"]
-		return(cols)
-	}else{
-		return(testOptions[whichTest,"testName"])
-	}
+# Return name of statistical test used to generate P-Values 
+# If att=NULL, return all tests as vector with test-color as element names
+getTestName <- function( field=NULL, isParametric=TRUE ) {
+   tests = c( "T-Test", "Wilcox", "ANOVA", "Kruskal", "Pearson", "Kendall" )
+   names( tests ) = c( "coral", "dodgerblue2", "darkgoldenrod1", "cornflowerblue", "tan1", "aquamarine3" )
+   if( is.null( field ) && isParametric ) return( tests[ c(1,3,5) ] )
+   if( is.null( field ) && !isParametric ) return( tests[ c(2,4,6) ] )
+   if( field %in% getBinaryFields() && isParametric ) return( tests[1] )
+   if( field %in% getBinaryFields() && !isParametric ) return( tests[2] )
+   if( field %in% getNominalFields() && isParametric ) return( tests[3] )
+   if( field %in% getNominalFields() && !isParametric ) return( tests[4] )
+   if( field %in% getNumericFields() && isParametric ) return( tests[5] )
+   if( field %in% getNumericFields() && !isParametric ) return( tests[6] )
 }
 
 # Return named vector values for the given name
@@ -416,9 +398,9 @@ statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
 
 # Return taxonomy levels or HumanN2 report types based on property R_internal.runHumann2
 taxaLevels <- function() {
-	levels = getProperty( "report.taxonomyLevels" )
-	if( ( "species" %in% levels ) && getProperty( "R_internal.runHumann2", FALSE ) ) {
-		levels = c()
+	levels = c()
+	errMsg = "No levels found"
+	if( getProperty( "R_internal.runHumann2", FALSE ) ) {
 		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
 			levels[length(levels) + 1] = "pAbund" 
 		}
@@ -428,6 +410,12 @@ taxaLevels <- function() {
 		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
 			levels[length(levels) + 1] = "geneFam" 
 		}
+		errMsg = "No HumanN2 Pathway or Gene Family reports found"
+	} else {
+		levels = getProperty( "report.taxonomyLevels" )
+	}
+	if( length( levels ) == 0 ) {
+		writeErrors( c( errMsg ) )
 	}
 	return( levels )
 }

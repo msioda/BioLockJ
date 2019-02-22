@@ -23,7 +23,7 @@ buildSummaryTables <- function( reportStats, level ) {
 }  
 
 
-# Build list of reportStats for the taxonomy level specific countTable with the following columns:
+# Build list of reportStats for the specific taxonomy/humann2 countTable with the following columns:
 # "OTU", "parametricPvals", "nonParametricPvals", "adjParPvals", "adjNonParPvals", "rSquaredVals"
 # First, parametric & non-parametric p-values are calculated for each attribute type
 # Then the p-values are adjusted using method defined in r.pAdjust
@@ -163,35 +163,18 @@ getP_AdjustLen <- function( names ) {
 # Outputs summary tables for each metric at each taxonomyLevel
 main <- function() {
 	importLibs( c( "coin", "Kendall" ) ) 
-	
-	if( ( "species" %in% taxaLevels() ) && getProperty( "R_internal.runHumann2", FALSE ) ) {
-		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
-			buildReport( "pAbund" )
+	for( level in taxaLevels() ) {
+		if( doDebug() ) sink( getLogFile( level ) )
+		reportStats = calculateStats( level )
+		if( is.null( reportStats ) ) {
+			logInfo( c( level, "table is empty" ) )
+		} else {
+			logInfo( "Building summary Tables ... " )
+			buildSummaryTables( reportStats, level )
 		}
-		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) {
-			buildReport( "pCovg" )
-		}
-		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
-			buildReport( "geneFam" )
-		}
-	} else {
-		for( level in taxaLevels() ) {
-			buildReport( level )
-		}
+		logInfo( "Done!" )
+		if( doDebug() ) sink()
 	}
-}
-
-buildReport <- function( key ) {
-	if( doDebug() ) sink( getLogFile( level ) )
-	reportStats = calculateStats( level )
-	if( is.null( reportStats ) ) {
-		logInfo( c( level, "table is empty" ) )
-	} else {
-		logInfo( "Building summary Tables ... " )
-		buildSummaryTables( reportStats, level )
-	}
-	logInfo( "Done!" )
-	if( doDebug() ) sink()
 }
 
 # Method wilcox_test is from the coin package

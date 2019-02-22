@@ -35,6 +35,7 @@ import biolockj.util.SummaryUtil;
 /**
  * This BioModule is used to email the user the pipeline execution status and summary. If run on cluster, an scp command
  * is included in the email that can be run to download analysis from the cluster.
+ * 
  * @web_desc Email
  */
 public class Email extends BioModuleImpl implements BioModule

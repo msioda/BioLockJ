@@ -24,6 +24,7 @@ import biolockj.util.*;
 
 /**
  * This BioModule validates fasta/fastq file formats are valid and enforces min/max read lengths.
+ * 
  * @web_desc Sequence File Validator
  */
 public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqModule
@@ -407,22 +408,26 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 			final TreeSet<String> longReads, final long totalAvgFwLen, final long totalAvgRvLen, final int minReadLen,
 			final int maxReadLen ) throws Exception
 	{
+
+		final String label = "Valid Reads";
+		final int pad = SummaryUtil.getPad( label );
+
 		final StringBuffer sb = new StringBuffer();
 		final int avgReadLen = Double.valueOf( totalAvgFwLen / sampleStats.size() ).intValue();
 
 		if( totalAvgRvLen > 0 )
 		{
 			final int avgRvReadLen = Double.valueOf( totalAvgRvLen / sampleStats.size() ).intValue();
-			sb.append( "Mean valid FW read len: " + avgReadLen + RETURN );
-			sb.append( "Mean valid RV read len: " + avgRvReadLen + RETURN );
+			sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid FW read len:", pad ) + avgReadLen + RETURN );
+			sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid RV read len:", pad ) + avgRvReadLen + RETURN );
 		}
 		else
 		{
-			sb.append( "Mean valid read len: " + avgReadLen + RETURN );
+			sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid read len:", pad ) + avgReadLen + RETURN );
 		}
 
-		sb.append( "Min valid read len: " + minReadLen + RETURN );
-		sb.append( "Max valid read len: " + maxReadLen + RETURN );
+		sb.append( BioLockJUtil.addTrailingSpaces( "Min valid read len:", pad ) + minReadLen + RETURN );
+		sb.append( BioLockJUtil.addTrailingSpaces( "Max valid read len:", pad ) + maxReadLen + RETURN );
 
 		if( invalidReads.isEmpty() && shortReads.isEmpty() && longReads.isEmpty() )
 		{
@@ -432,31 +437,34 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 		{
 			if( !invalidReads.isEmpty() )
 			{
-				sb.append( "Removed invalid reads from: " + invalidReads + RETURN );
+				sb.append(
+						BioLockJUtil.addTrailingSpaces( "Removed invalid reads from:", pad ) + invalidReads + RETURN );
 			}
 
 			if( !shortReads.isEmpty() )
 			{
-				sb.append( "Removed short reads from: " + shortReads + RETURN );
+				sb.append( BioLockJUtil.addTrailingSpaces( "Removed short reads from:", pad ) + shortReads + RETURN );
 			}
-
-			sb.append( "Discarded reads stored in: " + getTempDir().getAbsolutePath() + RETURN );
+			sb.append( BioLockJUtil.addTrailingSpaces( "Discarded reads stored in:", pad )
+					+ getTempDir().getAbsolutePath() + RETURN );
 
 			if( !longReads.isEmpty() )
 			{
-				sb.append( "Trimmed long reads from: " + shortReads + RETURN );
+				sb.append( BioLockJUtil.addTrailingSpaces( "Trimmed long reads from:", pad ) + shortReads + RETURN );
 			}
 
 			final int max = maxSeqFound.keySet().iterator().next();
 			final TreeSet<String> ids = new TreeSet<>( maxSeqFound.values().iterator().next() );
-			sb.append( "IDs w/ ORIGINAL max read len [ " + max + " ]: " + ids + RETURN );
+			sb.append( BioLockJUtil.addTrailingSpaces( "IDs w/ ORIGINAL max read len [" + max + "]:", pad ) + ids
+					+ RETURN );
+
 		}
 
-		String summary = SummaryUtil.getCountSummary( readsPerSample, "Valid Reads" ) + sb.toString();
+		String summary = SummaryUtil.getCountSummary( readsPerSample, label, true ) + sb.toString();
 		sampleIds.removeAll( readsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + sampleIds;
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) + sampleIds;
 		}
 
 		return summary;

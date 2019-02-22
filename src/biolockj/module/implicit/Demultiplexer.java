@@ -39,6 +39,7 @@ import biolockj.util.*;
  * <li>Forward and reverse reads can be combined in a single file with read direction indicated in the header by values
  * "1:N:" and "2:N:"
  * </ol>
+ * 
  * @web_desc Demultiplexer
  */
 public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModule

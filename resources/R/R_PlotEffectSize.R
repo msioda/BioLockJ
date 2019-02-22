@@ -2,27 +2,15 @@
 
 ### NOTE: The header printed on the reference table serves as built-in documentation for this module. 
 
-# Get the raw taxa or pathway abundance table
-getRawCountTable <- function( level ){
-  rcTaxa = pipelineFile( paste0( "_taxaCount_", level, ".tsv$" ) )
-  rcAbund = pipelineFile( paste0( "_pAbund_", level, ".tsv$" ) )
-  effectPlots = pipelineFile( paste0( level, "_EffectSizePlots.pdf$" ) )
-  latestFile = pickLatestFile( c( rcTaxa, rcAbund, effectPlots ) )
-  if( !is.null( latestFile ) &&  is.null( effectPlots )  || !grepl( effectPlots, latestFile ) ) {
-    return( latestFile )
-  }
-  return( NULL )
-}
-
-# Get the raw counts from the parser and calc simple relative abundance of binary data fields
-getRelAbund <- function( level ){
-  data = NULL
-  if( !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) && length( getBinaryFields() ) > 0 ) {
-    logInfo( c( "Find raw count table for ", length(getBinaryFields()), " binary fields" ) )
-        rawCounts = readBljTable( getRawCountTable( level ) )
-        data = normalize( rawCounts )
-    }
-    return( data )
+# Get the raw counts and calculate simple relative abundance of the binary data fields
+getNormTaxaTable <- function( level ){
+	normTable = NULL
+	if( !getProperty( "r_PlotEffectSize.disableFoldChange", FALSE ) && !getProperty( "R_internal.runHumann2" ) ) {
+		normTaxa = pipelineFile( paste0( "_taxaCount_norm_", level, ".tsv$" ) )
+		logInfo( c( "Looking for normalized taxa table count table", paste0( "_taxaCount_norm_", level, ".tsv$" ) ) )
+		if( !is.null( normTaxa ) ) normTable = readBljTable( normTaxa )
+	}
+    return( normTable )
 }
 
 # The main method is designed to integrate this module with BiolockJ.  
@@ -41,8 +29,6 @@ main <- function(){
     if( is.null(countTable) || is.null(metaTable) ) { next }
     if( doDebug() ) sink( getLogFile( level ) )
     
-    relAbundance = getRelAbund( level )
-    
     # get stats
     pvalTable = getStatsTable( level, getProperty("r_PlotEffectSize.parametricPval", FALSE), !getProperty("r_PlotEffectSize.disablePvalAdj", FALSE) )
     if( doRSquared ) r2Table = getStatsTable( level )
@@ -54,10 +40,10 @@ main <- function(){
     outFileName = getPath( getOutputDir(), paste0(level, "_EffectSizePlots.pdf") )
     pdf(file=outFileName, paper="letter", width=7.5, height=10, onefile=TRUE)
     par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
-    p = par(no.readonly = TRUE)
+    p = par( no.readonly = TRUE )
     # use this to reset par to the values it has as of right now
     resetPar <- function(){ 
-      par(p)
+      par( p )
     }
 
     for( field in getReportFields() ){
@@ -90,6 +76,7 @@ main <- function(){
             resetPar()
             drawPlot( data[["toPlot"]][,c("pvalue","rSquared")], field, "rSquared", "R-squared", data[["comments"]][c(1,3)] )
             logInfo( c("Completed r-squared plot for level:", level, "and report field:", field) )
+            successfulPlots = successfulPlots + 1
           }
           
           if (doCohensD && isBinaryAtt){
@@ -103,39 +90,34 @@ main <- function(){
         })
       }
       
-      if( !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) && !is.null(relAbundance) ) {
-        tryCatch(expr={
-
-          splitRelAbund = split(relAbundance[row.names(metaTable),], f=metaTable[,field])
-          logInfo( c("Fold change: Calling calcBarSizes for level:", level, ":", field ) )
-          
-          saveRefTable=getPath( getTempDir(), paste(level, field,"foldChange.tsv", sep="_") ) 
-          data = calcBarSizes( "foldChange", splitRelAbund, pvals, saveRefTable=saveRefTable )
-          
-          logInfo( c( "Fold change: Calling drawPlot for level:", level, ":", field ) )
-          resetPar()
-          drawPlot( data[["toPlot"]], field, "foldChange", "Fold Change", data[["comments"]], data[["xAxisLab2"]] )
-          successfulPlots = successfulPlots + 1
-          
-        }, error = function(err) {
-          errorHandler1(err, level, field)
-        })
+	if( isBinaryAtt && !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) ) {
+		tryCatch(expr={
+			resetPar()
+			plotFoldChange( countTable, level )
+			successfulPlots = successfulPlots + 1
+        }, error = function(err) { errorHandler1(err, level, field) })
       }
     }
     dev.off()
     if( doDebug() ) sink()
   }
-  if (successfulPlots == 0){
-    writeErrors( c( "No successful plots." ) )
-  }
+  
+  if (successfulPlots == 0) writeErrors( c( "No successful plots." ) )
 }
 
-# normalize otu counts by simple relative abundance
-normalize <- function(countTable){
-  # countTable - data frame with a row for each sample and a column for each OTU
-  normFactor = rowSums(countTable)
-  normed = countTable/normFactor
-  return(normed)
+# Plot fold changes for normalized counts
+plotFoldChange <- function( countTable, level ){
+  	normCountTable = getNormTaxaTable( level )
+	if( is.null( normCountTable ) ) normCountTable = countTable
+	splitRelAbund = split(normCountTable[row.names(metaTable),], f=metaTable[,field])
+	logInfo( c("Fold change: Calling calcBarSizes for level:", level, ":", field ) )
+          
+	saveRefTable=getPath( getTempDir(), paste(level, field,"foldChange.tsv", sep="_") ) 
+	data = calcBarSizes( "foldChange", splitRelAbund, pvals, saveRefTable=saveRefTable )
+          
+	logInfo( c( "Fold change: Calling drawPlot for level:", level, ":", field ) )
+	resetPar()
+	drawPlot( data[["toPlot"]], field, "foldChange", "Fold Change", data[["comments"]], data[["xAxisLab2"]] )
 }
 
 # error handler designed for calcBarSizes and drawPlot
@@ -145,9 +127,8 @@ errorHandler1 = function(err, level, field) {
   # error messages that I create in calcBarSizes and drawPlot start with "Stop Plotting"
   trimmedErr=gsub("Error.*Stop Plotting:", "", origErr) 
   msg = paste0("Failed to create plot for taxonomy level: ", level, 
-               "\nusing attribute: ", field)
-  if (doDebug() || nchar(trimmedErr) < nchar(origErr)){
-    # show error in plot file and move on to next plot.
+               "\nfor field: ", field)
+  if( doDebug() || nchar(trimmedErr) < nchar(origErr) ){
     msg = paste0(msg, "\n", trimmedErr)
     plotPlainText(msg)
   }else{
@@ -164,7 +145,7 @@ calcBarSizes <- function( type, data, pvals, r2vals=NULL, saveRefTable=NULL ) {
   ##   foldChange is the ratio of the means
   ##   rSquared is taken from the calculate stats module
     # data - data.frame with effect size + OTU/Pathway data
-    # pvals - named vector of p-values from calcStats
+    # pvals - named vector of -values from calcStats
     ##   names of pvals are OTUs/Pathways, and should match data column names.
     # r2vals - (optional) named vector of r-squared values from a statistical test to use for bar sizes.
     # saveRefTable - file name to save a reference table corresponding to the plot
@@ -198,7 +179,7 @@ calcBarSizes <- function( type, data, pvals, r2vals=NULL, saveRefTable=NULL ) {
   header = c(header, paste("infDown: was the OTU flagged for having all-0-counts only in the", numGroupName, "group."))
   if (!is.null(pvals)){
     toPlot$pvalue = pvals[row.names(toPlot)]
-    header = c(header, paste0("pvalue: the p-value used to determine if the OTU was included (if under ", getProperty("r_PlotEffectSize.excludePvalAbove", 1),
+    header = c(header, paste0("pvalue: the -value used to determine if the OTU was included (if under ", getProperty("r_PlotEffectSize.excludePvalAbove", 1),
                               ") and if OTU got a star (if under <pvalStar>thresholds controlled by r_PlotEffectSize.excludePvalAbove and r.pvalCutoff properties respectively.",
                               " See also: r_PlotEffectSize.parametricPval property"))
   }
@@ -240,7 +221,7 @@ calcBarSizes <- function( type, data, pvals, r2vals=NULL, saveRefTable=NULL ) {
       header = c(header, paste("rSquared:", r2comment))
     }
   }
-  #
+  
   # select top [maxBars] most changed OTUs
   # cases where one group is all-zeros is treated at most changed
   toPlot = toPlot[order(abs(toPlot[,orderByColumn]), decreasing = T),] #highest abs on top
@@ -250,7 +231,7 @@ calcBarSizes <- function( type, data, pvals, r2vals=NULL, saveRefTable=NULL ) {
   toPlot$includeInPlot = toPlot$plotPriority <= maxBars
   comments[1] = paste0("Showing top ", maxBars, " most changed OTUs ", viableOTUs[["comment"]])
   header = c(header, "includeInPlot: will this otu be included in the plot.")
-  #
+  
   # order OTUs to plot
   ordNames = row.names(toPlot)[order(toPlot[,orderByColumn])]
   toPlot = toPlot[ordNames,] #lowest values at top, barplot plots from bottom
@@ -268,13 +249,11 @@ calcBarSizes <- function( type, data, pvals, r2vals=NULL, saveRefTable=NULL ) {
     suppressWarnings(write.table(toPrint, file=saveRefTable, quote=FALSE, sep="\t", row.names = FALSE, append = TRUE))
     logInfo( "Saved reference table to", saveRefTable )
   }
-  #
+  
   # get rid of the rows that will not be plotted
   toPlot = toPlot[toPlot$includeInPlot,]
   return(list(toPlot=toPlot, comments=comments, xAxisLab2=xAxisLab2))
 }
-
-
 
 # Select the OTU's that qualify to be in the plot
 selectViableOTUs <- function(group1, group2, pvals=NULL){
@@ -292,7 +271,7 @@ selectViableOTUs <- function(group1, group2, pvals=NULL){
       stop(paste("Stop Plotting: Provided", length(pvals), "pvalues, \nwith", length(sigOTUs), "below the provided threshold:", pvalIncludeBar))
     }
     plotOTUs = intersect(sigOTUs, sharedOTUs)
-    comment=paste0("out of ", length(plotOTUs), " OTUs with p-value <= ", pvalIncludeBar, ".")
+    comment=paste0("out of ", length(plotOTUs), " OTUs with -value <= ", pvalIncludeBar, ".")
   }else if (!is.null(userOTUs)){
     plotOTUs = intersect(userOTUs, sharedOTUs)
     comment=paste0("out of ", length(plotOTUs), " user-supplied OTUs.")
@@ -448,6 +427,6 @@ drawPlot <- function(toPlot, title, barSizeColumn, xAxisLab, comments, xAxisLab2
       xPlusGap = toPlot[starOTUs,barSizeColumn] + ifelse(toPlot[starOTUs,barSizeColumn] > 0, starBarGap, (-1 * starBarGap))
       points(x=xPlusGap, y=bp[starOTUs,], pch="*", col=getProperty("r.colorHighlight", "red"), xpd=TRUE)
     }
-    mtext(paste0("( * ) p-value <= ", pvalStar), side=3, line=0, adj=0)
+    mtext(paste0("( * ) -value <= ", pvalStar), side=3, line=0, adj=0)
   }
 }

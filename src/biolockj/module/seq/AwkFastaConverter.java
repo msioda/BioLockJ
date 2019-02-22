@@ -24,6 +24,7 @@ import biolockj.util.SeqUtil;
 
 /**
  * This BioModule uses awk and gzip to convert input sequence files into a decompressed fasta file format.
+ * 
  * @web_desc Awk Fastq to Fasta Converter
  */
 public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
@@ -76,8 +77,7 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 	}
 
 	/**
-	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_TYPE} =
-	 * {@value biolockj.Constants#FASTA}<br>
+	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_TYPE} = {@value biolockj.Constants#FASTA}<br>
 	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_HEADER_CHAR} =
 	 * {@link biolockj.util.SeqUtil#FASTA_HEADER_DEFAULT_DELIM}
 	 *

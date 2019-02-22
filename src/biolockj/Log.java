@@ -311,7 +311,8 @@ public class Log
 	 * Validate log level is configured to one of the valid Log4J options: DEBUG, INFO, WARN, ERROR
 	 *
 	 * @return valid logLevel (DEBUG, INFO, WARN, ERROR)
-	 * @throws Exception if {@link biolockj.Config}.{@value Constants#LOG_LEVEL_PROPERTY} parameter is missing or invalid
+	 * @throws Exception if {@link biolockj.Config}.{@value Constants#LOG_LEVEL_PROPERTY} parameter is missing or
+	 * invalid
 	 */
 	protected static String validateLogLevel() throws Exception
 	{
@@ -382,6 +383,8 @@ public class Log
 	 */
 	protected static final String LOG_FILE = "LOG_FILE";
 
+	private static Set<String> debugClasses = null;
+	private static boolean gaveDebugWarning = false;
 	/**
 	 * Set in {@link #initialize(String)} to proper layout based on pipeline is direct or note<br>
 	 * Used by <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
@@ -389,8 +392,6 @@ public class Log
 	 * <i>log4j.appender.file.layout.ConversionPattern=${LOG_FORMAT}</i>
 	 */
 	private static final String LOG_FORMAT = "LOG_FORMAT";
-	private static Set<String> debugClasses = null;
-	private static boolean gaveDebugWarning = false;
 	private static File logFile = null;
 	private static Map<String, Logger> loggers = new HashMap<>();
 	private static final List<String> logMesseges = new ArrayList<>();

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
@@ -24,6 +25,7 @@ import biolockj.util.SeqUtil;
  * This BioModule runs biobakery kneaddata program to remove contaminated DNA.<br>
  * Multiple contaminent DNA databases can be used to filter reads simultaniously.<br>
  * Common contaminents include Human, Viral, and Plasmid DNA.<br>
+ * 
  * @web_desc Knead Data Sanitizer
  */
 public class KneadData extends SeqModuleImpl implements SeqModule
@@ -70,6 +72,24 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 		getParams();
 	}
 
+	@Override
+	public String getSummary() throws Exception
+	{
+		final StringBuffer sb = new StringBuffer();
+		try
+		{
+			sb.append( "Removed contaminents in DB: " + Config.getList( this, KNEAD_DBS ) );
+		}
+		catch( final Exception ex )
+		{
+			final String msg = "Unable to complete module summary: " + ex.getMessage();
+			sb.append( msg + RETURN );
+			Log.warn( getClass(), msg );
+		}
+
+		return super.getSummary() + sb.toString();
+	}
+
 	/**
 	 * This method generates the worker script function: {@value #FUNCTION_SANATIZE}.
 	 */
@@ -80,8 +100,8 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 		lines.add( "function " + FUNCTION_SANATIZE + "() {" );
 		lines.add( Config.getExe( this, EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 "
 				+ INPUT_PARAM + " $2 "
-				+ ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" ) + OUTPUT_PARAM
-				+ " " + getTempDir().getAbsolutePath() );
+				+ ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
+				+ OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
 		lines.add( "}" + RETURN );
 		return lines;
 	}

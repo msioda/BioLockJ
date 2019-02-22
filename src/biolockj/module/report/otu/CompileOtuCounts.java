@@ -22,6 +22,7 @@ import biolockj.util.OtuUtil;
 /**
  * This BioModule compiles the counts from all OTU count files into a single summary OTU count file containing OTU
  * counts for the entire dataset.
+ * 
  * @web_desc Compile OTU Counts
  */
 public class CompileOtuCounts extends OtuCountModule implements JavaModule
@@ -33,7 +34,8 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String msg = "# Samples: " + BioLockJUtil.formatNumericOutput( MetaUtil.getSampleIds().size() ) + RETURN;
+		String msg = "# Samples:     " + BioLockJUtil.formatNumericOutput( MetaUtil.getSampleIds().size(), false )
+				+ RETURN;
 		int uniqueOtus = 0;
 		int totalOtus = 0;
 		BufferedReader reader = null;
@@ -55,8 +57,8 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 			}
 		}
 
-		msg += "# Unique OTUs: " + BioLockJUtil.formatNumericOutput( uniqueOtus ) + RETURN;
-		msg += "# Total OTUs: " + BioLockJUtil.formatNumericOutput( totalOtus ) + RETURN;
+		msg += "# Unique OTUs: " + BioLockJUtil.formatNumericOutput( uniqueOtus, false ) + RETURN;
+		msg += "# Total OTUs:  " + BioLockJUtil.formatNumericOutput( totalOtus, false ) + RETURN;
 		msg += getMinOtusPerSample() + RETURN;
 		msg += getMaxOtusPerSample() + RETURN;
 		return super.getSummary() + msg;
@@ -148,7 +150,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 				max = uniqueOtuPerSample.get( sampleId );
 			}
 		}
-		return "Max # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( max ) + " ]: "
+		return "Max # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( max, false ) + " ]: "
 				+ BioLockJUtil.getCollectionAsString( ids );
 	}
 
@@ -175,7 +177,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 				min = uniqueOtuPerSample.get( sampleId );
 			}
 		}
-		return "Min # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( min ) + " ]: "
+		return "Min # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( min, false ) + " ]: "
 				+ BioLockJUtil.getCollectionAsString( ids );
 	}
 

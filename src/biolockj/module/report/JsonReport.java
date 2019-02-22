@@ -18,6 +18,7 @@ import biolockj.util.*;
 
 /**
  * This BioModule is used to build a JSON file (summary.json) compiled from all OTUs in the dataset.
+ * 
  * @web_desc Json Report
  */
 public class JsonReport extends JavaModuleImpl implements JavaModule
@@ -224,7 +225,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 			for( final Iterator<String> stats = node.getStats().keySet().iterator(); stats.hasNext(); )
 			{
 				final String stat = stats.next();
-				final String name = stat.startsWith( R_CalculateStats.getSuffix(null, false) ) ? stat
+				final String name = stat.startsWith( R_CalculateStats.getSuffix( null, false ) ) ? stat
 						: prefix + "(" + stat + ")";
 				sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
 				sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
@@ -268,6 +269,52 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 				}
 			}
 		}
+	}
+
+	/**
+	 * Get the taxonomy level reports from {@link biolockj.module.report.r.R_CalculateStats} for the given level
+	 *
+	 * @param level String
+	 * @return File log normalized report
+	 * @throws Exception if unable to obtain the report due to propagated exceptions
+	 */
+	private Map<String, File> getAllStatReports( final String level ) throws Exception
+	{
+		Map<String, File> statReports = new LinkedHashMap<>();
+		final ClassifierModule classifier = ModuleUtil.getClassifier( this, false );
+		if( classifier != null && classifier instanceof Humann2Classifier )
+		{
+			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
+			{
+				final Map<String, File> reports = getStatReports( Constants.HN2_PATH_ABUND_SUM + "_" + level );
+				for( final String key: reports.keySet() )
+				{
+					statReports.put( key, reports.get( key ) );
+				}
+			}
+			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
+			{
+				final Map<String, File> reports = getStatReports( Constants.HN2_PATH_COVG_SUM + "_" + level );
+				for( final String key: reports.keySet() )
+				{
+					statReports.put( key, reports.get( key ) );
+				}
+			}
+			if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
+			{
+				final Map<String, File> reports = getStatReports( Constants.HN2_GENE_FAM_SUM + "_" + level );
+				for( final String key: reports.keySet() )
+				{
+					statReports.put( key, reports.get( key ) );
+				}
+			}
+		}
+		else
+		{
+			statReports = getStatReports( level );
+		}
+
+		return statReports;
 	}
 
 	private List<JsonNode> getChildNodes( final JsonNode node, final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap,
@@ -324,54 +371,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		}
 		return null;
 	}
-	
 
-	/**
-	 * Get the taxonomy level reports from {@link biolockj.module.report.r.R_CalculateStats} for the given level
-	 *
-	 * @param level String
-	 * @return File log normalized report
-	 * @throws Exception if unable to obtain the report due to propagated exceptions
-	 */
-	private Map<String, File> getAllStatReports( final String level ) throws Exception
-	{
-		Map<String, File> statReports = new LinkedHashMap<>();
-		final ClassifierModule classifier = ModuleUtil.getClassifier( this, false );
-		if( classifier != null && classifier instanceof Humann2Classifier )
-		{
-			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
-			{
-				Map<String, File> reports = getStatReports( Constants.HN2_PATH_ABUND_SUM + "_" + level );
-				for( String key : reports.keySet() )
-				{
-					statReports.put( key, reports.get( key ) );
-				}
-			}
-			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) )
-			{
-				Map<String, File> reports = getStatReports( Constants.HN2_PATH_COVG_SUM + "_" + level );
-				for( String key : reports.keySet() )
-				{
-					statReports.put( key, reports.get( key ) );
-				}
-			}
-			if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) )
-			{
-				Map<String, File> reports = getStatReports( Constants.HN2_GENE_FAM_SUM + "_" + level );
-				for( String key : reports.keySet() )
-				{
-					statReports.put( key, reports.get( key ) );
-				}
-			}
-		}
-		else
-		{
-			statReports = getStatReports( level );
-		}
-		
-		return statReports;
-	}
-	
 	private Map<String, File> getStatReports( final String type ) throws Exception
 	{
 		final Map<String, File> statReports = new LinkedHashMap<>();
@@ -387,12 +387,11 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		}
 		else
 		{
-			
+
 		}
-		
+
 		return statReports;
 	}
-	
 
 	private boolean hasStats() throws Exception
 	{

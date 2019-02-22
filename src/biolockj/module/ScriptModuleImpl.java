@@ -61,8 +61,9 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	/**
 	 * 
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
-	 * the worker scripts.  Pass{@link #getInputFiles()} to either {@link #buildScript(List)} or {@link #buildScriptForPairedReads(List)}
-	 * based on {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS}.
+	 * the worker scripts. Pass{@link #getInputFiles()} to either {@link #buildScript(List)} or
+	 * {@link #buildScriptForPairedReads(List)} based on
+	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS}.
 	 */
 	@Override
 	public void executeTask() throws Exception
@@ -212,16 +213,21 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		return returnVal + " ";
 	}
 
-	private Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException
-	{
-		return Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
-	}
-
-	private boolean hasScripts() throws Exception
+	/**
+	 * Check if module produced any scripts
+	 * 
+	 * @return boolean
+	 * @throws Exception if errors occur
+	 */
+	protected boolean hasScripts() throws Exception
 	{
 		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		return scriptDir.exists();
+	}
 
+	private Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException
+	{
+		return Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
 	}
 
 }

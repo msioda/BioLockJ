@@ -26,6 +26,7 @@ import biolockj.util.*;
  * For more informations, see the online PEAR manual:
  * <a href="https://sco.h-its.org/exelixis/web/software/pear/doc.html" target=
  * "_top">https://sco.h-its.org/exelixis/web/software/pear/doc.html</a>
+ * 
  * @web_desc Merge Reads with PEAR
  */
 public class PearMergeReads extends SeqModuleImpl implements SeqModule
@@ -92,8 +93,8 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	}
 
 	/**
-	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS} =
-	 * {@value biolockj.Constants#FALSE} and register number of reads.
+	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS} = {@value biolockj.Constants#FALSE}
+	 * and register number of reads.
 	 */
 	@Override
 	public void cleanUp() throws Exception
@@ -137,11 +138,14 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String summary = SummaryUtil.getCountSummary( readsPerSample, "Paired Reads" );
+		final String label = "Paired Reads";
+		final int pad = SummaryUtil.getPad( label );
+		String summary = SummaryUtil.getCountSummary( readsPerSample, "Paired Reads", true );
 		sampleIds.removeAll( readsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+					+ BioLockJUtil.getCollectionAsString( sampleIds );
 		}
 		readsPerSample = null;
 		return super.getSummary() + summary;

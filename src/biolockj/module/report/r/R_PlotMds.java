@@ -17,6 +17,7 @@ import biolockj.module.ScriptModule;
 /**
  * This BioModule is used to build the R script used to generate MDS plots for each report field and each taxonomy level
  * configured.
+ * 
  * @web_desc R Plot MDS
  */
 public class R_PlotMds extends R_Module implements ScriptModule
@@ -37,12 +38,6 @@ public class R_PlotMds extends R_Module implements ScriptModule
 	}
 
 	/**
-	 * {@link biolockj.Config} List property: {@value #R_MDS_REPORT_FIELDS}<br>
-	 * List metadata fields to generate MDS ordination plots.
-	 */
-	protected static final String R_MDS_REPORT_FIELDS = "r_PlotMds.reportFields";
-
-	/**
 	 * {@link biolockj.Config} property: {@value #R_MDS_DISTANCE} defines the distance index to use in the capscale
 	 * command.
 	 */
@@ -52,5 +47,11 @@ public class R_PlotMds extends R_Module implements ScriptModule
 	 * {@link biolockj.Config} Integer property: {@value #R_MDS_NUM_AXIS} defines the number of MDS axis to report
 	 */
 	protected static final String R_MDS_NUM_AXIS = "r_PlotMds.numAxis";
+
+	/**
+	 * {@link biolockj.Config} List property: {@value #R_MDS_REPORT_FIELDS}<br>
+	 * List metadata fields to generate MDS ordination plots.
+	 */
+	protected static final String R_MDS_REPORT_FIELDS = "r_PlotMds.reportFields";
 
 }

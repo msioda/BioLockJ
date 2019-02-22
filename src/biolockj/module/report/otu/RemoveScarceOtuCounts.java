@@ -26,6 +26,7 @@ import biolockj.util.*;
 /**
  * This BioModule removes scarce OTUs not found in enough samples.<br>
  * The OTU must be found in a configurable percentage of samples.
+ * 
  * @web_desc Remove Low OTU Counts
  */
 public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
@@ -57,14 +58,17 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
+		final String label = "OTUs";
+		final int pad = SummaryUtil.getPad( label );
 		String summary = "Remove rare OTUs found in less than " + getCutoff() + " samples" + RETURN;
-		summary += "# Unique OTU removed:  " + uniqueOtuRemoved.size() + RETURN;
-		summary += "# Total OTU removed:   " + totalOtuRemoved + RETURN;
-		summary += SummaryUtil.getCountSummary( hitsPerSample, "OTUs" );
+		summary += BioLockJUtil.addTrailingSpaces( "# Unique OTU removed:", pad ) + uniqueOtuRemoved.size() + RETURN;
+		summary += BioLockJUtil.addTrailingSpaces( "# Total OTU removed:", pad ) + totalOtuRemoved + RETURN;
+		summary += SummaryUtil.getCountSummary( hitsPerSample, label, true );
 		sampleIds.removeAll( hitsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+					+ BioLockJUtil.getCollectionAsString( sampleIds );
 		}
 		hitsPerSample = null;
 		return super.getSummary() + summary;
@@ -124,8 +128,8 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 
 	/**
 	 * Find scarce taxa found in less samples than the cutoff percentage:
-	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_SCARCE_CUTOFF}. Return a map of these scare taxa and a set of samples that
-	 * need to remove them.
+	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_SCARCE_CUTOFF}. Return a map of these scare taxa and a
+	 * set of samples that need to remove them.
 	 *
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @param otus TreeSet of unique OTUs

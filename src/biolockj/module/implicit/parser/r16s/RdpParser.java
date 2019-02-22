@@ -25,6 +25,7 @@ import biolockj.util.MemoryUtil;
 
 /**
  * This BioModule parses RDP output files to build standard OTU abundance tables.
+ * 
  * @web_desc RDP Parser
  */
 public class RdpParser extends ParserModuleImpl implements ParserModule
@@ -69,8 +70,8 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 
 	/**
 	 * If {@link biolockj.node.r16s.RdpNode#getScore()} is above the
-	 * {@link biolockj.Config}.{@value Constants#RDP_THRESHOLD_SCORE}, continue with the standard {@link biolockj.node.OtuNode}
-	 * validation.
+	 * {@link biolockj.Config}.{@value Constants#RDP_THRESHOLD_SCORE}, continue with the standard
+	 * {@link biolockj.node.OtuNode} validation.
 	 *
 	 * @return true if {@link biolockj.node.OtuNode} is valid
 	 */

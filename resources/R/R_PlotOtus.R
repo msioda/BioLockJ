@@ -2,13 +2,13 @@
 
 # Output box-plot illustrating OTU-nominal metadata field relationship
 # Print adjusted P-values in pot header
-addBoxPlot <- function( item, taxaVals, metaVals, barColors)
+addBoxPlot <- function( item, taxaVals, metaVals, barColors )
 {
    metaVals = as.factor( metaVals )
    factors = split( taxaVals, metaVals )
-   cexAxis = getCexAxis( levels(metaVals) )
-   labels = getBoxPlotLabels( levels(metaVals) )
-   orient = getLas( levels(metaVals) )
+   cexAxis = getCexAxis( levels( metaVals ) )
+   labels = getBoxPlotLabels( levels( metaVals ) )
+   orient = getLas( levels( metaVals ) )
 
    boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=getProperty("r.pch"),
                 ylab=item, xlab="", cex.axis=cexAxis )
@@ -16,31 +16,30 @@ addBoxPlot <- function( item, taxaVals, metaVals, barColors)
                      vertical=TRUE, pch=getProperty("r.pch"), add=TRUE )
 }
 
-plotHeading <- function(parPval, nonParPval, r2, att) {
+plotHeading <- function( parPval, nonParPval, r2, field ) {
    HEAD_1 = 0.2; HEAD_2 = 1.4; LEFT = 0; RIGHT = 1; TOP = 3;
 
-   title1_A = paste( "Adj.", getTestName(att, TRUE), "P-value: ", displayCalc(parPval) )
-   title1_B = bquote( paste( R^2, ": ", .( displayCalc(parPval) ) ) )
-   title2 = paste( "Adj.", getTestName(att, FALSE), "P-value: ", displayCalc(nonParPval) )
+   title1_A = paste( "Adj.", getTestName( field ), "P-value:", displayCalc( parPval ) )
+   title1_B = bquote( paste( R^2, ": ", .( displayCalc( r2 ) ) ) )
+   title2 = paste( "Adj.", getTestName( field, FALSE ), "P-value:", displayCalc( nonParPval ) )
 
    mtext( title1_A, TOP, HEAD_1, col=getColor( parPval ), cex=0.75, adj=LEFT )
    mtext( title1_B, TOP, HEAD_1, cex=0.75, adj=RIGHT )
    mtext( title2, TOP, HEAD_2, col=getColor( nonParPval ), cex=0.75, adj=LEFT )
 }
 
-addScatterPlot <- function( item, taxaVals, metaVals )
-{
-   #cols = getColors( length(metaVals) )
-   cols = getProperty("r.colorPoint", "black")
-   plot( metaVals, taxaVals, pch=getProperty("r.pch"), col=cols, ylab=item, xlab="" )
+# Scatterplot for numeric fields 
+addScatterPlot <- function( item, taxaVals, metaVals ) {
+   cols = getProperty( "r.colorPoint", "black" )
+   plot( metaVals, taxaVals, pch=getProperty( "r.pch" ), col=cols, ylab=item, xlab="" )
 }
 
 # Return nominal group names truncated for display on X-axis of box plot
 getBoxPlotLabels <- function( labels ) {
-   if( getCexAxis(labels) == getCexAxis(returnMin=TRUE) ) {
-      nchars = sum(nchar(labels)) + length(labels) - 1
-      maxSize = ((r.plotWidth*2)+2)/length(labels)
-      return( strtrim(labels, floor(maxSize) ) )
+   if( getCexAxis( labels ) == getCexAxis( returnMin=TRUE ) ) {
+      nchars = sum( nchar( labels ) ) + length( labels ) - 1
+      maxSize = ( ( r.plotWidth * 2 ) + 2 )/length( labels )
+      return( strtrim( labels, floor( maxSize ) ) )
    }
    return( labels )
 }

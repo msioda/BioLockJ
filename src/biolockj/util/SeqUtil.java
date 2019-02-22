@@ -388,7 +388,8 @@ public class SeqUtil
 				}
 
 				// trim .fasta or .fastq extension
-				if( id.toLowerCase().endsWith( "." + Constants.FASTA ) || id.toLowerCase().endsWith( "." + Constants.FASTQ ) )
+				if( id.toLowerCase().endsWith( "." + Constants.FASTA )
+						|| id.toLowerCase().endsWith( "." + Constants.FASTQ ) )
 				{
 					id = id.substring( 0, id.length() - 6 );
 				}
@@ -540,7 +541,8 @@ public class SeqUtil
 		else
 		{
 			Config.setConfigProperty( MetaUtil.META_FILENAME_COLUMN, "" );
-			Config.setConfigProperty( Constants.INTERNAL_SEQ_TYPE, Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
+			Config.setConfigProperty( Constants.INTERNAL_SEQ_TYPE,
+					Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
 		}
 	}
 
@@ -868,9 +870,9 @@ public class SeqUtil
 
 		if( foundFasta != null && foundFastq != null )
 		{
-			throw new Exception( "Input files from: " + Constants.INPUT_DIRS + " must all be of a single type (FASTA or FASTQ)."
-					+ Constants.RETURN + "FASTA file found: " + foundFasta + Constants.RETURN + "FASTQ file found: "
-					+ foundFastq );
+			throw new Exception( "Input files from: " + Constants.INPUT_DIRS
+					+ " must all be of a single type (FASTA or FASTQ)." + Constants.RETURN + "FASTA file found: "
+					+ foundFasta + Constants.RETURN + "FASTQ file found: " + foundFastq );
 		}
 
 		if( headerChar != null )
@@ -898,8 +900,9 @@ public class SeqUtil
 		}
 		else
 		{
-			Config.setConfigProperty( Constants.INTERNAL_SEQ_TYPE, Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
-			Config.setConfigProperty(Constants.INTERNAL_SEQ_HEADER_CHAR,
+			Config.setConfigProperty( Constants.INTERNAL_SEQ_TYPE,
+					Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
+			Config.setConfigProperty( Constants.INTERNAL_SEQ_HEADER_CHAR,
 					Config.requireString( null, MetaUtil.META_NULL_VALUE ) );
 		}
 	}
@@ -975,8 +978,8 @@ public class SeqUtil
 			foundPairedReads = !getPairedReads( BioLockJUtil.getPipelineInputFiles() ).isEmpty();
 		}
 
-		Log.info( SeqUtil.class,
-				"Set " + Constants.INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Constants.TRUE: Constants.FALSE ) );
+		Log.info( SeqUtil.class, "Set " + Constants.INTERNAL_PAIRED_READS + "="
+				+ ( foundPairedReads ? Constants.TRUE: Constants.FALSE ) );
 		Config.setConfigProperty( Constants.INTERNAL_PAIRED_READS, foundPairedReads ? Constants.TRUE: Constants.FALSE );
 	}
 
@@ -1062,16 +1065,6 @@ public class SeqUtil
 	public static final String FASTA_HEADER_DEFAULT_DELIM = ">";
 
 	/**
-	 * List of acceptable 1st characters for a FASTA file
-	 */
-	private static final List<String> FASTA_HEADER_DELIMS = Arrays.asList( new String[] { ">", ";" } );
-
-	/**
-	 * Only acceptable 1st character for a FASTQ file: {@value #FASTQ_HEADER_DELIM}
-	 */
-	private static final String FASTQ_HEADER_DELIM = "@";
-
-	/**
 	 * Illumina forward read indicator found in sequence header
 	 */
 	public static final String ILLUMINA_FW_READ_IND = " 1:N:";
@@ -1082,6 +1075,16 @@ public class SeqUtil
 	public static final String ILLUMINA_RV_READ_IND = " 2:N:";
 
 	private static final Map<String, String> DNA_BASE_MAP = new HashMap<>();
+
+	/**
+	 * List of acceptable 1st characters for a FASTA file
+	 */
+	private static final List<String> FASTA_HEADER_DELIMS = Arrays.asList( new String[] { ">", ";" } );
+
+	/**
+	 * Only acceptable 1st character for a FASTQ file: {@value #FASTQ_HEADER_DELIM}
+	 */
+	private static final String FASTQ_HEADER_DELIM = "@";
 
 	private static Integer numMultiSeqLines = 0;
 
