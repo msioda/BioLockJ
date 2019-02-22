@@ -80,7 +80,7 @@ addHeaderFooter <- function( field, level, pageNum ) {
 
 # Get variance plot label as percentage
 getMdsLabel <- function( axisNum, variance ) { 
-   return( paste0("Axis-", axisNum, " ( ", paste0( round( variance ), "% )" ) ) )
+   return( paste0("Axis ", axisNum, " ( ", paste0( round( variance ), "% )" ) ) )
 }
 
 # This plot is always put in the upper right corner of the page
@@ -101,7 +101,7 @@ plotRelativeVariance <- function( field, metaColVals, perVariance, level, numAxi
 	legendLabels = paste0(names(legendKey), " (n=", table(metaColVals)[names(legendKey)], ")")
 	legendKey = legendKey[ order(table(metaColVals)[names(colorKey)]) ]
 	
-	if (length(colorKey) > maxInLegend){
+	if (length(colorKey) > (maxInLegend + 1) ){
 		legendKey = c( colorKey[ 1:maxInLegend], NA)
 	    numDropped = length(colorKey) - length(legendKey) + 1
 	    legendLabels = c(legendLabels[1:maxInLegend], paste("(", numDropped, "other labels )"))
