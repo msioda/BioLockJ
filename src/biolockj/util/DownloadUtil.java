@@ -84,7 +84,7 @@ public final class DownloadUtil
 			final List<File> downFiles = buildDownloadList( files );
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
 			final String src = SRC + "=" + Config.pipelinePath();
-			final String cmd = "rsync -v --times --files-from=:$" + SRC + File.pathSeparator + getDownloadListFile().getName() + " " + getClusterUser() + "@"
+			final String cmd = "rsync -v --times --files-from=:$" + SRC + File.separator + getDownloadListFile().getName() + " " + getClusterUser() + "@"
 					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 			
 			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + src + RETURN + cmd;
