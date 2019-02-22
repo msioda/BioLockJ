@@ -106,7 +106,7 @@ plotRelativeVariance <- function( field, metaColVals, perVariance, level, numAxi
 	    numDropped = length(colorKey) - length(legendKey) + 1
 	    legendLabels = c(legendLabels[1:maxInLegend], paste("(", numDropped, "other labels )"))
 	}
-	legend( "topright", title=field, legend=legendLabels, cex=0.8 col=legendKey, pch=getProperty("r.pch", 20), bty="n" )
+	legend( "topright", title=field, legend=legendLabels, cex=0.8, col=legendKey, pch=getProperty("r.pch", 20), bty="n" )
 }
 
 maxInLegend = 6
