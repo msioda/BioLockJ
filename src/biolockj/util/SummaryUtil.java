@@ -134,7 +134,7 @@ public class SummaryUtil
 		sb.append( getLabel( PIPELINE_CONFIG ) + " " + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( PIPELINE_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
 
-		final String downloadCmd = DownloadUtil.getDownloadCmd();
+		final String downloadCmd = downloadCmd();
 		if( downloadCmd != null )
 		{
 			sb.append( SPACER_2X + RETURN );
@@ -143,6 +143,15 @@ public class SummaryUtil
 
 		sb.append( SPACER_2X + RETURN );
 		return sb.toString();
+	}
+	
+	private static String downloadCmd() throws Exception
+	{
+		if( downloadCommand == null )
+		{
+			downloadCommand = DownloadUtil.getDownloadCmd();
+		}
+		return downloadCommand;
 	}
 
 	/**
@@ -280,12 +289,10 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			final String label = "Mean Output File Size:";
-			final int pad = label.length() + 8;
 
 			if( module.getOutputDir().listFiles().length == 0 )
 			{
-				return BioLockJUtil.addTrailingSpaces( "# Files Output:", pad ) + "0" + RETURN;
+				return  "# Files Output:  0" + RETURN;
 			}
 
 			final Collection<File> outFiles = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
@@ -316,11 +323,9 @@ public class SummaryUtil
 				outAvg = outAvg.divide( BigInteger.valueOf( count ) );
 			}
 
-			sb.append( BioLockJUtil.addTrailingSpaces( "# Files Output:", pad ) + count + RETURN );
-			sb.append( BioLockJUtil.addTrailingSpaces( label, pad ) + FileUtils.byteCountToDisplaySize( outAvg )
-					+ RETURN );
-			sb.append( newMeta == null ? ""
-					: BioLockJUtil.addTrailingSpaces( "New metadata:", pad ) + newMeta.getAbsolutePath() + RETURN );
+			sb.append( "# Files Output:  " + count + RETURN );
+			sb.append( "Mean Output File Size:  " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
+			sb.append( newMeta == null ? "" : "New metadata:" + newMeta.getAbsolutePath() + RETURN );
 
 		}
 		catch( final Exception ex )
@@ -885,9 +890,7 @@ public class SummaryUtil
 
 	private static final String EXCEPTION_LABEL = "Exception:";
 
-	/**
-	 * Summary label BioModule header: {@value #MODULE}
-	 */
+	private static String downloadCommand = null;
 	private static final String MODULE = "Module";
 
 	private static final String NUM_ATTEMPTS = "# Attempts";

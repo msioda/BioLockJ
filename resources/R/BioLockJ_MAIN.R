@@ -56,7 +56,6 @@ getModuleScript <- function() {
 		initial.options = commandArgs(trailingOnly=FALSE)
 		script.name <- sub("--file=", "", initial.options[grep("--file=", initial.options)])
 		if( length( script.name ) == 0 ) {
-		
 			if( init( getInteractiveMain() ) ) {
 				script.name = getInteractiveMain() 
 			}

@@ -15,9 +15,7 @@ import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.NameFileFilter;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.commons.io.filefilter.*;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -58,7 +56,7 @@ public final class DownloadUtil
 			final File pipeRoot = new File( Config.pipelinePath() );
 
 			boolean hasRmods = false;
-			String status = "completed";
+			final String status = ( BioLockJ.isPipelineComplete() ? "completed" : "failed" ) + " pipeline -->";
 			final Set<File> files = new TreeSet<>();
 			for( final BioModule module: modules )
 			{
@@ -66,17 +64,13 @@ public final class DownloadUtil
 				if( module instanceof R_Module )
 				{
 					hasRmods = true;
-					files.addAll( FileUtils.listFiles( module.getModuleDir(), new WildcardFileFilter( "*" ),
+					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
 							getDirFilter( true ) ) );
 				}
 				else
 				{
-					files.addAll( FileUtils.listFiles( module.getModuleDir(), new WildcardFileFilter( "*" ),
+					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
 							getDirFilter( false ) ) );
-				}
-				if( !ModuleUtil.isComplete( module ) )
-				{
-					status = "failed";
 				}
 			}
 
@@ -87,15 +81,13 @@ public final class DownloadUtil
 
 			files.addAll( Arrays.asList( pipeRoot.listFiles() ) );
 
-			addToDownloadList( files );
-
-			final String label = status + " pipeline -->";
-			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize() );
-			final String cmd = SOURCE + "=" + pipeRoot.getAbsolutePath() + RETURN + DEST + "=" + getDownloadDirPath()
-					+ RETURN + "rsync --times --files-from=:$" + SOURCE + File.separator
-					+ pipeRoot.toURI().relativize( getDownloadListFile().toURI() ) + " " + getClusterUser() + "@"
-					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SOURCE + " $" + DEST;
-			return "Download " + label + " [" + displaySize + "]:" + RETURN + cmd;
+			final List<File> downFiles = buildDownloadList( files );
+			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
+			final String src = SRC + "=" + Config.pipelinePath();
+			final String cmd = "rsync -v --times --files-from=:$" + SRC + File.separator + getDownloadListFile().getName() + " " + getClusterUser() + "@"
+					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
+			
+			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + src + RETURN + cmd;
 		}
 
 		return null;
@@ -124,71 +116,38 @@ public final class DownloadUtil
 	}
 
 	/**
-	 * Get the file that has the download list.
+	 * Get the download list file.
 	 * 
 	 * @return File containing list of files to download
 	 * @throws Exception if errors occur
 	 */
 	public static File getDownloadListFile() throws Exception
 	{
-		final File downloadList = new File( Config.pipelinePath() + File.separator + DOWNLOAD_LIST );
-		if( !downloadList.exists() )
-		{
-			downloadList.createNewFile();
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( downloadList, true ) );
-			final String header = RSYNC_COMMENT + "Use this file with the --files-from argument to rsync." + RETURN
-					+ RSYNC_COMMENT + "See \"" + SummaryUtil.getSummaryFile().getName() + "\" or call "
-					+ DOWNLOAD_SCRIPT + " for full rsync command." + RETURN + RSYNC_COMMENT + "Lines that begin with \""
-					+ RSYNC_COMMENT + "\" are ignored." + RETURN + RSYNC_COMMENT
-					+ "This file is regenerated with each restart; any manual edits are lost." + RETURN + RSYNC_COMMENT
-					+ RETURN + RSYNC_COMMENT;
-			writer.write( header + RETURN );
-			writer.close();
-		}
-		return downloadList;
+		return new File( Config.pipelinePath() + File.separator + DOWNLOAD_LIST );
 	}
 
 	/**
-	 * Get the total size of all files that would be included in download.
+	 * Get the total size of all files included for download.
 	 * 
+	 * @param files List of download files
 	 * @return BigInteger total download size
 	 * @throws Exception if errors occur
 	 */
-	public static BigInteger getDownloadSize() throws Exception
+	protected static BigInteger getDownloadSize( List<File> files ) throws Exception
 	{
-		final String pipeRoot = Config.pipelinePath();
-
-		BigInteger downloadSize = FileUtils.sizeOfAsBigInteger( Log.getFile() );
-
-		final File dlFile = getDownloadListFile();
-
-		final BufferedReader reader = new BufferedReader( new FileReader( dlFile ) );
-		String readLine;
-		while( ( readLine = reader.readLine() ) != null )
+		BigInteger downloadSize = BigInteger.valueOf( 0L );
+		for( File file: files )
 		{
-			if( !readLine.startsWith( RSYNC_COMMENT ) )
-			{
-				final File f = new File( pipeRoot + File.separator + readLine );
-				downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( f ) );
-			}
+			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( file ) );
 		}
-
-		reader.close();
-
+		
 		return downloadSize;
-
 	}
 
-	/**
-	 * Get the file name to use for creating the script to run all R modules locally.
-	 * 
-	 * @return file name
-	 * @throws Exception if errors occur
-	 */
-	public static File getRunAllRScriptName() throws Exception
+
+	private static File getRunAllRScript() throws Exception
 	{
-		final File script = new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
-		return script;
+		return new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
 	}
 
 	/**
@@ -288,8 +247,8 @@ public final class DownloadUtil
 	{
 
 		final File pipeRoot = new File( Config.pipelinePath() );
-		final File script = getRunAllRScriptName();
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( script, true ) );
+		final File script = getRunAllRScript();
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
 
 		if( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
@@ -316,31 +275,35 @@ public final class DownloadUtil
 	}
 
 	/**
-	 * Add files to {@value biolockj.util.DownloadUtil#DOWNLOAD_LIST} in pipeline root directory. If doDownlaod = false,
-	 * then the file and its size are noted in the download file in a commented out line. This makes it easy for the
-	 * user to see how big the files is and add it to the list ad-hoc.
+	 * Add files to {@value biolockj.util.DownloadUtil#DOWNLOAD_LIST} in pipeline root directory. 
 	 * 
 	 * @param files - files to add to the download list
+	 * @return List of files for download
 	 * @throws Exception if errors occur
 	 */
-	private static void addToDownloadList( final Collection<File> files ) throws Exception
+	protected static List<File> buildDownloadList( final Collection<File> files ) throws Exception
 	{
-		final File dlFile = getDownloadListFile();
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( dlFile, true ) );
-
-		final File pipeRoot = new File( Config.pipelinePath() );
-		for( final File file: files )
+		final List<File> downFiles = new ArrayList<>();
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getDownloadListFile() ) );
+		try
 		{
-			if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() )
+			final File pipeRoot = new File( Config.pipelinePath() );
+			for( final File file: files )
 			{
-				final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
-				final String sizeString = RSYNC_COMMENT + relPath + " --> "
-						+ FileUtils.byteCountToDisplaySize( FileUtils.sizeOf( file ) );
-				writer.write( sizeString + RETURN );
-				writer.write( relPath + RETURN );
+				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
+				{
+					downFiles.add(  file );
+					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
+					writer.write( relPath + RETURN );
+				}
 			}
 		}
-		writer.close();
+		finally
+		{
+			if( writer != null ) writer.close();
+		}
+
+		return downFiles;
 	}
 
 	/**
@@ -353,11 +316,7 @@ public final class DownloadUtil
 	 * Sets the local directory targeted by the scp command.
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
-
-	private static final String DEST = "out";
-	private static final String DOWNLOAD_SCRIPT = "blj_download";
+	private static final String SRC = "src";
 	private static final String RETURN = Constants.RETURN;
-	private static final String RSYNC_COMMENT = "# ";
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
-	private static final String SOURCE = "src";
 }

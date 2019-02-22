@@ -101,38 +101,42 @@ main <- function() {
 
          parTestName = getTestName( field )
          xLabelPar = paste( parTestName, "P-Values" )
-
          addHistogram( parStats[, field], xLabelPar, names(parTestName) )
-         position = position + 1
 
          nonParTestName = getTestName( field, FALSE )
          xLabelNonPar = paste( nonParTestName, "P-Values" )
          addHistogram( nonParStats[, field], xLabelNonPar, names(nonParTestName) )
-        position = position + 1
+         
+         position = position + 2
 
          # shared title
          plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
          shiftByPoints = par("mai")[2] * plotPointPerInch
          centerAt = par("usr")[1] - shiftByPoints
-         mtext(text=field, side=3, line=1.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
+         mtext( field, side=3, line=1.5, at=centerAt, adj=.5, xpd=NA, font=par("font.main"), cex=par("cex.main"))
          
-         if (position > prod( par("mfrow") ) ){
-           addPageNumber( pageNum )
-           addPageFooter(paste("P-Value Histograms", displayLevel( level ), sep = " - "))
-           position = 1
-           pageNum = pageNum + 1
+         if( position == 3 ) { 
+            addReportFooter( level, pageNum ) 
+         } else if( position > prod( par("mfrow") ) ) {
+			   addReportFooter( level, pageNum )
+            position = 1
+            pageNum = pageNum + 1
          }
-
       }
-
-      printColorCode()
-      plotPlainText( c("Histograms are ordered by", paste("the fraction of tests below", getProperty("r.pvalCutoff")), 
-                       "in the parametric or non-parametric test,", "whichever was greater.", " ", 
-                       "All p-values are unadjusted."), align="right")
-      addPageNumber( pageNum )
-      addPageFooter(paste("P-Value Histograms", displayLevel( level ), sep = " - "))
-
+		par()
+		
+		printColorCode()
+		plotPlainText( c("Unadjusted P-value histograms are", "ordered by % tests below",
+			paste( "P-value significance threshold:", getProperty("r.pvalCutoff") ) ), align="right")
+      addReportFooter( level, pageNum )
+      
       dev.off()
       if( doDebug() ) sink()
-   }
+	}
 }
+
+# Add page footer and page number at bottom of page
+addReportFooter <- function( level, pageNum ) {
+	addPageNumber( pageNum )
+	addPageFooter( paste( str_to_title( level ), "P-Value Histograms" ) )
+ }

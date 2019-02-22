@@ -339,6 +339,7 @@ public class BioLockJ
 
 			PropUtil.sanitizeMasterConfig();
 			markProjectStatus( Constants.BLJ_COMPLETE );
+			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
 		}
 	}
 
@@ -393,7 +394,7 @@ public class BioLockJ
 	 *
 	 * @return true if {@value biolockj.Constants#BLJ_COMPLETE} exists in the pipeline root directory, otherwise false
 	 */
-	private static boolean isPipelineComplete()
+	public static boolean isPipelineComplete()
 	{
 		File f = null;
 		try
@@ -453,7 +454,7 @@ public class BioLockJ
 
 	private static void pipelineShutDown( final String[] args )
 	{
-		if( !RuntimeParamUtil.isDirectMode() && !RuntimeParamUtil.doRestart() )
+		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			try
 			{
@@ -467,18 +468,10 @@ public class BioLockJ
 			{
 				logFinalException( args, ex );
 			}
-
-			try
-			{
-				Log.info( BioLockJ.class, "Log Pipeline Summary" + Constants.RETURN + SummaryUtil.getSummary() );
-			}
-			catch( final Exception ex )
-			{
-				logFinalException( args, ex );
-			}
 		}
-
-		Log.info( BioLockJ.class, "Code #42 - Exit Program" );
+		Log.info( BioLockJ.class, "Analysis complete --> The answer to the ultimate question of life, the universe and everything is... [ 42 ]" );
+		Log.info( BioLockJ.class, "End program." );
+		
 		if( !isPipelineComplete() )
 		{
 			System.exit( 1 );

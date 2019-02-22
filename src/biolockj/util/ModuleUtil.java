@@ -273,7 +273,7 @@ public class ModuleUtil
 					}
 				}
 
-				Log.info( ModuleUtil.class, "Removed out-of-scope IDs, leaving valid R IDs = " + filteredR_ids.size() );
+				Log.debug( ModuleUtil.class, "Removed out-of-scope IDs, leaving valid R IDs = " + filteredR_ids.size() );
 			}
 
 			if( !filteredR_ids.isEmpty() )
