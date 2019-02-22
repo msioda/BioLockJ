@@ -467,22 +467,26 @@ public class BioLockJ
 			{
 				logFinalException( args, ex );
 			}
-
+		}
+		
+		if( isPipelineComplete() )
+		{
 			try
 			{
-				Log.info( BioLockJ.class, "Log Pipeline Summary" + Constants.RETURN + SummaryUtil.getSummary() );
+				Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+				Log.info( BioLockJ.class, "Analysis complete --> The answer to the ultimate question of life, the universe and everything is... [ 42 ]" );
+				Log.info( BioLockJ.class, "End program." );
 			}
 			catch( final Exception ex )
 			{
 				logFinalException( args, ex );
 			}
 		}
-
-		Log.info( BioLockJ.class, "Code #42 - Exit Program" );
-		if( !isPipelineComplete() )
+		else
 		{
 			System.exit( 1 );
 		}
+		
 	}
 
 	/**

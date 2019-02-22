@@ -92,7 +92,7 @@ public final class DownloadUtil
 			final String label = status + " pipeline -->";
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize() );
 			final String cmd = SOURCE + "=" + pipeRoot.getAbsolutePath() + RETURN + DEST + "=" + getDownloadDirPath()
-					+ RETURN + "rsync --times --files-from=:$" + SOURCE + File.separator
+					+ RETURN + "rsync -v --times --files-from=:$" + SOURCE + File.separator
 					+ pipeRoot.toURI().relativize( getDownloadListFile().toURI() ) + " " + getClusterUser() + "@"
 					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SOURCE + " $" + DEST;
 			return "Download " + label + " [" + displaySize + "]:" + RETURN + cmd;
