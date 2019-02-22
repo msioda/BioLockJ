@@ -85,7 +85,7 @@ public final class DownloadUtil
 			final List<File> downFiles = buildDownloadList( files );
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
 			final String cmd = "rsync -v --times --files-from=:" + getDownloadListFile().getAbsolutePath() + " " + getClusterUser() + "@"
-					+ Config.requireString( null, Email.CLUSTER_HOST ) + " " + getDownloadDirPath();
+					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":" + Config.pipelinePath() + " " + getDownloadDirPath();
 			
 			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + cmd;
 		}
@@ -116,28 +116,14 @@ public final class DownloadUtil
 	}
 
 	/**
-	 * Get the file that has the download list.
+	 * Get the download list file.
 	 * 
 	 * @return File containing list of files to download
 	 * @throws Exception if errors occur
 	 */
 	public static File getDownloadListFile() throws Exception
 	{
-		final File downloadList = new File( Config.pipelinePath() + File.separator + DOWNLOAD_LIST );
-		if( !downloadList.exists() )
-		{
-			downloadList.createNewFile();
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( downloadList, true ) );
-			final String header = RSYNC_COMMENT + "Use this file with the --files-from argument to rsync." + RETURN
-					+ RSYNC_COMMENT + "See \"" + SummaryUtil.getSummaryFile().getName() + "\" or call "
-					+ DOWNLOAD_SCRIPT + " for full rsync command." + RETURN + RSYNC_COMMENT + "Lines that begin with \""
-					+ RSYNC_COMMENT + "\" are ignored." + RETURN + RSYNC_COMMENT
-					+ "This file is regenerated with each restart; any manual edits are lost." + RETURN + RSYNC_COMMENT
-					+ RETURN + RSYNC_COMMENT;
-			writer.write( header + RETURN );
-			writer.close();
-		}
-		return downloadList;
+		return new File( Config.pipelinePath() + File.separator + DOWNLOAD_LIST );
 	}
 
 	/**
@@ -149,11 +135,18 @@ public final class DownloadUtil
 	 */
 	protected static BigInteger getDownloadSize( List<File> files ) throws Exception
 	{
+		int i = 0;
 		BigInteger downloadSize = BigInteger.valueOf( 0L );
+		Log.info( DownloadUtil.class, "Calculatng download size.  Initial value: " + FileUtils.byteCountToDisplaySize( downloadSize ) );
 		for( File file: files )
 		{
+			Log.info( DownloadUtil.class,  "File [  " + file.getName() + " ] STANDARD sizeOf( file ) = " +  FileUtils.sizeOf( file ) );
+			Log.info( DownloadUtil.class, "File [  " + file.getName() + " ] = { " + FileUtils.sizeOfAsBigInteger( file ) + " } --> " + FileUtils.byteCountToDisplaySize( FileUtils.sizeOfAsBigInteger( file ) ) );
 			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( file ) );
+			Log.info( DownloadUtil.class, "Total after iteration [ " + (i++) + "]: { " + downloadSize + " } --> " + FileUtils.byteCountToDisplaySize( downloadSize ) );
 		}
+		
+		Log.info( DownloadUtil.class, "FINAL download size: { " + downloadSize  + " } --> " + FileUtils.byteCountToDisplaySize( downloadSize ) );
 		return downloadSize;
 	}
 
@@ -262,7 +255,7 @@ public final class DownloadUtil
 
 		final File pipeRoot = new File( Config.pipelinePath() );
 		final File script = getRunAllRScript();
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( script, true ) );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
 
 		if( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 		{
@@ -301,11 +294,13 @@ public final class DownloadUtil
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getDownloadListFile() ) );
 		try
 		{
+			final File pipeRoot = new File( Config.pipelinePath() );
 			for( final File file: files )
 			{
 				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
 				{
-					writer.write( file.getAbsolutePath() + RETURN );
+					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
+					writer.write( relPath + RETURN );
 				}
 			}
 		}
@@ -328,10 +323,6 @@ public final class DownloadUtil
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
 
-	private static final String DEST = "out";
-	private static final String DOWNLOAD_SCRIPT = "blj_download";
 	private static final String RETURN = Constants.RETURN;
-	private static final String RSYNC_COMMENT = "# ";
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
-	private static final String SOURCE = "src";
 }
