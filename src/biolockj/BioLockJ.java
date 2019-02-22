@@ -453,7 +453,7 @@ public class BioLockJ
 
 	private static void pipelineShutDown( final String[] args )
 	{
-		if( !RuntimeParamUtil.isDirectMode() && !RuntimeParamUtil.doRestart() )
+		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			try
 			{
