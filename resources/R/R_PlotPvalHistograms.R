@@ -41,19 +41,18 @@ getCexMain<- function( labels=NULL ) {
    return( size )
 }
 
-
 # This graphic can be printed with the histograms,
 # used for documentation, or just as a reference check when chaning the colors.
-printColorCode <- function(){
-   parColors = getTestName(isParametric = TRUE, returnColors = TRUE)
-   nonParColors = getTestName(isParametric = FALSE, returnColors = TRUE)
-   colors = c(parColors, nonParColors)
+printColorCode <- function() {
+   parTests = getTestName() 
+   nonParTests = getTestName( isParametric=FALSE )
+   colors = c( names(parColors), names(nonParColors) )
    plot(1,1, ylim=c(0,4), xlim=c(.5,2.5), type="n", axes=FALSE, xlab="", ylab="")
    title(main="Color Coding", line=0)
    x=rep(1:2, each=3)
    y=rep(3:1, 2)
    symbols(x=x, y=y, rectangles = matrix(ncol=2,byrow=TRUE,data=rep(c(1,1),6)), fg=colors, bg=colors, inches=FALSE, add=TRUE)
-   text(x=x, y=y, labels=names(colors))
+   text(x=x, y=y, labels=c(parTests,nonParTests) )
    text(x=1, y=3.5, labels="parametric", pos=3)
    text(x=2, y=3.5, labels="non-parametric", pos=3)
 }

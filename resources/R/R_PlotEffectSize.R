@@ -104,7 +104,7 @@ main <- function(){
         })
       }
       
-      if( !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) && !is.null(relAbundance) ) {
+      if( isBinaryAtt && !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) && !is.null(relAbundance) ) {
         tryCatch(expr={
 
           splitRelAbund = split(relAbundance[row.names(metaTable),], f=metaTable[,field])
