@@ -14,7 +14,9 @@ package biolockj.util;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 
 /**
  * Simple utility containing String manipulation and formatting functions.

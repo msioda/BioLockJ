@@ -31,6 +31,7 @@ import biolockj.util.*;
  * times and the average OTU count is used for each sample. Note that even if a previous module removed singletons, this
  * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
+ * 
  * @web_desc Rarefy OTU Counts
  */
 public class RarefyOtuCounts extends OtuCountModule implements JavaModule
@@ -66,11 +67,14 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String summary = SummaryUtil.getCountSummary( hitsPerSample, "OTUs" );
+		final String label = "OTUs";
+		final int pad = SummaryUtil.getPad( label );
+		String summary = SummaryUtil.getCountSummary( hitsPerSample, "OTUs", false );
 		sampleIds.removeAll( hitsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+					+ BioLockJUtil.getCollectionAsString( sampleIds );
 		}
 		hitsPerSample = null;
 		return super.getSummary() + summary;

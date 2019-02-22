@@ -5,15 +5,14 @@
 # color by test type
 
 # Add one histogram to the report
-addHistogram <- function( v, xLabel, size, pvalCutoff=NULL, col ) {
+addHistogram <- function( v, xLabel, col ) {
    if ( !all(is.nan( v )) && !all(is.na( v )) ) {
-      hist( v, breaks = seq(0, 1, 0.05), xlab=xLabel, main="", cex.main=size, col=col, xlim=c(0,1))
-      if (!is.null(pvalCutoff)){
-         abline(v=pvalCutoff, col=gray(.5), lty=2)
-         mtext(at=pvalCutoff, side=3, text=pvalCutoff, col=gray(.5))
-      }
+      pvalCutoff = getProperty("r.pvalCutoff")
+      hist( v, breaks=seq(0, 1, 0.05), xlab=xLabel, main="", cex.main=getCexMain( xLabel ), col=col, xlim=c(0,1) )
+      abline(v=pvalCutoff, col=gray(.5), lty=2)
+      mtext(at=pvalCutoff, side=3, text=pvalCutoff, col=gray(.5))
    }else{
-      plotPlainText("All values are NA or NaN.")
+      plotPlainText( "All values are NA or NaN." )
    }
 }
 
@@ -41,19 +40,18 @@ getCexMain<- function( labels=NULL ) {
    return( size )
 }
 
-
 # This graphic can be printed with the histograms,
 # used for documentation, or just as a reference check when chaning the colors.
-printColorCode <- function(){
-   parColors = getTestName(isParametric = TRUE, returnColors = TRUE)
-   nonParColors = getTestName(isParametric = FALSE, returnColors = TRUE)
-   colors = c(parColors, nonParColors)
+printColorCode <- function() {
+   parTests = getTestName() 
+   nonParTests = getTestName( isParametric=FALSE )
+   colors = c( names(parTests), names(nonParTests) )
    plot(1,1, ylim=c(0,4), xlim=c(.5,2.5), type="n", axes=FALSE, xlab="", ylab="")
    title(main="Color Coding", line=0.5)
    x=rep(1:2, each=3)
    y=rep(3:1, 2)
    symbols(x=x, y=y, rectangles = matrix(ncol=2,byrow=TRUE,data=rep(c(1,1),6)), fg=colors, bg=colors, inches=FALSE, add=TRUE)
-   text(x=x, y=y, labels=names(colors))
+   text(x=x, y=y, labels=c(parTests,nonParTests) )
    text(x=1, y=3.5, labels="parametric", pos=3)
    text(x=2, y=3.5, labels="non-parametric", pos=3)
 }
@@ -62,8 +60,6 @@ printColorCode <- function(){
 # Main function generates reports for each each taxaLevels()
 # Each taxonomy report includes 2 histograms for each report field (1 parametric, 1 non-parametric)
 main <- function() {
-   pvalCutoff = getProperty("r.pvalCutoff", 0.05)
-
    for( level in taxaLevels() ) {
      parStats = getStatsTable( level, TRUE, FALSE )
      nonParStats = getStatsTable( level, FALSE, FALSE )
@@ -77,24 +73,22 @@ main <- function() {
       pageNum = 1
       position = 1
 
-      size = getCexMain( colnames(parStats) )
-      logInfo( "size = getCexMain( colnames(parStats) )", size )
-
       # create ranks table
       fields = names(parStats)[ names(parStats) %in% getReportFields()]
       logInfo("fields", getReportFields())
       ranks = data.frame(AttributeName=fields,
                                   Parametric.FractionPvalsUnderCutoff=rep(NA, ncol(parStats)),
                                   NonParametric.FractionPvalsUnderCutoff=rep(NA, ncol(nonParStats)))
-      row.names(ranks) = fields
-      for( field in fields ) {
-         ranks[field,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=parStats[, field], pvalCutoff)
-         ranks[field,"NonParametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=nonParStats[, field], pvalCutoff)
+
+      row.names(ranks) = ranks$AttributeName
+      for( field in names(parStats) ) {
+         ranks[field,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=parStats[, field], getProperty("r.pvalCutoff"))
+         ranks[field,"NonParametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=nonParStats[, field], getProperty("r.pvalCutoff"))
       }
       # order attributes based on the fraction of tests with a p-value below <pvalCutoff>
       orderBy = apply(ranks[2:3],1, max, na.rm=TRUE)
       ranks = ranks[order(orderBy, decreasing=TRUE),]
-      fname = getPath( getTempDir(), paste0(level, "_fractionBelow-", pvalCutoff, ".tsv") )
+      fname = getPath( getTempDir(), paste0(level, "_fractionBelow-", getProperty("r.pvalCutoff"), ".tsv") )
       write.table(ranks, file=fname, sep="\t", quote=FALSE, row.names=FALSE)
 
       # plot histograms in the same order they have in the ranks table
@@ -105,19 +99,16 @@ main <- function() {
          logInfo("processing attribute:", field )
          stopifnot( field %in% names(nonParStats) && field %in% names(parStats) )
 
-         parTestName = getTestName(field, isParametric=TRUE)
+         parTestName = getTestName( field )
          xLabelPar = paste( parTestName, "P-Values" )
-         addHistogram( v=parStats[, field],
-                              xLabel=xLabelPar, size=size, pvalCutoff=pvalCutoff, 
-                              col=getTestName(field, isParametric=TRUE, returnColors=TRUE) )
+
+         addHistogram( parStats[, field], xLabelPar, names(parTestName) )
          position = position + 1
 
-         nonParTestName = getTestName(field, isParametric=FALSE)
+         nonParTestName = getTestName( field, FALSE )
          xLabelNonPar = paste( nonParTestName, "P-Values" )
-         addHistogram( v=nonParStats[, field],
-                              xLabel=xLabelNonPar, size=size, pvalCutoff=pvalCutoff, 
-                              col=getTestName(field, isParametric=FALSE, returnColors=TRUE) )
-         position = position + 1
+         addHistogram( nonParStats[, field], xLabelNonPar, names(nonParTestName) )
+        position = position + 1
 
          # shared title
          plotPointPerInch = (par("usr")[2] - par("usr")[1]) / par("pin")[1]
@@ -133,15 +124,15 @@ main <- function() {
          }
 
       }
-      # at the end, add the color code reference
+
       printColorCode()
-      plotPlainText( c("Histograms are ordered by", paste("the fraction of tests below", pvalCutoff), 
+      plotPlainText( c("Histograms are ordered by", paste("the fraction of tests below", getProperty("r.pvalCutoff")), 
                        "in the parametric or non-parametric test,", "whichever was greater.", " ", 
                        "All p-values are unadjusted."), align="right")
       addPageNumber( pageNum )
       addPageFooter(paste("P-Value Histograms", displayLevel( level ), sep = " - "))
-      dev.off()
 
+      dev.off()
       if( doDebug() ) sink()
    }
 }

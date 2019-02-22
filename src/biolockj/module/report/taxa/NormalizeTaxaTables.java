@@ -42,11 +42,11 @@ import biolockj.util.TaxaUtil;
  * "Stochastic changes over time and not founder effects drive cage effects in microbial community assembly in a mouse
  * model" <a href= "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/" target=
  * "_top">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3806260/</a>
+ * 
  * @web_desc Normalize Taxa Tables
  */
 public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 {
-
 	/**
 	 * Verify {@link biolockj.Config}.{@value biolockj.Constants#REPORT_LOG_BASE} property is valid (if defined) with a
 	 * value = (e or 10).
@@ -173,19 +173,19 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 			}
 		}
 
+		File normOutDir = getOutputDir();
 		final String level = TaxaUtil.getTaxonomyTableLevel( taxaTable );
 		Log.debug( getClass(), "Normalizing table for level: " + level );
 		if( !logBase.isEmpty() )
 		{
-			final File logNormTable = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase + NORMAL );
+			normOutDir = getTempDir();
+			final File logNormTable = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level,
+					TaxaUtil.NORMALIZED + "_Log" + logBase );
 			writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsNormalizedThenLogged );
 		}
-		else
-		{
-			final File normTable = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, NORMAL );
-			writeDataToFile( normTable, sampleNames, otuNames, dataPointsNormalized );
-		}
 
+		final File normTable = TaxaUtil.getTaxonomyTableFile( normOutDir, level, TaxaUtil.NORMALIZED );
+		writeDataToFile( normTable, sampleNames, otuNames, dataPointsNormalized );
 	}
 
 	private List<String> getOtuNames( final String firstLine ) throws Exception
@@ -290,11 +290,6 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 
 	private String logBase = "";
 	private String summary = "";
-
-	/**
-	 * File suffix appended to normalized OTU tables
-	 */
-	public static final String NORMAL = "_norm";
 
 	/**
 	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}

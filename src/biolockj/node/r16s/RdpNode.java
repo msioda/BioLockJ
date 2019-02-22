@@ -53,9 +53,9 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 
 	/**
 	 * Build the OtuNode by extracting the OTU names for each level from the line. Only OTUs with score above the
-	 * threshold are included. Score is set to the lowest score above
-	 * {@value biolockj.Constants#RDP_THRESHOLD_SCORE}. If id = null, extract the ID from
-	 * the 1st token in the line. Remove single and double quotes if found around OTU name.
+	 * threshold are included. Score is set to the lowest score above {@value biolockj.Constants#RDP_THRESHOLD_SCORE}.
+	 * If id = null, extract the ID from the 1st token in the line. Remove single and double quotes if found around OTU
+	 * name.
 	 *
 	 * @param id Sample ID
 	 * @param line RDP Classifier output line

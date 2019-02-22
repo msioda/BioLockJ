@@ -27,7 +27,8 @@ import biolockj.util.*;
  * For a complete list of available metrics, see:
  * <a href= "http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html" target=
  * "_top">http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html</a><br>
- * @web_desc 
+ * 
+ * @web_desc
  */
 public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
@@ -43,8 +44,8 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * output/{@value #OTU_SUMMARY_FILE}
 	 * </ol>
 	 * <p>
-	 * If {@link biolockj.Config}.{@value Constants#QIIME_ALPHA_DIVERSITY_METRICS} are defined, add lines to run additional
-	 * scripts:
+	 * If {@link biolockj.Config}.{@value Constants#QIIME_ALPHA_DIVERSITY_METRICS} are defined, add lines to run
+	 * additional scripts:
 	 * <ol>
 	 * <li>{@value #SCRIPT_CALC_ALPHA_DIVERSITY} - calculates {@value Constants#QIIME_ALPHA_DIVERSITY_METRICS} on
 	 * {@value #OTU_TABLE} to create output/{@value #ALPHA_DIVERSITY_TABLE}
@@ -479,6 +480,11 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	private String switches = null;
 
 	/**
+	 * Value output by {@value #SCRIPT_CALC_ALPHA_DIVERSITY} for null values: {@value #ALPHA_DIV_NULL_VALUE}
+	 */
+	protected static final String ALPHA_DIV_NULL_VALUE = "N/A";
+
+	/**
 	 * File produced by QIIME {@value #SCRIPT_CALC_ALPHA_DIVERSITY} script: {@value #ALPHA_DIVERSITY_TABLE}
 	 */
 	protected static final String ALPHA_DIVERSITY_TABLE = "alphaDiversity" + TXT_EXT;
@@ -510,10 +516,21 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String OTU_TABLE = "otu_table.biom";
 
 	/**
+	 * {@link biolockj.Config} List property used to obtain the QIIME executable params
+	 */
+	protected static final String QIIME_PARAMS = "qiime.params";
+
+	/**
 	 * {@link biolockj.Config} boolean property to indicate if {@value #EXE_VSEARCH} is needed for chimera removal:
 	 * {@value #QIIME_REMOVE_CHIMERAS}
 	 */
 	protected static final String QIIME_REMOVE_CHIMERAS = "qiime.removeChimeras";
+
+	/**
+	 * Directory created by {@value biolockj.module.classifier.r16s.QiimeDeNovoClassifier#PICK_OTU_SCRIPT} and
+	 * {@value biolockj.module.classifier.r16s.QiimeOpenRefClassifier#PICK_OTU_SCRIPT}: {@value #REP_SET}
+	 */
+	protected static final String REP_SET = "rep_set";
 
 	/**
 	 * QIIME script to add {@value #ALPHA_DIVERSITY_TABLE} to the metadata file: {@value #SCRIPT_ADD_ALPHA_DIVERSITY}
@@ -551,22 +568,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * {@value #SCRIPT_SUMMARIZE_TAXA}
 	 */
 	protected static final String SCRIPT_SUMMARIZE_TAXA = "summarize_taxa.py";
-
-	/**
-	 * Value output by {@value #SCRIPT_CALC_ALPHA_DIVERSITY} for null values: {@value #ALPHA_DIV_NULL_VALUE}
-	 */
-	protected static final String ALPHA_DIV_NULL_VALUE = "N/A";
-
-	/**
-	 * {@link biolockj.Config} List property used to obtain the QIIME executable params
-	 */
-	protected static final String QIIME_PARAMS = "qiime.params";
-
-	/**
-	 * Directory created by {@value biolockj.module.classifier.r16s.QiimeDeNovoClassifier#PICK_OTU_SCRIPT} and
-	 * {@value biolockj.module.classifier.r16s.QiimeOpenRefClassifier#PICK_OTU_SCRIPT}: {@value #REP_SET}
-	 */
-	protected static final String REP_SET = "rep_set";
 
 	/**
 	 * QIIME script {@value #SCRIPT_SUMMARIZE_TAXA} parameter used to suppress the output of biom files. BioLockJ

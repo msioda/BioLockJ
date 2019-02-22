@@ -13,7 +13,9 @@ package biolockj.module.classifier.wgs;
 
 import java.io.File;
 import java.util.*;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
@@ -28,6 +30,7 @@ import biolockj.util.*;
  *
  * For more information, please review the BioBakery instruction manual:
  * <a href= "https://bitbucket.org/biobakery/humann2" target="_top">https://bitbucket.org/biobakery/humann2</a><br>
+ * 
  * @web_desc HumanN2 Classifier
  */
 public class Humann2Classifier extends ClassifierModuleImpl implements ClassifierModule
@@ -142,6 +145,24 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return res;
 	}
 
+	@Override
+	public String getSummary() throws Exception
+	{
+		final StringBuffer sb = new StringBuffer();
+		try
+		{
+			sb.append( "HumanN2 nucleotide DB: " + getNuclDB() );
+			sb.append( "HumanN2 protein DB: " + getProtDB() );
+		}
+		catch( final Exception ex )
+		{
+			final String msg = "Unable to complete module summary: " + ex.getMessage();
+			sb.append( msg + RETURN );
+			Log.warn( getClass(), msg );
+		}
+
+		return super.getSummary() + sb.toString();
+	}
 
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
@@ -174,25 +195,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		lines.add( "}" + RETURN );
 		lines.addAll( getBuildSummaryFunction() );
 		return lines;
-	}
-
-	private String getParams( final String property ) throws Exception
-	{
-		String params = " ";
-		for( final String val: Config.getList( this, property ) )
-		{
-			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM )
-					|| val.startsWith( LONG_OUTPUT_PARAM ) )
-			{
-				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: " + property
-						+ " because this value is set by BioLockJ at runtime based on pipeline context" );
-			}
-			else
-			{
-				params = val + " ";
-			}
-		}
-		return params;
 	}
 
 	/**
@@ -285,6 +287,25 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return pairedReads;
 	}
 
+	private String getParams( final String property ) throws Exception
+	{
+		String params = " ";
+		for( final String val: Config.getList( this, property ) )
+		{
+			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM )
+					|| val.startsWith( LONG_OUTPUT_PARAM ) )
+			{
+				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: " + property
+						+ " because this value is set by BioLockJ at runtime based on pipeline context" );
+			}
+			else
+			{
+				params = val + " ";
+			}
+		}
+		return params;
+	}
+
 	private String getProtDB() throws Exception
 	{
 		if( RuntimeParamUtil.isDockerMode() )
@@ -375,7 +396,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private static final String NUM_THREADS_PARAM = "--threads";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String PROT_DB_PARAM = "--protein-database";
-
 	private static final String RENORM_BASH_COMMENT = "# Renormalize output summary tables" + RETURN
 			+ "# Renorm unit options: counts/million (default) or relative abundance" + RETURN
 			+ "# Renorm mode options: community (default) or levelwise";

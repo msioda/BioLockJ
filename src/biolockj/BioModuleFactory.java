@@ -112,8 +112,8 @@ public class BioModuleFactory
 	/**
 	 * The method returns the ordered list of BioModules required as part of the runtime {@link biolockj.Config}
 	 * file.<br>
-	 * Each line the begins with {@value biolockj.Constants#INTERNAL_BLJ_MODULE} should be followed by the full class name
-	 * of a Java class that implements the {@link biolockj.module.BioModule } interface.
+	 * Each line the begins with {@value biolockj.Constants#INTERNAL_BLJ_MODULE} should be followed by the full class
+	 * name of a Java class that implements the {@link biolockj.module.BioModule } interface.
 	 * 
 	 * @return List of BioModules
 	 * @throws Exception thrown for invalid BioModules

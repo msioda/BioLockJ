@@ -16,9 +16,13 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
+import biolockj.module.report.humann2.AddMetadataToPathwayTables;
+import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.util.*;
 
 /**
@@ -163,7 +167,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		final List<String> preReqs = new ArrayList<>();
 		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 		{
-			preReqs.add( ModuleUtil.getMetaMergedModule( this ) );
+			preReqs.add( getMetaMergedModule() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
@@ -286,6 +290,23 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
+	 * Get correct meta-merged BioModule type for the give module. This is determined by examining previous configured
+	 * modules to see what type of raw count tables are generated.
+	 * 
+	 * @return MetaMerged BioModule
+	 * @throws Exception if errors occur
+	 */
+	protected String getMetaMergedModule() throws Exception
+	{
+		if( PathwayUtil.useHumann2RawCount( this ) )
+		{
+			return AddMetadataToPathwayTables.class.getName();
+		}
+
+		return AddMetadataToTaxaTables.class.getName();
+	}
+
+	/**
 	 * Add {@link biolockj.module.report.r.R_CalculateStats} to standard {@link #getPreRequisiteModules()}
 	 * 
 	 * @return Statistics Module prerequisite if needed
@@ -353,8 +374,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		return getClass().getSimpleName() + biolockj.Constants.R_EXT;
 	}
 
-	
-
 	/**
 	 * Get the BioLockJ resource R directory.
 	 * 
@@ -418,21 +437,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}
-	 */
-	protected static final String R_FUNCTION_LIB = "BioLockJ_Lib.R";
-
-	/**
-	 * This main R script that sources helper libraries and calls modules main method function: {@value #R_MAIN_SCRIPT}
-	 */
-	protected static final String R_MAIN_SCRIPT = "BioLockJ_MAIN.R";
-
-	/**
-	 * {@link biolockj.Config} boolean property {@value #R_SAVE_R_DATA} enables the .RData file to save.
-	 */
-	protected static final String R_SAVE_R_DATA = "r.saveRData";
-
-	/**
 	 * {@link biolockj.Config} property {@value #EXE_RSCRIPT} defines the command line executable to call RScript
 	 */
 	protected static final String EXE_RSCRIPT = "exe.Rscript";
@@ -446,6 +450,21 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * {@link biolockj.Config} boolean property {@value #R_DEBUG} sets the debug log function endabled
 	 */
 	protected static final String R_DEBUG = "r.debug";
+
+	/**
+	 * This library script contains helper functions used in the R scripts: {@value #R_FUNCTION_LIB}
+	 */
+	protected static final String R_FUNCTION_LIB = "BioLockJ_Lib.R";
+
+	/**
+	 * This main R script that sources helper libraries and calls modules main method function: {@value #R_MAIN_SCRIPT}
+	 */
+	protected static final String R_MAIN_SCRIPT = "BioLockJ_MAIN.R";
+
+	/**
+	 * {@link biolockj.Config} boolean property {@value #R_SAVE_R_DATA} enables the .RData file to save.
+	 */
+	protected static final String R_SAVE_R_DATA = "r.saveRData";
 
 	/**
 	 * {@link biolockj.Config} property {@value #R_TIMEOUT} defines the number of minutes before R script fails due to

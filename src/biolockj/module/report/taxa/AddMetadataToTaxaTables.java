@@ -26,10 +26,20 @@ import biolockj.util.SummaryUtil;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
+ * 
  * @web_desc Add Metadata to Taxa Tables
  */
 public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModule
 {
+
+	/**
+	 * For R to report taxa levels (not HumanN2 reports)
+	 */
+	@Override
+	public void cleanUp() throws Exception
+	{
+		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.FALSE );
+	}
 
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
@@ -109,8 +119,8 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
-		Log.info( getClass(), "Direct runModule() complete!" );
-		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
+		Log.info( getClass(), "runModule() complete!" );
+
 	}
 
 	/**

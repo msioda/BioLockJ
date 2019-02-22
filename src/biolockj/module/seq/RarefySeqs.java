@@ -27,6 +27,7 @@ import biolockj.util.*;
 /**
  * This BioModule imposes a minimum and/or maximum number of reads per sample. Samples below the minimum are discarded.
  * Samples above the maximum are limited by selecting random reads up to the maximum value.
+ * 
  * @web_desc Rarefy Seqs
  */
 public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
@@ -100,11 +101,14 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String summary = SummaryUtil.getCountSummary( readsPerSample, "Reads" );
+		final String label = "Reads";
+		final int pad = SummaryUtil.getPad( label );
+		String summary = SummaryUtil.getCountSummary( readsPerSample, "Reads", true );
 		sampleIds.removeAll( readsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+					+ BioLockJUtil.getCollectionAsString( sampleIds );
 		}
 		readsPerSample = null;
 		return super.getSummary() + summary;

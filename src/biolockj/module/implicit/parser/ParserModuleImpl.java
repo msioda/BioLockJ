@@ -121,7 +121,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	@Override
 	public String getSummary() throws Exception
 	{
-		String summary = SummaryUtil.getCountSummary( hitsPerSample, "OTUs" );
+		String summary = SummaryUtil.getCountSummary( hitsPerSample, "OTUs", true );
 		sampleIds.removeAll( hitsPerSample.keySet() );
 		if( !sampleIds.isEmpty() )
 		{

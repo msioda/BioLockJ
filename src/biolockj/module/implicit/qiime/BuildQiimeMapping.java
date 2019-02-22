@@ -197,9 +197,10 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 			return lines;
 		}
 
-		final List<Integer> skip = Arrays.asList(
-				new Integer[] { metaColumns.indexOf( Constants.QIIME_BARCODE_SEQ_COL ), metaColumns.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ),
-						metaColumns.indexOf( Constants.QIIME_DEMUX_COL ), metaColumns.indexOf( Constants.QIIME_DESC_COL ) } );
+		final List<Integer> skip = Arrays.asList( new Integer[] {
+				metaColumns.indexOf( Constants.QIIME_BARCODE_SEQ_COL ),
+				metaColumns.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ),
+				metaColumns.indexOf( Constants.QIIME_DEMUX_COL ), metaColumns.indexOf( Constants.QIIME_DESC_COL ) } );
 
 		String awkBody = "";
 		awkBody += Config.getExe( this, Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
@@ -282,7 +283,6 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		lines.add( copyMappingToOutputDir() );
 		return lines;
 	}
-	
 
 	/**
 	 * Get mapping dir, called "mapping" which is the directory the new mapping is output by Qiime
@@ -308,8 +308,10 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		cols.add( MetaUtil.getID() );
 		cols.addAll( MetaUtil.getFieldNames() );
 
-		if( cols.indexOf( Constants.QIIME_BARCODE_SEQ_COL ) == 1 && cols.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ) == 2
-				&& cols.indexOf( Constants.QIIME_DEMUX_COL ) == cols.size() - 2 && cols.indexOf( Constants.QIIME_DESC_COL ) == cols.size() - 1 )
+		if( cols.indexOf( Constants.QIIME_BARCODE_SEQ_COL ) == 1
+				&& cols.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ) == 2
+				&& cols.indexOf( Constants.QIIME_DEMUX_COL ) == cols.size() - 2
+				&& cols.indexOf( Constants.QIIME_DESC_COL ) == cols.size() - 1 )
 		{
 			return null;
 		}
@@ -346,6 +348,11 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	private List<String> metaColumns = null;
 
 	/**
+	 * Name of the bash function that reorders metadata columns: {@value #FUNCTION_REORDER_FIELDS}
+	 */
+	protected static final String FUNCTION_REORDER_FIELDS = "reorderColumns";
+
+	/**
 	 * Comment used to populate {@value biolockj.Constants#QIIME_DESC_COL} column
 	 */
 	protected static final String QIIME_COMMENT = "BioLockJ Generated Mapping";
@@ -364,9 +371,4 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 * Suffix appended to the validate QIIME mapping file output to temp/mapping dir by bash script
 	 */
 	protected static final String VALIDATED_MAPPING = "_corrected" + TXT_EXT;
-
-	/**
-	 * Name of the bash function that reorders metadata columns: {@value #FUNCTION_REORDER_FIELDS}
-	 */
-	protected static final String FUNCTION_REORDER_FIELDS = "reorderColumns";
 }

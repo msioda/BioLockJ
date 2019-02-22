@@ -21,7 +21,6 @@ import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.report.Email;
 import biolockj.util.*;
-import biolockj.Constants;
 
 /**
  * This is the primary BioLockJ class - its main() method is executed when the jar is run.<br>
@@ -229,10 +228,10 @@ public class BioLockJ
 	{
 		Log.initialize( Config.pipelineName() );
 
-		Log.warn( BioLockJ.class, 
+		Log.warn( BioLockJ.class,
 				Constants.RETURN + Constants.LOG_SPACER + Constants.RETURN + "RESTART PROJECT DIR --> "
-				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Constants.LOG_SPACER 
-				+ Constants.RETURN );
+						+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Constants.LOG_SPACER
+						+ Constants.RETURN );
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
@@ -487,8 +486,7 @@ public class BioLockJ
 	}
 
 	/**
-	 * Print the {@link biolockj.Log} messages and the exception stack
-	 * trace info to the $USER $HOME directory.
+	 * Print the {@link biolockj.Log} messages and the exception stack trace info to the $USER $HOME directory.
 	 * 
 	 * @param fatalException Fatal application Exception
 	 */

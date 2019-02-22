@@ -202,15 +202,15 @@ public class Properties extends java.util.Properties
 		return modules;
 	}
 
+	private static File configFile = null;
+
+	private static List<File> defaultConfigFiles = new ArrayList<>();
+
 	/**
 	 * Path to Docker Config file: {@value #DOCKER_CONFIG_PATH}<br>
 	 * Sets Docker properties as the default config.
 	 */
 	private static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";
-
-	private static File configFile = null;
-
-	private static List<File> defaultConfigFiles = new ArrayList<>();
 	private static Properties props = null;
 	private static final long serialVersionUID = 2980376615128441545L;
 
