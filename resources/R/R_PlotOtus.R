@@ -20,7 +20,7 @@ plotHeading <- function( parPval, nonParPval, r2, field ) {
    HEAD_1 = 0.2; HEAD_2 = 1.4; LEFT = 0; RIGHT = 1; TOP = 3;
 
    title1_A = paste( "Adj.", getTestName( field ), "P-value:", displayCalc( parPval ) )
-   title1_B = bquote( paste( "R^2:", .( displayCalc( r2 ) ) ) )
+   title1_B = bquote( paste( R^2, ": ", .( displayCalc( r2 ) ) ) )
    title2 = paste( "Adj.", getTestName( field, FALSE ), "P-value:", displayCalc( nonParPval ) )
 
    mtext( title1_A, TOP, HEAD_1, col=getColor( parPval ), cex=0.75, adj=LEFT )
@@ -28,9 +28,8 @@ plotHeading <- function( parPval, nonParPval, r2, field ) {
    mtext( title2, TOP, HEAD_2, col=getColor( nonParPval ), cex=0.75, adj=LEFT )
 }
 
-# Scatterplot for 
+# Scatterplot for numeric fields 
 addScatterPlot <- function( item, taxaVals, metaVals ) {
-   #cols = getColors( length( metaVals ) )
    cols = getProperty( "r.colorPoint", "black" )
    plot( metaVals, taxaVals, pch=getProperty( "r.pch" ), col=cols, ylab=item, xlab="" )
 }

@@ -40,10 +40,10 @@ main <- function(){
     outFileName = getPath( getOutputDir(), paste0(level, "_EffectSizePlots.pdf") )
     pdf(file=outFileName, paper="letter", width=7.5, height=10, onefile=TRUE)
     par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
-     = par( no.readonly = TRUE )
+    p = par( no.readonly = TRUE )
     # use this to reset par to the values it has as of right now
     resetPar <- function(){ 
-      par(  )
+      par( p )
     }
 
     for( field in getReportFields() ){
@@ -92,11 +92,9 @@ main <- function(){
       
 	if( isBinaryAtt && !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) ) {
 		tryCatch(expr={
-		
 			resetPar()
-			plotFoldChange countTable, level )
+			plotFoldChange( countTable, level )
 			successfulPlots = successfulPlots + 1
-          
         }, error = function(err) { errorHandler1(err, level, field) })
       }
     }
