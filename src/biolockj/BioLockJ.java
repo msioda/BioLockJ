@@ -121,18 +121,6 @@ public class BioLockJ
 		}
 		finally
 		{
-			if( isPipelineComplete() )
-			{
-				Log.info( BioLockJ.class, "PIPELINE SUCCESS!" );
-				Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
-				Log.info( BioLockJ.class, "Analysis complete --> The answer to the ultimate question of life, the universe and everything is... [ 42 ]" );
-				Log.info( BioLockJ.class, "End program." );
-			}
-			else
-			{
-				Log.info( BioLockJ.class, "PIPELINE FAILED!" );
-			}
-			
 			pipelineShutDown( args );
 		}
 	}
@@ -351,6 +339,7 @@ public class BioLockJ
 
 			PropUtil.sanitizeMasterConfig();
 			markProjectStatus( Constants.BLJ_COMPLETE );
+			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
 		}
 	}
 
@@ -480,6 +469,8 @@ public class BioLockJ
 				logFinalException( args, ex );
 			}
 		}
+		Log.info( BioLockJ.class, "Analysis complete --> The answer to the ultimate question of life, the universe and everything is... [ 42 ]" );
+		Log.info( BioLockJ.class, "End program." );
 		
 		if( !isPipelineComplete() )
 		{

@@ -79,15 +79,15 @@ public final class DownloadUtil
 				makeRunAllScript( modules );
 			}
 
-
 			files.addAll( Arrays.asList( pipeRoot.listFiles() ) );
 
 			final List<File> downFiles = buildDownloadList( files );
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
-			final String cmd = "rsync -v --times --files-from=:" + getDownloadListFile().getAbsolutePath() + " " + getClusterUser() + "@"
-					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":" + Config.pipelinePath() + " " + getDownloadDirPath();
+			final String src = SRC + "=" + Config.pipelinePath();
+			final String cmd = "rsync -v --times --files-from=:$" + SRC + File.pathSeparator + getDownloadListFile().getName() + " " + getClusterUser() + "@"
+					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 			
-			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + cmd;
+			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + src + RETURN + cmd;
 		}
 
 		return null;
@@ -135,18 +135,12 @@ public final class DownloadUtil
 	 */
 	protected static BigInteger getDownloadSize( List<File> files ) throws Exception
 	{
-		int i = 0;
 		BigInteger downloadSize = BigInteger.valueOf( 0L );
-		Log.info( DownloadUtil.class, "Calculatng download size.  Initial value: " + FileUtils.byteCountToDisplaySize( downloadSize ) );
 		for( File file: files )
 		{
-			Log.info( DownloadUtil.class,  "File [  " + file.getName() + " ] STANDARD sizeOf( file ) = " +  FileUtils.sizeOf( file ) );
-			Log.info( DownloadUtil.class, "File [  " + file.getName() + " ] = { " + FileUtils.sizeOfAsBigInteger( file ) + " } --> " + FileUtils.byteCountToDisplaySize( FileUtils.sizeOfAsBigInteger( file ) ) );
 			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( file ) );
-			Log.info( DownloadUtil.class, "Total after iteration [ " + (i++) + "]: { " + downloadSize + " } --> " + FileUtils.byteCountToDisplaySize( downloadSize ) );
 		}
 		
-		Log.info( DownloadUtil.class, "FINAL download size: { " + downloadSize  + " } --> " + FileUtils.byteCountToDisplaySize( downloadSize ) );
 		return downloadSize;
 	}
 
@@ -322,7 +316,7 @@ public final class DownloadUtil
 	 * Sets the local directory targeted by the scp command.
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
-
+	private static final String SRC = "src";
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
 }
