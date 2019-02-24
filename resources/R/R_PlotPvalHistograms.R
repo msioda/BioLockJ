@@ -138,5 +138,5 @@ main <- function() {
 # Add page footer and page number at bottom of page
 addReportFooter <- function( level, pageNum ) {
 	addPageNumber( pageNum )
-	addPageFooter( paste( str_to_title( level ), "P-Value Histograms" ) )
+	addPageFooter( paste( "P-Value Histograms [", str_to_title( level ), "]" ) )
  }

@@ -358,10 +358,11 @@ public class TaxaUtil
 	 */
 	public static boolean isNormalizedTaxaFile( final File file ) throws Exception
 	{
-		final String suffix = "_" + TAXA_TABLE + "_" + NORMALIZED + "_";
+		final String suffix =  "_" + NORMALIZED + "_";
 		for( final String level: getTaxaLevels() )
 		{
-			if( file.getName().endsWith( suffix + level + Constants.TSV_EXT ) )
+			if( file.getName().contains( "_" + TAXA_TABLE + "_" ) &&
+					file.getName().endsWith( suffix + level + Constants.TSV_EXT ) )
 			{
 				return true;
 			}

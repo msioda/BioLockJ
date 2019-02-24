@@ -75,7 +75,7 @@ main <- function() {
 addHeaderFooter <- function( field, level, pageNum ) {
 	addPageTitle( field )
 	addPageNumber( pageNum )
-	addPageFooter( paste( str_to_title( level ), "Multidimensional Scaling" ) )
+	addPageFooter( paste( "Multidimensional Scaling [", str_to_title( level ), "]" ) )
 }
 
 # Get variance plot label as percentage

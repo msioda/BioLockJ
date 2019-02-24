@@ -54,19 +54,14 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		return null;
 	}
 
-	/**
-	 * Validate configuration file properties used to build the R report:
-	 * <ol>
-	 * <li>Get positive integer {@link biolockj.Config}.{@value #R_TIMEOUT}
-	 * <li>Get positive integer {@link biolockj.Config}.{@value #P_VAL_CUTOFF}
-	 * </ol>
-	 */
 	@Override
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
 		Config.getPositiveInteger( this, R_TIMEOUT );
-		Config.requirePositiveDouble( this, P_VAL_CUTOFF );
+		Config.getBoolean( this, R_DEBUG );
+		Config.getBoolean( this, R_SAVE_R_DATA );
+		
 	}
 
 	/**
@@ -84,22 +79,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		}
 	}
 
-	/**
-	 * Get the function library script
-	 * 
-	 * @return Function library script
-	 * @throws Exception if errors occur
-	 */
-	public File getFunctionLib() throws Exception
-	{
-		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
-		if( !rFile.exists() )
-		{
-			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
-		}
 
-		return rFile;
-	}
+
 
 	/**
 	 * If running Docker, run the Docker bash script, otherwise:<br>
@@ -336,6 +317,31 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		FileUtils.copyFileToDirectory( getFunctionLib(), getScriptDir() );
 		FileUtils.copyFileToDirectory( getModuleScript(), getScriptDir() );
 	}
+	
+	protected void checkPlotConfig() throws Exception
+	{
+
+		Config.getString( this, R_COLOR_POINT );
+		Config.getString( this, R_PCH );
+		
+	}
+	
+	
+	protected void allPlotModulesExceptMds() throws Exception
+	{
+		Config.requirePositiveDouble( this, P_VAL_CUTOFF );
+	}
+	
+	private File getFunctionLib() throws Exception
+	{
+		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
+		if( !rFile.exists() )
+		{
+			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
+		}
+
+		return rFile;
+	}
 
 	private String getErrors() throws Exception
 	{
@@ -406,7 +412,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @param rCode R code
 	 * @throws Exception if I/O errors occur
 	 */
-	private static void writeScript( final BufferedWriter writer, final String rCode ) throws Exception
+	protected static void writeScript( final BufferedWriter writer, final String rCode ) throws Exception
 	{
 		int indentCount = 0;
 		final StringTokenizer st = new StringTokenizer( rCode, Constants.RETURN );
@@ -436,6 +442,36 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		writer.close();
 	}
 
+	/**
+	 * {@link biolockj.Config} Double property {@value #R_RARE_OTU_THRESHOLD} defines number OTUs needed to includ in reports
+	 */
+	protected static final String R_RARE_OTU_THRESHOLD = "r.rareOtuThreshold";
+	
+	/**
+	 * {@link biolockj.Config} property {@value #R_COLOR_BASE} defines the base label color
+	 */
+	protected static final String R_COLOR_BASE = "r.colorBase";
+	
+	/**
+	 * {@link biolockj.Config} property {@value #R_COLOR_HIGHLIGHT} defines the highlight label color
+	 */
+	protected static final String R_COLOR_HIGHLIGHT = "r.colorHighlight";
+	
+	/**
+	 * {@link biolockj.Config} property {@value #R_COLOR_PALETTE} defines the color palette for PDF plots
+	 */
+	protected static final String R_COLOR_PALETTE = "r.colorPalette";
+	
+	/**
+	 * {@link biolockj.Config} property {@value #R_COLOR_POINT} defines the pch point colors for PDF plots
+	 */
+	protected static final String R_COLOR_POINT = "r.colorPoint";
+	
+	/**
+	 * {@link biolockj.Config} property {@value #R_PCH} defines the plot point shape for PDF plots
+	 */
+	protected static final String R_PCH = "r.pch";
+	
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_RSCRIPT} defines the command line executable to call RScript
 	 */

@@ -31,6 +31,10 @@ public class R_PlotMds extends R_Module implements ScriptModule
 	{
 		super.checkDependencies();
 		Config.requireString( this, R_MDS_DISTANCE );
+		Config.getString( this, R_COLOR_BASE );
+		Config.getString( this, R_COLOR_HIGHLIGHT );
+		Config.getString( this, R_COLOR_PALETTE );
+		Config.getString( this, R_PCH );
 		if( Config.requirePositiveInteger( this, R_MDS_NUM_AXIS ) < 2 )
 		{
 			throw new Exception( "Config property [" + R_MDS_NUM_AXIS + "] must be > 2" );

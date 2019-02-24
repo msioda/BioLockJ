@@ -6,8 +6,8 @@
 getNormTaxaTable <- function( level ){
 	normTable = NULL
 	if( !getProperty( "r_PlotEffectSize.disableFoldChange", FALSE ) && !getProperty( "R_internal.runHumann2" ) ) {
-		normTaxa = pipelineFile( paste0( "_taxaCount_norm_", level, ".tsv$" ) )
-		logInfo( c( "Looking for normalized taxa table count table", paste0( "_taxaCount_norm_", level, ".tsv$" ) ) )
+		normTaxa = pipelineFile( paste0( "_taxaCount_.*norm_", level, ".tsv$" ) )
+		logInfo( c( "Looking for normalized taxa table count table", paste0( "_taxaCount_.*norm_", level, ".tsv$" ) ) )
 		if( !is.null( normTaxa ) ) normTable = readBljTable( normTaxa )
 	}
     return( normTable )
@@ -19,7 +19,6 @@ main <- function(){
 
   doCohensD = !getProperty("r_PlotEffectSize.disableCohensD", FALSE)
   doRSquared = !getProperty("r_PlotEffectSize.disableRSquared", FALSE)
-  successfulPlots = 0
   
   for( level in taxaLevels() ) {
     
@@ -38,7 +37,7 @@ main <- function(){
 
     # make a new pdf output file, specify page size
     outFileName = getPath( getOutputDir(), paste0(level, "_EffectSizePlots.pdf") )
-    pdf(file=outFileName, paper="letter", width=7.5, height=10, onefile=TRUE)
+    pdf(file=outFileName, paper="letter", width=7.5, height=10 )
     par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
     p = par( no.readonly = TRUE )
     # use this to reset par to the values it has as of right now
@@ -56,57 +55,46 @@ main <- function(){
       # so IF both are plotted, they are ploted in the same order.
       # Even if it is not a binary attribute, the normalized P-values should have AT LEAST 2 tables
       if( doCohensD || doRSquared ){ 
-        
-        tryCatch(expr={
-          
-          r2vals=r2Table[,field]
-          names(r2vals) = row.names(r2Table)
-          normPvals = split(countTable[row.names(metaTable),], f=metaTable[,field])
-          
-          saveRefTable = NULL
-          if( doCohensD && isBinaryAtt ){
-            saveRefTable=getPath( getTempDir(), paste(level, field, "effectSize.tsv", sep="_") )
-          }
-
-          type = c( "CohensD", "rSquared" )
-          if( !doCohensD || !isBinaryAtt ) type = c( type[1], type[2] )
-          data = calcBarSizes( type, normPvals, pvals, r2vals, saveRefTable )
-          
-          if( doRSquared ){ 
-            resetPar()
-            drawPlot( data[["toPlot"]][,c("pvalue","rSquared")], field, "rSquared", "R-squared", data[["comments"]][c(1,3)] )
-            logInfo( c("Completed r-squared plot for level:", level, "and report field:", field) )
-            successfulPlots = successfulPlots + 1
-          }
-          
-          if (doCohensD && isBinaryAtt){
-            logInfo( c( "Effect size: Calling drawPlot for level:", level, ":", field ) )
-            resetPar()
-            drawPlot( data[["toPlot"]], field, "CohensD", "Effect Size (Cohen's D)", data[["comments"]][c(1,2)], data[["xAxisLab2"]] )
-            successfulPlots = successfulPlots + 1
-          }
-        }, error = function(err) {
-          errorHandler1(err, level, field)
-        })
+ 
+	      r2vals=r2Table[,field]
+	      names(r2vals) = row.names(r2Table)
+	      normPvals = split(countTable[row.names(metaTable),], f=metaTable[,field])
+	      
+	      saveRefTable = NULL
+	      if( doCohensD && isBinaryAtt ){
+	        saveRefTable=getPath( getTempDir(), paste(level, field, "effectSize.tsv", sep="_") )
+	      }
+	      
+	     type = c( "CohensD", "rSquared" )
+	     if( !doCohensD ) type = "rSquared" else if( !doRSquared ) type = "CohensD"
+	
+	     data = calcBarSizes( type, normPvals, pvals, r2vals, saveRefTable )
+	      
+	     if( doRSquared ){ 
+	        resetPar()
+	        drawPlot( data[["toPlot"]][,c("pvalue","rSquared")], field, "rSquared", "R-squared", data[["comments"]][c(1,3)] )
+	        logInfo( c("Completed r-squared plot for level:", level, "and report field:", field) )
+	     }
+	      
+	      if( doCohensD && isBinaryAtt ) {
+	        logInfo( c( "Effect size: Calling drawPlot for level:", level, ":", field ) )
+	        resetPar()
+	        drawPlot( data[["toPlot"]], field, "CohensD", "Effect Size (Cohen's D)", data[["comments"]][c(1,2)], data[["xAxisLab2"]] )
+	      }
       }
       
-	if( isBinaryAtt && !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) ) {
-		tryCatch(expr={
+		if( isBinaryAtt && !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) ) {
 			resetPar()
-			plotFoldChange( countTable, level )
-			successfulPlots = successfulPlots + 1
-        }, error = function(err) { errorHandler1(err, level, field) })
-      }
+			plotFoldChange( countTable, metaTable, level, pvals )
+	    }
     }
     dev.off()
     if( doDebug() ) sink()
   }
-  
-  if (successfulPlots == 0) writeErrors( c( "No successful plots." ) )
 }
 
 # Plot fold changes for normalized counts
-plotFoldChange <- function( countTable, level ){
+plotFoldChange <- function( countTable, metaTable, level, pvals ){
   	normCountTable = getNormTaxaTable( level )
 	if( is.null( normCountTable ) ) normCountTable = countTable
 	splitRelAbund = split(normCountTable[row.names(metaTable),], f=metaTable[,field])
@@ -116,7 +104,6 @@ plotFoldChange <- function( countTable, level ){
 	data = calcBarSizes( "foldChange", splitRelAbund, pvals, saveRefTable=saveRefTable )
           
 	logInfo( c( "Fold change: Calling drawPlot for level:", level, ":", field ) )
-	resetPar()
 	drawPlot( data[["toPlot"]], field, "foldChange", "Fold Change", data[["comments"]], data[["xAxisLab2"]] )
 }
 
@@ -351,11 +338,11 @@ drawPlot <- function(toPlot, title, barSizeColumn, xAxisLab, comments, xAxisLab2
   inchesToRemove = plotRegionHeightInches - plotMarginsHeightInches - inchesForBars
    
     if(inchesToRemove > 0){
-    mais = par("mai")
-    mais[1] = mais[1] + inchesToRemove
-    par(mai=mais)
+	    mais = par("mai")
+	    mais[1] = mais[1] + inchesToRemove
+	    par(mai=mais)
     }else{
-    logInfo( c( "Not enough space in plot for", nrow(toPlot), "bars with", fixedBarHeightInches, 
+    		logInfo( c( "Not enough space in plot for", nrow(toPlot), "bars with", fixedBarHeightInches, 
                   " for each bar. Bar widths will be set to fit the space.") )
     }
   

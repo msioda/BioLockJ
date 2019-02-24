@@ -52,7 +52,7 @@ getColIndexes <- function( countTable, colNames ) {
 getColor <- function( v ) {
 	for( i in 1:length(v) ) {
 		if( grepl("e", v[i]) || !is.na(v[i]) && !is.nan(v[i]) && ( v[i] <= getProperty("r.pvalCutoff", 0.05) ) ) {
-			return( getProperty("r.colorHighlight", "black") )
+			return( getProperty("r.colorHighlight", "red") )
 		} 
 	}
 	return( getProperty("r.colorBase", "black") )

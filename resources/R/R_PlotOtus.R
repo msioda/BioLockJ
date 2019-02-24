@@ -21,9 +21,9 @@ plotHeading <- function( parPval, nonParPval, r2, field ) {
    HEAD_1 = 0.2; HEAD_2 = 1.4; LEFT = 0; RIGHT = 1; TOP = 3;
    title1 = paste( "Adj.", getTestName( field ), "P-value:", displayCalc( parPval ) )
    title2 = paste( "Adj.", getTestName( field, FALSE ), "P-value:", displayCalc( nonParPval ) )
-   mtext( title1, TOP, HEAD_1, col=getColor( parPval ), cex=0.75, adj=LEFT )
+   mtext( title1, TOP, HEAD_1, col=displayCol( parPval ), cex=0.75, adj=LEFT )
    mtext( displayR2( r2 ), TOP, HEAD_1, cex=0.75, adj=RIGHT )
-   mtext( title2, TOP, HEAD_2, col=getColor( nonParPval ), cex=0.75, adj=LEFT )
+   mtext( title2, TOP, HEAD_2, col=displayCol( nonParPval ), cex=0.75, adj=LEFT )
 }
 
 # Scatterplot for numeric fields 
@@ -70,6 +70,13 @@ getLas <- function( labels ) {
 
 # Called by BioLockJ_Lib.R runProgram() to execute this script
 main <- function() {
+	buildPlots()
+	sigOnly <<- TRUE
+	buildPlots()
+}
+
+# Key method used to build plots
+buildPlots <- function() {
 
    for( level in taxaLevels() ) {
 
@@ -77,7 +84,7 @@ main <- function() {
       metaTable = getMetaData( level )
       if( is.null(countTable) || is.null(metaTable) ) { next }
       if( doDebug() ) sink( getLogFile( level ) )
-
+	  logInfo( "Display significant pvalues only?", sigOnly )
       binaryCols = getBinaryFields()
       nominalCols = getNominalFields()
       numericCols = getNumericFields()
@@ -90,10 +97,11 @@ main <- function() {
       r2Stats = getStatsTable( level )
       metaColColors = getColorsByCategory( metaTable )
 
-      outputFile = getPath( getOutputDir(), paste0(level, "_OTU_plots.pdf") )
+	  outputFile = getPath( getOutputDir(), paste0( level, ifelse( sigOnly, "_significant", "" ), "_OTU_plots.pdf" ) )
       pdf( outputFile, paper="letter", width=7, height=10.5 )
       par(mfrow=c(3, 2), las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
       pageNum = 0
+      pvalCutoff = getProperty("r.pvalCutoff")
 
       # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countTable rows
       cutoffValue = getProperty("r.rareOtuThreshold", 1)
@@ -105,33 +113,36 @@ main <- function() {
          	# Every item starts a new page
             par( mfrow = par("mfrow") ) 
             position = 0
-
             taxaVals = countTable[,item]
 
             for( meta in getReportFields() ) {
             
-               metaVals = metaTable[,meta]
-               if( meta %in% binaryCols || meta %in% nominalCols ) {
-                  logInfo( c( "Add Box-Plot [", item, "~", meta, "]" ) )
-                  addBoxPlot( item, taxaVals, metaVals, metaColColors[[meta]] )
-               }
-               else {
-                  logInfo( c( "Add Scatter-Plot [", item, "~", meta, "]" ) )
-                  addScatterPlot( item, taxaVals, metaVals )
-               }
+            		metaVals = metaTable[,meta]
+            		parPval = parStats[item, meta]
+               	nonParPval = nonParStats[item, meta]
+               	if( min( parPval, nonParPval ) > pvalCutoff ) { next }
+            
+               	if( meta %in% binaryCols || meta %in% nominalCols ) {
+                  	logInfo( c( "Add Box-Plot [", item, "~", meta, "]" ) )
+                  	addBoxPlot( item, taxaVals, metaVals, metaColColors[[meta]] )
+               	}
+               	else {
+                  	logInfo( c( "Add Scatter-Plot [", item, "~", meta, "]" ) )
+                  	addScatterPlot( item, taxaVals, metaVals )
+               	}
 
-               plotHeading( parStats[item, meta], nonParStats[item, meta], r2Stats[item, meta], meta )
-               mtext( meta, side=1, font=1, cex=1, line=2.5 )
-               position = position + 1
+              	 plotHeading( parPval, nonParPval, r2Stats[item, meta], meta )
+               	mtext( meta, side=1, font=1, cex=1, line=2.5, col=displayCol( c(parPval, nonParPval) ) )
+               	position = position + 1
 
-			   if( position == 1 ) {
+			   	if( position == 1 ) {
 			   		pageNum = pageNum + 1
             			addHeaderFooter( item, level, pageNum )
-               } else if( position > prod( par("mfrow") ) ) {
+               	} else if( position > prod( par("mfrow") ) ) {
             			position = 1
             			pageNum = pageNum + 1
             			addHeaderFooter( item, level, pageNum )
-               }
+               	}
             }
          }
       }
@@ -140,11 +151,18 @@ main <- function() {
    }
 }
 
+# Always use base color for significant only plot, otherwise use highlight colors for significant plots
+displayCol <- function( vals ) {
+	if( sigOnly ) return( getProperty("r.colorBase", "black") )
+	return( getColor( vals ) )
+}
+
 # Add page title + footer with page number
 addHeaderFooter <- function( item, level, pageNum ) {
 	addPageTitle( item )
 	addPageNumber( pageNum )
-	addPageFooter( paste( str_to_title( level ), "Taxa Plots" ) )
+	addPageFooter( paste( "Taxa Plots [", str_to_title( level ), "]" ) )
 }
 
-r.plotWidth=23
+sigOnly = FALSE
+r.plotWidth = 23
