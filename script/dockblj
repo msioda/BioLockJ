@@ -101,10 +101,10 @@ restart_dir() {
 }
 
 # Call the docker run command with the correct parameters
-run_docker( useAws ) {
+run_docker() {
 	D_SOCK="/var/run/docker.sock"
 	opt="$(blj_options)"
-	[ $useAws ] && opt="$opt -aws"
+	[ "$1" -eq 1 ] && opt="$opt -aws"
 	if $(has_param $metaPath) && $(has_param $primerPath); then
 		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $metaPath:/meta -v $primerPath:/primer \
 			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
@@ -190,9 +190,9 @@ echo $(status_msg)
 #echo "BLJ_PROJ: $(blj_proj)"
 #echo "BLJ_OPTIONS: $(blj_options)"
 
-run_docker( FALSE )
+run_docker 0
 status=$?
 
-[ $status -eq 0 ] && $(has_param $runAws) && run_docker( TRUE )
+[ $status -eq 0 ] && $(has_param $runAws) && run_docker 1
 
 [ $status -ne 0 ] && echo "Exit script - docker run command failed"  

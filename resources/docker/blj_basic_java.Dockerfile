@@ -4,7 +4,8 @@ FROM biolockj/blj_basic
 ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Java 
-RUN apt-get install -y software-properties-common && \
+RUN apt-get update && \
+	apt-get install -y software-properties-common && \
 	apt-get upgrade -y && \
    	apt-get install -y openjdk-8-jre-headless
 
