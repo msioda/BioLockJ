@@ -40,7 +40,6 @@ arg_exists() {
 # Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
 blj_options() {
 	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config)" 
-	$(has_param $runAws) && options="$options $runAws"
 	$(has_param $doRestart) && options="$options -r $(restart_dir)"
 	$(has_param $newPass) && options="$options -p $newPass"
 	$(has_param $inputDirs) && options="$options -i $inputDirs"
@@ -101,6 +100,26 @@ restart_dir() {
 	echo "/pipelines/${doRestart#$(blj_proj)/}"
 }
 
+# Call the docker run command with the correct parameters
+run_docker( useAws ) {
+	D_SOCK="/var/run/docker.sock"
+	opt="$(blj_options)"
+	[ $useAws ] && opt="$opt -aws"
+	if $(has_param $metaPath) && $(has_param $primerPath); then
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $metaPath:/meta -v $primerPath:/primer \
+			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
+	elif $(has_param $metaPath); then	
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $metaPath:/meta \
+			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
+	elif $(has_param $primerPath); then	
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $primerPath:/primer
+			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
+	else
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK \
+			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
+	fi
+}
+
 # Print status message with GUI context and BLJ_OPTIONS
 status_msg() {
 	msg=""
@@ -111,9 +130,9 @@ status_msg() {
 	fi
 	
 	if $(has_param $doRestart); then
-		msg+=" restarting $(restart_dir) in $DOCKER_HUB_USER/$(manager_type) Docker container"
+		msg+=" restarting $(restart_dir) in $(manager_type) Docker container"
 	else
-		msg+=" starting $DOCKER_HUB_USER/$(manager_type) Docker container"
+		msg+=" starting $(manager_type) Docker container"
 	fi
 	
 	echo "$msg with BLJ_OPTIONS=$(blj_options)"
@@ -165,26 +184,15 @@ runAws=$(arg_exists "$@" "-aws")
 # Call function to print status message
 echo $(status_msg)
 
-D_SOCK="/var/run/docker.sock"
-
 #echo "config: $(dirname $config)"
 #echo "inputDir: $inputDirs"
 #echo "metaPath: $metaPath"
 #echo "BLJ_PROJ: $(blj_proj)"
 #echo "BLJ_OPTIONS: $(blj_options)"
 
-if $(has_param $metaPath) && $(has_param $primerPath); then
-	docker run -e "BLJ_OPTIONS=$(blj_options)" -v $D_SOCK:$D_SOCK -v $metaPath:/meta -v $primerPath:/primer \
-		-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
-elif $(has_param $metaPath); then	
-	docker run -e "BLJ_OPTIONS=$(blj_options)" -v $D_SOCK:$D_SOCK -v $metaPath:/meta \
-		-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
-elif $(has_param $primerPath); then	
-	docker run -e "BLJ_OPTIONS=$(blj_options)" -v $D_SOCK:$D_SOCK -v $primerPath:/primer
-		-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
-else
-	docker run -e "BLJ_OPTIONS=$(blj_options)" -v $D_SOCK:$D_SOCK \
-		-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirs:/input --rm $(manager_type)
-fi
+run_docker( FALSE )
+status=$?
 
-[ $? -ne 0 ] && echo "Exit script - docker run command failed"  
+[ $status -eq 0 ] && $(has_param $runAws) && run_docker( TRUE )
+
+[ $status -ne 0 ] && echo "Exit script - docker run command failed"  

@@ -625,7 +625,7 @@ public class RuntimeParamUtil
 	/**
 	 * AWS pipeline runtime parameter switch: {@value #AWS_FLAG}
 	 */
-	protected static final String AWS_FLAG = "--aws";
+	protected static final String AWS_FLAG = "-aws";
 	
 	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
 	private static final String CONFIG_FLAG_EXT = "--config";

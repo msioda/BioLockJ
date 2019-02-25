@@ -84,7 +84,7 @@ public class BioLockJ
 	 * <ol>
 	 * <li>Call {@link #initBioLockJ(String[])} to assign pipeline root dir and log file
 	 * <li>If change password pipeline, call {@link biolockj.module.report.Email#encryptAndStoreEmailPassword()}
-	 * <li>Otherwise execute {@link #runPipeline()}
+	 * <li>Otherwise execute {@link #startPipeline()}
 	 * </ol>
 	 * <p>
 	 * If pipeline has failed, attempt execute {@link biolockj.module.report.Email} (if configured) to notify user of
@@ -113,7 +113,7 @@ public class BioLockJ
 			}
 			else
 			{
-				runPipeline();
+				startPipeline();
 			}
 		}
 		catch( final Exception ex )
@@ -264,9 +264,9 @@ public class BioLockJ
 		{
 			DownloadUtil.getDownloadListFile().delete();
 		}
-		if( NextflowUtil.getNextflowMainConfig().exists() )
+		if( NextflowUtil.getMainNf().exists() )
 		{
-			NextflowUtil.getNextflowMainConfig().delete();
+			NextflowUtil.getMainNf().delete();
 		}
 
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
@@ -335,7 +335,8 @@ public class BioLockJ
 	 * <ol>
 	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
 	 * <li>For direct module execution call {@link biolockj.Pipeline#runDirectModule(Integer)}
-	 * <li>Otherwise execute {@link biolockj.Pipeline#runPipeline()}
+	 * <li>Otherwise execute {@link biolockj.Pipeline#runPipeline()} and save  MASTER {@link biolockj.Config}
+	 * <li>If initializing AWS Cloud manager, call {@link #initAwsManager()}.
 	 * <li>If {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_DELETE_TEMP_FILES} =
 	 * {@value biolockj.Constants#TRUE}, Call {@link #removeTempFiles()} to delete tem files
 	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status as successful
@@ -343,7 +344,7 @@ public class BioLockJ
 	 * 
 	 * @throws Exception if runtime errors occur
 	 */
-	protected static void runPipeline() throws Exception
+	protected static void startPipeline() throws Exception
 	{
 		Pipeline.initializePipeline();
 		
@@ -354,23 +355,11 @@ public class BioLockJ
 		else 
 		{
 			PropUtil.saveMasterConfig( null );
-			
 			if( DockerUtil.initAwsCloudManager() )
 			{
-				NextflowUtil.buildNextFlowMain( Pipeline.getModules() );
-				Pipeline.executeModule( importMeta() );
+				initAwsManager();
 			}
-			else if( DockerUtil.runAwsCloudManager() )
-			{
-				
-			}
-			
-			
-			if( DockerUtil.initAwsCloudManager() )
-			{
-				Pipeline.executeModule( importMeta() );
-			}
-			else
+			else 
 			{
 				Pipeline.runPipeline();
 	
@@ -385,6 +374,28 @@ public class BioLockJ
 			
 			}
 		}
+	}
+	
+	/**
+	 * Initialize AWS manager pipeline:<br>
+	 * <ol>
+	 * <li>Build Nexflow main.nf
+	 * <li>Run ImportMetadata module
+	 * <li>Set files editable
+	 * <li>Update pipeline root directory to EFS directory
+	 * <li>Update EFS MASTER {@link biolockj.Config} with new pipeline root directory path
+	 * <li>Save pipeline input files to EFS for faster processing
+	 * <ol>
+	 * @throws Exception if runtime errors occur
+	 */
+	protected static void initAwsManager() throws Exception
+	{
+		NextflowUtil.buildNextflowMain( Pipeline.getModules() );
+		Pipeline.executeModule( importMeta() );
+		setPipelineSecurity();
+		Config.setPipelineDir( NextflowUtil.copyPipelineToEfs() );
+		PropUtil.saveMasterConfig( null );
+		copyInputData();
 	}
 	
 	
@@ -551,6 +562,16 @@ public class BioLockJ
 
 		printedFinalExcp = true;
 	}
+	
+	
+	private static void setPipelineSecurity() throws Exception
+	{
+		final String perm = Config.getString( null, Constants.PROJECT_PERMISSIONS );
+		if( perm != null )
+		{
+			Job.setFilePermissions( Config.pipelinePath(), perm );
+		}
+	}
 
 	private static void pipelineShutDown( final String[] args )
 	{
@@ -558,11 +579,7 @@ public class BioLockJ
 		{
 			try
 			{
-				final String perm = Config.getString( null, Constants.PROJECT_PERMISSIONS );
-				if( perm != null )
-				{
-					Job.setFilePermissions( Config.pipelinePath(), perm );
-				}
+				setPipelineSecurity();
 			}
 			catch( final Exception ex )
 			{

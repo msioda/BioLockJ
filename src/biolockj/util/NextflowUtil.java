@@ -14,6 +14,7 @@ package biolockj.util;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -33,14 +34,31 @@ public class NextflowUtil
 	 * @return Nextflow main.nf file
 	 * @throws Exception if errors occur
 	 */
-	public static File buildNextFlowMain( final List<BioModule> modules ) throws Exception
+	public static File buildNextflowMain( final List<BioModule> modules ) throws Exception
 	{
-		Log.info( NextflowUtil.class, "Running AWS Cloud Manager [ INIT MODE ]"  );
-		final File template = buildInitialTemplate( flattenList( modules ) );
-		writeNextFlowMainNF( getNextFlowLines( template ) );
-		BioLockJUtil.deleteWithRetry( getNextflowTempConfig(), 3 );
-		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getNextflowMainConfig().getAbsolutePath() );
-		return getNextflowMainConfig();
+		Log.info( NextflowUtil.class, "Initialize AWS Cloud Manager"  );
+		final File template = buildInitialTemplate( asString( modules ) );
+		writeNextflowMainNF( getNextflowLines( template ) );
+		BioLockJUtil.deleteWithRetry( templateConfig(), 3 );
+		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
+		return getMainNf();
+	}
+	
+	/**
+	 * Copy the initialized pipeline to EFS.  The aws_manager can then be launched with updated $BLJ_PROJ = EFS parent directory.
+	 * 
+	 * @return File EFS Pipeline directory
+	 * @throws Exception if errors occur copying the pipeline.
+	 */
+	public static File copyPipelineToEfs() throws Exception
+	{
+		final File efsPipeline = new File( Config.requireExistingDir( null, Constants.AWS_EFS_DIR ).getAbsolutePath() + File.separator + Config.pipelineName() );
+		FileUtils.copyDirectory( new File( Config.pipelinePath() ), efsPipeline, true );
+		if( !efsPipeline.exists() )
+		{
+			throw new Exception( "Unable to create EFS pipeline directory: " + efsPipeline.getAbsolutePath() );
+		}
+		return efsPipeline;
 	}
 
 	/**
@@ -50,7 +68,7 @@ public class NextflowUtil
 	 * @return List of lines to save in final main.nf
 	 * @throws Exception if errors occur
 	 */
-	protected static List<String> getNextFlowLines( final File template ) throws Exception
+	protected static List<String> getNextflowLines( final File template ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
@@ -72,7 +90,15 @@ public class NextflowUtil
 					}
 					else if( line.contains( NF_MEMORY ) )
 					{
-						final String ram = Config.getString( null, Config.getModuleProp( module, NF_MEMORY ) );
+						String ram = Config.requireString( null, Config.getModuleProp( module, NF_MEMORY ) );
+						if( !ram.startsWith( "'" ) )
+						{
+							ram = "'" + ram;
+						}
+						if( !ram.endsWith( "'" ) )
+						{
+							ram = ram + "'";
+						}
 						line = line.replace( NF_MEMORY, ram );
 					}
 					else if( line.contains( NF_DOCKER_IMAGE ) )
@@ -110,29 +136,27 @@ public class NextflowUtil
 
 	private static File buildInitialTemplate( final String modules ) throws Exception
 	{
-		final File tempFile = getNextflowTempConfig();
-		Log.info( NextflowUtil.class, "Building template file: " + tempFile.getAbsolutePath() );
+		Log.info( NextflowUtil.class, "Build Nextflow initial template: " +  templateConfig().getAbsolutePath() );
 		final String[] args = new String[ 3 ];
-		args[ 0 ] = buildTemplateScript().getAbsolutePath();
-		args[ 1 ] = tempFile.getAbsolutePath();
+		args[ 0 ] = templateScript().getAbsolutePath();
+		args[ 1 ] = templateConfig().getAbsolutePath();
 		args[ 2 ] = modules;
 		Job.submit( args );
-		if( !tempFile.exists() )
+		if( !templateConfig().exists() )
 		{
-			throw new Exception( "Unable to build template: " + tempFile.getAbsolutePath() );
+			throw new Exception( "Unable to build template: " + templateConfig().getAbsolutePath() );
 		}
-		Log.info( NextflowUtil.class, "Template file generated: " + tempFile.getAbsolutePath() );
-
-		return tempFile;
+		Log.info( NextflowUtil.class, "Template file generated: " + templateConfig().getAbsolutePath() );
+		return templateConfig();
 	}
 
-	private static File buildTemplateScript() throws Exception
+	private static File templateScript() throws Exception
 	{
 		return new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR
 				+ File.separator + MAKE_NEXTFLOW_SCRIPT );
 	}
 
-	private static String flattenList( final List<BioModule> modules ) throws Exception
+	private static String asString( final List<BioModule> modules ) throws Exception
 	{
 		String flatMods = "";
 		for( final BioModule module: modules )
@@ -158,19 +182,19 @@ public class NextflowUtil
 	 * @return Nextflow main.nf
 	 * @throws Exception if File I/O Errors occur
 	 */
-	public static File getNextflowMainConfig() throws Exception
+	public static File getMainNf() throws Exception
 	{
 		return new File( Config.pipelinePath() + File.separator + MAIN_NF );
 	}
 	
-	private static File getNextflowTempConfig() throws Exception
+	private static File templateConfig() throws Exception
 	{
 		return new File( Config.pipelinePath() + File.separator + "." + MAIN_NF );
 	}
 
-	private static void writeNextFlowMainNF( final List<String> lines ) throws Exception
+	private static void writeNextflowMainNF( final List<String> lines ) throws Exception
 	{
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getNextflowMainConfig() ) );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMainNf() ) );
 		try
 		{
 			boolean indent = false;

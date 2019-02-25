@@ -13,9 +13,7 @@ package biolockj.util;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
@@ -77,7 +75,11 @@ public class BashScriptBuilder
 		setBatchSize( module, data );
 
 		buildWorkerScripts( module, data );
-		buildMainScript( module );
+		
+		if( !DockerUtil.runAwsCloudManager() )
+		{
+			buildMainScript( module );
+		}
 	}
 
 	/**
@@ -131,6 +133,12 @@ public class BashScriptBuilder
 			{
 				writer.close();
 			}
+		}
+		
+		if( DockerUtil.inAwsEnv() )
+		{
+			Job.setFilePermissions( scriptPath,
+					Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
 		}
 
 		printScriptAsDebug( scriptPath );
@@ -195,14 +203,8 @@ public class BashScriptBuilder
 	 */
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception
 	{
-		final String modId = ModuleUtil.displayID( module );
-
-		final String modPrefix = new File( getMainScriptPath( module ) ).getName()
-				.replaceAll( BioModule.MAIN_SCRIPT_PREFIX, "" );
-
-		final String jobName = modId + "." + workerId + modPrefix.substring( 2 );
-
-		return module.getScriptDir().getAbsolutePath() + File.separator + jobName;
+		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) 
+			+ "." + workerId + module.getClass().getSimpleName() + Constants.SH_EXT;
 	}
 
 	/**
@@ -453,10 +455,10 @@ public class BashScriptBuilder
 		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
 	}
 
-	private static String getMainScriptPath( final ScriptModule scriptModule ) throws Exception
+	private static String getMainScriptPath( final ScriptModule module ) throws Exception
 	{
-		return new File( scriptModule.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
-				+ scriptModule.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
+		return new File( module.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
+				+ module.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
 	}
 
 	private static String getWorkerId( final int scriptNum, final int digits )

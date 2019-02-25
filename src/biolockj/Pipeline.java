@@ -227,6 +227,10 @@ public class Pipeline
 		if( runScripts )
 		{
 			Job.submit( (ScriptModule) module );
+		}
+		
+		if( runScripts || DockerUtil.initAwsCloudManager() )
+		{
 			pollAndSpin( (ScriptModule) module );
 		}
 
