@@ -76,9 +76,10 @@ main <- function() {
 # Key method used to build plots
 buildPlots <- function() {
 
+	
 	logInfo( c( "sigOnly value", sigOnly ) )
 	for( level in taxaLevels() ) {
-
+	  foundSig = FALSE
       countTable = getCountTable( level )
       metaTable = getMetaData( level )
       if( is.null(countTable) || is.null(metaTable) ) { next }
@@ -97,8 +98,7 @@ buildPlots <- function() {
       r2Stats = getStatsTable( level )
       metaColColors = getColorsByCategory( metaTable )
 
-	  outputFile = getPath( getOutputDir(), paste0( level, ifelse( sigOnly, "_significant", "" ), "_OTU_plots.pdf" ) )
-      pdf( outputFile, paper="letter", width=7, height=10.5 )
+      pdf( reportFile( level ), paper="letter", width=7, height=10.5 )
       par(mfrow=c(3, 2), las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
       logInfo( "default par(mfrow)", par("mfrow") )
       par( mfrow = par("mfrow") ) 
@@ -123,6 +123,7 @@ buildPlots <- function() {
                	nonParPval = nonParStats[item, meta]
                	
                	if( sigOnly && min( parPval, nonParPval ) > pvalCutoff ) { next } 
+               	foundSig = TRUE
                	
                	# Every new item starts a new page
                	if( !sigOnly && !foundValidPvals ) {
@@ -156,8 +157,13 @@ buildPlots <- function() {
          }
       }
       dev.off()
+      if( !foundSig ) file.remove( reportFile( level ) )
       if( doDebug() ) sink()
    }
+}
+
+reportFile <- function( level ) {
+	return( getPath( getOutputDir(), paste0( level, ifelse( sigOnly, "_significant", "" ), "_OTU_plots.pdf" ) ) )
 }
 
 # Always use base color for significant only plot, otherwise use highlight colors for significant plots
