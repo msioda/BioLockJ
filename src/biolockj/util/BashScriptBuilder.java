@@ -204,7 +204,7 @@ public class BashScriptBuilder
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception
 	{
 		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) 
-			+ "." + workerId + module.getClass().getSimpleName() + Constants.SH_EXT;
+			+ "." + workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
 	}
 
 	/**
