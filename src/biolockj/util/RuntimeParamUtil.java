@@ -42,6 +42,18 @@ public class RuntimeParamUtil
 	{
 		return params.get( RESTART_FLAG ) != null;
 	}
+	
+	
+	/**
+	 * Return TRUE if runtime parameters indicate attempt to restart pipeline
+	 * 
+	 * @return boolean
+	 */
+	public static boolean runAws()
+	{
+		return params.get( AWS_FLAG ) != null;
+	}
+	
 
 	/**
 	 * Runtime property getter for {@value #PASSWORD_FLAG}
@@ -345,7 +357,8 @@ public class RuntimeParamUtil
 	{
 		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG )
 				|| param.equals( CONFIG_DIR_FLAG ) || param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG )
-				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( PRIMER_DIR_FLAG ) )
+				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( PRIMER_DIR_FLAG )
+				|| param.equals( AWS_FLAG ) )
 		{
 			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
 		}
@@ -407,6 +420,10 @@ public class RuntimeParamUtil
 			if( arg.equals( DOCKER_FLAG ) )
 			{
 				params.put( DOCKER_FLAG, Constants.TRUE );
+			}
+			else if( arg.equals( AWS_FLAG ) )
+			{
+				params.put( AWS_FLAG, Constants.TRUE );
 			}
 			else if( prevParam.equals( RESTART_FLAG ) )
 			{
@@ -578,7 +595,7 @@ public class RuntimeParamUtil
 	/**
 	 * Docker mode runtime parameter switch: {@value #DOCKER_FLAG}
 	 */
-	protected static final String DOCKER_FLAG = "-D";
+	protected static final String DOCKER_FLAG = "-docker";
 
 	/**
 	 * Input directory file-path runtime parameter switch: {@value #INPUT_DIR_FLAG}
@@ -605,8 +622,12 @@ public class RuntimeParamUtil
 	 */
 	protected static final String RESTART_FLAG = "-r";
 
+	/**
+	 * AWS pipeline runtime parameter switch: {@value #AWS_FLAG}
+	 */
+	protected static final String AWS_FLAG = "--aws";
+	
 	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
-
 	private static final String CONFIG_FLAG_EXT = "--config";
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
 	private static final List<String> extraParams = new ArrayList<>();

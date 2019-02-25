@@ -35,11 +35,12 @@ public class NextflowUtil
 	 */
 	public static File buildNextFlowMain( final List<BioModule> modules ) throws Exception
 	{
+		Log.info( NextflowUtil.class, "Running AWS Cloud Manager [ INIT MODE ]"  );
 		final File template = buildInitialTemplate( flattenList( modules ) );
 		writeNextFlowMainNF( getNextFlowLines( template ) );
-		BioLockJUtil.deleteWithRetry( getFile( true ), 3 );
-		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getFile( false ).getAbsolutePath() );
-		return getFile( false );
+		BioLockJUtil.deleteWithRetry( getNextflowTempConfig(), 3 );
+		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getNextflowMainConfig().getAbsolutePath() );
+		return getNextflowMainConfig();
 	}
 
 	/**
@@ -109,7 +110,7 @@ public class NextflowUtil
 
 	private static File buildInitialTemplate( final String modules ) throws Exception
 	{
-		final File tempFile = getFile( true );
+		final File tempFile = getNextflowTempConfig();
 		Log.info( NextflowUtil.class, "Building template file: " + tempFile.getAbsolutePath() );
 		final String[] args = new String[ 3 ];
 		args[ 0 ] = buildTemplateScript().getAbsolutePath();
@@ -151,14 +152,25 @@ public class NextflowUtil
 				+ "_" + DockerUtil.getImageVersion( moduleName ) + "'";
 	}
 
-	private static File getFile( final boolean temp ) throws Exception
+	/**
+	 * Get the Nextflow main.nf file path.  
+	 * 
+	 * @return Nextflow main.nf
+	 * @throws Exception if File I/O Errors occur
+	 */
+	public static File getNextflowMainConfig() throws Exception
 	{
-		return new File( Config.pipelinePath() + File.separator + ( temp ? ".": "" ) + MAIN_NF );
+		return new File( Config.pipelinePath() + File.separator + MAIN_NF );
+	}
+	
+	private static File getNextflowTempConfig() throws Exception
+	{
+		return new File( Config.pipelinePath() + File.separator + "." + MAIN_NF );
 	}
 
 	private static void writeNextFlowMainNF( final List<String> lines ) throws Exception
 	{
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile( false ) ) );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getNextflowMainConfig() ) );
 		try
 		{
 			boolean indent = false;

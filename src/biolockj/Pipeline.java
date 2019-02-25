@@ -66,10 +66,6 @@ public class Pipeline
 		bioModules = BioModuleFactory.buildPipeline();
 		Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
-		if( DockerUtil.runAws() )
-		{
-			NextflowUtil.buildNextFlowMain( bioModules );
-		}
 	}
 
 	/**
@@ -197,44 +193,54 @@ public class Pipeline
 	 */
 	protected static void executeModules() throws Exception
 	{
-		BioModule prevModule = null;
 		for( final BioModule module: Pipeline.getModules() )
 		{
 			if( !ModuleUtil.isComplete( module ) )
 			{
-				ModuleUtil.markStarted( module );
-				refreshOutputMetadata( prevModule );
-				refreshRCacheIfNeeded( module );
-				module.executeTask();
-
-				final boolean isJava = module instanceof JavaModule;
-				final boolean isScript = module instanceof ScriptModule;
-				final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
-
-				if( runScripts )
-				{
-					Job.submit( (ScriptModule) module );
-					pollAndSpin( (ScriptModule) module );
-				}
-
-				refreshOutputMetadata( module );
-				module.cleanUp();
-
-				if( !isJava || !runScripts )
-				{
-					SummaryUtil.reportSuccess( module );
-				}
-
-				ModuleUtil.markComplete( module );
+				executeModule( module );
 			}
 			else
 			{
 				Log.debug( Pipeline.class,
 						"Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
 			}
-			prevModule = module;
 		}
 	}
+	
+	/**
+	 * Execute a single pipeline module.
+	 * 
+	 * @param module BioModule current module
+	 * @throws Exception if runtime errors occur
+	 */
+	public static void executeModule( BioModule module ) throws Exception
+	{
+		ModuleUtil.markStarted( module );
+		refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
+		refreshRCacheIfNeeded( module );
+		module.executeTask();
+
+		final boolean isJava = module instanceof JavaModule;
+		final boolean isScript = module instanceof ScriptModule;
+		final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
+
+		if( runScripts )
+		{
+			Job.submit( (ScriptModule) module );
+			pollAndSpin( (ScriptModule) module );
+		}
+
+		refreshOutputMetadata( module );
+		module.cleanUp();
+
+		if( !isJava || !runScripts )
+		{
+			SummaryUtil.reportSuccess( module );
+		}
+
+		ModuleUtil.markComplete( module );
+	}
+	
 
 	/**
 	 * If the bioModule is complete and contains a metadata file in its output directory, return the metadata file,

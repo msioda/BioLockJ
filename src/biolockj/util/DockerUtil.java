@@ -183,14 +183,27 @@ public class DockerUtil
 	}
 
 	/**
-	 * Boolean to determine if running Docker blj_manager
+	 * Boolean to determine if running Docker aws_manager
 	 * 
-	 * @return TRUE if running Docker blj_manager
+	 * @return TRUE if running Docker aws_manager
 	 * @throws Exception if unable to determine Docker module type
 	 */
-	public static boolean isAwsManager() throws Exception
+	public static boolean runAwsCloudManager() throws Exception
 	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && runAws();
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() 
+				 && inAwsEnv() && RuntimeParamUtil.runAws();
+	}
+	
+	/**
+	 * Boolean to determine if should initialize Docker aws_manager
+	 * 
+	 * @return TRUE if running Docker aws_manager in init mode
+	 * @throws Exception if unable to determine Docker module type
+	 */
+	public static boolean initAwsCloudManager() throws Exception
+	{
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() 
+				 && inAwsEnv() && !RuntimeParamUtil.runAws();
 	}
 
 	/**
@@ -201,7 +214,7 @@ public class DockerUtil
 	 */
 	public static boolean isBljManager() throws Exception
 	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !runAws();
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !inAwsEnv();
 	}
 
 	/**
@@ -210,7 +223,7 @@ public class DockerUtil
 	 * @return TRUE if project.env=aws
 	 * @throws Exception if errors occur
 	 */
-	public static boolean runAws() throws Exception
+	public static boolean inAwsEnv() throws Exception
 	{
 		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
 	}

@@ -20,6 +20,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.report.Email;
 import biolockj.util.*;
 
@@ -259,9 +260,13 @@ public class BioLockJ
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
-		if( Config.isOnCluster() )
+		if( DownloadUtil.getDownloadListFile().exists() )
 		{
 			DownloadUtil.getDownloadListFile().delete();
+		}
+		if( NextflowUtil.getNextflowMainConfig().exists() )
+		{
+			NextflowUtil.getNextflowMainConfig().delete();
 		}
 
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
@@ -346,21 +351,52 @@ public class BioLockJ
 		{
 			runDirectPipeline();
 		}
-		else
+		else 
 		{
 			PropUtil.saveMasterConfig( null );
-
-			Pipeline.runPipeline();
-
-			if( Config.getBoolean( null, Constants.PROJECT_DELETE_TEMP_FILES ) )
+			
+			if( DockerUtil.initAwsCloudManager() )
 			{
-				removeTempFiles();
+				NextflowUtil.buildNextFlowMain( Pipeline.getModules() );
+				Pipeline.executeModule( importMeta() );
 			}
-
-			PropUtil.sanitizeMasterConfig();
-			markProjectStatus( Constants.BLJ_COMPLETE );
-			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+			else if( DockerUtil.runAwsCloudManager() )
+			{
+				
+			}
+			
+			
+			if( DockerUtil.initAwsCloudManager() )
+			{
+				Pipeline.executeModule( importMeta() );
+			}
+			else
+			{
+				Pipeline.runPipeline();
+	
+				if( Config.getBoolean( null, Constants.PROJECT_DELETE_TEMP_FILES ) )
+				{
+					removeTempFiles();
+				}
+			
+				PropUtil.sanitizeMasterConfig();
+				markProjectStatus( Constants.BLJ_COMPLETE );
+				Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+			
+			}
 		}
+	}
+	
+	
+	private static BioModule importMeta() throws Exception
+	{
+		final BioModule module = Pipeline.getModules().get( 0 );
+		if( module instanceof ImportMetadata )
+		{
+			return module;
+		}
+		
+		return null;
 	}
 	
 	

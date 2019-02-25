@@ -29,7 +29,8 @@ arg_exists() {
 	numArgs=${#@}
 	target=${args[$((numArgs-1))]}
 	args=${args[@]:0:$((numArgs-1))}
-	for arg in $args; do
+	for arg in $args;
+	do
 		[ "$arg" == "$target" ] && echo "$target" && return
 	done
 }
@@ -37,7 +38,7 @@ arg_exists() {
 # Populates the docker run BLJ_OPTIONS parameter
 # Include -docker to run BioLockJ in a Docker container
 # Include Docker container path to required Config file
-# Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
+# Include all directory paths the blj_manager may need to map volumes in spawned Docker compute node instances
 blj_options() {
 	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config)" 
 	$(has_param $runAws) && options="$options $runAws"
@@ -49,8 +50,9 @@ blj_options() {
 	echo $options
 }
 
-# Return $HOST_BLJ_PROJ if called from within a docker container (such as blj_webapp), otherwise return $BLJ_PROJ
+# Return $HOST_BLJ_PROJ if called from within a docker container (like webapp), otherwise return $BLJ_PROJ
 blj_proj() {
+	
 	bljProj=$BLJ_PROJ
 	if $(has_param $inDocker); then
 		bljProj=$HOST_BLJ_PROJ
@@ -60,10 +62,12 @@ blj_proj() {
 			echo "Exit program - Required env variable HOST_BLJ_PROJ undefined" && exit 1
 		fi
 	fi
+	
 	if [ "${bljProj: -1}" == "/" ]; then
 		len=$((${#bljProj}-1))
 		bljProj="${bljProj:0:len}"
 	fi
+	
 	$(has_param $bljProj) && echo $bljProj && return
 	echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
 }
@@ -89,7 +93,8 @@ named_arg() {
 	numArgs=${#@}
 	target=${args[$((numArgs-1))]}
 	args=${args[@]:0:$((numArgs-1))}
-	for arg in $args; do
+	for arg in $args; 
+	do
 		IFS="="
 		tokens=( $arg )
 		[ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
@@ -111,9 +116,9 @@ status_msg() {
 	fi
 	
 	if $(has_param $doRestart); then
-		msg+=" restarting $(restart_dir) in $DOCKER_HUB_USER/$(manager_type) Docker container"
+		msg+=" restarting $(restart_dir) in $DOCKER_HUB_USER/blj_manager Docker container"
 	else
-		msg+=" starting $DOCKER_HUB_USER/$(manager_type) Docker container"
+		msg+=" starting $DOCKER_HUB_USER/blj_manager Docker container"
 	fi
 	
 	echo "$msg with BLJ_OPTIONS=$(blj_options)"
@@ -132,7 +137,7 @@ verify_host_file() {
 }
 
 # Verify paths are valid, if dockblj is not deployed inside a Docker container
-verify_inputs() {
+verify_input_params() {
 	$(has_param $doRestart) && verify_host_dir $doRestart Restart
 	$(has_param $config) && verify_host_file $config Config
 	$(has_param $metaPath) && verify_host_dir $metaPath Metadata
@@ -148,8 +153,6 @@ verify_inputs() {
 	fi 
 }
 
-echo "Running dockblj..."
-
 config=$(named_arg "$@" "config")
 inputDirs=$(named_arg "$@" "inputDirPaths")
 metaPath=$(named_arg "$@" "metadataFilePath")
@@ -160,18 +163,19 @@ inDocker=$(arg_exists "$@" "-docker")
 runAws=$(arg_exists "$@" "-aws")
 
 # Call function to verify input parameters are valid unless running in Docker container
-! $(has_param $inDocker) && verify_inputs
+! $(has_param $inDocker) && verify_input_params
 
 # Call function to print status message
 echo $(status_msg)
-
-D_SOCK="/var/run/docker.sock"
 
 #echo "config: $(dirname $config)"
 #echo "inputDir: $inputDirs"
 #echo "metaPath: $metaPath"
 #echo "BLJ_PROJ: $(blj_proj)"
 #echo "BLJ_OPTIONS: $(blj_options)"
+
+
+D_SOCK="/var/run/docker.sock"
 
 if $(has_param $metaPath) && $(has_param $primerPath); then
 	docker run -e "BLJ_OPTIONS=$(blj_options)" -v $D_SOCK:$D_SOCK -v $metaPath:/meta -v $primerPath:/primer \
