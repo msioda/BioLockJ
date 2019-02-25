@@ -4,3 +4,4 @@
 .classpath
 .Rproj.user
 .Rhistory
+*.Dockerfile
