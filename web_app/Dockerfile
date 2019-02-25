@@ -1,7 +1,5 @@
 #For webapp development
 FROM biolockj/blj_webapp
-RUN rm -r $BLJ/web_app/*
-COPY . $BLJ/web_app/
 ENV PROJECT_DIRS=$BLJ/web_app
 
 # Add AWS
@@ -28,6 +26,10 @@ RUN apt-get update && \
 # docker build --tag amyerke/webapp --no-cached .
 # if mike updates his:
 # docker pull biolockj/webapp && docker build --tag amyerke/webapp .
+
+RUN rm -r $BLJ/web_app/*
+COPY . $BLJ/web_app/
+
 WORKDIR $BLJ/web_app/
 
 # Install Malcolm's repo
