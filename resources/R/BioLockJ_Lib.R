@@ -165,9 +165,9 @@ getFactorGroups <- function( countMetaTable, metaCol, taxaCol ) {
 	return( vals )
 }
 
-# Return the name of the R module level specific log file
-getLogFile <- function( level ) {
-	return( file.path( getTempDir(), paste0( moduleScriptName(), ".", level, ".log") ) )
+# Return  name of the R module log file using the given name
+getLogFile <- function( name ) {
+	return( file.path( getTempDir(), paste0( moduleScriptName(), "_", name, ".log") ) )
 }
 
 # Return the name of the BioLockJ MASTER Config file

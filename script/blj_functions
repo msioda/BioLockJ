@@ -65,3 +65,8 @@ most_recent_pipeline() {
 		done
 	fi
 }
+
+# Rerun current pipeline from point of failure using same MASTER config
+reblj() {
+	biolockj -r $PWD
+}

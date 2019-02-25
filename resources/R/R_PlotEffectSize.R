@@ -32,8 +32,8 @@ main <- function(){
     pvalTable = getStatsTable( level, getProperty("r_PlotEffectSize.parametricPval", FALSE), !getProperty("r_PlotEffectSize.disablePvalAdj", FALSE) )
     if( doRSquared ) r2Table = getStatsTable( level )
   
-    logInfo( c( "Processing level table[", level, "] has", nrow(countTable), "rows and", ncol(countTable), "columns") )
-    logInfo( c( "Stat tables have", nrow(pvalTable), "rows and", ncol(pvalTable), "columns." ) )
+    logInfo( c( "Processing level table[", level, "] has", nrow( countTable ), "rows and", ncol(countTable), "columns") )
+    logInfo( c( "Stat tables have", nrow( pvalTable ), "rows and", ncol( pvalTable ), "columns." ) )
 
     # make a new pdf output file, specify page size
     outFileName = getPath( getOutputDir(), paste0(level, "_EffectSizePlots.pdf") )
@@ -61,14 +61,10 @@ main <- function(){
 	      normPvals = split(countTable[row.names(metaTable),], f=metaTable[,field])
 	      
 	      saveRefTable = NULL
-	      if( doCohensD && isBinaryAtt ){
-	        saveRefTable=getPath( getTempDir(), paste(level, field, "effectSize.tsv", sep="_") )
-	      }
-	      
-	     type = c( "CohensD", "rSquared" )
-	     if( !doCohensD ) type = "rSquared" else if( !doRSquared ) type = "CohensD"
-	
-	     data = calcBarSizes( type, normPvals, pvals, r2vals, saveRefTable )
+	      if( doCohensD && isBinaryAtt ) saveRefTable=getPath( getTempDir(), paste(level, field, "effectSize.tsv", sep="_") )
+	      type = c( "CohensD", "rSquared" )
+	      if( !doCohensD ) type = "rSquared" else if( !doRSquared ) type = "CohensD"
+	      data = calcBarSizes( type, normPvals, pvals, r2vals, saveRefTable )
 	      
 	     if( doRSquared ){ 
 	        resetPar()
@@ -85,7 +81,7 @@ main <- function(){
       
 		if( isBinaryAtt && !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) ) {
 			resetPar()
-			plotFoldChange( countTable, metaTable, level, pvals )
+			plotFoldChange( countTable, metaTable, level, field, pvals )
 	    }
     }
     dev.off()
@@ -94,7 +90,7 @@ main <- function(){
 }
 
 # Plot fold changes for normalized counts
-plotFoldChange <- function( countTable, metaTable, level, pvals ){
+plotFoldChange <- function( countTable, metaTable, level, field, pvals ){
   	normCountTable = getNormTaxaTable( level )
 	if( is.null( normCountTable ) ) normCountTable = countTable
 	splitRelAbund = split(normCountTable[row.names(metaTable),], f=metaTable[,field])

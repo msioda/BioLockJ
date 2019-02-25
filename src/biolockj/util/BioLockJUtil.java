@@ -351,6 +351,16 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Setter for pipeline input files. 
+	 * 
+	 * @param files List of input files
+	 */
+	public static void setPipelineInputFiles( List<File> files )
+	{
+		inputFiles = files;
+	}
+
+	/**
 	 * Get the source of the java runtime classes ( /bin directory or JAR file ).
 	 * 
 	 * @return File object
@@ -687,6 +697,6 @@ public class BioLockJUtil
 	 */
 	public static final String PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count";
 
-	private static final List<File> inputFiles = new ArrayList<>();
+	private static List<File> inputFiles = new ArrayList<>();
 	private static final String VERSION_FILE = ".version";
 }

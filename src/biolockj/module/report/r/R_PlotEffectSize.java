@@ -36,8 +36,10 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	{
 		super.checkDependencies();
 		Config.getString( this, R_COLOR_HIGHLIGHT );
-		if( Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC ) && Config.getBoolean( this, NO_COHENS_D )
-				&& Config.getBoolean( this, NO_R2 ) )
+		
+		// Use single "&" to ensure all config values saved to MASTER config
+		if( Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC ) & Config.getBoolean( this, NO_COHENS_D )
+				& Config.getBoolean( this, NO_R2 ) )
 		{
 			throw new ConfigViolationException( NO_COHENS_D,
 					"When using " + this.getClass().getName() + " at least one of " + NO_COHENS_D + ", " + NO_R2

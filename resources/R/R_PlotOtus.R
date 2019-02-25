@@ -2,18 +2,17 @@
 
 # Output box-plot illustrating OTU-nominal metadata field relationship
 # Print adjusted P-values in pot header
-addBoxPlot <- function( item, taxaVals, metaVals, barColors )
-{
+addBoxPlot <- function( item, taxaVals, metaVals, barColors ) {
    metaVals = as.factor( metaVals )
    factors = split( taxaVals, metaVals )
    cexAxis = getCexAxis( levels( metaVals ) )
    labels = getBoxPlotLabels( levels( metaVals ) )
    orient = getLas( levels( metaVals ) )
-
-   boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=getProperty("r.pch"),
-                ylab=item, xlab="", cex.axis=cexAxis )
-   stripchart( taxaVals ~ metaVals, data=data.frame(taxaVals, metaVals), method="jitter",
-                     vertical=TRUE, pch=getProperty("r.pch"), add=TRUE )
+   pch = getProperty("r.pch")
+   pointCol = getProperty( "r.colorPoint", "black" )
+   data = data.frame(taxaVals, metaVals)
+   boxplot( factors, outline=FALSE, names=labels, las=orient, col=barColors, pch=pch, ylab=item, xlab="", cex.axis=cexAxis )
+   stripchart( taxaVals ~ metaVals, method="jitter", data=data, vertical=TRUE, col=pointCol, pch=pch, add=TRUE )             
 }
 
 # Display plot heading with 2 pvalues + R^2 effect size
@@ -26,10 +25,9 @@ plotHeading <- function( parPval, nonParPval, r2, field ) {
    mtext( title2, TOP, HEAD_2, col=displayCol( nonParPval ), cex=0.75, adj=LEFT )
 }
 
-# Scatterplot for numeric fields 
+# Scatter-plot for numeric fields 
 addScatterPlot <- function( item, taxaVals, metaVals ) {
-   cols = getProperty( "r.colorPoint", "black" )
-   plot( metaVals, taxaVals, pch=getProperty( "r.pch" ), col=cols, ylab=item, xlab="" )
+   plot( metaVals, taxaVals, pch=getProperty( "r.pch" ), col=getProperty( "r.colorPoint", "black" ), ylab=item, xlab="" )
 }
 
 # Return nominal group names truncated for display on X-axis of box plot
@@ -78,13 +76,15 @@ main <- function() {
 # Key method used to build plots
 buildPlots <- function() {
 
-   for( level in taxaLevels() ) {
+	logInfo( c( "sigOnly value", sigOnly ) )
+	for( level in taxaLevels() ) {
 
       countTable = getCountTable( level )
       metaTable = getMetaData( level )
       if( is.null(countTable) || is.null(metaTable) ) { next }
-      if( doDebug() ) sink( getLogFile( level ) )
-	  logInfo( "Display significant pvalues only?", sigOnly )
+      
+      if( doDebug() ) sink( getLogFile( paste0( level, ifelse( sigOnly, "_significant", "" ) ) ) )
+	  
       binaryCols = getBinaryFields()
       nominalCols = getNominalFields()
       numericCols = getNumericFields()
@@ -100,7 +100,11 @@ buildPlots <- function() {
 	  outputFile = getPath( getOutputDir(), paste0( level, ifelse( sigOnly, "_significant", "" ), "_OTU_plots.pdf" ) )
       pdf( outputFile, paper="letter", width=7, height=10.5 )
       par(mfrow=c(3, 2), las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
+      logInfo( "default par(mfrow)", par("mfrow") )
+      par( mfrow = par("mfrow") ) 
+      logInfo( "new par(mfrow)", par("mfrow") )
       pageNum = 0
+      position = 0
       pvalCutoff = getProperty("r.pvalCutoff")
 
       # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countTable rows
@@ -109,18 +113,23 @@ buildPlots <- function() {
 
       for( item in names( countTable ) ) {
          if( sum( countTable[,item] > 0 ) >=  cutoffValue ) {
-         	
-         	# Every item starts a new page
-            par( mfrow = par("mfrow") ) 
-            position = 0
+         
             taxaVals = countTable[,item]
+            foundValidPvals = FALSE
 
             for( meta in getReportFields() ) {
-            
             		metaVals = metaTable[,meta]
             		parPval = parStats[item, meta]
                	nonParPval = nonParStats[item, meta]
-               	if( min( parPval, nonParPval ) > pvalCutoff ) { next }
+               	
+               	if( sigOnly && min( parPval, nonParPval ) > pvalCutoff ) { next } 
+               	
+               	# Every new item starts a new page
+               	if( !sigOnly && !foundValidPvals ) {
+                     foundValidPvals = TRUE
+                     par( mfrow = par("mfrow") ) 
+                     position = 0
+                  } 
             
                	if( meta %in% binaryCols || meta %in% nominalCols ) {
                   	logInfo( c( "Add Box-Plot [", item, "~", meta, "]" ) )
@@ -131,7 +140,7 @@ buildPlots <- function() {
                   	addScatterPlot( item, taxaVals, metaVals )
                	}
 
-              	 plotHeading( parPval, nonParPval, r2Stats[item, meta], meta )
+              	plotHeading( parPval, nonParPval, r2Stats[item, meta], meta )
                	mtext( meta, side=1, font=1, cex=1, line=2.5, col=displayCol( c(parPval, nonParPval) ) )
                	position = position + 1
 
@@ -159,9 +168,9 @@ displayCol <- function( vals ) {
 
 # Add page title + footer with page number
 addHeaderFooter <- function( item, level, pageNum ) {
-	addPageTitle( item )
+	if( !sigOnly ) addPageTitle( item )
 	addPageNumber( pageNum )
-	addPageFooter( paste( "Taxa Plots [", str_to_title( level ), "]" ) )
+	addPageFooter( paste0( ifelse( sigOnly, "Significant ", "" ), "Taxa Plots [ ", str_to_title( level ), " ]" ) )
 }
 
 sigOnly = FALSE

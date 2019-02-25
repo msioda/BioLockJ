@@ -74,16 +74,16 @@ main <- function() {
       position = 1
 
       # create ranks table
-      fields = names(parStats)[ names(parStats) %in% getReportFields()]
-      logInfo("fields", getReportFields())
+      fields = getReportFields()
+      logInfo( "fields", getReportFields() )
       ranks = data.frame(AttributeName=fields,
-                                  Parametric.FractionPvalsUnderCutoff=rep(NA, ncol(parStats)),
-                                  NonParametric.FractionPvalsUnderCutoff=rep(NA, ncol(nonParStats)))
+                                  Parametric.FractionPvalsUnderCutoff=rep(NA, length(getReportFields())),
+                                  NonParametric.FractionPvalsUnderCutoff=rep(NA, length(getReportFields())))
 
       row.names(ranks) = ranks$AttributeName
-      for( field in names(parStats) ) {
-         ranks[field,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=parStats[, field], getProperty("r.pvalCutoff"))
-         ranks[field,"NonParametric.FractionPvalsUnderCutoff"] = calcSigFraction(pvals=nonParStats[, field], getProperty("r.pvalCutoff"))
+      for( field in getReportFields() ) {
+         ranks[field,"Parametric.FractionPvalsUnderCutoff"] = calcSigFraction(parStats[, field], getProperty("r.pvalCutoff"))
+         ranks[field,"NonParametric.FractionPvalsUnderCutoff"] = calcSigFraction(nonParStats[, field], getProperty("r.pvalCutoff"))
       }
       # order attributes based on the fraction of tests with a p-value below <pvalCutoff>
       orderBy = apply(ranks[2:3],1, max, na.rm=TRUE)
@@ -93,8 +93,6 @@ main <- function() {
 
       # plot histograms in the same order they have in the ranks table
       for( field in ranks$AttributeName ) {
-
-         if( ! field %in% getReportFields() ){ next }
 
          logInfo("processing attribute:", field )
          stopifnot( field %in% names(nonParStats) && field %in% names(parStats) )
@@ -118,25 +116,25 @@ main <- function() {
          if( position == 3 ) { 
             addReportFooter( level, pageNum ) 
          } else if( position > prod( par("mfrow") ) ) {
-			   addReportFooter( level, pageNum )
+            addReportFooter( level, pageNum )
             position = 1
             pageNum = pageNum + 1
          }
       }
-		par()
-		
-		printColorCode()
-		plotPlainText( c("Unadjusted P-value histograms are", "ordered by % tests below",
-			paste( "P-value significance threshold:", getProperty("r.pvalCutoff") ) ), align="right")
+      par()
+      
+      printColorCode()
+      plotPlainText( c("Unadjusted P-value histograms are", "ordered by % tests below",
+         paste( "P-value significance threshold:", getProperty("r.pvalCutoff") ) ), align="right")
       addReportFooter( level, pageNum )
       
       dev.off()
       if( doDebug() ) sink()
-	}
+   }
 }
 
 # Add page footer and page number at bottom of page
 addReportFooter <- function( level, pageNum ) {
-	addPageNumber( pageNum )
-	addPageFooter( paste( "P-Value Histograms [", str_to_title( level ), "]" ) )
+   addPageNumber( pageNum )
+   addPageFooter( paste( "P-Value Histograms [", str_to_title( level ), "]" ) )
  }

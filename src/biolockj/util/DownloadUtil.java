@@ -288,6 +288,24 @@ public final class DownloadUtil
 		try
 		{
 			final File pipeRoot = new File( Config.pipelinePath() );
+			
+			if( BioLockJ.pipelineInputDir().exists() && BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) ||
+					BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) ||
+					BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+					BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+					BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
+			{
+				for( final File file: BioLockJUtil.getPipelineInputFiles() )
+				{
+					if( !SeqUtil.isSeqFile( file ) )
+					{
+						downFiles.add( file );
+						final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
+						writer.write( relPath + RETURN );
+					}
+				}
+			}
+			
 			for( final File file: files )
 			{
 				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )

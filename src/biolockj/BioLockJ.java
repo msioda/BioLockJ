@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
@@ -208,8 +209,31 @@ public class BioLockJ
 		{
 			BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
 		}
+		
+		// Initializes PIPELINE_SEQ_INPUT_TYPE
+		BioLockJUtil.getPipelineInputFiles();
+		
+		if( doCopyInput() )
+		{
+			copyInputData();
+		}
 
 		SeqUtil.initialize();
+	}
+	
+	private static boolean doCopyInput() throws Exception
+	{
+		boolean hasMixedInputs = BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) ||
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) ||
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE );
+		if( hasMixedInputs ) 
+		{
+			Log.warn( BioLockJ.class, "Non-sequence inputs found - copy input files from " + Config.requireString( null, Constants.INPUT_DIRS ) 
+				+ " to:" + pipelineInputDir().getAbsolutePath() );
+		}
+		return( !RuntimeParamUtil.isDirectMode() && Config.getBoolean( null, Constants.PROJECT_COPY_FILES ) || hasMixedInputs );
 	}
 
 	/**
@@ -317,7 +341,7 @@ public class BioLockJ
 	protected static void runPipeline() throws Exception
 	{
 		Pipeline.initializePipeline();
-
+		
 		if( RuntimeParamUtil.isDirectMode() )
 		{
 			runDirectPipeline();
@@ -325,10 +349,6 @@ public class BioLockJ
 		else
 		{
 			PropUtil.saveMasterConfig( null );
-			if( Config.getBoolean( null, Constants.PROJECT_COPY_FILES ) )
-			{
-				SeqUtil.copyInputData();
-			}
 
 			Pipeline.runPipeline();
 
@@ -342,7 +362,51 @@ public class BioLockJ
 			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
 		}
 	}
+	
+	
+	/**
+	 * Create a copy of the sequence files in property {@value biolockj.Constants#INPUT_DIRS}, output to a directory
+	 * named {@value biolockj.Constants#PROJECT_PIPELINE_DIR}/input.
+	 *
+	 * @throws Exception if unable to copy the files
+	 */
+	protected static void copyInputData() throws Exception
+	{
+		if( !pipelineInputDir().exists() )
+		{
+			pipelineInputDir().mkdirs();
+		}
+		
+		for( final File dir: BioLockJUtil.getInputDirs() )
+		{
+			Log.info( BioLockJ.class, "Copying input files from " + dir + " to " + pipelineInputDir() );
+			FileUtils.copyDirectory( dir, pipelineInputDir() );
+		}
+		
+		final List<File> inputFiles = new ArrayList<>( FileUtils.listFiles( pipelineInputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+		Log.info( BioLockJ.class, "Total number of input files: " + inputFiles.size() );
+		int i = 0;
+		for( File file: inputFiles )
+		{
+			Log.info( BioLockJ.class, "Imported Input File [ "+( i++ ) + " ]: " + file.getAbsolutePath() );
+		}
+		
+		BioLockJUtil.setPipelineInputFiles( inputFiles );
+		Config.setConfigProperty( Constants.INPUT_DIRS, pipelineInputDir().getAbsolutePath() );
 
+	}
+
+	/**
+	 * Return the pipeline input directory
+	 * 
+	 * @return Input dir 
+	 * @throws Exception if unable to obtain file
+	 */
+	public static File pipelineInputDir() throws Exception
+	{
+		return new File( Config.pipelinePath() + File.separator + "input" );
+	}
+	
 	private static String getDirectLogName( final String moduleDir ) throws Exception
 	{
 		final File modDir = new File( Config.pipelinePath() + File.separator + moduleDir );
