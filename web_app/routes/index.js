@@ -35,14 +35,9 @@ router.get('/config', function(req, res, next) {
 router.post('/retrieveProjects', function(req, res, next) {
   console.log('retrieveProjects');
   try {
-<<<<<<< HEAD
-    let projects = [];
-    fs.readdir(path.join('/', 'pipeline'), (err, files) => {
-=======
     let names = [];
     let descrip = [];
     fs.readdir(path.join('/', 'pipelines'), (err, files) => {
->>>>>>> fix the AWS sections. projects and config project.properties returned at retrieve projects
       if (err) {
         console.error(err);
         accessLogStream.write(e.stack + '\n');;
@@ -51,11 +46,6 @@ router.post('/retrieveProjects', function(req, res, next) {
         console.log(file);
         const checkFile = fs.lstatSync(path.join('/','pipelines',file));
           if (checkFile.isDirectory()) {
-<<<<<<< HEAD
-            projects.push(file);
-            // console.log(projects);
-          };
-=======
             names.push(file);
 
             //go into folder
@@ -82,7 +72,6 @@ router.post('/retrieveProjects', function(req, res, next) {
               }
             }//end nestedFolderFiles for loop
           };//end if dir
->>>>>>> fix the AWS sections. projects and config project.properties returned at retrieve projects
         });
         console.log(projects);
         res.setHeader("Content-Type", "text/html");
