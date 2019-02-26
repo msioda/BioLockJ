@@ -38,12 +38,8 @@ main <- function(){
     # make a new pdf output file, specify page size
     outFileName = getPath( getOutputDir(), paste0(level, "_EffectSizePlots.pdf") )
     pdf(file=outFileName, paper="letter", width=7.5, height=10 )
-    par(mar=c(6, 5, 2, 5), oma=c(0,0,0,0))
-    p = par( no.readonly = TRUE )
-    # use this to reset par to the values it has as of right now
-    resetPar <- function(){ 
-      par( p )
-    }
+    newPlot()
+
 
     for( field in getReportFields() ){
     
@@ -67,20 +63,17 @@ main <- function(){
 	      data = calcBarSizes( type, normPvals, pvals, r2vals, saveRefTable )
 	      
 	     if( doRSquared ){ 
-	        resetPar()
 	        drawPlot( data[["toPlot"]][,c("pvalue","rSquared")], field, "rSquared", "R-squared", data[["comments"]][c(1,3)] )
 	        logInfo( c("Completed r-squared plot for level:", level, "and report field:", field) )
 	     }
 	      
 	      if( doCohensD && isBinaryAtt ) {
 	        logInfo( c( "Effect size: Calling drawPlot for level:", level, ":", field ) )
-	        resetPar()
 	        drawPlot( data[["toPlot"]], field, "CohensD", "Effect Size (Cohen's D)", data[["comments"]][c(1,2)], data[["xAxisLab2"]] )
 	      }
       }
       
 		if( isBinaryAtt && !getProperty("r_PlotEffectSize.disableFoldChange", FALSE) ) {
-			resetPar()
 			plotFoldChange( countTable, metaTable, level, field, pvals )
 	    }
     }
@@ -181,6 +174,7 @@ calcBarSizes <- function( type, data, pvals, r2vals=NULL, saveRefTable=NULL ) {
     }
     header = c(header, paste("CohensD:", xAxisLab2))
   }
+  
   if ("foldChange" %in% type){
     toPlot$foldChange = numMeans / denMeans
     toPlot$scaledFC = do.call("log2", list(x=toPlot$foldChange))
@@ -295,6 +289,8 @@ drawPlot <- function(toPlot, title, barSizeColumn, xAxisLab, comments, xAxisLab2
   # comments - string(s) to add to bottom of the plot to inform the user
   # xAxisLab2 - Optional 2nd string to plot below the x-axis label (added explaination of x-axis)
   
+  par( mar=c(6, 5, 2, 5), oma=c(0,0,0,0) )
+  
   # Check required values in toPlot
   if (is.null(toPlot[,barSizeColumn])){ stop(paste('Input data frame [toPlot] must include a barSizeColumn ("', barSizeColumn, '") column.')) }
 
@@ -341,7 +337,6 @@ drawPlot <- function(toPlot, title, barSizeColumn, xAxisLab, comments, xAxisLab2
     		logInfo( c( "Not enough space in plot for", nrow(toPlot), "bars with", fixedBarHeightInches, 
                   " for each bar. Bar widths will be set to fit the space.") )
     }
-  
   
   # determine plot dimensions
   xmin = min( toPlot[,barSizeColumn] )
