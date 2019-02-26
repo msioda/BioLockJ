@@ -93,7 +93,7 @@ function parseIdsFromStandPropString(standProps = standPropsString) {
 }
 
 /**
-//The following function usage in app.
+//The following function usage in javascript console:
 
 let spClass = returnClassIds();
 let stnPrps = returnStandPropIds()
