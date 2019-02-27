@@ -89,25 +89,32 @@ function moduleLiHoverTextfromJavadocs(moduleJavaClassPath){
 }//end moduleLiHoverTextfromJavadocs
 
 function parseBljModuleJavaClass(text){//gets text java documentation from Java class
- var startPublicClass;
- var startComment;
- var lines = text.split('\n');
+  let startPublicClass;
+  let startComment;
+  let lines = text.split('\n');
+  let modDescrip = ""
+  let webDesc;
  for (let i = 0; i < lines.length; i++){
    if (lines[i].startsWith("public class")){
      startPublicClass = i;
    }
  }
  for (let i = startPublicClass; i > 0; i--) {
-   if (lines[i].startsWith("/**")) {
+   if (lines[i].startsWith("/**") && lines[i+1].startsWith(' * This ')) {
      startComment = i;
    }
  }
- var modDescrip = ""
  for (var a = startComment; a < startPublicClass; a++){
    var sect = lines[a].slice(3,);
    modDescrip = modDescrip.concat(sect);
  }
- return modDescrip;
+ if (modDescrip.includes('@web_desc ')){
+   let split = modDescrip.split('@web_desc ');
+   modDescrip = split[0];
+   webDesc = split[1]
+   return [modDescrip, webDesc];
+ }
+ return [modDescrip];
 }//end parseBljModuleJavaClass
 
 /*This function object will be used to keep track of how many of each moduleClass is chosen
@@ -430,10 +437,14 @@ function runModuleFunctions() {//large function to build module li and counters
         let text = moduleLiHoverTextfromJavadocs(link);
         //console.log('makeModuleLi link: ', text);
         text.then(result => {
+          let parsedResult = parseBljModuleJavaClass(result);
           //console.log('result: ', result);
-          console.log('parseBljModuleJavaClass(result): ', parseBljModuleJavaClass(result));
-          mod.setAttribute('data-info', parseBljModuleJavaClass(result));
+          console.log('parsedResult[0]: ', parsedResult[0]);
+          mod.setAttribute('data-info', parsedResult[0]);
           hoverEventlistenerForModules(mod);
+          if (parsedResult.length > 1){
+            mod.innerHTML = parsedResult[1];
+          }
           });
       } catch (e) {
         console.error(e);
