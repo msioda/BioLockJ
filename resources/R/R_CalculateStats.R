@@ -7,21 +7,20 @@
 # 4. Adjusted Non-parametric P-Value table 
 # 5. R^2 Value table
 buildSummaryTables <- function( reportStats, level ) {
-	fields = unique( names(reportStats[[2]]) )
-	for( i in 2:length( reportStats ) ) {
-		df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
-		df[, 1] = reportStats[[1]]
-		names(df)[1] = names( reportStats )[1]
-		for( j in 1:length( fields ) ) {
-			df[, length(df)+1] = getValuesByName( reportStats[[i]], fields[j] )
-			names(df)[length(df)] = fields[j]
-		}
-		fileName = getPath( getOutputDir(), paste0( level, "_", names(reportStats)[i] ) )
-		logInfo( paste( "Saving output file", fileName ) )
-		write.table( df, file=fileName, sep="\t", row.names=FALSE )
-	}
+   fields = unique( names(reportStats[[2]]) )
+   for( i in 2:length( reportStats ) ) {
+      df = data.frame( vector( mode="double", length=length( reportStats[[1]] ) ) )
+      df[, 1] = reportStats[[1]]
+      names(df)[1] = names( reportStats )[1]
+      for( j in 1:length( fields ) ) {
+         df[, length(df)+1] = getValuesByName( reportStats[[i]], fields[j] )
+         names(df)[length(df)] = fields[j]
+      }
+      fileName = getPath( getOutputDir(), paste0( level, "_", names(reportStats)[i] ) )
+      logInfo( paste( "Saving output file", fileName ) )
+      write.table( df, file=fileName, sep="\t", row.names=FALSE )
+   }
 }  
-
 
 # Build list of reportStats for the specific taxonomy/humann2 countTable with the following columns:
 # "OTU", "parametricPvals", "nonParametricPvals", "adjParPvals", "adjNonParPvals", "rSquaredVals"
@@ -31,68 +30,63 @@ calculateStats <- function( level ) {
 
    countTable = getCountTable( level )
    metaTable = getMetaData( level )
-   if ( is.null(countTable) || is.null(metaTable) ){
-      return( NULL )
-   }
-
-   # Loop through the OTUs to assign P-value & R^2 values
+   if ( is.null(countTable) || is.null(metaTable) ) return( NULL )
    names = vector( mode="character" )
    parametricPvals = vector( mode="double" )
    nonParametricPvals = vector( mode="double" )
    rSquaredVals = vector( mode="double" )
    adjParPvals = vector( mode="double" )
    adjNonParPvals = vector( mode="double" )
-
-   binaryCols = getBinaryFields()
-   nominalCols = getNominalFields()
-   numericCols = getNumericFields()
-   logInfo( "binaryCols", binaryCols )
-   logInfo( "nominalCols", nominalCols )
-   logInfo( "numericCols", numericCols )
-	
-   logInfo( "number of metadata columns", ncol(metaTable) )
-   logInfo( "number of count-data columns", ncol(countTable) )
+   logInfo( "binaryCols", getBinaryFields() )
+   logInfo( "nominalCols", getNominalFields() )
+   logInfo( "numericCols", getNumericFields() )
 
    # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countTable rows
    cutoffValue = getProperty("r.rareOtuThreshold", 1)
-   if( cutoffValue < 1 ) {
-      cutoffValue = cutoffValue * nrow(countTable)
-   }
-   logInfo( "cutoffValue", cutoffValue )
+   if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow(countTable)
 
    for( countCol in 1:ncol(countTable) ) {
       if( sum( countTable[,countCol] > 0 ) >= cutoffValue ) {
          names[ length(names)+1 ] = names(countTable)[countCol]
-         logInfo( c( "names[", length(names), "]", names[ length(names) ] ) )
+         logInfo( c( "Calculate pvalues for:", names[ length(names) ] ) )
 
-         if( length( binaryCols ) > 0 ) {
-            logInfo( "Calculate BINARY P_VALS" )
-            for( field in binaryCols ) {
+         if( length( getBinaryFields() ) > 0 ) {
+            for( field in getBinaryFields() ) {
                att = as.factor( metaTable[,field] )
                vals = levels( att )
-               myLm = lm( countTable[,countCol] ~ att, na.action=na.exclude )
-               parametricPvals = addNamedVectorElement( parametricPvals, field, t.test( countTable[att==vals[1], countCol], countTable[att==vals[2], countCol] )$p.value )
-               nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, pvalue( wilcox_test( countTable[att==vals[1], countCol], countTable[att==vals[2], countCol] ) ) )
-               rSquaredVals = addNamedVectorElement( rSquaredVals, field, summary( myLm )$r.squared )
+               if( everyGroupHasMultipleVals( countTable, countCol, att, vals ) ) { 
+                     myLm = lm( countTable[,countCol] ~ att, na.action=na.exclude )
+                     parametricPvals = addNamedVectorElement( parametricPvals, field, t.test( countTable[att==vals[1], countCol], countTable[att==vals[2], countCol] )$p.value )
+                     nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, pvalue( wilcox_test( countTable[att==vals[1], countCol], countTable[att==vals[2], countCol] ) ) )
+                     rSquaredVals = addNamedVectorElement( rSquaredVals, field, summary( myLm )$r.squared )
+               } else {
+                     parametricPvals = addNamedVectorElement( parametricPvals, field, 1 )
+                     nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, 1 )
+                     rSquaredVals = addNamedVectorElement( rSquaredVals, field, 0 )
+               }
             }
          }
-     
-         if( length( nominalCols ) > 0 ) {
-            logInfo( "Calculate NOMINAL P_VALS" )
-            for( field in nominalCols ) {
+
+         if( length( getNominalFields() ) > 0 ) {
+            for( field in getNominalFields() ) {
                att = as.factor( metaTable[,field] )
                vals = levels( att )
-               myLm = lm( countTable[,countCol] ~ att, na.action=na.exclude )
-               myAnova = anova( myLm )
-               parametricPvals = addNamedVectorElement( parametricPvals, field, myAnova$"Pr(>F)"[1] )
-               nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, kruskal.test( countTable[,countCol] ~ att, na.action=na.exclude )$p.value )
-               rSquaredVals = addNamedVectorElement( rSquaredVals, field, summary( myLm )$r.squared )
+               if( everyGroupHasMultipleVals( countTable, countCol, att, vals ) ) { 
+                     myLm = lm( countTable[,countCol] ~ att, na.action=na.exclude )
+                     myAnova = anova( myLm )
+                     parametricPvals = addNamedVectorElement( parametricPvals, field, myAnova$"Pr(>F)"[1] )
+                     nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, kruskal.test( countTable[,countCol] ~ att, na.action=na.exclude )$p.value )
+                     rSquaredVals = addNamedVectorElement( rSquaredVals, field, summary( myLm )$r.squared )
+               } else {
+                     parametricPvals = addNamedVectorElement( parametricPvals, field, 1 )
+                     nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, 1 )
+                     rSquaredVals = addNamedVectorElement( rSquaredVals, field, 0 )
+               }
             }
          }
          
-         if( length( numericCols ) > 0 ) {
-            logInfo( "Calculate NUMERIC P_VALS" )
-            for( field in numericCols ) {
+         if( length( getNumericFields() ) > 0 ) {
+            for( field in getNumericFields() ) {
                att = as.numeric( metaTable[,field] )
                parametricPvals = addNamedVectorElement( parametricPvals, field, Kendall( countTable[,countCol], att)$sl[1] )
                nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, cor.test( countTable[,countCol], att, na.action=na.exclude )$p.value )
@@ -111,11 +105,9 @@ calculateStats <- function( level ) {
    adjParDF = data.frame( vector(mode="double", length=length(names)) )
    adjNonParDF = data.frame( vector(mode="double", length=length(names)) )
    for( i in 1:length( getReportFields() ) ) {
-      logInfo( "getReportFields()[i]", getReportFields()[i] )
+      logInfo( "Calculate adjusted pval for report field:", getReportFields()[i] )
       parPvals = getValuesByName( parametricPvals, getReportFields()[i] )
-      logInfo("parPvals:", parPvals )
       npPvals = getValuesByName( nonParametricPvals, getReportFields()[i] )
-      logInfo( "npPval:", npPvals )
       adjParDF[,i] = p.adjust( parPvals, method=getProperty("r_CalculateStats.pAdjustMethod"), n=getP_AdjustLen(names) )
       adjNonParDF[,i] = p.adjust( npPvals, method=getProperty("r_CalculateStats.pAdjustMethod"), n=getP_AdjustLen(names) )
       names(adjParDF)[i] = getReportFields()[i]
@@ -162,19 +154,31 @@ getP_AdjustLen <- function( names ) {
 # Generates the reportStats list with p-value and R^2 metrics 
 # Outputs summary tables for each metric at each taxonomyLevel
 main <- function() {
-	importLibs( c( "coin", "Kendall" ) ) 
-	for( level in taxaLevels() ) {
-		if( doDebug() ) sink( getLogFile( level ) )
-		reportStats = calculateStats( level )
-		if( is.null( reportStats ) ) {
-			logInfo( c( level, "table is empty" ) )
-		} else {
-			logInfo( "Building summary Tables ... " )
-			buildSummaryTables( reportStats, level )
-		}
-		logInfo( "Done!" )
-		if( doDebug() ) sink()
-	}
+   importLibs( c( "coin", "Kendall" ) ) 
+   for( level in taxaLevels() ) {
+      if( doDebug() ) sink( getLogFile( level ) )
+      reportStats = calculateStats( level )
+      if( is.null( reportStats ) ) {
+         logInfo( c( level, "table is empty" ) )
+      } else {
+         logInfo( "Building summary Tables ... " )
+         buildSummaryTables( reportStats, level )
+      }
+      logInfo( "Done!" )
+      if( doDebug() ) sink()
+   }
+}
+
+# Verify all groups have 2+ values to avoid statistical test failures
+everyGroupHasMultipleVals <- function( countTable, countCol, att, vals )  {
+   for( val in vals ) {
+      numVals = length( countTable[att==val, countCol] )
+      if( numVals < 2 ) {
+         logInfo( c( "Skip statistical test for", names(countTable)[countCol], "contains only", numVals, "values with value =", val ) )
+         return( FALSE )
+      }
+   }
+   return( TRUE )
 }
 
 # Method wilcox_test is from the coin package

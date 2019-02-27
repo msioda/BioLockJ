@@ -6,8 +6,8 @@
 getNormTaxaTable <- function( level ){
 	normTable = NULL
 	if( !getProperty( "r_PlotEffectSize.disableFoldChange", FALSE ) && !getProperty( "R_internal.runHumann2" ) ) {
-		normTaxa = pipelineFile( paste0( "_taxaCount_.*norm_", level, ".tsv$" ) )
-		logInfo( c( "Looking for normalized taxa table count table", paste0( "_taxaCount_.*norm_", level, ".tsv$" ) ) )
+		normTaxa = pipelineFile( paste0( "_taxaCount_norm_", level, ".tsv$" ) )
+		logInfo( c( "Looking for normalized taxa table count table", paste0( "_taxaCount_norm_", level, ".tsv$" ) ) )
 		if( !is.null( normTaxa ) ) normTable = readBljTable( normTaxa )
 	}
     return( normTable )
@@ -38,8 +38,6 @@ main <- function(){
     # make a new pdf output file, specify page size
     outFileName = getPath( getOutputDir(), paste0(level, "_EffectSizePlots.pdf") )
     pdf(file=outFileName, paper="letter", width=7.5, height=10 )
-    newPlot()
-
 
     for( field in getReportFields() ){
     
