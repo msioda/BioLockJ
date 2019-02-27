@@ -126,10 +126,10 @@ router.post('/retrievePropertiesFile', function(req, res, next){
 router.post('/javadocsmodulegetter', function(req, res, next) {
   try {
     let modPathString = req.body.moduleJavaClassPath;
-    modPathString = modPathString.concat('.html');
+    modPathString = modPathString.concat('.java');
     const modPathArray = modPathString.split('/');
     // console.log(path.join.apply(null, modPathArray));
-    const datum = fs.readFileSync(path.join(bljDir, 'docs', path.join.apply(null, modPathArray)), 'utf8');
+    const datum = fs.readFileSync(path.join(bljDir, 'src', path.join.apply(null, modPathArray)), 'utf8');
       res.setHeader("Content-Type", "text/html");
       res.write(datum);
       res.end();
@@ -492,14 +492,3 @@ console.log(process.env.BLJ.toString());
 console.log('index.js started');
 
 //to actually run blj: https://stackoverflow.com/questions/1880198/how-to-execute-shell-command-in-javascript
-
-var pgp = require('pg-promise')(/*options*/)
-var db = pgp('postgres://username:password@host:port/database')
-
-db.one('SELECT $1 AS value', 123)
-  .then(function (data) {
-    console.log('DATA:', data.value)
-  })
-  .catch(function (error) {
-    console.log('ERROR:', error)
-  })
