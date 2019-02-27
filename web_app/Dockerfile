@@ -30,6 +30,9 @@ RUN apt-get update && \
 RUN rm -r $BLJ/web_app/*
 COPY . $BLJ/web_app/
 
+COPY /src/ $BLJ/src/
+#COPY /Users/aaronyerke/git/BioLockJ/src/ $BLJ/src/
+
 WORKDIR $BLJ/web_app/
 
 # Install Malcolm's repo
