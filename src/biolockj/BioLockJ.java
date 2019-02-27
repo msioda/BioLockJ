@@ -385,7 +385,8 @@ public class BioLockJ
 	 * <li>Update pipeline root directory to EFS directory
 	 * <li>Update EFS MASTER {@link biolockj.Config} with new pipeline root directory path
 	 * <li>Save pipeline input files to EFS for faster processing
-	 * <ol>
+	 * </ol>
+	 * 
 	 * @throws Exception if runtime errors occur
 	 */
 	protected static void initAwsManager() throws Exception
