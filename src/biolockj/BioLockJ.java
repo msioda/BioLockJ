@@ -287,29 +287,27 @@ public class BioLockJ
 	 */
 	protected static void markProjectStatus( final String status )
 	{
-		File f = null;
 		try
 		{
 			Log.info( BioLockJ.class, "BioLockJ Pipeline [" + Config.pipelineName() + "] = " + status );
-
-			f = new File( Config.pipelinePath() + File.separator + status );
-			final FileWriter writer = new FileWriter( f );
-			writer.close();
-			if( !f.exists() )
-			{
-				throw new Exception( "Unable to create " + f.getAbsolutePath() );
-			}
+			markStatus( status );
 		}
 		catch( final Exception ex )
 		{
 			Log.error( BioLockJ.class, "Unable to create pipeline status indicator file!", ex );
-			if( f != null && f.exists() )
-			{
-				f.delete();
-			}
 			pipelineShutDown( null );
 		}
-
+	}
+	
+	private static void markStatus( final String status ) throws Exception
+	{
+		File f = new File( Config.pipelinePath() + File.separator + status );
+		final FileWriter writer = new FileWriter( f );
+		writer.close();
+		if( !f.exists() )
+		{
+			throw new Exception( "Unable to create " + f.getAbsolutePath() );
+		}
 	}
 
 	/**
@@ -420,15 +418,23 @@ public class BioLockJ
 	 */
 	protected static void copyInputData() throws Exception
 	{
+		String statusFileName = pipelineInputDir().getName() + File.separator + Constants.BLJ_COMPLETE;
+		File statusFile = new File( Config.pipelinePath() + File.separator + statusFileName );
 		if( !pipelineInputDir().exists() )
 		{
 			pipelineInputDir().mkdirs();
+		}
+		else if( statusFile.exists() )
+		{
+			return;
 		}
 		
 		for( final File dir: BioLockJUtil.getInputDirs() )
 		{
 			Log.info( BioLockJ.class, "Copying input files from " + dir + " to " + pipelineInputDir() );
 			FileUtils.copyDirectory( dir, pipelineInputDir() );
+			markStatus( statusFileName );
+			BioLockJUtil.ignoreFile( statusFile );
 		}
 		
 		final List<File> inputFiles = new ArrayList<>( FileUtils.listFiles( pipelineInputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
@@ -441,7 +447,6 @@ public class BioLockJ
 		
 		BioLockJUtil.setPipelineInputFiles( inputFiles );
 		Config.setConfigProperty( Constants.INPUT_DIRS, pipelineInputDir().getAbsolutePath() );
-
 	}
 
 	/**
