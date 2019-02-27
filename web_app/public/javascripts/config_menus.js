@@ -89,49 +89,25 @@ function moduleLiHoverTextfromJavadocs(moduleJavaClassPath){
 }//end moduleLiHoverTextfromJavadocs
 
 function parseBljModuleJavaClass(text){//gets text java documentation from Java class
-  // TODO: This has some extra div tagged to the begining and the end.  This could be trimmed off.
-  try {
-      let startPublicClass;
-      let startComment;
-      let endComment;
-      let lines = text.split('\n');
-      //console.log('lines[0]: ', lines[0]);
-      for (let i = 0; i < lines.length; i++){
-        if (lines[i].startsWith("<pre>public class")){
-          // console.log('lines[i]: ', lines[i]);
-          startPublicClass = i;
-          // console.log('startPublicClass: ', startPublicClass);
-          break;
-        }
-      }
-      for (let i = startPublicClass; i < lines.length; i++) {
-        //   console.log(lines[i]);
-        if (lines[i].endsWith("</pre>")) {
-          startComment = i + 1;
-          // console.log('endPublicClass: ', lines[i], endPublicClass);
-          break;
-        }
-      }
-
-      for (let i = startComment; lines.length; i++) {
-        if (lines[i].endsWith('</div>')) {
-          endComment = i;
-          // console.log('endComment: ', lines[i]);
-          break;
-        }
-      }
-
-      let modDescrip = ""
-      for (let a = startComment; a <= endComment; a++){
-        //var sect = lines[a].slice(3,);
-        modDescrip = modDescrip.concat(lines[a]);
-        // console.log('modDescrip: ', modDescrip);
-      }
-      return modDescrip;
-  } catch (e) {
-    console.error(e);
-  }
-
+ var startPublicClass;
+ var startComment;
+ var lines = text.split('\n');
+ for (let i = 0; i < lines.length; i++){
+   if (lines[i].startsWith("public class")){
+     startPublicClass = i;
+   }
+ }
+ for (let i = startPublicClass; i > 0; i--) {
+   if (lines[i].startsWith("/**")) {
+     startComment = i;
+   }
+ }
+ var modDescrip = ""
+ for (var a = startComment; a < startPublicClass; a++){
+   var sect = lines[a].slice(3,);
+   modDescrip = modDescrip.concat(sect);
+ }
+ return modDescrip;
 }//end parseBljModuleJavaClass
 
 /*This function object will be used to keep track of how many of each moduleClass is chosen
@@ -267,7 +243,7 @@ let myModules = new Map(Object.entries({
   'biolockj/module/classifier/r16s/QiimeClosedRefClassifier' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
-  'biolockj/module/classifier/wgs/HumanN2Classifier' :
+  'biolockj/module/classifier/wgs/Humann2Classifier' :
   { cssClass : ['humann2Class', 'classifierUnique'], label : "WGS Classifier: HumanN2", counter : 'humann2ModuleCounter' , category : 'classifier'},
 
   'biolockj/module/classifier/r16s/RdpClassifier' :
@@ -285,7 +261,7 @@ let myModules = new Map(Object.entries({
   'biolockj/module/classifier/r16s/QiimeOpenRefClassifier' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
-  'biolockj/module/implicit/parser/wgs/HumanN2Parser' :
+  'biolockj/module/implicit/parser/wgs/Humann2Parser' :
   { cssClass : ['humann2Class', , 'classifierUnique', 'implicit', 'hidden'], counter : 'humann2ModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/classifier/wgs/KrakenClassifier' :
@@ -294,11 +270,11 @@ let myModules = new Map(Object.entries({
   'biolockj/module/classifier/wgs/Kraken2Classifier' :
   { cssClass : ['kraken2Class', 'classifierUnique'], counter : 'kraken2ModuleCounter', category : 'classifier'},
 
-  'biolockj/module/classifier/wgs/MetaphlanClassifier' :
+  'biolockj/module/classifier/wgs/Metaphlan2Classifier' :
   { cssClass : ['metaphlanClass', 'classifierUnique'], counter : 'metaphlanModuleCounter', category : 'classifier'},
 
-  'biolockj/module/classifier/wgs/SlimmClassifier' :
-  { cssClass : ['slimmClass', 'classifierUnique'], counter : 'slimmModuleCounter', category : 'classifier'},
+  // 'biolockj/module/classifier/wgs/SlimmClassifier' :
+  // { cssClass : ['slimmClass', 'classifierUnique'], counter : 'slimmModuleCounter', category : 'classifier'},
 
   'biolockj/module/implicit/parser/wgs/KrakenParser' :
   { cssClass : ['krakenClass', 'classifierUnique', 'implicit', 'hidden'], counter : 'krakenModuleCounter', category : 'implicit.parser'},
@@ -306,11 +282,11 @@ let myModules = new Map(Object.entries({
   'biolockj/module/implicit/parser/wgs/Kraken2Parser' :
   { cssClass : ['kraken2Class', 'classifierUnique','implicit', 'hidden'], counter : 'kraken2ModuleCounter', category : 'implicit.parser'},
 
-  'biolockj/module/implicit/parser/wgs/MetaphlanParser' :
+  'biolockj/module/implicit/parser/wgs/Metaphlan2Parser' :
   { cssClass : ['metaphlanClass', 'classifierUnique','implicit', 'hidden'], counter : 'metaphlanModuleCounter', category : 'implicit.parser'},
 
-  'biolockj/module/implicit/parser/wgs/SlimmParser' :
-  { cssClass : ['slimmClass', 'classifierUnique','implicit', 'hidden'], counter : 'slimmModuleCounter', category : 'implicit.parser'},
+  // 'biolockj/module/implicit/parser/wgs/SlimmParser' :
+  // { cssClass : ['slimmClass', 'classifierUnique','implicit', 'hidden'], counter : 'slimmModuleCounter', category : 'implicit.parser'},
 
   'biolockj/module/implicit/qiime/BuildQiimeMapping' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'qiime'},
@@ -333,7 +309,7 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/report/taxa/AddMetaToTaxonomyTables' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/taxa/AddMetadataToTaxaTables' : { cssClass : [], category : 'report'},
 
   'biolockj/module/report/taxa/BuildTaxaTables' : { cssClass : [], category : 'report'},
 
@@ -347,15 +323,13 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/report/otu/RemoveScarceOtuCounts' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/otu/RarefyOtuCounts.java' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/otu/RarefyOtuCounts' : { cssClass : [], category : 'report'},
 
   'biolockj/module/report/taxa/LogTransformTaxaTables' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/CompileOtuCounts' : { cssClass : [], category : 'report'},
-
   'biolockj/module/seq/AwkFastaConverter' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/KneadDataSanitizer' : { cssClass : [], category : 'seq'},
+  'biolockj/module/seq/KneadData' : { cssClass : [], category : 'seq'},
 
   'biolockj/module/seq/Multiplexer' : { cssClass : [], category : 'seq'},
 
@@ -457,7 +431,7 @@ function runModuleFunctions() {//large function to build module li and counters
         //console.log('makeModuleLi link: ', text);
         text.then(result => {
           //console.log('result: ', result);
-          //console.log('parseBljModuleJavaClass(result): ', parseBljModuleJavaClass(result));
+          console.log('parseBljModuleJavaClass(result): ', parseBljModuleJavaClass(result));
           mod.setAttribute('data-info', parseBljModuleJavaClass(result));
           hoverEventlistenerForModules(mod);
           });
@@ -491,7 +465,7 @@ function runModuleFunctions() {//large function to build module li and counters
 }
   for (let mod of myModules.keys()){
     try {
-      console.log('myModules.get(mod).cssClass): ', mod, myModules.get(mod).cssClass);
+      //console.log('myModules.get(mod).cssClass): ', mod, myModules.get(mod).cssClass);
       makeModuleLi(mod, myModules.get(mod).cssClass);
     } catch (e) {
       console.error(e);
@@ -508,12 +482,13 @@ function runModuleFunctions() {//large function to build module li and counters
   var humann2ClassModNodes = Array.from(document.getElementsByClassName("humann2"));
 
   //moduleCounters instanciated with nodes that they will disable
-  var qiimeModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes]);
-  var rdpModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, qiimeClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes]);
-  var krakenModuleCounter = new moduleCounter([slimmClassModNodes, qiimeClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes]);
-  var kraken2ModuleCounter = new moduleCounter([slimmClassModNodes, qiimeClassModNodes, rdpClassModNodes, metaphlanClassModNodes, krakenClassModNodes]);
-  var slimmModuleCounter = new moduleCounter([qiimeClassModNodes, krakenClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes]);
-  var metaphlanModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, qiimeClassModNodes, kraken2ClassModNodes]);
+  var qiimeModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
+  var rdpModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, qiimeClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
+  var krakenModuleCounter = new moduleCounter([slimmClassModNodes, qiimeClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
+  var kraken2ModuleCounter = new moduleCounter([slimmClassModNodes, qiimeClassModNodes, rdpClassModNodes, metaphlanClassModNodes, krakenClassModNodes, humann2ClassModNodes]);
+  var slimmModuleCounter = new moduleCounter([qiimeClassModNodes, krakenClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
+  var metaphlanModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, qiimeClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
+  var humann2ModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, qiimeClassModNodes, kraken2ClassModNodes, metaphlanClassModNodes]);
 
   document.getElementById('project.allowImplicitModules').addEventListener('change', function(evt){
     const implicits = Array.from(document.getElementsByClassName('implicit'));
