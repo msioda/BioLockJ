@@ -25,7 +25,7 @@ import biolockj.util.*;
  * This BioModule removes sequence primers from demultiplexed files.<br>
  * The primers are defined using regular expressions in a separate file.
  * 
- * @web_desc Trim Primers
+ * @blj.web_desc Trim Primers
  */
 public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 {

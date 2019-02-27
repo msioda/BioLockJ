@@ -26,7 +26,7 @@ import biolockj.util.*;
 /**
  * This BioModule
  * 
- * @web_desc Remove Scarce Pathway Counts
+ * @blj.web_desc Remove Scarce Pathway Counts
  */
 public class RemoveScarcePathwayCounts extends Humann2CountModule implements JavaModule
 {

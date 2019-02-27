@@ -24,7 +24,7 @@ import biolockj.util.TaxaUtil;
 /**
  * This BioModule builds the bash scripts used to execute metaphlan2.py to classify WGS sequences.
  * 
- * @web_desc MetaPhlAn2 Classifier
+ * @blj.web_desc MetaPhlAn2 Classifier
  */
 public class Metaphlan2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {

@@ -25,7 +25,7 @@ import biolockj.util.*;
  * identifying bar-code (if defined in the metatata) is stored in the sequence header.<br>
  * BioLockJ is designed to run on demultiplexed data so this must be the last module to run in its branch.
  * 
- * @web_desc Multiplexer
+ * @blj.web_desc Multiplexer
  */
 public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {

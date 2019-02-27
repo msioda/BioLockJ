@@ -26,7 +26,7 @@ import biolockj.util.PathwayUtil;
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  * 
- * @web_desc Add Metadata to Pathway Tables
+ * @blj.web_desc Add Metadata to Pathway Tables
  */
 public class AddMetadataToPathwayTables extends Humann2CountModule implements JavaModule
 {

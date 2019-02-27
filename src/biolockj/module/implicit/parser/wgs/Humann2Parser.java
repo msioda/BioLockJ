@@ -28,7 +28,7 @@ import biolockj.util.*;
  * Samples IDs are found in the column headers starting with the 2nd column.<br>
  * The count type depends on the HumanN2 config properties.
  * 
- * @web_desc HumanN2 Parser
+ * @blj.web_desc HumanN2 Parser
  */
 public class Humann2Parser extends ParserModuleImpl implements ParserModule
 {

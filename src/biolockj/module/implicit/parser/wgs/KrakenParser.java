@@ -24,7 +24,7 @@ import biolockj.util.MemoryUtil;
 /**
  * This BioModules parses KrakenClassifier output reports to build standard OTU abundance tables.
  * 
- * @web_desc Kraken Parser
+ * @blj.web_desc Kraken Parser
  */
 public class KrakenParser extends ParserModuleImpl implements ParserModule
 {

@@ -26,7 +26,7 @@ import biolockj.util.SeqUtil;
  * Multiple contaminent DNA databases can be used to filter reads simultaniously.<br>
  * Common contaminents include Human, Viral, and Plasmid DNA.<br>
  * 
- * @web_desc Knead Data Sanitizer
+ * @blj.web_desc Knead Data Sanitizer
  */
 public class KneadData extends SeqModuleImpl implements SeqModule
 {

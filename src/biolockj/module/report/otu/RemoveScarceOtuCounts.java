@@ -27,7 +27,7 @@ import biolockj.util.*;
  * This BioModule removes scarce OTUs not found in enough samples.<br>
  * The OTU must be found in a configurable percentage of samples.
  * 
- * @web_desc Remove Low OTU Counts
+ * @blj.web_desc Remove Low OTU Counts
  */
 public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 {

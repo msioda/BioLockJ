@@ -27,7 +27,7 @@ import biolockj.util.SummaryUtil;
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
  * 
- * @web_desc Add Metadata to Taxa Tables
+ * @blj.web_desc Add Metadata to Taxa Tables
  */
 public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModule
 {

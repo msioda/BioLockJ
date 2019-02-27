@@ -31,7 +31,7 @@ import biolockj.util.*;
  * For more information, please review the BioBakery instruction manual:
  * <a href= "https://bitbucket.org/biobakery/humann2" target="_top">https://bitbucket.org/biobakery/humann2</a><br>
  * 
- * @web_desc HumanN2 Classifier
+ * @blj.web_desc HumanN2 Classifier
  */
 public class Humann2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {

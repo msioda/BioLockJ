@@ -28,7 +28,7 @@ import biolockj.util.SeqUtil;
  * defined in the online manual: <a href="http://ccb.jhu.edu/software/kraken/MANUAL.html" target=
  * "_top">http://ccb.jhu.edu/software/kraken/MANUAL.html</a>
  * 
- * @web_desc Kraken2 Classifier
+ * @blj.web_desc Kraken2 Classifier
  */
 public class Kraken2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {

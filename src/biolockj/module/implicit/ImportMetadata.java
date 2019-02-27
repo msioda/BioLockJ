@@ -24,7 +24,7 @@ import biolockj.util.*;
  * This BioModule validates the contents/format of the project metadata file and the related Config properties. If
  * successful, the metadata is saved as a tab delimited text file.
  * 
- * @web_desc Import metadata
+ * @blj.web_desc Import metadata
  */
 public class ImportMetadata extends BioModuleImpl implements BioModule
 {

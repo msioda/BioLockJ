@@ -24,7 +24,7 @@ import biolockj.util.SeqUtil;
 /**
  * This BioModule uses RDP to assign taxonomy to 16s sequences.
  * 
- * @web_desc RDP Classifier
+ * @blj.web_desc RDP Classifier
  */
 public class RdpClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
