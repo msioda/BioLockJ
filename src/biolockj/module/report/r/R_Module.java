@@ -318,20 +318,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		FileUtils.copyFileToDirectory( getModuleScript(), getScriptDir() );
 	}
 	
-	protected void checkPlotConfig() throws Exception
-	{
-
-		Config.getString( this, R_COLOR_POINT );
-		Config.getString( this, R_PCH );
-		
-	}
-	
-	
-	protected void allPlotModulesExceptMds() throws Exception
-	{
-		Config.requirePositiveDouble( this, P_VAL_CUTOFF );
-	}
-	
 	private File getFunctionLib() throws Exception
 	{
 		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
