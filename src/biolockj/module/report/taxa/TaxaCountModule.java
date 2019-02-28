@@ -98,12 +98,11 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 		return isTaxaModule( module );
 	}
 
-	
 	/**
-	 * Pipelines may include taxa tables + normalized taxa tables (or log normalized taxa tables).
-	 * Standard modules will always want the most processed modules (log-norm is top preference, then normalized, lastly raw counts).
-	 * The purpose of includes less processes normalized tables is merely to provide the required input
-	 * for the R_PlotEffectSize module (which find the correct tables in an R function).
+	 * Pipelines may include taxa tables + normalized taxa tables (or log normalized taxa tables). Standard modules will
+	 * always want the most processed modules (log-norm is top preference, then normalized, lastly raw counts). The
+	 * purpose of includes less processes normalized tables is merely to provide the required input for the
+	 * R_PlotEffectSize module (which find the correct tables in an R function).
 	 * 
 	 * @param files List of taxa table files
 	 * @return List of taxa tables (only 1/level)
@@ -113,16 +112,16 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 	{
 		final List<File> filteredFiles = new ArrayList<>();
 		final Map<String, Set<File>> levelFiles = getTaxaFilesByLevel( files );
-		for( String level: levelFiles.keySet() )
+		for( final String level: levelFiles.keySet() )
 		{
 			if( levelFiles.get( level ).size() == 1 )
 			{
 				filteredFiles.add( levelFiles.get( level ).iterator().next() );
 				continue;
 			}
-			
+
 			File topFile = null;
-			for( File file: levelFiles.get( level ) )
+			for( final File file: levelFiles.get( level ) )
 			{
 				if( TaxaUtil.isLogNormalizedTaxaFile( file ) )
 				{
@@ -138,19 +137,19 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 					topFile = file;
 				}
 			}
-			
+
 			filteredFiles.add( topFile );
 		}
-		
+
 		return filteredFiles;
 	}
-	
+
 	private Map<String, Set<File>> getTaxaFilesByLevel( final List<File> files ) throws Exception
 	{
 		final Map<String, Set<File>> levelFiles = new HashMap<>();
-		for( String level: TaxaUtil.getTaxaLevels() )
+		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
-			for( File file: files )
+			for( final File file: files )
 			{
 				if( file.getName().contains( level ) )
 				{
@@ -164,8 +163,8 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 				}
 			}
 		}
-		
+
 		return levelFiles;
 	}
-	
+
 }

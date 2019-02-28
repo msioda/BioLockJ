@@ -144,15 +144,6 @@ public class SummaryUtil
 		sb.append( SPACER_2X + RETURN );
 		return sb.toString();
 	}
-	
-	private static String downloadCmd() throws Exception
-	{
-		if( downloadCommand == null )
-		{
-			downloadCommand = DownloadUtil.getDownloadCmd();
-		}
-		return downloadCommand;
-	}
 
 	/**
 	 * Build a summary of the input files for the given module
@@ -292,7 +283,7 @@ public class SummaryUtil
 
 			if( module.getOutputDir().listFiles().length == 0 )
 			{
-				return  "# Files Output:  0" + RETURN;
+				return "# Files Output:  0" + RETURN;
 			}
 
 			final Collection<File> outFiles = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
@@ -325,7 +316,7 @@ public class SummaryUtil
 
 			sb.append( "# Files Output:  " + count + RETURN );
 			sb.append( "Mean Output File Size:  " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
-			sb.append( newMeta == null ? "" : "New metadata:" + newMeta.getAbsolutePath() + RETURN );
+			sb.append( newMeta == null ? "": "New metadata:" + newMeta.getAbsolutePath() + RETURN );
 
 		}
 		catch( final Exception ex )
@@ -861,6 +852,15 @@ public class SummaryUtil
 		Log.info( SummaryUtil.class, "Summary updated" );
 	}
 
+	private static String downloadCmd() throws Exception
+	{
+		if( downloadCommand == null )
+		{
+			downloadCommand = DownloadUtil.getDownloadCmd();
+		}
+		return downloadCommand;
+	}
+
 	private static String getHeading() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();
@@ -888,9 +888,9 @@ public class SummaryUtil
 		return new File( Config.pipelinePath() + File.separator + TEMP_SUMMARY_FILE );
 	}
 
-	private static final String EXCEPTION_LABEL = "Exception:";
-
 	private static String downloadCommand = null;
+
+	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String MODULE = "Module";
 
 	private static final String NUM_ATTEMPTS = "# Attempts";

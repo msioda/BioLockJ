@@ -75,7 +75,7 @@ public class BashScriptBuilder
 		setBatchSize( module, data );
 
 		buildWorkerScripts( module, data );
-		
+
 		if( !DockerUtil.runAwsCloudManager() )
 		{
 			buildMainScript( module );
@@ -134,11 +134,10 @@ public class BashScriptBuilder
 				writer.close();
 			}
 		}
-		
+
 		if( DockerUtil.inAwsEnv() )
 		{
-			Job.setFilePermissions( scriptPath,
-					Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
+			Job.setFilePermissions( scriptPath, Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
 		}
 
 		printScriptAsDebug( scriptPath );
@@ -203,8 +202,8 @@ public class BashScriptBuilder
 	 */
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception
 	{
-		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) 
-			+ "." + workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
+		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "."
+				+ workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
 	}
 
 	/**

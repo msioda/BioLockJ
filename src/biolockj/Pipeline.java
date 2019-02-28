@@ -35,6 +35,44 @@ public class Pipeline
 	{}
 
 	/**
+	 * Execute a single pipeline module.
+	 * 
+	 * @param module BioModule current module
+	 * @throws Exception if runtime errors occur
+	 */
+	public static void executeModule( final BioModule module ) throws Exception
+	{
+		ModuleUtil.markStarted( module );
+		refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
+		refreshRCacheIfNeeded( module );
+		module.executeTask();
+
+		final boolean isJava = module instanceof JavaModule;
+		final boolean isScript = module instanceof ScriptModule;
+		final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
+
+		if( runScripts )
+		{
+			Job.submit( (ScriptModule) module );
+		}
+
+		if( runScripts || DockerUtil.initAwsCloudManager() )
+		{
+			pollAndSpin( (ScriptModule) module );
+		}
+
+		refreshOutputMetadata( module );
+		module.cleanUp();
+
+		if( !isJava || !runScripts )
+		{
+			SummaryUtil.reportSuccess( module );
+		}
+
+		ModuleUtil.markComplete( module );
+	}
+
+	/**
 	 * Return a list of {@link biolockj.module.BioModule}s constructed by the {@link biolockj.BioModuleFactory}
 	 *
 	 * @return List of BioModules
@@ -206,45 +244,6 @@ public class Pipeline
 			}
 		}
 	}
-	
-	/**
-	 * Execute a single pipeline module.
-	 * 
-	 * @param module BioModule current module
-	 * @throws Exception if runtime errors occur
-	 */
-	public static void executeModule( BioModule module ) throws Exception
-	{
-		ModuleUtil.markStarted( module );
-		refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
-		refreshRCacheIfNeeded( module );
-		module.executeTask();
-
-		final boolean isJava = module instanceof JavaModule;
-		final boolean isScript = module instanceof ScriptModule;
-		final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
-
-		if( runScripts )
-		{
-			Job.submit( (ScriptModule) module );
-		}
-		
-		if( runScripts || DockerUtil.initAwsCloudManager() )
-		{
-			pollAndSpin( (ScriptModule) module );
-		}
-
-		refreshOutputMetadata( module );
-		module.cleanUp();
-
-		if( !isJava || !runScripts )
-		{
-			SummaryUtil.reportSuccess( module );
-		}
-
-		ModuleUtil.markComplete( module );
-	}
-	
 
 	/**
 	 * If the bioModule is complete and contains a metadata file in its output directory, return the metadata file,
@@ -302,7 +301,7 @@ public class Pipeline
 				refreshOutputMetadata( module );
 				refreshRCacheIfNeeded( module );
 			}
-			
+
 			info( "Check dependencies for: " + module.getClass().getName() );
 			module.checkDependencies();
 		}

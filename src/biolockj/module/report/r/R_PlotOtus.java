@@ -44,7 +44,6 @@ public class R_PlotOtus extends R_Module implements ScriptModule
 	{
 		return getStatPreReqs();
 	}
-	
-	
+
 	private static final String R_PVAL_FORMAT = "r.pValFormat";
 }

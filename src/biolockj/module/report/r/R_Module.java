@@ -61,7 +61,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		Config.getPositiveInteger( this, R_TIMEOUT );
 		Config.getBoolean( this, R_DEBUG );
 		Config.getBoolean( this, R_SAVE_R_DATA );
-		
+
 	}
 
 	/**
@@ -78,9 +78,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 			BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
 		}
 	}
-
-
-
 
 	/**
 	 * If running Docker, run the Docker bash script, otherwise:<br>
@@ -317,17 +314,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		FileUtils.copyFileToDirectory( getFunctionLib(), getScriptDir() );
 		FileUtils.copyFileToDirectory( getModuleScript(), getScriptDir() );
 	}
-	
-	private File getFunctionLib() throws Exception
-	{
-		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
-		if( !rFile.exists() )
-		{
-			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
-		}
-
-		return rFile;
-	}
 
 	private String getErrors() throws Exception
 	{
@@ -359,6 +345,17 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		}
 		errors.append( INDENT + rSpacer + RETURN );
 		return errors.toString();
+	}
+
+	private File getFunctionLib() throws Exception
+	{
+		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
+		if( !rFile.exists() )
+		{
+			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
+		}
+
+		return rFile;
 	}
 
 	private String getModuleScriptName() throws Exception
@@ -429,36 +426,6 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	}
 
 	/**
-	 * {@link biolockj.Config} Double property {@value #R_RARE_OTU_THRESHOLD} defines number OTUs needed to includ in reports
-	 */
-	protected static final String R_RARE_OTU_THRESHOLD = "r.rareOtuThreshold";
-	
-	/**
-	 * {@link biolockj.Config} property {@value #R_COLOR_BASE} defines the base label color
-	 */
-	protected static final String R_COLOR_BASE = "r.colorBase";
-	
-	/**
-	 * {@link biolockj.Config} property {@value #R_COLOR_HIGHLIGHT} defines the highlight label color
-	 */
-	protected static final String R_COLOR_HIGHLIGHT = "r.colorHighlight";
-	
-	/**
-	 * {@link biolockj.Config} property {@value #R_COLOR_PALETTE} defines the color palette for PDF plots
-	 */
-	protected static final String R_COLOR_PALETTE = "r.colorPalette";
-	
-	/**
-	 * {@link biolockj.Config} property {@value #R_COLOR_POINT} defines the pch point colors for PDF plots
-	 */
-	protected static final String R_COLOR_POINT = "r.colorPoint";
-	
-	/**
-	 * {@link biolockj.Config} property {@value #R_PCH} defines the plot point shape for PDF plots
-	 */
-	protected static final String R_PCH = "r.pch";
-	
-	/**
 	 * {@link biolockj.Config} property {@value #EXE_RSCRIPT} defines the command line executable to call RScript
 	 */
 	protected static final String EXE_RSCRIPT = "exe.Rscript";
@@ -467,6 +434,26 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * {@link biolockj.Config} property {@value #P_VAL_CUTOFF} defines the p-value cutoff for significance
 	 */
 	protected static final String P_VAL_CUTOFF = "r.pvalCutoff";
+
+	/**
+	 * {@link biolockj.Config} property {@value #R_COLOR_BASE} defines the base label color
+	 */
+	protected static final String R_COLOR_BASE = "r.colorBase";
+
+	/**
+	 * {@link biolockj.Config} property {@value #R_COLOR_HIGHLIGHT} defines the highlight label color
+	 */
+	protected static final String R_COLOR_HIGHLIGHT = "r.colorHighlight";
+
+	/**
+	 * {@link biolockj.Config} property {@value #R_COLOR_PALETTE} defines the color palette for PDF plots
+	 */
+	protected static final String R_COLOR_PALETTE = "r.colorPalette";
+
+	/**
+	 * {@link biolockj.Config} property {@value #R_COLOR_POINT} defines the pch point colors for PDF plots
+	 */
+	protected static final String R_COLOR_POINT = "r.colorPoint";
 
 	/**
 	 * {@link biolockj.Config} boolean property {@value #R_DEBUG} sets the debug log function endabled
@@ -482,6 +469,17 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * This main R script that sources helper libraries and calls modules main method function: {@value #R_MAIN_SCRIPT}
 	 */
 	protected static final String R_MAIN_SCRIPT = "BioLockJ_MAIN.R";
+
+	/**
+	 * {@link biolockj.Config} property {@value #R_PCH} defines the plot point shape for PDF plots
+	 */
+	protected static final String R_PCH = "r.pch";
+
+	/**
+	 * {@link biolockj.Config} Double property {@value #R_RARE_OTU_THRESHOLD} defines number OTUs needed to includ in
+	 * reports
+	 */
+	protected static final String R_RARE_OTU_THRESHOLD = "r.rareOtuThreshold";
 
 	/**
 	 * {@link biolockj.Config} boolean property {@value #R_SAVE_R_DATA} enables the .RData file to save.

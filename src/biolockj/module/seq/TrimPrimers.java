@@ -44,8 +44,15 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
-		BioLockJ.copyFileToPipelineRoot( getPrimerFile() );
-		getPrimers( false );
+
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			Config.requireString( this, INPUT_TRIM_SEQ_FILE );
+		}
+		else
+		{
+			Config.requireExistingFile( this, INPUT_TRIM_SEQ_FILE );
+		}
 	}
 
 	/**
@@ -96,6 +103,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	@Override
 	public void runModule() throws Exception
 	{
+		BioLockJ.copyFileToPipelineRoot( getPrimerFile() );
 		trimSeqs();
 		Log.debug( getClass(), "numLinesPerRead = " + SeqUtil.getNumLinesPerRead() );
 		Log.debug( getClass(), "#samples in table numLinesWithPrimer = " + numLinesWithPrimer.size() );
@@ -309,11 +317,10 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	 * rv primer (ending with $) are found set mergedReadTwoPrimers = true to enforce reads must have both primers if
 	 * discarding reads without valid primers
 	 *
-	 * @param doLog Boolean set TRUE to print to log
 	 * @return Set of primers
 	 * @throws Exception if unable to read the file
 	 */
-	protected Set<String> getPrimers( final boolean doLog ) throws Exception
+	protected Set<String> getPrimers() throws Exception
 	{
 		boolean fwMergePrimerFound = false;
 		boolean rvMergePrimerFound = false;
@@ -329,10 +336,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 					final String seq = line.trim().toUpperCase();
 					if( seq.length() > 0 )
 					{
-						if( doLog )
-						{
-							Log.info( getClass(), "Found primer to trim: " + seq );
-						}
+						Log.info( getClass(), "Found primer to trim: " + seq );
 						String regexSeq = "";
 
 						for( int i = 1; i <= seq.length(); i++ )
@@ -344,10 +348,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 							{
 								if( !substitutions.contains( base ) )
 								{
-									if( doLog )
-									{
-										Log.info( getClass(), "IUPAC substitution of base: " + base + " to: " + iupac );
-									}
+									Log.info( getClass(), "IUPAC substitution of base: " + base + " to: " + iupac );
 									substitutions.add( base );
 								}
 							}
@@ -408,10 +409,9 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return DockerUtil.getDockerVolumeFile( Config.getString( this, INPUT_TRIM_SEQ_FILE ),
-					DockerUtil.CONTAINER_PRIMER_DIR, "primer" );
+			return DockerUtil.getDockerVolumeFile( INPUT_TRIM_SEQ_FILE, DockerUtil.CONTAINER_PRIMER_DIR );
 		}
-		return Config.requireExistingFile( null, INPUT_TRIM_SEQ_FILE );
+		return Config.requireExistingFile( this, INPUT_TRIM_SEQ_FILE );
 	}
 
 	private String getTrimFilePath( final File file ) throws Exception
@@ -707,7 +707,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 
 	private void trimSeqs() throws Exception
 	{
-		final Set<String> primers = getPrimers( true );
+		final Set<String> primers = getPrimers();
 		final boolean hasPairedReads = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS );
 		final Map<File, File> pairedReads = hasPairedReads ? SeqUtil.getPairedReads( getInputFiles() ): null;
 		final List<File> files = hasPairedReads ? new ArrayList<>( pairedReads.keySet() ): getInputFiles();
@@ -759,20 +759,24 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 	private final Set<File> seqs = new HashSet<>();
 	private final Map<File, Long> seqsWithPrimersTrimmed = new HashMap<>();
 	private final Map<String, String> validReadsPerSample = new HashMap<>();
+
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_TRIM_SEQ_FILE} defines the file path to the file that defines the
 	 * primers as regular expressions.
 	 */
 	public static final String INPUT_TRIM_SEQ_FILE = "trimPrimers.filePath";
+
 	/**
 	 * Metadata column name for column that holds number of trimmed reads per sample: {@value #NUM_TRIMMED_READS}
 	 */
 	public static final String NUM_TRIMMED_READS = "Num_Trimmed_Reads";
+
 	/**
 	 * {@link biolockj.Config} property {@value #INPUT_REQUIRE_PRIMER} is a boolean used to determine if sequences
 	 * without a primer should be kept or discarded
 	 */
 	protected static final String INPUT_REQUIRE_PRIMER = "trimPrimers.requirePrimer";
+
 	private static Set<String> substitutions = new HashSet<>();
 	private static final List<String> summaryMsgs = new ArrayList<>();
 }

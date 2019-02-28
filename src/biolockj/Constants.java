@@ -12,9 +12,7 @@
 package biolockj;
 
 /**
- * 
- * @author mike
- *
+ * Single Java class to hold shared constant values referenced my multiple classes.
  */
 public class Constants
 {
@@ -346,9 +344,14 @@ public class Constants
 	public static final String MASTER_PREFIX = "MASTER_";
 
 	/**
-	 * Biolockj SEQ module package: {@value #MODULE_SEQ_PACKAGE}
+	 * BioLockJ SEQ module package: {@value #MODULE_SEQ_PACKAGE}
 	 */
 	public static final String MODULE_SEQ_PACKAGE = "biolockj.module.seq";
+
+	/**
+	 * BioLockJ WGS Classifier module package: {@value #MODULE_WGS_CLASSIFIER_PACKAGE}
+	 */
+	public static final String MODULE_WGS_CLASSIFIER_PACKAGE = "biolockj.module.classifier.wgs";
 
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #ORDER}

@@ -32,7 +32,7 @@ public class SeqUtil
 	// Prevent instantiation
 	private SeqUtil()
 	{}
-	
+
 	/**
 	 * Method counts number of reads in the given sequence file by counting the number of lines and dividing by the
 	 * number of lines/sample (fasta=2, fastq=4)

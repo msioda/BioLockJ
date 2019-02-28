@@ -320,24 +320,6 @@ public class BioLockJUtil
 		}
 		return Config.requireExistingDirs( null, Constants.INPUT_DIRS );
 	}
-	
-	/**
-	 * Method used to add a file to the ignore file list property.
-	 * 
-	 * @param file File to ignore
-	 * @throws Exception if errors occur
-	 */
-	public static void ignoreFile( File file ) throws Exception
-	{
-		final Set<String> ignore = new HashSet<>();
-		if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) != null )
-		{
-			ignore.addAll( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) );
-		}
-
-		ignore.add( file.getName() );
-		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
-	}
 
 	/**
 	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
@@ -366,16 +348,6 @@ public class BioLockJUtil
 		}
 
 		return inputFiles;
-	}
-
-	/**
-	 * Setter for pipeline input files. 
-	 * 
-	 * @param files List of input files
-	 */
-	public static void setPipelineInputFiles( List<File> files )
-	{
-		inputFiles = files;
 	}
 
 	/**
@@ -410,6 +382,24 @@ public class BioLockJUtil
 		}
 
 		return missingMsg;
+	}
+
+	/**
+	 * Method used to add a file to the ignore file list property.
+	 * 
+	 * @param file File to ignore
+	 * @throws Exception if errors occur
+	 */
+	public static void ignoreFile( final File file ) throws Exception
+	{
+		final Set<String> ignore = new HashSet<>();
+		if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) != null )
+		{
+			ignore.addAll( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) );
+		}
+
+		ignore.add( file.getName() );
+		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
 	}
 
 	/**
@@ -574,6 +564,16 @@ public class BioLockJUtil
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
+	/**
+	 * Setter for pipeline input files.
+	 * 
+	 * @param files List of input files
+	 */
+	public static void setPipelineInputFiles( final List<File> files )
+	{
+		inputFiles = files;
+	}
+
 	private static void setPipelineInputFileTypes() throws Exception
 	{
 		final Set<String> fileTypes = new HashSet<>();
@@ -673,18 +673,18 @@ public class BioLockJUtil
 	public static final String PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE = "hn2";
 
 	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_LOG_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for log-normalized taxa count files that meet the
+	 * file requirements to pass {@link biolockj.util.TaxaUtil#isLogNormalizedTaxaFile(File)}.
+	 */
+	public static final String PIPELINE_LOG_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count_log_norm";
+
+	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for normalized taxa count files that meet the file
 	 * requirements to pass {@link biolockj.util.TaxaUtil#isNormalizedTaxaFile(File)}.
 	 */
 	public static final String PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count_norm";
-	
-	/**
-	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_LOG_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
-	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for log-normalized taxa count files that meet the file
-	 * requirements to pass {@link biolockj.util.TaxaUtil#isLogNormalizedTaxaFile(File)}.
-	 */
-	public static final String PIPELINE_LOG_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count_log_norm";
 
 	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}<br>

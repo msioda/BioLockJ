@@ -19,6 +19,8 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
+import biolockj.util.DockerUtil;
+import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
 
 /**
@@ -69,6 +71,16 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 		{
 			throw new Exception( getClass().getName() + " requires FASTQ format!" );
 		}
+
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			Config.requireList( this, KNEAD_DBS );
+		}
+		else
+		{
+			Config.requireExistingDirs( this, KNEAD_DBS );
+		}
+
 		getParams();
 	}
 
@@ -168,7 +180,11 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 	private String getParams() throws Exception
 	{
 		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM );
-		for( final File db: Config.requireExistingDirs( this, KNEAD_DBS ) )
+
+		final List<File> dbs = RuntimeParamUtil.isDockerMode() ? DockerUtil.getDockerVolumeDBs( KNEAD_DBS )
+				: Config.requireExistingDirs( this, KNEAD_DBS );
+
+		for( final File db: dbs )
 		{
 			params += DB_PARAM + " " + db.getAbsolutePath() + " ";
 		}
