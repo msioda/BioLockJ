@@ -32,6 +32,7 @@ router.get('/config', function(req, res, next) {
   res.render('config', { title: 'Configuration' });
 });
 
+//retrieve project and descriptions
 router.post('/retrieveProjects', function(req, res, next) {
   console.log('retrieveProjects');
   try {
@@ -73,9 +74,13 @@ router.post('/retrieveProjects', function(req, res, next) {
             }//end nestedFolderFiles for loop
           };//end if dir
         });
-        console.log(projects);
+        // console.log(projects);
+        console.log(descrip);
         res.setHeader("Content-Type", "text/html");
-        res.write(JSON.stringify(projects));
+        res.write(JSON.stringify({
+          names : names,
+          descrip : descrip,
+        }));
         res.end();
       });
   } catch (e) {
@@ -225,7 +230,8 @@ router.post('/launch', function(req, res, next) {
 
     const configText = indexAux.formatAsFlatFile(modules, paramKeys, paramValues);
     indexAux.saveConfigToLocal(configName,configText);
-    launchArg['config'] = path.join(configHost, configName);
+    launchArg['c'] = path.join(configHost, configName);
+    //console.log("launchArg['c']: ", launchArg['config']);
 
     var launchCommand;
 
@@ -462,7 +468,7 @@ function pipelineProjectName(configName){//gets the name of the BLJ created pipe
   let day = now.getDate();
   console.log(day);
   let c = configName.concat('_',year,month,day);
-  const projectPipelinePath = path.join('/','pipeline', c );
+  const projectPipelinePath = path.join('/','pipelines', c );
   return projectPipelinePath;
 }
 
