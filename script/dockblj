@@ -42,7 +42,7 @@ blj_options() {
 	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config)" 
 	$(has_param $doRestart) && options="$options -r $(restart_dir)"
 	$(has_param $newPass) && options="$options -p $newPass"
-	$(has_param $inputDirs) && options="$options -i $inputDirs"
+	$(has_param $inputDir) && options="$options -i $inputDir"
 	$(has_param $metaPath) && options="$options -m $metaPath"
 	$(has_param $db) && options="$options -db $db"
 	echo $options
@@ -107,16 +107,16 @@ run_docker() {
 	opt="$(blj_options)"
 	[ ${#1} -gt 0 ] && opt="$opt $1"
 	if $(has_param $metaPath) && $(has_param $db); then	
-		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDirs:/input -v $metaPath:/meta -v $db:/db \
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $db:/db \
 			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
 	elif $(has_param $metaPath); then	
-		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDirs:/input -v $metaPath:/meta \
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
 			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
 	elif $(has_param $db); then	
-		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDirs:/input -v $db:/db
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $db:/db
 			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
 	else
-		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDirs:/input \
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
 			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
 	fi
 }
@@ -157,33 +157,30 @@ verify_inputs() {
 	$(has_param $config) && verify_host_file $config Config
 	$(has_param $metaPath) && verify_host_dir $metaPath Metadata
 	$(has_param $db) && verify_host_dir $db DB
-	if $(has_param $inputDirs); then
-		IFS=","
-		dirPaths=( $inputDirs )
-		for dir in "$dirPaths"; do
-			verify_host_dir $dir Input
-		done
-	else
-		echo "Exit script - Input directory is required" && exit 1
-	fi 
+	! $(has_param $inputDir) && echo "Exit script. The -i parameter must reference a single input directory" && exit 1
+	IFS=","
+	dirPath=( $inputDir )
+	[ ${#dirPath[@]} -gt 1 ] && echo "Exit script. The -i parameter must reference a single input directory" && exit 1
+	verify_host_dir $dirPath Input
 }
 
 echo "Running dockblj..."
 
+runAws=$(arg_exists "$@" "-aws")
 config=$(named_arg "$@" "-c")
-inputDirs=$(named_arg "$@" "-i")
-metaPath=$(named_arg "$@" "-m")
 db=$(named_arg "$@" "-db")
+inDocker=$(arg_exists "$@" "-docker")
+inputDir=$(named_arg "$@" "-i")
+metaPath=$(named_arg "$@" "-m")
 newPass=$(named_arg "$@" "-p")
 doRestart=$(named_arg "$@" "-r")
-inDocker=$(arg_exists "$@" "-docker")
-runAws=$(arg_exists "$@" "-aws")
 
 ! $(has_param $inDocker) && verify_inputs
+
 echo $(status_msg)
 
 #echo "config: $(dirname $config)"
-#echo "inputDir: $inputDirs"
+#echo "inputDir: $inputDir"
 #echo "DB: $db"
 #echo "metaPath: $metaPath"
 #echo "BLJ_PROJ: $(blj_proj)"

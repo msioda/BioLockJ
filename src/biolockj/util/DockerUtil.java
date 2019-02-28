@@ -280,7 +280,7 @@ public class DockerUtil
 
 		if( module instanceof TrimPrimers )
 		{
-			final File primers = new File( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) );
+			final File primers = new File( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) ).getParentFile();
 			dockerVolumes += " -v " + primers.getAbsolutePath() + ":" + CONTAINER_PRIMER_DIR;
 		}
 
