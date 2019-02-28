@@ -439,18 +439,17 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     //config key : blj_argument
     //config Path will be built serverside
     const runtimeArguments = {
-      'input.dirPaths' : 'inputDirPaths',
-      'metadata.filePath' : 'metadataFilePath',
-      'trimPrimers.filePath' : 'trimPrimersFilePath'
-      //'project.configFile' : 'CONFIG_PATH',
-      // TODO: Add -r and -p to arguements list
+      'input.dirPaths' : 'i',
+      'metadata.filePath' : 'm',
+      // 'project.configFile' : 'c',
+      // TODO: Add -p to arguements list
     };
     for (var i = 0; i < this.paramKeys.length; i++) {
       if (Object.keys(runtimeArguments).includes(this.paramKeys[i])){
         partialLaunchArgument[runtimeArguments[this.paramKeys[i]]] = this.paramValues[i];
       }
     }
-    //console.log('partialLaunchArgument: ', partialLaunchArgument);
+    console.log('partialLaunchArgument: ', partialLaunchArgument);
     return partialLaunchArgument;
   }
 
