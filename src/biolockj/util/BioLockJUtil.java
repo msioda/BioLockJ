@@ -320,6 +320,24 @@ public class BioLockJUtil
 		}
 		return Config.requireExistingDirs( null, Constants.INPUT_DIRS );
 	}
+	
+	/**
+	 * Method used to add a file to the ignore file list property.
+	 * 
+	 * @param file File to ignore
+	 * @throws Exception if errors occur
+	 */
+	public static void ignoreFile( File file ) throws Exception
+	{
+		final Set<String> ignore = new HashSet<>();
+		if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) != null )
+		{
+			ignore.addAll( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) );
+		}
+
+		ignore.add( file.getAbsolutePath() );
+		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
+	}
 
 	/**
 	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
