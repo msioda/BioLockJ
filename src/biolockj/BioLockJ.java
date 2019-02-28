@@ -280,10 +280,10 @@ public class BioLockJ
 		Config.initialize();
 		if( isPipelineComplete() )
 		{
-			throw new Exception( "RESTART FAILED!  Restart pipeline still shows status as: " + Constants.BLJ_COMPLETE
-					+ " --> Check restart directory: " + Config.pipelinePath() );
+			throw new Exception( "Pipeline Cancelled!  Pipeline already contains status file: " + Constants.BLJ_COMPLETE
+					+ " --> Check directory: " + Config.pipelinePath() );
 		}
-
+		Config.getString( null, Constants.INPUT_DIRS );
 		MetaUtil.initialize();
 
 		if( RuntimeParamUtil.isDirectMode() )
