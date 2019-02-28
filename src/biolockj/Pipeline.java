@@ -378,7 +378,6 @@ public class Pipeline
 		if( mainFailed.exists() || numFailed > 0 )
 		{
 			final String failMsg = "SCRIPT FAILED: " + BioLockJUtil.getCollectionAsString( module.getScriptErrors() );
-			Log.warn( Pipeline.class, failMsg );
 			throw new Exception( failMsg );
 		}
 

@@ -72,12 +72,6 @@ getModuleScript <- function() {
 	return( moduleScript )
 }
 
-
-# Initialize MAIN script core functions, failures will return FALSE.
-init <- function( expr ) {
-	return( !is.null( tryCatch( withCallingHandlers( expr ), error=function(e) { FALSE } ) ) )
-}
-
 # Load the BioLockJ library of shared R functions functions (BioLockJ_Lib.R)
 importLib <- function() {
 	source( file.path( dirname( getModuleScript() ), "BioLockJ_Lib.R" ) )
@@ -89,13 +83,21 @@ importModuleScript <- function() {
 	source( file.path( dirname( getModuleScript() ), moduleScriptName() ) )
 }
 
-# Each R_Module has 3 tasks.
-# --> 1. Initialize BioLockJ_Lib.R
-# --> 2. Initialize BioModule R Template
-# --> 3. Execute BioModule R Template main()
-# Execution errors at any point will abort the job and kill the pipeline
-runModule <- function()
-{
+# Initialize MAIN script core functions, failures will return FALSE.
+init <- function( expr ) {
+	return( !is.null( tryCatch( withCallingHandlers( expr ), error=function(e) { FALSE } ) ) )
+}
+
+# Every R_Module has a template R script stored in $BLJ/resources/R
+# This method returns the template needed based on the MAIN script name
+moduleScriptName <- function() {
+	return( sub( "^MAIN_", "", basename( getModuleScript() ) ) )
+}
+
+# Remove old error/warning files
+# Initialize BioLockJ_Lib.R
+# Initialize BioModule R Template
+prepRun <- function() {
 	errMsg = "Initialization failure in MAIN script function  -->"
 	if( !init( getModuleScript() ) ) stop( paste( errMsg, "getModuleScript()" ) )
 	if( !init( warningFile() ) ) stop( paste( errMsg, "warningFile()" ) )
@@ -106,17 +108,20 @@ runModule <- function()
 	executeTask( "Import BioLockJ_Lib.R", importLib() )
 	executeTask( paste( "Import", moduleScriptName() ), importModuleScript() )
 	print( paste( "All", basename( getModuleScript() ), "subscripts successfully imported from:", dirname( getModuleScript() ) ) )
+}
+
+# Execute prepRun()
+# Execute BioModule R Template main()
+# Execution errors at any point will abort the job and kill the pipeline
+runModule <- function()
+{
+	prepRun()
 	executeTask( paste0( "Execute[ ", moduleScriptName(), ":main() ]" ), main() )
 	file.create( paste0( getModuleScript(), "_Success" ) )
 	if ( getProperty( "r.saveRData", FALSE ) ) save.image( paste0( getModuleScript(), "Data" ) )
 	print( paste( getModuleScript(), "status --> SUCCESS!" ) )
 }
 
-# Every R_Module has a template R script stored in $BLJ/resources/R
-# This method returns the template needed based on the MAIN script name
-moduleScriptName <- function() {
-	return( sub( "^MAIN_", "", basename( getModuleScript() ) ) )
-}
 
 # Absolute path of the warning file - in the same directory as the MAIN script
 warningFile <- function() {

@@ -584,11 +584,13 @@ public class BioLockJ
 				logFinalException( args, ex );
 			}
 		}
-		Log.info( BioLockJ.class,
-				"Analysis complete --> The answer to the ultimate question of life, the universe and everything is... [ 42 ]" );
-		Log.info( BioLockJ.class, "End program." );
-
-		if( !isPipelineComplete() )
+		if( isPipelineComplete() )
+		{
+			Log.info( BioLockJ.class,
+				"Analysis complete --> The answer to the ultimate question of life, the universe and everything is [ 42 ]" );
+			Log.info( BioLockJ.class, "End program." );
+		}
+		else
 		{
 			System.exit( 1 );
 		}

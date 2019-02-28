@@ -246,7 +246,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private String getDB( final String prop ) throws Exception
 	{
 		return RuntimeParamUtil.isDockerMode() ? DockerUtil.getDockerVolumeDB( prop ).getAbsolutePath()
-				: Config.requireExistingFile( null, prop ).getAbsolutePath();
+				: Config.requireExistingDir( null, prop ).getAbsolutePath();
 	}
 
 	private String getJoinTableCmd() throws Exception

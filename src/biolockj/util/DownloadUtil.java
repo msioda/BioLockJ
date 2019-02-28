@@ -31,6 +31,7 @@ import biolockj.module.report.r.R_Module;
 import biolockj.module.report.r.R_PlotEffectSize;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.module.report.taxa.BuildTaxaTables;
+import biolockj.module.report.taxa.NormalizeTaxaTables;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -69,12 +70,17 @@ public final class DownloadUtil
 				{
 					hasRmods = true;
 					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( true ) ) );
+							getDirFilter( true, true, !ModuleUtil.isComplete( module ) ) ) );
+				}
+				else if( module instanceof NormalizeTaxaTables )
+				{
+					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
+							getDirFilter( false, false, true ) ) );
 				}
 				else
 				{
 					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( false ) ) );
+							getDirFilter( true, false, !ModuleUtil.isComplete( module ) ) ) );
 				}
 			}
 
@@ -207,20 +213,30 @@ public final class DownloadUtil
 	}
 
 	/**
-	 * Get a directory name filter to include output and (optionally) script folders in file searches.
+	 * Get a directory name filter to include module sub-directories.
 	 * 
+	 * @param includeOutput include the output directory
 	 * @param includeScript include the script directory
+	 * @param includeTemp include the temp directory
 	 * @return a file name filter
 	 * @throws Exception if errors occur
 	 */
-	protected static IOFileFilter getDirFilter( final boolean includeScript ) throws Exception
+	protected static IOFileFilter getDirFilter( final boolean includeOutput, final boolean includeScript, final boolean includeTemp ) throws Exception
 	{
 		final ArrayList<String> dirFilter = new ArrayList<>();
+		if( includeOutput )
+		{
+			dirFilter.add( BioModule.OUTPUT_DIR );
+		}
 		if( includeScript )
 		{
-			dirFilter.add( "script" );
+			dirFilter.add( Constants.SCRIPT_DIR );
 		}
-		dirFilter.add( "output" );
+		if( includeTemp )
+		{
+			dirFilter.add( BioModule.TEMP_DIR );
+		}
+
 		return new NameFileFilter( dirFilter );
 	}
 
@@ -251,17 +267,18 @@ public final class DownloadUtil
 			for( final BioModule module: Pipeline.getModules() )
 			{
 				final boolean includeRawCounts = ModuleUtil.moduleExists( R_PlotEffectSize.class.getName() )
-						&& Config.getBoolean( module, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC );
+						&& !Config.getBoolean( module, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC );
 
 				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
 						|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
-						|| includeRawCounts && ( module instanceof BuildTaxaTables || module instanceof Humann2Parser );
+						|| ( includeRawCounts && module instanceof NormalizeTaxaTables  );
 
 				if( ModuleUtil.hasExecuted( module ) && downloadableType )
 				{
 					modules.add( module );
 				}
 			}
+			
 			return modules;
 		}
 		catch( final Exception ex )
