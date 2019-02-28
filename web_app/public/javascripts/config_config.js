@@ -879,6 +879,11 @@ function retreiveDefaultProps(dpropPath) {
 //     }
 // }
 
+document.getElementById('getMalcolmGitRepo').addEventListener('click', function(evt){
+  evt.preventDefault();
+  sendFormToNode('getMalcolmGitRepo', '/getMalcolmGitRepo')
+});
+
 document.getElementById('submitConfigureAWS').addEventListener('click', function(evt){
   evt.preventDefault();
   sendFormToNode('submitConfigureAWS', '/configureAws')
@@ -894,7 +899,7 @@ document.getElementById('launchEc2HeadNodeButton').addEventListener('click', fun
 
 function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
   let formData = {};
-  let myForm = new FormData(document.getElementById(formElementId));
+  let myForm = new FormData(document.getElementById(formElementId).parentNode.parentNode);
   for (var i of myForm.entries()) {
     console.log(i);
     formData[i[0]] = i[1];
