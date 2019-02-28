@@ -23,14 +23,12 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.implicit.parser.wgs.Humann2Parser;
 import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
 import biolockj.module.report.r.R_PlotEffectSize;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
-import biolockj.module.report.taxa.BuildTaxaTables;
 import biolockj.module.report.taxa.NormalizeTaxaTables;
 
 /**
