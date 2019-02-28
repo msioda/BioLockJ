@@ -192,8 +192,8 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         'r.pValFormat' : 'Please choose your p-value format for your R reports.',
         'r.rareOtuThreshold' : 'Please choose your rare OTU threshold (positive integer).',
         'r.timeout' : 'Please set your R timeout threshold (positive integer).',
-        'rStats.pAdjustMethod' : 'Please choose your p-value adjust method.',
-        'rStats.pAdjustScope' : 'Please choose your p-value adjust scope.'
+        'r_CalculateStats.pAdjustMethod' : 'Please choose your p-value adjust method.',
+        'r_CalculateStats.pAdjustScope' : 'Please choose your p-value adjust scope.'
         }));
       const reqForEmail = new Map(Object.entries({
         'mail.encryptedPassword' : 'In order to receive an Emailed report, please provide your encrypted password.',
@@ -205,19 +205,14 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         }));
 
       const reqForMdsPlots = new Map(Object.entries({
-        'rMds.numAxis' : 'Please provide the number of axes for the MDS plot.',
-        'rMds.distance' : 'Please provide the number of axes for the MDS plot.',
-        'rMds.outliers' : 'Please choose the Email address from which you want to recieve your Emailed report.',
+        'r_PlotMds.numAxis' : 'Please provide the number of axes for the MDS plot.',
+        'r_PlotMds.distance' : 'Please provide the number of axes for the MDS plot.',
+        'r_PlotMds.outliers' : 'Please choose the Email address from which you want to recieve your Emailed report.',
         }));
 
       const reqForRdpClassifier = new Map(Object.entries({
         'rdp.minThresholdScore' : 'Please provide the RDP minium threshold score.'
         }));
-
-      const reqForSlimmClassifier = new Map(Object.entries({
-      'slimm.db' : 'Please provide a Slimm database.',
-      'slimm.refGenomeIndex' : 'Please provide a reference genome index for Slimm.'
-      }));
 
       const reqForKrakenClassifier = new Map(Object.entries({
         'kraken.db' : 'Please provide a Kraken database.',
