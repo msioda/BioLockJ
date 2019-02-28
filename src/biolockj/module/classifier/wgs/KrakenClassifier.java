@@ -19,16 +19,14 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule assigns taxonomy to WGS sequences and translates the results into mpa-format. Command line options are
  * defined in the online manual: <a href="http://ccb.jhu.edu/software/kraken/MANUAL.html" target=
  * "_top">http://ccb.jhu.edu/software/kraken/MANUAL.html</a>
  * 
- * @web_desc Kraken Classifier
+ * @blj.web_desc Kraken Classifier
  */
 public class KrakenClassifier extends ClassifierModuleImpl implements ClassifierModule
 {
@@ -106,6 +104,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	{
 		super.checkDependencies();
 		getParams();
+		getDB();
 	}
 
 	/**
@@ -147,7 +146,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return Config.requireString( this, KRAKEN_DATABASE );
+			return DockerUtil.CONTAINER_DB_DIR;
 		}
 
 		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();

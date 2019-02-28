@@ -16,9 +16,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
+import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.report.Email;
 import biolockj.util.*;
 
@@ -77,12 +79,32 @@ public class BioLockJ
 	}
 
 	/**
+	 * Determine project status based on existence of {@value biolockj.Constants#BLJ_COMPLETE} in pipeline root
+	 * directory.
+	 *
+	 * @return true if {@value biolockj.Constants#BLJ_COMPLETE} exists in the pipeline root directory, otherwise false
+	 */
+	public static boolean isPipelineComplete()
+	{
+		File f = null;
+		try
+		{
+			f = new File( Config.pipelinePath() + Constants.BLJ_COMPLETE );
+		}
+		catch( final Exception ex )
+		{
+			return false;
+		}
+		return f != null && f.exists();
+	}
+
+	/**
 	 * {@link biolockj.BioLockJ} is the BioLockj.jar Main-Class, and is the first method executed.<br>
 	 * Execution summary:<br>
 	 * <ol>
 	 * <li>Call {@link #initBioLockJ(String[])} to assign pipeline root dir and log file
 	 * <li>If change password pipeline, call {@link biolockj.module.report.Email#encryptAndStoreEmailPassword()}
-	 * <li>Otherwise execute {@link #runPipeline()}
+	 * <li>Otherwise execute {@link #startPipeline()}
 	 * </ol>
 	 * <p>
 	 * If pipeline has failed, attempt execute {@link biolockj.module.report.Email} (if configured) to notify user of
@@ -111,7 +133,7 @@ public class BioLockJ
 			}
 			else
 			{
-				runPipeline();
+				startPipeline();
 			}
 		}
 		catch( final Exception ex )
@@ -123,6 +145,57 @@ public class BioLockJ
 		{
 			pipelineShutDown( args );
 		}
+	}
+
+	/**
+	 * Return the pipeline input directory
+	 * 
+	 * @return Input dir
+	 * @throws Exception if unable to obtain file
+	 */
+	public static File pipelineInputDir() throws Exception
+	{
+		return new File( Config.pipelinePath() + File.separator + "input" );
+	}
+
+	/**
+	 * Create a copy of the sequence files in property {@value biolockj.Constants#INPUT_DIRS}, output to a directory
+	 * named {@value biolockj.Constants#PROJECT_PIPELINE_DIR}/input.
+	 *
+	 * @throws Exception if unable to copy the files
+	 */
+	protected static void copyInputData() throws Exception
+	{
+		final String statusFileName = pipelineInputDir().getName() + File.separator + Constants.BLJ_COMPLETE;
+		final File statusFile = new File( Config.pipelinePath() + File.separator + statusFileName );
+		if( !pipelineInputDir().exists() )
+		{
+			pipelineInputDir().mkdirs();
+		}
+		else if( statusFile.exists() )
+		{
+			return;
+		}
+
+		for( final File dir: BioLockJUtil.getInputDirs() )
+		{
+			Log.info( BioLockJ.class, "Copying input files from " + dir + " to " + pipelineInputDir() );
+			FileUtils.copyDirectory( dir, pipelineInputDir() );
+			markStatus( statusFileName );
+			BioLockJUtil.ignoreFile( statusFile );
+		}
+
+		final List<File> inputFiles = new ArrayList<>(
+				FileUtils.listFiles( pipelineInputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+		Log.info( BioLockJ.class, "Total number of input files: " + inputFiles.size() );
+		int i = 0;
+		for( final File file: inputFiles )
+		{
+			Log.info( BioLockJ.class, "Imported Input File [ " + i++ + " ]: " + file.getAbsolutePath() );
+		}
+
+		BioLockJUtil.setPipelineInputFiles( inputFiles );
+		Config.setConfigProperty( Constants.INPUT_DIRS, pipelineInputDir().getAbsolutePath() );
 	}
 
 	/**
@@ -160,6 +233,29 @@ public class BioLockJ
 	}
 
 	/**
+	 * Initialize AWS manager pipeline:<br>
+	 * <ol>
+	 * <li>Build Nexflow main.nf
+	 * <li>Run ImportMetadata module
+	 * <li>Set files editable
+	 * <li>Update pipeline root directory to EFS directory
+	 * <li>Update EFS MASTER {@link biolockj.Config} with new pipeline root directory path
+	 * <li>Save pipeline input files to EFS for faster processing
+	 * </ol>
+	 * 
+	 * @throws Exception if runtime errors occur
+	 */
+	protected static void initAwsManager() throws Exception
+	{
+		NextflowUtil.buildNextflowMain( Pipeline.getModules() );
+		Pipeline.executeModule( importMeta() );
+		setPipelineSecurity();
+		Config.setPipelineDir( NextflowUtil.copyPipelineToEfs() );
+		PropUtil.saveMasterConfig( null );
+		copyInputData();
+	}
+
+	/**
 	 * Execution summary:<br>
 	 * <ol>
 	 * <li>Call {@link biolockj.util.MemoryUtil#reportMemoryUsage(String)} for baseline memory info
@@ -184,10 +280,10 @@ public class BioLockJ
 		Config.initialize();
 		if( isPipelineComplete() )
 		{
-			throw new Exception( "RESTART FAILED!  Restart pipeline still shows status as: " + Constants.BLJ_COMPLETE
-					+ " --> Check restart directory: " + Config.pipelinePath() );
+			throw new Exception( "Pipeline Cancelled!  Pipeline already contains status file: " + Constants.BLJ_COMPLETE
+					+ " --> Check directory: " + Config.pipelinePath() );
 		}
-
+		Config.getString( null, Constants.INPUT_DIRS );
 		MetaUtil.initialize();
 
 		if( RuntimeParamUtil.isDirectMode() )
@@ -207,6 +303,14 @@ public class BioLockJ
 		if( MetaUtil.getMetadata() != null )
 		{
 			BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
+		}
+
+		// Initializes PIPELINE_SEQ_INPUT_TYPE
+		BioLockJUtil.getPipelineInputFiles();
+
+		if( doCopyInput() )
+		{
+			copyInputData();
 		}
 
 		SeqUtil.initialize();
@@ -235,9 +339,13 @@ public class BioLockJ
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
-		if( Config.isOnCluster() )
+		if( DownloadUtil.getDownloadListFile().exists() )
 		{
 			DownloadUtil.getDownloadListFile().delete();
+		}
+		if( NextflowUtil.getMainNf().exists() )
+		{
+			NextflowUtil.getMainNf().delete();
 		}
 
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
@@ -258,29 +366,16 @@ public class BioLockJ
 	 */
 	protected static void markProjectStatus( final String status )
 	{
-		File f = null;
 		try
 		{
 			Log.info( BioLockJ.class, "BioLockJ Pipeline [" + Config.pipelineName() + "] = " + status );
-
-			f = new File( Config.pipelinePath() + File.separator + status );
-			final FileWriter writer = new FileWriter( f );
-			writer.close();
-			if( !f.exists() )
-			{
-				throw new Exception( "Unable to create " + f.getAbsolutePath() );
-			}
+			markStatus( status );
 		}
 		catch( final Exception ex )
 		{
 			Log.error( BioLockJ.class, "Unable to create pipeline status indicator file!", ex );
-			if( f != null && f.exists() )
-			{
-				f.delete();
-			}
 			pipelineShutDown( null );
 		}
-
 	}
 
 	/**
@@ -306,7 +401,8 @@ public class BioLockJ
 	 * <ol>
 	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
 	 * <li>For direct module execution call {@link biolockj.Pipeline#runDirectModule(Integer)}
-	 * <li>Otherwise execute {@link biolockj.Pipeline#runPipeline()}
+	 * <li>Otherwise execute {@link biolockj.Pipeline#runPipeline()} and save MASTER {@link biolockj.Config}
+	 * <li>If initializing AWS Cloud manager, call {@link #initAwsManager()}.
 	 * <li>If {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_DELETE_TEMP_FILES} =
 	 * {@value biolockj.Constants#TRUE}, Call {@link #removeTempFiles()} to delete tem files
 	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status as successful
@@ -314,7 +410,7 @@ public class BioLockJ
 	 * 
 	 * @throws Exception if runtime errors occur
 	 */
-	protected static void runPipeline() throws Exception
+	protected static void startPipeline() throws Exception
 	{
 		Pipeline.initializePipeline();
 
@@ -325,22 +421,43 @@ public class BioLockJ
 		else
 		{
 			PropUtil.saveMasterConfig( null );
-			if( Config.getBoolean( null, Constants.PROJECT_COPY_FILES ) )
+			if( DockerUtil.initAwsCloudManager() )
 			{
-				SeqUtil.copyInputData();
+				initAwsManager();
 			}
-
-			Pipeline.runPipeline();
-
-			if( Config.getBoolean( null, Constants.PROJECT_DELETE_TEMP_FILES ) )
+			else
 			{
-				removeTempFiles();
-			}
+				Pipeline.runPipeline();
 
-			PropUtil.sanitizeMasterConfig();
-			markProjectStatus( Constants.BLJ_COMPLETE );
-			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+				if( Config.getBoolean( null, Constants.PROJECT_DELETE_TEMP_FILES ) )
+				{
+					removeTempFiles();
+				}
+
+				PropUtil.sanitizeMasterConfig();
+				markProjectStatus( Constants.BLJ_COMPLETE );
+				Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+
+			}
 		}
+	}
+
+	private static boolean doCopyInput() throws Exception
+	{
+		final boolean hasMixedInputs = BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE )
+				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
+				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
+				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
+				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE );
+		if( hasMixedInputs )
+		{
+			Log.warn( BioLockJ.class,
+					"Non-sequence inputs found - copy input files from "
+							+ Config.requireString( null, Constants.INPUT_DIRS ) + " to:"
+							+ pipelineInputDir().getAbsolutePath() );
+		}
+		return !RuntimeParamUtil.isDirectMode() && Config.getBoolean( null, Constants.PROJECT_COPY_FILES )
+				|| hasMixedInputs;
 	}
 
 	private static String getDirectLogName( final String moduleDir ) throws Exception
@@ -388,24 +505,15 @@ public class BioLockJ
 		return name;
 	}
 
-	/**
-	 * Determine project status based on existence of {@value biolockj.Constants#BLJ_COMPLETE} in pipeline root
-	 * directory.
-	 *
-	 * @return true if {@value biolockj.Constants#BLJ_COMPLETE} exists in the pipeline root directory, otherwise false
-	 */
-	public static boolean isPipelineComplete()
+	private static BioModule importMeta() throws Exception
 	{
-		File f = null;
-		try
+		final BioModule module = Pipeline.getModules().get( 0 );
+		if( module instanceof ImportMetadata )
 		{
-			f = new File( Config.pipelinePath() + Constants.BLJ_COMPLETE );
+			return module;
 		}
-		catch( final Exception ex )
-		{
-			return false;
-		}
-		return f != null && f.exists();
+
+		return null;
 	}
 
 	private static void logFinalException( final String[] args, final Exception ex )
@@ -452,27 +560,37 @@ public class BioLockJ
 		printedFinalExcp = true;
 	}
 
+	private static void markStatus( final String status ) throws Exception
+	{
+		final File f = new File( Config.pipelinePath() + File.separator + status );
+		final FileWriter writer = new FileWriter( f );
+		writer.close();
+		if( !f.exists() )
+		{
+			throw new Exception( "Unable to create " + f.getAbsolutePath() );
+		}
+	}
+
 	private static void pipelineShutDown( final String[] args )
 	{
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			try
 			{
-				final String perm = Config.getString( null, Constants.PROJECT_PERMISSIONS );
-				if( perm != null )
-				{
-					Job.setFilePermissions( Config.pipelinePath(), perm );
-				}
+				setPipelineSecurity();
 			}
 			catch( final Exception ex )
 			{
 				logFinalException( args, ex );
 			}
 		}
-		Log.info( BioLockJ.class, "Analysis complete --> The answer to the ultimate question of life, the universe and everything is... [ 42 ]" );
-		Log.info( BioLockJ.class, "End program." );
-		
-		if( !isPipelineComplete() )
+		if( isPipelineComplete() )
+		{
+			Log.info( BioLockJ.class,
+				"Analysis complete --> The answer to the ultimate question of life, the universe and everything is [ 42 ]" );
+			Log.info( BioLockJ.class, "End program." );
+		}
+		else
 		{
 			System.exit( 1 );
 		}
@@ -594,6 +712,15 @@ public class BioLockJ
 		finally
 		{
 
+		}
+	}
+
+	private static void setPipelineSecurity() throws Exception
+	{
+		final String perm = Config.getString( null, Constants.PROJECT_PERMISSIONS );
+		if( perm != null )
+		{
+			Job.setFilePermissions( Config.pipelinePath(), perm );
 		}
 	}
 

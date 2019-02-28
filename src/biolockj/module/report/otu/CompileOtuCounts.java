@@ -23,7 +23,7 @@ import biolockj.util.OtuUtil;
  * This BioModule compiles the counts from all OTU count files into a single summary OTU count file containing OTU
  * counts for the entire dataset.
  * 
- * @web_desc Compile OTU Counts
+ * @blj.web_desc Compile OTU Counts
  */
 public class CompileOtuCounts extends OtuCountModule implements JavaModule
 {

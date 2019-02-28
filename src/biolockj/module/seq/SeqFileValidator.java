@@ -25,7 +25,7 @@ import biolockj.util.*;
 /**
  * This BioModule validates fasta/fastq file formats are valid and enforces min/max read lengths.
  * 
- * @web_desc Sequence File Validator
+ * @blj.web_desc Sequence File Validator
  */
 public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqModule
 {

@@ -13,6 +13,7 @@ modules=
 SEPARATOR="%"
 MAIN_NF="$BLJ/resources/nextflow/nextflow_template_main.nf"
 
+# If 2nd parameter (module list) is undefined, define process for each possible BioLockJ modules
 get_modules() {
 	FILE_TYPE=".java"
 	SEARCH_KEY="public class"
@@ -34,7 +35,6 @@ else
 	modules=$(get_modules)
 fi
 
-
 numModules=$(echo $modules | wc -w | xargs)
 summaryMsg="BioLockJ $(get_version) generated Nextflow Template with ${numModules} BioModule processes"
 
@@ -42,7 +42,6 @@ echo "// $summaryMsg" > $MAIN_NF
 echo "// Path: $MAIN_NF" >> $MAIN_NF
 echo "" >> $MAIN_NF
 echo 'aws.efs = $aws.efs' >> $MAIN_NF
-echo 'aws.stack = $aws.stack' >> $MAIN_NF
 echo 'aws.s3 = $aws.s3' >> $MAIN_NF
 echo 'project.pipelineName = $project.pipelineName' >> $MAIN_NF
 echo 'project.pipelineDir = "${aws.efs}/${project.pipelineName}"' >> $MAIN_NF

@@ -25,7 +25,7 @@ import biolockj.util.TaxaUtil;
 /**
  * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.
  * 
- * @web_desc Log Transform Taxa Tables
+ * @blj.web_desc Log Transform Taxa Tables
  */
 public class LogTransformTaxaTables extends TaxaCountModule implements JavaModule
 {

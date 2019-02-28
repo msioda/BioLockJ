@@ -12,13 +12,14 @@
 package biolockj.module.report.r;
 
 import java.util.List;
+import biolockj.Config;
 import biolockj.module.ScriptModule;
 
 /**
  * This BioModule is used to build the R script used to generate OTU-metadata box-plots and scatter-plots for each
  * report field and taxonomy level.
  * 
- * @web_desc R Plot OTUs
+ * @blj.web_desc R Plot OTUs
  */
 public class R_PlotOtus extends R_Module implements ScriptModule
 {
@@ -26,6 +27,13 @@ public class R_PlotOtus extends R_Module implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
+		Config.getString( this, R_PVAL_FORMAT );
+		Config.getPositiveDoubleVal( this, R_RARE_OTU_THRESHOLD );
+		Config.getString( this, R_COLOR_BASE );
+		Config.getString( this, R_COLOR_HIGHLIGHT );
+		Config.getString( this, R_COLOR_PALETTE );
+		Config.getString( this, R_COLOR_POINT );
+		Config.getString( this, R_PCH );
 	}
 
 	/**
@@ -37,4 +45,5 @@ public class R_PlotOtus extends R_Module implements ScriptModule
 		return getStatPreReqs();
 	}
 
+	private static final String R_PVAL_FORMAT = "r.pValFormat";
 }

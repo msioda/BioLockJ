@@ -23,7 +23,7 @@ import biolockj.util.MemoryUtil;
 /**
  * This BioModules parses Metaphlan2Classifier output reports to build standard OTU abundance tables.
  * 
- * @web_desc MetaPhlAn2 Parser
+ * @blj.web_desc MetaPhlAn2 Parser
  */
 public class Metaphlan2Parser extends ParserModuleImpl implements ParserModule
 {

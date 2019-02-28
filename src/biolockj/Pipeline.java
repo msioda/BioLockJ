@@ -35,6 +35,44 @@ public class Pipeline
 	{}
 
 	/**
+	 * Execute a single pipeline module.
+	 * 
+	 * @param module BioModule current module
+	 * @throws Exception if runtime errors occur
+	 */
+	public static void executeModule( final BioModule module ) throws Exception
+	{
+		ModuleUtil.markStarted( module );
+		refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
+		refreshRCacheIfNeeded( module );
+		module.executeTask();
+
+		final boolean isJava = module instanceof JavaModule;
+		final boolean isScript = module instanceof ScriptModule;
+		final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
+
+		if( runScripts )
+		{
+			Job.submit( (ScriptModule) module );
+		}
+
+		if( runScripts || DockerUtil.initAwsCloudManager() )
+		{
+			pollAndSpin( (ScriptModule) module );
+		}
+
+		refreshOutputMetadata( module );
+		module.cleanUp();
+
+		if( !isJava || !runScripts )
+		{
+			SummaryUtil.reportSuccess( module );
+		}
+
+		ModuleUtil.markComplete( module );
+	}
+
+	/**
 	 * Return a list of {@link biolockj.module.BioModule}s constructed by the {@link biolockj.BioModuleFactory}
 	 *
 	 * @return List of BioModules
@@ -66,10 +104,6 @@ public class Pipeline
 		bioModules = BioModuleFactory.buildPipeline();
 		Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
-		if( DockerUtil.runAws() )
-		{
-			NextflowUtil.buildNextFlowMain( bioModules );
-		}
 	}
 
 	/**
@@ -197,42 +231,17 @@ public class Pipeline
 	 */
 	protected static void executeModules() throws Exception
 	{
-		BioModule prevModule = null;
 		for( final BioModule module: Pipeline.getModules() )
 		{
 			if( !ModuleUtil.isComplete( module ) )
 			{
-				ModuleUtil.markStarted( module );
-				refreshOutputMetadata( prevModule );
-				refreshRCacheIfNeeded( module );
-				module.executeTask();
-
-				final boolean isJava = module instanceof JavaModule;
-				final boolean isScript = module instanceof ScriptModule;
-				final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
-
-				if( runScripts )
-				{
-					Job.submit( (ScriptModule) module );
-					pollAndSpin( (ScriptModule) module );
-				}
-
-				refreshOutputMetadata( module );
-				module.cleanUp();
-
-				if( !isJava || !runScripts )
-				{
-					SummaryUtil.reportSuccess( module );
-				}
-
-				ModuleUtil.markComplete( module );
+				executeModule( module );
 			}
 			else
 			{
 				Log.debug( Pipeline.class,
 						"Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
 			}
-			prevModule = module;
 		}
 	}
 
@@ -292,7 +301,7 @@ public class Pipeline
 				refreshOutputMetadata( module );
 				refreshRCacheIfNeeded( module );
 			}
-			
+
 			info( "Check dependencies for: " + module.getClass().getName() );
 			module.checkDependencies();
 		}
@@ -369,7 +378,6 @@ public class Pipeline
 		if( mainFailed.exists() || numFailed > 0 )
 		{
 			final String failMsg = "SCRIPT FAILED: " + BioLockJUtil.getCollectionAsString( module.getScriptErrors() );
-			Log.warn( Pipeline.class, failMsg );
 			throw new Exception( failMsg );
 		}
 

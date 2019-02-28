@@ -282,8 +282,7 @@ public class MetaUtil
 
 		if( RuntimeParamUtil.isDockerMode() )
 		{
-			return DockerUtil.getDockerVolumeFile( Config.getString( null, META_FILE_PATH ),
-					DockerUtil.CONTAINER_META_DIR, "metadata" );
+			return DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.CONTAINER_META_DIR );
 		}
 		return Config.requireExistingFile( null, META_FILE_PATH );
 	}

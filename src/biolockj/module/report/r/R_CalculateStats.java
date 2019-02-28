@@ -26,7 +26,7 @@ import biolockj.util.ModuleUtil;
 /**
  * This BioModule is used to build the R script used to generate taxonomy statistics and plots.
  * 
- * @web_desc R Statistics Calculator
+ * @blj.web_desc R Statistics Calculator
  */
 public class R_CalculateStats extends R_Module implements BioModule
 {
@@ -44,6 +44,7 @@ public class R_CalculateStats extends R_Module implements BioModule
 		super.checkDependencies();
 		Config.requireString( this, R_ADJ_PVALS_SCOPE );
 		Config.requireString( this, R_PVAL_ADJ_METHOD );
+		Config.getPositiveDoubleVal( this, R_RARE_OTU_THRESHOLD );
 	}
 
 	/**

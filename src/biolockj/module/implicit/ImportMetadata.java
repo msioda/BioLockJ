@@ -24,7 +24,7 @@ import biolockj.util.*;
  * This BioModule validates the contents/format of the project metadata file and the related Config properties. If
  * successful, the metadata is saved as a tab delimited text file.
  * 
- * @web_desc Import metadata
+ * @blj.web_desc Import metadata
  */
 public class ImportMetadata extends BioModuleImpl implements BioModule
 {
@@ -58,7 +58,7 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 		{
 			MetaUtil.setFile( metadata );
 			MetaUtil.refreshCache();
-			addMetadataToConfigIgnoreInputFiles();
+			BioLockJUtil.ignoreFile( MetaUtil.getFile() );
 			if( hasRModules() )
 			{
 				RMetaUtil.classifyReportableMetadata( this );
@@ -416,18 +416,6 @@ public class ImportMetadata extends BioModuleImpl implements BioModule
 			throw new Exception( "MetaUtil file column names must be unique.  Column #" + colNum
 					+ " is a duplicate of Column #" + j + " - duplicate name = [" + dup + "]" );
 		}
-	}
-
-	private void addMetadataToConfigIgnoreInputFiles() throws Exception
-	{
-		final Set<String> ignore = new HashSet<>();
-		if( Config.getSet( this, Constants.INPUT_IGNORE_FILES ) != null )
-		{
-			ignore.addAll( Config.getSet( this, Constants.INPUT_IGNORE_FILES ) );
-		}
-
-		ignore.add( MetaUtil.getMetadataFileName() );
-		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
 	}
 
 	private boolean doIdToSeqVerifiction() throws Exception

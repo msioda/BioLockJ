@@ -26,7 +26,7 @@ import biolockj.util.*;
 /**
  * This BioModule
  * 
- * @web_desc Remove Low OTU Counts
+ * @blj.web_desc Remove Low OTU Counts
  */
 public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 {

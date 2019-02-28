@@ -32,7 +32,7 @@ import biolockj.util.*;
  * approach can yield new singleton OTU assignments but these are less likely to be due to contaminant and thus, should
  * generally be allowed in the OTU table output.
  * 
- * @web_desc Rarefy OTU Counts
+ * @blj.web_desc Rarefy OTU Counts
  */
 public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 {

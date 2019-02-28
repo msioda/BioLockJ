@@ -40,7 +40,7 @@ import biolockj.util.*;
  * "1:N:" and "2:N:"
  * </ol>
  * 
- * @web_desc Demultiplexer
+ * @blj.web_desc Demultiplexer
  */
 public class Demultiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 {

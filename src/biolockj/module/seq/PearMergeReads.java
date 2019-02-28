@@ -27,7 +27,7 @@ import biolockj.util.*;
  * <a href="https://sco.h-its.org/exelixis/web/software/pear/doc.html" target=
  * "_top">https://sco.h-its.org/exelixis/web/software/pear/doc.html</a>
  * 
- * @web_desc Merge Reads with PEAR
+ * @blj.web_desc Merge Reads with PEAR
  */
 public class PearMergeReads extends SeqModuleImpl implements SeqModule
 {

@@ -24,7 +24,7 @@ import biolockj.util.RMetaUtil;
  * This BioModule is used to run the R script used to generate OTU-metadata fold-change-barplots for each binary report
  * field. A pdf is created for each taxonomy level.
  * 
- * @web_desc R Plot Effect Size
+ * @blj.web_desc R Plot Effect Size
  */
 public class R_PlotEffectSize extends R_Module implements ScriptModule
 {
@@ -35,6 +35,9 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	public void checkDependencies() throws Exception
 	{
 		super.checkDependencies();
+		Config.getString( this, R_COLOR_HIGHLIGHT );
+
+		// Use single "&" to ensure all config values saved to MASTER config
 		if( Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC ) && Config.getBoolean( this, NO_COHENS_D )
 				&& Config.getBoolean( this, NO_R2 ) )
 		{

@@ -12,9 +12,7 @@
 package biolockj.util;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Config;
@@ -40,6 +38,7 @@ public class UpdateJavaDocs
 			final Collection<File> files = FileUtils.listFiles( new File( Config.getSystemFilePath( PATH ) ),
 					HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE );
 			final List<String> lines = new ArrayList<>();
+			System.out.println( "Start Time: " + new GregorianCalendar().getTime() );
 			System.out.println( "Checking: " + files.size() + " files to update heads with link to online Wiki" );
 			int i = 0;
 			for( final File file: files )
@@ -106,6 +105,7 @@ public class UpdateJavaDocs
 		}
 		finally
 		{
+			System.out.println( "End Time: " + new GregorianCalendar().getTime() );
 			try
 			{
 				if( reader != null )

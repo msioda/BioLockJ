@@ -881,6 +881,18 @@ public class Config
 	}
 
 	/**
+	 * Set the root pipeline directory path
+	 * 
+	 * @param dir Pipeline directory path
+	 * @throws Exception if errors occur
+	 */
+	public static void setPipelineDir( final File dir ) throws Exception
+	{
+		setConfigProperty( Constants.PROJECT_PIPELINE_DIR, dir.getAbsolutePath() );
+		pipelineDir = dir;
+	}
+
+	/**
 	 * Build File using filePath. Replace "~" with System.getProperty( "user.home" ) if found.
 	 *
 	 * @param filePath File path
@@ -915,21 +927,19 @@ public class Config
 		boolean isNew = false;
 		if( RuntimeParamUtil.doRestart() )
 		{
-			setConfigProperty( Constants.PROJECT_PIPELINE_DIR, RuntimeParamUtil.getRestartDir().getAbsolutePath() );
+			setPipelineDir( RuntimeParamUtil.getRestartDir() );
 		}
 		else if( RuntimeParamUtil.isDirectMode() )
 		{
-			setConfigProperty( Constants.PROJECT_PIPELINE_DIR,
-					RuntimeParamUtil.getDirectPipelineDir().getAbsolutePath() );
+			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
 		}
 		else
 		{
 			isNew = true;
-			setConfigProperty( Constants.PROJECT_PIPELINE_DIR, BioLockJ.createPipelineDirectory().getAbsolutePath() );
+			setPipelineDir( BioLockJ.createPipelineDirectory() );
 		}
 
-		Log.info( Config.class,
-				"Init pipeline dir: " + requireExistingDir( null, Constants.PROJECT_PIPELINE_DIR ).getAbsolutePath() );
+		Log.info( Config.class, "Initialize pipeline directory: " + Config.pipelinePath() );
 
 		return isNew;
 	}

@@ -28,7 +28,7 @@ import biolockj.util.*;
  * can be run in batches (output/batch_0, output/batch_1, output/batch_2, etc.). The program awk is used to split the
  * metadata into separate batch-specific QIIME mapping files.
  * 
- * @web_desc Qiime Closed Ref Classifier
+ * @blj.web_desc Qiime Closed Ref Classifier
  */
 public class QiimeClosedRefClassifier extends QiimeClassifier implements ClassifierModule
 {
@@ -43,7 +43,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		Log.info( getClass(), "Processing " + ( files == null ? 0: files.size() ) + " files" );
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
-		if( RuntimeParamUtil.isDockerMode() && !DockerUtil.runAws()
+		if( RuntimeParamUtil.isDockerMode() && !DockerUtil.inAwsEnv()
 				|| Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= files.size() )
 		{
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );

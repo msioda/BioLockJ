@@ -28,7 +28,7 @@ import biolockj.util.*;
  * This BioModule imposes a minimum and/or maximum number of reads per sample. Samples below the minimum are discarded.
  * Samples above the maximum are limited by selecting random reads up to the maximum value.
  * 
- * @web_desc Rarefy Seqs
+ * @blj.web_desc Rarefy Seqs
  */
 public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 {

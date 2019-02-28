@@ -18,7 +18,7 @@ import biolockj.module.ScriptModule;
  * This BioModule is used to build the R script used to generate MDS plots for each report field and each taxonomy level
  * configured.
  * 
- * @web_desc R Plot MDS
+ * @blj.web_desc R Plot MDS
  */
 public class R_PlotMds extends R_Module implements ScriptModule
 {
@@ -31,6 +31,10 @@ public class R_PlotMds extends R_Module implements ScriptModule
 	{
 		super.checkDependencies();
 		Config.requireString( this, R_MDS_DISTANCE );
+		Config.getString( this, R_COLOR_BASE );
+		Config.getString( this, R_COLOR_HIGHLIGHT );
+		Config.getString( this, R_COLOR_PALETTE );
+		Config.getString( this, R_PCH );
 		if( Config.requirePositiveInteger( this, R_MDS_NUM_AXIS ) < 2 )
 		{
 			throw new Exception( "Config property [" + R_MDS_NUM_AXIS + "] must be > 2" );

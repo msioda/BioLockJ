@@ -1,23 +1,23 @@
 #!/bin/bash
-##############################################################################
-##                                                                          ##
-##  Script launches BioLockJ in a Docker container                          ##
-##                                                                          ##
-##  Bash env must include pipeline base directory: $BLJ_PROJ                ##
-##                                                                          ##
-##  Required Parameters                                                     ##
-##  Config file path:       config                                          ##
-##  Input directories:      inputDirPaths (commma separated, no spaces)     ##
-##                                                                          ##
-##  Optional parameters:                                                    ##
-##                                                                          ##
-##  Admin email password    changePassword                                  ##
-##  Metadata directory:     metadataFilePath                                ##
-##  Primer directory:       trimPrimersFilePath                             ##
-##  Restart flag:           -r <directory>                                  ##
-##  Docker flag:            -docker                                         ##
-##                                                                          ##
-##############################################################################
+##################################################################################
+##                                                                              ##
+##  Script launches BioLockJ in a Docker container                              ##
+##                                                                              ##
+##  Bash env must include pipeline base directory: $BLJ_PROJ                    ##
+##                                                                              ##
+##  Required Parameters:                                                        ##
+##  Config file path:       -c                                                  ##
+##  Input directories:      -i <commma-separated paths> (no spaces)             ##
+##                                                                              ##
+##  Optional Parameters:                                                        ##
+##  Aws flag:               -aws                                                ##
+##  Docker flag:            -docker                                             ##
+##  DB directory:           -db <path>                                          ##
+##  Metadata directory:     -m  <path>                                          ##
+##  New email password:     -p  <new_pass>                                      ##
+##  Restart flag:           -r  <directory>                                     ##
+##                                                                              ##
+##################################################################################
 . $BLJ/script/blj_functions
 
 [ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
@@ -29,154 +29,164 @@ arg_exists() {
 	numArgs=${#@}
 	target=${args[$((numArgs-1))]}
 	args=${args[@]:0:$((numArgs-1))}
-	for arg in $args;
-	do
+	for arg in $args; do
 		[ "$arg" == "$target" ] && echo "$target" && return
 	done
 }
 
+# Populates the docker run BLJ_OPTIONS parameter
+# Include -docker to run BioLockJ in a Docker container
+# Include Docker container path to required Config file
+# Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
+blj_options() {
+	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config)" 
+	$(has_param $doRestart) && options="$options -r $(restart_dir)"
+	$(has_param $newPass) && options="$options -p $newPass"
+	$(has_param $inputDir) && options="$options -i $inputDir"
+	$(has_param $metaPath) && options="$options -m $metaPath"
+	$(has_param $db) && options="$options -db $db"
+	echo $options
+}
+
+# Return $HOST_BLJ_PROJ if called from within a docker container (such as blj_webapp), otherwise return $BLJ_PROJ
+blj_proj() {
+	bljProj=$BLJ_PROJ
+	if $(has_param $inDocker); then
+		bljProj=$HOST_BLJ_PROJ
+		if $(has_param $bljProj); then
+			bljProj=$HOST_BLJ_PROJ
+		else
+			echo "Exit program - Required env variable HOST_BLJ_PROJ undefined" && exit 1
+		fi
+	fi
+	if [ "${bljProj: -1}" == "/" ]; then
+		len=$((${#bljProj}-1))
+		bljProj="${bljProj:0:len}"
+	fi
+	$(has_param $bljProj) && echo $bljProj && return
+	echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
+}
+
+# Return boolean evaluation if single argument passed exists with a non-zero size
+has_param() {
+	[ ${#1} -gt 0 ]
+}
+
+# Get the Docker manager module (aws_manager or blj_manager) with $DOCKER_HUB_USER user prefix
+manager_type() {
+	if $(has_param $runAws); then
+		echo $DOCKER_HUB_USER/aws_manager
+	else
+		echo $DOCKER_HUB_USER/blj_manager
+	fi
+}
+
 # Pass script input parameters + the argument name
 # Named arguments must be formated: "argName=argValue"
-get_named_arg() {
+named_arg() {
 	args=("$@")
 	numArgs=${#@}
 	target=${args[$((numArgs-1))]}
 	args=${args[@]:0:$((numArgs-1))}
-	for arg in $args; 
-	do
+	for arg in $args; do
 		IFS="="
 		tokens=( $arg )
 		[ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
 	done
 }
 
-# Return $HOST_BLJ_PROJ if called from within a docker container (like webapp), otherwise return $BLJ_PROJ
-get_blj_proj() {
-	
-	bljProj=$BLJ_PROJ
-	if [ ${#inDockerContainer} -gt 0 ]; then
-		bljProj=$HOST_BLJ_PROJ
-		if [ ${#HOST_BLJ_PROJ} -gt 0 ]; then
-			bljProj=$HOST_BLJ_PROJ
-		else
-			echo "Exit program - Required env variable HOST_BLJ_PROJ undefined" && exit 1
-		fi
-	fi
-	
-	if [ "${bljProj: -1}" == "/" ]; then
-		len=$((${#bljProj}-1))
-		bljProj="${bljProj:0:len}"
-	fi
-	
-	[ ${#bljProj} -gt 0 ] && echo $bljProj && return
-	echo "Exit program - Required env variable BLJ_PROJ undefined" && exit 1
+# Get the internal Docker restart directory
+restart_dir() {
+	echo "/pipelines/${doRestart#$(blj_proj)/}"
 }
 
-# Verify host file exists, if dockblj is not deployed inside a Docker container
-validateHostFile() {
-	#echo "validate Host Dir: $# + $1"
-	[ ${#inDockerContainer} -eq 0 ] && [ $# -eq 2 ] && [ ! -f "$1" ] && echo "Exit script - $2 file not found: $1" && exit 1
-}
-
-# Verify host directory exists, if dockblj is not deployed inside a Docker container
-validateHostDir() {
-	#echo "validate Host Dir: $# + $1"
- 	[ ${#inDockerContainer} -eq 0 ] && [ $# -eq 2 ] && [ ! -d "$1" ] && echo "Exit script - $2 directory not found: $1" && exit 1
-}
-
-# Verify paths are valid, if dockblj is not deployed inside a Docker container
-validate_input() {
-	[ ${#restartPipeline} -gt 0 ] && validateHostDir $restartPipeline Restart
-	[ ${#restartPipeline} -eq 0 ] && validateHostFile $config Config
-	validateHostDir $metadataFilePath Metadata
-	validateHostDir $trimPrimersFilePath Primer
-	if [ ${#inputDirPaths} -lt 0 ]; then
-		echo "Exit script - Input directory is required" && exit 1
+# Call the docker run command with the correct parameters
+# If parameter is passed, add it to blj_options
+run_docker() {
+	D_SOCK="/var/run/docker.sock"
+	opt="$(blj_options)"
+	[ ${#1} -gt 0 ] && opt="$opt $1"
+	if $(has_param $metaPath) && $(has_param $db); then	
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $db:/db \
+			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
+	elif $(has_param $metaPath); then	
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
+			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
+	elif $(has_param $db); then	
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $db:/db
+			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
 	else
-		IFS=","
-		dirPaths=( $inputDirPaths )
-		for dir in "$dirPaths"; do
-			validateHostDir $dir Input
-		done
-	fi 
-}
-
-get_restart_dir() {
-	echo "/pipelines/${restartPipeline#$(get_blj_proj)/}"
-}
-
-# Populates the docker run BLJ_OPTIONS parameter
-# Include -D to run BioLockJ in a Docker container
-# Include Docker container path to required Config file
-# Include all directory paths the blj_manager may need to map volumes in spawned Docker compute node instances
-get_blj_options() {
-	options="-D -b $(get_blj_proj)" 
-	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -gt 0 ] && options="$options -C $(dirname $config) -r $(get_restart_dir) -c /config/$(basename $config)"
-	[ ${#config} -gt 0 ] && [ ${#restartPipeline} -eq 0 ] && options="$options -C $(dirname $config) -c /config/$(basename $config)"
-	[ ${#changePassword} -gt 0 ] && options="$options -p $changePassword"
-	[ ${#inputDirPaths} -gt 0 ] && options="$options -i $inputDirPaths"
-	[ ${#metadataFilePath} -gt 0 ] && options="$options -m $metadataFilePath"
-	[ ${#trimPrimersFilePath} -gt 0 ] && options="$options -t $trimPrimersFilePath"
-	echo $options
+		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
+			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
+	fi
 }
 
 # Print status message with GUI context and BLJ_OPTIONS
-get_status_msg() {
+status_msg() {
 	msg=""
-	if [ ${#inDockerContainer} -gt 0 ]; then
+	if $(has_param $inDocker); then
 		msg="Docker $DOCKER_HUB_USER/webapp GUI"
 	else
 		msg="Host machine $BLJ/web_app GUI" 
 	fi
 	
-	if [ ${#restartPipeline} -gt 0 ]; then
-		msg+=" restarting $(get_restart_dir) in $DOCKER_HUB_USER/blj_manager Docker container"
+	if $(has_param $doRestart); then
+		msg+=" restarting $(restart_dir) in $(manager_type) Docker container"
 	else
-		msg+=" starting $DOCKER_HUB_USER/blj_manager Docker container"
+		msg+=" starting $(manager_type) Docker container"
 	fi
 	
-	echo "$msg with BLJ_OPTIONS=$(get_blj_options)"
+	echo "$msg with BLJ_OPTIONS=$(blj_options)"
 }
 
-config=$(get_named_arg "$@" "config")
-inputDirPaths=$(get_named_arg "$@" "inputDirPaths")
-metadataFilePath=$(get_named_arg "$@" "metadataFilePath")
-trimPrimersFilePath=$(get_named_arg "$@" "trimPrimersFilePath")
-changePassword=$(get_named_arg "$@" "-p")
-restartPipeline=$(get_named_arg "$@" "-r")
-inDockerContainer=$(arg_exists "$@" "-docker")
+# Verify host directory exists, if dockblj is not deployed inside a Docker container
+verify_host_dir() {
+	#echo "validate Host Dir: $# + $1"
+ 	[ $# -eq 2 ] && [ ! -d "$1" ] && echo "Exit script - $2 directory not found: $1" && exit 1
+}
 
-# Call function to verify input parameters are vaild
-validate_input
+# Verify host file exists, if dockblj is not deployed inside a Docker container
+verify_host_file() {
+	#echo "validate Host Dir: $# + $1"
+	[ $# -eq 2 ] && [ ! -f "$1" ] && echo "Exit script - $2 file not found: $1" && exit 1
+}
 
-# Call function to print status message
-echo $(get_status_msg)
+# Verify paths are valid, if dockblj is not deployed inside a Docker container
+verify_inputs() {
+	$(has_param $doRestart) && verify_host_dir $doRestart Restart
+	$(has_param $config) && verify_host_file $config Config
+	$(has_param $metaPath) && verify_host_dir $metaPath Metadata
+	$(has_param $db) && verify_host_dir $db DB
+	! $(has_param $inputDir) && echo "Exit script. The -i parameter must reference a single input directory" && exit 1
+	IFS=","
+	dirPath=( $inputDir )
+	[ ${#dirPath[@]} -gt 1 ] && echo "Exit script. The -i parameter must reference a single input directory" && exit 1
+	verify_host_dir $dirPath Input
+}
+
+echo "Running dockblj..."
+
+runAws=$(arg_exists "$@" "-aws")
+config=$(named_arg "$@" "-c")
+db=$(named_arg "$@" "-db")
+inDocker=$(arg_exists "$@" "-docker")
+inputDir=$(named_arg "$@" "-i")
+metaPath=$(named_arg "$@" "-m")
+newPass=$(named_arg "$@" "-p")
+doRestart=$(named_arg "$@" "-r")
+
+! $(has_param $inDocker) && verify_inputs
+
+echo $(status_msg)
 
 #echo "config: $(dirname $config)"
-#echo "inputDir: $inputDirPaths"
-#echo "metadataFilePath: $metadataFilePath"
-#echo "BLJ_PROJ: $(get_blj_proj)"
-#echo "BLJ_OPTIONS: $(get_blj_options)"
+#echo "inputDir: $inputDir"
+#echo "DB: $db"
+#echo "metaPath: $metaPath"
+#echo "BLJ_PROJ: $(blj_proj)"
+#echo "BLJ_OPTIONS: $(blj_options)"
 
-if [ ${#metadataFilePath} -gt 0 ] && [ ${#trimPrimersFilePath} -gt 0 ]; then
-	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
-		-v $metadataFilePath:/meta -v $trimPrimersFilePath:/primer \
-		--rm -d $DOCKER_HUB_USER/blj_manager
-elif [ ${#metadataFilePath} -gt 0 ]; then	
-	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
-		-v $metadataFilePath:/meta \
-		--rm -d $DOCKER_HUB_USER/blj_manager
-elif [ ${#trimPrimersFilePath} -gt 0 ]; then	
-	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
-		-v $trimPrimersFilePath:/primer \
-		--rm -d $DOCKER_HUB_USER/blj_manager 
-else
-	docker run -e "BLJ_OPTIONS=$(get_blj_options)" -v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(get_blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $inputDirPaths:/input \
-		--rm -d $DOCKER_HUB_USER/blj_manager 
-fi
-
-[ $? -ne 0 ] && echo "Exit script - docker run command failed"  
+run_docker
+status=$?
+[ $status -eq 0 ] && $(has_param $runAws) && run_docker -aws
+[ $status -ne 0 ] && echo "Exit script - docker run command failed"  

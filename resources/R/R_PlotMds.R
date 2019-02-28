@@ -50,7 +50,6 @@ main <- function() {
                         ylab=getMdsLabel( y, perVariance[y] ),
                         cex=1.2, pch=getProperty("r.pch", 20), col=colorKey[metaColVals] )
                
-               
                if( position == 1 || position > prod( par("mfrow") ) ) {
 					position = 1
                   	pageNum = pageNum + 1
@@ -75,7 +74,7 @@ main <- function() {
 addHeaderFooter <- function( field, level, pageNum ) {
 	addPageTitle( field )
 	addPageNumber( pageNum )
-	addPageFooter( paste( str_to_title( level ), "Multidimensional Scaling" ) )
+	addPageFooter( paste( "Multidimensional Scaling [", str_to_title( level ), "]" ) )
 }
 
 # Get variance plot label as percentage

@@ -31,7 +31,7 @@ import biolockj.util.*;
  * For more information, please review the BioBakery instruction manual:
  * <a href= "https://bitbucket.org/biobakery/humann2" target="_top">https://bitbucket.org/biobakery/humann2</a><br>
  * 
- * @web_desc HumanN2 Classifier
+ * @blj.web_desc HumanN2 Classifier
  */
 public class Humann2Classifier extends ClassifierModuleImpl implements ClassifierModule
 {
@@ -151,8 +151,8 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			sb.append( "HumanN2 nucleotide DB: " + getNuclDB() );
-			sb.append( "HumanN2 protein DB: " + getProtDB() );
+			sb.append( "HumanN2 nucleotide DB: " + getDB( HN2_NUCL_DB ) );
+			sb.append( "HumanN2 protein DB: " + getDB( HN2_PROT_DB ) );
 		}
 		catch( final Exception ex )
 		{
@@ -206,7 +206,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	protected String getRuntimeParams() throws Exception
 	{
 		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " + NUCL_DB_PARAM
-				+ " " + getNuclDB() + " " + PROT_DB_PARAM + " " + getProtDB() + " ";
+				+ " " + getDB( HN2_NUCL_DB ) + " " + PROT_DB_PARAM + " " + getDB( HN2_PROT_DB ) + " ";
 	}
 
 	private List<String> getBuildSummaryFunction() throws Exception
@@ -243,6 +243,12 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return lines;
 	}
 
+	private String getDB( final String prop ) throws Exception
+	{
+		return RuntimeParamUtil.isDockerMode() ? DockerUtil.getDockerVolumeDB( prop ).getAbsolutePath()
+				: Config.requireExistingDir( null, prop ).getAbsolutePath();
+	}
+
 	private String getJoinTableCmd() throws Exception
 	{
 		return getClassifierExe() + JOIN_TABLE_CMD_SUFFIX;
@@ -258,16 +264,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	{
 		return new File( getTempSubDir( TEMP_MERGE_READ_DIR ).getAbsoluteFile() + File.separator
 				+ SeqUtil.getSampleId( file.getName() ) + BioLockJUtil.fileExt( file ) );
-	}
-
-	private String getNuclDB() throws Exception
-	{
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			return Config.requireString( this, HN2_NUCL_DB );
-		}
-
-		return Config.requireExistingDir( this, HN2_NUCL_DB ).getAbsolutePath();
 	}
 
 	private String getPairedReadLine( final File file ) throws Exception
@@ -304,16 +300,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 			}
 		}
 		return params;
-	}
-
-	private String getProtDB() throws Exception
-	{
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			return Config.requireString( this, HN2_PROT_DB );
-		}
-
-		return Config.requireExistingDir( this, HN2_PROT_DB ).getAbsolutePath();
 	}
 
 	private String getRenormTableCmd() throws Exception
@@ -365,17 +351,16 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	protected static final String EXE_HUMANN2_RENORM_PARAMS = "exe.humann2RenormTableParams";
 
 	/**
-	 * {@link biolockj.Config} Directory property may contain multiple nucleotide database files: {@value #HN2_NUCL_DB}
+	 * {@link biolockj.Config} Directory property must contain the nucleotide database: {@value #HN2_NUCL_DB}
 	 */
 	protected static final String HN2_NUCL_DB = "humann2.nuclDB";
 
 	/**
-	 * {@link biolockj.Config} Directory property may contain protein nucleotide database files: {@value #HN2_PROT_DB}
+	 * {@link biolockj.Config} Directory property must contain the protein nucleotide database: {@value #HN2_PROT_DB}
 	 */
 	protected static final String HN2_PROT_DB = "humann2.protDB";
 
 	private static final String BUILD_SUMMARY_BASH_COMMENT = "# Wait until all worker scripts are complete to build summary tables";
-
 	private static final String FILE_NAME_PARAM = "--file_name";
 	private static final String FUNCTION_BUILD_SUMMARY_TABLES = "buildSummaryTables";
 	private static final String FUNCTION_CONCAT_PAIRED_READS = "mergePairedReads";
@@ -400,7 +385,6 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 			+ "# Renorm unit options: counts/million (default) or relative abundance" + RETURN
 			+ "# Renorm mode options: community (default) or levelwise";
 	private static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table";
-
 	private static final String RM_STRATIFIED_OUTPUT = "--remove-stratified-output";
 	private static final String TEMP_MERGE_READ_DIR = "merged";
 }

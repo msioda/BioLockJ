@@ -11,11 +11,15 @@
  */
 package biolockj.util;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.math.BigInteger;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.*;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -27,6 +31,7 @@ import biolockj.module.report.r.R_Module;
 import biolockj.module.report.r.R_PlotEffectSize;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.module.report.taxa.BuildTaxaTables;
+import biolockj.module.report.taxa.NormalizeTaxaTables;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -56,7 +61,7 @@ public final class DownloadUtil
 			final File pipeRoot = new File( Config.pipelinePath() );
 
 			boolean hasRmods = false;
-			final String status = ( BioLockJ.isPipelineComplete() ? "completed" : "failed" ) + " pipeline -->";
+			final String status = ( BioLockJ.isPipelineComplete() ? "completed": "failed" ) + " pipeline -->";
 			final Set<File> files = new TreeSet<>();
 			for( final BioModule module: modules )
 			{
@@ -65,12 +70,17 @@ public final class DownloadUtil
 				{
 					hasRmods = true;
 					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( true ) ) );
+							getDirFilter( true, true, !ModuleUtil.isComplete( module ) ) ) );
+				}
+				else if( module instanceof NormalizeTaxaTables )
+				{
+					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
+							getDirFilter( false, false, true ) ) );
 				}
 				else
 				{
 					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( false ) ) );
+							getDirFilter( true, false, !ModuleUtil.isComplete( module ) ) ) );
 				}
 			}
 
@@ -84,9 +94,10 @@ public final class DownloadUtil
 			final List<File> downFiles = buildDownloadList( files );
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
 			final String src = SRC + "=" + Config.pipelinePath();
-			final String cmd = "rsync -v --times --files-from=:$" + SRC + File.separator + getDownloadListFile().getName() + " " + getClusterUser() + "@"
+			final String cmd = "rsync -v --times --files-from=:$" + SRC + File.separator
+					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
 					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
-			
+
 			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + src + RETURN + cmd;
 		}
 
@@ -127,27 +138,57 @@ public final class DownloadUtil
 	}
 
 	/**
-	 * Get the total size of all files included for download.
+	 * Add files to {@value biolockj.util.DownloadUtil#DOWNLOAD_LIST} in pipeline root directory.
 	 * 
-	 * @param files List of download files
-	 * @return BigInteger total download size
+	 * @param files - files to add to the download list
+	 * @return List of files for download
 	 * @throws Exception if errors occur
 	 */
-	protected static BigInteger getDownloadSize( List<File> files ) throws Exception
+	protected static List<File> buildDownloadList( final Collection<File> files ) throws Exception
 	{
-		BigInteger downloadSize = BigInteger.valueOf( 0L );
-		for( File file: files )
+		final List<File> downFiles = new ArrayList<>();
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getDownloadListFile() ) );
+		try
 		{
-			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( file ) );
+			final File pipeRoot = new File( Config.pipelinePath() );
+
+			if( BioLockJ.pipelineInputDir().exists()
+					&& BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE )
+					|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
+					|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
+					|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
+					|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
+			{
+				for( final File file: BioLockJUtil.getPipelineInputFiles() )
+				{
+					if( !SeqUtil.isSeqFile( file ) )
+					{
+						downFiles.add( file );
+						final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
+						writer.write( relPath + RETURN );
+					}
+				}
+			}
+
+			for( final File file: files )
+			{
+				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
+				{
+					downFiles.add( file );
+					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
+					writer.write( relPath + RETURN );
+				}
+			}
 		}
-		
-		return downloadSize;
-	}
+		finally
+		{
+			if( writer != null )
+			{
+				writer.close();
+			}
+		}
 
-
-	private static File getRunAllRScript() throws Exception
-	{
-		return new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
+		return downFiles;
 	}
 
 	/**
@@ -172,20 +213,30 @@ public final class DownloadUtil
 	}
 
 	/**
-	 * Get a directory name filter to include output and (optionally) script folders in file searches.
+	 * Get a directory name filter to include module sub-directories.
 	 * 
+	 * @param includeOutput include the output directory
 	 * @param includeScript include the script directory
+	 * @param includeTemp include the temp directory
 	 * @return a file name filter
 	 * @throws Exception if errors occur
 	 */
-	protected static IOFileFilter getDirFilter( final boolean includeScript ) throws Exception
+	protected static IOFileFilter getDirFilter( final boolean includeOutput, final boolean includeScript, final boolean includeTemp ) throws Exception
 	{
 		final ArrayList<String> dirFilter = new ArrayList<>();
+		if( includeOutput )
+		{
+			dirFilter.add( BioModule.OUTPUT_DIR );
+		}
 		if( includeScript )
 		{
-			dirFilter.add( "script" );
+			dirFilter.add( Constants.SCRIPT_DIR );
 		}
-		dirFilter.add( "output" );
+		if( includeTemp )
+		{
+			dirFilter.add( BioModule.TEMP_DIR );
+		}
+
 		return new NameFileFilter( dirFilter );
 	}
 
@@ -216,17 +267,18 @@ public final class DownloadUtil
 			for( final BioModule module: Pipeline.getModules() )
 			{
 				final boolean includeRawCounts = ModuleUtil.moduleExists( R_PlotEffectSize.class.getName() )
-						&& Config.getBoolean( module, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC );
+						&& !Config.getBoolean( module, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC );
 
 				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
 						|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
-						|| includeRawCounts && ( module instanceof BuildTaxaTables || module instanceof Humann2Parser );
+						|| ( includeRawCounts && module instanceof NormalizeTaxaTables  );
 
 				if( ModuleUtil.hasExecuted( module ) && downloadableType )
 				{
 					modules.add( module );
 				}
 			}
+			
 			return modules;
 		}
 		catch( final Exception ex )
@@ -234,6 +286,24 @@ public final class DownloadUtil
 			Log.warn( DownloadUtil.class, "Unable to find any executed modules to summarize: " + ex.getMessage() );
 		}
 		return null;
+	}
+
+	/**
+	 * Get the total size of all files included for download.
+	 * 
+	 * @param files List of download files
+	 * @return BigInteger total download size
+	 * @throws Exception if errors occur
+	 */
+	protected static BigInteger getDownloadSize( final List<File> files ) throws Exception
+	{
+		BigInteger downloadSize = BigInteger.valueOf( 0L );
+		for( final File file: files )
+		{
+			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( file ) );
+		}
+
+		return downloadSize;
 	}
 
 	/**
@@ -274,36 +344,9 @@ public final class DownloadUtil
 		return script;
 	}
 
-	/**
-	 * Add files to {@value biolockj.util.DownloadUtil#DOWNLOAD_LIST} in pipeline root directory. 
-	 * 
-	 * @param files - files to add to the download list
-	 * @return List of files for download
-	 * @throws Exception if errors occur
-	 */
-	protected static List<File> buildDownloadList( final Collection<File> files ) throws Exception
+	private static File getRunAllRScript() throws Exception
 	{
-		final List<File> downFiles = new ArrayList<>();
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getDownloadListFile() ) );
-		try
-		{
-			final File pipeRoot = new File( Config.pipelinePath() );
-			for( final File file: files )
-			{
-				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
-				{
-					downFiles.add(  file );
-					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
-					writer.write( relPath + RETURN );
-				}
-			}
-		}
-		finally
-		{
-			if( writer != null ) writer.close();
-		}
-
-		return downFiles;
+		return new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
 	}
 
 	/**
@@ -316,7 +359,7 @@ public final class DownloadUtil
 	 * Sets the local directory targeted by the scp command.
 	 */
 	protected static final String DOWNLOAD_DIR = "project.downloadDir";
-	private static final String SRC = "src";
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
+	private static final String SRC = "src";
 }

@@ -26,7 +26,7 @@ import biolockj.util.*;
 /**
  * This BioModule
  * 
- * @web_desc Remove Scarce Pathway Counts
+ * @blj.web_desc Remove Scarce Pathway Counts
  */
 public class RemoveScarcePathwayCounts extends Humann2CountModule implements JavaModule
 {
@@ -403,9 +403,9 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule implements Jav
 				scarceSampleMap.put( id, new TreeSet<>() );
 				for( int i = 1; i < record.size(); i++ )
 				{
-					if( !record.get( i ).equals( "0" ) )
+					if( !record.get( i ).equals( "0" ) && !record.get( i ).equals( "0.0" ) )
 					{
-						scarceSampleMap.get( id ).add( pathways.get( i ) );
+						scarceSampleMap.get( id ).add( pathways.get( i - 1 ) );
 					}
 				}
 			}

@@ -4,6 +4,11 @@
 ##                                                               ##
 ###################################################################
 
+# Rerun current pipeline from point of failure using same MASTER config
+blj_rerun() {
+	biolockj -r $PWD
+}
+
 # Return absolute path of current pipeline if in a pipeline directory
 current_pipeline() {
 	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then

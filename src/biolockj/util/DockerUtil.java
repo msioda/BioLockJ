@@ -20,13 +20,12 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
+import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.module.report.r.R_Module;
-import biolockj.module.seq.AwkFastaConverter;
-import biolockj.module.seq.Gunzipper;
-import biolockj.module.seq.PearMergeReads;
+import biolockj.module.seq.*;
 
 /**
  * DockerUtil for Docker integration.
@@ -44,13 +43,12 @@ public class DockerUtil
 	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes() );
-		Log.info( DockerUtil.class, "Docker Environment variables:" + getDockerEnvVars( module ) );
+		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes( module ) );
 
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
-		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run" + rmFlag( module )
-				+ getDockerEnvVars( module ) + getDockerVolumes() + getDockerImage( module ) );
+		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module )
+				+ getDockerEnvVars( module ) + getDockerVolumes( module ) + getDockerImage( module ) );
 		lines.add( "}" + Constants.RETURN );
 		return lines;
 	}
@@ -64,16 +62,15 @@ public class DockerUtil
 	 */
 	public static String getDockerImage( final BioModule module ) throws Exception
 	{
+		final String className = module.getClass().getSimpleName();
 		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
 				|| module instanceof QiimeClassifier;
 
 		final String name = isQiime ? QiimeClassifier.class.getSimpleName()
 				: module instanceof R_Module ? R_Module.class.getSimpleName()
-						: module instanceof JavaModule ? JavaModule.class.getSimpleName()
-								: module.getClass().getSimpleName();
+						: module instanceof JavaModule ? JavaModule.class.getSimpleName(): className;
 
-		return " " + getDockerUser( module.getClass().getSimpleName() ) + "/" + getImageName( name ) + ":"
-				+ getImageVersion( module.getClass().getSimpleName() );
+		return " " + getDockerUser( className ) + "/" + getImageName( name ) + ":" + getImageVersion( className );
 	}
 
 	/**
@@ -91,25 +88,52 @@ public class DockerUtil
 	}
 
 	/**
-	 * Get mapped Docker system path from {@link biolockj.Config} property by replacing the host system path with the
+	 * Get mapped Docker system database file or directory
+	 * 
+	 * @param prop {@link biolockj.Config} property
+	 * @return Configured database path under the Docker {@value #CONTAINER_DB_DIR}
+	 * @throws Exception if errors occur building DB path
+	 */
+	public static File getDockerVolumeDB( final String prop ) throws Exception
+	{
+		return getDockerVolumeFile( prop, CONTAINER_DB_DIR );
+	}
+
+	/**
+	 * Get mapped Docker system database files from a list property of host database files or directories
+	 * 
+	 * @param prop {@link biolockj.Config} property
+	 * @return List of database paths under the Docker {@value #CONTAINER_DB_DIR}
+	 * @throws Exception if errors occur building DB paths
+	 */
+	public static List<File> getDockerVolumeDBs( final String prop ) throws Exception
+	{
+		final List<File> dbs = new ArrayList<>();
+		for( final String db: Config.requireList( null, prop ) )
+		{
+			final File hostFile = new File( db );
+			dbs.add( new File( CONTAINER_DB_DIR + File.separator + hostFile.getName() ) );
+		}
+
+		return dbs;
+	}
+
+	/**
+	 * Get mapped Docker system File from {@link biolockj.Config} property by replacing the host system path with the
 	 * mapped container path.
 	 * 
-	 * @param path {@link biolockj.Config} property
+	 * @param prop {@link biolockj.Config} property
 	 * @param containerPath Local container path
-	 * @param label Path label
-	 * @return Docker volume file object
+	 * @return Docker volume file
 	 * @throws Exception if errors occur
 	 */
-	public static File getDockerVolumeFile( final String path, final String containerPath, final String label )
-			throws Exception
+	public static File getDockerVolumeFile( final String prop, final String containerPath ) throws Exception
 	{
-		final File hostFile = new File( path );
-		final String newPath = containerPath + File.separator + hostFile.getName();
-		final File newFile = new File( newPath );
+		final File newFile = new File( getDockerVolumePath( prop, containerPath ) );
 		if( !newFile.exists() )
 		{
 			throw new Exception(
-					"Container missing mapped " + label + " volume system path: " + newFile.getAbsolutePath() );
+					"Container missing mapped " + containerPath + " volume system path: " + newFile.getAbsolutePath() );
 		}
 		return newFile;
 	}
@@ -129,16 +153,14 @@ public class DockerUtil
 	 */
 	public static String getImageName( final String className ) throws Exception
 	{
-		final StringBuffer imageName = new StringBuffer();
-
+		String imageName = "";
 		if( useBasicBashImg( className ) )
 		{
-			imageName.append( BLJ_BASH );
+			imageName += BLJ_BASH;
 		}
 		else
 		{
-			imageName.append( className.substring( 0, 1 ).toLowerCase() );
-
+			imageName += className.substring( 0, 1 ).toLowerCase();
 			for( int i = 2; i < className.length() + 1; i++ )
 			{
 				final int len = imageName.toString().length();
@@ -147,18 +169,22 @@ public class DockerUtil
 				if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM )
 						&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
 				{
-					imageName.append( IMAGE_NAME_DELIM ).append( val.toLowerCase() );
+					imageName += IMAGE_NAME_DELIM + val.toLowerCase();
 				}
-				else if( prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
+				else if( !prevChar.equals( IMAGE_NAME_DELIM )
+						|| prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
 				{
-					imageName.append( val.toLowerCase() );
-				}
-				else if( !prevChar.equals( IMAGE_NAME_DELIM ) )
-				{
-					imageName.append( val.toLowerCase() );
+					imageName += val.toLowerCase();
 				}
 			}
+
+			if( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
+					&& hasDB( getShellModule( className ) ) )
+			{
+				imageName += DB_FREE;
+			}
 		}
+
 		Log.info( DockerUtil.class,
 				"Map: Class [" + className + "] <--> Docker Image [ " + imageName.toString() + " ]" );
 		return imageName.toString();
@@ -183,14 +209,26 @@ public class DockerUtil
 	}
 
 	/**
-	 * Boolean to determine if running Docker blj_manager
+	 * Return TRUE if running on AWS (based on Config props).
 	 * 
-	 * @return TRUE if running Docker blj_manager
+	 * @return TRUE if project.env=aws
+	 * @throws Exception if errors occur
+	 */
+	public static boolean inAwsEnv() throws Exception
+	{
+		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
+	}
+
+	/**
+	 * Boolean to determine if should initialize Docker aws_manager
+	 * 
+	 * @return TRUE if running Docker aws_manager in init mode
 	 * @throws Exception if unable to determine Docker module type
 	 */
-	public static boolean isAwsManager() throws Exception
+	public static boolean initAwsCloudManager() throws Exception
 	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && runAws();
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && inAwsEnv()
+				&& !RuntimeParamUtil.runAws();
 	}
 
 	/**
@@ -201,18 +239,19 @@ public class DockerUtil
 	 */
 	public static boolean isBljManager() throws Exception
 	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !runAws();
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !inAwsEnv();
 	}
 
 	/**
-	 * Return TRUE if running on AWS (based on Config props).
+	 * Boolean to determine if running Docker aws_manager
 	 * 
-	 * @return TRUE if project.env=aws
-	 * @throws Exception if errors occur
+	 * @return TRUE if running Docker aws_manager
+	 * @throws Exception if unable to determine Docker module type
 	 */
-	public static boolean runAws() throws Exception
+	public static boolean runAwsCloudManager() throws Exception
 	{
-		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
+		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && inAwsEnv()
+				&& RuntimeParamUtil.runAws();
 	}
 
 	private static final String getDockerEnvVars( final BioModule module ) throws Exception
@@ -220,7 +259,13 @@ public class DockerUtil
 		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
 
-	private static final String getDockerVolumes() throws Exception
+	private static String getDockerVolumePath( final String prop, final String containerPath ) throws Exception
+	{
+		final File hostFile = new File( Config.requireString( null, prop ) );
+		return containerPath + File.separator + hostFile.getName();
+	}
+
+	private static final String getDockerVolumes( final BioModule module ) throws Exception
 	{
 		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;
@@ -232,17 +277,35 @@ public class DockerUtil
 		{
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
 		}
-		if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
+
+		if( module instanceof TrimPrimers )
 		{
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPrimerDir() + ":" + CONTAINER_PRIMER_DIR;
+			final File primers = new File( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) ).getParentFile();
+			dockerVolumes += " -v " + primers.getAbsolutePath() + ":" + CONTAINER_PRIMER_DIR;
+		}
+
+		if( hasDB( module ) )
+		{
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostDbDir() + ":" + CONTAINER_DB_DIR;
 		}
 
 		return dockerVolumes;
 	}
 
+	private static BioModule getShellModule( final String className ) throws Exception
+	{
+		return (BioModule) Class.forName( className ).getDeclaredConstructor().newInstance();
+	}
+
+	private static final boolean hasDB( final BioModule module ) throws Exception
+	{
+		return RuntimeParamUtil.getDockerHostDbDir() != null
+				&& ( module instanceof ClassifierModule || module instanceof KneadData );
+	}
+
 	private static final String rmFlag( final BioModule module ) throws Exception
 	{
-		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "": " " + DOCK_RM_FLAG;
+		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "": DOCK_RM_FLAG;
 	}
 
 	private static boolean useBasicBashImg( final String className ) throws Exception
@@ -256,6 +319,11 @@ public class DockerUtil
 	 * All containers mount the host {@link biolockj.Config} directory to the container"config" volume
 	 */
 	public static final String CONTAINER_CONFIG_DIR = File.separator + "config";
+
+	/**
+	 * Some containers mount a database to the containers "db" volume.
+	 */
+	public static final String CONTAINER_DB_DIR = File.separator + "db";
 
 	/**
 	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume
@@ -312,6 +380,7 @@ public class DockerUtil
 	 */
 	protected static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
 
+	private static final String DB_FREE = "_dbfree";
 	private static final String DOCK_RM_FLAG = "--rm";
 	private static final String DOCKER_IMG_VERSION = "docker.imgVersion";
 	private static final String DOCKER_LATEST = "latest";

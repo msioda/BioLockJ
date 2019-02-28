@@ -14,6 +14,9 @@ addPageNumber <- function( pageNum ){
 
 # Add text to the bottom of the page, centered
 addPageFooter <- function(text, line=0){
+	if( text == "pAbund" ) text = "Pathway Abundance"
+	if( text == "pCovg" ) text = "Pathway Coverage"
+	if( text == "geneFam" ) text = "Gene Family"
 	mtext(text, side=1, outer=TRUE, line=line, adj=0.5)
 }
 
@@ -52,7 +55,7 @@ getColIndexes <- function( countTable, colNames ) {
 getColor <- function( v ) {
 	for( i in 1:length(v) ) {
 		if( grepl("e", v[i]) || !is.na(v[i]) && !is.nan(v[i]) && ( v[i] <= getProperty("r.pvalCutoff", 0.05) ) ) {
-			return( getProperty("r.colorHighlight", "black") )
+			return( getProperty("r.colorHighlight", "red") )
 		} 
 	}
 	return( getProperty("r.colorBase", "black") )
@@ -165,9 +168,9 @@ getFactorGroups <- function( countMetaTable, metaCol, taxaCol ) {
 	return( vals )
 }
 
-# Return the name of the R module level specific log file
-getLogFile <- function( level ) {
-	return( file.path( getTempDir(), paste0( moduleScriptName(), ".", level, ".log") ) )
+# Return  name of the R module log file using the given name
+getLogFile <- function( name ) {
+	return( file.path( getTempDir(), paste0( moduleScriptName(), "_", name, ".log") ) )
 }
 
 # Return the name of the BioLockJ MASTER Config file

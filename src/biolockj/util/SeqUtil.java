@@ -13,7 +13,6 @@ package biolockj.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -33,42 +32,6 @@ public class SeqUtil
 	// Prevent instantiation
 	private SeqUtil()
 	{}
-
-	/**
-	 * Create a copy of the sequence files in property {@value biolockj.Constants#INPUT_DIRS}, output to a directory
-	 * named {@value biolockj.Constants#PROJECT_PIPELINE_DIR}/input.
-	 *
-	 * @throws Exception if unable to copy the files
-	 */
-	public static void copyInputData() throws Exception
-	{
-		final File inputFileDir = new File( Config.pipelinePath() + File.separator + "input" );
-
-		if( !inputFileDir.exists() )
-		{
-			inputFileDir.mkdirs();
-		}
-
-		final File startedFlag = new File( inputFileDir.getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
-		if( startedFlag.exists() )
-		{
-			BioLockJUtil.deleteWithRetry( inputFileDir, 10 );
-		}
-
-		for( final File dir: BioLockJUtil.getInputDirs() )
-		{
-			Log.info( SeqUtil.class, "Copying input files from " + dir + " to " + inputFileDir );
-			FileUtils.copyDirectory( dir, inputFileDir );
-		}
-
-		final File completeFlag = new File( inputFileDir.getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
-		final FileWriter writer = new FileWriter( completeFlag );
-		writer.close();
-		if( !completeFlag.exists() )
-		{
-			throw new Exception( "Unable to create " + completeFlag.getAbsolutePath() );
-		}
-	}
 
 	/**
 	 * Method counts number of reads in the given sequence file by counting the number of lines and dividing by the
@@ -509,8 +472,6 @@ public class SeqUtil
 	 */
 	public static void initialize() throws Exception
 	{
-		// 1st call to BioLockJUtil.getPipelineInputFiles() initializes PIPELINE_SEQ_INPUT_TYPE
-		BioLockJUtil.getPipelineInputFiles();
 		if( piplineHasSeqInput() )
 		{
 			initSeqParams();
