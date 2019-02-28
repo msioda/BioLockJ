@@ -11,7 +11,9 @@ let express = require('express'),
  indexAux = require('../lib/indexAux.js'),
  fs = require('fs'),
  events = require('events'),
- eventEmitter = new events.EventEmitter();//for making an event emitter
+ eventEmitter = new events.EventEmitter();//for making an event emitter,
+ sys = require('util');
+ exec = require('child_process').exec;
 const { spawn } = require('child_process');//for running child processes
 const Stream = new events.EventEmitter(); // my event emitter instance
 
@@ -338,7 +340,9 @@ router.post('/getMalcolmGitRepo', function(req, res, next) {
     console.dir(req.body.formData);
     const sys = require('util');
     const exec = require('child_process').exec;
-    exec('git clone https://github.com/mjzapata/AWSBatchGenomicsStack.git', function(err, stdout, stderr) {
+    exec(`
+      git clone https://github.com/mjzapata/AWSBatchGenomicsStack.git ; cd AWSBatchGenomicsStack ;  ./installBatchDeployer.sh pwd
+    `, function(err, stdout, stderr) {
       console.log(stdout);
       console.error(err);
       console.error(stderr);
@@ -351,6 +355,7 @@ router.post('/getMalcolmGitRepo', function(req, res, next) {
     console.error(e);
   }
 });
+const batchAwsConfigFile = "~/.batchawsdeploy/config"
 
 router.post('/configureAws', function(req, res, next) {
   /*
@@ -359,19 +364,33 @@ router.post('/configureAws', function(req, res, next) {
   */
   console.log('configureAws');
   try {
-    console.log('req.body.form: ', req.body.form);
+    console.log('req.body.formData: ', req.body.formData);
     console.dir(req.body.formData);
     const sys = require('util');
     const exec = require('child_process').exec;
       //then write credentials
-    exec(`../AWSBatchGenomicsStack/webapp/writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
-      console.log(stdout);
-      console.error(err);
-      console.error(stderr);
-      res.setHeader('Content-Type', 'text/html');
-      res.write(`Server Response: ${stdout}`);
-      res.end();
-    });
+    var spawn = require('child_process').spawn,
+        aws = spawn(`source ${batchAwsConfigFile} ; writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, {shell: '/bin/bash'});
+
+aws.stdout.on('data', function (data) {
+  console.log('stdout: ' + data.toString());
+});
+
+aws.stderr.on('data', function (data) {
+  console.log('stderr: ' + data.toString());
+});
+
+aws.on('exit', function (code) {
+  console.log('child process exited with code ' + code.toString());
+});
+    // exec(`source ${batchAwsConfigFile} ; writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, {shell: '/bin/bash'},  function(err, stdout, stderr) {
+    //   console.log(stdout);
+    //   console.error(err);
+    //   console.error(stderr);
+    //   res.setHeader('Content-Type', 'text/html');
+    //   res.write(`Server Response: ${stdout}`);
+    //   res.end();
+    // });
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
     console.error(e);
@@ -384,16 +403,48 @@ router.post('/deployBatchEnv', function(req, res, next) {
   s3bucket: string,
   docker run --rm   --name pg-docker -e POSTGRES_PASSWORD=docker -d -p 5432:5432 -v /Users/aaronyerke/git/postgres:/var/lib/postgresql/data  postgres
   */
+  console.log('req.body.formData: ', req.body.formData);
   console.log('deployBatchEnv');
   try {
-    exec(`deployBatchEnv.sh ${req.body.formData.stackname}`, function(err, stdout, stderr) {
-      console.log(stdout);
-      console.error(err);
-      console.error(stderr);
-      res.setHeader('Content-Type', 'text/html');
-      res.write(`Server Response: ${stdout}`);
-      res.end();
-    });
+    if (req.body.formData.deployArg = 'delete'){
+      var spawn = require('child_process').spawn,
+          aws = spawn(`source ${batchAwsConfigFile} ; deployBatchEnv.sh delete ${req.body.formData.stackname}`, {shell: '/bin/bash'});
+
+      aws.stdout.on('data', function (data) {
+        console.log('stdout: ' + data.toString());
+      });
+
+      aws.stderr.on('data', function (data) {
+        console.log('stderr: ' + data.toString());
+      });
+
+      aws.on('exit', function (code) {
+        console.log('child process exited with code ' + code.toString());
+      });
+    }else{
+      var spawn = require('child_process').spawn,
+          aws = spawn(`source ${batchAwsConfigFile} ; deployBatchEnv.sh create ${req.body.formData.stackname} ${req.body.formData.dockerRepository}`, {shell: '/bin/bash'});
+
+      aws.stdout.on('data', function (data) {
+        console.log('stdout: ' + data.toString());
+      });
+
+      aws.stderr.on('data', function (data) {
+        console.log('stderr: ' + data.toString());
+      });
+
+      aws.on('exit', function (code) {
+        console.log('child process exited with code ' + code.toString());
+    })
+  }
+    // exec(`source ${batchAwsConfigFile} ; deployBatchEnv.sh create ${req.body.formData.stackname} ${req.body.formData.dockerRepository}`, {shell: '/bin/bash'}, function(err, stdout, stderr) {
+    //   console.log(stdout);
+    //   console.error(err);
+    //   console.error(stderr);
+    //   res.setHeader('Content-Type', 'text/html');
+    //   res.write(`Server Response: ${stdout}`);
+    //   res.end();
+    // });
 
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
@@ -407,7 +458,7 @@ router.post('/launchEc2HeadNode', function(req, res, next) {
   */
   console.log('launchEC2HeadNode.sh');
   try {
-    exec(`launchEC2HeadNode.sh ${req.body.formData.instanceType} ${req.body.formData.scriptName}`, function(err, stdout, stderr) {
+    exec(`source ${batchAwsConfigFile} ; launchEC2HeadNode.sh ${req.body.formData.instanceType} ${req.body.formData.scriptName}`, {shell: '/bin/bash'}, function(err, stdout, stderr) {
       console.log(stdout);
       console.error(err);
       console.error(stderr);
