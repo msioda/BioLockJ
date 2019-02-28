@@ -449,6 +449,7 @@ public class RuntimeParamUtil
 			else if( prevParam.equals( INPUT_DIR_FLAG ) )
 			{
 				params.put( INPUT_DIR_FLAG, arg );
+				Config.requireString( null, Constants.INPUT_DIRS );
 			}
 			else if( prevParam.equals( META_DIR_FLAG ) )
 			{
