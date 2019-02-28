@@ -328,7 +328,7 @@ router.get('/streamProgress', function(request, response){
 });
 
 
-router.post('/startAws', function(req, res, next) {
+router.post('/getMalcolmGitRepo', function(req, res, next) {
   /*
   The components of the formData should be:
   AWSACCESSKEYID, AWSSECRETACCESSKEY, REGION, OUTPUTFORMAT, PROFILE
@@ -343,11 +343,6 @@ router.post('/startAws', function(req, res, next) {
       console.error(err);
       console.error(stderr);
     });
-    exec(`AWSBatchGenomicsStack/webapp/writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
-      console.log(stdout);
-      console.error(err);
-      console.error(stderr);
-    })
     res.setHeader('Content-Type', 'text/html');
     res.write('Server Response: AWS launched!');
     res.end();
@@ -356,6 +351,7 @@ router.post('/startAws', function(req, res, next) {
     console.error(e);
   }
 });
+
 router.post('/configureAws', function(req, res, next) {
   /*
   The components of the formData should be:
@@ -367,28 +363,15 @@ router.post('/configureAws', function(req, res, next) {
     console.dir(req.body.formData);
     const sys = require('util');
     const exec = require('child_process').exec;
-    exec('git clone https://github.com/mjzapata/AWSBatchGenomicsStack.git', function(err, stdout, stderr) {
-      if (err){
-        console.error(err);
-        res.setHeader('Content-Type', 'text/html');
-        res.write('Server Response: AWS Configured!');
-        res.end();
-        return;
-      }
-      console.log(stdout);
-      console.error(stderr);
-
       //then write credentials
-      exec(` ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
-        console.log(stdout);
-        console.error(err);
-        console.error(stderr);
-        res.setHeader('Content-Type', 'text/html');
-        res.write(`Server Response: ${stout}`);
-        res.end();
-      })
+    exec(`../AWSBatchGenomicsStack/webapp/writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, function(err, stdout, stderr) {
+      console.log(stdout);
+      console.error(err);
+      console.error(stderr);
+      res.setHeader('Content-Type', 'text/html');
+      res.write(`Server Response: ${stdout}`);
+      res.end();
     });
-
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
     console.error(e);
@@ -408,7 +391,7 @@ router.post('/deployBatchEnv', function(req, res, next) {
       console.error(err);
       console.error(stderr);
       res.setHeader('Content-Type', 'text/html');
-      res.write(`Server Response: ${stout}`);
+      res.write(`Server Response: ${stdout}`);
       res.end();
     });
 
@@ -429,7 +412,7 @@ router.post('/launchEc2HeadNode', function(req, res, next) {
       console.error(err);
       console.error(stderr);
       res.setHeader('Content-Type', 'text/html');
-      res.write(`Server Response: ${stout}`);
+      res.write(`Server Response: ${stdout}`);
       res.end();
     });
 
