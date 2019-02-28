@@ -56,16 +56,20 @@ exports.saveConfigToLocal = function(configName, configText){
 exports.createFullLaunchCommand = function(launchJSON, restartPath){//
   //const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
   //const bljDir = process.env.BLJ;
+  const execSync = require('child_process').execSync;
   const dockblj = path.join('..','script','dockblj');//relative path from webapp folder
   let command = [];
   command.push(dockblj.toString());
   Object.keys(launchJSON).forEach(key => {
+    const resolvedPath = execSync(`echo ${launchJSON[key]}`).toString()
+    console.log('key: ', key);
+    console.log('resolvedPath: ', resolvedPath);
     //if key not config, grab path.Dirname(launchJSON[key])
-    if (!['i','t', 'm', 'c'].includes(key)){//need only the dir, not the file name
-      launchJSON[key] = path.dirname(launchJSON[key]);
-      command.push(`${key}=${launchJSON[key]}`)
+    if (key != 'c' && key != 'i'){//need only the dir, not the file name
+      launchJSON[key] = path.dirname(resolvedPath);
+      command.push(`${key}=${resolvedPath}`)
     }else{
-    command.push(`${key}=${launchJSON[key]}`);
+    command.push(`${key}=${resolvedPath}`);
     };
   });
   command.push('-docker');
