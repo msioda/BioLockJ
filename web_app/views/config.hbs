@@ -46,7 +46,6 @@
     <button class="tablinks" onclick="openTab(event, 'rarefyOtuCountsTab')">Rarefy OTU Counts</button>
     <button class="tablinks" onclick="openTab(event, 'removeLowOtuCountsTab')">Remove Low OTU Counts</button>
     <button class="tablinks" onclick="openTab(event, 'seqFileValidatorTab')">Sequence File Validator</button>
-    <button class="tablinks" onclick="openTab(event, 'clusterTab')">Cluster</button>
     <button class="tablinks" onclick="openTab(event, 'demultiplexerTab')">Demultiplexer</button>
     <button class="tablinks" onclick="openTab(event, 'dockerTab')">Docker</button>
     <button class="tablinks" onclick="openTab(event, 'humann2Tab')">HumanN2</button>
@@ -754,24 +753,6 @@ For fastq, typically “@”.)<h5></p>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
-  <div id="clusterTab" class="tabcontent moduleTab">
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <p>Command(s) to run at the start of every script after loading cluster modules (if any):
-      <input class="sp" type="text" name="cluster.prologue" id="cluster.prologue" value="">
-    </p>
-    <p>Allow each JavaModule to instantiate a clone of the application in direct mode on a job node via a single worker script to avoid overworking the head node where BioLockJ is deployed:
-      <select class="sp" name="cluster.runJavaAsScript" id="cluster.runJavaAsScript">
-        <option selected default value="">Click for options</option>
-        <option value="Y">Yes</option>
-        <option value="N">No</option>
-      </select>
-    </p>
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
-    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div>
-
   <div id="demultiplexerTab" class="tabcontent moduleTab">
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -935,7 +916,7 @@ For fastq, typically “@”.)<h5></p>
         </p>
         <p>Docker repository (for both jobs) <input type="text" name="dockerRepository" value="">
         </p>
-        <p>S3bucket: <input type="text" name="s3bucket" value="" placeholder='autogerate'>
+        <p>S3bucket: <input type="text" name="s3bucket" value="autogenerate">
         </p>
         <p>You can view your S3 bucket here <a href="#"></a>.
         </p>
