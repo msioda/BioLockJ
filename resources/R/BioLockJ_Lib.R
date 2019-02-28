@@ -14,6 +14,9 @@ addPageNumber <- function( pageNum ){
 
 # Add text to the bottom of the page, centered
 addPageFooter <- function(text, line=0){
+	if( text == "pAbund" ) text = "Pathway Abundance"
+	if( text == "pCovg" ) text = "Pathway Coverage"
+	if( text == "geneFam" ) text = "Gene Family"
 	mtext(text, side=1, outer=TRUE, line=line, adj=0.5)
 }
 

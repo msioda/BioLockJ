@@ -223,7 +223,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	private Integer numSamples = null;
 	private static final String ABUND_SUFFIX = "_Abundance";
 	private static final String COVERAGE_SUFFIX = "_Coverage";
-	private static final String HN2_PARSED = "hnn2";
+	private static final String HN2_PARSED = "hn2";
 	private static final String KD_SUFFIX = "_kneaddata";
 	private static final String PAIRED_SUFFIX = "_paired_merged";
 	private static final String RPK_SUFFIX = "-RPKs";

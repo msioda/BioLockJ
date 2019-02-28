@@ -83,7 +83,13 @@ main <- function(){
 # Plot fold changes for normalized counts
 plotFoldChange <- function( countTable, metaTable, level, field, pvals ){
   	normCountTable = getNormTaxaTable( level )
-	if( is.null( normCountTable ) ) normCountTable = countTable
+	if( is.null( normCountTable ) ) {
+		logInfo( "Normalized data not found by analyzing file names, using same table used for other plots" )
+	 	normCountTable = countTable
+	} else {
+		logInfo( "Using normalized data for fold change plot" )
+	}
+	
 	splitRelAbund = split(normCountTable[row.names(metaTable),], f=metaTable[,field])
 	logInfo( c("Fold change: Calling calcBarSizes for level:", level, ":", field ) )
           

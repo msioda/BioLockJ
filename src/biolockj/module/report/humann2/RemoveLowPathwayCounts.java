@@ -153,7 +153,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 			for( int i = 1; i < record.size(); i++ )
 			{
 				final Double count = Double.valueOf( record.get( i ) );
-				final String pathway = pathways.get( i );
+				final String pathway = pathways.get( i -1 );
 				if( count < getMinCount() )
 				{
 					line.add( "0.0" );

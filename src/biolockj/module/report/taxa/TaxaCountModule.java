@@ -12,9 +12,7 @@
 package biolockj.module.report.taxa;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Log;
@@ -43,7 +41,8 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 					files.add( f );
 				}
 			}
-			cacheInputFiles( files );
+
+			cacheInputFiles( filterByProcessLevel( files ) );
 		}
 
 		return getFileCache();
@@ -99,4 +98,74 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 		return isTaxaModule( module );
 	}
 
+	
+	/**
+	 * Pipelines may include taxa tables + normalized taxa tables (or log normalized taxa tables).
+	 * Standard modules will always want the most processed modules (log-norm is top preference, then normalized, lastly raw counts).
+	 * The purpose of includes less processes normalized tables is merely to provide the required input
+	 * for the R_PlotEffectSize module (which find the correct tables in an R function).
+	 * 
+	 * @param files List of taxa table files
+	 * @return List of taxa tables (only 1/level)
+	 * @throws Exception if errors occur
+	 */
+	protected List<File> filterByProcessLevel( final List<File> files ) throws Exception
+	{
+		final List<File> filteredFiles = new ArrayList<>();
+		final Map<String, Set<File>> levelFiles = getTaxaFilesByLevel( files );
+		for( String level: levelFiles.keySet() )
+		{
+			if( levelFiles.get( level ).size() == 1 )
+			{
+				filteredFiles.add( levelFiles.get( level ).iterator().next() );
+				continue;
+			}
+			
+			File topFile = null;
+			for( File file: levelFiles.get( level ) )
+			{
+				if( TaxaUtil.isLogNormalizedTaxaFile( file ) )
+				{
+					topFile = file;
+					break;
+				}
+				if( TaxaUtil.isNormalizedTaxaFile( file ) )
+				{
+					topFile = file;
+				}
+				else if( topFile == null )
+				{
+					topFile = file;
+				}
+			}
+			
+			filteredFiles.add( topFile );
+		}
+		
+		return filteredFiles;
+	}
+	
+	private Map<String, Set<File>> getTaxaFilesByLevel( final List<File> files ) throws Exception
+	{
+		final Map<String, Set<File>> levelFiles = new HashMap<>();
+		for( String level: TaxaUtil.getTaxaLevels() )
+		{
+			for( File file: files )
+			{
+				if( file.getName().contains( level ) )
+				{
+					Set<File> fileSet = levelFiles.get( level );
+					if( fileSet == null )
+					{
+						fileSet = new HashSet<>();
+					}
+					fileSet.add( file );
+					levelFiles.put( level, fileSet );
+				}
+			}
+		}
+		
+		return levelFiles;
+	}
+	
 }

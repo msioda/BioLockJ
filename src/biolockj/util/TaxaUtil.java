@@ -358,11 +358,29 @@ public class TaxaUtil
 	 */
 	public static boolean isNormalizedTaxaFile( final File file ) throws Exception
 	{
-		final String suffix =  "_" + NORMALIZED + "_";
 		for( final String level: getTaxaLevels() )
 		{
-			if( file.getName().contains( "_" + TAXA_TABLE + "_" ) &&
-					file.getName().endsWith( suffix + level + Constants.TSV_EXT ) )
+			if( file.getName().endsWith( "_" + TAXA_TABLE + "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) )
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Check the file name to determine if it is a Log normalized taxonomy table file.
+	 * 
+	 * @param file File to test
+	 * @return boolean TRUE if file is a normalized taxonomy count file
+	 * @throws Exception if errors occur
+	 */
+	public static boolean isLogNormalizedTaxaFile( final File file ) throws Exception
+	{
+		for( final String level: getTaxaLevels() )
+		{
+			if( file.getName().contains( "_" + TAXA_TABLE + "_Log" ) &&
+					file.getName().endsWith( "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) )
 			{
 				return true;
 			}

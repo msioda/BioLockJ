@@ -335,7 +335,7 @@ public class BioLockJUtil
 			ignore.addAll( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) );
 		}
 
-		ignore.add( file.getAbsolutePath() );
+		ignore.add( file.getName() );
 		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
 	}
 
@@ -600,6 +600,11 @@ public class BioLockJUtil
 			{
 				fileTypes.add( PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE );
 			}
+			else if( TaxaUtil.isLogNormalizedTaxaFile( file ) )
+			{
+				fileTypes.add( PIPELINE_LOG_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE );
+				fileTypes.add( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+			}
 			else if( TaxaUtil.isNormalizedTaxaFile( file ) )
 			{
 				fileTypes.add( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE );
@@ -673,6 +678,13 @@ public class BioLockJUtil
 	 * requirements to pass {@link biolockj.util.TaxaUtil#isNormalizedTaxaFile(File)}.
 	 */
 	public static final String PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count_norm";
+	
+	/**
+	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_LOG_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
+	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for log-normalized taxa count files that meet the file
+	 * requirements to pass {@link biolockj.util.TaxaUtil#isLogNormalizedTaxaFile(File)}.
+	 */
+	public static final String PIPELINE_LOG_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count_log_norm";
 
 	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE}<br>
