@@ -77,7 +77,8 @@
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
-      <p id="defaultPropsP">Path to default properties file:
+        <button type="button" name="dockerDefaultProps" id="dockerDefaultProps">Add Default Properties</button>
+      <p class="hidden" id="defaultPropsP">Path to default properties file:
         <input class="sp" type="text" id="project.defaultProps" name="project.defaultProps" size='70'><br>
         <!-- add file picker here -->
         <i>(Path to a default BioLockJ configuration file containing default
@@ -97,27 +98,10 @@
           <option value="aws">AWS</option>
           <option value="cluster">Cluster</option>
           <option value="local">Local</option>
-        </select></p>
-      <p>Run project in Docker:
-        <select class="sp" id="project.runDocker" name="project.runDocker">
-          <option selected default value="">Click for options</option>
-          <option default value="Y">Yes</option>
-          <option value="N">No</option>
-        </select></p>
-      <p>Delete docker containers on exit
-        <select class="sp" id="docker.deleteContainerOnExit" name="docker.deleteContainerOnExit">
-          <option selected default value="">Click for options</option>
-          <option value="Y">Yes</option>
-          <option value="N">No</option>
-        </select></p>
+        </select>
+      </p>
       <p>A directory on the local workstation where the cluster.downloadModule will be downloaded
         <input class="sp" type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
-      <p>Assign module to demultiplex datasets.
-        <input class="sp" type="text" id="project.defaultModuleDemultiplexer" name="project.defaultModuleDemultiplexer" size='70'></p>
-      <p>Assign module to convert fastq sequence files into fasta format when required.
-        <input class="sp" type="text" id="project.defaultModuleFastaConverter" name="project.defaultModuleFastaConverter" size='70'></p>
-      <p>Assign module to merge paired reads when required.
-        <input class="sp" type="text" id="project.defaultModuleSeqMerger" name="project.defaultModuleSeqMerger" size='70'></p>
       <p>Set chmod -R command security bits on pipeline root directory (Ex. 770).
         <input class="sp" type="text" id="project.permissions" name="project.permissions" size='70'>
       </p>
@@ -177,7 +161,7 @@
       </div>
     </fieldset>
     <p>BioLockJ automatically adds implicit modules as they are needed, but you may override this behavior and force it to run an implicit module.</p>
-    <select class="sp" id="project.allowImplicitModules" name="project.allowImplicitModules">
+    <select id="project.allowImplicitModules" name="project.allowImplicitModules">
       <option class='noOverrideImplicit' selected default value="">Click for options</option>
       <option id='yesOverrideImplicit' value="Y">Allow implicit modules to be directly added to pipeline</option>
       <option class='noOverrideImplicit' value="N">Allow BLJ to determine where to add implicit modules in the pipeline</option>
@@ -213,14 +197,6 @@ For fastq, typically “@”.)<h5></p>
            isted in input.forwardFileSuffix/reverseFileSuffix.
            If input.demultiplex=Y, provide 1st character in the sequence header after ID;
            for fastq, typically “:” char.)</h5></p>
-      <p>Maximum accepted length of sequence read:
-        <input class="sp" type="number" id="input.seqMaxLen" name="input.seqMaxLen" min="1"><br></p>
-      <p>Minimum accepted length of sequence read:
-        <input class="sp" type="number" id="input.seqMinLen" name="input.seqMinLen" min="1"><br></p>
-      <p>Minimum number of sequences per sample for use in rarefication (BioLockJ will discard samples with sequences below this.):
-        <input class="sp" type="number" id="rarefier.min" name="rarefier.min" min="1"><br></p> <!--these should be hidden unless rarefy module is selected (also change names)-->
-      <p>Randomly select maximum number of sequences per sample use in rarefication:
-        <input class="sp" type="number" id="rarefier.max" name="rarefier.max" min="1"><br></p>
       <p>Path to file containing primers to trim (File must contain only one sequence per line):
         <input class="sp" type="text" id="trimPrimers.filePath" name="trimPrimers.filePath" size='70'><br></p>
       <p>Discard reads with no primers?
@@ -286,21 +262,9 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <p>Job script header to define # of nodes, # of cores, RAM, walltime, etc.
         <input class="sp" type="text" id="cluster.jobHeader" name="cluster.jobHeader"><br></p>
-      <p>Number of classifier threads (Integer value passed to ClassifierModule if it has a number of threads parameter.
-        If undefined, script.numThreads will be used instead because classifiers often
-        require more resources than other modules.):
-        <input class="sp" type="number" id="cluster.numClassifierThreads" name="cluster.numClassifierThreads" min='1'><br></p>
-      <p>Run java as script module: (If Y, each JavaModule will instantiate a clone of the
-        application in direct mode on a job node via a single worker script to avoid overworking
-        the head node where BioLockJ is deployed):
-        <select class="sp" id="cluster.runJavaAsScriptModule" name="cluster.runJavaAsScriptModule">
-          <option selected default value="">Click for options</option>
-          <option value="Y">Yes</option>
-          <option value="N"> No</option>
-        </select></p>
       <p>Validate cluster parameters: (If Y, validate
         cluster.jobHeader/cluster.classifierHeader "ppn:" or "procs:"
-        value matches script.numThreads/cluster.numClassifierThreads)
+        value matches script.numThreads
         <select class="sp" id="cluster.validateParams" name="cluster.validateParams">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
@@ -318,12 +282,6 @@ For fastq, typically “@”.)<h5></p>
   <div id="scriptTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Exit program if errors in script occur: (script.exitOnError)
-        <select class="sp" id="script.exitOnError" name="script.exitOnError">
-          <option selected default value="">Click for options</option>
-          <option value="Y">Yes</option>
-          <option value="N">No (failures will be logged to failure directory)</option>
-          </select></p>
       <p>Number of sequence files to process per script:
         <input class="sp" type="number" min='0' id="script.batchSize" name="script.batchSize"><br></p>
       <p>Command to grant script execute permissions:
@@ -337,9 +295,6 @@ For fastq, typically “@”.)<h5></p>
         <input class="sp" type="number" min='0' id="script.timeout" name="script.timeout"><br>
       </p>
       <!--  Question for mike: whats the difference between these two? -->
-      <p>Set # minutes before direct Java module script will time out and fail
-        <input class="sp" type="number" min='0' id="java.timeout" name="java.timeout"><br>
-      </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -367,10 +322,7 @@ For fastq, typically “@”.)<h5></p>
           <option value="N"> No</option>
         </select></p>
       <p>"Integer, minimum table count allowed. If a count less that this value is found, it is set to 0.:
-        <input class="sp" type="number" min='0' id="report.minCount" name="report.minCount"><br></p>
-      <p>ParserModule ignores OTU counts if the total OTU count for all samples falls below this minimum number when building raw count tables:
-        <input class="sp" type="number" min='0' id="report.minOtuThreshold" name="report.minOtuThreshold">
-      <!--  <p>Delimiter to sepearte genus and species:<br>
+        <input class="sp" type="number" min='0' id="report.minCount" name="report.minCount"><br></p>      <!--  <p>Delimiter to sepearte genus and species:<br>
         <input class="sp" type="text" name="emptySpaceDelim"><br></p>-->
       <p <input class="sp" id='report.taxonomyLevels'>Taxonomic levels included in report:<br>
         <input type="checkbox" name="report.taxonomyLevels" value="domain">Domain<br>
@@ -451,23 +403,10 @@ For fastq, typically “@”.)<h5></p>
         </select></p>
       <p>List metadata columns to exclude from R script reports (comma separated)
         <input class="sp" type="text" id='r.excludeFields' name='r.excludeFields'></p>
-      <p>Filter fields: (Ordered list of metadata fields that together with r.filterOperators and r.filterValues
-        are used to filter OTU-metadata tables in generated R script reports.)
-        <input class="sp" type="text" id="r.filterFields" name="r.filterFields"></p>
-      <p>Filter out rows with "NA" values for these fields in R
-        <input class="sp" type="text" id="r.filterNaFields" name="r.filterNaFields"></p>
-      <p>List of logical operators to apply to attributes filter:
-        <input class="sp" type="text" id="r.filterOperators" name="r.filterOperators"></p>
-      <p>Filter values: <br><i>(An ordered list of values to compare with attributes filter)</i>
-        <input class="sp" type="text" id="r.filterValues" name="r.filterValues"></p>
       <p>Explicitly override default field type assignment to model as a nominal field in R (Comma seperated list)<br>
         <input class="sp" type="text" id="r.nominalFields" name="r.nominalFields">    </p>
-      <p>Explicitly override default field type assignment to model as a numeric field in R. (Comma seperated list)<br>
-        <input class="sp" type="text" id="r.numericData" name="r.numericData"><br>  </p>
       <p>Sets R plot pch parameter for PDF report:
         <input class="sp" type='text' id="r.pch" name="r.pch"></p>
-      <p>Sets PDF report plot label maximum width
-        <input class="sp" type="text" id="r.plotWidth" min="1" name="r.plotWidth" value=""></p>
       <p>Sets p-value cutoff used to assign label the highlight color
         <input class="sp" type="text" id="r.pvalCutoff" name="r.pvalCutoff" value="">
       </p>
@@ -510,14 +449,6 @@ For fastq, typically “@”.)<h5></p>
       <p>Optional bowtie2 parameters used by SlimmClassifier:
         <input class="sp" type="text" id="exe.bowtie2Params" name="exe.bowtie2Params">
       </p>
-      <p>Classifier executable command:
-        <input class="sp" type="text" id="exe.classifier" name="exe.classifier">
-      </p>
-      <p>Optional classifier parameters,
-        excluding parameters generated by BioLockJ (input files,
-        output files, numThreads, etc.):
-        <input class="sp" type="text" id="exe.classifierParams" name="exe.classifierParams">
-      </p>
       <p>Define executable gzip command if default "gzip" is not included in your $PATH:
         <input class="sp" type="text" id="exe.gzip" name="exe.gzip">
       </p>
@@ -538,9 +469,6 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <p>Define executable Rscript command, if default "Rscript" is not included in your $PATH:
         <input class="sp" type="text" id="exe.Rscript" name="exe.Rscript">
-      </p>
-      <p>Define executable samtools command, if default "samtools" is not included in your $PATH
-        <input class="sp" type="text" id="exe.samtools" name="exe.samtools">
       </p>
       <p>Define executable vsearch command, if default "vsearch" is not included in your $PATH:
         <input class="sp" type="text" id="exe.vsearch" name="exe.vsearch">
@@ -598,9 +526,6 @@ For fastq, typically “@”.)<h5></p>
       <p>Required RDP minimum threshold score for valid OTUs:
         <input class="sp" type="text" id="rdp.minThresholdScore" name="rdp.minThresholdScore">
       </p>
-      <p>Path to RDP classifier:
-        <input class="sp" type="text" size='70' id="rdp.classifier" name="rdp.classifier">
-      </p>
       <p>File property for RDP java executable JAR:
         <input class="sp" type="text" size='70' id="rdp.jar" name="rdp.jar">
       </p>
@@ -639,12 +564,6 @@ For fastq, typically “@”.)<h5></p>
       <p>Path to Kraken database:
         <input class="sp" type="text" size='70' id="kraken.db" name="kraken.db">
       </p>
-      <p>Path to Kraken classifier:
-        <input class="sp" type="text" size='70' id="kraken.classifier" name="kraken.classifier">
-      </p>
-      <p>Additional Kraken classifier parameters:
-        <input class="sp" type="text" size='70' id="kraken.classifierParams" name="kraken.classifierParams">
-      </p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
       <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
@@ -663,37 +582,6 @@ For fastq, typically “@”.)<h5></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
   </div>
-
-  <div id="metaphlanTab" class="tabcontent">
-      <button class="createDownload">Create configuration file for download</button>
-      <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Path to MetaPhlAn database:
-        <input class="sp" type="text" size='70' id="metaphlan.db" name="metaphlan.db">
-      </p>
-      <p>Path to MetaPhlAn classifier:
-        <input class="sp" type="text" size='70' id="metaphlan.classifier" name="metaphlan.classifier">
-      </p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
-      <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
-  </div>
-
-  <!-- <div id="slimmTab" class="tabcontent">
-      <button class="createDownload">Create configuration file for download</button>
-      <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Path to SLIMM database:
-        <input class="sp" type="text" size='70' id="slimm.db" name="slimm.db">
-      </p>
-      <p>Path to SLIMM classifier:
-        <input class="sp" type="text" size='70' id="slimm.classifier" name="slimm.classifier">
-      </p>
-      <p>Path the bowtie2 reference genome index:
-        <input class="sp" type="text" size='70' id="slimm.refGenomeIndex" name="slimm.refGenomeIndex">
-      </p>
-      <button class="createDownload">Create configuration file for download</button>
-      <a class="downloadlink">Download configuration file to default directory</a>
-      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div> -->
 
   <div id="r_PlotMdsTab" class="tabcontent moduleTab">
     <button class="createDownload">Create configuration file for download</button>
@@ -825,13 +713,6 @@ For fastq, typically “@”.)<h5></p>
     <p>Quantile for rarefication. The number of OTUs/sample are ordered, all samples with more OTUs than the quantile sample are subselected without replacement until they have the same number of OTUs as the quantile sample"}
       <input class='sp' type="number" name="rarefyOtuCounts.quantile" id="rarefyOtuCounts.quantile" value="">
     </p>
-    <p>Remove all samples below the quantile for rarefication:
-      <select class="sp" name="rarefyOtuCounts.removeSamplesBelowQuantile" id="rarefyOtuCounts.removeSamplesBelowQuantile">
-        <option selected default value="">Click for options</option>
-        <option value="Y">Yes</option>
-        <option value="N">No</option>
-      </select>
-    </p>
     <p>Remove all samples below the rarefyOtuCounts.quantile quantile:
       <select class="sp" name="rarefyOtuCounts.rmLowSamples" id="rarefyOtuCounts.rmLowSamples">
         <option selected default value="">Click for options</option>
@@ -847,12 +728,6 @@ For fastq, typically “@”.)<h5></p>
   <div id="removeLowOtuCountsTab" class="tabcontent moduleTab">
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <p>Minimum number of OTUs allowed, if a count less that this value is found, it is set to 0.
-      <input class='sp' type="number" min="0" name="removeLowOtuCounts.minOtuCount" id="removeLowOtuCounts.minOtuCount" value="">
-    </p>
-    <p>Minimum percentage of samples that must contain an OTU for it to be kept.
-      <input class='sp' type="number" min="0" max="1" name="removeScarceOtuCounts.cutoffPct" id="removeScarceOtuCounts.cutoffPct" value="">
-    </p>
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -916,14 +791,6 @@ For fastq, typically “@”.)<h5></p>
         <option value="barcode_in_seq">Barcode in sequence</option>
         <option value="id_in_header">Sequence ID in header</option>
         <option selected default value="do_not_demux.">N/A</option>
-      </select>
-    </p>
-    <p>Use reverse compliment of metadata Barcode Column if demultimplexer strategy = barcode_in_header or barcode_in_seq.
-    If using barcodes, they must be provided in the metadata.filePath with in column name defined by metadata.barcodeColumn.
-      <select class="sp" name="demultiplexer.barcodeRevComp" id="demultiplexer.barcodeRevComp">
-        <option selected default value="">Click for options</option>
-        <option value="Y">Yes</option>
-        <option value="N">No</option>
       </select>
     </p>
     <button class="createDownload">Create configuration file for download</button>
