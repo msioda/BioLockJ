@@ -177,7 +177,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         'report.taxonomyLevels' : 'What taxonomy levels would you like in the report?',
         'script.permissions' : 'what are the script permissions?',
         'script.defaultHeader' : 'what are the script default headers?',
-        'demux.strategy' : 'What demultiplexing statagy do you want to use?',
+        'demultiplexer.strategy' : 'What demultiplexing statagy do you want to use?',
         'project.env' : 'In which enviroment do you wish to run this project?',
       }));
 
@@ -686,41 +686,14 @@ launchSpan.forEach(span => span.addEventListener('click', function(){
 //     launchModal.style.display = "none";
 // }
 
-// remove other choices for standard properties in if docker is running
-const defaultProps = document.getElementById("project.defaultProps");
-const defaultPropsP = document.getElementById('defaultPropsP');
-//// NOTE: add event listener for default props section after talking to Mike
-const runDocker = document.getElementById('project.runDocker');
-runDocker.addEventListener('change', function(){
-  var defaultPath;
-  console.log("eventListener rundockr ", defaultConfigs);
-  defaultConfigs.length = 0; //array to hold all of the configs.  Will use this to build the table of default parameters
-  defaultConfigs.push(currentConfig);
-  console.log("defaultConfig event listener:  ", defaultConfigs);
-  const runDockerVal = runDocker.value;
-  console.log('runDockerVal', runDocker.value);
-  const defaultPropsVal = defaultProps.value;
-  console.log('defaultPropsVal: ', defaultPropsVal);
-  if (runDockerVal === 'Y'){//check for run-in-docker
-    defaultPath = '$BLJ/resources/config/default/docker.properties';
-    defaultPropsP.classList.add('hidden');
-    defaultProps.value = '$BLJ/resources/config/default/docker.properties';
+
+// NOTE: add event listener for default props section after talking to Mike
+const dockerDefaultProps = document.getElementById('dockerDefaultProps');
+dockerDefaultProps.addEventListener('click', function(){
+  var defaultPath = '$BLJ/resources/config/default/docker.properties';
     currentConfig.paramKeys.push('project.defaultProps');
     currentConfig.paramValues.push(defaultPath);
-
     getAllDefaultProps(defaultPath);
-  } else {
-    defaultPropsP.classList.remove('hidden');
-    if (defaultPropsVal !== null){
-      // NOTE: look-up regex to split for all computers //f
-      //defaultPathArray = defaultPropsVal.split('/');
-      defaultPath = defaultPropsVal;
-    }
-  }
-  if (defaultPath !== undefined){
-    console.log('defaultPropsVal: ', defaultPropsVal);
-    //currentConfig = resolveDefaultProps(currentConfig, docker = true);  //commented out because I want to be more explicit with the user on how we resolve default properties
-  }
 }, false);
 
 document.getElementById('acceptDefaultProps').addEventListener('click', tableToCurrentConfig);
