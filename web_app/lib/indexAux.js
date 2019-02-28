@@ -61,7 +61,7 @@ exports.createFullLaunchCommand = function(launchJSON, restartPath){//
   command.push(dockblj.toString());
   Object.keys(launchJSON).forEach(key => {
     //if key not config, grab path.Dirname(launchJSON[key])
-    if (key != 'config' && key != 'inputDirPaths'){//need only the dir, not the file name
+    if (!['i','t', 'm', 'c'].includes(key)){//need only the dir, not the file name
       launchJSON[key] = path.dirname(launchJSON[key]);
       command.push(`${key}=${launchJSON[key]}`)
     }else{
