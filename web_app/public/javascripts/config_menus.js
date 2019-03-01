@@ -108,8 +108,8 @@ function parseBljModuleJavaClass(text){//gets text java documentation from Java 
    var sect = lines[a].slice(3,);
    modDescrip = modDescrip.concat(sect);
  }
- if (modDescrip.includes('@web_desc ')){
-   let split = modDescrip.split('@web_desc ');
+ if (modDescrip.includes('@blj.web_desc')){
+   let split = modDescrip.split('@blj.web_desc ');
    modDescrip = split[0];
    webDesc = split[1]
    return [modDescrip, webDesc];
