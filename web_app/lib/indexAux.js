@@ -61,15 +61,21 @@ exports.createFullLaunchCommand = function(launchJSON, restartPath){//
   let command = [];
   command.push(dockblj.toString());
   Object.keys(launchJSON).forEach(key => {
-    const resolvedPath = execSync(`echo ${launchJSON[key]}`).toString()
+    var resolvedPath = execSync(`echo ${launchJSON[key]}`).toString().trim();
+    // if (resolvedPath.endsWith('\n')){
+    //   resolvedPath = resolvedPath.slice(0,resolvedPath.length - 1)
+    //   console.log('resolvedPath has "\n":', resolvedPath);
+    // }
+    // console.log('resolvedPath[0:10]', resolvedPa);
+    // resolvedPath = resolvedPath.toString()[resolvedPath.length];
     console.log('key: ', key);
     console.log('resolvedPath: ', resolvedPath);
     //if key not config, grab path.Dirname(launchJSON[key])
     if (key != 'c' && key != 'i'){//need only the dir, not the file name
-      launchJSON[key] = path.dirname(resolvedPath);
-      command.push(`${key}=${resolvedPath}`)
+      // launchJSON[key] = path.dirname(resolvedPath);
+      command.push(`-${key} ${path.dirname(resolvedPath)}`)
     }else{
-    command.push(`${key}=${resolvedPath}`);
+    command.push(`-${key} ${resolvedPath}`);
     };
   });
   command.push('-docker');
@@ -92,7 +98,7 @@ exports.runLaunchCommand = function(command, eventEmitter) {
     const child = spawn(first, command);
     child.stdout.on('data', function(data){
       eventEmitter.emit('log',data);
-      console.log('child.stout: ' + data);
+      console.log('child.stdout: ' + data);
     });
     child.stderr.on('data', function (data) {
         //throw errors
