@@ -92,6 +92,19 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 		return validParams;
 	}
 
+	@Override
+	public File getDB() throws Exception
+	{
+		File dir = null;
+		final String path = Config.getString( this, RDP_DB );
+		if( path != null )
+		{
+			dir = new File( Config.getSystemFilePath( path ) );
+		}
+
+		return dir;
+	}
+
 	/**
 	 * If paired reads found, add prerequisite: {@link biolockj.module.seq.PearMergeReads}.
 	 */
@@ -123,13 +136,14 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 
 	private String getDbParam() throws Exception
 	{
-		if( Config.getString( null, RDP_DB ) == null )
+		final String db = Config.getString( null, RDP_DB );
+		if( db == null )
 		{
 			return "";
 		}
 
 		final String dbParam = RuntimeParamUtil.isDockerMode()
-				? DockerUtil.getDockerVolumeDB( RDP_DB ).getAbsolutePath()
+				? db.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
 				: Config.requireExistingFile( this, RDP_DB ).getAbsolutePath();
 
 		return DB_PARAM + " " + dbParam + " ";

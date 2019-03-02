@@ -19,8 +19,8 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
+import biolockj.module.DatabaseModule;
 import biolockj.module.JavaModule;
-import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
@@ -88,37 +88,6 @@ public class DockerUtil
 	}
 
 	/**
-	 * Get mapped Docker system database file or directory
-	 * 
-	 * @param prop {@link biolockj.Config} property
-	 * @return Configured database path under the Docker {@value #CONTAINER_DB_DIR}
-	 * @throws Exception if errors occur building DB path
-	 */
-	public static File getDockerVolumeDB( final String prop ) throws Exception
-	{
-		return getDockerVolumeFile( prop, CONTAINER_DB_DIR );
-	}
-
-	/**
-	 * Get mapped Docker system database files from a list property of host database files or directories
-	 * 
-	 * @param prop {@link biolockj.Config} property
-	 * @return List of database paths under the Docker {@value #CONTAINER_DB_DIR}
-	 * @throws Exception if errors occur building DB paths
-	 */
-	public static List<File> getDockerVolumeDBs( final String prop ) throws Exception
-	{
-		final List<File> dbs = new ArrayList<>();
-		for( final String db: Config.requireList( null, prop ) )
-		{
-			final File hostFile = new File( db );
-			dbs.add( new File( CONTAINER_DB_DIR + File.separator + hostFile.getName() ) );
-		}
-
-		return dbs;
-	}
-
-	/**
 	 * Get mapped Docker system File from {@link biolockj.Config} property by replacing the host system path with the
 	 * mapped container path.
 	 * 
@@ -129,13 +98,7 @@ public class DockerUtil
 	 */
 	public static File getDockerVolumeFile( final String prop, final String containerPath ) throws Exception
 	{
-		final File newFile = new File( getDockerVolumePath( prop, containerPath ) );
-		if( !newFile.exists() )
-		{
-			throw new Exception(
-					"Container missing mapped " + containerPath + " volume system path: " + newFile.getAbsolutePath() );
-		}
-		return newFile;
+		return new File( getDockerVolumePath( prop, containerPath ) );
 	}
 
 	/**
@@ -178,8 +141,8 @@ public class DockerUtil
 				}
 			}
 
-			if( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
-					&& hasDB( getShellModule( className ) ) )
+			if( ( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
+					|| className.contains( KneadData.class.getName() ) ) && hasDB( getShellModule( className ) ) )
 			{
 				imageName += DB_FREE;
 			}
@@ -280,13 +243,14 @@ public class DockerUtil
 
 		if( module instanceof TrimPrimers )
 		{
-			final File primers = new File( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) ).getParentFile();
+			final File primers = new File( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) )
+					.getParentFile();
 			dockerVolumes += " -v " + primers.getAbsolutePath() + ":" + CONTAINER_PRIMER_DIR;
 		}
 
 		if( hasDB( module ) )
 		{
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostDbDir() + ":" + CONTAINER_DB_DIR;
+			dockerVolumes += " -v " + ( (DatabaseModule) module ).getDB().getAbsolutePath() + ":" + CONTAINER_DB_DIR;
 		}
 
 		return dockerVolumes;
@@ -299,8 +263,7 @@ public class DockerUtil
 
 	private static final boolean hasDB( final BioModule module ) throws Exception
 	{
-		return RuntimeParamUtil.getDockerHostDbDir() != null
-				&& ( module instanceof ClassifierModule || module instanceof KneadData );
+		return module instanceof DatabaseModule && ( (DatabaseModule) module ).getDB() != null;
 	}
 
 	private static final String rmFlag( final BioModule module ) throws Exception

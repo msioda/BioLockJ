@@ -11,10 +11,12 @@
  */
 package biolockj.module.classifier;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Constants;
 import biolockj.module.BioModule;
+import biolockj.module.DatabaseModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.util.ModuleUtil;
@@ -23,8 +25,9 @@ import biolockj.util.SummaryUtil;
 /**
  * This is the superclass for all WGS and 16S biolockj.module.classifier BioModules.
  */
-public abstract class ClassifierModuleImpl extends SeqModuleImpl implements ClassifierModule
+public abstract class ClassifierModuleImpl extends SeqModuleImpl implements ClassifierModule, DatabaseModule
 {
+
 	/**
 	 * Validate module dependencies:
 	 * <ul>
@@ -48,6 +51,9 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 
 	@Override
 	public abstract List<String> getClassifierParams() throws Exception;
+
+	@Override
+	public abstract File getDB() throws Exception;
 
 	/**
 	 * This method returns the corresponding Parser module associated with the classifier. The Parser module name is

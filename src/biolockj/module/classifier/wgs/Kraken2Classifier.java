@@ -98,7 +98,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	{
 		super.checkDependencies();
 		getParams();
-		getDB();
+		getKrakenDB();
 	}
 
 	/**
@@ -119,6 +119,12 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		return Config.getList( this, getExeParamName() );
 	}
 
+	@Override
+	public File getDB() throws Exception
+	{
+		return new File( Config.getSystemFilePath( Config.requireString( this, KRAKEN_DATABASE ) ) );
+	}
+
 	/**
 	 * This method generates the required bash function: {@value #FUNCTION_KRAKEN}
 	 */
@@ -135,7 +141,12 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		return lines;
 	}
 
-	private String getDB() throws Exception
+	private String getExeParamName()
+	{
+		return EXE_KRAKEN2 + Constants.PARAMS;
+	}
+
+	private String getKrakenDB() throws Exception
 	{
 		if( RuntimeParamUtil.isDockerMode() )
 		{
@@ -143,11 +154,6 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 		}
 
 		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
-	}
-
-	private String getExeParamName()
-	{
-		return EXE_KRAKEN2 + Constants.PARAMS;
 	}
 
 	private String getParams() throws Exception
@@ -212,7 +218,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 						+ Constants.INPUT_DIRS );
 			}
 
-			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getDB() + " "
+			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getKrakenDB() + " "
 					+ USE_NAMES_PARAM + USE_MPA_PARAM;;
 		}
 

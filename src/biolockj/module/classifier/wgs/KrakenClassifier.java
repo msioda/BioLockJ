@@ -104,7 +104,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 	{
 		super.checkDependencies();
 		getParams();
-		getDB();
+		getKrakenDB();
 	}
 
 	/**
@@ -125,6 +125,12 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		return Config.getList( this, getExeParamName() );
 	}
 
+	@Override
+	public File getDB() throws Exception
+	{
+		return new File( Config.getSystemFilePath( Config.requireString( this, KRAKEN_DATABASE ) ) );
+	}
+
 	/**
 	 * This method generates the required bash functions: {@value #FUNCTION_TRANSLATE} and {@value #FUNCTION_KRAKEN}
 	 */
@@ -137,19 +143,9 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" + RETURN );
 		lines.add( "function " + FUNCTION_TRANSLATE + "() {" );
-		lines.add( getClassifierExe() + "-translate " + DB_PARAM + getDB() + " --mpa-format $1 > $2" );
+		lines.add( getClassifierExe() + "-translate " + DB_PARAM + getKrakenDB() + " --mpa-format $1 > $2" );
 		lines.add( "}" + RETURN );
 		return lines;
-	}
-
-	private String getDB() throws Exception
-	{
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			return DockerUtil.CONTAINER_DB_DIR;
-		}
-
-		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
 	private String getExeParamName()
@@ -173,6 +169,16 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 		{
 			return FASTQ_PARAM;
 		}
+	}
+
+	private String getKrakenDB() throws Exception
+	{
+		if( RuntimeParamUtil.isDockerMode() )
+		{
+			return DockerUtil.CONTAINER_DB_DIR;
+		}
+
+		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
 	private String getParams() throws Exception
@@ -242,7 +248,7 @@ public class KrakenClassifier extends ClassifierModuleImpl implements Classifier
 			params += GZIP_PARAM;
 		}
 
-		params += DB_PARAM + getDB() + " " + getInputSwitch();
+		params += DB_PARAM + getKrakenDB() + " " + getInputSwitch();
 		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 		{
 			params += PAIRED_PARAM;

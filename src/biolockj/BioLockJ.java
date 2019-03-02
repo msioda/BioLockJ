@@ -587,7 +587,7 @@ public class BioLockJ
 		if( isPipelineComplete() )
 		{
 			Log.info( BioLockJ.class,
-				"Analysis complete --> The answer to the ultimate question of life, the universe and everything is [ 42 ]" );
+					"Analysis complete --> The answer to the ultimate question of life, the universe and everything is [ 42 ]" );
 			Log.info( BioLockJ.class, "End program." );
 		}
 		else
