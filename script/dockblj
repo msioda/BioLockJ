@@ -104,7 +104,7 @@ run_docker() {
 	D_SOCK="/var/run/docker.sock"
 	opt="$(blj_options)"
 	[ ${#1} -gt 0 ] && opt="$opt $1"
-	if $(has_param $metaPath)
+	if $(has_param $metaPath); then
 		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
 			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
 	else
