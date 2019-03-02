@@ -23,14 +23,12 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.implicit.parser.wgs.Humann2Parser;
 import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
 import biolockj.module.report.r.R_PlotEffectSize;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
-import biolockj.module.report.taxa.BuildTaxaTables;
 import biolockj.module.report.taxa.NormalizeTaxaTables;
 
 /**
@@ -221,7 +219,8 @@ public final class DownloadUtil
 	 * @return a file name filter
 	 * @throws Exception if errors occur
 	 */
-	protected static IOFileFilter getDirFilter( final boolean includeOutput, final boolean includeScript, final boolean includeTemp ) throws Exception
+	protected static IOFileFilter getDirFilter( final boolean includeOutput, final boolean includeScript,
+			final boolean includeTemp ) throws Exception
 	{
 		final ArrayList<String> dirFilter = new ArrayList<>();
 		if( includeOutput )
@@ -271,14 +270,14 @@ public final class DownloadUtil
 
 				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
 						|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
-						|| ( includeRawCounts && module instanceof NormalizeTaxaTables  );
+						|| includeRawCounts && module instanceof NormalizeTaxaTables;
 
 				if( ModuleUtil.hasExecuted( module ) && downloadableType )
 				{
 					modules.add( module );
 				}
 			}
-			
+
 			return modules;
 		}
 		catch( final Exception ex )

@@ -268,6 +268,38 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Compare files to return a common parent directory (if any)
+	 * 
+	 * @param f1 File 1
+	 * @param f2 File 2
+	 * @return Directory path share by f1 and f2
+	 * @throws Exception if errors occur
+	 */
+	public static File getCommonParent( final File f1, File f2 ) throws Exception
+	{
+		if( f1 == null || f2 == null )
+		{
+			return null;
+		}
+		final String f1Path = f1.getAbsolutePath();
+		while( true )
+		{
+			if( f1Path.contains( f2.getAbsolutePath() ) )
+			{
+				return new File( f2.getAbsolutePath() );
+			}
+
+			final File parent = f2.getParentFile();
+			if( parent == null || f2 == parent )
+			{
+				return null;
+			}
+
+			f2 = parent;
+		}
+	}
+
+	/**
 	 * Return an ordered list of absolute file paths from the input collection.
 	 * 
 	 * @param files Files

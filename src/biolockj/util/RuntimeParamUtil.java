@@ -75,15 +75,6 @@ public class RuntimeParamUtil
 	}
 
 	/**
-	 * @return String
-	 * @throws Exception if errors occur
-	 */
-	public static String getConfigFileParam() throws Exception
-	{
-		return CONFIG_FLAG + " " + Config.getConfigFilePath();
-	}
-
-	/**
 	 * Runtime property getter for {@value #CONFIG_FLAG}
 	 * 
 	 * @return {@link biolockj.Config} file
@@ -93,6 +84,15 @@ public class RuntimeParamUtil
 	{
 		return params.get( CONFIG_FLAG ) == null ? null
 				: new File( Config.getSystemFilePath( params.get( CONFIG_FLAG ) ) );
+	}
+
+	/**
+	 * @return String
+	 * @throws Exception if errors occur
+	 */
+	public static String getConfigFileParam() throws Exception
+	{
+		return CONFIG_FLAG + " " + Config.getConfigFilePath();
 	}
 
 	/**
@@ -140,16 +140,6 @@ public class RuntimeParamUtil
 	}
 
 	/**
-	 * Runtime property getter for {@value #DB_FLAG}
-	 * 
-	 * @return PCR primer file directory path
-	 */
-	public static String getDockerHostDbDir()
-	{
-		return params.get( DB_FLAG );
-	}
-
-	/**
 	 * Runtime property getter for {@value #INPUT_DIR_FLAG}
 	 * 
 	 * @return Host {@value biolockj.Constants#INPUT_DIRS} directory
@@ -191,18 +181,18 @@ public class RuntimeParamUtil
 		String javaModArgs = "";
 		for( final String key: params.keySet() )
 		{
-			if( key.equals( RESTART_FLAG ) || key.equals( BASE_DIR_FLAG ) || key.equals( DB_FLAG ) 
-					|| key.equals( PASSWORD_FLAG ) || key.equals( AWS_FLAG ) )
+			if( key.equals( RESTART_FLAG ) || key.equals( BASE_DIR_FLAG ) || key.equals( PASSWORD_FLAG )
+					|| key.equals( AWS_FLAG ) )
 			{
 				continue;
 			}
 			else if( key.equals( HOST_PIPELINE_DIR ) )
 			{
-				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + BASE_DIR_FLAG + " " + params.get( key );  
+				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + BASE_DIR_FLAG + " " + params.get( key );
 			}
 			else
 			{
-				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + key;  
+				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + key;
 				javaModArgs += params.get( key ).equals( Constants.TRUE ) ? "": " " + params.get( key );
 			}
 		}
@@ -354,8 +344,7 @@ public class RuntimeParamUtil
 	{
 		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG )
 				|| param.equals( CONFIG_DIR_FLAG ) || param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG )
-				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( DB_FLAG )
-				|| param.equals( AWS_FLAG ) )
+				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( AWS_FLAG ) )
 		{
 			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
 		}
@@ -453,10 +442,6 @@ public class RuntimeParamUtil
 			else if( prevParam.equals( META_DIR_FLAG ) )
 			{
 				params.put( META_DIR_FLAG, arg );
-			}
-			else if( prevParam.equals( DB_FLAG ) )
-			{
-				params.put( DB_FLAG, arg );
 			}
 			else
 			{
@@ -588,11 +573,6 @@ public class RuntimeParamUtil
 	 * {@link biolockj.Config} file path runtime parameter switch: {@value #CONFIG_FLAG}
 	 */
 	protected static final String CONFIG_FLAG = "-c";
-
-	/**
-	 * Database file directory path runtime parameter switch: {@value #DB_FLAG}
-	 */
-	protected static final String DB_FLAG = "-db";
 
 	/**
 	 * Direct mode runtime parameter switch: {@value #DIRECT_FLAG}

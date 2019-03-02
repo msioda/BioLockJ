@@ -12,7 +12,6 @@
 ##  Optional Parameters:                                                        ##
 ##  Aws flag:               -aws                                                ##
 ##  Docker flag:            -docker                                             ##
-##  DB directory:           -db <path>                                          ##
 ##  Metadata directory:     -m  <path>                                          ##
 ##  New email password:     -p  <new_pass>                                      ##
 ##  Restart flag:           -r  <directory>                                     ##
@@ -44,7 +43,6 @@ blj_options() {
 	$(has_param $newPass) && options="$options -p $newPass"
 	$(has_param $inputDir) && options="$options -i $inputDir"
 	$(has_param $metaPath) && options="$options -m $metaPath"
-	$(has_param $db) && options="$options -db $db"
 	echo $options
 }
 
@@ -106,14 +104,8 @@ run_docker() {
 	D_SOCK="/var/run/docker.sock"
 	opt="$(blj_options)"
 	[ ${#1} -gt 0 ] && opt="$opt $1"
-	if $(has_param $metaPath) && $(has_param $db); then	
-		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $db:/db \
-			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
-	elif $(has_param $metaPath); then	
+	if $(has_param $metaPath); then
 		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
-			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
-	elif $(has_param $db); then	
-		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $db:/db
 			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
 	else
 		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
@@ -156,7 +148,6 @@ verify_inputs() {
 	$(has_param $doRestart) && verify_host_dir $doRestart Restart
 	$(has_param $config) && verify_host_file $config Config
 	$(has_param $metaPath) && verify_host_dir $metaPath Metadata
-	$(has_param $db) && verify_host_dir $db DB
 	! $(has_param $inputDir) && echo "Exit script. The -i parameter must reference a single input directory" && exit 1
 	IFS=","
 	dirPath=( $inputDir )
@@ -168,7 +159,6 @@ echo "Running dockblj..."
 
 runAws=$(arg_exists "$@" "-aws")
 config=$(named_arg "$@" "-c")
-db=$(named_arg "$@" "-db")
 inDocker=$(arg_exists "$@" "-docker")
 inputDir=$(named_arg "$@" "-i")
 metaPath=$(named_arg "$@" "-m")
@@ -181,7 +171,6 @@ echo $(status_msg)
 
 #echo "config: $(dirname $config)"
 #echo "inputDir: $inputDir"
-#echo "DB: $db"
 #echo "metaPath: $metaPath"
 #echo "BLJ_PROJ: $(blj_proj)"
 #echo "BLJ_OPTIONS: $(blj_options)"

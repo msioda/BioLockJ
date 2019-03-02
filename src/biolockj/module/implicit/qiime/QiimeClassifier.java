@@ -201,6 +201,52 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		return Config.getList( this, QIIME_PARAMS );
 	}
 
+	/**
+	 * Check DB parameters for the comment parent directory path, there are 3 parameters:
+	 * <ol>
+	 * <li>{@value #QIIME_PYNAST_ALIGN_DB}
+	 * <li>{@value #QIIME_REF_SEQ_DB}
+	 * <li>{@value #QIIME_TAXA_DB}
+	 * </ol>
+	 * 
+	 * @return Parent DB directory
+	 * @throws Exception if errors occur
+	 */
+	@Override
+	public File getDB() throws Exception
+	{
+		String pynastDB = Config.getString( this, QIIME_PYNAST_ALIGN_DB );
+		String refSeqDB = Config.getString( this, QIIME_REF_SEQ_DB );
+		String taxaDB = Config.getString( this, QIIME_TAXA_DB );
+		if( pynastDB != null || refSeqDB != null || taxaDB != null )
+		{
+			if( pynastDB == null || refSeqDB == null || taxaDB == null )
+			{
+				if( pynastDB == null )
+				{
+					pynastDB = UNDEFINED;
+				}
+				if( pynastDB == null )
+				{
+					refSeqDB = UNDEFINED;
+				}
+				if( pynastDB == null )
+				{
+					taxaDB = UNDEFINED;
+				}
+				throw new Exception(
+						"Alternate QIIME database cannot be partially defined.  If any of these Config properties are defined, they must all be defined: "
+								+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB
+								+ ", " + QIIME_TAXA_DB + "=" + taxaDB );
+			}
+		}
+
+		final File parentDir = BioLockJUtil.getCommonParent(
+				BioLockJUtil.getCommonParent( new File( pynastDB ), new File( refSeqDB ) ), new File( taxaDB ) );
+		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
+		return parentDir;
+	}
+
 	@Override
 	public List<File> getInputFiles() throws Exception
 	{
@@ -521,10 +567,28 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String QIIME_PARAMS = "qiime.params";
 
 	/**
+	 * {@link biolockj.Config} File property to define ~/.qiime_config pynast_template_alignment_fp:
+	 * {@value #QIIME_PYNAST_ALIGN_DB}
+	 */
+	protected static final String QIIME_PYNAST_ALIGN_DB = "qiime.pynastAlignDB";
+
+	/**
+	 * {@link biolockj.Config} File property to define ~/.qiime_config pick_otus_reference_seqs_fp and
+	 * assign_taxonomy_reference_seqs_fp: {@value #QIIME_REF_SEQ_DB}
+	 */
+	protected static final String QIIME_REF_SEQ_DB = "qiime.refSeqDB";
+
+	/**
 	 * {@link biolockj.Config} boolean property to indicate if {@value #EXE_VSEARCH} is needed for chimera removal:
 	 * {@value #QIIME_REMOVE_CHIMERAS}
 	 */
 	protected static final String QIIME_REMOVE_CHIMERAS = "qiime.removeChimeras";
+
+	/**
+	 * {@link biolockj.Config} File property to define ~/.qiime_config assign_taxonomy_id_to_taxonomy_fp:
+	 * {@value #QIIME_TAXA_DB}
+	 */
+	protected static final String QIIME_TAXA_DB = "qiime.taxaDB";
 
 	/**
 	 * Directory created by {@value biolockj.module.classifier.r16s.QiimeDeNovoClassifier#PICK_OTU_SCRIPT} and
@@ -574,8 +638,10 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * BioLockJ parsers expect clear text files in the module output directory, so the biom files must be excluded.
 	 */
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
+
 	private static final String NUM_THREADS_PARAM = "-aO";
 
+	private static final String UNDEFINED = "UNDEFINED";
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 
 	// OTHER SCRIPT THAT MAY BE ADDED IN THE FUTURE

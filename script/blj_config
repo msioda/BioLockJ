@@ -29,11 +29,11 @@ BLJ_PARENT="$(dirname $BLJ)"
 
 alias blj_go=". $SCRIPT_DIR/blj_go"
 
-[ ! -d "$BLJ_SUP" ] && echo "BLJ_SUP not found" && echo "Add $SCRIPT_DIR to PATH" && exit 0
-
-export BLJ_SUP=$BLJ_SUP
-export PATH="$BLJ_SUP/script:$PATH"
-
-. $BLJ_SUP/script/docker_functions
-
-echo "Add $SCRIPT_DIR:$BLJ_SUP/script to PATH"
+if [ -d "$BLJ_SUP" ]; then
+	export BLJ_SUP=$BLJ_SUP
+	export PATH="$BLJ_SUP/script:$PATH"
+	. $BLJ_SUP/script/docker_functions
+	echo "$SCRIPT_DIR:$BLJ_SUP/script has been added to your PATH"
+else
+	echo "$SCRIPT_DIR has been added to your PATH" && echo "BLJ_SUP not found" 
+fi 

@@ -76,8 +76,8 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	}
 
 	/**
-	 * If in Docker mode, set {@value #BLJ_OPTIONS} which will be reference in every worker script
-	 * when running BioLockJ in direct mode.
+	 * If in Docker mode, set {@value #BLJ_OPTIONS} which will be reference in every worker script when running BioLockJ
+	 * in direct mode.
 	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception

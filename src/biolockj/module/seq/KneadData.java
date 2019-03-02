@@ -17,11 +17,10 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.module.DatabaseModule;
 import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
-import biolockj.util.DockerUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule runs biobakery kneaddata program to remove contaminated DNA.<br>
@@ -30,7 +29,7 @@ import biolockj.util.SeqUtil;
  * 
  * @blj.web_desc Knead Data Sanitizer
  */
-public class KneadData extends SeqModuleImpl implements SeqModule
+public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModule
 {
 
 	@Override
@@ -72,16 +71,54 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 			throw new Exception( getClass().getName() + " requires FASTQ format!" );
 		}
 
-		if( RuntimeParamUtil.isDockerMode() )
+		getParams();
+
+	}
+
+	@Override
+	public File getDB() throws Exception
+	{
+		final List<String> paths = Config.requireList( this, KNEAD_DBS );
+		if( paths.size() == 1 )
 		{
-			Config.requireList( this, KNEAD_DBS );
-		}
-		else
-		{
-			Config.requireExistingDirs( this, KNEAD_DBS );
+			return new File( Config.getSystemFilePath( paths.get( 0 ) ) );
 		}
 
-		getParams();
+		final List<File> dbs = new ArrayList<>();
+		for( final String db: Config.requireList( this, KNEAD_DBS ) )
+		{
+			dbs.add( new File( Config.getSystemFilePath( db ) ) );
+		}
+
+		File parentDir = null;
+		File testDB = null;
+		for( final File db: dbs )
+		{
+			if( testDB == null )
+			{
+				testDB = db;
+			}
+			else if( parentDir == null )
+			{
+				parentDir = BioLockJUtil.getCommonParent( testDB, db );
+			}
+			else
+			{
+				parentDir = BioLockJUtil.getCommonParent( parentDir, db );
+			}
+		}
+
+		for( final File db: dbs )
+		{
+			if( !db.getAbsolutePath().contains( parentDir.getAbsolutePath() ) )
+			{
+				throw new Exception(
+						"Docker implementation requires all databases exist under a common parent directory" );
+			}
+
+		}
+		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
+		return parentDir;
 	}
 
 	@Override
@@ -154,6 +191,41 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 	}
 
 	/**
+	 * Get the configured database parameters
+	 * 
+	 * @return Database parameters
+	 * @throws Exception if errors occur
+	 */
+	protected String getDBs() throws Exception
+	{
+		if( !RuntimeParamUtil.isDockerMode() )
+		{
+			Config.requireExistingDirs( this, KNEAD_DBS );
+		}
+
+		String dbs = "";
+		for( final String path: Config.requireList( this, KNEAD_DBS ) )
+		{
+			final File db = new File( path );
+			if( RuntimeParamUtil.isDockerMode() && Config.requireList( this, KNEAD_DBS ).size() == 1 )
+			{
+				dbs += DB_PARAM + " " + DockerUtil.CONTAINER_DB_DIR + " ";
+			}
+			if( RuntimeParamUtil.isDockerMode() )
+			{
+				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) + " ";
+			}
+			else
+			{
+				dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
+
+			}
+		}
+
+		return dbs;
+	}
+
+	/**
 	 * Return sanitized sequence data file.
 	 *
 	 * @param sampleId Sample ID
@@ -179,17 +251,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule
 
 	private String getParams() throws Exception
 	{
-		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM );
-
-		final List<File> dbs = RuntimeParamUtil.isDockerMode() ? DockerUtil.getDockerVolumeDBs( KNEAD_DBS )
-				: Config.requireExistingDirs( this, KNEAD_DBS );
-
-		for( final File db: dbs )
-		{
-			params += DB_PARAM + " " + db.getAbsolutePath() + " ";
-		}
-
-		return params;
+		return getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM ) + getDBs();
 	}
 
 	private String sanatize( final File seqFile, final File rvRead ) throws Exception

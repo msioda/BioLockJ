@@ -146,13 +146,23 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	}
 
 	@Override
+	public File getDB() throws Exception
+	{
+		final File nuclDb = new File( Config.getSystemFilePath( Config.requireString( this, HN2_NUCL_DB ) ) );
+		final File protDb = new File( Config.getSystemFilePath( Config.requireString( this, HN2_PROT_DB ) ) );
+		final File parentDir = BioLockJUtil.getCommonParent( nuclDb, protDb );
+		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
+		return parentDir;
+	}
+
+	@Override
 	public String getSummary() throws Exception
 	{
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			sb.append( "HumanN2 nucleotide DB: " + getDB( HN2_NUCL_DB ) );
-			sb.append( "HumanN2 protein DB: " + getDB( HN2_PROT_DB ) );
+			sb.append( "HumanN2 nucleotide DB: " + getDbPath( HN2_NUCL_DB ) );
+			sb.append( "HumanN2 protein DB: " + getDbPath( HN2_PROT_DB ) );
 		}
 		catch( final Exception ex )
 		{
@@ -206,7 +216,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	protected String getRuntimeParams() throws Exception
 	{
 		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " + NUCL_DB_PARAM
-				+ " " + getDB( HN2_NUCL_DB ) + " " + PROT_DB_PARAM + " " + getDB( HN2_PROT_DB ) + " ";
+				+ " " + getDbPath( HN2_NUCL_DB ) + " " + PROT_DB_PARAM + " " + getDbPath( HN2_PROT_DB ) + " ";
 	}
 
 	private List<String> getBuildSummaryFunction() throws Exception
@@ -243,9 +253,10 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return lines;
 	}
 
-	private String getDB( final String prop ) throws Exception
+	private String getDbPath( final String prop ) throws Exception
 	{
-		return RuntimeParamUtil.isDockerMode() ? DockerUtil.getDockerVolumeDB( prop ).getAbsolutePath()
+		final String db = Config.getString( null, prop );
+		return RuntimeParamUtil.isDockerMode() ? db.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
 				: Config.requireExistingDir( null, prop ).getAbsolutePath();
 	}
 
