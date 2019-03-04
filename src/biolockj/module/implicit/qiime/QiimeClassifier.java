@@ -242,14 +242,24 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 							+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB
 							+ ", " + QIIME_TAXA_DB + "=" + taxaDB );
 		}
+		
+		File pynastFile = new File( Config.getSystemFilePath( pynastDB ) );
+		File refSeqFile = new File( Config.getSystemFilePath( refSeqDB ) );
+		File taxaFile = new File( Config.getSystemFilePath( taxaDB ) );
 
 		final File parentDir = BioLockJUtil.getCommonParent(
-				BioLockJUtil.getCommonParent( new File( pynastDB ), new File( refSeqDB ) ), new File( taxaDB ) );
+				BioLockJUtil.getCommonParent( pynastFile, refSeqFile ), taxaFile );
 		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
 		return parentDir;
 	}
 	
-	
+	/**
+	 * Return the Docker container database directory (starting with /db/...)
+	 * 
+	 * @param prop QIIME database dir
+	 * @return Docker container DB dir
+	 * @throws Exception if errors occur
+	 */
 	protected File getDB( String prop ) throws Exception
 	{
 		return new File( Config.getSystemFilePath( Config.requireString( this, prop ) ).replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) );
@@ -404,10 +414,10 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		final List<String> lines = new ArrayList<>();
 		if( getDB() != null )
 		{
-			lines.add( "echo \"" + QIIME_CONFIG_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "\" > " + QIIME_CONFIG );
-			lines.add( "echo \"" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "\" >> " + QIIME_CONFIG );
-			lines.add( "echo \"" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "\" >> " + QIIME_CONFIG );
-			lines.add( "echo \"" + QIIME_CONFIG_TAXA_ID_REF + " " +  getDB( QIIME_TAXA_DB ) + "\" >> " + QIIME_CONFIG + RETURN);
+			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_CONFIG );
+			lines.add( "echo " + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> " + QIIME_CONFIG );
+			lines.add( "echo " + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " +  getDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG + RETURN);
 		}
 		
 		return lines;
