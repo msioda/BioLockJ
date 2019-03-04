@@ -21,6 +21,9 @@
 
 [ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
 
+[ -d ~/projects/testDockerQiimeSilva_2019Mar04 ] && echo "~/projects/testDockerQiimeSilva_2019Mar04 FOUND"
+[ ! -d ~/projects/testDockerQiimeSilva_2019Mar04 ] && echo "~/projects/testDockerQiimeSilva_2019Mar04 NOT FOUND"
+
 # Pass script input parameters + the argument value
 # Return value if found in input parameters
 arg_exists() {
@@ -134,13 +137,13 @@ status_msg() {
 # Verify host directory exists, if dockblj is not deployed inside a Docker container
 verify_host_dir() {
 	#echo "validate Host Dir: $# + $1"
- 	[ $# -eq 2 ] && [ ! -d "$1" ] && echo "Exit script - $2 directory not found: $1" && exit 1
+ 	[ $# -eq 2 ] && [ ${#1} -gt 0 ] && [ ! -d $1 ] && echo "Exit script - $2 directory not found: $1" && exit 1
 }
 
 # Verify host file exists, if dockblj is not deployed inside a Docker container
 verify_host_file() {
 	#echo "validate Host Dir: $# + $1"
-	[ $# -eq 2 ] && [ ! -f "$1" ] && echo "Exit script - $2 file not found: $1" && exit 1
+	[ $# -eq 2 ] && [ ${#1} -gt 0 ] && [ ! -f $1 ] && echo "Exit script - $2 file not found: $1" && exit 1
 }
 
 # Verify paths are valid, if dockblj is not deployed inside a Docker container
@@ -164,6 +167,8 @@ inputDir=$(named_arg "$@" "-i")
 metaPath=$(named_arg "$@" "-m")
 newPass=$(named_arg "$@" "-p")
 doRestart=$(named_arg "$@" "-r")
+
+echo "doRestart: $doRestart"
 
 ! $(has_param $inDocker) && verify_inputs
 

@@ -148,8 +148,10 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	@Override
 	public File getDB() throws Exception
 	{
-		final File nuclDb = new File( Config.getSystemFilePath( Config.requireString( this, HN2_NUCL_DB ) ) );
-		final File protDb = new File( Config.getSystemFilePath( Config.requireString( this, HN2_PROT_DB ) ) );
+		String nuclPath = Config.requireString( this, HN2_NUCL_DB );
+		String protPath = Config.requireString( this, HN2_PROT_DB );
+		final File nuclDb = new File( Config.getSystemFilePath( nuclPath ) );
+		final File protDb = new File( Config.getSystemFilePath( protPath ) );
 		final File parentDir = BioLockJUtil.getCommonParent( nuclDb, protDb );
 		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
 		return parentDir;

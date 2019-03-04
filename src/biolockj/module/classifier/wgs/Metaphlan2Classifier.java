@@ -131,19 +131,15 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 	@Override
 	public File getDB() throws Exception
 	{
-		File dir = null;
 		final String path = Config.getString( this, METAPHLAN2_DB );
 		if( path != null )
 		{
-			dir = new File( Config.getSystemFilePath( path ) );
+			return new File( Config.getSystemFilePath( path ) );
 		}
-
-		return dir;
+		
+		return null;
 	}
 
-	/**
-	 * This method generates the required bash function: {@value #FUNCTION_RUN_METAPHLAN}
-	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{

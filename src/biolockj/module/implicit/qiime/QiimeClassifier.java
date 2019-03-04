@@ -218,33 +218,52 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		String pynastDB = Config.getString( this, QIIME_PYNAST_ALIGN_DB );
 		String refSeqDB = Config.getString( this, QIIME_REF_SEQ_DB );
 		String taxaDB = Config.getString( this, QIIME_TAXA_DB );
-		if( pynastDB != null || refSeqDB != null || taxaDB != null )
+
+		if( pynastDB == null && refSeqDB == null && taxaDB == null )
 		{
-			if( pynastDB == null || refSeqDB == null || taxaDB == null )
-			{
-				if( pynastDB == null )
-				{
-					pynastDB = UNDEFINED;
-				}
-				if( pynastDB == null )
-				{
-					refSeqDB = UNDEFINED;
-				}
-				if( pynastDB == null )
-				{
-					taxaDB = UNDEFINED;
-				}
-				throw new Exception(
-						"Alternate QIIME database cannot be partially defined.  If any of these Config properties are defined, they must all be defined: "
-								+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB
-								+ ", " + QIIME_TAXA_DB + "=" + taxaDB );
-			}
+			return null;
 		}
 
+		if( pynastDB == null || refSeqDB == null || taxaDB == null )
+		{
+			if( pynastDB == null )
+			{
+				pynastDB = UNDEFINED;
+			}
+			if( pynastDB == null )
+			{
+				refSeqDB = UNDEFINED;
+			}
+			if( pynastDB == null )
+			{
+				taxaDB = UNDEFINED;
+			}
+			throw new Exception(
+					"Alternate QIIME database cannot be partially defined.  If any of these Config properties are defined, they must all be defined: "
+							+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB
+							+ ", " + QIIME_TAXA_DB + "=" + taxaDB );
+		}
+		
+		File pynastFile = new File( Config.getSystemFilePath( pynastDB ) );
+		File refSeqFile = new File( Config.getSystemFilePath( refSeqDB ) );
+		File taxaFile = new File( Config.getSystemFilePath( taxaDB ) );
+
 		final File parentDir = BioLockJUtil.getCommonParent(
-				BioLockJUtil.getCommonParent( new File( pynastDB ), new File( refSeqDB ) ), new File( taxaDB ) );
+				BioLockJUtil.getCommonParent( pynastFile, refSeqFile ), taxaFile );
 		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
 		return parentDir;
+	}
+	
+	/**
+	 * Return the Docker container database directory (starting with /db/...)
+	 * 
+	 * @param prop QIIME database dir
+	 * @return Docker container DB dir
+	 * @throws Exception if errors occur
+	 */
+	protected File getDB( String prop ) throws Exception
+	{
+		return new File( Config.getSystemFilePath( Config.requireString( this, prop ) ).replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) );
 	}
 
 	@Override
@@ -384,6 +403,39 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 		return dir;
 	}
+	
+	/**
+	 * Build ~/.qiime_config to define the alternate Docker qiime_classifier DB with local container path references.<br>
+	 * 
+	 * @return Bash script lines to build the qiime_config file
+	 * @throws Exception if errors occur build file
+	 */
+	protected List<String> buildQiimeConfigLines() throws Exception
+	{
+		final List<String> lines = new ArrayList<>();
+		if( getDB() != null )
+		{
+			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> " + QIIME_CONFIG  );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " +  getDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG );
+		}
+
+		return lines;
+	}
+	
+	@Override
+	public List<String> getWorkerScriptFunctions() throws Exception
+	{
+		final List<String> lines = super.getWorkerScriptFunctions();
+		if( DockerUtil.hasDB( this ) )
+		{
+			lines.addAll( buildQiimeConfigLines() );
+			lines.add( "" );
+		}
+
+		return lines;
+	}
 
 	/**
 	 * Subclasses call this method to check dependencies before picking OTUs to validate
@@ -453,6 +505,8 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		lines.add( otuPickingScript + getParams() + "-i " + fnaFile + " -fo " + outputDir );
 		return lines;
 	}
+	
+
 
 	/**
 	 * Return runtime parameters for {@value #EXE_VSEARCH_PARAMS}
@@ -640,7 +694,11 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
 
 	private static final String NUM_THREADS_PARAM = "-aO";
-
+	private static final String QIIME_CONFIG_SEQ_REF = "pick_otus_reference_seqs_fp";
+	private static final String QIIME_CONFIG_PYNAST_ALIGN_REF = "pynast_template_alignment_fp";
+	private static final String QIIME_CONFIG_TAXA_SEQ_REF = "assign_taxonomy_reference_seqs_fp";
+	private static final String QIIME_CONFIG_TAXA_ID_REF = "assign_taxonomy_id_to_taxonomy_fp";
+	private static final String QIIME_CONFIG = DockerUtil.DOCKER_ROOT_HOME + "/.qiime_config";
 	private static final String UNDEFINED = "UNDEFINED";
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 

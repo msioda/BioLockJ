@@ -23,7 +23,7 @@ import biolockj.util.MetaUtil;
  * This module runs the QIIME pick_de_novo_otus.py script on FastA sequence files in a single script so it is important
  * to allocate sufficient job resources if running in a clustered environment.
  * 
- * @blj.web_desc Qiime de novo Classifier
+ * @blj.web_desc QIIME de novo Classifier
  */
 public class QiimeDeNovoClassifier extends QiimeClassifier implements ClassifierModule
 {
