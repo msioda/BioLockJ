@@ -40,7 +40,7 @@ is_module_dir() {
 
 # Trim last input $1 character if ends with "/"
 # Return 0 status code if $1 param ends with patthern _yyyymmmdd.
-# Example: myTestPipeline_2018Jan01 returns TRUE
+# Example: myTestPipeline_2019Jan01 returns TRUE
 is_pipeline_dir() {
 	dir=$1
 	[ ${dir: -1} == "/" ] && dir=${dir:0:$((${#dir}-1))}
