@@ -190,7 +190,8 @@ div#moduleInfo{
   margin: 15px;
 }
 div#moduleInfoDiv {
-  position: relative;
+  position: sticky;
+  top: 10px;
   display: inline;
   padding: 10, 10, 10, 10;
   left: 20px;
@@ -199,8 +200,8 @@ div#moduleInfoDiv {
   display: inline;
 }
 #tempModInfo{
-  display: initial;
   /*position: fixed;*/
+  /* background-color: rgba(117, 190, 218, 0.5); */
   width: inherit;
 }
 

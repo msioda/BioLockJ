@@ -1,3 +1,10 @@
+/**
+Author: Aaron Yerke
+Purpose: Javascript for the portion of the web app that builds configuration files and runs them
+Notes:
+  This file contains most of the js related to the configuration object.
+  config_menus.js contains the js for controlling the menu, which includes building the module selection
+*/
 function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
   this.modules = modules;
   this.paramKeys = paramKeys;
@@ -26,10 +33,9 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       //localStorage.setItem(file.name, JSON.stringify(this));
 
       saveConfigToGui({
-          configName : file.name,
-          configText : this.formatAsFlatFile(),
+        configName : file.name,
+        configText : this.formatAsFlatFile(),
       });
-
 
       //hide used file reader from user
       document.getElementById("openConfig").style.display = "none";
@@ -37,6 +43,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       this.sendConfigDataToForms();
     } catch (e) {
       alert(e);
+      console.error(e);
     }
   }//end load localhost
 
@@ -48,7 +55,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         return false;
       }
       //reorder module list elements to match the config
-      myModules = orderModulesFromLocalFiles(this.modules, myModules);
+      myModules = orderModulesFromLocalFiles(this.modules.slice(), myModules);
       runModuleFunctions();
 
       //get all input elements for adding values too
@@ -64,13 +71,13 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         var domModule = document.getElementById('module');
         var domModuleLi = domModule.getElementsByTagName('li');
         for (var b = 0; b < domModuleLi.length; b++) {//for mod in mod li
-          if (mod == domModuleLi[b].innerHTML) {
+          if (mod == domModuleLi[b].getAttribute('data-link')) {
             try{
             domModuleLi[b].click();//add('modChoosen');
             }catch(err) {
               alert(err);
-            }finally{
-              }
+              console.error(err);
+            }
           };//end if
         };//end for-loop over domModuleLi
       }//end this.modules for loop
@@ -101,6 +108,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
           document.getElementById("mainMenu").style.display = "block";
         } catch (err) {
           alert(err + "\n problem with " + key + ".")
+          console.error(err + "\n problem with " + key + ".");
         }
       }; //end for-loop over keys/parameters
     } catch (e) {
@@ -135,11 +143,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       };
     };
     _this.modulesToCurrentConfig();
-    console.log('configFile.value', configFile.value);
-    console.log(JSON.stringify({
-        configName : configFile.value,
-        configText : _this.formatAsFlatFile(),
-    }));
     //var save = saveConfigToGui({test : "test"});
     saveConfigToGui({
         configName : configFile.value,
@@ -156,7 +159,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     this.modules = [];
     for (var i = 0; i < mods.length; i++) {
       if (mods[i].classList.contains('modChoosen')) {
-        this.modules.push( mods[i].innerHTML);
+        this.modules.push( mods[i].getAttribute('data-link'));
       };
     };
     console.log("this.paramKeys.indexOf('project.configFile'): ", this.paramKeys.indexOf('project.configFile'));
@@ -174,7 +177,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         'report.taxonomyLevels' : 'What taxonomy levels would you like in the report?',
         'script.permissions' : 'what are the script permissions?',
         'script.defaultHeader' : 'what are the script default headers?',
-        'demux.strategy' : 'What demultiplexing statagy do you want to use?',
+        'demultiplexer.strategy' : 'What demultiplexing statagy do you want to use?',
         'project.env' : 'In which enviroment do you wish to run this project?',
       }));
 
@@ -189,8 +192,8 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         'r.pValFormat' : 'Please choose your p-value format for your R reports.',
         'r.rareOtuThreshold' : 'Please choose your rare OTU threshold (positive integer).',
         'r.timeout' : 'Please set your R timeout threshold (positive integer).',
-        'rStats.pAdjustMethod' : 'Please choose your p-value adjust method.',
-        'rStats.pAdjustScope' : 'Please choose your p-value adjust scope.'
+        'r_CalculateStats.pAdjustMethod' : 'Please choose your p-value adjust method.',
+        'r_CalculateStats.pAdjustScope' : 'Please choose your p-value adjust scope.'
         }));
       const reqForEmail = new Map(Object.entries({
         'mail.encryptedPassword' : 'In order to receive an Emailed report, please provide your encrypted password.',
@@ -202,19 +205,14 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         }));
 
       const reqForMdsPlots = new Map(Object.entries({
-        'rMds.numAxis' : 'Please provide the number of axes for the MDS plot.',
-        'rMds.distance' : 'Please provide the number of axes for the MDS plot.',
-        'rMds.outliers' : 'Please choose the Email address from which you want to recieve your Emailed report.',
+        'r_PlotMds.numAxis' : 'Please provide the number of axes for the MDS plot.',
+        'r_PlotMds.distance' : 'Please provide the number of axes for the MDS plot.',
+        'r_PlotMds.outliers' : 'Please choose the Email address from which you want to recieve your Emailed report.',
         }));
 
       const reqForRdpClassifier = new Map(Object.entries({
         'rdp.minThresholdScore' : 'Please provide the RDP minium threshold score.'
         }));
-
-      const reqForSlimmClassifier = new Map(Object.entries({
-      'slimm.db' : 'Please provide a Slimm database.',
-      'slimm.refGenomeIndex' : 'Please provide a reference genome index for Slimm.'
-      }));
 
       const reqForKrakenClassifier = new Map(Object.entries({
         'kraken.db' : 'Please provide a Kraken database.',
@@ -306,14 +304,11 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         for (let para of dependencyMap.keys()){
           console.log(para);
           if (!(currentConfig.paramKeys.includes(para))){
-            //resetAnimation(requiredParamIds[r]);
             console.log(para);
             const currentMenuTab = getCurrentMenuTab();
             console.log(menuTabsArray.indexOf(currentMenuTab));
-            // console.log(currentMenuTab);
             currentMenuTab.style.display = 'none';
             menuTabButtons[menuTabsArray.indexOf(getParentDiv(para))].click();
-            //getParentDiv(para).style.display='block';
             alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
             highlightRequiredParam(para);
             return false;
@@ -444,18 +439,17 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     //config key : blj_argument
     //config Path will be built serverside
     const runtimeArguments = {
-      'input.dirPaths' : 'inputDirPaths',
-      'metadata.filePath' : 'metadataFilePath',
-      'trimPrimers.filePath' : 'trimPrimersFilePath'
-      //'project.configFile' : 'CONFIG_PATH',
-      // TODO: Add -r and -p to arguements list
+      'input.dirPaths' : 'i',
+      'metadata.filePath' : 'm',
+      // 'project.configFile' : 'c',
+      // TODO: Add -p to arguements list
     };
     for (var i = 0; i < this.paramKeys.length; i++) {
       if (Object.keys(runtimeArguments).includes(this.paramKeys[i])){
         partialLaunchArgument[runtimeArguments[this.paramKeys[i]]] = this.paramValues[i];
       }
     }
-    //console.log('partialLaunchArgument: ', partialLaunchArgument);
+    console.log('partialLaunchArgument: ', partialLaunchArgument);
     return partialLaunchArgument;
   }
 
@@ -537,32 +531,32 @@ document.getElementById('localFile').addEventListener('change', currentConfig.lo
 //Adding all eventlisteners
 //eventlistener for adding the recent config files to "recent"
 document.getElementById("recent").addEventListener("mouseover", function() {
-    const configs = retrieveConfigs();
-    configs.then(retrievedConfigs => {
-      console.log(retrievedConfigs);
-      for (var i = 0; i < retrievedConfigs.length; i++) {
-        let opt = document.createElement('a');
-        opt.setAttribute("name", retrievedConfigs[i]);
-        var text = document.createTextNode(retrievedConfigs[i].toString());
-        opt.addEventListener("click", function() {
-          console.log(JSON.stringify({propertiesFile : this.name}))
-          const tempConfig = retrievePropertiesFile({propertiesFile : this.name.concat('.properties')});
-          tempConfig.then( propertiesFile => {
-            console.log(propertiesFile);
-            currentConfig = new Config();
-            currentConfig.loadFromText(propertiesFile.data);
-            currentConfig.paramKeys.push('project.configFile');
-            currentConfig.paramValues.push(this.name);
-            currentConfig.sendConfigDataToForms();
-            console.log(currentConfig);
-          })
-        });
-        opt.appendChild(text);
-        opt.setAttribute('position', 'relative');
-        opt.setAttribute('display', 'block');
-        opt.classList.add('recentConfigs');
-        let proj = document.getElementById("projects");
-        proj.appendChild(opt);
+  const configs = retrieveConfigs();
+  configs.then(retrievedConfigs => {
+    console.log(retrievedConfigs);
+    for (var i = 0; i < retrievedConfigs.length; i++) {
+      let opt = document.createElement('a');
+      opt.setAttribute("name", retrievedConfigs[i]);
+      var text = document.createTextNode(retrievedConfigs[i].toString());
+      opt.addEventListener("click", function() {
+        //console.log(JSON.stringify({propertiesFile : this.name}))
+        const tempConfig = retrievePropertiesFile({propertiesFile : this.name.concat('.properties')});
+        tempConfig.then( propertiesFile => {
+          console.log(propertiesFile);
+          currentConfig = new Config();
+          currentConfig.loadFromText(propertiesFile.data);
+          currentConfig.paramKeys.push('project.configFile');
+          currentConfig.paramValues.push(this.name);
+          currentConfig.sendConfigDataToForms();
+          console.log(currentConfig);
+        })
+      });
+      opt.appendChild(text);
+      opt.setAttribute('position', 'relative');
+      opt.setAttribute('display', 'block');
+      opt.classList.add('recentConfigs');
+      let proj = document.getElementById("projects");
+      proj.appendChild(opt);
     };
   })
 }, {
@@ -635,7 +629,7 @@ for (const launch of document.getElementsByClassName("openLaunchModal")) {
         });
       }
     } catch (e) {
-      alert(e)
+      console.error(e);
     }
   });//end eventlistener
 };//end forloop
@@ -686,41 +680,14 @@ launchSpan.forEach(span => span.addEventListener('click', function(){
 //     launchModal.style.display = "none";
 // }
 
-// remove other choices for standard properties in if docker is running
-const defaultProps = document.getElementById("project.defaultProps");
-const defaultPropsP = document.getElementById('defaultPropsP');
-//// NOTE: add event listener for default props section after talking to Mike
-const runDocker = document.getElementById('project.runDocker');
-runDocker.addEventListener('change', function(){
-  var defaultPath;
-  console.log("eventListener rundockr ", defaultConfigs);
-  defaultConfigs.length = 0; //array to hold all of the configs.  Will use this to build the table of default parameters
-  defaultConfigs.push(currentConfig);
-  console.log("defaultConfig event listener:  ", defaultConfigs);
-  const runDockerVal = runDocker.value;
-  console.log('runDockerVal', runDocker.value);
-  const defaultPropsVal = defaultProps.value;
-  console.log('defaultPropsVal: ', defaultPropsVal);
-  if (runDockerVal === 'Y'){//check for run-in-docker
-    defaultPath = '$BLJ/resources/config/default/docker.properties';
-    defaultPropsP.classList.add('hidden');
-    defaultProps.value = '$BLJ/resources/config/default/docker.properties';
+
+// NOTE: add event listener for default props section after talking to Mike
+const dockerDefaultProps = document.getElementById('dockerDefaultProps');
+dockerDefaultProps.addEventListener('click', function(){
+  var defaultPath = '$BLJ/resources/config/default/docker.properties';
     currentConfig.paramKeys.push('project.defaultProps');
     currentConfig.paramValues.push(defaultPath);
-
     getAllDefaultProps(defaultPath);
-  } else {
-    defaultPropsP.classList.remove('hidden');
-    if (defaultPropsVal !== null){
-      // NOTE: look-up regex to split for all computers //f
-      //defaultPathArray = defaultPropsVal.split('/');
-      defaultPath = defaultPropsVal;
-    }
-  }
-  if (defaultPath !== undefined){
-    console.log('defaultPropsVal: ', defaultPropsVal);
-    //currentConfig = resolveDefaultProps(currentConfig, docker = true);  //commented out because I want to be more explicit with the user on how we resolve default properties
-  }
 }, false);
 
 document.getElementById('acceptDefaultProps').addEventListener('click', tableToCurrentConfig);
@@ -731,13 +698,14 @@ document.getElementById('seeResolvedDefaultProperties').addEventListener('click'
 })
 
 function getAllDefaultProps(dfpath){
-  console.log('defaultConfigs getAllDefaultProps', defaultConfigs);
+
   const defaultFlatFile = retreiveDefaultProps(dfpath);
+
   defaultFlatFile.then( flatFile => {
     const defaultConfig = new Config();
     defaultConfig.loadFromText(flatFile);
     const splitPath = dfpath.split('/');
-    console.log('splitPath: ', splitPath);
+
 
     //most config files won't have the file name as a property so we need to add it.
     defaultConfig.paramKeys.push('project.configFile');
@@ -910,39 +878,92 @@ function retreiveDefaultProps(dpropPath) {
 //         launchModal.style.display = "none";
 //     }
 // }
-document.getElementById('submitAWS').addEventListener('click', function(evt){
+
+document.getElementById('getMalcolmGitRepo').addEventListener('click', function(evt){
   evt.preventDefault();
+  sendFormToNode('getMalcolmGitRepo', '/getMalcolmGitRepo')
+});
+
+document.getElementById('submitConfigureAWS').addEventListener('click', function(evt){
+  evt.preventDefault();
+  sendFormToNode('submitConfigureAWS', '/configureAws')
+});
+document.getElementById('deployComputeStack').addEventListener('click', function(evt){
+  evt.preventDefault();
+  sendFormToNode('deployComputeStack', '/deployBatchEnv');
+});
+document.getElementById('launchEc2HeadNodeButton').addEventListener('click', function(evt) {
+  evt.preventDefault();
+  sendFormToNode('launchEc2HeadNodeButton', 'launchEc2HeadNode')
+});
+
+function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
   let formData = {};
-  console.log(document.getElementById('AwsForm'));
-  let AwsForm = new FormData(document.getElementById('AwsForm'));
-  for (var i of AwsForm.entries()) {
+  let myForm = new FormData(document.getElementById(formElementId).parentNode.parentNode);
+  for (var i of myForm.entries()) {
     console.log(i);
     formData[i[0]] = i[1];
   }
   var request = new XMLHttpRequest();
-  request.open('POST', '/startAws', true);
+  request.open(requestMethod, nodeAddress, true);
   request.setRequestHeader("Content-Type", "application/json");
   request.send(JSON.stringify({formData}));
     request.onreadystatechange = function() {
     if (request.readyState == XMLHttpRequest.DONE) {
       console.log(request.responseText);
+      // callback;
     }
   }
-})//document.getElementById('submitAWS')
+};
 
+const projEnvInput = document.getElementById('project.env');
+['change','load', 'input'].forEach( evt =>
+    projEnvInput.addEventListener(evt, function(event){
+      event.preventDefault();
+      const AwsButton = document.getElementById('AwsButton');
+      console.log(`adding ${evt} listener to ${document.getElementById('project.env')}`);
+      switch (document.getElementById('project.env').value) {
+        case 'aws':
+          AwsButton.classList.remove('hidden');
+          AwsButton.click();
+          break;
+        default:
+          AwsButton.classList.add('hidden');
+      }
+    }, false)
+);
 
-document.getElementById('project.env').addEventListener('click', function(evt){
-  const AwsButton = document.getElementById('AwsButton');
-  switch (this.value) {
-    case 'aws':
-      AwsButton.classList.remove('hidden');
-      AwsButton.click();
-      break;
-    default:
-      AwsButton.classList.add('hidden');
-  }
+document.getElementById("manageConfigs").addEventListener("click", function() {
+  console.log("manageConfigs clicked");
+  updateConfigManager();
 });
 
+document.getElementById('submitDeleteConfig').addEventListener('click', event => {
+  console.log(event);
+  const datForm = new FormData(document.getElementById('configManagerForm'));
+  datForm.forEach( input => {
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        try {
+          if (request.responseText === `deleted : ${input}`){
+            const inputs = document.getElementsByName(input);
+            inputs.forEach( delInput => {
+              console.log(delInput);
+              delInput.parentNode.remove();
+            })
+            updateConfigManager();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    request.open('POST', '/deleteConfig', true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(JSON.stringify({ configFileName : input }));
+  });//end forEach
+})//end submitDeleteConfig').addEventListener(
 
 
 if(typeof(EventSource) !== "undefined") {
@@ -1005,6 +1026,33 @@ if(typeof(EventSource) !== "undefined") {
     // Sorry! No server-sent events support..
 }
 
+function updateConfigManager() {
+  const manager = document.getElementById('configManager');
+  const deleteDiv = document.getElementById('deleteConfigsDiv');
+  const configs = retrieveConfigs();
+  let br = document.createElement("br");
+  deleteDiv.innerHTML = "";
+
+  deleteDiv.innerHTML = "Please select the configuation files to delete: ";
+
+  configs.then(configs => {
+    for (var i = 0; i < configs.length; i++) {
+      const checkbox = document.createElement('input');
+      const deleteP = document.createElement('p');
+
+      checkbox.setAttribute('type', 'checkbox');
+      checkbox.setAttribute('value', configs[i]);
+      checkbox.setAttribute('name', 'deleteConfigs');
+      deleteP.innerHTML = configs[i];
+      deleteP.appendChild(checkbox);
+      deleteDiv.appendChild(deleteP)
+      deleteDiv.appendChild(br);
+      //managerForm.appendChild(p);
+    }
+    manager.style.display = "block";
+  })
+}
+
 function launcher(launchAction = 'launchNew', restartProjectPath){
   event.preventDefault();
   //launchModal.style.display = "block";
@@ -1041,4 +1089,20 @@ function launcher(launchAction = 'launchNew', restartProjectPath){
   console.log(request.responseText);
 }
 
-
+//delete config flat file
+function deleteConfig(configFileName) {
+  console.log(configFileName);
+  const request = new XMLHttpRequest();
+  request.onreadystatechange = function() {
+    if (request.readyState === XMLHttpRequest.DONE) {
+      try {
+        console.log(request.responseText);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+  request.open('POST', '/deleteConfig', true);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.send(JSON.stringify({configFileName : configFileName}));
+}//end deleteConfig(configFileName)

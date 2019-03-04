@@ -43,7 +43,7 @@ exports.saveConfigToLocal = function(configName, configText){
   if (!configName.endsWith('.properties')){
     configName = configName.concat('.properties')
   }
-  const configPath = path.join('/config/', configName);
+  const configPath = path.join('/', 'config', configName);
   //console.log(configPath.toString());
   fs.writeFile(configPath, configText,function(err) {
     if(err) {
@@ -56,16 +56,26 @@ exports.saveConfigToLocal = function(configName, configText){
 exports.createFullLaunchCommand = function(launchJSON, restartPath){//
   //const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
   //const bljDir = process.env.BLJ;
+  const execSync = require('child_process').execSync;
   const dockblj = path.join('..','script','dockblj');//relative path from webapp folder
   let command = [];
   command.push(dockblj.toString());
   Object.keys(launchJSON).forEach(key => {
+    var resolvedPath = execSync(`echo ${launchJSON[key]}`).toString().trim();
+    // if (resolvedPath.endsWith('\n')){
+    //   resolvedPath = resolvedPath.slice(0,resolvedPath.length - 1)
+    //   console.log('resolvedPath has "\n":', resolvedPath);
+    // }
+    // console.log('resolvedPath[0:10]', resolvedPa);
+    // resolvedPath = resolvedPath.toString()[resolvedPath.length];
+    console.log('key: ', key);
+    console.log('resolvedPath: ', resolvedPath);
     //if key not config, grab path.Dirname(launchJSON[key])
-    if (key != 'config' && key != 'inputDirPaths'){//need only the dir, not the file name
-      launchJSON[key] = path.dirname(launchJSON[key]);
-      command.push(`${key}=${launchJSON[key]}`)
+    if (key != 'c' && key != 'i'){//need only the dir, not the file name
+      // launchJSON[key] = path.dirname(resolvedPath);
+      command.push(`-${key} ${path.dirname(resolvedPath)}`)
     }else{
-    command.push(`${key}=${launchJSON[key]}`);
+    command.push(`-${key} ${resolvedPath}`);
     };
   });
   command.push('-docker');
@@ -88,7 +98,7 @@ exports.runLaunchCommand = function(command, eventEmitter) {
     const child = spawn(first, command);
     child.stdout.on('data', function(data){
       eventEmitter.emit('log',data);
-      console.log('child.stout: ' + data);
+      console.log('child.stdout: ' + data);
     });
     child.stderr.on('data', function (data) {
         //throw errors
