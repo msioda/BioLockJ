@@ -42,7 +42,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	{
 		Log.info( getClass(), "Processing " + ( files == null ? 0: files.size() ) + " files" );
 		final List<List<String>> data = new ArrayList<>();
-		List<String> lines = initLines();
+		List<String> lines = new ArrayList<>();
 
 		if( RuntimeParamUtil.isDockerMode() && !DockerUtil.inAwsEnv()
 				|| Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= files.size() )
@@ -66,7 +66,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 				{
 					data.add( getBatch( lines, batchNum++, startIndex ) );
 					startIndex = startIndex + Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
-					lines = initLines();
+					lines = new ArrayList<>();
 				}
 			}
 

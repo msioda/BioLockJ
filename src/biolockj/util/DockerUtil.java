@@ -363,7 +363,10 @@ public class DockerUtil
 	 */
 	protected static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
 
-	private static final String DOCKER_ROOT_HOME = "/root";
+	/**
+	 * Docker container root user $HOME directory
+	 */
+	public static final String DOCKER_ROOT_HOME = "/root";
 	private static final String DB_FREE = "_dbfree";
 	private static final String DOCK_RM_FLAG = "--rm";
 	private static final String DOCKER_IMG_VERSION = "docker.imgVersion";

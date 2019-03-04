@@ -42,7 +42,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
 	{
 		final List<List<String>> data = new ArrayList<>();
-		final List<String> lines = initLines();
+		final List<String> lines = new ArrayList<>();
 
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outputDir = getOutputDir().getAbsolutePath() + File.separator;

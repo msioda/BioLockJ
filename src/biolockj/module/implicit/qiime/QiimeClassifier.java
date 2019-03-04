@@ -64,7 +64,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final List<List<String>> data = new ArrayList<>();
-		final List<String> lines = initLines();
+		final List<String> lines = new ArrayList<>();
 		lines.add( SCRIPT_PRINT_CONFIG + " -t" );
 		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L "
 				+ getLowestQiimeTaxaLevel() + " -o " + outDir );
@@ -415,7 +415,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( getDB() != null )
 		{
 			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> " + QIIME_CONFIG  );
 			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
 			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " +  getDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG );
 		}
@@ -423,20 +423,16 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		return lines;
 	}
 	
-	/**
-	 * Initialize lines for next script, if running Docker and an alternate DB is configured, add lines
-	 * to build the ~/.qiime_config file
-	 * 
-	 * @return Bash script lines to initialize new script
-	 * @throws Exception if errors occur
-	 */
-	protected List<String> initLines() throws Exception
+	@Override
+	public List<String> getWorkerScriptFunctions() throws Exception
 	{
-		List<String> lines = new ArrayList<>();
+		final List<String> lines = super.getWorkerScriptFunctions();
 		if( DockerUtil.hasDB( this ) )
 		{
 			lines.addAll( buildQiimeConfigLines() );
+			lines.add( "" );
 		}
+
 		return lines;
 	}
 
@@ -704,7 +700,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	private static final String QIIME_CONFIG_TAXA_SEQ_REF = "assign_taxonomy_reference_seqs_fp";
 	private static final String QIIME_CONFIG_TAXA_ID_REF = "assign_taxonomy_id_to_taxonomy_fp";
 	
-	private static final String QIIME_CONFIG = "~/.qiime_config";
+	private static final String QIIME_CONFIG = DockerUtil.DOCKER_ROOT_HOME + "/.qiime_config";
 	private static final String UNDEFINED = "UNDEFINED";
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 
