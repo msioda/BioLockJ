@@ -1,0 +1,33 @@
+###################################################################
+##                                                               ##
+##  This script launches Docker webapp container                 ##
+##  Must map volume to /config to save new BLJ Config files      ##
+##                                                               ##
+###################################################################
+
+# check for options to start the browser
+startBrowser() {
+  sleep 2
+  #usefull: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
+  # if [ -n $BROWSER ]; then
+  #   $BROWSER 'http://localhost:8080/'
+  if which xdg-open > /dev/null; then
+    xdg-open 'http://localhost:8080/'
+  elif which gnome-open > /dev/null; then
+    gnome-open 'http://localhost:8080/'
+  elif which python > /dev/null; then
+    python -mwebbrowser http://localhost:8080/
+  else
+    echo "Could not detect the web browser to use."
+  fi
+}
+
+docker run --rm -p 8080:3000 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $BLJ/resources/config/gui:/config  \
+  -v $BLJ_PROJ:/pipelines:delegated  \
+  -v $BLJ/web_app/logs:/log:delegated  \
+  -e "HOST_BLJ_PROJ=$BLJ_PROJ" \
+  $DOCKER_HUB_USER/blj_webapp
+
+startBrowser
