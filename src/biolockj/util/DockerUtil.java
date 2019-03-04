@@ -267,7 +267,13 @@ public class DockerUtil
 
 		if( hasDB( module ) )
 		{
-			dockerVolumes += " -v " + ( (DatabaseModule) module ).getDB().getAbsolutePath() + ":" + CONTAINER_DB_DIR;
+			String db = ( (DatabaseModule) module ).getDB().getAbsolutePath();
+			if( db.startsWith( DOCKER_ROOT_HOME ) )
+			{
+				db = db.replace( DOCKER_ROOT_HOME, "~" );
+			}
+			
+			dockerVolumes += " -v " + db + ":" + CONTAINER_DB_DIR;
 		}
 
 		return dockerVolumes;
@@ -326,6 +332,8 @@ public class DockerUtil
 	 */
 	public static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
 
+	
+
 	/**
 	 * Docker image name for simple bash scripts (awk,gzip,pear).
 	 */
@@ -355,6 +363,7 @@ public class DockerUtil
 	 */
 	protected static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
 
+	private static final String DOCKER_ROOT_HOME = "/root";
 	private static final String DB_FREE = "_dbfree";
 	private static final String DOCK_RM_FLAG = "--rm";
 	private static final String DOCKER_IMG_VERSION = "docker.imgVersion";

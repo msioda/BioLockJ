@@ -415,11 +415,11 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		if( getDB() != null )
 		{
 			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_CONFIG );
-			lines.add( "echo " + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> " + QIIME_CONFIG );
-			lines.add( "echo " + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " +  getDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG + RETURN);
+			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " +  getDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG );
 		}
-		
+
 		return lines;
 	}
 	
