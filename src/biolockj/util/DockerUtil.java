@@ -172,6 +172,24 @@ public class DockerUtil
 	}
 
 	/**
+	 * Function used to determine if an alternate database has been defined (other than /db).
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if module has a custom DB defined
+	 * @throws Exception if errors occur
+	 */
+	public static final boolean hasDB( final BioModule module ) throws Exception
+	{
+		if( RuntimeParamUtil.isDockerMode() && module instanceof DatabaseModule )
+		{
+			final String db = ( (DatabaseModule) module ).getDB().getAbsolutePath();
+			return !db.equals( CONTAINER_DB_DIR );
+		}
+
+		return false;
+	}
+
+	/**
 	 * Return TRUE if running on AWS (based on Config props).
 	 * 
 	 * @return TRUE if project.env=aws
@@ -243,8 +261,7 @@ public class DockerUtil
 
 		if( module instanceof TrimPrimers )
 		{
-			final File primers = new File( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) )
-					.getParentFile();
+			final File primers = new File( Config.getSystemFilePath( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) ) ).getParentFile();
 			dockerVolumes += " -v " + primers.getAbsolutePath() + ":" + CONTAINER_PRIMER_DIR;
 		}
 
@@ -259,17 +276,6 @@ public class DockerUtil
 	private static BioModule getShellModule( final String className ) throws Exception
 	{
 		return (BioModule) Class.forName( className ).getDeclaredConstructor().newInstance();
-	}
-
-	private static final boolean hasDB( final BioModule module ) throws Exception
-	{
-		if( module instanceof DatabaseModule )
-		{
-			String db = ( (DatabaseModule) module ).getDB().getAbsolutePath();
-			return !db.equals( CONTAINER_DB_DIR );
-		}
-		
-		return false;
 	}
 
 	private static final String rmFlag( final BioModule module ) throws Exception

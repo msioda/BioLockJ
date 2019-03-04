@@ -23,7 +23,7 @@ import biolockj.util.MetaUtil;
  * This module runs the QIIME pick_open_reference_otus.py script on FastA sequence files in a single script so it is
  * important to allocate sufficient job resources if running in a clustered environment.
  * 
- * @blj.web_desc Qiime Open Ref Classifier
+ * @blj.web_desc QIIME Open Reference Classifier
  */
 public class QiimeOpenRefClassifier extends QiimeClassifier implements ClassifierModule
 {
@@ -42,7 +42,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 	public List<List<String>> buildScript( final List<File> files ) throws Exception
 	{
 		final List<List<String>> data = new ArrayList<>();
-		final List<String> lines = new ArrayList<>();
+		final List<String> lines = initLines();
 
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outputDir = getOutputDir().getAbsolutePath() + File.separator;

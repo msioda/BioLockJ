@@ -46,7 +46,6 @@ import biolockj.util.SeqUtil;
  */
 public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 {
-
 	/**
 	 * Create QIIME mapping based on metadata file, output to temp dir. Add required fields if missing.
 	 *
