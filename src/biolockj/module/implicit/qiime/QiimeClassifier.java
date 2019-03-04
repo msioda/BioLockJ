@@ -218,6 +218,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		String pynastDB = Config.getString( this, QIIME_PYNAST_ALIGN_DB );
 		String refSeqDB = Config.getString( this, QIIME_REF_SEQ_DB );
 		String taxaDB = Config.getString( this, QIIME_TAXA_DB );
+
 		if( pynastDB == null && refSeqDB == null && taxaDB == null )
 		{
 			return null;
@@ -693,13 +694,10 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
 
 	private static final String NUM_THREADS_PARAM = "-aO";
-	
-
 	private static final String QIIME_CONFIG_SEQ_REF = "pick_otus_reference_seqs_fp";
 	private static final String QIIME_CONFIG_PYNAST_ALIGN_REF = "pynast_template_alignment_fp";
 	private static final String QIIME_CONFIG_TAXA_SEQ_REF = "assign_taxonomy_reference_seqs_fp";
 	private static final String QIIME_CONFIG_TAXA_ID_REF = "assign_taxonomy_id_to_taxonomy_fp";
-	
 	private static final String QIIME_CONFIG = DockerUtil.DOCKER_ROOT_HOME + "/.qiime_config";
 	private static final String UNDEFINED = "UNDEFINED";
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
