@@ -141,9 +141,6 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 		return dir;
 	}
 
-	/**
-	 * This method generates the required bash function: {@value #FUNCTION_RUN_METAPHLAN}
-	 */
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{

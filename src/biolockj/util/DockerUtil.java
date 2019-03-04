@@ -263,7 +263,13 @@ public class DockerUtil
 
 	private static final boolean hasDB( final BioModule module ) throws Exception
 	{
-		return module instanceof DatabaseModule && ( (DatabaseModule) module ).getDB() != null;
+		if( module instanceof DatabaseModule )
+		{
+			String db = ( (DatabaseModule) module ).getDB().getAbsolutePath();
+			return !db.equals( CONTAINER_DB_DIR );
+		}
+		
+		return false;
 	}
 
 	private static final String rmFlag( final BioModule module ) throws Exception
