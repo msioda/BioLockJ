@@ -30,7 +30,7 @@ RUN echo ${BLJ_DATE} && \
 	mkdir $BLJ && \
 	cd $BLJ && \
 	wget -qO- $WGET_URL | bsdtar -xzf- && \
-	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/src && \
+	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]* && \
 	cp $BLJ/script/* /usr/local/bin
 	
 #4.) Install npm
