@@ -33,7 +33,7 @@ if [ -d "$BLJ_SUP" ]; then
 	export BLJ_SUP=$BLJ_SUP
 	export PATH="$BLJ_SUP/script:$PATH"
 	. $BLJ_SUP/script/docker_functions
-	echo "$SCRIPT_DIR:$BLJ_SUP/script has been added to your PATH"
+	echo -e "The BioLockJ & blj_support script directories have been added to your PATH environment variable: \"PATH=$SCRIPT_DIR:$BLJ_SUP/script:$PATH\""
 else
-	echo "$SCRIPT_DIR has been added to your PATH" && echo "BLJ_SUP not found" 
+	echo -e "The BioLockJ script directory has been added to your PATH environment variable: \"PATH=$SCRIPT_DIR:$PATH\""
 fi 
