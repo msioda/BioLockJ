@@ -608,5 +608,4 @@ public final class RMetaUtil
 	private static Set<String> numericFields = null;
 	private static String QIIME_ALPHA_METRIC_LABEL_SUFFIX = "_alpha_label";
 	private static final String QIIME_ALPHA_METRIC_SUFFIX = "_alpha";
-	private static final String QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX = "_normalized_alpha";
 }
