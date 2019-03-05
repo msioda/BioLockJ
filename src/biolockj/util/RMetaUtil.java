@@ -496,9 +496,10 @@ public final class RMetaUtil
 			for( final String metric: alphaDivMetrics )
 			{
 				final String m0 = metric + QIIME_ALPHA_METRIC_SUFFIX;
-				final String m1 = metric + QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX;
+				// skip as redundant
+				//final String m1 = metric + QIIME_NORMALIZED_ALPHA_METRIC_SUFFIX;
 				final String m2 = metric + QIIME_ALPHA_METRIC_LABEL_SUFFIX;
-				if( field.equals( m0 ) || field.equals( m1 ) || field.equals( m2 ) )
+				if( field.equals( m0 ) || field.equals( m2 ) )
 				{
 					Log.info( RMetaUtil.class,
 							"Metadata validation of field(" + field + ") --> found QIIME metric: " + metric );

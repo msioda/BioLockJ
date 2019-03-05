@@ -5,8 +5,9 @@
     <button class="dropbtn" onclick="projectOptions()">Projects (Click here to start)</button>
     <div class="dropdown-content" id="projects">
       <a onclick="newProj()" href="#">New</a>
-      <a onclick="openProjDisplay()" href="#">Open local config file</a>
-      <a id="recent" href="#">Recent</a>
+      <a onclick="openProjDisplay()" href="#">Open BLJ config with file picker</a>
+      <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
+      <a id="recent" href="#">(Auto)Saved configs</a>
     </div>
   </div>
 </div>
@@ -25,7 +26,7 @@
   <div class="tab">
     <button id="defaultOpen" class="tablinks" onclick="openTab(event, 'projectTab')">Project</button>
     <button class="tablinks" onclick="openTab(event, 'moduleTab')">Modules</button>
-    <button class="tablinks" onclick="openTab(event, 'inputTab')">[Sequencing Input]</button>
+    <button class="tablinks" onclick="openTab(event, 'inputTab')">Input</button>
     <button class="tablinks" onclick="openTab(event, 'metadataTab')">Metadata</button>
     <button class="tablinks" onclick="openTab(event, 'clusterTab')">Cluster</button>
     <button class="tablinks" onclick="openTab(event, 'scriptTab')">Script</button>
@@ -38,9 +39,21 @@
     <button class="tablinks" onclick="openTab(event, 'krakenTab')">Kraken</button>
     <button class="tablinks" onclick="openTab(event, 'kraken2Tab')">Kraken2</button>
     <button class="tablinks" onclick="openTab(event, 'metaphlanTab')">MetaPhlAn</button>
-    <button class="tablinks" onclick="openTab(event, 'slimmTab')">SLIMM</button>
-    <button id='AwsButton' class="tablinks hidden" onclick="openTab(event, 'AWS')">AWS</button>
+    <!-- <button class="tablinks" onclick="openTab(event, 'slimmTab')">SLIMM</button> -->
+    <button class="tablinks" onclick="openTab(event, 'r_PlotMdsTab')">R Plot MDS</button>
+    <button class="tablinks" onclick="openTab(event, 'r_CalculateStatsTab')">R Statistics Calculator</button>
+    <button class="tablinks" onclick="openTab(event, 'r_PlotEffectSizeTab')">R Plot Effect Size</button>
+    <button class="tablinks" onclick="openTab(event, 'rarefyOtuCountsTab')">Rarefy OTU Counts</button>
+    <button class="tablinks" onclick="openTab(event, 'removeLowOtuCountsTab')">Remove Low OTU Counts</button>
+    <button class="tablinks" onclick="openTab(event, 'seqFileValidatorTab')">Sequence File Validator</button>
+    <button class="tablinks" onclick="openTab(event, 'demultiplexerTab')">Demultiplexer</button>
+    <button class="tablinks" onclick="openTab(event, 'dockerTab')">Docker</button>
+    <button class="tablinks" onclick="openTab(event, 'humann2Tab')">HumanN2</button>
+    <button class="tablinks" onclick="openTab(event, 'multiplexerTab')">Multiplexer</button>
+    <button class="tablinks" onclick="openTab(event, 'rarefySeqsTab')">Rarify Seqs</button>
+    <button id='AwsButton' class="tablinks" onclick="openTab(event, 'AwsTab')">AWS</button>
   </div>
+
   <!--tabbed menu-->
 <form id="configForm" class="" action="" method="post">
 
@@ -48,26 +61,30 @@
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Project name:
-        <input name='project.configFile' id='project.configFile' name='project.configFile' type="text" size='35'></p>
+        <input class="sp" id='project.configFile' name='project.configFile' type="text" size='35'></p>
+      <p>Project description (for your own records):
+        <input class="sp" id='project.description' name='project.description' type="text" size='200'></p>
       <p>Copy input files into the parent directory:
-        <select id='project.copyInput' name='project.copyInput'>
+        <select class="sp" id='project.copyInput' name='project.copyInput'>
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
       <p>Delete temporary files:
-        <select id="project.deleteTempFiles" name="project.deleteTempFiles">
+        <select class='sp' id="project.deleteTempFiles" name="project.deleteTempFiles">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
-      <p id="defaultPropsP">Path to default properties file:
-        <input type="text" id="project.defaultProps" name="project.defaultProps" size='70'><br> add file picker here
+        <button type="button" name="dockerDefaultProps" id="dockerDefaultProps">Add Default Properties</button>
+      <p class="hidden" id="defaultPropsP">Path to default properties file:
+        <input class="sp" type="text" id="project.defaultProps" name="project.defaultProps" size='70'><br>
+        <!-- add file picker here -->
         <i>(Path to a default BioLockJ configuration file containing default
         property values that are overridden if defined in the primary
         configuration file.)</i></p>
       <p>Log level: <br><i>Determines log level sensitivity.</i>
-        <select name="project.logLevel" id="project.logLevel">
+        <select class="sp" name="project.logLevel" id="project.logLevel">
           <option selected default value="">Click for options</option>
           <option value="DEBUG">Include debug output.</option>
           <option value="INFO">Include informative output.</option>
@@ -75,34 +92,47 @@
           <option value="ERROR">Include only errors.</option>
         </select></p>
       <p>Project runtime environment:
-        <select class="" name="project.env" id="project.env">
+        <select class="sp" name="project.env" id="project.env">
           <option selected default value="">Click for options</option>
           <option value="aws">AWS</option>
           <option value="cluster">Cluster</option>
           <option value="local">Local</option>
-        </select></p>
-      <p>Run project in Docker:
-        <select class="" id="project.runDocker" name="project.runDocker">
-          <option selected default value="">Click for options</option>
-          <option default value="Y">Yes</option>
-          <option value="N">No</option>
-        </select></p>
-      <p>Delete docker containers on exit
-        <select class="" id="docker.deleteContainerOnExit" name="docker.deleteContainerOnExit">
+        </select>
+      </p>
+      <p>A directory on the local workstation where the cluster.downloadModule will be downloaded
+        <input class="sp" type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
+      <p>Set chmod -R command security bits on pipeline root directory (Ex. 770).
+        <input class="sp" type="text" id="project.permissions" name="project.permissions" size='70'>
+      </p>
+      <p>Assign module to demultiplex datasets:
+        <input type="text" class="sp" id="project.defaultDemultiplexer" name="project.defaultDemultiplexer" placeholder="Demultiplexer" size='70'>
+      </p>
+      <p>ssign module to convert fastq sequence files into fasta format when required. Default = AwkFastaConverter":
+        <input type="text" class="sp" id="project.defaultFastaConverter" name="project.defaultFastaConverter" placeholder="AwkFastaConverter" size='70'>
+      </p>
+      <p>Assign module to merge paired reads when required. Default = PearMergeReads:
+        <input type="text" class="sp" id="project.defaultSeqMerger" name="project.defaultSeqMerger" placeholder="PearMergeReads" size='70'>
+      </p>
+      <p>Add implicit modules to the pipeline.
+        <select class="sp" id="project.disableAddImplicitModules" name="project.disableAddImplicitModules">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
-        </select></p>
-      <p>A directory on the local workstation where the cluster.downloadModule will be downloaded
-        <input type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
-      <p>Assign module to demultiplex datasets.
-        <input type="text" id="project.defaultModuleDemultiplexer" name="project.defaultModuleDemultiplexer" size='70'></p>
-      <p>Assign module to convert fastq sequence files into fasta format when required.
-        <input type="text" id="project.defaultModuleFastaConverter" name="project.defaultModuleFastaConverter" size='70'></p>
-      <p>Assign module to merge paired reads when required.
-        <input type="text" id="project.defaultModuleSeqMerger" name="project.defaultModuleSeqMerger" size='70'></p>
-      <p>Set chmod -R command security bits on pipeline root directory (Ex. 770).
-        <input type="text" id="project.permissions" name="project.permissions" size='70'></p>
+        </select>
+      </p>
+      <p>Disable automatic adding of prerequisite modules to pipeline.
+        <select class="sp" id="project.disableAddPreReqModules" name="project.disableAddPreReqModules">
+          <option selected default value="">Click for options</option>
+          <option value="Y">Yes</option>
+          <option value="N">No</option>
+        </select>
+      </p>
+      <p>Limit debug classes (used to limit classes that log debug statements):
+        <input type="text" class="sp" id="project.limitDebugClasses" name="project.limitDebugClasses" size='70'>
+      </p>
+      <p>User profile (Bash users typically use ~/.bash_profile (the standard default)):
+        <input type="text" class="sp" id="project.userProfile" name="project.userProfile" size='70'>
+      </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -124,13 +154,13 @@
       <div id='moduleInfo'>
         <center>Hover mouse over module for more information.</center><br>
         <div id='moduleInfoDiv'>
-          <div>Info will display here!</div>
+          <div>Info about modules will display here!</div>
           <!--inner div for adding information to-->
         </div>
       </div>
     </fieldset>
     <p>BioLockJ automatically adds implicit modules as they are needed, but you may override this behavior and force it to run an implicit module.</p>
-    <select class="" id="project.allowImplicitModules" name="project.allowImplicitModules">
+    <select id="project.allowImplicitModules" name="project.allowImplicitModules">
       <option class='noOverrideImplicit' selected default value="">Click for options</option>
       <option id='yesOverrideImplicit' value="Y">Allow implicit modules to be directly added to pipeline</option>
       <option class='noOverrideImplicit' value="N">Allow BLJ to determine where to add implicit modules in the pipeline</option>
@@ -143,118 +173,105 @@
   <div id="inputTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Input directory (or directories): <input type="text" size='70' id="input.dirPaths" name="input.dirPaths">
+      <p>Input directory (or directories): <input class="sp" type="text" size='70' id="input.dirPaths" name="input.dirPaths">
         <h5>(Input directory must contain files expected by the first module executed.
         Multiple directories must be comma-separated.)</h5></p>
-      <p>Files in input directory to ignore: <input type="text" id="input.ignoreFiles" name="input.ignoreFiles"><br>
+      <p>Files in input directory to ignore: <input class="sp" type="text" id="input.ignoreFiles" name="input.ignoreFiles"><br>
         <h5>(Multiple files must be comma-separated.)</h5></p>
       <p>File name suffix to indicate a forward read:
-          <input type="text" id="input.suffixFw" name="input.suffixFw"><br>
+          <input class="sp" type="text" id="input.suffixFw" name="input.suffixFw"><br>
         File name suffix to indicate a reverse read.
-        <input type="text" id="input.suffixRv" name="input.suffixRv"><br>
+        <input class="sp" type="text" id="input.suffixRv" name="input.suffixRv"><br>
             </p>
       <p>Trim prefix:
-        <input type="text" id="input.trimPrefix" name="input.trimPrefix">
+        <input class="sp" type="text" id="input.trimPrefix" name="input.trimPrefix">
       <h5>(For files named by Sample ID, provide the
         prefix preceding the ID to trim when extracting Sample ID.
 If input.demultiplex=Y, provide any characters in the sequence header preceding the ID.
 For fastq, typically “@”.)<h5></p>
       <p>Trim suffix:
-        <input type="text" id="input.trimSuffix" name="input.trimSuffix"><br>
+        <input class="sp" type="text" id="input.trimSuffix" name="input.trimSuffix"><br>
         <h5>(For files named by Sample ID, provide the suffix after the ID, often
            this is just the file extension.  Do not include read direction indicators l
            isted in input.forwardFileSuffix/reverseFileSuffix.
            If input.demultiplex=Y, provide 1st character in the sequence header after ID;
            for fastq, typically “:” char.)</h5></p>
-      <p>Maximum accepted length of sequence read:
-        <input type="number" id="input.seqMaxLen" name="input.seqMaxLen" min="1"><br></p>
-      <p>Minimum accepted length of sequence read:
-        <input type="number" id="input.seqMinLen" name="input.seqMinLen" min="1"><br></p>
-      <p>Minimum number of sequences per sample for use in rarefication (BioLockJ will discard samples with sequences below this.):
-        <input type="number" id="rarefier.min" name="rarefier.min" min="1"><br></p> <!--these should be hidden unless rarefy module is selected (also change names)-->
-      <p>Randomly select maximum number of sequences per sample use in rarefication:
-        <input type="number" id="rarefier.max" name="rarefier.max" min="1"><br></p>
       <p>Path to file containing primers to trim (File must contain only one sequence per line):
-        <input type="text" id="trimPrimers.filePath" name="trimPrimers.filePath" size='70'><br></p>
+        <input class="sp" type="text" id="trimPrimers.filePath" name="trimPrimers.filePath" size='70'><br></p>
       <p>Discard reads with no primers?
-        <select class="" id="trimPrimers.requirePrimer" name="trimPrimers.requirePrimer">
+        <select class="sp" id="trimPrimers.requirePrimer" name="trimPrimers.requirePrimer">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N"> No</option>
-        </select></p>
-      <p>Set the Demultiplexer strategy. If using barcodes, they must be provided in the
-        metadata.filePath with in column name defined by metadata.barcodeColumn. This is only used by the Demultiplexer module:
-        <select class="" id="demux.strategy" name="demux.strategy">
-          <!-- <option selected value="">Click for options</option> -->
-          <option value="barcode_in_header">Barcode in header</option>
-          <option value="barcode_in_seq">Barcode in sequence</option>
-          <option value="id_in_header">Sequence ID in header</option>
-          <option selected default value="do_not_demux.">N/A</option>
-        </select></p>
+        </select>
+      </p>
+      <p>Stop pipeline if any unpaired forward or reverse read sequence file is found.
+        <select class="sp" name="input.requireCompletePairs" id="input.requireCompletePairs">
+          <option value="Y">Yes</option>
+          <option value="N">No</option>
+        </select>
+      </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
   <div id="metadataTab" class="tabcontent">
-      <button class="createDownload">Create configuration file for download</button>
-      <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Metadata column name containing the barcode used for demultiplexing:
-        <input type="text" id="metadata.barcodeColumn" name="metadata.barcodeColumn"><br></p>
-      <p>Metadata file path (file must have unique column headers):
-        <input type="text" id="metadata.filePath" name="metadata.filePath" size='70'><br></p>
-      <p>Define how comments are represented in metadata:
-        <input type="text" id="metadata.commentChar" name="metadata.commentChar"><br></p>
-      <p>Define how null values are represented in metadata:
-        <input type="text" id="metadata.nullValue" name="metadata.nullValue"></p>
-      <p>Define column delimiter for input.metadata (input.columnDelim)
-        <input type="text" id="metadata.columnDelim" name="metadata.columnDelim"></p>
-      <p>Require every sequence file to have a corresponding row in metadata file:
-        <select class="" id="metadata.required" name="metadata.required">
-          <option selected default value="">Click for options</option>
-          <option value="Y">Yes</option>
-          <option value="N"> No</option>
-        </select></p>
-      </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>Metadata column name containing the barcode used for demultiplexing:
+      <input class="sp" type="text" id="metadata.barcodeColumn" name="metadata.barcodeColumn"><br></p>
+    <p>Metadata file path (file must have unique column headers):
+      <input class="sp" type="text" id="metadata.filePath" name="metadata.filePath" size='70'><br></p>
+    <p>Define how comments are represented in metadata:
+      <input class="sp" type="text" id="metadata.commentChar" name="metadata.commentChar"><br></p>
+    <p>Define how null values are represented in metadata:
+      <input class="sp" type="text" id="metadata.nullValue" name="metadata.nullValue"></p>
+    <p>Define column delimiter for input.metadata (input.columnDelim)
+      <input class="sp" type="text" id="metadata.columnDelim" name="metadata.columnDelim"></p>
+    <p>Require every sequence file to have a corresponding row in metadata file:
+      <select class="sp" id="metadata.required" name="metadata.required">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N"> No</option>
+      </select></p>
+    </p>
+    <p>Column in metadata file giving file names used to identify each sample. Values should be simple names, not file paths, and unique to each sample. Using this column in the metadata overrides the use of input.trimPreifx and input.trimSuffix. For paired reads, give the forward read file and use input.suffixFw and input.suffixRv to link to the reverse file.
+      <input class="sp" type="text" name="metadata.fileNameColumn" id="metadata.fileNameColumn" value="" placeholder="InputFileName">
+    </p>
+    <p>Require every metadata row to have a corresponding sequence file?
+      <select class="sp" name="metadata.useEveryRow" id="metadata.useEveryRow">
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-    </div>
-
+  </div>
 
   <div id="clusterTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
       <p>Cluster host address (cluster.host):
-        <input type="text" id="cluster.host" name="cluster.host"><br></p>
+        <input class="sp" type="text" id="cluster.host" name="cluster.host"><br></p>
       <p>Batch command to submit jobs on the cluster:
-        <input type="text" id="cluster.batchCommand" name="cluster.batchCommand"><br>
+        <input class="sp" type="text" id="cluster.batchCommand" name="cluster.batchCommand"><br>
       </p>
       <p>Job script header to define # of nodes, # of cores, RAM, walltime, etc.
-        <input type="text" id="cluster.jobHeader" name="cluster.jobHeader"><br></p>
-      <p>Number of classifier threads (Integer value passed to ClassifierModule if it has a number of threads parameter.
-        If undefined, script.numThreads will be used instead because classifiers often
-        require more resources than other modules.):
-        <input type="number" id="cluster.numClassifierThreads" name="cluster.numClassifierThreads" min='1'><br></p>
-      <p>Run java as script module: (If Y, each JavaModule will instantiate a clone of the
-        application in direct mode on a job node via a single worker script to avoid overworking
-        the head node where BioLockJ is deployed):
-        <select class="" id="cluster.runJavaAsScriptModule" name="cluster.runJavaAsScriptModule">
-          <option selected default value="">Click for options</option>
-          <option value="Y">Yes</option>
-          <option value="N"> No</option>
-        </select></p>
+        <input class="sp" type="text" id="cluster.jobHeader" name="cluster.jobHeader"><br></p>
       <p>Validate cluster parameters: (If Y, validate
         cluster.jobHeader/cluster.classifierHeader "ppn:" or "procs:"
-        value matches script.numThreads/cluster.numClassifierThreads)
-        <select class="" id="cluster.validateParams" name="cluster.validateParams">
+        value matches script.numThreads
+        <select class="sp" id="cluster.validateParams" name="cluster.validateParams">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N"> No</option>
         </select></p>
       <p>Cluster modules to load before execution:
-        <input type="text" id="cluster.modules" name="cluster.modules"><br></p>
+        <input class="sp" type="text" id="cluster.modules" name="cluster.modules"><br>
+      </p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -264,23 +281,19 @@ For fastq, typically “@”.)<h5></p>
   <div id="scriptTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Exit program if errors in script occur: (script.exitOnError)
-        <select class="" id="script.exitOnError" name="script.exitOnError">
-          <option selected default value="">Click for options</option>
-          <option value="Y">Yes</option>
-          <option value="N">No (failures will be logged to failure directory)</option>
-          </select></p>
       <p>Number of sequence files to process per script:
-        <input type="number" min='0' id="script.batchSize" name="script.batchSize"><br></p>
+        <input class="sp" type="number" min='0' id="script.batchSize" name="script.batchSize"><br></p>
       <p>Command to grant script execute permissions:
-        <input type="text" id="script.permissions" name="script.permissions"><br></p>
+        <input class="sp" type="text" id="script.permissions" name="script.permissions"><br></p>
       <p>Number of threads:
-        <input type="number" min='0' id="script.numThreads" name="script.numThreads"><br></p>
+        <input class="sp" type="number" min='0' id="script.numThreads" name="script.numThreads"><br></p>
       <p>Default header: (Used to set shebang line to define scripts as bash executables, such as "#!/bin/bash"
         scriptDefaultHeader)
-        <input type="text" id="script.defaultHeader" name="script.defaultHeader"><br></p>
-      <p>Set # minutes before direct Java module script will time out and fail
-        <input type="number" min='0' id="java.timeout" name="java.timeout"><br></p>
+        <input class="sp" type="text" id="script.defaultHeader" name="script.defaultHeader"><br></p>
+      <p>Set number of minutes before module script will time out and fail
+        <input class="sp" type="number" min='0' id="script.timeout" name="script.timeout"><br>
+      </p>
+      <!--  Question for mike: whats the difference between these two? -->
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -290,30 +303,27 @@ For fastq, typically “@”.)<h5></p>
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Report logbase: (If e, use natural log (base e), otherwise use log base 10):
-        <select class="" id="report.logBase" name="report.logBase">
+        <select class="sp" id="report.logBase" name="report.logBase">
           <option selected default value="">Click for options</option>
           <option value="e">e</option>
           <option value="10">10</option>
         </select></p>
       <p>Include number of hits in output:
-        <select class="" id="report.numHits" name="report.numHits">
+        <select class="sp" id="report.numHits" name="report.numHits">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N"> No</option>
         </select></p>
       <p>Add number of reads to output:
-        <select class="" id="report.numReads" name="report.numReads">
+        <select class="sp" id="report.numReads" name="report.numReads">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N"> No</option>
         </select></p>
-      <p>ParserModule ignores OTU counts below this minimum number per sample when building raw count tables:
-        <input type="number" min='0' id="report.minOtuCount" name="report.minOtuCount"><br></p>
-      <p>ParserModule ignores OTU counts if the total OTU count for all samples falls below this minimum number when building raw count tables:
-        <input type="number" min='0' id="report.minOtuThreshold" name="report.minOtuThreshold">
-      <!--  <p>Delimiter to sepearte genus and species:<br>
-        <input type="text" name="emptySpaceDelim"><br></p>-->
-      <p id='report.taxonomyLevels'>Taxonomic levels included in report:<br>
+      <p>"Integer, minimum table count allowed. If a count less that this value is found, it is set to 0.:
+        <input class="sp" type="number" min='0' id="report.minCount" name="report.minCount"><br></p>      <!--  <p>Delimiter to sepearte genus and species:<br>
+        <input class="sp" type="text" name="emptySpaceDelim"><br></p>-->
+      <p <input class="sp" id='report.taxonomyLevels'>Taxonomic levels included in report:<br>
         <input type="checkbox" name="report.taxonomyLevels" value="domain">Domain<br>
         <input type="checkbox" name="report.taxonomyLevels" value="phylum">Phylum<br>
         <input type="checkbox" name="report.taxonomyLevels" value="class">Class<br>
@@ -322,6 +332,10 @@ For fastq, typically “@”.)<h5></p>
         <input type="checkbox" name="report.taxonomyLevels" value="genus">Genus<br>
         <input type="checkbox" name="report.taxonomyLevels" value="species">Species<br>
       </p>
+      <p>"Minimum percentage of samples that must contain a count value for it to be kept.:
+        <input class="sp" type="number" min='0' max='1' id="report.scarceCountCutoff" name="report.scarceCountCutoff"><br></p>
+      <p>"Minimum percentage of data columns that must be non-zero to keep the sample.:
+        <input class="sp" type="number" min='0' max='1' id="report.scarceSampleCutoff" name="report.scarceSampleCutoff"><br></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -337,26 +351,26 @@ For fastq, typically “@”.)<h5></p>
         <strong>WARNING: Base64 encryption is only a trivial roadblock for malicious users.
           This functionality is intended merely to keep clear-text passwords out of the
           configuration files and should only be used with a disposable email.from account.</strong>
-        <input type="text" id="mail.encryptedPassword" name="mail.encryptedPassword"><br>
+        <input class="sp" type="text" id="mail.encryptedPassword" name="mail.encryptedPassword"><br>
         <p>Notification emails sent from this account, provided email.encryptedPassword is valid:
-          <input type="text" id="mail.from" name="mail.from"><br>
+          <input class="sp" type="text" id="mail.from" name="mail.from"><br>
           <p>Comma-separated email recipients list:
-            <input type="text" id="mail.to" name="mail.to"><br>
+            <input class="sp" type="text" id="mail.to" name="mail.to"><br>
           </p>
           <p>Email SMTP Host:<br>
-            <input type="text" id="mail.smtp.host" name="mail.smtp.host"><br>
+            <input class="sp" type="text" id="mail.smtp.host" name="mail.smtp.host"><br>
           </p>
           <p>Email SMTP port:<br>
-          <input type="text" id="mail.smtp.port" name="mail.smtp.port"><br>
+          <input class="sp" type="text" id="mail.smtp.port" name="mail.smtp.port"><br>
         </p>
         <p>Set the SMTP authorization property:<br>
-          <select class="" id="mail.smtp.auth" name="mail.smtp.auth">
+          <select class="sp" id="mail.smtp.auth" name="mail.smtp.auth">
             <option selected default value="">Click for options</option>
             <option value="Y">Yes</option>
             <option value="N"> No</option>
           </select></p>
         <p>Set the SMTP start TLS property:
-          <select class="" id="mail.smtp.starttls.enable" name="mail.smtp.starttls.enable">
+          <select class="sp" id="mail.smtp.starttls.enable" name="mail.smtp.starttls.enable">
             <option selected default value="">Click for options</option>
             <option value="Y">Yes</option>
             <option value="N"> No</option>
@@ -370,103 +384,50 @@ For fastq, typically “@”.)<h5></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>The base color used for labels & headings in the PDF report:
-        <input type="text" id="r.colorBase" name="r.colorBase">
+        <input class="sp" type="text" id="r.colorBase" name="r.colorBase">
       </p>
       <p>The color palette for the plots:
-        <input type="text" name="r.colorPalette" id="r.colorPalette">
+        <input class="sp" type="text" name="r.colorPalette" id="r.colorPalette">
       <p>The color used to highlight significant attributes:
-        <input type="text" id="r.colorHighlight" name="r.colorHighlight">
+        <input class="sp" type="text" id="r.colorHighlight" name="r.colorHighlight">
       </p>
       <p>Sets the color of scatterplot points:<br>
-        <input type="text" id="r.colorPoint" name="r.colorPoint">
+        <input class="sp" type="text" id="r.colorPoint" name="r.colorPoint">
       </p>
       <p>Generate R Script log files:
-        <select class="" id="r.debug" name="r.debug">
+        <select class="sp" id="r.debug" name="r.debug">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N"> No</option>
         </select></p>
       <p>List metadata columns to exclude from R script reports (comma separated)
-        <input type="text" id='r.excludeFields' name='r.excludeFields'></p>
-      <p>Filter fields: (Ordered list of metadata fields that together with r.filterOperators and r.filterValues
-        are used to filter OTU-metadata tables in generated R script reports.)
-        <input type="text" id="r.filterFields" name="r.filterFields"></p>
-      <p>Filter out rows with "NA" values for these fields in R
-        <input type="text" id="r.filterNaFields" name="r.filterNaFields"></p>
-      <p>List of logical operators to apply to attributes filter:
-        <input type="text" id="r.filterOperators" name="r.filterOperators"></p>
-      <p>Filter values: <br><i>(An ordered list of values to compare with attributes filter)</i>
-        <input type="text" id="r.filterValues" name="r.filterValues"></p>
+        <input class="sp" type="text" id='r.excludeFields' name='r.excludeFields'></p>
       <p>Explicitly override default field type assignment to model as a nominal field in R (Comma seperated list)<br>
-        <input type="text" id="r.nominalFields" name="r.nominalFields">    </p>
-      <p>Explicitly override default field type assignment to model as a numeric field in R. (Comma seperated list)<br>
-        <input type="text" id="r.numericData" name="r.numericData"><br>  </p>
+        <input class="sp" type="text" id="r.nominalFields" name="r.nominalFields">    </p>
       <p>Sets R plot pch parameter for PDF report:
-        <input type='text' id="r.pch" name="r.pch"></p>
-      <p>Sets PDF report plot label maximum width
-        <input type="text" id="r.plotWidth" min="1" name="r.plotWidth" value=""></p>
+        <input class="sp" type='text' id="r.pch" name="r.pch"></p>
       <p>Sets p-value cutoff used to assign label the highlight color
-        <input type="text" id="r.pvalCutoff" name="r.pvalCutoff" value="">
+        <input class="sp" type="text" id="r.pvalCutoff" name="r.pvalCutoff" value="">
       </p>
       <p>Format of the pvalue used in R sprintf() function
-        <input type="text" id="r.pValFormat" name="r.pValFormat" value=""></p>
+        <input class="sp" type="text" id="r.pValFormat" name="r.pValFormat" value=""></p>
       <p>Rare OTU threshold: (If > 1, R will filter OTUs below value provided. If < 1, R will interperate the value as a percentage and discard OTUs not found in at least that percentage of samples)
-        <input type="number" min='1' id="r.rareOtuThreshold" name="r.rareOtuThreshold" value=""></p>
+        <input class="sp" type="number" min='1' id="r.rareOtuThreshold" name="r.rareOtuThreshold" value=""></p>
       <p>Override field used to explicitly list metadata columns to report in the R scripts. If left undefined, all columns are reported.
-      <input type="text" id="r.reportFields" name="r.reportFields" value=""></p>
+      <input class="sp" type="text" id="r.reportFields" name="r.reportFields" value=""></p>
       <p>Save r data? (If Y, all R script generating BioModules will save R Session data to the module output directory to a file using the extension ".RData")
-        <select class="" id="r.saveRData" name="r.saveRData">
+        <select class="sp" id="r.saveRData" name="r.saveRData">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N"> No</option>
         </select></p>
-      <p># minutes before R Script times out:
-        <input type="number" min='1' id="r.timeout" name="r.timeout"><br>
+      <p>Number of minutes before R Script times out:
+        <input class="sp" type="number" min='1' id="r.timeout" name="r.timeout"><br>
       </p>
-      <p>Number of MDS axis to plot:
-      <input type="number" min="0" id="rMds.numAxis" name="rMds.numAxis" value=""> </p>
-      <p>Override field used to explicitly list metadata columns to build MDS plots. If left undefined, all columns are reported
-      <input type="text" id="rMds.reportFields" name="rMds.reportFields" value=""> </p>
-      <p>P-value adjustment scope: Used to set the p.adjust "n" parameter for how many simultaneous p-value calculations:
-        <select class="" id="rStats.pAdjustScope" name="rStats.pAdjustScope">
-          <option selected default value="">Click for options</option>
-          <option value="GLOBAL">GLOBAL</option>
-          <option value="LOCAL">LOCAL</option>
-          <option value="TAXA">TAXA</option>
-          <option value="ATTRIBUTE">ATTRIBUTE</option>
-        </select></p>
-      <p>Set the p.adjust "method" parameter:<a href=https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html>More info</a><br>
-        <select class="" id="rStats.pAdjustMethod" name="rStats.pAdjustMethod">
-          <option selected default value="">Click for options</option>
-          <option value="holm">Holm</option>
-          <option value="hochberg">Hochberg</option>
-          <option value="hommel">Hommel</option>
-          <option value="bonferroni">Bonferroni</option>
-          <option value="BH">Benjamini & Hochberg (BH)</option>
-          <option value="BY">Benjamini & Yekutieli (BY)</option>
-          <option value="fdr">FDR</option>
-          <option value="none">none</option>
-        </select></p>
-        <p>Select the distance/dissimilary measure for your MDS BuildMdsPlots
-          <select class="" id='rMds.distance' name="rMds.distance">
-            <option selected default value="">Click for options</option>
-            <option value="euclidean">Euclidean dissimilarity</option>
-            <option value="bray">Bray Curtis dissimilary</option>
-            <option value="manhattan">Manhattan dissimilarities</option>
-            <option value="canberra">Canberra index</option>
-            <option value="kulczynski">Kulczynski index</option>
-            <option value="jaccard">Jaccard index</option>
-            <option value="gower">Gower index</option>
-            <option value="altGower">Alternative Gower index</option>
-            <option value="morisita">Morisita index</option>
-            <option value="horn">Horn index</option>
-            <option value="mountford">Mountford index</option>
-            <option value="raup">Raup index</option>
-            <option value="binomial">Binomial index</option>
-            <option value="chao">Chao index</option>
-            <option value="cao">Cao index</option>
-            <option value="mahalanobis">Mahalanobis index</option>
-          </select><br>
+      <p>Explicitly override default field type assignment to model as a numeric field in R:
+        <input class="sp" type="text" min='1' id="r.numericFields" name="r.numericFields"><br>
+      </p>
+
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -479,48 +440,79 @@ For fastq, typically “@”.)<h5></p>
        <button class="createDownload">Create configuration file for download</button>
        <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Define executable awk command if default "awk" is not included in your $PATH:
-        <input type="text" id="exe.awk" name="exe.awk">
+        <input class="sp" type="text" id="exe.awk" name="exe.awk">
       </p>
       <p>Define executable bowtie2 command if default "bowtie2" is not included in your $PATH:
-        <input type="text" id="exe.bowtie2" name="exe.bowtie2">
+        <input class="sp" type="text" id="exe.bowtie2" name="exe.bowtie2">
       </p>
       <p>Optional bowtie2 parameters used by SlimmClassifier:
-        <input type="text" id="exe.bowtie2Params" name="exe.bowtie2Params">
-      </p>
-      <p>Classifier executable command:
-        <input type="text" id="exe.classifier" name="exe.classifier">
-      </p>
-      <p>Optional classifier parameters,
-        excluding parameters generated by BioLockJ (input files,
-        output files, numThreads, etc.):
-        <input type="text" id="exe.classifierParams" name="exe.classifierParams">
+        <input class="sp" type="text" id="exe.bowtie2Params" name="exe.bowtie2Params">
       </p>
       <p>Define executable gzip command if default "gzip" is not included in your $PATH:
-        <input type="text" id="exe.gzip" name="exe.gzip">
+        <input class="sp" type="text" id="exe.gzip" name="exe.gzip">
       </p>
       <p>Define executable java command if default "java" is not included in your $PATH
-        <input type="text" id="exe.java" name="exe.java">
+        <input class="sp" type="text" id="exe.java" name="exe.java">
+      </p>
+      <p>Optional java parameters:
+        <input class="sp" type="text" id="exe.javaParams" name="exe.javaParams">
       </p>
       <p>Define executable pear command if default "pear" is not included in your $PATH
-        <input type="text" id="exe.pear" name="exe.pear">
+        <input class="sp" type="text" id="exe.pear" name="exe.pear">
       </p>
       <p>Optional PEAR parameters:
-        <input type="text" id="exe.pearParams" name="exe.pearParams">
+        <input class="sp" type="text" id="exe.pearParams" name="exe.pearParams">
       </p>
       <p>Define executable python command, if default "python" is not included in your $PATH:
-        <input type="text" id="exe.python" name="exe.python">
+        <input class="sp" type="text" id="exe.python" name="exe.python">
       </p>
       <p>Define executable Rscript command, if default "Rscript" is not included in your $PATH:
-        <input type="text" id="exe.Rscript" name="exe.Rscript">
-      </p>
-      <p>Define executable samtools command, if default "samtools" is not included in your $PATH
-        <input type="text" id="exe.samtools" name="exe.samtools">
+        <input class="sp" type="text" id="exe.Rscript" name="exe.Rscript">
       </p>
       <p>Define executable vsearch command, if default "vsearch" is not included in your $PATH:
-        <input type="text" id="exe.vsearch" name="exe.vsearch">
+        <input class="sp" type="text" id="exe.vsearch" name="exe.vsearch">
       </p>
       <p>Optional vsearch parameters:
-        <input type="text" id="exe.vsearchParams" name="exe.vsearchParams">
+        <input class="sp" type="text" id="exe.vsearchParams" name="exe.vsearchParams">
+      </p>
+      <p>Define executable docker command, if default "docker" is not included in your $PATH:
+        <input type="text" class="sp" id="exe.docker" name="exe.docker">
+      </p>
+      <p>Define executable humann2 command, if default "humann2" is not included in your $PATH:
+        <input type="text" class="sp" id="exe.humann2" name="exe.humann2">
+      </p>
+      <p>Optional humann2 parameters:
+        <input type="text" class="sp" id="exe.humann2Params" name="exe.humann2Params">
+      </p>
+      <p>Optional humann2 Join Table parameters:
+        <input type="text" class="sp" id="exe.humann2JoinTableParams" name="exe.humann2JoinTableParams">
+      </p>
+      <p>Optional humann2 Renorm Table parameters:
+        <input type="text" class="sp" id="exe.humann2RenormTableParams" name="exe.humann2RenormTableParams">
+      </p>
+      <p>Define executable kneaddata command, if default "kneaddata" is not included in your $PATH:
+        <input type="text" class="sp" id="exe.kneaddata" name="exe.kneaddata">
+      </p>
+      <p>Optional kneaddata parameters:
+        <input type="text" class="sp" id="exe.kneaddataParams" name="exe.kneaddataParams">
+      </p>
+      <p>Define executable kraken command, if default "kraken" is not included in your $PATH:
+        <input type="text" class="sp" id="exe.kraken" name="exe.kraken">
+      </p>
+      <p>Optional kraken parameters:
+        <input type="text" class="sp" id="exe.krakenParams" name="exe.krakenParams">
+      </p>
+      <p>Define executable kraken2 command, if default "kraken2" is not included in your $PATH:
+        <input type="text" class="sp" id="exe.kraken2" name="exe.kraken2">
+      </p>
+      <p>Optional kraken2 parameters:
+        <input type="text" class="sp" id="exe.kraken2Params" name="exe.kraken2Params">
+      </p>
+      <p>Define executable metaphlan2 command, if default "metaphlan2" is not included in your $PATH:
+        <input type="text" class="sp" id="exe.metaphlan2" name="exe.metaphlan2">
+      </p>
+      <p>Optional metaphlan2 parameters:
+        <input type="text" class="sp" id="exe.metaphlan2Params" name="exe.metaphlan2Params">
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -531,10 +523,10 @@ For fastq, typically “@”.)<h5></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Required RDP minimum threshold score for valid OTUs:
-        <input type="text" id="rdp.minThresholdScore" name="rdp.minThresholdScore">
+        <input class="sp" type="text" id="rdp.minThresholdScore" name="rdp.minThresholdScore">
       </p>
-      <p>Path to RDP classifier:
-        <input type="text" size='70' id="rdp.classifier" name="rdp.classifier">
+      <p>File property for RDP java executable JAR:
+        <input class="sp" type="text" size='70' id="rdp.jar" name="rdp.jar">
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -548,14 +540,17 @@ For fastq, typically “@”.)<h5></p>
       <p>Alpha diverisity metrics: <br> Options listed online:
         <a href="http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html">
           scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html</a>.<br>
-        <input type="text" id="qiime.alphaMetrics" name="qiime.alphaMetrics">
+        <input class="sp" type="text" id="qiime.alphaMetrics" name="qiime.alphaMetrics">
       </p>
       <p>Remove chimeras after open or de novo OTU picking:<br>
-        <select class="" id="qiime.removeChimeras" name="qiime.removeChimeras">
+        <select class="sp" id="qiime.removeChimeras" name="qiime.removeChimeras">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
+      </p>
+      <p>Optional parameters passed to qiime scripts:
+        <input class='sp' type="text" name="qiime.params" id="qiime.params"value="">
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -566,13 +561,7 @@ For fastq, typically “@”.)<h5></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Path to Kraken database:
-        <input type="text" size='70' id="kraken.db" name="kraken.db">
-      </p>
-      <p>Path to Kraken classifier:
-        <input type="text" size='70' id="kraken.classifier" name="kraken.classifier">
-      </p>
-      <p>Additional Kraken classifier parameters:
-        <input type="text" size='70' id="kraken.classifierParams" name="kraken.classifierParams">
+        <input class="sp" type="text" size='70' id="kraken.db" name="kraken.db">
       </p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
@@ -583,95 +572,407 @@ For fastq, typically “@”.)<h5></p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Path to Kraken database:
-        <input type="text" size='70' id="kraken2.db" name="kraken2.db">
+        <input class="sp" type="text" size='70' id="kraken2.db" name="kraken2.db">
       </p>
       <p>Path to Kraken classifier:
-        <input type="text" size='70' id="kraken2.classifier" name="kraken2.classifier">
+        <input class="sp" type="text" size='70' id="kraken2.classifier" name="kraken2.classifier">
       </p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
       <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
   </div>
 
-  <div id="metaphlanTab" class="tabcontent">
-      <button class="createDownload">Create configuration file for download</button>
-      <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Path to MetaPhlAn database:
-        <input type="text" size='70' id="metaphlan.db" name="metaphlan.db">
-      </p>
-      <p>Path to MetaPhlAn classifier:
-        <input type="text" size='70' id="metaphlan.classifier" name="metaphlan.classifier">
-      </p>
-      <button type='submit' class='saveTab'>Save progress</button>
-      <button class="createDownload">Create configuration file for download</button>
-      <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
-  </div>
-
-
-  <div id="slimmTab" class="tabcontent">
-      <button class="createDownload">Create configuration file for download</button>
-      <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Path to SLIMM database:
-        <input type="text" size='70' id="slimm.db" name="slimm.db">
-      </p>
-      <p>Path to SLIMM classifier:
-        <input type="text" size='70' id="slimm.classifier" name="slimm.classifier">
-      </p>
-      <p>Path the bowtie2 reference genome index:
-        <input type="text" size='70' id="slimm.refGenomeIndex" name="slimm.refGenomeIndex">
-      </p>
-      <button class="createDownload">Create configuration file for download</button>
-      <a class="downloadlink">Download configuration file to default directory</a>
-      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div>
-
-</form> <!--End of configForm -->
-
-  <div id="AWS" class="tabcontent">
-    <fieldset>
-      <legend>AWS Set-up</legend>
-    <form id='AwsForm' class="" action="#" method="post">
-      <p>*AWS Secret Key ID:*<input type="text" name="AWSACCESSKEYID"></p>
-      <p>AWS Secret Access Key <input required type="text" name="AWSSECRETACCESSKEY"></p>
-      <p>Please select the geographic area in which you live. Subsequent configuration
-    questions will narrow this down by presenting a list of cities, representing
-    the time zones in which they are located.
-      <select class="" name="REGION">
-        <option default value="us-east-1">us-east-1</option>
-        <option value="1">Africa</option>
-        <option value="2">America</option>
-        <option value="3">Antarctica</option>
-        <option value="4">Australia</option>
-        <option value="5">Arctic</option>
-        <option value="6">Asia</option>
-        <option value="7">Atlantic</option>
-        <option value="8">Europe</option>
-        <option value="9">Indian</option>
-        <option value="10">Pacific</option>
-        <option value="11">SystemV</option>
-        <option value="10">Pacific</option>
-        <option value="11">SystemV</option>
-        <option value="12">US</option>
-        <option value="13">Etc</option>
-      </select>
-      </p>
-      <p>Default Output Format: <select class="" name="OUTPUTFORMAT">
-        <option default value="text">text</option>
-      </select></p>
-      <p>Profile:
-        <select required class="" name="PROFILE">
-          <option value="default">default</option>
-        </select>
-      </p>
-      <p id="AWSOutput"></p>
-      <button type="button" id='submitAWS' name="button">Start AWS Service</button>
-    </form>
-  </fieldset>
+  <div id="r_PlotMdsTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>Number of MDS axes to plot:
+      <input class="sp" type="number" min="1" name="r_PlotMds.numAxis" id="r_PlotMds.numAxis" value="">
+    </p>
+    <p>Select the distance/dissimilary measure for your MDS BuildMdsPlots
+      <select class="sp" id='r_PlotMds.distance' name="r_PlotMds.distance">
+        <option selected default value="">Click for options</option>
+        <option value="euclidean">Euclidean dissimilarity</option>
+        <option default value="bray">Bray Curtis dissimilary</option>
+        <option value="manhattan">Manhattan dissimilarities</option>
+        <option value="canberra">Canberra index</option>
+        <option value="kulczynski">Kulczynski index</option>
+        <option value="jaccard">Jaccard index</option>
+        <option value="gower">Gower index</option>
+        <option value="altGower">Alternative Gower index</option>
+        <option value="morisita">Morisita index</option>
+        <option value="horn">Horn index</option>
+        <option value="mountford">Mountford index</option>
+        <option value="raup">Raup index</option>
+        <option value="binomial">Binomial index</option>
+        <option value="chao">Chao index</option>
+        <option value="cao">Cao index</option>
+        <option value="mahalanobis">Mahalanobis index</option>
+      </select><br>
+    </p>
+    <p>Override field used to explicitly list metadata columns to build MDS plots. If left undefined, all columns are reported
+      <input type="text" class='sp' id="r_PlotMds.reportFields" name="r_PlotMds.reportFields" value="">
+    </p>
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
+
+  <div id="r_CalculateStatsTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>P-value adjustment scope: Used to set the p.adjust "n" parameter for how many simultaneous p-value calculations:
+      <select class="sp" id="r_CalculateStats.pAdjustScope" name="r_CalculateStats.pAdjustScope">
+        <option selected default value="">Click for options</option>
+        <option value="GLOBAL">GLOBAL</option>
+        <option value="LOCAL">LOCAL</option>
+        <option value="TAXA">TAXA</option>
+        <option value="ATTRIBUTE">ATTRIBUTE</option>
+      </select>
+    </p>
+    <p>Set the p.adjust "method" parameter:<a href=https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html>More info</a><br>
+      <select class="sp" id="r_CalculateStats.pAdjustMethod" name="r_CalculateStats.pAdjustMethod">
+        <option selected default value="">Click for options</option>
+        <option value="holm">Holm</option>
+        <option value="hochberg">Hochberg</option>
+        <option value="hommel">Hommel</option>
+        <option value="bonferroni">Bonferroni</option>
+        <option value="BH">Benjamini & Hochberg (BH)</option>
+        <option value="BY">Benjamini & Yekutieli (BY)</option>
+        <option value="fdr">FDR</option>
+        <option value="none">none</option>
+      </select>
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="r_PlotEffectSizeTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>Use parametric p-values or nonparametric p-values to determine statisticl significance:
+      <select class="sp" id="r_PlotEffectSize.parametricPval" name="r_PlotEffectSize.parametricPval">
+        <option value="Y">parametric</option>
+        <option default value="N">nonparametric (default)</option>
+      </select></p>
+    </p>
+    <p>Exclude taxa with p-values above __ from plots:
+        <input class='sp' type="number" min="0" max="1" name="r_PlotEffectSize.excludePvalAbove" id="r_PlotEffectSize.excludePvalAbove" value="">
+    </p>
+    <p>
+      Override other criteria for selecting which taxa to include in the plot by specifying which taxa should be included in comma seperated list:
+      <input class='sp' type="text" name="r_PlotEffectSize.taxa" id="r_PlotEffectSize.taxa" value="">
+    </p>
+    <p>Each plot is given one page. This is the maximum number of bars to include in each one-page plot.
+      <input class='sp' type="number" min="0" id="r_PlotEffectSize.maxNumTaxa" name="r_PlotEffectSize.maxNumTaxa" value="">
+    </p>
+    <p>Disable adjusted p-value when determining which tax to include in the plot: <br>(If Yes, the non-adjusted p-value is used when determining which taxa to include in the plot and which should get a (*). If No, the adjusted p-value is used).
+      <select class="sp" name="r_PlotEffectSize.disablePvalAdj" id="r_PlotEffectSize.disablePvalAdj">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>Disable plots based on Cohen's d (effect size): <br> (If No, produce plots for binary attributes showing effect size calculated as Cohen's d. If Yes, skip this plot type.)"
+      <!-- ask about this discription  -->
+      <select class="sp" name="r_PlotEffectSize.disableCohensD" id="r_PlotEffectSize.disableCohensD">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>Disable r-squared: <br> (If No, produce plots showing effect size calculated as the r-squared value. If Y, skip this plot type.)
+      <select class="sp" name="r_PlotEffectSize.disableRSquared" id="r_PlotEffectSize.disableRSquared">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>Disable Fold-chain: <br> (If No, produce plots for binary attributes showing the fold change. If Y, skip this plot type.)
+      <select class="sp" name="r_PlotEffectSize.disableFoldChange" id="r_PlotEffectSize.disableFoldChange">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="rarefyOtuCountsTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>The number of iterations to randomly select the rarefyOtuCounts.quantile of OTUs:
+      <input class='sp' type="number" name="rarefyOtuCounts.iterations" id="rarefyOtuCounts.iterations" min="1" value="">
+    </p>
+    <p>Minimum percentage of samples that must contain an OTU:
+      <input class='sp' type="number" min="0" max="100" name="rarefyOtuCounts.lowAbundantCutoff" id="rarefyOtuCounts.lowAbundantCutoff" value="">
+    </p>
+    <p>Quantile for rarefication. The number of OTUs/sample are ordered, all samples with more OTUs than the quantile sample are subselected without replacement until they have the same number of OTUs as the quantile sample"}
+      <input class='sp' type="number" name="rarefyOtuCounts.quantile" id="rarefyOtuCounts.quantile" value="">
+    </p>
+    <p>Remove all samples below the rarefyOtuCounts.quantile quantile:
+      <select class="sp" name="rarefyOtuCounts.rmLowSamples" id="rarefyOtuCounts.rmLowSamples">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="removeLowOtuCountsTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="seqFileValidatorTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>Require equal numbers of pairs in sequencing input:
+      <select class="sp" name="seqFileValidator.requireEqualNumPairs" id="seqFileValidator.requireEqualNumPairs">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>Maximum number of bases per read:
+      <input class='sp' type="number" min="1" name="seqFileValidator.seqMaxLen" id="seqFileValidator.seqMaxLen" value="">
+    </p>
+    <p>Minimum number of bases per read:
+      <input class='sp' type="number" min="1" name="seqFileValidator.seqMinLen" id="seqFileValidator.seqMinLen" value="">
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="demultiplexerTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>
+      Demultiplexer barcode cutoff:
+      <input type="text" name="demultiplexer.barcodeCutoff" id="demultiplexer.barcodeCutoff" class="sp "value="">
+    </p>
+    <p>
+      Path to the mapping file to match sequence headers to barcodes:
+      <input type="text" name="demultiplexer.mapping" id="demultiplexer.mapping" class="sp" value="">
+    </p>
+    <p>Set the Demultiplexer strategy. If using barcodes, they must be provided in the
+      metadata.filePath with in column name defined by metadata.barcodeColumn. This is only used by the Demultiplexer module:
+      <select class="sp" id="demultiplexer.strategy" name="demultiplexer.strategy">
+        <!-- <option selected value="">Click for options</option> -->
+        <option value="barcode_in_header">Barcode in header</option>
+        <option value="barcode_in_seq">Barcode in sequence</option>
+        <option value="id_in_header">Sequence ID in header</option>
+        <option selected default value="do_not_demux.">N/A</option>
+      </select>
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="dockerTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>
+      Docker Image version:
+      <br>
+      (By default, docker will always use 'latest', but advanced users may specify a different tag)
+      <input type="text" class="sp" name="docker.imgVersion" id="docker.imgVersion" value="">
+    </p>
+    <p>Docker Hub user name with the BioLockJ containers. By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own versions of these modules and add new modules in their own Docker Hub account:
+    <input type="text" class="sp" name="docker.user" id="docker.user" value="">
+    </p>
+    <p>Save container on exit:
+      <select class="sp" name="docker.saveContainerOnExit" id="docker.saveContainerOnExit">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="humann2Tab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>Disable HumanN2 Gene Family report:
+      <select class="sp" name="humann2.disableGeneFamilies" id="humann2.disableGeneFamilies">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>Disable HumanN2 Pathway Abundance report:
+      <select class="sp" name="humann2.disablePathAbundance" id="humann2.disablePathAbundance">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>Disable HumanN2 Pathway Coverage report:
+      <select class="sp" name="humann2.disablePathCoverage" id="humann2.disablePathCoverage">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>HummanN2 nucleotide database (Directory property may contain multiple nucleotide database files):
+    <input type="text" class="sp" name="humann2.nuclDB" id="humann2.nuclDB" value="">
+    </p>
+    <p>HummanN2 protein database (Directory property may contain multiple nucleotide database files):
+    <input type="text" class="sp" name="humann2.protDB" id="humann2.protDB" value="">
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="multiplexerTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>Gzip the multiplexed output:
+      <select class="sp" name="multiplexer.gzip" id="multiplexer.gzip">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="rarefySeqsTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <p>Randomly select maximum number of sequences per sample
+      <input class="sp" type="number" min="1" name="rarefySeqs.max" id="rarefySeqs.max" value="">
+    </p>
+    <p>Discard samples without minimum number of sequences:
+      <input class="sp" type="number" min="1" name="rarefySeqs.min" id="rarefySeqs.min" value="">
+    </p>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+</form> <!--End of configForm -->
+
+  <div id="AwsTab" class="tabcontent">
+    <button type="button" id="getMalcolmGitRepo" name="button">Get Malcolm Repo</button>
+    <form id='configureAwsForm' class="" action="#" method="#">
+      <fieldset>
+        <legend>Configure AWS Credentials</legend>
+        <p>AWS Access Key ID:<input type="text" name="AWSACCESSKEYID"></p>
+        <p>*AWS Secret Key ID:*<input type="text" name="AWSACCESSKEYID"></p>
+        <p>Please select the geographic area in which you live. Subsequent configuration
+      questions will narrow this down by presenting a list of cities, representing
+      the time zones in which they are located.
+        <select class="" name="REGION">
+          <option default value="us-east-1">us-east-1</option>
+          <option value="1">Africa</option>
+          <option value="2">America</option>
+          <option value="3">Antarctica</option>
+          <option value="4">Australia</option>
+          <option value="5">Arctic</option>
+          <option value="6">Asia</option>
+          <option value="7">Atlantic</option>
+          <option value="8">Europe</option>
+          <option value="9">Indian</option>
+          <option value="10">Pacific</option>
+          <option value="11">SystemV</option>
+          <option value="10">Pacific</option>
+          <option value="11">SystemV</option>
+          <option value="12">US</option>
+          <option value="13">Etc</option>
+        </select>
+        </p>
+        <p>Default Output Format: <select class="" name="OUTPUTFORMAT">
+          <option default value="text">text</option>
+        </select></p>
+        <p>Profile:
+          <select required class="" name="PROFILE">
+            <option value="default">default</option>
+          </select>
+        </p>
+        <p id="AWSOutput"></p>
+        <button type="button" id='submitConfigureAWS' name="button">Set AWS Configuration</button>
+      </fieldset>
+    </form>
+    <form class="" id='AwsStack' action="#" method="">
+      <fieldset>
+        <legend>Deploy AWS Compute Stack</legend>
+        <p>Stackname: <input type="text" name="stackname" value="">
+        </p>
+        <p>Docker repository (for both jobs) <input type="text" name="dockerRepository" value="">
+        </p>
+        <p>S3bucket: <input type="text" name="s3bucket" value="autogenerate">
+        </p>
+        <p>You can view your S3 bucket here <a href="#"></a>.
+        </p>
+        <p>Create or delete stack?
+          <select class="" name="deployArg">
+            <option default value="create">create</option>
+            <option value="delete">delet</option>
+          </select>
+        </p>
+        <button type="button" id='deployComputeStack' name="deployComputeStack">Deploy Compute Stack</button>
+      </fieldset>
+    </form>
+    <form id="launchEc2HeadNode"class="" action="#" method="">
+      <fieldset>
+        <legend>EC2 headnode</legend>
+        <p>Launch action:
+          <select class="" name="launchAction">
+            <option default value="runscript">runscript</option>
+            <option value="directconnect">directconnect</option>
+          </select>
+        </p>
+        <p>Script name:
+        <input type="text" name="scriptName" value="startHeadNodeGui.sh"></p>
+        <p>instanceType:
+          <input type="text" list="awsInstanceType" />
+          <datalist name='awsInstanceType' id="awsInstanceType">
+            <option value="t2.micro">1GB</opt>
+            <option value="t2.small">2GB</opt>
+            <option value="t2.medium">4GB</opt>
+            <option value="t2.large">8GB</opt>
+            <option value="t2.xlarge">16GB</opt>
+          </datalist>
+        </p>
+        <button type="button" id='launchEc2HeadNodeButton' name="launchEc2HeadNodeButton">Launch EC2 headnode</button>
+      </fieldset>
+    </form>
+
+
+
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div><!-- end AWS div -->
 </div><!-- End Menu tab -->
+
+<div id='configManager' class="modal">
+  <div class="modal-content">
+    <span class="closeModal">×</span>
+    <form id='configManagerForm' action="#" method="#">
+      <div id='deleteConfigsDiv' class="">
+
+      </div>
+      <button type="button" id='submitDeleteConfig' name="submitDelete">Delete Selected</button>
+    </form>
+  </div>
+</div>
 
 <!-- The Modal that appears after ready to launch button is pressed -->
 <div id="launchConsole" class="modal">
@@ -731,7 +1032,6 @@ For fastq, typically “@”.)<h5></p>
     <text x="69" y="43" dx="0" font-family="Times">J</text>
     <!--<path d="M70,30 L80,30  M75,30 L75,35 " fill="none" stroke="rgb(0,112,60)" stroke-width="2"/>-->
   </svg>
-  <span class='hidden' id='hackForDownload'></span>
   <!-- <button form='configForm' type="submit" name="button" class='hidden'></button> -->
 </div>
 
@@ -739,5 +1039,5 @@ For fastq, typically “@”.)<h5></p>
 
 <script type="text/javascript" src="./javascripts/config_menus.js"></script>
 <script type="text/javascript" src="./javascripts/config_config.js"></script>
-</script>
+<script type="text/javascript" src="./javascripts/tests/standPropsAllPresent.js"></script>
 <!-- <script type="text/javascript" src="resetAnimationWorker.js"></script> -->

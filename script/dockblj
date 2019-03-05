@@ -21,9 +21,6 @@
 
 [ ! -d "$BLJ_PROJ" ] && echo "Exit program - Required bash variable BLJ_PROJ undefined" && exit 1
 
-[ -d ~/projects/testDockerQiimeSilva_2019Mar04 ] && echo "~/projects/testDockerQiimeSilva_2019Mar04 FOUND"
-[ ! -d ~/projects/testDockerQiimeSilva_2019Mar04 ] && echo "~/projects/testDockerQiimeSilva_2019Mar04 NOT FOUND"
-
 # Pass script input parameters + the argument value
 # Return value if found in input parameters
 arg_exists() {
