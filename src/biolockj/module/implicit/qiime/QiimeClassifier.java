@@ -170,7 +170,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 				for( int i = numCols; i < record.size(); i++ )
 				{
 					String val = record.get( i );
-					if( isHeader && val != null && val.endsWith( NORMALIZED_ALPHA )  )
+					if( isHeader && val != null && ( val.endsWith( NORMALIZED_ALPHA ) || val.endsWith( NORMALIZED_ALPHA_LABEL ) ) )
 					{
 						skipCols.add( i );
 					}
@@ -715,6 +715,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
 
 	private static final String NORMALIZED_ALPHA = "_normalized_alpha";
+	private static final String NORMALIZED_ALPHA_LABEL = "_alpha_label";
 	private static final String NUM_THREADS_PARAM = "-aO";
 	private static final String QIIME_CONFIG_SEQ_REF = "pick_otus_reference_seqs_fp";
 	private static final String QIIME_CONFIG_PYNAST_ALIGN_REF = "pynast_template_alignment_fp";
