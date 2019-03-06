@@ -24,7 +24,8 @@ import biolockj.module.JavaModule;
 import biolockj.util.*;
 
 /**
- * This BioModule
+ * This BioModule removes scarce pathways not found in enough samples.<br>
+ * Each pathway must be found in a configurable percentage of samples to be retained.
  * 
  * @blj.web_desc Remove Scarce Pathway Counts
  */

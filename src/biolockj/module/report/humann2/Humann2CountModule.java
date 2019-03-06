@@ -26,7 +26,8 @@ import biolockj.util.BioLockJUtil;
 import biolockj.util.PathwayUtil;
 
 /**
- * TBD
+ * This abstract superclass is extended by all other modules in this package.<br>
+ * Shared method implementations are defined to ensure uniform adoption of dependencies and prerequisites.
  */
 public abstract class Humann2CountModule extends JavaModuleImpl implements JavaModule
 {

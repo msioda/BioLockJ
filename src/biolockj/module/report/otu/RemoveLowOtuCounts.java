@@ -24,7 +24,8 @@ import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
 /**
- * This BioModule
+ * This BioModule set low OTU counts below a configured threshold to zero.<br>
+ * These low sample counts are assumed to be miscategorized or contaminents.
  * 
  * @blj.web_desc Remove Low OTU Counts
  */

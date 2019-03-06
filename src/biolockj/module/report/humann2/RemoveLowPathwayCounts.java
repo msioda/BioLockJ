@@ -22,7 +22,8 @@ import biolockj.module.JavaModule;
 import biolockj.util.*;
 
 /**
- * This BioModule
+ * This BioModule set low Pathway counts below a configured threshold to zero.<br>
+ * These low sample counts are assumed to be miscategorized or genomic contamination.
  * 
  * @blj.web_desc Remove Low Pathway Counts
  */
