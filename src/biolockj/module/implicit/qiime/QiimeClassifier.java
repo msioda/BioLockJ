@@ -65,7 +65,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final List<List<String>> data = new ArrayList<>();
 		final List<String> lines = new ArrayList<>();
-		lines.add( SCRIPT_PRINT_CONFIG + " -t" );
+		lines.add( SCRIPT_PRINT_CONFIG );
 		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L "
 				+ getLowestQiimeTaxaLevel() + " -o " + outDir );
 		lines.add( SCRIPT_SUMMARIZE_BIOM + " -i " + files.get( 0 ) + " -o " + tempDir + OTU_SUMMARY_FILE );
