@@ -252,11 +252,11 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	private String getParams() throws Exception
 	{
 		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM ) + getDBs();
-		if( !params.contains( BYPASS_TRIM_PARAM ) &&  !params.contains( TRIMMOMATIC_PARAM ) && RuntimeParamUtil.isDockerMode() )
+		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM ) && RuntimeParamUtil.isDockerMode() )
 		{
 			params += DOCKER_TRIM_PARAM + " ";
 		}
-		
+
 		return params;
 	}
 
@@ -296,5 +296,5 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	private static final String RV_OUTPUT_SUFFIX = "_paired_2";
 	private static final String BYPASS_TRIM_PARAM = "--bypass-trim";
 	private static final String TRIMMOMATIC_PARAM = "--trimmomatic ";
-	private static final String DOCKER_TRIM_PARAM = "--trimmomatic /app/Trimmomatic-0.38/trimmomatic-0.38.jar";
+	private static final String DOCKER_TRIM_PARAM = "--trimmomatic /app/Trimmomatic-0.38";
 }
