@@ -211,7 +211,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 			{
 				dbs += DB_PARAM + " " + DockerUtil.CONTAINER_DB_DIR + " ";
 			}
-			if( RuntimeParamUtil.isDockerMode() )
+			else if( RuntimeParamUtil.isDockerMode() )
 			{
 				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) + " ";
 			}
