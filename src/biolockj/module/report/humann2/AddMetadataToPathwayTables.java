@@ -24,7 +24,7 @@ import biolockj.util.MetaUtil;
 import biolockj.util.PathwayUtil;
 
 /**
- * This BioModule is used to add metadata columns to the OTU abundance tables.
+ * This BioModule is used to add metadata columns to the HumanN2 pathway abundance, pathway coverage, and gene family tables.
  * 
  * @blj.web_desc Add Metadata to Pathway Tables
  */

@@ -16,7 +16,7 @@ RUN cd $BUILD_DIR && \
 	chmod o+x -R $BUILD_DIR && \
 	rm -rf $KRAKEN2
 
-#2.) Cleanup
+#2.) Cleanup - save ca-certificates so kraken2_classifier can download from internet
 RUN	apt-get clean && \
 	find / -name *python* | xargs rm -rf && \
 	rm -rf /tmp/* && \

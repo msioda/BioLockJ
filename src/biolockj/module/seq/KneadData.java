@@ -211,7 +211,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 			{
 				dbs += DB_PARAM + " " + DockerUtil.CONTAINER_DB_DIR + " ";
 			}
-			if( RuntimeParamUtil.isDockerMode() )
+			else if( RuntimeParamUtil.isDockerMode() )
 			{
 				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) + " ";
 			}
@@ -251,7 +251,13 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 
 	private String getParams() throws Exception
 	{
-		return getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM ) + getDBs();
+		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM ) + getDBs();
+		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM ) && RuntimeParamUtil.isDockerMode() )
+		{
+			params += DOCKER_TRIM_PARAM + " ";
+		}
+
+		return params;
 	}
 
 	private String sanatize( final File seqFile, final File rvRead ) throws Exception
@@ -288,4 +294,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	private static final String OUTPUT_FILE_PREFIX_PARAM = "--output-prefix";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String RV_OUTPUT_SUFFIX = "_paired_2";
+	private static final String BYPASS_TRIM_PARAM = "--bypass-trim";
+	private static final String TRIMMOMATIC_PARAM = "--trimmomatic ";
+	private static final String DOCKER_TRIM_PARAM = "--trimmomatic /app/Trimmomatic-0.38";
 }

@@ -102,13 +102,13 @@ if [ ${#newPass} -gt 0 ] && [ ${#config} -gt 0 ]; then
 	echo "Encrypt & save email password to Config property mail.encryptedPassword in $config\n"
 fi
 
-
 i=0
 initPipeline=$(most_recent_pipeline)
 pipelineDir=$(most_recent_pipeline)
 initJava=$(ps | grep -c java)
 numJava=$(ps | grep -c java)
 
+echo -e "Run Java Application with Command:  \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\""
 nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &
 [ $? != 0 ] && echo "Exit program - Unable to run $bljJar" && exit 1
 echo "Initializing BioLockJ"
@@ -119,7 +119,6 @@ while [ $i -lt 10 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq 
 	pipelineDir="$(most_recent_pipeline)"
 	numJava=$(ps | grep -c java)
 done
-
 
 if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ] && [ "$initPipeline" == "$pipelineDir" ]; then
 	echo "Restarted pipeline:  $pipelineDir"

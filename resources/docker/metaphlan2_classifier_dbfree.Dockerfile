@@ -2,16 +2,16 @@
 
 FROM biolockj/blj_basic_py2
 
-#1.) Install numpy & biopython
+#1.) Install dependencies
 RUN pip install numpy && \
 	pip install biopython && \
 	pip install biom-format
 
-#2.) Install bowtie 2.2.9
-ENV BOWTIE_URL="https://sourceforge.net/projects/bowtie-bio/files/bowtie2"
-ENV BOWTIE_VER=2.2.9
-ENV BOWTIE=bowtie2-${BOWTIE_VER}
-ENV B_URL=$BOWTIE_URL/$BOWTIE_VER/${BOWTIE}-linux-x86_64.zip
+#2.) Install bowtie 2.3.4.3
+ENV BOWTIE_URL="https://github.com/BenLangmead/bowtie2/releases/download/v"
+ENV BOWTIE_VER=2.3.4.3
+ENV BOWTIE=bowtie2-${BOWTIE_VER}-linux-x86_64
+ENV B_URL=${BOWTIE_URL}${BOWTIE_VER}/${BOWTIE}.zip
 RUN cd /usr/local/bin && \
 	wget -qO- $B_URL | bsdtar -xf- && \
 	chmod o+x -R /usr/local/bin/$BOWTIE && \
@@ -29,7 +29,7 @@ RUN cd $mpa_dir && \
 	chmod o+x -R *.py && \
 	ln -s metaphlan2.py metaphlan2
 	
-#4.) Cleanup
+#4.) Cleanup - save ca-certificates so metaphlan2_classifier can download from internet
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
 	mv /usr/share/ca-certificates ~ && \

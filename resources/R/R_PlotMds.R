@@ -88,7 +88,7 @@ plotRelativeVariance <- function( field, metaColVals, perVariance, level, numAxi
    numBars = max(numBars, numAxis)
    heights = perVariance[1:numBars]
    bp = barplot(heights, col="dodgerblue1", ylim=c(0,100), names=1:numBars,
-                      xlab="Axis", ylab="Variance" )
+                      xlab="Axis", ylab="Explained Variance" )
    labels = round(heights)
    near0 = which(labels < 1)
    labels[near0] = "<1"
