@@ -18,7 +18,22 @@ RUN mkdir /app && \
 	mkdir /pipelines && \
 	mkdir /primer
 
-#2.) Update  ~/.bashrc
+#3.) Install Ubuntu Software 
+RUN apt-get update && \
+	apt-get install -y \
+		build-essential \
+		apt-utils \
+		bsdtar \
+		gawk \
+		nano \
+		tzdata \
+		wget
+
+#4.) Set the timezone to EST
+RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
+	dpkg-reconfigure -f noninteractive tzdata
+
+#5.) Update  ~/.bashrc
 RUN echo ' '  >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \
 	echo 'alias ..="cd .."' >> ~/.bashrc && \
@@ -37,21 +52,6 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
 	echo 'export PS1="${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' >> ~/.bashrc && \	
 	echo 'alias goblj=blj_go' >> ~/.bashrc
-
-#4.) Install Ubuntu Software 
-RUN apt-get update && \
-	apt-get install -y \
-		build-essential \
-		apt-utils \
-		bsdtar \
-		gawk \
-		nano \
-		tzdata \
-		wget
-
-#5.) Set the timezone to EST
-RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
-	dpkg-reconfigure -f noninteractive tzdata
 
 #6.) Cleanup
 RUN	rm -rf /tmp/* && \
