@@ -61,22 +61,37 @@ public final class DownloadUtil
 			boolean hasRmods = false;
 			final String status = ( BioLockJ.isPipelineComplete() ? "completed": "failed" ) + " pipeline -->";
 			final Set<File> files = new TreeSet<>();
+			final Set<File> dirs = new TreeSet<>();
 			for( final BioModule module: modules )
 			{
 				Log.info( DownloadUtil.class, "Updating download list for " + module.getClass().getSimpleName() );
 				if( module instanceof R_Module )
 				{
+					dirs.add( ( (R_Module) module ).getScriptDir() );
+					dirs.add( module.getOutputDir() );
+					if( !ModuleUtil.isComplete( module ) )
+					{
+						dirs.add( module.getTempDir() );
+					}
+					
 					hasRmods = true;
 					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
 							getDirFilter( true, true, !ModuleUtil.isComplete( module ) ) ) );
 				}
 				else if( module instanceof NormalizeTaxaTables )
 				{
+					dirs.add( module.getTempDir() );
 					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
 							getDirFilter( false, false, true ) ) );
 				}
 				else
 				{
+					dirs.add( ( (ScriptModule) module ).getScriptDir() );
+					if( !ModuleUtil.isComplete( module ) )
+					{
+						dirs.add( module.getTempDir() );
+					}
+					
 					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
 							getDirFilter( true, false, !ModuleUtil.isComplete( module ) ) ) );
 				}
@@ -87,12 +102,16 @@ public final class DownloadUtil
 				makeRunAllScript( modules );
 			}
 
-			files.addAll( Arrays.asList( pipeRoot.listFiles() ) );
+			
+			//files.addAll( Arrays.asList( pipeRoot.listFiles() ) );
+			//final List<File> downFiles = buildDownloadList( files );
+			
+			dirs.addAll( Arrays.asList( pipeRoot.listFiles() ) );
+			final List<File> downFiles = buildDownloadList( dirs );
 
-			final List<File> downFiles = buildDownloadList( files );
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
 			final String src = SRC + "=" + Config.pipelinePath();
-			final String cmd = "rsync -v --times --files-from=:$" + SRC + File.separator
+			final String cmd = "rsync -rtv --files-from=:$" + SRC + File.separator
 					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
 					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 
