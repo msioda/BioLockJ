@@ -111,7 +111,7 @@ public final class DownloadUtil
 
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
 			final String src = SRC + "=" + Config.pipelinePath();
-			final String cmd = "rsync -rtv --files-from=:$" + SRC + File.separator
+			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
 					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
 					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 
