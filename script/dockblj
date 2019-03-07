@@ -171,12 +171,6 @@ echo "doRestart: $doRestart"
 
 echo $(status_msg)
 
-#echo "config: $(dirname $config)"
-#echo "inputDir: $inputDir"
-#echo "metaPath: $metaPath"
-#echo "BLJ_PROJ: $(blj_proj)"
-#echo "BLJ_OPTIONS: $(blj_options)"
-
 run_docker
 status=$?
 [ $status -eq 0 ] && $(has_param $runAws) && run_docker -aws
