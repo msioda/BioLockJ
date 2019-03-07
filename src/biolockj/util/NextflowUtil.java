@@ -53,8 +53,7 @@ public class NextflowUtil
 	 */
 	public static File copyPipelineToEfs() throws Exception
 	{
-		final File efsPipeline = new File( Config.requireExistingDir( null, Constants.AWS_EFS_DIR ).getAbsolutePath()
-				+ File.separator + Config.pipelineName() );
+		final File efsPipeline = new File( EFS_DIR + File.separator + Config.pipelineName() );
 		FileUtils.copyDirectory( new File( Config.pipelinePath() ), efsPipeline, true );
 		if( !efsPipeline.exists() )
 		{
@@ -126,11 +125,6 @@ public class NextflowUtil
 				else if( line.contains( NF_PIPELINE_NAME ) )
 				{
 					line = line.replace( NF_PIPELINE_NAME, Config.pipelineName() );
-				}
-				else if( line.contains( NF_EFS_DIR ) )
-				{
-					final File efsDir = Config.requireExistingDir( null, Constants.AWS_EFS_DIR );
-					line = line.replace( NF_EFS_DIR, efsDir.getAbsolutePath() );
 				}
 
 				lines.add( line );
@@ -222,13 +216,13 @@ public class NextflowUtil
 		}
 	}
 
+	private static final String EFS_DIR = "/mount/efs";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 
-	private static final String NF_EFS_DIR = "$" + Constants.AWS_EFS_DIR;
 	private static final String NF_MEMORY = "$" + Constants.AWS_RAM;
 	private static final String NF_PIPELINE_NAME = "$project.pipelineName";
 	private static final String PROCESS = "process";

@@ -23,11 +23,6 @@ public class Constants
 	public static final long APP_START_TIME = System.currentTimeMillis();
 
 	/**
-	 * {@link biolockj.Config} String property: AWS EFS directory set in Nextflow main.nf: {@value #AWS_EFS_DIR}
-	 */
-	public static final String AWS_EFS_DIR = "aws.efsDir";
-
-	/**
 	 * {@link biolockj.Config} String property: AWS memory set in Nextflow main.nf: {@value #AWS_RAM}
 	 */
 	public static final String AWS_RAM = "aws.ram";
