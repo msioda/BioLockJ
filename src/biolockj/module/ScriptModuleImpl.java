@@ -201,16 +201,12 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	{
 		final String threadsParam = numThreadsParam == null ? "": numThreadsParam + " " + getNumThreads();
 		final String paramVals = params == null || params.isEmpty() ? "": BioLockJUtil.join( params );
-		String returnVal = null;
 		if( !threadsParam.isEmpty() && !paramVals.isEmpty() )
 		{
-			returnVal = threadsParam + " " + paramVals;
+			return threadsParam + " " + paramVals;
 		}
-		else
-		{
-			returnVal = threadsParam + paramVals;
-		}
-		return returnVal + " ";
+		
+		return threadsParam + paramVals;
 	}
 
 	/**

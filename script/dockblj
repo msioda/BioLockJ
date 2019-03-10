@@ -165,8 +165,6 @@ metaPath=$(named_arg "$@" "-m")
 newPass=$(named_arg "$@" "-p")
 doRestart=$(named_arg "$@" "-r")
 
-echo "doRestart: $doRestart"
-
 ! $(has_param $inDocker) && verify_inputs
 
 echo $(status_msg)

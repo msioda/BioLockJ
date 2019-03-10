@@ -182,8 +182,12 @@ public class DockerUtil
 	{
 		if( RuntimeParamUtil.isDockerMode() && module instanceof DatabaseModule )
 		{
-			final String db = ( (DatabaseModule) module ).getDB().getAbsolutePath();
-			return !db.equals( CONTAINER_DB_DIR );
+			final File db = ( (DatabaseModule) module ).getDB();
+			if( db != null )
+			{
+				final String dbPath = db.getAbsolutePath();
+				return !dbPath.equals( CONTAINER_DB_DIR );
+			}
 		}
 
 		return false;
@@ -267,13 +271,19 @@ public class DockerUtil
 
 		if( hasDB( module ) )
 		{
-			String db = ( (DatabaseModule) module ).getDB().getAbsolutePath();
-			if( db.startsWith( DOCKER_ROOT_HOME ) )
+			File db = ( (DatabaseModule) module ).getDB();
+			if( db.isFile() )
 			{
-				db = db.replace( DOCKER_ROOT_HOME, "~" );
+				db = db.getParentFile();
 			}
 			
-			dockerVolumes += " -v " + db + ":" + CONTAINER_DB_DIR;
+			String dbPath = db.getAbsolutePath();
+			if( dbPath.startsWith( DOCKER_ROOT_HOME ) )
+			{
+				dbPath = dbPath.replace( DOCKER_ROOT_HOME, "~" );
+			}
+			
+			dockerVolumes += " -v " + dbPath + ":" + CONTAINER_DB_DIR;
 		}
 
 		return dockerVolumes;
