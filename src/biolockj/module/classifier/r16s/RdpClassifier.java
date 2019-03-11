@@ -95,14 +95,12 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	@Override
 	public File getDB() throws Exception
 	{
-		File dir = null;
-		final String path = Config.getString( this, RDP_DB );
-		if( path != null )
+		if( Config.getString( this, RDP_DB ) != null )
 		{
-			dir = new File( Config.getSystemFilePath( path ) );
+			return new File( Config.getSystemFilePath( Config.getString( this, RDP_DB ) ) );
 		}
 
-		return dir;
+		return null;
 	}
 
 	/**
@@ -136,15 +134,14 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 
 	private String getDbParam() throws Exception
 	{
-		final String db = Config.getString( null, RDP_DB );
-		if( db == null )
+		if( getDB() == null )
 		{
 			return "";
 		}
 
 		final String dbParam = RuntimeParamUtil.isDockerMode()
-				? db.replace( getDB().getParentFile().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
-				: Config.requireExistingFile( this, RDP_DB ).getAbsolutePath();
+				? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
+				: getDB().getAbsolutePath();
 
 		return DB_PARAM + " " + dbParam + " ";
 	}

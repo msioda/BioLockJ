@@ -50,6 +50,7 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc && \
 	echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
+	echo 'export BLJ_PROJ=/pipelines' >> ~/.bashrc && \
 	echo 'export PS1="${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' >> ~/.bashrc && \	
 	echo 'alias goblj=blj_go' >> ~/.bashrc
 

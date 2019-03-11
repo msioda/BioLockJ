@@ -38,7 +38,7 @@ arg_exists() {
 # Include Docker container path to required Config file
 # Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
 blj_options() {
-	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config)" 
+	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config) -u $HOME" 
 	$(has_param $doRestart) && options="$options -r $(restart_dir)"
 	$(has_param $newPass) && options="$options -p $newPass"
 	$(has_param $inputDir) && options="$options -i $inputDir"

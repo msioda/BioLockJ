@@ -21,6 +21,7 @@ import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.DatabaseModule;
 import biolockj.module.JavaModule;
+import biolockj.module.classifier.r16s.RdpClassifier;
 import biolockj.module.implicit.qiime.BuildQiimeMapping;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
@@ -63,16 +64,10 @@ public class DockerUtil
 	public static String getDockerImage( final BioModule module ) throws Exception
 	{
 		final String className = module.getClass().getSimpleName();
-		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
-				|| module instanceof QiimeClassifier;
-
-		final String name = isQiime ? QiimeClassifier.class.getSimpleName()
-				: module instanceof R_Module ? R_Module.class.getSimpleName()
-						: module instanceof JavaModule ? JavaModule.class.getSimpleName(): className;
-
+		final String name = getDockerImageName( module );
 		return " " + getDockerUser( className ) + "/" + getImageName( name ) + ":" + getImageVersion( className );
 	}
-
+	
 	/**
 	 * Return the Docker Hub user ID. If none configured, return biolockj.
 	 * 
@@ -239,7 +234,7 @@ public class DockerUtil
 				&& RuntimeParamUtil.runAws();
 	}
 
-	private static final String getDockerEnvVars( final BioModule module ) throws Exception
+	private static String getDockerEnvVars( final BioModule module ) throws Exception
 	{
 		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
@@ -249,8 +244,26 @@ public class DockerUtil
 		final File hostFile = new File( Config.requireString( null, prop ) );
 		return containerPath + File.separator + hostFile.getName();
 	}
+	
 
-	private static final String getDockerVolumes( final BioModule module ) throws Exception
+	private static String getDockerImageName( final BioModule module ) throws Exception
+	{
+		final String className = module.getClass().getSimpleName();
+		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
+				|| module instanceof QiimeClassifier;
+
+		return isQiime ? QiimeClassifier.class.getSimpleName()
+				: module instanceof R_Module ? R_Module.class.getSimpleName()
+						: module instanceof JavaModule ? JavaModule.class.getSimpleName(): className;
+	}
+	
+	private static boolean isJavaModule( final BioModule module ) throws Exception
+	{
+		return getDockerImageName( module ).equals( JavaModule.class.getSimpleName() );
+	}
+
+
+	private static String getDockerVolumes( final BioModule module ) throws Exception
 	{
 		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;
@@ -262,28 +275,36 @@ public class DockerUtil
 		{
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
 		}
+		
+		if( isJavaModule( module ) && RuntimeParamUtil.getDockerHostBLJ() != null )
+		{
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR;
+		}
 
 		if( module instanceof TrimPrimers )
 		{
 			final File primers = new File( Config.getSystemFilePath( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) ) ).getParentFile();
 			dockerVolumes += " -v " + primers.getAbsolutePath() + ":" + CONTAINER_PRIMER_DIR;
 		}
+		
+		
+		Log.info( DockerUtil.class, "Build Docker volumes for module: " + module.getClass().getSimpleName() );
+		Log.info( DockerUtil.class, "hasDB( module ): " + hasDB( module ) );
 
 		if( hasDB( module ) )
 		{
 			File db = ( (DatabaseModule) module ).getDB();
-			if( db.isFile() )
+			Log.info( DockerUtil.class, "Found DB: " + db.getAbsolutePath() );
+			Log.info( DockerUtil.class, "module instanceof RdpClassifier: " + (module instanceof RdpClassifier) );
+			if( module instanceof RdpClassifier )
 			{
-				db = db.getParentFile();
-			}
-			
-			if( db != null && db.isDirectory() )
-			{
-				String dbPath = db.getAbsolutePath();
+				String dbPath = db.getParentFile().getAbsolutePath();
 				if( dbPath.startsWith( DOCKER_ROOT_HOME ) )
 				{
-					dbPath = dbPath.replace( DOCKER_ROOT_HOME, "~" );
+					dbPath = dbPath.replace( DOCKER_ROOT_HOME, RuntimeParamUtil.getDockerHostHomeUserDir().getAbsolutePath() );
 				}
+				
+				Log.info( DockerUtil.class, "Updated DB Path: " + dbPath );
 				
 				dockerVolumes += " -v " + dbPath + ":" + CONTAINER_DB_DIR;
 			}
@@ -328,6 +349,11 @@ public class DockerUtil
 	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume
 	 */
 	public static final String CONTAINER_META_DIR = File.separator + "meta";
+	
+	/**
+	 * Docker container BioLockJ installation directory: {@value #CONTAINER_BLJ_DIR}
+	 */
+	public static final String CONTAINER_BLJ_DIR = "/app/biolockj";
 
 	/**
 	 * All containers mount {@value biolockj.Constants#PROJECT_PIPELINE_DIR} to the container "pipelines" volume
