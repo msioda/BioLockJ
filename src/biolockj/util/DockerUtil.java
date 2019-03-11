@@ -277,13 +277,16 @@ public class DockerUtil
 				db = db.getParentFile();
 			}
 			
-			String dbPath = db.getAbsolutePath();
-			if( dbPath.startsWith( DOCKER_ROOT_HOME ) )
+			if( db != null && db.isDirectory() )
 			{
-				dbPath = dbPath.replace( DOCKER_ROOT_HOME, "~" );
+				String dbPath = db.getAbsolutePath();
+				if( dbPath.startsWith( DOCKER_ROOT_HOME ) )
+				{
+					dbPath = dbPath.replace( DOCKER_ROOT_HOME, "~" );
+				}
+				
+				dockerVolumes += " -v " + dbPath + ":" + CONTAINER_DB_DIR;
 			}
-			
-			dockerVolumes += " -v " + dbPath + ":" + CONTAINER_DB_DIR;
 		}
 
 		return dockerVolumes;
