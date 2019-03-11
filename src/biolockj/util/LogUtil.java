@@ -140,7 +140,7 @@ public class LogUtil
 	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
 	 * Bash users typically use ~/.bash_profile.
 	 */
-	public static final String USER_PROFILE = "project.userProfile";
+	public static final String USER_PROFILE = "pipeline.userProfile";
 
 	private static final List<String> profile = new ArrayList<>();
 }

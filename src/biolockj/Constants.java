@@ -69,25 +69,25 @@ public class Constants
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
 	 * {@value #DEFAULT_MOD_DEMUX}
 	 */
-	public static final String DEFAULT_MOD_DEMUX = "project.defaultDemultiplexer";
+	public static final String DEFAULT_MOD_DEMUX = "pipeline.defaultDemultiplexer";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to convert files into fasta:
 	 * {@value #DEFAULT_MOD_FASTA_CONV} format
 	 */
-	public static final String DEFAULT_MOD_FASTA_CONV = "project.defaultFastaConverter";
+	public static final String DEFAULT_MOD_FASTA_CONV = "pipeline.defaultFastaConverter";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used combined paired read files:
 	 * {@value #DEFAULT_MOD_SEQ_MERGER}
 	 */
-	public static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultSeqMerger";
+	public static final String DEFAULT_MOD_SEQ_MERGER = "pipeline.defaultSeqMerger";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used generate p-value and other
 	 * stats: {@value #DEFAULT_STATS_MODULE}
 	 */
-	public static final String DEFAULT_STATS_MODULE = "project.defaultStatsModule";
+	public static final String DEFAULT_STATS_MODULE = "pipeline.defaultStatsModule";
 
 	/**
 	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
@@ -99,13 +99,13 @@ public class Constants
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
 	 * If set to {@value #TRUE}, implicit modules will not be added to the pipeline.
 	 */
-	public static final String DISABLE_ADD_IMPLICIT_MODULES = "project.disableAddImplicitModules";
+	public static final String DISABLE_ADD_IMPLICIT_MODULES = "pipeline.disableAddImplicitModules";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_PRE_REQ_MODULES}<br>
 	 * If set to {@value #TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
-	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
+	public static final String DISABLE_PRE_REQ_MODULES = "pipeline.disableAddPreReqModules";
 
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #DOMAIN}
@@ -312,7 +312,7 @@ public class Constants
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when
 	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Constants#TRUE}
 	 */
-	public static final String LIMIT_DEBUG_CLASSES = "project.limitDebugClasses";
+	public static final String LIMIT_DEBUG_CLASSES = "pipeline.limitDebugClasses";
 
 	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
@@ -323,7 +323,7 @@ public class Constants
 	 * {@link biolockj.Config} property used to set log sensitivity in
 	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
 	 * "_top">log4j.properties</a><br>
-	 * <i>log4j.rootLogger=${project.logLevel}, file, stdout</i>
+	 * <i>log4j.rootLogger=${pipeline.logLevel}, file, stdout</i>
 	 * <ol>
 	 * <li>DEBUG - Log all messages
 	 * <li>INFO - Log info, warning and error messages
@@ -331,7 +331,7 @@ public class Constants
 	 * <li>ERROR - Log error messages only
 	 * </ol>
 	 */
-	public static final String LOG_LEVEL_PROPERTY = "project.logLevel";
+	public static final String LOG_LEVEL_PROPERTY = "pipeline.logLevel";
 
 	/**
 	 * Spacer used to improve log file readability
@@ -392,26 +392,26 @@ public class Constants
 	 * {@link biolockj.Config} property set to copy input files into pipeline root directory:
 	 * {@value #PROJECT_COPY_FILES}
 	 */
-	public static final String PROJECT_COPY_FILES = "project.copyInput";
+	public static final String PROJECT_COPY_FILES = "pipeline.copyInput";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
 	 * Set file path of default property file. Nested default properties are supported (so the default property file can
 	 * also have a default, and so on).
 	 */
-	public static final String PROJECT_DEFAULT_PROPS = "project.defaultProps";
+	public static final String PROJECT_DEFAULT_PROPS = "pipeline.defaultProps";
 
 	/**
 	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
 	 * {@value #PROJECT_DELETE_TEMP_FILES}
 	 */
-	public static final String PROJECT_DELETE_TEMP_FILES = "project.deleteTempFiles";
+	public static final String PROJECT_DELETE_TEMP_FILES = "pipeline.deleteTempFiles";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #PROJECT_ENV}<br>
 	 * Options: {@value #PROJECT_ENV_CLUSTER}, {@value #PROJECT_ENV_AWS}, {@value #PROJECT_ENV_LOCAL}
 	 */
-	public static final String PROJECT_ENV = "project.env";
+	public static final String PROJECT_ENV = "pipeline.env";
 
 	/**
 	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
@@ -435,7 +435,7 @@ public class Constants
 	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_DIR}<br>
 	 * Stores the path of the pipeline root directory path set by the application runtime code.
 	 */
-	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
+	public static final String PROJECT_PIPELINE_DIR = "pipeline.pipelineDir";
 
 	/**
 	 * QIIME application: {@value #QIIME}
@@ -609,5 +609,5 @@ public class Constants
 	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:
 	 * {@value #PROJECT_PERMISSIONS}
 	 */
-	protected static final String PROJECT_PERMISSIONS = "project.permissions";
+	protected static final String PROJECT_PERMISSIONS = "pipeline.permissions";
 }
