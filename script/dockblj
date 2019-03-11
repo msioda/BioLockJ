@@ -43,7 +43,7 @@ blj_options() {
 	$(has_param $newPass) && options="$options -p $newPass"
 	$(has_param $inputDir) && options="$options -i $inputDir"
 	$(has_param $metaPath) && options="$options -m $metaPath"
-	[ -z "$HOST_BLJ" ] && options="$options -h $HOST_BLJ"
+	$(has_param $HOST_BLJ) && options="$options -h $HOST_BLJ"
 	echo $options
 }
 
@@ -106,19 +106,22 @@ run_docker() {
 	opt="$(blj_options)"
 	[ ${#1} -gt 0 ] && opt="$opt $1"
 	if $(has_param $metaPath); then
-	
-		if [ -z "$HOST_BLJ" ]; then
+		if $(has_param $HOST_BLJ); then
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
 			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type)
 		else
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type)]"
 			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type)
 		fi
 	else
-		if [ -z "$HOST_BLJ" ]; then
+		if $(has_param $HOST_BLJ); then
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
 			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type)
 		else
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type) ]"
 			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type)
 		fi

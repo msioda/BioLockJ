@@ -28,11 +28,12 @@ startBrowser() {
 # Launch blj_webapp on localhost 
 # Param $1 = Docker Hub Account ID
 runDockerWebApp() {
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' $(dockerID $1)/blj_webapp ]"
 	docker run --rm -p 8080:3000 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v $BLJ/resources/config/gui:/config  \
 		-v $BLJ_PROJ:/pipelines:delegated  \
-		-v $BLJ/web_app/logs:/log:delegated  \
+		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
 		$(dockerID $1)/blj_webapp
 }
@@ -40,12 +41,13 @@ runDockerWebApp() {
 # Launch blj_webapp on localhost in dev mode (replace container $BLJ with host $BLJ)
 # Param $1 = Docker Hub Account ID
 devDockerWebApp() {
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' $(dockerID $1)/blj_webapp]"
 	docker run --rm -p 8080:3000 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ/resources/config/gui:/config  \
-		-v $BLJ_PROJ:/pipelines:delegated  \
-		-v $BLJ:/app/biolockj  \
-		-v $BLJ/web_app/logs:/log:delegated  \
+		-v $BLJ/resources/config/gui:/config \
+		-v $BLJ_PROJ:/pipelines:delegated \
+		-v $BLJ:/app/biolockj \
+		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
 		-e "HOST_BLJ=$BLJ" \
 		$(dockerID $1)/blj_webapp
