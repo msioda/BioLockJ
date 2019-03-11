@@ -159,7 +159,7 @@ public class PropUtil
 			}
 
 			props.remove( Constants.INTERNAL_BLJ_MODULE );
-			props.remove( Constants.PROJECT_DEFAULT_PROPS );
+			props.remove( Constants.PIPELINE_DEFAULT_PROPS );
 
 			final Set<String> keys = new TreeSet<>( props.keySet() );
 			for( final String key: keys )

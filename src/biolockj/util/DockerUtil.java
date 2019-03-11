@@ -197,7 +197,7 @@ public class DockerUtil
 	 */
 	public static boolean inAwsEnv() throws Exception
 	{
-		return Config.requireString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_AWS );
+		return Config.requireString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_AWS );
 	}
 
 	/**
@@ -317,7 +317,7 @@ public class DockerUtil
 	public static final String CONTAINER_META_DIR = File.separator + "meta";
 
 	/**
-	 * All containers mount {@value biolockj.Constants#PROJECT_PIPELINE_DIR} to the container "pipelines" volume
+	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container "pipelines" volume
 	 */
 	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipelines";
 

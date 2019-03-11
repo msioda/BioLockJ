@@ -160,7 +160,7 @@ public class BioLockJ
 
 	/**
 	 * Create a copy of the sequence files in property {@value biolockj.Constants#INPUT_DIRS}, output to a directory
-	 * named {@value biolockj.Constants#PROJECT_PIPELINE_DIR}/input.
+	 * named {@value biolockj.Constants#PIPELINE_DIR}/input.
 	 *
 	 * @throws Exception if unable to copy the files
 	 */
@@ -200,7 +200,7 @@ public class BioLockJ
 
 	/**
 	 * Create the pipeline root directory under $DOCKER_PROJ and save the path to
-	 * {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_PIPELINE_DIR}.
+	 * {@link biolockj.Config}.{@value biolockj.Constants#PIPELINE_DIR}.
 	 * <p>
 	 * For example, the following {@link biolockj.Config} settings will create:
 	 * <b>/projects/MicrobeProj_2018Jan01</b><br>
@@ -360,7 +360,7 @@ public class BioLockJ
 
 	/**
 	 * Create indicator file in pipeline root directory, with name = status parameter.
-	 * {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_PIPELINE_DIR}.
+	 * {@link biolockj.Config}.{@value biolockj.Constants#PIPELINE_DIR}.
 	 * 
 	 * @param status Status indicator file name
 	 */
@@ -403,7 +403,7 @@ public class BioLockJ
 	 * <li>For direct module execution call {@link biolockj.Pipeline#runDirectModule(Integer)}
 	 * <li>Otherwise execute {@link biolockj.Pipeline#runPipeline()} and save MASTER {@link biolockj.Config}
 	 * <li>If initializing AWS Cloud manager, call {@link #initAwsManager()}.
-	 * <li>If {@link biolockj.Config}.{@value biolockj.Constants#PROJECT_DELETE_TEMP_FILES} =
+	 * <li>If {@link biolockj.Config}.{@value biolockj.Constants#PIPELINE_DELETE_TEMP_FILES} =
 	 * {@value biolockj.Constants#TRUE}, Call {@link #removeTempFiles()} to delete tem files
 	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status as successful
 	 * </ol>
@@ -429,7 +429,7 @@ public class BioLockJ
 			{
 				Pipeline.runPipeline();
 
-				if( Config.getBoolean( null, Constants.PROJECT_DELETE_TEMP_FILES ) )
+				if( Config.getBoolean( null, Constants.PIPELINE_DELETE_TEMP_FILES ) )
 				{
 					removeTempFiles();
 				}
@@ -456,7 +456,7 @@ public class BioLockJ
 							+ Config.requireString( null, Constants.INPUT_DIRS ) + " to:"
 							+ pipelineInputDir().getAbsolutePath() );
 		}
-		return !RuntimeParamUtil.isDirectMode() && Config.getBoolean( null, Constants.PROJECT_COPY_FILES )
+		return !RuntimeParamUtil.isDirectMode() && Config.getBoolean( null, Constants.PIPELINE_COPY_FILES )
 				|| hasMixedInputs;
 	}
 

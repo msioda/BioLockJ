@@ -523,7 +523,7 @@ public class Config
 	 */
 	public static Map<String, String> getUsedProps()
 	{
-		getString( null, Constants.PROJECT_DEFAULT_PROPS );
+		getString( null, Constants.PIPELINE_DEFAULT_PROPS );
 		return new HashMap<>( usedProps );
 	}
 
@@ -556,8 +556,8 @@ public class Config
 	 */
 	public static boolean isOnCluster()
 	{
-		return getString( null, Constants.PROJECT_ENV ) != null
-				&& getString( null, Constants.PROJECT_ENV ).equals( Constants.PROJECT_ENV_CLUSTER );
+		return getString( null, Constants.PIPELINE_ENV ) != null
+				&& getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
 	}
 
 	/**
@@ -888,7 +888,7 @@ public class Config
 	 */
 	public static void setPipelineDir( final File dir ) throws Exception
 	{
-		setConfigProperty( Constants.PROJECT_PIPELINE_DIR, dir.getAbsolutePath() );
+		setConfigProperty( Constants.PIPELINE_DIR, dir.getAbsolutePath() );
 		pipelineDir = dir;
 	}
 
@@ -917,7 +917,7 @@ public class Config
 	}
 
 	/**
-	 * Set {@value Constants#PROJECT_PIPELINE_DIR} Create a pipeline root directory if the pipeline is new.
+	 * Set {@value Constants#PIPELINE_DIR} Create a pipeline root directory if the pipeline is new.
 	 * 
 	 * @return TRUE if a new pipeline directory was created
 	 * @throws Exception if errors occur
@@ -1029,7 +1029,7 @@ public class Config
 		{
 			try
 			{
-				pipelineDir = requireExistingDir( null, Constants.PROJECT_PIPELINE_DIR );
+				pipelineDir = requireExistingDir( null, Constants.PIPELINE_DIR );
 			}
 			catch( final Exception ex )
 			{

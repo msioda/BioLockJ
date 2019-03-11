@@ -33,13 +33,13 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	/**
-	 * Name of the file created in the BioModule or {@value #PROJECT_PIPELINE_DIR} root directory to indicate execution
+	 * Name of the file created in the BioModule or {@value #PIPELINE_DIR} root directory to indicate execution
 	 * was successful: {@value #BLJ_COMPLETE}
 	 */
 	public static final String BLJ_COMPLETE = "biolockjComplete";
 
 	/**
-	 * Name of the file created in the {@value #PROJECT_PIPELINE_DIR} root directory to indicate fatal application
+	 * Name of the file created in the {@value #PIPELINE_DIR} root directory to indicate fatal application
 	 * errors halted execution: {@value #BLJ_FAILED}
 	 */
 	public static final String BLJ_FAILED = "biolockjFailed";
@@ -390,52 +390,52 @@ public class Constants
 
 	/**
 	 * {@link biolockj.Config} property set to copy input files into pipeline root directory:
-	 * {@value #PROJECT_COPY_FILES}
+	 * {@value #PIPELINE_COPY_FILES}
 	 */
-	public static final String PROJECT_COPY_FILES = "pipeline.copyInput";
+	public static final String PIPELINE_COPY_FILES = "pipeline.copyInput";
 
 	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
+	 * {@link biolockj.Config} String property: {@value #PIPELINE_DEFAULT_PROPS}<br>
 	 * Set file path of default property file. Nested default properties are supported (so the default property file can
 	 * also have a default, and so on).
 	 */
-	public static final String PROJECT_DEFAULT_PROPS = "pipeline.defaultProps";
+	public static final String PIPELINE_DEFAULT_PROPS = "pipeline.defaultProps";
 
 	/**
 	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
-	 * {@value #PROJECT_DELETE_TEMP_FILES}
+	 * {@value #PIPELINE_DELETE_TEMP_FILES}
 	 */
-	public static final String PROJECT_DELETE_TEMP_FILES = "pipeline.deleteTempFiles";
+	public static final String PIPELINE_DELETE_TEMP_FILES = "pipeline.deleteTempFiles";
 
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #PROJECT_ENV}<br>
-	 * Options: {@value #PROJECT_ENV_CLUSTER}, {@value #PROJECT_ENV_AWS}, {@value #PROJECT_ENV_LOCAL}
+	 * {@link biolockj.Config} Boolean property: {@value #PIPELINE_ENV}<br>
+	 * Options: {@value #PIPELINE_ENV_CLUSTER}, {@value #PIPELINE_ENV_AWS}, {@value #PIPELINE_ENV_LOCAL}
 	 */
-	public static final String PROJECT_ENV = "pipeline.env";
+	public static final String PIPELINE_ENV = "pipeline.env";
 
 	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running as an Amazon web service: {@value #PROJECT_ENV_AWS}
+	 * {@link biolockj.Config} option for property: {@value #PIPELINE_ENV}<br>
+	 * Used to indicate running as an Amazon web service: {@value #PIPELINE_ENV_AWS}
 	 */
-	public static final String PROJECT_ENV_AWS = "aws";
+	public static final String PIPELINE_ENV_AWS = "aws";
 
 	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running on the cluster: {@value #PROJECT_ENV_CLUSTER}
+	 * {@link biolockj.Config} option for property: {@value #PIPELINE_ENV}<br>
+	 * Used to indicate running on the cluster: {@value #PIPELINE_ENV_CLUSTER}
 	 */
-	public static final String PROJECT_ENV_CLUSTER = "cluster";
+	public static final String PIPELINE_ENV_CLUSTER = "cluster";
 
 	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running on a local machine (laptop, etc): {@value #PROJECT_ENV_LOCAL}
+	 * {@link biolockj.Config} option for property: {@value #PIPELINE_ENV}<br>
+	 * Used to indicate running on a local machine (laptop, etc): {@value #PIPELINE_ENV_LOCAL}
 	 */
-	public static final String PROJECT_ENV_LOCAL = "local";
+	public static final String PIPELINE_ENV_LOCAL = "local";
 
 	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_DIR}<br>
+	 * {@link biolockj.Config} String property: {@value #PIPELINE_DIR}<br>
 	 * Stores the path of the pipeline root directory path set by the application runtime code.
 	 */
-	public static final String PROJECT_PIPELINE_DIR = "pipeline.pipelineDir";
+	public static final String PIPELINE_DIR = "pipeline.pipelineDir";
 
 	/**
 	 * QIIME application: {@value #QIIME}
