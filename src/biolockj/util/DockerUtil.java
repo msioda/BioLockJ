@@ -304,7 +304,7 @@ public class DockerUtil
 			if( dbPath.startsWith( DOCKER_ROOT_HOME ) )
 			{
 				dbPath = dbPath.replace( DOCKER_ROOT_HOME, RuntimeParamUtil.getDockerHostHomeUserDir().getAbsolutePath() );
-				Log.info( DockerUtil.class, "DB Host dir: " + dbPath );
+				Log.info( DockerUtil.class, "Replace " + DOCKER_ROOT_HOME + " with DB Host dir: " + dbPath );
 			}
 			
 			dockerVolumes += " -v " + dbPath + ":" + CONTAINER_DB_DIR;
