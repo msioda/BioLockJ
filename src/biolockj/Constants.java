@@ -28,13 +28,13 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	/**
-	 * Name of the file created in the BioModule or {@value #PROJECT_PIPELINE_DIR} root directory to indicate execution
+	 * Name of the file created in the BioModule or {@value #PIPELINE_DIR} root directory to indicate execution
 	 * was successful: {@value #BLJ_COMPLETE}
 	 */
 	public static final String BLJ_COMPLETE = "biolockjComplete";
 
 	/**
-	 * Name of the file created in the {@value #PROJECT_PIPELINE_DIR} root directory to indicate fatal application
+	 * Name of the file created in the {@value #PIPELINE_DIR} root directory to indicate fatal application
 	 * errors halted execution: {@value #BLJ_FAILED}
 	 */
 	public static final String BLJ_FAILED = "biolockjFailed";
@@ -64,25 +64,25 @@ public class Constants
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
 	 * {@value #DEFAULT_MOD_DEMUX}
 	 */
-	public static final String DEFAULT_MOD_DEMUX = "project.defaultDemultiplexer";
+	public static final String DEFAULT_MOD_DEMUX = "pipeline.defaultDemultiplexer";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to convert files into fasta:
 	 * {@value #DEFAULT_MOD_FASTA_CONV} format
 	 */
-	public static final String DEFAULT_MOD_FASTA_CONV = "project.defaultFastaConverter";
+	public static final String DEFAULT_MOD_FASTA_CONV = "pipeline.defaultFastaConverter";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used combined paired read files:
 	 * {@value #DEFAULT_MOD_SEQ_MERGER}
 	 */
-	public static final String DEFAULT_MOD_SEQ_MERGER = "project.defaultSeqMerger";
+	public static final String DEFAULT_MOD_SEQ_MERGER = "pipeline.defaultSeqMerger";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used generate p-value and other
 	 * stats: {@value #DEFAULT_STATS_MODULE}
 	 */
-	public static final String DEFAULT_STATS_MODULE = "project.defaultStatsModule";
+	public static final String DEFAULT_STATS_MODULE = "pipeline.defaultStatsModule";
 
 	/**
 	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
@@ -94,13 +94,13 @@ public class Constants
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
 	 * If set to {@value #TRUE}, implicit modules will not be added to the pipeline.
 	 */
-	public static final String DISABLE_ADD_IMPLICIT_MODULES = "project.disableAddImplicitModules";
+	public static final String DISABLE_ADD_IMPLICIT_MODULES = "pipeline.disableAddImplicitModules";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_PRE_REQ_MODULES}<br>
 	 * If set to {@value #TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
-	public static final String DISABLE_PRE_REQ_MODULES = "project.disableAddPreReqModules";
+	public static final String DISABLE_PRE_REQ_MODULES = "pipeline.disableAddPreReqModules";
 
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #DOMAIN}
@@ -307,7 +307,7 @@ public class Constants
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when
 	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Constants#TRUE}
 	 */
-	public static final String LIMIT_DEBUG_CLASSES = "project.limitDebugClasses";
+	public static final String LIMIT_DEBUG_CLASSES = "pipeline.limitDebugClasses";
 
 	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
@@ -318,7 +318,7 @@ public class Constants
 	 * {@link biolockj.Config} property used to set log sensitivity in
 	 * <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
 	 * "_top">log4j.properties</a><br>
-	 * <i>log4j.rootLogger=${project.logLevel}, file, stdout</i>
+	 * <i>log4j.rootLogger=${pipeline.logLevel}, file, stdout</i>
 	 * <ol>
 	 * <li>DEBUG - Log all messages
 	 * <li>INFO - Log info, warning and error messages
@@ -326,7 +326,7 @@ public class Constants
 	 * <li>ERROR - Log error messages only
 	 * </ol>
 	 */
-	public static final String LOG_LEVEL_PROPERTY = "project.logLevel";
+	public static final String LOG_LEVEL_PROPERTY = "pipeline.logLevel";
 
 	/**
 	 * Spacer used to improve log file readability
@@ -379,58 +379,82 @@ public class Constants
 	public static final String PHYLUM = "phylum";
 
 	/**
-	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
-	 */
-	public static final String PROCESSED = "_reported" + Constants.TSV_EXT;
-
-	/**
 	 * {@link biolockj.Config} property set to copy input files into pipeline root directory:
-	 * {@value #PROJECT_COPY_FILES}
+	 * {@value #PIPELINE_COPY_FILES}
 	 */
-	public static final String PROJECT_COPY_FILES = "project.copyInput";
+	public static final String PIPELINE_COPY_FILES = "pipeline.copyInput";
 
 	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_DEFAULT_PROPS}<br>
+	 * {@link biolockj.Config} String property: {@value #PIPELINE_DEFAULT_PROPS}<br>
 	 * Set file path of default property file. Nested default properties are supported (so the default property file can
 	 * also have a default, and so on).
 	 */
-	public static final String PROJECT_DEFAULT_PROPS = "project.defaultProps";
+	public static final String PIPELINE_DEFAULT_PROPS = "pipeline.defaultProps";
 
 	/**
 	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
-	 * {@value #PROJECT_DELETE_TEMP_FILES}
+	 * {@value #PIPELINE_DELETE_TEMP_FILES}
 	 */
-	public static final String PROJECT_DELETE_TEMP_FILES = "project.deleteTempFiles";
-
+	public static final String PIPELINE_DELETE_TEMP_FILES = "pipeline.deleteTempFiles";
+	
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #PROJECT_ENV}<br>
-	 * Options: {@value #PROJECT_ENV_CLUSTER}, {@value #PROJECT_ENV_AWS}, {@value #PROJECT_ENV_LOCAL}
+	 * {@link biolockj.Config} property to allow a free-hand description to a pipeline: {@value #PIPELINE_DESC}
+	 * TODO: needs to be implemented.
 	 */
-	public static final String PROJECT_ENV = "project.env";
-
+	public static final String PIPELINE_DESC = "pipeline.desc";
+	
 	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running as an Amazon web service: {@value #PROJECT_ENV_AWS}
-	 */
-	public static final String PROJECT_ENV_AWS = "aws";
-
-	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running on the cluster: {@value #PROJECT_ENV_CLUSTER}
-	 */
-	public static final String PROJECT_ENV_CLUSTER = "cluster";
-
-	/**
-	 * {@link biolockj.Config} option for property: {@value #PROJECT_ENV}<br>
-	 * Used to indicate running on a local machine (laptop, etc): {@value #PROJECT_ENV_LOCAL}
-	 */
-	public static final String PROJECT_ENV_LOCAL = "local";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #PROJECT_PIPELINE_DIR}<br>
+	 * {@link biolockj.Config} String property: {@value #PIPELINE_DIR}<br>
 	 * Stores the path of the pipeline root directory path set by the application runtime code.
 	 */
-	public static final String PROJECT_PIPELINE_DIR = "project.pipelineDir";
+	public static final String PIPELINE_DIR = "pipeline.pipelineDir";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #PIPELINE_ENV}<br>
+	 * Options: {@value #PIPELINE_ENV_CLUSTER}, {@value #PIPELINE_ENV_AWS}, {@value #PIPELINE_ENV_LOCAL}
+	 */
+	public static final String PIPELINE_ENV = "pipeline.env";
+
+	/**
+	 * {@link biolockj.Config} option for property: {@value #PIPELINE_ENV}<br>
+	 * Used to indicate running as an Amazon web service: {@value #PIPELINE_ENV_AWS}
+	 */
+	public static final String PIPELINE_ENV_AWS = "aws";
+
+	/**
+	 * {@link biolockj.Config} option for property: {@value #PIPELINE_ENV}<br>
+	 * Used to indicate running on the cluster: {@value #PIPELINE_ENV_CLUSTER}
+	 */
+	public static final String PIPELINE_ENV_CLUSTER = "cluster";
+
+	/**
+	 * {@link biolockj.Config} option for property: {@value #PIPELINE_ENV}<br>
+	 * Used to indicate running on a local machine (laptop, etc): {@value #PIPELINE_ENV_LOCAL}
+	 */
+	public static final String PIPELINE_ENV_LOCAL = "local";
+	
+	/**
+	 * {@link biolockj.Config} property to assign a name to a pipeline: {@value #PIPELINE_NAME}
+	 * TODO: needs to be implemented.
+	 */
+	public static final String PIPELINE_NAME = "pipeline.name";
+	
+	/**
+	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
+	 */
+	public static final String PROCESSED = "_reported" + Constants.TSV_EXT;
+	
+	/**
+	 * {@link biolockj.Config} property to assign a free-hand to a project: {@value #PROJECT_DESC}
+	 * TODO: needs to be implemented.
+	 */
+	public static final String PROJECT_DESC = "project.desc";
+	
+	/**
+	 * {@link biolockj.Config} property to assign a name to a project: {@value #PROJECT_NAME}
+	 * TODO: needs to be implemented.
+	 */
+	public static final String PROJECT_NAME = "project.name";
 
 	/**
 	 * QIIME application: {@value #QIIME}
@@ -604,5 +628,5 @@ public class Constants
 	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:
 	 * {@value #PROJECT_PERMISSIONS}
 	 */
-	protected static final String PROJECT_PERMISSIONS = "project.permissions";
+	protected static final String PROJECT_PERMISSIONS = "pipeline.permissions";
 }

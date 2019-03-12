@@ -32,9 +32,9 @@ public class Properties extends java.util.Properties
 	}
 
 	/**
-	 * Constructor called when {@value biolockj.Constants#PROJECT_DEFAULT_PROPS} contains a valid file-path
+	 * Constructor called when {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS} contains a valid file-path
 	 *
-	 * @param defaultConfig Config built from {@value biolockj.Constants#PROJECT_DEFAULT_PROPS} property
+	 * @param defaultConfig Config built from {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS} property
 	 */
 	public Properties( final Properties defaultConfig )
 	{
@@ -131,7 +131,7 @@ public class Properties extends java.util.Properties
 	}
 
 	/**
-	 * Parse property file for the property {@value biolockj.Constants#PROJECT_DEFAULT_PROPS}.<br>
+	 * Parse property file for the property {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS}.<br>
 	 * project.defaultProps=$BLJ/resources/config/default/docker.properties
 	 * 
 	 * @param configFile BioLockJ Config file
@@ -149,7 +149,7 @@ public class Properties extends java.util.Properties
 			final StringTokenizer st = new StringTokenizer( line, "=" );
 			if( st.countTokens() > 1 )
 			{
-				if( st.nextToken().trim().equals( Constants.PROJECT_DEFAULT_PROPS ) )
+				if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
 				{
 					final File defaultConfig = Config.getExistingFileObject( st.nextToken().trim() );
 					reader.close();

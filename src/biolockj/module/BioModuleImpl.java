@@ -139,7 +139,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	}
 
 	/**
-	 * Returns moduleDir/temp for intermediate files. If {@link biolockj.Constants#PROJECT_DELETE_TEMP_FILES} =
+	 * Returns moduleDir/temp for intermediate files. If {@link biolockj.Constants#PIPELINE_DELETE_TEMP_FILES} =
 	 * {@value biolockj.Constants#TRUE}, this directory is deleted after pipeline completes successfully.
 	 */
 	@Override
