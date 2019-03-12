@@ -265,6 +265,8 @@ public class DockerUtil
 
 	private static String getDockerVolumes( final BioModule module ) throws Exception
 	{
+		Log.info( DockerUtil.class, "Build Docker volumes for module: " + module.getClass().getSimpleName() );
+		
 		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR
@@ -286,28 +288,26 @@ public class DockerUtil
 			final File primers = new File( Config.getSystemFilePath( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) ) ).getParentFile();
 			dockerVolumes += " -v " + primers.getAbsolutePath() + ":" + CONTAINER_PRIMER_DIR;
 		}
-		
-		
-		Log.info( DockerUtil.class, "Build Docker volumes for module: " + module.getClass().getSimpleName() );
-		Log.info( DockerUtil.class, "hasDB( module ): " + hasDB( module ) );
 
 		if( hasDB( module ) )
 		{
 			File db = ( (DatabaseModule) module ).getDB();
-			Log.info( DockerUtil.class, "Found DB: " + db.getAbsolutePath() );
-			Log.info( DockerUtil.class, "module instanceof RdpClassifier: " + (module instanceof RdpClassifier) );
+			String dbPath = db.getAbsolutePath();
+			Log.info( DockerUtil.class, "Map Docker volume for DB: " + dbPath );
+
 			if( module instanceof RdpClassifier )
 			{
-				String dbPath = db.getParentFile().getAbsolutePath();
-				if( dbPath.startsWith( DOCKER_ROOT_HOME ) )
-				{
-					dbPath = dbPath.replace( DOCKER_ROOT_HOME, RuntimeParamUtil.getDockerHostHomeUserDir().getAbsolutePath() );
-				}
-				
-				Log.info( DockerUtil.class, "Updated DB Path: " + dbPath );
-				
-				dockerVolumes += " -v " + dbPath + ":" + CONTAINER_DB_DIR;
+				dbPath = db.getParentFile().getAbsolutePath();
+				Log.info( DockerUtil.class, "RDP DB directory path: " + dbPath );
 			}
+			
+			if( dbPath.startsWith( DOCKER_ROOT_HOME ) )
+			{
+				dbPath = dbPath.replace( DOCKER_ROOT_HOME, RuntimeParamUtil.getDockerHostHomeUserDir().getAbsolutePath() );
+				Log.info( DockerUtil.class, "DB Host dir: " + dbPath );
+			}
+			
+			dockerVolumes += " -v " + dbPath + ":" + CONTAINER_DB_DIR;
 		}
 
 		return dockerVolumes;

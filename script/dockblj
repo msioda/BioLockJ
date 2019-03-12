@@ -128,24 +128,6 @@ run_docker() {
 	fi
 }
 
-# Print status message with GUI context and BLJ_OPTIONS
-status_msg() {
-	msg=""
-	if $(has_param $inDocker); then
-		msg="Docker $DOCKER_HUB_USER/webapp GUI"
-	else
-		msg="Host machine $BLJ/web_app GUI" 
-	fi
-	
-	if $(has_param $doRestart); then
-		msg+=" restarting $(restart_dir) in $(manager_type) Docker container"
-	else
-		msg+=" starting $(manager_type) Docker container"
-	fi
-	
-	echo "$msg with BLJ_OPTIONS=$(blj_options)"
-}
-
 # Verify host directory exists, if dockblj is not deployed inside a Docker container
 verify_host_dir() {
 	#echo "validate Host Dir: $# + $1"
@@ -180,7 +162,6 @@ newPass=$(named_arg "$@" "-p")
 doRestart=$(named_arg "$@" "-r")
 
 ! $(has_param $inDocker) && verify_inputs
-echo $(status_msg)
 
 run_docker
 status=$?

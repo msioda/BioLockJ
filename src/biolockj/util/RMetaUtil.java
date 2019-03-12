@@ -101,7 +101,7 @@ public final class RMetaUtil
 
 		if( reportAllFields( module ) )
 		{
-			rScriptFields.addAll( MetaUtil.getFieldNames() );
+			rScriptFields.addAll( getMetaCols( module ) );
 			rScriptFields.removeAll( excludeFields );
 			if( Config.getString( module, MetaUtil.META_BARCODE_COLUMN ) != null )
 			{
