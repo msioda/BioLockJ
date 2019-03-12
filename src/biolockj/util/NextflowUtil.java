@@ -224,7 +224,7 @@ public class NextflowUtil
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 
 	private static final String NF_MEMORY = "$" + Constants.AWS_RAM;
-	private static final String NF_PIPELINE_NAME = "$project.pipelineName";
+	private static final String NF_PIPELINE_NAME = "$pipeline.pipelineName";
 	private static final String PROCESS = "process";
 	private static final String SEPARATOR = ".";
 }
