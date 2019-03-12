@@ -585,11 +585,9 @@ public class BioLockJ
 				logFinalException( args, ex );
 			}
 		}
-		if( isPipelineComplete() )
+		else if( isPipelineComplete() )
 		{
-			Log.info( BioLockJ.class,
-					"Analysis complete --> The answer to the ultimate question of life, the universe and everything is [ 42 ]" );
-			Log.info( BioLockJ.class, "End program." );
+			Log.info( BioLockJ.class, "Analysis complete --> End program [ 42 ]" );
 		}
 		else
 		{
@@ -681,20 +679,17 @@ public class BioLockJ
 		final JavaModule module = (JavaModuleImpl) Pipeline.getModules()
 				.get( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
 		Log.info( BioLockJ.class, "Save failure status for direct module: " + module.getClass().getName() );
-		SummaryUtil.reportFailure( ex );
 		module.moduleFailed();
-		System.exit( 1 );
+		SummaryUtil.reportFailure( ex );
 	}
 
 	private static void reportDirectModuleSucess() throws Exception
 	{
 		final JavaModule module = (JavaModuleImpl) Pipeline.getModules()
 				.get( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
-
 		Log.info( BioLockJ.class, "Save success status for direct module: " + module.getClass().getName() );
 		module.moduleComplete();
 		SummaryUtil.reportSuccess( module );
-		System.exit( 0 );
 	}
 
 	private static void runDirectPipeline() throws Exception
@@ -704,15 +699,12 @@ public class BioLockJ
 			final Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
 			Pipeline.runDirectModule( id );
 			reportDirectModuleSucess();
+			System.exit( 0 );
 		}
 		catch( final Exception ex )
 		{
-			ex.printStackTrace();
 			reportDirectModuleFailure( ex );
-		}
-		finally
-		{
-
+			System.exit( 1 );
 		}
 	}
 
