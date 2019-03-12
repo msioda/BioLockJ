@@ -191,7 +191,7 @@ public class DockerUtil
 	/**
 	 * Return TRUE if running on AWS (based on Config props).
 	 * 
-	 * @return TRUE if project.env=aws
+	 * @return TRUE if pipeline.env=aws
 	 * @throws Exception if errors occur
 	 */
 	public static boolean inAwsEnv() throws Exception

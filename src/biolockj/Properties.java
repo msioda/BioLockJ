@@ -132,7 +132,7 @@ public class Properties extends java.util.Properties
 
 	/**
 	 * Parse property file for the property {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS}.<br>
-	 * project.defaultProps=$BLJ/resources/config/default/docker.properties
+	 * pipeline.defaultProps=$BLJ/resources/config/default/docker.properties
 	 * 
 	 * @param configFile BioLockJ Config file
 	 * @return nested default prop file or null
