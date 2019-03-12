@@ -690,6 +690,7 @@ public class BioLockJ
 		Log.info( BioLockJ.class, "Save success status for direct module: " + module.getClass().getName() );
 		module.moduleComplete();
 		SummaryUtil.reportSuccess( module );
+		System.exit( 0 );
 	}
 
 	private static void runDirectPipeline() throws Exception
