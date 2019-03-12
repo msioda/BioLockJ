@@ -1,6 +1,7 @@
 # Deployment path: $DOCKER_FILE_PATH/blj_webapp.Dockerfile
 
 FROM biolockj/blj_basic_py2
+ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install Ubuntu Software
 ENV NODE_VERSION 8.11.3
@@ -10,7 +11,8 @@ RUN apt-get install -y \
 	nodejs \
 	aptitude \
 	npm && \
-    wget $NODE_URL | bash -
+    wget $NODE_URL | bash - && \
+    pip install awscli
 
 #2.) Install Docker Client
 ARG DOCKER_CLIENT
@@ -45,8 +47,13 @@ RUN	apt-get clean && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
-	
-#6.) Start npm Command (Ready to open web-browser localhost:8080)
+
+#6.) Update  ~/.bashrc
+RUN echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
+	echo 'export BLJ_PROJ=/pipelines' >> ~/.bashrc && \
+	echo 'alias goblj=blj_go' >> ~/.bashrc
+		
+#7.) Start npm Command (Ready to open web-browser localhost:8080)
 WORKDIR $BLJ/web_app/
 EXPOSE 8080
 CMD [ "npm", "start" ]

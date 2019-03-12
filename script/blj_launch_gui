@@ -1,33 +1,74 @@
-###################################################################
-##                                                               ##
-##  This script launches Docker webapp container                 ##
-##  Must map volume to /config to save new BLJ Config files      ##
-##                                                               ##
-###################################################################
+######################################################################
+##                                                                  ##
+##  This script launches Docker webapp container                    ##
+##  Must map volume to /config to save new BLJ Config files         ##
+##                                                                  ##
+##  Runtime args not required but 2 optional arguments accepted     ##
+##                                                                  ##
+##  1. Docker Account ID (default = "biolockj")                     ##
+##  2. "dev" - Map volume to replace container $BLJ with host $BLJ  ##
+##                                                                  ##
+######################################################################
 
-# check for options to start the browser
+# Launch web browser based on existence of xdg-open, gnome-open, or python 
 startBrowser() {
-  sleep 2
-  #usefull: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
-  # if [ -n $BROWSER ]; then
-  #   $BROWSER 'http://localhost:8080/'
-  if which xdg-open > /dev/null; then
-    xdg-open 'http://localhost:8080/'
-  elif which gnome-open > /dev/null; then
-    gnome-open 'http://localhost:8080/'
-  elif which python > /dev/null; then
-    python -mwebbrowser http://localhost:8080/
-  else
-    echo "Could not detect the web browser to use."
-  fi
+	sleep 2
+	# Helpful info: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
+	if which xdg-open > /dev/null; then
+		xdg-open 'http://localhost:8080/'
+	elif which gnome-open > /dev/null; then
+		gnome-open 'http://localhost:8080/'
+	elif which python > /dev/null; then
+		python -mwebbrowser http://localhost:8080/
+	else
+		echo "Web browser not found on localhost!"
+	fi
 }
 
-docker run --rm -p 8080:3000 \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $BLJ/resources/config/gui:/config  \
-  -v $BLJ_PROJ:/pipelines:delegated  \
-  -v $BLJ/web_app/logs:/log:delegated  \
-  -e "HOST_BLJ_PROJ=$BLJ_PROJ" \
-  $DOCKER_HUB_USER/blj_webapp
+# Launch blj_webapp on localhost 
+# Param $1 = Docker Hub Account ID
+runDockerWebApp() {
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' $(dockerID $1)/blj_webapp ]"
+	docker run --rm -p 8080:3000 \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $BLJ/resources/config/gui:/config  \
+		-v $BLJ_PROJ:/pipelines:delegated  \
+		-v $BLJ/web_app/logs:/log:delegated \
+		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
+		$(dockerID $1)/blj_webapp
+}
+
+# Launch blj_webapp on localhost in dev mode (replace container $BLJ with host $BLJ)
+# Param $1 = Docker Hub Account ID
+devDockerWebApp() {
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' $(dockerID $1)/blj_webapp]"
+	docker run --rm -p 8080:3000 \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $BLJ/resources/config/gui:/config \
+		-v $BLJ_PROJ:/pipelines:delegated \
+		-v $BLJ:/app/biolockj \
+		-v $BLJ/web_app/logs:/log:delegated \
+		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
+		-e "HOST_BLJ=$BLJ" \
+		$(dockerID $1)/blj_webapp
+}
+
+# If the arg is empty, return the default value "biolockJ" 
+dockerID() {
+	if [ ${#1} -eq 0 ]; then
+		echo "biolockJ"
+	else
+		echo $1
+	fi
+}
+
+if [ $# -gt 0 ] && [ "$1" == "dev" ] || [ "$2" == "dev" ]; then
+	dockerID=$DOCKER_HUB_USER
+	[ $# -eq 2 ] && [ "$1" == "dev" ] && dockerID=$2
+	[ $# -eq 2 ] && [ "$2" == "dev" ] && dockerID=$1
+	devDockerWebApp $dockerID
+else
+	runDockerWebApp $DOCKER_HUB_USER
+fi
 
 startBrowser

@@ -31,5 +31,10 @@ RUN	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
 
-#4.) Set Default Command
+#4.) Update  ~/.bashrc
+RUN echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
+	echo 'export BLJ_PROJ=/pipelines' >> ~/.bashrc && \
+	echo 'alias goblj=blj_go' >> ~/.bashrc
+	
+#5.) Set Default Command
 CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS

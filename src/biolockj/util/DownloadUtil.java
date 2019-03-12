@@ -11,15 +11,11 @@
  */
 package biolockj.util;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.NameFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.filefilter.*;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -60,25 +56,33 @@ public final class DownloadUtil
 
 			boolean hasRmods = false;
 			final String status = ( BioLockJ.isPipelineComplete() ? "completed": "failed" ) + " pipeline -->";
-			final Set<File> files = new TreeSet<>();
+			//final Set<File> files = new TreeSet<>();
+			final Set<File> downloadPaths = new TreeSet<>();
 			for( final BioModule module: modules )
 			{
 				Log.info( DownloadUtil.class, "Updating download list for " + module.getClass().getSimpleName() );
 				if( module instanceof R_Module )
 				{
+					downloadPaths.add( ( (R_Module) module ).getScriptDir() );
+					downloadPaths.add( module.getOutputDir() );
+					if( !ModuleUtil.isComplete( module ) )
+					{
+						downloadPaths.add( module.getTempDir() );
+					}
+					
 					hasRmods = true;
-					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( true, true, !ModuleUtil.isComplete( module ) ) ) );
+					//files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
+					//		getDirFilter( true, true, !ModuleUtil.isComplete( module ) ) ) );
 				}
 				else if( module instanceof NormalizeTaxaTables )
 				{
-					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( false, false, true ) ) );
+					downloadPaths.add( module.getTempDir() );
+					//files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
+					//		getDirFilter( false, false, true ) ) );
 				}
-				else
+				else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables  ) 
 				{
-					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( true, false, !ModuleUtil.isComplete( module ) ) ) );
+					downloadPaths.add( module.getOutputDir() );
 				}
 			}
 
@@ -87,12 +91,15 @@ public final class DownloadUtil
 				makeRunAllScript( modules );
 			}
 
-			files.addAll( Arrays.asList( pipeRoot.listFiles() ) );
+			
+			//files.addAll( Arrays.asList( pipeRoot.listFiles() ) );
+			//final List<File> downFiles = buildDownloadList( files );
+			
+			downloadPaths.addAll( FileUtils.listFiles( pipeRoot, HiddenFileFilter.VISIBLE, FalseFileFilter.INSTANCE ) );
 
-			final List<File> downFiles = buildDownloadList( files );
-			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
+			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
 			final String src = SRC + "=" + Config.pipelinePath();
-			final String cmd = "rsync -v --times --files-from=:$" + SRC + File.separator
+			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
 					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
 					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 
@@ -170,9 +177,11 @@ public final class DownloadUtil
 
 			for( final File file: files )
 			{
-				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
+				Log.info( DownloadUtil.class, "Candidate download path: " + file.getAbsolutePath() );
+				if( FileUtils.sizeOf( file ) != 0 && !file.getName().startsWith( "." ) )
 				{
 					downFiles.add( file );
+					Log.info( DownloadUtil.class, "Accepted download path: " + file.getAbsolutePath() );
 					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
 					writer.write( relPath + RETURN );
 				}

@@ -23,6 +23,16 @@ current_pipeline() {
    fi
 }
 
+# Return BioLockJ release version
+get_version() {
+	if [ -f "$BLJ/.version" ]; then
+		{ read -r v; } < "$BLJ/.version"
+		echo $v
+	else
+		echo "Missing $BLJ/.version"
+	fi
+}
+
 # Return 0 if directory is empty (or missing)
 is_empty() {
 	[ ! -d "$1" ] || [ -z "$(\ls -A $1)" ]
@@ -50,16 +60,6 @@ is_pipeline_dir() {
 	mon23=$(echo ${dir: -4:2} | egrep "^[a-y{2}]+$")
 	day=$(echo ${dir: -2} | egrep "^[0-9{2}]+$")
 	[ -d "$1" ] && [ $prefix == "_" ] && [ ${#year} -eq 4 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ ${#day} -eq 2 ]
-}
-
-# Return BioLockJ release version
-get_version() {
-	if [ -f "$BLJ/.version" ]; then
-		{ read -r v; } < "$BLJ/.version"
-		echo $v
-	else
-		echo "Missing $BLJ/.version"
-	fi
 }
 
 # Return absolute path of most recent pipeline

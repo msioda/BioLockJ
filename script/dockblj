@@ -7,7 +7,7 @@
 ##                                                                              ##
 ##  Required Parameters:                                                        ##
 ##  Config file path:       -c                                                  ##
-##  Input directories:      -i <commma-separated paths> (no spaces)             ##
+##  Input directory:        -i <path>                                           ##
 ##                                                                              ##
 ##  Optional Parameters:                                                        ##
 ##  Aws flag:               -aws                                                ##
@@ -38,11 +38,12 @@ arg_exists() {
 # Include Docker container path to required Config file
 # Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
 blj_options() {
-	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config)" 
+	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config) -u $HOME" 
 	$(has_param $doRestart) && options="$options -r $(restart_dir)"
 	$(has_param $newPass) && options="$options -p $newPass"
 	$(has_param $inputDir) && options="$options -i $inputDir"
 	$(has_param $metaPath) && options="$options -m $metaPath"
+	$(has_param $HOST_BLJ) && options="$options -h $HOST_BLJ"
 	echo $options
 }
 
@@ -105,30 +106,26 @@ run_docker() {
 	opt="$(blj_options)"
 	[ ${#1} -gt 0 ] && opt="$opt $1"
 	if $(has_param $metaPath); then
-		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
-			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
+		if $(has_param $HOST_BLJ); then
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
+				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type)
+		else
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type)]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
+				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type)
+		fi
 	else
-		docker run -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
-			-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config --rm $(manager_type)
+		if $(has_param $HOST_BLJ); then
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
+				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type)
+		else
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
+				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type)
+		fi
 	fi
-}
-
-# Print status message with GUI context and BLJ_OPTIONS
-status_msg() {
-	msg=""
-	if $(has_param $inDocker); then
-		msg="Docker $DOCKER_HUB_USER/webapp GUI"
-	else
-		msg="Host machine $BLJ/web_app GUI" 
-	fi
-	
-	if $(has_param $doRestart); then
-		msg+=" restarting $(restart_dir) in $(manager_type) Docker container"
-	else
-		msg+=" starting $(manager_type) Docker container"
-	fi
-	
-	echo "$msg with BLJ_OPTIONS=$(blj_options)"
 }
 
 # Verify host directory exists, if dockblj is not deployed inside a Docker container
@@ -143,7 +140,7 @@ verify_host_file() {
 	[ $# -eq 2 ] && [ ${#1} -gt 0 ] && [ ! -f $1 ] && echo "Exit script - $2 file not found: $1" && exit 1
 }
 
-# Verify paths are valid, if dockblj is not deployed inside a Docker container
+# Verify paths are valid, if dockblj is not run inside a Docker container
 verify_inputs() {
 	$(has_param $doRestart) && verify_host_dir $doRestart Restart
 	$(has_param $config) && verify_host_file $config Config
@@ -156,8 +153,7 @@ verify_inputs() {
 }
 
 echo "Running dockblj..."
-
-runAws=$(arg_exists "$@" "-aws")
+runAws=$(named_arg "$@" "-aws")
 config=$(named_arg "$@" "-c")
 inDocker=$(arg_exists "$@" "-docker")
 inputDir=$(named_arg "$@" "-i")
@@ -165,19 +161,14 @@ metaPath=$(named_arg "$@" "-m")
 newPass=$(named_arg "$@" "-p")
 doRestart=$(named_arg "$@" "-r")
 
-echo "doRestart: $doRestart"
-
 ! $(has_param $inDocker) && verify_inputs
-
-echo $(status_msg)
-
-#echo "config: $(dirname $config)"
-#echo "inputDir: $inputDir"
-#echo "metaPath: $metaPath"
-#echo "BLJ_PROJ: $(blj_proj)"
-#echo "BLJ_OPTIONS: $(blj_options)"
 
 run_docker
 status=$?
-[ $status -eq 0 ] && $(has_param $runAws) && run_docker -aws
-[ $status -ne 0 ] && echo "Exit script - docker run command failed"  
+[ $status -ne 0 ] && echo "Exit script - Docker $(manager_type) pipeline failed" && exit $status
+
+$(has_param $runAws) && run_docker -aws
+status=$?
+[ $status -ne 0 ] && echo "Exit script - Docker $(manager_type) pipeline failed" && exit $status
+
+echo "Exit script - Docker $(manager_type) pipeline success!"
