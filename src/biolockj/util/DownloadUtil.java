@@ -19,7 +19,6 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -60,40 +59,33 @@ public final class DownloadUtil
 
 			boolean hasRmods = false;
 			final String status = ( BioLockJ.isPipelineComplete() ? "completed": "failed" ) + " pipeline -->";
-			final Set<File> files = new TreeSet<>();
-			final Set<File> dirs = new TreeSet<>();
+			//final Set<File> files = new TreeSet<>();
+			final Set<File> downloadPaths = new TreeSet<>();
 			for( final BioModule module: modules )
 			{
 				Log.info( DownloadUtil.class, "Updating download list for " + module.getClass().getSimpleName() );
 				if( module instanceof R_Module )
 				{
-					dirs.add( ( (R_Module) module ).getScriptDir() );
-					dirs.add( module.getOutputDir() );
+					downloadPaths.add( ( (R_Module) module ).getScriptDir() );
+					downloadPaths.add( module.getOutputDir() );
 					if( !ModuleUtil.isComplete( module ) )
 					{
-						dirs.add( module.getTempDir() );
+						downloadPaths.add( module.getTempDir() );
 					}
 					
 					hasRmods = true;
-					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( true, true, !ModuleUtil.isComplete( module ) ) ) );
+					//files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
+					//		getDirFilter( true, true, !ModuleUtil.isComplete( module ) ) ) );
 				}
 				else if( module instanceof NormalizeTaxaTables )
 				{
-					dirs.add( module.getTempDir() );
-					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( false, false, true ) ) );
+					downloadPaths.add( module.getTempDir() );
+					//files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
+					//		getDirFilter( false, false, true ) ) );
 				}
-				else
+				else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables  ) 
 				{
-					dirs.add( ( (ScriptModule) module ).getScriptDir() );
-					if( !ModuleUtil.isComplete( module ) )
-					{
-						dirs.add( module.getTempDir() );
-					}
-					
-					files.addAll( FileUtils.listFiles( module.getModuleDir(), TrueFileFilter.INSTANCE,
-							getDirFilter( true, false, !ModuleUtil.isComplete( module ) ) ) );
+					downloadPaths.add( module.getOutputDir() );
 				}
 			}
 
@@ -106,10 +98,9 @@ public final class DownloadUtil
 			//files.addAll( Arrays.asList( pipeRoot.listFiles() ) );
 			//final List<File> downFiles = buildDownloadList( files );
 			
-			dirs.addAll( Arrays.asList( pipeRoot.listFiles() ) );
-			final List<File> downFiles = buildDownloadList( dirs );
+			downloadPaths.addAll( Arrays.asList( pipeRoot.listFiles() ) );
 
-			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( downFiles ) );
+			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
 			final String src = SRC + "=" + Config.pipelinePath();
 			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
 					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
@@ -189,7 +180,7 @@ public final class DownloadUtil
 
 			for( final File file: files )
 			{
-				if( FileUtils.sizeOf( file ) != 0 && !file.getName().startsWith( "." ) )
+				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
 				{
 					downFiles.add( file );
 					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
