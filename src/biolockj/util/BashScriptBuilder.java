@@ -285,7 +285,7 @@ public class BashScriptBuilder
 	}
 
 	/**
-	 * If property {@value biolockj.Constants#PROJECT_ENV} = cluster, require property {@value #CLUSTER_BATCH_COMMAND},
+	 * If property {@value biolockj.Constants#PIPELINE_ENV} = cluster, require property {@value #CLUSTER_BATCH_COMMAND},
 	 * otherwise exit this method.
 	 * <p>
 	 * If running on the cluster and property {@value #CLUSTER_VALIDATE_PARAMS} = {@value biolockj.Constants#TRUE}:

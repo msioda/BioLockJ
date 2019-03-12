@@ -272,7 +272,7 @@ public class Pipeline
 	/**
 	 * Initialization occurs by calling {@link biolockj.module.BioModule} methods on configured modules<br>
 	 * <ol>
-	 * <li>Create module sub-directories under {@value biolockj.Constants#PROJECT_PIPELINE_DIR} as ordered in
+	 * <li>Create module sub-directories under {@value biolockj.Constants#PIPELINE_DIR} as ordered in
 	 * {@link biolockj.Config} file.<br>
 	 * <li>Reset the {@link biolockj.util.SummaryUtil} module so previous summary descriptions can be used for completed
 	 * modules

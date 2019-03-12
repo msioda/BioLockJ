@@ -190,8 +190,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 			{
 				final String path = script.getAbsolutePath() + "_" + status;
 				Log.info( getClass(), "Saving file: " + path );
-				final File file = new File( path );
-				final FileWriter writer = new FileWriter( file );
+				final FileWriter writer = new FileWriter( new File( path ) );
 				writer.close();
 			}
 			else

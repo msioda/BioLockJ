@@ -70,6 +70,7 @@ public final class DownloadUtil
 					}
 					
 					hasRmods = true;
+
 				}
 				else if( module instanceof NormalizeTaxaTables )
 				{
@@ -86,7 +87,6 @@ public final class DownloadUtil
 				makeRunAllScript( modules );
 			}
 
-			
 			downloadPaths.addAll( FileUtils.listFiles( pipeRoot, HiddenFileFilter.VISIBLE, FalseFileFilter.INSTANCE ) );
 
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
@@ -358,7 +358,7 @@ public final class DownloadUtil
 	 * {@link biolockj.Config} String property: {@value #DOWNLOAD_DIR}<br>
 	 * Sets the local directory targeted by the scp command.
 	 */
-	protected static final String DOWNLOAD_DIR = "project.downloadDir";
+	protected static final String DOWNLOAD_DIR = "pipeline.downloadDir";
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
 	private static final String SRC = "src";

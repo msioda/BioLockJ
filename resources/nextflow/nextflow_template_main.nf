@@ -2,8 +2,8 @@
 // Path: /Users/mike/git/BioLockJ/resources/docker/nextflow/nextflow_template_main.nf
 
 aws.efs = $aws.efs
-project.pipelineName = $project.pipelineName
-project.pipelineDir = "${aws.efs}/${project.pipelineName}"
+pipeline.pipelineName = $pipeline.pipelineName
+pipeline.pipelineDir = "${aws.efs}/${pipeline.pipelineName}"
 
 process AddMetadataToPathwayTables {
 	echo 	true
@@ -11,7 +11,7 @@ process AddMetadataToPathwayTables {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_AddMetadataToPathwayTables/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_AddMetadataToPathwayTables/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -23,7 +23,7 @@ process AddMetadataToTaxaTables {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_AddMetadataToTaxaTables/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_AddMetadataToTaxaTables/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -35,7 +35,7 @@ process AwkFastaConverter {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_AwkFastaConverter/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_AwkFastaConverter/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -47,7 +47,7 @@ process BuildQiimeMapping {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_BuildQiimeMapping/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_BuildQiimeMapping/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -59,7 +59,7 @@ process BuildTaxaTables {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_BuildTaxaTables/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_BuildTaxaTables/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -71,7 +71,7 @@ process CompileOtuCounts {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_CompileOtuCounts/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_CompileOtuCounts/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -83,7 +83,7 @@ process Demultiplexer {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Demultiplexer/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Demultiplexer/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -95,7 +95,7 @@ process Email {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Email/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Email/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -107,7 +107,7 @@ process Gunzipper {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Gunzipper/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Gunzipper/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -119,7 +119,7 @@ process Humann2Classifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Humann2Classifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Humann2Classifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -131,7 +131,7 @@ process Humann2Parser {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Humann2Parser/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Humann2Parser/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -143,7 +143,7 @@ process ImportMetadata {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_ImportMetadata/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_ImportMetadata/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -155,7 +155,7 @@ process JsonReport {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_JsonReport/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_JsonReport/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -167,7 +167,7 @@ process KneadData {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_KneadData/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_KneadData/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -179,7 +179,7 @@ process Kraken2Classifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Kraken2Classifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Kraken2Classifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -191,7 +191,7 @@ process Kraken2Parser {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Kraken2Parser/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Kraken2Parser/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -203,7 +203,7 @@ process KrakenClassifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_KrakenClassifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_KrakenClassifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -215,7 +215,7 @@ process KrakenParser {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_KrakenParser/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_KrakenParser/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -227,7 +227,7 @@ process LogTransformTaxaTables {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_LogTransformTaxaTables/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_LogTransformTaxaTables/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -239,7 +239,7 @@ process MergeQiimeOtuTables {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_MergeQiimeOtuTables/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_MergeQiimeOtuTables/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -251,7 +251,7 @@ process Metaphlan2Classifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Metaphlan2Classifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Metaphlan2Classifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -263,7 +263,7 @@ process Metaphlan2Parser {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Metaphlan2Parser/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Metaphlan2Parser/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -275,7 +275,7 @@ process Multiplexer {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_Multiplexer/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_Multiplexer/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -287,7 +287,7 @@ process NormalizeTaxaTables {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_NormalizeTaxaTables/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_NormalizeTaxaTables/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -299,7 +299,7 @@ process PearMergeReads {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_PearMergeReads/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_PearMergeReads/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -311,7 +311,7 @@ process QiimeClassifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeClassifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_QiimeClassifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -323,7 +323,7 @@ process QiimeClosedRefClassifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeClosedRefClassifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_QiimeClosedRefClassifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -335,7 +335,7 @@ process QiimeDeNovoClassifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeDeNovoClassifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_QiimeDeNovoClassifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -347,7 +347,7 @@ process QiimeOpenRefClassifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeOpenRefClassifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_QiimeOpenRefClassifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -359,7 +359,7 @@ process QiimeParser {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_QiimeParser/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_QiimeParser/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -371,7 +371,7 @@ process R_CalculateStats {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_CalculateStats/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_R_CalculateStats/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -383,7 +383,7 @@ process R_PlotEffectSize {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_PlotEffectSize/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_R_PlotEffectSize/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -395,7 +395,7 @@ process R_PlotMds {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_PlotMds/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_R_PlotMds/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -407,7 +407,7 @@ process R_PlotOtus {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_PlotOtus/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_R_PlotOtus/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -419,7 +419,7 @@ process R_PlotPvalHistograms {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_R_PlotPvalHistograms/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_R_PlotPvalHistograms/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -431,7 +431,7 @@ process RarefyOtuCounts {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RarefyOtuCounts/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RarefyOtuCounts/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -443,7 +443,7 @@ process RarefySeqs {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RarefySeqs/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RarefySeqs/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -455,7 +455,7 @@ process RdpClassifier {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RdpClassifier/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RdpClassifier/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -467,7 +467,7 @@ process RdpParser {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RdpParser/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RdpParser/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -479,7 +479,7 @@ process RegisterNumReads {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RegisterNumReads/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RegisterNumReads/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -491,7 +491,7 @@ process RemoveLowOtuCounts {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RemoveLowOtuCounts/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RemoveLowOtuCounts/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -503,7 +503,7 @@ process RemoveLowPathwayCounts {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RemoveLowPathwayCounts/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RemoveLowPathwayCounts/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -515,7 +515,7 @@ process RemoveScarceOtuCounts {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RemoveScarceOtuCounts/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RemoveScarceOtuCounts/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -527,7 +527,7 @@ process RemoveScarcePathwayCounts {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_RemoveScarcePathwayCounts/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_RemoveScarcePathwayCounts/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -539,7 +539,7 @@ process SeqFileValidator {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_SeqFileValidator/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_SeqFileValidator/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
@@ -551,7 +551,7 @@ process TrimPrimers {
 	memory 	$nextflow.memory
 	label 	$nextflow.dockerImage
 	input:
-	val worker from Channel.watchPath( '${project.pipelineDir}/**_TrimPrimers/script/*.sh' )
+	val worker from Channel.watchPath( '${pipeline.pipelineDir}/**_TrimPrimers/script/*.sh' )
 	"""
 	#!/bin/bash
 	bash ${worker}
