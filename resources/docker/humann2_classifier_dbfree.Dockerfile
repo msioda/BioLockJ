@@ -22,12 +22,14 @@ RUN cd /usr/local/bin && \
 
 #3.) Install MetaPhlAn2
 ENV mpa_dir=/usr/local/bin
-ENV META_URL="https://bitbucket.org/biobakery/metaphlan2/get/default.zip"
-RUN cd $mpa_dir && \
+ENV METAPHLAN_APP=/app/metaphlan2
+ENV META_URL="https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip"
+RUN cd /app && \
 	wget -qO- $META_URL | bsdtar -xf- && \
-	mv biobakery*/* . && \
-	rm -rf biobakery*  && \
-	chmod o+x -R *.py && \
+	chmod -R 774 $METAPHLAN_APP && \
+	mv ${METAPHLAN_APP}/* $mpa_dir && \
+	rm -rf $METAPHLAN_APP && \
+	cd $mpa_dir && \
 	ln -s metaphlan2.py metaphlan2
 
 #4.) Cleanup - save ca-certificates so humann2_classifier can download from internet
