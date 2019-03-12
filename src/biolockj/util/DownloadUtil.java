@@ -11,14 +11,11 @@
  */
 package biolockj.util;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.*;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -98,7 +95,7 @@ public final class DownloadUtil
 			//files.addAll( Arrays.asList( pipeRoot.listFiles() ) );
 			//final List<File> downFiles = buildDownloadList( files );
 			
-			downloadPaths.addAll( Arrays.asList( pipeRoot.listFiles() ) );
+			downloadPaths.addAll( FileUtils.listFiles( pipeRoot, HiddenFileFilter.VISIBLE, FalseFileFilter.INSTANCE ) );
 
 			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
 			final String src = SRC + "=" + Config.pipelinePath();
