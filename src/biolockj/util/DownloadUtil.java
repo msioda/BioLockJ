@@ -189,7 +189,7 @@ public final class DownloadUtil
 
 			for( final File file: files )
 			{
-				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
+				if( FileUtils.sizeOf( file ) != 0 && !file.getName().startsWith( "." ) )
 				{
 					downFiles.add( file );
 					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
