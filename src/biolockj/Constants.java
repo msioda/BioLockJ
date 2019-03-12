@@ -384,11 +384,6 @@ public class Constants
 	public static final String PHYLUM = "phylum";
 
 	/**
-	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
-	 */
-	public static final String PROCESSED = "_reported" + Constants.TSV_EXT;
-
-	/**
 	 * {@link biolockj.Config} property set to copy input files into pipeline root directory:
 	 * {@value #PIPELINE_COPY_FILES}
 	 */
@@ -406,6 +401,18 @@ public class Constants
 	 * {@value #PIPELINE_DELETE_TEMP_FILES}
 	 */
 	public static final String PIPELINE_DELETE_TEMP_FILES = "pipeline.deleteTempFiles";
+	
+	/**
+	 * {@link biolockj.Config} property to allow a free-hand description to a pipeline: {@value #PIPELINE_DESC}
+	 * TODO: needs to be implemented.
+	 */
+	public static final String PIPELINE_DESC = "pipeline.desc";
+	
+	/**
+	 * {@link biolockj.Config} String property: {@value #PIPELINE_DIR}<br>
+	 * Stores the path of the pipeline root directory path set by the application runtime code.
+	 */
+	public static final String PIPELINE_DIR = "pipeline.pipelineDir";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #PIPELINE_ENV}<br>
@@ -430,12 +437,29 @@ public class Constants
 	 * Used to indicate running on a local machine (laptop, etc): {@value #PIPELINE_ENV_LOCAL}
 	 */
 	public static final String PIPELINE_ENV_LOCAL = "local";
-
+	
 	/**
-	 * {@link biolockj.Config} String property: {@value #PIPELINE_DIR}<br>
-	 * Stores the path of the pipeline root directory path set by the application runtime code.
+	 * {@link biolockj.Config} property to assign a name to a pipeline: {@value #PIPELINE_NAME}
+	 * TODO: needs to be implemented.
 	 */
-	public static final String PIPELINE_DIR = "pipeline.pipelineDir";
+	public static final String PIPELINE_NAME = "pipeline.name";
+	
+	/**
+	 * File suffix appended to processed samples in the module output directory: {@value #PROCESSED}
+	 */
+	public static final String PROCESSED = "_reported" + Constants.TSV_EXT;
+	
+	/**
+	 * {@link biolockj.Config} property to assign a free-hand to a project: {@value #PROJECT_DESC}
+	 * TODO: needs to be implemented.
+	 */
+	public static final String PROJECT_DESC = "project.desc";
+	
+	/**
+	 * {@link biolockj.Config} property to assign a name to a project: {@value #PROJECT_NAME}
+	 * TODO: needs to be implemented.
+	 */
+	public static final String PROJECT_NAME = "project.name";
 
 	/**
 	 * QIIME application: {@value #QIIME}
