@@ -180,9 +180,11 @@ public final class DownloadUtil
 
 			for( final File file: files )
 			{
-				if( FileUtils.sizeOf( file ) != 0 && !file.isDirectory() && !file.getName().startsWith( "." ) )
+				Log.info( DownloadUtil.class, "Candidate download path: " + file.getAbsolutePath() );
+				if( FileUtils.sizeOf( file ) != 0 && !file.getName().startsWith( "." ) )
 				{
 					downFiles.add( file );
+					Log.info( DownloadUtil.class, "Accepted download path: " + file.getAbsolutePath() );
 					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
 					writer.write( relPath + RETURN );
 				}

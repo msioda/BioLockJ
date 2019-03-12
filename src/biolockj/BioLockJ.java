@@ -692,8 +692,8 @@ public class BioLockJ
 				.get( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
 
 		Log.info( BioLockJ.class, "Save success status for direct module: " + module.getClass().getName() );
-		SummaryUtil.reportSuccess( module );
 		module.moduleComplete();
+		SummaryUtil.reportSuccess( module );
 		System.exit( 0 );
 	}
 
