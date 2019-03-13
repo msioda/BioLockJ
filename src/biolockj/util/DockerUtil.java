@@ -282,6 +282,11 @@ public class DockerUtil
 		{
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR;
 		}
+		
+		if( isJavaModule( module ) && RuntimeParamUtil.getDockerHostBLJ_SUP() != null )
+		{
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":" + CONTAINER_BLJ_SUP_DIR;
+		}
 
 		if( module instanceof TrimPrimers )
 		{
@@ -354,6 +359,11 @@ public class DockerUtil
 	 * Docker container BioLockJ installation directory: {@value #CONTAINER_BLJ_DIR}
 	 */
 	public static final String CONTAINER_BLJ_DIR = "/app/biolockj";
+	
+	/**
+	 * Docker container blj_support directory: {@value #CONTAINER_BLJ_SUP_DIR}
+	 */
+	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
 
 	/**
 	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container "pipelines" volume

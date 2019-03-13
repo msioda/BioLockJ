@@ -80,6 +80,7 @@ public class TrimPrimers extends JavaModuleImpl implements JavaModule, SeqModule
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
+			sb.append( "Primer file: " + Config.requireString( this, INPUT_TRIM_SEQ_FILE ) );
 			for( final String msg: summaryMsgs )
 			{
 				sb.append( msg + RETURN );

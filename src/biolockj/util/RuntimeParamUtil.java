@@ -180,6 +180,16 @@ public class RuntimeParamUtil
 	}
 	
 	/**
+	 * Runtime property getter for Docker host blj_support dir
+	 * 
+	 * @return Host {@value #HOST_BLJ_SUP} directory
+	 */
+	public static File getDockerHostBLJ_SUP()
+	{
+		return new File( params.get( HOST_BLJ_SUP ) );
+	}
+	
+	/**
 	 * Runtime property getter for Docker host $USER $HOME dir
 	 * 
 	 * @return Host {@value #HOST_HOME_USER_DIR} directory
@@ -363,7 +373,7 @@ public class RuntimeParamUtil
 
 	private static void assignLastParam( final String param ) throws Exception
 	{
-		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG ) || param.equals( HOST_BLJ )
+		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG ) || param.equals( HOST_BLJ ) || param.equals( HOST_BLJ_SUP )
 				|| param.equals( CONFIG_DIR_FLAG ) || param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG ) || param.equals( HOST_HOME_USER_DIR ) 
 				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( AWS_FLAG ) )
 		{
@@ -439,6 +449,10 @@ public class RuntimeParamUtil
 			else if( prevParam.equals( HOST_BLJ ) )
 			{
 				params.put( HOST_BLJ, arg );
+			}
+			else if( prevParam.equals( HOST_BLJ_SUP ) )
+			{
+				params.put( HOST_BLJ_SUP, arg );
 			}
 			else if( prevParam.equals( HOST_HOME_USER_DIR ) )
 			{
@@ -616,7 +630,13 @@ public class RuntimeParamUtil
 	/**
 	 * Host BioLockJ deployment to run - used to override installed $BLJ in Docker containers with BioLockJ installed: {@value #HOST_BLJ}
 	 */
-	protected static final String HOST_BLJ = "-h";
+	protected static final String HOST_BLJ = "-blj";
+	
+	/**
+	 * Host BioLockJ deployment to run - used to map $BLJ_SUP volume in Docker containers with BioLockJ installed: {@value #HOST_BLJ_SUP}
+	 */
+	protected static final String HOST_BLJ_SUP = "-bljSup";
+	
 
 	/**
 	 * Input directory file-path runtime parameter switch: {@value #INPUT_DIR_FLAG}
