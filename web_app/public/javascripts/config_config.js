@@ -433,7 +433,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     Returns something like:
     inputDirPaths: "/Users/aaronyerke/git/blj_support/resources/test/data/multiplexed/combinedFastq"
     metadataFilePath: "/Users/aaronyerke/git/blj_support/resources/test/metadata/testMetadata.tsv"
-    trimPrimersFilePath: "/Users/aaronyerke/git/blj_support/resources/test/primers/testPrimers.txt"
     */
     const partialLaunchArgument = {};
     //config key : blj_argument
@@ -881,16 +880,77 @@ function retreiveDefaultProps(dpropPath) {
 
 document.getElementById('getMalcolmGitRepo').addEventListener('click', function(evt){
   evt.preventDefault();
-  sendFormToNode('getMalcolmGitRepo', '/getMalcolmGitRepo')
+  sendFormToNode('getMalcolmGitRepo', '/getMalcolmGitRepo');
+});
+document.getElementById('validateAwsCreditials').addEventListener('click', function(evt){
+  evt.preventDefault();
+  setTimeout(function(){
+    var request = new XMLHttpRequest();
+    request.open('POST', '/validateAwsCreditials', true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send();
+    console.log('AWS VALIDATION REQUEST SENT');
+    request.onreadystatechange = function() {
+    if (request.readyState == XMLHttpRequest.DONE) {
+      console.log(request.responseText);
+      document.getElementById('awsCredentialsStatus').innerHTML = request.responseText;
+      }
+    }
+    console.log(request.responseText);
+  }, 2000);
 });
 
 document.getElementById('submitConfigureAWS').addEventListener('click', function(evt){
   evt.preventDefault();
-  sendFormToNode('submitConfigureAWS', '/configureAws')
+  let thisForm = document.getElementById('configureAwsForm');
+    if (thisForm.checkValidity()){
+    console.log("this: ",this);
+    let promis = sendFormToNode('submitConfigureAWS', '/configureAws');
+      promis.then(result => {
+        console.log('result: ', result);
+        let correct = Array.from(thisForm.getElementsByClassName('correctInput'));
+        let incorrect = Array.from(thisForm.getElementsByClassName('incorrectInput'));
+        if (result.trim() === 'valid'){
+          correct.forEach( ele => ele.style.display = 'inline');
+          incorrect.forEach( ele => ele.style.display = 'none');
+        }else {
+          incorrect.forEach( ele => ele.style.display = 'inline');
+          correct.forEach( ele => ele.style.display = 'none');
+        }
+      })
+  }
 });
+//document.getElementById('configureAwsForm').getElementsByTagName('span').getElementsByClassName('correctInput')
 document.getElementById('deployComputeStack').addEventListener('click', function(evt){
   evt.preventDefault();
-  sendFormToNode('deployComputeStack', '/deployBatchEnv');
+  console.log('this: ', this);
+  let formData = {};
+  let myForm = new FormData(this.parentNode.parentNode);
+  for (var i of myForm.entries()) {
+    formData[i[0]] = i[1];
+  }
+  console.log('formData: ', formData);
+  let request = new XMLHttpRequest();
+  request.open("POST", '/deployCloudInfrastructure', true);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.send(JSON.stringify({formData}));
+
+  request.onreadystatechange = function() {
+    if (request.readyState == XMLHttpRequest.DONE) {
+      console.log(request.responseText);
+      let correct = Array.from(this.parentNode.parentNode.getElementsByClassName('correctInput'));
+      let incorrect = Array.from(this.parentNode.parentNode.getElementsByClassName('incorrectInput'));
+      if (responseText === "success"){
+          correct.forEach( ele => ele.style.display = 'inline');
+          incorrect.forEach( ele => ele.style.display = 'none');
+        }else {
+          incorrect.forEach( ele => ele.style.display = 'inline');
+          correct.forEach( ele => ele.style.display = 'none');
+        }
+      }
+
+    }
+  }
 });
 document.getElementById('launchEc2HeadNodeButton').addEventListener('click', function(evt) {
   evt.preventDefault();
@@ -898,22 +958,33 @@ document.getElementById('launchEc2HeadNodeButton').addEventListener('click', fun
 });
 
 function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
-  let formData = {};
-  let myForm = new FormData(document.getElementById(formElementId).parentNode.parentNode);
-  for (var i of myForm.entries()) {
-    console.log(i);
-    formData[i[0]] = i[1];
-  }
-  var request = new XMLHttpRequest();
-  request.open(requestMethod, nodeAddress, true);
-  request.setRequestHeader("Content-Type", "application/json");
-  request.send(JSON.stringify({formData}));
-    request.onreadystatechange = function() {
-    if (request.readyState == XMLHttpRequest.DONE) {
-      console.log(request.responseText);
-      // callback;
+  return new Promise((resolve, reject) => {
+    let formData = {};
+    let myForm = new FormData(document.getElementById(formElementId).parentNode.parentNode);
+    for (var i of myForm.entries()) {
+      formData[i[0]] = i[1];
     }
-  }
+    console.log('formData: ', formData);
+
+    var request = new XMLHttpRequest();
+    request.open(requestMethod, nodeAddress, true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(JSON.stringify({formData}));
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        try {
+          if(this.status === 200 && request.readyState === 4){
+            console.log(this.responseText);
+            resolve(this.responseText);
+          }else{
+            reject(this.status + " " + this.statusText)
+          }
+        } catch (e) {
+          reject (e.message)
+        }
+      }
+    }
+  });
 };
 
 const projEnvInput = document.getElementById('project.env');
@@ -981,6 +1052,7 @@ if(typeof(EventSource) !== "undefined") {
 
 	StreamLog.addEventListener("error", function(e) {
 	    console.log("Error - connection was lost.");
+      StreamLog.close();//close on errors
 	}, false);
 	StreamLog.onmessage = function(event) {
 		document.getElementById("log").innerHTML += event.data + "<br>";
@@ -1106,3 +1178,7 @@ function deleteConfig(configFileName) {
   request.setRequestHeader("Content-Type", "application/json");
   request.send(JSON.stringify({configFileName : configFileName}));
 }//end deleteConfig(configFileName)
+
+window.onload = function(){
+
+  }
