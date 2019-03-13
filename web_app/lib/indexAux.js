@@ -61,22 +61,15 @@ exports.createFullLaunchCommand = function(launchJSON, restartPath){//
   let command = [];
   command.push(dockblj.toString());
   Object.keys(launchJSON).forEach(key => {
-    var resolvedPath = execSync(`echo ${launchJSON[key]}`).toString().trim();
-    // if (resolvedPath.endsWith('\n')){
-    //   resolvedPath = resolvedPath.slice(0,resolvedPath.length - 1)
-    //   console.log('resolvedPath has "\n":', resolvedPath);
-    // }
-    // console.log('resolvedPath[0:10]', resolvedPa);
-    // resolvedPath = resolvedPath.toString()[resolvedPath.length];
-    console.log('key: ', key);
-    console.log('resolvedPath: ', resolvedPath);
     //if key not config, grab path.Dirname(launchJSON[key])
-    if (key != 'c' && key != 'i'){//need only the dir, not the file name
-      // launchJSON[key] = path.dirname(resolvedPath);
-      command.push(`-${key} ${path.dirname(resolvedPath)}`)
+
+    //need to pass directories to map for all except -c and -i is already a directory
+    if (key != 'c' && key != 'i'){// TODO: update this to handle '\' also incase someone is running windows
+      command.push(`-${key}=${path.dirname(launchJSON[key])}`)
     }else{
-    command.push(`-${key} ${resolvedPath}`);
+    command.push(`-${key}=${launchJSON[key]}`);
     };
+    // command.push(`-${key}=${launchJSON[key]}`);
   });
   command.push('-docker');
   if (restartPath !== undefined ){
