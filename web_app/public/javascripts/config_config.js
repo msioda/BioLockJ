@@ -941,14 +941,12 @@ document.getElementById('deployComputeStack').addEventListener('click', function
       let correct = Array.from(this.parentNode.parentNode.getElementsByClassName('correctInput'));
       let incorrect = Array.from(this.parentNode.parentNode.getElementsByClassName('incorrectInput'));
       if (responseText === "success"){
-          correct.forEach( ele => ele.style.display = 'inline');
-          incorrect.forEach( ele => ele.style.display = 'none');
-        }else {
-          incorrect.forEach( ele => ele.style.display = 'inline');
-          correct.forEach( ele => ele.style.display = 'none');
-        }
+        correct.forEach( ele => ele.style.display = 'inline');
+        incorrect.forEach( ele => ele.style.display = 'none');
+      }else {
+        incorrect.forEach( ele => ele.style.display = 'inline');
+        correct.forEach( ele => ele.style.display = 'none');
       }
-
     }
   }
 });
