@@ -148,8 +148,8 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	@Override
 	public File getDB() throws Exception
 	{
-		String nuclPath = Config.requireString( this, HN2_NUCL_DB );
-		String protPath = Config.requireString( this, HN2_PROT_DB );
+		final String nuclPath = Config.requireString( this, HN2_NUCL_DB );
+		final String protPath = Config.requireString( this, HN2_PROT_DB );
 		final File nuclDb = new File( Config.getSystemFilePath( nuclPath ) );
 		final File protDb = new File( Config.getSystemFilePath( protPath ) );
 		final File parentDir = BioLockJUtil.getCommonParent( nuclDb, protDb );

@@ -446,7 +446,7 @@ public class Config
 	/**
 	 * Return filePath with system parameter values replaced. If filePath starts with "~" or $HOME it is replaced with
 	 * System.getProperty( "user.home" ). If filePath contains $USER it is replaced with System.getProperty( "user.name"
-	 * ).  Also $BLJ and $BLJ_SUP params are handled for use in Docker implementations
+	 * ). Also $BLJ and $BLJ_SUP params are handled for use in Docker implementations
 	 * 
 	 * @param filePath File path
 	 * @return Formatted filePath
@@ -477,12 +477,13 @@ public class Config
 
 		if( filePath != null && filePath.contains( "$BLJ_SUP" ) )
 		{
-			File bljSup = new File( BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
+			File bljSup = new File(
+					BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
 			if( !bljSup.exists() || !bljSup.isDirectory() )
 			{
 				bljSup = null;
 			}
-			
+
 			if( RuntimeParamUtil.isDockerMode() && RuntimeParamUtil.getDockerHostBLJ_SUP() != null )
 			{
 				bljSup = RuntimeParamUtil.getDockerHostBLJ_SUP();

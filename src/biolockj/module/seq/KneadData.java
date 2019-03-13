@@ -252,7 +252,8 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	private String getParams() throws Exception
 	{
 		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM ) + getDBs();
-		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM ) && RuntimeParamUtil.isDockerMode() )
+		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM )
+				&& RuntimeParamUtil.isDockerMode() )
 		{
 			params += DOCKER_TRIM_PARAM + " ";
 		}
@@ -287,14 +288,14 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	 */
 	protected static final String KNEAD_DBS = "kneaddata.dbs";
 
+	private static final String BYPASS_TRIM_PARAM = "--bypass-trim";
 	private static final String DB_PARAM = "-db";
+	private static final String DOCKER_TRIM_PARAM = "--trimmomatic /app/Trimmomatic-0.38";
 	private static final String FW_OUTPUT_SUFFIX = "_paired_1";
 	private static final String INPUT_PARAM = "-i";
 	private static final String NUM_THREADS_PARAM = "-t";
 	private static final String OUTPUT_FILE_PREFIX_PARAM = "--output-prefix";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String RV_OUTPUT_SUFFIX = "_paired_2";
-	private static final String BYPASS_TRIM_PARAM = "--bypass-trim";
 	private static final String TRIMMOMATIC_PARAM = "--trimmomatic ";
-	private static final String DOCKER_TRIM_PARAM = "--trimmomatic /app/Trimmomatic-0.38";
 }

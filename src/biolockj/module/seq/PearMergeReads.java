@@ -76,7 +76,7 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 		Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX );
 		Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX );
 		getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
-		
+
 		if( ModuleUtil.isComplete( this ) )
 		{
 			return;

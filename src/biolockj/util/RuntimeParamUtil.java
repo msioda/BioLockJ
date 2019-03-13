@@ -130,6 +130,26 @@ public class RuntimeParamUtil
 	}
 
 	/**
+	 * Runtime property getter for Docker host BioLockJ dir
+	 * 
+	 * @return Host {@value #HOST_BLJ} directory
+	 */
+	public static File getDockerHostBLJ()
+	{
+		return new File( params.get( HOST_BLJ ) );
+	}
+
+	/**
+	 * Runtime property getter for Docker host blj_support dir
+	 * 
+	 * @return Host {@value #HOST_BLJ_SUP} directory
+	 */
+	public static File getDockerHostBLJ_SUP()
+	{
+		return new File( params.get( HOST_BLJ_SUP ) );
+	}
+
+	/**
 	 * Runtime property getter for {@value #CONFIG_DIR_FLAG}
 	 * 
 	 * @return PCR primer file directory path
@@ -137,6 +157,16 @@ public class RuntimeParamUtil
 	public static String getDockerHostConfigDir()
 	{
 		return params.get( CONFIG_DIR_FLAG );
+	}
+
+	/**
+	 * Runtime property getter for Docker host $USER $HOME dir
+	 * 
+	 * @return Host {@value #HOST_HOME_USER_DIR} directory
+	 */
+	public static File getDockerHostHomeUserDir()
+	{
+		return new File( params.get( HOST_HOME_USER_DIR ) );
 	}
 
 	/**
@@ -168,37 +198,6 @@ public class RuntimeParamUtil
 	{
 		return params.get( HOST_PIPELINE_DIR );
 	}
-	
-	/**
-	 * Runtime property getter for Docker host BioLockJ dir
-	 * 
-	 * @return Host {@value #HOST_BLJ} directory
-	 */
-	public static File getDockerHostBLJ()
-	{
-		return new File( params.get( HOST_BLJ ) );
-	}
-	
-	/**
-	 * Runtime property getter for Docker host blj_support dir
-	 * 
-	 * @return Host {@value #HOST_BLJ_SUP} directory
-	 */
-	public static File getDockerHostBLJ_SUP()
-	{
-		return new File( params.get( HOST_BLJ_SUP ) );
-	}
-	
-	/**
-	 * Runtime property getter for Docker host $USER $HOME dir
-	 * 
-	 * @return Host {@value #HOST_HOME_USER_DIR} directory
-	 */
-	public static File getDockerHostHomeUserDir()
-	{
-		return new File( params.get( HOST_HOME_USER_DIR ) );
-	}
-	
 
 	/**
 	 * Get Docker runtime arguments passed to BioLockJ from dockblj script.<br>
@@ -373,8 +372,9 @@ public class RuntimeParamUtil
 
 	private static void assignLastParam( final String param ) throws Exception
 	{
-		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG ) || param.equals( HOST_BLJ ) || param.equals( HOST_BLJ_SUP )
-				|| param.equals( CONFIG_DIR_FLAG ) || param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG ) || param.equals( HOST_HOME_USER_DIR ) 
+		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG )
+				|| param.equals( HOST_BLJ ) || param.equals( HOST_BLJ_SUP ) || param.equals( CONFIG_DIR_FLAG )
+				|| param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG ) || param.equals( HOST_HOME_USER_DIR )
 				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( AWS_FLAG ) )
 		{
 			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
@@ -626,28 +626,29 @@ public class RuntimeParamUtil
 	 * Docker mode runtime parameter switch: {@value #DOCKER_FLAG}
 	 */
 	protected static final String DOCKER_FLAG = "-docker";
-	
+
 	/**
-	 * Host BioLockJ deployment to run - used to override installed $BLJ in Docker containers with BioLockJ installed: {@value #HOST_BLJ}
+	 * Host BioLockJ deployment to run - used to override installed $BLJ in Docker containers with BioLockJ installed:
+	 * {@value #HOST_BLJ}
 	 */
 	protected static final String HOST_BLJ = "-blj";
-	
+
 	/**
-	 * Host BioLockJ deployment to run - used to map $BLJ_SUP volume in Docker containers with BioLockJ installed: {@value #HOST_BLJ_SUP}
+	 * Host BioLockJ deployment to run - used to map $BLJ_SUP volume in Docker containers with BioLockJ installed:
+	 * {@value #HOST_BLJ_SUP}
 	 */
 	protected static final String HOST_BLJ_SUP = "-bljSup";
-	
+
+	/**
+	 * Host $USER $HOME param: {@value #HOST_HOME_USER_DIR}
+	 */
+	protected static final String HOST_HOME_USER_DIR = "-u";
 
 	/**
 	 * Input directory file-path runtime parameter switch: {@value #INPUT_DIR_FLAG}
 	 */
 	protected static final String INPUT_DIR_FLAG = "-i";
 
-	/**
-	 * Host $USER $HOME param: {@value #HOST_HOME_USER_DIR}
-	 */
-	protected static final String HOST_HOME_USER_DIR = "-u";
-	
 	/**
 	 * Metadata file directory path runtime parameter switch: {@value #META_DIR_FLAG}
 	 */
