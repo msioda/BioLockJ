@@ -42,6 +42,9 @@ function openTab(evt, tabName) {
 }
 // Get the element with id="defaultOpen" and click on it (making it open by default)
 document.getElementById("defaultOpen").click();
+document.getElementById('openAwsSettings').addEventListener('click', function() {
+  document.getElementById('awsSettings').style.display = "block";
+})
 
 //make "open" show open div
 function openProjDisplay() {
