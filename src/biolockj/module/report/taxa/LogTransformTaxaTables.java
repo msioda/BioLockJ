@@ -100,6 +100,7 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 			final List<Double> loggedInnerList = dataPointsLogged.get( x );
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
 			{
+				double val = dataPointsUnnormalized.get( x ).get( y ) + 1;
 				if( allZeroIndex.contains( x ) )
 				{
 					// index 0 = col headers, so add + 1
@@ -108,11 +109,11 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 				}
 				else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 				{
-					loggedInnerList.add( Math.log( y + 1 ) );
+					loggedInnerList.add( Math.log( val ) );
 				}
 				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
 				{
-					loggedInnerList.add( Math.log10( y + 1 ) );
+					loggedInnerList.add( Math.log10( val ) );
 				}
 			}
 		}
@@ -122,4 +123,10 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 		final File logNormTable = getLogTransformedFile( level );
 		writeDataToFile( logNormTable, filteredSampleIDs, otuNames, dataPointsLogged );
 	}
+	
+	private File getLogTransformedFile( final String level ) throws Exception
+	{
+		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, "_Log" + getLogBase() );
+	}
+	
 }

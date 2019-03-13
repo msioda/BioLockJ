@@ -124,14 +124,8 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		return logBase;
 	}
 
-	/**
-	 * Get Log transformed output file
-	 * 
-	 * @param level Level
-	 * @return Output file
-	 * @throws Exception if errors occur
-	 */
-	protected File getLogTransformedFile( final String level ) throws Exception
+
+	private File getLogTransformedFile( final String level ) throws Exception
 	{
 		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, TaxaUtil.NORMALIZED + "_Log" + getLogBase() );
 	}
