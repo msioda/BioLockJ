@@ -22,6 +22,21 @@ import biolockj.util.SeqUtil;
 public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModule
 {
 	/**
+	 * Add database info if module is a DatabaseModule
+	 */
+	@Override
+	public String getSummary() throws Exception
+	{
+		String summary = "";
+		if( this instanceof DatabaseModule && ( (DatabaseModule) this).getDB() != null )
+		{
+			summary = "" + ( (DatabaseModule) this).getDB().getAbsolutePath() + RETURN;
+		}
+		
+		return super.getSummary() + summary;
+	}
+
+	/**
 	 * Return {@link #getSeqFiles(Collection)} to filter standard module input files.
 	 *
 	 * @throws Exception thrown if any runtime error occurs
