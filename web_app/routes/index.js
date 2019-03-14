@@ -66,7 +66,7 @@ router.post('/retrieveProjects', function(req, res, next) {
                 let projDescrp = 'Project description is empty'
 
                 for (var i = 0; i < propFile.length; i++) {
-                  if (propFile[i].startsWith('project.description=')) {
+                  if (propFile[i].startsWith('pipeline.description=')) {
                     console.log(propFile[i].slice(20));
                     projDescrp = propFile[i].slice(20);
                   }
@@ -223,7 +223,7 @@ router.post('/launch', function(req, res, next) {
     const paramKeys = req.body.paramKeys;
     const paramValues = req.body.paramValues;
     let launchArg = req.body.partialLaunchArg;
-    let configName = paramValues[paramKeys.indexOf('project.configFile')];
+    let configName = paramValues[paramKeys.indexOf('pipeline.configFile')];
     if (!configName.endsWith('.properties')){
       configName = configName.concat('.properties');
     }

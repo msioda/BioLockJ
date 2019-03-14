@@ -62,30 +62,30 @@
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Project name:
-        <input class="sp" id='project.configFile' name='project.configFile' type="text" size='35'></p>
+        <input class="sp" id='pipeline.configFile' name='pipeline.configFile' type="text" size='35'></p>
       <p>Project description (for your own records):
-        <input class="sp" id='project.description' name='project.description' type="text" size='70'></p>
+        <input class="sp" id='pipeline.description' name='pipeline.description' type="text" size='70'></p>
       <p>Copy input files into the parent directory:
-        <select class="sp" id='project.copyInput' name='project.copyInput'>
+        <select class="sp" id='pipeline.copyInput' name='pipeline.copyInput'>
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
       <p>Delete temporary files:
-        <select class='sp' id="project.deleteTempFiles" name="project.deleteTempFiles">
+        <select class='sp' id="pipeline.deleteTempFiles" name="pipeline.deleteTempFiles">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
         <button type="button" name="dockerDefaultProps" id="dockerDefaultProps">Add Default Properties</button>
       <p class="hidden" id="defaultPropsP">Path to default properties file:
-        <input class="sp" type="text" id="project.defaultProps" name="project.defaultProps" size='70'><br>
+        <input class="sp" type="text" id="pipeline.defaultProps" name="pipeline.defaultProps" size='70'><br>
         <!-- add file picker here -->
         <i>(Path to a default BioLockJ configuration file containing default
         property values that are overridden if defined in the primary
         configuration file.)</i></p>
       <p>Log level: <br><i>Determines log level sensitivity.</i>
-        <select class="sp" name="project.logLevel" id="project.logLevel">
+        <select class="sp" name="pipeline.logLevel" id="pipeline.logLevel">
           <option selected default value="">Click for options</option>
           <option value="DEBUG">Include debug output.</option>
           <option value="INFO">Include informative output.</option>
@@ -93,7 +93,7 @@
           <option value="ERROR">Include only errors.</option>
         </select></p>
       <p>Project runtime environment:
-        <select class="sp" name="project.env" id="project.env">
+        <select class="sp" name="pipeline.env" id="pipeline.env">
           <option selected default value="">Click for options</option>
           <option value="aws">AWS</option>
           <option value="cluster">Cluster</option>
@@ -101,38 +101,38 @@
         </select>
       </p>
       <p>A directory on the local workstation where the cluster.downloadModule will be downloaded
-        <input class="sp" type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
+        <input class="sp" type="text" id="pipeline.downloadDir" name="pipeline.downloadDir"><br></p>
       <p>Set chmod -R command security bits on pipeline root directory (Ex. 770).
-        <input class="sp" type="text" id="project.permissions" name="project.permissions" size='70'>
+        <input class="sp" type="text" id="pipeline.permissions" name="pipeline.permissions" size='70'>
       </p>
       <p>Assign module to demultiplex datasets:
-        <input type="text" class="sp" id="project.defaultDemultiplexer" name="project.defaultDemultiplexer" placeholder="Demultiplexer" size='70'>
+        <input type="text" class="sp" id="pipeline.defaultDemultiplexer" name="pipeline.defaultDemultiplexer" placeholder="Demultiplexer" size='70'>
       </p>
       <p>ssign module to convert fastq sequence files into fasta format when required. Default = AwkFastaConverter":
-        <input type="text" class="sp" id="project.defaultFastaConverter" name="project.defaultFastaConverter" placeholder="AwkFastaConverter" size='70'>
+        <input type="text" class="sp" id="pipeline.defaultFastaConverter" name="pipeline.defaultFastaConverter" placeholder="AwkFastaConverter" size='70'>
       </p>
       <p>Assign module to merge paired reads when required. Default = PearMergeReads:
-        <input type="text" class="sp" id="project.defaultSeqMerger" name="project.defaultSeqMerger" placeholder="PearMergeReads" size='70'>
+        <input type="text" class="sp" id="pipeline.defaultSeqMerger" name="pipeline.defaultSeqMerger" placeholder="PearMergeReads" size='70'>
       </p>
       <p>Add implicit modules to the pipeline.
-        <select class="sp" id="project.disableAddImplicitModules" name="project.disableAddImplicitModules">
+        <select class="sp" id="pipeline.disableAddImplicitModules" name="pipeline.disableAddImplicitModules">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select>
       </p>
       <p>Disable automatic adding of prerequisite modules to pipeline.
-        <select class="sp" id="project.disableAddPreReqModules" name="project.disableAddPreReqModules">
+        <select class="sp" id="pipeline.disableAddPreReqModules" name="pipeline.disableAddPreReqModules">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select>
       </p>
       <p>Limit debug classes (used to limit classes that log debug statements):
-        <input type="text" class="sp" id="project.limitDebugClasses" name="project.limitDebugClasses" size='70'>
+        <input type="text" class="sp" id="pipeline.limitDebugClasses" name="pipeline.limitDebugClasses" size='70'>
       </p>
       <p>User profile (Bash users typically use ~/.bash_profile (the standard default)):
-        <input type="text" class="sp" id="project.userProfile" name="project.userProfile" size='70'>
+        <input type="text" class="sp" id="pipeline.userProfile" name="pipeline.userProfile" size='70'>
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -161,7 +161,7 @@
       </div>
     </fieldset>
     <p>BioLockJ automatically adds implicit modules as they are needed, but you may override this behavior and force it to run an implicit module.</p>
-    <select id="project.allowImplicitModules" name="project.allowImplicitModules">
+    <select id="pipeline.allowImplicitModules" name="pipeline.allowImplicitModules">
       <option class='noOverrideImplicit' selected default value="">Click for options</option>
       <option id='yesOverrideImplicit' value="Y">Allow implicit modules to be directly added to pipeline</option>
       <option class='noOverrideImplicit' value="N">Allow BLJ to determine where to add implicit modules in the pipeline</option>
@@ -1033,7 +1033,7 @@ For fastq, typically “@”.)<h5></p>
   <form id="projectLaunchOptions">
     <fieldset>
       <legend>Project Launch Options</legend>
-      Use this configuation to start a new project.
+      Use this configuation to start a new pipeline.
       <input type="radio" name="projLaunch" value="launchNew" checked>
       <p id="projOptFieldSet"></p>
     </fieldset>

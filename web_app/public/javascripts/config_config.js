@@ -25,7 +25,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       this.modules = results[0];
       this.paramKeys = results[1];
       this.paramValues = results[2];
-      this.paramKeys.push("project.configFile");
+      this.paramKeys.push("pipeline.configFile");
       this.paramValues.push(file.name);
       console.dir(this);
 
@@ -120,7 +120,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
   this.saveConfigParamsForm = function (){
     _this.paramKeys = [], _this.paramValues = [];
     //let configForm = document.getElementById('configForm');
-    let configFile = document.getElementById('project.configFile');
+    let configFile = document.getElementById('pipeline.configFile');
     //console.log('configFile.value: ', configFile.value);
     if (configFile.value == ""){
       let now = new Date();
@@ -162,12 +162,12 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         this.modules.push( mods[i].getAttribute('data-link'));
       };
     };
-    console.log("this.paramKeys.indexOf('project.configFile'): ", this.paramKeys.indexOf('project.configFile'));
+    console.log("this.paramKeys.indexOf('pipeline.configFile'): ", this.paramKeys.indexOf('pipeline.configFile'));
     saveConfigToGui({
-        configName : this.paramValues[this.paramKeys.indexOf('project.configFile')],
+        configName : this.paramValues[this.paramKeys.indexOf('pipeline.configFile')],
         configText : this.formatAsFlatFile(),
     });
-    //localStorage.setItem(this.paramValues[this.paramKeys.indexOf('project.configFile')], JSON.stringify(this));
+    //localStorage.setItem(this.paramValues[this.paramKeys.indexOf('pipeline.configFile')], JSON.stringify(this));
   };//end modulesToCurrentConfig
 
   this.validateConfig = function() {
@@ -178,7 +178,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         'script.permissions' : 'what are the script permissions?',
         'script.defaultHeader' : 'what are the script default headers?',
         'demultiplexer.strategy' : 'What demultiplexing statagy do you want to use?',
-        'project.env' : 'In which enviroment do you wish to run this project?',
+        'pipeline.env' : 'In which enviroment do you wish to run this project?',
       }));
 
       const reqForR = new Map(Object.entries({//R module dependencies
@@ -440,7 +440,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     const runtimeArguments = {
       'input.dirPaths' : 'i',
       'metadata.filePath' : 'm',
-      // 'project.configFile' : 'c',
+      // 'pipeline.configFile' : 'c',
       // TODO: Add -p to arguements list
     };
     for (var i = 0; i < this.paramKeys.length; i++) {
@@ -544,7 +544,7 @@ document.getElementById("recent").addEventListener("mouseover", function() {
           console.log(propertiesFile);
           currentConfig = new Config();
           currentConfig.loadFromText(propertiesFile.data);
-          currentConfig.paramKeys.push('project.configFile');
+          currentConfig.paramKeys.push('pipeline.configFile');
           currentConfig.paramValues.push(this.name);
           currentConfig.sendConfigDataToForms();
           console.log(currentConfig);
@@ -569,7 +569,7 @@ for (var i = 0; i < createDownload.length; i++) {
     currentConfig.saveConfigParamsForm();
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(currentConfig.formatAsFlatFile()));
-    element['download'] = currentConfig.paramValues[currentConfig.paramKeys.indexOf("project.configFile")];
+    element['download'] = currentConfig.paramValues[currentConfig.paramKeys.indexOf("pipeline.configFile")];
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
@@ -684,7 +684,7 @@ launchSpan.forEach(span => span.addEventListener('click', function(){
 const dockerDefaultProps = document.getElementById('dockerDefaultProps');
 dockerDefaultProps.addEventListener('click', function(){
   var defaultPath = '$BLJ/resources/config/default/docker.properties';
-    currentConfig.paramKeys.push('project.defaultProps');
+    currentConfig.paramKeys.push('pipeline.defaultProps');
     currentConfig.paramValues.push(defaultPath);
     getAllDefaultProps(defaultPath);
 }, false);
@@ -707,7 +707,7 @@ function getAllDefaultProps(dfpath){
 
 
     //most config files won't have the file name as a property so we need to add it.
-    defaultConfig.paramKeys.push('project.configFile');
+    defaultConfig.paramKeys.push('pipeline.configFile');
     console.log('splitPath[splitPath.length]: ', splitPath[splitPath.length-1]);
     defaultConfig.paramValues.push(splitPath[splitPath.length-1]);
 
@@ -715,9 +715,9 @@ function getAllDefaultProps(dfpath){
     defaultConfigs.push(defaultConfig);
     console.log(defaultConfigs);
 
-    console.log('defaultProps, ', defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')]);
-    if (defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')] !== undefined){
-      getAllDefaultProps(defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')])
+    console.log('defaultProps, ', defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('pipeline.defaultProps')]);
+    if (defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('pipeline.defaultProps')] !== undefined){
+      getAllDefaultProps(defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('pipeline.defaultProps')])
     } else{
       console.log(defaultConfigs);
       //get the length of the longest array of paramKeys (mod of https://stackoverflow.com/questions/4020796/finding-the-max-value-of-an-attribute-in-an-array-of-objects)
@@ -741,12 +741,12 @@ function getAllDefaultProps(dfpath){
       for (var name = 0; name < defaultConfigs.length; name++) {
         // Insert a new cell (<td>) at the first position of the "new" <tr> element:
         const th = document.createElement('th');
-        th.innerHTML = defaultConfigs[name].paramValues[defaultConfigs[name].paramKeys.indexOf('project.configFile')];
+        th.innerHTML = defaultConfigs[name].paramValues[defaultConfigs[name].paramKeys.indexOf('pipeline.configFile')];
         row.appendChild(th);
         //var cell = row.create(name+1);
-        //cell.innerHTML = defaultConfigs[name].paramValues[defaultConfigs[name].paramKeys.indexOf('project.configFile')];
+        //cell.innerHTML = defaultConfigs[name].paramValues[defaultConfigs[name].paramKeys.indexOf('pipeline.configFile')];
       }//end for loop
-      usedParamKeys.push('project.configFile');
+      usedParamKeys.push('pipeline.configFile');
       rowCounter += 1;
 
       //cycle through the configs and add the parameters of each in order.
@@ -813,9 +813,9 @@ function tableToCurrentConfig(){
 
 // retrieves chain of default props without user input, not used anymore
 function resolveDefaultProps(config, docker = false){
-  const dpropPath = config.paramValues[config.paramKeys.indexOf('project.defaultProps')];
+  const dpropPath = config.paramValues[config.paramKeys.indexOf('pipeline.defaultProps')];
   console.log('dpropPath ', dpropPath);
-  // if (!config.paramKeys.includes('project.defaultProps')){
+  // if (!config.paramKeys.includes('pipeline.defaultProps')){
   //   console.error('no default props found');
   //   return;
   // }
@@ -824,7 +824,7 @@ function resolveDefaultProps(config, docker = false){
   dprop.then( retreived => {
     defaultConfig.loadFromText( retreived );
     console.log('defaultConfig ', defaultConfig);
-    const defaultConfigDPath = defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('project.defaultProps')];
+    const defaultConfigDPath = defaultConfig.paramValues[defaultConfig.paramKeys.indexOf('pipeline.defaultProps')];
     console.log('dpropPat ',dpropPath);
     console.log('defaultConfigDPat ',defaultConfigDPath);
     if (defaultConfigDPath && defaultConfigDPath !== dpropPath){
@@ -833,7 +833,7 @@ function resolveDefaultProps(config, docker = false){
     }
     for (let i = 0; i < defaultConfig.paramKeys.length; i++) {
       const dfKey = defaultConfig.paramKeys[i]
-      if (dfKey !== 'project.configFile' && !config.paramKeys.includes(dfKey)){
+      if (dfKey !== 'pipeline.configFile' && !config.paramKeys.includes(dfKey)){
         config.paramKeys.push(defaultConfig.paramKeys[i]);
         config.paramValues.push(defaultConfig.paramValues[i])
       }
@@ -985,13 +985,13 @@ function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
   });
 };
 
-const projEnvInput = document.getElementById('project.env');
+const projEnvInput = document.getElementById('pipeline.env');
 ['change','load', 'input'].forEach( evt =>
     projEnvInput.addEventListener(evt, function(event){
       event.preventDefault();
       const AwsButton = document.getElementById('AwsButton');
-      console.log(`adding ${evt} listener to ${document.getElementById('project.env')}`);
-      switch (document.getElementById('project.env').value) {
+      console.log(`adding ${evt} listener to ${document.getElementById('pipeline.env')}`);
+      switch (document.getElementById('pipeline.env').value) {
         case 'aws':
           AwsButton.classList.remove('hidden');
           AwsButton.click();
