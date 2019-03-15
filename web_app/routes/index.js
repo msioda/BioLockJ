@@ -34,6 +34,16 @@ router.get('/config', function(req, res, next) {
   res.render('config', { title: 'Configuration' });
 });
 
+router.get('/config/:configPath', function(req, res, next) {
+  console.log(req.params.configPath);
+  let configPath = req.params.configPath;
+  if (configPath === "" || configPath === " "){
+    configPath = 'default';
+  }
+  console.log("__dirname: ", __dirname);
+  res.render('config', { title: 'Configuration', configPath : configPath });
+});
+
 //retrieve project and descriptions
 router.post('/retrieveProjects', function(req, res, next) {
   console.log('retrieveProjects');
