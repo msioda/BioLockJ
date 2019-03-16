@@ -20,6 +20,8 @@ export PATH="$SCRIPT_DIR:$PATH"
 
 export BLJ="$(dirname $SCRIPT_DIR)"
 export BLJ_PROJ="$BLJ/pipelines"
+export BLJ_META=~/metadata
+
 export DOCKER_HUB_USER="biolockj"
 
 . $BLJ/script/blj_functions
