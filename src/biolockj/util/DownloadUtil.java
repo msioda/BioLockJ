@@ -11,7 +11,9 @@
  */
 package biolockj.util;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.math.BigInteger;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
@@ -68,7 +70,7 @@ public final class DownloadUtil
 					{
 						downloadPaths.add( module.getTempDir() );
 					}
-					
+
 					hasRmods = true;
 
 				}
@@ -76,7 +78,7 @@ public final class DownloadUtil
 				{
 					downloadPaths.add( module.getTempDir() );
 				}
-				else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables  ) 
+				else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables )
 				{
 					downloadPaths.add( module.getOutputDir() );
 				}
@@ -89,7 +91,8 @@ public final class DownloadUtil
 
 			downloadPaths.addAll( FileUtils.listFiles( pipeRoot, HiddenFileFilter.VISIBLE, FalseFileFilter.INSTANCE ) );
 
-			final String displaySize = FileUtils.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
+			final String displaySize = FileUtils
+					.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
 			final String src = SRC + "=" + Config.pipelinePath();
 			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
 					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"

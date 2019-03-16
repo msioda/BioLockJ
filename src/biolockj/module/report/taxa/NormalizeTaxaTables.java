@@ -12,9 +12,7 @@
 package biolockj.module.report.taxa;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
@@ -90,10 +88,66 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	{
 		for( final File file: getInputFiles() )
 		{
-			normalize( file );
+			transform( file );
 		}
 
 		summary = "Output " + getOutputDir().listFiles().length;
+	}
+
+	/**
+	 * Filter Sample IDs with all zero rows
+	 * 
+	 * @param sampleIDs List of Sample IDs
+	 * @param allZeroIndex Table row index for all-zero rows
+	 * @return Filtered list of Sample IDs
+	 * @throws Exception if errors occur
+	 */
+	protected List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex )
+			throws Exception
+	{
+		final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
+
+		for( final String id: zeroSampleIDs )
+		{
+			sampleIDs.remove( id );
+		}
+		return sampleIDs;
+	}
+
+	/**
+	 * Get the Log base (10 or e)
+	 * 
+	 * @return Log base
+	 */
+	protected String getLogBase()
+	{
+		return logBase;
+	}
+
+
+	private File getLogTransformedFile( final String level ) throws Exception
+	{
+		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, TaxaUtil.NORMALIZED + "_Log" + getLogBase() );
+	}
+
+	/**
+	 * Parse Taxa names from the given header line.
+	 * 
+	 * @param header
+	 * @return List of Taxa
+	 * @throws Exception if errors occur
+	 */
+	protected List<String> getOtuNames( final String header ) throws Exception
+	{
+		final List<String> otuNames = new ArrayList<>();
+		final StringTokenizer st = new StringTokenizer( header, Constants.TAB_DELIM );
+		st.nextToken(); // skip ID & then strip quotes
+		while( st.hasMoreTokens() )
+		{
+			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
+		}
+
+		return otuNames;
 	}
 
 	/**
@@ -102,31 +156,31 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 * @param taxaTable OTU raw count table
 	 * @throws Exception if unable to construct NormalizeTaxaTables
 	 */
-	protected void normalize( final File taxaTable ) throws Exception
+	protected void transform( final File taxaTable ) throws Exception
 	{
 		final List<List<Double>> dataPointsNormalized = new ArrayList<>();
 		final List<List<Double>> dataPointsNormalizedThenLogged = new ArrayList<>();
 		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();
-		final List<String> sampleNames = new ArrayList<>();
+		final List<String> sampleIDs = new ArrayList<>();
 		final List<String> otuNames = new ArrayList<>();
 		double tableSum = 0;
-		
+
 		final BufferedReader reader = BioLockJUtil.getFileReader( taxaTable );
 		try
 		{
 			otuNames.addAll( getOtuNames( reader.readLine() ) );
 			String nextLine = reader.readLine();
-			
+
 			while( nextLine != null )
 			{
 				final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
-				final String sampleName = st.nextToken();
+				final String sampleID = st.nextToken();
 				final List<Double> innerList = new ArrayList<>();
-				sampleNames.add( sampleName );
+				sampleIDs.add( sampleID );
 				dataPointsUnnormalized.add( innerList );
 				dataPointsNormalized.add( new ArrayList<Double>() );
 				dataPointsNormalizedThenLogged.add( new ArrayList<Double>() );
-	
+
 				while( st.hasMoreTokens() )
 				{
 					final String nextToken = st.nextToken();
@@ -137,45 +191,55 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 					}
 					innerList.add( d );
 				}
-				
-				double rowSum = innerList.stream().mapToDouble(Double::doubleValue).sum();
+
+				final double rowSum = innerList.stream().mapToDouble( Double::doubleValue ).sum();
 				tableSum += rowSum;
 				if( rowSum == 0 )
 				{
-					throw new Exception( sampleName + " has all zeros for table counts." );
+					throw new Exception( sampleID + " has all zeros for table counts." );
 				}
 				nextLine = reader.readLine();
-				
-				Log.info( getClass(), "Row Sum [" + sampleNames.size() + "] = " + rowSum );
-				Log.info( getClass(), "Table Sum [" + sampleNames.size() + "] = " + tableSum );
+
+				Log.info( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
+				Log.info( getClass(), "Table Sum [" + sampleIDs.size() + "] = " + tableSum );
 			}
 		}
 		finally
 		{
-			if( reader != null ) reader.close();
+			if( reader != null )
+			{
+				reader.close();
+			}
 		}
-		
-		Log.info( getClass(), "Final Table Sum = " + tableSum );
 
-		final double aveRowSum = tableSum / sampleNames.size();
+		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
+		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
+		final double aveRowSum = tableSum / filteredSampleIDs.size();
+
+		Log.info( getClass(), "Final Table Sum = " + tableSum );
+		Log.info( getClass(), "Average Row Sum = " + aveRowSum );
+		Log.info( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
-			double rowSum = dataPointsUnnormalized.get( x ).stream().mapToDouble(Double::doubleValue).sum();
-
-			final List<Double> normalizedInnerList = dataPointsNormalized.get( x );
+			final double rowSum = dataPointsUnnormalized.get( x ).stream().mapToDouble( Double::doubleValue ).sum();
 			final List<Double> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
 
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
 			{
-				final double normVal = aveRowSum * dataPointsUnnormalized.get( x ).get( y )/rowSum + 1;
-				normalizedInnerList.add( normVal );
-
-				if( logBase.equalsIgnoreCase( LOG_E ) )
+				final double normVal = aveRowSum * dataPointsUnnormalized.get( x ).get( y ) / rowSum + 1;
+				dataPointsNormalized.get( x ).add( normVal );
+				if( allZeroIndex.contains( x ) )
+				{
+					// index 0 = col headers, so add + 1
+					final String id = MetaUtil.getSampleIds().get( x + 1 );
+					Log.warn( getClass(), "All zero row will not be transformed - ID ommitted: " + id );
+				}
+				else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 				{
 					loggedInnerList.add( Math.log( normVal ) );
 				}
-				else if( logBase.equalsIgnoreCase( LOG_10 ) )
+				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
 				{
 					loggedInnerList.add( Math.log10( normVal ) );
 				}
@@ -185,35 +249,30 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		File normOutDir = getOutputDir();
 		final String level = TaxaUtil.getTaxonomyTableLevel( taxaTable );
 		Log.debug( getClass(), "Normalizing table for level: " + level );
-		if( !logBase.isEmpty() )
+		if( !getLogBase().isEmpty() )
 		{
 			normOutDir = getTempDir();
-			final File logNormTable = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level,
-					TaxaUtil.NORMALIZED + "_Log" + logBase );
-			writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsNormalizedThenLogged );
+			final File logNormTable = getLogTransformedFile( level );
+			writeDataToFile( logNormTable, filteredSampleIDs, otuNames, dataPointsNormalizedThenLogged );
 		}
 
 		final File normTable = TaxaUtil.getTaxonomyTableFile( normOutDir, level, TaxaUtil.NORMALIZED );
-		writeDataToFile( normTable, sampleNames, otuNames, dataPointsNormalized );
+		writeDataToFile( normTable, filteredSampleIDs, otuNames, dataPointsNormalized );
 	}
 
-	private List<String> getOtuNames( final String firstLine ) throws Exception
-	{
-		final List<String> otuNames = new ArrayList<>();
-		final StringTokenizer st = new StringTokenizer( firstLine, Constants.TAB_DELIM );
-		st.nextToken(); // skip ID & then strip quotes
-		while( st.hasMoreTokens() )
-		{
-			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
-		}
-
-		return otuNames;
-	}
-
-	private void writeDataToFile( final File file, final List<String> sampleNames, final List<String> otuNames,
+	/**
+	 * Write transformed data to file
+	 * 
+	 * @param inputFile Count table
+	 * @param sampleNames Sample
+	 * @param otuNames
+	 * @param otuCounts
+	 * @throws Exception
+	 */
+	protected void writeDataToFile( final File inputFile, final List<String> sampleNames, final List<String> otuNames,
 			final List<List<Double>> otuCounts ) throws Exception
 	{
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( file ) );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( inputFile ) );
 
 		writer.write( MetaUtil.getID() );
 
@@ -243,7 +302,47 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		writer.close();
 	}
 
+	private List<String> getNonZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex )
+			throws Exception
+	{
+		final List<String> zeroSampleIDs = new ArrayList<>();
+		for( final Integer i: allZeroIndex )
+		{
+			zeroSampleIDs.add( sampleIDs.get( i ) );
+		}
 
+		return zeroSampleIDs;
+	}
+
+	/**
+	 * Return the table index for rows with all zer count values
+	 * 
+	 * @param dataPointsUnnormalized
+	 * @return Set of empty zero-rows
+	 * @throws Exception if errors occur
+	 */
+	protected static Set<Integer> findAllZeroIndex( final List<List<Double>> dataPointsUnnormalized ) throws Exception
+	{
+		final Set<Integer> allZero = new HashSet<>();
+		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
+		{
+			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
+			{
+				double sum = 0;
+
+				for( final Double d: dataPointsUnnormalized.get( x ) )
+				{
+					sum += d;
+				}
+
+				if( sum == 0 )
+				{
+					allZero.add( x );
+				}
+			}
+		}
+		return allZero;
+	}
 
 	private String logBase = "";
 	private String summary = "";

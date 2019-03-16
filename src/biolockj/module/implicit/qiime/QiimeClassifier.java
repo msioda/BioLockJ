@@ -124,8 +124,8 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * script {@value #SCRIPT_ADD_ALPHA_DIVERSITY} outputs {@value #ALPHA_DIV_NULL_VALUE} for null values which must be
 	 * replaced by {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_NULL_VALUE} if any are found.
 	 * <p>
-	 * This method also removes the redundant normalized alpha metric column and reorganizes the metadata
-	 * so that alpha metric columns are move to the first columns after the 1st ID column.
+	 * This method also removes the redundant normalized alpha metric column and reorganizes the metadata so that alpha
+	 * metric columns are move to the first columns after the 1st ID column.
 	 */
 	@Override
 	public void cleanUp() throws Exception
@@ -152,25 +152,26 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		try
 		{
 
-			Set<Integer> skipCols = new HashSet<>();
+			final Set<Integer> skipCols = new HashSet<>();
 
 			boolean isHeader = true;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
 				writer.write( st.nextToken() ); // write ID col
-				
-				List<String> record = new ArrayList<>();
-				while( st.hasMoreTokens() ) 
+
+				final List<String> record = new ArrayList<>();
+				while( st.hasMoreTokens() )
 				{
 					record.add( st.nextToken() );
 				}
-				
+
 				// Add Alpha Metrics as 1st columns since these will be used later as count cols instead of meta cols
 				for( int i = numCols; i < record.size(); i++ )
 				{
 					String val = record.get( i );
-					if( isHeader && val != null && ( val.endsWith( NORMALIZED_ALPHA ) || val.endsWith( NORMALIZED_ALPHA_LABEL ) ) )
+					if( isHeader && val != null
+							&& ( val.endsWith( NORMALIZED_ALPHA ) || val.endsWith( NORMALIZED_ALPHA_LABEL ) ) )
 					{
 						skipCols.add( i );
 					}
@@ -181,11 +182,11 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 						{
 							val = Config.requireString( this, MetaUtil.META_NULL_VALUE );
 						}
-						
+
 						writer.write( TAB_DELIM + val );
 					}
 				}
-				
+
 				// Add previously existing meta cols
 				for( int i = 0; i < numCols; i++ )
 				{
@@ -261,30 +262,18 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 			}
 			throw new Exception(
 					"Alternate QIIME database cannot be partially defined.  If any of these Config properties are defined, they must all be defined: "
-							+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB
-							+ ", " + QIIME_TAXA_DB + "=" + taxaDB );
+							+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB + ", "
+							+ QIIME_TAXA_DB + "=" + taxaDB );
 		}
-		
-		File pynastFile = new File( Config.getSystemFilePath( pynastDB ) );
-		File refSeqFile = new File( Config.getSystemFilePath( refSeqDB ) );
-		File taxaFile = new File( Config.getSystemFilePath( taxaDB ) );
 
-		final File parentDir = BioLockJUtil.getCommonParent(
-				BioLockJUtil.getCommonParent( pynastFile, refSeqFile ), taxaFile );
+		final File pynastFile = new File( Config.getSystemFilePath( pynastDB ) );
+		final File refSeqFile = new File( Config.getSystemFilePath( refSeqDB ) );
+		final File taxaFile = new File( Config.getSystemFilePath( taxaDB ) );
+
+		final File parentDir = BioLockJUtil.getCommonParent( BioLockJUtil.getCommonParent( pynastFile, refSeqFile ),
+				taxaFile );
 		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
 		return parentDir;
-	}
-	
-	/**
-	 * Return the Docker container database directory (starting with /db/...)
-	 * 
-	 * @param prop QIIME database dir
-	 * @return Docker container DB dir
-	 * @throws Exception if errors occur
-	 */
-	protected File getDB( String prop ) throws Exception
-	{
-		return new File( Config.getSystemFilePath( Config.requireString( this, prop ) ).replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) );
 	}
 
 	@Override
@@ -389,6 +378,19 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		return super.getSummary();
 	}
 
+	@Override
+	public List<String> getWorkerScriptFunctions() throws Exception
+	{
+		final List<String> lines = super.getWorkerScriptFunctions();
+		if( DockerUtil.hasDB( this ) )
+		{
+			lines.addAll( buildQiimeConfigLines() );
+			lines.add( "" );
+		}
+
+		return lines;
+	}
+
 	/**
 	 * If superclass is fed by another QiimeClassifier, it must be a subclass with biom output. Otherwise, if a
 	 * subclass, it must expect sequence file input.
@@ -403,6 +405,42 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 
 		return super.isValidInputModule( module );
+	}
+
+	/**
+	 * Build ~/.qiime_config to define the alternate Docker qiime_classifier DB with local container path
+	 * references.<br>
+	 * 
+	 * @return Bash script lines to build the qiime_config file
+	 * @throws Exception if errors occur build file
+	 */
+	protected List<String> buildQiimeConfigLines() throws Exception
+	{
+		final List<String> lines = new ArrayList<>();
+		if( getDB() != null )
+		{
+			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> "
+					+ QIIME_CONFIG );
+			lines.add(
+					"echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG );
+		}
+
+		return lines;
+	}
+
+	/**
+	 * Return the Docker container database directory (starting with /db/...)
+	 * 
+	 * @param prop QIIME database dir
+	 * @return Docker container DB dir
+	 * @throws Exception if errors occur
+	 */
+	protected File getDB( final String prop ) throws Exception
+	{
+		return new File( Config.getSystemFilePath( Config.requireString( this, prop ) )
+				.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) );
 	}
 
 	/**
@@ -423,39 +461,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		}
 
 		return dir;
-	}
-	
-	/**
-	 * Build ~/.qiime_config to define the alternate Docker qiime_classifier DB with local container path references.<br>
-	 * 
-	 * @return Bash script lines to build the qiime_config file
-	 * @throws Exception if errors occur build file
-	 */
-	protected List<String> buildQiimeConfigLines() throws Exception
-	{
-		final List<String> lines = new ArrayList<>();
-		if( getDB() != null )
-		{
-			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> " + QIIME_CONFIG  );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " +  getDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG );
-		}
-
-		return lines;
-	}
-	
-	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
-		final List<String> lines = super.getWorkerScriptFunctions();
-		if( DockerUtil.hasDB( this ) )
-		{
-			lines.addAll( buildQiimeConfigLines() );
-			lines.add( "" );
-		}
-
-		return lines;
 	}
 
 	/**
@@ -526,8 +531,6 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		lines.add( otuPickingScript + getParams() + "-i " + fnaFile + " -fo " + outputDir );
 		return lines;
 	}
-	
-
 
 	/**
 	 * Return runtime parameters for {@value #EXE_VSEARCH_PARAMS}
@@ -717,11 +720,11 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	private static final String NORMALIZED_ALPHA = "_normalized_alpha";
 	private static final String NORMALIZED_ALPHA_LABEL = "_alpha_label";
 	private static final String NUM_THREADS_PARAM = "-aO";
-	private static final String QIIME_CONFIG_SEQ_REF = "pick_otus_reference_seqs_fp";
-	private static final String QIIME_CONFIG_PYNAST_ALIGN_REF = "pynast_template_alignment_fp";
-	private static final String QIIME_CONFIG_TAXA_SEQ_REF = "assign_taxonomy_reference_seqs_fp";
-	private static final String QIIME_CONFIG_TAXA_ID_REF = "assign_taxonomy_id_to_taxonomy_fp";
 	private static final String QIIME_CONFIG = DockerUtil.DOCKER_ROOT_HOME + "/.qiime_config";
+	private static final String QIIME_CONFIG_PYNAST_ALIGN_REF = "pynast_template_alignment_fp";
+	private static final String QIIME_CONFIG_SEQ_REF = "pick_otus_reference_seqs_fp";
+	private static final String QIIME_CONFIG_TAXA_ID_REF = "assign_taxonomy_id_to_taxonomy_fp";
+	private static final String QIIME_CONFIG_TAXA_SEQ_REF = "assign_taxonomy_reference_seqs_fp";
 	private static final String UNDEFINED = "UNDEFINED";
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 
