@@ -632,4 +632,6 @@ console.log(process.env.BLJ.toString());
 
 console.log('index.js started');
 
+console.log('index.js __dirname: ', __dirname);
+
 //to actually run blj: https://stackoverflow.com/questions/1880198/how-to-execute-shell-command-in-javascript
