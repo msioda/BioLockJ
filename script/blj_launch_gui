@@ -79,12 +79,14 @@ dockerID() {
 	fi
 }
 
-if [ $# -gt 0 ] && [ "$1" == "dev" ] || [ "$2" == "dev" ]; then
+if [ $# -gt 0 ] && [ "$1" == "-dev" ] || [ "$2" == "-dev" ]; then
 	dockerID=$DOCKER_HUB_USER
-	[ $# -eq 2 ] && [ "$1" == "dev" ] && dockerID=$2
-	[ $# -eq 2 ] && [ "$2" == "dev" ] && dockerID=$1
+	[ $# -eq 2 ] && [ "$1" == "-dev" ] && dockerID=$2
+	[ $# -eq 2 ] && [ "$2" == "-dev" ] && dockerID=$1
 	[ ! -d "$BLJ_SUP" ] && devDockerWebApp $dockerID
 	[ -d "$BLJ_SUP" ] && devSupDockerWebApp $dockerID
+elif if [ $# -gt 0 ] && [ "$1" == "-aws" ] || [ "$2" == "-aws" ]; then
+	runDockerAwsWebApp $DOCKER_HUB_USER
 else
 	runDockerWebApp $DOCKER_HUB_USER
 fi
