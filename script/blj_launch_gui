@@ -85,7 +85,6 @@ if [ $# -gt 0 ] && [ "$1" == "dev" ] || [ "$2" == "dev" ]; then
 	[ $# -eq 2 ] && [ "$2" == "dev" ] && dockerID=$1
 	[ ! -d "$BLJ_SUP" ] && devDockerWebApp $dockerID
 	[ -d "$BLJ_SUP" ] && devSupDockerWebApp $dockerID
-	
 else
 	runDockerWebApp $DOCKER_HUB_USER
 fi
