@@ -45,17 +45,18 @@ router.get('/config/:configPath', function(req, res, next) {
 });
 
 //retrieve project and descriptions
-router.post('/retrieveProjects', function(req, res, next) {
+router.post('/retrievePipelines', function(req, res, next) {
   console.log('retrieveProjects');
   try {
     let names = [];
     let descrip = [];
-    fs.readdir(path.join('/', 'pipelines'), (err, files) => {
+    let paths = [];
+    fs.readdir(path.join( '/', 'pipelines' ), (err, files) => {
       if (err) {
         console.error(err);
         accessLogStream.write(e.stack + '\n');;
       }
-      files.forEach(file => {
+      files.forEach( file => {
         console.log(file);
         const checkFile = fs.lstatSync(path.join('/','pipelines',file));
           if (checkFile.isDirectory()) {
@@ -68,12 +69,11 @@ router.post('/retrieveProjects', function(req, res, next) {
             for (var i = 0; i < nestedFolderFiles.length; i++) {
               if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
                 console.log(nestedFolderFiles[i]);
+                const propFilePath = path.join('/', 'pipelines', file, nestedFolderFiles[i]);
 
-                const propFile = fs
-                  .readFileSync(path.join('/', 'pipelines', file, nestedFolderFiles[i]), 'utf8')
-                  .split('\n');
+                const propFile = fs.readFileSync(propFilePath, 'utf8').split('\n');
 
-                let projDescrp = 'Project description is empty'
+                let projDescrp = 'Project description is empty';
 
                 for (var i = 0; i < propFile.length; i++) {
                   if (propFile[i].startsWith('pipeline.description=')) {
@@ -81,7 +81,9 @@ router.post('/retrieveProjects', function(req, res, next) {
                     projDescrp = propFile[i].slice(20);
                   }
                 }//end propFile for loop
+
                 descrip.push(projDescrp);
+                path.push(propFilePath);
               }
             }//end nestedFolderFiles for loop
           };//end if dir
@@ -92,6 +94,7 @@ router.post('/retrieveProjects', function(req, res, next) {
         res.write(JSON.stringify({
           names : names,
           descrip : descrip,
+          paths : paths,
         }));
         res.end();
       });
@@ -99,7 +102,7 @@ router.post('/retrieveProjects', function(req, res, next) {
     console.error(e);
     accessLogStream.write(e.stack + '\n');;
   }
-});//end router.post('/retrieveProjects',
+});//end router.post('/retrievePipelines',
 
 router.post('/retrieveConfigs', function(req, res, next) {
   console.log('/retrieveConfigs');
@@ -126,14 +129,14 @@ router.post('/retrieveConfigs', function(req, res, next) {
     console.error(e);
     accessLogStream.write(e.stack + '\n');;
   }
-});//end router.post('/retrieveProjects',
+});//end router.post('/retrieveConfigs',
 
 router.post('/retrievePropertiesFile', function(req, res, next){
   try {
     const propertiesFile = req.body.propertiesFile;
     console.log('propertiesFile: ', propertiesFile);
     if (propertiesFile.startsWith('/') || propertiesFile.startsWith('$BLJ')){
-      console.log('contains /');
+      console.log('entered contains / section of /retrievePropertiesFile');
       const datum = fs.readFileSync(propertiesFile, 'utf8');
       res.setHeader("Content-Type", "text/html");
       res.write(JSON.stringify({data : datum}));
