@@ -54,7 +54,7 @@ function saveConfigToGui(configTextandNameObject){
 }
 
 function retrieveProjects(){
-  return returnPromiseFromServer('/retrieveProjects', requestParameter = null);
+  return returnPromiseFromServer('/retrievePipelines', requestParameter = null);
 }//end function retrieveProjects
 
 function retrieveConfigs(){
