@@ -10,6 +10,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
   this.paramKeys = paramKeys;
   this.paramValues = paramValues;
   this.comments = comments;
+  this.configPath;
 
   const _this = this; //hack for when some callback changes my 'this', used in this.saveConfigParamsForm
 
@@ -144,9 +145,12 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     };
     _this.modulesToCurrentConfig();
     //var save = saveConfigToGui({test : "test"});
+    if (this.configPath){
+      console.log(this.configPath);
+    }
     saveConfigToGui({
-        configName : configFile.value,
-        configText : _this.formatAsFlatFile(),
+      configName : configFile.value,
+      configText : _this.formatAsFlatFile(),
     });
     // localStorage.setItem(configFile.value, JSON.stringify(_this));
 
@@ -527,6 +531,29 @@ const defaultConfigs = []; //array to hold all of the configs.
 
 document.getElementById('localFile').addEventListener('change', currentConfig.loadLocal);
 
+//
+function loadConfigPathToForm(conPath) {
+  const tempConfig = retrievePropertiesFile({propertiesFile : conPath});
+  tempConfig.then( propertiesFile => {
+    console.log(propertiesFile);
+    console.log("loadConfigPathToForm conPath:", conPath);
+    currentConfig = new Config();
+    currentConfig.loadFromText(propertiesFile.data);
+    if (conPath.includes('/')){
+      const split = conPath.split("/");
+      currentConfig.paramKeys.push('pipeline.configFile');
+      console.log(split[split.length - 1 ]);
+      currentConfig.paramValues.push(split[split.length - 1]);
+    }else {
+      currentConfig.paramKeys.push('pipeline.configFile');
+      currentConfig.paramValues.push(conPath);
+    }
+    currentConfig.sendConfigDataToForms();
+    currentConfig.configPath = conPath;
+    console.log(currentConfig);
+  })
+}
+
 //Adding all eventlisteners
 //eventlistener for adding the recent config files to "recent"
 document.getElementById("recent").addEventListener("mouseover", function() {
@@ -538,18 +565,8 @@ document.getElementById("recent").addEventListener("mouseover", function() {
       opt.setAttribute("name", retrievedConfigs[i]);
       var text = document.createTextNode(retrievedConfigs[i].toString());
       opt.addEventListener("click", function() {
-        //console.log(JSON.stringify({propertiesFile : this.name}))
-        const tempConfig = retrievePropertiesFile({propertiesFile : this.name.concat('.properties')});
-        tempConfig.then( propertiesFile => {
-          console.log(propertiesFile);
-          currentConfig = new Config();
-          currentConfig.loadFromText(propertiesFile.data);
-          currentConfig.paramKeys.push('pipeline.configFile');
-          currentConfig.paramValues.push(this.name);
-          currentConfig.sendConfigDataToForms();
-          console.log(currentConfig);
+        loadConfigPathToForm('/config/' + this.name.concat('.properties'));
         })
-      });
       opt.appendChild(text);
       opt.setAttribute('position', 'relative');
       opt.setAttribute('display', 'block');
@@ -1100,3 +1117,10 @@ function deleteConfig(configFileName) {
   request.send(JSON.stringify({configFileName : configFileName}));
 }//end deleteConfig(configFileName)
 
+window.onload = function(){
+  configPath = document.getElementById('configPath').innerHTML
+  if (configPath){
+    console.log(configPath);
+    // loadConfigPathToForm(configPath)
+  }
+}
