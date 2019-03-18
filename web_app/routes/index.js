@@ -130,10 +130,18 @@ router.post('/retrieveConfigs', function(req, res, next) {
 
 router.post('/retrievePropertiesFile', function(req, res, next){
   try {
-    const datum = fs.readFileSync(path.join('/','config', req.body.propertiesFile), 'utf8');
-    res.setHeader("Content-Type", "text/html");
-    res.write(JSON.stringify({data : datum}));
-    res.end();
+    const propertiesFile = req.body.propertiesFile;
+    if (propertiesFile.startsWith('/')){
+      const datum = fs.readFileSync(propertiesFile, 'utf8');
+      res.setHeader("Content-Type", "text/html");
+      res.write(JSON.stringify({data : datum}));
+      res.end();
+    } else{
+      const datum = fs.readFileSync(path.join('/','config', propertiesFile), 'utf8');
+      res.setHeader("Content-Type", "text/html");
+      res.write(JSON.stringify({data : datum}));
+      res.end();
+    }
   } catch (e) {
     console.error(e);
     accessLogStream.write(e.stack + '\n');;
