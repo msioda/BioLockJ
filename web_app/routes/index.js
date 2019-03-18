@@ -173,10 +173,20 @@ router.post('/saveConfigToGui', function(req, res, next) {
   console.log('made it to /saveConfigToGui');
   try {
     console.log(req.body.configName);
-    indexAux.saveConfigToLocal(req.body.configName, req.body.configText);
-    res.setHeader('Content-Type', 'text/html');
-    res.write('Server Response: config saved!');
-    res.end();
+    if (req.body.configName.startsWith('/')){
+      fs.writeFile(req.body.configName, req.body.configText,function(err) {
+        if (err) {
+          accessLogStream.write(e.stack + '\n');
+          return console.log(err);
+        }
+        res.setHeader('Content-Type', 'text/html');
+        res.write('Server Response: config saved!');
+        res.end();}
+    }else{
+      indexAux.saveConfigToLocal(req.body.configName, req.body.configText);
+      res.setHeader('Content-Type', 'text/html');
+      res.write('Server Response: config saved!');
+      res.end();}
   } catch (e) {
     accessLogStream.write(e.stack + '\n');
     console.error(e);
