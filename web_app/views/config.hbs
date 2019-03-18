@@ -6,7 +6,7 @@
     <div class="dropdown-content" id="projects">
       <a onclick="newProj()" href="#">New</a>
       <a id="openAwsSettings">AWS Mini-dashboard</a>
-      <a >Open BLJ config with file picker <input plcaeholder="Open BLJ config with file picker" type="file" accept=".txt,.properties" id="localFile"></a>
+      <a >Open BLJ config with file picker <input type="file" accept=".txt,.properties" id="localFile"></a>
       <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
       <a id="restartListAnchor" href="#">Modify configuration of a previously launched project </a>
       <a id="recent" href="#">(Auto)Saved configuration</a>
@@ -15,13 +15,6 @@
 </div>
 
 <div class="banner">BioLockJ</div>
-
-<div id="openConfig" class="menu">
-  <form class='' id=localFileForm>
-    Select BioLockJ configuration file
-    <input type="file" accept=".txt,.properties" id="localFile">
-  </form>
-</div>
 
 <!--options for control panel-->
 <div class="menu" id='mainMenu'>
