@@ -131,12 +131,15 @@ router.post('/retrieveConfigs', function(req, res, next) {
 router.post('/retrievePropertiesFile', function(req, res, next){
   try {
     const propertiesFile = req.body.propertiesFile;
-    if (propertiesFile.startsWith('/')){
+    console.log('propertiesFile: ', propertiesFile);
+    if (propertiesFile.startsWith('/') || propertiesFile.startsWith('$BLJ')){
+      console.log('contains /');
       const datum = fs.readFileSync(propertiesFile, 'utf8');
       res.setHeader("Content-Type", "text/html");
       res.write(JSON.stringify({data : datum}));
       res.end();
     } else{
+      console.log('no / found');
       const datum = fs.readFileSync(path.join('/','config', propertiesFile), 'utf8');
       res.setHeader("Content-Type", "text/html");
       res.write(JSON.stringify({data : datum}));
@@ -174,14 +177,15 @@ router.post('/saveConfigToGui', function(req, res, next) {
   try {
     console.log(req.body.configName);
     if (req.body.configName.startsWith('/')){
-      fs.writeFile(req.body.configName, req.body.configText,function(err) {
+      fs.writeFile(req.body.configName, req.body.configText, function(err){
         if (err) {
           accessLogStream.write(e.stack + '\n');
           return console.log(err);
         }
-        res.setHeader('Content-Type', 'text/html');
-        res.write('Server Response: config saved!');
-        res.end();}
+      })
+      res.setHeader('Content-Type', 'text/html');
+      res.write('Server Response: config saved!');
+      res.end();
     }else{
       indexAux.saveConfigToLocal(req.body.configName, req.body.configText);
       res.setHeader('Content-Type', 'text/html');
