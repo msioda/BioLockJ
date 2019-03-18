@@ -38,7 +38,7 @@ router.get('/config/:configPath', function(req, res, next) {
   console.log(req.params.configPath);
   let configPath = req.params.configPath;
   if (configPath === "" || configPath === " "){
-    configPath = 'default';
+    res.redirect('/config');
   }
   console.log("__dirname: ", __dirname);
   res.render('config', { title: 'Configuration', configPath : configPath });
