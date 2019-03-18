@@ -8,7 +8,8 @@
       <a id="openAwsSettings">AWS Mini-dashboard</a>
       <a >Open BLJ config with file picker <input plcaeholder="Open BLJ config with file picker" type="file" accept=".txt,.properties" id="localFile"></a>
       <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
-      <a id="recent" href="#">(Auto)Saved configs</a>
+      <a id="restartListAnchor" href="#">Modify configuration of a previously launched project </a>
+      <a id="recent" href="#">(Auto)Saved configuration</a>
     </div>
   </div>
 </div>
@@ -1082,6 +1083,17 @@ For fastq, typically “@”.)<h5></p>
     <!--<path d="M70,30 L80,30  M75,30 L75,35 " fill="none" stroke="rgb(0,112,60)" stroke-width="2"/>-->
   </svg>
   <!-- <button form='configForm' type="submit" name="button" class='hidden'></button> -->
+</div>
+
+<div id="urlInfo" class="">
+  <!--
+  This is a hidden panel for passing handlebars variables to the javascript.
+  It feels like a hack but I don't know enough about Express to find a better
+  solution
+ -->
+  <div id='configPath' class="">
+    {{configPath}}
+  </div>
 </div>
 
 <script type="text/javascript" src="./../javascripts/config_menus.js"></script>
