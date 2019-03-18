@@ -154,6 +154,8 @@ select[multiple] {
 
 .recentConfigs {
   text-align: right !important;
+  position: relative;
+  display: block;
 }
 
 /*for the list elements of the module tab*/

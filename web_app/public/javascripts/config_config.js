@@ -543,7 +543,15 @@ function loadConfigPathToForm(conPath) {
       const split = conPath.split("/");
       currentConfig.paramKeys.push('pipeline.configFile');
       console.log(split[split.length - 1 ]);
-      currentConfig.paramValues.push(split[split.length - 1]);
+      //take just the filename of the path and then take the .properties off
+      //because we don't want the user to see the whole thing.  .properties
+      //is added back on the save event.
+      let configName = split[split.length - 1]
+      if (configName.includes('.')){
+        configName = configName.split('.')[0];
+
+      }
+      currentConfig.paramValues.push(configName);
     }else {
       currentConfig.paramKeys.push('pipeline.configFile');
       currentConfig.paramValues.push(conPath);
@@ -568,8 +576,6 @@ document.getElementById("recent").addEventListener("mouseover", function() {
         loadConfigPathToForm('/config/' + this.name.concat('.properties'));
         })
       opt.appendChild(text);
-      opt.setAttribute('position', 'relative');
-      opt.setAttribute('display', 'block');
       opt.classList.add('recentConfigs');
       let proj = document.getElementById("projects");
       proj.appendChild(opt);
