@@ -582,6 +582,28 @@ document.getElementById("recent").addEventListener("mouseover", function() {
  once: true
 });
 
+//eventlistener for adding the recent config files to "recent"
+document.getElementById("restartListAnchor").addEventListener("mouseover", function() {
+  const configs = retrievePipelines();
+  configs.then(retrievedConfigs => {
+    console.log(retrievedConfigs);
+  //   for (var i = 0; i < retrievedConfigs.length; i++) {
+  //     let opt = document.createElement('a');
+  //     opt.setAttribute("name", retrievedConfigs[i]);
+  //     var text = document.createTextNode(retrievedConfigs[i].toString());
+  //     opt.addEventListener("click", function() {
+  //       loadConfigPathToForm('/config/' + this.name.concat('.properties'));
+  //       })
+  //     opt.appendChild(text);
+  //     opt.classList.add('recentConfigs');
+  //     let proj = document.getElementById("projects");
+  //     proj.appendChild(opt);
+  //   };
+  })
+}, {
+ once: true
+});
+
 const createDownload = document.getElementsByClassName('createDownload');
 for (var i = 0; i < createDownload.length; i++) {
   createDownload[i].addEventListener('click', function() {
@@ -607,7 +629,7 @@ for (const launch of document.getElementsByClassName("openLaunchModal")) {
       if ( currentConfig.validateConfig() === true ){
       launchModal.style.display = "block";
 
-        const projectFolderNames = retrieveProjects();
+        const projectFolderNames = retrievePipelines();
         projectFolderNames.then((projNames) => {
 
           //erase old restart options
@@ -1121,7 +1143,7 @@ function deleteConfig(configFileName) {
 }//end deleteConfig(configFileName)
 
 window.onload = function(){
-  configPath = document.getElementById('configPath').innerHTML
+  configPath = document.getElementById('configPath').innerHTML;
   if (configPath){
     console.log(configPath);
     // loadConfigPathToForm(configPath)
