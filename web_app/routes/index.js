@@ -49,7 +49,7 @@ router.post('/retrievePipelines', function(req, res, next) {
   console.log('retrieveProjects');
   try {
     let names = [];
-    let descrip = [];
+    let descrips = [];
     let paths = [];
     fs.readdir(path.join( '/', 'pipelines' ), (err, files) => {
       if (err) {
@@ -57,47 +57,47 @@ router.post('/retrievePipelines', function(req, res, next) {
         accessLogStream.write(e.stack + '\n');;
       }
       files.forEach( file => {
-        console.log(file);
         const checkFile = fs.lstatSync(path.join('/','pipelines',file));
-          if (checkFile.isDirectory()) {
-            names.push(file);
+        if (checkFile.isDirectory()) {
 
-            //go into folder
-            const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
+          //go into folder
+          const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
+          console.log('nestedFolderFiles: ', nestedFolderFiles);
 
-            //get master config and read description
-            for (var i = 0; i < nestedFolderFiles.length; i++) {
-              if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
-                console.log(nestedFolderFiles[i]);
-                const propFilePath = path.join('/', 'pipelines', file, nestedFolderFiles[i]);
+          //get master config and read description
+          for (var i = 0; i < nestedFolderFiles.length; i++) {
+            console.log('nestedFolderFiles[i]: ', nestedFolderFiles[i]);
+            if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
+              // console.log('nestedFolderFiles[i] MASTER_', nestedFolderFiles[i]);
+              const propFilePath = path.join('/', 'pipelines', file, nestedFolderFiles[i]);
+              // console.log('propFilePath: ', propFilePath);
+              const propFile = fs.readFileSync(propFilePath, 'utf8').split('\n');
 
-                const propFile = fs.readFileSync(propFilePath, 'utf8').split('\n');
+              let projDescrp = 'Project description is empty';
 
-                let projDescrp = 'Project description is empty';
-
-                for (var i = 0; i < propFile.length; i++) {
-                  if (propFile[i].startsWith('pipeline.description=')) {
-                    console.log(propFile[i].slice(20));
-                    projDescrp = propFile[i].slice(20);
-                  }
-                }//end propFile for loop
-
-                descrip.push(projDescrp);
-                path.push(propFilePath);
-              }
-            }//end nestedFolderFiles for loop
-          };//end if dir
-        });
-        // console.log(projects);
-        console.log(descrip);
-        res.setHeader("Content-Type", "text/html");
-        res.write(JSON.stringify({
-          names : names,
-          descrip : descrip,
-          paths : paths,
-        }));
-        res.end();
+              for (var i = 0; i < propFile.length; i++) {
+                if (propFile[i].startsWith('pipeline.description=')) {
+                  console.log(propFile[i].slice(20));
+                  projDescrp = propFile[i].slice(20);
+                }
+              }//end propFile for loop
+              names.push(file);
+              descrips.push(projDescrp);
+              paths.push(propFilePath);
+            }
+          }//end nestedFolderFiles for loop
+        };//end if dir
       });
+      // console.log(projects);
+      console.log('descrip: ', descrips);
+      res.setHeader("Content-Type", "text/html");
+      res.write(JSON.stringify({
+        names : names,
+        descrips : descrips,
+        paths : paths,
+      }));
+      res.end();
+    });
   } catch (e) {
     console.error(e);
     accessLogStream.write(e.stack + '\n');;
