@@ -9,7 +9,7 @@ projects.then(proj => {
 function distributeIcons(containerDiv, iconFileNamesAndDescrip){
   console.log(iconFileNamesAndDescrip);
   const projNames = iconFileNamesAndDescrip.names;
-  const projDescrip = iconFileNamesAndDescrip.descrip;
+  const projDescrip = iconFileNamesAndDescrip.descrips;
   for (var i = 0; i < projNames.length; i++) {
     const spn = document.createElement('span');
     spn.classList.add('projectIcon');
