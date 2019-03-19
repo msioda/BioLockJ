@@ -38,9 +38,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         configText : this.formatAsFlatFile(),
       });
 
-      //hide used file reader from user
-      document.getElementById("openConfig").style.display = "none";
-
       this.sendConfigDataToForms();
     } catch (e) {
       alert(e);
