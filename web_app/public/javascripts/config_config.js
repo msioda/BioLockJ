@@ -586,19 +586,20 @@ document.getElementById("recent").addEventListener("mouseover", function() {
 document.getElementById("restartListAnchor").addEventListener("mouseover", function() {
   const configs = retrievePipelines();
   configs.then(retrievedConfigs => {
-    console.log(retrievedConfigs);
-  //   for (var i = 0; i < retrievedConfigs.length; i++) {
-  //     let opt = document.createElement('a');
-  //     opt.setAttribute("name", retrievedConfigs[i]);
-  //     var text = document.createTextNode(retrievedConfigs[i].toString());
-  //     opt.addEventListener("click", function() {
-  //       loadConfigPathToForm('/config/' + this.name.concat('.properties'));
-  //       })
-  //     opt.appendChild(text);
-  //     opt.classList.add('recentConfigs');
-  //     let proj = document.getElementById("projects");
-  //     proj.appendChild(opt);
-  //   };
+    console.log('retrievedConfigs: ', retrievedConfigs);
+    for (let i = 0; i < retrievedConfigs.names.length; i++) {
+      console.log('retrievedConfigs.names[i]: ', retrievedConfigs.names[i]);
+      let opt = document.createElement('a');
+      let text = document.createTextNode(retrievedConfigs.names[i]);
+      opt.addEventListener("click", function() {
+        loadConfigPathToForm(retrievedConfigs.paths[i]);
+        })
+      opt.appendChild(text);
+      opt.classList.add('recentConfigs');
+      let proj = document.getElementById("restartListAnchor");
+      proj.appendChild(opt);
+      console.log('added opt', opt);
+    };
   })
 }, {
  once: true
