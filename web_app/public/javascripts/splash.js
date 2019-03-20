@@ -9,7 +9,7 @@ projects.then(proj => {
 function distributeIcons(containerDiv, iconFileNamesAndDescrip){
   console.log(iconFileNamesAndDescrip);
   const projNames = iconFileNamesAndDescrip.names;
-  const projDescrip = iconFileNamesAndDescrip.descrip;
+  const projDescrip = iconFileNamesAndDescrip.descrips;
   for (var i = 0; i < projNames.length; i++) {
     const spn = document.createElement('span');
     spn.classList.add('projectIcon');
@@ -54,7 +54,7 @@ function saveConfigToGui(configTextandNameObject){
 }
 
 function retrieveProjects(){
-  return returnPromiseFromServer('/retrieveProjects', requestParameter = null);
+  return returnPromiseFromServer('/retrievePipelines', requestParameter = null);
 }//end function retrieveProjects
 
 function retrieveConfigs(){

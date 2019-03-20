@@ -42,6 +42,9 @@ function openTab(evt, tabName) {
 }
 // Get the element with id="defaultOpen" and click on it (making it open by default)
 document.getElementById("defaultOpen").click();
+document.getElementById('openAwsSettings').addEventListener('click', function() {
+  document.getElementById('awsSettings').style.display = "block";
+})
 
 //make "open" show open div
 function openProjDisplay() {
@@ -501,7 +504,7 @@ function runModuleFunctions() {//large function to build module li and counters
   var metaphlanModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, qiimeClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
   var humann2ModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, qiimeClassModNodes, kraken2ClassModNodes, metaphlanClassModNodes]);
 
-  document.getElementById('project.allowImplicitModules').addEventListener('change', function(evt){
+  document.getElementById('pipeline.allowImplicitModules').addEventListener('change', function(evt){
     const implicits = Array.from(document.getElementsByClassName('implicit'));
     if (this.value === 'Y'){ implicits.forEach(imp => {imp.classList.remove('hidden')});
     }else{implicits.forEach(imp => imp.classList.add('hidden'));}

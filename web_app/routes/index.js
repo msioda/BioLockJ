@@ -12,7 +12,7 @@ let express = require('express'),
  fs = require('fs'),
  events = require('events'),
  eventEmitter = new events.EventEmitter();//for making an event emitter,
- sys = require('util');
+ sys = require('util'),
  exec = require('child_process').exec;
 const { spawn } = require('child_process');//for running child processes
 const Stream = new events.EventEmitter(); // my event emitter instance
@@ -34,62 +34,75 @@ router.get('/config', function(req, res, next) {
   res.render('config', { title: 'Configuration' });
 });
 
+router.get('/config/:configPath', function(req, res, next) {
+  console.log(req.params.configPath);
+  let configPath = req.params.configPath;
+  if (configPath === "" || configPath === " "){
+    res.redirect('/config');
+  }
+  console.log("__dirname: ", __dirname);
+  res.render('config', { title: 'Configuration', configPath : configPath });
+});
+
 //retrieve project and descriptions
-router.post('/retrieveProjects', function(req, res, next) {
+router.post('/retrievePipelines', function(req, res, next) {
   console.log('retrieveProjects');
   try {
     let names = [];
-    let descrip = [];
-    fs.readdir(path.join('/', 'pipelines'), (err, files) => {
+    let descrips = [];
+    let paths = [];
+    fs.readdir(path.join( '/', 'pipelines' ), (err, files) => {
       if (err) {
         console.error(err);
         accessLogStream.write(e.stack + '\n');;
       }
-      files.forEach(file => {
-        console.log(file);
+      files.forEach( file => {
         const checkFile = fs.lstatSync(path.join('/','pipelines',file));
-          if (checkFile.isDirectory()) {
-            names.push(file);
+        if (checkFile.isDirectory()) {
 
-            //go into folder
-            const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
+          //go into folder
+          const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
+          console.log('nestedFolderFiles: ', nestedFolderFiles);
 
-            //get master config and read description
-            for (var i = 0; i < nestedFolderFiles.length; i++) {
-              if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
-                console.log(nestedFolderFiles[i]);
+          //get master config and read description
+          for (var i = 0; i < nestedFolderFiles.length; i++) {
+            console.log('nestedFolderFiles[i]: ', nestedFolderFiles[i]);
+            if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
+              // console.log('nestedFolderFiles[i] MASTER_', nestedFolderFiles[i]);
+              const propFilePath = path.join('/', 'pipelines', file, nestedFolderFiles[i]);
+              // console.log('propFilePath: ', propFilePath);
+              const propFile = fs.readFileSync(propFilePath, 'utf8').split('\n');
 
-                const propFile = fs
-                  .readFileSync(path.join('/', 'pipelines', file, nestedFolderFiles[i]), 'utf8')
-                  .split('\n');
+              let projDescrp = 'Project description is empty';
 
-                let projDescrp = 'Project description is empty'
-
-                for (var i = 0; i < propFile.length; i++) {
-                  if (propFile[i].startsWith('project.description=')) {
-                    console.log(propFile[i].slice(20));
-                    projDescrp = propFile[i].slice(20);
-                  }
-                }//end propFile for loop
-                descrip.push(projDescrp);
-              }
-            }//end nestedFolderFiles for loop
-          };//end if dir
-        });
-        // console.log(projects);
-        console.log(descrip);
-        res.setHeader("Content-Type", "text/html");
-        res.write(JSON.stringify({
-          names : names,
-          descrip : descrip,
-        }));
-        res.end();
+              for (var i = 0; i < propFile.length; i++) {
+                if (propFile[i].startsWith('pipeline.description=')) {
+                  console.log(propFile[i].slice(20));
+                  projDescrp = propFile[i].slice(20);
+                }
+              }//end propFile for loop
+              names.push(file);
+              descrips.push(projDescrp);
+              paths.push(propFilePath);
+            }
+          }//end nestedFolderFiles for loop
+        };//end if dir
       });
+      // console.log(projects);
+      console.log('descrip: ', descrips);
+      res.setHeader("Content-Type", "text/html");
+      res.write(JSON.stringify({
+        names : names,
+        descrips : descrips,
+        paths : paths,
+      }));
+      res.end();
+    });
   } catch (e) {
     console.error(e);
     accessLogStream.write(e.stack + '\n');;
   }
-});//end router.post('/retrieveProjects',
+});//end router.post('/retrievePipelines',
 
 router.post('/retrieveConfigs', function(req, res, next) {
   console.log('/retrieveConfigs');
@@ -116,14 +129,25 @@ router.post('/retrieveConfigs', function(req, res, next) {
     console.error(e);
     accessLogStream.write(e.stack + '\n');;
   }
-});//end router.post('/retrieveProjects',
+});//end router.post('/retrieveConfigs',
 
 router.post('/retrievePropertiesFile', function(req, res, next){
   try {
-    const datum = fs.readFileSync(path.join('/','config', req.body.propertiesFile), 'utf8');
-    res.setHeader("Content-Type", "text/html");
-    res.write(JSON.stringify({data : datum}));
-    res.end();
+    const propertiesFile = req.body.propertiesFile;
+    console.log('propertiesFile: ', propertiesFile);
+    if (propertiesFile.startsWith('/') || propertiesFile.startsWith('$BLJ')){
+      console.log('entered contains / section of /retrievePropertiesFile');
+      const datum = fs.readFileSync(propertiesFile, 'utf8');
+      res.setHeader("Content-Type", "text/html");
+      res.write(JSON.stringify({data : datum}));
+      res.end();
+    } else{
+      console.log('no / found');
+      const datum = fs.readFileSync(path.join('/','config', propertiesFile), 'utf8');
+      res.setHeader("Content-Type", "text/html");
+      res.write(JSON.stringify({data : datum}));
+      res.end();
+    }
   } catch (e) {
     console.error(e);
     accessLogStream.write(e.stack + '\n');;
@@ -155,10 +179,21 @@ router.post('/saveConfigToGui', function(req, res, next) {
   console.log('made it to /saveConfigToGui');
   try {
     console.log(req.body.configName);
-    indexAux.saveConfigToLocal(req.body.configName, req.body.configText);
-    res.setHeader('Content-Type', 'text/html');
-    res.write('Server Response: config saved!');
-    res.end();
+    if (req.body.configName.startsWith('/')){
+      fs.writeFile(req.body.configName, req.body.configText, function(err){
+        if (err) {
+          accessLogStream.write(e.stack + '\n');
+          return console.log(err);
+        }
+      })
+      res.setHeader('Content-Type', 'text/html');
+      res.write('Server Response: config saved!');
+      res.end();
+    }else{
+      indexAux.saveConfigToLocal(req.body.configName, req.body.configText);
+      res.setHeader('Content-Type', 'text/html');
+      res.write('Server Response: config saved!');
+      res.end();}
   } catch (e) {
     accessLogStream.write(e.stack + '\n');
     console.error(e);
@@ -216,8 +251,6 @@ router.post('/checkProjectExists', function(req, res, next) {
 
 router.post('/launch', function(req, res, next) {
   console.log('entered /launch');
-  const configHost = path.join(HOST_BLJ,'resources','config','gui');
-  //const configPath = 'config';
   try {
     console.log('entered try catch');
     //console.log(req.body);
@@ -225,15 +258,16 @@ router.post('/launch', function(req, res, next) {
     const paramKeys = req.body.paramKeys;
     const paramValues = req.body.paramValues;
     let launchArg = req.body.partialLaunchArg;
-    let configName = paramValues[paramKeys.indexOf('project.configFile')];
+    let configName = paramValues[paramKeys.indexOf('pipeline.configFile')];
     if (!configName.endsWith('.properties')){
       configName = configName.concat('.properties');
     }
 
     const configText = indexAux.formatAsFlatFile(modules, paramKeys, paramValues);
     indexAux.saveConfigToLocal(configName,configText);
-    launchArg['c'] = path.join(configHost, configName);
-    //console.log("launchArg['c']: ", launchArg['config']);
+
+    //set host-path for the config:
+    launchArg['c'] = path.join( HOST_BLJ ,'resources','config','gui', configName);
 
     var launchCommand;
 
@@ -329,7 +363,9 @@ router.get('/streamProgress', function(request, response){
   });
 });
 
+// source ~/.batchawsdeploy/config ; getcloudformationstack.sh testing2
 
+const batchAwsConfigFile = "~/.batchawsdeploy/config"; //find a good place to put this
 router.post('/getMalcolmGitRepo', function(req, res, next) {
   /*
   The components of the formData should be:
@@ -348,14 +384,13 @@ router.post('/getMalcolmGitRepo', function(req, res, next) {
       console.error(stderr);
     });
     res.setHeader('Content-Type', 'text/html');
-    res.write('Server Response: AWS launched!');
+    res.write('Server Response: Malcolm Git Cloned!');
     res.end();
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
     console.error(e);
   }
 });
-const batchAwsConfigFile = "~/.batchawsdeploy/config"
 
 router.post('/configureAws', function(req, res, next) {
   /*
@@ -365,24 +400,34 @@ router.post('/configureAws', function(req, res, next) {
   console.log('configureAws');
   try {
     console.log('req.body.formData: ', req.body.formData);
-    console.dir(req.body.formData);
     const sys = require('util');
     const exec = require('child_process').exec;
       //then write credentials
     var spawn = require('child_process').spawn,
-        aws = spawn(`source ${batchAwsConfigFile} ; writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, {shell: '/bin/bash'});
+    aws = spawn(`source ${batchAwsConfigFile} ; configAWScredentials.sh write ${req.body.formData.PROFILE} ${req.body.formData.REGION} text ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, {shell: '/bin/bash'});
 
-aws.stdout.on('data', function (data) {
-  console.log('stdout: ' + data.toString());
-});
+    let response = "";
 
-aws.stderr.on('data', function (data) {
-  console.log('stderr: ' + data.toString());
-});
+    aws.stdout.on('data', function (data) {
+      console.log('stdout: ' + data.toString());
+      response += data.toString();
+      // res.setHeader('Content-Type', 'text/html');
+      // res.write(data.toString());
+      // return res.end();
+      // console.log(response);
+    });
 
-aws.on('exit', function (code) {
-  console.log('child process exited with code ' + code.toString());
-});
+    aws.stderr.on('data', function (data) {
+      console.log('stderr: ' + data.toString());
+    });
+
+    aws.on('exit', function (code) {
+      res.setHeader('Content-Type', 'text/html');
+      res.write(response);
+      res.end();
+      console.log(response);
+      console.log('child process exited with code ' + code.toString());
+    });
     // exec(`source ${batchAwsConfigFile} ; writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, {shell: '/bin/bash'},  function(err, stdout, stderr) {
     //   console.log(stdout);
     //   console.error(err);
@@ -396,7 +441,7 @@ aws.on('exit', function (code) {
     console.error(e);
   }
 });
-router.post('/deployBatchEnv', function(req, res, next) {
+router.post('/deployCloudInfrastructure', function(req, res, next) {
   /**
   stackname: string,
   dockerRepository: string,
@@ -404,14 +449,22 @@ router.post('/deployBatchEnv', function(req, res, next) {
   docker run --rm   --name pg-docker -e POSTGRES_PASSWORD=docker -d -p 5432:5432 -v /Users/aaronyerke/git/postgres:/var/lib/postgresql/data  postgres
   */
   console.log('req.body.formData: ', req.body.formData);
-  console.log('deployBatchEnv');
+  console.log('deployCloudInfrastructure');
   try {
-    if (req.body.formData.deployArg = 'delete'){
+    if (req.body.formData.deployArg === 'delete'){
       var spawn = require('child_process').spawn,
-          aws = spawn(`source ${batchAwsConfigFile} ; deployBatchEnv.sh delete ${req.body.formData.stackname}`, {shell: '/bin/bash'});
+      aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh delete ${req.body.formData.stackname}`, {shell: '/bin/bash'});
+      //source ~/.batchawsdeploy/config ; deployCloudInfrastructure.sh delete testing
 
       aws.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
+        let statusIndicator = 'deleting KeyPair: ';
+        let output = data.toString().trim()
+        if (output.startsWith(statusIndicator)){
+          res.setHeader('Content-Type', 'text/html');
+          res.write("success");
+          res.end();
+        }
       });
 
       aws.stderr.on('data', function (data) {
@@ -421,12 +474,20 @@ router.post('/deployBatchEnv', function(req, res, next) {
       aws.on('exit', function (code) {
         console.log('child process exited with code ' + code.toString());
       });
-    }else{
-      var spawn = require('child_process').spawn,
-          aws = spawn(`source ${batchAwsConfigFile} ; deployBatchEnv.sh create ${req.body.formData.stackname} ${req.body.formData.dockerRepository}`, {shell: '/bin/bash'});
-
+    }
+    if (req.body.formData.deployArg === 'create'){
+      let spawn = require('child_process').spawn,
+          aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh create ${req.body.formData.stackname} ${req.body.formData.dockerRepository}`, {shell: '/bin/bash'});
+          //source ~/.batchawsdeploy/config ; deployCloudInfrastructure.sh create testingblj biolockj
       aws.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
+        let statusIndicator = 'infrastructureScriptStatus=';
+        let output = data.toString().trim()
+        if (output.startsWith('infrastructureScriptStatus=')){
+          res.setHeader('Content-Type', 'text/html');
+          res.write(output);
+          res.end();
+        }
       });
 
       aws.stderr.on('data', function (data) {
@@ -453,25 +514,90 @@ router.post('/deployBatchEnv', function(req, res, next) {
 });
 router.post('/launchEc2HeadNode', function(req, res, next) {
   /**
-  launchAction
-  awsInstanceType
+  Can be found with: source ~/.batchawsdeploy/config ; launchEC2HeadNode.sh
+    launchEC2HeadNode.sh exist [STACKNAME] [INSTANCENAME]
+    launchEC2HeadNode.sh directconnect [STACKNAME] [INSTANCENAME] [INSTANCETYPE]
+    launchEC2HeadNode.sh runscript_attached [STACKNAME] [INSTANCENAME] [INSTANCETYPE] startHeadNodeGui.sh
+    launchEC2HeadNode.sh runscript_detached [STACKNAME] [INSTANCENAME] [INSTANCETYPE] startHeadNodeGui.sh
+    Usage:
+    launchEC2HeadNode.sh exist [STACKNAME] [INSTANCENAME]
+    launchEC2HeadNode.sh directconnect [STACKNAME] [INSTANCENAME] [INSTANCETYPE]
+    launchEC2HeadNode.sh runscript_attached [STACKNAME] [INSTANCENAME] [INSTANCETYPE] startHeadNodeGui.sh
+    launchEC2HeadNode.sh runscript_detached [STACKNAME] [INSTANCENAME] [INSTANCETYPE] startHeadNodeGui.sh
+
+  launchEC2HeadNode.sh exist [STACKNAME] [INSTANCENAME]
+  launchEC2HeadNode.sh directconnect [STACKNAME] [INSTANCENAME] [INSTANCETYPE]
+  launchEC2HeadNode.sh directconnect [STACKNAME] [INSTANCENAME] [INSTANCETYPE]
+
   */
   console.log('launchEC2HeadNode.sh');
   try {
-    exec(`source ${batchAwsConfigFile} ; launchEC2HeadNode.sh ${req.body.formData.instanceType} ${req.body.formData.scriptName}`, {shell: '/bin/bash'}, function(err, stdout, stderr) {
-      console.log(stdout);
-      console.error(err);
-      console.error(stderr);
-      res.setHeader('Content-Type', 'text/html');
-      res.write(`Server Response: ${stdout}`);
-      res.end();
+
+    //source ~/.batchawsdeploy/config ;
+    //source ~/.batchawsdeploy/config ; launchEC2HeadNode.sh t2.micro startHeadNodeGui.sh
+    // exec(`source ${batchAwsConfigFile} ; launchEC2HeadNode.sh ${req.body.formData.instanceType} ${req.body.formData.scriptName}`, {shell: '/bin/bash'}, function(err, stdout, stderr) {
+    //   console.log(stdout);
+    //   console.error(err);
+    //   console.error(stderr);
+    //   res.setHeader('Content-Type', 'text/html');
+    //   res.write(`Server Response: ${stdout}`);
+    //   res.end();
+    // });
+    var spawn = require('child_process').spawn,
+    aws = spawn(`source ${batchAwsConfigFile} ; launchEC2Node.sh ${req.body.formData.launchAction} ${req.body.formData.launchAction}`, {shell: '/bin/bash'});
+    // source ~/.batchawsdeploy/config ; launchEC2Node.sh directconnect testthis HeadNode t2.micro
+    aws.stdout.on('data', function (data) {
+      console.log('stdout: ' + data.toString());
     });
+
+    aws.stderr.on('data', function (data) {
+      console.log('stderr: ' + data.toString());
+    });
+
+    aws.on('exit', function (code) {
+      console.log('child process exited with code ' + code.toString());
+    });
+
+  // source ~/.batchawsdeploy/config ;  launchEC2HeadNode.sh exist testing2 HeadNode
 
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
     console.error(e);
   }
 });
+// router.post('/validateAwsCreditials', function(req, res, next) {
+//   try {
+//     var spawn = require('child_process').spawn,
+//     aws = spawn(`source ${batchAwsConfigFile} ; configAWScredentials.sh validate`, {shell: '/bin/bash'});
+//
+//     aws.stdout.on('data', function (data) {
+//       console.log('stdout: ' + data.toString());
+//       if (data.toString().trim() === "valid"){
+//           res.setHeader('Content-Type', 'text/html');
+//           res.write('Stored AWS Credentials Valid');
+//           res.end();
+//       }else {
+//         console.log(data);
+//         res.setHeader('Content-Type', 'text/html');
+//         res.write('Stored AWS Credentials Invalid');
+//         res.end();
+//       }
+//     });
+//
+//     aws.stderr.on('data', function (data) {
+//       console.log('stderr: ' + data.toString());
+//     });
+//
+//     aws.on('exit', function (code) {
+//       console.log('child process exited with code ' + code.toString());
+//     });
+//   } catch (e) {
+//     console.error(e);
+//     accessLogStream.write(e.stack + '\n');
+//   }
+// })
+
+
 // fs.watch('/config', (eventType, filename) => {
 //   console.log(`Filename: ${filename}, Event: ${eventType}`);
 //   console.log(`Filename: ${filename}, Event: ${eventType}`);
@@ -530,5 +656,7 @@ function createLogFile(){//creates file and returns file name
 console.log(process.env.BLJ.toString());
 
 console.log('index.js started');
+
+console.log('index.js __dirname: ', __dirname);
 
 //to actually run blj: https://stackoverflow.com/questions/1880198/how-to-execute-shell-command-in-javascript

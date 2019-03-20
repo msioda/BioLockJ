@@ -154,6 +154,8 @@ select[multiple] {
 
 .recentConfigs {
   text-align: right !important;
+  position: relative;
+  display: block;
 }
 
 /*for the list elements of the module tab*/
@@ -261,4 +263,20 @@ table, td {
 }
 .emptyTd {
   text-align: center;
+}
+.incorrectInput{
+  display: none;
+  font-size: medium;
+  color: red;
+
+}
+.correctInput{
+  display: none;
+  font-size: medium;
+  color: green;
+}
+.inProgress{
+  display: none;
+  font-size: medium;
+  color: yellow;
 }

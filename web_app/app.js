@@ -14,8 +14,10 @@ var app = express();
 
 // view engine setup
 app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layout', layoutDir: __dirname + '/views/layouts/'}));
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, 'views'));// __dirname now resolves to: /web_app
 app.set('view engine', 'hbs');
+
+console.log('__dirname from app.js', __dirname);
 
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));

@@ -1,25 +1,20 @@
 <!--file button-->
-<link rel="stylesheet" type="text/css" href="./stylesheets/config.css" />
+<link rel="stylesheet" type="text/css" href="./../stylesheets/config.css" />
 <div class="nav-bar">
   <div class="dropdown">
     <button class="dropbtn" onclick="projectOptions()">Projects (Click here to start)</button>
     <div class="dropdown-content" id="projects">
       <a onclick="newProj()" href="#">New</a>
-      <a onclick="openProjDisplay()" href="#">Open BLJ config with file picker</a>
+      <a id="openAwsSettings">AWS Mini-dashboard</a>
+      <a >Open BLJ config with file picker <input type="file" accept=".txt,.properties" id="localFile"></a>
       <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
-      <a id="recent" href="#">(Auto)Saved configs</a>
+      <a id="restartListAnchor" href="#">Modify configuration of a previously launched project </a>
+      <a id="recent" href="#">(Auto)Saved configuration</a>
     </div>
   </div>
 </div>
 
 <div class="banner">BioLockJ</div>
-
-<div id="openConfig" class="menu">
-  <form class='' id=localFileForm>
-    Select BioLockJ configuration file
-    <input type="file" accept=".txt,.properties" id="localFile">
-  </form>
-</div>
 
 <!--options for control panel-->
 <div class="menu" id='mainMenu'>
@@ -39,7 +34,7 @@
     <button class="tablinks" onclick="openTab(event, 'krakenTab')">Kraken</button>
     <button class="tablinks" onclick="openTab(event, 'kraken2Tab')">Kraken2</button>
     <button class="tablinks" onclick="openTab(event, 'metaphlanTab')">MetaPhlAn</button>
-    <!-- <button class="tablinks" onclick="openTab(event, 'slimmTab')">SLIMM</button> -->
+    <button class="tablinks" onclick="openTab(event, 'kneadDataTab')">kneadData</button>
     <button class="tablinks" onclick="openTab(event, 'r_PlotMdsTab')">R Plot MDS</button>
     <button class="tablinks" onclick="openTab(event, 'r_CalculateStatsTab')">R Statistics Calculator</button>
     <button class="tablinks" onclick="openTab(event, 'r_PlotEffectSizeTab')">R Plot Effect Size</button>
@@ -61,30 +56,30 @@
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <p>Project name:
-        <input class="sp" id='project.configFile' name='project.configFile' type="text" size='35'></p>
+        <input class="sp" id='pipeline.configFile' name='pipeline.configFile' type="text" size='35'></p>
       <p>Project description (for your own records):
-        <input class="sp" id='project.description' name='project.description' type="text" size='200'></p>
+        <input class="sp" id='pipeline.description' name='pipeline.description' type="text" size='70'></p>
       <p>Copy input files into the parent directory:
-        <select class="sp" id='project.copyInput' name='project.copyInput'>
+        <select class="sp" id='pipeline.copyInput' name='pipeline.copyInput'>
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
       <p>Delete temporary files:
-        <select class='sp' id="project.deleteTempFiles" name="project.deleteTempFiles">
+        <select class='sp' id="pipeline.deleteTempFiles" name="pipeline.deleteTempFiles">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select></p>
         <button type="button" name="dockerDefaultProps" id="dockerDefaultProps">Add Default Properties</button>
       <p class="hidden" id="defaultPropsP">Path to default properties file:
-        <input class="sp" type="text" id="project.defaultProps" name="project.defaultProps" size='70'><br>
+        <input class="sp" type="text" id="pipeline.defaultProps" name="pipeline.defaultProps" size='70'><br>
         <!-- add file picker here -->
         <i>(Path to a default BioLockJ configuration file containing default
         property values that are overridden if defined in the primary
         configuration file.)</i></p>
       <p>Log level: <br><i>Determines log level sensitivity.</i>
-        <select class="sp" name="project.logLevel" id="project.logLevel">
+        <select class="sp" name="pipeline.logLevel" id="pipeline.logLevel">
           <option selected default value="">Click for options</option>
           <option value="DEBUG">Include debug output.</option>
           <option value="INFO">Include informative output.</option>
@@ -92,7 +87,7 @@
           <option value="ERROR">Include only errors.</option>
         </select></p>
       <p>Project runtime environment:
-        <select class="sp" name="project.env" id="project.env">
+        <select class="sp" name="pipeline.env" id="pipeline.env">
           <option selected default value="">Click for options</option>
           <option value="aws">AWS</option>
           <option value="cluster">Cluster</option>
@@ -100,38 +95,38 @@
         </select>
       </p>
       <p>A directory on the local workstation where the cluster.downloadModule will be downloaded
-        <input class="sp" type="text" id="project.downloadDir" name="project.downloadDir"><br></p>
+        <input class="sp" type="text" id="pipeline.downloadDir" name="pipeline.downloadDir"><br></p>
       <p>Set chmod -R command security bits on pipeline root directory (Ex. 770).
-        <input class="sp" type="text" id="project.permissions" name="project.permissions" size='70'>
+        <input class="sp" type="text" id="pipeline.permissions" name="pipeline.permissions" size='70'>
       </p>
       <p>Assign module to demultiplex datasets:
-        <input type="text" class="sp" id="project.defaultDemultiplexer" name="project.defaultDemultiplexer" placeholder="Demultiplexer" size='70'>
+        <input type="text" class="sp" id="pipeline.defaultDemultiplexer" name="pipeline.defaultDemultiplexer" placeholder="Demultiplexer" size='70'>
       </p>
       <p>ssign module to convert fastq sequence files into fasta format when required. Default = AwkFastaConverter":
-        <input type="text" class="sp" id="project.defaultFastaConverter" name="project.defaultFastaConverter" placeholder="AwkFastaConverter" size='70'>
+        <input type="text" class="sp" id="pipeline.defaultFastaConverter" name="pipeline.defaultFastaConverter" placeholder="AwkFastaConverter" size='70'>
       </p>
       <p>Assign module to merge paired reads when required. Default = PearMergeReads:
-        <input type="text" class="sp" id="project.defaultSeqMerger" name="project.defaultSeqMerger" placeholder="PearMergeReads" size='70'>
+        <input type="text" class="sp" id="pipeline.defaultSeqMerger" name="pipeline.defaultSeqMerger" placeholder="PearMergeReads" size='70'>
       </p>
       <p>Add implicit modules to the pipeline.
-        <select class="sp" id="project.disableAddImplicitModules" name="project.disableAddImplicitModules">
+        <select class="sp" id="pipeline.disableAddImplicitModules" name="pipeline.disableAddImplicitModules">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select>
       </p>
       <p>Disable automatic adding of prerequisite modules to pipeline.
-        <select class="sp" id="project.disableAddPreReqModules" name="project.disableAddPreReqModules">
+        <select class="sp" id="pipeline.disableAddPreReqModules" name="pipeline.disableAddPreReqModules">
           <option selected default value="">Click for options</option>
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select>
       </p>
       <p>Limit debug classes (used to limit classes that log debug statements):
-        <input type="text" class="sp" id="project.limitDebugClasses" name="project.limitDebugClasses" size='70'>
+        <input type="text" class="sp" id="pipeline.limitDebugClasses" name="pipeline.limitDebugClasses" size='70'>
       </p>
       <p>User profile (Bash users typically use ~/.bash_profile (the standard default)):
-        <input type="text" class="sp" id="project.userProfile" name="project.userProfile" size='70'>
+        <input type="text" class="sp" id="pipeline.userProfile" name="pipeline.userProfile" size='70'>
       </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -160,7 +155,7 @@
       </div>
     </fieldset>
     <p>BioLockJ automatically adds implicit modules as they are needed, but you may override this behavior and force it to run an implicit module.</p>
-    <select id="project.allowImplicitModules" name="project.allowImplicitModules">
+    <select id="pipeline.allowImplicitModules" name="pipeline.allowImplicitModules">
       <option class='noOverrideImplicit' selected default value="">Click for options</option>
       <option id='yesOverrideImplicit' value="Y">Allow implicit modules to be directly added to pipeline</option>
       <option class='noOverrideImplicit' value="N">Allow BLJ to determine where to add implicit modules in the pipeline</option>
@@ -528,6 +523,9 @@ For fastq, typically “@”.)<h5></p>
       <p>File property for RDP java executable JAR:
         <input class="sp" type="text" size='70' id="rdp.jar" name="rdp.jar">
       </p>
+      <p>Alternative RDP database:
+        <input type="text" name="rdp.db" id="rdp.db" value="">
+      </p>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -565,7 +563,7 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
-      <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
+      <a class ="downloadlink hidden" class="hidden">Download configuration file to default directory</a>
   </div>
 
   <div id="kraken2Tab" class="tabcontent">
@@ -579,7 +577,7 @@ For fastq, typically “@”.)<h5></p>
       </p>
       <button type='submit' class='saveTab'>Save progress</button>
       <button class="createDownload">Create configuration file for download</button>
-      <a class ="downloadlink" class="hidden">Download configuration file to default directory</a>
+      <a class ="downloadlink hidden" class="hidden">Download configuration file to default directory</a>
   </div>
 
   <div id="r_PlotMdsTab" class="tabcontent moduleTab">
@@ -613,7 +611,7 @@ For fastq, typically “@”.)<h5></p>
       <input type="text" class='sp' id="r_PlotMds.reportFields" name="r_PlotMds.reportFields" value="">
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -643,7 +641,7 @@ For fastq, typically “@”.)<h5></p>
       </select>
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -696,7 +694,7 @@ For fastq, typically “@”.)<h5></p>
       </select>
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -720,7 +718,7 @@ For fastq, typically “@”.)<h5></p>
       </select>
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -728,7 +726,7 @@ For fastq, typically “@”.)<h5></p>
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -749,7 +747,7 @@ For fastq, typically “@”.)<h5></p>
       <input class='sp' type="number" min="1" name="seqFileValidator.seqMinLen" id="seqFileValidator.seqMinLen" value="">
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -775,7 +773,7 @@ For fastq, typically “@”.)<h5></p>
       </select>
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -799,7 +797,19 @@ For fastq, typically “@”.)<h5></p>
       </select>
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="kneadDataTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a><br>
+    <!-- kneaddata.dbs ß just like input.dirPaths, kneaddata.dbs normally accepts multiple input paths, but on AWS we will require all DBs exist under 1 parent dir, so GUI should verify only 1 directory path given if they want to run on AWS. -->
+    Custom Protein Database Full path:<br>
+    <input type="text" name="kneaddata.dbs" id="kneaddata.dbs" value=""><br>
+    Note: Normally this field accepts multiple input paths, seperated by comas, but on AWS we require all DBs exist under a single parent directory.<br>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -826,7 +836,8 @@ For fastq, typically “@”.)<h5></p>
         <option value="Y">Yes</option>
         <option value="N">No</option>
       </select>
-    </p>
+    </p>blj_support Config files updated to use this property whenever we use Silva for RDP.
+    HumanN2 requires 2 DBs, AWS expects them both to reside under 1 parent directory.
     <p>HummanN2 nucleotide database (Directory property may contain multiple nucleotide database files):
     <input type="text" class="sp" name="humann2.nuclDB" id="humann2.nuclDB" value="">
     </p>
@@ -834,7 +845,7 @@ For fastq, typically “@”.)<h5></p>
     <input type="text" class="sp" name="humann2.protDB" id="humann2.protDB" value="">
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -849,7 +860,7 @@ For fastq, typically “@”.)<h5></p>
       </select>
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
@@ -863,18 +874,36 @@ For fastq, typically “@”.)<h5></p>
       <input class="sp" type="number" min="1" name="rarefySeqs.min" id="rarefySeqs.min" value="">
     </p>
     <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
+    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+  </div>
+
+  <div id="AwsTab" class="tabcontent moduleTab">
+    <button class="createDownload">Create configuration file for download</button><br>
+    aws.stack<input type="text" name="aws.stack" id="aws.stack" value=""><br>
+    aws.ram<input type="text" name="aws.ram" id="aws.ram" value=""><br>
+    s3.blj_proj<input type="s3.blj_proj" name="" value=""><br>
+    <button class="createDownload">Create configuration file for download</button>
+    <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 </form> <!--End of configForm -->
 
-  <div id="AwsTab" class="tabcontent">
-    <button type="button" id="getMalcolmGitRepo" name="button">Get Malcolm Repo</button>
-    <form id='configureAwsForm' class="" action="#" method="#">
+</div><!-- End Menu tab -->
+
+<div class="modal" id="awsSettings">
+  <div class="modal-content">
+    <span class="closeModal">×</span>
+    <legend>AWS Mini-dashboard</legend>
+      <button type="button" id="getMalcolmGitRepo" name="button">Get Malcolm Repo</button>
+      <button type="button" id="validateAwsCreditials" name="button">Pre-validate Credentials</button>
+      <form id='configureAwsForm' class="" action="#" method="#">
       <fieldset>
         <legend>Configure AWS Credentials</legend>
-        <p>AWS Access Key ID:<input type="text" name="AWSACCESSKEYID"></p>
-        <p>*AWS Secret Key ID:*<input type="text" name="AWSACCESSKEYID"></p>
+        <p>AWS Access Key ID:<input required type="text" name="AWSACCESSKEYID">
+          <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span></p>
+        <p>*AWS Secret Key ID:*<input required type="text" name="AWSSECRETACCESSKEY">
+          <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span></p>
         <p>Please select the geographic area in which you live. Subsequent configuration
       questions will narrow this down by presenting a list of cities, representing
       the time zones in which they are located.
@@ -896,25 +925,27 @@ For fastq, typically “@”.)<h5></p>
           <option value="12">US</option>
           <option value="13">Etc</option>
         </select>
+        <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span>
         </p>
-        <p>Default Output Format: <select class="" name="OUTPUTFORMAT">
-          <option default value="text">text</option>
-        </select></p>
         <p>Profile:
           <select required class="" name="PROFILE">
             <option value="default">default</option>
           </select>
+          <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span>
         </p>
         <p id="AWSOutput"></p>
-        <button type="button" id='submitConfigureAWS' name="button">Set AWS Configuration</button>
+        <button type="submit" id='submitConfigureAWS' name="button">Set AWS Configuration</button>
       </fieldset>
     </form>
     <form class="" id='AwsStack' action="#" method="">
       <fieldset>
-        <legend>Deploy AWS Compute Stack</legend>
-        <p>Stackname: <input type="text" name="stackname" value="">
+        <legend>
+          AWS CLoud Infrastructure Stack
+          <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
+        </legend>
+        <p>Stackname: <input type="text" name="stackname" value="" pattern="[-a-zA-Z0-9]">
         </p>
-        <p>Docker repository (for both jobs) <input type="text" name="dockerRepository" value="">
+        <p>Docker HUB user account (for images used):<input type="text" name="dockerRepository" value="biolockj">
         </p>
         <p>S3bucket: <input type="text" name="s3bucket" value="autogenerate">
         </p>
@@ -923,9 +954,11 @@ For fastq, typically “@”.)<h5></p>
         <p>Create or delete stack?
           <select class="" name="deployArg">
             <option default value="create">create</option>
-            <option value="delete">delet</option>
+            <option value="delete">delete</option>
           </select>
         </p>
+        <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span>
+        <a id="stackPath"></a>
         <button type="button" id='deployComputeStack' name="deployComputeStack">Deploy Compute Stack</button>
       </fieldset>
     </form>
@@ -934,33 +967,43 @@ For fastq, typically “@”.)<h5></p>
         <legend>EC2 headnode</legend>
         <p>Launch action:
           <select class="" name="launchAction">
-            <option default value="runscript">runscript</option>
             <option value="directconnect">directconnect</option>
+            <option value="runscript_attached">runscript attached</option>
+            <option value="runscript_detached">runscript detached</option>
           </select>
+        </p>
+        <p>Stack name:
+          <input type="text" placeholder="select AWS stack name"list="ec2StackName">
+          <datalist name='ec2StackName' placeholder='add your own' id="ec2StackName">
+            <option value="blj_testing">blj_testing</option>
+          </datalist>
         </p>
         <p>Script name:
         <input type="text" name="scriptName" value="startHeadNodeGui.sh"></p>
         <p>instanceType:
-          <input type="text" list="awsInstanceType" />
+          <input type="text" placeholder="select AWS instance type or define a custom type"list="awsInstanceType">
           <datalist name='awsInstanceType' id="awsInstanceType">
-            <option value="t2.micro">1GB</opt>
-            <option value="t2.small">2GB</opt>
-            <option value="t2.medium">4GB</opt>
-            <option value="t2.large">8GB</opt>
-            <option value="t2.xlarge">16GB</opt>
+            <option value="t2.micro">1GB</option>
+            <option value="t2.small">2GB</option>
+            <option value="t2.medium">4GB</option>
+            <option value="t2.large">8GB</option>
+            <option value="t2.xlarge">16GB</option>
           </datalist>
         </p>
+        <p>
+          Instance name:
+          <select class="" name="instanceType">
+            <option default value="HeadNode">HeadNode</option>
+          </select>
+        </p>
         <button type="button" id='launchEc2HeadNodeButton' name="launchEc2HeadNodeButton">Launch EC2 headnode</button>
+        <button type="button" id='terminateEc2HeadNodeButton' name="terminateEc2HeadNodeButton">Terminate EC2 headnode</button>
       </fieldset>
     </form>
+  </div>
+</div>
 
-
-
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink">Download configuration file to default directory</a>
-    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div><!-- end AWS div -->
-</div><!-- End Menu tab -->
+<!-- launchEC2Node.sh property instanceHostNamePublic blj_testing -->
 
 <div id='configManager' class="modal">
   <div class="modal-content">
@@ -984,7 +1027,7 @@ For fastq, typically “@”.)<h5></p>
   <form id="projectLaunchOptions">
     <fieldset>
       <legend>Project Launch Options</legend>
-      Use this configuation to start a new project.
+      Use this configuation to start a new pipeline.
       <input type="radio" name="projLaunch" value="launchNew" checked>
       <p id="projOptFieldSet"></p>
     </fieldset>
@@ -1035,9 +1078,19 @@ For fastq, typically “@”.)<h5></p>
   <!-- <button form='configForm' type="submit" name="button" class='hidden'></button> -->
 </div>
 
+<div id="urlInfo" class="">
+  <!--
+  This is a hidden panel for passing handlebars variables to the javascript.
+  It feels like a hack but I don't know enough about Express to find a better
+  solution
+ -->
+  <div id='configPath' class="">
+    {{configPath}}
+  </div>
+</div>
 
-
-<script type="text/javascript" src="./javascripts/config_menus.js"></script>
-<script type="text/javascript" src="./javascripts/config_config.js"></script>
-<script type="text/javascript" src="./javascripts/tests/standPropsAllPresent.js"></script>
+<script type="text/javascript" src="./../javascripts/config_menus.js"></script>
+<script type="text/javascript" src="./../javascripts/config_config.js"></script>
+<script type="text/javascript" src="./../javascripts/tests/standPropsAllPresent.js"></script>
+<script type="text/javascript" src="./../javascripts/awsMiniDash.js"></script>
 <!-- <script type="text/javascript" src="resetAnimationWorker.js"></script> -->

@@ -15,8 +15,8 @@ function saveConfigToGui(configTextandNameObject){
   //return returnPromiseFromServer('/saveConfigToGui', requestParameter = configTextandNameObject);
 }
 
-function retrieveProjects(){//gets all project names
-  return returnPromiseFromServer('/retrieveProjects', requestParameter = null);
+function retrievePipelines(){//gets all project names
+  return returnPromiseFromServer('/retrievePipelines', requestParameter = null);
 }//end function retrieveProjects
 
 function retrieveConfigs(){
@@ -24,7 +24,7 @@ function retrieveConfigs(){
 }//end function retrieveProjects
 
 function retrievePropertiesFile(configName){
-  console.log(configName);
+  console.log('retrievePropertiesFile configName: ', configName);
   return returnPromiseFromServer('/retrievePropertiesFile', requestParameter = configName);
 }
 
