@@ -1144,9 +1144,12 @@ function deleteConfig(configFileName) {
 }//end deleteConfig(configFileName)
 
 window.onload = function(){
-  configPath = document.getElementById('configPath').innerHTML;
+  let configPath = document.getElementById('configPath').innerHTML.trim();
   if (configPath){
-    console.log(configPath);
+    console.log('Windo.onload configPath: ', configPath);
+    document.getElementById('mainMenu').style.display = 'block';
+    loadConfigPathToForm(configPath);
+    currentConfig.configPath = configPath;
     // loadConfigPathToForm(configPath)
   }
 }
