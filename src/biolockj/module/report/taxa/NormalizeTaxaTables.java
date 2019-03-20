@@ -133,7 +133,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	/**
 	 * Parse Taxa names from the given header line.
 	 * 
-	 * @param header
+	 * @param header Head line of table
 	 * @return List of Taxa
 	 * @throws Exception if errors occur
 	 */
@@ -265,18 +265,18 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 * 
 	 * @param inputFile Count table
 	 * @param sampleNames Sample
-	 * @param otuNames
-	 * @param otuCounts
-	 * @throws Exception
+	 * @param taxaNames Taxa names
+	 * @param taxaCounts Taxa counts
+	 * @throws Exception if errors occur
 	 */
-	protected void writeDataToFile( final File inputFile, final List<String> sampleNames, final List<String> otuNames,
-			final List<List<Double>> otuCounts ) throws Exception
+	protected void writeDataToFile( final File inputFile, final List<String> sampleNames, final List<String> taxaNames,
+			final List<List<Double>> taxaCounts ) throws Exception
 	{
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( inputFile ) );
 
 		writer.write( MetaUtil.getID() );
 
-		for( final String s: otuNames )
+		for( final String s: taxaNames )
 		{
 			writer.write( Constants.TAB_DELIM + s );
 		}
@@ -288,9 +288,9 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		{
 			writer.write( sampleNames.get( x ) );
 
-			for( int y = 0; y < otuNames.size(); y++ )
+			for( int y = 0; y < taxaNames.size(); y++ )
 			{
-				writer.write( Constants.TAB_DELIM + otuCounts.get( x ).get( y ) );
+				writer.write( Constants.TAB_DELIM + taxaCounts.get( x ).get( y ) );
 			}
 
 			if( x + 1 != size )
@@ -317,20 +317,20 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	/**
 	 * Return the table index for rows with all zer count values
 	 * 
-	 * @param dataPointsUnnormalized
+	 * @param data List of table rows
 	 * @return Set of empty zero-rows
 	 * @throws Exception if errors occur
 	 */
-	protected static Set<Integer> findAllZeroIndex( final List<List<Double>> dataPointsUnnormalized ) throws Exception
+	protected static Set<Integer> findAllZeroIndex( final List<List<Double>> data ) throws Exception
 	{
 		final Set<Integer> allZero = new HashSet<>();
-		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
+		for( int x = 0; x < data.size(); x++ )
 		{
-			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
+			for( int y = 0; y < data.get( x ).size(); y++ )
 			{
 				double sum = 0;
 
-				for( final Double d: dataPointsUnnormalized.get( x ) )
+				for( final Double d: data.get( x ) )
 				{
 					sum += d;
 				}
