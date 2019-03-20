@@ -57,7 +57,7 @@ public final class DownloadUtil
 			final File pipeRoot = new File( Config.pipelinePath() );
 
 			boolean hasRmods = false;
-			final String status = ( BioLockJ.isPipelineComplete() ? "completed": "failed" ) + " pipeline -->";
+			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() -1 ) ) ? "completed": "failed" ) + " pipeline -->";
 			final Set<File> downloadPaths = new TreeSet<>();
 			for( final BioModule module: modules )
 			{
