@@ -10,6 +10,7 @@
 ##  Input directory:        -i <path>                                           ##
 ##                                                                              ##
 ##  Optional Parameters:                                                        ##
+##  Dev flag:               -dev                                                ##
 ##  Aws flag:               -aws                                                ##
 ##  Docker flag:            -docker                                             ##
 ##  Metadata directory:     -m  <path>                                          ##
@@ -43,8 +44,8 @@ blj_options() {
 	$(has_param $newPass) && options="$options -p $newPass"
 	$(has_param $inputDir) && options="$options -i $inputDir"
 	$(has_param $metaPath) && options="$options -m $metaPath"
-	$(has_param $HOST_BLJ) && options="$options -blj $HOST_BLJ"
-	$(has_param $HOST_BLJ_SUP) && options="$options -bljSup $HOST_BLJ_SUP"
+	$(has_param $runDev) && $(has_param $HOST_BLJ) && options="$options -blj $HOST_BLJ"
+	$(has_param $runDev) && $(has_param $HOST_BLJ_SUP) && options="$options -bljSup $HOST_BLJ_SUP"
 	echo $options
 }
 
@@ -107,11 +108,11 @@ run_docker() {
 	opt="$(blj_options)"
 	[ ${#1} -gt 0 ] && opt="$opt $1"
 	if $(has_param $metaPath); then
-		if $(has_param $HOST_BLJ) && $(has_param $HOST_BLJ_SUP); then
+		if $(has_param $runDev) && $(has_param $HOST_BLJ) && $(has_param $HOST_BLJ_SUP); then
 			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
 			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
-		elif $(has_param $HOST_BLJ); then
+		elif $(has_param $runDev) && $(has_param $HOST_BLJ); then
 			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
 			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type)
@@ -121,11 +122,11 @@ run_docker() {
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config $(manager_type)
 		fi
 	else
-		if $(has_param $HOST_BLJ) && $(has_param $HOST_BLJ_SUP); then
+		if $(has_param $runDev) && $(has_param $HOST_BLJ) && $(has_param $HOST_BLJ_SUP); then
 			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
 			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
-		elif $(has_param $HOST_BLJ); then
+		elif $(has_param $runDev) && $(has_param $HOST_BLJ); then
 			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
 			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
 				-v $(blj_proj):/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type)
@@ -162,6 +163,7 @@ verify_inputs() {
 }
 
 echo "Running dockblj..."
+runDev=$(named_arg "$@" "-dev")
 runAws=$(named_arg "$@" "-aws")
 config=$(named_arg "$@" "-c")
 inDocker=$(arg_exists "$@" "-docker")

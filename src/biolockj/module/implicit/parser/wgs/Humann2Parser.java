@@ -67,7 +67,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		}
 		if( !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) )
 		{
-			summary += "UNMAPPED column discarded from output tables" + RETURN;
+			summary += "UNINTEGRATED column discarded from output tables" + RETURN;
 		}
 
 		return summary;

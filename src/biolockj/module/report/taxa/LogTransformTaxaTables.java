@@ -41,9 +41,6 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();
 		final List<String> sampleIDs = new ArrayList<>();
 		final List<String> otuNames = new ArrayList<>();
-
-		double tableSum = 0;
-
 		final BufferedReader reader = BioLockJUtil.getFileReader( otuTable );
 		try
 		{
@@ -70,15 +67,12 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 				}
 
 				final double rowSum = innerList.stream().mapToDouble( Double::doubleValue ).sum();
-				tableSum += rowSum;
+	
 				if( rowSum == 0 )
 				{
 					throw new Exception( sampleID + " has all zeros for table counts." );
 				}
 				nextLine = reader.readLine();
-
-				Log.info( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
-				Log.info( getClass(), "Table Sum [" + sampleIDs.size() + "] = " + tableSum );
 			}
 		}
 		finally
@@ -92,7 +86,6 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
 		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
 
-		Log.info( getClass(), "Final Table Sum = " + tableSum );
 		Log.info( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )

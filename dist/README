@@ -1,4 +1,4 @@
-The $BLJ/resource/build.xml Ant script builds release jar & tgz files to this directory: $BLJ/dist.
+The $BLJ/resources/build.xml Ant script builds release jar & tgz files to this directory: $BLJ/dist.
 
  * Ant target "compile-source" builds $BLJ/dist/BioLockJ.jar
 
