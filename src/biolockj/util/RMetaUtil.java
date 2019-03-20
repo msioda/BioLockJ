@@ -261,9 +261,6 @@ public final class RMetaUtil
 		return binaryFields;
 	}
 
-
-
-
 	/**
 	 * Method analyzes the file name to determine if the file could be output from the BioModule
 	 * {@link biolockj.module.report.taxa.AddMetadataToTaxaTables}
@@ -326,7 +323,7 @@ public final class RMetaUtil
 			}
 
 		}
-		
+
 		if( !nominalFields.isEmpty() )
 		{
 			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
@@ -342,7 +339,7 @@ public final class RMetaUtil
 				Config.setConfigProperty( NOMINAL_FIELDS, val );
 			}
 		}
-		
+
 		if( !numericFields.isEmpty() )
 		{
 			final String val = BioLockJUtil.getCollectionAsString( numericFields );
@@ -483,7 +480,7 @@ public final class RMetaUtil
 	 * Binary fields contain only 2 unique non-NA options
 	 */
 	protected static final String BINARY_FIELDS = "R_internal.binaryFields";
-	
+
 	/**
 	 * Name of R script variable with metadata column count
 	 */

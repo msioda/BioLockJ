@@ -1,14 +1,16 @@
-######################################################################
-##                                                                  ##
-##  This script launches Docker webapp container                    ##
-##  Must map volume to /config to save new BLJ Config files         ##
-##                                                                  ##
-##  Runtime args not required but 2 optional arguments accepted     ##
-##                                                                  ##
-##  1. Docker Account ID (default = "biolockj")                     ##
-##  2. "dev" - Map volume to replace container $BLJ with host $BLJ  ##
-##                                                                  ##
-######################################################################
+#############################################################################
+##                                                                         ##
+##  This script launches Docker webapp container                           ##
+##  Must map volume to /config to save new BLJ Config files                ##
+##                                                                         ##
+##  Runtime args not required but 2 optional arguments accepted            ##
+##                                                                         ##
+##  1. Docker Account ID (default = "biolockj")                            ##
+##  2. "-dev" Override container installation dirs with host dirs          ##
+##  	    b) Map host $BLJ to container /app/biolockj ($BLJ)                 ##
+##  	    b) Map host $BLJ_SUP to container /app/blj_support (new dir)       ##
+##                                                                         ##
+#############################################################################
 
 # Launch web browser based on existence of xdg-open, gnome-open, or python 
 startBrowser() {
@@ -25,7 +27,8 @@ startBrowser() {
 	fi
 }
 
-# Launch blj_webapp on localhost 
+# Launch blj_webapp on localhost for standard users.
+# ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
 # Param $1 = Docker Hub Account ID
 runDockerWebApp() {
 	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' $(dockerID $1)/blj_webapp ]"
@@ -38,7 +41,10 @@ runDockerWebApp() {
 		$(dockerID $1)/blj_webapp
 }
 
-# Launch blj_webapp on localhost in dev mode (replace container $BLJ with host $BLJ)
+# Launch blj_webapp on localhost in "dev mode"  by overriding default container $BLJ
+# ---> Assign env var HOST_BLJ=$BLJ
+# ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
+# Replace container installed $BLJ dir with host $BLJ)
 # Param $1 = Docker Hub Account ID
 devDockerWebApp() {
 	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' $(dockerID $1)/blj_webapp]"
@@ -53,6 +59,29 @@ devDockerWebApp() {
 		$(dockerID $1)/blj_webapp
 }
 
+# Launch blj_webapp on localhost in "dev mode" by overriding default container $BLJ + add $BLJ_SUP dir
+# ---> Assign env var HOST_BLJ=$BLJ
+# ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
+# ---> Assign env var HOST_BLJ_SUP=$BLJ_SUP 
+# ---> Map host $BLJ dir to container /app/biolockj
+# ---> Map host $BLJ_SUP dir to container /app/blj_support (if $BLJ_SUP exists)
+# Replace container installed $BLJ dir with host $BLJ)
+# Param $1 = Docker Hub Account ID
+devSupDockerWebApp() {
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' -e 'HOST_BLJ_SUP=$BLJ_SUP' $(dockerID $1)/blj_webapp]"
+	docker run --rm -p 8080:3000 \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $BLJ/resources/config/gui:/config \
+		-v $BLJ_PROJ:/pipelines:delegated \
+		-v $BLJ:/app/biolockj \
+		-v $BLJ_SUP:/app/blj_support \
+		-v $BLJ/web_app/logs:/log:delegated \
+		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
+		-e "HOST_BLJ=$BLJ" \
+		-e "HOST_BLJ_SUP=$BLJ_SUP" \
+		$(dockerID $1)/blj_webapp
+}
+
 # If the arg is empty, return the default value "biolockJ" 
 dockerID() {
 	if [ ${#1} -eq 0 ]; then
@@ -62,11 +91,14 @@ dockerID() {
 	fi
 }
 
-if [ $# -gt 0 ] && [ "$1" == "dev" ] || [ "$2" == "dev" ]; then
+if [ "$1" == "-dev" ] || [ "$2" == "-dev" ]; then
 	dockerID=$DOCKER_HUB_USER
-	[ $# -eq 2 ] && [ "$1" == "dev" ] && dockerID=$2
-	[ $# -eq 2 ] && [ "$2" == "dev" ] && dockerID=$1
-	devDockerWebApp $dockerID
+	[ $# -eq 2 ] && [ "$1" == "-dev" ] && dockerID=$2
+	[ $# -eq 2 ] && [ "$2" == "-dev" ] && dockerID=$1
+	[ ! -d "$BLJ_SUP" ] && devDockerWebApp $dockerID
+	[ -d "$BLJ_SUP" ] && devSupDockerWebApp $dockerID
+elif [ "$1" == "-aws" ] || [ "$2" == "-aws" ]; then
+	runDockerAwsWebApp $DOCKER_HUB_USER
 else
 	runDockerWebApp $DOCKER_HUB_USER
 fi

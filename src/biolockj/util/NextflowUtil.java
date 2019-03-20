@@ -165,9 +165,9 @@ public class NextflowUtil
 		Job.submit( args );
 		if( !templateConfig().exists() )
 		{
-			throw new Exception( "Unable to build template: " + templateConfig().getAbsolutePath() );
+			throw new Exception( "Nextflow Template failed to build: " + templateConfig().getAbsolutePath() );
 		}
-		Log.info( NextflowUtil.class, "Template file generated: " + templateConfig().getAbsolutePath() );
+		Log.info( NextflowUtil.class, "Nextflow Template successfully created: " + templateConfig().getAbsolutePath() );
 		return templateConfig();
 	}
 

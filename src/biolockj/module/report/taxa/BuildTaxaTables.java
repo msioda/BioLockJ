@@ -51,7 +51,7 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 			throws Exception
 	{
 		final String label = "OTUs";
-		final int pad = SummaryUtil.getPad( label );
+		final int pad = SummaryUtil.getPad( label ) + 4;
 
 		final TreeSet<String> otus = OtuUtil.findUniqueOtus( sampleOtuCounts );
 		Log.info( getClass(), "Write " + otus.size() + " unique OTUs for: " + sampleOtuCounts.size() + " samples" );

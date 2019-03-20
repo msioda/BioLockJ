@@ -136,7 +136,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 		{
 			return new File( Config.getSystemFilePath( path ) );
 		}
-		
+
 		return null;
 	}
 

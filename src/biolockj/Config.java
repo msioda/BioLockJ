@@ -446,7 +446,7 @@ public class Config
 	/**
 	 * Return filePath with system parameter values replaced. If filePath starts with "~" or $HOME it is replaced with
 	 * System.getProperty( "user.home" ). If filePath contains $USER it is replaced with System.getProperty( "user.name"
-	 * ).
+	 * ). Also $BLJ and $BLJ_SUP params are handled for use in Docker implementations
 	 * 
 	 * @param filePath File path
 	 * @return Formatted filePath
@@ -454,7 +454,6 @@ public class Config
 	 */
 	public static String getSystemFilePath( String filePath ) throws ConfigPathException
 	{
-
 		if( filePath != null && filePath.startsWith( "~" ) )
 		{
 			Log.debug( Config.class, "Replacing ~ in file-path: " + filePath );
@@ -475,12 +474,30 @@ public class Config
 			filePath = filePath.replace( "$USER", System.getProperty( "user.name" ) );
 			Log.debug( Config.class, "Updated file-path: " + filePath );
 		}
+		
+		if( filePath != null && filePath.contains( "$BLJ_META" ) )
+		{
+			Log.debug( Config.class, "Replacing $BLJ_META in file-path: " + filePath );
+			filePath = System.getProperty( "user.home" ) + File.separator + METADATA + filePath.substring( 9 );
+			Log.debug( Config.class, "Updated file-path: " + filePath );
+		}
+		
 
 		if( filePath != null && filePath.contains( "$BLJ_SUP" ) )
 		{
-			final File bljSup = new File(
+			File bljSup = new File(
 					BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
-			if( bljSup.exists() && bljSup.isDirectory() )
+			if( !bljSup.exists() || !bljSup.isDirectory() )
+			{
+				bljSup = null;
+			}
+
+			if( RuntimeParamUtil.isDockerMode() && RuntimeParamUtil.getDockerHostBLJ_SUP() != null )
+			{
+				bljSup = RuntimeParamUtil.getDockerHostBLJ_SUP();
+			}
+
+			if( bljSup != null )
 			{
 				Log.debug( Config.class, "Replacing $BLJ_SUP in file-path: " + filePath );
 				filePath = filePath.replace( "$BLJ_SUP", bljSup.getAbsolutePath() );
@@ -1044,6 +1061,7 @@ public class Config
 		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
 	}
 
+	private static final String METADATA = "metadata";
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
 	private static File pipelineDir = null;

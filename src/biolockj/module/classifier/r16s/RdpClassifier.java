@@ -140,7 +140,8 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 		}
 
 		final String dbParam = RuntimeParamUtil.isDockerMode()
-				? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
+				? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(),
+						DockerUtil.CONTAINER_DB_DIR )
 				: getDB().getAbsolutePath();
 
 		return DB_PARAM + " " + dbParam + " ";

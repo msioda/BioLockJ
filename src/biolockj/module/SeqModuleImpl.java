@@ -43,6 +43,21 @@ public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModul
 		return SeqUtil.getSeqFiles( files );
 	}
 
+	/**
+	 * Add database info if module is a DatabaseModule
+	 */
+	@Override
+	public String getSummary() throws Exception
+	{
+		String summary = "";
+		if( this instanceof DatabaseModule && ( (DatabaseModule) this ).getDB() != null )
+		{
+			summary = "" + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
+		}
+
+		return super.getSummary() + summary;
+	}
+
 	@Override
 	public boolean isValidInputModule( final BioModule module )
 	{

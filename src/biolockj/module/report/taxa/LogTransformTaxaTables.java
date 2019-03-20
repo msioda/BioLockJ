@@ -11,12 +11,11 @@
  */
 package biolockj.module.report.taxa;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
 import java.util.*;
-import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.exception.ConfigFormatException;
 import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
@@ -27,232 +26,107 @@ import biolockj.util.TaxaUtil;
  * 
  * @blj.web_desc Log Transform Taxa Tables
  */
-public class LogTransformTaxaTables extends TaxaCountModule implements JavaModule
+public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaModule
 {
-
-	/**
-	 * Verify {@link biolockj.Config}.{@value biolockj.Constants#REPORT_LOG_BASE} property is valid (if defined) with a
-	 * value = (e or 10).
-	 *
-	 * @throws ConfigFormatException if REPORT_LOG_BASE is not set to a valid option (e or 10)
-	 */
-	@Override
-	public void checkDependencies() throws Exception
-	{
-		logBase = Config.requireString( this, Constants.REPORT_LOG_BASE );
-
-		if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
-		{
-			throw new ConfigFormatException( Constants.REPORT_LOG_BASE, "Property only accepts value \"10\" or \"e\"" );
-		}
-
-		super.checkDependencies();
-	}
-
-	/**
-	 *
-	 */
-	@Override
-	public void runModule() throws Exception
-	{
-		for( final File file: getInputFiles() )
-		{
-			transform( file );
-		}
-	}
-
 	/**
 	 * Log transform the data
 	 *
 	 * @param otuTable OTU raw count table
 	 * @throws Exception if unable to construct LogTransformTaxaTables
 	 */
+	@Override
 	protected void transform( final File otuTable ) throws Exception
 	{
-		final BufferedReader reader = BioLockJUtil.getFileReader( otuTable );
 		final List<List<Double>> dataPointsLogged = new ArrayList<>();
 		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();
-		final List<String> sampleNames = new ArrayList<>();
-		final List<String> otuNames = getOtuNames( reader.readLine() );
+		final List<String> sampleIDs = new ArrayList<>();
+		final List<String> otuNames = new ArrayList<>();
 
-		String nextLine = reader.readLine();
-		int totalCounts = 0;
-		while( nextLine != null )
+		double tableSum = 0;
+
+		final BufferedReader reader = BioLockJUtil.getFileReader( otuTable );
+		try
 		{
-			final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
-			final String sampleName = st.nextToken();
-			final List<Double> innerList = new ArrayList<>();
-			sampleNames.add( sampleName );
-			dataPointsUnnormalized.add( innerList );
-			dataPointsLogged.add( new ArrayList<Double>() );
-
-			while( st.hasMoreTokens() )
+			otuNames.addAll( getOtuNames( reader.readLine() ) );
+			String nextLine = reader.readLine();
+			while( nextLine != null )
 			{
-				final String nextToken = st.nextToken();
-				double d = 0;
-				if( nextToken.length() > 0 )
+				final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
+				final String sampleID = st.nextToken();
+				final List<Double> innerList = new ArrayList<>();
+				sampleIDs.add( sampleID );
+				dataPointsUnnormalized.add( innerList );
+				dataPointsLogged.add( new ArrayList<Double>() );
+
+				while( st.hasMoreTokens() )
 				{
-					d = Double.parseDouble( nextToken );
+					final String nextToken = st.nextToken();
+					double d = 0;
+					if( nextToken.length() > 0 )
+					{
+						d = Double.parseDouble( nextToken );
+					}
+					innerList.add( d );
 				}
 
-				innerList.add( d );
-				totalCounts += d;
-			}
+				final double rowSum = innerList.stream().mapToDouble( Double::doubleValue ).sum();
+				tableSum += rowSum;
+				if( rowSum == 0 )
+				{
+					throw new Exception( sampleID + " has all zeros for table counts." );
+				}
+				nextLine = reader.readLine();
 
-			nextLine = reader.readLine();
+				Log.info( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
+				Log.info( getClass(), "Table Sum [" + sampleIDs.size() + "] = " + tableSum );
+			}
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
 		}
 
-		reader.close();
-		assertNum( otuTable, totalCounts, dataPointsUnnormalized );
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
+		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
+
+		Log.info( getClass(), "Final Table Sum = " + tableSum );
+		Log.info( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
-			if( x == 14 )
-			{
-				Log.warn( getClass(), "Found all zero row" + x );
-			}
-			final List<Double> unnormalizedInnerList = dataPointsUnnormalized.get( x );
-
 			final List<Double> loggedInnerList = dataPointsLogged.get( x );
-
-			for( int y = 0; y < unnormalizedInnerList.size(); y++ )
+			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
 			{
+				double val = dataPointsUnnormalized.get( x ).get( y ) + 1;
 				if( allZeroIndex.contains( x ) )
 				{
 					// index 0 = col headers, so add + 1
 					final String id = MetaUtil.getSampleIds().get( x + 1 );
-					Log.warn( getClass(), "All zero row will not be transformed for " + id );
+					Log.warn( getClass(), "All zero row will not be transformed - ID ommitted: " + id );
 				}
-				if( logBase.equalsIgnoreCase( LOG_E ) )
+				else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 				{
-					loggedInnerList.add( Math.log( y + 1 ) );
+					loggedInnerList.add( Math.log( val ) );
 				}
-				else if( logBase.equalsIgnoreCase( LOG_10 ) )
+				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
 				{
-					loggedInnerList.add( Math.log10( y + 1 ) );
+					loggedInnerList.add( Math.log10( val ) );
 				}
 			}
 		}
 
 		final String level = TaxaUtil.getTaxonomyTableLevel( otuTable );
 		Log.debug( getClass(), "Transforming table for level: " + level );
-
-		final File logNormTable = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, "Log" + logBase );
-
-		writeDataToFile( logNormTable, sampleNames, otuNames, dataPointsLogged );
+		final File logNormTable = getLogTransformedFile( level );
+		writeDataToFile( logNormTable, filteredSampleIDs, otuNames, dataPointsLogged );
 	}
-
-	private List<String> getOtuNames( final String firstLine ) throws Exception
+	
+	private File getLogTransformedFile( final String level ) throws Exception
 	{
-		final List<String> otuNames = new ArrayList<>();
-		final StringTokenizer st = new StringTokenizer( firstLine, Constants.TAB_DELIM );
-		st.nextToken(); // skip ID & then strip quotes
-		while( st.hasMoreTokens() )
-		{
-			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
-		}
-
-		return otuNames;
+		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, "_Log" + getLogBase() );
 	}
-
-	private void writeDataToFile( final File file, final List<String> sampleNames, final List<String> otuNames,
-			final List<List<Double>> otuCounts ) throws Exception
-	{
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( file ) );
-
-		writer.write( MetaUtil.getID() );
-
-		for( final String s: otuNames )
-		{
-			writer.write( Constants.TAB_DELIM + s );
-		}
-
-		writer.write( Constants.RETURN );
-
-		final int size = sampleNames.size();
-		for( int x = 0; x < size; x++ )
-		{
-			writer.write( sampleNames.get( x ) );
-
-			for( int y = 0; y < otuNames.size(); y++ )
-			{
-				writer.write( Constants.TAB_DELIM + otuCounts.get( x ).get( y ) );
-			}
-
-			if( x + 1 != size )
-			{
-				writer.write( Constants.RETURN );
-			}
-		}
-
-		writer.close();
-	}
-
-	private static void assertNum( final File otuTable, final int totalCounts,
-			final List<List<Double>> dataPointsUnnormalized ) throws Exception
-	{
-		int sum = 0;
-
-		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
-		{
-			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
-			{
-				sum += dataPointsUnnormalized.get( x ).get( y );
-			}
-		}
-
-		if( totalCounts != sum )
-		{
-			throw new Exception( "Logic error " + totalCounts + " " + sum + " --> " + otuTable.getAbsolutePath() );
-		}
-
-		if( dataPointsUnnormalized.size() > 0 )
-		{
-			final int length = dataPointsUnnormalized.get( 0 ).size();
-
-			for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
-			{
-				if( length != dataPointsUnnormalized.get( x ).size() )
-				{
-					throw new Exception( "Jagged array in: " + otuTable.getAbsolutePath() );
-				}
-			}
-		}
-	}
-
-	private static Set<Integer> findAllZeroIndex( final List<List<Double>> dataPointsUnnormalized ) throws Exception
-	{
-		final Set<Integer> allZero = new HashSet<>();
-		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
-		{
-			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
-			{
-				double sum = 0;
-
-				for( final Double d: dataPointsUnnormalized.get( x ) )
-				{
-					sum += d;
-				}
-
-				if( sum == 0 )
-				{
-					allZero.add( x );
-				}
-			}
-		}
-		return allZero;
-	}
-
-	private String logBase = "";
-
-	/**
-	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
-	 */
-	protected static final String LOG_10 = "10";
-
-	/**
-	 * Log e display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
-	 */
-	protected static final String LOG_E = "e";
+	
 }
