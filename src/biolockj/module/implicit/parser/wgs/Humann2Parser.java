@@ -14,8 +14,8 @@ package biolockj.module.implicit.parser.wgs;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import biolockj.Config;
 import biolockj.Constants;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.wgs.Humann2Classifier;
@@ -37,6 +37,8 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	{
 		super.checkDependencies();
 		PathwayUtil.verifyConfig( this );
+		Config.getBoolean( this, HN2_KEEP_UNMAPPED );
+		Config.getBoolean( this, HN2_KEEP_UNINTEGRATED );
 	}
 
 	@Override
@@ -59,6 +61,14 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		{
 			summary += BioLockJUtil.addTrailingSpaces( "# Gene Families:", pad ) + numGeneFamilies + RETURN;
 		}
+		if( !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) )
+		{
+			summary += "UNMAPPED column discarded from output tables" + RETURN;
+		}
+		if( !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) )
+		{
+			summary += "UNMAPPED column discarded from output tables" + RETURN;
+		}
 
 		return summary;
 	}
@@ -71,6 +81,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 	/**
 	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.Humann2Classifier}.
+	 * Skip mapping of UNMAPPED and UNINTEGRATED columns
 	 *
 	 * Sample HumanN2 report line (head output_pAbund.tsv):<br>
 	 * 1st cell format: [Pathway_ID]:[Pathway_Descr] | g__[genus_taxa].s__[species_taxa]<br>
@@ -89,6 +100,8 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
 			try
 			{
+				boolean headerRow = true;
+				Set<Integer> skipCols = new HashSet<>();
 				for( final String[] record: data )
 				{
 					if( numSamples == null )
@@ -96,12 +109,30 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 						count++;
 					}
 					boolean newRecord = true;
-					for( final String cell: record )
+					for( int i=0; i<record.length; i++ )
 					{
-						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + BioLockJUtil.removeQuotes( cell ) );
+						String cell = BioLockJUtil.removeQuotes( record[ i ] );
+						if( headerRow && cell.equals( UNMAPPED ) && !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) )
+						{
+							skipCols.add( i );
+						}
+						else if( headerRow && cell.equals( UNINTEGRATED ) && !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) )
+						{
+							skipCols.add( i );
+						}
+						else if( skipCols.contains( i ) )
+						{
+							skipCols.add( i );
+						}
+						else
+						{
+							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + cell );
+						}
+
 						newRecord = false;
 					}
 					writer.write( Constants.RETURN );
+					headerRow = false;
 				}
 			}
 			finally
@@ -216,6 +247,22 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 		return transpose;
 	}
+	
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #HN2_KEEP_UNMAPPED}<br>
+	 * Set value = {@value biolockj.Constants#TRUE}  to keep UNMAPPED column in count tables
+	 */
+	protected static final String HN2_KEEP_UNMAPPED = "humann2.keepUnmapped";
+
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #HN2_KEEP_UNINTEGRATED}<br>
+	 * Set value = {@value biolockj.Constants#TRUE} to keep UNINTEGRATED column in count tables
+	 */
+	protected static final String HN2_KEEP_UNINTEGRATED = "humann2.keepUnintegrated";
+
+	
+
 
 	private Integer numGeneFamilies = null;
 	private Integer numPathwayAbund = null;
@@ -227,4 +274,7 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	private static final String KD_SUFFIX = "_kneaddata";
 	private static final String PAIRED_SUFFIX = "_paired_merged";
 	private static final String RPK_SUFFIX = "-RPKs";
+	private static final String UNINTEGRATED = "UNINTEGRATED";
+	private static final String UNMAPPED = "UNMAPPED";
+	
 }
