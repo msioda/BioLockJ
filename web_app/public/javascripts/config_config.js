@@ -528,7 +528,7 @@ const defaultConfigs = []; //array to hold all of the configs.
 
 document.getElementById('localFile').addEventListener('change', currentConfig.loadLocal);
 
-//
+//loads a .properties file to the mainMenu from its path as a string
 function loadConfigPathToForm(conPath) {
   const tempConfig = retrievePropertiesFile({propertiesFile : conPath});
   tempConfig.then( propertiesFile => {
