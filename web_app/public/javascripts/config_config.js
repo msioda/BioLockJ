@@ -713,15 +713,10 @@ const launchModal = document.getElementById('launchConsole');
 // Get the <span> element that closes the modal
 const launchSpan = Array.from(document.getElementsByClassName("closeModal"));
 
+// When the user clicks on <span> (x), close the modal
 launchSpan.forEach(span => span.addEventListener('click', function(){
   this.parentNode.parentNode.style.display = "none";
 }));
-
-// When the user clicks on <span> (x), close the modal
-// launchSpan.onclick = function() {
-//     launchModal.style.display = "none";
-// }
-
 
 // NOTE: add event listener for default props section after talking to Mike
 const dockerDefaultProps = document.getElementById('dockerDefaultProps');
