@@ -200,8 +200,8 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 				}
 				nextLine = reader.readLine();
 
-				Log.info( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
-				Log.info( getClass(), "Table Sum [" + sampleIDs.size() + "] = " + tableSum );
+				Log.debug( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
+				Log.debug( getClass(), "Table Sum [" + sampleIDs.size() + "] = " + tableSum );
 			}
 		}
 		finally
@@ -216,9 +216,9 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
 		final double aveRowSum = tableSum / filteredSampleIDs.size();
 
-		Log.info( getClass(), "Final Table Sum = " + tableSum );
-		Log.info( getClass(), "Average Row Sum = " + aveRowSum );
-		Log.info( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
+		Log.debug( getClass(), "Final Table Sum = " + tableSum );
+		Log.debug( getClass(), "Average Row Sum = " + aveRowSum );
+		Log.debug( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
@@ -233,7 +233,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 				{
 					// index 0 = col headers, so add + 1
 					final String id = MetaUtil.getSampleIds().get( x + 1 );
-					Log.warn( getClass(), "All zero row will not be transformed - ID ommitted: " + id );
+					Log.warn( getClass(), "All zero row will not be transformed - ID removed: " + id );
 				}
 				else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 				{

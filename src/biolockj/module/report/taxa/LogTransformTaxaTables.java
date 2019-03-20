@@ -86,7 +86,7 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
 		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
 
-		Log.info( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
+		Log.debug( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
