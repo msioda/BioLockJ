@@ -943,7 +943,7 @@ For fastq, typically “@”.)<h5></p>
           AWS CLoud Infrastructure Stack
           <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
         </legend>
-        <p>Stackname: <input type="text" name="stackname" value="" pattern="[-a-zA-Z0-9]">
+        <p>Stackname: <input type="text" name="stackname" value="" pattern="[-a-zA-Z0-9]"> <p id="awsMiniDashStackName"></p>
         </p>
         <p>Docker HUB user account (for images used):<input type="text" name="dockerRepository" value="biolockj">
         </p>
@@ -957,7 +957,9 @@ For fastq, typically “@”.)<h5></p>
             <option value="delete">delete</option>
           </select>
         </p>
-        <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span>
+        <span class="correctInput">&#10003;</span>
+        <span class='incorrectInput'>X</span>
+        <span class='inProgress'>O</span>
         <a id="stackPath"></a>
         <button type="button" id='deployComputeStack' name="deployComputeStack">Deploy Compute Stack</button>
       </fieldset>
