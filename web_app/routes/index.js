@@ -403,7 +403,9 @@ router.post('/configureAws', function(req, res, next) {
     const sys = require('util');
     const exec = require('child_process').exec;
       //then write credentials
-    var spawn = require('child_process').spawn,
+    var spawn = require('child_process').spawn;
+    console.log(batchAwsConfigFile);
+    console.log(`source ${batchAwsConfigFile} ; configAWScredentials.sh write ${req.body.formData.PROFILE} ${req.body.formData.REGION} text ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`);
     aws = spawn(`source ${batchAwsConfigFile} ; configAWScredentials.sh write ${req.body.formData.PROFILE} ${req.body.formData.REGION} text ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, {shell: '/bin/bash'});
 
     let response = "";
@@ -411,10 +413,6 @@ router.post('/configureAws', function(req, res, next) {
     aws.stdout.on('data', function (data) {
       console.log('stdout: ' + data.toString());
       response += data.toString();
-      // res.setHeader('Content-Type', 'text/html');
-      // res.write(data.toString());
-      // return res.end();
-      // console.log(response);
     });
 
     aws.stderr.on('data', function (data) {
@@ -428,14 +426,7 @@ router.post('/configureAws', function(req, res, next) {
       console.log(response);
       console.log('child process exited with code ' + code.toString());
     });
-    // exec(`source ${batchAwsConfigFile} ; writeAWScredentials.sh ${req.body.formData.PROFILE} ${req.body.formData.REGION} ${req.body.formData.OUTPUTFORMAT} ${req.body.formData.AWSACCESSKEYID} ${req.body.formData.AWSSECRETACCESSKEY}`, {shell: '/bin/bash'},  function(err, stdout, stderr) {
-    //   console.log(stdout);
-    //   console.error(err);
-    //   console.error(stderr);
-    //   res.setHeader('Content-Type', 'text/html');
-    //   res.write(`Server Response: ${stdout}`);
-    //   res.end();
-    // });
+
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
     console.error(e);
@@ -451,18 +442,19 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
   console.log('req.body.formData: ', req.body.formData);
   console.log('deployCloudInfrastructure');
   try {
+    const outputOptions = ['CREATE_COMPLETE', 'CREATE_FAILED', 'DELETE_COMPLETE', 'invalid']
     if (req.body.formData.deployArg === 'delete'){
-      var spawn = require('child_process').spawn,
-      aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh delete ${req.body.formData.stackname}`, {shell: '/bin/bash'});
+      var spawn = require('child_process').spawn;
+      let aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh delete ${req.body.formData.stackname}`, {shell: '/bin/bash'});
       //source ~/.batchawsdeploy/config ; deployCloudInfrastructure.sh delete testing
 
       aws.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
-        let statusIndicator = 'deleting KeyPair: ';
         let output = data.toString().trim()
-        if (output.startsWith(statusIndicator)){
+        if (outputOptions.includes(output)){
+          console.log(output);
           res.setHeader('Content-Type', 'text/html');
-          res.write("success");
+          res.write(output);
           res.end();
         }
       });
@@ -481,9 +473,9 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
           //source ~/.batchawsdeploy/config ; deployCloudInfrastructure.sh create testingblj biolockj
       aws.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
-        let statusIndicator = 'infrastructureScriptStatus=';
         let output = data.toString().trim()
-        if (output.startsWith('infrastructureScriptStatus=')){
+        if (outputOptions.includes(output)){
+          console.log(output);
           res.setHeader('Content-Type', 'text/html');
           res.write(output);
           res.end();
