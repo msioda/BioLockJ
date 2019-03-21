@@ -50,6 +50,9 @@ document.getElementById('submitConfigureAWS').addEventListener('click', function
 //document.getElementById('configureAwsForm').getElementsByTagName('span').getElementsByClassName('correctInput')
 document.getElementById('deployComputeStack').addEventListener('click', function(evt){
   evt.preventDefault();
+  console.log(this.parentNode);
+  let inProgress = Array.from(this.parentNode.getElementsByClassName('inProgress'));
+  inProgress.forEach( ele => ele.style.display = 'block');
   console.log('this: ', this);
   let formData = {};
   let myForm = new FormData(this.parentNode.parentNode);
@@ -61,15 +64,18 @@ document.getElementById('deployComputeStack').addEventListener('click', function
   request.open("POST", '/deployCloudInfrastructure', true);
   request.setRequestHeader("Content-Type", "application/json");
   request.send(JSON.stringify({formData}));
-
   request.onreadystatechange = function() {
     if (request.readyState == XMLHttpRequest.DONE) {
       console.log(request.responseText);
+      inProgress.forEach( ele => ele.style.display = 'none');
       let correct = Array.from(this.parentNode.parentNode.getElementsByClassName('correctInput'));
       let incorrect = Array.from(this.parentNode.parentNode.getElementsByClassName('incorrectInput'));
-      if (responseText === "success"){
+      if (responseText.strip() === "CREATE_COMPLETE" || 'DELETE_COMPLETE'){
         correct.forEach( ele => ele.style.display = 'inline');
         incorrect.forEach( ele => ele.style.display = 'none');
+      } if (responseText.strip().endsWith("FAILED") ){
+        incorrect.forEach( ele => ele.style.display = 'inline');
+        correct.forEach( ele => ele.style.display = 'none');
       }else {
         incorrect.forEach( ele => ele.style.display = 'inline');
         correct.forEach( ele => ele.style.display = 'none');
