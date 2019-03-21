@@ -844,6 +844,20 @@ For fastq, typically “@”.)<h5></p>
     <p>HummanN2 protein database (Directory property may contain multiple nucleotide database files):
     <input type="text" class="sp" name="humann2.protDB" id="humann2.protDB" value="">
     </p>
+    <p>Keep UNMAPPED column in count tables:
+      <select class="sp" name="humann2.keepUnmapped" id="humann2.keepUnmapped">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>Keep UNINTEGRATED column in count tables:
+      <select class="sp" name="humann2.keepUnintegrated" id="humann2.keepUnintegrated">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -880,9 +894,27 @@ For fastq, typically “@”.)<h5></p>
 
   <div id="AwsTab" class="tabcontent moduleTab">
     <button class="createDownload">Create configuration file for download</button><br>
-    aws.stack<input type="text" name="aws.stack" id="aws.stack" value=""><br>
-    aws.ram<input type="text" name="aws.ram" id="aws.ram" value=""><br>
-    s3.blj_proj<input type="s3.blj_proj" name="" value=""><br>
+    <p>AWS profile as found in your rootkey.csv:
+      <input type="text" value="default" placeholder="select AWS profile"list="awsProfiles" name="aws.ram" id="aws.profile">
+      <datalist name='awsProfiles' placeholder='add your own'>
+        <option value="default">default</option>
+      </datalist>
+    </p>
+    <p>AWS ram:
+      <input type="text" name="aws.ram" value="">
+    </p>
+    <p>AWS S3 bucket:
+      <input type="text" name="aws.s3" id="aws.s3" value=""><br>
+    </p>
+    <p>
+      AWS RAM:
+      <input type="text" id="aws.ram" value=""><br>
+    </p>
+    <p>BioShepherd project folder on S3
+      <input type="text" name="s3.blj_proj" id="s3.blj_proj" value=""><br>
+    </p>
+
+
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
