@@ -176,8 +176,9 @@ run_docker
 status=$?
 [ $status -ne 0 ] && echo "Exit script - Docker $(manager_type) pipeline failed" && exit $status
 
-$(has_param $runAws) && run_docker -aws
-status=$?
-[ $status -ne 0 ] && echo "Exit script - Docker $(manager_type) pipeline failed" && exit $status
-
+if $(has_param $runAws); then
+	run_docker -aws
+	status=$?
+	[ $status -ne 0 ] && echo "Exit script - Docker $(manager_type) pipeline failed" && exit $status
+fi
 echo "Exit script - Docker $(manager_type) pipeline success!"

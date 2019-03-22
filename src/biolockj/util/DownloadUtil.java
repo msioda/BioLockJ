@@ -54,10 +54,7 @@ public final class DownloadUtil
 		final List<BioModule> modules = getDownloadModules();
 		if( Config.isOnCluster() && modules != null && getDownloadDirPath() != null )
 		{
-			final File pipeRoot = new File( Config.pipelinePath() );
-
 			boolean hasRmods = false;
-			final String status = ( BioLockJ.isPipelineComplete() ? "completed": "failed" ) + " pipeline -->";
 			final Set<File> downloadPaths = new TreeSet<>();
 			for( final BioModule module: modules )
 			{
@@ -72,7 +69,6 @@ public final class DownloadUtil
 					}
 
 					hasRmods = true;
-
 				}
 				else if( module instanceof NormalizeTaxaTables )
 				{
@@ -89,8 +85,10 @@ public final class DownloadUtil
 				makeRunAllScript( modules );
 			}
 
-			downloadPaths.addAll( FileUtils.listFiles( pipeRoot, HiddenFileFilter.VISIBLE, FalseFileFilter.INSTANCE ) );
+			AndFileFilter filter = new AndFileFilter( EmptyFileFilter.NOT_EMPTY, HiddenFileFilter.VISIBLE );
+			downloadPaths.addAll( FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE ) );
 
+			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() -1 ) ) ? "completed": "failed" ) + " pipeline -->";
 			final String displaySize = FileUtils
 					.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
 			final String src = SRC + "=" + Config.pipelinePath();
