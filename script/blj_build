@@ -13,7 +13,6 @@ cd $BLJ/resources
 [ ${#1} -gt 0 ] && ant $1
 echo "Ant script execution complete"
 
-
 if [ -f "$BLJ/dist/BioLockJ.jar" ]; then
 	ls -lh "$BLJ/dist/BioLockJ.jar"
 else
