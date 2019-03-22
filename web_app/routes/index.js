@@ -442,7 +442,8 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
   console.log('req.body.formData: ', req.body.formData);
   console.log('deployCloudInfrastructure');
   try {
-    const outputOptions = ['CREATE_COMPLETE', 'CREATE_FAILED', 'DELETE_COMPLETE', 'invalid']
+    const outputOptions = ['DELETE_FAILED','CREATE_COMPLETE', 'CREATE_FAILED', 'DELETE_COMPLETE'];
+    let sent = false;
     if (req.body.formData.deployArg === 'delete'){
       var spawn = require('child_process').spawn;
       let aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh delete ${req.body.formData.stackname}`, {shell: '/bin/bash'});
@@ -450,12 +451,24 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
 
       aws.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
-        let output = data.toString().trim()
-        if (outputOptions.includes(output)){
-          console.log(output);
-          res.setHeader('Content-Type', 'text/html');
-          res.write(output);
-          res.end();
+        if (sent === false){
+          let output = data.toString().trim();
+          let found = false;
+          while (found === false) {
+            for (let i = 0; i < outputOptions.length; i++) {
+              if (output.includes(outputOptions[i])){
+                found = true;
+                console.log('output ', output, outputOptions[i]);
+                console.log(outputOptions[i]);
+                res.setHeader('Content-Type', 'text/html');
+                res.write(outputOptions[i].toString());
+                res.send();
+                sent = true;
+                break;
+              }
+            }
+            found = true;
+          }
         }
       });
 
@@ -468,37 +481,39 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
       });
     }
     if (req.body.formData.deployArg === 'create'){
-      let spawn = require('child_process').spawn,
-          aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh create ${req.body.formData.stackname} ${req.body.formData.dockerRepository}`, {shell: '/bin/bash'});
+      let spawn = require('child_process').spawn;
+      let aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh create ${req.body.formData.stackname} ${req.body.formData.dockerRepository}`, {shell: '/bin/bash'});
           //source ~/.batchawsdeploy/config ; deployCloudInfrastructure.sh create testingblj biolockj
       aws.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
-        let output = data.toString().trim()
-        if (outputOptions.includes(output)){
-          console.log(output);
-          res.setHeader('Content-Type', 'text/html');
-          res.write(output);
-          res.end();
+        if (sent === false){
+          let output = data.toString().trim();
+          let found = false;
+          while (found === false) {
+            for (let i = 0; i < outputOptions.length; i++) {
+              if (output.includes(outputOptions[i])){
+                found = true;
+                console.log('found: ', found);
+                console.log('output ', output, outputOptions[i]);
+                console.log(outputOptions[i]);
+                res.setHeader('Content-Type', 'text/html');
+                res.write('qasfasfsaasadsfafasdafadfas');
+                res.end();
+                sent = true;
+                break;
+              }echo "Init umask: $(umask)” && umask 0007 && echo "Updated umask: $(umask)"
+            }
+            found = true;
+          }
         }
       });
-
       aws.stderr.on('data', function (data) {
         console.log('stderr: ' + data.toString());
       });
-
       aws.on('exit', function (code) {
         console.log('child process exited with code ' + code.toString());
-    })
-  }
-    // exec(`source ${batchAwsConfigFile} ; deployBatchEnv.sh create ${req.body.formData.stackname} ${req.body.formData.dockerRepository}`, {shell: '/bin/bash'}, function(err, stdout, stderr) {
-    //   console.log(stdout);
-    //   console.error(err);
-    //   console.error(stderr);
-    //   res.setHeader('Content-Type', 'text/html');
-    //   res.write(`Server Response: ${stdout}`);
-    //   res.end();
-    // });
-
+      })
+    }
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
     console.error(e);
@@ -557,6 +572,7 @@ router.post('/launchEc2HeadNode', function(req, res, next) {
     console.error(e);
   }
 });
+
 // router.post('/validateAwsCreditials', function(req, res, next) {
 //   try {
 //     var spawn = require('child_process').spawn,
