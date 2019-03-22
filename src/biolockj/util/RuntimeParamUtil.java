@@ -136,7 +136,7 @@ public class RuntimeParamUtil
 	 */
 	public static File getDockerHostBLJ()
 	{
-		return new File( params.get( HOST_BLJ ) );
+		return params.get( HOST_BLJ ) == null ? null : new File( params.get( HOST_BLJ ) );
 	}
 
 	/**
@@ -146,7 +146,7 @@ public class RuntimeParamUtil
 	 */
 	public static File getDockerHostBLJ_SUP()
 	{
-		return new File( params.get( HOST_BLJ_SUP ) );
+		return params.get( HOST_BLJ_SUP ) == null ? null : new File( params.get( HOST_BLJ_SUP ) );
 	}
 
 	/**
