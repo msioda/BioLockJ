@@ -200,6 +200,52 @@ router.post('/saveConfigToGui', function(req, res, next) {
   }
 })
 
+router.post('/deleteConfig', function(req, res, next) {
+  try {
+    let dotProperties = false;
+    let sent = false;
+    console.log(req.body.configFileName);
+    let deleteThis = req.body.configFileName;
+    console.log(deleteThis);
+    if (!deleteThis.endsWith('.properties')){
+      deleteThis += '.properties';
+      dotProperties = true;
+    }
+    if (deleteThis.startsWith('/')){
+      if (! fs.existsSync(deleteThis)) {
+        res.setHeader('Content-Type', 'text/html');
+        res.write(`ENOENT : ${deleteThis}`);
+        res.end();
+        sent = true;
+        return;
+      } else {
+        fs.unlinkSync( deleteThis );
+      }
+    }else{
+      if (! fs.existsSync(path.join('/', 'config', deleteThis))) {
+        res.setHeader('Content-Type', 'text/html');
+        res.write(`ENOENT : ${path.join('/','config', deleteThis)}`);
+        res.end();
+        sent = true;
+        return;
+      } else {
+        fs.unlinkSync(path.join('/', 'config', deleteThis ));
+      }
+    }
+
+    //report deleted to browser
+    if (dotProperties === true) {
+      deleteThis = deleteThis.slice(0,-11);
+    }
+    res.setHeader('Content-Type', 'text/html');
+    res.write(`deleted : ${deleteThis}`);
+    res.end();
+  } catch (e) {
+    console.error(e);
+    accessLogStream.write(e.stack + '\n');
+  }
+});
+
 router.post('/defaultproperties', function(req, res, next) {
   try {
     console.log(req.body.file);
@@ -497,11 +543,11 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
                 console.log('output ', output, outputOptions[i]);
                 console.log(outputOptions[i]);
                 res.setHeader('Content-Type', 'text/html');
-                res.write('qasfasfsaasadsfafasdafadfas');
+                res.write('outputOptions[i]');
                 res.end();
                 sent = true;
                 break;
-              }echo "Init umask: $(umask)” && umask 0007 && echo "Updated umask: $(umask)"
+              }
             }
             found = true;
           }
@@ -615,7 +661,6 @@ router.post('/launchEc2HeadNode', function(req, res, next) {
 // also generally emit 'rename'
 // })
 module.exports = router;
-
 
 // fs.watch(bljDir, (eventType, filename) => {
 //   console.log(`Filename: ${filename}, Event: ${eventType}`);
