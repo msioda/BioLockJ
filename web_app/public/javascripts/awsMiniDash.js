@@ -50,10 +50,11 @@ document.getElementById('submitConfigureAWS').addEventListener('click', function
 //document.getElementById('configureAwsForm').getElementsByTagName('span').getElementsByClassName('correctInput')
 document.getElementById('deployComputeStack').addEventListener('click', function(evt){
   evt.preventDefault();
-  console.log(this.parentNode);
+  console.log('this.parentNode: ', this.parentNode);
+  const targ = this;
   let inProgress = Array.from(this.parentNode.getElementsByClassName('inProgress'));
   inProgress.forEach( ele => ele.style.display = 'block');
-  console.log('this: ', this);
+  console.log('this deployComputeStack: ', this);
   let formData = {};
   let myForm = new FormData(this.parentNode.parentNode);
   for (var i of myForm.entries()) {
@@ -66,14 +67,17 @@ document.getElementById('deployComputeStack').addEventListener('click', function
   request.send(JSON.stringify({formData}));
   request.onreadystatechange = function() {
     if (request.readyState == XMLHttpRequest.DONE) {
-      console.log(request.responseText);
+      console.log(request);
+      console.log('request.responseText: ', request.responseText);
+      console.log('targ: ', targ);
+      const rt = request.responseText.trim();
       inProgress.forEach( ele => ele.style.display = 'none');
-      let correct = Array.from(this.parentNode.parentNode.getElementsByClassName('correctInput'));
-      let incorrect = Array.from(this.parentNode.parentNode.getElementsByClassName('incorrectInput'));
-      if (responseText.strip() === "CREATE_COMPLETE" || 'DELETE_COMPLETE'){
+      let correct = Array.from(targ.parentNode.getElementsByClassName('correctInput'));
+      let incorrect = Array.from(targ.parentNode.getElementsByClassName('incorrectInput'));
+      if (rt.endsWith("_COMPLETE")){
         correct.forEach( ele => ele.style.display = 'inline');
         incorrect.forEach( ele => ele.style.display = 'none');
-      } if (responseText.strip().endsWith("FAILED") ){
+      } if (rt.endsWith("FAILED") ){
         incorrect.forEach( ele => ele.style.display = 'inline');
         correct.forEach( ele => ele.style.display = 'none');
       }else {
