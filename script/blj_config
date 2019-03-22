@@ -30,8 +30,6 @@ BLJ_SUP=
 BLJ_PARENT="$(dirname $BLJ)"
 [ -d "$BLJ_PARENT/blj_support/script" ] && BLJ_SUP="$BLJ_PARENT/blj_support" 
 
-alias blj_go=". $SCRIPT_DIR/blj_go"
-
 if [ -d "$BLJ_SUP" ]; then
 	export BLJ_SUP=$BLJ_SUP
 	export PATH="$BLJ_SUP/script:$PATH"
