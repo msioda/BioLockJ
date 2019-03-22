@@ -1,14 +1,14 @@
 'use strict';
 
-var hasSymbols = require('../hasSymbols')();
+var hasSymbols = require('has-symbols/shams')();
 var forEach = require('for-each');
 
 module.exports = function (assign, t) {
 	t.test('error cases', function (st) {
-		st.throws(function () { assign(null); }, TypeError, 'target must be an object');
-		st.throws(function () { assign(undefined); }, TypeError, 'target must be an object');
-		st.throws(function () { assign(null, {}); }, TypeError, 'target must be an object');
-		st.throws(function () { assign(undefined, {}); }, TypeError, 'target must be an object');
+		st['throws'](function () { assign(null); }, TypeError, 'target must be an object');
+		st['throws'](function () { assign(undefined); }, TypeError, 'target must be an object');
+		st['throws'](function () { assign(null, {}); }, TypeError, 'target must be an object');
+		st['throws'](function () { assign(undefined, {}); }, TypeError, 'target must be an object');
 		st.end();
 	});
 
@@ -120,18 +120,24 @@ module.exports = function (assign, t) {
 		var target = { a: 1 };
 		var returned = assign(target, foo);
 		st.equal(returned, target, 'returned object is the same reference as the target object');
-		st.deepEqual(target, { baz: true, a: 1 }, 'returned object has only own properties from both');
+		st.deepEqual(target, { a: 1, baz: true }, 'returned object has only own properties from both');
 		st.end();
 	});
 
 	t.test('includes enumerable symbols, after keys', { skip: !hasSymbols }, function (st) {
 		var visited = [];
 		var obj = {};
-		Object.defineProperty(obj, 'a', { get: function () { visited.push('a'); return 42; }, enumerable: true });
+		Object.defineProperty(obj, 'a', { enumerable: true, get: function () { visited.push('a'); return 42; } });
 		var symbol = Symbol('enumerable');
-		Object.defineProperty(obj, symbol, { get: function () { visited.push(symbol); return Infinity; }, enumerable: true });
+		Object.defineProperty(obj, symbol, {
+			enumerable: true,
+			get: function () { visited.push(symbol); return Infinity; }
+		});
 		var nonEnumSymbol = Symbol('non-enumerable');
-		Object.defineProperty(obj, nonEnumSymbol, { get: function () { visited.push(nonEnumSymbol); return -Infinity; }, enumerable: false });
+		Object.defineProperty(obj, nonEnumSymbol, {
+			enumerable: false,
+			get: function () { visited.push(nonEnumSymbol); return -Infinity; }
+		});
 		var target = assign({}, obj);
 		st.deepEqual(visited, ['a', symbol], 'key is visited first, then symbol');
 		st.equal(target.a, 42, 'target.a is 42');
@@ -149,13 +155,13 @@ module.exports = function (assign, t) {
 
 		var visited = [];
 		var obj = {};
-		Object.defineProperty(obj, 'a', { get: function () { visited.push('a'); return 42; }, enumerable: true });
+		Object.defineProperty(obj, 'a', { enumerable: true, get: function () { visited.push('a'); return 42; } });
 		var keys = ['a'];
 		if (hasSymbols) {
-			var symbol = Symbol();
+			var symbol = Symbol('sym');
 			Object.defineProperty(obj, symbol, {
-				get: function () { visited.push(symbol); return Infinity; },
-				enumerable: true
+				enumerable: true,
+				get: function () { visited.push(symbol); return Infinity; }
 			});
 			keys.push(symbol);
 		}
@@ -197,11 +203,12 @@ module.exports = function (assign, t) {
 		var target = { b: targetBvalue, c: targetCvalue };
 		var source = {};
 		Object.defineProperty(source, 'a', {
+			enumerable: true,
 			get: function () {
 				delete this.b;
 				Object.defineProperty(this, 'c', { enumerable: false });
-			},
-			enumerable: true
+				return 'a';
+			}
 		});
 		var sourceBvalue = {};
 		var sourceCvalue = {};
