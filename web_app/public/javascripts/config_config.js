@@ -172,266 +172,266 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
   };//end modulesToCurrentConfig
 
   this.validateConfig = function() {
-      const configForm = document.getElementById('configForm');
-      const requiredParams = new Map(Object.entries({
-        'input.dirPaths' : 'what is your sequence input directory path?',
-        'report.taxonomyLevels' : 'What taxonomy levels would you like in the report?',
-        'script.permissions' : 'what are the script permissions?',
-        'script.defaultHeader' : 'what are the script default headers?',
-        'demultiplexer.strategy' : 'What demultiplexing statagy do you want to use?',
-        'pipeline.env' : 'In which enviroment do you wish to run this project?',
+    const configForm = document.getElementById('configForm');
+    const requiredParams = new Map(Object.entries({
+      'input.dirPaths' : 'what is your sequence input directory path?',
+      'report.taxonomyLevels' : 'What taxonomy levels would you like in the report?',
+      'script.permissions' : 'what are the script permissions?',
+      'script.defaultHeader' : 'what are the script default headers?',
+      'demultiplexer.strategy' : 'What demultiplexing statagy do you want to use?',
+      'pipeline.env' : 'In which enviroment do you wish to run this project?',
+    }));
+
+    const reqForR = new Map(Object.entries({//R module dependencies
+      'r.colorBase' : 'Please choose your R plot base color.',
+      'r.colorHighlight' : 'Please choose your R plot highlight color.',
+      'r.colorPalette' : 'Please choose your R plot color palette.',
+      'r.colorPoint' : 'Please choose your R plot point color.',
+      'r.pch' : 'Please choose your R point size.',
+      'r.plotWidth' : 'Please choose your R plot width (positive integer).',
+      'r.pvalCutoff' : 'Please choose your p-value cut off (alpha) for your R statistics.',
+      'r.pValFormat' : 'Please choose your p-value format for your R reports.',
+      'r.rareOtuThreshold' : 'Please choose your rare OTU threshold (positive integer).',
+      'r.timeout' : 'Please set your R timeout threshold (positive integer).',
+      'r_CalculateStats.pAdjustMethod' : 'Please choose your p-value adjust method.',
+      'r_CalculateStats.pAdjustScope' : 'Please choose your p-value adjust scope.'
+      }));
+    const reqForEmail = new Map(Object.entries({
+      'mail.encryptedPassword' : 'In order to receive an Emailed report, please provide your encrypted password.',
+      'mail.from' : 'Please choose the Email address from which you want to recieve your Emailed report.',
+      'mail.smtp.auth' : 'Please provide SMTP Authentication.',
+      'mail.smtp.host' : 'Please provide your SMTP host.',
+      'mail.to' : 'Please provide the Email recipient.',
+      'mail.smtp.port' : 'Please provide the SMTP port.'
       }));
 
-      const reqForR = new Map(Object.entries({//R module dependencies
-        'r.colorBase' : 'Please choose your R plot base color.',
-        'r.colorHighlight' : 'Please choose your R plot highlight color.',
-        'r.colorPalette' : 'Please choose your R plot color palette.',
-        'r.colorPoint' : 'Please choose your R plot point color.',
-        'r.pch' : 'Please choose your R point size.',
-        'r.plotWidth' : 'Please choose your R plot width (positive integer).',
-        'r.pvalCutoff' : 'Please choose your p-value cut off (alpha) for your R statistics.',
-        'r.pValFormat' : 'Please choose your p-value format for your R reports.',
-        'r.rareOtuThreshold' : 'Please choose your rare OTU threshold (positive integer).',
-        'r.timeout' : 'Please set your R timeout threshold (positive integer).',
-        'r_CalculateStats.pAdjustMethod' : 'Please choose your p-value adjust method.',
-        'r_CalculateStats.pAdjustScope' : 'Please choose your p-value adjust scope.'
-        }));
-      const reqForEmail = new Map(Object.entries({
-        'mail.encryptedPassword' : 'In order to receive an Emailed report, please provide your encrypted password.',
-        'mail.from' : 'Please choose the Email address from which you want to recieve your Emailed report.',
-        'mail.smtp.auth' : 'Please provide SMTP Authentication.',
-        'mail.smtp.host' : 'Please provide your SMTP host.',
-        'mail.to' : 'Please provide the Email recipient.',
-        'mail.smtp.port' : 'Please provide the SMTP port.'
-        }));
+    const reqForMdsPlots = new Map(Object.entries({
+      'r_PlotMds.numAxis' : 'Please provide the number of axes for the MDS plot.',
+      'r_PlotMds.distance' : 'Please provide the number of axes for the MDS plot.',
+      'r_PlotMds.outliers' : 'Please choose the Email address from which you want to recieve your Emailed report.',
+      }));
 
-      const reqForMdsPlots = new Map(Object.entries({
-        'r_PlotMds.numAxis' : 'Please provide the number of axes for the MDS plot.',
-        'r_PlotMds.distance' : 'Please provide the number of axes for the MDS plot.',
-        'r_PlotMds.outliers' : 'Please choose the Email address from which you want to recieve your Emailed report.',
-        }));
+    const reqForRdpClassifier = new Map(Object.entries({
+      'rdp.minThresholdScore' : 'Please provide the RDP minium threshold score.'
+      }));
 
-      const reqForRdpClassifier = new Map(Object.entries({
-        'rdp.minThresholdScore' : 'Please provide the RDP minium threshold score.'
-        }));
+    const reqForKrakenClassifier = new Map(Object.entries({
+      'kraken.db' : 'Please provide a Kraken database.',
+      }));
 
-      const reqForKrakenClassifier = new Map(Object.entries({
-        'kraken.db' : 'Please provide a Kraken database.',
-        }));
+    const menuTabs = document.getElementsByClassName('tabcontent');
+    const menuTabButtons = document.getElementsByClassName('tablinks');
+    const moduleNameShortened = this.modules.forEach(mod => mod.slice('biolockj.module.'.length)); //broken
 
-      const menuTabs = document.getElementsByClassName('tabcontent');
-      const menuTabButtons = document.getElementsByClassName('tablinks');
-      const moduleNameShortened = this.modules.forEach(mod => mod.slice('biolockj.module.'.length)); //broken
+    let implicits = [],
+      classifiers = [],
+      implicitParsers = [],
+      seqs = [],
+      rs = [],
+      reports = [];
 
-      let implicits = [],
-        classifiers = [],
-        implicitParsers = [],
-        seqs = [],
-        rs = [],
-        reports = [];
-
-      //Build arrays of modules from each catagory
-      for (ele of myModules.entries()){
-        //console.log(ele[1].catagory);
-        switch (ele[1].category) {
-          case 'implicit':
-            implicits.push(ele[0].split('/').join('.'));
-            break;
-          case 'seq':
-            seqs.push(ele[0].split('/').join('.'));
-            break
-          case 'classifier':
-            classifiers.push(ele[0].split('/').join('.'));
-            break;
-          case 'implicit.parser':
-            implicitParsers.push(ele[0].split('/').join('.'));
-            break;
-          case 'r':
-            rs.push(ele[0].split('/').join('.'));
-            break;
-          case 'report':
-            reports.push(ele[0].split('/').join('.'));
-          default:
-          //let all elements with no catagory fall through
-        }
-      }
-      //console.log('reports: ',reports);
-
-      //get parent div of any given node
-      function getParentDiv(nodeId){
-        let parentDiv;
-        var node = document.getElementById(nodeId);
-        if (node === null || node === undefined){
-          alert(`We can't find ${nodeId}, perhaps we should add it to our parameters?`);
-        }
-        let counter = 4;
-        while (parentDiv == undefined && counter > 0){
-          console.log('getParentDiv node: ', node);
-          if (node.parentNode.tagName == 'DIV'){
-            parentDiv = node.parentNode;
-            return parentDiv;
-          }
-          if (counter === 0){
-            alert(`Check for developer bug found in getParentDiv: ${node}`)
-          }
-          node = node.parentNode;
-          counter--
-        }//end while
-      }//end getParentDiv
-
-      function getCurrentMenuTab(){//shows the currently viewed tab
-        for (let i = 0; i < menuTabs.length; i++) {
-          if (menuTabs[i].style.display == 'block'){
-            return menuTabs[i];
-          }
-        }//end for forloop
-        alert('problem with getCurrentMenuTab')
-      };//end getCurrentMenuTab
-
-      function highlightRequiredParam(nodeId){
-        const target = document.getElementById(nodeId);
-        //found here: https://css-tricks.com/restart-css-animation/
-        if (target.classList.contains('missingParameterOnValidation')){
-          target.classList.remove('missingParameterOnValidation');
-          void target.offsetWidth;
-          target.classList.add('missingParameterOnValidation');
-        }else{
-          target.classList.add('missingParameterOnValidation');
-        }
-      }//end highlightRequiredParam
-
-      //check for module dependencies based on the dependencyMap Map objects above
-      function dependenciesPresent(dependencyMap){
-        const menuTabsArray = Array.from(menuTabs);
-        for (let para of dependencyMap.keys()){
-          console.log(para);
-          if (!(currentConfig.paramKeys.includes(para))){
-            console.log(para);
-            const currentMenuTab = getCurrentMenuTab();
-            console.log(menuTabsArray.indexOf(currentMenuTab));
-            currentMenuTab.style.display = 'none';
-            menuTabButtons[menuTabsArray.indexOf(getParentDiv(para))].click();
-            alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
-            highlightRequiredParam(para);
-            return false;
-          }//end if
-        }//end for loop
-      }
-      if (this.paramKeys.length != this.paramValues.length){
-        return false;
-      }
-      if (this.paramKeys.length < 1 ){
-        return false;
-      }
-
-      //First check: check for required parameters
-      if (dependenciesPresent(requiredParams) == false){
-        return false;
-      }
-
-      if ( ['barcode_in_header', 'barcode_in_seq'].includes(currentConfig['demux.strategy'])){
-        if (!currentConfig['metadata.barcodeColumn'] || currentConfig['metadata.barcodeColumn'] == ''){
-          const currentMenuTab = getCurrentMenuTab();
-          console.log(currentMenuTab);
-          currentMenuTab.style.display = 'none';
-          getParentDiv('metadata.barcodeColumn').style.display='block';
-          alert('If demultiplex strategy is either "barcode in header", or "barcode in sequence", then the header of the metadata barcode column must be named.')//change this to modal later
-          highlightRequiredParam('metadata.barcodeColumn');
-          return false;
-        }//end nested if
-      }//end demux.strategy if
-
-      //check for module dependencies
-      if (this.modules.length === 0){
-        alert('Please select at least one module.')
-        return false;
-      }
-      for (let mod of this.modules){
-        //check for dependencies
-        // NOTE: When I change the format of the module li's this will change...
-        let shortMod = mod.slice('biolockj.module.'.length);
-        console.log(shortMod);
-        switch(shortMod) {
-        case 'report.r.R_PlotMds':
-        case 'report.r.R_PlotOtus':
-        case 'report.r.R_PlotPvalHistograms':
-        case 'report.r.R_PlotEffectSize':
-        case 'report.r.R_CalculateStats', :
-          if (dependenciesPresent(reqForR) == false){
-            return false;
-          }
+    //Build arrays of modules from each catagory
+    for (ele of myModules.entries()){
+      //console.log(ele[1].catagory);
+      switch (ele[1].category) {
+        case 'implicit':
+          implicits.push(ele[0].split('/').join('.'));
           break;
-        case 'report.Email':
-          if (dependenciesPresent(reqForEmail) == false){
-            return false;
-          }
+        case 'seq':
+          seqs.push(ele[0].split('/').join('.'));
           break
-        case 'seq.rarefier':
-          // NOTE: ASK WHAT to do if both are there.
-          if (!(this.paramKeys.contains('rarefier.max') || this.paramKeys.contains('rarefier.min'))){
-            const currentMenuTab = getCurrentMenuTab();
-            currentMenuTab.style.display = 'none';
-            getParentDiv('rarefier.max').style.display='block';
-            alert('A maximum or minimum value is required for the rarifier.');
-            highlightRequiredParam('rarefier.min');
-            highlightRequiredParam('rarefier.max');
-            return false;
-          }
-             break;
-        case 'classifier.r16s.RdpClassifier':
-          if (dependenciesPresent(reqForRdpClassifier) == false){
-            return false;
-          }
+        case 'classifier':
+          classifiers.push(ele[0].split('/').join('.'));
           break;
-        case 'classifier.wgs.KrakenClassifier':
-          if (dependenciesPresent(reqForKrakenClassifier) == false){
-            return false;
-          }
+        case 'implicit.parser':
+          implicitParsers.push(ele[0].split('/').join('.'));
           break;
-        case 'classifier.wgs.SlimmClassifier':
-          if (dependenciesPresent(reqForSlimmClassifier) == false){
-            return false;
-          }
+        case 'r':
+          rs.push(ele[0].split('/').join('.'));
           break;
-        default: //optional
-        console.log('All required parameters are found');
-        }//end switch
+        case 'report':
+          reports.push(ele[0].split('/').join('.'));
+        default:
+        //let all elements with no catagory fall through
+      }
+    }
+    //console.log('reports: ',reports);
 
-        //check order
-        const modsAfterMod = this.modules.slice(this.modules.indexOf(mod)+1);
-        for (m of modsAfterMod){
-          // If module = biolockj.module.classifier.*, no biolockj.module.seq.* modules can come after
-          //console.log('m: ', m, ' mod: ', mod);
-          //console.log('classifiers: ', classifiers);
-          //console.log('seqs: ', seqs);
-          if (classifiers.includes(mod) && seqs.includes(m)){
-            alert('Please re-order your modules -no biolockj.module.seq modules can come after biolockj.module.classifiers.');
+    //get parent div of any given node
+    function getParentDiv(nodeId){
+      let parentDiv;
+      var node = document.getElementById(nodeId);
+      if (node === null || node === undefined){
+        alert(`We can't find ${nodeId}, perhaps we should add it to our parameters?`);
+      }
+      let counter = 4;
+      while (parentDiv == undefined && counter > 0){
+        console.log('getParentDiv node: ', node);
+        if (node.parentNode.tagName == 'DIV'){
+          parentDiv = node.parentNode;
+          return parentDiv;
+        }
+        if (counter === 0){
+          alert(`Check for developer bug found in getParentDiv: ${node}`)
+        }
+        node = node.parentNode;
+        counter--
+      }//end while
+    }//end getParentDiv
+
+    function getCurrentMenuTab(){//shows the currently viewed tab
+      for (let i = 0; i < menuTabs.length; i++) {
+        if (menuTabs[i].style.display == 'block'){
+          return menuTabs[i];
+        }
+      }//end for forloop
+      alert('problem with getCurrentMenuTab')
+    };//end getCurrentMenuTab
+
+    function highlightRequiredParam(nodeId){
+      const target = document.getElementById(nodeId);
+      //found here: https://css-tricks.com/restart-css-animation/
+      if (target.classList.contains('missingParameterOnValidation')){
+        target.classList.remove('missingParameterOnValidation');
+        void target.offsetWidth;
+        target.classList.add('missingParameterOnValidation');
+      }else{
+        target.classList.add('missingParameterOnValidation');
+      }
+    }//end highlightRequiredParam
+
+    //check for module dependencies based on the dependencyMap Map objects above
+    function dependenciesPresent(dependencyMap){
+      const menuTabsArray = Array.from(menuTabs);
+      for (let para of dependencyMap.keys()){
+        console.log(para);
+        if (!(currentConfig.paramKeys.includes(para))){
+          console.log(para);
+          const currentMenuTab = getCurrentMenuTab();
+          console.log(menuTabsArray.indexOf(currentMenuTab));
+          currentMenuTab.style.display = 'none';
+          menuTabButtons[menuTabsArray.indexOf(getParentDiv(para))].click();
+          alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
+          highlightRequiredParam(para);
+          return false;
+        }//end if
+      }//end for loop
+    }
+    if (this.paramKeys.length != this.paramValues.length){
+      return false;
+    }
+    if (this.paramKeys.length < 1 ){
+      return false;
+    }
+
+    //First check: check for required parameters
+    if (dependenciesPresent(requiredParams) == false){
+      return false;
+    }
+
+    if ( ['barcode_in_header', 'barcode_in_seq'].includes(currentConfig['demux.strategy'])){
+      if (!currentConfig['metadata.barcodeColumn'] || currentConfig['metadata.barcodeColumn'] == ''){
+        const currentMenuTab = getCurrentMenuTab();
+        console.log(currentMenuTab);
+        currentMenuTab.style.display = 'none';
+        getParentDiv('metadata.barcodeColumn').style.display='block';
+        alert('If demultiplex strategy is either "barcode in header", or "barcode in sequence", then the header of the metadata barcode column must be named.')//change this to modal later
+        highlightRequiredParam('metadata.barcodeColumn');
+        return false;
+      }//end nested if
+    }//end demux.strategy if
+
+    //check for module dependencies
+    if (this.modules.length === 0){
+      alert('Please select at least one module.')
+      return false;
+    }
+    for (let mod of this.modules){
+      //check for dependencies
+      // NOTE: When I change the format of the module li's this will change...
+      let shortMod = mod.slice('biolockj.module.'.length);
+      console.log(shortMod);
+      switch(shortMod) {
+      case 'report.r.R_PlotMds':
+      case 'report.r.R_PlotOtus':
+      case 'report.r.R_PlotPvalHistograms':
+      case 'report.r.R_PlotEffectSize':
+      case 'report.r.R_CalculateStats', :
+        if (dependenciesPresent(reqForR) == false){
+          return false;
+        }
+        break;
+      case 'report.Email':
+        if (dependenciesPresent(reqForEmail) == false){
+          return false;
+        }
+        break
+      case 'seq.rarefier':
+        // NOTE: ASK WHAT to do if both are there.
+        if (!(this.paramKeys.contains('rarefier.max') || this.paramKeys.contains('rarefier.min'))){
+          const currentMenuTab = getCurrentMenuTab();
+          currentMenuTab.style.display = 'none';
+          getParentDiv('rarefier.max').style.display='block';
+          alert('A maximum or minimum value is required for the rarifier.');
+          highlightRequiredParam('rarefier.min');
+          highlightRequiredParam('rarefier.max');
+          return false;
+        }
+           break;
+      case 'classifier.r16s.RdpClassifier':
+        if (dependenciesPresent(reqForRdpClassifier) == false){
+          return false;
+        }
+        break;
+      case 'classifier.wgs.KrakenClassifier':
+        if (dependenciesPresent(reqForKrakenClassifier) == false){
+          return false;
+        }
+        break;
+      case 'classifier.wgs.SlimmClassifier':
+        if (dependenciesPresent(reqForSlimmClassifier) == false){
+          return false;
+        }
+        break;
+      default: //optional
+      console.log('All required parameters are found');
+      }//end switch
+
+      //check order
+      const modsAfterMod = this.modules.slice(this.modules.indexOf(mod)+1);
+      for (m of modsAfterMod){
+        // If module = biolockj.module.classifier.*, no biolockj.module.seq.* modules can come after
+        //console.log('m: ', m, ' mod: ', mod);
+        //console.log('classifiers: ', classifiers);
+        //console.log('seqs: ', seqs);
+        if (classifiers.includes(mod) && seqs.includes(m)){
+          alert('Please re-order your modules -no biolockj.module.seq modules can come after biolockj.module.classifiers.');
+          return false;
+        }
+        // If module = biolockj.module.implicit.parser.*, no biolockj.module.seq.* or biolockj.module.classifier.* modules can come after
+        if (implicitParsers.includes(mod)){
+          if (seqs.includes(m) || classifiers.includes(m)){
+            alert('Please re-order your modules -no biolockj.module.seq modules or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
             return false;
           }
-          // If module = biolockj.module.implicit.parser.*, no biolockj.module.seq.* or biolockj.module.classifier.* modules can come after
-          if (implicitParsers.includes(mod)){
-            if (seqs.includes(m) || classifiers.includes(m)){
-              alert('Please re-order your modules -no biolockj.module.seq modules or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
-              return false;
+        }
+        // If module = biolockj.module.report, *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
+        if (reports.includes(mod)){
+          if (seqs.includes(m) || classifiers.includes(m) || implicitParsers.includes(m)){
+            alert('Please re-order your modules -no biolockj.module.seq modules, biolockj.module.implicit.parser modules, or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
+            return false;
+          }
+        }
+        // If module = biolockj.module.r. *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
+        if (rs.includes(mod)){
+          if (seqs.includes(m) || classifiers.includes(m) || implicitParsers.includes(m)){
+            alert('Please re-order your modules -no biolockj.module.seq modules, biolockj.module.implicit.parser modules, or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
+            return false;
             }
           }
-          // If module = biolockj.module.report, *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
-          if (reports.includes(mod)){
-            if (seqs.includes(m) || classifiers.includes(m) || implicitParsers.includes(m)){
-              alert('Please re-order your modules -no biolockj.module.seq modules, biolockj.module.implicit.parser modules, or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
-              return false;
-            }
-          }
-          // If module = biolockj.module.r. *no biolockj.module.seq.* or biolockj.module.classifier. *or biolockj.module.implicit.parser.* modules can come after
-          if (rs.includes(mod)){
-            if (seqs.includes(m) || classifiers.includes(m) || implicitParsers.includes(m)){
-              alert('Please re-order your modules -no biolockj.module.seq modules, biolockj.module.implicit.parser modules, or biolockj.module.classifier modules can come after biolockj.module.implicit.parsers.');
-              return false;
-              }
-            }
-          }//end for (m of modsAfterMod){
-        }//end for loop
-      return true;
+        }//end for (m of modsAfterMod){
+      }//end for loop
+    return true;
   };//end validation
 
   this.buildPartialLaunchArgument = function buildLaunchArgument(restart = false){
