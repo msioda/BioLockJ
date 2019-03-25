@@ -230,6 +230,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         rs = [],
         reports = [];
 
+      //Build arrays of modules from each catagory
       for (ele of myModules.entries()){
         //console.log(ele[1].catagory);
         switch (ele[1].category) {
@@ -351,7 +352,11 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         let shortMod = mod.slice('biolockj.module.'.length);
         console.log(shortMod);
         switch(shortMod) {
-        case 'r.BuildMdsPlots': case 'r.BuildOtuPlots': case 'r.BuildPvalHistograms': case 'r.CalculateStats':
+        case 'report.r.R_PlotMds':
+        case 'report.r.R_PlotOtus':
+        case 'report.r.R_PlotPvalHistograms':
+        case 'report.r.R_PlotEffectSize':
+        case 'report.r.R_CalculateStats', :
           if (dependenciesPresent(reqForR) == false){
             return false;
           }
@@ -551,6 +556,7 @@ function loadConfigPathToForm(conPath) {
       currentConfig.paramValues.push(configName);
     }else {
       currentConfig.paramKeys.push('pipeline.configFile');
+      console.log('pipeline.configFile: ', conPath);
       currentConfig.paramValues.push(conPath);
     }
     currentConfig.sendConfigDataToForms();
