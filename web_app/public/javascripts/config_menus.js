@@ -317,8 +317,6 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/report/r/R_CalculateStats' : { cssClass : [], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : [], category : 'r'},
-
   'biolockj/module/report/taxa/AddMetadataToTaxaTables' : { cssClass : [], category : 'report'},
 
   'biolockj/module/report/taxa/BuildTaxaTables' : { cssClass : [], category : 'report'},
