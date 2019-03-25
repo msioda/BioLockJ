@@ -550,6 +550,26 @@ For fastq, typically “@”.)<h5></p>
       <p>Optional parameters passed to qiime scripts:
         <input class='sp' type="text" name="qiime.params" id="qiime.params"value="">
       </p>
+      <fieldset>
+        <legend>If supplied, all three of these must be in the same parent directory.
+          For more info about these parameters,
+          visit <a href="http://qiime.org/install/qiime_config.html">http://qiime.org/install/qiime_config.html</a>.        </legend>
+          <p>File property to define ~/.qiime_config pynast_template_alignment_fp.
+            This defines the template alignment to use with PyNAST as a fasta file,
+            if the user doesn't want to use the default (more info at ):
+            <input class='sp' type="text" name="qiime.pynastAlignDB" id="qiime.pynastAlignDB"value="">
+          </p>
+          <p>File property to define ~/.qiime_config pick_otus_reference_seqs_fp and
+            assign_taxonomy_reference_seqs_fp, reference database to use with all OTU
+            picking scripts and workflows, if you prefer to not use the default:
+            <input class='sp' type="text" name="qiime.refSeqDB" id="qiime.refSeqDB"value="">
+          </p>
+          <p>File property to define ~/.qiime_config assign_taxonomy_id_to_taxonomy_fp,
+            an id-to-taxonomy map to use with assign_taxonomy.py (and parallel versions),
+            if you prefer to not use the default:
+            <input class='sp' type="text" name="qiime.taxaDB" id="qiime.taxaDB"value="">
+          </p>
+      </fieldset>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
