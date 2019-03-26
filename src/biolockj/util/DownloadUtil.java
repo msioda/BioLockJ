@@ -51,7 +51,7 @@ public final class DownloadUtil
 	public static String getDownloadCmd() throws Exception
 	{
 		final List<BioModule> modules = getDownloadModules();
-		if( Config.isOnCluster() && modules != null && getDownloadDirPath() != null )
+		if( Config.isOnCluster() && modules != null && getDownloadDirPath() != null && !modules.isEmpty() )
 		{
 			boolean hasRmods = false;
 			final Set<File> downloadPaths = new TreeSet<>();
@@ -87,11 +87,7 @@ public final class DownloadUtil
 
 			AndFileFilter filter = new AndFileFilter( EmptyFileFilter.NOT_EMPTY, HiddenFileFilter.VISIBLE );
 			Collection<File> dirs = FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
-			if( dirs == null )
-			{
-				return null;
-			}
-			
+
 			downloadPaths.addAll( dirs );
 
 			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() -1 ) ) ? "completed": "failed" ) + " pipeline -->";
