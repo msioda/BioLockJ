@@ -30,7 +30,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * @param parent Taxa parent
 	 * @param level Taxa level
 	 */
-	public JsonNode( final String taxa, final Integer count, final JsonNode parent, final String level )
+	public JsonNode( final String taxa, final Long count, final JsonNode parent, final String level )
 	{
 		this.taxa = taxa;
 		this.count = count;
@@ -43,7 +43,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @param count Taxa count
 	 */
-	public void addCount( final Integer count )
+	public void addCount( final Long count )
 	{
 		this.count += count;
 	}
@@ -83,7 +83,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @return OTU count
 	 */
-	public Integer getCount()
+	public Long getCount()
 	{
 		return count;
 	}
@@ -192,7 +192,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 		stats.put( name, stats.get( name ) + val );
 	}
 
-	private Integer count = 0;
+	private Long count = 0L;
 	private String level;
 	private JsonNode parent;
 	private final HashMap<String, Double> stats = new LinkedHashMap<>();

@@ -4,8 +4,20 @@
 ##                                                               ##
 ###################################################################
 
+# Add a named arg to a space-delimited list of args (Use "=" to add a name-value pair)
+# Param 1 - arg name
+# Param 2 - arg value
+# Param 3 (optional) - space delimited named args: if empty, return name-value pair
+add_named_arg() {
+	myArgs=$3
+	val=$(named_arg "$3" $1)
+	[ $# -eq 2 ] && echo "$1=$2"
+	[ $# -eq 3 ] && [ ${#val} -gt 0 ] && myArgs="${3/$1=$val}"
+	[ $# -eq 3 ] && echo "$myArgs $1=$2"
+}
+
 # This script navigates the $USER to their most recent pipeline and lists the current directory
-function blj_go() {
+blj_go() {
 	[ ! -d "$BLJ_PROJ" ] && echo "Exit program - BLJ_PROJ: directory not found: $BLJ_PROJ" && return
 	pipeline=$(most_recent_pipeline)
 	if [ ${#pipeline} -gt 0 ]; then
@@ -20,7 +32,7 @@ function blj_go() {
 # This script tails 1K lines from the current pipelines Java log file.
 # If the current directory is not a BioLockJ pipeline, print last 1K lines from the most recent pipeline executed.  
 # If param is passed, pass it to tail command in place of -1000 parameter.
-function blj_log() {
+blj_log() {
 	pipeline=$(current_pipeline)
 	if [ ${#pipeline} -gt 0 ]; then
 		echo "Tail current BioLockJ pipeline log: $pipeline"
@@ -41,13 +53,13 @@ function blj_log() {
 }
 
 # Rerun current pipeline from point of failure using same MASTER config
-function blj_rerun() {
+blj_rerun() {
 	biolockj -r $PWD
 }
 
 # This script prints the Summary BioModule output of current pipeline.
 # If the current directory is not a BioLockJ pipeline, print the summary of the most recent pipeline executed.
-function blj_summary() {
+blj_summary() {
 	pipeline=$(most_recent_pipeline)
 	SUM=summary.txt
 	if [ -f $SUM ]; then
@@ -62,7 +74,7 @@ function blj_summary() {
 }
 
 # Return absolute path of current pipeline if in a pipeline directory
-function current_pipeline() {
+current_pipeline() {
 	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then
 		dir="$PWD"
 		parentDir="$(dirname $dir)"
@@ -86,13 +98,13 @@ get_version() {
 }
 
 # Return 0 if directory is empty (or missing)
-function is_empty() {
+is_empty() {
 	[ ! -d "$1" ] || [ -z "$(\ls -A $1)" ]
 }
 
 # Return TRUE if the directory path given ends with a valid module name
 # Example: 01_Demultiplexer
-function is_module_dir() {
+is_module_dir() {
 	modName=$(basename $1)
 	modNum=0
 	[ ${#modName} -gt 3 ] && modNum=$( echo ${modName:0:2} | egrep "^[0-9{2}]+$" )
@@ -103,7 +115,7 @@ function is_module_dir() {
 # Trim last input $1 character if ends with "/"
 # Return 0 status code if $1 param ends with patthern _yyyymmmdd.
 # Example: myTestPipeline_2019Jan01 returns TRUE
-function is_pipeline_dir() {
+is_pipeline_dir() {
 	dir=$1
 	[ ${dir: -1} == "/" ] && dir=${dir:0:$((${#dir}-1))}
 	prefix=${dir: -10:1}
@@ -115,10 +127,25 @@ function is_pipeline_dir() {
 }
 
 # Return absolute path of most recent pipeline
-function most_recent_pipeline() {
+most_recent_pipeline() {
 	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then
 		for dir in $(ls -1dt $BLJ_PROJ/*); do
 			$(is_pipeline_dir $dir) && echo "$dir" && exit
 		done
 	fi
+}
+
+# Pass script input parameters + the argument name
+# Named arguments must be formated: "argName=argValue"
+# Param 1 aws_functions script args $@
+# Param 2 parameter name
+named_arg() {
+	args=("$@")
+	numArgs=${#@}
+	target=${args[$((numArgs-1))]}
+	args=${args[@]:0:$((numArgs-1))}
+	for arg in $args; do
+		IFS="=" && tokens=( $arg )
+		[ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
+	done
 }

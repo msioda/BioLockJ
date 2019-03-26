@@ -13,7 +13,7 @@ package biolockj.module.seq;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.Config;
 import biolockj.Constants;
@@ -143,7 +143,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	 * @param indexes List of indexes to keep
 	 * @throws Exception if unable to build rarefied file
 	 */
-	protected void buildRarefiedFile( final File input, final List<Integer> indexes ) throws Exception
+	protected void buildRarefiedFile( final File input, final List<Long> indexes ) throws Exception
 	{
 		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
 		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
@@ -157,9 +157,9 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 				"Building file [#lines/read=" + SeqUtil.getNumLinesPerRead() + "]: " + output.getAbsolutePath() );
 		try
 		{
-			int index = 0;
+			long index = 0;
 			int i = 0;
-			final Set<Integer> usedIndexes = new HashSet<>();
+			final Set<Long> usedIndexes = new HashSet<>();
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				if( indexes.contains( index ) )
@@ -203,30 +203,31 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	 */
 	protected void rarefy( final File seqFile ) throws Exception
 	{
-		Integer max = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MAX );
-		Integer min = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
+		Integer maxConfig = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MAX );
+		Integer minConfig = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
+		Long max = 0L;
+		Long min = 0L;
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
-		final int numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
-		final int count = Integer.parseInt( Long.toString( numReads ) );
+		final long numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
 
-		if( max != null )
+		if( maxConfig != null )
 		{
-			max = count < max ? count: max;
+			max = numReads < max ? numReads: max;
 		}
 
-		if( min == null )
+		if( minConfig == null )
 		{
-			min = 1;
+			min = 1L;
 		}
 
 		Log.debug( getClass(), "Sample[" + sampleId + "]  numReads = " + numReads );
 		if( numReads >= min )
 		{
-			final int[] range = IntStream.rangeClosed( 0, numReads - 1 ).toArray();
-			final List<Integer> indexes = new ArrayList<>();
-			Collections.addAll( indexes, Arrays.stream( range ).boxed().toArray( Integer[]::new ) );
+			final long[] range = LongStream.rangeClosed( 0, numReads - 1 ).toArray();
+			final List<Long> indexes = new ArrayList<>();
+			Collections.addAll( indexes, Arrays.stream( range ).boxed().toArray( Long[]::new ) );
 			Collections.shuffle( indexes );
-			indexes.subList( max, indexes.size() ).clear();
+			indexes.subList( max.intValue(), indexes.size() ).clear();
 			buildRarefiedFile( seqFile, indexes );
 		}
 		else
@@ -238,14 +239,14 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 		}
 	}
 
-	private Integer getCount( final String sampleId, final String attName ) throws Exception
+	private Long getCount( final String sampleId, final String attName ) throws Exception
 	{
 		if( MetaUtil.getFieldNames().contains( attName ) )
 		{
 			final String count = MetaUtil.getField( sampleId, attName );
 			if( count != null && NumberUtils.isNumber( count ) )
 			{
-				return Integer.valueOf( count );
+				return Long.valueOf( count );
 			}
 		}
 

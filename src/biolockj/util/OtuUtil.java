@@ -44,7 +44,7 @@ public class OtuUtil
 						"OTU count lines should have 2 tokens {OTU, COUNT}, #tokens found: " + st.countTokens() );
 			}
 			otu = st.nextToken();
-			count = Integer.valueOf( st.nextToken() );
+			count = Long.valueOf( st.nextToken() );
 		}
 
 		/**
@@ -52,7 +52,7 @@ public class OtuUtil
 		 * 
 		 * @return OTU count
 		 */
-		public Integer getCount()
+		public Long getCount()
 		{
 			return count;
 		}
@@ -67,7 +67,7 @@ public class OtuUtil
 			return otu;
 		}
 
-		private Integer count = null;
+		private Long count = null;
 		private String otu = null;
 	}
 
@@ -95,9 +95,9 @@ public class OtuUtil
 	 * @return TreeMap(OTU, count)
 	 * @throws Exception if errors occur
 	 */
-	public static TreeMap<String, Integer> compileSampleOtuCounts( final File file ) throws Exception
+	public static TreeMap<String, Long> compileSampleOtuCounts( final File file ) throws Exception
 	{
-		final TreeMap<String, Integer> otuCounts = new TreeMap<>();
+		final TreeMap<String, Long> otuCounts = new TreeMap<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try
 		{
@@ -105,7 +105,7 @@ public class OtuUtil
 			{
 				final OtuCountLine ocl = new OtuCountLine( line );
 				final String otu = ocl.getOtu();
-				final Integer count = ocl.getCount();
+				final Long count = ocl.getCount();
 				otuCounts.put( otu, count );
 			}
 		}
@@ -127,13 +127,13 @@ public class OtuUtil
 	 * @return Ordered TreeSet of unique OTUs
 	 * @throws Exception if errors occur
 	 */
-	public static TreeSet<String> findUniqueOtus( final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts )
+	public static TreeSet<String> findUniqueOtus( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts )
 			throws Exception
 	{
 		final TreeSet<String> otus = new TreeSet<>();
 		for( final String id: sampleOtuCounts.keySet() )
 		{
-			final TreeMap<String, Integer> taxaCounts = sampleOtuCounts.get( id );
+			final TreeMap<String, Long> taxaCounts = sampleOtuCounts.get( id );
 			if( taxaCounts != null && !taxaCounts.isEmpty() )
 			{
 				otus.addAll( sampleOtuCounts.get( id ).keySet() );
@@ -208,10 +208,10 @@ public class OtuUtil
 	 * @return TreeMap(SampleID, TreeMap(OTU, count)) OTU counts by sample
 	 * @throws Exception if any of the input file names are missing "_{@value biolockj.Constants#OTU_COUNT}_"
 	 */
-	public static TreeMap<String, TreeMap<String, Integer>> getSampleOtuCounts( final Collection<File> files )
+	public static TreeMap<String, TreeMap<String, Long>> getSampleOtuCounts( final Collection<File> files )
 			throws Exception
 	{
-		final TreeMap<String, TreeMap<String, Integer>> otuCountsBySample = new TreeMap<>();
+		final TreeMap<String, TreeMap<String, Long>> otuCountsBySample = new TreeMap<>();
 		for( final File file: files )
 		{
 			if( !file.getName().contains( "_" + Constants.OTU_COUNT + "_" ) )

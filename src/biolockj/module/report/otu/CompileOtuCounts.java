@@ -34,10 +34,10 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String msg = "# Samples:     " + BioLockJUtil.formatNumericOutput( MetaUtil.getSampleIds().size(), false )
+		String msg = "# Samples:     " + BioLockJUtil.formatNumericOutput( new Integer( MetaUtil.getSampleIds().size() ).longValue(), false )
 				+ RETURN;
-		int uniqueOtus = 0;
-		int totalOtus = 0;
+		long uniqueOtus = 0;
+		long totalOtus = 0;
 		BufferedReader reader = null;
 		try
 		{
@@ -76,7 +76,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 	 * @param otuCounts OTU-count mapping
 	 * @throws Exception if errors occur
 	 */
-	protected void buildSummaryOtuCountFile( final TreeMap<String, Integer> otuCounts ) throws Exception
+	protected void buildSummaryOtuCountFile( final TreeMap<String, Long> otuCounts ) throws Exception
 	{
 		final File otuCountFile = OtuUtil.getOtuCountFile( getOutputDir(), null, SUMMARY );
 		Log.info( getClass(),
@@ -105,20 +105,20 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 	 * @return TreeMap(OTU, count)
 	 * @throws Exception if errors occur
 	 */
-	protected TreeMap<String, Integer> compileOtuCounts( final Collection<File> files ) throws Exception
+	protected TreeMap<String, Long> compileOtuCounts( final Collection<File> files ) throws Exception
 	{
-		final TreeMap<String, Integer> combinedOtuCounts = new TreeMap<>();
+		final TreeMap<String, Long> combinedOtuCounts = new TreeMap<>();
 		for( final File file: files )
 		{
-			final TreeMap<String, Integer> otuCounts = OtuUtil.compileSampleOtuCounts( file );
-			uniqueOtuPerSample.put( OtuUtil.getSampleId( file ), otuCounts.size() );
+			final TreeMap<String, Long> otuCounts = OtuUtil.compileSampleOtuCounts( file );
+			uniqueOtuPerSample.put( OtuUtil.getSampleId( file ), new Integer( otuCounts.size() ).longValue() );
 			for( final String otu: otuCounts.keySet() )
 			{
-				final Integer count = otuCounts.get( otu );
+				final Long count = otuCounts.get( otu );
 
 				if( !combinedOtuCounts.keySet().contains( otu ) )
 				{
-					combinedOtuCounts.put( otu, 0 );
+					combinedOtuCounts.put( otu, 0L );
 				}
 
 				combinedOtuCounts.put( otu, combinedOtuCounts.get( otu ) + count );
@@ -136,7 +136,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 	protected String getMaxOtusPerSample()
 	{
 		final TreeSet<String> ids = new TreeSet<>();
-		int max = 0;
+		long max = 0L;
 		for( final String sampleId: uniqueOtuPerSample.keySet() )
 		{
 			if( uniqueOtuPerSample.get( sampleId ) == max )
@@ -162,7 +162,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 	protected String getMinOtusPerSample()
 	{
 		final TreeSet<String> ids = new TreeSet<>();
-		Integer min = null;
+		Long min = null;
 		for( final String sampleId: uniqueOtuPerSample.keySet() )
 		{
 			if( min == null || uniqueOtuPerSample.get( sampleId ) == min )
@@ -192,7 +192,7 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 		return OtuUtil.getOtuCountFile( getOutputDir(), null, SUMMARY );
 	}
 
-	private final Map<String, Integer> uniqueOtuPerSample = new HashMap<>();
+	private final Map<String, Long> uniqueOtuPerSample = new HashMap<>();
 
 	/**
 	 * Output file prefix: {@value #SUMMARY}

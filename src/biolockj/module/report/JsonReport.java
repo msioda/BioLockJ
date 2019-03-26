@@ -59,7 +59,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	@Override
 	public void runModule() throws Exception
 	{
-		final JsonNode root = new JsonNode( ROOT_NODE, 0, null, null );
+		final JsonNode root = new JsonNode( ROOT_NODE, 0L, null, null );
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = buildJsonMap( root );
 		root.addCount( totalTaxaCount );
 		if( hasStats() )
@@ -83,13 +83,13 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	protected LinkedHashMap<String, TreeSet<JsonNode>> buildJsonMap( final JsonNode rootNode ) throws Exception
 	{
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = initJsonMap();
-		final Map<String, Integer> otuCounts = OtuUtil.compileSampleOtuCounts( getInputFiles().get( 0 ) );
+		final Map<String, Long> otuCounts = OtuUtil.compileSampleOtuCounts( getInputFiles().get( 0 ) );
 		Log.info( getClass(), "Build JSON Nodes for " + otuCounts.size() + " unique OTUs..." );
 		for( final String otu: otuCounts.keySet() )
 		{
 			Log.debug( getClass(), "Add JSON otu " + otu );
 			JsonNode parent = rootNode;
-			final int otuCount = otuCounts.get( otu );
+			final long otuCount = otuCounts.get( otu );
 			final Map<String, String> taxaMap = TaxaUtil.getTaxaByLevel( otu );
 			for( final String level: TaxaUtil.getTaxaLevels() )
 			{
@@ -457,7 +457,7 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 	private int numberOfNodes = 1; // root always created
 
 	private String summary = "";
-	private int totalTaxaCount = 0;
+	private long totalTaxaCount = 0;
 	private static final String CHILDREN = "children";
 	private static final String JSON_SUMMARY = "otuSummary.json";
 	private static final String NUM_SEQS = "numSeqs";

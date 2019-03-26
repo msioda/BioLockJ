@@ -6,36 +6,31 @@
 ##   1. Add $BLJ/script into the $USER $PATH                           ##
 ##   2. Add env. variable $BLJ = BioLockJ installation directory       ##
 ##   3. Add env. variable $BLJ_PROJ = pipeline output directory        ##
-##   4. Add env. variable $DOCKER_HUB_USER = "biolockj"                ##
-##   5. Add env. variable $DOCKER_FILE_PATH = "$BLJ/resources/docker"  ##
-##   6. Add env. variable $DOCKER_VER = "docker-18.09.2"               ##
-##   7. Add env. variable $BLJ_VER = BioLockJ build version            ##
-##   8. Add alias blj_go to "cd" into latest pipeline directory        ##
-##   9. Add $BLJ/script/blj_functions to bash shell environment        ##
-##  10. If $BLJ_SUP exists add $BLJ_SUP/script/blj_git_functions,      ##
-##      $BLJ_SUP/script/docker_functions  to bash shell environment    ##
+##   4. Add env. variable $BLJ_META = BioLockJ metatada file repo      ##
+##   5. Add env. variable $DOCKER_HUB_USER = "biolockj"                ##
+##   6. Add env. variable $DOCKER_FILE_PATH = "$BLJ/resources/docker"  ##
+##   7. Add $BLJ/script/blj_functions to bash shell environment        ##
+##   8. If $BLJ_SUP exists add $BLJ_SUP/script/blj_git_functions,      ##
+##      $BLJ_SUP/script/docker_functions to bash environment           ##
 ##                                                                     ##
 #########################################################################
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export PATH="$SCRIPT_DIR:$PATH"
 export BLJ="$(dirname $SCRIPT_DIR)"
-export BLJ_PROJ="$BLJ/pipelines"
-export BLJ_META=~/metadata
-export DOCKER_HUB_USER="biolockj"
+[ ! -d "$BLJ_PROJ" ] && export BLJ_PROJ="$BLJ/pipelines"
+[ ! -d "$BLJ_META" ] && export BLJ_META=~/metadata
+[ ! -d "$DOCKER_FILE_PATH" ]  && export DOCKER_FILE_PATH="$BLJ/resources/docker"
+[ ${#DOCKER_HUB_USER} -eq 0 ] && export DOCKER_HUB_USER="biolockj"
 
 . $BLJ/script/blj_functions
 
-BLJ_SUP=
 BLJ_PARENT="$(dirname $BLJ)"
-[ -d "$BLJ_PARENT/blj_support/script" ] && BLJ_SUP="$BLJ_PARENT/blj_support" 
+[ ! -d "$BLJ_SUP" ] && [ -d "$BLJ_PARENT/blj_support/script" ] && export BLJ_SUP="$BLJ_PARENT/blj_support" 
 
 if [ -d "$BLJ_SUP" ]; then
-	export BLJ_SUP=$BLJ_SUP
 	export PATH="$BLJ_SUP/script:$PATH"
 	. $BLJ_SUP/script/blj_git_functions
 	. $BLJ_SUP/script/docker_functions
-	#echo -e "The BioLockJ & blj_support script directories have been added to your PATH environment variable: \"PATH=$SCRIPT_DIR:$BLJ_SUP/script:$PATH\""
-#else
-	#echo -e "The BioLockJ script directory has been added to your PATH environment variable: \"PATH=$SCRIPT_DIR:$PATH\""
+	#echo "Updated PATH=$PATH"
 fi 

@@ -79,7 +79,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
 		Log.info( getClass(), "Searching samples to remove OTUs found in less than " + getCutoff() + " samples." );
-		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
+		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 
 		final TreeSet<String> uniqueOtus = OtuUtil.findUniqueOtus( sampleOtuCounts );
 		Log.info( getClass(),
@@ -108,7 +108,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	 * @throws Exception if errors occur
 	 */
 	protected TreeMap<String, TreeSet<String>> findScarceOtus(
-			final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts, final TreeSet<String> uniqueOtus,
+			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> uniqueOtus,
 			final TreeMap<String, TreeSet<String>> scarceTaxa ) throws Exception
 	{
 		final TreeMap<String, TreeSet<String>> scarceOtus = new TreeMap<>();
@@ -137,7 +137,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	 * @throws Exception if errors occur
 	 */
 	protected TreeMap<String, TreeSet<String>> findScarceTaxa(
-			final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts, final TreeSet<String> otus )
+			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> otus )
 			throws Exception
 	{
 		final TreeMap<String, TreeSet<String>> scarceTaxa = new TreeMap<>();
@@ -148,12 +148,12 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 			Log.debug( getClass(), "Checking level: " + level + " with " + levelTaxa.size() + " taxa" );
 			for( final String taxa: levelTaxa )
 			{
-				final TreeMap<String, TreeMap<String, Integer>> levelTaxaCounts = TaxaUtil
+				final TreeMap<String, TreeMap<String, Long>> levelTaxaCounts = TaxaUtil
 						.getLevelTaxaCounts( sampleOtuCounts, level );
 				final TreeSet<String> samplesWithTaxa = new TreeSet<>();
 				for( final String sampleId: levelTaxaCounts.keySet() )
 				{
-					final TreeMap<String, Integer> taxaCounts = levelTaxaCounts.get( sampleId );
+					final TreeMap<String, Long> taxaCounts = levelTaxaCounts.get( sampleId );
 					Log.debug( getClass(), "Checking sampleId: " + sampleId + " with " + taxaCounts.size() + " " + level
 							+ " taxa for: " + taxa );
 					if( taxaCounts.keySet().contains( taxa ) )
@@ -186,8 +186,8 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	 * @return TreeMap(SampleId, TreeMap(OTU, count)) sampleOtuCounts after scarce OTUs have been removed
 	 * @throws Exception if errors occur
 	 */
-	protected TreeMap<String, TreeMap<String, Integer>> getUpdatedOtuCounts(
-			final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts,
+	protected TreeMap<String, TreeMap<String, Long>> getUpdatedOtuCounts(
+			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts,
 			final TreeMap<String, TreeSet<String>> scarceOtus ) throws Exception
 	{
 		for( final String badOtu: scarceOtus.keySet() )
@@ -246,12 +246,12 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	 * @param updatedOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @throws Exception if errors occur
 	 */
-	protected void removeScarceOtuCounts( final TreeMap<String, TreeMap<String, Integer>> updatedOtuCounts )
+	protected void removeScarceOtuCounts( final TreeMap<String, TreeMap<String, Long>> updatedOtuCounts )
 			throws Exception
 	{
 		for( final String sampleId: updatedOtuCounts.keySet() )
 		{
-			final TreeMap<String, Integer> otuCounts = updatedOtuCounts.get( sampleId );
+			final TreeMap<String, Long> otuCounts = updatedOtuCounts.get( sampleId );
 			if( otuCounts != null && !otuCounts.isEmpty() )
 			{
 				final BufferedWriter writer = new BufferedWriter( new FileWriter(
@@ -259,11 +259,11 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 				try
 				{
 					Log.debug( getClass(), sampleId + " # unique OTUs: " + otuCounts.size() );
-					Integer total = 0;
+					Long total = 0L;
 					for( final String otu: otuCounts.keySet() )
 					{
 						Log.debug( getClass(), sampleId + " checking OTU: " + otu );
-						final Integer sampleCount = otuCounts.get( otu );
+						final Long sampleCount = otuCounts.get( otu );
 						if( sampleCount != null )
 						{
 							total += otuCounts.get( otu );
@@ -322,6 +322,6 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	private Map<String, String> hitsPerSample = new HashMap<>();
 	private String prop = null;
 	private final TreeSet<String> sampleIds = new TreeSet<>();
-	private int totalOtuRemoved = 0;
+	private long totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();
 }

@@ -121,10 +121,10 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 					"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
 			for( final File f: getOutputDir().listFiles() )
 			{
-				final int count = SeqUtil.countNumReads( f );
+				final long count = SeqUtil.countNumReads( f );
 				Log.info( getClass(), "Num merged Reads for File:[" + f.getName() + "] ==> ID:["
 						+ SeqUtil.getSampleId( f.getName() ) + "] = " + count );
-				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Integer.toString( count ) );
+				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
 			MetaUtil.addColumn( metaColName, readsPerSample, getOutputDir(), true );

@@ -37,8 +37,8 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 	@Override
 	protected void transform( final File otuTable ) throws Exception
 	{
-		final List<List<Double>> dataPointsLogged = new ArrayList<>();
-		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();
+		final List<List<String>> dataPointsLogged = new ArrayList<>();
+		final List<List<Long>> dataPointsUnnormalized = new ArrayList<>();
 		final List<String> sampleIDs = new ArrayList<>();
 		final List<String> otuNames = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( otuTable );
@@ -50,23 +50,23 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 			{
 				final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
 				final String sampleID = st.nextToken();
-				final List<Double> innerList = new ArrayList<>();
+				final List<Long> innerList = new ArrayList<>();
 				sampleIDs.add( sampleID );
 				dataPointsUnnormalized.add( innerList );
-				dataPointsLogged.add( new ArrayList<Double>() );
+				dataPointsLogged.add( new ArrayList<String>() );
 
 				while( st.hasMoreTokens() )
 				{
 					final String nextToken = st.nextToken();
-					double d = 0;
+					long d = 0;
 					if( nextToken.length() > 0 )
 					{
-						d = Double.parseDouble( nextToken );
+						d = Long.parseLong( nextToken );
 					}
 					innerList.add( d );
 				}
 
-				final double rowSum = innerList.stream().mapToDouble( Double::doubleValue ).sum();
+				final long rowSum = innerList.stream().mapToLong( Long::longValue ).sum();
 	
 				if( rowSum == 0 )
 				{
@@ -90,10 +90,10 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
-			final List<Double> loggedInnerList = dataPointsLogged.get( x );
+			final List<String> loggedInnerList = dataPointsLogged.get( x );
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
 			{
-				double val = dataPointsUnnormalized.get( x ).get( y ) + 1;
+				long val = dataPointsUnnormalized.get( x ).get( y ) + 1;
 				if( allZeroIndex.contains( x ) )
 				{
 					// index 0 = col headers, so add + 1
@@ -102,11 +102,11 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 				}
 				else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 				{
-					loggedInnerList.add( Math.log( val ) );
+					loggedInnerList.add( new Double( Math.log( val ) ).toString() );
 				}
 				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
 				{
-					loggedInnerList.add( Math.log10( val ) );
+					loggedInnerList.add( new Double( Math.log10( val ) ).toString() );
 				}
 			}
 		}

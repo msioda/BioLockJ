@@ -47,7 +47,7 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @throws Exception if errors occur
 	 */
-	protected void buildTaxonomyTables( final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts )
+	protected void buildTaxonomyTables( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts )
 			throws Exception
 	{
 		final String label = "OTUs";
@@ -58,17 +58,17 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 		report( "OTU Count", sampleOtuCounts );
 		report( "Unique OTU", otus );
 		summary += BioLockJUtil.addTrailingSpaces( "# Samples:", pad )
-				+ BioLockJUtil.formatNumericOutput( sampleOtuCounts.size(), false ) + RETURN;
-		int totalOtus = 0;
+				+ BioLockJUtil.formatNumericOutput( new Integer( sampleOtuCounts.size() ).longValue(), false ) + RETURN;
+		long totalOtus = 0;
 		boolean topLevel = true;
 		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
 			final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
-			final TreeMap<String, TreeMap<String, Integer>> levelTaxaCounts = TaxaUtil
+			final TreeMap<String, TreeMap<String, Long>> levelTaxaCounts = TaxaUtil
 					.getLevelTaxaCounts( sampleOtuCounts, level );
-			final Map<String, Integer> uniqueOtus = new HashMap<>();
+			final Map<String, Long> uniqueOtus = new HashMap<>();
 
-			uniqueOtus.put( level, levelTaxa.size() );
+			uniqueOtus.put( level, new Integer( levelTaxa.size() ).longValue() );
 			report( "Taxonomy Counts @" + level, levelTaxaCounts );
 			final File table = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, null );
 			Log.info( getClass(), "Building: " + table.getAbsolutePath() );
@@ -85,7 +85,7 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 
 				for( final String sampleId: sampleOtuCounts.keySet() )
 				{
-					final TreeMap<String, Integer> taxaCounts = levelTaxaCounts.get( sampleId );
+					final TreeMap<String, Long> taxaCounts = levelTaxaCounts.get( sampleId );
 					if( taxaCounts.isEmpty() )
 					{
 						Log.warn( getClass(), "No " + level + " taxa found: " + sampleId );
@@ -95,7 +95,7 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 
 					for( final String taxa: levelTaxa )
 					{
-						Integer count = 0;
+						Long count = 0L;
 						if( taxaCounts != null && taxaCounts.keySet().contains( taxa ) )
 						{
 							count = taxaCounts.get( taxa );
@@ -140,13 +140,13 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 		}
 	}
 
-	private void report( final String label, final TreeMap<String, TreeMap<String, Integer>> map ) throws Exception
+	private void report( final String label, final TreeMap<String, TreeMap<String, Long>> map ) throws Exception
 	{
 		if( Log.doDebug() )
 		{
 			for( final String id: map.keySet() )
 			{
-				final TreeMap<String, Integer> innerMap = map.get( id );
+				final TreeMap<String, Long> innerMap = map.get( id );
 				for( final String otu: innerMap.keySet() )
 				{
 					Log.debug( getClass(), "REPORT [ " + id + " " + label + " ]: " + otu + "=" + innerMap.get( otu ) );
