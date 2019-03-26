@@ -303,7 +303,7 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/implicit/qiime/MergeQiimeOtuTables' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'qiime'},
-  
+
   'biolockj/module/report/r/R_PlotMds' : { cssClass : [], category : 'r'},
 
   'biolockj/module/report/r/R_PlotOtus' : { cssClass : [], category : 'r'},
@@ -346,7 +346,7 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/implicit/RegisterNumReads' : { cssClass : ['implicit', 'hidden'], category : 'implicit'},
 
-  'biolockj/module/report/Email' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/Email' : { cssClass : ['emailMod'], category : 'report'},
 
 }));
 
