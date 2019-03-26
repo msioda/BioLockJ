@@ -127,6 +127,14 @@ div.tab button:hover {
 div.tab button.active {
     background-color: #ccc;
 }
+
+.tablinks {
+  display: none;
+}
+.basicTabBut {
+  display: block;
+}
+
 /* Style the tab content */
 .tabcontent {
     display: none;
@@ -205,6 +213,9 @@ div#moduleInfoDiv {
   /*position: fixed;*/
   /* background-color: rgba(117, 190, 218, 0.5); */
   width: inherit;
+}
+.implicit {
+  display: none;
 }
 
 .missingParameterOnValidation{
