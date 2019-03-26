@@ -10,50 +10,7 @@ module.exports = assign.shim();
 
 delete assign.shim;
 
-},{"./":4,"object-keys":9}],2:[function(require,module,exports){
-'use strict';
-
-var keys = require('object-keys');
-
-module.exports = function hasSymbols() {
-	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
-	if (typeof Symbol.iterator === 'symbol') { return true; }
-
-	var obj = {};
-	var sym = Symbol('test');
-	var symObj = Object(sym);
-	if (typeof sym === 'string') { return false; }
-
-	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
-	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
-
-	// temp disabled per https://github.com/ljharb/object.assign/issues/17
-	// if (sym instanceof Symbol) { return false; }
-	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
-	// if (!(symObj instanceof Symbol)) { return false; }
-
-	var symVal = 42;
-	obj[sym] = symVal;
-	for (sym in obj) { return false; }
-	if (keys(obj).length !== 0) { return false; }
-	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
-
-	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
-
-	var syms = Object.getOwnPropertySymbols(obj);
-	if (syms.length !== 1 || syms[0] !== sym) { return false; }
-
-	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
-
-	if (typeof Object.getOwnPropertyDescriptor === 'function') {
-		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
-		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
-	}
-
-	return true;
-};
-
-},{"object-keys":9}],3:[function(require,module,exports){
+},{"./":3,"object-keys":9}],2:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es6-shim
@@ -62,7 +19,7 @@ var bind = require('function-bind');
 var canBeObject = function (obj) {
 	return typeof obj !== 'undefined' && obj !== null;
 };
-var hasSymbols = require('./hasSymbols')();
+var hasSymbols = require('has-symbols/shams')();
 var toObject = Object;
 var push = bind.call(Function.call, Array.prototype.push);
 var propIsEnumerable = bind.call(Function.call, Object.prototype.propertyIsEnumerable);
@@ -96,7 +53,7 @@ module.exports = function assign(target, source1) {
 	return objTarget;
 };
 
-},{"./hasSymbols":2,"function-bind":8,"object-keys":9}],4:[function(require,module,exports){
+},{"function-bind":7,"has-symbols/shams":8,"object-keys":9}],3:[function(require,module,exports){
 'use strict';
 
 var defineProperties = require('define-properties');
@@ -108,14 +65,14 @@ var shim = require('./shim');
 var polyfill = getPolyfill();
 
 defineProperties(polyfill, {
-	implementation: implementation,
 	getPolyfill: getPolyfill,
+	implementation: implementation,
 	shim: shim
 });
 
 module.exports = polyfill;
 
-},{"./implementation":3,"./polyfill":11,"./shim":12,"define-properties":5}],5:[function(require,module,exports){
+},{"./implementation":2,"./polyfill":11,"./shim":12,"define-properties":4}],4:[function(require,module,exports){
 'use strict';
 
 var keys = require('object-keys');
@@ -173,7 +130,7 @@ defineProperties.supportsDescriptors = !!supportsDescriptors;
 
 module.exports = defineProperties;
 
-},{"foreach":6,"object-keys":9}],6:[function(require,module,exports){
+},{"foreach":5,"object-keys":9}],5:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -197,7 +154,11 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+'use strict';
+
+/* eslint no-invalid-this: 1 */
+
 var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
 var slice = Array.prototype.slice;
 var toStr = Object.prototype.toString;
@@ -247,12 +208,58 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
+'use strict';
+
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":7}],9:[function(require,module,exports){
+},{"./implementation":6}],8:[function(require,module,exports){
+'use strict';
+
+/* eslint complexity: [2, 17], max-statements: [2, 33] */
+module.exports = function hasSymbols() {
+	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
+	if (typeof Symbol.iterator === 'symbol') { return true; }
+
+	var obj = {};
+	var sym = Symbol('test');
+	var symObj = Object(sym);
+	if (typeof sym === 'string') { return false; }
+
+	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
+	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
+
+	// temp disabled per https://github.com/ljharb/object.assign/issues/17
+	// if (sym instanceof Symbol) { return false; }
+	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
+	// if (!(symObj instanceof Symbol)) { return false; }
+
+	// if (typeof Symbol.prototype.toString !== 'function') { return false; }
+	// if (String(sym) !== Symbol.prototype.toString.call(sym)) { return false; }
+
+	var symVal = 42;
+	obj[sym] = symVal;
+	for (sym in obj) { return false; } // eslint-disable-line no-restricted-syntax
+	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
+
+	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
+
+	var syms = Object.getOwnPropertySymbols(obj);
+	if (syms.length !== 1 || syms[0] !== sym) { return false; }
+
+	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
+
+	if (typeof Object.getOwnPropertyDescriptor === 'function') {
+		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
+		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
+	}
+
+	return true;
+};
+
+},{}],9:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es5-shim
@@ -282,12 +289,20 @@ var excludedKeys = {
 	$frame: true,
 	$frameElement: true,
 	$frames: true,
-	$height: true,
+	$innerHeight: true,
+	$innerWidth: true,
+	$outerHeight: true,
+	$outerWidth: true,
+	$pageXOffset: true,
+	$pageYOffset: true,
 	$parent: true,
+	$scrollLeft: true,
+	$scrollTop: true,
+	$scrollX: true,
+	$scrollY: true,
 	$self: true,
 	$webkitIndexedDB: true,
 	$webkitStorageInfo: true,
-	$width: true,
 	$window: true
 };
 var hasAutomationEqualityBug = (function () {
@@ -458,7 +473,7 @@ module.exports = function getPolyfill() {
 	return Object.assign;
 };
 
-},{"./implementation":3}],12:[function(require,module,exports){
+},{"./implementation":2}],12:[function(require,module,exports){
 'use strict';
 
 var define = require('define-properties');
@@ -474,4 +489,4 @@ module.exports = function shimAssign() {
 	return polyfill;
 };
 
-},{"./polyfill":11,"define-properties":5}]},{},[1]);
+},{"./polyfill":11,"define-properties":4}]},{},[1]);
