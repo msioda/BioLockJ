@@ -303,10 +303,7 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/implicit/qiime/MergeQiimeOtuTables' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'qiime'},
-  //what is this?
-  'biolockj/module/implicit/qiime/QiimeClassifier' :
-  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
-
+  
   'biolockj/module/report/r/R_PlotMds' : { cssClass : [], category : 'r'},
 
   'biolockj/module/report/r/R_PlotOtus' : { cssClass : [], category : 'r'},
