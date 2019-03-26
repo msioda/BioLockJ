@@ -19,20 +19,20 @@
 <!--options for control panel-->
 <div class="menu" id='mainMenu'>
   <div class="tab">
-    <button id="defaultOpen" class="tablinks" onclick="openTab(event, 'projectTab')">Project</button>
-    <button class="tablinks" onclick="openTab(event, 'moduleTab')">Modules</button>
-    <button class="tablinks" onclick="openTab(event, 'inputTab')">Input</button>
-    <button class="tablinks" onclick="openTab(event, 'metadataTab')">Metadata</button>
-    <button class="tablinks" onclick="openTab(event, 'clusterTab')">Cluster</button>
-    <button class="tablinks" onclick="openTab(event, 'scriptTab')">Script</button>
-    <button class="tablinks" onclick="openTab(event, 'reportTab')">Report</button>
-    <button class="tablinks" onclick="openTab(event, 'mailTab')">E-mail</button>
-    <button class="tablinks" onclick="openTab(event, 'rTab')">R</button>
+    <button id="defaultOpen" class="tablinks basicTabBut" onclick="openTab(event, 'projectTab')">Project</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'moduleTab')">Modules</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'inputTab')">Input</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'metadataTab')">Metadata</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'clusterTab')">Cluster</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'scriptTab')">Script</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'reportTab')">Report</button>
+    <button class="tablinks emailTabBut" id="biolockj.module.report.EmailButton" onclick="openTab(event, 'mailTab')">E-mail</button>
+    <button class="tablinks rTabBut" onclick="openTab(event, 'rTab')">R</button>
     <button class="tablinks" onclick="openTab(event, 'exeTab')">Exe</button>
-    <button class="tablinks" onclick="openTab(event, 'rdpTab')">RDP</button>
-    <button class="tablinks" onclick="openTab(event, 'qiimeTab')">QIIME</button>
-    <button class="tablinks" onclick="openTab(event, 'krakenTab')">Kraken</button>
-    <button class="tablinks" onclick="openTab(event, 'kraken2Tab')">Kraken2</button>
+    <button class="tablinks" id="biolockj.module.classifier.r16s.RdpClassifierButton" onclick="openTab(event, 'rdpTab')">RDP</button>
+    <button class="tablinks" id="qiimeTabButton" onclick="openTab(event, 'qiimeTab')">QIIME</button>
+    <button class="tablinks" id="biolockj.module.classifier.wgs.KrakenClassifierButton"onclick="openTab(event, 'krakenTab')">Kraken</button>
+    <button class="tablinks" id="biolockj.module.classifier.wgs.Kraken2ClassifierButton" onclick="openTab(event, 'kraken2Tab')">Kraken2</button>
     <button class="tablinks" onclick="openTab(event, 'metaphlanTab')">MetaPhlAn</button>
     <button class="tablinks" onclick="openTab(event, 'kneadDataTab')">kneadData</button>
     <button class="tablinks" onclick="openTab(event, 'r_PlotMdsTab')">R Plot MDS</button>
@@ -40,10 +40,10 @@
     <button class="tablinks" onclick="openTab(event, 'r_PlotEffectSizeTab')">R Plot Effect Size</button>
     <button class="tablinks" onclick="openTab(event, 'rarefyOtuCountsTab')">Rarefy OTU Counts</button>
     <button class="tablinks" onclick="openTab(event, 'removeLowOtuCountsTab')">Remove Low OTU Counts</button>
-    <button class="tablinks" onclick="openTab(event, 'seqFileValidatorTab')">Sequence File Validator</button>
-    <button class="tablinks" onclick="openTab(event, 'demultiplexerTab')">Demultiplexer</button>
+    <button class="tablinks" id="biolockj.module.seq.SeqFileValidatorButton" onclick="openTab(event, 'seqFileValidatorTab')">Sequence File Validator</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'demultiplexerTab')">Demultiplexer</button>
     <button class="tablinks" onclick="openTab(event, 'dockerTab')">Docker</button>
-    <button class="tablinks" onclick="openTab(event, 'humann2Tab')">HumanN2</button>
+    <button class="tablinks" id="biolockj.module.classifier.wgs.Humann2ClassifierButton" onclick="openTab(event, 'humann2Tab')">HumanN2</button>
     <button class="tablinks" onclick="openTab(event, 'multiplexerTab')">Multiplexer</button>
     <button class="tablinks" onclick="openTab(event, 'rarefySeqsTab')">Rarify Seqs</button>
     <button id='AwsButton' class="tablinks" onclick="openTab(event, 'AwsTab')">AWS</button>
