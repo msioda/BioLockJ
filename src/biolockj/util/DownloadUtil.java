@@ -25,7 +25,6 @@ import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
-import biolockj.module.report.r.R_PlotEffectSize;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
 import biolockj.module.report.taxa.NormalizeTaxaTables;
 
@@ -72,6 +71,7 @@ public final class DownloadUtil
 				}
 				else if( module instanceof NormalizeTaxaTables )
 				{
+					downloadPaths.add( module.getOutputDir() );
 					downloadPaths.add( module.getTempDir() );
 				}
 				else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables )
@@ -86,7 +86,13 @@ public final class DownloadUtil
 			}
 
 			AndFileFilter filter = new AndFileFilter( EmptyFileFilter.NOT_EMPTY, HiddenFileFilter.VISIBLE );
-			downloadPaths.addAll( FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE ) );
+			Collection<File> dirs = FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
+			if( dirs == null )
+			{
+				return null;
+			}
+			
+			downloadPaths.addAll( dirs );
 
 			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() -1 ) ) ? "completed": "failed" ) + " pipeline -->";
 			final String displaySize = FileUtils
@@ -267,12 +273,10 @@ public final class DownloadUtil
 		{
 			for( final BioModule module: Pipeline.getModules() )
 			{
-				final boolean includeRawCounts = ModuleUtil.moduleExists( R_PlotEffectSize.class.getName() )
-						&& !Config.getBoolean( module, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC );
-
+	
 				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
 						|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
-						|| includeRawCounts && module instanceof NormalizeTaxaTables;
+						|| module instanceof NormalizeTaxaTables;
 
 				if( ModuleUtil.hasExecuted( module ) && downloadableType )
 				{

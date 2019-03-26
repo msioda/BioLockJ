@@ -74,7 +74,7 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	public void runModule() throws Exception
 	{
 		sampleIds.addAll( MetaUtil.getSampleIds() );
-		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
+		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 
 		final TreeMap<String, TreeSet<String>> lowCountOtus = removeLowOtuCounts( sampleOtuCounts );
 		logLowCountOtus( lowCountOtus );
@@ -131,7 +131,7 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	 * @throws Exception if errors occur
 	 */
 	protected TreeMap<String, TreeSet<String>> removeLowOtuCounts(
-			final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts ) throws Exception
+			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts ) throws Exception
 	{
 		final TreeMap<String, TreeSet<String>> lowCountOtus = new TreeMap<>();
 		Log.debug( getClass(), "Build low count files for total # files: " + sampleOtuCounts.size() );
@@ -139,14 +139,14 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 		{
 			final Set<String> badOtus = new TreeSet<>();
 			Log.debug( getClass(), "Check for low OTU counts in: " + sampleId );
-			int numOtus = 0;
-			final TreeMap<String, Integer> otuCounts = sampleOtuCounts.get( sampleId );
+			long numOtus = 0;
+			final TreeMap<String, Long> otuCounts = sampleOtuCounts.get( sampleId );
 
 			final Set<String> validOtus = new TreeSet<>( otuCounts.keySet() );
-			int numOtuRemoved = 0;
+			long numOtuRemoved = 0;
 			for( final String otu: otuCounts.keySet() )
 			{
-				final int count = otuCounts.get( otu );
+				final long count = otuCounts.get( otu );
 				if( count < getMinCount() )
 				{
 					uniqueOtuRemoved.add( otu );
@@ -251,6 +251,6 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	private Map<String, String> hitsPerSample = new HashMap<>();
 	private String prop = null;
 	private final Set<String> sampleIds = new HashSet<>();
-	private int totalOtuRemoved = 0;
+	private long totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();
 }

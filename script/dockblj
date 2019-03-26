@@ -81,20 +81,6 @@ manager_type() {
 	fi
 }
 
-# Pass script input parameters + the argument name
-# Named arguments must be formated: "argName=argValue"
-named_arg() {
-	args=("$@")
-	numArgs=${#@}
-	target=${args[$((numArgs-1))]}
-	args=${args[@]:0:$((numArgs-1))}
-	for arg in $args; do
-		IFS="="
-		tokens=( $arg )
-		[ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
-	done
-}
-
 # Get the internal Docker restart directory
 restart_dir() {
 	echo "/pipelines/${doRestart#$(blj_proj)/}"
@@ -162,13 +148,13 @@ verify_inputs() {
 }
 
 echo "Running dockblj..."
-runAws=$(named_arg "$@" "-aws")
-config=$(named_arg "$@" "-c")
-inDocker=$(arg_exists "$@" "-docker")
-inputDir=$(named_arg "$@" "-i")
-metaPath=$(named_arg "$@" "-m")
-newPass=$(named_arg "$@" "-p")
-doRestart=$(named_arg "$@" "-r")
+runAws=$(named_arg "$@" -aws)
+config=$(named_arg "$@" -c)
+inDocker=$(arg_exists "$@" -docker)
+inputDir=$(named_arg "$@" -i)
+metaPath=$(named_arg "$@" -m)
+newPass=$(named_arg "$@" -p)
+doRestart=$(named_arg "$@" -r)
 
 ! $(has_param $inDocker) && verify_inputs
 

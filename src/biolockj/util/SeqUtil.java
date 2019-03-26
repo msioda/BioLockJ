@@ -41,9 +41,9 @@ public class SeqUtil
 	 * @return Number of reads in seqFile
 	 * @throws Exception if errors occur
 	 */
-	public static int countNumReads( final File seqFile ) throws Exception
+	public static long countNumReads( final File seqFile ) throws Exception
 	{
-		int count = 0;
+		long count = 0;
 		final BufferedReader r = BioLockJUtil.getFileReader( seqFile );
 		for( String line = r.readLine(); line != null; line = r.readLine() )
 		{

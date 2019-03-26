@@ -90,7 +90,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 		{
 			if( SeqUtil.isForwardRead( f.getName() ) )
 			{
-				final int count = SeqUtil.countNumReads( f );
+				final long count = SeqUtil.countNumReads( f );
 				Log.debug( getClass(), "Num Reads for :[" + SeqUtil.getSampleId( f.getName() ) + "] = " + count );
 				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}

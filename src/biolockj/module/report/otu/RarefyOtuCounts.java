@@ -91,14 +91,14 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 		sampleIds.addAll( MetaUtil.getSampleIds() );
 		Log.info( getClass(), "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_"
 				+ Constants.OTU_COUNT );
-		final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
-		final Integer quantileNum = getNumOtusForQuantile( sampleOtuCounts );
+		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
+		final Long quantileNum = getNumOtusForQuantile( sampleOtuCounts );
 
 		Log.info( getClass(), "Rarefy " + sampleOtuCounts.size() + " to " + quantileNum );
 		for( final String sampleId: sampleOtuCounts.keySet() )
 		{
 			Log.info( getClass(), "Rarefy " + sampleId );
-			final TreeMap<String, Integer> data = rarefy( sampleId, sampleOtuCounts.get( sampleId ), quantileNum );
+			final TreeMap<String, Long> data = rarefy( sampleId, sampleOtuCounts.get( sampleId ), quantileNum );
 			if( data != null )
 			{
 				generateOtuput( OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName() ), data );
@@ -118,7 +118,7 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	 * @param otuCounts TreeMap(OTU, count)
 	 * @throws Exception if errors occur
 	 */
-	protected void generateOtuput( final File file, final TreeMap<String, Integer> otuCounts ) throws Exception
+	protected void generateOtuput( final File file, final TreeMap<String, Long> otuCounts ) throws Exception
 	{
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( file ) );
 		try
@@ -145,11 +145,12 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	 * @return List of OTUs for the given sampleId
 	 * @throws Exception if errors occur
 	 */
-	protected List<String> getData( final String sampleId, final TreeMap<String, Integer> otuCounts ) throws Exception
+	protected List<String> getData( final String sampleId, final TreeMap<String, Long> otuCounts ) throws Exception
 	{
 		final String metaField = MetaUtil.getField( sampleId, ParserModuleImpl.getOtuCountField() );
-		final Integer val = Integer.valueOf( metaField );
-		final List<String> otus = new ArrayList<>( val );
+		final Long val = Long.valueOf( metaField );
+		final List<String> otus = new ArrayList<>( val.intValue() );
+		
 		for( final String otu: otuCounts.keySet() )
 		{
 			for( int i = 0; i < otuCounts.get( otu ); i++ )
@@ -185,28 +186,28 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 		}
 		else
 		{
-			final TreeMap<Integer, String> lowest = new TreeMap<>();
+			final TreeMap<Long, String> lowest = new TreeMap<>();
 			for( final String sampleId: sampleIds )
 			{
 				final String val = MetaUtil.getField( sampleId, otuCountField );
 				try
 				{
-					if( lowest.size() < numToRemove && val != null && !val.isEmpty() & Integer.valueOf( val ) > 0 )
+					if( lowest.size() < numToRemove && val != null && !val.isEmpty() & Long.valueOf( val ) > 0 )
 					{
-						lowest.put( Integer.valueOf( val ), sampleId );
+						lowest.put( Long.valueOf( val ), sampleId );
 					}
 					else
 					{
-						final List<Integer> intList = new ArrayList<>( lowest.keySet() );
+						final List<Long> intList = new ArrayList<>( lowest.keySet() );
 						Collections.sort( intList );
-						for( final Integer lowVal: intList )
+						for( final Long lowVal: intList )
 						{
-							if( Integer.valueOf( val ) < lowVal )
+							if( Long.valueOf( val ) < lowVal )
 							{
-								final Integer high = intList.get( intList.size() - 1 );
+								final Long high = intList.get( intList.size() - 1 );
 								lowest.remove( high );
-								lowest.put( Integer.valueOf( val ), sampleId );
-								Log.debug( getClass(), "Replace " + high + " with new low: " + Integer.valueOf( val ) );
+								lowest.put( Long.valueOf( val ), sampleId );
+								Log.debug( getClass(), "Replace " + high + " with new low: " + Long.valueOf( val ) );
 								break;
 							}
 
@@ -233,17 +234,17 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	 * @return quantile number of OTUs
 	 * @throws Exception if errors occur
 	 */
-	protected Integer getNumOtusForQuantile( final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts )
+	protected Long getNumOtusForQuantile( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts )
 			throws Exception
 	{
-		final TreeMap<String, Integer> countMap = new TreeMap<>();
+		final TreeMap<String, Long> countMap = new TreeMap<>();
 		for( final String sampleId: sampleOtuCounts.keySet() )
 		{
 			countMap.put( sampleId,
-					sampleOtuCounts.get( sampleId ).values().stream().mapToInt( Integer::intValue ).sum() );
+					sampleOtuCounts.get( sampleId ).values().stream().mapToLong( Long::longValue ).sum() );
 		}
 
-		final List<Integer> data = new ArrayList<>( countMap.values() );
+		final List<Long> data = new ArrayList<>( countMap.values() );
 		Collections.sort( data );
 
 		final int index = new Double( Config.requirePositiveDouble( this, QUANTILE ) * countMap.size() ).intValue();
@@ -259,12 +260,12 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	 * @return List of randomly selected OTUs up to the given quantile
 	 * @throws Exception if errors occur
 	 */
-	protected List<String> getRandomQuantileOtus( List<String> data, final int quantileNum ) throws Exception
+	protected List<String> getRandomQuantileOtus( List<String> data, final Long quantileNum ) throws Exception
 	{
 		Collections.shuffle( data );
 		if( data.size() > quantileNum )
 		{
-			data = data.subList( 0, quantileNum );
+			data = data.subList( 0, quantileNum.intValue() );
 		}
 		return data;
 	}
@@ -278,11 +279,11 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 	 * @return TreeMap(OTU, count) of rarefied data
 	 * @throws Exception if errors occur
 	 */
-	protected TreeMap<String, Integer> rarefy( final String sampleId, final TreeMap<String, Integer> otuCounts,
-			final int quantileNum ) throws Exception
+	protected TreeMap<String, Long> rarefy( final String sampleId, final TreeMap<String, Long> otuCounts,
+			final long quantileNum ) throws Exception
 	{
 
-		final TreeMap<String, Integer> otuCount = new TreeMap<>();
+		final TreeMap<String, Long> otuCount = new TreeMap<>();
 		final List<String> data = getData( sampleId, otuCounts );
 		if( Config.getBoolean( this, REMOVE_LOW_ABUNDANT_SAMPLES ) && data.size() < quantileNum )
 		{
@@ -297,19 +298,19 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 			{
 				if( otuCount.get( otu ) == null )
 				{
-					otuCount.put( otu, 0 );
+					otuCount.put( otu, 0L );
 				}
 
 				otuCount.put( otu, otuCount.get( otu ) + 1 );
 			}
 		}
 
-		int totalSampleOtuCount = 0;
-		final TreeMap<String, Integer> meanCountValues = new TreeMap<>();
+		long totalSampleOtuCount = 0L;
+		final TreeMap<String, Long> meanCountValues = new TreeMap<>();
 		int i = 0;
 		for( final String otu: otuCount.keySet() )
 		{
-			final int avg = Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) );
+			final long avg = new Integer( Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) ) ).longValue();
 			if( avg > 0 )
 			{
 				meanCountValues.put( otu, avg );

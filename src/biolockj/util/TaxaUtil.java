@@ -113,14 +113,14 @@ public class TaxaUtil
 	 * @return TreeMap(sampleId, TreeMap(taxa, count))
 	 * @throws Exception if errors occur
 	 */
-	public static TreeMap<String, TreeMap<String, Integer>> getLevelTaxaCounts(
-			final TreeMap<String, TreeMap<String, Integer>> sampleOtuCounts, final String level ) throws Exception
+	public static TreeMap<String, TreeMap<String, Long>> getLevelTaxaCounts(
+			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final String level ) throws Exception
 	{
-		final TreeMap<String, TreeMap<String, Integer>> taxaCounts = new TreeMap<>();
+		final TreeMap<String, TreeMap<String, Long>> taxaCounts = new TreeMap<>();
 
 		for( final String sampleId: sampleOtuCounts.keySet() )
 		{
-			final TreeMap<String, Integer> otuCounts = sampleOtuCounts.get( sampleId );
+			final TreeMap<String, Long> otuCounts = sampleOtuCounts.get( sampleId );
 			for( final String otu: otuCounts.keySet() )
 			{
 				final String taxa = getTaxaName( otu, level );
@@ -132,7 +132,7 @@ public class TaxaUtil
 					}
 					if( taxaCounts.get( sampleId ).get( taxa ) == null )
 					{
-						taxaCounts.get( sampleId ).put( taxa, 0 );
+						taxaCounts.get( sampleId ).put( taxa, 0L );
 					}
 					taxaCounts.get( sampleId ).put( taxa,
 							taxaCounts.get( sampleId ).get( taxa ) + otuCounts.get( otu ) );

@@ -158,12 +158,12 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 */
 	protected void transform( final File taxaTable ) throws Exception
 	{
-		final List<List<Double>> dataPointsNormalized = new ArrayList<>();
-		final List<List<Double>> dataPointsNormalizedThenLogged = new ArrayList<>();
-		final List<List<Double>> dataPointsUnnormalized = new ArrayList<>();
+		final List<List<String>> dataPointsNormalized = new ArrayList<>();
+		final List<List<String>> dataPointsNormalizedThenLogged = new ArrayList<>();
+		final List<List<Long>> dataPointsUnnormalized = new ArrayList<>();
 		final List<String> sampleIDs = new ArrayList<>();
 		final List<String> otuNames = new ArrayList<>();
-		double tableSum = 0;
+		long tableSum = 0;
 
 		final BufferedReader reader = BioLockJUtil.getFileReader( taxaTable );
 		try
@@ -175,24 +175,24 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 			{
 				final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
 				final String sampleID = st.nextToken();
-				final List<Double> innerList = new ArrayList<>();
+				final List<Long> innerList = new ArrayList<>();
 				sampleIDs.add( sampleID );
 				dataPointsUnnormalized.add( innerList );
-				dataPointsNormalized.add( new ArrayList<Double>() );
-				dataPointsNormalizedThenLogged.add( new ArrayList<Double>() );
+				dataPointsNormalized.add( new ArrayList<String>() );
+				dataPointsNormalizedThenLogged.add( new ArrayList<String>() );
 
 				while( st.hasMoreTokens() )
 				{
 					final String nextToken = st.nextToken();
-					double d = 0;
+					long d = 0;
 					if( nextToken.length() > 0 )
 					{
-						d = Double.parseDouble( nextToken );
+						d = Long.parseLong( nextToken );
 					}
 					innerList.add( d );
 				}
 
-				final double rowSum = innerList.stream().mapToDouble( Double::doubleValue ).sum();
+				final long rowSum = innerList.stream().mapToLong( Long::longValue ).sum();
 				tableSum += rowSum;
 				if( rowSum == 0 )
 				{
@@ -201,7 +201,6 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 				nextLine = reader.readLine();
 
 				Log.debug( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
-				Log.debug( getClass(), "Table Sum [" + sampleIDs.size() + "] = " + tableSum );
 			}
 		}
 		finally
@@ -211,6 +210,8 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 				reader.close();
 			}
 		}
+		
+		Log.debug( getClass(), "Table Sum [ #samples=" + sampleIDs.size() + "] = " + tableSum );
 
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
 		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
@@ -222,13 +223,13 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
 		{
-			final double rowSum = dataPointsUnnormalized.get( x ).stream().mapToDouble( Double::doubleValue ).sum();
-			final List<Double> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
+			final long rowSum = dataPointsUnnormalized.get( x ).stream().mapToLong( Long::longValue ).sum();
+			final List<String> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
 
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
 			{
-				final double normVal = aveRowSum * dataPointsUnnormalized.get( x ).get( y ) / rowSum + 1;
-				dataPointsNormalized.get( x ).add( normVal );
+				final Double normVal = aveRowSum * dataPointsUnnormalized.get( x ).get( y ) / rowSum + 1;
+				dataPointsNormalized.get( x ).add( new Long( normVal.longValue() ).toString() );
 				if( allZeroIndex.contains( x ) )
 				{
 					// index 0 = col headers, so add + 1
@@ -237,11 +238,11 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 				}
 				else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 				{
-					loggedInnerList.add( Math.log( normVal ) );
+					loggedInnerList.add( new Double( Math.log( normVal ) ).toString() );
 				}
 				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
 				{
-					loggedInnerList.add( Math.log10( normVal ) );
+					loggedInnerList.add( new Double( Math.log10( normVal ) ).toString() );
 				}
 			}
 		}
@@ -270,7 +271,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 * @throws Exception if errors occur
 	 */
 	protected void writeDataToFile( final File inputFile, final List<String> sampleNames, final List<String> taxaNames,
-			final List<List<Double>> taxaCounts ) throws Exception
+			final List<List<String>> taxaCounts ) throws Exception
 	{
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( inputFile ) );
 
@@ -321,16 +322,16 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 * @return Set of empty zero-rows
 	 * @throws Exception if errors occur
 	 */
-	protected static Set<Integer> findAllZeroIndex( final List<List<Double>> data ) throws Exception
+	protected static Set<Integer> findAllZeroIndex( final List<List<Long>> data ) throws Exception
 	{
 		final Set<Integer> allZero = new HashSet<>();
 		for( int x = 0; x < data.size(); x++ )
 		{
 			for( int y = 0; y < data.get( x ).size(); y++ )
 			{
-				double sum = 0;
+				long sum = 0;
 
-				for( final Double d: data.get( x ) )
+				for( final Long d: data.get( x ) )
 				{
 					sum += d;
 				}

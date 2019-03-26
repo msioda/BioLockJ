@@ -63,26 +63,26 @@ public class SummaryUtil
 	{
 		final int pad = getPad( label );
 		String msg = BioLockJUtil.addTrailingSpaces( "# Samples:", pad )
-				+ BioLockJUtil.formatNumericOutput( map.size(), false ) + RETURN;
+				+ BioLockJUtil.formatNumericOutput( new Integer( map.size() ).longValue(), false ) + RETURN;
 
 		if( !map.isEmpty() )
 		{
-			final TreeSet<Integer> vals = new TreeSet<>(
-					map.values().stream().map( Integer::parseInt ).collect( Collectors.toSet() ) );
+			final TreeSet<Long> vals = new TreeSet<>(
+					map.values().stream().map( Long::parseLong ).collect( Collectors.toSet() ) );
 
 			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (min):", pad )
 					+ BioLockJUtil.formatNumericOutput( vals.first(), false ) + RETURN;
 			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (median):", pad )
-					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMedian( vals, false ) ), false )
+					+ BioLockJUtil.formatNumericOutput( Long.valueOf( SummaryUtil.getMedian( vals, false ) ), false )
 					+ RETURN;
 			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (mean):", pad )
-					+ BioLockJUtil.formatNumericOutput( Integer.valueOf( SummaryUtil.getMean( vals, false ) ), false )
+					+ BioLockJUtil.formatNumericOutput( Long.valueOf( SummaryUtil.getMean( vals, false ) ), false )
 					+ RETURN;
 			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (max):", pad )
 					+ BioLockJUtil.formatNumericOutput( vals.last(), false ) + RETURN;
 
-			Integer sum = 0;
-			for( final int val: vals )
+			Long sum = 0L;
+			for( final long val: vals )
 			{
 				sum += val;
 			}
@@ -162,14 +162,13 @@ public class SummaryUtil
 				return null;
 			}
 
-			BigInteger inAvg = BigInteger.valueOf( 0L );
+			Long inAvg =  0L;
 			for( final File f: module.getInputFiles() )
 			{
-				final BigInteger size = FileUtils.sizeOfAsBigInteger( f );
-				inAvg = inAvg.add( size );
-
+				inAvg += FileUtils.sizeOf( f );
 			}
-			inAvg = inAvg.divide( BigInteger.valueOf( numIn ) );
+			
+			inAvg = new Double( inAvg / numIn ).longValue();
 
 			sb.append( "# Input files: " + numIn + Constants.RETURN );
 			sb.append( "Mean Input File Size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
@@ -201,9 +200,9 @@ public class SummaryUtil
 			return Double.valueOf( doubleVals.stream().mapToDouble( i -> i ).sum() / doubleVals.size() ).toString();
 		}
 
-		final Collection<Integer> intVals = (Collection<Integer>) vals;
-		return Integer
-				.valueOf( Double.valueOf( intVals.stream().mapToInt( i -> i ).sum() / intVals.size() ).intValue() )
+		final Collection<Long> longVals = (Collection<Long>) vals;
+		return Long
+				.valueOf( Double.valueOf( longVals.stream().mapToLong( i -> i ).sum() / longVals.size() ).longValue() )
 				.toString();
 	}
 
@@ -229,7 +228,7 @@ public class SummaryUtil
 		}
 		else
 		{
-			data = new ArrayList<>( (Collection<Integer>) vals );
+			data = new ArrayList<>( (Collection<Long>) vals );
 		}
 
 		Collections.sort( data );
@@ -237,7 +236,7 @@ public class SummaryUtil
 		final int middle = data.size() / 2;
 		if( data.size() % 2 == 1 )
 		{
-			return data.get( data.size() / 2 ).toString();
+			return data.get( new Double( data.size() / 2  ).intValue() ).toString();
 		}
 		else if( isDouble )
 		{
@@ -245,7 +244,7 @@ public class SummaryUtil
 		}
 		else
 		{
-			return Integer.valueOf( ( (Integer) data.get( middle - 1 ) + (Integer) data.get( middle ) ) / 2 )
+			return Long.valueOf( ( (Long) data.get( middle - 1 ) + (Long) data.get( middle ) ) / 2 )
 					.toString();
 		}
 	}

@@ -58,8 +58,8 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 		{
 			long combinedMeanFwReadLen = 0L;
 			long combinedMeanRvReadLen = 0L;
-			int overallMinReadLen = 0;
-			int overallMaxReadLen = 0;
+			long overallMinReadLen = 0;
+			long overallMaxReadLen = 0;
 
 			sb.append( getSeqLenRange() + RETURN );
 
@@ -73,7 +73,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 			final TreeSet<String> longReads = new TreeSet<>();
 			for( final String sampleId: new TreeSet<>( sampleStats.keySet() ) )
 			{
-				final Integer[] stats = sampleStats.get( sampleId );
+				final Long[] stats = sampleStats.get( sampleId );
 				combinedMeanFwReadLen += stats[ INDEX_AVG_FW_READ_LEN ];
 				combinedMeanRvReadLen += stats[ INDEX_AVG_RV_READ_LEN ];
 				Log.debug( getClass(), "combinedMeanFwReadLen=" + combinedMeanFwReadLen );
@@ -180,8 +180,8 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 	protected void validateFile( final File file, final Integer fileCount ) throws Exception
 	{
 		Log.info( getClass(), "Validating File[" + fileCount + "]: " + file.getAbsolutePath() );
-		final Integer[] stats = initStats();
-		int combinedReadLen = 0;
+		final Long[] stats = initStats();
+		long combinedReadLen = 0;
 		int seqNum = 0;
 
 		final List<String> seqLines = new ArrayList<>();
@@ -260,7 +260,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 							}
 						}
 
-						final int readLen = seqLines.get( 1 ).length();
+						final long readLen = seqLines.get( 1 ).length();
 						combinedReadLen += readLen;
 
 						if( readLen > 0 && stats[ INDEX_MIN_READS ] == 0 || readLen < stats[ INDEX_MIN_READS ] )
@@ -346,7 +346,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 				{
 					final String numFwReads = readsPerSample.get( sampleId );
 					final String numRvReads = rvReadsPerSample.get( sampleId );
-					if( !Integer.valueOf( numFwReads ).equals( Integer.valueOf( numRvReads ) ) )
+					if( !Long.valueOf( numFwReads ).equals( Long.valueOf( numRvReads ) ) )
 					{
 						Log.warn( getClass(), sampleId + " has unequal read count FW=" + readsPerSample.get( sampleId )
 								+ "; RV=" + rvReadsPerSample.get( sampleId ) );
@@ -405,19 +405,19 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 	}
 
 	private String getSeqModSummary( final TreeSet<String> invalidReads, final TreeSet<String> shortReads,
-			final TreeSet<String> longReads, final long totalAvgFwLen, final long totalAvgRvLen, final int minReadLen,
-			final int maxReadLen ) throws Exception
+			final TreeSet<String> longReads, final long totalAvgFwLen, final long totalAvgRvLen, final long minReadLen,
+			final long maxReadLen ) throws Exception
 	{
 
 		final String label = "Valid Reads";
 		final int pad = SummaryUtil.getPad( label );
 
 		final StringBuffer sb = new StringBuffer();
-		final int avgReadLen = Double.valueOf( totalAvgFwLen / sampleStats.size() ).intValue();
+		final long avgReadLen = Double.valueOf( totalAvgFwLen / sampleStats.size() ).longValue();
 
 		if( totalAvgRvLen > 0 )
 		{
-			final int avgRvReadLen = Double.valueOf( totalAvgRvLen / sampleStats.size() ).intValue();
+			final long avgRvReadLen = Double.valueOf( totalAvgRvLen / sampleStats.size() ).longValue();
 			sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid FW read len:", pad ) + avgReadLen + RETURN );
 			sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid RV read len:", pad ) + avgRvReadLen + RETURN );
 		}
@@ -453,7 +453,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 				sb.append( BioLockJUtil.addTrailingSpaces( "Trimmed long reads from:", pad ) + shortReads + RETURN );
 			}
 
-			final int max = maxSeqFound.keySet().iterator().next();
+			final long max = maxSeqFound.keySet().iterator().next();
 			final TreeSet<String> ids = new TreeSet<>( maxSeqFound.values().iterator().next() );
 			sb.append( BioLockJUtil.addTrailingSpaces( "IDs w/ ORIGINAL max read len [" + max + "]:", pad ) + ids
 					+ RETURN );
@@ -470,12 +470,12 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 		return summary;
 	}
 
-	private Integer[] initStats() throws Exception
+	private Long[] initStats() throws Exception
 	{
-		final Integer[] stats = new Integer[ 8 ];
+		final Long[] stats = new Long[ 8 ];
 		for( int i = 0; i < stats.length; i++ )
 		{
-			stats[ i ] = 0;
+			stats[ i ] = 0L;
 		}
 		return stats;
 	}
@@ -490,15 +490,15 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 		return seqMin;
 	}
 
-	private void populateSampleStats( final Integer[] stats, final File file, final int seqNum,
-			final int combinedReadLen ) throws Exception
+	private void populateSampleStats( final Long[] stats, final File file, final int seqNum,
+			final long combinedReadLen ) throws Exception
 	{
 		final String id = SeqUtil.getSampleId( file.getName() );
 		setNumReads( file, stats );
 
-		final Integer[] otherStats = sampleStats.get( id );
-		final int len = stats[ INDEX_NUM_VALID_READS ] > 0
-				? Double.valueOf( combinedReadLen / stats[ INDEX_NUM_VALID_READS ] ).intValue()
+		final Long[] otherStats = sampleStats.get( id );
+		final long len = stats[ INDEX_NUM_VALID_READS ] > 0
+				? Double.valueOf( combinedReadLen / stats[ INDEX_NUM_VALID_READS ] ).longValue()
 				: 0;
 		if( SeqUtil.isForwardRead( file.getName() ) )
 		{
@@ -566,7 +566,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 		}
 	}
 
-	private void setMaxSeq( final String sampleId, final int seqLen ) throws Exception
+	private void setMaxSeq( final String sampleId, final long seqLen ) throws Exception
 	{
 		final TreeSet<String> ids = new TreeSet<>();
 		ids.add( sampleId );
@@ -577,8 +577,8 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 		}
 		else
 		{
-			final int currentMaxLen = maxSeqFound.keySet().iterator().next();
-			final int newMaxLen = Math.max( seqLen, currentMaxLen );
+			final long currentMaxLen = maxSeqFound.keySet().iterator().next();
+			final long newMaxLen = Math.max( seqLen, currentMaxLen );
 			if( newMaxLen == currentMaxLen )
 			{
 				ids.addAll( maxSeqFound.values().iterator().next() );
@@ -591,7 +591,7 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 		}
 	}
 
-	private void setNumReads( final File file, final Integer[] stats ) throws Exception
+	private void setNumReads( final File file, final Long[] stats ) throws Exception
 	{
 		if( SeqUtil.isForwardRead( file.getName() ) )
 		{
@@ -607,13 +607,13 @@ public class SeqFileValidator extends JavaModuleImpl implements JavaModule, SeqM
 	}
 
 	private Set<File> badFiles = new HashSet<>();
-	private final Map<Integer, TreeSet<String>> maxSeqFound = new HashMap<>();
+	private final Map<Long, TreeSet<String>> maxSeqFound = new HashMap<>();
 	private String otuColName = null;
 	private Map<String, String> readsPerSample = new HashMap<>();
 	private Map<String, String> rvReadsPerSample = new HashMap<>();
 	private Set<String> sampleIds = new HashSet<>();
 
-	private Map<String, Integer[]> sampleStats = new HashMap<>();
+	private Map<String, Long[]> sampleStats = new HashMap<>();
 
 	/**
 	 * Column name that holds number of valid reads per sample: {@value #NUM_VALID_READS}
