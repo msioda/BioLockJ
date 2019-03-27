@@ -405,7 +405,7 @@ function runModuleFunctions() {//large function to build module li and counters
       for (let i = 0; i < target.classList.length; i++) {
         let thisClassMenu = tabButtons.getElementsByClassName(target.classList[i]);
         if (thisClassMenu.length > 0) {
-          for (var i = 0; i < thisClassMenu.length; i++) {
+          for (let i = 0; i < thisClassMenu.length; i++) {
             thisClassMenu[i].style.display = 'none';
           }//end second for loop
         }
