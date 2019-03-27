@@ -246,7 +246,7 @@ let myModules = new Map(Object.entries({
   'biolockj/module/implicit/Demultiplexer' :
   { cssClass : ['implicit', 'hidden'], category : 'implicit'},
 
-  'biolockj/module/seq/SeqFileValidator' : { cssClass : [], category : 'seq'},
+  'biolockj/module/seq/SeqFileValidator' : { cssClass : ['SeqFileValidatorMod'], category : 'seq'},
 
   'biolockj/module/seq/TrimPrimers' : { cssClass : [], category : 'seq'},
 
@@ -304,15 +304,15 @@ let myModules = new Map(Object.entries({
   'biolockj/module/implicit/qiime/MergeQiimeOtuTables' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'qiime'},
 
-  'biolockj/module/report/r/R_PlotMds' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotMds' : { cssClass : ['rMod'], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotOtus' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotOtus' : { cssClass : ['rMod'], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotPvalHistograms' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotPvalHistograms' : { cssClass : ['rMod'], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : ['rMod'], category : 'r'},
 
-  'biolockj/module/report/r/R_CalculateStats' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_CalculateStats' : { cssClass : ['rMod'], category : 'r'},
 
   'biolockj/module/report/taxa/AddMetadataToTaxaTables' : { cssClass : [], category : 'report'},
 
@@ -328,19 +328,19 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/report/otu/RemoveScarceOtuCounts' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/otu/RarefyOtuCounts' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/otu/RarefyOtuCounts' : { cssClass : ['rarefyOtuCounts'], category : 'report'},
 
-  'biolockj/module/report/taxa/LogTransformTaxaTables' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/taxa/LogTransformTaxaTables' : { cssClass : ['removeLowOtuCounts'], category : 'report'},
 
   'biolockj/module/seq/AwkFastaConverter' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/KneadData' : { cssClass : [], category : 'seq'},
+  'biolockj/module/seq/KneadData' : { cssClass : ['kneadDataClass'], category : 'seq'},
 
   'biolockj/module/seq/Multiplexer' : { cssClass : [], category : 'seq'},
 
   'biolockj/module/seq/PearMergeReads' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/RarefySeqs' : { cssClass : [], category : 'seq'},
+  'biolockj/module/seq/RarefySeqs' : { cssClass : ['rarefySeqs'], category : 'seq'},
 
   'biolockj/module/seq/Gunzipper' : { cssClass : [], category : 'seq'},
 
