@@ -260,10 +260,10 @@ let myModules = new Map(Object.entries({
   { cssClass : ['rdpClass', 'classifierUnique'], label : "16S Classifier: RDP", counter : 'rdpModuleCounter' , category : 'classifier'},
 
   'biolockj/module/implicit/parser/r16s/RdpParser' :
-  { cssClass : ['rdpClass', , 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
+  { cssClass : ['rdpClass', 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/implicit/parser/r16s/QiimeParser' :
-  { cssClass : ['rdpClass', , 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
+  { cssClass : ['rdpClass', 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/classifier/r16s/QiimeDeNovoClassifier' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
@@ -272,7 +272,7 @@ let myModules = new Map(Object.entries({
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
   'biolockj/module/implicit/parser/wgs/Humann2Parser' :
-  { cssClass : ['humann2Class', , 'classifierUnique', 'implicit', 'hidden'], counter : 'humann2ModuleCounter' , category : 'implicit.parser'},
+  { cssClass : ['humann2Class', 'classifierUnique', 'implicit', 'hidden'], counter : 'humann2ModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/classifier/wgs/KrakenClassifier' :
   { cssClass : ['krakenClass', 'classifierUnique'], counter : 'krakenModuleCounter', category : 'classifier'},
@@ -507,7 +507,7 @@ function runModuleFunctions() {//large function to build module li and counters
   var kraken2ClassModNodes = Array.from(document.getElementsByClassName("kraken2Class"));
   var rdpClassModNodes = Array.from(document.getElementsByClassName("rdpClass"));
   var metaphlanClassModNodes = Array.from(document.getElementsByClassName("metaphlanClass"));
-  var humann2ClassModNodes = Array.from(document.getElementsByClassName("humann2"));
+  var humann2ClassModNodes = Array.from(document.getElementsByClassName("humann2Class"));
 
   //moduleCounters instanciated with nodes that they will disable
   var qiimeModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
