@@ -12,6 +12,24 @@ aws_cred_file=$aws_home_dir/credentials
 blj_aws_config=$aws_home_dir/blj_config
 aws_args=
 
+# Return a prop stored in $blj_aws_config
+get_blj_prop() {
+	prop=$(cat $blj_aws_config | grep $1)
+	echo ${prop/$1=}
+}
+
+# Add a property to the current $blj_aws_config 
+# Param 1 Property name
+# Param 2 (optional) Property value
+add_aws_config() {
+	if [ $# -eq 1 ]; then
+		echo $1 >> $blj_aws_config 
+	elif [ $# -eq 2 ]; then
+		set_aws_config $1 $2
+		echo "$1=$2" >> $blj_aws_config 
+	fi
+}
+
 # MANUAL TESTING OVERRIDE VALUES
 aws_dev_config() {
 	set_aws_config dockerImgVer latest
@@ -120,13 +138,14 @@ aws_stacks() {
 	echo $awsStacks
 }
 
-# Init Config before aws_select_functions will run
+# Store Config properties
 init_aws_config() {
 	set_aws_config awsProfile $(aws_profile)
 	set_aws_config dockerAccount $(named_arg "$@" docker.user)
 	set_aws_config dockerImgVer $(named_arg "$@" docker.imgVersion)
 	set_aws_config ec2SpotPer $(named_arg "$@" aws.ec2SpotPer)
 	set_aws_config ec2Type $(named_arg "$@" aws.ec2InstanceType)
+	set_aws_config ec2InstCategory $(named_arg "$@" aws.ec2InstanceCategory)
 	set_aws_config myS3 $(named_arg "$@" aws.s3)
 	set_aws_config stackName $(named_arg "$@" aws.stack)
 	set_aws_config region $(named_arg "$@" aws.region)
@@ -177,10 +196,10 @@ set_account_config() {
 	set_aws_config ami $(aws_get_ami)
 	set_aws_config s3Bucket $(get_s3 $s3BucketName)
 	set_aws_config stack $(get_stack_name $stackName)
+	set_aws_config region $(named_arg "$aws_args" $(aws_region))
 	remove_aws_config stackName
 	
 }
-
 
 # Add a named arg to aws_args + return the new arg value
 # Param 1 - arg name
@@ -205,9 +224,8 @@ set_stack_config() {
 	set_aws_config iamFleetRole "arn:aws:iam::$account_id:role/$(aws_role $stack SpotIamFleetRoleArn)"
 	set_aws_config jobRoleArn $(aws_role $stack ECSTaskRole)
 	set_aws_config instanceRole "arn:aws:iam::$account_id:instance-profile/$(aws_role $stack IamInstanceProfileArn)"
-	set_aws_config bastiionGroup $(aws_role $stack BastionSecurityGroup)
-	set_aws_config batchGroup $(named_arg "$aws_args" bastiionGroup)
-	set_aws_config subNet $(aws_subnets $stack)
+	set_aws_config bastionGroup $(aws_role $stack BastionSecurityGroup)
+	set_aws_config subnets $(aws_subnets $stack)
 	set_aws_config efsID $(aws_role $stack FileSystemId)
 	set_aws_config headNodeLaunchTemplate $(aws_role $stack HeadNodeLaunchTemplateId)
 	set_aws_config batchNodeLaunchTemplate $(aws_role $stack BatchNodeLaunchTemplateId)

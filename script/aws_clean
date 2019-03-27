@@ -101,6 +101,8 @@ aws_rm_batch() {
 	aws_rm_compute_envs
 	aws_rm_cloud_forms
 	aws_rm_stacks
+	kill_head
+	
 }
 
 aws_rm_key_pairs() {
@@ -146,4 +148,8 @@ aws_rm_stacks() {
 	echo "All Stacks deleted (if possible)!"
 	echo "Remaining DELETE_COMPLETE Stacks:"
 	aws cloudformation list-stacks
+}
+
+kill_head() {
+	aws ec2 terminate-instances --instance-id $(get_blj_prop instanceID)
 }
