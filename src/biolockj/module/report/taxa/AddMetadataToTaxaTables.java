@@ -144,10 +144,19 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 			else
 			{
 				final long numReads = Long.valueOf( numReadsField );
-				final long numHits = Long.valueOf( numHitsField );
-				Log.info( getClass(),
-						HIT_RATIO + " for: [" + id + "] ==> " + BioLockJUtil.formatPercentage( numHits, numReads ) );
-				hitRatioPerSample.put( id, Double.valueOf( (double) numHits / numReads ).toString() );
+				if( numReads == 0L )
+				{
+					hitRatioPerSample.put( id, "0.0" );
+				}
+				else
+				{
+				
+					final long numHits = Long.valueOf( numHitsField );
+					
+					Log.info( getClass(),
+							HIT_RATIO + " for: [" + id + "] ==> " + BioLockJUtil.formatPercentage( numHits, numReads ) );
+					hitRatioPerSample.put( id, Double.valueOf( (double) numHits / numReads ).toString() );
+				}
 			}
 		}
 
