@@ -95,8 +95,8 @@ aws_rm_job_queues() {
 }
 
 # De-register, disable, and remove AWS batch objects
-aws_rm_batch() {
- 	kill_head
+aws_clear_skies() {
+ 	kill_head_node
 	aws_deregister_job_defs
 	aws_rm_job_queues
 	aws_rm_stacks
@@ -154,6 +154,8 @@ aws_rm_stacks() {
 	aws cloudformation list-stacks
 }
 
-kill_head() {
+# Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
+kill_head_node() {
+	aws ec2 stop-instances --instance-ids $(get_blj_prop instanceID)
 	aws ec2 terminate-instances --instance-id $(get_blj_prop instanceID)
 }

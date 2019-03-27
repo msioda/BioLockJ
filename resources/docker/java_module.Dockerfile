@@ -23,6 +23,6 @@ RUN	apt-get clean && \
 	rm -rf /var/log/*
 
 #3.) Update  ~/.bashrc
-RUN echo '[ -x "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
+RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
 	echo 'export BLJ_PROJ=/pipelines' >> ~/.bashrc && \
 	echo 'alias goblj=blj_go' >> ~/.bashrc

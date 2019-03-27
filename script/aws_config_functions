@@ -12,6 +12,7 @@ aws_cred_file=$aws_home_dir/credentials
 blj_aws_config=$aws_home_dir/blj_config
 aws_args=
 
+
 # Return a prop stored in $blj_aws_config
 get_blj_prop() {
 	prop=$(cat $blj_aws_config | grep $1)
