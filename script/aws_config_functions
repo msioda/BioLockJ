@@ -1,13 +1,15 @@
 #!/bin/bash
 ##############################################################
 ##                                                          ##
-##  This script is used for AWS Confif functions            ##
+##  This script is used for AWS Config functions            ##
 ##                                                          ##
 ##############################################################
 . $BLJ/script/blj_functions
 
-aws_cred_file=$local_aws_dir/credentials
-blj_aws_config=$local_aws_dir/blj_config
+aws_home_dir=~/.aws
+aws_local_config=$aws_home_dir/config
+aws_cred_file=$aws_home_dir/credentials
+blj_aws_config=$aws_home_dir/blj_config
 aws_args=
 
 # MANUAL TESTING OVERRIDE VALUES
@@ -16,7 +18,50 @@ aws_dev_config() {
 	set_aws_config ec2SpotPer 70
 	set_aws_config ec2Type SPOT
 	set_aws_config myS3 blj-2019-03-25
-	set_aws_config stackName bljStack-2019-03-25
+	#set_aws_config stackName bljStack-2019-03-25
+}
+
+# Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
+aws_get_ami() {
+	ami=$(aws ec2 describe-images --region $(aws_region) --owner amazon \
+		--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
+		--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
+	[ ${#ami} -eq 0 ] && echo "Error:  Unable to obtain AWS AMI template from region $(aws_region)" && exit 1
+	echo $ami
+}
+
+# Get an AWS property $1 from local AWS Config file $2 under the $(aws_profile) 
+# Param 1 argName Parse filePath for a line that starts with argName
+# Param 2 filePath Target file
+aws_local_prop() {
+	foundProfile=0
+	prop="$1 = "
+	awsProfile=$(named_arg "$aws_args" awsProfile)
+	[ ${#awsProfile} -eq 0 ] && awsProfile="[default]"
+	#echo "Search config=$2 for arg=$1 in profile= $(named_arg "$aws_args" awsProfile)"
+	[ ! -f "$2" ] && echo "Error:  File not found: $2" && return
+	cat $2 | while read -r line; do
+		[ $foundProfile -eq 1 ] && [ "${line:0:1}" == "[" ] && break
+		[ $foundProfile -eq 1 ] && [ "${line:0:${#prop}}" == "$prop" ] && echo "${line/$prop}" && return
+		[ "$line" == "$awsProfile" ] && foundProfile=1
+	done
+}
+
+# Return profile name, if used to return props, props specific to this profile are returned
+# Param 1 (optional) profile - name of existing profile, if null return [default] profile
+aws_profile() {
+	awsProfile=$(named_arg "$aws_args" awsProfile)
+	[ ${#awsProfile} -gt 0 ] && echo $awsProfile && return
+	[ $# -eq 0 ] && echo "[default]"
+	[ $# -gt 0 ] && echo "[$1]"
+}
+
+# Get the region defined in the AWS config file
+aws_region() {
+	region=$(named_arg "$aws_args" region)
+	[ ${#region} -eq 0 ] && region=$(aws_local_prop region $aws_local_config)
+	[ ${#region} -eq 0 ] && echo "Error:  Region undefined in $aws_local_config" && exit 1
+	echo $region
 }
 
 # Print AWS Config report
@@ -27,6 +72,36 @@ aws_report_config() {
 		IFS2=$IFS && IFS="=" && tokens=( $arg )
 		IFS=$IFS2 && echo "----> ${tokens[0]}=${tokens[1]}"
 	done
+}
+
+# Get a role get_role bljStack4 BatchServiceRoleArn 
+# Param 1 Stack name
+# Param 2 Role name
+aws_role() {
+	role=$(aws cloudformation describe-stacks --stack-name $1 --query "Stacks[*].Outputs[?OutputKey=='$2'].OutputValue")
+	[ ${#role} -eq 0 ] && return
+	echo $role
+}
+
+# Get the s3 bucket names in the user region
+aws_s3_buckets() {
+	myBuckets=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[].Name")
+	[ ${#myBuckets} -eq 0 ] || [ "$myBuckets" == "None" ] && return
+	echo $myBuckets
+}
+
+# Lists stacks available on AWS. If status arg provided, only return stacks with the given status.
+# Param 1 (optional) Stack status
+aws_stacks() {
+	awsStacks=
+	if [ $# -eq 1 ]; then
+		awsStacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='$1'].StackName")
+		[ ${#awsStacks} -eq 0 ] || [ "$awsStacks" == "None" ] && return
+	else
+		awsStacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
+		[ ${#awsStacks} -eq 0 ] || [ "$awsStacks" == "None" ] && return
+	fi
+	echo $awsStacks
 }
 
 # Init Config before aws_select_functions will run
@@ -51,36 +126,57 @@ init_aws_config() {
 # Param 1 - prop name 
 remove_aws_config() {
 	if [ ${#aws_args} -gt 0 ]; then
-		val=$(named_arg "$aws_args" $1) 
-		[ ${#val} -gt 0 ] && aws_args="${aws_args/$1=$val}"
+		exists=$(echo $aws_args | grep -c "$1=")
+		if [ $exists -gt 0 ]; then
+			val=$(named_arg "$aws_args" $1) 
+			if [ ${#val} -gt 0 ]; then
+				aws_args="${aws_args/$1=$val}"
+			else
+				aws_args="${aws_args/$1=}"
+			fi
+		fi 
 	fi
 }
 
 # Move previous config to history folder and create a new config with current properties
 save_aws_config() {
-	chmod 770 $blj_aws_config && [ -f $blj_aws_config ] && [ ! -d $local_aws_dir/history ] && mkdir $local_aws_dir/history
-	[ -f $blj_aws_config ] && mv $blj_aws_config $local_aws_dir/history/blj_config-$(date "+%Y-%m-%d.%H.%M.%S")
+	[ ! -d $aws_home_dir/history ] && mkdir $aws_home_dir/history
+	[ -f $blj_aws_config ] && chmod -R 770 $blj_aws_config && mv $blj_aws_config $aws_home_dir/history/blj_config-$(date "+%Y-%m-%d.%H.%M.%S")
 	echo "# Config generated to run BioLockJ on the AWS cloud: $(date)" > $blj_aws_config
 	props=("$aws_args")
 	for arg in ${props[@]}; do
 		IFS2=$IFS && IFS="=" && tokens=( $arg )
 		IFS=$IFS2 && [ ${#tokens[*]} -eq 2 ] && echo "${tokens[0]}=${tokens[1]}" >> $blj_aws_config
 	done
+	echo "Saved blj Config to: $blj_aws_config"
+	aws_report_config
 }
+
+# Build account config (and create s3 bucket if needed)
+set_account_config() {
+	s3BucketName=$(named_arg "$aws_args" myS3)
+	stackName=$(named_arg "$aws_args" stackName)
+	set_aws_config access_id $(aws_local_prop aws_access_key_id $aws_cred_file)
+	set_aws_config key $(aws_local_prop aws_secret_access_key $aws_cred_file)
+	set_aws_config ami $(aws_get_ami)
+	set_aws_config s3Bucket $(get_s3 $s3BucketName)
+	set_aws_config stack $(get_stack_name $stackName)
+	remove_aws_config stackName
+	
+}
+
 
 # Add a named arg to aws_args + return the new arg value
 # Param 1 - arg name
 # Param 2 - arg value
 set_aws_config() {
+	exists=$(echo $aws_args | grep -c "$1=${2/\[/\\\[}")
+	[ $exists -gt 0 ] && return
 	remove_aws_config $1
-	if [ $# -eq 2 ]; then
-		[ ${#aws_args} -gt 0 ] && aws_args="$aws_args $1=$2"
-		[ ${#aws_args} -eq 0 ] && aws_args="$1=$2"
-	fi
-	aws_report_config
+	[ ${#aws_args} -gt 0 ] && aws_args="$aws_args $1=$2"
+	[ ${#aws_args} -eq 0 ] && aws_args="$1=$2"
+	echo "Set aws Config: $1=$2"
 }
-
-
 
 # Build stack config using stack and account_id references and build the roles
 set_stack_config() {

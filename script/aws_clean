@@ -1,0 +1,149 @@
+#!/bin/bash
+##############################################################
+##                                                          ##
+##  This script is used for AWS core function + logic       ##
+##                                                          ##
+##############################################################
+. $BLJ/script/aws_config_functions
+
+# Remove all job-definitions 
+aws_deregister_job_defs() {
+	IFS=$'\t'
+	vals=$(aws batch describe-job-definitions --status ACTIVE --query "jobDefinitions[*].jobDefinitionArn")
+	[ ${#vals} -eq 0 ] && echo "No ACTIVE job-definitions found" && return
+	echo "Remove Job defs: $vals"
+	while [ ${#vals} -gt 0 ]; do
+		module=$(aws_get_arn $vals) 
+		echo "REMOVE: $module"
+		status=ENABLED
+		while [ "$status" != "DISABLED" ]; do
+			sleep 10
+			status=$(aws batch describe-job-definitions --compute-environment $module --query "computeEnvironments[*].status")
+		done
+		vals=${vals/$module/""}
+		aws batch deregister-job-definition --job-definition $module
+		echo "DE-RESISTERED: $module"
+	done
+	echo "All jobs removed (if possible)!"
+	
+	echo "Remaining Job-Defs (none should be active):"
+	aws batch describe-job-definitions 
+}
+
+# Get 1st "arn*" value in list
+# Param 1 list containing arn values
+aws_get_arn() {
+	module=
+	i=1
+	while [ ${#module} -eq 0 ] || [ "${module:0:1}" != "a" ]; do
+		module=$(echo $1 | cut -f $i -d " ")
+		((i++))
+	done
+	echo "$module"
+}
+
+# Remove all compute envs
+aws_rm_compute_envs() {
+	IFS=$'\t'
+	vals=$(aws batch describe-compute-environments --query "computeEnvironments[*].computeEnvironmentArn")
+	[ ${#vals} -eq 0 ] && echo "No compute-environments found" && return
+	echo "Remove Compute Envs: $vals"
+	while [ $vals -gt 0 ]; do
+		module="$(aws_get_arn $vals)"
+		echo "REMOVE: $module"
+		vals=${vals/$module/""}
+		statusReason=$(aws batch describe-compute-environments --compute-environment $module --query "computeEnvironments[*].statusReason")
+		[ ${#statusReason} -gt 0 ] && [ "$statusReason" == "CLIENT_ERROR - Access denied" ] && echo "$statusReason" && continue
+		status=$(aws batch describe-compute-environments --compute-environment $module --query "computeEnvironments[*].state")
+		[ "$status" != "DISABLED" ] && aws batch update-compute-environment --compute-environment $module --state DISABLED
+		while [ "$status" != "DISABLED" ]; do
+			sleep 10
+			status=$(aws batch describe-compute-environments --compute-environment $module --query "computeEnvironments[*].state")
+		done
+		echo "DISABLED: $module"
+		aws batch delete-compute-environment --compute-environment $module
+		echo "DELETED: $module"
+	done
+	echo "All Compute Envs removed (if possible)!"
+	echo "Remaining Compute Envs:"
+	aws batch describe-compute-environments
+}
+
+# Remove AWS Job Queues
+aws_rm_job_queues() {
+	IFS=$'\t'
+	vals=$(aws batch describe-job-queues --query "jobQueues[*].jobQueueArn")
+	[ ${#vals} -eq 0 ] && echo "No job-queues found" && return
+	echo "Remove Job Queues: $vals"
+	while [ $vals -gt 0 ]; do
+		module=$(aws_get_arn $vals) 
+		echo "REMOVE: $module"
+		status=$(aws batch describe-job-queues --job-queue $module --query "jobQueues[*].status")
+		[ "$status" == "DISABLED" ] && aws batch update-job-queue --job-queue $module --status DISABLED
+		while [ "$status" != "DISABLED" ]; do
+			sleep 10
+			status=$(aws batch describe-job-queues --job-queue $module --query "jobQueues[*].status")
+		done
+		echo "DISABLED: $module"
+		vals=${vals/$module/""}
+		aws batch delete-job-queue --job-queue $module
+		echo "DELETED: $module"
+	done
+	echo "All Job Queues removed (if possible)!"
+	echo "Remaining Job Queues:"
+	aws batch describe-job-queues
+}
+
+# De-register, disable, and remove AWS batch objects
+aws_rm_batch() {
+	aws_deregister_job_defs
+	aws_rm_job_queues
+	aws_rm_compute_envs
+	aws_rm_cloud_forms
+	aws_rm_stacks
+}
+
+aws_rm_key_pairs() {
+	IFS=$'\t'
+	vals=$(aws ec2 describe-key-pairs --query "KeyPairs[*].KeyName")
+	[ ${#vals} -eq 0 ] && echo "No keys found" && return
+	while [ ${#vals} -gt 0 ]; do
+		module=$(echo $vals | cut -f 1 -d " ")
+		aws ec2 delete-key-pair --key-name $module
+		vals=${vals/$module/""}
+		echo "DELETED: $module"
+	done
+	
+	echo "All Key-Pairs deleted (if possible)!"
+	echo "Remaining Key-Pairs:"
+	aws ec2 describe-key-pairs
+}
+
+# Not used currently
+aws_rm_s3_buckets() {
+	s3Buckets=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[*].Name")
+}
+
+aws_rm_stacks() {
+	IFS=$'\t'
+	vals=$(aws cloudformation describe-stacks --query "StackSummaries[*].StackId")
+	[ ${#vals} -eq 0 ] && echo "No stacks found" && return
+	while [ ${#vals} -gt 0 ]; do
+		module=$(aws_get_arn $vals) 
+		status=$(aws cloudformation describe-stacks --stack-name $module --query "Stacks[*].StackStatus")
+		[ "$status" == "DELETE_COMPLETE" ] && "$module=DELETE_COMPLETE" && continue
+		echo "Found: $module"
+		aws cloudformation delete-stack --stack-name $module 
+		status=ACTIVE
+		while [ "$status" != "DELETE_COMPLETE" ]; do
+			sleep 10
+			status=$(aws cloudformation describe-stacks --stack-name $module --query "Stacks[*].StackStatus")
+		done
+		vals=${vals/$module/""}
+		echo "DELETED: $module"
+	done
+	
+	echo "All Stacks deleted (if possible)!"
+	echo "Remaining DELETE_COMPLETE Stacks:"
+	aws cloudformation list-stacks
+}

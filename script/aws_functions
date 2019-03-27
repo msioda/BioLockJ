@@ -4,7 +4,7 @@
 ##  This script is used for AWS core function + logic       ##
 ##                                                          ##
 ##############################################################
-. $BLJ/script/aws_select_functions
+. $BLJ/script/aws_config_functions
 
 # Build the compute environment
 build_compute_env() {
@@ -12,7 +12,6 @@ build_compute_env() {
 	myCompEnv=$(aws batch describe-compute-environments --compute-environments $compEnv --query "computeEnvironments[].computeEnvironmentName")
 	if [ ${#myCompEnv} -eq 0 ] || [ "$myCompEnv" == "None" ]; then
 		echo "Building $compEnv"
-		
 		ec2Type=$(named_arg "$aws_args" ec2Type)
 		ami=$(named_arg "$aws_args" ami)
 		subNet=$(named_arg "$aws_args" subNet)
@@ -26,10 +25,11 @@ build_compute_env() {
 		c2="securityGroupIds=$batchGroup,ec2KeyPair=$keyName,instanceRole=$instanceRole,bidPercentage=$ec2SpotPer,"
 		c3="spotIamFleetRole=$iamFleetRole,launchTemplate={launchTemplateId=$batchNodeLaunchTemplate}"
 		compResources=${c1}${c2}${c3}
-		
 		echo $(aws batch create-compute-environment --compute-environment-name $compEnv \
 			--type MANAGED --state ENABLED --service-role $(named_arg "$aws_args" serviceRole) \
 			--compute-resources "$compResources")
+	else
+		echo "Found stack compute environment: $myCompEnv"
 	fi
 }
 
@@ -39,14 +39,23 @@ build_docker_job_defs() {
 	jobRoleArn=$(named_arg "$aws_args" jobRoleArn)
 	dockId=$(named_arg "$aws_args" dockerAccount)
 	dockerVer=$(named_arg "$aws_args" dockerImgVer)
-	dockerModules=$(docker search $dockId | grep ^$dockId | awk '{print $1}')
+	dockerModules=$(docker search $dockId | grep -E ^$dockId ) 
 	jobVcpus=2
 	jobRam=1024
-	echo $ | while read -r line; do
-		[ "${line/blj_basic}" != "$line" ] && continue
-		jobImg="${line}:${dockerVer}"
-		jobImgClean=$(tr -s /: _ <<< "$jobImg")
-		jobDef="${stack}_${jobImgClean}"
+
+	echo $dockerModules | while read -r line; do
+		echo "Read line: $line"
+		[ $(echo "$line" | grep -c "blj_basic") -gt 0 ] && echo "Skip blj_basic*" && continue
+		module=$(echo "$line" | cut -f 1 -d " ")
+		echo "Found module: $module (size=${#module})"
+		jobImg="${module}:${dockerVer}"
+		jobLabel=${module/\//_} 
+		jobLabel=${jobLabel/:/_} 
+		
+		jobDef="${stack}_${jobLabel}"
+		echo "jobImg: $jobImg"
+		echo "jobLabel: $jobLabel"
+		echo "jobDef: $jobDef"
 	    jobConfig="{
 			\"image\": \"$jobImg\",
 			\"vcpus\": $jobVcpus,
@@ -58,17 +67,19 @@ build_docker_job_defs() {
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
-		echo "Created jobConfig: $jobConfig for $jobImg" 
+		echo "Created jobConfig: $jobConfig" 
 		
-		jobExists=$(aws batch describe-job-definitions --status ACTIVE --type container --query "jobDefinitions[].containerProperties=[?image='$jobImg']|[*].jobDefinitionName" )
-		jobDefinitions
+		#existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name "bljStack-2019-03-25_biolockj_blj_manager_latest" --query "jobDefinitions[*].jobDefinitionName")
 		
+		existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name "$stack_$jobLabel" "bljStack-2019-03-25_biolockj_blj_manager_latest" --query "jobDefinitions[*].jobDefinitionName")
+		[ ${#existingJob} -gt 0 ] && echo "FOUND JOB: $existingJob" && continue
 		registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
 		echo "registeredJob: $registeredJob"
 		IFS=$'\t' && OFS=$'\t'
 		jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
-		echo "image_$jobImgClean=$jobName"
+		echo "image_$jobLabel=$jobName"
 	done
+	echo "JOB COMPLETE!"
 }
 
 # Build Cloud-formation Stack
@@ -88,10 +99,10 @@ build_stack() {
 	echo "Secured to local IP: $myIp in $numSecs seconds"
 }
 
-# Build key pair + save to $local_aws_dir/$keyPair.pem file
+# Build key pair + save to $aws_home_dir/$keyPair.pem file
 cache_key_pair() {
 	keyPair=$(named_arg "$aws_args" keyName)
-	keyFile=$local_aws_dir/$keyPair.pem
+	keyFile=$aws_home_dir/$keyPair.pem
 	if [ ! -f $keyFile ]; then
 		keys=$(aws ec2 describe-key-pairs)
 		if [ "${keys/$keyPair}" == "$keys" ]; then
@@ -99,7 +110,10 @@ cache_key_pair() {
 			echo "Security keys created.  Private key: $keyFile"
 			#AWS keypair security requirement (perms 400)  
 			chmod 400 $keyFile
+			echo "Generated new: $keyFile"
 		fi
+	else
+		echo "Found existing: $keyFile"
 	fi
 }
 
@@ -158,11 +172,12 @@ get_stack_name() {
 # Check status of Cloud Formation Stack
 # Param 1 Stack name
 is_stack_complete() {
-	stackExists=$( echo $(aws cloudformation describe-stacks --query "Stacks[].StackName") | grep -c $1 )
-	[ ${#stackExists} -gt 0 ] && testStack=$(aws cloudformation describe-stacks --stack-name $1 \
+	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
+	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] && echo "false" && return
+	stacks=$(aws cloudformation describe-stacks --stack-name $1 \
 		--query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
-	[ ${#testStack} -eq 0 ] || [ "$testStack" == "None" ] && echo "false"
-	[ ${#testStack} -gt 0 ] && echo "true"
+	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] && echo "false"
+	[ ${#stacks} -gt 0 ] && echo "true"
 }
 
 # Main method, called to launch BioLockJ on AWS
@@ -173,14 +188,4 @@ is_stack_complete() {
 run_aws() {
 	init_aws_config "$@" && aws_dev_config && set_account_config && build_stack && set_stack_config && \
 		save_aws_config && cache_key_pair && build_compute_env && build_docker_job_defs
-}
-
-# Build account config (and create s3 bucket if needed)
-set_account_config() {
-	set_aws_config access_id $(aws_local_prop aws_access_key_id $aws_cred_file)
-	set_aws_config key $(aws_local_prop aws_secret_access_key $aws_cred_file)
-	set_aws_config ami $(aws_ami)
-	set_aws_config s3Bucket $(get_s3 $(named_arg "$aws_args" myS3))
-	set_aws_config stack $(get_stack_name $(named_arg "$aws_args" stackName))
-	remove_aws_config stackName
 }
