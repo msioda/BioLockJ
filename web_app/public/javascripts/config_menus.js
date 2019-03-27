@@ -135,16 +135,16 @@ function moduleCounter(modulesToDisable) {
     this.count++
   };
   this.modClassSelected = function(target){
-  if (target.classList.contains("modChoosen")) {
-    target.classList.remove("modChoosen");
+    if (!target.classList.contains("modChoosen")) {
+      // target.classList.remove("modChoosen");
       this.decrementCount();
       if (this.getCount() == 0) {
         for (let t = 0; t < this.modsToDisable.length; t++) {
           removeClassToAllElemInList(this.modsToDisable[t], "disabledMod");
         }
       }
-  }else {
-    target.classList.add("modChoosen");
+    }else {
+      // target.classList.add("modChoosen");
       this.incrementCount();
       if (this.getCount() > 0) {
         for (let t = 0; t < this.modsToDisable.length; t++) {
@@ -397,6 +397,32 @@ function orderModulesFromLocalFiles(selectedModulesArray, defaultOrderMap){
 function runModuleFunctions() {//large function to build module li and counters
 
   function toggleSelectModule(target) {//function called when modules are selected, it both selects them and disables others
+    //first, enable or disable the mods, then add or remove their button from the tab buttons
+    const tabButtons = document.getElementById('tabButtons');
+    if (target.classList.contains("modChoosen")) {
+      target.classList.remove("modChoosen");
+      //remove the module's tab button
+      for (let i = 0; i < target.classList.length; i++) {
+        let thisClassMenu = tabButtons.getElementsByClassName(target.classList[i]);
+        if (thisClassMenu.length > 0) {
+          for (var i = 0; i < thisClassMenu.length; i++) {
+            thisClassMenu[i].style.display = 'none';
+          }//end second for loop
+        }
+      }//End first for loop
+    }else{
+      target.classList.add("modChoosen");
+      //add the module's tab to tab Buttons
+      for (let i = 0; i < target.classList.length; i++) {
+        let thisClassMenu = tabButtons.getElementsByClassName(target.classList[i]);
+        if (thisClassMenu.length > 0) {
+          for (let i = 0; i < thisClassMenu.length; i++) {
+            thisClassMenu[i].style.display = 'block';
+          }//end second for loop
+        }
+      }//first for loop
+    }
+    //Next, let module counters calculate if any modules need to be disabled or enabled ect
     if (target.classList.contains("qiimeClass")) {
       qiimeModuleCounter.modClassSelected(target)
     }else if (target.classList.contains("rdpClass")) {
@@ -411,13 +437,6 @@ function runModuleFunctions() {//large function to build module li and counters
       metaphlanModuleCounter.modClassSelected(target)
     }else if (target.classList.contains("humann2Class")) {
       humann2ModuleCounter.modClassSelected(target)
-    }else{
-      //for all modules that are not a classifier
-      if (target.classList.contains("modChoosen")) {
-      target.classList.remove("modChoosen");
-      }else{
-        target.classList.add("modChoosen");
-        }
     }
   };// end toggleSelectModule
 
@@ -437,7 +456,7 @@ function runModuleFunctions() {//large function to build module li and counters
         text.then(result => {
           let parsedResult = parseBljModuleJavaClass(result);
           //console.log('result: ', result);
-          console.log('parsedResult[0]: ', parsedResult[0]);
+          // console.log('parsedResult[0]: ', parsedResult[0]);
           mod.setAttribute('data-info', parsedResult[0]);
           hoverEventlistenerForModules(mod);
           if (parsedResult.length > 1){
