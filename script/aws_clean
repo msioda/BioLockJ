@@ -127,7 +127,7 @@ aws_rm_s3_buckets() {
 aws_rm_stacks() {
 	IFS=$'\t'
 	vals=$(aws cloudformation describe-stacks --query "StackSummaries[*].StackId")
-	[ ${#vals} -eq 0 ] && echo "No stacks found" && return
+	[ ${#vals} -eq 0 ] || [ "$vals" == "None" ] && echo "No stacks found" && return
 	while [ ${#vals} -gt 0 ]; do
 		module=$(aws_get_arn $vals) 
 		status=$(aws cloudformation describe-stacks --stack-name $module --query "Stacks[*].StackStatus")

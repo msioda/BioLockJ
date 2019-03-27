@@ -42,20 +42,17 @@ build_docker_job_defs() {
 	dockerModules=$(docker search $dockId | grep -E ^$dockId ) 
 	jobVcpus=2
 	jobRam=1024
-
+	IFS=$'\t'
 	echo $dockerModules | while read -r line; do
-		echo "Read line: $line"
-		[ $(echo "$line" | grep -c "blj_basic") -gt 0 ] && echo "Skip blj_basic*" && continue
+		#echo "Read line: $line"
+		[ $(echo "$line" | grep -c "blj_basic") -gt 0 ] && continue
 		module=$(echo "$line" | cut -f 1 -d " ")
-		echo "Found module: $module (size=${#module})"
+		#echo "Found module: $module (size=${#module})"
 		jobImg="${module}:${dockerVer}"
 		jobLabel=${module/\//_} 
 		jobLabel=${jobLabel/:/_} 
-		
 		jobDef="${stack}_${jobLabel}"
-		echo "jobImg: $jobImg"
-		echo "jobLabel: $jobLabel"
-		echo "jobDef: $jobDef"
+		
 	    jobConfig="{
 			\"image\": \"$jobImg\",
 			\"vcpus\": $jobVcpus,
@@ -67,19 +64,21 @@ build_docker_job_defs() {
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
-		echo "Created jobConfig: $jobConfig" 
 		
-		#existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name "bljStack-2019-03-25_biolockj_blj_manager_latest" --query "jobDefinitions[*].jobDefinitionName")
+		#echo "jobImg: $jobImg"
+		#echo "jobLabel: $jobLabel"
+		#echo "jobDef: $jobDef"
+		#echo "jobConfig: $jobConfig" 
 		
-		existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name "$stack_$jobLabel" "bljStack-2019-03-25_biolockj_blj_manager_latest" --query "jobDefinitions[*].jobDefinitionName")
+		existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name "$stack_$jobLabel" --query "jobDefinitions[*].jobDefinitionName")
 		[ ${#existingJob} -gt 0 ] && echo "FOUND JOB: $existingJob" && continue
 		registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
-		echo "registeredJob: $registeredJob"
+		#echo "registeredJob: $registeredJob"
 		IFS=$'\t' && OFS=$'\t'
 		jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
 		echo "image_$jobLabel=$jobName"
 	done
-	echo "JOB COMPLETE!"
+
 }
 
 # Build Cloud-formation Stack
@@ -173,10 +172,9 @@ get_stack_name() {
 # Param 1 Stack name
 is_stack_complete() {
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
+	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] || [ ${#1} -eq 0 ] && echo "false" && return
+	stacks=$(aws cloudformation describe-stacks --stack-name $1 --query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
 	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] && echo "false" && return
-	stacks=$(aws cloudformation describe-stacks --stack-name $1 \
-		--query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
-	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] && echo "false"
 	[ ${#stacks} -gt 0 ] && echo "true"
 }
 
@@ -187,5 +185,5 @@ is_stack_complete() {
 
 run_aws() {
 	init_aws_config "$@" && aws_dev_config && set_account_config && build_stack && set_stack_config && \
-		save_aws_config && cache_key_pair && build_compute_env && build_docker_job_defs
+		save_aws_config && cache_key_pair && build_compute_env && build_docker_job_defs && echo "run_aws COMPLETE!"
 }
