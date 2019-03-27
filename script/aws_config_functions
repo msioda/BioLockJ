@@ -35,6 +35,7 @@ aws_dev_config() {
 	set_aws_config dockerImgVer latest
 	set_aws_config ec2SpotPer 70
 	set_aws_config ec2Type SPOT
+	set_aws_config ec2Category t2.micro
 	set_aws_config myS3 blj-2019-03-25
 	set_aws_config stackName bljStack-2019-03-27
 }
@@ -99,22 +100,6 @@ aws_role() {
 	role=$(aws cloudformation describe-stacks --stack-name $1 --query "Stacks[*].Outputs[?OutputKey=='$2'].OutputValue")
 	[ ${#role} -eq 0 ] && return
 	echo $role
-}
-
-# Get the stack subnets
-# Param 1 stack name
-aws_subnets() {
-	IFS=$'\n'
-	vals=$(aws cloudformation describe-stacks --stack-name $1 --query "Stacks[*][Outputs]")
-	[ ${#vals} -eq 0 ] && echo "No subnets found" && return
-	subnets=
-	for line in $vals; do
-		if [ "${line:0:6}" == "Subnet" ]; then
-			[ ${#subnets} -gt 0 ] && subnets="$subnets,${line:7}"
-			[ ${#subnets} -eq 0 ] && subnets="${line:7}"
-		fi
-	done
-	echo $subnets | tr -d '[:space:]'
 }
 
 # Get the s3 bucket names in the user region
@@ -225,7 +210,7 @@ set_stack_config() {
 	set_aws_config jobRoleArn $(aws_role $stack ECSTaskRole)
 	set_aws_config instanceRole "arn:aws:iam::$account_id:instance-profile/$(aws_role $stack IamInstanceProfileArn)"
 	set_aws_config bastionGroup $(aws_role $stack BastionSecurityGroup)
-	set_aws_config subnets $(aws_subnets $stack)
+	set_aws_config subnet $(aws_role $stack Subnet)
 	set_aws_config efsID $(aws_role $stack FileSystemId)
 	set_aws_config headNodeLaunchTemplate $(aws_role $stack HeadNodeLaunchTemplateId)
 	set_aws_config batchNodeLaunchTemplate $(aws_role $stack BatchNodeLaunchTemplateId)

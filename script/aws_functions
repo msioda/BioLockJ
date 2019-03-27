@@ -8,53 +8,37 @@
 
 # Build the compute environment
 build_compute_env() {
-	compEnv=$(named_arg "$aws_args" computeEnv)
+	. $blj_aws_config
 	myCompEnv=$(aws batch describe-compute-environments --compute-environments $compEnv --query "computeEnvironments[].computeEnvironmentName")
 	if [ ${#myCompEnv} -eq 0 ] || [ "$myCompEnv" == "None" ]; then
 		echo "Building $compEnv"
-		ec2Type=$(named_arg "$aws_args" ec2Type)
-		ami=$(named_arg "$aws_args" ami)
-		subnets=$(named_arg "$aws_args" subnets)
-		bastionGroup=$(named_arg "$aws_args" bastionGroup)
-		keyName=$(named_arg "$aws_args" keyName)
-		instanceRole=$(named_arg "$aws_args" instanceRole)
-		ec2SpotPer=$(named_arg "$aws_args" ec2SpotPer)
-		iamFleetRole=$(named_arg "$aws_args" iamFleetRole)
-		batchNodeLaunchTemplate=$(named_arg "$aws_args" batchNodeLaunchTemplate)
-		c1="type=$ec2Type,minvCpus=0,maxvCpus=112,desiredvCpus=0,instanceTypes=optimal,imageId=$ami,subnets=$subnets,"
+		c1="type=$ec2Type,minvCpus=0,maxvCpus=112,desiredvCpus=0,instanceTypes=optimal,imageId=$ami,subnets=$subnet,"
 		c2="securityGroupIds=$bastionGroup,ec2KeyPair=$keyName,instanceRole=$instanceRole,bidPercentage=$ec2SpotPer,"
 		c3="spotIamFleetRole=$iamFleetRole,launchTemplate={launchTemplateId=$batchNodeLaunchTemplate}"
 		compResources=${c1}${c2}${c3}
 		echo $(aws batch create-compute-environment --compute-environment-name $compEnv \
-			--type MANAGED --state ENABLED --service-role $(named_arg "$aws_args" serviceRole) \
-			--compute-resources "$compResources")
+			--type MANAGED --state ENABLED --service-role $serviceRole --compute-resources "$compResources")
 	else
-		echo "Found stack compute environment: $myCompEnv"
+		echo "Found existing compute environment: $myCompEnv"
 	fi
 }
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
-	stack=$(named_arg "$aws_args" stack)
-	jobRoleArn=$(named_arg "$aws_args" jobRoleArn)
-	dockId=$(named_arg "$aws_args" dockerAccount)
-	dockerVer=$(named_arg "$aws_args" dockerImgVer)
-	dockerModules=$(docker search $dockId | grep -E ^$dockId ) 
+	. $blj_aws_config
+	dockerModules=$(docker search $dockerAccount | grep -E ^$dockerAccount ) 
 	jobVcpus=2
 	jobRam=1024
 	IFS=$'\t'
+	echo "Building job-definitions"
 	echo $dockerModules | while read -r line; do
-		#echo "Read line: $line"
-		[ $(echo "$line" | grep -c "blj_basic") -gt 0 ] && continue
-		module=$(echo "$line" | cut -f 1 -d " ")
-		#echo "Found module: $module (size=${#module})"
-		jobImg="${module}:${dockerVer}"
-		jobLabel=${module/\//_} 
+		[ $(echo $line | grep -c blj_basic) -gt 0 ] && continue
+		module=$(echo $line | cut -f 1 -d " ")
+		jobImg="${module}:${dockerImgVer}"
+		jobLabel=${jobImg/\//_} 
 		jobLabel=${jobLabel/:/_} 
-		jobDef="${stack}_${jobLabel}"
-		
-	    jobConfig="{
-			\"image\": \"$jobImg\",
+	    jobConfig="{ 
+	    		\"image\": \"$jobImg\",
 			\"vcpus\": $jobVcpus,
 			\"memory\": $jobRam,
 			\"command\": [ \"/bin/bash\" ],
@@ -64,19 +48,12 @@ build_docker_job_defs() {
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
-		
-		#echo "jobImg: $jobImg"
-		#echo "jobLabel: $jobLabel"
-		#echo "jobDef: $jobDef"
-		#echo "jobConfig: $jobConfig" 
-		
-		existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name "$stack_$jobLabel" --query "jobDefinitions[*].jobDefinitionName")
+		jobDef="${stack}_${jobLabel}"
+		existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name $jobDef --query "jobDefinitions[*].jobDefinitionName")
 		[ ${#existingJob} -gt 0 ] && echo "FOUND JOB: $existingJob" && continue
 		registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
-		#echo "registeredJob: $registeredJob"
-		IFS=$'\t' && OFS=$'\t'
 		jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
-		printf "image_$jobLabel=$jobName,"
+		echo "image_$jobLabel=$jobName"
 	done
 
 }
@@ -190,30 +167,14 @@ key_file() {
 
 # Launch a new ec2 head node
 launch_head_node() {
-	
-	bastionGroup=$(get_blj_prop bastionGroup)
-	headTemplate=$(get_blj_prop headNodeLaunchTemplate)
-	ec2Type=$(get_blj_prop ec2Type)
-	ami=$(get_blj_prop ami)
-	subnets=$(get_blj_prop subnets)
-	region=$(get_blj_prop region)
-	
+	. $blj_aws_config
 	runTime=0
-	EC2RunOutput=$(aws ec2 run-instances --count 1 --key-name $(get_blj_prop keyName) --image-id $ami --security-group-ids $bastionGroup 
-		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $subnets
-		--subnet-id $subnets --launch-template LaunchTemplateId=$headTemplate --instance-type $ec2Type)
-
-	IFS=$'\t'
-	vars=$(echo $EC2RunOutput | grep INSTANCES)
-	instanceID=$(echo $vars  | awk '//{print $7}')
-	
+	instanceID=$(aws ec2 run-instances --count 1 --key-name $keyName --image-id $ami --security-group-ids $bastionGroup 
+		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $subnet
+		--subnet-id $subnet --launch-template LaunchTemplateId=$headNodeLaunchTemplate --instance-type $ec2Category --query "Instances[].PrivateIpAddress" )
 
 	echo "Launching EC2 Instance: $instanceID"
-	echo "-----------------------------------------------------------------------------------------"
-	echo "Instance state progress can be seen here:"
-	echo "https://console.aws.amazon.com/ec2/v2/home?region=${region}#Instances:sort=instanceId"
-	echo "-----------------------------------------------------------------------------------------"
-	printf "Please wait"
+	# echo "https://console.aws.amazon.com/ec2/v2/home?region=$region#Instances:sort=instanceId"
 	systemStatus=starting
 	while [ "$systemStatus" != "ok" ]; do
 		systemStatus=$(aws ec2 describe-instance-status --instance-ids $instanceID --query "InstanceStatuses[*].SystemStatus.Status")
@@ -224,17 +185,18 @@ launch_head_node() {
 	echo " Instance:  $instanceID  created in $runTime seconds"
 	add_aws_config instanceID $instanceID
 	
-	add_aws_config privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateDnsName")
+	add_aws_config privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[*].Instances[*].PrivateDnsName")
 	add_aws_config privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
-	add_aws_config publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName")
 	add_aws_config publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
+	
+	publicHost=$(add_aws_config publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName"))
 
 	#remove previous hosts
-	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_blj_prop publicHost))
-	[ $keyFound -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_blj_prop publicHost)
+	keyFound=$(cat ~/.ssh/known_hosts | grep -c $publicHost)
+	[ $keyFound -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $publicHost
 
 	echo "Connecting directly via ssh:"
-	ssh -i $(key_file) ec2-user@$(get_blj_prop publicHost)
+	ssh -i $(key_file) ec2-user@$publicHost
 }
 
 # Main method, called to launch BioLockJ on AWS

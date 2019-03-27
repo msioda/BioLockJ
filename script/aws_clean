@@ -96,15 +96,18 @@ aws_rm_job_queues() {
 
 # De-register, disable, and remove AWS batch objects
 aws_rm_batch() {
+ 	kill_head
 	aws_deregister_job_defs
 	aws_rm_job_queues
+	aws_rm_stacks
 	aws_rm_compute_envs
 	aws_rm_cloud_forms
-	aws_rm_stacks
-	kill_head
-	
+	aws_rm_s3
+	aws_rm_key_pairs
+
 }
 
+# Remove AWS key_pairs + keyPair file
 aws_rm_key_pairs() {
 	IFS=$'\t'
 	vals=$(aws ec2 describe-key-pairs --query "KeyPairs[*].KeyName")
@@ -116,7 +119,8 @@ aws_rm_key_pairs() {
 		echo "DELETED: $module"
 	done
 	
-	echo "All Key-Pairs deleted (if possible)!"
+	rm -rf $(key_file)
+	echo "All Key-Pairs + files deleted (if possible)!"
 	echo "Remaining Key-Pairs:"
 	aws ec2 describe-key-pairs
 }
