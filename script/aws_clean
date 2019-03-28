@@ -55,7 +55,7 @@ aws_rm_compute_envs() {
 		echo "REMOVE: $module"
 		vals=${vals/$module/""}
 		statusReason=$(aws batch describe-compute-environments --compute-environment $module --query "computeEnvironments[*].statusReason")
-		if [ ${#statusReason} -gt 0 ] && [ "$statusReason" != "CLIENT_ERROR - Access denied" ]; then
+		if [ ${#statusReason} -gt 0 ] && [ "$statusReason" != "${statusReason/'Access denied'}" ]; then
 			status=$(aws batch describe-compute-environments --compute-environment $module --query "computeEnvironments[*].state")
 			[ "$status" != "DISABLED" ] && aws batch update-compute-environment --compute-environment $module --state DISABLED
 			while [ ${#status} -gt 0 ] && [ "$status" != "DISABLED" ]; do

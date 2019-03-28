@@ -39,7 +39,7 @@ aws_local_prop() {
 # Print AWS Config report
 aws_report_config() {
 	echo "AWS Config Report"
-	conf=$(cat $blj_aws_config)
+	[ -f $blj_aws_config ] && conf=$(cat $blj_aws_config)
 	[ ${#conf} -eq 0 ] && return
 	props=("$conf")
 	for arg in ${props[@]}; do
@@ -151,7 +151,7 @@ set_stack_config() {
 	set_blj_prop jobRoleArn $(aws_role ECSTaskRole)
 	set_blj_prop instanceRole "arn:aws:iam::$awsAccountId:instance-profile/$(aws_role IamInstanceProfileArn)"
 	set_blj_prop bastionGroup $(aws_role BastionSecurityGroup)
-	set_blj_prop subnet $(aws_role Subnet)
+	set_blj_prop subnets "$(aws_role Subnet1),$(aws_role Subnet2)"
 	set_blj_prop efsID $(aws_role FileSystemId)
 	set_blj_prop headNodeLaunchTemplate $(aws_role HeadNodeLaunchTemplateId)
 	set_blj_prop batchNodeLaunchTemplate $(aws_role BatchNodeLaunchTemplateId)
