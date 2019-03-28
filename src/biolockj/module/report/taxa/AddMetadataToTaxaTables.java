@@ -120,7 +120,6 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 		Log.info( getClass(), mergeHeaderLine );
 		Log.info( getClass(), mergeSampleLine );
 		Log.info( getClass(), "runModule() complete!" );
-
 	}
 
 	/**
