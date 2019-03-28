@@ -8,6 +8,7 @@
 
 # Remove all job-definitions 
 aws_deregister_job_defs() {
+	echo "CLEARING job-definitions..." 
 	IFS=$'\t'
 	vals=$(aws batch describe-job-definitions --status ACTIVE --query "jobDefinitions[*].jobDefinitionArn")
 	[ ${#vals} -eq 0 ] && echo "No ACTIVE job-definitions found" && return
@@ -44,6 +45,7 @@ aws_get_arn() {
 
 # Remove all compute envs
 aws_rm_compute_envs() {
+	echo "CLEARING compute-environments..." 
 	IFS=$'\t'
 	vals=$(aws batch describe-compute-environments --query "computeEnvironments[*].computeEnvironmentArn")
 	[ ${#vals} -eq 0 ] && echo "No compute-environments found" && return
@@ -69,8 +71,8 @@ aws_rm_compute_envs() {
 	done
 	echo "All Compute Envs removed (if possible)!"
 	vals=$(aws batch describe-compute-environments)
-	[ ${#vals} -eq 0 ] && echo "No Compute Envs  remaining" && return
-	echo "Remaining Compute Envs:" && aws batch describe-compute-environments
+	[ ${#vals} -eq 0 ] && echo "No compute-environments  remaining" && return
+	echo "Remaining compute-environments:" && aws batch describe-compute-environments
 }
 
 # Remove AWS Job Queues
@@ -112,6 +114,7 @@ aws_clear_skies() {
 
 # Remove AWS key_pairs + keyPair file
 aws_rm_key_pairs() {
+	echo "CLEARING Key-Pairs..." 
 	IFS=$'\t'
 	vals=$(aws ec2 describe-key-pairs --query "KeyPairs[*].KeyName")
 	[ ${#vals} -eq 0 ] && echo "No keys found" && return
@@ -131,6 +134,7 @@ aws_rm_key_pairs() {
 
 # Remove S3 buckets
 aws_rm_s3_buckets() {
+	echo "CLEARING S3 buckets..." 
 	s3Buckets=$(aws s3api list-buckets --query "Buckets[*].Name")
 	buckets=("$s3Buckets")
 	for bucket in ${buckets[@]}; do
@@ -145,6 +149,7 @@ aws_rm_s3_buckets() {
 }
 
 aws_rm_stacks() {
+	echo "CLEARING cloudformation stacks..." 
 	IFS=$'\t'
 	vals=$(aws cloudformation describe-stacks --query "Stacks[*].StackId")
 	[ ${#vals} -eq 0 ] || [ "$vals" == "None" ] && echo "No stacks found" && return
@@ -171,9 +176,13 @@ aws_rm_stacks() {
 
 # Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
 kill_head_node() {
+	echo "CLEARING ec2 instances..." 
 	instances=$(aws ec2 describe-instances)
 	[ ${#instances} -eq 0 ] && echo "No ec2 instances remaining" && return
 
 	aws ec2 stop-instances --instance-ids $(get_blj_prop instanceID)
 	aws ec2 terminate-instances --instance-id $(get_blj_prop instanceID)
+	instances=$(aws ec2 describe-instances)
+	[ ${#instances} -eq 0 ] && echo "No ec2 instances remaining" && return
+	echo "Remaining ec2 instances:" && aws ec2 describe-instances
 }
