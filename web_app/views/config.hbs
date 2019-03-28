@@ -1021,6 +1021,7 @@ For fastq, typically “@”.)<h5></p>
         <legend>EC2 headnode</legend>
         <p>Launch action:
           <select class="" name="launchAction">
+            <option value="exists">Check stack exists</option>
             <option value="directconnect">directconnect</option>
             <option value="runscript_attached">runscript attached</option>
             <option value="runscript_detached">runscript detached</option>
@@ -1035,8 +1036,8 @@ For fastq, typically “@”.)<h5></p>
         <p>Script name:
         <input type="text" name="scriptName" value="startHeadNodeGui.sh"></p>
         <p>instanceType:
-          <input type="text" placeholder="select AWS instance type or define a custom type"list="awsInstanceType">
-          <datalist name='awsInstanceType' id="awsInstanceType">
+          <input type="text" placeholder="select AWS instance type or define a custom type" list="instanceType">
+          <datalist name='instanceType' id="instanceType">
             <option value="t2.micro">1GB</option>
             <option value="t2.small">2GB</option>
             <option value="t2.medium">4GB</option>
@@ -1046,7 +1047,7 @@ For fastq, typically “@”.)<h5></p>
         </p>
         <p>
           Instance name:
-          <select class="" name="instanceType">
+          <select class="" name="instanceName">
             <option default value="HeadNode">HeadNode</option>
           </select>
         </p>
