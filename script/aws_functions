@@ -26,7 +26,7 @@ build_compute_env() {
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
 	. $blj_aws_config
-	dockerModules=$(docker search $dockerAccount | grep -E ^$dockerAccount ) 
+	dockerModules=$(docker search $dockerUser | grep -E ^$dockerUser ) 
 	jobVcpus=2
 	jobRam=1024
 	IFS=$'\t'
@@ -34,7 +34,7 @@ build_docker_job_defs() {
 	echo $dockerModules | while read -r line; do
 		[ $(echo $line | grep -c blj_basic) -gt 0 ] && continue
 		module=$(echo $line | cut -f 1 -d " ")
-		jobImg="${module}:${dockerImgVer}"
+		jobImg="${module}:${dockerImgVersion}"
 		jobLabel=${jobImg/\//_} 
 		jobLabel=${jobLabel/:/_} 
 	    jobConfig="{ 
@@ -48,7 +48,7 @@ build_docker_job_defs() {
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
-		jobDef="${stack}_${jobLabel}"
+		jobDef="${awsStack}_${jobLabel}"
 		existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name $jobDef --query "jobDefinitions[*].jobDefinitionName")
 		[ ${#existingJob} -gt 0 ] && echo "FOUND JOB: $existingJob" && continue
 		registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
@@ -60,16 +60,16 @@ build_docker_job_defs() {
 
 # Build Cloud-formation Stack
 build_stack() {
-	stack=$(named_arg "$aws_args" stack)
-	[ $(is_stack_complete $stack) == "true" ] && echo "Found existing AWS Stack: $stack" && return 
-	echo "Building cloud formation stack: $stack. Please wait..."
+	awsStack=$(get_blj_prop awsStack)
+	[ $(is_stack_complete $awsStack) == "true" ] && echo "Found existing AWS Stack: $awsStack" && return 
+	echo "Building cloud formation stack: $awsStack. Please wait..."
 	stackYml="file://$BLJ/resources/aws/StackEFS.yml"
 	myIp=$(get_ip)/32
 	params='ParameterKey=NetworkAccessIP,ParameterValue='
-	aws cloudformation create-stack --template-body $stackYml --stack-name $stack --capabilities CAPABILITY_IAM --parameters ${params}${myIp}
+	aws cloudformation create-stack --template-body $stackYml --stack-name $awsStack --capabilities CAPABILITY_IAM --parameters ${params}${myIp}
 	numSecs=0
-	echo "Building Stack: $stack"
-	while [ $(is_stack_complete $stack) != "true" ]; do
+	echo "Building Stack: $awsStack"
+	while [ $(is_stack_complete $awsStack) != "true" ]; do
 		printf "." && sleep 5s && numSecs=$((numSecs+5))
 	done
 	echo "Secured to local IP: $myIp in $numSecs seconds"
@@ -77,7 +77,7 @@ build_stack() {
 
 # Build key pair + save to $aws_home_dir/$keyPair.pem file
 cache_key_pair() {
-	keyPair=$(named_arg "$aws_args" keyName)
+	keyPair=$(get_blj_prop keyName)
 	keyFile=$aws_home_dir/$keyPair.pem
 	if [ ! -f $keyFile ]; then
 		keys=$(aws ec2 describe-key-pairs)
@@ -122,19 +122,24 @@ get_ip() {
 # Param 1 (optional) S3 bucket name
 get_s3() {
 	s3Bucket=
-	if [ $# -eq 1 ]; then
-		s3Bucket=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$1']|[*].Name")
+	myS3=$(get_blj_prop awsS3)
+	if [ ${#myS3} -gt 0 ]; then
+		s3Bucket=$(aws s3api list-buckets --region $(get_blj_prop awsRegion)  --query "Buckets[?Name=='$myS3']|[*].Name")
 		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
-			echo "Error:  S3 bucket [ aws.s3=$1 ] not found" && exit 1
+			echo "Error:  S3 bucket [ awsS3=$myS3 ] not found" && exit 1
 		fi
 	else
 		newS3=$(generate_name blj $(aws_s3_buckets))
-		s3Bucket=$(aws s3api create-bucket --region $(aws_region) --bucket $newS3)
+		s3Bucket=$(aws s3api create-bucket --region $(get_blj_prop awsRegion) --bucket $newS3)
 		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
 			echo "Error:  Failed to create S3 bucket: $newS3" && exit 1
 		fi
 	fi
 	echo $s3Bucket
+}
+
+get_s3_buckets() {
+	echo $(aws s3api list-buckets --region us-east-1 --query "Buckets[].Name")
 }
 
 # Return stack name.  If stack name arg given, verify is exists, else generate a new stack stack name.
@@ -145,7 +150,7 @@ get_stack_name() {
 		echo $(generate_name bljStack $awsStacks)
 	elif [ $# -eq 1 ]; then
 		awsStacks=$(aws_stacks CREATE_COMPLETE)
-		[ "${awsStacks/$1}" == "$awsStacks" ] && echo "Error:  Config property [ aws.stack=$1 ] does not exist!" && exit 1
+		[ "${awsStacks/$1}" == "$awsStacks" ] && echo "Error:  Config property [ awsStack=$1 ] does not exist!" && exit 1
 		echo $1
 	fi
 }
@@ -166,7 +171,7 @@ key_file() {
 }
 
 # Launch a new ec2 head node
-launch_head_node() {
+launch_ec2_head_node() {
 	. $blj_aws_config
 	runTime=0
 	instanceID=$(aws ec2 run-instances --count 1 --key-name $keyName --image-id $ami --security-group-ids $bastionGroup 
@@ -174,7 +179,6 @@ launch_head_node() {
 		--subnet-id $subnet --launch-template LaunchTemplateId=$headNodeLaunchTemplate --instance-type $ec2Category --query "Instances[].PrivateIpAddress" )
 
 	echo "Launching EC2 Instance: $instanceID"
-	# echo "https://console.aws.amazon.com/ec2/v2/home?region=$region#Instances:sort=instanceId"
 	systemStatus=starting
 	while [ "$systemStatus" != "ok" ]; do
 		systemStatus=$(aws ec2 describe-instance-status --instance-ids $instanceID --query "InstanceStatuses[*].SystemStatus.Status")
@@ -182,34 +186,48 @@ launch_head_node() {
 		sleep 10s
 		runTime=$((runTime+10))
 	done
-	echo " Instance:  $instanceID  created in $runTime seconds"
-	add_aws_config instanceID $instanceID
+	echo " Instance:  $instanceID created in $runTime seconds"
+	set_blj_config instanceID $instanceID
 	
-	add_aws_config privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[*].Instances[*].PrivateDnsName")
-	add_aws_config privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
-	add_aws_config publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
+	set_blj_config privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[*].Instances[*].PrivateDnsName")
+	set_blj_config privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
+	set_blj_config publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
 	
-	publicHost=$(add_aws_config publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName"))
+	publicHost=$(set_blj_config publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName"))
 
 	#remove previous hosts
-	keyFound=$(cat ~/.ssh/known_hosts | grep -c $publicHost)
-	[ $keyFound -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $publicHost
+	keyFound=$(cat ~/.ssh/known_hosts | grep -c ${publicHost})
+	[ $keyFound -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
 
 	echo "Connecting directly via ssh:"
-	ssh -i $(key_file) ec2-user@$publicHost
+	ssh -i $(key_file) ec2-user@${publicHost}
 }
 
-# Main method, called to launch BioLockJ on AWS
-# Params format:  argName=argValue --> for example [ aws.s3=blj-2019-03-24 ]
-# Params (required) Config property: aws.ec2InstanceType, aws.ec2SpotPer, aws.profile, docker.imgVersion
-# Params (optional) Config properties that generate vals if undefined: aws.stack, aws.s3 
+# Main method, called to launch BioLockJ on AWS from localhost, if a Config is not given, defaults are used.
+# The optional file-path parameter can be passed to re-use existing objects on the cloud.
+# The parameter file should contain AWS configuration properties in the expected format.
+# Config file parameter format:  argName=argValue --> for example [ awsS3=blj-2019-03-24 ]
 run_aws() {
-	init_aws_config "$@" && aws_dev_config && set_account_config && build_stack && set_stack_config && \
-		save_aws_config && cache_key_pair && build_compute_env && add_aws_config $(build_docker_job_defs) && \
-		launch_ec2_head_node && echo "run_aws COMPLETE!"
+	init_aws_config true && set_account_config && build_stack && set_stack_config && cache_key_pair && \
+		build_compute_env && build_docker_job_defs && launch_ec2_head_node && echo "run_aws COMPLETE!"
+}
+
+# Build account config (and create s3 bucket if needed)
+set_account_config() {
+
+	set_blj_prop ami ami-007571470797b8ffa
+	set_blj_prop awsStack bljStack-2019-03-27-2
+	set_blj_prop awsS3 blj-2019-03-27-1
+	
+	stackName=$(get_blj_prop awsStack)
+	
+	x=$(get_blj_prop ami $(aws_get_ami))
+	x=$(get_blj_prop awsS3 $(get_s3))
+	x=$(get_blj_prop awsStack $(get_stack_name $stackName))
+	
 }
 
 # Upload data to the ec2 head node
-upload_to_head() {
+upload_to_head_node() {
 	ssh -i $(key_file) ec2-user@$(get_blj_prop publicHost)
 }
