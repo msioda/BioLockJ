@@ -45,14 +45,17 @@ document.getElementById('submitConfigureAWS').addEventListener('click', function
           correct.forEach( ele => ele.style.display = 'none');
         }
       })
-  }
+    }
 });
 //document.getElementById('configureAwsForm').getElementsByTagName('span').getElementsByClassName('correctInput')
 document.getElementById('deployComputeStack').addEventListener('click', function(evt){
   evt.preventDefault();
   console.log('this.parentNode: ', this.parentNode);
-  const targ = this;
+  let correct = Array.from(this.parentNode.getElementsByClassName('correctInput'));
+  let incorrect = Array.from(this.parentNode.getElementsByClassName('incorrectInput'));
   let inProgress = Array.from(this.parentNode.getElementsByClassName('inProgress'));
+  incorrect.forEach( ele => ele.style.display = 'none');
+  correct.forEach( ele => ele.style.display = 'none');
   inProgress.forEach( ele => ele.style.display = 'block');
   console.log('this deployComputeStack: ', this);
   let formData = {};
@@ -62,6 +65,10 @@ document.getElementById('deployComputeStack').addEventListener('click', function
   }
   console.log('formData: ', formData);
   let request = new XMLHttpRequest();
+  request.timeout = 1000 * 10 * 60;
+  request.ontimeout = function (e) {
+    console.log('timed out from browser \n', e);
+  };
   request.open("POST", '/deployCloudInfrastructure', true);
   request.setRequestHeader("Content-Type", "application/json");
   request.send(JSON.stringify({formData}));
@@ -69,17 +76,12 @@ document.getElementById('deployComputeStack').addEventListener('click', function
     if (request.readyState == XMLHttpRequest.DONE) {
       console.log(request);
       console.log('request.responseText: ', request.responseText);
-      console.log('targ: ', targ);
       const rt = request.responseText.trim();
       inProgress.forEach( ele => ele.style.display = 'none');
-      let correct = Array.from(targ.parentNode.getElementsByClassName('correctInput'));
-      let incorrect = Array.from(targ.parentNode.getElementsByClassName('incorrectInput'));
       if (rt.endsWith("_COMPLETE")){
         correct.forEach( ele => ele.style.display = 'inline');
-        incorrect.forEach( ele => ele.style.display = 'none');
       } if (rt.endsWith("FAILED") ){
         incorrect.forEach( ele => ele.style.display = 'inline');
-        correct.forEach( ele => ele.style.display = 'none');
       }else {
         incorrect.forEach( ele => ele.style.display = 'inline');
         correct.forEach( ele => ele.style.display = 'none');
@@ -91,3 +93,34 @@ document.getElementById('launchEc2HeadNodeButton').addEventListener('click', fun
   evt.preventDefault();
   sendFormToNode('launchEc2HeadNodeButton', 'launchEc2HeadNode')
 });
+
+//copy past from config_config
+function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
+  return new Promise((resolve, reject) => {
+    let formData = {};
+    let myForm = new FormData(document.getElementById(formElementId).parentNode.parentNode);
+    for (var i of myForm.entries()) {
+      formData[i[0]] = i[1];
+    }
+    console.log('formData: ', formData);
+
+    let request = new XMLHttpRequest();
+    request.open(requestMethod, nodeAddress, true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(JSON.stringify({formData}));
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        try {
+          if(this.status === 200 && request.readyState === 4){
+            console.log(this.responseText);
+            resolve(this.responseText);
+          }else{
+            reject(this.status + " " + this.statusText)
+          }
+        } catch (e) {
+          reject (e.message)
+        }
+      }
+    }
+  });
+};
