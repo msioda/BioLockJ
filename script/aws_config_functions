@@ -10,16 +10,7 @@ aws_home_dir=~/.aws
 aws_local_config=$aws_home_dir/config
 aws_cred_file=$aws_home_dir/credentials
 blj_aws_config=$aws_home_dir/blj_config
-sheBang="#!/bin/bash"
-
-# Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
-aws_get_ami() {
-	ami=$(aws ec2 describe-images --region $(get_blj_prop awsRegion) --owner amazon \
-		--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
-		--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
-	[ ${#ami} -eq 0 ] && echo "Error:  Unable to obtain AWS AMI template from region $(get_blj_prop awsRegion)" && exit 1
-	echo $ami
-}
+sheBang='#!/bin/bash'
 
 # Get an AWS property $1 from local AWS Config file $2 under the awsProfile
 # Param 1 argName Parse filePath for a line that starts with argName
@@ -39,13 +30,7 @@ aws_local_prop() {
 # Print AWS Config report
 aws_report_config() {
 	echo "AWS Config Report"
-	[ -f $blj_aws_config ] && conf=$(cat $blj_aws_config)
-	[ ${#conf} -eq 0 ] && return
-	props=("$conf")
-	for arg in ${props[@]}; do
-		IFS2=$IFS && IFS="=" && tokens=( ${arg} )
-		IFS=$IFS2 && echo "----> ${tokens[0]}=${tokens[1]}"
-	done
+	[ -f $blj_aws_config ] && cat $blj_aws_config
 }
 
 # Get a role get_role for the configured stack 
@@ -99,14 +84,18 @@ init_aws_config() {
 	[ $# -eq 0 ] && echo $sheBang > $blj_aws_config && chmod 770 $blj_aws_config
 	
 	x=$(get_blj_prop awsAccountId $(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId))
+	x=$(get_blj_prop awsAmi)
+	x=$(get_blj_prop awsComputeEnv)
 	x=$(get_blj_prop awsEc2SpotPer 70)
 	x=$(get_blj_prop awsEc2AcquisitionStrategy SPOT)
 	x=$(get_blj_prop awsEc2InstanceType t2.micro)
 	x=$(get_blj_prop awsProfile default)
 	x=$(get_blj_prop awsRegion $(aws configure get region))
+	x=$(get_blj_prop awsS3)
+	x=$(get_blj_prop awsStack)
 	x=$(get_blj_prop dockerImgVersion latest)
 	x=$(get_blj_prop dockerUser biolockj)
-	
+
 	set_blj_prop access_id $(aws_local_prop aws_access_key_id $aws_cred_file)
 	set_blj_prop secret_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
 }
@@ -114,14 +103,17 @@ init_aws_config() {
 # Remove AWS property - delete the line from the file
 # Param 1 - prop name 
 rm_blj_prop() {
-	TMP=~/.temp.txt
 	conf=$(cat $blj_aws_config)
 	[ ${#conf} -eq 0 ] && return
+	TMP=~/.temp.txt
+	[ ! -f $TMP ] && echo $sheBang > $TMP
+	chmod 770 $TMP
 	props=("$conf")
 	for arg in ${props[@]}; do
-		[ "$arg" == "$sheBang" ] && continue
-		IFS2=$IFS && IFS="=" && tokens=( ${arg} )
-		IFS=$IFS2 && [ "${tokens[0]}" != "$1" ] && echo ${arg} >> $TMP
+		if [ "$arg" != "$sheBang" ]; then
+			IFS2=$IFS && IFS="=" && tokens=( ${arg} )
+			IFS=$IFS2 && [ "${tokens[0]}" != "$1" ] && echo ${arg} >> $TMP
+		fi
 	done
 	rm $blj_aws_config
 	[ -f $TMP ] && mv $TMP $blj_aws_config
@@ -144,7 +136,7 @@ set_stack_config() {
 	awsStack=$(get_blj_prop awsStack)
 	awsAccountId=$(get_blj_prop awsAccountId)
 	set_blj_prop keyName $awsStack-KeyPair
-	set_blj_prop computeEnv $awsStack-ComputeEnv
+	set_blj_prop awsComputeEnv $awsStack-ComputeEnv
 	set_blj_prop queueName $awsStack-Queue
 	set_blj_prop serviceRole $(aws_role BatchServiceRoleArn)
 	set_blj_prop iamFleetRole "arn:aws:iam::$awsAccountId:role/$(aws_role SpotIamFleetRoleArn)"

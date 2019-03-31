@@ -22,8 +22,9 @@ aws_deregister_job_defs() {
 			sleep 10
 			status=$(aws batch describe-job-definitions --job-definitions ${module} --query "jobDefinitions[*].status")
 		done
-		vals=${vals/${module}/""}
 		echo "DE-RESISTERED: ${module}"
+		vals=${vals/${module}/""}
+		$(is_empty $vals) && break
 	done
 	echo "All jobs de-registered (if possible)!"
 	vals=$(aws batch describe-job-definitions)
@@ -54,6 +55,7 @@ aws_rm_compute_envs() {
 		module="$(aws_get_arn $vals)"
 		echo "REMOVE: $module"
 		vals=${vals/$module/""}
+		$(is_empty $vals) && break
 		statusReason=$(aws batch describe-compute-environments --compute-environment $module --query "computeEnvironments[*].statusReason")
 		if [ ${#statusReason} -gt 0 ] && [ "$statusReason" != "${statusReason/'Access denied'}" ]; then
 			status=$(aws batch describe-compute-environments --compute-environment $module --query "computeEnvironments[*].state")
@@ -81,19 +83,20 @@ aws_rm_job_queues() {
 	vals=$(aws batch describe-job-queues --query "jobQueues[*].jobQueueArn")
 	[ ${#vals} -eq 0 ] && echo "No job-queues found" && return
 	echo "Remove Job Queues: $vals"
-	while [ $vals -gt 0 ]; do
+	while [ ${#vals} -gt 0 ]; do
 		module=$(aws_get_arn $vals) 
 		echo "REMOVE: $module"
-		status=$(aws batch describe-job-queues --job-queue $module --query "jobQueues[*].status")
-		[ "$status" == "DISABLED" ] && aws batch update-job-queue --job-queue $module --status DISABLED
+		status=$(aws batch describe-job-queues --job-queue $module --query "jobQueues[*].state")
+		[ "$status" != "DISABLED" ] && aws batch update-job-queue --job-queue $module --state DISABLED
 		while [ ${#status} -gt 0 ] && [ "$status" != "DISABLED" ]; do
 			sleep 10
-			status=$(aws batch describe-job-queues --job-queue $module --query "jobQueues[*].status")
+			status=$(aws batch describe-job-queues --job-queue $module --query "jobQueues[*].state")
 		done
 		echo "DISABLED: $module"
-		vals=${vals/$module/""}
 		aws batch delete-job-queue --job-queue $module
 		echo "DELETED: $module"
+		vals=${vals/$module/""}
+		$(is_empty $vals) && break
 	done
 	echo "All Job Queues removed (if possible)!"
 	vals=$(aws batch describe-job-queues )
@@ -122,6 +125,7 @@ aws_rm_key_pairs() {
 		module=$(echo $vals | cut -f 1 -d " ")
 		aws ec2 delete-key-pair --key-name $module
 		vals=${vals/$module/""}
+		$(is_empty $vals) && break
 		echo "DELETED: $module"
 	done
 	echo "All Key-Pairs on AWS Cloud deleted (if possible)!"
@@ -156,15 +160,17 @@ aws_rm_stacks() {
 	while [ ${#vals} -gt 0 ]; do
 		module=$(aws_get_arn $vals) 
 		status=$(aws cloudformation describe-stacks --stack-name $module --query "Stacks[*].StackStatus")
-		[ "$status" == "DELETE_COMPLETE" ] && "$module=DELETE_COMPLETE" && continue
+		vals=${vals/$module/""}
+		$(is_empty $vals) && break
+		[ "${status}" != "${status/DELETE}" ] && continue
 		echo "Found: $module"
 		aws cloudformation delete-stack --stack-name $module 
 		status=ACTIVE
-		while [ "$status" != "DELETE_COMPLETE" ]; do
+		while [ "${status}" != "${status/DELETE}" ]; do
 			sleep 10
 			status=$(aws cloudformation describe-stacks --stack-name $module --query "Stacks[*].StackStatus")
 		done
-		vals=${vals/$module/""}
+		
 		echo "DELETED: $module"
 	done
 	
@@ -174,12 +180,15 @@ aws_rm_stacks() {
 	echo "Remaining DELETE_COMPLETE Stacks:" && aws cloudformation list-stacks
 }
 
+is_empty() {
+	x=$(echo $vals | grep -c [a-zA-Z0-9])
+}
+
 # Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
 kill_head_node() {
 	echo "CLEARING ec2 instances..." 
 	instances=$(aws ec2 describe-instances)
 	[ ${#instances} -eq 0 ] && echo "No ec2 instances remaining" && return
-
 	aws ec2 stop-instances --instance-ids $(get_blj_prop instanceID)
 	aws ec2 terminate-instances --instance-id $(get_blj_prop instanceID)
 	instances=$(aws ec2 describe-instances)

@@ -6,21 +6,42 @@
 ##############################################################
 . $BLJ/script/aws_config_functions
 
+# Return TRUE if test value exist in the param list
+# Param 1 Full parameter list
+# Param 2 Test value
+containsVar() { 
+	[ $# -eq 2 ] && [ "$1" != "None" ] && [ "$2" != "None" ] && [ "${1/$2}" != "$1" ] 
+}
+
+# Get ENABLED Compute Environment (if configured)
+verify_comp_env() {
+	configCompEnv=$(get_blj_prop awsComputeEnv)
+	if [ ${#configCompEnv} -gt 0 ]; then
+		allCompEnvs=$(aws batch describe-compute-environments --query "computeEnvironments[].computeEnvironmentName")
+		enabledCompEnvs=$(aws batch describe-compute-environments --compute-environments $configCompEnv --query "computeEnvironments[?state=='ENABLED'].computeEnvironmentName")
+		$(containsVar $enabledCompEnvs $configCompEnv) && echo "Found ENABLED Compute Environment: $configCompEnv" && return
+		$(containsVar $allCompEnvs $configCompEnv) && echo "Error:  Invalid configured AWS Compute Environment: $configCompEnv" && exit 1
+	fi
+}
+
 # Build the compute environment
 build_compute_env() {
 	. $blj_aws_config
-	myCompEnv=$(aws batch describe-compute-environments --compute-environments $compEnv --query "computeEnvironments[].computeEnvironmentName")
-	if [ ${#myCompEnv} -eq 0 ] || [ "$myCompEnv" == "None" ]; then
-		echo "Building $compEnv"
-		c1="type=$ec2Type,minvCpus=0,maxvCpus=112,desiredvCpus=0,instanceTypes=optimal,imageId=$ami,subnets=$subnets,"
-		c2="securityGroupIds=$bastionGroup,ec2KeyPair=$keyName,instanceRole=$instanceRole,bidPercentage=$ec2SpotPer,"
-		c3="spotIamFleetRole=$iamFleetRole,launchTemplate={launchTemplateId=$batchNodeLaunchTemplate}"
-		compResources=${c1}${c2}${c3}
-		echo $(aws batch create-compute-environment --compute-environment-name $compEnv \
-			--type MANAGED --state ENABLED --service-role $serviceRole --compute-resources "$compResources")
-	else
-		echo "Found existing compute environment: $myCompEnv"
-	fi
+	status=$(aws batch describe-compute-environments --compute-environment $awsComputeEnv --query "computeEnvironments[*].state")
+	statusReason=$(aws batch describe-compute-environments --compute-environment $awsComputeEnv --query "computeEnvironments[*].statusReason")
+
+	allCompEnvs=$(aws batch describe-compute-environments --query "computeEnvironments[].computeEnvironmentName")
+	enabledCompEnvs=$(aws batch describe-compute-environments --compute-environments $awsComputeEnv --query "computeEnvironments[?state=='ENABLED'].computeEnvironmentName")
+	$(containsVar $enabledCompEnvs $awsComputeEnv) && echo "Found ENABLED Compute Environment: $awsComputeEnv: Status( $status ) $statusReason" && return
+	$(containsVar $allCompEnvs $awsComputeEnv) && echo "Error:  Invalid configured AWS Compute Environment: $awsComputeEnv" && exit 1
+
+	echo "Building $awsComputeEnv"
+	c1="type=$awsEc2AcquisitionStrategy,minvCpus=0,maxvCpus=112,desiredvCpus=0,instanceTypes=optimal,imageId=$awsAmi,subnets=$subnets,"
+	c2="securityGroupIds=$bastionGroup,ec2KeyPair=$keyName,instanceRole=$instanceRole,bidPercentage=$awsEc2SpotPer,"
+	c3="spotIamFleetRole=$iamFleetRole,launchTemplate={launchTemplateId=$batchNodeLaunchTemplate}"
+	compResources=${c1}${c2}${c3}
+	echo $(aws batch create-compute-environment --compute-environment-name $awsComputeEnv \
+		--type MANAGED --state ENABLED --service-role $serviceRole --compute-resources "$compResources")
 }
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
@@ -60,16 +81,16 @@ build_docker_job_defs() {
 
 # Build Cloud-formation Stack
 build_stack() {
-	awsStack=$(get_blj_prop awsStack)
-	[ $(is_stack_complete $awsStack) == "true" ] && echo "Found existing AWS Stack: $awsStack" && return 
-	echo "Building cloud formation stack: $awsStack. Please wait..."
+	myStack=$(get_blj_prop awsStack)
+	[ $(is_stack_complete $myStack) == "true" ] && echo "Confirmed existing AWS Stack is CREATE_COMPLETE: $myStack" && return 
+	echo "Building cloud formation stack: $myStack. Please wait..."
 	stackYml="file://$BLJ/resources/aws/StackEFS.yml"
 	myIp=$(get_ip)/32
 	params='ParameterKey=NetworkAccessIP,ParameterValue='
-	aws cloudformation create-stack --template-body $stackYml --stack-name $awsStack --capabilities CAPABILITY_IAM --parameters ${params}${myIp}
+	aws cloudformation create-stack --template-body $stackYml --stack-name $myStack --capabilities CAPABILITY_IAM --parameters ${params}${myIp}
 	numSecs=0
-	echo "Building Stack: $awsStack"
-	while [ $(is_stack_complete $awsStack) != "true" ]; do
+	echo "Building Stack: $myStack"
+	while [ $(is_stack_complete $myStack) != "true" ]; do
 		printf "." && sleep 5s && numSecs=$((numSecs+5))
 	done
 	echo "Secured to local IP: $myIp in $numSecs seconds"
@@ -118,53 +139,26 @@ get_ip() {
 	echo $(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
 }
 
-# Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
-# Param 1 (optional) S3 bucket name
-get_s3() {
-	s3Bucket=
-	myS3=$(get_blj_prop awsS3)
-	if [ ${#myS3} -gt 0 ]; then
-		s3Bucket=$(aws s3api list-buckets --region $(get_blj_prop awsRegion)  --query "Buckets[?Name=='$myS3']|[*].Name")
-		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
-			echo "Error:  S3 bucket [ awsS3=$myS3 ] not found" && exit 1
-		fi
-	else
-		newS3=$(generate_name blj $(aws_s3_buckets))
-		s3Bucket=$(aws s3api create-bucket --region $(get_blj_prop awsRegion) --bucket $newS3)
-		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
-			echo "Error:  Failed to create S3 bucket: $newS3" && exit 1
-		fi
-	fi
-	echo $s3Bucket
-}
 
+# Got existing S3 bucket names in your region
 get_s3_buckets() {
-	echo $(aws s3api list-buckets --region us-east-1 --query "Buckets[].Name")
+	echo $(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
 }
 
-# Return stack name.  If stack name arg given, verify is exists, else generate a new stack stack name.
-# Param 1 (optional) Stack name
-get_stack_name() {
-	if [ $# -eq 0 ]; then
-		awsStacks=$(aws_stacks CREATE_COMPLETE)
-		echo $(generate_name bljStack $awsStacks)
-	elif [ $# -eq 1 ]; then
-		awsStacks=$(aws_stacks CREATE_COMPLETE)
-		[ "${awsStacks/$1}" == "$awsStacks" ] && echo "Error:  Config property [ awsStack=$1 ] does not exist!" && exit 1
-		echo $1
-	fi
-}
 
 # Check status of Cloud Formation Stack
 # Param 1 Stack name
 is_stack_complete() {
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
-	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] || [ ${#1} -eq 0 ] && echo "false" && return
-	stacks=$(aws cloudformation describe-stacks --stack-name $1 --query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
+	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] || [ $# -eq 0 ] && echo "false" && return
+	stacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
 	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] && echo "false" && return
-	[ ${#stacks} -gt 0 ] && echo "true"
+	[ ${#stacks} -gt 0 ] && [ "${stacks/$myStack}" != "$stacks"  ] && echo "true" && return
+	echo "false"
 }
 
+
+$myStack 
 # Get the ec2 key file for the ec2 head node
 key_file() {
 	echo $aws_home_dir/$(get_blj_prop keyName).pem
@@ -174,9 +168,10 @@ key_file() {
 launch_ec2_head_node() {
 	. $blj_aws_config
 	runTime=0
-	instanceID=$(aws ec2 run-instances --count 1 --key-name $keyName --image-id $ami --security-group-ids $bastionGroup 
-		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $subnets
-		--subnet-id $subnets --launch-template LaunchTemplateId=$headNodeLaunchTemplate --instance-type $ec2Category --query "Instances[].PrivateIpAddress" )
+	firstSubnet=$(echo $subnets | cut -f1 -d ",")
+	instanceID=$(aws ec2 run-instances --count 1 --key-name $keyName --image-id $awsAmi --security-group-ids $bastionGroup  \
+		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $firstSubnet \
+		--launch-template LaunchTemplateId=$headNodeLaunchTemplate --instance-type $awsEc2InstanceType --query "Instances[].InstanceId" )
 
 	echo "Launching EC2 Instance: $instanceID"
 	systemStatus=starting
@@ -187,13 +182,12 @@ launch_ec2_head_node() {
 		runTime=$((runTime+10))
 	done
 	echo " Instance:  $instanceID created in $runTime seconds"
-	set_blj_config instanceID $instanceID
+	set_blj_prop instanceID $instanceID
+	set_blj_prop privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateDnsName")
+	set_blj_prop privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
+	set_blj_prop publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
 	
-	set_blj_config privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[*].Instances[*].PrivateDnsName")
-	set_blj_config privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
-	set_blj_config publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
-	
-	publicHost=$(set_blj_config publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName"))
+	publicHost=$(set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName"))
 
 	#remove previous hosts
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c ${publicHost})
@@ -208,26 +202,86 @@ launch_ec2_head_node() {
 # The parameter file should contain AWS configuration properties in the expected format.
 # Config file parameter format:  argName=argValue --> for example [ awsS3=blj-2019-03-24 ]
 run_aws() {
-	init_aws_config true && set_account_config && build_stack && set_stack_config && cache_key_pair && \
+	init_aws_config && verify_cloud_formation && build_stack && set_stack_config && cache_key_pair && \
 		build_compute_env && build_docker_job_defs && launch_ec2_head_node && echo "run_aws COMPLETE!"
 }
 
 # Build account config (and create s3 bucket if needed)
-set_account_config() {
+verify_cloud_formation() {
 
-	set_blj_prop ami ami-007571470797b8ffa
-	set_blj_prop awsStack bljStack-2019-03-27-2
-	set_blj_prop awsS3 blj-2019-03-27-1
+	set_blj_prop awsAmi ami-007571470797b8ffa
+	set_blj_prop awsS3 blj-2019-03-31
+	set_blj_prop awsStack bljStack-2019-03-31-4
 	
-	stackName=$(get_blj_prop awsStack)
-	
-	x=$(get_blj_prop ami $(aws_get_ami))
-	x=$(get_blj_prop awsS3 $(get_s3))
-	x=$(get_blj_prop awsStack $(get_stack_name $stackName))
-	
+	verify_ami
+	verify_s3
+	verify_stack
 }
 
 # Upload data to the ec2 head node
 upload_to_head_node() {
 	ssh -i $(key_file) ec2-user@$(get_blj_prop publicHost)
 }
+
+# Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
+verify_ami() {
+	. $blj_aws_config
+	ami=$awsAmi
+	if [ ${#ami} -gt 0 ]; then
+		ami=$(aws ec2 describe-images --image-ids $ami --query "Images[?State=='available'].ImageId")
+		[ $ami == "None" ] && echo "Error:  Unable to use configured AWS AMI: $ami" && exit 1
+		[ ${#ami} -gt 0 ] && echo "Found existing AWS Image: $ami" && return
+	else
+		ami=$(aws ec2 describe-images --region $awsRegion --owner amazon \
+			--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
+			--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
+		[ ${#ami} -eq 0 ] || [ $ami == "None" ] && echo "Error:  Unable to obtain AWS AMI template from region $awsRegion" && exit 1
+		set_blj_prop awsAmi $ami
+		echo "Set awsAmi=$ami"
+	fi
+}
+
+# Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
+# Param 1 (optional) S3 bucket name
+verify_s3() {
+	. $blj_aws_config
+	s3Bucket=
+	if [ ${#awsS3} -gt 0 ]; then
+		s3Bucket=$(aws s3api list-buckets --region $awsRegion  --query "Buckets[?Name=='$awsS3']|[*].Name")
+		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
+			echo "Error:  S3 bucket [ awsS3=$awsS3 ] not found" && exit 1
+		fi
+		echo "Found existing S3 Bucket $s3Bucket"
+	else
+		newS3=$(generate_name blj $(aws_s3_buckets))
+		s3Bucket=$(aws s3api create-bucket --region $awsRegion --bucket $newS3)
+		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
+			echo "Error:  Failed to create S3 bucket: $newS3" && exit 1
+		fi
+		set_blj_prop awsS3 ${s3Bucket:1}
+		echo "Set awsS3=${s3Bucket:1}"
+	fi
+}
+
+# Return stack name.  If stack name arg given, verify is exists, else generate a new stack stack name.
+verify_stack() {
+	myStack=$(get_blj_prop awsStack)
+	disabledStacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
+	enabledStacks=$(aws_stacks CREATE_COMPLETE)
+	if [ ${#myStack} -gt 0 ]; then
+		if [ ${#disabledStacks} -gt 0 ] && [ "${disabledStacks/$myStack}" != "$disabledStacks" ]; then
+			echo "Stack disabled on AWS cloud: $myStack"
+			myStack=""
+		elif [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$myStack}" != "$enabledStacks" ]; then
+			echo "Use configured AWS Stack name: $myStack" && return
+		fi
+	fi
+	
+	if [ ${#myStack} -eq 0 ]; then
+		echo "Generate new stack name"
+		myStack=$(generate_name bljStack "$disabledStacks $enabledStacks")
+		set_blj_prop awsStack $myStack
+		echo "Set awsStack=$myStack"
+	fi
+}
+
