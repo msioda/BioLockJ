@@ -22,6 +22,9 @@ const bljDir = process.env.BLJ;
 console.log('bljDir ', bljDir);
 const HOST_BLJ = process.env.HOST_BLJ;
 
+//For turning streamProgress on and off
+let launchedPipeline = false;
+
 //for error reports
 const accessLogStream = fs.createWriteStream(createLogFile(), { flags: 'a' });
 
@@ -372,9 +375,9 @@ router.post('/launch', function(req, res, next) {
 
     }
     res.setHeader('Content-Type', 'text/html');
-    res.write('Server Response: project launched!');
+    res.write('Server Response: pipeline launched!');
     res.end();
-
+    launchedPipeline = true;
   } catch (e) {
     accessLogStream.write(e.stack + '\n');;
     console.error(e);
@@ -397,6 +400,11 @@ router.get('/streamLog', function(request, response){
 
 //begin serverside events
 router.get('/streamProgress', function(request, response){
+  while (launchedPipeline === false) {
+    response.res.status(400);
+    response.send('Pipeline not yet launched');
+    break;
+  }
   response.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -488,32 +496,35 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
   console.log('req.body.formData: ', req.body.formData);
   console.log('deployCloudInfrastructure');
   try {
+    const ms = 1000 * 10 * 60;
+    req.connection.setTimeout(ms);
     const outputOptions = ['DELETE_FAILED','CREATE_COMPLETE', 'CREATE_FAILED', 'DELETE_COMPLETE'];
     let sent = false;
+    const spawn = require('child_process').spawn;
     if (req.body.formData.deployArg === 'delete'){
-      var spawn = require('child_process').spawn;
       let aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh delete ${req.body.formData.stackname}`, {shell: '/bin/bash'});
       //source ~/.batchawsdeploy/config ; deployCloudInfrastructure.sh delete testing
-
       aws.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
         if (sent === false){
           let output = data.toString().trim();
-          let found = false;
-          while (found === false) {
-            for (let i = 0; i < outputOptions.length; i++) {
-              if (output.includes(outputOptions[i])){
-                found = true;
-                console.log('output ', output, outputOptions[i]);
-                console.log(outputOptions[i]);
-                res.setHeader('Content-Type', 'text/html');
-                res.write(outputOptions[i].toString());
-                res.send();
-                sent = true;
-                break;
-              }
+
+          for (let i = 0; i < outputOptions.length; i++) {
+            if (output.includes(outputOptions[i])){
+              console.log('output found YAY!', output, outputOptions[i]);
+              console.log(outputOptions[i]);
+              res.setHeader('Content-Type', 'text/html');
+              res.write(outputOptions[i].toString());
+              res.send();
+              sent = true;
+              break;
+            } else{
+              // res.writeHead(202, {
+              //   'Content-Type': 'text/event-stream',
+              //   'Cache-Control': 'no-cache',
+              //   'Connection': 'keep-alive'
+              // })
             }
-            found = true;
           }
         }
       });
@@ -527,29 +538,25 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
       });
     }
     if (req.body.formData.deployArg === 'create'){
-      let spawn = require('child_process').spawn;
       let aws = spawn(`source ${batchAwsConfigFile} ; deployCloudInfrastructure.sh create ${req.body.formData.stackname} ${req.body.formData.dockerRepository}`, {shell: '/bin/bash'});
           //source ~/.batchawsdeploy/config ; deployCloudInfrastructure.sh create testingblj biolockj
       aws.stdout.on('data', function (data) {
         console.log('stdout: ' + data.toString());
         if (sent === false){
           let output = data.toString().trim();
-          let found = false;
-          while (found === false) {
-            for (let i = 0; i < outputOptions.length; i++) {
-              if (output.includes(outputOptions[i])){
-                found = true;
-                console.log('found: ', found);
-                console.log('output ', output, outputOptions[i]);
-                console.log(outputOptions[i]);
-                res.setHeader('Content-Type', 'text/html');
-                res.write('outputOptions[i]');
-                res.end();
-                sent = true;
-                break;
-              }
+          for (let i = 0; i < outputOptions.length; i++) {
+            if (output.includes(outputOptions[i])){
+              found = true;
+              console.log('output found asdfdasf asfdL \n', output, '\n', outputOptions[i]);
+              console.log(outputOptions[i]);
+              res.setHeader('Content-Type', 'text/html');
+              res.write(outputOptions[i]);
+              res.end();
+              sent = true;
+              break;
+            } else{
+              // res.status(202).send('AWSBatchGenomics is helping BLJ with your request');
             }
-            found = true;
           }
         }
       });
@@ -585,19 +592,28 @@ router.post('/launchEc2HeadNode', function(req, res, next) {
   */
   console.log('launchEC2HeadNode.sh');
   try {
+    console.log('req.body.formData: ', req.body.formData);
+    let spawn = require('child_process').spawn
+    if (req.body.formData.launchAction === 'exists') {;
+      let aws = spawn(`source ${batchAwsConfigFile} ; launchEC2Node.sh ${req.body.formData.launchAction} ${req.body.formData.ec2StackName} ${req.body.formData.instanceName} ${req.body.formData.instanceType} ${req.body.formData.scriptName}`, {shell: '/bin/bash'});
+      // source ~/.batchawsdeploy/config ; launchEC2Node.sh directconnect testthis HeadNode t2.micro
+      aws.stdout.on('data', function (data) {
+        console.log('stdout: ' + data.toString());
+      });
 
-    //source ~/.batchawsdeploy/config ;
-    //source ~/.batchawsdeploy/config ; launchEC2HeadNode.sh t2.micro startHeadNodeGui.sh
-    // exec(`source ${batchAwsConfigFile} ; launchEC2HeadNode.sh ${req.body.formData.instanceType} ${req.body.formData.scriptName}`, {shell: '/bin/bash'}, function(err, stdout, stderr) {
-    //   console.log(stdout);
-    //   console.error(err);
-    //   console.error(stderr);
-    //   res.setHeader('Content-Type', 'text/html');
-    //   res.write(`Server Response: ${stdout}`);
-    //   res.end();
-    // });
-    var spawn = require('child_process').spawn,
-    aws = spawn(`source ${batchAwsConfigFile} ; launchEC2Node.sh ${req.body.formData.launchAction} ${req.body.formData.launchAction}`, {shell: '/bin/bash'});
+      aws.stderr.on('data', function (data) {
+        console.log('stderr: ' + data.toString());
+      });
+
+      aws.on('exit', function (code) {
+        console.log('child process exited with code ' + code.toString());
+      });
+    }//end if exists
+    else {
+
+    }
+    //launchEC2HeadNode.sh runscript_attached [STACKNAME] [INSTANCENAME] [INSTANCETYPE] startHeadNodeGui.sh
+    let aws = spawn(`source ${batchAwsConfigFile} ; launchEC2Node.sh ${req.body.formData.launchAction} ${req.body.formData.ec2ec2StackName} ${req.body.formData.instanceName}`, {shell: '/bin/bash'});
     // source ~/.batchawsdeploy/config ; launchEC2Node.sh directconnect testthis HeadNode t2.micro
     aws.stdout.on('data', function (data) {
       console.log('stdout: ' + data.toString());
