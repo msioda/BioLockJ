@@ -80,7 +80,7 @@ document.getElementById('deployComputeStack').addEventListener('click', function
       inProgress.forEach( ele => ele.style.display = 'none');
       if (rt.endsWith("_COMPLETE")){
         correct.forEach( ele => ele.style.display = 'inline');
-      } if (rt.endsWith("FAILED") ){
+      }else if (rt.endsWith("FAILED") ){
         incorrect.forEach( ele => ele.style.display = 'inline');
       }else {
         incorrect.forEach( ele => ele.style.display = 'inline');
