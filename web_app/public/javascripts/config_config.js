@@ -188,7 +188,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       'r.colorPalette' : 'Please choose your R plot color palette.',
       'r.colorPoint' : 'Please choose your R plot point color.',
       'r.pch' : 'Please choose your R point size.',
-      'r.plotWidth' : 'Please choose your R plot width (positive integer).',
+      // 'r.plotWidth' : 'Please choose your R plot width (positive integer).',
       'r.pvalCutoff' : 'Please choose your p-value cut off (alpha) for your R statistics.',
       'r.pValFormat' : 'Please choose your p-value format for your R reports.',
       'r.rareOtuThreshold' : 'Please choose your rare OTU threshold (positive integer).',
@@ -218,6 +218,16 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     const reqForKrakenClassifier = new Map(Object.entries({
       'kraken.db' : 'Please provide a Kraken database.',
       }));
+
+    const mustPassTogether = [
+      ['metaphlan2.mpa_pkl', 'metaphlan2.db'],
+      ['qiime.pynastAlignDB', 'qiime.refSeqDB', 'qiime.taxaDB'],
+    ];
+
+    const commonParentDir = [
+      ['metaphlan2.mpa_pkl', 'metaphlan2.db'],
+      ['qiime.pynastAlignDB', 'qiime.refSeqDB', 'qiime.taxaDB'],
+    ];
 
     const menuTabs = document.getElementsByClassName('tabcontent');
     const menuTabButtons = document.getElementsByClassName('tablinks');
@@ -255,7 +265,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         //let all elements with no catagory fall through
       }
     }
-    //console.log('reports: ',reports);
 
     //get parent div of any given node
     function getParentDiv(nodeId){
@@ -356,8 +365,13 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       case 'report.r.R_PlotOtus':
       case 'report.r.R_PlotPvalHistograms':
       case 'report.r.R_PlotEffectSize':
-      case 'report.r.R_CalculateStats', :
+      case 'report.r.R_CalculateStats':
         if (dependenciesPresent(reqForR) == false){
+          return false;
+        }
+        break;
+      case 'report.R_PlotMds':
+        if (dependenciesPresent(reqForMdsPlots) == false){
           return false;
         }
         break;
@@ -431,6 +445,43 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
           }
         }//end for (m of modsAfterMod){
       }//end for loop
+
+    //Loop through all parameter keys and:
+    //  check for groups that must be passed together (const mustPassTogether)
+    //  check for parameters that must share a common parent dir (const commonParentDir)
+    for (var i = 0; i < this.paramKeys.length; i++) {
+      const key = this.paramKeys[i];
+      console.log('validation key', key);
+      const val = this.paramValues[i];
+      for (let i = 0; i < mustPassTogether.length; i++) {
+        if (mustPassTogether[i].includes(key)) {
+          mustPassTogether[i].forEach( ele => {
+            if (! this.paramKeys.includes(ele)){
+              console.log('failed to pass mustPassTogether');
+              return false;
+            }
+          })
+        }
+      }
+      for (let j = 0; j < commonParentDir.length; j++) {
+        console.log(commonParentDir[j]);
+      }
+    }
+
+    //If AWS is selected as environment, all kneadData databases must have the same folder.
+    if (this.paramValues[this.paramKeys.indexOf('pipeline.env')] === "aws") {
+      console.log('he want AWS');
+      const AwsSharedParentDir = [//must have shared parent dr
+        [],
+      ]
+    }
+
+    // input.requireCompletePairs=Y ß if input is paired reads, every seq must have matching FW & RV read files or pipeline will throw error
+    // metadata.required=Y
+      // if metadata file is provided, every sequence file must have a row in the metadata file or pipeline will throw error
+    // metadata.useEveryRow=Y
+      //if metadata file is provided, every metadata row must have a sequence file or pipeline will throw error
+
     return true;
   };//end validation
 
@@ -1001,67 +1052,6 @@ document.getElementById('submitDeleteConfig').addEventListener('click', event =>
   });//end forEach
 })//end submitDeleteConfig').addEventListener(
 
-
-if(typeof(EventSource) !== "undefined") {
-	console.log('EventSource Works');
-		// Yes! Server-sent events support!
-    // Some code.....
-	var StreamLog = new EventSource("/streamLog",{ withCredentials: true });
-	StreamLog.addEventListener("message", function(e) {
-	    console.log(e.data);
-	}, false);
-
-	StreamLog.addEventListener("open", function(e) {
-	    console.log("StreamLog connection was opened.");
-	}, false);
-
-	StreamLog.addEventListener("error", function(e) {
-	    console.log("Error - connection was lost.");
-      StreamLog.close();//close on errors
-	}, false);
-	StreamLog.onmessage = function(event) {
-		document.getElementById("log").innerHTML += event.data + "<br>";
-	};
-	//for getting progress from blj
-	var streamProgress = new EventSource("/streamProgress",{ withCredentials: true });
-	streamProgress.addEventListener("message", function(e) {
-	    console.log(e.data);
-	}, false);
-
-	streamProgress.addEventListener("open", function(e) {
-	    console.log("streamprogress connection was opened.");
-	}, false);
-
-	streamProgress.addEventListener("error", function(e) {
-	    console.log("Error - connection was lost.");
-	}, false);
-	streamProgress.onmessage = function(event) {
-		console.log('onmessage fired');
-		console.log(event);
-	//     //document.getElementById("result").innerHTML += event.data + "<br>";
-	};
-	var streamProgress = new EventSource("/streamProgress",{ withCredentials: true });
-	streamProgress.addEventListener("message", function(e) {
-	    console.log(e.data);
-	}, false);
-
-	streamProgress.addEventListener("open", function(e) {
-	    console.log("streamprogress connection was opened.");
-	}, false);
-
-	streamProgress.addEventListener("error", function(e) {
-	    console.log("Error - connection was lost.");
-	}, false);
-	streamProgress.onmessage = function(event) {
-		console.log('onmessage fired');
-		console.log(event);
-	//     //document.getElementById("result").innerHTML += event.data + "<br>";
-	};
-
-} else {
-	console.log('Sorry! No server-sent events support for this browser');
-    // Sorry! No server-sent events support..
-}
 //Updates local list of configs based on list from node.
 function updateConfigManager() {
   const manager = document.getElementById('configManager');
@@ -1124,6 +1114,67 @@ function launcher(launchAction = 'launchNew', restartProjectPath){
     }
   }
   console.log(request.responseText);
+
+  if(typeof(EventSource) !== "undefined") {
+  	console.log('EventSource Works');
+  		// Yes! Server-sent events support!
+      // Some code.....
+  	var StreamLog = new EventSource("/streamLog",{ withCredentials: true });
+  	StreamLog.addEventListener("message", function(e) {
+  	    console.log(e.data);
+  	}, false);
+
+  	StreamLog.addEventListener("open", function(e) {
+  	    console.log("StreamLog connection was opened.");
+  	}, false);
+
+  	StreamLog.addEventListener("error", function(e) {
+  	    console.log("Error - connection was lost.");
+        StreamLog.close();//close on errors
+  	}, false);
+  	StreamLog.onmessage = function(event) {
+  		document.getElementById("log").innerHTML += event.data + "<br>";
+  	};
+  	//for getting progress from blj
+  	var streamProgress = new EventSource("/streamProgress",{ withCredentials: true });
+  	streamProgress.addEventListener("message", function(e) {
+  	    console.log(e.data);
+  	}, false);
+
+  	streamProgress.addEventListener("open", function(e) {
+  	    console.log("streamprogress connection was opened.");
+  	}, false);
+
+  	streamProgress.addEventListener("error", function(e) {
+  	    console.log("Error - connection was lost.");
+  	}, false);
+  	streamProgress.onmessage = function(event) {
+  		console.log('onmessage fired');
+  		console.log(event);
+  	//     //document.getElementById("result").innerHTML += event.data + "<br>";
+  	};
+  	var streamProgress = new EventSource("/streamProgress",{ withCredentials: true });
+  	streamProgress.addEventListener("message", function(e) {
+  	    console.log(e.data);
+  	}, false);
+
+  	streamProgress.addEventListener("open", function(e) {
+  	    console.log("streamprogress connection was opened.");
+  	}, false);
+
+  	streamProgress.addEventListener("error", function(e) {
+  	    console.log("Error - connection was lost.");
+  	}, false);
+  	streamProgress.onmessage = function(event) {
+  		console.log('onmessage fired');
+  		console.log(event);
+  	//     //document.getElementById("result").innerHTML += event.data + "<br>";
+  	};
+
+  } else {
+  	console.log('Sorry! No server-sent events support for this browser');
+      // Sorry! No server-sent events support..
+  }
 }
 
 //delete config flat file
