@@ -91,11 +91,15 @@ document.getElementById('deployComputeStack').addEventListener('click', function
 });
 document.getElementById('launchEc2HeadNodeButton').addEventListener('click', function(evt) {
   evt.preventDefault();
-  sendFormToNode('launchEc2HeadNodeButton', 'launchEc2HeadNode')
+  let prom = sendFormToNode('launchEc2HeadNodeButton', 'launchEc2HeadNode', timeout = 10);
+  prom.then(resp => {
+    console.log(resp);
+  })
 });
 
 //copy past from config_config
-function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
+function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST', timeOut = 2) {
+  //timeOut should be in minutes
   return new Promise((resolve, reject) => {
     let formData = {};
     let myForm = new FormData(document.getElementById(formElementId).parentNode.parentNode);
@@ -106,6 +110,7 @@ function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
 
     let request = new XMLHttpRequest();
     request.open(requestMethod, nodeAddress, true);
+    request.timeout = 1000 * 60 * timeOut;
     request.setRequestHeader("Content-Type", "application/json");
     request.send(JSON.stringify({formData}));
     request.onreadystatechange = function() {
