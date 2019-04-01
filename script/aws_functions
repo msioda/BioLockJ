@@ -4,7 +4,7 @@
 ##  This script is used for AWS core function + logic       ##
 ##                                                          ##
 ##############################################################
-. $BLJ/script/aws_config_functions
+. $BLJ/script/aws_config_lib
 . $BLJ/script/aws_clean_lib
 . $BLJ/script/aws_upload_lib
 
@@ -194,7 +194,7 @@ launch_ec2_head_node() {
 # Main method, called to launch BioLockJ on AWS from localhost
 # Param 1 Pipeline Config file-path
 run_aws() {
-	[ $# -eq 0 ] || [ ! -f "$1" ] && exit_script "Error [ aws_config_functions ]: Required pipeline Config file not found: \"$1\""
+	[ $# -eq 0 ] || [ ! -f "$1" ] && exit_script "Error [ aws_config_lib ]: Required pipeline Config file not found: \"$1\""
 	init_aws_config $1 && echo "TEST COMPLETE"
 	# init_aws_config $1 && verify_cloud_formation && build_stack && set_stack_config && cache_key_pair && build_compute_env && build_docker_job_defs && launch_ec2_head_node && echo "run_aws COMPLETE!"
 }

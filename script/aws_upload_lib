@@ -7,9 +7,8 @@
 ##  s3://$awsS3/db        - $BLJ_DB folder with DB sub-folders     ##
 ##  s3://$awsS3/metadata  - $BLJ_META folder for metadata files    ##
 ##  s3://$awsS3/pipelines - $BLJ_PROJ folder for pipeline output   ##
-##  s3://$awsS3/primer    - $BLJ_PRIMER folder for seq primers     ##
+##  s3://$awsS3/primers   - $BLJ_PRIMER folder for seq primers     ##
 ##  s3://$awsS3/seq       - $BLJ_SEQ folder for sequence files     ##
-##  s3://$awsS3/tables    - $BLJ_TABLE folder for count tables     ##
 ##                                                                 ##
 #####################################################################
 . $BLJ/script/blj_functions
@@ -17,32 +16,38 @@
 IGNORE_FILES=".DS_Store"
 
 aws_upload_all() {
-	aws_upload_seqs $awsS3
-	aws_upload_metadata
-	aws_upload_primers
-
-	aws_upload_seqs $awsS3
+	. $blj_aws_config
+	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib ]: Requires awsS3 be defined in $blj_aws_config"
+	aws_upload_s3 $inputDirPath seq
+	aws_upload_s3 $metadataFilePath metadata
+	aws_upload_s3 $trimPrimersFilePath primers
+	aws_upload_s3 $humann2NuclDB db
+	aws_upload_s3 $humann2ProtDB db
+	aws_upload_s3 $kneaddataDbs db
+	aws_upload_s3 $krakenDb db
+	aws_upload_s3 $kraken2Db db
+	aws_upload_s3 $metaphlan2Db db
+	aws_upload_s3 $metaphlan2Mpa_pkl db
+	aws_upload_s3 $qiimePynastAlignDB db
+	aws_upload_s3 $qiimeRefSeqDB db
+	aws_upload_s3 $qiimeTaxaDB db
+	aws_upload_s3 $rdpDb db
 }
 
-
 # Sync local directory (all files/dirs) with AWS S3 Bucket-path
-#  
-# TEST: aws_upload_seqs ~/r16s_fastq $awsS3  
-#
+# TEST: aws_upload_s3 $BLJ_SUP/resources/test/data/r16s_fastq seq 
 # Param 1 - Local Directory of File
-# Param 1 - S3 bucket name
-aws_upload_seqs() {
-	[ $# -ne 2 ] && exit_script "Error [ aws_upload_lib ]: Requires 2 args (local path + S3 bucket), but only $# args found!"
-	dest=$(get_blj_prop awsS3)
+# Param 2 - S3 bucket folder
+aws_upload_s3() {
+	[ $# -ne 2 ] && return
 	[ ! -f "$1" ] && [ ! -d "$1" ] && exit_script "Error [ aws_upload_lib ]: Path \"$1\" not found!"
-	[ $# -eq 2 ] && dest="$2" && echo "Synchronizing $1 --> s3://$dest/seq" 
-	aws s3 sync $1 s3://$dest/seq --exclude *${IGNORE_FILES}
+	echo "Synchronizing $1 --> s3://$awsS3/$2" 
+	aws s3 sync $1 s3://$awsS3/$2 --exclude *${IGNORE_FILES}
 }
 
 # List all contents of an AWS S3 Bucket
 # TEST: aws_s3_ls $awsS3/r16s_fastq
-#
-# Param 1 - S3 bucket name
+# Param 1 - S3 bucket folder name
 aws_s3_ls() {
 	aws s3 ls s3://$1 --recursive --human-readable
 }

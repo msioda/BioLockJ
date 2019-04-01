@@ -170,7 +170,6 @@ set_blj_prop() {
 set_pipeline_conig_props() {
 	echo "Searching for AWS properties in Pipeline Config: $1"
 	set_blj_prop inputDirPath $(get_prop $1 "input.dirPaths") $NOT_NULL
-	set_blj_prop inputIgnoreFiles $(get_prop $1 "input.ignoreFiles") $NOT_NULL
 	set_blj_prop humann2NuclDB $(get_prop $1 "humann2.nuclDB") $NOT_NULL
 	set_blj_prop humann2ProtDB $(get_prop $1 "humann2.protDB") $NOT_NULL
 	set_blj_prop kneaddataDbs $(get_prop $1 "kneaddata.dbs") $NOT_NULL
