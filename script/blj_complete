@@ -11,7 +11,7 @@ pipelineDir="$(dirname $PWD)"
 if $(is_pipeline_dir $PWD); then
 	pipelineDir=$PWD
 elif ! $(is_pipeline_dir $pipelineDir); then 
-	echo "ABORT: blj_complete must be executed from a pipeline directory" && exit 1
+	exit_script "Error [ blj_complete ]: script must be executed from a pipeline root directory"
 fi
 
 echo "Update $pipelineDir status to: COMPLETE"

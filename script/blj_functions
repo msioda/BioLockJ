@@ -4,6 +4,8 @@
 ##                                                               ##
 ###################################################################
 
+alias awsr="aws_report_config"
+
 # Add a named arg to a space-delimited list of args (Use "=" to add a name-value pair)
 # Param 1 - arg name
 # Param 2 - arg value
@@ -14,6 +16,15 @@ add_named_arg() {
 	[ $# -eq 2 ] && echo "$1=$2"
 	[ $# -eq 3 ] && [ ${#val} -gt 0 ] && myArgs="${3/$1=$val}"
 	[ $# -eq 3 ] && echo "$myArgs $1=$2"
+}
+
+# Print AWS Config report
+aws_report_config() {
+	echo "---------------------------------------------------"
+	echo "Report current AWS Config"
+	echo "---------------------------------------------------"
+	[ -f ~/.aws/blj_config ] && tail -n +2 ~/.aws/blj_config
+	echo "---------------------------------------------------"
 }
 
 # This script navigates the $USER to their most recent pipeline and lists the current directory
@@ -78,13 +89,23 @@ current_pipeline() {
 	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then
 		dir="$PWD"
 		parentDir="$(dirname $dir)"
-		while [ "$parentDir" != "$BLJ_PROJ" ] && [  "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
+		while [ "$parentDir" != "$BLJ_PROJ" ] && [ "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
 		do
 			dir="$parentDir"
 			parentDir="$(dirname $parentDir)"
 		done
 		[ "$parentDir" == "$BLJ_PROJ" ] && echo $dir
    fi
+}
+
+# Exit script after sleeping 10 seconds because in some cases (Docker bash shells) exit command will close the terminal window.
+# In this case, the user can at least view the message before the window closes.
+# Param 1 Exit message
+# Param 2 (optional) Numeric status code
+exit_script() {
+	status=$2
+	[ ${#status} -eq 0 ] && status=1
+	echo "$1" && sleep 5 && exit $2
 }
 
 # Return BioLockJ release version
@@ -117,20 +138,20 @@ is_module_dir() {
 # Example: myTestPipeline_2019Jan01 returns TRUE
 is_pipeline_dir() {
 	dir=$1
-	[ ${dir: -1} == "/" ] && dir=${dir:0:$((${#dir}-1))}
+	[ "${dir: -1}" == "/" ] && dir=${dir:0:$((${#dir}-1))}
 	prefix=${dir: -10:1}
 	year=$(echo ${dir: -9:4} | egrep "^[0-9{4}]+$")
 	mon1=$(echo ${dir: -5:1} | egrep "^[A-S]+$")
 	mon23=$(echo ${dir: -4:2} | egrep "^[a-y{2}]+$")
 	day=$(echo ${dir: -2} | egrep "^[0-9{2}]+$")
-	[ -d "$1" ] && [ $prefix == "_" ] && [ ${#year} -eq 4 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ ${#day} -eq 2 ]
+	[ "$dir" == "${dir/.}" ] && [ -d "$1" ] && [ "$prefix" == "_" ] && [ ${#year} -eq 4 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ ${#day} -eq 2 ]
 }
 
 # Return absolute path of most recent pipeline
 most_recent_pipeline() {
 	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then
 		for dir in $(ls -1dt $BLJ_PROJ/*); do
-			$(is_pipeline_dir $dir) && echo "$dir" && exit
+			$(is_pipeline_dir $dir) && echo "$dir" && return
 		done
 	fi
 }

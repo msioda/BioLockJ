@@ -5,23 +5,14 @@
 ##                                                          ##
 ##############################################################
 . $BLJ/script/aws_config_functions
+. $BLJ/script/aws_clean_lib
+. $BLJ/script/aws_upload_lib
 
 # Return TRUE if test value exist in the param list
 # Param 1 Full parameter list
 # Param 2 Test value
 containsVar() { 
 	[ $# -eq 2 ] && [ "$1" != "None" ] && [ "$2" != "None" ] && [ "${1/$2}" != "$1" ] 
-}
-
-# Get ENABLED Compute Environment (if configured)
-verify_comp_env() {
-	configCompEnv=$(get_blj_prop awsComputeEnv)
-	if [ ${#configCompEnv} -gt 0 ]; then
-		allCompEnvs=$(aws batch describe-compute-environments --query "computeEnvironments[].computeEnvironmentName")
-		enabledCompEnvs=$(aws batch describe-compute-environments --compute-environments $configCompEnv --query "computeEnvironments[?state=='ENABLED'].computeEnvironmentName")
-		$(containsVar $enabledCompEnvs $configCompEnv) && echo "Found ENABLED Compute Environment: $configCompEnv" && return
-		$(containsVar $allCompEnvs $configCompEnv) && echo "Error:  Invalid configured AWS Compute Environment: $configCompEnv" && exit 1
-	fi
 }
 
 # Build the compute environment
@@ -33,7 +24,7 @@ build_compute_env() {
 	allCompEnvs=$(aws batch describe-compute-environments --query "computeEnvironments[].computeEnvironmentName")
 	enabledCompEnvs=$(aws batch describe-compute-environments --compute-environments $awsComputeEnv --query "computeEnvironments[?state=='ENABLED'].computeEnvironmentName")
 	$(containsVar $enabledCompEnvs $awsComputeEnv) && echo "Found ENABLED Compute Environment: $awsComputeEnv: Status( $status ) $statusReason" && return
-	$(containsVar $allCompEnvs $awsComputeEnv) && echo "Error:  Invalid configured AWS Compute Environment: $awsComputeEnv" && exit 1
+	$(containsVar $allCompEnvs $awsComputeEnv) && exit_script "Error [ aws_functions ]: Invalid configured AWS Compute Environment: $awsComputeEnv"
 
 	echo "Building $awsComputeEnv"
 	c1="type=$awsEc2AcquisitionStrategy,minvCpus=0,maxvCpus=112,desiredvCpus=0,instanceTypes=optimal,imageId=$awsAmi,subnets=$subnets,"
@@ -131,7 +122,7 @@ generate_name() {
 		[ "${2/$testVal}" == "$2" ] && echo $testVal && return
 		i=$[$i+1] && testVal="$1-$(date +%F)-$i"
 	done
-	[ $i -eq $maxI ] && echo "Error:  Failed to generate unique name: $maxI names already exist!" && exit 1
+	[ $i -eq $maxI ] && exit_script "Error [ aws_functions ]: Failed to generate unique name: $maxI names already exist!"
 }
 
 # Get current IP address
@@ -157,8 +148,6 @@ is_stack_complete() {
 	echo "false"
 }
 
-
-$myStack 
 # Get the ec2 key file for the ec2 head node
 key_file() {
 	echo $aws_home_dir/$(get_blj_prop keyName).pem
@@ -167,43 +156,47 @@ key_file() {
 # Launch a new ec2 head node
 launch_ec2_head_node() {
 	. $blj_aws_config
+
 	runTime=0
 	firstSubnet=$(echo $subnets | cut -f1 -d ",")
 	instanceID=$(aws ec2 run-instances --count 1 --key-name $keyName --image-id $awsAmi --security-group-ids $bastionGroup  \
 		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $firstSubnet \
 		--launch-template LaunchTemplateId=$headNodeLaunchTemplate --instance-type $awsEc2InstanceType --query "Instances[].InstanceId" )
 
-	echo "Launching EC2 Instance: $instanceID"
+	printf "Launching EC2 Instance, please wait."
 	systemStatus=starting
 	while [ "$systemStatus" != "ok" ]; do
 		systemStatus=$(aws ec2 describe-instance-status --instance-ids $instanceID --query "InstanceStatuses[*].SystemStatus.Status")
 		printf "."
 		sleep 10s
-		runTime=$((runTime+10))
+		runTime=$((runTime+10))  
 	done
-	echo " Instance:  $instanceID created in $runTime seconds"
+	echo "InstanceID [ $instanceID ] created in $runTime seconds!"
+	aws_report_config
+	
 	set_blj_prop instanceID $instanceID
 	set_blj_prop privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateDnsName")
 	set_blj_prop privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
 	set_blj_prop publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
+	set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName")
 	
-	publicHost=$(set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName"))
+	publicHost=$(get_blj_prop publicHost)
 
 	#remove previous hosts
-	keyFound=$(cat ~/.ssh/known_hosts | grep -c ${publicHost})
-	[ $keyFound -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
+	KNOWN_HOST_FILE=~/.ssh/known_hosts
+	keyFound=$(cat $KNOWN_HOST_FILE | grep -c ${publicHost})
+	[ $keyFound -gt 0 ] && ssh-keygen -f $KNOWN_HOST_FILE -R ${publicHost}
 
 	echo "Connecting directly via ssh:"
 	ssh -i $(key_file) ec2-user@${publicHost}
 }
 
-# Main method, called to launch BioLockJ on AWS from localhost, if a Config is not given, defaults are used.
-# The optional file-path parameter can be passed to re-use existing objects on the cloud.
-# The parameter file should contain AWS configuration properties in the expected format.
-# Config file parameter format:  argName=argValue --> for example [ awsS3=blj-2019-03-24 ]
+# Main method, called to launch BioLockJ on AWS from localhost
+# Param 1 Pipeline Config file-path
 run_aws() {
-	init_aws_config && verify_cloud_formation && build_stack && set_stack_config && cache_key_pair && \
-		build_compute_env && build_docker_job_defs && launch_ec2_head_node && echo "run_aws COMPLETE!"
+	[ $# -eq 0 ] || [ ! -f "$1" ] && exit_script "Error [ aws_config_functions ]: Required pipeline Config file not found: \"$1\""
+	init_aws_config $1 && echo "TEST COMPLETE"
+	# init_aws_config $1 && verify_cloud_formation && build_stack && set_stack_config && cache_key_pair && build_compute_env && build_docker_job_defs && launch_ec2_head_node && echo "run_aws COMPLETE!"
 }
 
 # Build account config (and create s3 bucket if needed)
@@ -229,15 +222,26 @@ verify_ami() {
 	ami=$awsAmi
 	if [ ${#ami} -gt 0 ]; then
 		ami=$(aws ec2 describe-images --image-ids $ami --query "Images[?State=='available'].ImageId")
-		[ $ami == "None" ] && echo "Error:  Unable to use configured AWS AMI: $ami" && exit 1
+		[ $ami == "None" ] && exit_script "Error [ aws_functions ]:  Unable to use configured AWS AMI: $ami"
 		[ ${#ami} -gt 0 ] && echo "Found existing AWS Image: $ami" && return
 	else
 		ami=$(aws ec2 describe-images --region $awsRegion --owner amazon \
 			--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
 			--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
-		[ ${#ami} -eq 0 ] || [ $ami == "None" ] && echo "Error:  Unable to obtain AWS AMI template from region $awsRegion" && exit 1
+		[ ${#ami} -eq 0 ] || [ $ami == "None" ] && exit_script "Error [ aws_functions ]: Unable to obtain AWS AMI template from region $awsRegion"
 		set_blj_prop awsAmi $ami
 		echo "Set awsAmi=$ami"
+	fi
+}
+
+# Get ENABLED Compute Environment (if configured)
+verify_comp_env() {
+	configCompEnv=$(get_blj_prop awsComputeEnv)
+	if [ ${#configCompEnv} -gt 0 ]; then
+		allCompEnvs=$(aws batch describe-compute-environments --query "computeEnvironments[].computeEnvironmentName")
+		enabledCompEnvs=$(aws batch describe-compute-environments --compute-environments $configCompEnv --query "computeEnvironments[?state=='ENABLED'].computeEnvironmentName")
+		$(containsVar $enabledCompEnvs $configCompEnv) && echo "Found ENABLED Compute Environment: $configCompEnv" && return
+		$(containsVar $allCompEnvs $configCompEnv) && exit_script "Error [ aws_functions ]: Invalid AWS Compute Environment: $configCompEnv" 
 	fi
 }
 
@@ -249,14 +253,14 @@ verify_s3() {
 	if [ ${#awsS3} -gt 0 ]; then
 		s3Bucket=$(aws s3api list-buckets --region $awsRegion  --query "Buckets[?Name=='$awsS3']|[*].Name")
 		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
-			echo "Error:  S3 bucket [ awsS3=$awsS3 ] not found" && exit 1
+			exit_script "Error [ aws_functions ]:  S3 bucket [ awsS3=$awsS3 ] not found"
 		fi
 		echo "Found existing S3 Bucket $s3Bucket"
 	else
 		newS3=$(generate_name blj $(aws_s3_buckets))
 		s3Bucket=$(aws s3api create-bucket --region $awsRegion --bucket $newS3)
 		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
-			echo "Error:  Failed to create S3 bucket: $newS3" && exit 1
+			exit_script "Error [ aws_functions ]:  Failed to create S3 bucket: $newS3"
 		fi
 		set_blj_prop awsS3 ${s3Bucket:1}
 		echo "Set awsS3=${s3Bucket:1}"
@@ -285,3 +289,7 @@ verify_stack() {
 	fi
 }
 
+# OLD NOTES
+# The optional file-path parameter can be passed to re-use existing objects on the cloud.
+# The parameter file should contain AWS configuration properties in the expected format.
+# Config file parameter format:  argName=argValue --> for example [ awsS3=blj-2019-03-24 ]

@@ -4,9 +4,10 @@
 ##  This script calls ant on build.xml to create BioLockJ.jar  ##
 ##                                                             ##
 #################################################################
+. $BLJ/script/blj_functions
 
 echo "Building BioLockJ with ANT..."
-[ ! -f "$BLJ/resources/build.xml" ] && echo "ANT build script missing: $BLJ/resources/build.xml" && exit 1
+[ ! -f "$BLJ/resources/build.xml" ] && exit_script "Error [ blj_build ]: ANT build script missing: $BLJ/resources/build.xml"
 
 cd $BLJ/resources
 [ ${#1} -eq 0 ] && ant

@@ -1,0 +1,60 @@
+#!/bin/bash
+#####################################################################
+##                                                                 ##
+##  This script is used for uploading data + config to AWS cloud.  ##
+##                                                                 ##
+##  s3://$awsS3           - Top level $BLJ bucket                  ##
+##  s3://$awsS3/db        - $BLJ_DB folder with DB sub-folders     ##
+##  s3://$awsS3/metadata  - $BLJ_META folder for metadata files    ##
+##  s3://$awsS3/pipelines - $BLJ_PROJ folder for pipeline output   ##
+##  s3://$awsS3/primer    - $BLJ_PRIMER folder for seq primers     ##
+##  s3://$awsS3/seq       - $BLJ_SEQ folder for sequence files     ##
+##  s3://$awsS3/tables    - $BLJ_TABLE folder for count tables     ##
+##                                                                 ##
+#####################################################################
+. $BLJ/script/blj_functions
+
+IGNORE_FILES=".DS_Store"
+
+aws_upload_all() {
+	aws_upload_seqs $awsS3
+	aws_upload_metadata
+	aws_upload_primers
+
+	aws_upload_seqs $awsS3
+}
+
+
+# Sync local directory (all files/dirs) with AWS S3 Bucket-path
+#  
+# TEST: aws_upload_seqs ~/r16s_fastq $awsS3  
+#
+# Param 1 - Local Directory of File
+# Param 1 - S3 bucket name
+aws_upload_seqs() {
+	[ $# -ne 2 ] && exit_script "Error [ aws_upload_lib ]: Requires 2 args (local path + S3 bucket), but only $# args found!"
+	dest=$(get_blj_prop awsS3)
+	[ ! -f "$1" ] && [ ! -d "$1" ] && exit_script "Error [ aws_upload_lib ]: Path \"$1\" not found!"
+	[ $# -eq 2 ] && dest="$2" && echo "Synchronizing $1 --> s3://$dest/seq" 
+	aws s3 sync $1 s3://$dest/seq --exclude *${IGNORE_FILES}
+}
+
+# List all contents of an AWS S3 Bucket
+# TEST: aws_s3_ls $awsS3/r16s_fastq
+#
+# Param 1 - S3 bucket name
+aws_s3_ls() {
+	aws s3 ls s3://$1 --recursive --human-readable
+}
+
+
+
+
+
+
+
+
+
+
+
+

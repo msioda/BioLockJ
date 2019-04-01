@@ -11,6 +11,16 @@ aws_local_config=$aws_home_dir/config
 aws_cred_file=$aws_home_dir/credentials
 blj_aws_config=$aws_home_dir/blj_config
 sheBang='#!/bin/bash'
+NOT_NULL="NOT_NULL"
+
+# Archive previous AWS Config properties file: $blj_aws_config
+aws_archive() {
+	awsHist=$aws_home_dir/history
+	[ ! -d $awsHist ] && mkdir $awsHist
+	[ -f $blj_aws_config ] && mv $blj_aws_config $awsHist/blj_config-$(date "+%Y-%m-%d.%H.%M.%S")
+	echo $sheBang > $blj_aws_config
+	chmod 770 $blj_aws_config
+}
 
 # Get an AWS property $1 from local AWS Config file $2 under the awsProfile
 # Param 1 argName Parse filePath for a line that starts with argName
@@ -25,12 +35,6 @@ aws_local_prop() {
 		[ $foundProfile -eq 1 ] && [ "${line:0:${#prop}}" == "$prop" ] && echo "${line/$prop}" && return
 		[ "$line" == "$userProfile" ] && foundProfile=1
 	done
-}
-
-# Print AWS Config report
-aws_report_config() {
-	echo "AWS Config Report"
-	[ -f $blj_aws_config ] && cat $blj_aws_config
 }
 
 # Get a role get_role for the configured stack 
@@ -62,42 +66,72 @@ aws_stacks() {
 	echo $awsStacks
 }
 
+# Copy AWS properties from BLJ pipeline Config file "${1}" to AWS Config file: "${blj_aws_config}"
+# Param 1 Pipeline Config file-path
+copy_pipeline_config() {
+	echo "Copy AWS properties from Pipeline Config [$1] into --> AWS Config [$blj_aws_config]"
+	configFiles=$(get_default_config_files $1)
+	[ ${#configFiles} -gt 0 ] && configFiles="$configFiles,$1"
+	[ ${#configFiles} -eq 0 ] && configFiles="$1"
+	echo "List Pipeline Config Files:  $configFiles"
+	IFS=","
+	propFiles=( "$configFiles" )
+	for propFile in ${propFiles[@]}; do
+		set_pipeline_conig_props $propFile
+		aws_report_config
+	done
+}
+
 # Get a prop stored in $blj_aws_config
 # Param 1 Prop name
 # Param 2 (optional) Default value
 get_blj_prop() {
-	prop=$(cat $blj_aws_config | grep $1)
-	val=${prop/$1=}
+	val=$(get_prop $blj_aws_config $1)
 	[ ${#val} -eq 0 ] && val=$2
-	exists=$(echo $prop | grep "$1=")
-	[ ${#exists} -gt 0 ] || [ ${#val} -gt 0 ] && response=$(set_blj_prop $1 $val)
+	[ ${#val} -gt 0 ] && response=$(set_blj_prop $1 $val)
 	echo $val
 }
 
+# Return property value from the given file
+# Param 1 - Config file
+# Param 2 - Prop name
+get_prop() {
+	prop=$(cat $1 | grep $2)
+	echo ${prop/$2=}
+}
+
+# Return default Configs ordered so lowest level is first file in comma separated list
+# Param 1 Pipeline Config file path
+get_default_config_files() {
+	defaultConfigFiles=
+	propFile=$(get_prop $1 "pipeline.defaultProps")
+	while [ -f "$propFile" ]; do
+		[ ${#defaultConfigFiles} -gt 0 ] && defaultConfigFiles=",$defaultConfigFiles"
+		defaultConfigFiles="${propFile}${defaultConfigFiles}"
+		propFile=$(get_prop $propFile "pipeline.defaultProps")
+	done
+	echo $defaultConfigFiles
+}
+
 # Init AWS Config properties file: $blj_aws_config
-# Param 1 (optional) if true, use existing $blj_aws_config
+# Param 1 Pipeline Config file path
+# Param 2 (optional) Flag to skip $blj_aws_config archival
 init_aws_config() {
-	[ ! -d $aws_home_dir/history ] && mkdir $aws_home_dir/history
-	if [ -f $blj_aws_config ] && [ "$1" != "true" ]; then
-		mv $blj_aws_config $aws_home_dir/history/blj_config-$(date "+%Y-%m-%d.%H.%M.%S")
-	fi
-	[ $# -eq 0 ] && echo $sheBang > $blj_aws_config && chmod 770 $blj_aws_config
-	
+	aws_archive
+	copy_pipeline_config $1
+	echo "Done copying pipeline Config"
 	x=$(get_blj_prop awsAccountId $(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId))
-	x=$(get_blj_prop awsAmi)
 	x=$(get_blj_prop awsComputeEnv)
 	x=$(get_blj_prop awsEc2SpotPer 70)
 	x=$(get_blj_prop awsEc2AcquisitionStrategy SPOT)
 	x=$(get_blj_prop awsEc2InstanceType t2.micro)
 	x=$(get_blj_prop awsProfile default)
 	x=$(get_blj_prop awsRegion $(aws configure get region))
-	x=$(get_blj_prop awsS3)
-	x=$(get_blj_prop awsStack)
 	x=$(get_blj_prop dockerImgVersion latest)
 	x=$(get_blj_prop dockerUser biolockj)
 
-	set_blj_prop access_id $(aws_local_prop aws_access_key_id $aws_cred_file)
-	set_blj_prop secret_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
+	set_blj_prop aws_access_key_id $(aws_local_prop aws_access_key_id $aws_cred_file)
+	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
 }
 
 # Remove AWS property - delete the line from the file
@@ -108,11 +142,10 @@ rm_blj_prop() {
 	TMP=~/.temp.txt
 	[ ! -f $TMP ] && echo $sheBang > $TMP
 	chmod 770 $TMP
-	props=("$conf")
-	for arg in ${props[@]}; do
-		if [ "$arg" != "$sheBang" ]; then
-			IFS2=$IFS && IFS="=" && tokens=( ${arg} )
-			IFS=$IFS2 && [ "${tokens[0]}" != "$1" ] && echo ${arg} >> $TMP
+	cat $blj_aws_config | while read -r line; do
+		if [ "$line" != $sheBang ]; then
+			IFS2=$IFS && IFS="=" && tokens=( ${line} )
+			IFS=$IFS2 && [ "${tokens[0]}" != "$1" ] && echo ${line} >> $TMP
 		fi
 	done
 	rm $blj_aws_config
@@ -123,12 +156,34 @@ rm_blj_prop() {
 # Param 1 Prop name
 # Param 2 Prop value
 set_blj_prop() {
+	[ "$2" == $NOT_NULL ] && return
 	prop=$(cat $blj_aws_config | grep $1)
 	exists=$(echo $prop | grep "$1=${2/\[/\\\[}")
 	[ ${#exists} -gt 0 ] && return
 	rm_blj_prop $1
 	echo "$1=$2" >> $blj_aws_config
 	#echo "Set aws config:  $1=$2"
+}
+
+# Save AWS Config properties from pipeline Config file to AWS Config file: $blj_aws_config
+# Param 1 Pipeline Config file path
+set_pipeline_conig_props() {
+	echo "Searching for AWS properties in Pipeline Config: $1"
+	set_blj_prop inputDirPath $(get_prop $1 "input.dirPaths") $NOT_NULL
+	set_blj_prop inputIgnoreFiles $(get_prop $1 "input.ignoreFiles") $NOT_NULL
+	set_blj_prop humann2NuclDB $(get_prop $1 "humann2.nuclDB") $NOT_NULL
+	set_blj_prop humann2ProtDB $(get_prop $1 "humann2.protDB") $NOT_NULL
+	set_blj_prop kneaddataDbs $(get_prop $1 "kneaddata.dbs") $NOT_NULL
+	set_blj_prop krakenDb $(get_prop $1 "kraken.db") $NOT_NULL
+	set_blj_prop kraken2Db $(get_prop $1 "kraken2.db") $NOT_NULL
+	set_blj_prop metadataFilePath $(get_prop $1 "metadata.filePath") $NOT_NULL
+	set_blj_prop metaphlan2Db $(get_prop $1 "metaphlan2.db") $NOT_NULL
+	set_blj_prop metaphlan2Mpa_pkl $(get_prop $1 "metaphlan2.mpa_pkl") $NOT_NULL
+	set_blj_prop qiimePynastAlignDB $(get_prop $1 "qiime.pynastAlignDB") $NOT_NULL
+	set_blj_prop qiimeRefSeqDB $(get_prop $1 "qiime.refSeqDB") $NOT_NULL
+	set_blj_prop qiimeTaxaDB $(get_prop $1 "qiime.taxaDB") $NOT_NULL
+	set_blj_prop rdpDb $(get_prop $1 "rdp.db") $NOT_NULL
+	set_blj_prop trimPrimersFilePath $(get_prop $1 "trimPrimers.filePath") $NOT_NULL
 }
 
 # Build stack config using awsStack and awsAccountId references and build the roles

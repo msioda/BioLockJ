@@ -15,7 +15,7 @@ if $(is_pipeline_dir $PWD); then
 	pipelineDir=$PWD
 	targetNum=0
 elif ! $(is_pipeline_dir $pipelineDir) || [ ! -f "$PWD/biolockjComplete" ]; then 
-	echo "ABORT: blj_reset must be executed within a biolockjComplete module directory" && exit 1
+	exit_script "Error [ blj_reset ]:  script must be executed within a biolockjComplete module directory"
 fi
 
 [ -f "$pipelineDir/biolockjComplete" ] && rm "$pipelineDir/biolockjComplete" && echo "deleted $pipelineDir/biolockjComplete"
