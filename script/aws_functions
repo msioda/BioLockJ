@@ -55,7 +55,7 @@ build_stack() {
 # Build key pair + save to $aws_home_dir/$keyPair.pem file
 cache_key_pair() {
 	keyPair=$(get_blj_prop keyName)
-	keyFile=$aws_home_dir/$keyPair.pem
+	keyFile=~/.aws/$keyPair.pem
 	if [ ! -f $keyFile ]; then
 		keys=$(aws ec2 describe-key-pairs)
 		if [ "${keys/$keyPair}" == "$keys" ]; then

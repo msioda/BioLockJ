@@ -104,6 +104,7 @@ build_docker_job_defs() {
 connect_head() {
 	echo "Opening SSH tunnel to Head Node...$(get_blj_prop publicHost)"
 	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_blj_prop publicHost)
+	
 	#mv ~/.bash_profile ~/.bash_profile~
 	#mv ~/ec2_head_node_profile ~/.bash_profile
 	#. ~/.bash_profile
@@ -115,7 +116,6 @@ connect_head() {
 get_aws_config_file() {
 	echo ~/.aws_config/$(basename $1)
 }
-
 
 # Param 1 - Local Directory of File
 # Param 2 - S3 bucket folder
@@ -232,6 +232,7 @@ stage_to_head_node() {
 # Param 1 - Config file
 update_config_file() {
 
+	outFile=$(get_aws_config_file $1)
 	defaultConfig=$(get_prop $1 "pipeline.defaultProps")
 	if [ -f "$defaultConfig" ]; then
 		cp $defaultConfig $AWS_CONFIG
@@ -239,11 +240,16 @@ update_config_file() {
 		set_config_prop pipeline.defaultProps $(get_s3_name $defaultConfig config) $1
 	fi
 	
-	
-	
-	set_config_prop input.dirPaths $(get_s3_name $inputDirPath seq) $1
-	set_config_prop metadata.filePath $(get_s3_name $metadataFilePath metadata) $1
-	set_config_prop trimPrimers.filePath $(get_s3_name $metadataFilePath primers) $1
+	cat $1 | while read -r line; do
+		IFS2=$IFS && IFS="=" && tokens=( ${line} ) && IFS=$IFS2
+		[ ${#tokens[@]} -gt 0 ] && arg=${tokens[0]}
+		[ ${#tokens[@]} -gt 1 ] && val=${tokens[1]}
+		
+		if [ "$arg" == "input.dirPaths" ]; then
+			echo $arg=$inputDirPath >> $outFile
+		fi
+	done
+
 	set_config_prop humann2.nuclDB $(get_s3_name $humann2NuclDB db) $1
 	set_config_prop humann2.protDB $(get_s3_name $humann2ProtDB db) $1
 	set_config_prop kneaddata.dbs $(get_s3_name $kneaddataDbs db) $1
@@ -255,6 +261,8 @@ update_config_file() {
 	set_config_prop qiime.refSeqDB $(get_s3_name $qiimeRefSeqDB db) $1
 	set_config_prop qiime.taxaDB $(get_s3_name $qiimeTaxaDB db) $1
 	set_config_prop rdp.db $(get_s3_name $rdpDb db) $1
+	
+	echo $defaultConfig
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
@@ -263,8 +271,10 @@ update_config_s3_props() {
 	configFiles=$(get_blj_prop configFiles)
 	IFS=","
 	propFiles=( $configFiles )
+	newPropFiles=
 	for propFile in ${propFiles[@]}; do
-		cp $propFile $AWS_CONFIG
-		update_config_file $(get_aws_config_file $propFile)
+		newConfig=$(update_config_file $propFile)
+		[ ${#newPropFiles} -gt 0 ] && newPropFiles=",$newPropFiles"
+		newPropFiles=${newConfig}${newPropFiles}
 	done
 }

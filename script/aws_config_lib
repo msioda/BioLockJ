@@ -80,9 +80,8 @@ get_blj_prop() {
 # Param 2 - Prop name
 get_prop() {
 	prop=$(cat $1 | grep $2)
-	echo ${prop/$2=}
+	echo $(eval "echo ${prop/$2=}")
 }
-
 
 # Init AWS Config properties file [ $blj_aws_config ] with pipeline Config, AWS config, and standard defaults
 # Check BLJ pipeline Config files + all nested default Config files
