@@ -6,7 +6,7 @@
 ##############################################################
 . $BLJ/script/aws_config_lib
 . $BLJ/script/aws_clean_lib
-. $BLJ/script/aws_upload_lib
+. $BLJ/script/aws_head_node_lib
 
 # Return TRUE if test value exist in the param list
 # Param 1 Full parameter list
@@ -33,41 +33,6 @@ build_compute_env() {
 	compResources=${c1}${c2}${c3}
 	echo $(aws batch create-compute-environment --compute-environment-name $awsComputeEnv \
 		--type MANAGED --state ENABLED --service-role $serviceRole --compute-resources "$compResources")
-}
-
-# Build Docker Job defs to use with label references in Nextflow main.nf
-build_docker_job_defs() {
-	. $blj_aws_config
-	dockerModules=$(docker search $dockerUser | grep -E ^$dockerUser ) 
-	jobVcpus=2
-	jobRam=1024
-	IFS=$'\t'
-	echo "Building job-definitions"
-	echo $dockerModules | while read -r line; do
-		[ $(echo $line | grep -c blj_basic) -gt 0 ] && continue
-		module=$(echo $line | cut -f 1 -d " ")
-		jobImg="${module}:${dockerImgVersion}"
-		jobLabel=${jobImg/\//_} 
-		jobLabel=${jobLabel/:/_} 
-	    jobConfig="{ 
-	    		\"image\": \"$jobImg\",
-			\"vcpus\": $jobVcpus,
-			\"memory\": $jobRam,
-			\"command\": [ \"/bin/bash\" ],
-			\"jobRoleArn\": \"$jobRoleArn\",
-			\"volumes\": [ { \"host\": { \"sourcePath\": \"/mnt/efs\" }, \"name\": \"efs\" } ],
-			\"mountPoints\": [ { \"containerPath\": \"/efs\", \"readOnly\": false, \"sourceVolume\": \"efs\" } ],
-			\"readonlyRootFilesystem\": false,
-			\"privileged\": true
-		}"
-		jobDef="${awsStack}_${jobLabel}"
-		existingJob=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name $jobDef --query "jobDefinitions[*].jobDefinitionName")
-		[ ${#existingJob} -gt 0 ] && echo "FOUND JOB: $existingJob" && continue
-		registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
-		jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
-		echo "image_$jobLabel=$jobName"
-	done
-
 }
 
 # Build Cloud-formation Stack
@@ -105,11 +70,6 @@ cache_key_pair() {
 	fi
 }
 
-# Connect to runninng head node
-connect_head() {
-	ssh -i $(key_file) ec2-user@$(get_blj_prop publicHost)
-}
-
 # Generate a name not found in $1, created using format $2-$date-index
 # Param 1 (required) Key String
 # Param 2 (optional) List of unavailable names
@@ -130,12 +90,10 @@ get_ip() {
 	echo $(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
 }
 
-
 # Got existing S3 bucket names in your region
 get_s3_buckets() {
 	echo $(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
 }
-
 
 # Check status of Cloud Formation Stack
 # Param 1 Stack name
@@ -148,72 +106,11 @@ is_stack_complete() {
 	echo "false"
 }
 
-# Get the ec2 key file for the ec2 head node
-key_file() {
-	echo $aws_home_dir/$(get_blj_prop keyName).pem
-}
-
-# Launch a new ec2 head node
-launch_ec2_head_node() {
-	. $blj_aws_config
-
-	runTime=0
-	firstSubnet=$(echo $subnets | cut -f1 -d ",")
-	instanceID=$(aws ec2 run-instances --count 1 --key-name $keyName --image-id $awsAmi --security-group-ids $bastionGroup  \
-		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $firstSubnet \
-		--launch-template LaunchTemplateId=$headNodeLaunchTemplate --instance-type $awsEc2InstanceType --query "Instances[].InstanceId" )
-
-	printf "Launching EC2 Instance, please wait."
-	systemStatus=starting
-	while [ "$systemStatus" != "ok" ]; do
-		systemStatus=$(aws ec2 describe-instance-status --instance-ids $instanceID --query "InstanceStatuses[*].SystemStatus.Status")
-		printf "."
-		sleep 10s
-		runTime=$((runTime+10))  
-	done
-	echo "InstanceID [ $instanceID ] created in $runTime seconds!"
-	aws_report_config
-	
-	set_blj_prop instanceID $instanceID
-	set_blj_prop privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateDnsName")
-	set_blj_prop privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
-	set_blj_prop publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
-	set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName")
-	
-	publicHost=$(get_blj_prop publicHost)
-
-	#remove previous hosts
-	KNOWN_HOST_FILE=~/.ssh/known_hosts
-	keyFound=$(cat $KNOWN_HOST_FILE | grep -c ${publicHost})
-	[ $keyFound -gt 0 ] && ssh-keygen -f $KNOWN_HOST_FILE -R ${publicHost}
-
-	echo "Connecting directly via ssh:"
-	ssh -i $(key_file) ec2-user@${publicHost}
-}
-
 # Main method, called to launch BioLockJ on AWS from localhost
 # Param 1 Pipeline Config file-path
 run_aws() {
 	[ $# -eq 0 ] || [ ! -f "$1" ] && exit_script "Error [ aws_config_lib ]: Required pipeline Config file not found: \"$1\""
-	init_aws_config $1 && echo "TEST COMPLETE"
-	# init_aws_config $1 && verify_cloud_formation && build_stack && set_stack_config && cache_key_pair && build_compute_env && build_docker_job_defs && launch_ec2_head_node && echo "run_aws COMPLETE!"
-}
-
-# Build account config (and create s3 bucket if needed)
-verify_cloud_formation() {
-
-	set_blj_prop awsAmi ami-007571470797b8ffa
-	set_blj_prop awsS3 blj-2019-03-31
-	set_blj_prop awsStack bljStack-2019-03-31-4
-	
-	verify_ami
-	verify_s3
-	verify_stack
-}
-
-# Upload data to the ec2 head node
-upload_to_head_node() {
-	ssh -i $(key_file) ec2-user@$(get_blj_prop publicHost)
+	init_aws_config $1 && verify_cloud_formation && build_stack && set_stack_config && cache_key_pair && build_compute_env && launch_ec2_head_node
 }
 
 # Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
@@ -232,6 +129,18 @@ verify_ami() {
 		set_blj_prop awsAmi $ami
 		echo "Set awsAmi=$ami"
 	fi
+}
+
+# Build account config (and create s3 bucket if needed)
+verify_cloud_formation() {
+
+	set_blj_prop awsAmi ami-007571470797b8ffa
+	set_blj_prop awsS3 blj-2019-03-31
+	set_blj_prop awsStack bljStack-2019-03-31-4
+	
+	verify_ami
+	verify_s3
+	verify_stack
 }
 
 # Get ENABLED Compute Environment (if configured)
@@ -288,8 +197,3 @@ verify_stack() {
 		echo "Set awsStack=$myStack"
 	fi
 }
-
-# OLD NOTES
-# The optional file-path parameter can be passed to re-use existing objects on the cloud.
-# The parameter file should contain AWS configuration properties in the expected format.
-# Config file parameter format:  argName=argValue --> for example [ awsS3=blj-2019-03-24 ]

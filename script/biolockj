@@ -56,18 +56,20 @@ newPass=$(named_arg $inArray -p)
 [ ${#newPass} -eq 0 ] && newPass=$(named_arg $inArray --password)
 
 [ $# -eq 1 ] && [ ${#config} -eq 0 ] && config=$1
+[ ! -f "$config" ] && [ ${#restart} -eq 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
+[ ! -f "$config" ] && [ ! -d "$restart" ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$restart\" is not a valid directory \n"
 
-[ ! -f "$config" ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  $config is not a valid file\n"
-
-[ ${#runAws} -gt 0 ] && run_aws $config
-if [ $? -eq 0 ]; then
-	exit_script "Successfully launched AWS Pipeline"
-else
-	exit_script "Error [ biolockj ]: Unable to launch AWS Pipeline" 1
+if [ ${#runAws} -gt 0 ]; then
+	aws_response=$(run_aws $config)
+	if [ $? -eq 0 ] && [ ${#aws_response} -gt 0 ]; then
+		exit_script "Successfully launched AWS Pipeline" 0
+	else
+		exit_script "Error [ biolockj ]: Failed to launch AWS Pipeline: $aws_response"
+	fi
 fi
 
-[ ! -d "$BLJ_PROJ" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined"
-[ ! -f "$bljJar" ] && exit_script "Error [ biolockj ]: $bljJar not found"
+[ ! -d "$BLJ_PROJ" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"$BLJ_PROJ\""
+[ ! -f "$bljJar" ] && exit_script "Error [ biolockj ]: Jar file \"$bljJar\" not found"
 
 if [ $# -eq 1 ] && [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
     echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
@@ -80,36 +82,21 @@ if [ $# -eq 1 ] && [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     exit 0
 fi
 
-if [ ${#newPass} -gt 0 ] && [ ${#config} -eq 0 ]; then
-	$BLJ/script/biolockj -h && exit_script "Error [ biolockj ]: Invalid parameters: $@"
-fi
-
-if [ ${#restart} -eq 0 ] && [ ${#config} -eq 0 ]; then
-	$BLJ/script/biolockj -h && exit_script "Error [ biolockj ]: Invalid parameters: $@"
-fi
-
-if [ ${#restart} -gt 0 ] && [ ! -d "$restart" ]; then
-	$BLJ/script/biolockj -h && exit_script "Error [ biolockj ]: $restart is not a valid directory\n"
-fi 
-
-if [ ${#newPass} -gt 0 ] && [ ${#config} -gt 0 ]; then
-	echo "Encrypt & save email password to Config property mail.encryptedPassword in $config\n"
-fi
-
 i=0
 initPipeline=$(most_recent_pipeline)
 pipelineDir=$(most_recent_pipeline)
 initJava=$(ps | grep -c java)
 numJava=$(ps | grep -c java)
 
-echo -e "Run Java Application with Command:  \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\""
+echo -e "Launching BioLockJ Java application with CMD:  \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\""
 nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &
 [ $? != 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
-echo "Initializing BioLockJ"
+printf "Initializing BioLockJ"
 
 while [ $i -lt 10 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
 	sleep 1
 	((i++))
+	printf "."
 	pipelineDir="$(most_recent_pipeline)"
 	numJava=$(ps | grep -c java)
 done
