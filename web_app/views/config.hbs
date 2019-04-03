@@ -26,12 +26,12 @@
     <button class="tablinks basicTabBut" onclick="openTab(event, 'clusterTab')">Cluster</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'scriptTab')">Script</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'reportTab')">Report</button>
+    <button class="tablinks emailMod" onclick="openTab(event, 'mailTab')">E-mail</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'multiplexerTab')">Multiplexer</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'demultiplexerTab')">Demultiplexer</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'exeTab')">Exe</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'dockerTab')">Docker</button>
     <button id='AwsButton' class="tablinks basicTabBut" onclick="openTab(event, 'AwsTab')">AWS</button>
-    <button class="tablinks emailMod" onclick="openTab(event, 'mailTab')">E-mail</button>
     <button class="tablinks rMod" onclick="openTab(event, 'rTab')">R</button>
     <button class="tablinks rdpClass" onclick="openTab(event, 'rdpTab')">RDP</button>
     <button class="tablinks qiimeClass" onclick="openTab(event, 'qiimeTab')">QIIME</button>
@@ -182,8 +182,8 @@
         <input class="sp" type="text" id="input.trimPrefix" name="input.trimPrefix">
       <h5>(For files named by Sample ID, provide the
         prefix preceding the ID to trim when extracting Sample ID.
-If input.demultiplex=Y, provide any characters in the sequence header preceding the ID.
-For fastq, typically “@”.)<h5></p>
+        If input.demultiplex=Y, provide any characters in the sequence header preceding the ID.
+        For fastq, typically “@”.)<h5></p>
       <p>Trim suffix:
         <input class="sp" type="text" id="input.trimSuffix" name="input.trimSuffix"><br>
         <h5>(For files named by Sample ID, provide the suffix after the ID, often
@@ -553,22 +553,22 @@ For fastq, typically “@”.)<h5></p>
       <fieldset>
         <legend>If supplied, all three of these must be in the same parent directory.
           For more info about these parameters,
-          visit <a href="http://qiime.org/install/qiime_config.html">http://qiime.org/install/qiime_config.html</a>.        </legend>
-          <p>File property to define ~/.qiime_config pynast_template_alignment_fp.
+          visit <a href="http://qiime.org/install/qiime_config.html">http://qiime.org/install/qiime_config.html</a>.
+        </legend>
+            File property to define ~/.qiime_config pynast_template_alignment_fp.
             This defines the template alignment to use with PyNAST as a fasta file,
             if the user doesn't want to use the default (more info at ):
-            <input class='sp' type="text" name="qiime.pynastAlignDB" id="qiime.pynastAlignDB"value="">
-          </p>
-          <p>File property to define ~/.qiime_config pick_otus_reference_seqs_fp and
+            <input class='sp' type="text" name="qiime.pynastAlignDB" id="qiime.pynastAlignDB">
+            <br>
+            File property to define ~/.qiime_config pick_otus_reference_seqs_fp and
             assign_taxonomy_reference_seqs_fp, reference database to use with all OTU
             picking scripts and workflows, if you prefer to not use the default:
-            <input class='sp' type="text" name="qiime.refSeqDB" id="qiime.refSeqDB"value="">
-          </p>
-          <p>File property to define ~/.qiime_config assign_taxonomy_id_to_taxonomy_fp,
+            <input class='sp' type="text" name="qiime.refSeqDB" id="qiime.refSeqDB">
+            <br>
+            File property to define ~/.qiime_config assign_taxonomy_id_to_taxonomy_fp,
             an id-to-taxonomy map to use with assign_taxonomy.py (and parallel versions),
             if you prefer to not use the default:
-            <input class='sp' type="text" name="qiime.taxaDB" id="qiime.taxaDB"value="">
-          </p>
+            <input class='sp' type="text" name="qiime.taxaDB" id="qiime.taxaDB">
       </fieldset>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -952,6 +952,7 @@ For fastq, typically “@”.)<h5></p>
       <form id='configureAwsForm' class="" action="#" method="#">
       <fieldset>
         <legend>Configure AWS Credentials</legend>
+        <a href="https://console.aws.amazon.com/iam/home?#/security_credentials">If you don’t have an access key ID, click here and select access keys to create one.</a>
         <p>AWS Access Key ID:<input required type="text" name="AWSACCESSKEYID">
           <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span></p>
         <p>*AWS Secret Key ID:*<input required type="text" name="AWSSECRETACCESSKEY">
@@ -1019,6 +1020,7 @@ For fastq, typically “@”.)<h5></p>
     <form id="launchEc2HeadNode"class="" action="#" method="">
       <fieldset>
         <legend>EC2 headnode</legend>
+        <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
         <p>Launch action:
           <select class="" name="launchAction">
             <option value="exists">Check stack exists</option>
@@ -1051,8 +1053,15 @@ For fastq, typically “@”.)<h5></p>
             <option default value="HeadNode">HeadNode</option>
           </select>
         </p>
-        <button type="button" id='launchEc2HeadNodeButton' name="launchEc2HeadNodeButton">Launch EC2 headnode</button>
-        <button type="button" id='terminateEc2HeadNodeButton' name="terminateEc2HeadNodeButton">Terminate EC2 headnode</button>
+        <p>Launch or terminate:
+          <select class="" name="REGION">
+            <option value="launch">launch</option>
+            <option value="terminate">terminate</option>
+          </select>
+        </p>
+        <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
+        <!-- <button type="button" id='launchEc2HeadNodeButton' name="launchEc2HeadNodeButton">Launch EC2 headnode</button> -->
+        <!-- <button type="button" id='terminateEc2HeadNodeButton' name="terminateEc2HeadNodeButton">Terminate EC2 headnode</button> -->
       </fieldset>
     </form>
   </div>
