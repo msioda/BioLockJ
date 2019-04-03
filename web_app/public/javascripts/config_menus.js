@@ -500,14 +500,15 @@ function runModuleFunctions() {//large function to build module li and counters
     }
   }//end forloop
 
+  const module = document.getElementById('module');
   //the following are list of module nodes with class for building the subsequence "Choosen" lists
-  var qiimeClassModNodes = Array.from(document.getElementsByClassName("qiimeClass"));
-  var slimmClassModNodes = Array.from(document.getElementsByClassName("slimmClass"));
-  var krakenClassModNodes = Array.from(document.getElementsByClassName("krakenClass"));
-  var kraken2ClassModNodes = Array.from(document.getElementsByClassName("kraken2Class"));
-  var rdpClassModNodes = Array.from(document.getElementsByClassName("rdpClass"));
-  var metaphlanClassModNodes = Array.from(document.getElementsByClassName("metaphlanClass"));
-  var humann2ClassModNodes = Array.from(document.getElementsByClassName("humann2Class"));
+  var qiimeClassModNodes = Array.from(module.getElementsByClassName("qiimeClass"));
+  var slimmClassModNodes = Array.from(module.getElementsByClassName("slimmClass"));
+  var krakenClassModNodes = Array.from(module.getElementsByClassName("krakenClass"));
+  var kraken2ClassModNodes = Array.from(module.getElementsByClassName("kraken2Class"));
+  var rdpClassModNodes = Array.from(module.getElementsByClassName("rdpClass"));
+  var metaphlanClassModNodes = Array.from(module.getElementsByClassName("metaphlanClass"));
+  var humann2ClassModNodes = Array.from(module.getElementsByClassName("humann2Class"));
 
   //moduleCounters instanciated with nodes that they will disable
   var qiimeModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
