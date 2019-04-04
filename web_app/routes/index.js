@@ -30,11 +30,11 @@ const accessLogStream = fs.createWriteStream(createLogFile(), { flags: 'a' });
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Welcome to BioLockJ' });
+  res.render('index', { title: 'Welcome to BioLockJ', HOST_ENVIRONMENT: process.env.HOST_ENVIRONMENT});
 });
 
 router.get('/config', function(req, res, next) {
-  res.render('config', { title: 'Configuration' });
+  res.render('config', { title: 'Configuration', HOST_ENVIRONMENT: process.env.HOST_ENVIRONMENT});
 });
 
 router.get('/config/:configPath', function(req, res, next) {
@@ -44,7 +44,7 @@ router.get('/config/:configPath', function(req, res, next) {
     res.redirect('/config');
   }
   console.log("__dirname: ", __dirname);
-  res.render('config', { title: 'Configuration', configPath : configPath });
+  res.render('config', { title: 'Configuration', configPath : configPath, HOST_ENVIRONMENT: process.env.HOST_ENVIRONMENT });
 });
 
 //retrieve project and descriptions
@@ -613,8 +613,10 @@ router.post('/launchEc2HeadNode', function(req, res, next) {
 
     }
     //launchEC2HeadNode.sh runscript_attached [STACKNAME] [INSTANCENAME] [INSTANCETYPE] startHeadNodeGui.sh
-    let aws = spawn(`source ${batchAwsConfigFile} ; launchEC2Node.sh ${req.body.formData.launchAction} ${req.body.formData.ec2ec2StackName} ${req.body.formData.instanceName}`, {shell: '/bin/bash'});
+    let aws = spawn(`source ${batchAwsConfigFile} ; launchEC2.sh ${req.body.formData.launchAction} ${req.body.formData.ec2ec2StackName} ${req.body.formData.instanceName}`, {shell: '/bin/bash'});
     // source ~/.batchawsdeploy/config ; launchEC2Node.sh directconnect testthis HeadNode t2.micro
+    // source ~/.batchawsdeploy/config ; EC2Node.sh directconnect testthis HeadNode t2.micro
+    // launchEC2.sh STACKNAME IMAGEID INSTANCETYPE KEYNAME EBSVOLUMESIZEGB
     aws.stdout.on('data', function (data) {
       console.log('stdout: ' + data.toString());
     });
