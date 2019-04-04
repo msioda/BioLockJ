@@ -249,7 +249,7 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
           break;
         case 'seq':
           seqs.push(ele[0].split('/').join('.'));
-          break
+          break;
         case 'classifier':
           classifiers.push(ele[0].split('/').join('.'));
           break;
@@ -447,24 +447,59 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       }//end for loop
 
     //Loop through all parameter keys and:
+    //  figure out what the split is.
     //  check for groups that must be passed together (const mustPassTogether)
     //  check for parameters that must share a common parent dir (const commonParentDir)
+    function crudeParentDir(p) {
+      //All possible results of navigator.platform if browser running windows
+      const windowsPlatforms = ['OS/2', 'Pocket PC', 'Windows', 'Win16', 'Win32', 'Win64', 'WinCE'];
+      //add or starts with "win"
+      let splitter = '/';
+      if (windowsPlatforms.includes(navigator.platform)){
+        splitter = "\\";
+        console.log(splitter);
+      }
+      let crudeSplit = p.split(splitter);
+      return crudeSplit.slice(0,crudeSplit.length-1)
+    }//end function crudeParentDir
+
     for (var i = 0; i < this.paramKeys.length; i++) {
       const key = this.paramKeys[i];
       console.log('validation key', key);
       const val = this.paramValues[i];
+      const valPar = crudeParentDir(val);
+
+      //first check if values are being passed together
       for (let i = 0; i < mustPassTogether.length; i++) {
         if (mustPassTogether[i].includes(key)) {
-          mustPassTogether[i].forEach( ele => {
-            if (! this.paramKeys.includes(ele)){
-              console.log('failed to pass mustPassTogether');
+          for (let a = 0; a < mustPassTogether[i].length; a++) {
+            const mpt = mustPassTogether[i][a]
+            if (this.paramKeys.includes(mpt)===false) {
+              console.log('failed to pass mustPassTogether: ', key);
+              highlightRequiredParam(mpt);
               return false;
             }
-          })
+          }
         }
-      }
+      }//mustPassTogether for loop
+
+      //check if commonParentDir items have common parent
       for (let j = 0; j < commonParentDir.length; j++) {
-        console.log(commonParentDir[j]);
+        if (commonParentDir[j].includes(key)){
+          for (let a = 0; a < commonParentDir[j].length; a++) {
+            const d = commonParentDir[j][a];
+            console.log('crudeParentDir(d): ', crudeParentDir(d), ' ', valPar);
+            if (crudeParentDir(d) != valPar){
+              console.log('failed commonParentDir: ', key);
+              alert('The following must share a common parent directory: ', commonParentDir[j]);
+              commonParentDir[j].forEach( ele => {
+                highlightRequiredParam(ele);
+              })
+              // highlightRequiredParam(d);
+              return false;
+            }
+          }
+        }
       }
     }
 
@@ -481,7 +516,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       // if metadata file is provided, every sequence file must have a row in the metadata file or pipeline will throw error
     // metadata.useEveryRow=Y
       //if metadata file is provided, every metadata row must have a sequence file or pipeline will throw error
-
     return true;
   };//end validation
 
