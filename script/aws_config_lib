@@ -92,12 +92,10 @@ init_aws_config() {
 	echo "Copy AWS properties from Pipeline Config [ $1 ] into --> AWS Config [ $blj_aws_config ]"
 	set_pipeline_config_files $1
 	configFiles=$(get_blj_prop configFiles)
-	IFS=","
-	propFiles=( $configFiles )
+	IFS2=$IFS && IFS="," && propFiles=( $configFiles ) && IFS=$IFS2
 	for propFile in ${propFiles[@]}; do
 		set_pipeline_conig_props $propFile
 	done
-	
 	verify_required_config
 	echo "Pipeline Config properties initialized stored with AWS Config properties in: $blj_aws_config"
 	aws_report_config
@@ -199,15 +197,15 @@ verify_required_config() {
 	[ ${#awsEc2InstanceType} -eq 0 ] && set_blj_prop awsEc2InstanceType t2.micro
 	[ ${#dockerImgVersion} -eq 0 ] && set_blj_prop dockerImgVersion latest
 	[ ${#dockerUser} -eq 0 ] && set_blj_prop dockerUser biolockj
-	[ ${#humann2NuclDB} -eq 0 ] && "$DB/chocophlan"
-	[ ${#humann2ProtDB} -eq 0 ] && "$DB/uniref"
+	[ ${#humann2NuclDB} -eq 0 ] && set_blj_prop "$DB/chocophlan"
+	[ ${#humann2ProtDB} -eq 0 ] && set_blj_prop "$DB/uniref"
 	[ ${#kneaddataDbs} -eq 0 ] && set_blj_prop kneaddataDbs $DB
 	[ ${#krakenDb} -eq 0 ] && set_blj_prop krakenDb $DB
 	[ ${#kraken2Db} -eq 0 ] && set_blj_prop kraken2Db  $DB
 	
 	set_blj_prop aws_access_key_id $(aws_local_prop aws_access_key_id $aws_cred_file)
 	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
-	
+	. $blj_aws_config
 	echo "Verify aws client authentication..."
 	[ ${#awsAccountId} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."
 	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."

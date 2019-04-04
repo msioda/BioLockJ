@@ -123,7 +123,7 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 		{
 			lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
 			lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
-					+ " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf;}' > $2 " );
+					+ " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf $0;}' > $2 " );
 			lines.add( "}" + RETURN );
 		}
 		return lines;
