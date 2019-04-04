@@ -304,15 +304,15 @@ let myModules = new Map(Object.entries({
   'biolockj/module/implicit/qiime/MergeQiimeOtuTables' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'qiime'},
 
-  'biolockj/module/report/r/R_PlotMds' : { cssClass : ['rMod'], category : 'r'},
+  'biolockj/module/report/r/R_PlotMds' : { cssClass : ['rMod', 'R_PlotMds'], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotOtus' : { cssClass : ['rMod'], category : 'r'},
+  'biolockj/module/report/r/R_PlotOtus' : { cssClass : ['rMod', 'R_PlotOtus'], category : 'r'},
 
   'biolockj/module/report/r/R_PlotPvalHistograms' : { cssClass : ['rMod'], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : ['rMod'], category : 'r'},
+  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : ['rMod', 'R_PlotEffectSize'], category : 'r'},
 
-  'biolockj/module/report/r/R_CalculateStats' : { cssClass : ['rMod'], category : 'r'},
+  'biolockj/module/report/r/R_CalculateStats' : { cssClass : ['rMod', 'R_CalculateStats'], category : 'r'},
 
   'biolockj/module/report/taxa/AddMetadataToTaxaTables' : { cssClass : [], category : 'report'},
 
@@ -399,7 +399,7 @@ function runModuleFunctions() {//large function to build module li and counters
   function toggleSelectModule(target) {//function called when modules are selected, it both selects them and disables others
     //first, enable or disable the mods, then add or remove their button from the tab buttons
     const tabButtons = document.getElementById('tabButtons');
-    if (target.classList.contains("modChoosen")) {
+    if (target.classList.contains("modChoosen")){
       target.classList.remove("modChoosen");
       //remove the module's tab button
       for (let i = 0; i < target.classList.length; i++) {
@@ -407,6 +407,7 @@ function runModuleFunctions() {//large function to build module li and counters
         if (thisClassMenu.length > 0) {
           for (let i = 0; i < thisClassMenu.length; i++) {
             thisClassMenu[i].style.display = 'none';
+            thisClassMenu[i].classList.remove('modChoosen');
           }//end second for loop
         }
       }//End first for loop
@@ -418,6 +419,7 @@ function runModuleFunctions() {//large function to build module li and counters
         if (thisClassMenu.length > 0) {
           for (let i = 0; i < thisClassMenu.length; i++) {
             thisClassMenu[i].style.display = 'block';
+            thisClassMenu[i].classList.add('modChoosen');
           }//end second for loop
         }
       }//first for loop
