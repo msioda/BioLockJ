@@ -18,6 +18,7 @@ containsVar() {
 # Build the compute environment
 build_compute_env() {
 	. $blj_aws_config
+	awsComputeEnv=$awsStack-ComputeEnv
 	status=$(aws batch describe-compute-environments --compute-environment $awsComputeEnv --query "computeEnvironments[*].state")
 	statusReason=$(aws batch describe-compute-environments --compute-environment $awsComputeEnv --query "computeEnvironments[*].statusReason")
 
@@ -26,13 +27,18 @@ build_compute_env() {
 	$(containsVar $enabledCompEnvs $awsComputeEnv) && echo "Found ENABLED Compute Environment: $awsComputeEnv: Status( $status ) $statusReason" && return
 	$(containsVar $allCompEnvs $awsComputeEnv) && exit_script "Error [ aws_functions ]: Invalid configured AWS Compute Environment: $awsComputeEnv"
 
+	iamFleetRole="arn:aws:iam::$awsAccountId:role/$(get_stack_param SpotIamFleetRoleArn)"
+	instanceRole="arn:aws:iam::$awsAccountId:instance-profile/$(get_stack_param IamInstanceProfileArn)"
+	subnets="$(get_stack_param Subnet1),$(get_stack_param Subnet2)"
+	
 	echo "Building $awsComputeEnv"
 	c1="type=$awsEc2AcquisitionStrategy,minvCpus=0,maxvCpus=112,desiredvCpus=0,instanceTypes=optimal,imageId=$awsAmi,subnets=$subnets,"
-	c2="securityGroupIds=$bastionGroup,ec2KeyPair=$keyName,instanceRole=$instanceRole,bidPercentage=$awsEc2SpotPer,"
-	c3="spotIamFleetRole=$iamFleetRole,launchTemplate={launchTemplateId=$batchNodeLaunchTemplate}"
+	c2="securityGroupIds=$(get_stack_param BastionSecurityGroup),ec2KeyPair=$awsStack-KeyPair,instanceRole=$instanceRole,bidPercentage=$awsEc2SpotPer,"
+	c3="spotIamFleetRole=$iamFleetRole,launchTemplate={launchTemplateId=$(get_stack_param BatchNodeLaunchTemplateId)}"
 	compResources=${c1}${c2}${c3}
 	echo $(aws batch create-compute-environment --compute-environment-name $awsComputeEnv \
-		--type MANAGED --state ENABLED --service-role $serviceRole --compute-resources "$compResources")
+		--type MANAGED --state ENABLED --service-role $(get_stack_param BatchServiceRoleArn) --compute-resources "$compResources")
+
 }
 
 # Build Cloud-formation Stack
@@ -49,13 +55,14 @@ build_stack() {
 	while [ $(is_stack_complete $myStack) != "true" ]; do
 		printf "." && sleep 5s && numSecs=$((numSecs+5))
 	done
-	echo "Secured to local IP: $myIp in $numSecs seconds"
+	echo "Attached secure $myStack to local IP: $myIp in $numSecs seconds"
 }
 
-# Build key pair + save to $aws_home_dir/$keyPair.pem file
+# Build key pair + save to ~/.aws/$awsStack-KeyPair.pem file
 cache_key_pair() {
-	keyPair=$(get_blj_prop keyName)
-	keyFile=~/.aws/$keyPair.pem
+	keyPair=$(get_blj_prop awsStack)-KeyPair 
+	keyFile=$(key_file)
+	
 	if [ ! -f $keyFile ]; then
 		keys=$(aws ec2 describe-key-pairs)
 		if [ "${keys/$keyPair}" == "$keys" ]; then
@@ -68,6 +75,21 @@ cache_key_pair() {
 	else
 		echo "Found existing: $keyFile"
 	fi
+}
+
+# Deploy AWS cloud formation AMI, Stack, S3 Bucket, Compute Environment, and EC2 Instance 
+# Confirm any configured values exist, create objects that are undefined as store them in AWS config
+deploy_cloud_formation() {
+
+	#set_blj_prop awsAmi ami-007571470797b8ffa
+	#set_blj_prop awsS3 blj-2019-03-31
+	#set_blj_prop awsStack bljStack-2019-03-31-4
+	#set_blj_prop instanceID i-024f7b087cee53145
+	
+	. $blj_aws_config
+	verify_s3
+	verify_ami
+	verify_stack
 }
 
 # Generate a name not found in $1, created using format $2-$date-index
@@ -110,12 +132,11 @@ is_stack_complete() {
 # Param 1 Pipeline Config file-path
 run_aws() {
 	[ $# -eq 0 ] || [ ! -f "$1" ] && exit_script "Error [ aws_config_lib ]: Required pipeline Config file not found: \"$1\""
-	init_aws_config $1 && verify_cloud_formation && build_stack && set_stack_config && cache_key_pair && build_compute_env && launch_ec2_head_node
+	init_aws_config $1 && deploy_cloud_formation && cache_key_pair && build_compute_env && launch_ec2_head_node
 }
 
 # Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
 verify_ami() {
-	. $blj_aws_config
 	ami=$awsAmi
 	if [ ${#ami} -gt 0 ]; then
 		ami=$(aws ec2 describe-images --image-ids $ami --query "Images[?State=='available'].ImageId")
@@ -131,21 +152,9 @@ verify_ami() {
 	fi
 }
 
-# Build account config (and create s3 bucket if needed)
-verify_cloud_formation() {
-
-	set_blj_prop awsAmi ami-007571470797b8ffa
-	set_blj_prop awsS3 blj-2019-03-31
-	set_blj_prop awsStack bljStack-2019-03-31-4
-	
-	verify_ami
-	verify_s3
-	verify_stack
-}
-
-# Get ENABLED Compute Environment (if configured)
+# Get ENABLED Compute Environment (if configured) - called by verify_stack
 verify_comp_env() {
-	configCompEnv=$(get_blj_prop awsComputeEnv)
+	configCompEnv=$awsStack-ComputeEnv
 	if [ ${#configCompEnv} -gt 0 ]; then
 		allCompEnvs=$(aws batch describe-compute-environments --query "computeEnvironments[].computeEnvironmentName")
 		enabledCompEnvs=$(aws batch describe-compute-environments --compute-environments $configCompEnv --query "computeEnvironments[?state=='ENABLED'].computeEnvironmentName")
@@ -157,12 +166,11 @@ verify_comp_env() {
 # Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
 # Param 1 (optional) S3 bucket name
 verify_s3() {
-	. $blj_aws_config
 	s3Bucket=
 	if [ ${#awsS3} -gt 0 ]; then
 		s3Bucket=$(aws s3api list-buckets --region $awsRegion  --query "Buckets[?Name=='$awsS3']|[*].Name")
 		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
-			exit_script "Error [ aws_functions ]:  S3 bucket [ awsS3=$awsS3 ] not found"
+			exit_script "Error [ aws_functions ]:  Configured S3 bucket [ aws.s3=$awsS3 ] not found"
 		fi
 		echo "Found existing S3 Bucket $s3Bucket"
 	else
@@ -176,24 +184,25 @@ verify_s3() {
 	fi
 }
 
-# Return stack name.  If stack name arg given, verify is exists, else generate a new stack stack name.
+# Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.
+# If aws.stack was undefined, create a new stack.
 verify_stack() {
-	myStack=$(get_blj_prop awsStack)
 	disabledStacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
 	enabledStacks=$(aws_stacks CREATE_COMPLETE)
-	if [ ${#myStack} -gt 0 ]; then
-		if [ ${#disabledStacks} -gt 0 ] && [ "${disabledStacks/$myStack}" != "$disabledStacks" ]; then
-			echo "Stack disabled on AWS cloud: $myStack"
-			myStack=""
-		elif [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$myStack}" != "$enabledStacks" ]; then
-			echo "Use configured AWS Stack name: $myStack" && return
+	if [ ${#awsStack} -gt 0 ]; then
+		if [ ${#disabledStacks} -gt 0 ] && [ "${disabledStacks/$awsStack}" != "$disabledStacks" ]; then
+			status=$(aws cloudformation describe-stacks --stack-name $awsStack --query "Stacks[*].StackStatus")
+			exit_script "Error [ aws_functions ]:  Configured AWS Stack [ aws.stack=$awsStack ] exists but is not  --> status=$status"
+		elif [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$awsStack}" != "$enabledStacks" ]; then
+			echo "Configured AWS Stack: $awsStack --> status=CREATE_COMPLETE"
+			verify_comp_env
+			return
 		fi
-	fi
-	
-	if [ ${#myStack} -eq 0 ]; then
+	else
 		echo "Generate new stack name"
-		myStack=$(generate_name bljStack "$disabledStacks $enabledStacks")
-		set_blj_prop awsStack $myStack
-		echo "Set awsStack=$myStack"
+		newStack=$(generate_name bljStack "$disabledStacks $enabledStacks")
+		set_blj_prop awsStack $newStack
+		echo "Set awsStack=$newStack"
+		build_stack
 	fi
 }

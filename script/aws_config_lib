@@ -36,14 +36,6 @@ aws_local_prop() {
 	done
 }
 
-# Get a role get_role for the configured stack 
-# Param 1 Role name
-aws_role() {
-	role=$(aws cloudformation describe-stacks --stack-name $(get_blj_prop awsStack) --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
-	[ ${#role} -eq 0 ] && return
-	echo $role
-}
-
 # Get the s3 bucket names in the user region
 aws_s3_buckets() {
 	myBuckets=$(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
@@ -83,27 +75,37 @@ get_prop() {
 	echo $(eval "echo ${prop/$2=}")
 }
 
+
+# Get a stack parameter for the configured stack 
+# Param 1 - Param name
+get_stack_param() {
+	myParam=$(aws cloudformation describe-stacks --stack-name $(get_blj_prop awsStack) --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
+	[ ${#myParam} -eq 0 ] && return
+	echo $myParam
+}
+
 # Init AWS Config properties file [ $blj_aws_config ] with pipeline Config, AWS config, and standard defaults
 # Check BLJ pipeline Config files + all nested default Config files
 # Param 1 Pipeline Config file path
 init_aws_config() {
 	aws_archive
-	echo "Copy AWS properties from Pipeline Config [$1] into --> AWS Config [ $blj_aws_config ]"
+	echo "Copy AWS properties from Pipeline Config [ $1 ] into --> AWS Config [ $blj_aws_config ]"
 	set_pipeline_config_files $1
 	configFiles=$(get_blj_prop configFiles)
 	IFS=","
 	propFiles=( $configFiles )
 	for propFile in ${propFiles[@]}; do
 		set_pipeline_conig_props $propFile
-		aws_report_config
 	done
 	
-	echo "Pipeline Config properties stored in AWS Config: $blj_aws_config "
+	verify_required_config
+	echo "Pipeline Config properties initialized stored with AWS Config properties in: $blj_aws_config"
+	aws_report_config
 }
 
 # Get the ec2 key file for the ec2 head node
 key_file() {
-	echo ~/.aws/$(get_blj_prop keyName).pem
+	echo ~/.aws/$(get_blj_prop awsStack)-KeyPair.pem
 }
 
 # Remove AWS property - delete the line from the file
@@ -126,11 +128,12 @@ rm_blj_prop() {
 }
 
 # Set a prop stored in $blj_aws_config.  In case prop value ${2} is null, $2 actually returns the 3rd param (the default)
+# If the default value = $IS_NULL return without making any updates
 # Param 1 Prop name
 # Param 2 Prop value
 # Param 3 (optional) Default value
 set_blj_prop() {
-	[ "$2" == $IS_NULL ] && return
+	[ $# -lt 2 ] || [ "$2" == $IS_NULL ] && return
 	prop=$(cat $blj_aws_config | grep $1)
 	exists=$(echo $prop | grep "$1=${2/\[/\\\[}")
 	[ ${#exists} -gt 0 ] && return
@@ -157,27 +160,24 @@ set_pipeline_config_files() {
 # Param 1 Pipeline Config file path
 set_pipeline_conig_props() {
 	echo "Update [ $blj_aws_config ] with any AWS properties found in Pipeline Config [ $1 ]"
-	acctId=$(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId)
-
-	set_blj_prop awsAccountId $(get_prop $1 "aws.account_id") $acctId 
-	set_blj_prop awsComputeEnv $(get_prop $1 "aws.computeEnv") $IS_NULL
-	set_blj_prop awsEc2AcquisitionStrategy $(get_prop $1 "aws.ec2AcquisitionStrategy") SPOT
-	set_blj_prop awsEc2InstanceType $(get_prop $1 "aws.ec2InstanceType") t2.micro 
-	set_blj_prop awsEc2SpotPer $(get_prop $1 "aws.ec2SpotPer") 70
-	set_blj_prop awsProfile $(get_prop $1 "aws.profile") default
-	set_blj_prop awsRam $(get_prop $1 "aws.ram") "8 GB"
-	set_blj_prop awsRegion $(get_prop $1 "aws.region") $(aws configure get region)
+	set_blj_prop awsAccountId $(get_prop $1 "aws.account_id") $IS_NULL
+	set_blj_prop awsEc2AcquisitionStrategy $(get_prop $1 "aws.ec2AcquisitionStrategy") $IS_NULL
+	set_blj_prop awsEc2InstanceType $(get_prop $1 "aws.ec2InstanceType") $IS_NULL
+	set_blj_prop awsEc2SpotPer $(get_prop $1 "aws.ec2SpotPer") $IS_NULL
+	set_blj_prop awsProfile $(get_prop $1 "aws.profile") $IS_NULL
+	set_blj_prop awsRam $(get_prop $1 "aws.ram") $IS_NULL
+	set_blj_prop awsRegion $(get_prop $1 "aws.region") $IS_NULL
 	set_blj_prop awsStack $(get_prop $1 "aws.stack") $IS_NULL
 	set_blj_prop awsS3 $(get_prop $1 "aws.s3") $IS_NULL
 	set_blj_prop awsWalltime $(get_prop $1 "aws.walltime") $IS_NULL
-	set_blj_prop dockerImgVersion $(get_prop $1 "docker.imgVersion") latest
-	set_blj_prop dockerUser $(get_prop $1 "docker.user") biolockj
-	set_blj_prop humann2NuclDB $(get_prop $1 "humann2.nuclDB") "$DB/chocophlan"
-	set_blj_prop humann2ProtDB $(get_prop $1 "humann2.protDB") "$DB/uniref"
+	set_blj_prop dockerImgVersion $(get_prop $1 "docker.imgVersion") $IS_NULL
+	set_blj_prop dockerUser $(get_prop $1 "docker.user") $IS_NULL
+	set_blj_prop humann2NuclDB $(get_prop $1 "humann2.nuclDB") $IS_NULL
+	set_blj_prop humann2ProtDB $(get_prop $1 "humann2.protDB") $IS_NULL
 	set_blj_prop inputDirPath $(get_prop $1 "input.dirPaths") $IS_NULL
-	set_blj_prop kneaddataDbs $(get_prop $1 "kneaddata.dbs") $DB
-	set_blj_prop krakenDb $(get_prop $1 "kraken.db") $DB
-	set_blj_prop kraken2Db $(get_prop $1 "kraken2.db") $DB
+	set_blj_prop kneaddataDbs $(get_prop $1 "kneaddata.dbs") $IS_NULL
+	set_blj_prop krakenDb $(get_prop $1 "kraken.db") $IS_NULL
+	set_blj_prop kraken2Db $(get_prop $1 "kraken2.db") $IS_NULL
 	set_blj_prop metadataFilePath $(get_prop $1 "metadata.filePath") $IS_NULL
 	set_blj_prop metaphlan2Db $(get_prop $1 "metaphlan2.db") $IS_NULL
 	set_blj_prop metaphlan2Mpa_pkl $(get_prop $1 "metaphlan2.mpa_pkl") $IS_NULL
@@ -186,26 +186,56 @@ set_pipeline_conig_props() {
 	set_blj_prop qiimeTaxaDB $(get_prop $1 "qiime.taxaDB") $IS_NULL
 	set_blj_prop rdpDb $(get_prop $1 "rdp.db") $IS_NULL
 	set_blj_prop trimPrimersFilePath $(get_prop $1 "trimPrimers.filePath") $IS_NULL
+	aws_report_config
+}
+
+# Set basic defaults if undefined & throw error if user did not login to aws client or is missing required properties
+verify_required_config() {
+	echo "Assign default Config properties..."
+	. $blj_aws_config
+	[ ${#awsAccountId} -eq 0 ] && set_blj_prop awsAccountId $(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId)
+	[ ${#awsProfile} -eq 0 ] && set_blj_prop awsProfile default
+	[ ${#awsRegion} -eq 0 ] && set_blj_prop awsRegion $(aws configure get region)
+	[ ${#awsEc2InstanceType} -eq 0 ] && set_blj_prop awsEc2InstanceType t2.micro
+	[ ${#dockerImgVersion} -eq 0 ] && set_blj_prop dockerImgVersion latest
+	[ ${#dockerUser} -eq 0 ] && set_blj_prop dockerUser biolockj
+	[ ${#humann2NuclDB} -eq 0 ] && "$DB/chocophlan"
+	[ ${#humann2ProtDB} -eq 0 ] && "$DB/uniref"
+	[ ${#kneaddataDbs} -eq 0 ] && set_blj_prop kneaddataDbs $DB
+	[ ${#krakenDb} -eq 0 ] && set_blj_prop krakenDb $DB
+	[ ${#kraken2Db} -eq 0 ] && set_blj_prop kraken2Db  $DB
 	
 	set_blj_prop aws_access_key_id $(aws_local_prop aws_access_key_id $aws_cred_file)
 	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
+	
+	echo "Verify aws client authentication..."
+	[ ${#awsAccountId} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."
+	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."
+	[ ${#aws_access_key_id} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
+	[ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."
+	
+	echo "Verify required Pipeline Config properties exist ( TO-DO --> implement value or type validations )..."
+	[ ${#awsEc2AcquisitionStrategy} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ec2AcquisitionStrategy\" undefined!"
+	[ ${#awsEc2SpotPer} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ec2SpotPer\" undefined!"
+	[ ${#awsRam} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ram\" undefined!"
 }
 
 # Build stack config using awsStack and awsAccountId references and build the roles
-set_stack_config() {
-	awsStack=$(get_blj_prop awsStack)
-	awsAccountId=$(get_blj_prop awsAccountId)
-	set_blj_prop keyName $awsStack-KeyPair
-	set_blj_prop awsComputeEnv $awsStack-ComputeEnv
-	set_blj_prop queueName $awsStack-Queue
-	set_blj_prop serviceRole $(aws_role BatchServiceRoleArn)
-	set_blj_prop lowPriorityJobQRole $(aws_role JobQueueLowPriority)
-	set_blj_prop iamFleetRole "arn:aws:iam::$awsAccountId:role/$(aws_role SpotIamFleetRoleArn)"
-	set_blj_prop jobRoleArn $(aws_role ECSTaskRole)
-	set_blj_prop instanceRole "arn:aws:iam::$awsAccountId:instance-profile/$(aws_role IamInstanceProfileArn)"
-	set_blj_prop bastionGroup $(aws_role BastionSecurityGroup)
-	set_blj_prop subnets "$(aws_role Subnet1),$(aws_role Subnet2)"
-	set_blj_prop efsID $(aws_role FileSystemId)
-	set_blj_prop headNodeLaunchTemplate $(aws_role HeadNodeLaunchTemplateId)
-	set_blj_prop batchNodeLaunchTemplate $(aws_role BatchNodeLaunchTemplateId)
-}
+#set_stack_config() {
+	#awsStack=$(get_blj_prop awsStack)
+	#awsAccountId=$(get_blj_prop awsAccountId)
+	# NEVER ACTUALLY USED THESE 3
+	#set_blj_prop queueName $awsStack-Queue
+	#set_blj_prop lowPriorityJobQRole $(get_stack_param JobQueueLowPriority)
+	#set_blj_prop efsID $(get_stack_param FileSystemId)  
+	# NO REASON TO STORE THESE, can call get_stack_param whenever these are needed
+	#set_blj_prop keyName $awsStack-KeyPair
+	#set_blj_prop serviceRole $(get_stack_param BatchServiceRoleArn)
+	#set_blj_prop iamFleetRole "arn:aws:iam::$awsAccountId:role/$(get_stack_param SpotIamFleetRoleArn)"
+	#set_blj_prop jobRoleArn $(get_stack_param ECSTaskRole)
+	#set_blj_prop instanceRole "arn:aws:iam::$awsAccountId:instance-profile/$(get_stack_param IamInstanceProfileArn)"
+	#set_blj_prop bastionGroup $(get_stack_param BastionSecurityGroup)
+	#set_blj_prop subnets "$(get_stack_param Subnet1),$(get_stack_param Subnet2)"
+	#set_blj_prop headNodeLaunchTemplate $(get_stack_param HeadNodeLaunchTemplateId)
+	#set_blj_prop batchNodeLaunchTemplate $(get_stack_param BatchNodeLaunchTemplateId)
+#}

@@ -15,31 +15,36 @@
 . $BLJ/script/aws_config_lib
 
 AWS_CONFIG=~/.aws_config
+S3_DIR="s3://"
 
 # Sync local files to S3 for cloud pipeline execution
 aws_sync_s3_folders() {
-	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_head_node_lib ]: Requires awsS3 be defined in $blj_aws_config"
-	aws_upload_s3 $inputDirPath seq
-	aws_upload_s3 $metadataFilePath metadata
-	aws_upload_s3 $trimPrimersFilePath primers
-	aws_upload_s3 $humann2NuclDB db
-	aws_upload_s3 $humann2ProtDB db
-	aws_upload_s3 $kneaddataDbs db
-	aws_upload_s3 $krakenDb db
-	aws_upload_s3 $kraken2Db db
-	aws_upload_s3 $metaphlan2Db db
-	aws_upload_s3 $metaphlan2Mpa_pkl db
-	aws_upload_s3 $qiimePynastAlignDB db
-	aws_upload_s3 $qiimeRefSeqDB db
-	aws_upload_s3 $qiimeTaxaDB db
-	aws_upload_s3 $rdpDb db
+	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_head_node_lib ]: Requires awsS3 property is defined in $blj_aws_config"
+	aws_upload_s3 inputDirPath $inputDirPath seq
+	aws_upload_s3 metadataFilePath $metadataFilePath metadata
+	aws_upload_s3 trimPrimersFilePath $trimPrimersFilePath primers
+	aws_upload_s3 humann2NuclDB $humann2NuclDB db
+	aws_upload_s3 humann2ProtDB $humann2ProtDB db
+	aws_upload_s3 kneaddataDbs $kneaddataDbs db
+	aws_upload_s3 krakenDb $krakenDb db
+	aws_upload_s3 kraken2Db $kraken2Db db
+	aws_upload_s3 metaphlan2Db $metaphlan2Db db
+	aws_upload_s3 metaphlan2Mpa_pkl $metaphlan2Mpa_pkl db
+	aws_upload_s3 qiimePynastAlignDB $qiimePynastAlignDB db
+	aws_upload_s3 qiimeRefSeqDB $qiimeRefSeqDB db
+	aws_upload_s3 qiimeTaxaDB $qiimeTaxaDB db
+	aws_upload_s3 rdpDb $rdpDb db
 	
 	configFiles=$(get_blj_prop configFiles)
+	newConfigFiles=
 	IFS=","
 	propFiles=( $configFiles )
 	for propFile in ${propFiles[@]}; do
-		aws_upload_s3 $propFile config
+		val=$(aws_upload_s3 configFiles $propFile config)
+		[ ${#val} -gt 0 ] && [ ${#newConfigFiles} -gt 0 ] && newConfigFiles=",$newConfigFiles"
+		[ ${#val} -gt 0 ] && newConfigFiles="${val},${newConfigFiles}"
 	done
+	[ ${#newConfigFiles} -gt 0 ] && set_blj_prop configFiles $newConfigFiles
 }
 
 # List all contents of an AWS S3 Bucket
@@ -50,14 +55,25 @@ aws_s3_ls() {
 }
 
 # Sync local directory (all files/dirs) with AWS S3 Bucket-path
-# TEST: aws_upload_s3 $BLJ_SUP/resources/test/data/r16s_fastq seq 
-# Param 1 - Local Directory of File
-# Param 2 - S3 bucket folder
+# TEST: aws_upload_s3 inputDirPath $BLJ_SUP/resources/test/data/r16s_fastq seq
+# Param 1 - AWS property name
+# Param 2 - Local Directory of File
+# Param 3 - S3 bucket folder
 aws_upload_s3() {
-	[ $# -ne 2 ] && return
-	[ ! -f "$1" ] && [ ! -d "$1" ] && exit_script "Error [ aws_head_node_lib ]: Path \"$1\" not found!"
-	echo "Synchronizing $1 --> $(get_s3_name $1 $2)" 
-	aws s3 sync $1 $(get_s3_name $1 $2) --exclude *.DS_Store
+	[ $# -eq 2 ] && [ "$1" != "$IS_NULL" ] && return
+	[ $# -lt 2 ] || [ "${2:0:5}" == "$S3_DIR" ] && return
+	[ ! -f "$2" ] && [ ! -d "$2" ] && exit_script "Error [ aws_head_node_lib ]: Local path \"$2\" not found!"
+	newPath="$(get_s3_name $2 $3)"
+	[ ${#newPath} -eq 0 ] && exit_script "Error [ aws_head_node_lib ]: Unable to build S3 AWS property for $1=\"$2\".\nPlease verify \"$2\" is a valid file-path"
+	
+	val=$(aws s3 sync $2 $newPath --exclude *.DS_Store)
+	if [ ${#val} -gt 0 ]; then
+		set_blj_prop $1 $newPath
+	else
+		exit_script "Error [ aws_head_node_lib ]: Failed to update AWS property $1=\"$newPath\" in --> $blj_aws_config.\nFailed command: \"aws s3 sync $2 $newPath --exclude *.DS_Store\""
+	fi
+	
+	echo $newPath
 }
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
@@ -79,7 +95,7 @@ build_docker_job_defs() {
 			\"vcpus\": $jobVcpus,
 			\"memory\": $jobRam,
 			\"command\": [ \"/bin/bash\" ],
-			\"jobRoleArn\": \"$jobRoleArn\",
+			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
 			\"volumes\": [ { \"host\": { \"sourcePath\": \"/mnt/efs\" }, \"name\": \"efs\" } ],
 			\"mountPoints\": [ { \"containerPath\": \"/efs\", \"readOnly\": false, \"sourceVolume\": \"efs\" } ],
 			\"readonlyRootFilesystem\": false,
@@ -97,7 +113,7 @@ build_docker_job_defs() {
 		prop=$(get_blj_prop "image_$jobLabel" $jobName)
 		echo "Saved Docker job-definition label: image_$jobLabel=$prop"
 	done
-	touch ~/.CREATED_DOCKER_JOB_DEFS
+	touch ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS
 }
 
 # Connect to running head node
@@ -130,7 +146,6 @@ exe_remote() {
 	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_blj_prop publicHost) "$1"
 }
 
-
 # Upload local files to S3
 # Copy Config file with updated properties to reference new S3 paths
 init_head_node() {
@@ -156,15 +171,15 @@ init_head_node() {
 # Launch a new ec2 head node
 launch_ec2_head_node() {
 	. $blj_aws_config
+	[ -x "$(which docker)" ] && build_docker_job_defs
 
 	runTime=0
-	firstSubnet=$(echo $subnets | cut -f1 -d ",")
-	instanceID=$(aws ec2 run-instances --count 1 --key-name $keyName --image-id $awsAmi --security-group-ids $bastionGroup  \
-		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $firstSubnet \
-		--launch-template LaunchTemplateId=$headNodeLaunchTemplate --instance-type $awsEc2InstanceType --query "Instances[].InstanceId" )
+	instanceID=$(aws ec2 run-instances --count 1 --key-name $awsStack-KeyPair --image-id $awsAmi --security-group-ids $(get_stack_param BastionSecurityGroup)  \
+		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $(get_stack_param Subnet1) \
+		--launch-template LaunchTemplateId=$(get_stack_param HeadNodeLaunchTemplateId) --instance-type $awsEc2InstanceType --query "Instances[].InstanceId" )
 
 	printf "Launching EC2 Instance, please wait."
-	systemStatus=starting
+	systemStatus=init
 	while [ "$systemStatus" != "ok" ]; do
 		systemStatus=$(aws ec2 describe-instance-status --instance-ids $instanceID --query "InstanceStatuses[*].SystemStatus.Status")
 		printf "."
@@ -173,10 +188,12 @@ launch_ec2_head_node() {
 	done
 	echo "InstanceID [ $instanceID ] created in $runTime seconds!"
 	set_blj_prop instanceID $instanceID
-	set_blj_prop privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateDnsName")
-	set_blj_prop privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
-	set_blj_prop publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
 	set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName")
+	
+	# THESE APPEAR TO NEVER BE USED, COMMENTING OUT FOR NOW Apr 4
+	#set_blj_prop privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateDnsName")
+	#set_blj_prop privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
+	#set_blj_prop publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
 	
 	publicHost=$(get_blj_prop publicHost)
 	keyFound=$(cat ~/.ssh/known_hosts| grep -c ${publicHost})
@@ -231,38 +248,63 @@ stage_to_head_node() {
 # Change the file/dir-path to the new S3 path
 # Param 1 - Config file
 update_config_file() {
-
 	outFile=$(get_aws_config_file $1)
-	defaultConfig=$(get_prop $1 "pipeline.defaultProps")
-	if [ -f "$defaultConfig" ]; then
-		cp $defaultConfig $AWS_CONFIG
-		defaultConfig=$(get_aws_config_file $defaultConfig)
-		set_config_prop pipeline.defaultProps $(get_s3_name $defaultConfig config) $1
-	fi
-	
 	cat $1 | while read -r line; do
 		IFS2=$IFS && IFS="=" && tokens=( ${line} ) && IFS=$IFS2
 		[ ${#tokens[@]} -gt 0 ] && arg=${tokens[0]}
 		[ ${#tokens[@]} -gt 1 ] && val=${tokens[1]}
-		
-		if [ "$arg" == "input.dirPaths" ]; then
-			echo $arg=$inputDirPath >> $outFile
+		if [ ${#tokens[@]} -eq 1 ] || [ ${#tokens[@]} -eq 2 ] && [ "${2:0:5}" == "$S3_DIR" ]; then
+			echo "$line" >> $outFile
+		elif [ "$arg" == "pipeline.defaultProps" ] && [ -d "$val" ]; then
+			newPath=$(get_s3_name $defaultConfig config)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "input.dirPaths" ] && [ -d "$val" ]; then
+			newPath=$(aws_upload_s3 inputDirPath $inputDirPath seq)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "metadata.filePath" ] && [ -f "$val" ]; then
+			newPath=$(aws_upload_s3 metadataFilePath $metadataFilePath metadata)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "trimPrimers.filePath" ] && [ -f "$val" ]; then
+			newPath=$(aws_upload_s3 trimPrimersFilePath $trimPrimersFilePath primers)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "humann2.nuclDB" ] && [ -d "$val" ]; then
+			newPath=$(aws_upload_s3 humann2NuclDB $humann2NuclDB db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "humann2.protDB" ] && [ -d "$val" ]; then
+			newPath=$(aws_upload_s3 humann2ProtDB $humann2ProtDB db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "kneaddata.dbs" ] && [ -d "$val" ]; then
+			newPath=$(aws_upload_s3 kneaddataDbs $kneaddataDbs db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "kraken.db" ] && [ -d "$val" ]; then
+			newPath=$(aws_upload_s3 krakenDb $krakenDb db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "kraken2.db" ] && [ -d "$val" ]; then
+			newPath=$(aws_upload_s3 kraken2Db $kraken2Db db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "metaphlan2.db" ] && [ -d "$val" ]; then
+			newPath=$(aws_upload_s3 metaphlan2Db $metaphlan2Db db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "metaphlan2.mpa_pkl" ] && [ -f "$val" ]; then
+			newPath=$(aws_upload_s3 metaphlan2Mpa_pkl $metaphlan2Mpa_pkl db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "qiime.pynastAlignDB" ] && [ -f "$val" ]; then
+			newPath=$(aws_upload_s3 qiimePynastAlignDB $qiimePynastAlignDB db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "qiime.refSeqDB" ] && [ -f "$val" ]; then	
+			newPath=$(aws_upload_s3 qiimeRefSeqDB $qiimeRefSeqDB db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "qiime.taxaDB" ] && [ -f "$val" ]; then
+			newPath=$(aws_upload_s3 qiimeTaxaDB $qiimeTaxaDB db)
+			echo "$arg=$newPath" >> $outFile
+		elif [ "$arg" == "rdp.db" ] && [ -f "$val" ]; then
+			newPath=$(aws_upload_s3 rdpDb $rdpDb db)
+			echo "$arg=$newPath" >> $outFile
+		else
+			echo "$line" >> $outFile
 		fi
 	done
-
-	set_config_prop humann2.nuclDB $(get_s3_name $humann2NuclDB db) $1
-	set_config_prop humann2.protDB $(get_s3_name $humann2ProtDB db) $1
-	set_config_prop kneaddata.dbs $(get_s3_name $kneaddataDbs db) $1
-	set_config_prop kraken.db $(get_s3_name $krakenDb db) $1
-	set_config_prop kraken2.db $(get_s3_name $kraken2Db db) $1
-	set_config_prop metaphlan2.db $(get_s3_name $metaphlan2Db db) $1
-	set_config_prop metaphlan2.mpa_pkl $(get_s3_name $metaphlan2Mpa_pkl db) $1
-	set_config_prop qiime.pynastAlignDB $(get_s3_name $qiimePynastAlignDB db) $1
-	set_config_prop qiime.refSeqDB $(get_s3_name $qiimeRefSeqDB db) $1
-	set_config_prop qiime.taxaDB $(get_s3_name $qiimeTaxaDB db) $1
-	set_config_prop rdp.db $(get_s3_name $rdpDb db) $1
-	
-	echo $defaultConfig
+	echo $outFile
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
@@ -273,8 +315,10 @@ update_config_s3_props() {
 	propFiles=( $configFiles )
 	newPropFiles=
 	for propFile in ${propFiles[@]}; do
-		newConfig=$(update_config_file $propFile)
+		newLocalConfig=$(update_config_file $propFile)
+		newPath=$(aws_upload_s3 $IS_NULL $newLocalConfig config)
 		[ ${#newPropFiles} -gt 0 ] && newPropFiles=",$newPropFiles"
-		newPropFiles=${newConfig}${newPropFiles}
+		newPropFiles=${newPath}${newPropFiles}
 	done
+	set_config_prop configFiles $newPropFiles
 }
