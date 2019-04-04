@@ -1,4 +1,5 @@
 <!--file button-->
+{{HOST_ENVIRONMENT}}
 <link rel="stylesheet" type="text/css" href="./../stylesheets/config.css" />
 <div class="nav-bar">
   <div class="dropdown">
@@ -31,7 +32,6 @@
     <button class="tablinks basicTabBut" onclick="openTab(event, 'demultiplexerTab')">Demultiplexer</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'exeTab')">Exe</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'dockerTab')">Docker</button>
-    <button id='AwsButton' class="tablinks basicTabBut" onclick="openTab(event, 'AwsTab')">AWS</button>
     <button class="tablinks rMod" onclick="openTab(event, 'rTab')">R</button>
     <button class="tablinks rdpClass" onclick="openTab(event, 'rdpTab')">RDP</button>
     <button class="tablinks qiimeClass" onclick="openTab(event, 'qiimeTab')">QIIME</button>
@@ -47,6 +47,7 @@
     <button class="tablinks SeqFileValidatorMod" onclick="openTab(event, 'seqFileValidatorTab')">Sequence File Validator</button>
     <button class="tablinks humann2Class" onclick="openTab(event, 'humann2Tab')">HumanN2</button>
     <button class="tablinks rarefySeqs" onclick="openTab(event, 'rarefySeqsTab')">Rarify Seqs</button>
+    <button id='AwsButton' class="tablinks basicTabBut" onclick="openTab(event, 'AwsTab')">AWS</button>
   </div>
 
   <!--tabbed menu-->
@@ -514,6 +515,56 @@
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
+  <div id="demultiplexerTab" class="tabcontent moduleTab">
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <p>
+        Demultiplexer barcode cutoff:
+        <input type="text" name="demultiplexer.barcodeCutoff" id="demultiplexer.barcodeCutoff" class="sp "value="">
+      </p>
+      <p>
+        Path to the mapping file to match sequence headers to barcodes:
+        <input type="text" name="demultiplexer.mapping" id="demultiplexer.mapping" class="sp" value="">
+      </p>
+      <p>Set the Demultiplexer strategy. If using barcodes, they must be provided in the
+        metadata.filePath with in column name defined by metadata.barcodeColumn. This is only used by the Demultiplexer module:
+        <select class="sp" id="demultiplexer.strategy" name="demultiplexer.strategy">
+          <!-- <option selected value="">Click for options</option> -->
+          <option value="barcode_in_header">Barcode in header</option>
+          <option value="barcode_in_seq">Barcode in sequence</option>
+          <option value="id_in_header">Sequence ID in header</option>
+          <option selected default value="do_not_demux.">N/A</option>
+        </select>
+      </p>
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+    </div>
+
+  <div id="dockerTab" class="tabcontent moduleTab">
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <p>
+        Docker Image version:
+        <br>
+        (By default, docker will always use 'latest', but advanced users may specify a different tag)
+        <input type="text" class="sp" name="docker.imgVersion" id="docker.imgVersion" value="">
+      </p>
+      <p>Docker Hub user name with the BioLockJ containers. By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own versions of these modules and add new modules in their own Docker Hub account:
+      <input type="text" class="sp" name="docker.user" id="docker.user" value="">
+      </p>
+      <p>Save container on exit:
+        <select class="sp" name="docker.saveContainerOnExit" id="docker.saveContainerOnExit">
+          <option selected default value="">Click for options</option>
+          <option value="Y">Yes</option>
+          <option value="N">No</option>
+        </select>
+      </p>
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+    </div>
+
   <div id="rdpTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -771,56 +822,6 @@
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
-  <div id="demultiplexerTab" class="tabcontent moduleTab">
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <p>
-      Demultiplexer barcode cutoff:
-      <input type="text" name="demultiplexer.barcodeCutoff" id="demultiplexer.barcodeCutoff" class="sp "value="">
-    </p>
-    <p>
-      Path to the mapping file to match sequence headers to barcodes:
-      <input type="text" name="demultiplexer.mapping" id="demultiplexer.mapping" class="sp" value="">
-    </p>
-    <p>Set the Demultiplexer strategy. If using barcodes, they must be provided in the
-      metadata.filePath with in column name defined by metadata.barcodeColumn. This is only used by the Demultiplexer module:
-      <select class="sp" id="demultiplexer.strategy" name="demultiplexer.strategy">
-        <!-- <option selected value="">Click for options</option> -->
-        <option value="barcode_in_header">Barcode in header</option>
-        <option value="barcode_in_seq">Barcode in sequence</option>
-        <option value="id_in_header">Sequence ID in header</option>
-        <option selected default value="do_not_demux.">N/A</option>
-      </select>
-    </p>
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div>
-
-  <div id="dockerTab" class="tabcontent moduleTab">
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <p>
-      Docker Image version:
-      <br>
-      (By default, docker will always use 'latest', but advanced users may specify a different tag)
-      <input type="text" class="sp" name="docker.imgVersion" id="docker.imgVersion" value="">
-    </p>
-    <p>Docker Hub user name with the BioLockJ containers. By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own versions of these modules and add new modules in their own Docker Hub account:
-    <input type="text" class="sp" name="docker.user" id="docker.user" value="">
-    </p>
-    <p>Save container on exit:
-      <select class="sp" name="docker.saveContainerOnExit" id="docker.saveContainerOnExit">
-        <option selected default value="">Click for options</option>
-        <option value="Y">Yes</option>
-        <option value="N">No</option>
-      </select>
-    </p>
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div>
-
   <div id="kneadDataTab" class="tabcontent moduleTab">
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a><br>
@@ -1023,7 +1024,7 @@
         <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
         <p>Launch action:
           <select class="" name="launchAction">
-            <option value="exists">Check stack exists</option>
+            <option value="exists">Check EC2 instance stack exists</option>
             <option value="directconnect">directconnect</option>
             <option value="runscript_attached">runscript attached</option>
             <option value="runscript_detached">runscript detached</option>
@@ -1053,14 +1054,8 @@
             <option default value="HeadNode">HeadNode</option>
           </select>
         </p>
-        <p>Launch or terminate:
-          <select class="" name="REGION">
-            <option value="launch">launch</option>
-            <option value="terminate">terminate</option>
-          </select>
-        </p>
         <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
-        <!-- <button type="button" id='launchEc2HeadNodeButton' name="launchEc2HeadNodeButton">Launch EC2 headnode</button> -->
+        <button type="button" id='launchEc2HeadNodeButton' name="launchEc2HeadNodeButton">Launch EC2 headnode</button>
         <!-- <button type="button" id='terminateEc2HeadNodeButton' name="terminateEc2HeadNodeButton">Terminate EC2 headnode</button> -->
       </fieldset>
     </form>
