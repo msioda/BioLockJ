@@ -57,7 +57,6 @@ document.getElementById('deployComputeStack').addEventListener('click', function
   incorrect.forEach( ele => ele.style.display = 'none');
   correct.forEach( ele => ele.style.display = 'none');
   inProgress.forEach( ele => ele.style.display = 'block');
-  console.log('this deployComputeStack: ', this);
   let formData = {};
   let myForm = new FormData(this.parentNode.parentNode);
   for (var i of myForm.entries()) {
@@ -89,12 +88,46 @@ document.getElementById('deployComputeStack').addEventListener('click', function
     }
   }
 });
+
 document.getElementById('launchEc2HeadNodeButton').addEventListener('click', function(evt) {
   evt.preventDefault();
-  let prom = sendFormToNode('launchEc2HeadNodeButton', 'launchEc2HeadNode', timeout = 10);
-  prom.then(resp => {
-    console.log(resp);
-  })
+  console.log('this.parentNode: ', this.parentNode);
+  let correct = Array.from(this.parentNode.getElementsByClassName('correctInput'));
+  let incorrect = Array.from(this.parentNode.getElementsByClassName('incorrectInput'));
+  let inProgress = Array.from(this.parentNode.getElementsByClassName('inProgress'));
+  incorrect.forEach( ele => ele.style.display = 'none');
+  correct.forEach( ele => ele.style.display = 'none');
+  inProgress.forEach( ele => ele.style.display = 'block');
+  let formData = {};
+  let myForm = new FormData(this.parentNode.parentNode);
+  for (var i of myForm.entries()) {
+    formData[i[0]] = i[1];
+  }
+  console.log('formData: ', formData);
+  let request = new XMLHttpRequest();
+  request.timeout = 1000 * 10 * 60;
+  request.ontimeout = function (e) {
+    console.log('timed out from browser \n', e);
+  };
+  request.open("POST", '/deployCloudInfrastructure', true);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.send(JSON.stringify({formData}));
+  request.onreadystatechange = function() {
+    if (request.readyState == XMLHttpRequest.DONE) {
+      console.log(request);
+      console.log('request.responseText: ', request.responseText);
+      const rt = request.responseText.trim();
+      inProgress.forEach( ele => ele.style.display = 'none');
+      if (rt.endsWith("_COMPLETE")){
+        correct.forEach( ele => ele.style.display = 'inline');
+      }else if (rt.endsWith("FAILED") ){
+        incorrect.forEach( ele => ele.style.display = 'inline');
+      }else {
+        incorrect.forEach( ele => ele.style.display = 'inline');
+        correct.forEach( ele => ele.style.display = 'none');
+      }
+    }
+  }
 });
 
 //copy past from config_config
