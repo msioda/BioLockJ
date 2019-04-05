@@ -25,7 +25,7 @@ aws_archive() {
 # Param 1 argName Parse filePath for a line that starts with argName
 # Param 2 filePath Target file
 aws_local_prop() {
-	[ ! -f "$2" ] && echo "Error:  File not found: $2" && return
+	[ ! -f "$2" ] && aws_log "Error:  File not found: $2" && return
 	foundProfile=0
 	prop="$1 = "
 	userProfile="[$(get_blj_prop awsProfile)]"
@@ -36,11 +36,17 @@ aws_local_prop() {
 	done
 }
 
+# Log current time-stamp and print the line parameter
+# Param 1 - Log statement  
+aws_log() {
+	echo "[ $(date "+%Y-%m-%d %H:%M:%S") ] $1"
+}
+
 # Get the s3 bucket names in the user region
 aws_s3_buckets() {
 	myBuckets=$(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
 	[ ${#myBuckets} -eq 0 ] || [ "$myBuckets" == "None" ] && return
-	echo $myBuckets
+	echo "${myBuckets}"
 }
 
 # Lists stacks available on AWS. If status arg provided, only return stacks with the given status.
@@ -49,12 +55,12 @@ aws_stacks() {
 	awsStacks=
 	if [ $# -eq 1 ]; then
 		awsStacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='$1'].StackName")
-		[ ${#awsStacks} -eq 0 ] || [ "$awsStacks" == "None" ] && return
+		[ ${#awsStacks} -eq 0 ] || [ "${awsStacks}" == "None" ] && return
 	else
 		awsStacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
-		[ ${#awsStacks} -eq 0 ] || [ "$awsStacks" == "None" ] && return
+		[ ${#awsStacks} -eq 0 ] || [ "${awsStacks}" == "None" ] && return
 	fi
-	echo $awsStacks
+	echo "${awsStacks}"
 }
 
 # Get a prop stored in $blj_aws_config
@@ -64,7 +70,7 @@ get_blj_prop() {
 	val=$(get_prop $blj_aws_config $1)
 	[ ${#val} -eq 0 ] && val=$2
 	[ ${#val} -gt 0 ] && response=$(set_blj_prop $1 $val)
-	echo $val
+	echo "${val}"
 }
 
 # Return property value from the given file
@@ -72,7 +78,8 @@ get_blj_prop() {
 # Param 2 - Prop name
 get_prop() {
 	prop=$(cat $1 | grep $2)
-	echo $(eval "echo ${prop/$2=}")
+	out=$(eval "echo ${prop/$2=}")
+	echo "${out}"
 }
 
 
@@ -81,7 +88,7 @@ get_prop() {
 get_stack_param() {
 	myParam=$(aws cloudformation describe-stacks --stack-name $(get_blj_prop awsStack) --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
 	[ ${#myParam} -eq 0 ] && return
-	echo $myParam
+	echo "${myParam}"
 }
 
 # Init AWS Config properties file [ $blj_aws_config ] with pipeline Config, AWS config, and standard defaults
@@ -89,7 +96,7 @@ get_stack_param() {
 # Param 1 Pipeline Config file path
 init_aws_config() {
 	aws_archive
-	echo "Copy AWS properties from Pipeline Config [ $1 ] into --> AWS Config [ $blj_aws_config ]"
+	aws_log "Copy AWS properties from Pipeline Config [ $1 ] into --> AWS Config [ $blj_aws_config ]"
 	set_pipeline_config_files $1
 	configFiles=$(get_blj_prop configFiles)
 	IFS2=$IFS && IFS="," && propFiles=( $configFiles ) && IFS=$IFS2
@@ -97,7 +104,7 @@ init_aws_config() {
 		set_pipeline_conig_props $propFile
 	done
 	verify_required_config
-	echo "Pipeline Config properties initialized stored with AWS Config properties in: $blj_aws_config"
+	aws_log "Pipeline Config properties initialized stored with AWS Config properties in: $blj_aws_config"
 	aws_report_config
 }
 
@@ -143,21 +150,21 @@ set_blj_prop() {
 # Files should be listed in order from standard.props up to project.props
 # Param 1 Pipeline Config file-path
 set_pipeline_config_files() {
-	echo "Search pipeline Config [ $1 ] for nested Config files defined by: \"pipeline.defaultProps\""
+	aws_log "Search pipeline Config [ $1 ] for nested Config files defined by: \"pipeline.defaultProps\""
 	configFiles=$1
 	propFile=$(get_prop $1 "pipeline.defaultProps")
 	while [ -f "$propFile" ]; do
 		configFiles="$propFile,$configFiles"
 		propFile=$(get_prop $propFile "pipeline.defaultProps")
 	done
-	echo "Save list of pipeline Config files configFiles=$configFiles"
+	aws_log "Save list of pipeline Config files configFiles=$configFiles"
 	set_blj_prop configFiles $configFiles
 }
 
 # Save AWS Config properties from pipeline Config file to AWS Config file: $blj_aws_config
 # Param 1 Pipeline Config file path
 set_pipeline_conig_props() {
-	echo "Update [ $blj_aws_config ] with any AWS properties found in Pipeline Config [ $1 ]"
+	aws_log "Update [ $blj_aws_config ] with any AWS properties found in Pipeline Config [ $1 ]"
 	set_blj_prop awsAccountId $(get_prop $1 "aws.account_id") $IS_NULL
 	set_blj_prop awsEc2AcquisitionStrategy $(get_prop $1 "aws.ec2AcquisitionStrategy") $IS_NULL
 	set_blj_prop awsEc2InstanceType $(get_prop $1 "aws.ec2InstanceType") $IS_NULL
@@ -189,7 +196,7 @@ set_pipeline_conig_props() {
 
 # Set basic defaults if undefined & throw error if user did not login to aws client or is missing required properties
 verify_required_config() {
-	echo "Assign default Config properties..."
+	aws_log "Assign default Config properties..."
 	. $blj_aws_config
 	[ ${#awsAccountId} -eq 0 ] && set_blj_prop awsAccountId $(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId)
 	[ ${#awsProfile} -eq 0 ] && set_blj_prop awsProfile default
@@ -206,13 +213,13 @@ verify_required_config() {
 	set_blj_prop aws_access_key_id $(aws_local_prop aws_access_key_id $aws_cred_file)
 	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
 	. $blj_aws_config
-	echo "Verify aws client authentication..."
+	aws_log "Verify aws client authentication..."
 	[ ${#awsAccountId} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."
 	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."
 	[ ${#aws_access_key_id} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
 	[ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."
 	
-	echo "Verify required Pipeline Config properties exist ( TO-DO --> implement value or type validations )..."
+	aws_log "Verify required Pipeline Config properties exist ( TO-DO --> implement value or type validations )..."
 	[ ${#awsEc2AcquisitionStrategy} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ec2AcquisitionStrategy\" undefined!"
 	[ ${#awsEc2SpotPer} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ec2SpotPer\" undefined!"
 	[ ${#awsRam} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ram\" undefined!"

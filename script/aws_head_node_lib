@@ -73,7 +73,7 @@ aws_upload_s3() {
 		exit_script "Error [ aws_head_node_lib ]: Failed to update AWS property $1=\"$newPath\" in --> $blj_aws_config.\nFailed command: \"aws s3 sync $2 $newPath --exclude *.DS_Store\""
 	fi
 	
-	echo $newPath
+	echo ${newPath}
 }
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
@@ -83,7 +83,7 @@ build_docker_job_defs() {
 	jobRam=1024
 	IFS=$'\t'
 	[ ${#dockerModules} -eq 0 ] && "No Docker images found for Docker Account \"$dockerUser\"" && return
-	echo "Building job-definitions"
+	aws_log "Building job-definitions"
 	echo $dockerModules | while read -r line; do
 		[ $(echo $line | grep -c blj_basic) -gt 0 ] && continue
 		module=$(echo $line | cut -f 1 -d " ")
@@ -106,19 +106,19 @@ build_docker_job_defs() {
 		if [ ${#jobName} -eq 0 ]; then
 			registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
 			jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
-			echo "Registered new Docker job-definition: $jobName"
+			aws_log "Registered new Docker job-definition: $jobName"
 		else
-			echo "Found existing Docker job-definition: $jobName"
+			aws_log "Found existing Docker job-definition: $jobName"
 		fi
 		prop=$(get_blj_prop "image_$jobLabel" $jobName)
-		echo "Saved Docker job-definition label: image_$jobLabel=$prop"
+		aws_log "Saved Docker job-definition label: image_$jobLabel=$prop"
 	done
 	touch ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS
 }
 
 # Connect to running head node
 connect_head() {
-	echo "Opening SSH tunnel to Head Node...$(get_blj_prop publicHost)"
+	aws_log "Opening SSH tunnel to Head Node...$(get_blj_prop publicHost)"
 	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_blj_prop publicHost)
 	
 	#mv ~/.bash_profile ~/.bash_profile~
@@ -186,7 +186,7 @@ launch_ec2_head_node() {
 		sleep 10s
 		runTime=$((runTime+10))  
 	done
-	echo "InstanceID [ $instanceID ] created in $runTime seconds!"
+	aws_log "InstanceID [ $instanceID ] created in $runTime seconds!"
 	set_blj_prop instanceID $instanceID
 	set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName")
 	
@@ -304,7 +304,7 @@ update_config_file() {
 			echo "$line" >> $outFile
 		fi
 	done
-	echo $outFile
+	echo ${outFile}
 }
 
 # The method creates a new version of the pipeline Config files by replacing 

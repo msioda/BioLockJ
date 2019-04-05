@@ -86,7 +86,7 @@ blj_summary() {
 
 # Return absolute path of current pipeline if in a pipeline directory
 current_pipeline() {
-	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then
+	if ! $(dir_missing $BLJ_PROJ); then
 		dir="$PWD"
 		parentDir="$(dirname $dir)"
 		while [ "$parentDir" != "$BLJ_PROJ" ] && [ "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
@@ -119,7 +119,8 @@ get_version() {
 }
 
 # Return 0 if directory is empty (or missing)
-is_empty() {
+# Param 1 - Directory-path expected
+dir_missing() {
 	[ ! -d "$1" ] || [ -z "$(\ls -A $1)" ]
 }
 
@@ -149,7 +150,7 @@ is_pipeline_dir() {
 
 # Return absolute path of most recent pipeline
 most_recent_pipeline() {
-	if [ -d "$BLJ_PROJ" ] && ! $(is_empty $BLJ_PROJ); then
+	if ! $(dir_missing $BLJ_PROJ); then
 		for dir in $(ls -1dt $BLJ_PROJ/*); do
 			$(is_pipeline_dir $dir) && echo "$dir" && return
 		done
