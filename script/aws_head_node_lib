@@ -19,7 +19,7 @@ S3_DIR="s3://"
 
 # Sync local files to S3 for cloud pipeline execution
 aws_sync_s3_folders() {
-	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_head_node_lib ]: Requires awsS3 property is defined in $blj_aws_config"
+	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_head_node_lib.aws_sync_s3_folders() ]: Requires awsS3 property is defined in $blj_aws_config"
 	aws_upload_s3 inputDirPath $inputDirPath seq
 	aws_upload_s3 metadataFilePath $metadataFilePath metadata
 	aws_upload_s3 trimPrimersFilePath $trimPrimersFilePath primers
@@ -62,15 +62,15 @@ aws_s3_ls() {
 aws_upload_s3() {
 	[ $# -eq 2 ] && [ "$1" != "$IS_NULL" ] && return
 	[ $# -lt 2 ] || [ "${2:0:5}" == "$S3_DIR" ] && return
-	[ ! -f "$2" ] && [ ! -d "$2" ] && exit_script "Error [ aws_head_node_lib ]: Local path \"$2\" not found!"
+	[ ! -f "$2" ] && [ ! -d "$2" ] && exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Local path \"$2\" not found!"
 	newPath="$(get_s3_name $2 $3)"
-	[ ${#newPath} -eq 0 ] && exit_script "Error [ aws_head_node_lib ]: Unable to build S3 AWS property for $1=\"$2\".\nPlease verify \"$2\" is a valid file-path"
+	[ ${#newPath} -eq 0 ] && exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Unable to build S3 AWS property for $1=\"$2\".\nPlease verify \"$2\" is a valid file-path"
 	
 	val=$(aws s3 sync $2 $newPath --exclude *.DS_Store)
 	if [ ${#val} -gt 0 ]; then
 		set_blj_prop $1 $newPath
 	else
-		exit_script "Error [ aws_head_node_lib ]: Failed to update AWS property $1=\"$newPath\" in --> $blj_aws_config.\nFailed command: \"aws s3 sync $2 $newPath --exclude *.DS_Store\""
+		exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Failed to update AWS property $1=\"$newPath\" in --> $blj_aws_config.\nFailed command: \"aws s3 sync $2 $newPath --exclude *.DS_Store\""
 	fi
 	
 	echo ${newPath}
@@ -149,7 +149,7 @@ exe_remote() {
 # Upload local files to S3
 # Copy Config file with updated properties to reference new S3 paths
 init_head_node() {
-	. $blj_aws_config
+	refresh_aws_cache
 	update_config_s3_props
 	aws_sync_s3_folders
 	
@@ -170,11 +170,11 @@ init_head_node() {
 
 # Launch a new ec2 head node
 launch_ec2_head_node() {
-	. $blj_aws_config
+	refresh_aws_cache
 	[ -x "$(which docker)" ] && build_docker_job_defs
 
 	runTime=0
-	instanceID=$(aws ec2 run-instances --count 1 --key-name $awsStack-KeyPair --image-id $awsAmi --security-group-ids $(get_stack_param BastionSecurityGroup)  \
+	instanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids $(get_stack_param BastionSecurityGroup)  \
 		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $(get_stack_param Subnet1) \
 		--launch-template LaunchTemplateId=$(get_stack_param HeadNodeLaunchTemplateId) --instance-type $awsEc2InstanceType --query "Instances[].InstanceId" )
 

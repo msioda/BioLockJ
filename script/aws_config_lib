@@ -82,7 +82,6 @@ get_prop() {
 	echo "${out}"
 }
 
-
 # Get a stack parameter for the configured stack 
 # Param 1 - Param name
 get_stack_param() {
@@ -108,9 +107,14 @@ init_aws_config() {
 	aws_report_config
 }
 
+
 # Get the ec2 key file for the ec2 head node
 key_file() {
-	echo ~/.aws/$(get_blj_prop awsStack)-KeyPair.pem
+	echo ~/.aws/${awsStack}.pem
+}
+
+refresh_aws_cache() {
+	. $blj_aws_config
 }
 
 # Remove AWS property - delete the line from the file
@@ -166,6 +170,7 @@ set_pipeline_config_files() {
 set_pipeline_conig_props() {
 	aws_log "Update [ $blj_aws_config ] with any AWS properties found in Pipeline Config [ $1 ]"
 	set_blj_prop awsAccountId $(get_prop $1 "aws.account_id") $IS_NULL
+	set_blj_prop awsAmi $(get_prop $1 "aws.ami") $IS_NULL
 	set_blj_prop awsEc2AcquisitionStrategy $(get_prop $1 "aws.ec2AcquisitionStrategy") $IS_NULL
 	set_blj_prop awsEc2InstanceType $(get_prop $1 "aws.ec2InstanceType") $IS_NULL
 	set_blj_prop awsEc2SpotPer $(get_prop $1 "aws.ec2SpotPer") $IS_NULL
@@ -197,7 +202,7 @@ set_pipeline_conig_props() {
 # Set basic defaults if undefined & throw error if user did not login to aws client or is missing required properties
 verify_required_config() {
 	aws_log "Assign default Config properties..."
-	. $blj_aws_config
+	refresh_aws_cache
 	[ ${#awsAccountId} -eq 0 ] && set_blj_prop awsAccountId $(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId)
 	[ ${#awsProfile} -eq 0 ] && set_blj_prop awsProfile default
 	[ ${#awsRegion} -eq 0 ] && set_blj_prop awsRegion $(aws configure get region)
@@ -212,35 +217,15 @@ verify_required_config() {
 	
 	set_blj_prop aws_access_key_id $(aws_local_prop aws_access_key_id $aws_cred_file)
 	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
-	. $blj_aws_config
+	refresh_aws_cache
 	aws_log "Verify aws client authentication..."
-	[ ${#awsAccountId} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."
-	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."
-	[ ${#aws_access_key_id} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
-	[ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."
+	[ ${#awsAccountId} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_required_config() ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."
+	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_required_config() ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."
+	[ ${#aws_access_key_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_required_config() ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
+	[ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_required_config() ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."
 	
 	aws_log "Verify required Pipeline Config properties exist ( TO-DO --> implement value or type validations )..."
-	[ ${#awsEc2AcquisitionStrategy} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ec2AcquisitionStrategy\" undefined!"
-	[ ${#awsEc2SpotPer} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ec2SpotPer\" undefined!"
-	[ ${#awsRam} -eq 0 ] && exit_script "Error [ aws_config_lib ]: Required Pipeline Config property \"aws.ram\" undefined!"
+	[ ${#awsEc2AcquisitionStrategy} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_required_config() ]: Required Pipeline Config property \"aws.ec2AcquisitionStrategy\" undefined!"
+	[ ${#awsEc2SpotPer} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_required_config() ]: Required Pipeline Config property \"aws.ec2SpotPer\" undefined!"
+	[ ${#awsRam} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_required_config() ]: Required Pipeline Config property \"aws.ram\" undefined!"
 }
-
-# Build stack config using awsStack and awsAccountId references and build the roles
-#set_stack_config() {
-	#awsStack=$(get_blj_prop awsStack)
-	#awsAccountId=$(get_blj_prop awsAccountId)
-	# NEVER ACTUALLY USED THESE 3
-	#set_blj_prop queueName $awsStack-Queue
-	#set_blj_prop lowPriorityJobQRole $(get_stack_param JobQueueLowPriority)
-	#set_blj_prop efsID $(get_stack_param FileSystemId)  
-	# NO REASON TO STORE THESE, can call get_stack_param whenever these are needed
-	#set_blj_prop keyName $awsStack-KeyPair
-	#set_blj_prop serviceRole $(get_stack_param BatchServiceRoleArn)
-	#set_blj_prop iamFleetRole "arn:aws:iam::$awsAccountId:role/$(get_stack_param SpotIamFleetRoleArn)"
-	#set_blj_prop jobRoleArn $(get_stack_param ECSTaskRole)
-	#set_blj_prop instanceRole "arn:aws:iam::$awsAccountId:instance-profile/$(get_stack_param IamInstanceProfileArn)"
-	#set_blj_prop bastionGroup $(get_stack_param BastionSecurityGroup)
-	#set_blj_prop subnets "$(get_stack_param Subnet1),$(get_stack_param Subnet2)"
-	#set_blj_prop headNodeLaunchTemplate $(get_stack_param HeadNodeLaunchTemplateId)
-	#set_blj_prop batchNodeLaunchTemplate $(get_stack_param BatchNodeLaunchTemplateId)
-#}

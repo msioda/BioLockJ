@@ -23,14 +23,6 @@ Parameters:
     MinValue: 1
     MaxValue: 90
     Default: 80
-  SpotBatchMaxvCPUs:
-    Description: Max number of vCPUs for Batch environments
-    Type: Number
-    Default: 1024
-  OnDemandBatchMaxvCPUs:
-    Description: Max number of vCPUs for Batch environments
-    Type: Number
-    Default: 256
   VolumeName:
     Description: The name to be used for the EFS volume
     Type: String
@@ -307,7 +299,7 @@ Resources:
           - SpotComputeEnv
       ComputeResources:
         MinvCpus: 0
-        MaxvCpus: !Ref SpotBatchMaxvCPUs
+        MaxvCpus: 1024
         DesiredvCpus: 0
         SecurityGroupIds:
           - Ref: BastionSecurityGroup
@@ -357,7 +349,7 @@ Resources:
           - OnDemandComputeEnv
       ComputeResources:
         MinvCpus: 0
-        MaxvCpus: !Ref OnDemandBatchMaxvCPUs
+        MaxvCpus: 256
         DesiredvCpus: 0
         SecurityGroupIds:
           - Ref: BastionSecurityGroup

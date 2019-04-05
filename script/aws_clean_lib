@@ -147,6 +147,7 @@ aws_rm_key_pairs() {
 	while [ ${#vals} -gt 0 ]; do
 		((count++))
 		module=$(echo $vals | cut -f 1 -d " ")
+		$(is_empty ${module}) && break
 		aws_log "Deleting key-pair ARN #[$count]: ${module}"
 		aws ec2 delete-key-pair --key-name ${module}
 		arnVals=${vals/${module}/""}
