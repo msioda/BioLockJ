@@ -98,7 +98,7 @@ init_aws_config() {
 	aws_log "Copy AWS properties from Pipeline Config [ $1 ] into --> AWS Config [ $blj_aws_config ]"
 	set_pipeline_config_files $1
 	configFiles=$(get_blj_prop configFiles)
-	IFS2=$IFS && IFS="," && propFiles=( $configFiles ) && IFS=$IFS2
+	propFiles=$(split_data $configFiles ",")
 	for propFile in ${propFiles[@]}; do
 		set_pipeline_conig_props $propFile
 	done
@@ -128,8 +128,8 @@ rm_blj_prop() {
 	chmod 770 $TMP
 	cat $blj_aws_config | while read -r line; do
 		if [ "${line:0:1}" != "#" ]; then
-			IFS2=$IFS && IFS="=" && tokens=( ${line} )
-			IFS=$IFS2 && [ "${tokens[0]}" != "$1" ] && echo ${line} >> $TMP
+			IFS="=" && tokens=( ${line} )
+			[ "${tokens[0]}" != "$1" ] && echo ${line} >> $TMP
 		fi
 	done
 	rm $blj_aws_config

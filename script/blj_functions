@@ -171,3 +171,13 @@ named_arg() {
 		[ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
 	done
 }
+
+# Split data into an array using the delim to separate elements
+# Param 1 - data
+# Param 2 - delim
+split_data() {
+ 	data=(${1//"${2}"/ })
+	for val in "${data[@]}"; do
+		echo "${val}"
+	done
+}

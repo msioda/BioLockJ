@@ -37,8 +37,7 @@ aws_sync_s3_folders() {
 	
 	configFiles=$(get_blj_prop configFiles)
 	newConfigFiles=
-	IFS=","
-	propFiles=( $configFiles )
+	propFiles=$(split_data $configFiles ",")
 	for propFile in ${propFiles[@]}; do
 		val=$(aws_upload_s3 configFiles $propFile config)
 		[ ${#val} -gt 0 ] && [ ${#newConfigFiles} -gt 0 ] && newConfigFiles=",$newConfigFiles"
@@ -51,49 +50,28 @@ aws_sync_s3_folders() {
 # TEST: aws_s3_ls $awsS3/r16s_fastq
 # Param 1 - S3 bucket folder name
 aws_s3_ls() {
-	aws s3 ls s3://$1 --recursive --human-readable
+	aws s3 ls "${S3_DIR}${1}" --recursive --human-readable
 }
 
-# Sync local directory (all files/dirs) with AWS S3 Bucket-path
-# TEST: aws_upload_s3 inputDirPath $BLJ_SUP/resources/test/data/r16s_fastq seq
-# Param 1 - AWS property name
-# Param 2 - Local Directory of File
-# Param 3 - S3 bucket folder
-aws_upload_s3() {
-	[ $# -eq 2 ] && [ "$1" != "$IS_NULL" ] && return
-	[ $# -lt 2 ] || [ "${2:0:5}" == "$S3_DIR" ] && return
-	[ ! -f "$2" ] && [ ! -d "$2" ] && exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Local path \"$2\" not found!"
-	newPath="$(get_s3_name $2 $3)"
-	[ ${#newPath} -eq 0 ] && exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Unable to build S3 AWS property for $1=\"$2\".\nPlease verify \"$2\" is a valid file-path"
-	
-	val=$(aws s3 sync $2 $newPath --exclude *.DS_Store)
-	if [ ${#val} -gt 0 ]; then
-		set_blj_prop $1 $newPath
-	else
-		exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Failed to update AWS property $1=\"$newPath\" in --> $blj_aws_config.\nFailed command: \"aws s3 sync $2 $newPath --exclude *.DS_Store\""
-	fi
-	
-	echo ${newPath}
-}
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
-	dockerModules=$(docker search $dockerUser | grep -E ^$dockerUser ) 
+	dockerModules=$(docker search ${dockerUser} | grep -E ^${dockerUser} ) 
 	jobVcpus=2
 	jobRam=1024
 	IFS=$'\t'
-	[ ${#dockerModules} -eq 0 ] && "No Docker images found for Docker Account \"$dockerUser\"" && return
+	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
 	aws_log "Building job-definitions"
-	echo $dockerModules | while read -r line; do
+	echo ${dockerModules} | while read -r line; do
 		[ $(echo $line | grep -c blj_basic) -gt 0 ] && continue
 		module=$(echo $line | cut -f 1 -d " ")
 		jobImg="${module}:${dockerImgVersion}"
 		jobLabel=${jobImg/\//_} 
 		jobLabel=${jobLabel/:/_} 
 	    jobConfig="{ 
-	    		\"image\": \"$jobImg\",
-			\"vcpus\": $jobVcpus,
-			\"memory\": $jobRam,
+	    		\"image\": \"${jobImg}\",
+			\"vcpus\": ${jobVcpus},
+			\"memory\": ${jobRam},
 			\"command\": [ \"/bin/bash\" ],
 			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
 			\"volumes\": [ { \"host\": { \"sourcePath\": \"/mnt/efs\" }, \"name\": \"efs\" } ],
@@ -102,18 +80,18 @@ build_docker_job_defs() {
 			\"privileged\": true
 		}"
 		jobDef="${awsStack}_${jobLabel}"
-		jobName=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name $jobDef --query "jobDefinitions[*].jobDefinitionName")
+		jobName=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name ${jobDef} --query "jobDefinitions[*].jobDefinitionName")
 		if [ ${#jobName} -eq 0 ]; then
 			registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
 			jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
-			aws_log "Registered new Docker job-definition: $jobName"
+			aws_log "Registered new Docker job-definition: ${jobName}"
 		else
-			aws_log "Found existing Docker job-definition: $jobName"
+			aws_log "Found existing Docker job-definition: ${jobName}"
 		fi
-		prop=$(get_blj_prop "image_$jobLabel" $jobName)
-		aws_log "Saved Docker job-definition label: image_$jobLabel=$prop"
+		prop=$(get_blj_prop "image_${jobLabel}" ${jobName})
+		aws_log "Saved Docker job-definition label: image_${jobLabel}=${prop}"
 	done
-	touch ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS
+	touch ~/.aws/.${awsStack}-CREATED_DOCKER_JOB_DEFS
 }
 
 # Connect to running head node
@@ -133,11 +111,19 @@ get_aws_config_file() {
 	echo ~/.aws_config/$(basename $1)
 }
 
+# Build the S3 file/dir-path
 # Param 1 - Local Directory of File
 # Param 2 - S3 bucket folder
 get_s3_name() {
-	[ ! -f "$1" ] && [ ! -d "$1" ] && return
-	echo "s3://$awsS3/$2/$(basename $1)"
+	[ ! -f "$1" ] && [ ! -d "$1" ] && exit_script "Error [ aws_head_node_lib.get_s3_name() ]:  Param 1 = \"${1}\" is not a valid file/dir-path"
+	echo "${S3_DIR}${awsS3}/$2/$(basename $1)"
+}
+
+# Get the S3 directory-path
+# Param 1 - S3 bucket folder
+get_s3_dir() {
+	[ ${#1} -eq 0 ] && exit_script "Error [ aws_head_node_lib.get_s3_dir() ]:  Missing required parameter - S3 bucket folder name"
+	echo "${S3_DIR}${awsS3}/$1"
 }
 
 # Execute remote commands
@@ -150,7 +136,7 @@ exe_remote() {
 # Copy Config file with updated properties to reference new S3 paths
 init_head_node() {
 	refresh_aws_cache
-	update_config_s3_props
+	update_s3_config_files
 	aws_sync_s3_folders
 	
 	stage_to_head_node $BLJ/resources/aws/ec2_head_node_profile 
@@ -181,23 +167,17 @@ launch_ec2_head_node() {
 	printf "Launching EC2 Instance, please wait."
 	systemStatus=init
 	while [ "$systemStatus" != "ok" ]; do
-		systemStatus=$(aws ec2 describe-instance-status --instance-ids $instanceID --query "InstanceStatuses[*].SystemStatus.Status")
+		systemStatus=$(aws ec2 describe-instance-status --instance-ids ${instanceID} --query "InstanceStatuses[*].SystemStatus.Status")
 		printf "."
 		sleep 10s
 		runTime=$((runTime+10))  
 	done
-	aws_log "InstanceID [ $instanceID ] created in $runTime seconds!"
-	set_blj_prop instanceID $instanceID
-	set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicDnsName")
-	
-	# THESE APPEAR TO NEVER BE USED, COMMENTING OUT FOR NOW Apr 4
-	#set_blj_prop privateHost $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateDnsName")
-	#set_blj_prop privateIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PrivateIpAddress")
-	#set_blj_prop publicIp $(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[].Instances[].PublicIpAddress")
-	
-	publicHost=$(get_blj_prop publicHost)
+	aws_log "InstanceID [ ${instanceID} ] created in $runTime seconds!"
+	set_blj_prop instanceID ${instanceID}
+	set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids ${instanceID} --query "Reservations[].Instances[].PublicDnsName")
+	refresh_aws_cache
 	keyFound=$(cat ~/.ssh/known_hosts| grep -c ${publicHost})
-	[ $keyFound -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
+	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
 	aws_report_config
 	init_head_node
 	connect_head
@@ -216,8 +196,8 @@ rm_config_prop() {
 		if [ ${#line} -eq 0 ] || [ "${line:0:1}" == "#" ]; then
 			echo ${line} >> $TMP
 		else
-			IFS2=$IFS && IFS="=" && tokens=( ${line} )
-			IFS=$IFS2 && [ "${tokens[0]}" != "$2" ] && echo ${line} >> $TMP
+			IFS="=" && tokens=( ${line} )
+			[ "${tokens[0]}" != "$2" ] && echo ${line} >> $TMP
 		fi
 	done
 	rm $1 && [ -f $TMP ] && mv $TMP $1
@@ -253,9 +233,13 @@ update_config_file() {
 		IFS2=$IFS && IFS="=" && tokens=( ${line} ) && IFS=$IFS2
 		[ ${#tokens[@]} -gt 0 ] && arg=${tokens[0]}
 		[ ${#tokens[@]} -gt 1 ] && val=${tokens[1]}
-		if [ ${#tokens[@]} -eq 1 ] || [ ${#tokens[@]} -eq 2 ] && [ "${2:0:5}" == "$S3_DIR" ]; then
+		if [ ${#tokens[@]} -eq 1 ] || [ ${#tokens[@]} -eq 2 ] && [ "${val:0:5}" == "$S3_DIR" ]; then
 			echo "$line" >> $outFile
-		elif [ "$arg" == "pipeline.defaultProps" ] && [ -d "$val" ]; then
+		elif [ "$arg" == "pipeline.defaultProps" ] && [ -f "$val" ]; then
+			
+			newPath=$(get_s3_name $val config)
+			[ ${#newPropFiles} -gt 0 ] && newPropFiles=",$newPropFiles"
+			newPropFiles=${newPath}${newPropFiles}
 			newPath=$(get_s3_name $defaultConfig config)
 			echo "$arg=$newPath" >> $outFile
 		elif [ "$arg" == "input.dirPaths" ] && [ -d "$val" ]; then
@@ -308,17 +292,56 @@ update_config_file() {
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
-update_config_s3_props() {
-	[ ! -d "$AWS_CONFIG" ] && mkdir $AWS_CONFIG
+update_s3_config_files() {
+	[ ! -d "$AWS_CONFIG" ] && mkdir $AWS_CONFIG && aws_log "Creating the staging directory:  $AWS_CONFIG"
 	configFiles=$(get_blj_prop configFiles)
-	IFS=","
-	propFiles=( $configFiles )
+	aws_log "Generating new Config files with properties that reference AWS S3 locations instead of local file-paths"
 	newPropFiles=
+	propFiles=$(split_data $configFiles ",")
 	for propFile in ${propFiles[@]}; do
-		newLocalConfig=$(update_config_file $propFile)
-		newPath=$(aws_upload_s3 $IS_NULL $newLocalConfig config)
+		aws_log "Updating $propFile properties to reference S3 locations (instead of local dirs)"
+		update_config_file $propFile
+		aws_log "Staging $propFile --> ${AWS_CONFIG}"
+		newPath=$(get_s3_name $propFile config)
 		[ ${#newPropFiles} -gt 0 ] && newPropFiles=",$newPropFiles"
 		newPropFiles=${newPath}${newPropFiles}
 	done
+	
+	
+	upload_s3_dir $AWS_CONFIG config
 	set_config_prop configFiles $newPropFiles
+	refresh_aws_cache
+}
+
+# Upload local directory to AWS S3 Bucket if modified
+# TEST: upload_s3_dir $AWS_CONFIG config
+# Param 1 - Local directory
+# Param 2 - S3 bucket folder
+upload_s3_dir() {
+	[ $# -ne 2 ] || [ "${1:0:5}" == "$S3_DIR" ] && return
+	[ ! -d "$1" ] && exit_script "Error [ aws_head_node_lib.upload_s3_dir() ]: Local path \"$1\" not found!"
+	newPath="$(get_s3_dir $2)/$(basename $1)"
+	[ ${#newPath} -eq 0 ] && exit_script "Error [ aws_head_node_lib.upload_s3_dir() ]: Failed to upload $1 --> AWS S3"
+	val=$(aws s3 sync $2 $(get_s3_dir $2) --exclude *.DS_Store)
+	echo ${newPath}
+}
+ 
+# Upload local file to AWS S3 Bucket folder if modified
+# TEST: upload_s3_file metadataFilePath $metadataFilePath metadata
+# Param 1 - AWS property name
+# Param 2 - Local file
+# Param 3 - S3 bucket folder
+upload_s3_file() {
+	[ $# -eq 2 ] && [ "$1" != "$IS_NULL" ] && return
+	[ $# -lt 2 ] || [ "${2:0:5}" == "$S3_DIR" ] && return
+	[ ! -f "$2" ] && exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Local path \"$2\" not found!"
+	newPath="$(get_s3_dir $2 $3)"
+	[ ${#newPath} -eq 0 ] && exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Unable to build S3 AWS property for $1=\"$2\".\nPlease verify \"$2\" is a valid file-path"
+	val=$(aws s3 sync $2 $newPath --exclude *.DS_Store)
+	if [ ${#val} -gt 0 ]; then
+		set_blj_prop $1 $newPath
+	else
+		exit_script "Error [ aws_head_node_lib.aws_upload_s3() ]: Failed to update AWS property $1=\"$newPath\" in --> $blj_aws_config.\nFailed command: \"aws s3 sync $2 $newPath --exclude *.DS_Store\""
+	fi
+	echo ${newPath}
 }

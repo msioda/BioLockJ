@@ -38,7 +38,7 @@ export BLJ_PROJ="$S3_BUCKET/pipelines"
 export BLJ_PRIMER="$S3_BUCKET/primers"
 export BLJ_SEQ="$S3_BUCKET/seq"
 
-[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
+[ ! -f ~/.aws/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
 
 ######=======================================######
 ######   BioLockJ AWS .bash_profile LOADED   ###### 

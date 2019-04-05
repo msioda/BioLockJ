@@ -20,7 +20,7 @@ else
 	echo "    Saved backup:  $blj_profile~"
 fi
 
-echo "[ -x $bljDir/script/blj_config ] && . $bljDir/script/blj_config" >> $blj_profile
+echo "[ -f $bljDir/script/blj_config ] && . $bljDir/script/blj_config" >> $blj_profile
 source $blj_profile
 echo "    Saved profile:  $blj_profile"
 echo "BioLockJ installation complete!"

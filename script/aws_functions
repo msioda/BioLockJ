@@ -141,17 +141,6 @@ run_aws() {
 	init_aws_config $1 && deploy_cloud_formation && launch_ec2_head_node
 }
 
-# Get ENABLED Compute Environment (if configured) 
-verify_comp_env() {
-	configCompEnv=$awsStack-ComputeEnv
-	if [ ${#configCompEnv} -gt 0 ]; then
-		allCompEnvs=$(aws batch describe-compute-environments --query "computeEnvironments[].computeEnvironmentName")
-		enabledCompEnvs=$(aws batch describe-compute-environments --compute-environments $configCompEnv --query "computeEnvironments[?state=='ENABLED'].computeEnvironmentName")
-		$(containsVar $enabledCompEnvs $configCompEnv) && aws_log "Found ENABLED Compute Environment: $configCompEnv" && return
-		$(containsVar $allCompEnvs $configCompEnv) && exit_script "Error [ aws_functions.verify_comp_env() ]: Invalid AWS Compute Environment: $configCompEnv" 
-	fi
-}
-
 # Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.
 # If aws.stack was undefined, create a new stack.
 verify_stack() {
@@ -162,7 +151,6 @@ verify_stack() {
 	createInProgStacks=$(aws_stacks CREATE_IN_PROGRESS)
 	if [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$awsStack}" != "$enabledStacks" ]; then
 		aws_log "Configured AWS Stack: $awsStack --> status=CREATE_COMPLETE"
-		verify_comp_env
 	elif [ ${#createInProgStacks} -gt 0 ] && [ "${createInProgStacks/$awsStack}" != "$createInProgStacks" ]; then
 		sleep 30 && verify_stack
 	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$awsStack}" != "$allStacks" ]; then
