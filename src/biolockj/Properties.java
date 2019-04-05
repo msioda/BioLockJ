@@ -15,7 +15,6 @@ import java.io.*;
 import java.util.*;
 import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
-import biolockj.util.RuntimeParamUtil;
 
 /**
  * Load properties defined in the BioLockJ configuration file, including inherited properties from project.defaultProps
@@ -132,7 +131,6 @@ public class Properties extends java.util.Properties
 
 	/**
 	 * Parse property file for the property {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS}.<br>
-	 * pipeline.defaultProps=$BLJ/resources/config/default/docker.properties
 	 * 
 	 * @param configFile BioLockJ Config file
 	 * @return nested default prop file or null
@@ -168,12 +166,12 @@ public class Properties extends java.util.Properties
 
 		// No more nested default Config files
 		// If running Docker, add the Docker Config...
-		if( RuntimeParamUtil.isDockerMode()
-				&& !defaultConfigFiles.contains( Config.getExistingFileObject( DOCKER_CONFIG_PATH ) ) )
-		{
-			Log.info( Properties.class, "Import Docker Config: " + DOCKER_CONFIG_PATH );
-			return Config.getExistingFileObject( DOCKER_CONFIG_PATH );
-		}
+//		if( RuntimeParamUtil.isDockerMode()
+//				&& !defaultConfigFiles.contains( Config.getExistingFileObject( DOCKER_CONFIG_PATH ) ) )
+//		{
+//			Log.info( Properties.class, "Import Docker Config: " + DOCKER_CONFIG_PATH );
+//			return Config.getExistingFileObject( DOCKER_CONFIG_PATH );
+//		}
 
 		return null;
 	}
@@ -206,11 +204,11 @@ public class Properties extends java.util.Properties
 
 	private static List<File> defaultConfigFiles = new ArrayList<>();
 
-	/**
-	 * Path to Docker Config file: {@value #DOCKER_CONFIG_PATH}<br>
-	 * Sets Docker properties as the default config.
-	 */
-	private static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";
+//	/**
+//	 * Path to Docker Config file: {@value #DOCKER_CONFIG_PATH}<br>
+//	 * Sets Docker properties as the default config.
+//	 */
+//	private static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";
 	private static Properties props = null;
 	private static final long serialVersionUID = 2980376615128441545L;
 
