@@ -316,9 +316,9 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         console.log(para);
         if (!(currentConfig.paramKeys.includes(para))){
           console.log(para);
-          const currentMenuTab = getCurrentMenuTab();
+          const currentMenuTab = getCurrentMenuTab();//Get whatever tab is currently visable
           console.log(menuTabsArray.indexOf(currentMenuTab));
-          currentMenuTab.style.display = 'none';
+          currentMenuTab.style.display = 'none';//close the tab
           menuTabButtons[menuTabsArray.indexOf(getParentDiv(para))].click();
           alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
           highlightRequiredParam(para);
