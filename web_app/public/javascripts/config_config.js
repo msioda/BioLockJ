@@ -313,14 +313,12 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     function dependenciesPresent(dependencyMap){
       const menuTabsArray = Array.from(menuTabs);
       for (let para of dependencyMap.keys()){
-        console.log(para);
         if (!(currentConfig.paramKeys.includes(para))){
           console.log(para);
           const currentMenuTab = getCurrentMenuTab();//Get whatever tab is currently visable
-          console.log(menuTabsArray.indexOf(currentMenuTab));
           currentMenuTab.style.display = 'none';//close the tab
-          menuTabButtons[menuTabsArray.indexOf(getParentDiv(para))].click();
-          alert('Required information missing: '.concat(dependencyMap.get(para)))//change this to modal later
+          getParentDiv(para).style.display = 'block';
+          alert('Required information missing: '.concat(dependencyMap.get(para)));//change this to modal later
           highlightRequiredParam(para);
           return false;
         }//end if
@@ -473,10 +471,14 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
       for (let i = 0; i < mustPassTogether.length; i++) {
         if (mustPassTogether[i].includes(key)) {
           for (let a = 0; a < mustPassTogether[i].length; a++) {
-            const mpt = mustPassTogether[i][a]
+            const mpt = mustPassTogether[i][a];
             if (this.paramKeys.includes(mpt)===false) {
+              const currentMenuTab = getCurrentMenuTab();//Get whatever tab is currently visable
+              currentMenuTab.style.display = 'none';//close the tab
               console.log('failed to pass mustPassTogether: ', key);
+              getParentDiv(mpt).style.display = 'block';
               highlightRequiredParam(mpt);
+              alert(`The following variables must all be passed if any of them is passed: ${mustPassTogether[i].toString()}.`)
               return false;
             }
           }
@@ -488,14 +490,14 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
         if (commonParentDir[j].includes(key)){
           for (let a = 0; a < commonParentDir[j].length; a++) {
             const d = commonParentDir[j][a];
-            console.log('crudeParentDir(d): ', crudeParentDir(d), ' ', valPar);
             if (crudeParentDir(d) != valPar){
-              console.log('failed commonParentDir: ', key);
-              alert('The following must share a common parent directory: ', commonParentDir[j]);
               commonParentDir[j].forEach( ele => {
                 highlightRequiredParam(ele);
               })
-              // highlightRequiredParam(d);
+              alert(`The following must share a common parent directory: ${commonParentDir[j].toString()}`);
+              const currentMenuTab = getCurrentMenuTab();//Get whatever tab is currently visable
+              currentMenuTab.style.display = 'none';//close the tab
+              getParentDiv(key).style.display = 'block';
               return false;
             }
           }
