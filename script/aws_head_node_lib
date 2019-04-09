@@ -23,10 +23,9 @@ aws_sync_s3() {
 	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_head_node_lib.aws_sync_s3() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
 	
 	# Upload files
-	upload_s3_dir $metadataFilePath metadata
-	upload_s3_dir $trimPrimersFilePath primers
-	upload_s3_file $rdpDb db
-	
+	upload_s3_file $metadataFilePath metadata
+	upload_s3_file $trimPrimersFilePath primers
+
 	# Upload dirs
 	upload_s3_dir $inputDirPaths seq
 	upload_s3_dir $humann2NuclDB db
@@ -39,6 +38,7 @@ aws_sync_s3() {
 	upload_s3_dir $qiimePynastAlignDB db
 	upload_s3_dir $qiimeRefSeqDB db
 	upload_s3_dir $qiimeTaxaDB db
+	[ -f "$rdpDb" ] && upload_s3_dir $(dirname rdpDb) db
 }
 
 # List all contents of an AWS S3 Bucket
@@ -128,8 +128,17 @@ get_s3_dir() {
 init_head_node() {
 	update_s3_config_files
 	aws_sync_s3
-	exe_remote "mkdir /home/ec2-user/config"
-	exe_remote "mkdir /home/ec2-user/script"
+	
+	localConfig=/home/ec2-user/config
+	localScript=/home/ec2-user/script
+	localInput=/mnt/efs/input
+	localPipelines=/mnt/efs/pipelines
+	
+	exe_remote "[ ! -d $localConfig ] && mkdir $localConfig"
+	exe_remote "[ ! -d $localScript ] && mkdir $localScript"
+	exe_remote "[ ! -d $localInput ] && mkdir $localInput"
+	exe_remote "[ ! -d $localPipelines ] && mkdir $localPipelines"
+	
 	[ -f $AWS_DOCKER_JOB_FLAG ] && stage_file_to_head_node $AWS_DOCKER_JOB_FLAG
 	stage_file_to_head_node $BLJ/resources/aws/ec2_head_node_profile 
 	stage_dir_to_head_node $AWS_CONFIG /home/ec2-user/config
@@ -199,12 +208,6 @@ stage_dir_to_head_node() {
 	done
 }
 
-#configFiles=$(get_blj_prop configFiles)
-	#propFiles=( ${configFiles//,/ } ) 
-	#for propFile in ${propFiles[@]}; do
-	#	stage_to_head_node $propFile /home/ec2-user/config
-	#done
-
 # Change the file/dir-path to the new S3 path
 # Param 1 - Config file
 update_config_file() {
@@ -272,6 +275,7 @@ update_s3_config_files() {
 	for propFile in ${propFiles[@]}; do
 		update_config_file $propFile
 		s3Path=$(get_s3_name $propFile config)
+		upload_s3_file $s3Path config
 		[ ${#newPropFiles} -gt 0 ] && newPropFiles=",${newPropFiles}"
 		newPropFiles=${s3Path}${newPropFiles}
 	done
@@ -294,5 +298,5 @@ upload_s3_dir() {
 upload_s3_file() {
 	[ $# -ne 2 ] || [ "${2:0:5}" == "$S3_DIR" ] && return
 	[ ! -f "$1" ] && exit_script "Error [ aws_head_node_lib.upload_s3_file() ]: : Local path is not a valid file -->  $1"
-	aws s3 sync "$1" "$(get_s3_dir $2)/$(basename $1)" --exclude *.DS_Store
+	aws s3 cp "$1" "$(get_s3_dir $2)/$(basename $1)"
 }

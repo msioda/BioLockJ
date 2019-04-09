@@ -30,13 +30,18 @@ alias tlogf="tail -1000f *.log"
 . $SCRIPT/aws_head_node_lib
 
 export BLJ=$HOME
-export S3_BUCKET="s3://$awsS3"
+export BLJ_PROJ="/mnt/efs/pipelines"
+export BLJ_INPUT="/mnt/efs/input"
+export S3_BUCKET="s3://${awsS3}"
 export BLJ_CONFIG="$S3_BUCKET/config"
 export BLJ_DB="$S3_BUCKET/db"
 export BLJ_META="$S3_BUCKET/metadata"
 export BLJ_PROJ="$S3_BUCKET/pipelines"
 export BLJ_PRIMER="$S3_BUCKET/primers"
 export BLJ_SEQ="$S3_BUCKET/seq"
+
+[ ! -d $BLJ_PROJ ] && mkdir $BLJ_PROJ
+[ ! -d $BLJ_INPUT ] && mkdir $BLJ_INPUT
 
 [ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
 
