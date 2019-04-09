@@ -54,22 +54,27 @@ router.post('/retrievePipelines', function(req, res, next) {
     let names = [];
     let descrips = [];
     let paths = [];
+    let complete = [];
     fs.readdir(path.join( '/', 'pipelines' ), (err, files) => {
       if (err) {
         console.error(err);
         accessLogStream.write(e.stack + '\n');;
       }
+      let completePosition = 0;//variable for
       files.forEach( file => {
         const checkFile = fs.lstatSync(path.join('/','pipelines',file));
         if (checkFile.isDirectory()) {
-
+          complete[completePosition] = false;
           //go into folder
           const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
-          console.log('nestedFolderFiles: ', nestedFolderFiles);
+          // console.log('nestedFolderFiles: ', nestedFolderFiles);
 
           //get master config and read description
           for (var i = 0; i < nestedFolderFiles.length; i++) {
             console.log('nestedFolderFiles[i]: ', nestedFolderFiles[i]);
+            if (nestedFolderFiles[i] == 'biolockjComplete') {
+              complete[completePosition] = true;
+            }
             if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
               // console.log('nestedFolderFiles[i] MASTER_', nestedFolderFiles[i]);
               const propFilePath = path.join('/', 'pipelines', file, nestedFolderFiles[i]);
@@ -78,10 +83,10 @@ router.post('/retrievePipelines', function(req, res, next) {
 
               let projDescrp = 'Project description is empty';
 
-              for (var i = 0; i < propFile.length; i++) {
+              for (let a = 0; a < propFile.length; a++) {
                 if (propFile[i].startsWith('pipeline.description=')) {
-                  console.log(propFile[i].slice(20));
-                  projDescrp = propFile[i].slice(20);
+                  console.log(propFile[a].slice(20));
+                  projDescrp = propFile[a].slice(20);
                 }
               }//end propFile for loop
               names.push(file);
@@ -89,6 +94,7 @@ router.post('/retrievePipelines', function(req, res, next) {
               paths.push(propFilePath);
             }
           }//end nestedFolderFiles for loop
+          completePosition += 1;
         };//end if dir
       });
       // console.log(projects);
@@ -98,6 +104,7 @@ router.post('/retrievePipelines', function(req, res, next) {
         names : names,
         descrips : descrips,
         paths : paths,
+        complete : complete,
       }));
       res.end();
     });
