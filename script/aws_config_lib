@@ -8,16 +8,18 @@
 
 aws_cred_file=~/.aws/credentials
 blj_aws_config=~/.aws/blj_config
-sheBang='#!/bin/bash'
 IS_NULL=IS_NULL
 DB=/db
+HN2_NUCL_DB=$DB/chocophlan
+HN2_PROT_DB=$DB/uniref
+RDP_DB=$DB/rRNAClassifier.properties
 
 # Archive previous AWS Config properties file: $blj_aws_config
 aws_archive() {
 	aws_history=~/.aws/history
 	[ ! -d $aws_history ] && mkdir $aws_history
 	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/blj_config-$(date "+%Y-%m-%d.%H.%M.%S")
-	echo $sheBang > $blj_aws_config
+	echo '#!/bin/bash' > $blj_aws_config
 	chmod 770 $blj_aws_config
 }
 
@@ -67,15 +69,15 @@ aws_stacks() {
 # Param 1 - Pipeline Config file path
 # Param 2 - Pipeline Config property name
 convert_prop() {
-	set_blj_prop $(map_property_name "$2") $(get_prop $1 "$2") $IS_NULL
+	set_blj_prop $(map_property_name "$2") $(get_prop "$1" "$2") $IS_NULL
 }
 
 # Convert pipeline Config DB prop to AWS Config file property format in: $blj_aws_config
 # Param 1 - Pipeline Config file path
 # Param 2 - Pipeline Config DB property name
 convert_db_prop() {
-	db=$(get_prop $1 "$2")
-	[ "$db" != "$DB" ] && convert_prop $1 $2
+	db=$(get_prop "$1" "$2")
+	[ "$db" != "$DB" ] && convert_prop "$1" $2
 }
 
 # Get a prop stored in $blj_aws_config
@@ -92,7 +94,7 @@ get_blj_prop() {
 # Param 1 - Config file
 # Param 2 - Prop name
 get_prop() {
-	prop=$(cat $1 | grep $2)
+	prop=$(cat "$1" | grep $2)
 	out=$(eval "echo ${prop/$2=}")
 	echo "${out}"
 }
@@ -103,9 +105,9 @@ get_prop() {
 init_aws_config() {
 	aws_archive
 	aws_log "Copy AWS properties from Pipeline Config [ $1 ] into --> AWS Config [ $blj_aws_config ]"
-	set_pipeline_config_files $1
+	set_pipeline_config_files "$1"
 	configFiles=$(get_blj_prop configFiles)
-	propFiles=$(split_data $configFiles ",")
+	propFiles=( ${configFiles//,/ } )
 	for propFile in ${propFiles[@]}; do
 		set_pipeline_conig_props $propFile
 	done
@@ -119,34 +121,6 @@ key_file() {
 	echo ~/.aws/${awsStack}.pem
 }
 
-
-# AWS Config prop names cannot contain "." or bash fails trying to interpret as a function calls
-# Param 1 Prop name
-map_property_name() {
-	arg="demultiplexer.barcodeCutoff"
-	val=
-	foundPeriod="N"
-	size=$((${#arg}-1))
-	echo "Num chars = $size"
-	for i in $(seq 0 $size); do
-		echo "Print char range from $startIndex to $i"
-		char=${arg:$i:1} 
-		echo "Start Iteration [$i] - index = [$startIndex] char = $char"
-		if [ $foundPeriod == "Y" ]; then
-			upCase=$(echo "$char" | awk '{print toupper($0)}')
-			val=${val}${upCase}
-			foundPeriod="N"
-		elif [ "${char}" == "." ]; then
-			foundPeriod="Y"
-		else
-			val=${val}${char}
-			foundPeriod="N"
-		fi
-		echo "End Iteration [$i] val = $val"
-	done
-	echo ${val}
-}
-
 # AWS Config prop names cannot contain "." or bash fails trying to interpret as a function calls
 # Param 1 Prop name
 map_property_name() {
@@ -154,9 +128,9 @@ map_property_name() {
 	foundPeriod=N
 	size=$((${#1}-1))
 	for i in $(seq 0 $size); do
-		char=${1:$i:1} 
+		char=${1:$i:1}
 		if [ $foundPeriod == Y ]; then
-			upCase=$(echo ${char} | awk '{print toupper($0)}')
+			upCase=$(echo "${char}" | awk '{print toupper($0)}')
 			val=${val}${upCase}
 			foundPeriod=N
 		elif [ "${char}" == "." ]; then
@@ -174,22 +148,19 @@ refresh_aws_cache() {
 }
 
 # Remove AWS property - delete the line from the file
-# Param 1 - prop name 
-rm_blj_prop() {
-	conf=$(cat $blj_aws_config)
+# Param 1 - Config file
+# Param 2 - prop name 
+rm_config_prop() {
+	conf=$(cat "$1")
 	[ ${#conf} -eq 0 ] && return
-	TMP=~/.temp.txt
+	TMP=~/.temp_config.txt
 	[ -f $TMP ] && rm $TMP
-	echo $sheBang > $TMP
-	chmod 770 $TMP
-	cat $blj_aws_config | while read -r line; do
-		if [ "${line:0:1}" != "#" ]; then
-			IFS="=" && tokens=( ${line} )
-			[ "${tokens[0]}" != "$1" ] && echo ${line} >> $TMP
-		fi
-	done
-	rm $blj_aws_config
-	[ -f $TMP ] && mv $TMP $blj_aws_config
+	touch $TMP && chmod 770 $TMP
+	while read line; do
+		tokens=( ${line//=/ } )
+		[ "${tokens[0]}" != "$2" ] && echo ${line} >> $TMP
+	done < $1
+	[ -f $TMP ] && rm "$1" && mv $TMP "$1"
 }
 
 # Set a prop stored in $blj_aws_config.  In case prop value ${2} is null, $2 actually returns the 3rd param (the default)
@@ -202,7 +173,7 @@ set_blj_prop() {
 	prop=$(cat $blj_aws_config | grep $1)
 	exists=$(echo $prop | grep "$1=${2/\[/\\\[}")
 	[ ${#exists} -gt 0 ] && return
-	rm_blj_prop $1
+	rm_config_prop $blj_aws_config $1
 	echo "$1=$2" >> $blj_aws_config
 }
 
@@ -242,13 +213,12 @@ set_pipeline_conig_props() {
 	# File Paths
 	convert_prop "$1" "metadata.filePath"
 	convert_prop "$1" "trimPrimers.filePath"
-	rdpDb=$(get_prop $1 "rdp.db")
-	[ "$rdpDb" != "$DB/rRNAClassifier.properties" ] && convert_db_prop "$1" "rdp.db"
+	field="rdp.db"
+	[ "$(get_prop "$1" field)" != "$RDP_DB" ] && convert_db_prop "$1" field
 	
+
 	# Dir Paths
 	convert_prop "$1" "input.dirPaths"
-	convert_db_prop "$1" "humann2.nuclDB"
-	convert_db_prop "$1" "humann2.protDB"
 	convert_db_prop "$1" "kneaddata.dbs"
 	convert_db_prop "$1" "kraken.db"
 	convert_db_prop "$1" "kraken2.db"
@@ -257,6 +227,11 @@ set_pipeline_conig_props() {
 	convert_db_prop "$1" "qiime.pynastAlignDB"
 	convert_db_prop "$1" "qiime.refSeqDB"
 	convert_db_prop "$1" "qiime.taxaDB"
+	field="humann2.nuclDB"
+	[ "$(get_prop "$1" field)" != "$HN2_NUCL_DB" ] && convert_prop "$1" field
+	field="humann2.protDB"
+	[ "$(get_prop "$1" field)" != "$HN2_PROT_DB" ] && convert_prop "$1" field
+
 	aws_report_config
 }
 

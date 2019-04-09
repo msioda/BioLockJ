@@ -119,6 +119,16 @@ get_ip() {
 	echo $(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
 }
 
+# Create new stack name if awsStack is undefined in AWS Config
+get_stack_name() {
+	[ ${#awsStack} -gt 0 ] && aws_log "Using Pipeline Config \"aws.stack=${awsStack}\"" && return
+	aws_log "Generating unique AWS stack name"
+	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
+	newStack=$(generate_name bljStack "$stacks")
+	set_blj_prop awsStack $newStack
+	aws_log "Set awsStack=$newStack"
+	refresh_aws_cache
+}
 
 # Got existing S3 bucket names in your region
 get_s3_buckets() {
@@ -159,15 +169,4 @@ verify_stack() {
 	else
 		build_stack
 	fi
-}
-
-# Create new stack name if awsStack is undefined in AWS Config
-get_stack_name() {
-	[ ${#awsStack} -gt 0 ] && aws_log "Using Pipeline Config \"aws.stack=${awsStack}\"" && return
-	aws_log "Generating unique AWS stack name"
-	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-	newStack=$(generate_name bljStack "$stacks")
-	set_blj_prop awsStack $newStack
-	aws_log "Set awsStack=$newStack"
-	refresh_aws_cache
 }

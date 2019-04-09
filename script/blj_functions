@@ -159,25 +159,15 @@ most_recent_pipeline() {
 
 # Pass script input parameters + the argument name
 # Named arguments must be formated: "argName=argValue"
-# Param 1 aws_functions script args $@
-# Param 2 parameter name
+# Param 1 - Array of script args $@
+# Param 2 - Parameter name
 named_arg() {
 	args=("$@")
 	numArgs=${#@}
 	target=${args[$((numArgs-1))]}
 	args=${args[@]:0:$((numArgs-1))}
 	for arg in $args; do
-		IFS="=" && tokens=( $arg )
-		[ ${#tokens[*]} -eq 2 ] && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
-	done
-}
-
-# Split data into an array using the delim to separate elements
-# Param 1 - data
-# Param 2 - delim
-split_data() {
- 	data=(${1//"${2}"/ })
-	for val in "${data[@]}"; do
-		echo "${val}"
+		tokens=( ${arg//=/ } )
+		[ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
 	done
 }

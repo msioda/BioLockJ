@@ -141,8 +141,7 @@ init_head_node() {
 	
 	#exe_remote "[ ! -d /home/ec2-user/config ] && mkdir /home/ec2-user/config"
 	#configFiles=$(get_blj_prop configFiles)
-	#IFS=","
-	#propFiles=( $configFiles )
+	#propFiles=( ${configFiles//,/ } ) 
 	#for propFile in ${propFiles[@]}; do
 	#	stage_to_head_node $propFile /home/ec2-user/config
 	#done
@@ -187,40 +186,7 @@ launch_ec2_head_node() {
 # Param 1 - arg
 # Param 2 - target
 prop_exists() {
-	[ $# -eq 2 ] && [ "$1" ==  "$2" ] || [ "$1" == $(map_property_name "$1") ]
-}
-
-# Remove AWS property - delete the line from the file
-# Param 1 - Config file
-# Param 2 - prop name 
-rm_config_prop() {
-	conf=$(cat $1)
-	[ ${#conf} -eq 0 ] && return
-	TMP=~/.temp_config.txt
-	[ -f $TMP ] && rm $TMP
-	touch $TMP && chmod 770 $TMP
-	while read -r line; do
-		if [ ${#line} -eq 0 ] || [ "${line:0:1}" == "#" ]; then
-			echo ${line} >> $TMP
-		else
-			IFS="=" && tokens=( ${line} )
-			[ "${tokens[0]}" != "$2" ] && echo ${line} >> $TMP
-		fi
-	done < $1
-	rm $1 && [ -f $TMP ] && mv $TMP $1
-}
-
-# Set a prop stored in $blj_aws_config.  In case prop value ${2} is null, $2 actually returns the 3rd param (the default)
-# Param 1 Prop name
-# Param 2 Prop value
-# Param 3 Config file
-set_config_prop() {
-	[ $# -eq 2 ] && return
-	prop=$(get_prop $3 $1) 
-	exists=$(echo $prop | grep "$1=")
-	[ ${#exists} -gt 0 ] && return
-	rm_config_prop $3 $1
-	echo "$1=$2" >> $3
+	[ $# -eq 2 ] && [ "$1" ==  "$2" ] || [ "$1" == $(map_property_name "$2") ]
 }
 
 # Upload local file or directory to the ec2 head node
@@ -236,7 +202,8 @@ stage_to_head_node() {
 # Param 1 - Config file
 update_config_file() {
 	outFile="$AWS_CONFIG/$(basename $1)"
-	aws_log "Save new Pipeline Config with S3 paths --> $outFile"
+	touch $outFile
+	#aws_log "Save new Pipeline Config with S3 paths --> $outFile"
 	while read line; do
 		line=$(echo ${line} | xargs)
 		#aws_log "READ LINE:  ${line}"
@@ -253,10 +220,6 @@ update_config_file() {
 				echo "$arg=$(get_s3_name $val metadata)" >> $outFile
 			elif $(prop_exists "$arg" "trimPrimers.filePath"); then
 				echo "$arg=$(get_s3_name $val primers)" >> $outFile
-			elif [ "$val" != "$DB" ] && $(prop_exists "$arg" "humann2.nuclDB"); then
-				echo "$arg=$(get_s3_name $val db)" >> $outFile
-			elif [ "$val" != "$DB" ] && $(prop_exists "$arg" "humann2.protDB"); then
-				echo "$arg=$(get_s3_name $val db)" >> $outFile
 			elif [ "$val" != "$DB" ] && $(prop_exists "$arg" "kneaddata.dbs"); then
 				echo "$arg=$(get_s3_name $val db)" >> $outFile
 			elif [ "$val" != "$DB" ] && $(prop_exists "$arg" "kraken.db"); then
@@ -273,7 +236,11 @@ update_config_file() {
 				echo "$arg=$(get_s3_name $val db)" >> $outFile
 			elif [ "$val" != "$DB" ] && $(prop_exists "$arg" "qiime.taxaDB"); then
 				echo "$arg=$(get_s3_name $val db)" >> $outFile
-			elif [ "$val" != "$DB/rRNAClassifier.properties" ] && $(prop_exists "$arg" "rdp.db"); then
+			elif [ "$val" != "$HN2_NUCL_DB" ] && $(prop_exists "$arg" "humann2.nuclDB"); then
+				echo "$arg=$(get_s3_name $val db)" >> $outFile
+			elif [ "$val" != "$HN2_PROT_DB" ] && $(prop_exists "$arg" "humann2.protDB"); then
+				echo "$arg=$(get_s3_name $val db)" >> $outFile
+			elif [ "$val" != "$RDP_DB" ] && $(prop_exists "$arg" "rdp.db"); then
 				echo "$arg=$(get_s3_name $val db)" >> $outFile
 			else
 				echo "${line}" >> $outFile
@@ -294,16 +261,14 @@ update_s3_config_files() {
 	configFiles=$(get_blj_prop configFiles)
 	aws_log "Generating new Config files with properties that reference AWS S3 locations instead of local file-paths"
 	newPropFiles=
-	propFiles=$(split_data $configFiles ",")
+	propFiles=( ${configFiles//,/ } )
 	for propFile in ${propFiles[@]}; do
 		update_config_file $propFile
 		s3Path=$(get_s3_name $propFile config)
-		[ ${#newPropFiles} -gt 0 ] && newPropFiles=",$newPropFiles"
+		[ ${#newPropFiles} -gt 0 ] && newPropFiles=",${newPropFiles}"
 		newPropFiles=${s3Path}${newPropFiles}
 	done
 	set_blj_prop configFiles $newPropFiles
-	update_config_file $blj_aws_config
-	#upload_s3_dir $AWS_CONFIG config
 	refresh_aws_cache
 }
 

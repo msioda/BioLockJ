@@ -176,7 +176,8 @@ aws_rm_s3_buckets() {
 		while [ ${#s3items} -gt 0 ]; do
 			#IFS2=$IFS && IFS=$'\t\n'
 			#items=$( "$s3items" ) && IFS=$IFS2
-			items=$(split_data "$s3items" $'\t\n')
+			#items=$(split_data "$s3items" $'\t\n')
+			items=( ${s3items//'\t\n'/ } )
 			for item in ${items[@]}; do
 				aws s3api delete-objects --bucket ${bucket} --key ${item}
 			done
