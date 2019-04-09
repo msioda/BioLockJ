@@ -22,11 +22,11 @@ alias h="head -n 8"
 alias t="tail -n 8"
 alias f="find . -name"
 alias vib="vi ~/.bash_profile"
-alias cab="cat~/.bash_profile"
+alias cab="cat ~/.bash_profile"
 alias tlog="tail -1000 *.log"
 alias tlogf="tail -1000f *.log"
 
-. ~/blj_config
+. ~/config/blj_config
 . $SCRIPT/aws_head_node_lib
 
 export BLJ=$HOME
@@ -38,7 +38,7 @@ export BLJ_PROJ="$S3_BUCKET/pipelines"
 export BLJ_PRIMER="$S3_BUCKET/primers"
 export BLJ_SEQ="$S3_BUCKET/seq"
 
-[ ! -f ~/.aws/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
+[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
 
 ######=======================================######
 ######   BioLockJ AWS .bash_profile LOADED   ###### 
