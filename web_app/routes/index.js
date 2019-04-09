@@ -67,7 +67,6 @@ router.post('/retrievePipelines', function(req, res, next) {
           complete[completePosition] = false;
           //go into folder
           const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
-          // console.log('nestedFolderFiles: ', nestedFolderFiles);
 
           //get master config and read description
           for (var i = 0; i < nestedFolderFiles.length; i++) {
@@ -575,7 +574,7 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
       })
     }
   } catch (e) {
-    accessLogStream.write(e.stack + '\n');;
+    accessLogStream.write(e.stack + '\n');
     console.error(e);
   }
 });
@@ -643,6 +642,31 @@ router.post('/launchEc2HeadNode', function(req, res, next) {
     console.error(e);
   }
 });
+
+router.post('/retrieveAwsStackLists', function(req, res, next) {
+  try {
+    console.log( 'in /retrieveAwsStackLists: ' );
+    let aws = spawn(`$BLJ/web_app/AWSBatchGenomicsStack/support/getcloudformationstack.sh ALLAWSBATCHGENOMICSSTACKS`, {shell: '/bin/bash'});
+    //source ~/.batchawsdeploy/config ; deployCloudInfrastructure.sh delete testing
+    aws.stdout.on('data', function (data) {
+      console.log('stdout: ' + data.toString());
+      res.setHeader("Content-Type", "text/html");
+      res.write(data);
+      res.end();
+    });
+
+    aws.stderr.on('data', function (data) {
+      console.log('stderr: ' + data.toString());
+    });
+
+    aws.on('exit', function (code) {
+      console.log('child process exited with code ' + code.toString());
+    });
+  } catch (e) {
+    console.log('error in /retrieveAwsStackLists: ', e);
+    accessLogStream.write(e.stack + '\n');
+  }
+})
 
 // router.post('/validateAwsCreditials', function(req, res, next) {
 //   try {
