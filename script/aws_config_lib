@@ -8,6 +8,7 @@
 
 aws_cred_file=~/.aws/credentials
 blj_aws_config=~/.aws/blj_config
+sheBang='#!/bin/bash'
 IS_NULL=IS_NULL
 DB=/db
 HN2_NUCL_DB=$DB/chocophlan
@@ -19,7 +20,7 @@ aws_archive() {
 	aws_history=~/.aws/history
 	[ ! -d $aws_history ] && mkdir $aws_history
 	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/blj_config-$(date "+%Y-%m-%d.%H.%M.%S")
-	echo '#!/bin/bash' > $blj_aws_config
+	echo $sheBang > $blj_aws_config
 	chmod 770 $blj_aws_config
 }
 

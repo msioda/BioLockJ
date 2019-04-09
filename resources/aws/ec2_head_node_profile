@@ -26,31 +26,31 @@ alias cab="cat ~/.bash_profile"
 alias tlog="tail -1000 *.log"
 alias tlogf="tail -1000f *.log"
 
-. ~/config/blj_config
 . $SCRIPT/aws_head_node_lib
 
+export EFS="/mnt/efs"
 export BLJ=$HOME
-export BLJ_PROJ="/mnt/efs/pipelines"
-export BLJ_INPUT="/mnt/efs/input"
-export S3_BUCKET="s3://${awsS3}"
-export BLJ_CONFIG="$S3_BUCKET/config"
-export BLJ_DB="$S3_BUCKET/db"
-export BLJ_META="$S3_BUCKET/metadata"
-export BLJ_PROJ="$S3_BUCKET/pipelines"
-export BLJ_PRIMER="$S3_BUCKET/primers"
-export BLJ_SEQ="$S3_BUCKET/seq"
 
-[ ! -d $BLJ_PROJ ] && mkdir $BLJ_PROJ
-[ ! -d $BLJ_INPUT ] && mkdir $BLJ_INPUT
+export S3_BUCKET="s3://${awsS3}"
+export S3_CONFIG="$S3_BUCKET/config"
+export S3_DB="$S3_BUCKET/db"
+export S3_META="$S3_BUCKET/metadata"
+export S3_PROJ="$S3_BUCKET/pipelines"
+export S3_PRIMER="$S3_BUCKET/primer"
+export S3_SEQ="$S3_BUCKET/seq"
+
+export BLJ_CONFIG="~/config"
+export BLJ_DB="$EFS/db"
+export BLJ_INPUT="$EFS/input"
+export BLJ_META="$EFS/metadata"
+export BLJ_PROJ="$EFS/pipelines"
+export BLJ_PRIMER="$EFS/primer"
+
+export blj_aws_config=$BLJ_CONFIG/blj_config
+. $blj_aws_config
 
 [ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
 
 ######=======================================######
 ######   BioLockJ AWS .bash_profile LOADED   ###### 
 ######=======================================######
-
-
-
-
-
-
