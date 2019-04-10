@@ -41,13 +41,10 @@ summaryMsg="BioLockJ $(get_version) generated Nextflow Template with $numModules
 echo "// $summaryMsg" > $MAIN_NF
 echo "// Path: $MAIN_NF" >> $MAIN_NF
 echo "" >> $MAIN_NF
-echo 'aws.s3 = $aws.s3' >> $MAIN_NF
-echo 'pipeline.pipelineName = $pipeline.pipelineName' >> $MAIN_NF
-echo 'pipeline.pipelineDir = "${aws.efs}/${pipeline.pipelineName}"' >> $MAIN_NF
+echo 'pipeline.pipelineDir = "$BLJ_PROJ/$pipeline.pipelineName"' >> $MAIN_NF
 echo "" >> $MAIN_NF
 
 for module in ${modules[@]}; do
-	#echo "Add process for: $module"
 	echo "process ${module} {" >> $MAIN_NF
 	echo '	echo 	true' >> $MAIN_NF
 	echo '	cpus 	$script.numThreads' >> $MAIN_NF
@@ -55,7 +52,7 @@ for module in ${modules[@]}; do
 	echo '	label 	$nextflow.dockerImage' >> $MAIN_NF
 	echo '	input:' >> $MAIN_NF
 	printf "	val worker from Channel.watchPath( '" >> $MAIN_NF
-	printf '${pipeline.pipelineName}' >> $MAIN_NF
+	printf '${pipeline.pipelineDir}' >> $MAIN_NF
 	echo "/**_${module}/script/*.sh' )" >> $MAIN_NF
 	echo '	"""' >> $MAIN_NF
 	echo '	#!/bin/bash' >> $MAIN_NF

@@ -169,7 +169,7 @@ public class BioLockJ
 	
 	private static File getAwsStatus() throws Exception
 	{
-		return new File( "/home/ec2-user/.init_aws_" + RuntimeParamUtil.getAwsStack() );
+		return new File( Config.getSystemFilePath( "$HOME/.init_aws_" + RuntimeParamUtil.getAwsStack() ) );
 	}
 
 	/**
@@ -265,7 +265,6 @@ public class BioLockJ
 	 * <li>Set files editable
 	 * <li>Update pipeline root directory to EFS directory
 	 * <li>Update EFS MASTER {@link biolockj.Config} with new pipeline root directory path
-	 * <li>Save pipeline input files to EFS for faster processing
 	 * </ol>
 	 * 
 	 * @throws Exception if runtime errors occur
@@ -277,7 +276,6 @@ public class BioLockJ
 		setPipelineSecurity();
 		Config.setPipelineDir( NextflowUtil.copyPipelineToEfs() );
 		PropUtil.saveMasterConfig( null );
-		copyInputData();
 	}
 
 	/**

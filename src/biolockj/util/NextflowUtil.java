@@ -38,6 +38,7 @@ public class NextflowUtil
 	{
 		Log.info( NextflowUtil.class, "Initialize AWS Cloud Manager" );
 		final File template = buildInitialTemplate( asString( modules ) );
+		Log.info( NextflowUtil.class, "Generated template: " + template.getAbsolutePath() );
 		writeNextflowMainNF( getNextflowLines( template ) );
 		BioLockJUtil.deleteWithRetry( templateConfig(), 3 );
 		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
@@ -82,6 +83,7 @@ public class NextflowUtil
 	 */
 	protected static List<String> getNextflowLines( final File template ) throws Exception
 	{
+		Log.info( NextflowUtil.class, "Calling getNextflowLines()" );
 		final List<String> lines = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
 		try
@@ -89,6 +91,7 @@ public class NextflowUtil
 			String module = null;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
+				Log.info( NextflowUtil.class, "READ line: " + line );
 				if( module != null )
 				{
 					if( line.trim().equals( "}" ) )
@@ -97,12 +100,17 @@ public class NextflowUtil
 					}
 					else if( line.contains( NF_CPUS ) )
 					{
-						final String numCpus = Config.getString( null, Config.getModuleProp( module, NF_CPUS ) );
+						String prop = Config.getModuleProp( module, NF_CPUS.substring( 1 ) );
+						Log.info( NextflowUtil.class, "Found " + NF_CPUS + " prop: " + prop );
+						final String numCpus = Config.getString( null, prop );
 						line = line.replace( NF_CPUS, numCpus );
+						Log.info( NextflowUtil.class, "Updating: " + NF_CPUS + "=" + numCpus );
 					}
 					else if( line.contains( NF_MEMORY ) )
 					{
-						String ram = Config.requireString( null, Config.getModuleProp( module, NF_MEMORY ) );
+						String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
+						Log.info( NextflowUtil.class, "Found " + NF_MEMORY + " prop: " + prop );
+						String ram = Config.requireString( null, prop );
 						if( !ram.startsWith( "'" ) )
 						{
 							ram = "'" + ram;
@@ -112,21 +120,29 @@ public class NextflowUtil
 							ram = ram + "'";
 						}
 						line = line.replace( NF_MEMORY, ram );
+						Log.info( NextflowUtil.class, "Updating: " + NF_MEMORY + "=" + ram );
 					}
 					else if( line.contains( NF_DOCKER_IMAGE ) )
 					{
-						line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
+						Log.info( NextflowUtil.class, "Build Docker Image: " + NF_DOCKER_IMAGE );
+						String label = getDockerImageLabel( module );
+						Log.info( NextflowUtil.class, "Found label: " + label );
+						line = line.replace( NF_DOCKER_IMAGE, label );
+						Log.info( NextflowUtil.class, "Updating: " + NF_DOCKER_IMAGE + "=" + label );
 					}
 				}
 				else if( line.trim().startsWith( PROCESS ) )
 				{
 					module = line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim();
+					Log.info( NextflowUtil.class, "module=" + module );
 				}
 				else if( line.contains( NF_PIPELINE_NAME ) )
 				{
 					line = line.replace( NF_PIPELINE_NAME, Config.pipelineName() );
+					Log.info( NextflowUtil.class, "Updating: " + NF_PIPELINE_NAME + "=" + Config.pipelineName() );
 				}
 
+				Log.info( NextflowUtil.class, "Add line: " + line );
 				lines.add( line );
 			}
 		}
@@ -137,7 +153,7 @@ public class NextflowUtil
 				reader.close();
 			}
 		}
-
+		Log.info( NextflowUtil.class, "Return: " + lines.size() + " total lines" );
 		return lines;
 	}
 
@@ -190,15 +206,21 @@ public class NextflowUtil
 
 	private static void writeNextflowMainNF( final List<String> lines ) throws Exception
 	{
+		Log.info( NextflowUtil.class, "Exec writeNextflowMainNF() - total # lines: " + lines.size() );
+		Log.info( NextflowUtil.class, "getMainNf(): " + getMainNf() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMainNf() ) );
 		try
 		{
 			boolean indent = false;
-			for( final String line: lines )
+			for( String line: lines )
 			{
 				if( line.trim().equals( "}" ) )
 				{
 					indent = !indent;
+				}
+				if( indent ) 
+				{
+					line = "    " + line;
 				}
 				writer.write( line + Constants.RETURN );
 				if( line.trim().endsWith( "{" ) )

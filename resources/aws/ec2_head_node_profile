@@ -28,6 +28,7 @@ alias tlog="tail -1000 *.log"
 alias tlogf="tail -1000f *.log"
 alias dockls="docker images; docker container ls --all"
 alias goblj="blj_go"
+alias showIFS="printf %q $IFS"
 
 export EFS="/mnt/efs"
 export BLJ_CONFIG="$HOME/config"
