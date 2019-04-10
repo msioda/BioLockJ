@@ -50,7 +50,8 @@ document.getElementById('submitConfigureAWS').addEventListener('click', function
 //document.getElementById('configureAwsForm').getElementsByTagName('span').getElementsByClassName('correctInput')
 document.getElementById('deployComputeStack').addEventListener('click', function(evt){
   evt.preventDefault();
-  console.log('this.parentNode: ', this.parentNode);
+  console.log(this);
+  this.disabled = true;
   let correct = Array.from(this.parentNode.getElementsByClassName('correctInput'));
   let incorrect = Array.from(this.parentNode.getElementsByClassName('incorrectInput'));
   let inProgress = Array.from(this.parentNode.getElementsByClassName('inProgress'));
@@ -86,6 +87,8 @@ document.getElementById('deployComputeStack').addEventListener('click', function
         correct.forEach( ele => ele.style.display = 'none');
       }
     }
+    console.log('undisabling');
+    this.disabled = false;
   }
 });
 
@@ -162,3 +165,33 @@ function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST', tim
     }
   });
 };
+
+function retrieveStackListAsPromise() {
+  try {
+    return new Promise((resolve, reject) => {
+      let request = new XMLHttpRequest();
+      request.open('POST', '/retrieveAwsStackLists', true);
+      request.setRequestHeader("Content-Type", "application/json");
+      request.send();
+      console.log('request sent');
+      request.onreadystatechange = function() {
+        if (request.readyState === XMLHttpRequest.DONE) {
+          try {
+            if(this.status === 200 && request.readyState === 4){
+              console.log(this.responseText);
+              resolve(this.responseText);
+            }else{
+              reject(this.status + " " + this.statusText)
+            }
+          } catch (e) {
+            reject (e.message)
+          }
+        }
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+function updateCloudStackElements() {
+}
