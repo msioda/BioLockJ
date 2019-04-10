@@ -208,7 +208,7 @@ public class DockerUtil
 	public static boolean initAwsCloudManager() throws Exception
 	{
 		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && inAwsEnv()
-				&& !RuntimeParamUtil.runAws();
+				&& RuntimeParamUtil.getAwsStack() != null;
 	}
 
 	/**
@@ -231,7 +231,7 @@ public class DockerUtil
 	public static boolean runAwsCloudManager() throws Exception
 	{
 		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && inAwsEnv()
-				&& RuntimeParamUtil.runAws();
+				&& RuntimeParamUtil.getAwsStack() == null;
 	}
 
 	private static String getDockerEnvVars( final BioModule module ) throws Exception
@@ -348,35 +348,35 @@ public class DockerUtil
 	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
 
 	/**
-	 * All containers mount the host {@link biolockj.Config} directory to the container"config" volume
+	 * All containers mount the host {@link biolockj.Config} directory to the container volume: {@value #CONTAINER_CONFIG_DIR} 
 	 */
-	public static final String CONTAINER_CONFIG_DIR = File.separator + "config";
+	public static final String CONTAINER_CONFIG_DIR =  "/config";
 
 	/**
-	 * Some containers mount a database to the containers "db" volume.
+	 * Some containers mount a database to the containers "db" volume: {@value #CONTAINER_DB_DIR} 
 	 */
-	public static final String CONTAINER_DB_DIR = File.separator + "db";
+	public static final String CONTAINER_DB_DIR = "/db";
 
 	/**
-	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume
+	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume: {@value #CONTAINER_INPUT_DIR} 
 	 */
-	public static final String CONTAINER_INPUT_DIR = File.separator + "input";
+	public static final String CONTAINER_INPUT_DIR = "/input";
 
 	/**
-	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume
+	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume: {@value #CONTAINER_META_DIR} 
 	 */
-	public static final String CONTAINER_META_DIR = File.separator + "meta";
+	public static final String CONTAINER_META_DIR =  "/meta";
 
 	/**
-	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container "pipelines" volume
+	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container "pipelines" volume: {@value #CONTAINER_OUTPUT_DIR} 
 	 */
-	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipelines";
+	public static final String CONTAINER_OUTPUT_DIR = "/pipelines";
 
 	/**
-	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer"
+	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer": {@value #CONTAINER_PRIMER_DIR} 
 	 * volume.
 	 */
-	public static final String CONTAINER_PRIMER_DIR = File.separator + "primer";
+	public static final String CONTAINER_PRIMER_DIR = "/primer";
 
 	/**
 	 * Docker container root user $HOME directory

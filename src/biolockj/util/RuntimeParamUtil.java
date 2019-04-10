@@ -52,6 +52,16 @@ public class RuntimeParamUtil
 	{
 		return params.get( PASSWORD_FLAG );
 	}
+	
+	/**
+	 * Runtime property getter for Docker host BioLockJ dir
+	 * 
+	 * @return Host {@value #HOST_BLJ} directory
+	 */
+	public static File getAwsStack()
+	{
+		return params.get( AWS_STACK ) == null ? null : new File( params.get( AWS_STACK ) );
+	}
 
 	/**
 	 * Runtime property getter for {@value #BASE_DIR_FLAG}
@@ -211,8 +221,7 @@ public class RuntimeParamUtil
 		String javaModArgs = "";
 		for( final String key: params.keySet() )
 		{
-			if( key.equals( RESTART_FLAG ) || key.equals( BASE_DIR_FLAG ) || key.equals( PASSWORD_FLAG )
-					|| key.equals( AWS_FLAG ) )
+			if( key.equals( RESTART_FLAG ) || key.equals( BASE_DIR_FLAG ) || key.equals( PASSWORD_FLAG ) )
 			{
 				continue;
 			}
@@ -336,16 +345,6 @@ public class RuntimeParamUtil
 		validateParams();
 	}
 
-	/**
-	 * Return TRUE if runtime parameters indicate attempt to restart pipeline
-	 * 
-	 * @return boolean
-	 */
-	public static boolean runAws()
-	{
-		return params.get( AWS_FLAG ) != null;
-	}
-
 	private static void assignDirectPipelineDir() throws Exception
 	{
 		Log.info( RuntimeParamUtil.class,
@@ -375,7 +374,7 @@ public class RuntimeParamUtil
 		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG )
 				|| param.equals( HOST_BLJ ) || param.equals( HOST_BLJ_SUP ) || param.equals( CONFIG_DIR_FLAG )
 				|| param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG ) || param.equals( HOST_HOME_USER_DIR )
-				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( AWS_FLAG ) )
+				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( AWS_STACK ) )
 		{
 			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
 		}
@@ -438,9 +437,9 @@ public class RuntimeParamUtil
 			{
 				params.put( DOCKER_FLAG, Constants.TRUE );
 			}
-			else if( arg.equals( AWS_FLAG ) )
+			else if( prevParam.equals( AWS_STACK ) )
 			{
-				params.put( AWS_FLAG, Constants.TRUE );
+				params.put( AWS_STACK, arg );
 			}
 			else if( prevParam.equals( RESTART_FLAG ) )
 			{
@@ -598,9 +597,9 @@ public class RuntimeParamUtil
 	}
 
 	/**
-	 * AWS pipeline runtime parameter switch: {@value #AWS_FLAG}
+	 * AWS pipeline runtime parameter switch: {@value #AWS_STACK}
 	 */
-	protected static final String AWS_FLAG = "-aws";
+	protected static final String AWS_STACK = "-aws";
 
 	/**
 	 * Pipeline parent directory file-path runtime parameter switch: {@value #BASE_DIR_FLAG}

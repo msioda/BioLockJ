@@ -151,7 +151,7 @@ is_pipeline_dir() {
 # Return absolute path of most recent pipeline
 most_recent_pipeline() {
 	if ! $(dir_missing $BLJ_PROJ); then
-		for dir in $(ls -1dt $BLJ_PROJ/*); do
+		for dir in $(\ls -1dt $BLJ_PROJ/*); do
 			$(is_pipeline_dir $dir) && echo "$dir" && return
 		done
 	fi

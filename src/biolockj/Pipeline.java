@@ -56,7 +56,7 @@ public class Pipeline
 			Job.submit( (ScriptModule) module );
 		}
 
-		if( runScripts || DockerUtil.initAwsCloudManager() )
+		if( runScripts || DockerUtil.inAwsEnv() )
 		{
 			pollAndSpin( (ScriptModule) module );
 		}

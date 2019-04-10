@@ -13,8 +13,9 @@ package biolockj;
 
 import java.io.*;
 import java.util.*;
-import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.DockerUtil;
+import biolockj.util.RuntimeParamUtil;
 
 /**
  * Load properties defined in the BioLockJ configuration file, including inherited properties from project.defaultProps
@@ -108,14 +109,12 @@ public class Properties extends java.util.Properties
 	 *
 	 * @param configFile BioLockJ Configuration file
 	 * @return {@link biolockj.Properties} instance
-	 * @throws FileNotFoundException thrown if configFile is not a valid file
-	 * @throws IOException thrown if configFile or defaultConfig cannot be parsed to read in properties
-	 * @throws ConfigPathException if configFile or defaultConfig are defined, but not a valid file path
+	 * @throws Exception if errors occur
 	 */
-	protected static Properties buildConfig( final File configFile )
-			throws FileNotFoundException, IOException, ConfigPathException
+	protected static Properties buildConfig( final File configFile ) throws Exception
 	{
 		Log.debug( Properties.class, "Run buildConfig for Config: " + configFile.getAbsolutePath() );
+		
 		final File defaultConfig = getDefaultConfigProp( configFile );
 		if( defaultConfig == null )
 		{
@@ -134,44 +133,57 @@ public class Properties extends java.util.Properties
 	 * 
 	 * @param configFile BioLockJ Config file
 	 * @return nested default prop file or null
-	 * @throws FileNotFoundException thrown if configFile is not a valid file
-	 * @throws IOException thrown if configFile or defaultConfig cannot be parsed to read in properties
-	 * @throws ConfigPathException if the defaultConfig property is defined, but is not a valid file path
+	 * @throws Exception if errors occur
 	 */
-	protected static File getDefaultConfigProp( final File configFile )
-			throws FileNotFoundException, IOException, ConfigPathException
+	protected static File getDefaultConfigProp( final File configFile ) throws Exception
 	{
-		final BufferedReader reader = BioLockJUtil.getFileReader( configFile );
-		for( String line = reader.readLine(); line != null; line = reader.readLine() )
-		{
-			final StringTokenizer st = new StringTokenizer( line, "=" );
-			if( st.countTokens() > 1 )
-			{
-				if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
-				{
-					final File defaultConfig = Config.getExistingFileObject( st.nextToken().trim() );
-					reader.close();
-					if( !defaultConfigFiles.contains( defaultConfig ) )
-					{
-						return defaultConfig;
-					}
-
-					return null;
-				}
-			}
-		}
-		reader.close();
-
-		// Log.debug( Properties.class, "No default Config found in: " + configFile.getAbsolutePath() );
-
+		
 		// No more nested default Config files
 		// If running Docker, add the Docker Config...
-//		if( RuntimeParamUtil.isDockerMode()
-//				&& !defaultConfigFiles.contains( Config.getExistingFileObject( DOCKER_CONFIG_PATH ) ) )
-//		{
-//			Log.info( Properties.class, "Import Docker Config: " + DOCKER_CONFIG_PATH );
-//			return Config.getExistingFileObject( DOCKER_CONFIG_PATH );
-//		}
+		if( defaultConfigFiles.isEmpty() && RuntimeParamUtil.isDockerMode() )
+		{
+			Log.info( Properties.class, "Import Docker Config: " + DOCKER_CONFIG_PATH );
+			return Config.getExistingFileObject( DOCKER_CONFIG_PATH );
+		}
+
+		final BufferedReader reader = BioLockJUtil.getFileReader( configFile );
+		Log.info( Properties.class, "Import Config: " + configFile.getAbsolutePath() );
+		try
+		{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			{
+				final StringTokenizer st = new StringTokenizer( line, "=" );
+				if( st.countTokens() > 1 )
+				{
+					if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
+					{
+						String filePath = st.nextToken().trim();
+						Log.info( Properties.class, "Import Default Config: " + filePath );
+						File defaultConfig = null;
+						if( RuntimeParamUtil.isDockerMode() && !filePath.endsWith( "docker.properties" ) && !filePath.endsWith( "standard.properties" ) )
+						{
+							Log.info( Properties.class, "Replace Default Config path with Docker /config path: " );
+							defaultConfig = DockerUtil.getDockerVolumeFile( Constants.PIPELINE_DEFAULT_PROPS, DockerUtil.CONTAINER_CONFIG_DIR );
+							Log.info( Properties.class, "New Default Config path: " + defaultConfig );
+						}
+						else
+						{
+							defaultConfig = Config.getExistingFileObject( filePath );
+						}
+						
+						reader.close();
+						if( !defaultConfigFiles.contains( defaultConfig ) )
+						{
+							return defaultConfig;
+						}
+	
+						return null;
+					}
+				}
+			}
+		} finally {
+			if( reader != null ) reader.close();
+		}
 
 		return null;
 	}
@@ -204,11 +216,11 @@ public class Properties extends java.util.Properties
 
 	private static List<File> defaultConfigFiles = new ArrayList<>();
 
-//	/**
-//	 * Path to Docker Config file: {@value #DOCKER_CONFIG_PATH}<br>
-//	 * Sets Docker properties as the default config.
-//	 */
-//	private static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";
+	/**
+	 * Path to Docker Config file: {@value #DOCKER_CONFIG_PATH}<br>
+	 * Sets Docker properties as the default config.
+	 */
+	private static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";
 	private static Properties props = null;
 	private static final long serialVersionUID = 2980376615128441545L;
 

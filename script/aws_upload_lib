@@ -81,8 +81,6 @@ stage_dir_to_head_node() {
 	done
 }
 
-alias test="echo TESTING 1,2,3..."
-
 # Upload local directory to AWS S3 Bucket folder (if modified)
 # Param 1 - Local directory
 # Param 2 - S3 bucket folder

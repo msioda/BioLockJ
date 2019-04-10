@@ -70,9 +70,11 @@ build_docker_job_defs() {
 # Build start script for given Config file
 # Param 1 - Pipeline Config file
 build_start_script() {
-	[ -f "${metadataFilePath}" ] && meta="-m=$headMeta/$(basename ${metadataFilePath}) "
+	[ -f "${metadataFilePath}" ] && meta="-m=$headMeta "
 	echo $sheBang > $(get_start_script)
-	echo "dockblj ${meta}-i=$headInput -aws -c=$1" >> $(get_start_script)
+	echo "source /home/ec2-user/.bash_profile" >> $(get_start_script)
+	echo "docker pull $DOCKER_HUB_USER/aws_manager" >> $(get_start_script)
+	echo "dockblj ${meta}-i=$headInput -aws=${awsStack} -c=$1" >> $(get_start_script)
 	chmod 770 $(get_start_script)
 	echo $(get_start_script)
 }
@@ -132,8 +134,6 @@ init_head_node() {
 
 	stage_file_to_head_node $(build_start_script $(get_config))
 	exe_remote "chmod 770 $HEAD/$(basename $(get_start_script))"
-	
-	[ -x "$(which docker)" ] && exe_remote $HEAD/$(basename $(get_start_script))
 }
 
 # Launch a new ec2 head node
@@ -167,6 +167,9 @@ launch_ec2_head_node() {
 	keyFound=$(cat ~/.ssh/known_hosts| grep -c ${publicHost})
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
 	init_head_node
+	
+	[ -x "$(which docker)" ] && exe_remote "$HEAD/$(basename $(get_start_script))"
+	
 	connect_head
 }
 

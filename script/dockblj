@@ -147,21 +147,19 @@ verify_inputs() {
 }
 
 echo "Running dockblj..."
+
+inDocker=$(arg_exists "$@" -docker)
 runAws=$(named_arg "$@" -aws)
 config=$(named_arg "$@" -c)
-inDocker=$(arg_exists "$@" -docker)
 inputDir=$(named_arg "$@" -i)
 metaPath=$(named_arg "$@" -m)
 newPass=$(named_arg "$@" -p)
 doRestart=$(named_arg "$@" -r)
 
-! $(has_param $inDocker) && verify_inputs && run_docker
-status=$?
-[ $status -ne 0 ] && exit_script "Error [ dockblj ]:  Docker $(manager_type) pipeline failed" $status
+! $(has_param $inDocker) && verify_inputs 
+run_docker "-aws ${runAws}"
 
 if $(has_param $runAws); then
-	run_docker -aws
-	status=$?
-	[ $status -ne 0 ] && exit_script "Error [ dockblj ]: Docker $(manager_type) pipeline failed" $status
+	[ ! -f "/home/ec2-user/.init_aws_${runAws}" ] && exit_script "Error [ dockblj ]: Docker $(manager_type) pipeline failed $status"
+	run_docker
 fi
-echo "Exit script - Docker $(manager_type) pipeline success!"

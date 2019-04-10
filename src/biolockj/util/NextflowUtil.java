@@ -120,7 +120,7 @@ public class NextflowUtil
 				}
 				else if( line.trim().startsWith( PROCESS ) )
 				{
-					module = line.replace( PROCESS, "" ).replaceAll( "{", "" ).trim();
+					module = line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim();
 				}
 				else if( line.contains( NF_PIPELINE_NAME ) )
 				{

@@ -114,9 +114,17 @@ public class BioLockJ
 	 */
 	public static void main( final String[] args )
 	{
-		System.out.println( "Staring BioLockj..." );
+		System.out.println( "Starting BioLockj..." );
 		try
 		{
+			if( DockerUtil.initAwsCloudManager() )
+			{
+				if( getAwsStatus().exists() )
+				{
+					getAwsStatus().delete();
+				}
+			}
+			
 			initBioLockJ( args );
 		}
 		catch( final Exception ex )
@@ -135,6 +143,17 @@ public class BioLockJ
 			{
 				startPipeline();
 			}
+			
+			if( DockerUtil.initAwsCloudManager() )
+			{
+				final FileWriter writer = new FileWriter( getAwsStatus() );
+				writer.close();
+				if( !getAwsStatus().exists() )
+				{
+					throw new Exception( "Unable to create " + getAwsStatus().getAbsolutePath() );
+				}
+			}
+			
 		}
 		catch( final Exception ex )
 		{
@@ -145,6 +164,12 @@ public class BioLockJ
 		{
 			pipelineShutDown( args );
 		}
+	}
+	
+	
+	private static File getAwsStatus() throws Exception
+	{
+		return new File( "/home/ec2-user/.init_aws_" + RuntimeParamUtil.getAwsStack() );
 	}
 
 	/**
