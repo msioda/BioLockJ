@@ -194,4 +194,31 @@ function retrieveStackListAsPromise() {
   }
 }
 function updateCloudStackElements() {
+  const awsMiniDash = document.getElementById('awsSettings');
+  let datLis = Array.from(awsMiniDash.getElementsByClassName('stackList'));
+  console.log('datLis: ', datLis);
+  let stacks = retrieveStackListAsPromise();
+  stacks.then(dat => {
+    console.log(dat);
+    let data = dat.trim().split('\n');
+    console.log(data);
+    datLis.forEach( ele => {
+
+      //remove child nodes
+      while (ele.firstChild) {
+        ele.removeChild(ele.firstChild);
+      }
+
+      //iterate through stackname list (data)
+      for (var i = 0; i < data.length; i++) {
+        let o = document.createElement('option');
+        o.innerHTML = data[i];
+        o.value = data[i];
+        ele.appendChild(o);
+        console.log('ele: ', ele);
+      }
+    })
+  })//.then end
+
+  console.log();
 }
