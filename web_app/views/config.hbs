@@ -931,7 +931,7 @@
       AWS RAM:
       <input type="text" id="aws.ram" value=""><br>
     </p>
-    <p>BioShepherd project folder on S3
+    <p>BioLockJ project folder on S3
       <input type="text" name="s3.blj_proj" id="s3.blj_proj" value=""><br>
     </p>
 
@@ -997,7 +997,9 @@
           AWS CLoud Infrastructure Stack
           <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
         </legend>
-        <p>Stackname: <input type="text" name="stackname" value="" pattern="[-a-zA-Z0-9]"> <p id="awsMiniDashStackName"></p>
+        <p>Stackname: <input type="text" name="stackname" placeholder="select AWS stack name" list="cloudFormationStackDatalist">
+          <datalist name='cloudFormationStackDatalist' id="cloudFormationStackDatalist" class='stackList'>
+          </datalist>
         </p>
         <p>Docker HUB user account (for images used):<input type="text" name="dockerRepository" value="biolockj">
         </p>
@@ -1032,8 +1034,7 @@
         </p>
         <p>Stack name:
           <input type="text" placeholder="select AWS stack name"list="ec2StackName">
-          <datalist name='ec2StackName' placeholder='add your own' id="ec2StackName">
-            <option value="blj_testing">blj_testing</option>
+          <datalist name='ec2StackName' placeholder='add your own' id="ec2StackName" class='stackList'>
           </datalist>
         </p>
         <p>Script name:
