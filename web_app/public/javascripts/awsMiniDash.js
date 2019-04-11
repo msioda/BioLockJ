@@ -25,6 +25,7 @@ document.getElementById('validateAwsCreditials').addEventListener('click', funct
     }
     console.log(request.responseText);
   }, 2000);
+  updateCloudStackElements();
 });
 
 document.getElementById('submitConfigureAWS').addEventListener('click', function(evt){
@@ -44,14 +45,17 @@ document.getElementById('submitConfigureAWS').addEventListener('click', function
           incorrect.forEach( ele => ele.style.display = 'inline');
           correct.forEach( ele => ele.style.display = 'none');
         }
+        updateCloudStackElements();
       })
     }
+
 });
 //document.getElementById('configureAwsForm').getElementsByTagName('span').getElementsByClassName('correctInput')
 document.getElementById('deployComputeStack').addEventListener('click', function(evt){
   evt.preventDefault();
   console.log(this);
   this.disabled = true;
+  let button = this;
   let correct = Array.from(this.parentNode.getElementsByClassName('correctInput'));
   let incorrect = Array.from(this.parentNode.getElementsByClassName('incorrectInput'));
   let inProgress = Array.from(this.parentNode.getElementsByClassName('inProgress'));
@@ -86,9 +90,10 @@ document.getElementById('deployComputeStack').addEventListener('click', function
         incorrect.forEach( ele => ele.style.display = 'inline');
         correct.forEach( ele => ele.style.display = 'none');
       }
+      updateCloudStackElements();
+      console.log('undisabling');
+      button.disabled = false;
     }
-    console.log('undisabling');
-    this.disabled = false;
   }
 });
 
@@ -131,6 +136,7 @@ document.getElementById('launchEc2HeadNodeButton').addEventListener('click', fun
       }
     }
   }
+  updateCloudStackElements();
 });
 
 //copy past from config_config
@@ -164,6 +170,7 @@ function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST', tim
       }
     }
   });
+  updateCloudStackElements();
 };
 
 function retrieveStackListAsPromise() {
