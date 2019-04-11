@@ -31,9 +31,10 @@ public class Job
 	 * 
 	 * @param args Command args
 	 * @param label Log label
+	 * @param blockUntilComplete Boolean
 	 * @throws Exception if errors occur in the Job
 	 */
-	public void runJob( final String[] args, final String label ) throws Exception
+	public void runJob( final String[] args, final String label, final boolean blockUntilComplete ) throws Exception
 	{
 		Log.info( getClass(), "[Run Command]: " + getArgsAsString( args ) );
 		final Runtime r = Runtime.getRuntime();
@@ -48,8 +49,11 @@ public class Job
 			}
 		}
 
-		p.waitFor();
-		p.destroy();
+		if( blockUntilComplete )
+		{
+			p.waitFor();
+			p.destroy();
+		}
 	}
 
 	/**
@@ -69,7 +73,7 @@ public class Job
 			args[ i ] = st.nextToken();
 		}
 
-		submit( args );
+		submit( args, true );
 	}
 
 	/**
@@ -86,7 +90,7 @@ public class Job
 	{
 		setFilePermissions( module.getScriptDir().getAbsolutePath(),
 				Config.requireString( module, ScriptModule.SCRIPT_PERMISSIONS ) );
-		new Job().runJob( module.getJobParams(), module.getClass().getSimpleName() );
+		new Job().runJob( module.getJobParams(), module.getClass().getSimpleName(), true );
 	}
 
 	/**
@@ -95,11 +99,12 @@ public class Job
 	 * As if executing on terminal args[0] args[1]... args[n-1] as one command.
 	 *
 	 * @param args Terminal command created from args (adds 1 space between each array element)
+	 * @param blockUntilComplete Boolean
 	 * @throws Exception if errors occur during execution
 	 */
-	public static void submit( final String[] args ) throws Exception
+	public static void submit( final String[] args, final boolean blockUntilComplete   ) throws Exception
 	{
-		new Job().runJob( args, "Process" );
+		new Job().runJob( args, "Process", blockUntilComplete );
 	}
 
 	private static String getArgsAsString( final String[] args )

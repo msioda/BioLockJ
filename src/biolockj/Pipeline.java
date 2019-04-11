@@ -56,7 +56,7 @@ public class Pipeline
 			Job.submit( (ScriptModule) module );
 		}
 
-		if( runScripts || DockerUtil.runAwsCloudManager() )
+		if( runScripts || RuntimeParamUtil.runAws() )
 		{
 			pollAndSpin( (ScriptModule) module );
 		}
@@ -330,7 +330,12 @@ public class Pipeline
 		final File mainScript = module.getMainScript();
 		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? Constants.R_EXT: Constants.SH_EXT ) );
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
-		scriptFiles.remove( mainScript );
+		
+		if( mainScript != null )
+		{
+			scriptFiles.remove( mainScript );
+		}
+		
 
 		// Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
 		// for( final File f: scriptFiles )
@@ -338,7 +343,7 @@ public class Pipeline
 		// Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
 		// }
 
-		if( is_R )
+		if( is_R && mainScript != null )
 		{
 			scriptFiles.clear();
 			scriptFiles.add( mainScript );
@@ -348,6 +353,8 @@ public class Pipeline
 		int numSuccess = 0;
 		int numStarted = 0;
 		int numFailed = 0;
+		
+		File firstFailure = null;
 
 		for( final File f: scriptFiles )
 		{
@@ -357,9 +364,14 @@ public class Pipeline
 			numStarted = numStarted + ( testStarted.exists() ? 1: 0 );
 			numSuccess = numSuccess + ( testSuccess.exists() ? 1: 0 );
 			numFailed = numFailed + ( testFailure.exists() ? 1: 0 );
+			
+			if( firstFailure == null && testFailure.exists() ) 
+			{
+				firstFailure = testFailure;
+			}
 		}
 
-		final String logMsg = mainScript.getName() + " Status (Total=" + numScripts + "): Success=" + numSuccess
+		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success=" + numSuccess
 				+ "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) + "; Queued="
 				+ ( numScripts - numStarted );
 
@@ -373,15 +385,14 @@ public class Pipeline
 		{
 			Log.info( Pipeline.class, logMsg );
 		}
-
-		final File mainFailed = new File( mainScript.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
-		if( mainFailed.exists() || numFailed > 0 )
+		
+		if( numFailed > 0 )
 		{
 			final String failMsg = "SCRIPT FAILED: " + BioLockJUtil.getCollectionAsString( module.getScriptErrors() );
 			throw new Exception( failMsg );
 		}
-
-		return numSuccess + numFailed == numScripts;
+		
+		return numScripts > 0 && ( numSuccess + numFailed == numScripts );
 	}
 
 	/**
@@ -474,8 +485,7 @@ public class Pipeline
 			{
 				if( module.getTimeout() != null && module.getTimeout() > 0 && numMinutes++ >= module.getTimeout() )
 				{
-					throw new Exception(
-							module.getMainScript().getAbsolutePath() + " timed out after " + numMinutes + " minutes." );
+					throw new Exception( module.getClass().getName() + " timed out after " + numMinutes + " minutes." );
 				}
 
 				Thread.sleep( POLL_TIME * 1000 );

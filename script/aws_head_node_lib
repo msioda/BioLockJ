@@ -3,23 +3,15 @@
 ##                                                                 ##
 ##  This script is used for uploading data + config to AWS cloud.  ##
 ##                                                                 ##
-##  s3://$awsS3           - Top level $BLJ bucket                  ##
-##  s3://$awsS3/config    - $BLJ_CONFIG folder with DB sub-folders ##
-##  s3://$awsS3/db        - $BLJ_DB folder with DB sub-folders     ##
-##  s3://$awsS3/metadata  - $BLJ_META folder for metadata files    ##
-##  s3://$awsS3/pipelines - $BLJ_PROJ folder for pipeline output   ##
-##  s3://$awsS3/primers   - $BLJ_PRIMER folder for seq primers     ##
-##  s3://$awsS3/seq       - $BLJ_SEQ folder for sequence files     ##
 ##                                                                 ##
 #####################################################################
 . $BLJ/script/aws_upload_lib
 
-AWS_CONFIG=~/.aws_config
 AWS_DOCKER_JOB_FLAG=~/.aws/.${awsStack}-CREATED_DOCKER_JOB_DEFS
-HEAD=/home/ec2-user
+EC2_HEAD_NODE=/home/ec2-user
 EFS=/mnt/efs
-headConfig=$HEAD/config
-headScript=$HEAD/script
+headConfig=$EFS/config
+headScript=$EFS/script
 headDB=$EFS/db
 headInput=$EFS/input
 headMeta=$EFS/metadata
@@ -60,23 +52,35 @@ build_docker_job_defs() {
 		else
 			aws_log "Found existing Docker job-definition: ${jobName}"
 		fi
-		prop=$(get_blj_prop "image_${jobLabel}" ${jobName})
+		prop=$(get_blj_prop "image_${jobLabel}" "${jobName}")
 		aws_log "Saved Docker job-definition label: image_${jobLabel}=${prop}"
 	done
 	touch $AWS_DOCKER_JOB_FLAG
 }
 
 
-# Build start script for given Config file
+# Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
+	startScript=~/.aws/run-${awsStack}.sh
 	[ -f "${metadataFilePath}" ] && meta="-m=$headMeta "
-	echo $sheBang > $(get_start_script)
-	echo "source /home/ec2-user/.bash_profile" >> $(get_start_script)
-	echo "docker pull $DOCKER_HUB_USER/aws_manager" >> $(get_start_script)
-	echo "dockblj ${meta}-i=$headInput -aws=${awsStack} -c=$1" >> $(get_start_script)
-	chmod 770 $(get_start_script)
-	echo $(get_start_script)
+	echo $sheBang > $startScript
+	echo "" >> $startScript
+	echo "##########################################################" >> $startScript
+	echo "##                                                      ##" >> $startScript
+	echo "##  Run this script to launch BioLockJ pipeline on AWS  ##" >> $startScript
+	echo "##  1) Clear old aws_manager Docker images (if any)     ##" >> $startScript
+	echo "##  2) Pull the latest aws_manager from Docker Hub      ##" >> $startScript
+	echo "##  3) Run dockblj                                      ##" >> $startScript
+	echo "##                                                      ##" >> $startScript
+	echo "##########################################################" >> $startScript
+	echo "source /home/ec2-user/.bash_profile" >> $startScript
+	echo 'images=$(docker images -f dangling=true -q)' >> $startScript
+	echo '[ ${#images} -gt 0 ] && docker rmi $images' >> $startScript
+	echo "docker pull ${dockerUser}/aws_manager:${dockerImgVersion}" >> $startScript
+	echo "dockblj -aws ${meta}-i=$headInput -c=$(get_config)" >> $startScript
+	chmod 770 $startScript
+	echo $startScript
 }
 
 # Connect to running head node
@@ -85,12 +89,7 @@ connect_head() {
 	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_blj_prop publicHost)
 }
 
-# Execute remote command on the head node
-# Param 1 - Remote command
-exe_remote() {
-	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_blj_prop publicHost) "$1"
-}
-
+# Get the Pipeline Config local file-path
 get_config() {
 	configFiles=$(get_blj_prop configFiles)
 	propFiles=( ${configFiles//,/ } )
@@ -107,51 +106,20 @@ get_stack_param() {
 	echo "${myParam}"
 }
 
-get_start_script() {
-	echo ~/.aws/run-${awsStack}.sh
-}
-
-# Upload local files to S3
-# Copy Config file with updated properties to reference new S3 paths
-init_head_node() {
-
-	exe_remote "[ ! -d $headConfig ] && mkdir $headConfig"
-	exe_remote "[ ! -d $headScript ] && mkdir $headScript"
-	exe_remote "[ ! -d $headDB ] && mkdir $headDB"
-	exe_remote "[ ! -d $headInput ] && mkdir $headInput"
-	exe_remote "[ ! -d $headMeta ] && mkdir $headMeta"
-	exe_remote "[ ! -d $headPipelines ] && mkdir $headPipelines"
-	exe_remote "[ ! -d $headPrimer ] && mkdir $headPrimer"
-	
-	stage_pipeline_data
-	update_head_config
-
-	[ -f "$AWS_DOCKER_JOB_FLAG" ] && stage_file_to_head_node $AWS_DOCKER_JOB_FLAG
-	stage_file_to_head_node $BLJ/resources/aws/ec2_head_node_profile 
-	stage_dir_to_head_node $AWS_CONFIG $headConfig
-	stage_dir_to_head_node $BLJ/script $headScript
-	exe_remote "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
-
-	stage_file_to_head_node $(build_start_script $(get_config))
-	exe_remote "chmod 770 $HEAD/$(basename $(get_start_script))"
-}
-
 # Launch a new ec2 head node
 launch_ec2_head_node() {
 	refresh_aws_cache
 	[ -x "$(which docker)" ] && build_docker_job_defs
 	runTime=0
-	ami="${awsAmi}"
-	stack="${awsStack}"
 	secureGroup="$(get_stack_param BastionSecurityGroup)"
 	subnet="$(get_stack_param Subnet1)"
 	templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
 	if [ {#ami} -eq 0 ] || [ {#stack} -eq 0 ] || [ {#secureGroup} -eq 0 ] || [ {#subnet} -eq 0 ] || [ {#templateId} -eq 0 ]; then
 		exit_script "Error [ aws_head_node_lib.launch_ec2_head_node() ]: Cannot launch EC2 - required parameters not found in $blj_aws_config"
 	fi
-	instanceID=$(aws ec2 run-instances --count 1 --key-name $stack --image-id $ami --security-group-ids $secureGroup  \
-		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id $subnet \
-		--launch-template LaunchTemplateId=$templateId --instance-type $awsEc2InstanceType --query "Instances[].InstanceId" )
+	instanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids ${secureGroup} \
+		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='HeadNode'}" --subnet-id ${subnet} \
+		--launch-template LaunchTemplateId=${templateId} --instance-type ${awsEc2InstanceType} --query "Instances[].InstanceId" )
 	printf "Launching EC2 Instance, please wait."
 	systemStatus=init
 	while [ "$systemStatus" != "ok" ]; do
@@ -166,130 +134,7 @@ launch_ec2_head_node() {
 	refresh_aws_cache
 	keyFound=$(cat ~/.ssh/known_hosts| grep -c ${publicHost})
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
-	init_head_node
-	
-	[ -x "$(which docker)" ] && exe_remote "$HEAD/$(basename $(get_start_script))"
-	
-	connect_head
-}
-
-# Check if prop is the target prop prop, or its mapped prop name. 
-# Param 1 - prop
-# Param 2 - target
-prop_exists() {
-	[ $# -eq 2 ] && [ "$1" ==  "$2" ] || [ "$1" == $(map_property_name "$2") ]
-}
-
-# Stage data for pipeline onto EFS volume
-stage_pipeline_data() {
-	aws_log "Staging pipeline data..."
-
-	if [ -d "$inputDirPaths" ]; then
-		stage_dir_to_head_node ${inputDirPaths} $headInput
-	else
-		exit_script "Error [ aws_head_node_lib.stage_pipeline_data() ]: Required Config inputDirPaths undefined"
-	fi
-	
-	[ -f "$metadataFilePath" ] && stage_file_to_head_node ${metadataFilePath} $headMeta
-	[ -f "$trimPrimersFilePath" ] && stage_file_to_head_node ${trimPrimersFilePath} $headPrimer
-	[ -d "$kneaddataDbs" ] && stage_dir_to_head_node ${kneaddataDbs} $headDB
-	[ -d "$krakenDb" ] && stage_dir_to_head_node ${krakenDb} $headDB
-	[ -d "$kraken2Db" ] && stage_dir_to_head_node ${kraken2Db} $headDB
-	
-	if [ -d "$metaphlan2Db" ] || [ -f "$metaphlan2Mpa_pkl" ]; then
-		if [ -d "$metaphlan2Db" ] && [ -f "$metaphlan2Mpa_pkl" ]; then
-			stage_dir_to_head_node ${metaphlan2Db} $headDB
-			stage_file_to_head_node ${metaphlan2Mpa_pkl} $headDB
-		else
-			exit_script "Error [ aws_head_node_lib.stage_pipeline_data() ]: Required Config missing - if any defined all must be defined \"metaphlan2Db\" and \"metaphlan2Mpa_pkl\""
-		fi
-	fi
-	
-	if [ -f "$qiimePynastAlignDB" ] || [ -f "$qiimeRefSeqDB" ] || [ -f "$qiimeTaxaDB" ]; then
-		if [ -f "$qiimePynastAlignDB" ] && [ -f "$qiimeRefSeqDB" ] && [ -f "$qiimeTaxaDB" ]; then
-			stage_file_to_head_node ${qiimePynastAlignDB} $headDB
-			stage_file_to_head_node ${qiimeRefSeqDB} $headDB
-			stage_file_to_head_node ${qiimeTaxaDB} $headDB	
-		else
-			exit_script "Error [ aws_head_node_lib.stage_pipeline_data() ]: Required Config missing - if any defined all must be defined \"qiimePynastAlignDB\", \"qiimeRefSeqDB\", \"qiimeTaxaDB\""
-		fi
-	fi
-			
-	[ -d "$humann2NuclDB" ] && stage_dir_to_head_node ${humann2NuclDB} $headDB	
-	[ -d "$humann2ProtDB" ] && stage_dir_to_head_node ${humann2ProtDB} $headDB	
-	[ -f "$rdpDb" ] && stage_dir_to_head_node $(dirname ${rdpDb}) $headDB	
-}
-
-# The method creates a new version of the pipeline Config files by replacing 
-update_head_config() {
-	[ ! -d "$AWS_CONFIG" ] && mkdir $AWS_CONFIG && aws_log "Creating the staging directory:  $AWS_CONFIG"
-	rm $AWS_CONFIG/*
-	configFiles=$(get_blj_prop configFiles)
-	aws_log "Generating new Config files with properties that to point to EFS"
-	newPropFiles=
-	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do
-		headPath=$headConfig/$(basename $propFile)
-		update_head_config_file $propFile
-		[ ${#newPropFiles} -gt 0 ] && newPropFiles=",${newPropFiles}"
-		newPropFiles=${headPath}${newPropFiles}
-	done
-	set_blj_prop configFiles $newPropFiles
-	update_head_config_file $blj_aws_config
-	refresh_aws_cache
-}
-
-
-# Change the file/dir-path to the new S3 path
-# Param 1 - Config file
-update_head_config_file() {
-	outFile="$AWS_CONFIG/$(basename $1)"
-	touch $outFile
-	while read line; do
-		line=$(echo ${line} | xargs)
-		prop=
-		val=
-		if [ "${line/=/}" != "${line}" ] && [ "${line:0:1}" != "#" ]; then
-			prop=$(echo ${line} | cut -d '=' -f1)
-			val=$(eval "echo ${line} | cut -d '=' -f2")
-			if $(prop_exists "$prop" "pipeline.defaultProps"); then
-				echo "$prop=$headConfig/$(basename $val)" >> $outFile	
-			elif $(prop_exists "$prop" "input.dirPaths"); then
-				echo "$prop=$headInput/$(basename $val)" >> $outFile	
-			elif $(prop_exists "$prop" "metadata.filePath"); then
-				echo "$prop=$headMeta/$(basename $val)" >> $outFile	
-			elif $(prop_exists "$prop" "trimPrimers.filePath"); then
-				echo "$prop=$headPrimer/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "kneaddata.dbs") && [ "$val" != "$DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "kraken.db") && [ "$val" != "$DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "kraken2.db") && [ "$val" != "$DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "metaphlan2.db") && [ "$val" != "$DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "metaphlan2.mpa_pkl") && [ "$val" != "$DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "qiime.pynastAlignDB") && [ "$val" != "$DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "qiime.refSeqDB") && [ "$val" != "$DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "qiime.taxaDB") && [ "$val" != "$DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "humann2.nuclDB") && [ "$val" != "$HN2_NUCL_DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "humann2.protDB") && [ "$val" != "$HN2_PROT_DB" ]; then
-				echo "$prop=$headDB/$(basename $val)" >> $outFile
-			elif $(prop_exists "$prop" "rdp.db") && [ "$val" != "$RDP_DB" ]; then
-				dirPath=$(dirname $val)
-				parDir=$(basename $dirPath)
-				echo "$prop=$headDB/$parDir/$(basename $val)" >> $outFile
-			else
-				echo "${line}" >> $outFile
-			fi
-		else
-			echo "${line}" >> $outFile
-		fi
-	done < $1
-	echo ${outFile}
+	startScript=$(build_start_script)
+	stage_pipeline_on_aws $startScript
+	[ -x "$(which docker)" ] && exe_remote_cmd "$EC2_HEAD_NODE/$(basename $startScript)"
 }

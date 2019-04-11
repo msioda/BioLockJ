@@ -5,16 +5,24 @@
 # Get the aliases and functions
 [ -f ~/.bashrc ] && . ~/.bashrc
 
+umask 0007
+
 export PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h\[\033[33;1m\]..$(basename "$(dirname $PWD)")/$(basename $PWD)\[\033[m\]~$ '
 export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
-export SCRIPT=~/script
-export PATH="$SCRIPT:$PATH:$HOME/.local/bin:$HOME/bin"
-export BLJ=$HOME
+export EFS="/mnt/efs"
+export BLJ_DB="$EFS/db"
+export BLJ_INPUT="$EFS/input"
+export BLJ_META="$EFS/metadata"
+export BLJ_PROJ="$EFS/pipelines"
+export BLJ_PRIMER="$EFS/primer"
+export BLJ_CONFIG="$EFS/config"
+export BLJ_SCRIPT="$EFS/script"
+export blj_aws_config="$BLJ_CONFIG/blj_config"
+export BLJ=$EFS
+export PATH="$BLJ_SCRIPT:$PATH:$HOME/.local/bin:$HOME/bin"
 
-umask 0007
-
-alias ls='ls -lGFh'
+alias ls='ls -lFh'
 alias rd="rm -rf"
 alias md5="openssl md5"
 alias rf="source ~/.bash_profile"
@@ -30,19 +38,10 @@ alias dockls="docker images; docker container ls --all"
 alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 
-export EFS="/mnt/efs"
-export BLJ_CONFIG="$HOME/config"
-export BLJ_DB="$EFS/db"
-export BLJ_INPUT="$EFS/input"
-export BLJ_META="$EFS/metadata"
-export BLJ_PROJ="$EFS/pipelines"
-export BLJ_PRIMER="$EFS/primer"
-
-export blj_aws_config=$BLJ_CONFIG/blj_config
-
 source $blj_aws_config
-source $SCRIPT/aws_head_node_lib
+source $BLJ_SCRIPT/aws_head_node_lib
 
+export blj_aws_config="$BLJ_CONFIG/blj_config"
 export DOCKER_HUB_USER=${dockerUser}
 
 [ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
@@ -53,7 +52,16 @@ export S3_DB="$S3_BUCKET/db"
 export S3_META="$S3_BUCKET/metadata"
 export S3_PROJ="$S3_BUCKET/pipelines"
 export S3_PRIMER="$S3_BUCKET/primer"
-export S3_SEQ="$S3_BUCKET/seq"i
+export S3_SEQ="$S3_BUCKET/seq"
+
+# Print AWS Config report
+aws_report_config() {
+	echo "---------------------------------------------------"
+	echo "Report current AWS Config"
+	echo "---------------------------------------------------"
+	[ -f "$blj_aws_config" ] && tail -n +2 "$blj_aws_config"
+	echo "---------------------------------------------------"
+}
 
 # Return absolute path of most recent pipeline
 most_recent_pipeline() {
@@ -69,8 +77,7 @@ most_recent_pipeline() {
 	IFS=$"IFS2"
 }
 
-
-echo "AWS Profile loaded - Docker Account: $DOCKER_HUB_USER"
+echo "AWS Profile loaded - Docker Account ID: $DOCKER_HUB_USER"
 
 ######=======================================######
 ######   BioLockJ AWS .bash_profile LOADED   ###### 

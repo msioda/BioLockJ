@@ -81,20 +81,17 @@ public class BioLockJUtil
 			try
 			{
 				Thread.sleep( 3 * 1000 );
-				if( i == numTries )
+				if( i == 0  || i == numTries )
 				{
 					file.delete();
-					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) failed, but file.delete() worked" );
+					Log.warn( BioLockJUtil.class, "file.delete() removed: " + file.getAbsolutePath() );
 				}
 				else
 				{
 					FileUtils.forceDelete( file );
+					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) removed: " + file.getAbsolutePath() );
 				}
-				if( i > 1 )
-				{
-					Log.warn( BioLockJUtil.class, "Attempt #" + i + " succeeded in deleting file: "
-							+ file.getAbsolutePath() + "  --> with FileUtils.forceDelete( file )" );
-				}
+
 				return true;
 			}
 			catch( final IOException ex )

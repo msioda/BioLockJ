@@ -8,13 +8,6 @@
 . $BLJ/script/aws_clean_lib
 . $BLJ/script/aws_head_node_lib
 
-# Return TRUE if test value exist in the param list
-# Param 1 Full parameter list
-# Param 2 Test value
-containsVar() { 
-	[ $# -eq 2 ] && [ "$1" != "None" ] && [ "$2" != "None" ] && [ "${1/$2}" != "$1" ] 
-}
-
 # Build Cloud-formation Stack
 build_stack() {
 	refresh_aws_cache
@@ -26,7 +19,6 @@ build_stack() {
 	spBidParam='ParameterKey=SpotBidPercentage,ParameterValue='
 	params="${ipParam}${myIp},${spBidParam}${awsEc2SpotPer}"
 	numSecs=0
-	
 	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name ${awsStack} --capabilities CAPABILITY_IAM --parameters ${params}"
 	aws cloudformation create-stack --template-body ${stackYml} --stack-name ${awsStack} --capabilities CAPABILITY_IAM --parameters ${params}
 	aws_log "Building Stack: ${awsStack}"
@@ -84,8 +76,8 @@ deploy_cloud_formation() {
 }
 
 # Generate a name not found in $1, created using format $2-$date-index
-# Param 1 (required) Key String
-# Param 2 (optional) List of unavailable names
+# Param 1 - Key String
+# Param 2 - (optional) List of unavailable names
 generate_name() {
 	testVal="$1-$(date +%F)"
 	[ $# -eq 1 ] && echo $testVal && return
@@ -145,7 +137,7 @@ is_stack_complete() {
 }
 
 # Main method, called to launch BioLockJ on AWS from localhost
-# Param 1 Pipeline Config file-path
+# Param 1 - Pipeline Config file-path
 run_aws() {
 	[ $# -eq 0 ] || [ ! -f "$1" ] && exit_script "Error [ aws_config_lib.run_aws() ]: Required pipeline Config file not found: \"$1\""
 	init_aws_config $1 && deploy_cloud_formation && launch_ec2_head_node

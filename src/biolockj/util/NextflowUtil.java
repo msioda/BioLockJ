@@ -14,6 +14,7 @@ package biolockj.util;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -30,18 +31,27 @@ public class NextflowUtil
 	 * Call this method to build the Nextflow main.nf for the current pipeline.
 	 * 
 	 * @param modules Pipeline modules
-	 * @return Nextflow main.nf file
 	 * @throws Exception if errors occur
 	 */
-	public static File buildNextflowMain( final List<BioModule> modules ) throws Exception
+	public static void startNextflow( final List<BioModule> modules ) throws Exception
 	{
 		Log.info( NextflowUtil.class, "Initialize AWS Cloud Manager" );
 		final File template = buildInitialTemplate( asString( modules ) );
 		Log.info( NextflowUtil.class, "Generated template: " + template.getAbsolutePath() );
 		writeNextflowMainNF( getNextflowLines( template ) );
-		BioLockJUtil.deleteWithRetry( templateConfig(), 3 );
+		BioLockJUtil.deleteWithRetry( templateConfig(), 5 );
 		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
-		return getMainNf();
+		startService();
+		//return getMainNf();
+	}
+	
+	private static void startService() throws Exception
+	{
+		final String[] args = new String[ 3 ];
+		args[ 0 ] = NEXTFLOW_CMD;
+		args[ 1 ] = "run";
+		args[ 2 ] = getMainNf().getAbsolutePath();
+		Job.submit( args, false );
 	}
 
 	/**
@@ -69,29 +79,33 @@ public class NextflowUtil
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
 		try
 		{
-			String module = null;
+			String moduleName = null;
+			BioModule module = null;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				Log.info( NextflowUtil.class, "READ line: " + line );
-				if( module != null )
+				if( moduleName != null )
 				{
+					module = getShellModule( moduleName );
+
 					if( line.trim().equals( "}" ) )
 					{
+						moduleName = null;
 						module = null;
 					}
-					else if( line.contains( NF_CPUS ) )
+					if( line.contains( "$BLJ_PROJ" ) )
+					{
+						line = line.replace( "$BLJ_PROJ", new File( Config.pipelinePath() ).getParentFile().getAbsolutePath() );
+					}
+					if( line.contains( NF_CPUS ) )
 					{
 						String prop = Config.getModuleProp( module, NF_CPUS.substring( 1 ) );
-						Log.info( NextflowUtil.class, "Found " + NF_CPUS + " prop: " + prop );
-						final String numCpus = Config.getString( null, prop );
-						line = line.replace( NF_CPUS, numCpus );
-						Log.info( NextflowUtil.class, "Updating: " + NF_CPUS + "=" + numCpus );
+						line = line.replace( NF_CPUS, Config.getString( module, prop ) );
 					}
-					else if( line.contains( NF_MEMORY ) )
+					if( line.contains( NF_MEMORY ) )
 					{
 						String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
-						Log.info( NextflowUtil.class, "Found " + NF_MEMORY + " prop: " + prop );
-						String ram = Config.requireString( null, prop );
+						String ram = Config.requireString( module, prop );
 						if( !ram.startsWith( "'" ) )
 						{
 							ram = "'" + ram;
@@ -101,26 +115,21 @@ public class NextflowUtil
 							ram = ram + "'";
 						}
 						line = line.replace( NF_MEMORY, ram );
-						Log.info( NextflowUtil.class, "Updating: " + NF_MEMORY + "=" + ram );
 					}
-					else if( line.contains( NF_DOCKER_IMAGE ) )
+					if( line.contains( NF_DOCKER_IMAGE ) )
 					{
-						Log.info( NextflowUtil.class, "Build Docker Image: " + NF_DOCKER_IMAGE );
-						String label = getDockerImageLabel( module );
-						Log.info( NextflowUtil.class, "Found label: " + label );
-						line = line.replace( NF_DOCKER_IMAGE, label );
-						Log.info( NextflowUtil.class, "Updating: " + NF_DOCKER_IMAGE + "=" + label );
+						line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
 					}
 				}
-				else if( line.trim().startsWith( PROCESS ) )
+				if( line.trim().startsWith( PROCESS ) )
 				{
-					module = line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim();
-					Log.info( NextflowUtil.class, "module=" + module );
+					Log.info( NextflowUtil.class, "Found module on line: " + line );
+					line = line.replaceAll( PACKAGE_SEPARATOR, "\\." );
+					moduleName = convertModuleName( line );
 				}
-				else if( line.contains( NF_PIPELINE_NAME ) )
+				if( line.contains( NF_PIPELINE_NAME ) )
 				{
 					line = line.replace( NF_PIPELINE_NAME, Config.pipelineName() );
-					Log.info( NextflowUtil.class, "Updating: " + NF_PIPELINE_NAME + "=" + Config.pipelineName() );
 				}
 
 				Log.info( NextflowUtil.class, "Add line: " + line );
@@ -137,6 +146,27 @@ public class NextflowUtil
 		Log.info( NextflowUtil.class, "Return: " + lines.size() + " total lines" );
 		return lines;
 	}
+	
+	private static BioModule getShellModule( final String className ) throws Exception
+	{
+		return (BioModule) Class.forName( className ).getDeclaredConstructor().newInstance();
+	}
+	
+	private static String convertModuleName( String moduleLowerCase ) throws Exception
+	{
+		String val = "";
+		String name = moduleLowerCase.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim();
+		StringTokenizer st = new StringTokenizer( name, "." );
+		while( st.hasMoreTokens() )
+		{
+			val += st.nextToken();
+			if( st.hasMoreTokens() )
+			{
+				val += ".";
+			}
+		}
+		return val;
+	}
 
 	private static String asString( final List<BioModule> modules ) throws Exception
 	{
@@ -145,7 +175,7 @@ public class NextflowUtil
 		{
 			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) )
 			{
-				flatMods += ( flatMods.isEmpty() ? "": SEPARATOR ) + module.getClass().getSimpleName();
+				flatMods += ( flatMods.isEmpty() ? "": MODULE_SEPARATOR ) + module.getClass().getName().replaceAll( "\\.", PACKAGE_SEPARATOR );
 			}
 		}
 
@@ -155,11 +185,13 @@ public class NextflowUtil
 	private static File buildInitialTemplate( final String modules ) throws Exception
 	{
 		Log.info( NextflowUtil.class, "Build Nextflow initial template: " + templateConfig().getAbsolutePath() );
+		Log.info( NextflowUtil.class, "Using module list: " + modules );
+
 		final String[] args = new String[ 3 ];
 		args[ 0 ] = templateScript().getAbsolutePath();
 		args[ 1 ] = templateConfig().getAbsolutePath();
 		args[ 2 ] = modules;
-		Job.submit( args );
+		Job.submit( args, true );
 		if( !templateConfig().exists() )
 		{
 			throw new Exception( "Nextflow Template failed to build: " + templateConfig().getAbsolutePath() );
@@ -168,10 +200,10 @@ public class NextflowUtil
 		return templateConfig();
 	}
 
-	private static String getDockerImageLabel( final String moduleName ) throws Exception
+	private static String getDockerImageLabel( final BioModule module ) throws Exception
 	{
-		return "'" + IMAGE + "_" + DockerUtil.getDockerUser( moduleName ) + "_" + DockerUtil.getImageName( moduleName )
-				+ "_" + DockerUtil.getImageVersion( moduleName ) + "'";
+		return "'" + IMAGE + "_" + DockerUtil.getDockerUser( module ) + "_" + DockerUtil.getImageName( module )
+				+ "_" + DockerUtil.getImageVersion( module ) + "'";
 	}
 
 	private static File templateConfig() throws Exception
@@ -221,6 +253,8 @@ public class NextflowUtil
 
 	//private static final String EFS_DIR = "/mount/efs";
 	private static final String IMAGE = "image";
+	private static final String NEXTFLOW_CMD = "nextflow";
+	
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
@@ -229,5 +263,6 @@ public class NextflowUtil
 	private static final String NF_MEMORY = "$" + Constants.AWS_RAM;
 	private static final String NF_PIPELINE_NAME = "$pipeline.pipelineName";
 	private static final String PROCESS = "process";
-	private static final String SEPARATOR = ".";
+	private static final String MODULE_SEPARATOR = ".";
+	private static final String PACKAGE_SEPARATOR = "_:_";
 }

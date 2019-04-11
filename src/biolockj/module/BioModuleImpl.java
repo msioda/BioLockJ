@@ -164,11 +164,11 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		{
 			moduleDir.mkdirs();
 			Log.info( getClass(),
-					"Construct module [ " + ModuleUtil.displayID( this ) + " ] for new" + moduleDir.getAbsolutePath() );
+					"Construct module [ " + ModuleUtil.displayID( this ) + " ] for new " + moduleDir.getAbsolutePath() );
 		}
 		else
 		{
-			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing"
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing "
 					+ moduleDir.getAbsolutePath() );
 		}
 	}

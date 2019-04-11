@@ -38,7 +38,7 @@ aws_deregister_job_defs() {
 }
 
 # Get 1st "arn*" value in list
-# Param 1 list containing arn values
+# Param 1 - list containing arn values
 aws_get_arn() {
 	module=
 	i=1
@@ -194,6 +194,7 @@ aws_rm_s3_buckets() {
 	aws_log "Remaining s3-buckets:" && aws s3api list-buckets
 }
 
+# Remove all AWS Stacks
 aws_rm_stacks() {
 	aws_log "CLEARING cloudformation stacks..." 
 	vals=$(aws cloudformation describe-stacks --query "Stacks[*].StackId")

@@ -76,7 +76,7 @@ public class BashScriptBuilder
 
 		buildWorkerScripts( module, data );
 
-		if( !DockerUtil.runAwsCloudManager() )
+		if( !RuntimeParamUtil.runAws() )
 		{
 			buildMainScript( module );
 		}

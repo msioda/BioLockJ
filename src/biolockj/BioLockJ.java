@@ -20,7 +20,6 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.report.Email;
 import biolockj.util.*;
 
@@ -117,13 +116,13 @@ public class BioLockJ
 		System.out.println( "Starting BioLockj..." );
 		try
 		{
-			if( DockerUtil.initAwsCloudManager() )
-			{
-				if( getAwsStatus().exists() )
-				{
-					getAwsStatus().delete();
-				}
-			}
+//			if( DockerUtil.inAwsEnv() )
+//			{
+//				if( getAwsStatus().exists() )
+//				{
+//					getAwsStatus().delete();
+//				}
+//			}
 			
 			initBioLockJ( args );
 		}
@@ -156,10 +155,10 @@ public class BioLockJ
 	}
 	
 	
-	private static File getAwsStatus() throws Exception
-	{
-		return new File( Config.getSystemFilePath( "$HOME/.init_aws_" + RuntimeParamUtil.getAwsStack() ) );
-	}
+//	private static File getAwsStatus() throws Exception
+//	{
+//		return new File( Config.getSystemFilePath( "$HOME/.init_aws_" + RuntimeParamUtil.runAws() ) );
+//	}
 
 	/**
 	 * Return the pipeline input directory
@@ -260,19 +259,20 @@ public class BioLockJ
 	 */
 	protected static void initAwsManager() throws Exception
 	{
-		NextflowUtil.buildNextflowMain( Pipeline.getModules() );
-		Pipeline.executeModule( importMeta() );
-		Pipeline.refreshOutputMetadata( importMeta() );
-		importMeta().cleanUp();
-		SummaryUtil.reportSuccess( importMeta() );
-		ModuleUtil.markComplete( importMeta() );
-
-		final FileWriter writer = new FileWriter( getAwsStatus() );
-		writer.close();
-		if( !getAwsStatus().exists() )
-		{
-			throw new Exception( "Unable to create " + getAwsStatus().getAbsolutePath() );
-		}
+		NextflowUtil.startNextflow( Pipeline.getModules() );
+//		Pipeline.executeModule( importMeta() );
+//		Pipeline.refreshOutputMetadata( importMeta() );
+//		importMeta().cleanUp();
+//		SummaryUtil.reportSuccess( importMeta() );
+//		setPipelineSecurity();
+//		ModuleUtil.markComplete( importMeta() );
+//
+//		final FileWriter writer = new FileWriter( getAwsStatus() );
+//		writer.close();
+//		if( !getAwsStatus().exists() )
+//		{
+//			throw new Exception( "Unable to create " + getAwsStatus().getAbsolutePath() );
+//		}
 	}
 
 	/**
@@ -441,24 +441,22 @@ public class BioLockJ
 		else
 		{
 			PropUtil.saveMasterConfig( null );
-			if( DockerUtil.initAwsCloudManager() )
+			if( RuntimeParamUtil.runAws() )
 			{
-				initAwsManager();
+				NextflowUtil.startNextflow( Pipeline.getModules() );
+				//initAwsManager();
 			}
-			else
+	
+			Pipeline.runPipeline();
+
+			if( Config.getBoolean( null, Constants.PIPELINE_DELETE_TEMP_FILES ) )
 			{
-				Pipeline.runPipeline();
-
-				if( Config.getBoolean( null, Constants.PIPELINE_DELETE_TEMP_FILES ) )
-				{
-					removeTempFiles();
-				}
-
-				PropUtil.sanitizeMasterConfig();
-				markProjectStatus( Constants.BLJ_COMPLETE );
-				Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
-
+				removeTempFiles();
 			}
+
+			PropUtil.sanitizeMasterConfig();
+			markProjectStatus( Constants.BLJ_COMPLETE );
+			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
 		}
 	}
 
@@ -526,16 +524,16 @@ public class BioLockJ
 		return name;
 	}
 
-	private static BioModule importMeta() throws Exception
-	{
-		final BioModule module = Pipeline.getModules().get( 0 );
-		if( module instanceof ImportMetadata )
-		{
-			return module;
-		}
-
-		return null;
-	}
+//	private static BioModule importMeta() throws Exception
+//	{
+//		final BioModule module = Pipeline.getModules().get( 0 );
+//		if( module instanceof ImportMetadata )
+//		{
+//			return module;
+//		}
+//
+//		return null;
+//	}
 
 	private static void logFinalException( final String[] args, final Exception ex )
 	{

@@ -18,9 +18,9 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.Config;
-import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.ModuleUtil;
 
 /**
@@ -153,7 +153,7 @@ public class R_CalculateStats extends R_Module implements BioModule
 			return dirs;
 		}
 
-		return Config.requireExistingDirs( module, Constants.INPUT_DIRS );
+		return BioLockJUtil.getInputDirs();
 	}
 
 	/**

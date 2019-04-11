@@ -83,6 +83,11 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 		{
 			return new File( Config.getSystemFilePath( paths.get( 0 ) ) );
 		}
+		
+		if( RuntimeParamUtil.runAws() )
+		{
+			return new File( DockerUtil.AWS_DB );
+		}
 
 		final List<File> dbs = new ArrayList<>();
 		for( final String db: Config.requireList( this, KNEAD_DBS ) )

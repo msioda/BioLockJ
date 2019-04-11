@@ -265,6 +265,11 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 							+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB + ", "
 							+ QIIME_TAXA_DB + "=" + taxaDB );
 		}
+		
+		if( RuntimeParamUtil.runAws() )
+		{
+			return new File( DockerUtil.AWS_DB );
+		}
 
 		final File pynastFile = new File( Config.getSystemFilePath( pynastDB ) );
 		final File refSeqFile = new File( Config.getSystemFilePath( refSeqDB ) );
@@ -384,7 +389,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 		final List<String> lines = super.getWorkerScriptFunctions();
 		if( DockerUtil.hasDB( this ) )
 		{
-			lines.addAll( buildQiimeConfigLines() );
+			lines.addAll( buildQiimeDockerConfigLines() );
 			lines.add( "" );
 		}
 
@@ -414,17 +419,17 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * @return Bash script lines to build the qiime_config file
 	 * @throws Exception if errors occur build file
 	 */
-	protected List<String> buildQiimeConfigLines() throws Exception
+	protected List<String> buildQiimeDockerConfigLines() throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
 		if( getDB() != null )
 		{
-			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDB( QIIME_PYNAST_ALIGN_DB ) + "' >> "
+			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDockerDB( QIIME_PYNAST_ALIGN_DB ) + "' >> "
 					+ QIIME_CONFIG );
 			lines.add(
-					"echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG );
+					"echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDockerDB( QIIME_TAXA_DB ) + "' >> " + QIIME_CONFIG );
 		}
 
 		return lines;
@@ -437,7 +442,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 	 * @return Docker container DB dir
 	 * @throws Exception if errors occur
 	 */
-	protected File getDB( final String prop ) throws Exception
+	protected File getDockerDB( final String prop ) throws Exception
 	{
 		return new File( Config.getSystemFilePath( Config.requireString( this, prop ) )
 				.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) );

@@ -63,21 +63,19 @@ public class DockerUtil
 	 */
 	public static String getDockerImage( final BioModule module ) throws Exception
 	{
-		final String className = module.getClass().getSimpleName();
-		final String name = getDockerImageName( module );
-		return " " + getDockerUser( className ) + "/" + getImageName( name ) + ":" + getImageVersion( className );
+		return " " + getDockerUser( module ) + "/" + getImageName( module ) + ":" + getImageVersion( module );
 	}
 
 	/**
 	 * Return the Docker Hub user ID. If none configured, return biolockj.
 	 * 
-	 * @param moduleName Calling module
+	 * @param module BioModule
 	 * @return Docker Hub User ID
 	 * @throws Exception if errors occur
 	 */
-	public static String getDockerUser( final String moduleName ) throws Exception
+	public static String getDockerUser( final BioModule module ) throws Exception
 	{
-		String user = Config.getString( null, Config.getModuleProp( moduleName, DOCKER_HUB_USER ) );
+		String user = Config.getString( null, Config.getModuleProp( module, DOCKER_HUB_USER ) );
 		user = user == null ? DEFAULT_DOCKER_HUB_USER: user;
 		return user;
 	}
@@ -105,60 +103,66 @@ public class DockerUtil
 	 * <br>
 	 * Example: JavaModule becomes java_module
 	 * 
-	 * @param className BioModule class name
+	 * @param module BioModule
 	 * @return Docker Image Name
 	 * @throws Exception if errors occur
 	 */
-	public static String getImageName( final String className ) throws Exception
+	public static String getImageName( final BioModule module ) throws Exception
 	{
+		String className = module.getClass().getName();
+		Log.info( DockerUtil.class, "Find Docker image name for module: " + className );
+		if( useBasicBashImg( module ) )
+		{
+			Log.info( DockerUtil.class, "Return: " + BLJ_BASH );
+			return BLJ_BASH;
+		}
+		
+		String simpleName = getDockerClassName( module );
+		Log.info( DockerUtil.class, "Found corresponding Java simpleName: " + simpleName );
 		String imageName = "";
-		if( useBasicBashImg( className ) )
-		{
-			imageName += BLJ_BASH;
-		}
-		else
-		{
-			imageName += className.substring( 0, 1 ).toLowerCase();
-			for( int i = 2; i < className.length() + 1; i++ )
-			{
-				final int len = imageName.toString().length();
-				final String prevChar = imageName.toString().substring( len - 1, len );
-				final String val = className.substring( i - 1, i );
-				if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM )
-						&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
-				{
-					imageName += IMAGE_NAME_DELIM + val.toLowerCase();
-				}
-				else if( !prevChar.equals( IMAGE_NAME_DELIM )
-						|| prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
-				{
-					imageName += val.toLowerCase();
-				}
-			}
 
-			if( ( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
-					|| className.contains( KneadData.class.getName() ) ) && hasDB( getShellModule( className ) ) )
+		imageName += simpleName.substring( 0, 1 ).toLowerCase();
+		Log.info( DockerUtil.class, "Building image name: " + imageName );
+		for( int i = 2; i < simpleName.length() + 1; i++ )
+		{
+			final int len = imageName.toString().length();
+			final String prevChar = imageName.toString().substring( len - 1, len );
+			final String val = simpleName.substring( i - 1, i );
+			if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM )
+					&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
 			{
-				imageName += DB_FREE;
+				imageName += IMAGE_NAME_DELIM + val.toLowerCase();
 			}
+			else if( !prevChar.equals( IMAGE_NAME_DELIM )
+					|| prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
+			{
+				imageName += val.toLowerCase();
+			}
+			Log.info( DockerUtil.class, "Building image name: " + imageName );
 		}
 
-		Log.info( DockerUtil.class,
-				"Map: Class [" + className + "] <--> Docker Image [ " + imageName.toString() + " ]" );
-		return imageName.toString();
+		if( ( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
+				|| className.equals( KneadData.class.getName() ) ) && hasDB( module ) )
+		{
+			imageName += DB_FREE;
+		}
+
+		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
+		
+		return imageName;
 	}
 
 	/**
 	 * Get the Docker image version if defined in the {@link biolockj.Config} file<br>
 	 * If not found, return the default version "latest"
 	 * 
-	 * @param moduleName BioModule name
+	 * @param module BioModule
 	 * @return Docker image version
 	 * @throws Exception if errors occur
 	 */
-	public static String getImageVersion( final String moduleName ) throws Exception
+	public static String getImageVersion( final BioModule module ) throws Exception
 	{
-		String ver = Config.getString( null, Config.getModuleProp( moduleName, DOCKER_IMG_VERSION ) );
+		String ver = Config.getString( null, Config.getModuleProp( module, DOCKER_IMG_VERSION ) );
 		if( ver == null )
 		{
 			ver = DOCKER_LATEST;
@@ -200,18 +204,6 @@ public class DockerUtil
 	}
 
 	/**
-	 * Boolean to determine if should initialize Docker aws_manager
-	 * 
-	 * @return TRUE if running Docker aws_manager in init mode
-	 * @throws Exception if unable to determine Docker module type
-	 */
-	public static boolean initAwsCloudManager() throws Exception
-	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && inAwsEnv()
-				&& RuntimeParamUtil.getAwsStack() != null;
-	}
-
-	/**
 	 * Boolean to determine if running Docker blj_manager
 	 * 
 	 * @return TRUE if running Docker blj_manager
@@ -222,24 +214,12 @@ public class DockerUtil
 		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !inAwsEnv();
 	}
 
-	/**
-	 * Boolean to determine if running Docker aws_manager
-	 * 
-	 * @return TRUE if running Docker aws_manager
-	 * @throws Exception if unable to determine Docker module type
-	 */
-	public static boolean runAwsCloudManager() throws Exception
-	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && inAwsEnv()
-				&& RuntimeParamUtil.getAwsStack() == null;
-	}
-
 	private static String getDockerEnvVars( final BioModule module ) throws Exception
 	{
 		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
 
-	private static String getDockerImageName( final BioModule module ) throws Exception
+	private static String getDockerClassName( final BioModule module ) throws Exception
 	{
 		final String className = module.getClass().getSimpleName();
 		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
@@ -315,14 +295,9 @@ public class DockerUtil
 		return dockerVolumes;
 	}
 
-	private static BioModule getShellModule( final String className ) throws Exception
-	{
-		return (BioModule) Class.forName( className ).getDeclaredConstructor().newInstance();
-	}
-
 	private static boolean isJavaModule( final BioModule module ) throws Exception
 	{
-		return getDockerImageName( module ).equals( JavaModule.class.getSimpleName() );
+		return getDockerClassName( module ).equals( JavaModule.class.getSimpleName() );
 	}
 
 	private static final String rmFlag( final BioModule module ) throws Exception
@@ -330,11 +305,9 @@ public class DockerUtil
 		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "": DOCK_RM_FLAG;
 	}
 
-	private static boolean useBasicBashImg( final String className ) throws Exception
+	private static boolean useBasicBashImg( final BioModule module ) throws Exception
 	{
-		return className.contains( PearMergeReads.class.getSimpleName() )
-				|| className.contains( AwkFastaConverter.class.getSimpleName() )
-				|| className.contains( Gunzipper.class.getSimpleName() );
+		return module instanceof PearMergeReads || module instanceof  AwkFastaConverter || module instanceof Gunzipper;
 	}
 
 	/**
@@ -382,6 +355,17 @@ public class DockerUtil
 	 * Docker container root user $HOME directory
 	 */
 	public static final String DOCKER_ROOT_HOME = "/root";
+	
+	/**
+	 * Docker container root user $HOME directory
+	 */
+	public static final String AWS_EFS = "/mnt/efs";
+	
+	/**
+	 * Docker container root user $HOME directory
+	 */
+	public static final String AWS_DB = AWS_EFS + "/db";
+	
 
 	/**
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}

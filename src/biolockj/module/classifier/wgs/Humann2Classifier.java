@@ -150,6 +150,12 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	{
 		final String nuclPath = Config.requireString( this, HN2_NUCL_DB );
 		final String protPath = Config.requireString( this, HN2_PROT_DB );
+		
+		if( RuntimeParamUtil.runAws() )
+		{
+			return new File( DockerUtil.AWS_DB );
+		}
+		
 		final File nuclDb = new File( Config.getSystemFilePath( nuclPath ) );
 		final File protDb = new File( Config.getSystemFilePath( protPath ) );
 		final File parentDir = BioLockJUtil.getCommonParent( nuclDb, protDb );
@@ -255,11 +261,17 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		return lines;
 	}
 
+
+	/**
+	 * Typically in Docker both databases are expected to have the same parent dir
+	 * humann2.nuclDB=/db/chocophlan
+	 * humann2.protDB=/db/uniref
+	 */
 	private String getDbPath( final String prop ) throws Exception
 	{
-		final String db = Config.getString( null, prop );
-		return RuntimeParamUtil.isDockerMode() ? db.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
-				: Config.requireExistingDir( null, prop ).getAbsolutePath();
+		final File db = new File( Config.getSystemFilePath( Config.requireString( this, prop ) ) );
+		return RuntimeParamUtil.isDockerMode() ? db.getAbsolutePath().replace( db.getParentFile().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
+				: Config.requireExistingDir( this, prop ).getAbsolutePath();
 	}
 
 	private String getJoinTableCmd() throws Exception

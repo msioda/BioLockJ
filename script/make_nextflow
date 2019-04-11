@@ -10,7 +10,6 @@
 . $BLJ/script/blj_functions
 
 modules=
-SEPARATOR="%"
 MAIN_NF="$BLJ/resources/aws/nextflow_template_main.nf"
 
 # If 2nd parameter (module list) is undefined, define process for each possible BioLockJ modules
@@ -41,7 +40,7 @@ summaryMsg="BioLockJ $(get_version) generated Nextflow Template with $numModules
 echo "// $summaryMsg" > $MAIN_NF
 echo "// Path: $MAIN_NF" >> $MAIN_NF
 echo "" >> $MAIN_NF
-echo 'pipeline.pipelineDir = "$BLJ_PROJ/$pipeline.pipelineName"' >> $MAIN_NF
+echo 'pipeline.pipelineDir = $BLJ_PROJ/$pipeline.pipelineName' >> $MAIN_NF
 echo "" >> $MAIN_NF
 
 for module in ${modules[@]}; do

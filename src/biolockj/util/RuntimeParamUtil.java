@@ -58,10 +58,20 @@ public class RuntimeParamUtil
 	 * 
 	 * @return Host {@value #HOST_BLJ} directory
 	 */
-	public static File getAwsStack()
+	public static boolean runAws()
 	{
-		return params.get( AWS_STACK ) == null ? null : new File( params.get( AWS_STACK ) );
+		return params.get( AWS_FLAG ) != null;
 	}
+	
+//	/**
+//	 * Runtime property getter for Docker host BioLockJ dir
+//	 * 
+//	 * @return Host {@value #HOST_BLJ} directory
+//	 */
+//	public static File getAwsStack()
+//	{
+//		return params.get( AWS_FLAG ) == null ? null : new File( params.get( AWS_FLAG ) );
+//	}
 
 	/**
 	 * Runtime property getter for {@value #BASE_DIR_FLAG}
@@ -374,7 +384,7 @@ public class RuntimeParamUtil
 		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG )
 				|| param.equals( HOST_BLJ ) || param.equals( HOST_BLJ_SUP ) || param.equals( CONFIG_DIR_FLAG )
 				|| param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG ) || param.equals( HOST_HOME_USER_DIR )
-				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) || param.equals( AWS_STACK ) )
+				|| param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) )
 		{
 			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
 		}
@@ -437,9 +447,9 @@ public class RuntimeParamUtil
 			{
 				params.put( DOCKER_FLAG, Constants.TRUE );
 			}
-			else if( prevParam.equals( AWS_STACK ) )
+			else if( arg.equals( AWS_FLAG ) )
 			{
-				params.put( AWS_STACK, arg );
+				params.put( AWS_FLAG, Constants.TRUE );
 			}
 			else if( prevParam.equals( RESTART_FLAG ) )
 			{
@@ -597,9 +607,9 @@ public class RuntimeParamUtil
 	}
 
 	/**
-	 * AWS pipeline runtime parameter switch: {@value #AWS_STACK}
+	 * AWS pipeline runtime parameter switch: {@value #AWS_FLAG}
 	 */
-	protected static final String AWS_STACK = "-aws";
+	protected static final String AWS_FLAG = "-aws";
 
 	/**
 	 * Pipeline parent directory file-path runtime parameter switch: {@value #BASE_DIR_FLAG}
