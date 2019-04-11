@@ -143,17 +143,6 @@ public class BioLockJ
 			{
 				startPipeline();
 			}
-			
-			if( DockerUtil.initAwsCloudManager() )
-			{
-				final FileWriter writer = new FileWriter( getAwsStatus() );
-				writer.close();
-				if( !getAwsStatus().exists() )
-				{
-					throw new Exception( "Unable to create " + getAwsStatus().getAbsolutePath() );
-				}
-			}
-			
 		}
 		catch( final Exception ex )
 		{
@@ -273,9 +262,17 @@ public class BioLockJ
 	{
 		NextflowUtil.buildNextflowMain( Pipeline.getModules() );
 		Pipeline.executeModule( importMeta() );
-		setPipelineSecurity();
-		Config.setPipelineDir( NextflowUtil.copyPipelineToEfs() );
-		PropUtil.saveMasterConfig( null );
+		Pipeline.refreshOutputMetadata( importMeta() );
+		importMeta().cleanUp();
+		SummaryUtil.reportSuccess( importMeta() );
+		ModuleUtil.markComplete( importMeta() );
+
+		final FileWriter writer = new FileWriter( getAwsStatus() );
+		writer.close();
+		if( !getAwsStatus().exists() )
+		{
+			throw new Exception( "Unable to create " + getAwsStatus().getAbsolutePath() );
+		}
 	}
 
 	/**

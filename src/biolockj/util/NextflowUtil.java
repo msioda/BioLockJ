@@ -14,7 +14,6 @@ package biolockj.util;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.io.FileUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -43,24 +42,6 @@ public class NextflowUtil
 		BioLockJUtil.deleteWithRetry( templateConfig(), 3 );
 		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
 		return getMainNf();
-	}
-
-	/**
-	 * Copy the initialized pipeline to EFS. The aws_manager can then be launched with updated $BLJ_PROJ = EFS parent
-	 * directory.
-	 * 
-	 * @return File EFS Pipeline directory
-	 * @throws Exception if errors occur copying the pipeline.
-	 */
-	public static File copyPipelineToEfs() throws Exception
-	{
-		final File efsPipeline = new File( EFS_DIR + File.separator + Config.pipelineName() );
-		FileUtils.copyDirectory( new File( Config.pipelinePath() ), efsPipeline, true );
-		if( !efsPipeline.exists() )
-		{
-			throw new Exception( "Unable to create EFS pipeline directory: " + efsPipeline.getAbsolutePath() );
-		}
-		return efsPipeline;
 	}
 
 	/**
@@ -238,7 +219,7 @@ public class NextflowUtil
 		}
 	}
 
-	private static final String EFS_DIR = "/mount/efs";
+	//private static final String EFS_DIR = "/mount/efs";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
