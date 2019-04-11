@@ -114,7 +114,7 @@ launch_ec2_head_node() {
 	secureGroup="$(get_stack_param BastionSecurityGroup)"
 	subnet="$(get_stack_param Subnet1)"
 	templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
-	if [ {#ami} -eq 0 ] || [ {#stack} -eq 0 ] || [ {#secureGroup} -eq 0 ] || [ {#subnet} -eq 0 ] || [ {#templateId} -eq 0 ]; then
+	if [ ${#awsAmi} -eq 0 ] || [ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ]; then
 		exit_script "Error [ aws_head_node_lib.launch_ec2_head_node() ]: Cannot launch EC2 - required parameters not found in $blj_aws_config"
 	fi
 	instanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids ${secureGroup} \
