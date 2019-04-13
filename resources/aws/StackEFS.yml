@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  AWS CloudFormation Template for BioLockJ Genomics pipeline using AWS Batch 
+  AWSBatchGenomicsStack_Template
+  This is an AWS CloudFormation Template for BioLockJ Genomics pipeline using AWS Batch 
   This file only creates the roles, vpcs, and subnets necssary for deployment
   Note: this cloudformation stack requires one parameter, your public IP address
   which is automatically queried from inside the main script.  This is to only
@@ -23,6 +24,14 @@ Parameters:
     MinValue: 1
     MaxValue: 90
     Default: 80
+  SpotBatchMaxvCPUs:
+    Description: Max number of vCPUs for Batch environments
+    Type: Number
+    Default: 1024
+  OnDemandBatchMaxvCPUs:
+    Description: Max number of vCPUs for Batch environments
+    Type: Number
+    Default: 256
   VolumeName:
     Description: The name to be used for the EFS volume
     Type: String
@@ -33,6 +42,9 @@ Parameters:
     Type: String
     MinLength: '1'
     Default: myEFSvolume
+  CloudformationTemplateName:
+    Type: String
+    Default: AWSBatchGenomicsStack
 Resources:
   VPC:
     Type: 'AWS::EC2::VPC'
@@ -317,8 +329,8 @@ Resources:
           - optimal
         Ec2KeyPair: !Ref 'AWS::StackName'
         Tags:
-          Owner: A
-          Project: B
+          StackName: !Ref 'AWS::StackName'
+          ComputeEnvironment: SpotComputeEnv
       State: ENABLED
     Metadata:
       'AWS::CloudFormation::Designer':
@@ -349,7 +361,7 @@ Resources:
           - OnDemandComputeEnv
       ComputeResources:
         MinvCpus: 0
-        MaxvCpus: 256
+        MaxvCpus: !Ref OnDemandBatchMaxvCPUs
         DesiredvCpus: 0
         SecurityGroupIds:
           - Ref: BastionSecurityGroup
@@ -365,8 +377,8 @@ Resources:
           - optimal
         Ec2KeyPair: !Ref 'AWS::StackName'
         Tags:
-          Owner: A
-          Project: B
+          StackName: !Ref 'AWS::StackName'
+          ComputeEnvironment: OnDemandComputeEnv
       State: ENABLED
     Metadata:
       'AWS::CloudFormation::Designer':
@@ -431,25 +443,26 @@ Resources:
         - - !Ref 'AWS::StackName'
           - HeadNodeTemplateWithEFS
       LaunchTemplateData:
+        TagSpecifications:
+          - ResourceType: 'instance'
+            Tags:
+              - Key: 'StackName'
+                Value: !Ref 'AWS::StackName'
         UserData:
           'Fn::Base64': !Sub >
             MIME-Version: 1.0
 
             Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
 
-
             --==MYBOUNDARY==
 
             Content-Type: text/cloud-config; charset="us-ascii"
 
-
             package_update: true
-
 
             packages:
 
             - amazon-efs-utils
-
 
             runcmd:
 
@@ -470,7 +483,6 @@ Resources:
 
             - chmod g+x ${!efs_directory}
 
-
             --==MYBOUNDARY==--
     Metadata:
       'AWS::CloudFormation::Designer':
@@ -489,16 +501,13 @@ Resources:
 
             Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
 
-
             --==MYBOUNDARY==
 
             Content-Type: text/cloud-config; charset="us-ascii"
 
-
             packages:
 
             - amazon-efs-utils
-
 
             runcmd:
 

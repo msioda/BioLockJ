@@ -76,7 +76,7 @@
 				</delete>
 			</then>
 		</if>
-		<tar compression="gzip" destfile="${release_tar}">
+		<tar compression="gzip" destfile="${release_tar}" longfile="gnu">
 			<tarfileset dir="." filemode="770" dirmode="770">
 				<exclude name="/bin"/>
 				<exclude name="${release_tar}"/> 

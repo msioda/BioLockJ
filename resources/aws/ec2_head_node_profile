@@ -44,7 +44,7 @@ source $BLJ_SCRIPT/aws_head_node_lib
 export blj_aws_config="$BLJ_CONFIG/blj_config"
 export DOCKER_HUB_USER=${dockerUser}
 
-[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
+[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs && build_nextflow_config
 
 export S3_BUCKET="s3://${awsS3}"
 export S3_CONFIG="$S3_BUCKET/config"
@@ -61,6 +61,21 @@ aws_report_config() {
 	echo "---------------------------------------------------"
 	[ -f "$blj_aws_config" ] && tail -n +2 "$blj_aws_config"
 	echo "---------------------------------------------------"
+}
+
+# Remove old Docker images
+clearDock() {
+	echo "Stop/remove all containers & remove old images..."
+	containers=$(docker ps -aq)
+	runningProcs=$(docker ps -q)
+	images=$(docker images -f "dangling=true" -q) 
+	
+	[ ${#runningProcs} -gt 0 ] && docker kill $runningProcs
+	[ ${#containers} -gt 0 ] && docker rm $containers
+	[ ${#images} -gt 0 ] && docker rmi $images
+	
+	echo "Verify old containers & images have been removed..."
+	dockls
 }
 
 # Return absolute path of most recent pipeline

@@ -33,6 +33,13 @@ public class Pipeline
 {
 	private Pipeline()
 	{}
+	
+	
+	private static boolean hasScripts( final BioModule module ) throws Exception
+	{
+		final File scriptDir = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
+		return scriptDir.exists() && module instanceof ScriptModule;
+	}
 
 	/**
 	 * Execute a single pipeline module.
@@ -48,15 +55,14 @@ public class Pipeline
 		module.executeTask();
 
 		final boolean isJava = module instanceof JavaModule;
-		final boolean isScript = module instanceof ScriptModule;
-		final boolean runScripts = isScript && ( (ScriptModule) module ).getMainScript() != null;
+		final boolean runScripts = hasScripts( module );
 
-		if( runScripts )
+		if( runScripts && !RuntimeParamUtil.runAws() )
 		{
 			Job.submit( (ScriptModule) module );
 		}
-
-		if( runScripts || RuntimeParamUtil.runAws() )
+		
+		if( runScripts )
 		{
 			pollAndSpin( (ScriptModule) module );
 		}
@@ -64,7 +70,7 @@ public class Pipeline
 		refreshOutputMetadata( module );
 		module.cleanUp();
 
-		if( !isJava || !runScripts )
+		if( !isJava && !runScripts )
 		{
 			SummaryUtil.reportSuccess( module );
 		}

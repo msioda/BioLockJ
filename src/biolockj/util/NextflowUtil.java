@@ -76,6 +76,7 @@ public class NextflowUtil
 	{
 		Log.info( NextflowUtil.class, "Calling getNextflowLines()" );
 		final List<String> lines = new ArrayList<>();
+
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
 		try
 		{
@@ -83,6 +84,7 @@ public class NextflowUtil
 			BioModule module = null;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
+				String onDemandLabel = null;
 				Log.info( NextflowUtil.class, "READ line: " + line );
 				if( moduleName != null )
 				{
@@ -93,9 +95,12 @@ public class NextflowUtil
 						moduleName = null;
 						module = null;
 					}
-					if( line.contains( "$BLJ_PROJ" ) )
+					if( line.trim().startsWith( WORKER_FLAG ) && line.contains( module.getClass().getSimpleName() ) )
 					{
-						line = line.replace( "$BLJ_PROJ", new File( Config.pipelinePath() ).getParentFile().getAbsolutePath() );
+						Log.info( NextflowUtil.class, "Found worker: " + line );
+						String moduleFlag = moduleName.replaceAll( "\\.", PACKAGE_SEPARATOR );
+						Log.info( NextflowUtil.class, "Replace moduleFlag: " + moduleFlag + " with " + module.getClass().getSimpleName() );
+						line = line.replace( moduleFlag, module.getClass().getSimpleName() );
 					}
 					if( line.contains( NF_CPUS ) )
 					{
@@ -119,13 +124,18 @@ public class NextflowUtil
 					if( line.contains( NF_DOCKER_IMAGE ) )
 					{
 						line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
+						if( Config.requireString( module, EC2_ACQUISITION_STRATEGY ).toUpperCase().equals( ON_DEMAND ) )
+						{
+							onDemandLabel = "    label '" + ON_DEMAND + "'";
+						}
 					}
 				}
 				if( line.trim().startsWith( PROCESS ) )
 				{
 					Log.info( NextflowUtil.class, "Found module on line: " + line );
 					line = line.replaceAll( PACKAGE_SEPARATOR, "\\." );
-					moduleName = convertModuleName( line );
+					moduleName = line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim();
+					line = line.replace( moduleName, convertModuleName( moduleName ) );
 				}
 				if( line.contains( NF_PIPELINE_NAME ) )
 				{
@@ -134,6 +144,10 @@ public class NextflowUtil
 
 				Log.info( NextflowUtil.class, "Add line: " + line );
 				lines.add( line );
+				if( onDemandLabel != null )
+				{
+					lines.add( onDemandLabel );
+				}
 			}
 		}
 		finally
@@ -152,17 +166,16 @@ public class NextflowUtil
 		return (BioModule) Class.forName( className ).getDeclaredConstructor().newInstance();
 	}
 	
-	private static String convertModuleName( String moduleLowerCase ) throws Exception
+	private static String convertModuleName( String name ) throws Exception
 	{
 		String val = "";
-		String name = moduleLowerCase.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim();
 		StringTokenizer st = new StringTokenizer( name, "." );
 		while( st.hasMoreTokens() )
 		{
 			val += st.nextToken();
 			if( st.hasMoreTokens() )
 			{
-				val += ".";
+				val += "_";
 			}
 		}
 		return val;
@@ -251,18 +264,18 @@ public class NextflowUtil
 		}
 	}
 
-	//private static final String EFS_DIR = "/mount/efs";
+	private static final String ON_DEMAND = "DEMAND";
+	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
-	private static final String NEXTFLOW_CMD = "nextflow";
-	
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
+	private static final String WORKER_FLAG = "val worker from Channel.watchPath";
+	private static final String MODULE_SEPARATOR = ".";
+	private static final String NEXTFLOW_CMD = "nextflow";
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
-
 	private static final String NF_MEMORY = "$" + Constants.AWS_RAM;
 	private static final String NF_PIPELINE_NAME = "$pipeline.pipelineName";
-	private static final String PROCESS = "process";
-	private static final String MODULE_SEPARATOR = ".";
 	private static final String PACKAGE_SEPARATOR = "_:_";
+	private static final String PROCESS = "process";
 }

@@ -28,7 +28,7 @@ RUN echo ${BLJ_DATE} && \
 #4.) Cleanup
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
-	rm -rf /usr/share/* && \
+	#rm -rf /usr/share/* && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*

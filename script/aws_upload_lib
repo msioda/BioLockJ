@@ -14,6 +14,7 @@
 #####################################################################
 . $BLJ/script/aws_config_lib
 
+NF_LOCAL=~/.aws/nextflow
 S3_DIR="s3://"
 
 # Sync local files to S3 for cloud pipeline execution
@@ -51,6 +52,14 @@ exe_remote_cmd() {
 	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_blj_prop publicHost) "$1"
 }
 
+# Return the Nextflow basic config file-path
+get_nextflow_basic_config() {
+	nfStackDir=$NF_LOCAL/${awsStack} 
+	[ ! -d "$nfStackDir" ] && mkdir -p $nfStackDir
+	[ ! -f "$nfStackDir/config" ] && build_nextflow_config
+	echo "$nfStackDir/config"
+}
+
 # Get the S3 directory-path
 # Param 1 - S3 bucket folder
 get_s3_dir() {
@@ -77,7 +86,9 @@ stage_pipeline_on_aws() {
 	exe_remote_cmd "[ ! -d $headPipelines ] && mkdir $headPipelines"
 	exe_remote_cmd "[ ! -d $headPrimer ] && mkdir $headPrimer"
 	exe_remote_cmd "[ ! -d $headScript ] && mkdir $headScript"
+	exe_remote_cmd "[ ! -d $EC2_HEAD_NODE/.nextflow ] && mkdir $EC2_HEAD_NODE/.nextflow"
 	
+	upload_file_to_aws $(get_nextflow_basic_config) $EC2_HEAD_NODE/.nextflow
 	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
 	upload_file_to_aws $blj_aws_config $headConfig
 	upload_pipeline_inputs_to_aws
@@ -96,18 +107,18 @@ upload_config_to_aws() {
 	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile $headConfig; done
 }
 
-# Upload local directory up to the ec2 head node
+# Upload local directory up to the ec2 head node, if no target dir specified use EC2 $HOME
 # Param 1 - Local dir
-# Param 2 - AWS ec2 directory-path 
+# Param 2 - (optional) AWS ec2 directory-path 
 upload_dir_to_aws() {
 	if [ $# -eq 2 ]; then target="$2"; else target=$EC2_HEAD_NODE; fi
 	aws_log "Uploading directory \"$1\" to AWS --> \"$target\" --> See file/sub-dir list below..."
 	for f in $1/*; do upload_file_to_aws "$f" "$target"; done
 }
 
-# Upload local file-path up to the ec2 head node
+# Upload local file-path up to the ec2 head node, if no target dir specified use EC2 $HOME
 # Param 1 - Local file
-# Param 2 - AWS ec2 file-path 
+# Param 2 - (optional) AWS ec2 file-path 
 upload_file_to_aws() {
 	if [ $# -eq 2 ]; then target="$2"; else target=$EC2_HEAD_NODE; fi
 	aws_log "Uploading file \"$1\" to AWS --> \"$target\""

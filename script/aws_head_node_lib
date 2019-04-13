@@ -20,6 +20,7 @@ headPipelines=$EFS/pipelines
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
+	refresh_aws_cache
 	dockerModules=$(docker search ${dockerUser} | grep -E ^${dockerUser} ) 
 	jobVcpus=2
 	jobRam=1024
@@ -58,6 +59,47 @@ build_docker_job_defs() {
 	touch $AWS_DOCKER_JOB_FLAG
 }
 
+# Create the basic nextflow config file using the current statck AWS batch queues
+build_nextflow_config() {
+	refresh_aws_cache
+	nfConfig=$(get_nextflow_basic_config)
+	dockUID="${dockerUser}"
+	LPJQ="$(get_stack_param LowPriorityJobQueue)"
+	HPJQ="$(get_stack_param HighPriorityJobQueue)"
+	
+	echo "# These Nextflow properties are inherited by pipeline main.nf" > $nfConfig
+	echo "" >> $nfConfig
+	echo "executor {" >> $nfConfig
+    echo "    name = 'awsbatch'" >> $nfConfig
+    echo "}" >> $nfConfig
+    echo "" >> $nfConfig
+    echo "aws {" >> $nfConfig
+	echo "    region = '${awsRegion}'" >> $nfConfig
+	echo "}" >> $nfConfig
+	echo "" >> $nfConfig
+	
+	echo "process {" >> $nfConfig
+	echo "    queue = '$LPJQ'" >> $nfConfig
+	echo "    withLabel: 'DEMAND' {" >> $nfConfig
+	echo "        queue = '$HPJQ'" >> $nfConfig
+	echo "    }" >> $nfConfig
+
+	while read line; do
+	    line=$(echo ${line} | xargs)
+	    prop=
+	    val=
+	    if [ "${line/=/}" != "${line}" ] && [ "${line:0:1}" != "#" ]; then
+			prop=$(echo ${line} | cut -d '=' -f1)
+			val=$(eval "echo ${line} | cut -d '=' -f2")
+			if [ "${prop/image_$dockUID}" != "${prop}" ]; then
+				echo "    withLabel: ${prop} {" >> $nfConfig
+				echo "        container = '${val}'" >> $nfConfig
+				echo "    }" >> $nfConfig
+			fi
+		fi
+	done < $blj_aws_config
+	echo "}" >> $nfConfig
+}
 
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
@@ -108,8 +150,8 @@ get_stack_param() {
 
 # Launch a new ec2 head node
 launch_ec2_head_node() {
+	[ -x "$(which docker)" ] && build_docker_job_defs && build_nextflow_config
 	refresh_aws_cache
-	[ -x "$(which docker)" ] && build_docker_job_defs
 	runTime=0
 	secureGroup="$(get_stack_param BastionSecurityGroup)"
 	subnet="$(get_stack_param Subnet1)"
@@ -136,5 +178,9 @@ launch_ec2_head_node() {
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
 	startScript=$(build_start_script)
 	stage_pipeline_on_aws $startScript
-	[ -x "$(which docker)" ] && exe_remote_cmd "$EC2_HEAD_NODE/$(basename $startScript)"
+	if [ -x "$(which docker)" ]; then
+		exe_remote_cmd "$EC2_HEAD_NODE/$(basename $startScript)"
+	else
+		connect_head
+	fi
 }
