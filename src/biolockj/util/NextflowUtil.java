@@ -42,6 +42,7 @@ public class NextflowUtil
 		BioLockJUtil.deleteWithRetry( templateConfig(), 5 );
 		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
 		startService();
+		Log.info( NextflowUtil.class, "Nextflow service sub-process started!" );
 		//return getMainNf();
 	}
 	
@@ -51,7 +52,10 @@ public class NextflowUtil
 		args[ 0 ] = NEXTFLOW_CMD;
 		args[ 1 ] = "run";
 		args[ 2 ] = getMainNf().getAbsolutePath();
-		Job.submit( args, false );
+		Processor.runSubprocess( args, "Nextflow-main" );
+		
+		
+		
 	}
 
 	/**
@@ -204,7 +208,7 @@ public class NextflowUtil
 		args[ 0 ] = templateScript().getAbsolutePath();
 		args[ 1 ] = templateConfig().getAbsolutePath();
 		args[ 2 ] = modules;
-		Job.submit( args, true );
+		Processor.submit( args );
 		if( !templateConfig().exists() )
 		{
 			throw new Exception( "Nextflow Template failed to build: " + templateConfig().getAbsolutePath() );

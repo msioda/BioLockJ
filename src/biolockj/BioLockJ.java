@@ -153,12 +153,6 @@ public class BioLockJ
 			pipelineShutDown( args );
 		}
 	}
-	
-	
-//	private static File getAwsStatus() throws Exception
-//	{
-//		return new File( Config.getSystemFilePath( "$HOME/.init_aws_" + RuntimeParamUtil.runAws() ) );
-//	}
 
 	/**
 	 * Return the pipeline input directory
@@ -732,7 +726,7 @@ public class BioLockJ
 		final String perm = Config.getString( null, Constants.PROJECT_PERMISSIONS );
 		if( perm != null )
 		{
-			Job.setFilePermissions( Config.pipelinePath(), perm );
+			Processor.setFilePermissions( Config.pipelinePath(), perm );
 		}
 	}
 

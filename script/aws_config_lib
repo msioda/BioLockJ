@@ -7,7 +7,8 @@
 . $BLJ/script/blj_functions
 
 aws_cred_file=~/.aws/credentials
-blj_aws_config=~/.aws/blj_config
+
+[ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config
 sheBang='#!/bin/bash'
 IS_NULL=IS_NULL
 DB=/db
@@ -20,7 +21,7 @@ DEFAULT_CONFIG=$BLJ/resources/config/default/docker.properties
 aws_archive() {
 	aws_history=~/.aws/history
 	[ ! -d $aws_history ] && mkdir $aws_history
-	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/blj_config-$(date "+%Y-%m-%d.%H.%M.%S")
+	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
 	echo $sheBang > $blj_aws_config
 	chmod 770 $blj_aws_config
 }
@@ -261,6 +262,7 @@ verify_config() {
 	[ ${#awsRam} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Required Pipeline Config property \"aws.ram\" undefined!"
 }
 
+# Verify the Pipeline Config property aws.ec2AcquisitionStrategy
 verify_ec2_acquisition_strategy() {
 	[ ${#awsEc2AcquisitionStrategy} -eq 0 ] && \
     exit_script "Error [ aws_config_lib.verify_ec2_acquisition_strategy() ]: Required property \"aws.ec2AcquisitionStrategy\" is undefined!"
@@ -268,7 +270,7 @@ verify_ec2_acquisition_strategy() {
 	[ "$val" != "SPOT" ] && [ "$val" != "DEMAND" ] && \
     exit_script "Error [ aws_config_lib.verify_ec2_acquisition_strategy() ]: Required property \"aws.ec2AcquisitionStrategy\" is invalid \"$val\".  Update to \"spot\" or \"demand\"!" 
 }
-
+# Verify the Pipeline Config property aws.ec2SpotPer
 verify_ec2_spot_per() {
 	ec2strategy=$( echo "${awsEc2AcquisitionStrategy}" | awk '{print toupper($0)}' )
 	[ "${ec2strategy}" == "SPOT" ] && [ ${#awsEc2SpotPer} -eq 0 ] || [ ${awsEc2SpotPer} -lt 0 ] || [ ${awsEc2SpotPer} -gt 100 ] && \

@@ -20,10 +20,11 @@ add_named_arg() {
 
 # Print AWS Config report
 aws_report_config() {
+	[ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config 
 	echo "---------------------------------------------------"
 	echo "Report current AWS Config"
 	echo "---------------------------------------------------"
-	[ -f ~/.aws/blj_config ] && tail -n +2 ~/.aws/blj_config
+	[ -f $blj_aws_config ] && tail -n +2 $blj_aws_config
 	echo "---------------------------------------------------"
 }
 

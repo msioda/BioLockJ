@@ -18,12 +18,48 @@ import biolockj.module.ScriptModule;
 
 /**
  * {@link biolockj.module.ScriptModule}s that generate scripts will submit a main script to the OS for execution as a
- * {@link biolockj.Job}.
+ * {@link biolockj.Processor}.
  */
-public class Job
+public class Processor
 {
+	/**
+	 * Class used to submit processes on their own Thread.
+	 */
+	public class SubProcess implements Runnable
+	{
+		private String[] args = null;
+		private String label = null;
+		
+		/**
+		 * Execute the command args in a separate thread and log output with label.
+		 * 
+		 * @param args Command args
+		 * @param label Log label
+		 * @throws Exception if errors occur in the Processor
+		 */
+		public SubProcess( final String[] args, final String label )
+		{
+			this.args = args;
+			this.label = label;
+		}
 
-	private Job()
+		@Override
+		public void run()
+		{
+			try
+			{
+				Log.info( getClass(), "SubProcess initiailizing..." );
+				new Processor().runJob( args, "SubProcess-" + label );
+			} 
+			catch( Exception ex )
+			{
+				Log.error( getClass(), "Problem occurring within SubProcess-" + label + " --> " + ex.getMessage() );
+				ex.printStackTrace();
+			}
+		}
+	}
+	
+	private Processor()
 	{};
 
 	/**
@@ -31,16 +67,16 @@ public class Job
 	 * 
 	 * @param args Command args
 	 * @param label Log label
-	 * @param blockUntilComplete Boolean
-	 * @throws Exception if errors occur in the Job
+	 * @throws Exception if errors occur in the Processor
 	 */
-	public void runJob( final String[] args, final String label, final boolean blockUntilComplete ) throws Exception
+	public void runJob( final String[] args, final String label ) throws Exception
 	{
 		Log.info( getClass(), "[Run Command]: " + getArgsAsString( args ) );
 		final Runtime r = Runtime.getRuntime();
 		final Process p = r.exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 		String s;
+		Log.info( getClass(), "BioLockJ process-" + label + " process started..." );
 		while( ( s = br.readLine() ) != null )
 		{
 			if( !s.trim().isEmpty() )
@@ -48,12 +84,10 @@ public class Job
 				Log.info( getClass(), "[" + label + "] " + s );
 			}
 		}
-
-		if( blockUntilComplete )
-		{
-			p.waitFor();
-			p.destroy();
-		}
+		Log.info( getClass(), "BioLockJ process-" + label + " has no further output" );
+		p.waitFor();
+		p.destroy();
+		Log.info( getClass(), "BioLockJ process-" + label + " has been destroyed" );
 	}
 
 	/**
@@ -73,7 +107,7 @@ public class Job
 			args[ i ] = st.nextToken();
 		}
 
-		submit( args, true );
+		submit( args );
 	}
 
 	/**
@@ -82,7 +116,7 @@ public class Job
 	 * (passed in the args param) is executed. Calls {@link #setFilePermissions(String, String)} and
 	 * {@link #submit(ScriptModule)}
 	 *
-	 * @param module ScriptModule that is submitting its main script as a Job
+	 * @param module ScriptModule that is submitting its main script as a Processor
 	 * 
 	 * @throws Exception if errors occur during execution
 	 */
@@ -90,21 +124,34 @@ public class Job
 	{
 		setFilePermissions( module.getScriptDir().getAbsolutePath(),
 				Config.requireString( module, ScriptModule.SCRIPT_PERMISSIONS ) );
-		new Job().runJob( module.getJobParams(), module.getClass().getSimpleName(), true );
+		new Processor().runJob( module.getJobParams(), module.getClass().getSimpleName() );
 	}
 
 	/**
-	 * Instantiates a new {@link biolockj.Job}.<br>
+	 * Instantiates a new {@link biolockj.Processor}.<br>
 	 * String[] array used to control spacing between command/params.<br>
 	 * As if executing on terminal args[0] args[1]... args[n-1] as one command.
 	 *
 	 * @param args Terminal command created from args (adds 1 space between each array element)
-	 * @param blockUntilComplete Boolean
 	 * @throws Exception if errors occur during execution
 	 */
-	public static void submit( final String[] args, final boolean blockUntilComplete   ) throws Exception
+	public static void submit( final String[] args ) throws Exception
 	{
-		new Job().runJob( args, "Process", blockUntilComplete );
+		new Processor().runJob( args, "Process" );
+	}
+	
+	/**
+	 * Instantiates a new {@link biolockj.Processor}.<br>
+	 * String[] array used to control spacing between command/params.<br>
+	 * As if executing on terminal args[0] args[1]... args[n-1] as one command.
+	 *
+	 * @param args Terminal command created from args (adds 1 space between each array element)
+	 * @param label to associate with the process
+	 * @throws Exception if errors occur during execution
+	 */
+	public static void runSubprocess( final String[] args, String label ) throws Exception
+	{
+		new Thread( new Processor().new SubProcess( args, label ) ).start();
 	}
 
 	private static String getArgsAsString( final String[] args )

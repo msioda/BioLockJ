@@ -93,6 +93,7 @@ stage_pipeline_on_aws() {
 	upload_file_to_aws $blj_aws_config $headConfig
 	upload_pipeline_inputs_to_aws
 	upload_dir_to_aws $BLJ/script $headScript
+	[ -d "$BLJ_SUP/script" ] && upload_dir_to_aws $BLJ_SUP/script $headScript
 	upload_file_to_aws ${1}
 	
 	[ -f "$AWS_DOCKER_JOB_FLAG" ] && upload_file_to_aws $AWS_DOCKER_JOB_FLAG

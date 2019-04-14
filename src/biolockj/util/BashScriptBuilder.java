@@ -137,7 +137,7 @@ public class BashScriptBuilder
 
 		if( DockerUtil.inAwsEnv() )
 		{
-			Job.setFilePermissions( scriptPath, Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
+			Processor.setFilePermissions( scriptPath, Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
 		}
 
 		printScriptAsDebug( scriptPath );

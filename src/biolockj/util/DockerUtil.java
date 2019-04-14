@@ -357,12 +357,12 @@ public class DockerUtil
 	public static final String DOCKER_ROOT_HOME = "/root";
 	
 	/**
-	 * Docker container root user $HOME directory
+	 * Docker container root user EFS directory
 	 */
 	public static final String AWS_EFS = "/mnt/efs";
 	
 	/**
-	 * Docker container root user $HOME directory
+	 * Docker container root user DB directory
 	 */
 	public static final String AWS_DB = AWS_EFS + "/db";
 	

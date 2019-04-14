@@ -59,7 +59,7 @@ public class Pipeline
 
 		if( runScripts && !RuntimeParamUtil.runAws() )
 		{
-			Job.submit( (ScriptModule) module );
+			Processor.submit( (ScriptModule) module );
 		}
 		
 		if( runScripts )
