@@ -15,10 +15,10 @@ build_stack() {
 	aws_log "Building cloud formation stack: $awsStack. Please wait..."
 	stackYml="file://$BLJ/resources/aws/StackEFS.yml"
 	myIp=$(get_ip)/32
-	ipParam='ParameterKey=NetworkAccessIP,ParameterValue='
-	spBidParam='ParameterKey=SpotBidPercentage,ParameterValue='
-	params="${ipParam}${myIp}"
-	[ ${#awsEc2SpotPer} -gt 0 ] && params="${params},${spBidParam}${awsEc2SpotPer}"
+	ipParam="ParameterKey=NetworkAccessIP,ParameterValue="
+	spBidParam="ParameterKey=SpotBidPercentage,ParameterValue="
+	params=${ipParam}${myIp}
+	[ ${awsEc2SpotPer} -gt 0 ] && params="${params},${spBidParam}${awsEc2SpotPer}"
 	
 	numSecs=0
 	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name ${awsStack} --capabilities CAPABILITY_IAM --parameters ${params}"
@@ -27,7 +27,7 @@ build_stack() {
 	while [ $(is_stack_complete ${awsStack}) != "true" ]; do
 		printf "." && sleep 5s && numSecs=$((numSecs+5))
 	done
-	aws_log "Attached secure $awsStack to local IP: $myIp in $numSecs seconds"
+	aws_log "Attached secure $awsStack to local IP: ${myIp} in ${numSecs} seconds"
 }
 
 # Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
