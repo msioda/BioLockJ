@@ -113,7 +113,7 @@ init_aws_config() {
 	configFiles=$(get_blj_prop configFiles)
 	if [ "${configFiles/docker.properties}" == "${configFiles}" ]; then
 		[ ${#configFiles} -gt 0 ] && configFiles=",${configFiles}"
-		configFiles="$DEFAULT_CONFIG,${configFiles}" 
+		configFiles="${DEFAULT_CONFIG}${configFiles}" 
 	fi
 	
 	propFiles=( ${configFiles//,/ } )
@@ -256,7 +256,7 @@ verify_config() {
 	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."
 	[ ${#aws_access_key_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
 	[ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."
-	aws_log "Verify basic required properties exist...( TO-DO-->validate by type or value range)"
+	aws_log "Verify basic required properties exist..."
 	verify_ec2_acquisition_strategy
 	verify_ec2_spot_per
 	[ ${#awsRam} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Required Pipeline Config property \"aws.ram\" undefined!"

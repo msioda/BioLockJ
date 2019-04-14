@@ -121,17 +121,6 @@ aws_rm_job_queues() {
 	aws_log "Remaining job-queues:" && aws batch describe-job-queues
 }
 
-# De-register, disable, and remove all AWS objects
-nuke_aws() {
- 	kill_head_node && \
-	aws_deregister_job_defs  && \
-	aws_rm_job_queues  && \
-	aws_rm_stacks  && \
-	aws_rm_compute_envs  && \
-	aws_rm_s3_buckets  && \
-	aws_rm_key_pairs
-}
-
 # Remove AWS key_pairs + keyPair file
 aws_rm_key_pairs() {
 	aws_log "CLEARING key-pairs..." 
@@ -169,23 +158,15 @@ aws_rm_s3_buckets() {
 	numComplete=0
 	buckets=( "$s3Buckets" )
 	for bucket in ${buckets[@]}; do
-		((count++))
 		aws_log "CLEARING inventory out of s3-bucket #[$count]: ${bucket}"
 		s3items=$(aws s3api list-objects --bucket ${bucket} --query "Contents[].Key")
-		#aws_log "List list-objects [\"${bucket}\"] --> $s3items"
-		while [ ${#s3items} -gt 0 ]; do
-			#IFS2=$IFS && IFS=$'\t\n'
-			#items=$( "$s3items" ) && IFS=$IFS2
-			#items=$(split_data "$s3items" $'\t\n')
-			items=( ${s3items//'\t\n'/ } )
-			for item in ${items[@]}; do
-				aws s3api delete-objects --bucket ${bucket} --key ${item}
-			done
-			s3items=$(aws s3api list-objects --bucket ${bucket} --query "Contents[].Key")
-			$(is_empty "${s3items}") && break
+		items=( "${s3items//'\t\n'/ }" )
+		for item in ${items[@]}; do
+			aws s3api delete-objects --bucket ${bucket} --key ${item}
 		done
+		((count++))
 		aws_log "Deleting s3-bucket #[$count]: ${bucket}"
-		aws s3api delete-bucket --bucket $bucket
+		aws s3api delete-bucket --bucket ${bucket}
 		aws_log "Deleted s3-bucket #[$count]: ${bucket}" && ((numComplete++))
 	done
 	aws_log "Deleted $numComplete/$count s3-buckets"
@@ -229,7 +210,7 @@ aws_rm_stacks() {
 # Param 1 - Any variable
 is_empty() {
 	x=$(echo "$1" | grep -c [a-zA-Z0-9])
-	[ ${#x} -eq 0 ]
+	[ ${x} -eq 0 ]
 }
 
 # Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
@@ -245,4 +226,15 @@ kill_head_node() {
 	instances=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated']|Reservations[].Instances[*]")
 	[ ${#instances} -eq 0 ] || [ "${instances}" == "None" ]  && aws_log "All ec2 instances have been terminated" && return
 	aws_log "Remaining ec2 instances:" && aws ec2 describe-instances
+}
+
+# De-register, disable, and remove all AWS objects
+nuke_aws() {
+ 	kill_head_node && \
+	aws_deregister_job_defs  && \
+	aws_rm_job_queues  && \
+	aws_rm_stacks  && \
+	aws_rm_compute_envs  && \
+	#aws_rm_s3_buckets  && \
+	aws_rm_key_pairs
 }

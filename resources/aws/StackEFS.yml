@@ -361,7 +361,7 @@ Resources:
           - OnDemandComputeEnv
       ComputeResources:
         MinvCpus: 0
-        MaxvCpus: !Ref OnDemandBatchMaxvCPUs
+        MaxvCpus: 256
         DesiredvCpus: 0
         SecurityGroupIds:
           - Ref: BastionSecurityGroup
