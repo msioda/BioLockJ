@@ -17,8 +17,8 @@ build_stack() {
 	myIp=$(get_ip)/32
 	ipParam="ParameterKey=NetworkAccessIP,ParameterValue="
 	spBidParam="ParameterKey=SpotBidPercentage,ParameterValue="
-	params="${ipParam}\"${myIp}\""
-	[ ${awsEc2SpotPer} -gt 0 ] && params="${params},${spBidParam}${awsEc2SpotPer}"
+	params="${ipParam}${myIp}"
+	[ ${awsEc2SpotPer} -gt 0 ] && params="${params} ${spBidParam}${awsEc2SpotPer}"
 	numSecs=0
 	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name ${awsStack} --capabilities CAPABILITY_IAM --parameters ${params}"
 	aws cloudformation create-stack --template-body ${stackYml} --stack-name ${awsStack} --capabilities CAPABILITY_IAM --parameters ${params}

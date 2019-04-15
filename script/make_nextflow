@@ -48,7 +48,7 @@ summaryMsg="BioLockJ $(get_version) generated Nextflow Template with $numModules
 echo "// $summaryMsg" > $MAIN_NF
 echo "// Path: $MAIN_NF" >> $MAIN_NF
 echo "" >> $MAIN_NF
-echo 'pipeline.pipelineDir = /pipelines/$pipeline.pipelineName' >> $MAIN_NF
+echo 'pipelinePipelineDir = /pipelines/$pipeline.pipelineName' >> $MAIN_NF
 echo "" >> $MAIN_NF
 
 for module in ${modules[@]}; do
@@ -58,8 +58,8 @@ for module in ${modules[@]}; do
 	echo '    memory $aws.ram' >> $MAIN_NF
 	echo '    label $nextflow.dockerImage' >> $MAIN_NF
 	echo '    input:' >> $MAIN_NF
-	printf "    val worker from Channel.watchPath( \"" >> $MAIN_NF
-	printf '${pipeline.pipelineDir}' >> $MAIN_NF
+	printf "    file worker from Channel.watchPath( \"" >> $MAIN_NF
+	printf '${pipelinePipelineDir}' >> $MAIN_NF
 	echo "/**_${module}/script/*.sh\" )" >> $MAIN_NF
 	echo '    """' >> $MAIN_NF
 	echo '    #!/bin/bash' >> $MAIN_NF

@@ -66,7 +66,7 @@ build_nextflow_config() {
 	LPJQ="$(get_stack_param LowPriorityJobQueue)"
 	HPJQ="$(get_stack_param HighPriorityJobQueue)"
 	
-	echo "# These Nextflow properties are inherited by pipeline main.nf" > $nfConfig
+	echo "// These Nextflow properties are inherited by pipeline main.nf" > $nfConfig
 	echo "" >> $nfConfig
 	echo "executor {" >> $nfConfig
     echo "    name = 'awsbatch'" >> $nfConfig
