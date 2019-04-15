@@ -56,7 +56,6 @@ exe_remote_cmd() {
 get_nextflow_basic_config() {
 	nfStackDir=$NF_LOCAL/${awsStack} 
 	[ ! -d "$nfStackDir" ] && mkdir -p $nfStackDir
-	[ ! -f "$nfStackDir/config" ] && build_nextflow_config
 	echo "$nfStackDir/config"
 }
 
@@ -96,7 +95,7 @@ stage_pipeline_on_aws() {
 	[ -d "$BLJ_SUP/script" ] && upload_dir_to_aws $BLJ_SUP/script $headScript
 	upload_file_to_aws ${1}
 	
-	[ -f "$AWS_DOCKER_JOB_FLAG" ] && upload_file_to_aws $AWS_DOCKER_JOB_FLAG
+	[ -f "$(get_docker_job_flag)" ] && upload_file_to_aws $(get_docker_job_flag)
 	exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
 }
 

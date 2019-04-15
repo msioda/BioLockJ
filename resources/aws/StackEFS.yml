@@ -454,15 +454,19 @@ Resources:
 
             Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
 
+
             --==MYBOUNDARY==
 
             Content-Type: text/cloud-config; charset="us-ascii"
 
+
             package_update: true
+
 
             packages:
 
             - amazon-efs-utils
+
 
             runcmd:
 
@@ -480,8 +484,8 @@ Resources:
             - mount -a -t efs defaults
 
             - chown -R ec2-user:ec2-user ${!efs_directory}
-
-            - chmod g+x ${!efs_directory}
+            
+            - chmod g+s ${!efs_directory}
 
             --==MYBOUNDARY==--
     Metadata:
@@ -501,13 +505,16 @@ Resources:
 
             Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
 
+
             --==MYBOUNDARY==
 
             Content-Type: text/cloud-config; charset="us-ascii"
 
+
             packages:
 
             - amazon-efs-utils
+
 
             runcmd:
 
@@ -523,8 +530,8 @@ Resources:
             - mount -a -t efs defaults
 
             - chown -R ec2-user:ec2-user ${!efs_directory}
-
-            - chmod g+x ${!efs_directory}
+            
+            - chmod g+s ${!efs_directory}
 
             --==MYBOUNDARY==--
     Metadata:

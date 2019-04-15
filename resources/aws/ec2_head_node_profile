@@ -39,18 +39,16 @@ alias dockls="docker images; docker container ls --all"
 alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 
-
-
-[ ! -f "$blj_aws_config" ] && . $blj_aws_config
-[ ! -f "$BLJ_SCRIPT/aws_head_node_lib" ] && . $BLJ_SCRIPT/aws_head_node_lib
+[ -f "$blj_aws_config" ] && source $blj_aws_config
+[ -f "$BLJ_SCRIPT/aws_head_node_lib" ] && source $BLJ_SCRIPT/aws_head_node_lib
 
 if [ ${#dockerUser} -gt 0 ]; then
 	export DOCKER_HUB_USER=${dockerUser}
 	[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs && build_nextflow_config
 fi
 
-[ -f "$BLJ/script/blj_functions" ] && . $BLJ/script/blj_functions
-[ -f "$BLJ/script/docker_functions" ] && . $BLJ/script/docker_functions
+[ -f "$BLJ/script/blj_functions" ] && source $BLJ/script/blj_functions
+[ -f "$BLJ/script/docker_functions" ] && source $BLJ/script/docker_functions
 
 
 # Return absolute path of most recent pipeline
@@ -66,7 +64,6 @@ most_recent_pipeline() {
 	fi
 	IFS=$"IFS2"
 }
-
 
 #export S3_BUCKET="s3://${awsS3}"
 #export S3_CONFIG="$S3_BUCKET/config"
