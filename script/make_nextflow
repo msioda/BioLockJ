@@ -11,64 +11,76 @@
 . $BLJ/script/blj_functions
 . /config/aws_config
 
-echo "Copy /config/nextflow/${awsStack}/config to --> $HOME/.nextflow"
-[ ! -d "$HOME/.nextflow" ] && mkdir "$HOME/.nextflow" && echo Create "$HOME/.nextflow directory"
-cp /config/nextflow/${awsStack}/config $HOME/.nextflow
-echo "Print default Nextflow config: $HOME/.nextflow/config"
-cat $HOME/.nextflow/config
+AWS_DIR="$HOME/.aws"
+[ ! -d "$AWS_DIR" ] && mkdir "$AWS_DIR" && echo Created "$AWS_DIR directory"
 
-modules=
-MAIN_NF="$BLJ/resources/aws/nextflow_template_main.nf"
+buildAwsConfig() {
+	AWS_CONF="$AWS_DIR/config"
+	echo "Generating aws_manager container $AWS_CONF"
+	echo "[default]" > $AWS_CONF"
+	echo "region = ${awsRegion}" >> $AWS_CONF"
+	echo "output = text" >> $AWS_CONF"
+	echo "Created --> $AWS_CONF"
+	cat $AWS_CONF
+}
 
-# If 2nd parameter (module list) is undefined, define process for each possible BioLockJ modules
+buildAwsCredentials() {
+	AWS_CRED="$AWS_DIR/credentials"
+	echo "Generating aws_manager container $AWS_CRED"
+	echo "[default]" > $AWS_CRED"
+	echo "aws_access_key_id = ${aws_access_key_id}" >> $AWS_CRED"
+	echo "aws_secret_access_key = ${aws_secret_access_key}" >> $AWS_CRED"
+	echo "Created --> $AWS_CRED"
+	cat $AWS_CRED
+}
+
+buildNexflowConfigDir() {
+	NF_DIR="$HOME/.nextflow"
+	[ ! -d "$NF_DIR" ] && mkdir "$NF_DIR" && echo Created "$NF_DIR directory"
+	echo "Copy /config/nextflow/${awsStack}/config to --> $NF_DIR"
+	cp /config/nextflow/${awsStack}/config $NF_DIR
+	echo "Created --> Nextflow config: $NF_DIR/config"
+	cat $NF_DIR/config
+}
+
+buildNexflowTemplate() {
+	modules=$(get_modules)
+	numModules=$(echo $modules | wc -w | xargs)
+	summaryMsg="BioLockJ $(get_version) generated Nextflow Template \"$MAIN_NF\" with $numModules BioModule process definitions"
+	echo "// $summaryMsg" > $MAIN_NF
+	echo "" >> $MAIN_NF
+	for module in ${modules[@]}; do
+		echo "process ${module} {" >> $MAIN_NF
+		echo '    echo true' >> $MAIN_NF
+		echo '    cpus $script.numThreads' >> $MAIN_NF
+		echo '    memory $aws.ram' >> $MAIN_NF
+		echo '    label $nextflow.dockerImage' >> $MAIN_NF
+		echo '    input:' >> $MAIN_NF
+		echo '    val worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> $MAIN_NF
+		echo '    """' >> $MAIN_NF
+		echo '    #!/bin/bash' >> $MAIN_NF
+		echo '    bash ${worker}' >> $MAIN_NF
+		echo '    """' >> $MAIN_NF
+		echo '}' >> $MAIN_NF
+	done
+	echo "-----------------------------------------------------------------------------------------"
+	[ -f $MAIN_NF ] && echo "Success!  $summaryMsg" && echo "Deployed: $MAIN_NF"  
+	# cat $MAIN_NF
+	echo "-----------------------------------------------------------------------------------------"	
+}
+
 get_modules() {
-	FILE_TYPE=".java"
-	SEARCH_KEY="public class"
-	modules=$(find $BLJ/src/biolockj/module -print | grep $FILE_TYPE | xargs grep -il "$SEARCH_KEY" | sed 's:.*/::' | sed 's/'$FILE_TYPE'//')
-	modules=$(echo ${modules}|tr " " "\n"|sort|tr " " "\n")
+	modules=${2//./ }
 	modules=( $modules )
 	echo ${modules[*]}
 }
 
-if [ $# -gt 0 ]; then
-	MAIN_NF=$1
-fi
-if [ $# -eq 2 ]; then
-	modules=$2
-	modules=${modules//./ }
-	modules=( $modules )
-	modules=${modules[*]}
+if [ $# -lt 2 ]; then
+	echo "Missing required parameters, 2 params requried main.nf - 1) file-path, 2) List of modules formatted with specific delimiters"
 else
-	modules=$(get_modules)
+	MAIN_NF="${1}"
+	buildNexflowConfigDir
+	buildAwsConfig
+	buildAwsCredentials
+	buildNexflowTemplate
 fi
-
-numModules=$(echo $modules | wc -w | xargs)
-summaryMsg="BioLockJ $(get_version) generated Nextflow Template with $numModules BioModule processes"
-
-echo "// $summaryMsg" > $MAIN_NF
-echo "// Path: $MAIN_NF" >> $MAIN_NF
-echo "" >> $MAIN_NF
-echo 'pipelinePipelineDir = /pipelines/$pipeline.pipelineName' >> $MAIN_NF
-echo "" >> $MAIN_NF
-
-for module in ${modules[@]}; do
-	echo "process ${module} {" >> $MAIN_NF
-	echo '    echo true' >> $MAIN_NF
-	echo '    cpus $script.numThreads' >> $MAIN_NF
-	echo '    memory $aws.ram' >> $MAIN_NF
-	echo '    label $nextflow.dockerImage' >> $MAIN_NF
-	echo '    input:' >> $MAIN_NF
-	printf "    file worker from Channel.watchPath( \"" >> $MAIN_NF
-	printf '${pipelinePipelineDir}' >> $MAIN_NF
-	echo "/**_${module}/script/*.sh\" )" >> $MAIN_NF
-	echo '    """' >> $MAIN_NF
-	echo '    #!/bin/bash' >> $MAIN_NF
-	echo '    bash ${worker}' >> $MAIN_NF
-	echo '    """' >> $MAIN_NF
-	echo '}' >> $MAIN_NF
-done
-
-echo "-----------------------------------------------------------------------------------------"
-[ -f $MAIN_NF ] && echo "Success!  $summaryMsg" && echo "Deployed: $MAIN_NF"  
-# cat $MAIN_NF
-echo "-----------------------------------------------------------------------------------------"

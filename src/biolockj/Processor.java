@@ -35,7 +35,6 @@ public class Processor
 		 * 
 		 * @param args Command args
 		 * @param label Log label
-		 * @throws Exception if errors occur in the Processor
 		 */
 		public SubProcess( final String[] args, final String label )
 		{
@@ -76,7 +75,7 @@ public class Processor
 		final Process p = r.exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 		String s;
-		Log.info( getClass(), "BioLockJ process-" + label + " process started..." );
+		Log.info( getClass(), "BioLockJ [" + label + "] process started..." );
 		while( ( s = br.readLine() ) != null )
 		{
 			if( !s.trim().isEmpty() )
@@ -84,10 +83,9 @@ public class Processor
 				Log.info( getClass(), "[" + label + "] " + s );
 			}
 		}
-		Log.info( getClass(), "BioLockJ process-" + label + " has no further output" );
 		p.waitFor();
 		p.destroy();
-		Log.info( getClass(), "BioLockJ process-" + label + " has been destroyed" );
+		Log.info( getClass(), "BioLockJ Process [" + label + "] has been destroyed" );
 	}
 
 	/**

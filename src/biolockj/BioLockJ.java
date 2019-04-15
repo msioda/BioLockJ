@@ -116,14 +116,6 @@ public class BioLockJ
 		System.out.println( "Starting BioLockj..." );
 		try
 		{
-//			if( DockerUtil.inAwsEnv() )
-//			{
-//				if( getAwsStatus().exists() )
-//				{
-//					getAwsStatus().delete();
-//				}
-//			}
-			
 			initBioLockJ( args );
 		}
 		catch( final Exception ex )
@@ -237,36 +229,6 @@ public class BioLockJ
 
 		projectDir.mkdirs();
 		return projectDir;
-	}
-
-	/**
-	 * Initialize AWS manager pipeline:<br>
-	 * <ol>
-	 * <li>Build Nexflow main.nf
-	 * <li>Run ImportMetadata module
-	 * <li>Set files editable
-	 * <li>Update pipeline root directory to EFS directory
-	 * <li>Update EFS MASTER {@link biolockj.Config} with new pipeline root directory path
-	 * </ol>
-	 * 
-	 * @throws Exception if runtime errors occur
-	 */
-	protected static void initAwsManager() throws Exception
-	{
-		NextflowUtil.startNextflow( Pipeline.getModules() );
-//		Pipeline.executeModule( importMeta() );
-//		Pipeline.refreshOutputMetadata( importMeta() );
-//		importMeta().cleanUp();
-//		SummaryUtil.reportSuccess( importMeta() );
-//		setPipelineSecurity();
-//		ModuleUtil.markComplete( importMeta() );
-//
-//		final FileWriter writer = new FileWriter( getAwsStatus() );
-//		writer.close();
-//		if( !getAwsStatus().exists() )
-//		{
-//			throw new Exception( "Unable to create " + getAwsStatus().getAbsolutePath() );
-//		}
 	}
 
 	/**
@@ -416,7 +378,6 @@ public class BioLockJ
 	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
 	 * <li>For direct module execution call {@link biolockj.Pipeline#runDirectModule(Integer)}
 	 * <li>Otherwise execute {@link biolockj.Pipeline#runPipeline()} and save MASTER {@link biolockj.Config}
-	 * <li>If initializing AWS Cloud manager, call {@link #initAwsManager()}.
 	 * <li>If {@link biolockj.Config}.{@value biolockj.Constants#PIPELINE_DELETE_TEMP_FILES} =
 	 * {@value biolockj.Constants#TRUE}, Call {@link #removeTempFiles()} to delete tem files
 	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status as successful
@@ -438,7 +399,6 @@ public class BioLockJ
 			if( RuntimeParamUtil.runAws() )
 			{
 				NextflowUtil.startNextflow( Pipeline.getModules() );
-				//initAwsManager();
 			}
 	
 			Pipeline.runPipeline();

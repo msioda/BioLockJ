@@ -162,7 +162,7 @@ refresh_aws_cache() {
 # Remove AWS property - delete the line from the file
 # Param 1 - Config file
 # Param 2 - prop name 
-rm_config_prop() {
+rm_prop() {
 	conf=$(cat "$1")
 	[ ${#conf} -eq 0 ] && return
 	TMP=~/.temp_config.txt
@@ -175,18 +175,28 @@ rm_config_prop() {
 	[ -f $TMP ] && rm "$1" && mv $TMP "$1"
 }
 
-# Set a prop stored in $blj_aws_config.  In case prop value ${2} is null, $2 actually returns the 3rd param (the default)
-# If the default value = $IS_NULL return without making any updates
+# Call set_prop using Config file $blj_aws_config
 # Param 1 - Prop name
 # Param 2 - Prop value
 # Param 3 - (optional) Default value
 set_blj_prop() {
-	[ $# -lt 2 ] || [ "$2" == $IS_NULL ] && return
-	prop=$(cat $blj_aws_config | grep $1)
-	exists=$(echo $prop | grep "$1=${2/\[/\\\[}")
-	[ ${#exists} -gt 0 ] && return
-	rm_config_prop $blj_aws_config $1
-	echo "$1=$2" >> $blj_aws_config
+	[ $# -lt 2 ] || [ "$2{}" == $IS_NULL ] && return
+	set_prop "$blj_aws_config" "${1}" "${2}"
+}
+
+# Set property in Config file $1 unless this value already is set, in which case - do nothing.
+# In case prop value ${3} is null, $3 actually returns the 4th param (the default)
+# Param 1 - Config file-path
+# Param 2 - Prop name
+# Param 3 - Prop value
+# Param 4 - (optional) Default value
+set_prop() {
+	[ $# -lt 3 ] && [ "${3}" != $IS_NULL ] && exit_script "Error [ aws_config_lib.set_prop() ]: Unable to set property \"${2}=${3}\" in Config file \"${1}\""
+	prop=$(cat "${1}" | grep "${2}")
+	exists=$(echo $prop | grep -c "$2=${3/\[/\\\[}")
+	[ ${exists} -gt 0 ] && return
+	rm_prop "${1}" "${2}"
+	echo "$2=$3" >> "${1}"
 }
 
 # Set property "configFiles" as list of project Config files + nested default Config files.
@@ -194,8 +204,8 @@ set_blj_prop() {
 # Param 1 - Pipeline Config file-path
 set_pipeline_config_files() {
 	aws_log "Search \"$1\" for nested \"pipeline.defaultProps\" Config files"
-	configFiles="$1"
-	propFile=$(get_prop "$1" "pipeline.defaultProps")
+	configFiles="${1}"
+	propFile=$(get_prop "${1}" "pipeline.defaultProps")
 	while [ -f "$propFile" ]; do
 		configFiles="$propFile,$configFiles"
 		propFile=$(get_prop $propFile "pipeline.defaultProps")

@@ -46,6 +46,12 @@ build_s3() {
 		set_blj_prop awsS3 ${awsS3:1}
 		aws_log "Set awsS3=${awsS3:1}"
 	fi
+	
+	s3items=$(aws s3api list-objects --bucket ${awsS3} --query "Contents[].Key")
+	if [ "${s3items/nextflow}" == "${s3items}" ]; then
+		aws s3api put-object --bucket ${awsS3} --key nextflow/
+	fi
+	
 }
 
 # Build key pair + save to ~/.aws/$awsStack.pem file

@@ -15,7 +15,7 @@ Parameters:
     Type: String
     MinLength: '9'
     MaxLength: '18'
-    Default: 0.0.0.0/0
+    Default: 0.0.0.0/32
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid CIDR range of the form x.x.x.x/x.
   SpotBidPercentage:
@@ -484,8 +484,11 @@ Resources:
             - mount -a -t efs defaults
 
             - chown -R ec2-user:ec2-user ${!efs_directory}
-            
+
             - chmod g+s ${!efs_directory}
+
+            - yum remove -y ecs-init
+
 
             --==MYBOUNDARY==--
     Metadata:
@@ -499,6 +502,11 @@ Resources:
         - - !Ref 'AWS::StackName'
           - BatchNodeTemplateWithEFS
       LaunchTemplateData:
+        TagSpecifications:
+          - ResourceType: 'instance'
+            Tags:
+              - Key: 'StackName'
+                Value: !Ref 'AWS::StackName'
         UserData:
           'Fn::Base64': !Sub >
             MIME-Version: 1.0
@@ -530,8 +538,9 @@ Resources:
             - mount -a -t efs defaults
 
             - chown -R ec2-user:ec2-user ${!efs_directory}
-            
+
             - chmod g+s ${!efs_directory}
+
 
             --==MYBOUNDARY==--
     Metadata:

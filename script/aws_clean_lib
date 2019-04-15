@@ -89,38 +89,6 @@ aws_rm_compute_envs() {
 	aws_log "Remaining compute-environments:" && aws batch describe-compute-environments
 }
 
-# Remove AWS Job Queues
-aws_rm_job_queues() {
-	aws_log "AWS CLEARING job-queues..." 
-	vals=$(aws batch describe-job-queues --query "jobQueues[*].jobQueueArn")
-	[ ${#vals} -eq 0 ] && aws_log "No job-queues found" && return
-	aws_log "List job-queues --> $vals"
-	count=0
-	numComplete=0
-	while [ ${#vals} -gt 0 ]; do
-		((count++))
-		module=$(aws_get_arn $vals)
-		aws_log "Disabling job-queue ARN #[$count]: ${module}"
-		status=$(aws batch describe-job-queues --job-queue ${module} --query "jobQueues[*].state")
-		[ "$status" != "DISABLED" ] && aws batch update-job-queue --job-queue ${module} --state DISABLED
-		while [ ${#status} -gt 0 ] && [ "$status" != "DISABLED" ]; do
-			sleep 10
-			status=$(aws batch describe-job-queues --job-queue ${module} --query "jobQueues[*].state")
-		done
-		aws_log "Disabled job-queue ARN #[$count]: ${module}"
-		aws batch delete-job-queue --job-queue ${module}
-		arnVals=${vals/${module}/""}
-		[ "${arnVals}" != "${vals}" ] && aws_log "Deleted job-queue ARN #[$count]: ${module}" && ((numComplete++))
-		[ "${arnVals}" == "${vals}" ] && aws_log "Failed to delete job-queue ARN #[$count]: ${module}"
-		vals="${arnVals}"
-		$(is_empty ${vals}) && break
-	done
-	aws_log "Deleted $numComplete/$count job-queues"
-	vals=$(aws batch describe-job-queues)
-	[ ${#vals} -eq 0 ] && aws_log "All job-queues removed" && return
-	aws_log "Remaining job-queues:" && aws batch describe-job-queues
-}
-
 # Remove AWS key_pairs + keyPair file
 aws_rm_key_pairs() {
 	aws_log "CLEARING key-pairs..." 
@@ -158,15 +126,9 @@ aws_rm_s3_buckets() {
 	numComplete=0
 	buckets=( "$s3Buckets" )
 	for bucket in ${buckets[@]}; do
-		aws_log "CLEARING inventory out of s3-bucket #[$count]: ${bucket}"
-		s3items=$(aws s3api list-objects --bucket ${bucket} --query "Contents[].Key")
-		items=( "${s3items//'\t\n'/ }" )
-		for item in ${items[@]}; do
-			aws s3api delete-objects --bucket ${bucket} --key ${item}
-		done
 		((count++))
-		aws_log "Deleting s3-bucket #[$count]: ${bucket}"
-		aws s3api delete-bucket --bucket ${bucket}
+		aws_log "DELETING S3-bucket #[$count]: ${bucket}"
+		aws s3 rb --force ${bucket}
 		aws_log "Deleted s3-bucket #[$count]: ${bucket}" && ((numComplete++))
 	done
 	aws_log "Deleted $numComplete/$count s3-buckets"
@@ -232,7 +194,6 @@ kill_head_node() {
 nuke_aws() {
  	kill_head_node && \
 	aws_deregister_job_defs  && \
-	aws_rm_job_queues  && \
 	aws_rm_stacks  && \
 	aws_rm_compute_envs  && \
 	#aws_rm_s3_buckets  && \

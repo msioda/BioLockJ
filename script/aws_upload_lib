@@ -94,6 +94,10 @@ stage_pipeline_on_aws() {
 
 # The method creates a new version of the pipeline Config files by replacing 
 upload_config_to_aws() {
+
+	primaryConfig=$(get_config)
+	myAwsS3=$(set_prop "$primaryConfig" "aws.s3" "${awsS3}")
+	[ ${#myAwsS3} -eq 0 ] && set_prop "$primaryConfig" "aws.s3" "${awsS3}"
 	configFiles=$(get_blj_prop configFiles)
 	aws_log "Uploaded Config files: $configFiles"
 	propFiles=( ${configFiles//,/ } )
