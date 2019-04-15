@@ -3,14 +3,6 @@
 ##                                                                 ##
 ##  This script is used for uploading data + config to AWS cloud.  ##
 ##                                                                 ##
-##  s3://$awsS3           - Top level $BLJ bucket                  ##
-##  s3://$awsS3/config    - $BLJ_CONFIG folder with DB sub-folders ##
-##  s3://$awsS3/db        - $BLJ_DB folder with DB sub-folders     ##
-##  s3://$awsS3/metadata  - $BLJ_META folder for metadata files    ##
-##  s3://$awsS3/pipelines - $BLJ_PROJ folder for pipeline output   ##
-##  s3://$awsS3/primers   - $BLJ_PRIMER folder for seq primers     ##
-##  s3://$awsS3/seq       - $BLJ_SEQ folder for sequence files     ##
-##                                                                 ##
 #####################################################################
 . $BLJ/script/aws_config_lib
 
@@ -55,6 +47,7 @@ exe_remote_cmd() {
 # Return the Nextflow basic config file-path
 get_nextflow_basic_config() {
 	nfStackDir=$NF_LOCAL/${awsStack} 
+	[ "$USER" == "ec2-user" ] && nfStackDir=$headConfig/nextflow/${awsStack} 
 	[ ! -d "$nfStackDir" ] && mkdir -p $nfStackDir
 	echo "$nfStackDir/config"
 }
@@ -78,16 +71,16 @@ get_s3_name() {
 # Copy Config file with updated properties to reference new S3 paths
 # Param 1 Pipeline start script
 stage_pipeline_on_aws() {
-	exe_remote_cmd "[ ! -d $headConfig ] && mkdir $headConfig"
+	nfDir="$headConfig/nextflow/${awsStack}"
+	exe_remote_cmd "[ ! -d $nfDir ] && mkdir -p $nfDir"
 	exe_remote_cmd "[ ! -d $headDB ] && mkdir $headDB"
 	exe_remote_cmd "[ ! -d $headInput ] && mkdir $headInput"
 	exe_remote_cmd "[ ! -d $headMeta ] && mkdir $headMeta"
 	exe_remote_cmd "[ ! -d $headPipelines ] && mkdir $headPipelines"
 	exe_remote_cmd "[ ! -d $headPrimer ] && mkdir $headPrimer"
 	exe_remote_cmd "[ ! -d $headScript ] && mkdir $headScript"
-	exe_remote_cmd "[ ! -d $EC2_HEAD_NODE/.nextflow ] && mkdir $EC2_HEAD_NODE/.nextflow"
 	
-	upload_file_to_aws $(get_nextflow_basic_config) $EC2_HEAD_NODE/.nextflow
+	upload_file_to_aws $(get_nextflow_basic_config) $nfDir
 	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
 	upload_file_to_aws $blj_aws_config $headConfig
 	upload_pipeline_inputs_to_aws

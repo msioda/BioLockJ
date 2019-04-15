@@ -119,7 +119,7 @@ build_start_script() {
 	echo 'images=$(docker images -f dangling=true -q)' >> $startScript
 	echo '[ ${#images} -gt 0 ] && docker rmi $images' >> $startScript
 	echo "docker pull ${dockerUser}/aws_manager:${dockerImgVersion}" >> $startScript
-	echo "dockblj -aws ${meta}-i=$headInput -c=$(get_config)" >> $startScript
+	echo "dockblj -aws ${meta}-i=$headInput -c=$(get_config ec2)" >> $startScript
 	chmod 770 $startScript
 	echo $startScript
 }
@@ -131,12 +131,14 @@ connect_head() {
 }
 
 # Get the Pipeline Config local file-path
+# Param 1 - local or ec2
 get_config() {
 	configFiles=$(get_blj_prop configFiles)
 	propFiles=( ${configFiles//,/ } )
 	numConfig=${#propFiles[@]}
 	((numConfig--))
-	echo "$headConfig/$(basename ${propFiles[$numConfig]})"
+	[ "${1}" == "local" ] && echo "${propFiles[$numConfig]}"
+	[ "${1}" == "ec2" ] && echo "$headConfig/$(basename ${propFiles[$numConfig]})"
 }
 
 # Get the flag file that indicates Docker job definitions were created
