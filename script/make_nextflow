@@ -9,10 +9,12 @@
 ##                                                                            ##
 ################################################################################
 . $BLJ/script/blj_functions
+. /config/aws_config
 
-echo "Copy /mnt/efs/config/nextflow/${awsStack}/config to --> $HOME/.nextflow"
-cp /mnt/efs/config/nextflow/${awsStack}/config $HOME/.nextflow
-echo "Print default Nextflow config"
+echo "Copy /config/nextflow/${awsStack}/config to --> $HOME/.nextflow"
+[ ! -d "$HOME/.nextflow" ] && mkdir "$HOME/.nextflow" && echo Create "$HOME/.nextflow directory"
+cp /config/nextflow/${awsStack}/config $HOME/.nextflow
+echo "Print default Nextflow config: $HOME/.nextflow/config"
 cat $HOME/.nextflow/config
 
 modules=
