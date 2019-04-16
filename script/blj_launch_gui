@@ -7,8 +7,8 @@
 ##                                                                         ##
 ##  1. Docker Account ID (default = "biolockj")                            ##
 ##  2. "-dev" Override container installation dirs with host dirs          ##
-##  	    b) Map host $BLJ to container /app/biolockj ($BLJ)                 ##
-##  	    b) Map host $BLJ_SUP to container /app/blj_support (new dir)       ##
+##  	    b) Map host $BLJ to container /app/biolockj ($BLJ)             ##
+##  	    b) Map host $BLJ_SUP to container /app/blj_support (new dir)   ##
 ##                                                                         ##
 #############################################################################
 

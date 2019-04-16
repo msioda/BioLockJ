@@ -12,65 +12,67 @@
 . /config/aws_config
 
 AWS_DIR="$HOME/.aws"
-[ ! -d "$AWS_DIR" ] && mkdir "$AWS_DIR" && echo Created "$AWS_DIR directory"
+[ ! -d "$AWS_DIR" ] && mkdir "$AWS_DIR" && echo "Created $AWS_DIR directory"
 
 buildAwsConfig() {
-	AWS_CONF="$AWS_DIR/config"
-	echo "Generating aws_manager container $AWS_CONF"
-	echo "[default]" > $AWS_CONF"
-	echo "region = ${awsRegion}" >> $AWS_CONF"
-	echo "output = text" >> $AWS_CONF"
-	echo "Created --> $AWS_CONF"
-	cat $AWS_CONF
+	AWS_CONF="${AWS_DIR}/config"
+	echo "Generating aws_manager container ${AWS_CONF}"
+	echo "[default]" > "${AWS_CONF}"
+	echo "region = ${awsRegion}" >> "${AWS_CONF}"
+	echo "output = text" >> "${AWS_CONF}"
+	echo "Created --> ${AWS_CONF}"
+	cat "${AWS_CONF}"
 }
 
 buildAwsCredentials() {
-	AWS_CRED="$AWS_DIR/credentials"
-	echo "Generating aws_manager container $AWS_CRED"
-	echo "[default]" > $AWS_CRED"
-	echo "aws_access_key_id = ${aws_access_key_id}" >> $AWS_CRED"
-	echo "aws_secret_access_key = ${aws_secret_access_key}" >> $AWS_CRED"
-	echo "Created --> $AWS_CRED"
-	cat $AWS_CRED
+	AWS_CRED="${AWS_DIR}/credentials"
+	echo "Generating aws_manager container ${AWS_CRED}"
+	echo "[default]" > "${AWS_CRED}"
+	echo "aws_access_key_id = ${aws_access_key_id}" >> "${AWS_CRED}"
+	echo "aws_secret_access_key = ${aws_secret_access_key}" >> "${AWS_CRED}"
+	echo "Created -->" "${AWS_CRED}"
+	cat "${AWS_CRED}"
 }
 
 buildNexflowConfigDir() {
 	NF_DIR="$HOME/.nextflow"
-	[ ! -d "$NF_DIR" ] && mkdir "$NF_DIR" && echo Created "$NF_DIR directory"
-	echo "Copy /config/nextflow/${awsStack}/config to --> $NF_DIR"
-	cp /config/nextflow/${awsStack}/config $NF_DIR
-	echo "Created --> Nextflow config: $NF_DIR/config"
-	cat $NF_DIR/config
+	[ ! -d "${NF_DIR}" ] && mkdir "${NF_DIR}" && echo Created "${NF_DIR} directory"
+	echo "Copy /config/nextflow/${awsStack}/config to --> ${NF_DIR}"
+	cp "/config/nextflow/${awsStack}/config" "${NF_DIR}"
+	echo "Created --> Nextflow config: ${NF_DIR}/config"
+	cat "${NF_DIR}/config"
 }
 
+# Build the template
+# Param 1 - List of modules (using special delimiters)
 buildNexflowTemplate() {
-	modules=$(get_modules)
+	modules="${2}"
 	numModules=$(echo $modules | wc -w | xargs)
-	summaryMsg="BioLockJ $(get_version) generated Nextflow Template \"$MAIN_NF\" with $numModules BioModule process definitions"
-	echo "// $summaryMsg" > $MAIN_NF
-	echo "" >> $MAIN_NF
+	summaryMsg="BioLockJ $(get_version) generated Nextflow Template \"${1}\" with $numModules BioModule process definitions"
+	echo "// $summaryMsg" > "${1}"
+	echo "" >> "${1}"
 	for module in ${modules[@]}; do
-		echo "process ${module} {" >> $MAIN_NF
-		echo '    echo true' >> $MAIN_NF
-		echo '    cpus $script.numThreads' >> $MAIN_NF
-		echo '    memory $aws.ram' >> $MAIN_NF
-		echo '    label $nextflow.dockerImage' >> $MAIN_NF
-		echo '    input:' >> $MAIN_NF
-		echo '    val worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> $MAIN_NF
-		echo '    """' >> $MAIN_NF
-		echo '    #!/bin/bash' >> $MAIN_NF
-		echo '    bash ${worker}' >> $MAIN_NF
-		echo '    """' >> $MAIN_NF
-		echo '}' >> $MAIN_NF
+		echo "process ${module} {" >> "${1}"
+		echo '    echo true' >> "${1}"
+		echo '    cpus $script.numThreads' >> "${1}"
+		echo '    memory $aws.ram' >> "${1}"
+		echo '    label $nextflow.dockerImage' >> "${1}"
+		echo '    input:' >> "${1}"
+		echo '    val worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> "${1}"
+		echo '    """' >> "${1}"
+		echo '    #!/bin/bash' >> "${1}"
+		echo '    bash ${worker}' >> "${1}"
+		echo '    """' >> "${1}"
+		echo '}' >> "${1}"
 	done
 	echo "-----------------------------------------------------------------------------------------"
-	[ -f $MAIN_NF ] && echo "Success!  $summaryMsg" && echo "Deployed: $MAIN_NF"  
-	# cat $MAIN_NF
+	[ -f "${1}" ] && echo "Success!  $summaryMsg" && echo "Deployed: ${1}"  
+	cat "${1}"
 	echo "-----------------------------------------------------------------------------------------"	
 }
 
 get_modules() {
-	modules=${2//./ }
+	modules=${1//./ }
 	modules=( $modules )
 	echo ${modules[*]}
 }
@@ -78,9 +80,8 @@ get_modules() {
 if [ $# -lt 2 ]; then
 	echo "Missing required parameters, 2 params requried main.nf - 1) file-path, 2) List of modules formatted with specific delimiters"
 else
-	MAIN_NF="${1}"
 	buildNexflowConfigDir
 	buildAwsConfig
 	buildAwsCredentials
-	buildNexflowTemplate
+	buildNexflowTemplate "${1}" "$(get_modules ${2})"
 fi
