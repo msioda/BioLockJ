@@ -191,12 +191,13 @@ kill_head_node() {
 }
 
 # De-register, disable, and remove all AWS objects
-# Param 1 - Also remove S3 buckets
+# Param 1 (optional) - Also remove S3 buckets if any param 
 nuke_aws() {
+	refresh_aws_cache
  	kill_head_node && \
 	aws_deregister_job_defs  && \
 	aws_rm_stacks  && \
 	aws_rm_compute_envs  && \
-	[ $# -gt 0 ] && aws_rm_s3_buckets  && \
+	[ "${1}" == "s3" ] && aws_rm_s3_buckets  && \
 	aws_rm_key_pairs
 }
