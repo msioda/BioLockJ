@@ -23,6 +23,10 @@ aws_archive() {
 	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
 	echo $sheBang > $blj_aws_config
 	chmod 770 $blj_aws_config
+	foundKeys=$(\ls ~/.aws/*.pem)
+	foundStartScript=$(\ls ~/.aws/run-bljStack*)
+	[ ${#foundKeys} -gt 0 ] && chmod 770 ~/.aws/*.pem && mv ~/.aws/*.pem $aws_history
+	[ ${#foundStartScript} -gt 0 ] && chmod 770 ~/.aws/run-bljStack* && mv ~/.aws/run-bljStack* $aws_history
 }
 
 # Get an AWS property $1 from local AWS Config file $2 under the awsProfile
@@ -79,7 +83,9 @@ convert_db_prop() {
 # Param 1 - Pipeline Config file-path
 # Param 2 - property name
 convert_prop() {
-	set_blj_prop $(map_property_name "$2") $(get_prop "$1" "$2") $IS_NULL
+	val="$(get_prop "$1" "$2")"
+	[ $(echo $val | wc -w) -gt 1 ] && val="'${val}'"
+	set_blj_prop $(map_property_name "$2") "${val}" $IS_NULL
 }
 
 # Get a prop stored in $blj_aws_config
@@ -114,12 +120,10 @@ init_aws_config() {
 		[ ${#configFiles} -gt 0 ] && configFiles=",${configFiles}"
 		configFiles="${DEFAULT_CONFIG}${configFiles}" 
 	fi
-	
 	propFiles=( ${configFiles//,/ } )
 	for propFile in ${propFiles[@]}; do
 		set_pipeline_conig_props $propFile
 	done
-
 	verify_config
 	aws_log "Pipeline Config properties initialized and saved to --> $blj_aws_config"
 }

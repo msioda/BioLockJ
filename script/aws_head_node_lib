@@ -153,6 +153,7 @@ init_nextflow_config() {
 }
 
 # Launch a new ec2 head node
+# Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
 launch_ec2_head_node() {
 	[ -x "$(which docker)" ] && build_docker_job_defs
 	refresh_aws_cache
@@ -183,7 +184,7 @@ launch_ec2_head_node() {
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
 	startScript=$(build_start_script)
 	stage_pipeline_on_aws $startScript
-	if [ -x "$(which docker)" ]; then
+	if [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
 		exe_remote_cmd "$EC2_HOME/$(basename $startScript)"
 	else
 		connect_head

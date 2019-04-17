@@ -145,9 +145,10 @@ is_stack_complete() {
 
 # Main method, called to launch BioLockJ on AWS from localhost
 # Param 1 - Pipeline Config file-path
+# Param 2 - Start Pipeline
 run_aws() {
 	[ $# -eq 0 ] || [ ! -f "$1" ] && exit_script "Error [ aws_config_lib.run_aws() ]: Required pipeline Config file not found: \"$1\""
-	init_aws_config ${1} && deploy_cloud_formation && launch_ec2_head_node
+	init_aws_config ${1} && deploy_cloud_formation && launch_ec2_head_node "$2"
 }
 
 # Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.
