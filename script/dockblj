@@ -77,7 +77,7 @@ has_param() {
 # Get the Docker manager module (aws_manager or blj_manager) with $DOCKER_HUB_USER user prefix
 manager_type() {
 	if $(has_param $runAws); then
-		echo $DOCKER_HUB_USER/aws_manager
+		echo -v /home/ec2-user/miniconda:/home/ec2-user/miniconda $DOCKER_HUB_USER/aws_manager
 	else
 		echo $DOCKER_HUB_USER/blj_manager
 	fi
@@ -143,7 +143,7 @@ verify_inputs() {
 	$(has_param $config) && verify_host_file $config Config
 	$(has_param $metaPath) && verify_host_dir $metaPath Metadata
 	! $(has_param $inputDir) && exit_script "Error [ dockblj ]: The -i parameter must reference a single input directory"
-	dirPath=( ${inputDir//,/ } )
+	dirPath=( ${inputDir//,} )
 	[ ${#dirPath[@]} -gt 1 ] && exit_script "Error [ dockblj ]: The -i parameter must reference a single input directory"
 	verify_host_dir $dirPath Input
 }

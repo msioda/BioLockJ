@@ -156,7 +156,7 @@ init_nextflow_config() {
 # Launch a new ec2 head node
 # Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
 launch_ec2_head_node() {
-	[ -x "$(which docker)" ] && build_docker_job_defs
+	#[ -x "$(which docker)" ] && build_docker_job_defs
 	refresh_aws_cache
 	runTime=0
 	secureGroup="$(get_stack_param BastionSecurityGroup)"
