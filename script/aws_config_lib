@@ -61,7 +61,7 @@ aws_s3_buckets() {
 # Param 1 (optional) Stack status
 aws_stacks() {
 	awsStacks=
-	if [ $# -eq 1 ]; then
+	if [ ${#1} -gt 0 ]; then
 		awsStacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='$1'].StackName")
 		[ ${#awsStacks} -eq 0 ] || [ "${awsStacks}" == "None" ] && return
 	else
@@ -83,8 +83,8 @@ convert_db_prop() {
 # Param 1 - Pipeline Config file-path
 # Param 2 - property name
 convert_prop() {
-	val="$(get_prop "$1" "$2")"
-	[ $(echo $val | wc -w) -gt 1 ] && val="'${val}'"
+	val=$(get_prop "$1" "$2")
+	[ $(echo "${val}" | wc -w) -gt 1 ] && val="'${val}'"
 	set_blj_prop $(map_property_name "$2") "${val}" $IS_NULL
 }
 
@@ -92,9 +92,9 @@ convert_prop() {
 # Param 1 - Prop name
 # Param 2 - (Optional) Default value
 get_blj_prop() {
-	val=$(get_prop $blj_aws_config $1)
-	[ ${#val} -eq 0 ] && val=$2
-	[ ${#val} -gt 0 ] && response=$(set_blj_prop $1 $val)
+	val=$(get_prop $blj_aws_config "$1")
+	[ ${#val} -eq 0 ] && val="$2"
+	[ ${#val} -gt 0 ] && response=$(set_blj_prop "$1" "$val")
 	echo "${val}"
 }
 
@@ -183,7 +183,7 @@ rm_prop() {
 # Param 2 - Prop value
 # Param 3 - (optional) Default value
 set_blj_prop() {
-	[ $# -lt 2 ] || [ "${2}" == $IS_NULL ] && return
+	[ ${#2} -eq 0 ] || [ "${2}" == $IS_NULL ] && return
 	set_prop "$blj_aws_config" "${1}" "${2}"
 }
 
@@ -194,12 +194,13 @@ set_blj_prop() {
 # Param 3 - Prop value
 # Param 4 - (optional) Default value
 set_prop() {
-	[ $# -lt 3 ] && [ "${3}" != $IS_NULL ] && exit_script "Error [ aws_config_lib.set_prop() ]: Unable to set property \"${2}=${3}\" in Config file \"${1}\""
-	prop=$(cat "${1}" | grep "${2}")
-	exists=$(echo $prop | grep -c "$2=${3/\[/\\\[}")
-	[ ${exists} -gt 0 ] && return
+	line=$(cat "${1}" | grep "${2}")
+	existsInFile=$(echo "${line}" | grep -c "${2}=${3}")
+	existsInParam=0
+	[ ${#3} -gt 0 ] && [ "${3}" != $IS_NULL ] && existsInParam=1
+	[ ${existsInFile} -eq 0 ] && [ ${existsInParam} -eq 0 ] && return
 	rm_prop "${1}" "${2}"
-	echo "$2=$3" >> "${1}"
+	echo "${2}=${3}" >> "${1}"
 }
 
 # Set property "configFiles" as list of project Config files + nested default Config files.
@@ -255,7 +256,7 @@ set_pipeline_conig_props() {
 verify_config() {
 	refresh_aws_cache
 	aws_log "Assign default AWS Config properties..."
-	[ ${#awsAccount_id} -eq 0 ] && set_blj_prop awsAccountId $(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId)
+	[ ${#awsAccount_id} -eq 0 ] && set_blj_prop awsAccount_id $(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId)
 	[ ${#awsProfile} -eq 0 ] && set_blj_prop awsProfile default
 	[ ${#awsRegion} -eq 0 ] && set_blj_prop awsRegion $(aws configure get region)
 	[ ${#awsEc2InstanceType} -eq 0 ] && set_blj_prop awsEc2InstanceType t2.micro
@@ -265,7 +266,7 @@ verify_config() {
 	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
 	refresh_aws_cache
 	aws_log "Verify AWS client authentication properties..."
-	[ ${#awsAccountId} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."
+	[ ${#awsAccount_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."
 	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."
 	[ ${#aws_access_key_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
 	[ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."

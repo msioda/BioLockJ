@@ -21,7 +21,7 @@ export BLJ_SCRIPT="$EFS/script"
 export blj_aws_config="$BLJ_CONFIG/aws_config"
 export BLJ=$EFS
 export BLJ_SUP=$EFS
-export PATH="$BLJ_SCRIPT:$PATH:~/.local/bin:~/bin"
+export PATH="~/miniconda/bin:$BLJ_SCRIPT:$PATH:~/.local/bin:~/bin"
 
 alias ls='ls -lFh'
 alias rd="rm -rf"
@@ -44,12 +44,11 @@ alias showIFS="printf %q $IFS"
 
 if [ ${#dockerUser} -gt 0 ]; then
 	export DOCKER_HUB_USER=${dockerUser}
-	[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs && build_nextflow_config
+	[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
 fi
 
 [ -f "$BLJ/script/blj_functions" ] && source $BLJ/script/blj_functions
 [ -f "$BLJ/script/docker_functions" ] && source $BLJ/script/docker_functions
-
 
 # Return absolute path of most recent pipeline
 most_recent_pipeline() {
