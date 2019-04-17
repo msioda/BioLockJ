@@ -489,6 +489,16 @@ Resources:
 
             - yum remove -y ecs-init
 
+            - yum install -y bzip2 wget
+
+            - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
+
+            - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /home/ec2-user/miniconda'
+
+            - runuser -l  ec2-user -c '$HOME/miniconda/bin/conda install -c conda-forge -y awscli'
+
+            - runuser -l  ec2-user -c 'rm Miniconda3-latest-Linux-x86_64.sh'
+
 
             --==MYBOUNDARY==--
     Metadata:
@@ -540,6 +550,16 @@ Resources:
             - chown -R ec2-user:ec2-user ${!efs_directory}
 
             - chmod g+s ${!efs_directory}
+
+            - yum install -y bzip2 wget
+
+            - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
+
+            - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /home/ec2-user/miniconda'
+
+            - runuser -l  ec2-user -c '$HOME/miniconda/bin/conda install -c conda-forge -y awscli'
+
+            - runuser -l  ec2-user -c 'rm Miniconda3-latest-Linux-x86_64.sh'
 
 
             --==MYBOUNDARY==--
