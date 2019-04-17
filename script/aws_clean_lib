@@ -24,7 +24,7 @@ aws_deregister_job_defs() {
 			sleep 10
 			status=$(aws batch describe-job-definitions --job-definitions ${module} --query "jobDefinitions[*].status")
 		done
-		arnVals=${vals/${module}/""}
+		arnVals=${vals/${module}}
 		[ "${arnVals}" != "${vals}" ] && aws_log "De-registered job-definition ARN #[$count]: ${module}" && ((numComplete++))
 		[ "${arnVals}" == "${vals}" ] && aws_log "Failed to de-register job-definition ARN #[$count]: ${module}"
 		vals="${arnVals}"	
@@ -61,7 +61,7 @@ aws_rm_compute_envs() {
 		((count++))
 		module=$(aws_get_arn $vals) 
 		aws_log "Disabling compute-environment ARN #[$count]: ${module}"
-		arnVals=${vals/${module}/""}
+		arnVals=${vals/${module}}
 		$(is_empty $arnVals) && aws_log "ERROR, No compute-environment ARNs remaining" && break
 		statusReason=$(aws batch describe-compute-environments --compute-environment ${module} --query "computeEnvironments[*].statusReason")
 		if [ ${#statusReason} -gt 0 ] && [ "$statusReason" != "${statusReason/'Access denied'}" ]; then
@@ -103,7 +103,7 @@ aws_rm_key_pairs() {
 		$(is_empty ${module}) && break
 		aws_log "Deleting key-pair ARN #[$count]: ${module}"
 		aws ec2 delete-key-pair --key-name ${module}
-		arnVals=${vals/${module}/""}
+		arnVals=${vals/${module}}
 		[ "${arnVals}" != "${vals}" ] && aws_log "Deleted key-pair ARN #[$count]: ${module}" && ((numComplete++))
 		[ "${arnVals}" == "${vals}" ] && aws_log "Failed to delete key-pair ARN #[$count]: ${module}"
 		vals="${arnVals}"
@@ -149,7 +149,7 @@ aws_rm_stacks() {
 		$(is_empty $vals) && break
 		module=$(aws_get_arn $vals) && ((count++))
 		status=$(aws cloudformation describe-stacks --stack-name ${module} --query "Stacks[*].StackStatus")
-		arnVals=${vals/${module}/""}
+		arnVals=${vals/${module}}
 		[ "${status}" != "${status/DELETE}" ] && vals=${arnVals} && continue
 		aws_log "Deleting stack ARN #[$count]: ${module}"
 		aws cloudformation delete-stack --stack-name ${module} 
@@ -197,7 +197,8 @@ nuke_aws() {
  	kill_head_node && \
 	aws_deregister_job_defs  && \
 	aws_rm_stacks  && \
-	aws_rm_compute_envs  && \
-	[ "${1}" == "s3" ] && aws_rm_s3_buckets  && \
-	aws_rm_key_pairs
+	#aws_rm_compute_envs && \  <-- is this now removed with the stack?
+	aws_rm_key_pairs  && \
+	[ "${1}" == "s3" ] && aws_rm_s3_buckets
+	
 }
