@@ -33,15 +33,71 @@ public class NextflowUtil
 	 */
 	public static void startNextflow( final List<BioModule> modules ) throws Exception
 	{
-		Log.info( NextflowUtil.class, "Initialize AWS Cloud Manager" );
 		final File template = buildInitialTemplate( asString( modules ) );
-		Log.info( NextflowUtil.class, "Generated template: " + template.getAbsolutePath() );
 		writeNextflowMainNF( getNextflowLines( template ) );
 		BioLockJUtil.deleteWithRetry( templateConfig(), 5 );
 		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
 		startService();
+		pollAndSpin();
 		Log.info( NextflowUtil.class, "Nextflow service sub-process started!" );
 	}
+	
+	private static void pollAndSpin() throws Exception
+	{
+		Log.info( NextflowUtil.class, "Poll " + NF_LOG + " every 15 seconds until the status message \"" + NF_INIT_FLAG + "\" is logged" );
+		int numSecs = 0;
+		boolean finished = false;
+		while( !finished )
+		{
+			finished = poll();
+			if( !finished )
+			{
+				if( numSecs > NF_TIMEOUT )
+				{
+					throw new Exception( "Nextflow initialization timed out after " + numSecs + " seconds." );
+				}
+				Log.info( NextflowUtil.class, "Nextflow initializing..." );
+				Thread.sleep( 15 * 1000 );
+				numSecs += 15;
+			}
+			else
+			{
+				Log.info( NextflowUtil.class, "Nextflow initialization complete!" );
+			}
+		}
+	}
+	
+	private static boolean poll() throws Exception
+	{
+		File nfLog = new File( NF_LOG );
+		final BufferedReader reader = BioLockJUtil.getFileReader( nfLog );
+		try
+		{
+			if( nfLog.exists() )
+			{
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
+				{
+					if( line.contains( NF_INIT_FLAG ) )
+					{
+						return true;
+					}
+				}
+			}
+			else
+			{
+				Log.info( NextflowUtil.class, "Nextflow log file \"" + NF_LOG + "\" has not been created yet..." );
+			}
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
+		return false;
+	}
+	
 	
 	private static void startService() throws Exception
 	{
@@ -81,7 +137,6 @@ public class NextflowUtil
 	 */
 	protected static List<String> getNextflowLines( final File template ) throws Exception
 	{
-		Log.info( NextflowUtil.class, "Calling getNextflowLines()" );
 		final List<String> lines = new ArrayList<>();
 
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
@@ -92,13 +147,13 @@ public class NextflowUtil
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				String onDemandLabel = null;
-				Log.info( NextflowUtil.class, "READ line: " + line );
+				Log.debug( NextflowUtil.class, "READ line: " + line );
 				if( moduleName != null )
 				{
 					if( module == null )
 					{
 						module = getModule( moduleName );
-						Log.info( NextflowUtil.class, "Found module: " + module.getClass().getName() );
+						Log.debug( NextflowUtil.class, "Found module: " + module.getClass().getName() );
 					}
 
 					if( line.trim().equals( "}" ) )
@@ -108,9 +163,9 @@ public class NextflowUtil
 					}
 					if( line.trim().startsWith( WORKER_FLAG ) && line.contains( module.getClass().getSimpleName() ) )
 					{
-						Log.info( NextflowUtil.class, "Found worker: " + line );
+						Log.debug( NextflowUtil.class, "Found worker: " + line );
 						String moduleFlag = moduleName.replaceAll( "\\.", PACKAGE_SEPARATOR );
-						Log.info( NextflowUtil.class, "Replace moduleFlag: " + moduleFlag + " with " + module.getClass().getSimpleName() );
+						Log.debug( NextflowUtil.class, "Replace moduleFlag: " + moduleFlag + " with " + module.getClass().getSimpleName() );
 						line = line.replace( moduleFlag, module.getClass().getSimpleName() );
 					}
 					
@@ -148,17 +203,18 @@ public class NextflowUtil
 				}
 				if( line.trim().startsWith( PROCESS ) )
 				{
-					Log.info( NextflowUtil.class, "Found module on line: " + line );
+					Log.debug( NextflowUtil.class, "Found module on line: " + line );
 					line = line.replaceAll( PACKAGE_SEPARATOR, "\\." );
 					moduleName = line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim();
 					line = line.replace( moduleName, convertModuleName( moduleName ) );
 				}
 
-				Log.info( NextflowUtil.class, "KEEP line: " + line );
+				Log.info( NextflowUtil.class, "Add line: " + line );
 				lines.add( line );
 				if( onDemandLabel != null )
 				{
 					lines.add( onDemandLabel );
+					Log.info( NextflowUtil.class, "Add line: " + onDemandLabel );
 				}
 			}
 		}
@@ -169,25 +225,20 @@ public class NextflowUtil
 				reader.close();
 			}
 		}
-		Log.info( NextflowUtil.class, "Return: " + lines.size() + " total lines" );
+		Log.info( NextflowUtil.class, "# Lines in main.nf: " + lines.size() );
 		return lines;
 	}
 	
 	private static ScriptModule getModule( final String className ) throws Exception
 	{
-		Log.info( NextflowUtil.class, "Searching for module: " + className );
 		for( BioModule mod: getModules().keySet() )
 		{
-			Log.info( NextflowUtil.class, "Examine module: " + mod.getClass().getName() );
-			Log.info( NextflowUtil.class, "Already Used mod?: " + getModules().get( mod ) );
 			if( !getModules().get( mod ) )
 			{
-				Log.info( NextflowUtil.class, "RETURN MATCH: " + mod.getClass().getName() );
 				getModules().put( (ScriptModule) mod, true );
 				return (ScriptModule) mod;
 			}
 		}
-		
 		return null;
 	}
 	
@@ -195,7 +246,6 @@ public class NextflowUtil
 	{
 		if( modules.isEmpty() )
 		{
-			Log.info( NextflowUtil.class, "modules.isEmpty(): TRUE  --> BUILD LIST" );
 			for( BioModule module: Pipeline.getModules() )
 			{
 				if( ! ( module instanceof ImportMetadata ) &&  ! ( module instanceof Email ) )
@@ -242,7 +292,7 @@ public class NextflowUtil
 	private static File buildInitialTemplate( final String modules ) throws Exception
 	{
 		Log.info( NextflowUtil.class, "Build Nextflow initial template: " + templateConfig().getAbsolutePath() );
-		Log.info( NextflowUtil.class, "Using module list: " + modules );
+		Log.info( NextflowUtil.class, "Nextflow modules: " + modules );
 
 		final String[] args = new String[ 3 ];
 		args[ 0 ] = templateScript().getAbsolutePath();
@@ -251,9 +301,9 @@ public class NextflowUtil
 		Processor.submit( args );
 		if( !templateConfig().exists() )
 		{
-			throw new Exception( "Nextflow Template failed to build: " + templateConfig().getAbsolutePath() );
+			throw new Exception( "Nextflow Template file is not found at path: " + templateConfig().getAbsolutePath() );
 		}
-		Log.info( NextflowUtil.class, "Nextflow Template successfully created: " + templateConfig().getAbsolutePath() );
+		Log.info( NextflowUtil.class, "Nextflow Template file created: " + templateConfig().getAbsolutePath() );
 		return templateConfig();
 	}
 
@@ -276,8 +326,7 @@ public class NextflowUtil
 
 	private static void writeNextflowMainNF( final List<String> lines ) throws Exception
 	{
-		Log.info( NextflowUtil.class, "Exec writeNextflowMainNF() - total # lines: " + lines.size() );
-		Log.info( NextflowUtil.class, "getMainNf(): " + getMainNf() );
+		Log.debug( NextflowUtil.class, "Create " + getMainNf().getAbsolutePath() + " with # lines = " + lines.size() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMainNf() ) );
 		try
 		{
@@ -308,8 +357,11 @@ public class NextflowUtil
 		}
 	}
 
-	private static final Hashtable<ScriptModule, Boolean> modules = new Hashtable<>();
 	
+	private static final int NF_TIMEOUT = 180;
+	private static final String NF_LOG = File.separator + ".nextflow.log";
+	private static final String NF_INIT_FLAG = "Session await";
+	private static final Hashtable<ScriptModule, Boolean> modules = new Hashtable<>();
 	private static final String ON_DEMAND = "DEMAND";
 	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
@@ -322,7 +374,6 @@ public class NextflowUtil
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 	private static final String NF_MEMORY = "$" + Constants.AWS_RAM;
-	//private static final String NF_PIPELINE_NAME = "$pipeline.pipelineName";
 	private static final String PACKAGE_SEPARATOR = "_:_";
 	private static final String PROCESS = "process";
 	private static final String S3_DIR = "s3://";
