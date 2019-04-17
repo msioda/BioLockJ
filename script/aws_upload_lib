@@ -45,7 +45,7 @@ exe_remote_cmd() {
 }
 
 # Return the Nextflow basic config file-path
-get_nextflow_basic_config() {
+get_nextflow_config() {
 	nfStackDir=$NF_LOCAL/${awsStack} 
 	[ "$USER" == "ec2-user" ] && nfStackDir=$headConfig/nextflow/${awsStack} 
 	[ ! -d "$nfStackDir" ] && mkdir -p $nfStackDir
@@ -80,7 +80,7 @@ stage_pipeline_on_aws() {
 	exe_remote_cmd "[ ! -d $headPrimer ] && mkdir $headPrimer"
 	exe_remote_cmd "[ ! -d $headScript ] && mkdir $headScript"
 	
-	upload_file_to_aws $(get_nextflow_basic_config) $nfDir
+	upload_file_to_aws $(get_nextflow_config) $nfDir
 	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
 	upload_file_to_aws $blj_aws_config $headConfig
 	upload_pipeline_inputs_to_aws
@@ -94,8 +94,7 @@ stage_pipeline_on_aws() {
 
 # The method creates a new version of the pipeline Config files by replacing 
 upload_config_to_aws() {
-
-	primaryConfig=$(get_config)
+	primaryConfig=$(get_config local)
 	myAwsS3=$(set_prop "$primaryConfig" "aws.s3" "${awsS3}")
 	[ ${#myAwsS3} -eq 0 ] && set_prop "$primaryConfig" "aws.s3" "${awsS3}"
 	configFiles=$(get_blj_prop configFiles)
@@ -108,7 +107,7 @@ upload_config_to_aws() {
 # Param 1 - Local dir
 # Param 2 - (optional) AWS ec2 directory-path 
 upload_dir_to_aws() {
-	if [ $# -eq 2 ]; then target="$2"; else target=$EC2_HEAD_NODE; fi
+	if [ $# -eq 2 ]; then target="$2"; else target=$EC2_HOME; fi
 	aws_log "Uploading directory \"$1\" to AWS --> \"$target\" --> See file/sub-dir list below..."
 	for f in $1/*; do upload_file_to_aws "$f" "$target"; done
 }
@@ -117,7 +116,7 @@ upload_dir_to_aws() {
 # Param 1 - Local file
 # Param 2 - (optional) AWS ec2 file-path 
 upload_file_to_aws() {
-	if [ $# -eq 2 ]; then target="$2"; else target=$EC2_HEAD_NODE; fi
+	if [ $# -eq 2 ]; then target="$2"; else target=$EC2_HOME; fi
 	aws_log "Uploading file \"$1\" to AWS --> \"$target\""
 	scp -pro StrictHostKeyChecking=no -i $(key_file) "$1" ec2-user@${publicHost}:${target}
 }
@@ -129,14 +128,14 @@ upload_pipeline_inputs_to_aws() {
 	if [ -d "$inputDirPaths" ]; then
 		upload_dir_to_aws ${inputDirPaths} $headInput
 	else
-		exit_script "Error [ aws_upload_lib.stage_pipeline_data() ]: Required Config inputDirPaths is not a valid directory"
+		exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config inputDirPaths is not a valid directory"
 	fi
 	if [ -d "$metaphlan2Db" ] || [ -f "$metaphlan2Mpa_pkl" ]; then
 		if [ -d "$metaphlan2Db" ] && [ -f "$metaphlan2Mpa_pkl" ]; then
 			upload_dir_to_aws ${metaphlan2Db} $headDB
 			upload_file_to_aws ${metaphlan2Mpa_pkl} $headDB
 		else
-			exit_script "Error [ aws_upload_lib.stage_pipeline_data() ]: Required Config missing - if any defined, all must be defined {\"metaphlan2Db\", \"metaphlan2Mpa_pkl\" }"
+			exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config missing - if any defined, all must be defined {\"metaphlan2Db\", \"metaphlan2Mpa_pkl\" }"
 		fi
 	fi
 	if [ -f "$qiimePynastAlignDB" ] || [ -f "$qiimeRefSeqDB" ] || [ -f "$qiimeTaxaDB" ]; then
@@ -145,7 +144,7 @@ upload_pipeline_inputs_to_aws() {
 			upload_file_to_aws ${qiimeRefSeqDB} $headDB
 			upload_file_to_aws ${qiimeTaxaDB} $headDB	
 		else
-			exit_script "Error [ aws_upload_lib.stage_pipeline_data() ]: Required Config missing - if any defined, all must be defined { \"qiimePynastAlignDB\", \"qiimeRefSeqDB\", \"qiimeTaxaDB\" }"
+			exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config missing - if any defined, all must be defined { \"qiimePynastAlignDB\", \"qiimeRefSeqDB\", \"qiimeTaxaDB\" }"
 		fi
 	fi
 	[ -f "$metadataFilePath" ] && upload_file_to_aws ${metadataFilePath} $headMeta

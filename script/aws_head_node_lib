@@ -7,7 +7,7 @@
 #####################################################################
 . $BLJ/script/aws_upload_lib
 
-EC2_HEAD_NODE=/home/ec2-user
+EC2_HOME=/home/ec2-user
 EFS=/mnt/efs
 headConfig=$EFS/config
 headScript=$EFS/script
@@ -17,25 +17,35 @@ headMeta=$EFS/metadata
 headPrimer=$EFS/primer
 headPipelines=$EFS/pipelines
 
+# Add job definition to Nextflow Config
+# Param 1 - Nextflow label
+# Param 2 - Nextflow container
+add_nextflow_job_def() {
+	aws_log "Add Nextflow Docker job-definition label=${1}, container=${2}"
+	echo "    withLabel: '${1}' {" >> $(get_nextflow_config)
+	echo "        container = '${2}'" >> $(get_nextflow_config)
+	echo "    }" >> $(get_nextflow_config)
+}
+
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
 	refresh_aws_cache
+	init_nextflow_config
 	dockerModules=$(docker search ${dockerUser} | grep -E ^${dockerUser} ) 
-	jobVcpus=2
-	jobRam=1024
-	IFS=$'\t'
+	IFS2=$IFS && IFS=$'\t'
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
-	aws_log "Building job-definitions"
+	aws_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
-		[ $(echo $line | grep -c blj_basic) -gt 0 ] && continue
+		[ $(echo $line | grep -c blj_basic) -gt 0 ] && aws_log "Skip basic Docker image: \"$line\"" && continue
 		module=$(echo $line | cut -f 1 -d " ")
 		jobImg="${module}:${dockerImgVersion}"
+		aws_log "Add job-definition for Docker image: \"$jobImg\""
 		jobLabel=${jobImg/\//_} 
 		jobLabel=${jobLabel/:/_} 
 	    jobConfig="{ 
-	    		\"image\": \"${jobImg}\",
-			\"vcpus\": ${jobVcpus},
-			\"memory\": ${jobRam},
+			\"image\": \"${jobImg}\",
+			\"vcpus\": 2,
+			\"memory\": 1024,
 			\"command\": [ \"/bin/bash\" ],
 			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
 			\"volumes\": [ { \"host\": { \"sourcePath\": \"/mnt/efs\" }, \"name\": \"efs\" } ],
@@ -48,56 +58,16 @@ build_docker_job_defs() {
 		if [ ${#jobName} -eq 0 ]; then
 			registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
 			jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
+			[ ${#jobName} -eq 0 ] && exit_script "Error [ aws_head_node_lib.build_docker_job_defs() ]: Failed to register job-definition: ${jobDef}"
 			aws_log "Registered new Docker job-definition: ${jobName}"
 		else
 			aws_log "Found existing Docker job-definition: ${jobName}"
 		fi
-		prop=$(get_blj_prop "image_${jobLabel}" "${jobName}")
-		aws_log "Saved Docker job-definition label: image_${jobLabel}=${prop}"
+		add_nextflow_job_def "image_${jobLabel}" "${jobName}"
 	done
+	IFS2=$IFS
+	close_nextflow_config
 	touch $(get_docker_job_flag)
-}
-
-# Create the basic nextflow config file using the current statck AWS batch queues
-build_nextflow_config() {
-	refresh_aws_cache
-	nfConfig=$(get_nextflow_basic_config)
-	dockUID="${dockerUser}"
-	LPJQ="$(get_stack_param LowPriorityJobQueue)"
-	HPJQ="$(get_stack_param HighPriorityJobQueue)"
-	
-	echo "// These Nextflow properties are inherited by pipeline main.nf" > $nfConfig
-	echo "" >> $nfConfig
-	echo "executor {" >> $nfConfig
-    echo "    name = 'awsbatch'" >> $nfConfig
-    echo "}" >> $nfConfig
-    echo "" >> $nfConfig
-    echo "aws {" >> $nfConfig
-	echo "    region = '${awsRegion}'" >> $nfConfig
-	echo "}" >> $nfConfig
-	echo "" >> $nfConfig
-	
-	echo "process {" >> $nfConfig
-	echo "    queue = '${LPJQ}'" >> $nfConfig
-	echo "    withLabel: 'DEMAND' {" >> $nfConfig
-	echo "        queue = '${HPJQ}'" >> $nfConfig
-	echo "    }" >> $nfConfig
-
-	while read line; do
-	    line=$(echo ${line} | xargs)
-	    prop=
-	    val=
-	    if [ "${line/=/}" != "${line}" ] && [ "${line:0:1}" != "#" ]; then
-			prop=$(echo ${line} | cut -d '=' -f1)
-			val=$(eval "echo ${line} | cut -d '=' -f2")
-			if [ "${prop/image_$dockUID}" != "${prop}" ]; then
-				echo "    withLabel: '${prop}' {" >> $nfConfig
-				echo "        container = '${val}'" >> $nfConfig
-				echo "    }" >> $nfConfig
-			fi
-		fi
-	done < $blj_aws_config
-	echo "}" >> $nfConfig
 }
 
 # Build start script for given Pipeline Config file and reutnr local path
@@ -115,13 +85,20 @@ build_start_script() {
 	echo "##  3) Run dockblj                                      ##" >> $startScript
 	echo "##                                                      ##" >> $startScript
 	echo "##########################################################" >> $startScript
-	echo "source /home/ec2-user/.bash_profile" >> $startScript
+	echo 'source $HOME/.bash_profile' >> $startScript
 	echo 'images=$(docker images -f dangling=true -q)' >> $startScript
 	echo '[ ${#images} -gt 0 ] && docker rmi $images' >> $startScript
 	echo "docker pull ${dockerUser}/aws_manager:${dockerImgVersion}" >> $startScript
 	echo "dockblj -aws ${meta}-i=$headInput -c=$(get_config ec2)" >> $startScript
 	chmod 770 $startScript
 	echo $startScript
+}
+
+# Close Nextflow Config process block
+close_nextflow_config() {
+	echo "}" >> $(get_nextflow_config)
+	echo "" >> $(get_nextflow_config)
+	chmod 770 $(get_nextflow_config)
 }
 
 # Connect to running head node
@@ -149,21 +126,41 @@ get_docker_job_flag() {
 # Get a stack parameter for the configured stack 
 # Param 1 - Param name
 get_stack_param() {
-	myParam=$(aws cloudformation describe-stacks --stack-name $(get_blj_prop awsStack) --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
+	myParam=$(aws cloudformation describe-stacks --stack-name "${awsStack}" --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
 	[ ${#myParam} -eq 0 ] && return
 	echo "${myParam}"
 }
 
+# Create the basic nextflow config file using the current statck AWS batch queues
+init_nextflow_config() {
+	nfConfig=$(get_nextflow_config)
+	echo "// Nextflow properties inherited by main.nf in BioLockJ $(get_version) pipelines" > $(get_nextflow_config)
+	echo "" >> $(get_nextflow_config)
+	echo "executor {" >> $(get_nextflow_config)
+    echo "    name = 'awsbatch'" >> $(get_nextflow_config)
+    echo "}" >> $(get_nextflow_config)
+    echo "" >> $(get_nextflow_config)
+    echo "aws {" >> $(get_nextflow_config)
+	echo "    region = '${awsRegion}'" >> $(get_nextflow_config)
+	echo "}" >> $(get_nextflow_config)
+	echo "" >> $(get_nextflow_config)
+	echo "process {" >> $(get_nextflow_config)
+	echo "    queue = '$(get_stack_param LowPriorityJobQueue)'" >> $(get_nextflow_config)
+	echo "    withLabel: 'DEMAND' {" >> $(get_nextflow_config)
+	echo "        queue = '$(get_stack_param HighPriorityJobQueue)'" >> $(get_nextflow_config)
+	echo "    }" >> $(get_nextflow_config)
+}
+
 # Launch a new ec2 head node
 launch_ec2_head_node() {
-	[ -x "$(which docker)" ] && build_docker_job_defs && build_nextflow_config
+	[ -x "$(which docker)" ] && build_docker_job_defs
 	refresh_aws_cache
 	runTime=0
 	secureGroup="$(get_stack_param BastionSecurityGroup)"
 	subnet="$(get_stack_param Subnet1)"
 	templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
 	if [ ${#awsAmi} -eq 0 ] || [ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ]; then
-		exit_script "Error [ aws_head_node_lib.launch_ec2_head_node() ]: Cannot launch EC2 - required parameters not found in $blj_aws_config"
+		exit_script "Error [ aws_head_node_lib.launch_ec2_head_node() ]: Cannot launch EC2 - required parameters undefined in $blj_aws_config"
 	fi
 	instanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids ${secureGroup} \
 		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='Head-${awsStack}'}" --subnet-id ${subnet} \
@@ -176,16 +173,17 @@ launch_ec2_head_node() {
 		sleep 10s
 		runTime=$((runTime+10))  
 	done
-	aws_log "InstanceID [ ${instanceID} ] created in $runTime seconds!"
+	echo ""
+	aws_log "EC2 Instance [ ID=${instanceID} ] created in $runTime seconds"
 	set_blj_prop instanceID ${instanceID}
 	set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids ${instanceID} --query "Reservations[].Instances[].PublicDnsName")
 	refresh_aws_cache
-	keyFound=$(cat ~/.ssh/known_hosts| grep -c ${publicHost})
+	keyFound=$(cat ~/.ssh/known_hosts | grep -c ${publicHost})
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
 	startScript=$(build_start_script)
 	stage_pipeline_on_aws $startScript
 	if [ -x "$(which docker)" ]; then
-		exe_remote_cmd "$EC2_HEAD_NODE/$(basename $startScript)"
+		exe_remote_cmd "$EC2_HOME/$(basename $startScript)"
 	else
 		connect_head
 	fi

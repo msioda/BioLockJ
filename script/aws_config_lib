@@ -6,10 +6,9 @@
 ##############################################################
 . $BLJ/script/blj_functions
 
-aws_cred_file=~/.aws/credentials
-
 [ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config
 sheBang='#!/bin/bash'
+aws_cred_file=~/.aws/credentials
 IS_NULL=IS_NULL
 DB=/db
 HN2_NUCL_DB=$DB/chocophlan
@@ -180,7 +179,7 @@ rm_prop() {
 # Param 2 - Prop value
 # Param 3 - (optional) Default value
 set_blj_prop() {
-	[ $# -lt 2 ] || [ "$2{}" == $IS_NULL ] && return
+	[ $# -lt 2 ] || [ "${2}" == $IS_NULL ] && return
 	set_prop "$blj_aws_config" "${1}" "${2}"
 }
 
