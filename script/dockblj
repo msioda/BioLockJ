@@ -128,13 +128,13 @@ run_docker() {
 # Verify host directory exists, if dockblj is not deployed inside a Docker container
 verify_host_dir() {
 	#echo "validate Host Dir: $# + $1"
- 	[ $# -eq 2 ] && [ ! -d "${#1}" ] && exit_script "Error [ dockblj ]: $2 directory not found: $1"
+ 	[ $# -eq 2 ] && [ ! -d "${1}" ] && exit_script "Error [ dockblj ]: $2 directory not found: $1"
 }
 
 # Verify host file exists, if dockblj is not deployed inside a Docker container
 verify_host_file() {
 	#echo "validate Host Dir: $# + $1"
-	[ $# -eq 2 ] && [ ! -f "${#1}" ] && exit_script "Error [ dockblj ]: $2 file not found: $1"
+	[ $# -eq 2 ] && [ ! -f "${1}" ] && exit_script "Error [ dockblj ]: $2 file not found: $1"
 }
 
 # Verify paths are valid, if dockblj is not run inside a Docker container

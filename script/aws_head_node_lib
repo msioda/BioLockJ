@@ -49,7 +49,7 @@ build_docker_job_defs() {
 			\"command\": [ \"/bin/bash\" ],
 			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
 			\"volumes\": [ { \"host\": { \"sourcePath\": \"/mnt/efs\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"/home/ec2-user/miniconda\" }, \"name\": \"miniconda\" } ],
-			\"mountPoints\": [ { \"containerPath\": \"/mnt/efs\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"/home/ec2-user/miniconda\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
+			\"mountPoints\": [ { \"containerPath\": \"/efs\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"/home/ec2-user/miniconda\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
@@ -139,6 +139,7 @@ init_nextflow_config() {
 	echo "" >> $(get_nextflow_config)
 	echo "executor {" >> $(get_nextflow_config)
     echo "    name = 'awsbatch'" >> $(get_nextflow_config)
+    echo "    executor.awscli = '/home/ec2-user/miniconda/bin/aws'" >> $(get_nextflow_config)
     echo "}" >> $(get_nextflow_config)
     echo "" >> $(get_nextflow_config)
     echo "aws {" >> $(get_nextflow_config)

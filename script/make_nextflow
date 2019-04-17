@@ -48,7 +48,7 @@ buildNexflowConfigDir() {
 buildNexflowTemplate() {
 	modules="${2}"
 	numModules=$(echo $modules | wc -w | xargs)
-	summaryMsg="BioLockJ $(get_version) generated Nextflow Template \"${1}\" with $numModules BioModule process definitions"
+	summaryMsg="BioLockJ $(get_version) generated Nextflow Config with $numModules BioModule process definitions"
 	echo "// $summaryMsg" > "${1}"
 	echo "" >> "${1}"
 	for module in ${modules[@]}; do
@@ -58,7 +58,7 @@ buildNexflowTemplate() {
 		echo '    memory $aws.ram' >> "${1}"
 		echo '    label $nextflow.dockerImage' >> "${1}"
 		echo '    input:' >> "${1}"
-		echo '    file worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> "${1}"
+		echo '    val worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> "${1}"
 		echo '    """' >> "${1}"
 		echo '    #!/bin/bash' >> "${1}"
 		echo '    bash ${worker}' >> "${1}"
