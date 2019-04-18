@@ -50,7 +50,7 @@ build_docker_job_defs() {
 			\"command\": [ \"/bin/bash\" ],
 			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
 			\"volumes\": [ { \"host\": { \"sourcePath\": \"/mnt/efs\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"/home/ec2-user/miniconda\" }, \"name\": \"miniconda\" } ],
-			\"mountPoints\": [ { \"containerPath\": \"/efs\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"/home/ec2-user/miniconda\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
+			\"mountPoints\": [ { \"containerPath\": \"/mnt/efs\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"/home/ec2-user/miniconda\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"

@@ -35,6 +35,7 @@ aws_deregister_job_defs() {
 	[ ${#vals} -eq 0 ] && aws_log "All job-definitions removed" && return
 	aws_log "Remaining job-definitions with status!='INACTIVE':"
 	aws batch describe-job-definitions --query "jobDefinitions[?status!='INACTIVE']|[*].jobDefinitionArn"
+	rm $(get_docker_job_flag)
 }
 
 # Get 1st "arn*" value in list

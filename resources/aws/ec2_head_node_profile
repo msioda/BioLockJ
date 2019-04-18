@@ -39,11 +39,15 @@ alias dockls="docker images; docker container ls --all"
 alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 
+[ ! -d ~/.aws ] && mkdir ~/.aws
+
+[ -f "$blj_aws_config" ] && source $blj_aws_config
+[ -f "$BLJ_SCRIPT/aws_head_node_lib" ] && source $BLJ_SCRIPT/aws_head_node_lib
+
 get_aws_profile() {
 	[ ${#awsProfile} -eq 0 ] && awsProfile=default
 	echo "[${awsProfile}]"
 }
-[ ! -d ~/.aws ] && mkdir ~/.aws
 
 if [ ! -f ~/.aws/config ]; then
 	echo "$(get_aws_profile)" > ~/.aws/config
@@ -60,9 +64,6 @@ if [ ! -f ~/.aws/credentials ] && [ ${#aws_access_key_id} -gt 0 ] && [ ${#aws_se
 	echo "Generated new file: ~/.aws/credentials"
 	cat ~/.aws/credentials 
 fi
-
-[ -f "$blj_aws_config" ] && source $blj_aws_config
-[ -f "$BLJ_SCRIPT/aws_head_node_lib" ] && source $BLJ_SCRIPT/aws_head_node_lib
 
 if [ ${#dockerUser} -gt 0 ]; then
 	export DOCKER_HUB_USER=${dockerUser}

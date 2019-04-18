@@ -9,7 +9,14 @@ ENV BLJ_PROJ=/mnt/efs/pipelines
 ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
 
 #2.) Build Standard Directories 
-RUN mkdir /app && mkdir /db 
+RUN mkdir /app && \
+	mkdir /config && \
+	mkdir /db && \
+	mkdir /input && \
+	mkdir /log && \
+	mkdir /meta && \
+	mkdir -p $BLJ_PROJ && \
+	mkdir /primer
 
 #3.) Install Ubuntu Software 
 RUN apt-get update && \
