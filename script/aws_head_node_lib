@@ -36,7 +36,7 @@ build_docker_job_defs() {
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
 	aws_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
-		[ $(echo $line | grep -c blj_basic) -gt 0 ] && aws_log "Skip basic Docker image: \"$line\"" && continue
+		[ $(echo $line | grep -c blj_basic) -gt 0 ] || [ $(echo $line | grep -c aws_manager) -gt 0 ] && aws_log "Skip Docker image: \"$line\"" && continue
 		module=$(echo $line | cut -f 1 -d " ")
 		jobImg="${module}:${dockerImgVersion}"
 		aws_log "Add job-definition for Docker image: \"$jobImg\""
