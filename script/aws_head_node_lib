@@ -89,7 +89,7 @@ build_start_script() {
 	echo 'source $HOME/.bash_profile' >> $startScript
 	echo 'images=$(docker images -f dangling=true -q)' >> $startScript
 	echo '[ ${#images} -gt 0 ] && docker rmi $images' >> $startScript
-	echo "docker pull ${dockerUser}/biolockj:${dockerImgVersion}" >> $startScript
+	echo "docker pull ${dockerUser}/blj_manager:${dockerImgVersion}" >> $startScript
 	echo "dockblj -aws ${meta}-i=$headInput -c=$(get_config ec2)" >> $startScript
 	chmod 770 $startScript
 	echo $startScript
