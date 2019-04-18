@@ -90,6 +90,7 @@ stage_pipeline_on_aws() {
 	
 	[ -f "$(get_docker_job_flag)" ] && upload_file_to_aws $(get_docker_job_flag)
 	exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
+	exe_remote_cmd "chmod -R o+rwx $EFS"
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
