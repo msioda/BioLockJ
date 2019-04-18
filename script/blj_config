@@ -28,7 +28,7 @@ else
 	[ ! -d "$BLJ_META" ] && export BLJ_META=~/metadata
 fi
 
-[ ! -d "$DOCKER_FILE_PATH" ]  && export DOCKER_FILE_PATH="$BLJ/resources/docker"
+[ ! -d "$DOCKER_FILE_PATH" ] && export DOCKER_FILE_PATH="$BLJ/resources/docker"
 [ ${#DOCKER_HUB_USER} -eq 0 ] && export DOCKER_HUB_USER="biolockj"
 
 . $BLJ/script/blj_functions
@@ -38,9 +38,6 @@ if [ "$BLJ" != "/app/biolockj" ]; then
 	[ ! -d "$BLJ_SUP" ] && [ -d "$BLJ_PARENT/blj_support/script" ] && export BLJ_SUP="$BLJ_PARENT/blj_support" 
 fi
 
-if [ -d "$BLJ_SUP" ]; then
-	[ "$BLJ_SUP" != "$BLJ" ] && export PATH="$BLJ_SUP/script:$PATH"
-	. $BLJ_SUP/script/blj_git_functions
-	. $BLJ_SUP/script/docker_functions
-fi 
-
+[ -d "$BLJ_SUP" ] && [ "$BLJ_SUP" != "$BLJ" ] && export PATH="$BLJ_SUP/script:$PATH"
+[ -f "$BLJ_SUP/script/blj_git_functions" ] && . $BLJ_SUP/script/blj_git_functions
+[ -f "$BLJ_SUP/script/docker_functions" ] && . $BLJ_SUP/script/docker_functions

@@ -31,7 +31,7 @@ add_nextflow_job_def() {
 build_docker_job_defs() {
 	refresh_aws_cache
 	init_nextflow_config
-	dockerModules=$(docker search ${dockerUser} | grep -E ^${dockerUser} ) 
+	dockerModules=$(docker search --no-trunc --limit 100 ${dockerUser} | grep -E ^${dockerUser} ) 
 	IFS2=$IFS && IFS=$'\t'
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
 	aws_log "Building Docker job-definitions..."
