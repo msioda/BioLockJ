@@ -93,8 +93,10 @@ convert_prop() {
 # Param 2 - (Optional) Default value
 get_blj_prop() {
 	val=$(get_prop $blj_aws_config "$1")
-	[ ${#val} -eq 0 ] && val="$2"
-	[ ${#val} -gt 0 ] && response=$(set_blj_prop "$1" "$val")
+	if [ ${#val} -eq 0 ]; then
+		val="$2"
+		response=$(set_blj_prop "awsStack" "$2")
+	fi 
 	echo "${val}"
 }
 
