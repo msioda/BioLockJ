@@ -110,19 +110,17 @@ public class DockerUtil
 	public static String getImageName( final BioModule module ) throws Exception
 	{
 		String className = module.getClass().getName();
-		Log.info( DockerUtil.class, "Find Docker image name for module: " + className );
+		Log.info( DockerUtil.class, "Map BioModule " +  className + " to Docker image name");
 		if( useBasicBashImg( module ) )
 		{
-			Log.info( DockerUtil.class, "Return: " + BLJ_BASH );
+			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
 			return BLJ_BASH;
 		}
 		
 		String simpleName = getDockerClassName( module );
-		Log.info( DockerUtil.class, "Found corresponding Java simpleName: " + simpleName );
-		String imageName = "";
-
-		imageName += simpleName.substring( 0, 1 ).toLowerCase();
-		Log.info( DockerUtil.class, "Building image name: " + imageName );
+		Log.debug( DockerUtil.class, "Found Java simple class name: " + simpleName );
+		String imageName = simpleName.substring( 0, 1 ).toLowerCase();
+		
 		for( int i = 2; i < simpleName.length() + 1; i++ )
 		{
 			final int len = imageName.toString().length();
@@ -138,7 +136,6 @@ public class DockerUtil
 			{
 				imageName += val.toLowerCase();
 			}
-			Log.info( DockerUtil.class, "Building image name: " + imageName );
 		}
 
 		if( ( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
@@ -341,9 +338,9 @@ public class DockerUtil
 	public static final String CONTAINER_META_DIR =  "/meta";
 
 	/**
-	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container "pipelines" volume: {@value #CONTAINER_OUTPUT_DIR} 
+	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container volume: {@value #CONTAINER_OUTPUT_DIR} 
 	 */
-	public static final String CONTAINER_OUTPUT_DIR = "/pipelines";
+	public static final String CONTAINER_OUTPUT_DIR = "/mnt/efs/pipelines";
 
 	/**
 	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer": {@value #CONTAINER_PRIMER_DIR} 

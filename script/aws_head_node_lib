@@ -81,15 +81,15 @@ build_start_script() {
 	echo "##########################################################" >> $startScript
 	echo "##                                                      ##" >> $startScript
 	echo "##  Run this script to launch BioLockJ pipeline on AWS  ##" >> $startScript
-	echo "##  1) Clear old aws_manager Docker images (if any)     ##" >> $startScript
-	echo "##  2) Pull the latest aws_manager from Docker Hub      ##" >> $startScript
+	echo "##  1) Clear old biolockj Docker images (if any)        ##" >> $startScript
+	echo "##  2) Pull the latest biolockj image from Docker Hub   ##" >> $startScript
 	echo "##  3) Run dockblj                                      ##" >> $startScript
 	echo "##                                                      ##" >> $startScript
 	echo "##########################################################" >> $startScript
 	echo 'source $HOME/.bash_profile' >> $startScript
 	echo 'images=$(docker images -f dangling=true -q)' >> $startScript
 	echo '[ ${#images} -gt 0 ] && docker rmi $images' >> $startScript
-	echo "docker pull ${dockerUser}/aws_manager:${dockerImgVersion}" >> $startScript
+	echo "docker pull ${dockerUser}/biolockj:${dockerImgVersion}" >> $startScript
 	echo "dockblj -aws ${meta}-i=$headInput -c=$(get_config ec2)" >> $startScript
 	chmod 770 $startScript
 	echo $startScript

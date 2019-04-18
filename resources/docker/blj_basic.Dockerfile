@@ -5,18 +5,11 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Setup Env
 ENV BLJ=/app/biolockj
-ENV BLJ_PROJ=/pipelines
+ENV BLJ_PROJ=/mnt/efs/pipelines
 ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
 
 #2.) Build Standard Directories 
-RUN mkdir /app && \
-	mkdir /config && \
-	mkdir /db && \
-	mkdir /input && \
-	mkdir /log && \
-	mkdir /meta && \
-	mkdir /pipelines && \
-	mkdir /primer
+RUN mkdir /app && mkdir /db 
 
 #3.) Install Ubuntu Software 
 RUN apt-get update && \

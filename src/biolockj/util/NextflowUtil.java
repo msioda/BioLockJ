@@ -69,11 +69,11 @@ public class NextflowUtil
 	
 	private static boolean poll() throws Exception
 	{
-		File nfLog = new File( NF_LOG );
-		final BufferedReader reader = BioLockJUtil.getFileReader( nfLog );
-		try
+		final File nfLog = new File( NF_LOG );
+		if( nfLog.exists() )
 		{
-			if( nfLog.exists() )
+			final BufferedReader reader = BioLockJUtil.getFileReader( nfLog );
+			try
 			{
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				{
@@ -83,17 +83,17 @@ public class NextflowUtil
 					}
 				}
 			}
-			else
+			finally
 			{
-				Log.info( NextflowUtil.class, "Nextflow log file \"" + NF_LOG + "\" has not been created yet..." );
+				if( reader != null )
+				{
+					reader.close();
+				}
 			}
 		}
-		finally
+		else
 		{
-			if( reader != null )
-			{
-				reader.close();
-			}
+			Log.info( NextflowUtil.class, "Nextflow log file \"" + NF_LOG + "\" has not been created yet..." );
 		}
 		return false;
 	}

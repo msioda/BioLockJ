@@ -16,7 +16,7 @@ AWS_DIR="$HOME/.aws"
 
 buildAwsConfig() {
 	AWS_CONF="${AWS_DIR}/config"
-	echo "Generating aws_manager container ${AWS_CONF}"
+	echo "Generating ${AWS_CONF} in the biolockj container"
 	echo "[default]" > "${AWS_CONF}"
 	echo "region = ${awsRegion}" >> "${AWS_CONF}"
 	echo "output = text" >> "${AWS_CONF}"
@@ -26,7 +26,7 @@ buildAwsConfig() {
 
 buildAwsCredentials() {
 	AWS_CRED="${AWS_DIR}/credentials"
-	echo "Generating aws_manager container ${AWS_CRED}"
+	echo "Generating ${AWS_CRED} in the biolockj container"
 	echo "[default]" > "${AWS_CRED}"
 	echo "aws_access_key_id = ${aws_access_key_id}" >> "${AWS_CRED}"
 	echo "aws_secret_access_key = ${aws_secret_access_key}" >> "${AWS_CRED}"

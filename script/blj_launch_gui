@@ -31,11 +31,11 @@ startBrowser() {
 # ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
 # Param $1 = Docker Hub Account ID
 runDockerWebApp() {
-	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' $(dockerID $1)/blj_webapp ]"
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/mnt/efs/pipelines:delegated -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' $(dockerID $1)/blj_webapp ]"
 	docker run --rm -p 8080:3000 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v $BLJ/resources/config/gui:/config  \
-		-v $BLJ_PROJ:/pipelines:delegated  \
+		-v $BLJ_PROJ:/mnt/efs/pipelines:delegated  \
 		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
 		$(dockerID $1)/blj_webapp
@@ -47,11 +47,11 @@ runDockerWebApp() {
 # Replace container installed $BLJ dir with host $BLJ)
 # Param $1 = Docker Hub Account ID
 devDockerWebApp() {
-	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' $(dockerID $1)/blj_webapp]"
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/mnt/efs/pipelines:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' $(dockerID $1)/blj_webapp]"
 	docker run --rm -p 8080:3000 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v $BLJ/resources/config/gui:/config \
-		-v $BLJ_PROJ:/pipelines:delegated \
+		-v $BLJ_PROJ:/mnt/efs/pipelines:delegated \
 		-v $BLJ:/app/biolockj \
 		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
@@ -68,11 +68,11 @@ devDockerWebApp() {
 # Replace container installed $BLJ dir with host $BLJ)
 # Param $1 = Docker Hub Account ID
 devSupDockerWebApp() {
-	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/pipelines:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' -e 'HOST_BLJ_SUP=$BLJ_SUP' $(dockerID $1)/blj_webapp]"
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:/config -v $BLJ_PROJ:/mnt/efs/pipelines:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' -e 'HOST_BLJ_SUP=$BLJ_SUP' $(dockerID $1)/blj_webapp]"
 	docker run --rm -p 8080:3000 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v $BLJ/resources/config/gui:/config \
-		-v $BLJ_PROJ:/pipelines:delegated \
+		-v $BLJ_PROJ:/mnt/efs/pipelines:delegated \
 		-v $BLJ:/app/biolockj \
 		-v $BLJ_SUP:/app/blj_support \
 		-v $BLJ/web_app/logs:/log:delegated \
