@@ -476,19 +476,7 @@ Resources:
 
             - efs_directory=/mnt/efs
 
-            - mkdir -p ${!efs_directory}/config
-
-            - mkdir ${!efs_directory}/db
-
-            - mkdir ${!efs_directory}/input
-
-            - mkdir ${!efs_directory}/metadata
-
-            - mkdir ${!efs_directory}/pipelines
-
-            - mkdir ${!efs_directory}/primer
-
-            - mkdir ${!efs_directory}/script
+            - mkdir -p ${!efs_directory}
 
             - echo "${!file_system_id_01}:/ ${!efs_directory} efs
             defaults,_netdev" >> /etc/fstab
@@ -496,10 +484,6 @@ Resources:
             - mount -a -t efs defaults
 
             - chown -R ec2-user:ec2-user ${!efs_directory}
-
-            - chmod -R 777 ${!efs_directory}
-
-            - chmod -R g+s ${!efs_directory}
 
             - yum remove -y ecs-init
 
@@ -554,19 +538,7 @@ Resources:
 
             - efs_directory=/mnt/efs
 
-            - mkdir -p ${!efs_directory}/config
-
-            - mkdir ${!efs_directory}/db
-
-            - mkdir ${!efs_directory}/input
-
-            - mkdir ${!efs_directory}/metadata
-
-            - mkdir ${!efs_directory}/pipelines
-
-            - mkdir ${!efs_directory}/primer
-
-            - mkdir ${!efs_directory}/script
+            - mkdir -p ${!efs_directory}
 
             - echo "${!file_system_id_01}:/ ${!efs_directory} efs
             defaults,_netdev" >> /etc/fstab
@@ -574,10 +546,6 @@ Resources:
             - mount -a -t efs defaults
 
             - chown -R ec2-user:ec2-user ${!efs_directory}
-
-            - chmod -R 777 ${!efs_directory}
-
-            - chmod -R g+s ${!efs_directory}
 
             - yum install -y bzip2 wget
 

@@ -72,19 +72,29 @@ get_s3_name() {
 stage_pipeline_on_aws() {
 	upload_file_to_aws "${1}"
 	EC2_NF_DIR="$EFS_CONFIG/nextflow/${awsStack}"
-	exe_remote_cmd "mkdir $EC2_HOME/.aws"
+	
 	exe_remote_cmd "mkdir -p $EC2_NF_DIR"
+	exe_remote_cmd "mkdir $EFS_DB"
+	exe_remote_cmd "mkdir $EFS_INPUT"
+	exe_remote_cmd "mkdir $EFS_META"
+	exe_remote_cmd "mkdir $EFS_PROJ"
+	exe_remote_cmd "mkdir $EFS_PRIMER"
+	exe_remote_cmd "mkdir $EFS_SCRIPT"
+	exe_remote_cmd "mkdir $EC2_HOME/.aws"
+
 	upload_file_to_aws $blj_aws_config "$EC2_HOME/.aws"
 	upload_file_to_aws $blj_aws_config "$EFS_CONFIG"
 	upload_file_to_aws "$(get_nextflow_config)" "$EC2_NF_DIR"
-	
+
 	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
 	upload_pipeline_inputs_to_aws
 	upload_dir_to_aws $BLJ/script $EFS_SCRIPT
 	[ -d "$BLJ_SUP/script" ] && upload_dir_to_aws $BLJ_SUP/script $EFS_SCRIPT
-	
+
 	[ -f "$(get_docker_job_flag)" ] && upload_file_to_aws $(get_docker_job_flag)
 	exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
+	exe_remote_cmd "chmod -R 777 $EFS"
+	exe_remote_cmd "chmod -R g+s $EFS"
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
