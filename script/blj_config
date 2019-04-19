@@ -26,6 +26,7 @@ export EFS_INPUT="$EFS/input"
 export EFS_META="$EFS/metadata"
 export EFS_PROJ="$EFS/pipelines"
 export EFS_PRIMER="$EFS/primer"
+export EFS_SCRIPT="$EFS/script"
 export MINICONDA_BIN="$HOME/miniconda/bin"
 
 if [ "$BLJ" == "$EFS" ]; then

@@ -6,6 +6,7 @@
 #####################################################################
 . $BLJ/script/aws_config_lib
 
+EC2_HOME=/home/ec2-user
 S3_DIR="s3://"
 
 # Sync local files to S3 for cloud pipeline execution
@@ -72,14 +73,13 @@ get_s3_name() {
 stage_pipeline_on_aws() {
 	upload_file_to_aws ${1}
 	nfConfig=$(get_nextflow_config)
-	exe_remote_cmd "[ ! -d $nfDir ] && mkdir -p $(dirname $nfConfig)"
 
-	upload_file_to_aws $nfConfig
+	upload_file_to_aws $nfConfig $EC2_HOME/.aws
 	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
-	upload_file_to_aws $blj_aws_config $EFS_CONFIG
+	upload_file_to_aws $blj_aws_config $EC2_HOME/.aws
 	upload_pipeline_inputs_to_aws
-	upload_dir_to_aws $BLJ/script $BLJ_SCRIPT
-	[ -d "$BLJ_SUP/script" ] && upload_dir_to_aws $BLJ_SUP/script $BLJ_SCRIPT
+	upload_dir_to_aws $BLJ/script $EFS_SCRIPT
+	[ -d "$BLJ_SUP/script" ] && upload_dir_to_aws $BLJ_SUP/script $EFS_SCRIPT
 	
 	[ -f "$(get_docker_job_flag)" ] && upload_file_to_aws $(get_docker_job_flag)
 	exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
@@ -125,29 +125,29 @@ upload_pipeline_inputs_to_aws() {
 	fi
 	if [ -d "$metaphlan2Db" ] || [ -f "$metaphlan2Mpa_pkl" ]; then
 		if [ -d "$metaphlan2Db" ] && [ -f "$metaphlan2Mpa_pkl" ]; then
-			upload_dir_to_aws ${metaphlan2Db} $BLJ_DB
-			upload_file_to_aws ${metaphlan2Mpa_pkl} $BLJ_DB
+			upload_dir_to_aws ${metaphlan2Db} $EFS_DB
+			upload_file_to_aws ${metaphlan2Mpa_pkl} $EFS_DB
 		else
 			exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config missing - if any defined, all must be defined {\"metaphlan2Db\", \"metaphlan2Mpa_pkl\" }"
 		fi
 	fi
 	if [ -f "$qiimePynastAlignDB" ] || [ -f "$qiimeRefSeqDB" ] || [ -f "$qiimeTaxaDB" ]; then
 		if [ -f "$qiimePynastAlignDB" ] && [ -f "$qiimeRefSeqDB" ] && [ -f "$qiimeTaxaDB" ]; then
-			upload_file_to_aws ${qiimePynastAlignDB} $BLJ_DB
-			upload_file_to_aws ${qiimeRefSeqDB} $BLJ_DB
-			upload_file_to_aws ${qiimeTaxaDB} $BLJ_DB	
+			upload_file_to_aws ${qiimePynastAlignDB} $EFS_DB
+			upload_file_to_aws ${qiimeRefSeqDB} $EFS_DB
+			upload_file_to_aws ${qiimeTaxaDB} $EFS_DB	
 		else
 			exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config missing - if any defined, all must be defined { \"qiimePynastAlignDB\", \"qiimeRefSeqDB\", \"qiimeTaxaDB\" }"
 		fi
 	fi
-	[ -f "$metadataFilePath" ] && upload_file_to_aws ${metadataFilePath} $BLJ_META
-	[ -f "$trimPrimersFilePath" ] && upload_file_to_aws ${trimPrimersFilePath} $BLJ_PRIMER
-	[ -d "$kneaddataDbs" ] && upload_dir_to_aws ${kneaddataDbs} $BLJ_DB
-	[ -d "$krakenDb" ] && upload_dir_to_aws ${krakenDb} $BLJ_DB
-	[ -d "$kraken2Db" ] && upload_dir_to_aws ${kraken2Db} $BLJ_DB
-	[ -d "$humann2NuclDB" ] && upload_dir_to_aws ${humann2NuclDB} $BLJ_DB	
-	[ -d "$humann2ProtDB" ] && upload_dir_to_aws ${humann2ProtDB} $BLJ_DB	
-	[ -f "$rdpDb" ] && upload_dir_to_aws $(dirname ${rdpDb}) $BLJ_DB	
+	[ -f "$metadataFilePath" ] && upload_file_to_aws ${metadataFilePath} $EFS_META
+	[ -f "$trimPrimersFilePath" ] && upload_file_to_aws ${trimPrimersFilePath} $EFS_PRIMER
+	[ -d "$kneaddataDbs" ] && upload_dir_to_aws ${kneaddataDbs} $EFS_DB
+	[ -d "$krakenDb" ] && upload_dir_to_aws ${krakenDb} $EFS_DB
+	[ -d "$kraken2Db" ] && upload_dir_to_aws ${kraken2Db} $EFS_DB
+	[ -d "$humann2NuclDB" ] && upload_dir_to_aws ${humann2NuclDB} $EFS_DB	
+	[ -d "$humann2ProtDB" ] && upload_dir_to_aws ${humann2ProtDB} $EFS_DB	
+	[ -f "$rdpDb" ] && upload_dir_to_aws $(dirname ${rdpDb}) $EFS_DB	
 	upload_config_to_aws
 }
 

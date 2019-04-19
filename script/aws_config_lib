@@ -178,16 +178,18 @@ refresh_aws_cache() {
 # Param 1 - Config file
 # Param 2 - prop name 
 rm_prop() {
-	conf=$(cat "$1")
+	conf=$(cat "${1}")
 	[ ${#conf} -eq 0 ] && return
 	TMP=~/.temp_config.txt
 	[ -f $TMP ] && rm $TMP
 	touch $TMP && chmod 770 $TMP
-	while read line; do
+	while read line; do 
+		IFS2=$IFS && IFS=" "
 		tokens=( ${line//=/ } )
-		[ "${tokens[0]}" != "$2" ] && echo ${line} >> $TMP
-	done < $1
-	[ -f $TMP ] && rm "$1" && mv $TMP "$1"
+		IFS=$IFS2
+		[ "${tokens[0]}" != "${2}" ] && echo "${line}" >> $TMP
+	done < "${1}"
+	[ -f $TMP ] && rm "${1}" && mv $TMP "${1}"
 }
 
 # Call set_prop using Config file $blj_aws_config

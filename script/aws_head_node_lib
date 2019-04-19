@@ -5,7 +5,6 @@
 ##                                                                 ##
 ##                                                                 ##
 #####################################################################
-. $BLJ/script/blj_config
 . $BLJ/script/aws_upload_lib
 
 # Add job definition to Nextflow Config
@@ -67,7 +66,7 @@ build_docker_job_defs() {
 # Param 1 - Pipeline Config file
 build_start_script() {
 	startScript=~/.aws/run-${awsStack}.sh
-	[ -f "${metadataFilePath}" ] && meta="-m=$BLJ_META "
+	[ -f "${metadataFilePath}" ] && meta="-m=$EFS_META "
 	echo $sheBang > $startScript
 	echo "" >> $startScript
 	echo "##########################################################" >> $startScript
