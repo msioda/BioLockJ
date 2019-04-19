@@ -245,6 +245,11 @@ public class RuntimeParamUtil
 				javaModArgs += params.get( key ).equals( Constants.TRUE ) ? "": " " + params.get( key );
 			}
 		}
+		
+//		if( RuntimeParamUtil.runAws() )
+//		{
+//			javaModArgs = javaModArgs.replace( getConfigFileParam(), CONFIG_FLAG + " " + AWS_CONFIG_DIR + Config.getConfigFileName() );
+//		}
 
 		return javaModArgs;
 	}
@@ -672,7 +677,7 @@ public class RuntimeParamUtil
 	 * Restart pipeline runtime parameter switch: {@value #RESTART_FLAG}
 	 */
 	protected static final String RESTART_FLAG = "-r";
-
+	
 	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
 	private static final String CONFIG_FLAG_EXT = "--config";
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";

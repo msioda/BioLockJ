@@ -29,7 +29,7 @@ RUN cd $mpa_dir && \
 	chmod o+x -R *.py && \
 	ln -s metaphlan2.py metaphlan2
 	
-#4.) Cleanup - save ca-certificates so metaphlan2_classifier can download from internet
+#4.) Cleanup - save ca-certificates so metaphlan2_classifier can download from Internet
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
 	mv /usr/share/ca-certificates ~ && \

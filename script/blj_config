@@ -15,29 +15,39 @@
 ##                                                                     ##
 #########################################################################
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export PATH="$SCRIPT_DIR:$PATH"
-export BLJ="$(dirname $SCRIPT_DIR)"
+export BLJ_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+[ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="$BLJ_SCRIPT:$PATH"
+export BLJ="$(dirname $BLJ_SCRIPT)"
 
-if [ "$BLJ" == "/app/biolockj" ]; then
-	[ ! -d "$BLJ_PROJ" ] && export BLJ_PROJ=/mnt/efs/pipelines
-	[ ! -d "$BLJ_META" ] && export BLJ_META=/mnt/efs/metadata
-	[ ! -d "$BLJ_SUP" ] && export BLJ_SUP=$BLJ
+export EFS="/mnt/efs"
+export EFS_CONFIG="$EFS/config"
+export EFS_DB="$EFS/db"
+export EFS_INPUT="$EFS/input"
+export EFS_META="$EFS/metadata"
+export EFS_PROJ="$EFS/pipelines"
+export EFS_PRIMER="$EFS/primer"
+export MINICONDA_BIN="$HOME/miniconda/bin"
+
+if [ "$BLJ" == "$EFS" ]; then
+	[ -d "$MINICONDA_BIN" ] && [ "${PATH/$MINICONDA_BIN}" == "${PATH}" ] && export PATH="$MINICONDA_BIN:$PATH"
+	export BLJ_CONFIG="$EFS_CONFIG"
+	export BLJ_DB="$EFS_DB"
+	export BLJ_INPUT="$EFS_INPUT"
+	export BLJ_META="$EFS_META"
+	export BLJ_PRIMER="$EFS_PRIMER"
+	export BLJ_SUP="$BLJ"
+	source $BLJ_SCRIPT/docker_functions
+	source $BLJ_SCRIPT/aws_head_node_lib
 else
-	[ ! -d "$BLJ_PROJ" ] && export BLJ_PROJ="$BLJ/pipelines"
 	[ ! -d "$BLJ_META" ] && export BLJ_META=~/metadata
+	[ ! -d "$BLJ_SUP" ] && [ -d "$(dirname $BLJ)/blj_support/script" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
+	[ -d "$BLJ_SUP" ] && [ "${PATH/$BLJ_SUP/script}" == "${PATH}" ] && export PATH="$BLJ_SUP/script:$PATH"
+	[ -d "$BLJ_SUP" ] && source $BLJ_SUP/script/blj_git_functions
+	[ -d "$BLJ_SUP" ] && source $BLJ_SUP/script/docker_functions
 fi
 
-[ ! -d "$DOCKER_FILE_PATH" ] && export DOCKER_FILE_PATH="$BLJ/resources/docker"
+[ ! -d "$BLJ_PROJ" ] && export BLJ_PROJ="$BLJ/pipelines"
+export DOCKER_FILE_PATH="$BLJ/resources/docker"
 [ ${#DOCKER_HUB_USER} -eq 0 ] && export DOCKER_HUB_USER="biolockj"
 
-. $BLJ/script/blj_functions
-
-if [ "$BLJ" != "/app/biolockj" ]; then
-	BLJ_PARENT="$(dirname $BLJ)"
-	[ ! -d "$BLJ_SUP" ] && [ -d "$BLJ_PARENT/blj_support/script" ] && export BLJ_SUP="$BLJ_PARENT/blj_support" 
-fi
-
-[ -d "$BLJ_SUP" ] && [ "$BLJ_SUP" != "$BLJ" ] && export PATH="$BLJ_SUP/script:$PATH"
-[ -f "$BLJ_SUP/script/blj_git_functions" ] && . $BLJ_SUP/script/blj_git_functions
-[ -f "$BLJ_SUP/script/docker_functions" ] && . $BLJ_SUP/script/docker_functions
+source $BLJ_SCRIPT/blj_functions

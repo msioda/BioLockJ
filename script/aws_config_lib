@@ -4,16 +4,14 @@
 ##  This script is used for AWS Config functions            ##
 ##                                                          ##
 ##############################################################
-. $BLJ/script/blj_functions
+. $BLJ/script/blj_config
 
 [ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config
 sheBang='#!/bin/bash'
-aws_cred_file=~/.aws/credentials
 IS_NULL=IS_NULL
-DB=/db
-HN2_NUCL_DB=$DB/chocophlan
-HN2_PROT_DB=$DB/uniref
-RDP_DB=$DB/rRNAClassifier.properties
+HN2_NUCL_DB=$EFS_DB/chocophlan
+HN2_PROT_DB=$EFS_DB/uniref
+RDP_DB=$EFS_DB/rRNAClassifier.properties
 DEFAULT_CONFIG=$BLJ/resources/config/default/docker.properties
 
 # Archive previous AWS Config properties file: $blj_aws_config
@@ -50,6 +48,16 @@ aws_log() {
 	echo "[ $(date "+%Y-%m-%d %H:%M:%S") ] $1"
 }
 
+# Print AWS Config report
+aws_report_config() {
+	[ ! -f $blj_aws_config ] && echo "$blj_aws_config not found" && return
+	echo "---------------------------------------------------"
+	echo "Report current AWS Config"
+	echo "---------------------------------------------------"
+	tail -n +2 $blj_aws_config
+	echo "---------------------------------------------------"
+}
+
 # Get the s3 bucket names in the user region
 aws_s3_buckets() {
 	myBuckets=$(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
@@ -76,7 +84,7 @@ aws_stacks() {
 # Param 2 - DB property name
 convert_db_prop() {
 	db=$(get_prop "$1" "$2")
-	[ "$db" != "$DB" ] && convert_prop "$1" "$2"
+	[ "$db" != "$EFS_DB" ] && convert_prop "$1" "$2"
 }
 
 # Convert pipeline Config prop to AWS Config file property format in: $blj_aws_config
@@ -264,8 +272,8 @@ verify_config() {
 	[ ${#awsEc2InstanceType} -eq 0 ] && set_blj_prop awsEc2InstanceType t2.micro
 	[ ${#dockerImgVersion} -eq 0 ] && set_blj_prop dockerImgVersion latest
 	[ ${#dockerUser} -eq 0 ] && set_blj_prop dockerUser biolockj
-	set_blj_prop aws_access_key_id $(aws_local_prop aws_access_key_id $aws_cred_file)
-	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key $aws_cred_file)
+	set_blj_prop aws_access_key_id $(aws_local_prop aws_access_key_id ~/.aws/credentials)
+	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key ~/.aws/credentials)
 	refresh_aws_cache
 	aws_log "Verify AWS client authentication properties..."
 	[ ${#awsAccount_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."

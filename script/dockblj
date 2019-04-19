@@ -38,7 +38,7 @@ arg_exists() {
 # Include Docker container path to required Config file
 # Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
 blj_options() {
-	options="-docker -b $(blj_proj) -C $(dirname $config) -c /config/$(basename $config) -u $HOME" 
+	options="-docker -b $(blj_proj) -C $(dirname $config) -c $EFS_CONFIG:ro/$(basename $config) -u $HOME" 
 	$(has_param $runAws) && options="$options $runAws"
 	$(has_param $doRestart) && options="$options -r $(restart_dir)"
 	$(has_param $newPass) && options="$options -p $newPass"
@@ -77,7 +77,7 @@ has_param() {
 # Get the Docker biolockj module with $DOCKER_HUB_USER user prefix
 manager_type() {
 	if $(has_param $runAws); then
-		echo -v /home/ec2-user/miniconda:/home/ec2-user/miniconda $DOCKER_HUB_USER/blj_manager
+		echo -v /home/ec2-user/miniconda:/home/ec2-user/miniconda:ro $DOCKER_HUB_USER/blj_manager
 	else
 		echo $DOCKER_HUB_USER/biolockj
 	fi
@@ -85,7 +85,7 @@ manager_type() {
 
 # Get the internal Docker restart directory
 restart_dir() {
-	echo "/mnt/efs/pipelines/${doRestart#$(blj_proj)/}"
+	echo "$EFS_PROJ/${doRestart#$(blj_proj)/}"
 }
 
 # Call the docker run command with the correct parameters
@@ -96,31 +96,31 @@ run_docker() {
 	[ ${#1} -gt 0 ] && opt="$1 $opt"
 	if $(has_param $metaPath); then
 		if $(has_param $HOST_BLJ) && $(has_param $HOST_BLJ_SUP); then
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
-				-v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
 		elif $(has_param $HOST_BLJ); then
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
-				-v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj $(manager_type)
 		else
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta -v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $metaPath:/meta \
-				-v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro $(manager_type)
 		fi
 	else
 		if $(has_param $HOST_BLJ) && $(has_param $HOST_BLJ_SUP); then
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
-				-v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
 		elif $(has_param $HOST_BLJ); then
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
-				-v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config -v $HOST_BLJ:/app/biolockj $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj $(manager_type)
 		else
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:/input -v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:/input \
-				-v $(blj_proj):/mnt/efs/pipelines:delegated -v $(dirname $config):/config $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro $(manager_type)
 		fi
 	fi
 }

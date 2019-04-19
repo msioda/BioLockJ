@@ -6,7 +6,6 @@
 #####################################################################
 . $BLJ/script/aws_config_lib
 
-NF_LOCAL=~/.aws/nextflow
 S3_DIR="s3://"
 
 # Sync local files to S3 for cloud pipeline execution
@@ -46,8 +45,8 @@ exe_remote_cmd() {
 
 # Return the Nextflow basic config file-path
 get_nextflow_config() {
-	nfStackDir=$NF_LOCAL/${awsStack} 
-	[ "$USER" == "ec2-user" ] && nfStackDir=$headConfig/nextflow/${awsStack} 
+	nfStackDir=~/.aws/nextflow/${awsStack} 
+	[ "$USER" == "ec2-user" ] && nfStackDir=$EFS_CONFIG/nextflow/${awsStack} 
 	[ ! -d "$nfStackDir" ] && mkdir -p $nfStackDir
 	echo "$nfStackDir/config"
 }
@@ -71,26 +70,19 @@ get_s3_name() {
 # Copy Config file with updated properties to reference new S3 paths
 # Param 1 Pipeline start script
 stage_pipeline_on_aws() {
-	nfDir="$headConfig/nextflow/${awsStack}"
-	exe_remote_cmd "[ ! -d $nfDir ] && mkdir -p $nfDir"
-	exe_remote_cmd "[ ! -d $headDB ] && mkdir $headDB"
-	exe_remote_cmd "[ ! -d $headInput ] && mkdir $headInput"
-	exe_remote_cmd "[ ! -d $headMeta ] && mkdir $headMeta"
-	exe_remote_cmd "[ ! -d $headPipelines ] && mkdir $headPipelines"
-	exe_remote_cmd "[ ! -d $headPrimer ] && mkdir $headPrimer"
-	exe_remote_cmd "[ ! -d $headScript ] && mkdir $headScript"
-	
-	upload_file_to_aws $(get_nextflow_config) $nfDir
-	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
-	upload_file_to_aws $blj_aws_config $headConfig
-	upload_pipeline_inputs_to_aws
-	upload_dir_to_aws $BLJ/script $headScript
-	[ -d "$BLJ_SUP/script" ] && upload_dir_to_aws $BLJ_SUP/script $headScript
 	upload_file_to_aws ${1}
+	nfConfig=$(get_nextflow_config)
+	exe_remote_cmd "[ ! -d $nfDir ] && mkdir -p $(dirname $nfConfig)"
+
+	upload_file_to_aws $nfConfig
+	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
+	upload_file_to_aws $blj_aws_config $EFS_CONFIG
+	upload_pipeline_inputs_to_aws
+	upload_dir_to_aws $BLJ/script $BLJ_SCRIPT
+	[ -d "$BLJ_SUP/script" ] && upload_dir_to_aws $BLJ_SUP/script $BLJ_SCRIPT
 	
 	[ -f "$(get_docker_job_flag)" ] && upload_file_to_aws $(get_docker_job_flag)
 	exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
-	exe_remote_cmd "chmod -R o+rwx $EFS"
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
@@ -101,7 +93,7 @@ upload_config_to_aws() {
 	configFiles=$(get_blj_prop configFiles)
 	aws_log "Uploaded Config files: $configFiles"
 	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile $headConfig; done
+	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile $EFS_CONFIG; done
 }
 
 # Upload local directory up to the ec2 head node, if no target dir specified use EC2 $HOME
@@ -127,35 +119,35 @@ upload_file_to_aws() {
 upload_pipeline_inputs_to_aws() {
 	aws_log "Staging pipeline inputs..."
 	if [ -d "$inputDirPaths" ]; then
-		upload_dir_to_aws ${inputDirPaths} $headInput
+		upload_dir_to_aws ${inputDirPaths} $EFS_INPUT
 	else
 		exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config inputDirPaths is not a valid directory"
 	fi
 	if [ -d "$metaphlan2Db" ] || [ -f "$metaphlan2Mpa_pkl" ]; then
 		if [ -d "$metaphlan2Db" ] && [ -f "$metaphlan2Mpa_pkl" ]; then
-			upload_dir_to_aws ${metaphlan2Db} $headDB
-			upload_file_to_aws ${metaphlan2Mpa_pkl} $headDB
+			upload_dir_to_aws ${metaphlan2Db} $BLJ_DB
+			upload_file_to_aws ${metaphlan2Mpa_pkl} $BLJ_DB
 		else
 			exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config missing - if any defined, all must be defined {\"metaphlan2Db\", \"metaphlan2Mpa_pkl\" }"
 		fi
 	fi
 	if [ -f "$qiimePynastAlignDB" ] || [ -f "$qiimeRefSeqDB" ] || [ -f "$qiimeTaxaDB" ]; then
 		if [ -f "$qiimePynastAlignDB" ] && [ -f "$qiimeRefSeqDB" ] && [ -f "$qiimeTaxaDB" ]; then
-			upload_file_to_aws ${qiimePynastAlignDB} $headDB
-			upload_file_to_aws ${qiimeRefSeqDB} $headDB
-			upload_file_to_aws ${qiimeTaxaDB} $headDB	
+			upload_file_to_aws ${qiimePynastAlignDB} $BLJ_DB
+			upload_file_to_aws ${qiimeRefSeqDB} $BLJ_DB
+			upload_file_to_aws ${qiimeTaxaDB} $BLJ_DB	
 		else
 			exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config missing - if any defined, all must be defined { \"qiimePynastAlignDB\", \"qiimeRefSeqDB\", \"qiimeTaxaDB\" }"
 		fi
 	fi
-	[ -f "$metadataFilePath" ] && upload_file_to_aws ${metadataFilePath} $headMeta
-	[ -f "$trimPrimersFilePath" ] && upload_file_to_aws ${trimPrimersFilePath} $headPrimer
-	[ -d "$kneaddataDbs" ] && upload_dir_to_aws ${kneaddataDbs} $headDB
-	[ -d "$krakenDb" ] && upload_dir_to_aws ${krakenDb} $headDB
-	[ -d "$kraken2Db" ] && upload_dir_to_aws ${kraken2Db} $headDB
-	[ -d "$humann2NuclDB" ] && upload_dir_to_aws ${humann2NuclDB} $headDB	
-	[ -d "$humann2ProtDB" ] && upload_dir_to_aws ${humann2ProtDB} $headDB	
-	[ -f "$rdpDb" ] && upload_dir_to_aws $(dirname ${rdpDb}) $headDB	
+	[ -f "$metadataFilePath" ] && upload_file_to_aws ${metadataFilePath} $BLJ_META
+	[ -f "$trimPrimersFilePath" ] && upload_file_to_aws ${trimPrimersFilePath} $BLJ_PRIMER
+	[ -d "$kneaddataDbs" ] && upload_dir_to_aws ${kneaddataDbs} $BLJ_DB
+	[ -d "$krakenDb" ] && upload_dir_to_aws ${krakenDb} $BLJ_DB
+	[ -d "$kraken2Db" ] && upload_dir_to_aws ${kraken2Db} $BLJ_DB
+	[ -d "$humann2NuclDB" ] && upload_dir_to_aws ${humann2NuclDB} $BLJ_DB	
+	[ -d "$humann2ProtDB" ] && upload_dir_to_aws ${humann2ProtDB} $BLJ_DB	
+	[ -f "$rdpDb" ] && upload_dir_to_aws $(dirname ${rdpDb}) $BLJ_DB	
 	upload_config_to_aws
 }
 

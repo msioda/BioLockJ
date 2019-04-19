@@ -632,8 +632,10 @@ public class MetaUtil
 
 	private static boolean isUpdated()
 	{
-		return metadataFile != null && metadataFile.exists() && reportedMetadata == null
-				|| !reportedMetadata.getAbsolutePath().equals( metadataFile.getAbsolutePath() );
+		boolean foundMeta = metadataFile != null && metadataFile.exists();
+		boolean foundNewReport = foundMeta && reportedMetadata != null && !reportedMetadata.getAbsolutePath().equals( metadataFile.getAbsolutePath() );
+		boolean noReport = foundMeta && reportedMetadata == null;
+		return foundNewReport || noReport;
 	}
 
 	/**

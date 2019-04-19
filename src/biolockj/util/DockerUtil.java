@@ -306,6 +306,11 @@ public class DockerUtil
 	{
 		return module instanceof PearMergeReads || module instanceof  AwkFastaConverter || module instanceof Gunzipper;
 	}
+	
+	/**
+	 * Docker container root user EFS directory
+	 */
+	public static final String AWS_EFS = "/mnt/efs";
 
 	/**
 	 * Docker container BioLockJ installation directory: {@value #CONTAINER_BLJ_DIR}
@@ -320,43 +325,40 @@ public class DockerUtil
 	/**
 	 * All containers mount the host {@link biolockj.Config} directory to the container volume: {@value #CONTAINER_CONFIG_DIR} 
 	 */
-	public static final String CONTAINER_CONFIG_DIR =  "/config";
+	public static final String CONTAINER_CONFIG_DIR = AWS_EFS + "/config";
 
 	/**
 	 * Some containers mount a database to the containers "db" volume: {@value #CONTAINER_DB_DIR} 
 	 */
-	public static final String CONTAINER_DB_DIR = "/db";
+	public static final String CONTAINER_DB_DIR = AWS_EFS + "/db";
 
 	/**
 	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume: {@value #CONTAINER_INPUT_DIR} 
 	 */
-	public static final String CONTAINER_INPUT_DIR = "/input";
+	public static final String CONTAINER_INPUT_DIR = AWS_EFS + "/input";
 
 	/**
 	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume: {@value #CONTAINER_META_DIR} 
 	 */
-	public static final String CONTAINER_META_DIR =  "/meta";
+	public static final String CONTAINER_META_DIR =  AWS_EFS + "/metadata";
 
 	/**
 	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container volume: {@value #CONTAINER_OUTPUT_DIR} 
 	 */
-	public static final String CONTAINER_OUTPUT_DIR = "/mnt/efs/pipelines";
+	public static final String CONTAINER_OUTPUT_DIR = AWS_EFS + "/pipelines";
 
 	/**
 	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer": {@value #CONTAINER_PRIMER_DIR} 
 	 * volume.
 	 */
-	public static final String CONTAINER_PRIMER_DIR = "/primer";
+	public static final String CONTAINER_PRIMER_DIR = AWS_EFS + "/primer";
 
 	/**
 	 * Docker container root user $HOME directory
 	 */
 	public static final String DOCKER_ROOT_HOME = "/root";
 	
-	/**
-	 * Docker container root user EFS directory
-	 */
-	public static final String AWS_EFS = "/mnt/efs";
+	
 	
 	/**
 	 * Docker container root user DB directory

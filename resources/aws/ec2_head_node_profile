@@ -1,79 +1,63 @@
-######=======================================######
-######    LOAD BioLockJ AWS .bash_profile    ###### 
-######=======================================######
+######=========================================######
+######    LOAD BioLockJ AWS ~/.bash_profile    ###### 
+######=========================================######
 
-# Get the aliases and functions
 [ -f ~/.bashrc ] && . ~/.bashrc
-
 umask 0007
-
 export PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h\[\033[33;1m\]..$(basename "$(dirname $PWD)")/$(basename $PWD)\[\033[m\]~$ '
 export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
-export EFS="/mnt/efs"
-export BLJ_DB="$EFS/db"
-export BLJ_INPUT="$EFS/input"
-export BLJ_META="$EFS/metadata"
-export BLJ_PROJ="$EFS/pipelines"
-export BLJ_PRIMER="$EFS/primer"
-export BLJ_CONFIG="$EFS/config"
-export BLJ_SCRIPT="$EFS/script"
-export blj_aws_config="$BLJ_CONFIG/aws_config"
-export BLJ=$EFS
-export BLJ_SUP=$EFS
-export PATH="~/miniconda/bin:$BLJ_SCRIPT:$PATH:~/.local/bin:~/bin"
+export BSH_PROF=~/.bash_profile
+export BLJ=/mnt/efs
 
-alias ls='ls -lFh'
+alias ls="ls -lFh"
 alias rd="rm -rf"
 alias md5="openssl md5"
-alias rf="source ~/.bash_profile"
+alias rf="source $BSH_PROF"
 alias ..="cd .."
 alias h="head -n 8"
 alias t="tail -n 8"
 alias f="find . -name"
-alias vib="vi ~/.bash_profile"
-alias cab="cat ~/.bash_profile"
+alias vib="vi $BSH_PROF"
+alias cab="cat $BSH_PROF"
 alias tlog="tail -1000 *.log"
 alias tlogf="tail -1000f *.log"
 alias dockls="docker images; docker container ls --all"
 alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 
-[ ! -d ~/.aws ] && mkdir ~/.aws
+[ -f "$BLJ/script/aws_head_node_lib" ] && source $BLJ/script/aws_head_node_lib
+source $blj_aws_config
 
-[ -f "$blj_aws_config" ] && source $blj_aws_config
-[ -f "$BLJ_SCRIPT/aws_head_node_lib" ] && source $BLJ_SCRIPT/aws_head_node_lib
-
+# Return the AWS profile tag - if undefined, returns [default]
 get_aws_profile() {
 	[ ${#awsProfile} -eq 0 ] && awsProfile=default
 	echo "[${awsProfile}]"
 }
 
-if [ ! -f ~/.aws/config ]; then
-	echo "$(get_aws_profile)" > ~/.aws/config
-	echo "region = ${awsRegion}" >> ~/.aws/config
-	echo "output = text" >> ~/.aws/config
-	echo "Generated new file: ~/.aws/config"
-	cat ~/.aws/config 
-fi
+# AWS client was installed so set default config: ~/.aws/config
+build_aws_config() {
+	if [ ! -f ~/.aws/config ]; then
+		echo "$(get_aws_profile)" > ~/.aws/config
+		echo "region = ${awsRegion}" >> ~/.aws/config
+		echo "output = text" >> ~/.aws/config
+		echo "Created file:  ~/.aws/config"
+		cat ~/.aws/config 
+	fi
+}
 
-if [ ! -f ~/.aws/credentials ] && [ ${#aws_access_key_id} -gt 0 ] && [ ${#aws_secret_access_key} -gt 0 ]; then
-	echo "$(get_aws_profile)" > ~/.aws/credentials
-	echo "aws_access_key_id = ${aws_access_key_id}" >> ~/.aws/credentials
-	echo "aws_secret_access_key = ${aws_secret_access_key}" >> ~/.aws/credentials
-	echo "Generated new file: ~/.aws/credentials"
-	cat ~/.aws/credentials 
-fi
+# AWS client was installed so set default credentials: ~/.aws/credentials
+build_aws_credentials() {
+	if [ ! -f ~/.aws/credentials ] && [ ${#aws_access_key_id} -gt 0 ] && [ ${#aws_secret_access_key} -gt 0 ]; then
+		echo "$(get_aws_profile)" > ~/.aws/credentials
+		echo "aws_access_key_id = ${aws_access_key_id}" >> ~/.aws/credentials
+		echo "aws_secret_access_key = ${aws_secret_access_key}" >> ~/.aws/credentials
+		echo "Created file:  ~/.aws/credentials"
+		cat ~/.aws/credentials 
+	fi
+}
 
-if [ ${#dockerUser} -gt 0 ]; then
-	export DOCKER_HUB_USER=${dockerUser}
-	[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
-fi
-
-[ -f "$BLJ/script/blj_functions" ] && source $BLJ/script/blj_functions
-[ -f "$BLJ/script/docker_functions" ] && source $BLJ/script/docker_functions
-
-# Return absolute path of most recent pipeline
+# Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
 most_recent_pipeline() {
 	IFS2="$IFS"
 	if ! $(dir_missing $BLJ_PROJ); then
@@ -87,16 +71,13 @@ most_recent_pipeline() {
 	IFS=$"IFS2"
 }
 
-#export S3_BUCKET="s3://${awsS3}"
-#export S3_CONFIG="$S3_BUCKET/config"
-#export S3_DB="$S3_BUCKET/db"
-#export S3_META="$S3_BUCKET/metadata"
-#export S3_PROJ="$S3_BUCKET/pipelines"
-#export S3_PRIMER="$S3_BUCKET/primer"
-#export S3_SEQ="$S3_BUCKET/seq"
-
+# Initialize bash environment
+build_aws_config
+build_aws_credentials
+[ ${#dockerUser} -gt 0 ] && export DOCKER_HUB_USER=${dockerUser}
+[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
 echo "AWS Profile loaded - Docker Account ID: $DOCKER_HUB_USER"
-
-######=======================================######
-######   BioLockJ AWS .bash_profile LOADED   ###### 
-######=======================================######
+cat $BSH_PROF
+######=========================================######
+######   BioLockJ AWS ~/.bash_profile LOADED   ###### 
+######=========================================######

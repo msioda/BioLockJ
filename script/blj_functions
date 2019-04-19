@@ -4,8 +4,6 @@
 ##                                                               ##
 ###################################################################
 
-alias awsr="aws_report_config"
-
 # Add a named arg to a space-delimited list of args (Use "=" to add a name-value pair)
 # Param 1 - arg name
 # Param 2 - arg value
@@ -16,16 +14,6 @@ add_named_arg() {
 	[ $# -eq 2 ] && echo "$1=$2"
 	[ $# -eq 3 ] && [ ${#val} -gt 0 ] && myArgs="${3/$1=$val}"
 	[ $# -eq 3 ] && echo "$myArgs $1=$2"
-}
-
-# Print AWS Config report
-aws_report_config() {
-	[ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config 
-	echo "---------------------------------------------------"
-	echo "Report current AWS Config"
-	echo "---------------------------------------------------"
-	[ -f $blj_aws_config ] && tail -n +2 $blj_aws_config
-	echo "---------------------------------------------------"
 }
 
 # This script navigates the $USER to their most recent pipeline and lists the current directory
