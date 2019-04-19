@@ -8,7 +8,8 @@
 ##                    substituting "_" for all "." characters                 ##
 ##                                                                            ##
 ################################################################################
-. $EFS_SCRIPT/blj_config
+. $BLJ/script/blj_config
+echo "Check EFS_CONFIG --> $EFS_CONFIG"
 . $EFS_CONFIG/aws_config
 
 AWS_DIR="$HOME/.aws"

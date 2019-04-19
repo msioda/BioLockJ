@@ -77,7 +77,7 @@ has_param() {
 # Get the Docker biolockj module with $DOCKER_HUB_USER user prefix
 manager_type() {
 	if $(has_param $runAws); then
-		echo -v ${EC2_HOME}/miniconda:${EC2_HOME}/miniconda:ro -v ${EFS_SCRIPT}:${EFS_SCRIPT}:ro $DOCKER_HUB_USER/blj_manager
+		echo -v ${EC2_HOME}/miniconda:${EC2_HOME}/miniconda -v ${EFS_SCRIPT}:${EFS_SCRIPT} $DOCKER_HUB_USER/blj_manager
 	else
 		echo $DOCKER_HUB_USER/biolockj
 	fi
@@ -96,31 +96,31 @@ run_docker() {
 	[ ${#1} -gt 0 ] && opt="$1 $opt"
 	if $(has_param $metaPath); then
 		if $(has_param $HOST_BLJ) && $(has_param $HOST_BLJ_SUP); then
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro \
-				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $metaPath:$EFS_META -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $metaPath:$EFS_META \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
 		elif $(has_param $HOST_BLJ); then
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro \
-				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $metaPath:$EFS_META -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $metaPath:$EFS_META \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG -v $HOST_BLJ:/app/biolockj $(manager_type)
 		else
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $metaPath:$EFS_META:ro \
-				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $metaPath:$EFS_META -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $metaPath:$EFS_META \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG $(manager_type)
 		fi
 	else
 		if $(has_param $HOST_BLJ) && $(has_param $HOST_BLJ_SUP); then
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro \
-				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG -v $HOST_BLJ:/app/biolockj -v $HOST_BLJ_SUP:/app/blj_support $(manager_type)
 		elif $(has_param $HOST_BLJ); then
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro \
-				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro -v $HOST_BLJ:/app/biolockj $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG -v $HOST_BLJ:/app/biolockj $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG -v $HOST_BLJ:/app/biolockj $(manager_type)
 		else
-			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro $(manager_type) ]"
-			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT:ro \
-				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG:ro $(manager_type)
+			echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$opt' -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT -v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG $(manager_type) ]"
+			docker run --rm -e "BLJ_OPTIONS=$opt" -v $D_SOCK:$D_SOCK -v $inputDir:$EFS_INPUT \
+				-v $(blj_proj):$EFS_PROJ:delegated -v $(dirname $config):$EFS_CONFIG $(manager_type)
 		fi
 	fi
 }
