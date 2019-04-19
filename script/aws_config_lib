@@ -13,6 +13,8 @@ HN2_NUCL_DB=$EFS_DB/chocophlan
 HN2_PROT_DB=$EFS_DB/uniref
 RDP_DB=$EFS_DB/rRNAClassifier.properties
 DEFAULT_CONFIG=$BLJ/resources/config/default/docker.properties
+alias awsr="aws_report_config"
+alias awsrf="refresh_aws_cache"
 
 # Archive previous AWS Config properties file: $blj_aws_config
 aws_archive() {
