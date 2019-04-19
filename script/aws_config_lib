@@ -198,9 +198,9 @@ set_blj_prop() {
 set_prop() {
 	line=$(cat "${1}" | grep "${2}")
 	existsInFile=$(echo "${line}" | grep -c "${2}=${3}")
-	existsInParam=0
-	[ ${#3} -gt 0 ] && [ "${3}" != $IS_NULL ] && existsInParam=1
-	[ ${existsInFile} -eq 0 ] && [ ${existsInParam} -eq 0 ] && return
+	paramIsNull=true
+	[ ${#3} -gt 0 ] && [ "${3}" != $IS_NULL ] && paramIsNull=false
+	[ ${existsInFile} -eq 0 ] && [ "$paramIsNull" == "true" ] && return
 	rm_prop "${1}" "${2}"
 	echo "${2}=${3}" >> "${1}"
 }
