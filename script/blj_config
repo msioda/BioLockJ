@@ -18,7 +18,7 @@
 export BLJ_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="$BLJ_SCRIPT:$PATH"
 export BLJ="$(dirname $BLJ_SCRIPT)"
-
+export EC2_HOME=/home/ec2-user
 export EFS="/mnt/efs"
 export EFS_CONFIG="$EFS/config"
 export EFS_DB="$EFS/db"
@@ -38,7 +38,6 @@ if [ "$BLJ" == "$EFS" ]; then
 	export BLJ_PRIMER="$EFS_PRIMER"
 	export BLJ_SUP="$BLJ"
 	source $BLJ_SCRIPT/docker_functions
-	source $BLJ_SCRIPT/aws_head_node_lib
 else
 	[ ! -d "$BLJ_META" ] && export BLJ_META=~/metadata
 	[ ! -d "$BLJ_SUP" ] && [ -d "$(dirname $BLJ)/blj_support/script" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"

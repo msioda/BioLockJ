@@ -6,7 +6,6 @@
 #####################################################################
 . $BLJ/script/aws_config_lib
 
-EC2_HOME=/home/ec2-user
 S3_DIR="s3://"
 
 # Sync local files to S3 for cloud pipeline execution
@@ -71,12 +70,15 @@ get_s3_name() {
 # Copy Config file with updated properties to reference new S3 paths
 # Param 1 Pipeline start script
 stage_pipeline_on_aws() {
-	upload_file_to_aws ${1}
-	nfConfig=$(get_nextflow_config)
-
-	upload_file_to_aws $nfConfig $EC2_HOME/.aws
+	upload_file_to_aws "${1}"
+	EC2_NF_DIR="$EFS_CONFIG/nextflow/${awsStack}"
+	exe_remote_cmd "mkdir $EC2_HOME/.aws"
+	exe_remote_cmd "mkdir -p $EC2_NF_DIR"
+	upload_file_to_aws $blj_aws_config "$EC2_HOME/.aws"
+	upload_file_to_aws $blj_aws_config "$EFS_CONFIG"
+	upload_file_to_aws "$(get_nextflow_config)" "$EC2_NF_DIR"
+	
 	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
-	upload_file_to_aws $blj_aws_config $EC2_HOME/.aws
 	upload_pipeline_inputs_to_aws
 	upload_dir_to_aws $BLJ/script $EFS_SCRIPT
 	[ -d "$BLJ_SUP/script" ] && upload_dir_to_aws $BLJ_SUP/script $EFS_SCRIPT

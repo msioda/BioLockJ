@@ -38,7 +38,7 @@ arg_exists() {
 # Include Docker container path to required Config file
 # Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
 blj_options() {
-	options="-docker -b $(blj_proj) -C $(dirname $config) -c $EFS_CONFIG:ro/$(basename $config) -u $HOME" 
+	options="-docker -b $(blj_proj) -C $(dirname $config) -c $EFS_CONFIG/$(basename $config) -u $HOME" 
 	$(has_param $runAws) && options="$options $runAws"
 	$(has_param $doRestart) && options="$options -r $(restart_dir)"
 	$(has_param $newPass) && options="$options -p $newPass"
@@ -77,7 +77,7 @@ has_param() {
 # Get the Docker biolockj module with $DOCKER_HUB_USER user prefix
 manager_type() {
 	if $(has_param $runAws); then
-		echo -v /home/ec2-user/miniconda:/home/ec2-user/miniconda:ro $DOCKER_HUB_USER/blj_manager
+		echo -v ${EC2_HOME}/miniconda:${EC2_HOME}/miniconda:ro -v ${EFS_SCRIPT}:${EFS_SCRIPT}:ro $DOCKER_HUB_USER/blj_manager
 	else
 		echo $DOCKER_HUB_USER/biolockj
 	fi

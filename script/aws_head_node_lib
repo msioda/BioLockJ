@@ -39,8 +39,8 @@ build_docker_job_defs() {
 			\"memory\": 1024,
 			\"command\": [ \"/bin/bash\" ],
 			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
-			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"/home/ec2-user/miniconda\" }, \"name\": \"miniconda\" } ],
-			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"/home/ec2-user/miniconda\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
+			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"${EC2_HOME}/miniconda\" }, \"name\": \"miniconda\" } ],
+			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${EC2_HOME}/miniconda\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
@@ -176,7 +176,7 @@ launch_ec2_head_node() {
 	startScript=$(build_start_script)
 	stage_pipeline_on_aws $startScript
 	if [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
-		exe_remote_cmd "/home/ec2-user/$(basename $startScript)"
+		exe_remote_cmd "${EC2_HOME}/$(basename $startScript)"
 	else
 		connect_head
 	fi
