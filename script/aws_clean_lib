@@ -197,8 +197,6 @@ nuke_aws() {
  	kill_head_node && \
 	aws_deregister_job_defs  && \
 	aws_rm_stacks  && \
-	#aws_rm_compute_envs && \  <-- is this now removed with the stack?
 	aws_rm_key_pairs  && \
 	[ "${1}" == "s3" ] && aws_rm_s3_buckets
-	
 }

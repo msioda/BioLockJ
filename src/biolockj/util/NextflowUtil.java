@@ -137,48 +137,32 @@ public class NextflowUtil
 	 */
 	protected static List<String> getNextflowLines( final File template ) throws Exception
 	{
+		Log.info( NextflowUtil.class, "BUILD main.nf from the template: " + template.getAbsolutePath() );
 		final List<String> lines = new ArrayList<>();
-
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
 		try
 		{
-			String moduleName = null;
 			ScriptModule module = null;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				String onDemandLabel = null;
-				Log.debug( NextflowUtil.class, "READ line: " + line );
-				if( moduleName != null )
+				Log.info( NextflowUtil.class, "READ line: " + line );
+				if( line.trim().startsWith( PROCESS ) )
 				{
-					if( module == null )
-					{
-						module = getModule( moduleName );
-						Log.debug( NextflowUtil.class, "Found module: " + module.getClass().getName() );
-					}
-
-					if( line.trim().equals( "}" ) )
-					{
-						moduleName = null;
-						module = null;
-					}
-					if( line.trim().startsWith( WORKER_FLAG ) && line.contains( module.getClass().getSimpleName() ) )
-					{
-						Log.debug( NextflowUtil.class, "Found worker: " + line );
-						String moduleFlag = moduleName.replaceAll( "\\.", PACKAGE_SEPARATOR );
-						Log.debug( NextflowUtil.class, "Replace moduleFlag: " + moduleFlag + " with " + module.getClass().getSimpleName() );
-						line = line.replace( moduleFlag, module.getClass().getSimpleName() );
-					}
-					
-					if( line.contains( MODULE_SCRIPT ) )
-					{
-						line = line.replace( MODULE_SCRIPT, module.getScriptDir().getAbsolutePath() );
-					}
+					Log.info( NextflowUtil.class, "Found module PROCESS declaration: " + line );
+					line = line.replaceAll( PACKAGE_SEPARATOR, "\\." );
+					module = getModule( line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim() );
+					line = line.replace( module.getClass().getName(), getModuleProcessName( module ) );
+					Log.info( NextflowUtil.class, "START module BLOCK for: " + module.getClass().getName() );
+				}
+				else if( module != null )
+				{
 					if( line.contains( NF_CPUS ) )
 					{
 						String prop = Config.getModuleProp( module, NF_CPUS.substring( 1 ) );
 						line = line.replace( NF_CPUS, Config.getString( module, prop ) );
 					}
-					if( line.contains( NF_MEMORY ) )
+					else if( line.contains( NF_MEMORY ) )
 					{
 						String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
 						String ram = Config.requireString( module, prop );
@@ -192,7 +176,7 @@ public class NextflowUtil
 						}
 						line = line.replace( NF_MEMORY, ram );
 					}
-					if( line.contains( NF_DOCKER_IMAGE ) )
+					else if( line.contains( NF_DOCKER_IMAGE ) )
 					{
 						line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
 						if( Config.requireString( module, EC2_ACQUISITION_STRATEGY ).toUpperCase().equals( ON_DEMAND ) )
@@ -200,21 +184,24 @@ public class NextflowUtil
 							onDemandLabel = "    label '" + ON_DEMAND + "'";
 						}
 					}
-				}
-				if( line.trim().startsWith( PROCESS ) )
-				{
-					Log.debug( NextflowUtil.class, "Found module on line: " + line );
-					line = line.replaceAll( PACKAGE_SEPARATOR, "\\." );
-					moduleName = line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim();
-					line = line.replace( moduleName, convertModuleName( moduleName ) );
+					else if( line.trim().startsWith( WORKER_FLAG ) )
+					{
+						Log.info( NextflowUtil.class, "Found worker line: " + line );
+						line = line.replace( MODULE_SCRIPT, module.getScriptDir().getAbsolutePath() );
+					}
+					else if( line.trim().equals( "}" ) )
+					{
+						Log.info( NextflowUtil.class, "END module BLOCK: " + module.getClass().getName() );
+						module = null;
+					}
 				}
 
-				Log.info( NextflowUtil.class, "Add line: " + line );
+				Log.info( NextflowUtil.class, "ADD LINE: " + line );
 				lines.add( line );
 				if( onDemandLabel != null )
 				{
 					lines.add( onDemandLabel );
-					Log.info( NextflowUtil.class, "Add line: " + onDemandLabel );
+					Log.info( NextflowUtil.class, "ADD LINE: " + onDemandLabel );
 				}
 			}
 		}
@@ -250,7 +237,7 @@ public class NextflowUtil
 			{
 				if( ! ( module instanceof ImportMetadata ) &&  ! ( module instanceof Email ) )
 				{
-					Log.info( NextflowUtil.class, "Add module: " + module.getClass().getName() );
+					Log.info( NextflowUtil.class, "Add Nextflow module: " + module.getClass().getName() );
 					modules.put( (ScriptModule) module, false );
 				}
 			}
@@ -260,19 +247,10 @@ public class NextflowUtil
 	
 	
 	
-	private static String convertModuleName( String name ) throws Exception
+	private static String getModuleProcessName( ScriptModule module ) throws Exception
 	{
-		String val = "";
-		StringTokenizer st = new StringTokenizer( name, "." );
-		while( st.hasMoreTokens() )
-		{
-			val += st.nextToken();
-			if( st.hasMoreTokens() )
-			{
-				val += "_";
-			}
-		}
-		return val;
+		return module.getClass().getName().replaceAll( "\\.", "_" );
+
 	}
 
 	private static String asString( final List<BioModule> modules ) throws Exception

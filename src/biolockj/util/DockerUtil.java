@@ -110,7 +110,6 @@ public class DockerUtil
 	public static String getImageName( final BioModule module ) throws Exception
 	{
 		String className = module.getClass().getName();
-		Log.info( DockerUtil.class, "Map BioModule " +  className + " to Docker image name");
 		if( useBasicBashImg( module ) )
 		{
 			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );

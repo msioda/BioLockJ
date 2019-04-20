@@ -11,7 +11,11 @@ RUN cd /usr/local/bin && \
 	mv tempDocker/* . && \
 	rm -rf tempDocker
 
-#2.) Install BioLockJ
+#2.) Install Nextflow Client
+RUN cd /usr/local/bin && wget -qO- https://get.nextflow.io | bash
+
+
+#3.) Install BioLockJ
 ARG BLJ_DATE
 ARG VER
 ENV BLJ_TAR=biolockj_${VER}.tgz
@@ -23,8 +27,6 @@ RUN echo ${BLJ_DATE} && \
 	rm -rf $BLJ/[bilw]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/docs && rm -rf $BLJ/src && \
 	cp $BLJ/script/* /usr/local/bin
 
-#3.) Install Nextflow Client
-RUN cd /usr/local/bin && wget -qO- https://get.nextflow.io | bash
 
 #4.) Cleanup
 RUN	apt-get clean && \
