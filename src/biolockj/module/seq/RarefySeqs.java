@@ -122,6 +122,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	@Override
 	public void runModule() throws Exception
 	{
+		Log.info( getClass(), "Base #Reads based on: " + RegisterNumReads.getNumReadFieldName() );
 		sampleIds.addAll( MetaUtil.getSampleIds() );
 		final List<File> files = getInputFiles();
 		for( int i = 0; i < files.size(); i++ )
@@ -153,8 +154,9 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 		final File output = new File( name );
 		final BufferedReader reader = BioLockJUtil.getFileReader( input );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( output ) );
-		Log.debug( getClass(),
+		Log.info( getClass(),
 				"Building file [#lines/read=" + SeqUtil.getNumLinesPerRead() + "]: " + output.getAbsolutePath() );
+		
 		try
 		{
 			long index = 0;
@@ -209,25 +211,41 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 		Long min = 0L;
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
 		final long numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
-
+		
+		Log.info( getClass(), "minConfig = " + minConfig );
+		Log.info( getClass(), "maxConfig = " + maxConfig );
+		
 		if( maxConfig != null )
 		{
-			max = numReads < max ? numReads: max;
+			max = numReads < maxConfig.longValue() ? numReads: minConfig.longValue();
 		}
-
+		
 		if( minConfig == null )
 		{
 			min = 1L;
 		}
+		else
+		{
+			min = minConfig.longValue();
+		}
 
-		Log.debug( getClass(), "Sample[" + sampleId + "]  numReads = " + numReads );
+		Log.info( getClass(), "min = " + min );
+		Log.info( getClass(), "max = " + max );
+		Log.info( getClass(), "numReads = " + numReads );
 		if( numReads >= min )
 		{
 			final long[] range = LongStream.rangeClosed( 0, numReads - 1 ).toArray();
+			Log.info( getClass(), "range.length = " + range.length );
 			final List<Long> indexes = new ArrayList<>();
 			Collections.addAll( indexes, Arrays.stream( range ).boxed().toArray( Long[]::new ) );
+			
+			Log.info( getClass(), "Sample #indexes size #1 -->  [" + indexes.size() + "]"  );
+			
 			Collections.shuffle( indexes );
 			indexes.subList( max.intValue(), indexes.size() ).clear();
+			
+			Log.info( getClass(), "Sample #indexes size  #2 -->  [" + indexes.size() + "]"  );
+			
 			buildRarefiedFile( seqFile, indexes );
 		}
 		else

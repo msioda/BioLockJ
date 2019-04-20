@@ -70,7 +70,8 @@ public class Pipeline
 		refreshOutputMetadata( module );
 		module.cleanUp();
 
-		if( !isJava && !runScripts )
+
+		if( !isJava || !runScripts )
 		{
 			SummaryUtil.reportSuccess( module );
 		}
