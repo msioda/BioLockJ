@@ -24,9 +24,9 @@ aws_archive() {
 	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
 	echo $sheBang > $blj_aws_config
 	chmod 770 $blj_aws_config
-	foundKeys=$(ls ~/.aws | grep -c ".pem" )
+	#foundKeys=$(ls ~/.aws | grep -c ".pem" )
+	#[ ${foundKeys} -gt 0 ] && chmod 770 ~/.aws/*.pem && mv ~/.aws/*.pem $aws_history
 	foundStartScript=$(ls ~/.aws | grep -c "run-bljStack" )
-	[ ${foundKeys} -gt 0 ] && chmod 770 ~/.aws/*.pem && mv ~/.aws/*.pem $aws_history
 	[ ${foundStartScript} -gt 0 ] && chmod 770 ~/.aws/run-bljStack* && mv ~/.aws/run-bljStack* $aws_history
 }
 
@@ -238,6 +238,7 @@ set_pipeline_conig_props() {
 	convert_prop "$1" "aws.account_id"
 	convert_prop "$1" "aws.ami"
 	convert_prop "$1" "aws.ec2AcquisitionStrategy"
+	convert_prop "$1" "aws.ec2InstanceID"
 	convert_prop "$1" "aws.ec2InstanceType"
 	convert_prop "$1" "aws.ec2SpotPer"
 	convert_prop "$1" "aws.profile"

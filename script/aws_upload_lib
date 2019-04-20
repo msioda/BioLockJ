@@ -40,7 +40,7 @@ aws_s3_ls() {
 # Execute remote command on the head node
 # Param 1 - Remote command
 exe_remote_cmd() {
-	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_blj_prop publicHost) "$1"
+	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_ec2_public_ip) "$1"
 }
 
 # Return the Nextflow basic config file-path
@@ -73,14 +73,14 @@ stage_pipeline_on_aws() {
 	upload_file_to_aws "${1}"
 	EC2_NF_DIR="$EFS_CONFIG/nextflow/${awsStack}"
 	
-	exe_remote_cmd "mkdir -p $EC2_NF_DIR"
-	exe_remote_cmd "mkdir $EFS_DB"
-	exe_remote_cmd "mkdir $EFS_INPUT"
-	exe_remote_cmd "mkdir $EFS_META"
-	exe_remote_cmd "mkdir $EFS_PROJ"
-	exe_remote_cmd "mkdir $EFS_PRIMER"
-	exe_remote_cmd "mkdir $EFS_SCRIPT"
-	exe_remote_cmd "mkdir $EC2_HOME/.aws"
+	exe_remote_cmd "[ ! -d $EC2_NF_DIR ] && mkdir -p $EC2_NF_DIR"
+	exe_remote_cmd "[ ! -d $EFS_DB ] && mkdir $EFS_DB"
+	exe_remote_cmd "[ ! -d $EFS_INPUT ] && mkdir $EFS_INPUT"
+	exe_remote_cmd "[ ! -d $EFS_META ] && mkdir $EFS_META"
+	exe_remote_cmd "[ ! -d $EFS_PROJ ] && mkdir $EFS_PROJ"
+	exe_remote_cmd "[ ! -d $EFS_PRIMER ] && mkdir $EFS_PRIMER"
+	exe_remote_cmd "[ ! -d $EFS_SCRIPT ] && mkdir $EFS_SCRIPT"
+	exe_remote_cmd "[ ! -d $EC2_HOME/.aws ] && mkdir $EC2_HOME/.aws"
 
 	upload_file_to_aws $blj_aws_config "$EC2_HOME/.aws"
 	upload_file_to_aws $blj_aws_config "$EFS_CONFIG"
@@ -123,7 +123,7 @@ upload_dir_to_aws() {
 upload_file_to_aws() {
 	if [ $# -eq 2 ]; then target="$2"; else target=$EC2_HOME; fi
 	aws_log "Uploading file \"$1\" to AWS --> \"$target\""
-	scp -pro StrictHostKeyChecking=no -i $(key_file) "$1" ec2-user@${publicHost}:${target}
+	scp -pro StrictHostKeyChecking=no -i $(key_file) "$1" ec2-user@$(get_ec2_public_ip):${target}
 }
 
 # Stage data for pipeline onto EFS volume

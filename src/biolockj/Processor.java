@@ -48,7 +48,7 @@ public class Processor
 			try
 			{
 				Log.info( getClass(), "SubProcess initiailizing..." );
-				new Processor().runJob( args, "SubProcess-" + label );
+				new Processor().runJob( args, label );
 			} 
 			catch( Exception ex )
 			{

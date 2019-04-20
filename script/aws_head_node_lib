@@ -95,8 +95,9 @@ close_nextflow_config() {
 
 # Connect to running head node
 connect_head() {
-	aws_log "Opening SSH tunnel to Head Node...$(get_blj_prop publicHost)"
-	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_blj_prop publicHost)
+	publicIP=$(get_ec2_public_ip)
+	aws_log "Opening SSH tunnel to Head Node...$publicIP"
+	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$publicIP
 }
 
 # Get the Pipeline Config local file-path
@@ -143,11 +144,10 @@ init_nextflow_config() {
 	echo "    }" >> $(get_nextflow_config)
 }
 
-# Launch a new ec2 head node
-# Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
-launch_ec2_head_node() {
-	[ -x "$(which docker)" ] && build_docker_job_defs
+get_ec2_head_node() {
 	refresh_aws_cache
+	[ "${#awsEc2InstanceID}" -gt 0 ] && instances=$(aws ec2 describe-instances --instance-ids "${awsEc2InstanceID}" --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
+	[ "${#instances}" -gt 0 ] && [ "${instances}" == "${awsEc2InstanceID}" ] && return
 	runTime=0
 	secureGroup="$(get_stack_param BastionSecurityGroup)"
 	subnet="$(get_stack_param Subnet1)"
@@ -155,24 +155,37 @@ launch_ec2_head_node() {
 	if [ ${#awsAmi} -eq 0 ] || [ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ]; then
 		exit_script "Error [ aws_head_node_lib.launch_ec2_head_node() ]: Cannot launch EC2 - required parameters undefined in $blj_aws_config"
 	fi
-	instanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids ${secureGroup} \
+	awsEc2InstanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids ${secureGroup} \
 		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='Head-${awsStack}'}" --subnet-id ${subnet} \
 		--launch-template LaunchTemplateId=${templateId} --instance-type "${awsEc2InstanceType}" --query "Instances[].InstanceId" )
 	printf "Launching EC2 Instance, please wait."
-	systemStatus=init
+	systemStatus=init  
 	while [ "$systemStatus" != "ok" ]; do
-		systemStatus=$(aws ec2 describe-instance-status --instance-ids ${instanceID} --query "InstanceStatuses[*].SystemStatus.Status")
+		systemStatus=$(aws ec2 describe-instance-status --instance-ids ${awsEc2InstanceID} --query "InstanceStatuses[*].SystemStatus.Status")
 		printf "."
 		sleep 10s
 		runTime=$((runTime+10))  
 	done
 	echo ""
-	aws_log "EC2 Instance [ ID=${instanceID} ] created in $runTime seconds"
-	set_blj_prop instanceID ${instanceID}
-	set_blj_prop publicHost $(aws ec2 describe-instances --instance-ids ${instanceID} --query "Reservations[].Instances[].PublicDnsName")
+	aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] created in $runTime seconds"
+	set_blj_prop awsEc2InstanceID ${awsEc2InstanceID}
+}
+
+# Get EC2 instance public IP address
+get_ec2_public_ip() {
+	[ "${#ec2PublicIp}" -eq 0 ] && ec2PublicIp=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
+	set_blj_prop ec2PublicIp "${ec2PublicIp}"
+	echo "${ec2PublicIp}"
+}
+
+# Launch a new ec2 head node
+# Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
+launch_ec2_head_node() {
+	[ -x "$(which docker)" ] && build_docker_job_defs
+	awsEc2InstanceID=$(get_ec2_head_node)
 	refresh_aws_cache
-	keyFound=$(cat ~/.ssh/known_hosts | grep -c ${publicHost})
-	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R ${publicHost}
+	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
+	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
 	startScript=$(build_start_script)
 	stage_pipeline_on_aws $startScript
 	if [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then

@@ -179,14 +179,13 @@ is_empty() {
 # Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
 kill_head_node() {
 	aws_log "CLEARING ec2 instances..." 
-	allInstances=$(aws ec2 describe-instances --query "Reservations[].Instances[].InstanceId")
+	instances=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
 	runningInstances=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name=='running'].InstanceId")
-	[ ${#allInstances} -eq 0 ] && aws_log "No EC2 instances found" && return
-	aws_log "List EC2 instance-ids --> $allInstances"
+	[ ${#instances} -eq 0 ] && aws_log "No EC2 instances found" && return
+	aws_log "List valid EC2 instance-ids --> $instances"
 	[ ${#runningInstances} -gt 0 ] && aws ec2 stop-instances --instance-ids ${runningInstances}
 	aws_log "Any running EC2 instances have been stopped --> $runningInstances"
 	aws ec2 terminate-instances --instance-id ${allInstances}
-	instances=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated']|Reservations[].Instances[*]")
 	[ ${#instances} -eq 0 ] || [ "${instances}" == "None" ]  && aws_log "All ec2 instances have been terminated" && return
 	aws_log "Remaining ec2 instances:" && aws ec2 describe-instances
 }

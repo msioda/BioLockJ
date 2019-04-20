@@ -114,7 +114,7 @@ public class NextflowUtil
 		args[ 8 ] = "-with-dag";
 		args[ 9 ] = reportBase + "nextflow_diagram.html";
 		args[ 10 ] = getMainNf().getAbsolutePath();
-		Processor.runSubprocess( args, "Nextflow-main" );
+		Processor.runSubprocess( args, "Nextflow" );
 	}
 
 	/**
