@@ -407,10 +407,15 @@ public class BioLockJ
 			{
 				removeTempFiles();
 			}
-
+			
 			PropUtil.sanitizeMasterConfig();
 			markProjectStatus( Constants.BLJ_COMPLETE );
 			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+			
+			if( RuntimeParamUtil.runAws() )
+			{
+				NextflowUtil.saveNextflowLog();
+			}
 		}
 	}
 

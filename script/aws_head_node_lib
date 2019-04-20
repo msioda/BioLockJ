@@ -82,6 +82,12 @@ build_start_script() {
 	echo '[ ${#images} -gt 0 ] && docker rmi $images' >> $startScript
 	echo "docker pull ${dockerUser}/blj_manager:${dockerImgVersion}" >> $startScript
 	echo "dockblj -aws ${meta}-i=$EFS_INPUT -c=$(get_config ec2)" >> $startScript
+	[ "${awsCopyInputsToS3}" == "Y" ] && echo "aws_sync_inputs_to_s3" >> $startScript
+	[ "${awsCopyPipelineToS3}" == "Y" ] && echo "aws_sync_outputs_to_s3" >> $startScript
+	[ "${awsPurgeEfsInputs}" == "Y" ] && echo 'sudo rm -rf $EFS/[cdims]*/*; sudo rm -rf $EFS/primer' >> $startScript
+	[ "${awsPurgeEfsOutput}" == "Y" ] && echo 'sudo rm -rf $BLJ_PROJ/*' >> $startScript
+	
+	
 	chmod 770 $startScript
 	echo $startScript
 }
@@ -144,21 +150,38 @@ init_nextflow_config() {
 	echo "    }" >> $(get_nextflow_config)
 }
 
-get_ec2_head_node() {
+set_ec2_head_node_id() {
 	refresh_aws_cache
-	[ "${#awsEc2InstanceID}" -gt 0 ] && instances=$(aws ec2 describe-instances --instance-ids "${awsEc2InstanceID}" --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
-	[ "${#instances}" -gt 0 ] && [ "${instances}" == "${awsEc2InstanceID}" ] && return
-	runTime=0
-	secureGroup="$(get_stack_param BastionSecurityGroup)"
-	subnet="$(get_stack_param Subnet1)"
-	templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
-	if [ ${#awsAmi} -eq 0 ] || [ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ]; then
-		exit_script "Error [ aws_head_node_lib.launch_ec2_head_node() ]: Cannot launch EC2 - required parameters undefined in $blj_aws_config"
+	isStarting=false
+	[ "${#awsEc2InstanceID}" -gt 0 ] && instances=$(aws ec2 describe-instances --instance-ids "${awsEc2InstanceID}" --query "Reservations[].Instances[].[State.Name, InstanceId]")
+	if [ "${instances/$awsEc2InstanceID}" != "${awsEc2InstanceID}" ]; then
+		echo "Found existing instance ${awsEc2InstanceID}"
+		if [ "${instances/stopped}" != "${awsEc2InstanceID}" ]; then
+			aws ec2 start-instances --instance-ids "${awsEc2InstanceID}"
+			printf "Configured EC2 instance ${awsEc2InstanceID} was stopped...attempting to restart...please wait."
+			isStarting=true
+		elif [ "${instances/terminated}" != "${awsEc2InstanceID}" ]; then
+			echo "Configured EC2 instance ${awsEc2InstanceID} was terminated...launching a new instance"
+		elif [ "${instances/pending}" != "${awsEc2InstanceID}" ] || [ "${instances/shutting-down}" != "${awsEc2InstanceID}" ] || [ "${instances/stopping}" != "${awsEc2InstanceID}" ]; then
+			exit_script "Configured EC2 Instance ${awsEc2InstanceID} has an in-between state-status, aborting launch EC2 instance - check status and try again later: ${instances}"
+		elif [ "${instances/running}" != "${awsEc2InstanceID}" ]; then
+			echo "Configured EC2 instance ${awsEc2InstanceID} is running..." && return
+		fi
 	fi
-	awsEc2InstanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids ${secureGroup} \
-		--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='Head-${awsStack}'}" --subnet-id ${subnet} \
-		--launch-template LaunchTemplateId=${templateId} --instance-type "${awsEc2InstanceType}" --query "Instances[].InstanceId" )
-	printf "Launching EC2 Instance, please wait."
+	
+	runTime=0
+	if [ $isStarting == false ]; then 
+		secureGroup="$(get_stack_param BastionSecurityGroup)"
+		subnet="$(get_stack_param Subnet1)"
+		templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
+		if [ ${#awsAmi} -eq 0 ] || [ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ]; then
+			exit_script "Error [ aws_head_node_lib.launch_ec2_head_node() ]: Cannot launch EC2 - required parameters undefined in $blj_aws_config"
+		fi
+		awsEc2InstanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids ${secureGroup} \
+			--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='Head-${awsStack}'}" --subnet-id ${subnet} \
+			--launch-template LaunchTemplateId=${templateId} --instance-type "${awsEc2InstanceType}" --query "Instances[].InstanceId" )
+		printf "Launching EC2 Instance, please wait."
+	fi
 	systemStatus=init  
 	while [ "$systemStatus" != "ok" ]; do
 		systemStatus=$(aws ec2 describe-instance-status --instance-ids ${awsEc2InstanceID} --query "InstanceStatuses[*].SystemStatus.Status")
@@ -182,7 +205,7 @@ get_ec2_public_ip() {
 # Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
 launch_ec2_head_node() {
 	[ -x "$(which docker)" ] && build_docker_job_defs
-	awsEc2InstanceID=$(get_ec2_head_node)
+	set_ec2_head_node_id
 	refresh_aws_cache
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)

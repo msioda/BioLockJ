@@ -13,6 +13,7 @@ package biolockj.util;
 
 import java.io.*;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
@@ -24,6 +25,14 @@ import biolockj.module.report.Email;
  */
 public class NextflowUtil
 {
+	/**
+	 * Save a copy of the Nextflow log file to the Pipeline root directory
+	 * @throws Exception if errors occur
+	 */
+	public static void saveNextflowLog() throws Exception
+	{
+		FileUtils.copyFileToDirectory( new File( NF_LOG ), new File( Config.pipelinePath() + File.separator + "nextflow.log" ) );
+	}
 
 	/**
 	 * Call this method to build the Nextflow main.nf for the current pipeline.
@@ -35,7 +44,6 @@ public class NextflowUtil
 	{
 		final File template = buildInitialTemplate( asString( modules ) );
 		writeNextflowMainNF( getNextflowLines( template ) );
-		BioLockJUtil.deleteWithRetry( templateConfig(), 5 );
 		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
 		startService();
 		pollAndSpin();
@@ -146,14 +154,13 @@ public class NextflowUtil
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				String onDemandLabel = null;
-				Log.info( NextflowUtil.class, "READ line: " + line );
+				Log.info( NextflowUtil.class, "READ LINE: " + line );
 				if( line.trim().startsWith( PROCESS ) )
 				{
 					Log.info( NextflowUtil.class, "Found module PROCESS declaration: " + line );
-					line = line.replaceAll( PACKAGE_SEPARATOR, "\\." );
-					module = getModule( line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim() );
-					line = line.replace( module.getClass().getName(), getModuleProcessName( module ) );
+					module = getModule( line.replaceAll( PACKAGE_SEPARATOR, "\\." ).replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim() );
 					Log.info( NextflowUtil.class, "START module BLOCK for: " + module.getClass().getName() );
+					line = line.replaceAll( PACKAGE_SEPARATOR, "_" );
 				}
 				else if( module != null )
 				{
@@ -184,7 +191,7 @@ public class NextflowUtil
 							onDemandLabel = "    label '" + ON_DEMAND + "'";
 						}
 					}
-					else if( line.trim().startsWith( WORKER_FLAG ) )
+					else if( line.contains( MODULE_SCRIPT ) )
 					{
 						Log.info( NextflowUtil.class, "Found worker line: " + line );
 						line = line.replace( MODULE_SCRIPT, module.getScriptDir().getAbsolutePath() );
@@ -218,39 +225,24 @@ public class NextflowUtil
 	
 	private static ScriptModule getModule( final String className ) throws Exception
 	{
-		for( BioModule mod: getModules().keySet() )
+		Log.info( NextflowUtil.class, "Calling getModule( " + className + " )" );
+		for( BioModule module: Pipeline.getModules() )
 		{
-			if( !getModules().get( mod ) )
+			if( module.getClass().getName().equals( className ) )
 			{
-				getModules().put( (ScriptModule) mod, true );
-				return (ScriptModule) mod;
-			}
-		}
-		return null;
-	}
-	
-	private static Hashtable<ScriptModule, Boolean> getModules() throws Exception
-	{
-		if( modules.isEmpty() )
-		{
-			for( BioModule module: Pipeline.getModules() )
-			{
-				if( ! ( module instanceof ImportMetadata ) &&  ! ( module instanceof Email ) )
+				if( usedModules.contains( module.getID() ) )
 				{
-					Log.info( NextflowUtil.class, "Add Nextflow module: " + module.getClass().getName() );
-					modules.put( (ScriptModule) module, false );
+					Log.info( NextflowUtil.class, "Skip module [ ID = " + module.getID() + " ] in since it was already used, look for another module of type: " + module.getClass().getName() );
+				}
+				else
+				{
+					Log.info( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = " + module.getID() + " ] --> " + module.getClass().getName() );
+					usedModules.add( module.getID() );
+					return (ScriptModule) module;
 				}
 			}
 		}
-		return modules;
-	}
-	
-	
-	
-	private static String getModuleProcessName( ScriptModule module ) throws Exception
-	{
-		return module.getClass().getName().replaceAll( "\\.", "_" );
-
+		return null;
 	}
 
 	private static String asString( final List<BioModule> modules ) throws Exception
@@ -293,7 +285,7 @@ public class NextflowUtil
 
 	private static File templateConfig() throws Exception
 	{
-		return new File( Config.pipelinePath() + File.separator + "." + MAIN_NF );
+		return new File( Config.pipelinePath() + File.separator + ".template_" + MAIN_NF );
 	}
 
 	private static File templateScript() throws Exception
@@ -335,18 +327,16 @@ public class NextflowUtil
 		}
 	}
 
-	
 	private static final int NF_TIMEOUT = 180;
 	private static final String NF_LOG = File.separator + ".nextflow.log";
 	private static final String NF_INIT_FLAG = "Session await";
-	private static final Hashtable<ScriptModule, Boolean> modules = new Hashtable<>();
+	private static final Set<Integer> usedModules = new HashSet<>();
 	private static final String ON_DEMAND = "DEMAND";
 	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MODULE_SCRIPT = "BLJ_MODULE_SUB_DIR";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
-	private static final String WORKER_FLAG = "val worker from Channel.watchPath";
 	private static final String MODULE_SEPARATOR = ".";
 	private static final String NEXTFLOW_CMD = "nextflow";
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;

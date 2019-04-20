@@ -9,8 +9,34 @@
 S3_DIR="s3://"
 
 # Sync local files to S3 for cloud pipeline execution
-aws_sync_s3() {
-	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_sync_s3() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
+aws_sync_inputs_to_s3() {
+	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_sync_inputs_to_s3() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
+	
+	# Upload Config
+	propFiles=( ${configFiles//,/ } )
+	for propFile in ${propFiles[@]}; do upload_s3_file $EFS_CONFIG/$(basename $propFile) config; done
+	
+	upload_s3_dir $EFS_DB db
+	upload_s3_dir $EFS_INPUT seq
+	upload_s3_file $EFS_META metadata
+	upload_s3_file $EFS_PRIMER primer
+
+}
+
+# Sync local files to S3 for cloud pipeline execution
+aws_sync_outputs_to_s3() {
+	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_sync_outputs_to_s3() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
+	upload_s3_dir $BLJ_PROJ pipelines
+}
+
+
+# Sync local files to S3 for cloud pipeline execution
+aws_stage_s3_data() {
+	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_stage_s3_data() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
+	
+	# Upload Config
+	propFiles=( ${configFiles//,/ } )
+	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile $EFS_CONFIG; done
 	
 	# Upload files
 	upload_s3_file $metadataFilePath metadata
