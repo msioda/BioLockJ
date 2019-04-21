@@ -12,7 +12,6 @@
 package biolockj;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
@@ -326,38 +325,12 @@ public class Pipeline
 	 */
 	protected static boolean poll( final ScriptModule module ) throws Exception
 	{
-		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
-		final File mainScript = module.getMainScript();
-		Collection<File> scriptFiles = new ArrayList<>();
-		if( !RuntimeParamUtil.runAws() )
-		{
-			final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? Constants.R_EXT: Constants.SH_EXT ) );
-			scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
-		}
-
-		if( mainScript != null )
-		{
-			scriptFiles.remove( mainScript );
-		}
-
-		// Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
-		// for( final File f: scriptFiles )
-		// {
-		// Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
-		// }
-
-		if( is_R && mainScript != null )
-		{
-			scriptFiles.clear();
-			scriptFiles.add( mainScript );
-		}
+		final Collection<File> scriptFiles = getWorkerScripts( module );
 
 		final int numScripts = scriptFiles.size();
 		int numSuccess = 0;
 		int numStarted = 0;
 		int numFailed = 0;
-
-		File firstFailure = null;
 
 		for( final File f: scriptFiles )
 		{
@@ -367,11 +340,6 @@ public class Pipeline
 			numStarted = numStarted + ( testStarted.exists() ? 1: 0 );
 			numSuccess = numSuccess + ( testSuccess.exists() ? 1: 0 );
 			numFailed = numFailed + ( testFailure.exists() ? 1: 0 );
-
-			if( firstFailure == null && testFailure.exists() )
-			{
-				firstFailure = testFailure;
-			}
 		}
 
 		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success="
@@ -433,6 +401,38 @@ public class Pipeline
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
 			RMetaUtil.classifyReportableMetadata( module );
 		}
+	}
+
+	private static IOFileFilter getWorkerScriptFilter( final ScriptModule module ) throws Exception
+	{
+		String filterString = "*" + Constants.SH_EXT;
+		if( !RuntimeParamUtil.isDockerMode() && module instanceof R_Module )
+		{
+			filterString = ScriptModule.MAIN_SCRIPT_PREFIX + "*" + Constants.R_EXT;
+		}
+
+		return new WildcardFileFilter( filterString );
+
+	}
+
+	private static Collection<File> getWorkerScripts( final ScriptModule module ) throws Exception
+	{
+		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(),
+				getWorkerScriptFilter( module ), null );
+		final File mainScript = module.getMainScript();
+
+		if( !RuntimeParamUtil.isDockerMode() && module instanceof R_Module && mainScript != null )
+		{
+			scriptFiles.remove( mainScript );
+		}
+
+		Log.debug( Pipeline.class, "mainScript = " + ( mainScript == null ? "<null>": mainScript.getAbsolutePath() ) );
+		for( final File f: scriptFiles )
+		{
+			Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
+		}
+
+		return scriptFiles;
 	}
 
 	private static boolean hasScripts( final BioModule module ) throws Exception

@@ -305,7 +305,7 @@ public class DockerUtil
 	{
 		return module instanceof PearMergeReads || module instanceof AwkFastaConverter || module instanceof Gunzipper;
 	}
-	
+
 	/**
 	 * Docker container root user EFS directory
 	 */

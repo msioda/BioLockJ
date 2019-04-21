@@ -72,7 +72,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public void executeTask() throws Exception
 	{
 		writePrimaryScript();
-		if( RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.runAws() )
+		if( RuntimeParamUtil.isDockerMode() )
 		{
 			BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
 		}
@@ -359,7 +359,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 
 	private String getModuleScriptName() throws Exception
 	{
-		return getClass().getSimpleName() + biolockj.Constants.R_EXT;
+		return getClass().getSimpleName() + Constants.R_EXT;
 	}
 
 	/**
