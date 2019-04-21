@@ -115,7 +115,6 @@ prepRun <- function() {
 # Execution errors at any point will abort the job and kill the pipeline
 runModule <- function()
 {
-	file.create( paste0( getModuleScript(), "_Started" ) )
 	prepRun()
 	executeTask( paste0( "Execute[ ", moduleScriptName(), ":main() ]" ), main() )
 	file.create( paste0( getModuleScript(), "_Success" ) )
