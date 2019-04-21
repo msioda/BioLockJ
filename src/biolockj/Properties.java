@@ -114,7 +114,7 @@ public class Properties extends java.util.Properties
 	protected static Properties buildConfig( final File configFile ) throws Exception
 	{
 		Log.debug( Properties.class, "Run buildConfig for Config: " + configFile.getAbsolutePath() );
-		
+
 		final File defaultConfig = getDefaultConfigProp( configFile );
 		if( defaultConfig == null )
 		{
@@ -137,7 +137,7 @@ public class Properties extends java.util.Properties
 	 */
 	protected static File getDefaultConfigProp( final File configFile ) throws Exception
 	{
-		
+
 		// No more nested default Config files
 		// If running Docker, add the Docker Config...
 		if( defaultConfigFiles.isEmpty() && RuntimeParamUtil.isDockerMode() )
@@ -157,32 +157,39 @@ public class Properties extends java.util.Properties
 				{
 					if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
 					{
-						String filePath = st.nextToken().trim();
+						final String filePath = st.nextToken().trim();
 						Log.info( Properties.class, "Import Default Config: " + filePath );
 						File defaultConfig = null;
-						if( RuntimeParamUtil.isDockerMode() && !filePath.endsWith( "docker.properties" ) && !filePath.endsWith( "standard.properties" ) )
+						if( RuntimeParamUtil.isDockerMode() && !filePath.endsWith( "docker.properties" )
+								&& !filePath.endsWith( "standard.properties" ) )
 						{
 							Log.info( Properties.class, "Replace Default Config path with Docker /config path: " );
-							defaultConfig = DockerUtil.getDockerVolumeFile( Constants.PIPELINE_DEFAULT_PROPS, DockerUtil.CONTAINER_CONFIG_DIR );
+							defaultConfig = DockerUtil.getDockerVolumeFile( Constants.PIPELINE_DEFAULT_PROPS,
+									DockerUtil.CONTAINER_CONFIG_DIR );
 							Log.info( Properties.class, "New Default Config path: " + defaultConfig );
 						}
 						else
 						{
 							defaultConfig = Config.getExistingFileObject( filePath );
 						}
-						
+
 						reader.close();
 						if( !defaultConfigFiles.contains( defaultConfig ) )
 						{
 							return defaultConfig;
 						}
-	
+
 						return null;
 					}
 				}
 			}
-		} finally {
-			if( reader != null ) reader.close();
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
 		}
 
 		return null;

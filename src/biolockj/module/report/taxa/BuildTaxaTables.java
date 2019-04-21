@@ -47,8 +47,7 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @throws Exception if errors occur
 	 */
-	protected void buildTaxonomyTables( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts )
-			throws Exception
+	protected void buildTaxonomyTables( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts ) throws Exception
 	{
 		final String label = "OTUs";
 		final int pad = SummaryUtil.getPad( label ) + 4;
@@ -64,8 +63,8 @@ public class BuildTaxaTables extends OtuCountModule implements JavaModule
 		for( final String level: TaxaUtil.getTaxaLevels() )
 		{
 			final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
-			final TreeMap<String, TreeMap<String, Long>> levelTaxaCounts = TaxaUtil
-					.getLevelTaxaCounts( sampleOtuCounts, level );
+			final TreeMap<String, TreeMap<String, Long>> levelTaxaCounts = TaxaUtil.getLevelTaxaCounts( sampleOtuCounts,
+					level );
 			final Map<String, Long> uniqueOtus = new HashMap<>();
 
 			uniqueOtus.put( level, new Integer( levelTaxa.size() ).longValue() );

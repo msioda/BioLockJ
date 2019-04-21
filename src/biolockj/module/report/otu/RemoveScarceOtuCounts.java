@@ -137,8 +137,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
 	 * @throws Exception if errors occur
 	 */
 	protected TreeMap<String, TreeSet<String>> findScarceTaxa(
-			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> otus )
-			throws Exception
+			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> otus ) throws Exception
 	{
 		final TreeMap<String, TreeSet<String>> scarceTaxa = new TreeMap<>();
 		for( final String level: TaxaUtil.getTaxaLevels() )

@@ -67,7 +67,7 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 				}
 
 				final long rowSum = innerList.stream().mapToLong( Long::longValue ).sum();
-	
+
 				if( rowSum == 0 )
 				{
 					throw new Exception( sampleID + " has all zeros for table counts." );
@@ -93,7 +93,7 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 			final List<String> loggedInnerList = dataPointsLogged.get( x );
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
 			{
-				long val = dataPointsUnnormalized.get( x ).get( y ) + 1;
+				final long val = dataPointsUnnormalized.get( x ).get( y ) + 1;
 				if( allZeroIndex.contains( x ) )
 				{
 					// index 0 = col headers, so add + 1
@@ -116,10 +116,10 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables implements JavaM
 		final File logNormTable = getLogTransformedFile( level );
 		writeDataToFile( logNormTable, filteredSampleIDs, otuNames, dataPointsLogged );
 	}
-	
+
 	private File getLogTransformedFile( final String level ) throws Exception
 	{
 		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, "_Log" + getLogBase() );
 	}
-	
+
 }

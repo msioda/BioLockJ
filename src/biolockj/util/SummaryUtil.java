@@ -162,12 +162,12 @@ public class SummaryUtil
 				return null;
 			}
 
-			Long inAvg =  0L;
+			Long inAvg = 0L;
 			for( final File f: module.getInputFiles() )
 			{
 				inAvg += FileUtils.sizeOf( f );
 			}
-			
+
 			inAvg = new Double( inAvg / numIn ).longValue();
 
 			sb.append( "# Input files: " + numIn + Constants.RETURN );
@@ -236,7 +236,7 @@ public class SummaryUtil
 		final int middle = data.size() / 2;
 		if( data.size() % 2 == 1 )
 		{
-			return data.get( new Double( data.size() / 2  ).intValue() ).toString();
+			return data.get( new Double( data.size() / 2 ).intValue() ).toString();
 		}
 		else if( isDouble )
 		{
@@ -244,8 +244,7 @@ public class SummaryUtil
 		}
 		else
 		{
-			return Long.valueOf( ( (Long) data.get( middle - 1 ) + (Long) data.get( middle ) ) / 2 )
-					.toString();
+			return Long.valueOf( ( (Long) data.get( middle - 1 ) + (Long) data.get( middle ) ) / 2 ).toString();
 		}
 	}
 

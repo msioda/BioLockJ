@@ -52,26 +52,6 @@ public class RuntimeParamUtil
 	{
 		return params.get( PASSWORD_FLAG );
 	}
-	
-	/**
-	 * Runtime property getter for Docker host BioLockJ dir
-	 * 
-	 * @return Host {@value #HOST_BLJ} directory
-	 */
-	public static boolean runAws()
-	{
-		return params.get( AWS_FLAG ) != null;
-	}
-	
-//	/**
-//	 * Runtime property getter for Docker host BioLockJ dir
-//	 * 
-//	 * @return Host {@value #HOST_BLJ} directory
-//	 */
-//	public static File getAwsStack()
-//	{
-//		return params.get( AWS_FLAG ) == null ? null : new File( params.get( AWS_FLAG ) );
-//	}
 
 	/**
 	 * Runtime property getter for {@value #BASE_DIR_FLAG}
@@ -84,6 +64,16 @@ public class RuntimeParamUtil
 		return params.get( BASE_DIR_FLAG ) == null ? null
 				: new File( Config.getSystemFilePath( params.get( BASE_DIR_FLAG ) ) );
 	}
+
+	// /**
+	// * Runtime property getter for Docker host BioLockJ dir
+	// *
+	// * @return Host {@value #HOST_BLJ} directory
+	// */
+	// public static File getAwsStack()
+	// {
+	// return params.get( AWS_FLAG ) == null ? null : new File( params.get( AWS_FLAG ) );
+	// }
 
 	/**
 	 * @return String
@@ -156,7 +146,7 @@ public class RuntimeParamUtil
 	 */
 	public static File getDockerHostBLJ()
 	{
-		return params.get( HOST_BLJ ) == null ? null : new File( params.get( HOST_BLJ ) );
+		return params.get( HOST_BLJ ) == null ? null: new File( params.get( HOST_BLJ ) );
 	}
 
 	/**
@@ -166,7 +156,7 @@ public class RuntimeParamUtil
 	 */
 	public static File getDockerHostBLJ_SUP()
 	{
-		return params.get( HOST_BLJ_SUP ) == null ? null : new File( params.get( HOST_BLJ_SUP ) );
+		return params.get( HOST_BLJ_SUP ) == null ? null: new File( params.get( HOST_BLJ_SUP ) );
 	}
 
 	/**
@@ -245,11 +235,12 @@ public class RuntimeParamUtil
 				javaModArgs += params.get( key ).equals( Constants.TRUE ) ? "": " " + params.get( key );
 			}
 		}
-		
-//		if( RuntimeParamUtil.runAws() )
-//		{
-//			javaModArgs = javaModArgs.replace( getConfigFileParam(), CONFIG_FLAG + " " + AWS_CONFIG_DIR + Config.getConfigFileName() );
-//		}
+
+		// if( RuntimeParamUtil.runAws() )
+		// {
+		// javaModArgs = javaModArgs.replace( getConfigFileParam(), CONFIG_FLAG + " " + AWS_CONFIG_DIR +
+		// Config.getConfigFileName() );
+		// }
 
 		return javaModArgs;
 	}
@@ -358,6 +349,16 @@ public class RuntimeParamUtil
 		}
 
 		validateParams();
+	}
+
+	/**
+	 * Runtime property getter for Docker host BioLockJ dir
+	 * 
+	 * @return Host {@value #HOST_BLJ} directory
+	 */
+	public static boolean runAws()
+	{
+		return params.get( AWS_FLAG ) != null;
 	}
 
 	private static void assignDirectPipelineDir() throws Exception
@@ -677,7 +678,7 @@ public class RuntimeParamUtil
 	 * Restart pipeline runtime parameter switch: {@value #RESTART_FLAG}
 	 */
 	protected static final String RESTART_FLAG = "-r";
-	
+
 	private static final String BASE_DIR_FLAG_EXT = "--baseDir";
 	private static final String CONFIG_FLAG_EXT = "--config";
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";

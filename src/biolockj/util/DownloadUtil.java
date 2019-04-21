@@ -85,12 +85,14 @@ public final class DownloadUtil
 				makeRunAllScript( modules );
 			}
 
-			AndFileFilter filter = new AndFileFilter( EmptyFileFilter.NOT_EMPTY, HiddenFileFilter.VISIBLE );
-			Collection<File> dirs = FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
+			final AndFileFilter filter = new AndFileFilter( EmptyFileFilter.NOT_EMPTY, HiddenFileFilter.VISIBLE );
+			final Collection<File> dirs = FileUtils.listFiles( new File( Config.pipelinePath() ), filter,
+					FalseFileFilter.INSTANCE );
 
 			downloadPaths.addAll( dirs );
 
-			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() -1 ) ) ? "completed": "failed" ) + " pipeline -->";
+			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() - 1 ) ) ? "completed": "failed" )
+					+ " pipeline -->";
 			final String displaySize = FileUtils
 					.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
 			final String src = SRC + "=" + Config.pipelinePath();
@@ -269,7 +271,7 @@ public final class DownloadUtil
 		{
 			for( final BioModule module: Pipeline.getModules() )
 			{
-	
+
 				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
 						|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
 						|| module instanceof NormalizeTaxaTables;

@@ -27,9 +27,6 @@ public class Processor
 	 */
 	public class SubProcess implements Runnable
 	{
-		private String[] args = null;
-		private String label = null;
-		
 		/**
 		 * Execute the command args in a separate thread and log output with label.
 		 * 
@@ -49,15 +46,19 @@ public class Processor
 			{
 				Log.info( getClass(), "SubProcess initiailizing..." );
 				new Processor().runJob( args, label );
-			} 
-			catch( Exception ex )
+			}
+			catch( final Exception ex )
 			{
 				Log.error( getClass(), "Problem occurring within SubProcess-" + label + " --> " + ex.getMessage() );
 				ex.printStackTrace();
 			}
 		}
+
+		private String[] args = null;
+
+		private String label = null;
 	}
-	
+
 	private Processor()
 	{};
 
@@ -86,6 +87,20 @@ public class Processor
 		p.waitFor();
 		p.destroy();
 		Log.info( getClass(), "BioLockJ Process [" + label + "] has been destroyed" );
+	}
+
+	/**
+	 * Instantiates a new {@link biolockj.Processor}.<br>
+	 * String[] array used to control spacing between command/params.<br>
+	 * As if executing on terminal args[0] args[1]... args[n-1] as one command.
+	 *
+	 * @param args Terminal command created from args (adds 1 space between each array element)
+	 * @param label to associate with the process
+	 * @throws Exception if errors occur during execution
+	 */
+	public static void runSubprocess( final String[] args, final String label ) throws Exception
+	{
+		new Thread( new Processor().new SubProcess( args, label ) ).start();
 	}
 
 	/**
@@ -136,20 +151,6 @@ public class Processor
 	public static void submit( final String[] args ) throws Exception
 	{
 		new Processor().runJob( args, "Process" );
-	}
-	
-	/**
-	 * Instantiates a new {@link biolockj.Processor}.<br>
-	 * String[] array used to control spacing between command/params.<br>
-	 * As if executing on terminal args[0] args[1]... args[n-1] as one command.
-	 *
-	 * @param args Terminal command created from args (adds 1 space between each array element)
-	 * @param label to associate with the process
-	 * @throws Exception if errors occur during execution
-	 */
-	public static void runSubprocess( final String[] args, String label ) throws Exception
-	{
-		new Thread( new Processor().new SubProcess( args, label ) ).start();
 	}
 
 	private static String getArgsAsString( final String[] args )

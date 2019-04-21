@@ -150,7 +150,7 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 		final String metaField = MetaUtil.getField( sampleId, ParserModuleImpl.getOtuCountField() );
 		final Long val = Long.valueOf( metaField );
 		final List<String> otus = new ArrayList<>( val.intValue() );
-		
+
 		for( final String otu: otuCounts.keySet() )
 		{
 			for( int i = 0; i < otuCounts.get( otu ); i++ )
@@ -310,7 +310,9 @@ public class RarefyOtuCounts extends OtuCountModule implements JavaModule
 		int i = 0;
 		for( final String otu: otuCount.keySet() )
 		{
-			final long avg = new Integer( Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) ) ).longValue();
+			final long avg = new Integer(
+					Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) ) )
+							.longValue();
 			if( avg > 0 )
 			{
 				meanCountValues.put( otu, avg );

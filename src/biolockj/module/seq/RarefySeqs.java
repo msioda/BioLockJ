@@ -156,7 +156,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( output ) );
 		Log.info( getClass(),
 				"Building file [#lines/read=" + SeqUtil.getNumLinesPerRead() + "]: " + output.getAbsolutePath() );
-		
+
 		try
 		{
 			long index = 0;
@@ -205,8 +205,8 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 	 */
 	protected void rarefy( final File seqFile ) throws Exception
 	{
-		Integer maxConfig = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MAX );
-		Integer minConfig = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
+		final Integer maxConfig = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MAX );
+		final Integer minConfig = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
 		Long max = 0L;
 		Long min = 0L;
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
@@ -216,7 +216,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 		{
 			max = numReads < maxConfig.longValue() ? numReads: minConfig.longValue();
 		}
-		
+
 		if( minConfig == null )
 		{
 			min = 1L;
@@ -235,14 +235,14 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 			Log.debug( getClass(), "range.length = " + range.length );
 			final List<Long> indexes = new ArrayList<>();
 			Collections.addAll( indexes, Arrays.stream( range ).boxed().toArray( Long[]::new ) );
-			
-			Log.debug( getClass(), "Sample #indexes size #1 -->  [" + indexes.size() + "]"  );
-			
+
+			Log.debug( getClass(), "Sample #indexes size #1 -->  [" + indexes.size() + "]" );
+
 			Collections.shuffle( indexes );
 			indexes.subList( max.intValue(), indexes.size() ).clear();
-			
-			Log.debug( getClass(), "Sample #indexes size  #2 -->  [" + indexes.size() + "]"  );
-			
+
+			Log.debug( getClass(), "Sample #indexes size  #2 -->  [" + indexes.size() + "]" );
+
 			buildRarefiedFile( seqFile, indexes );
 		}
 		else

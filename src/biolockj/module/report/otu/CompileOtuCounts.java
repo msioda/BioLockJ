@@ -34,7 +34,8 @@ public class CompileOtuCounts extends OtuCountModule implements JavaModule
 	@Override
 	public String getSummary() throws Exception
 	{
-		String msg = "# Samples:     " + BioLockJUtil.formatNumericOutput( new Integer( MetaUtil.getSampleIds().size() ).longValue(), false )
+		String msg = "# Samples:     "
+				+ BioLockJUtil.formatNumericOutput( new Integer( MetaUtil.getSampleIds().size() ).longValue(), false )
 				+ RETURN;
 		long uniqueOtus = 0;
 		long totalOtus = 0;

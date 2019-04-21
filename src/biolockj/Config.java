@@ -138,7 +138,8 @@ public class Config
 			throw new Exception( "Config.getExe() can only be called for properties that begin with \"exe.\"" );
 		}
 
-		// return name of property after trimming "exe." prefix, for example if exe.Rscript is undefined, return "Rscript"
+		// return name of property after trimming "exe." prefix, for example if exe.Rscript is undefined, return
+		// "Rscript"
 		if( getString( module, property ) == null )
 		{
 			return property.substring( property.indexOf( "." ) + 1 );
@@ -474,14 +475,13 @@ public class Config
 			filePath = filePath.replace( "$USER", System.getProperty( "user.name" ) );
 			Log.debug( Config.class, "Updated file-path: " + filePath );
 		}
-		
+
 		if( filePath != null && filePath.contains( "$BLJ_META" ) )
 		{
 			Log.debug( Config.class, "Replacing $BLJ_META in file-path: " + filePath );
 			filePath = System.getProperty( "user.home" ) + File.separator + METADATA + filePath.substring( 9 );
 			Log.debug( Config.class, "Updated file-path: " + filePath );
 		}
-		
 
 		if( filePath != null && filePath.contains( "$BLJ_SUP" ) )
 		{
@@ -1061,9 +1061,9 @@ public class Config
 		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
 	}
 
-	private static final String METADATA = "metadata";
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
+	private static final String METADATA = "metadata";
 	private static File pipelineDir = null;
 	private static Properties props = null;
 	private static Properties unmodifiedInputProps = new Properties();

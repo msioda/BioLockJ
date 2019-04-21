@@ -81,7 +81,7 @@ public class BioLockJUtil
 			try
 			{
 				Thread.sleep( 3 * 1000 );
-				if( i == 0  || i == numTries )
+				if( i == 0 || i == numTries )
 				{
 					file.delete();
 					Log.warn( BioLockJUtil.class, "file.delete() removed: " + file.getAbsolutePath() );

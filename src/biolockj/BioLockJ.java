@@ -400,18 +400,18 @@ public class BioLockJ
 			{
 				NextflowUtil.startNextflow( Pipeline.getModules() );
 			}
-	
+
 			Pipeline.runPipeline();
 
 			if( Config.getBoolean( null, Constants.PIPELINE_DELETE_TEMP_FILES ) )
 			{
 				removeTempFiles();
 			}
-			
+
 			PropUtil.sanitizeMasterConfig();
 			markProjectStatus( Constants.BLJ_COMPLETE );
 			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
-			
+
 			if( RuntimeParamUtil.runAws() )
 			{
 				NextflowUtil.saveNextflowLog();
@@ -483,16 +483,16 @@ public class BioLockJ
 		return name;
 	}
 
-//	private static BioModule importMeta() throws Exception
-//	{
-//		final BioModule module = Pipeline.getModules().get( 0 );
-//		if( module instanceof ImportMetadata )
-//		{
-//			return module;
-//		}
-//
-//		return null;
-//	}
+	// private static BioModule importMeta() throws Exception
+	// {
+	// final BioModule module = Pipeline.getModules().get( 0 );
+	// if( module instanceof ImportMetadata )
+	// {
+	// return module;
+	// }
+	//
+	// return null;
+	// }
 
 	private static void logFinalException( final String[] args, final Exception ex )
 	{

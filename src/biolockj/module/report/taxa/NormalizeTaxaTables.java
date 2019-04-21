@@ -124,12 +124,6 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		return logBase;
 	}
 
-
-	private File getLogTransformedFile( final String level ) throws Exception
-	{
-		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, TaxaUtil.NORMALIZED + "_Log" + getLogBase() );
-	}
-
 	/**
 	 * Parse Taxa names from the given header line.
 	 * 
@@ -210,7 +204,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 				reader.close();
 			}
 		}
-		
+
 		Log.debug( getClass(), "Table Sum [ #samples=" + sampleIDs.size() + "] = " + tableSum );
 
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
@@ -301,6 +295,11 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		}
 
 		writer.close();
+	}
+
+	private File getLogTransformedFile( final String level ) throws Exception
+	{
+		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, TaxaUtil.NORMALIZED + "_Log" + getLogBase() );
 	}
 
 	private List<String> getNonZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex )

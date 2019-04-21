@@ -109,17 +109,17 @@ public class DockerUtil
 	 */
 	public static String getImageName( final BioModule module ) throws Exception
 	{
-		String className = module.getClass().getName();
+		final String className = module.getClass().getName();
 		if( useBasicBashImg( module ) )
 		{
 			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
 			return BLJ_BASH;
 		}
-		
-		String simpleName = getDockerClassName( module );
+
+		final String simpleName = getDockerClassName( module );
 		Log.debug( DockerUtil.class, "Found Java simple class name: " + simpleName );
 		String imageName = simpleName.substring( 0, 1 ).toLowerCase();
-		
+
 		for( int i = 2; i < simpleName.length() + 1; i++ )
 		{
 			final int len = imageName.toString().length();
@@ -144,7 +144,7 @@ public class DockerUtil
 		}
 
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
-		
+
 		return imageName;
 	}
 
@@ -210,11 +210,6 @@ public class DockerUtil
 		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !inAwsEnv();
 	}
 
-	private static String getDockerEnvVars( final BioModule module ) throws Exception
-	{
-		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
-	}
-
 	private static String getDockerClassName( final BioModule module ) throws Exception
 	{
 		final String className = module.getClass().getSimpleName();
@@ -224,6 +219,11 @@ public class DockerUtil
 		return isQiime ? QiimeClassifier.class.getSimpleName()
 				: module instanceof R_Module ? R_Module.class.getSimpleName()
 						: module instanceof JavaModule ? JavaModule.class.getSimpleName(): className;
+	}
+
+	private static String getDockerEnvVars( final BioModule module ) throws Exception
+	{
+		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
 
 	private static String getDockerVolumePath( final String prop, final String containerPath ) throws Exception
@@ -303,9 +303,14 @@ public class DockerUtil
 
 	private static boolean useBasicBashImg( final BioModule module ) throws Exception
 	{
-		return module instanceof PearMergeReads || module instanceof  AwkFastaConverter || module instanceof Gunzipper;
+		return module instanceof PearMergeReads || module instanceof AwkFastaConverter || module instanceof Gunzipper;
 	}
-	
+
+	/**
+	 * Docker container root user DB directory
+	 */
+	public static final String AWS_DB = AWS_EFS + "/db";
+
 	/**
 	 * Docker container root user EFS directory
 	 */
@@ -322,33 +327,37 @@ public class DockerUtil
 	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
 
 	/**
-	 * All containers mount the host {@link biolockj.Config} directory to the container volume: {@value #CONTAINER_CONFIG_DIR} 
+	 * All containers mount the host {@link biolockj.Config} directory to the container volume:
+	 * {@value #CONTAINER_CONFIG_DIR}
 	 */
 	public static final String CONTAINER_CONFIG_DIR = AWS_EFS + "/config";
 
 	/**
-	 * Some containers mount a database to the containers "db" volume: {@value #CONTAINER_DB_DIR} 
+	 * Some containers mount a database to the containers "db" volume: {@value #CONTAINER_DB_DIR}
 	 */
 	public static final String CONTAINER_DB_DIR = AWS_EFS + "/db";
 
 	/**
-	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume: {@value #CONTAINER_INPUT_DIR} 
+	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume:
+	 * {@value #CONTAINER_INPUT_DIR}
 	 */
 	public static final String CONTAINER_INPUT_DIR = AWS_EFS + "/input";
 
 	/**
-	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume: {@value #CONTAINER_META_DIR} 
+	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume:
+	 * {@value #CONTAINER_META_DIR}
 	 */
-	public static final String CONTAINER_META_DIR =  AWS_EFS + "/metadata";
+	public static final String CONTAINER_META_DIR = AWS_EFS + "/metadata";
 
 	/**
-	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container volume: {@value #CONTAINER_OUTPUT_DIR} 
+	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container volume:
+	 * {@value #CONTAINER_OUTPUT_DIR}
 	 */
 	public static final String CONTAINER_OUTPUT_DIR = AWS_EFS + "/pipelines";
 
 	/**
-	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer": {@value #CONTAINER_PRIMER_DIR} 
-	 * volume.
+	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers
+	 * "primer": {@value #CONTAINER_PRIMER_DIR} volume.
 	 */
 	public static final String CONTAINER_PRIMER_DIR = AWS_EFS + "/primer";
 
@@ -356,14 +365,6 @@ public class DockerUtil
 	 * Docker container root user $HOME directory
 	 */
 	public static final String DOCKER_ROOT_HOME = "/root";
-	
-	
-	
-	/**
-	 * Docker container root user DB directory
-	 */
-	public static final String AWS_DB = AWS_EFS + "/db";
-	
 
 	/**
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}

@@ -163,8 +163,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 		if( !moduleDir.exists() )
 		{
 			moduleDir.mkdirs();
-			Log.info( getClass(),
-					"Construct module [ " + ModuleUtil.displayID( this ) + " ] for new " + moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new "
+					+ moduleDir.getAbsolutePath() );
 		}
 		else
 		{

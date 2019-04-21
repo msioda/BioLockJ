@@ -28,10 +28,11 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	/**
-	 * {@link biolockj.Config} String property: AWS S3 pipeline output directory used by Nextflow main.nf: {@value #AWS_S3}
+	 * {@link biolockj.Config} String property: AWS S3 pipeline output directory used by Nextflow main.nf:
+	 * {@value #AWS_S3}
 	 */
 	public static final String AWS_S3 = "aws.s3";
-	
+
 	/**
 	 * Name of the file created in the BioModule or {@value #PIPELINE_DIR} root directory to indicate execution was
 	 * successful: {@value #BLJ_COMPLETE}

@@ -12,7 +12,6 @@
 package biolockj;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
@@ -34,13 +33,6 @@ public class Pipeline
 {
 	private Pipeline()
 	{}
-	
-	
-	private static boolean hasScripts( final BioModule module ) throws Exception
-	{
-		final File scriptDir = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
-		return scriptDir.exists() && module instanceof ScriptModule;
-	}
 
 	/**
 	 * Execute a single pipeline module.
@@ -62,7 +54,7 @@ public class Pipeline
 		{
 			Processor.submit( (ScriptModule) module );
 		}
-		
+
 		if( runScripts )
 		{
 			pollAndSpin( (ScriptModule) module );
@@ -70,7 +62,6 @@ public class Pipeline
 
 		refreshOutputMetadata( module );
 		module.cleanUp();
-
 
 		if( !isJava || !runScripts )
 		{
@@ -335,26 +326,18 @@ public class Pipeline
 	protected static boolean poll( final ScriptModule module ) throws Exception
 	{
 		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
-		File mainScript = module.getMainScript();
+		final File mainScript = module.getMainScript();
 		Collection<File> scriptFiles = null;
-		if ( RuntimeParamUtil.runAws() )
-		{
-			scriptFiles = new ArrayList<>();
-			scriptFiles.add( mainScript );
-			mainScript = null;
-		}
-		else
+		if( !RuntimeParamUtil.runAws() )
 		{
 			final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? Constants.R_EXT: Constants.SH_EXT ) );
 			scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
 		}
-		
-		
+
 		if( mainScript != null )
 		{
 			scriptFiles.remove( mainScript );
 		}
-		
 
 		// Log.debug( Pipeline.class, "mainScript = " + mainScript.getAbsolutePath() );
 		// for( final File f: scriptFiles )
@@ -372,7 +355,7 @@ public class Pipeline
 		int numSuccess = 0;
 		int numStarted = 0;
 		int numFailed = 0;
-		
+
 		File firstFailure = null;
 
 		for( final File f: scriptFiles )
@@ -383,16 +366,16 @@ public class Pipeline
 			numStarted = numStarted + ( testStarted.exists() ? 1: 0 );
 			numSuccess = numSuccess + ( testSuccess.exists() ? 1: 0 );
 			numFailed = numFailed + ( testFailure.exists() ? 1: 0 );
-			
-			if( firstFailure == null && testFailure.exists() ) 
+
+			if( firstFailure == null && testFailure.exists() )
 			{
 				firstFailure = testFailure;
 			}
 		}
 
-		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success=" + numSuccess
-				+ "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) + "; Queued="
-				+ ( numScripts - numStarted );
+		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success="
+				+ numSuccess + "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed )
+				+ "; Queued=" + ( numScripts - numStarted );
 
 		if( !statusMsg.equals( logMsg ) )
 		{
@@ -404,14 +387,14 @@ public class Pipeline
 		{
 			Log.info( Pipeline.class, logMsg );
 		}
-		
+
 		if( numFailed > 0 )
 		{
 			final String failMsg = "SCRIPT FAILED: " + BioLockJUtil.getCollectionAsString( module.getScriptErrors() );
 			throw new Exception( failMsg );
 		}
-		
-		return numScripts > 0 && ( numSuccess + numFailed == numScripts );
+
+		return numScripts > 0 && numSuccess + numFailed == numScripts;
 	}
 
 	/**
@@ -449,6 +432,13 @@ public class Pipeline
 			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
 			RMetaUtil.classifyReportableMetadata( module );
 		}
+	}
+
+	private static boolean hasScripts( final BioModule module ) throws Exception
+	{
+		final File scriptDir = new File(
+				module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
+		return scriptDir.exists() && module instanceof ScriptModule;
 	}
 
 	private static void info( final String msg ) throws Exception
