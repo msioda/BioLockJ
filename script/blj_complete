@@ -27,10 +27,9 @@ found=false
 for modDir in $pipeDir/*; do
 	if ! $(is_empty "$modDir") && $(is_module_dir "$modDir"); then
 		dirName=$(basename "$modDir")
-		if [ $((10#${dirName%%_*})) -lt $myNum ]; then
-			[ -f "$modDir/biolockjStarted" ] && rm "$modDir/biolockjStarted" && echo "Deleted $modDir/biolockjStarted" && found=true
-			[ ! -f "$modDir/biolockjComplete" ] && touch "$modDir/biolockjComplete" && echo "Created $modDir/biolockjComplete" && found=true
-		fi
+		[ $((10#${dirName%%_*})) -lt $myNum ] && [ -f "$modDir/biolockjStarted" ] && found=true && \
+			rm "$modDir/biolockjStarted" && echo "Deleted $modDir/biolockjStarted" && \
+			[ ! -f "$modDir/biolockjComplete" ] && touch "$modDir/biolockjComplete" && echo "Created $modDir/biolockjComplete" 
 	fi
 done
 
