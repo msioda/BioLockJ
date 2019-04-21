@@ -268,7 +268,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 
 		if( RuntimeParamUtil.runAws() )
 		{
-			return new File( DockerUtil.AWS_DB );
+			return new File( DockerUtil.AWS_EFS_DB );
 		}
 
 		final File pynastFile = new File( Config.getSystemFilePath( pynastDB ) );

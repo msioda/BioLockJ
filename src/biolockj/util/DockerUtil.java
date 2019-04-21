@@ -305,16 +305,16 @@ public class DockerUtil
 	{
 		return module instanceof PearMergeReads || module instanceof AwkFastaConverter || module instanceof Gunzipper;
 	}
-
-	/**
-	 * Docker container root user DB directory
-	 */
-	public static final String AWS_DB = AWS_EFS + "/db";
-
+	
 	/**
 	 * Docker container root user EFS directory
 	 */
 	public static final String AWS_EFS = "/mnt/efs";
+
+	/**
+	 * Docker container root user DB directory
+	 */
+	public static final String AWS_EFS_DB = AWS_EFS + "/db";
 
 	/**
 	 * Docker container BioLockJ installation directory: {@value #CONTAINER_BLJ_DIR}

@@ -12,6 +12,7 @@
 package biolockj;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
@@ -327,7 +328,7 @@ public class Pipeline
 	{
 		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
 		final File mainScript = module.getMainScript();
-		Collection<File> scriptFiles = null;
+		Collection<File> scriptFiles = new ArrayList<>();
 		if( !RuntimeParamUtil.runAws() )
 		{
 			final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? Constants.R_EXT: Constants.SH_EXT ) );

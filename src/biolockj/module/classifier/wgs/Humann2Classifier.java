@@ -153,7 +153,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 
 		if( RuntimeParamUtil.runAws() )
 		{
-			return new File( DockerUtil.AWS_DB );
+			return new File( DockerUtil.AWS_EFS_DB );
 		}
 
 		final File nuclDb = new File( Config.getSystemFilePath( nuclPath ) );

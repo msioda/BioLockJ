@@ -86,7 +86,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 
 		if( RuntimeParamUtil.runAws() )
 		{
-			return new File( DockerUtil.AWS_DB );
+			return new File( DockerUtil.AWS_EFS_DB );
 		}
 
 		final List<File> dbs = new ArrayList<>();
