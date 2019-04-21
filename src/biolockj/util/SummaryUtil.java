@@ -384,7 +384,7 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			if( module.getMainScript() == null )
+			if( module.getMainScript() == null && !RuntimeParamUtil.runAws() )
 			{
 				return "Module MAIN script not found in -->" + module.getScriptDir().getAbsolutePath() + RETURN;
 			}

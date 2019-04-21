@@ -72,8 +72,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public void executeTask() throws Exception
 	{
 		writePrimaryScript();
-
-		if( RuntimeParamUtil.isDockerMode() )
+		if( RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.runAws() )
 		{
 			BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
 		}
@@ -203,7 +202,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 			}
 
 			final File rScript = getPrimaryScript();
-			if( rScript == null || !rScript.exists() )
+			if( RuntimeParamUtil.runAws() && ( rScript == null || !rScript.exists() ) )
 			{
 				sb.append( "Failed to generate R Script!" + RETURN );
 			}
@@ -428,7 +427,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_RSCRIPT} defines the command line executable to call RScript
 	 */
-	protected static final String EXE_RSCRIPT = "exe.Rscript";
+	public static final String EXE_RSCRIPT = "exe.Rscript";
 
 	/**
 	 * {@link biolockj.Config} property {@value #P_VAL_CUTOFF} defines the p-value cutoff for significance

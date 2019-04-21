@@ -211,10 +211,7 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 		Long min = 0L;
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
 		final long numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
-		
-		Log.info( getClass(), "minConfig = " + minConfig );
-		Log.info( getClass(), "maxConfig = " + maxConfig );
-		
+
 		if( maxConfig != null )
 		{
 			max = numReads < maxConfig.longValue() ? numReads: minConfig.longValue();
@@ -229,22 +226,22 @@ public class RarefySeqs extends JavaModuleImpl implements JavaModule, SeqModule
 			min = minConfig.longValue();
 		}
 
-		Log.info( getClass(), "min = " + min );
-		Log.info( getClass(), "max = " + max );
-		Log.info( getClass(), "numReads = " + numReads );
+		Log.debug( getClass(), "min = " + min );
+		Log.debug( getClass(), "max = " + max );
+		Log.debug( getClass(), "numReads = " + numReads );
 		if( numReads >= min )
 		{
 			final long[] range = LongStream.rangeClosed( 0, numReads - 1 ).toArray();
-			Log.info( getClass(), "range.length = " + range.length );
+			Log.debug( getClass(), "range.length = " + range.length );
 			final List<Long> indexes = new ArrayList<>();
 			Collections.addAll( indexes, Arrays.stream( range ).boxed().toArray( Long[]::new ) );
 			
-			Log.info( getClass(), "Sample #indexes size #1 -->  [" + indexes.size() + "]"  );
+			Log.debug( getClass(), "Sample #indexes size #1 -->  [" + indexes.size() + "]"  );
 			
 			Collections.shuffle( indexes );
 			indexes.subList( max.intValue(), indexes.size() ).clear();
 			
-			Log.info( getClass(), "Sample #indexes size  #2 -->  [" + indexes.size() + "]"  );
+			Log.debug( getClass(), "Sample #indexes size  #2 -->  [" + indexes.size() + "]"  );
 			
 			buildRarefiedFile( seqFile, indexes );
 		}

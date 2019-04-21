@@ -12,6 +12,7 @@
 package biolockj;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
@@ -334,9 +335,20 @@ public class Pipeline
 	protected static boolean poll( final ScriptModule module ) throws Exception
 	{
 		final boolean is_R = !RuntimeParamUtil.isDirectMode() && module instanceof R_Module;
-		final File mainScript = module.getMainScript();
-		final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? Constants.R_EXT: Constants.SH_EXT ) );
-		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
+		File mainScript = module.getMainScript();
+		Collection<File> scriptFiles = null;
+		if ( RuntimeParamUtil.runAws() )
+		{
+			scriptFiles = new ArrayList<>();
+			scriptFiles.add( mainScript );
+			mainScript = null;
+		}
+		else
+		{
+			final IOFileFilter ff = new WildcardFileFilter( "*" + ( is_R ? Constants.R_EXT: Constants.SH_EXT ) );
+			scriptFiles = FileUtils.listFiles( module.getScriptDir(), ff, null );
+		}
+		
 		
 		if( mainScript != null )
 		{

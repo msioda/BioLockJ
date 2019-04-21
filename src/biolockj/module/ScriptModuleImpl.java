@@ -94,6 +94,11 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		if( scriptDir.exists() )
 		{
+			if( this instanceof R_Module && RuntimeParamUtil.runAws() )
+			{
+				return null;
+			}
+			
 			for( final File file: getScriptDir().listFiles() )
 			{
 				final String name = file.getName();

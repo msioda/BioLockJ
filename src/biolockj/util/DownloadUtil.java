@@ -334,9 +334,7 @@ public final class DownloadUtil
 			{
 				final String relPath = pipeRoot.toURI().relativize( ( (R_Module) mod ).getPrimaryScript().toURI() )
 						.toString();
-				// do not use exe.Rscript config option, this is a convenience for the users local system not for the
-				// system where biolockj ran.
-				writer.write( "Rscript " + relPath + RETURN );
+				writer.write( Config.getExe( mod, R_Module.EXE_RSCRIPT ) + relPath + RETURN );
 			}
 		}
 

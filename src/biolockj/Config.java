@@ -138,7 +138,7 @@ public class Config
 			throw new Exception( "Config.getExe() can only be called for properties that begin with \"exe.\"" );
 		}
 
-		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
+		// return name of property after trimming "exe." prefix, for example if exe.Rscript is undefined, return "Rscript"
 		if( getString( module, property ) == null )
 		{
 			return property.substring( property.indexOf( "." ) + 1 );
