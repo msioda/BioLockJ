@@ -6,7 +6,7 @@ FROM biolockj/kraken2_classifier_dbfree
 ENV KRAKEN_DB_URL="https://ccb.jhu.edu/software/kraken2/dl/minikraken2_v1_8GB.tgz"
 RUN cd $BLJ_DB && \
 	wget -qO- $KRAKEN_DB_URL | bsdtar -xzf- && \
-	chmod o+x *
+	chmod -R o+x $BLJ_DB
 
 #2.) Cleanup
 RUN	 rm -rf /usr/share/* 

@@ -7,7 +7,8 @@ ENV KRAKEN_DB_URL="https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_8G
 RUN cd $BLJ_DB && \
 	wget -qO- $KRAKEN_DB_URL | bsdtar -xzf- && \
 	mv minikraken*/* . && \
-	rm -rf minikraken*
+	rm -rf minikraken* && \
+	chmod -R o+x $BLJ_DB
 
 #2.) Cleanup
 RUN	 rm -rf /usr/share/* 
