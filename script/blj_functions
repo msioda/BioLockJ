@@ -113,6 +113,13 @@ dir_missing() {
 	[ ! -d "$1" ] || [ -z "$(\ls -A $1)" ]
 }
 
+# Check if parameter contains alpha-numeric chars [a-zA-Z0-9]
+# Param 1 - Any variable
+is_empty() {
+	x=$(echo "$1" | grep -c [a-zA-Z0-9])
+	[ ${x} -eq 0 ]
+}
+
 # Return TRUE if the directory path given ends with a valid module name
 # Example: 01_Demultiplexer
 is_module_dir() {

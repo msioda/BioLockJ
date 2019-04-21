@@ -169,13 +169,6 @@ aws_rm_stacks() {
 	aws_log "Remaining stacks (verify status==DELETE_COMPLETE):" && aws cloudformation list-stacks
 }
 
-# Check if parameter contains alpha-numeric chars [a-zA-Z0-9]
-# Param 1 - Any variable
-is_empty() {
-	x=$(echo "$1" | grep -c [a-zA-Z0-9])
-	[ ${x} -eq 0 ]
-}
-
 # Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
 kill_head_node() {
 	aws_log "CLEARING ec2 instances..." 

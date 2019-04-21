@@ -2,25 +2,36 @@
 ###############################################################################
 ##                                                                           ##
 ##  This script manually completes current module and pipeline status.       ##
+##  All modules numbered below than the current module will also be reset.   ##
 ##                                                                           ##
 ###############################################################################
 . $BLJ/script/blj_functions
 
-pipelineDir="$(dirname $PWD)"
+if [ ${#1} -gt 0 ]; then myDir="${1}"; else myDir="$PWD"; fi
+echo "Starting [ blj_complete ] to reset status of modules before/including $myDir to --> \"biolockjComplete\""
 
-if $(is_pipeline_dir $PWD); then
-	pipelineDir=$PWD
-elif ! $(is_pipeline_dir $pipelineDir); then 
-	exit_script "Error [ blj_complete ]: script must be executed from a pipeline root directory"
+if $(is_pipeline_dir "$myDir"); then
+	pipeDir="$myDir" && myNum=$(($(ls "$pipeDir" | wc -l)+1))
+else
+	pipeDir=$(dirname "$myDir") && aDir=$(basename "$myDir") && myNum=$((10#${aDir%%_*}+1))
 fi
 
-echo "Update $pipelineDir status to: COMPLETE"
-[ ! -f "$pipelineDir/biolockjComplete" ] && touch "$pipelineDir/biolockjComplete" && echo "created $pipelineDir/biolockjComplete"
-[ -f "$pipelineDir/biolockjFailed" ] && rm "$pipelineDir/biolockjFailed" && echo "removed $pipelineDir/biolockjFailed"
+if ! $(is_pipeline_dir "$pipeDir"); then
+	exit_script "Error [ blj_reset ] target dir is not a pipeline or module root directory --> $myDir"
+fi
 
-for modDir in $pipelineDir/*; do
-	if $(is_module_dir "$modDir"); then
-		[ -f "$modDir/biolockjStarted" ] && rm "$modDir/biolockjStarted" && echo "deleted $modDir/biolockjStarted"
-		[ ! -f "$modDir/biolockjComplete" ] && touch "$modDir/biolockjComplete" && echo "created $modDir/biolockjComplete"
+[ -f "$pipeDir/biolockjComplete" ] && rm "$pipeDir/biolockjComplete" && echo "Deleted $pipeDir/biolockjComplete"
+[ -f "$pipeDir/biolockjFailed" ] && rm "$pipeDir/biolockjFailed" && echo "Deleted $pipeDir/biolockjFailed"
+
+found=false
+for modDir in $pipeDir/*; do
+	if ! $(is_empty "$modDir") && $(is_module_dir "$modDir"); then
+		dirName=$(basename "$modDir")
+		if [ $((10#${dirName%%_*})) -lt $myNum ]; then
+			[ -f "$modDir/biolockjStarted" ] && rm "$modDir/biolockjStarted" && echo "Deleted $modDir/biolockjStarted" && found=true
+			[ ! -f "$modDir/biolockjComplete" ] && touch "$modDir/biolockjComplete" && echo "Created $modDir/biolockjComplete" && found=true
+		fi
 	fi
 done
+
+[ $found == false ] && echo "All pipeline directories up to/including $myDir already complete - no changes made"
