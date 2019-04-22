@@ -49,8 +49,14 @@ public class Pipeline
 
 		final boolean isJava = module instanceof JavaModule;
 		final boolean runScripts = hasScripts( module );
+		
+		if( isJava && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) )
+		{
+			PropUtil.saveMasterConfig( Config.getProperties() );
+		}
 
-		if( runScripts && !RuntimeParamUtil.runAws() )
+
+		if( runScripts && !DockerUtil.inAwsEnv() )
 		{
 			Processor.submit( (ScriptModule) module );
 		}
@@ -114,7 +120,7 @@ public class Pipeline
 	public static void runDirectModule( final Integer moduleID ) throws Exception
 	{
 		Log.info( Pipeline.class,
-				"Run Direct BioModule ID[ " + moduleID + " ] = " + Pipeline.getModules().get( moduleID ) );
+				"Run Direct BioModule ID [ " + moduleID + " ] = " + Pipeline.getModules().get( moduleID ) );
 		final JavaModule module = (JavaModule) Pipeline.getModules().get( moduleID );
 		module.runModule();
 		refreshOutputMetadata( module ); // keep in case cleanup does something with metadata

@@ -72,7 +72,7 @@ public class NextflowUtil
 	 */
 	protected static List<String> getNextflowLines( final File template ) throws Exception
 	{
-		Log.info( NextflowUtil.class, "BUILD main.nf from the template: " + template.getAbsolutePath() );
+		Log.info( NextflowUtil.class, "Build main.nf from the Nextflow template: " + template.getAbsolutePath() );
 		final List<String> lines = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
 		try
@@ -81,13 +81,13 @@ public class NextflowUtil
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
 				String onDemandLabel = null;
-				Log.info( NextflowUtil.class, "READ LINE: " + line );
+				Log.debug( NextflowUtil.class, "READ LINE: " + line );
 				if( line.trim().startsWith( PROCESS ) )
 				{
-					Log.info( NextflowUtil.class, "Found module PROCESS declaration: " + line );
+					Log.debug( NextflowUtil.class, "Found module PROCESS declaration: " + line );
 					module = getModule( line.replaceAll( PACKAGE_SEPARATOR, "\\." ).replace( PROCESS, "" )
 							.replaceAll( "\\{", "" ).trim() );
-					Log.info( NextflowUtil.class, "START module BLOCK for: " + module.getClass().getName() );
+					Log.debug( NextflowUtil.class, "START module BLOCK for: " + module.getClass().getName() );
 					line = line.replaceAll( PACKAGE_SEPARATOR, "_" );
 				}
 				else if( module != null )
@@ -121,17 +121,17 @@ public class NextflowUtil
 					}
 					else if( line.contains( MODULE_SCRIPT ) )
 					{
-						Log.info( NextflowUtil.class, "Found worker line: " + line );
+						Log.debug( NextflowUtil.class, "Found worker line: " + line );
 						line = line.replace( MODULE_SCRIPT, module.getScriptDir().getAbsolutePath() );
 					}
 					else if( line.trim().equals( "}" ) )
 					{
-						Log.info( NextflowUtil.class, "END module BLOCK: " + module.getClass().getName() );
+						Log.debug( NextflowUtil.class, "END module BLOCK: " + module.getClass().getName() );
 						module = null;
 					}
 				}
 
-				Log.info( NextflowUtil.class, "ADD LINE: " + line );
+				Log.debug( NextflowUtil.class, "ADD LINE: " + line );
 				lines.add( line );
 				if( onDemandLabel != null )
 				{
@@ -147,7 +147,7 @@ public class NextflowUtil
 				reader.close();
 			}
 		}
-		Log.info( NextflowUtil.class, "# Lines in main.nf: " + lines.size() );
+		Log.info( NextflowUtil.class, "Done building main.nf with # lines = " + lines.size() );
 		return lines;
 	}
 
@@ -192,21 +192,21 @@ public class NextflowUtil
 
 	private static ScriptModule getModule( final String className ) throws Exception
 	{
-		Log.info( NextflowUtil.class, "Calling getModule( " + className + " )" );
+		Log.debug( NextflowUtil.class, "Calling getModule( " + className + " )" );
 		for( final BioModule module: Pipeline.getModules() )
 		{
 			if( module.getClass().getName().equals( className ) )
 			{
 				if( usedModules.contains( module.getID() ) )
 				{
-					Log.info( NextflowUtil.class,
+					Log.debug( NextflowUtil.class,
 							"Skip module [ ID = " + module.getID()
 									+ " ] in since it was already used, look for another module of type: "
 									+ module.getClass().getName() );
 				}
 				else
 				{
-					Log.info( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = "
+					Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = "
 							+ module.getID() + " ] --> " + module.getClass().getName() );
 					usedModules.add( module.getID() );
 					return (ScriptModule) module;
@@ -334,6 +334,32 @@ public class NextflowUtil
 			}
 		}
 	}
+	
+	/**
+	 * Sync file or directory to S3 bucket subdir
+	 * 
+	 * @param path File/dir-path
+	 * @param subdir under S3 bucket
+	 * @throws Exception if errors occur
+	 */
+	public static void awsSyncS3( String path, String subdir ) throws Exception
+	{
+		String s3Dir = "s3://" + Config.requireString( null, Constants.AWS_S3 ) + File.separator + subdir + File.separator + Config.pipelineName();
+		Log.info( BioLockJ.class, "Transferring " + path + " to --> " + s3Dir );
+		String[] s3args = new String[ 5 ];
+		s3args[ 0 ] = "aws";
+		s3args[ 1 ] = "s3";
+		s3args[ 2 ] = ( path.contains( "." ) ? "cp" : "sync" );
+		s3args[ 3 ] = path;
+		s3args[ 4 ] =  s3Dir;
+		Processor.submit( s3args );
+	}
+	
+	
+	/**
+	 * The Docker container will generate a nextflow.log file in the root directory, this is the file name
+	 */
+	protected static final String NF_LOG = "/.nextflow.log";
 
 	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
@@ -345,7 +371,7 @@ public class NextflowUtil
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 	private static final String NF_INIT_FLAG = "Session await";
-	private static final String NF_LOG = File.separator + ".nextflow.log";
+	
 	private static final String NF_MEMORY = "$" + Constants.AWS_RAM;
 	private static final int NF_TIMEOUT = 180;
 	private static final String ON_DEMAND = "DEMAND";

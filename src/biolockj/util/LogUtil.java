@@ -36,25 +36,9 @@ public class LogUtil
 	 */
 	public static void syncModuleLogs( final ScriptModule module ) throws Exception
 	{
-		if( module instanceof JavaModule && Config.getBoolean( module, Constants.CLUSTER_RUN_JAVA_AS_SCRIPT ) )
+		if( module instanceof JavaModule && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) )
 		{
 			merge( cacheLog( getModuleLog( module ) ) );
-		}
-
-		if( module instanceof ScriptModule && Config.isOnCluster() )
-		{
-			// final List<String> cache = new ArrayList<>();
-			// for( final File log: module.getScriptDir().listFiles() )
-			// {
-			// final List<String> lines = cacheLog( log );
-			// if( !lines.isEmpty() )
-			// {
-			// cache.add( "Logging info from: " + log.getAbsolutePath() );
-			// cache.addAll( lines );
-			// }
-			// }
-			//
-			// merge( cache );
 		}
 	}
 

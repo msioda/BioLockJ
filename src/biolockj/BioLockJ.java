@@ -11,9 +11,7 @@
  */
 package biolockj;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -275,21 +273,24 @@ public class BioLockJ
 		{
 			initRestart();
 		}
-
-		if( MetaUtil.getMetadata() != null )
+		
+		if( !RuntimeParamUtil.isDirectMode() )
 		{
-			BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
+			if( MetaUtil.getMetadata() != null )
+			{
+				BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
+			}
+
+			// Initializes PIPELINE_SEQ_INPUT_TYPE
+			BioLockJUtil.getPipelineInputFiles();
+			
+			if( doCopyInput() )
+			{
+				copyInputData();
+			}
+
+			SeqUtil.initialize();
 		}
-
-		// Initializes PIPELINE_SEQ_INPUT_TYPE
-		BioLockJUtil.getPipelineInputFiles();
-
-		if( doCopyInput() )
-		{
-			copyInputData();
-		}
-
-		SeqUtil.initialize();
 	}
 
 	/**
@@ -396,7 +397,7 @@ public class BioLockJ
 		else
 		{
 			PropUtil.saveMasterConfig( null );
-			if( RuntimeParamUtil.runAws() )
+			if( DockerUtil.inAwsEnv() )
 			{
 				NextflowUtil.startNextflow( Pipeline.getModules() );
 			}
@@ -412,12 +413,39 @@ public class BioLockJ
 			markProjectStatus( Constants.BLJ_COMPLETE );
 			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
 
-			if( RuntimeParamUtil.runAws() )
+			if( DockerUtil.inAwsEnv() )
 			{
 				NextflowUtil.saveNextflowLog();
+				File dlFile =  DownloadUtil.getDownloadListFile();
+				
+				if( Config.getBoolean( null, Constants.AWS_COPY_PIPELINE_TO_S3 ) )
+				{
+					NextflowUtil.awsSyncS3( Config.pipelinePath(), Constants.AWS_PIPELINE_DIR );
+				}
+				else if( dlFile.exists() && Config.getBoolean( null, Constants.AWS_COPY_REPORTS_TO_S3 ) )
+				{
+					final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
+					try
+					{
+						for( String path = reader.readLine(); path != null; path = reader.readLine() )
+						{
+							NextflowUtil.awsSyncS3( path, Constants.AWS_REPORT_DIR );
+						}
+					}
+					finally
+					{
+						if( reader != null ) reader.close();
+					}
+				}
+				else
+				{
+					Log.warn( BioLockJ.class, "No data will be transferred to AWS s3: " );
+				}
 			}
 		}
 	}
+	
+	
 
 	private static boolean doCopyInput() throws Exception
 	{
@@ -434,8 +462,7 @@ public class BioLockJ
 							+ Config.requireString( null, Constants.INPUT_DIRS ) + " to:"
 							+ pipelineInputDir().getAbsolutePath() );
 		}
-		return !RuntimeParamUtil.isDirectMode() && Config.getBoolean( null, Constants.PIPELINE_COPY_FILES )
-				|| hasMixedInputs;
+		return Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) || hasMixedInputs;
 	}
 
 	private static String getDirectLogName( final String moduleDir ) throws Exception
@@ -677,6 +704,7 @@ public class BioLockJ
 			final Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
 			Pipeline.runDirectModule( id );
 			reportDirectModuleSucess();
+			PropUtil.saveMasterConfig( Config.getProperties() );
 			System.exit( 0 );
 		}
 		catch( final Exception ex )

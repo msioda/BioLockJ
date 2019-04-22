@@ -383,7 +383,7 @@ public class SummaryUtil
 		final StringBuffer sb = new StringBuffer();
 		try
 		{
-			if( module.getMainScript() == null && !RuntimeParamUtil.runAws() )
+			if( module.getMainScript() == null && !DockerUtil.inAwsEnv() )
 			{
 				return "Module MAIN script not found in -->" + module.getScriptDir().getAbsolutePath() + RETURN;
 			}

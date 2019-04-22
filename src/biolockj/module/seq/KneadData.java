@@ -84,7 +84,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 			return new File( Config.getSystemFilePath( paths.get( 0 ) ) );
 		}
 
-		if( RuntimeParamUtil.runAws() )
+		if( DockerUtil.inAwsEnv() )
 		{
 			return new File( DockerUtil.AWS_EFS_DB );
 		}

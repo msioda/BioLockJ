@@ -27,39 +27,54 @@ startBrowser() {
 	fi
 }
 
-# Launch blj_webapp on localhost for standard users.
-# ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
-# Param $1 = Docker Hub Account ID
-runDockerWebApp() {
-	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:$EFS_CONFIG:ro -v $BLJ_PROJ:$EFS_PROJ:delegated -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' $(dockerID $1)/blj_webapp ]"
+runDockerAwsWebApp() {
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:$EFS_CONFIG -v $BLJ_PROJ:$EFS_PROJ:delegated -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' --entrypoint '/bin/bash' $(dockerID $1)/biolockj_controller -c 'npm start' ]"
 	docker run --rm -p 8080:3000 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ/resources/config/gui:$EFS_CONFIG:ro  \
+		-v $BLJ/resources/config/gui:$EFS_CONFIG  \
 		-v $BLJ_PROJ:$EFS_PROJ:delegated  \
 		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
-		$(dockerID $1)/blj_webapp
+		--entrypoint '/bin/bash' \
+		$(dockerID $1)/biolockj_controller
+		-c 'npm start'
+}	
+
+
+
+# Launch biolockj_controller on localhost for standard users.
+# ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
+# Param $1 = Docker Hub Account ID
+runDockerWebApp() {
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:$EFS_CONFIG -v $BLJ_PROJ:$EFS_PROJ:delegated -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' $(dockerID $1)/biolockj_controller ]"
+	docker run --rm -p 8080:3000 \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $BLJ/resources/config/gui:$EFS_CONFIG  \
+		-v $BLJ_PROJ:$EFS_PROJ:delegated  \
+		-v $BLJ/web_app/logs:/log:delegated \
+		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
+		$(dockerID $1)/biolockj_controller
 }
 
-# Launch blj_webapp on localhost in "dev mode"  by overriding default container $BLJ
+# Launch biolockj_controller on localhost in "dev mode"  by overriding default container $BLJ
 # ---> Assign env var HOST_BLJ=$BLJ
 # ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
 # Replace container installed $BLJ dir with host $BLJ)
 # Param $1 = Docker Hub Account ID
 devDockerWebApp() {
-	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:$EFS_CONFIG:ro -v $BLJ_PROJ:$EFS_PROJ:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' $(dockerID $1)/blj_webapp]"
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:$EFS_CONFIG -v $BLJ_PROJ:$EFS_PROJ:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' $(dockerID $1)/biolockj_controller]"
 	docker run --rm -p 8080:3000 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ/resources/config/gui:$EFS_CONFIG:ro \
+		-v $BLJ/resources/config/gui:$EFS_CONFIG \
 		-v $BLJ_PROJ:$EFS_PROJ:delegated \
 		-v $BLJ:/app/biolockj \
 		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
 		-e "HOST_BLJ=$BLJ" \
-		$(dockerID $1)/blj_webapp
+		$(dockerID $1)/biolockj_controller
 }
 
-# Launch blj_webapp on localhost in "dev mode" by overriding default container $BLJ + add $BLJ_SUP dir
+# Launch biolockj_controller on localhost in "dev mode" by overriding default container $BLJ + add $BLJ_SUP dir
 # ---> Assign env var HOST_BLJ=$BLJ
 # ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
 # ---> Assign env var HOST_BLJ_SUP=$BLJ_SUP 
@@ -68,10 +83,10 @@ devDockerWebApp() {
 # Replace container installed $BLJ dir with host $BLJ)
 # Param $1 = Docker Hub Account ID
 devSupDockerWebApp() {
-	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:$EFS_CONFIG:ro -v $BLJ_PROJ:$EFS_PROJ:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' -e 'HOST_BLJ_SUP=$BLJ_SUP' $(dockerID $1)/blj_webapp]"
+	echo "execute [ docker run --rm -p 8080:3000 -v /var/run/docker.sock:/var/run/docker.sock -v $BLJ/resources/config/gui:$EFS_CONFIG -v $BLJ_PROJ:$EFS_PROJ:delegated -v $BLJ:/app/biolockj -v $BLJ/web_app/logs:/log:delegated -e 'HOST_BLJ_PROJ=$BLJ_PROJ' -e 'HOST_BLJ=$BLJ' -e 'HOST_BLJ_SUP=$BLJ_SUP' $(dockerID $1)/biolockj_controller]"
 	docker run --rm -p 8080:3000 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v $BLJ/resources/config/gui:$EFS_CONFIG:ro \
+		-v $BLJ/resources/config/gui:$EFS_CONFIG \
 		-v $BLJ_PROJ:$EFS_PROJ:delegated \
 		-v $BLJ:/app/biolockj \
 		-v $BLJ_SUP:/app/blj_support \
@@ -79,7 +94,7 @@ devSupDockerWebApp() {
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
 		-e "HOST_BLJ=$BLJ" \
 		-e "HOST_BLJ_SUP=$BLJ_SUP" \
-		$(dockerID $1)/blj_webapp
+		$(dockerID $1)/biolockj_controller
 }
 
 # If the arg is empty, return the default value "biolockJ" 
@@ -90,6 +105,8 @@ dockerID() {
 		echo $1
 	fi
 }
+
+
 
 if [ "$1" == "-dev" ] || [ "$2" == "-dev" ]; then
 	dockerID=$DOCKER_HUB_USER

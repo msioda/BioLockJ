@@ -1,4 +1,4 @@
-# Deployment path: $DOCKER_FILE_PATH/blj_webapp.Dockerfile
+# Deployment path: $DOCKER_FILE_PATH/biolockj_controller.Dockerfile
 
 FROM biolockj/blj_basic_py2
 ARG DEBIAN_FRONTEND=noninteractive
@@ -6,15 +6,21 @@ ARG DEBIAN_FRONTEND=noninteractive
 #1.) Install Ubuntu Software
 ENV NODE_VERSION 8.11.3
 ENV NODE_URL="https://deb.nodesource.com/setup_8.x"
-RUN apt-get install -y \
+RUN apt-get update && \
+	apt-get install -y \
 	ca-certificates \
+	software-properties-common \
 	nodejs \
 	aptitude \
 	npm && \
-    wget $NODE_URL | bash - && \
-    pip install awscli
+	apt-get upgrade -y && \
+   	apt-get install -y openjdk-8-jre-headless && \
+    wget $NODE_URL | bash -
 
-#2.) Install Docker Client
+#2.) Install Nextflow Client
+RUN cd /usr/local/bin && wget -qO- https://get.nextflow.io | bash
+
+#3.) Install Docker Client
 ARG DOCKER_CLIENT
 ENV DOCKER_URL="https://download.docker.com/linux/static/stable/x86_64"
 RUN cd /usr/local/bin && \
@@ -23,7 +29,7 @@ RUN cd /usr/local/bin && \
 	mv tempDocker/* . && \
 	rm -rf tempDocker
 
-#3.) Install BioLockJ
+#4.) Install BioLockJ
 ARG BLJ_DATE
 ARG VER
 ENV BLJ_TAR=biolockj_${VER}.tgz
@@ -34,25 +40,27 @@ RUN echo ${BLJ_DATE} && \
 	wget -qO- $WGET_URL | bsdtar -xzf- && \
 	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]* && \
 	cp $BLJ/script/* /usr/local/bin
-	
-#4.) Install npm
+
+#5.) Install npm
 RUN cp $BLJ/web_app/package*.json ./
 RUN npm install --only=production
 RUN cp -r $BLJ/web_app/* ./
 
-#5.) Cleanup
+#6.) Cleanup
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
-	#rm -rf /usr/share/* && \
+	mv /usr/share/ca-certificates* ~ && \
+	rm -rf /usr/share/* && \
+	mv ~/ca-certificates* /usr/share && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
 
-#6.) Update  ~/.bashrc
+#7.) Update  ~/.bashrc
 RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
 	echo 'alias goblj=blj_go' >> ~/.bashrc
 		
-#7.) Start npm Command (Ready to open web-browser localhost:8080)
+#8.) Start npm Command (Ready to open web-browser localhost:8080)
 WORKDIR $BLJ/web_app/
 EXPOSE 8080
-CMD [ "npm", "start" ]
+CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS

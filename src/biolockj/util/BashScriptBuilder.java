@@ -76,7 +76,7 @@ public class BashScriptBuilder
 
 		buildWorkerScripts( module, data );
 
-		if( !RuntimeParamUtil.runAws() )
+		if( !DockerUtil.inAwsEnv() )
 		{
 			buildMainScript( module );
 		}
@@ -546,7 +546,7 @@ public class BashScriptBuilder
 
 	private static void setBatchSize( final ScriptModule module, final List<List<String>> data ) throws Exception
 	{
-		if( DockerUtil.isBljManager() )
+		if( RuntimeParamUtil.isDockerMode() && !DockerUtil.inAwsEnv() )
 		{
 			batchSize = data.size();
 		}

@@ -36,6 +36,11 @@ public final class DownloadUtil
 	// Prevent instantiation
 	private DownloadUtil()
 	{}
+	
+	private static boolean buildRsyncCmd( List<BioModule> modules ) throws Exception
+	{
+		return modules != null && !modules.isEmpty() && DockerUtil.inAwsEnv() || ( Config.isOnCluster() && getDownloadDirPath() != null );
+	}
 
 	/**
 	 * If running on cluster, build command for user to download pipeline analysis.<br>
@@ -51,7 +56,7 @@ public final class DownloadUtil
 	public static String getDownloadCmd() throws Exception
 	{
 		final List<BioModule> modules = getDownloadModules();
-		if( Config.isOnCluster() && modules != null && getDownloadDirPath() != null && !modules.isEmpty() )
+		if( buildRsyncCmd( modules ) )
 		{
 			boolean hasRmods = false;
 			final Set<File> downloadPaths = new TreeSet<>();
@@ -95,6 +100,14 @@ public final class DownloadUtil
 					+ " pipeline -->";
 			final String displaySize = FileUtils
 					.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
+			
+			
+			if( DockerUtil.inAwsEnv() )
+			{
+				Log.info( DownloadUtil.class, "Size of report files = [ " + displaySize + " ]:" + getDownloadListFile().getAbsolutePath() );
+				return null;
+			}
+			
 			final String src = SRC + "=" + Config.pipelinePath();
 			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
 					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
@@ -172,13 +185,14 @@ public final class DownloadUtil
 				}
 			}
 
+			Log.info( DownloadUtil.class, "Building download list: " + getDownloadListFile().getAbsolutePath() );
 			for( final File file: files )
 			{
-				Log.info( DownloadUtil.class, "Candidate download path: " + file.getAbsolutePath() );
+				Log.debug( DownloadUtil.class, "Candidate download path: " + file.getAbsolutePath() );
 				if( FileUtils.sizeOf( file ) != 0 && !file.getName().startsWith( "." ) )
 				{
 					downFiles.add( file );
-					Log.info( DownloadUtil.class, "Accepted download path: " + file.getAbsolutePath() );
+					Log.info( DownloadUtil.class, "Add download path: " + file.getAbsolutePath() );
 					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
 					writer.write( relPath + RETURN );
 				}
@@ -353,7 +367,7 @@ public final class DownloadUtil
 	/**
 	 * Name of the file holding the list of pipeline files to include when running {@link biolockj.util.DownloadUtil}
 	 */
-	public static final String DOWNLOAD_LIST = "downloadList.txt";
+	protected static final String DOWNLOAD_LIST = "downloadList.txt";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #DOWNLOAD_DIR}<br>

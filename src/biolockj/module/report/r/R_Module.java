@@ -202,7 +202,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 			}
 
 			final File rScript = getPrimaryScript();
-			if( RuntimeParamUtil.runAws() && ( rScript == null || !rScript.exists() ) )
+			if( DockerUtil.inAwsEnv() && ( rScript == null || !rScript.exists() ) )
 			{
 				sb.append( "Failed to generate R Script!" + RETURN );
 			}

@@ -266,7 +266,7 @@ public class QiimeClassifier extends ClassifierModuleImpl implements ClassifierM
 							+ QIIME_TAXA_DB + "=" + taxaDB );
 		}
 
-		if( RuntimeParamUtil.runAws() )
+		if( DockerUtil.inAwsEnv() )
 		{
 			return new File( DockerUtil.AWS_EFS_DB );
 		}

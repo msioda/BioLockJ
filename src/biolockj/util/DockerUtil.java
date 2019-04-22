@@ -199,17 +199,6 @@ public class DockerUtil
 		return Config.requireString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_AWS );
 	}
 
-	/**
-	 * Boolean to determine if running Docker blj_manager
-	 * 
-	 * @return TRUE if running Docker blj_manager
-	 * @throws Exception if unable to determine Docker module type
-	 */
-	public static boolean isBljManager() throws Exception
-	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !inAwsEnv();
-	}
-
 	private static String getDockerClassName( final BioModule module ) throws Exception
 	{
 		final String className = module.getClass().getSimpleName();

@@ -21,6 +21,16 @@ public class Constants
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();
+	
+	/**
+	 * {@link biolockj.Config} Boolean property: If enabled save pipeline to S3: {@value #AWS_COPY_PIPELINE_TO_S3}
+	 */
+	public static final String AWS_COPY_PIPELINE_TO_S3 = "aws.copyPipelineToS3";
+	
+	/**
+	 * {@link biolockj.Config} Boolean property: If enabled save reports to S3: {@value #AWS_COPY_PIPELINE_TO_S3}
+	 */
+	public static final String AWS_COPY_REPORTS_TO_S3 = "aws.copyReportsToS3";
 
 	/**
 	 * {@link biolockj.Config} String property: AWS memory set in Nextflow main.nf: {@value #AWS_RAM}
@@ -32,6 +42,18 @@ public class Constants
 	 * {@value #AWS_S3}
 	 */
 	public static final String AWS_S3 = "aws.s3";
+	
+	/**
+	 * Name of the AWS S3 subdirectory used to save pipeline reports
+	 */
+	public static final String AWS_REPORT_DIR = "reports";
+	
+	/**
+	 * Name of the AWS S3 subdirectory used to save pipeline reports
+	 */
+	public static final String AWS_PIPELINE_DIR = "pipelines";
+	
+	
 
 	/**
 	 * Name of the file created in the BioModule or {@value #PIPELINE_DIR} root directory to indicate execution was
@@ -61,10 +83,10 @@ public class Constants
 	public static final String CLASS = "class";
 
 	/**
-	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
-	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
+	 * {@link biolockj.Config} Boolean property: {@value #DETACH_JAVA_MODULES}<br>
+	 * If {@value biolockj.Constants#TRUE} Java modules do not run with main BioLockJ Java application
 	 */
-	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScript";
+	public static final String DETACH_JAVA_MODULES = "pipeline.detachJavaModules";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:

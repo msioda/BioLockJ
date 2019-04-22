@@ -65,16 +65,6 @@ public class RuntimeParamUtil
 				: new File( Config.getSystemFilePath( params.get( BASE_DIR_FLAG ) ) );
 	}
 
-	// /**
-	// * Runtime property getter for Docker host BioLockJ dir
-	// *
-	// * @return Host {@value #HOST_BLJ} directory
-	// */
-	// public static File getAwsStack()
-	// {
-	// return params.get( AWS_FLAG ) == null ? null : new File( params.get( AWS_FLAG ) );
-	// }
-
 	/**
 	 * @return String
 	 * @throws Exception if errors occur
@@ -236,12 +226,6 @@ public class RuntimeParamUtil
 			}
 		}
 
-		// if( RuntimeParamUtil.runAws() )
-		// {
-		// javaModArgs = javaModArgs.replace( getConfigFileParam(), CONFIG_FLAG + " " + AWS_CONFIG_DIR +
-		// Config.getConfigFileName() );
-		// }
-
 		return javaModArgs;
 	}
 
@@ -351,16 +335,6 @@ public class RuntimeParamUtil
 		validateParams();
 	}
 
-	/**
-	 * Runtime property getter for Docker host BioLockJ dir
-	 * 
-	 * @return Host {@value #HOST_BLJ} directory
-	 */
-	public static boolean runAws()
-	{
-		return params.get( AWS_FLAG ) != null;
-	}
-
 	private static void assignDirectPipelineDir() throws Exception
 	{
 		Log.info( RuntimeParamUtil.class,
@@ -452,10 +426,6 @@ public class RuntimeParamUtil
 			if( arg.equals( DOCKER_FLAG ) )
 			{
 				params.put( DOCKER_FLAG, Constants.TRUE );
-			}
-			else if( arg.equals( AWS_FLAG ) )
-			{
-				params.put( AWS_FLAG, Constants.TRUE );
 			}
 			else if( prevParam.equals( RESTART_FLAG ) )
 			{
@@ -611,11 +581,6 @@ public class RuntimeParamUtil
 			}
 		}
 	}
-
-	/**
-	 * AWS pipeline runtime parameter switch: {@value #AWS_FLAG}
-	 */
-	protected static final String AWS_FLAG = "-aws";
 
 	/**
 	 * Pipeline parent directory file-path runtime parameter switch: {@value #BASE_DIR_FLAG}

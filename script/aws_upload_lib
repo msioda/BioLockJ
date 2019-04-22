@@ -14,13 +14,12 @@ aws_sync_inputs_to_s3() {
 	
 	# Upload Config
 	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_s3_file $EFS_CONFIG/$(basename $propFile) config; done
+	for propFile in ${propFiles[@]}; do upload_s3_file $EFS_CONFIG/$(basename "${propFile}") config; done
 	
 	upload_s3_dir $EFS_DB db
-	upload_s3_dir $EFS_INPUT seq
+	upload_s3_dir $EFS_INPUT/$(basename "${inputDirPaths}") input
 	upload_s3_file $EFS_META metadata
 	upload_s3_file $EFS_PRIMER primer
-
 }
 
 # Sync local files to S3 for cloud pipeline execution
@@ -134,13 +133,13 @@ upload_config_to_aws() {
 	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile $EFS_CONFIG; done
 }
 
-# Upload local directory up to the ec2 head node, if no target dir specified use EC2 $HOME
+# Upload local directory up to the ec2 head node, if no target dir specified use EC2 $HOME: /Users/mike/git/blj_support/resources/test/data/r16s_fastq
 # Param 1 - Local dir
 # Param 2 - (optional) AWS ec2 directory-path 
 upload_dir_to_aws() {
-	if [ $# -eq 2 ]; then target="$2"; else target=$EC2_HOME; fi
-	aws_log "Uploading directory \"$1\" to AWS --> \"$target\" --> See file/sub-dir list below..."
-	for f in $1/*; do upload_file_to_aws "$f" "$target"; done
+	if [ $# -eq 2 ]; then target="${2}"/$(basename "${1}"); else target=$EC2_HOME/$(basename "${1}"); fi
+	aws_log "Uploading directory \"${1}\" to AWS --> \"$target\""
+	scp -pro StrictHostKeyChecking=no -i $(key_file) "${1}" ec2-user@$(get_ec2_public_ip):${target}
 }
 
 # Upload local file-path up to the ec2 head node, if no target dir specified use EC2 $HOME
@@ -156,7 +155,7 @@ upload_file_to_aws() {
 # Param 1 - AWS run-pipeline script
 upload_pipeline_inputs_to_aws() {
 	aws_log "Staging pipeline inputs..."
-	if [ -d "$inputDirPaths" ]; then
+	if [ -d "${inputDirPaths}" ]; then
 		upload_dir_to_aws ${inputDirPaths} $EFS_INPUT
 	else
 		exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config inputDirPaths is not a valid directory"

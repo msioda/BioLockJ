@@ -151,7 +151,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 		final String nuclPath = Config.requireString( this, HN2_NUCL_DB );
 		final String protPath = Config.requireString( this, HN2_PROT_DB );
 
-		if( RuntimeParamUtil.runAws() )
+		if( DockerUtil.inAwsEnv() )
 		{
 			return new File( DockerUtil.AWS_EFS_DB );
 		}
