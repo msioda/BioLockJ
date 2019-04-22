@@ -15,6 +15,7 @@
       <a id="recent" href="#">(Auto)Saved configuration</a>
     </div>
   </div>
+  <button class="dropdown" id="prevConfigNavBut">Previously run config</button>
 </div>
 
 <div class="banner">BioLockJ</div>
@@ -1124,6 +1125,21 @@
   </div>
 </div>
 
+<div id="prevConfigModal"class="modal">
+  <div class="modal-content">
+    <span class="closeModal">&times;</span>
+    <div class="">
+      Any previously run config file can be cloned, however, only unsuccessful configs can be edited.
+      <div >
+        <ul id="prevRunConfigsUl">
+
+        </ul>
+      </div>
+    </div>
+    <button type="button" class="closeModal" name="cancel">Cancel</button>
+  </div>
+</div>
+
 <div class="banner">
   <!--Working on logo here-->
   <?xml version="1.0" standalone="No"?>
@@ -1156,10 +1172,10 @@
 <script type="text/javascript" src="./../javascripts/awsMiniDash.js"></script>
 
 
-<script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+<!-- <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.24.0/babel.js"></script>
-<script <script type="text/babel" src="./../javascripts/config_react.js"></script>
+<script <script type="text/babel" src="./../javascripts/config_react.js"></script> -->
 
 </script>
 <!-- <script type="text/javascript" src="resetAnimationWorker.js"></script> -->
