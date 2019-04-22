@@ -738,6 +738,7 @@ for (const launch of document.getElementsByClassName("openLaunchModal")) {
           //get all projects as options for restart
           for (var i = 0; i < projNames.length; i++) {
             let newRadio = document.createElement('input');
+
             newRadio.setAttribute('type', 'radio');
             newRadio.setAttribute('name', 'projLaunch');
             newRadio.setAttribute('value', projNames[i]);
@@ -1088,6 +1089,61 @@ document.getElementById('submitDeleteConfig').addEventListener('click', event =>
   });//end forEach
 })//end submitDeleteConfig').addEventListener(
 
+document.getElementById('prevConfigNavBut').addEventListener('click', event => {
+  const mdl = document.getElementById('prevConfigModal');
+  const hook = document.getElementById('prevRunConfigsUl');
+
+  const pipes = retrievePipelines();
+  /*retrievePipelines() should return an object with 4 properties:
+    names, descrips, paths, and complete.*/
+  pipes.then( pl => { //pl for pipelines
+    clearChildren(hook);//clear the ul elements
+
+    for (var i = 0; i < pl.names.length; i++) {
+      console.log(pl.names[i]);
+      let l = document.createElement('li');
+
+      // l.descrip = pl.descrips[i];
+      l.innerHTML = pl.names[i];
+
+      l.setAttribute('data-configPath', pl.paths[i]);
+
+      let cloneForm = document.createElement('form');
+      cloneForm.onsubmit = function() {
+        console.log(this);
+        let f = new FormData(clone.form);
+        console.log(f.get('cloneName'));
+        let cl = f.get('cloneName');
+        cloneConfig(l.getAttribute('data-configPath'), cl)
+        toggleShow('prevConfigModal');
+        mainMenu.style.display = 'block';
+        console.log('done');
+        return false;
+      }
+
+      let clone = document.createElement('button');
+      clone.innerHTML = `clone ${pl.names[i]}`
+      clone.setAttribute('type', 'submit');
+
+      let nameInp = document.createElement('input');
+      nameInp.setAttribute('type', 'text');
+      nameInp.setAttribute('name', 'cloneName');
+      nameInp.setAttribute('placeholder', 'select name for clone');
+      nameInp.setAttribute('required', true);
+
+      cloneForm.appendChild(clone);
+      cloneForm.appendChild(nameInp);
+
+      l.appendChild(cloneForm);
+
+      hook.appendChild(l);
+
+    }
+  });
+
+  toggleShow('prevConfigModal');
+})
+
 //Updates local list of configs based on list from node.
 function updateConfigManager() {
   const manager = document.getElementById('configManager');
@@ -1230,6 +1286,20 @@ function deleteConfig(configFileName) {
   request.setRequestHeader("Content-Type", "application/json");
   request.send(JSON.stringify({configFileName : configFileName}));
 }//end deleteConfig(configFileName)
+
+function cloneConfig(configPath, newConfigName){
+  let tempConfig = new Config();
+  const tempProps = retrievePropertiesFile({propertiesFile : configPath});
+  tempProps.then( tp => {
+    console.log('tp: ', tp.data);
+    tempConfig.loadFromText(tp.data);
+    tempConfig.paramKeys.push("pipeline.configFile");
+    tempConfig.paramValues.push(newConfigName);
+    tempConfig.configPath = configPath;
+    currentConfig = tempConfig;
+    currentConfig.sendConfigDataToForms();
+  })
+}
 
 window.onload = function(){
   let configPath = document.getElementById('configPath').innerHTML.trim();
