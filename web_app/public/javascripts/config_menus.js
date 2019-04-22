@@ -4,6 +4,21 @@ function projectOptions() {
   document.getElementById("projects").classList.toggle("show");
 }
 
+function toggleShow(trgt, useId = true) {
+//can be used on html objects or their ids
+  let x;
+  if (useId = true){
+    x = document.getElementById(trgt);
+  }else{
+    x = trgt;
+  }
+  if (x.style.display === "none") {
+    x.style.display = "block";
+  } else {
+    x.style.display = "none";
+  }
+}
+
 //Open the main Menu when "Projects" -> "New" is clicked
 function newProj() {
   document.getElementById("mainMenu").style.display = "block";
@@ -537,3 +552,11 @@ function runModuleFunctions() {//large function to build module li and counters
      }
    }
  }
+
+function clearChildren(t) {
+  while (t.firstChild) {
+    t.removeChild(t.firstChild);
+  }
+}
+
+
