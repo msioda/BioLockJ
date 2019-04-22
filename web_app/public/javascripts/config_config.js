@@ -1122,7 +1122,7 @@ document.getElementById('prevConfigNavBut').addEventListener('click', event => {
       }
 
       let clone = document.createElement('button');
-      clone.innerHTML = `clone ${pl.names[i]}`
+      clone.innerHTML = `clone ${pl.names[i]}`;
       clone.setAttribute('type', 'submit');
 
       let nameInp = document.createElement('input');
@@ -1135,6 +1135,19 @@ document.getElementById('prevConfigNavBut').addEventListener('click', event => {
       cloneForm.appendChild(nameInp);
 
       l.appendChild(cloneForm);
+
+      if (pl.complete[i] === false) {
+        let editButt = document.createElement('button');
+        editButt.innerHTML = `edit ${pl.names[i]}`;
+        clone.setAttribute('type', 'button');
+        l.appendChild(editButt);
+        editButt.addEventListener('click', function(){
+          loadConfigPathToForm(l.getAttribute('data-configPath'));
+          toggleShow('prevConfigModal');
+          mainMenu.style.display = 'block';
+          console.log('done');
+        })
+      }
 
       hook.appendChild(l);
 
