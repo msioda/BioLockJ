@@ -577,8 +577,8 @@ public class Config
 			Log.debug( Config.class, "# initial props: " + props.size() );
 			unmodifiedInputProps.putAll( props );
 			Log.debug( Config.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
-			TaxaUtil.initTaxaLevels();
 		}
+		TaxaUtil.initTaxaLevels();
 	}
 
 	/**

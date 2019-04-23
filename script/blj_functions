@@ -131,7 +131,7 @@ is_pipeline_dir() {
 # Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
 most_recent_pipeline() {
 	IFS2="${IFS}"
-	if ! $(dir_missing "${BLJ_PROJ}"); then
+	if [ ! -d "${BLJ_PROJ}" ]; then
 		IFS=$'\n' && dirs=$(\ls -1dt $BLJ_PROJ/*) && myDirs=( "$dirs" )
 		for dir in $myDirs; do
 			$(is_pipeline_dir $dir) && IFS="${IFS2}" && echo "$dir" && return
