@@ -131,7 +131,7 @@ get_stack_param() {
 
 # Create the basic nextflow config file using the current statck AWS batch queues
 init_nextflow_config() {
-	echo "// Nextflow properties inherited by main.nf in BioLockJ $(get_version) pipelines" > $(get_nextflow_config)
+	echo "// Nextflow properties inherited by main.nf in BioLockJ $(biolockj -v) pipelines" > $(get_nextflow_config)
 	echo "" >> $(get_nextflow_config)
 	echo "executor {" >> $(get_nextflow_config)
     echo "    name = 'awsbatch'" >> $(get_nextflow_config)

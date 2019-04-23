@@ -9,7 +9,6 @@
 ##                                                                            ##
 ################################################################################
 . $BLJ/script/blj_config
-echo "Check EFS_CONFIG --> $EFS_CONFIG"
 . $EFS_CONFIG/aws_config
 
 AWS_DIR="$HOME/.aws"
@@ -49,7 +48,7 @@ buildNexflowConfigDir() {
 buildNexflowTemplate() {
 	modules="${2}"
 	numModules=$(echo $modules | wc -w | xargs)
-	summaryMsg="BioLockJ $(get_version) generated Nextflow Config with $numModules BioModule process definitions"
+	summaryMsg="BioLockJ $(biolockj -v) generated Nextflow Config with $numModules BioModule process definitions"
 	echo "// $summaryMsg" > "${1}"
 	echo "" >> "${1}"
 	for module in ${modules[@]}; do
@@ -72,6 +71,7 @@ buildNexflowTemplate() {
 	echo "-----------------------------------------------------------------------------------------"	
 }
 
+# Get the module list 
 get_modules() {
 	modules=${1//./ }
 	modules=( $modules )

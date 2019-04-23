@@ -13,9 +13,16 @@
 . $BLJ/script/blj_functions
 . $BLJ/script/aws_functions
 
-config=
-runAws=
 bljJar=$BLJ/dist/BioLockJ.jar
+
+# Display BioLockJ release version
+display_version() {
+	if [ -f "$BLJ/.version" ]; then
+		cat $BLJ/.version
+	else
+		echo "Missing $BLJ/.version"
+	fi
+}
 
 # Convert input parameters to array with values "name=value"
 get_params() {
@@ -25,91 +32,110 @@ get_params() {
 	myConfig=
 	name=
     for arg in ${args[@]}; do  
-    		[ $((i%2)) -eq 0 ] && name=${arg}
-    		if [ $((i%2)) -eq 1 ]; then
-    			[ "$name" == "-c" ] || [ "$name" == "-config" ] && myConfig=${arg}
-    			echo "$name=${arg}"
-    			name=""
+		[ $((i%2)) -eq 0 ] && name=${arg}
+		if [ $((i%2)) -eq 1 ]; then
+    		[ "$name" == "-c" ] || [ "$name" == "-config" ] && myConfig=${arg}
+    		echo "$name=${arg}"
+    		name=""
 		fi  
-    		i=$(expr $i + 1)
+    	i=$(expr $i + 1)
     done
     [ ${#name} -gt 0 ] && [ ${#myConfig} -eq 0 ] && echo "-c=$name"
 }
 
-if [ $# -eq 0 ]; then
-	$BLJ/script/biolockj -h
-	exit_script "Error [ biolockj ]: Missing required parameters"
-fi
-
-inArray=$(get_params $@)
-
-runAws=$(named_arg $inArray -a)
-[ ${#runAws} -eq 0 ] && runAws=$(named_arg $inArray --aws)
-
-config=$(named_arg $inArray -c)
-[ ${#config} -eq 0 ] && config=$(named_arg $inArray --config)
-
-restart=$(named_arg $inArray -r)
-[ ${#restart} -eq 0 ] && restart=$(named_arg $inArray --restart)
-
-newPass=$(named_arg $inArray -p)
-[ ${#newPass} -eq 0 ] && newPass=$(named_arg $inArray --password)
-
-[ $# -eq 1 ] && [ ${#config} -eq 0 ] && config=$1
-[ ! -f "$config" ] && [ ${#restart} -eq 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
-[ ! -f "$config" ] && [ ! -d "$restart" ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$restart\" is not a valid directory \n"
-
-if [ ${#runAws} -gt 0 ]; then
-	aws_response=$(run_aws $config)
-	if [ $? -eq 0 ] && [ ${#aws_response} -gt 0 ]; then
-		exit_script "Successfully launched AWS Pipeline" 0
-	else
-		exit_script "Error [ biolockj ]: Failed to launch AWS Pipeline: $aws_response"
-	fi
-fi
-
-[ ! -d "$BLJ_PROJ" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"$BLJ_PROJ\""
-[ ! -f "$bljJar" ] && exit_script "Error [ biolockj ]: Jar file \"$bljJar\" not found"
-
-if [ $# -eq 1 ] && [ "$1" == "-h" ] || [ "$1" == "--help" ]; then   
+# Show the help menu
+display_help() {
     echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
-    echo "Run new pipeline:   biolockj               <config_file>"
-    echo "Run AWS pipeline:             -a/--aws     <config_file>"
-    echo "Run new pipeline:             -c/--config  <config_file>"
-    echo "Show help menu:               -h/--help"
-    echo "Encrypt password:             -p/--pass     <new_passw>"
-    echo "Restart pipeline:             -r/--restart  <directory>"
-    exit 0
-fi
+    echo "Run new pipeline:   biolockj                       <config_file>"
+    echo "Run new pipeline:             -c/--config/config   <config_file>"
+    echo "Run AWS pipeline:             -a/--aws/aws         <config_file>"
+    echo "Restart pipeline:             -r/--restart/restart  <directory>"
+    echo "Encrypt password:             -p/--pass/pass        <new_passw>"
+    echo "Show help menu:               -h/--help/help"
+    echo "Display BioLockJ version:     -v/--version/version"
+}
 
-i=0
-initPipeline=$(most_recent_pipeline)
-pipelineDir=$(most_recent_pipeline)
-initJava=$(ps | grep -c java)
-numJava=$(ps | grep -c java)
+# Initialize script, read in script arguments
+init() {
+	inArray=$(get_params $@)
+	runAws=$(named_arg $inArray -a)
+	[ ${#runAws} -eq 0 ] && runAws=$(named_arg $inArray --aws)
+	[ ${#runAws} -eq 0 ] && runAws=$(named_arg $inArray aws)
+	config=$(named_arg $inArray -c)
+	[ ${#config} -eq 0 ] && config=$(named_arg $inArray --config)
+	[ ${#config} -eq 0 ] && config=$(named_arg $inArray config)
+	restart=$(named_arg $inArray -r)
+	[ ${#restart} -eq 0 ] && restart=$(named_arg $inArray --restart)
+	[ ${#restart} -eq 0 ] && restart=$(named_arg $inArray restart)
+	newPass=$(named_arg $inArray -p)
+	[ ${#newPass} -eq 0 ] && newPass=$(named_arg $inArray --pass)
+	[ ${#newPass} -eq 0 ] && newPass=$(named_arg $inArray pass)
+}
 
-echo -e "Launching BioLockJ Java application with CMD:  \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\""
-nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &
-[ $? != 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
-printf "Initializing BioLockJ"
+# Launch AWS pipeline
+launchAwsPipeline() {
+	run_aws $config start
+	status=$?
+	if [ $status -eq 0 ] && [ ${#aws_response} -gt 0 ]; then
+		exit_script "Successfully ran AWS Pipeline" 0
+	else
+		exit_script "Error [ biolockj ]: AWS Pipeline failed" $status
+	fi
+}
 
-while [ $i -lt 10 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
-	sleep 1
-	((i++))
-	printf "."
-	pipelineDir="$(most_recent_pipeline)"
+# Launch local pipeline
+launchLocalPipeline() {
+	i=0
+	initPipeline=$(most_recent_pipeline)
+	pipelineDir=$(most_recent_pipeline)
+	initJava=$(ps | grep -c java)
 	numJava=$(ps | grep -c java)
-done
+	
+	echo -e "Launching BioLockJ Java application with CMD:  \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\""
+	nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &
+	[ $? != 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
+	printf "Initializing BioLockJ"
+	
+	while [ $i -lt 10 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
+		sleep 1 && ((i++)) && printf "." && pipelineDir="$(most_recent_pipeline)" && numJava=$(ps | grep -c java)
+	done
+	
+	if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ] && [ "$initPipeline" == "$pipelineDir" ]; then
+		echo "Restarted pipeline:  $pipelineDir"
+	elif [ ${#restart} -eq 0 ] && [ "$initPipeline" != "$pipelineDir" ]; then
+		echo "Started new pipeline:  $pipelineDir"
+	elif [ ${#restart} -eq 0 ]; then
+		echo "BioLockJ may have failed on: exec( \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\" )"
+		echo "Check $BLJ_PROJ for new pipeline directory" && return
+	fi
+	
+	echo "blj_go       -> Move to pipeline output directory"
+	echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
+	echo "blj_summary  -> View module execution summary"
+}
 
-if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ] && [ "$initPipeline" == "$pipelineDir" ]; then
-	echo "Restarted pipeline:  $pipelineDir"
-elif [ ${#restart} -eq 0 ] && [ "$initPipeline" != "$pipelineDir" ]; then
-	echo "Started new pipeline:  $pipelineDir"
-elif [ ${#restart} -eq 0 ]; then
-	echo "BioLockJ may have failed on: exec( \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\" )"
-	echo "Check $BLJ_PROJ for new pipeline directory" && return
+# Verify input argument paths
+verifyArgPaths() {
+	[ $# -eq 1 ] && [ ${#config} -eq 0 ] && config="${1}"
+	[ ! -f "$config" ] && [ ${#restart} -eq 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
+	[ ! -f "$config" ] && [ ! -d "$restart" ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$restart\" is not a valid directory \n"
+}
+
+# Verify required local BioLockJ system paths exist
+verifyLocalBljPaths() {
+	[ ! -d "$BLJ_PROJ" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"$BLJ_PROJ\""
+	[ ! -f "$bljJar" ] && exit_script "Error [ biolockj ]: Jar file \"$bljJar\" not found"
+} 
+
+init $@
+if [ $# -eq 0 ] || [ "${1}" == "-h" ] || [ "${1}" == "--help" ] || [ "${1}" == "help" ]; then
+	display_help
+elif [ "${1}" == "-v" ] || [ "${1}" == "--version" ] || [ "${1}" == "version" ]; then
+	display_version 
+elif [ ${#runAws} -gt 0 ]; then
+	verifyArgPaths $@
+	launchAwsPipeline
+else
+	verifyLocalBljPaths $@
+	launchLocalPipeline
 fi
-
-echo "blj_go       -> Move to pipeline output directory"
-echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
-echo "blj_summary  -> View module execution summary"

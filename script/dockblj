@@ -39,7 +39,7 @@ arg_exists() {
 # Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
 blj_options() {
 	options="-docker -b $(blj_proj) -C $(dirname $config) -c $EFS_CONFIG/$(basename $config) -u $HOME" 
-	$(has_param $doRestart) && options="$options -r $(restart_dir)"
+	$(has_param $doRestart) && options="$options -r $EFS_PROJ/${doRestart#$(blj_proj)/}"
 	$(has_param $newPass) && options="$options -p $newPass"
 	$(has_param $inputDir) && options="$options -i $inputDir"
 	$(has_param $metaPath) && options="$options -m $metaPath"
@@ -67,45 +67,29 @@ blj_proj() {
 	exit_script "Error [ dockblj ]: Required env variable BLJ_PROJ undefined"
 }
 
-# Return boolean evaluation if single argument passed exists with a non-zero size
+# Get the Docker volumes to map
+get_volumes() {
+	vols="-v /var/run/docker.sock:/var/run/docker.sock"
+	if $(has_param $runAws); then
+		vols="${vols} -v $EC2_HOME/miniconda:$EC2_HOME/miniconda -v $EFS:$EFS"
+	else
+		vols="${vols} -v $(blj_proj):$EFS_PROJ:delegated -v $inputDir:$EFS_INPUT -v $(dirname $config):$EFS_CONFIG"
+		$(has_param $metaPath) && vols="${vols} -v $metaPath:$EFS_META"
+		$(has_param $HOST_BLJ) && vols="${vols} -v $HOST_BLJ:/app/biolockj"
+		$(has_param $HOST_BLJ_SUP) && vols="${vols} -v $HOST_BLJ_SUP:/app/blj_support"
+	fi
+	echo "${vols}"
+}
+
+# Boolean evaluation if single argument passed exists with a non-zero size
 has_param() {
 	[ ${#1} -gt 0 ]
 }
 
-# Get the Docker biolockj module with $DOCKER_HUB_USER user prefix
-manager_type() {
-	if $(has_param $runAws); then
-		echo  $DOCKER_HUB_USER/biolockj_controller
-	else
-		echo $DOCKER_HUB_USER/biolockj_controller
-	fi
-}
-
-# Get the internal Docker restart directory
-restart_dir() {
-	
-	echo "$EFS_PROJ/${doRestart#$(blj_proj)/}"
-}
-
-get_volumes() {
-	D_SOCK="/var/run/docker.sock"
-	vols="-v $D_SOCK:$D_SOCK"
-	if $(has_param $runAws); then
-		vols="${val} -v $EC2_HOME/miniconda:$EC2_HOME/miniconda -v $EFS:$EFS"
-	else
-		vols="${val} -v $(blj_proj):$EFS_PROJ:delegated -v $inputDir:$EFS_INPUT -v $(dirname $config):$EFS_CONFIG"
-		$(has_param $metaPath) && vols="$val -v $metaPath:$EFS_META"
-		$(has_param $HOST_BLJ) && vols="$val -v $HOST_BLJ:/app/biolockj"
-		$(has_param $HOST_BLJ_SUP) && vols="$val -v $HOST_BLJ_SUP:/app/blj_support"
-	fi
-	echo "$vols"
-}
-
 # Call the docker run command with the correct parameters
-# If parameter is passed, add it to blj_options
 run_docker() {
-	echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$(blj_options)' $(get_volumes) $DOCKER_HUB_USER/biolockj_controller"
-	//docker run --rm -e 'BLJ_OPTIONS=$opt' $(get_volumes) $DOCKER_HUB_USER/biolockj_controller
+	echo "execute[ docker run --rm -e 'BLJ_OPTIONS=$(blj_options)' $(get_volumes) $DOCKER_HUB_USER/biolockj_controller ]"
+	docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) $DOCKER_HUB_USER/biolockj_controller
 }
 
 # Verify host directory exists, if dockblj is not deployed inside a Docker container
@@ -126,7 +110,7 @@ verify_inputs() {
 	$(has_param $config) && verify_host_file $config Config
 	$(has_param $metaPath) && verify_host_dir $metaPath Metadata
 	! $(has_param $inputDir) && exit_script "Error [ dockblj ]: The -i parameter must reference a single input directory"
-	dirPath=( ${inputDir//,} )
+	dirPath=( ${inputDir//, } )
 	[ ${#dirPath[@]} -gt 1 ] && exit_script "Error [ dockblj ]: The -i parameter must reference a single input directory"
 	verify_host_dir $dirPath Input
 }

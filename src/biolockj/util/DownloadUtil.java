@@ -374,7 +374,7 @@ public final class DownloadUtil
 	/**
 	 * Name of the file holding the list of pipeline files to include when running {@link biolockj.util.DownloadUtil}
 	 */
-	protected static final String DOWNLOAD_LIST = "downloadList.txt";
+	public static final String DOWNLOAD_LIST = "downloadList.txt";
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
 	private static final String SRC = "src";

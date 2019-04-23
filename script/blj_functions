@@ -75,7 +75,7 @@ blj_summary() {
 
 # Return absolute path of current pipeline if in a pipeline directory
 current_pipeline() {
-	if ! $(dir_missing $BLJ_PROJ); then
+	if [ ! -d "${BLJ_PROJ}" ]; then
 		dir="$PWD"
 		parentDir="$(dirname $dir)"
 		while [ "$parentDir" != "$BLJ_PROJ" ] && [ "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
@@ -95,22 +95,6 @@ exit_script() {
 	status=$2
 	[ ${#status} -eq 0 ] && status=1
 	echo "$1" && sleep 5 && exit $2
-}
-
-# Return BioLockJ release version
-get_version() {
-	if [ -f "$BLJ/.version" ]; then
-		{ read -r v; } < "$BLJ/.version"
-		echo $v
-	else
-		echo "Missing $BLJ/.version"
-	fi
-}
-
-# Return 0 if directory is empty (or missing)
-# Param 1 - Directory-path expected
-dir_missing() {
-	[ ! -d "$1" ] || [ -z "$(\ls -A $1)" ]
 }
 
 # Check if parameter contains alpha-numeric chars [a-zA-Z0-9]
@@ -146,7 +130,7 @@ is_pipeline_dir() {
 
 # Return absolute path of most recent pipeline
 most_recent_pipeline() {
-	if ! $(dir_missing $BLJ_PROJ); then
+	if [ ! -d "${BLJ_PROJ}" ]; then
 		for dir in $(\ls -1dt $BLJ_PROJ/*); do
 			$(is_pipeline_dir $dir) && echo "$dir" && return
 		done
