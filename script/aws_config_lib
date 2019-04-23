@@ -255,7 +255,7 @@ set_pipeline_conig_props() {
 	convert_prop "$1" "docker.imgVersion"
 	convert_prop "$1" "docker.user"
 	convert_prop "$1" "metadata.filePath"
-	convert_prop "$1" "pipeline.javaModuleOverride"
+	convert_prop "$1" "pipeline.detachJavaModules"
 	convert_prop "$1" "trimPrimers.filePath"
 	convert_prop "$1" "input.dirPaths"
 	convert_db_prop "$1" "kneaddata.dbs"
