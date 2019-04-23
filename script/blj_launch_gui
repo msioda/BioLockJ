@@ -36,11 +36,9 @@ runDockerAwsWebApp() {
 		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
 		--entrypoint '/bin/bash' \
-		$(dockerID $1)/biolockj_controller
+		$(dockerID $1)/biolockj_controller \
 		-c 'npm start'
 }	
-
-
 
 # Launch biolockj_controller on localhost for standard users.
 # ---> Assign env var HOST_BLJ_PROJ=$BLJ_PROJ
@@ -53,7 +51,9 @@ runDockerWebApp() {
 		-v $BLJ_PROJ:$EFS_PROJ:delegated  \
 		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
-		$(dockerID $1)/biolockj_controller
+		--entrypoint '/bin/bash' \
+		$(dockerID $1)/biolockj_controller \
+		-c 'npm start'
 }
 
 # Launch biolockj_controller on localhost in "dev mode"  by overriding default container $BLJ
@@ -71,7 +71,9 @@ devDockerWebApp() {
 		-v $BLJ/web_app/logs:/log:delegated \
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
 		-e "HOST_BLJ=$BLJ" \
-		$(dockerID $1)/biolockj_controller
+		--entrypoint '/bin/bash' \
+		$(dockerID $1)/biolockj_controller \
+		-c 'npm start'
 }
 
 # Launch biolockj_controller on localhost in "dev mode" by overriding default container $BLJ + add $BLJ_SUP dir
@@ -94,7 +96,9 @@ devSupDockerWebApp() {
 		-e "HOST_BLJ_PROJ=$BLJ_PROJ" \
 		-e "HOST_BLJ=$BLJ" \
 		-e "HOST_BLJ_SUP=$BLJ_SUP" \
-		$(dockerID $1)/biolockj_controller
+		--entrypoint '/bin/bash' \
+		$(dockerID $1)/biolockj_controller \
+		-c 'npm start'
 }
 
 # If the arg is empty, return the default value "biolockJ" 
@@ -105,8 +109,6 @@ dockerID() {
 		echo $1
 	fi
 }
-
-
 
 if [ "$1" == "-dev" ] || [ "$2" == "-dev" ]; then
 	dockerID=$DOCKER_HUB_USER

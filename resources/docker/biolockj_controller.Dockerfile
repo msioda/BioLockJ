@@ -38,19 +38,21 @@ RUN echo ${BLJ_DATE} && \
 	mkdir $BLJ && \
 	cd $BLJ && \
 	wget -qO- $WGET_URL | bsdtar -xzf- && \
-	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]* && \
-	cp $BLJ/script/* /usr/local/bin
+	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]*
 
 #5.) Install npm
-RUN cp $BLJ/web_app/package*.json ./
-RUN npm install --only=production
-RUN cp -r $BLJ/web_app/* ./
+RUN cp $BLJ/web_app/package-lock.json ./ && \
+	cp $BLJ/web_app/package.json ./ && \
+	npm install --only=production && \
+	cp -r $BLJ/web_app/* ./
 
 #6.) Cleanup
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
 	mv /usr/share/ca-certificates* ~ && \
+	mv /usr/share/npm ~ && \
 	rm -rf /usr/share/* && \
+	mv ~/npm /usr/share && \
 	mv ~/ca-certificates* /usr/share && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \

@@ -13,14 +13,15 @@ package biolockj;
 
 import java.io.File;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.TaxaUtil;
+import biolockj.util.*;
 
 /**
  * Provides type-safe, validated methods for storing/accessing system properties.<br>
@@ -554,16 +555,30 @@ public class Config
 		configFile = RuntimeParamUtil.getConfigFile();
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = Properties.loadProperties( configFile );
-		initProjectProps();
-		for( final Object key: props.keySet() )
+		if( RuntimeParamUtil.isDirectMode() )
 		{
-			Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String) key ) );
+			final IOFileFilter ff = new WildcardFileFilter( Constants.MASTER_PREFIX + "*" );
+			final Collection<File> scripts = FileUtils.listFiles( RuntimeParamUtil.getDirectPipelineDir(), ff, null );
+			if( scripts == null || scripts.isEmpty() )
+			{
+				throw new Exception( "Cannot find MASTER config in " + RuntimeParamUtil.getDirectPipelineDir() );
+			}
+			final File masterConfig = scripts.iterator().next();			
+			Log.debug( Config.class, "Load MASTER Config for direct Java Module: " + masterConfig.getAbsolutePath() );
+			props = Properties.loadProperties( masterConfig );
 		}
-
-		Log.debug( Config.class, "# initial props: " + props.size() );
-		unmodifiedInputProps.putAll( props );
-		Log.debug( Config.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
-		TaxaUtil.initTaxaLevels();
+		else
+		{
+			initProjectProps();
+			for( final Object key: props.keySet() )
+			{
+				Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String) key ) );
+			}
+			Log.debug( Config.class, "# initial props: " + props.size() );
+			unmodifiedInputProps.putAll( props );
+			Log.debug( Config.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
+			TaxaUtil.initTaxaLevels();
+		}
 	}
 
 	/**
@@ -945,10 +960,6 @@ public class Config
 		if( RuntimeParamUtil.doRestart() )
 		{
 			setPipelineDir( RuntimeParamUtil.getRestartDir() );
-		}
-		else if( RuntimeParamUtil.isDirectMode() )
-		{
-			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
 		}
 		else
 		{

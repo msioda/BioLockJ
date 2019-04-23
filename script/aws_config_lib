@@ -235,7 +235,6 @@ set_pipeline_config_files() {
 # Param 1 - Pipeline Config file path
 set_pipeline_conig_props() {
 	aws_log "Update \"$blj_aws_config\" with AWS properties found in Pipeline Config \"$1\""
-	convert_prop "$1" "aws.account_id"
 	convert_prop "$1" "aws.ami"
 	convert_prop "$1" "aws.ec2AcquisitionStrategy"
 	convert_prop "$1" "aws.ec2InstanceID"
@@ -276,7 +275,6 @@ set_pipeline_conig_props() {
 verify_config() {
 	refresh_aws_cache
 	aws_log "Assign default AWS Config properties..."
-	[ ${#awsAccount_id} -eq 0 ] && set_blj_prop awsAccount_id $(aws ec2 describe-security-groups --group-names Default --query SecurityGroups[0].OwnerId)
 	[ ${#awsProfile} -eq 0 ] && set_blj_prop awsProfile default
 	[ ${#awsRegion} -eq 0 ] && set_blj_prop awsRegion $(aws configure get region)
 	[ ${#awsEc2InstanceType} -eq 0 ] && set_blj_prop awsEc2InstanceType t2.micro
@@ -286,7 +284,6 @@ verify_config() {
 	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key ~/.aws/credentials)
 	refresh_aws_cache
 	aws_log "Verify AWS client authentication properties..."
-	[ ${#awsAccount_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws.account_id\" - please log into aws client from command line and try again."
 	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."
 	[ ${#aws_access_key_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
 	[ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."

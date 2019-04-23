@@ -11,8 +11,7 @@ RUN echo ${BLJ_DATE} && \
 	mkdir $BLJ && \
 	cd $BLJ && \
 	wget -qO- $WGET_URL | bsdtar -xzf- && \
-	rm -rf $BLJ/[bilw]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/docs && rm -rf $BLJ/src && \
-	cp $BLJ/script/* /usr/local/bin 
+	rm -rf $BLJ/[bilw]* && rm -rf $BLJ/resources/[bdil]* && rm -rf $BLJ/docs && rm -rf $BLJ/src 
 
 #2.) Cleanup
 RUN	apt-get clean && \

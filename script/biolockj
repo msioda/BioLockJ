@@ -24,6 +24,18 @@ display_version() {
 	fi
 }
 
+# Show the help menu
+display_help() {
+    echo "BioLockJ $(display_version) - UNCC Fodor Lab July 2018"
+    echo "Run new pipeline:   biolockj                       <config_file>"
+    echo "Run new pipeline:             -c/--config/config   <config_file>"
+    echo "Run AWS pipeline:             -a/--aws/aws         <config_file>"
+    echo "Restart pipeline:             -r/--restart/restart  <directory>"
+    echo "Encrypt password:             -p/--pass/pass        <new_passw>"
+    echo "Show help menu:               -h/--help/help"
+    echo "Display BioLockJ version:     -v/--version/version"
+}
+
 # Convert input parameters to array with values "name=value"
 get_params() {
 	args=("$@")
@@ -41,18 +53,6 @@ get_params() {
     	i=$(expr $i + 1)
     done
     [ ${#name} -gt 0 ] && [ ${#myConfig} -eq 0 ] && echo "-c=$name"
-}
-
-# Show the help menu
-display_help() {
-    echo "BioLockJ $(get_version) - UNCC Fodor Lab July 2018"
-    echo "Run new pipeline:   biolockj                       <config_file>"
-    echo "Run new pipeline:             -c/--config/config   <config_file>"
-    echo "Run AWS pipeline:             -a/--aws/aws         <config_file>"
-    echo "Restart pipeline:             -r/--restart/restart  <directory>"
-    echo "Encrypt password:             -p/--pass/pass        <new_passw>"
-    echo "Show help menu:               -h/--help/help"
-    echo "Display BioLockJ version:     -v/--version/version"
 }
 
 # Initialize script, read in script arguments
@@ -108,7 +108,6 @@ launchLocalPipeline() {
 		echo "BioLockJ may have failed on: exec( \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\" )"
 		echo "Check $BLJ_PROJ for new pipeline directory" && return
 	fi
-	
 	echo "blj_go       -> Move to pipeline output directory"
 	echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
 	echo "blj_summary  -> View module execution summary"

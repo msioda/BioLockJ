@@ -54,20 +54,6 @@ get_aws_profile() {
 	echo "[${awsProfile}]"
 }
 
-# Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
-most_recent_pipeline() {
-	IFS2="$IFS"
-	if ! $(dir_missing $BLJ_PROJ); then
-		IFS=$'\n'
-		dirs=$(\ls -1dt $BLJ_PROJ/*)
-		myDirs=( "$dirs" )
-		for dir in $myDirs; do
-			$(is_pipeline_dir $dir) && echo "$dir" && IFS=$"IFS2" && return
-		done
-	fi
-	IFS=$"IFS2"
-}
-
 # Initialize bash environment
 source "$HOME/.aws/aws_config"
 build_aws_config

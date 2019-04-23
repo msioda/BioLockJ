@@ -125,4 +125,3 @@ newPass=$(named_arg "$@" -p)
 doRestart=$(named_arg "$@" -r)
 ! $(has_param $inDocker) && verify_inputs 
 run_docker
-echo "dockblj complete!"

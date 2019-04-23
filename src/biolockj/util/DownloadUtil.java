@@ -345,7 +345,7 @@ public final class DownloadUtil
 			{
 				final String relPath = pipeRoot.toURI().relativize( ( (R_Module) mod ).getPrimaryScript().toURI() )
 						.toString();
-				writer.write( Config.getExe( mod, R_Module.EXE_RSCRIPT ) + relPath + RETURN );
+				writer.write( "Rscript " + relPath + RETURN );
 			}
 		}
 
