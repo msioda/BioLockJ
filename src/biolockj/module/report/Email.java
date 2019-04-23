@@ -252,7 +252,6 @@ public class Email extends BioModuleImpl implements BioModule
 		Log.info( Email.class,
 				"About to encrypt and store new admin email password in Config: " + Config.getConfigFilePath() );
 		Config.setConfigProperty( EMAIL_ENCRYPTED_PASSWORD, encrypt( RuntimeParamUtil.getAdminEmailPassword() ) );
-		PropUtil.saveMasterConfig( Config.getProperties() );
 		Log.info( Email.class,
 				"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
 						+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "

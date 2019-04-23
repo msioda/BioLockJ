@@ -21,16 +21,21 @@ public class Constants
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();
-	
+
 	/**
 	 * {@link biolockj.Config} Boolean property: If enabled save pipeline to S3: {@value #AWS_COPY_PIPELINE_TO_S3}
 	 */
 	public static final String AWS_COPY_PIPELINE_TO_S3 = "aws.copyPipelineToS3";
-	
+
 	/**
 	 * {@link biolockj.Config} Boolean property: If enabled save reports to S3: {@value #AWS_COPY_PIPELINE_TO_S3}
 	 */
 	public static final String AWS_COPY_REPORTS_TO_S3 = "aws.copyReportsToS3";
+
+	/**
+	 * Name of the AWS S3 subdirectory used to save pipeline reports
+	 */
+	public static final String AWS_PIPELINE_DIR = "pipelines";
 
 	/**
 	 * {@link biolockj.Config} String property: AWS memory set in Nextflow main.nf: {@value #AWS_RAM}
@@ -38,22 +43,15 @@ public class Constants
 	public static final String AWS_RAM = "aws.ram";
 
 	/**
+	 * Name of the AWS S3 subdirectory used to save pipeline reports
+	 */
+	public static final String AWS_REPORT_DIR = "reports";
+
+	/**
 	 * {@link biolockj.Config} String property: AWS S3 pipeline output directory used by Nextflow main.nf:
 	 * {@value #AWS_S3}
 	 */
 	public static final String AWS_S3 = "aws.s3";
-	
-	/**
-	 * Name of the AWS S3 subdirectory used to save pipeline reports
-	 */
-	public static final String AWS_REPORT_DIR = "reports";
-	
-	/**
-	 * Name of the AWS S3 subdirectory used to save pipeline reports
-	 */
-	public static final String AWS_PIPELINE_DIR = "pipelines";
-	
-	
 
 	/**
 	 * Name of the file created in the BioModule or {@value #PIPELINE_DIR} root directory to indicate execution was
@@ -81,12 +79,6 @@ public class Constants
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #CLASS}
 	 */
 	public static final String CLASS = "class";
-
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #DETACH_JAVA_MODULES}<br>
-	 * If {@value biolockj.Constants#TRUE} Java modules do not run with main BioLockJ Java application
-	 */
-	public static final String DETACH_JAVA_MODULES = "pipeline.detachJavaModules";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
@@ -117,6 +109,12 @@ public class Constants
 	 * with {@value #DELIM_SEP}
 	 */
 	public static final String DELIM_SEP = "__";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #DETACH_JAVA_MODULES}<br>
+	 * If {@value biolockj.Constants#TRUE} Java modules do not run with main BioLockJ Java application
+	 */
+	public static final String DETACH_JAVA_MODULES = "pipeline.detachJavaModules";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>

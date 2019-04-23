@@ -49,12 +49,11 @@ public class Pipeline
 
 		final boolean isJava = module instanceof JavaModule;
 		final boolean runScripts = hasScripts( module );
-		
+
 		if( isJava && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) )
 		{
-			PropUtil.saveMasterConfig( Config.getProperties() );
+			PropUtil.saveMasterConfig();
 		}
-
 
 		if( runScripts && !DockerUtil.inAwsEnv() )
 		{
@@ -132,7 +131,7 @@ public class Pipeline
 	 * 
 	 * @throws Exception if any fatal error occurs during execution
 	 */
-	public static void runPipeline() throws Exception
+	public static void startPipeline() throws Exception
 	{
 		try
 		{

@@ -102,6 +102,9 @@ public class PropUtil
 							+ Constants.LIMIT_DEBUG_CLASSES + "=" + PropUtil.class.getName() );
 		}
 
+		usedProps.remove( Constants.INTERNAL_BLJ_MODULE );
+		usedProps.remove( Constants.PIPELINE_DEFAULT_PROPS );
+
 		for( final String key: usedProps.keySet() )
 		{
 			final String val = usedProps.get( key );
@@ -125,26 +128,25 @@ public class PropUtil
 	}
 
 	/**
-	 * Save a single version of the config file by combing with default config files, if any exist. If props are
-	 * provided, then only include these proerty values from the Config.
+	 * Save a single version of the Config file with all inherited properties for the default config (if any exist).
+	 * 
+	 * @throws Exception if errors occur
+	 */
+	public static void saveMasterConfig() throws Exception
+	{
+		saveMasterConfig( Config.getProperties() );
+	}
+
+	/**
+	 * Save a single version of the Config file with all inherited properties for the default config (if any exist).
+	 * Include internal.* properties if any provided.
 	 * 
 	 * @param props Properties map
 	 * @throws Exception if errors occur
 	 */
 	public static void saveMasterConfig( Map<String, String> props ) throws Exception
 	{
-		final File masterConfig = getMasterConfig();
-		final boolean masterExists = masterConfig.exists();
-		if( masterExists )
-		{
-			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
-			if( getMasterConfig().exists() )
-			{
-				throw new Exception( "Cannot backup MASTER before modifying - trying to save as: "
-						+ getTempConfig().getAbsolutePath() );
-			}
-		}
-
+		final File masterConfig = archiveTmpMasterConfig();
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( masterConfig ) );
 		try
 		{
@@ -158,16 +160,10 @@ public class PropUtil
 				writeCompleteHeader( writer, props );
 			}
 
-			props.remove( Constants.INTERNAL_BLJ_MODULE );
-			props.remove( Constants.PIPELINE_DEFAULT_PROPS );
-
 			final Set<String> keys = new TreeSet<>( props.keySet() );
 			for( final String key: keys )
 			{
-				if( !key.startsWith( INTERNAL_PREFIX ) )
-				{
-					writer.write( key + "=" + props.get( key ) + RETURN );
-				}
+				writer.write( key + "=" + props.get( key ) + RETURN );
 			}
 		}
 		finally
@@ -184,6 +180,22 @@ public class PropUtil
 		{
 			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
 		}
+	}
+
+	private static File archiveTmpMasterConfig() throws Exception
+	{
+		final File masterConfig = getMasterConfig();
+		final boolean masterExists = masterConfig.exists();
+		if( masterExists )
+		{
+			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
+			if( getMasterConfig().exists() )
+			{
+				throw new Exception( "Cannot backup MASTER before modifying - trying to save as: "
+						+ getTempConfig().getAbsolutePath() );
+			}
+		}
+		return masterConfig;
 	}
 
 	private static void deleteTempConfigFile() throws Exception

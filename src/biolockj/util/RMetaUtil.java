@@ -234,7 +234,7 @@ public final class RMetaUtil
 
 		if( updateRConfig( module ) )
 		{
-			PropUtil.saveMasterConfig( Config.getProperties() );
+			PropUtil.saveMasterConfig();
 		}
 
 		if( !RuntimeParamUtil.isDirectMode() )

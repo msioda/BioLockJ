@@ -26,6 +26,27 @@ import biolockj.module.report.Email;
 public class NextflowUtil
 {
 	/**
+	 * Sync file or directory to S3 bucket subdir
+	 * 
+	 * @param path File/dir-path
+	 * @param subdir under S3 bucket
+	 * @throws Exception if errors occur
+	 */
+	public static void awsSyncS3( final String path, final String subdir ) throws Exception
+	{
+		final String s3Dir = "s3://" + Config.requireString( null, Constants.AWS_S3 ) + File.separator + subdir
+				+ File.separator + Config.pipelineName();
+		Log.info( BioLockJ.class, "Transferring " + path + " to --> " + s3Dir );
+		final String[] s3args = new String[ 5 ];
+		s3args[ 0 ] = "aws";
+		s3args[ 1 ] = "s3";
+		s3args[ 2 ] = path.contains( "." ) ? "cp": "sync";
+		s3args[ 3 ] = path;
+		s3args[ 4 ] = s3Dir;
+		Processor.submit( s3args );
+	}
+
+	/**
 	 * Get the Nextflow main.nf file path.
 	 * 
 	 * @return Nextflow main.nf
@@ -334,28 +355,7 @@ public class NextflowUtil
 			}
 		}
 	}
-	
-	/**
-	 * Sync file or directory to S3 bucket subdir
-	 * 
-	 * @param path File/dir-path
-	 * @param subdir under S3 bucket
-	 * @throws Exception if errors occur
-	 */
-	public static void awsSyncS3( String path, String subdir ) throws Exception
-	{
-		String s3Dir = "s3://" + Config.requireString( null, Constants.AWS_S3 ) + File.separator + subdir + File.separator + Config.pipelineName();
-		Log.info( BioLockJ.class, "Transferring " + path + " to --> " + s3Dir );
-		String[] s3args = new String[ 5 ];
-		s3args[ 0 ] = "aws";
-		s3args[ 1 ] = "s3";
-		s3args[ 2 ] = ( path.contains( "." ) ? "cp" : "sync" );
-		s3args[ 3 ] = path;
-		s3args[ 4 ] =  s3Dir;
-		Processor.submit( s3args );
-	}
-	
-	
+
 	/**
 	 * The Docker container will generate a nextflow.log file in the root directory, this is the file name
 	 */
@@ -371,7 +371,7 @@ public class NextflowUtil
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 	private static final String NF_INIT_FLAG = "Session await";
-	
+
 	private static final String NF_MEMORY = "$" + Constants.AWS_RAM;
 	private static final int NF_TIMEOUT = 180;
 	private static final String ON_DEMAND = "DEMAND";

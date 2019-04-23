@@ -36,11 +36,6 @@ public final class DownloadUtil
 	// Prevent instantiation
 	private DownloadUtil()
 	{}
-	
-	private static boolean buildRsyncCmd( List<BioModule> modules ) throws Exception
-	{
-		return modules != null && !modules.isEmpty() && DockerUtil.inAwsEnv() || ( Config.isOnCluster() && getDownloadDirPath() != null );
-	}
 
 	/**
 	 * If running on cluster, build command for user to download pipeline analysis.<br>
@@ -100,14 +95,14 @@ public final class DownloadUtil
 					+ " pipeline -->";
 			final String displaySize = FileUtils
 					.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
-			
-			
+
 			if( DockerUtil.inAwsEnv() )
 			{
-				Log.info( DownloadUtil.class, "Size of report files = [ " + displaySize + " ]:" + getDownloadListFile().getAbsolutePath() );
+				Log.info( DownloadUtil.class,
+						"Size of report files = [ " + displaySize + " ]:" + getDownloadListFile().getAbsolutePath() );
 				return null;
 			}
-			
+
 			final String src = SRC + "=" + Config.pipelinePath();
 			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
 					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
@@ -359,21 +354,27 @@ public final class DownloadUtil
 		return script;
 	}
 
+	private static boolean buildRsyncCmd( final List<BioModule> modules ) throws Exception
+	{
+		return modules != null && !modules.isEmpty() && DockerUtil.inAwsEnv()
+				|| Config.isOnCluster() && getDownloadDirPath() != null;
+	}
+
 	private static File getRunAllRScript() throws Exception
 	{
 		return new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
 	}
 
 	/**
-	 * Name of the file holding the list of pipeline files to include when running {@link biolockj.util.DownloadUtil}
-	 */
-	protected static final String DOWNLOAD_LIST = "downloadList.txt";
-
-	/**
 	 * {@link biolockj.Config} String property: {@value #DOWNLOAD_DIR}<br>
 	 * Sets the local directory targeted by the scp command.
 	 */
 	protected static final String DOWNLOAD_DIR = "pipeline.downloadDir";
+
+	/**
+	 * Name of the file holding the list of pipeline files to include when running {@link biolockj.util.DownloadUtil}
+	 */
+	protected static final String DOWNLOAD_LIST = "downloadList.txt";
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_ALL_SCRIPT = "Run_All_R" + Constants.SH_EXT;
 	private static final String SRC = "src";

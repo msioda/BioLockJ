@@ -101,7 +101,7 @@ public class BioLockJ
 	 * <ol>
 	 * <li>Call {@link #initBioLockJ(String[])} to assign pipeline root dir and log file
 	 * <li>If change password pipeline, call {@link biolockj.module.report.Email#encryptAndStoreEmailPassword()}
-	 * <li>Otherwise execute {@link #startPipeline()}
+	 * <li>Otherwise execute {@link #runPipeline()}
 	 * </ol>
 	 * <p>
 	 * If pipeline has failed, attempt execute {@link biolockj.module.report.Email} (if configured) to notify user of
@@ -123,15 +123,7 @@ public class BioLockJ
 
 		try
 		{
-			if( RuntimeParamUtil.doChangePassword() )
-			{
-				Log.info( BioLockJ.class, "Save encrypted password to: " + Config.getConfigFilePath() );
-				Email.encryptAndStoreEmailPassword();
-			}
-			else
-			{
-				startPipeline();
-			}
+			runPipeline();
 		}
 		catch( final Exception ex )
 		{
@@ -273,7 +265,7 @@ public class BioLockJ
 		{
 			initRestart();
 		}
-		
+
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			if( MetaUtil.getMetadata() != null )
@@ -283,7 +275,7 @@ public class BioLockJ
 
 			// Initializes PIPELINE_SEQ_INPUT_TYPE
 			BioLockJUtil.getPipelineInputFiles();
-			
+
 			if( doCopyInput() )
 			{
 				copyInputData();
@@ -378,46 +370,62 @@ public class BioLockJ
 	 * <ol>
 	 * <li>Call {@link biolockj.Pipeline#initializePipeline()} to initialize Pipeline modules
 	 * <li>For direct module execution call {@link biolockj.Pipeline#runDirectModule(Integer)}
-	 * <li>Otherwise execute {@link biolockj.Pipeline#runPipeline()} and save MASTER {@link biolockj.Config}
+	 * <li>Otherwise execute {@link biolockj.Pipeline#startPipeline()} and save MASTER {@link biolockj.Config}
 	 * <li>If {@link biolockj.Config}.{@value biolockj.Constants#PIPELINE_DELETE_TEMP_FILES} =
-	 * {@value biolockj.Constants#TRUE}, Call {@link #removeTempFiles()} to delete tem files
+	 * {@value biolockj.Constants#TRUE}, Call {@link #removeTempFiles()} to delete temp files
 	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status as successful
 	 * </ol>
 	 * 
 	 * @throws Exception if runtime errors occur
 	 */
-	protected static void startPipeline() throws Exception
+	protected static void runPipeline() throws Exception
 	{
+		if( RuntimeParamUtil.doChangePassword() )
+		{
+			Log.info( BioLockJ.class, "Save encrypted password to: " + Config.getConfigFilePath() );
+			Email.encryptAndStoreEmailPassword();
+			PropUtil.saveMasterConfig();
+			return;
+		}
+
 		Pipeline.initializePipeline();
 
 		if( RuntimeParamUtil.isDirectMode() )
 		{
-			runDirectPipeline();
+			try
+			{
+				final Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
+				Pipeline.runDirectModule( id );
+				reportDirectModuleSucess();
+				PropUtil.saveMasterConfig();
+				System.exit( 0 );
+			}
+			catch( final Exception ex )
+			{
+				reportDirectModuleFailure( ex );
+				System.exit( 1 );
+			}
 		}
 		else
 		{
-			PropUtil.saveMasterConfig( null );
+			PropUtil.saveMasterConfig();
 			if( DockerUtil.inAwsEnv() )
 			{
 				NextflowUtil.startNextflow( Pipeline.getModules() );
 			}
 
-			Pipeline.runPipeline();
+			Pipeline.startPipeline();
 
 			if( Config.getBoolean( null, Constants.PIPELINE_DELETE_TEMP_FILES ) )
 			{
 				removeTempFiles();
 			}
 
-			PropUtil.sanitizeMasterConfig();
-			markProjectStatus( Constants.BLJ_COMPLETE );
-			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
-
 			if( DockerUtil.inAwsEnv() )
 			{
 				NextflowUtil.saveNextflowLog();
-				File dlFile =  DownloadUtil.getDownloadListFile();
-				
+				final File dlFile = DownloadUtil.getDownloadListFile();
+
 				if( Config.getBoolean( null, Constants.AWS_COPY_PIPELINE_TO_S3 ) )
 				{
 					NextflowUtil.awsSyncS3( Config.pipelinePath(), Constants.AWS_PIPELINE_DIR );
@@ -434,7 +442,10 @@ public class BioLockJ
 					}
 					finally
 					{
-						if( reader != null ) reader.close();
+						if( reader != null )
+						{
+							reader.close();
+						}
 					}
 				}
 				else
@@ -442,10 +453,21 @@ public class BioLockJ
 					Log.warn( BioLockJ.class, "No data will be transferred to AWS s3: " );
 				}
 			}
+
+			markProjectStatus( Constants.BLJ_COMPLETE );
+			PropUtil.sanitizeMasterConfig();
+			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+
+			if( Config.getBoolean( null, Constants.AWS_COPY_PIPELINE_TO_S3 )
+					|| Config.getBoolean( null, Constants.AWS_COPY_REPORTS_TO_S3 ) )
+			{
+				final File statusFile = new File( Config.pipelinePath() + File.separator + Constants.BLJ_COMPLETE );
+				NextflowUtil.awsSyncS3( statusFile.getAbsolutePath(), Constants.AWS_PIPELINE_DIR );
+				NextflowUtil.awsSyncS3( PropUtil.getMasterConfig().getAbsolutePath(), Constants.AWS_PIPELINE_DIR );
+				NextflowUtil.awsSyncS3( Log.getFile().getAbsolutePath(), Constants.AWS_PIPELINE_DIR );
+			}
 		}
 	}
-	
-	
 
 	private static boolean doCopyInput() throws Exception
 	{
@@ -695,23 +717,6 @@ public class BioLockJ
 		module.moduleComplete();
 		SummaryUtil.reportSuccess( module );
 		System.exit( 0 );
-	}
-
-	private static void runDirectPipeline() throws Exception
-	{
-		try
-		{
-			final Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
-			Pipeline.runDirectModule( id );
-			reportDirectModuleSucess();
-			PropUtil.saveMasterConfig( Config.getProperties() );
-			System.exit( 0 );
-		}
-		catch( final Exception ex )
-		{
-			reportDirectModuleFailure( ex );
-			System.exit( 1 );
-		}
 	}
 
 	private static void setPipelineSecurity() throws Exception

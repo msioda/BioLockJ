@@ -55,8 +55,8 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	 * If in Docker mode and not in Direct mode, execute {@link biolockj.module.ScriptModule#executeTask()} to build the
 	 * bash script.<br>
 	 * If not in Docker mode AND on the cluster AND
-	 * {@link biolockj.Config}.{@value biolockj.Constants#DETACH_JAVA_MODULES}={@value biolockj.Constants#TRUE}
-	 * execute {@link biolockj.module.ScriptModule#executeTask()} to build the bash script<br>
+	 * {@link biolockj.Config}.{@value biolockj.Constants#DETACH_JAVA_MODULES}={@value biolockj.Constants#TRUE} execute
+	 * {@link biolockj.module.ScriptModule#executeTask()} to build the bash script<br>
 	 * Otherwise, execute {@link #runModule()} to run the Java code to execute module functionality.
 	 */
 	@Override
