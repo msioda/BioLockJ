@@ -74,12 +74,7 @@ cache_key_pair() {
 # Deploy AWS cloud formation AMI, S3 Bucket, EC2-KeyPair, Cloud Formation Stack, and Compute Environment
 # Confirm any configured values exist, create objects that are undefined as store them in AWS config
 deploy_cloud_formation() {
-	refresh_aws_cache
-	build_s3
-	get_ami
-	get_stack_name
-	cache_key_pair 
-	verify_stack
+	refresh_aws_cache && build_s3 && get_ami && get_stack_name && cache_key_pair && verify_stack
 }
 
 # Generate a name not found in $1, created using format $2-$date-index
