@@ -336,7 +336,7 @@ public class BioLockJUtil
 	 */
 	public static List<File> getInputDirs() throws Exception
 	{
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			final List<File> dirs = new ArrayList<>();
 			final File dir = new File( DockerUtil.CONTAINER_INPUT_DIR );

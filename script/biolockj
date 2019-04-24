@@ -84,6 +84,7 @@ launchAwsPipeline() {
 }
 
 # Launch local pipeline
+# Param 1 - array of script args "$@"
 launchLocalPipeline() {
 	i=0
 	initPipeline=$(most_recent_pipeline)
@@ -91,22 +92,21 @@ launchLocalPipeline() {
 	initJava=$(ps | grep -c java)
 	numJava=$(ps | grep -c java)
 	
-	echo -e "Launching BioLockJ Java application with CMD:  \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\""
-	nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &
+	echo -e "Launching BioLockJ:  \"nohup java -jar $bljJar -b ${BLJ_PROJ} $@ >/dev/null 2>&1 &\""
+	nohup java -jar $bljJar -b "${BLJ_PROJ}" $@ >/dev/null 2>&1 &
 	[ $? != 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
 	printf "Initializing BioLockJ"
 	
 	while [ $i -lt 10 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
 		sleep 1 && ((i++)) && printf "." && pipelineDir="$(most_recent_pipeline)" && numJava=$(ps | grep -c java)
 	done
-	
+	echo "."
 	if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ] && [ "$initPipeline" == "$pipelineDir" ]; then
-		echo "Restarted pipeline:  $pipelineDir"
+		echo "Restarting pipeline:  $pipelineDir"
 	elif [ ${#restart} -eq 0 ] && [ "$initPipeline" != "$pipelineDir" ]; then
-		echo "Started new pipeline:  $pipelineDir"
+		echo "Starting pipeline:  $pipelineDir"
 	elif [ ${#restart} -eq 0 ]; then
-		echo "BioLockJ may have failed on: exec( \"nohup java -jar $bljJar -b $BLJ_PROJ $@ >/dev/null 2>&1 &\" )"
-		echo "Check $BLJ_PROJ for new pipeline directory" && return
+		exit_script "Error [ biolockj ]:  BioLockJ pipeline failed to start!" 1
 	fi
 	echo "blj_go       -> Move to pipeline output directory"
 	echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
@@ -122,7 +122,7 @@ verifyArgPaths() {
 
 # Verify required local BioLockJ system paths exist
 verifyLocalBljPaths() {
-	[ ! -d "$BLJ_PROJ" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"$BLJ_PROJ\""
+	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
 	[ ! -f "$bljJar" ] && exit_script "Error [ biolockj ]: Jar file \"$bljJar\" not found"
 } 
 
@@ -135,6 +135,6 @@ elif [ ${#runAws} -gt 0 ]; then
 	verifyArgPaths $@
 	launchAwsPipeline
 else
-	verifyLocalBljPaths $@
-	launchLocalPipeline
+	verifyLocalBljPaths
+	launchLocalPipeline $@
 fi

@@ -20,7 +20,9 @@ import biolockj.Log;
 import biolockj.module.DatabaseModule;
 import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.DockerUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModule runs biobakery kneaddata program to remove contaminated DNA.<br>
@@ -203,7 +205,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	 */
 	protected String getDBs() throws Exception
 	{
-		if( !RuntimeParamUtil.isDockerMode() )
+		if( !DockerUtil.inDockerEnv() )
 		{
 			Config.requireExistingDirs( this, KNEAD_DBS );
 		}
@@ -212,11 +214,11 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 		for( final String path: Config.requireList( this, KNEAD_DBS ) )
 		{
 			final File db = new File( path );
-			if( RuntimeParamUtil.isDockerMode() && Config.requireList( this, KNEAD_DBS ).size() == 1 )
+			if( DockerUtil.inDockerEnv() && Config.requireList( this, KNEAD_DBS ).size() == 1 )
 			{
 				dbs += DB_PARAM + " " + DockerUtil.CONTAINER_DB_DIR + " ";
 			}
-			else if( RuntimeParamUtil.isDockerMode() )
+			else if( DockerUtil.inDockerEnv() )
 			{
 				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) + " ";
 			}
@@ -257,8 +259,7 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	private String getParams() throws Exception
 	{
 		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM ) + getDBs();
-		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM )
-				&& RuntimeParamUtil.isDockerMode() )
+		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM ) && DockerUtil.inDockerEnv() )
 		{
 			params += DOCKER_TRIM_PARAM + " ";
 		}

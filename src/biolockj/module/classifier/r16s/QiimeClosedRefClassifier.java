@@ -20,7 +20,9 @@ import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.DockerUtil;
+import biolockj.util.MetaUtil;
 
 /**
  * This BioModule executes the QIIME script pick_closed_reference_otus.py on a FastA sequence files. Unlike open and de
@@ -44,7 +46,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
 
-		if( RuntimeParamUtil.isDockerMode() && !DockerUtil.inAwsEnv()
+		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv()
 				|| Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= files.size() )
 		{
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
@@ -97,7 +99,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier implements Classif
 	public List<String> getPostRequisiteModules() throws Exception
 	{
 		final List<String> postReqs = new ArrayList<>();
-		if( !RuntimeParamUtil.isDockerMode() && ( Config.getBoolean( this, Constants.INTERNAL_MULTIPLEXED )
+		if( !DockerUtil.inDockerEnv() && ( Config.getBoolean( this, Constants.INTERNAL_MULTIPLEXED )
 				|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( this, SCRIPT_BATCH_SIZE ) ) )
 		{
 			postReqs.add( MergeQiimeOtuTables.class.getName() );

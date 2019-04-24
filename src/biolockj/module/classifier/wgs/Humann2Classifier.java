@@ -268,7 +268,7 @@ public class Humann2Classifier extends ClassifierModuleImpl implements Classifie
 	private String getDbPath( final String prop ) throws Exception
 	{
 		final File db = new File( Config.getSystemFilePath( Config.requireString( this, prop ) ) );
-		return RuntimeParamUtil.isDockerMode()
+		return DockerUtil.inDockerEnv()
 				? db.getAbsolutePath().replace( db.getParentFile().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
 				: Config.requireExistingDir( this, prop ).getAbsolutePath();
 	}

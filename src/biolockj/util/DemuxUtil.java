@@ -11,12 +11,10 @@
  */
 package biolockj.util;
 
-import java.io.File;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
 
 /**
  * This utility contains standard methods used to handle multiplexed data.
@@ -150,23 +148,6 @@ public class DemuxUtil
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * Return the demultiplexer mapping file used to map sequence files to barcode.
-	 * 
-	 * @return Mapping file path
-	 * @throws ConfigNotFoundException if {@value #MAPPING_FILE} is undefined
-	 * @throws ConfigPathException if {@value #MAPPING_FILE} path does not exist on the file system
-	 * 
-	 */
-	public static File getMapping() throws ConfigNotFoundException, ConfigPathException
-	{
-		if( barcodeInMapping() )
-		{
-			return Config.requireExistingFile( null, MAPPING_FILE );
-		}
-		return null;
 	}
 
 	/**

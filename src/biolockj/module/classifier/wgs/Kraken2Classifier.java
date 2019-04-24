@@ -19,7 +19,9 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.DockerUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModule assigns taxonomy to WGS sequences and translates the results into mpa-format. Command line options are
@@ -148,7 +150,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 
 	private String getKrakenDB() throws Exception
 	{
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			return DockerUtil.CONTAINER_DB_DIR;
 		}

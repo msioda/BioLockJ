@@ -175,7 +175,7 @@ public class DockerUtil
 	 */
 	public static final boolean hasDB( final BioModule module ) throws Exception
 	{
-		if( RuntimeParamUtil.isDockerMode() && module instanceof DatabaseModule )
+		if( DockerUtil.inDockerEnv() && module instanceof DatabaseModule )
 		{
 			final File db = ( (DatabaseModule) module ).getDB();
 			if( db != null )
@@ -189,7 +189,7 @@ public class DockerUtil
 	}
 
 	/**
-	 * Return TRUE if running on AWS (based on Config props).
+	 * Return TRUE if running in AWS (based on Config props).
 	 * 
 	 * @return TRUE if pipeline.env=aws
 	 * @throws Exception if errors occur
@@ -197,6 +197,17 @@ public class DockerUtil
 	public static boolean inAwsEnv() throws Exception
 	{
 		return Config.requireString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_AWS );
+	}
+
+	/**
+	 * Return TRUE if running in AWS (based on Config props).
+	 * 
+	 * @return TRUE if pipeline.env=aws
+	 * @throws Exception if errors occur
+	 */
+	public static boolean inDockerEnv() throws Exception
+	{
+		return RuntimeParamUtil.isDockerMode();
 	}
 
 	private static String getDockerClassName( final BioModule module ) throws Exception

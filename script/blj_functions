@@ -54,6 +54,7 @@ blj_log() {
 
 # Rerun current pipeline from point of failure using same MASTER config
 blj_rerun() {
+	echo "Restarting BioLockJ pipeline: $PWD"
 	biolockj -r $PWD
 }
 

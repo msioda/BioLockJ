@@ -189,9 +189,9 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File directory or null
-	 * @throws ConfigPathException if path is defined but is not an existing directory
+	 * @throws Exception if path is defined but is not an existing directory or other errors occur
 	 */
-	public static File getExistingDir( final BioModule module, final String property ) throws ConfigPathException
+	public static File getExistingDir( final BioModule module, final String property ) throws Exception
 	{
 		final File f = getExistingFileObject( getString( module, property ) );
 		if( f != null && !f.isDirectory() )
@@ -213,9 +213,9 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File (not directory) or null
-	 * @throws ConfigPathException if path is defined but is not an existing file
+	 * @throws Exception if path is defined but is not an existing file or if other errors occur
 	 */
-	public static File getExistingFile( final BioModule module, final String property ) throws ConfigPathException
+	public static File getExistingFile( final BioModule module, final String property ) throws Exception
 	{
 		File f = getExistingFileObject( getString( module, property ) );
 		if( f != null && !f.isFile() )
@@ -452,9 +452,9 @@ public class Config
 	 * 
 	 * @param filePath File path
 	 * @return Formatted filePath
-	 * @throws ConfigPathException if path is invalid
+	 * @throws Exception if path is invalid or other errors occur
 	 */
-	public static String getSystemFilePath( String filePath ) throws ConfigPathException
+	public static String getSystemFilePath( String filePath ) throws Exception
 	{
 		if( filePath != null && filePath.startsWith( "~" ) )
 		{
@@ -493,7 +493,7 @@ public class Config
 				bljSup = null;
 			}
 
-			if( RuntimeParamUtil.isDockerMode() && RuntimeParamUtil.getDockerHostBLJ_SUP() != null )
+			if( DockerUtil.inDockerEnv() && RuntimeParamUtil.getDockerHostBLJ_SUP() != null )
 			{
 				bljSup = RuntimeParamUtil.getDockerHostBLJ_SUP();
 			}
@@ -563,7 +563,7 @@ public class Config
 			{
 				throw new Exception( "Cannot find MASTER config in " + RuntimeParamUtil.getDirectPipelineDir() );
 			}
-			final File masterConfig = scripts.iterator().next();			
+			final File masterConfig = scripts.iterator().next();
 			Log.debug( Config.class, "Load MASTER Config for direct Java Module: " + masterConfig.getAbsolutePath() );
 			props = Properties.loadProperties( masterConfig );
 		}
@@ -669,11 +669,9 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File directory
-	 * @throws ConfigNotFoundException if property is undefined
-	 * @throws ConfigPathException if property is not a valid directory path
+	 * @throws Exception if property is undefined or if property is not a valid directory path
 	 */
-	public static File requireExistingDir( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigPathException
+	public static File requireExistingDir( final BioModule module, final String property ) throws Exception
 	{
 		final File f = getExistingDir( module, property );
 		if( f == null )
@@ -690,11 +688,9 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return List of File directories
-	 * @throws ConfigNotFoundException if property is undefined
-	 * @throws ConfigPathException if property is not a valid directory path
+	 * @throws Exception if errors occur
 	 */
-	public static List<File> requireExistingDirs( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigPathException
+	public static List<File> requireExistingDirs( final BioModule module, final String property ) throws Exception
 	{
 		final List<File> returnDirs = new ArrayList<>();
 		for( final String d: requireSet( module, property ) )
@@ -721,11 +717,9 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File with filename defined by property
-	 * @throws ConfigNotFoundException if property is undefined
-	 * @throws ConfigPathException if property is not a valid file path
+	 * @throws Exception if property is undefined or if property is not a valid file path
 	 */
-	public static File requireExistingFile( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigPathException
+	public static File requireExistingFile( final BioModule module, final String property ) throws Exception
 	{
 		final File f = getExistingFile( module, property );
 		if( f == null )
@@ -929,9 +923,9 @@ public class Config
 	 *
 	 * @param filePath File path
 	 * @return File or null
-	 * @throws ConfigPathException if path is defined but is not found on the file system
+	 * @throws Exception if path is defined but is not found on the file system or other errors occur
 	 */
-	protected static File getExistingFileObject( final String filePath ) throws ConfigPathException
+	protected static File getExistingFileObject( final String filePath ) throws Exception
 	{
 		if( filePath != null )
 		{

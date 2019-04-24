@@ -320,10 +320,11 @@ public class BioLockJ
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
 		if( f.exists() )
 		{
-			if( !BioLockJUtil.deleteWithRetry( f, 5 ) )
-			{
-				Log.warn( BioLockJ.class, "Unable to delete " + f.getAbsolutePath() );
-			}
+			f.delete();
+			// if( !BioLockJUtil.deleteWithRetry( f, 5 ) )
+			// {
+			// Log.warn( BioLockJ.class, "Unable to delete " + f.getAbsolutePath() );
+			// }
 		}
 	}
 
@@ -532,17 +533,6 @@ public class BioLockJ
 		return name;
 	}
 
-	// private static BioModule importMeta() throws Exception
-	// {
-	// final BioModule module = Pipeline.getModules().get( 0 );
-	// if( module instanceof ImportMetadata )
-	// {
-	// return module;
-	// }
-	//
-	// return null;
-	// }
-
 	private static void logFinalException( final String[] args, final Exception ex )
 	{
 		if( printedFinalExcp )
@@ -657,8 +647,7 @@ public class BioLockJ
 			}
 
 			int index = 0;
-			final String prefix = ( RuntimeParamUtil.isDockerMode() ? DockerUtil.CONTAINER_OUTPUT_DIR: "~" )
-					+ File.separator;
+			final String prefix = ( DockerUtil.inDockerEnv() ? DockerUtil.CONTAINER_OUTPUT_DIR: "~" ) + File.separator;
 			File errFile = new File(
 					Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
 			while( errFile.exists() )

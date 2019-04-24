@@ -72,7 +72,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public void executeTask() throws Exception
 	{
 		writePrimaryScript();
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
 		}
@@ -87,7 +87,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	public String[] getJobParams() throws Exception
 	{
 		Log.info( getClass(), "Run MAIN Script: " + getMainScript().getName() );
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			return super.getJobParams();
 		}

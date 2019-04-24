@@ -21,7 +21,6 @@ if ! $(is_pipeline_dir "$pipeDir"); then
 fi
 
 [ -f "$pipeDir/biolockjComplete" ] && rm "$pipeDir/biolockjComplete" && echo "Deleted $pipeDir/biolockjComplete"
-[ -f "$pipeDir/biolockjFailed" ] && rm "$pipeDir/biolockjFailed" && echo "Deleted $pipeDir/biolockjFailed"
 
 found=false
 for modDir in $pipeDir/*; do

@@ -19,7 +19,9 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
-import biolockj.util.*;
+import biolockj.util.DockerUtil;
+import biolockj.util.ModuleUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModule uses RDP to assign taxonomy to 16s sequences.
@@ -139,7 +141,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 			return "";
 		}
 
-		final String dbParam = RuntimeParamUtil.isDockerMode()
+		final String dbParam = DockerUtil.inDockerEnv()
 				? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(),
 						DockerUtil.CONTAINER_DB_DIR )
 				: getDB().getAbsolutePath();

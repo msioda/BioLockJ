@@ -280,7 +280,7 @@ public class MetaUtil
 			return null;
 		}
 
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			return DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.CONTAINER_META_DIR );
 		}

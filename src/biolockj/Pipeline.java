@@ -411,7 +411,11 @@ public class Pipeline
 	private static IOFileFilter getWorkerScriptFilter( final ScriptModule module ) throws Exception
 	{
 		String filterString = "*" + Constants.SH_EXT;
-		if( !RuntimeParamUtil.isDockerMode() && module instanceof R_Module )
+		if( DockerUtil.inDockerEnv() && module instanceof R_Module )
+		{
+			filterString = ScriptModule.MAIN_SCRIPT_PREFIX + "*" + Constants.SH_EXT;
+		}
+		else if( module instanceof R_Module )
 		{
 			filterString = ScriptModule.MAIN_SCRIPT_PREFIX + "*" + Constants.R_EXT;
 		}
@@ -424,9 +428,9 @@ public class Pipeline
 	{
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(),
 				getWorkerScriptFilter( module ), null );
+		
 		final File mainScript = module.getMainScript();
-
-		if( !RuntimeParamUtil.isDockerMode() && module instanceof R_Module && mainScript != null )
+		if( !(module instanceof R_Module) && mainScript != null )
 		{
 			scriptFiles.remove( mainScript );
 		}

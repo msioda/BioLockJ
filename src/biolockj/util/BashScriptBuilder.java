@@ -18,6 +18,7 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
+import biolockj.module.report.r.R_Module;
 
 /**
  * This utility class generates the bash script files using the lines provided and {@link biolockj.Config} script
@@ -58,7 +59,12 @@ public class BashScriptBuilder
 	}
 
 	/**
-	 * This method builds the bash scripts (MAIN + worker scripts) for the given module.
+	 * This method builds the bash scripts required for the given module.<br>
+	 * Standard local/cluster pipelines include: 1 MAIN script, 1+ worker-scripts.<br>
+	 * Docker R_Modules include: 1 MAIN scirpt, 0 worker-scripts - MAIN.R run by MAIN.sh<br>
+	 * Docker *non-R_Modules* include: 1 MAIN scirpt, 1+ worker-scripts - MAIN.sh runs workers<br>
+	 * AWS Docker R_Modules include: 0 MAIN scirpts, 0 worker-scripts - MAIN.R run by nextflow<br>
+	 * AWS Docker *non-R_Modules* include: 0 MAIN scirpts, 1+ worker-scripts MAIN.sh runs workers<br>
 	 * 
 	 * @param module ScriptModule
 	 * @param data Bash script lines
@@ -71,15 +77,25 @@ public class BashScriptBuilder
 			throw new Exception( "Cannot build empty scripts for: " + module.getClass().getName() );
 		}
 
-		verifyConfig( module );
 		setBatchSize( module, data );
+
+		if( !Config.isOnCluster() )
+		{
+			verifyConfig( module );
+		}
 
 		buildWorkerScripts( module, data );
 
-		if( !DockerUtil.inAwsEnv() )
+		if( allowMainScript( module ) )
 		{
 			buildMainScript( module );
 		}
+	}
+	
+	private static boolean allowMainScript(final ScriptModule module ) throws Exception
+	{
+		if( DockerUtil.inAwsEnv() || ( DockerUtil.inDockerEnv() && module instanceof R_Module )  ) return false;
+		return true;
 	}
 
 	/**
@@ -158,7 +174,7 @@ public class BashScriptBuilder
 	{
 		final StringBuffer line = new StringBuffer();
 
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			line.append( DockerUtil.SPAWN_DOCKER_CONTAINER + " " );
 		}
@@ -202,6 +218,11 @@ public class BashScriptBuilder
 	 */
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception
 	{
+		if( DockerUtil.inDockerEnv() && module instanceof R_Module )
+		{
+			return getMainScriptPath( module );
+		}
+		
 		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "."
 				+ workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
 	}
@@ -227,7 +248,7 @@ public class BashScriptBuilder
 		lines.add( "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.add( "cd " + module.getScriptDir().getAbsolutePath() + RETURN );
 
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			lines.addAll( DockerUtil.buildSpawnDockerContainerFunction( module ) );
 		}
@@ -303,11 +324,6 @@ public class BashScriptBuilder
 	 */
 	protected static void verifyConfig( final ScriptModule module ) throws Exception
 	{
-		if( !Config.isOnCluster() )
-		{
-			return;
-		}
-
 		Config.requireString( module, CLUSTER_BATCH_COMMAND );
 
 		if( !Config.getBoolean( null, CLUSTER_VALIDATE_PARAMS ) )
@@ -424,8 +440,7 @@ public class BashScriptBuilder
 		{
 			if( lines.size() == 0 )
 			{
-				throw new Exception(
-						" Worker script cannot be written with zero lines: " + module.getClass().getName() );
+				throw new Exception( " Worker script is empty for: " + module.getClass().getName() );
 			}
 
 			if( samplesInScript == 0 )
@@ -546,7 +561,7 @@ public class BashScriptBuilder
 
 	private static void setBatchSize( final ScriptModule module, final List<List<String>> data ) throws Exception
 	{
-		if( RuntimeParamUtil.isDockerMode() && !DockerUtil.inAwsEnv() )
+		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv() )
 		{
 			batchSize = data.size();
 		}

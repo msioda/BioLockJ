@@ -19,6 +19,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
+import biolockj.util.DockerUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SeqUtil;
 
@@ -36,7 +37,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	{
 		final List<List<String>> data = new ArrayList<>();
 		final ArrayList<String> lines = new ArrayList<>();
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			lines.add( "java" + getSource() + " $" + BLJ_OPTIONS );
 		}
@@ -62,9 +63,9 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	@Override
 	public void executeTask() throws Exception
 	{
-		final boolean buildClusterScript = !RuntimeParamUtil.isDockerMode() && Config.isOnCluster()
+		final boolean buildClusterScript = !DockerUtil.inDockerEnv() && Config.isOnCluster()
 				&& Config.getBoolean( this, Constants.DETACH_JAVA_MODULES );
-		final boolean buildDockerScript = RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode();
+		final boolean buildDockerScript = DockerUtil.inDockerEnv() && !RuntimeParamUtil.isDirectMode();
 		if( buildClusterScript || buildDockerScript )
 		{
 			super.executeTask();
@@ -83,7 +84,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public List<String> getWorkerScriptFunctions() throws Exception
 	{
 		final List<String> lines = new ArrayList<>();
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			final String args = RuntimeParamUtil.getDockerJavaModuleParams() + " "
 					+ RuntimeParamUtil.getDirectModuleParam( this );

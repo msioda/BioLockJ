@@ -15,7 +15,6 @@ import java.io.*;
 import java.util.*;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.DockerUtil;
-import biolockj.util.RuntimeParamUtil;
 
 /**
  * Load properties defined in the BioLockJ configuration file, including inherited properties from project.defaultProps
@@ -140,7 +139,7 @@ public class Properties extends java.util.Properties
 
 		// No more nested default Config files
 		// If running Docker, add the Docker Config...
-		if( defaultConfigFiles.isEmpty() && RuntimeParamUtil.isDockerMode() )
+		if( defaultConfigFiles.isEmpty() && DockerUtil.inDockerEnv() )
 		{
 			Log.info( Properties.class, "Import Docker Config: " + DOCKER_CONFIG_PATH );
 			return Config.getExistingFileObject( DOCKER_CONFIG_PATH );
@@ -160,7 +159,7 @@ public class Properties extends java.util.Properties
 						final String filePath = st.nextToken().trim();
 						Log.info( Properties.class, "Import Default Config: " + filePath );
 						File defaultConfig = null;
-						if( RuntimeParamUtil.isDockerMode() && !filePath.endsWith( "docker.properties" )
+						if( DockerUtil.inDockerEnv() && !filePath.endsWith( "docker.properties" )
 								&& !filePath.endsWith( "standard.properties" ) )
 						{
 							Log.info( Properties.class, "Replace Default Config path with Docker /config path: " );

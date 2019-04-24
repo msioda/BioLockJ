@@ -221,7 +221,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 			return null;
 		}
 
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			return DockerUtil.CONTAINER_DB_DIR;
 		}
@@ -237,7 +237,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl implements Classi
 			return null;
 		}
 
-		if( RuntimeParamUtil.isDockerMode() )
+		if( DockerUtil.inDockerEnv() )
 		{
 			return DockerUtil.CONTAINER_DB_DIR + File.separator + mpaPkl;
 		}
