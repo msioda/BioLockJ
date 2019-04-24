@@ -13,6 +13,9 @@ ENV BLJ_META=$BLJ_ROOT/metadata
 ENV BLJ_PRIMER=$BLJ_ROOT/primer
 ENV BLJ_PROJ=$BLJ_ROOT/pipelines
 ENV BLJ_SCRIPT=$BLJ_ROOT/script
+ENV EC2_USER=/home/ec2-user
+ENV MC_BIN=$EC2_USER/miniconda/bin
+ENV PATH="$MC_BIN:$PATH"
 ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
 
 #2.) Build Standard Directories 
@@ -24,7 +27,8 @@ RUN mkdir /app && \
 	mkdir $BLJ_INPUT && \
 	mkdir $BLJ_META && \
 	mkdir $BLJ_PRIMER && \
-	mkdir $BLJ_SCRIPT
+	mkdir $BLJ_SCRIPT && \
+	mkdir $MC_BIN
 	
 
 #3.) Install Ubuntu Software 

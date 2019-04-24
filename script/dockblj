@@ -71,7 +71,7 @@ blj_proj() {
 get_volumes() {
 	vols="-v /var/run/docker.sock:/var/run/docker.sock"
 	if $(has_param $runAws); then
-		vols="${vols} -v $EC2_HOME/miniconda:$EC2_HOME/miniconda -v $EFS:$EFS"
+		vols="${vols} -v $EC2_HOME:$EC2_HOME -v $EFS:$EFS"
 	else
 		vols="${vols} -v $(blj_proj):$EFS_PROJ:delegated -v $inputDir:$EFS_INPUT -v $(dirname $config):$EFS_CONFIG"
 		$(has_param $metaPath) && vols="${vols} -v $metaPath:$EFS_META"

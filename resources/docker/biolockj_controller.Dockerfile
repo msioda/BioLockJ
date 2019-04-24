@@ -65,4 +65,6 @@ RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bas
 #8.) Start npm Command (Ready to open web-browser localhost:8080)
 WORKDIR $BLJ/web_app/
 EXPOSE 8080
+
+RUN mkdir MINIC/bin
 CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS
