@@ -28,7 +28,7 @@ RUN mkdir /app && \
 	mkdir $BLJ_META && \
 	mkdir $BLJ_PRIMER && \
 	mkdir $BLJ_SCRIPT && \
-	mkdir $MC_BIN
+	mkdir -p $MC_BIN
 	
 
 #3.) Install Ubuntu Software 
