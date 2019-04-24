@@ -216,7 +216,7 @@ public class BashScriptBuilder
 		{
 			return getMainScriptPath( module );
 		}
-		
+
 		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "."
 				+ workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
 	}

@@ -168,7 +168,7 @@ public class BioLockJ
 
 		for( final File dir: BioLockJUtil.getInputDirs() )
 		{
-			Log.info( BioLockJ.class, "Copying input files from " + dir + " to " + pipelineInputDir() );
+			info( "Copying input files from " + dir + " to " + pipelineInputDir() );
 			FileUtils.copyDirectory( dir, pipelineInputDir() );
 			markStatus( statusFileName );
 			BioLockJUtil.ignoreFile( statusFile );
@@ -176,11 +176,11 @@ public class BioLockJ
 
 		final List<File> inputFiles = new ArrayList<>(
 				FileUtils.listFiles( pipelineInputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-		Log.info( BioLockJ.class, "Total number of input files: " + inputFiles.size() );
+		info( "Total number of input files: " + inputFiles.size() );
 		int i = 0;
 		for( final File file: inputFiles )
 		{
-			Log.info( BioLockJ.class, "Imported Input File [ " + i++ + " ]: " + file.getAbsolutePath() );
+			info( "Imported Input File [ " + i++ + " ]: " + file.getAbsolutePath() );
 		}
 
 		BioLockJUtil.setPipelineInputFiles( inputFiles );
@@ -457,10 +457,10 @@ public class BioLockJ
 
 			markProjectStatus( Constants.BLJ_COMPLETE );
 			PropUtil.sanitizeMasterConfig();
-			Log.info( BioLockJ.class, "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+			info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
 
-			if( Config.getBoolean( null, Constants.AWS_COPY_PIPELINE_TO_S3 )
-					|| Config.getBoolean( null, Constants.AWS_COPY_REPORTS_TO_S3 ) )
+			if( DockerUtil.inAwsEnv() && ( Config.getBoolean( null, Constants.AWS_COPY_PIPELINE_TO_S3 )
+					|| Config.getBoolean( null, Constants.AWS_COPY_REPORTS_TO_S3 ) ) )
 			{
 				final File statusFile = new File( Config.pipelinePath() + File.separator + Constants.BLJ_COMPLETE );
 				NextflowUtil.awsSyncS3( statusFile.getAbsolutePath(), Constants.AWS_PIPELINE_DIR );
@@ -533,6 +533,14 @@ public class BioLockJ
 		return name;
 	}
 
+	private static void info( final String msg ) throws Exception
+	{
+		if( !RuntimeParamUtil.isDirectMode() )
+		{
+			Log.info( BioLockJ.class, msg );
+		}
+	}
+
 	private static void logFinalException( final String[] args, final Exception ex )
 	{
 		if( printedFinalExcp )
@@ -603,7 +611,7 @@ public class BioLockJ
 		}
 		else if( isPipelineComplete() )
 		{
-			Log.info( BioLockJ.class, "Analysis complete --> End program [ 42 ]" );
+			Log.info( BioLockJ.class, "Analysis complete!" );
 		}
 		else
 		{

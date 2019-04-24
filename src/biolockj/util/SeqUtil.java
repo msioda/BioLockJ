@@ -332,8 +332,8 @@ public class SeqUtil
 				}
 				if( ind == -1 )
 				{
-					Log.info( SeqUtil.class, "Filename [" + ( isForwardRead( value ) ? value: revValue )
-							+ "] does not appear in column [" + fileNameCol + "]. This file will be ignored." );
+					info( "Filename [" + ( isForwardRead( value ) ? value: revValue ) + "] does not appear in column ["
+							+ fileNameCol + "]. This file will be ignored." );
 					id = "";
 				}
 				else
@@ -579,7 +579,7 @@ public class SeqUtil
 	 */
 	public static boolean isSeqFile( final File file ) throws Exception
 	{
-		Log.warn( SeqUtil.class, "Check if input file is a SEQ file: " + file.getAbsolutePath() );
+		info( "Check if input file is a SEQ file: " + file.getAbsolutePath() );
 		boolean isSeq = false;
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try
@@ -587,9 +587,8 @@ public class SeqUtil
 			final String header = SeqUtil.scanFirstLine( reader, file );
 			final String idChar = header.substring( 0, 1 );
 			String seq = reader.readLine();
-			Log.info( SeqUtil.class, "header: " + header );
-			Log.info( SeqUtil.class, "idChar: " + idChar );
-			Log.info( SeqUtil.class, "seq: " + seq );
+			info( "header: " + header );
+			info( "seq: " + seq );
 			if( FASTA_HEADER_DELIMS.contains( idChar ) || idChar.equals( FASTQ_HEADER_DELIM ) )
 			{
 				if( seq != null && !seq.trim().isEmpty() )
@@ -601,8 +600,8 @@ public class SeqUtil
 			}
 			else
 			{
-				Log.info( SeqUtil.class, file.getAbsolutePath() + " is not a sequence file! " + Constants.RETURN
-						+ "Line 1: [ " + header + " ]" + Constants.RETURN + "Line 2= [ " + seq + " ]" );
+				info( file.getAbsolutePath() + " is not a sequence file! " + Constants.RETURN + "Line 1: [ " + header
+						+ " ]" + Constants.RETURN + "Line 2= [ " + seq + " ]" );
 			}
 		}
 		finally
@@ -781,11 +780,11 @@ public class SeqUtil
 					line = reader.readLine();
 				}
 
-				Log.info( SeqUtil.class, f.getAbsolutePath() + " --> #lines/read: " + ( numSeqLines + 1 ) );
+				info( f.getAbsolutePath() + " --> #lines/read: " + ( numSeqLines + 1 ) );
 				if( numSeqLines > 1 && Config.getString( null, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) == null
 						&& ( FASTA_HEADER_DELIMS.contains( headerChar ) || headerChar.equals( FASTQ_HEADER_DELIM ) ) )
 				{
-					Log.info( SeqUtil.class, "Multi-line input file detected: # lines/seq: " + numSeqLines );
+					info( "Multi-line input file detected: # lines/seq: " + numSeqLines );
 					Config.setConfigProperty( Constants.INTERNAL_IS_MULTI_LINE_SEQ, Constants.TRUE );
 					if( numMultiSeqLines != null && numMultiSeqLines == 0 )
 					{
@@ -890,8 +889,7 @@ public class SeqUtil
 				final BufferedReader reader = BioLockJUtil.getFileReader( testFile );
 				try
 				{
-					Log.info( SeqUtil.class,
-							"Reading multiplexed file to check for paired reads: " + testFile.getAbsolutePath() );
+					info( "Reading multiplexed file to check for paired reads: " + testFile.getAbsolutePath() );
 					final List<String> seqLines = new ArrayList<>();
 					for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					{
@@ -939,9 +937,16 @@ public class SeqUtil
 			foundPairedReads = !getPairedReads( BioLockJUtil.getPipelineInputFiles() ).isEmpty();
 		}
 
-		Log.info( SeqUtil.class, "Set " + Constants.INTERNAL_PAIRED_READS + "="
-				+ ( foundPairedReads ? Constants.TRUE: Constants.FALSE ) );
+		info( "Set " + Constants.INTERNAL_PAIRED_READS + "=" + ( foundPairedReads ? Constants.TRUE: Constants.FALSE ) );
 		Config.setConfigProperty( Constants.INTERNAL_PAIRED_READS, foundPairedReads ? Constants.TRUE: Constants.FALSE );
+	}
+
+	private static void info( final String msg ) throws Exception
+	{
+		if( !RuntimeParamUtil.isDirectMode() )
+		{
+			Log.info( SeqUtil.class, msg );
+		}
 	}
 
 	private static boolean mapSampleIdWithMetaFileNameCol() throws Exception
@@ -962,7 +967,7 @@ public class SeqUtil
 	private static void registerDemuxStatus() throws Exception
 	{
 		final int count = BioLockJUtil.getPipelineInputFiles().size();
-		Log.info( SeqUtil.class, "Register Demux Status for: " + count + " input files." );
+		info( "Register Demux Status for: " + count + " input files." );
 		boolean isMultiplexed = false;
 		if( DemuxUtil.doDemux() != null && !DemuxUtil.doDemux() )
 		{
@@ -970,7 +975,7 @@ public class SeqUtil
 		}
 		else if( count == 1 )
 		{
-			Log.info( SeqUtil.class, "Must demultiplex data!  Found exactly 1 input file" );
+			info( "Must demultiplex data!  Found exactly 1 input file" );
 			isMultiplexed = true;
 		}
 		else if( count == 2 )
@@ -989,24 +994,24 @@ public class SeqUtil
 			{
 				suffixes.add( rvRead );
 			}
-			Log.info( SeqUtil.class, "Checking 2 input files for paired read suffix values: " + suffixes );
+			info( "Checking 2 input files for paired read suffix values: " + suffixes );
 			for( final File file: BioLockJUtil.getPipelineInputFiles() )
 			{
 				if( fwRead != null && file.getName().contains( fwRead ) )
 				{
-					Log.info( SeqUtil.class, "Found forward read: " + file.getName() );
+					info( "Found forward read: " + file.getName() );
 					foundFw = true;
 				}
 				else if( rvRead != null && file.getName().contains( rvRead ) )
 				{
-					Log.info( SeqUtil.class, "Found reverse read: " + file.getName() );
+					info( "Found reverse read: " + file.getName() );
 					foundRv = true;
 				}
 			}
 
 			if( foundFw && foundRv )
 			{
-				Log.info( SeqUtil.class, "Must demultiplex data!  Found exactly 1 set of paired input files" );
+				info( "Must demultiplex data!  Found exactly 1 set of paired input files" );
 				isMultiplexed = true;
 			}
 		}

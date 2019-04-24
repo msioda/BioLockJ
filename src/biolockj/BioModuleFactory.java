@@ -140,21 +140,20 @@ public class BioModuleFactory
 		final List<String> modules = new ArrayList<>();
 		if( !Config.getBoolean( null, Constants.DISABLE_ADD_IMPLICIT_MODULES ) )
 		{
-			Log.info( getClass(), "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
+			info( "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
 			configModules.remove( ImportMetadata.class.getName() );
 			modules.add( ImportMetadata.class.getName() );
 
 			if( Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED ) )
 			{
-				Log.info( getClass(),
-						"Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
+				info( "Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
 				configModules.remove( ModuleUtil.getDefaultDemultiplexer() );
 				modules.add( ModuleUtil.getDefaultDemultiplexer() );
 			}
 
 			if( Config.getBoolean( null, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
 			{
-				Log.info( getClass(), "Set required module (for multi seq-line fasta files ): "
+				info( "Set required module (for multi seq-line fasta files ): "
 						+ ModuleUtil.getDefaultFastaConverter() );
 				configModules.remove( ModuleUtil.getDefaultFastaConverter() );
 				modules.add( ModuleUtil.getDefaultFastaConverter() );
@@ -270,7 +269,7 @@ public class BioModuleFactory
 
 			if( foundClassifier && branchClassifier )
 			{
-				Log.info( getClass(), "Found another classifier: reset branch" );
+				info( "Found another classifier: reset branch" );
 				branchClassifier = false;
 				foundClassifier = false;
 				moduleCache.addAll( branchModules );

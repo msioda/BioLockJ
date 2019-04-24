@@ -428,9 +428,9 @@ public class Pipeline
 	{
 		final Collection<File> scriptFiles = FileUtils.listFiles( module.getScriptDir(),
 				getWorkerScriptFilter( module ), null );
-		
+
 		final File mainScript = module.getMainScript();
-		if( !(module instanceof R_Module) && mainScript != null )
+		if( !( module instanceof R_Module ) && mainScript != null )
 		{
 			scriptFiles.remove( mainScript );
 		}

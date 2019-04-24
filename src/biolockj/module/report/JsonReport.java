@@ -377,17 +377,13 @@ public class JsonReport extends JavaModuleImpl implements JavaModule
 		final Map<String, File> statReports = new LinkedHashMap<>();
 
 		final ClassifierModule classifier = ModuleUtil.getClassifier( this, false );
-		if( classifier != null && classifier instanceof Humann2Classifier )
+		if( classifier != null )
 		{
 			statReports.put( "parPval", R_CalculateStats.getStatsFile( this, type, true, false ) );
 			statReports.put( "nonParPval", R_CalculateStats.getStatsFile( this, type, false, false ) );
 			statReports.put( "adjParPval", R_CalculateStats.getStatsFile( this, type, true, true ) );
 			statReports.put( "adjNonParPval", R_CalculateStats.getStatsFile( this, type, false, true ) );
 			statReports.put( "rSquared", R_CalculateStats.getStatsFile( this, type, false, false ) );
-		}
-		else
-		{
-
 		}
 
 		return statReports;

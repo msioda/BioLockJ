@@ -371,7 +371,7 @@ public class BioLockJUtil
 			files = removeIgnoredAndEmptyFiles( files );
 			inputFiles.addAll( files );
 
-			Log.info( SeqUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
+			Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 
 			setPipelineInputFileTypes();
 		}
