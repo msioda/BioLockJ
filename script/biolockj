@@ -41,45 +41,35 @@ get_params() {
 	args=("$@")
 	numArgs=${#@}
 	i=0
-	myConfig=
-	name=
     for arg in ${args[@]}; do  
-		[ $((i%2)) -eq 0 ] && name=${arg}
+		[ $((i%2)) -eq 0 ] && name=${arg//-} && name=${name:0:1}
 		if [ $((i%2)) -eq 1 ]; then
-    		[ "$name" == "-c" ] || [ "$name" == "-config" ] && myConfig=${arg}
+    		[ "$name" == "c" ] && myConfig=${arg}
     		echo "$name=${arg}"
     		name=""
 		fi  
     	i=$(expr $i + 1)
     done
-    [ ${#name} -gt 0 ] && [ ${#myConfig} -eq 0 ] && echo "-c=$name"
+    [ ${#name} -gt 0 ] && [ ${#myConfig} -eq 0 ] && echo "c=$name"
 }
 
 # Initialize script, read in script arguments
 init() {
-	inArray=$(get_params $@)
-	runAws=$(named_arg $inArray -a)
-	[ ${#runAws} -eq 0 ] && runAws=$(named_arg $inArray --aws)
-	[ ${#runAws} -eq 0 ] && runAws=$(named_arg $inArray aws)
-	config=$(named_arg $inArray -c)
-	[ ${#config} -eq 0 ] && config=$(named_arg $inArray --config)
-	[ ${#config} -eq 0 ] && config=$(named_arg $inArray config)
-	restart=$(named_arg $inArray -r)
-	[ ${#restart} -eq 0 ] && restart=$(named_arg $inArray --restart)
-	[ ${#restart} -eq 0 ] && restart=$(named_arg $inArray restart)
-	newPass=$(named_arg $inArray -p)
-	[ ${#newPass} -eq 0 ] && newPass=$(named_arg $inArray --pass)
-	[ ${#newPass} -eq 0 ] && newPass=$(named_arg $inArray pass)
+	inArray=$(get_params "$@")
+	runAws=$(named_arg $inArray a)
+	config=$(named_arg $inArray c)
+	restart=$(named_arg $inArray r)
+	newPass=$(named_arg $inArray p)
+	[ ${#config} -eq 0 ] && [ $# -eq 1 ] && config="${1}"
 }
 
 # Launch AWS pipeline
 launchAwsPipeline() {
 	run_aws $config start
-	status=$?
-	if [ $status -eq 0 ] && [ ${#aws_response} -gt 0 ]; then
+	if [ $? -eq 0 ]; then
 		exit_script "Successfully ran AWS Pipeline" 0
 	else
-		exit_script "Error [ biolockj ]: AWS Pipeline failed" $status
+		exit_script "Error [ biolockj ]: AWS Pipeline failed"
 	fi
 }
 
@@ -115,7 +105,6 @@ launchLocalPipeline() {
 
 # Verify input argument paths
 verifyArgPaths() {
-	[ $# -eq 1 ] && [ ${#config} -eq 0 ] && config="${1}"
 	[ ! -f "$config" ] && [ ${#restart} -eq 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
 	[ ! -f "$config" ] && [ ! -d "$restart" ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$restart\" is not a valid directory \n"
 }
@@ -126,15 +115,17 @@ verifyLocalBljPaths() {
 	[ ! -f "$bljJar" ] && exit_script "Error [ biolockj ]: Jar file \"$bljJar\" not found"
 } 
 
-init $@
 if [ $# -eq 0 ] || [ "${1}" == "-h" ] || [ "${1}" == "--help" ] || [ "${1}" == "help" ]; then
 	display_help
 elif [ "${1}" == "-v" ] || [ "${1}" == "--version" ] || [ "${1}" == "version" ]; then
-	display_version 
-elif [ ${#runAws} -gt 0 ]; then
-	verifyArgPaths $@
-	launchAwsPipeline
+	display_version
 else
-	verifyLocalBljPaths
-	launchLocalPipeline $@
+	init $@
+	if [ ${#runAws} -gt 0 ]; then
+		verifyArgPaths
+		launchAwsPipeline
+	else
+		verifyLocalBljPaths
+		launchLocalPipeline $@
+	fi
 fi

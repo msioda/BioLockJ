@@ -62,35 +62,6 @@ build_docker_job_defs() {
 	touch $(get_docker_job_flag)
 }
 
-# Build start script for given Pipeline Config file and reutnr local path
-# Param 1 - Pipeline Config file
-build_start_script() {
-	startScript=~/.aws/run-${awsStack}.sh
-	[ -f "${metadataFilePath}" ] && meta="-m=$EFS_META "
-	echo $sheBang > $startScript
-	echo "" >> $startScript
-	echo "##########################################################" >> $startScript
-	echo "##                                                      ##" >> $startScript
-	echo "##  Run this script to launch BioLockJ pipeline on AWS  ##" >> $startScript
-	echo "##  1) Clear old biolockj Docker images (if any)        ##" >> $startScript
-	echo "##  2) Pull the latest biolockj image from Docker Hub   ##" >> $startScript
-	echo "##  3) Run dockblj                                      ##" >> $startScript
-	echo "##                                                      ##" >> $startScript
-	echo "##########################################################" >> $startScript
-	echo 'source $HOME/.bash_profile' >> $startScript
-	echo "clearDock" >> $startScript
-	echo 'rm $(find $EFS -name .DS_Store)' >> $startScript
-	echo "set_prop $(get_config ec2) \"pipeline.env\" aws" >> $startScript
-	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $startScript
-	echo "dockblj -aws ${meta}-i=$EFS_INPUT/$(basename ${inputDirPaths}) -c=$(get_config ec2)" >> $startScript
-	[ "${awsCopyInputsToS3}" == "Y" ] && echo "aws_sync_inputs_to_s3" >> $startScript
-	[ "${awsCopyPipelineToS3}" == "Y" ] && echo "aws_sync_outputs_to_s3" >> $startScript
-	[ "${awsPurgeEfsInputs}" == "Y" ] && echo 'sudo rm -rf $EFS/[cdims]*/*; sudo rm -rf $EFS/primer' >> $startScript
-	[ "${awsPurgeEfsOutput}" == "Y" ] && echo 'sudo rm -rf $BLJ_PROJ/*' >> $startScript
-	chmod 770 $startScript
-	echo $startScript
-}
-
 # Close Nextflow Config process block
 close_nextflow_config() {
 	echo "}" >> $(get_nextflow_config)
@@ -121,6 +92,13 @@ get_docker_job_flag() {
 	echo ~/.aws/.$(get_blj_prop awsStack)-CREATED_DOCKER_JOB_DEFS
 }
 
+# Get EC2 instance public IP address
+get_ec2_public_ip() {
+	[ "${#ec2PublicIp}" -eq 0 ] && ec2PublicIp=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
+	set_blj_prop ec2PublicIp "${ec2PublicIp}"
+	echo "${ec2PublicIp}"
+}
+
 # Get a stack parameter for the configured stack 
 # Param 1 - Param name
 get_stack_param() {
@@ -149,6 +127,24 @@ init_nextflow_config() {
 	echo "    }" >> $(get_nextflow_config)
 }
 
+# Launch a new ec2 head node
+# Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
+launch_ec2_head_node() {
+	[ -x "$(which docker)" ] && build_docker_job_defs
+	set_prop $(get_config local) "pipeline.env" aws
+	set_ec2_head_node_id
+	refresh_aws_cache
+	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
+	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
+	stage_pipeline_on_aws
+	if [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
+		exe_remote_cmd "${EC2_HOME}/$(basename $startScript)"
+	else
+		connect_head
+	fi
+}
+
+# Start Head node if stopped, create if not found, and set awsEc2InstanceID
 set_ec2_head_node_id() {
 	refresh_aws_cache
 	isStarting=false
@@ -162,7 +158,7 @@ set_ec2_head_node_id() {
 		elif [ "${instances/terminated}" != "${instances}" ]; then
 			echo "Configured EC2 instance ${awsEc2InstanceID} was terminated...launching a new instance"
 		elif [ "${instances/pending}" != "${instances}" ] || [ "${instances/shutting-down}" != "${awsEc2InstanceID}" ] || [ "${instances/stopping}" != "${awsEc2InstanceID}" ]; then
-			exit_script "Configured EC2 Instance ${awsEc2InstanceID} has an in-between state-status, aborting launch EC2 instance - check status and try again later: ${instances}"
+			exit_script "Error [ aws_head_node_lib.set_ec2_head_node_id() ]: Configured EC2 Instance ${awsEc2InstanceID} has an in-between state-status, aborting launch EC2 instance - check status and try again later: ${instances}"
 		elif [ "${instances/running}" != "${instances}" ]; then
 			echo "Configured EC2 instance ${awsEc2InstanceID} is running..." && return
 		fi
@@ -174,7 +170,7 @@ set_ec2_head_node_id() {
 		subnet="$(get_stack_param Subnet1)"
 		templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
 		if [ ${#awsAmi} -eq 0 ] || [ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ]; then
-			exit_script "Error [ aws_head_node_lib.launch_ec2_head_node() ]: Cannot launch EC2 - required parameters undefined in $blj_aws_config"
+			exit_script "Error [ aws_head_node_lib.set_ec2_head_node_id() ]: Cannot launch EC2 - required parameters undefined in $blj_aws_config"
 		fi
 		awsEc2InstanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id ${awsAmi} --security-group-ids ${secureGroup} \
 			--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='Head-${awsStack}'}" --subnet-id ${subnet} \
@@ -191,28 +187,4 @@ set_ec2_head_node_id() {
 	echo ""
 	aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] created in $runTime seconds"
 	set_blj_prop awsEc2InstanceID ${awsEc2InstanceID}
-}
-
-# Get EC2 instance public IP address
-get_ec2_public_ip() {
-	[ "${#ec2PublicIp}" -eq 0 ] && ec2PublicIp=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
-	set_blj_prop ec2PublicIp "${ec2PublicIp}"
-	echo "${ec2PublicIp}"
-}
-
-# Launch a new ec2 head node
-# Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
-launch_ec2_head_node() {
-	[ -x "$(which docker)" ] && build_docker_job_defs
-	set_ec2_head_node_id
-	refresh_aws_cache
-	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
-	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
-	startScript=$(build_start_script)
-	stage_pipeline_on_aws $startScript
-	if [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
-		exe_remote_cmd "${EC2_HOME}/$(basename $startScript)"
-	else
-		connect_head
-	fi
 }

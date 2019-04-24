@@ -28,7 +28,6 @@ aws_sync_outputs_to_s3() {
 	upload_s3_dir $BLJ_PROJ pipelines
 }
 
-
 # Sync local files to S3 for cloud pipeline execution
 aws_stage_s3_data() {
 	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_stage_s3_data() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
@@ -62,10 +61,43 @@ aws_s3_ls() {
 	aws s3 ls "${S3_DIR}${1}" --recursive --human-readable
 }
 
+# Build start script for given Pipeline Config file and reutnr local path
+# Param 1 - Pipeline Config file
+build_start_script() {
+	startScript=~/.aws/run-${awsStack}.sh
+	[ -f "${metadataFilePath}" ] && meta="-m=$EFS_META "
+	echo $sheBang > $startScript
+	echo "" >> $startScript
+	echo "##########################################################" >> $startScript
+	echo "##                                                      ##" >> $startScript
+	echo "##  Run this script to launch BioLockJ pipeline on AWS  ##" >> $startScript
+	echo "##  1) Clear old biolockj Docker images (if any)        ##" >> $startScript
+	echo "##  2) Pull the latest biolockj image from Docker Hub   ##" >> $startScript
+	echo "##  3) Run dockblj                                      ##" >> $startScript
+	echo "##                                                      ##" >> $startScript
+	echo "##########################################################" >> $startScript
+	echo 'source $HOME/.bash_profile' >> $startScript
+	echo "clearDock" >> $startScript
+	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $startScript
+	echo "dockblj -aws ${meta}-i=$EFS_INPUT/$(basename ${inputDirPaths}) -c=$(get_config ec2)" >> $startScript
+	[ "${awsCopyInputsToS3}" == "Y" ] && echo "aws_sync_inputs_to_s3" >> $startScript
+	[ "${awsCopyPipelineToS3}" == "Y" ] && echo "aws_sync_outputs_to_s3" >> $startScript
+	[ "${awsPurgeEfsInputs}" == "Y" ] && echo 'sudo rm -rf $EFS/[cdims]*/*; sudo rm -rf $EFS/primer' >> $startScript
+	[ "${awsPurgeEfsOutput}" == "Y" ] && echo 'sudo rm -rf $BLJ_PROJ/*' >> $startScript
+	chmod 770 $startScript
+	echo $startScript
+}
+
 # Execute remote command on the head node
 # Param 1 - Remote command
 exe_remote_cmd() {
 	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_ec2_public_ip) "$1"
+}
+
+# Return the AWS profile tag - if undefined, returns [default]
+get_aws_profile() {
+	[ ${#awsProfile} -eq 0 ] && awsProfile=default
+	echo "[${awsProfile}]"
 }
 
 # Return the Nextflow basic config file-path
@@ -95,9 +127,9 @@ get_s3_name() {
 # Copy Config file with updated properties to reference new S3 paths
 # Param 1 Pipeline start script
 stage_pipeline_on_aws() {
-	upload_file_to_aws "${1}"
+	upload_file_to_aws "$(build_start_script)"
 	EC2_NF_DIR="$EFS_CONFIG/nextflow/${awsStack}"
-	
+
 	exe_remote_cmd "[ ! -d $EC2_NF_DIR ] && mkdir -p $EC2_NF_DIR"
 	exe_remote_cmd "[ ! -d $EFS_DB ] && mkdir $EFS_DB"
 	exe_remote_cmd "[ ! -d $EFS_INPUT ] && mkdir $EFS_INPUT"
@@ -106,8 +138,9 @@ stage_pipeline_on_aws() {
 	exe_remote_cmd "[ ! -d $EFS_PRIMER ] && mkdir $EFS_PRIMER"
 	exe_remote_cmd "[ ! -d $EFS_SCRIPT ] && mkdir $EFS_SCRIPT"
 	exe_remote_cmd "[ ! -d $EC2_HOME/.aws ] && mkdir $EC2_HOME/.aws"
+	
+	stage_aws_confg
 
-	upload_file_to_aws $blj_aws_config "$EC2_HOME/.aws"
 	upload_file_to_aws $blj_aws_config "$EFS_CONFIG"
 	upload_file_to_aws "$(get_nextflow_config)" "$EC2_NF_DIR"
 	upload_file_to_aws $BLJ/resources/aws/ec2_head_node_profile
@@ -118,6 +151,29 @@ stage_pipeline_on_aws() {
 	exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
 	exe_remote_cmd "sudo chmod -R 777 $EFS"
 	exe_remote_cmd "sudo chmod -R g+s $EFS"
+	exe_remote_cmd "x=$(find $EFS -name .DS_Store); [ ${#x} -gt 0 ] && rm $x"
+}
+
+# Stage AWS config and credentials files to push to AWS cloud
+stage_aws_confg() {
+	[ ! -f "$HOME/.aws/config" ] && exit_script "Error [ aws_upload_lib.stage_aws_confg() ]: Required file not found: $HOME/.aws/config"
+	[ ! -f "$HOME/.aws/credentials" ] && exit_script "Error [ aws_upload_lib.stage_aws_confg() ]: Required file not found: $HOME/.aws/credentials"
+	[ ${#aws_access_key_id} -eq 0 ] || [ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_upload_lib.stage_aws_confg() ]: Login credentials not found: $HOME/.aws/credentials"
+	stageDir="$HOME/.aws/stage"
+	[ ! -d "$HOME/.aws/stage" ] && mkdir "$stageDir"
+	echo "$(get_aws_profile)" > "$stageDir/config"
+	echo "region = ${awsRegion}" >> "$stageDir/config"
+	echo "output = text" >> "$stageDir/config"
+	echo "Created file:  $stageDir/config"
+	cat "$stageDir/config" 
+	echo "$(get_aws_profile)" > "$stageDir/credentials"
+	echo "aws_access_key_id = ${aws_access_key_id}" >> "$stageDir/credentials"
+	echo "aws_secret_access_key = ${aws_secret_access_key}" >> "$stageDir/credentials"
+	echo "Created file:  $stageDir/credentials"
+	cat "$stageDir/credentials"
+	upload_file_to_aws "$stageDir/config" "$EC2_HOME/.aws"
+	upload_file_to_aws "$stageDir/credentials" "$EC2_HOME/.aws"
+	upload_file_to_aws $blj_aws_config "$EC2_HOME/.aws"
 }
 
 # The method creates a new version of the pipeline Config files by replacing 

@@ -51,7 +51,6 @@ build_s3() {
 	if [ "${s3items/nextflow}" == "${s3items}" ]; then
 		aws s3api put-object --bucket ${awsS3} --key nextflow/
 	fi
-	
 }
 
 # Build key pair + save to ~/.aws/$awsStack.pem file
@@ -74,7 +73,7 @@ cache_key_pair() {
 # Deploy AWS cloud formation AMI, S3 Bucket, EC2-KeyPair, Cloud Formation Stack, and Compute Environment
 # Confirm any configured values exist, create objects that are undefined as store them in AWS config
 deploy_cloud_formation() {
-	refresh_aws_cache && build_s3 && get_ami && get_stack_name && cache_key_pair && verify_stack
+	refresh_aws_cache && build_s3 && get_ami && set_stack_name && cache_key_pair && verify_stack
 }
 
 # Generate a name not found in $1, created using format $2-$date-index
@@ -113,17 +112,6 @@ get_ip() {
 	echo $(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
 }
 
-# Create new stack name if awsStack is undefined in AWS Config
-get_stack_name() {
-	[ ${#awsStack} -gt 0 ] && aws_log "Using Pipeline Config \"aws.stack=${awsStack}\"" && return
-	aws_log "Generating unique AWS stack name"
-	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-	newStack=$(generate_name bljStack "$stacks")
-	set_blj_prop awsStack $newStack
-	aws_log "Set awsStack=$newStack"
-	refresh_aws_cache
-}
-
 # Got existing S3 bucket names in your region
 get_s3_buckets() {
 	echo $(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
@@ -144,6 +132,23 @@ is_stack_complete() {
 run_aws() {
 	[ $# -eq 0 ] || [ ! -f "${1}" ] && exit_script "Error [ aws_config_lib.run_aws() ]: Required pipeline Config file not found: \"$1\""
 	init_aws_config "${1}" && deploy_cloud_formation && launch_ec2_head_node "${2}"
+}
+
+# Create new stack name if awsStack is undefined in AWS Config
+set_stack_name() {
+	if [ ${#awsStack} -gt 0 ]; then
+		enabledStacks=$(aws_stacks CREATE_COMPLETE)
+		if [ "${enabledStacks/$awsStack}" == "${enabledStacks}" ]; then
+			exit_script "Using Pipeline Config \"aws.stack=${awsStack}\""
+		fi
+		aws_log "Pipeline Config \"aws.stack=${awsStack}\".status=CREATE_COMPLETE" && return
+	fi
+	aws_log "Generating unique AWS stack name"
+	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
+	newStack=$(generate_name bljStack "$stacks")
+	set_blj_prop awsStack $newStack
+	aws_log "Set awsStack=$newStack"
+	refresh_aws_cache
 }
 
 # Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.

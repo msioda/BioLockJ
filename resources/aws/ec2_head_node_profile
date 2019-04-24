@@ -26,38 +26,7 @@ alias dockls="docker images; docker container ls --all"
 alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 
-# AWS client was installed so set default config: ~/.aws/config
-build_aws_config() {
-	if [ ! -f "$HOME/.aws/config" ]; then
-		echo "$(get_aws_profile)" > "$HOME/.aws/config"
-		echo "region = ${awsRegion}" >> "$HOME/.aws/config"
-		echo "output = text" >> "$HOME/.aws/config"
-		echo "Created file:  ~/.aws/config"
-		cat "$HOME/.aws/config" 
-	fi
-}
-
-# AWS client was installed so set default credentials: ~/.aws/credentials
-build_aws_credentials() {
-	if [ ! -f "$HOME/.aws/credentials" ] && [ ${#aws_access_key_id} -gt 0 ] && [ ${#aws_secret_access_key} -gt 0 ]; then
-		echo "$(get_aws_profile)" > "$HOME/.aws/credentials"
-		echo "aws_access_key_id = ${aws_access_key_id}" >> "$HOME/.aws/credentials"
-		echo "aws_secret_access_key = ${aws_secret_access_key}" >> "$HOME/.aws/credentials"
-		echo "Created file:  $HOME/.aws/credentials"
-		cat "$HOME/.aws/credentials"
-	fi
-}
-
-# Return the AWS profile tag - if undefined, returns [default]
-get_aws_profile() {
-	[ ${#awsProfile} -eq 0 ] && awsProfile=default
-	echo "[${awsProfile}]"
-}
-
 # Initialize bash environment
-source "$HOME/.aws/aws_config"
-build_aws_config
-build_aws_credentials
 [ -f "$BLJ/script/aws_head_node_lib" ] && source $BLJ/script/aws_head_node_lib
 [ ${#dockerUser} -gt 0 ] && export DOCKER_HUB_USER=${dockerUser}
 [ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs

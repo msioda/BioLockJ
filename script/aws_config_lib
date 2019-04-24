@@ -19,15 +19,17 @@ alias awsrf="refresh_aws_cache"
 
 # Archive previous AWS Config properties file: $blj_aws_config
 aws_archive() {
+	clear_aws_cache
 	aws_history=~/.aws/history
+	aws_log "Archive AWS properties, key file, and start script to $aws_history"
 	[ ! -d $aws_history ] && mkdir $aws_history
 	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
 	echo $sheBang > $blj_aws_config
 	chmod 770 $blj_aws_config
-	#foundKeys=$(ls ~/.aws | grep -c ".pem" )
-	#[ ${foundKeys} -gt 0 ] && chmod 770 ~/.aws/*.pem && mv ~/.aws/*.pem $aws_history
+	foundKeys=$(ls ~/.aws | grep -c ".pem" )
+	[ ${foundKeys} -gt 0 ] && chmod 770 ~/.aws/*.pem && mv ~/.aws/*.pem $aws_history
 	foundStartScript=$(ls ~/.aws | grep -c "run-bljStack" )
-	[ ${foundStartScript} -gt 0 ] && chmod 770 ~/.aws/run-bljStack* && mv ~/.aws/run-bljStack* $aws_history
+	[ ${foundStartScript} -gt 0 ] && mv ~/.aws/run-bljStack* $aws_history
 }
 
 # Get an AWS property $1 from local AWS Config file $2 under the awsProfile
@@ -71,15 +73,45 @@ aws_s3_buckets() {
 # Lists stacks available on AWS. If status arg provided, only return stacks with the given status.
 # Param 1 (optional) Stack status
 aws_stacks() {
-	awsStacks=
 	if [ ${#1} -gt 0 ]; then
 		awsStacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='$1'].StackName")
-		[ ${#awsStacks} -eq 0 ] || [ "${awsStacks}" == "None" ] && return
 	else
 		awsStacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
-		[ ${#awsStacks} -eq 0 ] || [ "${awsStacks}" == "None" ] && return
 	fi
-	echo "${awsStacks}"
+	[ ${#awsStacks} -gt 0 ] && [ "${awsStacks}" != "None" ] && echo "${awsStacks}" && return
+}
+
+# Clear possible aws_config from bash shell memeroy
+clear_aws_cache() {
+	aws_access_key_id=
+	awsEc2AcquisitionStrategy=
+	awsEc2InstanceID=
+	awsAmi=
+	awsProfile=
+	awsRegion=
+	aws_secret_access_key=
+	awsStack=
+	awsS3=
+	awsWalltime=
+	configFiles=
+	dockerImgVersion=
+	dockerUser=
+	ec2PublicIp=
+	inputDirPaths=
+	metadataFilePath=
+	pipelineDetachJavaModules=
+	trimPrimersFilePath=
+	kneaddataDbs=
+	krakenDb=
+	kraken2Db=
+	metaphlan2Db=
+	metaphlan2Mpa_pkl=
+	qiimePynastAlignDB=
+	qiimeRefSeqDB=
+	qiimeTaxaDB=
+	humann2NuclDB=
+	humann2ProtDB=
+	rdpDb=
 }
 
 # Convert pipeline Config DB prop to AWS Config file property format in: $blj_aws_config

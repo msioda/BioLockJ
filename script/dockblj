@@ -21,18 +21,6 @@
 
 [ ! -d "$BLJ_PROJ" ] && exit_script "Error [ dockblj ]: Required bash variable BLJ_PROJ undefined"
 
-# Pass script input parameters + the argument value
-# Return value if found in input parameters
-arg_exists() {
-	args=("$@")
-	numArgs=${#@}
-	target=${args[$((numArgs-1))]}
-	args=${args[@]:0:$((numArgs-1))}
-	for arg in $args; do
-		[ "$arg" == "$target" ] && echo "$target" && return
-	done
-}
-
 # Populates the docker run BLJ_OPTIONS parameter
 # Include -docker to run BioLockJ in a Docker container
 # Include Docker container path to required Config file
