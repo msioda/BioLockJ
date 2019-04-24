@@ -79,23 +79,17 @@ public class BashScriptBuilder
 
 		setBatchSize( module, data );
 
-		if( !Config.isOnCluster() )
+		if( Config.isOnCluster() )
 		{
 			verifyConfig( module );
 		}
 
 		buildWorkerScripts( module, data );
 
-		if( allowMainScript( module ) )
+		if( !DockerUtil.inAwsEnv() )
 		{
 			buildMainScript( module );
 		}
-	}
-	
-	private static boolean allowMainScript(final ScriptModule module ) throws Exception
-	{
-		if( DockerUtil.inAwsEnv() || ( DockerUtil.inDockerEnv() && module instanceof R_Module )  ) return false;
-		return true;
 	}
 
 	/**
@@ -218,7 +212,7 @@ public class BashScriptBuilder
 	 */
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception
 	{
-		if( DockerUtil.inDockerEnv() && module instanceof R_Module )
+		if( DockerUtil.inAwsEnv() && module instanceof R_Module )
 		{
 			return getMainScriptPath( module );
 		}
