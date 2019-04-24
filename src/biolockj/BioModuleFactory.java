@@ -11,9 +11,9 @@
  */
 package biolockj;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.File;
+import java.util.*;
 import biolockj.module.BioModule;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.implicit.RegisterNumReads;
@@ -130,6 +130,36 @@ public class BioModuleFactory
 
 		return bioModules;
 	}
+	
+	private boolean masterConfigContains( String val ) throws Exception
+	{
+		File masterConfig = new File( Config.pipelinePath() + File.separator + Constants.MASTER_PREFIX + Config.getConfigFileName() );
+		if( !masterConfig.exists() )
+		{
+			return false;
+		}
+		final BufferedReader reader = BioLockJUtil.getFileReader( masterConfig );
+		try
+		{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			{
+				if( line.contains( Constants.INTERNAL_BLJ_MODULE + " " + val ) )
+				{
+					return true;
+				}
+			}
+		}
+		finally
+		{
+			if( reader != null )
+			{
+				reader.close();
+			}
+		}
+		return false;
+	}
+	
+	
 
 	/**
 	 * Get the configured modules + implicit modules if configured.
@@ -144,7 +174,8 @@ public class BioModuleFactory
 			configModules.remove( ImportMetadata.class.getName() );
 			modules.add( ImportMetadata.class.getName() );
 
-			if( Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED ) )
+			if( Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED ) || 
+					masterConfigContains( ModuleUtil.getDefaultDemultiplexer() ) )
 			{
 				info( "Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
 				configModules.remove( ModuleUtil.getDefaultDemultiplexer() );
