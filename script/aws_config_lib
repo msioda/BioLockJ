@@ -146,7 +146,7 @@ key_file() {
 	echo ~/.aws/${awsStack}.pem
 }
 
-# AWS Config prop names cannot contain "." or bash fails trying to interpret as a function calls
+# AWS Config prop names cannot contain "." or bash fails by trying to interpret and run them as function calls
 # Param 1 - Prop name
 map_property_name() {
 	val=

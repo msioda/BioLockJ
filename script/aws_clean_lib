@@ -171,16 +171,18 @@ aws_rm_stacks() {
 
 # Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
 kill_head_node() {
-	aws_log "CLEARING ec2 instances..." 
+	aws_log "CLEARING EC2 instances..." 
 	instances=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
 	runningInstances=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name=='running'].InstanceId")
 	[ ${#instances} -eq 0 ] && aws_log "No EC2 instances found" && return
-	aws_log "List valid EC2 instance-ids --> $instances"
-	[ ${#runningInstances} -gt 0 ] && aws ec2 stop-instances --instance-ids ${runningInstances}
-	aws_log "Any running EC2 instances have been stopped --> $runningInstances"
-	aws ec2 terminate-instances --instance-id ${allInstances}
-	[ ${#instances} -eq 0 ] || [ "${instances}" == "None" ]  && aws_log "All ec2 instances have been terminated" && return
-	aws_log "Remaining ec2 instances:" && aws ec2 describe-instances
+	aws_log "List EC2 instance-ids --> ${instances}"
+	[ ${#runningInstances} -gt 0 ] && aws ec2 stop-instances --instance-ids ${runningInstances} && \
+		aws_log "The following EC2 instances have been stopped --> ${runningInstances}"
+	[ ${#instances} -gt 0 ] && aws ec2 terminate-instances --instance-id "${instances}" && \
+		aws_log "The following EC2 instances have been terminated --> ${runningInstances}"
+	checkIn=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated']")
+	[ ${#checkIn} -gt 0 ] && echo "Describe EC2 instances:" && \
+		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
 }
 
 # De-register, disable, and remove all AWS objects
@@ -188,8 +190,8 @@ kill_head_node() {
 nuke_aws() {
 	refresh_aws_cache
  	kill_head_node && \
-	aws_deregister_job_defs  && \
-	aws_rm_stacks  && \
-	aws_rm_key_pairs  && \
+	aws_deregister_job_defs && \
+	aws_rm_stacks && \
+	aws_rm_key_pairs && \
 	[ "${1}" == "s3" ] && aws_rm_s3_buckets
 }
