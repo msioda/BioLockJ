@@ -18,14 +18,14 @@ add_named_arg() {
 
 # This script navigates the $USER to their most recent pipeline and lists the current directory
 blj_go() {
-	[ ! -d "$BLJ_PROJ" ] && echo "Exit program - BLJ_PROJ: directory not found: $BLJ_PROJ" && return
+	[ ! -d "${BLJ_PROJ}" ] && echo "Exit program - BLJ_PROJ: directory not found: ${BLJ_PROJ}" && return
 	pipeline=$(most_recent_pipeline)
 	if [ ${#pipeline} -gt 0 ]; then
 		echo "Goto latest BioLockJ pipeline: $pipeline"
 		cd "$pipeline"
 		ls "$pipeline"
 	else
-		echo "No pipelines found in BLJ_PROJ: $BLJ_PROJ"
+		echo "No pipelines found in BLJ_PROJ: ${BLJ_PROJ}"
 	fi
 }
 
@@ -48,7 +48,7 @@ blj_log() {
 			\tail -1000 $pipeline/*.log 
 		fi
 	else
-		echo "No pipelines found in BLJ_PROJ: $BLJ_PROJ"
+		echo "No pipelines found in BLJ_PROJ: ${BLJ_PROJ}"
 	fi
 }
 
@@ -69,21 +69,21 @@ blj_summary() {
 		echo "Print summary file: $pipeline/$SUM"
 		cat "$pipeline/$SUM"
 	else
-		echo "No pipeline summary found in BLJ_PROJ: $BLJ_PROJ"
+		echo "No pipeline summary found in BLJ_PROJ: ${BLJ_PROJ}"
 	fi
 }
 
 # Return absolute path of current pipeline if in a pipeline directory
 current_pipeline() {
-	if [ ! -d "${BLJ_PROJ}" ]; then
+	if [ -d "${BLJ_PROJ}" ]; then
 		dir="$PWD"
 		parentDir="$(dirname $dir)"
-		while [ "$parentDir" != "$BLJ_PROJ" ] && [ "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
+		while [ "$parentDir" != "${BLJ_PROJ}" ] && [ "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
 		do
 			dir="$parentDir"
 			parentDir="$(dirname $parentDir)"
 		done
-		[ "$parentDir" == "$BLJ_PROJ" ] && echo $dir
+		[ "$parentDir" == "${BLJ_PROJ}" ] && echo $dir
    fi
 }
 
@@ -131,8 +131,8 @@ is_pipeline_dir() {
 # Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
 most_recent_pipeline() {
 	IFS2="${IFS}"
-	if [ ! -d "${BLJ_PROJ}" ]; then
-		IFS=$'\n' && dirs=$(\ls -1dt $BLJ_PROJ/*) && myDirs=( "$dirs" )
+	if [ -d "${BLJ_PROJ}" ]; then
+		IFS=$'\n' && dirs=$(\ls -1dt ${BLJ_PROJ}/*) && myDirs=( "$dirs" )
 		for dir in $myDirs; do
 			$(is_pipeline_dir $dir) && IFS="${IFS2}" && echo "$dir" && return
 		done
