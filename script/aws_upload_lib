@@ -78,6 +78,7 @@ build_start_script() {
 	echo "##########################################################" >> $startScript
 	echo 'source $HOME/.bash_profile' >> $startScript
 	echo "clearDock" >> $startScript
+	echo "set_prop $(get_config ec2) \"pipeline.env\" aws" >> $startScript
 	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $startScript
 	echo "dockblj -aws ${meta}-i=$EFS_INPUT/$(basename ${inputDirPaths}) -c=$(get_config ec2)" >> $startScript
 	[ "${awsCopyInputsToS3}" == "Y" ] && echo "aws_sync_inputs_to_s3" >> $startScript

@@ -131,7 +131,6 @@ init_nextflow_config() {
 # Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
 launch_ec2_head_node() {
 	[ -x "$(which docker)" ] && build_docker_job_defs
-	set_prop $(get_config local) "pipeline.env" aws
 	set_ec2_head_node_id
 	refresh_aws_cache
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
