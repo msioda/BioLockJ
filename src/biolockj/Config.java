@@ -458,66 +458,59 @@ public class Config
 	{
 		if( filePath != null && filePath.startsWith( "~" ) )
 		{
-			Log.debug( Config.class, "Replacing ~ in file-path: " + filePath );
-			filePath = System.getProperty( "user.home" ) + filePath.substring( 1 );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
+			filePath = replaceEnvVar( filePath, "~", System.getProperty( "user.home" ) );
 		}
-
-		if( filePath != null && filePath.startsWith( "$HOME" ) )
+		else if( filePath != null && filePath.startsWith( "$HOME" ) )
 		{
-			Log.debug( Config.class, "Replacing $HOME in file-path: " + filePath );
-			filePath = System.getProperty( "user.home" ) + filePath.substring( 5 );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
+			filePath = replaceEnvVar( filePath, "$HOME", System.getProperty( "user.home" ) );
 		}
-
-		if( filePath != null && filePath.contains( "$USER" ) )
+		else if( filePath != null && filePath.startsWith( "$BLJ_META" ) )
 		{
-			Log.debug( Config.class, "Replacing $USER in file-path: " + filePath );
-			filePath = filePath.replace( "$USER", System.getProperty( "user.name" ) );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
-		}
-
-		if( filePath != null && filePath.contains( "$BLJ_META" ) )
-		{
-			Log.debug( Config.class, "Replacing $BLJ_META in file-path: " + filePath );
-			filePath = System.getProperty( "user.home" ) + File.separator + METADATA + filePath.substring( 9 );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
-		}
-
-		if( filePath != null && filePath.contains( "$BLJ_SUP" ) )
-		{
-			File bljSup = new File(
-					BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
-			if( !bljSup.exists() || !bljSup.isDirectory() )
+			String testPath = null;
+			if( Config.getString( null, MetaUtil.BLJ_META_PROP ) != null )
 			{
-				bljSup = null;
+				testPath = replaceEnvVar( filePath, "$BLJ_META", Config.getString( null, MetaUtil.BLJ_META_PROP ) );
 			}
 
-			if( DockerUtil.inDockerEnv() && RuntimeParamUtil.getDockerHostBLJ_SUP() != null )
+			if( testPath == null )
 			{
-				bljSup = RuntimeParamUtil.getDockerHostBLJ_SUP();
-			}
-
-			if( bljSup != null )
-			{
-				Log.debug( Config.class, "Replacing $BLJ_SUP in file-path: " + filePath );
-				filePath = filePath.replace( "$BLJ_SUP", bljSup.getAbsolutePath() );
-				Log.debug( Config.class, "Updated file-path: " + filePath );
+				filePath = replaceEnvVar( filePath, "$BLJ_META", System.getProperty( "user.home" ) + File.separator + METADATA );
 			}
 			else
 			{
-				Log.warn( Config.class, "Could not find/replace $BLJ_SUP in file-path: " + filePath );
+				filePath = testPath;
 			}
-
 		}
-		else if( filePath != null && filePath.contains( "$BLJ" ) )
+		else if( filePath != null && filePath.startsWith( "$BLJ_SUP" ) )
 		{
-			Log.debug( Config.class, "Replacing $BLJ in file-path: " + filePath );
-			filePath = filePath.replace( "$BLJ", BioLockJUtil.getBljDir().getAbsolutePath() );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
+			filePath = replaceEnvVar( filePath, "$BLJ_SUP", BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
+		}
+		else if( filePath != null && filePath.startsWith( "$BLJ" ) )
+		{
+			filePath = replaceEnvVar( filePath, "$BLJ", BioLockJUtil.getBljDir().getAbsolutePath() );
+		}
+		
+		if( filePath != null && filePath.contains( "$USER" ) )
+		{
+			filePath = replaceEnvVar( filePath, "$USER", System.getProperty( "user.name" ) );
 		}
 
 		return filePath;
+	}
+	
+	private static String replaceEnvVar( String filePath, String envVar, String replacementValue ) throws Exception
+	{
+		if( replacementValue != null && !replacementValue.isEmpty() )
+		{
+			File newFilePath = new File( filePath.replace( envVar, replacementValue ) );
+			Log.info( Config.class, "Decode: " + filePath + " --> " + replacementValue );
+			if( newFilePath.exists() )
+			{
+				return newFilePath.getAbsolutePath();
+			}
+		}
+		Log.warn( Config.class, "Directory not found! Please verify  bash runtime env var: \"" + envVar + "\"" );
+		return null;
 	}
 
 	/**
@@ -564,7 +557,7 @@ public class Config
 				throw new Exception( "Cannot find MASTER config in " + RuntimeParamUtil.getDirectPipelineDir() );
 			}
 			final File masterConfig = scripts.iterator().next();
-			Log.debug( Config.class, "Load MASTER Config for direct Java Module: " + masterConfig.getAbsolutePath() );
+			Log.info( Config.class, "Load MASTER Config for direct Java Module: " + masterConfig.getAbsolutePath() );
 			props = Properties.loadProperties( masterConfig );
 		}
 		else
@@ -572,7 +565,7 @@ public class Config
 			initProjectProps();
 			for( final Object key: props.keySet() )
 			{
-				Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String) key ) );
+				Log.debug( Config.class, "Project Config: " + key + "=" + props.getProperty( (String) key ) );
 			}
 			Log.debug( Config.class, "# initial props: " + props.size() );
 			unmodifiedInputProps.putAll( props );
@@ -1065,10 +1058,10 @@ public class Config
 	{
 		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
 	}
-
+	
+	private static final String METADATA = "metadata";
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
-	private static final String METADATA = "metadata";
 	private static File pipelineDir = null;
 	private static Properties props = null;
 	private static Properties unmodifiedInputProps = new Properties();

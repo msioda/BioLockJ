@@ -1,26 +1,33 @@
 #!/bin/bash
 ###################################################################################
 ##                                                                               ##
-##  This script update user profile to run $BLJ/script/blj_config.               ##
-##  If using bash, $blj_profile=~/.bash_profile (set on 11 as the default val).  ##
-##  If using another env, like zsh, update blj_profile value on line 11 below.   ##
-##  If profile exists: backup as $blj_profile~, else create a new $blj_profile.  ##
+##  This script update user profile to run $BLJ/script/blj_config                ##
+##  If using bash, user_profile=~/.bash_profile (set on 11 as the default val)   ##
+##  If using another env, like zsh, update blj_profile value on line 11 below    ##
+##  If profile exists: save backup wtih ~ appended to name (ex. $blj_profile~    ##
 ##                                                                               ##
 ###################################################################################
 
-export blj_profile=~/.bash_profile
+export user_profile=~/.bash_profile
+[ ! -f "$user_profile" ] && user_profile=~/.bashrc
+[ ! -f "$user_profile" ] && user_profile=~/.profile
+[ ! -f "$user_profile" ] && user_profile=~/.bash_login
+[ ! -f "$user_profile" ] && user_profile=~/.zshenv
+[ ! -f "$user_profile" ] && user_profile=~/.zprofile
+[ ! -f "$user_profile" ] && user_profile=~/.zshrc
+[ ! -f "$user_profile" ] && user_profile=~/.zlogin
 
 bljDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ ! -f "$blj_profile" ]; then
-	printf '%s\n' '#BioLockJ generated bash profile' > $blj_profile
-	echo "    Created profile: $blj_profile"
+if [ ! -f "$user_profile" ]; then
+	printf '%s\n' '#BioLockJ generated bash profile' > $user_profile
+	echo "    Created profile: $user_profile"
 else
-	cp $blj_profile $blj_profile~
-	echo "    Saved backup:  $blj_profile~"
+	cp $user_profile $user_profile~
+	echo "    Saved backup:  $user_profile~"
 fi
 
-echo "[ -f $bljDir/script/blj_config ] && . $bljDir/script/blj_config" >> $blj_profile
-source $blj_profile
-echo "    Saved profile:  $blj_profile"
+echo "[ -f $bljDir/script/blj_config ] && . $bljDir/script/blj_config" >> $user_profile
+source $user_profile
+echo "    Saved profile:  $user_profile"
 echo "BioLockJ installation complete!"

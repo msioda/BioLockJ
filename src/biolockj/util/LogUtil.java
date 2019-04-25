@@ -75,7 +75,7 @@ public class LogUtil
 		if( profile.isEmpty() )
 		{
 			String userProfile = "Config property [" + USER_PROFILE
-					+ "] is undefined.  Bash users typically use: ~/.bash_profile";
+					+ "] is undefined.  One common example: ~/.bash_profile";
 			try
 			{
 				userProfile = Config.requireString( null, USER_PROFILE );

@@ -287,10 +287,16 @@ public class Constants
 	public static final String INTERNAL_ALL_MODULES = "internal.allModules";
 
 	/**
-	 * Set BioModule tag in {@link biolockj.Config} file to include in pipeline: {@value #INTERNAL_BLJ_MODULE}<br>
+	 * Set "#BioModule" tag in {@link biolockj.Config} file to include in pipeline: {@value #BLJ_MODULE_TAG}<br>
 	 * Example: #BioModule biolockj.module.ImportMetadata
 	 */
-	public static final String INTERNAL_BLJ_MODULE = "#BioModule";
+	public static final String BLJ_MODULE_TAG = "#BioModule"; 
+	
+	/**
+	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_BLJ_MODULE}<br>
+	 * List of all project config modules.<br>
+	 */
+	public static final String INTERNAL_BLJ_MODULE = "internal.configModules";
 
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_DEFAULT_CONFIG}<br>

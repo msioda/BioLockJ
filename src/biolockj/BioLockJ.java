@@ -672,9 +672,13 @@ public class BioLockJ
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
 			try
 			{
-				for( final String msg: Log.getMsgs() )
+				for( final String[] m: Log.getMsgs() )
 				{
-					writer.write( msg + Constants.RETURN );
+					if( m[0].equals( Log.DEBUG ) ) Log.debug( BioLockJ.class, m[1] );
+					if( m[0].equals( Log.INFO ) ) Log.info( BioLockJ.class, m[1] );
+					if( m[0].equals( Log.WARN ) ) Log.warn( BioLockJ.class, m[1] );
+					if( m[0].equals( Log.ERROR ) ) Log.error( BioLockJ.class, m[1] );
+
 				}
 			}
 			finally

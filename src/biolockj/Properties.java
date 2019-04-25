@@ -202,7 +202,7 @@ public class Properties extends java.util.Properties
 		{
 			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 			{
-				if( line.startsWith( Constants.INTERNAL_BLJ_MODULE ) )
+				if( line.startsWith( Constants.BLJ_MODULE_TAG ) )
 				{
 					final String moduleName = line.trim().substring( line.indexOf( " " ) + 1 );
 					Log.info( Properties.class, "Found configured BioModule: " + moduleName );

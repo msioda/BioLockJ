@@ -66,7 +66,7 @@ public class Log
 		{
 			if( !MetaUtil.class.equals( loggingClass ) )
 			{
-				logMesseges.add( msg );
+				logMesseges.add( new String[] { DEBUG, msg } );
 			}
 		}
 		else
@@ -126,7 +126,7 @@ public class Log
 		}
 		if( logFile == null )
 		{
-			logMesseges.add( msg );
+			logMesseges.add( new String[] { ERROR, msg } );
 		}
 		else if( exception != null )
 		{
@@ -153,7 +153,7 @@ public class Log
 	 * 
 	 * @return logMesseges
 	 */
-	public static List<String> getMsgs()
+	public static List<String[]> getMsgs()
 	{
 		return logMesseges;
 	}
@@ -172,7 +172,7 @@ public class Log
 		}
 		if( logFile == null )
 		{
-			logMesseges.add( msg );
+			logMesseges.add( new String[] { INFO, msg } );
 		}
 		else
 		{
@@ -207,9 +207,12 @@ public class Log
 		if( !RuntimeParamUtil.isDirectMode() )
 		{
 			logWelcomeMsg();
-			for( final String m: Log.logMesseges )
+			for( final String[] m: Log.logMesseges )
 			{
-				Log.info( Log.class, m );
+				if( m[0].equals( DEBUG ) ) Log.debug( Log.class, m[1] );
+				if( m[0].equals( INFO ) ) Log.info( Log.class, m[1] );
+				if( m[0].equals( WARN ) ) Log.warn( Log.class, m[1] );
+				if( m[0].equals( ERROR ) ) Log.error( Log.class, m[1] );
 			}
 
 			Log.info( Log.class, "Set " + LOG_FILE + " = " + logFile.getAbsolutePath() );
@@ -254,7 +257,7 @@ public class Log
 		}
 		if( logFile == null )
 		{
-			logMesseges.add( msg );
+			logMesseges.add( new String[] { WARN, msg } );
 		}
 		else
 		{
@@ -394,6 +397,26 @@ public class Log
 	private static final String LOG_FORMAT = "LOG_FORMAT";
 	private static File logFile = null;
 	private static Map<String, Logger> loggers = new HashMap<>();
-	private static final List<String> logMesseges = new ArrayList<>();
+	private static final List<String[]> logMesseges = new ArrayList<>();
 	private static boolean suppressLogs = false;
+	
+	/**
+	 * DEBUG log message type
+	 */
+	public static String DEBUG = "DEBUG";
+	
+	/**
+	 * INFO log message type
+	 */
+	public static String INFO = "INFO";
+	
+	/**
+	 * WARN log message type
+	 */
+	public static String WARN = "WARN";
+	
+	/**
+	 * ERROR log message type
+	 */
+	public static String ERROR = "ERROR";
 }

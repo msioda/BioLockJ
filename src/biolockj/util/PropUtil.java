@@ -264,7 +264,7 @@ public class PropUtil
 			writer.write( "#" + RETURN );
 			for( final String mod: Config.requireList( null, Constants.INTERNAL_ALL_MODULES ) )
 			{
-				writer.write( "#      " + Constants.INTERNAL_BLJ_MODULE + " " + mod + RETURN );
+				writer.write( "#      " + Constants.BLJ_MODULE_TAG + " " + mod + RETURN );
 			}
 			writer.write( "#" + RETURN );
 			writer.write(
@@ -326,7 +326,7 @@ public class PropUtil
 		writer.write( RETURN );
 		for( final String module: Config.getList( null, Constants.INTERNAL_BLJ_MODULE ) )
 		{
-			writer.write( Constants.INTERNAL_BLJ_MODULE + " " + module + RETURN );
+			writer.write( Constants.BLJ_MODULE_TAG + " " + module + RETURN );
 		}
 		writer.write( RETURN );
 	}
