@@ -359,7 +359,7 @@ public class NextflowUtil
 	/**
 	 * The Docker container will generate a nextflow.log file in the root directory, this is the file name
 	 */
-	protected static final String NF_LOG = "/.nextflow.log";
+	protected static final String NF_LOG = "/app/biolockj/web_app/.nextflow.log";
 
 	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";

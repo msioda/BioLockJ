@@ -49,11 +49,11 @@ RUN cp $BLJ/web_app/package-lock.json ./ && \
 #6.) Cleanup
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
-	mv /usr/share/ca-certificates* ~ && \
-	mv /usr/share/npm ~ && \
-	rm -rf /usr/share/* && \
-	mv ~/npm /usr/share && \
-	mv ~/ca-certificates* /usr/share && \
+	#mv /usr/share/ca-certificates* ~ && \
+	#mv /usr/share/npm ~ && \
+	#rm -rf /usr/share/* && \
+	#mv ~/npm /usr/share && \
+	#mv ~/ca-certificates* /usr/share && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
