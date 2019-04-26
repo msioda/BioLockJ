@@ -56,7 +56,6 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	}
 
 	/**
-	 * 
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
 	 * the worker scripts. Pass{@link #getInputFiles()} to either {@link #buildScript(List)} or
 	 * {@link #buildScriptForPairedReads(List)} based on

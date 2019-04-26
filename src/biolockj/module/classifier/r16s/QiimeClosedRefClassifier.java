@@ -19,9 +19,7 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.DockerUtil;
-import biolockj.util.MetaUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule executes the QIIME script pick_closed_reference_otus.py on a FastA sequence files. Unlike open and de
@@ -33,6 +31,24 @@ import biolockj.util.MetaUtil;
  */
 public class QiimeClosedRefClassifier extends QiimeClassifier {
 
+	
+	/**
+	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
+	 * the worker scripts. Pass{@link #getInputFiles()} to either {@link #buildScript(List)} or
+	 * {@link #buildScriptForPairedReads(List)} based on
+	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS}.
+	 */
+	@Override
+	public void executeTask() throws Exception {
+		final List<List<String>> data = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
+			? buildScriptForPairedReads( getInputFiles() )
+			: buildScript( getInputFiles() );
+		Integer batchSize = Config.getPositiveInteger( this, SCRIPT_BATCH_SIZE );
+		Config.setConfigProperty( SCRIPT_BATCH_SIZE, "1" );
+		BashScriptBuilder.buildScripts( this, data );
+		Config.setConfigProperty( SCRIPT_BATCH_SIZE, batchSize.toString() );
+	}
+	
 	/**
 	 * Create bash script lines to split up the QIIME mapping and fasta files into batches of size
 	 * {@link biolockj.Config}.{@value biolockj.module.ScriptModule#SCRIPT_BATCH_SIZE}
