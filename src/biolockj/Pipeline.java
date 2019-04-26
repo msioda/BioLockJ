@@ -96,11 +96,9 @@ public class Pipeline {
 	public static void initializePipeline() throws Exception {
 		Log.info( Pipeline.class, "Initialize " + ( DockerUtil.isDirectMode() ? "DIRECT module " : 
 			DockerUtil.inAwsEnv() ? "AWS " : DockerUtil.inDockerEnv() ? "DOCKER " : "" )  + "pipeline");
-		Log.warn( Pipeline.class, "TMP MSG: Config file: " + Config.getConfigFileName() ); 
-		List<String> allMods = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
-		if( !allMods.isEmpty() ) Log.warn( Pipeline.class, "TMP MSG: ALL MODS -------> " + BioLockJUtil.printLongFormList( allMods ) );
 		bioModules = BioModuleFactory.buildPipeline();
-		Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
+		if( !DockerUtil.isDirectMode() )
+			Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
 	}
 

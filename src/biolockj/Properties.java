@@ -86,6 +86,7 @@ public class Properties extends java.util.Properties {
 	public static Properties readProps( final File propFile, final Properties defaultProps )
 		throws FileNotFoundException, IOException {
 		if( propFile.exists() ) {
+			if( defaultProps == null ) Log.info( Properties.class, "LOAD CONFIG[ #"+ loadOrder++  +" ]: ---> " + propFile.getAbsolutePath() );
 			final FileInputStream in = new FileInputStream( propFile );
 			final Properties tempProps = defaultProps == null ? new Properties(): new Properties( defaultProps );
 			tempProps.load( in );
@@ -105,16 +106,13 @@ public class Properties extends java.util.Properties {
 	 * @throws Exception if errors occur
 	 */
 	protected static Properties buildConfig( final File propFile ) throws Exception {
-		Log.debug( Properties.class, "Calling buildConfig( " + propFile.getAbsolutePath() + " )" );
 		final File defaultConfig = getDefaultConfig( propFile );
 		if( defaultConfig == null ) {
 			final File basicConfig = getBasicConfig();
 			if( basicConfig != null ) return readProps( propFile, buildConfig( basicConfig ) );
-			Log.info( Properties.class, "Load Config: " + propFile.getAbsolutePath() );
 			return readProps( propFile, null );
 		}
 
-		Log.info( Properties.class, "Load Config: " + propFile.getAbsolutePath() );
 		return readProps( propFile, buildConfig( defaultConfig ) );
 	}
 
@@ -140,11 +138,13 @@ public class Properties extends java.util.Properties {
 		}
 		if( basicConfig != null ) {
 			defaultConfigFiles.add( basicConfig );
-			Log.info( Properties.class, "Initialize Basic Config: " + basicConfig.getAbsolutePath() );
+			Log.info( Properties.class, "Adding Basic Config: " + basicConfig.getAbsolutePath() );
 			return basicConfig;
 		}
 		return null;
 	}
+	
+	
 
 	/**
 	 * Parse property to find default config property: {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS}.<br>
@@ -176,7 +176,7 @@ public class Properties extends java.util.Properties {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				if( line.startsWith( Constants.BLJ_MODULE_TAG ) ) {
 					final String moduleName = line.trim().substring( line.indexOf( " " ) + 1 );
-					Log.info( Properties.class, "Found configured BioModule: " + moduleName );
+					Log.info( Properties.class, "Detected configured BioModule: " + moduleName );
 					modules.add( moduleName );
 				}
 			}
@@ -193,6 +193,7 @@ public class Properties extends java.util.Properties {
 		return new File( Config.getSystemFilePath( path ) );
 	}
 
+	private static int loadOrder = 0;
 	private static File configFile = null;
 	private static Set<File> defaultConfigFiles = new HashSet<>();
 	private static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";

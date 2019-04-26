@@ -76,7 +76,7 @@ public class Processor {
 		}
 		p.waitFor();
 		p.destroy();
-		Log.info( getClass(), "BioLockJ [" + label + "] complete" );
+		Log.info( getClass(), "BioLockJ [" + label + " : " + getArgsAsString( args ) + " ] complete" );
 	}
 
 	/**

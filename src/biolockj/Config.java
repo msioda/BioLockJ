@@ -239,7 +239,7 @@ public class Config {
 		final String moduleProp = moduleName + "." + suffix( prop );
 		final String val = Config.getString( null, moduleProp );
 		if( val == null || val.isEmpty() ) return prop;
-		Log.debug( Config.class, "Found module specific property: [ " + moduleProp + "=" + val + " ]" );
+		Log.info( Config.class, "Use module specific property: [ " + moduleProp + "=" + val + " ]" );
 		return moduleProp;
 	}
 
@@ -699,9 +699,7 @@ public class Config {
 	public static void setConfigProperty( final String name, final String val ) {
 		String origProp = usedProps.get( name );
 		origProp = origProp != null && origProp.isEmpty() ? null: origProp;
-
 		props.setProperty( name, val );
-
 		final boolean hasVal = val != null && !val.isEmpty();
 		if( origProp == null && hasVal || origProp != null && !hasVal
 			|| origProp != null && hasVal && !origProp.equals( val ) ) {

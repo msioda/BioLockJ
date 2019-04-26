@@ -11,8 +11,6 @@
  */
 package biolockj;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -243,14 +241,15 @@ public class BioModuleFactory {
 	 */
 	private static List<String> getConfigModules() throws Exception {
 		final List<String> configModules = Config.requireList( null, Constants.INTERNAL_BLJ_MODULE );
+		final List<String> allMods = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
 		final List<String> modules = new ArrayList<>();
 		if( !Config.getBoolean( null, Constants.DISABLE_ADD_IMPLICIT_MODULES ) ) {
 			info( "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
 			configModules.remove( ImportMetadata.class.getName() );
 			modules.add( ImportMetadata.class.getName() );
-
-			if( Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED )
-				|| masterConfigContains( ModuleUtil.getDefaultDemultiplexer() ) ) {
+			
+			boolean isMultiplexed = Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED );
+			if( isMultiplexed || allMods.contains( ModuleUtil.getDefaultDemultiplexer() ) ) {
 				info( "Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
 				configModules.remove( ModuleUtil.getDefaultDemultiplexer() );
 				modules.add( ModuleUtil.getDefaultDemultiplexer() );
@@ -308,34 +307,6 @@ public class BioModuleFactory {
 	 */
 	private static boolean isSeqProcessingModule( final String name ) {
 		return name.startsWith( Constants.MODULE_SEQ_PACKAGE ) || name.startsWith( MODULE_CLASSIFIER_PACKAGE );
-	}
-
-	private static boolean masterConfigContains( final String val ) throws Exception {
-		Log.warn( BioModuleFactory.class, "Does BLJ MASTER contain:  " + val + "?" );
-		final File masterConfig = new File(
-			Config.pipelinePath() + File.separator + Constants.MASTER_PREFIX + Config.getConfigFileName() );
-		Log.warn( BioModuleFactory.class, "TMP MSG: masterConfig:  " + masterConfig.getAbsolutePath() );
-		Log.warn( BioModuleFactory.class, "TMP MSG: masterConfig exists?:  " + masterConfig.exists() );
-		
-		final List<String> allMods = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
-		if( allMods.contains( val ) ) {
-			Log.warn( BioModuleFactory.class, "TMP MSG: FOUND DEMUX IN:  " + Constants.INTERNAL_ALL_MODULES );
-			return true;
-		}
-
-		if( !masterConfig.exists() ) return false;
-		final BufferedReader reader = BioLockJUtil.getFileReader( masterConfig );
-		try {
-			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				Log.warn( BioModuleFactory.class, "TMP MSG: masterConfig[LINE] ==--> " + line );
-				if( line.contains( Constants.BLJ_MODULE_TAG + " " + val ) ) return true;
-			}
-		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
-		}
-		return false;
 	}
 
 	private static void warn( final String msg ) {
