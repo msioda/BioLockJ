@@ -833,7 +833,7 @@ public class Config {
 	private static String replaceEnvVar( final String filePath, final String envVar, final String replacementValue ) {
 		if( replacementValue != null && !replacementValue.isEmpty() ) {
 			final File newFilePath = new File( filePath.replace( envVar, replacementValue ) );
-			Log.info( Config.class, "Decode: " + filePath + " --> " + replacementValue );
+			Log.info( Config.class, "Decode: " + filePath + " --> " + newFilePath.getAbsolutePath() );
 			if( newFilePath.exists() ) return newFilePath.getAbsolutePath();
 		}
 		Log.warn( Config.class, "Directory not found! Please verify  bash runtime env var: \"" + envVar + "\"" );

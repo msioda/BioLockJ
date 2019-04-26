@@ -114,6 +114,7 @@ public class Properties extends java.util.Properties {
 			return readProps( propFile, null );
 		}
 
+		Log.info( Properties.class, "Load Config: " + propFile.getAbsolutePath() );
 		return readProps( propFile, buildConfig( defaultConfig ) );
 	}
 
