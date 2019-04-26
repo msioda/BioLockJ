@@ -27,35 +27,35 @@ import biolockj.util.MemoryUtil;
  */
 public class KrakenParser extends ParserModuleImpl {
 
-    /**
-     * Parse all {@link biolockj.module.classifier.wgs.KrakenClassifier} reports in the input directory.<br>
-     * Build an {@link biolockj.node.wgs.KrakenNode} for each line.<br>
-     * If {@link #isValid(OtuNode)},<br>
-     * <ol>
-     * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.KrakenNode#getSampleId()} if not
-     * yet created.
-     * <li>Add the {@link biolockj.node.wgs.KrakenNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
-     * </ol>
-     * <p>
-     * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
-     * FCC6MMAACXX:8:1101:1968:2100#GTATTCTC/1
-     * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales|f__Bacteroidaceae|g__Bacteroides|s__Bacteroides_vulgatus
-     */
-    @Override
-    public void parseSamples() throws Exception {
+	/**
+	 * Parse all {@link biolockj.module.classifier.wgs.KrakenClassifier} reports in the input directory.<br>
+	 * Build an {@link biolockj.node.wgs.KrakenNode} for each line.<br>
+	 * If {@link #isValid(OtuNode)},<br>
+	 * <ol>
+	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.KrakenNode#getSampleId()} if not
+	 * yet created.
+	 * <li>Add the {@link biolockj.node.wgs.KrakenNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
+	 * </ol>
+	 * <p>
+	 * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
+	 * FCC6MMAACXX:8:1101:1968:2100#GTATTCTC/1
+	 * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales|f__Bacteroidaceae|g__Bacteroides|s__Bacteroides_vulgatus
+	 */
+	@Override
+	public void parseSamples() throws Exception {
 
-        for( final File file: getInputFiles() ) {
-            MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
-            final BufferedReader reader = BioLockJUtil.getFileReader( file );
-            try {
-                for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-                    addOtuNode( new KrakenNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
-                }
-            } finally {
-                if( reader != null ) {
-                    reader.close();
-                }
-            }
-        }
-    }
+		for( final File file: getInputFiles() ) {
+			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
+			try {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+					addOtuNode( new KrakenNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
+				}
+			} finally {
+				if( reader != null ) {
+					reader.close();
+				}
+			}
+		}
+	}
 }

@@ -19,7 +19,6 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.JavaModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -34,283 +33,279 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Rarefy OTU Counts
  */
-public class RarefyOtuCounts extends OtuCountModule implements JavaModule {
+public class RarefyOtuCounts extends OtuCountModule {
 
-    @Override
-    public void checkDependencies() throws Exception {
-        super.checkDependencies();
-        if( Config.requirePositiveDouble( this, QUANTILE ) > 1 )
-            throw new ConfigFormatException( QUANTILE, "This value must be x, wehre x: { 0.0 < x < 1.0 }" );
-        Config.requirePositiveInteger( this, NUM_ITERATIONS );
-        Config.getBoolean( this, REMOVE_LOW_ABUNDANT_SAMPLES );
-        Config.requirePositiveDouble( this, LOW_ABUNDANT_CUTOFF );
+	@Override
+	public void checkDependencies() throws Exception {
+		super.checkDependencies();
+		if( Config.requirePositiveDouble( this, QUANTILE ) > 1 )
+			throw new ConfigFormatException( QUANTILE, "This value must be x, wehre x: { 0.0 < x < 1.0 }" );
+		Config.requirePositiveInteger( this, NUM_ITERATIONS );
+		Config.getBoolean( this, REMOVE_LOW_ABUNDANT_SAMPLES );
+		Config.requirePositiveDouble( this, LOW_ABUNDANT_CUTOFF );
 
-    }
+	}
 
-    /**
-     * Update {@link biolockj.module.implicit.parser.ParserModuleImpl} OTU_COUNT field name.
-     */
-    @Override
-    public void cleanUp() throws Exception {
-        super.cleanUp();
-        ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
-    }
+	/**
+	 * Update {@link biolockj.module.implicit.parser.ParserModuleImpl} OTU_COUNT field name.
+	 */
+	@Override
+	public void cleanUp() throws Exception {
+		super.cleanUp();
+		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
+	}
 
-    /**
-     * Produce summary message with min, max, mean, and median number of reads.
-     */
-    @Override
-    public String getSummary() throws Exception {
-        final String label = "OTUs";
-        final int pad = SummaryUtil.getPad( label );
-        String summary = SummaryUtil.getCountSummary( this.hitsPerSample, "OTUs", false );
-        this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-        if( !this.sampleIds.isEmpty() ) {
-            summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-                + BioLockJUtil.getCollectionAsString( this.sampleIds );
-        }
-        this.hitsPerSample = null;
-        return super.getSummary() + summary;
-    }
+	/**
+	 * Produce summary message with min, max, mean, and median number of reads.
+	 */
+	@Override
+	public String getSummary() throws Exception {
+		final String label = "OTUs";
+		final int pad = SummaryUtil.getPad( label );
+		String summary = SummaryUtil.getCountSummary( this.hitsPerSample, "OTUs", false );
+		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
+		if( !this.sampleIds.isEmpty() ) {
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+				+ BioLockJUtil.getCollectionAsString( this.sampleIds );
+		}
+		this.hitsPerSample = null;
+		return super.getSummary() + summary;
+	}
 
-    /**
-     * Apply the quantile Config to the number of OTUs per sample to calculate the maximum OTU count per sample. For
-     * each sample rarefy the configured number of times and output a file with the average counts. Update the metadata
-     * to add the new OTU_COUNT column with the new OTU count per sample.
-     */
-    @Override
-    public void runModule() throws Exception {
-        this.sampleIds.addAll( MetaUtil.getSampleIds() );
-        Log.info( getClass(),
-            "Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_" + Constants.OTU_COUNT );
-        final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
-        final Long quantileNum = getNumOtusForQuantile( sampleOtuCounts );
+	/**
+	 * Apply the quantile Config to the number of OTUs per sample to calculate the maximum OTU count per sample. For
+	 * each sample rarefy the configured number of times and output a file with the average counts. Update the metadata
+	 * to add the new OTU_COUNT column with the new OTU count per sample.
+	 */
+	@Override
+	public void runModule() throws Exception {
+		this.sampleIds.addAll( MetaUtil.getSampleIds() );
+		Log.info( getClass(),
+			"Rarefied OTU counts will be stored in metadata column: " + getMetaColName() + "_" + Constants.OTU_COUNT );
+		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
+		final Long quantileNum = getNumOtusForQuantile( sampleOtuCounts );
 
-        Log.info( getClass(), "Rarefy " + sampleOtuCounts.size() + " to " + quantileNum );
-        for( final String sampleId: sampleOtuCounts.keySet() ) {
-            Log.info( getClass(), "Rarefy " + sampleId );
-            final TreeMap<String, Long> data = rarefy( sampleId, sampleOtuCounts.get( sampleId ), quantileNum );
-            if( data != null ) {
-                generateOtuput( OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName() ), data );
-            }
-        }
+		Log.info( getClass(), "Rarefy " + sampleOtuCounts.size() + " to " + quantileNum );
+		for( final String sampleId: sampleOtuCounts.keySet() ) {
+			Log.info( getClass(), "Rarefy " + sampleId );
+			final TreeMap<String, Long> data = rarefy( sampleId, sampleOtuCounts.get( sampleId ), quantileNum );
+			if( data != null ) {
+				generateOtuput( OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName() ), data );
+			}
+		}
 
-        if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) {
-            MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, this.hitsPerSample, getOutputDir(),
-                true );
-        }
-    }
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) {
+			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, this.hitsPerSample, getOutputDir(),
+				true );
+		}
+	}
 
-    /**
-     * Print the output file wit rarefied counts.
-     *
-     * @param file Output file
-     * @param otuCounts TreeMap(OTU, count)
-     * @throws Exception if errors occur
-     */
-    protected void generateOtuput( final File file, final TreeMap<String, Long> otuCounts ) throws Exception {
-        final BufferedWriter writer = new BufferedWriter( new FileWriter( file ) );
-        try {
-            for( final String otu: otuCounts.keySet() ) {
-                writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
-            }
-        } finally {
-            if( writer != null ) {
-                writer.close();
-            }
-        }
-    }
+	/**
+	 * Return a list of low abundant samples, as defined by {@value #LOW_ABUNDANT_CUTOFF}
+	 *
+	 * @return List of Sample IDs
+	 * @throws Exception if errors occur
+	 */
+	protected List<String> getLowAbundantSamples() throws Exception {
+		final List<String> ids = MetaUtil.getSampleIds();
+		final int numToRemove = Double
+			.valueOf(
+				Math.ceil( new Double( Config.requirePositiveDouble( this, LOW_ABUNDANT_CUTOFF ) * ids.size() ) ) )
+			.intValue();
 
-    /**
-     * Get OTU count data for the given sampleId.
-     *
-     * @param sampleId Sample ID
-     * @param otuCounts All OTU counts
-     * @return List of OTUs for the given sampleId
-     * @throws Exception if errors occur
-     */
-    protected List<String> getData( final String sampleId, final TreeMap<String, Long> otuCounts ) throws Exception {
-        final String metaField = MetaUtil.getField( sampleId, ParserModuleImpl.getOtuCountField() );
-        final Long val = Long.valueOf( metaField );
-        final List<String> otus = new ArrayList<>( val.intValue() );
+		final String otuCountField = ParserModuleImpl.getOtuCountField();
+		if( otuCountField == null || !MetaUtil.getFieldNames().contains( otuCountField )
+			|| MetaUtil.getFieldValues( otuCountField, true ).isEmpty() ) {
+			Log.warn( getClass(),
+				"Cannot remove low abundant fields without OTU Count files, field is empty: " + otuCountField );
+		} else {
+			final TreeMap<Long, String> lowest = new TreeMap<>();
+			for( final String sampleId: ids ) {
+				final String val = MetaUtil.getField( sampleId, otuCountField );
+				try {
+					if( lowest.size() < numToRemove && val != null && !val.isEmpty() & Long.valueOf( val ) > 0 ) {
+						lowest.put( Long.valueOf( val ), sampleId );
+					} else {
+						final List<Long> intList = new ArrayList<>( lowest.keySet() );
+						Collections.sort( intList );
+						for( final Long lowVal: intList ) {
+							if( Long.valueOf( val ) < lowVal ) {
+								final Long high = intList.get( intList.size() - 1 );
+								lowest.remove( high );
+								lowest.put( Long.valueOf( val ), sampleId );
+								Log.debug( getClass(), "Replace " + high + " with new low: " + Long.valueOf( val ) );
+								break;
+							}
 
-        for( final String otu: otuCounts.keySet() ) {
-            for( int i = 0; i < otuCounts.get( otu ); i++ ) {
-                otus.add( otu );
-            }
-            Collections.sort( otus );
-        }
+						}
+					}
+				} catch( final Exception ex ) {
+					Log.warn( getClass(), "Quiet try-catch for format exception: " + sampleId );
+				}
+			}
 
-        return otus;
-    }
+			ids.removeAll( lowest.values() );
 
-    /**
-     * Return a list of low abundant samples, as defined by {@value #LOW_ABUNDANT_CUTOFF}
-     *
-     * @return List of Sample IDs
-     * @throws Exception if errors occur
-     */
-    protected List<String> getLowAbundantSamples() throws Exception {
-        final List<String> sampleIds = MetaUtil.getSampleIds();
-        final int numToRemove = Double
-            .valueOf( Math
-                .ceil( new Double( Config.requirePositiveDouble( this, LOW_ABUNDANT_CUTOFF ) * sampleIds.size() ) ) )
-            .intValue();
+		}
 
-        final String otuCountField = ParserModuleImpl.getOtuCountField();
-        if( otuCountField == null || !MetaUtil.getFieldNames().contains( otuCountField )
-            || MetaUtil.getFieldValues( otuCountField, true ).isEmpty() ) {
-            Log.warn( getClass(),
-                "Cannot remove low abundant fields without OTU Count files, field is empty: " + otuCountField );
-        } else {
-            final TreeMap<Long, String> lowest = new TreeMap<>();
-            for( final String sampleId: sampleIds ) {
-                final String val = MetaUtil.getField( sampleId, otuCountField );
-                try {
-                    if( lowest.size() < numToRemove && val != null && !val.isEmpty() & Long.valueOf( val ) > 0 ) {
-                        lowest.put( Long.valueOf( val ), sampleId );
-                    } else {
-                        final List<Long> intList = new ArrayList<>( lowest.keySet() );
-                        Collections.sort( intList );
-                        for( final Long lowVal: intList ) {
-                            if( Long.valueOf( val ) < lowVal ) {
-                                final Long high = intList.get( intList.size() - 1 );
-                                lowest.remove( high );
-                                lowest.put( Long.valueOf( val ), sampleId );
-                                Log.debug( getClass(), "Replace " + high + " with new low: " + Long.valueOf( val ) );
-                                break;
-                            }
+		return ids;
+	}
 
-                        }
-                    }
-                } catch( final Exception ex ) {
-                    Log.warn( getClass(), "Quiet try-catch for format exception: " + sampleId );
-                }
-            }
+	/**
+	 * Get the quantile number of OTUs. If quantile = 0.5 the median value is returned.
+	 *
+	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
+	 * @return quantile number of OTUs
+	 * @throws Exception if errors occur
+	 */
+	protected Long getNumOtusForQuantile( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts )
+		throws Exception {
+		final TreeMap<String, Long> countMap = new TreeMap<>();
+		for( final String sampleId: sampleOtuCounts.keySet() ) {
+			countMap.put( sampleId,
+				sampleOtuCounts.get( sampleId ).values().stream().mapToLong( Long::longValue ).sum() );
+		}
 
-            sampleIds.removeAll( lowest.values() );
+		final List<Long> data = new ArrayList<>( countMap.values() );
+		Collections.sort( data );
 
-        }
+		final int index = new Double( Config.requirePositiveDouble( this, QUANTILE ) * countMap.size() ).intValue();
 
-        return sampleIds;
-    }
+		return data.get( index );
+	}
 
-    /**
-     * Get the quantile number of OTUs. If quantile = 0.5 the median value is returned.
-     *
-     * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
-     * @return quantile number of OTUs
-     * @throws Exception if errors occur
-     */
-    protected Long getNumOtusForQuantile( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts )
-        throws Exception {
-        final TreeMap<String, Long> countMap = new TreeMap<>();
-        for( final String sampleId: sampleOtuCounts.keySet() ) {
-            countMap.put( sampleId,
-                sampleOtuCounts.get( sampleId ).values().stream().mapToLong( Long::longValue ).sum() );
-        }
+	/**
+	 * Rarefy the data by taking the average value of {@value #NUM_ITERATIONS}
+	 *
+	 * @param sampleId Sample ID
+	 * @param otuCounts OTU counts
+	 * @param quantileNum Maximum number
+	 * @return TreeMap(OTU, count) of rarefied data
+	 * @throws Exception if errors occur
+	 */
+	protected TreeMap<String, Long> rarefy( final String sampleId, final TreeMap<String, Long> otuCounts,
+		final long quantileNum ) throws Exception {
 
-        final List<Long> data = new ArrayList<>( countMap.values() );
-        Collections.sort( data );
+		final TreeMap<String, Long> otuCount = new TreeMap<>();
+		final List<String> data = getData( sampleId, otuCounts );
+		if( Config.getBoolean( this, REMOVE_LOW_ABUNDANT_SAMPLES ) && data.size() < quantileNum ) {
+			Log.info( getClass(), "REMOVE LOW ABUNDANT sample: " + sampleId );
+			return null;
+		}
 
-        final int index = new Double( Config.requirePositiveDouble( this, QUANTILE ) * countMap.size() ).intValue();
+		for( int i = 0; i < Config.requirePositiveInteger( this, NUM_ITERATIONS ); i++ ) {
+			Log.debug( getClass(), sampleId + " iteration[ " + i + " ]" );
+			for( final String otu: getRandomQuantileOtus( data, quantileNum ) ) {
+				if( otuCount.get( otu ) == null ) {
+					otuCount.put( otu, 0L );
+				}
 
-        return data.get( index );
-    }
+				otuCount.put( otu, otuCount.get( otu ) + 1 );
+			}
+		}
 
-    /**
-     * Select random OTUs based on the quantileNum from the list of OTUs in data.
-     *
-     * @param data List( OTUs )
-     * @param quantileNum Qunatile (range: 0.0 - 1.0)
-     * @return List of randomly selected OTUs up to the given quantile
-     * @throws Exception if errors occur
-     */
-    protected List<String> getRandomQuantileOtus( List<String> data, final Long quantileNum ) throws Exception {
-        Collections.shuffle( data );
-        if( data.size() > quantileNum ) {
-            data = data.subList( 0, quantileNum.intValue() );
-        }
-        return data;
-    }
+		long totalSampleOtuCount = 0L;
+		final TreeMap<String, Long> meanCountValues = new TreeMap<>();
+		int i = 0;
+		for( final String otu: otuCount.keySet() ) {
+			final long avg = new Integer(
+				Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) ) ).longValue();
+			if( avg > 0 ) {
+				meanCountValues.put( otu, avg );
+				totalSampleOtuCount += avg;
+			}
+			Log.debug( getClass(), "Total Sample Otu Count[" + i++ + "] = " + totalSampleOtuCount );
+		}
 
-    /**
-     * Rarefy the data by taking the average value of {@value #NUM_ITERATIONS}
-     *
-     * @param sampleId Sample ID
-     * @param otuCounts OTU counts
-     * @param quantileNum Maximum number
-     * @return TreeMap(OTU, count) of rarefied data
-     * @throws Exception if errors occur
-     */
-    protected TreeMap<String, Long> rarefy( final String sampleId, final TreeMap<String, Long> otuCounts,
-        final long quantileNum ) throws Exception {
+		this.hitsPerSample.put( sampleId, String.valueOf( totalSampleOtuCount ) );
+		return meanCountValues;
+	}
 
-        final TreeMap<String, Long> otuCount = new TreeMap<>();
-        final List<String> data = getData( sampleId, otuCounts );
-        if( Config.getBoolean( this, REMOVE_LOW_ABUNDANT_SAMPLES ) && data.size() < quantileNum ) {
-            Log.info( getClass(), "REMOVE LOW ABUNDANT sample: " + sampleId );
-            return null;
-        }
+	private String getMetaColName() throws Exception {
+		return "postRareQ" + new Double( Config.requirePositiveDouble( this, QUANTILE ) * 100 ).intValue();
+	}
 
-        for( int i = 0; i < Config.requirePositiveInteger( this, NUM_ITERATIONS ); i++ ) {
-            Log.debug( getClass(), sampleId + " iteration[ " + i + " ]" );
-            for( final String otu: getRandomQuantileOtus( data, quantileNum ) ) {
-                if( otuCount.get( otu ) == null ) {
-                    otuCount.put( otu, 0L );
-                }
+	/**
+	 * Print the output file wit rarefied counts.
+	 *
+	 * @param file Output file
+	 * @param otuCounts TreeMap(OTU, count)
+	 * @throws Exception if errors occur
+	 */
+	protected static void generateOtuput( final File file, final TreeMap<String, Long> otuCounts ) throws Exception {
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( file ) );
+		try {
+			for( final String otu: otuCounts.keySet() ) {
+				writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
+			}
+		} finally {
+			writer.close();
+		}
+	}
 
-                otuCount.put( otu, otuCount.get( otu ) + 1 );
-            }
-        }
+	/**
+	 * Get OTU count data for the given sampleId.
+	 *
+	 * @param sampleId Sample ID
+	 * @param otuCounts All OTU counts
+	 * @return List of OTUs for the given sampleId
+	 * @throws Exception if errors occur
+	 */
+	protected static List<String> getData( final String sampleId, final TreeMap<String, Long> otuCounts )
+		throws Exception {
+		final String metaField = MetaUtil.getField( sampleId, ParserModuleImpl.getOtuCountField() );
+		final Long val = Long.valueOf( metaField );
+		final List<String> otus = new ArrayList<>( val.intValue() );
 
-        long totalSampleOtuCount = 0L;
-        final TreeMap<String, Long> meanCountValues = new TreeMap<>();
-        int i = 0;
-        for( final String otu: otuCount.keySet() ) {
-            final long avg = new Integer(
-                Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) ) ).longValue();
-            if( avg > 0 ) {
-                meanCountValues.put( otu, avg );
-                totalSampleOtuCount += avg;
-            }
-            Log.debug( getClass(), "Total Sample Otu Count[" + i++ + "] = " + totalSampleOtuCount );
-        }
+		for( final String otu: otuCounts.keySet() ) {
+			for( int i = 0; i < otuCounts.get( otu ); i++ ) {
+				otus.add( otu );
+			}
+			Collections.sort( otus );
+		}
 
-        this.hitsPerSample.put( sampleId, String.valueOf( totalSampleOtuCount ) );
-        return meanCountValues;
-    }
+		return otus;
+	}
 
-    private String getMetaColName() throws Exception {
-        return "postRareQ" + new Double( Config.requirePositiveDouble( this, QUANTILE ) * 100 ).intValue();
-    }
+	/**
+	 * Select random OTUs based on the quantileNum from the list of OTUs in data.
+	 *
+	 * @param data List( OTUs )
+	 * @param quantileNum Qunatile (range: 0.0 - 1.0)
+	 * @return List of randomly selected OTUs up to the given quantile
+	 */
+	protected static List<String> getRandomQuantileOtus( final List<String> data, final Long quantileNum ) {
+		Collections.shuffle( data );
+		if( data.size() > quantileNum ) return data.subList( 0, quantileNum.intValue() );
+		return data;
+	}
 
-    private Map<String, String> hitsPerSample = new HashMap<>();
-    private final Set<String> sampleIds = new HashSet<>();
+	private Map<String, String> hitsPerSample = new HashMap<>();
+	private final Set<String> sampleIds = new HashSet<>();
 
-    /**
-     * {@link biolockj.Config} Posivite Double property to define minimum percentage of samples that must contain an
-     * OTU. Low abundance OTUs will be removed: {@value #LOW_ABUNDANT_CUTOFF}
-     */
-    protected static final String LOW_ABUNDANT_CUTOFF = "rarefyOtuCounts.lowAbundantCutoff";
+	/**
+	 * {@link biolockj.Config} Posivite Double property to define minimum percentage of samples that must contain an
+	 * OTU. Low abundance OTUs will be removed: {@value #LOW_ABUNDANT_CUTOFF}
+	 */
+	protected static final String LOW_ABUNDANT_CUTOFF = "rarefyOtuCounts.lowAbundantCutoff";
 
-    /**
-     * {@link biolockj.Config} Positive Integer property {@value #NUM_ITERATIONS} defines the number of iterations to
-     * randomly select the {@value #QUANTILE}% of OTUs.
-     */
-    protected static final String NUM_ITERATIONS = "rarefyOtuCounts.iterations";
+	/**
+	 * {@link biolockj.Config} Positive Integer property {@value #NUM_ITERATIONS} defines the number of iterations to
+	 * randomly select the {@value #QUANTILE}% of OTUs.
+	 */
+	protected static final String NUM_ITERATIONS = "rarefyOtuCounts.iterations";
 
-    /**
-     * {@link biolockj.Config} Positive Double property {@value #QUANTILE} defines quantile for rarefication. The number
-     * of OTUs/sample are ordered, all samples with more OTUs than the quantile sample are subselected without
-     * replacement until they have the same number of OTUs as the quantile sample value. A quantile of 0.50 returns the
-     * median value.
-     */
-    protected static final String QUANTILE = "rarefyOtuCounts.quantile";
+	/**
+	 * {@link biolockj.Config} Positive Double property {@value #QUANTILE} defines quantile for rarefication. The number
+	 * of OTUs/sample are ordered, all samples with more OTUs than the quantile sample are subselected without
+	 * replacement until they have the same number of OTUs as the quantile sample value. A quantile of 0.50 returns the
+	 * median value.
+	 */
+	protected static final String QUANTILE = "rarefyOtuCounts.quantile";
 
-    /**
-     * {@link biolockj.Config} Boolean property {@value #REMOVE_LOW_ABUNDANT_SAMPLES} if TRUE, all samples below the
-     * quantile sample are removed.
-     */
-    protected static final String REMOVE_LOW_ABUNDANT_SAMPLES = "rarefyOtuCounts.rmLowSamples";
+	/**
+	 * {@link biolockj.Config} Boolean property {@value #REMOVE_LOW_ABUNDANT_SAMPLES} if TRUE, all samples below the
+	 * quantile sample are removed.
+	 */
+	protected static final String REMOVE_LOW_ABUNDANT_SAMPLES = "rarefyOtuCounts.rmLowSamples";
 }

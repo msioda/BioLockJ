@@ -27,79 +27,79 @@ import biolockj.module.ScriptModule;
  */
 public class LogUtil {
 
-    /**
-     * Not used currently.
-     * 
-     * @param module BioModule
-     * @throws Exception if errors occur
-     */
-    public static void syncModuleLogs( final ScriptModule module ) throws Exception {
-        if( module instanceof JavaModule && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
-            merge( cacheLog( getModuleLog( module ) ) );
-        }
-    }
+	/**
+	 * Not used currently.
+	 * 
+	 * @param module BioModule
+	 * @throws Exception if errors occur
+	 */
+	public static void syncModuleLogs( final ScriptModule module ) throws Exception {
+		if( module instanceof JavaModule && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
+			merge( cacheLog( getModuleLog( module ) ) );
+		}
+	}
 
-    private static List<String> cacheLog( final File log ) throws Exception {
-        final List<String> cache = new ArrayList<>();
-        final BufferedReader reader = BioLockJUtil.getFileReader( log );
-        try {
-            for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-                if( !line.trim().isEmpty() && !getProfile().contains( line ) ) {
-                    cache.add( line );
-                }
-            }
-        } finally {
-            reader.close();
-        }
+	private static List<String> cacheLog( final File log ) throws Exception {
+		final List<String> cache = new ArrayList<>();
+		final BufferedReader reader = BioLockJUtil.getFileReader( log );
+		try {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				if( !line.trim().isEmpty() && !getProfile().contains( line ) ) {
+					cache.add( line );
+				}
+			}
+		} finally {
+			reader.close();
+		}
 
-        return cache;
-    }
+		return cache;
+	}
 
-    private static File getModuleLog( final BioModule module ) {
-        return new File( module.getTempDir().getAbsolutePath() + File.separator + module.getClass().getSimpleName()
-            + Constants.LOG_EXT );
-    }
+	private static File getModuleLog( final BioModule module ) {
+		return new File( module.getTempDir().getAbsolutePath() + File.separator + module.getClass().getSimpleName()
+			+ Constants.LOG_EXT );
+	}
 
-    private static List<String> getProfile() {
-        if( profile.isEmpty() ) {
-            String userProfile = "Config property [" + USER_PROFILE
-                + "] is undefined.  One common example: ~/.bash_profile";
-            try {
-                userProfile = Config.requireString( null, USER_PROFILE );
-                final File bashProfile = new File( Config.getSystemFilePath( userProfile ) );
-                if( bashProfile.exists() ) {
-                    profile.addAll( cacheLog( bashProfile ) );
-                }
-            } catch( final Exception ex ) {
-                Log.warn( LogUtil.class, "Unable to find " + userProfile );
-            }
-        }
-        return profile;
-    }
+	private static List<String> getProfile() {
+		if( profile.isEmpty() ) {
+			String userProfile = "Config property [" + USER_PROFILE
+				+ "] is undefined.  One common example: ~/.bash_profile";
+			try {
+				userProfile = Config.requireString( null, USER_PROFILE );
+				final File bashProfile = new File( Config.getSystemFilePath( userProfile ) );
+				if( bashProfile.exists() ) {
+					profile.addAll( cacheLog( bashProfile ) );
+				}
+			} catch( final Exception ex ) {
+				Log.warn( LogUtil.class, "Unable to find " + userProfile );
+			}
+		}
+		return profile;
+	}
 
-    private static String getTempLogPath() {
-        return Log.getFile().getAbsolutePath().replace( Log.getFile().getName(), ".temp" + Log.getFile().getName() );
-    }
+	private static String getTempLogPath() {
+		return Log.getFile().getAbsolutePath().replace( Log.getFile().getName(), ".temp" + Log.getFile().getName() );
+	}
 
-    private static void merge( final List<String> lines ) throws Exception {
-        final File tempLog = new File( getTempLogPath() );
-        FileUtils.copyFile( Log.getFile(), tempLog );
-        final BufferedWriter writer = new BufferedWriter( new FileWriter( tempLog, true ) );
-        try {
-            for( final String line: lines ) {
-                writer.write( line + Constants.RETURN );
-            }
-        } finally {
-            writer.close();
-        }
-        FileUtils.copyFile( tempLog, Log.getFile() );
-    }
+	private static void merge( final List<String> lines ) throws Exception {
+		final File tempLog = new File( getTempLogPath() );
+		FileUtils.copyFile( Log.getFile(), tempLog );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( tempLog, true ) );
+		try {
+			for( final String line: lines ) {
+				writer.write( line + Constants.RETURN );
+			}
+		} finally {
+			writer.close();
+		}
+		FileUtils.copyFile( tempLog, Log.getFile() );
+	}
 
-    /**
-     * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
-     * Bash users typically use ~/.bash_profile.
-     */
-    public static final String USER_PROFILE = "pipeline.userProfile";
+	/**
+	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
+	 * Bash users typically use ~/.bash_profile.
+	 */
+	public static final String USER_PROFILE = "pipeline.userProfile";
 
-    private static final List<String> profile = new ArrayList<>();
+	private static final List<String> profile = new ArrayList<>();
 }

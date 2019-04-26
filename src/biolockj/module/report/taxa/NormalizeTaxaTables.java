@@ -17,7 +17,6 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.TaxaUtil;
@@ -43,269 +42,264 @@ import biolockj.util.TaxaUtil;
  * 
  * @blj.web_desc Normalize Taxa Tables
  */
-public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule {
-    /**
-     * Verify {@link biolockj.Config}.{@value biolockj.Constants#REPORT_LOG_BASE} property is valid (if defined) with a
-     * value = (e or 10).
-     *
-     * @throws ConfigFormatException if REPORT_LOG_BASE is not set to a valid option (e or 10)
-     */
-    @Override
-    public void checkDependencies() throws Exception {
-        this.logBase = Config.getString( this, Constants.REPORT_LOG_BASE );
-        if( this.logBase != null ) {
-            if( !this.logBase.equals( "10" ) && !this.logBase.equals( "e" ) )
-                throw new ConfigFormatException( Constants.REPORT_LOG_BASE,
-                    "Property only accepts value \"10\" or \"e\"" );
-            Log.debug( getClass(), "Found logBase: " + this.logBase );
-        } else {
-            this.logBase = "";
-        }
-        super.checkDependencies();
-    }
+public class NormalizeTaxaTables extends TaxaCountModule {
+	/**
+	 * Verify {@link biolockj.Config}.{@value biolockj.Constants#REPORT_LOG_BASE} property is valid (if defined) with a
+	 * value = (e or 10).
+	 *
+	 * @throws ConfigFormatException if REPORT_LOG_BASE is not set to a valid option (e or 10)
+	 */
+	@Override
+	public void checkDependencies() throws Exception {
+		this.logBase = Config.getString( this, Constants.REPORT_LOG_BASE );
+		if( this.logBase != null ) {
+			if( !this.logBase.equals( "10" ) && !this.logBase.equals( "e" ) )
+				throw new ConfigFormatException( Constants.REPORT_LOG_BASE,
+					"Property only accepts value \"10\" or \"e\"" );
+			Log.debug( getClass(), "Found logBase: " + this.logBase );
+		} else {
+			this.logBase = "";
+		}
+		super.checkDependencies();
+	}
 
-    @Override
-    public String getSummary() throws Exception {
-        if( Config.getString( this, Constants.REPORT_LOG_BASE ) != null ) {
-            this.summary += " Log(" + Config.getString( this, Constants.REPORT_LOG_BASE ) + ")";
-        }
+	@Override
+	public String getSummary() throws Exception {
+		if( Config.getString( this, Constants.REPORT_LOG_BASE ) != null ) {
+			this.summary += " Log(" + Config.getString( this, Constants.REPORT_LOG_BASE ) + ")";
+		}
 
-        this.summary += " normalized tables";
-        return super.getSummary() + this.summary;
-    }
+		this.summary += " normalized tables";
+		return super.getSummary() + this.summary;
+	}
 
-    @Override
-    public void runModule() throws Exception {
-        for( final File file: getInputFiles() ) {
-            transform( file );
-        }
+	@Override
+	public void runModule() throws Exception {
+		for( final File file: getInputFiles() ) {
+			transform( file );
+		}
 
-        this.summary = "Output " + getOutputDir().listFiles().length;
-    }
+		this.summary = "Output " + getOutputDir().listFiles().length;
+	}
 
-    /**
-     * Filter Sample IDs with all zero rows
-     * 
-     * @param sampleIDs List of Sample IDs
-     * @param allZeroIndex Table row index for all-zero rows
-     * @return Filtered list of Sample IDs
-     * @throws Exception if errors occur
-     */
-    protected List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex )
-        throws Exception {
-        final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
+	/**
+	 * Get the Log base (10 or e)
+	 * 
+	 * @return Log base
+	 */
+	protected String getLogBase() {
+		return this.logBase;
+	}
 
-        for( final String id: zeroSampleIDs ) {
-            sampleIDs.remove( id );
-        }
-        return sampleIDs;
-    }
+	/**
+	 * Populate normalized OTU counts with the formula: (RC/n)*((SUM(x))/N)+1
+	 *
+	 * @param taxaTable OTU raw count table
+	 * @throws Exception if unable to construct NormalizeTaxaTables
+	 */
+	protected void transform( final File taxaTable ) throws Exception {
+		final List<List<String>> dataPointsNormalized = new ArrayList<>();
+		final List<List<String>> dataPointsNormalizedThenLogged = new ArrayList<>();
+		final List<List<Long>> dataPointsUnnormalized = new ArrayList<>();
+		final List<String> sampleIDs = new ArrayList<>();
+		final List<String> otuNames = new ArrayList<>();
+		long tableSum = 0;
 
-    /**
-     * Get the Log base (10 or e)
-     * 
-     * @return Log base
-     */
-    protected String getLogBase() {
-        return this.logBase;
-    }
+		final BufferedReader reader = BioLockJUtil.getFileReader( taxaTable );
+		try {
+			otuNames.addAll( getOtuNames( reader.readLine() ) );
+			String nextLine = reader.readLine();
 
-    /**
-     * Parse Taxa names from the given header line.
-     * 
-     * @param header Head line of table
-     * @return List of Taxa
-     * @throws Exception if errors occur
-     */
-    protected List<String> getOtuNames( final String header ) throws Exception {
-        final List<String> otuNames = new ArrayList<>();
-        final StringTokenizer st = new StringTokenizer( header, Constants.TAB_DELIM );
-        st.nextToken(); // skip ID & then strip quotes
-        while( st.hasMoreTokens() ) {
-            otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
-        }
+			while( nextLine != null ) {
+				final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
+				final String sampleID = st.nextToken();
+				final List<Long> innerList = new ArrayList<>();
+				sampleIDs.add( sampleID );
+				dataPointsUnnormalized.add( innerList );
+				dataPointsNormalized.add( new ArrayList<String>() );
+				dataPointsNormalizedThenLogged.add( new ArrayList<String>() );
 
-        return otuNames;
-    }
+				while( st.hasMoreTokens() ) {
+					final String nextToken = st.nextToken();
+					long d = 0;
+					if( nextToken.length() > 0 ) {
+						d = Long.parseLong( nextToken );
+					}
+					innerList.add( d );
+				}
 
-    /**
-     * Populate normalized OTU counts with the formula: (RC/n)*((SUM(x))/N)+1
-     *
-     * @param taxaTable OTU raw count table
-     * @throws Exception if unable to construct NormalizeTaxaTables
-     */
-    protected void transform( final File taxaTable ) throws Exception {
-        final List<List<String>> dataPointsNormalized = new ArrayList<>();
-        final List<List<String>> dataPointsNormalizedThenLogged = new ArrayList<>();
-        final List<List<Long>> dataPointsUnnormalized = new ArrayList<>();
-        final List<String> sampleIDs = new ArrayList<>();
-        final List<String> otuNames = new ArrayList<>();
-        long tableSum = 0;
+				final long rowSum = innerList.stream().mapToLong( Long::longValue ).sum();
+				tableSum += rowSum;
+				if( rowSum == 0 ) throw new Exception( sampleID + " has all zeros for table counts." );
+				nextLine = reader.readLine();
 
-        final BufferedReader reader = BioLockJUtil.getFileReader( taxaTable );
-        try {
-            otuNames.addAll( getOtuNames( reader.readLine() ) );
-            String nextLine = reader.readLine();
+				Log.debug( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
+			}
+		} finally {
+			if( reader != null ) {
+				reader.close();
+			}
+		}
 
-            while( nextLine != null ) {
-                final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
-                final String sampleID = st.nextToken();
-                final List<Long> innerList = new ArrayList<>();
-                sampleIDs.add( sampleID );
-                dataPointsUnnormalized.add( innerList );
-                dataPointsNormalized.add( new ArrayList<String>() );
-                dataPointsNormalizedThenLogged.add( new ArrayList<String>() );
+		Log.debug( getClass(), "Table Sum [ #samples=" + sampleIDs.size() + "] = " + tableSum );
 
-                while( st.hasMoreTokens() ) {
-                    final String nextToken = st.nextToken();
-                    long d = 0;
-                    if( nextToken.length() > 0 ) {
-                        d = Long.parseLong( nextToken );
-                    }
-                    innerList.add( d );
-                }
+		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
+		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
+		final double aveRowSum = tableSum / filteredSampleIDs.size();
 
-                final long rowSum = innerList.stream().mapToLong( Long::longValue ).sum();
-                tableSum += rowSum;
-                if( rowSum == 0 ) throw new Exception( sampleID + " has all zeros for table counts." );
-                nextLine = reader.readLine();
+		Log.debug( getClass(), "Final Table Sum = " + tableSum );
+		Log.debug( getClass(), "Average Row Sum = " + aveRowSum );
+		Log.debug( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
 
-                Log.debug( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
-            }
-        } finally {
-            if( reader != null ) {
-                reader.close();
-            }
-        }
+		for( int x = 0; x < dataPointsUnnormalized.size(); x++ ) {
+			final long rowSum = dataPointsUnnormalized.get( x ).stream().mapToLong( Long::longValue ).sum();
+			final List<String> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
 
-        Log.debug( getClass(), "Table Sum [ #samples=" + sampleIDs.size() + "] = " + tableSum );
+			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ ) {
+				final Double normVal = aveRowSum * dataPointsUnnormalized.get( x ).get( y ) / rowSum + 1;
+				dataPointsNormalized.get( x ).add( new Long( normVal.longValue() ).toString() );
+				if( allZeroIndex.contains( x ) ) {
+					// index 0 = col headers, so add + 1
+					final String id = MetaUtil.getSampleIds().get( x + 1 );
+					Log.warn( getClass(), "All zero row will not be transformed - ID removed: " + id );
+				} else if( getLogBase().equalsIgnoreCase( LOG_E ) ) {
+					loggedInnerList.add( new Double( Math.log( normVal ) ).toString() );
+				} else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
+					loggedInnerList.add( new Double( Math.log10( normVal ) ).toString() );
+				}
+			}
+		}
 
-        final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
-        final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
-        final double aveRowSum = tableSum / filteredSampleIDs.size();
+		File normOutDir = getOutputDir();
+		final String level = TaxaUtil.getTaxonomyTableLevel( taxaTable );
+		Log.debug( getClass(), "Normalizing table for level: " + level );
+		if( !getLogBase().isEmpty() ) {
+			normOutDir = getTempDir();
+			final File logNormTable = getLogTransformedFile( level );
+			writeDataToFile( logNormTable, filteredSampleIDs, otuNames, dataPointsNormalizedThenLogged );
+		}
 
-        Log.debug( getClass(), "Final Table Sum = " + tableSum );
-        Log.debug( getClass(), "Average Row Sum = " + aveRowSum );
-        Log.debug( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
+		final File normTable = TaxaUtil.getTaxonomyTableFile( normOutDir, level, TaxaUtil.NORMALIZED );
+		writeDataToFile( normTable, filteredSampleIDs, otuNames, dataPointsNormalized );
+	}
 
-        for( int x = 0; x < dataPointsUnnormalized.size(); x++ ) {
-            final long rowSum = dataPointsUnnormalized.get( x ).stream().mapToLong( Long::longValue ).sum();
-            final List<String> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
+	private File getLogTransformedFile( final String level ) throws Exception {
+		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, TaxaUtil.NORMALIZED + "_Log" + getLogBase() );
+	}
 
-            for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ ) {
-                final Double normVal = aveRowSum * dataPointsUnnormalized.get( x ).get( y ) / rowSum + 1;
-                dataPointsNormalized.get( x ).add( new Long( normVal.longValue() ).toString() );
-                if( allZeroIndex.contains( x ) ) {
-                    // index 0 = col headers, so add + 1
-                    final String id = MetaUtil.getSampleIds().get( x + 1 );
-                    Log.warn( getClass(), "All zero row will not be transformed - ID removed: " + id );
-                } else if( getLogBase().equalsIgnoreCase( LOG_E ) ) {
-                    loggedInnerList.add( new Double( Math.log( normVal ) ).toString() );
-                } else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
-                    loggedInnerList.add( new Double( Math.log10( normVal ) ).toString() );
-                }
-            }
-        }
+	/**
+	 * Filter Sample IDs with all zero rows
+	 * 
+	 * @param sampleIDs List of Sample IDs
+	 * @param allZeroIndex Table row index for all-zero rows
+	 * @return Filtered list of Sample IDs
+	 */
+	protected static List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
+		final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
 
-        File normOutDir = getOutputDir();
-        final String level = TaxaUtil.getTaxonomyTableLevel( taxaTable );
-        Log.debug( getClass(), "Normalizing table for level: " + level );
-        if( !getLogBase().isEmpty() ) {
-            normOutDir = getTempDir();
-            final File logNormTable = getLogTransformedFile( level );
-            writeDataToFile( logNormTable, filteredSampleIDs, otuNames, dataPointsNormalizedThenLogged );
-        }
+		for( final String id: zeroSampleIDs ) {
+			sampleIDs.remove( id );
+		}
+		return sampleIDs;
+	}
 
-        final File normTable = TaxaUtil.getTaxonomyTableFile( normOutDir, level, TaxaUtil.NORMALIZED );
-        writeDataToFile( normTable, filteredSampleIDs, otuNames, dataPointsNormalized );
-    }
+	/**
+	 * Return the table index for rows with all zer count values
+	 * 
+	 * @param data List of table rows
+	 * @return Set of empty zero-rows
+	 */
+	protected static Set<Integer> findAllZeroIndex( final List<List<Long>> data ) {
+		final Set<Integer> allZero = new HashSet<>();
+		for( int x = 0; x < data.size(); x++ ) {
+			for( int y = 0; y < data.get( x ).size(); y++ ) {
+				long sum = 0;
 
-    /**
-     * Write transformed data to file
-     * 
-     * @param inputFile Count table
-     * @param sampleNames Sample
-     * @param taxaNames Taxa names
-     * @param taxaCounts Taxa counts
-     * @throws Exception if errors occur
-     */
-    protected void writeDataToFile( final File inputFile, final List<String> sampleNames, final List<String> taxaNames,
-        final List<List<String>> taxaCounts ) throws Exception {
-        final BufferedWriter writer = new BufferedWriter( new FileWriter( inputFile ) );
+				for( final Long d: data.get( x ) ) {
+					sum += d;
+				}
 
-        writer.write( MetaUtil.getID() );
+				if( sum == 0 ) {
+					allZero.add( x );
+				}
+			}
+		}
+		return allZero;
+	}
 
-        for( final String s: taxaNames ) {
-            writer.write( Constants.TAB_DELIM + s );
-        }
+	/**
+	 * Parse Taxa names from the given header line.
+	 * 
+	 * @param header Head line of table
+	 * @return List of Taxa
+	 */
+	protected static List<String> getOtuNames( final String header ) {
+		final List<String> otuNames = new ArrayList<>();
+		final StringTokenizer st = new StringTokenizer( header, Constants.TAB_DELIM );
+		st.nextToken(); // skip ID & then strip quotes
+		while( st.hasMoreTokens() ) {
+			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
+		}
 
-        writer.write( Constants.RETURN );
+		return otuNames;
+	}
 
-        final int size = sampleNames.size();
-        for( int x = 0; x < size; x++ ) {
-            writer.write( sampleNames.get( x ) );
+	/**
+	 * Write transformed data to file
+	 * 
+	 * @param inputFile Count table
+	 * @param sampleNames Sample
+	 * @param taxaNames Taxa names
+	 * @param taxaCounts Taxa counts
+	 * @throws Exception if errors occur
+	 */
+	protected static void writeDataToFile( final File inputFile, final List<String> sampleNames,
+		final List<String> taxaNames, final List<List<String>> taxaCounts ) throws Exception {
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( inputFile ) );
 
-            for( int y = 0; y < taxaNames.size(); y++ ) {
-                writer.write( Constants.TAB_DELIM + taxaCounts.get( x ).get( y ) );
-            }
+		writer.write( MetaUtil.getID() );
 
-            if( x + 1 != size ) {
-                writer.write( Constants.RETURN );
-            }
-        }
+		for( final String s: taxaNames ) {
+			writer.write( Constants.TAB_DELIM + s );
+		}
 
-        writer.close();
-    }
+		writer.write( Constants.RETURN );
 
-    private File getLogTransformedFile( final String level ) throws Exception {
-        return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, TaxaUtil.NORMALIZED + "_Log" + getLogBase() );
-    }
+		final int size = sampleNames.size();
+		for( int x = 0; x < size; x++ ) {
+			writer.write( sampleNames.get( x ) );
 
-    private List<String> getNonZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex )
-        throws Exception {
-        final List<String> zeroSampleIDs = new ArrayList<>();
-        for( final Integer i: allZeroIndex ) {
-            zeroSampleIDs.add( sampleIDs.get( i ) );
-        }
+			for( int y = 0; y < taxaNames.size(); y++ ) {
+				writer.write( Constants.TAB_DELIM + taxaCounts.get( x ).get( y ) );
+			}
 
-        return zeroSampleIDs;
-    }
+			if( x + 1 != size ) {
+				writer.write( Constants.RETURN );
+			}
+		}
 
-    /**
-     * Return the table index for rows with all zer count values
-     * 
-     * @param data List of table rows
-     * @return Set of empty zero-rows
-     * @throws Exception if errors occur
-     */
-    protected static Set<Integer> findAllZeroIndex( final List<List<Long>> data ) throws Exception {
-        final Set<Integer> allZero = new HashSet<>();
-        for( int x = 0; x < data.size(); x++ ) {
-            for( int y = 0; y < data.get( x ).size(); y++ ) {
-                long sum = 0;
+		writer.close();
+	}
 
-                for( final Long d: data.get( x ) ) {
-                    sum += d;
-                }
+	private static List<String> getNonZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
+		final List<String> zeroSampleIDs = new ArrayList<>();
+		for( final Integer i: allZeroIndex ) {
+			zeroSampleIDs.add( sampleIDs.get( i ) );
+		}
 
-                if( sum == 0 ) {
-                    allZero.add( x );
-                }
-            }
-        }
-        return allZero;
-    }
+		return zeroSampleIDs;
+	}
 
-    private String logBase = "";
-    private String summary = "";
+	private String logBase = "";
+	private String summary = "";
 
-    /**
-     * Log 10 display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
-     */
-    protected static final String LOG_10 = "10";
+	/**
+	 * Log 10 display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
+	 */
+	protected static final String LOG_10 = "10";
 
-    /**
-     * Log e display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
-     */
-    protected static final String LOG_E = "e";
+	/**
+	 * Log e display string as 1/2 supported values for: {@value biolockj.Constants#REPORT_LOG_BASE}
+	 */
+	protected static final String LOG_E = "e";
 }

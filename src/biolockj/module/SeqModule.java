@@ -20,15 +20,15 @@ import java.util.List;
  */
 public interface SeqModule extends ScriptModule {
 
-    /**
-     * Return only sequence files for sample IDs found in the metadata file.<br>
-     * If {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_REQUIRED} = {@value biolockj.Constants#TRUE}, an
-     * error is thrown to list the files that cannot be matched to a metadata row.
-     * 
-     * @param files Module input files
-     * @return Module sequence files
-     * @throws Exception if no input files are found
-     */
-    public List<File> getSeqFiles( Collection<File> files ) throws Exception;
+	/**
+	 * Return only sequence files for sample IDs found in the metadata file.<br>
+	 * If {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_REQUIRED} = {@value biolockj.Constants#TRUE}, an
+	 * error is thrown to list the files that cannot be matched to a metadata row.
+	 * 
+	 * @param files Module input files
+	 * @return Module sequence files
+	 * @throws Exception if no input files are found
+	 */
+	public List<File> getSeqFiles( Collection<File> files ) throws Exception;
 
 }

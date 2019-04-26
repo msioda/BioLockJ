@@ -26,61 +26,61 @@ import biolockj.util.ModuleUtil;
  */
 public class MergeQiimeOtuTables extends ScriptModuleImpl {
 
-    /**
-     * Build a single bash script line to call {@value #SCRIPT_MERGE_OTU_TABLES} to create the single
-     * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}, as required by
-     * {@link biolockj.module.implicit.parser.r16s.QiimeParser}.
-     */
-    @Override
-    public List<List<String>> buildScript( final List<File> files ) throws Exception {
-        String tables = "";
-        for( final File f: files ) {
-            if( f.getName().startsWith( Constants.OTU_TABLE_PREFIX ) ) {
-                tables += ( tables.isEmpty() ? "": "," ) + f.getAbsolutePath();
-            } else {
-                Log.warn( getClass(),
-                    "Ignoring non-" + Constants.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
-            }
-        }
+	/**
+	 * Build a single bash script line to call {@value #SCRIPT_MERGE_OTU_TABLES} to create the single
+	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}, as required by
+	 * {@link biolockj.module.implicit.parser.r16s.QiimeParser}.
+	 */
+	@Override
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
+		String tables = "";
+		for( final File f: files ) {
+			if( f.getName().startsWith( Constants.OTU_TABLE_PREFIX ) ) {
+				tables += ( tables.isEmpty() ? "": "," ) + f.getAbsolutePath();
+			} else {
+				Log.warn( getClass(),
+					"Ignoring non-" + Constants.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
+			}
+		}
 
-        final List<List<String>> data = new ArrayList<>();
-        final List<String> lines = new ArrayList<>();
-        final String outputFile = getOutputDir().getAbsolutePath() + File.separator + QiimeClassifier.OTU_TABLE;
-        lines.add( SCRIPT_MERGE_OTU_TABLES + " -i " + tables + " -o " + outputFile );
-        data.add( lines );
+		final List<List<String>> data = new ArrayList<>();
+		final List<String> lines = new ArrayList<>();
+		final String outputFile = getOutputDir().getAbsolutePath() + File.separator + QiimeClassifier.OTU_TABLE;
+		lines.add( SCRIPT_MERGE_OTU_TABLES + " -i " + tables + " -o " + outputFile );
+		data.add( lines );
 
-        return data;
-    }
+		return data;
+	}
 
-    /**
-     * Verify the previous module = {@link biolockj.module.classifier.r16s.QiimeClosedRefClassifier}
-     */
-    @Override
-    public void checkDependencies() throws Exception {
-        super.checkDependencies();
-        if( !( ModuleUtil.getPreviousModule( this ) instanceof QiimeClosedRefClassifier ) )
-            throw new Exception( "Module order exception!  " + RETURN + getClass().getName()
-                + " must run immediately after " + QiimeClosedRefClassifier.class.getName() + " (if configured)" );
-    }
+	/**
+	 * Verify the previous module = {@link biolockj.module.classifier.r16s.QiimeClosedRefClassifier}
+	 */
+	@Override
+	public void checkDependencies() throws Exception {
+		super.checkDependencies();
+		if( !( ModuleUtil.getPreviousModule( this ) instanceof QiimeClosedRefClassifier ) )
+			throw new Exception( "Module order exception!  " + RETURN + getClass().getName()
+				+ " must run immediately after " + QiimeClosedRefClassifier.class.getName() + " (if configured)" );
+	}
 
-    /**
-     * Call {@link #buildScript(List)} to create bash script lines needed to merge
-     * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}s with {@value #SCRIPT_MERGE_OTU_TABLES} unless
-     * only 1 input file found, in which case, just copy it to the output dir.
-     */
-    @Override
-    public void executeTask() throws Exception {
-        if( getInputFiles().size() > 1 ) {
-            super.executeTask();
-        } else if( getInputFiles().size() == 1 ) {
-            Log.warn( getClass(),
-                "Previous module only output 1 " + QiimeClassifier.OTU_TABLE + "so there is nothing to merge" );
-            FileUtils.copyFileToDirectory( getInputFiles().get( 0 ), getOutputDir() );
-        } else throw new Exception( "No " + Constants.OTU_TABLE_PREFIX + " files to merge" );
-    }
+	/**
+	 * Call {@link #buildScript(List)} to create bash script lines needed to merge
+	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}s with {@value #SCRIPT_MERGE_OTU_TABLES} unless
+	 * only 1 input file found, in which case, just copy it to the output dir.
+	 */
+	@Override
+	public void executeTask() throws Exception {
+		if( getInputFiles().size() > 1 ) {
+			super.executeTask();
+		} else if( getInputFiles().size() == 1 ) {
+			Log.warn( getClass(),
+				"Previous module only output 1 " + QiimeClassifier.OTU_TABLE + "so there is nothing to merge" );
+			FileUtils.copyFileToDirectory( getInputFiles().get( 0 ), getOutputDir() );
+		} else throw new Exception( "No " + Constants.OTU_TABLE_PREFIX + " files to merge" );
+	}
 
-    /**
-     * QIIME script to merge multiple OTU tables in biom format.
-     */
-    protected static final String SCRIPT_MERGE_OTU_TABLES = "merge_otu_tables.py";
+	/**
+	 * QIIME script to merge multiple OTU tables in biom format.
+	 */
+	protected static final String SCRIPT_MERGE_OTU_TABLES = "merge_otu_tables.py";
 }

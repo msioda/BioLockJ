@@ -18,12 +18,12 @@ import java.io.File;
  * directory to map to the container /db volume.
  */
 public interface DatabaseModule extends BioModule {
-    /**
-     * Return database directory, if multiple databases are configured, they must share a common parent directory and
-     * the common parent directory is returned by this method.
-     *
-     * @return Database directory
-     * @throws Exception thrown if any runtime error occurs
-     */
-    public File getDB() throws Exception;
+	/**
+	 * Return database directory, if multiple databases are configured, they must share a common parent directory and
+	 * the common parent directory is returned by this method.
+	 *
+	 * @return Database directory
+	 * @throws Exception thrown if any runtime error occurs
+	 */
+	public File getDB() throws Exception;
 }

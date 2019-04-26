@@ -26,38 +26,38 @@ import biolockj.node.OtuNodeImpl;
  */
 public class KrakenNode extends OtuNodeImpl {
 
-    /**
-     * Constructor called for each line of Kraken output.<br>
-     * Builds the OtuNode by extracting the OTU names for each taxonomy level found in the line.
-     *
-     * @param id Sample ID
-     * @param line Kraken mpa-output line
-     * @throws Exception if required properties are invalid or undefined
-     */
-    public KrakenNode( final String id, final String line ) throws Exception {
-        final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
-        if( st.countTokens() == 2 ) {
-            st.nextToken(); // skip the header
-            setSampleId( id );
-            setLine( line );
-            setCount( 1 );
+	/**
+	 * Constructor called for each line of Kraken output.<br>
+	 * Builds the OtuNode by extracting the OTU names for each taxonomy level found in the line.
+	 *
+	 * @param id Sample ID
+	 * @param line Kraken mpa-output line
+	 * @throws Exception if required properties are invalid or undefined
+	 */
+	public KrakenNode( final String id, final String line ) throws Exception {
+		final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
+		if( st.countTokens() == 2 ) {
+			st.nextToken(); // skip the header
+			setSampleId( id );
+			setLine( line );
+			setCount( 1 );
 
-            final StringTokenizer taxas = new StringTokenizer( st.nextToken(), KRAKEN_DELIM );
-            while( taxas.hasMoreTokens() ) {
-                final String token = taxas.nextToken();
-                final String levelDelim = token.substring( 0, 3 );
-                final String taxa = token.substring( 3 );
-                addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
-            }
-        } else {
-            while( st.hasMoreTokens() ) {
-                Log.warn( getClass(), "Extra Kraken token [ more than expected 2! ]: " + st.nextToken() );
-            }
+			final StringTokenizer taxas = new StringTokenizer( st.nextToken(), KRAKEN_DELIM );
+			while( taxas.hasMoreTokens() ) {
+				final String token = taxas.nextToken();
+				final String levelDelim = token.substring( 0, 3 );
+				final String taxa = token.substring( 3 );
+				addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
+			}
+		} else {
+			while( st.hasMoreTokens() ) {
+				Log.warn( getClass(), "Extra Kraken token [ more than expected 2! ]: " + st.nextToken() );
+			}
 
-            throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + Constants.RETURN
-                + "Kraken output must have exactly 2 tab delimited columns per line. " );
-        }
-    }
+			throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + Constants.RETURN
+				+ "Kraken output must have exactly 2 tab delimited columns per line. " );
+		}
+	}
 
-    private static final String KRAKEN_DELIM = "\\|";
+	private static final String KRAKEN_DELIM = "\\|";
 }

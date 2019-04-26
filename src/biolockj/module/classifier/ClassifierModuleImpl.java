@@ -27,88 +27,88 @@ import biolockj.util.SummaryUtil;
  */
 public abstract class ClassifierModuleImpl extends SeqModuleImpl implements ClassifierModule, DatabaseModule {
 
-    /**
-     * Validate module dependencies:
-     * <ul>
-     * <li>Call {@link #getClassifierExe()} to verify the executable
-     * <li>Call {@link #getClassifierParams()} to verify the runtime parameters are valid
-     * <li>Call {@link #validateModuleOrder()} to validate module configuration order.
-     * <li>Call {@link biolockj.module.ScriptModule#checkDependencies() } to validate script dependencies.
-     * </ul>
-     */
-    @Override
-    public void checkDependencies() throws Exception {
-        getClassifierExe();
-        getClassifierParams();
-        validateModuleOrder();
-        super.checkDependencies();
-    }
+	/**
+	 * Validate module dependencies:
+	 * <ul>
+	 * <li>Call {@link #getClassifierExe()} to verify the executable
+	 * <li>Call {@link #getClassifierParams()} to verify the runtime parameters are valid
+	 * <li>Call {@link #validateModuleOrder()} to validate module configuration order.
+	 * <li>Call {@link biolockj.module.ScriptModule#checkDependencies() } to validate script dependencies.
+	 * </ul>
+	 */
+	@Override
+	public void checkDependencies() throws Exception {
+		getClassifierExe();
+		getClassifierParams();
+		validateModuleOrder();
+		super.checkDependencies();
+	}
 
-    @Override
-    public abstract String getClassifierExe() throws Exception;
+	@Override
+	public abstract String getClassifierExe() throws Exception;
 
-    @Override
-    public abstract List<String> getClassifierParams() throws Exception;
+	@Override
+	public abstract List<String> getClassifierParams() throws Exception;
 
-    @Override
-    public abstract File getDB() throws Exception;
+	@Override
+	public abstract File getDB() throws Exception;
 
-    /**
-     * This method returns the corresponding Parser module associated with the classifier. The Parser module name is
-     * built using the same prefix used in the Classifier module
-     * <p>
-     * For example RdpClassifier, will return the RdpParser.
-     */
-    @Override
-    public List<String> getPostRequisiteModules() throws Exception {
-        final List<String> postReqs = new ArrayList<>();
-        final String type = getClassifierType().substring( 0, 1 ).toUpperCase() + getClassifierType().substring( 1 );
-        postReqs.add( ParserModule.class.getPackage().getName() + "." + getSeqType() + "." + type + "Parser" );
-        postReqs.addAll( super.getPostRequisiteModules() );
-        return postReqs;
-    }
+	/**
+	 * This method returns the corresponding Parser module associated with the classifier. The Parser module name is
+	 * built using the same prefix used in the Classifier module
+	 * <p>
+	 * For example RdpClassifier, will return the RdpParser.
+	 */
+	@Override
+	public List<String> getPostRequisiteModules() throws Exception {
+		final List<String> postReqs = new ArrayList<>();
+		final String type = getClassifierType().substring( 0, 1 ).toUpperCase() + getClassifierType().substring( 1 );
+		postReqs.add( ParserModule.class.getPackage().getName() + "." + getSeqType() + "." + type + "Parser" );
+		postReqs.addAll( super.getPostRequisiteModules() );
+		return postReqs;
+	}
 
-    @Override
-    public String getSummary() throws Exception {
-        return super.getSummary() + SummaryUtil.getInputSummary( this );
-    }
+	@Override
+	public String getSummary() throws Exception {
+		return super.getSummary() + SummaryUtil.getInputSummary( this );
+	}
 
-    /**
-     * This method returns the classifier class name in lower case, after "classifier" is removed.<br>
-     * The remaining text should uniquely identify the name of the program.<br>
-     * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan2, or humann2).<br>
-     *
-     * @return String - options { rdp, qiime, kraken, kraken2, metaphlan2, or humann2 }
-     */
-    protected String getClassifierType() {
-        String type = getClass().getSimpleName().toLowerCase().replaceAll( "classifier", "" );
-        if( type.startsWith( Constants.QIIME ) ) {
-            type = Constants.QIIME;
-        }
+	/**
+	 * This method returns the classifier class name in lower case, after "classifier" is removed.<br>
+	 * The remaining text should uniquely identify the name of the program.<br>
+	 * The basic deployment will return one of: (rdp, qiime, kraken, metaphlan2, or humann2).<br>
+	 *
+	 * @return String - options { rdp, qiime, kraken, kraken2, metaphlan2, or humann2 }
+	 */
+	protected String getClassifierType() {
+		String type = getClass().getSimpleName().toLowerCase().replaceAll( "classifier", "" );
+		if( type.startsWith( Constants.QIIME ) ) {
+			type = Constants.QIIME;
+		}
 
-        return type;
-    }
+		return type;
+	}
 
-    /**
-     * Validate that no {@link biolockj.module.seq} modules run after this classifier unless a new classifier branch is
-     * started.
-     * 
-     * @throws Exception if modules are out of order
-     */
-    protected void validateModuleOrder() throws Exception {
-        for( final BioModule module: ModuleUtil.getModules( this, true ) ) {
-            if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) {
-                break;
-            } else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
-                throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
-                    + " must run before the ParserModule." );
-        }
-    }
+	/**
+	 * Validate that no {@link biolockj.module.seq} modules run after this classifier unless a new classifier branch is
+	 * started.
+	 * 
+	 * @throws Exception if modules are out of order
+	 */
+	protected void validateModuleOrder() throws Exception {
+		for( final BioModule module: ModuleUtil.getModules( this, true ) ) {
+			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) {
+				break;
+			} else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
+				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
+					+ " must run before the ParserModule." );
+		}
+	}
 
-    private String getSeqType() {
-        if( getClass().getName().startsWith( "biolockj.module.classifier.wgs" ) ) return "wgs";
+	private String getSeqType() {
+		if( getClass().getName().startsWith( "biolockj.module.classifier.wgs" ) ) return "wgs";
 
-        return "r16s";
+		return "r16s";
 
-    }
+	}
 }

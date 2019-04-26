@@ -19,37 +19,37 @@ import biolockj.Config;
  */
 public class ConfigPathException extends ConfigException {
 
-    /**
-     * ConfigPathException is thrown if the filePath parameter does not exist on the file system.
-     *
-     * @param filePath File path
-     */
-    public ConfigPathException( final String filePath ) {
-        super( "Invalid Path: " + filePath + " does not exist on the file system" );
-    }
+	/**
+	 * ConfigPathException is thrown if the filePath parameter does not exist on the file system.
+	 *
+	 * @param filePath File path
+	 */
+	public ConfigPathException( final String filePath ) {
+		super( "Invalid Path: " + filePath + " does not exist on the file system" );
+	}
 
-    /**
-     * ConfigPathException is thrown if the path does not exist or is not the proper file type: {@value #FILE} or
-     * {@value #DIRECTORY}.
-     *
-     * @param property {@link biolockj.Config} property name
-     * @param fileType File type must be {@value #FILE} or {@value #DIRECTORY}
-     */
-    public ConfigPathException( final String property, final String fileType ) {
-        super( property, "Current value \"" + Config.getString( null, property ) + "\" is not a valid " + fileType );
-    }
+	/**
+	 * ConfigPathException is thrown if the path does not exist or is not the proper file type: {@value #FILE} or
+	 * {@value #DIRECTORY}.
+	 *
+	 * @param property {@link biolockj.Config} property name
+	 * @param fileType File type must be {@value #FILE} or {@value #DIRECTORY}
+	 */
+	public ConfigPathException( final String property, final String fileType ) {
+		super( property, "Current value \"" + Config.getString( null, property ) + "\" is not a valid " + fileType );
+	}
 
-    /**
-     * One of 2 BioLockJ file path types that can be passed to the constructor {@value #DIRECTORY}. The exception
-     * message will state the filePath given is not a {@value #DIRECTORY}
-     */
-    public static final String DIRECTORY = "directory";
+	/**
+	 * One of 2 BioLockJ file path types that can be passed to the constructor {@value #DIRECTORY}. The exception
+	 * message will state the filePath given is not a {@value #DIRECTORY}
+	 */
+	public static final String DIRECTORY = "directory";
 
-    /**
-     * One of 2 BioLockJ file path types that can be passed to the constructor {@value #FILE}. The exception message
-     * will state the filePath given is not a {@value #FILE}
-     */
-    public static final String FILE = "file";
+	/**
+	 * One of 2 BioLockJ file path types that can be passed to the constructor {@value #FILE}. The exception message
+	 * will state the filePath given is not a {@value #FILE}
+	 */
+	public static final String FILE = "file";
 
-    private static final long serialVersionUID = 8070021678414952511L;
+	private static final long serialVersionUID = 8070021678414952511L;
 }

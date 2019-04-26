@@ -18,7 +18,6 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.JavaModule;
 import biolockj.util.*;
 
 /**
@@ -27,224 +26,220 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Remove Low Pathway Counts
  */
-public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaModule {
+public class RemoveLowPathwayCounts extends Humann2CountModule {
 
-    @Override
-    public void checkDependencies() throws Exception {
-        super.checkDependencies();
-        getMinCount();
-    }
+	@Override
+	public void checkDependencies() throws Exception {
+		super.checkDependencies();
+		getMinCount();
+	}
 
-    /**
-     * Produce summary message with min, max, mean, and median number of pathways.
-     */
-    @Override
-    public String getSummary() throws Exception {
-        String summary = "Remove Pathway counts below --> " + getMetaColName() + RETURN;
-        if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
-            summary += SummaryUtil.getCountSummary( this.uniquePathwaysPerSample, "Unique Pathways", false );
-            summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
-            this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
-            if( !this.sampleIds.isEmpty() ) {
-                summary += "Removed empty samples: " + this.sampleIds;
-            }
-        }
-        freeMemory();
-        return super.getSummary() + summary;
-    }
+	/**
+	 * Produce summary message with min, max, mean, and median number of pathways.
+	 */
+	@Override
+	public String getSummary() throws Exception {
+		String summary = "Remove Pathway counts below --> " + getMetaColName() + RETURN;
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
+			summary += SummaryUtil.getCountSummary( this.uniquePathwaysPerSample, "Unique Pathways", false );
+			summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
+			this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
+			if( !this.sampleIds.isEmpty() ) {
+				summary += "Removed empty samples: " + this.sampleIds;
+			}
+		}
+		freeMemory();
+		return super.getSummary() + summary;
+	}
 
-    @Override
-    public void runModule() throws Exception {
-        this.sampleIds.addAll( MetaUtil.getSampleIds() );
-        for( final File file: getInputFiles() ) {
-            final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts( file );
-            logLowCountPathways( lowCounts );
-            if( Config.getBoolean( this, Constants.REPORT_NUM_HITS )
-                && !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-                && file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
-                MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT,
-                    this.uniquePathwaysPerSample, getTempDir(), true );
-                MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT,
-                    this.totalPathwaysPerSample, getOutputDir(), true );
-            }
-        }
-    }
+	@Override
+	public void runModule() throws Exception {
+		this.sampleIds.addAll( MetaUtil.getSampleIds() );
+		for( final File file: getInputFiles() ) {
+			final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts( file );
+			logLowCountPathways( lowCounts );
+			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS )
+				&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
+				&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT,
+					this.uniquePathwaysPerSample, getTempDir(), true );
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT,
+					this.totalPathwaysPerSample, getOutputDir(), true );
+			}
+		}
+	}
 
-    /**
-     * Save a list of low count pathways to the module temp directory.
-     *
-     * @param map TreeMap(sampleId, TreeSet(Pathway)) of Pathways found in too few samples
-     * @throws Exception if errors occur
-     */
-    protected void logLowCountPathways( final TreeMap<String, TreeSet<String>> map ) throws Exception {
-        if( map == null || map.isEmpty() ) {
-            Log.info( getClass(), "No low-count pathways detected" );
-            return;
-        }
-        final BufferedWriter writer = new BufferedWriter( new FileWriter( getLowCountPathwayLogFile() ) );
-        try {
-            for( final String id: map.keySet() ) {
-                final TreeSet<String> pathways = map.get( id );
+	/**
+	 * Save a list of low count pathways to the module temp directory.
+	 *
+	 * @param map TreeMap(sampleId, TreeSet(Pathway)) of Pathways found in too few samples
+	 * @throws Exception if errors occur
+	 */
+	protected void logLowCountPathways( final TreeMap<String, TreeSet<String>> map ) throws Exception {
+		if( map == null || map.isEmpty() ) {
+			Log.info( getClass(), "No low-count pathways detected" );
+			return;
+		}
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getLowCountPathwayLogFile() ) );
+		try {
+			for( final String id: map.keySet() ) {
+				final TreeSet<String> pathways = map.get( id );
 
-                for( final String pathway: pathways ) {
-                    writer.write( id + ": " + pathway + RETURN );
-                }
-            }
-        } finally {
-            if( writer != null ) {
-                writer.close();
-            }
-        }
+				for( final String pathway: pathways ) {
+					writer.write( id + ": " + pathway + RETURN );
+				}
+			}
+		} finally {
+			writer.close();
+		}
 
-        Log.info( getClass(),
-            "Found " + map.size() + " samples with low count pathways removed - Pathway list saved to --> "
-                + getLowCountPathwayLogFile().getAbsolutePath() );
-    }
+		Log.info( getClass(),
+			"Found " + map.size() + " samples with low count pathways removed - Pathway list saved to --> "
+				+ getLowCountPathwayLogFile().getAbsolutePath() );
+	}
 
-    /**
-     * Remove Pathway Counts below the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_MIN_COUNT}
-     *
-     * @param file Input file
-     * @return TreeMap(SampleId, TreeMap(Pathway)) Map removed pathways to sample ID
-     * @throws Exception if errors occur
-     */
-    protected TreeMap<String, TreeSet<String>> removeLowPathwayCounts( final File file ) throws Exception {
-        Log.info( getClass(), "Inspecting for Low Pathway count: " + file.getAbsolutePath() );
-        final TreeMap<String, TreeSet<String>> lowCountPathways = new TreeMap<>();
-        final List<List<String>> table = BioLockJUtil.parseCountTable( file );
-        final List<List<String>> output = new ArrayList<>();
+	/**
+	 * Remove Pathway Counts below the {@link biolockj.Config}.{@value biolockj.Constants#REPORT_MIN_COUNT}
+	 *
+	 * @param file Input file
+	 * @return TreeMap(SampleId, TreeMap(Pathway)) Map removed pathways to sample ID
+	 * @throws Exception if errors occur
+	 */
+	protected TreeMap<String, TreeSet<String>> removeLowPathwayCounts( final File file ) throws Exception {
+		Log.info( getClass(), "Inspecting for Low Pathway count: " + file.getAbsolutePath() );
+		final TreeMap<String, TreeSet<String>> lowCountPathways = new TreeMap<>();
+		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
+		final List<List<String>> output = new ArrayList<>();
 
-        List<String> pathways = null;
-        final TreeSet<String> validPathways = new TreeSet<>();
-        final Set<String> foundSamplePathways = new TreeSet<>();
-        int totalPathwayCount = 0;
-        for( final List<String> record: table ) {
-            final String sampleId = record.get( 0 );
+		List<String> pathways = null;
+		final TreeSet<String> validPathways = new TreeSet<>();
+		final Set<String> foundSamplePathways = new TreeSet<>();
+		int totalPathwayCount = 0;
+		for( final List<String> record: table ) {
+			final String sampleId = record.get( 0 );
 
-            if( pathways == null ) {
-                output.add( record );
-                validPathways.addAll( record.subList( 1, record.size() ) );
-                pathways = record;
-                continue;
-            }
+			if( pathways == null ) {
+				output.add( record );
+				validPathways.addAll( record.subList( 1, record.size() ) );
+				pathways = record;
+				continue;
+			}
 
-            final TreeSet<String> validSamplePathways = new TreeSet<>();
+			final TreeSet<String> validSamplePathways = new TreeSet<>();
 
-            final List<String> line = new ArrayList<>();
-            line.add( sampleId );
-            for( int i = 1; i < record.size(); i++ ) {
-                final Double count = Double.valueOf( record.get( i ) );
-                final String pathway = pathways.get( i - 1 );
-                if( count < getMinCount() ) {
-                    line.add( "0.0" );
-                    Log.debug( getClass(), sampleId + ": Remove Low Pathway count: " + pathway + "=" + count );
-                } else {
-                    validSamplePathways.add( pathway );
-                    line.add( count.toString() );
-                    totalPathwayCount += count;
-                    validPathways.add( pathway );
-                }
-            }
+			final List<String> line = new ArrayList<>();
+			line.add( sampleId );
+			for( int i = 1; i < record.size(); i++ ) {
+				final Double count = Double.valueOf( record.get( i ) );
+				final String pathway = pathways.get( i - 1 );
+				if( count < getMinCount() ) {
+					line.add( "0.0" );
+					Log.debug( getClass(), sampleId + ": Remove Low Pathway count: " + pathway + "=" + count );
+				} else {
+					validSamplePathways.add( pathway );
+					line.add( count.toString() );
+					totalPathwayCount += count;
+					validPathways.add( pathway );
+				}
+			}
 
-            output.add( line );
+			output.add( line );
 
-            final TreeSet<String> badSamplePathways = new TreeSet<>( validPathways );
-            badSamplePathways.removeAll( validSamplePathways );
-            foundSamplePathways.addAll( validSamplePathways );
-            if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
-                Log.info( getClass(), "Set totalPathwaysPerSample: " + sampleId + "=" + totalPathwayCount );
-                Log.info( getClass(), "Set uniquePathwaysPerSample: " + sampleId + "=" + foundSamplePathways.size() );
-                this.totalPathwaysPerSample.put( sampleId, String.valueOf( totalPathwayCount ) );
-                this.uniquePathwaysPerSample.put( sampleId, String.valueOf( foundSamplePathways.size() ) );
-            }
+			final TreeSet<String> badSamplePathways = new TreeSet<>( validPathways );
+			badSamplePathways.removeAll( validSamplePathways );
+			foundSamplePathways.addAll( validSamplePathways );
+			if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
+				Log.info( getClass(), "Set totalPathwaysPerSample: " + sampleId + "=" + totalPathwayCount );
+				Log.info( getClass(), "Set uniquePathwaysPerSample: " + sampleId + "=" + foundSamplePathways.size() );
+				this.totalPathwaysPerSample.put( sampleId, String.valueOf( totalPathwayCount ) );
+				this.uniquePathwaysPerSample.put( sampleId, String.valueOf( foundSamplePathways.size() ) );
+			}
 
-            if( !badSamplePathways.isEmpty() ) {
-                lowCountPathways.put( sampleId, badSamplePathways );
-                Log.debug( getClass(), sampleId + ": Removed " + badSamplePathways.size()
-                    + " low Pathway counts (below " + getProp() + "=" + getMinCount() + ") --> " + badSamplePathways );
-            }
-        }
+			if( !badSamplePathways.isEmpty() ) {
+				lowCountPathways.put( sampleId, badSamplePathways );
+				Log.debug( getClass(), sampleId + ": Removed " + badSamplePathways.size()
+					+ " low Pathway counts (below " + getProp() + "=" + getMinCount() + ") --> " + badSamplePathways );
+			}
+		}
 
-        final TreeSet<String> allRemovedPathways = new TreeSet<>( validPathways );
-        allRemovedPathways.removeAll( foundSamplePathways );
-        if( !allRemovedPathways.isEmpty() ) {
-            Log.warn( getClass(),
-                "Completely Remove " + allRemovedPathways.size() + " Pathways (all samples below threshold" + getProp()
-                    + "=" + getMinCount() + ") --> " + allRemovedPathways );
-        }
+		final TreeSet<String> allRemovedPathways = new TreeSet<>( validPathways );
+		allRemovedPathways.removeAll( foundSamplePathways );
+		if( !allRemovedPathways.isEmpty() ) {
+			Log.warn( getClass(),
+				"Completely Remove " + allRemovedPathways.size() + " Pathways (all samples below threshold" + getProp()
+					+ "=" + getMinCount() + ") --> " + allRemovedPathways );
+		}
 
-        buildOutputTable( output, file, allRemovedPathways );
+		buildOutputTable( output, file, allRemovedPathways );
 
-        return lowCountPathways;
-    }
+		return lowCountPathways;
+	}
 
-    private void buildOutputTable( final List<List<String>> data, final File file, final Set<String> badPathways )
-        throws Exception {
-        final File outTable = PathwayUtil.getPathwayCountFile( getOutputDir(), file, getMetaColName() );
-        final BufferedWriter writer = new BufferedWriter( new FileWriter( outTable ) );
-        try {
-            final Set<Integer> badIndex = new HashSet<>();
-            boolean firstRecord = true;
-            for( final List<String> record: data ) {
-                boolean newRecord = true;
-                if( firstRecord && !badPathways.isEmpty() ) {
-                    for( final String pathway: record ) {
-                        if( badPathways.contains( pathway ) ) {
-                            badIndex.add( record.indexOf( pathway ) );
-                        } else {
-                            writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
-                        }
-                        newRecord = false;
-                    }
-                } else if( !firstRecord ) {
-                    for( int i = 0; i < record.size(); i++ ) {
-                        if( !badIndex.contains( i ) ) {
-                            writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + record.get( i ) );
-                        }
-                        newRecord = false;
-                    }
-                } else {
-                    for( final String pathway: record ) {
-                        writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
-                        newRecord = false;
-                    }
-                }
-                firstRecord = false;
-                writer.write( RETURN );
-            }
-        } finally {
-            if( writer != null ) {
-                writer.close();
-            }
-        }
-    }
+	private void buildOutputTable( final List<List<String>> data, final File file, final Set<String> badPathways )
+		throws Exception {
+		final File outTable = PathwayUtil.getPathwayCountFile( getOutputDir(), file, getMetaColName() );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( outTable ) );
+		try {
+			final Set<Integer> badIndex = new HashSet<>();
+			boolean firstRecord = true;
+			for( final List<String> record: data ) {
+				boolean newRecord = true;
+				if( firstRecord && !badPathways.isEmpty() ) {
+					for( final String pathway: record ) {
+						if( badPathways.contains( pathway ) ) {
+							badIndex.add( record.indexOf( pathway ) );
+						} else {
+							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
+						}
+						newRecord = false;
+					}
+				} else if( !firstRecord ) {
+					for( int i = 0; i < record.size(); i++ ) {
+						if( !badIndex.contains( i ) ) {
+							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + record.get( i ) );
+						}
+						newRecord = false;
+					}
+				} else {
+					for( final String pathway: record ) {
+						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
+						newRecord = false;
+					}
+				}
+				firstRecord = false;
+				writer.write( RETURN );
+			}
+		} finally {
+			writer.close();
+		}
+	}
 
-    private void freeMemory() {
-        this.uniquePathwaysPerSample = null;
-        this.totalPathwaysPerSample = null;
-    }
+	private void freeMemory() {
+		this.uniquePathwaysPerSample = null;
+		this.totalPathwaysPerSample = null;
+	}
 
-    private File getLowCountPathwayLogFile() throws Exception {
-        return new File( getTempDir().getAbsolutePath() + File.separator + "lowCountPathways" + TXT_EXT );
-    }
+	private File getLowCountPathwayLogFile() {
+		return new File( getTempDir().getAbsolutePath() + File.separator + "lowCountPathways" + TXT_EXT );
+	}
 
-    private String getMetaColName() throws Exception {
-        return "minCount" + getMinCount();
-    }
+	private String getMetaColName() throws Exception {
+		return "minCount" + getMinCount();
+	}
 
-    private Integer getMinCount() throws Exception {
-        return Config.requirePositiveInteger( this, getProp() );
-    }
+	private Integer getMinCount() throws Exception {
+		return Config.requirePositiveInteger( this, getProp() );
+	}
 
-    private String getProp() throws Exception {
-        if( this.prop == null ) {
-            this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
-        }
-        return this.prop;
-    }
+	private String getProp() {
+		if( this.prop == null ) {
+			this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
+		}
+		return this.prop;
+	}
 
-    private String prop = null;
-    private final Set<String> sampleIds = new HashSet<>();
-    private Map<String, String> totalPathwaysPerSample = new HashMap<>();
-    private Map<String, String> uniquePathwaysPerSample = new HashMap<>();
+	private String prop = null;
+	private final Set<String> sampleIds = new HashSet<>();
+	private Map<String, String> totalPathwaysPerSample = new HashMap<>();
+	private Map<String, String> uniquePathwaysPerSample = new HashMap<>();
 }

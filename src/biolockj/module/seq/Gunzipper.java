@@ -27,49 +27,49 @@ import biolockj.util.SeqUtil;
  */
 public class Gunzipper extends SeqModuleImpl {
 
-    @Override
-    public List<List<String>> buildScript( final List<File> files ) throws Exception {
-        final List<List<String>> data = new ArrayList<>();
-        for( final File f: files ) {
-            final ArrayList<String> lines = new ArrayList<>();
-            if( SeqUtil.isGzipped( f.getName() ) ) {
-                lines.add( unzip( f ) );
-            } else {
-                Log.warn( getClass(),
-                    "May be able to remove this BioModule - input already decompressed: " + f.getAbsolutePath() );
-                lines.add( copyToOutputDir( f ) );
-            }
+	@Override
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
+		final List<List<String>> data = new ArrayList<>();
+		for( final File f: files ) {
+			final ArrayList<String> lines = new ArrayList<>();
+			if( SeqUtil.isGzipped( f.getName() ) ) {
+				lines.add( unzip( f ) );
+			} else {
+				Log.warn( getClass(),
+					"May be able to remove this BioModule - input already decompressed: " + f.getAbsolutePath() );
+				lines.add( copyToOutputDir( f ) );
+			}
 
-            data.add( lines );
-        }
+			data.add( lines );
+		}
 
-        return data;
-    }
+		return data;
+	}
 
-    /**
-     * This method generates the bash function: {@value #FUNCTION_GUNZIP}.
-     */
-    @Override
-    public List<String> getWorkerScriptFunctions() throws Exception {
-        final List<String> lines = super.getWorkerScriptFunctions();
-        lines.add( "function " + FUNCTION_GUNZIP + "() {" );
-        lines.add( Config.getExe( this, Constants.EXE_GZIP ) + " -cd $1 > $2" );
-        lines.add( "}" + RETURN );
-        return lines;
-    }
+	/**
+	 * This method generates the bash function: {@value #FUNCTION_GUNZIP}.
+	 */
+	@Override
+	public List<String> getWorkerScriptFunctions() throws Exception {
+		final List<String> lines = super.getWorkerScriptFunctions();
+		lines.add( "function " + FUNCTION_GUNZIP + "() {" );
+		lines.add( Config.getExe( this, Constants.EXE_GZIP ) + " -cd $1 > $2" );
+		lines.add( "}" + RETURN );
+		return lines;
+	}
 
-    private String copyToOutputDir( final File file ) {
-        return "cp " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath();
-    }
+	private String copyToOutputDir( final File file ) {
+		return "cp " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath();
+	}
 
-    private String unzip( final File file ) throws Exception {
-        return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() + File.separator
-            + SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
-            + Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
-    }
+	private String unzip( final File file ) throws Exception {
+		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() + File.separator
+			+ SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
+			+ Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
+	}
 
-    /**
-     * Name of the bash function used to decompress gzipped files: {@value #FUNCTION_GUNZIP}
-     */
-    protected static final String FUNCTION_GUNZIP = "openZip";
+	/**
+	 * Name of the bash function used to decompress gzipped files: {@value #FUNCTION_GUNZIP}
+	 */
+	protected static final String FUNCTION_GUNZIP = "openZip";
 }

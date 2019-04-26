@@ -26,35 +26,35 @@ import biolockj.util.MemoryUtil;
  * @blj.web_desc Kraken2 Parser
  */
 public class Kraken2Parser extends ParserModuleImpl {
-    /**
-     * Parse all {@link biolockj.module.classifier.wgs.Kraken2Classifier} reports in the input directory.<br>
-     * Build an {@link biolockj.node.wgs.Kraken2Node} for each line.<br>
-     * If {@link #isValid(OtuNode)}: <br>
-     * <ol>
-     * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.KrakenNode#getSampleId()} if not
-     * yet created.
-     * <li>Add the {@link biolockj.node.wgs.KrakenNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
-     * </ol>
-     * <p>
-     * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
-     * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales 20094
-     */
-    @Override
-    public void parseSamples() throws Exception {
-        for( final File file: getInputFiles() ) {
-            MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
-            final BufferedReader reader = BioLockJUtil.getFileReader( file );
-            try {
-                for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-                    // Log.debug( getClass(), " LINE = " + line );
-                    addOtuNode( new Kraken2Node( file.getName().replace( Constants.PROCESSED, "" ), line ) );
-                }
-            } finally {
-                if( reader != null ) {
-                    reader.close();
-                }
-            }
+	/**
+	 * Parse all {@link biolockj.module.classifier.wgs.Kraken2Classifier} reports in the input directory.<br>
+	 * Build an {@link biolockj.node.wgs.Kraken2Node} for each line.<br>
+	 * If {@link #isValid(OtuNode)}: <br>
+	 * <ol>
+	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.KrakenNode#getSampleId()} if not
+	 * yet created.
+	 * <li>Add the {@link biolockj.node.wgs.KrakenNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
+	 * </ol>
+	 * <p>
+	 * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
+	 * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales 20094
+	 */
+	@Override
+	public void parseSamples() throws Exception {
+		for( final File file: getInputFiles() ) {
+			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
+			final BufferedReader reader = BioLockJUtil.getFileReader( file );
+			try {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+					// Log.debug( getClass(), " LINE = " + line );
+					addOtuNode( new Kraken2Node( file.getName().replace( Constants.PROCESSED, "" ), line ) );
+				}
+			} finally {
+				if( reader != null ) {
+					reader.close();
+				}
+			}
 
-        }
-    }
+		}
+	}
 }
