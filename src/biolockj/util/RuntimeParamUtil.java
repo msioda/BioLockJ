@@ -244,7 +244,6 @@ public class RuntimeParamUtil {
 			: new File( Config.getSystemFilePath( params.get( RESTART_FLAG ) ) );
 	}
 
-	
 	/**
 	 * Return TRUE if runtime parameter {@value #DOCKER_FLAG} was found
 	 * 

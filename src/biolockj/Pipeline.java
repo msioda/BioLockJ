@@ -94,11 +94,12 @@ public class Pipeline {
 	 * @throws Exception if errors occur
 	 */
 	public static void initializePipeline() throws Exception {
-		Log.info( Pipeline.class, "Initialize " + ( DockerUtil.isDirectMode() ? "DIRECT module " : 
-			DockerUtil.inAwsEnv() ? "AWS " : DockerUtil.inDockerEnv() ? "DOCKER " : "" )  + "pipeline");
+		Log.info( Pipeline.class, "Initialize " + ( DockerUtil.isDirectMode() ? "DIRECT module "
+			: DockerUtil.inAwsEnv() ? "AWS ": DockerUtil.inDockerEnv() ? "DOCKER ": "" ) + "pipeline" );
 		bioModules = BioModuleFactory.buildPipeline();
-		if( !DockerUtil.isDirectMode() )
+		if( !DockerUtil.isDirectMode() ) {
 			Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
+		}
 		initializeModules();
 	}
 

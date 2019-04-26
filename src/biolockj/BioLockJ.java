@@ -238,7 +238,7 @@ public class BioLockJ {
 
 			if( doCopyInput() ) {
 				if( DockerUtil.inAwsEnv() ) {
-					NextflowUtil.awsSyncS3( DockerUtil.CONTAINER_INPUT_DIR );
+					NextflowUtil.awsSyncS3( DockerUtil.CONTAINER_INPUT_DIR, false );
 				}
 				copyInputData();
 			}

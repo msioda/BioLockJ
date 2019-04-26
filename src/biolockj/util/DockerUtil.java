@@ -32,16 +32,6 @@ import biolockj.module.seq.*;
  * DockerUtil for Docker integration.
  */
 public class DockerUtil {
-	
-	
-	/**
-	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
-	 * 
-	 * @return boolean
-	 */
-	public static boolean isDirectMode() {
-		return RuntimeParamUtil.getDirectModuleDir() != null;
-	}
 
 	/**
 	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script
@@ -221,6 +211,15 @@ public class DockerUtil {
 	 */
 	public static boolean inDockerEnv() {
 		return RuntimeParamUtil.isDockerMode();
+	}
+
+	/**
+	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
+	 * 
+	 * @return boolean
+	 */
+	public static boolean isDirectMode() {
+		return RuntimeParamUtil.getDirectModuleDir() != null;
 	}
 
 	private static String getDockerClassName( final BioModule module ) {

@@ -86,7 +86,9 @@ public class Properties extends java.util.Properties {
 	public static Properties readProps( final File propFile, final Properties defaultProps )
 		throws FileNotFoundException, IOException {
 		if( propFile.exists() ) {
-			if( defaultProps == null ) Log.info( Properties.class, "LOAD CONFIG[ #"+ loadOrder++  +" ]: ---> " + propFile.getAbsolutePath() );
+			if( defaultProps == null ) {
+				Log.info( Properties.class, "LOAD CONFIG[ #" + loadOrder++ + " ]: ---> " + propFile.getAbsolutePath() );
+			}
 			final FileInputStream in = new FileInputStream( propFile );
 			final Properties tempProps = defaultProps == null ? new Properties(): new Properties( defaultProps );
 			tempProps.load( in );
@@ -143,8 +145,6 @@ public class Properties extends java.util.Properties {
 		}
 		return null;
 	}
-	
-	
 
 	/**
 	 * Parse property to find default config property: {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS}.<br>
@@ -193,10 +193,10 @@ public class Properties extends java.util.Properties {
 		return new File( Config.getSystemFilePath( path ) );
 	}
 
-	private static int loadOrder = 0;
 	private static File configFile = null;
 	private static Set<File> defaultConfigFiles = new HashSet<>();
 	private static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";
+	private static int loadOrder = 0;
 	private static Properties props = null;
 	private static final long serialVersionUID = 2980376615128441545L;
 	private static final String STANDARD_CONFIG_PATH = "$BLJ/resources/config/default/standard.properties";

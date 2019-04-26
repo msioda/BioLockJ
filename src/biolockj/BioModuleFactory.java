@@ -232,10 +232,6 @@ public class BioModuleFactory {
 		return factory.buildModules();
 	}
 
-	private static void initFactory() throws Exception {
-		factory = new BioModuleFactory();
-	}
-
 	/**
 	 * Get the configured modules + implicit modules if configured.
 	 */
@@ -247,8 +243,8 @@ public class BioModuleFactory {
 			info( "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
 			configModules.remove( ImportMetadata.class.getName() );
 			modules.add( ImportMetadata.class.getName() );
-			
-			boolean isMultiplexed = Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED );
+
+			final boolean isMultiplexed = Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED );
 			if( isMultiplexed || allMods.contains( ModuleUtil.getDefaultDemultiplexer() ) ) {
 				info( "Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
 				configModules.remove( ModuleUtil.getDefaultDemultiplexer() );
@@ -296,6 +292,10 @@ public class BioModuleFactory {
 		if( !DockerUtil.isDirectMode() ) {
 			Log.info( BioModuleFactory.class, msg );
 		}
+	}
+
+	private static void initFactory() throws Exception {
+		factory = new BioModuleFactory();
 	}
 
 	private static boolean isImplicitModule( final String moduleName ) {

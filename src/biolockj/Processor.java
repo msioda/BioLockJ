@@ -106,7 +106,7 @@ public class Processor {
 			args[ i ] = st.nextToken();
 		}
 
-		submit( args );
+		submit( args, "Set File Access Control" );
 	}
 
 	/**
@@ -131,10 +131,11 @@ public class Processor {
 	 * As if executing on terminal args[0] args[1]... args[n-1] as one command.
 	 *
 	 * @param args Terminal command created from args (adds 1 space between each array element)
+	 * @param label - Process label
 	 * @throws Exception if errors occur during execution
 	 */
-	public static void submit( final String[] args ) throws Exception {
-		new Processor().runJob( args, "Process" );
+	public static void submit( final String[] args, final String label ) throws Exception {
+		new Processor().runJob( args, label );
 	}
 
 	private static String getArgsAsString( final String[] args ) {

@@ -31,9 +31,10 @@ public class NextflowUtil {
 	 * File example: aws s3 cp $EFS_META/testMetadata.tsv s3://blj-2019-04-05/metadata/testMetadata.tsv
 	 * 
 	 * @param efsPath File or directory to sync
+	 * @param waitUntilComplete Boolean if enabled will block until process completes before moving on
 	 * @throws Exception if errors occur
 	 */
-	public static void awsSyncS3( final String efsPath ) throws Exception {
+	public static void awsSyncS3( final String efsPath, final boolean waitUntilComplete ) throws Exception {
 		String s3Dir = getAwsS3();
 		if( efsPath.contains( Config.pipelinePath() ) ) {
 			s3Dir += efsPath.replace( Config.pipelinePath(), "" );
@@ -45,7 +46,12 @@ public class NextflowUtil {
 		s3args[ 2 ] = new File( efsPath ).isFile() ? "cp": "sync";
 		s3args[ 3 ] = efsPath;
 		s3args[ 4 ] = s3Dir;
-		Processor.submit( s3args );
+
+		if( waitUntilComplete ) {
+			Processor.runSubprocess( s3args, "S3-Transfer" );
+		} else {
+			Processor.submit( s3args, "S3-Transfer" );
+		}
 	}
 
 	/**
@@ -71,18 +77,40 @@ public class NextflowUtil {
 	 * 
 	 * @throws Exception if errors occur
 	 */
+	public static void purgeEfsData() throws Exception {
+		String target = DockerUtil.AWS_EFS;
+		boolean purgeInputs = Config.getBoolean( null, AWS_PURGE_EFS_INPUTS );
+		boolean purgeOutputs= Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT );
+		if( purgeInputs && purgeOutputs ) {
+			// TO-DO
+		}
+
+		Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
+		final String[] args = new String[ 3 ];
+		args[ 0 ] = "rm";
+		args[ 1 ] = "-rf";
+		args[ 2 ] = target;
+
+		Processor.submit( args, "Clear-EFS" );
+	}
+
+	/**
+	 * Save EFS data to S3 based on pipeline Config.
+	 * 
+	 * @throws Exception if errors occur
+	 */
 	public static void saveEfsDataToS3() throws Exception {
 
 		final boolean savePipeline = Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 );
 		final boolean saveReports = Config.getBoolean( null, NextflowUtil.AWS_COPY_REPORTS_TO_S3 );
 
 		if( savePipeline ) {
-			awsSyncS3( Config.pipelinePath() );
+			awsSyncS3( Config.pipelinePath(), true );
 		} else if( DownloadUtil.getDownloadListFile().exists() && saveReports ) {
 			final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
 			try {
 				for( String path = reader.readLine(); path != null; path = reader.readLine() ) {
-					awsSyncS3( Config.pipelinePath() + File.separator + path );
+					awsSyncS3( Config.pipelinePath() + File.separator + path, true );
 				}
 			} finally {
 				if( reader != null ) {
@@ -216,7 +244,7 @@ public class NextflowUtil {
 		args[ 0 ] = templateScript().getAbsolutePath();
 		args[ 1 ] = templateConfig().getAbsolutePath();
 		args[ 2 ] = modules;
-		Processor.submit( args );
+		Processor.submit( args, "Build Nextflow Template" );
 		if( !templateConfig().exists() )
 			throw new Exception( "Nextflow Template file is not found at path: " + templateConfig().getAbsolutePath() );
 		Log.info( NextflowUtil.class, "Nextflow Template file created: " + templateConfig().getAbsolutePath() );
