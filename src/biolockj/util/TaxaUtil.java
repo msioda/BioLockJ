@@ -212,7 +212,7 @@ public class TaxaUtil {
 		if( mySuffix == null ) {
 			mySuffix = "_";
 		}
-		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + suffix
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + mySuffix
 			+ level + Constants.TSV_EXT );
 	}
 
