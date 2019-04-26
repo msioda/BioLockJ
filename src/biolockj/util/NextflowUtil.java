@@ -78,9 +78,9 @@ public class NextflowUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static void purgeEfsData() throws Exception {
-		String target = DockerUtil.AWS_EFS;
-		boolean purgeInputs = Config.getBoolean( null, AWS_PURGE_EFS_INPUTS );
-		boolean purgeOutputs= Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT );
+		final String target = DockerUtil.AWS_EFS;
+		final boolean purgeInputs = Config.getBoolean( null, AWS_PURGE_EFS_INPUTS );
+		final boolean purgeOutputs = Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT );
 		if( purgeInputs && purgeOutputs ) {
 			// TO-DO
 		}

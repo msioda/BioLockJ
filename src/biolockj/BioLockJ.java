@@ -452,7 +452,7 @@ public class BioLockJ {
 	private static void pipelineShutDown( final String[] args ) {
 		if( !DockerUtil.isDirectMode() ) {
 			try {
-				if( !NextflowUtil.nextflowLogExists() ) {
+				if( DockerUtil.inAwsEnv() && !NextflowUtil.nextflowLogExists() ) {
 					NextflowUtil.saveNextflowLog();
 				}
 				setPipelineSecurity();
