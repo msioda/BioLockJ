@@ -15,7 +15,7 @@
       <a id="recent" href="#">(Auto)Saved configuration</a>
     </div>
   </div>
-  <button class="dropdown" id="prevConfigNavBut">Previously run config</button>
+  <button class="dropbtn" id="prevConfigNavBut">Previously run config</button>
 </div>
 
 <div class="banner">BioLockJ</div>
@@ -919,24 +919,123 @@
   <div id="AwsTab" class="tabcontent moduleTab">
     <button class="createDownload">Create configuration file for download</button><br>
     <p>AWS profile as found in your rootkey.csv:
-      <input type="text" value="default" placeholder="select AWS profile"list="awsProfiles" name="aws.ram" id="aws.profile">
+      <!-- Add update to this in save loop -->
+      <input class="sp" type="text" value="default" placeholder="select AWS profile"list="awsProfiles" name="aws.profile" id="aws.profile">
       <datalist name='awsProfiles' placeholder='add your own'>
         <option value="default">default</option>
       </datalist>
     </p>
+    <p>Please select the geographic area in which you live. Subsequent configuration
+  questions will narrow this down by presenting a list of cities, representing
+  the time zones in which they are located.
+    <select class="sp" class="" name="REGION" id="">
+      <option default value="us-east-1">us-east-1</option>
+      <option value="1">Africa</option>
+      <option value="2">America</option>
+      <option value="3">Antarctica</option>
+      <option value="4">Australia</option>
+      <option value="5">Arctic</option>
+      <option value="6">Asia</option>
+      <option value="7">Atlantic</option>
+      <option value="8">Europe</option>
+      <option value="9">Indian</option>
+      <option value="10">Pacific</option>
+      <option value="11">SystemV</option>
+      <option value="10">Pacific</option>
+      <option value="11">SystemV</option>
+      <option value="12">US</option>
+      <option value="13">Etc</option>
+    </select>
+    <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span>
+    </p>
     <p>AWS ram:
-      <input type="text" name="aws.ram" value="">
+      <input class="sp" type="text" name="aws.ram" value="">
     </p>
+    <!-- Add update to this in save loop -->
     <p>AWS S3 bucket:
-      <input type="text" name="aws.s3" id="aws.s3" value=""><br>
+      <input class="sp" type="text" name="aws.s3" id="aws.s3" placeholder="select AWS stack name" list="s3BucketList">
+      <datalist name='s3BucketList' id="s3BucketList" class='stackList'>
+      </datalist>
     </p>
-    <p>
-      AWS RAM:
-      <input type="text" id="aws.ram" value=""><br>
+    <p>AWS RAM:
+      <input class="sp" type="text" id="aws.ram" value=""><br>
     </p>
-    <p>BioLockJ project folder on S3
+    <!-- <p>BioLockJ project folder on S3
       <input type="text" name="s3.blj_proj" id="s3.blj_proj" value=""><br>
+    </p> -->
+    <p>Copy input files to S3 storage?
+      <select class="sp" name="aws.copyInputsToS3" value="aws.copyInputsToS3">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, delete input files</option>
+      </select>
     </p>
+    <p>Copy entire pipeline to S3 storage?
+      <select class="sp" name="aws.copyPipelineToS3" value="aws.copyPipelineToS3">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, delete the pipeline</option>
+      </select>
+    </p>
+    <p>Copy report to S3?
+      <select class="sp" name="aws.copyReportsToS3" value="aws.copyReportsToS3">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, delete report</option>
+      </select>
+    </p>
+    <p>Purge Efs Inputs?
+      <select class="sp" name="aws.purgeEfsInputs" value="aws.purgeEfsInputs">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, leave them on EC2</option>
+      </select>
+    </p>
+    <p>Purge Efs Ouputs?
+      <select class="sp" name="aws.purgeEfsOuputs" value="aws.purgeEfsOutputs">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, leave them on EC2</option>
+      </select>
+    </p>
+    <p>Shutdown EC2 after purge?
+      <select class="sp" class="" name="aws.ec2ShutdownAfterPurge" value="aws.ec2ShutdownAfterPurge">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, leave EC2 running</option>
+      </select>
+    </p>
+    <p>Save cloud after purge?(Mike is this the correct question for aws.saveCloud?)
+      <select class="sp" class="" name="aws.saveCloud" value="aws.saveCloud">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, leave EC2 running</option>
+      </select>
+    </p>
+    <p>AWS walltime:
+      <input class="sp" type="number" min="1" name="aws.walltime" id="aws.walltime" value="">
+    </p>
+    <!-- Add update to this in save loop -->
+    <p>EC2 Instance ID:
+      <input class="sp" type="text" name="aws.ec2InstanceID" id="aws.ec2InstanceID" placeholder="select EC2 ID" list="ec2InstanceList">
+        <datalist id="ec2InstanceList" class='stackList'>
+        </datalist>
+    </p>
+    <!-- Add update to this in save loop -->
+    <p>EC2 Instance Type:
+      <input class="sp" type="text" name="aws.ec2InstanceID" id="aws.ec2InstanceID" placeholder="select AWS stack name" list="ec2instanceType">
+    </p>
+    <p>Spot price for AWS minues (percentage going rate that you are willing to pay per minute ):
+      <input class="sp" type="percentage" id="aws.ec2SpotPer" name="aws.ec2SpotPer" value="100">%<br>
+    </p>
+    <p>Stack name:
+      <input class="sp" type="text" name="aws.stack" id="aws.stack" placeholder="select stack" list="AwsStackList">
+        <datalist id="AwsStackList" class="stackList">
+        </datalist>
+    </p>
+<!-- Still need to add input for
+    aws.ec2AcquisitionStrategy
+-->
 
 
     <button class="createDownload">Create configuration file for download</button>
@@ -1020,7 +1119,7 @@
         <span class='incorrectInput'>X</span>
         <span class='inProgress'>O</span>
         <a id="stackPath"></a>
-        <button type="button" id='deployComputeStack' name="deployComputeStack">Deploy Compute Stack</button>
+        <button type="button" id='deployComputeStack' value='deployComputeStack1' name="deployComputeStack">Deploy Compute Stack</button>
       </fieldset>
     </form>
     <form id="launchEc2HeadNode"class="" action="#" method="">
@@ -1042,8 +1141,8 @@
         <p>Script name:
         <input type="text" name="scriptName" value="startHeadNodeGui.sh"></p>
         <p>instanceType:
-          <input type="text" placeholder="select AWS instance type or define a custom type" list="instanceType">
-          <datalist name='instanceType' id="instanceType">
+          <input type="text" placeholder="select AWS instance type or define a custom type" list="ec2instanceType">
+          <datalist id="ec2instanceType">
             <option value="t2.micro">1GB</option>
             <option value="t2.small">2GB</option>
             <option value="t2.medium">4GB</option>
