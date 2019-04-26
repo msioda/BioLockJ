@@ -19,48 +19,41 @@ import biolockj.util.SeqUtil;
 /**
  * Superclass for SeqModules that take sequence files as input for pre-processing prior to classification.
  */
-public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModule
-{
-	/**
-	 * Return {@link #getSeqFiles(Collection)} to filter standard module input files.
-	 *
-	 * @throws Exception thrown if any runtime error occurs
-	 */
-	@Override
-	public List<File> getInputFiles() throws Exception
-	{
-		if( getFileCache().isEmpty() )
-		{
-			cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
-		}
+public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModule {
+    /**
+     * Return {@link #getSeqFiles(Collection)} to filter standard module input files.
+     *
+     * @throws Exception thrown if any runtime error occurs
+     */
+    @Override
+    public List<File> getInputFiles() throws Exception {
+        if( getFileCache().isEmpty() ) {
+            cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+        }
 
-		return getFileCache();
-	}
+        return getFileCache();
+    }
 
-	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
-	{
-		return SeqUtil.getSeqFiles( files );
-	}
+    @Override
+    public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+        return SeqUtil.getSeqFiles( files );
+    }
 
-	/**
-	 * Add database info if module is a DatabaseModule
-	 */
-	@Override
-	public String getSummary() throws Exception
-	{
-		String summary = "";
-		if( this instanceof DatabaseModule && ( (DatabaseModule) this ).getDB() != null )
-		{
-			summary = "" + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
-		}
+    /**
+     * Add database info if module is a DatabaseModule
+     */
+    @Override
+    public String getSummary() throws Exception {
+        String summary = "";
+        if( this instanceof DatabaseModule && ( (DatabaseModule) this ).getDB() != null ) {
+            summary = "" + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
+        }
 
-		return super.getSummary() + summary;
-	}
+        return super.getSummary() + summary;
+    }
 
-	@Override
-	public boolean isValidInputModule( final BioModule module )
-	{
-		return SeqUtil.isSeqModule( module );
-	}
+    @Override
+    public boolean isValidInputModule( final BioModule module ) {
+        return SeqUtil.isSeqModule( module );
+    }
 }

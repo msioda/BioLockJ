@@ -25,142 +25,126 @@ import biolockj.node.OtuNodeImpl;
  * # Constructed from biom file #OTU ID 3A.1 7A.1 120A.1 <br>
  * 7A.1 k__Bacteria;p__Actinobacteria 419.0 26.0 90.0 70.0
  */
-public class QiimeNode extends OtuNodeImpl implements OtuNode
-{
-	/**
-	 * Build the OtuNode by extracting the OTU names for each level from the line.
-	 *
-	 * @param id Sample ID extracted from count column header
-	 * @param taxas OTU names with level indicator prefix
-	 * @param count Extracted from column of the Sample ID
-	 * @throws Exception if propagated from addOtu() method
-	 */
-	public QiimeNode( final String id, final String taxas, final int count ) throws Exception
-	{
-		setLine( id + "_" + taxas + "_" + count );
-		setSampleId( id );
-		setCount( count );
-		final StringTokenizer st = new StringTokenizer( taxas, QIIME_DELIM );
-		String taxa = st.nextToken(); // skip domain
+public class QiimeNode extends OtuNodeImpl implements OtuNode {
+    /**
+     * Build the OtuNode by extracting the OTU names for each level from the line.
+     *
+     * @param id Sample ID extracted from count column header
+     * @param taxas OTU names with level indicator prefix
+     * @param count Extracted from column of the Sample ID
+     * @throws Exception if propagated from addOtu() method
+     */
+    public QiimeNode( final String id, final String taxas, final int count ) throws Exception {
+        setLine( id + "_" + taxas + "_" + count );
+        setSampleId( id );
+        setCount( count );
+        final StringTokenizer st = new StringTokenizer( taxas, QIIME_DELIM );
+        String taxa = st.nextToken(); // skip domain
 
-		while( st.hasMoreTokens() )
-		{
-			taxa = st.nextToken();
-			final String levelDelim = getLevel( taxa );
-			final String otu = taxa.substring( levelDelimSize );
-			addTaxa( otu, levelDelim );
-		}
-	}
+        while( st.hasMoreTokens() ) {
+            taxa = st.nextToken();
+            final String levelDelim = getLevel( taxa );
+            final String otu = taxa.substring( levelDelimSize );
+            addTaxa( otu, levelDelim );
+        }
+    }
 
-	@Override
-	public Map<String, String> delimToLevelMap()
-	{
-		if( delimToLevelMap.isEmpty() )
-		{
-			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
-		}
-		return delimToLevelMap;
-	}
+    @Override
+    public Map<String, String> delimToLevelMap() {
+        if( delimToLevelMap.isEmpty() ) {
+            delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
+            delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
+            delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
+            delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
+            delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
+            delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
+            delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
+        }
+        return delimToLevelMap;
+    }
 
-	/**
-	 * Get the first taxonomy level delim.
-	 * 
-	 * @param taxa Full classifier taxonomy string
-	 * @return Level delim
-	 * @throws Exception if the taxa delim is undefined
-	 */
-	protected String getLevel( final String taxa ) throws Exception
-	{
-		for( final String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA )
-		{
-			if( taxa.startsWith( abmiguousDelim ) )
-			{
-				return null;
-			}
-		}
+    /**
+     * Get the first taxonomy level delim.
+     * 
+     * @param taxa Full classifier taxonomy string
+     * @return Level delim
+     * @throws Exception if the taxa delim is undefined
+     */
+    protected String getLevel( final String taxa ) throws Exception {
+        for( final String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA ) {
+            if( taxa.startsWith( abmiguousDelim ) ) return null;
+        }
 
-		if( delimToLevelMap.isEmpty() )
-		{
-			if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null )
-			{
-				delimToLevelMap.clear();
-				levelDelimSize = 5;
-				DOMAIN_DELIM = SILVA_DOMAIN_DELIM;
-				PHYLUM_DELIM = SILVA_PHYLUM_DELIM;
-				CLASS_DELIM = SILVA_CLASS_DELIM;
-				ORDER_DELIM = SILVA_ORDER_DELIM;
-				FAMILY_DELIM = SILVA_FAMILY_DELIM;
-				GENUS_DELIM = SILVA_GENUS_DELIM;
-				SPECIES_DELIM = SILVA_SPECIES_DELIM;
+        if( delimToLevelMap.isEmpty() ) {
+            if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null ) {
+                delimToLevelMap.clear();
+                levelDelimSize = 5;
+                DOMAIN_DELIM = SILVA_DOMAIN_DELIM;
+                PHYLUM_DELIM = SILVA_PHYLUM_DELIM;
+                CLASS_DELIM = SILVA_CLASS_DELIM;
+                ORDER_DELIM = SILVA_ORDER_DELIM;
+                FAMILY_DELIM = SILVA_FAMILY_DELIM;
+                GENUS_DELIM = SILVA_GENUS_DELIM;
+                SPECIES_DELIM = SILVA_SPECIES_DELIM;
 
-				final String delim = taxa.substring( 0, levelDelimSize );
-				if( delimToLevelMap().get( delim ) == null )
-				{
-					throw new Exception(
-							"Taxa delim [ " + delim + " ] is undefined in: " + getSampleId() + ": " + taxa );
-				}
+                final String delim = taxa.substring( 0, levelDelimSize );
+                if( delimToLevelMap().get( delim ) == null ) throw new Exception(
+                    "Taxa delim [ " + delim + " ] is undefined in: " + getSampleId() + ": " + taxa );
 
-			}
-		}
+            }
+        }
 
-		return delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) );
-	}
+        return delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) );
+    }
 
-	/**
-	 * QIIME domain taxonomy level delimiter: {@value #QIIME_DOMAIN_DELIM}
-	 */
-	protected static final String QIIME_DOMAIN_DELIM = "k__";
+    /**
+     * QIIME domain taxonomy level delimiter: {@value #QIIME_DOMAIN_DELIM}
+     */
+    protected static final String QIIME_DOMAIN_DELIM = "k__";
 
-	/**
-	 * Silva class taxonomy level delimiter: {@value #SILVA_CLASS_DELIM}
-	 */
-	protected static final String SILVA_CLASS_DELIM = "D_2__";
+    /**
+     * Silva class taxonomy level delimiter: {@value #SILVA_CLASS_DELIM}
+     */
+    protected static final String SILVA_CLASS_DELIM = "D_2__";
 
-	/**
-	 * Silva domain taxonomy level delimiter: {@value #SILVA_DOMAIN_DELIM}
-	 */
-	protected static final String SILVA_DOMAIN_DELIM = "D_0__";
+    /**
+     * Silva domain taxonomy level delimiter: {@value #SILVA_DOMAIN_DELIM}
+     */
+    protected static final String SILVA_DOMAIN_DELIM = "D_0__";
 
-	/**
-	 * Silva family taxonomy level delimiter: {@value #SILVA_FAMILY_DELIM}
-	 */
-	protected static final String SILVA_FAMILY_DELIM = "D_4__";
+    /**
+     * Silva family taxonomy level delimiter: {@value #SILVA_FAMILY_DELIM}
+     */
+    protected static final String SILVA_FAMILY_DELIM = "D_4__";
 
-	/**
-	 * Silva genus taxonomy level delimiter: {@value #SILVA_GENUS_DELIM}
-	 */
-	protected static final String SILVA_GENUS_DELIM = "D_5__";
+    /**
+     * Silva genus taxonomy level delimiter: {@value #SILVA_GENUS_DELIM}
+     */
+    protected static final String SILVA_GENUS_DELIM = "D_5__";
 
-	/**
-	 * Silva order taxonomy level delimiter: {@value #SILVA_ORDER_DELIM}
-	 */
-	protected static final String SILVA_ORDER_DELIM = "D_3__";
+    /**
+     * Silva order taxonomy level delimiter: {@value #SILVA_ORDER_DELIM}
+     */
+    protected static final String SILVA_ORDER_DELIM = "D_3__";
 
-	/**
-	 * Silva phylum taxonomy level delimiter: {@value #SILVA_PHYLUM_DELIM}
-	 */
-	protected static final String SILVA_PHYLUM_DELIM = "D_1__";
+    /**
+     * Silva phylum taxonomy level delimiter: {@value #SILVA_PHYLUM_DELIM}
+     */
+    protected static final String SILVA_PHYLUM_DELIM = "D_1__";
 
-	/**
-	 * Silva species taxonomy level delimiter: {@value #SILVA_SPECIES_DELIM}
-	 */
-	protected static final String SILVA_SPECIES_DELIM = "D_6__";
+    /**
+     * Silva species taxonomy level delimiter: {@value #SILVA_SPECIES_DELIM}
+     */
+    protected static final String SILVA_SPECIES_DELIM = "D_6__";
 
-	private static final Map<String, String> delimToLevelMap = new HashMap<>();
-	private static int levelDelimSize = 3;
+    private static final Map<String, String> delimToLevelMap = new HashMap<>();
+    private static int levelDelimSize = 3;
 
-	private static final String QIIME_DELIM = ";";
+    private static final String QIIME_DELIM = ";";
 
-	// Override default DOMAIN taxonomy level delimiter (d__) set in OtuNodeImpl with QIIME domain delim (k__)
-	static
-	{
-		DOMAIN_DELIM = QIIME_DOMAIN_DELIM;
-	}
+    // Override default DOMAIN taxonomy level delimiter (d__) set in OtuNodeImpl with QIIME domain delim (k__)
+    static {
+        DOMAIN_DELIM = QIIME_DOMAIN_DELIM;
+    }
 
 }

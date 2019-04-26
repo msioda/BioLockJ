@@ -25,77 +25,69 @@ import biolockj.util.MetaUtil;
  * 
  * @blj.web_desc QIIME de novo Classifier
  */
-public class QiimeDeNovoClassifier extends QiimeClassifier implements ClassifierModule
-{
+public class QiimeDeNovoClassifier extends QiimeClassifier implements ClassifierModule {
 
-	/**
-	 * Return bash script lines to pick de novo OTUs by calling {@link biolockj.module.implicit.qiime.QiimeClassifier}
-	 * getPickOtuLines() method. If property
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Constants#TRUE},
-	 * use vsearch to identify chimeras and call
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#SCRIPT_FILTER_OTUS} to remove them from
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}
-	 */
-	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
-		final List<List<String>> data = new ArrayList<>();
-		final List<String> lines = new ArrayList<>();
+    /**
+     * Return bash script lines to pick de novo OTUs by calling {@link biolockj.module.implicit.qiime.QiimeClassifier}
+     * getPickOtuLines() method. If property
+     * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Constants#TRUE},
+     * use vsearch to identify chimeras and call
+     * {@value biolockj.module.implicit.qiime.QiimeClassifier#SCRIPT_FILTER_OTUS} to remove them from
+     * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}
+     */
+    @Override
+    public List<List<String>> buildScript( final List<File> files ) throws Exception {
+        final List<List<String>> data = new ArrayList<>();
+        final List<String> lines = new ArrayList<>();
 
-		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
-		final String outputDir = getOutputDir().getAbsolutePath() + File.separator;
+        final String tempDir = getTempDir().getAbsolutePath() + File.separator;
+        final String outputDir = getOutputDir().getAbsolutePath() + File.separator;
 
-		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
+        lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 
-		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) )
-		{
-			final String otusToFilter = tempDir + "chimeras.fasta";
-			lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET
-					+ File.separator + "*.fasta" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir
-					+ "nochimeras.fasta" );
-			lines.add( SCRIPT_FILTER_OTUS + " -i " + tempDir + OTU_TABLE + " -e " + otusToFilter + " -o " + outputDir
-					+ OTU_TABLE );
-		}
-		else
-		{
-			lines.add( copyTempOtuTableToOutputDir() );
-		}
+        if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) {
+            final String otusToFilter = tempDir + "chimeras.fasta";
+            lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET
+                + File.separator + "*.fasta" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir
+                + "nochimeras.fasta" );
+            lines.add( SCRIPT_FILTER_OTUS + " -i " + tempDir + OTU_TABLE + " -e " + otusToFilter + " -o " + outputDir
+                + OTU_TABLE );
+        } else {
+            lines.add( copyTempOtuTableToOutputDir() );
+        }
 
-		data.add( lines );
-		return data;
-	}
+        data.add( lines );
+        return data;
+    }
 
-	/**
-	 * Call {@link biolockj.module.implicit.qiime.QiimeClassifier} checkOtuPickingDependencies() method to verify OTU
-	 * picking script parameters. If not in Docker mode and property
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Constants#TRUE},
-	 * verify {@value biolockj.module.implicit.qiime.QiimeClassifier#EXE_VSEARCH_PARAMS}.
-	 */
-	@Override
-	public void checkDependencies() throws Exception
-	{
-		super.checkDependencies();
-		getParams();
-		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) )
-		{
-			getVsearchParams();
-		}
-	}
+    /**
+     * Call {@link biolockj.module.implicit.qiime.QiimeClassifier} checkOtuPickingDependencies() method to verify OTU
+     * picking script parameters. If not in Docker mode and property
+     * {@value biolockj.module.implicit.qiime.QiimeClassifier#QIIME_REMOVE_CHIMERAS} = {@value biolockj.Constants#TRUE},
+     * verify {@value biolockj.module.implicit.qiime.QiimeClassifier#EXE_VSEARCH_PARAMS}.
+     */
+    @Override
+    public void checkDependencies() throws Exception {
+        super.checkDependencies();
+        getParams();
+        if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) {
+            getVsearchParams();
+        }
+    }
 
-	/**
-	 * The method returns 1 bash script line that will copy the batch
-	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE} from the batchDir to the output directory.
-	 *
-	 * @return Bash script line to copy table to
-	 */
-	protected String copyTempOtuTableToOutputDir()
-	{
-		return "cp " + getTempDir().getAbsolutePath() + File.separator + OTU_TABLE + " "
-				+ getOutputDir().getAbsolutePath();
-	}
+    /**
+     * The method returns 1 bash script line that will copy the batch
+     * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE} from the batchDir to the output directory.
+     *
+     * @return Bash script line to copy table to
+     */
+    protected String copyTempOtuTableToOutputDir() {
+        return "cp " + getTempDir().getAbsolutePath() + File.separator + OTU_TABLE + " "
+            + getOutputDir().getAbsolutePath();
+    }
 
-	/**
-	 * De novo OTU picking script: {@value #PICK_OTU_SCRIPT}
-	 */
-	public static final String PICK_OTU_SCRIPT = "pick_de_novo_otus.py";
+    /**
+     * De novo OTU picking script: {@value #PICK_OTU_SCRIPT}
+     */
+    public static final String PICK_OTU_SCRIPT = "pick_de_novo_otus.py";
 }

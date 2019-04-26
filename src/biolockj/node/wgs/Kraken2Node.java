@@ -12,7 +12,6 @@
 package biolockj.node.wgs;
 
 import java.util.StringTokenizer;
-import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 
 /**
@@ -23,48 +22,39 @@ import biolockj.node.OtuNodeImpl;
  * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
  * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales 20094
  */
-public class Kraken2Node extends OtuNodeImpl implements OtuNode
-{
-	/**
-	 * Build the OtuNode by extracting the OTU names for each level from the line. Sample ID is passed as a parameter
-	 * pulled from the file name.
-	 *
-	 * @param id Sample ID
-	 * @param line Kraken2 output line
-	 * @throws Exception if an invalid line format is found
-	 */
-	public Kraken2Node( final String id, final String line ) throws Exception
-	{
-		final String[] parts = line.split( "\\t" );
-		if( parts.length != 2 )
-		{
-			throw new Exception( "INVALID FILE FORMAT.  Line should have 2 parts.  LINE =  (" + line + ") " );
-		}
+public class Kraken2Node extends OtuNodeImpl {
+    /**
+     * Build the OtuNode by extracting the OTU names for each level from the line. Sample ID is passed as a parameter
+     * pulled from the file name.
+     *
+     * @param id Sample ID
+     * @param line Kraken2 output line
+     * @throws Exception if an invalid line format is found
+     */
+    public Kraken2Node( final String id, final String line ) throws Exception {
+        final String[] parts = line.split( "\\t" );
+        if( parts.length != 2 )
+            throw new Exception( "INVALID FILE FORMAT.  Line should have 2 parts.  LINE =  (" + line + ") " );
 
-		try
-		{
-			setSampleId( id );
-			setLine( line );
-			setCount( Integer.valueOf( parts[ 1 ] ) );
+        try {
+            setSampleId( id );
+            setLine( line );
+            setCount( Integer.valueOf( parts[ 1 ] ) );
 
-			final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], TAXA_DELIM );
-			while( taxas.hasMoreTokens() )
-			{
-				final String token = taxas.nextToken();
-				final String levelDelim = token.substring( 0, 3 );
-				final String taxa = token.substring( 3 ).trim();
-				if( !taxa.isEmpty() )
-				{
-					addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
-				}
-			}
-		}
-		catch( final Exception ex )
-		{
-			throw new Exception( "Error parsing Sample ID:" + id + "> line: " + line + ": " + ex.getMessage() );
-		}
-	}
+            final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], TAXA_DELIM );
+            while( taxas.hasMoreTokens() ) {
+                final String token = taxas.nextToken();
+                final String levelDelim = token.substring( 0, 3 );
+                final String taxa = token.substring( 3 ).trim();
+                if( !taxa.isEmpty() ) {
+                    addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
+                }
+            }
+        } catch( final Exception ex ) {
+            throw new Exception( "Error parsing Sample ID:" + id + "> line: " + line + ": " + ex.getMessage() );
+        }
+    }
 
-	private static final String TAXA_DELIM = "\\|";
+    private static final String TAXA_DELIM = "\\|";
 
 }

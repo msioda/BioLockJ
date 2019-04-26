@@ -14,27 +14,26 @@ package biolockj.module;
 /**
  * Classes that implement this interface are pure Java modules.<br>
  */
-public interface JavaModule extends ScriptModule
-{
+public interface JavaModule extends ScriptModule {
 
-	/**
-	 * This method will create the success flag file so the next module can run.
-	 *
-	 * @throws Exception thrown if any runtime error occurs
-	 */
-	public void moduleComplete() throws Exception;
+    /**
+     * This method will create the success flag file so the next module can run.
+     *
+     * @throws Exception thrown if any runtime error occurs
+     */
+    public void moduleComplete() throws Exception;
 
-	/**
-	 * This method will create the fail flag file so the pipeline can move on..
-	 *
-	 * @throws Exception thrown if any runtime error occurs
-	 */
-	public void moduleFailed() throws Exception;
+    /**
+     * This method will create the fail flag file so the pipeline can move on..
+     *
+     * @throws Exception thrown if any runtime error occurs
+     */
+    public void moduleFailed() throws Exception;
 
-	/**
-	 * This method executes the modules primary Java routine.
-	 *
-	 * @throws Exception thrown if any runtime error occurs
-	 */
-	public void runModule() throws Exception;
+    /**
+     * This method executes the modules primary Java routine.
+     *
+     * @throws Exception thrown if any runtime error occurs
+     */
+    public void runModule() throws Exception;
 }

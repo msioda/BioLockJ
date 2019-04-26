@@ -18,7 +18,6 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
@@ -27,162 +26,139 @@ import biolockj.util.SeqUtil;
  * 
  * @blj.web_desc Awk Fastq to Fasta Converter
  */
-public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
-{
+public class AwkFastaConverter extends SeqModuleImpl {
 
-	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
-		final List<List<String>> data = new ArrayList<>();
-		final boolean isMultiLine = Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ );
-		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
-		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
+    @Override
+    public List<List<String>> buildScript( final List<File> files ) throws Exception {
+        final List<List<String>> data = new ArrayList<>();
+        final boolean isMultiLine = Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ );
+        final String tempDir = getTempDir().getAbsolutePath() + File.separator;
+        final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 
-		final String ext = "."
-				+ ( isMultiLine ? Constants.FASTA: Config.requireString( this, Constants.INTERNAL_SEQ_TYPE ) );
-		for( final File f: files )
-		{
-			final ArrayList<String> lines = new ArrayList<>();
-			final String fileId = SeqUtil.getSampleId( f.getName() );
-			final String dirExt = SeqUtil.getReadDirectionSuffix( f );
+        final String ext = "." + ( isMultiLine ? Constants.FASTA: SeqUtil.getSeqType() );
+        for( final File f: files ) {
+            final ArrayList<String> lines = new ArrayList<>();
+            final String fileId = SeqUtil.getSampleId( f.getName() );
+            final String dirExt = SeqUtil.getReadDirectionSuffix( f );
 
-			String filePath = f.getAbsolutePath();
+            String filePath = f.getAbsolutePath();
 
-			if( SeqUtil.isGzipped( f.getName() ) )
-			{
-				filePath = ( SeqUtil.isFastQ() || isMultiLine ? tempDir: outDir ) + fileId + dirExt + ext;
-				lines.add( unzip( f, filePath ) );
-			}
+            if( SeqUtil.isGzipped( f.getName() ) ) {
+                filePath = ( SeqUtil.isFastQ() || isMultiLine ? tempDir: outDir ) + fileId + dirExt + ext;
+                lines.add( unzip( f, filePath ) );
+            }
 
-			if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
-			{
-				lines.add( convert454( filePath, fileId + dirExt, outDir ) );
-			}
-			else if( SeqUtil.isFastQ() )
-			{
-				lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
-			}
+            if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) ) {
+                lines.add( convert454( filePath, fileId + dirExt, outDir ) );
+            } else if( SeqUtil.isFastQ() ) {
+                lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
+            }
 
-			if( !SeqUtil.isGzipped( f.getName() ) && SeqUtil.isFastA() )
-			{
-				Log.warn( getClass(), "Remove this BioModule from Config:  "
-						+ " Files are already in decompressed FastA format!  It is unnecessary to make duplicate files..." );
-				lines.add( copyToOutputDir( filePath, fileId + dirExt + ext ) );
-			}
+            if( !SeqUtil.isGzipped( f.getName() ) && SeqUtil.isFastA() ) {
+                Log.warn( getClass(), "Remove this BioModule from Config:  "
+                    + " Files are already in decompressed FastA format!  It is unnecessary to make duplicate files..." );
+                lines.add( copyToOutputDir( filePath, fileId + dirExt + ext ) );
+            }
 
-			data.add( lines );
-		}
+            data.add( lines );
+        }
 
-		return data;
-	}
+        return data;
+    }
 
-	/**
-	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_TYPE} = {@value biolockj.Constants#FASTA}<br>
-	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_HEADER_CHAR} =
-	 * {@link biolockj.util.SeqUtil#FASTA_HEADER_DEFAULT_DELIM}
-	 *
-	 * @throws Exception if errors occur
-	 */
-	@Override
-	public void cleanUp() throws Exception
-	{
-		super.cleanUp();
-		Config.setConfigProperty( Constants.INTERNAL_SEQ_TYPE, Constants.FASTA );
-		Config.setConfigProperty( Constants.INTERNAL_SEQ_HEADER_CHAR, SeqUtil.FASTA_HEADER_DEFAULT_DELIM );
-	}
+    /**
+     * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_TYPE} = {@value biolockj.Constants#FASTA}<br>
+     * Set {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_SEQ_HEADER_CHAR} =
+     * {@link biolockj.util.SeqUtil#FASTA_HEADER_DEFAULT_DELIM}
+     *
+     * @throws Exception if errors occur
+     */
+    @Override
+    public void cleanUp() throws Exception {
+        super.cleanUp();
+        Config.setConfigProperty( Constants.INTERNAL_SEQ_TYPE, Constants.FASTA );
+        Config.setConfigProperty( Constants.INTERNAL_SEQ_HEADER_CHAR, SeqUtil.FASTA_HEADER_DEFAULT_DELIM );
+    }
 
-	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
-	{
-		return SeqUtil.getSeqFiles( files );
-	}
+    @Override
+    public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+        return SeqUtil.getSeqFiles( files );
+    }
 
-	/**
-	 * This method generates the required bash functions used by the module scripts.
-	 * <ul>
-	 * <li>{@value #FUNCTION_CONVERT_TO_FASTA}
-	 * <li>{@value #FUNCTION_GUNZIP}
-	 * </ul>
-	 */
-	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
-		final List<String> lines = super.getWorkerScriptFunctions();
-		lines.add( "function " + FUNCTION_CONVERT_TO_FASTA + "() {" );
-		lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
-				+ " '{ if(NR%4==1) { printf( \">%s \\n\",substr($0,2) ); } else if(NR%4==2) print; }' > $2 " );
-		lines.add( "}" + RETURN );
-		if( hasGzipped() )
-		{
-			lines.add( "function " + FUNCTION_GUNZIP + "() {" );
-			lines.add( Config.getExe( this, Constants.EXE_GZIP ) + " -cd $1 > $2" );
-			lines.add( "}" + RETURN );
-		}
+    /**
+     * This method generates the required bash functions used by the module scripts.
+     * <ul>
+     * <li>{@value #FUNCTION_CONVERT_TO_FASTA}
+     * <li>{@value #FUNCTION_GUNZIP}
+     * </ul>
+     */
+    @Override
+    public List<String> getWorkerScriptFunctions() throws Exception {
+        final List<String> lines = super.getWorkerScriptFunctions();
+        lines.add( "function " + FUNCTION_CONVERT_TO_FASTA + "() {" );
+        lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
+            + " '{ if(NR%4==1) { printf( \">%s \\n\",substr($0,2) ); } else if(NR%4==2) print; }' > $2 " );
+        lines.add( "}" + RETURN );
+        if( hasGzipped() ) {
+            lines.add( "function " + FUNCTION_GUNZIP + "() {" );
+            lines.add( Config.getExe( this, Constants.EXE_GZIP ) + " -cd $1 > $2" );
+            lines.add( "}" + RETURN );
+        }
 
-		if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
-		{
-			lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
-			lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
-					+ " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf $0;}' > $2 " );
-			lines.add( "}" + RETURN );
-		}
-		return lines;
-	}
+        if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) ) {
+            lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
+            lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
+                + " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf $0;}' > $2 " );
+            lines.add( "}" + RETURN );
+        }
+        return lines;
+    }
 
-	/**
-	 * Build script line to decompress gzipped sequence file.
-	 *
-	 * @param file Gzipped file
-	 * @param targetPath Output file name
-	 * @return Bash Script line to gunzip file
-	 */
-	protected String unzip( final File file, final String targetPath )
-	{
-		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + targetPath;
-	}
+    private String copyToOutputDir( final String source, final String target ) {
+        return "cp " + source + " " + getOutputDir().getAbsolutePath() + File.separator + target;
+    }
 
-	private String convert2fastA( final String filePath, final String fileId, final String outDir ) throws Exception
-	{
-		return FUNCTION_CONVERT_TO_FASTA + " " + filePath + " " + outDir + fileId + "." + Constants.FASTA;
-	}
+    private boolean hasGzipped() throws Exception {
+        for( final File f: getInputFiles() ) {
+            if( SeqUtil.isGzipped( f.getName() ) ) return true;
+        }
 
-	private String convert454( final String filePath, final String fileId, final String outDir ) throws Exception
-	{
-		return FUNCTION_CONVERT_454 + " " + filePath + " " + outDir + fileId + "." + Constants.FASTA;
-	}
+        return false;
+    }
 
-	private String copyToOutputDir( final String source, final String target ) throws Exception
-	{
-		return "cp " + source + " " + getOutputDir().getAbsolutePath() + File.separator + target;
-	}
+    /**
+     * Build script line to decompress gzipped sequence file.
+     *
+     * @param file Gzipped file
+     * @param targetPath Output file name
+     * @return Bash Script line to gunzip file
+     */
+    protected static String unzip( final File file, final String targetPath ) {
+        return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + targetPath;
+    }
 
-	private boolean hasGzipped() throws Exception
-	{
-		for( final File f: getInputFiles() )
-		{
-			if( SeqUtil.isGzipped( f.getName() ) )
-			{
-				return true;
-			}
-		}
+    private static String convert2fastA( final String filePath, final String fileId, final String outDir ) {
+        return FUNCTION_CONVERT_TO_FASTA + " " + filePath + " " + outDir + fileId + "." + Constants.FASTA;
+    }
 
-		return false;
-	}
+    private static String convert454( final String filePath, final String fileId, final String outDir ) {
+        return FUNCTION_CONVERT_454 + " " + filePath + " " + outDir + fileId + "." + Constants.FASTA;
+    }
 
-	/**
-	 * Name of the bash function used to conver 454 format to BioLockJ friendly Illumina format:
-	 * {@value #FUNCTION_CONVERT_454}
-	 */
-	protected static final String FUNCTION_CONVERT_454 = "convert454";
+    /**
+     * Name of the bash function used to conver 454 format to BioLockJ friendly Illumina format:
+     * {@value #FUNCTION_CONVERT_454}
+     */
+    protected static final String FUNCTION_CONVERT_454 = "convert454";
 
-	/**
-	 * Name of the bash function that converts the file format to Fasta: {@value #FUNCTION_CONVERT_TO_FASTA}
-	 */
-	protected static final String FUNCTION_CONVERT_TO_FASTA = "convertToFastA";
+    /**
+     * Name of the bash function that converts the file format to Fasta: {@value #FUNCTION_CONVERT_TO_FASTA}
+     */
+    protected static final String FUNCTION_CONVERT_TO_FASTA = "convertToFastA";
 
-	/**
-	 * Name of the bash function used to decompress gzipped files: {@value #FUNCTION_GUNZIP}
-	 */
-	protected static final String FUNCTION_GUNZIP = "decompressGzip";
+    /**
+     * Name of the bash function used to decompress gzipped files: {@value #FUNCTION_GUNZIP}
+     */
+    protected static final String FUNCTION_GUNZIP = "decompressGzip";
 
 }

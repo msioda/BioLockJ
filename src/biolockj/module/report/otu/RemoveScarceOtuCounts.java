@@ -29,298 +29,254 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Remove Scarce OTU Counts
  */
-public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule
-{
+public class RemoveScarceOtuCounts extends OtuCountModule implements JavaModule {
 
-	@Override
-	public void checkDependencies() throws Exception
-	{
-		super.checkDependencies();
-		if( getScarceCutoff() > 1 )
-		{
-			throw new ConfigFormatException( getScarceProp(), "Required range 0.0 < " + getScarceProp() + " < 1.0 " );
-		}
-	}
+    @Override
+    public void checkDependencies() throws Exception {
+        super.checkDependencies();
+        if( getScarceCutoff() > 1 )
+            throw new ConfigFormatException( getScarceProp(), "Required range 0.0 < " + getScarceProp() + " < 1.0 " );
+    }
 
-	/**
-	 * Set the number of hits field.
-	 */
-	@Override
-	public void cleanUp() throws Exception
-	{
-		super.cleanUp();
-		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
-	}
+    /**
+     * Set the number of hits field.
+     */
+    @Override
+    public void cleanUp() throws Exception {
+        super.cleanUp();
+        ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
+    }
 
-	/**
-	 * Produce summary message with min, max, mean, and median number of reads.
-	 */
-	@Override
-	public String getSummary() throws Exception
-	{
-		final String label = "OTUs";
-		final int pad = SummaryUtil.getPad( label );
-		String summary = "Remove rare OTUs found in less than " + getCutoff() + " samples" + RETURN;
-		summary += BioLockJUtil.addTrailingSpaces( "# Unique OTU removed:", pad ) + uniqueOtuRemoved.size() + RETURN;
-		summary += BioLockJUtil.addTrailingSpaces( "# Total OTU removed:", pad ) + totalOtuRemoved + RETURN;
-		summary += SummaryUtil.getCountSummary( hitsPerSample, label, true );
-		sampleIds.removeAll( hitsPerSample.keySet() );
-		if( !sampleIds.isEmpty() )
-		{
-			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-					+ BioLockJUtil.getCollectionAsString( sampleIds );
-		}
-		hitsPerSample = null;
-		return super.getSummary() + summary;
-	}
+    /**
+     * Produce summary message with min, max, mean, and median number of reads.
+     */
+    @Override
+    public String getSummary() throws Exception {
+        final String label = "OTUs";
+        final int pad = SummaryUtil.getPad( label );
+        String summary = "Remove rare OTUs found in less than " + getCutoff() + " samples" + RETURN;
+        summary += BioLockJUtil.addTrailingSpaces( "# Unique OTU removed:", pad ) + this.uniqueOtuRemoved.size()
+            + RETURN;
+        summary += BioLockJUtil.addTrailingSpaces( "# Total OTU removed:", pad ) + this.totalOtuRemoved + RETURN;
+        summary += SummaryUtil.getCountSummary( this.hitsPerSample, label, true );
+        this.sampleIds.removeAll( this.hitsPerSample.keySet() );
+        if( !this.sampleIds.isEmpty() ) {
+            summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+                + BioLockJUtil.getCollectionAsString( this.sampleIds );
+        }
+        this.hitsPerSample = null;
+        return super.getSummary() + summary;
+    }
 
-	@Override
-	public void runModule() throws Exception
-	{
-		sampleIds.addAll( MetaUtil.getSampleIds() );
-		Log.info( getClass(), "Searching samples to remove OTUs found in less than " + getCutoff() + " samples." );
-		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
+    @Override
+    public void runModule() throws Exception {
+        this.sampleIds.addAll( MetaUtil.getSampleIds() );
+        Log.info( getClass(), "Searching samples to remove OTUs found in less than " + getCutoff() + " samples." );
+        final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 
-		final TreeSet<String> uniqueOtus = OtuUtil.findUniqueOtus( sampleOtuCounts );
-		Log.info( getClass(),
-				"Searching " + uniqueOtus.size() + " unique OTUs in " + sampleOtuCounts.size()
-						+ " samples for OTUs found in less than the cutoff percentage [ " + getScarceCutoff() + " ] = "
-						+ getCutoff() + " samples." );
+        final TreeSet<String> uniqueOtus = OtuUtil.findUniqueOtus( sampleOtuCounts );
+        Log.info( getClass(),
+            "Searching " + uniqueOtus.size() + " unique OTUs in " + sampleOtuCounts.size()
+                + " samples for OTUs found in less than the cutoff percentage [ " + getScarceCutoff() + " ] = "
+                + getCutoff() + " samples." );
 
-		final TreeMap<String, TreeSet<String>> scarceTaxa = findScarceTaxa( sampleOtuCounts, uniqueOtus );
-		final TreeMap<String, TreeSet<String>> scarceOtus = findScarceOtus( sampleOtuCounts, uniqueOtus, scarceTaxa );
-		logScarceOtus( scarceOtus.keySet() );
-		removeScarceOtuCounts( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
+        final TreeMap<String, TreeSet<String>> scarceTaxa = findScarceTaxa( sampleOtuCounts, uniqueOtus );
+        final TreeMap<String, TreeSet<String>> scarceOtus = findScarceOtus( sampleOtuCounts, uniqueOtus, scarceTaxa );
+        logScarceOtus( scarceOtus.keySet() );
+        removeScarceOtuCounts( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
 
-		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
-		{
-			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, hitsPerSample, getOutputDir(), true );
-		}
-	}
+        if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) {
+            MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, this.hitsPerSample, getOutputDir(),
+                true );
+        }
+    }
 
-	/**
-	 * Find the scarce OTUs that contain the key values in scarceTaxa.
-	 *
-	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
-	 * @param uniqueOtus TreeSet(OTU) contains all OTUs for all samples
-	 * @param scarceTaxa TreeMap(taxa, TreeSet(SampleId)) contains scarce taxa and their associated samples
-	 * @return TreeMap(OTU, TreeSet(SampleId)) contains scarce OTUs and their associated samples
-	 * @throws Exception if errors occur
-	 */
-	protected TreeMap<String, TreeSet<String>> findScarceOtus(
-			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> uniqueOtus,
-			final TreeMap<String, TreeSet<String>> scarceTaxa ) throws Exception
-	{
-		final TreeMap<String, TreeSet<String>> scarceOtus = new TreeMap<>();
-		for( final String otu: uniqueOtus )
-		{
-			for( final String taxa: scarceTaxa.keySet() )
-			{
-				if( otu.contains( taxa ) )
-				{
-					scarceOtus.put( otu, scarceTaxa.get( taxa ) );
-				}
-			}
-		}
+    /**
+     * Find the scarce OTUs that contain the key values in scarceTaxa.
+     *
+     * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
+     * @param uniqueOtus TreeSet(OTU) contains all OTUs for all samples
+     * @param scarceTaxa TreeMap(taxa, TreeSet(SampleId)) contains scarce taxa and their associated samples
+     * @return TreeMap(OTU, TreeSet(SampleId)) contains scarce OTUs and their associated samples
+     * @throws Exception if errors occur
+     */
+    protected TreeMap<String, TreeSet<String>> findScarceOtus(
+        final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> uniqueOtus,
+        final TreeMap<String, TreeSet<String>> scarceTaxa ) throws Exception {
+        final TreeMap<String, TreeSet<String>> scarceOtus = new TreeMap<>();
+        for( final String otu: uniqueOtus ) {
+            for( final String taxa: scarceTaxa.keySet() ) {
+                if( otu.contains( taxa ) ) {
+                    scarceOtus.put( otu, scarceTaxa.get( taxa ) );
+                }
+            }
+        }
 
-		return scarceOtus;
-	}
+        return scarceOtus;
+    }
 
-	/**
-	 * Find scarce taxa found in less samples than the cutoff percentage:
-	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_SCARCE_CUTOFF}. Return a map of these scare taxa and a
-	 * set of samples that need to remove them.
-	 *
-	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
-	 * @param otus TreeSet of unique OTUs
-	 * @return TreeMap(taxa, TreeSet(SampleIds))
-	 * @throws Exception if errors occur
-	 */
-	protected TreeMap<String, TreeSet<String>> findScarceTaxa(
-			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> otus ) throws Exception
-	{
-		final TreeMap<String, TreeSet<String>> scarceTaxa = new TreeMap<>();
-		for( final String level: TaxaUtil.getTaxaLevels() )
-		{
-			final TreeMap<String, TreeSet<String>> scarceLevelTaxa = new TreeMap<>();
-			final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
-			Log.debug( getClass(), "Checking level: " + level + " with " + levelTaxa.size() + " taxa" );
-			for( final String taxa: levelTaxa )
-			{
-				final TreeMap<String, TreeMap<String, Long>> levelTaxaCounts = TaxaUtil
-						.getLevelTaxaCounts( sampleOtuCounts, level );
-				final TreeSet<String> samplesWithTaxa = new TreeSet<>();
-				for( final String sampleId: levelTaxaCounts.keySet() )
-				{
-					final TreeMap<String, Long> taxaCounts = levelTaxaCounts.get( sampleId );
-					Log.debug( getClass(), "Checking sampleId: " + sampleId + " with " + taxaCounts.size() + " " + level
-							+ " taxa for: " + taxa );
-					if( taxaCounts.keySet().contains( taxa ) )
-					{
-						samplesWithTaxa.add( sampleId );
-					}
-				}
+    /**
+     * Find scarce taxa found in less samples than the cutoff percentage:
+     * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_SCARCE_CUTOFF}. Return a map of these scare taxa and a
+     * set of samples that need to remove them.
+     *
+     * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
+     * @param otus TreeSet of unique OTUs
+     * @return TreeMap(taxa, TreeSet(SampleIds))
+     * @throws Exception if errors occur
+     */
+    protected TreeMap<String, TreeSet<String>> findScarceTaxa(
+        final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> otus ) throws Exception {
+        final TreeMap<String, TreeSet<String>> scarceTaxa = new TreeMap<>();
+        for( final String level: TaxaUtil.getTaxaLevels() ) {
+            final TreeMap<String, TreeSet<String>> scarceLevelTaxa = new TreeMap<>();
+            final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
+            Log.debug( getClass(), "Checking level: " + level + " with " + levelTaxa.size() + " taxa" );
+            for( final String taxa: levelTaxa ) {
+                final TreeMap<String,
+                    TreeMap<String, Long>> levelTaxaCounts = TaxaUtil.getLevelTaxaCounts( sampleOtuCounts, level );
+                final TreeSet<String> samplesWithTaxa = new TreeSet<>();
+                for( final String sampleId: levelTaxaCounts.keySet() ) {
+                    final TreeMap<String, Long> taxaCounts = levelTaxaCounts.get( sampleId );
+                    Log.debug( getClass(), "Checking sampleId: " + sampleId + " with " + taxaCounts.size() + " " + level
+                        + " taxa for: " + taxa );
+                    if( taxaCounts.keySet().contains( taxa ) ) {
+                        samplesWithTaxa.add( sampleId );
+                    }
+                }
 
-				Log.debug( getClass(), taxa + " found in " + samplesWithTaxa.size() + " samples" );
-				if( !samplesWithTaxa.isEmpty() && samplesWithTaxa.size() <= getCutoff() )
-				{
-					scarceLevelTaxa.put( OtuUtil.buildOtuTaxa( level, taxa ), samplesWithTaxa );
-					scarceTaxa.put( OtuUtil.buildOtuTaxa( level, taxa ), samplesWithTaxa );
-				}
-			}
+                Log.debug( getClass(), taxa + " found in " + samplesWithTaxa.size() + " samples" );
+                if( !samplesWithTaxa.isEmpty() && samplesWithTaxa.size() <= getCutoff() ) {
+                    scarceLevelTaxa.put( OtuUtil.buildOtuTaxa( level, taxa ), samplesWithTaxa );
+                    scarceTaxa.put( OtuUtil.buildOtuTaxa( level, taxa ), samplesWithTaxa );
+                }
+            }
 
-			Log.info( getClass(), "Found " + scarceLevelTaxa.size() + " scarce " + level + " taxa: "
-					+ BioLockJUtil.getCollectionAsString( scarceLevelTaxa.keySet() ) );
+            Log.info( getClass(), "Found " + scarceLevelTaxa.size() + " scarce " + level + " taxa: "
+                + BioLockJUtil.getCollectionAsString( scarceLevelTaxa.keySet() ) );
 
-		}
+        }
 
-		return scarceTaxa;
-	}
+        return scarceTaxa;
+    }
 
-	/**
-	 * Remove scarce OTUs from the sampleOtuCounts and return it.
-	 *
-	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
-	 * @param scarceOtus TreeMap(OTU, TreeSet(SampleId)) Scarce OTUs and the samples that list them
-	 * @return TreeMap(SampleId, TreeMap(OTU, count)) sampleOtuCounts after scarce OTUs have been removed
-	 * @throws Exception if errors occur
-	 */
-	protected TreeMap<String, TreeMap<String, Long>> getUpdatedOtuCounts(
-			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts,
-			final TreeMap<String, TreeSet<String>> scarceOtus ) throws Exception
-	{
-		for( final String badOtu: scarceOtus.keySet() )
-		{
-			for( final String sampleId: scarceOtus.get( badOtu ) )
-			{
-				if( sampleOtuCounts.get( sampleId ).get( badOtu ) != null )
-				{
-					uniqueOtuRemoved.add( badOtu );
-					totalOtuRemoved += sampleOtuCounts.get( sampleId ).get( badOtu );
-					sampleOtuCounts.get( sampleId ).remove( badOtu );
-				}
-			}
-		}
+    /**
+     * Remove scarce OTUs from the sampleOtuCounts and return it.
+     *
+     * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
+     * @param scarceOtus TreeMap(OTU, TreeSet(SampleId)) Scarce OTUs and the samples that list them
+     * @return TreeMap(SampleId, TreeMap(OTU, count)) sampleOtuCounts after scarce OTUs have been removed
+     * @throws Exception if errors occur
+     */
+    protected TreeMap<String, TreeMap<String, Long>> getUpdatedOtuCounts(
+        final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts,
+        final TreeMap<String, TreeSet<String>> scarceOtus ) throws Exception {
+        for( final String badOtu: scarceOtus.keySet() ) {
+            for( final String sampleId: scarceOtus.get( badOtu ) ) {
+                if( sampleOtuCounts.get( sampleId ).get( badOtu ) != null ) {
+                    this.uniqueOtuRemoved.add( badOtu );
+                    this.totalOtuRemoved += sampleOtuCounts.get( sampleId ).get( badOtu );
+                    sampleOtuCounts.get( sampleId ).remove( badOtu );
+                }
+            }
+        }
 
-		return sampleOtuCounts;
+        return sampleOtuCounts;
 
-	}
+    }
 
-	/**
-	 * Save a list of scarce OTUs to the module temp directory.
-	 *
-	 * @param scarceOtus OTUs found in too few samples
-	 * @throws Exception if errors occur
-	 */
-	protected void logScarceOtus( final Set<String> scarceOtus ) throws Exception
-	{
-		if( scarceOtus == null || scarceOtus.isEmpty() )
-		{
-			Log.info( getClass(), "No scarce OTUs detected!" );
-			return;
-		}
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getScareOtuLogFile() ) );
-		try
-		{
-			for( final String otu: scarceOtus )
-			{
-				writer.write( otu + RETURN );
-			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
-		}
+    /**
+     * Save a list of scarce OTUs to the module temp directory.
+     *
+     * @param scarceOtus OTUs found in too few samples
+     * @throws Exception if errors occur
+     */
+    protected void logScarceOtus( final Set<String> scarceOtus ) throws Exception {
+        if( scarceOtus == null || scarceOtus.isEmpty() ) {
+            Log.info( getClass(), "No scarce OTUs detected!" );
+            return;
+        }
+        final BufferedWriter writer = new BufferedWriter( new FileWriter( getScareOtuLogFile() ) );
+        try {
+            for( final String otu: scarceOtus ) {
+                writer.write( otu + RETURN );
+            }
+        } finally {
+            if( writer != null ) {
+                writer.close();
+            }
+        }
 
-		Log.info( getClass(),
-				"Found " + scarceOtus.size() + " scarce OTUs saved to --> " + getScareOtuLogFile().getAbsolutePath() );
-	}
+        Log.info( getClass(),
+            "Found " + scarceOtus.size() + " scarce OTUs saved to --> " + getScareOtuLogFile().getAbsolutePath() );
+    }
 
-	/**
-	 * Output OTU count files with the updatedOtuCounts
-	 *
-	 * @param updatedOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
-	 * @throws Exception if errors occur
-	 */
-	protected void removeScarceOtuCounts( final TreeMap<String, TreeMap<String, Long>> updatedOtuCounts )
-			throws Exception
-	{
-		for( final String sampleId: updatedOtuCounts.keySet() )
-		{
-			final TreeMap<String, Long> otuCounts = updatedOtuCounts.get( sampleId );
-			if( otuCounts != null && !otuCounts.isEmpty() )
-			{
-				final BufferedWriter writer = new BufferedWriter( new FileWriter(
-						OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName().replace( "%", "" ) ) ) );
-				try
-				{
-					Log.debug( getClass(), sampleId + " # unique OTUs: " + otuCounts.size() );
-					Long total = 0L;
-					for( final String otu: otuCounts.keySet() )
-					{
-						Log.debug( getClass(), sampleId + " checking OTU: " + otu );
-						final Long sampleCount = otuCounts.get( otu );
-						if( sampleCount != null )
-						{
-							total += otuCounts.get( otu );
-							writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
-						}
-					}
+    /**
+     * Output OTU count files with the updatedOtuCounts
+     *
+     * @param updatedOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
+     * @throws Exception if errors occur
+     */
+    protected void removeScarceOtuCounts( final TreeMap<String, TreeMap<String, Long>> updatedOtuCounts )
+        throws Exception {
+        for( final String sampleId: updatedOtuCounts.keySet() ) {
+            final TreeMap<String, Long> otuCounts = updatedOtuCounts.get( sampleId );
+            if( otuCounts != null && !otuCounts.isEmpty() ) {
+                final BufferedWriter writer = new BufferedWriter( new FileWriter(
+                    OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName().replace( "%", "" ) ) ) );
+                try {
+                    Log.debug( getClass(), sampleId + " # unique OTUs: " + otuCounts.size() );
+                    Long total = 0L;
+                    for( final String otu: otuCounts.keySet() ) {
+                        Log.debug( getClass(), sampleId + " checking OTU: " + otu );
+                        final Long sampleCount = otuCounts.get( otu );
+                        if( sampleCount != null ) {
+                            total += otuCounts.get( otu );
+                            writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
+                        }
+                    }
 
-					hitsPerSample.put( sampleId, total.toString() );
-				}
-				finally
-				{
-					if( writer != null )
-					{
-						writer.close();
-					}
-				}
-			}
-		}
-	}
+                    this.hitsPerSample.put( sampleId, total.toString() );
+                } finally {
+                    if( writer != null ) {
+                        writer.close();
+                    }
+                }
+            }
+        }
+    }
 
-	private int getCutoff() throws Exception
-	{
-		if( cutoff == null )
-		{
-			cutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCutoff() ) ).intValue();
-		}
+    private int getCutoff() throws Exception {
+        if( this.cutoff == null ) {
+            this.cutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCutoff() ) ).intValue();
+        }
 
-		return cutoff;
-	}
+        return this.cutoff;
+    }
 
-	private String getMetaColName() throws Exception
-	{
-		return "scarce" + new Double( getScarceCutoff() * 100 ).intValue() + "%";
-	}
+    private String getMetaColName() throws Exception {
+        return "scarce" + new Double( getScarceCutoff() * 100 ).intValue() + "%";
+    }
 
-	private Double getScarceCutoff() throws Exception
-	{
-		return Config.requirePositiveDouble( this, getScarceProp() );
-	}
+    private Double getScarceCutoff() throws Exception {
+        return Config.requirePositiveDouble( this, getScarceProp() );
+    }
 
-	private String getScarceProp() throws Exception
-	{
-		if( prop == null )
-		{
-			prop = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
-		}
-		return prop;
-	}
+    private String getScarceProp() throws Exception {
+        if( this.prop == null ) {
+            this.prop = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
+        }
+        return this.prop;
+    }
 
-	private File getScareOtuLogFile() throws Exception
-	{
-		return new File( getTempDir().getAbsolutePath() + File.separator + "scarceOtus" + TXT_EXT );
-	}
+    private File getScareOtuLogFile() throws Exception {
+        return new File( getTempDir().getAbsolutePath() + File.separator + "scarceOtus" + TXT_EXT );
+    }
 
-	private Integer cutoff = null;
-	private Map<String, String> hitsPerSample = new HashMap<>();
-	private String prop = null;
-	private final TreeSet<String> sampleIds = new TreeSet<>();
-	private long totalOtuRemoved = 0;
-	private final Set<String> uniqueOtuRemoved = new HashSet<>();
+    private Integer cutoff = null;
+    private Map<String, String> hitsPerSample = new HashMap<>();
+    private String prop = null;
+    private final TreeSet<String> sampleIds = new TreeSet<>();
+    private long totalOtuRemoved = 0;
+    private final Set<String> uniqueOtuRemoved = new HashSet<>();
 }

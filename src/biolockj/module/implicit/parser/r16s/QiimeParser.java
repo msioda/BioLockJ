@@ -28,314 +28,276 @@ import biolockj.util.MetaUtil;
  * 
  * @blj.web_desc Qiime Parser
  */
-public class QiimeParser extends ParserModuleImpl implements ParserModule
-{
+public class QiimeParser extends ParserModuleImpl implements ParserModule {
 
-	@Override
-	public void cleanUp() throws Exception
-	{
-		setOrderedQiimeIDs( getInputFiles().get( 0 ) );
-		super.cleanUp();
-	}
+    @Override
+    public void cleanUp() throws Exception {
+        setOrderedQiimeIDs( getInputFiles().get( 0 ) );
+        super.cleanUp();
+    }
 
-	/**
-	 * Get only the lowest level report since it contains taxa info for all higher OTU reports.
-	 */
-	@Override
-	public List<File> getInputFiles() throws Exception
-	{
-		File lowestLevelReport = null;
-		Integer levelNum = null;
-		for( final File file: super.getInputFiles() )
-		{
-			final Integer reportLevel = Integer.valueOf(
-					file.getName().substring( Constants.OTU_TABLE_PREFIX.length() + 2, file.getName().length() - 4 ) );
+    /**
+     * Get only the lowest level report since it contains taxa info for all higher OTU reports.
+     */
+    @Override
+    public List<File> getInputFiles() throws Exception {
+        File lowestLevelReport = null;
+        Integer levelNum = null;
+        for( final File file: super.getInputFiles() ) {
+            final Integer reportLevel = Integer.valueOf(
+                file.getName().substring( Constants.OTU_TABLE_PREFIX.length() + 2, file.getName().length() - 4 ) );
 
-			if( levelNum == null || levelNum < reportLevel )
-			{
-				levelNum = reportLevel;
-				lowestLevelReport = file;
-			}
-		}
+            if( levelNum == null || levelNum < reportLevel ) {
+                levelNum = reportLevel;
+                lowestLevelReport = file;
+            }
+        }
 
-		final List<File> files = new ArrayList<>();
-		files.add( lowestLevelReport );
-		return files;
-	}
+        final List<File> files = new ArrayList<>();
+        files.add( lowestLevelReport );
+        return files;
+    }
 
-	/**
-	 * Parse lowest level {@link biolockj.module.implicit.qiime.QiimeClassifier} report in the input directory. The
-	 * classifier report lists 1 OTU/line with 1 column/sample, each column holds the OTU count for the QIIME ID in the
-	 * column header. For each line, build a {@link biolockj.node.r16s.QiimeNode} for each sample with a positive OTU
-	 * count.
-	 * <p>
-	 * {@link biolockj.node.r16s.QiimeNode}s will be created using QiimeID (not SampleID) in order to match the metadata
-	 * file #SampleID
-	 * <p>
-	 * If {@link #isValid(OtuNode)}:
-	 * <ol>
-	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.r16s.QiimeNode#getSampleId()} if not
-	 * yet created.
-	 * <li>Add the {@link biolockj.node.r16s.QiimeNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
-	 * </ol>
-	 */
-	@Override
-	public void parseSamples() throws Exception
-	{
-		final File file = getInputFiles().get( 0 );
-		Log.info( getClass(), "Parse file: " + file.getName() );
-		final BufferedReader reader = BioLockJUtil.getFileReader( file );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				if( line.startsWith( "#" ) )
-				{
-					continue;
-				}
+    /**
+     * Parse lowest level {@link biolockj.module.implicit.qiime.QiimeClassifier} report in the input directory. The
+     * classifier report lists 1 OTU/line with 1 column/sample, each column holds the OTU count for the QIIME ID in the
+     * column header. For each line, build a {@link biolockj.node.r16s.QiimeNode} for each sample with a positive OTU
+     * count.
+     * <p>
+     * {@link biolockj.node.r16s.QiimeNode}s will be created using QiimeID (not SampleID) in order to match the metadata
+     * file #SampleID
+     * <p>
+     * If {@link #isValid(OtuNode)}:
+     * <ol>
+     * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.r16s.QiimeNode#getSampleId()} if not
+     * yet created.
+     * <li>Add the {@link biolockj.node.r16s.QiimeNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
+     * </ol>
+     */
+    @Override
+    public void parseSamples() throws Exception {
+        final File file = getInputFiles().get( 0 );
+        Log.info( getClass(), "Parse file: " + file.getName() );
+        final BufferedReader reader = BioLockJUtil.getFileReader( file );
+        try {
+            for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+                if( line.startsWith( "#" ) ) {
+                    continue;
+                }
 
-				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
-				int index = 0;
-				final String taxas = st.nextToken();
+                final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
+                int index = 0;
+                final String taxas = st.nextToken();
 
-				while( st.hasMoreTokens() )
-				{
-					final Integer count = Double.valueOf( st.nextToken() ).intValue();
-					final String id = orderedQiimeIDs.get( index++ );
-					addOtuNode( new QiimeNode( id, taxas, count ) );
-				}
-			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
-				reader.close();
-			}
-		}
+                while( st.hasMoreTokens() ) {
+                    final Integer count = Double.valueOf( st.nextToken() ).intValue();
+                    final String id = orderedQiimeIDs.get( index++ );
+                    addOtuNode( new QiimeNode( id, taxas, count ) );
+                }
+            }
+        } finally {
+            if( reader != null ) {
+                reader.close();
+            }
+        }
 
-	}
+    }
 
-	/**
-	 * To parse the taxonomy level reports output by {@link biolockj.module.implicit.qiime.QiimeClassifier}:
-	 * <ol>
-	 * <li>Call {@link #getInputFiles()}
-	 * <li>Call {@link #initializeMaps()}
-	 * <li>Call {@link #setOrderedQiimeIDs(File)}
-	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.r16s.QiimeNode#getSampleId()} if not
-	 * yet created.
-	 * <li>Add the {@link biolockj.node.r16s.QiimeNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
-	 * </ol>
-	 * <p>
-	 * Sample QIIME report line: (head otu_table_L2.txt): <br>
-	 * # Constructed from biom file #OTU ID 3A.1 6A.1 120A.1 7A.1 k__Bacteria;p__Actinobacteria 419.0 26.0 90.0 70.0
-	 */
-	@Override
-	public void runModule() throws Exception
-	{
-		final List<File> inputFiles = getInputFiles();
-		initializeMaps();
-		setOrderedQiimeIDs( inputFiles.get( 0 ) );
-		super.runModule();
-	}
+    /**
+     * To parse the taxonomy level reports output by {@link biolockj.module.implicit.qiime.QiimeClassifier}:
+     * <ol>
+     * <li>Call {@link #getInputFiles()}
+     * <li>Call {@link #initializeMaps()}
+     * <li>Call {@link #setOrderedQiimeIDs(File)}
+     * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.r16s.QiimeNode#getSampleId()} if not
+     * yet created.
+     * <li>Add the {@link biolockj.node.r16s.QiimeNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
+     * </ol>
+     * <p>
+     * Sample QIIME report line: (head otu_table_L2.txt): <br>
+     * # Constructed from biom file #OTU ID 3A.1 6A.1 120A.1 7A.1 k__Bacteria;p__Actinobacteria 419.0 26.0 90.0 70.0
+     */
+    @Override
+    public void runModule() throws Exception {
+        final List<File> inputFiles = getInputFiles();
+        initializeMaps();
+        setOrderedQiimeIDs( inputFiles.get( 0 ) );
+        super.runModule();
+    }
 
-	/**
-	 * Examines the header line to find the column index for {@value biolockj.Constants#QIIME_DEMUX_COL} which holds the
-	 * demultiplexed sample file name.
-	 *
-	 * @param line Header line containing column names
-	 * @return Index of Qiime mapping column {@value biolockj.Constants#QIIME_DEMUX_COL}
-	 * @throws Exception If {@value biolockj.Constants#QIIME_DEMUX_COL} not found.
-	 */
-	protected int getFileNameColumn( final String line ) throws Exception
-	{
-		final StringTokenizer header = new StringTokenizer( line, Constants.TAB_DELIM );
-		int colNum = 0;
-		while( header.hasMoreTokens() )
-		{
-			final String token = header.nextToken();
-			Log.info( getClass(), "column(" + colNum + ") = " + token );
-			if( token.equals( Constants.QIIME_DEMUX_COL ) )
-			{
-				Log.info( getClass(), "Found QIIME_DEMUX_COL, not checking remaining metadata columns!" );
-				return colNum;
-			}
-			colNum++;
-		}
+    /**
+     * Examines the header line to find the column index for {@value biolockj.Constants#QIIME_DEMUX_COL} which holds the
+     * demultiplexed sample file name.
+     *
+     * @param line Header line containing column names
+     * @return Index of Qiime mapping column {@value biolockj.Constants#QIIME_DEMUX_COL}
+     * @throws Exception If {@value biolockj.Constants#QIIME_DEMUX_COL} not found.
+     */
+    protected int getFileNameColumn( final String line ) throws Exception {
+        final StringTokenizer header = new StringTokenizer( line, Constants.TAB_DELIM );
+        int colNum = 0;
+        while( header.hasMoreTokens() ) {
+            final String token = header.nextToken();
+            Log.info( getClass(), "column(" + colNum + ") = " + token );
+            if( token.equals( Constants.QIIME_DEMUX_COL ) ) {
+                Log.info( getClass(), "Found QIIME_DEMUX_COL, not checking remaining metadata columns!" );
+                return colNum;
+            }
+            colNum++;
+        }
 
-		throw new Exception( "Unable to find " + Constants.QIIME_DEMUX_COL + " in header [ " + line + "]" );
-	}
+        throw new Exception( "Unable to find " + Constants.QIIME_DEMUX_COL + " in header [ " + line + "]" );
+    }
 
-	/**
-	 * This method is used to get an R-friendly Sample ID value by stripping out the quotes AND by replacing any Qiime
-	 * ID found with the original Sample ID.
-	 *
-	 * @param id Sample ID
-	 * @return formatted Sample ID
-	 * @throws Exception If any QIIME ID does not have a corresponding Sample ID
-	 */
-	// @Override
-	protected String getOtuTableRowId( final String id ) throws Exception
-	{
-		final StringBuffer sb = new StringBuffer();
-		final String valWithoutQuotes = id.replaceAll( "'", "" ).replaceAll( "\"", "" );
-		final StringTokenizer st = new StringTokenizer( valWithoutQuotes, TAB_DELIM );
-		while( st.hasMoreTokens() )
-		{
-			final String token = st.nextToken();
-			if( !sb.toString().isEmpty() )
-			{
-				sb.append( TAB_DELIM ).append( token );
-			}
-			else if( token.equals( MetaUtil.getID() ) )
-			{
-				sb.append( token );
-			}
-			else // must be a Qiime ID
-			{
-				sb.append( getSampleId( token ).replaceAll( "'", "" ).replaceAll( "\"", "" ) );
-			}
-		}
+    /**
+     * This method is used to get an R-friendly Sample ID value by stripping out the quotes AND by replacing any Qiime
+     * ID found with the original Sample ID.
+     *
+     * @param id Sample ID
+     * @return formatted Sample ID
+     * @throws Exception If any QIIME ID does not have a corresponding Sample ID
+     */
+    // @Override
+    protected String getOtuTableRowId( final String id ) throws Exception {
+        final StringBuffer sb = new StringBuffer();
+        final String valWithoutQuotes = id.replaceAll( "'", "" ).replaceAll( "\"", "" );
+        final StringTokenizer st = new StringTokenizer( valWithoutQuotes, TAB_DELIM );
+        while( st.hasMoreTokens() ) {
+            final String token = st.nextToken();
+            if( !sb.toString().isEmpty() ) {
+                sb.append( TAB_DELIM ).append( token );
+            } else if( token.equals( MetaUtil.getID() ) ) {
+                sb.append( token );
+            } else // must be a Qiime ID
+            {
+                sb.append( getSampleId( token ).replaceAll( "'", "" ).replaceAll( "\"", "" ) );
+            }
+        }
 
-		return sb.toString();
-	}
+        return sb.toString();
+    }
 
-	/**
-	 * Get the Sample ID from {@link #qiimeIdToSampleIdMap}. Qiime removes special characters by output of
-	 * {@link biolockj.module.implicit.qiime.BuildQiimeMapping}, to create the qiimeId, which this method accepts as a
-	 * parameter to lookup the Sample ID.
-	 *
-	 * @param qiimeId Qiime ID that was created from sample ID in a previous script
-	 * @return sampleId Original sample ID from metadata file
-	 * @throws Exception if the qiimeId is not found in {@link #qiimeIdToSampleIdMap}
-	 */
-	protected String getSampleId( final String qiimeId ) throws Exception
-	{
-		final String sampleId = qiimeIdToSampleIdMap.get( qiimeId );
-		if( sampleId == null )
-		{
-			throw new Exception( "QIIME ID: " + qiimeId + " not cached in qiimeIdToSampleIdMap" );
-		}
-		return sampleId;
-	}
+    /**
+     * Get the Sample ID from {@link #qiimeIdToSampleIdMap}. Qiime removes special characters by output of
+     * {@link biolockj.module.implicit.qiime.BuildQiimeMapping}, to create the qiimeId, which this method accepts as a
+     * parameter to lookup the Sample ID.
+     *
+     * @param qiimeId Qiime ID that was created from sample ID in a previous script
+     * @return sampleId Original sample ID from metadata file
+     * @throws Exception if the qiimeId is not found in {@link #qiimeIdToSampleIdMap}
+     */
+    protected String getSampleId( final String qiimeId ) throws Exception {
+        final String sampleId = qiimeIdToSampleIdMap.get( qiimeId );
+        if( sampleId == null ) throw new Exception( "QIIME ID: " + qiimeId + " not cached in qiimeIdToSampleIdMap" );
+        return sampleId;
+    }
 
-	/**
-	 * The mapping file used the original sampleId when generating the demultipled files, as recorded in mapping file
-	 * column - {@value biolockj.Constants#QIIME_DEMUX_COL}. Example: sampleId = gutSample_42 / qiimeId = gutSample.42 /
-	 * {@value biolockj.Constants#QIIME_DEMUX_COL} = gutSample_42.fasta
-	 *
-	 * @param qiimeId Qiime corrected ID
-	 * @param demuxIndex Qiime mapping column index for{@value biolockj.Constants#QIIME_DEMUX_COL}
-	 * @return Original sampleId extracted from {@value biolockj.Constants#QIIME_DEMUX_COL}
-	 * @throws Exception if unable to get sample ID from metadata file column
-	 * {@value biolockj.Constants#QIIME_DEMUX_COL}
-	 */
-	protected String getSampleIdFromMappingFile( final String qiimeId, final int demuxIndex ) throws Exception
-	{
-		if( demuxIndex != -1 )
-		{
-			return MetaUtil.getMetadataRecord( qiimeId ).get( demuxIndex - 1 ).replaceAll( "." + Constants.FASTA, "" );
-		}
+    /**
+     * The mapping file used the original sampleId when generating the demultipled files, as recorded in mapping file
+     * column - {@value biolockj.Constants#QIIME_DEMUX_COL}. Example: sampleId = gutSample_42 / qiimeId = gutSample.42 /
+     * {@value biolockj.Constants#QIIME_DEMUX_COL} = gutSample_42.fasta
+     *
+     * @param qiimeId Qiime corrected ID
+     * @param demuxIndex Qiime mapping column index for{@value biolockj.Constants#QIIME_DEMUX_COL}
+     * @return Original sampleId extracted from {@value biolockj.Constants#QIIME_DEMUX_COL}
+     * @throws Exception if unable to get sample ID from metadata file column
+     * {@value biolockj.Constants#QIIME_DEMUX_COL}
+     */
+    protected String getSampleIdFromMappingFile( final String qiimeId, final int demuxIndex ) throws Exception {
+        if( demuxIndex != -1 )
+            return MetaUtil.getRecord( qiimeId ).get( demuxIndex - 1 ).replaceAll( "." + Constants.FASTA, "" );
 
-		return qiimeId;
-	}
+        return qiimeId;
+    }
 
-	/**
-	 * Sample IDs in the original metadata file may contain restricted characters that will be replaced with a "." via
-	 * {link biolockj.module.implicit.qiime.BuildQiimeMapping}. The {@value biolockj.Constants#QIIME_DEMUX_COL} column
-	 * will contain the original characters (and are used in the file name).
-	 *
-	 * @see <a href= "http://qiime.org/scripts/validate_mapping_file.html" target=
-	 * "_top">http://qiime.org/scripts/validate_mapping_file.html</a>
-	 * <p>
-	 * Convenience maps are initialized to simplify lookups:
-	 * <ul>
-	 * <li>{@link #qiimeIdToSampleIdMap}
-	 * <li>{@link #sampleIdToQiimeIdMap}
-	 * </ul>
-	 *
-	 * @throws Exception if unable to initialize the maps
-	 */
-	protected void initializeMaps() throws Exception
-	{
-		Log.info( getClass(), "Initialize QIIME_ID to SAMPLE_ID Maps for: " + MetaUtil.getPath() );
-		int fileNameCol = 0;
-		boolean isHeaderRow = true;
-		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
+    /**
+     * Sample IDs in the original metadata file may contain restricted characters that will be replaced with a "." via
+     * {link biolockj.module.implicit.qiime.BuildQiimeMapping}. The {@value biolockj.Constants#QIIME_DEMUX_COL} column
+     * will contain the original characters (and are used in the file name).
+     *
+     * @see <a href= "http://qiime.org/scripts/validate_mapping_file.html" target=
+     * "_top">http://qiime.org/scripts/validate_mapping_file.html</a>
+     * <p>
+     * Convenience maps are initialized to simplify lookups:
+     * <ul>
+     * <li>{@link #qiimeIdToSampleIdMap}
+     * <li>{@link #sampleIdToQiimeIdMap}
+     * </ul>
+     *
+     * @throws Exception if unable to initialize the maps
+     */
+    protected void initializeMaps() throws Exception {
+        Log.info( getClass(), "Initialize QIIME_ID to SAMPLE_ID Maps for: " + MetaUtil.getPath() );
+        int fileNameCol = 0;
+        boolean isHeaderRow = true;
+        final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getMetadata() );
 
-		for( String line = reader.readLine(); line != null; line = reader.readLine() )
-		{
-			final String qiimeId = new StringTokenizer( line, Constants.TAB_DELIM ).nextToken();
-			if( isHeaderRow )
-			{
-				isHeaderRow = false;
-				fileNameCol = getFileNameColumn( line );
-				Log.info( getClass(),
-						"Header ID (" + qiimeId + ") has " + Constants.QIIME_DEMUX_COL + " in column #" + fileNameCol );
-			}
-			else
-			{
-				final String sampleId = getSampleIdFromMappingFile( qiimeId, fileNameCol );
-				Log.info( getClass(), "[Id-Map Entry] QIIME_ID(" + qiimeId + ")<=>SAMPLE_ID(" + sampleId + ")" );
-				qiimeIdToSampleIdMap.put( qiimeId, sampleId );
-				sampleIdToQiimeIdMap.put( sampleId, qiimeId );
-			}
-		}
+        for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+            final String qiimeId = new StringTokenizer( line, Constants.TAB_DELIM ).nextToken();
+            if( isHeaderRow ) {
+                isHeaderRow = false;
+                fileNameCol = getFileNameColumn( line );
+                Log.info( getClass(),
+                    "Header ID (" + qiimeId + ") has " + Constants.QIIME_DEMUX_COL + " in column #" + fileNameCol );
+            } else {
+                final String sampleId = getSampleIdFromMappingFile( qiimeId, fileNameCol );
+                Log.info( getClass(), "[Id-Map Entry] QIIME_ID(" + qiimeId + ")<=>SAMPLE_ID(" + sampleId + ")" );
+                qiimeIdToSampleIdMap.put( qiimeId, sampleId );
+                sampleIdToQiimeIdMap.put( sampleId, qiimeId );
+            }
+        }
 
-		reader.close();
+        reader.close();
 
-	}
+    }
 
-	/**
-	 * Qiime IDs are read in from the header line, converted to the sampleId, and saved to {@link #orderedQiimeIDs}.
-	 *
-	 * @param file Taxonomy level report file
-	 * @throws Exception If unable to read the file parameter
-	 */
-	protected void setOrderedQiimeIDs( final File file ) throws Exception
-	{
-		Log.info( getClass(),
-				"Configure ordered list of Qiime IDs based on the 1st taxonomy report: " + file.getAbsolutePath() );
-		final BufferedReader reader = BioLockJUtil.getFileReader( file );
+    /**
+     * Qiime IDs are read in from the header line, converted to the sampleId, and saved to {@link #orderedQiimeIDs}.
+     *
+     * @param file Taxonomy level report file
+     * @throws Exception If unable to read the file parameter
+     */
+    protected void setOrderedQiimeIDs( final File file ) throws Exception {
+        Log.info( getClass(),
+            "Configure ordered list of Qiime IDs based on the 1st taxonomy report: " + file.getAbsolutePath() );
+        final BufferedReader reader = BioLockJUtil.getFileReader( file );
 
-		final String commenLine = reader.readLine(); // skip first line (its a comment)
-		final String headerLine = reader.readLine();
-		final String header = headerLine.replace( OTU_ID, "" );
-		Log.info( getClass(), "Skip comment line: " + commenLine );
-		Log.info( getClass(), "Read header line: " + headerLine );
-		Log.info( getClass(), "Remove " + OTU_ID + " from header" );
-		Log.info( getClass(), "Remaining header line should contain the QIIME IDs for all samples: " + header );
+        final String commenLine = reader.readLine(); // skip first line (its a comment)
+        final String headerLine = reader.readLine();
+        final String header = headerLine.replace( OTU_ID, "" );
+        Log.info( getClass(), "Skip comment line: " + commenLine );
+        Log.info( getClass(), "Read header line: " + headerLine );
+        Log.info( getClass(), "Remove " + OTU_ID + " from header" );
+        Log.info( getClass(), "Remaining header line should contain the QIIME IDs for all samples: " + header );
 
-		final String[] parts = header.split( "\\s" );
-		for( final String qiimeId: parts )
-		{
-			if( qiimeId.trim().length() > 0 )
-			{
-				Log.debug( getClass(), "Add QiimeID: " + qiimeId );
-				orderedQiimeIDs.add( qiimeId );
-			}
-		}
+        final String[] parts = header.split( "\\s" );
+        for( final String qiimeId: parts ) {
+            if( qiimeId.trim().length() > 0 ) {
+                Log.debug( getClass(), "Add QiimeID: " + qiimeId );
+                orderedQiimeIDs.add( qiimeId );
+            }
+        }
 
-		reader.close();
+        reader.close();
 
-		Log.info( getClass(), "List QIIME IDs( total#" + orderedQiimeIDs.size() + " ) = " + orderedQiimeIDs );
-	}
+        Log.info( getClass(), "List QIIME IDs( total#" + orderedQiimeIDs.size() + " ) = " + orderedQiimeIDs );
+    }
 
-	/**
-	 * Qiime IDs are listed in the same order in each taxonomy level report. The values are cached here after being read
-	 * from the first report.
-	 */
-	protected static final List<String> orderedQiimeIDs = new ArrayList<>();
+    /**
+     * Qiime IDs are listed in the same order in each taxonomy level report. The values are cached here after being read
+     * from the first report.
+     */
+    protected static final List<String> orderedQiimeIDs = new ArrayList<>();
 
-	/**
-	 * Convenience map, to convert Qiime ID to Sample ID
-	 */
-	protected static final Map<String, String> qiimeIdToSampleIdMap = new HashMap<>();
+    /**
+     * Convenience map, to convert Qiime ID to Sample ID
+     */
+    protected static final Map<String, String> qiimeIdToSampleIdMap = new HashMap<>();
 
-	/**
-	 * Convenience map, to convert Sample ID to Qiime ID
-	 */
-	protected static final Map<String, String> sampleIdToQiimeIdMap = new HashMap<>();
+    /**
+     * Convenience map, to convert Sample ID to Qiime ID
+     */
+    protected static final Map<String, String> sampleIdToQiimeIdMap = new HashMap<>();
 
-	private static final String OTU_ID = "#OTU ID";
+    private static final String OTU_ID = "#OTU ID";
 }

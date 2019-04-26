@@ -21,22 +21,19 @@ import biolockj.module.ScriptModule;
  * 
  * @blj.web_desc R Plot P-value Histograms
  */
-public class R_PlotPvalHistograms extends R_Module implements ScriptModule
-{
-	@Override
-	public void checkDependencies() throws Exception
-	{
-		super.checkDependencies();
-		Config.requireString( this, P_VAL_CUTOFF );
-	}
+public class R_PlotPvalHistograms extends R_Module implements ScriptModule {
+    @Override
+    public void checkDependencies() throws Exception {
+        super.checkDependencies();
+        Config.requireString( this, P_VAL_CUTOFF );
+    }
 
-	/**
-	 * Returns {@link #getStatPreReqs()}
-	 */
-	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
-		return getStatPreReqs();
-	}
+    /**
+     * Returns {@link #getStatPreReqs()}
+     */
+    @Override
+    public List<String> getPreRequisiteModules() throws Exception {
+        return getStatPreReqs();
+    }
 
 }

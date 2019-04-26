@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import biolockj.Log;
-import biolockj.module.JavaModule;
 import biolockj.module.report.otu.OtuCountModule;
 import biolockj.util.*;
 
@@ -26,133 +25,110 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Build Taxa Tables
  */
-public class BuildTaxaTables extends OtuCountModule implements JavaModule
-{
+public class BuildTaxaTables extends OtuCountModule {
 
-	@Override
-	public String getSummary() throws Exception
-	{
-		return super.getSummary() + summary;
-	}
+    @Override
+    public String getSummary() throws Exception {
+        return super.getSummary() + this.summary;
+    }
 
-	@Override
-	public void runModule() throws Exception
-	{
-		buildTaxonomyTables( OtuUtil.getSampleOtuCounts( getInputFiles() ) );
-	}
+    @Override
+    public void runModule() throws Exception {
+        buildTaxonomyTables( OtuUtil.getSampleOtuCounts( getInputFiles() ) );
+    }
 
-	/**
-	 * Build taxonomy tables from the sampleTaxaCounts.
-	 *
-	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
-	 * @throws Exception if errors occur
-	 */
-	protected void buildTaxonomyTables( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts ) throws Exception
-	{
-		final String label = "OTUs";
-		final int pad = SummaryUtil.getPad( label ) + 4;
+    /**
+     * Build taxonomy tables from the sampleTaxaCounts.
+     *
+     * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
+     * @throws Exception if errors occur
+     */
+    protected void buildTaxonomyTables( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts )
+        throws Exception {
+        final String label = "OTUs";
+        final int pad = SummaryUtil.getPad( label ) + 4;
 
-		final TreeSet<String> otus = OtuUtil.findUniqueOtus( sampleOtuCounts );
-		Log.info( getClass(), "Write " + otus.size() + " unique OTUs for: " + sampleOtuCounts.size() + " samples" );
-		report( "OTU Count", sampleOtuCounts );
-		report( "Unique OTU", otus );
-		summary += BioLockJUtil.addTrailingSpaces( "# Samples:", pad )
-				+ BioLockJUtil.formatNumericOutput( new Integer( sampleOtuCounts.size() ).longValue(), false ) + RETURN;
-		long totalOtus = 0;
-		boolean topLevel = true;
-		for( final String level: TaxaUtil.getTaxaLevels() )
-		{
-			final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
-			final TreeMap<String, TreeMap<String, Long>> levelTaxaCounts = TaxaUtil.getLevelTaxaCounts( sampleOtuCounts,
-					level );
-			final Map<String, Long> uniqueOtus = new HashMap<>();
+        final TreeSet<String> otus = OtuUtil.findUniqueOtus( sampleOtuCounts );
+        Log.info( getClass(), "Write " + otus.size() + " unique OTUs for: " + sampleOtuCounts.size() + " samples" );
+        report( "OTU Count", sampleOtuCounts );
+        report( "Unique OTU", otus );
+        this.summary += BioLockJUtil.addTrailingSpaces( "# Samples:", pad )
+            + BioLockJUtil.formatNumericOutput( new Integer( sampleOtuCounts.size() ).longValue(), false ) + RETURN;
+        long totalOtus = 0;
+        boolean topLevel = true;
+        for( final String level: TaxaUtil.getTaxaLevels() ) {
+            final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
+            final TreeMap<String,
+                TreeMap<String, Long>> levelTaxaCounts = TaxaUtil.getLevelTaxaCounts( sampleOtuCounts, level );
+            final Map<String, Long> uniqueOtus = new HashMap<>();
 
-			uniqueOtus.put( level, new Integer( levelTaxa.size() ).longValue() );
-			report( "Taxonomy Counts @" + level, levelTaxaCounts );
-			final File table = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, null );
-			Log.info( getClass(), "Building: " + table.getAbsolutePath() );
+            uniqueOtus.put( level, new Integer( levelTaxa.size() ).longValue() );
+            report( "Taxonomy Counts @" + level, levelTaxaCounts );
+            final File table = TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, null );
+            Log.info( getClass(), "Building: " + table.getAbsolutePath() );
 
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( table ) );
-			try
-			{
-				writer.write( MetaUtil.getID() );
-				for( final String taxa: levelTaxa )
-				{
-					writer.write( TAB_DELIM + taxa );
-				}
-				writer.write( RETURN );
+            final BufferedWriter writer = new BufferedWriter( new FileWriter( table ) );
+            try {
+                writer.write( MetaUtil.getID() );
+                for( final String taxa: levelTaxa ) {
+                    writer.write( TAB_DELIM + taxa );
+                }
+                writer.write( RETURN );
 
-				for( final String sampleId: sampleOtuCounts.keySet() )
-				{
-					final TreeMap<String, Long> taxaCounts = levelTaxaCounts.get( sampleId );
-					if( taxaCounts.isEmpty() )
-					{
-						Log.warn( getClass(), "No " + level + " taxa found: " + sampleId );
-						continue;
-					}
-					writer.write( sampleId );
+                for( final String sampleId: sampleOtuCounts.keySet() ) {
+                    final TreeMap<String, Long> taxaCounts = levelTaxaCounts.get( sampleId );
+                    if( taxaCounts.isEmpty() ) {
+                        Log.warn( getClass(), "No " + level + " taxa found: " + sampleId );
+                        continue;
+                    }
+                    writer.write( sampleId );
 
-					for( final String taxa: levelTaxa )
-					{
-						Long count = 0L;
-						if( taxaCounts != null && taxaCounts.keySet().contains( taxa ) )
-						{
-							count = taxaCounts.get( taxa );
-							if( topLevel )
-							{
-								totalOtus += count;
-							}
-						}
+                    for( final String taxa: levelTaxa ) {
+                        Long count = 0L;
+                        if( taxaCounts.keySet().contains( taxa ) ) {
+                            count = taxaCounts.get( taxa );
+                            if( topLevel ) {
+                                totalOtus += count;
+                            }
+                        }
 
-						writer.write( TAB_DELIM + count );
-						Log.debug( getClass(), sampleId + ":" + taxa + "=" + count );
-					}
+                        writer.write( TAB_DELIM + count );
+                        Log.debug( getClass(), sampleId + ":" + taxa + "=" + count );
+                    }
 
-					writer.write( RETURN );
-				}
+                    writer.write( RETURN );
+                }
 
-				summary += BioLockJUtil.addTrailingSpaces( "# Unique " + level + " OTUs:", pad )
-						+ BioLockJUtil.formatNumericOutput( uniqueOtus.get( level ), false ) + RETURN;
-			}
-			finally
-			{
-				if( writer != null )
-				{
-					writer.close();
-				}
-			}
-			topLevel = false;
-		}
+                this.summary += BioLockJUtil.addTrailingSpaces( "# Unique " + level + " OTUs:", pad )
+                    + BioLockJUtil.formatNumericOutput( uniqueOtus.get( level ), false ) + RETURN;
+            } finally {
+                writer.close();
+            }
+            topLevel = false;
+        }
 
-		summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs:", pad )
-				+ BioLockJUtil.formatNumericOutput( totalOtus, false );
-	}
+        this.summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs:", pad )
+            + BioLockJUtil.formatNumericOutput( totalOtus, false );
+    }
 
-	private void report( final String label, final Collection<String> col ) throws Exception
-	{
-		if( Log.doDebug() )
-		{
-			for( final String item: col )
-			{
-				Log.debug( getClass(), "REPORT [ " + label + " ]:" + item );
-			}
-		}
-	}
+    private void report( final String label, final Collection<String> col ) throws Exception {
+        if( Log.doDebug() ) {
+            for( final String item: col ) {
+                Log.debug( getClass(), "REPORT [ " + label + " ]:" + item );
+            }
+        }
+    }
 
-	private void report( final String label, final TreeMap<String, TreeMap<String, Long>> map ) throws Exception
-	{
-		if( Log.doDebug() )
-		{
-			for( final String id: map.keySet() )
-			{
-				final TreeMap<String, Long> innerMap = map.get( id );
-				for( final String otu: innerMap.keySet() )
-				{
-					Log.debug( getClass(), "REPORT [ " + id + " " + label + " ]: " + otu + "=" + innerMap.get( otu ) );
-				}
-			}
-		}
-	}
+    private void report( final String label, final TreeMap<String, TreeMap<String, Long>> map ) throws Exception {
+        if( Log.doDebug() ) {
+            for( final String id: map.keySet() ) {
+                final TreeMap<String, Long> innerMap = map.get( id );
+                for( final String otu: innerMap.keySet() ) {
+                    Log.debug( getClass(), "REPORT [ " + id + " " + label + " ]: " + otu + "=" + innerMap.get( otu ) );
+                }
+            }
+        }
+    }
 
-	private String summary = "";
+    private String summary = "";
 }

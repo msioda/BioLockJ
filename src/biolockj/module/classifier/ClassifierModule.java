@@ -20,21 +20,20 @@ import biolockj.module.SeqModule;
  * to get classifier command (loaded module, executable file path, or in the $USER $PATH) and optional command line
  * parameters.}
  */
-public interface ClassifierModule extends SeqModule
-{
-	/**
-	 * Get the executable required to classify your samples.
-	 *
-	 * @return Command to execute classifier program
-	 * @throws Exception if the classifier program undefined or invalid
-	 */
-	public String getClassifierExe() throws Exception;
+public interface ClassifierModule extends SeqModule {
+    /**
+     * Get the executable required to classify your samples.
+     *
+     * @return Command to execute classifier program
+     * @throws Exception if the classifier program undefined or invalid
+     */
+    public String getClassifierExe() throws Exception;
 
-	/**
-	 * Get optional list of parameters to append whenever the classifier executable is called.
-	 *
-	 * @return Runtime parameters
-	 * @throws Exception thrown if parameters defined are invalid
-	 */
-	public List<String> getClassifierParams() throws Exception;
+    /**
+     * Get optional list of parameters to append whenever the classifier executable is called.
+     *
+     * @return Runtime parameters
+     * @throws Exception thrown if parameters defined are invalid
+     */
+    public List<String> getClassifierParams() throws Exception;
 }

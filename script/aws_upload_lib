@@ -81,8 +81,6 @@ build_start_script() {
 	echo "set_prop $(get_config ec2) \"pipeline.env\" aws" >> $startScript
 	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $startScript
 	echo "dockblj -aws ${meta}-i=$EFS_INPUT/$(basename ${inputDirPaths}) -c=$(get_config ec2)" >> $startScript
-	[ "${awsCopyInputsToS3}" == "Y" ] && echo "aws_sync_inputs_to_s3" >> $startScript
-	[ "${awsCopyPipelineToS3}" == "Y" ] && echo "aws_sync_outputs_to_s3" >> $startScript
 	[ "${awsPurgeEfsInputs}" == "Y" ] && echo 'sudo rm -rf $EFS/[cdims]*/*; sudo rm -rf $EFS/primer' >> $startScript
 	[ "${awsPurgeEfsOutput}" == "Y" ] && echo 'sudo rm -rf $BLJ_PROJ/*' >> $startScript
 	chmod 770 $startScript

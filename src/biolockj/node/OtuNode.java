@@ -20,81 +20,80 @@ import java.util.Map;
  * sample ID. Note that if data is demultiplexed, the Sample ID is extracted from the file name instead of the sequence
  * header.
  */
-public interface OtuNode
-{
-	/**
-	 * Add {@link biolockj.node.OtuNode} taxa names for the
-	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS} level mapped by the classifier
-	 * specific levelDelim parameter: .
-	 * 
-	 * @param taxa Classifier Taxa name
-	 * @param levelDelim Classifier specific taxonomy level indicator
-	 * @throws Exception if errors occur adding the taxa
-	 */
-	public void addTaxa( final String taxa, final String levelDelim ) throws Exception;
+public interface OtuNode {
+    /**
+     * Add {@link biolockj.node.OtuNode} taxa names for the
+     * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS} level mapped by the classifier
+     * specific levelDelim parameter: .
+     * 
+     * @param taxa Classifier Taxa name
+     * @param levelDelim Classifier specific taxonomy level indicator
+     * @throws Exception if errors occur adding the taxa
+     */
+    public void addTaxa( final String taxa, final String levelDelim ) throws Exception;
 
-	/**
-	 * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to
-	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
-	 * 
-	 * @return Map(delim, level) map
-	 */
-	public Map<String, String> delimToLevelMap();
+    /**
+     * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to
+     * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
+     * 
+     * @return Map(delim, level) map
+     */
+    public Map<String, String> delimToLevelMap();
 
-	/**
-	 * Gets the OTU count.
-	 *
-	 * @return Number of reads in node sampleId with node OTU assignment
-	 */
-	public int getCount();
+    /**
+     * Gets the OTU count.
+     *
+     * @return Number of reads in node sampleId with node OTU assignment
+     */
+    public int getCount();
 
-	/**
-	 * Get the line from classifier output file used to create this OtuNode.
-	 *
-	 * @return Line of classifier output
-	 */
-	public String getLine();
+    /**
+     * Get the line from classifier output file used to create this OtuNode.
+     *
+     * @return Line of classifier output
+     */
+    public String getLine();
 
-	/**
-	 * Build the OTU name from the taxaMap.
-	 * 
-	 * @return OTU name
-	 */
-	public String getOtuName();
+    /**
+     * Build the OTU name from the taxaMap.
+     * 
+     * @return OTU name
+     */
+    public String getOtuName();
 
-	/**
-	 * Gets the sample ID to which the read belongs
-	 *
-	 * @return Sample ID
-	 */
-	public String getSampleId();
+    /**
+     * Gets the sample ID to which the read belongs
+     *
+     * @return Sample ID
+     */
+    public String getSampleId();
 
-	/**
-	 * Gets the map holding level-specific OTU names
-	 *
-	 * @return OTU map (key=level, value=OTU)
-	 * @throws Exception if errors occur building map
-	 */
-	public Map<String, String> getTaxaMap() throws Exception;
+    /**
+     * Gets the map holding level-specific OTU names
+     *
+     * @return OTU map (key=level, value=OTU)
+     * @throws Exception if errors occur building map
+     */
+    public Map<String, String> getTaxaMap() throws Exception;
 
-	/**
-	 * Set the number of reads for a sample ID that have this OTU assignment.
-	 *
-	 * @param count Number of reads having this OTU assignment
-	 */
-	public void setCount( int count );
+    /**
+     * Set the number of reads for a sample ID that have this OTU assignment.
+     *
+     * @param count Number of reads having this OTU assignment
+     */
+    public void setCount( int count );
 
-	/**
-	 * Set the classifier report line parsed to build this OTU node.
-	 *
-	 * @param line Classifier report line
-	 */
-	public void setLine( String line );
+    /**
+     * Set the classifier report line parsed to build this OTU node.
+     *
+     * @param line Classifier report line
+     */
+    public void setLine( String line );
 
-	/**
-	 * Set the sample ID, parsed from file name or sequence header, to which this taxonomy assignment belongs.
-	 *
-	 * @param sampleId ID of sample to which this taxonomy assignment belongs
-	 */
-	public void setSampleId( final String sampleId );
+    /**
+     * Set the sample ID, parsed from file name or sequence header, to which this taxonomy assignment belongs.
+     *
+     * @param sampleId ID of sample to which this taxonomy assignment belongs
+     */
+    public void setSampleId( final String sampleId );
 }
