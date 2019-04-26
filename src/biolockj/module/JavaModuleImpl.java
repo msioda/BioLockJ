@@ -59,7 +59,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public void executeTask() throws Exception {
 		final boolean buildClusterScript = !DockerUtil.inDockerEnv() && Config.isOnCluster()
 			&& Config.getBoolean( this, Constants.DETACH_JAVA_MODULES );
-		final boolean buildDockerScript = DockerUtil.inDockerEnv() && !RuntimeParamUtil.isDirectMode();
+		final boolean buildDockerScript = DockerUtil.inDockerEnv() && !DockerUtil.isDirectMode();
 		if( buildClusterScript || buildDockerScript ) {
 			super.executeTask();
 		} else {

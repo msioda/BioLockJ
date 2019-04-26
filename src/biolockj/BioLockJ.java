@@ -218,7 +218,7 @@ public class BioLockJ {
 		Config.getString( null, Constants.INPUT_DIRS );
 		MetaUtil.initialize();
 
-		if( RuntimeParamUtil.isDirectMode() ) {
+		if( DockerUtil.isDirectMode() ) {
 			Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
 		} else {
 			Log.initialize( Config.pipelineName() );
@@ -228,7 +228,7 @@ public class BioLockJ {
 			initRestart();
 		}
 
-		if( !RuntimeParamUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() ) {
 			if( MetaUtil.getMetadata() != null ) {
 				BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
 			}
@@ -339,7 +339,7 @@ public class BioLockJ {
 
 		Pipeline.initializePipeline();
 
-		if( RuntimeParamUtil.isDirectMode() ) {
+		if( DockerUtil.isDirectMode() ) {
 			try {
 				final Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
 				Pipeline.runDirectModule( id );
@@ -401,7 +401,7 @@ public class BioLockJ {
 	}
 
 	private static void info( final String msg ) {
-		if( !RuntimeParamUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() ) {
 			Log.info( BioLockJ.class, msg );
 		}
 	}
@@ -450,7 +450,7 @@ public class BioLockJ {
 	}
 
 	private static void pipelineShutDown( final String[] args ) {
-		if( !RuntimeParamUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() ) {
 			try {
 				if( !NextflowUtil.nextflowLogExists() ) {
 					NextflowUtil.saveNextflowLog();
@@ -478,7 +478,7 @@ public class BioLockJ {
 				if( Config.pipelineName() != null ) {
 					suffix = Config.pipelineName();
 				}
-				if( RuntimeParamUtil.isDirectMode() ) {
+				if( DockerUtil.isDirectMode() ) {
 					suffix += ( suffix.isEmpty() ? "": "_" ) + RuntimeParamUtil.getDirectModuleDir();
 				}
 

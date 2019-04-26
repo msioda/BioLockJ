@@ -741,7 +741,7 @@ public class SeqUtil {
 	}
 
 	private static void info( final String msg ) {
-		if( !RuntimeParamUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() ) {
 			Log.info( SeqUtil.class, msg );
 		}
 	}

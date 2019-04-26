@@ -244,15 +244,7 @@ public class RuntimeParamUtil {
 			: new File( Config.getSystemFilePath( params.get( RESTART_FLAG ) ) );
 	}
 
-	/**
-	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
-	 * 
-	 * @return boolean
-	 */
-	public static boolean isDirectMode() {
-		return getDirectModuleDir() != null;
-	}
-
+	
 	/**
 	 * Return TRUE if runtime parameter {@value #DOCKER_FLAG} was found
 	 * 
@@ -310,12 +302,10 @@ public class RuntimeParamUtil {
 			reassignDockerConfig();
 		}
 
-		if( isDirectMode() ) {
+		if( getDirectModuleDir() != null ) {
 			assignMasterConfig( assignDirectPipelineDir() );
-		} else if( doRestart() ) {
-			if( getConfigFile() == null ) {
-				assignMasterConfig( getRestartDir() );
-			}
+		} else if( doRestart() && getConfigFile() == null ) {
+			assignMasterConfig( getRestartDir() );
 		}
 
 		validateParams();

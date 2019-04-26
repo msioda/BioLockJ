@@ -88,7 +88,7 @@ public final class RMetaUtil {
 		verifyMetadataFieldsExist( module, R_NOMINAL_FIELDS, nominalFields );
 		verifyMetadataFieldsExist( module, R_MDS_REPORT_FIELDS, mdsFields );
 
-		if( !RuntimeParamUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() ) {
 			Log.debug( RMetaUtil.class,
 				"List override nominal fields: " + BioLockJUtil.getCollectionAsString( nominalFields ) );
 			Log.debug( RMetaUtil.class,
@@ -122,7 +122,7 @@ public final class RMetaUtil {
 				rScriptFields.removeAll( RegisterNumReads.getDepricatedReadFields() );
 			}
 
-			if( !RuntimeParamUtil.isDirectMode() ) {
+			if( !DockerUtil.isDirectMode() ) {
 				Log.debug( RMetaUtil.class, "List R fields BEFORE chekcing for Qiime alpha metrics: "
 					+ BioLockJUtil.getCollectionAsString( rScriptFields ) );
 			}
@@ -140,7 +140,7 @@ public final class RMetaUtil {
 		rScriptFields = updateNumericData( ParserModuleImpl.getOtuCountField(), rScriptFields, reportHits );
 		rScriptFields = updateNumericData( AddMetadataToTaxaTables.HIT_RATIO, rScriptFields, reportHits );
 
-		if( reportAllFields( module ) && !RuntimeParamUtil.isDirectMode() ) {
+		if( reportAllFields( module ) && !DockerUtil.isDirectMode() ) {
 			Log.info( RMetaUtil.class, "R_Modules will report on the all [" + rScriptFields.size()
 				+ "] metadata fields since Config property: " + R_REPORT_FIELDS + " is undefined." );
 
@@ -149,7 +149,7 @@ public final class RMetaUtil {
 		for( final String field: rScriptFields ) {
 			final Set<String> data = MetaUtil.getUniqueFieldValues( field, true );
 			final int count = data.size();
-			if( !RuntimeParamUtil.isDirectMode() ) {
+			if( !DockerUtil.isDirectMode() ) {
 				Log.info( RMetaUtil.class, "Metadata field [" + field + "] has " + count + " unique non-null values." );
 			}
 
@@ -179,21 +179,21 @@ public final class RMetaUtil {
 				if( foundNominal && !foundNumeric ) // all nominal
 				{
 					nominalFields.add( field );
-					if( !RuntimeParamUtil.isDirectMode() ) {
+					if( !DockerUtil.isDirectMode() ) {
 						Log.debug( RMetaUtil.class, "Assign as nominal field: " + field );
 					}
 
 				} else if( foundNominal && foundNumeric ) // mixed nominal/numeric
 				{
 					nominalFields.add( field );
-					if( !RuntimeParamUtil.isDirectMode() ) {
+					if( !DockerUtil.isDirectMode() ) {
 						Log.warn( RMetaUtil.class, "Metadata field [" + field + "] has both numeric and "
 							+ "non-numeric data so will be classified as nominal data" );
 					}
 				} else if( !foundNominal && foundNumeric ) // all numeric
 				{
 					numericFields.add( field );
-					if( !RuntimeParamUtil.isDirectMode() ) {
+					if( !DockerUtil.isDirectMode() ) {
 						Log.debug( RMetaUtil.class, "Assign as numeric field: " + field );
 					}
 				}
@@ -204,7 +204,7 @@ public final class RMetaUtil {
 			PropUtil.saveMasterConfig();
 		}
 
-		if( !RuntimeParamUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() ) {
 			Log.info( RMetaUtil.class, Constants.LOG_SPACER );
 			Log.info( RMetaUtil.class, "Reportable metadata field validations complete for: " + rScriptFields );
 			Log.info( RMetaUtil.class, Constants.LOG_SPACER );

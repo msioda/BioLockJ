@@ -234,12 +234,7 @@ public class BioModuleFactory {
 		return factory.buildModules();
 	}
 
-	/**
-	 * Register the complete list of modules to run.
-	 * 
-	 * @throws Exception if errors occur
-	 */
-	public static void initFactory() throws Exception {
+	private static void initFactory() throws Exception {
 		factory = new BioModuleFactory();
 	}
 
@@ -299,7 +294,7 @@ public class BioModuleFactory {
 	}
 
 	private static void info( final String msg ) {
-		if( !RuntimeParamUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() ) {
 			Log.info( BioModuleFactory.class, msg );
 		}
 	}
@@ -316,13 +311,24 @@ public class BioModuleFactory {
 	}
 
 	private static boolean masterConfigContains( final String val ) throws Exception {
+		Log.warn( BioModuleFactory.class, "Does BLJ MASTER contain:  " + val + "?" );
 		final File masterConfig = new File(
 			Config.pipelinePath() + File.separator + Constants.MASTER_PREFIX + Config.getConfigFileName() );
+		Log.warn( BioModuleFactory.class, "TMP MSG: masterConfig:  " + masterConfig.getAbsolutePath() );
+		Log.warn( BioModuleFactory.class, "TMP MSG: masterConfig exists?:  " + masterConfig.exists() );
+		
+		final List<String> allMods = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
+		if( allMods.contains( val ) ) {
+			Log.warn( BioModuleFactory.class, "TMP MSG: FOUND DEMUX IN:  " + Constants.INTERNAL_ALL_MODULES );
+			return true;
+		}
+
 		if( !masterConfig.exists() ) return false;
 		final BufferedReader reader = BioLockJUtil.getFileReader( masterConfig );
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				if( line.contains( Constants.INTERNAL_BLJ_MODULE + " " + val ) ) return true;
+				Log.warn( BioModuleFactory.class, "TMP MSG: masterConfig[LINE] ==--> " + line );
+				if( line.contains( Constants.BLJ_MODULE_TAG + " " + val ) ) return true;
 			}
 		} finally {
 			if( reader != null ) {
@@ -333,8 +339,8 @@ public class BioModuleFactory {
 	}
 
 	private static void warn( final String msg ) {
-		if( !RuntimeParamUtil.isDirectMode() ) {
-			Log.warn( NextflowUtil.class, msg );
+		if( !DockerUtil.isDirectMode() ) {
+			Log.warn( BioModuleFactory.class, msg );
 		}
 	}
 

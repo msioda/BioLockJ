@@ -745,7 +745,7 @@ public class Config {
 		if( RuntimeParamUtil.doRestart() ) {
 			setPipelineDir( RuntimeParamUtil.getRestartDir() );
 			Log.info( Config.class, "Assign RESTART pipeline root directory: " + Config.pipelinePath() );
-		} else if( RuntimeParamUtil.isDirectMode() ) {
+		} else if( DockerUtil.isDirectMode() ) {
 			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
 			Log.info( Config.class, "Assign DIRECT pipeline root directory: " + Config.pipelinePath() );
 		} else {

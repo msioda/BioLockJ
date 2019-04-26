@@ -387,7 +387,7 @@ public class MetaUtil {
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
-			if( !RuntimeParamUtil.isDirectMode() ) {
+			if( !DockerUtil.isDirectMode() ) {
 				report();
 			}
 

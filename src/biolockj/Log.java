@@ -165,9 +165,9 @@ public class Log {
 		System.setProperty( Constants.LOG_LEVEL_PROPERTY, validateLogLevel() );
 		System.setProperty( LOG_APPEND, String.valueOf( logFile.exists() ) );
 		System.setProperty( LOG_FORMAT,
-			RuntimeParamUtil.isDirectMode() && !Config.isOnCluster() ? DIRECT_FORMAT: DEFAULT_FORMAT );
+			DockerUtil.isDirectMode() && !Config.isOnCluster() ? DIRECT_FORMAT: DEFAULT_FORMAT );
 
-		if( !RuntimeParamUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() ) {
 			logWelcomeMsg();
 			for( final String[] m: Log.logMesseges ) {
 				if( m[ 0 ].equals( DEBUG ) ) {
