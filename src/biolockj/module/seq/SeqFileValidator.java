@@ -472,6 +472,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	private static String getFileName( final File dir, final String name ) {
 		final String prefix = dir.getAbsolutePath() + File.separator;
 		if( SeqUtil.isGzipped( name ) ) return name.substring( 0, name.length() - 3 );
+		Log.info( SeqFileValidator.class, "Building output file: " +  prefix + name );
 		return prefix + name;
 	}
 

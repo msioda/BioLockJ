@@ -112,7 +112,7 @@ public class Properties extends java.util.Properties {
 	 * @throws Exception if errors occur
 	 */
 	protected static Properties buildConfig( final File propFile ) throws Exception {
-		final Properties basicConfig = defaultConfigFiles.isEmpty() ? null: getBasicConfig();
+		final Properties basicConfig = defaultConfigFiles.isEmpty() ? getBasicConfig() : null;
 		final File defaultConfig = getDefaultConfig( propFile );
 		if( defaultConfig == null && basicConfig == null ) return readProps( propFile, null );
 		if( defaultConfig == null ) return readProps( propFile, basicConfig );
