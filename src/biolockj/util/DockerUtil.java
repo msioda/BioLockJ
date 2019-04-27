@@ -186,8 +186,7 @@ public class DockerUtil {
 		if( DockerUtil.inDockerEnv() && module instanceof DatabaseModule ) {
 			final File db = ( (DatabaseModule) module ).getDB();
 			if( db != null ) {
-				final String dbPath = db.getAbsolutePath();
-				return !dbPath.equals( CONTAINER_DB_DIR );
+				return !db.getAbsolutePath().equals( CONTAINER_DB_DIR );
 			}
 		}
 

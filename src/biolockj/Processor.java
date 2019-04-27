@@ -63,20 +63,20 @@ public class Processor {
 	 * @throws Exception if errors occur in the Processor
 	 */
 	public void runJob( final String[] args, final String label ) throws Exception {
-		Log.info( getClass(), "[Run Command]: " + getArgsAsString( args ) );
+		Log.info( getClass(), "[ " + label + " ]: " + getArgsAsString( args ) );
 		final Runtime r = Runtime.getRuntime();
 		final Process p = r.exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 		String s;
-		Log.info( getClass(), "BioLockJ [" + label + "] process started..." );
+		Log.info( getClass(), "[ " + label + " ] process started..." );
 		while( ( s = br.readLine() ) != null ) {
 			if( !s.trim().isEmpty() ) {
-				Log.info( getClass(), "[" + label + "] " + s );
+				Log.info( getClass(), "[ " + label + " ] " + s );
 			}
 		}
 		p.waitFor();
 		p.destroy();
-		Log.info( getClass(), "BioLockJ [" + label + " : " + getArgsAsString( args ) + " ] complete" );
+		Log.info( getClass(), "[ " + label + " ] complete" );
 	}
 
 	/**

@@ -351,7 +351,7 @@ public class Config {
 		 * project.dataDir=/projects/data/internal/research_labs project.experimentID=1987209C
 		 * project.labUrl=$project.dataDir/fodor_lab/$project.experimentID reportBuilder.massSpecReportHeading=Mass Spec
 		 * $project.labID */
-		if( val.contains( "${" ) && val.contains( "}" ) ) {
+		if( hasInternalRef( val ) ) {
 			val = getInternalRefProp( val );
 		}
 
@@ -685,7 +685,7 @@ public class Config {
 		final boolean hasVal = val != null && !val.isEmpty();
 		if( origProp == null && hasVal || origProp != null && !hasVal
 			|| origProp != null && hasVal && !origProp.equals( val ) ) {
-			Log.info( Config.class, "Set Config property [" + name + "] = " + val );
+			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
 	}
@@ -703,7 +703,7 @@ public class Config {
 		final boolean hasVal = val != null && !val.isEmpty();
 		if( origProp == null && hasVal || origProp != null && !hasVal
 			|| origProp != null && hasVal && !origProp.equals( val ) ) {
-			Log.info( Config.class, "Set Config property [" + name + "] = " + val );
+			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
 	}
@@ -786,32 +786,35 @@ public class Config {
 		return null;
 	}
 
-	private static String getInternalRefProp( final String propName ) {
-		String propName2 = propName;
-		final String origPropName = propName2;
+	private static String getInternalRefProp( final String envVar ) {
 		String val = "";
+		String modifiedProp = envVar;
+		final List<String> parts = new ArrayList<>();
 		try {
-			int startIndex = propName2.indexOf( "${" );
-			int endIndex = propName2.indexOf( "}" );
-
-			while( startIndex > -1 && endIndex > -1 ) {
-				val += propName2.substring( 0, startIndex );
-				final String refProp = propName2.substring( startIndex + 2, endIndex );
-				final String refVal = props.getProperty( refProp );
-				if( refVal == null ) throw new Exception(
-					"Could not find Config.prop references (in ${val} format) of property: " + origPropName );
-				propName2 = propName2.substring( endIndex + 1 );
-				val += refVal;
-				startIndex = propName2.indexOf( "${" );
-				endIndex = propName2.indexOf( "}" );
+			while( hasInternalRef( modifiedProp ) ) {
+				final int startIndex = modifiedProp.indexOf( "${" );
+				final int endIndex = modifiedProp.indexOf( "}" );
+				final String preRefProp = modifiedProp.substring( 0, startIndex );
+				if( !preRefProp.isEmpty() ) {
+					parts.add( preRefProp );
+				}
+				final String isolatedVal = modifiedProp.substring( startIndex + 2, endIndex );
+				final String refVal = props.getProperty( isolatedVal );
+				if( refVal == null ) throw new Exception( "Config reference variable undefined: " + envVar );
+				parts.add( refVal );
+				modifiedProp = modifiedProp.substring( preRefProp.length() + isolatedVal.length() + 1 );
+				if( !hasInternalRef( modifiedProp ) ) {
+					parts.add( modifiedProp );
+				}
 			}
 
-			val += propName2;
-			System.out.println( "FINAL NAME: ===> " + propName2 );
+			final Iterator<String> partsIt = parts.iterator();
+			while( partsIt.hasNext() ) val += partsIt.next();
+			System.out.println( "Converted property value [ " + envVar + " ] ===> " + val );
 
 		} catch( final Exception ex ) {
 			Log.warn( Config.class, ex.getMessage() );
-			return origPropName;
+			return envVar;
 		}
 
 		return val;
@@ -826,6 +829,12 @@ public class Config {
 			}
 		}
 		return pipelineDir;
+	}
+
+	private static boolean hasInternalRef( final String propVal ) {
+		if( propVal.contains( "${" ) && propVal.contains( "}" ) && propVal.indexOf( "${" ) < propVal.indexOf( "}" ) )
+			return true;
+		return false;
 	}
 
 	private static String replaceEnvVar( final String filePath, final String envVar, final String replacementValue ) {
