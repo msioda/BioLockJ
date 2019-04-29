@@ -87,15 +87,17 @@ launchLocalPipeline() {
 	[ $? != 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
 	printf "Initializing BioLockJ"
 	
-	while [ $i -lt 10 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
+	while [ $i -lt 15 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
 		sleep 1 && ((i++)) && printf "." && pipelineDir="$(most_recent_pipeline)" && numJava=$(ps | grep -c java)
 	done
+	sleep 5
+	pipelineDir="$(most_recent_pipeline)"
 	echo "."
-	if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ] && [ "$initPipeline" == "$pipelineDir" ]; then
+	if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ]; then
 		echo "Restarting pipeline:  $pipelineDir"
-	elif [ ${#restart} -eq 0 ] && [ "$initPipeline" != "$pipelineDir" ]; then
+	elif [ ${#restart} -eq 0 ] && [ "$initPipeline" != "$pipelineDir" ] || [ $numJava -gt $initJava ]; then
 		echo "Starting pipeline:  $pipelineDir"
-	elif [ ${#restart} -eq 0 ]; then
+	elif [ ${#restart} -eq 0 ] ; then
 		exit_script "Error [ biolockj ]:  BioLockJ pipeline failed to start!" 1
 	fi
 	echo "blj_go       -> Move to pipeline output directory"

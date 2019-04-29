@@ -105,10 +105,10 @@ public class Properties extends java.util.Properties {
 			}
 		}
 
-		Properties pops = readProps( propFile, defaultProps );
+		Properties props = readProps( propFile, defaultProps );
 		//report( pops, propFile, true );
 		
-		return pops;
+		return props;
 	}
 
 	/**
