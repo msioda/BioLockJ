@@ -239,7 +239,7 @@ public class Config {
 		final String moduleProp = moduleName + "." + suffix( prop );
 		final String val = Config.getString( null, moduleProp );
 		if( val == null || val.isEmpty() ) return prop;
-		Log.info( Config.class, "Use module specific property: [ " + moduleProp + "=" + val + " ]" );
+		Log.debug( Config.class, "Use module specific property: [ " + moduleProp + "=" + val + " ]" );
 		return moduleProp;
 	}
 
@@ -703,7 +703,7 @@ public class Config {
 
 	/**
 	 * Interpret env variables defined in the Config file and runtime env - for example<br>
-	 * These props are used in --> $BLJ/resources/config/defult/docker.properties:<br>
+	 * These props are used in: $BLJ/resources/config/defult/docker.properties:<br>
 	 * <ul>
 	 * <li>BLJ_ROOT=/mnt/efs
 	 * <li>EFS_DB=${BLJ_ROOT}/db

@@ -80,7 +80,7 @@ public class BioLockJ {
 		} catch( final Exception ex ) {
 			return false;
 		}
-		return f.exists();
+		return f.isFile();
 	}
 
 	/**

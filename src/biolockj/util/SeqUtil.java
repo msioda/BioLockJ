@@ -261,65 +261,46 @@ public class SeqUtil {
 	 * @throws Exception if unable to determine Sample ID
 	 */
 	public static String getSampleId( final String value ) throws Exception {
-		String id;
-		String revValue = "";
+		String id = value;
 		try {
+			final String fwReadSuffix = Config.getString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
+			final String rvReadSuffix = Config.getString( null, Constants.INPUT_REVERSE_READ_SUFFIX );
 			final String fileNameCol = Config.getString( null, MetaUtil.META_FILENAME_COLUMN );
-			if( MetaUtil.hasColumn( fileNameCol ) ) {
-				int ind;
-				if( isForwardRead( value ) ) {
-					ind = MetaUtil.getFieldValues( fileNameCol, false ).indexOf( value );
-				}
 
-				else {
-					// if this file name is a reverse file, look up the corresponding forward file name.
-					final String fwReadSuffix = Config.getString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
-					final String rvReadSuffix = Config.getString( null, Constants.INPUT_REVERSE_READ_SUFFIX );
-					revValue = value.substring( 0, value.lastIndexOf( rvReadSuffix ) ) + fwReadSuffix
-						+ value.substring( value.lastIndexOf( rvReadSuffix ) + rvReadSuffix.length() );
-					Log.debug( SeqUtil.class, value + " is a reverse read. Seeking sample id for file: " + revValue );
-					ind = MetaUtil.getFieldValues( fileNameCol, false ).indexOf( revValue );
-				}
-				if( ind == -1 ) {
-					info( "Filename [" + ( isForwardRead( value ) ? value: revValue ) + "] does not appear in column ["
-						+ fileNameCol + "]. This file will be ignored." );
-					id = "";
-				} else {
-					id = MetaUtil.getSampleIds().get( ind );
-				}
-			} else {
-				id = value;
-				// trim .gz extension
-				if( isGzipped( id ) ) {
-					id = id.substring( 0, id.length() - 3 ); // 9_R2.fastq
-				}
-
-				// trim .fasta or .fastq extension
-				if( id.toLowerCase().endsWith( "." + Constants.FASTA )
-					|| id.toLowerCase().endsWith( "." + Constants.FASTQ ) ) {
-					id = id.substring( 0, id.length() - 6 );
-				}
+			if( !isForwardRead( id ) ) {
+				final int rvIndex = value.lastIndexOf( rvReadSuffix );
+				id = id.substring( 0, rvIndex ) + fwReadSuffix + id.substring( rvIndex + 3 );
 			}
+
+			if( MetaUtil.hasColumn( fileNameCol ) && !MetaUtil.getFieldValues( fileNameCol, true ).isEmpty() ) {
+				final int ind = MetaUtil.getFieldValues( fileNameCol, false ).indexOf( id );
+				if( ind > -1 ) return MetaUtil.getSampleIds().get( ind );
+				Log.warn( SeqUtil.class, value + " not processed in pipeline - path not found in metadata column "
+					+ fileNameCol + " in: " + MetaUtil.getPath() );
+				return null;
+			}
+
+			// trim files extensions: .gz | .fasta | .fastq
+			if( isGzipped( id ) ) {
+				id = id.substring( 0, id.length() - 3 );
+			}
+			if( id.toLowerCase().endsWith( "." + Constants.FASTA )
+				|| id.toLowerCase().endsWith( "." + Constants.FASTQ ) ) {
+				id = id.substring( 0, id.length() - 6 );
+			}
+
 			// trim directional suffix
-			if( !Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED ) ) // must be a file name
-			{
-				final String fwReadSuffix = Config.getString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
-				final String rvReadSuffix = Config.getString( null, Constants.INPUT_REVERSE_READ_SUFFIX );
-				if( fwReadSuffix != null && isForwardRead( id ) && id.lastIndexOf( fwReadSuffix ) > 0 ) {
-					id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
-				} else if( rvReadSuffix != null && id.lastIndexOf( rvReadSuffix ) > 0 ) {
-					id = id.substring( 0, id.lastIndexOf( rvReadSuffix ) );
-				}
+			if( !isMultiplexed() && fwReadSuffix != null && id.indexOf( fwReadSuffix ) > 0 ) {
+				id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
 			}
 
 			// trim user defined file prefix and/or suffix patterns
 			final String trimPrefix = Config.getString( null, Constants.INPUT_TRIM_PREFIX );
 			final String trimSuffix = Config.getString( null, Constants.INPUT_TRIM_SUFFIX );
-			if( trimPrefix != null && !trimPrefix.isEmpty() && id.indexOf( trimPrefix ) > -1 ) {
+			if( trimPrefix != null && id.indexOf( trimPrefix ) > -1 ) {
 				id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
 			}
-
-			if( trimSuffix != null && !trimSuffix.isEmpty() && id.indexOf( trimSuffix ) > 0 ) {
+			if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 ) {
 				id = id.substring( 0, id.indexOf( trimSuffix ) );
 			}
 		} catch( final Exception ex ) {
@@ -328,7 +309,6 @@ public class SeqUtil {
 		}
 
 		if( id == null || id.isEmpty() ) throw new Exception( "Unable to extract a valid Sample ID from: " + value );
-
 		return id;
 	}
 
@@ -463,6 +443,16 @@ public class SeqUtil {
 	 */
 	public static boolean isGzipped( final String fileName ) {
 		return fileName != null && fileName.toLowerCase().endsWith( Constants.GZIP_EXT );
+	}
+
+	/**
+	 * Check current state of sequence data.
+	 * 
+	 * @return Boolean TRUE if multiplexed
+	 * @throws ConfigFormatException if property assignment is invalid
+	 */
+	public static Boolean isMultiplexed() throws ConfigFormatException {
+		return Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED );
 	}
 
 	/**
@@ -693,7 +683,7 @@ public class SeqUtil {
 	 */
 	protected static void registerPairedReadStatus() throws Exception {
 		boolean foundPairedReads = false;
-		if( Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED ) ) {
+		if( isMultiplexed() ) {
 			if( BioLockJUtil.getPipelineInputFiles().size() > 1 ) {
 				foundPairedReads = true;
 			} else {

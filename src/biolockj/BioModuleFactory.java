@@ -244,8 +244,7 @@ public class BioModuleFactory {
 			configModules.remove( ImportMetadata.class.getName() );
 			modules.add( ImportMetadata.class.getName() );
 
-			final boolean isMultiplexed = Config.getBoolean( null, Constants.INTERNAL_MULTIPLEXED );
-			if( isMultiplexed || allMods.contains( ModuleUtil.getDefaultDemultiplexer() ) ) {
+			if( SeqUtil.isMultiplexed() || allMods.contains( ModuleUtil.getDefaultDemultiplexer() ) ) {
 				info( "Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
 				configModules.remove( ModuleUtil.getDefaultDemultiplexer() );
 				modules.add( ModuleUtil.getDefaultDemultiplexer() );

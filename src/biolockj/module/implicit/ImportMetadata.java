@@ -35,8 +35,7 @@ public class ImportMetadata extends BioModuleImpl {
 			inputDelim = TAB_DELIM;
 		}
 
-		if( Config.getBoolean( this, Constants.INTERNAL_MULTIPLEXED )
-			&& ( MetaUtil.getMetadata() == null || !MetaUtil.getMetadata().exists() ) )
+		if( SeqUtil.isMultiplexed() && ( MetaUtil.getMetadata() == null || !MetaUtil.getMetadata().exists() ) )
 			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: "
 				+ MetaUtil.META_FILE_PATH );
 	}
@@ -315,7 +314,7 @@ public class ImportMetadata extends BioModuleImpl {
 
 	private boolean doIdToSeqVerifiction() throws Exception {
 		return Config.getBoolean( this, MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() )
-			&& !Config.getBoolean( this, Constants.INTERNAL_MULTIPLEXED );
+			&& !SeqUtil.isMultiplexed();
 	}
 
 	private File getMetadata() {

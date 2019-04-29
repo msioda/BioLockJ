@@ -104,7 +104,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	@Override
 	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
-		if( !DockerUtil.inDockerEnv() && ( Config.getBoolean( this, Constants.INTERNAL_MULTIPLEXED )
+		if( !DockerUtil.inDockerEnv() && ( SeqUtil.isMultiplexed()
 			|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( this, SCRIPT_BATCH_SIZE ) ) ) {
 			postReqs.add( MergeQiimeOtuTables.class.getName() );
 		}

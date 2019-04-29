@@ -56,8 +56,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 	public void runModule() throws Exception {
 		this.sampleIds.addAll( MetaUtil.getSampleIds() );
 		for( final File file: getInputFiles() ) {
-			final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts( file );
-			logLowCountPathways( lowCounts );
+			logLowCountPathways( removeLowPathwayCounts( file ) );
 			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS )
 				&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
 				&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
@@ -110,7 +109,6 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 		final TreeMap<String, TreeSet<String>> lowCountPathways = new TreeMap<>();
 		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
 		final List<List<String>> output = new ArrayList<>();
-
 		List<String> pathways = null;
 		final TreeSet<String> validPathways = new TreeSet<>();
 		final Set<String> foundSamplePathways = new TreeSet<>();
@@ -157,17 +155,18 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 
 			if( !badSamplePathways.isEmpty() ) {
 				lowCountPathways.put( sampleId, badSamplePathways );
-				Log.debug( getClass(), sampleId + ": Removed " + badSamplePathways.size()
-					+ " low Pathway counts (below " + getProp() + "=" + getMinCount() + ") --> " + badSamplePathways );
+				Log.warn( getClass(), sampleId + ": Remove " + badSamplePathways.size()
+					+ " Pathways with #counts below threshold: " + getProp() + "=" + getMinCount() );
+				Log.debug( getClass(), sampleId + ": Removed Pathways: " + badSamplePathways );
 			}
 		}
 
 		final TreeSet<String> allRemovedPathways = new TreeSet<>( validPathways );
 		allRemovedPathways.removeAll( foundSamplePathways );
 		if( !allRemovedPathways.isEmpty() ) {
-			Log.warn( getClass(),
-				"Completely Remove " + allRemovedPathways.size() + " Pathways (all samples below threshold" + getProp()
-					+ "=" + getMinCount() + ") --> " + allRemovedPathways );
+			Log.warn( getClass(), "Remove " + allRemovedPathways.size() + " Pathways with #counts below threshold: "
+				+ getProp() + "=" + getMinCount() );
+			Log.debug( getClass(), "Removed Pathways: " + allRemovedPathways );
 		}
 
 		buildOutputTable( output, file, allRemovedPathways );

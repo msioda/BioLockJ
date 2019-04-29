@@ -43,12 +43,12 @@ public class DockerUtil {
 	 */
 	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception {
 		final List<String> lines = new ArrayList<>();
-		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes( module ) );
-
+		Log.debug( DockerUtil.class, "Docker volumes:" + getDockerVolumes( module ) );
+		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module ) + getDockerEnvVars()
+			+ getDockerVolumes( module ) + getDockerImage( module );
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
-		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module ) + getDockerEnvVars()
-			+ getDockerVolumes( module ) + getDockerImage( module ) );
+		lines.add( cmd );
 		lines.add( "}" + Constants.RETURN );
 		return lines;
 	}
@@ -235,7 +235,7 @@ public class DockerUtil {
 	}
 
 	private static String getDockerVolumes( final BioModule module ) throws Exception {
-		Log.info( DockerUtil.class, "Build Docker volumes for module: " + module.getClass().getSimpleName() );
+		Log.debug( DockerUtil.class, "Build Docker volumes for module: " + module.getClass().getSimpleName() );
 
 		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;

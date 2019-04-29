@@ -105,9 +105,9 @@ public class Properties extends java.util.Properties {
 			}
 		}
 
-		Properties props = readProps( propFile, defaultProps );
-		//report( pops, propFile, true );
-		
+		final Properties props = readProps( propFile, defaultProps );
+		// report( pops, propFile, true );
+
 		return props;
 	}
 
@@ -193,9 +193,8 @@ public class Properties extends java.util.Properties {
 		return configFiles;
 	}
 
-
 	@SuppressWarnings("unused")
-	private static void report( final Properties properties, final File config, boolean projectConfigOnly ) {
+	private static void report( final Properties properties, final File config, final boolean projectConfigOnly ) {
 		Log.debug( Properties.class, " ---------- Report [ " + config.getAbsolutePath() + " ] ------------> " );
 		if( projectConfigOnly ) {
 			for( final Object key: properties.keySet() ) {
@@ -208,8 +207,9 @@ public class Properties extends java.util.Properties {
 				Log.debug( Properties.class, key + " = " + properties.getProperty( key ) );
 			}
 		}
-		
-		Log.debug( Properties.class, " ----------------------------------------------------------------------------------" );
+
+		Log.debug( Properties.class,
+			" ----------------------------------------------------------------------------------" );
 	}
 
 	private static int loadOrder = -1;
