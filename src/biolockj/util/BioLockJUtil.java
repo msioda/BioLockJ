@@ -176,13 +176,14 @@ public class BioLockJUtil {
 	 * @throws ConfigPathException if unable to determine $BLJ source
 	 */
 	public static File getBljDir() throws ConfigPathException {
+		File f = null;
 		try {
-			final File f = getSource();
+			f = getSource();
 			// source will return JAR path or MAIN class file in bin dir
 			if( f.isFile() ) return f.getParentFile().getParentFile();
 			else if( f.isDirectory() && f.getName().equals( "bin" ) ) return f.getParentFile();
 		} catch( final Exception ex ) {
-			throw new ConfigPathException( "Unable to decode $BLJ environment variable." );
+			throw new ConfigPathException( f, "Unable to decode $BLJ environment variable." );
 		}
 		return null;
 	}
@@ -286,6 +287,32 @@ public class BioLockJUtil {
 	}
 
 	/**
+	 * Return directory for path after modifying if running in a Docker container and/or interpreting bash env vars.
+	 * 
+	 * @param path Directory path
+	 * @return Local Directory
+	 * @throws ConfigPathException if the local path is not found
+	 */
+	public static File getLocalDir( final String path ) throws ConfigPathException {
+		final File file = new File( Config.replaceEnvVar( path ) );
+		if( !file.isDirectory() ) throw new ConfigPathException( file, ConfigPathException.DIRECTORY );
+		return file;
+	}
+
+	/**
+	 * Return file for path after modifying if running in a Docker container and/or interpreting bash env vars.
+	 * 
+	 * @param path File path
+	 * @return Local File
+	 * @throws ConfigPathException if the local path is not found
+	 */
+	public static File getLocalFile( final String path ) throws ConfigPathException {
+		final File file = new File( Config.replaceEnvVar( path ) );
+		if( !file.isFile() ) throw new ConfigPathException( file, ConfigPathException.FILE );
+		return file;
+	}
+
+	/**
 	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
 	 * 
 	 * @return Collection of pipeline input files
@@ -370,6 +397,19 @@ public class BioLockJUtil {
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Verify all items in collection are not null and do not have empty toString() values.
+	 * 
+	 * @param vals Collection of objects
+	 * @return Boolean TRUE if all vals exist and are not empty
+	 */
+	public static boolean noNullOrEmptyVals( final Collection<Object> vals ) {
+		for( final Object val: vals ) {
+			if( val == null || val.toString().isEmpty() ) return false;
+		}
+		return true;
 	}
 
 	/**

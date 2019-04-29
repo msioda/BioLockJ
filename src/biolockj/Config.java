@@ -316,92 +316,26 @@ public class Config {
 
 	/**
 	 * Get property value as String. Empty strings return null.<br>
-	 * If $BLJ or $BLJ_SUP or $USER or $HOME was used, it would already be converted to the actual file path by
-	 * {@link biolockj.Properties} before this method is called.
 	 *
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property {@link biolockj.Config} file property name
-	 * @return String value or null
+	 * @return String or null
 	 */
 	public static String getString( final BioModule module, final String property ) {
 		if( props == null ) return null;
-		Object obj = null;
-		String val = null;
 		String propName = property;
+
 		if( module != null ) {
-			final String modPropName = Config.getModuleProp( module, property );
-			obj = props.getProperty( modPropName );
-			if( obj != null ) {
+			final String modPropName = Config.getModuleProp( module, propName );
+			if( props.getProperty( modPropName ) != null ) {
 				propName = modPropName;
 			}
 		}
 
-		if( obj == null ) {
-			obj = props.getProperty( propName );
-		}
-
-		if( obj == null ) {
-			usedProps.put( propName, null );
-			return null;
-		}
-
-		val = obj.toString().trim();
-
-		/* Allow internal references to avoid re-typing paths. For example:
-		 * project.dataDir=/projects/data/internal/research_labs project.experimentID=1987209C
-		 * project.labUrl=$project.dataDir/fodor_lab/$project.experimentID reportBuilder.massSpecReportHeading=Mass Spec
-		 * $project.labID */
-		if( hasInternalRef( val ) ) {
-			val = getInternalRefProp( val );
-		}
-
-		if( val.isEmpty() ) {
-			usedProps.put( propName, "" );
-			return null;
-		}
+		final String val = props.getProperty( propName );
 		usedProps.put( propName, val );
-
+		if( val == null || val.isEmpty() ) return null;
 		return val;
-	}
-
-	/**
-	 * Return filePath with system parameter values replaced. If filePath starts with "~" or $HOME it is replaced with
-	 * System.getProperty( "user.home" ). If filePath contains $USER it is replaced with System.getProperty( "user.name"
-	 * ). Also $BLJ and $BLJ_SUP params are handled for use in Docker implementations
-	 * 
-	 * @param filePath File path
-	 * @return Formatted filePath
-	 * @throws Exception if path is invalid or other errors occur
-	 */
-	public static String getSystemFilePath( final String filePath ) throws Exception {
-		String filePath2 = filePath;
-		if( filePath2 != null && filePath2.startsWith( "~" ) ) {
-			filePath2 = replaceEnvVar( filePath2, "~", System.getProperty( "user.home" ) );
-		} else if( filePath2 != null && filePath2.startsWith( "$HOME" ) ) {
-			filePath2 = replaceEnvVar( filePath2, "$HOME", System.getProperty( "user.home" ) );
-		} else if( filePath2 != null && filePath2.startsWith( "$BLJ_META" ) ) {
-			String testPath = null;
-			if( Config.getString( null, MetaUtil.BLJ_META_PROP ) != null ) {
-				testPath = replaceEnvVar( filePath2, "$BLJ_META", Config.getString( null, MetaUtil.BLJ_META_PROP ) );
-			}
-			if( testPath == null ) {
-				filePath2 = replaceEnvVar( filePath2, "$BLJ_META",
-					System.getProperty( "user.home" ) + File.separator + METADATA );
-			} else {
-				filePath2 = testPath;
-			}
-		} else if( filePath2 != null && filePath2.startsWith( "$BLJ_SUP" ) ) {
-			filePath2 = replaceEnvVar( filePath2, "$BLJ_SUP",
-				BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
-		} else if( filePath2 != null && filePath2.startsWith( "$BLJ" ) ) {
-			filePath2 = replaceEnvVar( filePath2, "$BLJ", BioLockJUtil.getBljDir().getAbsolutePath() );
-		}
-
-		if( filePath2 != null && filePath2.contains( "$USER" ) ) {
-			filePath2 = replaceEnvVar( filePath2, "$USER", System.getProperty( "user.name" ) );
-		}
-
-		return filePath2;
 	}
 
 	/**
@@ -435,14 +369,10 @@ public class Config {
 	public static void initialize() throws Exception {
 		configFile = RuntimeParamUtil.getConfigFile();
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
-		props = Properties.loadProperties( configFile );
+		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
-		for( final Object key: props.keySet() ) {
-			Log.debug( Config.class, "Project Config: " + key + "=" + props.getProperty( (String) key ) );
-		}
-		Log.debug( Config.class, "# initial props: " + props.size() );
+		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
-		Log.debug( Config.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
 		TaxaUtil.initTaxaLevels();
 	}
 
@@ -473,6 +403,43 @@ public class Config {
 	 */
 	public static String pipelinePath() {
 		return getPipelineDir().getAbsolutePath();
+	}
+
+	/**
+	 * Interpret env variable if included in the arg string, otherwise return the arg.
+	 * 
+	 * @param arg Property or runtime argument
+	 * @return Updated arg value after replacing env variables
+	 */
+	public static String replaceEnvVar( final String arg ) {
+		if( arg == null ) return null;
+		String val = arg.toString().trim();
+		if( !hasEnvVar( val ) ) return val;
+		try {
+
+			if( val.startsWith( "~" ) ) {
+				val = val.replace( "~", "${HOME}" );
+			}
+
+			while( hasEnvVar( val ) ) {
+				final String bashVar = val.substring( val.indexOf( "${" ), val.indexOf( "}" ) + 1 );
+				String bashVal = props == null ? null
+					: props.getProperty( bashVar.substring( 2, bashVar.length() - 1 ) );
+				if( bashVal == null || bashVal.trim().isEmpty() ) {
+					bashVal = Processor.getBashVar( bashVar );
+					if( bashVal == null ) throw new Exception( "Undefined env. var [ " + bashVar + " ] in " + val );
+				}
+				val = val.replace( bashVar, bashVal );
+			}
+
+			Log.info( Config.class, "Converted [ " + arg + " ] --> " + val );
+		} catch( final Exception ex ) {
+			Log.warn( Config.class,
+				"Return orig value (without replacing the env variable due to error --> " + ex.getMessage() );
+			return arg;
+		}
+
+		return val;
 	}
 
 	/**
@@ -719,7 +686,7 @@ public class Config {
 	}
 
 	/**
-	 * Build File using filePath. Replace "~" with System.getProperty( "user.home" ) if found.
+	 * Build File using filePath.
 	 *
 	 * @param filePath File path
 	 * @return File or null
@@ -727,11 +694,39 @@ public class Config {
 	 */
 	protected static File getExistingFileObject( final String filePath ) throws Exception {
 		if( filePath != null ) {
-			final File f = new File( getSystemFilePath( filePath ) );
+			final File f = new File( filePath );
 			if( f.exists() ) return f;
-			throw new ConfigPathException( filePath );
+			throw new ConfigPathException( f );
 		}
 		return null;
+	}
+
+	/**
+	 * Interpret env variables defined in the Config file and runtime env - for example<br>
+	 * These props are used in --> $BLJ/resources/config/defult/docker.properties:<br>
+	 * <ul>
+	 * <li>BLJ_ROOT=/mnt/efs
+	 * <li>EFS_DB=${BLJ_ROOT}/db
+	 * <li>humann2.protDB=${EFS_DB}/uniref
+	 * </ul>
+	 * Therefore, getString( "humann2.protDB" ) returns "/mnt/efs/db/uniref"<br>
+	 * If not found, check runtiem env (i.e., $HOME/bash_profile)
+	 * 
+	 * @param properties All Config Properties
+	 * @return Properties after replacing env variables
+	 */
+	protected static Properties replaceEnvVars( final Properties properties ) {
+		final Properties convertedProps = properties;
+		final Enumeration<?> en = properties.propertyNames();
+		Log.debug( Properties.class, " ---------------------- replace Config Env Vars ----------------------" );
+		while( en.hasMoreElements() ) {
+			final String key = en.nextElement().toString();
+			final String val = replaceEnvVar( properties.getProperty( key ) );
+			Log.info( Properties.class, key + " = " + val );
+			convertedProps.put( key, val );
+		}
+		Log.debug( Properties.class, " --------------------------------------------------------------------" );
+		return convertedProps;
 	}
 
 	/**
@@ -786,40 +781,6 @@ public class Config {
 		return null;
 	}
 
-	private static String getInternalRefProp( final String envVar ) {
-		String val = "";
-		String modifiedProp = envVar;
-		final List<String> parts = new ArrayList<>();
-		try {
-			while( hasInternalRef( modifiedProp ) ) {
-				final int startIndex = modifiedProp.indexOf( "${" );
-				final int endIndex = modifiedProp.indexOf( "}" );
-				final String preRefProp = modifiedProp.substring( 0, startIndex );
-				if( !preRefProp.isEmpty() ) {
-					parts.add( preRefProp );
-				}
-				final String isolatedVal = modifiedProp.substring( startIndex + 2, endIndex );
-				final String refVal = props.getProperty( isolatedVal );
-				if( refVal == null ) throw new Exception( "Config reference variable undefined: " + envVar );
-				parts.add( refVal );
-				modifiedProp = modifiedProp.substring( preRefProp.length() + isolatedVal.length() + 1 );
-				if( !hasInternalRef( modifiedProp ) ) {
-					parts.add( modifiedProp );
-				}
-			}
-
-			final Iterator<String> partsIt = parts.iterator();
-			while( partsIt.hasNext() ) val += partsIt.next();
-			System.out.println( "Converted property value [ " + envVar + " ] ===> " + val );
-
-		} catch( final Exception ex ) {
-			Log.warn( Config.class, ex.getMessage() );
-			return envVar;
-		}
-
-		return val;
-	}
-
 	private static File getPipelineDir() {
 		if( pipelineDir == null ) {
 			try {
@@ -831,29 +792,16 @@ public class Config {
 		return pipelineDir;
 	}
 
-	private static boolean hasInternalRef( final String propVal ) {
-		if( propVal.contains( "${" ) && propVal.contains( "}" ) && propVal.indexOf( "${" ) < propVal.indexOf( "}" ) )
-			return true;
-		return false;
-	}
-
-	private static String replaceEnvVar( final String filePath, final String envVar, final String replacementValue ) {
-		if( replacementValue != null && !replacementValue.isEmpty() ) {
-			final File newFilePath = new File( filePath.replace( envVar, replacementValue ) );
-			Log.info( Config.class, "Decode: " + filePath + " --> " + newFilePath.getAbsolutePath() );
-			if( newFilePath.exists() ) return newFilePath.getAbsolutePath();
-		}
-		Log.warn( Config.class, "Directory not found! Please verify  bash runtime env var: \"" + envVar + "\"" );
-		return null;
+	private static boolean hasEnvVar( final String val ) {
+		return val.startsWith( "~" )
+			|| val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
 	}
 
 	private static String suffix( final String prop ) {
 		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
 	}
 
-	private static final String BLJ_SUPPORT = "blj_support";
 	private static File configFile = null;
-	private static final String METADATA = "metadata";
 	private static File pipelineDir = null;
 	private static Properties props = null;
 	private static Properties unmodifiedInputProps = new Properties();

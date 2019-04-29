@@ -32,7 +32,7 @@ public class UpdateJavaDocs {
 	public static void main( final String[] args ) {
 		BufferedReader reader = null;
 		try {
-			final Collection<File> files = FileUtils.listFiles( new File( Config.getSystemFilePath( PATH ) ),
+			final Collection<File> files = FileUtils.listFiles( new File( Config.replaceEnvVar( PATH ) ),
 				HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE );
 			final List<String> lines = new ArrayList<>();
 			System.out.println( "Start Time: " + new GregorianCalendar().getTime() );

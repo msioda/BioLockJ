@@ -114,7 +114,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	@Override
 	public File getDB() throws Exception {
 		final String path = Config.getString( this, METAPHLAN2_DB );
-		if( path != null ) return new File( Config.getSystemFilePath( path ) );
+		if( path != null ) return new File( path );
 
 		return null;
 	}

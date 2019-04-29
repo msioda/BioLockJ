@@ -1,0 +1,8 @@
+#!/bin/bash
+###############################################################################
+##                                                                           ##
+##  BioLockJ returns variables defined in the runtime shell environment.     ##
+##                                                                           ##
+###############################################################################
+source ~/.bash_profile
+echo BLJ_GET_ENV_VAR $(eval "echo ${1}")

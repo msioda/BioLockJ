@@ -114,7 +114,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws Exception {
-		return new File( Config.getSystemFilePath( Config.requireString( this, KRAKEN_DATABASE ) ) );
+		return new File( Config.requireString( this, KRAKEN_DATABASE ) );
 	}
 
 	/**

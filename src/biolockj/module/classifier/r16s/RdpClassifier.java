@@ -85,9 +85,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws Exception {
-		if( Config.getString( this, RDP_DB ) != null )
-			return new File( Config.getSystemFilePath( Config.getString( this, RDP_DB ) ) );
-
+		if( Config.getString( this, RDP_DB ) != null ) return new File( Config.getString( this, RDP_DB ) );
 		return null;
 	}
 

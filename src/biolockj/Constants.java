@@ -101,11 +101,16 @@ public class Constants {
 	 * If set to {@value #TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_PRE_REQ_MODULES = "pipeline.disableAddPreReqModules";
+
+	/**
+	 * Default Docker {@link biolockj.Config} file imported after {@value #STANDARD_CONFIG_PATH} (if files exist)
+	 */
+	public static final String DOCKER_CONFIG_PATH = "${BLJ}/resources/config/default/docker.properties";
+
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #DOMAIN}
 	 */
 	public static final String DOMAIN = "domain";
-
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
@@ -163,12 +168,12 @@ public class Constants {
 	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
+
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Gene Family report:
 	 * {@value #HN2_DISABLE_GENE_FAMILIES}
 	 */
 	public static final String HN2_DISABLE_GENE_FAMILIES = "humann2.disableGeneFamilies";
-
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Pathway Abundance report:
 	 * {@value #HN2_DISABLE_PATH_ABUNDANCE}
@@ -609,6 +614,11 @@ public class Constants {
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #SPECIES}
 	 */
 	public static final String SPECIES = "species";
+
+	/**
+	 * Default {@link biolockj.Config} imported for all pipelines (if file exists)
+	 */
+	public static final String STANDARD_CONFIG_PATH = "${BLJ}/resources/config/default/standard.properties";
 
 	/**
 	 * BioLockJ tab character constant: {@value #TAB_DELIM}

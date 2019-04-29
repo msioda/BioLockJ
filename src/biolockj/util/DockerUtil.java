@@ -110,6 +110,7 @@ public class DockerUtil {
 	 * @return Docker file path
 	 */
 	public static String getDockerVolumePath( final String path, final String containerPath ) {
+		if( path == null || path.isEmpty() ) return null;
 		return containerPath + File.separator + path.substring( path.lastIndexOf( File.separator ) );
 	}
 
@@ -185,9 +186,7 @@ public class DockerUtil {
 	public static final boolean hasDB( final BioModule module ) throws Exception {
 		if( DockerUtil.inDockerEnv() && module instanceof DatabaseModule ) {
 			final File db = ( (DatabaseModule) module ).getDB();
-			if( db != null ) {
-				return !db.getAbsolutePath().equals( CONTAINER_DB_DIR );
-			}
+			if( db != null ) return !db.getAbsolutePath().equals( CONTAINER_DB_DIR );
 		}
 
 		return false;
@@ -258,9 +257,8 @@ public class DockerUtil {
 		}
 
 		if( module instanceof TrimPrimers ) {
-			final File primers = new File(
-				Config.getSystemFilePath( Config.requireString( module, Constants.INPUT_TRIM_SEQ_FILE ) ) )
-					.getParentFile();
+			final File primers = new File( Config.requireString( module, Constants.INPUT_TRIM_SEQ_FILE ) )
+				.getParentFile();
 			dockerVolumes += " -v " + primers.getAbsolutePath() + ":" + CONTAINER_PRIMER_DIR;
 		}
 

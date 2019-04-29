@@ -231,9 +231,9 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 
 		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.AWS_EFS_DB );
 
-		final File pynastFile = new File( Config.getSystemFilePath( pynastDB ) );
-		final File refSeqFile = new File( Config.getSystemFilePath( refSeqDB ) );
-		final File taxaFile = new File( Config.getSystemFilePath( taxaDB ) );
+		final File pynastFile = new File( pynastDB );
+		final File refSeqFile = new File( refSeqDB );
+		final File taxaFile = new File( taxaDB );
 
 		final File parentDir = BioLockJUtil.getCommonParent( BioLockJUtil.getCommonParent( pynastFile, refSeqFile ),
 			taxaFile );
@@ -379,8 +379,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 * @throws Exception if errors occur
 	 */
 	protected File getDockerDB( final String prop ) throws Exception {
-		return new File( Config.getSystemFilePath( Config.requireString( this, prop ) )
-			.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) );
+		return new File(
+			Config.requireString( this, prop ).replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) );
 	}
 
 	/**

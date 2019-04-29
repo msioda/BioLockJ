@@ -68,13 +68,13 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 	@Override
 	public File getDB() throws Exception {
 		final List<String> paths = Config.requireList( this, KNEAD_DBS );
-		if( paths.size() == 1 ) return new File( Config.getSystemFilePath( paths.get( 0 ) ) );
+		if( paths.size() == 1 ) return new File( paths.get( 0 ) );
 
 		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.AWS_EFS_DB );
 
 		final List<File> dbs = new ArrayList<>();
 		for( final String db: Config.requireList( this, KNEAD_DBS ) ) {
-			dbs.add( new File( Config.getSystemFilePath( db ) ) );
+			dbs.add( new File( db ) );
 		}
 
 		File parentDir = null;

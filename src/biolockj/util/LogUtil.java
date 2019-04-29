@@ -62,16 +62,14 @@ public class LogUtil {
 
 	private static List<String> getProfile() {
 		if( profile.isEmpty() ) {
-			String userProfile = "Config property [" + USER_PROFILE
-				+ "] is undefined.  One common example: ~/.bash_profile";
 			try {
-				userProfile = Config.requireString( null, USER_PROFILE );
-				final File bashProfile = new File( Config.getSystemFilePath( userProfile ) );
+				final File bashProfile = new File( Config.requireString( null, USER_PROFILE ) );
 				if( bashProfile.exists() ) {
 					profile.addAll( cacheLog( bashProfile ) );
 				}
 			} catch( final Exception ex ) {
-				Log.warn( LogUtil.class, "Unable to find " + userProfile );
+				Log.warn( LogUtil.class, "Config property [ " + USER_PROFILE
+					+ " ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile" );
 			}
 		}
 		return profile;

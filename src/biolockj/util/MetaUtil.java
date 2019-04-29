@@ -560,12 +560,6 @@ public class MetaUtil {
 	}
 
 	/**
-	 * {@link biolockj.Config} property {@value #BLJ_META_PROP} defines how BioLockJ interprets $BLJ_META in Config file
-	 * directory paths
-	 */
-	public static final String BLJ_META_PROP = "metadata.blj_meta";
-
-	/**
 	 * {@link biolockj.Config} property {@value #META_BARCODE_COLUMN} defines metadata column with identifying barcode
 	 */
 	public static final String META_BARCODE_COLUMN = "metadata.barcodeColumn";

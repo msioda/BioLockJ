@@ -12,15 +12,19 @@
 package biolockj;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.ScriptModule;
+import biolockj.util.BioLockJUtil;
 
 /**
  * {@link biolockj.module.ScriptModule}s that generate scripts will submit a main script to the OS for execution as a
  * {@link biolockj.Processor}.
  */
 public class Processor {
+
 	/**
 	 * Class used to submit processes on their own Thread.
 	 */
@@ -49,7 +53,6 @@ public class Processor {
 		}
 
 		private String[] args = null;
-
 		private String label = null;
 	}
 
@@ -64,8 +67,7 @@ public class Processor {
 	 */
 	public void runJob( final String[] args, final String label ) throws Exception {
 		Log.info( getClass(), "[ " + label + " ]: " + getArgsAsString( args ) );
-		final Runtime r = Runtime.getRuntime();
-		final Process p = r.exec( args );
+		final Process p = Runtime.getRuntime().exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 		String s;
 		Log.info( getClass(), "[ " + label + " ] process started..." );
@@ -77,6 +79,30 @@ public class Processor {
 		p.waitFor();
 		p.destroy();
 		Log.info( getClass(), "[ " + label + " ] complete" );
+	}
+
+	/**
+	 * Return the value of the bash variable from the runtime shell.
+	 * 
+	 * @param bashVar Bash variable name
+	 * @return Bash env variable value or null if not found (or undefined)
+	 * @throws Exception if errors occur running the script
+	 */
+	public static String getBashVar( final String bashVar ) throws Exception {
+		if( bashVar == null ) return null;
+		final String var = bashVar.startsWith( "$" ) || bashVar.equals( "~" ) ? bashVar: "$" + bashVar;
+		final String[] args = new String[] { bashVarScript().getAbsolutePath(), var };
+		final Process p = Runtime.getRuntime().exec( args );
+		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
+		String bashVarValue = null;
+		String s;
+		while( ( s = br.readLine() ) != null )
+			if( s.startsWith( BLJ_GET_ENV_VAR_KEY ) ) {
+				bashVarValue = s.replace( BLJ_GET_ENV_VAR_KEY, "" ).trim();
+			}
+		p.waitFor();
+		p.destroy();
+		return bashVarValue;
 	}
 
 	/**
@@ -138,12 +164,21 @@ public class Processor {
 		new Processor().runJob( args, label );
 	}
 
+	private static File bashVarScript() throws Exception {
+		final File script = new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR
+			+ File.separator + BLJ_GET_ENV_VAR_SCRIPT );
+		if( script.isFile() ) return script;
+		throw new ConfigPathException( script );
+	}
+
 	private static String getArgsAsString( final String[] args ) {
 		final StringBuffer sb = new StringBuffer();
 		for( final String arg: args ) {
 			sb.append( arg + " " );
 		}
-
 		return sb.toString();
 	}
+
+	private static final String BLJ_GET_ENV_VAR_KEY = "BLJ_GET_ENV_VAR";
+	private static final String BLJ_GET_ENV_VAR_SCRIPT = "get_env_var";
 }

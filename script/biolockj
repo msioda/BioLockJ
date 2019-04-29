@@ -13,14 +13,14 @@
 . $BLJ/script/blj_functions
 . $BLJ/script/aws_functions
 
-bljJar=$BLJ/dist/BioLockJ.jar
+bljJar=${BLJ}/dist/BioLockJ.jar
 
 # Display BioLockJ release version
 display_version() {
-	if [ -f "$BLJ/.version" ]; then
+	if [ -f "${BLJ}/.version" ]; then
 		cat $BLJ/.version
 	else
-		echo "Missing $BLJ/.version"
+		echo "Missing ${BLJ}/.version"
 	fi
 }
 
@@ -44,9 +44,9 @@ get_params() {
     for arg in ${args[@]}; do  
 		[ $((i%2)) -eq 0 ] && name=${arg//-} && name=${name:0:1}
 		if [ $((i%2)) -eq 1 ]; then
-    		[ "$name" == "c" ] && myConfig=${arg}
-    		echo "$name=${arg}"
-    		name=""
+    			[ "$name" == "c" ] && myConfig=${arg}
+    			echo "$name=${arg}"
+    			name=""
 		fi  
     	i=$(expr $i + 1)
     done
@@ -84,7 +84,7 @@ launchLocalPipeline() {
 	
 	echo -e "Launching BioLockJ:  \"nohup java -jar $bljJar -b ${BLJ_PROJ} $@ >/dev/null 2>&1 &\""
 	nohup java -jar $bljJar -b "${BLJ_PROJ}" $@ >/dev/null 2>&1 &
-	[ $? != 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
+	[ $? != 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
 	printf "Initializing BioLockJ"
 	
 	while [ $i -lt 10 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
@@ -105,8 +105,8 @@ launchLocalPipeline() {
 
 # Verify input argument paths
 verifyArgPaths() {
-	[ ! -f "$config" ] && [ ${#restart} -eq 0 ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
-	[ ! -f "$config" ] && [ ! -d "$restart" ] && $BLJ/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$restart\" is not a valid directory \n"
+	[ ! -f "$config" ] && [ ${#restart} -eq 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
+	[ ! -f "$config" ] && [ ! -d "$restart" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$restart\" is not a valid directory \n"
 }
 
 # Verify required local BioLockJ system paths exist

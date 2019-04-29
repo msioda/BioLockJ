@@ -11,6 +11,7 @@
  */
 package biolockj.exception;
 
+import java.io.File;
 import biolockj.Config;
 
 /**
@@ -22,10 +23,20 @@ public class ConfigPathException extends ConfigException {
 	/**
 	 * ConfigPathException is thrown if the filePath parameter does not exist on the file system.
 	 *
-	 * @param filePath File path
+	 * @param file File or directory path
 	 */
-	public ConfigPathException( final String filePath ) {
-		super( "Invalid Path: " + filePath + " does not exist on the file system" );
+	public ConfigPathException( final File file ) {
+		super( "Invalid Path: " + file.getAbsolutePath() + " does not exist on the file system" );
+	}
+
+	/**
+	 * ConfigPathException is thrown if the filePath parameter does not exist on the file system.
+	 *
+	 * @param file File or directory path
+	 * @param msg Error message
+	 */
+	public ConfigPathException( final File file, final String msg ) {
+		super( "Invalid Path: " + file.getAbsolutePath() + " does not exist on the file system: " + msg );
 	}
 
 	/**

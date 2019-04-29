@@ -495,7 +495,7 @@ Resources:
 
             - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /home/ec2-user/miniconda'
 
-            - runuser -l  ec2-user -c '$HOME/miniconda/bin/conda install -c conda-forge -y awscli'
+            - runuser -l  ec2-user -c '${HOME}/miniconda/bin/conda install -c conda-forge -y awscli'
 
             - runuser -l  ec2-user -c 'rm Miniconda3-latest-Linux-x86_64.sh'
 
@@ -560,7 +560,7 @@ Resources:
 
             - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /home/ec2-user/miniconda'
 
-            - runuser -l  ec2-user -c '$HOME/miniconda/bin/conda install -c conda-forge -y awscli'
+            - runuser -l  ec2-user -c '${HOME}/miniconda/bin/conda install -c conda-forge -y awscli'
 
             - runuser -l  ec2-user -c 'rm Miniconda3-latest-Linux-x86_64.sh'
             

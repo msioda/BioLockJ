@@ -128,10 +128,8 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	@Override
 	public File getDB() throws Exception {
 		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.AWS_EFS_DB );
-		final String nuclPath = Config.requireString( this, HN2_NUCL_DB );
-		final String protPath = Config.requireString( this, HN2_PROT_DB );
-		final File nuclDb = new File( Config.getSystemFilePath( nuclPath ) );
-		final File protDb = new File( Config.getSystemFilePath( protPath ) );
+		final File nuclDb = new File( Config.requireString( this, HN2_NUCL_DB ) );
+		final File protDb = new File( Config.requireString( this, HN2_PROT_DB ) );
 		final File parentDir = BioLockJUtil.getCommonParent( nuclDb, protDb );
 		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
 		return parentDir;
@@ -229,7 +227,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 * humann2.protDB=/db/uniref
 	 */
 	private String getDbPath( final String prop ) throws Exception {
-		final File db = new File( Config.getSystemFilePath( Config.requireString( this, prop ) ) );
+		final File db = new File( Config.requireString( this, prop ) );
 		return DockerUtil.inDockerEnv()
 			? db.getAbsolutePath().replace( db.getParentFile().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
 			: Config.requireExistingDir( this, prop ).getAbsolutePath();

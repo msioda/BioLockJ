@@ -27,7 +27,7 @@ export EFS_META="$EFS/metadata"
 export EFS_PROJ="$EFS/pipelines"
 export EFS_PRIMER="$EFS/primer"
 export EFS_SCRIPT="$EFS/script"
-export MINICONDA_BIN="$HOME/miniconda/bin"
+export MINICONDA_BIN="${HOME}/miniconda/bin"
 
 if [ "$BLJ" == "$EFS" ]; then
 	[ -d "$MINICONDA_BIN" ] && [ "${PATH/$MINICONDA_BIN}" == "${PATH}" ] && export PATH="$MINICONDA_BIN:$PATH"
@@ -39,11 +39,11 @@ if [ "$BLJ" == "$EFS" ]; then
 	export BLJ_SUP="$BLJ"
 	source $BLJ_SCRIPT/docker_functions
 else
-	[ ! -d "$BLJ_META" ] && export BLJ_META=~/metadata
-	[ ! -d "$BLJ_SUP" ] && [ -d "$(dirname $BLJ)/blj_support/script" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
-	[ -d "$BLJ_SUP" ] && [ "${PATH/$BLJ_SUP/script}" == "${PATH}" ] && export PATH="$BLJ_SUP/script:$PATH"
-	[ -d "$BLJ_SUP" ] && source $BLJ_SUP/script/blj_git_functions
-	[ -d "$BLJ_SUP" ] && source $BLJ_SUP/script/docker_functions
+	[ ! -d "${BLJ_META}" ] && export BLJ_META=~/metadata
+	[ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support/script" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
+	[ -d "${BLJ_SUP}" ] && [ "${PATH/${BLJ_SUP}/script}" == "${PATH}" ] && export PATH="${BLJ_SUP}/script:$PATH"
+	[ -d "${BLJ_SUP}" ] && source ${BLJ_SUP}/script/blj_git_functions
+	[ -d "${BLJ_SUP}" ] && source ${BLJ_SUP}/script/docker_functions
 fi
 
 [ ! -d "$BLJ_PROJ" ] && export BLJ_PROJ="$BLJ/pipelines"

@@ -173,9 +173,8 @@ public class BioLockJ {
 	 * </ul>
 	 *
 	 * @return Pipeline root directory
-	 * @throws Exception if errors occur
 	 */
-	protected static File createPipelineDirectory() throws Exception {
+	protected static File createPipelineDirectory() {
 		final String year = String.valueOf( new GregorianCalendar().get( Calendar.YEAR ) );
 		final String month = new GregorianCalendar().getDisplayName( Calendar.MONTH, Calendar.SHORT, Locale.ENGLISH );
 		final String day = BioLockJUtil.formatDigits( new GregorianCalendar().get( Calendar.DATE ), 2 );
@@ -208,10 +207,9 @@ public class BioLockJ {
 	 * @throws Exception if errors occur
 	 */
 	protected static void initBioLockJ( final String[] args ) throws Exception {
-		Log.info( BioLockJ.class, "App Runtime start time (as long): " + Constants.APP_START_TIME );
+
 		MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 		RuntimeParamUtil.registerRuntimeParameters( args );
-
 		Config.initialize();
 		if( isPipelineComplete() ) throw new Exception( "Pipeline Cancelled!  Pipeline already contains status file: "
 			+ Constants.BLJ_COMPLETE + " --> Check directory: " + Config.pipelinePath() );
@@ -494,9 +492,9 @@ public class BioLockJ {
 			int index = 0;
 			final String prefix = ( DockerUtil.inDockerEnv() ? DockerUtil.CONTAINER_OUTPUT_DIR: "~" ) + File.separator;
 			File errFile = new File(
-				Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
+				Config.replaceEnvVar( prefix + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
 			while( errFile.exists() ) {
-				errFile = new File( Config.getSystemFilePath( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
+				errFile = new File( Config.replaceEnvVar( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
 					+ new Integer( ++index ).toString() + Constants.LOG_EXT ) );
 			}
 

@@ -46,6 +46,11 @@ public class Log {
 	 */
 	public static void debug( final Class<?> loggingClass, final String msg ) {
 		if( suppressLogs ) return;
+		if( systemLogs ) {
+			System.out.println( "[ DEBUG ] " + msg );
+			return;
+		}
+
 		if( isInitialized() && !debugClasses().isEmpty() && !debugClasses().contains( loggingClass.getName() ) ) {
 			if( !gaveDebugWarning ) {
 				gaveDebugWarning = true;
@@ -92,6 +97,10 @@ public class Log {
 	 */
 	public static void error( final Class<?> myClass, final String msg ) {
 		if( suppressLogs ) return;
+		if( systemLogs ) {
+			System.out.println( "[ ERROR ] " + msg );
+			return;
+		}
 		error( myClass, msg, null );
 	}
 
@@ -104,6 +113,10 @@ public class Log {
 	 */
 	public static void error( final Class<?> myClass, final String msg, final Exception exception ) {
 		if( suppressLogs ) return;
+		if( systemLogs ) {
+			System.out.println( "[ DEBUG ] " + msg + " --> " + exception.getMessage() );
+			return;
+		}
 		if( logFile == null ) {
 			logMesseges.add( new String[] { ERROR, msg } );
 		} else if( exception != null ) {
@@ -139,6 +152,10 @@ public class Log {
 	 */
 	public static void info( final Class<?> myClass, final String msg ) {
 		if( suppressLogs ) return;
+		if( systemLogs ) {
+			System.out.println( "[ INFO ] " + msg );
+			return;
+		}
 		if( logFile == null ) {
 			logMesseges.add( new String[] { INFO, msg } );
 		} else {
@@ -220,6 +237,10 @@ public class Log {
 	 */
 	public static void warn( final Class<?> myClass, final String msg ) {
 		if( suppressLogs ) return;
+		if( systemLogs ) {
+			System.out.println( "[ WARN ] " + msg );
+			return;
+		}
 		if( logFile == null ) {
 			logMesseges.add( new String[] { WARN, msg } );
 		} else {
@@ -369,6 +390,7 @@ public class Log {
 	private static Map<String, Logger> loggers = new HashMap<>();
 
 	private static final List<String[]> logMesseges = new ArrayList<>();
-
 	private static boolean suppressLogs = false;
+	private static final boolean systemLogs = false;
+
 }
