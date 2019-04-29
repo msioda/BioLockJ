@@ -132,7 +132,7 @@ public class Processor {
 			args[ i ] = st.nextToken();
 		}
 
-		submit( args, "Set File Access Control" );
+		submit( args, "Set File Privs" );
 	}
 
 	/**
