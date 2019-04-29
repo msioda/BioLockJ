@@ -507,10 +507,10 @@ public class SummaryUtil {
 	public static void reportSuccess( final BioModule module ) throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		final File summaryFile = getSummaryFile();
-		Log.info( SummaryUtil.class, "Update " + summaryFile.getAbsolutePath() );
 		if( module == null ) {
 			sb.append( getFooter() );
 		} else {
+			Log.info( SummaryUtil.class, "Update BioModule summary [ " + module.getClass().getName() + " ] " + summaryFile.getAbsolutePath() );
 			Integer modNum = 0;
 			if( !summaryFile.exists() ) {
 				sb.append( getHeading() );
@@ -520,16 +520,13 @@ public class SummaryUtil {
 			}
 
 			String gap = "  ";
-			if( modNum.toString().length() == 2 ) {
-				gap += " ";
-			}
-
+			if( modNum.toString().length() == 2 ) gap += " ";
 			sb.append( getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName() + RETURN );
 			sb.append( getLabel( RUN_TIME ) + gap + getModuleRunTime( module ) + RETURN );
-			Log.info( SummaryUtil.class, "Add BioModule summary " + module.getClass().getName() );
+			
 			final String summary = module.getSummary();
 			if( summary != null && !summary.isEmpty() ) {
-				sb.append( SPACER + RETURN + summary + ( summary.endsWith( RETURN ) ? "": RETURN ) );
+				sb.append( getTitleSpacer( module ) + RETURN + summary + ( summary.endsWith( RETURN ) ? "": RETURN ) );
 			}
 			sb.append( SPACER_2X + RETURN );
 		}
@@ -698,7 +695,7 @@ public class SummaryUtil {
 
 	private static String getHeading() {
 		final StringBuffer sb = new StringBuffer();
-		sb.append( RETURN + SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
+		sb.append( RETURN + SPACER_2X + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( PIPELINE_CONFIG ) + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
 		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
@@ -718,6 +715,13 @@ public class SummaryUtil {
 
 	private static File getTempFile() {
 		return new File( Config.pipelinePath() + File.separator + TEMP_SUMMARY_FILE );
+	}
+	
+	private static String getTitleSpacer( BioModule module ) {
+		String spacer = "";
+		int len = module.getClass().getName().length() + ModuleUtil.displayID( module ).length() + 11;
+		for( int i=0; i< len; i++ )  spacer += "-";
+		return spacer;
 	}
 
 	private static String downloadCommand = null;

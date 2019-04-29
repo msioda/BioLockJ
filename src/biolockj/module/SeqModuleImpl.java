@@ -46,7 +46,7 @@ public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModul
 	public String getSummary() throws Exception {
 		String summary = "";
 		if( this instanceof DatabaseModule && ( (DatabaseModule) this ).getDB() != null ) {
-			summary = "" + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
+			summary = "Used Database: " + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
 		}
 
 		return super.getSummary() + summary;
