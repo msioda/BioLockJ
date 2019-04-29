@@ -126,7 +126,6 @@ public class Properties extends java.util.Properties {
 				if( st.countTokens() > 1 ) {
 					if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
 						return BioLockJUtil.getLocalFile( st.nextToken().trim() );
-					break;
 				}
 			}
 		} finally {

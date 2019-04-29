@@ -392,5 +392,4 @@ public class Log {
 	private static final List<String[]> logMesseges = new ArrayList<>();
 	private static boolean suppressLogs = false;
 	private static final boolean systemLogs = false;
-
 }
