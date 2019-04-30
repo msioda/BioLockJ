@@ -82,7 +82,7 @@ has_param() {
 
 # Call the docker run command with the correct parameters
 run_docker() {
-	echo "execute[ docker run -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) ${DOCKER_HUB_USER}/biolockj_controller ]"
+	echo "execute[ docker run -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img) ]"
 	docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) "$(get_docker_img)"
 }
 
@@ -130,6 +130,6 @@ if ! $(has_param $inDocker); then
 	$(has_param $launchGui) && verify_inputs 
 fi
 
-$(has_param $runDev) && echo "Running DEV mode "
+$(has_param $runDev) && echo "Running DEV mode!"
 	
 run_docker
