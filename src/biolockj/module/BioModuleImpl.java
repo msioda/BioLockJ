@@ -250,7 +250,6 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 * @param file Next file to validate
 	 * @throws Exception if a duplicate file name found
 	 */
-	@SuppressWarnings("static-method")
 	protected void validateFileNameUnique( final Set<String> fileNames, final File file ) throws Exception {
 		if( fileNames.contains( file.getName() ) )
 			throw new Exception( "File names must be unique!  Duplicate file: " + file.getAbsolutePath() );

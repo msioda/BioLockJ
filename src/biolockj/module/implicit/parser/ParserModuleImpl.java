@@ -142,7 +142,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * @return boolean if {@link biolockj.node.OtuNode} is valid
 	 * @throws Exception if errors occur checking if node is valid
 	 */
-	@SuppressWarnings("static-method")
 	protected boolean isValid( final OtuNode node ) throws Exception {
 		return node != null && node.getSampleId() != null && !node.getSampleId().isEmpty() && node.getTaxaMap() != null
 			&& !node.getTaxaMap().isEmpty() && node.getCount() > 0;

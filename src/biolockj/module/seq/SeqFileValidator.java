@@ -155,7 +155,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	 * @throws Exception if I/O errors occur while processing sequence files
 	 */
 	protected void validateFile( final File file, final Integer fileCount ) throws Exception {
-		Log.info( getClass(), "Validating File[" + fileCount + "]: " + file.getAbsolutePath() );
+		Log.info( getClass(), "Validate File [" + fileCount + "]: " + file.getAbsolutePath() );
 		final Long[] stats = initStats();
 		long combinedReadLen = 0;
 		int seqNum = 0;
@@ -244,6 +244,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 				reader.close();
 			}
 		}
+		Log.info( BioLockJUtil.class, "Output file: " + outputFile.getAbsolutePath() );
 
 		if( stats[ INDEX_NUM_VALID_READS ] == 0 ) {
 			this.badFiles.add( file );
@@ -471,7 +472,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private static String getFileName( final File dir, final String name ) {
 		final String prefix = dir.getAbsolutePath() + File.separator;
-		if( SeqUtil.isGzipped( name ) ) return name.substring( 0, name.length() - 3 );
+		if( SeqUtil.isGzipped( name ) ) return prefix + name.substring( 0, name.length() - 3 );
 		return prefix + name;
 	}
 

@@ -41,7 +41,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode> {
 	 * 
 	 * @param count Taxa count
 	 */
-	public void addCount( @SuppressWarnings("hiding") final Long count ) {
+	public void addCount( final Long count ) {
 		this.count += count;
 	}
 
