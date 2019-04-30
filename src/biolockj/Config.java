@@ -468,7 +468,12 @@ public class Config {
 		String val = arg.toString().trim();
 		try {
 			if( !hasEnvVar( val ) ) return val;
-			if( val.startsWith( "~" ) ) val = val.replaceFirst( "~", "${HOME}" );
+			if( val.substring( 0, 1 ).equals( "~" ) ) {
+				Log.debug( Config.class, "Found property starting with \"~\" --> " + arg );
+				val = val.replace( "~", "${HOME}" );
+				Log.debug( Config.class, "Updated property --> " + val );
+			}
+
 			while( hasEnvVar( val ) ) {
 				final String bashVar = val.substring( val.indexOf( "${" ), val.indexOf( "}" ) + 1 );
 				Log.debug( Config.class, "Attempting to update [ " + arg + 
@@ -479,7 +484,7 @@ public class Config {
 				Log.debug( Config.class, "Found env variable [ " + bashVar + 
 					"= " + bashVal + "  ] (length=" + bashVal.length() + ") | UPDATED arg val --> " + val );
 			}
-			Log.info( Config.class, "--------> Converted [ " + arg + " ] --> " + val );
+			Log.info( Config.class, "--------> Bash Var Converted [ " + arg + " ] --> " + val );
 			return val;
 		} catch( Exception ex ) {
 			Log.warn( Config.class, "Failed to convert arg \"" + arg + "\"" + ex.getMessage() );

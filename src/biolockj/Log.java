@@ -287,7 +287,6 @@ public class Log {
 		Log.info( Log.class, "but WITHOUT ANY WARRANTY; without even the implied warranty of" );
 		Log.info( Log.class, "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the" );
 		Log.info( Log.class, "GNU General Public License for more details at http://www.gnu.org" );
-		Log.info( Log.class, Constants.LOG_SPACER );
 	}
 
 	/**

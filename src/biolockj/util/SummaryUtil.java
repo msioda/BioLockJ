@@ -262,7 +262,7 @@ public class SummaryUtil {
 
 			sb.append( "# Files Output:  " + count + RETURN );
 			sb.append( "Mean Output File Size:  " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
-			sb.append( newMeta == null ? "": "New metadata:" + newMeta.getAbsolutePath() + RETURN );
+			sb.append( newMeta == null ? "": "New metadata: " + newMeta.getAbsolutePath() + RETURN );
 
 		} catch( final Exception ex ) {
 			final String msg = "Unable to produce module outputDir summary for: " + module.getClass().getName() + " : "
@@ -404,7 +404,7 @@ public class SummaryUtil {
 
 			final Long avgRunTime = numCompleted > 0 ? totalRunTime / numCompleted: null;
 			final int numInc = scriptsStarted.size() - numCompleted;
-			sb.append( "Main Script: " + module.getMainScript().getAbsolutePath() + RETURN );
+			sb.append( "Main Script:  " + module.getMainScript().getAbsolutePath() + RETURN );
 			sb.append( "Executed " + scriptsStarted.size() + "/" + scripts.size() + " worker scripts [" );
 			sb.append( scriptsSuccess.size() + " successful" );
 			sb.append( scriptsFailed.isEmpty() ? "": "; " + scriptsFailed.size() + " failed" );
@@ -521,12 +521,14 @@ public class SummaryUtil {
 
 			String gap = "  ";
 			if( modNum.toString().length() == 2 ) gap += " ";
-			sb.append( getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName() + RETURN );
-			sb.append( getLabel( RUN_TIME ) + gap + getModuleRunTime( module ) + RETURN );
+			String modLabel = getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName() ;
+			String runtime = getLabel( RUN_TIME ) + gap + getModuleRunTime( module );
+			sb.append( modLabel + RETURN );
+			sb.append( runtime + RETURN );
 			
 			final String summary = module.getSummary();
 			if( summary != null && !summary.isEmpty() ) {
-				sb.append( getTitleSpacer( module ) + RETURN + summary + ( summary.endsWith( RETURN ) ? "": RETURN ) );
+				sb.append( getTitleSpacer( Math.max( modLabel.length(), runtime.length() ) ) + RETURN + summary + ( summary.endsWith( RETURN ) ? "": RETURN ) );
 			}
 			sb.append( SPACER_2X + RETURN );
 		}
@@ -717,9 +719,8 @@ public class SummaryUtil {
 		return new File( Config.pipelinePath() + File.separator + TEMP_SUMMARY_FILE );
 	}
 	
-	private static String getTitleSpacer( BioModule module ) {
+	private static String getTitleSpacer( final int len ) {
 		String spacer = "";
-		int len = module.getClass().getName().length() + ModuleUtil.displayID( module ).length() + 11;
 		for( int i=0; i< len; i++ )  spacer += "-";
 		return spacer;
 	}

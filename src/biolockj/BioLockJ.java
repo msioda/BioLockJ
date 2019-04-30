@@ -41,12 +41,12 @@ public class BioLockJ {
 	 * @throws Exception if errors occur
 	 */
 	public static void copyFileToPipelineRoot( final File file ) throws Exception {
+		Log.info( BioLockJ.class, "Copy file: " + file.getAbsolutePath() + " to pipeline root: " + Config.pipelinePath() );
 		final File localFile = new File( Config.pipelinePath() + File.separator + file.getName() );
-		if( !localFile.exists() ) {
+		if( !localFile.isFile() ) {
 			FileUtils.copyFileToDirectory( file, new File( Config.pipelinePath() ) );
-			if( !localFile.exists() )
+			if( !localFile.isFile() )
 				throw new Exception( "Unable to copy file to pipeline root directory: " + file.getAbsolutePath() );
-
 		}
 	}
 

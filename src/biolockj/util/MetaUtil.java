@@ -55,7 +55,6 @@ public class MetaUtil {
 			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + Constants.RETURN );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
-
 				final String id = st.nextToken();
 				if( sampleIds.contains( id ) ) {
 					writer.write( line + Constants.TAB_DELIM + map.get( id ) + Constants.RETURN );
@@ -63,8 +62,8 @@ public class MetaUtil {
 					writer.write(
 						line + Constants.TAB_DELIM + Config.requireString( null, META_NULL_VALUE ) + Constants.RETURN );
 				} else {
-					Log.warn( MetaUtil.class,
-						"REMOVE SAMPLE ID [" + id + "] due to no data in metadata column: " + colName );
+					Log.warn( MetaUtil.class, getRemoveIdMsg( id ) );
+					
 				}
 			}
 		} finally {
@@ -72,6 +71,22 @@ public class MetaUtil {
 			writer.close();
 			refreshCache();
 		}
+	}
+	
+	private static String getRemoveIdMsg( String id ) throws Exception {
+		final String msg = "REMOVE SAMPLE ID [" + id + "] from metadata file " + getPath() + " | Reason:  ";
+		if( SeqUtil.piplineHasSeqInput() ) {
+			for( File seqFile: BioLockJUtil.getPipelineInputFiles() ) {
+				final String seqId = SeqUtil.getSampleId( seqFile.getName() );
+				if( seqId != null && seqId.equals( id ) ) {
+					return msg + "No valid seqs remain in: " + seqFile.getName();
+				}
+			}
+			return msg + "Sample not found in pipeline input dirs: " + Config.requireString( null, Constants.INPUT_DIRS );
+		} 
+		
+		return msg + "Sample not referenced in pipeline inputs: " + Config.requireString( null, Constants.INPUT_DIRS );
+		
 	}
 
 	/**

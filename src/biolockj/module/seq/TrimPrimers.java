@@ -70,7 +70,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		try {
-			sb.append( "Primer file: " + Config.requireString( this, Constants.INPUT_TRIM_SEQ_FILE ) );
+			sb.append( "Primer file: " + Config.requireString( this, Constants.INPUT_TRIM_SEQ_FILE ) + RETURN );
 			for( final String msg: summaryMsgs ) {
 				sb.append( msg + RETURN );
 			}
@@ -90,7 +90,9 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	 */
 	@Override
 	public void runModule() throws Exception {
-		BioLockJ.copyFileToPipelineRoot( getSeqPrimerFile() );
+		Log.info( getClass(), "Starting TrimPrimers Module" );
+		File primerFile = getSeqPrimerFile();
+		BioLockJ.copyFileToPipelineRoot( primerFile );
 		trimSeqs();
 		Log.debug( getClass(), "numLinesPerRead = " + SeqUtil.getNumLinesPerRead() );
 		Log.debug( getClass(), "#samples in table numLinesWithPrimer = " + this.numLinesWithPrimer.size() );
@@ -100,9 +102,14 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 
 		addBadFilesToSummary();
 
+		String reqPrimerMsg = ""; 
 		if( Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) ) {
-			Log.warn( getClass(), INPUT_REQUIRE_PRIMER + "=Y so any sequences without a primer have been discarded" );
+			reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.TRUE + " --> Sequences without a primer were discarded";
+		} else {
+			reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.FALSE + " --> Sequences without a primer were saved";
 		}
+		Log.warn( getClass(), reqPrimerMsg );
+		summaryMsgs.add( reqPrimerMsg );
 
 		long totalPrimerR = 0L;
 		long totalNoPrimerR = 0L;
@@ -287,6 +294,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		final BufferedReader reader = BioLockJUtil.getFileReader( trimSeqFile );
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				Log.info( getClass(), "Trim primer [ " + line + " ] defined in: " +  trimSeqFile.getAbsolutePath() );
 				if( !line.startsWith( "#" ) ) {
 					final String seq = line.trim().toUpperCase();
 					if( seq.length() > 0 ) {
