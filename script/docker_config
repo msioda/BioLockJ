@@ -1,0 +1,33 @@
+#########################################################################
+##                                                                     ##
+##  The $USER profile was updated by $BLJ/install to run               ##
+##  $BLJ/script/blj_config.  This purpose of this script it to:        ##
+##                                                                     ##
+##   1. Add env. variable $DOCK_ID = "biolockj"                        ##
+##   2. Add env. variable $DOCKER_DIR = "$BLJ/resources/docker"        ##
+##   3. Add $BLJ/script/docker_functions to bash shell                 ##
+##                                                                     ##
+#########################################################################
+. ${BLJ_LIB}
+
+export BLJ_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export BLJ="$(dirname $BLJ_SCRIPT)"
+
+export DOCKER_DIR="${BLJ}/resources/docker"
+export DOCKER_ID="biolockj"
+export DOCK_SOCK="/var/run/docker.sock"
+export DOCKER_VER="docker-18.09.2"
+
+export EC2_HOME="/home/ec2-user"
+export EC2_AWS="${EC2_HOME}/.aws"
+export EC2_MCONDA_BIN="${EC2_HOME}/miniconda/bin"
+export EFS="/mnt/efs"
+export EFS_PROJ="${EFS}/pipelines"
+
+export BLJ_CONFIG="${EFS}/config"
+export BLJ_DB="${EFS}/db"
+export BLJ_INPUT="${EFS}/input"
+export BLJ_META="${EFS}/metadata"
+export BLJ_PRIMER="${EFS}/primer"
+
+source "${BLJ_SCRIPT}/docker_functions"

@@ -29,6 +29,47 @@ add_named_arg() {
 	[ $# -eq 3 ] && echo "$myArgs $1=$2"
 }
 
+# Call ANT to build BioLockJ
+blj_build() {
+	echo "Building BioLockJ with ANT..."
+	[ ! -f "$BLJ/resources/build.xml" ] && exit_script "Error [ blj_build ]: ANT build script missing: $BLJ/resources/build.xml"
+
+	cd $BLJ/resources
+	[ ${#1} -eq 0 ] && ant
+	[ ${#1} -gt 0 ] && ant $1
+	echo "Ant script execution complete"
+
+	if [ -f "$BLJ/dist/BioLockJ.jar" ]; then
+		ls -lh "$BLJ/dist/BioLockJ.jar"
+	else
+		echo "Build Failed - missing $BLJ/dist/BioLockJ.jar"
+	fi
+}
+
+# Git latest $BLJ + build BioLockJ.jar
+blj_git() {
+	[ ! -d "${BLJ}" ] && echo "Cannot build BLJ: directory not found: ${BLJ}" && return
+	blj_git_reset "${BLJ}"
+	"${BLJ}/script/blj_build" build-jar
+}
+
+# Reset git repo + set file permissions 770
+# Param 1 Directory path of Git repo
+blj_git_reset() {
+	echo "Get latest code from GitHub repo: $1"
+	cd $1
+	git fetch
+  	git checkout -q master
+  	git reset -q --hard origin/master  
+	chmod -R 770 $1
+	echo "==========================================================================="
+	echo "$1 Git pull SUCESSFULLY COMPLETED!"
+	chmod -R 770 $1
+	echo "$1 permissions set: 770"
+	echo "==========================================================================="
+	echo ""
+}
+
 # This script navigates the $USER to their most recent pipeline and lists the current directory
 blj_go() {
 	[ ! -d "${BLJ_PROJ}" ] && echo "Exit program - BLJ_PROJ: directory not found: ${BLJ_PROJ}" && return
@@ -85,6 +126,12 @@ blj_summary() {
 	else
 		echo "No pipeline summary found in BLJ_PROJ: ${BLJ_PROJ}"
 	fi
+}
+
+# Git latest ${BLJ_SUP}
+blj_sup_git() {
+	[ ! -d "${BLJ_SUP}" ] && echo "Cannot build BLJ_SUP: directory not found: ${BLJ_SUP}" && return
+	blj_git_reset "${BLJ_SUP}"
 }
 
 # Return absolute path of current pipeline if in a pipeline directory
@@ -153,6 +200,11 @@ is_pipeline_dir() {
 	mon23=$(echo ${dir: -4:2} | egrep "^[a-y{2}]+$")
 	day=$(echo ${dir: -2} | egrep "^[0-9{2}]+$")
 	[ "$dir" == "${dir/.}" ] && [ -d "$1" ] && [ "$prefix" == "_" ] && [ ${#year} -eq 4 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ ${#day} -eq 2 ]
+}
+
+# Load docker functions and env vars into current shell
+load_docker_lib() {
+	source "${BLJ}/script/docker_config"
 }
 
 # Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 

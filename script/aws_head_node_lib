@@ -3,9 +3,7 @@
 ##                                                                 ##
 ##  This script is used for uploading data + config to AWS cloud.  ##
 ##                                                                 ##
-##                                                                 ##
 #####################################################################
-. $BLJ/script/aws_upload_lib
 
 # Add job definition to Nextflow Config
 # Param 1 - Nextflow label
@@ -20,7 +18,7 @@ add_nextflow_job_def() {
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
 	refresh_aws_cache
-	[ -f "$(get_docker_job_flag)" ] && echo "Jobs already exist, found flag file: $(get_docker_job_flag)" && return
+	[ -f "$(get_docker_job_def_flag)" ] && echo "Jobs already exist, found flag file: $(get_docker_job_def_flag)" && return
 	init_nextflow_config
 	dockerModules=$(docker search --no-trunc --limit 100 ${dockerUser} | grep -E ^${dockerUser} ) 
 	IFS2=$IFS && IFS=$'\t'
@@ -39,8 +37,8 @@ build_docker_job_defs() {
 			\"memory\": 1024,
 			\"command\": [ \"/bin/bash\" ],
 			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
-			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"${EC2_HOME}/miniconda\" }, \"name\": \"miniconda\" } ],
-			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${EC2_HOME}/miniconda\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
+			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"${EC2_MCONDA_BIN}\" }, \"name\": \"miniconda\" } ],
+			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${EC2_MCONDA_BIN}\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
@@ -59,7 +57,7 @@ build_docker_job_defs() {
 	done
 	IFS2=$IFS
 	close_nextflow_config
-	touch $(get_docker_job_flag)
+	touch $(get_docker_job_def_flag)
 }
 
 # Close Nextflow Config process block
@@ -93,8 +91,8 @@ get_config_name() {
 }
 
 # Get the flag file that indicates Docker job definitions were created
-get_docker_job_flag() {
-	echo ~/.aws/.$(get_blj_prop awsStack)-CREATED_DOCKER_JOB_DEFS
+get_docker_job_def_flag() {
+	echo "${HOME}/.${awsStack}-CREATED_DOCKER_JOB_DEFS"
 }
 
 # Get EC2 instance public IP address
@@ -118,7 +116,7 @@ init_nextflow_config() {
 	echo "" >> $(get_nextflow_config)
 	echo "executor {" >> $(get_nextflow_config)
     echo "    name = 'awsbatch'" >> $(get_nextflow_config)
-    echo "    executor.awscli = '/home/ec2-user/miniconda/bin/aws'" >> $(get_nextflow_config)
+    echo "    executor.awscli = '${EC2_MCONDA_BIN}/aws'" >> $(get_nextflow_config)
     echo "}" >> $(get_nextflow_config)
     echo "" >> $(get_nextflow_config)
     echo "aws {" >> $(get_nextflow_config)
@@ -194,5 +192,3 @@ set_ec2_head_node_id() {
 	aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] created in $runTime seconds"
 	set_blj_prop awsEc2InstanceID ${awsEc2InstanceID}
 }
-
-

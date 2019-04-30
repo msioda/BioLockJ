@@ -4,7 +4,6 @@
 ##  This script is used for AWS core function + logic       ##
 ##                                                          ##
 ##############################################################
-. $BLJ/script/aws_config_lib
 
 # Remove all job-definitions 
 aws_deregister_job_defs() {
@@ -35,7 +34,7 @@ aws_deregister_job_defs() {
 	[ ${#vals} -eq 0 ] && aws_log "All job-definitions removed" && return
 	aws_log "Remaining job-definitions with status!='INACTIVE':"
 	aws batch describe-job-definitions --query "jobDefinitions[?status!='INACTIVE']|[*].jobDefinitionArn"
-	rm $(get_docker_job_flag)
+	rm $(get_docker_job_def_flag)
 }
 
 # Get 1st "arn*" value in list

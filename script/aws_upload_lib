@@ -4,7 +4,6 @@
 ##  This script is used for uploading data + config to AWS cloud.  ##
 ##                                                                 ##
 #####################################################################
-. $BLJ/script/aws_config_lib
 
 S3_DIR="s3://"
 
@@ -14,12 +13,12 @@ aws_sync_inputs_to_s3() {
 	
 	# Upload Config
 	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_s3_file ${EFS_CONFIG}/$(basename "${propFile}") config; done
+	for propFile in ${propFiles[@]}; do upload_s3_file ${BLJ_CONFIG}/$(basename "${propFile}") config; done
 	
-	upload_s3_dir ${EFS_DB} db
-	upload_s3_dir ${EFS_INPUT}/$(basename "${inputDirPaths}") input
-	upload_s3_file ${EFS_META} metadata
-	upload_s3_file ${EFS_PRIMER} primer
+	upload_s3_dir ${BLJ_DB} db
+	upload_s3_dir ${BLJ_INPUT}/$(basename "${inputDirPaths}") input
+	upload_s3_file ${BLJ_META} metadata
+	upload_s3_file ${BLJ_PRIMER} primer
 }
 
 # Sync local files to S3 for cloud pipeline execution
@@ -34,7 +33,7 @@ aws_stage_s3_data() {
 	
 	# Upload Config
 	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile ${EFS_CONFIG}; done
+	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile ${BLJ_CONFIG}; done
 	
 	# Upload files
 	upload_s3_file $metadataFilePath metadata
@@ -65,7 +64,7 @@ aws_s3_ls() {
 # Param 1 - Pipeline Config file
 build_start_script() {
 	startScript=~/.aws/run-${awsStack}.sh
-	[ -f "${metadataFilePath}" ] && meta="-m=${EFS_META} "
+	[ -f "${metadataFilePath}" ] && meta="-m=${BLJ_META} "
 	echo $sheBang > $startScript
 	echo "" >> $startScript
 	echo "##########################################################" >> $startScript
@@ -79,9 +78,9 @@ build_start_script() {
 	echo 'source ${HOME}/.bash_profile' >> $startScript
 	echo "clearDock" >> $startScript
 	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $startScript
-	echo "dockblj -aws ${meta}-i=${EFS_INPUT}/$(basename ${inputDirPaths}) -c=$(get_config ec2)" >> $startScript
-	[ "${awsPurgeEfsInputs}" == "Y" ] && echo 'sudo rm -rf $EFS/[cdims]*/*; sudo rm -rf $EFS/primer' >> $startScript
-	[ "${awsPurgeEfsOutput}" == "Y" ] && echo 'sudo rm -rf $BLJ_PROJ/*' >> $startScript
+	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename ${inputDirPaths}) -c=$(get_config ec2)" >> $startScript
+	[ "${awsPurgeEfsInputs}" == "Y" ] && echo 'sudo rm -rf /mnt/efs/[cdims]*/*; sudo rm -rf /mnt/efs/primer' >> $startScript
+	[ "${awsPurgeEfsOutput}" == "Y" ] && echo 'sudo rm -rf /mnt/efs/pipelines/*' >> $startScript
 	chmod 770 $startScript
 	echo $startScript
 }
@@ -101,7 +100,7 @@ get_aws_profile() {
 # Return the Nextflow basic config file-path
 get_nextflow_config() {
 	nfStackDir=~/.aws/nextflow/${awsStack} 
-	[ "${USER}" == "ec2-user" ] && nfStackDir=${EFS_CONFIG}/nextflow/${awsStack} 
+	[ "${USER}" == "ec2-user" ] && nfStackDir=${BLJ_CONFIG}/nextflow/${awsStack} 
 	[ ! -d "$nfStackDir" ] && mkdir -p $nfStackDir
 	echo "$nfStackDir/config"
 }
@@ -121,31 +120,35 @@ get_s3_name() {
 	echo "${S3_DIR}${awsS3}/$2/$(basename $1)"
 }
 
+# Return directory that stores base nextflow config
+get_ec2_nextflow_dir() {
+	echo "${BLJ_CONFIG}/nextflow/${awsStack}"
+}
+
 # Upload local files to S3
 # Copy Config file with updated properties to reference new S3 paths
 # Param 1 Pipeline start script
 stage_pipeline_on_aws() {
 	upload_file_to_aws "$(build_start_script)"
-	EC2_NF_CONF="${EFS_CONFIG}/nextflow/$(get_config_name)"
-	exe_remote_cmd "[ ! -d $EC2_NF_DIR ] && mkdir -p $EC2_NF_DIR"
+	exe_remote_cmd "[ ! -d $(get_ec2_nextflow_dir) ] && mkdir -p $(get_ec2_nextflow_dir)"
 	
-	#exe_remote_cmd "[ ! -d ${EFS_DB} ] && mkdir ${EFS_DB}"
-	#exe_remote_cmd "[ ! -d ${EFS_INPUT} ] && mkdir ${EFS_INPUT}"
-	#exe_remote_cmd "[ ! -d ${EFS_META} ] && mkdir ${EFS_META}"
-	#exe_remote_cmd "[ ! -d ${EFS_PROJ} ] && mkdir ${EFS_PROJ}"
-	#exe_remote_cmd "[ ! -d ${EFS_PRIMER} ] && mkdir ${EFS_PRIMER}"
-	#exe_remote_cmd "[ ! -d $EFS_SCRIPT ] && mkdir $EFS_SCRIPT"
+	#exe_remote_cmd "[ ! -d ${BLJ_DB} ] && mkdir ${BLJ_DB}"
+	#exe_remote_cmd "[ ! -d ${BLJ_INPUT} ] && mkdir ${BLJ_INPUT}"
+	#exe_remote_cmd "[ ! -d ${BLJ_META} ] && mkdir ${BLJ_META}"
+	#exe_remote_cmd "[ ! -d ${BLJ_PROJ} ] && mkdir ${BLJ_PROJ}"
+	#exe_remote_cmd "[ ! -d ${BLJ_PRIMER} ] && mkdir ${BLJ_PRIMER}"
+	#exe_remote_cmd "[ ! -d $BLJ_SCRIPT ] && mkdir $BLJ_SCRIPT"
 	#exe_remote_cmd "[ ! -d $EC2_HOME/.aws ] && mkdir $EC2_HOME/.aws"
 	
 	stage_aws_confg
 
-	upload_file_to_aws "$blj_aws_config" "${EFS_CONFIG}"
-	upload_file_to_aws "$(get_nextflow_config)" "${EC2_NF_DIR}"
+	upload_file_to_aws "$blj_aws_config" "${BLJ_CONFIG}"
+	upload_file_to_aws "$(get_nextflow_config)" "$(get_ec2_nextflow_dir)"
 	upload_file_to_aws "${BLJ}/resources/aws/ec2_head_node_profile"
 	upload_pipeline_inputs_to_aws
 	upload_dir_to_aws "${BLJ}/script" "${EFS}"
 	[ -d "${BLJ_SUP}/script" ] && upload_dir_to_aws "${BLJ_SUP}/script" "${EFS}"
-	[ -f "$(get_docker_job_flag)" ] && upload_file_to_aws "$(get_docker_job_flag)"
+	[ -f "$(get_docker_job_def_flag)" ] && upload_file_to_aws "$(get_docker_job_def_flag)"
 	exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
 	
 	#exe_remote_cmd "sudo chmod -R 777 ${EFS}"
@@ -170,9 +173,9 @@ stage_aws_confg() {
 	echo "aws_secret_access_key = ${aws_secret_access_key}" >> "$stageDir/credentials"
 	echo "Created file:  $stageDir/credentials"
 	cat "$stageDir/credentials"
-	upload_file_to_aws "$stageDir/config" "${EC2_HOME}/.aws"
-	upload_file_to_aws "$stageDir/credentials" "$EC2_HOME}/.aws"
-	upload_file_to_aws "$blj_aws_config" "${EC2_HOME}/.aws"
+	upload_file_to_aws "$stageDir/config" "${EC2_AWS}"
+	upload_file_to_aws "$stageDir/credentials" "$EC2_AWS}"
+	upload_file_to_aws "$blj_aws_config" "${EC2_AWS}"
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
@@ -183,7 +186,7 @@ upload_config_to_aws() {
 	configFiles=$(get_blj_prop configFiles)
 	aws_log "Uploaded Config files: $configFiles"
 	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile ${EFS_CONFIG}; done
+	for propFile in ${propFiles[@]}; do upload_file_to_aws $propFile ${BLJ_CONFIG}; done
 }
 
 # Upload local directory up to the ec2 head node, if no target dir specified use EC2 ${HOME}: /Users/mike/git/blj_support/resources/test/data/r16s_fastq
@@ -209,35 +212,35 @@ upload_file_to_aws() {
 upload_pipeline_inputs_to_aws() {
 	aws_log "Staging pipeline inputs..."
 	if [ -d "${inputDirPaths}" ]; then
-		upload_dir_to_aws ${inputDirPaths} ${EFS_INPUT}
+		upload_dir_to_aws ${inputDirPaths} ${BLJ_INPUT}
 	else
 		exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config inputDirPaths is not a valid directory"
 	fi
 	if [ -d "$metaphlan2Db" ] || [ -f "$metaphlan2Mpa_pkl" ]; then
 		if [ -d "$metaphlan2Db" ] && [ -f "$metaphlan2Mpa_pkl" ]; then
-			upload_dir_to_aws ${metaphlan2Db} ${EFS_DB}
-			upload_file_to_aws ${metaphlan2Mpa_pkl} ${EFS_DB}
+			upload_dir_to_aws ${metaphlan2Db} ${BLJ_DB}
+			upload_file_to_aws ${metaphlan2Mpa_pkl} ${BLJ_DB}
 		else
 			exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config missing - if any defined, all must be defined {\"metaphlan2Db\", \"metaphlan2Mpa_pkl\" }"
 		fi
 	fi
 	if [ -f "$qiimePynastAlignDB" ] || [ -f "$qiimeRefSeqDB" ] || [ -f "$qiimeTaxaDB" ]; then
 		if [ -f "$qiimePynastAlignDB" ] && [ -f "$qiimeRefSeqDB" ] && [ -f "$qiimeTaxaDB" ]; then
-			upload_file_to_aws ${qiimePynastAlignDB} ${EFS_DB}
-			upload_file_to_aws ${qiimeRefSeqDB} ${EFS_DB}
-			upload_file_to_aws ${qiimeTaxaDB} ${EFS_DB}	
+			upload_file_to_aws ${qiimePynastAlignDB} ${BLJ_DB}
+			upload_file_to_aws ${qiimeRefSeqDB} ${BLJ_DB}
+			upload_file_to_aws ${qiimeTaxaDB} ${BLJ_DB}	
 		else
 			exit_script "Error [ aws_upload_lib.upload_pipeline_inputs_to_aws() ]: Required Config missing - if any defined, all must be defined { \"qiimePynastAlignDB\", \"qiimeRefSeqDB\", \"qiimeTaxaDB\" }"
 		fi
 	fi
-	[ -f "$metadataFilePath" ] && upload_file_to_aws ${metadataFilePath} ${EFS_META}
-	[ -f "$trimPrimersFilePath" ] && upload_file_to_aws ${trimPrimersFilePath} ${EFS_PRIMER}
-	[ -d "$kneaddataDbs" ] && upload_dir_to_aws ${kneaddataDbs} ${EFS_DB}
-	[ -d "$krakenDb" ] && upload_dir_to_aws ${krakenDb} ${EFS_DB}
-	[ -d "$kraken2Db" ] && upload_dir_to_aws ${kraken2Db} ${EFS_DB}
-	[ -d "$humann2NuclDB" ] && upload_dir_to_aws ${humann2NuclDB} ${EFS_DB}	
-	[ -d "$humann2ProtDB" ] && upload_dir_to_aws ${humann2ProtDB} ${EFS_DB}	
-	[ -f "$rdpDb" ] && upload_dir_to_aws $(dirname ${rdpDb}) ${EFS_DB}	
+	[ -f "$metadataFilePath" ] && upload_file_to_aws ${metadataFilePath} ${BLJ_META}
+	[ -f "$trimPrimersFilePath" ] && upload_file_to_aws ${trimPrimersFilePath} ${BLJ_PRIMER}
+	[ -d "$kneaddataDbs" ] && upload_dir_to_aws ${kneaddataDbs} ${BLJ_DB}
+	[ -d "$krakenDb" ] && upload_dir_to_aws ${krakenDb} ${BLJ_DB}
+	[ -d "$kraken2Db" ] && upload_dir_to_aws ${kraken2Db} ${BLJ_DB}
+	[ -d "$humann2NuclDB" ] && upload_dir_to_aws ${humann2NuclDB} ${BLJ_DB}	
+	[ -d "$humann2ProtDB" ] && upload_dir_to_aws ${humann2ProtDB} ${BLJ_DB}	
+	[ -f "$rdpDb" ] && upload_dir_to_aws $(dirname ${rdpDb}) ${BLJ_DB}	
 	upload_config_to_aws
 }
 

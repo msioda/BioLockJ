@@ -277,7 +277,7 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 	/**
 	 * Call validate_mapping_file.py to get corrected QIIME Mapping.
 	 */
-	private String validateMapping() {
+	private String validateMapping() throws Exception {
 		return SCRIPT_VALIDATE_MAPPING + " -p -b -m " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
 			+ Constants.QIIME_DEMUX_COL;
 	}

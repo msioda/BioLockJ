@@ -1,0 +1,19 @@
+#########################################################################
+##                                                                     ##
+##  This config is only to be loaded from EC2 AWS nodes in order to:   ##
+##                                                                     ##
+##   1. Override BLJ to point to "${EFS}"                              ##
+##   2. Override BLJ_SUP to use = "${EFS}"                             ##
+##   3. Override BLJ_SCRIPT to point to "${EFS}/script"                ##
+##   4. Add ${BLJ_SCRIPT}/aws_functions to bash shell                  ##
+##                                                                     ##
+#########################################################################
+. ${DOCKER_LIB}
+
+if [ "${USER}" == "ec2-user" ]; then
+	export BLJ_SCRIPT="${EFS}/script"
+	export BLJ="${EFS}"
+	export BLJ_SUP="${EFS}"
+fi
+
+source "${BLJ_SCRIPT}/aws_functions"

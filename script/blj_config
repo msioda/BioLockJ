@@ -3,51 +3,28 @@
 ##  The $USER profile was updated by $BLJ/install to run               ##
 ##  $BLJ/script/blj_config.  This purpose of this script it to:        ##
 ##                                                                     ##
-##   1. Add $BLJ/script into the $USER $PATH                           ##
-##   2. Add env. variable $BLJ = BioLockJ installation directory       ##
-##   3. Add env. variable $BLJ_PROJ = pipeline output directory        ##
-##   4. Add env. variable $BLJ_META = BioLockJ metatada file repo      ##
-##   5. Add env. variable $DOCKER_HUB_USER = "biolockj"                ##
-##   6. Add env. variable $DOCKER_FILE_PATH = "$BLJ/resources/docker"  ##
-##   7. Add $BLJ/script/blj_functions to bash shell environment        ##
-##   8. If $BLJ_SUP exists add $BLJ_SUP/script/blj_git_functions,      ##
-##      $BLJ_SUP/script/docker_functions to bash environment           ##
+##   1. Add env. variable $BLJ = BioLockJ installation directory       ##
+##   2. Add env. variable $BLJ_SCRIPT = ${BLJ}/script                  ##
+##   3. Add env. variable $BLJ_PROJ = ${BLJ}/pipelines                 ##
+##   4. Add env. variable $BLJ_META = ${HOME}/metadata if undefined    ##
+##   5. Add env. variable $DOCKER_LIB = ${BLJ}/docker_config           ##
+##   6. Add env. variable $AWS_LIB = ${BLJ}/aws_config                 ##
+##   7. Add env. variable $BLJ_SUP = blj_support directory             ##
+##   8. Add $BLJ_SCRIPT into the $USER $PATH                           ##
+##   9. Add $BLJ_SCRIPT/blj_functions to bash shell                    ##
 ##                                                                     ##
 #########################################################################
 
 export BLJ_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-[ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="$BLJ_SCRIPT:$PATH"
 export BLJ="$(dirname $BLJ_SCRIPT)"
-export EC2_HOME=/home/ec2-user
-export EFS="/mnt/efs"
-export EFS_CONFIG="$EFS/config"
-export EFS_DB="$EFS/db"
-export EFS_INPUT="$EFS/input"
-export EFS_META="$EFS/metadata"
-export EFS_PROJ="$EFS/pipelines"
-export EFS_PRIMER="$EFS/primer"
-export EFS_SCRIPT="$EFS/script"
-export MINICONDA_BIN="${HOME}/miniconda/bin"
+export BLJ_PROJ="${BLJ}/pipelines"
+export BLJ_LIB="${BLJ_SCRIPT}/blj_config"
+export DOCKER_LIB="${BLJ_SCRIPT}/docker_config"
+export AWS_LIB="${BLJ_SCRIPT}/aws_config"
 
-if [ "${BLJ}" == "$EFS" ]; then
-	[ -d "${MINICONDA_BIN}" ] && [ "${PATH/$MINICONDA_BIN}" == "${PATH}" ] && export PATH="${MINICONDA_BIN}:${PATH}"
-	export BLJ_CONFIG="${EFS_CONFIG}"
-	export BLJ_DB="${EFS_DB}"
-	export BLJ_INPUT="${EFS_INPUT}"
-	export BLJ_META="${EFS_META}"
-	export BLJ_PRIMER="${EFS_PRIMER}"
-	export BLJ_SUP="${BLJ}"
-	source "${BLJ_SCRIPT}/docker_functions"
-else
-	[ ! -d "${BLJ_META}" ] && export BLJ_META="${HOME}/metadata"
-	[ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support/script" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
-	[ -d "${BLJ_SUP}/script" ] && [ "${PATH/${BLJ_SUP}/script}" == "${PATH}" ] && export PATH="${BLJ_SUP}/script:$PATH"
-	[ -f "${BLJ_SUP}/script/blj_git_functions" ] && source "${BLJ_SUP}/script/blj_git_functions"
-	[ -f "${BLJ_SUP}/script/docker_functions" ] && source "${BLJ_SUP}/script/docker_functions"
-fi
-
-[ ! -d "$BLJ_PROJ" ] && export BLJ_PROJ="${BLJ}/pipelines"
-export DOCKER_FILE_PATH="${BLJ}/resources/docker"
-[ ${#DOCKER_HUB_USER} -eq 0 ] && export DOCKER_HUB_USER="biolockj"
+[ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="${BLJ_SCRIPT}:$PATH"
+[ ! -d "${BLJ_META}" ] && export BLJ_META="${HOME}/metadata"
+[ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support/script" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
+[ -d "${BLJ_SUP}/script" ] && [ "${PATH/${BLJ_SUP}/script}" == "${PATH}" ] && export PATH="${BLJ_SUP}/script:$PATH"
 
 source "${BLJ_SCRIPT}/blj_functions"

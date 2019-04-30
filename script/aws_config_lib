@@ -4,14 +4,15 @@
 ##  This script is used for AWS Config functions            ##
 ##                                                          ##
 ##############################################################
-. $BLJ/script/blj_config
+. ${BLJ}/script/blj_config
+. ${BLJ}/script/docker_config
 
 [ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config
 sheBang='#!/bin/bash'
 IS_NULL="IS_NULL"
-HN2_NUCL_DB="${EFS_DB}/chocophlan"
-HN2_PROT_DB="${EFS_DB}/uniref"
-RDP_DB="${EFS_DB}/rRNAClassifier.properties"
+HN2_NUCL_DB="${BLJ_DB}/chocophlan"
+HN2_PROT_DB="${BLJ_DB}/uniref"
+RDP_DB="${BLJ_DB}/rRNAClassifier.properties"
 DEFAULT_CONFIG="${BLJ}/resources/config/default/docker.properties"
 alias awsr="aws_report_config"
 alias awsrf="refresh_aws_cache"
@@ -118,7 +119,7 @@ clear_aws_cache() {
 # Param 2 - DB property name
 convert_db_prop() {
 	db=$(get_prop "${1}" "${2}")
-	[ "$db" != "${EFS_DB}" ] && convert_prop "${1}" "${2}"
+	[ "$db" != "${BLJ_DB}" ] && convert_prop "${1}" "${2}"
 }
 
 # Convert pipeline Config prop to AWS Config file property format in: $blj_aws_config

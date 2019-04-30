@@ -9,29 +9,34 @@ export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
 export BSH_PROF=~/.bash_profile
 export BLJ=/mnt/efs
+export BLJ_SCRIPT="${BLJ}/script"
+export BLJ_SUP="${BLJ}"
 
 alias ls="ls -lFh"
 alias rd="rm -rf"
 alias md5="openssl md5"
-alias rf="source $BSH_PROF"
+alias rf="source ${BSH_PROF}"
 alias ..="cd .."
 alias h="head -n 8"
 alias t="tail -n 8"
 alias f="find . -name"
-alias vib="vi $BSH_PROF"
-alias cab="cat $BSH_PROF"
+alias vib="vi ${BSH_PROF}"
+alias cab="cat ${BSH_PROF}"
 alias tlog="tail -1000 *.log"
 alias tlogf="tail -1000f *.log"
 alias dockls="docker images; docker container ls --all"
 alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 
+
 # Initialize bash environment
-[ -f "${BLJ}/script/aws_head_node_lib" ] && source "${BLJ}/script/aws_head_node_lib"
-[ ${#dockerUser} -gt 0 ] && export DOCKER_HUB_USER="${dockerUser}"
-[ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
-echo "AWS Profile loaded - Docker Account ID: $DOCKER_HUB_USER"
-cat $BSH_PROF
+source "${BLJ_SCRIPT}/blj_config"
+source "${AWS_LIB}"
+
+[ ${#dockerUser} -gt 0 ] && export DOCKER_ID="${dockerUser}"
+[ ! -f "$(get_docker_job_def_flag)" ] && build_docker_job_defs
+echo "AWS Profile loaded - Docker Account ID: $DOCKER_ID"
+cat "${BSH_PROF}"
 ######=========================================######
 ######   BioLockJ AWS ~/.bash_profile LOADED   ###### 
 ######=========================================######

@@ -4,9 +4,10 @@
 ##  This script is used for AWS core function + logic       ##
 ##                                                          ##
 ##############################################################
-. $BLJ/script/aws_config_lib
-. $BLJ/script/aws_clean_lib
-. $BLJ/script/aws_head_node_lib
+. ${BLJ}/script/aws_config_lib
+. ${BLJ}/script/aws_clean_lib
+. ${BLJ}/script/aws_head_node_lib
+. ${BLJ}/script/aws_upload_lib
 
 # Build Cloud-formation Stack
 build_stack() {

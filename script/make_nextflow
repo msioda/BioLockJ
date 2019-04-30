@@ -8,14 +8,13 @@
 ##                    substituting "_" for all "." characters                 ##
 ##                                                                            ##
 ################################################################################
-. $BLJ/script/blj_config
-. ${EFS_CONFIG}/aws_config
+. ${BLJ}/script/docker_config
+. ${AWS_LIB}
 
-AWS_DIR="${HOME}/.aws"
-[ ! -d "$AWS_DIR" ] && mkdir "$AWS_DIR" && echo "Created $AWS_DIR directory"
+[ ! -d "${EC2_AWS}" ] && mkdir "${EC2_AWS}" && echo "Created ${EC2_AWS} directory"
 
 buildAwsConfig() {
-	AWS_CONF="${AWS_DIR}/config"
+	AWS_CONF="${EC2_AWS}/config"
 	echo "Generating ${AWS_CONF} in the biolockj container"
 	echo "[default]" > "${AWS_CONF}"
 	echo "region = ${awsRegion}" >> "${AWS_CONF}"
@@ -37,8 +36,8 @@ buildAwsCredentials() {
 buildNexflowConfigDir() {
 	NF_DIR="${HOME}/.nextflow"
 	[ ! -d "${NF_DIR}" ] && mkdir "${NF_DIR}" && echo Created "${NF_DIR} directory"
-	echo "Copy ${EFS_CONFIG}/nextflow/${awsStack}/config to --> ${NF_DIR}"
-	cp "${EFS_CONFIG}/nextflow/${awsStack}/config" "${NF_DIR}"
+	echo "Copy $(get_ec2_nextflow_dir)/config to --> ${NF_DIR}"
+	cp "$(get_ec2_nextflow_dir)/config" "${NF_DIR}"
 	echo "Created --> Nextflow config: ${NF_DIR}/config"
 	cat "${NF_DIR}/config"
 }

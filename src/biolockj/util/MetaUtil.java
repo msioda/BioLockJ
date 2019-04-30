@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
 
 /**
@@ -171,10 +172,7 @@ public class MetaUtil {
 	 */
 	public static String getFileName() {
 		try {
-			if( metadataFile == null ) {
-				metadataFile = getMetadata();
-			}
-			if( metadataFile != null ) return metadataFile.getName();
+			if( getMetadata() != null ) return getMetadata().getName();
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class, "Error occurred accessing Config property: " + META_FILE_PATH, ex );
 			ex.printStackTrace();
@@ -238,23 +236,29 @@ public class MetaUtil {
 	 * Metadata file getter. This path changes as new versions are created by the BioModules.
 	 * 
 	 * @return Metadata file
-	 * @throws Exception if any errors occur
+	 * @throws Exception if errors occur
 	 */
 	public static File getMetadata() throws Exception {
 		if( metadataFile != null ) return metadataFile;
 		final String path = Config.getString( null, META_FILE_PATH );
 		if( path == null ) return null;
-		return Config.requireExistingFile( null, META_FILE_PATH );
+		if( DockerUtil.inDockerEnv() ) {
+			setFile( DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.CONTAINER_META_DIR ) );
+		} else {
+			setFile( new File( path ) );
+		}
+		return metadataFile;
 	}
 
 	/**
 	 * Return the metadata file path
 	 * 
 	 * @return String the metadata file path
+	 * @throws Exception if errors occur
 	 */
-	public static String getPath() {
-		if( metadataFile == null ) return "";
-		return metadataFile.getAbsolutePath();
+	public static String getPath() throws Exception {
+		if( getMetadata() == null ) return "";
+		return getMetadata().getAbsolutePath();
 	}
 
 	/**
@@ -380,7 +384,7 @@ public class MetaUtil {
 	 */
 	public static void refreshCache() throws Exception {
 		if( isUpdated() ) {
-			Log.info( MetaUtil.class, "Update metadata cache: " + metadataFile.getAbsolutePath() );
+			Log.info( MetaUtil.class, "Update metadata cache: " + getMetadata().getAbsolutePath() );
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
@@ -388,10 +392,10 @@ public class MetaUtil {
 				report();
 			}
 
-			reportedMetadata = metadataFile;
+			reportedMetadata = getMetadata();
 		} else {
 			Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
-				+ ( metadataFile == null ? "<NO_METADATA_PATH>": metadataFile.getAbsolutePath() ) );
+				+ ( getMetadata() == null ? "<NO_METADATA_PATH>": getMetadata().getAbsolutePath() ) );
 		}
 	}
 
@@ -462,7 +466,8 @@ public class MetaUtil {
 				Log.debug( MetaUtil.class,
 					"===> MetaUtil.setFile() not required, file already defined as " + metadataFile.getAbsolutePath() );
 			}
-		} else throw new Exception( "Must pass valid file to MetaUtil.setFile( NULL )" );
+			if( !file.isFile() ) throw new ConfigPathException( META_FILE_PATH, ConfigPathException.FILE );
+		} else throw new Exception( "Cannot pass NULL to MetaUtil.setFile( file )" );
 		metadataFile = file;
 	}
 
@@ -510,10 +515,10 @@ public class MetaUtil {
 
 	}
 
-	private static boolean isUpdated() {
-		final boolean foundMeta = metadataFile != null && metadataFile.exists();
+	private static boolean isUpdated() throws Exception {
+		final boolean foundMeta = getMetadata() != null;
 		final boolean foundNewReport = foundMeta && reportedMetadata != null
-			&& !reportedMetadata.getAbsolutePath().equals( metadataFile.getAbsolutePath() );
+			&& !reportedMetadata.getAbsolutePath().equals( getMetadata().getAbsolutePath() );
 		final boolean noReport = foundMeta && reportedMetadata == null;
 		return foundNewReport || noReport;
 	}
@@ -560,7 +565,7 @@ public class MetaUtil {
 	private static void report() throws Exception {
 		final String exId = getSampleIds().get( 0 );
 		Log.info( MetaUtil.class, META_SPACER );
-		Log.info( MetaUtil.class, "===> New Metadata file: " + metadataFile.getAbsolutePath() );
+		Log.info( MetaUtil.class, "===> New Metadata file: " + getMetadata().getAbsolutePath() );
 		Log.info( MetaUtil.class, "===> Sample IDs: " + getSampleIds() );
 		Log.info( MetaUtil.class, "===> Metadata fields: " + getFieldNames() );
 		Log.info( MetaUtil.class, "===> 1st Record: [" + exId + "]: " + getRecord( exId ) );

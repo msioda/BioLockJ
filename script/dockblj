@@ -52,21 +52,21 @@ blj_proj() {
 
 # Get Docker image - add port, entrypoint, anc command if launching GUI
 get_docker_img() {
-	cmd=$DOCKER_HUB_USER/biolockj_controller	
+	cmd=$(dock_id)/biolockj_controller	
 	$(has_param $launchGui) && cmd="-p 8080:3000 --entrypoint '/bin/bash' $cmd -c 'npm start'"
 	echo "${cmd}"
 }
 
 # Get mapped  Docker volumes
 get_volumes() {
-	vols="-v /var/run/docker.sock:/var/run/docker.sock -v $(blj_proj):${EFS_PROJ}:delegated"
+	vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v $(blj_proj):${EFS_PROJ}:delegated"
 	$(has_param $runAws) && "${vols} -v ${EC2_HOME}:${EC2_HOME} -v ${EFS}:${EFS}"
 	
 	if $(has_param $launchGui); then
-		vols="${vols} -v ${BLJ}/web_app/logs:/log:delegated -v ${BLJ}/resources/config/gui:${EFS_CONFIG} "
+		vols="${vols} -v ${BLJ}/web_app/logs:/log:delegated -v ${BLJ}/resources/config/gui:${BLJ_CONFIG} "
 	else
-		vols="${vols} -v $inputDir:${EFS_INPUT} -v $(dirname $config):${EFS_CONFIG}"
-		$(has_param $metaPath) && vols="${vols} -v $metaPath:${EFS_META}"
+		vols="${vols} -v $inputDir:${BLJ_INPUT} -v $(dirname $config):${BLJ_CONFIG}"
+		$(has_param $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}"
 	fi
 	
 	$(has_param $runDev) && $(has_param ${HOST_BLJ}) && vols="${vols} -v ${HOST_BLJ}:/app/biolockj"
