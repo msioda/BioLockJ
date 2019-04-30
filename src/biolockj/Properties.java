@@ -13,6 +13,7 @@ package biolockj;
 
 import java.io.*;
 import java.util.*;
+import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.DockerUtil;
 
@@ -88,12 +89,12 @@ public class Properties extends java.util.Properties {
 		Log.info( Properties.class,
 			"Import All Config Properties for --> Top Level Pipeline Properties File: " + propFile.getAbsolutePath() );
 		Properties defaultProps = null;
-		final File standConf = BioLockJUtil.getLocalFile( Constants.STANDARD_CONFIG_PATH );
+		final File standConf = getLocalConfigFile( Constants.STANDARD_CONFIG_PATH );
 		if( standConf != null && !regConf.contains( propFile ) ) {
 			defaultProps = readProps( standConf, null );
 		}
 
-		final File dockConf = DockerUtil.inDockerEnv() ? BioLockJUtil.getLocalFile( Constants.DOCKER_CONFIG_PATH )
+		final File dockConf = DockerUtil.inDockerEnv() ? getLocalConfigFile( Constants.DOCKER_CONFIG_PATH )
 			: null;
 		if( dockConf != null && !regConf.contains( dockConf ) ) {
 			defaultProps = readProps( dockConf, defaultProps );
@@ -125,7 +126,7 @@ public class Properties extends java.util.Properties {
 				final StringTokenizer st = new StringTokenizer( line, "=" );
 				if( st.countTokens() > 1 ) {
 					if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
-						return BioLockJUtil.getLocalFile( st.nextToken().trim() );
+						return getLocalConfigFile( st.nextToken().trim() );
 				}
 			}
 		} finally {
@@ -160,6 +161,23 @@ public class Properties extends java.util.Properties {
 
 		return null;
 	}
+	
+
+	/**
+	 * Return file for path after modifying if running in a Docker container and/or interpreting bash env vars.
+	 * 
+	 * @param path File path
+	 * @return Local File
+	 * @throws ConfigPathException if the local path
+	 */
+	public static File getLocalConfigFile( final String path ) throws ConfigPathException {
+		File file = new File( Config.replaceEnvVar( path ) );
+		if( DockerUtil.inDockerEnv() && !file.isFile() ) {
+			return Config.getConfigFile( path );
+		}
+		return file;
+	}
+
 
 	private static List<String> getListedModules( final File file ) throws Exception {
 		final List<String> modules = new ArrayList<>();

@@ -7,22 +7,15 @@
 ##  If profile exists: save backup wtih ~ appended to name (ex. $blj_profile~    ##
 ##                                                                               ##
 ###################################################################################
+. $BLJ/script/blj_functions
 
-export user_profile=~/.bash_profile
-[ ! -f "$user_profile" ] && user_profile=~/.bashrc
-[ ! -f "$user_profile" ] && user_profile=~/.profile
-[ ! -f "$user_profile" ] && user_profile=~/.bash_login
-[ ! -f "$user_profile" ] && user_profile=~/.zshenv
-[ ! -f "$user_profile" ] && user_profile=~/.zprofile
-[ ! -f "$user_profile" ] && user_profile=~/.zshrc
-[ ! -f "$user_profile" ] && user_profile=~/.zlogin
-
+user_profile=$(get_default_profile)
 bljDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ ! -f "$user_profile" ]; then
 	printf '%s\n' '#BioLockJ generated bash profile' > $user_profile
 	echo "    Created profile: $user_profile"
-else
+elif [ ! -x "$user_profile" ]; then
 	cp $user_profile $user_profile~
 	echo "    Saved backup:  $user_profile~"
 fi

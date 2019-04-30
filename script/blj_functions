@@ -101,6 +101,19 @@ current_pipeline() {
    fi
 }
 
+# Check for a default profile in the $USER $HOME dir
+get_default_profile() {
+	user_profile="${HOME}"/.bash_profile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.bashrc
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.profile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.bash_login
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zshenv
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zprofile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zshrc
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zlogin
+	[ -f "${user_profile}" ] && echo "${user_profile}"
+}
+
 # Exit script after sleeping 10 seconds because in some cases (Docker bash shells) exit command will close the terminal window.
 # In this case, the user can at least view the message before the window closes.
 # Param 1 Exit message

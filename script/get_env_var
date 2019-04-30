@@ -4,5 +4,9 @@
 ##  BioLockJ returns variables defined in the runtime shell environment.     ##
 ##                                                                           ##
 ###############################################################################
-source ~/.bash_profile
+. $BLJ/script/blj_functions
+
+[ $#2 -eq 2 ] && user_profile="${2}"
+[ ! -f "${user_profile}" ] && user_profile="$(get_default_profile)"
+[ -f "${user_profile}" ] && source "${user_profile}"
 echo BLJ_GET_ENV_VAR $(eval "echo ${1}")

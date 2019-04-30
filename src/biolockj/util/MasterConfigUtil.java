@@ -21,7 +21,7 @@ import biolockj.Log;
 /**
  * Simple utility containing String manipulation and formatting functions.
  */
-public class PropUtil {
+public class MasterConfigUtil {
 
 	/**
 	 * Return the MASTER config file.
@@ -42,7 +42,7 @@ public class PropUtil {
 	 * @throws Exception if runtime errors occur
 	 */
 	public static void sanitizeMasterConfig() throws Exception {
-		Log.info( PropUtil.class,
+		Log.info( MasterConfigUtil.class,
 			"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
 
 		if( DockerUtil.inAwsEnv() ) {
@@ -89,13 +89,13 @@ public class PropUtil {
 		}
 
 		if( !Log.doDebug() ) {
-			Log.info( PropUtil.class,
+			Log.info( MasterConfigUtil.class,
 				"To view the list of removed Config properties before MASTER config is sanitized in future runs, enable: "
 					+ Constants.LOG_LEVEL_PROPERTY + "=" + Constants.TRUE );
-			Log.info( PropUtil.class,
+			Log.info( MasterConfigUtil.class,
 				"To add DEBUG statements for only this utility class, add the property (this is a list property so multiple"
 					+ " class names could be provided - in this example, wee add a single class): "
-					+ Constants.LIMIT_DEBUG_CLASSES + "=" + PropUtil.class.getName() );
+					+ Constants.LIMIT_DEBUG_CLASSES + "=" + MasterConfigUtil.class.getName() );
 		}
 
 		usedProps.remove( Constants.INTERNAL_BLJ_MODULE );
@@ -104,15 +104,15 @@ public class PropUtil {
 		for( final String key: usedProps.keySet() ) {
 			final String val = usedProps.get( key );
 			if( val == null || val.trim().isEmpty() ) {
-				Log.debug( PropUtil.class, "Remove unused property from sanatized MASTER Config: " + key + "=" + val );
+				Log.debug( MasterConfigUtil.class, "Remove unused property from sanatized MASTER Config: " + key + "=" + val );
 			} else if( !key.startsWith( INTERNAL_PREFIX ) ) {
 				props.put( key, val );
 			}
 		}
 
-		Log.info( PropUtil.class, "The original version of project Config contained: "
+		Log.info( MasterConfigUtil.class, "The original version of project Config contained: "
 			+ Config.getInitialProperties().size() + " properties" );
-		Log.info( PropUtil.class, "The final version of MASTER Config contains: " + props.size() + " properties" );
+		Log.info( MasterConfigUtil.class, "The final version of MASTER Config contains: " + props.size() + " properties" );
 
 		saveMasterConfig( props );
 	}

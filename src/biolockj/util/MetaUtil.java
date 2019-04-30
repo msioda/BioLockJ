@@ -133,9 +133,7 @@ public class MetaUtil {
 			throw new Exception( "Metadata headers not found!  Please verify 1st column header is not missing from: "
 				+ getMetadata().getAbsolutePath() );
 
-		if( debug ) {
-			Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
-		}
+		//Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
 
 		return headers;
 	}
@@ -244,10 +242,11 @@ public class MetaUtil {
 	 * @throws Exception if any errors occur
 	 */
 	public static File getMetadata() throws Exception {
-		if( metadataFile != null ) return metadataFile;
-		if( Config.getString( null, META_FILE_PATH ) == null ) return null;
-		if( DockerUtil.inDockerEnv() )
-			return DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.CONTAINER_META_DIR );
+		if( metadataFile != null ) { 
+			return metadataFile;
+		}
+		String path = Config.getString( null, META_FILE_PATH );
+		if( path == null ) return null;
 		return Config.requireExistingFile( null, META_FILE_PATH );
 	}
 
@@ -351,6 +350,7 @@ public class MetaUtil {
 	 * @throws Exception if invalid Config properties are detected
 	 */
 	public static void initialize() throws Exception {
+		Log.info( MetaUtil.class, "Initialize MetaUtil" );
 		if( Config.getString( null, META_NULL_VALUE ) == null ) {
 			Config.setConfigProperty( META_NULL_VALUE, DEFAULT_NULL_VALUE );
 		}
@@ -392,7 +392,7 @@ public class MetaUtil {
 			}
 
 			reportedMetadata = metadataFile;
-		} else if( debug ) {
+		} else {
 			Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
 				+ ( metadataFile == null ? "<NO_METADATA_PATH>": metadataFile.getAbsolutePath() ) );
 		}
@@ -461,7 +461,7 @@ public class MetaUtil {
 	 */
 	public static void setFile( final File file ) throws Exception {
 		if( file != null ) {
-			if( debug && metadataFile != null && file.getAbsolutePath().equals( metadataFile.getAbsolutePath() ) ) {
+			if( metadataFile != null && file.getAbsolutePath().equals( metadataFile.getAbsolutePath() ) ) {
 				Log.debug( MetaUtil.class,
 					"===> MetaUtil.setFile() not required, file already defined as " + metadataFile.getAbsolutePath() );
 			}
@@ -478,12 +478,10 @@ public class MetaUtil {
 
 			if( rowNum == 0 ) {
 				metaId = id;
-				if( debug && isUpdated() ) {
-					Log.debug( MetaUtil.class, "Metadata Headers: " + row );
-				}
+				if( isUpdated() ) Log.debug( MetaUtil.class, "Metadata Headers: " + row );
 			}
 
-			if( rowNum++ == 1 && debug && isUpdated() ) {
+			if( rowNum++ == 1 && isUpdated() ) {
 				Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
 			}
 
@@ -516,9 +514,8 @@ public class MetaUtil {
 		final List<List<String>> data = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-			if( debug && isUpdated() ) {
-				Log.debug( MetaUtil.class, "===> Meta line: " + line );
-			}
+			if( isUpdated() ) Log.debug( MetaUtil.class, "===> Meta line: " + line );
+
 			final ArrayList<String> record = new ArrayList<>();
 			final String[] cells = line.split( Constants.TAB_DELIM, -1 );
 			for( final String cell: cells ) {
@@ -622,7 +619,6 @@ public class MetaUtil {
 	 */
 	protected static final String DEFAULT_NULL_VALUE = "NA";
 
-	private static boolean debug = false;
 	private static String META_SPACER = "************************************************************************";
 	private static File metadataFile = null;
 	private static final Map<String, List<String>> metadataMap = new HashMap<>();

@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.DatabaseModule;
 import biolockj.module.JavaModule;
@@ -32,7 +30,7 @@ import biolockj.module.seq.*;
  * DockerUtil for Docker integration.
  */
 public class DockerUtil {
-
+	
 	/**
 	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script
 	 * path parameters.
@@ -43,13 +41,14 @@ public class DockerUtil {
 	 */
 	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception {
 		final List<String> lines = new ArrayList<>();
-		Log.debug( DockerUtil.class, "Docker volumes:" + getDockerVolumes( module ) );
-		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module ) + getDockerEnvVars()
+		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module ) + getDockerEnvVars( module )
 			+ getDockerVolumes( module ) + getDockerImage( module );
+		Log.debug( DockerUtil.class, "Docker CMD:" + cmd );
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
 		lines.add( cmd );
 		lines.add( "}" + Constants.RETURN );
+		
 		return lines;
 	}
 
@@ -199,13 +198,13 @@ public class DockerUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static boolean inAwsEnv() throws Exception {
-		return Config.requireString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_AWS );
+		return RuntimeParamUtil.isAwsMode();
 	}
 
 	/**
-	 * Return TRUE if running in AWS (based on Config props).
+	 * Return TRUE if Java program passed {@value biolockj.util.RuntimeParamUtil#DOCKER_FLAG}.
 	 * 
-	 * @return TRUE if pipeline.env=aws
+	 * @return TRUE if Java running in Docker container
 	 */
 	public static boolean inDockerEnv() {
 		return RuntimeParamUtil.isDockerMode();
@@ -230,7 +229,7 @@ public class DockerUtil {
 				: module instanceof JavaModule ? JavaModule.class.getSimpleName(): className;
 	}
 
-	private static String getDockerEnvVars() {
+	private static String getDockerEnvVars( final BioModule module ) {
 		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
 
@@ -246,7 +245,7 @@ public class DockerUtil {
 		if( RuntimeParamUtil.getDockerHostMetaDir() != null ) {
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
 		}
-
+		
 		if( isJavaModule( module ) && RuntimeParamUtil.getDockerHostBLJ() != null ) {
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR;
 		}
@@ -295,7 +294,21 @@ public class DockerUtil {
 	private static boolean useBasicBashImg( final BioModule module ) {
 		return module instanceof PearMergeReads || module instanceof AwkFastaConverter || module instanceof Gunzipper;
 	}
+	
+//	private static List<String> DOCKER_CONFIG_DIRS = Arrays.asList( 
+//		new String[] { MetaUtil.META_FILE_PATH, Constants.INPUT_TRIM_SEQ_FILE, Constants.INPUT_DIRS } );
 
+	
+	/**
+	 * Docker container blj_support dir for dev support
+	 */
+	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
+	
+	/**
+	 * Docker container blj_support dir for dev support
+	 */
+	public static final String CONTAINER_BLJ_DIR = "/app/biolockj";
+	
 	/**
 	 * Docker container root user EFS directory
 	 */
@@ -305,16 +318,6 @@ public class DockerUtil {
 	 * Docker container root user DB directory
 	 */
 	public static final String AWS_EFS_DB = AWS_EFS + "/db";
-
-	/**
-	 * Docker container BioLockJ installation directory: {@value #CONTAINER_BLJ_DIR}
-	 */
-	public static final String CONTAINER_BLJ_DIR = "/app/biolockj";
-
-	/**
-	 * Docker container blj_support directory: {@value #CONTAINER_BLJ_SUP_DIR}
-	 */
-	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
 
 	/**
 	 * All containers mount the host {@link biolockj.Config} directory to the container volume:

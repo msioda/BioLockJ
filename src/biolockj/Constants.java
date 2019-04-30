@@ -17,6 +17,23 @@ package biolockj;
 public class Constants {
 
 	/**
+	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
+	 * Bash profile - may be ~/.bash_profile or ~/.bashrc or others
+	 */
+	public static final String USER_PROFILE = "pipeline.userProfile";
+	
+	/**
+	 * AWS bash profile name: {@value #AWS_BASH_PROFILE}
+	 */
+	public static final String AWS_BASH_PROFILE = "/root/.bash_profile";
+	
+	/**
+	 * Non-AWS Docker bash profile name: {@value #DOCKER_BASH_PROFILE}
+	 */
+	public static final String DOCKER_BASH_PROFILE = "/root/.bashrc";
+	
+	
+	/**
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();

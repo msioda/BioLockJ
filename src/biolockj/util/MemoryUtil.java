@@ -35,14 +35,14 @@ public class MemoryUtil {
 
 		if( total != prevTotal || free != prevFree ) {
 			// reportMemoryInBytes();
-			Log.info( MemoryUtil.class,
+			Log.debug( MemoryUtil.class,
 				msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB() + ", ∆Total: "
 					+ getChangeFormatted( total, prevTotal ) + ", %Free: " + getPercentageFreeFormatted() + ", Free: "
 					+ getFreeMemoryInMiB() + ", ∆Free: " + getChangeFormatted( free, prevFree ) );
 			prevTotal = total;
 			prevFree = free;
 		} else {
-			Log.info( MemoryUtil.class, msg + " no change" );
+			Log.debug( MemoryUtil.class, msg + " no change" );
 		}
 	}
 
@@ -86,7 +86,7 @@ public class MemoryUtil {
 	private static void reportInitMemory( final String msg ) {
 		prevFree = Runtime.getRuntime().freeMemory();
 		prevTotal = Runtime.getRuntime().totalMemory();
-		Log.info( MemoryUtil.class, msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB()
+		Log.debug( MemoryUtil.class, msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB()
 			+ ", %Free: " + getPercentageFreeFormatted() + ", Free: " + getFreeMemoryInMiB() );
 	}
 

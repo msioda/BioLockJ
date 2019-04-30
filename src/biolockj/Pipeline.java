@@ -48,7 +48,7 @@ public class Pipeline {
 		final boolean runScripts = hasScripts( module );
 
 		if( isJava && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
-			PropUtil.saveMasterConfig();
+			MasterConfigUtil.saveMasterConfig();
 		}
 
 		if( runScripts && !DockerUtil.inAwsEnv() ) {
@@ -85,7 +85,12 @@ public class Pipeline {
 	 * @return pipeline status (success or failed)
 	 */
 	public static String getStatus() {
-		return pipelineException == null ? Constants.SCRIPT_SUCCESS: Constants.SCRIPT_FAILURES;
+		if( pipelineException == null || getModules() == null || !getModules().isEmpty() ) return Constants.SCRIPT_FAILURES;
+		for( BioModule module: getModules() ) {
+			if( !ModuleUtil.isComplete( module ) ) return Constants.SCRIPT_FAILURES;
+		}
+
+		return Constants.SCRIPT_SUCCESS;
 	}
 
 	/**

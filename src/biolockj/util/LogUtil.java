@@ -15,12 +15,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.ScriptModule;
+import biolockj.*;
+import biolockj.module.*;
 
 /**
  * This util adds auxiliary log info to BioLockJ log file
@@ -38,13 +34,13 @@ public class LogUtil {
 			merge( cacheLog( getModuleLog( module ) ) );
 		}
 	}
-
+	
 	private static List<String> cacheLog( final File log ) throws Exception {
 		final List<String> cache = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( log );
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				if( !line.trim().isEmpty() && !getProfile().contains( line ) ) {
+				if( !line.trim().isEmpty() && !getProfileLines().contains( line ) ) {
 					cache.add( line );
 				}
 			}
@@ -60,15 +56,15 @@ public class LogUtil {
 			+ Constants.LOG_EXT );
 	}
 
-	private static List<String> getProfile() {
+	private static List<String> getProfileLines() {
 		if( profile.isEmpty() ) {
 			try {
-				final File bashProfile = new File( Config.requireString( null, USER_PROFILE ) );
+				final File bashProfile = new File( Config.requireString( null, Constants.USER_PROFILE ) );
 				if( bashProfile.exists() ) {
 					profile.addAll( cacheLog( bashProfile ) );
 				}
 			} catch( final Exception ex ) {
-				Log.warn( LogUtil.class, "Config property [ " + USER_PROFILE
+				Log.warn( LogUtil.class, "Config property [ " + Constants.USER_PROFILE
 					+ " ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile" );
 			}
 		}
@@ -93,11 +89,5 @@ public class LogUtil {
 		FileUtils.copyFile( tempLog, Log.getFile() );
 	}
 
-	/**
-	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
-	 * Bash users typically use ~/.bash_profile.
-	 */
-	public static final String USER_PROFILE = "pipeline.userProfile";
-
-	private static final List<String> profile = new ArrayList<>();
+	private static final List<String> profile = new ArrayList<>();	
 }

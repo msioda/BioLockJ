@@ -18,9 +18,7 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.report.r.R_CalculateStats;
@@ -176,6 +174,7 @@ public class BioLockJUtil {
 	 * @throws ConfigPathException if unable to determine $BLJ source
 	 */
 	public static File getBljDir() throws ConfigPathException {
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.CONTAINER_BLJ_DIR );
 		File f = null;
 		try {
 			f = getSource();
@@ -183,9 +182,28 @@ public class BioLockJUtil {
 			if( f.isFile() ) return f.getParentFile().getParentFile();
 			else if( f.isDirectory() && f.getName().equals( "bin" ) ) return f.getParentFile();
 		} catch( final Exception ex ) {
-			throw new ConfigPathException( f, "Unable to decode $BLJ environment variable." );
+			throw new ConfigPathException( f, "Unable to decode ${BLJ} environment variable: " + ex.getMessage() );
 		}
 		return null;
+	}
+	
+	/**
+	 * Return default ${BLJ_SUP} dir
+	 * @return blj_support dir
+	 * @throws ConfigPathException
+	 */
+	public static File getBljSupDir() throws ConfigPathException {
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.CONTAINER_BLJ_SUP_DIR );
+		File f = null;
+		try {
+			f = new File( getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
+			if( f.isDirectory() ) return f;
+		} catch( final Exception ex ) {
+			throw new ConfigPathException( f, "Unable to decode ${BLJ_SUP} environment variable: " + ex.getMessage() );
+		}
+		
+		return null;
+
 	}
 
 	/**
@@ -284,32 +302,6 @@ public class BioLockJUtil {
 			return dirs;
 		}
 		return Config.requireExistingDirs( null, Constants.INPUT_DIRS );
-	}
-
-	/**
-	 * Return directory for path after modifying if running in a Docker container and/or interpreting bash env vars.
-	 * 
-	 * @param path Directory path
-	 * @return Local Directory
-	 * @throws ConfigPathException if the local path is not found
-	 */
-	public static File getLocalDir( final String path ) throws ConfigPathException {
-		final File file = new File( Config.replaceEnvVar( path ) );
-		if( !file.isDirectory() ) throw new ConfigPathException( file, ConfigPathException.DIRECTORY );
-		return file;
-	}
-
-	/**
-	 * Return file for path after modifying if running in a Docker container and/or interpreting bash env vars.
-	 * 
-	 * @param path File path
-	 * @return Local File
-	 * @throws ConfigPathException if the local path is not found
-	 */
-	public static File getLocalFile( final String path ) throws ConfigPathException {
-		final File file = new File( Config.replaceEnvVar( path ) );
-		if( !file.isFile() ) throw new ConfigPathException( file, ConfigPathException.FILE );
-		return file;
 	}
 
 	/**
@@ -527,6 +519,39 @@ public class BioLockJUtil {
 	public static void setPipelineInputFiles( final List<File> files ) {
 		inputFiles = files;
 	}
+	
+
+	/**
+	 * Return the user shell profile
+	 * 
+	 * @return Shell profile 
+	 */
+	public static File getUserProfile() {
+		if( userProfile != null ) return userProfile;
+		File prof = null;
+		try {
+			if( DockerUtil.inAwsEnv() ) prof = getProfile( Constants.AWS_BASH_PROFILE );
+			if( prof == null && DockerUtil.inDockerEnv() ) prof = getProfile( Constants.DOCKER_BASH_PROFILE );
+			final String path = Config.getString( null, Constants.USER_PROFILE );
+			if( prof == null && path != null ) prof = getProfile( path );
+			if( prof == null ) prof = getProfile( Processor.submit( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
+		} catch( Exception ex ) {
+			Log.error( LogUtil.class, "Failed to find user shell profile ", ex );
+		}
+	
+		if( prof != null ) userProfile = prof;
+		return prof;
+	}
+	
+	private static File userProfile = null; 
+	
+	private static File getProfile( String path ) {
+		if( path != null ) {
+			File prof = new File( path );
+			if( prof.isFile() ) return prof;
+		}
+		return null;
+	}
 
 	private static void setPipelineInputFileTypes() throws Exception {
 		final Set<String> fileTypes = new HashSet<>();
@@ -664,4 +689,6 @@ public class BioLockJUtil {
 
 	private static List<File> inputFiles = new ArrayList<>();
 	private static final String VERSION_FILE = ".version";
+	private static final String DEFAULT_PROFILE_CMD = "get_default_profile";
+	private static final String BLJ_SUPPORT = "blj_support";
 }

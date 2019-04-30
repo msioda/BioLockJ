@@ -207,7 +207,6 @@ public class BioLockJ {
 	 * @throws Exception if errors occur
 	 */
 	protected static void initBioLockJ( final String[] args ) throws Exception {
-
 		MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 		RuntimeParamUtil.registerRuntimeParameters( args );
 		Config.initialize();
@@ -331,7 +330,7 @@ public class BioLockJ {
 		if( RuntimeParamUtil.doChangePassword() ) {
 			Log.info( BioLockJ.class, "Save encrypted password to: " + Config.getConfigFilePath() );
 			Email.encryptAndStoreEmailPassword();
-			PropUtil.saveMasterConfig();
+			MasterConfigUtil.saveMasterConfig();
 			return;
 		}
 
@@ -342,14 +341,14 @@ public class BioLockJ {
 				final Integer id = getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() );
 				Pipeline.runDirectModule( id );
 				reportDirectModuleSucess();
-				PropUtil.saveMasterConfig();
+				MasterConfigUtil.saveMasterConfig();
 				System.exit( 0 );
 			} catch( final Exception ex ) {
 				reportDirectModuleFailure( ex );
 				System.exit( 1 );
 			}
 		} else {
-			PropUtil.saveMasterConfig();
+			MasterConfigUtil.saveMasterConfig();
 			if( DockerUtil.inAwsEnv() ) {
 				NextflowUtil.startNextflow( Pipeline.getModules() );
 			}
@@ -360,7 +359,7 @@ public class BioLockJ {
 				removeTempFiles();
 			}
 
-			PropUtil.sanitizeMasterConfig();
+			MasterConfigUtil.sanitizeMasterConfig();
 			markProjectStatus( Constants.BLJ_COMPLETE );
 			info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
 		}
@@ -414,7 +413,7 @@ public class BioLockJ {
 		if( Log.getFile() != null ) {
 			Log.error( BioLockJ.class, Constants.LOG_SPACER );
 			Log.error( BioLockJ.class,
-				Constants.RETURN + "FATAL APPLICATION ERROR - " + ex.getMessage()
+				Constants.RETURN + "FATAL APPLICATION ERROR 1 - " + ex.getMessage()
 					+ ( args == null ? ""
 						: " -->" + Constants.RETURN + " Program args: "
 							+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) ),
@@ -426,7 +425,7 @@ public class BioLockJ {
 			Log.error( BioLockJ.class, Constants.LOG_SPACER );
 		} else {
 			System.out.println( Constants.LOG_SPACER );
-			System.out.println( Constants.RETURN + "FATAL APPLICATION ERROR - " + ex.getMessage()
+			System.out.println( Constants.RETURN + "FATAL APPLICATION ERROR 2 - " + ex.getMessage()
 				+ ( args == null ? ""
 					: " -->" + Constants.RETURN + " Program args: "
 						+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) ) );
@@ -470,63 +469,64 @@ public class BioLockJ {
 	 * @param fatalException Fatal application Exception
 	 */
 	private static void printErrorFileAndExitProgram( final String[] args, final Exception fatalException ) {
+		String hostPath = "<not_found>";
 		try {
 			String suffix = "";
 			try {
-				if( Config.pipelineName() != null ) {
-					suffix = Config.pipelineName();
-				}
+				
 				if( DockerUtil.isDirectMode() ) {
-					suffix += ( suffix.isEmpty() ? "": "_" ) + RuntimeParamUtil.getDirectModuleDir();
-				}
-
-				if( suffix.isEmpty() && RuntimeParamUtil.getConfigFile() != null ) {
+					suffix = RuntimeParamUtil.getDirectModuleDir();
+				} else if( Config.pipelineName() != null ) {
+					suffix = Config.pipelineName();
+				} else if( RuntimeParamUtil.getConfigFile() != null ) {
 					suffix = RuntimeParamUtil.getConfigFile().getName();
 				} else {
-					suffix = "Config_param_not_found";
+					suffix = "Config_undefined";
 				}
 			} catch( final Exception ex ) {
 				suffix = "Config_init_failed";
 			}
 
 			int index = 0;
-			final String prefix = ( DockerUtil.inDockerEnv() ? DockerUtil.CONTAINER_OUTPUT_DIR: "~" ) + File.separator;
-			File errFile = new File(
-				Config.replaceEnvVar( prefix + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT ) );
+			final String projDir = RuntimeParamUtil.getBaseDir().getAbsolutePath();
+			File errFile = new File( projDir + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT );
 			while( errFile.exists() ) {
-				errFile = new File( Config.replaceEnvVar( prefix + FATAL_ERROR_FILE_PREFIX + suffix + "_"
-					+ new Integer( ++index ).toString() + Constants.LOG_EXT ) );
+				errFile = new File( projDir + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + "_"
+					+ new Integer( ++index ).toString() + Constants.LOG_EXT );
 			}
-
-			Log.error( BioLockJ.class, Constants.LOG_SPACER );
-			Log.error( BioLockJ.class, "Pipeline failed before root directory or Log file was created!" );
-			Log.error( BioLockJ.class, Constants.LOG_SPACER );
+			hostPath = errFile.getAbsolutePath();
+			System.out.println( "projDir: " + projDir );
+			System.out.println( "Init errFile: " + hostPath );
+			if( DockerUtil.inDockerEnv() ) {
+				hostPath = hostPath.replace( projDir, RuntimeParamUtil.getDockerHostPipelineDir() );
+				System.out.println( "Docker env host path: " + hostPath );
+			}
+			
+			System.out.println( "Pipeline failed before root directory or Log file was created!" );
+			System.out.println( "For details see ERROR FILE: " + hostPath );
 			logFinalException( args, fatalException );
-
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
 			try {
 				for( final String[] m: Log.getMsgs() ) {
 					if( m[ 0 ].equals( Log.DEBUG ) ) {
-						Log.debug( BioLockJ.class, m[ 1 ] );
+						writer.write( Log.DEBUG + " " + m[ 1 ] + Constants.RETURN );
 					}
 					if( m[ 0 ].equals( Log.INFO ) ) {
-						Log.info( BioLockJ.class, m[ 1 ] );
+						writer.write( Log.INFO + " " + m[ 1 ] + Constants.RETURN );
 					}
 					if( m[ 0 ].equals( Log.WARN ) ) {
-						Log.warn( BioLockJ.class, m[ 1 ] );
+						writer.write( Log.WARN + " " + m[ 1 ] + Constants.RETURN );
 					}
 					if( m[ 0 ].equals( Log.ERROR ) ) {
-						Log.error( BioLockJ.class, m[ 1 ] );
+						writer.write( Log.ERROR + " " + m[ 1 ] + Constants.RETURN );
 					}
-
 				}
 			} finally {
 				writer.close();
 			}
 		} catch( final Exception ex ) {
-			System.out.println( "Unable to access Log or write to $USER $HOME directory!" );
+			System.out.println( "Unable to save error file write to target directory: " + hostPath );
 			System.out.println( getHelpInfo( null ) );
-
 		} finally {
 			pipelineShutDown( args );
 		}

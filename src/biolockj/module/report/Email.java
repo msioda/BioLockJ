@@ -26,7 +26,7 @@ import biolockj.Config;
 import biolockj.Log;
 import biolockj.Pipeline;
 import biolockj.module.BioModuleImpl;
-import biolockj.util.PropUtil;
+import biolockj.util.MasterConfigUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SummaryUtil;
 
@@ -206,7 +206,7 @@ public class Email extends BioModuleImpl {
 		Log.info( Email.class,
 			"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
 				+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
-				+ PropUtil.getMasterConfig().getAbsolutePath() );
+				+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
 	}
 
 	/**

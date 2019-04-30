@@ -61,6 +61,8 @@ RUN	apt-get clean && \
 #7.) Update  ~/.bashrc
 RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
 	echo 'alias goblj=blj_go' >> ~/.bashrc
+	
+RUN mkdir /app/blj_support
 		
 #8.) Start npm Command (Ready to open web-browser localhost:8080)
 WORKDIR $BLJ/web_app/

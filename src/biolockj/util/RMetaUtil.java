@@ -201,7 +201,7 @@ public final class RMetaUtil {
 		}
 
 		if( updateRConfig( module ) ) {
-			PropUtil.saveMasterConfig();
+			MasterConfigUtil.saveMasterConfig();
 		}
 
 		if( !DockerUtil.isDirectMode() ) {

@@ -11,9 +11,7 @@
  */
 package biolockj;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.StringTokenizer;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.ScriptModule;
@@ -63,13 +61,14 @@ public class Processor {
 	 * 
 	 * @param args Command args
 	 * @param label Log label
+	 * @return last line of process output
 	 * @throws Exception if errors occur in the Processor
 	 */
-	public void runJob( final String[] args, final String label ) throws Exception {
+	public String runJob( final String[] args, final String label ) throws Exception {
 		Log.info( getClass(), "[ " + label + " ]: " + getArgsAsString( args ) );
 		final Process p = Runtime.getRuntime().exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
-		String s;
+		String s = null;
 		Log.info( getClass(), "[ " + label + " ] process started..." );
 		while( ( s = br.readLine() ) != null ) {
 			if( !s.trim().isEmpty() ) {
@@ -79,6 +78,20 @@ public class Processor {
 		p.waitFor();
 		p.destroy();
 		Log.info( getClass(), "[ " + label + " ] complete" );
+		return s;
+	}
+	
+	/**
+	 * Run script that expects a single result
+	 * 
+	 * @param cmd Command
+	 * @param label Process Label
+	 * @return script output
+	 * @throws Exception if errors occur
+	 */
+	public static String submit( final String cmd, final String label ) throws Exception {
+		final String[] args = new String[] { "echo $("+cmd+")" };
+		return new Processor().runJob( args, label );
 	}
 
 	/**
@@ -86,23 +99,35 @@ public class Processor {
 	 * 
 	 * @param bashVar Bash variable name
 	 * @return Bash env variable value or null if not found (or undefined)
-	 * @throws Exception if errors occur running the script
 	 */
-	public static String getBashVar( final String bashVar ) throws Exception {
+	public static String getBashVar( final String bashVar ) {
 		if( bashVar == null ) return null;
-		final String var = bashVar.startsWith( "$" ) || bashVar.equals( "~" ) ? bashVar: "$" + bashVar;
-		final String[] args = new String[] { bashVarScript().getAbsolutePath(), var };
-		final Process p = Runtime.getRuntime().exec( args );
-		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 		String bashVarValue = null;
-		String s;
-		while( ( s = br.readLine() ) != null )
-			if( s.startsWith( BLJ_GET_ENV_VAR_KEY ) ) {
-				bashVarValue = s.replace( BLJ_GET_ENV_VAR_KEY, "" ).trim();
-			}
-		p.waitFor();
-		p.destroy();
+		try {
+			final String var = bashVar.startsWith( "$" ) || bashVar.equals( "~" ) ? bashVar: "$" + bashVar;
+			Process  p = Runtime.getRuntime().exec( bashVarArgs( var ) );
+			final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
+			String s = null;
+			while( ( s = br.readLine() ) != null )
+				if( s.startsWith( BLJ_GET_ENV_VAR_KEY ) ) 
+					bashVarValue = s.replace( BLJ_GET_ENV_VAR_KEY, "" ).trim();
+			p.waitFor();
+			p.destroy();
+		} catch( Exception ex ) {
+			Log.warn( Processor.class, "Problem occurred trying to convert bash env. variable: " + bashVar + " ---> " + ex.getMessage() );
+			ex.printStackTrace();
+		}
+		if( bashVarValue == null ) Log.warn( Processor.class, "Bash env variable: " + bashVar + " not found" );
+		if( bashVarValue != null && bashVarValue.trim().isEmpty() ) bashVarValue = null;
 		return bashVarValue;
+	}
+	
+	private static String[] bashVarArgs( final String bashVar ) throws Exception {
+		File profile = BioLockJUtil.getUserProfile();
+		if( profile != null ) {
+			return new String[] { bashVarScript().getAbsolutePath(), bashVar, profile.getAbsolutePath() };
+		}
+		return new String[] { bashVarScript().getAbsolutePath(), bashVar };
 	}
 
 	/**
@@ -164,7 +189,7 @@ public class Processor {
 		new Processor().runJob( args, label );
 	}
 
-	private static File bashVarScript() throws Exception {
+	private static File bashVarScript() throws ConfigPathException  {
 		final File script = new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR
 			+ File.separator + BLJ_GET_ENV_VAR_SCRIPT );
 		if( script.isFile() ) return script;
@@ -173,9 +198,7 @@ public class Processor {
 
 	private static String getArgsAsString( final String[] args ) {
 		final StringBuffer sb = new StringBuffer();
-		for( final String arg: args ) {
-			sb.append( arg + " " );
-		}
+		for( final String arg: args ) sb.append( arg + " " );
 		return sb.toString();
 	}
 

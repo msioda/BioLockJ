@@ -198,7 +198,6 @@ public class OtuUtil {
 	 * @return boolean TRUE if file is an OTU count file
 	 * @throws Exception if errors occur
 	 */
-	@SuppressWarnings("unused")
 	public static boolean isOtuFile( final File file ) throws Exception {
 		final String name = file.getName();
 		if( name.contains( "_" + Constants.OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) ) {

@@ -13,14 +13,10 @@ package biolockj.module.report.otu;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Log;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.util.BioLockJUtil;
 import biolockj.util.OtuUtil;
 
 /**
@@ -56,8 +52,7 @@ public abstract class OtuCountModule extends JavaModuleImpl {
 	 */
 	protected boolean isOtuModule( final BioModule module ) {
 		try {
-			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
-				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+			final File[] files = module.getOutputDir().listFiles();
 
 			for( final File f: files ) {
 				if( OtuUtil.isOtuFile( f ) ) return true;
