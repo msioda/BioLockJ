@@ -35,7 +35,7 @@ public class Metaphlan2Parser extends ParserModuleImpl {
 	 * count.
 	 * </ol>
 	 * <p>
-	 * Sample Metaphlan2 report line (head 7A_1_reported.tsv) :<br>
+	 * Sample Metaphlan2 report line (head 7A_reported.tsv) :<br>
 	 * #SampleID Metaphlan22_Analysis #clade_name relative_abundance coverage average_genome_length_in_the_clade
 	 * estimated_number_of_reads_from_the_clade k__Bacteria|p__Bacteroidetes 14.68863 0.137144143537 4234739 580770
 	 */

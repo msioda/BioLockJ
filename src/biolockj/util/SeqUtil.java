@@ -279,19 +279,21 @@ public class SeqUtil {
 					+ fileNameCol + " in: " + MetaUtil.getPath() );
 				return null;
 			}
-
-			// trim files extensions: .gz | .fasta | .fastq
-			if( isGzipped( id ) ) {
-				id = id.substring( 0, id.length() - 3 );
+			
+			// trim directional suffix
+			if( !isMultiplexed() && fwReadSuffix != null && id.indexOf( fwReadSuffix ) > 0 ) {
+				id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
 			}
+
+			
 			if( id.toLowerCase().endsWith( "." + Constants.FASTA )
 				|| id.toLowerCase().endsWith( "." + Constants.FASTQ ) ) {
 				id = id.substring( 0, id.length() - 6 );
 			}
 
-			// trim directional suffix
-			if( !isMultiplexed() && fwReadSuffix != null && id.indexOf( fwReadSuffix ) > 0 ) {
-				id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
+			// trim files extensions: .gz | .fasta | .fastq
+			if( isGzipped( id ) ) {
+				id = id.substring( 0, id.length() - 3 );
 			}
 
 			// trim user defined file prefix and/or suffix patterns

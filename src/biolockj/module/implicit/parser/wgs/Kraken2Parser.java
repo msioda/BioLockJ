@@ -36,7 +36,7 @@ public class Kraken2Parser extends ParserModuleImpl {
 	 * <li>Add the {@link biolockj.node.wgs.KrakenNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
 	 * </ol>
 	 * <p>
-	 * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
+	 * Sample Kraken report line (head 7A_reported.tsv) :<br>
 	 * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales 20094
 	 */
 	@Override

@@ -38,7 +38,7 @@ public class RdpParser extends ParserModuleImpl {
 	 * <li>Add the {@link biolockj.node.r16s.RdpNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
 	 * </ol>
 	 * <p>
-	 * Sample QIIME report line (head 7A_1_reported.tsv):<br>
+	 * Sample QIIME report line (head 7A_reported.tsv):<br>
 	 * FCABK7W:1:2105:21787:12788#/1 Root rootrank 1.0 Bacteria domain 1.0 Firmicutes phylum 1.0 Clostridia class 1.0
 	 * Clostridiales order 1.0 Ruminococcaceae family 1.0 Faecalibacterium genus 1.0
 	 */

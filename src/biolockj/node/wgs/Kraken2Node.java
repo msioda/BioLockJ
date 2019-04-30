@@ -19,7 +19,7 @@ import biolockj.node.OtuNodeImpl;
  * represent multiple reads since the estimated_number_of_reads_from_the_clade column is used to approximate the number
  * of reads with the given OTU in the sample.
  * <p>
- * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
+ * Sample Kraken report line (head 7A_reported.tsv) :<br>
  * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales 20094
  */
 public class Kraken2Node extends OtuNodeImpl {
