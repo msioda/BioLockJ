@@ -501,7 +501,19 @@ Resources:
 
             - runuser -l  ec2-user -c 'echo "export PATH=/home/ec2-user/miniconda/bin:$PATH" >> ~/.bashrc'
 
-            - runuser -l  ec2-user -c 'mkdir /home/ec2-user/.aws'
+            - runuser -l  ec2-user -c 'mkdir -p /mnt/efs/config/nextflow'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/db'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/input'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/metadata'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/pipelines'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/primer'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/script'
 
             --==MYBOUNDARY==--
     Metadata:
@@ -568,6 +580,19 @@ Resources:
 
             - runuser -l  ec2-user -c 'mkdir /home/ec2-user/.aws'
 
+            - runuser -l  ec2-user -c 'mkdir -p /mnt/efs/config/nextflow'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/db'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/input'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/metadata'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/pipelines'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/primer'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/script'
 
             --==MYBOUNDARY==--
     Metadata:
