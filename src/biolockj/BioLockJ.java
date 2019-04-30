@@ -98,7 +98,7 @@ public class BioLockJ {
 	 * @param args - String[] runtime parameters passed to the Java program when launching BioLockJ
 	 */
 	public static void main( final String[] args ) {
-		System.out.println( "Starting BioLockj..." );
+		System.out.println( "Starting BioLockj..." + Constants.APP_START_TIME );
 		try {
 			initBioLockJ( args );
 		} catch( final Exception ex ) {
