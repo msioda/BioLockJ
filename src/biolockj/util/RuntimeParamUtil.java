@@ -30,24 +30,6 @@ public class RuntimeParamUtil {
 	public static boolean doChangePassword() {
 		return params.get( PASSWORD_FLAG ) != null;
 	}
-	
-	/**
-	 * Runtime property getter for Docker host BioLockJ dir
-	 * 
-	 * @return Host {@value #HOST_BLJ} directory
-	 */
-	public static File getDockerHostBLJ() {
-		return params.get( HOST_BLJ ) == null ? null: new File( params.get( HOST_BLJ ) );
-	}
-
-	/**
-	 * Runtime property getter for Docker host blj_support dir
-	 * 
-	 * @return Host {@value #HOST_BLJ_SUP} directory
-	 */
-	public static File getDockerHostBLJ_SUP() {
-		return params.get( HOST_BLJ_SUP ) == null ? null: new File( params.get( HOST_BLJ_SUP ) );
-	}
 
 	/**
 	 * Return TRUE if runtime parameters indicate attempt to restart pipeline
@@ -128,7 +110,34 @@ public class RuntimeParamUtil {
 	 * @return Pipeline directory dir
 	 */
 	public static File getDirectPipelineDir() {
-		return params.get( DIRECT_PIPELINE_DIR ) == null ? null : new File( params.get( DIRECT_PIPELINE_DIR ) );
+		return params.get( DIRECT_PIPELINE_DIR ) == null ? null: new File( params.get( DIRECT_PIPELINE_DIR ) );
+	}
+
+	/**
+	 * Runtime property getter for Docker host BioLockJ dir
+	 * 
+	 * @return Host {@value #HOST_BLJ} directory
+	 */
+	public static File getDockerHostBLJ() {
+		return params.get( HOST_BLJ ) == null ? null: new File( params.get( HOST_BLJ ) );
+	}
+
+	/**
+	 * Runtime property getter for Docker host blj_support dir
+	 * 
+	 * @return Host {@value #HOST_BLJ_SUP} directory
+	 */
+	public static File getDockerHostBLJ_SUP() {
+		return params.get( HOST_BLJ_SUP ) == null ? null: new File( params.get( HOST_BLJ_SUP ) );
+	}
+
+	/**
+	 * Runtime property getter for Docker host config dir
+	 * 
+	 * @return Host directory mapped to config volume
+	 */
+	public static String getDockerHostConfigDir() {
+		return params.get( HOST_CONFIG_DIR );
 	}
 
 	/**
@@ -166,18 +175,7 @@ public class RuntimeParamUtil {
 	public static String getDockerHostPipelineDir() {
 		return params.get( HOST_PIPELINE_DIR );
 	}
-	
-	/**
-	 * Runtime property getter for Docker host config dir
-	 * 
-	 * @return Host directory mapped to config volume
-	 */
-	public static String getDockerHostConfigDir() {
-		return params.get( HOST_CONFIG_DIR );
-	}
 
-	
-	
 	/**
 	 * Get Docker runtime arguments passed to BioLockJ from dockblj script.<br>
 	 * These are used to to populate BLJ_OPTIONS in Docker java_module scripts.
@@ -187,12 +185,14 @@ public class RuntimeParamUtil {
 	public static String getDockerJavaModuleParams() {
 		String javaModArgs = "";
 		for( final String key: params.keySet() ) {
-			if( key.equals( CONFIG_FLAG ) || key.equals( RESTART_FLAG ) || key.equals( BASE_DIR_FLAG ) || key.equals( PASSWORD_FLAG ) ) {
+			if( key.equals( CONFIG_FLAG ) || key.equals( RESTART_FLAG ) || key.equals( BASE_DIR_FLAG )
+				|| key.equals( PASSWORD_FLAG ) ) {
 				continue;
 			} else if( key.equals( HOST_PIPELINE_DIR ) ) {
 				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + BASE_DIR_FLAG + " " + params.get( key );
 			} else if( key.equals( HOST_CONFIG_DIR ) ) {
-				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + CONFIG_FLAG + " " + params.get( key ) + getConfigFile().getName();
+				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + CONFIG_FLAG + " " + params.get( key )
+					+ getConfigFile().getName();
 			} else {
 				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + key;
 				javaModArgs += params.get( key ).equals( Constants.TRUE ) ? "": " " + params.get( key );
@@ -237,7 +237,16 @@ public class RuntimeParamUtil {
 	 * @return File directory path
 	 */
 	public static File getRestartDir() {
-		return params.get( RESTART_FLAG ) == null ? null : new File( params.get( RESTART_FLAG ) );
+		return params.get( RESTART_FLAG ) == null ? null: new File( params.get( RESTART_FLAG ) );
+	}
+
+	/**
+	 * Return TRUE if runtime parameter {@value #DOCKER_FLAG} was found
+	 * 
+	 * @return boolean
+	 */
+	public static boolean isAwsMode() {
+		return params.get( AWS_FLAG ) != null;
 	}
 
 	/**
@@ -248,16 +257,6 @@ public class RuntimeParamUtil {
 	public static boolean isDockerMode() {
 		return params.get( DOCKER_FLAG ) != null;
 	}
-	
-	/**
-	 * Return TRUE if runtime parameter {@value #DOCKER_FLAG} was found
-	 * 
-	 * @return boolean
-	 */
-	public static boolean isAwsMode() {
-		return params.get( AWS_FLAG ) != null;
-	}
-	
 
 	/**
 	 * Print the runtime args to System.out or using the Logger based on useSysOut parameter.
@@ -320,7 +319,7 @@ public class RuntimeParamUtil {
 
 		validateParams();
 	}
-	
+
 	private static File assignDirectPipelineDir() throws Exception {
 		Log.info( RuntimeParamUtil.class,
 			"Separating pipeline dir name and module name from: \"" + DIRECT_FLAG + "\" " + getDirectModuleDir() );
@@ -342,8 +341,9 @@ public class RuntimeParamUtil {
 
 	private static void assignLastParam( final String param ) throws Exception {
 		if( param.equals( BASE_DIR_FLAG ) || param.equals( CONFIG_FLAG ) || param.equals( RESTART_FLAG )
-			|| param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG ) || param.equals( HOST_BLJ ) || param.equals( HOST_BLJ_SUP ) 
-			|| param.equals( HOST_HOME_USER_DIR ) || param.equals( INPUT_DIR_FLAG ) || param.equals( META_DIR_FLAG ) )
+			|| param.equals( DIRECT_FLAG ) || param.equals( PASSWORD_FLAG ) || param.equals( HOST_BLJ )
+			|| param.equals( HOST_BLJ_SUP ) || param.equals( HOST_HOME_USER_DIR ) || param.equals( INPUT_DIR_FLAG )
+			|| param.equals( META_DIR_FLAG ) )
 			throw new Exception( "Missing argument value after paramter: \"" + param + "\"" );
 
 		if( !params.keySet().contains( CONFIG_FLAG ) && !params.keySet().contains( RESTART_FLAG )
@@ -424,8 +424,10 @@ public class RuntimeParamUtil {
 		params.put( HOST_PIPELINE_DIR, params.get( BASE_DIR_FLAG ) );
 		params.put( HOST_CONFIG_DIR, getConfigFile().getParentFile().getAbsolutePath() );
 		params.put( BASE_DIR_FLAG, DockerUtil.CONTAINER_OUTPUT_DIR );
-		
-		if( doRestart() ) params.put( RESTART_FLAG, DockerUtil.CONTAINER_OUTPUT_DIR + File.separator + getRestartDir().getName() );
+
+		if( doRestart() ) {
+			params.put( RESTART_FLAG, DockerUtil.CONTAINER_OUTPUT_DIR + File.separator + getRestartDir().getName() );
+		}
 	}
 
 	private static String[] simplifyArgs( final String[] args ) {
@@ -459,10 +461,9 @@ public class RuntimeParamUtil {
 		if( !extraParams.isEmpty() ) throw new Exception( "Too many runtime parameters found for command [ biolockj ]. "
 			+ RETURN + "Extra paramaters = { " + BioLockJUtil.getCollectionAsString( extraParams ) + " }" + RETURN );
 
-		if( isDockerMode() && getDockerHostInputDir() == null ) {
+		if( isDockerMode() && getDockerHostInputDir() == null )
 			throw new Exception( "Docker host input directory enviroment variable must be passed in Docker mode:"
 				+ INPUT_DIR_FLAG + RETURN + RETURN + "PROGRAM TERMINATED!" );
-		}
 	}
 
 	private static void verifyBaseDir() throws Exception {
@@ -474,6 +475,11 @@ public class RuntimeParamUtil {
 	}
 
 	/**
+	 * {@link biolockj.Config} AWS end parameter switch: {@value #AWS_FLAG}
+	 */
+	protected static final String AWS_FLAG = "-a";
+
+	/**
 	 * Pipeline parent directory file-path runtime parameter switch: {@value #BASE_DIR_FLAG}
 	 */
 	protected static final String BASE_DIR_FLAG = "-b";
@@ -482,11 +488,6 @@ public class RuntimeParamUtil {
 	 * {@link biolockj.Config} file path runtime parameter switch: {@value #CONFIG_FLAG}
 	 */
 	protected static final String CONFIG_FLAG = "-c";
-	
-	/**
-	 * {@link biolockj.Config} AWS end parameter switch: {@value #AWS_FLAG}
-	 */
-	protected static final String AWS_FLAG = "-a";
 
 	/**
 	 * Direct mode runtime parameter switch: {@value #DIRECT_FLAG}
@@ -535,14 +536,13 @@ public class RuntimeParamUtil {
 	 */
 	protected static final String RESTART_FLAG = "-r";
 
-	private static List<String> ARGS = Arrays.asList( 
-		new String[] { RESTART_FLAG, PASSWORD_FLAG, META_DIR_FLAG, INPUT_DIR_FLAG,
-			HOST_HOME_USER_DIR, DIRECT_FLAG, CONFIG_FLAG, BASE_DIR_FLAG, HOST_BLJ_SUP, HOST_BLJ } );
+	private static List<String> ARGS = Arrays.asList( new String[] { RESTART_FLAG, PASSWORD_FLAG, META_DIR_FLAG,
+		INPUT_DIR_FLAG, HOST_HOME_USER_DIR, DIRECT_FLAG, CONFIG_FLAG, BASE_DIR_FLAG, HOST_BLJ_SUP, HOST_BLJ } );
 
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
 	private static final List<String> extraParams = new ArrayList<>();
-	private static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
 	private static final String HOST_CONFIG_DIR = "--host_configDir";
+	private static final String HOST_PIPELINE_DIR = "--host_pipelineDir";
 	private static final Map<String, String> params = new HashMap<>();
 	private static final String RETURN = Constants.RETURN;
 	private static boolean useSystemOut = false;

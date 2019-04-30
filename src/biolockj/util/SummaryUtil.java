@@ -510,7 +510,8 @@ public class SummaryUtil {
 		if( module == null ) {
 			sb.append( getFooter() );
 		} else {
-			Log.info( SummaryUtil.class, "Update BioModule summary [ " + module.getClass().getName() + " ] " + summaryFile.getAbsolutePath() );
+			Log.info( SummaryUtil.class,
+				"Update BioModule summary [ " + module.getClass().getName() + " ] " + summaryFile.getAbsolutePath() );
 			Integer modNum = 0;
 			if( !summaryFile.exists() ) {
 				sb.append( getHeading() );
@@ -520,15 +521,18 @@ public class SummaryUtil {
 			}
 
 			String gap = "  ";
-			if( modNum.toString().length() == 2 ) gap += " ";
-			String modLabel = getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName() ;
-			String runtime = getLabel( RUN_TIME ) + gap + getModuleRunTime( module );
+			if( modNum.toString().length() == 2 ) {
+				gap += " ";
+			}
+			final String modLabel = getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName();
+			final String runtime = getLabel( RUN_TIME ) + gap + getModuleRunTime( module );
 			sb.append( modLabel + RETURN );
 			sb.append( runtime + RETURN );
-			
+
 			final String summary = module.getSummary();
 			if( summary != null && !summary.isEmpty() ) {
-				sb.append( getTitleSpacer( Math.max( modLabel.length(), runtime.length() ) ) + RETURN + summary + ( summary.endsWith( RETURN ) ? "": RETURN ) );
+				sb.append( getTitleSpacer( Math.max( modLabel.length(), runtime.length() ) ) + RETURN + summary
+					+ ( summary.endsWith( RETURN ) ? "": RETURN ) );
 			}
 			sb.append( SPACER_2X + RETURN );
 		}
@@ -718,10 +722,12 @@ public class SummaryUtil {
 	private static File getTempFile() {
 		return new File( Config.pipelinePath() + File.separator + TEMP_SUMMARY_FILE );
 	}
-	
+
 	private static String getTitleSpacer( final int len ) {
 		String spacer = "";
-		for( int i=0; i< len; i++ )  spacer += "-";
+		for( int i = 0; i < len; i++ ) {
+			spacer += "-";
+		}
 		return spacer;
 	}
 

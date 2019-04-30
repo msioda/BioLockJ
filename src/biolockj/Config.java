@@ -49,6 +49,23 @@ public class Config {
 	}
 
 	/**
+	 * Get Config file path - update for Docker env or bash env var references as needed.
+	 * 
+	 * @param path Runtime arg or Config property path
+	 * @return Local File
+	 * @throws ConfigPathException if errors occur due to invalid file path
+	 */
+	public static File getConfigFile( final String path ) throws ConfigPathException {
+		final String newPath = DockerUtil.inDockerEnv()
+			? DockerUtil.getDockerVolumePath( path, DockerUtil.CONTAINER_CONFIG_DIR )
+			: Config.replaceEnvVar( path );
+		final File configFile = new File( newPath );
+		if( !configFile.isFile() ) throw new ConfigPathException( configFile,
+			"Config file [ " + path + " ] --> converted to file that does not exist: " + newPath );
+		return configFile;
+	}
+
+	/**
 	 * Gets the configuration file extension (often ".properties")
 	 *
 	 * @return Config file extension
@@ -404,58 +421,6 @@ public class Config {
 	public static String pipelinePath() {
 		return getPipelineDir().getAbsolutePath();
 	}
-	
-	private static String stripBashMarkUp( final String bashVar ) {
-		if( bashVar != null && bashVar.length() > 3) 
-			return bashVar.substring( 2, bashVar.length() - 1 );
-		return bashVar;
-	}
-	
-	private static String getBashVal( final String bashVar ) {
-		try {
-			String bashVal = props == null ? null : props.getProperty( stripBashMarkUp( bashVar ) );
-			if( bashVal != null && !bashVal.trim().isEmpty() ) return bashVal;
-			
-			if( bashVar.equals( BLJ_BASH_VAR ) ) { 
-				File blj = BioLockJUtil.getBljDir();
-				if( blj != null && blj.isDirectory() ) {
-					return blj.getAbsolutePath();
-				}
-			}
-			else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) { 
-				File bljSup = BioLockJUtil.getBljSupDir();
-				if( bljSup != null && bljSup.isDirectory() ) {
-					return bljSup.getAbsolutePath();
-				}
-			}
-
-			bashVal = Processor.getBashVar( bashVar );
-			if( bashVal != null ) return bashVal;
-
-			Log.warn( Config.class, "Bash env. var [ " + bashVar + " ] not found" );
-			
-		} catch( Exception ex ) {
-			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar );
-		}
-		return bashVar;
-	}
-	
-	/**
-	 * Get Config file path - update for Docker env or bash env var references as needed.
-	 * 
-	 * @param path Runtime arg or Config property path
-	 * @return Local File
-	 * @throws ConfigPathException if errors occur due to invalid file path
-	 */
-	public static File getConfigFile( String path ) throws ConfigPathException {
-		final String newPath = DockerUtil.inDockerEnv()
-			? DockerUtil.getDockerVolumePath( path, DockerUtil.CONTAINER_CONFIG_DIR ) 
-			: Config.replaceEnvVar( path );
-		final File configFile = new File( newPath );
-		if( !configFile.isFile() ) 
-			throw new ConfigPathException( configFile, "Config file [ " + path + " ] --> converted to file that does not exist: " + newPath );
-		return configFile;
-	}
 
 	/**
 	 * Interpret env variable if included in the arg string, otherwise return the arg.
@@ -476,17 +441,17 @@ public class Config {
 
 			while( hasEnvVar( val ) ) {
 				final String bashVar = val.substring( val.indexOf( "${" ), val.indexOf( "}" ) + 1 );
-				Log.debug( Config.class, "Attempting to update [ " + arg + 
-					" ] by replacing environment variable (length=" + bashVar.length() + ") --> " + bashVar );
+				Log.debug( Config.class, "Attempting to update [ " + arg
+					+ " ] by replacing environment variable (length=" + bashVar.length() + ") --> " + bashVar );
 				final String bashVal = getBashVal( bashVar );
 				if( bashVal != null && bashVal.equals( bashVar ) ) return arg;
 				val = val.replace( bashVar, bashVal );
-				Log.debug( Config.class, "Found env variable [ " + bashVar + 
-					"= " + bashVal + "  ] (length=" + bashVal.length() + ") | UPDATED arg val --> " + val );
+				Log.debug( Config.class, "Found env variable [ " + bashVar + "= " + bashVal + "  ] (length="
+					+ bashVal.length() + ") | UPDATED arg val --> " + val );
 			}
 			Log.info( Config.class, "--------> Bash Var Converted [ " + arg + " ] --> " + val );
 			return val;
-		} catch( Exception ex ) {
+		} catch( final Exception ex ) {
 			Log.warn( Config.class, "Failed to convert arg \"" + arg + "\"" + ex.getMessage() );
 		}
 		return arg;
@@ -773,7 +738,7 @@ public class Config {
 		while( en.hasMoreElements() ) {
 			final String key = en.nextElement().toString();
 			String val = properties.getProperty( key );
-			//if( !DockerUtil.inDockerEnv() ) val = replaceEnvVar( val );
+			// if( !DockerUtil.inDockerEnv() ) val = replaceEnvVar( val );
 			val = replaceEnvVar( val );
 			Log.debug( Properties.class, key + " = " + val );
 			convertedProps.put( key, val );
@@ -813,6 +778,30 @@ public class Config {
 		return map;
 	}
 
+	private static String getBashVal( final String bashVar ) {
+		try {
+			String bashVal = props == null ? null: props.getProperty( stripBashMarkUp( bashVar ) );
+			if( bashVal != null && !bashVal.trim().isEmpty() ) return bashVal;
+
+			if( bashVar.equals( BLJ_BASH_VAR ) ) {
+				final File blj = BioLockJUtil.getBljDir();
+				if( blj != null && blj.isDirectory() ) return blj.getAbsolutePath();
+			} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
+				final File bljSup = BioLockJUtil.getBljSupDir();
+				if( bljSup != null && bljSup.isDirectory() ) return bljSup.getAbsolutePath();
+			}
+
+			bashVal = Processor.getBashVar( bashVar );
+			if( bashVal != null ) return bashVal;
+
+			Log.warn( Config.class, "Bash env. var [ " + bashVar + " ] not found" );
+
+		} catch( final Exception ex ) {
+			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar );
+		}
+		return bashVar;
+	}
+
 	/**
 	 * Parse property value as integer
 	 *
@@ -850,20 +839,25 @@ public class Config {
 			|| val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
 	}
 
+	private static String stripBashMarkUp( final String bashVar ) {
+		if( bashVar != null && bashVar.length() > 3 ) return bashVar.substring( 2, bashVar.length() - 1 );
+		return bashVar;
+	}
+
 	private static String suffix( final String prop ) {
 		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
 	}
 
 	/**
-	 * Bash variable with path to blj_support directory: {@value #BLJ_SUP_BASH_VAR}
-	 */
-	public static final String BLJ_SUP_BASH_VAR = "${BLJ_SUP}";
-	
-	/**
 	 * Bash variable with path to BioLockJ directory: {@value #BLJ_BASH_VAR}
 	 */
 	public static final String BLJ_BASH_VAR = "${BLJ}";
-	
+
+	/**
+	 * Bash variable with path to blj_support directory: {@value #BLJ_SUP_BASH_VAR}
+	 */
+	public static final String BLJ_SUP_BASH_VAR = "${BLJ_SUP}";
+
 	private static File configFile = null;
 	private static File pipelineDir = null;
 	private static Properties props = null;

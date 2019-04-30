@@ -15,8 +15,12 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import biolockj.*;
-import biolockj.module.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
+import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
+import biolockj.module.ScriptModule;
 
 /**
  * This util adds auxiliary log info to BioLockJ log file
@@ -34,7 +38,7 @@ public class LogUtil {
 			merge( cacheLog( getModuleLog( module ) ) );
 		}
 	}
-	
+
 	private static List<String> cacheLog( final File log ) throws Exception {
 		final List<String> cache = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( log );
@@ -89,5 +93,5 @@ public class LogUtil {
 		FileUtils.copyFile( tempLog, Log.getFile() );
 	}
 
-	private static final List<String> profile = new ArrayList<>();	
+	private static final List<String> profile = new ArrayList<>();
 }

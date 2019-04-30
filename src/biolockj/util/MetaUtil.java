@@ -63,7 +63,7 @@ public class MetaUtil {
 						line + Constants.TAB_DELIM + Config.requireString( null, META_NULL_VALUE ) + Constants.RETURN );
 				} else {
 					Log.warn( MetaUtil.class, getRemoveIdMsg( id ) );
-					
+
 				}
 			}
 		} finally {
@@ -71,22 +71,6 @@ public class MetaUtil {
 			writer.close();
 			refreshCache();
 		}
-	}
-	
-	private static String getRemoveIdMsg( String id ) throws Exception {
-		final String msg = "REMOVE SAMPLE ID [" + id + "] from metadata file " + getPath() + " | Reason:  ";
-		if( SeqUtil.piplineHasSeqInput() ) {
-			for( File seqFile: BioLockJUtil.getPipelineInputFiles() ) {
-				final String seqId = SeqUtil.getSampleId( seqFile.getName() );
-				if( seqId != null && seqId.equals( id ) ) {
-					return msg + "No valid seqs remain in: " + seqFile.getName();
-				}
-			}
-			return msg + "Sample not found in pipeline input dirs: " + Config.requireString( null, Constants.INPUT_DIRS );
-		} 
-		
-		return msg + "Sample not referenced in pipeline inputs: " + Config.requireString( null, Constants.INPUT_DIRS );
-		
 	}
 
 	/**
@@ -148,7 +132,7 @@ public class MetaUtil {
 			throw new Exception( "Metadata headers not found!  Please verify 1st column header is not missing from: "
 				+ getMetadata().getAbsolutePath() );
 
-		//Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
+		// Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
 
 		return headers;
 	}
@@ -257,10 +241,8 @@ public class MetaUtil {
 	 * @throws Exception if any errors occur
 	 */
 	public static File getMetadata() throws Exception {
-		if( metadataFile != null ) { 
-			return metadataFile;
-		}
-		String path = Config.getString( null, META_FILE_PATH );
+		if( metadataFile != null ) return metadataFile;
+		final String path = Config.getString( null, META_FILE_PATH );
 		if( path == null ) return null;
 		return Config.requireExistingFile( null, META_FILE_PATH );
 	}
@@ -493,7 +475,9 @@ public class MetaUtil {
 
 			if( rowNum == 0 ) {
 				metaId = id;
-				if( isUpdated() ) Log.debug( MetaUtil.class, "Metadata Headers: " + row );
+				if( isUpdated() ) {
+					Log.debug( MetaUtil.class, "Metadata Headers: " + row );
+				}
 			}
 
 			if( rowNum++ == 1 && isUpdated() ) {
@@ -509,6 +493,21 @@ public class MetaUtil {
 				metadataMap.put( id, row );
 			}
 		}
+	}
+
+	private static String getRemoveIdMsg( final String id ) throws Exception {
+		final String msg = "REMOVE SAMPLE ID [" + id + "] from metadata file " + getPath() + " | Reason:  ";
+		if( SeqUtil.piplineHasSeqInput() ) {
+			for( final File seqFile: BioLockJUtil.getPipelineInputFiles() ) {
+				final String seqId = SeqUtil.getSampleId( seqFile.getName() );
+				if( seqId != null && seqId.equals( id ) ) return msg + "No valid seqs remain in: " + seqFile.getName();
+			}
+			return msg + "Sample not found in pipeline input dirs: "
+				+ Config.requireString( null, Constants.INPUT_DIRS );
+		}
+
+		return msg + "Sample not referenced in pipeline inputs: " + Config.requireString( null, Constants.INPUT_DIRS );
+
 	}
 
 	private static boolean isUpdated() {
@@ -529,7 +528,9 @@ public class MetaUtil {
 		final List<List<String>> data = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
 		for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-			if( isUpdated() ) Log.debug( MetaUtil.class, "===> Meta line: " + line );
+			if( isUpdated() ) {
+				Log.debug( MetaUtil.class, "===> Meta line: " + line );
+			}
 
 			final ArrayList<String> record = new ArrayList<>();
 			final String[] cells = line.split( Constants.TAB_DELIM, -1 );

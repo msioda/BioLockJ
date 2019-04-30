@@ -41,7 +41,8 @@ public class BioLockJ {
 	 * @throws Exception if errors occur
 	 */
 	public static void copyFileToPipelineRoot( final File file ) throws Exception {
-		Log.info( BioLockJ.class, "Copy file: " + file.getAbsolutePath() + " to pipeline root: " + Config.pipelinePath() );
+		Log.info( BioLockJ.class,
+			"Copy file: " + file.getAbsolutePath() + " to pipeline root: " + Config.pipelinePath() );
 		final File localFile = new File( Config.pipelinePath() + File.separator + file.getName() );
 		if( !localFile.isFile() ) {
 			FileUtils.copyFileToDirectory( file, new File( Config.pipelinePath() ) );
@@ -473,7 +474,7 @@ public class BioLockJ {
 		try {
 			String suffix = "";
 			try {
-				
+
 				if( DockerUtil.isDirectMode() ) {
 					suffix = RuntimeParamUtil.getDirectModuleDir();
 				} else if( Config.pipelineName() != null ) {
@@ -501,7 +502,7 @@ public class BioLockJ {
 				hostPath = hostPath.replace( projDir, RuntimeParamUtil.getDockerHostPipelineDir() );
 				System.out.println( "Docker env host path: " + hostPath );
 			}
-			
+
 			System.out.println( "Pipeline failed before root directory or Log file was created!" );
 			System.out.println( "For details see ERROR FILE: " + hostPath );
 			logFinalException( args, fatalException );

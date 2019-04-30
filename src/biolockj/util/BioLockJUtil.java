@@ -186,9 +186,10 @@ public class BioLockJUtil {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Return default ${BLJ_SUP} dir
+	 * 
 	 * @return blj_support dir
 	 * @throws ConfigPathException
 	 */
@@ -201,7 +202,7 @@ public class BioLockJUtil {
 		} catch( final Exception ex ) {
 			throw new ConfigPathException( f, "Unable to decode ${BLJ_SUP} environment variable: " + ex.getMessage() );
 		}
-		
+
 		return null;
 
 	}
@@ -338,6 +339,38 @@ public class BioLockJUtil {
 	 */
 	public static File getSource() throws URISyntaxException {
 		return new File( BioLockJUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
+	}
+
+	/**
+	 * Return the user shell profile
+	 * 
+	 * @return Shell profile
+	 */
+	public static File getUserProfile() {
+		if( userProfile != null ) return userProfile;
+		File prof = null;
+		try {
+			if( DockerUtil.inAwsEnv() ) {
+				prof = getProfile( Constants.AWS_BASH_PROFILE );
+			}
+			if( prof == null && DockerUtil.inDockerEnv() ) {
+				prof = getProfile( Constants.DOCKER_BASH_PROFILE );
+			}
+			final String path = Config.getString( null, Constants.USER_PROFILE );
+			if( prof == null && path != null ) {
+				prof = getProfile( path );
+			}
+			if( prof == null ) {
+				prof = getProfile( Processor.submit( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
+			}
+		} catch( final Exception ex ) {
+			Log.error( LogUtil.class, "Failed to find user shell profile ", ex );
+		}
+
+		if( prof != null ) {
+			userProfile = prof;
+		}
+		return prof;
 	}
 
 	/**
@@ -519,35 +552,10 @@ public class BioLockJUtil {
 	public static void setPipelineInputFiles( final List<File> files ) {
 		inputFiles = files;
 	}
-	
 
-	/**
-	 * Return the user shell profile
-	 * 
-	 * @return Shell profile 
-	 */
-	public static File getUserProfile() {
-		if( userProfile != null ) return userProfile;
-		File prof = null;
-		try {
-			if( DockerUtil.inAwsEnv() ) prof = getProfile( Constants.AWS_BASH_PROFILE );
-			if( prof == null && DockerUtil.inDockerEnv() ) prof = getProfile( Constants.DOCKER_BASH_PROFILE );
-			final String path = Config.getString( null, Constants.USER_PROFILE );
-			if( prof == null && path != null ) prof = getProfile( path );
-			if( prof == null ) prof = getProfile( Processor.submit( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
-		} catch( Exception ex ) {
-			Log.error( LogUtil.class, "Failed to find user shell profile ", ex );
-		}
-	
-		if( prof != null ) userProfile = prof;
-		return prof;
-	}
-	
-	private static File userProfile = null; 
-	
-	private static File getProfile( String path ) {
+	private static File getProfile( final String path ) {
 		if( path != null ) {
-			File prof = new File( path );
+			final File prof = new File( path );
 			if( prof.isFile() ) return prof;
 		}
 		return null;
@@ -687,8 +695,10 @@ public class BioLockJUtil {
 	 */
 	public static final String PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count";
 
-	private static List<File> inputFiles = new ArrayList<>();
-	private static final String VERSION_FILE = ".version";
-	private static final String DEFAULT_PROFILE_CMD = "get_default_profile";
 	private static final String BLJ_SUPPORT = "blj_support";
+
+	private static final String DEFAULT_PROFILE_CMD = "get_default_profile";
+	private static List<File> inputFiles = new ArrayList<>();
+	private static File userProfile = null;
+	private static final String VERSION_FILE = ".version";
 }

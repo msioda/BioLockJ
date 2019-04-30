@@ -17,26 +17,14 @@ package biolockj;
 public class Constants {
 
 	/**
-	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
-	 * Bash profile - may be ~/.bash_profile or ~/.bashrc or others
+	 * Captures the application start time
 	 */
-	public static final String USER_PROFILE = "pipeline.userProfile";
-	
+	public static final long APP_START_TIME = System.currentTimeMillis();
+
 	/**
 	 * AWS bash profile name: {@value #AWS_BASH_PROFILE}
 	 */
 	public static final String AWS_BASH_PROFILE = "/root/.bash_profile";
-	
-	/**
-	 * Non-AWS Docker bash profile name: {@value #DOCKER_BASH_PROFILE}
-	 */
-	public static final String DOCKER_BASH_PROFILE = "/root/.bashrc";
-	
-	
-	/**
-	 * Captures the application start time
-	 */
-	public static final long APP_START_TIME = System.currentTimeMillis();
 
 	/**
 	 * Name of the file created in the BioModule or {@value #INTERNAL_PIPELINE_DIR} root directory to indicate execution
@@ -120,6 +108,11 @@ public class Constants {
 	public static final String DISABLE_PRE_REQ_MODULES = "pipeline.disableAddPreReqModules";
 
 	/**
+	 * Non-AWS Docker bash profile name: {@value #DOCKER_BASH_PROFILE}
+	 */
+	public static final String DOCKER_BASH_PROFILE = "/root/.bashrc";
+
+	/**
 	 * Default Docker {@link biolockj.Config} file imported after {@value #STANDARD_CONFIG_PATH} (if files exist)
 	 */
 	public static final String DOCKER_CONFIG_PATH = "${BLJ}/resources/config/default/docker.properties";
@@ -128,12 +121,12 @@ public class Constants {
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #DOMAIN}
 	 */
 	public static final String DOMAIN = "domain";
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
 	 */
 	public static final String EXE_AWK = "exe.awk";
-
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_DOCKER}<br>
 	 * Set command line executable docker
@@ -191,12 +184,12 @@ public class Constants {
 	 * {@value #HN2_DISABLE_GENE_FAMILIES}
 	 */
 	public static final String HN2_DISABLE_GENE_FAMILIES = "humann2.disableGeneFamilies";
+
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Pathway Abundance report:
 	 * {@value #HN2_DISABLE_PATH_ABUNDANCE}
 	 */
 	public static final String HN2_DISABLE_PATH_ABUNDANCE = "humann2.disablePathAbundance";
-
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Pathway Coverage report:
 	 * {@value #HN2_DISABLE_PATH_COVERAGE}
@@ -656,6 +649,12 @@ public class Constants {
 	 * BioLockJ standard text file extension constant: {@value #TXT_EXT}
 	 */
 	public static final String TXT_EXT = ".txt";
+
+	/**
+	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
+	 * Bash profile - may be ~/.bash_profile or ~/.bashrc or others
+	 */
+	public static final String USER_PROFILE = "pipeline.userProfile";
 
 	/**
 	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:

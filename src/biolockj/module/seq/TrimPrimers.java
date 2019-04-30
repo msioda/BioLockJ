@@ -91,7 +91,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	@Override
 	public void runModule() throws Exception {
 		Log.info( getClass(), "Starting TrimPrimers Module" );
-		File primerFile = getSeqPrimerFile();
+		final File primerFile = getSeqPrimerFile();
 		BioLockJ.copyFileToPipelineRoot( primerFile );
 		trimSeqs();
 		Log.debug( getClass(), "numLinesPerRead = " + SeqUtil.getNumLinesPerRead() );
@@ -102,9 +102,10 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 
 		addBadFilesToSummary();
 
-		String reqPrimerMsg = ""; 
+		String reqPrimerMsg = "";
 		if( Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) ) {
-			reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.TRUE + " --> Sequences without a primer were discarded";
+			reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.TRUE
+				+ " --> Sequences without a primer were discarded";
 		} else {
 			reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.FALSE + " --> Sequences without a primer were saved";
 		}
@@ -294,7 +295,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		final BufferedReader reader = BioLockJUtil.getFileReader( trimSeqFile );
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				Log.info( getClass(), "Trim primer [ " + line + " ] defined in: " +  trimSeqFile.getAbsolutePath() );
+				Log.info( getClass(), "Trim primer [ " + line + " ] defined in: " + trimSeqFile.getAbsolutePath() );
 				if( !line.startsWith( "#" ) ) {
 					final String seq = line.trim().toUpperCase();
 					if( seq.length() > 0 ) {

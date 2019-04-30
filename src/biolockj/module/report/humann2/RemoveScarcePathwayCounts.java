@@ -21,7 +21,9 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.MetaUtil;
+import biolockj.util.PathwayUtil;
 
 /**
  * This BioModule removes scarce pathways not found in enough samples.<br>
@@ -43,15 +45,15 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	 */
 	@Override
 	public String getSummary() throws Exception {
-		String summary = "Removed rare Pathways found in less than " + getCutoff() + " samples" + RETURN;
-//		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
-//			summary += SummaryUtil.getCountSummary( this.uniquePathwaysPerSample, "Unique Pathways", false );
-//			summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
-//			this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
-//			if( !this.sampleIds.isEmpty() ) {
-//				summary += "Removed empty samples: " + this.sampleIds;
-//			}
-//		}
+		final String summary = "Removed rare Pathways found in less than " + getCutoff() + " samples" + RETURN;
+		// if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
+		// summary += SummaryUtil.getCountSummary( this.uniquePathwaysPerSample, "Unique Pathways", false );
+		// summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
+		// this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
+		// if( !this.sampleIds.isEmpty() ) {
+		// summary += "Removed empty samples: " + this.sampleIds;
+		// }
+		// }
 		freeMemory();
 		return super.getSummary() + summary;
 	}
@@ -59,31 +61,26 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	@Override
 	public void runModule() throws Exception {
 		this.sampleIds.addAll( MetaUtil.getSampleIds() );
-		int cutoff = getCutoff();
+		final int cutoff = getCutoff();
 		for( final File file: getInputFiles() ) {
 			if( cutoff < 1 ) {
 				FileUtils.copyFileToDirectory( file, getOutputDir() );
-				
+
 			} else {
 				final List<List<String>> table = BioLockJUtil.parseCountTable( file );
-				logScarceData( removeScarcePathwayCounts( file, getScarcePathways( table ) ), getScarcePathwayLogFile() );
-				logScarceData( removeScarceSamples( file, getScarceSampleIds( file, table ) ), getScarceSampleLogFile() );
+				logScarceData( removeScarcePathwayCounts( file, getScarcePathways( table ) ),
+					getScarcePathwayLogFile() );
+				logScarceData( removeScarceSamples( file, getScarceSampleIds( file, table ) ),
+					getScarceSampleLogFile() );
 			}
-			
-//			if( addMetaCol( file ) ) {
-//				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT,
-//					this.uniquePathwaysPerSample, getTempDir(), true );
-//				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT,
-//					this.totalPathwaysPerSample, getOutputDir(), true );
-//			}
-		}
-	}
 
-	@SuppressWarnings("unused")
-	private boolean addMetaCol( File file ) throws Exception {
-		return Config.getBoolean( this, Constants.REPORT_NUM_HITS )
-			&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-			&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM );
+			// if( addMetaCol( file ) ) {
+			// MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT,
+			// this.uniquePathwaysPerSample, getTempDir(), true );
+			// MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT,
+			// this.totalPathwaysPerSample, getOutputDir(), true );
+			// }
+		}
 	}
 
 	/**
@@ -174,15 +171,23 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 
 			if( !badSamplePathways.isEmpty() ) {
 				scarcePathMap.put( id, badSamplePathways );
-				Log.warn( getClass(), id +
-					": Remove " + badSamplePathways.size() + " Pathways found in % samples below threshold: " + getScarceCountProp() + "=" + getMetaColName() );
-				Log.debug( getClass(), id + ": Removed Pathways: " + badSamplePathways );	
+				Log.warn( getClass(),
+					id + ": Remove " + badSamplePathways.size() + " Pathways found in % samples below threshold: "
+						+ getScarceCountProp() + "=" + getMetaColName() );
+				Log.debug( getClass(), id + ": Removed Pathways: " + badSamplePathways );
 			}
 		}
 
 		buildOutputTable( file, output );
 
 		return scarcePathMap;
+	}
+
+	@SuppressWarnings("unused")
+	private boolean addMetaCol( final File file ) throws Exception {
+		return Config.getBoolean( this, Constants.REPORT_NUM_HITS )
+			&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
+			&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM );
 	}
 
 	private void buildOutputTable( final File file, final List<List<String>> data ) throws Exception {
@@ -250,13 +255,17 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		final Set<String> scarcePathways = new HashSet<>();
 		final Map<String, Double> pathMap = new HashMap<>();
 		final List<String> pathways = table.get( 0 ).subList( 1, table.get( 0 ).size() - 1 );
-		for( String pathway: pathways ) pathMap.put( pathway, 0.0 );
+		for( final String pathway: pathways ) {
+			pathMap.put( pathway, 0.0 );
+		}
 
-		for( final List<String> record: table.subList( 1, table.size() - 1  ) ) {
+		for( final List<String> record: table.subList( 1, table.size() - 1 ) ) {
 			for( int i = 0; i < pathways.size(); i++ ) {
 				final Double count = Double.valueOf( record.get( i + 1 ) );
 				final String pathway = pathways.get( i );
-				if( count > 0 ) pathMap.put( pathway, pathMap.get( pathway ) + 1 );
+				if( count > 0 ) {
+					pathMap.put( pathway, pathMap.get( pathway ) + 1 );
+				}
 			}
 		}
 

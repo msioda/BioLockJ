@@ -104,7 +104,8 @@ public class MasterConfigUtil {
 		for( final String key: usedProps.keySet() ) {
 			final String val = usedProps.get( key );
 			if( val == null || val.trim().isEmpty() ) {
-				Log.debug( MasterConfigUtil.class, "Remove unused property from sanatized MASTER Config: " + key + "=" + val );
+				Log.debug( MasterConfigUtil.class,
+					"Remove unused property from sanatized MASTER Config: " + key + "=" + val );
 			} else if( !key.startsWith( INTERNAL_PREFIX ) ) {
 				props.put( key, val );
 			}
@@ -112,7 +113,8 @@ public class MasterConfigUtil {
 
 		Log.info( MasterConfigUtil.class, "The original version of project Config contained: "
 			+ Config.getInitialProperties().size() + " properties" );
-		Log.info( MasterConfigUtil.class, "The final version of MASTER Config contains: " + props.size() + " properties" );
+		Log.info( MasterConfigUtil.class,
+			"The final version of MASTER Config contains: " + props.size() + " properties" );
 
 		saveMasterConfig( props );
 	}

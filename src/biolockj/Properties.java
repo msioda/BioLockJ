@@ -57,6 +57,19 @@ public class Properties extends java.util.Properties {
 	}
 
 	/**
+	 * Return file for path after modifying if running in a Docker container and/or interpreting bash env vars.
+	 * 
+	 * @param path File path
+	 * @return Local File
+	 * @throws ConfigPathException if the local path
+	 */
+	public static File getLocalConfigFile( final String path ) throws ConfigPathException {
+		final File file = new File( Config.replaceEnvVar( path ) );
+		if( DockerUtil.inDockerEnv() && !file.isFile() ) return Config.getConfigFile( path );
+		return file;
+	}
+
+	/**
 	 * Instantiate {@link biolockj.Properties} via {@link #buildConfig(File)}
 	 *
 	 * @param file of {@link biolockj.Properties} file
@@ -94,8 +107,7 @@ public class Properties extends java.util.Properties {
 			defaultProps = readProps( standConf, null );
 		}
 
-		final File dockConf = DockerUtil.inDockerEnv() ? getLocalConfigFile( Constants.DOCKER_CONFIG_PATH )
-			: null;
+		final File dockConf = DockerUtil.inDockerEnv() ? getLocalConfigFile( Constants.DOCKER_CONFIG_PATH ): null;
 		if( dockConf != null && !regConf.contains( dockConf ) ) {
 			defaultProps = readProps( dockConf, defaultProps );
 		}
@@ -161,23 +173,6 @@ public class Properties extends java.util.Properties {
 
 		return null;
 	}
-	
-
-	/**
-	 * Return file for path after modifying if running in a Docker container and/or interpreting bash env vars.
-	 * 
-	 * @param path File path
-	 * @return Local File
-	 * @throws ConfigPathException if the local path
-	 */
-	public static File getLocalConfigFile( final String path ) throws ConfigPathException {
-		File file = new File( Config.replaceEnvVar( path ) );
-		if( DockerUtil.inDockerEnv() && !file.isFile() ) {
-			return Config.getConfigFile( path );
-		}
-		return file;
-	}
-
 
 	private static List<String> getListedModules( final File file ) throws Exception {
 		final List<String> modules = new ArrayList<>();

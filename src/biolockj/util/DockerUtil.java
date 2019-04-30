@@ -15,7 +15,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Constants;
+import biolockj.Log;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
@@ -32,7 +34,7 @@ import biolockj.module.seq.*;
  * DockerUtil for Docker integration.
  */
 public class DockerUtil {
-	
+
 	/**
 	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script
 	 * path parameters.
@@ -43,14 +45,14 @@ public class DockerUtil {
 	 */
 	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception {
 		final List<String> lines = new ArrayList<>();
-		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module ) + getDockerEnvVars( module )
-			+ getDockerVolumes( module ) + getDockerImage( module );
+		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module )
+			+ getDockerEnvVars( module ) + getDockerVolumes( module ) + getDockerImage( module );
 		Log.debug( DockerUtil.class, "Docker CMD:" + cmd );
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
 		lines.add( cmd );
 		lines.add( "}" + Constants.RETURN );
-		
+
 		return lines;
 	}
 
@@ -87,8 +89,9 @@ public class DockerUtil {
 	 * @throws ConfigNotFoundException if prop not found
 	 * @throws ConfigPathException if path is defined but is not an existing directory
 	 */
-	public static File getDockerVolumeDir( final String prop, final String containerPath ) throws ConfigPathException, ConfigNotFoundException {
-		File dir = new File( getDockerVolumePath( Config.requireString( null, prop ), containerPath ) );
+	public static File getDockerVolumeDir( final String prop, final String containerPath )
+		throws ConfigPathException, ConfigNotFoundException {
+		final File dir = new File( getDockerVolumePath( Config.requireString( null, prop ), containerPath ) );
 		if( !dir.isDirectory() ) throw new ConfigPathException( dir );
 		return dir;
 	}
@@ -103,8 +106,9 @@ public class DockerUtil {
 	 * @throws ConfigNotFoundException if prop not found
 	 * @throws ConfigPathException if path is defined but is not an existing directory
 	 */
-	public static File getDockerVolumeFile( final String prop, final String containerPath ) throws ConfigPathException, ConfigNotFoundException {
-		File file = new File( getDockerVolumePath( Config.requireString( null, prop ), containerPath ) );
+	public static File getDockerVolumeFile( final String prop, final String containerPath )
+		throws ConfigPathException, ConfigNotFoundException {
+		final File file = new File( getDockerVolumePath( Config.requireString( null, prop ), containerPath ) );
 		Log.info( DockerUtil.class, "Calling getDockerVolumeFile for propVal: " + file.getAbsolutePath() );
 		if( !file.isFile() ) throw new ConfigPathException( file );
 		return file;
@@ -254,7 +258,7 @@ public class DockerUtil {
 		if( RuntimeParamUtil.getDockerHostMetaDir() != null ) {
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
 		}
-		
+
 		if( isJavaModule( module ) && RuntimeParamUtil.getDockerHostBLJ() != null ) {
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR;
 		}
@@ -292,17 +296,19 @@ public class DockerUtil {
 
 		return dockerVolumes;
 	}
-	
+
 	private static String getVolumePath( final String path ) {
 		Log.info( DockerUtil.class, "Map Docker volume getVolumePath( " + path + " )" );
 		String newPath = path;
 		if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) ) {
 			Log.info( DockerUtil.class, "path.startsWith( " + CONTAINER_BLJ_SUP_DIR + " ) = TRUE!" );
-			newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + path.substring( CONTAINER_BLJ_SUP_DIR.length() );
+			newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath()
+				+ path.substring( CONTAINER_BLJ_SUP_DIR.length() );
 		}
 		if( path.startsWith( CONTAINER_BLJ_DIR ) ) {
 			Log.info( DockerUtil.class, "path.startsWith( " + CONTAINER_BLJ_DIR + " ) = TRUE!" );
-			newPath = RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + path.substring( CONTAINER_BLJ_DIR.length() );
+			newPath = RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath()
+				+ path.substring( CONTAINER_BLJ_DIR.length() );
 		}
 		Log.info( DockerUtil.class, "Map Docker volume newPath -----> ( " + newPath + " )" );
 		return newPath;
@@ -319,17 +325,7 @@ public class DockerUtil {
 	private static boolean useBasicBashImg( final BioModule module ) {
 		return module instanceof PearMergeReads || module instanceof AwkFastaConverter || module instanceof Gunzipper;
 	}
-	
-	/**
-	 * Docker container blj_support dir for dev support
-	 */
-	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
-	
-	/**
-	 * Docker container blj_support dir for dev support
-	 */
-	public static final String CONTAINER_BLJ_DIR = "/app/biolockj";
-	
+
 	/**
 	 * Docker container root user EFS directory
 	 */
@@ -339,6 +335,16 @@ public class DockerUtil {
 	 * Docker container root user DB directory
 	 */
 	public static final String AWS_EFS_DB = AWS_EFS + "/db";
+
+	/**
+	 * Docker container blj_support dir for dev support
+	 */
+	public static final String CONTAINER_BLJ_DIR = "/app/biolockj";
+
+	/**
+	 * Docker container blj_support dir for dev support
+	 */
+	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
 
 	/**
 	 * All containers mount the host {@link biolockj.Config} directory to the container volume:
