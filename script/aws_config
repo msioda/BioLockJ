@@ -13,7 +13,6 @@
 if [ "${USER}" == "ec2-user" ]; then
 	export BLJ_SCRIPT="${EFS}/script"
 	export BLJ="${EFS}"
-	export BLJ_SUP="${EFS}"
 fi
 
 source "${BLJ_SCRIPT}/aws_functions"

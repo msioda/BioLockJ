@@ -24,7 +24,6 @@ export AWS_LIB="${BLJ_SCRIPT}/aws_config"
 
 [ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="${BLJ_SCRIPT}:$PATH"
 [ ! -d "${BLJ_META}" ] && export BLJ_META="${HOME}/metadata"
-[ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support/script" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
-[ -d "${BLJ_SUP}/script" ] && [ "${PATH/${BLJ_SUP}/script}" == "${PATH}" ] && export PATH="${BLJ_SUP}/script:$PATH"
+[ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
 
 source "${BLJ_SCRIPT}/blj_functions"
