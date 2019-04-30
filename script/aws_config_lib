@@ -8,12 +8,11 @@
 
 [ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config
 sheBang='#!/bin/bash'
-IS_NULL=IS_NULL
-DB=/db
-HN2_NUCL_DB=$DB/chocophlan
-HN2_PROT_DB=$DB/uniref
-RDP_DB=$DB/rRNAClassifier.properties
-DEFAULT_CONFIG=${BLJ}/resources/config/default/docker.properties
+IS_NULL="IS_NULL"
+HN2_NUCL_DB="${EFS_DB}/chocophlan"
+HN2_PROT_DB="${EFS_DB}/uniref"
+RDP_DB="${EFS_DB}/rRNAClassifier.properties"
+DEFAULT_CONFIG="${BLJ}/resources/config/default/docker.properties"
 alias awsr="aws_report_config"
 alias awsrf="refresh_aws_cache"
 
@@ -32,15 +31,15 @@ aws_archive() {
 	[ ${foundStartScript} -gt 0 ] && mv ~/.aws/run-bljStack* $aws_history
 }
 
-# Get an AWS property $1 from local AWS Config file $2 under the awsProfile
+# Get an AWS property ${1} from local AWS Config file ${2} under the awsProfile
 # Param 1 - argName Parse filePath for a line that starts with argName
 # Param 2 - filePath Target file
 aws_local_prop() {
-	[ ! -f "$2" ] && aws_log "Error:  File not found: $2" && return
+	[ ! -f "${2}" ] && aws_log "Error:  File not found: ${2}" && return
 	foundProfile=0
 	prop="$1 = "
 	userProfile="[$(get_blj_prop awsProfile)]"
-	cat $2 | while read -r line; do
+	cat "${2}" | while read -r line; do
 		[ $foundProfile -eq 1 ] && [ "${line:0:1}" == "[" ] && break
 		[ $foundProfile -eq 1 ] && [ "${line:0:${#prop}}" == "$prop" ] && echo "${line/$prop}" && return
 		[ "$line" == "$userProfile" ] && foundProfile=1
@@ -118,27 +117,27 @@ clear_aws_cache() {
 # Param 1 - Pipeline Config file-path
 # Param 2 - DB property name
 convert_db_prop() {
-	db=$(get_prop "$1" "$2")
-	[ "$db" != "$DB" ] && convert_prop "$1" "$2"
+	db=$(get_prop "${1}" "${2}")
+	[ "$db" != "${EFS_DB}" ] && convert_prop "${1}" "${2}"
 }
 
 # Convert pipeline Config prop to AWS Config file property format in: $blj_aws_config
 # Param 1 - Pipeline Config file-path
 # Param 2 - property name
 convert_prop() {
-	val=$(get_prop "$1" "$2")
+	val=$(get_prop "${1}" "${2}")
 	[ $(echo "${val}" | wc -w) -gt 1 ] && val="'${val}'"
-	set_blj_prop $(map_property_name "$2") "${val}" $IS_NULL
+	set_blj_prop $(map_property_name "${2}") "${val}" $IS_NULL
 }
 
 # Get a prop stored in $blj_aws_config
 # Param 1 - Prop name
 # Param 2 - (Optional) Default value
 get_blj_prop() {
-	val=$(get_prop $blj_aws_config "$1")
+	val=$(get_prop $blj_aws_config "${1}")
 	if [ ${#val} -eq 0 ]; then
-		val="$2"
-		response=$(set_blj_prop "awsStack" "$2")
+		val="${2}"
+		response=$(set_blj_prop "awsStack" "${2}")
 	fi 
 	echo "${val}"
 }
@@ -147,9 +146,9 @@ get_blj_prop() {
 # Param 1 - Config file
 # Param 2 - Prop name
 get_prop() {
-	prop=$(cat "$1" | grep $2)
-	out=$(eval "echo ${prop/$2=}")
-	echo "${out}"
+	prop=$(cat "${1}" | grep ${2})
+	out=$(eval "echo ${prop/${2}=}")
+	[ "${out:0:1}" != "#" ] && echo "${out}"
 }
 
 # Init AWS Config properties file [ $blj_aws_config ] with pipeline Config, AWS config, and standard defaults
@@ -159,7 +158,7 @@ get_prop() {
 init_aws_config() {
 	aws_archive
 	aws_log "Copy AWS properties from Pipeline Config \"$1\" into AWS Config --> \"$blj_aws_config\""
-	set_pipeline_config_files "$1"
+	set_pipeline_config_files "${1}"
 	configFiles=$(get_blj_prop configFiles)
 	if [ "${configFiles/docker.properties}" == "${configFiles}" ]; then
 		[ ${#configFiles} -gt 0 ] && configFiles=",${configFiles}"
@@ -232,7 +231,7 @@ set_blj_prop() {
 	set_prop "$blj_aws_config" "${1}" "${2}"
 }
 
-# Set property in Config file $1 unless this value already is set, in which case - do nothing.
+# Set property in Config file ${1} unless this value already is set, in which case - do nothing.
 # In case prop value ${3} is null, $3 actually returns the 4th param (the default)
 # Param 1 - Config file-path
 # Param 2 - Prop name
@@ -267,39 +266,40 @@ set_pipeline_config_files() {
 # Param 1 - Pipeline Config file path
 set_pipeline_conig_props() {
 	aws_log "Update \"$blj_aws_config\" with AWS properties found in Pipeline Config \"$1\""
-	convert_prop "$1" "aws.ami"
-	convert_prop "$1" "aws.ec2AcquisitionStrategy"
-	convert_prop "$1" "aws.ec2InstanceID"
-	convert_prop "$1" "aws.ec2InstanceType"
-	convert_prop "$1" "aws.ec2SpotPer"
-	convert_prop "$1" "aws.copyReportsToS3"
-	convert_prop "$1" "aws.copyInputsToS3"
-	convert_prop "$1" "aws.copyPipelineToS3"
-	convert_prop "$1" "aws.purgeEfsInputs"
-	convert_prop "$1" "aws.purgeEfsOutput"
-	convert_prop "$1" "aws.profile"
-	convert_prop "$1" "aws.ram"
-	convert_prop "$1" "aws.region"
-	convert_prop "$1" "aws.stack"
-	convert_prop "$1" "aws.s3"
-	convert_prop "$1" "aws.walltime"
-	convert_prop "$1" "docker.imgVersion"
-	convert_prop "$1" "docker.user"
-	convert_prop "$1" "metadata.filePath"
-	convert_prop "$1" "pipeline.detachJavaModules"
-	convert_prop "$1" "trimPrimers.filePath"
-	convert_prop "$1" "input.dirPaths"
-	convert_db_prop "$1" "kneaddata.dbs"
-	convert_db_prop "$1" "kraken.db"
-	convert_db_prop "$1" "kraken2.db"
-	convert_db_prop "$1" "metaphlan2.db"
-	convert_db_prop "$1" "metaphlan2.mpa_pkl"
-	convert_db_prop "$1" "qiime.pynastAlignDB"
-	convert_db_prop "$1" "qiime.refSeqDB"
-	convert_db_prop "$1" "qiime.taxaDB"
-	[ "$(get_prop $1 humann2.nuclDB)" != "$HN2_NUCL_DB" ] && convert_prop "$1" "humann2.nuclDB"
-	[ "$(get_prop $1 humann2.protDB)" != "$HN2_PROT_DB" ] && convert_prop "$1" "humann2.protDB"
-	[ "$(get_prop $1 rdp.db)" != "$RDP_DB" ] && convert_db_prop "$1" "rdp.db"
+	convert_prop "${1}" "aws.ami"
+	convert_prop "${1}" "aws.ec2AcquisitionStrategy"
+	convert_prop "${1}" "aws.ec2InstanceID"
+	convert_prop "${1}" "aws.ec2InstanceType"
+	convert_prop "${1}" "aws.ec2SpotPer"
+	convert_prop "${1}" "aws.copyReportsToS3"
+	convert_prop "${1}" "aws.copyInputsToS3"
+	convert_prop "${1}" "aws.copyPipelineToS3"
+	convert_prop "${1}" "aws.purgeEfsInputs"
+	convert_prop "${1}" "aws.purgeEfsOutput"
+	convert_prop "${1}" "aws.profile"
+	convert_prop "${1}" "aws.ram"
+	convert_prop "${1}" "aws.region"
+	convert_prop "${1}" "aws.stack"
+	convert_prop "${1}" "aws.s3"
+	convert_prop "${1}" "aws.walltime"
+	convert_prop "${1}" "docker.imgVersion"
+	convert_prop "${1}" "docker.user"
+	convert_prop "${1}" "metadata.filePath"
+	convert_prop "${1}" "pipeline.detachJavaModules"
+	convert_prop "${1}" "trimPrimers.filePath"
+	convert_prop "${1}" "input.dirPaths"
+	convert_db_prop "${1}" "kneaddata.dbs"
+	convert_db_prop "${1}" "kraken.db"
+	convert_db_prop "${1}" "kraken2.db"
+	convert_db_prop "${1}" "metaphlan2.db"
+	convert_db_prop "${1}" "metaphlan2.mpa_pkl"
+	convert_db_prop "${1}" "qiime.pynastAlignDB"
+	convert_db_prop "${1}" "qiime.refSeqDB"
+	convert_db_prop "${1}" "qiime.taxaDB"
+
+	[ "$(get_prop ${1} humann2.nuclDB)" != "${HN2_NUCL_DB}" ] && convert_db_prop "${1}" "humann2.nuclDB"
+	[ "$(get_prop ${1} humann2.protDB)" != "${HN2_PROT_DB}" ] && convert_db_prop "${1}" "humann2.protDB"
+	[ "$(get_prop ${1} rdp.db)" != "${RDP_DB}" ] && convert_db_prop "${1}" "rdp.db"
 	aws_report_config
 }
 

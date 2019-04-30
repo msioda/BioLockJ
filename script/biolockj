@@ -18,7 +18,7 @@ bljJar=${BLJ}/dist/BioLockJ.jar
 # Display BioLockJ release version
 display_version() {
 	if [ -f "${BLJ}/.version" ]; then
-		cat $BLJ/.version
+		cat "${BLJ}/.version"
 	else
 		echo "Missing ${BLJ}/.version"
 	fi
@@ -65,7 +65,7 @@ init() {
 
 # Launch AWS pipeline
 launchAwsPipeline() {
-	run_aws $config start
+	run_aws "$runAws" start
 	if [ $? -eq 0 ]; then
 		exit_script "Successfully ran AWS Pipeline" 0
 	else
@@ -107,8 +107,7 @@ launchLocalPipeline() {
 
 # Verify input argument paths
 verifyArgPaths() {
-	[ ! -f "$config" ] && [ ${#restart} -eq 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
-	[ ! -f "$config" ] && [ ! -d "$restart" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$restart\" is not a valid directory \n"
+	[ ! -f "$runAws" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
 }
 
 # Verify required local BioLockJ system paths exist

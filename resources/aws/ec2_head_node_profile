@@ -27,8 +27,8 @@ alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 
 # Initialize bash environment
-[ -f "$BLJ/script/aws_head_node_lib" ] && source $BLJ/script/aws_head_node_lib
-[ ${#dockerUser} -gt 0 ] && export DOCKER_HUB_USER=${dockerUser}
+[ -f "${BLJ}/script/aws_head_node_lib" ] && source "${BLJ}/script/aws_head_node_lib"
+[ ${#dockerUser} -gt 0 ] && export DOCKER_HUB_USER="${dockerUser}"
 [ ! -f ~/.${awsStack}-CREATED_DOCKER_JOB_DEFS ] && build_docker_job_defs
 echo "AWS Profile loaded - Docker Account ID: $DOCKER_HUB_USER"
 cat $BSH_PROF

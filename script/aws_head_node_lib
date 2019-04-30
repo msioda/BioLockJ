@@ -84,7 +84,7 @@ get_config() {
 	numConfig=${#propFiles[@]}
 	((numConfig--))
 	[ "${1}" == "local" ] && echo "${propFiles[$numConfig]}"
-	[ "${1}" == "ec2" ] && echo "$EFS_CONFIG/$(basename ${propFiles[$numConfig]})"
+	[ "${1}" == "ec2" ] && echo "${EFS_CONFIG}/$(basename ${propFiles[$numConfig]})"
 }
 
 # Get the flag file that indicates Docker job definitions were created

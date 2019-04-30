@@ -13,7 +13,7 @@ build_stack() {
 	refresh_aws_cache
 	[ $(is_stack_complete $awsStack) == "true" ] && aws_log "Confirmed existing AWS Stack is CREATE_COMPLETE: $awsStack" && return 
 	aws_log "Building cloud formation stack: $awsStack. Please wait..."
-	stackYml="file://$BLJ/resources/aws/StackEFS.yml"
+	stackYml="file://${BLJ}/resources/aws/StackEFS.yml"
 	myIp=$(get_ip)/32
 	ipParam="ParameterKey=NetworkAccessIP,ParameterValue="
 	spBidParam="ParameterKey=SpotBidPercentage,ParameterValue="

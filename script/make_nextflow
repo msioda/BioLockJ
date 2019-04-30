@@ -9,7 +9,7 @@
 ##                                                                            ##
 ################################################################################
 . $BLJ/script/blj_config
-. $EFS_CONFIG/aws_config
+. ${EFS_CONFIG}/aws_config
 
 AWS_DIR="${HOME}/.aws"
 [ ! -d "$AWS_DIR" ] && mkdir "$AWS_DIR" && echo "Created $AWS_DIR directory"
@@ -37,8 +37,8 @@ buildAwsCredentials() {
 buildNexflowConfigDir() {
 	NF_DIR="${HOME}/.nextflow"
 	[ ! -d "${NF_DIR}" ] && mkdir "${NF_DIR}" && echo Created "${NF_DIR} directory"
-	echo "Copy $EFS_CONFIG/nextflow/${awsStack}/config to --> ${NF_DIR}"
-	cp "$EFS_CONFIG/nextflow/${awsStack}/config" "${NF_DIR}"
+	echo "Copy ${EFS_CONFIG}/nextflow/${awsStack}/config to --> ${NF_DIR}"
+	cp "${EFS_CONFIG}/nextflow/${awsStack}/config" "${NF_DIR}"
 	echo "Created --> Nextflow config: ${NF_DIR}/config"
 	cat "${NF_DIR}/config"
 }
