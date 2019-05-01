@@ -55,7 +55,10 @@ echo "If pipline failures occur: $exitOnFailure"
 pipelineDir=$(most_recent_pipeline)
 echo "$SPACER"
 echo "Initial Pipeline = $pipelineDir - $(date)"
+[ -f ~/nohup.out ] && mv ~/nohup.out ~/nohup.out~ && rm ~/nohup.out
+cd ~
 for f in $1/*; do
+
   biolockj $f
   count=0
   pipeDir="$(most_recent_pipeline)"
