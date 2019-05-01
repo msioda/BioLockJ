@@ -56,7 +56,6 @@ pipelineDir=$(most_recent_pipeline)
 echo "$SPACER"
 echo "Initial Pipeline = $pipelineDir - $(date)"
 [ -f ~/nohup.out ] && mv ~/nohup.out ~/nohup.out~ && rm ~/nohup.out
-cd ~
 for f in $1/*; do
 
   biolockj $f
