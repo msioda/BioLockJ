@@ -46,6 +46,13 @@ blj_build() {
 	fi
 }
 
+# Pull the latest Git code and build BioLockJ.jar
+blj_deploy() {
+	blj_sup_git
+	blj_git
+	blj_build
+}
+
 # Git latest $BLJ + build BioLockJ.jar
 blj_git() {
 	[ ! -d "${BLJ}" ] && echo "Cannot build BLJ: directory not found: ${BLJ}" && return
