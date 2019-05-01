@@ -9,6 +9,10 @@
 # List all Doker images & containers
 alias dockls='docker images; docker container ls --all'
 
+alias docker_build="updateDocker build"
+alias docker_push="updateDocker push"
+alias docker_pull="updateDocker pull"
+
 # Use to build containers with BioLockJ installed.
 # The date build-arg forces Docker to pull latest BioLockJ.tgz from GitHub 
 buildBljCmd() {
@@ -62,6 +66,24 @@ dockBuildBlj() {
 	clearDock
 }
 
+
+# Used by updateDocker to build and push number of modules given, or all modules if no params
+# Param 1 - Limit build to first ${1} modules
+docker_deploy() {
+	updateDocker "build" ${1}
+	clearDock
+	updateDocker "push" ${1}
+	clearDock
+}
+
+# Used by updateDocker to reference Dockerfiles
+# Param 1 - Docker command (build|pull|push)
+# Param 2 - Docker image
+docker_file() {
+	[ "${1}" == "build" ] && echo "$(docker_dir) -f $(docker_dir)/${2}.Dockerfile"
+}
+
+
 # Instantiate Docker bash shell for image + map ${BLJ_PROJ} to ${EFS_PROJ}
 # Param $1 = Docker image name (without user prefix)
 # Param $2 = input directory
@@ -88,19 +110,6 @@ dockManager() {
 # Param $1 = Docker container name or ID
 goDock() {
 	docker exec -ti ${1} /bin/bash
-}
-
-# Build and push number of modules given, or all modules if no params
-# Param 1 - Limit build to first ${1} modules
-docker_deploy() {
-	updateDocker "build" ${1}
-	clearDock
-	updateDocker "push" ${1}
-	clearDock
-}
-
-docker_file() {
-	[ "${1}" == "build" ] && echo "$(docker_dir) -f $(docker_dir)/${2}.Dockerfile"
 }
 
 # Single function used to build, pull, push Docker modules.
