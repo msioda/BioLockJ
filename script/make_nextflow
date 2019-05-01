@@ -8,8 +8,7 @@
 ##                    substituting "_" for all "." characters                 ##
 ##                                                                            ##
 ################################################################################
-. ${BLJ}/script/docker_config
-. ${AWS_LIB}
+source "${AWS_LIB}"
 
 [ ! -d "${EC2_AWS}" ] && mkdir "${EC2_AWS}" && echo "Created ${EC2_AWS} directory"
 

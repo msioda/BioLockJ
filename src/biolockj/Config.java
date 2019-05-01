@@ -446,7 +446,7 @@ public class Config {
 				final String bashVal = getBashVal( bashVar );
 				if( bashVal != null && bashVal.equals( bashVar ) ) return arg;
 				val = val.replace( bashVar, bashVal );
-				Log.debug( Config.class, "Found env variable [ " + bashVar + "= " + bashVal + "  ] (length="
+				Log.debug( Config.class, "Found env variable [ " + bashVar + " = " + bashVal + "  ] (length="
 					+ bashVal.length() + ") | UPDATED arg val --> " + val );
 			}
 			Log.info( Config.class, "--------> Bash Var Converted [ " + arg + " ] --> " + val );

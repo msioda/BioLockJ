@@ -26,7 +26,11 @@ import biolockj.util.*;
  */
 public class BioModuleFactory {
 	private BioModuleFactory() throws Exception {
-		initModules();
+		if( DockerUtil.isDirectMode() ) {
+			this.moduleCache = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
+		} else {
+			initModules();
+		}
 	}
 
 	/**
@@ -237,14 +241,13 @@ public class BioModuleFactory {
 	 */
 	private static List<String> getConfigModules() throws Exception {
 		final List<String> configModules = Config.requireList( null, Constants.INTERNAL_BLJ_MODULE );
-		final List<String> allMods = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
 		final List<String> modules = new ArrayList<>();
 		if( !Config.getBoolean( null, Constants.DISABLE_ADD_IMPLICIT_MODULES ) ) {
 			info( "Set required 1st module (for all pipelines): " + ImportMetadata.class.getName() );
 			configModules.remove( ImportMetadata.class.getName() );
 			modules.add( ImportMetadata.class.getName() );
 
-			if( SeqUtil.isMultiplexed() || allMods.contains( ModuleUtil.getDefaultDemultiplexer() ) ) {
+			if( SeqUtil.isMultiplexed() ) {
 				info( "Set required 2nd module (for multiplexed data): " + ModuleUtil.getDefaultDemultiplexer() );
 				configModules.remove( ModuleUtil.getDefaultDemultiplexer() );
 				modules.add( ModuleUtil.getDefaultDemultiplexer() );

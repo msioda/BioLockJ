@@ -5,8 +5,6 @@
 ##                                                                 ##
 #####################################################################
 
-S3_DIR="s3://"
-
 # Sync local files to S3 for cloud pipeline execution
 aws_sync_inputs_to_s3() {
 	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_sync_inputs_to_s3() ]: Required property \"awsS3\" is undefined in $blj_aws_config"

@@ -17,8 +17,9 @@
 ##  Restart flag:           -r  <directory>                                     ##
 ##                                                                              ##
 ##################################################################################
-. $BLJ/script/blj_functions
+. "${DOCKER_LIB}"
 
+[ ${#DOCKER_ID} -eq 0 ] && exit_script "Error [ dockblj ]: Required bash variable DOCKER_ID undefined"
 [ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ dockblj ]: Required bash variable BLJ_PROJ undefined"
 
 # Populates the docker run BLJ_OPTIONS parameter

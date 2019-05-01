@@ -8,10 +8,6 @@
 ##   3. Add $BLJ/script/docker_functions to bash shell                 ##
 ##                                                                     ##
 #########################################################################
-. ${BLJ_LIB}
-
-export BLJ_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export BLJ="$(dirname $BLJ_SCRIPT)"
 
 export DOCKER_DIR="${BLJ}/resources/docker"
 export DOCKER_ID="biolockj"
@@ -29,5 +25,3 @@ export BLJ_DB="${EFS}/db"
 export BLJ_INPUT="${EFS}/input"
 export BLJ_META="${EFS}/metadata"
 export BLJ_PRIMER="${EFS}/primer"
-
-source "${BLJ_SCRIPT}/docker_functions"

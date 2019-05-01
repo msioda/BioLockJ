@@ -28,7 +28,7 @@ public class NextflowUtil {
 	/**
 	 * Sync file or directory with S3 bucket.<br>
 	 * Dir example: aws s3 sync $EFS/config s3://blj-2019-04-05/config<br>
-	 * File example: aws s3 cp ${EFS_META}/testMetadata.tsv s3://blj-2019-04-05/metadata/testMetadata.tsv
+	 * File example: aws s3 cp ${BLJ_META}/testMetadata.tsv s3://blj-2019-04-05/metadata/testMetadata.tsv
 	 * 
 	 * @param efsPath File or directory to sync
 	 * @param waitUntilComplete Boolean if enabled will block until process completes before moving on

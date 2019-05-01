@@ -10,8 +10,7 @@
 ##  BioLockJ Config file (2nd param) instead of running a pipeline      ##
 ##                                                                      ##
 ##########################################################################
-. $BLJ/script/blj_functions
-. $BLJ/script/aws_functions
+. "${AWS_LIB}"
 
 bljJar=${BLJ}/dist/BioLockJ.jar
 

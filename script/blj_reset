@@ -5,7 +5,7 @@
 ##  All modules numbered higher than the current module will also be reset.  ##
 ##                                                                           ##
 ###############################################################################
-. $BLJ/script/blj_functions
+. "${BLJ_LIB}"
 
 if [ ${#1} -gt 0 ]; then myDir="${1}"; else myDir="$PWD"; fi
 echo "Starting [ blj_reset ] to reset status of modules after/including $myDir to --> \"biolockjStarted\""

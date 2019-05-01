@@ -498,6 +498,7 @@ public class BioLockJ {
 			hostPath = errFile.getAbsolutePath();
 			System.out.println( "projDir: " + projDir );
 			System.out.println( "Init errFile: " + hostPath );
+			System.out.println( "Host $BLJ_PROJ: " + RuntimeParamUtil.getDockerHostPipelineDir()  );
 			if( DockerUtil.inDockerEnv() ) {
 				hostPath = hostPath.replace( projDir, RuntimeParamUtil.getDockerHostPipelineDir() );
 				System.out.println( "Docker env host path: " + hostPath );

@@ -16,7 +16,6 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
 
 /**
@@ -42,12 +41,13 @@ public class MetaUtil {
 		final boolean removeMissingIds ) throws Exception {
 		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getFileName() );
 		Log.info( MetaUtil.class, "Adding new field [" + colName + "] to metadata: " + newMeta.getAbsolutePath() );
+		Log.debug( MetaUtil.class, "Current metadata: " + getMetadata().getAbsolutePath() );
 		if( getFieldNames().contains( colName ) ) {
 			Log.warn( MetaUtil.class,
 				"Metadata column [" + colName + "] already exists in: " + getMetadata().getAbsolutePath() );
 			return;
 		}
-
+		
 		final Set<String> sampleIds = map.keySet();
 		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
 		setFile( newMeta );
@@ -124,7 +124,7 @@ public class MetaUtil {
 	 * @throws Exception if unable to read metadata file
 	 */
 	public static List<String> getFieldNames() throws Exception {
-		if( getMetadata() == null || !getMetadata().exists() )
+		if( getMetadata() == null || !getMetadata().isFile())
 			throw new Exception( "Metadata file path is undefined.  Cannot get metadata field names." );
 
 		final List<String> headers = getRecord( metaId );
@@ -133,7 +133,7 @@ public class MetaUtil {
 			throw new Exception( "Metadata headers not found!  Please verify 1st column header is not missing from: "
 				+ getMetadata().getAbsolutePath() );
 
-		// Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
+		//Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
 
 		return headers;
 	}
@@ -247,6 +247,7 @@ public class MetaUtil {
 		} else {
 			setFile( new File( path ) );
 		}
+		Log.debug( MetaUtil.class, "Returning new metadata file path: " + getMetadata().getAbsolutePath() );
 		return metadataFile;
 	}
 
@@ -466,7 +467,6 @@ public class MetaUtil {
 				Log.debug( MetaUtil.class,
 					"===> MetaUtil.setFile() not required, file already defined as " + metadataFile.getAbsolutePath() );
 			}
-			if( !file.isFile() ) throw new ConfigPathException( META_FILE_PATH, ConfigPathException.FILE );
 		} else throw new Exception( "Cannot pass NULL to MetaUtil.setFile( file )" );
 		metadataFile = file;
 	}

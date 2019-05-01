@@ -14,16 +14,18 @@
 ##   9. Add $BLJ_SCRIPT/blj_functions to bash shell                    ##
 ##                                                                     ##
 #########################################################################
-
-export BLJ_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export BLJ_SCRIPT="$( cd "$( dirname ${BASH_SOURCE[0]} )" && pwd )"
 export BLJ="$(dirname $BLJ_SCRIPT)"
 export BLJ_PROJ="${BLJ}/pipelines"
-export BLJ_LIB="${BLJ_SCRIPT}/blj_config"
-export DOCKER_LIB="${BLJ_SCRIPT}/docker_config"
-export AWS_LIB="${BLJ_SCRIPT}/aws_config"
+export BLJ_LIB="${BLJ_SCRIPT}/blj_functions"
+export DOCKER_LIB="${BLJ_SCRIPT}/docker_functions"
+export AWS_LIB="${BLJ_SCRIPT}/aws_functions"
 
 [ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="${BLJ_SCRIPT}:$PATH"
 [ ! -d "${BLJ_META}" ] && export BLJ_META="${HOME}/metadata"
 [ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
 
-source "${BLJ_SCRIPT}/blj_functions"
+# Load blj_functions
+load_blj_functions() {
+	. "${BLJ_LIB}"
+}

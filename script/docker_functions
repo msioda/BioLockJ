@@ -3,6 +3,8 @@
 ##  This script contains common functions used in BioLockJ.      ##
 ##                                                               ##
 ###################################################################
+. "${BLJ_SCRIPT}/docker_config"
+. "${BLJ_LIB}"
 
 # List all Doker images & containers
 alias dockls='docker images; docker container ls --all'
@@ -41,20 +43,22 @@ dock() {
 	docker run --rm -v "${BLJ_PROJ}":"${EFS_PROJ}":delegated -it $(dock_id)/$1 /bin/bash
 }
 
+# Get configured Docker account ID
 dock_id() {
 	echo "${DOCKER_ID}"
 }
 
+# Get configured Dockerfile directory
 docker_dir() {
 	echo "${DOCKER_DIR}"
 }
 
 # Build Docker images that contain $BLJ
 dockBuildBlj() {
-	$(buildBljCmd) -t $(dock_id)/java_module${bljV} $(docker_dir) -f $(docker_dir)/java_module.Dockerfile
-	$(buildBljDockCliCmd) -t $(dock_id)/biolockj_controller${bljV} $(docker_dir) -f $(docker_dir)/biolockj_controller.Dockerfile
-	docker push $(dock_id)/java_module${bljV}
-	docker push $(dock_id)/biolockj_controller${bljV}
+	docker $(buildBljCmd) -t $DOCKER_ID/java_module${bljV} $(docker_dir) -f $(docker_dir)/java_module.Dockerfile
+	docker $(buildBljDockCliCmd) -t $DOCKER_ID/biolockj_controller${bljV} $(docker_dir) -f $(docker_dir)/biolockj_controller.Dockerfile
+	docker push $DOCKER_ID/java_module${bljV}
+	docker push $DOCKER_ID/biolockj_controller${bljV}
 	clearDock
 }
 

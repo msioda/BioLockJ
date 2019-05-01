@@ -203,8 +203,13 @@ is_pipeline_dir() {
 }
 
 # Load docker functions and env vars into current shell
-load_docker_lib() {
-	source "${BLJ}/script/docker_config"
+load_aws_blj() {
+	source "${AWS_LIB}"
+}
+
+# Load docker functions and env vars into current shell
+load_docker_blj() {
+	source "${DOCKER_LIB}"
 }
 
 # Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
