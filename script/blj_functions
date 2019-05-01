@@ -50,14 +50,13 @@ blj_build() {
 blj_deploy() {
 	blj_sup_git
 	blj_git
-	blj_build
+	blj_build build-jar
 }
 
 # Git latest $BLJ + build BioLockJ.jar
 blj_git() {
 	[ ! -d "${BLJ}" ] && echo "Cannot build BLJ: directory not found: ${BLJ}" && return
 	blj_git_reset "${BLJ}"
-	"${BLJ}/script/blj_build" build-jar
 }
 
 # Reset git repo + set file permissions 770
