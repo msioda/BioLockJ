@@ -538,27 +538,6 @@ function pipelineProjectName(configName){//gets the name of the BLJ created pipe
   return projectPipelinePath;
 }
 
-function createLogFile(){//creates file and returns file name
-  let now = new Date();
-  let year = now.getYear() + 1900;
-  let month = now.toLocaleString("en-us", {
-    month: "short"
-    });
-  let day = now.getDate();
-  let hour = now.getHours();
-  let min = now.getMinutes();
-  let c = ['webapp_log', year, month, day, hour, min].join('_');
-  let p = path.join('/','log', c)
-  fs.writeFile(p, "Log for BLJ webapp\n", function(err) {
-    if(err) {
-      accessLogStream.write(err);
-      return console.log(err);
-    }
-    console.log(`created ${c}`);
-});
-  return p;
-}// end of function loggerFileName()
-
 console.log(process.env.BLJ.toString());
 
 console.log('index.js started');
