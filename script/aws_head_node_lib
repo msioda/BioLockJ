@@ -64,7 +64,6 @@ build_docker_job_defs() {
 close_nextflow_config() {
 	echo "}" >> $(get_nextflow_config)
 	echo "" >> $(get_nextflow_config)
-	#chmod 777 $(get_nextflow_config)
 }
 
 # Connect to running head node
@@ -116,12 +115,13 @@ init_nextflow_config() {
 # Launch a new ec2 head node
 # Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
 launch_ec2_head_node() {
+	cache_key_pair
 	[ -x "$(which docker)" ] && build_docker_job_defs
 	set_ec2_head_node_id
 	refresh_aws_cache
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
-	stage_pipeline_on_aws $(get_ec2_public_ip)
+	stage_pipeline_on_aws
 	if [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
 		exe_remote_cmd "${EC2_HOME}/$(basename $startScript)" 
 	else

@@ -187,22 +187,32 @@ public class RuntimeParamUtil {
 	public static String getDockerJavaModuleParams() {
 		String javaModArgs = "";
 		for( final String key: params.keySet() ) {
-			if( key.equals( CONFIG_FILE ) || key.equals( RESTART_DIR ) || key.equals( BLJ_PROJ_DIR )
-				|| key.equals( PASSWORD ) ) {
-				continue;
-			} else if( key.equals( HOST_BLJ_PROJ_DIR ) ) {
-				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + BLJ_PROJ_DIR + " " + params.get( key );
-			} else if( key.equals( HOST_CONFIG_DIR ) ) {
-				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + CONFIG_FILE + " " + params.get( key )
-					+ getConfigFile().getName();
-			} else {
-				javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + key;
-				javaModArgs += params.get( key ).equals( Constants.TRUE ) ? "": " " + params.get( key );
-			}
+			if( BLJ_CONTROLLER_ONLY_ARGS.contains( key ) ) continue;
+			javaModArgs += javaModArgs.isEmpty() ? "": " ";
+			if( key.equals( HOST_CONFIG_DIR ) ) 
+				javaModArgs += CONFIG_FILE + " " + params.get( key ) + getConfigFile().getName();
+			else if( getDockerMap().values().contains( key ) ) 
+				javaModArgs += getDockerMap().get( key ) + " " + params.get( key );
+			else if( ARG_FLAGS.contains( key ) )
+				javaModArgs += key + " ";
+			else
+				javaModArgs += key + " " + params.get( key );
 		}
 
 		return javaModArgs;
 	}
+	
+	
+	
+	private static Map<String, String> getDockerMap() {
+		if( dockerMap != null ) return dockerMap;
+		dockerMap.put( HOME_DIR, HOST_HOME_DIR );
+		dockerMap.put( CONFIG_FILE, HOST_CONFIG_DIR );
+		dockerMap.put( BLJ_PROJ_DIR, HOST_BLJ_PROJ_DIR );
+		return dockerMap;
+	}
+	
+	private static Map<String, String> dockerMap = new HashMap<>(); 
 
 	/**
 	 * Runtime property getter for Docker host $USER $HOME dir
@@ -298,7 +308,7 @@ public class RuntimeParamUtil {
 	 * @throws RuntimeParamException if invalid parameters found
 	 */
 	public static void registerRuntimeParameters( final String[] args ) throws RuntimeParamException {
-		printRuntimeArgs( args, false );
+		printRuntimeArgs( args, true );
 
 		parseParams( simplifyArgs( args ) );
 
@@ -317,9 +327,7 @@ public class RuntimeParamUtil {
 				final File localConfig = Config.getLocalConfigFile( params.get( CONFIG_FILE ) );
 				params.put( CONFIG_FILE, localConfig.getAbsolutePath() );
 			} catch( final Exception ex ) {
-				Log.error( RuntimeParamUtil.class, "Failed to get local Confg file path", ex );
-				ex.printStackTrace();
-				throw new RuntimeParamException( CONFIG_FILE, params.get( CONFIG_FILE ), ex.getMessage() );
+				throw new RuntimeParamException( CONFIG_FILE, params.get( CONFIG_FILE ), "Failed to get local Confg file path: " + ex.getMessage() );
 			}
 		}
 
@@ -331,10 +339,8 @@ public class RuntimeParamUtil {
 	 * 
 	 * @param args Runtime Args
 	 * @param useSysOut Set TRUE if should use System.out to print
-	 * @throws RuntimeParamException if not enough runtime args found
 	 */
-	protected static void printRuntimeArgs( final String[] args, final boolean useSysOut )
-		throws RuntimeParamException {
+	protected static void printRuntimeArgs( final String[] args, final boolean useSysOut ) {
 		int numArgs = 0;
 		Log.info( RuntimeParamUtil.class, RETURN + Constants.LOG_SPACER );
 		if( args != null && args.length > 0 ) {
@@ -347,8 +353,6 @@ public class RuntimeParamUtil {
 			Log.info( RuntimeParamUtil.class, "No Java runtime args found!" );
 		}
 		Log.info( RuntimeParamUtil.class, Constants.LOG_SPACER );
-
-		if( numArgs < 5 ) throw new RuntimeParamException( "Not enough Java runtime args [ count = " + numArgs + " ]" );
 	}
 
 	private static File assignDirectPipelineDir() throws RuntimeParamException {
@@ -376,7 +380,6 @@ public class RuntimeParamUtil {
 			params.put( CONFIG_FILE, param );
 		} else if( NAMED_ARGS.contains( param ) )
 			throw new RuntimeParamException( param, "", "Missing argument for named parameter" );
-		else throw new RuntimeParamException( param, "", "Unknown final parameter" );
 	}
 
 	private static void assignMasterConfig( final String param, final File pipelineDir ) throws RuntimeParamException {
@@ -397,18 +400,23 @@ public class RuntimeParamUtil {
 		throw new RuntimeParamException( param, pipelineDir.getAbsolutePath(),
 			masterPrefix + " Config file not found in: " + pipelineDir.getAbsolutePath() );
 	}
+	
+	private static String getDir( String path ) {
+		if( path != null && path.endsWith( File.separator ) )
+			return path.substring( 0, path.length() - 1 );
+		return path;
+	}
 
 	private static void parseParams( final String[] args ) throws RuntimeParamException {
 		String prevParam = "";
 		for( final String arg: args ) {
-			if( ARG_FLAGS.contains( arg ) ) {
+			if( ARG_FLAGS.contains( arg ) ) 
 				params.put( arg, Constants.TRUE );
-			} else if( NAMED_ARGS.contains( prevParam ) ) {
+			else if( DIR_ARGS.contains( prevParam ) )
+				params.put( prevParam, getDir( arg ) );
+			else if( NAMED_ARGS.contains( prevParam ) ) 
 				params.put( prevParam, arg );
-			} else {
-				extraParams.add( arg );
-			}
-
+			else extraParams.add( arg );
 			prevParam = arg;
 		}
 
@@ -416,6 +424,9 @@ public class RuntimeParamUtil {
 
 		extraParams.removeAll( params.keySet() );
 		extraParams.removeAll( params.values() );
+		
+		if( !extraParams.isEmpty() ) throw new RuntimeParamException(
+			"Unexpected runtime parameters found:  { " + extraParams + " }" );
 	}
 
 	private static void reassignDockerConfig() {
@@ -426,11 +437,13 @@ public class RuntimeParamUtil {
 			"Reassign \"" + BLJ_PROJ_DIR + "\" arg ---> " + DockerUtil.CONTAINER_OUTPUT_DIR );
 		params.put( HOST_BLJ_PROJ_DIR, params.get( BLJ_PROJ_DIR ) );
 		params.put( HOST_CONFIG_DIR, getConfigFile().getParentFile().getAbsolutePath() );
-		params.put( BLJ_PROJ_DIR, DockerUtil.CONTAINER_OUTPUT_DIR );
-
+		params.put( HOST_HOME_DIR, params.get( HOME_DIR ) ); 
 		if( doRestart() ) {
 			params.put( RESTART_DIR, DockerUtil.CONTAINER_OUTPUT_DIR + File.separator + getRestartDir().getName() );
 		}
+		
+		params.put( BLJ_PROJ_DIR, DockerUtil.CONTAINER_OUTPUT_DIR );
+		params.put( HOME_DIR, DockerUtil.DOCKER_ROOT_HOME );
 	}
 
 	private static String[] simplifyArgs( final String[] args ) {
@@ -440,7 +453,7 @@ public class RuntimeParamUtil {
 		boolean foundConfig = false;
 
 		for( String arg: args ) {
-			if( dockerLongNames.contains( arg ) || NAMED_ARGS.contains( prevArg )
+			if( LONG_ARG_NAMES.contains( arg ) || NAMED_ARGS.contains( prevArg ) || DIR_ARGS.contains( prevArg )
 				|| i == args.length - 1 && !foundConfig ) {
 				simpleArgs[ i++ ] = arg;
 			} else {
@@ -461,18 +474,27 @@ public class RuntimeParamUtil {
 	}
 
 	private static void validateParams() throws RuntimeParamException {
-		if( !extraParams.isEmpty() ) throw new RuntimeParamException(
-			"Unexpected runtime parameters found:  { " + BioLockJUtil.getCollectionAsString( extraParams ) + " }" );
-
 		if( isDockerMode() && getDockerHostInputDir() == null )
 			throw new RuntimeParamException( INPUT_DIR, "", "Docker host input directory required, but not found" );
+		if( isDockerMode() && getDockerHostHomeDir() == null )
+			throw new RuntimeParamException( HOME_DIR, "", "Docker host $HOME directory required, but not found" );
+		if( isDockerMode() && getDockerHostConfigDir() == null )
+			throw new RuntimeParamException( HOST_CONFIG_DIR, "", "Docker host Config directory required, but not found" );
+		if( getHomeDir() == null )
+			throw new RuntimeParamException( HOME_DIR, "", "$HOME directory required, but not found" );
+		if( getConfigFile() == null )
+			throw new RuntimeParamException( CONFIG_FILE, "", "Config file required, but not found" );
+		if( !getHomeDir().isDirectory() ) throw new RuntimeParamException( HOME_DIR, getHomeDir().getAbsolutePath(),
+			"System directory-path not found" );
+		if( !getConfigFile().isFile() ) throw new RuntimeParamException( CONFIG_FILE, getConfigFile().getAbsolutePath(),
+			"System file-path not found" );
 	}
 
 	private static void verifyBaseDir() throws RuntimeParamException {
-		if( getBaseDir() == null ) throw new RuntimeParamException( BLJ_PROJ_DIR, "",
-			"Required environment variable $BLJ_PROJ_DIR must be undefined in runtime shell." );
+		if( getBaseDir() == null )
+			throw new RuntimeParamException( BLJ_PROJ_DIR, "", "$BLJ_PROJ directory required, but not found" );
 		if( !getBaseDir().isDirectory() ) throw new RuntimeParamException( BLJ_PROJ_DIR, getBaseDir().getAbsolutePath(),
-			"System directory not found" );
+			"System directory-path not found" );
 	}
 
 	/**
@@ -560,14 +582,17 @@ public class RuntimeParamUtil {
 	private static final List<String> ARG_FLAGS = Arrays.asList( AWS_FLAG, DOCKER_FLAG, SYSTEM_OUT_FLAG );
 
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
+	
+	private static final List<String> BLJ_CONTROLLER_ONLY_ARGS = Arrays.asList( BLJ_PROJ_DIR, CONFIG_FILE, HOME_DIR, PASSWORD, RESTART_DIR );
 
-	private static final List<String> dockerLongNames = Arrays.asList( DOCKER_FLAG, HOST_BLJ_DIR, HOST_BLJ_PROJ_DIR,
+	private static final List<String> LONG_ARG_NAMES = Arrays.asList( DIRECT_PIPELINE_DIR, DOCKER_FLAG, HOST_BLJ_DIR, HOST_BLJ_PROJ_DIR,
 		HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR );
+	
+	private static final List<String> DIR_ARGS = Arrays.asList( BLJ_PROJ_DIR, HOME_DIR, HOST_BLJ_DIR, HOST_BLJ_PROJ_DIR,
+		HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR, INPUT_DIR, META_DIR, RESTART_DIR );
 
+	private static final List<String> NAMED_ARGS = Arrays.asList( CONFIG_FILE, DIRECT_MODE, PASSWORD );
 	private static final List<String> extraParams = new ArrayList<>();
-
-	private static final List<String> NAMED_ARGS = Arrays.asList( BLJ_PROJ_DIR, CONFIG_FILE, DIRECT_MODE, HOME_DIR,
-		HOST_BLJ_DIR, HOST_BLJ_SUP_DIR, HOST_HOME_DIR, INPUT_DIR, META_DIR, PASSWORD, RESTART_DIR );
 	private static final Map<String, String> params = new HashMap<>();
 	private static final String RETURN = Constants.RETURN;
 	private static String runtimeArgs = "";

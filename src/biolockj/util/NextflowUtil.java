@@ -349,8 +349,7 @@ public class NextflowUtil {
 		args[ 0 ] = NEXTFLOW_CMD;
 		args[ 1 ] = "run";
 		args[ 2 ] = "-work-dir";
-		args[ 3 ] = S3_DIR + Config.requireString( null, AWS_S3 ) + File.separator + Config.pipelineName()
-			+ File.separator + NEXTFLOW_CMD;
+		args[ 3 ] = S3_DIR + Config.requireString( null, AWS_S3 ) + File.separator + NEXTFLOW_CMD;
 		args[ 4 ] = "-with-trace";
 		args[ 5 ] = reportBase + "nextflow_trace.tsv";
 		args[ 6 ] = "-with-timeline";

@@ -8,10 +8,16 @@
 
 # List all Doker images & containers
 alias dockls='docker images; docker container ls --all'
-alias db_blj="dockBuildBlj"
+alias bljd="dockBuildBlj"
 alias docker_build="updateDocker build"
 alias docker_push="updateDocker push"
 alias docker_pull="updateDocker pull"
+
+
+# These are the 1st BLJ_OPTIONS if running AWS Docker container
+aws_options() {
+	echo "-docker -u /home/ec2-user -aws"
+}
 
 # Use to build containers with BioLockJ installed.
 # The date build-arg forces Docker to pull latest BioLockJ.tgz from GitHub 
@@ -110,6 +116,11 @@ dockManager() {
 # Param $1 = Docker container name or ID
 goDock() {
 	docker exec -ti ${1} /bin/bash
+}
+
+# Check if running in an AWS Docker container
+inAwsDockerContainer() {
+	[ ${#BLJ_OPTIONS} -gt 30 ] && [ "${BLJ_OPTIONS/$(aws_options)}" != "${BLJ_OPTIONS}" ] 
 }
 
 # Single function used to build, pull, push Docker modules.

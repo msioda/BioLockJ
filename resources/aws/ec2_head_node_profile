@@ -23,7 +23,6 @@ alias vib="vi ${BSH_PROF}"
 alias cab="cat ${BSH_PROF}"
 alias tlog="tail -1000 *.log"
 alias tlogf="tail -1000f *.log"
-alias dockls="docker images; docker container ls --all"
 alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 

@@ -14,7 +14,6 @@ export DOCKER_ID="biolockj"
 export DOCK_SOCK="/var/run/docker.sock"
 export DOCKER_VER="docker-18.09.2"
 
-export EC2_HOME="/home/ec2-user"
 export EC2_AWS="${EC2_HOME}/.aws"
 export EC2_MCONDA_BIN="${EC2_HOME}/miniconda/bin"
 export EFS="/mnt/efs"

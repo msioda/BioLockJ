@@ -4,11 +4,13 @@
 ##  This script is used for AWS core function + logic       ##
 ##                                                          ##
 ##############################################################
-. "${BLJ_SCRIPT}/aws_config"
 . "${BLJ_SCRIPT}/aws_config_lib"
 . "${BLJ_SCRIPT}/aws_clean_lib"
 . "${BLJ_SCRIPT}/aws_head_node_lib"
 . "${BLJ_SCRIPT}/aws_upload_lib"
+
+alias clearPipes="sudo rm -rf $EFS/pipelines/*; echo AWS pipelines removed"
+alias tailnf="tail -1000f $BLJ/web_app/.nextflow.log"
 
 # Build Cloud-formation Stack
 build_stack() {
@@ -57,6 +59,7 @@ build_s3() {
 
 # Build key pair + save to ~/.aws/$awsStack.pem file
 cache_key_pair() {
+	refresh_aws_cache
 	keyFile=$(key_file)
 	if [ ! -f "$keyFile" ]; then
 		keys=$(aws ec2 describe-key-pairs)

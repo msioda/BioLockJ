@@ -22,20 +22,24 @@
 [ ${#DOCKER_ID} -eq 0 ] && exit_script "Error [ dockblj ]: Required bash variable DOCKER_ID undefined"
 [ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ dockblj ]: Required bash variable BLJ_PROJ undefined"
 
-# Populates the docker run BLJ_OPTIONS parameter
+# Populates the docker run BLJ_OPTIONS parameter in A VERY SPECIFIC ORDER.
 # Include -docker to run BioLockJ in a Docker container
 # Include Docker container path to required Config file
 # Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
+# $BLJ_SCRIPT/blj_config determines AWS runtime env by order of first few BLJ_OPTIONS "/-docker -u  /home/ec2-user -aws"
 blj_options() {
-	options="-docker -b $(blj_proj) -c $config -u ${HOME}"
-	$(has_param $runAws) && options="$options $runAws"
+	if $(has_param $runAws); then
+		options="$(aws_options)"
+	else
+		options="-docker -u ${HOME}"
+	fi
 	$(has_param $doRestart) && options="$options -r ${BLJ_PROJ}/${doRestart#$(blj_proj)/}"
 	$(has_param $newPass) && options="$options -p $newPass"
 	$(has_param $inputDir) && options="$options -i $inputDir"
 	$(has_param $metaPath) && options="$options -m $metaPath"
 	$(has_param $runDev) && $(has_param ${HOST_BLJ}) && options="$options -blj ${HOST_BLJ}"
 	$(has_param $runDev) && $(has_param ${HOST_BLJ_SUP}) && options="$options -bljSup ${HOST_BLJ_SUP}"
-	echo $options
+	echo "$options -b $(blj_proj) -c $config"
 }
 
 # Return $HOST_BLJ_PROJ if called from within the biolockj_controller Docker container, otherwise return $BLJ_PROJ
@@ -60,19 +64,20 @@ get_docker_img() {
 
 # Get mapped  Docker volumes
 get_volumes() {
-	vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v $(blj_proj):${EFS_PROJ}:delegated"
-	$(has_param $runAws) && "${vols} -v ${EC2_HOME}:${EC2_HOME} -v ${EFS}:${EFS}"
-	
-	if $(has_param $launchGui); then
-		vols="${vols} -v ${BLJ}/web_app/logs:/log:delegated -v ${BLJ}/resources/config/gui:${BLJ_CONFIG} "
+	if $(has_param $runAws); then
+		vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${EC2_HOME}:${EC2_HOME} -v ${EFS}:${EFS}:delegated"
 	else
-		vols="${vols} -v $inputDir:${BLJ_INPUT} -v $(dirname $config):${BLJ_CONFIG}"
+		vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v $(blj_proj):${EFS_PROJ}:delegated"
+		if $(has_param $launchGui); then
+			vols="${vols} -v ${BLJ}/web_app/logs:/log:delegated -v ${BLJ}/resources/config/gui:${BLJ_CONFIG} "
+		else
+			vols="${vols} -v $inputDir:${BLJ_INPUT} -v $(dirname $config):${BLJ_CONFIG}"
 		$(has_param $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}"
+		fi
+	
+		$(has_param $runDev) && $(has_param ${HOST_BLJ}) && vols="${vols} -v ${HOST_BLJ}:/app/biolockj"
+		$(has_param $runDev) && $(has_param ${HOST_BLJ_SUP}) && vols="${vols} -v ${HOST_BLJ_SUP}:/app/blj_support"
 	fi
-	
-	$(has_param $runDev) && $(has_param ${HOST_BLJ}) && vols="${vols} -v ${HOST_BLJ}:/app/biolockj"
-	$(has_param $runDev) && $(has_param ${HOST_BLJ_SUP}) && vols="${vols} -v ${HOST_BLJ_SUP}:/app/blj_support"
-	
 	echo "${vols}"
 }
 
@@ -83,7 +88,7 @@ has_param() {
 
 # Call the docker run command with the correct parameters
 run_docker() {
-	echo "execute[ docker run -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img) ]"
+	echo "execute[ docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img) ]"
 	docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) "$(get_docker_img)"
 }
 
@@ -115,7 +120,7 @@ launchGui=$(arg_exists "$@" -gui)
 if $(has_param $launchGui); then
 	echo "CMD dockblj...launching GUI"
 else
-	echo "CMD dockblj...launching BioLockJ pipeline"
+	echo "CMD dockblj...launching BioLockJ pipeline with home: ${EC2_HOME}"
 fi
 
 runDev=$(arg_exists "$@" -dev)
@@ -132,5 +137,5 @@ if ! $(has_param $inDocker); then
 fi
 
 $(has_param $runDev) && echo "Running DEV mode!"
-	
+$(has_param $runAws) && echo "Running AWS mode!"
 run_docker

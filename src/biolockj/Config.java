@@ -809,12 +809,17 @@ public class Config {
 		return null;
 	}
 
-	private static File getPipelineDir() {
+	/**
+	 * Get the pipeline directory if it is a valid directory on the file system.
+	 * 
+	 * @return Pipeline directory (if it exists)
+	 */
+	public static File getPipelineDir() {
 		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) {
 			try {
 				pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
 			} catch( final Exception ex ) {
-				ex.printStackTrace();
+				Log.error( Config.class, "Pipeline directory does not exist", ex  );
 			}
 		}
 		return pipelineDir;

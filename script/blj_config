@@ -7,11 +7,10 @@
 ##   2. Add env. variable $BLJ_SCRIPT = ${BLJ}/script                  ##
 ##   3. Add env. variable $BLJ_PROJ = ${BLJ}/pipelines                 ##
 ##   4. Add env. variable $BLJ_META = ${HOME}/metadata if undefined    ##
-##   5. Add env. variable $DOCKER_LIB = ${BLJ}/docker_config           ##
-##   6. Add env. variable $AWS_LIB = ${BLJ}/aws_config                 ##
+##   5. Source $DOCKER_LIB /.dockerenv exists                          ##
+##   6. Add aliases load_blj, load_docker, load_aws to source libs     ##
 ##   7. Add env. variable $BLJ_SUP = blj_support directory             ##
-##   8. Add $BLJ_SCRIPT into the $USER $PATH                           ##
-##   9. Add $BLJ_SCRIPT/blj_functions to bash shell                    ##
+##   8. Add $BLJ_SCRIPT to your $PATH                                  ##
 ##                                                                     ##
 #########################################################################
 export BLJ_SCRIPT="$( cd "$( dirname ${BASH_SOURCE[0]} )" && pwd )"
@@ -20,12 +19,14 @@ export BLJ_PROJ="${BLJ}/pipelines"
 export BLJ_LIB="${BLJ_SCRIPT}/blj_functions"
 export DOCKER_LIB="${BLJ_SCRIPT}/docker_functions"
 export AWS_LIB="${BLJ_SCRIPT}/aws_functions"
+export EC2_HOME="/home/ec2-user"
 
+alias load_blj=". ${BLJ_LIB}"
+alias load_docker=". ${DOCKER_LIB}"
+alias load_aws=". ${AWS_LIB}"
+
+[ "${HOME}" == "${EC2_HOME}" ] && load_docker
+$(inAwsDockerContainer) && load_aws
 [ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="${BLJ_SCRIPT}:$PATH"
 [ ! -d "${BLJ_META}" ] && export BLJ_META="${HOME}/metadata"
 [ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"
-
-# Load blj_functions
-load_blj_functions() {
-	. "${BLJ_LIB}"
-}

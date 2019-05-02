@@ -8,42 +8,16 @@
 ##                    substituting "_" for all "." characters                 ##
 ##                                                                            ##
 ################################################################################
-source "${AWS_LIB}"
+. "${AWS_LIB}"
 
-[ ! -d "${EC2_AWS}" ] && mkdir "${EC2_AWS}" && echo "Created ${EC2_AWS} directory"
+AWS_DIR=~/.aws
+[ ! -d "${AWS_DIR}" ] && mkdir "${AWS_DIR}" && echo "Created ${AWS_DIR} directory"
 
-buildAwsConfig() {
-	AWS_CONF="${EC2_AWS}/config"
-	echo "Generating ${AWS_CONF} in the biolockj container"
-	echo "[default]" > "${AWS_CONF}"
-	echo "region = ${awsRegion}" >> "${AWS_CONF}"
-	echo "output = text" >> "${AWS_CONF}"
-	echo "Created --> ${AWS_CONF}"
-	cat "${AWS_CONF}"
-}
-
-buildAwsCredentials() {
-	AWS_CRED="${EC2_AWS}/credentials"
-	echo "Generating ${AWS_CRED} in the biolockj container"
-	echo "[default]" > "${AWS_CRED}"
-	echo "aws_access_key_id = $(get_aws_access_key_id)" >> "${AWS_CRED}"
-	echo "aws_secret_access_key = $(get_aws_secret_access_key)" >> "${AWS_CRED}"
-	echo "Created -->" "${AWS_CRED}"
-	cat "${AWS_CRED}"
-}
-
-buildNexflowConfigDir() {
-	NF_DIR="${HOME}/.nextflow"
-	[ ! -d "${NF_DIR}" ] && mkdir "${NF_DIR}" && echo Created "${NF_DIR} directory"
-	echo "Copy $(get_ec2_nextflow_dir)/config to --> ${NF_DIR}"
-	cp "$(get_ec2_nextflow_dir)/config" "${NF_DIR}"
-	echo "Created --> Nextflow config: ${NF_DIR}/config"
-	cat "${NF_DIR}/config"
-}
 
 # Build the template
 # Param 1 - List of modules (using special delimiters)
 buildNexflowTemplate() {
+	echo "Building Nextflow Template..."
 	modules="${2}"
 	numModules=$(echo $modules | wc -w | xargs)
 	summaryMsg="BioLockJ $(biolockj -v) generated Nextflow Config with $numModules BioModule process definitions"
@@ -77,10 +51,13 @@ get_modules() {
 }
 
 if [ $# -lt 2 ]; then
-	echo "Missing required parameters, 2 params requried main.nf - 1) file-path, 2) List of modules formatted with specific delimiters"
+	echo "Missing [ make_nextflow ] args - 2 params required to build main.nf --->"
+	echo "  1) main.nf file-path"
+	echo "  2) List of modules formatted with specific delimiters"
+	sleep 15
+	exit 1
 else
-	buildNexflowConfigDir
-	buildAwsConfig
-	buildAwsCredentials
+	cp -v $(get_ec2_nextflow_dir)/config ~/.nextflow
+	cp -vr $EC2_AWS ~
 	buildNexflowTemplate "${1}" "$(get_modules ${2})"
 fi

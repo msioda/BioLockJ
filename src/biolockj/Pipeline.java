@@ -85,7 +85,7 @@ public class Pipeline {
 	 * @return pipeline status (success or failed)
 	 */
 	public static String getStatus() {
-		if( pipelineException == null || getModules() == null || getModules().isEmpty() )
+		if( pipelineException != null || getModules() == null || getModules().isEmpty() )
 			return Constants.SCRIPT_FAILURES;
 		for( final BioModule module: getModules() ) {
 			if( !ModuleUtil.isComplete( module ) ) return Constants.SCRIPT_FAILURES;

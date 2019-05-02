@@ -60,11 +60,11 @@ RUN	apt-get clean && \
 
 #7.) Update  ~/.bashrc
 RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
-	echo 'alias goblj=blj_go' >> ~/.bashrc
-	
-RUN mkdir /app/blj_support
+	echo 'alias goblj=blj_go' >> ~/.bashrc && \
+	echo alias rd='rm -rf' >> ~/.bashrc && \
+	mkdir /app/blj_support
 		
-#8.) Start npm Command (Ready to open web-browser localhost:8080)
+#8.) Setup environment and assign default command
 WORKDIR $BLJ/web_app/
 EXPOSE 8080
 CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS

@@ -21,7 +21,7 @@ RUN	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
 
-#3.) Update  ~/.bashrc
+#3.) Update  ~/.bashrc and make blj_support dir 
 RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
-	echo 'alias goblj=blj_go' >> ~/.bashrc
-RUN mkdir /app/blj_support
+	echo 'alias goblj=blj_go' >> ~/.bashrc && \
+	mkdir /app/blj_support

@@ -23,12 +23,48 @@ import biolockj.util.*;
 public class FatalExceptionHandler {
 
 	/**
-	 * Return the existing error log, or build a new log if not yet created.
+	 * Print the {@link biolockj.Log} messages and the exception stack trace info to the $USER $HOME directory.
 	 * 
-	 * @return Error log file
+	 * @param args Java runtime args
+	 * @param ex Fatal application exception
+	 */
+	public static void logFatalError( final String[] args, final Exception ex ) {
+		System.out.println( "System encountered a FATAL ERROR" );
+		if( Log.getFile() != null && Log.getFile().isFile() ) {
+			setErrorLog( Log.getFile() );
+			setFailedStatus();
+			SummaryUtil.addSummaryFooterForFailedPipeline();
+		} else setErrorLog( createErrorLog() );
+
+		
+		logFatalException( args, ex );
+
+		if( getErrorLog() != null ) {
+			Log.info( FatalExceptionHandler.class, "Local file-system error log path: " + getErrorLog().getAbsolutePath() );
+			if( DockerUtil.inDockerEnv()  && getHostLogPath() != null ) 
+				Log.info( FatalExceptionHandler.class, "Host file-system error log path: " + getHostLogPath() );
+			dumpLogs( getLogs() );
+		} else {
+			Log.warn( FatalExceptionHandler.class, "Unable to save logs to file-system: " );
+			printLogsOnScreen( getLogs() );
+		}
+	}
+	
+	/**
+	 * Error log file getter
+	 * 
+	 * @return Error log
 	 */
 	public static File getErrorLog() {
-		if( errorLog != null ) return errorLog;
+		return errorLog;
+	}
+	
+	private static void setErrorLog( File file ) {
+		errorLog = file;
+	}
+
+	private static File createErrorLog() {
+		Log.warn( FatalExceptionHandler.class, "Pipeline failed before pipeline directory or log were created!" );
 		final File dir = getErrorLogDir();
 		if( dir == null ) return null;
 		final String suffix = getErrorLogSuffix();
@@ -39,57 +75,19 @@ public class FatalExceptionHandler {
 			file = new File( dir.getAbsolutePath() + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + "_"
 				+ new Integer( ++i ).toString() + Constants.LOG_EXT );
 		}
-		errorLog = file;
-		return errorLog;
+		return file;
 	}
-
-	/**
-	 * Print the {@link biolockj.Log} messages and the exception stack trace info to the $USER $HOME directory.
-	 * 
-	 * @param args Java runtime args
-	 * @param ex Fatal application exception
-	 */
-	public static void logFatalError( final String[] args, final Exception ex ) {
-		if( Log.getFile() != null && Log.getFile().isFile() ) {
-			setFailedStatus();
-			SummaryUtil.addSummaryFooterForFailedPipeline();
-		} else {
-			createErrorLog();
+	
+	private static String getHostLogPath() {
+		String path = getErrorLog().getAbsolutePath();
+		String hostDir = RuntimeParamUtil.getDockerHostPipelineDir();
+		String hostHome = RuntimeParamUtil.getDockerHostHomeDir();
+		if( hostDir != null && path.startsWith( DockerUtil.CONTAINER_OUTPUT_DIR ) )
+			return path.replace( DockerUtil.CONTAINER_OUTPUT_DIR, hostDir );
+		if( path.startsWith( DockerUtil.DOCKER_ROOT_HOME ) ) {
+			return path.replace( DockerUtil.DOCKER_ROOT_HOME, hostHome );
 		}
-
-		logFatalException( args, ex );
-
-		if( getErrorLog() != null ) {
-			dumpLogs( getLogs() );
-		} else if( !RuntimeParamUtil.isDebugMode() ) {
-			printLogsOnScreen( getLogs() );
-		} else {
-			System.out.println(
-				"Log file not found or created.  System in DEBUG mode, so logs should already be on screen." );
-		}
-	}
-
-	private static void createErrorLog() {
-		Log.warn( FatalExceptionHandler.class, "Pipeline failed before pipeline directory or log were created!" );
-		final File errFile = getErrorLog();
-		if( errFile == null ) {
-			System.out.println( "Failed to build error log error log" );
-			return;
-		}
-		String hostPath = errFile.getAbsolutePath();
-		if( DockerUtil.inDockerEnv() ) {
-			if( hostPath.startsWith( DockerUtil.CONTAINER_OUTPUT_DIR ) ) {
-				hostPath = hostPath.replace( DockerUtil.CONTAINER_OUTPUT_DIR,
-					RuntimeParamUtil.getDockerHostPipelineDir() );
-			} else if( hostPath.startsWith( DockerUtil.DOCKER_ROOT_HOME ) ) {
-				hostPath = hostPath.replace( DockerUtil.DOCKER_ROOT_HOME, RuntimeParamUtil.getDockerHostHomeDir() );
-			}
-		}
-
-		Log.warn( FatalExceptionHandler.class, "Local file-system error log path: " + errFile.getAbsolutePath() );
-		if( !hostPath.equals( errFile.getAbsolutePath() ) ) {
-			Log.warn( FatalExceptionHandler.class, "Host file-system error log path: " + hostPath );
-		}
+		return null;
 	}
 
 	private static void dumpLogs( final List<String> lines ) {
@@ -100,15 +98,15 @@ public class FatalExceptionHandler {
 				writer.write( line );
 			}
 		} catch( final Exception ex ) {
-			System.out.println( "Failed to write to: " + getErrorLog().getAbsolutePath() );
+			System.out.println( "Failed to write to: " + getErrorLog().getAbsolutePath() + " : " + ex.getMessage() );
 			ex.printStackTrace();
 		} finally {
 			try {
 				if( writer != null ) {
 					writer.close();
 				}
-			} catch( final IOException ex3 ) {
-				System.out.println( "Failed to close writer for: " + getErrorLog().getAbsolutePath() );
+			} catch( final IOException ex ) {
+				System.out.println( "Failed to close writer for: " + getErrorLog().getAbsolutePath() + " : " + ex.getMessage() );
 			}
 		}
 	}
@@ -160,17 +158,14 @@ public class FatalExceptionHandler {
 	}
 
 	private static void logFatalException( final String[] args, final Exception ex ) {
-		if( Log.getFile() != null ) {
-			Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
-			Log.error( FatalExceptionHandler.class, Constants.RETURN + "FATAL APPLICATION ERROR " + ( args == null ? ""
-				: " -->" + Constants.RETURN + " Program args: " + RuntimeParamUtil.getRuntimeArgs() ), ex );
-			Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
-			ex.printStackTrace();
-			Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
-			Log.error( FatalExceptionHandler.class, BioLockJ.getHelpInfo() );
-			Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
-		}
-
+		Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
+		Log.error( FatalExceptionHandler.class, Constants.RETURN + "FATAL APPLICATION ERROR " + ( args == null ? ""
+			: " -->" + Constants.RETURN + " Program args: " + RuntimeParamUtil.getRuntimeArgs() ), ex );
+		Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
+		ex.printStackTrace();
+		Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
+		Log.error( FatalExceptionHandler.class, BioLockJ.getHelpInfo() );
+		Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );	
 	}
 
 	private static void printLogsOnScreen( final List<String> lines ) {
@@ -181,10 +176,12 @@ public class FatalExceptionHandler {
 
 	private static void setFailedStatus() {
 		try {
-			BioLockJUtil.createFile( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
+			if( Config.getPipelineDir() != null )
+				BioLockJUtil.createFile( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
 		} catch( final Exception ex ) {
 			Log.error( FatalExceptionHandler.class,
-				"Pipeline root directory not found, cannot save Pipeline Status File: " + Constants.BLJ_FAILED );
+				"Pipeline root directory not found - unable save Pipeline Status File: " + Constants.BLJ_FAILED
+				+ " : " + ex.getMessage() );
 		}
 	}
 

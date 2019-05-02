@@ -110,7 +110,8 @@ aws_rm_key_pairs() {
 		$(is_empty ${vals}) && break
 	done
 	aws_log "Deleted $numComplete/$count key-pairs"
-	[ ${#key_file} -gt 0 ] && rm -rf $(key_file)
+	myKey=$(key_file)
+	[ ${#myKey} -gt 0 ] && chmod 700 $myKey && rm -rf $myKey
 	vals=$(aws ec2 describe-key-pairs)
 	[ ${#vals} -eq 0 ] && aws_log "All key-pairs removed" && return
 	aws_log "Remaining key-pairs:" && aws ec2 describe-key-pairs
@@ -171,11 +172,12 @@ aws_rm_stacks() {
 }
 
 # Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
+# Also clear the associated key_pair file on AWS and local system
 kill_head_node() {
 	aws_log "CLEARING EC2 instances..." 
 	instances=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
 	runningInstances=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name=='running'].InstanceId")
-	[ ${#instances} -eq 0 ] && aws_log "No EC2 instances found" && return
+	[ ${#instances} -eq 0 ] && aws_log "No EC2 instances found" && aws_rm_key_pairs && return
 	aws_log "List EC2 instance-ids --> ${instances}"
 	[ ${#runningInstances} -gt 0 ] && aws ec2 stop-instances --instance-ids ${runningInstances} && \
 		aws_log "The following EC2 instances have been stopped --> ${runningInstances}"
@@ -186,6 +188,7 @@ kill_head_node() {
 		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
 	rm_prop "$blj_aws_config" ec2PublicIP
 	rm_prop "$blj_aws_config" awsEc2InstanceID
+	aws_rm_key_pairs
 }
 
 # De-register, disable, and remove all AWS objects
@@ -195,6 +198,5 @@ nuke_aws() {
  	kill_head_node && \
 	aws_deregister_job_defs && \
 	aws_rm_stacks && \
-	aws_rm_key_pairs && \
 	[ "${1}" == "s3" ] && aws_rm_s3_buckets
 }
