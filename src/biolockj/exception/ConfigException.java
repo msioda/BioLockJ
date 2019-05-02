@@ -52,8 +52,8 @@ public abstract class ConfigException extends Exception {
 			val = "{undefined}";
 		}
 		return "[ " + property + "=" + val + " ] " + Constants.RETURN + msg + Constants.RETURN
-			+ "Restart pipeline after updating application inputs or Config " + property + " value in: "
-			+ Config.getConfigFileName();
+			+ "Restart pipeline after updating the property value in: " + Config.getConfigFilePath() + Constants.RETURN
+			+ "RESTART SHORTCUT CMD ---> \"blj_rerun " + Config.getConfigFilePath() + "\"";
 	}
 
 	private static final long serialVersionUID = 3479702562753539290L;

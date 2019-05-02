@@ -9,7 +9,6 @@
 #########################################################################
 . "${DOCKER_LIB}"
 
-export S3_DIR="s3://"
 if [ "${USER}" == "ec2-user" ]; then
 	export BLJ_SCRIPT="${EFS}/script"
 	export BLJ="${EFS}"

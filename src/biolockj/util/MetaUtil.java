@@ -47,7 +47,7 @@ public class MetaUtil {
 				"Metadata column [" + colName + "] already exists in: " + getMetadata().getAbsolutePath() );
 			return;
 		}
-		
+
 		final Set<String> sampleIds = map.keySet();
 		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
 		setFile( newMeta );
@@ -124,7 +124,7 @@ public class MetaUtil {
 	 * @throws Exception if unable to read metadata file
 	 */
 	public static List<String> getFieldNames() throws Exception {
-		if( getMetadata() == null || !getMetadata().isFile())
+		if( getMetadata() == null || !getMetadata().isFile() )
 			throw new Exception( "Metadata file path is undefined.  Cannot get metadata field names." );
 
 		final List<String> headers = getRecord( metaId );
@@ -133,7 +133,7 @@ public class MetaUtil {
 			throw new Exception( "Metadata headers not found!  Please verify 1st column header is not missing from: "
 				+ getMetadata().getAbsolutePath() );
 
-		//Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
+		// Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
 
 		return headers;
 	}

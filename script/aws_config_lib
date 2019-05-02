@@ -82,23 +82,21 @@ aws_stacks() {
 
 # Clear possible aws_config from bash shell memeroy
 clear_aws_cache() {
-	aws_access_key_id=
+	awsAmi=
 	awsEc2AcquisitionStrategy=
 	awsEc2InstanceID=
-	awsAmi=
+	awsEc2SpotPer=
 	awsProfile=
+	awsRam=
 	awsRegion=
-	aws_secret_access_key=
 	awsStack=
 	awsS3=
 	awsWalltime=
 	configFiles=
 	dockerImgVersion=
 	dockerUser=
-	ec2PublicIp=
 	inputDirPaths=
 	metadataFilePath=
-	pipelineDetachJavaModules=
 	trimPrimersFilePath=
 	kneaddataDbs=
 	krakenDb=
@@ -130,6 +128,32 @@ convert_prop() {
 	set_blj_prop $(map_property_name "${2}") "${val}" $IS_NULL
 }
 
+# Get AWS-Access-ID from local file sytem (requires user has logged on to client or file is staged to $HOME)
+get_aws_access_key_id() {
+	echo $(aws_local_prop aws_access_key_id ~/.aws/credentials)
+}
+
+# Get AWS-Access-KEY from local file sytem (requires user has logged on to client or file is staged to $HOME)
+get_aws_secret_access_key() {
+	echo $(aws_local_prop aws_secret_access_key ~/.aws/credentials)
+}
+
+# Get the Pipeline Config local file-path
+# Param 1 - local or ec2
+get_config() {
+	configFiles=$(get_blj_prop configFiles)
+	propFiles=( ${configFiles//,/ } )
+	numConfig=${#propFiles[@]}
+	((numConfig--))
+	[ "${1}" == "local" ] && echo "${propFiles[$numConfig]}"
+	[ "${1}" == "ec2" ] && echo "${BLJ_CONFIG}/$(basename ${propFiles[$numConfig]})"
+}
+
+# Get the Config name - used to label pipeline dirs
+get_config_name() {
+	echo $(echo $(basename $(get_config local)) | cut -f1 -d".")
+}
+
 # Get a prop stored in $blj_aws_config
 # Param 1 - Prop name
 # Param 2 - (Optional) Default value
@@ -156,6 +180,8 @@ get_prop() {
 # Add docker.properties if not already in list of nested Config files
 # Param 1 - Pipeline Config file path
 init_aws_config() {
+	[ ! -f "${HOME}/.aws/config" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/config"
+	[ ! -f "${HOME}/.aws/credentials" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/credentials"
 	aws_archive
 	aws_log "Copy AWS properties from Pipeline Config \"$1\" into AWS Config --> \"$blj_aws_config\""
 	set_pipeline_config_files "${1}"
@@ -271,11 +297,6 @@ set_pipeline_conig_props() {
 	convert_prop "${1}" "aws.ec2InstanceID"
 	convert_prop "${1}" "aws.ec2InstanceType"
 	convert_prop "${1}" "aws.ec2SpotPer"
-	convert_prop "${1}" "aws.copyReportsToS3"
-	convert_prop "${1}" "aws.copyInputsToS3"
-	convert_prop "${1}" "aws.copyPipelineToS3"
-	convert_prop "${1}" "aws.purgeEfsInputs"
-	convert_prop "${1}" "aws.purgeEfsOutput"
 	convert_prop "${1}" "aws.profile"
 	convert_prop "${1}" "aws.ram"
 	convert_prop "${1}" "aws.region"
@@ -285,7 +306,6 @@ set_pipeline_conig_props() {
 	convert_prop "${1}" "docker.imgVersion"
 	convert_prop "${1}" "docker.user"
 	convert_prop "${1}" "metadata.filePath"
-	convert_prop "${1}" "pipeline.detachJavaModules"
 	convert_prop "${1}" "trimPrimers.filePath"
 	convert_prop "${1}" "input.dirPaths"
 	convert_db_prop "${1}" "kneaddata.dbs"
@@ -312,13 +332,13 @@ verify_config() {
 	[ ${#awsEc2InstanceType} -eq 0 ] && set_blj_prop awsEc2InstanceType t2.micro
 	[ ${#dockerImgVersion} -eq 0 ] && set_blj_prop dockerImgVersion latest
 	[ ${#dockerUser} -eq 0 ] && set_blj_prop dockerUser biolockj
-	set_blj_prop aws_access_key_id $(aws_local_prop aws_access_key_id ~/.aws/credentials)
-	set_blj_prop aws_secret_access_key $(aws_local_prop aws_secret_access_key ~/.aws/credentials)
+	access_id=$(get_aws_access_key_id)
+	access_key=$(get_aws_secret_access_key)
 	refresh_aws_cache
 	aws_log "Verify AWS client authentication properties..."
 	[ ${#awsRegion} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws.region\" in ~/.aws/config - please log into aws client from command line and try again."
-	[ ${#aws_access_key_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
-	[ ${#aws_secret_access_key} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."
+	[ ${#access_id} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_access_key_id\" in ~/.aws/credentials - please log into aws client from command line and try again."
+	[ ${#access_key} -eq 0 ] && exit_script "Error [ aws_config_lib.verify_config() ]: Unable to find AWS Config \"aws_secret_access_key\" in ~/.aws/credentials - please log into aws client from command line and try again."
 	aws_log "Verify basic required properties exist..."
 	verify_ec2_acquisition_strategy
 	verify_ec2_spot_per
@@ -333,6 +353,7 @@ verify_ec2_acquisition_strategy() {
 	[ "$val" != "SPOT" ] && [ "$val" != "DEMAND" ] && \
     exit_script "Error [ aws_config_lib.verify_ec2_acquisition_strategy() ]: Required property \"aws.ec2AcquisitionStrategy\" is invalid \"$val\".  Update to \"spot\" or \"demand\"!" 
 }
+
 # Verify the Pipeline Config property aws.ec2SpotPer
 verify_ec2_spot_per() {
 	ec2strategy=$( echo "${awsEc2AcquisitionStrategy}" | awk '{print toupper($0)}' )

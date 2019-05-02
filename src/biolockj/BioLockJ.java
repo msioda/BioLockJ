@@ -11,12 +11,12 @@
  */
 package biolockj;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
+import biolockj.exception.FatalExceptionHandler;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
@@ -54,18 +54,13 @@ public class BioLockJ {
 	/**
 	 * Print error file path, restart instructions, and link to the BioLockJ Wiki
 	 * 
-	 * @param errFile Error File
 	 * @return Help Info
 	 */
-	public static String getHelpInfo( final File errFile ) {
-		try {
-			return Constants.RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + Constants.RETURN
-				+ ( errFile != null ? "Writing error file to " + errFile.getAbsolutePath() + Constants.RETURN: "" )
-				+ "For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + Constants.RETURN;
-		} catch( final Exception ex ) {
-			ex.printStackTrace();
-		}
-		return "";
+	public static String getHelpInfo() {
+		final File errFile = FatalExceptionHandler.getErrorLog();
+		return Constants.RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + Constants.RETURN
+			+ ( errFile != null ? "Check error logs here --> " + errFile.getAbsolutePath() + Constants.RETURN: "" )
+			+ "For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + Constants.RETURN;
 	}
 
 	/**
@@ -101,22 +96,24 @@ public class BioLockJ {
 	public static void main( final String[] args ) {
 		System.out.println( "Starting BioLockj..." + Constants.APP_START_TIME );
 		try {
-			initBioLockJ( args );
-		} catch( final Exception ex ) {
-			printErrorFileAndExitProgram( args, ex );
-		}
 
-		try {
+			initBioLockJ( args );
+
 			runPipeline();
+
 			if( DockerUtil.inAwsEnv() ) {
 				NextflowUtil.saveNextflowLog();
-				NextflowUtil.saveEfsDataToS3();
+				boolean s3saved = NextflowUtil.saveEfsDataToS3();
+				if( s3saved ) {
+					NextflowUtil.purgeEfsData();
+				} else {
+					throw new Exception( "Pipeline completed successfully, EFS data failed to transfer to S3!" );
+				}
 			}
 		} catch( final Exception ex ) {
-			logFinalException( args, ex );
-			SummaryUtil.addSummaryFooterForFailedPipeline( getHelpInfo( null ) );
+			FatalExceptionHandler.logFatalError( args, ex );
 		} finally {
-			pipelineShutDown( args );
+			pipelineShutDown();
 		}
 	}
 
@@ -260,7 +257,7 @@ public class BioLockJ {
 	protected static void initRestart() throws Exception {
 		Log.initialize( Config.pipelineName() );
 		Log.warn( BioLockJ.class,
-			Constants.RETURN + Constants.LOG_SPACER + Constants.RETURN + "RESTART PROJECT DIR --> "
+			Constants.RETURN + Constants.LOG_SPACER + Constants.RETURN + "RESTART_DIR PROJECT DIR --> "
 				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Constants.LOG_SPACER
 				+ Constants.RETURN );
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
@@ -280,22 +277,6 @@ public class BioLockJ {
 			// {
 			// Log.warn( BioLockJ.class, "Unable to delete " + f.getAbsolutePath() );
 			// }
-		}
-	}
-
-	/**
-	 * Create indicator file in pipeline root directory, with name = status parameter.
-	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PIPELINE_DIR}.
-	 * 
-	 * @param status Status indicator file name
-	 */
-	protected static void markProjectStatus( final String status ) {
-		try {
-			Log.info( BioLockJ.class, "BioLockJ Pipeline [" + Config.pipelineName() + "] = " + status );
-			markStatus( status );
-		} catch( final Exception ex ) {
-			Log.error( BioLockJ.class, "Unable to create pipeline status indicator file!", ex );
-			pipelineShutDown( null );
 		}
 	}
 
@@ -322,7 +303,7 @@ public class BioLockJ {
 	 * <li>Otherwise execute {@link biolockj.Pipeline#startPipeline()} and save MASTER {@link biolockj.Config}
 	 * <li>If {@link biolockj.Config}.{@value biolockj.Constants#PIPELINE_DELETE_TEMP_FILES} =
 	 * {@value biolockj.Constants#TRUE}, Call {@link #removeTempFiles()} to delete temp files
-	 * <li>Call {@link #markProjectStatus(String)} to set the overall pipeline status as successful
+	 * <li>Call {@link biolockj.util.BioLockJUtil#createFile(String)} to set the overall pipeline status as successful
 	 * </ol>
 	 * 
 	 * @throws Exception if runtime errors occur
@@ -361,7 +342,7 @@ public class BioLockJ {
 			}
 
 			MasterConfigUtil.sanitizeMasterConfig();
-			markProjectStatus( Constants.BLJ_COMPLETE );
+			markStatus( Constants.BLJ_COMPLETE );
 			info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
 		}
 	}
@@ -404,42 +385,6 @@ public class BioLockJ {
 		}
 	}
 
-	private static void logFinalException( final String[] args, final Exception ex ) {
-		if( printedFinalExcp ) return;
-
-		if( Config.pipelineName() != null ) {
-			markProjectStatus( Constants.BLJ_FAILED );
-		}
-
-		if( Log.getFile() != null ) {
-			Log.error( BioLockJ.class, Constants.LOG_SPACER );
-			Log.error( BioLockJ.class,
-				Constants.RETURN + "FATAL APPLICATION ERROR 1 - " + ex.getMessage()
-					+ ( args == null ? ""
-						: " -->" + Constants.RETURN + " Program args: "
-							+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) ),
-				ex );
-			Log.error( BioLockJ.class, Constants.LOG_SPACER );
-			ex.printStackTrace();
-			Log.error( BioLockJ.class, Constants.LOG_SPACER );
-			Log.error( BioLockJ.class, getHelpInfo( Log.getFile() ) );
-			Log.error( BioLockJ.class, Constants.LOG_SPACER );
-		} else {
-			System.out.println( Constants.LOG_SPACER );
-			System.out.println( Constants.RETURN + "FATAL APPLICATION ERROR 2 - " + ex.getMessage()
-				+ ( args == null ? ""
-					: " -->" + Constants.RETURN + " Program args: "
-						+ BioLockJUtil.getCollectionAsString( Arrays.asList( args ) ) ) );
-			System.out.println( Constants.LOG_SPACER );
-			ex.printStackTrace();
-			System.out.println( Constants.LOG_SPACER );
-			System.out.println( getHelpInfo( null ) );
-			System.out.println( Constants.LOG_SPACER );
-		}
-
-		printedFinalExcp = true;
-	}
-
 	private static void markStatus( final String status ) throws Exception {
 		final File f = new File( Config.pipelinePath() + File.separator + status );
 		final FileWriter writer = new FileWriter( f );
@@ -447,90 +392,17 @@ public class BioLockJ {
 		if( !f.exists() ) throw new Exception( "Unable to create " + f.getAbsolutePath() );
 	}
 
-	private static void pipelineShutDown( final String[] args ) {
+	private static void pipelineShutDown() {
 		if( !DockerUtil.isDirectMode() ) {
-			try {
-				if( DockerUtil.inAwsEnv() && !NextflowUtil.nextflowLogExists() ) {
-					NextflowUtil.saveNextflowLog();
-				}
-				setPipelineSecurity();
-			} catch( final Exception ex ) {
-				logFinalException( args, ex );
+			if( DockerUtil.inAwsEnv() && !NextflowUtil.nextflowLogExists() ) {
+				NextflowUtil.saveNextflowLog();
 			}
+			setPipelineSecurity();
+
 		} else if( isPipelineComplete() ) {
 			Log.info( BioLockJ.class, "Analysis complete!" );
 		} else {
 			System.exit( 1 );
-		}
-	}
-
-	/**
-	 * Print the {@link biolockj.Log} messages and the exception stack trace info to the $USER $HOME directory.
-	 * 
-	 * @param fatalException Fatal application Exception
-	 */
-	private static void printErrorFileAndExitProgram( final String[] args, final Exception fatalException ) {
-		String hostPath = "<not_found>";
-		try {
-			String suffix = "";
-			try {
-
-				if( DockerUtil.isDirectMode() ) {
-					suffix = RuntimeParamUtil.getDirectModuleDir();
-				} else if( Config.pipelineName() != null ) {
-					suffix = Config.pipelineName();
-				} else if( RuntimeParamUtil.getConfigFile() != null ) {
-					suffix = RuntimeParamUtil.getConfigFile().getName();
-				} else {
-					suffix = "Config_undefined";
-				}
-			} catch( final Exception ex ) {
-				suffix = "Config_init_failed";
-			}
-
-			int index = 0;
-			final String projDir = RuntimeParamUtil.getBaseDir().getAbsolutePath();
-			File errFile = new File( projDir + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT );
-			while( errFile.exists() ) {
-				errFile = new File( projDir + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + "_"
-					+ new Integer( ++index ).toString() + Constants.LOG_EXT );
-			}
-			hostPath = errFile.getAbsolutePath();
-			System.out.println( "projDir: " + projDir );
-			System.out.println( "Init errFile: " + hostPath );
-			System.out.println( "Host $BLJ_PROJ: " + RuntimeParamUtil.getDockerHostPipelineDir()  );
-			if( DockerUtil.inDockerEnv() ) {
-				hostPath = hostPath.replace( projDir, RuntimeParamUtil.getDockerHostPipelineDir() );
-				System.out.println( "Docker env host path: " + hostPath );
-			}
-
-			System.out.println( "Pipeline failed before root directory or Log file was created!" );
-			System.out.println( "For details see ERROR FILE: " + hostPath );
-			logFinalException( args, fatalException );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( errFile ) );
-			try {
-				for( final String[] m: Log.getMsgs() ) {
-					if( m[ 0 ].equals( Log.DEBUG ) ) {
-						writer.write( Log.DEBUG + " " + m[ 1 ] + Constants.RETURN );
-					}
-					if( m[ 0 ].equals( Log.INFO ) ) {
-						writer.write( Log.INFO + " " + m[ 1 ] + Constants.RETURN );
-					}
-					if( m[ 0 ].equals( Log.WARN ) ) {
-						writer.write( Log.WARN + " " + m[ 1 ] + Constants.RETURN );
-					}
-					if( m[ 0 ].equals( Log.ERROR ) ) {
-						writer.write( Log.ERROR + " " + m[ 1 ] + Constants.RETURN );
-					}
-				}
-			} finally {
-				writer.close();
-			}
-		} catch( final Exception ex ) {
-			System.out.println( "Unable to save error file write to target directory: " + hostPath );
-			System.out.println( getHelpInfo( null ) );
-		} finally {
-			pipelineShutDown( args );
 		}
 	}
 
@@ -551,13 +423,12 @@ public class BioLockJ {
 		System.exit( 0 );
 	}
 
-	private static void setPipelineSecurity() throws Exception {
-		final String perm = Config.getString( null, Constants.PROJECT_PERMISSIONS );
-		if( perm != null ) {
-			Processor.setFilePermissions( Config.pipelinePath(), perm );
+	private static void setPipelineSecurity() {
+		try {
+			Processor.setFilePermissions( Config.pipelinePath(), Config.getString( null, Constants.PIPELINE_PRIVS ) );
+		} catch( final Exception ex ) {
+			System.out.println( "Unable to set pipeline filesystem privileges" );
+			ex.printStackTrace();
 		}
 	}
-
-	private static final String FATAL_ERROR_FILE_PREFIX = "BioLockJ_FATAL_ERROR_";
-	private static boolean printedFinalExcp = false;
 }

@@ -31,14 +31,12 @@ public class SummaryUtil {
 
 	/**
 	 * Called when pipeline fails to add summary details to summary file, if possible.
-	 * 
-	 * @param helpInfo Help Info
 	 */
-	public static void addSummaryFooterForFailedPipeline( final String helpInfo ) {
+	public static void addSummaryFooterForFailedPipeline() {
 		String summaryFile = "";
 		try {
 			summaryFile = getSummaryFile().getAbsolutePath();
-			saveSummary( helpInfo + RETURN + getFooter() );
+			saveSummary( getFooter() );
 		} catch( final Exception ex ) {
 			Log.error( SummaryUtil.class, "Unable to update summary file: " + summaryFile, ex );
 		}
@@ -115,9 +113,8 @@ public class SummaryUtil {
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
 		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration ) + RETURN );
-
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
-		sb.append( getLabel( PIPELINE_CONFIG ) + " " + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( PIPELINE_CONFIG ) + " " + MasterConfigUtil.getPath() + RETURN );
 		sb.append( getLabel( PIPELINE_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
 
 		final String downloadCmd = downloadCmd();
@@ -702,7 +699,7 @@ public class SummaryUtil {
 	private static String getHeading() {
 		final StringBuffer sb = new StringBuffer();
 		sb.append( RETURN + SPACER_2X + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
-		sb.append( getLabel( PIPELINE_CONFIG ) + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( INPUT_CONFIG ) + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
 		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
 		sb.append( SPACER_2X + RETURN );
@@ -733,6 +730,7 @@ public class SummaryUtil {
 
 	private static String downloadCommand = null;
 	private static final String EXCEPTION_LABEL = "Exception:";
+	private static final String INPUT_CONFIG = "Input Config";
 	private static final String MODULE = "Module";
 	private static final String NUM_ATTEMPTS = "# Attempts";
 	private static final String NUM_MODULES = "# Modules";

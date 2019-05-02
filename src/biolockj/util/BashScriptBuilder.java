@@ -179,9 +179,8 @@ public class BashScriptBuilder {
 	 * @param module ScriptModule is the module that owns the scripts
 	 * @param workerId Worker ID
 	 * @return Absolute path of next worker script
-	 * @throws Exception if I/O errors occur
 	 */
-	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) throws Exception {
+	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) {
 		if( DockerUtil.inAwsEnv() && module instanceof R_Module ) return getMainScriptPath( module );
 
 		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "."
@@ -485,7 +484,7 @@ public class BashScriptBuilder {
 	/**
 	 * One parameter of the {@link biolockj.Config} String property {@value #SCRIPT_JOB_HEADER} to set number of cores.
 	 */
-	protected static final List<String> CLUSTER_NUM_PROCESSORS = Arrays.asList( new String[] { "procs", "ppn" } );
+	protected static final List<String> CLUSTER_NUM_PROCESSORS = Arrays.asList( "procs", "ppn" );
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #CLUSTER_PROLOGUE}<br>

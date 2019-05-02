@@ -297,7 +297,7 @@ public final class DownloadUtil {
 		return script;
 	}
 
-	private static boolean buildRsyncCmd( final List<BioModule> modules ) throws Exception {
+	private static boolean buildRsyncCmd( final List<BioModule> modules ) {
 		return modules != null && !modules.isEmpty()
 			&& ( DockerUtil.inAwsEnv() || Config.isOnCluster() && getDownloadDirPath() != null );
 	}

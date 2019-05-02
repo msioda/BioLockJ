@@ -17,7 +17,6 @@ import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.module.classifier.r16s.QiimeOpenRefClassifier;
-import biolockj.module.seq.PearMergeReads;
 import biolockj.util.*;
 
 /**
@@ -78,15 +77,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		data.add( lines );
 
 		return data;
-	}
-
-	/**
-	 * QIIME does not support paired reads
-	 */
-	@Override
-	public List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception {
-		throw new Exception( "QIIME does not support paired reads!  Prerequisite BioModule "
-			+ PearMergeReads.class.getName() + " should be added your pipeline Config: " + Config.getConfigFileName() );
 	}
 
 	@Override
@@ -290,7 +280,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		{
 			preReqs.add( BuildQiimeMapping.class.getName() );
 		}
-
 		return preReqs;
 	}
 
@@ -463,15 +452,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	protected String getVsearchParams() throws Exception {
 		return " " + getRuntimeParams( Config.getList( this, EXE_VSEARCH_PARAMS ), VSEARCH_NUM_THREADS_PARAM );
-	}
-
-	/**
-	 * Typically we verify no duplicate file names are used, but for QIIME we may be combining multiple files with the
-	 * same name ({@value #OTU_TABLE}), so QiimeClassifier skips this validation.
-	 */
-	@Override
-	protected void validateFileNameUnique( final Set<String> fileNames, final File file ) {
-		// Not needed for QIIME. Multiple file named otu_table.biom & others exist.
 	}
 
 	private String getAlphaDiversityMetrics() throws Exception {

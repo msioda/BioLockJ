@@ -14,6 +14,7 @@ package biolockj;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.ScriptModule;
@@ -138,6 +139,7 @@ public class Processor {
 	 * @throws Exception if chmod command command fails
 	 */
 	public static void setFilePermissions( final String path, final String permissions ) throws Exception {
+		if( BioLockJUtil.hasNullOrEmptyVal( Arrays.asList( path, permissions ) ) ) return;
 		final StringTokenizer st = new StringTokenizer( "chmod -R " + permissions + " " + path );
 		final String[] args = new String[ st.countTokens() ];
 		for( int i = 0; i < args.length; i++ ) {

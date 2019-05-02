@@ -39,10 +39,10 @@ public class JsonNode implements Serializable, Comparable<JsonNode> {
 	/**
 	 * Add taxa count
 	 * 
-	 * @param count Taxa count
+	 * @param x Taxa count
 	 */
-	public void addCount( final Long count ) {
-		this.count += count;
+	public void addCount( final Long x ) {
+		this.count += x;
 	}
 
 	@Override

@@ -46,7 +46,7 @@ public class DockerUtil {
 	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception {
 		final List<String> lines = new ArrayList<>();
 		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module )
-			+ getDockerEnvVars( module ) + getDockerVolumes( module ) + getDockerImage( module );
+			+ getDockerEnvVars() + getDockerVolumes( module ) + getDockerImage( module );
 		Log.debug( DockerUtil.class, "Docker CMD:" + cmd );
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
@@ -54,6 +54,21 @@ public class DockerUtil {
 		lines.add( "}" + Constants.RETURN );
 
 		return lines;
+	}
+
+	/**
+	 * Get Config file path - update for Docker env or bash env var references as needed.
+	 * 
+	 * @param path Runtime arg or Config property path
+	 * @return Local File
+	 * @throws ConfigPathException if errors occur due to invalid file path
+	 */
+	public static File getConfigFile( final String path ) throws ConfigPathException {
+		final String newPath = DockerUtil.getDockerVolumePath( path, DockerUtil.CONTAINER_CONFIG_DIR );
+		final File dockerConfigFile = new File( newPath );
+		if( !dockerConfigFile.isFile() ) throw new ConfigPathException( dockerConfigFile,
+			"Config file [ " + path + " ] --> converted to container file-path that does not exist: " + newPath );
+		return dockerConfigFile;
 	}
 
 	/**
@@ -208,9 +223,8 @@ public class DockerUtil {
 	 * Return TRUE if running in AWS (based on Config props).
 	 * 
 	 * @return TRUE if pipeline.env=aws
-	 * @throws Exception if errors occur
 	 */
-	public static boolean inAwsEnv() throws Exception {
+	public static boolean inAwsEnv() {
 		return RuntimeParamUtil.isAwsMode();
 	}
 
@@ -242,7 +256,7 @@ public class DockerUtil {
 				: module instanceof JavaModule ? JavaModule.class.getSimpleName(): className;
 	}
 
-	private static String getDockerEnvVars( final BioModule module ) {
+	private static String getDockerEnvVars() {
 		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
 
@@ -286,8 +300,7 @@ public class DockerUtil {
 			}
 
 			if( dbPath.startsWith( DOCKER_ROOT_HOME ) ) {
-				dbPath = dbPath.replace( DOCKER_ROOT_HOME,
-					RuntimeParamUtil.getDockerHostHomeUserDir().getAbsolutePath() );
+				dbPath = dbPath.replace( DOCKER_ROOT_HOME, RuntimeParamUtil.getDockerHostHomeDir() );
 				Log.info( DockerUtil.class, "Replace " + DOCKER_ROOT_HOME + " with DB Host dir: " + dbPath );
 			}
 

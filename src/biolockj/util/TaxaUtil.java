@@ -35,7 +35,7 @@ public class TaxaUtil {
 	 * @return Ordered List of all possible taxonomy levels
 	 */
 	public static List<String> allTaxonomyLevels() {
-		return allLevels;
+		return TAXA_LEVELS;
 	}
 
 	/**
@@ -243,7 +243,7 @@ public class TaxaUtil {
 	public static List<String> initTaxaLevels() throws ConfigNotFoundException, ConfigFormatException {
 		configLevels = new ArrayList<>();
 		final String errorMsg = "Property only accepts valid taxonomy levels ==>  "
-			+ BioLockJUtil.getCollectionAsString( allLevels );
+			+ BioLockJUtil.getCollectionAsString( TAXA_LEVELS );
 		final Set<String> configuredLevels = new HashSet<>();
 		final List<String> validOptions = allTaxonomyLevels();
 
@@ -365,14 +365,12 @@ public class TaxaUtil {
 	 */
 	protected static final String TAXA_TABLE = "taxaCount";
 
-	private static final List<String> allLevels = Arrays.asList( new String[] { Constants.DOMAIN, Constants.PHYLUM,
-		Constants.CLASS, Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES } );
 	private static String bottomLevel = null;
 	private static List<String> configLevels = null;
 	private static List<String> levelSpan = null;
-
 	private static final String TAXA = "Taxa";
-
+	private static final List<String> TAXA_LEVELS = Arrays.asList( Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS,
+		Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES );
 	private static String topLevel = null;
 	private static final String UNCLASSIFIED = "Unclassified";
 }

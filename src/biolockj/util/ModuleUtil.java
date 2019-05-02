@@ -197,7 +197,7 @@ public class ModuleUtil {
 	 */
 	public static boolean isComplete( final BioModule module ) {
 		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
-		return f.exists();
+		return f.isFile();
 	}
 
 	/**

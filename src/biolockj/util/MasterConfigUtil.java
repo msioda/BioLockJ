@@ -29,11 +29,20 @@ public class MasterConfigUtil {
 	 * @return MASTER config
 	 */
 	public static File getMasterConfig() {
-		String configName = Config.getConfigFileName();
+		String configName = Config.pipelineName();
 		if( configName.startsWith( Constants.MASTER_PREFIX ) ) {
 			configName = configName.replaceAll( Constants.MASTER_PREFIX, "" );
 		}
 		return new File( Config.pipelinePath() + File.separator + Constants.MASTER_PREFIX + configName );
+	}
+
+	/**
+	 * Return the file path of the MASTER Config file generated in the pipeline root directory.
+	 * 
+	 * @return File-path of the MASTER Config file
+	 */
+	public static String getPath() {
+		return getMasterConfig().getAbsolutePath();
 	}
 
 	/**
@@ -201,7 +210,7 @@ public class MasterConfigUtil {
 	}
 
 	private static File getTempConfig() {
-		return new File( Config.pipelinePath() + File.separator + TEMP_PREFIX + Config.getConfigFileName() );
+		return new File( Config.pipelinePath() + File.separator + TEMP_PREFIX + Config.pipelineName() );
 	}
 
 	private static void writeCompleteHeader( final BufferedWriter writer, final Map<String, String> props )
@@ -258,7 +267,7 @@ public class MasterConfigUtil {
 			writer.write( PROJ_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
 			final List<String> defaults = Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG );
 			if( defaults != null && !defaults.isEmpty() ) {
-				for( final String defConfig: Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG ) ) {
+				for( final String defConfig: defaults ) {
 					writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
 				}
 			}

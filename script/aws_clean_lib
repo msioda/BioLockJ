@@ -135,6 +135,7 @@ aws_rm_s3_buckets() {
 	s3Buckets=$(aws s3api list-buckets)
 	[ ${#s3Buckets} -eq 0 ] && aws_log "All s3-buckets deleted" && return
 	aws_log "Remaining s3-buckets:" && aws s3api list-buckets
+	rm_prop "$blj_aws_config" "awsS3"
 }
 
 # Remove all AWS Stacks
@@ -166,6 +167,7 @@ aws_rm_stacks() {
 	vals=$(aws cloudformation describe-stacks)
 	[ ${#vals} -eq 0 ] && aws_log "All stacks removed" && return
 	aws_log "Remaining stacks (verify status==DELETE_COMPLETE):" && aws cloudformation list-stacks
+	rm_prop "$blj_aws_config" "awsStack"
 }
 
 # Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
@@ -182,6 +184,8 @@ kill_head_node() {
 	checkIn=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated']")
 	[ ${#checkIn} -gt 0 ] && echo "Describe EC2 instances:" && \
 		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
+	rm_prop "$blj_aws_config" ec2PublicIP
+	rm_prop "$blj_aws_config" awsEc2InstanceID
 }
 
 # De-register, disable, and remove all AWS objects

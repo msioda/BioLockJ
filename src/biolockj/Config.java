@@ -49,23 +49,6 @@ public class Config {
 	}
 
 	/**
-	 * Get Config file path - update for Docker env or bash env var references as needed.
-	 * 
-	 * @param path Runtime arg or Config property path
-	 * @return Local File
-	 * @throws ConfigPathException if errors occur due to invalid file path
-	 */
-	public static File getConfigFile( final String path ) throws ConfigPathException {
-		final String newPath = DockerUtil.inDockerEnv()
-			? DockerUtil.getDockerVolumePath( path, DockerUtil.CONTAINER_CONFIG_DIR )
-			: Config.replaceEnvVar( path );
-		final File configFile = new File( newPath );
-		if( !configFile.isFile() ) throw new ConfigPathException( configFile,
-			"Config file [ " + path + " ] --> converted to file that does not exist: " + newPath );
-		return configFile;
-	}
-
-	/**
 	 * Gets the configuration file extension (often ".properties")
 	 *
 	 * @return Config file extension
@@ -80,15 +63,6 @@ public class Config {
 		}
 
 		return "." + ext;
-	}
-
-	/**
-	 * Gets the configuration file name
-	 *
-	 * @return Config file name
-	 */
-	public static String getConfigFileName() {
-		return configFile.getName();
 	}
 
 	/**
@@ -232,6 +206,20 @@ public class Config {
 		}
 
 		return list;
+	}
+
+	/**
+	 * Return file for path after modifying if running in a Docker container and/or interpreting bash env vars.
+	 * 
+	 * @param path File path
+	 * @return Local File
+	 * @throws ConfigPathException if the local path
+	 */
+	public static File getLocalConfigFile( final String path ) throws ConfigPathException {
+		if( path == null || path.trim().isEmpty() ) return null;
+		final File file = new File( replaceEnvVar( path.trim() ) );
+		if( DockerUtil.inDockerEnv() && !file.isFile() ) return DockerUtil.getConfigFile( path.trim() );
+		return file;
 	}
 
 	/**
@@ -447,7 +435,7 @@ public class Config {
 				if( bashVal != null && bashVal.equals( bashVar ) ) return arg;
 				val = val.replace( bashVar, bashVal );
 				Log.debug( Config.class, "Found env variable [ " + bashVar + " = " + bashVal + "  ] (length="
-					+ bashVal.length() + ") | UPDATED arg val --> " + val );
+					+ ( bashVal == null ? 0: bashVal.length() ) + ") | UPDATED arg val --> " + val );
 			}
 			Log.info( Config.class, "--------> Bash Var Converted [ " + arg + " ] --> " + val );
 			return val;
@@ -729,16 +717,14 @@ public class Config {
 	 * 
 	 * @param properties All Config Properties
 	 * @return Properties after replacing env variables
-	 * @throws Exception if unable to replace some bash env vars
 	 */
-	protected static Properties replaceEnvVars( final Properties properties ) throws Exception {
+	protected static Properties replaceEnvVars( final Properties properties ) {
 		final Properties convertedProps = properties;
 		final Enumeration<?> en = properties.propertyNames();
 		Log.debug( Properties.class, " ---------------------- replace Config Env Vars ----------------------" );
 		while( en.hasMoreElements() ) {
 			final String key = en.nextElement().toString();
 			String val = properties.getProperty( key );
-			// if( !DockerUtil.inDockerEnv() ) val = replaceEnvVar( val );
 			val = replaceEnvVar( val );
 			Log.debug( Properties.class, key + " = " + val );
 			convertedProps.put( key, val );
@@ -755,7 +741,7 @@ public class Config {
 	protected static void setPipelineRootDir() throws Exception {
 		if( RuntimeParamUtil.doRestart() ) {
 			setPipelineDir( RuntimeParamUtil.getRestartDir() );
-			Log.info( Config.class, "Assign RESTART pipeline root directory: " + Config.pipelinePath() );
+			Log.info( Config.class, "Assign RESTART_DIR pipeline root directory: " + Config.pipelinePath() );
 		} else if( DockerUtil.isDirectMode() ) {
 			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
 			Log.info( Config.class, "Assign DIRECT pipeline root directory: " + Config.pipelinePath() );

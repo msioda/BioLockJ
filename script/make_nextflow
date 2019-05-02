@@ -23,11 +23,11 @@ buildAwsConfig() {
 }
 
 buildAwsCredentials() {
-	AWS_CRED="${AWS_DIR}/credentials"
+	AWS_CRED="${EC2_AWS}/credentials"
 	echo "Generating ${AWS_CRED} in the biolockj container"
 	echo "[default]" > "${AWS_CRED}"
-	echo "aws_access_key_id = ${aws_access_key_id}" >> "${AWS_CRED}"
-	echo "aws_secret_access_key = ${aws_secret_access_key}" >> "${AWS_CRED}"
+	echo "aws_access_key_id = $(get_aws_access_key_id)" >> "${AWS_CRED}"
+	echo "aws_secret_access_key = $(get_aws_secret_access_key)" >> "${AWS_CRED}"
 	echo "Created -->" "${AWS_CRED}"
 	cat "${AWS_CRED}"
 }

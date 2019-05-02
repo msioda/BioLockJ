@@ -172,11 +172,10 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		if( this.metaColumns == null ) return lines;
 
-		final List<
-			Integer> skip = Arrays.asList( new Integer[] { this.metaColumns.indexOf( Constants.QIIME_BARCODE_SEQ_COL ),
-				this.metaColumns.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ),
-				this.metaColumns.indexOf( Constants.QIIME_DEMUX_COL ),
-				this.metaColumns.indexOf( Constants.QIIME_DESC_COL ) } );
+		final List<Integer> skip = Arrays.asList( this.metaColumns.indexOf( Constants.QIIME_BARCODE_SEQ_COL ),
+			this.metaColumns.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ),
+			this.metaColumns.indexOf( Constants.QIIME_DEMUX_COL ),
+			this.metaColumns.indexOf( Constants.QIIME_DESC_COL ) );
 
 		String awkBody = "";
 		awkBody += Config.getExe( this, Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM

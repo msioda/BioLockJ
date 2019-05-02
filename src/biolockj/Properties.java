@@ -13,7 +13,6 @@ package biolockj;
 
 import java.io.*;
 import java.util.*;
-import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.DockerUtil;
 
@@ -57,19 +56,6 @@ public class Properties extends java.util.Properties {
 	}
 
 	/**
-	 * Return file for path after modifying if running in a Docker container and/or interpreting bash env vars.
-	 * 
-	 * @param path File path
-	 * @return Local File
-	 * @throws ConfigPathException if the local path
-	 */
-	public static File getLocalConfigFile( final String path ) throws ConfigPathException {
-		final File file = new File( Config.replaceEnvVar( path ) );
-		if( DockerUtil.inDockerEnv() && !file.isFile() ) return Config.getConfigFile( path );
-		return file;
-	}
-
-	/**
 	 * Instantiate {@link biolockj.Properties} via {@link #buildConfig(File)}
 	 *
 	 * @param file of {@link biolockj.Properties} file
@@ -81,10 +67,18 @@ public class Properties extends java.util.Properties {
 		final Properties props = buildConfig( file );
 		props.setProperty( Constants.INTERNAL_BLJ_MODULE,
 			BioLockJUtil.getCollectionAsString( getListedModules( file ) ) );
-		props.setProperty( Constants.INTERNAL_DEFAULT_CONFIG,
-			BioLockJUtil.getCollectionAsString( BioLockJUtil.getFilePaths( regConf ) ) );
+		if( configRegister.size() > 1 ) {
+			props.setProperty( Constants.INTERNAL_DEFAULT_CONFIG, BioLockJUtil.getCollectionAsString(
+				BioLockJUtil.getFilePaths( configRegister.subList( 0, configRegister.size() - 1 ) ) ) );
+		}
 		return props;
 	}
+
+	// SIZE = 2
+	// list[ 0 ] = standard.props
+	// list[ 1 ] = email.props
+	// configRegister.size() = 2
+	// configRegister.size() - 2 = 0
 
 	/**
 	 * Recursive method handles nested default Config files. Default props are overridden by parent level props.<br>
@@ -102,24 +96,26 @@ public class Properties extends java.util.Properties {
 		Log.info( Properties.class,
 			"Import All Config Properties for --> Top Level Pipeline Properties File: " + propFile.getAbsolutePath() );
 		Properties defaultProps = null;
-		final File standConf = getLocalConfigFile( Constants.STANDARD_CONFIG_PATH );
-		if( standConf != null && !regConf.contains( propFile ) ) {
+		final File standConf = Config.getLocalConfigFile( Constants.STANDARD_CONFIG_PATH );
+		if( standConf != null && !configRegister.contains( propFile ) ) {
 			defaultProps = readProps( standConf, null );
 		}
 
-		final File dockConf = DockerUtil.inDockerEnv() ? getLocalConfigFile( Constants.DOCKER_CONFIG_PATH ): null;
-		if( dockConf != null && !regConf.contains( dockConf ) ) {
-			defaultProps = readProps( dockConf, defaultProps );
+		if( DockerUtil.inDockerEnv() ) {
+			final File dockConf = Config.getLocalConfigFile( Constants.DOCKER_CONFIG_PATH );
+			if( dockConf != null && !configRegister.contains( dockConf ) ) {
+				defaultProps = readProps( dockConf, defaultProps );
+			}
 		}
 
 		for( final File pipelineDefaultConfig: getNestedDefaultProps( propFile ) ) {
-			if( !regConf.contains( pipelineDefaultConfig ) ) {
+			if( !configRegister.contains( pipelineDefaultConfig ) ) {
 				defaultProps = readProps( pipelineDefaultConfig, defaultProps );
 			}
 		}
 
 		final Properties props = readProps( propFile, defaultProps );
-		// report( pops, propFile, true );
+		report( props, propFile, true );
 
 		return props;
 	}
@@ -138,7 +134,7 @@ public class Properties extends java.util.Properties {
 				final StringTokenizer st = new StringTokenizer( line, "=" );
 				if( st.countTokens() > 1 ) {
 					if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
-						return getLocalConfigFile( st.nextToken().trim() );
+						return Config.getLocalConfigFile( st.nextToken().trim() );
 				}
 			}
 		} finally {
@@ -162,7 +158,7 @@ public class Properties extends java.util.Properties {
 	protected static Properties readProps( final File propFile, final Properties defaultProps )
 		throws FileNotFoundException, IOException {
 		if( propFile.exists() ) {
-			regConf.add( propFile );
+			configRegister.add( propFile );
 			Log.info( Properties.class, "LOAD CONFIG [ #" + ++loadOrder + " ]: ---> " + propFile.getAbsolutePath() );
 			final FileInputStream in = new FileInputStream( propFile );
 			final Properties tempProps = defaultProps == null ? new Properties(): new Properties( defaultProps );
@@ -197,7 +193,7 @@ public class Properties extends java.util.Properties {
 		File defConfig = null;
 		do {
 			defConfig = getDefaultConfig( propFile );
-			if( defConfig == null || regConf.contains( defConfig ) || configFiles.contains( defConfig ) ) {
+			if( defConfig == null || configRegister.contains( defConfig ) || configFiles.contains( defConfig ) ) {
 				break;
 			}
 			configFiles.add( defConfig );
@@ -206,7 +202,6 @@ public class Properties extends java.util.Properties {
 		return configFiles;
 	}
 
-	@SuppressWarnings("unused")
 	private static void report( final Properties properties, final File config, final boolean projectConfigOnly ) {
 		Log.debug( Properties.class, " ---------- Report [ " + config.getAbsolutePath() + " ] ------------> " );
 		if( projectConfigOnly ) {
@@ -225,7 +220,7 @@ public class Properties extends java.util.Properties {
 			" ----------------------------------------------------------------------------------" );
 	}
 
+	private static List<File> configRegister = new ArrayList<>();
 	private static int loadOrder = -1;
-	private static List<File> regConf = new ArrayList<>();
 	private static final long serialVersionUID = 2980376615128441545L;
 }

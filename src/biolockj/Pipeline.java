@@ -119,7 +119,8 @@ public class Pipeline {
 			"Run Direct BioModule ID [ " + moduleID + " ] = " + Pipeline.getModules().get( moduleID ) );
 		final JavaModule module = (JavaModule) Pipeline.getModules().get( moduleID );
 		module.runModule();
-		Log.info( MetaUtil.class, "DIRECT BioModule ID [ " + moduleID + " ].runModule() complete - next refresh metadata + cleanUp()"  );
+		Log.info( MetaUtil.class,
+			"DIRECT BioModule ID [ " + moduleID + " ].runModule() complete - next refresh metadata + cleanUp()" );
 		refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
 		module.cleanUp();
 	}

@@ -81,8 +81,8 @@ launchLocalPipeline() {
 	initJava=$(ps | grep -c java)
 	numJava=$(ps | grep -c java)
 	
-	echo -e "Launching BioLockJ:  \"nohup java -jar $bljJar -b ${BLJ_PROJ} $@ >/dev/null 2>&1 &\""
-	nohup java -jar $bljJar -b "${BLJ_PROJ}" $@ >/dev/null 2>&1 &
+	echo -e "Launching BioLockJ:  \"nohup java -jar $bljJar -b ${BLJ_PROJ} -u ${HOME} $@ >/dev/null 2>&1 &\""
+	nohup java -jar $bljJar -b "${BLJ_PROJ}" -u "${HOME}" $@ >/dev/null 2>&1 &
 	[ $? != 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
 	printf "Initializing BioLockJ"
 	

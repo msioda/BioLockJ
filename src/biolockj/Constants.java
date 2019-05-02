@@ -91,7 +91,8 @@ public class Constants {
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DETACH_JAVA_MODULES}<br>
-	 * If {@value biolockj.Constants#TRUE} Java modules do not run with main BioLockJ Java application
+	 * If {@value biolockj.Constants#TRUE} Java modules do not run with main BioLockJ Java application.
+	 * Instead they run on compute nodes on the CLUSTER or AWS environments.
 	 */
 	public static final String DETACH_JAVA_MODULES = "pipeline.detachJavaModules";
 
@@ -658,7 +659,7 @@ public class Constants {
 
 	/**
 	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:
-	 * {@value #PROJECT_PERMISSIONS}
+	 * {@value #PIPELINE_PRIVS}
 	 */
-	protected static final String PROJECT_PERMISSIONS = "pipeline.permissions";
+	protected static final String PIPELINE_PRIVS = "pipeline.permissions";
 }

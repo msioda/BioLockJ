@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.DockerUtil;
-import biolockj.util.MetaUtil;
+import biolockj.util.*;
 
 /**
  * Simple Logging Facade for Java (SLF4J) implementation using Log4J<br>
@@ -46,7 +44,7 @@ public class Log {
 	 */
 	public static void debug( final Class<?> loggingClass, final String msg ) {
 		if( suppressLogs ) return;
-		if( systemLogs ) {
+		if( useSystemOut() ) {
 			System.out.println( "[ DEBUG ] " + msg );
 			return;
 		}
@@ -96,11 +94,6 @@ public class Log {
 	 * @param msg Message to log
 	 */
 	public static void error( final Class<?> myClass, final String msg ) {
-		if( suppressLogs ) return;
-		if( systemLogs ) {
-			System.out.println( "[ ERROR ] " + msg );
-			return;
-		}
 		error( myClass, msg, null );
 	}
 
@@ -113,7 +106,7 @@ public class Log {
 	 */
 	public static void error( final Class<?> myClass, final String msg, final Exception exception ) {
 		if( suppressLogs ) return;
-		if( systemLogs ) {
+		if( useSystemOut() ) {
 			System.out.println( "[ DEBUG ] " + msg + " --> " + exception.getMessage() );
 			return;
 		}
@@ -152,7 +145,7 @@ public class Log {
 	 */
 	public static void info( final Class<?> myClass, final String msg ) {
 		if( suppressLogs ) return;
-		if( systemLogs ) {
+		if( useSystemOut() ) {
 			System.out.println( "[ INFO ] " + msg );
 			return;
 		}
@@ -179,10 +172,10 @@ public class Log {
 	 * @throws Exception if unable to create the log file or print {@link biolockj.Config} properties
 	 */
 	public static void initialize( final String name ) throws Exception {
-		logFile = new File( Config.pipelinePath() + File.separator + name + Constants.LOG_EXT );
+		logFile = BioLockJUtil.createFile( Config.pipelinePath() + File.separator + name + Constants.LOG_EXT );
 		System.setProperty( LOG_FILE, logFile.getAbsolutePath() );
 		System.setProperty( Constants.LOG_LEVEL_PROPERTY, validateLogLevel() );
-		System.setProperty( LOG_APPEND, String.valueOf( logFile.exists() ) );
+		System.setProperty( LOG_APPEND, String.valueOf( logFile.isFile() ) );
 		System.setProperty( LOG_FORMAT,
 			DockerUtil.isDirectMode() && !Config.isOnCluster() ? DIRECT_FORMAT: DEFAULT_FORMAT );
 
@@ -237,7 +230,7 @@ public class Log {
 	 */
 	public static void warn( final Class<?> myClass, final String msg ) {
 		if( suppressLogs ) return;
-		if( systemLogs ) {
+		if( useSystemOut() ) {
 			System.out.println( "[ WARN ] " + msg );
 			return;
 		}
@@ -331,23 +324,27 @@ public class Log {
 		return logFile != null && logFile.exists();
 	}
 
+	private static boolean useSystemOut() {
+		return RuntimeParamUtil.isDebugMode();
+	}
+
 	/**
-	 * DEBUG log message type
+	 * DEBUG log message type: {@value #DEBUG}
 	 */
 	public static String DEBUG = "DEBUG";
 
 	/**
-	 * ERROR log message type
+	 * ERROR log message type: {@value #ERROR}
 	 */
 	public static String ERROR = "ERROR";
 
 	/**
-	 * INFO log message type
+	 * INFO log message type: {@value #INFO}
 	 */
 	public static String INFO = "INFO";
 
 	/**
-	 * WARN log message type
+	 * WARN log message type: {@value #WARN}
 	 */
 	public static String WARN = "WARN";
 
@@ -390,5 +387,4 @@ public class Log {
 
 	private static final List<String[]> logMesseges = new ArrayList<>();
 	private static boolean suppressLogs = false;
-	private static final boolean systemLogs = false;
 }

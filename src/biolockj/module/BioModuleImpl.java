@@ -242,19 +242,6 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		return this.inputFiles;
 	}
 
-	/**
-	 * Validate files in {@link biolockj.Constants#INPUT_DIRS} have unique names. BioModules that expect duplicates must
-	 * override this method.
-	 *
-	 * @param fileNames A registry of module input file names added so far
-	 * @param file Next file to validate
-	 * @throws Exception if a duplicate file name found
-	 */
-	protected void validateFileNameUnique( final Set<String> fileNames, final File file ) throws Exception {
-		if( fileNames.contains( file.getName() ) )
-			throw new Exception( "File names must be unique!  Duplicate file: " + file.getAbsolutePath() );
-	}
-
 	private void printInputFiles() {
 		Log.info( getClass(), "# Input Files: " + getFileCache().size() );
 		for( int i = 0; i < getFileCache().size(); i++ ) {

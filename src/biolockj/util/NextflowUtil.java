@@ -73,55 +73,70 @@ public class NextflowUtil {
 	}
 
 	/**
-	 * Save EFS data to S3 based on pipeline Config.
+	 * Purge EFS data  based on pipeline Config.
 	 * 
-	 * @throws Exception if errors occur
+	 * @return TRUE if not errors occur
 	 */
-	public static void purgeEfsData() throws Exception {
-		final String target = DockerUtil.AWS_EFS;
-		final boolean purgeInputs = Config.getBoolean( null, AWS_PURGE_EFS_INPUTS );
-		final boolean purgeOutputs = Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT );
-		if( purgeInputs && purgeOutputs ) {
-			// TO-DO
+	public static boolean purgeEfsData() {
+		try {
+			String label = "EFS";
+			String target = DockerUtil.AWS_EFS;
+			final boolean purgeInputs = Config.getBoolean( null, AWS_PURGE_EFS_INPUTS );
+			final boolean purgeOutputs = Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT );
+			if( purgeOutputs && !purgeInputs ) {
+				label += "-OUTPUTS";
+				target += File.separator + AWS_PIPELINE_DIR + "*";
+			} else if( purgeInputs && !purgeOutputs ) {
+				label += "-INPUTS";
+				target += File.separator + AWS_PIPELINE_DIR + "[cdims]*/*";
+			}
+	
+			Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
+			final String[] args = new String[ 3 ];
+			args[ 0 ] = "rm";
+			args[ 1 ] = "-rf";
+			args[ 2 ] = target;
+			Processor.submit( args, "Clear-" + label );
+			return true;
+		} catch( Exception ex ) {
+			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
+			return false;
 		}
-
-		Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
-		final String[] args = new String[ 3 ];
-		args[ 0 ] = "rm";
-		args[ 1 ] = "-rf";
-		args[ 2 ] = target;
-
-		Processor.submit( args, "Clear-EFS" );
 	}
 
 	/**
 	 * Save EFS data to S3 based on pipeline Config.
 	 * 
-	 * @throws Exception if errors occur
+	 * @return TRUE if not errors occur
 	 */
-	public static void saveEfsDataToS3() throws Exception {
-
-		final boolean savePipeline = Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 );
-		final boolean saveReports = Config.getBoolean( null, NextflowUtil.AWS_COPY_REPORTS_TO_S3 );
-
-		if( savePipeline ) {
-			awsSyncS3( Config.pipelinePath(), true );
-		} else if( DownloadUtil.getDownloadListFile().exists() && saveReports ) {
-			final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
-			try {
-				for( String path = reader.readLine(); path != null; path = reader.readLine() ) {
-					awsSyncS3( Config.pipelinePath() + File.separator + path, true );
+	public static boolean saveEfsDataToS3() {
+		try {
+			final boolean savePipeline = Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 );
+			final boolean saveReports = Config.getBoolean( null, NextflowUtil.AWS_COPY_REPORTS_TO_S3 );
+	
+			if( savePipeline ) {
+				awsSyncS3( Config.pipelinePath(), true );
+			} else if( DownloadUtil.getDownloadListFile().exists() && saveReports ) {
+				final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
+				try {
+					for( String path = reader.readLine(); path != null; path = reader.readLine() ) {
+						awsSyncS3( Config.pipelinePath() + File.separator + path, true );
+					}
+				} finally {
+					if( reader != null ) {
+						reader.close();
+					}
 				}
-			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+			} else {
+				Log.warn( NextflowUtil.class,
+					"Due to Config [ " + AWS_COPY_PIPELINE_TO_S3 + "=" + Constants.FALSE + " ] & [ " + AWS_REPORT_DIR + "="
+						+ Constants.FALSE + " ]: pipeline ouput will be not saved to configured AWS S3 bucket: "
+						+ Config.requireString( null, AWS_S3 ) );
 			}
-		} else {
-			Log.warn( NextflowUtil.class,
-				"Due to Config [ " + AWS_COPY_PIPELINE_TO_S3 + "=" + Constants.FALSE + " ] & [ " + AWS_REPORT_DIR + "="
-					+ Constants.FALSE + " ]: pipeline ouput will be not saved to configured AWS S3 bucket: "
-					+ Config.requireString( null, AWS_S3 ) );
+			return true;
+		} catch( Exception ex ) {
+			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
+			return false;
 		}
 	}
 

@@ -355,7 +355,7 @@ public class SeqUtil {
 	 */
 	public static final List<String> getSeqHeaderChars() throws Exception {
 		if( isFastA() ) return FASTA_HEADER_DELIMS;
-		else if( isFastQ() ) return Arrays.asList( new String[] { FASTQ_HEADER_DELIM } );
+		else if( isFastQ() ) return Arrays.asList( FASTQ_HEADER_DELIM );
 		else throw new Exception( "Sequence type undefined!" );
 	}
 
@@ -820,7 +820,7 @@ public class SeqUtil {
 	/**
 	 * List of acceptable 1st characters for a FASTA file
 	 */
-	private static final List<String> FASTA_HEADER_DELIMS = Arrays.asList( new String[] { ">", ";" } );
+	private static final List<String> FASTA_HEADER_DELIMS = Arrays.asList( ">", ";" );
 
 	/**
 	 * Only acceptable 1st character for a FASTQ file: {@value #FASTQ_HEADER_DELIM}

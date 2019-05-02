@@ -200,8 +200,8 @@ public class Email extends BioModuleImpl {
 	 * @throws Exception if unable to encrypt or store password
 	 */
 	public static void encryptAndStoreEmailPassword() throws Exception {
-		Log.info( Email.class,
-			"About to encrypt and store new admin email password in Config: " + Config.getConfigFilePath() );
+		Log.info( Email.class, "About to encrypt and store new admin email password in MASTER Config: "
+			+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
 		Config.setConfigProperty( EMAIL_ENCRYPTED_PASSWORD, encrypt( RuntimeParamUtil.getAdminEmailPassword() ) );
 		Log.info( Email.class,
 			"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="

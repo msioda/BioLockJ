@@ -28,6 +28,7 @@ import biolockj.module.report.r.R_CalculateStats;
  */
 public class BioLockJUtil {
 
+	
 	/**
 	 * Add leading spaces until the val is padded to given length
 	 * 
@@ -56,6 +57,21 @@ public class BioLockJUtil {
 			val2 += " ";
 		}
 		return val2;
+	}
+
+	/**
+	 * Used to save status files for modules and the pipeline.
+	 * 
+	 * @param path Target dir path
+	 * @return File Created file
+	 * @throws Exception if errors occur attempting to save the file
+	 */
+	public static File createFile( final String path ) throws Exception {
+		final File f = new File( path );
+		final FileWriter writer = new FileWriter( f );
+		writer.close();
+		if( !f.isFile() ) throw new Exception( "Unable to create status file: " + f.getAbsolutePath() );
+		return f;
 	}
 
 	/**
@@ -191,7 +207,7 @@ public class BioLockJUtil {
 	 * Return default ${BLJ_SUP} dir
 	 * 
 	 * @return blj_support dir
-	 * @throws ConfigPathException
+	 * @throws ConfigPathException if $BLJ_SUP directory path is configured, but invalid
 	 */
 	public static File getBljSupDir() throws ConfigPathException {
 		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.CONTAINER_BLJ_SUP_DIR );
@@ -316,7 +332,8 @@ public class BioLockJUtil {
 			Collection<File> files = new HashSet<>();
 			for( final File dir: getInputDirs() ) {
 				Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
-				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+				files.addAll( findDups( files, removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) ) ) );
 			}
 			Log.info( BioLockJUtil.class, "# Initial input files found: " + files.size() );
 
@@ -425,16 +442,16 @@ public class BioLockJUtil {
 	}
 
 	/**
-	 * Verify all items in collection are not null and do not have empty toString() values.
+	 * Check collection vals for null or empty toString() values
 	 * 
 	 * @param vals Collection of objects
-	 * @return Boolean TRUE if all vals exist and are not empty
+	 * @return Boolean TRUE if all at least 1 value is null or empty
 	 */
-	public static boolean noNullOrEmptyVals( final Collection<Object> vals ) {
+	public static boolean hasNullOrEmptyVal( final Collection<Object> vals ) {
 		for( final Object val: vals ) {
-			if( val == null || val.toString().isEmpty() ) return false;
+			if( val == null || val.toString().isEmpty() ) return true;
 		}
-		return true;
+		return false;
 	}
 
 	/**
@@ -551,6 +568,21 @@ public class BioLockJUtil {
 	 */
 	public static void setPipelineInputFiles( final List<File> files ) {
 		inputFiles = files;
+	}
+
+	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles )
+		throws Exception {
+		final Map<String, String> names = new HashMap<>();
+		for( final File f: files ) {
+			names.put( f.getName(), f.getAbsolutePath() );
+		}
+		for( final File f: newFiles ) {
+			if( names.keySet().contains( f.getName() ) )
+				throw new Exception( "Pipeline input file names must be unique [ " + f.getAbsolutePath()
+					+ " ] has the same file name as [ " + names.get( f.getName() ) + " ]" );
+			names.put( f.getName(), f.getAbsolutePath() );
+		}
+		return newFiles;
 	}
 
 	private static File getProfile( final String path ) {
@@ -687,7 +719,7 @@ public class BioLockJUtil {
 	 * output by {@link biolockj.module.report.r.R_CalculateStats}.
 	 */
 	public static final String PIPELINE_STATS_TABLE_INPUT_TYPE = "stats";
-
+	
 	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for taxa count files that meet the file requirements
@@ -696,7 +728,6 @@ public class BioLockJUtil {
 	public static final String PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count";
 
 	private static final String BLJ_SUPPORT = "blj_support";
-
 	private static final String DEFAULT_PROFILE_CMD = "get_default_profile";
 	private static List<File> inputFiles = new ArrayList<>();
 	private static File userProfile = null;

@@ -501,6 +501,8 @@ Resources:
 
             - runuser -l  ec2-user -c 'echo "export PATH=/home/ec2-user/miniconda/bin:$PATH" >> ~/.bashrc'
 
+            - runuser -l  ec2-user -c 'mkdir /home/ec2-user/.aws'
+
             - runuser -l  ec2-user -c 'mkdir -p /mnt/efs/config/nextflow'
 
             - runuser -l  ec2-user -c 'mkdir /mnt/efs/db'
