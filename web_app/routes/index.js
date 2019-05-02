@@ -13,7 +13,10 @@ let express = require('express'),
  events = require('events'),
  eventEmitter = new events.EventEmitter();//for making an event emitter,
  sys = require('util'),
- exec = require('child_process').exec;
+ exec = require('child_process').exec,
+ pipelineIo = require(path.join('..','controllers','pipelineIo.js')),
+ errorLogger = require(path.join('..','controllers','errorLogger.js')),
+ propertiesIo = require(path.join('..','controllers','propertiesIo.js'));
 const { spawn } = require('child_process');//for running child processes
 const Stream = new events.EventEmitter(); // my event emitter instance
 
@@ -25,16 +28,13 @@ const HOST_BLJ = process.env.HOST_BLJ;
 //For turning streamProgress on and off
 let launchedPipeline = false;
 
-//for error reports
-const accessLogStream = fs.createWriteStream(createLogFile(), { flags: 'a' });
-
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Welcome to BioLockJ', HOST_ENVIRONMENT: process.env.HOST_ENVIRONMENT});
+  res.render('index', { title: 'Welcome to BioLockJ' });
 });
 
 router.get('/config', function(req, res, next) {
-  res.render('config', { title: 'Configuration', HOST_ENVIRONMENT: process.env.HOST_ENVIRONMENT});
+  res.render('config', { title: 'Configuration' });
 });
 
 router.get('/config/:configPath', function(req, res, next) {
@@ -44,124 +44,15 @@ router.get('/config/:configPath', function(req, res, next) {
     res.redirect('/config');
   }
   console.log("__dirname: ", __dirname);
-  res.render('config', { title: 'Configuration', configPath : configPath, HOST_ENVIRONMENT: process.env.HOST_ENVIRONMENT });
+  res.render('config', { title: 'Configuration', configPath : configPath });
 });
 
 //retrieve project and descriptions
-router.post('/retrievePipelines', function(req, res, next) {
-  console.log('retrieveProjects');
-  try {
-    let names = [];
-    let descrips = [];
-    let paths = [];
-    let complete = [];
-    fs.readdir(path.join( '/', 'pipelines' ), (err, files) => {
-      if (err) {
-        console.error(err);
-        accessLogStream.write(e.stack + '\n');;
-      }
-      let completePosition = 0;//variable for
-      files.forEach( file => {
-        const checkFile = fs.lstatSync(path.join('/','pipelines',file));
-        if (checkFile.isDirectory()) {
-          complete[completePosition] = false;
-          //go into folder
-          const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
+router.post('/retrievePipelines', pipelineIo.retrieveAllPipelines);
 
-          //get master config and read description
-          for (var i = 0; i < nestedFolderFiles.length; i++) {
-            console.log('nestedFolderFiles[i]: ', nestedFolderFiles[i]);
-            if (nestedFolderFiles[i] == 'biolockjComplete') {
-              complete[completePosition] = true;
-            }
-            if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
-              // console.log('nestedFolderFiles[i] MASTER_', nestedFolderFiles[i]);
-              const propFilePath = path.join('/', 'pipelines', file, nestedFolderFiles[i]);
-              // console.log('propFilePath: ', propFilePath);
-              const propFile = fs.readFileSync(propFilePath, 'utf8').split('\n');
+router.post('/retrieveConfigs', propertiesIo.retrievePropertiesFiles);
 
-              let projDescrp = 'Project description is empty';
-
-              for (let a = 0; a < propFile.length; a++) {
-                if (propFile[i].startsWith('pipeline.description=')) {
-                  console.log(propFile[a].slice(20));
-                  projDescrp = propFile[a].slice(20);
-                }
-              }//end propFile for loop
-              names.push(file);
-              descrips.push(projDescrp);
-              paths.push(propFilePath);
-            }
-          }//end nestedFolderFiles for loop
-          completePosition += 1;
-        };//end if dir
-      });
-      // console.log(projects);
-      console.log('descrip: ', descrips);
-      res.setHeader("Content-Type", "text/html");
-      res.write(JSON.stringify({
-        names : names,
-        descrips : descrips,
-        paths : paths,
-        complete : complete,
-      }));
-      res.end();
-    });
-  } catch (e) {
-    console.error(e);
-    accessLogStream.write(e.stack + '\n');;
-  }
-});//end router.post('/retrievePipelines',
-
-router.post('/retrieveConfigs', function(req, res, next) {
-  console.log('/retrieveConfigs');
-  try {
-    let configs = [];
-    fs.readdir(path.join('/', 'config'), (err, files) => {
-      if (err) {
-        console.error(err);
-      }
-      files.forEach(file => {
-        console.log(file);
-        // TODO: change isDirectory to check for .properties
-        const checkFile = path.parse(file);
-        if (checkFile.ext === '.properties'){
-          configs.push(checkFile.name)
-          }
-        });
-        console.log(configs);
-        res.setHeader("Content-Type", "text/html");
-        res.write(JSON.stringify(configs));
-        res.end();
-      });
-  } catch (e) {
-    console.error(e);
-    accessLogStream.write(e.stack + '\n');;
-  }
-});//end router.post('/retrieveConfigs',
-
-router.post('/retrievePropertiesFile', function(req, res, next){
-  try {
-    const propertiesFile = req.body.propertiesFile;
-    console.log('propertiesFile: ', propertiesFile);
-    if (propertiesFile.startsWith('/') || propertiesFile.startsWith('$BLJ')){
-      console.log('entered contains / section of /retrievePropertiesFile');
-      const datum = fs.readFileSync(propertiesFile, 'utf8');
-      res.setHeader("Content-Type", "text/html");
-      res.write(JSON.stringify({data : datum}));
-      res.end();
-    } else{
-      console.log('no / found');
-      const datum = fs.readFileSync(path.join('/','config', propertiesFile), 'utf8');
-      res.setHeader("Content-Type", "text/html");
-      res.write(JSON.stringify({data : datum}));
-      res.end();
-    }
-  } catch (e) {
-    console.error(e);
-    accessLogStream.write(e.stack + '\n');;
-  }
-})
+router.post('/retrievePropertiesFile', propertiesIo.retrievePropertiesFile);
 
 router.post('/javadocsmodulegetter', function(req, res, next) {
   try {
@@ -175,7 +66,7 @@ router.post('/javadocsmodulegetter', function(req, res, next) {
       res.end();
   } catch (e) {
     console.error(e);
-    accessLogStream.write(e.stack + '\n');;
+    errorLogger.writeError(e.stack);
   }
 });
 //__dirname resolves to /app/biolockj/web_app/routes
@@ -184,96 +75,9 @@ router.get('/results', function(req, res, next) {
   res.render('results', { title: 'BioLockJ' });
 });
 
-router.post('/saveConfigToGui', function(req, res, next) {
-  console.log('made it to /saveConfigToGui');
-  try {
-    console.log(req.body.configName);
-    if (req.body.configName.startsWith('/')){
-      fs.writeFile(req.body.configName, req.body.configText, function(err){
-        if (err) {
-          accessLogStream.write(e.stack + '\n');
-          return console.log(err);
-        }
-      })
-      res.setHeader('Content-Type', 'text/html');
-      res.write('Server Response: config saved!');
-      res.end();
-    }else{
-      indexAux.saveConfigToLocal(req.body.configName, req.body.configText);
-      res.setHeader('Content-Type', 'text/html');
-      res.write('Server Response: config saved!');
-      res.end();}
-  } catch (e) {
-    accessLogStream.write(e.stack + '\n');
-    console.error(e);
-  }
-})
+router.post('/saveConfigToGui', propertiesIo.saveConfig);
 
-router.post('/deleteConfig', function(req, res, next) {
-  try {
-    let dotProperties = false;
-    let sent = false;
-    console.log(req.body.configFileName);
-    let deleteThis = req.body.configFileName;
-    console.log(deleteThis);
-    if (!deleteThis.endsWith('.properties')){
-      deleteThis += '.properties';
-      dotProperties = true;
-    }
-    if (deleteThis.startsWith('/')){
-      if (! fs.existsSync(deleteThis)) {
-        res.setHeader('Content-Type', 'text/html');
-        res.write(`ENOENT : ${deleteThis}`);
-        res.end();
-        sent = true;
-        return;
-      } else {
-        fs.unlinkSync( deleteThis );
-      }
-    }else{
-      if (! fs.existsSync(path.join('/', 'config', deleteThis))) {
-        res.setHeader('Content-Type', 'text/html');
-        res.write(`ENOENT : ${path.join('/','config', deleteThis)}`);
-        res.end();
-        sent = true;
-        return;
-      } else {
-        fs.unlinkSync(path.join('/', 'config', deleteThis ));
-      }
-    }
-
-    //report deleted to browser
-    if (dotProperties === true) {
-      deleteThis = deleteThis.slice(0,-11);
-    }
-    res.setHeader('Content-Type', 'text/html');
-    res.write(`deleted : ${deleteThis}`);
-    res.end();
-  } catch (e) {
-    console.error(e);
-    accessLogStream.write(e.stack + '\n');
-  }
-});
-
-router.post('/defaultproperties', function(req, res, next) {
-  try {
-    console.log(req.body.file);
-    var filePath = req.body.file;
-    console.log("filePath: ", filePath);
-    filePath = filePath.replace(/^\$BLJ/g, '');
-    console.log(filePath);
-    //filePath = path.parse(filePath);
-    //console.log('filePath', filePath);
-    // console.log('path.join(bljDir, filePath)', path.join(bljDir, filePath));
-    const datum = fs.readFileSync(path.join(bljDir, filePath), 'utf8');
-    res.setHeader("Content-Type", "text/html");
-    res.write(datum);
-    res.end();
-  } catch (e) {
-    accessLogStream.write(e.stack + '\n');;
-    console.error(e);
-  }
-});//end router.post('/defaultproperties'...
+router.post('/defaultproperties', propertiesIo.getDefaultProperties);//end router.post('/defaultproperties'...
 
 //currently for docker only
 router.post('/checkProjectExists', function(req, res, next) {
@@ -300,7 +104,7 @@ router.post('/checkProjectExists', function(req, res, next) {
     }
   } catch (e) {
     console.log(e);
-    accessLogStream.write(e.stack + '\n');;
+    errorLogger.writeError(e.stack);
   }
 });// end outer.post('/checkProjectExists',
 
@@ -366,7 +170,7 @@ router.post('/launch', function(req, res, next) {
 
       } catch (e) {
         console.log(e);
-        accessLogStream.write(e.stack + '\n');;
+        errorLogger.writeError(e.stack);
       }
 
         break;
@@ -385,7 +189,7 @@ router.post('/launch', function(req, res, next) {
     res.end();
     launchedPipeline = true;
   } catch (e) {
-    accessLogStream.write(e.stack + '\n');;
+    errorLogger.writeError(e.stack);
     console.error(e);
   }
     console.log('leaving /launch post request');
@@ -447,7 +251,7 @@ router.post('/getMalcolmGitRepo', function(req, res, next) {
     res.write('Server Response: Malcolm Git Cloned!');
     res.end();
   } catch (e) {
-    accessLogStream.write(e.stack + '\n');;
+    errorLogger.writeError(e.stack);
     console.error(e);
   }
 });
@@ -488,7 +292,7 @@ router.post('/configureAws', function(req, res, next) {
     });
 
   } catch (e) {
-    accessLogStream.write(e.stack + '\n');;
+    errorLogger.writeError(e.stack);
     console.error(e);
   }
 });
@@ -574,7 +378,7 @@ router.post('/deployCloudInfrastructure', function(req, res, next) {
       })
     }
   } catch (e) {
-    accessLogStream.write(e.stack + '\n');
+    errorLogger.writeError(e.stack);
     console.error(e);
   }
 });
@@ -638,7 +442,7 @@ router.post('/launchEc2HeadNode', function(req, res, next) {
   // source ~/.batchawsdeploy/config ;  launchEC2HeadNode.sh exist testing2 HeadNode
 
   } catch (e) {
-    accessLogStream.write(e.stack + '\n');;
+    errorLogger.writeError(e.stack);
     console.error(e);
   }
 });
@@ -664,7 +468,7 @@ router.post('/retrieveAwsStackLists', function(req, res, next) {
     });
   } catch (e) {
     console.log('error in /retrieveAwsStackLists: ', e);
-    accessLogStream.write(e.stack + '\n');
+    errorLogger.writeError(e.stack);
   }
 })
 
@@ -696,7 +500,7 @@ router.post('/retrieveAwsStackLists', function(req, res, next) {
 //     });
 //   } catch (e) {
 //     console.error(e);
-//     accessLogStream.write(e.stack + '\n');
+//     errorLogger.writeError(e.stack);
 //   }
 // })
 
