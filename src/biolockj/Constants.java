@@ -176,7 +176,7 @@ public class Constants {
 	public static final String GENUS = "genus";
 
 	/**
-	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
+	 * Gzip compressed file extension: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
 
@@ -338,7 +338,7 @@ public class Constants {
 	public static final String LIMIT_DEBUG_CLASSES = "pipeline.limitDebugClasses";
 
 	/**
-	 * BioLockJ log file extension constant: {@value #LOG_EXT}
+	 * BioLockJ log file extension: {@value #LOG_EXT}
 	 */
 	public static final String LOG_EXT = ".log";
 
@@ -397,7 +397,7 @@ public class Constants {
 	public static final String PARAMS = "Params";
 
 	/**
-	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
+	 * BioLockJ PDF file extension: {@value #PDF_EXT}
 	 */
 	public static final String PDF_EXT = ".pdf";
 
@@ -587,7 +587,7 @@ public class Constants {
 	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
 
 	/**
-	 * Return character constant *backslash-n*
+	 * Return character: *backslash-n*
 	 */
 	public static final String RETURN = "\n";
 
@@ -617,9 +617,14 @@ public class Constants {
 	public static final String SEPARATOR = "|";
 
 	/**
-	 * BioLockJ shell script file extension constant: {@value #SH_EXT}
+	 * BioLockJ shell script file extension: {@value #SH_EXT}
 	 */
 	public static final String SH_EXT = ".sh";
+	
+	/**
+	 * BioLockJ properties file extension: {@value #PROPS_EXT}
+	 */
+	public static final String PROPS_EXT = ".properties";
 
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #SPECIES}
@@ -632,7 +637,7 @@ public class Constants {
 	public static final String STANDARD_CONFIG_PATH = "${BLJ}/resources/config/default/standard.properties";
 
 	/**
-	 * BioLockJ tab character constant: {@value #TAB_DELIM}
+	 * BioLockJ tab character: {@value #TAB_DELIM}
 	 */
 	public static final String TAB_DELIM = "\t";
 
@@ -642,12 +647,12 @@ public class Constants {
 	public static final String TRUE = "Y";
 
 	/**
-	 * BioLockJ tab delimited text file extension constant: {@value #TSV_EXT}
+	 * BioLockJ tab delimited text file extension: {@value #TSV_EXT}
 	 */
 	public static final String TSV_EXT = ".tsv";
 
 	/**
-	 * BioLockJ standard text file extension constant: {@value #TXT_EXT}
+	 * BioLockJ standard text file extension: {@value #TXT_EXT}
 	 */
 	public static final String TXT_EXT = ".txt";
 

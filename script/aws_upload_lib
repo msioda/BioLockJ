@@ -4,7 +4,8 @@
 ##  This script is used for uploading data + config to AWS cloud.  ##
 ##                                                                 ##
 #####################################################################
-source ${BLJ_SCRIPT}/aws_config_lib
+. "${BLJ_SCRIPT}/aws_config_lib"
+
 S3_DIR="s3://"
 
 # Sync local files to S3 for cloud pipeline execution
@@ -60,27 +61,31 @@ aws_s3_ls() {
 	aws s3 ls "${S3_DIR}${1}" --recursive --human-readable
 }
 
+# Get ths AWS script name
+get_aws_script_name() {
+	echo "${HOME}/.aws/start-$(get_config_name).sh"
+}
+
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
-	startScript=~/.aws/run-$(get_config_name).sh
 	[ -f "${metadataFilePath}" ] && meta="-m=${BLJ_META} "
-	echo $sheBang > $startScript
-	echo "" >> $startScript
-	echo "##########################################################" >> $startScript
-	echo "##                                                      ##" >> $startScript
-	echo "##  Run this script to launch BioLockJ pipeline on AWS  ##" >> $startScript
-	echo "##  1) Clear old biolockj Docker images (if any)        ##" >> $startScript
-	echo "##  2) Pull the latest biolockj image from Docker Hub   ##" >> $startScript
-	echo "##  3) Run dockblj                                      ##" >> $startScript
-	echo "##                                                      ##" >> $startScript
-	echo "##########################################################" >> $startScript
-	echo 'source ${HOME}/.bash_profile' >> $startScript
-	echo "clearDock" >> $startScript
-	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $startScript
-	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $inputDirPaths) -c=$(get_config ec2)" >> $startScript
-	chmod 770 $startScript
-	echo $startScript
+	echo $sheBang > $(get_aws_script_name)
+	echo "" >> $(get_aws_script_name)
+	echo "##########################################################" >> $(get_aws_script_name)
+	echo "##                                                      ##" >> $(get_aws_script_name)
+	echo "##  Run this script to launch BioLockJ pipeline on AWS  ##" >> $(get_aws_script_name)
+	echo "##  1) Clear old biolockj Docker images (if any)        ##" >> $(get_aws_script_name)
+	echo "##  2) Pull the latest biolockj image from Docker Hub   ##" >> $(get_aws_script_name)
+	echo "##  3) Run dockblj                                      ##" >> $(get_aws_script_name)
+	echo "##                                                      ##" >> $(get_aws_script_name)
+	echo "##########################################################" >> $(get_aws_script_name)
+	echo '. ~/.bash_profile' >> $(get_aws_script_name)
+	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $(get_aws_script_name)
+	echo "clearDock" >> $(get_aws_script_name)
+	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $inputDirPaths) -c=$(get_config ec2)" >> $(get_aws_script_name)
+	chmod 770 $(get_aws_script_name)
+	echo $(get_aws_script_name)
 }
 
 # Execute remote command on the head node
@@ -130,7 +135,7 @@ stage_pipeline_on_aws() {
 	upload_file_to_aws "$(build_start_script)"
 
 	# REMOVE ONCE NEW YML IS VERIFIED
-	exe_remote_cmd "[ ! -d $EC2_AWS ] && echo YML DID NOT MAKE AWS DIR YET && mkdir $EC2_AWS"
+	exe_remote_cmd "[ ! -d ${EC2_HOME}/.aws] && echo YML DID NOT MAKE AWS DIR YET && mkdir ${EC2_HOME}/.aws"
 	
 	stage_aws_confg
 
@@ -164,9 +169,9 @@ stage_aws_confg() {
 	echo "aws_secret_access_key = $(get_aws_secret_access_key)" >> "$stageDir/credentials"
 	echo "Created file:  $stageDir/credentials"
 	cat "$stageDir/credentials"
-	upload_file_to_aws "$stageDir/config" "${EC2_AWS}"
-	upload_file_to_aws "$stageDir/credentials" "${EC2_AWS}"
-	upload_file_to_aws "$blj_aws_config" "${EC2_AWS}"
+	upload_file_to_aws "$stageDir/config" "${EC2_HOME}/.aws"
+	upload_file_to_aws "$stageDir/credentials" "${EC2_HOME}/.aws"
+	upload_file_to_aws "$blj_aws_config" "${EC2_HOME}/.aws"
 }
 
 # The method creates a new version of the pipeline Config files by replacing 

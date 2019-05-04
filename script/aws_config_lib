@@ -4,7 +4,7 @@
 ##  This script is used for AWS Config functions            ##
 ##                                                          ##
 ##############################################################
-. ${DOCKER_LIB}
+. "${DOCKER_LIB}"
 
 [ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config
 sheBang='#!/bin/bash'

@@ -26,15 +26,12 @@ alias tlogf="tail -1000f *.log"
 alias goblj="blj_go"
 alias showIFS="printf %q $IFS"
 
-
 # Initialize bash environment
 source "${BLJ_SCRIPT}/blj_config"
-source "${AWS_LIB}"
 
 [ ${#dockerUser} -gt 0 ] && export DOCKER_ID="${dockerUser}"
 [ ! -f "$(get_docker_job_def_flag)" ] && build_docker_job_defs
-echo "AWS Profile loaded - Docker Account ID: $DOCKER_ID"
-cat "${BSH_PROF}"
+echo "AWS Profile ~/.bash_profile loaded - Docker Account ID: $DOCKER_ID"
 ######=========================================######
 ######   BioLockJ AWS ~/.bash_profile LOADED   ###### 
 ######=========================================######

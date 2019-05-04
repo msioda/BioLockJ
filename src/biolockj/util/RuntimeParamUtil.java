@@ -231,7 +231,7 @@ public class RuntimeParamUtil {
 	public static String getProjectName() {
 		final String configName = getConfigFile().getName();
 		String name = configName;
-		final String[] exts = { ".ascii", ".asc", ".plain", ".rft", ".tab", ".text", ".tsv", ".txt", ".properties",
+		final String[] exts = { ".ascii", ".asc", ".plain", ".rft", ".tab", ".text", ".tsv", ".txt", Constants.PROPS_EXT,
 			".prop", ".props", ".config" };
 
 		for( final String ext: exts ) {

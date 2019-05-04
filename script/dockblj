@@ -1,7 +1,7 @@
 #!/bin/bash
 ##################################################################################
 ##                                                                              ##
-##  Script launches BioLockJ in a Docker container                              ##
+##  Script launches BioLockJ via Docker + creates $DOCKER_CLONE_SCRIPT          ##
 ##                                                                              ##
 ##  Bash env must include pipeline base directory: ${BLJ_PROJ}                  ##
 ##                                                                              ##
@@ -18,6 +18,9 @@
 ##                                                                              ##
 ##################################################################################
 . "${DOCKER_LIB}"
+
+cmd="dockblj ${@}"
+printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
 
 [ ${#DOCKER_ID} -eq 0 ] && exit_script "Error [ dockblj ]: Required bash variable DOCKER_ID undefined"
 [ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ dockblj ]: Required bash variable BLJ_PROJ undefined"
@@ -55,6 +58,17 @@ blj_proj() {
 	exit_script "Error [ dockblj ]: Required env variable BLJ_PROJ undefined"
 }
 
+# Build a script that can be used to launch a clone of the
+# Param 1 - Full Docker run command
+build_clone_script() {
+	echo "#!/bin/bash" > "${DOCKER_CLONE_SCRIPT}"
+	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
+	echo ${@/$(get_docker_img)/-ti $(dock_id)/biolockj_controller /bin/bash} >> "${DOCKER_CLONE_SCRIPT}"
+	chmod 777 "${DOCKER_CLONE_SCRIPT}"
+	echo "Run Docker clone script generated --> ${DOCKER_CLONE_SCRIPT}"
+	[ -f "${DOCKER_CLONE_SCRIPT}" ] && cat "${DOCKER_CLONE_SCRIPT}"
+}
+
 # Get Docker image - add port, entrypoint, anc command if launching GUI
 get_docker_img() {
 	cmd=$(dock_id)/biolockj_controller	
@@ -86,9 +100,11 @@ has_param() {
 	[ ${#1} -gt 0 ]
 }
 
-# Call the docker run command with the correct parameters
+# Print and execute the docker run command with the correct volumes and env variables
 run_docker() {
-	echo "execute[ docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img) ]"
+	cmd="docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img)"
+	printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
+	build_clone_script "${cmd}"
 	docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) "$(get_docker_img)"
 }
 
@@ -115,17 +131,11 @@ verify_inputs() {
 	verify_host_dir $dirPath Input
 }
 
-launchGui=$(arg_exists "$@" -gui)
-
-if $(has_param $launchGui); then
-	echo "CMD dockblj...launching GUI"
-else
-	echo "CMD dockblj...launching BioLockJ pipeline with home: ${EC2_HOME}"
-fi
-
-runDev=$(arg_exists "$@" -dev)
 inDocker=$(arg_exists "$@" -docker)
+launchGui=$(arg_exists "$@" -gui)
 runAws=$(arg_exists "$@" -aws)
+runDev=$(arg_exists "$@" -dev)
+
 config=$(named_arg "$@" -c)
 inputDir=$(named_arg "$@" -i)
 metaPath=$(named_arg "$@" -m)
@@ -136,6 +146,7 @@ if ! $(has_param $inDocker); then
 	$(has_param $launchGui) && verify_inputs 
 fi
 
-$(has_param $runDev) && echo "Running DEV mode!"
-$(has_param $runAws) && echo "Running AWS mode!"
+$(has_param $runDev) && echo "Run DEV mode!"
+$(has_param $runAws) && echo "Run AWS mode!"
+
 run_docker

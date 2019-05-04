@@ -6,8 +6,6 @@
 . "${BLJ_SCRIPT}/docker_config"
 . "${BLJ_LIB}"
 
-# List all Doker images & containers
-alias dockls='docker images; docker container ls --all'
 alias bljd="dockBuildBlj"
 alias docker_build="updateDocker build"
 alias docker_push="updateDocker push"
@@ -41,7 +39,7 @@ clearDock() {
 	[ ${#containers} -gt 0 ] && docker rm $containers
 	[ ${#images} -gt 0 ] && docker rmi $images
 	
-	echo "Verify old containers & images have been removed..."
+	echo "All containers + stale images = REMOVED..."
 	dockls
 }
 
@@ -71,7 +69,6 @@ dockBuildBlj() {
 	docker push $DOCKER_ID/biolockj_controller${bljV}
 	clearDock
 }
-
 
 # Used by updateDocker to build and push number of modules given, or all modules if no params
 # Param 1 - Limit build to first ${1} modules
@@ -105,6 +102,12 @@ dockin() {
 	fi
 }
 
+
+# List all Doker images & containers
+dockls() {
+	docker images && docker container ls --all
+}
+
 # Instantiate Docker bash shell for biolockj_controller with  
 # Param $1 = input directory
 dockManager() {
@@ -118,9 +121,10 @@ goDock() {
 	docker exec -ti ${1} /bin/bash
 }
 
-# Check if running in an AWS Docker container
-inAwsDockerContainer() {
-	[ ${#BLJ_OPTIONS} -gt 30 ] && [ "${BLJ_OPTIONS/$(aws_options)}" != "${BLJ_OPTIONS}" ] 
+# Run a clone of the last biolockj_controller container
+# Very useful to debug after failed Docker pipelines
+run_docker_clone() {
+	[ -x "${DOCKER_CLONE_SCRIPT}" ] && bash "${DOCKER_CLONE_SCRIPT}"
 }
 
 # Single function used to build, pull, push Docker modules.

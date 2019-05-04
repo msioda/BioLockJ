@@ -43,7 +43,8 @@ public class FatalExceptionHandler {
 			Log.info( FatalExceptionHandler.class, "Local file-system error log path: " + getErrorLog().getAbsolutePath() );
 			if( DockerUtil.inDockerEnv()  && getHostLogPath() != null ) 
 				Log.info( FatalExceptionHandler.class, "Host file-system error log path: " + getHostLogPath() );
-			dumpLogs( getLogs() );
+			if( !getErrorLog().isFile() )
+				dumpLogs( getLogs() );
 		} else {
 			Log.warn( FatalExceptionHandler.class, "Unable to save logs to file-system: " );
 			printLogsOnScreen( getLogs() );

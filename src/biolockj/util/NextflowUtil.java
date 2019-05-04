@@ -69,7 +69,7 @@ public class NextflowUtil {
 	 * @return TRUE if log exists in pipeline root directory
 	 */
 	public static boolean nextflowLogExists() {
-		return new File( Config.pipelinePath() + File.separator + NF_LOG_NAME ).exists();
+		return new File( Config.pipelinePath() + File.separator + NF_LOG_NAME ).isFile();
 	}
 
 	/**
@@ -259,7 +259,7 @@ public class NextflowUtil {
 		args[ 0 ] = templateScript().getAbsolutePath();
 		args[ 1 ] = templateConfig().getAbsolutePath();
 		args[ 2 ] = modules;
-		Processor.submit( args, "Build Nextflow Template" );
+		Processor.submit( args, "Build Nf Template" );
 		if( !templateConfig().exists() )
 			throw new Exception( "Nextflow Template file is not found at path: " + templateConfig().getAbsolutePath() );
 		Log.info( NextflowUtil.class, "Nextflow Template file created: " + templateConfig().getAbsolutePath() );

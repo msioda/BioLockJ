@@ -422,26 +422,26 @@ public class Config {
 		try {
 			if( !hasEnvVar( val ) ) return val;
 			if( val.substring( 0, 1 ).equals( "~" ) ) {
-				Log.debug( Config.class, "Found property starting with \"~\" --> " + arg );
+				Log.debug( Config.class, "Found property value starting with \"~\" --> \"" + arg + "\"" );
 				val = val.replace( "~", "${HOME}" );
-				Log.debug( Config.class, "Updated property --> " + val );
+				Log.debug( Config.class, "Converted value to use standard syntax --> " + val + "\"" );
 			}
 
 			while( hasEnvVar( val ) ) {
 				final String bashVar = val.substring( val.indexOf( "${" ), val.indexOf( "}" ) + 1 );
-				Log.debug( Config.class, "Attempting to update [ " + arg
-					+ " ] by replacing environment variable (length=" + bashVar.length() + ") --> " + bashVar );
+				Log.debug( Config.class, "Replace \"" + bashVar + "\" in \"" + arg + "\"" );
 				final String bashVal = getBashVal( bashVar );
+				Log.debug( Config.class, "Bash var \"" + bashVar + "\" = \"" + bashVal + "\"" );
 				if( bashVal != null && bashVal.equals( bashVar ) ) return arg;
 				val = val.replace( bashVar, bashVal );
-				Log.debug( Config.class, "Found env variable [ " + bashVar + " = " + bashVal + "  ] (length="
-					+ ( bashVal == null ? 0: bashVal.length() ) + ") | UPDATED arg val --> " + val );
+				Log.debug( Config.class, "Updated \"" + arg + "\" --> " + val + "\"" );
 			}
-			Log.info( Config.class, "--------> Bash Var Converted [ " + arg + " ] --> " + val );
+			Log.info( Config.class, "--------> Bash Var Converted \"" + arg + "\" ======> \"" + val + "\"" );
 			return val;
 		} catch( final Exception ex ) {
 			Log.warn( Config.class, "Failed to convert arg \"" + arg + "\"" + ex.getMessage() );
 		}
+		Log.warn( Config.class, "Return unchanged value \"" + arg + "\"" );
 		return arg;
 	}
 
@@ -766,25 +766,29 @@ public class Config {
 
 	private static String getBashVal( final String bashVar ) {
 		try {
+			if( bashVarMap.get( bashVar ) != null ) return bashVarMap.get( bashVar );
 			String bashVal = props == null ? null: props.getProperty( stripBashMarkUp( bashVar ) );
-			if( bashVal != null && !bashVal.trim().isEmpty() ) return bashVal;
-
-			if( bashVar.equals( BLJ_BASH_VAR ) ) {
-				final File blj = BioLockJUtil.getBljDir();
-				if( blj != null && blj.isDirectory() ) return blj.getAbsolutePath();
-			} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
-				final File bljSup = BioLockJUtil.getBljSupDir();
-				if( bljSup != null && bljSup.isDirectory() ) return bljSup.getAbsolutePath();
+			if( bashVal == null || bashVal.trim().isEmpty() ) {
+				if( bashVar.equals( BLJ_BASH_VAR ) ) {
+					final File blj = BioLockJUtil.getBljDir();
+					if( blj != null && blj.isDirectory() ) bashVal = blj.getAbsolutePath();
+				} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
+					final File bljSup = BioLockJUtil.getBljSupDir();
+					if( bljSup != null && bljSup.isDirectory() ) bashVal = bljSup.getAbsolutePath();
+				} else {
+					bashVal = Processor.getBashVar( bashVar );
+				}
 			}
-
-			bashVal = Processor.getBashVar( bashVar );
-			if( bashVal != null ) return bashVal;
-
-			Log.warn( Config.class, "Bash env. var [ " + bashVar + " ] not found" );
+			
+			if( bashVal != null && !bashVal.trim().isEmpty() ) {
+				bashVarMap.put( bashVar, bashVal );
+				return bashVal;
+			}
 
 		} catch( final Exception ex ) {
 			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar );
 		}
+		
 		return bashVar;
 	}
 
@@ -849,6 +853,7 @@ public class Config {
 	 */
 	public static final String BLJ_SUP_BASH_VAR = "${BLJ_SUP}";
 
+	private static final Map<String, String> bashVarMap = new HashMap<>();
 	private static File configFile = null;
 	private static File pipelineDir = null;
 	private static Properties props = null;

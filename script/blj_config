@@ -25,8 +25,8 @@ alias load_blj=". ${BLJ_LIB}"
 alias load_docker=". ${DOCKER_LIB}"
 alias load_aws=". ${AWS_LIB}"
 
-[ "${HOME}" == "${EC2_HOME}" ] && load_docker
-$(inAwsDockerContainer) && load_aws
+[ -f "/.dockerenv" ] && load_aws
+
 [ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="${BLJ_SCRIPT}:$PATH"
 [ ! -d "${BLJ_META}" ] && export BLJ_META="${HOME}/metadata"
 [ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"

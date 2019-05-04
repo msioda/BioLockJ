@@ -61,7 +61,7 @@ RUN	apt-get clean && \
 #7.) Update  ~/.bashrc
 RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
 	echo 'alias goblj=blj_go' >> ~/.bashrc && \
-	echo alias rd='rm -rf' >> ~/.bashrc && \
+	echo 'alias rd="rm -rf"' >> ~/.bashrc && \
 	mkdir /app/blj_support
 		
 #8.) Setup environment and assign default command

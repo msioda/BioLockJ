@@ -211,6 +211,15 @@ is_pipeline_dir() {
 	[ "$dir" == "${dir/.}" ] && [ -d "$1" ] && [ "$prefix" == "_" ] && [ ${#year} -eq 4 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ ${#day} -eq 2 ]
 }
 
+# Kill running biolockj CMD
+# Param 1 - Override biolockj CMD name
+kill_blj() {
+	[ $# -eq 0 ] && procName="biolockj"
+	[ $# -gt 0 ] && procName="${1}"
+	pgrep ${procName}
+	pkill -9 [^]]${procName}
+}
+
 # Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
 most_recent_pipeline() {
 	IFS2="${IFS}"
