@@ -62,11 +62,6 @@ aws_s3_ls() {
 	aws s3 ls "${S3_DIR}${1}" --recursive --human-readable
 }
 
-# Get ths AWS script name
-get_aws_script_name() {
-	echo "${HOME}/.aws/start-$(get_config_name).sh"
-}
-
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
@@ -99,6 +94,11 @@ exe_remote_cmd() {
 get_aws_profile() {
 	[ ${#awsProfile} -eq 0 ] && awsProfile=default
 	echo "[${awsProfile}]"
+}
+
+# Get ths AWS script name
+get_aws_script_name() {
+	echo "${HOME}/.aws/start-$(get_config_name).sh"
 }
 
 # Return the Nextflow basic config file-path
@@ -136,7 +136,7 @@ stage_pipeline_on_aws() {
 	upload_file_to_aws "$(build_start_script)"
 
 	# REMOVE ONCE NEW YML IS VERIFIED
-	exe_remote_cmd "[ ! -d ${EC2_HOME}/.aws] && echo YML DID NOT MAKE AWS DIR YET && mkdir ${EC2_HOME}/.aws"
+	exe_remote_cmd "[ ! -d ${EC2_HOME}/.aws ] && mkdir ${EC2_HOME}/.aws"
 	
 	stage_aws_confg
 

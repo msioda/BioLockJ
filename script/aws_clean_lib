@@ -188,6 +188,9 @@ kill_head_node() {
 		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
 	rm_prop "$blj_aws_config" ec2PublicIP
 	rm_prop "$blj_aws_config" awsEc2InstanceID
+	ec2PublicIP=""
+	awsEc2InstanceID=""
+	refresh_aws_cache
 	aws_rm_key_pairs
 }
 

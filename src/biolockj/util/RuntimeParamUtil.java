@@ -190,20 +190,22 @@ public class RuntimeParamUtil {
 		Log.info( RuntimeParamUtil.class, "Building Docker java_module BLJ_OPTIONS" );
 		String javaModArgs = "";
 		for( final String key: params.keySet() ) {
-			Log.debug( RuntimeParamUtil.class, "Found Docker param: " + key + "=" + params.get( key ) );
+			Log.info( RuntimeParamUtil.class, "Found Docker param: " + key + "=" + params.get( key ) );
 			if( BLJ_CONTROLLER_ONLY_ARGS.contains( key ) ) 
 				continue;
 			String val = null;
 			if( key.equals( HOST_CONFIG_DIR ) ) 
 				val = CONFIG_FILE + " " + params.get( key ) + getConfigFile().getName();
-			else if( getDockerMap().keySet().contains( key ) )
-				val = key + " " + params.get( getDockerMap().get( key ) );
+			else if( key.equals( HOST_HOME_DIR ) ) 
+				val = HOME_DIR + " " + params.get( key );
+			else if( key.equals( HOST_BLJ_PROJ_DIR ) ) 
+				val = BLJ_PROJ_DIR + " " + params.get( key );
 			else if( ARG_FLAGS.contains( key ) )
 				val = key;
 			else val = key + " " + params.get( key );
 			
-			javaModArgs += javaModArgs.isEmpty() ? "": " " + val;
-			Log.debug( RuntimeParamUtil.class, "Add Docker param: " + val + " to java_module. BLJ_OPTIONS" );
+			javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + val;
+			Log.info( RuntimeParamUtil.class, "Add Docker param: " + val + " to java_module. BLJ_OPTIONS" );
 		}
 
 		return javaModArgs + " " + RuntimeParamUtil.getDirectModuleParam( module );
@@ -402,15 +404,6 @@ public class RuntimeParamUtil {
 		return path;
 	}
 
-	private static Map<String, String> getDockerMap() {
-		if( dockerMap == null ) {
-			dockerMap = new HashMap<>();
-			dockerMap.put( HOST_HOME_DIR, HOME_DIR );
-			dockerMap.put( HOST_BLJ_PROJ_DIR, BLJ_PROJ_DIR );
-		}
-		return dockerMap;
-	}
-
 	private static void parseParams( final String[] args ) throws RuntimeParamException {
 		String prevParam = "";
 		for( final String arg: args ) {
@@ -591,7 +584,6 @@ public class RuntimeParamUtil {
 	private static final List<String> DIR_ARGS = Arrays.asList( BLJ_PROJ_DIR, HOME_DIR, HOST_BLJ_DIR, HOST_BLJ_PROJ_DIR,
 		HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR, INPUT_DIR, META_DIR, RESTART_DIR );
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
-	private static Map<String, String> dockerMap = null;
 	private static final List<String> extraParams = new ArrayList<>();
 	private static final List<String> LONG_ARG_NAMES = Arrays.asList( DIRECT_PIPELINE_DIR, DOCKER_FLAG, HOST_BLJ_DIR,
 		HOST_BLJ_PROJ_DIR, HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR );

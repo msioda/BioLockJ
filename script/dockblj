@@ -65,14 +65,14 @@ build_clone_script() {
 	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
 	echo ${@/$(get_docker_img)/-ti $(dock_id)/biolockj_controller /bin/bash} >> "${DOCKER_CLONE_SCRIPT}"
 	chmod 777 "${DOCKER_CLONE_SCRIPT}"
-	echo "Run Docker clone script generated --> ${DOCKER_CLONE_SCRIPT}"
-	[ -f "${DOCKER_CLONE_SCRIPT}" ] && cat "${DOCKER_CLONE_SCRIPT}"
+	echo "Run clone (of most recent biolockj_controller) --> ${DOCKER_CLONE_SCRIPT}"
+	[ -f "${DOCKER_CLONE_SCRIPT}" ] && cat "${DOCKER_CLONE_SCRIPT}" & printf "\n"
 }
 
 # Get Docker image - add port, entrypoint, anc command if launching GUI
 get_docker_img() {
 	cmd=$(dock_id)/biolockj_controller	
-	$(has_param $launchGui) && cmd="-p 8080:3000 --entrypoint '/bin/bash' $cmd -c 'npm start'"
+	$(has_param $launchGui) && cmd="-p 8080:3000 -w '$BLJ/web_app' --entrypoint '/bin/bash' $cmd -c 'npm start'"
 	echo "${cmd}"
 }
 

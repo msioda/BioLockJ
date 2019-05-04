@@ -493,7 +493,7 @@ Resources:
 
             - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
 
-            - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /home/ec2-user/miniconda'
+            - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -bfp /home/ec2-user/miniconda'
 
             - runuser -l  ec2-user -c '/home/ec2-user/miniconda/bin/conda install -c conda-forge -y awscli'
 
@@ -572,7 +572,7 @@ Resources:
 
             - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
 
-            - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /home/ec2-user/miniconda'
+            - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -bfp /home/ec2-user/miniconda'
 
             - runuser -l  ec2-user -c '/home/ec2-user/miniconda/bin/conda install -c conda-forge -y awscli'
 

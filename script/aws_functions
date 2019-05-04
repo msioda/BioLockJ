@@ -9,8 +9,8 @@
 . "${BLJ_SCRIPT}/aws_head_node_lib"
 . "${BLJ_SCRIPT}/aws_upload_lib"
 
-alias clearPipes="sudo rm -rf $EFS/pipelines/*; echo AWS pipelines removed"
-alias tailnf="tail -1000f $BLJ/web_app/.nextflow.log"
+alias clearpipes="sudo rm -rf $EFS/pipelines/*; echo AWS pipelines removed"
+alias tailnf="tail -1000f /.nextflow.log"
 
 # Build Cloud-formation Stack
 build_stack() {

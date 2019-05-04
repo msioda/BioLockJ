@@ -92,30 +92,34 @@ public class NextflowUtil {
 	 */
 	public static boolean purgeEfsData() {
 		try {
-			String label = "EFS";
-			String target = DockerUtil.AWS_EFS;
-			final boolean purgeInputs = Config.getBoolean( null, AWS_PURGE_EFS_INPUTS );
-			final boolean purgeOutputs = Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT );
-			if( purgeOutputs && !purgeInputs ) {
-				label += "-OUTPUTS";
-				target += File.separator + AWS_PIPELINE_DIR + "*";
-			} else if( purgeInputs && !purgeOutputs ) {
-				label += "-INPUTS";
-				target += File.separator + AWS_PIPELINE_DIR + "[cdims]*/*";
+			if( Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT ) ) {
+				purge( Config.pipelinePath() );
+			} else if ( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
+				purge( Config.getConfigFilePath() );
+				purge( AWS_DB_DIR);
+				purge( AWS_INPUT_DIR );
+				purge( AWS_META_DIR );
+				purge( AWS_PRIMER_DIR );
 			}
-
-			Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
-			final String[] args = new String[ 3 ];
-			args[ 0 ] = "rm";
-			args[ 1 ] = "-rf";
-			args[ 2 ] = target;
-			Processor.submit( args, "Clear-" + label );
 			return true;
 		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
 			return false;
 		}
 	}
+	
+	private static boolean purge( final String subDir ) throws Exception {
+		final String target = DockerUtil.AWS_EFS + File.separator + subDir;
+		Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
+		final String[] args = new String[ 3 ];
+		args[ 0 ] = "rm";
+		args[ 1 ] = "-rf";
+		args[ 2 ] = target;
+		Processor.submit( args, "Clear-EFS-Data" );
+		return true;
+	}
+
+
 
 	/**
 	 * Save EFS data to S3 based on pipeline Config.
@@ -417,15 +421,6 @@ public class NextflowUtil {
 	 */
 	public static final String AWS_COPY_REPORTS_TO_S3 = "aws.copyReportsToS3";
 
-	/**
-	 * Name of the AWS S3 sub-directory used to save pipeline reports
-	 */
-	public static final String AWS_DB_DIR = "db";
-
-	/**
-	 * Name of the AWS S3 sub-directory used to save pipeline reports
-	 */
-	public static final String AWS_PIPELINE_DIR = "pipelines";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: If enabled delete all EFS dirs (except pipelines):
@@ -457,10 +452,15 @@ public class NextflowUtil {
 	/**
 	 * The Docker container will generate a nextflow.log file in the root directory, this is the file name
 	 */
-	protected static final String NF_LOG = "/app/biolockj/web_app/.nextflow.log";
+	protected static final String NF_LOG = "/.nextflow.log";
+	//protected static final String NF_LOG = "/app/biolockj/web_app/.nextflow.log";
 
 	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 
+	private static final String AWS_DB_DIR = "db";
+	private static final String AWS_INPUT_DIR = "input";
+	private static final String AWS_PRIMER_DIR = "primer";
+	private static final String AWS_META_DIR = "metadata";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";

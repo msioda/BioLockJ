@@ -65,6 +65,5 @@ RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bas
 	mkdir /app/blj_support
 		
 #8.) Setup environment and assign default command
-WORKDIR $BLJ/web_app/
 EXPOSE 8080
 CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS

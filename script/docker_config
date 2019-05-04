@@ -15,7 +15,7 @@ export DOCKER_ID="biolockj"
 export DOCK_SOCK="/var/run/docker.sock"
 export DOCKER_VER="docker-18.09.2"
 
-export EC2_MCONDA_BIN="${EC2_HOME}/.aws/miniconda/bin"
+export EC2_MCONDA_BIN="${EC2_HOME}/miniconda/bin"
 export EFS="/mnt/efs"
 export EFS_PROJ="${EFS}/pipelines"
 
@@ -24,3 +24,5 @@ export BLJ_DB="${EFS}/db"
 export BLJ_INPUT="${EFS}/input"
 export BLJ_META="${EFS}/metadata"
 export BLJ_PRIMER="${EFS}/primer"
+
+[ -f "/.dockerenv" ] && export BLJ_PROJ="${EFS_PROJ}"
