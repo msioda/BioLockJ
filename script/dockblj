@@ -32,7 +32,7 @@ printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
 # $BLJ_SCRIPT/blj_config determines AWS runtime env by order of first few BLJ_OPTIONS "/-docker -u  /home/ec2-user -aws"
 blj_options() {
 	if $(has_param $runAws); then
-		options="$(aws_options)"
+		options="-docker -u /home/ec2-user -aws"
 	else
 		options="-docker -u ${HOME}"
 	fi
@@ -86,7 +86,7 @@ get_volumes() {
 			vols="${vols} -v ${BLJ}/web_app/logs:/log:delegated -v ${BLJ}/resources/config/gui:${BLJ_CONFIG} "
 		else
 			vols="${vols} -v $inputDir:${BLJ_INPUT} -v $(dirname $config):${BLJ_CONFIG}"
-		$(has_param $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}"
+			$(has_param $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}"
 		fi
 	
 		$(has_param $runDev) && $(has_param ${HOST_BLJ}) && vols="${vols} -v ${HOST_BLJ}:/app/biolockj"

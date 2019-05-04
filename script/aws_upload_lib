@@ -6,7 +6,8 @@
 #####################################################################
 . "${BLJ_SCRIPT}/aws_config_lib"
 
-S3_DIR="s3://"
+export S3_DIR="s3://"
+alias dl_efs="download_dir_from_efs"
 
 # Sync local files to S3 for cloud pipeline execution
 aws_sync_inputs_to_s3() {
@@ -189,9 +190,19 @@ upload_config_to_aws() {
 # Param 1 - Local dir
 # Param 2 - (optional) AWS ec2 directory-path 
 upload_dir_to_aws() {
-	if [ $# -eq 2 ]; then target="${2}"; else target=$EC2_HOME; fi
+	if [ $# -eq 2 ]; then target="${2}"; else target="${EC2_HOME}"; fi
 	aws_log "Uploading directory \"${1}\" to AWS --> \"$target\""
 	scp -pro StrictHostKeyChecking=no -i $(key_file) "${1}" ec2-user@$(get_ec2_public_ip):${target}
+}
+
+# Download EFS directory, if no target dir specified, download to ~/projects/downloads/efs
+# Param 1 - EFS dir
+# Param 2 - (optional) Local directory-path 
+download_dir_from_efs() {
+	if [ $# -eq 2 ]; then target="${2}"; else target="${HOME}/projects/downloads/efs"; fi
+	aws_log "Downloading EFS directory \"${1}\" to --> \"$target\""
+	echo "Execute EFS-DL-CMD:  [ scp -pro StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_ec2_public_ip):$1 ${target} ]"
+	scp -pro StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_ec2_public_ip):$1 ${target} 
 }
 
 # Upload local file-path up to the ec2 head node, if no target dir specified use EC2 ${HOME}

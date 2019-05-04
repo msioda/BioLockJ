@@ -6,26 +6,29 @@
 . "${BLJ_SCRIPT}/docker_config"
 . "${BLJ_LIB}"
 
-alias bljd="dockBuildBlj"
+alias bljb="build_blj_only"
+alias bljbd="build_blj_only; clearDock; deploy_blj_only"
+alias bljd="deploy_blj_only"
 alias docker_build="updateDocker build"
 alias docker_push="updateDocker push"
 alias docker_pull="updateDocker pull"
 
 
-# These are the 1st BLJ_OPTIONS if running AWS Docker container
-aws_options() {
-	echo "-docker -u /home/ec2-user -aws"
+# Build only Docker images that contain $BLJ/dist/BioLockJ.jar
+build_blj_only() {
+	docker $(build_jm) -t $DOCKER_ID/java_module${bljV} $(docker_dir) -f $(docker_dir)/java_module.Dockerfile
+	docker $(build_controller) -t $DOCKER_ID/biolockj_controller${bljV} $(docker_dir) -f $(docker_dir)/biolockj_controller.Dockerfile
+}
+
+# Use to build containers with BioLockJ and the Docker client installed.
+build_controller() {
+	echo "$(build_jm) --build-arg DOCKER_CLIENT=$DOCKER_VER"
 }
 
 # Use to build containers with BioLockJ installed.
 # The date build-arg forces Docker to pull latest BioLockJ.tgz from GitHub 
-buildBljCmd() {
+build_jm() {
 	echo "build --build-arg BLJ_DATE=$(date +%s) --build-arg VER=$(biolockj -v)"
-}
-
-# Use to build containers with BioLockJ and the Docker client installed.
-buildBljDockCliCmd() {
-	echo "$(buildBljCmd) --build-arg DOCKER_CLIENT=$DOCKER_VER"
 }
 
 # Remove old Docker images
@@ -34,13 +37,17 @@ clearDock() {
 	containers=$(docker ps -aq)
 	runningProcs=$(docker ps -q)
 	images=$(docker images -f "dangling=true" -q) 
-	
 	[ ${#runningProcs} -gt 0 ] && docker kill $runningProcs
 	[ ${#containers} -gt 0 ] && docker rm $containers
 	[ ${#images} -gt 0 ] && docker rmi $images
-	
 	echo "All containers + stale images = REMOVED..."
 	dockls
+}
+
+# Deploy only Docker images that contain $BLJ/dist/BioLockJ.jar
+deploy_blj_only() {
+	docker $(build_jm) -t $DOCKER_ID/java_module${bljV} $(docker_dir) -f $(docker_dir)/java_module.Dockerfile
+	docker $(build_controller) -t $DOCKER_ID/biolockj_controller${bljV} $(docker_dir) -f $(docker_dir)/biolockj_controller.Dockerfile
 }
 
 # Instantiate Docker bash shell for image + map ${BLJ_PROJ} to ${EFS_PROJ}
@@ -59,15 +66,6 @@ dock_id() {
 # Get configured Dockerfile directory
 docker_dir() {
 	echo "${DOCKER_DIR}"
-}
-
-# Build Docker images that contain $BLJ
-dockBuildBlj() {
-	docker $(buildBljCmd) -t $DOCKER_ID/java_module${bljV} $(docker_dir) -f $(docker_dir)/java_module.Dockerfile
-	docker $(buildBljDockCliCmd) -t $DOCKER_ID/biolockj_controller${bljV} $(docker_dir) -f $(docker_dir)/biolockj_controller.Dockerfile
-	docker push $DOCKER_ID/java_module${bljV}
-	docker push $DOCKER_ID/biolockj_controller${bljV}
-	clearDock
 }
 
 # Used by updateDocker to build and push number of modules given, or all modules if no params
@@ -136,8 +134,8 @@ updateDocker() {
 	[ $# -eq 1 ] && x="ALL" && num=100
 	if [ "${1}" == "build" ]; then
 		cmd="${1} -t"
-		bljCmd="$(buildBljDockCliCmd) -t"
-		javaCmd="$(buildBljCmd) -t"
+		bljCmd="$(build_controller) -t"
+		javaCmd="$(build_jm) -t"
 	fi
 	echo "Docker ${1} latest Docker images for $x modules"
 	[ $num -gt 0 ] && docker $cmd $(dock_id)/blj_basic${bljV} $(docker_file ${1} blj_basic)

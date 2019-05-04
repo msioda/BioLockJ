@@ -347,14 +347,14 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	protected List<String> buildQiimeDockerConfigLines() throws Exception {
 		final List<String> lines = new ArrayList<>();
 		if( getDB() != null ) {
-			lines
-				.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ) + "' > " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ) + "' > "
+				+ QIIME_DOCKER_CONFIG );
 			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDockerDB( QIIME_PYNAST_ALIGN_DB ) + "' >> "
 				+ QIIME_DOCKER_CONFIG );
-			lines.add(
-				"echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ) + "' >> " + QIIME_DOCKER_CONFIG );
-			lines.add(
-				"echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDockerDB( QIIME_TAXA_DB ) + "' >> " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ) + "' >> "
+				+ QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDockerDB( QIIME_TAXA_DB ) + "' >> "
+				+ QIIME_DOCKER_CONFIG );
 		}
 
 		return lines;
@@ -597,11 +597,11 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	private static final String NORMALIZED_ALPHA = "_normalized_alpha";
 	private static final String NORMALIZED_ALPHA_LABEL = "_alpha_label";
 	private static final String NUM_THREADS_PARAM = "-aO";
-	private static final String QIIME_DOCKER_CONFIG = DockerUtil.DOCKER_ROOT_HOME + "/.qiime_config";
 	private static final String QIIME_CONFIG_PYNAST_ALIGN_REF = "pynast_template_alignment_fp";
 	private static final String QIIME_CONFIG_SEQ_REF = "pick_otus_reference_seqs_fp";
 	private static final String QIIME_CONFIG_TAXA_ID_REF = "assign_taxonomy_id_to_taxonomy_fp";
 	private static final String QIIME_CONFIG_TAXA_SEQ_REF = "assign_taxonomy_reference_seqs_fp";
+	private static final String QIIME_DOCKER_CONFIG = DockerUtil.DOCKER_HOME + "/.qiime_config";
 	private static final String UNDEFINED = "UNDEFINED";
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 

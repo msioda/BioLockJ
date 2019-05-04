@@ -79,6 +79,10 @@ public final class DownloadUtil {
 
 			downloadPaths.addAll( dirs );
 
+			if( DockerUtil.inAwsEnv() ) {
+				downloadPaths.add( NextflowUtil.getNextflowReportDir() );
+			}
+
 			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() - 1 ) ) ? "completed": "failed" )
 				+ " pipeline -->";
 			final String displaySize = FileUtils

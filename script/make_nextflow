@@ -9,16 +9,10 @@
 ##                                                                            ##
 ################################################################################
 . /app/biolockj/script/blj_config
-
-bljVer="$($BLJ_SCRIPT/biolockj -v)"
-echo "make_nextflow PATH=${PATH}"
-echo "BLJ_SCRIPT=${BLJ_SCRIPT}"
-echo "bljVer=${bljVer}"
-[ ${#bljV} -eq 0 ] && echo "bljVer not found: ${bljVer}" && bljVer="$(/app/biolockj/script/biolockj -v)"
-[ ${#bljV} -eq 0 ] && echo "bljVer STILL not found: ${bljVer}"
 . "${AWS_LIB}"
-[ ! -f "${AWS_LIB}" ] && echo "AWS_LIB not found: ${AWS_LIB}" && . /app/biolockj/script/aws_functions
-[ ! -f "${DOCKER_LIB}" ] && echo "DOCKER_LIB not found: ${DOCKER_LIB}"
+
+bljVer="$(biolockj -v)"
+[${#bljVer} -eq 0] && bljVer="$($BLJ_SCRIPT/biolockj -v)"
 
 # Build the template
 # Param 1 - List of modules (using special delimiters)

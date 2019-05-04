@@ -47,7 +47,7 @@ public class DockerUtil {
 		final List<String> lines = new ArrayList<>();
 		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module )
 			+ getDockerEnvVars() + getDockerVolumes( module ) + getDockerImage( module );
-		Log.debug( DockerUtil.class, "Docker CMD:" + cmd );
+		Log.debug( DockerUtil.class, "----> Docker CMD:" + cmd );
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
 		lines.add( cmd );
@@ -246,6 +246,11 @@ public class DockerUtil {
 		return RuntimeParamUtil.getDirectModuleDir() != null;
 	}
 
+	private static String getAwsVolumes() {
+		Log.debug( DockerUtil.class, "Assign Docker AWS volumes" );
+		return "-v " + AWS_HOME + ":" + AWS_HOME + ":ro -v " + AWS_EFS + ":" + AWS_EFS + ":delegated";
+	}
+
 	private static String getDockerClassName( final BioModule module ) {
 		final String className = module.getClass().getSimpleName();
 		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
@@ -261,32 +266,38 @@ public class DockerUtil {
 	}
 
 	private static String getDockerVolumes( final BioModule module ) throws Exception {
-		Log.debug( DockerUtil.class, "Build Docker volumes for module: " + module.getClass().getSimpleName() );
+		Log.debug( DockerUtil.class, "Assign Docker volumes for module: " + module.getClass().getSimpleName() );
 
 		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;
+		if( inAwsEnv() ) return dockerVolumes + " " + getAwsVolumes();
+
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR + ":ro";
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR
 			+ ":delegated";
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR;
-
-		if( RuntimeParamUtil.getDockerHostMetaDir() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
-		}
-
-		if( isJavaModule( module ) && RuntimeParamUtil.getDockerHostBLJ() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR;
-		}
-
-		if( isJavaModule( module ) && RuntimeParamUtil.getDockerHostBLJ_SUP() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":"
-				+ CONTAINER_BLJ_SUP_DIR;
-		}
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR + ":ro";
 
 		if( module instanceof TrimPrimers ) {
 			final File primers = new File( Config.requireString( module, Constants.INPUT_TRIM_SEQ_FILE ) )
 				.getParentFile();
 			Log.info( DockerUtil.class, "Map Docker volume for TrimPrimers: " + primers.getAbsolutePath() );
-			dockerVolumes += " -v " + getVolumePath( primers.getAbsolutePath() ) + ":" + CONTAINER_PRIMER_DIR;
+			dockerVolumes += " -v " + getVolumePath( primers.getAbsolutePath() ) + ":" + CONTAINER_PRIMER_DIR + ":ro";
+		}
+
+		if( RuntimeParamUtil.getDockerHostMetaDir() != null ) {
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR + ":ro";
+		}
+
+		if( RuntimeParamUtil.getDockerHostBLJ() != null ) {
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR + ":ro";
+		}
+
+		if( RuntimeParamUtil.getDockerHostBLJ_SUP() != null ) {
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":"
+				+ CONTAINER_BLJ_SUP_DIR + ":ro";
+		}
+		
+		if( RuntimeParamUtil.getDockerHostHomeDir() != null ) {
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostHomeDir() + ":" + DOCKER_HOME + ":ro";
 		}
 
 		if( hasDB( module ) ) {
@@ -299,11 +310,13 @@ public class DockerUtil {
 				Log.info( DockerUtil.class, "RDP DB directory path: " + dbPath );
 			}
 
-			if( dbPath.startsWith( DOCKER_ROOT_HOME ) ) {
-				dbPath = dbPath.replace( DOCKER_ROOT_HOME, RuntimeParamUtil.getDockerHostHomeDir() );
-				Log.info( DockerUtil.class, "Replace " + DOCKER_ROOT_HOME + " with DB Host dir: " + dbPath );
+			if( dbPath.startsWith( DOCKER_HOME ) ) {
+				dbPath = dbPath.replace( DOCKER_HOME, RuntimeParamUtil.getDockerHostHomeDir() );
+				Log.info( DockerUtil.class, "Replace " + DOCKER_HOME + " with DB Host dir: " + dbPath );
 			}
 
+			// TODO: Probably fine as read-only, but will wait until all modules tested before adding :ro
+			// dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + CONTAINER_DB_DIR + ":ro";
 			dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + CONTAINER_DB_DIR;
 		}
 
@@ -327,10 +340,6 @@ public class DockerUtil {
 		return newPath;
 	}
 
-	private static boolean isJavaModule( final BioModule module ) {
-		return getDockerClassName( module ).equals( JavaModule.class.getSimpleName() );
-	}
-
 	private static final String rmFlag( final BioModule module ) throws Exception {
 		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "": DOCK_RM_FLAG;
 	}
@@ -348,6 +357,11 @@ public class DockerUtil {
 	 * Docker container root user DB directory
 	 */
 	public static final String AWS_EFS_DB = AWS_EFS + "/db";
+
+	/**
+	 * AWS container root user $HOME directory: {@value #AWS_HOME}
+	 */
+	public static final String AWS_HOME = "/home/ec2-user";
 
 	/**
 	 * Docker container blj_support dir for dev support
@@ -395,9 +409,9 @@ public class DockerUtil {
 	public static final String CONTAINER_PRIMER_DIR = AWS_EFS + "/primer";
 
 	/**
-	 * Docker container root user $HOME directory
+	 * Docker container root user $HOME directory: {@value #DOCKER_HOME}
 	 */
-	public static final String DOCKER_ROOT_HOME = "/root";
+	public static final String DOCKER_HOME = "/root";
 
 	/**
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}

@@ -265,6 +265,22 @@ public class Config {
 	}
 
 	/**
+	 * Get the pipeline directory if it is a valid directory on the file system.
+	 * 
+	 * @return Pipeline directory (if it exists)
+	 */
+	public static File getPipelineDir() {
+		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) {
+			try {
+				pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
+			} catch( final Exception ex ) {
+				Log.error( Config.class, "Pipeline directory does not exist", ex );
+			}
+		}
+		return pipelineDir;
+	}
+
+	/**
 	 * Parse property as positive double value
 	 *
 	 * @param module BioModule to check for module-specific form of this property
@@ -771,15 +787,19 @@ public class Config {
 			if( bashVal == null || bashVal.trim().isEmpty() ) {
 				if( bashVar.equals( BLJ_BASH_VAR ) ) {
 					final File blj = BioLockJUtil.getBljDir();
-					if( blj != null && blj.isDirectory() ) bashVal = blj.getAbsolutePath();
+					if( blj != null && blj.isDirectory() ) {
+						bashVal = blj.getAbsolutePath();
+					}
 				} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
 					final File bljSup = BioLockJUtil.getBljSupDir();
-					if( bljSup != null && bljSup.isDirectory() ) bashVal = bljSup.getAbsolutePath();
+					if( bljSup != null && bljSup.isDirectory() ) {
+						bashVal = bljSup.getAbsolutePath();
+					}
 				} else {
 					bashVal = Processor.getBashVar( bashVar );
 				}
 			}
-			
+
 			if( bashVal != null && !bashVal.trim().isEmpty() ) {
 				bashVarMap.put( bashVar, bashVal );
 				return bashVal;
@@ -788,7 +808,7 @@ public class Config {
 		} catch( final Exception ex ) {
 			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar );
 		}
-		
+
 		return bashVar;
 	}
 
@@ -811,22 +831,6 @@ public class Config {
 		}
 
 		return null;
-	}
-
-	/**
-	 * Get the pipeline directory if it is a valid directory on the file system.
-	 * 
-	 * @return Pipeline directory (if it exists)
-	 */
-	public static File getPipelineDir() {
-		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) {
-			try {
-				pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
-			} catch( final Exception ex ) {
-				Log.error( Config.class, "Pipeline directory does not exist", ex  );
-			}
-		}
-		return pipelineDir;
 	}
 
 	private static boolean hasEnvVar( final String val ) {

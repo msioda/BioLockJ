@@ -64,16 +64,29 @@ public class NextflowUtil {
 	}
 
 	/**
+	 * Get the Nextflow report directory
+	 * 
+	 * @return Nextflow report directory
+	 */
+	public static File getNextflowReportDir() {
+		final File dir = new File( Config.pipelinePath() + File.separator + NEXTFLOW_CMD );
+		if( !dir.isDirectory() ) {
+			dir.mkdir();
+		}
+		return dir;
+	}
+
+	/**
 	 * Return true if the Nextflow log has been saved to the pipeline root directory
 	 * 
 	 * @return TRUE if log exists in pipeline root directory
 	 */
 	public static boolean nextflowLogExists() {
-		return new File( Config.pipelinePath() + File.separator + NF_LOG_NAME ).isFile();
+		return new File( getNextflowReportDir().getAbsolutePath() + File.separator + NF_LOG_NAME ).isFile();
 	}
 
 	/**
-	 * Purge EFS data  based on pipeline Config.
+	 * Purge EFS data based on pipeline Config.
 	 * 
 	 * @return TRUE if not errors occur
 	 */
@@ -90,7 +103,7 @@ public class NextflowUtil {
 				label += "-INPUTS";
 				target += File.separator + AWS_PIPELINE_DIR + "[cdims]*/*";
 			}
-	
+
 			Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
 			final String[] args = new String[ 3 ];
 			args[ 0 ] = "rm";
@@ -98,7 +111,7 @@ public class NextflowUtil {
 			args[ 2 ] = target;
 			Processor.submit( args, "Clear-" + label );
 			return true;
-		} catch( Exception ex ) {
+		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
 			return false;
 		}
@@ -113,7 +126,7 @@ public class NextflowUtil {
 		try {
 			final boolean savePipeline = Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 );
 			final boolean saveReports = Config.getBoolean( null, NextflowUtil.AWS_COPY_REPORTS_TO_S3 );
-	
+
 			if( savePipeline ) {
 				awsSyncS3( Config.pipelinePath(), true );
 			} else if( DownloadUtil.getDownloadListFile().exists() && saveReports ) {
@@ -129,12 +142,12 @@ public class NextflowUtil {
 				}
 			} else {
 				Log.warn( NextflowUtil.class,
-					"Due to Config [ " + AWS_COPY_PIPELINE_TO_S3 + "=" + Constants.FALSE + " ] & [ " + AWS_REPORT_DIR + "="
-						+ Constants.FALSE + " ]: pipeline ouput will be not saved to configured AWS S3 bucket: "
+					"Due to Config [ " + AWS_COPY_PIPELINE_TO_S3 + "=" + Constants.FALSE + " ] & [ " + AWS_REPORT_DIR
+						+ "=" + Constants.FALSE + " ]: pipeline ouput will be not saved to configured AWS S3 bucket: "
 						+ Config.requireString( null, AWS_S3 ) );
 			}
 			return true;
-		} catch( Exception ex ) {
+		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
 			return false;
 		}
@@ -150,7 +163,7 @@ public class NextflowUtil {
 				Log.warn( NextflowUtil.class, NF_LOG + " not found, cannot copy to pipeline root directory!" );
 				return;
 			}
-			FileUtils.copyFileToDirectory( new File( NF_LOG ), new File( Config.pipelinePath() ) );
+			FileUtils.copyFileToDirectory( new File( NF_LOG ), getNextflowReportDir() );
 		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Failed to copy nextflow.log to pipeline root directory ", ex );
 		}
@@ -297,14 +310,6 @@ public class NextflowUtil {
 		return null;
 	}
 
-	private static String getNextflowDir() {
-		final File f = new File( Config.pipelinePath() + File.separator + NEXTFLOW_CMD );
-		if( !f.exists() ) {
-			f.mkdir();
-		}
-		return f.getAbsolutePath();
-	}
-
 	private static boolean poll() throws Exception {
 		final File nfLog = new File( NF_LOG );
 		if( nfLog.exists() ) {
@@ -344,7 +349,8 @@ public class NextflowUtil {
 	}
 
 	private static void startService() throws Exception {
-		final String reportBase = getNextflowDir() + File.separator + Config.pipelineName() + "_";
+		final String reportBase = getNextflowReportDir().getAbsolutePath() + File.separator + Config.pipelineName()
+			+ "_";
 		final String[] args = new String[ 11 ];
 		args[ 0 ] = NEXTFLOW_CMD;
 		args[ 1 ] = "run";
@@ -465,7 +471,6 @@ public class NextflowUtil {
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 	private static final String NF_INIT_FLAG = "Session await";
 	private static final String NF_LOG_NAME = ".nextflow.log";
-
 	private static final String NF_MEMORY = "$" + AWS_RAM;
 	private static final int NF_TIMEOUT = 180;
 	private static final String ON_DEMAND = "DEMAND";

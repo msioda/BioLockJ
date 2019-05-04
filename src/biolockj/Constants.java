@@ -22,9 +22,14 @@ public class Constants {
 	public static final long APP_START_TIME = System.currentTimeMillis();
 
 	/**
-	 * AWS bash profile name: {@value #AWS_BASH_PROFILE}
+	 * Bash profile fo;e name: {@value #BASH_PROFILE}
 	 */
-	public static final String AWS_BASH_PROFILE = "/root/.bash_profile";
+	public static final String BASH_PROFILE = ".bash_profile";
+
+	/**
+	 * Bashrc file name: {@value #BASH_RC}
+	 */
+	public static final String BASH_RC = ".bashrc";
 
 	/**
 	 * Name of the file created in the BioModule or {@value #INTERNAL_PIPELINE_DIR} root directory to indicate execution
@@ -91,8 +96,8 @@ public class Constants {
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DETACH_JAVA_MODULES}<br>
-	 * If {@value biolockj.Constants#TRUE} Java modules do not run with main BioLockJ Java application.
-	 * Instead they run on compute nodes on the CLUSTER or AWS environments.
+	 * If {@value biolockj.Constants#TRUE} Java modules do not run with main BioLockJ Java application. Instead they run
+	 * on compute nodes on the CLUSTER or AWS environments.
 	 */
 	public static final String DETACH_JAVA_MODULES = "pipeline.detachJavaModules";
 
@@ -107,11 +112,6 @@ public class Constants {
 	 * If set to {@value #TRUE}, prerequisite modules will not be added to the pipeline.
 	 */
 	public static final String DISABLE_PRE_REQ_MODULES = "pipeline.disableAddPreReqModules";
-
-	/**
-	 * Non-AWS Docker bash profile name: {@value #DOCKER_BASH_PROFILE}
-	 */
-	public static final String DOCKER_BASH_PROFILE = "/root/.bashrc";
 
 	/**
 	 * Default Docker {@link biolockj.Config} file imported after {@value #STANDARD_CONFIG_PATH} (if files exist)
@@ -479,6 +479,11 @@ public class Constants {
 	public static final String PROJECT_NAME = "project.name";
 
 	/**
+	 * BioLockJ properties file extension: {@value #PROPS_EXT}
+	 */
+	public static final String PROPS_EXT = ".properties";
+
+	/**
 	 * QIIME application: {@value #QIIME}
 	 */
 	public static final String QIIME = "qiime";
@@ -620,11 +625,6 @@ public class Constants {
 	 * BioLockJ shell script file extension: {@value #SH_EXT}
 	 */
 	public static final String SH_EXT = ".sh";
-	
-	/**
-	 * BioLockJ properties file extension: {@value #PROPS_EXT}
-	 */
-	public static final String PROPS_EXT = ".properties";
 
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #SPECIES}

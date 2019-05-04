@@ -33,7 +33,8 @@ public class MasterConfigUtil {
 		if( configName.startsWith( Constants.MASTER_PREFIX ) ) {
 			configName = configName.replaceAll( Constants.MASTER_PREFIX, "" );
 		}
-		return new File( Config.pipelinePath() + File.separator + Constants.MASTER_PREFIX + configName + Constants.PROPS_EXT );
+		return new File(
+			Config.pipelinePath() + File.separator + Constants.MASTER_PREFIX + configName + Constants.PROPS_EXT );
 	}
 
 	/**

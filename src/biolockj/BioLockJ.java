@@ -103,12 +103,10 @@ public class BioLockJ {
 
 			if( DockerUtil.inAwsEnv() ) {
 				NextflowUtil.saveNextflowLog();
-				boolean s3saved = NextflowUtil.saveEfsDataToS3();
+				final boolean s3saved = NextflowUtil.saveEfsDataToS3();
 				if( s3saved ) {
 					NextflowUtil.purgeEfsData();
-				} else {
-					throw new Exception( "Pipeline completed successfully, EFS data failed to transfer to S3!" );
-				}
+				} else throw new Exception( "Pipeline completed successfully, EFS data failed to transfer to S3!" );
 			}
 		} catch( final Exception ex ) {
 			FatalExceptionHandler.logFatalError( args, ex );

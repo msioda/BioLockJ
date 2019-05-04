@@ -28,7 +28,6 @@ import biolockj.module.report.r.R_CalculateStats;
  */
 public class BioLockJUtil {
 
-	
 	/**
 	 * Add leading spaces until the val is padded to given length
 	 * 
@@ -368,10 +367,10 @@ public class BioLockJUtil {
 		File prof = null;
 		try {
 			if( DockerUtil.inAwsEnv() ) {
-				prof = getProfile( Constants.AWS_BASH_PROFILE );
+				prof = getProfile( DockerUtil.DOCKER_HOME + File.separator + Constants.BASH_PROFILE );
 			}
 			if( prof == null && DockerUtil.inDockerEnv() ) {
-				prof = getProfile( Constants.DOCKER_BASH_PROFILE );
+				prof = getProfile( DockerUtil.DOCKER_HOME + File.separator + Constants.BASH_RC );
 			}
 			final String path = Config.getString( null, Constants.USER_PROFILE );
 			if( prof == null && path != null ) {
@@ -410,6 +409,19 @@ public class BioLockJUtil {
 	}
 
 	/**
+	 * Check collection vals for null or empty toString() values
+	 * 
+	 * @param vals Collection of objects
+	 * @return Boolean TRUE if all at least 1 value is null or empty
+	 */
+	public static boolean hasNullOrEmptyVal( final Collection<Object> vals ) {
+		for( final Object val: vals ) {
+			if( val == null || val.toString().isEmpty() ) return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Method used to add a file to the ignore file list property.
 	 * 
 	 * @param file File to ignore
@@ -439,19 +451,6 @@ public class BioLockJUtil {
 		}
 
 		return sb.toString();
-	}
-
-	/**
-	 * Check collection vals for null or empty toString() values
-	 * 
-	 * @param vals Collection of objects
-	 * @return Boolean TRUE if all at least 1 value is null or empty
-	 */
-	public static boolean hasNullOrEmptyVal( final Collection<Object> vals ) {
-		for( final Object val: vals ) {
-			if( val == null || val.toString().isEmpty() ) return true;
-		}
-		return false;
 	}
 
 	/**
@@ -719,7 +718,7 @@ public class BioLockJUtil {
 	 * output by {@link biolockj.module.report.r.R_CalculateStats}.
 	 */
 	public static final String PIPELINE_STATS_TABLE_INPUT_TYPE = "stats";
-	
+
 	/**
 	 * Internal {@link biolockj.Config} String property: {@value #PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE}<br>
 	 * Set as the value of {@value #INTERNAL_PIPELINE_INPUT_TYPES} for taxa count files that meet the file requirements

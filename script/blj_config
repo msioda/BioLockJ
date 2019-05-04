@@ -4,12 +4,12 @@
 ##  $BLJ/script/blj_config.  This purpose of this script it to:        ##
 ##                                                                     ##
 ##   1. Add env. variable $BLJ = BioLockJ installation directory       ##
-##   2. Add env. variable $BLJ_SCRIPT = ${BLJ}/script                  ##
-##   3. Add env. variable $BLJ_PROJ = ${BLJ}/pipelines                 ##
-##   4. Add env. variable $BLJ_META = ${HOME}/metadata if undefined    ##
-##   5. Source $DOCKER_LIB /.dockerenv exists                          ##
-##   6. Add aliases load_blj, load_docker, load_aws to source libs     ##
-##   7. Add env. variable $BLJ_SUP = blj_support directory             ##
+##   2. Add env. variable $BLJ_SCRIPT = $BLJ/script                    ##
+##   3. Add env. variable $BLJ_PROJ = $BLJ/pipelines                   ##
+##   4. Add env. variable $BLJ_META = $HOME/metadata if undefined      ##
+##   5. Add env. variable $BLJ_SUP = blj_support directory             ##
+##   6. Source $DOCKER_LIB - which is also included in $AWS_LIB        ##
+##   7. Source $AWS_LIB /.dockerenv exists or $HOME == $EC2_HOME       ##
 ##   8. Add $BLJ_SCRIPT to your $PATH                                  ##
 ##                                                                     ##
 #########################################################################
@@ -25,7 +25,11 @@ alias load_blj=". ${BLJ_LIB}"
 alias load_docker=". ${DOCKER_LIB}"
 alias load_aws=". ${AWS_LIB}"
 
-[ -f "/.dockerenv" ] && load_aws
+if [ -f "/.dockerenv" ] || [ "${HOME}" == "${EC2_HOME}" ]; then 
+	. "${AWS_LIB}"
+else
+	. "${DOCKER_LIB}"
+fi
 
 [ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="${BLJ_SCRIPT}:$PATH"
 [ ! -d "${BLJ_META}" ] && export BLJ_META="${HOME}/metadata"
