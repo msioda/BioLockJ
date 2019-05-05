@@ -25,14 +25,13 @@ printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
 [ ${#DOCKER_ID} -eq 0 ] && exit_script "Error [ dockblj ]: Required bash variable DOCKER_ID undefined"
 [ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ dockblj ]: Required bash variable BLJ_PROJ undefined"
 
-# Populates the docker run BLJ_OPTIONS parameter in A VERY SPECIFIC ORDER.
-# Include -docker to run BioLockJ in a Docker container
-# Include Docker container path to required Config file
-# Include all directory paths the Docker container may need to map volumes when spawning Docker compute nodes
-# $BLJ_SCRIPT/blj_config determines AWS runtime env by order of first few BLJ_OPTIONS "/-docker -u  /home/ec2-user -aws"
+# Populate docker run env variable $BLJ_OPTIONS 
+# Always include vars to map Host paths: Config, $BLJ_PROJ, and $HOME.
+# In AWS mode, add -aws indicator, otherwise include the Host path for pipeline input. 
+# These paths are used by biolockj_controller to map Docker volumes for java_module containers
 blj_options() {
 	if $(has_param $runAws); then
-		options="-docker -u /home/ec2-user -aws"
+		options="-docker -u ${EC2_HOME} -aws"
 	else
 		options="-docker -u ${HOME}"
 	fi
@@ -65,14 +64,14 @@ build_clone_script() {
 	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
 	echo ${@/$(get_docker_img)/-ti $(dock_id)/biolockj_controller /bin/bash} >> "${DOCKER_CLONE_SCRIPT}"
 	chmod 777 "${DOCKER_CLONE_SCRIPT}"
-	echo "Run clone (of most recent biolockj_controller) --> ${DOCKER_CLONE_SCRIPT}"
+	echo "This script will execute a Docker clone of your most recent pipeline --> ${DOCKER_CLONE_SCRIPT}"
 	[ -f "${DOCKER_CLONE_SCRIPT}" ] && cat "${DOCKER_CLONE_SCRIPT}" & printf "\n"
 }
 
 # Get Docker image - add port, entrypoint, anc command if launching GUI
 get_docker_img() {
 	cmd=$(dock_id)/biolockj_controller	
-	$(has_param $launchGui) && cmd="-p 8080:3000 -w '$BLJ/web_app' --entrypoint '/bin/bash' $cmd -c 'npm start'"
+	$(has_param $launchGui) && cmd="-p 8080:3000 --expose 8080 -w '$BLJ/web_app' --entrypoint '/bin/bash' $cmd -c 'npm start'"
 	echo "${cmd}"
 }
 

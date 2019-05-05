@@ -9,7 +9,7 @@
 ##   4. Add env. variable $BLJ_META = $HOME/metadata if undefined      ##
 ##   5. Add env. variable $BLJ_SUP = blj_support directory             ##
 ##   6. Source $DOCKER_LIB - which is also included in $AWS_LIB        ##
-##   7. Source $AWS_LIB /.dockerenv exists or $HOME == $EC2_HOME       ##
+##   7. Source $AWS_LIB if /.dockerenv exists or $HOME == $EC2_HOME    ##
 ##   8. Add $BLJ_SCRIPT to your $PATH                                  ##
 ##                                                                     ##
 #########################################################################

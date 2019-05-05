@@ -49,44 +49,50 @@ aws_get_arn() {
 	echo "${module}"
 }
 
-# Remove all compute envs
-aws_rm_compute_envs() {
-	aws_log "CLEARING compute-environments..." 
-	vals=$(aws batch describe-compute-environments --query "computeEnvironments[*].computeEnvironmentArn")
-	[ ${#vals} -eq 0 ] && aws_log "No compute-environments found" && return
-	aws_log "List compute-environments --> $vals"
+# Clear all Pipeline Jobs
+clear_jobs() {
+	if [ "${awsEc2AcquisitionStrategy}" == "DEMAND" ]; then 
+		JQ=$(get_stack_param HighPriorityJobQueue)
+	else
+		JQ=$(get_stack_param LowPriorityJobQueue)
+	fi
+	clear_staged_jobs $JQ SUBMITTED
+	clear_staged_jobs $JQ PENDING
+	clear_staged_jobs $JQ RUNNABLE
+	clear_running_jobs $JQ STARTING
+	clear_running_jobs $JQ RUNNING
+}
+
+# Cancel jobs from the given Job queue with given status
+# Param 1 Job queue ARN
+# Param 2 Job status
+clear_staged_jobs() {
 	count=0
 	numComplete=0
-	while [ ${#vals} -gt 0 ]; do
-		((count++))
-		module=$(aws_get_arn $vals) 
-		aws_log "Disabling compute-environment ARN #[$count]: ${module}"
-		arnVals=${vals/${module}}
-		$(is_empty $arnVals) && aws_log "ERROR, No compute-environment ARNs remaining" && break
-		statusReason=$(aws batch describe-compute-environments --compute-environment ${module} --query "computeEnvironments[*].statusReason")
-		if [ ${#statusReason} -gt 0 ] && [ "$statusReason" != "${statusReason/'Access denied'}" ]; then
-			status=$(aws batch describe-compute-environments --compute-environment ${module} --query "computeEnvironments[*].state")
-			[ "$status" != "DISABLED" ] && aws batch update-compute-environment --compute-environment ${module} --state DISABLED
-			while [ ${#status} -gt 0 ] && [ "$status" != "DISABLED" ]; do
-				sleep 10
-				status=$(aws batch describe-compute-environments --compute-environment ${module} --query "computeEnvironments[*].state")
-			done
-			aws_log "Disabled compute-environment ARN #[$count]: ${module}" 
-			aws batch delete-compute-environment --compute-environment ${module}
-			aws_log "Deleted compute-environment ARN #[$count]: ${module}" && ((numComplete++))
-			[ "${arnVals}" != "${vals}" ] && aws_log "Deleted compute-environment ARN #[$count]: ${module}" && ((numComplete++))
-			[ "${arnVals}" == "${vals}" ] && aws_log "Failed to delete compute-environment ARN #[$count]: ${module}"
-			vals="${arnVals}"
-			$(is_empty ${vals}) && break
-		else
-			vals="${arnVals}"
-			aws_log "Skipping compute-environment ARN #[$count]: ${module} - Reason: $statusReason" 
-		fi
+	ids="$(get_aws_jobs ${1} ${2})"
+	while [ ${#ids} -gt 0 ] && [ ! $(is_empty $ids) ]; do
+		id=$(aws_get_arn ${ids}) && ((count++))
+		[ ${#id} -gt 0 ] && aws batch cancel-job --job-id "${id}"
+		[ "${ids/$id}" != "${ids}" ] && aws_log "Deleted stack ARN #[$count]: ${id}" && ((numComplete++))
+		ids="${ids/$id}"
 	done
-	aws_log "Deleted $numComplete/$count compute-environments"
-	vals=$(aws batch describe-compute-environments)
-	[ ${#vals} -eq 0 ] && aws_log "All compute-environments removed" && return
-	aws_log "Remaining compute-environments:" && aws batch describe-compute-environments
+	aws_log "Cancelled ${numComplete}/${count} ${2} jobs"
+}
+
+# Terminate jobs from the given Job queue with given status
+# Param 1 Job queue ARN
+# Param 2 Job status
+clear_running_jobs() {
+	count=0
+	numComplete=0
+	ids="$(get_aws_jobs $1 $2)"
+	while [ ${#ids} -gt 0 ] && [ ! $(is_empty $ids) ]; do
+		id=$(aws_get_arn ${ids}) && ((count++))
+		[ ${#id} -gt 0 ] && aws batch terminate-job --job-id "${id}"
+		[ "${ids/$id}" != "${ids}" ] && aws_log "Deleted stack ARN #[$count]: ${id}" && ((numComplete++))
+		ids="${ids/$id}"
+	done
+	aws_log "Terminated ${numComplete}/${count} ${2} jobs"
 }
 
 # Remove AWS key_pairs + keyPair file

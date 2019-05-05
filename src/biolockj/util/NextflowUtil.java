@@ -94,9 +94,9 @@ public class NextflowUtil {
 		try {
 			if( Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT ) ) {
 				purge( Config.pipelinePath() );
-			} else if ( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
+			} else if( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
 				purge( Config.getConfigFilePath() );
-				purge( AWS_DB_DIR);
+				purge( AWS_DB_DIR );
 				purge( AWS_INPUT_DIR );
 				purge( AWS_META_DIR );
 				purge( AWS_PRIMER_DIR );
@@ -107,19 +107,6 @@ public class NextflowUtil {
 			return false;
 		}
 	}
-	
-	private static boolean purge( final String subDir ) throws Exception {
-		final String target = DockerUtil.AWS_EFS + File.separator + subDir;
-		Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
-		final String[] args = new String[ 3 ];
-		args[ 0 ] = "rm";
-		args[ 1 ] = "-rf";
-		args[ 2 ] = target;
-		Processor.submit( args, "Clear-EFS-Data" );
-		return true;
-	}
-
-
 
 	/**
 	 * Save EFS data to S3 based on pipeline Config.
@@ -202,6 +189,7 @@ public class NextflowUtil {
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
 		try {
 			ScriptModule module = null;
+
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				String onDemandLabel = null;
 				Log.debug( NextflowUtil.class, "READ LINE: " + line );
@@ -238,8 +226,11 @@ public class NextflowUtil {
 						Log.debug( NextflowUtil.class, "END module BLOCK: " + module.getClass().getName() );
 						module = null;
 					}
+				} else if( line.contains( PIPELINE_ROOT_DIR ) ) {
+					Log.debug( NextflowUtil.class, "Found final proc worker line: " + line );
+					line = line.replace( PIPELINE_ROOT_DIR, Config.pipelinePath() );
 				}
-
+				
 				Log.debug( NextflowUtil.class, "ADD LINE: " + line );
 				lines.add( line );
 				if( onDemandLabel != null ) {
@@ -352,6 +343,17 @@ public class NextflowUtil {
 		}
 	}
 
+	private static boolean purge( final String subDir ) throws Exception {
+		final String target = DockerUtil.AWS_EFS + File.separator + subDir;
+		Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
+		final String[] args = new String[ 3 ];
+		args[ 0 ] = "rm";
+		args[ 1 ] = "-rf";
+		args[ 2 ] = target;
+		Processor.submit( args, "Clear-EFS-Data" );
+		return true;
+	}
+
 	private static void startService() throws Exception {
 		final String reportBase = getNextflowReportDir().getAbsolutePath() + File.separator + Config.pipelineName()
 			+ "_";
@@ -421,7 +423,6 @@ public class NextflowUtil {
 	 */
 	public static final String AWS_COPY_REPORTS_TO_S3 = "aws.copyReportsToS3";
 
-
 	/**
 	 * {@link biolockj.Config} Boolean property: If enabled delete all EFS dirs (except pipelines):
 	 * {@value #AWS_PURGE_EFS_INPUTS}
@@ -453,18 +454,17 @@ public class NextflowUtil {
 	 * The Docker container will generate a nextflow.log file in the root directory, this is the file name
 	 */
 	protected static final String NF_LOG = "/.nextflow.log";
-	//protected static final String NF_LOG = "/app/biolockj/web_app/.nextflow.log";
-
-	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 
 	private static final String AWS_DB_DIR = "db";
 	private static final String AWS_INPUT_DIR = "input";
-	private static final String AWS_PRIMER_DIR = "primer";
 	private static final String AWS_META_DIR = "metadata";
+	private static final String AWS_PRIMER_DIR = "primer";
+	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
 	private static final String MODULE_SCRIPT = "BLJ_MODULE_SUB_DIR";
+	private static final String PIPELINE_ROOT_DIR = "BLJ_PIPELINE_DIR";
 	private static final String MODULE_SEPARATOR = ".";
 	private static final String NEXTFLOW_CMD = "nextflow";
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;

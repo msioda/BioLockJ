@@ -12,6 +12,5 @@ RUN apt-get update && \
 #2.) Cleanup
 RUN	apt-get clean && \
 	find / -name *python* | xargs rm -rf && \
-	rm -rf /tmp/* && \
-	rm -rf /var/log/* 
+	rm -rf /tmp/* && rm -rf /var/log/* 
 	

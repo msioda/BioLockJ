@@ -180,6 +180,15 @@ public class RuntimeParamUtil {
 	}
 
 	/**
+	 * Runtime property getter for Docker host $USER $HOME dir
+	 * 
+	 * @return Host {@value #HOST_HOME_DIR} directory
+	 */
+	public static File getHomeDir() {
+		return new File( params.get( HOME_DIR ) );
+	}
+
+	/**
 	 * Get Docker runtime arguments passed to BioLockJ from dockblj script.<br>
 	 * These are used to to populate BLJ_OPTIONS in Docker java_module scripts.
 	 * 
@@ -190,34 +199,28 @@ public class RuntimeParamUtil {
 		Log.info( RuntimeParamUtil.class, "Building Docker java_module BLJ_OPTIONS" );
 		String javaModArgs = "";
 		for( final String key: params.keySet() ) {
-			Log.info( RuntimeParamUtil.class, "Found Docker param: " + key + "=" + params.get( key ) );
-			if( BLJ_CONTROLLER_ONLY_ARGS.contains( key ) ) 
+			Log.debug( RuntimeParamUtil.class, "Found Docker param: " + key + "=" + params.get( key ) );
+			if( BLJ_CONTROLLER_ONLY_ARGS.contains( key ) ) {
 				continue;
+			}
 			String val = null;
-			if( key.equals( HOST_CONFIG_DIR ) ) 
+			if( key.equals( HOST_CONFIG_DIR ) ) {
 				val = CONFIG_FILE + " " + params.get( key ) + getConfigFile().getName();
-			else if( key.equals( HOST_HOME_DIR ) ) 
+			} else if( key.equals( HOST_HOME_DIR ) ) {
 				val = HOME_DIR + " " + params.get( key );
-			else if( key.equals( HOST_BLJ_PROJ_DIR ) ) 
+			} else if( key.equals( HOST_BLJ_PROJ_DIR ) ) {
 				val = BLJ_PROJ_DIR + " " + params.get( key );
-			else if( ARG_FLAGS.contains( key ) )
+			} else if( ARG_FLAGS.contains( key ) ) {
 				val = key;
-			else val = key + " " + params.get( key );
-			
+			} else {
+				val = key + " " + params.get( key );
+			}
+
 			javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + val;
-			Log.info( RuntimeParamUtil.class, "Add Docker param: " + val + " to java_module. BLJ_OPTIONS" );
+			Log.info( RuntimeParamUtil.class, "Add Docker param: " + val + " to java_module.:BLJ_OPTIONS" );
 		}
 
 		return javaModArgs + " " + RuntimeParamUtil.getDirectModuleParam( module );
-	}
-
-	/**
-	 * Runtime property getter for Docker host $USER $HOME dir
-	 * 
-	 * @return Host {@value #HOST_HOME_DIR} directory
-	 */
-	public static File getHomeDir() {
-		return new File( params.get( HOME_DIR ) );
 	}
 
 	/**
@@ -286,12 +289,25 @@ public class RuntimeParamUtil {
 	}
 
 	/**
-	 * Return TRUE if runtime parameter {@value #DOCKER_FLAG} was found
+	 * Return TRUE if /.dockerenv file exists. TODO: RM COMMAND AFTER CONFIRMED // runtime parameter
+	 * {@value #DOCKER_FLAG} was found
 	 * 
 	 * @return boolean
 	 */
 	public static boolean isDockerMode() {
-		return params.get( DOCKER_FLAG ) != null;
+		try {
+			final File f = new File( "/.dockerenv" );
+			if( f.isFile() ) {
+				Log.info( RuntimeParamUtil.class, "Detected DOCKER mode via existance of \"/.dockerenv\"" );
+			}
+			return new File( "/.dockerenv" ).isFile();
+		} catch( final Exception ex ) {
+			Log.warn( RuntimeParamUtil.class, "Error occured checking file-system root directory for \"/.dockerenv\"" );
+			ex.printStackTrace();
+		}
+		Log.info( RuntimeParamUtil.class, "Detected NOTE-IN-DOCKER mode because \"/.dockerenv\" file not found" );
+		return false;
+		// return params.get( DOCKER_FLAG ) != null;
 	}
 
 	/**

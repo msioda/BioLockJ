@@ -288,14 +288,15 @@ public class DockerUtil {
 		}
 
 		if( RuntimeParamUtil.getDockerHostBLJ() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR + ":ro";
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR
+				+ ":ro";
 		}
 
 		if( RuntimeParamUtil.getDockerHostBLJ_SUP() != null ) {
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":"
 				+ CONTAINER_BLJ_SUP_DIR + ":ro";
 		}
-		
+
 		if( RuntimeParamUtil.getDockerHostHomeDir() != null ) {
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostHomeDir() + ":" + DOCKER_HOME + ":ro";
 		}

@@ -7,6 +7,7 @@
 . "${DOCKER_LIB}"
 
 [ ! -f "$blj_aws_config" ] && blj_aws_config=~/.aws/aws_config
+
 sheBang='#!/bin/bash'
 IS_NULL="IS_NULL"
 HN2_NUCL_DB="${BLJ_DB}/chocophlan"
@@ -201,6 +202,12 @@ key_file() {
 	[ ${#awsStack} -eq 0 ] && refresh_aws_cache
 	[ ${#awsStack} -eq 0 ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"awsStack\" is undefined!"
 	echo ~/.aws/${awsStack}.pem
+}
+
+
+# Get local Nextflow <base> config file
+local_nf_conf() {
+	echo ~/.aws/nextflow/${awsStack}/config
 }
 
 # AWS Config prop names cannot contain "." or bash fails by trying to interpret and run them as function calls

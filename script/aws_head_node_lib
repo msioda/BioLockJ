@@ -5,14 +5,16 @@
 ##                                                                 ##
 #####################################################################
 
+blj_mods_only=TRUE
+
 # Add job definition to Nextflow Config
 # Param 1 - Nextflow label
 # Param 2 - Nextflow container
 add_nextflow_job_def() {
 	aws_log "Add Nextflow Docker job-definition label=${1}, container=${2}"
-	echo "    withLabel: '${1}' {" >> $(get_nextflow_config)
-	echo "        container = '${2}'" >> $(get_nextflow_config)
-	echo "    }" >> $(get_nextflow_config)
+	echo "    withLabel: '${1}' {" >> "$(local_nf_conf)"
+	echo "        container = '${2}'" >> "$(local_nf_conf)"
+	echo "    }" >> "$(local_nf_conf)"
 }
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
@@ -25,7 +27,10 @@ build_docker_job_defs() {
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
 	aws_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
-		[ $(echo $line | grep -c blj_basic) -gt 0 ] && aws_log "Skip Docker image: \"$line\"" && continue
+		[ $(echo $line | grep -c biolockj_controller) -eq 0 ] && [ $(echo $line | grep -c java_module) -eq 0 ] && \
+			aws_log "Skip Docker image: \"$line\"" && continue
+		[ $(echo $line | grep -c blj_basic) -gt 0 ] && \
+			aws_log "Skip Docker image: \"$line\"" && continue
 		module=$(echo $line | cut -f 1 -d " ")
 		jobImg="${module}:${dockerImgVersion}"
 		aws_log "Add job-definition for Docker image: \"$jobImg\""
@@ -37,8 +42,8 @@ build_docker_job_defs() {
 			\"memory\": 1024,
 			\"command\": [ \"/bin/bash\" ],
 			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
-			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"${EC2_MCONDA_BIN}\" }, \"name\": \"miniconda\" } ],
-			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${EC2_MCONDA_BIN}\", \"readOnly\": true, \"sourceVolume\": \"miniconda\" } ],
+			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"${EC2_HOME}\" }, \"name\": \"ec2Home\" } ],
+			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${EC2_HOME}\", \"readOnly\": false, \"sourceVolume\": \"ec2Home\" } ],
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
@@ -62,8 +67,8 @@ build_docker_job_defs() {
 
 # Close Nextflow Config process block
 close_nextflow_config() {
-	echo "}" >> $(get_nextflow_config)
-	echo "" >> $(get_nextflow_config)
+	echo "}" >> "$(local_nf_conf)"
+	echo "" >> "$(local_nf_conf)"
 }
 
 # Connect to running head node
@@ -94,22 +99,25 @@ get_stack_param() {
 
 # Create the basic nextflow config file using the current statck AWS batch queues
 init_nextflow_config() {
-	echo "// Nextflow properties inherited by main.nf in BioLockJ $(biolockj -v) pipelines" > $(get_nextflow_config)
-	echo "" >> $(get_nextflow_config)
-	echo "executor {" >> $(get_nextflow_config)
-    echo "    name = 'awsbatch'" >> $(get_nextflow_config)
-    echo "    executor.awscli = '${EC2_MCONDA_BIN}/aws'" >> $(get_nextflow_config)
-    echo "}" >> $(get_nextflow_config)
-    echo "" >> $(get_nextflow_config)
-    echo "aws {" >> $(get_nextflow_config)
-	echo "    region = '${awsRegion}'" >> $(get_nextflow_config)
-	echo "}" >> $(get_nextflow_config)
-	echo "" >> $(get_nextflow_config)
-	echo "process {" >> $(get_nextflow_config)
-	echo "    queue = '$(get_stack_param LowPriorityJobQueue)'" >> $(get_nextflow_config)
-	echo "    withLabel: 'DEMAND' {" >> $(get_nextflow_config)
-	echo "        queue = '$(get_stack_param HighPriorityJobQueue)'" >> $(get_nextflow_config)
-	echo "    }" >> $(get_nextflow_config)
+	echo "// Nextflow properties inherited by BioLockJ $(biolockj -v) pipeline main.nf" > "$(local_nf_conf)"
+	echo "" >> "$(local_nf_conf)"
+	echo "executor {" >> "$(local_nf_conf)"
+    echo "    name = 'awsbatch'" >> "$(local_nf_conf)"
+    echo "    executor.awscli = '${EC2_HOME}/miniconda/bin/aws'" >> "$(local_nf_conf)"
+    echo "}" >> "$(local_nf_conf)"
+    echo "" >> "$(local_nf_conf)"
+    echo "aws {" >> "$(local_nf_conf)"
+	echo "    region = '${awsRegion}'" >> "$(local_nf_conf)"
+	# We should be able to avoid saving these details outside of our Docker containers
+	#echo "    aws_access_key_id = '$(get_aws_access_key_id)'" >> "$(local_nf_conf)"
+	#echo "    aws_secret_access_key = '$(aws_secret_access_key)'" >> "$(local_nf_conf)"
+	echo "}" >> "$(local_nf_conf)"
+	echo "" >> "$(local_nf_conf)"
+	echo "process {" >> "$(local_nf_conf)"
+	echo "    queue = '$(get_stack_param LowPriorityJobQueue)'" >> "$(local_nf_conf)"
+	echo "    withLabel: 'DEMAND' {" >> "$(local_nf_conf)"
+	echo "        queue = '$(get_stack_param HighPriorityJobQueue)'" >> "$(local_nf_conf)"
+	echo "    }" >> "$(local_nf_conf)"
 }
 
 # Launch a new ec2 head node
@@ -122,8 +130,8 @@ launch_ec2_head_node() {
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
 	stage_pipeline_on_aws
-	if [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
-		exe_remote_cmd "${EC2_HOME}/$(basename $startScript)" 
+	if [ $# -eq 1 ] && [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
+		exe_remote_cmd "$(start_aws_pipeline_script)" 
 	else
 		connect_head
 	fi
