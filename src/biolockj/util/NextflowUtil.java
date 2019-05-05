@@ -193,7 +193,10 @@ public class NextflowUtil {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				String onDemandLabel = null;
 				Log.debug( NextflowUtil.class, "READ LINE: " + line );
-				if( line.trim().startsWith( PROCESS ) ) {
+				 if( line.contains( PIPELINE_ROOT_DIR ) ) {
+						Log.debug( NextflowUtil.class, "Found final proc worker line: " + line );
+						line = line.replace( PIPELINE_ROOT_DIR, Config.pipelinePath() );
+				} else if( line.trim().startsWith( PROCESS ) ) {
 					Log.debug( NextflowUtil.class, "Found module PROCESS declaration: " + line );
 					module = getModule( line.replaceAll( PACKAGE_SEPARATOR, "\\." ).replace( PROCESS, "" )
 						.replaceAll( "\\{", "" ).trim() );
@@ -226,9 +229,6 @@ public class NextflowUtil {
 						Log.debug( NextflowUtil.class, "END module BLOCK: " + module.getClass().getName() );
 						module = null;
 					}
-				} else if( line.contains( PIPELINE_ROOT_DIR ) ) {
-					Log.debug( NextflowUtil.class, "Found final proc worker line: " + line );
-					line = line.replace( PIPELINE_ROOT_DIR, Config.pipelinePath() );
 				}
 				
 				Log.debug( NextflowUtil.class, "ADD LINE: " + line );

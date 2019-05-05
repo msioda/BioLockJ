@@ -47,7 +47,7 @@ buildNexflowTemplate() {
 # Add end pipeline process to the end of the template
 # Param 1 - template file path (output of function)
 addEndPipelineProcess() {
-	echo "addEndPipelineProcess()..."
+	echo 'addEndPipelineProcess()...'
 	echo "" >> "${1}"
 	echo "process end_biolockj_pipeline {" >> "${1}"
 	echo '    echo true' >> "${1}"
@@ -55,14 +55,14 @@ addEndPipelineProcess() {
 	echo '    val statusFile from Channel.watchPath( "BLJ_PIPELINE_DIR/biolockj*" )' >> "${1}"
 	echo '    """' >> "${1}"
 	echo '    #!/bin/bash' >> "${1}"
-	echo "    if [ $(basename $statusFile) == biolockjComplete ]; then" >> "${1}" 
-	echo "        echo 'EXIT NEXTFLOW - Pipeline Success'" >> "${1}"
-	echo "        exit 0" >> "${1}"
-	echo "    elif [ $(basename $statusFile) == biolockjFailed ]; then" >> "${1}"
-	echo "        clear_jobs" >> "${1}"
-	echo "        echo 'EXIT NEXTFLOW - Pipeline Failed'" >> "${1}"
-	echo "        exit 1" >> "${1}"
-	echo "    fi" >> "${1}"
+	echo '    if [ $(basename $statusFile) == biolockjComplete ]; then' >> "${1}" 
+	echo '        echo "EXIT NEXTFLOW - Pipeline Success"' >> "${1}"
+	echo '        exit 0' >> "${1}"
+	echo '    elif [ $(basename $statusFile) == biolockjFailed ]; then' >> "${1}"
+	echo '        clear_jobs' >> "${1}"
+	echo '        echo "EXIT NEXTFLOW - Pipeline Failed"' >> "${1}"
+	echo '        exit 1' >> "${1}"
+	echo '    fi' >> "${1}"
 	echo '    """' >> "${1}"
 	echo '}' >> "${1}"
 
