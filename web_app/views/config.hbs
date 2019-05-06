@@ -920,8 +920,8 @@
     <button class="createDownload">Create configuration file for download</button><br>
     <p>AWS profile as found in your rootkey.csv:
       <!-- Add update to this in save loop -->
-      <input class="sp" type="text" value="default" placeholder="select AWS profile"list="awsProfiles" name="aws.profile" id="aws.profile">
-      <datalist name='awsProfiles' placeholder='add your own'>
+      <input class="sp" type="text" placeholder="select AWS profile"list="awsProfiles" name="aws.profile" id="aws.profile">
+      <datalist name='awsProfiles' id="awsProfiles" placeholder='add your own'>
         <option value="default">default</option>
       </datalist>
     </p>
@@ -1265,11 +1265,11 @@
   </div>
 </div>
 
-<script type="text/javascript" src="./../javascripts/config_menus.js"></script>
+<script type="text/javascript" src="/javascripts/config_menus.js"></script>
 <script type="text/javascript" src="./../javascripts/config_config.js"></script>
 <script type="text/javascript" src="./../javascripts/tests/standPropsAllPresent.js"></script>
 <script type="text/javascript" src="./../javascripts/awsMiniDash.js"></script>
-
+<script type="module" src="./../javascripts/config_aws.js"></script>
 
 <!-- <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
