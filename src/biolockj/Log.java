@@ -72,10 +72,9 @@ public class Log {
 	 * Return TRUE if {@value Constants#LOG_LEVEL_PROPERTY} = DEBUG.
 	 * 
 	 * @return TRUE if DEBUG
-	 * @throws Exception if errors occur
 	 */
-	public static boolean doDebug() throws Exception {
-		return Config.requireString( null, Constants.LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
+	public static boolean doDebug() {
+		return Config.getString( null, Constants.LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
 	}
 
 	/**

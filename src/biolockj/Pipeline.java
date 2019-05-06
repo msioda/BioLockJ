@@ -44,29 +44,26 @@ public class Pipeline {
 		refreshRCacheIfNeeded( module );
 		module.executeTask();
 
-		final boolean isJava = module instanceof JavaModule;
-		final boolean runScripts = hasScripts( module );
+		final boolean runDetached = module instanceof JavaModule && hasScripts( module )
+			&& Config.getBoolean( module, Constants.DETACH_JAVA_MODULES );
 
-		if( isJava && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
+		if( runDetached ) {
 			MasterConfigUtil.saveMasterConfig();
 		}
-
-		if( runScripts && !DockerUtil.inAwsEnv() ) {
+		if( hasScripts( module ) && !DockerUtil.inAwsEnv() ) {
 			Processor.submit( (ScriptModule) module );
 		}
-
-		if( runScripts ) {
-			pollAndSpin( (ScriptModule) module );
+		if( hasScripts( module ) ) {
+			waitForModuleScripts( (ScriptModule) module );
 		}
 
 		refreshOutputMetadata( module );
 		module.cleanUp();
 
-		if( !isJava || !runScripts ) {
+		if( !ModuleUtil.isComplete( module ) && !runDetached ) {
 			SummaryUtil.reportSuccess( module );
+			ModuleUtil.markComplete( module );
 		}
-
-		ModuleUtil.markComplete( module );
 	}
 
 	/**
@@ -111,18 +108,27 @@ public class Pipeline {
 	/**
 	 * If moduleName is null, run all modules, otherwise only run the specified module.
 	 * 
-	 * @param moduleID of a single module to run
-	 * @throws Exception if any fatal error occurs during execution
+	 * @param id Module ID
+	 * @throws Exception if errors occur
 	 */
-	public static void runDirectModule( final Integer moduleID ) throws Exception {
-		Log.info( Pipeline.class,
-			"Run Direct BioModule ID [ " + moduleID + " ] = " + Pipeline.getModules().get( moduleID ) );
-		final JavaModule module = (JavaModule) Pipeline.getModules().get( moduleID );
-		module.runModule();
-		Log.info( MetaUtil.class,
-			"DIRECT BioModule ID [ " + moduleID + " ].runModule() complete - next refresh metadata + cleanUp()" );
-		refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
-		module.cleanUp();
+	public static void runDirectModule( final Integer id ) throws Exception {
+		final JavaModule module = (JavaModule) Pipeline.getModules().get( id );
+		try {
+			Log.info( Pipeline.class,
+				"Start Direct BioModule Execution for [ ID #" + id + " ] ---> " + module.getClass().getSimpleName() );
+			module.runModule();
+			Log.info( MetaUtil.class, "DIRECT module ID [" + id + "].runModule() complete!" );
+			refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
+			module.cleanUp();
+			module.moduleComplete();
+			SummaryUtil.reportSuccess( module );
+			MasterConfigUtil.saveMasterConfig();
+		} catch( final Exception ex ) {
+			Log.error( Pipeline.class, "Errors occurred attempting to run DIRECT module [ ID=" + id + " ] --> "
+				+ module.getClass().getSimpleName(), ex );
+			module.moduleFailed();
+			SummaryUtil.reportFailure( ex );
+		}
 	}
 
 	/**
@@ -130,7 +136,7 @@ public class Pipeline {
 	 * 
 	 * @throws Exception if any fatal error occurs during execution
 	 */
-	public static void startPipeline() throws Exception {
+	public static void runPipeline() throws Exception {
 		try {
 			executeModules();
 			SummaryUtil.reportSuccess( null );
@@ -180,11 +186,13 @@ public class Pipeline {
 	protected static void deleteIncompleteModule( final BioModule module ) throws Exception {
 		Log.info( Pipeline.class, "Reset incomplete module: " + module.getModuleDir().getAbsolutePath() );
 		final File moduleDir = module.getModuleDir();
-		if( BioLockJUtil.deleteWithRetry( module.getModuleDir(), 10 ) ) {
+		// if( BioLockJUtil.deleteWithRetry( module.getModuleDir(), 10 ) ) {
+		if( module.getModuleDir().delete() ) {
 			moduleDir.mkdirs(); // recreate deleted directory
 		} else if( module.getModuleDir().listFiles().length > 0 ) {
 			for( final File f: module.getModuleDir().listFiles() ) {
-				if( BioLockJUtil.deleteWithRetry( f, 5 ) ) {
+				// if( BioLockJUtil.deleteWithRetry( f, 5 ) ) {
+				if( f.delete() ) {
 					Log.info( Pipeline.class, "Deleted: " + f.getAbsolutePath() );
 				} else throw new Exception( "Unable to Delete: " + f.getAbsolutePath() );
 			}
@@ -388,7 +396,7 @@ public class Pipeline {
 	private static boolean hasScripts( final BioModule module ) {
 		final File scriptDir = new File(
 			module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
-		return scriptDir.exists() && module instanceof ScriptModule;
+		return module instanceof ScriptModule && scriptDir.isDirectory() && scriptDir.list().length > 0;
 	}
 
 	private static void info( final String msg ) {
@@ -420,12 +428,13 @@ public class Pipeline {
 	}
 
 	/**
-	 * This method calls poll to check status of scripts and then sleeps for {@value #POLL_TIME} seconds.
+	 * This method calls executes script module scripts and monitors them until complete or timing out after
+	 * {@value #POLL_TIME} seconds.
 	 *
 	 * @param module ScriptModule
 	 * @throws Exception if errors occur
 	 */
-	private static void pollAndSpin( final ScriptModule module ) throws Exception {
+	private static void waitForModuleScripts( final ScriptModule module ) throws Exception {
 		logScriptTimeOutMsg( module );
 		int numMinutes = 0;
 		boolean finished = false;
@@ -434,15 +443,13 @@ public class Pipeline {
 			if( !finished ) {
 				if( module.getTimeout() != null && module.getTimeout() > 0 && numMinutes++ >= module.getTimeout() )
 					throw new Exception( module.getClass().getName() + " timed out after " + numMinutes + " minutes." );
-
-				Thread.sleep( POLL_TIME * 1000 );
+				Thread.sleep( BioLockJUtil.minutesToMillis( 1 ) );
 			}
 		}
 	}
 
 	private static List<BioModule> bioModules = null;
 	private static Exception pipelineException = null;
-	private static final int POLL_TIME = 60;
 	private static int pollCount = 0;
 	private static String statusMsg = "";
 }

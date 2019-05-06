@@ -128,8 +128,9 @@ public abstract class R_Module extends ScriptModuleImpl {
 	 */
 	@Override
 	public String getSummary() throws Exception {
+		final StringBuffer sb = new StringBuffer();
 		try {
-			final StringBuffer sb = new StringBuffer();
+
 			final Map<String, Integer> map = new HashMap<>();
 			for( final File file: getOutputDir().listFiles() ) {
 				if( !file.isFile() ) {
@@ -141,8 +142,7 @@ public abstract class R_Module extends ScriptModuleImpl {
 					}
 
 					map.put( ext, map.get( ext ) + 1 );
-				} else // no extension
-				{
+				} else {
 					if( map.get( "none" ) == null ) {
 						map.put( "none", 0 );
 					}
@@ -171,12 +171,14 @@ public abstract class R_Module extends ScriptModuleImpl {
 				sb.append( getErrors() );
 			}
 
-			return sb.toString();
 		} catch( final Exception ex ) {
-			Log.warn( getClass(), "Unable to produce R_Module summary: " + ex.getMessage() );
+			final String msg = "Unable to produce " + getClass().getName() + " summary : " + ex.getMessage();
+			Log.warn( getClass(), msg );
+			sb.append( msg + RETURN );
+			ex.printStackTrace();
 		}
 
-		return "Error occurred attempting to build R_Module summary!";
+		return sb.toString();
 	}
 
 	/**

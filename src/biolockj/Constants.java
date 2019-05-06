@@ -22,6 +22,12 @@ public class Constants {
 	public static final long APP_START_TIME = System.currentTimeMillis();
 
 	/**
+	 * {@link biolockj.Config} Integer property: {@value #AWS_S3_XFER_TIMEOUT}<br>
+	 * Set the max number of minutes to allow for S3 transfers to complete.
+	 */
+	public static final String AWS_S3_XFER_TIMEOUT = "aws.s3TransferTimeout";
+
+	/**
 	 * Bash profile fo;e name: {@value #BASH_PROFILE}
 	 */
 	public static final String BASH_PROFILE = ".bash_profile";
@@ -426,12 +432,6 @@ public class Constants {
 	public static final String PIPELINE_DEFAULT_PROPS = "pipeline.defaultProps";
 
 	/**
-	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
-	 * {@value #PIPELINE_DELETE_TEMP_FILES}
-	 */
-	public static final String PIPELINE_DELETE_TEMP_FILES = "pipeline.deleteTempFiles";
-
-	/**
 	 * {@link biolockj.Config} property to allow a free-hand description to a pipeline: {@value #PIPELINE_DESC} TODO:
 	 * needs to be implemented.
 	 */
@@ -601,6 +601,12 @@ public class Constants {
 	 * Return character: *backslash-n*
 	 */
 	public static final String RETURN = "\n";
+
+	/**
+	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
+	 * {@value #RM_TEMP_FILES}
+	 */
+	public static final String RM_TEMP_FILES = "pipeline.deleteTempFiles";
 
 	/**
 	 * Name of the script sub-directory: {@value #SCRIPT_DIR}

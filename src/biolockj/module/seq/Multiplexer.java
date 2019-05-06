@@ -273,9 +273,10 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 		return numReads;
 	}
 
-	private void removeDecompressedFiles() throws Exception {
+	private void removeDecompressedFiles() {
 		for( final String path: this.muxFiles ) {
-			BioLockJUtil.deleteWithRetry( new File( path ), 5 );
+			new File( path ).delete();
+			// BioLockJUtil.deleteWithRetry( new File( path ), 5 );
 		}
 	}
 

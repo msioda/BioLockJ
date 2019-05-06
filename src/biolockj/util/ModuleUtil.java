@@ -12,7 +12,6 @@
 package biolockj.util;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.util.*;
 import biolockj.*;
 import biolockj.module.BioModule;
@@ -276,13 +275,10 @@ public class ModuleUtil {
 	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_COMPLETE} file
 	 */
 	public static void markComplete( final BioModule module ) throws Exception {
-		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
-		final FileWriter writer = new FileWriter( f );
-		writer.close();
-		if( !f.exists() ) throw new Exception( "Unable to create " + f.getAbsolutePath() );
+		BioLockJUtil.createFile( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		final File startFile = new File(
 			module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
-		BioLockJUtil.deleteWithRetry( startFile, 5 );
+		startFile.delete();
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 		Log.info( ModuleUtil.class,
 			"FINISHED [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
@@ -298,10 +294,7 @@ public class ModuleUtil {
 	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_STARTED} file
 	 */
 	public static void markStarted( final BioModule module ) throws Exception {
-		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
-		final FileWriter writer = new FileWriter( f );
-		writer.close();
-		if( !f.exists() ) throw new Exception( "Unable to create " + f.getAbsolutePath() );
+		BioLockJUtil.createFile( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 		Log.info( ModuleUtil.class,
 			"STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );

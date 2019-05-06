@@ -200,9 +200,8 @@ public final class RMetaUtil {
 			}
 		}
 
-		if( updateRConfig( module ) ) {
-			MasterConfigUtil.saveMasterConfig();
-		}
+		if( updateRConfig( module ) && !MasterConfigUtil.saveMasterConfig() )
+			throw new Exception( "Failed to update MASTER config with latest \"R_internal\" Config" );
 
 		if( !DockerUtil.isDirectMode() ) {
 			Log.info( RMetaUtil.class, Constants.LOG_SPACER );

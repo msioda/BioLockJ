@@ -14,8 +14,7 @@ package biolockj;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.StringTokenizer;
+import java.util.*;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.ScriptModule;
 import biolockj.util.BioLockJUtil;
@@ -29,14 +28,15 @@ public class Processor {
 	/**
 	 * Class used to submit processes on their own Thread.
 	 */
-	public class SubProcess implements Runnable {
+	public class Subprocess implements Runnable {
+
 		/**
 		 * Execute the command args in a separate thread and log output with label.
 		 * 
 		 * @param args Command args
 		 * @param label Log label
 		 */
-		public SubProcess( final String[] args, final String label ) {
+		public Subprocess( final String[] args, final String label ) {
 			this.args = args;
 			this.label = label;
 		}
@@ -48,7 +48,7 @@ public class Processor {
 				new Processor().runJob( this.args, this.label );
 			} catch( final Exception ex ) {
 				Log.error( getClass(),
-					"Problem occurring within SubProcess-" + this.label + " --> " + ex.getMessage() );
+					"Problem occurring within Subprocess-" + this.label + " --> " + ex.getMessage() );
 				ex.printStackTrace();
 			}
 		}
@@ -68,20 +68,32 @@ public class Processor {
 	 * @throws Exception if errors occur in the Processor
 	 */
 	public String runJob( final String[] args, final String label ) throws Exception {
-		Log.info( getClass(), "[ " + label + " ]: " + getArgsAsString( args ) );
+		Log.info( getClass(), "[ " + label + " ]: CMD --> " + getArgsAsString( args ) );
 		final Process p = Runtime.getRuntime().exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
+		String returnVal = null;
 		String s = null;
-		Log.info( getClass(), "[ " + label + " ] process started..." );
 		while( ( s = br.readLine() ) != null ) {
 			if( !s.trim().isEmpty() ) {
-				Log.info( getClass(), "[ " + label + " ] " + s );
+				if( returnVal == null ) {
+					returnVal = s;
+				}
+				Log.info( getClass(), "[ " + label + " ]: OUT --> " + s );
 			}
 		}
 		p.waitFor();
 		p.destroy();
-		Log.info( getClass(), "[ " + label + " ] complete" );
-		return s;
+		Log.info( getClass(), "[ " + label + " ]: CMD --> complete!" );
+		return returnVal;
+	}
+
+	/**
+	 * De-register a thread, so it is not considered when shutting down the application.
+	 * 
+	 * @param thread Subprocess thread
+	 */
+	public static void deregisterThread( final Thread thread ) {
+		threadRegister.remove( thread );
 	}
 
 	/**
@@ -125,9 +137,15 @@ public class Processor {
 	 *
 	 * @param args Terminal command created from args (adds 1 space between each array element)
 	 * @param label to associate with the process
+	 * @return Thread ID
 	 */
-	public static void runSubprocess( final String[] args, final String label ) {
-		new Thread( new Processor().new SubProcess( args, label ) ).start();
+	public static Thread runSubprocess( final String[] args, final String label ) {
+		final Thread t = new Thread( new Processor().new Subprocess( args, label ) );
+		threadRegister.put( t, System.currentTimeMillis() );
+		Log.warn( Processor.class,
+			"Register Subprocess Thread: " + t.getId() + " - " + t.getName() + " @" + threadRegister.get( t ) );
+		t.start();
+		return t;
 	}
 
 	/**
@@ -174,8 +192,7 @@ public class Processor {
 	 * @throws Exception if errors occur
 	 */
 	public static String submit( final String cmd, final String label ) throws Exception {
-		final String[] args = new String[] { "echo $(" + cmd + ")" };
-		return new Processor().runJob( args, label );
+		return new Processor().runJob( new String[] { cmd }, label );
 	}
 
 	/**
@@ -189,6 +206,36 @@ public class Processor {
 	 */
 	public static void submit( final String[] args, final String label ) throws Exception {
 		new Processor().runJob( args, label );
+	}
+
+	/**
+	 * Check if any Subprocess threads are still running.
+	 * 
+	 * @return boolean TRUE if all complete
+	 * @throws Exception if errors occur
+	 */
+	public static boolean subProcsAlive() throws Exception {
+		if( threadRegister.isEmpty() ) return false;
+		final long max = BioLockJUtil
+			.minutesToMillis( Config.getPositiveInteger( null, Constants.AWS_S3_XFER_TIMEOUT ) );
+		for( final Thread t: threadRegister.keySet() ) {
+			if( t.isAlive() ) {
+				final String id = t.getId() + " - " + t.getName();
+				final long runTime = System.currentTimeMillis() - threadRegister.get( t );
+				final int mins = BioLockJUtil.millisToMinutes( runTime );
+				Log.warn( Processor.class,
+					"Subprocess Thread [ " + id + " ] is ALIVE - runtime = " + mins + " minutes" );
+				if( runTime > max ) {
+					t.interrupt();
+					threadRegister.remove( t );
+				} else {
+					Log.warn( Processor.class,
+						"Subprocess Thread [ " + id + " ] is ALIVE - runtime = " + mins + " minutes" );
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private static String[] bashVarArgs( final String bashVar ) throws Exception {
@@ -215,4 +262,5 @@ public class Processor {
 
 	private static final String BLJ_GET_ENV_VAR_KEY = "BLJ_GET_ENV_VAR";
 	private static final String BLJ_GET_ENV_VAR_SCRIPT = "get_env_var";
+	private static final Map<Thread, Long> threadRegister = new HashMap<>();
 }

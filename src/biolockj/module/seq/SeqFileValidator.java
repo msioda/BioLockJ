@@ -127,13 +127,12 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	/**
 	 * Remove sequence files in which all reads failed validation checks, leaving only an empty file.
-	 *
-	 * @throws Exception if errors occur
 	 */
-	protected void removeBadFiles() throws Exception {
+	protected void removeBadFiles() {
 		if( !this.badFiles.isEmpty() ) {
 			for( final File file: this.badFiles ) {
-				if( BioLockJUtil.deleteWithRetry( file, 5 ) ) {
+				// if( BioLockJUtil.deleteWithRetry( file, 5 ) ) {
+				if( file.delete() ) {
 					Log.warn( BioLockJUtil.class, "Deleted empty file: " + file.getAbsolutePath() );
 				}
 			}

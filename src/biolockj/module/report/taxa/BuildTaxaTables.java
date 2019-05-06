@@ -111,7 +111,7 @@ public class BuildTaxaTables extends OtuCountModule {
 			+ BioLockJUtil.formatNumericOutput( totalOtus, false );
 	}
 
-	private void report( final String label, final Collection<String> col ) throws Exception {
+	private void report( final String label, final Collection<String> col ) {
 		if( Log.doDebug() ) {
 			for( final String item: col ) {
 				Log.debug( getClass(), "REPORT [ " + label + " ]:" + item );
@@ -119,7 +119,7 @@ public class BuildTaxaTables extends OtuCountModule {
 		}
 	}
 
-	private void report( final String label, final TreeMap<String, TreeMap<String, Long>> map ) throws Exception {
+	private void report( final String label, final TreeMap<String, TreeMap<String, Long>> map ) {
 		if( Log.doDebug() ) {
 			for( final String id: map.keySet() ) {
 				final TreeMap<String, Long> innerMap = map.get( id );

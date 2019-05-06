@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
+import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.report.r.R_Module;
@@ -45,6 +46,8 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_BATCH_SIZE} is positive integer
 	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_NUM_THREADS} is positive integer
 	 * <li>Verify {@link biolockj.Config}.{@value #SCRIPT_TIMEOUT} is positive integer if set
+	 * <li>Start the AWS DB sync to S3 if a novel DB has been configure and
+	 * {@value biolockj.util.NextflowUtil#AWS_COPY_DB_TO_S3} is enabled
 	 * </ul>
 	 */
 	@Override
@@ -53,6 +56,10 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
 		Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
 		Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
+		if( DockerUtil.hasDB( this ) && Config.getBoolean( this, NextflowUtil.AWS_COPY_DB_TO_S3 ) ) {
+			Log.info( getClass(), "Start async copy of module DBs to S3" );
+			NextflowUtil.awsSyncS3( ( (DatabaseModule) this ).getDB().getAbsolutePath(), false );
+		}
 	}
 
 	/**

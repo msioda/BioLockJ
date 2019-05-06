@@ -18,6 +18,7 @@ package biolockj.exception;
  * requirements so are meant to highlight harder to detect issues.
  */
 public class ConfigViolationException extends ConfigException {
+
 	/**
 	 * Generic exception message.
 	 * 
@@ -39,5 +40,5 @@ public class ConfigViolationException extends ConfigException {
 		super( property, msg );
 	}
 
-	private static final long serialVersionUID = -5659243602699272132L;
+	private static final long serialVersionUID = -6829737493836323409L;
 }

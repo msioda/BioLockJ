@@ -201,10 +201,15 @@ public class Email extends BioModuleImpl {
 		Log.info( Email.class, "About to encrypt and store new admin email password in MASTER Config: "
 			+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
 		Config.setConfigProperty( EMAIL_ENCRYPTED_PASSWORD, encrypt( RuntimeParamUtil.getAdminEmailPassword() ) );
-		Log.info( Email.class,
-			"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
-				+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
-				+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
+		if( MasterConfigUtil.saveMasterConfig() ) {
+			Log.info( Email.class,
+				"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
+					+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
+					+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
+		} else {
+			Log.error( Email.class,
+				"Failed to store enctryped password in the MASTER Config - check Log file for error details" );
+		}
 	}
 
 	/**

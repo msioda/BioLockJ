@@ -49,17 +49,10 @@ public class MasterConfigUtil {
 	/**
 	 * Remove unused properties from the MASTER config file.
 	 * 
-	 * @throws Exception if runtime errors occur
 	 */
-	public static void sanitizeMasterConfig() throws Exception {
+	public static void sanitizeMasterConfig() {
 		Log.info( MasterConfigUtil.class,
 			"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
-
-		if( DockerUtil.inAwsEnv() ) {
-			Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 );
-			Config.getBoolean( null, NextflowUtil.AWS_COPY_REPORTS_TO_S3 );
-			Config.getBoolean( null, NextflowUtil.AWS_COPY_INPUTS_TO_S3 );
-		}
 
 		final Map<String, String> props = new HashMap<>();
 		final Map<String, String> usedProps = Config.getUsedProps();
@@ -67,7 +60,7 @@ public class MasterConfigUtil {
 		final String defaultFaCon = ModuleUtil.getDefaultFastaConverter();
 		final String defaultMerger = ModuleUtil.getDefaultMergePairedReadsConverter();
 		final String defaultStats = ModuleUtil.getDefaultStatsModule();
-		final Set<String> configMods = Config.requireSet( null, Constants.INTERNAL_BLJ_MODULE );
+		final Set<String> configMods = Config.getSet( null, Constants.INTERNAL_BLJ_MODULE );
 		boolean foundQiime = false;
 		for( final String mod: configMods ) {
 			if( mod.toLowerCase().contains( Constants.QIIME ) ) {
@@ -132,10 +125,10 @@ public class MasterConfigUtil {
 	/**
 	 * Save a single version of the Config file with all inherited properties for the default config (if any exist).
 	 * 
-	 * @throws Exception if errors occur
+	 * @return boolean status indicator TRUE if successful
 	 */
-	public static void saveMasterConfig() throws Exception {
-		saveMasterConfig( Config.getProperties() );
+	public static boolean saveMasterConfig() {
+		return saveMasterConfig( Config.getProperties() );
 	}
 
 	/**
@@ -143,12 +136,21 @@ public class MasterConfigUtil {
 	 * Include internal.* properties if any provided.
 	 * 
 	 * @param props Properties map
-	 * @throws Exception if errors occur
+	 * @return boolean status indicator TRUE if successful
 	 */
-	public static void saveMasterConfig( final Map<String, String> props ) throws Exception {
-		final File masterConfig = archiveTmpMasterConfig();
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( masterConfig ) );
+	public static boolean saveMasterConfig( final Map<String, String> props ) {
+
+		if( getMasterConfig().exists() ) {
+			try {
+				FileUtils.moveFile( getMasterConfig(), getTempConfig() );
+			} catch( final Exception ex ) {
+				Log.error( MasterConfigUtil.class, "Failed to archive: " + getMasterConfig().getAbsolutePath(), ex );
+				return false;
+			}
+		}
+		BufferedWriter writer = null;
 		try {
+			writer = new BufferedWriter( new FileWriter( getMasterConfig() ) );
 			writeConfigHeaders( writer );
 			if( props != null ) {
 				writeCompleteHeader( writer, props );
@@ -157,35 +159,26 @@ public class MasterConfigUtil {
 			for( final String key: keys ) {
 				writer.write( key + "=" + getProps( props ).get( key ) + RETURN );
 			}
+		} catch( final IOException ex ) {
+			Log.error( MasterConfigUtil.class, "Failed to archive: " + getMasterConfig().getAbsolutePath(), ex );
+			return false;
 		} finally {
-			writer.close();
-			deleteTempConfigFile();
+			if( writer != null ) {
+				try {
+					writer.close();
+				} catch( final IOException ex2 ) {
+					Log.error( MasterConfigUtil.class, "Failed to close MASTER config writer", ex2 );
+				}
+			}
+			if( getTempConfig().exists() ) {
+				getTempConfig().delete();
+			}
 		}
 
-		if( !masterConfig.exists() )
-			throw new Exception( "Unable to build MASTER CONFIG: " + masterConfig.getAbsolutePath() );
+		return getMasterConfig().exists();
 	}
 
-	private static File archiveTmpMasterConfig() throws Exception {
-		final File masterConfig = getMasterConfig();
-		final boolean masterExists = masterConfig.exists();
-		if( masterExists ) {
-			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
-			if( getMasterConfig().exists() ) throw new Exception(
-				"Cannot backup MASTER before modifying - trying to save as: " + getTempConfig().getAbsolutePath() );
-		}
-		return masterConfig;
-	}
-
-	private static void deleteTempConfigFile() throws Exception {
-		if( getTempConfig().exists() && getMasterConfig().exists() ) {
-			BioLockJUtil.deleteWithRetry( getTempConfig(), 10 );
-		} else if( getTempConfig().exists() )
-			throw new Exception( "Error occurred updating MASTER config.  File has been deleted, please recover using: "
-				+ getTempConfig().getAbsolutePath() );
-	}
-
-	private static List<String> getInitConfig() throws Exception {
+	private static List<String> getInitConfig() throws IOException {
 		final File masterConfig = getMasterConfig();
 		if( !masterConfig.exists() || !Config.getConfigFilePath().equals( masterConfig.getAbsolutePath() ) )
 			return null;
@@ -215,7 +208,7 @@ public class MasterConfigUtil {
 	}
 
 	private static void writeCompleteHeader( final BufferedWriter writer, final Map<String, String> props )
-		throws Exception {
+		throws IOException {
 
 		final Set<String> configProps = Config.getSet( null, Constants.INTERNAL_BLJ_MODULE );
 		final Set<String> allProps = Config.getSet( null, Constants.INTERNAL_ALL_MODULES );
@@ -229,7 +222,7 @@ public class MasterConfigUtil {
 			writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ" + RETURN );
 			writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
 			writer.write( "#" + RETURN );
-			for( final String mod: Config.requireList( null, Constants.INTERNAL_ALL_MODULES ) ) {
+			for( final String mod: Config.getList( null, Constants.INTERNAL_ALL_MODULES ) ) {
 				writer.write( "#      " + Constants.BLJ_MODULE_TAG + " " + mod + RETURN );
 			}
 			writer.write( "#" + RETURN );
@@ -261,7 +254,7 @@ public class MasterConfigUtil {
 		writer.write( RETURN );
 	}
 
-	private static void writeConfigHeaders( final BufferedWriter writer ) throws Exception {
+	private static void writeConfigHeaders( final BufferedWriter writer ) throws IOException {
 		writer.write( "# The MASTER Config file was generated from the following Config files:" + RETURN );
 		final List<String> initConfig = getInitConfig();
 		if( initConfig == null ) {

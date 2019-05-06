@@ -78,11 +78,11 @@ aws_rm_stacks() {
 	while $(has_data ${ids}); do
 		id=$(get_id ${ids}) && ((count++))
 		status=$(aws cloudformation describe-stacks --stack-name "${id}" --query "Stacks[*].StackStatus")
-		arnVals=${ids/$id}
-		[ "${status}" != "DELETE" ] && [ "${status}" != "DELETE_IN_PROGRESS" ] && ids="${ids/$id}" && continue
+		[ "${status/DELETE}" != "${status}" ] && ids="${ids/$id}" && \
+			echo "Skipping Stack [ ${id} ] status=${status}..." && continue
 		aws_log "Deleting stack ARN #[$count]: ${id}" && aws cloudformation delete-stack --stack-name "${id}" 
 		status=ACTIVE
-		while [ "${status}" != "DELETE" ] && [ "${status}" != "DELETE_IN_PROGRESS" ]; do
+		while [ "${status}" != "DELETE_COMPLETE" ]; do
 			sleep 10 && status=$(aws cloudformation describe-stacks --stack-name ${id} --query "Stacks[*].StackStatus")
 		done
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break

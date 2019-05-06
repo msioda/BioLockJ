@@ -196,7 +196,7 @@ public class RuntimeParamUtil {
 	 * @return Docker runtime parameters
 	 */
 	public static String getJavaModuleParams( final JavaModule module ) {
-		Log.info( RuntimeParamUtil.class, "Building Docker java_module BLJ_OPTIONS" );
+		Log.info( RuntimeParamUtil.class, "Building Docker BLJ_OPTIONS for java_module Docker script -->" );
 		String javaModArgs = "";
 		for( final String key: params.keySet() ) {
 			Log.debug( RuntimeParamUtil.class, "Found Docker param: " + key + "=" + params.get( key ) );
@@ -217,7 +217,7 @@ public class RuntimeParamUtil {
 			}
 
 			javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + val;
-			Log.info( RuntimeParamUtil.class, "Add Docker param: " + val + " to java_module.:BLJ_OPTIONS" );
+			Log.info( RuntimeParamUtil.class, "Add Docker param: " + val );
 		}
 
 		return javaModArgs + " " + RuntimeParamUtil.getDirectModuleParam( module );

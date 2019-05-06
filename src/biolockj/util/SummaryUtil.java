@@ -43,63 +43,13 @@ public class SummaryUtil {
 	}
 
 	/**
-	 * Print the application name with ASCII art :-)
+	 * Print the application name *bigly* with ASCII art :-)
 	 * 
 	 * @return Beautiful artwork
 	 */
-	public static String display_ASCII_Art() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append( RETURN + SPACER_2X + RETURN + RETURN );
-		sb.append(
-			"BBBBBBBBBBBBBBBBB                                LLLLLLLLLLL                                                     kkkkkkkk                  JJJJJJJJJJJJJJJ"
-				+ RETURN );
-		sb.append(
-			"B::::::::::::::::B                               L:::::::::L                                                     k::::::k                  J:::::::::::::J"
-				+ RETURN );
-		sb.append(
-			"B::::::BBBBBB:::::B    iiii                      LL:::::::LL                                                     k::::::k                  JJJJ:::::::JJJJ"
-				+ RETURN );
-		sb.append(
-			"BB:::::B     B:::::B  i::::i                       L:::::L                                                       k::::::k                      J:::::J"
-				+ RETURN );
-		sb.append(
-			"  B::::B     B:::::B   iiii      ooooooooooo       L:::::L                  ooooooooooo       ccccccccccccccc    k:::::k    kkkkkkk            J:::::J"
-				+ RETURN );
-		sb.append(
-			"  B::::B     B:::::B           oo:::::::::::oo     L:::::L                oo:::::::::::oo   cc:::::::::::::::cc  k:::::k   k:::::k             J:::::J"
-				+ RETURN );
-		sb.append(
-			"  B::::BBBBBB:::::B   iiiiii  o:::::::::::::::o    L:::::L               o:::::::::::::::o  c:::::::::::::::::c  k:::::k  k:::::k              J:::::J"
-				+ RETURN );
-		sb.append(
-			"  B:::::::::::::BB    i::::i  o:::::ooooo:::::o    L:::::L               o:::::ooooo:::::o  c:::::::ccccccc:::c  k:::::k k:::::k               J:::::j"
-				+ RETURN );
-		sb.append(
-			"  B::::BBBBBB:::::B   i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c::::::c       cccc  k::::::k:::::k                J:::::J"
-				+ RETURN );
-		sb.append(
-			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c:::::c              k:::::::::::k     JJJJJJJ     J:::::J"
-				+ RETURN );
-		sb.append(
-			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c:::::c              k:::::::::::k     J:::::J     J:::::J"
-				+ RETURN );
-		sb.append(
-			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L       LLLLLL  o::::o     o::::o  c::::::c      cccc   k::::::k:::::k    J::::::J    J:::::J"
-				+ RETURN );
-		sb.append(
-			"BB:::::BBBBBB::::::B  i::::i  o:::::ooooo:::::o  LL::::::LLLLLLLLL::::L  o:::::ooooo:::::o  c:::::::cccccc::::c  k::::::k k:::::k   J::::::JJJJ::::::J"
-				+ RETURN );
-		sb.append(
-			"B:::::::::::::::::B   i::::i  o:::::::::::::::o  L::::::::::::::::::::L  o:::::::::::::::o  c:::::::::::::::::c  k::::::k  k:::::k   JJ:::::::::::::JJ"
-				+ RETURN );
-		sb.append(
-			"B::::::::::::::::B    i::::i   oo:::::::::::oo   L::::::::::::::::::::L   oo:::::::::::oo    cc::::::::::::::cc  k::::::k   k:::::k    JJ:::::::::JJ"
-				+ RETURN );
-		sb.append(
-			"BBBBBBBBBBBBBBBBB     iiiiii     ooooooooooo     LLLLLLLLLLLLLLLLLLLLLL     ooooooooooo        cccccccccccccc    kkkkkkkk    kkkkkkk     JJJJJJJJJ"
-				+ RETURN );
-		sb.append( RETURN + SPACER_2X + RETURN + RETURN );
-		return sb.toString();
+	public static String display_ASCII_Status() {
+		return biolockj_ASCII_Art() + RETURN
+			+ ( BioLockJ.isPipelineComplete() ? complete_ASCII_Art(): failed_ASCII_Art() );
 	}
 
 	/**
@@ -170,9 +120,9 @@ public class SummaryUtil {
 	public static String getFooter() throws Exception {
 		final long duration = System.currentTimeMillis() - Constants.APP_START_TIME;
 		final StringBuffer sb = new StringBuffer();
-		sb.append( SPACER_2X + RETURN );
+		sb.append( EXT_SPACER + RETURN );
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
-		sb.append( getLabel( RUNTIME_ENV ) + "   " + getRuntimeEnv() + RETURN );
+		sb.append( getLabel( RUNTIME_ENV ) + "     " + getRuntimeEnv() + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
 		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration ) + RETURN );
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
@@ -181,11 +131,11 @@ public class SummaryUtil {
 
 		final String downloadCmd = downloadCmd();
 		if( downloadCmd != null ) {
-			sb.append( SPACER_2X + RETURN );
+			sb.append( EXT_SPACER + RETURN );
 			sb.append( downloadCmd + RETURN );
 		}
 
-		sb.append( SPACER_2X + RETURN );
+		sb.append( EXT_SPACER + RETURN );
 		return sb.toString();
 	}
 
@@ -211,10 +161,11 @@ public class SummaryUtil {
 			sb.append( "# Input files: " + numIn + Constants.RETURN );
 			sb.append( "Mean Input File Size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
 		} catch( final Exception ex ) {
-			final String msg = "Unable to produce module outputDir summary for: " + module.getClass().getName() + " : "
+			final String msg = "Unable to produce module input summary for: " + module.getClass().getName() + " : "
 				+ ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( SummaryUtil.class, msg );
+			ex.printStackTrace();
 		}
 
 		return sb.toString();
@@ -324,10 +275,11 @@ public class SummaryUtil {
 			sb.append( newMeta == null ? "": "New metadata: " + newMeta.getAbsolutePath() + RETURN );
 
 		} catch( final Exception ex ) {
-			final String msg = "Unable to produce module outputDir summary for: " + module.getClass().getName() + " : "
+			final String msg = "Unable to produce module output summary for: " + module.getClass().getName() + " : "
 				+ ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( SummaryUtil.class, msg );
+			ex.printStackTrace();
 		}
 
 		return sb.toString();
@@ -419,7 +371,7 @@ public class SummaryUtil {
 			long maxDuration = 0L;
 			long minDuration = Long.MAX_VALUE;
 
-			final long oneMinute = 1000 * 60;
+			final long oneMinute = BioLockJUtil.minutesToMillis( 1 );
 
 			for( final File script: scripts ) {
 				final File started = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
@@ -490,10 +442,12 @@ public class SummaryUtil {
 				}
 			}
 		} catch( final Exception ex ) {
-			final String msg = "Unable to produce module scriptDir summary for: " + module.getClass().getName() + " : "
+			final String msg = "Unable to produce module script summary for: " + module.getClass().getName() + " : "
 				+ ex.getMessage();
-			Log.warn( SummaryUtil.class, msg );
 			sb.append( msg + RETURN );
+			Log.warn( SummaryUtil.class, msg );
+
+			ex.printStackTrace();
 		}
 
 		return sb.toString();
@@ -542,7 +496,7 @@ public class SummaryUtil {
 	 */
 	public static void reportFailure( final Exception ex ) throws Exception {
 		final StringBuffer sb = new StringBuffer();
-		sb.append( SPACER + RETURN + getLabel( "Exception" ) );
+		sb.append( getDashes( 60 ) + RETURN + getLabel( "Exception" ) );
 		if( ex == null ) {
 			sb.append( "Error message not found!" + RETURN );
 		} else {
@@ -590,10 +544,10 @@ public class SummaryUtil {
 
 			final String summary = module.getSummary();
 			if( summary != null && !summary.isEmpty() ) {
-				sb.append( getTitleSpacer( Math.max( modLabel.length(), runtime.length() ) ) + RETURN + summary
+				sb.append( getDashes( Math.max( modLabel.length(), runtime.length() ) ) + RETURN + summary
 					+ ( summary.endsWith( RETURN ) ? "": RETURN ) );
 			}
-			sb.append( SPACER_2X + RETURN );
+			sb.append( EXT_SPACER + RETURN );
 		}
 
 		saveSummary( sb.toString() );
@@ -608,7 +562,8 @@ public class SummaryUtil {
 		final File summary = getSummaryFile();
 		if( summary.exists() ) {
 			FileUtils.copyFile( getSummaryFile(), getTempFile() );
-			BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
+			getSummaryFile().delete();
+			// BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
 			final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 			try {
@@ -621,13 +576,13 @@ public class SummaryUtil {
 						writer.write( line + RETURN );
 					}
 				}
-				BioLockJUtil.deleteWithRetry( getTempFile(), 10 );
+				getTempFile().delete();
+				// BioLockJUtil.deleteWithRetry( getTempFile(), 10 );
 			} finally {
 				if( reader != null ) {
 					reader.close();
 				}
 				writer.close();
-
 			}
 		}
 	}
@@ -710,7 +665,8 @@ public class SummaryUtil {
 	 */
 	protected static void resetModuleSummary( final BioModule module ) throws Exception {
 		FileUtils.copyFile( getSummaryFile(), getTempFile() );
-		BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
+		getSummaryFile().delete();
+		// BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
 		final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 		try {
@@ -727,7 +683,8 @@ public class SummaryUtil {
 					writer.write( line + RETURN );
 				}
 			}
-			FileUtils.forceDelete( getTempFile() );
+			getTempFile().delete();
+			// FileUtils.forceDelete( getTempFile() );
 		} finally {
 			if( reader != null ) {
 				reader.close();
@@ -751,6 +708,20 @@ public class SummaryUtil {
 		Log.info( SummaryUtil.class, "Summary updated" );
 	}
 
+	private static String biolockj_ASCII_Art() {
+		final StringBuffer sb = new StringBuffer();
+		final String spacer = getSpaces( 10 );
+		sb.append( spacer + "" + RETURN );
+		return sb.toString();
+	}
+
+	private static String complete_ASCII_Art() {
+		final StringBuffer sb = new StringBuffer();
+		final String spacer = getSpaces( 5 );
+		sb.append( spacer + "" + RETURN );
+		return sb.toString();
+	}
+
 	private static String downloadCmd() throws Exception {
 		if( downloadCommand == null ) {
 			downloadCommand = DownloadUtil.getDownloadCmd();
@@ -758,13 +729,24 @@ public class SummaryUtil {
 		return downloadCommand;
 	}
 
+	private static String failed_ASCII_Art() {
+		final StringBuffer sb = new StringBuffer();
+		final String spacer = getSpaces( 23 );
+		sb.append( spacer + "" + RETURN );
+		return sb.toString();
+	}
+
+	private static String getDashes( final int len ) {
+		return getSpacer( "-", len );
+	}
+
 	private static String getHeading() {
 		final StringBuffer sb = new StringBuffer();
-		sb.append( RETURN + SPACER_2X + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
+		sb.append( RETURN + EXT_SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( INPUT_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
 		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
-		sb.append( SPACER_2X + RETURN );
+		sb.append( EXT_SPACER + RETURN );
 		return sb.toString();
 	}
 
@@ -786,38 +768,43 @@ public class SummaryUtil {
 				clusterHost = Config.requireString( null, Constants.CLUSTER_HOST );
 				env = clusterHost;
 			}
-			env = Processor.submit( "hostname", "Find Host Name" );
+			env = Processor.submit( "hostname", "Query Hostname" );
 		} catch( final Exception ex ) {
 			Log.warn( SummaryUtil.class, "Failed to determine runtime environment host" );
 		}
 
 		if( DockerUtil.inAwsEnv() ) {
-			env = "AWS-Nextflow-Docker-" + env;
+			env = "AWS::Nextflow::Docker::" + env;
 		} else if( DockerUtil.inDockerEnv() ) {
-			env = "Docker-" + env;
+			env = "Docker::" + env;
 		} else if( Config.isOnCluster() ) {
 			if( clusterHost != null && env != clusterHost ) {
 				env = "head-" + clusterHost + "::compute-" + env;
 			}
-			env = "Cluster-" + env;
+			env = "Cluster::" + env;
 		}
 		return env;
+	}
+
+	private static String getSpacer( final String val, final int len ) {
+		String spacer = "";
+		for( int i = 0; i < len; i++ ) {
+			spacer += val;
+		}
+		return spacer;
+	}
+
+	private static String getSpaces( final int len ) {
+		return getSpacer( " ", len );
 	}
 
 	private static File getTempFile() {
 		return new File( Config.pipelinePath() + File.separator + TEMP_SUMMARY_FILE );
 	}
 
-	private static String getTitleSpacer( final int len ) {
-		String spacer = "";
-		for( int i = 0; i < len; i++ ) {
-			spacer += "-";
-		}
-		return spacer;
-	}
-
 	private static String downloadCommand = null;
 	private static final String EXCEPTION_LABEL = "Exception:";
+	private static final String EXT_SPACER = getDashes( 154 );
 	private static final String FINAL_CONFIG = "Final Config";
 	private static final String FINAL_META = "Final Metadata";
 	private static final String INPUT_CONFIG = "Input Config";
@@ -831,8 +818,6 @@ public class SummaryUtil {
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_TIME = "Runtime";
 	private static final String RUNTIME_ENV = "Runtime Env";
-	private static final String SPACER = "---------------------------------------------------------------------";
-	private static final String SPACER_2X = SPACER + SPACER;
 	private static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
 	private static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
 }

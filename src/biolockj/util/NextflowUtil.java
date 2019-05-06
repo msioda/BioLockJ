@@ -29,13 +29,22 @@ public class NextflowUtil {
 	/**
 	 * Sync file or directory with S3 bucket.<br>
 	 * Dir example: aws s3 sync $EFS/config s3://blj-2019-04-05/config<br>
-	 * File example: aws s3 cp ${BLJ_META}/testMetadata.tsv s3://blj-2019-04-05/metadata/testMetadata.tsv
+	 * File example: aws s3 cp ${BLJ_META}/testMetadata.tsv s3://blj-2019-04-05/metadata/testMetadata.tsv Register each
+	 * efsPath to avoid syncing the same path more than once.
+	 * 
 	 * 
 	 * @param efsPath File or directory to sync
 	 * @param waitUntilComplete Boolean if enabled will block until process completes before moving on
 	 * @throws Exception if errors occur
 	 */
 	public static void awsSyncS3( final String efsPath, final boolean waitUntilComplete ) throws Exception {
+		if( s3SyncRegister.contains( efsPath ) ) {
+			Log.info( NextflowUtil.class, "Ignore sync request - sync already requested for: " + efsPath );
+			return;
+		}
+
+		s3SyncRegister.add( efsPath );
+
 		String s3Dir = getAwsS3();
 		if( efsPath.contains( Config.pipelinePath() ) ) {
 			s3Dir += efsPath.replace( Config.pipelinePath(), "" );
@@ -49,9 +58,9 @@ public class NextflowUtil {
 		s3args[ 4 ] = s3Dir;
 
 		if( waitUntilComplete ) {
-			Processor.runSubprocess( s3args, "S3-Transfer" );
+			Processor.submit( s3args, "S3-Sync-xFer" );
 		} else {
-			Processor.submit( s3args, "S3-Transfer" );
+			Processor.runSubprocess( s3args, "S3-Async-xFer" );
 		}
 	}
 
@@ -93,17 +102,15 @@ public class NextflowUtil {
 	 */
 	public static boolean purgeEfsData() {
 		try {
-			// Need to be more specific for this 1 pipeline
-			// purge( S3_DIR + Config.requireString( null, AWS_S3 ) + File.separator + NEXTFLOW + File.separator + "*"
-			// );
 			if( Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT ) ) {
 				purge( Config.pipelinePath() );
 			} else if( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
-				purge( Config.getConfigFilePath() );
-				purge( DockerUtil.AWS_EFS + File.separator + AWS_DB_DIR );
-				purge( DockerUtil.AWS_EFS + File.separator + AWS_INPUT_DIR );
-				purge( DockerUtil.AWS_EFS + File.separator + AWS_META_DIR );
-				purge( DockerUtil.AWS_EFS + File.separator + AWS_PRIMER_DIR );
+				purge( DockerUtil.CONTAINER_CONFIG_DIR );
+				purge( DockerUtil.CONTAINER_INPUT_DIR );
+				purge( DockerUtil.CONTAINER_META_DIR );
+				purge( DockerUtil.CONTAINER_PRIMER_DIR );
+
+				purge( DockerUtil.CONTAINER_DB_DIR );
 			}
 			return true;
 		} catch( final Exception ex ) {
@@ -119,12 +126,10 @@ public class NextflowUtil {
 	 */
 	public static boolean saveEfsDataToS3() {
 		try {
-			final boolean savePipeline = Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 );
-			final boolean saveReports = Config.getBoolean( null, NextflowUtil.AWS_COPY_REPORTS_TO_S3 );
-
-			if( savePipeline ) {
+			if( Config.getBoolean( null, AWS_COPY_PIPELINE_TO_S3 ) ) {
 				awsSyncS3( Config.pipelinePath(), true );
-			} else if( DownloadUtil.getDownloadListFile().exists() && saveReports ) {
+			} else if( DownloadUtil.getDownloadListFile().exists()
+				&& Config.getBoolean( null, AWS_COPY_REPORTS_TO_S3 ) ) {
 				final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
 				try {
 					for( String path = reader.readLine(); path != null; path = reader.readLine() ) {
@@ -136,11 +141,11 @@ public class NextflowUtil {
 					}
 				}
 			} else {
-				Log.warn( NextflowUtil.class,
-					"Due to Config [ " + AWS_COPY_PIPELINE_TO_S3 + "=" + Constants.FALSE + " ] & [ " + AWS_REPORT_DIR
-						+ "=" + Constants.FALSE + " ]: pipeline ouput will be not saved to configured AWS S3 bucket: "
-						+ Config.requireString( null, AWS_S3 ) );
+				Log.warn( NextflowUtil.class, "Pipeline ouput will be not saved to configured AWS S3 bucket: "
+					+ Config.requireString( null, AWS_S3 ) + " due to Config properties [ " + AWS_COPY_PIPELINE_TO_S3
+					+ "=" + Constants.FALSE + " ] & [ " + AWS_COPY_REPORTS_TO_S3 + "=" + Constants.FALSE + " ]" );
 			}
+
 			return true;
 		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
@@ -152,6 +157,7 @@ public class NextflowUtil {
 	 * Save a copy of the Nextflow log file to the Pipeline root directory
 	 */
 	public static void saveNextflowLog() {
+		if( nextflowLogExists() ) return;
 		try {
 			final File log = new File( NF_LOG );
 			if( !log.exists() ) {
@@ -182,18 +188,15 @@ public class NextflowUtil {
 	}
 
 	/**
-	 * Kill Nextflow process (required since parent Java process that ran BioLockJ pipeline will not halt until this
+	 * Stop Nextflow process (required since parent Java process that ran BioLockJ pipeline will not halt until this
 	 * subprocess is finished.
-	 * 
-	 * @throws Exception if errors occur trying to stop the Nextflow process
 	 */
-	public static void stopNextflow() throws Exception {
-		final String[] args = new String[ 3 ];
-		args[ 0 ] = "kill";
-		args[ 1 ] = "-9";
-		args[ 2 ] = pidID;
-		Processor.submit( args, "Stop Nextflow" );
-
+	public static void stopNextflow() {
+		if( nfMainThread != null ) {
+			nfMainThread.interrupt();
+			Processor.deregisterThread( nfMainThread );
+			Log.info( NextflowUtil.class, "Nextflow process thread de-registered" );
+		}
 	}
 
 	/**
@@ -213,9 +216,7 @@ public class NextflowUtil {
 				String onDemandLabel = null;
 				Log.debug( NextflowUtil.class, "READ LINE: " + line );
 				if( line.trim().startsWith( PROCESS ) ) {
-					Log.debug( NextflowUtil.class, "Found module PROCESS declaration: " + line );
 					module = getModule( line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim() );
-					Log.debug( NextflowUtil.class, "START module BLOCK for: " + module.getClass().getName() );
 					line = line.replaceAll( "\\.", "_" );
 				} else if( module != null ) {
 					if( line.contains( NF_CPUS ) ) {
@@ -231,10 +232,8 @@ public class NextflowUtil {
 							onDemandLabel = "    label '" + ON_DEMAND + "'";
 						}
 					} else if( line.contains( MODULE_SCRIPT ) ) {
-						Log.debug( NextflowUtil.class, "Found worker line: " + line );
 						line = line.replace( MODULE_SCRIPT, module.getScriptDir().getAbsolutePath() );
 					} else if( line.trim().equals( "}" ) ) {
-						Log.debug( NextflowUtil.class, "END module BLOCK: " + module.getClass().getName() );
 						module = null;
 					}
 				}
@@ -243,7 +242,7 @@ public class NextflowUtil {
 				lines.add( line );
 				if( onDemandLabel != null ) {
 					lines.add( onDemandLabel );
-					Log.info( NextflowUtil.class, "ADD LINE: " + onDemandLabel );
+					Log.debug( NextflowUtil.class, "ADD LINE: " + onDemandLabel );
 				}
 			}
 		} finally {
@@ -314,7 +313,8 @@ public class NextflowUtil {
 	private static String getRAM( final String ram ) throws ConfigFormatException {
 		String val = ram.trim();
 		String intVal = val.replaceAll( "[^0-9]", "" );
-		final String level = ram.replace( intVal, "" ).replaceAll( " ", "" ).replaceAll( "'", "" ).replaceAll( "\"", "" );
+		final String level = ram.replace( intVal, "" ).replaceAll( " ", "" ).replaceAll( "'", "" ).replaceAll( "\"",
+			"" );
 		if( level.length() > 0 && !ramLevels.contains( level ) ) throw new ConfigFormatException( AWS_RAM, "" );
 
 		try {
@@ -342,12 +342,7 @@ public class NextflowUtil {
 			final BufferedReader reader = BioLockJUtil.getFileReader( nfLog );
 			try {
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-					if( line.trim().startsWith( PID_LABEL ) ) {
-						final String x = line.replace( PID_LABEL, "" ).trim();
-						pidID = x.substring( 0, x.indexOf( "@" ) );
-						Log.info( NextflowUtil.class,
-							"Detected Nextflow PID [ " + pidID + " ] in log file: " + NF_LOG );
-					} else if( line.contains( NF_INIT_FLAG ) ) return true;
+					if( line.contains( NF_INIT_FLAG ) ) return true;
 				}
 			} finally {
 				if( reader != null ) {
@@ -390,6 +385,10 @@ public class NextflowUtil {
 		return true;
 	}
 
+	private static void setNfMainThread( final Thread thread ) {
+		nfMainThread = thread;
+	}
+
 	private static void startService() throws Exception {
 		final String reportBase = getNextflowReportDir().getAbsolutePath() + File.separator + Config.pipelineName()
 			+ "_";
@@ -405,7 +404,7 @@ public class NextflowUtil {
 		args[ 8 ] = "-with-dag";
 		args[ 9 ] = reportBase + "nextflow_diagram.html";
 		args[ 10 ] = getMainNf().getAbsolutePath();
-		Processor.runSubprocess( args, "Nextflow" );
+		setNfMainThread( Processor.runSubprocess( args, "Nextflow" ) );
 	}
 
 	private static File templateConfig() {
@@ -445,9 +444,9 @@ public class NextflowUtil {
 	public static final String AWS_CONFIG_DIR = "config";
 
 	/**
-	 * {@link biolockj.Config} Boolean property: If enabled save all input files to S3: {@value #AWS_COPY_INPUTS_TO_S3}
+	 * {@link biolockj.Config} Boolean property: If enabled save all input files to S3: {@value #AWS_COPY_DB_TO_S3}
 	 */
-	public static final String AWS_COPY_INPUTS_TO_S3 = "aws.copyInputsToS3";
+	public static final String AWS_COPY_DB_TO_S3 = "aws.copyDbToS3";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: If enabled save pipeline to S3: {@value #AWS_COPY_PIPELINE_TO_S3}
@@ -491,12 +490,8 @@ public class NextflowUtil {
 	 */
 	protected static final String NF_LOG = "/.nextflow.log";
 
-	private static final String AWS_DB_DIR = "db";
-
-	private static final String AWS_INPUT_DIR = "input";
-	private static final String AWS_META_DIR = "metadata";
-	private static final String AWS_PRIMER_DIR = "primer";
 	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
+
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
@@ -508,11 +503,11 @@ public class NextflowUtil {
 	private static final String NF_LOG_NAME = ".nextflow.log";
 	private static final String NF_MEMORY = "$" + AWS_RAM;
 	private static final int NF_TIMEOUT = 180;
+	private static Thread nfMainThread = null;
 	private static final String ON_DEMAND = "DEMAND";
-	private static final String PID_LABEL = "Process:";
-	private static String pidID = null;
 	private static final String PROCESS = "process";
 	private static List<String> ramLevels = Arrays.asList( "KB", "MB", "GB", "TB" );
 	private static final String S3_DIR = "s3://";
+	private static Set<String> s3SyncRegister = new HashSet<>();
 	private static final Set<Integer> usedModules = new HashSet<>();
 }

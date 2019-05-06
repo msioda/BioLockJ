@@ -454,6 +454,27 @@ public class BioLockJUtil {
 	}
 
 	/**
+	 * Convert milliseconds to minutes - useful to convert Java millisecond output rounded to the nearest minute.
+	 * 
+	 * @param milliseconds number of milliseconds
+	 * @return same amount of time as minutes
+	 */
+	public static int millisToMinutes( final long milliseconds ) {
+		return new Long( Math.round( milliseconds / 1000 / 60 ) ).intValue();
+	}
+
+	/**
+	 * Convert minutes to milliseconds - useful to convert Config props measure in minutes to milliseconds since many
+	 * Java functions have milliseconds args.
+	 * 
+	 * @param minutes number of minutes
+	 * @return same amount of time as milliseconds
+	 */
+	public static long minutesToMillis( final int minutes ) {
+		return 1000 * 60 * minutes;
+	}
+
+	/**
 	 * Read in BioLockJ count table, each inner lists represents 1 line from the file.<br>
 	 * Each cell in the tab delimited file is stored as 1 element in the inner lists.
 	 * 
