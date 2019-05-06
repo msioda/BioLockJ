@@ -64,6 +64,6 @@ AWS_CONF="${EC2_HOME}/.aws/config"
 AWS_CRED="${EC2_HOME}/.aws/credentials"
 NF_CONF="${EC2_HOME}/.nextflow/config"
 
-verify_inputs
+verify_inputs $@
 stage_root_config
 build_template $@

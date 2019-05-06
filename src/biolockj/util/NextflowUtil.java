@@ -313,9 +313,8 @@ public class NextflowUtil {
 
 	private static String getRAM( final String ram ) throws ConfigFormatException {
 		String val = ram.trim();
-
 		String intVal = val.replaceAll( "[^0-9]", "" );
-		final String level = ram.replace( intVal, "" ).trim();
+		final String level = ram.replace( intVal, "" ).replaceAll( " ", "" ).replaceAll( "'", "" ).replaceAll( "\"", "" );
 		if( level.length() > 0 && !ramLevels.contains( level ) ) throw new ConfigFormatException( AWS_RAM, "" );
 
 		try {
