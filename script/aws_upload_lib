@@ -187,7 +187,7 @@ stage_pipeline_on_aws() {
 
 # Get ths AWS script name
 start_aws_pipeline_script() {
-	echo "${HOME}/.aws/start-$(get_config_name).sh"
+	echo "${EC2_HOME}/.aws/start-$(get_config_name).sh"
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
