@@ -181,8 +181,9 @@ public class FatalExceptionHandler {
 
 	private static void setFailedStatus() {
 		try {
-			if( Config.getPipelineDir() != null )
+			if( Config.getPipelineDir() != null ) {
 				BioLockJUtil.createFile( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
+			}
 		} catch( final Exception ex ) {
 			Log.error( FatalExceptionHandler.class,
 				"Pipeline root directory not found - unable save Pipeline Status File: " + Constants.BLJ_FAILED + " : "

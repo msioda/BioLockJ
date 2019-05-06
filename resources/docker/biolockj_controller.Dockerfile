@@ -1,4 +1,4 @@
-# Deployment path: $DOCKER_FILE_PATH/biolockj_controller.Dockerfile
+# Deployment path: $DOCKER_DIR/biolockj_controller.Dockerfile
 
 FROM biolockj/blj_basic_py2
 ARG DEBIAN_FRONTEND=noninteractive
@@ -23,7 +23,7 @@ RUN cd /usr/local/bin && \
 #4.) Install BioLockJ
 ARG BLJ_DATE
 ARG VER
-RUN echo "${BLJ_DATE}" && mkdir $BLJ && cd $BLJ && \
+RUN echo "${BLJ_DATE}" && cd $BLJ && \
 	wget -qO- "https://github.com/msioda/BioLockJ/releases/download/${VER}/biolockj_${VER}.tgz" | bsdtar -xzf- && \
 	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]*
 

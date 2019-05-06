@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_FILE_PATH/knead_data.Dockerfile
+# Deployment path:  $DOCKER_DIR/knead_data.Dockerfile
 
 FROM biolockj/knead_data_dbfree
 

@@ -1,27 +1,22 @@
 #!/bin/bash
 ################################################################################
-##                                                                            ##
 ##  Build Nexflow main.nf template                                            ##
 ##  Query for SEARCH_KEY in all java files under $BLJ/src/biolockj/module     ##
-##  For each valid file, trim the file path & file extension                  ##
+##  For each valid module, return the template Nextflow process code block.   ##
 ##  Remaining value = Java class name module.getClass().getName() after       ##
-##                    substituting "_" for all "." characters                 ##
-##                                                                            ##
+##  substituting "_" for each "." characters in the Java class name           ##
 ################################################################################
 . /app/biolockj/script/blj_config
 . "${AWS_LIB}"
 
-bljVer="$(biolockj -v)"
-[${#bljVer} -eq 0] && bljVer="$($BLJ_SCRIPT/biolockj -v)"
-
-# Build the template
-# Param 1 - template file path (output of function)
-# Param 2 - List of modules (using special delimiters)
-buildNexflowTemplate() {
+# Build the template file that NextflowUtil.java will use to create the pipeline main.nf
+# Param 1 - All make_nextflow script args
+build_template() {
 	echo "Building Nextflow Template...${1}"
-	modules="${2}"
+	modules=( ${@/${1}/} )
+	modules=${modules[*]}
 	numModules=$(echo $modules | wc -w | xargs)
-	summaryMsg="BioLockJ ${bljVer} generated Nextflow Config with $numModules BioModule process definitions"
+	summaryMsg="BioLockJ $(biolockj -v) generated Nextflow Config with $numModules BioModule process definitions"
 	echo "// $summaryMsg" > "${1}"
 	echo "" >> "${1}"
 	for module in ${modules[@]}; do
@@ -31,74 +26,44 @@ buildNexflowTemplate() {
 		echo '    memory $aws.ram' >> "${1}"
 		echo '    label $nextflow.dockerImage' >> "${1}"
 		echo '    input:' >> "${1}"
-		echo '    val worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> "${1}"
+		echo '    file worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> "${1}"
 		echo '    """' >> "${1}"
 		echo '    #!/bin/bash' >> "${1}"
 		echo '    bash ${worker}' >> "${1}"
 		echo '    """' >> "${1}"
 		echo '}' >> "${1}"
 	done
-	addEndPipelineProcess "${1}" "${2}"
 	echo "-----------------------------------------------------------------------------------------"
 	[ -f "${1}" ] && echo "Success! -->  $summaryMsg" && echo "Deployed: ${1}" && cat "${1}" && \
 		echo "-----------------------------------------------------------------------------------------"	
-}
-
-# Add end pipeline process to the end of the template
-# Param 1 - template file path (output of function)
-addEndPipelineProcess() {
-	echo 'addEndPipelineProcess()...'
-	echo "" >> "${1}"
-	echo "process end_biolockj_pipeline {" >> "${1}"
-	echo '    echo true' >> "${1}"
-	echo '    input:' >> "${1}"
-	echo '    val statusFile from Channel.watchPath( "BLJ_PIPELINE_DIR/biolockj*" )' >> "${1}"
-	echo '    """' >> "${1}"
-	echo '    #!/bin/bash' >> "${1}"
-	echo '    if [ $(basename $statusFile) == biolockjComplete ]; then' >> "${1}" 
-	echo '        echo "EXIT NEXTFLOW - Pipeline Success"' >> "${1}"
-	echo '        exit 0' >> "${1}"
-	echo '    elif [ $(basename $statusFile) == biolockjFailed ]; then' >> "${1}"
-	echo '        clear_jobs' >> "${1}"
-	echo '        echo "EXIT NEXTFLOW - Pipeline Failed"' >> "${1}"
-	echo '        exit 1' >> "${1}"
-	echo '    fi' >> "${1}"
-	echo '    """' >> "${1}"
-	echo '}' >> "${1}"
-
-	echo "-----------------------------------------------------------------------------------------"
-	[ -f "${1}" ] && echo "Success! -->  $summaryMsg" && echo "Deployed: ${1}" && cat "${1}" && \
-		echo "-----------------------------------------------------------------------------------------"	
-}
-
-# Get the module list 
-get_modules() {
-	modules=${1//./ }
-	modules=( $modules )
-	echo ${modules[*]}
 }
 
 # Copy EC2 User root config into container /root directory:
 # /user/ec2-user/.aws --> /root/.aws
 # /user/ec2-user/.nextflow/config --> /root/.nextflow/config
 stage_root_config() {
-	[ ! -f "${EC2_HOME}/.aws/credentials" ] && exit_script "Missing EC2-AWS config: ${EC2_HOME}/.aws/credentials"
-	[ ! -f "${EC2_HOME}/.nextflow/config" ] && exit_script "Missing EC2-Nextflow config: ${EC2_HOME}/.nextflow/config"
-	echo "Copy ${EC2_HOME}/.aws into ~"
-	cp -vr "${EC2_HOME}/.aws" ~ 
-	echo "Copy ${EC2_HOME}/.nextflow/config into ~/.nextflow"
-	cp -v "${EC2_HOME}/.nextflow/config" ~/.nextflow
-	#echo "Copy $(get_ec2_nextflow_dir)/config into ~/.nextflow"
-	#cp -v "$(get_ec2_nextflow_dir)/config" ~/.nextflow
+	echo "Copy ${EC2_HOME}/.aws ---> ~" && cp -vr "${EC2_HOME}/.aws" ~ && echo "Copy Complete!"
+	echo "Copy ${NF_CONFIG} ---> ~/.nextflow" && cp -v "${NF_CONF}" ~/.nextflow && echo "Copy Complete!"
 }
 
-if [ $# -lt 2 ]; then
-	echo "Missing [ make_nextflow ] args - 2 params required to build main.nf --->"
-	echo "  1) main.nf file-path"
-	echo "  2) List of modules formatted with specific delimiters"
-	sleep 15 && exit 1
-else
-	stage_root_config
-	echo "Next - build template"
-	buildNexflowTemplate "${1}" "$(get_modules ${2})"
-fi
+# Verify at least 2 inpur parameters
+verify_inputs() {
+	[ $# -lt 2 ] && \
+		exit_script "Error [ make_nextflow.verify_inputs() ]: Script requires 1) main.nf file-path + 2) list of fully qualified BioModule Java class names"
+	[ ! -d "$(dirname ${1})" ] && \
+		exit_script "Error [ make_nextflow.verify_inputs() ]: Directory \"$(dirname ${1})\" from template nf path \"${1}\" not found!"
+	[ ! -f "${AWS_CRED}" ] && \
+		exit_script "Error [ make_nextflow.verify_inputs() ]:  Missing EC2-AWS credentials file: ${AWS_CRED}"
+	[ ! -f "${AWS_CONF}" ] && \
+		exit_script "Error [ make_nextflow.verify_inputs() ]:  Missing EC2-AWS config file: ${AWS_CONF}"
+	[ ! -f "${NF_CONF}" ] && \
+		exit_script "Error [ make_nextflow.verify_inputs() ]:  Missing EC2-Nextflow config: ${NF_CONF}"
+}
+
+AWS_CONF="${EC2_HOME}/.aws/config"
+AWS_CRED="${EC2_HOME}/.aws/credentials"
+NF_CONF="${EC2_HOME}/.nextflow/config"
+
+verify_inputs
+stage_root_config
+build_template $@

@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_FILE_PATH/metaphlan2_classifier.Dockerfile
+# Deployment path:  $DOCKER_DIR/metaphlan2_classifier.Dockerfile
 
 FROM biolockj/metaphlan2_classifier_dbfree
 

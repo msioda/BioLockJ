@@ -1,4 +1,4 @@
-# Deployment path: $DOCKER_FILE_PATH/blj_basic.Dockerfile
+# Deployment path: $DOCKER_DIR/blj_basic.Dockerfile
 
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
@@ -18,9 +18,9 @@ ENV EC2_HOME="/home/ec2-user"
 ENV PATH="${EC2_HOME}/miniconda/bin:$PATH"
 
 #2.) Build Standard Directories 
-RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" &&
+RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \
 	mkdir "${BLJ_CONFIG}" && mkdir "${BLJ_DB}" && mkdir "${BLJ_INPUT}" && \
-	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && mkdir /log
+	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && mkdir "/log"
 
 #3.) Install Ubuntu Software 
 RUN apt-get update && \

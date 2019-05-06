@@ -43,6 +43,66 @@ public class SummaryUtil {
 	}
 
 	/**
+	 * Print the application name with ASCII art :-)
+	 * 
+	 * @return Beautiful artwork
+	 */
+	public static String display_ASCII_Art() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append( RETURN + SPACER_2X + RETURN + RETURN );
+		sb.append(
+			"BBBBBBBBBBBBBBBBB                                LLLLLLLLLLL                                                     kkkkkkkk                  JJJJJJJJJJJJJJJ"
+				+ RETURN );
+		sb.append(
+			"B::::::::::::::::B                               L:::::::::L                                                     k::::::k                  J:::::::::::::J"
+				+ RETURN );
+		sb.append(
+			"B::::::BBBBBB:::::B    iiii                      LL:::::::LL                                                     k::::::k                  JJJJ:::::::JJJJ"
+				+ RETURN );
+		sb.append(
+			"BB:::::B     B:::::B  i::::i                       L:::::L                                                       k::::::k                      J:::::J"
+				+ RETURN );
+		sb.append(
+			"  B::::B     B:::::B   iiii      ooooooooooo       L:::::L                  ooooooooooo       ccccccccccccccc    k:::::k    kkkkkkk            J:::::J"
+				+ RETURN );
+		sb.append(
+			"  B::::B     B:::::B           oo:::::::::::oo     L:::::L                oo:::::::::::oo   cc:::::::::::::::cc  k:::::k   k:::::k             J:::::J"
+				+ RETURN );
+		sb.append(
+			"  B::::BBBBBB:::::B   iiiiii  o:::::::::::::::o    L:::::L               o:::::::::::::::o  c:::::::::::::::::c  k:::::k  k:::::k              J:::::J"
+				+ RETURN );
+		sb.append(
+			"  B:::::::::::::BB    i::::i  o:::::ooooo:::::o    L:::::L               o:::::ooooo:::::o  c:::::::ccccccc:::c  k:::::k k:::::k               J:::::j"
+				+ RETURN );
+		sb.append(
+			"  B::::BBBBBB:::::B   i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c::::::c       cccc  k::::::k:::::k                J:::::J"
+				+ RETURN );
+		sb.append(
+			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c:::::c              k:::::::::::k     JJJJJJJ     J:::::J"
+				+ RETURN );
+		sb.append(
+			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c:::::c              k:::::::::::k     J:::::J     J:::::J"
+				+ RETURN );
+		sb.append(
+			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L       LLLLLL  o::::o     o::::o  c::::::c      cccc   k::::::k:::::k    J::::::J    J:::::J"
+				+ RETURN );
+		sb.append(
+			"BB:::::BBBBBB::::::B  i::::i  o:::::ooooo:::::o  LL::::::LLLLLLLLL::::L  o:::::ooooo:::::o  c:::::::cccccc::::c  k::::::k k:::::k   J::::::JJJJ::::::J"
+				+ RETURN );
+		sb.append(
+			"B:::::::::::::::::B   i::::i  o:::::::::::::::o  L::::::::::::::::::::L  o:::::::::::::::o  c:::::::::::::::::c  k::::::k  k:::::k   JJ:::::::::::::JJ"
+				+ RETURN );
+		sb.append(
+			"B::::::::::::::::B    i::::i   oo:::::::::::oo   L::::::::::::::::::::L   oo:::::::::::oo    cc::::::::::::::cc  k::::::k   k:::::k    JJ:::::::::JJ"
+				+ RETURN );
+		sb.append(
+			"BBBBBBBBBBBBBBBBB     iiiiii     ooooooooooo     LLLLLLLLLLLLLLLLLLLLLL     ooooooooooo        cccccccccccccc    kkkkkkkk    kkkkkkk     JJJJJJJJJ"
+				+ RETURN );
+		sb.append( RETURN + SPACER_2X + RETURN + RETURN );
+		return sb.toString();
+	}
+
+	/**
 	 * Return the min/max/mean/median summary stats for the given metadata numeric column
 	 * 
 	 * @param map Map(sampleId,count)
@@ -110,12 +170,14 @@ public class SummaryUtil {
 	public static String getFooter() throws Exception {
 		final long duration = System.currentTimeMillis() - Constants.APP_START_TIME;
 		final StringBuffer sb = new StringBuffer();
+		sb.append( SPACER_2X + RETURN );
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
+		sb.append( getLabel( RUNTIME_ENV ) + "   " + getRuntimeEnv() + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
 		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration ) + RETURN );
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
-		sb.append( getLabel( PIPELINE_CONFIG ) + " " + MasterConfigUtil.getPath() + RETURN );
-		sb.append( getLabel( PIPELINE_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
+		sb.append( getLabel( FINAL_CONFIG ) + "    " + MasterConfigUtil.getPath() + RETURN );
+		sb.append( getLabel( FINAL_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
 
 		final String downloadCmd = downloadCmd();
 		if( downloadCmd != null ) {
@@ -699,7 +761,7 @@ public class SummaryUtil {
 	private static String getHeading() {
 		final StringBuffer sb = new StringBuffer();
 		sb.append( RETURN + SPACER_2X + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
-		sb.append( getLabel( INPUT_CONFIG ) + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( INPUT_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
 		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
 		sb.append( SPACER_2X + RETURN );
@@ -716,6 +778,32 @@ public class SummaryUtil {
 		return label + ":  ";
 	}
 
+	private static String getRuntimeEnv() {
+		String clusterHost = null;
+		String env = "localhost";
+		try {
+			if( Config.isOnCluster() ) {
+				clusterHost = Config.requireString( null, Constants.CLUSTER_HOST );
+				env = clusterHost;
+			}
+			env = Processor.submit( "hostname", "Find Host Name" );
+		} catch( final Exception ex ) {
+			Log.warn( SummaryUtil.class, "Failed to determine runtime environment host" );
+		}
+
+		if( DockerUtil.inAwsEnv() ) {
+			env = "AWS-Nextflow-Docker-" + env;
+		} else if( DockerUtil.inDockerEnv() ) {
+			env = "Docker-" + env;
+		} else if( Config.isOnCluster() ) {
+			if( clusterHost != null && env != clusterHost ) {
+				env = "head-" + clusterHost + "::compute-" + env;
+			}
+			env = "Cluster-" + env;
+		}
+		return env;
+	}
+
 	private static File getTempFile() {
 		return new File( Config.pipelinePath() + File.separator + TEMP_SUMMARY_FILE );
 	}
@@ -730,18 +818,19 @@ public class SummaryUtil {
 
 	private static String downloadCommand = null;
 	private static final String EXCEPTION_LABEL = "Exception:";
+	private static final String FINAL_CONFIG = "Final Config";
+	private static final String FINAL_META = "Final Metadata";
 	private static final String INPUT_CONFIG = "Input Config";
 	private static final String MODULE = "Module";
 	private static final String NUM_ATTEMPTS = "# Attempts";
 	private static final String NUM_MODULES = "# Modules";
-	private static final String PIPELINE_CONFIG = "Pipeline Config";
-	private static final String PIPELINE_META = "Final Metadata";
 	private static final String PIPELINE_NAME = "Pipeline Name";
 	private static final String PIPELINE_OUTPUT = "Pipeline Dir";
 	private static final String PIPELINE_RUNTIME = "Pipeline Runtime";
 	private static final String PIPELINE_STATUS = "Pipeline Status";
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_TIME = "Runtime";
+	private static final String RUNTIME_ENV = "Runtime Env";
 	private static final String SPACER = "---------------------------------------------------------------------";
 	private static final String SPACER_2X = SPACER + SPACER;
 	private static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;

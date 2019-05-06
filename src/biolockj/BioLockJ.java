@@ -132,18 +132,18 @@ public class BioLockJ {
 	protected static void copyInputData() throws Exception {
 		final String statusFileName = pipelineInputDir().getName() + File.separator + Constants.BLJ_COMPLETE;
 		final File statusFile = new File( Config.pipelinePath() + File.separator + statusFileName );
-		if( !pipelineInputDir().exists() )
+		if( !pipelineInputDir().exists() ) {
 			pipelineInputDir().mkdirs();
-		else if( statusFile.exists() ) return;
+		} else if( statusFile.exists() ) return;
 
 		for( final File dir: BioLockJUtil.getInputDirs() ) {
 			info( "Copying input files from " + dir + " to " + pipelineInputDir() );
 			FileUtils.copyDirectory( dir, pipelineInputDir() );
 		}
-		
+
 		BioLockJUtil.ignoreFile( statusFile );
 		BioLockJUtil.createFile( Config.pipelinePath() + File.separator + statusFileName );
-		
+
 		final List<File> inputFiles = new ArrayList<>(
 			FileUtils.listFiles( pipelineInputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 		info( "Total number of input files: " + inputFiles.size() );
@@ -341,7 +341,8 @@ public class BioLockJ {
 
 			MasterConfigUtil.sanitizeMasterConfig();
 			BioLockJUtil.createFile( Config.pipelinePath() + File.separator + Constants.BLJ_COMPLETE );
-			info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
+			info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.display_ASCII_Art()
+				+ SummaryUtil.getSummary() );
 		}
 	}
 

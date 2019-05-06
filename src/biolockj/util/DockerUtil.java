@@ -229,7 +229,7 @@ public class DockerUtil {
 	}
 
 	/**
-	 * Return TRUE if Java program passed {@value biolockj.util.RuntimeParamUtil#DOCKER_FLAG}.
+	 * Check runtime env for /.dockerenv
 	 * 
 	 * @return TRUE if Java running in Docker container
 	 */

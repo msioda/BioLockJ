@@ -65,6 +65,12 @@ public class Constants {
 	public static final String CLASS = "class";
 
 	/**
+	 * {@link biolockj.Config} String property: {@value #CLUSTER_HOST}<br>
+	 * The remote cluster host URL (used for ssh, scp, rsync, etc)
+	 */
+	public static final String CLUSTER_HOST = "cluster.host";
+
+	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
 	 * {@value #DEFAULT_MOD_DEMUX}
 	 */

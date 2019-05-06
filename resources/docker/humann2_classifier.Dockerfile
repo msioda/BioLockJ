@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_FILE_PATH/humann2_classifier.Dockerfile
+# Deployment path:  $DOCKER_DIR/humann2_classifier.Dockerfile
 
 FROM biolockj/humann2_classifier_dbfree
 

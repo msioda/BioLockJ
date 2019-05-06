@@ -271,7 +271,7 @@ public class RuntimeParamUtil {
 	}
 
 	/**
-	 * Return TRUE if runtime parameter {@value #DOCKER_FLAG} was found
+	 * Return TRUE if runtime parameter {@value #AWS_FLAG} was found
 	 * 
 	 * @return boolean
 	 */
@@ -289,17 +289,12 @@ public class RuntimeParamUtil {
 	}
 
 	/**
-	 * Return TRUE if /.dockerenv file exists. TODO: RM COMMAND AFTER CONFIRMED // runtime parameter
-	 * {@value #DOCKER_FLAG} was found
+	 * Return TRUE if /.dockerenv file exists.
 	 * 
 	 * @return boolean
 	 */
 	public static boolean isDockerMode() {
 		try {
-			final File f = new File( "/.dockerenv" );
-			if( f.isFile() ) {
-				Log.info( RuntimeParamUtil.class, "Detected DOCKER mode via existance of \"/.dockerenv\"" );
-			}
 			return new File( "/.dockerenv" ).isFile();
 		} catch( final Exception ex ) {
 			Log.warn( RuntimeParamUtil.class, "Error occured checking file-system root directory for \"/.dockerenv\"" );
@@ -307,7 +302,6 @@ public class RuntimeParamUtil {
 		}
 		Log.info( RuntimeParamUtil.class, "Detected NOTE-IN-DOCKER mode because \"/.dockerenv\" file not found" );
 		return false;
-		// return params.get( DOCKER_FLAG ) != null;
 	}
 
 	/**
@@ -445,7 +439,6 @@ public class RuntimeParamUtil {
 	}
 
 	private static void reassignDockerConfig() {
-		Log.info( RuntimeParamUtil.class, "Found \"" + DOCKER_FLAG + "\" arg ---> ENV = DOCKER CONTAINER" );
 		Log.info( RuntimeParamUtil.class,
 			"Assign \"" + HOST_BLJ_PROJ_DIR + "\" arg ---> " + params.get( BLJ_PROJ_DIR ) );
 		Log.info( RuntimeParamUtil.class,
@@ -533,11 +526,6 @@ public class RuntimeParamUtil {
 	protected static final String DIRECT_MODE = "-d";
 
 	/**
-	 * Docker mode runtime parameter switch: {@value #DOCKER_FLAG}
-	 */
-	protected static final String DOCKER_FLAG = "-docker";
-
-	/**
 	 * Automatically added $HOME by biolockj script: {@value #HOME_DIR}
 	 */
 	protected static final String HOME_DIR = "-u";
@@ -594,14 +582,14 @@ public class RuntimeParamUtil {
 	 */
 	protected static final String SYSTEM_OUT_FLAG = "-s";
 
-	private static final List<String> ARG_FLAGS = Arrays.asList( AWS_FLAG, DOCKER_FLAG, SYSTEM_OUT_FLAG );
+	private static final List<String> ARG_FLAGS = Arrays.asList( AWS_FLAG, SYSTEM_OUT_FLAG );
 	private static final List<
 		String> BLJ_CONTROLLER_ONLY_ARGS = Arrays.asList( BLJ_PROJ_DIR, CONFIG_FILE, HOME_DIR, PASSWORD, RESTART_DIR );
 	private static final List<String> DIR_ARGS = Arrays.asList( BLJ_PROJ_DIR, HOME_DIR, HOST_BLJ_DIR, HOST_BLJ_PROJ_DIR,
 		HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR, INPUT_DIR, META_DIR, RESTART_DIR );
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
 	private static final List<String> extraParams = new ArrayList<>();
-	private static final List<String> LONG_ARG_NAMES = Arrays.asList( DIRECT_PIPELINE_DIR, DOCKER_FLAG, HOST_BLJ_DIR,
+	private static final List<String> LONG_ARG_NAMES = Arrays.asList( DIRECT_PIPELINE_DIR, HOST_BLJ_DIR,
 		HOST_BLJ_PROJ_DIR, HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR );
 	private static final List<String> NAMED_ARGS = Arrays.asList( CONFIG_FILE, DIRECT_MODE, PASSWORD );
 	private static final Map<String, String> params = new HashMap<>();

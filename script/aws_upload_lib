@@ -175,7 +175,6 @@ stage_local_aws() {
 stage_pipeline_on_aws() {
 	stage_input_files_to_efs
 	stage_local_aws
-	exe_remote_cmd "mkdir ${EC2_HOME}/.nextflow"
 	upload_file_to_efs "$(build_start_script)"
 	upload_file_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
 	upload_file_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"

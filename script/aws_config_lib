@@ -207,6 +207,8 @@ key_file() {
 
 # Get local Nextflow <base> config file
 local_nf_conf() {
+	NF_DIR=~/.aws/nextflow/${awsStack}
+	[ ! -d $NF_DIR ] && mkdir -p $NF_DIR
 	echo ~/.aws/nextflow/${awsStack}/config
 }
 

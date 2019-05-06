@@ -1,4 +1,4 @@
-# Deployment path: $DOCKER_FILE_PATH/blj_bash.Dockerfile
+# Deployment path: $DOCKER_DIR/blj_bash.Dockerfile
 
 FROM biolockj/blj_basic
 

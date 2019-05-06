@@ -31,9 +31,9 @@ printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
 # These paths are used by biolockj_controller to map Docker volumes for java_module containers
 blj_options() {
 	if $(has_param $runAws); then
-		options="-docker -u ${EC2_HOME} -aws"
+		options="-u ${EC2_HOME} -aws"
 	else
-		options="-docker -u ${HOME}"
+		options="-u ${HOME}"
 	fi
 	$(has_param $doRestart) && options="$options -r ${BLJ_PROJ}/${doRestart#$(blj_proj)/}"
 	$(has_param $newPass) && options="$options -p $newPass"

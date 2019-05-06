@@ -396,7 +396,7 @@ public class BioLockJUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static String getVersion() throws Exception {
-		final String missingMsg = "undetermined - mission $BLJ/.version file";
+		final String missingMsg = "undetermined - missing $BLJ/.version file";
 		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
 		if( file.exists() ) {
 			final BufferedReader reader = getFileReader( file );

@@ -84,8 +84,10 @@ get_docker_job_def_flag() {
 
 # Get EC2 instance public IP address
 get_ec2_public_ip() {
-	[ ${#ec2PublicIP} -eq 0 ] && ec2PublicIP=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
-	set_blj_prop ec2PublicIP $ec2PublicIP
+	if [ ${#ec2PublicIP} -eq 0 ]; then 
+		ec2PublicIP=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
+		set_blj_prop ec2PublicIP $ec2PublicIP
+	fi
 	echo $ec2PublicIP
 }
 
@@ -131,8 +133,10 @@ launch_ec2_head_node() {
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
 	stage_pipeline_on_aws
 	if [ $# -eq 1 ] && [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
+		echo "Exectue internal CMD [  launch_ec2_head_node \"start\"  ]"
 		exe_remote_cmd "$(start_aws_pipeline_script)" 
 	else
+		echo "Exectue internal CMD [  connect_head  ]"
 		connect_head
 	fi
 }
@@ -182,4 +186,7 @@ set_ec2_head_node_id() {
 	echo ""
 	aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] created in $runTime seconds"
 	set_blj_prop awsEc2InstanceID ${awsEc2InstanceID}
+	
+	ec2PublicIP=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
+	set_blj_prop ec2PublicIP $ec2PublicIP
 }

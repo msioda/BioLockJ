@@ -21,7 +21,6 @@ import org.apache.commons.io.filefilter.*;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
@@ -97,7 +96,7 @@ public final class DownloadUtil {
 			final String src = SRC + "=" + Config.pipelinePath();
 			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
 				+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
-				+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
+				+ Config.requireString( null, Constants.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 
 			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + src + RETURN + cmd;
 		}

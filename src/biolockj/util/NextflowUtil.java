@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.implicit.ImportMetadata;
@@ -69,7 +70,7 @@ public class NextflowUtil {
 	 * @return Nextflow report directory
 	 */
 	public static File getNextflowReportDir() {
-		final File dir = new File( Config.pipelinePath() + File.separator + NEXTFLOW_CMD );
+		final File dir = new File( Config.pipelinePath() + File.separator + NEXTFLOW );
 		if( !dir.isDirectory() ) {
 			dir.mkdir();
 		}
@@ -92,14 +93,17 @@ public class NextflowUtil {
 	 */
 	public static boolean purgeEfsData() {
 		try {
+			// Need to be more specific for this 1 pipeline
+			// purge( S3_DIR + Config.requireString( null, AWS_S3 ) + File.separator + NEXTFLOW + File.separator + "*"
+			// );
 			if( Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT ) ) {
 				purge( Config.pipelinePath() );
 			} else if( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
 				purge( Config.getConfigFilePath() );
-				purge( AWS_DB_DIR );
-				purge( AWS_INPUT_DIR );
-				purge( AWS_META_DIR );
-				purge( AWS_PRIMER_DIR );
+				purge( DockerUtil.AWS_EFS + File.separator + AWS_DB_DIR );
+				purge( DockerUtil.AWS_EFS + File.separator + AWS_INPUT_DIR );
+				purge( DockerUtil.AWS_EFS + File.separator + AWS_META_DIR );
+				purge( DockerUtil.AWS_EFS + File.separator + AWS_PRIMER_DIR );
 			}
 			return true;
 		} catch( final Exception ex ) {
@@ -154,7 +158,8 @@ public class NextflowUtil {
 				Log.warn( NextflowUtil.class, NF_LOG + " not found, cannot copy to pipeline root directory!" );
 				return;
 			}
-			FileUtils.copyFileToDirectory( new File( NF_LOG ), getNextflowReportDir() );
+			FileUtils.copyFile( log,
+				new File( getNextflowReportDir().getAbsolutePath() + File.separator + NEXTFLOW + Constants.LOG_EXT ) );
 		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Failed to copy nextflow.log to pipeline root directory ", ex );
 		}
@@ -177,6 +182,21 @@ public class NextflowUtil {
 	}
 
 	/**
+	 * Kill Nextflow process (required since parent Java process that ran BioLockJ pipeline will not halt until this
+	 * subprocess is finished.
+	 * 
+	 * @throws Exception if errors occur trying to stop the Nextflow process
+	 */
+	public static void stopNextflow() throws Exception {
+		final String[] args = new String[ 3 ];
+		args[ 0 ] = "kill";
+		args[ 1 ] = "-9";
+		args[ 2 ] = pidID;
+		Processor.submit( args, "Stop Nextflow" );
+
+	}
+
+	/**
 	 * Build the main.nf lines from the template file by replacing several parameters.
 	 * 
 	 * @param template Generated .main.nf template
@@ -189,33 +209,21 @@ public class NextflowUtil {
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
 		try {
 			ScriptModule module = null;
-
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				String onDemandLabel = null;
 				Log.debug( NextflowUtil.class, "READ LINE: " + line );
-				 if( line.contains( PIPELINE_ROOT_DIR ) ) {
-						Log.debug( NextflowUtil.class, "Found final proc worker line: " + line );
-						line = line.replace( PIPELINE_ROOT_DIR, Config.pipelinePath() );
-				} else if( line.trim().startsWith( PROCESS ) ) {
+				if( line.trim().startsWith( PROCESS ) ) {
 					Log.debug( NextflowUtil.class, "Found module PROCESS declaration: " + line );
-					module = getModule( line.replaceAll( PACKAGE_SEPARATOR, "\\." ).replace( PROCESS, "" )
-						.replaceAll( "\\{", "" ).trim() );
+					module = getModule( line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim() );
 					Log.debug( NextflowUtil.class, "START module BLOCK for: " + module.getClass().getName() );
-					line = line.replaceAll( PACKAGE_SEPARATOR, "_" );
+					line = line.replaceAll( "\\.", "_" );
 				} else if( module != null ) {
 					if( line.contains( NF_CPUS ) ) {
 						final String prop = Config.getModuleProp( module, NF_CPUS.substring( 1 ) );
 						line = line.replace( NF_CPUS, Config.getString( module, prop ) );
 					} else if( line.contains( NF_MEMORY ) ) {
 						final String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
-						String ram = Config.requireString( module, prop );
-						if( !ram.startsWith( "'" ) ) {
-							ram = "'" + ram;
-						}
-						if( !ram.endsWith( "'" ) ) {
-							ram = ram + "'";
-						}
-						line = line.replace( NF_MEMORY, ram );
+						line = line.replace( NF_MEMORY, getRAM( Config.requireString( module, prop ) ) );
 					} else if( line.contains( NF_DOCKER_IMAGE ) ) {
 						line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
 						if( Config.requireString( module, EC2_ACQUISITION_STRATEGY ).toUpperCase()
@@ -230,7 +238,7 @@ public class NextflowUtil {
 						module = null;
 					}
 				}
-				
+
 				Log.debug( NextflowUtil.class, "ADD LINE: " + line );
 				lines.add( line );
 				if( onDemandLabel != null ) {
@@ -251,11 +259,9 @@ public class NextflowUtil {
 		String flatMods = "";
 		for( final BioModule module: modules ) {
 			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) ) {
-				flatMods += ( flatMods.isEmpty() ? "": MODULE_SEPARATOR )
-					+ module.getClass().getName().replaceAll( "\\.", PACKAGE_SEPARATOR );
+				flatMods += ( flatMods.isEmpty() ? "": " " ) + module.getClass().getName();
 			}
 		}
-
 		return flatMods;
 	}
 
@@ -305,13 +311,44 @@ public class NextflowUtil {
 		return null;
 	}
 
+	private static String getRAM( final String ram ) throws ConfigFormatException {
+		String val = ram.trim();
+
+		String intVal = val.replaceAll( "[^0-9]", "" );
+		final String level = ram.replace( intVal, "" ).trim();
+		if( level.length() > 0 && !ramLevels.contains( level ) ) throw new ConfigFormatException( AWS_RAM, "" );
+
+		try {
+			intVal = "'" + Integer.parseInt( ram ) + " GB'";
+			Log.warn( NextflowUtil.class, "RAM Config was purely numeric, adding default GB designation: " + ram
+				+ " converted to ---> " + intVal );
+			return intVal;
+		} catch( final Exception ex ) {
+			Log.debug( NextflowUtil.class, "RAM value is not purely numeric, ensure it is single quoted" );
+		}
+
+		if( !val.startsWith( "'" ) ) {
+			val = "'" + val;
+		}
+		if( !val.endsWith( "'" ) ) {
+			val = val + "'";
+		}
+
+		return ram;
+	}
+
 	private static boolean poll() throws Exception {
 		final File nfLog = new File( NF_LOG );
 		if( nfLog.exists() ) {
 			final BufferedReader reader = BioLockJUtil.getFileReader( nfLog );
 			try {
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-					if( line.contains( NF_INIT_FLAG ) ) return true;
+					if( line.trim().startsWith( PID_LABEL ) ) {
+						final String x = line.replace( PID_LABEL, "" ).trim();
+						pidID = x.substring( 0, x.indexOf( "@" ) );
+						Log.info( NextflowUtil.class,
+							"Detected Nextflow PID [ " + pidID + " ] in log file: " + NF_LOG );
+					} else if( line.contains( NF_INIT_FLAG ) ) return true;
 				}
 			} finally {
 				if( reader != null ) {
@@ -343,14 +380,14 @@ public class NextflowUtil {
 		}
 	}
 
-	private static boolean purge( final String subDir ) throws Exception {
-		final String target = DockerUtil.AWS_EFS + File.separator + subDir;
-		Log.info( BioLockJ.class, "Delete everything under/including --> " + target );
+	private static boolean purge( final String path ) throws Exception {
+
+		Log.info( BioLockJ.class, "Delete everything under/including --> " + path );
 		final String[] args = new String[ 3 ];
 		args[ 0 ] = "rm";
 		args[ 1 ] = "-rf";
-		args[ 2 ] = target;
-		Processor.submit( args, "Clear-EFS-Data" );
+		args[ 2 ] = path;
+		Processor.submit( args, "Clear-AWS-Data" );
 		return true;
 	}
 
@@ -358,10 +395,10 @@ public class NextflowUtil {
 		final String reportBase = getNextflowReportDir().getAbsolutePath() + File.separator + Config.pipelineName()
 			+ "_";
 		final String[] args = new String[ 11 ];
-		args[ 0 ] = NEXTFLOW_CMD;
+		args[ 0 ] = NEXTFLOW;
 		args[ 1 ] = "run";
 		args[ 2 ] = "-work-dir";
-		args[ 3 ] = S3_DIR + Config.requireString( null, AWS_S3 ) + File.separator + NEXTFLOW_CMD;
+		args[ 3 ] = S3_DIR + Config.requireString( null, AWS_S3 ) + File.separator + NEXTFLOW;
 		args[ 4 ] = "-with-trace";
 		args[ 5 ] = reportBase + "nextflow_trace.tsv";
 		args[ 6 ] = "-with-timeline";
@@ -456,6 +493,7 @@ public class NextflowUtil {
 	protected static final String NF_LOG = "/.nextflow.log";
 
 	private static final String AWS_DB_DIR = "db";
+
 	private static final String AWS_INPUT_DIR = "input";
 	private static final String AWS_META_DIR = "metadata";
 	private static final String AWS_PRIMER_DIR = "primer";
@@ -464,9 +502,7 @@ public class NextflowUtil {
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
 	private static final String MODULE_SCRIPT = "BLJ_MODULE_SUB_DIR";
-	private static final String PIPELINE_ROOT_DIR = "BLJ_PIPELINE_DIR";
-	private static final String MODULE_SEPARATOR = ".";
-	private static final String NEXTFLOW_CMD = "nextflow";
+	private static final String NEXTFLOW = "nextflow";
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 	private static final String NF_INIT_FLAG = "Session await";
@@ -474,8 +510,10 @@ public class NextflowUtil {
 	private static final String NF_MEMORY = "$" + AWS_RAM;
 	private static final int NF_TIMEOUT = 180;
 	private static final String ON_DEMAND = "DEMAND";
-	private static final String PACKAGE_SEPARATOR = "_:_";
+	private static final String PID_LABEL = "Process:";
+	private static String pidID = null;
 	private static final String PROCESS = "process";
+	private static List<String> ramLevels = Arrays.asList( "KB", "MB", "GB", "TB" );
 	private static final String S3_DIR = "s3://";
 	private static final Set<Integer> usedModules = new HashSet<>();
 }

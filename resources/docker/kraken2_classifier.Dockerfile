@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_FILE_PATH/kraken2_classifier.Dockerfile
+# Deployment path:  $DOCKER_DIR/kraken2_classifier.Dockerfile
 
 FROM biolockj/kraken2_classifier_dbfree
  

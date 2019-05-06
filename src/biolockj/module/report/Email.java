@@ -22,9 +22,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.mail.*;
 import javax.mail.internet.*;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
+import biolockj.*;
 import biolockj.module.BioModuleImpl;
 import biolockj.util.MasterConfigUtil;
 import biolockj.util.RuntimeParamUtil;
@@ -58,7 +56,7 @@ public class Email extends BioModuleImpl {
 		Config.requireBoolean( this, EMAIL_SMTP_AUTH );
 		Config.requireBoolean( this, EMAIL_START_TLS_ENABLE );
 		Config.requireString( this, EMAIL_ENCRYPTED_PASSWORD );
-		Config.getString( this, CLUSTER_HOST );
+		Config.getString( this, Constants.CLUSTER_HOST );
 
 		new InternetAddress( Config.requireString( this, EMAIL_FROM ) ).validate();
 		for( final String email: Config.requireList( this, EMAIL_TO ) ) {
@@ -248,12 +246,6 @@ public class Email extends BioModuleImpl {
 		multipart.addBodyPart( mimeMsg );
 		return multipart;
 	}
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #CLUSTER_HOST}<br>
-	 * The cluster host URL used for SSH and SCP connections.
-	 */
-	public static final String CLUSTER_HOST = "cluster.host";
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #EMAIL_ENCRYPTED_PASSWORD}<br>
