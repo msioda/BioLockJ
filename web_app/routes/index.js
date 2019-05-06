@@ -227,6 +227,12 @@ router.get('/streamProgress', function(request, response){
   });
 });
 
+router.post('/listAwsProfiles', function (req, res, next) {
+  res.setHeader('Content-Type', 'text/html');
+  res.write((JSON.stringify(['profile1', 'profile2', 'profile3'])));
+  res.end();
+})
+
 // source ~/.batchawsdeploy/config ; getcloudformationstack.sh testing2
 
 const batchAwsConfigFile = "~/.batchawsdeploy/config"; //find a good place to put this
