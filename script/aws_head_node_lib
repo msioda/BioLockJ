@@ -71,7 +71,7 @@ close_nextflow_config() {
 # Connect to running head node
 connect_head() {
 	aws_log "Opening SSH tunnel to Head Node...$(get_ec2_public_ip)"
-	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_ec2_public_ip)
+	ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip)
 }
 
 # Get the flag file that indicates Docker job definitions were created

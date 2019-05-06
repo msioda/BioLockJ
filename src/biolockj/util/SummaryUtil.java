@@ -761,29 +761,30 @@ public class SummaryUtil {
 	}
 
 	private static String getRuntimeEnv() {
+		if( runtimeEnv != null ) return runtimeEnv;
 		String clusterHost = null;
-		String env = "localhost";
+		runtimeEnv = "localhost";
 		try {
 			if( Config.isOnCluster() ) {
 				clusterHost = Config.requireString( null, Constants.CLUSTER_HOST );
-				env = clusterHost;
+				runtimeEnv = clusterHost;
 			}
-			env = Processor.submit( "hostname", "Query Hostname" );
+			runtimeEnv = Processor.submit( "hostname", "Query Hostname" );
 		} catch( final Exception ex ) {
 			Log.warn( SummaryUtil.class, "Failed to determine runtime environment host" );
 		}
 
 		if( DockerUtil.inAwsEnv() ) {
-			env = "AWS::Nextflow::Docker::" + env;
+			runtimeEnv = "AWS::Nextflow::Docker::" + runtimeEnv;
 		} else if( DockerUtil.inDockerEnv() ) {
-			env = "Docker::" + env;
+			runtimeEnv = "Docker::" + runtimeEnv;
 		} else if( Config.isOnCluster() ) {
-			if( clusterHost != null && env != clusterHost ) {
-				env = "head-" + clusterHost + "::compute-" + env;
+			if( clusterHost != null && runtimeEnv != clusterHost ) {
+				runtimeEnv = "head-" + clusterHost + "::compute-" + runtimeEnv;
 			}
-			env = "Cluster::" + env;
+			runtimeEnv = "Cluster::" + runtimeEnv;
 		}
-		return env;
+		return runtimeEnv;
 	}
 
 	private static String getSpacer( final String val, final int len ) {
@@ -803,6 +804,7 @@ public class SummaryUtil {
 	}
 
 	private static String downloadCommand = null;
+	private static String runtimeEnv = null;
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String EXT_SPACER = getDashes( 154 );
 	private static final String FINAL_CONFIG = "Final Config";

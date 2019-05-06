@@ -79,7 +79,7 @@ build_start_script() {
 	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $(start_aws_pipeline_script)
 	echo "clearDock" >> $(start_aws_pipeline_script)
 	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $inputDirPaths) -c=$(get_config ec2)" >> $(start_aws_pipeline_script)
-	echo "sudo chown -R ${USER}:${USER} ${EFS}" >> $(start_aws_pipeline_script)
+	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> $(start_aws_pipeline_script)
 	echo "sudo chmod -R 777 ${EFS}" >> $(start_aws_pipeline_script)
 	chmod 770 $(start_aws_pipeline_script)
 	echo $(start_aws_pipeline_script)
@@ -91,14 +91,14 @@ build_start_script() {
 download_dir_from_efs() {
 	if [ $# -eq 2 ]; then target="${2}"; else target="${HOME}/projects/downloads/efs"; fi
 	aws_log "Downloading EFS directory \"${1}\" to --> \"$target\""
-	echo "Execute EFS-DL-CMD:  [ scp -pro StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_ec2_public_ip):$1 ${target} ]"
-	scp -pro StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_ec2_public_ip):$1 ${target} 
+	echo "Execute EFS-DL-CMD:  [ scp -pro StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip):$1 ${target} ]"
+	scp -pro StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip):$1 ${target} 
 }
 
 # Execute remote command on the head node
 # Param 1 - Remote command
 exe_remote_cmd() {
-	ssh -o StrictHostKeyChecking=no -i $(key_file) ec2-user@$(get_ec2_public_ip) "$1"
+	ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip) "$1"
 }
 
 # Return the AWS profile tag - if undefined, returns [default]
@@ -210,7 +210,7 @@ upload_config_to_aws() {
 upload_dir_to_efs() {
 	if [ $# -eq 2 ]; then target="${2}"; else target="${EC2_HOME}"; fi
 	aws_log "Uploading directory \"${1}\" to AWS --> \"$target\""
-	scp -pro StrictHostKeyChecking=no -i $(key_file) "${1}" ec2-user@$(get_ec2_public_ip):${target}
+	scp -pro StrictHostKeyChecking=no -i $(key_file) "${1}" ${EC2_USER}@$(get_ec2_public_ip):${target}
 }
 
 # Upload local file-path up to the ec2 head node, if no target dir specified use EC2 ${HOME}
@@ -219,7 +219,7 @@ upload_dir_to_efs() {
 upload_file_to_efs() {
 	if [ $# -eq 2 ]; then target="$2"; else target="${EC2_HOME}"; fi
 	aws_log "Uploading file \"$1\" to AWS --> \"$target\""
-	scp -pro StrictHostKeyChecking=no -i $(key_file) "$1" ec2-user@$(get_ec2_public_ip):${target}
+	scp -pro StrictHostKeyChecking=no -i $(key_file) "$1" ${EC2_USER}@$(get_ec2_public_ip):${target}
 }
 
 

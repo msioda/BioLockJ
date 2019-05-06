@@ -128,6 +128,7 @@ public class Processor {
 		if( bashVarValue != null && bashVarValue.trim().isEmpty() ) {
 			bashVarValue = null;
 		}
+		Log.info( Processor.class, "[  Get Bash Var ]: CMD --> complete!" );
 		return bashVarValue;
 	}
 
