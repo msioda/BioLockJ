@@ -134,12 +134,16 @@ public class BioLockJ {
 		BioLockJUtil.ignoreFile( statusFile );
 		BioLockJUtil.createFile( path );
 
-		final List<File> inputFiles = new ArrayList<>(
+		final List<File> inputFiles = new ArrayList<>();
+		final List<File> allFiles = new ArrayList<>(
 			FileUtils.listFiles( pipelineInputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-		info( "Total number of input files: " + inputFiles.size() );
+		info( "Total number of input files: " + allFiles.size() );
 		int i = 0;
-		for( final File file: inputFiles ) {
-			info( "Imported Input File [ " + i++ + " ]: " + file.getAbsolutePath() );
+		for( final File file: allFiles ) {
+			if( !Config.getSet( null, Constants.INPUT_IGNORE_FILES ).contains( file.getName() ) ) {
+				inputFiles.add( file );
+				info( "Pipeline Input [ " + i++ + " ]: " + file.getAbsolutePath() );
+			}
 		}
 
 		BioLockJUtil.setPipelineInputFiles( inputFiles );
@@ -215,6 +219,8 @@ public class BioLockJ {
 			if( MetaUtil.getMetadata() != null ) {
 				BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
 			}
+			
+			if( DockerUtil.inAwsEnv() ) NextflowUtil.stageRootConfig();
 
 			// Initializes PIPELINE_SEQ_INPUT_TYPE
 			BioLockJUtil.getPipelineInputFiles();

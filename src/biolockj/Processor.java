@@ -107,6 +107,7 @@ public class Processor {
 		String bashVarValue = null;
 		try {
 			final String var = bashVar.startsWith( "$" ) || bashVar.equals( "~" ) ? bashVar: "$" + bashVar;
+			Log.info( Processor.class, "[ Get Bash Var ]: CMD --> " + getArgsAsString( bashVarArgs( var ) ) );
 			final Process p = Runtime.getRuntime().exec( bashVarArgs( var ) );
 			final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 			String s = null;

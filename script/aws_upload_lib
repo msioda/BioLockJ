@@ -68,16 +68,19 @@ aws_s3_ls() {
 build_start_script() {
 	[ -f "${metadataFilePath}" ] && meta="-m=${BLJ_META} "
 	echo $sheBang > $(start_aws_pipeline_script)
-	echo "##########################################################" >> $(start_aws_pipeline_script)
-	echo "##  Run this script to launch BioLockJ pipeline on AWS  ##" >> $(start_aws_pipeline_script)
-	echo "##  1) Pull the latest biolockj image from Docker Hub   ##" >> $(start_aws_pipeline_script)
-	echo "##  2) Clear stale Docker images/containers (if any)    ##" >> $(start_aws_pipeline_script)
-	echo "##  3) Run dockblj on the AWS Config                    ##" >> $(start_aws_pipeline_script)
-	echo "##########################################################" >> $(start_aws_pipeline_script)
+	echo "###################################################################" >> $(start_aws_pipeline_script)
+	echo "##  Run this script to launch BioLockJ pipeline on AWS           ##" >> $(start_aws_pipeline_script)
+	echo "##  1) Pull the latest biolockj image from Docker Hub            ##" >> $(start_aws_pipeline_script)
+	echo "##  2) Clear stale Docker images/containers (if any)             ##" >> $(start_aws_pipeline_script)
+	echo "##  3) Run dockblj on the AWS Config                             ##" >> $(start_aws_pipeline_script)
+	echo "##  4) Reset Nextflow-modified ${EFS} owner and access privs     ##" >> $(start_aws_pipeline_script)
+	echo "###################################################################" >> $(start_aws_pipeline_script)
 	echo '. ~/.bash_profile' >> $(start_aws_pipeline_script)
 	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> $(start_aws_pipeline_script)
 	echo "clearDock" >> $(start_aws_pipeline_script)
 	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $inputDirPaths) -c=$(get_config ec2)" >> $(start_aws_pipeline_script)
+	echo "sudo chown -R ${USER}:${USER} ${EFS}" >> $(start_aws_pipeline_script)
+	echo "sudo chmod -R 777 ${EFS}" >> $(start_aws_pipeline_script)
 	chmod 770 $(start_aws_pipeline_script)
 	echo $(start_aws_pipeline_script)
 }
@@ -187,7 +190,7 @@ stage_pipeline_on_aws() {
 
 # Get ths AWS script name
 start_aws_pipeline_script() {
-	echo "${EC2_HOME}/.aws/start-$(get_config_name).sh"
+	echo ~/.aws/start-$(get_config_name).sh
 }
 
 # The method creates a new version of the pipeline Config files by replacing 

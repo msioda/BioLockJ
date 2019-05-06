@@ -131,7 +131,7 @@ launch_ec2_head_node() {
 	stage_pipeline_on_aws
 	if [ $# -eq 1 ] && [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
 		echo "Exectue internal CMD [  launch_ec2_head_node \"start\"  ]"
-		exe_remote_cmd "$(start_aws_pipeline_script)" 
+		exe_remote_cmd "$(basename $(start_aws_pipeline_script))" 
 	else
 		echo "Exectue internal CMD [  connect_head  ]"
 		connect_head

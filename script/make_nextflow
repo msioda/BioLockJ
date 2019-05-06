@@ -38,32 +38,13 @@ build_template() {
 		echo "-----------------------------------------------------------------------------------------"	
 }
 
-# Copy EC2 User root config into container /root directory:
-# /user/ec2-user/.aws --> /root/.aws
-# /user/ec2-user/.nextflow/config --> /root/.nextflow/config
-stage_root_config() {
-	echo "Copy ${EC2_HOME}/.aws ---> ~" && cp -vr "${EC2_HOME}/.aws" ~ && echo "Copy Complete!"
-	echo "Copy ${NF_CONFIG} ---> ~/.nextflow" && cp -v "${NF_CONF}" ~/.nextflow && echo "Copy Complete!"
-}
-
 # Verify at least 2 inpur parameters
 verify_inputs() {
 	[ $# -lt 2 ] && \
 		exit_script "Error [ make_nextflow.verify_inputs() ]: Script requires 1) main.nf file-path + 2) list of fully qualified BioModule Java class names"
 	[ ! -d "$(dirname ${1})" ] && \
 		exit_script "Error [ make_nextflow.verify_inputs() ]: Directory \"$(dirname ${1})\" from template nf path \"${1}\" not found!"
-	[ ! -f "${AWS_CRED}" ] && \
-		exit_script "Error [ make_nextflow.verify_inputs() ]:  Missing EC2-AWS credentials file: ${AWS_CRED}"
-	[ ! -f "${AWS_CONF}" ] && \
-		exit_script "Error [ make_nextflow.verify_inputs() ]:  Missing EC2-AWS config file: ${AWS_CONF}"
-	[ ! -f "${NF_CONF}" ] && \
-		exit_script "Error [ make_nextflow.verify_inputs() ]:  Missing EC2-Nextflow config: ${NF_CONF}"
 }
 
-AWS_CONF="${EC2_HOME}/.aws/config"
-AWS_CRED="${EC2_HOME}/.aws/credentials"
-NF_CONF="${EC2_HOME}/.nextflow/config"
-
 verify_inputs $@
-stage_root_config
 build_template $@
