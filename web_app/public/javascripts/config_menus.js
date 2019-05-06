@@ -559,4 +559,23 @@ function clearChildren(t) {
   }
 }
 
+document.getElementById('aws.profile').addEventListener('focus', function(){
+  let datL = returnPromiseFromServer('/listAwsProfiles', requestParameter = null);
+  datL.then( arr => {
+    console.log('aws.profile: ', arr);
+    updateDataList('awsProfiles', arr);
+  })
+})
+
+//update datalist from array
+function updateDataList(dataListId, arry) {
+  let dl = document.getElementById(dataListId);
+  clearChildren(dl);
+  for (let a of arry){
+    let opt = document.createElement('option');
+    opt.value = a;
+    opt.text = a;
+    dl.appendChild(opt)
+  }
+}
 
