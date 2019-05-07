@@ -50,14 +50,14 @@ public class NextflowUtil {
 			s3Dir += efsPath.replace( Config.pipelinePath(), "" );
 		}
 		Log.info( BioLockJ.class, "Transfer " + efsPath + " to --> " + s3Dir );
-		
+
 		final String[] s3args = new String[ 5 ];
 		s3args[ 0 ] = "aws";
 		s3args[ 1 ] = "s3";
 		s3args[ 2 ] = new File( efsPath ).isFile() ? "cp": "sync";
 		s3args[ 3 ] = efsPath;
 		s3args[ 4 ] = s3Dir;
-		
+
 		if( waitUntilComplete ) {
 			Processor.submit( s3args, "S3-Sync-xFer" );
 		} else {
@@ -173,6 +173,31 @@ public class NextflowUtil {
 	}
 
 	/**
+	 * Before any AWS or Nextflow functionality can be used, the Docker root user $HOME directory must be updated with
+	 * the EC2 user aws + Nextflow config.
+	 * 
+	 * @throws IOException if source or target config directories are not found
+	 */
+	public static void stageRootConfig() throws IOException {
+		final File ec2Aws = new File( DockerUtil.AWS_HOME + File.separator + AWS_DIR );
+		final File ec2NfConfig = new File( DockerUtil.AWS_HOME + File.separator + NF_DIR + File.separator + "config" );
+		final File rootNfDir = new File( DockerUtil.DOCKER_HOME + File.separator + NF_DIR );
+		final File rootNfConfig = new File( rootNfDir.getAbsolutePath() + File.separator + "config" );
+		final File rootAwsConfig = new File(
+			DockerUtil.DOCKER_HOME + File.separator + AWS_DIR + File.separator + "config" );
+		final File rootAwsCred = new File(
+			DockerUtil.DOCKER_HOME + File.separator + AWS_DIR + File.separator + "credentials" );
+		FileUtils.copyFileToDirectory( ec2NfConfig, rootNfDir );
+		FileUtils.copyDirectoryToDirectory( ec2Aws, new File( DockerUtil.DOCKER_HOME ) );
+		if( !rootNfConfig.isFile() )
+			throw new IOException( "Root Nextflow config not found --> " + rootNfDir.getAbsolutePath() );
+		if( !rootAwsConfig.isFile() )
+			throw new IOException( "Root AWS config not found --> " + rootAwsConfig.getAbsolutePath() );
+		if( !rootAwsCred.isFile() )
+			throw new IOException( "Root Nextflow credentials not found --> " + rootAwsCred.getAbsolutePath() );
+	}
+
+	/**
 	 * Call this method to build the Nextflow main.nf for the current pipeline.
 	 * 
 	 * @param modules Pipeline modules
@@ -253,32 +278,6 @@ public class NextflowUtil {
 		}
 		Log.info( NextflowUtil.class, "Done building main.nf with # lines = " + lines.size() );
 		return lines;
-	}
-
-	/**
-	 * Before any AWS or Nextflow functionality can be used, the Docker root user $HOME directory
-	 * must be updated with the EC2 user aws + Nextflow config.
-	 * 
-	 * @throws IOException if source or target config directories are not found
-	 */
-	public static void stageRootConfig() throws IOException {
-		final File ec2Aws = new File( DockerUtil.AWS_HOME + File.separator + AWS_DIR );
-		final File ec2NfConfig = new File( DockerUtil.AWS_HOME + File.separator + NF_DIR + File.separator + "config" );
-		final File rootNfDir = new File( DockerUtil.DOCKER_HOME + File.separator + NF_DIR );
-		final File rootNfConfig = new File( rootNfDir.getAbsolutePath() + File.separator + "config" );
-		final File rootAwsConfig = new File( DockerUtil.DOCKER_HOME + File.separator + AWS_DIR + File.separator + "config" );
-		final File rootAwsCred = new File( DockerUtil.DOCKER_HOME + File.separator + AWS_DIR + File.separator + "credentials" );
-		FileUtils.copyFileToDirectory( ec2NfConfig, rootNfDir );
-		FileUtils.copyDirectoryToDirectory( ec2Aws, new File( DockerUtil.DOCKER_HOME ) );
-		if( !rootNfConfig.isFile() ) {
-			throw new IOException( "Root Nextflow config not found --> " + rootNfDir.getAbsolutePath() );
-		}
-		if( !rootAwsConfig.isFile() ) {
-			throw new IOException( "Root AWS config not found --> " + rootAwsConfig.getAbsolutePath() );
-		}
-		if( !rootAwsCred.isFile() ) {
-			throw new IOException( "Root Nextflow credentials not found --> " + rootAwsCred.getAbsolutePath() );
-		}
 	}
 
 	private static String asString( final List<BioModule> modules ) {
@@ -517,14 +516,16 @@ public class NextflowUtil {
 	 */
 	protected static final String NF_LOG = "/.nextflow.log";
 
-	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
+	private static final String AWS_DIR = ".aws";
 
+	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
 	private static final String MODULE_SCRIPT = "BLJ_MODULE_SUB_DIR";
 	private static final String NEXTFLOW = "nextflow";
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
+	private static final String NF_DIR = ".nextflow";
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 	private static final String NF_INIT_FLAG = "Session await";
 	private static final String NF_LOG_NAME = ".nextflow.log";
@@ -537,6 +538,4 @@ public class NextflowUtil {
 	private static final String S3_DIR = "s3://";
 	private static Set<String> s3SyncRegister = new HashSet<>();
 	private static final Set<Integer> usedModules = new HashSet<>();
-	private static final String AWS_DIR = ".aws";
-	private static final String NF_DIR = ".nextflow";
 }

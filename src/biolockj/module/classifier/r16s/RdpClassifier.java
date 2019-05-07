@@ -109,8 +109,9 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines.add( Config.getExe( this, Constants.EXE_JAVA ) + " " + getJavaParams() + JAVA_JAR_PARAM + " " + getJar()
-			+ " " + getRuntimeParams( getClassifierParams(), null ) + getDbParam() + OUTPUT_PARAM + " $2 $1" );
+		lines
+			.add( Config.getExe( this, Constants.EXE_JAVA ) + " " + getJavaParams() + Constants.JAR_ARG + " " + getJar()
+				+ " " + getRuntimeParams( getClassifierParams(), null ) + getDbParam() + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
@@ -155,6 +156,5 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	protected static final String RDP_PARAMS = "exe.rdpParams";
 
 	private static final String DB_PARAM = "-t";
-	private static final String JAVA_JAR_PARAM = "-jar";
 	private static final String OUTPUT_PARAM = "-o";
 }

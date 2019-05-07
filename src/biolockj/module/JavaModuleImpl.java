@@ -36,10 +36,9 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		final List<List<String>> data = new ArrayList<>();
 		final ArrayList<String> lines = new ArrayList<>();
 		if( DockerUtil.inDockerEnv() ) {
-			lines.add( "java" + getSource() + " $" + BLJ_OPTIONS );
+			lines.add( "java" + runBioLockJ_CMD() + " $" + BLJ_OPTIONS );
 		} else {
-			lines.add( "java" + getSource() + " " + RuntimeParamUtil.getDirectModuleParam( this ) + " "
-				+ RuntimeParamUtil.getBaseDirParam() + " " + RuntimeParamUtil.getConfigFileParam() );
+			lines.add( "java" + runBioLockJ_CMD() + " " + RuntimeParamUtil.getJavaModuleParams( this ) );
 		}
 
 		data.add( lines );
@@ -105,31 +104,6 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public abstract void runModule() throws Exception;
 
 	/**
-	 * Get the program source (either the jar path or main class biolockj.BioLockJ);
-	 * 
-	 * @return java source parameter (either Jar or main class with classpath)
-	 * @throws Exception if unable to determine source
-	 */
-	protected final String getSource() throws Exception {
-		final File source = new File(
-			JavaModuleImpl.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
-		String javaString = null;
-		if( source.exists() && source.isFile() ) {
-			javaString = " -jar " + source.getAbsolutePath();
-		} else if( source.exists() && source.isDirectory() ) {
-			final String lib = source.getAbsolutePath().replace( "bin", "lib/*" );
-			javaString = " -cp " + source.getAbsolutePath() + ":" + lib + " " + BioLockJ.class.getName();
-		}
-
-		if( javaString != null ) {
-			Log.debug( getClass(), "BioLockJ Java source code for java command: " + javaString );
-			return javaString;
-		}
-
-		throw new Exception( "Cannot find BioLockJ program source: " + source.getAbsolutePath() );
-	}
-
-	/**
 	 * This method sets the module status by saving the indicator file to the module root dir.
 	 * 
 	 * @param status Success or Failures
@@ -166,6 +140,31 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 			Log.warn( getClass(), msg );
 			throw new Exception( msg );
 		}
+	}
+
+	/**
+	 * Get the program source (either the jar path or main class biolockj.BioLockJ);
+	 * 
+	 * @return java source parameter (either Jar or main class with class-path)
+	 * @throws Exception if unable to determine source
+	 */
+	protected final String runBioLockJ_CMD() throws Exception {
+		final File source = new File(
+			JavaModuleImpl.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
+		String javaString = null;
+		if( source.exists() && source.isFile() ) {
+			javaString = " " + Constants.JAR_ARG + " " + source.getAbsolutePath();
+		} else if( source.exists() && source.isDirectory() ) {
+			final String lib = source.getAbsolutePath().replace( "bin", "lib/*" );
+			javaString = " -cp " + source.getAbsolutePath() + ":" + lib + " " + BioLockJ.class.getName();
+		}
+
+		if( javaString != null ) {
+			Log.debug( getClass(), "BioLockJ Java source code for java command: " + javaString );
+			return javaString;
+		}
+
+		throw new Exception( "Cannot find BioLockJ program source: " + source.getAbsolutePath() );
 	}
 
 	/**

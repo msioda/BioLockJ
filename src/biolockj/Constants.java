@@ -140,12 +140,12 @@ public class Constants {
 	 * Set command line executable awk.
 	 */
 	public static final String EXE_AWK = "exe.awk";
+
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_DOCKER}<br>
 	 * Set command line executable docker
 	 */
 	public static final String EXE_DOCKER = "exe.docker";
-
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
 	 * Set command line executable gzip
@@ -203,12 +203,12 @@ public class Constants {
 	 * {@value #HN2_DISABLE_PATH_ABUNDANCE}
 	 */
 	public static final String HN2_DISABLE_PATH_ABUNDANCE = "humann2.disablePathAbundance";
+
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Pathway Coverage report:
 	 * {@value #HN2_DISABLE_PATH_COVERAGE}
 	 */
 	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
-
 	/**
 	 * HumanN2 file suffix identifier for Gene Family Summary report: {@value #HN2_GENE_FAM_SUM}
 	 */
@@ -342,6 +342,11 @@ public class Constants {
 	 * System will auto-detect if not configured
 	 */
 	public static final String INTERNAL_SEQ_TYPE = "internal.seqType";
+
+	/**
+	 * Java runtime arg used to pass application jar path: {@value #JAR_ARG}
+	 */
+	public static final String JAR_ARG = "-jar";
 
 	/**
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when

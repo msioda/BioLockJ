@@ -219,8 +219,10 @@ public class BioLockJ {
 			if( MetaUtil.getMetadata() != null ) {
 				BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
 			}
-			
-			if( DockerUtil.inAwsEnv() ) NextflowUtil.stageRootConfig();
+
+			if( DockerUtil.inAwsEnv() ) {
+				NextflowUtil.stageRootConfig();
+			}
 
 			// Initializes PIPELINE_SEQ_INPUT_TYPE
 			BioLockJUtil.getPipelineInputFiles();

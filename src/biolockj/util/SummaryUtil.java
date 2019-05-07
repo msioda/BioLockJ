@@ -804,7 +804,6 @@ public class SummaryUtil {
 	}
 
 	private static String downloadCommand = null;
-	private static String runtimeEnv = null;
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String EXT_SPACER = getDashes( 154 );
 	private static final String FINAL_CONFIG = "Final Config";
@@ -820,6 +819,7 @@ public class SummaryUtil {
 	private static final String RETURN = Constants.RETURN;
 	private static final String RUN_TIME = "Runtime";
 	private static final String RUNTIME_ENV = "Runtime Env";
+	private static String runtimeEnv = null;
 	private static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
 	private static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
 }
