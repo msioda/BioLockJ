@@ -358,11 +358,17 @@ public class DockerUtil {
 	 * Docker container root user DB directory
 	 */
 	public static final String AWS_EFS_DB = AWS_EFS + "/db";
+	
+	/**
+	 * AWS $USER: {@value #AWS_EC2_USER}
+	 */
+	public static final String AWS_EC2_USER = "ec2-user";
 
 	/**
 	 * AWS container root user $HOME directory: {@value #AWS_HOME}
 	 */
-	public static final String AWS_HOME = "/home/ec2-user";
+	public static final String AWS_HOME = "/home/" + AWS_EC2_USER;
+
 
 	/**
 	 * Docker container blj_support dir for dev support

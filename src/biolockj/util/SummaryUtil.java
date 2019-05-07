@@ -126,7 +126,8 @@ public class SummaryUtil {
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
 		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration ) + RETURN );
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
-		sb.append( getLabel( FINAL_CONFIG ) + "    " + MasterConfigUtil.getPath() + RETURN );
+		sb.append( getLabel( INPUT_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( MASTER_CONFIG ) + "   " + MasterConfigUtil.getPath() + RETURN );
 		sb.append( getLabel( FINAL_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
 
 		final String downloadCmd = downloadCmd();
@@ -780,9 +781,10 @@ public class SummaryUtil {
 			runtimeEnv = "DOCKER::" + runtimeEnv;
 		} else if( Config.isOnCluster() ) {
 			if( clusterHost != null && runtimeEnv != clusterHost ) {
-				runtimeEnv = "HEAD:" + clusterHost + " --> COMPUTE:" + runtimeEnv;
+				runtimeEnv = "head::" + DockerUtil.AWS_EC2_USER + "@" + clusterHost + " --> compute::" 
+								+ DockerUtil.AWS_EC2_USER + "@" + runtimeEnv;
 			}
-			runtimeEnv = "CLUSTER:" + runtimeEnv;
+			runtimeEnv = "CLUSTER [ " + runtimeEnv + " ]";
 		}
 		return runtimeEnv;
 	}
@@ -806,7 +808,7 @@ public class SummaryUtil {
 	private static String downloadCommand = null;
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String EXT_SPACER = getDashes( 154 );
-	private static final String FINAL_CONFIG = "Final Config";
+	private static final String MASTER_CONFIG = "Master Config";
 	private static final String FINAL_META = "Final Metadata";
 	private static final String INPUT_CONFIG = "Input Config";
 	private static final String MODULE = "Module";

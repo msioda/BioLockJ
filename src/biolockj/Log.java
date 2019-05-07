@@ -60,9 +60,7 @@ public class Log {
 		}
 
 		if( logFile == null ) {
-			if( !MetaUtil.class.equals( loggingClass ) ) {
-				logMesseges.add( new String[] { DEBUG, msg } );
-			}
+			logMesseges.add( new String[] { DEBUG, msg } );
 		} else {
 			out( loggingClass ).debug( msg );
 		}

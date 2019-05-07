@@ -194,7 +194,7 @@ public class RuntimeParamUtil {
 			}
 			String val = null;
 			if( key.equals( HOST_CONFIG_DIR ) ) {
-				val = CONFIG_FILE + " " + params.get( key ) + getConfigFile().getName();
+				val = CONFIG_FILE + " " + params.get( key ) + File.separator + getConfigFile().getName();
 			} else if( key.equals( HOST_HOME_DIR ) ) {
 				val = HOME_DIR + " " + params.get( key );
 			} else if( key.equals( HOST_BLJ_PROJ_DIR ) ) {

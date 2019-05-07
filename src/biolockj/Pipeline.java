@@ -59,11 +59,11 @@ public class Pipeline {
 
 		refreshOutputMetadata( module );
 		module.cleanUp();
+		
+		if( !runDetached ) SummaryUtil.reportSuccess( module );
 
-		if( !ModuleUtil.isComplete( module ) && !runDetached ) {
-			SummaryUtil.reportSuccess( module );
-			ModuleUtil.markComplete( module );
-		}
+		ModuleUtil.markComplete( module );
+
 	}
 
 	/**
@@ -117,7 +117,7 @@ public class Pipeline {
 			Log.info( Pipeline.class,
 				"Start Direct BioModule Execution for [ ID #" + id + " ] ---> " + module.getClass().getSimpleName() );
 			module.runModule();
-			Log.info( MetaUtil.class, "DIRECT module ID [" + id + "].runModule() complete!" );
+			Log.info( Pipeline.class, "DIRECT module ID [" + id + "].runModule() complete!" );
 			refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
 			module.cleanUp();
 			module.moduleComplete();

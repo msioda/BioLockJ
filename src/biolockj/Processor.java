@@ -44,7 +44,6 @@ public class Processor {
 		@Override
 		public void run() {
 			try {
-				Log.info( getClass(), " initiailizing..." );
 				new Processor().runJob( this.args, this.label );
 			} catch( final Exception ex ) {
 				Log.error( getClass(),
@@ -68,6 +67,7 @@ public class Processor {
 	 * @throws Exception if errors occur in the Processor
 	 */
 	public String runJob( final String[] args, final String label ) throws Exception {
+		Log.info( getClass(), "[ " + label + " ]: STARTING" );
 		Log.info( getClass(), "[ " + label + " ]: CMD --> " + getArgsAsString( args ) );
 		final Process p = Runtime.getRuntime().exec( args );
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
@@ -78,12 +78,12 @@ public class Processor {
 				if( returnVal == null ) {
 					returnVal = s;
 				}
-				Log.info( getClass(), "[ " + label + " ]: OUT --> " + s );
+				Log.info( getClass(), "[ " + label + " ]: " + s );
 			}
 		}
 		p.waitFor();
 		p.destroy();
-		Log.info( getClass(), "[ " + label + " ]: CMD --> complete!" );
+		Log.info( getClass(), "[ " + label + " ]: COMPLETE" );
 		return returnVal;
 	}
 
@@ -105,30 +105,30 @@ public class Processor {
 	public static String getBashVar( final String bashVar ) {
 		if( bashVar == null ) return null;
 		String bashVarValue = null;
+		Log.info( Processor.class, "[ Get Bash Var ("+bashVar+") ]: STARTING" );
 		try {
 			final String var = bashVar.startsWith( "$" ) || bashVar.equals( "~" ) ? bashVar: "$" + bashVar;
-			Log.info( Processor.class, "[ Get Bash Var ]: CMD --> " + getArgsAsString( bashVarArgs( var ) ) );
+			Log.info( Processor.class, "[ Get Bash Var ("+bashVar+") ]: CMD --> " + getArgsAsString( bashVarArgs( var ) ) );
 			final Process p = Runtime.getRuntime().exec( bashVarArgs( var ) );
 			final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 			String s = null;
 			while( ( s = br.readLine() ) != null )
 				if( s.startsWith( BLJ_GET_ENV_VAR_KEY ) ) {
 					bashVarValue = s.replace( BLJ_GET_ENV_VAR_KEY, "" ).trim();
+					break;
 				}
 			p.waitFor();
 			p.destroy();
 		} catch( final Exception ex ) {
-			Log.warn( Processor.class,
-				"Problem occurred trying to convert bash env. variable: " + bashVar + " ---> " + ex.getMessage() );
-			ex.printStackTrace();
+			Log.error( Processor.class, "Problem occurred looking up bash env. variable: " + bashVar, ex );
 		}
 		if( bashVarValue == null ) {
-			Log.warn( Processor.class, "Bash env variable: " + bashVar + " not found" );
+			Log.warn( Processor.class, "[ Get Bash Var ("+bashVar+") ]: FAILED" );
 		}
 		if( bashVarValue != null && bashVarValue.trim().isEmpty() ) {
 			bashVarValue = null;
 		}
-		Log.info( Processor.class, "[  Get Bash Var ]: CMD --> complete!" );
+		Log.info( Processor.class, "[ Get Bash Var ("+bashVar+") ]: COMPLETE" );
 		return bashVarValue;
 	}
 
@@ -145,7 +145,7 @@ public class Processor {
 		final Thread t = new Thread( new Processor().new Subprocess( args, label ) );
 		threadRegister.put( t, System.currentTimeMillis() );
 		Log.warn( Processor.class,
-			"Register Subprocess Thread: " + t.getId() + " - " + t.getName() + " @" + threadRegister.get( t ) );
+			"Register Thread: " + t.getId() + " - " + t.getName() + " @" + threadRegister.get( t ) );
 		t.start();
 		return t;
 	}

@@ -142,6 +142,10 @@ getCountTable <- function( level ){
 # 2. Next group of columns contain numeric count data (derived from sample analysis)
 # 3. Last group of columns contain the metadata columns ( call numMetaCols() to find out how many )
 getCountMetaTable <- function( level ) {
+	if( !is.null( countMetaTable ) ) {
+		return( countMetaTable )
+	}
+
 	countMetaFile = pipelineFile( paste0( level, "_metaMerged.tsv$" ) )
 	if( is.null( countMetaFile )  ) {
 		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") found none!" ) )
@@ -151,6 +155,7 @@ getCountMetaTable <- function( level ) {
 	countMetaTable = readBljTable( countMetaFile )
 	if( nrow( countMetaTable ) == 0 ) {
 		logInfo( c( "BioLockJ_Lib.R getCountMetaTable(", level, ") returned an empty table with header row:", colnames( countMetaTable ) ) )
+		countMetaTable = NULL
 		return( NULL )
 	}
 	
@@ -445,4 +450,4 @@ taxaLevels <- function() {
 # Import standard shared libraries
 importLibs( c( "properties", "stringr", "ggpubr" ) )
 propCache = NULL
-
+countMetaTable = NULL
