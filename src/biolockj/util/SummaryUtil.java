@@ -775,14 +775,14 @@ public class SummaryUtil {
 		}
 
 		if( DockerUtil.inAwsEnv() ) {
-			runtimeEnv = "AWS::Nextflow::Docker::" + runtimeEnv;
+			runtimeEnv = "AWS+Nextflow+Docker:" + runtimeEnv;
 		} else if( DockerUtil.inDockerEnv() ) {
-			runtimeEnv = "Docker::" + runtimeEnv;
+			runtimeEnv = "DOCKER::" + runtimeEnv;
 		} else if( Config.isOnCluster() ) {
 			if( clusterHost != null && runtimeEnv != clusterHost ) {
-				runtimeEnv = "head-" + clusterHost + "::compute-" + runtimeEnv;
+				runtimeEnv = "HEAD:" + clusterHost + " --> COMPUTE:" + runtimeEnv;
 			}
-			runtimeEnv = "Cluster::" + runtimeEnv;
+			runtimeEnv = "CLUSTER:" + runtimeEnv;
 		}
 		return runtimeEnv;
 	}

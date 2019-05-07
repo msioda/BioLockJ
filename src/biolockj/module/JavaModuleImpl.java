@@ -27,6 +27,7 @@ import biolockj.util.SeqUtil;
  * Superclass for Java BioModules that will be called in separate instances of the application.
  */
 public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaModule {
+
 	/**
 	 * Java script only require 2 lines, one to run the blj_config to update our $PATH and gain access to environment
 	 * variables, and then the direct call to the BioLockJ.jar.
@@ -38,7 +39,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		if( DockerUtil.inDockerEnv() ) {
 			lines.add( "java" + runBioLockJ_CMD() + " $" + BLJ_OPTIONS );
 		} else {
-			lines.add( "java" + runBioLockJ_CMD() + " " + RuntimeParamUtil.getJavaModuleParams( this ) );
+			lines.add( "java" + runBioLockJ_CMD() + " " + RuntimeParamUtil.getJavaComputeNodeArgs( this ) );
 		}
 
 		data.add( lines );
@@ -73,7 +74,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = new ArrayList<>();
 		if( DockerUtil.inDockerEnv() ) {
-			lines.add( BLJ_OPTIONS + "=\"" + RuntimeParamUtil.getJavaModuleParams( this ) + "\"" + Constants.RETURN );
+			lines.add( BLJ_OPTIONS + "=\"" + RuntimeParamUtil.getJavaContainerArgs( this ) + "\"" + Constants.RETURN );
 		}
 
 		return lines;

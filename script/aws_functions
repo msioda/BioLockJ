@@ -1,7 +1,7 @@
 #!/bin/bash
 ##############################################################
 ##                                                          ##
-##  This script is used for AWS core function + logic       ##
+##  This script is used for AWS core functions + logic       ##
 ##                                                          ##
 ##############################################################
 . "${BLJ_SCRIPT}/aws_config_lib"
@@ -9,7 +9,7 @@
 . "${BLJ_SCRIPT}/aws_head_node_lib"
 . "${BLJ_SCRIPT}/aws_upload_lib"
 
-alias clearPipes="sudo rm -rf $EFS/pipelines/*; echo AWS pipelines removed"
+alias clearPipes="sudo rm -rf ${EFS}/pipelines/*; echo AWS pipelines removed"
 alias tailnf="tail -1000f /.nextflow.log"
 
 # Build Cloud-formation Stack

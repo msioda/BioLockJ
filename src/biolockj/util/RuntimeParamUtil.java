@@ -62,30 +62,12 @@ public class RuntimeParamUtil {
 	}
 
 	/**
-	 * Get the baseDir param and value
-	 * 
-	 * @return String baseDir param and value
-	 */
-	public static String getBaseDirParam() {
-		return BLJ_PROJ_DIR + " " + getBaseDir().getAbsolutePath();
-	}
-
-	/**
 	 * Runtime property getter for {@value #CONFIG_FILE}
 	 * 
 	 * @return {@link biolockj.Config} file
 	 */
 	public static File getConfigFile() {
 		return new File( params.get( CONFIG_FILE ) );
-	}
-
-	/**
-	 * Used to build Docker run commands.
-	 * 
-	 * @return {@link biolockj.Config} file param and value.
-	 */
-	public static String getConfigFileParam() {
-		return CONFIG_FILE + " " + getConfigFile().getAbsolutePath();
 	}
 
 	/**
@@ -97,13 +79,8 @@ public class RuntimeParamUtil {
 		return params.get( DIRECT_MODE );
 	}
 
-	/**
-	 * Direct module parameters contain 2 parts separated by a colon: (pipeline directory name):(module name)
-	 * 
-	 * @param module BioModule
-	 * @return Direct parameter flag + value
-	 */
-	public static String getDirectModuleParam( final BioModule module ) {
+
+	private static String getDirectModuleParam( final BioModule module ) {
 		return DIRECT_MODE + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
 	}
 
@@ -187,6 +164,18 @@ public class RuntimeParamUtil {
 	public static File getHomeDir() {
 		return new File( params.get( HOME_DIR ) );
 	}
+	
+	/**
+	 * Return runtime params that need be forward to detached cluster Java modules
+	 * 
+	 * @param module JavaModule
+	 * @return java -jar BioLockJ.jar runtime args
+	 */
+	public static String getJavaComputeNodeArgs( final JavaModule module ) {
+		Log.info( RuntimeParamUtil.class, "Building Docker java -jar args for Cluster-Compute nodes  -->" );
+		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam()
+			+ " " + getDirectModuleParam( module );
+	}
 
 	/**
 	 * Get Docker runtime arguments passed to BioLockJ from dockblj script.<br>
@@ -195,7 +184,7 @@ public class RuntimeParamUtil {
 	 * @param module JavaModule BioModule subclass
 	 * @return Docker runtime parameters
 	 */
-	public static String getJavaModuleParams( final JavaModule module ) {
+	public static String getJavaContainerArgs( final JavaModule module ) {
 		Log.info( RuntimeParamUtil.class, "Building Docker BLJ_OPTIONS for java_module Docker script -->" );
 		String javaModArgs = "";
 		for( final String key: params.keySet() ) {
@@ -480,6 +469,19 @@ public class RuntimeParamUtil {
 
 		return simpleArgs;
 	}
+	
+	private static String getBaseDirParam() {
+		return BLJ_PROJ_DIR + " " + getBaseDir().getAbsolutePath();
+	}
+	
+	private static String getHomeParam() {
+		return HOME_DIR + " " + getHomeDir().getAbsolutePath();
+	}
+	
+	private static String getConfigFileParam() {
+		return CONFIG_FILE + " " + getConfigFile().getAbsolutePath();
+	}
+
 
 	private static void validateParams() throws RuntimeParamException {
 		if( isDockerMode() && getDockerHostInputDir() == null )
