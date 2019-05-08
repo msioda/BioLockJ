@@ -87,9 +87,10 @@ build_start_script() {
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
 	echo "if [ -f ~/$(basename $(get_config ec2))-success ]; then" >> "${ss}"
 	if [ "${awsEc2EndState}" == "stop" ] || [ "${awsEc2EndState}" == "terminate" ]; then  
-		echo "[ -f \"${flagFile}\" ] && aws ec2 stop-instances --instance-ids ${awsEc2InstanceID}" >> "${ss}"
+		echo "    [ -f \"${flagFile}\" ] && aws ec2 stop-instances --instance-ids ${awsEc2InstanceID}" >> "${ss}"
 	fi
-	[ "${awsEc2EndState}" == "terminate" ] && echo "[ -f \"${flagFile}\" ] && aws ec2 terminate-instances --instance-id ${awsEc2InstanceID}" >> "${ss}"
+	[ "${awsEc2EndState}" == "terminate" ] && echo "    [ -f \"${flagFile}\" ] && aws ec2 terminate-instances --instance-id ${awsEc2InstanceID}" >> "${ss}"
+	echo "fi" >> "${ss}"
 	chmod 770 "${ss}"
 	echo "${ss}"
 }
