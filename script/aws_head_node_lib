@@ -137,12 +137,11 @@ launch_ec2_head_node() {
 	fi
 	stage_pipeline_on_aws ${2}
 	if [ $# -eq 1 ] && [ "${1}" == "start" ] && [ -x "$(which docker)" ] || [ $# -eq 2 ]; then
-		aws_log "Exectue internal CMD [  launch_ec2_head_node \"start\"  ]"
-		exe_remote_cmd "nohup ${EC2_HOME}/$(basename $(start_aws_pipeline_script)) > ${EC2_HOME}/$(get_config_name).log 2>&1" 
-	else
-		aws_log "Exectue internal CMD [  connect_head  ]"
-		connect_head
+		aws_log "Exectue Remote CMD [  nohup ${EC2_HOME}/$(basename $(start_aws_pipeline_script)) >/dev/null 2>&1 & ]"
+		exe_remote_cmd "nohup ${EC2_HOME}/$(basename $(start_aws_pipeline_script)) >/dev/null 2>&1 &" 
 	fi
+	aws_log "Exectue CMD [  connect_head  ]"
+	connect_head
 }
 
 # Start Head node if stopped, create if not found, and set awsEc2InstanceID
@@ -153,9 +152,8 @@ set_ec2_head_node_id() {
 	if [ "${instances/$awsEc2InstanceID}" != "${awsEc2InstanceID}" ]; then
 		aws_log "Found existing instance ${awsEc2InstanceID}"
 		if [ "${instances/stopped}" != "${instances}" ]; then
-			aws ec2 start-instances --instance-ids "${awsEc2InstanceID}"
 			printf "Configured EC2 instance ${awsEc2InstanceID} was stopped...attempting to restart...please wait."
-			isStarting=true
+			aws ec2 start-instances --instance-ids "${awsEc2InstanceID}"
 		elif [ "${instances/terminated}" != "${instances}" ]; then
 			aws_log "Configured EC2 instance ${awsEc2InstanceID} was terminated...launching a new instance"
 		elif [ "${instances/pending}" != "${instances}" ] || [ "${instances/shutting-down}" != "${awsEc2InstanceID}" ] || [ "${instances/stopping}" != "${awsEc2InstanceID}" ]; then

@@ -85,7 +85,6 @@ aws_stacks() {
 # Clear possible aws_config from bash shell memeroy
 clear_aws_cache() {
 	awsAmi=
-	awsEc2AcquisitionStrategy=
 	awsEc2InstanceID=
 	awsEc2SpotPer=
 	awsProfile=
@@ -96,7 +95,6 @@ clear_aws_cache() {
 	awsWalltime=
 	configFiles=
 	dockerImgVersion=
-	dockerUser=
 	inputDirPaths=
 	metadataFilePath=
 	trimPrimersFilePath=
@@ -309,6 +307,7 @@ set_pipeline_conig_props() {
 	aws_log "Update \"$blj_aws_config\" with AWS properties found in Pipeline Config \"$1\""
 	convert_prop "${1}" "aws.ami"
 	convert_prop "${1}" "aws.ec2AcquisitionStrategy"
+	convert_prop "${1}" "aws.ec2EndState"
 	convert_prop "${1}" "aws.ec2InstanceID"
 	convert_prop "${1}" "aws.ec2InstanceType"
 	convert_prop "${1}" "aws.ec2SpotPer"
