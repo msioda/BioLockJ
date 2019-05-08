@@ -374,7 +374,7 @@ public class BioLockJ {
 		if( DockerUtil.inAwsEnv() ) {
 			NextflowUtil.saveNextflowLog();
 			NextflowUtil.stopNextflow();
-			
+
 			try {
 				BioLockJUtil.createFile( "${HOME}" + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
 				while( Processor.subProcsAlive() ) {

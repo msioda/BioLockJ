@@ -70,12 +70,8 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 		final List<String> paths = Config.requireList( this, KNEAD_DBS );
 
 		if( paths.size() == 1 ) return new File( paths.get( 0 ) );
-		
-		if( DockerUtil.inAwsEnv() ) {
-			return new File( DockerUtil.DOCKER_DB_DIR );
-		}
-		
-		
+
+		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
 
 		final List<File> dbs = new ArrayList<>();
 		for( final String db: Config.requireList( this, KNEAD_DBS ) ) {
