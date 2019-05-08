@@ -81,7 +81,7 @@ public class MetaUtil {
 	 * @throws Exception if error occurs trying to read metadata file
 	 */
 	public static boolean exists() throws Exception {
-		return getMetadata() != null && getMetadata().exists();
+		return getMetadata() != null && getMetadata().isFile();
 	}
 
 	/**
@@ -304,8 +304,8 @@ public class MetaUtil {
 	 */
 	public static String getSystemMetaCol( final BioModule module, final String col ) throws Exception {
 		final File outputMeta = new File( module.getOutputDir().getAbsolutePath() + File.separator + getFileName() );
-		if( ModuleUtil.isComplete( module ) || outputMeta.exists() ) {
-			if( outputMeta.exists() ) {
+		if( ModuleUtil.isComplete( module ) || outputMeta.isFile() ) {
+			if( outputMeta.isFile() ) {
 				setFile( outputMeta );
 				refreshCache();
 			}
@@ -411,12 +411,12 @@ public class MetaUtil {
 		File myDir = fileDir;
 		if( myDir == null ) {
 			myDir = new File( Config.pipelinePath() + File.separator + ".temp" );
-			if( !myDir.exists() ) {
+			if( !myDir.isDirectory() ) {
 				myDir.mkdirs();
 			}
 		}
 
-		if( getMetadata() == null || !getMetadata().exists() ) {
+		if( !MetaUtil.exists() ) {
 			Log.warn( MetaUtil.class, "Cannot remove column [" + colName + "] because no metadata file exists." );
 			return;
 		}

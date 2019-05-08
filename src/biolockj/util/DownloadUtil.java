@@ -142,7 +142,7 @@ public final class DownloadUtil {
 		try {
 			final File pipeRoot = new File( Config.pipelinePath() );
 
-			if( BioLockJ.pipelineInputDir().exists()
+			if( BioLockJUtil.pipelineInternalInputDir().isDirectory()
 				&& BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE )
 				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
 				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )

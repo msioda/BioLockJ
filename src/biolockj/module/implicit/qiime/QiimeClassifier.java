@@ -292,7 +292,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		try {
 			final String endString = "Counts/sample detail:";
 			final File otuSummary = new File( getTempDir().getAbsolutePath() + File.separator + OTU_SUMMARY_FILE );
-			if( otuSummary.exists() ) {
+			if( otuSummary.isFile() ) {
 				final BufferedReader reader = BioLockJUtil.getFileReader( otuSummary );
 				sb.append( "OTU Summary" + RETURN );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
@@ -383,7 +383,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		final String inDir = getInputFiles().get( 0 ).getAbsolutePath();
 		final int i = inDir.indexOf( File.separator + getInputFiles().get( 0 ).getName() );
 		final File dir = new File( inDir.substring( 0, i ) );
-		if( !dir.exists() ) throw new Exception( "Module input directory not found! --> " + dir.getAbsolutePath() );
+		if( !dir.isDirectory() ) throw new Exception( "Module input directory not found! --> " + dir.getAbsolutePath() );
 
 		return dir;
 	}

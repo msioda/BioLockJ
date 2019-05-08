@@ -371,6 +371,11 @@ public class DockerUtil {
 	public static final String DOCKER_INPUT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "input";
 
 	/**
+	 * AWS deployed containers mount $BLJ/script to {@value #DOCKER_BLJ_MOUNT_DIR}/script dir: /mnt/efs/script
+	 */
+	public static final String DOCKER_SCRIPT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "script";
+	
+	/**
 	 * All containers mount {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} to the container volume: /mnt/efs/output
 	 */
 	public static final String DOCKER_OUTPUT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "pipelines";
@@ -390,14 +395,6 @@ public class DockerUtil {
 	 * Docker container root user $HOME directory: /root
 	 */
 	public static final String ROOT_HOME = File.separator + DOCKER_USER;
-
-	/**
-	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
-	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
-	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
-	 * versions of these modules and add new modules in their own Docker Hub account.
-	 */
-	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	/**
 	 * AWS EC2 head/batch node $USER: {@value #AWS_EC2_USER}
@@ -445,6 +442,14 @@ public class DockerUtil {
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
 	 */
 	static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
+
+	/**
+	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
+	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
+	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
+	 * versions of these modules and add new modules in their own Docker Hub account.
+	 */
+	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	private static final String BLJ_BASH = "blj_bash";
 	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";

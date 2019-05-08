@@ -111,8 +111,8 @@ public class NextflowUtil {
 				purge( DockerUtil.DOCKER_INPUT_DIR );
 				purge( DockerUtil.DOCKER_META_DIR );
 				purge( DockerUtil.DOCKER_PRIMER_DIR );
-
 				purge( DockerUtil.DOCKER_DB_DIR );
+				purge( DockerUtil.DOCKER_SCRIPT_DIR );
 			}
 			return true;
 		} catch( final Exception ex ) {
@@ -130,7 +130,7 @@ public class NextflowUtil {
 		try {
 			if( Config.getBoolean( null, AWS_COPY_PIPELINE_TO_S3 ) ) {
 				awsSyncS3( Config.pipelinePath(), true );
-			} else if( DownloadUtil.getDownloadListFile().exists()
+			} else if( DownloadUtil.getDownloadListFile().isFile()
 				&& Config.getBoolean( null, AWS_COPY_REPORTS_TO_S3 ) ) {
 				final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
 				try {
@@ -162,7 +162,7 @@ public class NextflowUtil {
 		if( nextflowLogExists() ) return;
 		try {
 			final File log = new File( NF_LOG );
-			if( !log.exists() ) {
+			if( !log.isFile() ) {
 				Log.warn( NextflowUtil.class, NF_LOG + " not found, cannot copy to pipeline root directory!" );
 				return;
 			}
@@ -296,7 +296,7 @@ public class NextflowUtil {
 		args[ 1 ] = templateConfig().getAbsolutePath();
 		args[ 2 ] = modules;
 		Processor.submit( args, "Build Nf Template" );
-		if( !templateConfig().exists() )
+		if( !templateConfig().isFile() )
 			throw new Exception( "Nextflow Template file is not found at path: " + templateConfig().getAbsolutePath() );
 		Log.info( NextflowUtil.class, "Nextflow Template file created: " + templateConfig().getAbsolutePath() );
 		return templateConfig();
@@ -381,7 +381,7 @@ public class NextflowUtil {
 
 	private static boolean poll() throws Exception {
 		final File nfLog = new File( NF_LOG );
-		if( nfLog.exists() ) {
+		if( nfLog.isFile() ) {
 			final BufferedReader reader = BioLockJUtil.getFileReader( nfLog );
 			try {
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {

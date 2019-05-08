@@ -197,7 +197,7 @@ public class Log {
 
 			Log.info( Log.class, "Set " + LOG_FILE + " = " + logFile.getAbsolutePath() );
 			Log.info( Log.class, "Set " + Constants.LOG_LEVEL_PROPERTY + " = " + validateLogLevel() );
-			Log.info( Log.class, "Set " + LOG_APPEND + " = " + String.valueOf( logFile.exists() ) );
+			Log.info( Log.class, "Set " + LOG_APPEND + " = " + String.valueOf( logFile.isFile() ) );
 			Log.info( Log.class, "Set " + LOG_FORMAT + " = " + DIRECT_FORMAT );
 			logConfig();
 			Log.info( Log.class, Constants.LOG_SPACER );
@@ -320,7 +320,7 @@ public class Log {
 	}
 
 	private static boolean isInitialized() {
-		return logFile != null && logFile.exists();
+		return logFile != null && logFile.isFile();
 	}
 
 	private static boolean useSystemOut() {

@@ -64,7 +64,7 @@ public class LogUtil {
 		if( profile.isEmpty() ) {
 			try {
 				final File bashProfile = new File( Config.requireString( null, Constants.USER_PROFILE ) );
-				if( bashProfile.exists() ) {
+				if( bashProfile.isFile() ) {
 					profile.addAll( cacheLog( bashProfile ) );
 				}
 			} catch( final Exception ex ) {

@@ -286,7 +286,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	private File getTempSubDir( final String name ) {
 		final File dir = new File( getTempDir().getAbsolutePath() + File.separator + name );
-		if( !dir.exists() ) {
+		if( !dir.isDirectory() ) {
 			dir.mkdirs();
 		}
 		return dir;

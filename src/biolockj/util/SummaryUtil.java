@@ -258,10 +258,10 @@ public class SummaryUtil {
 			File newMeta = new File(
 				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 
-			if( newMeta.exists() && module.getOutputDir().listFiles().length > 1 ) {
+			if( newMeta.isFile() && module.getOutputDir().listFiles().length > 1 ) {
 				count--;
 				outAvg = outAvg.subtract( FileUtils.sizeOfAsBigInteger( newMeta ) );
-			} else if( !newMeta.exists() ) {
+			} else if( !newMeta.isFile() ) {
 				newMeta = null;
 			}
 
@@ -379,10 +379,9 @@ public class SummaryUtil {
 			for( final File script: scripts ) {
 				final File started = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
 				File finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
-				if( !finish.exists() ) {
+				if( !finish.isFile() ) {
 					finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
-				}
-				if( finish.exists() ) {
+				} else {
 					final long duration = finish.lastModified() - started.lastModified();
 					Log.debug( SummaryUtil.class, script.getName() + " duration: " + duration );
 					totalRunTime += duration;
@@ -466,7 +465,7 @@ public class SummaryUtil {
 		final StringBuffer sb = new StringBuffer();
 		try {
 			final File summary = getSummaryFile();
-			if( !summary.exists() ) {
+			if( !summary.isFile() ) {
 				sb.append( "NO SUMMARY FOUND" );
 			} else {
 				final BufferedReader reader = BioLockJUtil.getFileReader( summary );
@@ -530,7 +529,7 @@ public class SummaryUtil {
 			Log.info( SummaryUtil.class,
 				"Update BioModule summary [ " + module.getClass().getName() + " ] " + summaryFile.getAbsolutePath() );
 			Integer modNum = 0;
-			if( !summaryFile.exists() ) {
+			if( !summaryFile.isFile() ) {
 				sb.append( getHeading() );
 			} else {
 				resetModuleSummary( module );
@@ -601,7 +600,7 @@ public class SummaryUtil {
 		Integer num = null;
 		final BufferedReader reader = BioLockJUtil.getFileReader( getSummaryFile() );
 		try {
-			if( getSummaryFile().exists() ) {
+			if( getSummaryFile().isFile() ) {
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 					final String label = MODULE + "[";
 					if( line.startsWith( label ) && line.indexOf( "]" ) > 0 ) {
@@ -705,8 +704,7 @@ public class SummaryUtil {
 	 */
 	protected static void saveSummary( final String summary ) throws Exception {
 		final File f = getSummaryFile();
-		final boolean append = f.exists();
-		final FileWriter writer = new FileWriter( f, append );
+		final FileWriter writer = new FileWriter( f, f.isFile());
 		writer.write( summary );
 		writer.close();
 		Log.info( SummaryUtil.class, "Summary updated" );

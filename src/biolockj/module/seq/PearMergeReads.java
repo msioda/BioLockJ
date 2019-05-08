@@ -94,7 +94,7 @@ public class PearMergeReads extends SeqModuleImpl {
 		Config.setConfigProperty( Constants.INTERNAL_PAIRED_READS, Constants.FALSE );
 
 		final File updatedMeta = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-		if( updatedMeta.exists() ) {
+		if( updatedMeta.isFile() ) {
 			MetaUtil.setFile( updatedMeta );
 			MetaUtil.refreshCache();
 		} else if( !MetaUtil.getFieldNames().contains( metaColName ) && this.readsPerSample != null ) {

@@ -61,7 +61,7 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 				FileUtils.copyFileToDirectory( MetaUtil.getMetadata(), getOutputDir() );
 				final File metaFile = new File(
 					getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-				if( !metaFile.exists() )
+				if( !metaFile.isFile() )
 					throw new Exception( "FileUtils.copyFileToDirectory did not successfully copy the metadata file" );
 				return;
 			}

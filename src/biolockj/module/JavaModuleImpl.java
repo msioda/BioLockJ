@@ -153,9 +153,9 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		final File source = new File(
 			JavaModuleImpl.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
 		String javaString = null;
-		if( source.exists() && source.isFile() ) {
+		if( source.isFile() ) {
 			javaString = " " + Constants.JAR_ARG + " " + source.getAbsolutePath();
-		} else if( source.exists() && source.isDirectory() ) {
+		} else if( source.isDirectory() ) {
 			final String lib = source.getAbsolutePath().replace( "bin", "lib/*" );
 			javaString = " -cp " + source.getAbsolutePath() + ":" + lib + " " + BioLockJ.class.getName();
 		}

@@ -241,7 +241,7 @@ public class Pipeline {
 		if( bioModule != null ) {
 			final File metadata = new File(
 				bioModule.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-			if( metadata.exists() ) return metadata;
+			if( metadata.isFile() ) return metadata;
 		}
 
 		return null;
@@ -310,9 +310,9 @@ public class Pipeline {
 			final File testStarted = new File( f.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
 			final File testSuccess = new File( f.getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
 			final File testFailure = new File( f.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
-			numStarted = numStarted + ( testStarted.exists() ? 1: 0 );
-			numSuccess = numSuccess + ( testSuccess.exists() ? 1: 0 );
-			numFailed = numFailed + ( testFailure.exists() ? 1: 0 );
+			numStarted = numStarted + ( testStarted.isFile() ? 1: 0 );
+			numSuccess = numSuccess + ( testSuccess.isFile() ? 1: 0 );
+			numFailed = numFailed + ( testFailure.isFile() ? 1: 0 );
 		}
 
 		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success="
@@ -347,7 +347,7 @@ public class Pipeline {
 			final File metadata = new File(
 				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 
-			if( metadata.exists() ) {
+			if( metadata.isFile() ) {
 				MetaUtil.setFile( metadata );
 				MetaUtil.refreshCache();
 			}

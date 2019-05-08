@@ -86,10 +86,8 @@ build_start_script() {
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
 	if [ "${awsEc2EndState}" == "stop" ] || [ "${awsEc2EndState}" == "terminate" ]; then 
-		echo 'if [ -f "${flagFile}" ]; then' >> "${ss}"
-		echo '    [ -f "${flagFile}" ] && aws ec2 stop-instances --instance-ids "${awsEc2InstanceID}"' >> "${ss}"
-		[ "${awsEc2EndState}" == "terminate" ] && echo '    [ -f "${flagFile}" ] && aws ec2 terminate-instances --instance-id "{awsEc2InstanceID}"' >> "${ss}"
-		echo 'fi' >> "${ss}"
+		echo '[ -f "${flagFile}" ] && aws ec2 stop-instances --instance-ids "${awsEc2InstanceID}"' >> "${ss}"
+		[ "${awsEc2EndState}" == "terminate" ] && echo '[ -f "${flagFile}" ] && aws ec2 terminate-instances --instance-id "${awsEc2InstanceID}"' >> "${ss}"
 	fi
 	chmod 770 "${ss}"
 	echo "${ss}"

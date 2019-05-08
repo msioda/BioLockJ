@@ -56,6 +56,9 @@ public class Processor {
 		private String label = null;
 	}
 
+	/**
+	 * Empty constuctor to faciliate subprocess creation.
+	 */
 	Processor() {}
 
 	/**

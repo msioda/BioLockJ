@@ -716,7 +716,7 @@ public class Config {
 	protected static File getExistingFileObject( final String filePath ) throws ConfigPathException {
 		if( filePath != null ) {
 			final File f = new File( filePath );
-			if( f.exists() ) return f;
+			if( f.isFile() ) return f;
 			throw new ConfigPathException( f );
 		}
 		return null;

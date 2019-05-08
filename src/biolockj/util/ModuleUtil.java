@@ -240,7 +240,7 @@ public class ModuleUtil {
 	 */
 	public static boolean isIncomplete( final BioModule module ) {
 		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
-		return f.exists();
+		return f.isFile();
 	}
 
 	/**
@@ -324,7 +324,7 @@ public class ModuleUtil {
 	 */
 	public static File requireSubDir( final BioModule module, final String subDirName ) {
 		final File dir = new File( module.getModuleDir().getAbsolutePath() + File.separator + subDirName );
-		if( !dir.exists() ) {
+		if( !dir.isDirectory() ) {
 			dir.mkdirs();
 			Log.info( ModuleUtil.class, "Create directory: " + dir.getAbsolutePath() );
 		}
@@ -340,7 +340,7 @@ public class ModuleUtil {
 	 */
 	public static boolean subDirExists( final BioModule module, final String subDirName ) {
 		final File dir = new File( module.getModuleDir().getAbsolutePath() + File.separator + subDirName );
-		return dir.exists();
+		return dir.isDirectory();
 	}
 
 	private static List<Integer> getClassifierIds() {

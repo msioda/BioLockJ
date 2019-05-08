@@ -9,10 +9,10 @@
 alias bljb="build_blj_only"
 alias bljbd="build_blj_only; clearDock; deploy_blj_only"
 alias bljd="deploy_blj_only"
+alias dclone="run_docker_clone"
 alias docker_build="docker_cmd build"
 alias docker_push="docker_cmd push"
 alias docker_pull="docker_cmd pull"
-
 
 # Build only Docker images that contain $BLJ/dist/BioLockJ.jar
 build_blj_only() {
@@ -67,7 +67,6 @@ dock_id() {
 docker_dir() {
 	echo "${DOCKER_DIR}"
 }
-
 
 # Single function used to build, pull, push Docker modules.
 # Images are built roughly in order of size.
