@@ -184,9 +184,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	private String getMpaPkl() throws Exception {
 		final String mpaPkl = Config.getString( this, METAPHLAN2_MPA_PKL );
 		if( mpaPkl == null ) return null;
-
 		if( DockerUtil.inDockerEnv() ) return DockerUtil.DOCKER_DB_DIR + File.separator + mpaPkl;
-
 		return Config.requireExistingFile( this, METAPHLAN2_MPA_PKL ).getAbsolutePath();
 	}
 

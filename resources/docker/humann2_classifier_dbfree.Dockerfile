@@ -1,7 +1,5 @@
 # Deployment path:  $DOCKER_DIR/humann2_classifier_dbfree.Dockerfile
 
-FROM biolockj/blj_basic_py2
-
 #1.) Install HumanN2 + dependencies
 RUN apt-get update && \
 	apt-get install -y build-essential apt-utils bsdtar gawk nano tzdata wget && \

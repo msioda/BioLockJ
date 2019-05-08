@@ -348,6 +348,16 @@ public class DockerUtil {
 	private static boolean useBasicBashImg( final BioModule module ) {
 		return module instanceof PearMergeReads || module instanceof AwkFastaConverter || module instanceof Gunzipper;
 	}
+	
+	/**
+	 * Return the default DB directory unless the user has supplied a DB in the override dir.
+	 * @return
+	 */
+	public static File getDefaultDbDir() {
+		if( true )
+			return new File( DOCKER_DB_DIR );
+		return new File( DOCKER_DEFAULT_DB_DIR );
+	}
 
 	/**
 	 * Docker container root user EFS directory: /mnt/efs
@@ -358,6 +368,11 @@ public class DockerUtil {
 	 * Docker container root user DB directory: /mnt/efs/db
 	 */
 	public static final String DOCKER_DB_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "db";
+	
+	/**
+	 * Docker container root user DB directory: /mnt/efs/db
+	 */
+	public static final String DOCKER_DEFAULT_DB_DIR = File.separator + "mnt" + File.separator + "db";
 
 	/**
 	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume: :

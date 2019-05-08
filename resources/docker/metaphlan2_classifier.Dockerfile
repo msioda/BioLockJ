@@ -9,9 +9,8 @@ RUN	cd /usr/local/bin && \
 	rm -rf metaphlan2.py 
 	
 #2.) Download MetaPhlAn2 with DB
-ENV META_URL="https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip"
 RUN cd /app && \
-	wget -qO- $META_URL | bsdtar -xf- && \
+	wget -qO- "https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip" | bsdtar -xf- && \
 	chmod -R 774 * && \
 	mv /app/metaphlan2/* $mpa_dir && \
 	rm -rf /app/*

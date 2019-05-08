@@ -374,8 +374,9 @@ public class BioLockJ {
 		if( DockerUtil.inAwsEnv() ) {
 			NextflowUtil.saveNextflowLog();
 			NextflowUtil.stopNextflow();
-
+			
 			try {
+				BioLockJUtil.createFile( "${HOME}" + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
 				while( Processor.subProcsAlive() ) {
 					Log.warn( BioLockJ.class,
 						"Standard execution complete - check again in 3 minutes - wait for S3-Data-xFers to complete" );

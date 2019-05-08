@@ -78,18 +78,18 @@ get_docker_img() {
 # Get mapped  Docker volumes
 get_volumes() {
 	if $(has_param $runAws); then
-		vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${EC2_HOME}:${EC2_HOME} -v ${EFS}:${EFS}:delegated"
+		vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${EC2_HOME}:${EC2_HOME}:ro -v ${EFS}:${EFS}:delegated"
 	else
 		vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v $(blj_proj):${EFS_PROJ}:delegated"
 		if $(has_param $launchGui); then
-			vols="${vols} -v ${BLJ}/web_app/logs:/log:delegated -v ${BLJ}/resources/config/gui:${BLJ_CONFIG} "
+			vols="${vols} -v ${BLJ}/web_app/logs:/log:delegated -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}"
 		else
-			vols="${vols} -v $inputDir:${BLJ_INPUT} -v $(dirname $config):${BLJ_CONFIG}"
-			$(has_param $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}"
+			vols="${vols} -v $inputDir:${BLJ_INPUT}:ro -v $(dirname $config):${BLJ_CONFIG}:ro"
+			$(has_param $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}:ro"
 		fi
 	
-		$(has_param $runDev) && $(has_param ${HOST_BLJ}) && vols="${vols} -v ${HOST_BLJ}:/app/biolockj"
-		$(has_param $runDev) && $(has_param ${HOST_BLJ_SUP}) && vols="${vols} -v ${HOST_BLJ_SUP}:/app/blj_support"
+		$(has_param $runDev) && $(has_param ${HOST_BLJ}) && vols="${vols} -v ${HOST_BLJ}:/app/biolockj:ro"
+		$(has_param $runDev) && $(has_param ${HOST_BLJ_SUP}) && vols="${vols} -v ${HOST_BLJ_SUP}:/app/blj_support:ro"
 	fi
 	echo "${vols}"
 }

@@ -8,7 +8,7 @@ RUN cd $BLJ_DB && \
 	wget -qO- $KRAKEN_DB_URL | bsdtar -xzf- && \
 	mv minikraken*/* . && \
 	rm -rf minikraken* && \
-	chmod -R o+x $BLJ_DB
+	chmod -R o+x "${BLJ_DEFAULT_DB}"
 
 #2.) Cleanup
 RUN	 rm -rf /usr/share/* 
