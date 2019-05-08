@@ -140,7 +140,7 @@ public class MasterConfigUtil {
 	 */
 	public static boolean saveMasterConfig( final Map<String, String> props ) {
 
-		if( getMasterConfig().exists() ) {
+		if( getMasterConfig().isFile() ) {
 			try {
 				FileUtils.moveFile( getMasterConfig(), getTempConfig() );
 			} catch( final Exception ex ) {
@@ -170,17 +170,17 @@ public class MasterConfigUtil {
 					Log.error( MasterConfigUtil.class, "Failed to close MASTER config writer", ex2 );
 				}
 			}
-			if( getTempConfig().exists() ) {
+			if( getTempConfig().isFile() ) {
 				getTempConfig().delete();
 			}
 		}
 
-		return getMasterConfig().exists();
+		return getMasterConfig().isFile();
 	}
 
 	private static List<String> getInitConfig() throws IOException {
 		final File masterConfig = getMasterConfig();
-		if( !masterConfig.exists() || !Config.getConfigFilePath().equals( masterConfig.getAbsolutePath() ) )
+		if( !masterConfig.isFile() || !Config.getConfigFilePath().equals( masterConfig.getAbsolutePath() ) )
 			return null;
 		final List<String> initConfig = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( masterConfig );

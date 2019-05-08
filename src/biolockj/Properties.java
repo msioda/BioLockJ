@@ -157,7 +157,7 @@ public class Properties extends java.util.Properties {
 	 */
 	protected static Properties readProps( final File propFile, final Properties defaultProps )
 		throws FileNotFoundException, IOException {
-		if( propFile.exists() ) {
+		if( propFile.isFile() ) {
 			configRegister.add( propFile );
 			Log.info( Properties.class, "LOAD CONFIG [ #" + ++loadOrder + " ]: ---> " + propFile.getAbsolutePath() );
 			final FileInputStream in = new FileInputStream( propFile );

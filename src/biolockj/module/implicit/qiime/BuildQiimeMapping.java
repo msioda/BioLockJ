@@ -253,7 +253,7 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 	 */
 	private String getMappingDir() {
 		final File dir = new File( getTempDir().getAbsolutePath() + File.separator + "mapping" );
-		if( !dir.exists() ) {
+		if( !dir.isDirectory() ) {
 			dir.mkdirs();
 		}
 
@@ -262,7 +262,7 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 
 	private File getOrderedMapping() {
 		final File orderedDir = new File( getTempDir().getAbsolutePath() + File.separator + "orderedColumns" );
-		if( !orderedDir.exists() ) {
+		if( !orderedDir.isDirectory() ) {
 			orderedDir.mkdirs();
 		}
 

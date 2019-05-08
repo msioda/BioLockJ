@@ -140,7 +140,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		this.moduleDir = new File(
 			Config.pipelinePath() + File.separator + ModuleUtil.displayID( this ) + "_" + getClass().getSimpleName() );
 
-		if( !this.moduleDir.exists() ) {
+		if( !this.moduleDir.isDirectory() ) {
 			this.moduleDir.mkdirs();
 			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new "
 				+ this.moduleDir.getAbsolutePath() );

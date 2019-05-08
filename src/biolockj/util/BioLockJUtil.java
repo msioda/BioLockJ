@@ -19,9 +19,7 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
-import biolockj.exception.ConfigViolationException;
+import biolockj.exception.*;
 import biolockj.module.report.r.R_CalculateStats;
 
 /**
@@ -302,6 +300,37 @@ public class BioLockJUtil {
 			? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
 			: new BufferedReader( new FileReader( file ) );
 	}
+	
+	
+	/**
+	 * Return the pipeline input directory
+	 * 
+	 * @return Input dir
+	 */
+	public static File pipelineInternalInputDir() {
+		return new File( Config.pipelinePath() + File.separator + "input" );
+	}
+	
+	/**
+	 * Copy input files into an internal folder within the pipeline root direction named "input"
+	 * 
+	 * @return Internal pipeline input dir
+	 * @throws ConfigNotFoundException if {@value biolockj.Constants#INPUT_DIRS} or {@value biolockj.Constants#PIPELINE_COPY_FILES} property is undefined
+	 * @throws ConfigFormatException if {@value biolockj.Constants#PIPELINE_COPY_FILES} does not have a boolean "Y" or "N" value
+	 */
+	public static boolean copyInputFiles() throws ConfigNotFoundException, ConfigFormatException {
+		final boolean hasMixedInputs = pipelineInputType( PIPELINE_R_INPUT_TYPE )
+			|| pipelineInputType( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
+			|| pipelineInputType( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
+			|| pipelineInputType( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
+			|| pipelineInputType( PIPELINE_STATS_TABLE_INPUT_TYPE );
+
+		if( hasMixedInputs ) {
+			Log.warn( BioLockJ.class, "Non-sequence inputs found - copy input files from "
+				+ Config.requireString( null, Constants.INPUT_DIRS ) + " to:" + pipelineInternalInputDir().getAbsolutePath() );
+		}
+		return Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) || hasMixedInputs;
+	}
 
 	/**
 	 * Get the list of input directories for the pipeline.
@@ -309,21 +338,28 @@ public class BioLockJUtil {
 	 * @return List of system directory file paths
 	 * @throws ConfigNotFoundException if a required property is undefined
 	 * @throws ConfigPathException if configured directory does not exist on the file-system
+	 * @throws ConfigFormatException if {@value biolockj.Constants#PIPELINE_COPY_FILES} does not have a boolean "Y" or "N" value
 	 */
-	public static List<File> getInputDirs() throws ConfigNotFoundException, ConfigPathException {
+	public static List<File> getInputDirs() throws ConfigNotFoundException, ConfigPathException, ConfigFormatException {
 		if( DockerUtil.inDockerEnv() ) {
 			final List<File> dirs = new ArrayList<>();
-			final String path = Config.requireString( null, Constants.INPUT_DIRS );
+			String path = Config.requireString( null, Constants.INPUT_DIRS );
+			Log.debug( BioLockJUtil.class, "Current property value of [ " + Constants.INPUT_DIRS + " ] = " + path );
+			
 			File dir = null;
 			if( path.equals( File.separator ) ) {
 				dir = new File( DockerUtil.DOCKER_INPUT_DIR );
+			} else if( DockerUtil.isDirectMode() && copyInputFiles() ) {
+				dir = pipelineInternalInputDir();
 			} else {
+				Log.debug( BioLockJUtil.class, "Replace Parent dir = "
+					+ new File( path ).getParentFile().getAbsolutePath() + " with " + DockerUtil.DOCKER_INPUT_DIR );
 				dir = new File(
 					path.replace( new File( path ).getParentFile().getAbsolutePath(), DockerUtil.DOCKER_INPUT_DIR ) );
 			}
 
-			if( !dir.exists() ) throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
-
+			Log.debug( BioLockJUtil.class, "Add input dir --> " + dir.getAbsolutePath() );
+			if( !dir.isDirectory() ) throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
 			dirs.add( dir );
 			return dirs;
 		}
@@ -337,9 +373,10 @@ public class BioLockJUtil {
 	 * @throws ConfigNotFoundException if a required property is undefined
 	 * @throws ConfigPathException if configured directory does not exist on the file-system
 	 * @throws ConfigViolationException if input directories contain duplicate file names
+	 * @throws ConfigFormatException if Config properties have values that do not match variable type
 	 */
 	public static Collection<File> getPipelineInputFiles()
-		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException {
+		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException, ConfigFormatException {
 		if( inputFiles.isEmpty() ) {
 			Collection<File> files = new HashSet<>();
 			for( final File dir: getInputDirs() ) {
@@ -407,7 +444,7 @@ public class BioLockJUtil {
 	public static String getVersion() throws Exception {
 		final String missingMsg = "undetermined - missing $BLJ/.version file";
 		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
-		if( file.exists() ) {
+		if( file.isFile() ) {
 			final BufferedReader reader = getFileReader( file );
 			for( final String line = reader.readLine(); line != null; )
 				return line;

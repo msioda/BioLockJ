@@ -177,7 +177,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 */
 	protected File getBatchDir( final int batchNum ) {
 		final File dir = new File( getTempDir().getAbsolutePath() + File.separator + "batch_" + batchNum );
-		if( !dir.exists() ) {
+		if( !dir.isDirectory() ) {
 			dir.mkdirs();
 		}
 		return dir;
@@ -191,7 +191,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 */
 	protected File getBatchFastaDir( final int batchNum ) {
 		final File f = new File( getBatchDir( batchNum ) + File.separator + Constants.FASTA );
-		if( !f.exists() ) {
+		if( !f.isFile() ) {
 			f.mkdirs();
 		}
 		return f;

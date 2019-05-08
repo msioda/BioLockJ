@@ -78,18 +78,17 @@ build_start_script() {
 	echo "##  4) Reset Nextflow-modified ${EFS} owner and access privs     ##" >> "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo '. ~/.bash_profile' >> "${ss}"
-	echo "flagFile=$( echo \"~/$(basename $(get_config ec2)) | cut -f1 -d'.'\")-success" >> "${ss}"
-	echo "[ -f \"${flagFile}\" ] && rm \"${flagFile}\"" >> "${ss}"
+	echo 'flagFile=$( echo ~/$(basename $(get_config ec2)) | cut -f1 -d".")-success' >> "${ss}"
+	echo '[ -f "${flagFile}" ] && rm "${flagFile}"' >> "${ss}"
 	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> "${ss}"
 	echo "clearDock" >> "${ss}"
 	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $inputDirPaths) -c=$(get_config ec2)" >> "${ss}"
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
-	echo "if [ -f ~/$(basename $(get_config ec2))-success ]; then" >> "${ss}"
-	if [ "${awsEc2EndState}" == "stop" ] || [ "${awsEc2EndState}" == "terminate" ]; then  
-		echo "[ -f \"${flagFile}\" ] && aws ec2 stop-instances --instance-ids ${awsEc2InstanceID}" >> "${ss}"
+	if [ "${awsEc2EndState}" == "stop" ] || [ "${awsEc2EndState}" == "terminate" ]; then 
+		echo '[ -f "${flagFile}" ] && aws ec2 stop-instances --instance-ids "${awsEc2InstanceID}"' >> "${ss}"
+		[ "${awsEc2EndState}" == "terminate" ] && echo '[ -f "${flagFile}" ] && aws ec2 terminate-instances --instance-id "${awsEc2InstanceID}"' >> "${ss}"
 	fi
-	[ "${awsEc2EndState}" == "terminate" ] && echo "[ -f \"${flagFile}\" ] && aws ec2 terminate-instances --instance-id ${awsEc2InstanceID}" >> "${ss}"
 	chmod 770 "${ss}"
 	echo "${ss}"
 }

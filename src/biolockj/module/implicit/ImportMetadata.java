@@ -35,7 +35,7 @@ public class ImportMetadata extends BioModuleImpl {
 			inputDelim = TAB_DELIM;
 		}
 
-		if( SeqUtil.isMultiplexed() && ( MetaUtil.getMetadata() == null || !MetaUtil.getMetadata().exists() ) )
+		if( SeqUtil.isMultiplexed() && !MetaUtil.exists() )
 			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: "
 				+ MetaUtil.META_FILE_PATH );
 	}
@@ -46,15 +46,14 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		final File metadata = getMetadata();
-		if( metadata.exists() ) {
-			MetaUtil.setFile( metadata );
+		if( MetaUtil.exists() ) {
+			MetaUtil.setFile( MetaUtil.getMetadata() );
 			MetaUtil.refreshCache();
 			BioLockJUtil.ignoreFile( MetaUtil.getMetadata() );
 			if( hasRModules() ) {
 				RMetaUtil.classifyReportableMetadata( this );
 			}
-		} else throw new Exception( "Metadata not found ---> " + metadata.getAbsolutePath() );
+		} else throw new Exception( "Metadata not found ---> " + MetaUtil.getPath() );
 	}
 
 	/**

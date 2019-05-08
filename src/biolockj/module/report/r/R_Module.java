@@ -93,7 +93,7 @@ public abstract class R_Module extends ScriptModuleImpl {
 	 */
 	public File getModuleScript() throws Exception {
 		final File rFile = new File( getRTemplateDir() + getModuleScriptName() );
-		if( !rFile.exists() ) throw new Exception( "Missing R module script: " + rFile.getAbsolutePath() );
+		if( !rFile.isFile() ) throw new Exception( "Missing R module script: " + rFile.getAbsolutePath() );
 
 		return rFile;
 	}
@@ -152,7 +152,7 @@ public abstract class R_Module extends ScriptModuleImpl {
 			}
 
 			final File rScript = getPrimaryScript();
-			if( DockerUtil.inAwsEnv() && ( rScript == null || !rScript.exists() ) ) {
+			if( DockerUtil.inAwsEnv() && ( rScript == null || !rScript.isFile() ) ) {
 				sb.append( "Failed to generate R Script!" + RETURN );
 			} else {
 				sb.append( getClass().getSimpleName() + ( getErrors().isEmpty() ? " successful": " failed" ) + ": "
@@ -282,7 +282,7 @@ public abstract class R_Module extends ScriptModuleImpl {
 	 */
 	public static File getMainR() throws Exception {
 		final File rFile = new File( getRTemplateDir() + R_MAIN_SCRIPT );
-		if( !rFile.exists() ) throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
+		if( !rFile.isFile() ) throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
 		return rFile;
 	}
 
@@ -343,7 +343,7 @@ public abstract class R_Module extends ScriptModuleImpl {
 
 	private static File getFunctionLib() throws Exception {
 		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
-		if( !rFile.exists() ) throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
+		if( !rFile.isFile() ) throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
 
 		return rFile;
 	}

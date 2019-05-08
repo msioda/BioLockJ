@@ -66,7 +66,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 				+ "should be used for demultiplexing.  Demultiplexer will also determine if reverse compliment barcodes are needed and set: "
 				+ DemuxUtil.BARCODE_USE_REV_COMP );
 		} else if( DemuxUtil.demuxWithBarcode() ) {
-			if( MetaUtil.getMetadata() == null || !MetaUtil.getMetadata().exists() )
+			if( !MetaUtil.exists() )
 				throw new Exception( demuxStrategy + " but metadata file is undefined" );
 
 			if( !MetaUtil.getFieldNames().contains( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ) ) )
@@ -661,7 +661,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 
 	private static void writeSample( final List<String> lines, final String fileName ) throws Exception {
 		final File outFile = new File( fileName );
-		final boolean exists = outFile.exists();
+		final boolean exists = outFile.isFile();
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile, exists ) );
 		for( final String line: lines ) {
 			writer.write( line + Constants.RETURN );

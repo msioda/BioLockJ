@@ -79,47 +79,6 @@ public class DemuxUtil {
 		return false;
 	}
 
-	// /**
-	// * Build header refs from mapping file
-	// *
-	// * INCOMPLETE CODE -- not currently used
-	// *
-	// * @throws Exception if errors occur
-	// */
-	// public static void buildHeaderRefs() throws Exception
-	// {
-	// final BufferedReader reader = BioLockJUtil.getFileReader( DemuxUtil.getMapping() );
-	// try
-	// {
-	// final Map<String, String> barcodeMap = getIdMap();
-	// final List<String> seqLines = new ArrayList<>();
-	// for( String line = reader.readLine(); line != null; line = reader.readLine() )
-	// {
-	// seqLines.add( line );
-	// if( seqLines.size() == SeqUtil.getNumLinesPerRead() )
-	// {
-	// final String header = seqLines.get( 0 );
-	// final String barcode = seqLines.get( 1 );
-	// if( barcodeMap.keySet().contains( barcode ) )
-	// {
-	// final BufferedWriter writer = new BufferedWriter(
-	// new FileWriter( getHeaderFile( barcode ), true ) );
-	// writer.write( header + Constants.RETURN );
-	// writer.close();
-	// }
-	// }
-	// }
-	//
-	// }
-	// finally
-	// {
-	// if( reader != null )
-	// {
-	// reader.close();
-	// }
-	// }
-	// }
-
 	/**
 	 * Return TRUE if Config is setup to demultiplex the sequence data.
 	 * 
@@ -154,15 +113,11 @@ public class DemuxUtil {
 				for( final String barCodeId: map.keySet() ) {
 					if( ( barcodeInHeader() || barcodeInMapping() ) && seqLines.get( 0 ).contains( barCodeId )
 						|| barcodeInSeq() && seqLines.get( 1 ).startsWith( barCodeId ) ) return map.get( barCodeId );
-
 				}
 			}
-
 			return null;
 		}
-
 		return SeqUtil.getSampleId( seqLines.get( 0 ) );
-
 	}
 
 	/**
@@ -244,28 +199,6 @@ public class DemuxUtil {
 		return idMap;
 	}
 
-	// private static File getHeaderFile( final String barcode ) throws Exception
-	// {
-	// if( headerFileMap.get( barcode ) == null )
-	// {
-	// final File barcodeDir = new File(
-	// ModuleUtil.getModule( Demultiplexer.class.getName() ).getTempDir().getAbsolutePath()
-	// + File.separator + "barcodeHeaderMaps" );
-	// if( !barcodeDir.exists() )
-	// {
-	// barcodeDir.mkdirs();
-	// }
-	//
-	// final File file = new File( barcodeDir.getAbsolutePath() + File.separator + barcode + ".txt" );
-	// if( !file.exists() )
-	// {
-	// headerFileMap.put( barcode, file.getAbsolutePath() );
-	// }
-	// }
-	//
-	// return new File( headerFileMap.get( barcode ) );
-	// }
-
 	/**
 	 * {@link biolockj.Config} boolean property {@value #BARCODE_CUTOFF} will look for barcodes in
 	 * {@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} to exist in this percentage of multiplex file.
@@ -318,7 +251,6 @@ public class DemuxUtil {
 	 */
 	public static final String OPTION_ID_IN_HEADER = "id_in_header";
 
-	// private static final Map<String, String> headerFileMap = new HashMap<>();
 	private static final Map<String, String> idMap = new HashMap<>();
 
 }
