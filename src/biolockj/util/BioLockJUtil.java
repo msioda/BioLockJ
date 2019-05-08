@@ -321,9 +321,7 @@ public class BioLockJUtil {
 				dir = new File(
 					path.replace( new File( path ).getParentFile().getAbsolutePath(), DockerUtil.DOCKER_INPUT_DIR ) );
 			}
-
-			if( !dir.exists() ) throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
-
+			
 			dirs.add( dir );
 			return dirs;
 		}
