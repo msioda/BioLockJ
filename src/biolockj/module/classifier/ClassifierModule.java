@@ -20,8 +20,7 @@ import biolockj.module.SeqModule;
  * to get classifier command (loaded module, executable file path, or in the $USER $PATH) and optional command line
  * parameters.}
  */
-public interface ClassifierModule extends SeqModule
-{
+public interface ClassifierModule extends SeqModule {
 	/**
 	 * Get the executable required to classify your samples.
 	 *

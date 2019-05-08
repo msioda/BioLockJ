@@ -1,33 +1,32 @@
-# Deployment path: $DOCKER_FILE_PATH/blj_basic.Dockerfile
+# Deployment path: $DOCKER_DIR/blj_basic.Dockerfile
 
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
 
-#1.) Setup Env
-ENV BLJ=/app/biolockj
-ENV BLJ_PROJ=/pipelines
-ENV BLJ_URL="https://github.com/msioda/BioLockJ/releases/download"
+#1.) Setup Standard Dirs (used by some but not all ancestors)
+ENV BLJ="/app/biolockj"
+ENV BLJ_SUP="/app/blj_support"
+ENV EFS="/mnt/efs"
+ENV BLJ_CONFIG="${EFS}/config"
+ENV BLJ_DB="${EFS}/db"
+ENV BLJ_DEFAULT_DB="/mnt/db"
+ENV BLJ_INPUT="${EFS}/input"
+ENV BLJ_META="${EFS}/metadata"
+ENV BLJ_PROJ="${EFS}/pipelines"
+ENV BLJ_PRIMER="${EFS}/primer"
+ENV BLJ_SCRIPT="${EFS}/script"
+ENV EC2_HOME="/home/ec2-user"
+ENV PATH="${EC2_HOME}/miniconda/bin:$PATH"
 
 #2.) Build Standard Directories 
-RUN mkdir /app && \
-	mkdir /config && \
-	mkdir /db && \
-	mkdir /input && \
-	mkdir /log && \
-	mkdir /meta && \
-	mkdir /pipelines && \
-	mkdir /primer
+RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \
+	mkdir "${BLJ_CONFIG}" && mkdir "${BLJ_DB}" && mkdir "${BLJ_INPUT}" && \
+	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && \
+	mkdir "${BLJ_DEFAULT_DB}" && mkdir "/log"
 
 #3.) Install Ubuntu Software 
 RUN apt-get update && \
-	apt-get install -y \
-		build-essential \
-		apt-utils \
-		bsdtar \
-		gawk \
-		nano \
-		tzdata \
-		wget
+	apt-get install -y build-essential apt-utils bsdtar gawk nano tzdata wget
 
 #4.) Set the timezone to EST
 RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
@@ -45,16 +44,16 @@ RUN echo ' '  >> ~/.bashrc && \
 	echo 'alias tlog="tail -1000 *.log"' >> ~/.bashrc && \
 	echo 'alias tlogf="tail -1000f *.log"' >> ~/.bashrc && \
 	echo 'alias rf="source ~/.bashrc"' >> ~/.bashrc && \
+	echo 'alias rd="rm -rf"' >> ~/.bashrc && \
 	echo ' ' >> ~/.bashrc && \
 	echo 'if [ -f /etc/bash_completion ] && ! shopt -oq posix; then' >> ~/.bashrc && \
 	echo '    . /etc/bash_completion' >> ~/.bashrc && \
 	echo 'fi' >> ~/.bashrc && \
-	echo 'export PS1="${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' >> ~/.bashrc	
+	echo 'export PS1="${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' >> ~/.bashrc	 && \
+	echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc
 
 #6.) Cleanup
-RUN	rm -rf /tmp/* && \
-	rm -rf /usr/games && \
-	rm -rf /var/log/*
+RUN	rm -rf /tmp/* && rm -rf /usr/games && rm -rf /var/log/*
 
 #7.) Set Default Command
 CMD /bin/bash $COMPUTE_SCRIPT

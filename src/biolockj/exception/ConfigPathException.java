@@ -11,23 +11,32 @@
  */
 package biolockj.exception;
 
+import java.io.File;
 import biolockj.Config;
 
 /**
  * ConfigPathException is thrown if property is invalid file paths are encountered when processing the BioLockJ
  * configuration file.
  */
-public class ConfigPathException extends ConfigException
-{
+public class ConfigPathException extends ConfigException {
 
 	/**
 	 * ConfigPathException is thrown if the filePath parameter does not exist on the file system.
 	 *
-	 * @param filePath File path
+	 * @param file File or directory path
 	 */
-	public ConfigPathException( final String filePath )
-	{
-		super( "Invalid Path: " + filePath + " does not exist on the file system" );
+	public ConfigPathException( final File file ) {
+		super( "Invalid Path: " + file.getAbsolutePath() + " does not exist on the file system" );
+	}
+
+	/**
+	 * ConfigPathException is thrown if the filePath parameter does not exist on the file system.
+	 *
+	 * @param file File or directory path
+	 * @param msg Error message
+	 */
+	public ConfigPathException( final File file, final String msg ) {
+		super( "Invalid Path: " + file.getAbsolutePath() + " does not exist on the file system: " + msg );
 	}
 
 	/**
@@ -37,8 +46,7 @@ public class ConfigPathException extends ConfigException
 	 * @param property {@link biolockj.Config} property name
 	 * @param fileType File type must be {@value #FILE} or {@value #DIRECTORY}
 	 */
-	public ConfigPathException( final String property, final String fileType )
-	{
+	public ConfigPathException( final String property, final String fileType ) {
 		super( property, "Current value \"" + Config.getString( null, property ) + "\" is not a valid " + fileType );
 	}
 

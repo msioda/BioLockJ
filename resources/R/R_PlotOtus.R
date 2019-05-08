@@ -118,8 +118,8 @@ buildPlots <- function() {
             foundValidPvals = FALSE
 
             for( meta in getReportFields() ) {
-            		metaVals = metaTable[,meta]
-            		parPval = parStats[item, meta]
+            	metaVals = metaTable[,meta]
+            	parPval = parStats[item, meta]
                	nonParPval = nonParStats[item, meta]
                	
                	if( sigOnly && min( parPval, nonParPval ) > pvalCutoff ) { next } 
@@ -147,11 +147,11 @@ buildPlots <- function() {
 
 			   	if( position == 1 ) {
 			   		pageNum = pageNum + 1
-            			addHeaderFooter( item, level, pageNum )
+            		addHeaderFooter( item, level, pageNum )
                	} else if( position > prod( par("mfrow") ) ) {
-            			position = 1
-            			pageNum = pageNum + 1
-            			addHeaderFooter( item, level, pageNum )
+            		position = 1
+            		pageNum = pageNum + 1
+            		addHeaderFooter( item, level, pageNum )
                	}
             }
          }

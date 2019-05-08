@@ -12,7 +12,6 @@
 package biolockj.node.wgs;
 
 import java.util.StringTokenizer;
-import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 
 /**
@@ -29,8 +28,7 @@ import biolockj.node.OtuNodeImpl;
  * <br>
  * k__Bacteria|p__Bacteroidetes 14.68863 0.137144143537 4234739 580770
  */
-public class MetaphlanNode extends OtuNodeImpl implements OtuNode
-{
+public class MetaphlanNode extends OtuNodeImpl {
 	/**
 	 * Build the OtuNode by extracting the OTU names for each level from the line. Sample ID is passed as a parameter
 	 * pulled from the file name. The number of reads matching the line taxonomy is extracted from the last column
@@ -40,36 +38,27 @@ public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 	 * @param line Metaphlan output line
 	 * @throws Exception if an invalid line format is found
 	 */
-	public MetaphlanNode( final String id, final String line ) throws Exception
-	{
+	public MetaphlanNode( final String id, final String line ) throws Exception {
 		final String[] parts = line.split( "\\s" );
-		if( parts.length != 5 )
-		{
-			throw new Exception( "INVALID FILE FORMAT.  Line should have 5 parts.  LINE =  (" + line
-					+ ") METAPHLAN CLASSIFICATION NOT RUN WITH SWITCH: -t (ANALYSIS_TYPE) rel_ab_w_read_stats.  Add "
-					+ " \"-t rel_ab_w_read_stats\" when calling metaphlan2." );
-		}
+		if( parts.length != 5 ) throw new Exception( "INVALID FILE FORMAT.  Line should have 5 parts.  LINE =  (" + line
+			+ ") METAPHLAN CLASSIFICATION NOT RUN WITH SWITCH: -t (ANALYSIS_TYPE) rel_ab_w_read_stats.  Add "
+			+ " \"-t rel_ab_w_read_stats\" when calling metaphlan2." );
 
-		try
-		{
+		try {
 			setSampleId( id );
 			setLine( line );
 			setCount( Integer.valueOf( parts[ 4 ] ) );
 
 			final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], METAPHLAN_DELIM );
-			while( taxas.hasMoreTokens() )
-			{
+			while( taxas.hasMoreTokens() ) {
 				final String token = taxas.nextToken();
 				final String levelDelim = token.substring( 0, 3 );
 				final String taxa = token.substring( 3 ).trim();
-				if( !taxa.isEmpty() )
-				{
+				if( !taxa.isEmpty() ) {
 					addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
 				}
 			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			throw new Exception( "Error parsing Sample ID:" + id + "> line: " + line + ": " + ex.getMessage() );
 		}
 	}
@@ -77,8 +66,7 @@ public class MetaphlanNode extends OtuNodeImpl implements OtuNode
 	private static final String METAPHLAN_DELIM = "\\|";
 
 	// Override default DOMAIN taxonomy level delimiter (d__) set in OtuNodeImpl with QIIME domain delim (k__)
-	static
-	{
+	static {
 		DOMAIN_DELIM = "k__";
 	}
 }

@@ -13,7 +13,6 @@ package biolockj.module.report.r;
 
 import java.util.List;
 import biolockj.Config;
-import biolockj.module.ScriptModule;
 
 /**
  * This BioModule is used to build the R script used to generate p-value histograms for each report field and each
@@ -21,11 +20,9 @@ import biolockj.module.ScriptModule;
  * 
  * @blj.web_desc R Plot P-value Histograms
  */
-public class R_PlotPvalHistograms extends R_Module implements ScriptModule
-{
+public class R_PlotPvalHistograms extends R_Module {
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		Config.requireString( this, P_VAL_CUTOFF );
 	}
@@ -34,8 +31,7 @@ public class R_PlotPvalHistograms extends R_Module implements ScriptModule
 	 * Returns {@link #getStatPreReqs()}
 	 */
 	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
+	public List<String> getPreRequisiteModules() throws Exception {
 		return getStatPreReqs();
 	}
 

@@ -21,7 +21,6 @@ import org.apache.commons.io.filefilter.*;
 import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.ScriptModule;
-import biolockj.module.report.Email;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
@@ -31,11 +30,9 @@ import biolockj.module.report.taxa.NormalizeTaxaTables;
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
  */
-public final class DownloadUtil
-{
+public final class DownloadUtil {
 	// Prevent instantiation
-	private DownloadUtil()
-	{}
+	private DownloadUtil() {}
 
 	/**
 	 * If running on cluster, build command for user to download pipeline analysis.<br>
@@ -48,59 +45,58 @@ public final class DownloadUtil
 	 * @return String (scp command) or null
 	 * @throws Exception if {@link biolockj.Config} parameters are missing or invalid
 	 */
-	public static String getDownloadCmd() throws Exception
-	{
+	public static String getDownloadCmd() throws Exception {
 		final List<BioModule> modules = getDownloadModules();
-		if( Config.isOnCluster() && modules != null && getDownloadDirPath() != null )
-		{
+		if( buildRsyncCmd( modules ) ) {
 			boolean hasRmods = false;
 			final Set<File> downloadPaths = new TreeSet<>();
-			for( final BioModule module: modules )
-			{
+			for( final BioModule module: modules ) {
 				Log.info( DownloadUtil.class, "Updating download list for " + module.getClass().getSimpleName() );
-				if( module instanceof R_Module )
-				{
+				if( module instanceof R_Module ) {
 					downloadPaths.add( ( (R_Module) module ).getScriptDir() );
 					downloadPaths.add( module.getOutputDir() );
-					if( !ModuleUtil.isComplete( module ) )
-					{
+					if( !ModuleUtil.isComplete( module ) ) {
 						downloadPaths.add( module.getTempDir() );
 					}
 
 					hasRmods = true;
-				}
-				else if( module instanceof NormalizeTaxaTables )
-				{
+				} else if( module instanceof NormalizeTaxaTables ) {
 					downloadPaths.add( module.getOutputDir() );
 					downloadPaths.add( module.getTempDir() );
-				}
-				else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables )
-				{
+				} else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables ) {
 					downloadPaths.add( module.getOutputDir() );
 				}
 			}
 
-			if( hasRmods )
-			{
+			if( hasRmods ) {
 				makeRunAllScript( modules );
 			}
 
-			AndFileFilter filter = new AndFileFilter( EmptyFileFilter.NOT_EMPTY, HiddenFileFilter.VISIBLE );
-			Collection<File> dirs = FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
-			if( dirs == null )
-			{
-				return null;
-			}
-			
+			final AndFileFilter filter = new AndFileFilter( EmptyFileFilter.NOT_EMPTY, HiddenFileFilter.VISIBLE );
+			final Collection<
+				File> dirs = FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
+
 			downloadPaths.addAll( dirs );
 
-			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() -1 ) ) ? "completed": "failed" ) + " pipeline -->";
+			if( DockerUtil.inAwsEnv() ) {
+				downloadPaths.add( NextflowUtil.getNextflowReportDir() );
+			}
+
+			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() - 1 ) ) ? "completed": "failed" )
+				+ " pipeline -->";
 			final String displaySize = FileUtils
-					.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
+				.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
+
+			if( DockerUtil.inAwsEnv() ) {
+				Log.info( DownloadUtil.class,
+					"Size of report files = [ " + displaySize + " ]:" + getDownloadListFile().getAbsolutePath() );
+				return null;
+			}
+
 			final String src = SRC + "=" + Config.pipelinePath();
 			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
-					+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
-					+ Config.requireString( null, Email.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
+				+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
+				+ Config.requireString( null, Constants.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 
 			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + src + RETURN + cmd;
 		}
@@ -112,21 +108,15 @@ public final class DownloadUtil
 	 * Get validated {@link biolockj.Config}.{@value #DOWNLOAD_DIR} if running on cluster, otherwise return null
 	 *
 	 * @return String download directory file or null
-	 * @throws Exception thrown if directory is defined but does not exist
 	 */
-	public static String getDownloadDirPath() throws Exception
-	{
+	public static String getDownloadDirPath() {
 		String dir = Config.getString( null, DOWNLOAD_DIR );
-		if( dir != null )
-		{
-			if( !dir.endsWith( File.separator ) )
-			{
+		if( dir != null ) {
+			if( !dir.endsWith( File.separator ) ) {
 				dir = dir + File.separator;
 			}
-
 			return dir + Config.pipelineName();
 		}
-
 		return null;
 	}
 
@@ -134,10 +124,8 @@ public final class DownloadUtil
 	 * Get the download list file.
 	 * 
 	 * @return File containing list of files to download
-	 * @throws Exception if errors occur
 	 */
-	public static File getDownloadListFile() throws Exception
-	{
+	public static File getDownloadListFile() {
 		return new File( Config.pipelinePath() + File.separator + DOWNLOAD_LIST );
 	}
 
@@ -148,25 +136,20 @@ public final class DownloadUtil
 	 * @return List of files for download
 	 * @throws Exception if errors occur
 	 */
-	protected static List<File> buildDownloadList( final Collection<File> files ) throws Exception
-	{
+	protected static List<File> buildDownloadList( final Collection<File> files ) throws Exception {
 		final List<File> downFiles = new ArrayList<>();
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getDownloadListFile() ) );
-		try
-		{
+		try {
 			final File pipeRoot = new File( Config.pipelinePath() );
 
 			if( BioLockJ.pipelineInputDir().exists()
-					&& BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE )
-					|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
-					|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
-					|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
-					|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
-			{
-				for( final File file: BioLockJUtil.getPipelineInputFiles() )
-				{
-					if( !SeqUtil.isSeqFile( file ) )
-					{
+				&& BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE )
+				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
+				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
+				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
+				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) ) {
+				for( final File file: BioLockJUtil.getPipelineInputFiles() ) {
+					if( !SeqUtil.isSeqFile( file ) ) {
 						downFiles.add( file );
 						final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
 						writer.write( relPath + RETURN );
@@ -174,26 +157,19 @@ public final class DownloadUtil
 				}
 			}
 
-			for( final File file: files )
-			{
-				Log.info( DownloadUtil.class, "Candidate download path: " + file.getAbsolutePath() );
-				if( FileUtils.sizeOf( file ) != 0 && !file.getName().startsWith( "." ) )
-				{
+			Log.info( DownloadUtil.class, "Building download list: " + getDownloadListFile().getAbsolutePath() );
+			for( final File file: files ) {
+				Log.debug( DownloadUtil.class, "Candidate download path: " + file.getAbsolutePath() );
+				if( FileUtils.sizeOf( file ) != 0 && !file.getName().startsWith( "." ) ) {
 					downFiles.add( file );
-					Log.info( DownloadUtil.class, "Accepted download path: " + file.getAbsolutePath() );
+					Log.info( DownloadUtil.class, "Add download path: " + file.getAbsolutePath() );
 					final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
 					writer.write( relPath + RETURN );
 				}
 			}
+		} finally {
+			writer.close();
 		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
-		}
-
 		return downFiles;
 	}
 
@@ -203,15 +179,10 @@ public final class DownloadUtil
 	 *
 	 * @return The userId
 	 */
-	protected static String getClusterUser()
-	{
+	protected static String getClusterUser() {
 		String user = System.getProperty( "user.home" );
-		if( user == null || user.trim().length() == 0 )
-		{
-			return null;
-		}
-		if( user.lastIndexOf( File.separator ) > 0 )
-		{
+		if( user == null || user.trim().length() == 0 ) return null;
+		if( user.lastIndexOf( File.separator ) > 0 ) {
 			user = user.substring( user.lastIndexOf( File.separator ) + 1 );
 		}
 
@@ -225,22 +196,17 @@ public final class DownloadUtil
 	 * @param includeScript include the script directory
 	 * @param includeTemp include the temp directory
 	 * @return a file name filter
-	 * @throws Exception if errors occur
 	 */
 	protected static IOFileFilter getDirFilter( final boolean includeOutput, final boolean includeScript,
-			final boolean includeTemp ) throws Exception
-	{
+		final boolean includeTemp ) {
 		final ArrayList<String> dirFilter = new ArrayList<>();
-		if( includeOutput )
-		{
+		if( includeOutput ) {
 			dirFilter.add( BioModule.OUTPUT_DIR );
 		}
-		if( includeScript )
-		{
+		if( includeScript ) {
 			dirFilter.add( Constants.SCRIPT_DIR );
 		}
-		if( includeTemp )
-		{
+		if( includeTemp ) {
 			dirFilter.add( BioModule.TEMP_DIR );
 		}
 
@@ -266,28 +232,22 @@ public final class DownloadUtil
 	 * 
 	 * @return BioModules to download
 	 */
-	protected static List<BioModule> getDownloadModules()
-	{
+	protected static List<BioModule> getDownloadModules() {
 		final List<BioModule> modules = new ArrayList<>();
-		try
-		{
-			for( final BioModule module: Pipeline.getModules() )
-			{
-	
-				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
-						|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
-						|| module instanceof NormalizeTaxaTables;
+		try {
+			for( final BioModule module: Pipeline.getModules() ) {
 
-				if( ModuleUtil.hasExecuted( module ) && downloadableType )
-				{
+				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
+					|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
+					|| module instanceof NormalizeTaxaTables;
+
+				if( ModuleUtil.hasExecuted( module ) && downloadableType ) {
 					modules.add( module );
 				}
 			}
 
 			return modules;
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.warn( DownloadUtil.class, "Unable to find any executed modules to summarize: " + ex.getMessage() );
 		}
 		return null;
@@ -298,13 +258,10 @@ public final class DownloadUtil
 	 * 
 	 * @param files List of download files
 	 * @return BigInteger total download size
-	 * @throws Exception if errors occur
 	 */
-	protected static BigInteger getDownloadSize( final List<File> files ) throws Exception
-	{
+	protected static BigInteger getDownloadSize( final List<File> files ) {
 		BigInteger downloadSize = BigInteger.valueOf( 0L );
-		for( final File file: files )
-		{
+		for( final File file: files ) {
 			downloadSize = downloadSize.add( FileUtils.sizeOfAsBigInteger( file ) );
 		}
 
@@ -318,28 +275,22 @@ public final class DownloadUtil
 	 * @return File Run_All.R script
 	 * @throws Exception if errors occur
 	 */
-	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception
-	{
+	protected static File makeRunAllScript( final List<BioModule> modules ) throws Exception {
 
 		final File pipeRoot = new File( Config.pipelinePath() );
 		final File script = getRunAllRScript();
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
 
-		if( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
-		{
+		if( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null ) {
 			writer.write( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN + RETURN );
 		}
 
 		writer.write( "# Use this script to locally run R modules." + RETURN );
 
-		for( final BioModule mod: modules )
-		{
-			if( mod instanceof R_Module )
-			{
+		for( final BioModule mod: modules ) {
+			if( mod instanceof R_Module ) {
 				final String relPath = pipeRoot.toURI().relativize( ( (R_Module) mod ).getPrimaryScript().toURI() )
-						.toString();
-				// do not use exe.Rscript config option, this is a convenience for the users local system not for the
-				// system where biolockj ran.
+					.toString();
 				writer.write( "Rscript " + relPath + RETURN );
 			}
 		}
@@ -349,8 +300,12 @@ public final class DownloadUtil
 		return script;
 	}
 
-	private static File getRunAllRScript() throws Exception
-	{
+	private static boolean buildRsyncCmd( final List<BioModule> modules ) {
+		return modules != null && !modules.isEmpty()
+			&& ( DockerUtil.inAwsEnv() || Config.isOnCluster() && getDownloadDirPath() != null );
+	}
+
+	private static File getRunAllRScript() {
 		return new File( Config.pipelinePath() + File.separator + RUN_ALL_SCRIPT );
 	}
 

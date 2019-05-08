@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import biolockj.Constants;
-import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 
 /**
@@ -25,8 +24,7 @@ import biolockj.node.OtuNodeImpl;
  * # Constructed from biom file #OTU ID 3A.1 7A.1 120A.1 <br>
  * 7A.1 k__Bacteria;p__Actinobacteria 419.0 26.0 90.0 70.0
  */
-public class QiimeNode extends OtuNodeImpl implements OtuNode
-{
+public class QiimeNode extends OtuNodeImpl {
 	/**
 	 * Build the OtuNode by extracting the OTU names for each level from the line.
 	 *
@@ -35,16 +33,14 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 * @param count Extracted from column of the Sample ID
 	 * @throws Exception if propagated from addOtu() method
 	 */
-	public QiimeNode( final String id, final String taxas, final int count ) throws Exception
-	{
+	public QiimeNode( final String id, final String taxas, final int count ) throws Exception {
 		setLine( id + "_" + taxas + "_" + count );
 		setSampleId( id );
 		setCount( count );
 		final StringTokenizer st = new StringTokenizer( taxas, QIIME_DELIM );
 		String taxa = st.nextToken(); // skip domain
 
-		while( st.hasMoreTokens() )
-		{
+		while( st.hasMoreTokens() ) {
 			taxa = st.nextToken();
 			final String levelDelim = getLevel( taxa );
 			final String otu = taxa.substring( levelDelimSize );
@@ -53,10 +49,8 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	}
 
 	@Override
-	public Map<String, String> delimToLevelMap()
-	{
-		if( delimToLevelMap.isEmpty() )
-		{
+	public Map<String, String> delimToLevelMap() {
+		if( delimToLevelMap.isEmpty() ) {
 			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
 			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
 			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
@@ -75,20 +69,13 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	 * @return Level delim
 	 * @throws Exception if the taxa delim is undefined
 	 */
-	protected String getLevel( final String taxa ) throws Exception
-	{
-		for( final String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA )
-		{
-			if( taxa.startsWith( abmiguousDelim ) )
-			{
-				return null;
-			}
+	protected String getLevel( final String taxa ) throws Exception {
+		for( final String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA ) {
+			if( taxa.startsWith( abmiguousDelim ) ) return null;
 		}
 
-		if( delimToLevelMap.isEmpty() )
-		{
-			if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null )
-			{
+		if( delimToLevelMap.isEmpty() ) {
+			if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null ) {
 				delimToLevelMap.clear();
 				levelDelimSize = 5;
 				DOMAIN_DELIM = SILVA_DOMAIN_DELIM;
@@ -100,11 +87,8 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 				SPECIES_DELIM = SILVA_SPECIES_DELIM;
 
 				final String delim = taxa.substring( 0, levelDelimSize );
-				if( delimToLevelMap().get( delim ) == null )
-				{
-					throw new Exception(
-							"Taxa delim [ " + delim + " ] is undefined in: " + getSampleId() + ": " + taxa );
-				}
+				if( delimToLevelMap().get( delim ) == null ) throw new Exception(
+					"Taxa delim [ " + delim + " ] is undefined in: " + getSampleId() + ": " + taxa );
 
 			}
 		}
@@ -158,8 +142,7 @@ public class QiimeNode extends OtuNodeImpl implements OtuNode
 	private static final String QIIME_DELIM = ";";
 
 	// Override default DOMAIN taxonomy level delimiter (d__) set in OtuNodeImpl with QIIME domain delim (k__)
-	static
-	{
+	static {
 		DOMAIN_DELIM = QIIME_DOMAIN_DELIM;
 	}
 

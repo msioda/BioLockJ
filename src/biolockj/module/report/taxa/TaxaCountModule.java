@@ -17,7 +17,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Log;
 import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.TaxaUtil;
@@ -25,19 +24,14 @@ import biolockj.util.TaxaUtil;
 /**
  * TBD
  */
-public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModule
-{
+public abstract class TaxaCountModule extends JavaModuleImpl {
 
 	@Override
-	public List<File> getInputFiles() throws Exception
-	{
-		if( getFileCache().isEmpty() )
-		{
+	public List<File> getInputFiles() throws Exception {
+		if( getFileCache().isEmpty() ) {
 			final List<File> files = new ArrayList<>();
-			for( final File f: findModuleInputFiles() )
-			{
-				if( TaxaUtil.isTaxaFile( f ) )
-				{
+			for( final File f: findModuleInputFiles() ) {
+				if( TaxaUtil.isTaxaFile( f ) ) {
 					files.add( f );
 				}
 			}
@@ -52,11 +46,9 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 	 * Require taxonomy table module as prerequisite
 	 */
 	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
+	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
-		{
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ) {
 			preReqs.add( BuildTaxaTables.class.getName() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
@@ -69,23 +61,15 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 	 * @param module BioModule
 	 * @return TRUE if module generated taxonomy table files
 	 */
-	public boolean isTaxaModule( final BioModule module )
-	{
-		try
-		{
+	public boolean isTaxaModule( final BioModule module ) {
+		try {
 			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
-					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-			for( final File f: files )
-			{
-				if( TaxaUtil.isTaxaFile( f ) )
-				{
-					return true;
-				}
+			for( final File f: files ) {
+				if( TaxaUtil.isTaxaFile( f ) ) return true;
 			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.warn( getClass(), "Error occurred while inspecting module output files: " + module );
 			ex.printStackTrace();
 		}
@@ -93,8 +77,7 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 	}
 
 	@Override
-	public boolean isValidInputModule( final BioModule module )
-	{
+	public boolean isValidInputModule( final BioModule module ) {
 		return isTaxaModule( module );
 	}
 
@@ -106,34 +89,25 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 	 * 
 	 * @param files List of taxa table files
 	 * @return List of taxa tables (only 1/level)
-	 * @throws Exception if errors occur
 	 */
-	protected List<File> filterByProcessLevel( final List<File> files ) throws Exception
-	{
+	protected static List<File> filterByProcessLevel( final List<File> files ) {
 		final List<File> filteredFiles = new ArrayList<>();
 		final Map<String, Set<File>> levelFiles = getTaxaFilesByLevel( files );
-		for( final String level: levelFiles.keySet() )
-		{
-			if( levelFiles.get( level ).size() == 1 )
-			{
+		for( final String level: levelFiles.keySet() ) {
+			if( levelFiles.get( level ).size() == 1 ) {
 				filteredFiles.add( levelFiles.get( level ).iterator().next() );
 				continue;
 			}
 
 			File topFile = null;
-			for( final File file: levelFiles.get( level ) )
-			{
-				if( TaxaUtil.isLogNormalizedTaxaFile( file ) )
-				{
+			for( final File file: levelFiles.get( level ) ) {
+				if( TaxaUtil.isLogNormalizedTaxaFile( file ) ) {
 					topFile = file;
 					break;
 				}
-				if( TaxaUtil.isNormalizedTaxaFile( file ) )
-				{
+				if( TaxaUtil.isNormalizedTaxaFile( file ) ) {
 					topFile = file;
-				}
-				else if( topFile == null )
-				{
+				} else if( topFile == null ) {
 					topFile = file;
 				}
 			}
@@ -144,18 +118,13 @@ public abstract class TaxaCountModule extends JavaModuleImpl implements JavaModu
 		return filteredFiles;
 	}
 
-	private Map<String, Set<File>> getTaxaFilesByLevel( final List<File> files ) throws Exception
-	{
+	private static Map<String, Set<File>> getTaxaFilesByLevel( final List<File> files ) {
 		final Map<String, Set<File>> levelFiles = new HashMap<>();
-		for( final String level: TaxaUtil.getTaxaLevels() )
-		{
-			for( final File file: files )
-			{
-				if( file.getName().contains( level ) )
-				{
+		for( final String level: TaxaUtil.getTaxaLevels() ) {
+			for( final File file: files ) {
+				if( file.getName().contains( level ) ) {
 					Set<File> fileSet = levelFiles.get( level );
-					if( fileSet == null )
-					{
+					if( fileSet == null ) {
 						fileSet = new HashSet<>();
 					}
 					fileSet.add( file );

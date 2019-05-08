@@ -20,8 +20,7 @@ import java.util.Map;
  * sample ID. Note that if data is demultiplexed, the Sample ID is extracted from the file name instead of the sequence
  * header.
  */
-public interface OtuNode
-{
+public interface OtuNode {
 	/**
 	 * Add {@link biolockj.node.OtuNode} taxa names for the
 	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS} level mapped by the classifier

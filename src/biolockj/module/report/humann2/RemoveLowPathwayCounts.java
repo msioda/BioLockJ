@@ -18,7 +18,6 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.JavaModule;
 import biolockj.util.*;
 
 /**
@@ -27,12 +26,10 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Remove Low Pathway Counts
  */
-public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaModule
-{
+public class RemoveLowPathwayCounts extends Humann2CountModule {
 
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		getMinCount();
 	}
@@ -41,17 +38,14 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 	 * Produce summary message with min, max, mean, and median number of pathways.
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		String summary = "Remove Pathway counts below --> " + getMetaColName() + RETURN;
-		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) )
-		{
-			summary += SummaryUtil.getCountSummary( uniquePathwaysPerSample, "Unique Pathways", false );
-			summary += SummaryUtil.getCountSummary( totalPathwaysPerSample, "Total Pathways ", true );
-			sampleIds.removeAll( totalPathwaysPerSample.keySet() );
-			if( !sampleIds.isEmpty() )
-			{
-				summary += "Removed empty samples: " + sampleIds;
+		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
+			summary += SummaryUtil.getCountSummary( this.uniquePathwaysPerSample, "Unique Pathways", false );
+			summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
+			this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
+			if( !this.sampleIds.isEmpty() ) {
+				summary += "Removed empty samples: " + this.sampleIds;
 			}
 		}
 		freeMemory();
@@ -59,21 +53,17 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 	}
 
 	@Override
-	public void runModule() throws Exception
-	{
-		sampleIds.addAll( MetaUtil.getSampleIds() );
-		for( final File file: getInputFiles() )
-		{
-			final TreeMap<String, TreeSet<String>> lowCounts = removeLowPathwayCounts( file );
-			logLowCountPathways( lowCounts );
+	public void runModule() throws Exception {
+		this.sampleIds.addAll( MetaUtil.getSampleIds() );
+		for( final File file: getInputFiles() ) {
+			logLowCountPathways( removeLowPathwayCounts( file ) );
 			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS )
-					&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-					&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
-			{
-				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT, uniquePathwaysPerSample,
-						getTempDir(), true );
-				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT, totalPathwaysPerSample,
-						getOutputDir(), true );
+				&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
+				&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT,
+					this.uniquePathwaysPerSample, getTempDir(), true );
+				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT,
+					this.totalPathwaysPerSample, getOutputDir(), true );
 			}
 		}
 	}
@@ -84,37 +74,27 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 	 * @param map TreeMap(sampleId, TreeSet(Pathway)) of Pathways found in too few samples
 	 * @throws Exception if errors occur
 	 */
-	protected void logLowCountPathways( final TreeMap<String, TreeSet<String>> map ) throws Exception
-	{
-		if( map == null || map.isEmpty() )
-		{
+	protected void logLowCountPathways( final TreeMap<String, TreeSet<String>> map ) throws Exception {
+		if( map == null || map.isEmpty() ) {
 			Log.info( getClass(), "No low-count pathways detected" );
 			return;
 		}
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getLowCountPathwayLogFile() ) );
-		try
-		{
-			for( final String id: map.keySet() )
-			{
+		try {
+			for( final String id: map.keySet() ) {
 				final TreeSet<String> pathways = map.get( id );
 
-				for( final String pathway: pathways )
-				{
+				for( final String pathway: pathways ) {
 					writer.write( id + ": " + pathway + RETURN );
 				}
 			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
+		} finally {
+			writer.close();
 		}
 
 		Log.info( getClass(),
-				"Found " + map.size() + " samples with low count pathways removed - Pathway list saved to --> "
-						+ getLowCountPathwayLogFile().getAbsolutePath() );
+			"Found " + map.size() + " samples with low count pathways removed - Pathway list saved to --> "
+				+ getLowCountPathwayLogFile().getAbsolutePath() );
 	}
 
 	/**
@@ -124,23 +104,19 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 	 * @return TreeMap(SampleId, TreeMap(Pathway)) Map removed pathways to sample ID
 	 * @throws Exception if errors occur
 	 */
-	protected TreeMap<String, TreeSet<String>> removeLowPathwayCounts( final File file ) throws Exception
-	{
+	protected TreeMap<String, TreeSet<String>> removeLowPathwayCounts( final File file ) throws Exception {
 		Log.info( getClass(), "Inspecting for Low Pathway count: " + file.getAbsolutePath() );
 		final TreeMap<String, TreeSet<String>> lowCountPathways = new TreeMap<>();
 		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
 		final List<List<String>> output = new ArrayList<>();
-
 		List<String> pathways = null;
 		final TreeSet<String> validPathways = new TreeSet<>();
 		final Set<String> foundSamplePathways = new TreeSet<>();
 		int totalPathwayCount = 0;
-		for( final List<String> record: table )
-		{
+		for( final List<String> record: table ) {
 			final String sampleId = record.get( 0 );
 
-			if( pathways == null )
-			{
+			if( pathways == null ) {
 				output.add( record );
 				validPathways.addAll( record.subList( 1, record.size() ) );
 				pathways = record;
@@ -151,17 +127,13 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 
 			final List<String> line = new ArrayList<>();
 			line.add( sampleId );
-			for( int i = 1; i < record.size(); i++ )
-			{
+			for( int i = 1; i < record.size(); i++ ) {
 				final Double count = Double.valueOf( record.get( i ) );
 				final String pathway = pathways.get( i - 1 );
-				if( count < getMinCount() )
-				{
+				if( count < getMinCount() ) {
 					line.add( "0.0" );
 					Log.debug( getClass(), sampleId + ": Remove Low Pathway count: " + pathway + "=" + count );
-				}
-				else
-				{
+				} else {
 					validSamplePathways.add( pathway );
 					line.add( count.toString() );
 					totalPathwayCount += count;
@@ -174,30 +146,27 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 			final TreeSet<String> badSamplePathways = new TreeSet<>( validPathways );
 			badSamplePathways.removeAll( validSamplePathways );
 			foundSamplePathways.addAll( validSamplePathways );
-			if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
-			{
+			if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
 				Log.info( getClass(), "Set totalPathwaysPerSample: " + sampleId + "=" + totalPathwayCount );
 				Log.info( getClass(), "Set uniquePathwaysPerSample: " + sampleId + "=" + foundSamplePathways.size() );
-				totalPathwaysPerSample.put( sampleId, String.valueOf( totalPathwayCount ) );
-				uniquePathwaysPerSample.put( sampleId, String.valueOf( foundSamplePathways.size() ) );
+				this.totalPathwaysPerSample.put( sampleId, String.valueOf( totalPathwayCount ) );
+				this.uniquePathwaysPerSample.put( sampleId, String.valueOf( foundSamplePathways.size() ) );
 			}
 
-			if( !badSamplePathways.isEmpty() )
-			{
+			if( !badSamplePathways.isEmpty() ) {
 				lowCountPathways.put( sampleId, badSamplePathways );
-				Log.debug( getClass(),
-						sampleId + ": Removed " + badSamplePathways.size() + " low Pathway counts (below " + getProp()
-								+ "=" + getMinCount() + ") --> " + badSamplePathways );
+				Log.warn( getClass(), sampleId + ": Remove " + badSamplePathways.size()
+					+ " Pathways with #counts below threshold: " + getProp() + "=" + getMinCount() );
+				Log.debug( getClass(), sampleId + ": Removed Pathways: " + badSamplePathways );
 			}
 		}
 
 		final TreeSet<String> allRemovedPathways = new TreeSet<>( validPathways );
 		allRemovedPathways.removeAll( foundSamplePathways );
-		if( !allRemovedPathways.isEmpty() )
-		{
-			Log.warn( getClass(),
-					"Completely Remove " + allRemovedPathways.size() + " Pathways (all samples below threshold"
-							+ getProp() + "=" + getMinCount() + ") --> " + allRemovedPathways );
+		if( !allRemovedPathways.isEmpty() ) {
+			Log.warn( getClass(), "Remove " + allRemovedPathways.size() + " Pathways with #counts below threshold: "
+				+ getProp() + "=" + getMinCount() );
+			Log.debug( getClass(), "Removed Pathways: " + allRemovedPathways );
 		}
 
 		buildOutputTable( output, file, allRemovedPathways );
@@ -206,47 +175,32 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 	}
 
 	private void buildOutputTable( final List<List<String>> data, final File file, final Set<String> badPathways )
-			throws Exception
-	{
+		throws Exception {
 		final File outTable = PathwayUtil.getPathwayCountFile( getOutputDir(), file, getMetaColName() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outTable ) );
-		try
-		{
+		try {
 			final Set<Integer> badIndex = new HashSet<>();
 			boolean firstRecord = true;
-			for( final List<String> record: data )
-			{
+			for( final List<String> record: data ) {
 				boolean newRecord = true;
-				if( firstRecord && !badPathways.isEmpty() )
-				{
-					for( final String pathway: record )
-					{
-						if( badPathways.contains( pathway ) )
-						{
+				if( firstRecord && !badPathways.isEmpty() ) {
+					for( final String pathway: record ) {
+						if( badPathways.contains( pathway ) ) {
 							badIndex.add( record.indexOf( pathway ) );
-						}
-						else
-						{
+						} else {
 							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
 						}
 						newRecord = false;
 					}
-				}
-				else if( !firstRecord )
-				{
-					for( int i = 0; i < record.size(); i++ )
-					{
-						if( !badIndex.contains( i ) )
-						{
+				} else if( !firstRecord ) {
+					for( int i = 0; i < record.size(); i++ ) {
+						if( !badIndex.contains( i ) ) {
 							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + record.get( i ) );
 						}
 						newRecord = false;
 					}
-				}
-				else
-				{
-					for( final String pathway: record )
-					{
+				} else {
+					for( final String pathway: record ) {
 						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
 						newRecord = false;
 					}
@@ -254,44 +208,33 @@ public class RemoveLowPathwayCounts extends Humann2CountModule implements JavaMo
 				firstRecord = false;
 				writer.write( RETURN );
 			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
+		} finally {
+			writer.close();
 		}
 	}
 
-	private void freeMemory()
-	{
-		uniquePathwaysPerSample = null;
-		totalPathwaysPerSample = null;
+	private void freeMemory() {
+		this.uniquePathwaysPerSample = null;
+		this.totalPathwaysPerSample = null;
 	}
 
-	private File getLowCountPathwayLogFile() throws Exception
-	{
+	private File getLowCountPathwayLogFile() {
 		return new File( getTempDir().getAbsolutePath() + File.separator + "lowCountPathways" + TXT_EXT );
 	}
 
-	private String getMetaColName() throws Exception
-	{
+	private String getMetaColName() throws Exception {
 		return "minCount" + getMinCount();
 	}
 
-	private Integer getMinCount() throws Exception
-	{
+	private Integer getMinCount() throws Exception {
 		return Config.requirePositiveInteger( this, getProp() );
 	}
 
-	private String getProp() throws Exception
-	{
-		if( prop == null )
-		{
-			prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
+	private String getProp() {
+		if( this.prop == null ) {
+			this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
 		}
-		return prop;
+		return this.prop;
 	}
 
 	private String prop = null;

@@ -26,8 +26,7 @@ import biolockj.util.SummaryUtil;
  * Superclass for standard BioModules (classifiers, parsers, etc). Sets standard behavior for many of the BioModule
  * interface methods.
  */
-public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
-{
+public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> {
 
 	/**
 	 * If restarting or running a direct pipeline execute the cleanup for completed modules.
@@ -39,14 +38,12 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * By default, no cleanUp code is required.
 	 */
 	@Override
-	public void cleanUp() throws Exception
-	{
+	public void cleanUp() throws Exception {
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
 	}
 
 	@Override
-	public int compareTo( final BioModule module )
-	{
+	public int compareTo( final BioModule module ) {
 		return getID().compareTo( module.getID() );
 	}
 
@@ -54,16 +51,9 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * Compared based on ID
 	 */
 	@Override
-	public boolean equals( final Object o )
-	{
-		if( o == this )
-		{
-			return true;
-		}
-		else if( !( o instanceof BioModule ) )
-		{
-			return false;
-		}
+	public boolean equals( final Object o ) {
+		if( o == this ) return true;
+		else if( !( o instanceof BioModule ) ) return false;
 
 		return ( (BioModule) o ).getID().equals( getID() );
 	}
@@ -72,19 +62,16 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	public abstract void executeTask() throws Exception;
 
 	@Override
-	public Integer getID()
-	{
-		return moduleId;
+	public Integer getID() {
+		return this.moduleId;
 	}
 
 	/**
 	 * BioModule {@link #getInputFiles()} is called to initialize upon first call and cached.
 	 */
 	@Override
-	public List<File> getInputFiles() throws Exception
-	{
-		if( getFileCache().isEmpty() )
-		{
+	public List<File> getInputFiles() throws Exception {
+		if( getFileCache().isEmpty() ) {
 			cacheInputFiles( findModuleInputFiles() );
 		}
 
@@ -95,17 +82,15 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * All BioModule work must be contained within the scope of its root directory.
 	 */
 	@Override
-	public File getModuleDir()
-	{
-		return moduleDir;
+	public File getModuleDir() {
+		return this.moduleDir;
 	}
 
 	/**
 	 * Returns moduleDir/output which will be used as the next module's input.
 	 */
 	@Override
-	public File getOutputDir()
-	{
+	public File getOutputDir() {
 		return ModuleUtil.requireSubDir( this, OUTPUT_DIR );
 	}
 
@@ -113,8 +98,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * By default, no post-requisites are required.
 	 */
 	@Override
-	public List<String> getPostRequisiteModules() throws Exception
-	{
+	public List<String> getPostRequisiteModules() throws Exception {
 		return new ArrayList<>();
 	}
 
@@ -122,8 +106,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * By default, no prerequisites are required.
 	 */
 	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
+	public List<String> getPreRequisiteModules() throws Exception {
 		return new ArrayList<>();
 	}
 
@@ -132,19 +115,17 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * provides summary metrics on output files
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		Log.info( SummaryUtil.class, "Building module summary for: " + getClass().getSimpleName() );
 		return SummaryUtil.getOutputDirSummary( this );
 	}
 
 	/**
-	 * Returns moduleDir/temp for intermediate files. If {@link biolockj.Constants#PIPELINE_DELETE_TEMP_FILES} =
+	 * Returns moduleDir/temp for intermediate files. If {@link biolockj.Constants#RM_TEMP_FILES} =
 	 * {@value biolockj.Constants#TRUE}, this directory is deleted after pipeline completes successfully.
 	 */
 	@Override
-	public File getTempDir()
-	{
+	public File getTempDir() {
 		return ModuleUtil.requireSubDir( this, TEMP_DIR );
 	}
 
@@ -154,22 +135,18 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * @throws Exception if errors occur
 	 */
 	@Override
-	public void init() throws Exception
-	{
-		moduleId = nextId++;
-		moduleDir = new File( Config.pipelinePath() + File.separator + ModuleUtil.displayID( this ) + "_"
-				+ getClass().getSimpleName() );
+	public void init() throws Exception {
+		this.moduleId = nextId++;
+		this.moduleDir = new File(
+			Config.pipelinePath() + File.separator + ModuleUtil.displayID( this ) + "_" + getClass().getSimpleName() );
 
-		if( !moduleDir.exists() )
-		{
-			moduleDir.mkdirs();
-			Log.info( getClass(),
-					"Construct module [ " + ModuleUtil.displayID( this ) + " ] for new" + moduleDir.getAbsolutePath() );
-		}
-		else
-		{
-			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing"
-					+ moduleDir.getAbsolutePath() );
+		if( !this.moduleDir.exists() ) {
+			this.moduleDir.mkdirs();
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new "
+				+ this.moduleDir.getAbsolutePath() );
+		} else {
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing "
+				+ this.moduleDir.getAbsolutePath() );
 		}
 	}
 
@@ -184,21 +161,16 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * generates a new metadata file.
 	 */
 	@Override
-	public boolean isValidInputModule( final BioModule module )
-	{
+	public boolean isValidInputModule( final BioModule module ) {
 		return !ModuleUtil.isMetadataModule( module );
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		String val = getID() + "_" + getClass().getName();
-		try
-		{
+		try {
 			val = ModuleUtil.displayID( this ) + "_" + getClass().getName();
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.error( getClass(), "Unable to find ID for: " + getClass().getName(), ex );
 		}
 		return val;
@@ -210,15 +182,11 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * @param files Input files
 	 * @throws Exception if errors occur
 	 */
-	protected void cacheInputFiles( final Collection<File> files ) throws Exception
-	{
-		if( files == null || files.isEmpty() )
-		{
-			throw new Exception( "No input files found!" );
-		}
-		inputFiles.clear();
-		inputFiles.addAll( files );
-		Collections.sort( inputFiles );
+	protected void cacheInputFiles( final Collection<File> files ) throws Exception {
+		if( files == null || files.isEmpty() ) throw new Exception( "No input files found!" );
+		this.inputFiles.clear();
+		this.inputFiles.addAll( files );
+		Collections.sort( this.inputFiles );
 
 		printInputFiles();
 
@@ -233,38 +201,30 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * @return Set of input files
 	 * @throws Exception if errors occur
 	 */
-	protected List<File> findModuleInputFiles() throws Exception
-	{
+	protected List<File> findModuleInputFiles() throws Exception {
 		final Set<File> moduleInputFiles = new HashSet<>();
 		Log.debug( getClass(), "Initialize input files..." );
 		boolean validInput = false;
 		BioModule previousModule = ModuleUtil.getPreviousModule( this );
-		while( !validInput )
-		{
-			if( previousModule == null )
-			{
+		while( !validInput ) {
+			if( previousModule == null ) {
 				Log.debug( getClass(),
-						"Previous module is NULL.  Return pipleline input from: " + Constants.INPUT_DIRS );
+					"Previous module is NULL.  Return pipleline input from: " + Constants.INPUT_DIRS );
 				moduleInputFiles.addAll( BioLockJUtil.getPipelineInputFiles() );
 				validInput = true;
-			}
-			else
-			{
+			} else {
 				Log.debug( getClass(),
-						"Check previous module for valid input files... # " + previousModule.getClass().getName()
-								+ " ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
+					"Check previous module for valid input files... # " + previousModule.getClass().getName()
+						+ " ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
 				validInput = isValidInputModule( previousModule );
-				if( validInput )
-				{
+				if( validInput ) {
 					Log.debug( getClass(),
-							"Found VALID input in the output dir of: " + previousModule.getClass().getName() + " --> "
-									+ previousModule.getOutputDir().getAbsolutePath() );
+						"Found VALID input in the output dir of: " + previousModule.getClass().getName() + " --> "
+							+ previousModule.getOutputDir().getAbsolutePath() );
 					moduleInputFiles.addAll( FileUtils.listFiles( previousModule.getOutputDir(),
-							HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+						HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 					Log.debug( getClass(), "# Files found: " + moduleInputFiles.size() );
-				}
-				else
-				{
+				} else {
 					previousModule = ModuleUtil.getPreviousModule( previousModule );
 				}
 			}
@@ -278,33 +238,14 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule>
 	 * 
 	 * @return List of input files
 	 */
-	protected List<File> getFileCache()
-	{
-		return inputFiles;
+	protected List<File> getFileCache() {
+		return this.inputFiles;
 	}
 
-	/**
-	 * Validate files in {@link biolockj.Constants#INPUT_DIRS} have unique names. BioModules that expect duplicates must
-	 * override this method.
-	 *
-	 * @param fileNames A registry of module input file names added so far
-	 * @param file Next file to validate
-	 * @throws Exception if a duplicate file name found
-	 */
-	protected void validateFileNameUnique( final Set<String> fileNames, final File file ) throws Exception
-	{
-		if( fileNames.contains( file.getName() ) )
-		{
-			throw new Exception( "File names must be unique!  Duplicate file: " + file.getAbsolutePath() );
-		}
-	}
-
-	private void printInputFiles() throws Exception
-	{
+	private void printInputFiles() {
 		Log.info( getClass(), "# Input Files: " + getFileCache().size() );
-		for( int i = 0; i < getFileCache().size(); i++ )
-		{
-			Log.info( getClass(), "Input File [" + i + "]: " + inputFiles.get( i ).getAbsolutePath() );
+		for( int i = 0; i < getFileCache().size(); i++ ) {
+			Log.info( getClass(), "Input File [" + i + "]: " + this.inputFiles.get( i ).getAbsolutePath() );
 		}
 	}
 

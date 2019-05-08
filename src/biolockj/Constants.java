@@ -14,8 +14,7 @@ package biolockj;
 /**
  * Single Java class to hold shared constant values referenced my multiple classes.
  */
-public class Constants
-{
+public class Constants {
 
 	/**
 	 * Captures the application start time
@@ -23,21 +22,38 @@ public class Constants
 	public static final long APP_START_TIME = System.currentTimeMillis();
 
 	/**
-	 * {@link biolockj.Config} String property: AWS memory set in Nextflow main.nf: {@value #AWS_RAM}
+	 * {@link biolockj.Config} Integer property: {@value #AWS_S3_XFER_TIMEOUT}<br>
+	 * Set the max number of minutes to allow for S3 transfers to complete.
 	 */
-	public static final String AWS_RAM = "aws.ram";
+	public static final String AWS_S3_XFER_TIMEOUT = "aws.s3TransferTimeout";
 
 	/**
-	 * Name of the file created in the BioModule or {@value #PIPELINE_DIR} root directory to indicate execution was
-	 * successful: {@value #BLJ_COMPLETE}
+	 * Bash profile fo;e name: {@value #BASH_PROFILE}
+	 */
+	public static final String BASH_PROFILE = ".bash_profile";
+
+	/**
+	 * Bashrc file name: {@value #BASH_RC}
+	 */
+	public static final String BASH_RC = ".bashrc";
+
+	/**
+	 * Name of the file created in the BioModule or {@value #INTERNAL_PIPELINE_DIR} root directory to indicate execution
+	 * was successful: {@value #BLJ_COMPLETE}
 	 */
 	public static final String BLJ_COMPLETE = "biolockjComplete";
 
 	/**
-	 * Name of the file created in the {@value #PIPELINE_DIR} root directory to indicate fatal application errors halted
-	 * execution: {@value #BLJ_FAILED}
+	 * Name of the file created in the {@value #INTERNAL_PIPELINE_DIR} root directory to indicate fatal application
+	 * errors halted execution: {@value #BLJ_FAILED}
 	 */
 	public static final String BLJ_FAILED = "biolockjFailed";
+
+	/**
+	 * Set "#BioModule" tag in {@link biolockj.Config} file to include in pipeline: {@value #BLJ_MODULE_TAG}<br>
+	 * Example: #BioModule biolockj.module.ImportMetadata
+	 */
+	public static final String BLJ_MODULE_TAG = "#BioModule";
 
 	/**
 	 * Name of the file created in the BioModule root directory to indicate execution has started: {@value #BLJ_STARTED}
@@ -55,10 +71,10 @@ public class Constants
 	public static final String CLASS = "class";
 
 	/**
-	 * {@link biolockj.Config} Boolean property {@value #CLUSTER_RUN_JAVA_AS_SCRIPT} if set =
-	 * {@value biolockj.Constants#TRUE} will run Java module as a script instead of running on the head node.
+	 * {@link biolockj.Config} String property: {@value #CLUSTER_HOST}<br>
+	 * The remote cluster host URL (used for ssh, scp, rsync, etc)
 	 */
-	public static final String CLUSTER_RUN_JAVA_AS_SCRIPT = "cluster.runJavaAsScript";
+	public static final String CLUSTER_HOST = "cluster.host";
 
 	/**
 	 * {@link biolockj.Config} String property: Java class name for default module used to demultiplex data:
@@ -91,6 +107,13 @@ public class Constants
 	public static final String DELIM_SEP = "__";
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #DETACH_JAVA_MODULES}<br>
+	 * If {@value biolockj.Constants#TRUE} Java modules do not run with main BioLockJ Java application. Instead they run
+	 * on compute nodes on the CLUSTER or AWS environments.
+	 */
+	public static final String DETACH_JAVA_MODULES = "pipeline.detachJavaModules";
+
+	/**
 	 * {@link biolockj.Config} Boolean property: {@value #DISABLE_ADD_IMPLICIT_MODULES}<br>
 	 * If set to {@value #TRUE}, implicit modules will not be added to the pipeline.
 	 */
@@ -103,9 +126,15 @@ public class Constants
 	public static final String DISABLE_PRE_REQ_MODULES = "pipeline.disableAddPreReqModules";
 
 	/**
+	 * Default Docker {@link biolockj.Config} file imported after {@value #STANDARD_CONFIG_PATH} (if files exist)
+	 */
+	public static final String DOCKER_CONFIG_PATH = "${BLJ}/resources/config/default/docker.properties";
+
+	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #DOMAIN}
 	 */
 	public static final String DOMAIN = "domain";
+
 	/**
 	 * {@link biolockj.Config} String property: {@value #EXE_AWK}<br>
 	 * Set command line executable awk.
@@ -117,7 +146,6 @@ public class Constants
 	 * Set command line executable docker
 	 */
 	public static final String EXE_DOCKER = "exe.docker";
-
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
 	 * Set command line executable gzip
@@ -160,7 +188,7 @@ public class Constants
 	public static final String GENUS = "genus";
 
 	/**
-	 * Gzip compressed file extension constant: {@value #GZIP_EXT}
+	 * Gzip compressed file extension: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
 
@@ -169,6 +197,7 @@ public class Constants
 	 * {@value #HN2_DISABLE_GENE_FAMILIES}
 	 */
 	public static final String HN2_DISABLE_GENE_FAMILIES = "humann2.disableGeneFamilies";
+
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Pathway Abundance report:
 	 * {@value #HN2_DISABLE_PATH_ABUNDANCE}
@@ -180,7 +209,6 @@ public class Constants
 	 * {@value #HN2_DISABLE_PATH_COVERAGE}
 	 */
 	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
-
 	/**
 	 * HumanN2 file suffix identifier for Gene Family Summary report: {@value #HN2_GENE_FAM_SUM}
 	 */
@@ -248,6 +276,12 @@ public class Constants
 	public static final String INPUT_TRIM_PREFIX = "input.trimPrefix";
 
 	/**
+	 * {@link biolockj.Config} property {@value #INPUT_TRIM_SEQ_FILE} defines the file path to the file that defines the
+	 * primers as regular expressions.
+	 */
+	public static final String INPUT_TRIM_SEQ_FILE = "trimPrimers.filePath";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_TRIM_SUFFIX}<br>
 	 * Set value of suffix to trim from sequence file names or headers to obtain Sample ID.
 	 */
@@ -261,10 +295,10 @@ public class Constants
 	public static final String INTERNAL_ALL_MODULES = "internal.allModules";
 
 	/**
-	 * Set BioModule tag in {@link biolockj.Config} file to include in pipeline: {@value #INTERNAL_BLJ_MODULE}<br>
-	 * Example: #BioModule biolockj.module.ImportMetadata
+	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_BLJ_MODULE}<br>
+	 * List of all project config modules.<br>
 	 */
-	public static final String INTERNAL_BLJ_MODULE = "#BioModule";
+	public static final String INTERNAL_BLJ_MODULE = "internal.configModules";
 
 	/**
 	 * Internal {@link biolockj.Config} List property: {@value #INTERNAL_DEFAULT_CONFIG}<br>
@@ -291,6 +325,12 @@ public class Constants
 	public static final String INTERNAL_PAIRED_READS = "internal.pairedReads";
 
 	/**
+	 * {@link biolockj.Config} String property: {@value #INTERNAL_PIPELINE_DIR}<br>
+	 * Stores the path of the pipeline root directory path set by the application runtime code.
+	 */
+	public static final String INTERNAL_PIPELINE_DIR = "internal.pipelineDir";
+
+	/**
 	 * {@link biolockj.Config} property: {@value #INTERNAL_SEQ_HEADER_CHAR}<br>
 	 * The property holds the 1st character used in the sequence header for the given dataset
 	 */
@@ -304,13 +344,18 @@ public class Constants
 	public static final String INTERNAL_SEQ_TYPE = "internal.seqType";
 
 	/**
+	 * Java runtime arg used to pass application jar path: {@value #JAR_ARG}
+	 */
+	public static final String JAR_ARG = "-jar";
+
+	/**
 	 * {@link biolockj.Config} property used to limit classes that log debug statements when
 	 * {@value #LOG_LEVEL_PROPERTY}={@value biolockj.Constants#TRUE}
 	 */
 	public static final String LIMIT_DEBUG_CLASSES = "pipeline.limitDebugClasses";
 
 	/**
-	 * BioLockJ log file extension constant: {@value #LOG_EXT}
+	 * BioLockJ log file extension: {@value #LOG_EXT}
 	 */
 	public static final String LOG_EXT = ".log";
 
@@ -369,7 +414,7 @@ public class Constants
 	public static final String PARAMS = "Params";
 
 	/**
-	 * BioLockJ PDF file extension constant: {@value #PDF_EXT}
+	 * BioLockJ PDF file extension: {@value #PDF_EXT}
 	 */
 	public static final String PDF_EXT = ".pdf";
 
@@ -392,22 +437,10 @@ public class Constants
 	public static final String PIPELINE_DEFAULT_PROPS = "pipeline.defaultProps";
 
 	/**
-	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
-	 * {@value #PIPELINE_DELETE_TEMP_FILES}
-	 */
-	public static final String PIPELINE_DELETE_TEMP_FILES = "pipeline.deleteTempFiles";
-
-	/**
 	 * {@link biolockj.Config} property to allow a free-hand description to a pipeline: {@value #PIPELINE_DESC} TODO:
 	 * needs to be implemented.
 	 */
 	public static final String PIPELINE_DESC = "pipeline.desc";
-
-	/**
-	 * {@link biolockj.Config} String property: {@value #PIPELINE_DIR}<br>
-	 * Stores the path of the pipeline root directory path set by the application runtime code.
-	 */
-	public static final String PIPELINE_DIR = "pipeline.pipelineDir";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #PIPELINE_ENV}<br>
@@ -455,6 +488,11 @@ public class Constants
 	 * implemented.
 	 */
 	public static final String PROJECT_NAME = "project.name";
+
+	/**
+	 * BioLockJ properties file extension: {@value #PROPS_EXT}
+	 */
+	public static final String PROPS_EXT = ".properties";
 
 	/**
 	 * QIIME application: {@value #QIIME}
@@ -565,9 +603,15 @@ public class Constants
 	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
 
 	/**
-	 * Return character constant *backslash-n*
+	 * Return character: *backslash-n*
 	 */
 	public static final String RETURN = "\n";
+
+	/**
+	 * {@link biolockj.Config} property set to delete {@link biolockj.module.BioModule#getTempDir()} files:
+	 * {@value #RM_TEMP_FILES}
+	 */
+	public static final String RM_TEMP_FILES = "pipeline.deleteTempFiles";
 
 	/**
 	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
@@ -595,7 +639,7 @@ public class Constants
 	public static final String SEPARATOR = "|";
 
 	/**
-	 * BioLockJ shell script file extension constant: {@value #SH_EXT}
+	 * BioLockJ shell script file extension: {@value #SH_EXT}
 	 */
 	public static final String SH_EXT = ".sh";
 
@@ -605,7 +649,12 @@ public class Constants
 	public static final String SPECIES = "species";
 
 	/**
-	 * BioLockJ tab character constant: {@value #TAB_DELIM}
+	 * Default {@link biolockj.Config} imported for all pipelines (if file exists)
+	 */
+	public static final String STANDARD_CONFIG_PATH = "${BLJ}/resources/config/default/standard.properties";
+
+	/**
+	 * BioLockJ tab character: {@value #TAB_DELIM}
 	 */
 	public static final String TAB_DELIM = "\t";
 
@@ -615,18 +664,24 @@ public class Constants
 	public static final String TRUE = "Y";
 
 	/**
-	 * BioLockJ tab delimited text file extension constant: {@value #TSV_EXT}
+	 * BioLockJ tab delimited text file extension: {@value #TSV_EXT}
 	 */
 	public static final String TSV_EXT = ".tsv";
 
 	/**
-	 * BioLockJ standard text file extension constant: {@value #TXT_EXT}
+	 * BioLockJ standard text file extension: {@value #TXT_EXT}
 	 */
 	public static final String TXT_EXT = ".txt";
 
 	/**
-	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:
-	 * {@value #PROJECT_PERMISSIONS}
+	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
+	 * Bash profile - may be ~/.bash_profile or ~/.bashrc or others
 	 */
-	protected static final String PROJECT_PERMISSIONS = "pipeline.permissions";
+	public static final String USER_PROFILE = "pipeline.userProfile";
+
+	/**
+	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:
+	 * {@value #PIPELINE_PRIVS}
+	 */
+	protected static final String PIPELINE_PRIVS = "pipeline.permissions";
 }

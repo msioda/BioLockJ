@@ -1,12 +1,12 @@
-# Deployment path:  $DOCKER_FILE_PATH/kraken2_classifier.Dockerfile
+# Deployment path:  $DOCKER_DIR/kraken2_classifier.Dockerfile
 
 FROM biolockj/kraken2_classifier_dbfree
  
 #1.) Download 8GB miniKraken2 DB
-ENV KRAKEN_DB_URL="https://ccb.jhu.edu/software/kraken2/dl/minikraken2_v1_8GB.tgz"
-RUN cd /db && \
+ENV KRAKEN_DB_URL="ftp://ftp.ccb.jhu.edu/pub/data/kraken2_dbs/minikraken2_v1_8GB_201904_UPDATE.tgz"
+RUN cd $BLJ_DB && \
 	wget -qO- $KRAKEN_DB_URL | bsdtar -xzf- && \
-	chmod o+x *
+	chmod -R o+x "${BLJ_DEFAULT_DB}" && mv "${BLJ_DEFAULT_DB}"/minikraken2*/* . && rm -rf "${BLJ_DEFAULT_DB}"/minikraken2*
 
 #2.) Cleanup
 RUN	 rm -rf /usr/share/* 

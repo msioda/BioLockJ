@@ -18,18 +18,16 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.report.r.R_CalculateStats;
 
 /**
  * Simple utility containing String manipulation and formatting functions.
  */
-public class BioLockJUtil
-{
+public class BioLockJUtil {
 
 	/**
 	 * Add leading spaces until the val is padded to given length
@@ -37,15 +35,13 @@ public class BioLockJUtil
 	 * @param val Value to add spaces
 	 * @param length Total length of val with spaces
 	 * @return Padded value
-	 * @throws Exception if errors occur.
 	 */
-	public static String addLeadingSpaces( String val, final int length ) throws Exception
-	{
-		while( val.length() < length )
-		{
-			val = " " + val;
+	public static String addLeadingSpaces( final String val, final int length ) {
+		String val2 = val;
+		while( val2.length() < length ) {
+			val2 = " " + val2;
 		}
-		return val;
+		return val2;
 	}
 
 	/**
@@ -54,15 +50,28 @@ public class BioLockJUtil
 	 * @param val Value to add spaces
 	 * @param length Total length of val with spaces
 	 * @return Padded value
-	 * @throws Exception if errors occur.
 	 */
-	public static String addTrailingSpaces( String val, final int length ) throws Exception
-	{
-		while( val.length() < length )
-		{
-			val += " ";
+	public static String addTrailingSpaces( final String val, final int length ) {
+		String val2 = val;
+		while( val2.length() < length ) {
+			val2 += " ";
 		}
-		return val;
+		return val2;
+	}
+
+	/**
+	 * Used to save status files for modules and the pipeline.
+	 * 
+	 * @param path Target dir path
+	 * @return File Created file
+	 * @throws Exception if errors occur attempting to save the file
+	 */
+	public static File createFile( final String path ) throws Exception {
+		final File f = new File( path );
+		final FileWriter writer = new FileWriter( f );
+		writer.close();
+		if( !f.isFile() ) throw new Exception( "Unable to create status file: " + f.getAbsolutePath() );
+		return f;
 	}
 
 	/**
@@ -73,34 +82,23 @@ public class BioLockJUtil
 	 * @return boolean status
 	 * @throws Exception if errors occur
 	 */
-	public static boolean deleteWithRetry( final File file, final int numTries ) throws Exception
-	{
+	public static boolean deleteWithRetry( final File file, final int numTries ) throws Exception {
 		int i = 0;
-		while( i++ < numTries )
-		{
-			try
-			{
+		while( i++ < numTries ) {
+			try {
 				Thread.sleep( 3 * 1000 );
-				if( i == numTries )
-				{
+				if( i == 0 || i == numTries ) {
 					file.delete();
-					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) failed, but file.delete() worked" );
-				}
-				else
-				{
+					Log.warn( BioLockJUtil.class, "file.delete() removed: " + file.getAbsolutePath() );
+				} else {
 					FileUtils.forceDelete( file );
+					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) removed: " + file.getAbsolutePath() );
 				}
-				if( i > 1 )
-				{
-					Log.warn( BioLockJUtil.class, "Attempt #" + i + " succeeded in deleting file: "
-							+ file.getAbsolutePath() + "  --> with FileUtils.forceDelete( file )" );
-				}
+
 				return true;
-			}
-			catch( final IOException ex )
-			{
-				Log.info( BioLockJUtil.class, "Failed while still waiting for resource to become free [" + i + "]: "
-						+ file.getAbsolutePath() );
+			} catch( final IOException ex ) {
+				Log.info( BioLockJUtil.class,
+					"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
 			}
 		}
 
@@ -114,19 +112,15 @@ public class BioLockJUtil
 	 * 
 	 * @param file File
 	 * @return File extension
-	 * @throws Exception if errors occur.
 	 */
-	public static String fileExt( final File file ) throws Exception
-	{
+	public static String fileExt( final File file ) {
 		String ext = file.getName();
 		int index = ext.lastIndexOf( Constants.GZIP_EXT );
-		if( SeqUtil.isGzipped( ext ) && index > 0 )
-		{
+		if( SeqUtil.isGzipped( ext ) && index > 0 ) {
 			ext = ext.substring( 0, index );
 		}
 		index = ext.lastIndexOf( "." );
-		if( index > 0 )
-		{
+		if( index > 0 ) {
 			ext = ext.substring( index );
 		}
 
@@ -141,11 +135,9 @@ public class BioLockJUtil
 	 * @param numDigits Number of digits return value should contain
 	 * @return number as String with leading zeros.
 	 */
-	public static String formatDigits( final Integer input, final Integer numDigits )
-	{
+	public static String formatDigits( final Integer input, final Integer numDigits ) {
 		String val = input.toString();
-		while( val.length() < numDigits )
-		{
+		while( val.length() < numDigits ) {
 			val = "0" + val;
 		}
 
@@ -159,22 +151,13 @@ public class BioLockJUtil
 	 * @param addCommas boolean if numeric output should be displayed using commas
 	 * @return number as String with commas
 	 */
-	public static String formatNumericOutput( final Long input, final boolean addCommas )
-	{
-		if( input == null )
-		{
-			return "0";
-		}
-		else if( !addCommas )
-		{
-			return input.toString();
-		}
+	public static String formatNumericOutput( final Long input, final boolean addCommas ) {
+		if( input == null ) return "0";
+		else if( !addCommas ) return input.toString();
 
 		String output = "";
-		for( int i = input.toString().length(); i > 0; i-- )
-		{
-			if( output.length() % 4 == 0 )
-			{
+		for( int i = input.toString().length(); i > 0; i-- ) {
+			if( output.length() % 4 == 0 ) {
 				output = "," + output;
 			}
 			output = input.toString().substring( i - 1, i ) + output;
@@ -190,12 +173,10 @@ public class BioLockJUtil
 	 * @param denom Denominator
 	 * @return ratio
 	 */
-	public static String formatPercentage( final long num, final long denom )
-	{
+	public static String formatPercentage( final long num, final long denom ) {
 		final DecimalFormat df = new DecimalFormat( "##.##" );
 		String percentage = Double.valueOf( df.format( 100 * ( (double) num / denom ) ) ).toString();
-		if( percentage.indexOf( "." ) < 3 )
-		{
+		if( percentage.indexOf( "." ) < 3 ) {
 			percentage += "0";
 		}
 
@@ -208,26 +189,38 @@ public class BioLockJUtil
 	 * @return java source parameter (either Jar or main class with classpath)
 	 * @throws ConfigPathException if unable to determine $BLJ source
 	 */
-	public static File getBljDir() throws ConfigPathException
-	{
-		try
-		{
-			final File f = getSource();
+	public static File getBljDir() throws ConfigPathException {
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.CONTAINER_BLJ_DIR );
+		File f = null;
+		try {
+			f = getSource();
 			// source will return JAR path or MAIN class file in bin dir
-			if( f.isFile() ) // must be jar
-			{
-				return f.getParentFile().getParentFile();
-			}
-			else if( f.isDirectory() && f.getName().equals( "bin" ) )
-			{
-				return f.getParentFile();
-			}
-		}
-		catch( final Exception ex )
-		{
-			throw new ConfigPathException( "Unable to decode $BLJ environment variable." );
+			if( f.isFile() ) return f.getParentFile().getParentFile();
+			else if( f.isDirectory() && f.getName().equals( "bin" ) ) return f.getParentFile();
+		} catch( final Exception ex ) {
+			throw new ConfigPathException( f, "Unable to decode ${BLJ} environment variable: " + ex.getMessage() );
 		}
 		return null;
+	}
+
+	/**
+	 * Return default ${BLJ_SUP} dir
+	 * 
+	 * @return blj_support dir
+	 * @throws ConfigPathException if $BLJ_SUP directory path is configured, but invalid
+	 */
+	public static File getBljSupDir() throws ConfigPathException {
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.CONTAINER_BLJ_SUP_DIR );
+		File f = null;
+		try {
+			f = new File( getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
+			if( f.isDirectory() ) return f;
+		} catch( final Exception ex ) {
+			throw new ConfigPathException( f, "Unable to decode ${BLJ_SUP} environment variable: " + ex.getMessage() );
+		}
+
+		return null;
+
 	}
 
 	/**
@@ -236,11 +229,9 @@ public class BioLockJUtil
 	 * @param objs Objects
 	 * @return List of class names
 	 */
-	public static List<String> getClassNames( final Collection<?> objs )
-	{
+	public static List<String> getClassNames( final Collection<?> objs ) {
 		final List<String> names = new ArrayList<>();
-		for( final Object obj: objs )
-		{
+		for( final Object obj: objs ) {
 			names.add( obj.getClass().getName() );
 		}
 
@@ -253,13 +244,10 @@ public class BioLockJUtil
 	 * @param data Collection of data
 	 * @return Collection data as a String
 	 */
-	public static String getCollectionAsString( final Collection<?> data )
-	{
+	public static String getCollectionAsString( final Collection<?> data ) {
 		final StringBuffer sb = new StringBuffer();
-		if( data != null && !data.isEmpty() )
-		{
-			for( final Object val: data )
-			{
+		if( data != null && !data.isEmpty() ) {
+			for( final Object val: data ) {
 				sb.append( ( sb.length() > 0 ? ", ": "" ) + val.toString() );
 			}
 		}
@@ -273,29 +261,16 @@ public class BioLockJUtil
 	 * @param f1 File 1
 	 * @param f2 File 2
 	 * @return Directory path share by f1 and f2
-	 * @throws Exception if errors occur
 	 */
-	public static File getCommonParent( final File f1, File f2 ) throws Exception
-	{
-		if( f1 == null || f2 == null )
-		{
-			return null;
-		}
+	public static File getCommonParent( final File f1, final File f2 ) {
+		File f22 = f2;
+		if( f1 == null || f22 == null ) return null;
 		final String f1Path = f1.getAbsolutePath();
-		while( true )
-		{
-			if( f1Path.contains( f2.getAbsolutePath() ) )
-			{
-				return new File( f2.getAbsolutePath() );
-			}
-
-			final File parent = f2.getParentFile();
-			if( parent == null || f2 == parent )
-			{
-				return null;
-			}
-
-			f2 = parent;
+		while( true ) {
+			if( f1Path.contains( f22.getAbsolutePath() ) ) return new File( f22.getAbsolutePath() );
+			final File parent = f22.getParentFile();
+			if( parent == null || f22 == parent ) return null;
+			f22 = parent;
 		}
 	}
 
@@ -305,11 +280,9 @@ public class BioLockJUtil
 	 * @param files Files
 	 * @return List of file paths
 	 */
-	public static List<String> getFilePaths( final Collection<File> files )
-	{
+	public static List<String> getFilePaths( final Collection<File> files ) {
 		final List<String> paths = new ArrayList<>();
-		for( final File file: files )
-		{
+		for( final File file: files ) {
 			paths.add( file.getAbsolutePath() );
 		}
 
@@ -324,29 +297,33 @@ public class BioLockJUtil
 	 * @throws FileNotFoundException if file does not exist
 	 * @throws IOException if unable to read or write the file
 	 */
-	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException
-	{
+	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException {
 		return SeqUtil.isGzipped( file.getName() )
-				? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
-				: new BufferedReader( new FileReader( file ) );
+			? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
+			: new BufferedReader( new FileReader( file ) );
 	}
 
 	/**
 	 * Get the list of input directories for the pipeline.
 	 * 
 	 * @return List of system directory file paths
-	 * @throws Exception if errors occur
+	 * @throws ConfigNotFoundException if a required property is undefined
+	 * @throws ConfigPathException if configured directory does not exist on the file-system
 	 */
-	public static List<File> getInputDirs() throws Exception
-	{
-		if( RuntimeParamUtil.isDockerMode() )
-		{
+	public static List<File> getInputDirs() throws ConfigNotFoundException, ConfigPathException {
+		if( DockerUtil.inDockerEnv() ) {
 			final List<File> dirs = new ArrayList<>();
-			final File dir = new File( DockerUtil.CONTAINER_INPUT_DIR );
-			if( !dir.exists() )
-			{
-				throw new Exception( "Container missing mapped input volume system path: " + dir.getAbsolutePath() );
+			final String path = Config.requireString( null, Constants.INPUT_DIRS );
+			File dir = null;
+			if( path.equals( File.separator ) ) {
+				dir = new File( DockerUtil.DOCKER_INPUT_DIR );
+			} else {
+				dir = new File(
+					path.replace( new File( path ).getParentFile().getAbsolutePath(), DockerUtil.DOCKER_INPUT_DIR ) );
 			}
+
+			if( !dir.exists() ) throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
+
 			dirs.add( dir );
 			return dirs;
 		}
@@ -357,28 +334,25 @@ public class BioLockJUtil
 	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
 	 * 
 	 * @return Collection of pipeline input files
-	 * @throws Exception if errors occur
+	 * @throws ConfigNotFoundException if a required property is undefined
+	 * @throws ConfigPathException if configured directory does not exist on the file-system
+	 * @throws ConfigViolationException if input directories contain duplicate file names
 	 */
-	public static Collection<File> getPipelineInputFiles() throws Exception
-	{
-		if( inputFiles.isEmpty() )
-		{
+	public static Collection<File> getPipelineInputFiles()
+		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException {
+		if( inputFiles.isEmpty() ) {
 			Collection<File> files = new HashSet<>();
-			for( final File dir: getInputDirs() )
-			{
+			for( final File dir: getInputDirs() ) {
 				Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
-				files.addAll( FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+				files.addAll( findDups( files, removeIgnoredAndEmptyFiles(
+					FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) ) ) );
 			}
 			Log.info( BioLockJUtil.class, "# Initial input files found: " + files.size() );
-
 			files = removeIgnoredAndEmptyFiles( files );
 			inputFiles.addAll( files );
-
-			Log.info( SeqUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
-
+			Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 			setPipelineInputFileTypes();
 		}
-
 		return inputFiles;
 	}
 
@@ -388,9 +362,40 @@ public class BioLockJUtil
 	 * @return File object
 	 * @throws URISyntaxException if unable to locate the Java source
 	 */
-	public static File getSource() throws URISyntaxException
-	{
+	public static File getSource() throws URISyntaxException {
 		return new File( BioLockJUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
+	}
+
+	/**
+	 * Return the user shell profile
+	 * 
+	 * @return Shell profile
+	 */
+	public static File getUserProfile() {
+		if( userProfile != null ) return userProfile;
+		File prof = null;
+		try {
+			if( DockerUtil.inAwsEnv() ) {
+				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_PROFILE );
+			}
+			if( prof == null && DockerUtil.inDockerEnv() ) {
+				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_RC );
+			}
+			final String path = Config.getString( null, Constants.USER_PROFILE );
+			if( prof == null && path != null ) {
+				prof = getProfile( path );
+			}
+			if( prof == null ) {
+				prof = getProfile( Processor.submit( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
+			}
+		} catch( final Exception ex ) {
+			Log.error( LogUtil.class, "Failed to find user shell profile ", ex );
+		}
+
+		if( prof != null ) {
+			userProfile = prof;
+		}
+		return prof;
 	}
 
 	/**
@@ -399,17 +404,13 @@ public class BioLockJUtil
 	 * @return BioLockJ version
 	 * @throws Exception if errors occur
 	 */
-	public static String getVersion() throws Exception
-	{
-		final String missingMsg = "undetermined - mission $BLJ/.version file";
+	public static String getVersion() throws Exception {
+		final String missingMsg = "undetermined - missing $BLJ/.version file";
 		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
-		if( file.exists() )
-		{
+		if( file.exists() ) {
 			final BufferedReader reader = getFileReader( file );
 			for( final String line = reader.readLine(); line != null; )
-			{
 				return line;
-			}
 			reader.close();
 		}
 
@@ -417,16 +418,26 @@ public class BioLockJUtil
 	}
 
 	/**
+	 * Check collection vals for null or empty toString() values
+	 * 
+	 * @param vals Collection of objects
+	 * @return Boolean TRUE if all at least 1 value is null or empty
+	 */
+	public static boolean hasNullOrEmptyVal( final Collection<Object> vals ) {
+		for( final Object val: vals ) {
+			if( val == null || val.toString().isEmpty() ) return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Method used to add a file to the ignore file list property.
 	 * 
 	 * @param file File to ignore
-	 * @throws Exception if errors occur
 	 */
-	public static void ignoreFile( final File file ) throws Exception
-	{
+	public static void ignoreFile( final File file ) {
 		final Set<String> ignore = new HashSet<>();
-		if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) != null )
-		{
+		if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) != null ) {
 			ignore.addAll( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) );
 		}
 
@@ -439,22 +450,37 @@ public class BioLockJUtil
 	 * 
 	 * @param collection Collection of objects
 	 * @return Joined values
-	 * @throws Exception if errors occur
 	 */
-	public static String join( final Collection<?> collection ) throws Exception
-	{
-		if( collection == null || collection.isEmpty() )
-		{
-			return "";
-		}
+	public static String join( final Collection<?> collection ) {
+		if( collection == null || collection.isEmpty() ) return "";
 
 		final StringBuilder sb = new StringBuilder();
-		for( final Object item: collection )
-		{
+		for( final Object item: collection ) {
 			sb.append( item.toString().trim() ).append( " " );
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Convert milliseconds to minutes - useful to convert Java millisecond output rounded to the nearest minute.
+	 * 
+	 * @param milliseconds number of milliseconds
+	 * @return same amount of time as minutes
+	 */
+	public static int millisToMinutes( final long milliseconds ) {
+		return new Long( Math.round( milliseconds / 1000 / 60 ) ).intValue();
+	}
+
+	/**
+	 * Convert minutes to milliseconds - useful to convert Config props measure in minutes to milliseconds since many
+	 * Java functions have milliseconds args.
+	 * 
+	 * @param minutes number of minutes
+	 * @return same amount of time as milliseconds
+	 */
+	public static long minutesToMillis( final int minutes ) {
+		return 1000 * 60 * minutes;
 	}
 
 	/**
@@ -465,29 +491,22 @@ public class BioLockJUtil
 	 * @return List of Lists - each inner list 1 line
 	 * @throws Exception if errors occur
 	 */
-	public static List<List<String>> parseCountTable( final File file ) throws Exception
-	{
+	public static List<List<String>> parseCountTable( final File file ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
-		try
-		{
+		try {
 			boolean firstRecord = true;
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final ArrayList<String> record = new ArrayList<>();
 				final String[] cells = line.split( Constants.TAB_DELIM, -1 );
-				for( final String cell: cells )
-				{
+				for( final String cell: cells ) {
 					record.add( firstRecord && record.isEmpty() ? MetaUtil.getID(): cell );
 				}
 				data.add( record );
 				firstRecord = false;
 			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
+		} finally {
+			if( reader != null ) {
 				reader.close();
 			}
 		}
@@ -502,8 +521,7 @@ public class BioLockJUtil
 	 * @return TRUE if type = {@link biolockj.Config}.{@value #INTERNAL_PIPELINE_INPUT_TYPES}
 	 * @throws ConfigNotFoundException if {@value #INTERNAL_PIPELINE_INPUT_TYPES} is undefined
 	 */
-	public static boolean pipelineInputType( final String type ) throws ConfigNotFoundException
-	{
+	public static boolean pipelineInputType( final String type ) throws ConfigNotFoundException {
 		return Config.requireSet( null, INTERNAL_PIPELINE_INPUT_TYPES ).contains( type );
 	}
 
@@ -513,14 +531,11 @@ public class BioLockJUtil
 	 * @param data Collection of data
 	 * @return Collection data as a String
 	 */
-	public static String printLongFormList( final Collection<?> data )
-	{
+	public static String printLongFormList( final Collection<?> data ) {
 		final StringBuffer sb = new StringBuffer();
-		if( data != null && !data.isEmpty() )
-		{
+		if( data != null && !data.isEmpty() ) {
 			sb.append( Constants.RETURN );
-			for( final Object val: data )
-			{
+			for( final Object val: data ) {
 				sb.append( val ).append( Constants.RETURN );
 			}
 		}
@@ -533,24 +548,16 @@ public class BioLockJUtil
 	 * 
 	 * @param files Collection of files
 	 * @return valid files
-	 * @throws Exception if errors occur
 	 */
-	public static List<File> removeIgnoredAndEmptyFiles( final Collection<File> files ) throws Exception
-	{
+	public static List<File> removeIgnoredAndEmptyFiles( final Collection<File> files ) {
 		final List<File> validInputFiles = new ArrayList<>();
-		for( final File file: files )
-		{
+		for( final File file: files ) {
 			final boolean isEmpty = FileUtils.sizeOf( file ) < 1L;
-			if( isEmpty )
-			{
+			if( isEmpty ) {
 				Log.warn( SeqUtil.class, "Skip empty file: " + file.getAbsolutePath() );
-			}
-			else if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ).contains( file.getName() ) )
-			{
+			} else if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ).contains( file.getName() ) ) {
 				Log.debug( SeqUtil.class, "Ignore file " + file.getAbsolutePath() );
-			}
-			else
-			{
+			} else {
 				validInputFiles.add( file );
 			}
 		}
@@ -563,18 +570,10 @@ public class BioLockJUtil
 	 * 
 	 * @param value Possibly quoted value
 	 * @return value without outer quotes
-	 * @throws Exception if errors occur
 	 */
-	public static String removeOuterQuotes( final String value ) throws Exception
-	{
-		if( value.startsWith( "\"" ) && value.endsWith( "\"" ) )
-		{
-			return value.substring( 1, value.length() - 1 );
-		}
-		if( value.startsWith( "'" ) && value.endsWith( "'" ) )
-		{
-			return value.substring( 1, value.length() - 1 );
-		}
+	public static String removeOuterQuotes( final String value ) {
+		if( value.startsWith( "\"" ) && value.endsWith( "\"" ) ) return value.substring( 1, value.length() - 1 );
+		if( value.startsWith( "'" ) && value.endsWith( "'" ) ) return value.substring( 1, value.length() - 1 );
 
 		return value;
 	}
@@ -584,14 +583,9 @@ public class BioLockJUtil
 	 * 
 	 * @param value Possibly quoted value
 	 * @return value with no quotes
-	 * @throws Exception if errors occur
 	 */
-	public static String removeQuotes( final String value ) throws Exception
-	{
-		if( value == null )
-		{
-			return null;
-		}
+	public static String removeQuotes( final String value ) {
+		if( value == null ) return null;
 
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
@@ -601,53 +595,56 @@ public class BioLockJUtil
 	 * 
 	 * @param files List of input files
 	 */
-	public static void setPipelineInputFiles( final List<File> files )
-	{
+	public static void setPipelineInputFiles( final List<File> files ) {
 		inputFiles = files;
 	}
 
-	private static void setPipelineInputFileTypes() throws Exception
-	{
+	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles )
+		throws ConfigViolationException {
+		final Map<String, String> names = new HashMap<>();
+		for( final File f: files ) {
+			names.put( f.getName(), f.getAbsolutePath() );
+		}
+		for( final File f: newFiles ) {
+			if( names.keySet().contains( f.getName() ) )
+				throw new ConfigViolationException( "Pipeline input file names must be unique [ " + f.getAbsolutePath()
+					+ " ] has the same file name as [ " + names.get( f.getName() ) + " ]" );
+			names.put( f.getName(), f.getAbsolutePath() );
+		}
+		return newFiles;
+	}
+
+	private static File getProfile( final String path ) {
+		if( path != null ) {
+			final File prof = new File( path );
+			if( prof.isFile() ) return prof;
+		}
+		return null;
+	}
+
+	private static void setPipelineInputFileTypes() {
 		final Set<String> fileTypes = new HashSet<>();
 
-		for( final File file: inputFiles )
-		{
-			if( SeqUtil.isSeqFile( file ) )
-			{
+		for( final File file: inputFiles ) {
+			if( SeqUtil.isSeqFile( file ) ) {
 				fileTypes.add( PIPELINE_SEQ_INPUT_TYPE );
-			}
-			else if( file.getName().endsWith( Constants.PROCESSED ) )
-			{
+			} else if( file.getName().endsWith( Constants.PROCESSED ) ) {
 				fileTypes.add( PIPELINE_PARSER_INPUT_TYPE );
-			}
-			else if( R_CalculateStats.isStatsFile( file ) )
-			{
+			} else if( R_CalculateStats.isStatsFile( file ) ) {
 				fileTypes.add( PIPELINE_STATS_TABLE_INPUT_TYPE );
-			}
-			else if( RMetaUtil.isMetaMergeTable( file ) )
-			{
+			} else if( RMetaUtil.isMetaMergeTable( file ) ) {
 				fileTypes.add( PIPELINE_R_INPUT_TYPE );
-			}
-			else if( OtuUtil.isOtuFile( file ) )
-			{
+			} else if( OtuUtil.isOtuFile( file ) ) {
 				fileTypes.add( PIPELINE_OTU_COUNT_TABLE_INPUT_TYPE );
-			}
-			else if( TaxaUtil.isLogNormalizedTaxaFile( file ) )
-			{
+			} else if( TaxaUtil.isLogNormalizedTaxaFile( file ) ) {
 				fileTypes.add( PIPELINE_LOG_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE );
 				fileTypes.add( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
-			}
-			else if( TaxaUtil.isNormalizedTaxaFile( file ) )
-			{
+			} else if( TaxaUtil.isNormalizedTaxaFile( file ) ) {
 				fileTypes.add( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE );
 				fileTypes.add( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
-			}
-			else if( TaxaUtil.isTaxaFile( file ) )
-			{
+			} else if( TaxaUtil.isTaxaFile( file ) ) {
 				fileTypes.add( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
-			}
-			else if( PathwayUtil.isPathwayFile( file ) )
-			{
+			} else if( PathwayUtil.isPathwayFile( file ) ) {
 				fileTypes.add( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE );
 			}
 		}
@@ -759,6 +756,9 @@ public class BioLockJUtil
 	 */
 	public static final String PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count";
 
+	private static final String BLJ_SUPPORT = "blj_support";
+	private static final String DEFAULT_PROFILE_CMD = "get_default_profile";
 	private static List<File> inputFiles = new ArrayList<>();
+	private static File userProfile = null;
 	private static final String VERSION_FILE = ".version";
 }

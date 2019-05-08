@@ -14,7 +14,6 @@ package biolockj.module.implicit.parser.wgs;
 import java.io.BufferedReader;
 import java.io.File;
 import biolockj.Constants;
-import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.wgs.KrakenNode;
@@ -26,8 +25,7 @@ import biolockj.util.MemoryUtil;
  * 
  * @blj.web_desc Kraken Parser
  */
-public class KrakenParser extends ParserModuleImpl implements ParserModule
-{
+public class KrakenParser extends ParserModuleImpl {
 
 	/**
 	 * Parse all {@link biolockj.module.classifier.wgs.KrakenClassifier} reports in the input directory.<br>
@@ -39,29 +37,22 @@ public class KrakenParser extends ParserModuleImpl implements ParserModule
 	 * <li>Add the {@link biolockj.node.wgs.KrakenNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
 	 * </ol>
 	 * <p>
-	 * Sample Kraken report line (head 7A_1_reported.tsv) :<br>
+	 * Sample Kraken report line (head 7A_reported.tsv) :<br>
 	 * FCC6MMAACXX:8:1101:1968:2100#GTATTCTC/1
 	 * d__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales|f__Bacteroidaceae|g__Bacteroides|s__Bacteroides_vulgatus
 	 */
 	@Override
-	public void parseSamples() throws Exception
-	{
+	public void parseSamples() throws Exception {
 
-		for( final File file: getInputFiles() )
-		{
+		for( final File file: getInputFiles() ) {
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			try
-			{
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
+			try {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 					addOtuNode( new KrakenNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
 				}
-			}
-			finally
-			{
-				if( reader != null )
-				{
+			} finally {
+				if( reader != null ) {
 					reader.close();
 				}
 			}

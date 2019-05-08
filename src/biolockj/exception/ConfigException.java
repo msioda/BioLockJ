@@ -17,16 +17,14 @@ import biolockj.Constants;
 /**
  * ConfigException is the superclass for all BioLockJ configuration file Exceptions used to ensure message uniformity.
  */
-public abstract class ConfigException extends Exception
-{
+public abstract class ConfigException extends Exception {
 	/**
 	 * Abstract {@link biolockj.Config} exception calls super to instantiate using the superclass
 	 * {@link java.lang.Exception} implementation
 	 *
 	 * @param msg Exception message details
 	 */
-	public ConfigException( final String msg )
-	{
+	public ConfigException( final String msg ) {
 		super( msg );
 	}
 
@@ -37,8 +35,7 @@ public abstract class ConfigException extends Exception
 	 * @param property {@link biolockj.Config} property name
 	 * @param msg Exception type
 	 */
-	public ConfigException( final String property, final String msg )
-	{
+	public ConfigException( final String property, final String msg ) {
 		super( buildMessage( property, msg ) );
 	}
 
@@ -49,22 +46,14 @@ public abstract class ConfigException extends Exception
 	 * @param msg Failure details
 	 * @return Exception message that will be passed to superclass {@link java.lang.Exception} via super()
 	 */
-	protected static String buildMessage( final String property, String msg )
-	{
-		if( !msg.isEmpty() )
-		{
-			msg = msg + Constants.RETURN;
-		}
-
+	protected static String buildMessage( final String property, final String msg ) {
 		String val = Config.getString( null, property );
-		if( val == null )
-		{
+		if( val == null ) {
 			val = "{undefined}";
 		}
-
-		return "[ " + property + "=" + val + " ] " + Constants.RETURN + msg
-				+ "Restart pipeline after updating application inputs or Config " + property + " value in: "
-				+ Config.getConfigFileName();
+		return "[ " + property + "=" + val + " ] " + Constants.RETURN + msg + Constants.RETURN
+			+ "Restart pipeline after updating the property value in: " + Config.getConfigFilePath() + Constants.RETURN
+			+ "RESTART SHORTCUT CMD ---> \"blj_rerun " + Config.getConfigFilePath() + "\"";
 	}
 
 	private static final long serialVersionUID = 3479702562753539290L;

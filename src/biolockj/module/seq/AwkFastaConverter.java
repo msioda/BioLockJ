@@ -18,7 +18,6 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
@@ -27,46 +26,37 @@ import biolockj.util.SeqUtil;
  * 
  * @blj.web_desc Awk Fastq to Fasta Converter
  */
-public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
-{
+public class AwkFastaConverter extends SeqModuleImpl {
 
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
 		final boolean isMultiLine = Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ );
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 
-		final String ext = "."
-				+ ( isMultiLine ? Constants.FASTA: Config.requireString( this, Constants.INTERNAL_SEQ_TYPE ) );
-		for( final File f: files )
-		{
+		final String ext = "." + ( isMultiLine ? Constants.FASTA: SeqUtil.getSeqType() );
+		for( final File f: files ) {
 			final ArrayList<String> lines = new ArrayList<>();
 			final String fileId = SeqUtil.getSampleId( f.getName() );
 			final String dirExt = SeqUtil.getReadDirectionSuffix( f );
 
 			String filePath = f.getAbsolutePath();
 
-			if( SeqUtil.isGzipped( f.getName() ) )
-			{
+			if( SeqUtil.isGzipped( f.getName() ) ) {
 				filePath = ( SeqUtil.isFastQ() || isMultiLine ? tempDir: outDir ) + fileId + dirExt + ext;
 				lines.add( unzip( f, filePath ) );
 			}
 
-			if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
-			{
+			if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) ) {
 				lines.add( convert454( filePath, fileId + dirExt, outDir ) );
-			}
-			else if( SeqUtil.isFastQ() )
-			{
+			} else if( SeqUtil.isFastQ() ) {
 				lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
 			}
 
-			if( !SeqUtil.isGzipped( f.getName() ) && SeqUtil.isFastA() )
-			{
+			if( !SeqUtil.isGzipped( f.getName() ) && SeqUtil.isFastA() ) {
 				Log.warn( getClass(), "Remove this BioModule from Config:  "
-						+ " Files are already in decompressed FastA format!  It is unnecessary to make duplicate files..." );
+					+ " Files are already in decompressed FastA format!  It is unnecessary to make duplicate files..." );
 				lines.add( copyToOutputDir( filePath, fileId + dirExt + ext ) );
 			}
 
@@ -84,16 +74,14 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 	 * @throws Exception if errors occur
 	 */
 	@Override
-	public void cleanUp() throws Exception
-	{
+	public void cleanUp() throws Exception {
 		super.cleanUp();
 		Config.setConfigProperty( Constants.INTERNAL_SEQ_TYPE, Constants.FASTA );
 		Config.setConfigProperty( Constants.INTERNAL_SEQ_HEADER_CHAR, SeqUtil.FASTA_HEADER_DEFAULT_DELIM );
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
-	{
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -105,28 +93,37 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 	 * </ul>
 	 */
 	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
+	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_CONVERT_TO_FASTA + "() {" );
 		lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
-				+ " '{ if(NR%4==1) { printf( \">%s \\n\",substr($0,2) ); } else if(NR%4==2) print; }' > $2 " );
+			+ " '{ if(NR%4==1) { printf( \">%s \\n\",substr($0,2) ); } else if(NR%4==2) print; }' > $2 " );
 		lines.add( "}" + RETURN );
-		if( hasGzipped() )
-		{
+		if( hasGzipped() ) {
 			lines.add( "function " + FUNCTION_GUNZIP + "() {" );
 			lines.add( Config.getExe( this, Constants.EXE_GZIP ) + " -cd $1 > $2" );
 			lines.add( "}" + RETURN );
 		}
 
-		if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
-		{
+		if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) ) {
 			lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
 			lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
-					+ " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf;}' > $2 " );
+				+ " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf $0;}' > $2 " );
 			lines.add( "}" + RETURN );
 		}
 		return lines;
+	}
+
+	private String copyToOutputDir( final String source, final String target ) {
+		return "cp " + source + " " + getOutputDir().getAbsolutePath() + File.separator + target;
+	}
+
+	private boolean hasGzipped() throws Exception {
+		for( final File f: getInputFiles() ) {
+			if( SeqUtil.isGzipped( f.getName() ) ) return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -136,37 +133,16 @@ public class AwkFastaConverter extends SeqModuleImpl implements SeqModule
 	 * @param targetPath Output file name
 	 * @return Bash Script line to gunzip file
 	 */
-	protected String unzip( final File file, final String targetPath )
-	{
+	protected static String unzip( final File file, final String targetPath ) {
 		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + targetPath;
 	}
 
-	private String convert2fastA( final String filePath, final String fileId, final String outDir ) throws Exception
-	{
+	private static String convert2fastA( final String filePath, final String fileId, final String outDir ) {
 		return FUNCTION_CONVERT_TO_FASTA + " " + filePath + " " + outDir + fileId + "." + Constants.FASTA;
 	}
 
-	private String convert454( final String filePath, final String fileId, final String outDir ) throws Exception
-	{
+	private static String convert454( final String filePath, final String fileId, final String outDir ) {
 		return FUNCTION_CONVERT_454 + " " + filePath + " " + outDir + fileId + "." + Constants.FASTA;
-	}
-
-	private String copyToOutputDir( final String source, final String target ) throws Exception
-	{
-		return "cp " + source + " " + getOutputDir().getAbsolutePath() + File.separator + target;
-	}
-
-	private boolean hasGzipped() throws Exception
-	{
-		for( final File f: getInputFiles() )
-		{
-			if( SeqUtil.isGzipped( f.getName() ) )
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	/**

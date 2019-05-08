@@ -14,7 +14,6 @@ package biolockj.node.r16s;
 import java.util.StringTokenizer;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.node.OtuNode;
 import biolockj.node.OtuNodeImpl;
 
 /**
@@ -26,8 +25,7 @@ import biolockj.node.OtuNodeImpl;
  * FCABK7W:1:2105:21787:12788#/1 Root rootrank 1.0 Bacteria domain 1.0 Firmicutes phylum 1.0 Clostridia class 1.0
  * Clostridiales order 1.0 Ruminococcaceae family 1.0 Faecalibacterium genus 1.0
  */
-public class RdpNode extends OtuNodeImpl implements OtuNode
-{
+public class RdpNode extends OtuNodeImpl {
 	/**
 	 * Constructor called one line of RDP output.
 	 *
@@ -35,8 +33,7 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 	 * @param line RDP Classifier output line
 	 * @throws Exception if propagated from {@link #buildRdpNode(String, String)}
 	 */
-	public RdpNode( final String id, final String line ) throws Exception
-	{
+	public RdpNode( final String id, final String line ) throws Exception {
 		buildRdpNode( id, line );
 	}
 
@@ -46,9 +43,8 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 	 *
 	 * @return Integer between 0 and 100
 	 */
-	public int getScore()
-	{
-		return score;
+	public int getScore() {
+		return this.score;
 	}
 
 	/**
@@ -61,12 +57,8 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 	 * @param line RDP Classifier output line
 	 * @throws Exception if required properties are invalid or undefined
 	 */
-	protected void buildRdpNode( final String id, final String line ) throws Exception
-	{
-		if( line == null || id == null || line.isEmpty() || id.isEmpty() )
-		{
-			return;
-		}
+	protected void buildRdpNode( final String id, final String line ) throws Exception {
+		if( line == null || id == null || line.isEmpty() || id.isEmpty() ) return;
 
 		final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 		setSampleId( id );
@@ -76,11 +68,9 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 		// skip the header, every line has at least 1 token, so next line will never throw Exception
 		st.nextToken();
 
-		while( st.hasMoreTokens() )
-		{
+		while( st.hasMoreTokens() ) {
 			String taxa = getTaxaName( st.nextToken() );
-			while( st.hasMoreTokens() && ( taxa.equals( "-" ) || taxa.equals( "" ) ) )
-			{
+			while( st.hasMoreTokens() && ( taxa.equals( "-" ) || taxa.equals( "" ) ) ) {
 				taxa = getTaxaName( st.nextToken() );
 			}
 
@@ -88,12 +78,9 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 			final Integer nextScore = st.hasMoreTokens() ? calculateScore( st.nextToken().trim() ): null;
 
 			if( level == null || nextScore == null
-					|| nextScore < Config.requirePositiveInteger( null, Constants.RDP_THRESHOLD_SCORE ) )
-			{
-				return;
-			}
+				|| nextScore < Config.requirePositiveInteger( null, Constants.RDP_THRESHOLD_SCORE ) ) return;
 
-			score = nextScore;
+			this.score = nextScore;
 			addTaxa( taxa, level );
 
 		}
@@ -105,51 +92,32 @@ public class RdpNode extends OtuNodeImpl implements OtuNode
 	 * @return the lowest score above the RDP (between 0 and 100)
 	 * @Exception if scoreString has an invalid format
 	 */
-	private Integer calculateScore( String scoreString ) throws Exception
-	{
-		if( scoreString.equals( "1" ) || scoreString.equals( "1.0" ) )
-		{
-			return 100;
+	private static Integer calculateScore( final String scoreString ) throws Exception {
+		String confScore = scoreString;
+		if( confScore.equals( "1" ) || confScore.equals( "1.0" ) ) return 100;
+		else if( confScore.equals( "0" ) || confScore.equals( "0.0" ) ) return 0;
+		else if( !confScore.startsWith( "0." ) ) throw new Exception( rangeError( confScore ) );
+		confScore = scoreString.replace( "0.", "" );
+		if( confScore.length() == 1 ) {
+			confScore += "0";
 		}
-		else if( scoreString.equals( "0" ) || scoreString.equals( "0.0" ) )
-		{
-			return 0;
-		}
-		else if( !scoreString.startsWith( "0." ) )
-		{
-			throw new Exception( rangeError( scoreString ) );
-		}
-
-		scoreString = scoreString.replace( "0.", "" );
-		if( scoreString.length() == 1 )
-		{
-			scoreString += "0";
-		}
-
-		final Integer thisScore = Integer.parseInt( scoreString );
-		if( thisScore < 0 || thisScore > 100 )
-		{
-			throw new Exception( rangeError( scoreString ) );
-		}
-
+		final Integer thisScore = Integer.parseInt( confScore );
+		if( thisScore < 0 || thisScore > 100 ) throw new Exception( rangeError( confScore ) );
 		return thisScore;
 	}
 
-	private String getTaxaName( final String taxa ) throws Exception
-	{
+	private static String getTaxaName( final String taxa ) {
 		return taxa.replaceAll( "'", "" ).replaceAll( "\"", "" ).trim();
 	}
 
-	private String rangeError( final String score ) throws Exception
-	{
+	private static String rangeError( final String score ) {
 		return "Invalid RDP confidence score | Required range [ 0.0 <= score <= 1.0 ] ---> Actual score = " + score;
 	}
 
 	private int score = 0;
 
 	// Override default taxonomy level delimiters set in OtuNodeImpl
-	static
-	{
+	static {
 		DOMAIN_DELIM = Constants.DOMAIN;
 		CLASS_DELIM = Constants.CLASS;
 		FAMILY_DELIM = Constants.FAMILY;

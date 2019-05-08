@@ -19,7 +19,6 @@ import org.apache.commons.io.FileUtils;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.JavaModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -29,12 +28,10 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Remove Low OTU Counts
  */
-public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
-{
+public class RemoveLowOtuCounts extends OtuCountModule {
 
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		getMinCount();
 	}
@@ -43,8 +40,7 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	 * Update {@link biolockj.module.implicit.parser.ParserModuleImpl} OTU_COUNT field name.
 	 */
 	@Override
-	public void cleanUp() throws Exception
-	{
+	public void cleanUp() throws Exception {
 		super.cleanUp();
 		ParserModuleImpl.setNumHitsFieldName( getMetaColName() + "_" + Constants.OTU_COUNT );
 	}
@@ -53,34 +49,32 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	 * Produce summary message with min, max, mean, and median number of reads.
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		final String label = "OTUs";
 		final int pad = SummaryUtil.getPad( label );
 		String summary = "Remove OTU below count --> " + getMetaColName() + RETURN;
-		summary += BioLockJUtil.addTrailingSpaces( "# Unique OTUs removed:", pad ) + uniqueOtuRemoved.size() + RETURN;
-		summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs removed:", pad ) + totalOtuRemoved + RETURN;
-		summary += SummaryUtil.getCountSummary( hitsPerSample, label, false );
-		sampleIds.removeAll( hitsPerSample.keySet() );
-		if( !sampleIds.isEmpty() )
-		{
-			summary += "Removed empty samples: " + sampleIds;
+		summary += BioLockJUtil.addTrailingSpaces( "# Unique OTUs removed:", pad ) + this.uniqueOtuRemoved.size()
+			+ RETURN;
+		summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs removed:", pad ) + this.totalOtuRemoved + RETURN;
+		summary += SummaryUtil.getCountSummary( this.hitsPerSample, label, false );
+		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
+		if( !this.sampleIds.isEmpty() ) {
+			summary += "Removed empty samples: " + this.sampleIds;
 		}
-		hitsPerSample = null;
+		this.hitsPerSample = null;
 		return super.getSummary() + summary;
 	}
 
 	@Override
-	public void runModule() throws Exception
-	{
-		sampleIds.addAll( MetaUtil.getSampleIds() );
+	public void runModule() throws Exception {
+		this.sampleIds.addAll( MetaUtil.getSampleIds() );
 		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts = OtuUtil.getSampleOtuCounts( getInputFiles() );
 
 		final TreeMap<String, TreeSet<String>> lowCountOtus = removeLowOtuCounts( sampleOtuCounts );
 		logLowCountOtus( lowCountOtus );
-		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
-		{
-			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, hitsPerSample, getOutputDir(), true );
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) {
+			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, this.hitsPerSample, getOutputDir(),
+				true );
 		}
 	}
 
@@ -90,37 +84,27 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	 * @param lowCountOtus TreeMap(sampleId, TreeSet(OTU)) of OTUs found in too few samples
 	 * @throws Exception if errors occur
 	 */
-	protected void logLowCountOtus( final TreeMap<String, TreeSet<String>> lowCountOtus ) throws Exception
-	{
-		if( lowCountOtus == null || lowCountOtus.isEmpty() )
-		{
+	protected void logLowCountOtus( final TreeMap<String, TreeSet<String>> lowCountOtus ) throws Exception {
+		if( lowCountOtus == null || lowCountOtus.isEmpty() ) {
 			Log.info( getClass(), "No low-count OTUs detected!" );
 			return;
 		}
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getLowCountOtuLogFile() ) );
-		try
-		{
-			for( final String id: lowCountOtus.keySet() )
-			{
+		try {
+			for( final String id: lowCountOtus.keySet() ) {
 				final TreeSet<String> otus = lowCountOtus.get( id );
 
-				for( final String otu: otus )
-				{
+				for( final String otu: otus ) {
 					writer.write( id + ": " + otu + RETURN );
 				}
 			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
+		} finally {
+			writer.close();
 		}
 
 		Log.info( getClass(),
-				"Found " + lowCountOtus.size() + " samples with low count OTUs removed - OTU list saved to --> "
-						+ getLowCountOtuLogFile().getAbsolutePath() );
+			"Found " + lowCountOtus.size() + " samples with low count OTUs removed - OTU list saved to --> "
+				+ getLowCountOtuLogFile().getAbsolutePath() );
 	}
 
 	/**
@@ -131,12 +115,10 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 	 * @throws Exception if errors occur
 	 */
 	protected TreeMap<String, TreeSet<String>> removeLowOtuCounts(
-			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts ) throws Exception
-	{
+		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts ) throws Exception {
 		final TreeMap<String, TreeSet<String>> lowCountOtus = new TreeMap<>();
 		Log.debug( getClass(), "Build low count files for total # files: " + sampleOtuCounts.size() );
-		for( final String sampleId: sampleOtuCounts.keySet() )
-		{
+		for( final String sampleId: sampleOtuCounts.keySet() ) {
 			final Set<String> badOtus = new TreeSet<>();
 			Log.debug( getClass(), "Check for low OTU counts in: " + sampleId );
 			long numOtus = 0;
@@ -144,62 +126,45 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 
 			final Set<String> validOtus = new TreeSet<>( otuCounts.keySet() );
 			long numOtuRemoved = 0;
-			for( final String otu: otuCounts.keySet() )
-			{
+			for( final String otu: otuCounts.keySet() ) {
 				final long count = otuCounts.get( otu );
-				if( count < getMinCount() )
-				{
-					uniqueOtuRemoved.add( otu );
-					totalOtuRemoved += count;
+				if( count < getMinCount() ) {
+					this.uniqueOtuRemoved.add( otu );
+					this.totalOtuRemoved += count;
 					badOtus.add( otu );
 					Log.debug( getClass(), sampleId + ": Remove Low OTU count: " + otu + "=" + count );
 					validOtus.remove( otu );
-					if( lowCountOtus.get( sampleId ) == null )
-					{
+					if( lowCountOtus.get( sampleId ) == null ) {
 						lowCountOtus.put( sampleId, new TreeSet<>() );
 					}
 					lowCountOtus.get( sampleId ).add( otu );
 					numOtuRemoved += count;
-				}
-				else
-				{
+				} else {
 					numOtus += count;
 					// Log.debug( getClass(),
 					// sampleId + ": update OTU count to " + numOtus + " after adding: " + otu + "=" + count );
 				}
 			}
 
-			if( numOtus > 0 )
-			{
+			if( numOtus > 0 ) {
 				Log.debug( getClass(), sampleId + ": Reduce total OTU count by: " + numOtuRemoved );
-				hitsPerSample.put( sampleId, String.valueOf( numOtus ) );
+				this.hitsPerSample.put( sampleId, String.valueOf( numOtus ) );
 
-				if( numOtuRemoved == 0 )
-				{
+				if( numOtuRemoved == 0 ) {
 					FileUtils.copyFileToDirectory( getFileMap().get( sampleId ), getOutputDir() );
-				}
-				else
-				{
+				} else {
 
 					Log.warn( getClass(), sampleId + ": Removed " + badOtus.size() + " low OTU counts (below "
-							+ getProp() + "=" + getMinCount() + ") --> " + badOtus );
+						+ getProp() + "=" + getMinCount() + ") --> " + badOtus );
 
 					final File otuFile = OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName() );
 					final BufferedWriter writer = new BufferedWriter( new FileWriter( otuFile ) );
-					try
-					{
-						for( final String otu: validOtus )
-						{
+					try {
+						for( final String otu: validOtus ) {
 							writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
 						}
-					}
-					finally
-					{
-						if( writer != null )
-						{
-							writer.close();
-						}
-
+					} finally {
+						writer.close();
 						getFileMap().put( sampleId, otuFile );
 					}
 				}
@@ -210,41 +175,33 @@ public class RemoveLowOtuCounts extends OtuCountModule implements JavaModule
 		return lowCountOtus;
 	}
 
-	private Map<String, File> getFileMap() throws Exception
-	{
-		if( fileMap == null )
-		{
-			fileMap = new HashMap<>();
-			for( final File f: getInputFiles() )
-			{
-				fileMap.put( OtuUtil.getSampleId( f ), f );
+	private Map<String, File> getFileMap() throws Exception {
+		if( this.fileMap == null ) {
+			this.fileMap = new HashMap<>();
+			for( final File f: getInputFiles() ) {
+				this.fileMap.put( OtuUtil.getSampleId( f ), f );
 			}
 		}
-		return fileMap;
+		return this.fileMap;
 	}
 
-	private File getLowCountOtuLogFile() throws Exception
-	{
+	private File getLowCountOtuLogFile() {
 		return new File( getTempDir().getAbsolutePath() + File.separator + "lowCountOtus" + TXT_EXT );
 	}
 
-	private String getMetaColName() throws Exception
-	{
+	private String getMetaColName() throws Exception {
 		return "min" + getMinCount();
 	}
 
-	private Integer getMinCount() throws Exception
-	{
+	private Integer getMinCount() throws Exception {
 		return Config.requirePositiveInteger( this, getProp() );
 	}
 
-	private String getProp() throws Exception
-	{
-		if( prop == null )
-		{
-			prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
+	private String getProp() {
+		if( this.prop == null ) {
+			this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
 		}
-		return prop;
+		return this.prop;
 	}
 
 	private Map<String, File> fileMap = null;

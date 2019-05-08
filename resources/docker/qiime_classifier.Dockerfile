@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_FILE_PATH/qiime_classifier.Dockerfile
+# Deployment path:  $DOCKER_DIR/qiime_classifier.Dockerfile
 
 FROM biolockj/blj_basic_py2
 ARG DEBIAN_FRONTEND=noninteractive

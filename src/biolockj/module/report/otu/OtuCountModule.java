@@ -13,34 +13,24 @@ package biolockj.module.report.otu;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Log;
 import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
-import biolockj.util.BioLockJUtil;
 import biolockj.util.OtuUtil;
 
 /**
  * OtuCount modules reads OTU count assignment tables (1 file/sample) with 2 columns.<br>
  * Col1: Full OTU pathway spanning top to bottom level Col2: Count (# of reads) for the sample.
  */
-public abstract class OtuCountModule extends JavaModuleImpl implements JavaModule
-{
+public abstract class OtuCountModule extends JavaModuleImpl {
 
 	@Override
-	public List<File> getInputFiles() throws Exception
-	{
-		if( getFileCache().isEmpty() )
-		{
+	public List<File> getInputFiles() throws Exception {
+		if( getFileCache().isEmpty() ) {
 			final List<File> files = new ArrayList<>();
-			for( final File f: findModuleInputFiles() )
-			{
-				if( OtuUtil.isOtuFile( f ) )
-				{
+			for( final File f: findModuleInputFiles() ) {
+				if( OtuUtil.isOtuFile( f ) ) {
 					files.add( f );
 				}
 			}
@@ -50,8 +40,7 @@ public abstract class OtuCountModule extends JavaModuleImpl implements JavaModul
 	}
 
 	@Override
-	public boolean isValidInputModule( final BioModule module )
-	{
+	public boolean isValidInputModule( final BioModule module ) {
 		return isOtuModule( module );
 	}
 
@@ -61,23 +50,14 @@ public abstract class OtuCountModule extends JavaModuleImpl implements JavaModul
 	 * @param module BioModule
 	 * @return TRUE if module generated OTU count files
 	 */
-	protected boolean isOtuModule( final BioModule module )
-	{
-		try
-		{
-			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
-					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+	protected boolean isOtuModule( final BioModule module ) {
+		try {
+			final File[] files = module.getOutputDir().listFiles();
 
-			for( final File f: files )
-			{
-				if( OtuUtil.isOtuFile( f ) )
-				{
-					return true;
-				}
+			for( final File f: files ) {
+				if( OtuUtil.isOtuFile( f ) ) return true;
 			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.warn( getClass(), "Error occurred while inspecting module output files: " + module );
 			ex.printStackTrace();
 		}

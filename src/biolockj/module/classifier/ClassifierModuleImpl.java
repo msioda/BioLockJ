@@ -25,8 +25,7 @@ import biolockj.util.SummaryUtil;
 /**
  * This is the superclass for all WGS and 16S biolockj.module.classifier BioModules.
  */
-public abstract class ClassifierModuleImpl extends SeqModuleImpl implements ClassifierModule, DatabaseModule
-{
+public abstract class ClassifierModuleImpl extends SeqModuleImpl implements ClassifierModule, DatabaseModule {
 
 	/**
 	 * Validate module dependencies:
@@ -38,8 +37,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 * </ul>
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		getClassifierExe();
 		getClassifierParams();
 		validateModuleOrder();
@@ -62,8 +60,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 * For example RdpClassifier, will return the RdpParser.
 	 */
 	@Override
-	public List<String> getPostRequisiteModules() throws Exception
-	{
+	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
 		final String type = getClassifierType().substring( 0, 1 ).toUpperCase() + getClassifierType().substring( 1 );
 		postReqs.add( ParserModule.class.getPackage().getName() + "." + getSeqType() + "." + type + "Parser" );
@@ -72,8 +69,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	}
 
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		return super.getSummary() + SummaryUtil.getInputSummary( this );
 	}
 
@@ -84,11 +80,9 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 *
 	 * @return String - options { rdp, qiime, kraken, kraken2, metaphlan2, or humann2 }
 	 */
-	protected String getClassifierType()
-	{
+	protected String getClassifierType() {
 		String type = getClass().getSimpleName().toLowerCase().replaceAll( "classifier", "" );
-		if( type.startsWith( Constants.QIIME ) )
-		{
+		if( type.startsWith( Constants.QIIME ) ) {
 			type = Constants.QIIME;
 		}
 
@@ -101,28 +95,18 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 * 
 	 * @throws Exception if modules are out of order
 	 */
-	protected void validateModuleOrder() throws Exception
-	{
-		for( final BioModule module: ModuleUtil.getModules( this, true ) )
-		{
-			if( module.equals( ModuleUtil.getClassifier( this, true ) ) )
-			{
+	protected void validateModuleOrder() throws Exception {
+		for( final BioModule module: ModuleUtil.getModules( this, true ) ) {
+			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) {
 				break;
-			}
-			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
-			{
+			} else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
 				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
-						+ " must run before the ParserModule." );
-			}
+					+ " must run before the ParserModule." );
 		}
 	}
 
-	private String getSeqType()
-	{
-		if( getClass().getName().startsWith( "biolockj.module.classifier.wgs" ) )
-		{
-			return "wgs";
-		}
+	private String getSeqType() {
+		if( getClass().getName().startsWith( "biolockj.module.classifier.wgs" ) ) return "wgs";
 
 		return "r16s";
 

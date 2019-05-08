@@ -15,7 +15,6 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.Log;
-import biolockj.module.JavaModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
 import biolockj.util.*;
@@ -26,12 +25,10 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Register Number of Reads
  */
-public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqModule
-{
+public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
-	{
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -39,13 +36,11 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 	 * Produce summary message with min, max, mean, and median number of reads.
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
-		String summary = SummaryUtil.getCountSummary( readsPerSample, "Reads", true );
-		sampleIds.removeAll( readsPerSample.keySet() );
-		if( !sampleIds.isEmpty() )
-		{
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( sampleIds );
+	public String getSummary() throws Exception {
+		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Reads", true );
+		this.sampleIds.removeAll( this.readsPerSample.keySet() );
+		if( !this.sampleIds.isEmpty() ) {
+			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( this.sampleIds );
 		}
 
 		freeMemory();
@@ -57,55 +52,44 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 	 * {@value #NUM_READS} column to metadata and refresh the cache.
 	 */
 	@Override
-	public void runModule() throws Exception
-	{
-		sampleIds.addAll( MetaUtil.getSampleIds() );
-		if( MetaUtil.getFieldNames().contains( NUM_READS ) )
-		{
-			if( MetaUtil.getFieldValues( NUM_READS, false ).size() == MetaUtil.getSampleIds().size() )
-			{
+	public void runModule() throws Exception {
+		this.sampleIds.addAll( MetaUtil.getSampleIds() );
+		if( MetaUtil.getFieldNames().contains( NUM_READS ) ) {
+			if( MetaUtil.getFieldValues( NUM_READS, false ).size() == MetaUtil.getSampleIds().size() ) {
 				Log.warn( getClass(),
-						NUM_READS + " column already fully populated in metadata file :" + MetaUtil.getPath() );
-				FileUtils.copyFileToDirectory( MetaUtil.getFile(), getOutputDir() );
+					NUM_READS + " column already fully populated in metadata file :" + MetaUtil.getPath() );
+				FileUtils.copyFileToDirectory( MetaUtil.getMetadata(), getOutputDir() );
 				final File metaFile = new File(
-						getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+					getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 				if( !metaFile.exists() )
-				{
 					throw new Exception( "FileUtils.copyFileToDirectory did not successfully copy the metadata file" );
-				}
-
 				return;
 			}
-			else
-			{
-				Log.warn( getClass(), NUM_READS + " column partially populated.  Clearing values & recounting reads" );
-				MetaUtil.removeColumn( NUM_READS, getTempDir() );
-			}
+
+			Log.warn( getClass(), NUM_READS + " column partially populated.  Clearing values & recounting reads" );
+			MetaUtil.removeColumn( NUM_READS, getTempDir() );
 		}
 
 		final List<File> files = getInputFiles();
 		Log.info( getClass(), "Counting # reads/sample for " + files.size() + " files" );
 
-		for( final File f: files )
-		{
-			if( SeqUtil.isForwardRead( f.getName() ) )
-			{
+		for( final File f: files ) {
+			if( SeqUtil.isForwardRead( f.getName() ) ) {
 				final long count = SeqUtil.countNumReads( f );
 				Log.debug( getClass(), "Num Reads for :[" + SeqUtil.getSampleId( f.getName() ) + "] = " + count );
-				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
+				this.readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 		}
 
-		MetaUtil.addColumn( getNumReadFieldName(), readsPerSample, getOutputDir(), true );
+		MetaUtil.addColumn( getNumReadFieldName(), this.readsPerSample, getOutputDir(), true );
 	}
 
 	/**
 	 * Free up memory.
 	 */
-	private void freeMemory()
-	{
-		sampleIds = null;
-		readsPerSample = null;
+	private void freeMemory() {
+		this.sampleIds = null;
+		this.readsPerSample = null;
 	}
 
 	/**
@@ -113,8 +97,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 	 *
 	 * @return depricatedReadFields
 	 */
-	public static Set<String> getDepricatedReadFields()
-	{
+	public static Set<String> getDepricatedReadFields() {
 		return depricatedReadFields;
 	}
 
@@ -123,8 +106,7 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 	 *
 	 * @return numReadFieldName
 	 */
-	public static String getNumReadFieldName()
-	{
+	public static String getNumReadFieldName() {
 		return numReadFieldName;
 	}
 
@@ -134,20 +116,13 @@ public class RegisterNumReads extends JavaModuleImpl implements JavaModule, SeqM
 	 * @param name Name of new number of reads metadata field
 	 * @throws Exception if null value passed
 	 */
-	public static void setNumReadFieldName( final String name ) throws Exception
-	{
+	public static void setNumReadFieldName( final String name ) throws Exception {
 		if( name == null )
-		{
 			throw new Exception( "Null name value passed to RegisterNumReads.setNumReadFieldName(name)" );
-		}
-		else if( numReadFieldName != null && numReadFieldName.equals( name ) )
-		{
+		else if( numReadFieldName != null && numReadFieldName.equals( name ) ) {
 			Log.warn( RegisterNumReads.class, "NumReads field already set to: " + numReadFieldName );
-		}
-		else
-		{
-			if( numReadFieldName != null )
-			{
+		} else {
+			if( numReadFieldName != null ) {
 				depricatedReadFields.add( numReadFieldName );
 			}
 

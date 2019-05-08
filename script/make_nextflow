@@ -1,70 +1,49 @@
 #!/bin/bash
 ################################################################################
-##                                                                            ##
 ##  Build Nexflow main.nf template                                            ##
 ##  Query for SEARCH_KEY in all java files under $BLJ/src/biolockj/module     ##
-##  For each valid file, trim the file path & file extension                  ##
-##  Remaining value = Java class name module.getClass().getSimpleName()       ##
-##                                                                            ##
+##  For each valid module, return the template Nextflow process code block.   ##
+##  Remaining value = Java class name module.getClass().getName() after       ##
+##  substituting "_" for each "." characters in the Java class name           ##
 ################################################################################
-. $BLJ/script/blj_functions
-
-modules=
-SEPARATOR="%"
-MAIN_NF="$BLJ/resources/aws/nextflow_template_main.nf"
-
-# If 2nd parameter (module list) is undefined, define process for each possible BioLockJ modules
-get_modules() {
-	FILE_TYPE=".java"
-	SEARCH_KEY="public class"
-	modules=$(find $BLJ/src/biolockj/module -print | grep $FILE_TYPE | xargs grep -il "$SEARCH_KEY" | sed 's:.*/::' | sed 's/'$FILE_TYPE'//')
-	modules=$(echo ${modules}|tr " " "\n"|sort|tr " " "\n")
-	modules=( $modules )
-	echo ${modules[*]}
+. /app/biolockj/script/blj_config
+. "${AWS_LIB}"
+echo "NEW BUILD Nextflow Template"
+# Build the template file that NextflowUtil.java will use to create the pipeline main.nf
+# Param 1 - All make_nextflow script args
+build_template() {
+	modules=( ${@/${1}/} )
+	echo "Building Nextflow Template ${1} with ---> ${modules[@]}"
+	numModules=$(echo ${modules[@]} | wc -w | xargs)
+	summaryMsg="BioLockJ $(biolockj -v) generated Nextflow Config with $numModules BioModule process definitions"
+	echo "// $summaryMsg" > "${1}"
+	echo "" >> "${1}"
+	for module in ${modules[@]}; do
+		echo "process ${module} {" >> "${1}"
+		echo '    echo true' >> "${1}"
+		echo '    cpus $script.numThreads' >> "${1}"
+		echo '    memory $aws.ram' >> "${1}"
+		echo '    label $nextflow.dockerImage' >> "${1}"
+		echo '    input:' >> "${1}"
+		echo '    file worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> "${1}"
+		echo '    """' >> "${1}"
+		echo '    #!/bin/bash' >> "${1}"
+		echo '    bash ${worker}' >> "${1}"
+		echo '    """' >> "${1}"
+		echo '}' >> "${1}"
+	done
+	echo "-----------------------------------------------------------------------------------------"
+	[ -f "${1}" ] && echo "Success! -->  $summaryMsg" && echo "Deployed: ${1}" && cat "${1}" && \
+		echo "-----------------------------------------------------------------------------------------"	
 }
 
-if [ $# -gt 0 ]; then
-	MAIN_NF=$1
-fi
-if [ $# -eq 2 ]; then
-	modules=$2
-	modules=${modules//./ }
-	modules=( $modules )
-	modules=${modules[*]}
-else
-	modules=$(get_modules)
-fi
+# Verify at least 2 input parameters + the 1st is a file-path for an existing directory
+verify_inputs() {
+	[ $# -lt 2 ] && \
+		exit_script "Error [ make_nextflow.verify_inputs() ]: Script requires 1) main.nf file-path + 2) list of fully qualified BioModule Java class names"
+	[ ! -d "$(dirname ${1})" ] && \
+		exit_script "Error [ make_nextflow.verify_inputs() ]: Directory \"$(dirname ${1})\" from template nf path \"${1}\" not found!"
+}
 
-numModules=$(echo $modules | wc -w | xargs)
-summaryMsg="BioLockJ $(get_version) generated Nextflow Template with $numModules BioModule processes"
-
-echo "// $summaryMsg" > $MAIN_NF
-echo "// Path: $MAIN_NF" >> $MAIN_NF
-echo "" >> $MAIN_NF
-echo 'aws.s3 = $aws.s3' >> $MAIN_NF
-echo 'pipeline.pipelineName = $pipeline.pipelineName' >> $MAIN_NF
-echo 'pipeline.pipelineDir = "${aws.efs}/${pipeline.pipelineName}"' >> $MAIN_NF
-echo "" >> $MAIN_NF
-
-for module in ${modules[@]}; do
-	#echo "Add process for: $module"
-	echo "process ${module} {" >> $MAIN_NF
-	echo '	echo 	true' >> $MAIN_NF
-	echo '	cpus 	$script.numThreads' >> $MAIN_NF
-	echo '	memory 	$aws.ram' >> $MAIN_NF
-	echo '	label 	$nextflow.dockerImage' >> $MAIN_NF
-	echo '	input:' >> $MAIN_NF
-	printf "	val worker from Channel.watchPath( '" >> $MAIN_NF
-	printf '${pipeline.pipelineName}' >> $MAIN_NF
-	echo "/**_${module}/script/*.sh' )" >> $MAIN_NF
-	echo '	"""' >> $MAIN_NF
-	echo '	#!/bin/bash' >> $MAIN_NF
-	echo '	bash ${worker}' >> $MAIN_NF
-	echo '	"""' >> $MAIN_NF
-	echo '}' >> $MAIN_NF
-done
-
-echo "-----------------------------------------------------------------------------------------"
-[ -f $MAIN_NF ] && echo "Success!  $summaryMsg" && echo "Deployed: $MAIN_NF"  
-# cat $MAIN_NF
-echo "-----------------------------------------------------------------------------------------"
+verify_inputs $@
+build_template $@

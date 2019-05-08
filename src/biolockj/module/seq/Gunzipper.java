@@ -17,7 +17,6 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
@@ -26,24 +25,18 @@ import biolockj.util.SeqUtil;
  * 
  * @blj.web_desc Decompress .gz Files
  */
-public class Gunzipper extends SeqModuleImpl implements SeqModule
-{
+public class Gunzipper extends SeqModuleImpl {
 
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
-		for( final File f: files )
-		{
+		for( final File f: files ) {
 			final ArrayList<String> lines = new ArrayList<>();
-			if( SeqUtil.isGzipped( f.getName() ) )
-			{
+			if( SeqUtil.isGzipped( f.getName() ) ) {
 				lines.add( unzip( f ) );
-			}
-			else
-			{
+			} else {
 				Log.warn( getClass(),
-						"May be able to remove this BioModule - input already decompressed: " + f.getAbsolutePath() );
+					"May be able to remove this BioModule - input already decompressed: " + f.getAbsolutePath() );
 				lines.add( copyToOutputDir( f ) );
 			}
 
@@ -57,8 +50,7 @@ public class Gunzipper extends SeqModuleImpl implements SeqModule
 	 * This method generates the bash function: {@value #FUNCTION_GUNZIP}.
 	 */
 	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
+	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_GUNZIP + "() {" );
 		lines.add( Config.getExe( this, Constants.EXE_GZIP ) + " -cd $1 > $2" );
@@ -66,16 +58,14 @@ public class Gunzipper extends SeqModuleImpl implements SeqModule
 		return lines;
 	}
 
-	private String copyToOutputDir( final File file ) throws Exception
-	{
+	private String copyToOutputDir( final File file ) {
 		return "cp " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath();
 	}
 
-	private String unzip( final File file ) throws Exception
-	{
+	private String unzip( final File file ) throws Exception {
 		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() + File.separator
-				+ SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
-				+ Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
+			+ SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
+			+ Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
 	}
 
 	/**

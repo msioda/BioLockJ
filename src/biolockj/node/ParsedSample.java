@@ -23,17 +23,15 @@ import biolockj.util.TaxaUtil;
  * OTU assignments and counts, for each sample. Only the samples that contain one or more reads used by
  * {@link biolockj.module.classifier.ClassifierModule} to generate a valid taxonomic assignment are used.
  */
-public class ParsedSample implements Serializable, Comparable<ParsedSample>
-{
+public class ParsedSample implements Serializable, Comparable<ParsedSample> {
+
 	/**
 	 * Construct a new ParsedSample with it's 1st OtuNode.
 	 *
 	 * @param node OtuNode
-	 * @throws Exception if propagated by {@link #addNode(OtuNode)}
 	 */
-	public ParsedSample( final OtuNode node ) throws Exception
-	{
-		sampleId = node.getSampleId();
+	public ParsedSample( final OtuNode node ) {
+		this.sampleId = node.getSampleId();
 		addNode( node );
 	}
 
@@ -42,40 +40,28 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	 *
 	 * @param node OtuNode
 	 */
-	public void addNode( final OtuNode node )
-	{
-		if( otuCounts.get( node.getOtuName() ) == null )
-		{
+	public void addNode( final OtuNode node ) {
+		if( this.otuCounts.get( node.getOtuName() ) == null ) {
 			Log.debug( getClass(), "Add new OtuNode: " + node.getOtuName() + "=" + node.getCount() );
-			otuCounts.put( node.getOtuName(), node.getCount() );
-		}
-		else
-		{
-			final int count = otuCounts.get( node.getOtuName() ) + node.getCount();
+			this.otuCounts.put( node.getOtuName(), node.getCount() );
+		} else {
+			final int count = this.otuCounts.get( node.getOtuName() ) + node.getCount();
 			Log.debug( getClass(), "Update OtuNode: " + node.getOtuName() + "=" + count );
-			otuCounts.put( node.getOtuName(), count );
+			this.otuCounts.put( node.getOtuName(), count );
 		}
 	}
 
 	@Override
-	public int compareTo( final ParsedSample o )
-	{
+	public int compareTo( final ParsedSample o ) {
 		return o.getSampleId().compareTo( getSampleId() );
 	}
 
 	@Override
-	public boolean equals( final Object o )
-	{
-		if( sampleId == null || o == null || !( o instanceof ParsedSample ) )
-		{
-			return false;
-		}
+	public boolean equals( final Object o ) {
+		if( this.sampleId == null || o == null || !( o instanceof ParsedSample ) ) return false;
 		final ParsedSample ps = (ParsedSample) o;
-		if( ps.getSampleId() == null || ps.getSampleId().isEmpty() )
-		{
-			return false;
-		}
-		return ps.getSampleId().equals( sampleId );
+		if( ps.getSampleId() == null || ps.getSampleId().isEmpty() ) return false;
+		return ps.getSampleId().equals( this.sampleId );
 
 	}
 
@@ -89,66 +75,49 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	 * @return map OTU-count
 	 * @throws Exception if errors occur
 	 */
-	public TreeMap<String, Integer> getOtuCounts() throws Exception
-	{
+	public TreeMap<String, Integer> getOtuCounts() throws Exception {
 		// Log.debug( getClass(), "Calling getOtuCounts() for: " + sampleId );
-		if( otuCounts == null )
-		{
-			throw new Exception( getClass().getName()
-					+ ".getOtuCounts() should be called only once - cached data is cleared after 1st call." );
-		}
-		else if( otuCounts.isEmpty() )
-		{
-			Log.debug( getClass(), "No valid OTUs found for: " + sampleId );
+		if( this.otuCounts == null ) throw new Exception( getClass().getName()
+			+ ".getOtuCounts() should be called only once - cached data is cleared after 1st call." );
+		else if( this.otuCounts.isEmpty() ) {
+			Log.debug( getClass(), "No valid OTUs found for: " + this.sampleId );
 			return null;
 		}
 
 		final TreeMap<String, Integer> fullPathOtuCounts = new TreeMap<>();
-		for( String otu: otuCounts.keySet() )
-		{
-			if( otu.isEmpty() )
-			{
+		for( String otu: this.otuCounts.keySet() ) {
+			if( otu.isEmpty() ) {
 				continue;
 			}
 
 			final Set<String> kids = getChildren( fullPathOtuCounts, otu );
-			final int otuCount = otuCounts.get( otu );
-			if( kids.isEmpty() )
-			{
-				Log.debug( getClass(), "Add [ " + sampleId + " ] OTU " + otu + "=" + otuCount );
+			final int otuCount = this.otuCounts.get( otu );
+			if( kids.isEmpty() ) {
+				Log.debug( getClass(), "Add [ " + this.sampleId + " ] OTU " + otu + "=" + otuCount );
 				fullPathOtuCounts.put( otu, otuCount );
-			}
-			else
-			{
+			} else {
 				final int totalCount = totalCount( fullPathOtuCounts, kids );
-				if( totalCount < otuCount )
-				{
+				if( totalCount < otuCount ) {
 					String parentTaxa = null;
-					for( final String level: TaxaUtil.getTaxaLevelSpan() )
-					{
-						if( otu.contains( level ) )
-						{
+					for( final String level: TaxaUtil.getTaxaLevelSpan() ) {
+						if( otu.contains( level ) ) {
 							parentTaxa = TaxaUtil.getTaxaName( otu, level );
-						}
-						else if( parentTaxa != null )
-						{
+						} else if( parentTaxa != null ) {
 							otu += Constants.SEPARATOR
-									+ OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
+								+ OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
 						}
 					}
 
 					final int diff = otuCount - totalCount;
 					fullPathOtuCounts.put( otu, diff );
 					Log.debug( getClass(),
-							"Add parent remainder count [ " + sampleId + " ] Unclassified OTU: " + otu + "=" + diff );
-				}
-				else if( otuCount >= totalCount )
-				{
-					Log.debug( getClass(), "Ignore [" + sampleId + " ] Parent OTU " + otu + "=" + otuCount );
+						"Add parent remainder count [ " + this.sampleId + " ] Unclassified OTU: " + otu + "=" + diff );
+				} else if( otuCount >= totalCount ) {
+					Log.debug( getClass(), "Ignore [" + this.sampleId + " ] Parent OTU " + otu + "=" + otuCount );
 				}
 			}
 		}
-		otuCounts = null;
+		this.otuCounts = null;
 		return fullPathOtuCounts;
 	}
 
@@ -157,29 +126,23 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample>
 	 *
 	 * @return Sample ID.
 	 */
-	public String getSampleId()
-	{
-		return sampleId;
+	public String getSampleId() {
+		return this.sampleId;
 	}
 
-	private Set<String> getChildren( final TreeMap<String, Integer> otuCounts, final String otu ) throws Exception
-	{
+	private static Set<String> getChildren( final TreeMap<String, Integer> otuCounts, final String otu ) {
 		final Set<String> kids = new HashSet<>();
-		for( final String key: otuCounts.keySet() )
-		{
-			if( key.contains( otu ) )
-			{
+		for( final String key: otuCounts.keySet() ) {
+			if( key.contains( otu ) ) {
 				kids.add( key );
 			}
 		}
 		return kids;
 	}
 
-	private int totalCount( final TreeMap<String, Integer> otuCounts, final Set<String> otus ) throws Exception
-	{
+	private static int totalCount( final TreeMap<String, Integer> otuCounts, final Set<String> otus ) {
 		int count = 0;
-		for( final String otu: otus )
-		{
+		for( final String otu: otus ) {
 			count += otuCounts.get( otu );
 		}
 		return count;

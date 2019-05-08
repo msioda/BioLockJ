@@ -15,7 +15,9 @@ import java.io.File;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.DockerUtil;
+import biolockj.util.RuntimeParamUtil;
 
 /**
  * Simple Logging Facade for Java (SLF4J) implementation using Log4J<br>
@@ -30,11 +32,9 @@ import biolockj.util.*;
  * <li>{@link biolockj.Log#out(Class)}.{@link #out(Class)}.error( logMessage, exception )
  * </ul>
  */
-public class Log
-{
+public class Log {
 
-	private Log()
-	{}
+	private Log() {}
 
 	/**
 	 * Print log level DEBUG message.<br>
@@ -44,33 +44,26 @@ public class Log
 	 * @param loggingClass Logging class
 	 * @param msg Message to log
 	 */
-	public static void debug( final Class<?> loggingClass, final String msg )
-	{
-		if( suppressLogs )
-		{
+	public static void debug( final Class<?> loggingClass, final String msg ) {
+		if( suppressLogs ) return;
+		if( useSystemOut() ) {
+			System.out.println( "[ DEBUG ] " + msg );
 			return;
 		}
-		if( isInitialized() && !debugClasses().isEmpty() && !debugClasses().contains( loggingClass.getName() ) )
-		{
-			if( !gaveDebugWarning )
-			{
+
+		if( isInitialized() && !debugClasses().isEmpty() && !debugClasses().contains( loggingClass.getName() ) ) {
+			if( !gaveDebugWarning ) {
 				gaveDebugWarning = true;
 				warn( loggingClass, "DEBUG DISABLED!  Because the [ " + Constants.LIMIT_DEBUG_CLASSES
-						+ " ] property is enabled, \"Debug\" log output is only written for clasess defined in Config property: "
-						+ Constants.LIMIT_DEBUG_CLASSES + " ---> " + debugClasses() );
+					+ " ] property is enabled, \"Debug\" log output is only written for clasess defined in Config property: "
+					+ Constants.LIMIT_DEBUG_CLASSES + " ---> " + debugClasses() );
 			}
 			return;
 		}
 
-		if( logFile == null )
-		{
-			if( !MetaUtil.class.equals( loggingClass ) )
-			{
-				logMesseges.add( msg );
-			}
-		}
-		else
-		{
+		if( logFile == null ) {
+			logMesseges.add( new String[] { DEBUG, msg } );
+		} else {
 			out( loggingClass ).debug( msg );
 		}
 	}
@@ -79,11 +72,9 @@ public class Log
 	 * Return TRUE if {@value Constants#LOG_LEVEL_PROPERTY} = DEBUG.
 	 * 
 	 * @return TRUE if DEBUG
-	 * @throws Exception if errors occur
 	 */
-	public static boolean doDebug() throws Exception
-	{
-		return Config.requireString( null, Constants.LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
+	public static boolean doDebug() {
+		return Config.getString( null, Constants.LOG_LEVEL_PROPERTY ).toUpperCase().equals( "DEBUG" );
 	}
 
 	/**
@@ -91,8 +82,7 @@ public class Log
 	 * 
 	 * @param enable boolean
 	 */
-	public static void enableLogs( final boolean enable )
-	{
+	public static void enableLogs( final boolean enable ) {
 		suppressLogs = !enable;
 	}
 
@@ -102,12 +92,7 @@ public class Log
 	 * @param myClass Logging class
 	 * @param msg Message to log
 	 */
-	public static void error( final Class<?> myClass, final String msg )
-	{
-		if( suppressLogs )
-		{
-			return;
-		}
+	public static void error( final Class<?> myClass, final String msg ) {
 		error( myClass, msg, null );
 	}
 
@@ -118,22 +103,17 @@ public class Log
 	 * @param msg Message to log
 	 * @param exception Cause of the error
 	 */
-	public static void error( final Class<?> myClass, final String msg, final Exception exception )
-	{
-		if( suppressLogs )
-		{
+	public static void error( final Class<?> myClass, final String msg, final Exception exception ) {
+		if( suppressLogs ) return;
+		if( useSystemOut() ) {
+			System.out.println( "[ DEBUG ] " + msg + " --> " + exception.getMessage() );
 			return;
 		}
-		if( logFile == null )
-		{
-			logMesseges.add( msg );
-		}
-		else if( exception != null )
-		{
+		if( logFile == null ) {
+			logMesseges.add( new String[] { ERROR, msg } );
+		} else if( exception != null ) {
 			out( myClass ).error( msg, exception );
-		}
-		else
-		{
+		} else {
 			out( myClass ).error( msg );
 		}
 	}
@@ -143,8 +123,7 @@ public class Log
 	 *
 	 * @return File logFile
 	 */
-	public static File getFile()
-	{
+	public static File getFile() {
 		return logFile;
 	}
 
@@ -153,8 +132,7 @@ public class Log
 	 * 
 	 * @return logMesseges
 	 */
-	public static List<String> getMsgs()
-	{
+	public static List<String[]> getMsgs() {
 		return logMesseges;
 	}
 
@@ -164,26 +142,23 @@ public class Log
 	 * @param myClass Logging class
 	 * @param msg Message to log
 	 */
-	public static void info( final Class<?> myClass, final String msg )
-	{
-		if( suppressLogs )
-		{
+	public static void info( final Class<?> myClass, final String msg ) {
+		if( suppressLogs ) return;
+		if( useSystemOut() ) {
+			System.out.println( "[ INFO ] " + msg );
 			return;
 		}
-		if( logFile == null )
-		{
-			logMesseges.add( msg );
-		}
-		else
-		{
+		if( logFile == null ) {
+			logMesseges.add( new String[] { INFO, msg } );
+		} else {
 			out( myClass ).info( msg );
 		}
 	}
 
 	/**
 	 * Called by {@link biolockj.BioLockJ#main(String[]) BioLockJ.main()} after {@link biolockj.Config} is initialized.
-	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Constants#PIPELINE_DIR}, named after the
-	 * project.
+	 * Create Java Log4J log file in {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PIPELINE_DIR}, named
+	 * after the project.
 	 * <ul>
 	 * <li>Set and store {@link #LOG_FILE} and {@link #LOG_APPEND} in {@link System} properties to be used by
 	 * <a href="https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
@@ -195,21 +170,29 @@ public class Log
 	 * @param name Name of the log file
 	 * @throws Exception if unable to create the log file or print {@link biolockj.Config} properties
 	 */
-	public static void initialize( final String name ) throws Exception
-	{
-		logFile = new File( Config.pipelinePath() + File.separator + name + Constants.LOG_EXT );
+	public static void initialize( final String name ) throws Exception {
+		logFile = BioLockJUtil.createFile( Config.pipelinePath() + File.separator + name + Constants.LOG_EXT );
 		System.setProperty( LOG_FILE, logFile.getAbsolutePath() );
 		System.setProperty( Constants.LOG_LEVEL_PROPERTY, validateLogLevel() );
-		System.setProperty( LOG_APPEND, String.valueOf( logFile.exists() ) );
+		System.setProperty( LOG_APPEND, String.valueOf( logFile.isFile() ) );
 		System.setProperty( LOG_FORMAT,
-				RuntimeParamUtil.isDirectMode() && !Config.isOnCluster() ? DIRECT_FORMAT: DEFAULT_FORMAT );
+			DockerUtil.isDirectMode() && !Config.isOnCluster() ? DIRECT_FORMAT: DEFAULT_FORMAT );
 
-		if( !RuntimeParamUtil.isDirectMode() )
-		{
+		if( !DockerUtil.isDirectMode() ) {
 			logWelcomeMsg();
-			for( final String m: Log.logMesseges )
-			{
-				Log.info( Log.class, m );
+			for( final String[] m: Log.logMesseges ) {
+				if( m[ 0 ].equals( DEBUG ) ) {
+					Log.debug( Log.class, m[ 1 ] );
+				}
+				if( m[ 0 ].equals( INFO ) ) {
+					Log.info( Log.class, m[ 1 ] );
+				}
+				if( m[ 0 ].equals( WARN ) ) {
+					Log.warn( Log.class, m[ 1 ] );
+				}
+				if( m[ 0 ].equals( ERROR ) ) {
+					Log.error( Log.class, m[ 1 ] );
+				}
 			}
 
 			Log.info( Log.class, "Set " + LOG_FILE + " = " + logFile.getAbsolutePath() );
@@ -230,10 +213,8 @@ public class Log
 	 * @param callingClass Java class in need of Logger
 	 * @return Logger for callingClass
 	 */
-	public static Logger out( final Class<?> callingClass )
-	{
-		if( loggers.get( callingClass.getName() ) == null )
-		{
+	public static Logger out( final Class<?> callingClass ) {
+		if( loggers.get( callingClass.getName() ) == null ) {
 			loggers.put( callingClass.getName(), LoggerFactory.getLogger( callingClass ) );
 		}
 
@@ -246,18 +227,15 @@ public class Log
 	 * @param myClass Logging class
 	 * @param msg Message to log
 	 */
-	public static void warn( final Class<?> myClass, final String msg )
-	{
-		if( suppressLogs )
-		{
+	public static void warn( final Class<?> myClass, final String msg ) {
+		if( suppressLogs ) return;
+		if( useSystemOut() ) {
+			System.out.println( "[ WARN ] " + msg );
 			return;
 		}
-		if( logFile == null )
-		{
-			logMesseges.add( msg );
-		}
-		else
-		{
+		if( logFile == null ) {
+			logMesseges.add( new String[] { WARN, msg } );
+		} else {
 			out( myClass ).warn( msg );
 		}
 	}
@@ -265,19 +243,17 @@ public class Log
 	/**
 	 * Prints {@link biolockj.Config} properties to the Java log file.
 	 */
-	protected static void logConfig()
-	{
+	protected static void logConfig() {
 		Log.info( Log.class, Constants.LOG_SPACER );
 		Log.info( Log.class, "Pipeline Project Config File: " + Config.getConfigFilePath() );
 		Log.info( Log.class,
-				"Pipeline Default Config Files: " + Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG ) );
+			"Pipeline Default Config Files: " + Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG ) );
 		Log.info( Log.class, Constants.LOG_SPACER );
 		Log.info( Log.class, "===> List All Configured Properties:" );
 		Log.info( Log.class, Constants.LOG_SPACER );
 		final Map<String, String> map = Config.getProperties();
 		final Iterator<String> it = map.keySet().iterator();
-		while( it.hasNext() )
-		{
+		while( it.hasNext() ) {
 			final String key = it.next();
 			Log.info( Log.class, key + " = " + map.get( key ) );
 		}
@@ -290,11 +266,10 @@ public class Log
 	 * 
 	 * @throws Exception if errors occur
 	 */
-	protected static void logWelcomeMsg() throws Exception
-	{
+	protected static void logWelcomeMsg() throws Exception {
 		Log.info( Log.class, Constants.LOG_SPACER );
 		Log.info( Log.class,
-				"Launching BioLockJ " + BioLockJUtil.getVersion() + " ~ Distributed by UNCC Fodor Lab @2019" );
+			"Launching BioLockJ " + BioLockJUtil.getVersion() + " ~ Distributed by UNCC Fodor Lab @2019" );
 		Log.info( Log.class, Constants.LOG_SPACER );
 		Log.info( Log.class, "This code is free software; you can redistribute and/or modify it" );
 		Log.info( Log.class, "under the terms of the GNU General Public License as published by" );
@@ -304,7 +279,6 @@ public class Log
 		Log.info( Log.class, "but WITHOUT ANY WARRANTY; without even the implied warranty of" );
 		Log.info( Log.class, "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the" );
 		Log.info( Log.class, "GNU General Public License for more details at http://www.gnu.org" );
-		Log.info( Log.class, Constants.LOG_SPACER );
 	}
 
 	/**
@@ -314,15 +288,12 @@ public class Log
 	 * @throws Exception if {@link biolockj.Config}.{@value Constants#LOG_LEVEL_PROPERTY} parameter is missing or
 	 * invalid
 	 */
-	protected static String validateLogLevel() throws Exception
-	{
+	protected static String validateLogLevel() throws Exception {
 		final String logLevel = Config.requireString( null, Constants.LOG_LEVEL_PROPERTY ).toUpperCase();
 		if( !logLevel.equals( "DEBUG" ) && !logLevel.equals( "INFO" ) && !logLevel.equals( "WARN" )
-				&& !logLevel.equals( "ERROR" ) )
-		{
+			&& !logLevel.equals( "ERROR" ) )
 			throw new Exception( "Config property: " + Constants.LOG_LEVEL_PROPERTY
-					+ "missing or invlid.  Please configure a valid option: " + "[DEBUG/INFO/WARN/ERROR]" );
-		}
+				+ "missing or invlid.  Please configure a valid option: " + "[DEBUG/INFO/WARN/ERROR]" );
 		return logLevel;
 	}
 
@@ -332,13 +303,10 @@ public class Log
 	 * 
 	 * @return Set of debug classes
 	 */
-	private static Set<String> debugClasses()
-	{
-		if( debugClasses == null )
-		{
+	private static Set<String> debugClasses() {
+		if( debugClasses == null ) {
 			debugClasses = Config.getSet( null, Constants.LIMIT_DEBUG_CLASSES );
-			if( !debugClasses.isEmpty() )
-			{
+			if( !debugClasses.isEmpty() ) {
 				debugClasses.add( BioLockJ.class.getName() );
 				debugClasses.add( BioModuleFactory.class.getName() );
 				debugClasses.add( Config.class.getName() );
@@ -351,22 +319,43 @@ public class Log
 		return debugClasses;
 	}
 
-	private static boolean isInitialized()
-	{
+	private static boolean isInitialized() {
 		return logFile != null && logFile.exists();
 	}
+
+	private static boolean useSystemOut() {
+		return RuntimeParamUtil.isDebugMode();
+	}
+
+	/**
+	 * DEBUG log message type: {@value #DEBUG}
+	 */
+	public static String DEBUG = "DEBUG";
+
+	/**
+	 * ERROR log message type: {@value #ERROR}
+	 */
+	public static String ERROR = "ERROR";
+
+	/**
+	 * INFO log message type: {@value #INFO}
+	 */
+	public static String INFO = "INFO";
+
+	/**
+	 * WARN log message type: {@value #WARN}
+	 */
+	public static String WARN = "WARN";
 
 	/**
 	 * Standard BioLockJ log format includes date, time, severity type, and calling class before the msg. Example:
 	 * 2018-05-27 19:53:04 INFO MetaUtil:
 	 */
 	protected static final String DEFAULT_FORMAT = "%d{yyyy-MM-dd HH:mm:ss} %p %c{1}: %m%n";
-
 	/**
 	 * Direct BioLockJ log prefix includes only the msg. Example: 2018-05-27 19:53:04 INFO MetaUtil:
 	 */
 	protected static final String DIRECT_FORMAT = "%m%n";
-
 	/**
 	 * Set in {@link #initialize(String)} to true only if executing pipeline restart.<br>
 	 * Used by <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
@@ -374,7 +363,6 @@ public class Log
 	 * <i>log4j.appender.file.Append=${LOG_APPEND}</i>
 	 */
 	protected static final String LOG_APPEND = "LOG_APPEND";
-
 	/**
 	 * Set in {@link #initialize(String)} to file path of pipeline Java log file<br>
 	 * Used by <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
@@ -382,7 +370,6 @@ public class Log
 	 * <i>log4j.appender.file.File=${LOG_FILE}</i>
 	 */
 	protected static final String LOG_FILE = "LOG_FILE";
-
 	private static Set<String> debugClasses = null;
 	private static boolean gaveDebugWarning = false;
 	/**
@@ -392,8 +379,11 @@ public class Log
 	 * <i>log4j.appender.file.layout.ConversionPattern=${LOG_FORMAT}</i>
 	 */
 	private static final String LOG_FORMAT = "LOG_FORMAT";
+
 	private static File logFile = null;
+
 	private static Map<String, Logger> loggers = new HashMap<>();
-	private static final List<String> logMesseges = new ArrayList<>();
+
+	private static final List<String[]> logMesseges = new ArrayList<>();
 	private static boolean suppressLogs = false;
 }

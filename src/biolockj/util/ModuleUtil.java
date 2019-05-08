@@ -12,7 +12,6 @@
 package biolockj.util;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.util.*;
 import biolockj.*;
 import biolockj.module.BioModule;
@@ -26,22 +25,18 @@ import biolockj.module.seq.PearMergeReads;
 /**
  * This utility holds general methods useful for BioModule interaction and management.
  */
-public class ModuleUtil
-{
+public class ModuleUtil {
 
 	// Prevent instantiation
-	private ModuleUtil()
-	{}
+	private ModuleUtil() {}
 
 	/**
 	 * Return the module ID as a 2 digit display number (add leading zero if needed).
 	 * 
 	 * @param module BioModule
 	 * @return ID display value
-	 * @throws Exception if errors occur
 	 */
-	public static String displayID( final BioModule module ) throws Exception
-	{
+	public static String displayID( final BioModule module ) {
 		return BioLockJUtil.formatDigits( module.getID(), 2 );
 	}
 
@@ -52,16 +47,10 @@ public class ModuleUtil
 	 * @param module Calling BioModule
 	 * @param checkAhead Boolean TRUE to check for NEXT, set FALSE to check BEHIND
 	 * @return BioModule
-	 * @throws Exception if errors occur
 	 */
-	public static ClassifierModule getClassifier( final BioModule module, final boolean checkAhead ) throws Exception
-	{
-		for( final BioModule m: getModules( module, checkAhead ) )
-		{
-			if( m instanceof ClassifierModule )
-			{
-				return (ClassifierModule) m;
-			}
+	public static ClassifierModule getClassifier( final BioModule module, final boolean checkAhead ) {
+		for( final BioModule m: getModules( module, checkAhead ) ) {
+			if( m instanceof ClassifierModule ) return (ClassifierModule) m;
 		}
 		return null;
 	}
@@ -71,8 +60,7 @@ public class ModuleUtil
 	 * 
 	 * @return Demultiplexer module Java class name
 	 */
-	public static String getDefaultDemultiplexer()
-	{
+	public static String getDefaultDemultiplexer() {
 		return getDefaultModule( Constants.DEFAULT_MOD_DEMUX, Demultiplexer.class.getName() );
 	}
 
@@ -81,8 +69,7 @@ public class ModuleUtil
 	 * 
 	 * @return Fasta converter module Java class name
 	 */
-	public static String getDefaultFastaConverter()
-	{
+	public static String getDefaultFastaConverter() {
 		return getDefaultModule( Constants.DEFAULT_MOD_FASTA_CONV, AwkFastaConverter.class.getName() );
 	}
 
@@ -91,8 +78,7 @@ public class ModuleUtil
 	 * 
 	 * @return Merge paired read module Java class name
 	 */
-	public static String getDefaultMergePairedReadsConverter()
-	{
+	public static String getDefaultMergePairedReadsConverter() {
 		return getDefaultModule( Constants.DEFAULT_MOD_SEQ_MERGER, PearMergeReads.class.getName() );
 	}
 
@@ -101,8 +87,7 @@ public class ModuleUtil
 	 * 
 	 * @return default stats module
 	 */
-	public static String getDefaultStatsModule()
-	{
+	public static String getDefaultStatsModule() {
 		return getDefaultModule( Constants.DEFAULT_STATS_MODULE, R_CalculateStats.class.getName() );
 	}
 
@@ -117,26 +102,17 @@ public class ModuleUtil
 	 * @throws Exception if errors occur
 	 */
 	public static BioModule getModule( final BioModule module, final String className, final boolean checkAhead )
-			throws Exception
-	{
-		if( module instanceof ClassifierModule )
-		{
-			throw new Exception(
-					"ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: "
-							+ module.getClass().getName() );
-		}
+		throws Exception {
+		if( module instanceof ClassifierModule ) throw new Exception(
+			"ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: "
+				+ module.getClass().getName() );
 
 		final ClassifierModule classifier = getClassifier( module, checkAhead );
-		for( final BioModule m: getModules( module, checkAhead ) )
-		{
-			if( m.getClass().getName().equals( className ) )
-			{
+		for( final BioModule m: getModules( module, checkAhead ) ) {
+			if( m.getClass().getName().equals( className ) ) {
 				final boolean targetBeforeClassifier = m.getID() < classifier.getID();
 				final boolean targetAfterClassifier = m.getID() > classifier.getID();
-				if( classifier == null || checkAhead && targetBeforeClassifier || !checkAhead && targetAfterClassifier )
-				{
-					return m;
-				}
+				if( checkAhead && targetBeforeClassifier || !checkAhead && targetAfterClassifier ) return m;
 
 			}
 		}
@@ -151,8 +127,7 @@ public class ModuleUtil
 	 * @return BioModule module
 	 * @throws Exception if errors occur
 	 */
-	public static BioModule getModule( final String className ) throws Exception
-	{
+	public static BioModule getModule( final String className ) throws Exception {
 		return (BioModule) Class.forName( className ).newInstance();
 	}
 
@@ -165,18 +140,13 @@ public class ModuleUtil
 	 * @param module Reference BioModule
 	 * @param checkAhead Set TRUE to return modules after the given reference module
 	 * @return List of BioModules before/after the current module, as determined by checkAhead parameter
-	 * @throws Exception if errors occur
 	 */
-	public static List<BioModule> getModules( final BioModule module, final Boolean checkAhead ) throws Exception
-	{
+	public static List<BioModule> getModules( final BioModule module, final Boolean checkAhead ) {
 		List<BioModule> modules = null;
-		if( checkAhead )
-		{
-			modules = new ArrayList<>( new TreeSet<>(
-					Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
-		}
-		else
-		{
+		if( checkAhead ) {
+			modules = new ArrayList<>(
+				new TreeSet<>( Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
+		} else {
 			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( 0, module.getID() ) ) );
 			Collections.reverse( modules );
 		}
@@ -190,15 +160,9 @@ public class ModuleUtil
 	 *
 	 * @param module BioModule
 	 * @return Next BioModule
-	 * @throws Exception if input module not found in the pipeline
 	 */
-	public static BioModule getNextModule( final BioModule module ) throws Exception
-	{
-		if( module.getID() + 1 == Pipeline.getModules().size() )
-		{
-			return null;
-		}
-
+	public static BioModule getNextModule( final BioModule module ) {
+		if( module.getID() + 1 == Pipeline.getModules().size() ) return null;
 		return Pipeline.getModules().get( module.getID() + 1 );
 	}
 
@@ -208,15 +172,9 @@ public class ModuleUtil
 	 *
 	 * @param module BioModule
 	 * @return Previous BioModule
-	 * @throws Exception if input module not found in the pipeline
 	 */
-	public static BioModule getPreviousModule( final BioModule module ) throws Exception
-	{
-		if( module.getID() == 0 )
-		{
-			return null;
-		}
-
+	public static BioModule getPreviousModule( final BioModule module ) {
+		if( module.getID() == 0 ) return null;
 		return Pipeline.getModules().get( module.getID() - 1 );
 	}
 
@@ -226,8 +184,7 @@ public class ModuleUtil
 	 * @param module BioModule
 	 * @return TRUE if module has executed
 	 */
-	public static boolean hasExecuted( final BioModule module )
-	{
+	public static boolean hasExecuted( final BioModule module ) {
 		return isComplete( module ) || isIncomplete( module );
 	}
 
@@ -237,10 +194,9 @@ public class ModuleUtil
 	 * @param module BioModule
 	 * @return TRUE if module has completed successfully.
 	 */
-	public static boolean isComplete( final BioModule module )
-	{
+	public static boolean isComplete( final BioModule module ) {
 		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
-		return f.exists();
+		return f.isFile();
 	}
 
 	/**
@@ -248,40 +204,29 @@ public class ModuleUtil
 	 * 
 	 * @param module BioModule to test
 	 * @return TRUE if module is 1st {@link biolockj.module.report.r.R_Module} in this branch
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isFirstRModule( final BioModule module ) throws Exception
-	{
+	public static boolean isFirstRModule( final BioModule module ) {
 		final List<Integer> rIds = getRModulesIds();
 		final List<Integer> filteredR_ids = new ArrayList<>( rIds );
-		if( rIds.contains( module.getID() ) )
-		{
+		if( rIds.contains( module.getID() ) ) {
 			final List<Integer> cIds = getClassifierIds();
-			if( !cIds.isEmpty() )
-			{
+			if( !cIds.isEmpty() ) {
 				final BioModule prevClassMod = getClassifier( module, false );
 				final BioModule nextClassMod = getClassifier( module, true );
-				for( final Integer rId: rIds )
-				{
-					if( prevClassMod != null && rId < prevClassMod.getID() )
-					{
+				for( final Integer rId: rIds ) {
+					if( prevClassMod != null && rId < prevClassMod.getID() ) {
 						filteredR_ids.remove( rId );
 					}
-					if( nextClassMod != null && rId > nextClassMod.getID() )
-					{
+					if( nextClassMod != null && rId > nextClassMod.getID() ) {
 						filteredR_ids.remove( rId );
 					}
 				}
 
 				Log.debug( ModuleUtil.class,
-						"Removed out-of-scope IDs, leaving valid R IDs = " + filteredR_ids.size() );
+					"Removed out-of-scope IDs, leaving valid R IDs = " + filteredR_ids.size() );
 			}
 
-			if( !filteredR_ids.isEmpty() )
-			{
-				return filteredR_ids.get( 0 ).equals( module.getID() );
-
-			}
+			if( !filteredR_ids.isEmpty() ) return filteredR_ids.get( 0 ).equals( module.getID() );
 		}
 
 		return false;
@@ -293,8 +238,7 @@ public class ModuleUtil
 	 * @param module BioModule
 	 * @return TRUE if module started execution but is not complete
 	 */
-	public static boolean isIncomplete( final BioModule module )
-	{
+	public static boolean isIncomplete( final BioModule module ) {
 		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		return f.exists();
 	}
@@ -305,27 +249,19 @@ public class ModuleUtil
 	 * @param module BioModule in question
 	 * @return TRUE if module produced exactly 1 file (metadata file)
 	 */
-	public static boolean isMetadataModule( final BioModule module )
-	{
+	public static boolean isMetadataModule( final BioModule module ) {
 		boolean foundMeta = false;
 		boolean foundOther = false;
-		try
-		{
+		try {
 			final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
-			for( final File f: files )
-			{
-				if( f.getName().equals( MetaUtil.getMetadataFileName() ) )
-				{
+			for( final File f: files ) {
+				if( f.getName().equals( MetaUtil.getFileName() ) ) {
 					foundMeta = true;
-				}
-				else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) )
-				{
+				} else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) ) {
 					foundOther = true;
 				}
 			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			return false;
 		}
 		return foundMeta && !foundOther;
@@ -338,21 +274,14 @@ public class ModuleUtil
 	 * @param module BioModule
 	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_COMPLETE} file
 	 */
-	public static void markComplete( final BioModule module ) throws Exception
-	{
-		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
-		final FileWriter writer = new FileWriter( f );
-		writer.close();
-		if( !f.exists() )
-		{
-			throw new Exception( "Unable to create " + f.getAbsolutePath() );
-		}
+	public static void markComplete( final BioModule module ) throws Exception {
+		BioLockJUtil.createFile( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
 		final File startFile = new File(
-				module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
-		BioLockJUtil.deleteWithRetry( startFile, 5 );
+			module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
+		startFile.delete();
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 		Log.info( ModuleUtil.class,
-				"FINISHED [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
+			"FINISHED [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 	}
 
@@ -364,18 +293,11 @@ public class ModuleUtil
 	 * @param module module
 	 * @throws Exception if unable to create {@value biolockj.Constants#BLJ_STARTED} file
 	 */
-	public static void markStarted( final BioModule module ) throws Exception
-	{
-		final File f = new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
-		final FileWriter writer = new FileWriter( f );
-		writer.close();
-		if( !f.exists() )
-		{
-			throw new Exception( "Unable to create " + f.getAbsolutePath() );
-		}
+	public static void markStarted( final BioModule module ) throws Exception {
+		BioLockJUtil.createFile( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 		Log.info( ModuleUtil.class,
-				"STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
+			"STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 	}
 
@@ -384,16 +306,10 @@ public class ModuleUtil
 	 * 
 	 * @param className module simple name
 	 * @return boolean
-	 * @throws Exception if runtime errors occur
 	 */
-	public static boolean moduleExists( final String className ) throws Exception
-	{
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( m.getClass().getName().equals( className ) )
-			{
-				return true;
-			}
+	public static boolean moduleExists( final String className ) {
+		for( final BioModule m: Pipeline.getModules() ) {
+			if( m.getClass().getName().equals( className ) ) return true;
 		}
 
 		return false;
@@ -406,11 +322,9 @@ public class ModuleUtil
 	 * @param subDirName BioModule sub-directory name
 	 * @return BioModule sub-directory File object
 	 */
-	public static File requireSubDir( final BioModule module, final String subDirName )
-	{
+	public static File requireSubDir( final BioModule module, final String subDirName ) {
 		final File dir = new File( module.getModuleDir().getAbsolutePath() + File.separator + subDirName );
-		if( !dir.exists() )
-		{
+		if( !dir.exists() ) {
 			dir.mkdirs();
 			Log.info( ModuleUtil.class, "Create directory: " + dir.getAbsolutePath() );
 		}
@@ -424,43 +338,34 @@ public class ModuleUtil
 	 * @param subDirName BioModule sub-directory name
 	 * @return TRUE if BioModule sub-directory exists
 	 */
-	public static boolean subDirExists( final BioModule module, final String subDirName )
-	{
+	public static boolean subDirExists( final BioModule module, final String subDirName ) {
 		final File dir = new File( module.getModuleDir().getAbsolutePath() + File.separator + subDirName );
 		return dir.exists();
 	}
 
-	private static List<Integer> getClassifierIds() throws Exception
-	{
+	private static List<Integer> getClassifierIds() {
 		final List<Integer> ids = new ArrayList<>();
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( m instanceof ClassifierModule )
-			{
+		for( final BioModule m: Pipeline.getModules() ) {
+			if( m instanceof ClassifierModule ) {
 				ids.add( m.getID() );
 			}
 		}
 		return ids;
 	}
 
-	private static String getDefaultModule( final String name, final String className )
-	{
+	private static String getDefaultModule( final String name, final String className ) {
 		String defaultModule = Config.getString( null, name );
-		if( defaultModule == null )
-		{
+		if( defaultModule == null ) {
 			defaultModule = className;
 		}
 
 		return defaultModule;
 	}
 
-	private static List<Integer> getRModulesIds() throws Exception
-	{
+	private static List<Integer> getRModulesIds() {
 		final List<Integer> ids = new ArrayList<>();
-		for( final BioModule m: Pipeline.getModules() )
-		{
-			if( m instanceof R_Module )
-			{
+		for( final BioModule m: Pipeline.getModules() ) {
+			if( m instanceof R_Module ) {
 				ids.add( m.getID() );
 			}
 		}

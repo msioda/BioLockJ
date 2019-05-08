@@ -17,9 +17,10 @@ import java.util.List;
 import java.util.Map;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.DockerUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModule assigns taxonomy to WGS sequences and translates the results into mpa-format. Command line options are
@@ -28,8 +29,7 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Kraken2 Classifier
  */
-public class Kraken2Classifier extends ClassifierModuleImpl implements ClassifierModule
-{
+public class Kraken2Classifier extends ClassifierModuleImpl {
 	/**
 	 * Build bash script lines to classify unpaired WGS reads with Kraken2. The inner list contains 1 bash script line
 	 * used to classify 1 sample.
@@ -41,15 +41,13 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	 * </ol>
 	 */
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
-		for( final File file: files )
-		{
+		for( final File file: files ) {
 			final String fileId = SeqUtil.getSampleId( file.getName() );
 			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
 			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId
-					+ Constants.PROCESSED;
+				+ Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>( 1 );
 			lines.add( FUNCTION_KRAKEN + " " + krakenOutput + " " + tempFile + " " + file.getAbsolutePath() );
 			data.add( lines );
@@ -70,19 +68,17 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	 * </ol>
 	 */
 	@Override
-	public List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
 		final Map<File, File> map = SeqUtil.getPairedReads( files );
-		for( final File file: map.keySet() )
-		{
+		for( final File file: map.keySet() ) {
 			final String fileId = SeqUtil.getSampleId( file.getName() );
 			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
 			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId
-					+ Constants.PROCESSED;
+				+ Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>( 1 );
 			lines.add( FUNCTION_KRAKEN + " " + krakenOutput + " " + tempFile + " " + file.getAbsolutePath() + " "
-					+ map.get( file ).getAbsolutePath() );
+				+ map.get( file ).getAbsolutePath() );
 			data.add( lines );
 		}
 
@@ -94,8 +90,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	 * {@link biolockj.Config}.{@value #EXE_KRAKEN2}{@value biolockj.Constants#PARAMS}.
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		getParams();
 		getKrakenDB();
@@ -105,8 +100,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	 * Get kraken executable command: {@value #EXE_KRAKEN2}
 	 */
 	@Override
-	public String getClassifierExe() throws Exception
-	{
+	public String getClassifierExe() throws Exception {
 		return Config.getExe( this, EXE_KRAKEN2 );
 	}
 
@@ -114,131 +108,95 @@ public class Kraken2Classifier extends ClassifierModuleImpl implements Classifie
 	 * Obtain the kraken2 runtime params
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception
-	{
+	public List<String> getClassifierParams() throws Exception {
 		return Config.getList( this, getExeParamName() );
 	}
 
 	@Override
-	public File getDB() throws Exception
-	{
-		return new File( Config.getSystemFilePath( Config.requireString( this, KRAKEN_DATABASE ) ) );
+	public File getDB() throws Exception {
+		return new File( Config.requireString( this, KRAKEN_DATABASE ) );
 	}
 
 	/**
 	 * This method generates the required bash function: {@value #FUNCTION_KRAKEN}
 	 */
 	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
+	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		final String inFiles = "$3" + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? " $4": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
-		lines.add( getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 "
-				+ inFiles );
+		lines.add(
+			getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 " + inFiles );
 		lines.add( "}" + RETURN );
 
 		return lines;
 	}
 
-	private String getExeParamName()
-	{
-		return EXE_KRAKEN2 + Constants.PARAMS;
-	}
-
-	private String getKrakenDB() throws Exception
-	{
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			return DockerUtil.CONTAINER_DB_DIR;
-		}
+	private String getKrakenDB() throws Exception {
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.DOCKER_DB_DIR;
 
 		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
-	private String getParams() throws Exception
-	{
-		if( defaultSwitches == null )
-		{
+	private String getParams() throws Exception {
+		if( this.defaultSwitches == null ) {
 			final List<String> classifierParams = getClassifierParams();
 			final String params = BioLockJUtil.join( classifierParams );
 
-			if( params.contains( FASTA_PARAM ) )
-			{
+			if( params.contains( FASTA_PARAM ) ) {
 				classifierParams.remove( FASTA_PARAM );
 			}
-			if( params.contains( FASTQ_PARAM ) )
-			{
+			if( params.contains( FASTQ_PARAM ) ) {
 				classifierParams.remove( FASTQ_PARAM );
 			}
-			if( params.contains( USE_NAMES_PARAM ) )
-			{
+			if( params.contains( USE_NAMES_PARAM ) ) {
 				classifierParams.remove( USE_NAMES_PARAM );
 			}
-			if( params.contains( USE_MPA_PARAM ) )
-			{
+			if( params.contains( USE_MPA_PARAM ) ) {
 				classifierParams.remove( USE_MPA_PARAM );
 			}
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
-			{
 				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-						+ getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
-			}
+					+ getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
 			if( params.indexOf( PAIRED_PARAM ) > -1 )
-			{
 				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property("
-						+ getExeParamName() + "). BioLockJ derives this value by analyzing input sequence files" );
-			}
-			if( params.indexOf( OUTPUT_PARAM ) > -1 )
-			{
-				throw new Exception( "Invalid classifier option (" + OUTPUT_PARAM + ") found in property("
-						+ getExeParamName() + "). BioLockJ hard codes this file path based on sequence files names in: "
-						+ Constants.INPUT_DIRS );
-			}
-			if( params.indexOf( DB_PARAM ) > -1 )
-			{
-				throw new Exception( "Invalid classifier option (" + DB_PARAM + ") found in property("
-						+ getExeParamName() + "). BioLockJ hard codes this directory path based on Config property: "
-						+ KRAKEN_DATABASE );
-			}
-			if( params.indexOf( "--help " ) > -1 )
-			{
-				throw new Exception(
-						"Invalid classifier option (--help) found in property(" + getExeParamName() + ")." );
-			}
-			if( params.indexOf( "--version " ) > -1 )
-			{
-				throw new Exception(
-						"Invalid classifier option (--version) found in property(" + getExeParamName() + ")." );
-			}
-			if( params.indexOf( REPORT_PARAM ) > -1 )
-			{
-				throw new Exception( "Invalid classifier option (" + REPORT_PARAM + ") found in property("
-						+ getExeParamName() + "). BioLockJ hard codes this value based on Sample IDs found in: "
-						+ Constants.INPUT_DIRS );
-			}
+					+ getExeParamName() + "). BioLockJ derives this value by analyzing input sequence files" );
+			if( params.indexOf( OUTPUT_PARAM ) > -1 ) throw new Exception( "Invalid classifier option (" + OUTPUT_PARAM
+				+ ") found in property(" + getExeParamName()
+				+ "). BioLockJ hard codes this file path based on sequence files names in: " + Constants.INPUT_DIRS );
+			if( params.indexOf( DB_PARAM ) > -1 ) throw new Exception(
+				"Invalid classifier option (" + DB_PARAM + ") found in property(" + getExeParamName()
+					+ "). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
+			if( params.indexOf( "--help " ) > -1 ) throw new Exception(
+				"Invalid classifier option (--help) found in property(" + getExeParamName() + ")." );
+			if( params.indexOf( "--version " ) > -1 ) throw new Exception(
+				"Invalid classifier option (--version) found in property(" + getExeParamName() + ")." );
+			if( params.indexOf( REPORT_PARAM ) > -1 ) throw new Exception(
+				"Invalid classifier option (" + REPORT_PARAM + ") found in property(" + getExeParamName()
+					+ "). BioLockJ hard codes this value based on Sample IDs found in: " + Constants.INPUT_DIRS );
 
-			defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getKrakenDB() + " "
-					+ USE_NAMES_PARAM + USE_MPA_PARAM;;
+			this.defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getKrakenDB()
+				+ " " + USE_NAMES_PARAM + USE_MPA_PARAM;
 		}
 
-		return defaultSwitches;
+		return this.defaultSwitches;
 	}
 
 	// method calculates mean need by the module.
-	private String getWorkerFunctionParams() throws Exception
-	{
+	private String getWorkerFunctionParams() throws Exception {
 		String params = " " + getParams();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-		{
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
 			params += PAIRED_PARAM;
 		}
 
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
-		{
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) ) {
 			params += GZIP_PARAM;
 		}
 		return params;
+	}
+
+	private static String getExeParamName() {
+		return EXE_KRAKEN2 + Constants.PARAMS;
 	}
 
 	private String defaultSwitches = null;

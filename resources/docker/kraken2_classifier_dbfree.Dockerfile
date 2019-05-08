@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_FILE_PATH/kraken2_classifier_dbfree.Dockerfile
+# Deployment path:  $DOCKER_DIR/kraken2_classifier_dbfree.Dockerfile
 
 FROM biolockj/blj_basic
   
@@ -16,7 +16,7 @@ RUN cd $BUILD_DIR && \
 	chmod o+x -R $BUILD_DIR && \
 	rm -rf $KRAKEN2
 
-#2.) Cleanup - save ca-certificates so kraken2_classifier can download from internet
+#2.) Cleanup - save ca-certificates so kraken2_classifier can download from Internet
 RUN	apt-get clean && \
 	find / -name *python* | xargs rm -rf && \
 	rm -rf /tmp/* && \

@@ -17,7 +17,6 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.TaxaUtil;
@@ -43,8 +42,7 @@ import biolockj.util.TaxaUtil;
  * 
  * @blj.web_desc Normalize Taxa Tables
  */
-public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
-{
+public class NormalizeTaxaTables extends TaxaCountModule {
 	/**
 	 * Verify {@link biolockj.Config}.{@value biolockj.Constants#REPORT_LOG_BASE} property is valid (if defined) with a
 	 * value = (e or 10).
@@ -52,66 +50,36 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 * @throws ConfigFormatException if REPORT_LOG_BASE is not set to a valid option (e or 10)
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
-		logBase = Config.getString( this, Constants.REPORT_LOG_BASE );
-		if( logBase != null )
-		{
-			if( !logBase.equals( "10" ) && !logBase.equals( "e" ) )
-			{
+	public void checkDependencies() throws Exception {
+		this.logBase = Config.getString( this, Constants.REPORT_LOG_BASE );
+		if( this.logBase != null ) {
+			if( !this.logBase.equals( "10" ) && !this.logBase.equals( "e" ) )
 				throw new ConfigFormatException( Constants.REPORT_LOG_BASE,
-						"Property only accepts value \"10\" or \"e\"" );
-			}
-			Log.debug( getClass(), "Found logBase: " + logBase );
-		}
-		else
-		{
-			logBase = "";
+					"Property only accepts value \"10\" or \"e\"" );
+			Log.debug( getClass(), "Found logBase: " + this.logBase );
+		} else {
+			this.logBase = "";
 		}
 		super.checkDependencies();
 	}
 
 	@Override
-	public String getSummary() throws Exception
-	{
-		if( Config.getString( this, Constants.REPORT_LOG_BASE ) != null )
-		{
-			summary += " Log(" + Config.getString( this, Constants.REPORT_LOG_BASE ) + ")";
+	public String getSummary() throws Exception {
+		if( Config.getString( this, Constants.REPORT_LOG_BASE ) != null ) {
+			this.summary += " Log(" + Config.getString( this, Constants.REPORT_LOG_BASE ) + ")";
 		}
 
-		summary += " normalized tables";
-		return super.getSummary() + summary;
+		this.summary += " normalized tables";
+		return super.getSummary() + this.summary;
 	}
 
 	@Override
-	public void runModule() throws Exception
-	{
-		for( final File file: getInputFiles() )
-		{
+	public void runModule() throws Exception {
+		for( final File file: getInputFiles() ) {
 			transform( file );
 		}
 
-		summary = "Output " + getOutputDir().listFiles().length;
-	}
-
-	/**
-	 * Filter Sample IDs with all zero rows
-	 * 
-	 * @param sampleIDs List of Sample IDs
-	 * @param allZeroIndex Table row index for all-zero rows
-	 * @return Filtered list of Sample IDs
-	 * @throws Exception if errors occur
-	 */
-	protected List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex )
-			throws Exception
-	{
-		final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
-
-		for( final String id: zeroSampleIDs )
-		{
-			sampleIDs.remove( id );
-		}
-		return sampleIDs;
+		this.summary = "Output " + getOutputDir().listFiles().length;
 	}
 
 	/**
@@ -119,35 +87,8 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 * 
 	 * @return Log base
 	 */
-	protected String getLogBase()
-	{
-		return logBase;
-	}
-
-
-	private File getLogTransformedFile( final String level ) throws Exception
-	{
-		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, TaxaUtil.NORMALIZED + "_Log" + getLogBase() );
-	}
-
-	/**
-	 * Parse Taxa names from the given header line.
-	 * 
-	 * @param header Head line of table
-	 * @return List of Taxa
-	 * @throws Exception if errors occur
-	 */
-	protected List<String> getOtuNames( final String header ) throws Exception
-	{
-		final List<String> otuNames = new ArrayList<>();
-		final StringTokenizer st = new StringTokenizer( header, Constants.TAB_DELIM );
-		st.nextToken(); // skip ID & then strip quotes
-		while( st.hasMoreTokens() )
-		{
-			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
-		}
-
-		return otuNames;
+	protected String getLogBase() {
+		return this.logBase;
 	}
 
 	/**
@@ -156,8 +97,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 * @param taxaTable OTU raw count table
 	 * @throws Exception if unable to construct NormalizeTaxaTables
 	 */
-	protected void transform( final File taxaTable ) throws Exception
-	{
+	protected void transform( final File taxaTable ) throws Exception {
 		final List<List<String>> dataPointsNormalized = new ArrayList<>();
 		final List<List<String>> dataPointsNormalizedThenLogged = new ArrayList<>();
 		final List<List<Long>> dataPointsUnnormalized = new ArrayList<>();
@@ -166,13 +106,11 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		long tableSum = 0;
 
 		final BufferedReader reader = BioLockJUtil.getFileReader( taxaTable );
-		try
-		{
+		try {
 			otuNames.addAll( getOtuNames( reader.readLine() ) );
 			String nextLine = reader.readLine();
 
-			while( nextLine != null )
-			{
+			while( nextLine != null ) {
 				final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
 				final String sampleID = st.nextToken();
 				final List<Long> innerList = new ArrayList<>();
@@ -181,12 +119,10 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 				dataPointsNormalized.add( new ArrayList<String>() );
 				dataPointsNormalizedThenLogged.add( new ArrayList<String>() );
 
-				while( st.hasMoreTokens() )
-				{
+				while( st.hasMoreTokens() ) {
 					final String nextToken = st.nextToken();
 					long d = 0;
-					if( nextToken.length() > 0 )
-					{
+					if( nextToken.length() > 0 ) {
 						d = Long.parseLong( nextToken );
 					}
 					innerList.add( d );
@@ -194,23 +130,17 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 
 				final long rowSum = innerList.stream().mapToLong( Long::longValue ).sum();
 				tableSum += rowSum;
-				if( rowSum == 0 )
-				{
-					throw new Exception( sampleID + " has all zeros for table counts." );
-				}
+				if( rowSum == 0 ) throw new Exception( sampleID + " has all zeros for table counts." );
 				nextLine = reader.readLine();
 
 				Log.debug( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
 			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
+		} finally {
+			if( reader != null ) {
 				reader.close();
 			}
 		}
-		
+
 		Log.debug( getClass(), "Table Sum [ #samples=" + sampleIDs.size() + "] = " + tableSum );
 
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
@@ -221,27 +151,20 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		Log.debug( getClass(), "Average Row Sum = " + aveRowSum );
 		Log.debug( getClass(), "# samples with all zeros (to be removed)  = " + allZeroIndex.size() );
 
-		for( int x = 0; x < dataPointsUnnormalized.size(); x++ )
-		{
+		for( int x = 0; x < dataPointsUnnormalized.size(); x++ ) {
 			final long rowSum = dataPointsUnnormalized.get( x ).stream().mapToLong( Long::longValue ).sum();
 			final List<String> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
 
-			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ )
-			{
+			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ ) {
 				final Double normVal = aveRowSum * dataPointsUnnormalized.get( x ).get( y ) / rowSum + 1;
 				dataPointsNormalized.get( x ).add( new Long( normVal.longValue() ).toString() );
-				if( allZeroIndex.contains( x ) )
-				{
+				if( allZeroIndex.contains( x ) ) {
 					// index 0 = col headers, so add + 1
 					final String id = MetaUtil.getSampleIds().get( x + 1 );
 					Log.warn( getClass(), "All zero row will not be transformed - ID removed: " + id );
-				}
-				else if( getLogBase().equalsIgnoreCase( LOG_E ) )
-				{
+				} else if( getLogBase().equalsIgnoreCase( LOG_E ) ) {
 					loggedInnerList.add( new Double( Math.log( normVal ) ).toString() );
-				}
-				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
-				{
+				} else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
 					loggedInnerList.add( new Double( Math.log10( normVal ) ).toString() );
 				}
 			}
@@ -250,8 +173,7 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		File normOutDir = getOutputDir();
 		final String level = TaxaUtil.getTaxonomyTableLevel( taxaTable );
 		Log.debug( getClass(), "Normalizing table for level: " + level );
-		if( !getLogBase().isEmpty() )
-		{
+		if( !getLogBase().isEmpty() ) {
 			normOutDir = getTempDir();
 			final File logNormTable = getLogTransformedFile( level );
 			writeDataToFile( logNormTable, filteredSampleIDs, otuNames, dataPointsNormalizedThenLogged );
@@ -259,6 +181,67 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 
 		final File normTable = TaxaUtil.getTaxonomyTableFile( normOutDir, level, TaxaUtil.NORMALIZED );
 		writeDataToFile( normTable, filteredSampleIDs, otuNames, dataPointsNormalized );
+	}
+
+	private File getLogTransformedFile( final String level ) throws Exception {
+		return TaxaUtil.getTaxonomyTableFile( getOutputDir(), level, TaxaUtil.NORMALIZED + "_Log" + getLogBase() );
+	}
+
+	/**
+	 * Filter Sample IDs with all zero rows
+	 * 
+	 * @param sampleIDs List of Sample IDs
+	 * @param allZeroIndex Table row index for all-zero rows
+	 * @return Filtered list of Sample IDs
+	 */
+	protected static List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
+		final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
+
+		for( final String id: zeroSampleIDs ) {
+			sampleIDs.remove( id );
+		}
+		return sampleIDs;
+	}
+
+	/**
+	 * Return the table index for rows with all zer count values
+	 * 
+	 * @param data List of table rows
+	 * @return Set of empty zero-rows
+	 */
+	protected static Set<Integer> findAllZeroIndex( final List<List<Long>> data ) {
+		final Set<Integer> allZero = new HashSet<>();
+		for( int x = 0; x < data.size(); x++ ) {
+			for( int y = 0; y < data.get( x ).size(); y++ ) {
+				long sum = 0;
+
+				for( final Long d: data.get( x ) ) {
+					sum += d;
+				}
+
+				if( sum == 0 ) {
+					allZero.add( x );
+				}
+			}
+		}
+		return allZero;
+	}
+
+	/**
+	 * Parse Taxa names from the given header line.
+	 * 
+	 * @param header Head line of table
+	 * @return List of Taxa
+	 */
+	protected static List<String> getOtuNames( final String header ) {
+		final List<String> otuNames = new ArrayList<>();
+		final StringTokenizer st = new StringTokenizer( header, Constants.TAB_DELIM );
+		st.nextToken(); // skip ID & then strip quotes
+		while( st.hasMoreTokens() ) {
+			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
+		}
+
+		return otuNames;
 	}
 
 	/**
@@ -270,32 +253,27 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 	 * @param taxaCounts Taxa counts
 	 * @throws Exception if errors occur
 	 */
-	protected void writeDataToFile( final File inputFile, final List<String> sampleNames, final List<String> taxaNames,
-			final List<List<String>> taxaCounts ) throws Exception
-	{
+	protected static void writeDataToFile( final File inputFile, final List<String> sampleNames,
+		final List<String> taxaNames, final List<List<String>> taxaCounts ) throws Exception {
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( inputFile ) );
 
 		writer.write( MetaUtil.getID() );
 
-		for( final String s: taxaNames )
-		{
+		for( final String s: taxaNames ) {
 			writer.write( Constants.TAB_DELIM + s );
 		}
 
 		writer.write( Constants.RETURN );
 
 		final int size = sampleNames.size();
-		for( int x = 0; x < size; x++ )
-		{
+		for( int x = 0; x < size; x++ ) {
 			writer.write( sampleNames.get( x ) );
 
-			for( int y = 0; y < taxaNames.size(); y++ )
-			{
+			for( int y = 0; y < taxaNames.size(); y++ ) {
 				writer.write( Constants.TAB_DELIM + taxaCounts.get( x ).get( y ) );
 			}
 
-			if( x + 1 != size )
-			{
+			if( x + 1 != size ) {
 				writer.write( Constants.RETURN );
 			}
 		}
@@ -303,46 +281,13 @@ public class NormalizeTaxaTables extends TaxaCountModule implements JavaModule
 		writer.close();
 	}
 
-	private List<String> getNonZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex )
-			throws Exception
-	{
+	private static List<String> getNonZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
 		final List<String> zeroSampleIDs = new ArrayList<>();
-		for( final Integer i: allZeroIndex )
-		{
+		for( final Integer i: allZeroIndex ) {
 			zeroSampleIDs.add( sampleIDs.get( i ) );
 		}
 
 		return zeroSampleIDs;
-	}
-
-	/**
-	 * Return the table index for rows with all zer count values
-	 * 
-	 * @param data List of table rows
-	 * @return Set of empty zero-rows
-	 * @throws Exception if errors occur
-	 */
-	protected static Set<Integer> findAllZeroIndex( final List<List<Long>> data ) throws Exception
-	{
-		final Set<Integer> allZero = new HashSet<>();
-		for( int x = 0; x < data.size(); x++ )
-		{
-			for( int y = 0; y < data.get( x ).size(); y++ )
-			{
-				long sum = 0;
-
-				for( final Long d: data.get( x ) )
-				{
-					sum += d;
-				}
-
-				if( sum == 0 )
-				{
-					allZero.add( x );
-				}
-			}
-		}
-		return allZero;
 	}
 
 	private String logBase = "";

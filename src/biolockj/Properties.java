@@ -13,21 +13,18 @@ package biolockj;
 
 import java.io.*;
 import java.util.*;
-import biolockj.exception.ConfigPathException;
 import biolockj.util.BioLockJUtil;
-import biolockj.util.RuntimeParamUtil;
+import biolockj.util.DockerUtil;
 
 /**
  * Load properties defined in the BioLockJ configuration file, including inherited properties from project.defaultProps
  */
-public class Properties extends java.util.Properties
-{
+public class Properties extends java.util.Properties {
 
 	/**
 	 * Default constructor.
 	 */
-	public Properties()
-	{
+	public Properties() {
 		super();
 	}
 
@@ -36,8 +33,7 @@ public class Properties extends java.util.Properties
 	 *
 	 * @param defaultConfig Config built from {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS} property
 	 */
-	public Properties( final Properties defaultConfig )
-	{
+	public Properties( final Properties defaultConfig ) {
 		super( defaultConfig );
 	}
 
@@ -47,12 +43,10 @@ public class Properties extends java.util.Properties
 	 * @param fis FileInputStream
 	 * @throws IOException if unable to convert escape characters
 	 */
-	protected void load( final FileInputStream fis ) throws IOException
-	{
+	protected void load( final FileInputStream fis ) throws IOException {
 		final Scanner in = new Scanner( fis );
 		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		while( in.hasNext() )
-		{
+		while( in.hasNext() ) {
 			out.write( in.nextLine().replace( "\\", "\\\\" ).getBytes() );
 			out.write( Constants.RETURN.getBytes() );
 		}
@@ -68,15 +62,87 @@ public class Properties extends java.util.Properties
 	 * @return Properties Config properties loaded from files
 	 * @throws Exception if unable to extract properties from filePath
 	 */
-	public static Properties loadProperties( final File file ) throws Exception
-	{
+	public static Properties loadProperties( final File file ) throws Exception {
 		Log.debug( Properties.class, "Run loadProperties for Config: " + file.getAbsolutePath() );
-		configFile = file;
-		props = buildConfig( configFile );
-		props.setProperty( Constants.INTERNAL_BLJ_MODULE, BioLockJUtil.getCollectionAsString( getListedModules() ) );
-		props.setProperty( Constants.INTERNAL_DEFAULT_CONFIG,
-				BioLockJUtil.getCollectionAsString( BioLockJUtil.getFilePaths( defaultConfigFiles ) ) );
+		final Properties props = buildConfig( file );
+		props.setProperty( Constants.INTERNAL_BLJ_MODULE,
+			BioLockJUtil.getCollectionAsString( getListedModules( file ) ) );
+		if( configRegister.size() > 1 ) {
+			props.setProperty( Constants.INTERNAL_DEFAULT_CONFIG, BioLockJUtil.getCollectionAsString(
+				BioLockJUtil.getFilePaths( configRegister.subList( 0, configRegister.size() - 1 ) ) ) );
+		}
 		return props;
+	}
+
+	// SIZE = 2
+	// list[ 0 ] = standard.props
+	// list[ 1 ] = email.props
+	// configRegister.size() = 2
+	// configRegister.size() - 2 = 0
+
+	/**
+	 * Recursive method handles nested default Config files. Default props are overridden by parent level props.<br>
+	 * Standard properties are always imported 1st: {@value biolockj.Constants#STANDARD_CONFIG_PATH}<br>
+	 * Docker properties are always imported 2nd if in a Docker container:
+	 * {@value biolockj.Constants#DOCKER_CONFIG_PATH}<br>
+	 * Then nested default Config files defined by property: {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS}<br>
+	 * The project Config file is read last to ensure properties are not overridden in the default Config files.
+	 * 
+	 * @param propFile BioLockJ Configuration file
+	 * @return Properties including default props
+	 * @throws Exception if errors occur
+	 */
+	protected static Properties buildConfig( final File propFile ) throws Exception {
+		Log.info( Properties.class,
+			"Import All Config Properties for --> Top Level Pipeline Properties File: " + propFile.getAbsolutePath() );
+		Properties defaultProps = null;
+		final File standConf = Config.getLocalConfigFile( Constants.STANDARD_CONFIG_PATH );
+		if( standConf != null && !configRegister.contains( propFile ) ) {
+			defaultProps = readProps( standConf, null );
+		}
+
+		if( DockerUtil.inDockerEnv() ) {
+			final File dockConf = Config.getLocalConfigFile( Constants.DOCKER_CONFIG_PATH );
+			if( dockConf != null && !configRegister.contains( dockConf ) ) {
+				defaultProps = readProps( dockConf, defaultProps );
+			}
+		}
+
+		for( final File pipelineDefaultConfig: getNestedDefaultProps( propFile ) ) {
+			if( !configRegister.contains( pipelineDefaultConfig ) ) {
+				defaultProps = readProps( pipelineDefaultConfig, defaultProps );
+			}
+		}
+
+		final Properties props = readProps( propFile, defaultProps );
+		report( props, propFile, true );
+
+		return props;
+	}
+
+	/**
+	 * Parse property file for the property {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS}.<br>
+	 * 
+	 * @param propFile BioLockJ Config file
+	 * @return nested default prop file or null
+	 * @throws Exception if errors occur
+	 */
+	protected static File getDefaultConfig( final File propFile ) throws Exception {
+		final BufferedReader reader = BioLockJUtil.getFileReader( propFile );
+		try {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				final StringTokenizer st = new StringTokenizer( line, "=" );
+				if( st.countTokens() > 1 ) {
+					if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
+						return Config.getLocalConfigFile( st.nextToken().trim() );
+				}
+			}
+		} finally {
+			if( reader != null ) {
+				reader.close();
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -84,16 +150,16 @@ public class Properties extends java.util.Properties
 	 * Properties in propFile will override the defaultProps.
 	 *
 	 * @param propFile BioLockJ configuration file
-	 * @param defaultProps Default BioLockJ configuration file
+	 * @param defaultProps Default properties
 	 * @return {@link biolockj.Properties} instance
 	 * @throws FileNotFoundException thrown if propFile is not a valid file path
 	 * @throws IOException thrown if propFile or defaultProps cannot be parsed to read in properties
 	 */
-	public static Properties readProps( final File propFile, final Properties defaultProps )
-			throws FileNotFoundException, IOException
-	{
-		if( propFile.exists() )
-		{
+	protected static Properties readProps( final File propFile, final Properties defaultProps )
+		throws FileNotFoundException, IOException {
+		if( propFile.exists() ) {
+			configRegister.add( propFile );
+			Log.info( Properties.class, "LOAD CONFIG [ #" + ++loadOrder + " ]: ---> " + propFile.getAbsolutePath() );
 			final FileInputStream in = new FileInputStream( propFile );
 			final Properties tempProps = defaultProps == null ? new Properties(): new Properties( defaultProps );
 			tempProps.load( in );
@@ -104,114 +170,57 @@ public class Properties extends java.util.Properties
 		return null;
 	}
 
-	/**
-	 * Recursive method handles nested default Config files. Default props are overridden by parent level props.
-	 *
-	 * @param configFile BioLockJ Configuration file
-	 * @return {@link biolockj.Properties} instance
-	 * @throws FileNotFoundException thrown if configFile is not a valid file
-	 * @throws IOException thrown if configFile or defaultConfig cannot be parsed to read in properties
-	 * @throws ConfigPathException if configFile or defaultConfig are defined, but not a valid file path
-	 */
-	protected static Properties buildConfig( final File configFile )
-			throws FileNotFoundException, IOException, ConfigPathException
-	{
-		Log.debug( Properties.class, "Run buildConfig for Config: " + configFile.getAbsolutePath() );
-		final File defaultConfig = getDefaultConfigProp( configFile );
-		if( defaultConfig == null )
-		{
-			// Log.debug( Properties.class, "Found the base Config file: " + configFile.getAbsolutePath() );
-			return readProps( configFile, null );
-		}
-		else
-		{
-			defaultConfigFiles.add( defaultConfig );
-			return readProps( configFile, buildConfig( defaultConfig ) );
-		}
-	}
-
-	/**
-	 * Parse property file for the property {@value biolockj.Constants#PIPELINE_DEFAULT_PROPS}.<br>
-	 * pipeline.defaultProps=$BLJ/resources/config/default/docker.properties
-	 * 
-	 * @param configFile BioLockJ Config file
-	 * @return nested default prop file or null
-	 * @throws FileNotFoundException thrown if configFile is not a valid file
-	 * @throws IOException thrown if configFile or defaultConfig cannot be parsed to read in properties
-	 * @throws ConfigPathException if the defaultConfig property is defined, but is not a valid file path
-	 */
-	protected static File getDefaultConfigProp( final File configFile )
-			throws FileNotFoundException, IOException, ConfigPathException
-	{
-		final BufferedReader reader = BioLockJUtil.getFileReader( configFile );
-		for( String line = reader.readLine(); line != null; line = reader.readLine() )
-		{
-			final StringTokenizer st = new StringTokenizer( line, "=" );
-			if( st.countTokens() > 1 )
-			{
-				if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
-				{
-					final File defaultConfig = Config.getExistingFileObject( st.nextToken().trim() );
-					reader.close();
-					if( !defaultConfigFiles.contains( defaultConfig ) )
-					{
-						return defaultConfig;
-					}
-
-					return null;
-				}
-			}
-		}
-		reader.close();
-
-		// Log.debug( Properties.class, "No default Config found in: " + configFile.getAbsolutePath() );
-
-		// No more nested default Config files
-		// If running Docker, add the Docker Config...
-		if( RuntimeParamUtil.isDockerMode()
-				&& !defaultConfigFiles.contains( Config.getExistingFileObject( DOCKER_CONFIG_PATH ) ) )
-		{
-			Log.info( Properties.class, "Import Docker Config: " + DOCKER_CONFIG_PATH );
-			return Config.getExistingFileObject( DOCKER_CONFIG_PATH );
-		}
-
-		return null;
-	}
-
-	private static List<String> getListedModules() throws Exception
-	{
+	private static List<String> getListedModules( final File file ) throws Exception {
 		final List<String> modules = new ArrayList<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( configFile );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				if( line.startsWith( Constants.INTERNAL_BLJ_MODULE ) )
-				{
+		final BufferedReader reader = BioLockJUtil.getFileReader( file );
+		try {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				if( line.startsWith( Constants.BLJ_MODULE_TAG ) ) {
 					final String moduleName = line.trim().substring( line.indexOf( " " ) + 1 );
-					Log.info( Properties.class, "Found configured BioModule: " + moduleName );
+					Log.info( Properties.class, "Configured BioModule: " + moduleName );
 					modules.add( moduleName );
 				}
 			}
-		}
-		finally
-		{
+		} finally {
 			reader.close();
 		}
 
 		return modules;
 	}
 
-	private static File configFile = null;
+	private static List<File> getNestedDefaultProps( final File propFile ) throws Exception {
+		final List<File> configFiles = new ArrayList<>();
+		File defConfig = null;
+		do {
+			defConfig = getDefaultConfig( propFile );
+			if( defConfig == null || configRegister.contains( defConfig ) || configFiles.contains( defConfig ) ) {
+				break;
+			}
+			configFiles.add( defConfig );
+		} while( true );
+		Collections.reverse( configFiles );
+		return configFiles;
+	}
 
-	private static List<File> defaultConfigFiles = new ArrayList<>();
+	private static void report( final Properties properties, final File config, final boolean projectConfigOnly ) {
+		Log.debug( Properties.class, " ---------- Report [ " + config.getAbsolutePath() + " ] ------------> " );
+		if( projectConfigOnly ) {
+			for( final Object key: properties.keySet() ) {
+				Log.debug( Config.class, "Project Config: " + key + "=" + properties.getProperty( (String) key ) );
+			}
+		} else {
+			final Enumeration<?> en = properties.propertyNames();
+			while( en.hasMoreElements() ) {
+				final String key = en.nextElement().toString();
+				Log.debug( Properties.class, key + " = " + properties.getProperty( key ) );
+			}
+		}
 
-	/**
-	 * Path to Docker Config file: {@value #DOCKER_CONFIG_PATH}<br>
-	 * Sets Docker properties as the default config.
-	 */
-	private static final String DOCKER_CONFIG_PATH = "$BLJ/resources/config/default/docker.properties";
-	private static Properties props = null;
+		Log.debug( Properties.class,
+			" ----------------------------------------------------------------------------------" );
+	}
+
+	private static List<File> configRegister = new ArrayList<>();
+	private static int loadOrder = -1;
 	private static final long serialVersionUID = 2980376615128441545L;
-
 }

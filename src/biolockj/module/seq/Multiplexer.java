@@ -15,7 +15,9 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 import biolockj.*;
-import biolockj.module.*;
+import biolockj.module.BioModule;
+import biolockj.module.JavaModuleImpl;
+import biolockj.module.SeqModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.report.Email;
 import biolockj.util.*;
@@ -27,26 +29,7 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Multiplexer
  */
-public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
-{
-
-	// /**
-	// * If enabled, gzip the multiplexed output file.
-	// */
-	// @Override
-	// public List<List<String>> buildScript( final List<File> files ) throws Exception
-	// {
-	// final List<List<String>> script = super.buildScript( files );
-	// if( Config.getBoolean( this, DO_GZIP ) )
-	// {
-	// final List<String> lines = script.get( script.size() - 1 );
-	// lines.add( FUNCTION_GZIP );
-	// script.clear();
-	// script.remove( script.size() - 1 );
-	// script.add( lines );
-	// }
-	// return script;
-	// }
+public class Multiplexer extends JavaModuleImpl implements SeqModule {
 
 	/**
 	 * Validate module dependencies:
@@ -58,16 +41,14 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 *
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		Log.warn( getClass(), "BioLockJ requires demultiplexed data, so this must be the last module except Email" );
 		validateModuleOrder();
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception
-	{
+	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -75,36 +56,26 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 * Produce a summary message with counts on total number of reads and number reads multiplexed.
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
-		try
-		{
-			if( totalNumRvReads > 0 )
-			{
-				sb.append( "# Forward Read Files multiplexed = " + fwMap.keySet().size() + RETURN );
-				sb.append( "# Reverse Read Files multiplexed = " + rvMap.keySet().size() + RETURN );
-				sb.append( "# Total Forward Reads = " + totalNumFwReads + RETURN );
-				sb.append( "# Total Reverse Reads = " + totalNumRvReads + RETURN );
-			}
-			else if( totalNumFwReads > 0 )
-			{
-				sb.append( "# Samples multiplexed = " + fwMap.keySet().size() + RETURN );
-				sb.append( "# Total Reads = " + totalNumFwReads + RETURN );
-			}
-			else
-			{
+		try {
+			if( this.totalNumRvReads > 0 ) {
+				sb.append( "# Forward Read Files multiplexed = " + this.fwMap.keySet().size() + RETURN );
+				sb.append( "# Reverse Read Files multiplexed = " + this.rvMap.keySet().size() + RETURN );
+				sb.append( "# Total Forward Reads = " + this.totalNumFwReads + RETURN );
+				sb.append( "# Total Reverse Reads = " + this.totalNumRvReads + RETURN );
+			} else if( this.totalNumFwReads > 0 ) {
+				sb.append( "# Samples multiplexed = " + this.fwMap.keySet().size() + RETURN );
+				sb.append( "# Total Reads = " + this.totalNumFwReads + RETURN );
+			} else {
 				sb.append( "Module incomplete - no output produced!" + RETURN );
 			}
 
-			if( rcCount > 0 )
-			{
-				sb.append( "# Reads saved with existing reverse compliment header barcode: " + rcCount + RETURN );
+			if( this.rcCount > 0 ) {
+				sb.append( "# Reads saved with existing reverse compliment header barcode: " + this.rcCount + RETURN );
 			}
 
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( getClass(), msg );
@@ -135,18 +106,15 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 * Execute {@link #multiplex(File)} on each input file
 	 */
 	@Override
-	public void runModule() throws Exception
-	{
+	public void runModule() throws Exception {
 		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( this, Constants.INTERNAL_SEQ_TYPE ) );
 
-		for( final File f: getInputFiles() )
-		{
+		for( final File f: getInputFiles() ) {
 			multiplex( f );
 		}
 
-		if( Config.getBoolean( this, DO_GZIP ) )
-		{
-			Log.warn( getClass(), "BioLockJ gzip data in: " + muxFiles );
+		if( Config.getBoolean( this, DO_GZIP ) ) {
+			Log.warn( getClass(), "BioLockJ gzip data in: " + this.muxFiles );
 			compressData();
 			removeDecompressedFiles();
 		}
@@ -160,41 +128,24 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 * @return the header row for the sequence
 	 * @throws Exception if errors occur while obtaining header
 	 */
-	protected String getHeader( final File file, final List<String> seqLines ) throws Exception
-	{
+	protected String getHeader( final File file, final List<String> seqLines ) throws Exception {
 		final String header = seqLines.get( 0 ).trim();
 		final String headerChar = header.substring( 0, 1 );
 		final String sampleId = SeqUtil.getSampleId( file.getName() );
 		final long numReads = incrementNumReads( file );
 
-		if( DemuxUtil.barcodeInHeader() )
-		{
-			return header;
-		}
-		else if( DemuxUtil.hasValidBarcodes() )
-		{
+		if( DemuxUtil.barcodeInHeader() ) return header;
+		else if( DemuxUtil.hasValidBarcodes() ) {
 			final String barcode = MetaUtil.getField( sampleId,
-					Config.getString( this, MetaUtil.META_BARCODE_COLUMN ) );
+				Config.getString( this, MetaUtil.META_BARCODE_COLUMN ) );
 			final String rc = SeqUtil.reverseComplement( barcode );
 
-			if( header.contains( barcode ) )
-			{
+			if( header.contains( barcode ) ) return header;
+			else if( header.contains( rc ) ) {
+				this.rcCount++;
 				return header;
-			}
-			else if( header.contains( rc ) )
-			{
-				rcCount++;
-				return header;
-			}
-			else
-			{
-				return header + " " + barcode;
-			}
-		}
-		else
-		{
-			return headerChar + sampleId + "_" + sampleId + "." + numReads + ":" + header.substring( 1 );
-		}
+			} else return header + " " + barcode;
+		} else return headerChar + sampleId + "_" + sampleId + "." + numReads + ":" + header.substring( 1 );
 	}
 
 	/**
@@ -205,35 +156,33 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 * @param sample Sequence file in Fasta or Fastq format
 	 * @throws Exception if I/O errors occur creating multiplexed file
 	 */
-	protected void multiplex( final File sample ) throws Exception
-	{
+	protected void multiplex( final File sample ) throws Exception {
 		Log.info( getClass(), "Multiplexing file  = " + sample.getAbsolutePath() );
 		final File muxFile = new File( getMutliplexeFileName( sample ) );
 		final List<String> seqLines = new ArrayList<>();
 		BufferedReader reader = null;
 		BufferedWriter writer = null;
-		try
-		{
+		try {
 			reader = BioLockJUtil.getFileReader( sample );
 			writer = new BufferedWriter( new FileWriter( muxFile, true ) );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				seqLines.add( line );
 				if( seqLines.size() == SeqUtil.getNumLinesPerRead() ) // full read
 				{
 					writer.write( getHeader( sample, seqLines ) + RETURN );
-					for( int i = 1; i < seqLines.size(); i++ )
-					{
+					for( int i = 1; i < seqLines.size(); i++ ) {
 						writer.write( seqLines.get( i ) + RETURN );
 					}
 					seqLines.clear();
 				}
 			}
-		}
-		finally
-		{
-			writer.close();
-			reader.close();
+		} finally {
+			if( writer != null ) {
+				writer.close();
+			}
+			if( reader != null ) {
+				reader.close();
+			}
 		}
 	}
 
@@ -243,113 +192,91 @@ public class Multiplexer extends JavaModuleImpl implements JavaModule, SeqModule
 	 *
 	 * @throws Exception if not the last module before {@link biolockj.module.report.Email}
 	 */
-	protected void validateModuleOrder() throws Exception
-	{
+	protected void validateModuleOrder() throws Exception {
 		final int modCount = Pipeline.getModules().size();
 		final BioModule nextModule = ModuleUtil.getNextModule( this );
 		final BioModule lastModule = Pipeline.getModules().get( modCount - 1 );
 		final BioModule penultimateModule = modCount > 1 ? Pipeline.getModules().get( modCount - 2 ): null;
 
-		if( lastModule.equals( this ) )
-		{
+		if( lastModule.equals( this ) ) {
 			Log.info( getClass(), "Multiplexing seqs as final step in pipeline." );
-		}
-		else if( lastModule instanceof Email && penultimateModule.equals( this ) )
-		{
+		} else if( lastModule instanceof Email && penultimateModule != null && penultimateModule.equals( this ) ) {
 			Log.info( getClass(), "Multiplexing seqs  as final step before sending email notification" );
-		}
-		else if( nextModule instanceof ClassifierModule )
-		{
+		} else if( nextModule instanceof ClassifierModule ) {
 			Log.info( getClass(), "Multiplexing seqs, before branching pipeline with new classifier" );
-		}
-		else
-		{
-			throw new Exception( "Invalid BioModule configuration! " + getClass().getName()
-					+ " must be the last module executed in the pipeline branch (or last before Email)." + RETURN
-					+ "All other BioLockJ modules require demultiplexed data." );
-		}
+		} else throw new Exception( "Invalid BioModule configuration! " + getClass().getName()
+			+ " must be the last module executed in the pipeline branch (or last before Email)." + RETURN
+			+ "All other BioLockJ modules require demultiplexed data." );
 	}
 
-	private void compressData() throws Exception
-	{
-		for( final String path: muxFiles )
-		{
+	private void compressData() throws Exception {
+		for( final String path: this.muxFiles ) {
 			FileInputStream fis = null;
 			FileOutputStream fos = null;
 			GZIPOutputStream gzipOS = null;
-			try
-			{
+			try {
 				fis = new FileInputStream( path );
 				fos = new FileOutputStream( path + Constants.GZIP_EXT );
 				gzipOS = new GZIPOutputStream( fos );
 				final byte[] buffer = new byte[ 1024 ];
 				int len;
-				while( ( len = fis.read( buffer ) ) != -1 )
-				{
+				while( ( len = fis.read( buffer ) ) != -1 ) {
 					gzipOS.write( buffer, 0, len );
 				}
-			}
-			finally
-			{
-				gzipOS.close();
-				fos.close();
-				fis.close();
+			} finally {
+				if( gzipOS != null ) {
+					gzipOS.close();
+				}
+				if( fos != null ) {
+					fos.close();
+				}
+				if( fis != null ) {
+					fis.close();
+				}
 			}
 		}
 	}
 
-	private String getMutliplexeFileName( final File file ) throws Exception
-	{
+	private String getMutliplexeFileName( final File file ) throws Exception {
 		final String path = getOutputDir().getAbsolutePath() + File.separator + Config.pipelineName()
-				+ SeqUtil.getReadDirectionSuffix( file ) + "."
-				+ Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
-		muxFiles.add( path );
+			+ SeqUtil.getReadDirectionSuffix( file ) + "." + SeqUtil.getSeqType();
+		this.muxFiles.add( path );
 		return path;
 	}
 
-	private long getNumReads( final File file ) throws Exception
-	{
+	private long getNumReads( final File file ) throws Exception {
 		Long numReads = null;
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
-		{
-			numReads = rvMap.get( file.getName() );
-		}
-		else
-		{
-			numReads = fwMap.get( file.getName() );
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) ) {
+			numReads = this.rvMap.get( file.getName() );
+		} else {
+			numReads = this.fwMap.get( file.getName() );
 		}
 
-		if( numReads == null )
-		{
+		if( numReads == null ) {
 			numReads = 0L;
 		}
 		return numReads;
 	}
 
-	private long incrementNumReads( final File file ) throws Exception
-	{
+	private long incrementNumReads( final File file ) throws Exception {
 		Long numReads = getNumReads( file );
 		numReads++;
 
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
-		{
-			rvMap.put( file.getName(), numReads );
-			totalNumRvReads++;
-		}
-		else
-		{
-			fwMap.put( file.getName(), numReads );
-			totalNumFwReads++;
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) ) {
+			this.rvMap.put( file.getName(), numReads );
+			this.totalNumRvReads++;
+		} else {
+			this.fwMap.put( file.getName(), numReads );
+			this.totalNumFwReads++;
 		}
 
 		return numReads;
 	}
 
-	private void removeDecompressedFiles() throws Exception
-	{
-		for( final String path: muxFiles )
-		{
-			BioLockJUtil.deleteWithRetry( new File( path ), 5 );
+	private void removeDecompressedFiles() {
+		for( final String path: this.muxFiles ) {
+			new File( path ).delete();
+			// BioLockJUtil.deleteWithRetry( new File( path ), 5 );
 		}
 	}
 

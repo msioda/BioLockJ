@@ -17,18 +17,15 @@ import biolockj.Log;
 /**
  * This Java memory report utility can be used to help identify memory leaks in the application.
  */
-public class MemoryUtil
-{
+public class MemoryUtil {
 	/**
 	 * Print stats on memory usage: Max, Total, ∆Total, %Free, Free, ∆Free.
 	 * 
 	 * @param msg Print msg with stats
 	 */
-	public static void reportMemoryUsage( final String msg )
-	{
+	public static void reportMemoryUsage( final String msg ) {
 		// Initialize by printing current values, skip delta values
-		if( prevTotal == 0 && prevFree == 0 && prevTotal == 0 )
-		{
+		if( prevTotal == 0 && prevFree == 0 && prevTotal == 0 ) {
 			reportInitMemory( msg );
 			return;
 		}
@@ -36,78 +33,65 @@ public class MemoryUtil
 		final long total = Runtime.getRuntime().totalMemory();
 		final long free = Runtime.getRuntime().freeMemory();
 
-		if( total != prevTotal || free != prevFree )
-		{
+		if( total != prevTotal || free != prevFree ) {
 			// reportMemoryInBytes();
-			Log.info( MemoryUtil.class,
-					msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB() + ", ∆Total: "
-							+ getChangeFormatted( total, prevTotal ) + ", %Free: " + getPercentageFreeFormatted()
-							+ ", Free: " + getFreeMemoryInMiB() + ", ∆Free: " + getChangeFormatted( free, prevFree ) );
+			Log.debug( MemoryUtil.class,
+				msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB() + ", ∆Total: "
+					+ getChangeFormatted( total, prevTotal ) + ", %Free: " + getPercentageFreeFormatted() + ", Free: "
+					+ getFreeMemoryInMiB() + ", ∆Free: " + getChangeFormatted( free, prevFree ) );
 			prevTotal = total;
 			prevFree = free;
-		}
-		else
-		{
-			Log.info( MemoryUtil.class, msg + " no change" );
+		} else {
+			Log.debug( MemoryUtil.class, msg + " no change" );
 		}
 	}
 
-	private static double bytesToMiB( final long val )
-	{
+	private static double bytesToMiB( final long val ) {
 		return val / MEGABYTE_FACTOR;
 	}
 
-	private static String getChangeFormatted( final long prev, final long cur )
-	{
+	private static String getChangeFormatted( final long prev, final long cur ) {
 		final double maxMiB = bytesToMiB( prev - cur );
 		return String.format( "%s %s", decimalFormat.format( maxMiB ), MIB );
 	}
 
-	private static String getFreeMemoryInMiB()
-	{
+	private static String getFreeMemoryInMiB() {
 		final double freeMiB = bytesToMiB( Runtime.getRuntime().freeMemory() );
 		return String.format( "%s %s", decimalFormat.format( freeMiB ), MIB );
 	}
 
-	private static String getMaxMemoryInMiB()
-	{
+	private static String getMaxMemoryInMiB() {
 		final double maxMiB = bytesToMiB( Runtime.getRuntime().maxMemory() );
 		return String.format( "%s %s", decimalFormat.format( maxMiB ), MIB );
 	}
 
-	private static double getPercentageFree()
-	{
+	private static double getPercentageFree() {
 		return (double) ( Runtime.getRuntime().maxMemory() - getUsedMemory() ) / Runtime.getRuntime().maxMemory() * 100;
 	}
 
-	private static String getPercentageFreeFormatted()
-	{
+	private static String getPercentageFreeFormatted() {
 		final double freePercentage = getPercentageFree();
 		return decimalFormat.format( freePercentage ) + "%";
 	}
 
-	private static String getTotalMemoryInMiB()
-	{
+	private static String getTotalMemoryInMiB() {
 		final double totalMiB = bytesToMiB( Runtime.getRuntime().totalMemory() );
 		return String.format( "%s %s", decimalFormat.format( totalMiB ), MIB );
 	}
 
-	private static long getUsedMemory()
-	{
+	private static long getUsedMemory() {
 		return Runtime.getRuntime().maxMemory() - Runtime.getRuntime().freeMemory();
 	}
 
-	private static void reportInitMemory( final String msg )
-	{
+	private static void reportInitMemory( final String msg ) {
 		prevFree = Runtime.getRuntime().freeMemory();
 		prevTotal = Runtime.getRuntime().totalMemory();
-		Log.info( MemoryUtil.class, msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB()
-				+ ", %Free: " + getPercentageFreeFormatted() + ", Free: " + getFreeMemoryInMiB() );
+		Log.debug( MemoryUtil.class, msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB()
+			+ ", %Free: " + getPercentageFreeFormatted() + ", Free: " + getFreeMemoryInMiB() );
 	}
 
 	@SuppressWarnings("unused")
-	private static void reportMemoryInBytes()
-	{
+	private static void reportMemoryInBytes() {
 		Log.debug( MemoryUtil.class, "MAXIMUM MEMORY: " + Runtime.getRuntime().maxMemory() );
 		Log.debug( MemoryUtil.class, "TOTAL MEMORY: " + Runtime.getRuntime().totalMemory() );
 		Log.debug( MemoryUtil.class, "FREE  MEMORY: " + Runtime.getRuntime().freeMemory() );

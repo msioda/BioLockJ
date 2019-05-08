@@ -17,15 +17,14 @@ package biolockj.exception;
  * by modifying {@link biolockj.Config} properties to more permissive values, but are intended to enforce process
  * requirements so are meant to highlight harder to detect issues.
  */
-public class ConfigViolationException extends ConfigException
-{
+public class ConfigViolationException extends ConfigException {
+
 	/**
 	 * Generic exception message.
 	 * 
 	 * @param msg Error message
 	 */
-	public ConfigViolationException( final String msg )
-	{
+	public ConfigViolationException( final String msg ) {
 		super( msg );
 	}
 
@@ -37,10 +36,9 @@ public class ConfigViolationException extends ConfigException
 	 * @param property {@link biolockj.Config} property name
 	 * @param msg Exception message details
 	 */
-	public ConfigViolationException( final String property, final String msg )
-	{
+	public ConfigViolationException( final String property, final String msg ) {
 		super( property, msg );
 	}
 
-	private static final long serialVersionUID = -5659243602699272132L;
+	private static final long serialVersionUID = -6829737493836323409L;
 }

@@ -17,17 +17,17 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
-import biolockj.util.*;
+import biolockj.util.DockerUtil;
+import biolockj.util.ModuleUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModule uses RDP to assign taxonomy to 16s sequences.
  * 
  * @blj.web_desc RDP Classifier
  */
-public class RdpClassifier extends ClassifierModuleImpl implements ClassifierModule
-{
+public class RdpClassifier extends ClassifierModuleImpl {
 
 	/**
 	 * Build bash script lines to classify unpaired reads with RDP. The inner list contains the bash script lines
@@ -37,13 +37,11 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * ./output/sample42.fasta_reported.tsv ./input/sample42.fasta"
 	 */
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
-		for( final File file: files )
-		{
+		for( final File file: files ) {
 			final String outputFile = getOutputDir().getAbsolutePath() + File.separator
-					+ SeqUtil.getSampleId( file.getName() ) + Constants.PROCESSED;
+				+ SeqUtil.getSampleId( file.getName() ) + Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>();
 			lines.add( FUNCTION_RDP + " " + file.getAbsolutePath() + " " + outputFile );
 			data.add( lines );
@@ -53,8 +51,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	}
 
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		Config.requireString( this, RDP_JAR );
 		getRuntimeParams( getClassifierParams(), null );
@@ -64,8 +61,7 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * RDP uses java to run a JAR file, so no special command is required
 	 */
 	@Override
-	public String getClassifierExe() throws Exception
-	{
+	public String getClassifierExe() throws Exception {
 		return null;
 	}
 
@@ -73,18 +69,13 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * Do not accept -t to define a database, since that instead requires the specific property: {@value #RDP_DB}
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception
-	{
+	public List<String> getClassifierParams() throws Exception {
 		final List<String> validParams = new ArrayList<>();
-		for( final String param: Config.getList( this, RDP_PARAMS ) )
-		{
-			if( param.startsWith( DB_PARAM ) )
-			{
+		for( final String param: Config.getList( this, RDP_PARAMS ) ) {
+			if( param.startsWith( DB_PARAM ) ) {
 				Log.warn( getClass(), "Ignoring " + DB_PARAM + " value: [ " + param + " ] set in Config property "
-						+ RDP_PARAMS + "since this property must be explictily defined in " + RDP_DB );
-			}
-			else
-			{
+					+ RDP_PARAMS + "since this property must be explictily defined in " + RDP_DB );
+			} else {
 				validParams.add( param );
 			}
 		}
@@ -93,13 +84,8 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	}
 
 	@Override
-	public File getDB() throws Exception
-	{
-		if( Config.getString( this, RDP_DB ) != null )
-		{
-			return new File( Config.getSystemFilePath( Config.getString( this, RDP_DB ) ) );
-		}
-
+	public File getDB() throws Exception {
+		if( Config.getString( this, RDP_DB ) != null ) return new File( Config.getString( this, RDP_DB ) );
 		return null;
 	}
 
@@ -107,11 +93,9 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * If paired reads found, add prerequisite: {@link biolockj.module.seq.PearMergeReads}.
 	 */
 	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
+	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-		{
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
@@ -122,38 +106,31 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	 * This method generates the required bash functions: {@value #FUNCTION_RDP}
 	 */
 	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
+	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines.add( Config.getExe( this, Constants.EXE_JAVA ) + " " + getJavaParams() + JAVA_JAR_PARAM + " " + getJar()
+		lines
+			.add( Config.getExe( this, Constants.EXE_JAVA ) + " " + getJavaParams() + Constants.JAR_ARG + " " + getJar()
 				+ " " + getRuntimeParams( getClassifierParams(), null ) + getDbParam() + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
 
-	private String getDbParam() throws Exception
-	{
-		if( getDB() == null )
-		{
-			return "";
-		}
+	private String getDbParam() throws Exception {
+		if( getDB() == null ) return "";
 
-		final String dbParam = RuntimeParamUtil.isDockerMode()
-				? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(),
-						DockerUtil.CONTAINER_DB_DIR )
-				: getDB().getAbsolutePath();
+		final String dbParam = DockerUtil.inDockerEnv()
+			? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR )
+			: getDB().getAbsolutePath();
 
 		return DB_PARAM + " " + dbParam + " ";
 	}
 
-	private String getJar() throws Exception
-	{
+	private String getJar() throws Exception {
 		return Config.requireString( this, RDP_JAR );
 	}
 
-	private String getJavaParams() throws Exception
-	{
+	private String getJavaParams() throws Exception {
 		return Config.getExeParams( this, Constants.EXE_JAVA );
 	}
 
@@ -178,6 +155,5 @@ public class RdpClassifier extends ClassifierModuleImpl implements ClassifierMod
 	protected static final String RDP_PARAMS = "exe.rdpParams";
 
 	private static final String DB_PARAM = "-t";
-	private static final String JAVA_JAR_PARAM = "-jar";
 	private static final String OUTPUT_PARAM = "-o";
 }

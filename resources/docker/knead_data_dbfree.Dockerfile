@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_FILE_PATH/knead_data_dbfree.Dockerfile
+# Deployment path:  $DOCKER_DIR/knead_data_dbfree.Dockerfile
 
 FROM biolockj/blj_basic_py2
 ARG DEBIAN_FRONTEND=noninteractive
@@ -34,7 +34,7 @@ RUN cd /usr/local/bin && \
 #5.) Update $PATH
 RUN echo 'export PATH=/app/$TRIM_APP:$PATH' >> ~/.bashrc
 
-#6.) Cleanup - save ca-certificates so knead_data can download from internet
+#6.) Cleanup - save ca-certificates so knead_data can download from Internet
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
 	mv /usr/share/ca-certificates ~ && \

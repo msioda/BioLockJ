@@ -27,26 +27,29 @@ import biolockj.module.ScriptModule;
  * This module builds an execution summary for the pipeline which is printed to the log file and is be sent to the user
  * if the Email module is configured.
  */
-public class SummaryUtil
-{
+public class SummaryUtil {
 
 	/**
 	 * Called when pipeline fails to add summary details to summary file, if possible.
-	 * 
-	 * @param helpInfo Help Info
 	 */
-	public static void addSummaryFooterForFailedPipeline( final String helpInfo )
-	{
+	public static void addSummaryFooterForFailedPipeline() {
 		String summaryFile = "";
-		try
-		{
+		try {
 			summaryFile = getSummaryFile().getAbsolutePath();
-			saveSummary( helpInfo + RETURN + getFooter() );
-		}
-		catch( final Exception ex )
-		{
+			saveSummary( getFooter() );
+		} catch( final Exception ex ) {
 			Log.error( SummaryUtil.class, "Unable to update summary file: " + summaryFile, ex );
 		}
+	}
+
+	/**
+	 * Print the application name *bigly* with ASCII art :-)
+	 * 
+	 * @return Beautiful artwork
+	 */
+	public static String display_ASCII_Status() {
+		return biolockj_ASCII_Art() + RETURN
+			+ ( BioLockJ.isPipelineComplete() ? complete_ASCII_Art(): failed_ASCII_Art() );
 	}
 
 	/**
@@ -59,51 +62,43 @@ public class SummaryUtil
 	 * @throws Exception if errors occur
 	 */
 	public static String getCountSummary( final Map<String, String> map, final String label, final boolean addTotal )
-			throws Exception
-	{
+		throws Exception {
 		final int pad = getPad( label );
 		String msg = BioLockJUtil.addTrailingSpaces( "# Samples:", pad )
-				+ BioLockJUtil.formatNumericOutput( new Integer( map.size() ).longValue(), false ) + RETURN;
+			+ BioLockJUtil.formatNumericOutput( new Integer( map.size() ).longValue(), false ) + RETURN;
 
-		if( !map.isEmpty() )
-		{
+		if( !map.isEmpty() ) {
 			final TreeSet<Long> vals = new TreeSet<>(
-					map.values().stream().map( Long::parseLong ).collect( Collectors.toSet() ) );
+				map.values().stream().map( Long::parseLong ).collect( Collectors.toSet() ) );
 
 			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (min):", pad )
-					+ BioLockJUtil.formatNumericOutput( vals.first(), false ) + RETURN;
+				+ BioLockJUtil.formatNumericOutput( vals.first(), false ) + RETURN;
 			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (median):", pad )
-					+ BioLockJUtil.formatNumericOutput( Long.valueOf( SummaryUtil.getMedian( vals, false ) ), false )
-					+ RETURN;
+				+ BioLockJUtil.formatNumericOutput( Long.valueOf( SummaryUtil.getMedian( vals, false ) ), false )
+				+ RETURN;
 			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (mean):", pad )
-					+ BioLockJUtil.formatNumericOutput( Long.valueOf( SummaryUtil.getMean( vals, false ) ), false )
-					+ RETURN;
+				+ BioLockJUtil.formatNumericOutput( Long.valueOf( SummaryUtil.getMean( vals, false ) ), false )
+				+ RETURN;
 			msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (max):", pad )
-					+ BioLockJUtil.formatNumericOutput( vals.last(), false ) + RETURN;
+				+ BioLockJUtil.formatNumericOutput( vals.last(), false ) + RETURN;
 
 			Long sum = 0L;
-			for( final long val: vals )
-			{
+			for( final long val: vals ) {
 				sum += val;
 			}
 
-			if( addTotal )
-			{
+			if( addTotal ) {
 				msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (total):", pad )
-						+ BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
+					+ BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
 			}
-			if( !vals.first().equals( vals.last() ) )
-			{
+			if( !vals.first().equals( vals.last() ) ) {
 				final Set<String> minSamples = new HashSet<>();
 				final Set<String> maxSamples = new HashSet<>();
-				for( final String id: map.keySet() )
-				{
-					if( map.get( id ).equals( vals.first().toString() ) )
-					{
+				for( final String id: map.keySet() ) {
+					if( map.get( id ).equals( vals.first().toString() ) ) {
 						minSamples.add( id );
 					}
-					if( map.get( id ).equals( vals.last().toString() ) )
-					{
+					if( map.get( id ).equals( vals.last().toString() ) ) {
 						maxSamples.add( id );
 					}
 				}
@@ -122,26 +117,26 @@ public class SummaryUtil
 	 * @return Summary info
 	 * @throws Exception if any error occurs
 	 */
-	public static String getFooter() throws Exception
-	{
+	public static String getFooter() throws Exception {
 		final long duration = System.currentTimeMillis() - Constants.APP_START_TIME;
 		final StringBuffer sb = new StringBuffer();
+		sb.append( EXT_SPACER + RETURN );
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
+		sb.append( getLabel( RUNTIME_ENV ) + "     " + getRuntimeEnv() + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
 		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration ) + RETURN );
-
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
-		sb.append( getLabel( PIPELINE_CONFIG ) + " " + Config.getConfigFilePath() + RETURN );
-		sb.append( getLabel( PIPELINE_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
+		sb.append( getLabel( INPUT_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( MASTER_CONFIG ) + "   " + MasterConfigUtil.getPath() + RETURN );
+		sb.append( getLabel( FINAL_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
 
 		final String downloadCmd = downloadCmd();
-		if( downloadCmd != null )
-		{
-			sb.append( SPACER_2X + RETURN );
+		if( downloadCmd != null ) {
+			sb.append( EXT_SPACER + RETURN );
 			sb.append( downloadCmd + RETURN );
 		}
 
-		sb.append( SPACER_2X + RETURN );
+		sb.append( EXT_SPACER + RETURN );
 		return sb.toString();
 	}
 
@@ -151,34 +146,27 @@ public class SummaryUtil
 	 * @param module BioModule to summarize
 	 * @return module input summary
 	 */
-	public static String getInputSummary( final BioModule module )
-	{
+	public static String getInputSummary( final BioModule module ) {
 		final StringBuffer sb = new StringBuffer();
-		try
-		{
+		try {
 			final int numIn = module.getInputFiles().size();
-			if( numIn < 1 )
-			{
-				return null;
-			}
+			if( numIn < 1 ) return null;
 
-			Long inAvg =  0L;
-			for( final File f: module.getInputFiles() )
-			{
+			Long inAvg = 0L;
+			for( final File f: module.getInputFiles() ) {
 				inAvg += FileUtils.sizeOf( f );
 			}
-			
+
 			inAvg = new Double( inAvg / numIn ).longValue();
 
 			sb.append( "# Input files: " + numIn + Constants.RETURN );
 			sb.append( "Mean Input File Size: " + FileUtils.byteCountToDisplaySize( inAvg ) + RETURN );
-		}
-		catch( final Exception ex )
-		{
-			final String msg = "Unable to produce module outputDir summary for: " + module.getClass().getName() + " : "
-					+ ex.getMessage();
+		} catch( final Exception ex ) {
+			final String msg = "Unable to produce module input summary for: " + module.getClass().getName() + " : "
+				+ ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( SummaryUtil.class, msg );
+			ex.printStackTrace();
 		}
 
 		return sb.toString();
@@ -192,18 +180,16 @@ public class SummaryUtil
 	 * @return mean value
 	 */
 	@SuppressWarnings("unchecked")
-	public static String getMean( final Collection<?> vals, final boolean isDouble )
-	{
-		if( isDouble )
-		{
+	public static String getMean( final Collection<?> vals, final boolean isDouble ) {
+		if( isDouble ) {
 			final Collection<Double> doubleVals = (Collection<Double>) vals;
 			return Double.valueOf( doubleVals.stream().mapToDouble( i -> i ).sum() / doubleVals.size() ).toString();
 		}
 
 		final Collection<Long> longVals = (Collection<Long>) vals;
 		return Long
-				.valueOf( Double.valueOf( longVals.stream().mapToLong( i -> i ).sum() / longVals.size() ).longValue() )
-				.toString();
+			.valueOf( Double.valueOf( longVals.stream().mapToLong( i -> i ).sum() / longVals.size() ).longValue() )
+			.toString();
 	}
 
 	/**
@@ -214,39 +200,23 @@ public class SummaryUtil
 	 * @return median value
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static String getMedian( final Collection<?> vals, final boolean isDouble )
-	{
-		if( vals.size() == 1 )
-		{
-			return vals.iterator().next().toString();
-		}
+	public static String getMedian( final Collection<?> vals, final boolean isDouble ) {
+		if( vals.size() == 1 ) return vals.iterator().next().toString();
 
 		List data = null;
-		if( isDouble )
-		{
+		if( isDouble ) {
 			data = new ArrayList<>( (Collection<Double>) vals );
-		}
-		else
-		{
+		} else {
 			data = new ArrayList<>( (Collection<Long>) vals );
 		}
 
 		Collections.sort( data );
 
 		final int middle = data.size() / 2;
-		if( data.size() % 2 == 1 )
-		{
-			return data.get( new Double( data.size() / 2  ).intValue() ).toString();
-		}
+		if( data.size() % 2 == 1 ) return data.get( new Double( data.size() / 2 ).intValue() ).toString();
 		else if( isDouble )
-		{
 			return Double.valueOf( ( (Double) data.get( middle - 1 ) + (Double) data.get( middle ) ) / 2 ).toString();
-		}
-		else
-		{
-			return Long.valueOf( ( (Long) data.get( middle - 1 ) + (Long) data.get( middle ) ) / 2 )
-					.toString();
-		}
+		else return Long.valueOf( ( (Long) data.get( middle - 1 ) + (Long) data.get( middle ) ) / 2 ).toString();
 	}
 
 	/**
@@ -256,10 +226,9 @@ public class SummaryUtil
 	 * @param module BioModule
 	 * @return Formatted module runtime
 	 */
-	public static String getModuleRunTime( final BioModule module )
-	{
+	public static String getModuleRunTime( final BioModule module ) {
 		final File started = new File(
-				module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
+			module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		return getRunTime( System.currentTimeMillis() - started.lastModified() );
 	}
 
@@ -274,56 +243,44 @@ public class SummaryUtil
 	 * @param module BioModule to summarize
 	 * @return Summary of module output directory
 	 */
-	public static String getOutputDirSummary( final BioModule module )
-	{
+	public static String getOutputDirSummary( final BioModule module ) {
 		final StringBuffer sb = new StringBuffer();
-		try
-		{
+		try {
 
-			if( module.getOutputDir().listFiles().length == 0 )
-			{
-				return "# Files Output:  0" + RETURN;
-			}
+			if( module.getOutputDir().listFiles().length == 0 ) return "# Files Output:  0" + RETURN;
 
 			final Collection<File> outFiles = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
-					HiddenFileFilter.VISIBLE );
+				HiddenFileFilter.VISIBLE );
 			int count = outFiles.size();
 
 			BigInteger outAvg = FileUtils.sizeOfAsBigInteger( module.getOutputDir() );
 
 			File newMeta = new File(
-					module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 
-			if( newMeta.exists() && module.getOutputDir().listFiles().length > 1 )
-			{
+			if( newMeta.exists() && module.getOutputDir().listFiles().length > 1 ) {
 				count--;
 				outAvg = outAvg.subtract( FileUtils.sizeOfAsBigInteger( newMeta ) );
-			}
-			else if( !newMeta.exists() )
-			{
+			} else if( !newMeta.exists() ) {
 				newMeta = null;
 			}
 
-			if( count == 0 )
-			{
+			if( count == 0 ) {
 				outAvg = BigInteger.valueOf( 0 );
-			}
-			else
-			{
+			} else {
 				outAvg = outAvg.divide( BigInteger.valueOf( count ) );
 			}
 
 			sb.append( "# Files Output:  " + count + RETURN );
 			sb.append( "Mean Output File Size:  " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
-			sb.append( newMeta == null ? "": "New metadata:" + newMeta.getAbsolutePath() + RETURN );
+			sb.append( newMeta == null ? "": "New metadata: " + newMeta.getAbsolutePath() + RETURN );
 
-		}
-		catch( final Exception ex )
-		{
-			final String msg = "Unable to produce module outputDir summary for: " + module.getClass().getName() + " : "
-					+ ex.getMessage();
+		} catch( final Exception ex ) {
+			final String msg = "Unable to produce module output summary for: " + module.getClass().getName() + " : "
+				+ ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( SummaryUtil.class, msg );
+			ex.printStackTrace();
 		}
 
 		return sb.toString();
@@ -335,8 +292,7 @@ public class SummaryUtil
 	 * @param label Label
 	 * @return padding length
 	 */
-	public static int getPad( final String label )
-	{
+	public static int getPad( final String label ) {
 		return label.length() + 15;
 	}
 
@@ -346,19 +302,16 @@ public class SummaryUtil
 	 * @param duration Milliseconds of run time
 	 * @return Formatted runtime as XX hours : XX minutes: XX seconds
 	 */
-	public static String getRunTime( final long duration )
-	{
+	public static String getRunTime( final long duration ) {
 		final String format = String.format( "%%0%dd", 2 );
 		long elapsedTime = duration / 1000;
-		if( elapsedTime < 0 )
-		{
+		if( elapsedTime < 0 ) {
 			elapsedTime = 0;
 		}
 		final String hours = String.format( format, elapsedTime / 3600 );
 		final String minutes = String.format( format, elapsedTime % 3600 / 60 );
 		String seconds = String.format( format, elapsedTime % 60 );
-		if( hours.equals( "00" ) && minutes.equals( "00" ) && seconds.equals( "00" ) )
-		{
+		if( hours.equals( "00" ) && minutes.equals( "00" ) && seconds.equals( "00" ) ) {
 			seconds = "01";
 		}
 
@@ -379,42 +332,40 @@ public class SummaryUtil
 	 * @param module ScriptModule to summarize
 	 * @return Summary of module script directory
 	 */
-	public static String getScriptDirSummary( final ScriptModule module )
-	{
+	public static String getScriptDirSummary( final ScriptModule module ) {
 		final StringBuffer sb = new StringBuffer();
-		try
-		{
-			if( module.getMainScript() == null )
-			{
+		try {
+
+			final File mainScript = module.getMainScript();
+			if( mainScript == null && !DockerUtil.inAwsEnv() )
 				return "Module MAIN script not found in -->" + module.getScriptDir().getAbsolutePath() + RETURN;
-			}
 
 			final IOFileFilter ff0 = new WildcardFileFilter( "*" + Constants.SH_EXT );
 			final IOFileFilter ffStarted = new WildcardFileFilter(
-					"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_STARTED );
+				"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_STARTED );
 			final IOFileFilter ffSuccess = new WildcardFileFilter(
-					"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_SUCCESS );
+				"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_SUCCESS );
 			final IOFileFilter ffFailed = new WildcardFileFilter(
-					"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_FAILURES );
+				"*" + Constants.SH_EXT + "_" + Constants.SCRIPT_FAILURES );
 
 			final Collection<File> scripts = FileUtils.listFiles( module.getScriptDir(), ff0, null );
 			final Collection<File> scriptsStarted = FileUtils.listFiles( module.getScriptDir(), ffStarted, null );
 			final Collection<File> scriptsFailed = FileUtils.listFiles( module.getScriptDir(), ffFailed, null );
 			final Collection<File> scriptsSuccess = FileUtils.listFiles( module.getScriptDir(), ffSuccess, null );
 
-			final File mainSuccess = new File(
+			if( mainScript != null ) {
+				final File mainSuccess = new File(
 					module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
-
-			final File mainFail = new File(
+				final File mainFail = new File(
 					module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
-
-			final File mainStarted = new File(
+				final File mainStarted = new File(
 					module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
 
-			scripts.remove( module.getMainScript() );
-			scriptsFailed.remove( mainFail );
-			scriptsSuccess.remove( mainSuccess );
-			scriptsStarted.remove( mainStarted );
+				scripts.remove( module.getMainScript() );
+				scriptsFailed.remove( mainFail );
+				scriptsSuccess.remove( mainSuccess );
+				scriptsStarted.remove( mainStarted );
+			}
 
 			final Map<String, Long> longestScripts = new HashMap<>();
 			final Map<String, Long> shortestScripts = new HashMap<>();
@@ -423,100 +374,84 @@ public class SummaryUtil
 			long maxDuration = 0L;
 			long minDuration = Long.MAX_VALUE;
 
-			final long oneMinute = 1000 * 60;
+			final long oneMinute = BioLockJUtil.minutesToMillis( 1 );
 
-			for( final File script: scripts )
-			{
+			for( final File script: scripts ) {
 				final File started = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
 				File finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
-				if( !finish.exists() )
-				{
+				if( !finish.exists() ) {
 					finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
 				}
-				if( finish.exists() )
-				{
+				if( finish.exists() ) {
 					final long duration = finish.lastModified() - started.lastModified();
 					Log.debug( SummaryUtil.class, script.getName() + " duration: " + duration );
 					totalRunTime += duration;
-					if( duration > oneMinute && duration > maxDuration )
-					{
+					if( duration > oneMinute && duration > maxDuration ) {
 						longestScripts.clear();
 						longestScripts.put( script.getName(), duration );
 						maxDuration = duration;
-					}
-					else if( duration > oneMinute && duration == maxDuration )
-					{
+					} else if( duration > oneMinute && duration == maxDuration ) {
 						longestScripts.put( script.getName(), duration );
 					}
 
-					if( duration > oneMinute && duration < minDuration )
-					{
+					if( duration > oneMinute && duration < minDuration ) {
 						shortestScripts.clear();
 						shortestScripts.put( script.getName(), duration );
 						minDuration = duration;
-					}
-					else if( duration > oneMinute && duration == minDuration )
-					{
+					} else if( duration > oneMinute && duration == minDuration ) {
 						shortestScripts.put( script.getName(), duration );
 					}
 				}
 			}
 
 			final Set<String> removeItems = new HashSet<>();
-			for( final String name: shortestScripts.keySet() )
-			{
-				if( longestScripts.keySet().contains( name ) )
-				{
+			for( final String name: shortestScripts.keySet() ) {
+				if( longestScripts.keySet().contains( name ) ) {
 					removeItems.add( name );
 				}
 			}
 
-			for( final String name: removeItems )
-			{
+			for( final String name: removeItems ) {
 				shortestScripts.remove( name );
 				longestScripts.remove( name );
 			}
 
 			final Long avgRunTime = numCompleted > 0 ? totalRunTime / numCompleted: null;
 			final int numInc = scriptsStarted.size() - numCompleted;
-			sb.append( "Main Script: " + module.getMainScript().getAbsolutePath() + RETURN );
+			if( mainScript != null ) {
+				sb.append( "Main Script:  " + mainScript.getAbsolutePath() + RETURN );
+			}
 			sb.append( "Executed " + scriptsStarted.size() + "/" + scripts.size() + " worker scripts [" );
 			sb.append( scriptsSuccess.size() + " successful" );
 			sb.append( scriptsFailed.isEmpty() ? "": "; " + scriptsFailed.size() + " failed" );
 			sb.append( numInc > 0 ? "; " + numInc + " incomplete": "" );
 			sb.append( "]" + RETURN );
 
-			if( avgRunTime != null )
-			{
+			if( avgRunTime != null ) {
 				sb.append( "Average worker script runtime: " + getScriptRunTime( avgRunTime ) + RETURN );
 			}
-			if( !shortestScripts.isEmpty() )
-			{
+			if( !shortestScripts.isEmpty() ) {
 				sb.append( "Shortest running scripts [" + getScriptRunTime( minDuration ) + "] --> "
-						+ shortestScripts.keySet() + RETURN );
+					+ shortestScripts.keySet() + RETURN );
 			}
-			if( !longestScripts.isEmpty() )
-			{
+			if( !longestScripts.isEmpty() ) {
 				sb.append( "Longest running scripts [" + getScriptRunTime( maxDuration ) + "] --> "
-						+ longestScripts.keySet() + RETURN );
+					+ longestScripts.keySet() + RETURN );
 			}
 
-			for( final File failureScript: scriptsFailed )
-			{
+			for( final File failureScript: scriptsFailed ) {
 				sb.append( "Script Failed:" + failureScript.getAbsolutePath() + RETURN );
 				final BufferedReader reader = BioLockJUtil.getFileReader( failureScript );
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 					sb.append( line + RETURN );
 				}
 			}
-		}
-		catch( final Exception ex )
-		{
-			final String msg = "Unable to produce module scriptDir summary for: " + module.getClass().getName() + " : "
-					+ ex.getMessage();
-			Log.warn( SummaryUtil.class, msg );
+		} catch( final Exception ex ) {
+			final String msg = "Unable to produce module script summary for: " + module.getClass().getName() + " : "
+				+ ex.getMessage();
 			sb.append( msg + RETURN );
+			Log.warn( SummaryUtil.class, msg );
+			ex.printStackTrace();
 		}
 
 		return sb.toString();
@@ -527,28 +462,20 @@ public class SummaryUtil
 	 * 
 	 * @return Pipeline summary
 	 */
-	public static String getSummary()
-	{
+	public static String getSummary() {
 		final StringBuffer sb = new StringBuffer();
-		try
-		{
+		try {
 			final File summary = getSummaryFile();
-			if( !summary.exists() )
-			{
+			if( !summary.exists() ) {
 				sb.append( "NO SUMMARY FOUND" );
-			}
-			else
-			{
+			} else {
 				final BufferedReader reader = BioLockJUtil.getFileReader( summary );
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 					sb.append( line + RETURN );
 				}
 				reader.close();
 			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			final String msg = "Error occurred creating the pipeline summary: " + ex.getMessage();
 			sb.append( RETURN + msg );
 			Log.error( SummaryUtil.class, msg, ex );
@@ -560,10 +487,8 @@ public class SummaryUtil
 	 * Getter for the summary file.
 	 * 
 	 * @return summary file
-	 * @throws Exception if unable to find the file dir
 	 */
-	public static File getSummaryFile() throws Exception
-	{
+	public static File getSummaryFile() {
 		return new File( Config.pipelinePath() + File.separator + SUMMARY_FILE );
 	}
 
@@ -573,27 +498,19 @@ public class SummaryUtil
 	 * @param ex Exception thrown causing application runtime failure
 	 * @throws Exception if unable to save the updates summary
 	 */
-	public static void reportFailure( final Exception ex ) throws Exception
-	{
+	public static void reportFailure( final Exception ex ) throws Exception {
 		final StringBuffer sb = new StringBuffer();
-		sb.append( SPACER + RETURN + getLabel( "Exception" ) );
-		if( ex == null )
-		{
+		sb.append( getDashes( 60 ) + RETURN + getLabel( "Exception" ) );
+		if( ex == null ) {
 			sb.append( "Error message not found!" + RETURN );
-		}
-		else
-		{
+		} else {
 			sb.append( ex.getMessage() + RETURN );
-		}
-
-		if( ex.getStackTrace() != null & ex.getStackTrace().length > 0 )
-		{
-			for( final StackTraceElement ste: ex.getStackTrace() )
-			{
-				sb.append( Constants.TAB_DELIM + ste.toString() + RETURN );
+			if( ex.getStackTrace() != null & ex.getStackTrace().length > 0 ) {
+				for( final StackTraceElement ste: ex.getStackTrace() ) {
+					sb.append( Constants.TAB_DELIM + ste.toString() + RETURN );
+				}
 			}
 		}
-
 		saveSummary( sb.toString() );
 	}
 
@@ -604,43 +521,37 @@ public class SummaryUtil
 	 * @param module Completed module
 	 * @throws Exception if unable to build the summary
 	 */
-	public static void reportSuccess( final BioModule module ) throws Exception
-	{
+	public static void reportSuccess( final BioModule module ) throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		final File summaryFile = getSummaryFile();
-		Log.info( SummaryUtil.class, "Update " + summaryFile.getAbsolutePath() );
-		if( module == null )
-		{
+		if( module == null ) {
 			sb.append( getFooter() );
-		}
-		else
-		{
+		} else {
+			Log.info( SummaryUtil.class,
+				"Update BioModule summary [ " + module.getClass().getName() + " ] " + summaryFile.getAbsolutePath() );
 			Integer modNum = 0;
-			if( !summaryFile.exists() )
-			{
+			if( !summaryFile.exists() ) {
 				sb.append( getHeading() );
-			}
-			else
-			{
+			} else {
 				resetModuleSummary( module );
 				modNum = getModuleNumber();
 			}
 
 			String gap = "  ";
-			if( modNum.toString().length() == 2 )
-			{
+			if( modNum.toString().length() == 2 ) {
 				gap += " ";
 			}
+			final String modLabel = getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName();
+			final String runtime = getLabel( RUN_TIME ) + gap + getModuleRunTime( module );
+			sb.append( modLabel + RETURN );
+			sb.append( runtime + RETURN );
 
-			sb.append( getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName() + RETURN );
-			sb.append( getLabel( RUN_TIME ) + gap + getModuleRunTime( module ) + RETURN );
-			Log.info( SummaryUtil.class, "Add BioModule summary " + module.getClass().getName() );
 			final String summary = module.getSummary();
-			if( summary != null && !summary.isEmpty() )
-			{
-				sb.append( SPACER + RETURN + summary + ( summary.endsWith( RETURN ) ? "": RETURN ) );
+			if( summary != null && !summary.isEmpty() ) {
+				sb.append( getDashes( Math.max( modLabel.length(), runtime.length() ) ) + RETURN + summary
+					+ ( summary.endsWith( RETURN ) ? "": RETURN ) );
 			}
-			sb.append( SPACER_2X + RETURN );
+			sb.append( EXT_SPACER + RETURN );
 		}
 
 		saveSummary( sb.toString() );
@@ -651,42 +562,31 @@ public class SummaryUtil
 	 * 
 	 * @throws Exception if unable to update the summary file
 	 */
-	public static void updateNumAttempts() throws Exception
-	{
+	public static void updateNumAttempts() throws Exception {
 		final File summary = getSummaryFile();
-		if( summary.exists() )
-		{
+		if( summary.exists() ) {
 			FileUtils.copyFile( getSummaryFile(), getTempFile() );
-			BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
+			getSummaryFile().delete();
+			// BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
 			final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
-			try
-			{
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
-					if( line.startsWith( NUM_ATTEMPTS ) )
-					{
+			try {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+					if( line.startsWith( NUM_ATTEMPTS ) ) {
 						final String count = line.substring( getLabel( NUM_ATTEMPTS ).length() ).trim();
 						final Integer num = Integer.valueOf( count ) + 1;
 						writer.write( line.replace( count, num.toString() ) + RETURN );
-					}
-					else
-					{
+					} else {
 						writer.write( line + RETURN );
 					}
 				}
-				BioLockJUtil.deleteWithRetry( getTempFile(), 10 );
-			}
-			finally
-			{
-				if( reader != null )
-				{
+				getTempFile().delete();
+				// BioLockJUtil.deleteWithRetry( getTempFile(), 10 );
+			} finally {
+				if( reader != null ) {
 					reader.close();
 				}
-				if( writer != null )
-				{
-					writer.close();
-				}
+				writer.close();
 			}
 		}
 	}
@@ -697,26 +597,19 @@ public class SummaryUtil
 	 * @return Next module number
 	 * @throws Exception if unable to determine the module number
 	 */
-	protected static Integer getModuleNumber() throws Exception
-	{
+	protected static Integer getModuleNumber() throws Exception {
 		Integer num = null;
 		final BufferedReader reader = BioLockJUtil.getFileReader( getSummaryFile() );
-		try
-		{
-			if( getSummaryFile().exists() )
-			{
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
+		try {
+			if( getSummaryFile().exists() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 					final String label = MODULE + "[";
-					if( line.startsWith( label ) && line.indexOf( "]" ) > 0 )
-					{
+					if( line.startsWith( label ) && line.indexOf( "]" ) > 0 ) {
 						num = Integer.valueOf( line.substring( label.length(), line.indexOf( "]" ) ) );
 					}
 				}
 			}
-		}
-		finally
-		{
+		} finally {
 			reader.close();
 		}
 
@@ -729,56 +622,37 @@ public class SummaryUtil
 	 * @param duration in milliseconds
 	 * @return Formatted runtime description
 	 */
-	protected static String getScriptRunTime( final Long duration )
-	{
-		if( duration == null )
-		{
-			return "N/A";
-		}
+	protected static String getScriptRunTime( final Long duration ) {
+		if( duration == null ) return "N/A";
 
 		final String format = String.format( "%%0%dd", 2 );
 		long elapsedTime = duration / 1000;
-		if( elapsedTime < 0 )
-		{
+		if( elapsedTime < 0 ) {
 			elapsedTime = 0;
 		}
 		String hours = String.format( format, elapsedTime / 3600 );
 		String minutes = String.format( format, elapsedTime % 3600 / 60 );
 
-		if( hours.equals( "00" ) )
-		{
+		if( hours.equals( "00" ) ) {
 			hours = "";
-		}
-		else if( hours.equals( "01" ) )
-		{
+		} else if( hours.equals( "01" ) ) {
 			hours = "1 hour";
-		}
-		else
-		{
+		} else {
 			hours += " hours";
 		}
 
-		if( hours.isEmpty() && minutes.equals( "00" ) )
-		{
+		if( hours.isEmpty() && minutes.equals( "00" ) ) {
 			minutes = "<1 minute";
-		}
-		else if( minutes.equals( "00" ) )
-		{
+		} else if( minutes.equals( "00" ) ) {
 			minutes = "";
-		}
-		else if( hours.isEmpty() && minutes.equals( "01" ) )
-		{
+		} else if( hours.isEmpty() && minutes.equals( "01" ) ) {
 			minutes = "1 minute";
-		}
-		else if( minutes.equals( "01" ) )
-		{
+		} else if( minutes.equals( "01" ) ) {
 			minutes = " : 1 minute";
-		}
-		else if( hours.isEmpty() ) // and minutes > 01
+		} else if( hours.isEmpty() ) // and minutes > 01
 		{
 			minutes += " minutes";
-		}
-		else // hours not empty & minutes > 01
+		} else // hours not empty & minutes > 01
 		{
 			minutes = " : " + minutes + " minutes";
 		}
@@ -793,45 +667,33 @@ public class SummaryUtil
 	 * @param module Rerun module
 	 * @throws Exception if unable to reset the summary
 	 */
-	protected static void resetModuleSummary( final BioModule module ) throws Exception
-	{
+	protected static void resetModuleSummary( final BioModule module ) throws Exception {
 		FileUtils.copyFile( getSummaryFile(), getTempFile() );
-		BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
+		getSummaryFile().delete();
+		// BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
 		final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
-		try
-		{
+		try {
 
 			boolean foundMod = false;
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final String label = MODULE + "[";
-				if( foundMod )
-				{
+				if( foundMod ) {
 					break;
-				}
-				else if( line.startsWith( EXCEPTION_LABEL )
-						|| line.startsWith( label ) && line.endsWith( module.getClass().getName() ) )
-				{
+				} else if( line.startsWith( EXCEPTION_LABEL )
+					|| line.startsWith( label ) && line.endsWith( module.getClass().getName() ) ) {
 					foundMod = true;
-				}
-				else
-				{
+				} else {
 					writer.write( line + RETURN );
 				}
 			}
-			FileUtils.forceDelete( getTempFile() );
-		}
-		finally
-		{
-			if( reader != null )
-			{
+			getTempFile().delete();
+			// FileUtils.forceDelete( getTempFile() );
+		} finally {
+			if( reader != null ) {
 				reader.close();
 			}
-			if( writer != null )
-			{
-				writer.close();
-			}
+			writer.close();
 		}
 	}
 
@@ -841,8 +703,7 @@ public class SummaryUtil
 	 * @param summary Pipeline summary
 	 * @throws Exception if file processing errors occur
 	 */
-	protected static void saveSummary( final String summary ) throws Exception
-	{
+	protected static void saveSummary( final String summary ) throws Exception {
 		final File f = getSummaryFile();
 		final boolean append = f.exists();
 		final FileWriter writer = new FileWriter( f, append );
@@ -851,23 +712,45 @@ public class SummaryUtil
 		Log.info( SummaryUtil.class, "Summary updated" );
 	}
 
-	private static String downloadCmd() throws Exception
-	{
-		if( downloadCommand == null )
-		{
+	private static String biolockj_ASCII_Art() {
+		final StringBuffer sb = new StringBuffer();
+		final String spacer = getSpaces( 10 );
+		sb.append( spacer + "" + RETURN );
+		return sb.toString();
+	}
+
+	private static String complete_ASCII_Art() {
+		final StringBuffer sb = new StringBuffer();
+		final String spacer = getSpaces( 5 );
+		sb.append( spacer + "" + RETURN );
+		return sb.toString();
+	}
+
+	private static String downloadCmd() throws Exception {
+		if( downloadCommand == null ) {
 			downloadCommand = DownloadUtil.getDownloadCmd();
 		}
 		return downloadCommand;
 	}
 
-	private static String getHeading() throws Exception
-	{
+	private static String failed_ASCII_Art() {
 		final StringBuffer sb = new StringBuffer();
-		sb.append( RETURN + SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
-		sb.append( getLabel( PIPELINE_CONFIG ) + Config.getConfigFilePath() + RETURN );
+		final String spacer = getSpaces( 23 );
+		sb.append( spacer + "" + RETURN );
+		return sb.toString();
+	}
+
+	private static String getDashes( final int len ) {
+		return getSpacer( "-", len );
+	}
+
+	private static String getHeading() {
+		final StringBuffer sb = new StringBuffer();
+		sb.append( RETURN + EXT_SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
+		sb.append( getLabel( INPUT_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
 		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
-		sb.append( SPACER_2X + RETURN );
+		sb.append( EXT_SPACER + RETURN );
 		return sb.toString();
 	}
 
@@ -877,43 +760,70 @@ public class SummaryUtil
 	 * @param label String
 	 * @return Formatted label
 	 */
-	private static String getLabel( final String label )
-	{
+	private static String getLabel( final String label ) {
 		return label + ":  ";
 	}
 
-	private static File getTempFile() throws Exception
-	{
+	private static String getRuntimeEnv() {
+		if( runtimeEnv != null ) return runtimeEnv;
+		String clusterHost = null;
+		runtimeEnv = "localhost";
+		try {
+			clusterHost = Config.isOnCluster() ? Config.requireString( null, Constants.CLUSTER_HOST ): null;
+			if( clusterHost != null ) {
+				runtimeEnv = clusterHost;
+			}
+
+			final String hostName = Processor.submit( "hostname", "Query Host" );
+			if( hostName != null ) {
+				runtimeEnv = hostName;
+			}
+
+		} catch( final Exception ex ) {
+			Log.error( SummaryUtil.class, "Failed to determine runtime environment host", ex );
+		}
+
+		if( DockerUtil.inAwsEnv() ) return "AWS-Nextflow/Docker@" + runtimeEnv;
+		if( DockerUtil.inDockerEnv() ) return "DOCKER@" + runtimeEnv;
+		if( Config.isOnCluster() && clusterHost != null && runtimeEnv != clusterHost )
+			return "CLUSTER [ head::" + DockerUtil.AWS_EC2_USER + "@" + clusterHost + " --> compute::"
+				+ DockerUtil.ROOT_HOME + "@" + runtimeEnv + " ]";
+		return "@" + runtimeEnv;
+	}
+
+	private static String getSpacer( final String val, final int len ) {
+		String spacer = "";
+		for( int i = 0; i < len; i++ ) {
+			spacer += val;
+		}
+		return spacer;
+	}
+
+	private static String getSpaces( final int len ) {
+		return getSpacer( " ", len );
+	}
+
+	private static File getTempFile() {
 		return new File( Config.pipelinePath() + File.separator + TEMP_SUMMARY_FILE );
 	}
 
 	private static String downloadCommand = null;
-
 	private static final String EXCEPTION_LABEL = "Exception:";
+	private static final String EXT_SPACER = getDashes( 154 );
+	private static final String FINAL_META = "Final Metadata";
+	private static final String INPUT_CONFIG = "Input Config";
+	private static final String MASTER_CONFIG = "Master Config";
 	private static final String MODULE = "Module";
-
 	private static final String NUM_ATTEMPTS = "# Attempts";
-
 	private static final String NUM_MODULES = "# Modules";
-	private static final String PIPELINE_CONFIG = "Pipeline Config";
-	private static final String PIPELINE_META = "Final Metadata";
 	private static final String PIPELINE_NAME = "Pipeline Name";
 	private static final String PIPELINE_OUTPUT = "Pipeline Dir";
 	private static final String PIPELINE_RUNTIME = "Pipeline Runtime";
 	private static final String PIPELINE_STATUS = "Pipeline Status";
 	private static final String RETURN = Constants.RETURN;
-	/**
-	 * Summary label for module/pipeline runtime: {@value #RUN_TIME}
-	 */
 	private static final String RUN_TIME = "Runtime";
-	private static final String SPACER = "---------------------------------------------------------------------";
-	private static final String SPACER_2X = SPACER + SPACER;
-	/**
-	 * Name of the summary file created in pipeline root directory: {@value #SUMMARY_FILE}
-	 */
+	private static final String RUNTIME_ENV = "Runtime Env";
+	private static String runtimeEnv = null;
 	private static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
-	/**
-	 * Name of the temp file created in pipeline root directory: {@value #TEMP_SUMMARY_FILE}
-	 */
 	private static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
 }

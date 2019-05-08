@@ -18,6 +18,8 @@ import org.apache.commons.lang.math.NumberUtils;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
 import biolockj.module.DatabaseModule;
 import biolockj.module.JavaModule;
@@ -31,8 +33,8 @@ import biolockj.module.seq.*;
 /**
  * DockerUtil for Docker integration.
  */
-public class DockerUtil
-{
+public class DockerUtil {
+
 	/**
 	 * Build the {@value #SPAWN_DOCKER_CONTAINER} method, which takes container name, in/out port, and optionally script
 	 * path parameters.
@@ -41,17 +43,32 @@ public class DockerUtil
 	 * @return Bash function to run docker
 	 * @throws Exception if unable to build the function
 	 */
-	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception
-	{
+	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception {
 		final List<String> lines = new ArrayList<>();
-		Log.info( DockerUtil.class, "Docker volumes:" + getDockerVolumes( module ) );
-
+		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module )
+			+ getDockerEnvVars() + getDockerVolumes( module ) + getDockerImage( module );
+		Log.debug( DockerUtil.class, "----> Docker CMD:" + cmd );
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
-		lines.add( Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module )
-				+ getDockerEnvVars( module ) + getDockerVolumes( module ) + getDockerImage( module ) );
+		lines.add( cmd );
 		lines.add( "}" + Constants.RETURN );
+
 		return lines;
+	}
+
+	/**
+	 * Get Config file path - update for Docker env or bash env var references as needed.
+	 * 
+	 * @param path Runtime arg or Config property path
+	 * @return Local File
+	 * @throws ConfigPathException if errors occur due to invalid file path
+	 */
+	public static File getConfigFile( final String path ) throws ConfigPathException {
+		final String newPath = DockerUtil.getDockerVolumePath( path, DockerUtil.DOCKER_CONFIG_DIR );
+		final File dockerConfigFile = new File( newPath );
+		if( !dockerConfigFile.isFile() ) throw new ConfigPathException( dockerConfigFile,
+			"Config file [ " + path + " ] --> converted to container file-path that does not exist: " + newPath );
+		return dockerConfigFile;
 	}
 
 	/**
@@ -61,106 +78,126 @@ public class DockerUtil
 	 * @return Docker image name
 	 * @throws Exception if errors occur
 	 */
-	public static String getDockerImage( final BioModule module ) throws Exception
-	{
-		final String className = module.getClass().getSimpleName();
-		final String name = getDockerImageName( module );
-		return " " + getDockerUser( className ) + "/" + getImageName( name ) + ":" + getImageVersion( className );
+	public static String getDockerImage( final BioModule module ) throws Exception {
+		return " " + getDockerUser( module ) + "/" + getImageName( module ) + ":" + getImageVersion( module );
 	}
 
 	/**
 	 * Return the Docker Hub user ID. If none configured, return biolockj.
 	 * 
-	 * @param moduleName Calling module
+	 * @param module BioModule
 	 * @return Docker Hub User ID
-	 * @throws Exception if errors occur
 	 */
-	public static String getDockerUser( final String moduleName ) throws Exception
-	{
-		String user = Config.getString( null, Config.getModuleProp( moduleName, DOCKER_HUB_USER ) );
+	public static String getDockerUser( final BioModule module ) {
+		String user = Config.getString( null, Config.getModuleProp( module, DOCKER_HUB_USER ) );
 		user = user == null ? DEFAULT_DOCKER_HUB_USER: user;
 		return user;
 	}
 
 	/**
-	 * Get mapped Docker system File from {@link biolockj.Config} property by replacing the host system path with the
-	 * mapped container path.
+	 * Get mapped Docker system File from {@link biolockj.Config} directory-property by replacing the host system path
+	 * with the mapped container path.
 	 * 
-	 * @param prop {@link biolockj.Config} property
+	 * @param prop {@link biolockj.Config} directory-property
 	 * @param containerPath Local container path
-	 * @return Docker volume file
-	 * @throws Exception if errors occur
+	 * @return Docker volume directory or null
+	 * @throws ConfigNotFoundException if prop not found
+	 * @throws ConfigPathException if path is defined but is not an existing directory
 	 */
-	public static File getDockerVolumeFile( final String prop, final String containerPath ) throws Exception
-	{
-		return new File( getDockerVolumePath( prop, containerPath ) );
+	public static File getDockerVolumeDir( final String prop, final String containerPath )
+		throws ConfigPathException, ConfigNotFoundException {
+		final File dir = new File( getDockerVolumePath( Config.requireString( null, prop ), containerPath ) );
+		if( !dir.isDirectory() ) throw new ConfigPathException( dir );
+		return dir;
+	}
+
+	/**
+	 * Get mapped Docker system File from {@link biolockj.Config} file-property by replacing the host system path with
+	 * the mapped container path.
+	 * 
+	 * @param prop {@link biolockj.Config} file-property
+	 * @param containerPath Local container path
+	 * @return Docker volume file or null
+	 * @throws ConfigNotFoundException if prop not found
+	 * @throws ConfigPathException if path is defined but is not an existing directory
+	 */
+	public static File getDockerVolumeFile( final String prop, final String containerPath )
+		throws ConfigPathException, ConfigNotFoundException {
+		final File file = new File( getDockerVolumePath( Config.requireString( null, prop ), containerPath ) );
+		Log.info( DockerUtil.class, "Calling getDockerVolumeFile for propVal: " + file.getAbsolutePath() );
+		if( !file.isFile() ) throw new ConfigPathException( file );
+		return file;
+	}
+
+	/**
+	 * Get Docker file path through mapped volume
+	 * 
+	 * @param path {@link biolockj.Config} file or directory path
+	 * @param containerPath Local container path
+	 * @return Docker file path
+	 */
+	public static String getDockerVolumePath( final String path, final String containerPath ) {
+		if( path == null || path.isEmpty() ) return null;
+		return containerPath + File.separator + path.substring( path.lastIndexOf( File.separator ) );
 	}
 
 	/**
 	 * Return the Docker Image name for the given class name.<br>
-	 * Return {@value #BLJ_BASH} for simple bash script modules that don't rely on special software<br>
+	 * Return blj_bash for simple bash script modules that don't rely on special software<br>
 	 * Class names contain no spaces, words are separated via CamelCaseConvension.<br>
 	 * Docker image names cannot contain upper case letters, so this method substitutes "_" before the lower-case
 	 * version of each capital letter.<br>
 	 * <br>
 	 * Example: JavaModule becomes java_module
 	 * 
-	 * @param className BioModule class name
+	 * @param module BioModule
 	 * @return Docker Image Name
 	 * @throws Exception if errors occur
 	 */
-	public static String getImageName( final String className ) throws Exception
-	{
-		String imageName = "";
-		if( useBasicBashImg( className ) )
-		{
-			imageName += BLJ_BASH;
+	public static String getImageName( final BioModule module ) throws Exception {
+		final String className = module.getClass().getName();
+		if( useBasicBashImg( module ) ) {
+			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
+			return BLJ_BASH;
 		}
-		else
-		{
-			imageName += className.substring( 0, 1 ).toLowerCase();
-			for( int i = 2; i < className.length() + 1; i++ )
-			{
-				final int len = imageName.toString().length();
-				final String prevChar = imageName.toString().substring( len - 1, len );
-				final String val = className.substring( i - 1, i );
-				if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM )
-						&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
-				{
-					imageName += IMAGE_NAME_DELIM + val.toLowerCase();
-				}
-				else if( !prevChar.equals( IMAGE_NAME_DELIM )
-						|| prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
-				{
-					imageName += val.toLowerCase();
-				}
-			}
 
-			if( ( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
-					|| className.contains( KneadData.class.getName() ) ) && hasDB( getShellModule( className ) ) )
-			{
-				imageName += DB_FREE;
+		final String simpleName = getDockerClassName( module );
+		Log.debug( DockerUtil.class, "Found Java simple class name: " + simpleName );
+		String imageName = simpleName.substring( 0, 1 ).toLowerCase();
+
+		for( int i = 2; i < simpleName.length() + 1; i++ ) {
+			final int len = imageName.toString().length();
+			final String prevChar = imageName.toString().substring( len - 1, len );
+			final String val = simpleName.substring( i - 1, i );
+			if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM )
+				&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) ) {
+				imageName += IMAGE_NAME_DELIM + val.toLowerCase();
+			} else if( !prevChar.equals( IMAGE_NAME_DELIM )
+				|| prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) {
+				imageName += val.toLowerCase();
 			}
 		}
 
-		Log.info( DockerUtil.class,
-				"Map: Class [" + className + "] <--> Docker Image [ " + imageName.toString() + " ]" );
-		return imageName.toString();
+		if( ( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
+			|| className.equals( KneadData.class.getName() ) ) && hasDB( module ) ) {
+			imageName += DB_FREE;
+		}
+
+		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
+
+		return imageName;
 	}
 
 	/**
 	 * Get the Docker image version if defined in the {@link biolockj.Config} file<br>
 	 * If not found, return the default version "latest"
 	 * 
-	 * @param moduleName BioModule name
+	 * @param module BioModule
 	 * @return Docker image version
-	 * @throws Exception if errors occur
 	 */
-	public static String getImageVersion( final String moduleName ) throws Exception
-	{
-		String ver = Config.getString( null, Config.getModuleProp( moduleName, DOCKER_IMG_VERSION ) );
-		if( ver == null )
-		{
+	public static String getImageVersion( final BioModule module ) {
+		String ver = Config.getString( null, Config.getModuleProp( module, DOCKER_IMG_VERSION ) );
+		if( ver == null ) {
 			ver = DOCKER_LATEST;
 		}
 		return ver;
@@ -173,235 +210,186 @@ public class DockerUtil
 	 * @return TRUE if module has a custom DB defined
 	 * @throws Exception if errors occur
 	 */
-	public static final boolean hasDB( final BioModule module ) throws Exception
-	{
-		if( RuntimeParamUtil.isDockerMode() && module instanceof DatabaseModule )
-		{
+	public static final boolean hasDB( final BioModule module ) throws Exception {
+		if( DockerUtil.inDockerEnv() && module instanceof DatabaseModule ) {
 			final File db = ( (DatabaseModule) module ).getDB();
-			if( db != null )
-			{
-				final String dbPath = db.getAbsolutePath();
-				return !dbPath.equals( CONTAINER_DB_DIR );
-			}
+			if( db != null ) return !db.getAbsolutePath().equals( DOCKER_DB_DIR );
 		}
 
 		return false;
 	}
 
 	/**
-	 * Return TRUE if running on AWS (based on Config props).
+	 * Return TRUE if running in AWS (based on Config props).
 	 * 
 	 * @return TRUE if pipeline.env=aws
-	 * @throws Exception if errors occur
 	 */
-	public static boolean inAwsEnv() throws Exception
-	{
-		return Config.requireString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_AWS );
+	public static boolean inAwsEnv() {
+		return RuntimeParamUtil.isAwsMode();
 	}
 
 	/**
-	 * Boolean to determine if should initialize Docker aws_manager
+	 * Check runtime env for /.dockerenv
 	 * 
-	 * @return TRUE if running Docker aws_manager in init mode
-	 * @throws Exception if unable to determine Docker module type
+	 * @return TRUE if Java running in Docker container
 	 */
-	public static boolean initAwsCloudManager() throws Exception
-	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && inAwsEnv()
-				&& !RuntimeParamUtil.runAws();
+	public static boolean inDockerEnv() {
+		return RuntimeParamUtil.isDockerMode();
 	}
 
 	/**
-	 * Boolean to determine if running Docker blj_manager
+	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
 	 * 
-	 * @return TRUE if running Docker blj_manager
-	 * @throws Exception if unable to determine Docker module type
+	 * @return boolean
 	 */
-	public static boolean isBljManager() throws Exception
-	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && !inAwsEnv();
+	public static boolean isDirectMode() {
+		return RuntimeParamUtil.getDirectModuleDir() != null;
 	}
 
-	/**
-	 * Boolean to determine if running Docker aws_manager
-	 * 
-	 * @return TRUE if running Docker aws_manager
-	 * @throws Exception if unable to determine Docker module type
-	 */
-	public static boolean runAwsCloudManager() throws Exception
-	{
-		return RuntimeParamUtil.isDockerMode() && !RuntimeParamUtil.isDirectMode() && inAwsEnv()
-				&& RuntimeParamUtil.runAws();
+	private static String getAwsVolumes() {
+		Log.debug( DockerUtil.class, "Assign Docker AWS volumes" );
+		return "-v " + AWS_HOME + ":" + AWS_HOME + ":ro -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR
+			+ ":delegated";
 	}
 
-	private static String getDockerEnvVars( final BioModule module ) throws Exception
-	{
+	private static String getDockerClassName( final BioModule module ) {
+		final String className = module.getClass().getSimpleName();
+		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
+			|| module instanceof QiimeClassifier;
+
+		return isQiime ? QiimeClassifier.class.getSimpleName()
+			: module instanceof R_Module ? R_Module.class.getSimpleName()
+				: module instanceof JavaModule ? JavaModule.class.getSimpleName(): className;
+	}
+
+	private static String getDockerEnvVars() {
 		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
 
-	private static String getDockerImageName( final BioModule module ) throws Exception
-	{
-		final String className = module.getClass().getSimpleName();
-		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
-				|| module instanceof QiimeClassifier;
-
-		return isQiime ? QiimeClassifier.class.getSimpleName()
-				: module instanceof R_Module ? R_Module.class.getSimpleName()
-						: module instanceof JavaModule ? JavaModule.class.getSimpleName(): className;
-	}
-
-	private static String getDockerVolumePath( final String prop, final String containerPath ) throws Exception
-	{
-		final File hostFile = new File( Config.requireString( null, prop ) );
-		return containerPath + File.separator + hostFile.getName();
-	}
-
-	private static String getDockerVolumes( final BioModule module ) throws Exception
-	{
-		Log.info( DockerUtil.class, "Build Docker volumes for module: " + module.getClass().getSimpleName() );
+	private static String getDockerVolumes( final BioModule module ) throws Exception {
+		Log.debug( DockerUtil.class, "Assign Docker volumes for module: " + module.getClass().getSimpleName() );
 
 		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR;
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR
-				+ ":delegated";
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR;
+		if( inAwsEnv() ) return dockerVolumes + " " + getAwsVolumes();
 
-		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
-		{
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR;
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + DOCKER_INPUT_DIR + ":ro";
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_OUTPUT_DIR + ":delegated";
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + DOCKER_CONFIG_DIR + ":ro";
+
+		if( module instanceof TrimPrimers ) {
+			final File primers = new File( Config.requireString( module, Constants.INPUT_TRIM_SEQ_FILE ) )
+				.getParentFile();
+			Log.info( DockerUtil.class, "Map Docker volume for TrimPrimers: " + primers.getAbsolutePath() );
+			dockerVolumes += " -v " + getVolumePath( primers.getAbsolutePath() ) + ":" + DOCKER_PRIMER_DIR + ":ro";
 		}
 
-		if( isJavaModule( module ) && RuntimeParamUtil.getDockerHostBLJ() != null )
-		{
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR;
+		if( RuntimeParamUtil.getDockerHostMetaDir() != null ) {
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + DOCKER_META_DIR + ":ro";
 		}
 
-		if( isJavaModule( module ) && RuntimeParamUtil.getDockerHostBLJ_SUP() != null )
-		{
+		if( RuntimeParamUtil.getDockerHostBLJ() != null ) {
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR
+				+ ":ro";
+		}
+
+		if( RuntimeParamUtil.getDockerHostBLJ_SUP() != null ) {
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":"
-					+ CONTAINER_BLJ_SUP_DIR;
+				+ CONTAINER_BLJ_SUP_DIR + ":ro";
 		}
 
-		if( module instanceof TrimPrimers )
-		{
-			final File primers = new File(
-					Config.getSystemFilePath( Config.requireString( module, TrimPrimers.INPUT_TRIM_SEQ_FILE ) ) )
-							.getParentFile();
-			dockerVolumes += " -v " + primers.getAbsolutePath() + ":" + CONTAINER_PRIMER_DIR;
+		if( RuntimeParamUtil.getDockerHostHomeDir() != null ) {
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostHomeDir() + ":" + ROOT_HOME + ":ro";
 		}
 
-		if( hasDB( module ) )
-		{
+		if( hasDB( module ) ) {
 			final File db = ( (DatabaseModule) module ).getDB();
 			String dbPath = db.getAbsolutePath();
 			Log.info( DockerUtil.class, "Map Docker volume for DB: " + dbPath );
 
-			if( module instanceof RdpClassifier )
-			{
+			if( module instanceof RdpClassifier ) {
 				dbPath = db.getParentFile().getAbsolutePath();
 				Log.info( DockerUtil.class, "RDP DB directory path: " + dbPath );
 			}
 
-			if( dbPath.startsWith( DOCKER_ROOT_HOME ) )
-			{
-				dbPath = dbPath.replace( DOCKER_ROOT_HOME,
-						RuntimeParamUtil.getDockerHostHomeUserDir().getAbsolutePath() );
-				Log.info( DockerUtil.class, "Replace " + DOCKER_ROOT_HOME + " with DB Host dir: " + dbPath );
+			if( dbPath.startsWith( ROOT_HOME ) ) {
+				dbPath = dbPath.replace( ROOT_HOME, RuntimeParamUtil.getDockerHostHomeDir() );
+				Log.info( DockerUtil.class, "Replace " + ROOT_HOME + " with DB Host dir: " + dbPath );
 			}
 
-			dockerVolumes += " -v " + dbPath + ":" + CONTAINER_DB_DIR;
+			// TODO: Probably fine as read-only, but will wait until all modules tested before adding :ro
+			// dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + DOCKER_DB_DIR + ":ro";
+			dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + DOCKER_DB_DIR;
 		}
 
 		return dockerVolumes;
 	}
 
-	private static BioModule getShellModule( final String className ) throws Exception
-	{
-		return (BioModule) Class.forName( className ).getDeclaredConstructor().newInstance();
+	private static String getVolumePath( final String path ) {
+		Log.info( DockerUtil.class, "Map Docker volume getVolumePath( " + path + " )" );
+		String newPath = path;
+		if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) ) {
+			Log.info( DockerUtil.class, "path.startsWith( " + CONTAINER_BLJ_SUP_DIR + " ) = TRUE!" );
+			newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath()
+				+ path.substring( CONTAINER_BLJ_SUP_DIR.length() );
+		}
+		if( path.startsWith( CONTAINER_BLJ_DIR ) ) {
+			Log.info( DockerUtil.class, "path.startsWith( " + CONTAINER_BLJ_DIR + " ) = TRUE!" );
+			newPath = RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath()
+				+ path.substring( CONTAINER_BLJ_DIR.length() );
+		}
+		Log.info( DockerUtil.class, "Map Docker volume newPath -----> ( " + newPath + " )" );
+		return newPath;
 	}
 
-	private static boolean isJavaModule( final BioModule module ) throws Exception
-	{
-		return getDockerImageName( module ).equals( JavaModule.class.getSimpleName() );
-	}
-
-	private static final String rmFlag( final BioModule module ) throws Exception
-	{
+	private static final String rmFlag( final BioModule module ) throws Exception {
 		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "": DOCK_RM_FLAG;
 	}
 
-	private static boolean useBasicBashImg( final String className ) throws Exception
-	{
-		return className.contains( PearMergeReads.class.getSimpleName() )
-				|| className.contains( AwkFastaConverter.class.getSimpleName() )
-				|| className.contains( Gunzipper.class.getSimpleName() );
+	private static boolean useBasicBashImg( final BioModule module ) {
+		return module instanceof PearMergeReads || module instanceof AwkFastaConverter || module instanceof Gunzipper;
 	}
 
 	/**
-	 * Docker container BioLockJ installation directory: {@value #CONTAINER_BLJ_DIR}
+	 * Docker container root user EFS directory: /mnt/efs
 	 */
-	public static final String CONTAINER_BLJ_DIR = "/app/biolockj";
+	public static final String DOCKER_BLJ_MOUNT_DIR = File.separator + "mnt" + File.separator + "efs";
 
 	/**
-	 * Docker container blj_support directory: {@value #CONTAINER_BLJ_SUP_DIR}
+	 * Docker container root user DB directory: /mnt/efs/db
 	 */
-	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
+	public static final String DOCKER_DB_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "db";
 
 	/**
-	 * All containers mount the host {@link biolockj.Config} directory to the container"config" volume
+	 * Docker container root user DB directory: /mnt/efs/db
 	 */
-	public static final String CONTAINER_CONFIG_DIR = File.separator + "config";
+	public static final String DOCKER_DEFAULT_DB_DIR = File.separator + "mnt" + File.separator + "db";
 
 	/**
-	 * Some containers mount a database to the containers "db" volume.
+	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume: :
+	 * /mnt/efs/input
 	 */
-	public static final String CONTAINER_DB_DIR = File.separator + "db";
+	public static final String DOCKER_INPUT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "input";
 
 	/**
-	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume
+	 * All containers mount {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} to the container volume: /mnt/efs/output
 	 */
-	public static final String CONTAINER_INPUT_DIR = File.separator + "input";
+	public static final String DOCKER_OUTPUT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "pipelines";
 
 	/**
-	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume
+	 * Some containers mount the {@value biolockj.Constants#INPUT_TRIM_SEQ_FILE} to the containers "primer":
+	 * /mnt/efs/primer
 	 */
-	public static final String CONTAINER_META_DIR = File.separator + "meta";
+	public static final String DOCKER_PRIMER_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "primer";
 
 	/**
-	 * All containers mount {@value biolockj.Constants#PIPELINE_DIR} to the container "pipelines" volume
+	 * Docker container default $USER: {@value #DOCKER_USER}
 	 */
-	public static final String CONTAINER_OUTPUT_DIR = File.separator + "pipelines";
+	public static final String DOCKER_USER = "root";
 
 	/**
-	 * Some containers mount the {@value biolockj.module.seq.TrimPrimers#INPUT_TRIM_SEQ_FILE} to the containers "primer"
-	 * volume.
+	 * Docker container root user $HOME directory: /root
 	 */
-	public static final String CONTAINER_PRIMER_DIR = File.separator + "primer";
-
-	/**
-	 * Docker container root user $HOME directory
-	 */
-	public static final String DOCKER_ROOT_HOME = "/root";
-
-	/**
-	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
-	 */
-	public static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
-
-	/**
-	 * Docker image name for simple bash scripts (awk,gzip,pear).
-	 */
-	protected static final String BLJ_BASH = "blj_bash";
-
-	/**
-	 * Docker environment variable holding the name of the compute script file: {@value #COMPUTE_SCRIPT}
-	 */
-	protected static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
-
-	/**
-	 * Name of the BioLockJ Docker account ID: {@value #DEFAULT_DOCKER_HUB_USER}
-	 */
-	protected static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
+	public static final String ROOT_HOME = File.separator + DOCKER_USER;
 
 	/**
 	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
@@ -412,13 +400,57 @@ public class DockerUtil
 	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	/**
-	 * {@link biolockj.Config} property removed the default --rm flag on docker run command if set to TRUE:
-	 * {@value #SAVE_CONTAINER_ON_EXIT}
+	 * AWS EC2 head/batch node $USER: {@value #AWS_EC2_USER}
 	 */
-	protected static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
+	static final String AWS_EC2_USER = "ec2-user";
+
+	/**
+	 * AWS container root user $HOME directory: /home/ec2-user
+	 */
+	static final String AWS_HOME = File.separator + "home" + File.separator + AWS_EC2_USER;
+
+	/**
+	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
+	 */
+	static final String CONTAINER_BLJ_DIR = "/app/biolockj";
+
+	/**
+	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_SUP_DIR}
+	 */
+	static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
+
+	/**
+	 * All containers mount the host {@link biolockj.Config} directory to the container volume: /mnt/efs/config
+	 */
+	static final String DOCKER_CONFIG_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "config";
+
+	/**
+	 * {@link biolockj.Config} String property used to run specific version of Docker images:
+	 * {@value #DOCKER_IMG_VERSION}
+	 */
+	static final String DOCKER_IMG_VERSION = "docker.imgVersion";
+
+	/**
+	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume:
+	 * /mnt/efs/metadata
+	 */
+	static final String DOCKER_META_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "metadata";
+
+	/**
+	 * {@link biolockj.Config} Boolean property - enable to avoid docker run --rm flag: {@value #SAVE_CONTAINER_ON_EXIT}
+	 */
+	static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
+
+	/**
+	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
+	 */
+	static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
+
+	private static final String BLJ_BASH = "blj_bash";
+	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
 	private static final String DB_FREE = "_dbfree";
+	private static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
 	private static final String DOCK_RM_FLAG = "--rm";
-	private static final String DOCKER_IMG_VERSION = "docker.imgVersion";
 	private static final String DOCKER_LATEST = "latest";
 	private static final String DOCKER_SOCKET = "/var/run/docker.sock";
 	private static final String IMAGE_NAME_DELIM = "_";

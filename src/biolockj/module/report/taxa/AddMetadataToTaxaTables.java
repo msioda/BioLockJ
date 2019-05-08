@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.JavaModule;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.BioLockJUtil;
@@ -29,15 +28,13 @@ import biolockj.util.SummaryUtil;
  * 
  * @blj.web_desc Add Metadata to Taxa Tables
  */
-public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModule
-{
+public class AddMetadataToTaxaTables extends TaxaCountModule {
 
 	/**
 	 * For R to report taxa levels (not HumanN2 reports)
 	 */
 	@Override
-	public void cleanUp() throws Exception
-	{
+	public void cleanUp() throws Exception {
 		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.FALSE );
 	}
 
@@ -45,42 +42,33 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 	 * Produce summary message with min, max, mean, and median hit ratios
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
-		try
-		{
+		try {
 			sb.append( "# Samples: " + MetaUtil.getSampleIds().size() + RETURN );
 			sb.append( "# Fields:  " + MetaUtil.getFieldNames().size() + RETURN );
 
-			if( !hitRatioPerSample.isEmpty() )
-			{
-				for( final String key: hitRatioPerSample.keySet() )
-				{
-					if( hitRatioPerSample.get( key ) == null || hitRatioPerSample.get( key )
-							.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
-					{
-						hitRatioPerSample.put( key, "0.0" );
+			if( !this.hitRatioPerSample.isEmpty() ) {
+				for( final String key: this.hitRatioPerSample.keySet() ) {
+					if( this.hitRatioPerSample.get( key ) == null || this.hitRatioPerSample.get( key )
+						.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) ) {
+						this.hitRatioPerSample.put( key, "0.0" );
 					}
 				}
 
-				if( !hitRatioPerSample.isEmpty() )
-				{
-					final TreeSet<Double> vals = new TreeSet<>( hitRatioPerSample.values().stream()
-							.map( Double::parseDouble ).collect( Collectors.toSet() ) );
+				if( !this.hitRatioPerSample.isEmpty() ) {
+					final TreeSet<Double> vals = new TreeSet<>( this.hitRatioPerSample.values().stream()
+						.map( Double::parseDouble ).collect( Collectors.toSet() ) );
 
 					sb.append( "Min. Hit Ratio:   " + vals.first() + RETURN );
 					sb.append( "Max. Hit Ratio:   " + vals.last() + RETURN );
 					sb.append( "Mean Hit Ratio:   " + SummaryUtil.getMean( vals, true ) + RETURN );
 					sb.append( "Median Hit Ratio: " + SummaryUtil.getMedian( vals, true ) + RETURN );
 
-					if( !vals.first().equals( vals.last() ) )
-					{
+					if( !vals.first().equals( vals.last() ) ) {
 						final Set<String> minSamples = new HashSet<>();
-						for( final String id: hitRatioPerSample.keySet() )
-						{
-							if( hitRatioPerSample.get( id ).equals( vals.first().toString() ) )
-							{
+						for( final String id: this.hitRatioPerSample.keySet() ) {
+							if( this.hitRatioPerSample.get( id ).equals( vals.first().toString() ) ) {
 								minSamples.add( id );
 							}
 						}
@@ -89,9 +77,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 					}
 				}
 			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( getClass(), msg );
@@ -105,22 +91,19 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 	 * 1st column.
 	 */
 	@Override
-	public void runModule() throws Exception
-	{
+	public void runModule() throws Exception {
 		final String numReadsCol = RegisterNumReads.getNumReadFieldName();
 		final String numHitsCol = ParserModuleImpl.getOtuCountField();
 		if( numReadsCol != null && numHitsCol != null && MetaUtil.getFieldNames().contains( numReadsCol )
-				&& MetaUtil.getFieldNames().contains( numHitsCol ) )
-		{
+			&& MetaUtil.getFieldNames().contains( numHitsCol ) ) {
 			addHitRatioToMetadata();
 		}
 
 		generateMergedTables();
 
-		Log.info( getClass(), mergeHeaderLine );
-		Log.info( getClass(), mergeSampleLine );
+		Log.info( getClass(), this.mergeHeaderLine );
+		Log.info( getClass(), this.mergeSampleLine );
 		Log.info( getClass(), "runModule() complete!" );
-
 	}
 
 	/**
@@ -128,30 +111,31 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 	 *
 	 * @throws Exception if unable to build the new metadata column
 	 */
-	protected void addHitRatioToMetadata() throws Exception
-	{
-		for( final String id: MetaUtil.getSampleIds() )
-		{
+	protected void addHitRatioToMetadata() throws Exception {
+		for( final String id: MetaUtil.getSampleIds() ) {
 			final String numReadsField = MetaUtil.getField( id, RegisterNumReads.getNumReadFieldName() );
 			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getOtuCountField() );
 
 			if( numReadsField == null || numHitsField == null
-					|| numReadsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) )
-					|| numHitsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) )
-			{
-				hitRatioPerSample.put( id, Config.requireString( this, MetaUtil.META_NULL_VALUE ) );
-			}
-			else
-			{
+				|| numReadsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) )
+				|| numHitsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) ) {
+				this.hitRatioPerSample.put( id, Config.requireString( this, MetaUtil.META_NULL_VALUE ) );
+			} else {
 				final long numReads = Long.valueOf( numReadsField );
-				final long numHits = Long.valueOf( numHitsField );
-				Log.info( getClass(),
+				if( numReads == 0L ) {
+					this.hitRatioPerSample.put( id, "0.0" );
+				} else {
+
+					final long numHits = Long.valueOf( numHitsField );
+
+					Log.info( getClass(),
 						HIT_RATIO + " for: [" + id + "] ==> " + BioLockJUtil.formatPercentage( numHits, numReads ) );
-				hitRatioPerSample.put( id, Double.valueOf( (double) numHits / numReads ).toString() );
+					this.hitRatioPerSample.put( id, Double.valueOf( (double) numHits / numReads ).toString() );
+				}
 			}
 		}
 
-		MetaUtil.addColumn( HIT_RATIO, hitRatioPerSample, getOutputDir(), true );
+		MetaUtil.addColumn( HIT_RATIO, this.hitRatioPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -159,21 +143,17 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 	 *
 	 * @throws Exception if unable to build tables
 	 */
-	protected void generateMergedTables() throws Exception
-	{
+	protected void generateMergedTables() throws Exception {
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
-		for( final File file: getInputFiles() )
-		{
+		for( final File file: getInputFiles() ) {
 			final String name = file.getName().replaceAll( TSV_EXT, "" ) + META_MERGED;
 			Log.info( getClass(), "Merge OTU table + Metadata file: " + outDir + name );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
 
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final String mergedLine = getMergedLine( line );
-				if( mergedLine != null )
-				{
+				if( mergedLine != null ) {
 					writer.write( mergedLine + RETURN );
 				}
 			}
@@ -192,31 +172,23 @@ public class AddMetadataToTaxaTables extends TaxaCountModule implements JavaModu
 	 * @return OTU table line + metadata line
 	 * @throws Exception if unable to create merged line
 	 */
-	protected String getMergedLine( final String line ) throws Exception
-	{
+	protected String getMergedLine( final String line ) throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		final String sampleId = new StringTokenizer( line, TAB_DELIM ).nextToken();
-		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) )
-		{
+		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) ) {
 			sb.append( BioLockJUtil.removeQuotes( line ) );
-			for( final String field: MetaUtil.getMetadataRecord( sampleId ) )
-			{
+			for( final String field: MetaUtil.getRecord( sampleId ) ) {
 				sb.append( TAB_DELIM ).append( BioLockJUtil.removeQuotes( field ) );
 			}
-		}
-		else
-		{
+		} else {
 			Log.warn( getClass(), "Missing record for: " + sampleId + " in metadata: " + MetaUtil.getPath() );
 			return null;
 		}
 
-		if( mergeHeaderLine == null )
-		{
-			mergeHeaderLine = "Merged OTU table header [" + sampleId + "] = " + sb.toString();
-		}
-		else if( mergeSampleLine == null )
-		{
-			mergeSampleLine = "Example Merged OTU table row [" + sampleId + "] = " + sb.toString();
+		if( this.mergeHeaderLine == null ) {
+			this.mergeHeaderLine = "Merged OTU table header [" + sampleId + "] = " + sb.toString();
+		} else if( this.mergeSampleLine == null ) {
+			this.mergeSampleLine = "Example Merged OTU table row [" + sampleId + "] = " + sb.toString();
 		}
 
 		return sb.toString();

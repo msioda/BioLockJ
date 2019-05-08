@@ -21,8 +21,7 @@ import biolockj.node.ParsedSample;
  * the OTUs assigned to each sample. Parser BioModules read ClassifierModule output to build a single OTU count files
  * for each sample using a standard format.
  */
-public interface ParserModule extends JavaModule
-{
+public interface ParserModule extends JavaModule {
 	/**
 	 * Each sample with taxonomic assignments from a {@link biolockj.module.classifier.ClassifierModule} is parsed by
 	 * {@link #parseSamples()} to produce a {@link biolockj.node.ParsedSample}. As each file is processed, this method

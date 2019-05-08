@@ -1,111 +1,89 @@
 #!/bin/bash
 ##############################################################
 ##                                                          ##
-##  This script is used for AWS core function + logic       ##
+##  This script is used for AWS core functions + logic       ##
 ##                                                          ##
 ##############################################################
-. $BLJ/script/aws_select_functions
+. "${BLJ_SCRIPT}/aws_config_lib"
+. "${BLJ_SCRIPT}/aws_clean_lib"
+. "${BLJ_SCRIPT}/aws_head_node_lib"
+. "${BLJ_SCRIPT}/aws_upload_lib"
 
-# Build the compute environment
-build_compute_env() {
-	compEnv=$(named_arg "$aws_args" computeEnv)
-	myCompEnv=$(aws batch describe-compute-environments --compute-environments $compEnv --query "computeEnvironments[].computeEnvironmentName")
-	if [ ${#myCompEnv} -eq 0 ] || [ "$myCompEnv" == "None" ]; then
-		echo "Building $compEnv"
-		
-		ec2Type=$(named_arg "$aws_args" ec2Type)
-		ami=$(named_arg "$aws_args" ami)
-		subNet=$(named_arg "$aws_args" subNet)
-		batchGroup=$(named_arg "$aws_args" batchGroup)
-		keyName=$(named_arg "$aws_args" keyName)
-		instanceRole=$(named_arg "$aws_args" instanceRole)
-		ec2SpotPer=$(named_arg "$aws_args" ec2SpotPer)
-		iamFleetRole=$(named_arg "$aws_args" iamFleetRole)
-		batchNodeLaunchTemplate=$(named_arg "$aws_args" batchNodeLaunchTemplate)
-		c1="type=$ec2Type,minvCpus=0,maxvCpus=112,desiredvCpus=0,instanceTypes=optimal,imageId=$ami,subnets=$subNet,"
-		c2="securityGroupIds=$batchGroup,ec2KeyPair=$keyName,instanceRole=$instanceRole,bidPercentage=$ec2SpotPer,"
-		c3="spotIamFleetRole=$iamFleetRole,launchTemplate={launchTemplateId=$batchNodeLaunchTemplate}"
-		compResources=${c1}${c2}${c3}
-		
-		echo $(aws batch create-compute-environment --compute-environment-name $compEnv \
-			--type MANAGED --state ENABLED --service-role $(named_arg "$aws_args" serviceRole) \
-			--compute-resources "$compResources")
-	fi
-}
-
-# Build Docker Job defs to use with label references in Nextflow main.nf
-build_docker_job_defs() {
-	stack=$(named_arg "$aws_args" stack)
-	jobRoleArn=$(named_arg "$aws_args" jobRoleArn)
-	dockId=$(named_arg "$aws_args" dockerAccount)
-	dockerVer=$(named_arg "$aws_args" dockerImgVer)
-	dockerModules=$(docker search $dockId | grep ^$dockId | awk '{print $1}')
-	jobVcpus=2
-	jobRam=1024
-	echo $ | while read -r line; do
-		[ "${line/blj_basic}" != "$line" ] && continue
-		jobImg="${line}:${dockerVer}"
-		jobImgClean=$(tr -s /: _ <<< "$jobImg")
-		jobDef="${stack}_${jobImgClean}"
-	    jobConfig="{
-			\"image\": \"$jobImg\",
-			\"vcpus\": $jobVcpus,
-			\"memory\": $jobRam,
-			\"command\": [ \"/bin/bash\" ],
-			\"jobRoleArn\": \"$jobRoleArn\",
-			\"volumes\": [ { \"host\": { \"sourcePath\": \"/mnt/efs\" }, \"name\": \"efs\" } ],
-			\"mountPoints\": [ { \"containerPath\": \"/efs\", \"readOnly\": false, \"sourceVolume\": \"efs\" } ],
-			\"readonlyRootFilesystem\": false,
-			\"privileged\": true
-		}"
-		echo "Created jobConfig: $jobConfig for $jobImg" 
-		
-		jobExists=$(aws batch describe-job-definitions --status ACTIVE --type container --query "jobDefinitions[].containerProperties=[?image='$jobImg']|[*].jobDefinitionName" )
-		jobDefinitions
-		
-		registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
-		echo "registeredJob: $registeredJob"
-		IFS=$'\t' && OFS=$'\t'
-		jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
-		echo "image_$jobImgClean=$jobName"
-	done
-}
+alias clearPipes="sudo rm -rf ${EFS}/pipelines/*; echo AWS pipelines removed"
+alias tailnf="tail -1000f /.nextflow.log"
 
 # Build Cloud-formation Stack
 build_stack() {
-	stack=$(named_arg "$aws_args" stack)
-	[ $(is_stack_complete $stack) == "true" ] && echo "Found existing AWS Stack: $stack" && return 
-	echo "Building cloud formation stack: $stack. Please wait..."
-	stackYml="file://$BLJ/resources/aws/StackEFS.yml"
+	refresh_aws_cache
+	[ $(is_stack_complete $awsStack) == "true" ] && aws_log "Confirmed existing AWS Stack is CREATE_COMPLETE: $awsStack" && return 
+	aws_log "Building cloud formation stack: $awsStack. Please wait..."
+	stackYml="file://${BLJ}/resources/aws/StackEFS.yml"
 	myIp=$(get_ip)/32
-	params='ParameterKey=NetworkAccessIP,ParameterValue='
-	aws cloudformation create-stack --template-body $stackYml --stack-name $stack --capabilities CAPABILITY_IAM --parameters ${params}${myIp}
+	ipParam="ParameterKey=NetworkAccessIP,ParameterValue="
+	spBidParam="ParameterKey=SpotBidPercentage,ParameterValue="
+	params="${ipParam}${myIp}"
+	[ ${awsEc2SpotPer} -gt 0 ] && params="${params} ${spBidParam}${awsEc2SpotPer}"
 	numSecs=0
-	echo "Building Stack: $stack"
-	while [ $(is_stack_complete $stack) != "true" ]; do
+	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name ${awsStack} --capabilities CAPABILITY_IAM --parameters ${params}"
+	aws cloudformation create-stack --template-body ${stackYml} --stack-name ${awsStack} --capabilities CAPABILITY_IAM --parameters ${params}
+	aws_log "Building Stack: ${awsStack}"
+	while [ $(is_stack_complete ${awsStack}) != "true" ]; do
 		printf "." && sleep 5s && numSecs=$((numSecs+5))
 	done
-	echo "Secured to local IP: $myIp in $numSecs seconds"
+	aws_log "Attached secure $awsStack to local IP: ${myIp} in ${numSecs} seconds"
 }
 
-# Build key pair + save to $local_aws_dir/$keyPair.pem file
-cache_key_pair() {
-	keyPair=$(named_arg "$aws_args" keyName)
-	keyFile=$local_aws_dir/$keyPair.pem
-	if [ ! -f $keyFile ]; then
-		keys=$(aws ec2 describe-key-pairs)
-		if [ "${keys/$keyPair}" == "$keys" ]; then
-			aws ec2 create-key-pair --key-name $keyPair --query "KeyMaterial" > $keyFile
-			echo "Security keys created.  Private key: $keyFile"
-			#AWS keypair security requirement (perms 400)  
-			chmod 400 $keyFile
+# Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
+build_s3() {
+	if [ ${#awsS3} -gt 0 ]; then
+		awsS3=$(aws s3api list-buckets --region $awsRegion  --query "Buckets[?Name=='$awsS3']|[*].Name")
+		if [ ${#awsS3} -eq 0 ] || [ "$awsS3" == "None" ]; then
+			exit_script "Error [ aws_functions.build_s3() ]:  Configured S3 bucket [ aws.s3=$awsS3 ] not found"
 		fi
+		aws_log "Found existing S3 Bucket $awsS3"
+	else
+		awsS3=$(generate_name blj $(aws_s3_buckets))
+		awsS3=$(aws s3api create-bucket --region $awsRegion --bucket $awsS3)
+		if [ ${#awsS3} -eq 0 ] || [ "$awsS3" == "None" ]; then
+			exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: $awsS3"
+		fi
+		set_blj_prop awsS3 ${awsS3:1}
+		aws_log "Set awsS3=${awsS3:1}"
+	fi
+	
+	s3items=$(aws s3api list-objects --bucket ${awsS3} --query "Contents[].Key")
+	if [ "${s3items/nextflow}" == "${s3items}" ]; then
+		aws s3api put-object --bucket ${awsS3} --key nextflow/
 	fi
 }
 
+# Build key pair + save to ~/.aws/$awsStack.pem file
+cache_key_pair() {
+	refresh_aws_cache
+	keyFile=$(key_file)
+	if [ ! -f "$keyFile" ]; then
+		keys=$(aws ec2 describe-key-pairs)
+		if [ "${keys/$keyPair}" == "$keys" ]; then
+			aws ec2 create-key-pair --key-name ${awsStack} --query "KeyMaterial" > $keyFile
+			aws_log "Security keys created.  Private key: $keyFile"
+			#AWS keypair security requirement (perms 400)  
+			chmod 400 $keyFile
+			aws_log "Generated new: $keyFile"
+		fi
+	else
+		aws_log "Found existing: $keyFile"
+	fi
+}
+
+# Deploy AWS cloud formation AMI, S3 Bucket, EC2-KeyPair, Cloud Formation Stack, and Compute Environment
+# Confirm any configured values exist, create objects that are undefined as store them in AWS config
+deploy_cloud_formation() {
+	refresh_aws_cache && build_s3 && get_ami && set_stack_name && cache_key_pair && verify_stack
+}
+
 # Generate a name not found in $1, created using format $2-$date-index
-# Param 1 (required) Key String
-# Param 2 (optional) List of unavailable names
+# Param 1 - Key String
+# Param 2 - (optional) List of unavailable names
 generate_name() {
 	testVal="$1-$(date +%F)"
 	[ $# -eq 1 ] && echo $testVal && return
@@ -115,7 +93,23 @@ generate_name() {
 		[ "${2/$testVal}" == "$2" ] && echo $testVal && return
 		i=$[$i+1] && testVal="$1-$(date +%F)-$i"
 	done
-	[ $i -eq $maxI ] && echo "Error:  Failed to generate unique name: $maxI names already exist!" && exit 1
+	[ $i -eq $maxI ] && exit_script "Error [ aws_functions.generate_name() ]: Failed to generate unique name: $maxI names already exist!"
+}
+
+# Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
+get_ami() {
+	if [ ${#awsAmi} -gt 0 ]; then
+		awsAmi=$(aws ec2 describe-images --image-ids $awsAmi --query "Images[?State=='available'].ImageId")
+		[ $awsAmi == "None" ] && exit_script "Error [ aws_functions.get_ami() ]:  Unable to use configured AWS AMI: $ami"
+		[ ${#awsAmi} -gt 0 ] && aws_log "Found existing AWS Image: $awsAmi" && return
+	else
+		awsAmi=$(aws ec2 describe-images --region $awsRegion --owner amazon \
+			--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
+			--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
+		[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] && exit_script "Error [ aws_functions.get_ami() ]: Unable to obtain AWS AMI template from region $awsRegion"
+		set_blj_prop awsAmi $awsAmi
+		aws_log "Set awsAmi=$awsAmi"
+	fi
 }
 
 # Get current IP address
@@ -123,64 +117,72 @@ get_ip() {
 	echo $(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//' )
 }
 
-# Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
-# Param 1 (optional) S3 bucket name
-get_s3() {
-	s3Bucket=
-	if [ $# -eq 1 ]; then
-		s3Bucket=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$1']|[*].Name")
-		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
-			echo "Error:  S3 bucket [ aws.s3=$1 ] not found" && exit 1
-		fi
-	else
-		newS3=$(generate_name blj $(aws_s3_buckets))
-		s3Bucket=$(aws s3api create-bucket --region $(aws_region) --bucket $newS3)
-		if [ ${#s3Bucket} -eq 0 ] || [ "$s3Bucket" == "None" ]; then
-			echo "Error:  Failed to create S3 bucket: $newS3" && exit 1
-		fi
-	fi
-	echo $s3Bucket
+# Get jobs by queue and status
+# Param 1 - Job queue ARN
+# Param 2 - Job status
+get_aws_jobs() {
+	echo $(aws batch list-jobs --job-queue ${1} --job-status ${2} --query "jobSummaryList[].jobId")
 }
 
-# Return stack name.  If stack name arg given, verify is exists, else generate a new stack stack name.
-# Param 1 (optional) Stack name
-get_stack_name() {
-	if [ $# -eq 0 ]; then
-		awsStacks=$(aws_stacks CREATE_COMPLETE)
-		echo $(generate_name bljStack $awsStacks)
-	elif [ $# -eq 1 ]; then
-		awsStacks=$(aws_stacks CREATE_COMPLETE)
-		[ "${awsStacks/$1}" == "$awsStacks" ] && echo "Error:  Config property [ aws.stack=$1 ] does not exist!" && exit 1
-		echo $1
-	fi
+# Got existing S3 bucket names in your region
+get_s3_buckets() {
+	echo $(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
 }
 
 # Check status of Cloud Formation Stack
-# Param 1 Stack name
 is_stack_complete() {
-	stackExists=$( echo $(aws cloudformation describe-stacks --query "Stacks[].StackName") | grep -c $1 )
-	[ ${#stackExists} -gt 0 ] && testStack=$(aws cloudformation describe-stacks --stack-name $1 \
-		--query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
-	[ ${#testStack} -eq 0 ] || [ "$testStack" == "None" ] && echo "false"
-	[ ${#testStack} -gt 0 ] && echo "true"
+	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
+	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] || [ $# -eq 0 ] && echo "false" && return
+	stacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
+	[ ${#stacks} -gt 0 ] && [ "$stacks" != "None" ] && [ "${stacks/$awsStack}" != "$stacks"  ] && echo "true" && return
+	echo "false"
 }
 
-# Main method, called to launch BioLockJ on AWS
-# Params format:  argName=argValue --> for example [ aws.s3=blj-2019-03-24 ]
-# Params (required) Config property: aws.ec2InstanceType, aws.ec2SpotPer, aws.profile, docker.imgVersion
-# Params (optional) Config properties that generate vals if undefined: aws.stack, aws.s3 
-
+# Main method #1, called to build AWS environment and launch BioLockJ pipeline on AWS
+# Param 1 - Pipeline Config file-path
+# Param 2 - Start Pipeline
+# Param 3 - Flag to use existing AWS cloud
 run_aws() {
-	init_aws_config "$@" && aws_dev_config && set_account_config && build_stack && set_stack_config && \
-		save_aws_config && cache_key_pair && build_compute_env && build_docker_job_defs
+	[ $# -eq 0 ] || [ ! -f "${1}" ] && exit_script "Error [ aws_config_lib.run_aws() ]: Required pipeline Config file not found: \"$1\""
+	init_aws_config "${1}" ${3}
+	[ ${#3} -eq 0 ] && deploy_cloud_formation
+	launch_ec2_head_node ${2} ${3}
 }
 
-# Build account config (and create s3 bucket if needed)
-set_account_config() {
-	set_aws_config access_id $(aws_local_prop aws_access_key_id $aws_cred_file)
-	set_aws_config key $(aws_local_prop aws_secret_access_key $aws_cred_file)
-	set_aws_config ami $(aws_ami)
-	set_aws_config s3Bucket $(get_s3 $(named_arg "$aws_args" myS3))
-	set_aws_config stack $(get_stack_name $(named_arg "$aws_args" stackName))
-	remove_aws_config stackName
+
+# Create new stack name if awsStack is undefined in AWS Config
+set_stack_name() {
+	if [ ${#awsStack} -gt 0 ]; then
+		enabledStacks=$(aws_stacks CREATE_COMPLETE)
+		if [ "${enabledStacks/$awsStack}" == "${enabledStacks}" ]; then
+			exit_script "Using Pipeline Config \"aws.stack=${awsStack}\""
+		fi
+		aws_log "Pipeline Config \"aws.stack=${awsStack}\".status=CREATE_COMPLETE" && return
+	fi
+	aws_log "Generating unique AWS stack name"
+	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
+	newStack=$(generate_name bljStack "$stacks")
+	set_blj_prop awsStack $newStack
+	aws_log "Set awsStack=$newStack"
+	refresh_aws_cache
+}
+
+# Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.
+# If aws.stack was undefined, create a new stack.
+verify_stack() {
+	refresh_aws_cache
+	aws_log "Check status of AWS Stack: \"$awsStack\""
+	allStacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
+	enabledStacks=$(aws_stacks CREATE_COMPLETE)
+	createInProgStacks=$(aws_stacks CREATE_IN_PROGRESS)
+	if [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$awsStack}" != "$enabledStacks" ]; then
+		aws_log "Configured AWS Stack: $awsStack --> status=CREATE_COMPLETE"
+	elif [ ${#createInProgStacks} -gt 0 ] && [ "${createInProgStacks/$awsStack}" != "$createInProgStacks" ]; then
+		sleep 30 && verify_stack
+	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$awsStack}" != "$allStacks" ]; then
+		status=$(aws cloudformation describe-stacks --stack-name ${awsStack} --query "Stacks[*].StackStatus")
+		exit_script "Error [ aws_functions.verify_stack() ]:  Configured AWS Stack [ $awsStack ] exists but is disabled --> status=$status"
+	else
+		build_stack
+	fi
 }

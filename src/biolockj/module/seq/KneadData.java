@@ -18,9 +18,10 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.DatabaseModule;
-import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.DockerUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModule runs biobakery kneaddata program to remove contaminated DNA.<br>
@@ -29,29 +30,22 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Knead Data Sanitizer
  */
-public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModule
-{
+public class KneadData extends SeqModuleImpl implements DatabaseModule {
 
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
-		for( final File seqFile: files )
-		{
+		for( final File seqFile: files ) {
 			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
-					&& !SeqUtil.isForwardRead( seqFile.getName() ) )
-			{
+				&& !SeqUtil.isForwardRead( seqFile.getName() ) ) {
 				continue;
 			}
 
 			final ArrayList<String> lines = new ArrayList<>();
 
-			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-			{
+			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
 				lines.add( sanatize( seqFile, SeqUtil.getPairedReads( files ).get( seqFile ) ) );
-			}
-			else
-			{
+			} else {
 				lines.add( sanatize( seqFile, null ) );
 			}
 
@@ -64,73 +58,56 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	}
 
 	@Override
-	public void checkDependencies() throws Exception
-	{
-		if( !SeqUtil.isFastQ() )
-		{
-			throw new Exception( getClass().getName() + " requires FASTQ format!" );
-		}
+	public void checkDependencies() throws Exception {
+		if( !SeqUtil.isFastQ() ) throw new Exception( getClass().getName() + " requires FASTQ format!" );
 
 		getParams();
 
 	}
 
 	@Override
-	public File getDB() throws Exception
-	{
+	public File getDB() throws Exception {
 		final List<String> paths = Config.requireList( this, KNEAD_DBS );
-		if( paths.size() == 1 )
-		{
-			return new File( Config.getSystemFilePath( paths.get( 0 ) ) );
-		}
+
+		if( paths.size() == 1 ) return new File( paths.get( 0 ) );
+
+		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
 
 		final List<File> dbs = new ArrayList<>();
-		for( final String db: Config.requireList( this, KNEAD_DBS ) )
-		{
-			dbs.add( new File( Config.getSystemFilePath( db ) ) );
+		for( final String db: Config.requireList( this, KNEAD_DBS ) ) {
+			dbs.add( new File( db ) );
 		}
 
 		File parentDir = null;
 		File testDB = null;
-		for( final File db: dbs )
-		{
-			if( testDB == null )
-			{
+		for( final File db: dbs ) {
+			if( testDB == null ) {
 				testDB = db;
-			}
-			else if( parentDir == null )
-			{
+			} else if( parentDir == null ) {
 				parentDir = BioLockJUtil.getCommonParent( testDB, db );
-			}
-			else
-			{
+			} else {
 				parentDir = BioLockJUtil.getCommonParent( parentDir, db );
 			}
 		}
 
-		for( final File db: dbs )
-		{
-			if( !db.getAbsolutePath().contains( parentDir.getAbsolutePath() ) )
-			{
-				throw new Exception(
-						"Docker implementation requires all databases exist under a common parent directory" );
-			}
+		if( parentDir == null )
+			throw new Exception( "Docker implementation requires all databases exist under a common parent directory" );
 
+		for( final File db: dbs ) {
+			if( !db.getAbsolutePath().contains( parentDir.getAbsolutePath() ) ) throw new Exception(
+				"Docker implementation requires all databases exist under a common parent directory" );
 		}
+
 		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
 		return parentDir;
 	}
 
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
-		try
-		{
+		try {
 			sb.append( "Removed contaminents in DB: " + Config.getList( this, KNEAD_DBS ) );
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( getClass(), msg );
@@ -143,13 +120,12 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	 * This method generates the worker script function: {@value #FUNCTION_SANATIZE}.
 	 */
 	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
+	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_SANATIZE + "() {" );
-		lines.add( Config.getExe( this, EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 "
-				+ INPUT_PARAM + " $2 "
-				+ ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
+		lines.add(
+			Config.getExe( this, EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 " + INPUT_PARAM
+				+ " $2 " + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
 				+ OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -164,25 +140,21 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	 * @return Script lines to move the file or files
 	 * @throws Exception if errors occur building lines
 	 */
-	protected List<String> buildScriptLinesToMoveValidSeqsToOutputDir( final String sampleId ) throws Exception
-	{
+	protected List<String> buildScriptLinesToMoveValidSeqsToOutputDir( final String sampleId ) throws Exception {
 		final List<String> lines = new ArrayList<>();
 		final String fileSuffix = fastqExt();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-		{
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
 			final String fwSuffix = Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX );
 			final String rvSuffix = Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX );
 			final File fwOutFile = new File(
-					getOutputDir().getAbsolutePath() + File.separator + sampleId + fwSuffix + fileSuffix );
+				getOutputDir().getAbsolutePath() + File.separator + sampleId + fwSuffix + fileSuffix );
 			final File rvOutFile = new File(
-					getOutputDir().getAbsolutePath() + File.separator + sampleId + rvSuffix + fileSuffix );
+				getOutputDir().getAbsolutePath() + File.separator + sampleId + rvSuffix + fileSuffix );
 			lines.add(
-					"mv " + getSanatizedFile( sampleId, false ).getAbsolutePath() + " " + fwOutFile.getAbsolutePath() );
+				"mv " + getSanatizedFile( sampleId, false ).getAbsolutePath() + " " + fwOutFile.getAbsolutePath() );
 			lines.add(
-					"mv " + getSanatizedFile( sampleId, true ).getAbsolutePath() + " " + rvOutFile.getAbsolutePath() );
-		}
-		else
-		{
+				"mv " + getSanatizedFile( sampleId, true ).getAbsolutePath() + " " + rvOutFile.getAbsolutePath() );
+		} else {
 			final File outFile = new File( getOutputDir().getAbsolutePath() + File.separator + sampleId + fileSuffix );
 			lines.add( "mv " + getSanatizedFile( sampleId, null ).getAbsolutePath() + " " + outFile.getAbsolutePath() );
 		}
@@ -196,27 +168,19 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	 * @return Database parameters
 	 * @throws Exception if errors occur
 	 */
-	protected String getDBs() throws Exception
-	{
-		if( !RuntimeParamUtil.isDockerMode() )
-		{
+	protected String getDBs() throws Exception {
+		if( !DockerUtil.inDockerEnv() ) {
 			Config.requireExistingDirs( this, KNEAD_DBS );
 		}
 
 		String dbs = "";
-		for( final String path: Config.requireList( this, KNEAD_DBS ) )
-		{
+		for( final String path: Config.requireList( this, KNEAD_DBS ) ) {
 			final File db = new File( path );
-			if( RuntimeParamUtil.isDockerMode() && Config.requireList( this, KNEAD_DBS ).size() == 1 )
-			{
-				dbs += DB_PARAM + " " + DockerUtil.CONTAINER_DB_DIR + " ";
-			}
-			else if( RuntimeParamUtil.isDockerMode() )
-			{
-				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) + " ";
-			}
-			else
-			{
+			if( DockerUtil.inDockerEnv() && Config.requireList( this, KNEAD_DBS ).size() == 1 ) {
+				dbs += DB_PARAM + " " + DockerUtil.DOCKER_DB_DIR + " ";
+			} else if( DockerUtil.inDockerEnv() ) {
+				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) + " ";
+			} else {
 				dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
 
 			}
@@ -233,38 +197,32 @@ public class KneadData extends SeqModuleImpl implements SeqModule, DatabaseModul
 	 * @return File with sanitized sequences
 	 * @throws Exception if errors occur
 	 */
-	protected File getSanatizedFile( final String sampleId, final Boolean isRvRead ) throws Exception
-	{
+	protected File getSanatizedFile( final String sampleId, final Boolean isRvRead ) throws Exception {
 		String suffix = "";
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-		{
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
 			suffix += isRvRead ? RV_OUTPUT_SUFFIX: FW_OUTPUT_SUFFIX;
 		}
 
 		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix + fastqExt() );
 	}
 
-	private String fastqExt() throws Exception
-	{
-		return "." + Constants.FASTQ;
-	}
-
-	private String getParams() throws Exception
-	{
+	private String getParams() throws Exception {
 		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM ) + getDBs();
 		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM )
-				&& RuntimeParamUtil.isDockerMode() )
-		{
+			&& DockerUtil.inDockerEnv() ) {
 			params += DOCKER_TRIM_PARAM + " ";
 		}
 
 		return params;
 	}
 
-	private String sanatize( final File seqFile, final File rvRead ) throws Exception
-	{
+	private static String fastqExt() {
+		return "." + Constants.FASTQ;
+	}
+
+	private static String sanatize( final File seqFile, final File rvRead ) throws Exception {
 		return FUNCTION_SANATIZE + " " + SeqUtil.getSampleId( seqFile.getName() ) + " " + seqFile.getAbsolutePath()
-				+ ( rvRead == null ? "": " " + rvRead.getAbsolutePath() );
+			+ ( rvRead == null ? "": " " + rvRead.getAbsolutePath() );
 	}
 
 	/**

@@ -16,7 +16,6 @@ import java.io.File;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.r16s.RdpNode;
@@ -28,8 +27,7 @@ import biolockj.util.MemoryUtil;
  * 
  * @blj.web_desc RDP Parser
  */
-public class RdpParser extends ParserModuleImpl implements ParserModule
-{
+public class RdpParser extends ParserModuleImpl {
 	/**
 	 * Parse all {@link biolockj.module.classifier.r16s.RdpClassifier} reports in the input directory.<br>
 	 * Build an {@link biolockj.node.r16s.RdpNode} for each line.<br>
@@ -40,28 +38,21 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	 * <li>Add the {@link biolockj.node.r16s.RdpNode#getCount()} (1) to {@link biolockj.node.ParsedSample} OTU count.
 	 * </ol>
 	 * <p>
-	 * Sample QIIME report line (head 7A_1_reported.tsv):<br>
+	 * Sample QIIME report line (head 7A_reported.tsv):<br>
 	 * FCABK7W:1:2105:21787:12788#/1 Root rootrank 1.0 Bacteria domain 1.0 Firmicutes phylum 1.0 Clostridia class 1.0
 	 * Clostridiales order 1.0 Ruminococcaceae family 1.0 Faecalibacterium genus 1.0
 	 */
 	@Override
-	public void parseSamples() throws Exception
-	{
-		for( final File file: getInputFiles() )
-		{
+	public void parseSamples() throws Exception {
+		for( final File file: getInputFiles() ) {
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			try
-			{
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
+			try {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 					addOtuNode( new RdpNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
 				}
-			}
-			finally
-			{
-				if( reader != null )
-				{
+			} finally {
+				if( reader != null ) {
 					reader.close();
 				}
 			}
@@ -76,17 +67,11 @@ public class RdpParser extends ParserModuleImpl implements ParserModule
 	 * @return true if {@link biolockj.node.OtuNode} is valid
 	 */
 	@Override
-	protected boolean isValid( final OtuNode node )
-	{
-		try
-		{
+	protected boolean isValid( final OtuNode node ) {
+		try {
 			if( ( (RdpNode) node ).getScore() >= Config.requirePositiveInteger( this, Constants.RDP_THRESHOLD_SCORE ) )
-			{
 				return super.isValid( node );
-			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.error( getClass(), "Unable to verify if OTU node is valid! " + ex.getMessage(), ex );
 		}
 		return false;

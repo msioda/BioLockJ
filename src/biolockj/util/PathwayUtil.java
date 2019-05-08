@@ -24,11 +24,9 @@ import biolockj.module.BioModule;
 /**
  * This utility helps work HumanN2 pathway abundance data.<br>
  */
-public class PathwayUtil
-{
+public class PathwayUtil {
 	// Prevent instantiation
-	private PathwayUtil()
-	{}
+	private PathwayUtil() {}
 
 	/**
 	 * Check pipeline input contains Humann2Parser module output.
@@ -36,17 +34,12 @@ public class PathwayUtil
 	 * @param files Files to test
 	 * @return TRUE if pipeline input contains module input
 	 */
-	public static boolean containsHn2ParserOutput( final Collection<File> files )
-	{
-		for( final File file: files )
-		{
+	public static boolean containsHn2ParserOutput( final Collection<File> files ) {
+		for( final File file: files ) {
 			final String name = file.getName();
 			if( name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_PATH_ABUND_SUM ) )
-					|| name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_PATH_COVG_SUM ) )
-					|| name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_GENE_FAM_SUM ) ) )
-			{
-				return true;
-			}
+				|| name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_PATH_COVG_SUM ) )
+				|| name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_GENE_FAM_SUM ) ) ) return true;
 
 		}
 		return false;
@@ -64,8 +57,7 @@ public class PathwayUtil
 	 * @param type Humann2 classifier output type
 	 * @return Name of humann2 output file of the given type
 	 */
-	public static String getHn2ClassifierOutput( final String type )
-	{
+	public static String getHn2ClassifierOutput( final String type ) {
 		return Config.pipelineName() + "_" + type + Constants.TSV_EXT;
 	}
 
@@ -83,23 +75,12 @@ public class PathwayUtil
 	 * @return Name of humann2 output file of the given type
 	 * @throws Exception if unable to determine the type
 	 */
-	public static String getHn2Type( final File file ) throws Exception
-	{
-		if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) )
-		{
-			return Constants.HN2_PATH_ABUND_SUM;
-		}
-		if( file.getName().contains( Constants.HN2_PATH_COVG_SUM ) )
-		{
-			return Constants.HN2_PATH_COVG_SUM;
-		}
-		if( file.getName().contains( Constants.HN2_GENE_FAM_SUM ) )
-		{
-			return Constants.HN2_GENE_FAM_SUM;
-		}
+	public static String getHn2Type( final File file ) throws Exception {
+		if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) return Constants.HN2_PATH_ABUND_SUM;
+		if( file.getName().contains( Constants.HN2_PATH_COVG_SUM ) ) return Constants.HN2_PATH_COVG_SUM;
+		if( file.getName().contains( Constants.HN2_GENE_FAM_SUM ) ) return Constants.HN2_GENE_FAM_SUM;
 		throw new Exception( "Invalid Pathway file [ " + file.getAbsolutePath()
-				+ " ] name does not match HumanN2 output file name format.  Valid file suffixes contain: "
-				+ validFormats );
+			+ " ] name does not match HumanN2 output file name format.  Valid file suffixes contain: " + validFormats );
 	}
 
 	/**
@@ -111,14 +92,13 @@ public class PathwayUtil
 	 * @return Pathway count file
 	 * @throws Exception if invalid file name formats are found
 	 */
-	public static File getPathwayCountFile( final File dir, final File hn2OutputFile, String prefix ) throws Exception
-	{
-		prefix = prefix == null ? "": prefix;
-		if( !prefix.startsWith( Config.pipelineName() ) )
-		{
-			prefix = Config.pipelineName() + "_" + prefix;
+	public static File getPathwayCountFile( final File dir, final File hn2OutputFile, final String prefix )
+		throws Exception {
+		String myPrefix = prefix == null ? "": prefix;
+		if( !myPrefix.startsWith( Config.pipelineName() ) ) {
+			myPrefix = Config.pipelineName() + "_" + prefix;
 		}
-		final String name = prefix + "_" + getHn2Type( hn2OutputFile ) + Constants.TSV_EXT;
+		final String name = myPrefix + "_" + getHn2Type( hn2OutputFile ) + Constants.TSV_EXT;
 		return new File( dir.getAbsolutePath() + File.separator + name );
 	}
 
@@ -127,18 +107,13 @@ public class PathwayUtil
 	 * 
 	 * @param file File to test
 	 * @return boolean TRUE if file is a pathway abundance file
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isPathwayFile( final File file ) throws Exception
-	{
+	public static boolean isPathwayFile( final File file ) {
 		final boolean isPathAund = file.getName().endsWith( "_" + Constants.HN2_PATH_ABUND_SUM + Constants.TSV_EXT );
 		final boolean isPathCovg = file.getName().contains( "_" + Constants.HN2_PATH_COVG_SUM + Constants.TSV_EXT );
 		final boolean isGeneFaml = file.getName().contains( "_" + Constants.HN2_GENE_FAM_SUM + Constants.TSV_EXT );
 
-		if( isPathAund || isPathCovg || isGeneFaml )
-		{
-			return true;
-		}
+		if( isPathAund || isPathCovg || isGeneFaml ) return true;
 		return false;
 	}
 
@@ -148,23 +123,15 @@ public class PathwayUtil
 	 * @param module BioModule
 	 * @return TRUE if module generated OTU count files
 	 */
-	public static boolean isPathwayModule( final BioModule module )
-	{
-		try
-		{
+	public static boolean isPathwayModule( final BioModule module ) {
+		try {
 			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
-					FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
+				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-			for( final File f: files )
-			{
-				if( isPathwayFile( f ) )
-				{
-					return true;
-				}
+			for( final File f: files ) {
+				if( isPathwayFile( f ) ) return true;
 			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.warn( PathwayUtil.class, "Error occurred while inspecting module output files: " + module );
 			ex.printStackTrace();
 		}
@@ -178,11 +145,9 @@ public class PathwayUtil
 	 * @return TRUE if humann2 counts should be used
 	 * @throws Exception if errors occur
 	 */
-	public static Boolean useHumann2RawCount( final BioModule module ) throws Exception
-	{
+	public static Boolean useHumann2RawCount( final BioModule module ) throws Exception {
 		Integer initCount = initMap.get( module.getClass().getName() );
-		if( initCount == null )
-		{
+		if( initCount == null ) {
 			initCount = 0;
 		}
 		initMap.put( module.getClass().getName(), ++initCount );
@@ -194,57 +159,43 @@ public class PathwayUtil
 		final List<Integer> hn2Classifiers = new ArrayList<>();
 		final List<Integer> otherRModules = new ArrayList<>();
 		final List<Integer> thisClass = new ArrayList<>();
-		for( int i = 0; i < mods.size(); i++ )
-		{
+		for( int i = 0; i < mods.size(); i++ ) {
 			final boolean isParser = mods.get( i ).toLowerCase().contains( "parser" );
 			final boolean isClassifier = mods.get( i ).toLowerCase().contains( "classifier" );
 			final boolean isHn2 = isClassifier && mods.get( i ).toLowerCase().contains( "humann2" );
-			if( mods.get( i ).equals( module.getClass().getName() ) )
-			{
+			if( mods.get( i ).equals( module.getClass().getName() ) ) {
 				thisClass.add( i );
-			}
-			else if( mods.get( i ).startsWith( "R_" ) )
-			{
+			} else if( mods.get( i ).startsWith( "R_" ) ) {
 				otherRModules.add( i );
-			}
-			else if( isHn2 )
-			{
+			} else if( isHn2 ) {
 				hn2Classifiers.add( i );
-			}
-			else if( isClassifier )
-			{
+			} else if( isClassifier ) {
 				classifiers.add( i );
-			}
-			else if( isParser )
-			{
+			} else if( isParser ) {
 				parsers.add( i );
 			}
 		}
 
 		final boolean hasPathwayInputs = BioLockJUtil
-				.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE );
+			.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE );
 		final boolean hasTaxaInputs = BioLockJUtil
-				.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+			.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
 		Log.debug( module.getClass(), "hasPathwayInputs: " + hasPathwayInputs );
 		Log.debug( module.getClass(), "hasTaxaInputs: " + hasTaxaInputs );
-		if( hn2Classifiers.isEmpty() && classifiers.isEmpty() )
-		{
-			if( hasPathwayInputs && !hasTaxaInputs )
-			{
+		if( hn2Classifiers.isEmpty() && classifiers.isEmpty() ) {
+			if( hasPathwayInputs && !hasTaxaInputs ) {
 				Log.debug( module.getClass(), "No classifier module found & pipeline input contains Humann2 reports" );
 				return true;
 			}
 			Log.debug( module.getClass(),
-					"No classifier modules found & pipeline inputs do not contain Humann2 reports" );
+				"No classifier modules found & pipeline inputs do not contain Humann2 reports" );
 			return false;
 		}
-		if( hn2Classifiers.isEmpty() )
-		{
+		if( hn2Classifiers.isEmpty() ) {
 			Log.debug( module.getClass(), "No HN2 classifiers configured: count tables must be taxa tables" );
 			return false;
 		}
-		if( classifiers.isEmpty() )
-		{
+		if( classifiers.isEmpty() ) {
 			Log.debug( module.getClass(), "No standard classifiers configured: return( TRUE )" );
 			return true;
 		}
@@ -258,8 +209,7 @@ public class PathwayUtil
 		Log.debug( module.getClass(), "classifierIndex: " + ( classifierIndex == null ? "N/A": classifierIndex ) );
 		Log.debug( module.getClass(), "parserIndex: " + ( parserIndex == null ? "N/A": parserIndex ) );
 
-		if( hn2Index == null )
-		{
+		if( hn2Index == null ) {
 			Log.debug( module.getClass(), "No HN2 classifiers BEFORE R-module index so return( FALSE ): " + rIndex );
 			return false;
 		}
@@ -280,27 +230,21 @@ public class PathwayUtil
 	 * @param module HumanN2 module
 	 * @throws Exception if errors occur
 	 */
-	public static void verifyConfig( final BioModule module ) throws Exception
-	{
+	public static void verifyConfig( final BioModule module ) throws Exception {
 		if( Config.getBoolean( module, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-				&& Config.getBoolean( module, Constants.HN2_DISABLE_PATH_COVERAGE )
-				&& Config.getBoolean( module, Constants.HN2_DISABLE_GENE_FAMILIES ) )
-		{
+			&& Config.getBoolean( module, Constants.HN2_DISABLE_PATH_COVERAGE )
+			&& Config.getBoolean( module, Constants.HN2_DISABLE_GENE_FAMILIES ) )
 			throw new ConfigViolationException(
-					"Must enable at least one type of HumanN2 report.  All 3 reports are disable via Config properties: "
-							+ Constants.HN2_DISABLE_PATH_ABUNDANCE + "=" + Constants.FALSE + ", "
-							+ Constants.HN2_DISABLE_PATH_COVERAGE + "=" + Constants.FALSE + ", "
-							+ Constants.HN2_DISABLE_GENE_FAMILIES + "=" + Constants.FALSE );
-		}
+				"Must enable at least one type of HumanN2 report.  All 3 reports are disable via Config properties: "
+					+ Constants.HN2_DISABLE_PATH_ABUNDANCE + "=" + Constants.FALSE + ", "
+					+ Constants.HN2_DISABLE_PATH_COVERAGE + "=" + Constants.FALSE + ", "
+					+ Constants.HN2_DISABLE_GENE_FAMILIES + "=" + Constants.FALSE );
 	}
 
-	private static Integer getClosestIndex( final List<Integer> indexes, final Integer target ) throws Exception
-	{
+	private static Integer getClosestIndex( final List<Integer> indexes, final Integer target ) {
 		Integer hit = null;
-		for( final Integer i: indexes )
-		{
-			if( i < target )
-			{
+		for( final Integer i: indexes ) {
+			if( i < target ) {
 				hit = i;
 			}
 		}
@@ -310,5 +254,5 @@ public class PathwayUtil
 	private static Map<String, Integer> initMap = new HashMap<>();
 
 	private static String validFormats = "[ " + Constants.HN2_PATH_ABUND_SUM + ", " + Constants.HN2_PATH_COVG_SUM + ", "
-			+ Constants.HN2_GENE_FAM_SUM + " ]";
+		+ Constants.HN2_GENE_FAM_SUM + " ]";
 }

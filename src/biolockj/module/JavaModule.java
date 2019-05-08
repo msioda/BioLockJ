@@ -14,8 +14,7 @@ package biolockj.module;
 /**
  * Classes that implement this interface are pure Java modules.<br>
  */
-public interface JavaModule extends ScriptModule
-{
+public interface JavaModule extends ScriptModule {
 
 	/**
 	 * This method will create the success flag file so the next module can run.

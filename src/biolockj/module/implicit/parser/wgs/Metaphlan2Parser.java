@@ -14,7 +14,6 @@ package biolockj.module.implicit.parser.wgs;
 import java.io.BufferedReader;
 import java.io.File;
 import biolockj.Constants;
-import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.wgs.MetaphlanNode;
 import biolockj.util.BioLockJUtil;
@@ -25,8 +24,7 @@ import biolockj.util.MemoryUtil;
  * 
  * @blj.web_desc MetaPhlAn2 Parser
  */
-public class Metaphlan2Parser extends ParserModuleImpl implements ParserModule
-{
+public class Metaphlan2Parser extends ParserModuleImpl {
 
 	/**
 	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.Metaphlan2Classifier}:
@@ -37,31 +35,23 @@ public class Metaphlan2Parser extends ParserModuleImpl implements ParserModule
 	 * count.
 	 * </ol>
 	 * <p>
-	 * Sample Metaphlan2 report line (head 7A_1_reported.tsv) :<br>
+	 * Sample Metaphlan2 report line (head 7A_reported.tsv) :<br>
 	 * #SampleID Metaphlan22_Analysis #clade_name relative_abundance coverage average_genome_length_in_the_clade
 	 * estimated_number_of_reads_from_the_clade k__Bacteria|p__Bacteroidetes 14.68863 0.137144143537 4234739 580770
 	 */
 	@Override
-	public void parseSamples() throws Exception
-	{
-		for( final File file: getInputFiles() )
-		{
+	public void parseSamples() throws Exception {
+		for( final File file: getInputFiles() ) {
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			try
-			{
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
-					if( !line.startsWith( "#" ) )
-					{
+			try {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+					if( !line.startsWith( "#" ) ) {
 						addOtuNode( new MetaphlanNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
 					}
 				}
-			}
-			finally
-			{
-				if( reader != null )
-				{
+			} finally {
+				if( reader != null ) {
 					reader.close();
 				}
 			}

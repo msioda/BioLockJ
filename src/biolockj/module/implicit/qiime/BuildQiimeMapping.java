@@ -17,7 +17,6 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.ScriptModule;
-import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
@@ -44,16 +43,14 @@ import biolockj.util.SeqUtil;
  * <li>Rename the validated mapping file to the original metadata file name and save to the module output directory.
  * </ol>
  */
-public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
-{
+public class BuildQiimeMapping extends SeqModuleImpl {
 	/**
 	 * Create QIIME mapping based on metadata file, output to temp dir. Add required fields if missing.
 	 *
 	 * @return New Metadata file
 	 * @throws Exception if unable to build the mapping file
 	 */
-	public File addMissingFields() throws Exception
-	{
+	public File addMissingFields() throws Exception {
 		final boolean hasQm1 = MetaUtil.getFieldNames().contains( Constants.QIIME_BARCODE_SEQ_COL );
 		final boolean hasQm2 = MetaUtil.getFieldNames().contains( Constants.QIIME_LINKER_PRIMER_SEQ_COL );
 		final boolean hasQm3 = MetaUtil.getFieldNames().contains( Constants.QIIME_DEMUX_COL );
@@ -61,13 +58,11 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 
 		final Map<String, String> metaLines = new HashMap<>();
 		String header = null;
-		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getFile() );
-		for( String line = reader.readLine(); line != null; line = reader.readLine() )
-		{
+		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getMetadata() );
+		for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 			final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
 			metaLines.put( st.nextToken(), line );
-			if( header == null )
-			{
+			if( header == null ) {
 				Log.info( getClass(), "Initial metadata columns = " + line );
 				header = line;
 			}
@@ -75,76 +70,63 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 		reader.close();
 
 		MetaUtil.setFile( getQiimeMapping() );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( MetaUtil.getFile() ) );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( MetaUtil.getMetadata() ) );
 		writer.write( QIIME_ID );
-		if( !hasQm1 )
-		{
+		if( !hasQm1 ) {
 			Log.info( getClass(), "Add required column(2) field = " + Constants.QIIME_BARCODE_SEQ_COL );
 			writer.write( TAB_DELIM + Constants.QIIME_BARCODE_SEQ_COL );
 		}
 
-		if( !hasQm2 )
-		{
+		if( !hasQm2 ) {
 			Log.info( getClass(), "Add required column(3) field = " + Constants.QIIME_LINKER_PRIMER_SEQ_COL );
 			writer.write( TAB_DELIM + Constants.QIIME_LINKER_PRIMER_SEQ_COL );
 		}
 		final StringTokenizer ht = new StringTokenizer( header, TAB_DELIM );
 		ht.nextToken(); // skip the ID column
-		while( ht.hasMoreTokens() )
-		{
+		while( ht.hasMoreTokens() ) {
 			writer.write( TAB_DELIM + ht.nextToken() );
 		}
-		if( !hasQm3 )
-		{
+		if( !hasQm3 ) {
 			Log.info( getClass(), "Add required column(n-1) field = " + Constants.QIIME_DEMUX_COL );
 			writer.write( TAB_DELIM + Constants.QIIME_DEMUX_COL );
 		}
 
-		if( !hasQm4 )
-		{
+		if( !hasQm4 ) {
 			Log.info( getClass(), "Add required column(n) field = " + Constants.QIIME_DESC_COL );
 			writer.write( TAB_DELIM + Constants.QIIME_DESC_COL );
 		}
 
 		writer.write( RETURN );
 
-		for( final File f: getInputFiles() )
-		{
-			for( final String key: metaLines.keySet() )
-			{
-				if( !SeqUtil.getSampleId( f.getName() ).equals( key ) )
-				{
+		for( final File f: getInputFiles() ) {
+			for( final String key: metaLines.keySet() ) {
+				if( !SeqUtil.getSampleId( f.getName() ).equals( key ) ) {
 					continue;
 				}
 
 				writer.write( key + TAB_DELIM );
-				if( !hasQm1 )
-				{
+				if( !hasQm1 ) {
 					writer.write( Config.requireString( this, MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
 				}
 
-				if( !hasQm2 )
-				{
+				if( !hasQm2 ) {
 					writer.write( Config.requireString( this, MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
 				}
 
 				final StringTokenizer st = new StringTokenizer( metaLines.get( key ), TAB_DELIM );
 				st.nextToken(); // skip the id
 				writer.write( st.nextToken() );
-				while( st.hasMoreTokens() )
-				{
+				while( st.hasMoreTokens() ) {
 					writer.write( TAB_DELIM + st.nextToken() );
 				}
 
-				if( !hasQm3 )
-				{
+				if( !hasQm3 ) {
 
 					writer.write( TAB_DELIM + f.getName() );
 					// writer.write( TAB_DELIM + key + "." + SeqUtil.FASTA );
 				}
 
-				if( !hasQm4 )
-				{
+				if( !hasQm4 ) {
 					writer.write( TAB_DELIM + QIIME_COMMENT );
 				}
 
@@ -162,10 +144,9 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 * format via the {@value #SCRIPT_VALIDATE_MAPPING} script.
 	 */
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
-		initMetaFile = MetaUtil.getFile();
+		this.initMetaFile = MetaUtil.getMetadata();
 		data.add( createQiimeCorrectedMapping() );
 		return data;
 	}
@@ -175,10 +156,9 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 * status of the QIIME mapping files (exists or not).
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		final String msg = ( getOutputDir().listFiles().length == 0 ? "QIIME Mapping not found"
-				: "Generated QIIME mapping file" ) + RETURN;
+			: "Generated QIIME mapping file" ) + RETURN;
 
 		return super.getSummary() + msg;
 	}
@@ -188,35 +168,29 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 * {@value #FUNCTION_REORDER_FIELDS}
 	 */
 	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
+	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
-		if( metaColumns == null )
-		{
-			return lines;
-		}
+		if( this.metaColumns == null ) return lines;
 
-		final List<Integer> skip = Arrays.asList( new Integer[] {
-				metaColumns.indexOf( Constants.QIIME_BARCODE_SEQ_COL ),
-				metaColumns.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ),
-				metaColumns.indexOf( Constants.QIIME_DEMUX_COL ), metaColumns.indexOf( Constants.QIIME_DESC_COL ) } );
+		final List<Integer> skip = Arrays.asList( this.metaColumns.indexOf( Constants.QIIME_BARCODE_SEQ_COL ),
+			this.metaColumns.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ),
+			this.metaColumns.indexOf( Constants.QIIME_DEMUX_COL ),
+			this.metaColumns.indexOf( Constants.QIIME_DESC_COL ) );
 
 		String awkBody = "";
 		awkBody += Config.getExe( this, Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
-				+ "\" '{ print $1," + colIndex( metaColumns, Constants.QIIME_BARCODE_SEQ_COL ) + ","
-				+ colIndex( metaColumns, Constants.QIIME_LINKER_PRIMER_SEQ_COL ) + ",";
+			+ "\" '{ print $1," + colIndex( this.metaColumns, Constants.QIIME_BARCODE_SEQ_COL ) + ","
+			+ colIndex( this.metaColumns, Constants.QIIME_LINKER_PRIMER_SEQ_COL ) + ",";
 
-		for( int i = 1; i < metaColumns.size(); i++ )
-		{
-			if( !skip.contains( i ) )
-			{
+		for( int i = 1; i < this.metaColumns.size(); i++ ) {
+			if( !skip.contains( i ) ) {
 				awkBody += " $" + ( i + 1 ) + ",";
 			}
 		}
 
-		awkBody += colIndex( metaColumns, Constants.QIIME_DEMUX_COL ) + ",";
-		awkBody += colIndex( metaColumns, Constants.QIIME_DESC_COL );
-		awkBody += " }' " + initMetaFile.getAbsolutePath() + " > " + getOrderedMapping().getAbsolutePath();
+		awkBody += colIndex( this.metaColumns, Constants.QIIME_DEMUX_COL ) + ",";
+		awkBody += colIndex( this.metaColumns, Constants.QIIME_DESC_COL );
+		awkBody += " }' " + this.initMetaFile.getAbsolutePath() + " > " + getOrderedMapping().getAbsolutePath();
 
 		Log.debug( getClass(), FUNCTION_REORDER_FIELDS + " will update column order using awk --> " + awkBody );
 
@@ -228,23 +202,16 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 
 	}
 
-	private String colIndex( final List<String> cols, final String name )
-	{
-		return " $" + ( cols.indexOf( name ) + 1 );
-	}
-
 	/**
 	 * Create the bash script line that will save a copy of the validated mapping file into the output directory,
 	 * renamed to the file name configured in {@link biolockj.util.MetaUtil#META_FILE_PATH
 	 * Config}.{@value biolockj.util.MetaUtil#META_FILE_PATH}
 	 *
 	 * @return Bash script line to save mapping file to output dir
-	 * @throws Exception if unable to create the bash script line
 	 */
-	private String copyMappingToOutputDir() throws Exception
-	{
+	private String copyMappingToOutputDir() {
 		return " cp " + getMappingDir() + "*" + VALIDATED_MAPPING + " " + getOutputDir().getAbsolutePath()
-				+ File.separator + MetaUtil.getMetadataFileName();
+			+ File.separator + MetaUtil.getFileName();
 	}
 
 	/**
@@ -255,26 +222,21 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 * @return Bash script lines to create the corrected mapping file
 	 * @throws Exception if unable to build the mapping or return the script lines
 	 */
-	private List<String> createQiimeCorrectedMapping() throws Exception
-	{
+	private List<String> createQiimeCorrectedMapping() throws Exception {
 		Log.info( getClass(), "Create QIIME Specific Mapping File" );
 		final List<String> lines = new ArrayList<>();
-		initMetaFile = addMissingFields();
-		metaColumns = getMetaCols();
-		if( metaColumns != null )
-		{
+		this.initMetaFile = addMissingFields();
+		this.metaColumns = getMetaCols();
+		if( this.metaColumns != null ) {
 			Log.info( getClass(), "Metadata column order:" );
 			int d = 0;
-			for( final String col: metaColumns )
-			{
+			for( final String col: this.metaColumns ) {
 				Log.info( getClass(), "col[" + d++ + "] = " + col );
 			}
 
 			lines.add( FUNCTION_REORDER_FIELDS );
 			MetaUtil.setFile( getOrderedMapping() );
-		}
-		else
-		{
+		} else {
 			Log.info( getClass(), "Qiime mapping file columns already in order!" );
 		}
 
@@ -288,59 +250,52 @@ public class BuildQiimeMapping extends SeqModuleImpl implements SeqModule
 	 * {@value #SCRIPT_VALIDATE_MAPPING}.
 	 *
 	 * @return Path to {@value #SCRIPT_VALIDATE_MAPPING} output dir
-	 * @throws Exception if unable to find temp dir
 	 */
-	private String getMappingDir() throws Exception
-	{
+	private String getMappingDir() {
 		final File dir = new File( getTempDir().getAbsolutePath() + File.separator + "mapping" );
-		if( !dir.exists() )
-		{
+		if( !dir.exists() ) {
 			dir.mkdirs();
 		}
 
 		return dir.getAbsolutePath() + File.separator;
 	}
 
-	private List<String> getMetaCols() throws Exception
-	{
-		final List<String> cols = new ArrayList<>();
-		cols.add( MetaUtil.getID() );
-		cols.addAll( MetaUtil.getFieldNames() );
-
-		if( cols.indexOf( Constants.QIIME_BARCODE_SEQ_COL ) == 1
-				&& cols.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ) == 2
-				&& cols.indexOf( Constants.QIIME_DEMUX_COL ) == cols.size() - 2
-				&& cols.indexOf( Constants.QIIME_DESC_COL ) == cols.size() - 1 )
-		{
-			return null;
-		}
-
-		return cols;
-	}
-
-	private File getOrderedMapping() throws Exception
-	{
+	private File getOrderedMapping() {
 		final File orderedDir = new File( getTempDir().getAbsolutePath() + File.separator + "orderedColumns" );
-		if( !orderedDir.exists() )
-		{
+		if( !orderedDir.exists() ) {
 			orderedDir.mkdirs();
 		}
 
-		return new File( orderedDir.getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+		return new File( orderedDir.getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 	}
 
-	private File getQiimeMapping() throws Exception
-	{
-		return new File( getTempDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
+	private File getQiimeMapping() {
+		return new File( getTempDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 	}
 
 	/**
 	 * Call validate_mapping_file.py to get corrected QIIME Mapping.
 	 */
-	private String validateMapping() throws Exception
-	{
+	private String validateMapping() throws Exception {
 		return SCRIPT_VALIDATE_MAPPING + " -p -b -m " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
-				+ Constants.QIIME_DEMUX_COL;
+			+ Constants.QIIME_DEMUX_COL;
+	}
+
+	private static String colIndex( final List<String> cols, final String name ) {
+		return " $" + ( cols.indexOf( name ) + 1 );
+	}
+
+	private static List<String> getMetaCols() throws Exception {
+		final List<String> cols = new ArrayList<>();
+		cols.add( MetaUtil.getID() );
+		cols.addAll( MetaUtil.getFieldNames() );
+
+		if( cols.indexOf( Constants.QIIME_BARCODE_SEQ_COL ) == 1
+			&& cols.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ) == 2
+			&& cols.indexOf( Constants.QIIME_DEMUX_COL ) == cols.size() - 2
+			&& cols.indexOf( Constants.QIIME_DESC_COL ) == cols.size() - 1 ) return null;
+
+		return cols;
 	}
 
 	private File initMetaFile = null;

@@ -23,11 +23,9 @@ import biolockj.module.BioModule;
  * Sample ID and column names must be unique. Metadata information is cached in this class for quick access throughout
  * the application.
  */
-public class MetaUtil
-{
+public class MetaUtil {
 	// Prevent instantiation
-	private MetaUtil()
-	{}
+	private MetaUtil() {}
 
 	/**
 	 * Adds a column to the metadata file. The updated metadata file is output to the fileDir. Once the new file is
@@ -40,47 +38,36 @@ public class MetaUtil
 	 * @throws Exception if unable to add the new column
 	 */
 	public static void addColumn( final String colName, final Map<String, String> map, final File fileDir,
-			final boolean removeMissingIds ) throws Exception
-	{
-		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getMetadataFileName() );
+		final boolean removeMissingIds ) throws Exception {
+		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getFileName() );
 		Log.info( MetaUtil.class, "Adding new field [" + colName + "] to metadata: " + newMeta.getAbsolutePath() );
-		if( getFieldNames().contains( colName ) )
-		{
+		Log.debug( MetaUtil.class, "Current metadata: " + getMetadata().getAbsolutePath() );
+		if( getFieldNames().contains( colName ) ) {
 			Log.warn( MetaUtil.class,
-					"Metadata column [" + colName + "] already exists in: " + getFile().getAbsolutePath() );
+				"Metadata column [" + colName + "] already exists in: " + getMetadata().getAbsolutePath() );
 			return;
 		}
 
 		final Set<String> sampleIds = map.keySet();
-		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
 		setFile( newMeta );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
-		try
-		{
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
+		try {
 			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + Constants.RETURN );
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
-
 				final String id = st.nextToken();
-				if( sampleIds.contains( id ) )
-				{
+				if( sampleIds.contains( id ) ) {
 					writer.write( line + Constants.TAB_DELIM + map.get( id ) + Constants.RETURN );
-				}
-				else if( !removeMissingIds )
-				{
-					writer.write( line + Constants.TAB_DELIM + Config.requireString( null, META_NULL_VALUE )
-							+ Constants.RETURN );
-				}
-				else
-				{
-					Log.warn( MetaUtil.class,
-							"REMOVE SAMPLE ID [" + id + "] due to no data in metadata column: " + colName );
+				} else if( !removeMissingIds ) {
+					writer.write(
+						line + Constants.TAB_DELIM + Config.requireString( null, META_NULL_VALUE ) + Constants.RETURN );
+				} else {
+					Log.warn( MetaUtil.class, getRemoveIdMsg( id ) );
+
 				}
 			}
-		}
-		finally
-		{
+		} finally {
 			reader.close();
 			writer.close();
 			refreshCache();
@@ -91,10 +78,10 @@ public class MetaUtil
 	 * Determine if metadata file exists
 	 *
 	 * @return TRUE if metadata exists
+	 * @throws Exception if error occurs trying to read metadata file
 	 */
-	public static boolean exists()
-	{
-		return getFile() != null && getFile().exists();
+	public static boolean exists() throws Exception {
+		return getMetadata() != null && getMetadata().exists();
 	}
 
 	/**
@@ -105,8 +92,7 @@ public class MetaUtil
 	 * @return boolean if field values are unique
 	 * @throws Exception if runtime errors occur
 	 */
-	public static boolean fieldValuesAreUnique( final String field, final boolean ignoreNulls ) throws Exception
-	{
+	public static boolean fieldValuesAreUnique( final String field, final boolean ignoreNulls ) throws Exception {
 		final int numVals = getFieldValues( field, ignoreNulls ).size();
 		final int numUnique = getUniqueFieldValues( field, ignoreNulls ).size();
 
@@ -121,21 +107,14 @@ public class MetaUtil
 	 * @return Metadata field value
 	 * @throws Exception if parameters are invalid
 	 */
-	public static String getField( final String sampleId, final String field ) throws Exception
-	{
-		if( !getFieldNames().contains( field ) )
-		{
-			throw new Exception(
-					"Invalid field [" + field + "] not found in Metadata = " + getFile().getAbsolutePath() );
-		}
+	public static String getField( final String sampleId, final String field ) throws Exception {
+		if( !getFieldNames().contains( field ) ) throw new Exception(
+			"Invalid field [" + field + "] not found in Metadata = " + getMetadata().getAbsolutePath() );
 
-		if( getMetadataRecord( sampleId ) == null )
-		{
-			throw new Exception(
-					"Invalid Sample ID [" + sampleId + "] not found in Metadata = " + getFile().getAbsolutePath() );
-		}
+		if( getRecord( sampleId ) == null ) throw new Exception(
+			"Invalid Sample ID [" + sampleId + "] not found in Metadata = " + getMetadata().getAbsolutePath() );
 
-		return getMetadataRecord( sampleId ).get( getFieldNames().indexOf( field ) );
+		return getRecord( sampleId ).get( getFieldNames().indexOf( field ) );
 	}
 
 	/**
@@ -144,25 +123,17 @@ public class MetaUtil
 	 * @return List of metadata column names, excluding the 1st column
 	 * @throws Exception if unable to read metadata file
 	 */
-	public static List<String> getFieldNames() throws Exception
-	{
-		if( getFile() == null || !getFile().exists() )
-		{
+	public static List<String> getFieldNames() throws Exception {
+		if( getMetadata() == null || !getMetadata().isFile() )
 			throw new Exception( "Metadata file path is undefined.  Cannot get metadata field names." );
-		}
 
-		final List<String> headers = getMetadataRecord( metaId );
+		final List<String> headers = getRecord( metaId );
 
 		if( headers == null )
-		{
 			throw new Exception( "Metadata headers not found!  Please verify 1st column header is not missing from: "
-					+ getFile().getAbsolutePath() );
-		}
+				+ getMetadata().getAbsolutePath() );
 
-		if( debug )
-		{
-			Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
-		}
+		// Log.debug( MetaUtil.class, "Found metadata headers: " + BioLockJUtil.getCollectionAsString( headers ) );
 
 		return headers;
 	}
@@ -175,23 +146,17 @@ public class MetaUtil
 	 * @return List of Column values for sample ID
 	 * @throws Exception if metadata file or column name not found
 	 */
-	public static List<String> getFieldValues( final String field, final boolean ignoreNulls ) throws Exception
-	{
+	public static List<String> getFieldValues( final String field, final boolean ignoreNulls ) throws Exception {
 		if( !getFieldNames().contains( field ) )
-		{
-			throw new Exception( "Invalid field [" + field + "] in Metadata = " + getFile().getAbsolutePath() );
-		}
+			throw new Exception( "Invalid field [" + field + "] in Metadata = " + getMetadata().getAbsolutePath() );
 
 		final List<String> vals = new ArrayList<>();
 
-		for( final String id: getSampleIds() )
-		{
+		for( final String id: getSampleIds() ) {
 			final String val = getField( id, field );
-			if( val != null && val.trim().length() > 0 )
-			{
+			if( val != null && val.trim().length() > 0 ) {
 				final boolean isNullVal = val.equals( Config.requireString( null, META_NULL_VALUE ) );
-				if( !isNullVal || !ignoreNulls )
-				{
+				if( !isNullVal || !ignoreNulls ) {
 					vals.add( val );
 				}
 			}
@@ -201,13 +166,19 @@ public class MetaUtil
 	}
 
 	/**
-	 * Get the current metadata file. This path may change as updates are made by BioModules.
+	 * Get the metadata file name, if it exists, otherwise return projectName.tsv
 	 *
-	 * @return Metadata file
+	 * @return Name of metadata file, or a default name if no metadata file exists #throws Exception if errors occur
 	 */
-	public static File getFile()
-	{
-		return metadataFile;
+	public static String getFileName() {
+		try {
+			if( getMetadata() != null ) return getMetadata().getName();
+		} catch( final Exception ex ) {
+			Log.error( MetaUtil.class, "Error occurred accessing Config property: " + META_FILE_PATH, ex );
+			ex.printStackTrace();
+		}
+
+		return Config.pipelineName() + "_metadata" + Constants.TSV_EXT;
 	}
 
 	/**
@@ -219,15 +190,12 @@ public class MetaUtil
 	 * @return Column name
 	 * @throws Exception if errors occur
 	 */
-	public static String getForcedColumnName( final String name ) throws Exception
-	{
+	public static String getForcedColumnName( final String name ) throws Exception {
 		int suffix = 1;
 		String testName = name;
-		while( getFieldNames().contains( testName ) )
-		{
+		while( getFieldNames().contains( testName ) ) {
 			final Set<String> testSet = new HashSet<>( getFieldValues( testName, true ) );
-			if( testSet.isEmpty() )
-			{
+			if( testSet.isEmpty() ) {
 				MetaUtil.removeColumn( testName, null );
 				break; // reuse the column
 			}
@@ -242,8 +210,7 @@ public class MetaUtil
 	 *
 	 * @return Metadata ID column name
 	 */
-	public static String getID()
-	{
+	public static String getID() {
 		return metaId;
 	}
 
@@ -254,13 +221,11 @@ public class MetaUtil
 	 * @return column name
 	 * @throws Exception if errors occur
 	 */
-	public static String getLatestColumnName( final String name ) throws Exception
-	{
+	public static String getLatestColumnName( final String name ) throws Exception {
 		int suffix = 1;
 		String testName = name;
 		String foundName = null;
-		while( getFieldNames().contains( testName ) )
-		{
+		while( getFieldNames().contains( testName ) ) {
 			foundName = testName;
 			testName = name + "_" + suffix++;
 		}
@@ -268,53 +233,33 @@ public class MetaUtil
 	}
 
 	/**
-	 * Metadata file getter.
+	 * Metadata file getter. This path changes as new versions are created by the BioModules.
 	 * 
 	 * @return Metadata file
-	 * @throws Exception if any errors occur
+	 * @throws Exception if errors occur
 	 */
-	public static File getMetadata() throws Exception
-	{
-		if( Config.getString( null, META_FILE_PATH ) == null )
-		{
-			return null;
+	public static File getMetadata() throws Exception {
+		if( metadataFile != null ) return metadataFile;
+		final String path = Config.getString( null, META_FILE_PATH );
+		if( path == null ) return null;
+		if( DockerUtil.inDockerEnv() ) {
+			setFile( DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.DOCKER_META_DIR ) );
+		} else {
+			setFile( new File( path ) );
 		}
-
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			return DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.CONTAINER_META_DIR );
-		}
-		return Config.requireExistingFile( null, META_FILE_PATH );
+		Log.debug( MetaUtil.class, "Returning new metadata file path: " + getMetadata().getAbsolutePath() );
+		return metadataFile;
 	}
 
 	/**
-	 * Get the metadata file name, if it exists, otherwise return projectName.tsv
-	 *
-	 * @return Name of metadata file, or a default name if no metadata file exists #throws Exception if errors occur
-	 * @throws Exception if runtime errors occur
+	 * Return the metadata file path
+	 * 
+	 * @return String the metadata file path
+	 * @throws Exception if errors occur
 	 */
-	public static String getMetadataFileName() throws Exception
-	{
-		try
-		{
-			if( metadataFile == null )
-			{
-				metadataFile = getMetadata();
-			}
-
-			if( metadataFile != null )
-			{
-				return metadataFile.getName();
-			}
-		}
-		catch( final Exception ex )
-		{
-			Log.error( MetaUtil.class, "Error occurred accessing Config property: " + META_FILE_PATH, ex );
-			ex.printStackTrace();
-		}
-
-		return Config.pipelineName() + Constants.TSV_EXT;
-
+	public static String getPath() throws Exception {
+		if( getMetadata() == null ) return "";
+		return getMetadata().getAbsolutePath();
 	}
 
 	/**
@@ -324,30 +269,10 @@ public class MetaUtil
 	 * @return Metadata row values for sample ID
 	 * @throws Exception if Sample ID not found or metadata file doesn't exist
 	 */
-	public static List<String> getMetadataRecord( final String sampleId ) throws Exception
-	{
-		try
-		{
-			return metadataMap.get( sampleId );
-		}
-		catch( final Exception ex )
-		{
+	public static List<String> getRecord( final String sampleId ) throws Exception {
+		if( metadataMap == null || !metadataMap.keySet().contains( sampleId ) )
 			throw new Exception( "Invalid ID: " + sampleId );
-		}
-	}
-
-	/**
-	 * Return the metadata file path
-	 * 
-	 * @return String the metadata file path
-	 */
-	public static String getPath()
-	{
-		if( metadataFile == null )
-		{
-			return "";
-		}
-		return metadataFile.getAbsolutePath();
+		return metadataMap.get( sampleId );
 	}
 
 	/**
@@ -355,14 +280,11 @@ public class MetaUtil
 	 *
 	 * @return Sample IDs found in metadata file
 	 */
-	public static List<String> getSampleIds()
-	{
+	public static List<String> getSampleIds() {
 		final List<String> ids = new ArrayList<>();
 
-		for( final String key: metadataMap.keySet() )
-		{
-			if( !key.equals( metaId ) )
-			{
+		for( final String key: metadataMap.keySet() ) {
+			if( !key.equals( metaId ) ) {
 				ids.add( key );
 			}
 		}
@@ -380,23 +302,16 @@ public class MetaUtil
 	 * @return Metadata column name
 	 * @throws Exception if errors occur
 	 */
-	public static String getSystemMetaCol( final BioModule module, final String col ) throws Exception
-	{
-		final File outputMeta = new File(
-				module.getOutputDir().getAbsolutePath() + File.separator + getMetadataFileName() );
-		if( ModuleUtil.isComplete( module ) || outputMeta.exists() )
-		{
-			if( outputMeta.exists() )
-			{
+	public static String getSystemMetaCol( final BioModule module, final String col ) throws Exception {
+		final File outputMeta = new File( module.getOutputDir().getAbsolutePath() + File.separator + getFileName() );
+		if( ModuleUtil.isComplete( module ) || outputMeta.exists() ) {
+			if( outputMeta.exists() ) {
 				setFile( outputMeta );
 				refreshCache();
 			}
 			return getLatestColumnName( col );
 		}
-		else
-		{
-			return getForcedColumnName( col );
-		}
+		return getForcedColumnName( col );
 	}
 
 	/**
@@ -407,8 +322,7 @@ public class MetaUtil
 	 * @return Number of unique values
 	 * @throws Exception if errors occur
 	 */
-	public static Set<String> getUniqueFieldValues( final String field, final boolean ignoreNulls ) throws Exception
-	{
+	public static Set<String> getUniqueFieldValues( final String field, final boolean ignoreNulls ) throws Exception {
 		return new HashSet<>( getFieldValues( field, ignoreNulls ) );
 	}
 
@@ -418,14 +332,10 @@ public class MetaUtil
 	 * @param columnName Column name
 	 * @return TRUE if columnName exists in hearder row of metadata file
 	 */
-	public static boolean hasColumn( final String columnName )
-	{
-		try
-		{
+	public static boolean hasColumn( final String columnName ) {
+		try {
 			return columnName != null && getFieldNames().contains( columnName );
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			return false;
 		}
 	}
@@ -441,34 +351,27 @@ public class MetaUtil
 	 * 
 	 * @throws Exception if invalid Config properties are detected
 	 */
-	public static void initialize() throws Exception
-	{
-		if( Config.getString( null, META_NULL_VALUE ) == null )
-		{
+	public static void initialize() throws Exception {
+		Log.info( MetaUtil.class, "Initialize MetaUtil" );
+		if( Config.getString( null, META_NULL_VALUE ) == null ) {
 			Config.setConfigProperty( META_NULL_VALUE, DEFAULT_NULL_VALUE );
 		}
 
-		if( Config.getString( null, META_COLUMN_DELIM ) == null )
-		{
+		if( Config.getString( null, META_COLUMN_DELIM ) == null ) {
 			Config.setConfigProperty( META_COLUMN_DELIM, DEFAULT_COL_DELIM );
 		}
 
-		if( Config.getString( null, META_COMMENT_CHAR ) == null )
-		{
+		if( Config.getString( null, META_COMMENT_CHAR ) == null ) {
 			Config.setConfigProperty( META_COMMENT_CHAR, DEFAULT_COMMENT_CHAR );
 		}
 
 		final String commentChar = Config.getString( null, MetaUtil.META_COMMENT_CHAR );
-		if( commentChar != null && commentChar.length() > 1 )
-		{
-			throw new Exception( META_COMMENT_CHAR + " property must be a single character.  Config value = \""
-					+ commentChar + "\"" );
-		}
+		if( commentChar != null && commentChar.length() > 1 ) throw new Exception(
+			META_COMMENT_CHAR + " property must be a single character.  Config value = \"" + commentChar + "\"" );
 
-		if( Config.getString( null, META_FILE_PATH ) != null )
-		{
+		if( Config.getString( null, META_FILE_PATH ) != null ) {
 			final Set<String> ignore = Config.getSet( null, Constants.INPUT_IGNORE_FILES );
-			ignore.add( MetaUtil.getMetadataFileName() );
+			ignore.add( MetaUtil.getFileName() );
 			Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
 			setFile( MetaUtil.getMetadata() );
 			refreshCache();
@@ -480,25 +383,20 @@ public class MetaUtil
 	 *
 	 * @throws Exception if unable to refresh cache
 	 */
-	public static void refreshCache() throws Exception
-	{
-		if( isUpdated() )
-		{
-			Log.info( MetaUtil.class, "Update metadata cache: " + metadataFile.getAbsolutePath() );
+	public static void refreshCache() throws Exception {
+		if( isUpdated() ) {
+			Log.info( MetaUtil.class, "Update metadata cache: " + getMetadata().getAbsolutePath() );
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
-			if( !RuntimeParamUtil.isDirectMode() )
-			{
+			if( !DockerUtil.isDirectMode() ) {
 				report();
 			}
 
-			reportedMetadata = metadataFile;
-		}
-		else if( debug )
-		{
+			reportedMetadata = getMetadata();
+		} else {
 			Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
-					+ ( metadataFile == null ? "<NO_METADATA_PATH>": metadataFile.getAbsolutePath() ) );
+				+ ( getMetadata() == null ? "<NO_METADATA_PATH>": getMetadata().getAbsolutePath() ) );
 		}
 	}
 
@@ -509,57 +407,48 @@ public class MetaUtil
 	 * @param fileDir File representing output directory for new metadata file
 	 * @throws Exception if errors occur
 	 */
-	public static void removeColumn( final String colName, File fileDir ) throws Exception
-	{
-		if( fileDir == null )
-		{
-			fileDir = new File( Config.pipelinePath() + File.separator + ".temp" );
-			if( !fileDir.exists() )
-			{
-				fileDir.mkdir();
+	public static void removeColumn( final String colName, final File fileDir ) throws Exception {
+		File myDir = fileDir;
+		if( myDir == null ) {
+			myDir = new File( Config.pipelinePath() + File.separator + ".temp" );
+			if( !myDir.exists() ) {
+				myDir.mkdirs();
 			}
 		}
 
-		if( getFile() == null || !getFile().exists() )
-		{
+		if( getMetadata() == null || !getMetadata().exists() ) {
 			Log.warn( MetaUtil.class, "Cannot remove column [" + colName + "] because no metadata file exists." );
 			return;
 		}
 
-		if( !getFieldNames().contains( colName ) )
-		{
+		if( !getFieldNames().contains( colName ) ) {
 			Log.warn( MetaUtil.class, "Metadata column [" + colName
-					+ "] cannot be removed, because it does not exists in: " + getFile().getAbsolutePath() );
+				+ "] cannot be removed, because it does not exists in: " + getMetadata().getAbsolutePath() );
 			return;
 		}
 
-		Log.info( MetaUtil.class, "Removing field [" + colName + "] from metadata: " + getFile().getAbsolutePath() );
+		Log.info( MetaUtil.class,
+			"Removing field [" + colName + "] from metadata: " + getMetadata().getAbsolutePath() );
 		final int index = MetaUtil.getFieldNames().indexOf( colName );
 
-		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getMetadataFileName() );
-		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
+		final File newMeta = new File( myDir.getAbsolutePath() + File.separator + getFileName() );
+		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
 		setFile( newMeta );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getFile() ) );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
+		try {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				int i = 1;
 				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 				writer.write( st.nextToken() );
-				while( st.hasMoreTokens() )
-				{
+				while( st.hasMoreTokens() ) {
 					final String token = st.nextToken();
-					if( i++ != index )
-					{
+					if( i++ != index ) {
 						writer.write( Constants.TAB_DELIM + token );
 					}
 				}
 				writer.write( Constants.RETURN );
 			}
-		}
-		finally
-		{
+		} finally {
 			reader.close();
 			writer.close();
 			refreshCache();
@@ -572,56 +461,37 @@ public class MetaUtil
 	 * @param file New metadata file
 	 * @throws Exception if null parameter is passed
 	 */
-	public static void setFile( final File file ) throws Exception
-	{
-		if( file != null )
-		{
-			if( metadataFile != null && file.getAbsolutePath().equals( metadataFile.getAbsolutePath() ) )
-			{
-				if( debug )
-				{
-					Log.debug( MetaUtil.class, "===> MetaUtil.setFile() not required, file already defined as "
-							+ metadataFile.getAbsolutePath() );
-				}
+	public static void setFile( final File file ) throws Exception {
+		if( file != null ) {
+			if( metadataFile != null && file.getAbsolutePath().equals( metadataFile.getAbsolutePath() ) ) {
+				Log.debug( MetaUtil.class,
+					"===> MetaUtil.setFile() not required, file already defined as " + metadataFile.getAbsolutePath() );
 			}
-		}
-		else
-		{
-			throw new Exception( "Must pass valid file to MetaUtil.setFile( file ), found value: "
-					+ ( file == null ? "": file.getAbsolutePath() ) );
-		}
-
+		} else throw new Exception( "Cannot pass NULL to MetaUtil.setFile( file )" );
 		metadataFile = file;
 	}
 
-	private static void cacheMetadata( final List<List<String>> data ) throws Exception
-	{
+	private static void cacheMetadata( final List<List<String>> data ) throws Exception {
 		int rowNum = 0;
 		final Iterator<List<String>> rows = data.iterator();
-		while( rows.hasNext() )
-		{
+		while( rows.hasNext() ) {
 			final List<String> row = rows.next();
 			final String id = row.get( 0 );
 
-			if( rowNum == 0 )
-			{
+			if( rowNum == 0 ) {
 				metaId = id;
-				if( debug && isUpdated() )
-				{
+				if( isUpdated() ) {
 					Log.debug( MetaUtil.class, "Metadata Headers: " + row );
 				}
 			}
 
-			if( rowNum++ == 1 && debug && isUpdated() )
-			{
+			if( rowNum++ == 1 && isUpdated() ) {
 				Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
 			}
 
-			if( id != null && !id.equals( Config.requireString( null, META_NULL_VALUE ) ) )
-			{
+			if( id != null && !id.equals( Config.requireString( null, META_NULL_VALUE ) ) ) {
 				row.remove( 0 );
-				if( isUpdated() )
-				{
+				if( isUpdated() ) {
 					Log.debug( MetaUtil.class, "metadataMap add: " + id + " = " + row );
 				}
 
@@ -630,10 +500,27 @@ public class MetaUtil
 		}
 	}
 
-	private static boolean isUpdated()
-	{
-		return metadataFile != null && metadataFile.exists() && reportedMetadata == null
-				|| !reportedMetadata.getAbsolutePath().equals( metadataFile.getAbsolutePath() );
+	private static String getRemoveIdMsg( final String id ) throws Exception {
+		final String msg = "REMOVE SAMPLE ID [" + id + "] from metadata file " + getPath() + " | Reason:  ";
+		if( SeqUtil.piplineHasSeqInput() ) {
+			for( final File seqFile: BioLockJUtil.getPipelineInputFiles() ) {
+				final String seqId = SeqUtil.getSampleId( seqFile.getName() );
+				if( seqId != null && seqId.equals( id ) ) return msg + "No valid seqs remain in: " + seqFile.getName();
+			}
+			return msg + "Sample not found in pipeline input dirs: "
+				+ Config.requireString( null, Constants.INPUT_DIRS );
+		}
+
+		return msg + "Sample not referenced in pipeline inputs: " + Config.requireString( null, Constants.INPUT_DIRS );
+
+	}
+
+	private static boolean isUpdated() throws Exception {
+		final boolean foundMeta = getMetadata() != null;
+		final boolean foundNewReport = foundMeta && reportedMetadata != null
+			&& !reportedMetadata.getAbsolutePath().equals( getMetadata().getAbsolutePath() );
+		final boolean noReport = foundMeta && reportedMetadata == null;
+		return foundNewReport || noReport;
 	}
 
 	/**
@@ -642,20 +529,17 @@ public class MetaUtil
 	 * @return List<List<String>>
 	 * @throws Exception if errros occur
 	 */
-	private static List<List<String>> parseMetadataFile() throws Exception
-	{
+	private static List<List<String>> parseMetadataFile() throws Exception {
 		final List<List<String>> data = new ArrayList<>();
-		final BufferedReader reader = BioLockJUtil.getFileReader( getFile() );
-		for( String line = reader.readLine(); line != null; line = reader.readLine() )
-		{
-			if( debug && isUpdated() )
-			{
+		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
+		for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+			if( isUpdated() ) {
 				Log.debug( MetaUtil.class, "===> Meta line: " + line );
 			}
+
 			final ArrayList<String> record = new ArrayList<>();
 			final String[] cells = line.split( Constants.TAB_DELIM, -1 );
-			for( final String cell: cells )
-			{
+			for( final String cell: cells ) {
 				record.add( removeComments( setNullValueIfEmpty( cell ) ) );
 			}
 			data.add( record );
@@ -664,18 +548,12 @@ public class MetaUtil
 		return data;
 	}
 
-	private static String removeComments( String val ) throws Exception
-	{
+	private static String removeComments( final String val ) {
 		final String commentChar = Config.getString( null, META_COMMENT_CHAR );
-		if( commentChar != null && commentChar.length() > 0 )
-		{
+		if( commentChar != null && commentChar.length() > 0 ) {
 			final int index = val.indexOf( commentChar );
-			if( index > -1 )
-			{
-				val = val.substring( 0, index );
-			}
+			if( index > -1 ) return val.substring( 0, index );
 		}
-
 		return val;
 	}
 
@@ -684,23 +562,18 @@ public class MetaUtil
 	 * 
 	 * @throws Exception if errors occur
 	 */
-	private static void report() throws Exception
-	{
+	private static void report() throws Exception {
 		final String exId = getSampleIds().get( 0 );
 		Log.info( MetaUtil.class, META_SPACER );
-		Log.info( MetaUtil.class, "===> New Metadata file: " + metadataFile.getAbsolutePath() );
+		Log.info( MetaUtil.class, "===> New Metadata file: " + getMetadata().getAbsolutePath() );
 		Log.info( MetaUtil.class, "===> Sample IDs: " + getSampleIds() );
 		Log.info( MetaUtil.class, "===> Metadata fields: " + getFieldNames() );
-		Log.info( MetaUtil.class, "===> 1st Record: [" + exId + "]: " + getMetadataRecord( exId ) );
+		Log.info( MetaUtil.class, "===> 1st Record: [" + exId + "]: " + getRecord( exId ) );
 		Log.info( MetaUtil.class, META_SPACER );
 	}
 
-	private static String setNullValueIfEmpty( final String val ) throws Exception
-	{
-		if( val == null || val.trim().isEmpty() )
-		{
-			return Config.requireString( null, META_NULL_VALUE );
-		}
+	private static String setNullValueIfEmpty( final String val ) throws Exception {
+		if( val == null || val.trim().isEmpty() ) return Config.requireString( null, META_NULL_VALUE );
 		return val.trim();
 	}
 
@@ -767,7 +640,6 @@ public class MetaUtil
 	 */
 	protected static final String DEFAULT_NULL_VALUE = "NA";
 
-	private static boolean debug = false;
 	private static String META_SPACER = "************************************************************************";
 	private static File metadataFile = null;
 	private static final Map<String, List<String>> metadataMap = new HashMap<>();

@@ -19,7 +19,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
@@ -28,16 +27,13 @@ import biolockj.util.*;
 /**
  * This BioModule is the superclass for R script generating modules.
  */
-public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
-{
+public abstract class R_Module extends ScriptModuleImpl {
 	/**
 	 * Run R script in docker.
 	 * 
 	 * @return Bash script lines for the docker script
-	 * @throws Exception if errors occur
 	 */
-	public List<List<String>> buildDockerBashScript() throws Exception
-	{
+	public List<List<String>> buildDockerBashScript() {
 		final List<List<String>> dockerScriptLines = new ArrayList<>();
 		final List<String> innerList = new ArrayList<>();
 		innerList.add( FUNCTION_RUN_R + " " + getPrimaryScript().getAbsolutePath() );
@@ -49,14 +45,12 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * Not needed for R script modules.
 	 */
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		return null;
 	}
 
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		Config.getPositiveInteger( this, R_TIMEOUT );
 		Config.getBoolean( this, R_DEBUG );
@@ -69,12 +63,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * the BaseScript, calls runProgram(), reportStatus() and main() which can only be implemented in a subclass.<br>
 	 */
 	@Override
-	public void executeTask() throws Exception
-	{
+	public void executeTask() throws Exception {
 		writePrimaryScript();
-
-		if( RuntimeParamUtil.isDockerMode() )
-		{
+		if( DockerUtil.inDockerEnv() ) {
 			BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
 		}
 	}
@@ -85,38 +76,13 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * {@link ScriptModuleImpl#getMainScript()}.
 	 */
 	@Override
-	public String[] getJobParams() throws Exception
-	{
+	public String[] getJobParams() throws Exception {
 		Log.info( getClass(), "Run MAIN Script: " + getMainScript().getName() );
-		if( RuntimeParamUtil.isDockerMode() )
-		{
-			return super.getJobParams();
-		}
-		else
-		{
-			final String[] cmd = new String[ 2 ];
-			cmd[ 0 ] = Config.getExe( this, EXE_RSCRIPT );
-			cmd[ 1 ] = getMainScript().getAbsolutePath();
-			return cmd;
-		}
-
-	}
-
-	/**
-	 * Get the main R script
-	 * 
-	 * @return Main R script
-	 * @throws Exception if errors occur
-	 */
-	public File getMainR() throws Exception
-	{
-		final File rFile = new File( getRTemplateDir() + R_MAIN_SCRIPT );
-		if( !rFile.exists() )
-		{
-			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
-		}
-
-		return rFile;
+		if( DockerUtil.inDockerEnv() ) return super.getJobParams();
+		final String[] cmd = new String[ 2 ];
+		cmd[ 0 ] = Config.getExe( this, EXE_RSCRIPT );
+		cmd[ 1 ] = getMainScript().getAbsolutePath();
+		return cmd;
 	}
 
 	/**
@@ -125,13 +91,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @return Module R script
 	 * @throws Exception if errors occur
 	 */
-	public File getModuleScript() throws Exception
-	{
+	public File getModuleScript() throws Exception {
 		final File rFile = new File( getRTemplateDir() + getModuleScriptName() );
-		if( !rFile.exists() )
-		{
-			throw new Exception( "Missing R module script: " + rFile.getAbsolutePath() );
-		}
+		if( !rFile.exists() ) throw new Exception( "Missing R module script: " + rFile.getAbsolutePath() );
 
 		return rFile;
 	}
@@ -140,11 +102,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * Require combined count-metadata tables as input.
 	 */
 	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
+	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
-		{
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) ) {
 			preReqs.add( getMetaMergedModule() );
 		}
 		preReqs.addAll( super.getPreRequisiteModules() );
@@ -155,12 +115,10 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * Get the primary R script
 	 * 
 	 * @return File (R script)
-	 * @throws Exception if errors occur
 	 */
-	public File getPrimaryScript() throws Exception
-	{
+	public File getPrimaryScript() {
 		return new File(
-				getScriptDir().getAbsolutePath() + File.separator + MAIN_SCRIPT_PREFIX + getModuleScriptName() );
+			getScriptDir().getAbsolutePath() + File.separator + MAIN_SCRIPT_PREFIX + getModuleScriptName() );
 	}
 
 	/**
@@ -169,32 +127,23 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * script errors, if any.
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
-		try
-		{
-			final StringBuffer sb = new StringBuffer();
+	public String getSummary() throws Exception {
+		final StringBuffer sb = new StringBuffer();
+		try {
+
 			final Map<String, Integer> map = new HashMap<>();
-			for( final File file: getOutputDir().listFiles() )
-			{
-				if( !file.isFile() )
-				{
+			for( final File file: getOutputDir().listFiles() ) {
+				if( !file.isFile() ) {
 					continue;
-				}
-				else if( file.getName().indexOf( "." ) > -1 )
-				{
+				} else if( file.getName().indexOf( "." ) > -1 ) {
 					final String ext = file.getName().substring( file.getName().lastIndexOf( "." ) + 1 );
-					if( map.get( ext ) == null )
-					{
+					if( map.get( ext ) == null ) {
 						map.put( ext, 0 );
 					}
 
 					map.put( ext, map.get( ext ) + 1 );
-				}
-				else // no extension
-				{
-					if( map.get( "none" ) == null )
-					{
+				} else {
+					if( map.get( "none" ) == null ) {
 						map.put( "none", 0 );
 					}
 
@@ -203,22 +152,17 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 			}
 
 			final File rScript = getPrimaryScript();
-			if( rScript == null || !rScript.exists() )
-			{
+			if( DockerUtil.inAwsEnv() && ( rScript == null || !rScript.exists() ) ) {
 				sb.append( "Failed to generate R Script!" + RETURN );
-			}
-			else
-			{
+			} else {
 				sb.append( getClass().getSimpleName() + ( getErrors().isEmpty() ? " successful": " failed" ) + ": "
-						+ rScript.getAbsolutePath() + RETURN );
+					+ rScript.getAbsolutePath() + RETURN );
 
-				for( final String ext: map.keySet() )
-				{
+				for( final String ext: map.keySet() ) {
 					sb.append( "Generated " + map.get( ext ) + " " + ext + " files" + RETURN );
 				}
 
-				if( Config.getBoolean( this, R_DEBUG ) )
-				{
+				if( Config.getBoolean( this, R_DEBUG ) ) {
 					final IOFileFilter ff = new WildcardFileFilter( "*" + LOG_EXT );
 					final Collection<File> debugLogs = FileUtils.listFiles( getTempDir(), ff, null );
 					sb.append( "Generated " + debugLogs.size() + " log files" + RETURN );
@@ -227,28 +171,24 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 				sb.append( getErrors() );
 			}
 
-			return sb.toString();
-		}
-		catch( final Exception ex )
-		{
-			Log.warn( getClass(), "Unable to produce R_Module summary: " + ex.getMessage() );
+		} catch( final Exception ex ) {
+			final String msg = "Unable to produce " + getClass().getName() + " summary : " + ex.getMessage();
+			Log.warn( getClass(), msg );
+			sb.append( msg + RETURN );
+			ex.printStackTrace();
 		}
 
-		return "Error occurred attempting to build R_Module summary!";
+		return sb.toString();
 	}
 
 	/**
 	 * The R Script should run quickly, timeout = 10 minutes appears to work well.
 	 */
 	@Override
-	public Integer getTimeout()
-	{
-		try
-		{
+	public Integer getTimeout() {
+		try {
 			return Config.getPositiveInteger( this, R_TIMEOUT );
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.error( getClass(), ex.getMessage(), ex );
 		}
 		return null;
@@ -258,8 +198,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * This method generates the bash function that calls the R script: runScript.
 	 */
 	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
+	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RUN_R + "() {" );
 		lines.add( Config.getExe( this, EXE_RSCRIPT ) + " $1" );
@@ -274,12 +213,8 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @return MetaMerged BioModule
 	 * @throws Exception if errors occur
 	 */
-	protected String getMetaMergedModule() throws Exception
-	{
-		if( PathwayUtil.useHumann2RawCount( this ) )
-		{
-			return AddMetadataToPathwayTables.class.getName();
-		}
+	protected String getMetaMergedModule() throws Exception {
+		if( PathwayUtil.useHumann2RawCount( this ) ) return AddMetadataToPathwayTables.class.getName();
 
 		return AddMetadataToTaxaTables.class.getName();
 	}
@@ -290,11 +225,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @return Statistics Module prerequisite if needed
 	 * @throws Exception if errors occur determining eligibility
 	 */
-	protected List<String> getStatPreReqs() throws Exception
-	{
+	protected List<String> getStatPreReqs() throws Exception {
 		final List<String> preReqs = super.getPreRequisiteModules();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
-		{
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) ) {
 			preReqs.add( ModuleUtil.getDefaultStatsModule() );
 		}
 		return preReqs;
@@ -306,8 +239,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 *
 	 * @throws Exception if unable to build the R script stub
 	 */
-	protected void writePrimaryScript() throws Exception
-	{
+	protected void writePrimaryScript() throws Exception {
 		getTempDir();
 		getOutputDir();
 		FileUtils.copyFile( getMainR(), getPrimaryScript() );
@@ -315,31 +247,22 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		FileUtils.copyFileToDirectory( getModuleScript(), getScriptDir() );
 	}
 
-	private String getErrors() throws Exception
-	{
+	private String getErrors() throws Exception {
 		final IOFileFilter ff = new WildcardFileFilter( "*" + Constants.SCRIPT_FAILURES );
 		final Collection<File> scriptsFailed = FileUtils.listFiles( getScriptDir(), ff, null );
-		if( scriptsFailed.isEmpty() )
-		{
-			return "";
-		}
+		if( scriptsFailed.isEmpty() ) return "";
 		final String rSpacer = "-------------------------------------";
 		final StringBuffer errors = new StringBuffer();
 
 		errors.append( INDENT + rSpacer + RETURN );
 		errors.append( INDENT + "R Script Errors:" + RETURN );
 		final BufferedReader reader = BioLockJUtil.getFileReader( scriptsFailed.iterator().next() );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
+		try {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				errors.append( INDENT + line + RETURN );
 			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
+		} finally {
+			if( reader != null ) {
 				reader.close();
 			}
 		}
@@ -347,20 +270,20 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		return errors.toString();
 	}
 
-	private File getFunctionLib() throws Exception
-	{
-		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
-		if( !rFile.exists() )
-		{
-			throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
-		}
-
-		return rFile;
+	private String getModuleScriptName() {
+		return getClass().getSimpleName() + Constants.R_EXT;
 	}
 
-	private String getModuleScriptName() throws Exception
-	{
-		return getClass().getSimpleName() + biolockj.Constants.R_EXT;
+	/**
+	 * Get the main R script
+	 * 
+	 * @return Main R script
+	 * @throws Exception if errors occur
+	 */
+	public static File getMainR() throws Exception {
+		final File rFile = new File( getRTemplateDir() + R_MAIN_SCRIPT );
+		if( !rFile.exists() ) throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
+		return rFile;
 	}
 
 	/**
@@ -369,10 +292,9 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @return System file path
 	 * @throws Exception if errors occur
 	 */
-	public static String getRTemplateDir() throws Exception
-	{
+	public static String getRTemplateDir() throws Exception {
 		return BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + "resources" + File.separator + "R"
-				+ File.separator;
+			+ File.separator;
 	}
 
 	/**
@@ -382,8 +304,7 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @param rCode R script code
 	 * @throws Exception if I/O errors occur
 	 */
-	public static void writeNewScript( final String path, final String rCode ) throws Exception
-	{
+	public static void writeNewScript( final String path, final String rCode ) throws Exception {
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( path ) );
 		writeScript( writer, rCode );
 	}
@@ -395,29 +316,24 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 	 * @param rCode R code
 	 * @throws Exception if I/O errors occur
 	 */
-	protected static void writeScript( final BufferedWriter writer, final String rCode ) throws Exception
-	{
+	protected static void writeScript( final BufferedWriter writer, final String rCode ) throws Exception {
 		int indentCount = 0;
 		final StringTokenizer st = new StringTokenizer( rCode, Constants.RETURN );
-		while( st.hasMoreTokens() )
-		{
+		while( st.hasMoreTokens() ) {
 			final String line = st.nextToken();
 
-			if( line.equals( "}" ) )
-			{
+			if( line.equals( "}" ) ) {
 				indentCount--;
 			}
 
 			int i = 0;
-			while( i++ < indentCount )
-			{
+			while( i++ < indentCount ) {
 				writer.write( INDENT );
 			}
 
 			writer.write( line + Constants.RETURN );
 
-			if( line.endsWith( "{" ) )
-			{
+			if( line.endsWith( "{" ) ) {
 				indentCount++;
 			}
 		}
@@ -425,10 +341,17 @@ public abstract class R_Module extends ScriptModuleImpl implements ScriptModule
 		writer.close();
 	}
 
+	private static File getFunctionLib() throws Exception {
+		final File rFile = new File( getRTemplateDir() + R_FUNCTION_LIB );
+		if( !rFile.exists() ) throw new Exception( "Missing R function library: " + rFile.getAbsolutePath() );
+
+		return rFile;
+	}
+
 	/**
 	 * {@link biolockj.Config} property {@value #EXE_RSCRIPT} defines the command line executable to call RScript
 	 */
-	protected static final String EXE_RSCRIPT = "exe.Rscript";
+	public static final String EXE_RSCRIPT = "exe.Rscript";
 
 	/**
 	 * {@link biolockj.Config} property {@value #P_VAL_CUTOFF} defines the p-value cutoff for significance

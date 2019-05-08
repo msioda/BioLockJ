@@ -11,7 +11,6 @@
  */
 package biolockj.module.report;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
@@ -23,12 +22,9 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.mail.*;
 import javax.mail.internet.*;
-import biolockj.Config;
-import biolockj.Log;
-import biolockj.Pipeline;
-import biolockj.module.BioModule;
+import biolockj.*;
 import biolockj.module.BioModuleImpl;
-import biolockj.util.PropUtil;
+import biolockj.util.MasterConfigUtil;
 import biolockj.util.RuntimeParamUtil;
 import biolockj.util.SummaryUtil;
 
@@ -38,8 +34,7 @@ import biolockj.util.SummaryUtil;
  * 
  * @blj.web_desc Email
  */
-public class Email extends BioModuleImpl implements BioModule
-{
+public class Email extends BioModuleImpl {
 
 	/**
 	 * Verify required email {@link biolockj.Config} properties exist and are properly formatted.
@@ -55,18 +50,16 @@ public class Email extends BioModuleImpl implements BioModule
 	 * </ol>
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		Config.requireString( this, EMAIL_HOST );
 		Config.requireString( this, EMAIL_PORT );
 		Config.requireBoolean( this, EMAIL_SMTP_AUTH );
 		Config.requireBoolean( this, EMAIL_START_TLS_ENABLE );
 		Config.requireString( this, EMAIL_ENCRYPTED_PASSWORD );
-		Config.getString( this, CLUSTER_HOST );
+		Config.getString( this, Constants.CLUSTER_HOST );
 
 		new InternetAddress( Config.requireString( this, EMAIL_FROM ) ).validate();
-		for( final String email: Config.requireList( this, EMAIL_TO ) )
-		{
+		for( final String email: Config.requireList( this, EMAIL_TO ) ) {
 			new InternetAddress( email ).validate();
 		}
 	}
@@ -76,23 +69,16 @@ public class Email extends BioModuleImpl implements BioModule
 	 * {@link biolockj.Config}.{@value #EMAIL_TO}
 	 */
 	@Override
-	public void executeTask() throws Exception
-	{
+	public void executeTask() throws Exception {
 		final String emailBody = SummaryUtil.getSummary() + SummaryUtil.getFooter();
 
-		if( emailBody == null || emailBody.trim().length() < 1 )
-		{
-			throw new Exception( "Unable to obtain SummaryUtil.getSummary()" );
-		}
+		if( emailBody.trim().length() < 1 ) throw new Exception( "Unable to obtain SummaryUtil.getSummary()" );
 
-		try
-		{
+		try {
 			Transport.send( getMimeMessage( emailBody + RETURN + "Regards," + RETURN + "BioLockJ Admin" ) );
 			Log.info( getClass(), "EMAIL SENT!" );
 			successful = true;
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			throw new Exception( "Unable to send email: " + ex.getMessage() );
 		}
 
@@ -102,12 +88,8 @@ public class Email extends BioModuleImpl implements BioModule
 	 * Summary simply reports the status.
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
-		if( successful )
-		{
-			return "EMAIL SENT";
-		}
+	public String getSummary() throws Exception {
+		if( successful ) return "EMAIL SENT";
 
 		return "EMAIL FAILED";
 	}
@@ -118,16 +100,13 @@ public class Email extends BioModuleImpl implements BioModule
 	 * @return javax.mail.Session required to send a MimeMessage
 	 * @throws Exception if {@link biolockj.Config} finds missing or invalid email properties
 	 */
-	protected Session getSession() throws Exception
-	{
+	protected Session getSession() throws Exception {
 		String startTls = "false";
 		String smtpAuth = "false";
-		if( Config.getBoolean( this, EMAIL_SMTP_AUTH ) )
-		{
+		if( Config.getBoolean( this, EMAIL_SMTP_AUTH ) ) {
 			smtpAuth = "true";
 		}
-		if( Config.getBoolean( this, EMAIL_START_TLS_ENABLE ) )
-		{
+		if( Config.getBoolean( this, EMAIL_START_TLS_ENABLE ) ) {
 			startTls = "true";
 		}
 
@@ -137,20 +116,15 @@ public class Email extends BioModuleImpl implements BioModule
 		props.put( EMAIL_HOST, Config.requireString( this, EMAIL_HOST ) );
 		props.put( EMAIL_PORT, Config.requireString( this, EMAIL_PORT ) );
 
-		final Session session = Session.getInstance( props, new Authenticator()
-		{
+		final Session session = Session.getInstance( props, new Authenticator() {
 			@Override
-			protected PasswordAuthentication getPasswordAuthentication()
-			{
-				try
-				{
+			protected PasswordAuthentication getPasswordAuthentication() {
+				try {
 					return new PasswordAuthentication( Config.requireString( null, EMAIL_FROM ),
-							decrypt( Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) ) );
-				}
-				catch( final Exception ex )
-				{
+						decrypt( Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) ) );
+				} catch( final Exception ex ) {
 					Log.error( getClass(), "Unable to build PasswordAuthentication due to missing/invalid properties: "
-							+ EMAIL_FROM + " or " + EMAIL_ENCRYPTED_PASSWORD + " : " + ex.getMessage(), ex );
+						+ EMAIL_FROM + " or " + EMAIL_ENCRYPTED_PASSWORD + " : " + ex.getMessage(), ex );
 				}
 
 				return null;
@@ -167,40 +141,20 @@ public class Email extends BioModuleImpl implements BioModule
 	 * @param val Encrypted password
 	 * @return Clear-text password
 	 */
-	private String decrypt( final String val )
-	{
+	String decrypt( final String val ) {
 		String decryptedPassword = null;
-		try
-		{
+		try {
 			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
 			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
 			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
 			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
 			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.error( getClass(), ex.getMessage(), ex );
 		}
 
 		return decryptedPassword;
 
-	}
-
-	/**
-	 * Wraps emailBody in javax.mail Multipart/BodyPart
-	 *
-	 * @param emailBody Pipeline summary
-	 * @return Multipart wrapper object
-	 * @throws Exception if propagated by MimeBodyPart
-	 */
-	private Multipart getContent( final String emailBody ) throws Exception
-	{
-		final Multipart multipart = new MimeMultipart();
-		final BodyPart mimeMsg = new MimeBodyPart();
-		mimeMsg.setText( emailBody );
-		multipart.addBodyPart( mimeMsg );
-		return multipart;
 	}
 
 	/**
@@ -210,8 +164,7 @@ public class Email extends BioModuleImpl implements BioModule
 	 * @return MimeMessage
 	 * @throws Exception if email properties are missing or invalid
 	 */
-	private Message getMimeMessage( final String emailBody ) throws Exception
-	{
+	private Message getMimeMessage( final String emailBody ) throws Exception {
 		final Message message = new MimeMessage( getSession() );
 		message.setFrom( new InternetAddress( Config.requireString( this, EMAIL_FROM ) ) );
 		message.addRecipients( Message.RecipientType.TO, InternetAddress.parse( getRecipients() ) );
@@ -226,13 +179,10 @@ public class Email extends BioModuleImpl implements BioModule
 	 * @return {@link biolockj.Config}.{@value #EMAIL_TO} as a comma separated list.
 	 * @throws Exception if {@link biolockj.Config}.{@value #EMAIL_TO} is missing or invalid
 	 */
-	private String getRecipients() throws Exception
-	{
+	private String getRecipients() throws Exception {
 		final StringBuffer addys = new StringBuffer();
-		for( final String to: Config.requireList( this, EMAIL_TO ) )
-		{
-			if( addys.length() != 0 )
-			{
+		for( final String to: Config.requireList( this, EMAIL_TO ) ) {
+			if( addys.length() != 0 ) {
 				addys.append( "," );
 			}
 			addys.append( to );
@@ -247,16 +197,19 @@ public class Email extends BioModuleImpl implements BioModule
 	 *
 	 * @throws Exception if unable to encrypt or store password
 	 */
-	public static void encryptAndStoreEmailPassword() throws Exception
-	{
-		Log.info( Email.class,
-				"About to encrypt and store new admin email password in Config: " + Config.getConfigFilePath() );
+	public static void encryptAndStoreEmailPassword() throws Exception {
+		Log.info( Email.class, "About to encrypt and store new admin email password in MASTER Config: "
+			+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
 		Config.setConfigProperty( EMAIL_ENCRYPTED_PASSWORD, encrypt( RuntimeParamUtil.getAdminEmailPassword() ) );
-		PropUtil.saveMasterConfig( Config.getProperties() );
-		Log.info( Email.class,
+		if( MasterConfigUtil.saveMasterConfig() ) {
+			Log.info( Email.class,
 				"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
-						+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
-						+ PropUtil.getMasterConfig().getAbsolutePath() );
+					+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
+					+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
+		} else {
+			Log.error( Email.class,
+				"Failed to store enctryped password in the MASTER Config - check Log file for error details" );
+		}
 	}
 
 	/**
@@ -268,8 +221,7 @@ public class Email extends BioModuleImpl implements BioModule
 	 * @throws UnsupportedEncodingException Encryption error
 	 */
 	protected static String encrypt( final String password )
-			throws GeneralSecurityException, UnsupportedEncodingException
-	{
+		throws GeneralSecurityException, UnsupportedEncodingException {
 		final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
 		final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
 		final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
@@ -277,21 +229,28 @@ public class Email extends BioModuleImpl implements BioModule
 		return base64Encode( pbeCipher.doFinal( password.getBytes( "UTF-8" ) ) );
 	}
 
-	private static byte[] base64Decode( final String encodedPassword ) throws IOException
-	{
+	private static byte[] base64Decode( final String encodedPassword ) {
 		return Base64.getDecoder().decode( encodedPassword );
 	}
 
-	private static String base64Encode( final byte[] bytes )
-	{
+	private static String base64Encode( final byte[] bytes ) {
 		return Base64.getEncoder().encodeToString( bytes );
 	}
 
 	/**
-	 * {@link biolockj.Config} String property: {@value #CLUSTER_HOST}<br>
-	 * The cluster host URL used for SSH and SCP connections.
+	 * Wraps emailBody in javax.mail Multipart/BodyPart
+	 *
+	 * @param emailBody Pipeline summary
+	 * @return Multipart wrapper object
+	 * @throws Exception if propagated by MimeBodyPart
 	 */
-	public static final String CLUSTER_HOST = "cluster.host";
+	private static Multipart getContent( final String emailBody ) throws Exception {
+		final Multipart multipart = new MimeMultipart();
+		final BodyPart mimeMsg = new MimeBodyPart();
+		mimeMsg.setText( emailBody );
+		multipart.addBodyPart( mimeMsg );
+		return multipart;
+	}
 
 	/**
 	 * {@link biolockj.Config} String property: {@value #EMAIL_ENCRYPTED_PASSWORD}<br>
@@ -339,6 +298,6 @@ public class Email extends BioModuleImpl implements BioModule
 	private static final char[] PASSWORD = "enfldsgbnlsngdlksdsgm".toCharArray();
 
 	private static final byte[] SALT = { (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33,
-			(byte) 0x10, (byte) 0x12, };
+		(byte) 0x10, (byte) 0x12, };
 	private static boolean successful = false;
 }

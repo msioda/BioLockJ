@@ -3,34 +3,35 @@
 ##  The $USER profile was updated by $BLJ/install to run               ##
 ##  $BLJ/script/blj_config.  This purpose of this script it to:        ##
 ##                                                                     ##
-##   1. Add $BLJ/script into the $USER $PATH                           ##
-##   2. Add env. variable $BLJ = BioLockJ installation directory       ##
-##   3. Add env. variable $BLJ_PROJ = pipeline output directory        ##
-##   4. Add env. variable $BLJ_META = BioLockJ metatada file repo      ##
-##   5. Add env. variable $DOCKER_HUB_USER = "biolockj"                ##
-##   6. Add env. variable $DOCKER_FILE_PATH = "$BLJ/resources/docker"  ##
-##   7. Add $BLJ/script/blj_functions to bash shell environment        ##
-##   8. If $BLJ_SUP exists add $BLJ_SUP/script/blj_git_functions,      ##
-##      $BLJ_SUP/script/docker_functions to bash environment           ##
+##   1. Add env. variable $BLJ = BioLockJ installation directory       ##
+##   2. Add env. variable $BLJ_SCRIPT = $BLJ/script                    ##
+##   3. Add env. variable $BLJ_PROJ = $BLJ/pipelines                   ##
+##   4. Add env. variable $BLJ_META = $HOME/metadata if undefined      ##
+##   5. Add env. variable $BLJ_SUP = blj_support directory             ##
+##   6. Source $DOCKER_LIB - which is also included in $AWS_LIB        ##
+##   7. Source $AWS_LIB if /.dockerenv exists or $HOME == $EC2_HOME    ##
+##   8. Add $BLJ_SCRIPT to your $PATH                                  ##
 ##                                                                     ##
 #########################################################################
+export BLJ_SCRIPT="$( cd "$( dirname ${BASH_SOURCE[0]} )" && pwd )"
+export BLJ="$(dirname $BLJ_SCRIPT)"
+export BLJ_PROJ="${BLJ}/pipelines"
+export BLJ_LIB="${BLJ_SCRIPT}/blj_functions"
+export DOCKER_LIB="${BLJ_SCRIPT}/docker_functions"
+export AWS_LIB="${BLJ_SCRIPT}/aws_functions"
+export EC2_USER="ec2-user"
+export EC2_HOME="/home/${EC2_USER}"
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export PATH="$SCRIPT_DIR:$PATH"
-export BLJ="$(dirname $SCRIPT_DIR)"
-[ ! -d "$BLJ_PROJ" ] && export BLJ_PROJ="$BLJ/pipelines"
-[ ! -d "$BLJ_META" ] && export BLJ_META=~/metadata
-[ ! -d "$DOCKER_FILE_PATH" ]  && export DOCKER_FILE_PATH="$BLJ/resources/docker"
-[ ${#DOCKER_HUB_USER} -eq 0 ] && export DOCKER_HUB_USER="biolockj"
+alias load_blj=". ${BLJ_LIB}"
+alias load_docker=". ${DOCKER_LIB}"
+alias load_aws=". ${AWS_LIB}"
 
-. $BLJ/script/blj_functions
+if [ -f "/.dockerenv" ] || [ "${HOME}" == "${EC2_HOME}" ]; then 
+	. "${AWS_LIB}"
+else
+	. "${DOCKER_LIB}"
+fi
 
-BLJ_PARENT="$(dirname $BLJ)"
-[ ! -d "$BLJ_SUP" ] && [ -d "$BLJ_PARENT/blj_support/script" ] && export BLJ_SUP="$BLJ_PARENT/blj_support" 
-
-if [ -d "$BLJ_SUP" ]; then
-	export PATH="$BLJ_SUP/script:$PATH"
-	. $BLJ_SUP/script/blj_git_functions
-	. $BLJ_SUP/script/docker_functions
-	#echo "Updated PATH=$PATH"
-fi 
+[ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="${BLJ_SCRIPT}:$PATH"
+[ ! -d "${BLJ_META}" ] && export BLJ_META="${HOME}/metadata"
+[ ! -d "${BLJ_SUP}" ] && [ -d "$(dirname $BLJ)/blj_support" ] && export BLJ_SUP="$(dirname $BLJ)/blj_support"

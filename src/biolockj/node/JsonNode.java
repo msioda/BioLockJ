@@ -20,8 +20,7 @@ import biolockj.Log;
 /**
  * Each JsonNode holds an OTU, count, and link to its parent node.
  */
-public class JsonNode implements Serializable, Comparable<JsonNode>
-{
+public class JsonNode implements Serializable, Comparable<JsonNode> {
 	/**
 	 * JsonNode Constructor
 	 * 
@@ -30,8 +29,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * @param parent Taxa parent
 	 * @param level Taxa level
 	 */
-	public JsonNode( final String taxa, final Long count, final JsonNode parent, final String level )
-	{
+	public JsonNode( final String taxa, final Long count, final JsonNode parent, final String level ) {
 		this.taxa = taxa;
 		this.count = count;
 		this.parent = parent;
@@ -41,38 +39,27 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	/**
 	 * Add taxa count
 	 * 
-	 * @param count Taxa count
+	 * @param x Taxa count
 	 */
-	public void addCount( final Long count )
-	{
-		this.count += count;
+	public void addCount( final Long x ) {
+		this.count += x;
 	}
 
 	@Override
-	public int compareTo( final JsonNode node )
-	{
-		return taxa.compareTo( node.taxa );
+	public int compareTo( final JsonNode node ) {
+		return this.taxa.compareTo( node.taxa );
 	}
 
 	@Override
-	public boolean equals( final Object o )
-	{
-		if( o != null && o instanceof JsonNode )
-		{
-			if( o == this )
-			{
-				return true;
+	public boolean equals( final Object o ) {
+		if( o != null && o instanceof JsonNode ) {
+			if( o == this ) return true;
+			if( ( (JsonNode) o ).parent != null ) {
+				if( this.parent == null ) return false;
+				return new EqualsBuilder().append( this.taxa, ( (JsonNode) o ).taxa )
+					.append( this.parent, ( (JsonNode) o ).parent ).isEquals();
 			}
-			if( ( (JsonNode) o ).parent != null )
-			{
-				if( parent == null )
-				{
-					return false;
-				}
-				return new EqualsBuilder().append( taxa, ( (JsonNode) o ).taxa )
-						.append( parent, ( (JsonNode) o ).parent ).isEquals();
-			}
-			return new EqualsBuilder().append( taxa, ( (JsonNode) o ).taxa ).isEquals();
+			return new EqualsBuilder().append( this.taxa, ( (JsonNode) o ).taxa ).isEquals();
 		}
 
 		return false;
@@ -83,9 +70,8 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @return OTU count
 	 */
-	public Long getCount()
-	{
-		return count;
+	public Long getCount() {
+		return this.count;
 	}
 
 	/**
@@ -93,9 +79,8 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @return JsonNode level
 	 */
-	public String getLevel()
-	{
-		return level;
+	public String getLevel() {
+		return this.level;
 	}
 
 	/**
@@ -103,9 +88,8 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @return JsonNode parent
 	 */
-	public JsonNode getParent()
-	{
-		return parent;
+	public JsonNode getParent() {
+		return this.parent;
 	}
 
 	/**
@@ -113,9 +97,8 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @return Map of OTU stats
 	 */
-	public HashMap<String, Double> getStats()
-	{
-		return stats;
+	public HashMap<String, Double> getStats() {
+		return this.stats;
 	}
 
 	/**
@@ -123,27 +106,21 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @return Taxa Name
 	 */
-	public String getTaxa()
-	{
-		return taxa;
+	public String getTaxa() {
+		return this.taxa;
 	}
 
 	@Override
-	public int hashCode()
-	{
-		if( parent == null )
-		{
-			return taxa.hashCode();
-		}
-		return ( taxa + parent ).hashCode();
+	public int hashCode() {
+		if( this.parent == null ) return this.taxa.hashCode();
+		return ( this.taxa + this.parent ).hashCode();
 	}
 
 	/**
 	 * Print node info.
 	 */
-	public void report()
-	{
-		Log.info( getClass(), "Report JsonNode[ " + level + ":" + taxa + ":" + count + " ]" );
+	public void report() {
+		Log.info( getClass(), "Report JsonNode[ " + this.level + ":" + this.taxa + ":" + this.count + " ]" );
 	}
 
 	/**
@@ -151,8 +128,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @param level Taxonomy level
 	 */
-	public void setLevel( final String level )
-	{
+	public void setLevel( final String level ) {
 		this.level = level;
 	}
 
@@ -161,8 +137,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @param parent Node parent
 	 */
-	public void setParent( final JsonNode parent )
-	{
+	public void setParent( final JsonNode parent ) {
 		this.parent = parent;
 	}
 
@@ -171,8 +146,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * 
 	 * @param taxa Taxa name
 	 */
-	public void setTaxa( final String taxa )
-	{
+	public void setTaxa( final String taxa ) {
 		this.taxa = taxa;
 	}
 
@@ -182,14 +156,12 @@ public class JsonNode implements Serializable, Comparable<JsonNode>
 	 * @param name Statistic name
 	 * @param val Statistic value
 	 */
-	public void updateStats( final String name, final Double val )
-	{
-		if( !stats.keySet().contains( name ) )
-		{
-			stats.put( name, 0D );
+	public void updateStats( final String name, final Double val ) {
+		if( !this.stats.keySet().contains( name ) ) {
+			this.stats.put( name, 0D );
 		}
 
-		stats.put( name, stats.get( name ) + val );
+		this.stats.put( name, this.stats.get( name ) + val );
 	}
 
 	private Long count = 0L;

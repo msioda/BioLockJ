@@ -28,7 +28,7 @@ buildSummaryTables <- function( reportStats, level ) {
 # Then the p-values are adjusted using method defined in r.pAdjust
 calculateStats <- function( level ) {
 
-   countTable = getCountTable( level )
+   countTable = getCountMetaTable( level )
    metaTable = getMetaData( level )
    if ( is.null(countTable) || is.null(metaTable) ) return( NULL )
    names = vector( mode="character" )
@@ -44,8 +44,8 @@ calculateStats <- function( level ) {
    # if r.rareOtuThreshold > 1, cutoffValue is an absolute threshold, otherwise it's a % of countTable rows
    cutoffValue = getProperty("r.rareOtuThreshold", 1)
    if( cutoffValue < 1 ) cutoffValue = cutoffValue * nrow(countTable)
-
-   for( countCol in 1:ncol(countTable) ) {
+   numDataCols = ncol(countTable) - ncol(metaTable);
+   for( countCol in 1:numDataCols ){
       if( sum( countTable[,countCol] > 0 ) >= cutoffValue ) {
          names[ length(names)+1 ] = names(countTable)[countCol]
          logInfo( c( "Calculate pvalues for:", names[ length(names) ] ) )
@@ -54,7 +54,7 @@ calculateStats <- function( level ) {
             for( field in getBinaryFields() ) {
                att = as.factor( metaTable[,field] )
                vals = levels( att )
-               if( everyGroupHasMultipleVals( countTable, countCol, att, vals ) ) { 
+               if( everyGroupHasData( countTable, countCol, att, vals ) ) { 
                      myLm = lm( countTable[,countCol] ~ att, na.action=na.exclude )
                      parametricPvals = addNamedVectorElement( parametricPvals, field, t.test( countTable[att==vals[1], countCol], countTable[att==vals[2], countCol] )$p.value )
                      nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, pvalue( wilcox_test( countTable[att==vals[1], countCol], countTable[att==vals[2], countCol] ) ) )
@@ -71,7 +71,7 @@ calculateStats <- function( level ) {
             for( field in getNominalFields() ) {
                att = as.factor( metaTable[,field] )
                vals = levels( att )
-               if( everyGroupHasMultipleVals( countTable, countCol, att, vals ) ) { 
+               if( everyGroupHasData( countTable, countCol, att, vals ) ) { 
                      myLm = lm( countTable[,countCol] ~ att, na.action=na.exclude )
                      myAnova = anova( myLm )
                      parametricPvals = addNamedVectorElement( parametricPvals, field, myAnova$"Pr(>F)"[1] )
@@ -170,11 +170,11 @@ main <- function() {
 }
 
 # Verify all groups have 2+ values to avoid statistical test failures
-everyGroupHasMultipleVals <- function( countTable, countCol, att, vals )  {
+everyGroupHasData <- function( countTable, countCol, att, vals )  {
    for( val in vals ) {
-      numVals = length( countTable[att==val, countCol] )
-      if( numVals < 2 ) {
-         logInfo( c( "Skip statistical test for", names(countTable)[countCol], "contains only", numVals, "values with value =", val ) )
+   	  numVals = length( countTable[ countTable[ , att] == val, countCol] )
+      if( numVals < 1 ) {
+         logInfo( c( "Skip statistical test for", names(countTable)[countCol], "since it has no data for", att, "=", val ) )
          return( FALSE )
       }
    }

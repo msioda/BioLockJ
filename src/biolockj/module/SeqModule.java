@@ -18,8 +18,7 @@ import java.util.List;
 /**
  * Classes that implement this interface requires sequence files for input.<br>
  */
-public interface SeqModule extends ScriptModule
-{
+public interface SeqModule extends ScriptModule {
 
 	/**
 	 * Return only sequence files for sample IDs found in the metadata file.<br>

@@ -19,7 +19,6 @@ import biolockj.Config;
 import biolockj.Constants;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.wgs.Humann2Classifier;
-import biolockj.module.implicit.parser.ParserModule;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -30,11 +29,9 @@ import biolockj.util.*;
  * 
  * @blj.web_desc HumanN2 Parser
  */
-public class Humann2Parser extends ParserModuleImpl implements ParserModule
-{
+public class Humann2Parser extends ParserModuleImpl {
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		PathwayUtil.verifyConfig( this );
 		Config.getBoolean( this, HN2_KEEP_UNMAPPED );
@@ -42,31 +39,26 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	}
 
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		final String longestLabel = "# Abundance File Pathways:";
 		final int pad = longestLabel.length() + 4;
 
 		String summary = SummaryUtil.getOutputDirSummary( this )
-				+ ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
-		if( numPathwayAbund != null )
-		{
-			summary += BioLockJUtil.addTrailingSpaces( longestLabel, pad ) + numPathwayAbund + RETURN;
+			+ ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
+		if( this.numPathwayAbund != null ) {
+			summary += BioLockJUtil.addTrailingSpaces( longestLabel, pad ) + this.numPathwayAbund + RETURN;
 		}
-		if( numPathwayCovg != null )
-		{
-			summary += BioLockJUtil.addTrailingSpaces( "# Coverage File Pathways:", pad ) + numPathwayCovg + RETURN;
+		if( this.numPathwayCovg != null ) {
+			summary += BioLockJUtil.addTrailingSpaces( "# Coverage File Pathways:", pad ) + this.numPathwayCovg
+				+ RETURN;
 		}
-		if( numGeneFamilies != null )
-		{
-			summary += BioLockJUtil.addTrailingSpaces( "# Gene Families:", pad ) + numGeneFamilies + RETURN;
+		if( this.numGeneFamilies != null ) {
+			summary += BioLockJUtil.addTrailingSpaces( "# Gene Families:", pad ) + this.numGeneFamilies + RETURN;
 		}
-		if( !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) )
-		{
+		if( !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) ) {
 			summary += "UNMAPPED column discarded from output tables" + RETURN;
 		}
-		if( !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) )
-		{
+		if( !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) ) {
 			summary += "UNINTEGRATED column discarded from output tables" + RETURN;
 		}
 
@@ -74,14 +66,13 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	}
 
 	@Override
-	public boolean isValidInputModule( final BioModule module )
-	{
+	public boolean isValidInputModule( final BioModule module ) {
 		return module instanceof Humann2Classifier;
 	}
 
 	/**
-	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.Humann2Classifier}.
-	 * Skip mapping of UNMAPPED and UNINTEGRATED columns
+	 * To parse the taxonomy level reports output by {@link biolockj.module.classifier.wgs.Humann2Classifier}. Skip
+	 * mapping of UNMAPPED and UNINTEGRATED columns
 	 *
 	 * Sample HumanN2 report line (head output_pAbund.tsv):<br>
 	 * 1st cell format: [Pathway_ID]:[Pathway_Descr] | g__[genus_taxa].s__[species_taxa]<br>
@@ -90,42 +81,30 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	 * estimated_number_of_reads_from_the_clade k__Bacteria|p__Bacteroidetes 14.68863 0.137144143537 4234739 580770
 	 */
 	@Override
-	public void parseSamples() throws Exception
-	{
+	public void parseSamples() throws Exception {
 		int count = 0;
-		for( final File file: getInputFiles() )
-		{
+		for( final File file: getInputFiles() ) {
 			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
 			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, HN2_PARSED );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
-			try
-			{
+			try {
 				boolean headerRow = true;
-				Set<Integer> skipCols = new HashSet<>();
-				for( final String[] record: data )
-				{
-					if( numSamples == null )
-					{
+				final Set<Integer> skipCols = new HashSet<>();
+				for( final String[] record: data ) {
+					if( this.numSamples == null ) {
 						count++;
 					}
 					boolean newRecord = true;
-					for( int i=0; i<record.length; i++ )
-					{
-						String cell = BioLockJUtil.removeQuotes( record[ i ] );
-						if( headerRow && cell.equals( UNMAPPED ) && !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) )
-						{
+					for( int i = 0; i < record.length; i++ ) {
+						final String cell = BioLockJUtil.removeQuotes( record[ i ] );
+						if( headerRow && cell.equals( UNMAPPED ) && !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) ) {
 							skipCols.add( i );
-						}
-						else if( headerRow && cell.equals( UNINTEGRATED ) && !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) )
-						{
+						} else if( headerRow && cell.equals( UNINTEGRATED )
+							&& !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) ) {
 							skipCols.add( i );
-						}
-						else if( skipCols.contains( i ) )
-						{
+						} else if( skipCols.contains( i ) ) {
 							skipCols.add( i );
-						}
-						else
-						{
+						} else {
 							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + cell );
 						}
 
@@ -134,30 +113,19 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 					writer.write( Constants.RETURN );
 					headerRow = false;
 				}
-			}
-			finally
-			{
-				if( writer != null )
-				{
-					writer.close();
-				}
+			} finally {
+				writer.close();
 			}
 
-			if( numSamples == null )
-			{
-				numSamples = count;
+			if( this.numSamples == null ) {
+				this.numSamples = count;
 			}
-			if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_ABUND_SUM ) )
-			{
-				numPathwayAbund = data[ 0 ].length - 1;
-			}
-			else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_COVG_SUM ) )
-			{
-				numPathwayCovg = data[ 0 ].length - 1;
-			}
-			else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_GENE_FAM_SUM ) )
-			{
-				numGeneFamilies = data[ 0 ].length - 1;
+			if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_ABUND_SUM ) ) {
+				this.numPathwayAbund = data[ 0 ].length - 1;
+			} else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_COVG_SUM ) ) {
+				this.numPathwayCovg = data[ 0 ].length - 1;
+			} else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_GENE_FAM_SUM ) ) {
+				this.numGeneFamilies = data[ 0 ].length - 1;
 			}
 
 			MemoryUtil.reportMemoryUsage( "Parsed " + file.getAbsolutePath() );
@@ -165,27 +133,20 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	}
 
 	@Override
-	public void runModule() throws Exception
-	{
+	public void runModule() throws Exception {
 		parseSamples();
 	}
 
-	private List<List<String>> assignSampleIDs( final List<List<String>> data ) throws Exception
-	{
+	private static List<List<String>> assignSampleIDs( final List<List<String>> data ) {
 		final List<List<String>> output = new ArrayList<>();
 		boolean firstRecord = true;
-		for( final List<String> row: data )
-		{
+		for( final List<String> row: data ) {
 			final ArrayList<String> record = new ArrayList<>();
-			if( firstRecord )
-			{
-				for( final String cell: row )
-				{
+			if( firstRecord ) {
+				for( final String cell: row ) {
 					record.add( record.isEmpty() ? MetaUtil.getID(): getSampleID( cell ) );
 				}
-			}
-			else
-			{
+			} else {
 				record.addAll( row );
 			}
 
@@ -196,37 +157,30 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 		return output;
 	}
 
-	private String getSampleID( String name ) throws Exception
-	{
-		if( name.contains( PAIRED_SUFFIX ) )
-		{
-			name = name.replace( PAIRED_SUFFIX, "" );
+	private static String getSampleID( final String name ) {
+		String id = name;
+		if( id.contains( PAIRED_SUFFIX ) ) {
+			id = id.replace( PAIRED_SUFFIX, "" );
 		}
-		if( name.contains( KD_SUFFIX ) )
-		{
-			name = name.replace( KD_SUFFIX, "" );
+		if( id.contains( KD_SUFFIX ) ) {
+			id = id.replace( KD_SUFFIX, "" );
 		}
-		if( name.contains( ABUND_SUFFIX ) )
-		{
-			name = name.replace( ABUND_SUFFIX, "" );
+		if( id.contains( ABUND_SUFFIX ) ) {
+			id = id.replace( ABUND_SUFFIX, "" );
 		}
-		if( name.contains( COVERAGE_SUFFIX ) )
-		{
-			name = name.replace( COVERAGE_SUFFIX, "" );
+		if( id.contains( COVERAGE_SUFFIX ) ) {
+			id = id.replace( COVERAGE_SUFFIX, "" );
 		}
-		if( name.contains( RPK_SUFFIX ) )
-		{
-			name = name.replace( RPK_SUFFIX, "" );
+		if( id.contains( RPK_SUFFIX ) ) {
+			id = id.replace( RPK_SUFFIX, "" );
 		}
 
-		return name;
+		return id;
 	}
 
-	private static String[][] transpose( final List<List<String>> data ) throws Exception
-	{
+	private static String[][] transpose( final List<List<String>> data ) {
 		final List<List<String>> transposed = new ArrayList<>();
-		for( final List<String> row: data )
-		{
+		for( final List<String> row: data ) {
 			final List<String> outputRow = new ArrayList<>();
 			outputRow.add( row.get( 0 ) );
 			transposed.add( outputRow );
@@ -237,37 +191,31 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 
 		final String transpose[][] = new String[ n ][ m ];
 
-		for( int c = 0; c < m; c++ )
-		{
-			for( int d = 0; d < n; d++ )
-			{
+		for( int c = 0; c < m; c++ ) {
+			for( int d = 0; d < n; d++ ) {
 				transpose[ d ][ c ] = data.get( c ).get( d );
 			}
 		}
 
 		return transpose;
 	}
-	
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #HN2_KEEP_UNMAPPED}<br>
-	 * Set value = {@value biolockj.Constants#TRUE}  to keep UNMAPPED column in count tables
-	 */
-	protected static final String HN2_KEEP_UNMAPPED = "humann2.keepUnmapped";
 
+	private Integer numGeneFamilies = null;
 
+	private Integer numPathwayAbund = null;
+
+	private Integer numPathwayCovg = null;
+	private Integer numSamples = null;
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #HN2_KEEP_UNINTEGRATED}<br>
 	 * Set value = {@value biolockj.Constants#TRUE} to keep UNINTEGRATED column in count tables
 	 */
 	protected static final String HN2_KEEP_UNINTEGRATED = "humann2.keepUnintegrated";
-
-	
-
-
-	private Integer numGeneFamilies = null;
-	private Integer numPathwayAbund = null;
-	private Integer numPathwayCovg = null;
-	private Integer numSamples = null;
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #HN2_KEEP_UNMAPPED}<br>
+	 * Set value = {@value biolockj.Constants#TRUE} to keep UNMAPPED column in count tables
+	 */
+	protected static final String HN2_KEEP_UNMAPPED = "humann2.keepUnmapped";
 	private static final String ABUND_SUFFIX = "_Abundance";
 	private static final String COVERAGE_SUFFIX = "_Coverage";
 	private static final String HN2_PARSED = "hn2";
@@ -276,5 +224,5 @@ public class Humann2Parser extends ParserModuleImpl implements ParserModule
 	private static final String RPK_SUFFIX = "-RPKs";
 	private static final String UNINTEGRATED = "UNINTEGRATED";
 	private static final String UNMAPPED = "UNMAPPED";
-	
+
 }

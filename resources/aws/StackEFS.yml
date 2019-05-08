@@ -1,0 +1,1122 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWSBatchGenomicsStack_Template
+  This is an AWS CloudFormation Template for BioLockJ Genomics pipeline using AWS Batch 
+  This file only creates the roles, vpcs, and subnets necssary for deployment
+  Note: this cloudformation stack requires one parameter, your public IP address
+  which is automatically queried from inside the main script.  This is to only
+  allow access from the user's current IP Address The other scripts pull the
+  ARNs of these resources to: 1.) Create a keypair 2.) Create an AMI with
+  expanded Docker storage space and miniconda 3.) setup a compute environment
+  and queue Usage: CreateRolesAndComputeEnvironment.sh [arguments]
+Parameters:
+  NetworkAccessIP:
+    Description: Source that has SSH access to the bastion host. (i.e. 50.32.108.38/32)
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/32
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid CIDR range of the form x.x.x.x/x.
+  SpotBidPercentage:
+    Description: Maximum bid percentage for Spot Compute Environment
+    Type: Number
+    MinValue: 1
+    MaxValue: 90
+    Default: 80
+  SpotBatchMaxvCPUs:
+    Description: Max number of vCPUs for Batch environments
+    Type: Number
+    Default: 1024
+  OnDemandBatchMaxvCPUs:
+    Description: Max number of vCPUs for Batch environments
+    Type: Number
+    Default: 256
+  VolumeName:
+    Description: The name to be used for the EFS volume
+    Type: String
+    MinLength: '1'
+    Default: myEFSvolume
+  MountPoint:
+    Description: The Linux mount point for the EFS volume
+    Type: String
+    MinLength: '1'
+    Default: myEFSvolume
+  CloudformationTemplateName:
+    Type: String
+    Default: AWSBatchGenomicsStack
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'True'
+      EnableDnsHostnames: 'True'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 279c1982-398d-4beb-95e9-7ea871ed3b25
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ca6bdb7c-af0f-4778-8b71-0a1604d35e79
+  RouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+  VPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 3f4ee6b9-63bd-4b07-84f5-f82811088135
+  BatchSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security Group for Batch
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref 'AWS::StackName'
+              - '-batch-sg'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b65d1864-edbd-4eb5-b161-21e04b7a9a5d
+  BastionSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: SSH Access to Bastion Instance
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref 'AWS::StackName'
+              - '-bastion-sg'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref NetworkAccessIP
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: !Ref NetworkAccessIP
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: !Ref NetworkAccessIP
+        - IpProtocol: tcp
+          FromPort: '8080'
+          ToPort: '8080'
+          CidrIp: !Ref NetworkAccessIP
+        - IpProtocol: icmp
+          FromPort: '-1'
+          ToPort: '-1'
+          CidrIp: !Ref NetworkAccessIP
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: c1d21c28-367b-4d9d-95d4-3c712561a79f
+  BastionToBastionSecurityGroupIngressNFS:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      IpProtocol: tcp
+      FromPort: '2049'
+      ToPort: '2049'
+      SourceSecurityGroupId: !GetAtt BastionSecurityGroup.GroupId
+      GroupId: !GetAtt BastionSecurityGroup.GroupId
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ddcdaa9a-8ff1-4994-90bb-86598e2ff1fd
+  BatchToBastionSecurityGroupIngressNFS:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      IpProtocol: tcp
+      FromPort: '2049'
+      ToPort: '2049'
+      SourceSecurityGroupId: !GetAtt BatchSecurityGroup.GroupId
+      GroupId: !GetAtt BastionSecurityGroup.GroupId
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 8ecc1b81-97ad-417f-a367-d800fbb3f6da
+  BastionSecurityGroupEgress:
+    Type: 'AWS::EC2::SecurityGroupEgress'
+    Properties:
+      IpProtocol: '-1'
+      CidrIp: 0.0.0.0/0
+      GroupId: !GetAtt BastionSecurityGroup.GroupId
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 7ad20dce-085e-463f-9df6-283f5a7d9d3a
+  Subnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs ''
+      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref VPC
+      MapPublicIpOnLaunch: 'True'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 87ccb9df-192a-4548-97f8-e7aa00fce39b
+  Subnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs ''
+      CidrBlock: 10.0.1.0/24
+      VpcId: !Ref VPC
+      MapPublicIpOnLaunch: 'True'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+  NetworkInterfaces:
+    Type: 'AWS::EC2::NetworkInterface'
+    Properties:
+      Description: Network interface for Bastion Node
+      SubnetId: !Ref Subnet1
+      GroupSet:
+        - !Ref BatchSecurityGroup
+        - !Ref BastionSecurityGroup
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b9922763-8390-4bc6-8cde-ccf23ffadd94
+  Route:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 37fc803d-6834-41a9-b4f7-4bc4d978d40f
+  SubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet1
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 63060ecd-552e-4088-a4eb-e152be2eaa9c
+  SubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet2
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: e839290d-0c50-4598-83b9-909d2f099ca7
+  BatchServiceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: batch.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 99df7c09-9e3f-4047-9b86-abd8dbcb30cd
+  IamInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Roles:
+        - !Ref EcsInstanceRole
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 6cad450f-0404-4ce6-b741-ff9bcdc396ae
+  ECSTaskRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+        - 'arn:aws:iam::aws:policy/AmazonElasticFileSystemFullAccess'
+        - >-
+          arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2RoleForSSM'
+        - 'arn:aws:iam::aws:policy/AmazonEC2FullAccess'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 49b9457f-d855-42d1-a2a1-90f7cd04476c
+  EcsInstanceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2008-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonEC2FullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonElasticFileSystemFullAccess'
+        - >-
+          arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 05ba0cf7-2248-40b5-bf47-a3b5f0330854
+  SpotIamFleetRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: spotfleet.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 4d9dff45-f244-46b4-bc94-72252bc75793
+  SpotComputeEnv:
+    Type: 'AWS::Batch::ComputeEnvironment'
+    Properties:
+      Type: MANAGED
+      ServiceRole: !Ref BatchServiceRole
+      ComputeEnvironmentName: !Join 
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - SpotComputeEnv
+      ComputeResources:
+        MinvCpus: 0
+        MaxvCpus: 1024
+        DesiredvCpus: 0
+        SecurityGroupIds:
+          - Ref: BastionSecurityGroup
+          - Ref: BatchSecurityGroup
+        Type: SPOT
+        BidPercentage: !Ref SpotBidPercentage
+        Subnets:
+          - !Ref Subnet1
+          - !Ref Subnet2
+        InstanceRole: !Ref IamInstanceProfile
+        SpotIamFleetRole: !Ref SpotIamFleetRole
+        LaunchTemplate:
+          LaunchTemplateId: !Ref BatchNodeLaunchTemplate
+        InstanceTypes:
+          - optimal
+        Ec2KeyPair: !Ref 'AWS::StackName'
+        Tags:
+          StackName: !Ref 'AWS::StackName'
+          ComputeEnvironment: SpotComputeEnv
+      State: ENABLED
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: d0b11a3a-33e4-4134-938d-59efa25df389
+  LowPriorityJobQueue:
+    Type: 'AWS::Batch::JobQueue'
+    Properties:
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref SpotComputeEnv
+      State: ENABLED
+      Priority: 1
+      JobQueueName: !Join 
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - LowPriorityQueue
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 168eb26a-5019-4130-acdc-33d36c9ddd58
+  OnDemandComputeEnv:
+    Type: 'AWS::Batch::ComputeEnvironment'
+    Properties:
+      Type: MANAGED
+      ServiceRole: !Ref BatchServiceRole
+      ComputeEnvironmentName: !Join 
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - OnDemandComputeEnv
+      ComputeResources:
+        MinvCpus: 0
+        MaxvCpus: 256
+        DesiredvCpus: 0
+        SecurityGroupIds:
+          - Ref: BastionSecurityGroup
+          - Ref: BatchSecurityGroup
+        Type: EC2
+        Subnets:
+          - !Ref Subnet1
+          - !Ref Subnet2
+        InstanceRole: !Ref IamInstanceProfile
+        LaunchTemplate:
+          LaunchTemplateId: !Ref BatchNodeLaunchTemplate
+        InstanceTypes:
+          - optimal
+        Ec2KeyPair: !Ref 'AWS::StackName'
+        Tags:
+          StackName: !Ref 'AWS::StackName'
+          ComputeEnvironment: OnDemandComputeEnv
+      State: ENABLED
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 372a5ab6-8579-4afb-abc6-ebf45bac14f5
+  HighPriorityJobQueue:
+    Type: 'AWS::Batch::JobQueue'
+    Properties:
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref OnDemandComputeEnv
+        - Order: 2
+          ComputeEnvironment: !Ref SpotComputeEnv
+      State: ENABLED
+      Priority: 10
+      JobQueueName: !Join 
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - HighPriorityQueue
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 44b3e843-65d1-4ece-8dd0-2eaf8a53b060
+  FileSystem:
+    Type: 'AWS::EFS::FileSystem'
+    Properties:
+      PerformanceMode: maxIO
+      FileSystemTags:
+        - Key: Name
+          Value: !Join 
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - EFS-shared
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: e3143b62-7cb1-4dea-87cd-5e0f290e684b
+  MountTarget1:
+    Type: 'AWS::EFS::MountTarget'
+    Properties:
+      FileSystemId: !Ref FileSystem
+      SubnetId: !Ref Subnet1
+      SecurityGroups:
+        - !Ref BastionSecurityGroup
+        - !Ref BatchSecurityGroup
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 607270af-72a1-45bb-9802-644f5e408ed7
+  MountTarget2:
+    Type: 'AWS::EFS::MountTarget'
+    Properties:
+      FileSystemId: !Ref FileSystem
+      SubnetId: !Ref Subnet2
+      SecurityGroups:
+        - !Ref BatchSecurityGroup
+        - !Ref BastionSecurityGroup
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 6a0a382e-57d1-4fa4-944d-fe8dcbebb648
+  HeadNodeLaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateName: !Join 
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - HeadNodeTemplateWithEFS
+      LaunchTemplateData:
+        TagSpecifications:
+          - ResourceType: 'instance'
+            Tags:
+              - Key: 'StackName'
+                Value: !Ref 'AWS::StackName'
+        UserData:
+          'Fn::Base64': !Sub >
+            MIME-Version: 1.0
+
+            Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
+
+
+            --==MYBOUNDARY==
+
+            Content-Type: text/cloud-config; charset="us-ascii"
+
+
+            package_update: true
+
+
+            packages:
+
+            - amazon-efs-utils
+
+
+            runcmd:
+
+            - yum update -y
+
+            - file_system_id_01=${FileSystem}
+
+            - efs_directory=/mnt/efs
+
+            - mkdir -p ${!efs_directory}
+
+            - echo "${!file_system_id_01}:/ ${!efs_directory} efs
+            defaults,_netdev" >> /etc/fstab
+
+            - mount -a -t efs defaults
+
+            - chown -R ec2-user:ec2-user ${!efs_directory}
+
+            - chmod g+s ${!efs_directory}
+
+            - yum remove -y ecs-init
+
+            - yum install -y bzip2 wget
+
+            - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
+
+            - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -bfp /home/ec2-user/miniconda'
+
+            - runuser -l  ec2-user -c '/home/ec2-user/miniconda/bin/conda install -c conda-forge -y awscli'
+
+            - runuser -l  ec2-user -c 'rm Miniconda3-latest-Linux-x86_64.sh'
+
+            - runuser -l  ec2-user -c 'echo "export PATH=/home/ec2-user/miniconda/bin:$PATH" >> ~/.bashrc'
+
+            - runuser -l  ec2-user -c 'mkdir /home/ec2-user/.aws'
+
+            - runuser -l  ec2-user -c 'mkdir /home/ec2-user/.nextflow'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/config'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/db'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/input'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/metadata'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/pipelines'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/primer'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/script'
+
+            --==MYBOUNDARY==--
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: a2cdae54-64a6-41d6-8565-9eadf5bef1bb
+  BatchNodeLaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateName: !Join 
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - BatchNodeTemplateWithEFS
+      LaunchTemplateData:
+        TagSpecifications:
+          - ResourceType: 'instance'
+            Tags:
+              - Key: 'StackName'
+                Value: !Ref 'AWS::StackName'
+        UserData:
+          'Fn::Base64': !Sub >
+            MIME-Version: 1.0
+
+            Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
+
+
+            --==MYBOUNDARY==
+
+            Content-Type: text/cloud-config; charset="us-ascii"
+
+
+            packages:
+
+            - amazon-efs-utils
+
+
+            runcmd:
+
+            - file_system_id_01=${FileSystem}
+
+            - efs_directory=/mnt/efs
+
+            - mkdir -p ${!efs_directory}
+
+            - echo "${!file_system_id_01}:/ ${!efs_directory} efs
+            defaults,_netdev" >> /etc/fstab
+
+            - mount -a -t efs defaults
+
+            - chown -R ec2-user:ec2-user ${!efs_directory}
+
+            - chmod g+s ${!efs_directory}
+
+            - yum install -y bzip2 wget
+
+            - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
+
+            - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -bfp /home/ec2-user/miniconda'
+
+            - runuser -l  ec2-user -c '/home/ec2-user/miniconda/bin/conda install -c conda-forge -y awscli'
+
+            - runuser -l  ec2-user -c 'rm Miniconda3-latest-Linux-x86_64.sh'
+            
+            - runuser -l  ec2-user -c 'echo "export PATH=/home/ec2-user/miniconda/bin:$PATH" >> ~/.bashrc'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/config'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/db'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/input'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/metadata'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/pipelines'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/primer'
+
+            - runuser -l  ec2-user -c 'mkdir /mnt/efs/script'
+
+            --==MYBOUNDARY==--
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: a2cdae54-64a6-41d6-8565-9eadf5bef1bc
+Outputs:
+  Subnet1:
+    Value: !Ref Subnet1
+  Subnet2:
+    Value: !Ref Subnet2
+  BatchSecurityGroup:
+    Value: !Ref BatchSecurityGroup
+  BastionSecurityGroup:
+    Value: !Ref BastionSecurityGroup
+  ECSTaskRole:
+    Value: !Ref ECSTaskRole
+  EcsInstanceRoleArn:
+    Value: !Ref EcsInstanceRole
+  IamInstanceProfileArn:
+    Value: !Ref IamInstanceProfile
+  SpotIamFleetRoleArn:
+    Value: !Ref SpotIamFleetRole
+  BatchServiceRoleArn:
+    Value: !Ref BatchServiceRole
+  FileSystemId:
+    Value: !Ref FileSystem
+  HeadNodeLaunchTemplateId:
+    Value: !Ref HeadNodeLaunchTemplate
+  BatchNodeLaunchTemplateId:
+    Value: !Ref BatchNodeLaunchTemplate
+  SpotComputeEnv:
+    Value: !Ref SpotComputeEnv
+  LowPriorityJobQueue:
+    Value: !Ref LowPriorityJobQueue
+  OnDemandComputeEnv:
+    Value: !Ref OnDemandComputeEnv
+  HighPriorityJobQueue:
+    Value: !Ref HighPriorityJobQueue
+Metadata:
+  'AWS::CloudFormation::Designer':
+    4d9dff45-f244-46b4-bc94-72252bc75793:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 1010
+        'y': 540
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    05ba0cf7-2248-40b5-bf47-a3b5f0330854:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 1120
+        'y': 460
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    6cad450f-0404-4ce6-b741-ff9bcdc396ae:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 1110
+        'y': 540
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+      isassociatedwith:
+        - 05ba0cf7-2248-40b5-bf47-a3b5f0330854
+    99df7c09-9e3f-4047-9b86-abd8dbcb30cd:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 1010
+        'y': 460
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    ca6bdb7c-af0f-4778-8b71-0a1604d35e79:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 550
+        'y': 150
+      z: 1
+      embeds: []
+    279c1982-398d-4beb-95e9-7ea871ed3b25:
+      size:
+        width: 1170
+        height: 720
+      position:
+        x: 50
+        'y': 200
+      z: 1
+      embeds:
+        - a2cdae54-64a6-41d6-8565-9eadf5bef1bc
+        - a2cdae54-64a6-41d6-8565-9eadf5bef1bb
+        - e3143b62-7cb1-4dea-87cd-5e0f290e684b
+        - 4d9dff45-f244-46b4-bc94-72252bc75793
+        - 05ba0cf7-2248-40b5-bf47-a3b5f0330854
+        - 49b9457f-d855-42d1-a2a1-90f7cd04476c
+        - 6cad450f-0404-4ce6-b741-ff9bcdc396ae
+        - 99df7c09-9e3f-4047-9b86-abd8dbcb30cd
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - c1d21c28-367b-4d9d-95d4-3c712561a79f
+        - b65d1864-edbd-4eb5-b161-21e04b7a9a5d
+        - 372a5ab6-8579-4afb-abc6-ebf45bac14f5
+        - d0b11a3a-33e4-4134-938d-59efa25df389
+        - 44b3e843-65d1-4ece-8dd0-2eaf8a53b060
+        - 168eb26a-5019-4130-acdc-33d36c9ddd58
+    87ccb9df-192a-4548-97f8-e7aa00fce39b:
+      size:
+        width: 520
+        height: 220
+      position:
+        x: 60
+        'y': 300
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds:
+        - 607270af-72a1-45bb-9802-644f5e408ed7
+        - b9922763-8390-4bc6-8cde-ccf23ffadd94
+      iscontainedinside:
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+    b65d1864-edbd-4eb5-b161-21e04b7a9a5d:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 670
+        'y': 520
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+      iscontainedinside:
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+    3f4ee6b9-63bd-4b07-84f5-f82811088135:
+      source:
+        id: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      target:
+        id: ca6bdb7c-af0f-4778-8b71-0a1604d35e79
+      z: 1
+    b662ea18-3ac7-4004-95ce-2eb2557ec5dc:
+      size:
+        width: 730
+        height: 660
+      position:
+        x: 60
+        'y': 240
+      z: 0
+      embeds: []
+      iscontainedinside:
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+    63060ecd-552e-4088-a4eb-e152be2eaa9c:
+      source:
+        id: b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+      target:
+        id: 87ccb9df-192a-4548-97f8-e7aa00fce39b
+      z: 0
+    37fc803d-6834-41a9-b4f7-4bc4d978d40f:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 470
+        'y': 230
+      z: 0
+      embeds: []
+      isassociatedwith:
+        - ca6bdb7c-af0f-4778-8b71-0a1604d35e79
+      iscontainedinside:
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+        - b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+    7ad20dce-085e-463f-9df6-283f5a7d9d3a:
+      source:
+        id: c1d21c28-367b-4d9d-95d4-3c712561a79f
+      target:
+        id: c1d21c28-367b-4d9d-95d4-3c712561a79f
+      z: 2
+    e3143b62-7cb1-4dea-87cd-5e0f290e684b:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 590
+        'y': 490
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    c1d21c28-367b-4d9d-95d4-3c712561a79f:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 700
+        'y': 450
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+      iscontainedinside:
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+    ddcdaa9a-8ff1-4994-90bb-86598e2ff1fd:
+      source:
+        id: c1d21c28-367b-4d9d-95d4-3c712561a79f
+      target:
+        id: c1d21c28-367b-4d9d-95d4-3c712561a79f
+      z: 2
+    6a0a382e-57d1-4fa4-944d-fe8dcbebb648:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 480
+        'y': 590
+      z: 3
+      parent: cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+      embeds: []
+      isassociatedwith:
+        - e3143b62-7cb1-4dea-87cd-5e0f290e684b
+        - b65d1864-edbd-4eb5-b161-21e04b7a9a5d
+        - c1d21c28-367b-4d9d-95d4-3c712561a79f
+      iscontainedinside:
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+        - cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+    a2cdae54-64a6-41d6-8565-9eadf5bef1bc:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 860
+        'y': 640
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    a2cdae54-64a6-41d6-8565-9eadf5bef1bb:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 1040
+        'y': 720
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    49b9457f-d855-42d1-a2a1-90f7cd04476c:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 1120
+        'y': 370
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    cbd1640c-4e74-40e2-a6ab-50fec23ceec3:
+      size:
+        width: 510
+        height: 240
+      position:
+        x: 60
+        'y': 590
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds:
+        - 6a0a382e-57d1-4fa4-944d-fe8dcbebb648
+      iscontainedinside:
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+        - 279c1982-398d-4beb-95e9-7ea871ed3b25
+    607270af-72a1-45bb-9802-644f5e408ed7:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 480
+        'y': 450
+      z: 3
+      parent: 87ccb9df-192a-4548-97f8-e7aa00fce39b
+      embeds: []
+      isassociatedwith:
+        - e3143b62-7cb1-4dea-87cd-5e0f290e684b
+        - c1d21c28-367b-4d9d-95d4-3c712561a79f
+        - b65d1864-edbd-4eb5-b161-21e04b7a9a5d
+      iscontainedinside:
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+    d0b11a3a-33e4-4134-938d-59efa25df389:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 890
+        'y': 570
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    168eb26a-5019-4130-acdc-33d36c9ddd58:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 890
+        'y': 420
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    b9922763-8390-4bc6-8cde-ccf23ffadd94:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 390
+        'y': 430
+      z: 3
+      parent: 87ccb9df-192a-4548-97f8-e7aa00fce39b
+      embeds: []
+      isassociatedwith:
+        - b65d1864-edbd-4eb5-b161-21e04b7a9a5d
+        - c1d21c28-367b-4d9d-95d4-3c712561a79f
+      iscontainedinside:
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+        - 87ccb9df-192a-4548-97f8-e7aa00fce39b
+    8ecc1b81-97ad-417f-a367-d800fbb3f6da:
+      source:
+        id: b65d1864-edbd-4eb5-b161-21e04b7a9a5d
+      target:
+        id: c1d21c28-367b-4d9d-95d4-3c712561a79f
+      z: 2
+    e839290d-0c50-4598-83b9-909d2f099ca7:
+      source:
+        id: b662ea18-3ac7-4004-95ce-2eb2557ec5dc
+      target:
+        id: cbd1640c-4e74-40e2-a6ab-50fec23ceec3
+      z: 0
+    44b3e843-65d1-4ece-8dd0-2eaf8a53b060:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 810
+        'y': 430
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []
+    372a5ab6-8579-4afb-abc6-ebf45bac14f5:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 810
+        'y': 570
+      z: 2
+      parent: 279c1982-398d-4beb-95e9-7ea871ed3b25
+      embeds: []

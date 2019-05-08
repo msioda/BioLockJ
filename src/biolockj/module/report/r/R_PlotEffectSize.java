@@ -15,7 +15,6 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.exception.ConfigViolationException;
-import biolockj.module.ScriptModule;
 import biolockj.module.report.taxa.NormalizeTaxaTables;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.RMetaUtil;
@@ -26,32 +25,26 @@ import biolockj.util.RMetaUtil;
  * 
  * @blj.web_desc R Plot Effect Size
  */
-public class R_PlotEffectSize extends R_Module implements ScriptModule
-{
+public class R_PlotEffectSize extends R_Module {
 	/**
 	 * At least one of the available plot types should NOT be disabled.
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		Config.getString( this, R_COLOR_HIGHLIGHT );
 
 		// Use single "&" to ensure all config values saved to MASTER config
 		if( Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC ) && Config.getBoolean( this, NO_COHENS_D )
-				&& Config.getBoolean( this, NO_R2 ) )
-		{
+			&& Config.getBoolean( this, NO_R2 ) )
 			throw new ConfigViolationException( NO_COHENS_D,
-					"When using " + this.getClass().getName() + " at least one of " + NO_COHENS_D + ", " + NO_R2
-							+ ", or " + Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC + " must not be true." );
-		}
+				"When using " + this.getClass().getName() + " at least one of " + NO_COHENS_D + ", " + NO_R2 + ", or "
+					+ Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC + " must not be true." );
 
 		if( !Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC )
-				&& RMetaUtil.getBinaryFields( this ).isEmpty() )
-		{
+			&& RMetaUtil.getBinaryFields( this ).isEmpty() )
 			throw new ConfigViolationException( Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC,
-					"Requires binary report fields" );
-		}
+				"Requires binary report fields" );
 	}
 
 	/**
@@ -59,12 +52,10 @@ public class R_PlotEffectSize extends R_Module implements ScriptModule
 	 * {@link biolockj.module.report.taxa.NormalizeTaxaTables}
 	 */
 	@Override
-	public List<String> getPreRequisiteModules() throws Exception
-	{
+	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = getStatPreReqs();
 		if( !Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC )
-				&& !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) )
-		{
+			&& !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ) {
 			preReqs.add( NormalizeTaxaTables.class.getName() );
 		}
 		return preReqs;

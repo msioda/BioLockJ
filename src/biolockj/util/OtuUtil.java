@@ -11,40 +11,34 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.File;
+import java.io.*;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.OtuFileException;
 
 /**
  * This utility helps work with OTU count files as formatted by the
  * {@link biolockj.module.implicit.parser.ParserModule}.
  */
-public class OtuUtil
-{
+public class OtuUtil {
 	/**
 	 * This inner class is used to hold a signle line from an OTU count file.
 	 */
-	public static class OtuCountLine
-	{
+	public static class OtuCountLine {
 		/**
 		 * Each OTU count file line has 2 parts: OTU Name and OTU Count
 		 * 
 		 * @param line OTU count file line
-		 * @throws Exception if errors occur
+		 * @throws OtuFileException if errors occur
 		 */
-		public OtuCountLine( final String line ) throws Exception
-		{
+		public OtuCountLine( final String line ) throws OtuFileException {
 			final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
-			if( st.countTokens() != 2 )
-			{
-				throw new Exception(
-						"OTU count lines should have 2 tokens {OTU, COUNT}, #tokens found: " + st.countTokens() );
-			}
-			otu = st.nextToken();
-			count = Long.valueOf( st.nextToken() );
+			if( st.countTokens() != 2 ) throw new OtuFileException(
+				"OTU count lines should have 2 tab-separated tokens {OTU, COUNT}, #tokens found: " + st.countTokens() );
+			this.otu = st.nextToken();
+			this.count = Long.valueOf( st.nextToken() );
 		}
 
 		/**
@@ -52,9 +46,8 @@ public class OtuUtil
 		 * 
 		 * @return OTU count
 		 */
-		public Long getCount()
-		{
-			return count;
+		public Long getCount() {
+			return this.count;
 		}
 
 		/**
@@ -62,9 +55,8 @@ public class OtuUtil
 		 * 
 		 * @return OTU name
 		 */
-		public String getOtu()
-		{
-			return otu;
+		public String getOtu() {
+			return this.otu;
 		}
 
 		private Long count = null;
@@ -72,8 +64,7 @@ public class OtuUtil
 	}
 
 	// Prevent instantiation
-	private OtuUtil()
-	{}
+	private OtuUtil() {}
 
 	/**
 	 * Build taxa name into OTU path, returns: level + {@value biolockj.Constants#DELIM_SEP} + taxa
@@ -81,10 +72,8 @@ public class OtuUtil
 	 * @param level Taxonomy level
 	 * @param taxa Taxa name
 	 * @return level + {@value biolockj.Constants#DELIM_SEP} + taxa
-	 * @throws Exception if errors occur
 	 */
-	public static String buildOtuTaxa( final String level, final String taxa ) throws Exception
-	{
+	public static String buildOtuTaxa( final String level, final String taxa ) {
 		return level + Constants.DELIM_SEP + BioLockJUtil.removeQuotes( taxa );
 	}
 
@@ -93,26 +82,21 @@ public class OtuUtil
 	 * 
 	 * @param file OTU count file
 	 * @return TreeMap(OTU, count)
-	 * @throws Exception if errors occur
+	 * @throws OtuFileException If the file is not formatted as an OTU file.
+	 * @throws IOException if unable to parse the input file
+	 * @throws FileNotFoundException if the file path is not found in the file system
 	 */
-	public static TreeMap<String, Long> compileSampleOtuCounts( final File file ) throws Exception
-	{
+	public static TreeMap<String, Long> compileSampleOtuCounts( final File file )
+		throws OtuFileException, FileNotFoundException, IOException {
 		final TreeMap<String, Long> otuCounts = new TreeMap<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
+		try {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final OtuCountLine ocl = new OtuCountLine( line );
-				final String otu = ocl.getOtu();
-				final Long count = ocl.getCount();
-				otuCounts.put( otu, count );
+				otuCounts.put( ocl.getOtu(), ocl.getCount() );
 			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
+		} finally {
+			if( reader != null ) {
 				reader.close();
 			}
 		}
@@ -125,17 +109,12 @@ public class OtuUtil
 	 * 
 	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @return Ordered TreeSet of unique OTUs
-	 * @throws Exception if errors occur
 	 */
-	public static TreeSet<String> findUniqueOtus( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts )
-			throws Exception
-	{
+	public static TreeSet<String> findUniqueOtus( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts ) {
 		final TreeSet<String> otus = new TreeSet<>();
-		for( final String id: sampleOtuCounts.keySet() )
-		{
+		for( final String id: sampleOtuCounts.keySet() ) {
 			final TreeMap<String, Long> taxaCounts = sampleOtuCounts.get( id );
-			if( taxaCounts != null && !taxaCounts.isEmpty() )
-			{
+			if( taxaCounts != null && !taxaCounts.isEmpty() ) {
 				otus.addAll( sampleOtuCounts.get( id ).keySet() );
 			}
 		}
@@ -152,34 +131,28 @@ public class OtuUtil
 	 * @param sampleId Sample ID
 	 * @param prefix File prefix (after pipeline name)
 	 * @return OTU count file
-	 * @throws Exception if errors occur
 	 */
-	public static File getOtuCountFile( final File dir, String sampleId, String prefix ) throws Exception
-	{
-		if( prefix == null )
-		{
-			prefix = "_";
+	public static File getOtuCountFile( final File dir, final String sampleId, final String prefix ) {
+		String myPrefix = prefix;
+		String id = sampleId;
+		if( myPrefix == null ) {
+			myPrefix = "_";
 		}
-		if( !prefix.startsWith( "_" ) )
-		{
-			prefix = "_" + prefix;
+		if( !myPrefix.startsWith( "_" ) ) {
+			myPrefix = "_" + myPrefix;
 		}
-		if( !prefix.endsWith( "_" ) )
-		{
-			prefix += "_";
+		if( !myPrefix.endsWith( "_" ) ) {
+			myPrefix += "_";
 		}
 
-		if( sampleId != null )
-		{
-			sampleId = "_" + sampleId;
-		}
-		else
-		{
-			sampleId = "";
+		if( id != null ) {
+			id = "_" + id;
+		} else {
+			id = "";
 		}
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + prefix + Constants.OTU_COUNT
-				+ sampleId + Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + myPrefix + Constants.OTU_COUNT
+			+ id + Constants.TSV_EXT );
 	}
 
 	/**
@@ -188,16 +161,13 @@ public class OtuUtil
 	 * 
 	 * @param otuCountFile {@value biolockj.Constants#OTU_COUNT} file
 	 * @return Sample ID
-	 * @throws Exception if errors occur
+	 * @throws OtuFileException if the OTU count file name is improperly formatted
 	 */
-	public static String getSampleId( final File otuCountFile ) throws Exception
-	{
-		if( otuCountFile.getName().lastIndexOf( "_" ) < 0 )
-		{
-			throw new Exception( "Unexpected format!  Missing \"_\" from input file name: " + otuCountFile.getName() );
-		}
+	public static String getSampleId( final File otuCountFile ) throws OtuFileException {
+		if( otuCountFile.getName().lastIndexOf( "_" ) < 0 ) throw new OtuFileException(
+			"Unexpected format!  Missing \"_\" from input file name: " + otuCountFile.getName() );
 		return otuCountFile.getName().substring( otuCountFile.getName().lastIndexOf( Constants.OTU_COUNT + "_" ) + 9,
-				otuCountFile.getName().length() - Constants.TSV_EXT.length() );
+			otuCountFile.getName().length() - Constants.TSV_EXT.length() );
 	}
 
 	/**
@@ -209,16 +179,12 @@ public class OtuUtil
 	 * @throws Exception if any of the input file names are missing "_{@value biolockj.Constants#OTU_COUNT}_"
 	 */
 	public static TreeMap<String, TreeMap<String, Long>> getSampleOtuCounts( final Collection<File> files )
-			throws Exception
-	{
+		throws Exception {
 		final TreeMap<String, TreeMap<String, Long>> otuCountsBySample = new TreeMap<>();
-		for( final File file: files )
-		{
+		for( final File file: files ) {
 			if( !file.getName().contains( "_" + Constants.OTU_COUNT + "_" ) )
-			{
 				throw new Exception( "Module input files must contain sample OTU counts with \"_" + Constants.OTU_COUNT
-						+ "_\" as part of the file name.  Found file: " + file.getAbsolutePath() );
-			}
+					+ "_\" as part of the file name.  Found file: " + file.getAbsolutePath() );
 
 			otuCountsBySample.put( getSampleId( file ), compileSampleOtuCounts( file ) );
 		}
@@ -231,35 +197,27 @@ public class OtuUtil
 	 * 
 	 * @param file File
 	 * @return boolean TRUE if file is an OTU count file
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isOtuFile( final File file ) throws Exception
-	{
-		final String name = file.getName();
-		if( name.contains( "_" + Constants.OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) )
-		{
-			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			try
-			{
-				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-				{
-					new OtuCountLine( line );
-				}
+	public static boolean isOtuFile( final File file ) {
+		BufferedReader reader = null;
+		try {
+			final String name = file.getName();
+			if( name.contains( "_" + Constants.OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) ) {
+				reader = BioLockJUtil.getFileReader( file );
+				final OtuCountLine otuCountLine = new OtuCountLine( reader.readLine() );
+				Log.debug( OtuUtil.class, "Found OTU file " + otuCountLine.getOtu() + " : " + otuCountLine.getCount() );
+				return true;
 			}
-			catch( final Exception ex )
-			{
-				Log.debug( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
-				return false;
-			}
-			finally
-			{
-				if( reader != null )
-				{
+		} catch( final Exception ex ) {
+			Log.error( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
+		} finally {
+			try {
+				if( reader != null ) {
 					reader.close();
 				}
+			} catch( final Exception ex ) {
+				Log.error( OtuUtil.class, "Failed to close file reader", ex );
 			}
-
-			return true;
 		}
 
 		return false;

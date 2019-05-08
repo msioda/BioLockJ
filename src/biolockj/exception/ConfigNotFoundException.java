@@ -14,15 +14,13 @@ package biolockj.exception;
 /**
  * ConfigNotFoundException is thrown if a required {@link biolockj.Config} property is undefined.
  */
-public class ConfigNotFoundException extends ConfigException
-{
+public class ConfigNotFoundException extends ConfigException {
 	/**
 	 * ConfigNotFoundException is thrown if a required {@link biolockj.Config} property is undefined.
 	 *
 	 * @param property {@link biolockj.Config} property name
 	 */
-	public ConfigNotFoundException( final String property )
-	{
+	public ConfigNotFoundException( final String property ) {
 		super( property );
 	}
 

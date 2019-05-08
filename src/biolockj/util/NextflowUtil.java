@@ -12,11 +12,12 @@
 package biolockj.util;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.report.Email;
@@ -24,53 +25,211 @@ import biolockj.module.report.Email;
 /**
  * This utility builds the Nextflow main.nf used in AWS pipelines.
  */
-public class NextflowUtil
-{
+public class NextflowUtil {
 
 	/**
-	 * Call this method to build the Nextflow main.nf for the current pipeline.
+	 * Sync file or directory with S3 bucket.<br>
+	 * Dir example: aws s3 sync $EFS/config s3://blj-2019-04-05/config<br>
+	 * File example: aws s3 cp ${BLJ_META}/testMetadata.tsv s3://blj-2019-04-05/metadata/testMetadata.tsv Register each
+	 * efsPath to avoid syncing the same path more than once.
 	 * 
-	 * @param modules Pipeline modules
-	 * @return Nextflow main.nf file
+	 * 
+	 * @param efsPath File or directory to sync
+	 * @param waitUntilComplete Boolean if enabled will block until process completes before moving on
 	 * @throws Exception if errors occur
 	 */
-	public static File buildNextflowMain( final List<BioModule> modules ) throws Exception
-	{
-		Log.info( NextflowUtil.class, "Initialize AWS Cloud Manager" );
-		final File template = buildInitialTemplate( asString( modules ) );
-		writeNextflowMainNF( getNextflowLines( template ) );
-		BioLockJUtil.deleteWithRetry( templateConfig(), 3 );
-		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
-		return getMainNf();
-	}
-
-	/**
-	 * Copy the initialized pipeline to EFS. The aws_manager can then be launched with updated $BLJ_PROJ = EFS parent
-	 * directory.
-	 * 
-	 * @return File EFS Pipeline directory
-	 * @throws Exception if errors occur copying the pipeline.
-	 */
-	public static File copyPipelineToEfs() throws Exception
-	{
-		final File efsPipeline = new File( EFS_DIR + File.separator + Config.pipelineName() );
-		FileUtils.copyDirectory( new File( Config.pipelinePath() ), efsPipeline, true );
-		if( !efsPipeline.exists() )
-		{
-			throw new Exception( "Unable to create EFS pipeline directory: " + efsPipeline.getAbsolutePath() );
+	public static void awsSyncS3( final String efsPath, final boolean waitUntilComplete ) throws Exception {
+		if( s3SyncRegister.contains( efsPath ) ) {
+			Log.info( NextflowUtil.class, "Ignore sync request - sync already requested for: " + efsPath );
+			return;
 		}
-		return efsPipeline;
+
+		s3SyncRegister.add( efsPath );
+
+		String s3Dir = getAwsS3();
+		if( efsPath.contains( Config.pipelinePath() ) ) {
+			s3Dir += efsPath.replace( Config.pipelinePath(), "" );
+		}
+		Log.info( BioLockJ.class, "Transfer " + efsPath + " to --> " + s3Dir );
+
+		final String[] s3args = new String[ 5 ];
+		s3args[ 0 ] = "aws";
+		s3args[ 1 ] = "s3";
+		s3args[ 2 ] = new File( efsPath ).isFile() ? "cp": "sync";
+		s3args[ 3 ] = efsPath;
+		s3args[ 4 ] = s3Dir;
+
+		if( waitUntilComplete ) {
+			Processor.submit( s3args, "S3-Sync-xFer" );
+		} else {
+			Processor.runSubprocess( s3args, "S3-Async-xFer" );
+		}
 	}
 
 	/**
 	 * Get the Nextflow main.nf file path.
 	 * 
 	 * @return Nextflow main.nf
-	 * @throws Exception if File I/O Errors occur
 	 */
-	public static File getMainNf() throws Exception
-	{
+	public static File getMainNf() {
 		return new File( Config.pipelinePath() + File.separator + MAIN_NF );
+	}
+
+	/**
+	 * Get the Nextflow report directory
+	 * 
+	 * @return Nextflow report directory
+	 */
+	public static File getNextflowReportDir() {
+		final File dir = new File( Config.pipelinePath() + File.separator + NEXTFLOW );
+		if( !dir.isDirectory() ) {
+			dir.mkdir();
+		}
+		return dir;
+	}
+
+	/**
+	 * Return true if the Nextflow log has been saved to the pipeline root directory
+	 * 
+	 * @return TRUE if log exists in pipeline root directory
+	 */
+	public static boolean nextflowLogExists() {
+		return new File( getNextflowReportDir().getAbsolutePath() + File.separator + NF_LOG_NAME ).isFile();
+	}
+
+	/**
+	 * Purge EFS data based on pipeline Config.
+	 * 
+	 * @return TRUE if not errors occur
+	 */
+	public static boolean purgeEfsData() {
+		try {
+			if( Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT ) ) {
+				purge( Config.pipelinePath() );
+			} else if( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
+				purge( DockerUtil.DOCKER_CONFIG_DIR );
+				purge( DockerUtil.DOCKER_INPUT_DIR );
+				purge( DockerUtil.DOCKER_META_DIR );
+				purge( DockerUtil.DOCKER_PRIMER_DIR );
+
+				purge( DockerUtil.DOCKER_DB_DIR );
+			}
+			return true;
+		} catch( final Exception ex ) {
+			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
+			return false;
+		}
+	}
+
+	/**
+	 * Save EFS data to S3 based on pipeline Config.
+	 * 
+	 * @return TRUE if not errors occur
+	 */
+	public static boolean saveEfsDataToS3() {
+		try {
+			if( Config.getBoolean( null, AWS_COPY_PIPELINE_TO_S3 ) ) {
+				awsSyncS3( Config.pipelinePath(), true );
+			} else if( DownloadUtil.getDownloadListFile().exists()
+				&& Config.getBoolean( null, AWS_COPY_REPORTS_TO_S3 ) ) {
+				final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
+				try {
+					for( String path = reader.readLine(); path != null; path = reader.readLine() ) {
+						awsSyncS3( Config.pipelinePath() + File.separator + path, true );
+					}
+				} finally {
+					if( reader != null ) {
+						reader.close();
+					}
+				}
+			} else {
+				Log.warn( NextflowUtil.class, "Pipeline ouput will be not saved to configured AWS S3 bucket: "
+					+ Config.requireString( null, AWS_S3 ) + " due to Config properties [ " + AWS_COPY_PIPELINE_TO_S3
+					+ "=" + Constants.FALSE + " ] & [ " + AWS_COPY_REPORTS_TO_S3 + "=" + Constants.FALSE + " ]" );
+			}
+
+			return true;
+		} catch( final Exception ex ) {
+			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
+			return false;
+		}
+	}
+
+	/**
+	 * Save a copy of the Nextflow log file to the Pipeline root directory
+	 */
+	public static void saveNextflowLog() {
+		if( nextflowLogExists() ) return;
+		try {
+			final File log = new File( NF_LOG );
+			if( !log.exists() ) {
+				Log.warn( NextflowUtil.class, NF_LOG + " not found, cannot copy to pipeline root directory!" );
+				return;
+			}
+			FileUtils.copyFile( log,
+				new File( getNextflowReportDir().getAbsolutePath() + File.separator + NEXTFLOW + Constants.LOG_EXT ) );
+		} catch( final Exception ex ) {
+			Log.error( NextflowUtil.class, "Failed to copy nextflow.log to pipeline root directory ", ex );
+		}
+	}
+
+	/**
+	 * Before any AWS or Nextflow functionality can be used, the Docker root user $HOME directory must be updated with
+	 * the EC2 user aws + Nextflow config.
+	 * 
+	 * @throws IOException if source or target config directories are not found
+	 */
+	public static void stageRootConfig() throws IOException {
+		final File ec2Aws = new File( DockerUtil.AWS_HOME + File.separator + AWS_DIR );
+		final File ec2NfConfig = new File( DockerUtil.AWS_HOME + File.separator + NF_DIR + File.separator + "config" );
+		final File rootNfDir = new File( DockerUtil.ROOT_HOME + File.separator + NF_DIR );
+		final File rootNfConfig = new File( rootNfDir.getAbsolutePath() + File.separator + "config" );
+		final File rootAwsConfig = new File(
+			DockerUtil.ROOT_HOME + File.separator + AWS_DIR + File.separator + "config" );
+		final File rootAwsCred = new File(
+			DockerUtil.ROOT_HOME + File.separator + AWS_DIR + File.separator + "credentials" );
+		FileUtils.copyFileToDirectory( ec2NfConfig, rootNfDir );
+		FileUtils.copyDirectoryToDirectory( ec2Aws, new File( DockerUtil.ROOT_HOME ) );
+		if( !rootNfConfig.isFile() )
+			throw new IOException( "Root Nextflow config not found --> " + rootNfDir.getAbsolutePath() );
+		if( !rootAwsConfig.isFile() )
+			throw new IOException( "Root AWS config not found --> " + rootAwsConfig.getAbsolutePath() );
+		if( !rootAwsCred.isFile() )
+			throw new IOException( "Root Nextflow credentials not found --> " + rootAwsCred.getAbsolutePath() );
+	}
+
+	/**
+	 * Call this method to build the Nextflow main.nf for the current pipeline.
+	 * 
+	 * @param modules Pipeline modules
+	 * @throws Exception if errors occur
+	 */
+	public static void startNextflow( final List<BioModule> modules ) throws Exception {
+		final String plist = buildNextflowProcessList( modules );
+		if( plist == null ) {
+			Log.warn( NextflowUtil.class,
+				"Nextflow not neccesary for this pipeline.  All modules are attached java_modules that will run on the head node." );
+			return;
+		}
+		final File template = buildInitialTemplate( plist );
+		writeNextflowMainNF( getNextflowLines( template ) );
+		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
+		template.delete();
+		startService();
+		pollAndSpin();
+		Log.info( NextflowUtil.class, "Nextflow service sub-process started!" );
+	}
+
+	/**
+	 * Stop Nextflow process (required since parent Java process that ran BioLockJ pipeline will not halt until this
+	 * subprocess is finished.
+	 */
+	public static void stopNextflow() {
+		if( nfMainThread != null ) {
+			nfMainThread.interrupt();
+			Processor.deregisterThread( nfMainThread );
+			Log.info( NextflowUtil.class, "Nextflow process thread de-registered" );
+		}
 	}
 
 	/**
@@ -80,151 +239,320 @@ public class NextflowUtil
 	 * @return List of lines to save in final main.nf
 	 * @throws Exception if errors occur
 	 */
-	protected static List<String> getNextflowLines( final File template ) throws Exception
-	{
+	protected static List<String> getNextflowLines( final File template ) throws Exception {
+		Log.info( NextflowUtil.class, "Build main.nf from the Nextflow template: " + template.getAbsolutePath() );
 		final List<String> lines = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( template );
-		try
-		{
-			String module = null;
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				if( module != null )
-				{
-					if( line.trim().equals( "}" ) )
-					{
+		try {
+			ScriptModule module = null;
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				String onDemandLabel = null;
+				Log.debug( NextflowUtil.class, "READ LINE: " + line );
+				if( line.trim().startsWith( PROCESS ) ) {
+					module = getModule( line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim() );
+					line = line.replaceAll( "\\.", "_" );
+				} else if( module != null ) {
+					if( line.contains( NF_CPUS ) ) {
+						final String prop = Config.getModuleProp( module, NF_CPUS.substring( 1 ) );
+						line = line.replace( NF_CPUS, Config.getString( module, prop ) );
+					} else if( line.contains( NF_MEMORY ) ) {
+						final String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
+						line = line.replace( NF_MEMORY, getRAM( Config.requireString( module, prop ) ) );
+					} else if( line.contains( NF_DOCKER_IMAGE ) ) {
+						line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
+						if( Config.requireString( module, EC2_ACQUISITION_STRATEGY ).toUpperCase()
+							.equals( ON_DEMAND ) ) {
+							onDemandLabel = "    label '" + ON_DEMAND + "'";
+						}
+					} else if( line.contains( MODULE_SCRIPT ) ) {
+						line = line.replace( MODULE_SCRIPT, module.getScriptDir().getAbsolutePath() );
+					} else if( line.trim().equals( "}" ) ) {
 						module = null;
 					}
-					else if( line.contains( NF_CPUS ) )
-					{
-						final String numCpus = Config.getString( null, Config.getModuleProp( module, NF_CPUS ) );
-						line = line.replace( NF_CPUS, numCpus );
-					}
-					else if( line.contains( NF_MEMORY ) )
-					{
-						String ram = Config.requireString( null, Config.getModuleProp( module, NF_MEMORY ) );
-						if( !ram.startsWith( "'" ) )
-						{
-							ram = "'" + ram;
-						}
-						if( !ram.endsWith( "'" ) )
-						{
-							ram = ram + "'";
-						}
-						line = line.replace( NF_MEMORY, ram );
-					}
-					else if( line.contains( NF_DOCKER_IMAGE ) )
-					{
-						line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
-					}
-				}
-				else if( line.trim().startsWith( PROCESS ) )
-				{
-					module = line.replace( PROCESS, "" ).replaceAll( "{", "" ).trim();
-				}
-				else if( line.contains( NF_PIPELINE_NAME ) )
-				{
-					line = line.replace( NF_PIPELINE_NAME, Config.pipelineName() );
 				}
 
+				Log.debug( NextflowUtil.class, "ADD LINE: " + line );
 				lines.add( line );
+				if( onDemandLabel != null ) {
+					lines.add( onDemandLabel );
+					Log.debug( NextflowUtil.class, "ADD LINE: " + onDemandLabel );
+				}
 			}
-		}
-		finally
-		{
-			if( reader != null )
-			{
+		} finally {
+			if( reader != null ) {
 				reader.close();
 			}
 		}
-
+		Log.info( NextflowUtil.class, "Done building main.nf with # lines = " + lines.size() );
 		return lines;
 	}
 
-	private static String asString( final List<BioModule> modules ) throws Exception
-	{
-		String flatMods = "";
-		for( final BioModule module: modules )
-		{
-			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) )
-			{
-				flatMods += ( flatMods.isEmpty() ? "": SEPARATOR ) + module.getClass().getSimpleName();
-			}
-		}
-
-		return flatMods;
-	}
-
-	private static File buildInitialTemplate( final String modules ) throws Exception
-	{
+	private static File buildInitialTemplate( final String modules ) throws Exception {
 		Log.info( NextflowUtil.class, "Build Nextflow initial template: " + templateConfig().getAbsolutePath() );
+		Log.info( NextflowUtil.class, "Nextflow modules: " + modules );
+
 		final String[] args = new String[ 3 ];
 		args[ 0 ] = templateScript().getAbsolutePath();
 		args[ 1 ] = templateConfig().getAbsolutePath();
 		args[ 2 ] = modules;
-		Job.submit( args );
+		Processor.submit( args, "Build Nf Template" );
 		if( !templateConfig().exists() )
-		{
-			throw new Exception( "Nextflow Template failed to build: " + templateConfig().getAbsolutePath() );
-		}
-		Log.info( NextflowUtil.class, "Nextflow Template successfully created: " + templateConfig().getAbsolutePath() );
+			throw new Exception( "Nextflow Template file is not found at path: " + templateConfig().getAbsolutePath() );
+		Log.info( NextflowUtil.class, "Nextflow Template file created: " + templateConfig().getAbsolutePath() );
 		return templateConfig();
 	}
 
-	private static String getDockerImageLabel( final String moduleName ) throws Exception
-	{
-		return "'" + IMAGE + "_" + DockerUtil.getDockerUser( moduleName ) + "_" + DockerUtil.getImageName( moduleName )
-				+ "_" + DockerUtil.getImageVersion( moduleName ) + "'";
+	private static String buildNextflowProcessList( final List<BioModule> modules ) throws ConfigFormatException {
+		String plist = "";
+		for( final BioModule module: modules ) {
+			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) ) {
+				if( module instanceof JavaModule && !Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
+					Log.warn( NextflowUtil.class,
+						"Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" + Constants.FALSE
+							+ " so JavaModule \"" + module.getClass().getName()
+							+ "\" will run on the head node - HEAD NODE MUST HAVE SUFFICIENT RESOURCES" );
+				} else {
+					plist += ( plist.isEmpty() ? "": " " ) + module.getClass().getName();
+				}
+			}
+		}
+		if( plist.isEmpty() ) {
+			plist = null;
+		}
+		return plist;
 	}
 
-	private static File templateConfig() throws Exception
-	{
-		return new File( Config.pipelinePath() + File.separator + "." + MAIN_NF );
+	private static String getAwsS3() throws Exception {
+		final String s3 = Config.requireString( null, AWS_S3 ) + File.separator + Config.pipelineName();
+		if( s3.startsWith( S3_DIR ) ) return s3;
+		return S3_DIR + s3;
 	}
 
-	private static File templateScript() throws Exception
-	{
+	private static String getDockerImageLabel( final BioModule module ) throws Exception {
+		return "'" + IMAGE + "_" + DockerUtil.getDockerUser( module ) + "_" + DockerUtil.getImageName( module ) + "_"
+			+ DockerUtil.getImageVersion( module ) + "'";
+	}
+
+	private static ScriptModule getModule( final String className ) {
+		Log.debug( NextflowUtil.class, "Calling getModule( " + className + " )" );
+		for( final BioModule module: Pipeline.getModules() ) {
+			if( module.getClass().getName().equals( className ) ) {
+				if( usedModules.contains( module.getID() ) ) {
+					Log.debug( NextflowUtil.class,
+						"Skip module [ ID = " + module.getID()
+							+ " ] in since it was already used, look for another module of type: "
+							+ module.getClass().getName() );
+				} else {
+					Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = "
+						+ module.getID() + " ] --> " + module.getClass().getName() );
+					usedModules.add( module.getID() );
+					return (ScriptModule) module;
+				}
+			}
+		}
+		return null;
+	}
+
+	private static String getRAM( final String ram ) throws ConfigFormatException {
+		String val = ram.trim();
+		String intVal = val.replaceAll( "[^0-9]", "" );
+		final String level = ram.replace( intVal, "" ).replaceAll( " ", "" ).replaceAll( "'", "" ).replaceAll( "\"",
+			"" );
+		if( level.length() > 0 && !ramLevels.contains( level ) ) throw new ConfigFormatException( AWS_RAM, "" );
+
+		try {
+			intVal = "'" + Integer.parseInt( ram ) + " GB'";
+			Log.warn( NextflowUtil.class, "RAM Config was purely numeric, adding default GB designation: " + ram
+				+ " converted to ---> " + intVal );
+			return intVal;
+		} catch( final Exception ex ) {
+			Log.debug( NextflowUtil.class, "RAM value is not purely numeric, ensure it is single quoted" );
+		}
+
+		if( !val.startsWith( "'" ) ) {
+			val = "'" + val;
+		}
+		if( !val.endsWith( "'" ) ) {
+			val = val + "'";
+		}
+
+		return ram;
+	}
+
+	private static boolean poll() throws Exception {
+		final File nfLog = new File( NF_LOG );
+		if( nfLog.exists() ) {
+			final BufferedReader reader = BioLockJUtil.getFileReader( nfLog );
+			try {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+					if( line.contains( NF_INIT_FLAG ) ) return true;
+				}
+			} finally {
+				if( reader != null ) {
+					reader.close();
+				}
+			}
+		} else {
+			Log.info( NextflowUtil.class, "Nextflow log file \"" + NF_LOG + "\" has not been created yet..." );
+		}
+		return false;
+	}
+
+	private static void pollAndSpin() throws Exception {
+		Log.info( NextflowUtil.class,
+			"Poll " + NF_LOG + " every 15 seconds until the status message \"" + NF_INIT_FLAG + "\" is logged" );
+		int numSecs = 0;
+		boolean finished = false;
+		while( !finished ) {
+			finished = poll();
+			if( !finished ) {
+				if( numSecs > NF_TIMEOUT )
+					throw new Exception( "Nextflow initialization timed out after " + numSecs + " seconds." );
+				Log.info( NextflowUtil.class, "Nextflow initializing..." );
+				Thread.sleep( 15 * 1000 );
+				numSecs += 15;
+			} else {
+				Log.info( NextflowUtil.class, "Nextflow initialization complete!" );
+			}
+		}
+	}
+
+	private static boolean purge( final String path ) throws Exception {
+
+		Log.info( BioLockJ.class, "Delete everything under/including --> " + path );
+		final String[] args = new String[ 3 ];
+		args[ 0 ] = "rm";
+		args[ 1 ] = "-rf";
+		args[ 2 ] = path;
+		Processor.submit( args, "Clear-AWS-Data" );
+		return true;
+	}
+
+	private static void setNfMainThread( final Thread thread ) {
+		nfMainThread = thread;
+	}
+
+	private static void startService() throws Exception {
+		final String reportBase = getNextflowReportDir().getAbsolutePath() + File.separator + Config.pipelineName()
+			+ "_";
+		final String[] args = new String[ 11 ];
+		args[ 0 ] = NEXTFLOW;
+		args[ 1 ] = "run";
+		args[ 2 ] = "-work-dir";
+		args[ 3 ] = S3_DIR + Config.requireString( null, AWS_S3 ) + File.separator + NEXTFLOW;
+		args[ 4 ] = "-with-trace";
+		args[ 5 ] = reportBase + "nextflow_trace.tsv";
+		args[ 6 ] = "-with-timeline";
+		args[ 7 ] = reportBase + "nextflow_timeline.html";
+		args[ 8 ] = "-with-dag";
+		args[ 9 ] = reportBase + "nextflow_diagram.html";
+		args[ 10 ] = getMainNf().getAbsolutePath();
+		setNfMainThread( Processor.runSubprocess( args, "Nextflow" ) );
+	}
+
+	private static File templateConfig() {
+		return new File( Config.pipelinePath() + File.separator + ".template_" + MAIN_NF );
+	}
+
+	private static File templateScript() throws Exception {
 		return new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR
-				+ File.separator + MAKE_NEXTFLOW_SCRIPT );
+			+ File.separator + MAKE_NEXTFLOW_SCRIPT );
 	}
 
-	private static void writeNextflowMainNF( final List<String> lines ) throws Exception
-	{
+	private static void writeNextflowMainNF( final List<String> lines ) throws Exception {
+		Log.debug( NextflowUtil.class, "Create " + getMainNf().getAbsolutePath() + " with # lines = " + lines.size() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMainNf() ) );
-		try
-		{
+		try {
 			boolean indent = false;
-			for( final String line: lines )
-			{
-				if( line.trim().equals( "}" ) )
-				{
+			for( String line: lines ) {
+				if( line.trim().equals( "}" ) ) {
 					indent = !indent;
+				}
+				if( indent ) {
+					line = "    " + line;
 				}
 				writer.write( line + Constants.RETURN );
-				if( line.trim().endsWith( "{" ) )
-				{
+				if( line.trim().endsWith( "{" ) ) {
 					indent = !indent;
 				}
 			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
+		} finally {
+			writer.close();
 		}
 	}
 
-	private static final String EFS_DIR = "/mount/efs";
+	/**
+	 * Name of the AWS S3 sub-directory used to save pipeline reports
+	 */
+	public static final String AWS_CONFIG_DIR = "config";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: If enabled save all input files to S3: {@value #AWS_COPY_DB_TO_S3}
+	 */
+	public static final String AWS_COPY_DB_TO_S3 = "aws.copyDbToS3";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: If enabled save pipeline to S3: {@value #AWS_COPY_PIPELINE_TO_S3}
+	 */
+	public static final String AWS_COPY_PIPELINE_TO_S3 = "aws.copyPipelineToS3";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: If enabled save reports to S3: {@value #AWS_COPY_PIPELINE_TO_S3}
+	 */
+	public static final String AWS_COPY_REPORTS_TO_S3 = "aws.copyReportsToS3";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: If enabled delete all EFS dirs (except pipelines):
+	 * {@value #AWS_PURGE_EFS_INPUTS}
+	 */
+	public static final String AWS_PURGE_EFS_INPUTS = "aws.purgeEfsInputs";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: If enabled delete all EFS/pipelines: {@value #AWS_PURGE_EFS_OUTPUT}
+	 */
+	public static final String AWS_PURGE_EFS_OUTPUT = "aws.purgeEfsOutput";
+
+	/**
+	 * {@link biolockj.Config} String property: AWS memory set in Nextflow main.nf: {@value #AWS_RAM}
+	 */
+	public static final String AWS_RAM = "aws.ram";
+
+	/**
+	 * Name of the AWS S3 subdirectory used to save pipeline reports
+	 */
+	public static final String AWS_REPORT_DIR = "reports";
+
+	/**
+	 * {@link biolockj.Config} String property: AWS S3 pipeline output directory used by Nextflow main.nf:
+	 * {@value #AWS_S3}
+	 */
+	public static final String AWS_S3 = "aws.s3";
+
+	/**
+	 * The Docker container will generate a nextflow.log file in the root directory, this is the file name
+	 */
+	protected static final String NF_LOG = "/.nextflow.log";
+
+	private static final String AWS_DIR = ".aws";
+
+	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
+	private static final String MODULE_SCRIPT = "BLJ_MODULE_SUB_DIR";
+	private static final String NEXTFLOW = "nextflow";
 	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
+	private static final String NF_DIR = ".nextflow";
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
-
-	private static final String NF_MEMORY = "$" + Constants.AWS_RAM;
-	private static final String NF_PIPELINE_NAME = "$pipeline.pipelineName";
+	private static final String NF_INIT_FLAG = "Session await";
+	private static final String NF_LOG_NAME = ".nextflow.log";
+	private static final String NF_MEMORY = "$" + AWS_RAM;
+	private static final int NF_TIMEOUT = 180;
+	private static Thread nfMainThread = null;
+	private static final String ON_DEMAND = "DEMAND";
 	private static final String PROCESS = "process";
-	private static final String SEPARATOR = ".";
+	private static List<String> ramLevels = Arrays.asList( "KB", "MB", "GB", "TB" );
+	private static final String S3_DIR = "s3://";
+	private static Set<String> s3SyncRegister = new HashSet<>();
+	private static final Set<Integer> usedModules = new HashSet<>();
 }

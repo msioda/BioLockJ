@@ -15,7 +15,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
-import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.util.MetaUtil;
 
@@ -25,8 +24,7 @@ import biolockj.util.MetaUtil;
  * 
  * @blj.web_desc QIIME Open Reference Classifier
  */
-public class QiimeOpenRefClassifier extends QiimeClassifier implements ClassifierModule
-{
+public class QiimeOpenRefClassifier extends QiimeClassifier {
 	/**
 	 * Return bash script lines to pick open reference OTUs by passing the newest biom file in the temp directory [via
 	 * bash code "$(ls -t $tempDir/*.biom | head -1)"] to {@link biolockj.module.implicit.qiime.QiimeClassifier}
@@ -39,8 +37,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 	 * {@value biolockj.module.implicit.qiime.QiimeClassifier#OTU_TABLE}
 	 */
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
 		final List<String> lines = new ArrayList<>();
 
@@ -50,16 +47,13 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 
 		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 
-		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) )
-		{
+		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) {
 			final String otusToFilter = tempDir + "chimeras.fasta";
 			lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET
-					+ ".fna" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir + "nochimeras.fasta" );
-			lines.add(
-					SCRIPT_FILTER_OTUS + " -i " + biomFile + " -e " + otusToFilter + " -o " + outputDir + OTU_TABLE );
-		}
-		else
-		{
+				+ ".fna" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir + "nochimeras.fasta" );
+			lines
+				.add( SCRIPT_FILTER_OTUS + " -i " + biomFile + " -e " + otusToFilter + " -o " + outputDir + OTU_TABLE );
+		} else {
 			lines.add( "cp " + biomFile + " " + outputDir + OTU_TABLE );
 		}
 
@@ -74,13 +68,11 @@ public class QiimeOpenRefClassifier extends QiimeClassifier implements Classifie
 	 * verify {@value biolockj.module.implicit.qiime.QiimeClassifier#EXE_VSEARCH_PARAMS}.
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		getParams();
 
-		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) )
-		{
+		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) {
 			getVsearchParams();
 		}
 	}

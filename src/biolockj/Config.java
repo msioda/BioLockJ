@@ -18,9 +18,7 @@ import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.TaxaUtil;
+import biolockj.util.*;
 
 /**
  * Provides type-safe, validated methods for storing/accessing system properties.<br>
@@ -28,8 +26,7 @@ import biolockj.util.TaxaUtil;
  * the Config (to save system determined info such as: pipeline directory and name, has paired reads?, has multiplexed
  * reads?, etc.).
  */
-public class Config
-{
+public class Config {
 	/**
 	 * Parse property value (Y or N) to return boolean, if not found, return false;
 	 *
@@ -38,22 +35,15 @@ public class Config
 	 * @return boolean value
 	 * @throws ConfigFormatException if property value is not null but also not Y or N.
 	 */
-	public static boolean getBoolean( final BioModule module, final String property ) throws ConfigFormatException
-	{
+	public static boolean getBoolean( final BioModule module, final String property ) throws ConfigFormatException {
 		if( getString( module, property ) != null && getString( module, property ).equalsIgnoreCase( Constants.TRUE ) )
-		{
 			return true;
-		}
-		else if( getString( module, property ) == null )
-		{
+		else if( getString( module, property ) == null ) {
 			setConfigProperty( property, Constants.FALSE );
 			Log.debug( Config.class, property + " is undefined, so return: " + Constants.FALSE );
-		}
-		else if( !getString( module, property ).equalsIgnoreCase( Constants.FALSE ) )
-		{
+		} else if( !getString( module, property ).equalsIgnoreCase( Constants.FALSE ) )
 			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE
-					+ " or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
-		}
+				+ " or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
 
 		return false;
 	}
@@ -63,14 +53,11 @@ public class Config
 	 *
 	 * @return Config file extension
 	 */
-	public static String getConfigFileExt()
-	{
+	public static String getConfigFileExt() {
 		String ext = null;
 		final StringTokenizer st = new StringTokenizer( configFile.getName(), "." );
-		if( st.countTokens() > 1 )
-		{
-			while( st.hasMoreTokens() )
-			{
+		if( st.countTokens() > 1 ) {
+			while( st.hasMoreTokens() ) {
 				ext = st.nextToken();
 			}
 		}
@@ -79,22 +66,11 @@ public class Config
 	}
 
 	/**
-	 * Gets the configuration file name
-	 *
-	 * @return Config file name
-	 */
-	public static String getConfigFileName()
-	{
-		return configFile.getName();
-	}
-
-	/**
 	 * Gets the full Config file path passed to BioLockJ as a runtime parameter.
 	 *
 	 * @return Config file path
 	 */
-	public static String getConfigFilePath()
-	{
+	public static String getConfigFilePath() {
 		return configFile.getAbsolutePath();
 	}
 
@@ -106,17 +82,12 @@ public class Config
 	 * @return Double value or null
 	 * @throws ConfigFormatException if property is defined, but set with a non-numeric value
 	 */
-	public static Double getDoubleVal( final BioModule module, final String property ) throws ConfigFormatException
-	{
-		if( getString( module, property ) != null )
-		{
-			try
-			{
+	public static Double getDoubleVal( final BioModule module, final String property ) throws ConfigFormatException {
+		if( getString( module, property ) != null ) {
+			try {
 				final Double val = Double.parseDouble( getString( module, property ) );
 				return val;
-			}
-			catch( final Exception ex )
-			{
+			} catch( final Exception ex ) {
 				throw new ConfigFormatException( property, "Property only accepts numeric values" );
 			}
 		}
@@ -131,25 +102,20 @@ public class Config
 	 * @return String value of executable
 	 * @throws Exception if property does not start with "exe."
 	 */
-	public static String getExe( final BioModule module, final String property ) throws Exception
-	{
+	public static String getExe( final BioModule module, final String property ) throws Exception {
 		if( !property.startsWith( "exe." ) )
-		{
 			throw new Exception( "Config.getExe() can only be called for properties that begin with \"exe.\"" );
-		}
 
-		// return name of property after trimming "exe." prefix, for example if exe.pear is undefined, return "pear"
-		if( getString( module, property ) == null )
-		{
-			return property.substring( property.indexOf( "." ) + 1 );
-		}
+		// return name of property after trimming "exe." prefix, for example if exe.Rscript is undefined, return
+		// "Rscript"
+		if( getString( module, property ) == null ) return property.substring( property.indexOf( "." ) + 1 );
 
 		return getString( module, property );
 	}
 
 	/**
 	 * Call this function to get the parameters configured for this property.<br>
-	 * Make sure the last character for non-null resultss is an empty character for use in bash scripts calling the
+	 * Make sure the last character for non-null results is an empty character for use in bash scripts calling the
 	 * corresponding executable.
 	 * 
 	 * @param module Calling module
@@ -157,25 +123,13 @@ public class Config
 	 * @return Executable program parameters
 	 * @throws Exception if errors occur
 	 */
-	public static String getExeParams( final BioModule module, String property ) throws Exception
-	{
-		if( !property.startsWith( "exe." ) )
-		{
+	public static String getExeParams( final BioModule module, final String property ) throws Exception {
+		final String property2 = property;
+		if( !property2.startsWith( "exe." ) )
 			throw new Exception( "Config.getExeParams() can only be called for properties that begin with \"exe.\"" );
-		}
-
-		property = property + Constants.PARAMS;
-		if( getString( module, property ) == null )
-		{
-			return "";
-		}
-
-		String val = getString( module, property );
-		if( val != null && !val.isEmpty() && !val.endsWith( " " ) )
-		{
-			;
-		}
-		{
+		if( getString( module, property2 + Constants.PARAMS ) == null ) return "";
+		String val = getString( module, property2 + Constants.PARAMS );
+		if( val != null && !val.isEmpty() && !val.endsWith( " " ) ) {
 			val = val + " ";
 		}
 		return val;
@@ -187,18 +141,13 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File directory or null
-	 * @throws ConfigPathException if path is defined but is not an existing directory
+	 * @throws Exception if path is defined but is not an existing directory or other errors occur
 	 */
-	public static File getExistingDir( final BioModule module, final String property ) throws ConfigPathException
-	{
+	public static File getExistingDir( final BioModule module, final String property ) throws Exception {
 		final File f = getExistingFileObject( getString( module, property ) );
-		if( f != null && !f.isDirectory() )
-		{
-			throw new ConfigPathException( property, ConfigPathException.DIRECTORY );
-		}
+		if( f != null && !f.isDirectory() ) throw new ConfigPathException( property, ConfigPathException.DIRECTORY );
 
-		if( f != null )
-		{
+		if( props != null && f != null ) {
 			Config.setConfigProperty( property, f.getAbsolutePath() );
 		}
 
@@ -211,27 +160,19 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File (not directory) or null
-	 * @throws ConfigPathException if path is defined but is not an existing file
+	 * @throws Exception if path is defined but is not an existing file or if other errors occur
 	 */
-	public static File getExistingFile( final BioModule module, final String property ) throws ConfigPathException
-	{
+	public static File getExistingFile( final BioModule module, final String property ) throws Exception {
 		File f = getExistingFileObject( getString( module, property ) );
-		if( f != null && !f.isFile() )
-		{
-			if( f.isDirectory() && f.list( HiddenFileFilter.VISIBLE ).length == 1 )
-			{
+		if( f != null && !f.isFile() ) {
+			if( f.isDirectory() && f.list( HiddenFileFilter.VISIBLE ).length == 1 ) {
 				Log.warn( Config.class,
-						property + " is a directory with only 1 valid file.  Return the lone file within." );
+					property + " is a directory with only 1 valid file.  Return the lone file within." );
 				f = new File( f.list( HiddenFileFilter.VISIBLE )[ 0 ] );
-			}
-			else
-			{
-				throw new ConfigPathException( property, ConfigPathException.FILE );
-			}
+			} else throw new ConfigPathException( property, ConfigPathException.FILE );
 		}
 
-		if( f != null )
-		{
+		if( props != null && f != null ) {
 			Config.setConfigProperty( property, f.getAbsolutePath() );
 		}
 
@@ -243,8 +184,7 @@ public class Config
 	 *
 	 * @return map ordered by property
 	 */
-	public static TreeMap<String, String> getInitialProperties()
-	{
+	public static TreeMap<String, String> getInitialProperties() {
 		return convertToMap( unmodifiedInputProps );
 	}
 
@@ -255,20 +195,31 @@ public class Config
 	 * @param property Property name
 	 * @return List of String values (or an empty list)
 	 */
-	public static List<String> getList( final BioModule module, final String property )
-	{
+	public static List<String> getList( final BioModule module, final String property ) {
 		final List<String> list = new ArrayList<>();
 		final String val = getString( module, property );
-		if( val != null )
-		{
+		if( val != null ) {
 			final StringTokenizer st = new StringTokenizer( val, "," );
-			while( st.hasMoreTokens() )
-			{
+			while( st.hasMoreTokens() ) {
 				list.add( st.nextToken().trim() );
 			}
 		}
 
 		return list;
+	}
+
+	/**
+	 * Return file for path after modifying if running in a Docker container and/or interpreting bash env vars.
+	 * 
+	 * @param path File path
+	 * @return Local File
+	 * @throws ConfigPathException if the local path
+	 */
+	public static File getLocalConfigFile( final String path ) throws ConfigPathException {
+		if( path == null || path.trim().isEmpty() ) return null;
+		final File file = new File( replaceEnvVar( path.trim() ) );
+		if( DockerUtil.inDockerEnv() && !file.isFile() ) return DockerUtil.getConfigFile( path.trim() );
+		return file;
 	}
 
 	/**
@@ -278,8 +229,7 @@ public class Config
 	 * @param prop Property
 	 * @return Config property
 	 */
-	public static String getModuleProp( final BioModule module, final String prop )
-	{
+	public static String getModuleProp( final BioModule module, final String prop ) {
 		return getModuleProp( module.getClass().getSimpleName(), prop );
 	}
 
@@ -290,15 +240,11 @@ public class Config
 	 * @param prop Property
 	 * @return property name
 	 */
-	public static String getModuleProp( final String moduleName, final String prop )
-	{
+	public static String getModuleProp( final String moduleName, final String prop ) {
 		final String moduleProp = moduleName + "." + suffix( prop );
 		final String val = Config.getString( null, moduleProp );
-		if( val == null )
-		{
-			return prop;
-		}
-		Log.debug( Config.class, "Found module specific property: [ " + moduleProp + "=" + val + " ]" );
+		if( val == null || val.isEmpty() ) return prop;
+		Log.debug( Config.class, "Use module specific property: [ " + moduleProp + "=" + val + " ]" );
 		return moduleProp;
 	}
 
@@ -311,14 +257,27 @@ public class Config
 	 * @throws ConfigFormatException if defined but is not a non-negative integer value
 	 */
 	public static Integer getNonNegativeInteger( final BioModule module, final String property )
-			throws ConfigFormatException
-	{
+		throws ConfigFormatException {
 		final Integer val = getIntegerProp( module, property );
 		if( val != null && val < 0 )
-		{
 			throw new ConfigFormatException( property, "Property only accepts non-negative integer values" );
-		}
 		return val;
+	}
+
+	/**
+	 * Get the pipeline directory if it is a valid directory on the file system.
+	 * 
+	 * @return Pipeline directory (if it exists)
+	 */
+	public static File getPipelineDir() {
+		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) {
+			try {
+				pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
+			} catch( final Exception ex ) {
+				Log.error( Config.class, "Pipeline directory does not exist", ex );
+			}
+		}
+		return pipelineDir;
 	}
 
 	/**
@@ -330,13 +289,10 @@ public class Config
 	 * @throws ConfigFormatException if property is defined, but not set with a positive number
 	 */
 	public static Double getPositiveDoubleVal( final BioModule module, final String property )
-			throws ConfigFormatException
-	{
+		throws ConfigFormatException {
 		final Double val = getDoubleVal( module, property );
 		if( val != null && val <= 0 )
-		{
 			throw new ConfigFormatException( property, "Property only accepts positive numeric values" );
-		}
 
 		return val;
 	}
@@ -350,13 +306,10 @@ public class Config
 	 * @throws ConfigFormatException if property is defined, but not set with a positive integer
 	 */
 	public static Integer getPositiveInteger( final BioModule module, final String property )
-			throws ConfigFormatException
-	{
+		throws ConfigFormatException {
 		final Integer val = getIntegerProp( module, property );
 		if( val != null && val <= 0 )
-		{
 			throw new ConfigFormatException( property, "Property only accepts positive integer values" );
-		}
 		return val;
 	}
 
@@ -365,8 +318,7 @@ public class Config
 	 *
 	 * @return map ordered by property
 	 */
-	public static TreeMap<String, String> getProperties()
-	{
+	public static TreeMap<String, String> getProperties() {
 		return convertToMap( props );
 	}
 
@@ -377,8 +329,7 @@ public class Config
 	 * @param property Property name
 	 * @return Set of values or an empty set (if no values)
 	 */
-	public static Set<String> getSet( final BioModule module, final String property )
-	{
+	public static Set<String> getSet( final BioModule module, final String property ) {
 		final Set<String> set = new HashSet<>();
 		set.addAll( getList( module, property ) );
 		return set;
@@ -386,137 +337,26 @@ public class Config
 
 	/**
 	 * Get property value as String. Empty strings return null.<br>
-	 * If $BLJ or $BLJ_SUP or $USER or $HOME was used, it would already be converted to the actual file path by
-	 * {@link biolockj.Properties} before this method is called.
 	 *
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property {@link biolockj.Config} file property name
-	 * @return String value or null
+	 * @return String or null
 	 */
-	public static String getString( final BioModule module, String property )
-	{
-		Object obj = null;
-		String val = null;
-		if( module != null )
-		{
-			final String modProperty = Config.getModuleProp( module, property );
-			obj = props.getProperty( modProperty );
-			if( obj != null )
-			{
-				property = modProperty;
+	public static String getString( final BioModule module, final String property ) {
+		if( props == null ) return null;
+		String propName = property;
+
+		if( module != null ) {
+			final String modPropName = Config.getModuleProp( module, propName );
+			if( props.getProperty( modPropName ) != null ) {
+				propName = modPropName;
 			}
 		}
 
-		if( obj == null )
-		{
-			obj = props.getProperty( property );
-		}
-
-		if( obj == null )
-		{
-			usedProps.put( property, null );
-			return null;
-		}
-
-		val = obj.toString().trim();
-
-		/*
-		 * Allow internal references to avoid re-typing paths. For example:
-		 * 
-		 * project.dataDir=/projects/data/internal/research_labs project.experimentID=1987209C
-		 * project.labUrl=$project.dataDir/fodor_lab/$project.experimentID reportBuilder.massSpecReportHeading=Mass Spec
-		 * $project.labID
-		 */
-		if( val.contains( "${" ) && val.contains( "}" ) )
-		{
-			val = getInternalRefProp( val );
-		}
-
-		if( val.isEmpty() )
-		{
-			usedProps.put( property, "" );
-			return null;
-		}
-
-		usedProps.put( property, val );
-
+		final String val = props.getProperty( propName );
+		usedProps.put( propName, val );
+		if( val == null || val.isEmpty() ) return null;
 		return val;
-	}
-
-	/**
-	 * Return filePath with system parameter values replaced. If filePath starts with "~" or $HOME it is replaced with
-	 * System.getProperty( "user.home" ). If filePath contains $USER it is replaced with System.getProperty( "user.name"
-	 * ). Also $BLJ and $BLJ_SUP params are handled for use in Docker implementations
-	 * 
-	 * @param filePath File path
-	 * @return Formatted filePath
-	 * @throws ConfigPathException if path is invalid
-	 */
-	public static String getSystemFilePath( String filePath ) throws ConfigPathException
-	{
-		if( filePath != null && filePath.startsWith( "~" ) )
-		{
-			Log.debug( Config.class, "Replacing ~ in file-path: " + filePath );
-			filePath = System.getProperty( "user.home" ) + filePath.substring( 1 );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
-		}
-
-		if( filePath != null && filePath.startsWith( "$HOME" ) )
-		{
-			Log.debug( Config.class, "Replacing $HOME in file-path: " + filePath );
-			filePath = System.getProperty( "user.home" ) + filePath.substring( 5 );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
-		}
-
-		if( filePath != null && filePath.contains( "$USER" ) )
-		{
-			Log.debug( Config.class, "Replacing $USER in file-path: " + filePath );
-			filePath = filePath.replace( "$USER", System.getProperty( "user.name" ) );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
-		}
-		
-		if( filePath != null && filePath.contains( "$BLJ_META" ) )
-		{
-			Log.debug( Config.class, "Replacing $BLJ_META in file-path: " + filePath );
-			filePath = System.getProperty( "user.home" ) + File.separator + METADATA + filePath.substring( 9 );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
-		}
-		
-
-		if( filePath != null && filePath.contains( "$BLJ_SUP" ) )
-		{
-			File bljSup = new File(
-					BioLockJUtil.getBljDir().getParentFile().getAbsolutePath() + File.separator + BLJ_SUPPORT );
-			if( !bljSup.exists() || !bljSup.isDirectory() )
-			{
-				bljSup = null;
-			}
-
-			if( RuntimeParamUtil.isDockerMode() && RuntimeParamUtil.getDockerHostBLJ_SUP() != null )
-			{
-				bljSup = RuntimeParamUtil.getDockerHostBLJ_SUP();
-			}
-
-			if( bljSup != null )
-			{
-				Log.debug( Config.class, "Replacing $BLJ_SUP in file-path: " + filePath );
-				filePath = filePath.replace( "$BLJ_SUP", bljSup.getAbsolutePath() );
-				Log.debug( Config.class, "Updated file-path: " + filePath );
-			}
-			else
-			{
-				Log.warn( Config.class, "Could not find/replace $BLJ_SUP in file-path: " + filePath );
-			}
-
-		}
-		else if( filePath != null && filePath.contains( "$BLJ" ) )
-		{
-			Log.debug( Config.class, "Replacing $BLJ in file-path: " + filePath );
-			filePath = filePath.replace( "$BLJ", BioLockJUtil.getBljDir().getAbsolutePath() );
-			Log.debug( Config.class, "Updated file-path: " + filePath );
-		}
-
-		return filePath;
 	}
 
 	/**
@@ -526,8 +366,7 @@ public class Config
 	 * @param property Property name
 	 * @return Set of values or an empty set (if no values)
 	 */
-	public static Set<String> getTreeSet( final BioModule module, final String property )
-	{
+	public static Set<String> getTreeSet( final BioModule module, final String property ) {
 		final Set<String> set = new TreeSet<>();
 		set.addAll( getList( module, property ) );
 		return set;
@@ -538,31 +377,23 @@ public class Config
 	 * 
 	 * @return list of properties
 	 */
-	public static Map<String, String> getUsedProps()
-	{
+	public static Map<String, String> getUsedProps() {
 		getString( null, Constants.PIPELINE_DEFAULT_PROPS );
 		return new HashMap<>( usedProps );
 	}
 
 	/**
-	 * Initialize Config by reading in props from file and setting taxonomy as an ordered list.
+	 * Initialize {@link biolockj.Config} by reading in properties from config runtime parameter.
 	 * 
 	 * @throws Exception if unable to load Props
 	 */
-	public static void initialize() throws Exception
-	{
+	public static void initialize() throws Exception {
 		configFile = RuntimeParamUtil.getConfigFile();
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
-		props = Properties.loadProperties( configFile );
-		initProjectProps();
-		for( final Object key: props.keySet() )
-		{
-			Log.info( Config.class, "INITIAL PROP:  " + key + "=" + props.getProperty( (String) key ) );
-		}
-
-		Log.debug( Config.class, "# initial props: " + props.size() );
+		props = replaceEnvVars( Properties.loadProperties( configFile ) );
+		setPipelineRootDir();
+		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
-		Log.debug( Config.class, "# initial unmodifiedInputProps: " + unmodifiedInputProps.size() );
 		TaxaUtil.initTaxaLevels();
 	}
 
@@ -571,10 +402,9 @@ public class Config
 	 * 
 	 * @return TRUE if running on the cluster
 	 */
-	public static boolean isOnCluster()
-	{
+	public static boolean isOnCluster() {
 		return getString( null, Constants.PIPELINE_ENV ) != null
-				&& getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
+			&& getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
 	}
 
 	/**
@@ -582,12 +412,8 @@ public class Config
 	 * 
 	 * @return Pipeline name
 	 */
-	public static String pipelineName()
-	{
-		if( getPipelineDir() == null )
-		{
-			return null;
-		}
+	public static String pipelineName() {
+		if( getPipelineDir() == null ) return null;
 		return getPipelineDir().getName();
 	}
 
@@ -596,9 +422,43 @@ public class Config
 	 * 
 	 * @return Pipeline directory path
 	 */
-	public static String pipelinePath()
-	{
+	public static String pipelinePath() {
 		return getPipelineDir().getAbsolutePath();
+	}
+
+	/**
+	 * Interpret env variable if included in the arg string, otherwise return the arg.
+	 * 
+	 * @param arg Property or runtime argument
+	 * @return Updated arg value after replacing env variables
+	 */
+	public static String replaceEnvVar( final String arg ) {
+		if( arg == null ) return null;
+		String val = arg.toString().trim();
+		try {
+			if( !hasEnvVar( val ) ) return val;
+			if( val.substring( 0, 1 ).equals( "~" ) ) {
+				Log.debug( Config.class, "Found property value starting with \"~\" --> \"" + arg + "\"" );
+				val = val.replace( "~", "${HOME}" );
+				Log.debug( Config.class, "Converted value to use standard syntax --> " + val + "\"" );
+			}
+
+			while( hasEnvVar( val ) ) {
+				final String bashVar = val.substring( val.indexOf( "${" ), val.indexOf( "}" ) + 1 );
+				Log.debug( Config.class, "Replace \"" + bashVar + "\" in \"" + arg + "\"" );
+				final String bashVal = getBashVal( bashVar );
+				Log.debug( Config.class, "Bash var \"" + bashVar + "\" = \"" + bashVal + "\"" );
+				if( bashVal != null && bashVal.equals( bashVar ) ) return arg;
+				val = val.replace( bashVar, bashVal );
+				Log.debug( Config.class, "Updated \"" + arg + "\" --> " + val + "\"" );
+			}
+			Log.info( Config.class, "--------> Bash Var Converted \"" + arg + "\" ======> \"" + val + "\"" );
+			return val;
+		} catch( final Exception ex ) {
+			Log.warn( Config.class, "Failed to convert arg \"" + arg + "\"" + ex.getMessage() );
+		}
+		Log.warn( Config.class, "Return unchanged value \"" + arg + "\"" );
+		return arg;
 	}
 
 	/**
@@ -611,20 +471,13 @@ public class Config
 	 * @throws ConfigFormatException if property is defined, but not set to a boolean value
 	 */
 	public static boolean requireBoolean( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigFormatException
-	{
+		throws ConfigNotFoundException, ConfigFormatException {
 		final String val = requireString( module, property );
-		if( val.equalsIgnoreCase( Constants.TRUE ) )
-		{
-			return true;
-		}
-		if( val.equalsIgnoreCase( Constants.FALSE ) )
-		{
-			return false;
-		}
+		if( val.equalsIgnoreCase( Constants.TRUE ) ) return true;
+		if( val.equalsIgnoreCase( Constants.FALSE ) ) return false;
 
 		throw new ConfigFormatException( property,
-				"Property only accepts boolean values: " + Constants.TRUE + " or " + Constants.FALSE );
+			"Property only accepts boolean values: " + Constants.TRUE + " or " + Constants.FALSE );
 	}
 
 	/**
@@ -637,13 +490,9 @@ public class Config
 	 * @throws ConfigFormatException if property is defined, but set with a non-numeric value
 	 */
 	public static Double requireDoubleVal( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigFormatException
-	{
+		throws ConfigNotFoundException, ConfigFormatException {
 		final Double val = getDoubleVal( module, property );
-		if( val == null )
-		{
-			throw new ConfigNotFoundException( property );
-		}
+		if( val == null ) throw new ConfigNotFoundException( property );
 
 		return val;
 	}
@@ -654,17 +503,11 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File directory
-	 * @throws ConfigNotFoundException if property is undefined
-	 * @throws ConfigPathException if property is not a valid directory path
+	 * @throws Exception if property is undefined or if property is not a valid directory path
 	 */
-	public static File requireExistingDir( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigPathException
-	{
+	public static File requireExistingDir( final BioModule module, final String property ) throws Exception {
 		final File f = getExistingDir( module, property );
-		if( f == null )
-		{
-			throw new ConfigNotFoundException( property );
-		}
+		if( f == null ) throw new ConfigNotFoundException( property );
 
 		return f;
 	}
@@ -675,26 +518,21 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return List of File directories
-	 * @throws ConfigNotFoundException if property is undefined
-	 * @throws ConfigPathException if property is not a valid directory path
+	 * @throws ConfigPathException if directory paths are undefined or do not exist
+	 * @throws ConfigNotFoundException if a required property is undefined
 	 */
 	public static List<File> requireExistingDirs( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigPathException
-	{
+		throws ConfigPathException, ConfigNotFoundException {
 		final List<File> returnDirs = new ArrayList<>();
-		for( final String d: requireSet( module, property ) )
-		{
+		for( final String d: requireSet( module, property ) ) {
 			final File dir = getExistingFileObject( d );
 			if( dir != null && !dir.isDirectory() )
-			{
 				throw new ConfigPathException( property, ConfigPathException.DIRECTORY );
-			}
 
 			returnDirs.add( dir );
 		}
 
-		if( returnDirs != null && !returnDirs.isEmpty() )
-		{
+		if( !returnDirs.isEmpty() ) {
 			Config.setConfigProperty( property, returnDirs );
 		}
 		return returnDirs;
@@ -706,17 +544,11 @@ public class Config
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File with filename defined by property
-	 * @throws ConfigNotFoundException if property is undefined
-	 * @throws ConfigPathException if property is not a valid file path
+	 * @throws Exception if property is undefined or if property is not a valid file path
 	 */
-	public static File requireExistingFile( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigPathException
-	{
+	public static File requireExistingFile( final BioModule module, final String property ) throws Exception {
 		final File f = getExistingFile( module, property );
-		if( f == null )
-		{
-			throw new ConfigNotFoundException( property );
-		}
+		if( f == null ) throw new ConfigNotFoundException( property );
 		return f;
 	}
 
@@ -730,13 +562,9 @@ public class Config
 	 * @throws ConfigFormatException if property is not a valid integer
 	 */
 	public static Integer requireInteger( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigFormatException
-	{
+		throws ConfigNotFoundException, ConfigFormatException {
 		final Integer val = getIntegerProp( module, property );
-		if( val == null )
-		{
-			throw new ConfigNotFoundException( property );
-		}
+		if( val == null ) throw new ConfigNotFoundException( property );
 
 		return val;
 	}
@@ -750,13 +578,9 @@ public class Config
 	 * @throws ConfigNotFoundException if property is undefined
 	 */
 	public static List<String> requireList( final BioModule module, final String property )
-			throws ConfigNotFoundException
-	{
+		throws ConfigNotFoundException {
 		final List<String> val = getList( module, property );
-		if( val == null || val.isEmpty() )
-		{
-			throw new ConfigNotFoundException( property );
-		}
+		if( val == null || val.isEmpty() ) throw new ConfigNotFoundException( property );
 		return val;
 	}
 
@@ -770,13 +594,9 @@ public class Config
 	 * @throws ConfigFormatException if property is defined, but not set to a positive numeric value
 	 */
 	public static Double requirePositiveDouble( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigFormatException
-	{
+		throws ConfigNotFoundException, ConfigFormatException {
 		final Double val = requireDoubleVal( module, property );
-		if( val <= 0 )
-		{
-			throw new ConfigFormatException( property, "Property only accepts positive numeric values" );
-		}
+		if( val <= 0 ) throw new ConfigFormatException( property, "Property only accepts positive numeric values" );
 
 		return val;
 	}
@@ -791,13 +611,9 @@ public class Config
 	 * @throws ConfigFormatException if property is defined, but not set to a positive integer value
 	 */
 	public static Integer requirePositiveInteger( final BioModule module, final String property )
-			throws ConfigNotFoundException, ConfigFormatException
-	{
+		throws ConfigNotFoundException, ConfigFormatException {
 		final Integer val = requireInteger( module, property );
-		if( val <= 0 )
-		{
-			throw new ConfigFormatException( property, "Property only accepts positive integers" );
-		}
+		if( val <= 0 ) throw new ConfigFormatException( property, "Property only accepts positive integers" );
 		return val;
 	}
 
@@ -809,13 +625,10 @@ public class Config
 	 * @return Set of values
 	 * @throws ConfigNotFoundException if property is undefined
 	 */
-	public static Set<String> requireSet( final BioModule module, final String property ) throws ConfigNotFoundException
-	{
+	public static Set<String> requireSet( final BioModule module, final String property )
+		throws ConfigNotFoundException {
 		final Set<String> val = getTreeSet( module, property );
-		if( val == null || val.isEmpty() )
-		{
-			throw new ConfigNotFoundException( property );
-		}
+		if( val == null || val.isEmpty() ) throw new ConfigNotFoundException( property );
 		return val;
 	}
 
@@ -827,12 +640,8 @@ public class Config
 	 * @return String value
 	 * @throws ConfigNotFoundException if property is undefined
 	 */
-	public static String requireString( final BioModule module, final String property ) throws ConfigNotFoundException
-	{
-		if( getString( module, property ) == null )
-		{
-			throw new ConfigNotFoundException( property );
-		}
+	public static String requireString( final BioModule module, final String property ) throws ConfigNotFoundException {
+		if( getString( module, property ) == null ) throw new ConfigNotFoundException( property );
 
 		return getString( module, property ).trim();
 	}
@@ -843,23 +652,18 @@ public class Config
 	 * @param name Property name
 	 * @param data Collection of data to store using the key = property
 	 */
-	public static void setConfigProperty( final String name, final Collection<?> data )
-	{
+	public static void setConfigProperty( final String name, final Collection<?> data ) {
 		String origProp = usedProps.get( name );
 		origProp = origProp != null && origProp.isEmpty() ? null: origProp;
 
 		String val = null;
-		if( data != null && !data.isEmpty() && data.iterator().next() instanceof File )
-		{
+		if( data != null && !data.isEmpty() && data.iterator().next() instanceof File ) {
 			final Collection<String> fileData = new ArrayList<>();
-			for( final Object obj: data )
-			{
+			for( final Object obj: data ) {
 				fileData.add( ( (File) obj ).getAbsolutePath() );
 			}
 			val = BioLockJUtil.getCollectionAsString( fileData );
-		}
-		else
-		{
+		} else {
 			val = BioLockJUtil.getCollectionAsString( data );
 
 		}
@@ -868,9 +672,8 @@ public class Config
 
 		final boolean hasVal = val != null && !val.isEmpty();
 		if( origProp == null && hasVal || origProp != null && !hasVal
-				|| origProp != null && hasVal && !origProp.equals( val ) )
-		{
-			Log.info( Config.class, "Set Config property [" + name + "] = " + val );
+			|| origProp != null && hasVal && !origProp.equals( val ) ) {
+			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
 	}
@@ -881,18 +684,14 @@ public class Config
 	 * @param name Property name
 	 * @param val Value to assign to property
 	 */
-	public static void setConfigProperty( final String name, final String val )
-	{
+	public static void setConfigProperty( final String name, final String val ) {
 		String origProp = usedProps.get( name );
 		origProp = origProp != null && origProp.isEmpty() ? null: origProp;
-
 		props.setProperty( name, val );
-
 		final boolean hasVal = val != null && !val.isEmpty();
 		if( origProp == null && hasVal || origProp != null && !hasVal
-				|| origProp != null && hasVal && !origProp.equals( val ) )
-		{
-			Log.info( Config.class, "Set Config property [" + name + "] = " + val );
+			|| origProp != null && hasVal && !origProp.equals( val ) ) {
+			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
 	}
@@ -901,76 +700,118 @@ public class Config
 	 * Set the root pipeline directory path
 	 * 
 	 * @param dir Pipeline directory path
-	 * @throws Exception if errors occur
 	 */
-	public static void setPipelineDir( final File dir ) throws Exception
-	{
-		setConfigProperty( Constants.PIPELINE_DIR, dir.getAbsolutePath() );
+	public static void setPipelineDir( final File dir ) {
+		setConfigProperty( Constants.INTERNAL_PIPELINE_DIR, dir.getAbsolutePath() );
 		pipelineDir = dir;
 	}
 
 	/**
-	 * Build File using filePath. Replace "~" with System.getProperty( "user.home" ) if found.
+	 * Build File using filePath.
 	 *
 	 * @param filePath File path
 	 * @return File or null
 	 * @throws ConfigPathException if path is defined but is not found on the file system
 	 */
-	protected static File getExistingFileObject( final String filePath ) throws ConfigPathException
-	{
-		if( filePath != null )
-		{
-			final File f = new File( getSystemFilePath( filePath ) );
-			if( f.exists() )
-			{
-				return f;
-			}
-			else
-			{
-				throw new ConfigPathException( filePath );
-			}
+	protected static File getExistingFileObject( final String filePath ) throws ConfigPathException {
+		if( filePath != null ) {
+			final File f = new File( filePath );
+			if( f.exists() ) return f;
+			throw new ConfigPathException( f );
 		}
 		return null;
 	}
 
 	/**
-	 * Set {@value Constants#PIPELINE_DIR} Create a pipeline root directory if the pipeline is new.
+	 * Interpret env variables defined in the Config file and runtime env - for example<br>
+	 * These props are used in: $BLJ/resources/config/defult/docker.properties:<br>
+	 * <ul>
+	 * <li>BLJ_ROOT=/mnt/efs
+	 * <li>EFS_DB=${BLJ_ROOT}/db
+	 * <li>humann2.protDB=${EFS_DB}/uniref
+	 * </ul>
+	 * Therefore, getString( "humann2.protDB" ) returns "/mnt/efs/db/uniref"<br>
+	 * If not found, check runtiem env (i.e., $HOME/bash_profile)
 	 * 
-	 * @return TRUE if a new pipeline directory was created
-	 * @throws Exception if errors occur
+	 * @param properties All Config Properties
+	 * @return Properties after replacing env variables
 	 */
-	protected static boolean initProjectProps() throws Exception
-	{
-		boolean isNew = false;
-		if( RuntimeParamUtil.doRestart() )
-		{
-			setPipelineDir( RuntimeParamUtil.getRestartDir() );
+	protected static Properties replaceEnvVars( final Properties properties ) {
+		final Properties convertedProps = properties;
+		final Enumeration<?> en = properties.propertyNames();
+		Log.debug( Properties.class, " ---------------------- replace Config Env Vars ----------------------" );
+		while( en.hasMoreElements() ) {
+			final String key = en.nextElement().toString();
+			String val = properties.getProperty( key );
+			val = replaceEnvVar( val );
+			Log.debug( Properties.class, key + " = " + val );
+			convertedProps.put( key, val );
 		}
-		else if( RuntimeParamUtil.isDirectMode() )
-		{
-			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
-		}
-		else
-		{
-			isNew = true;
-			setPipelineDir( BioLockJ.createPipelineDirectory() );
-		}
-
-		Log.info( Config.class, "Initialize pipeline directory: " + Config.pipelinePath() );
-
-		return isNew;
+		Log.debug( Properties.class, " --------------------------------------------------------------------" );
+		return convertedProps;
 	}
 
-	private static TreeMap<String, String> convertToMap( final Properties bljProps )
-	{
+	/**
+	 * Set {@value Constants#INTERNAL_PIPELINE_DIR} Create a pipeline root directory if the pipeline is new.
+	 * 
+	 * @throws Exception if any errors occur
+	 */
+	protected static void setPipelineRootDir() throws Exception {
+		if( RuntimeParamUtil.doRestart() ) {
+			setPipelineDir( RuntimeParamUtil.getRestartDir() );
+			Log.info( Config.class, "Assign RESTART_DIR pipeline root directory: " + Config.pipelinePath() );
+		} else if( DockerUtil.isDirectMode() ) {
+			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
+			Log.info( Config.class, "Assign DIRECT pipeline root directory: " + Config.pipelinePath() );
+		} else {
+			setPipelineDir( BioLockJ.createPipelineDirectory() );
+			Log.info( Config.class, "Assign NEW pipeline root directory: " + Config.pipelinePath() );
+		}
+
+		if( !Config.getPipelineDir().isDirectory() )
+			throw new ConfigPathException( Constants.INTERNAL_PIPELINE_DIR, ConfigPathException.DIRECTORY );
+	}
+
+	private static TreeMap<String, String> convertToMap( final Properties bljProps ) {
 		final TreeMap<String, String> map = new TreeMap<>();
 		final Iterator<String> it = bljProps.stringPropertyNames().iterator();
-		while( it.hasNext() )
-		{
+		while( it.hasNext() ) {
 			final String key = it.next();
 			map.put( key, bljProps.getProperty( key ) );
 		}
 		return map;
+	}
+
+	private static String getBashVal( final String bashVar ) {
+		try {
+			if( bashVarMap.get( bashVar ) != null ) return bashVarMap.get( bashVar );
+			String bashVal = props == null ? null: props.getProperty( stripBashMarkUp( bashVar ) );
+			if( bashVal == null || bashVal.trim().isEmpty() ) {
+				if( bashVar.equals( BLJ_BASH_VAR ) ) {
+					final File blj = BioLockJUtil.getBljDir();
+					if( blj != null && blj.isDirectory() ) {
+						bashVal = blj.getAbsolutePath();
+					}
+				} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
+					final File bljSup = BioLockJUtil.getBljSupDir();
+					if( bljSup != null && bljSup.isDirectory() ) {
+						bashVal = bljSup.getAbsolutePath();
+					}
+				} else {
+					bashVal = Processor.getBashVar( bashVar );
+				}
+			}
+
+			if( bashVal != null && !bashVal.trim().isEmpty() ) {
+				bashVarMap.put( bashVar, bashVal );
+				return bashVal;
+			}
+
+		} catch( final Exception ex ) {
+			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar );
+		}
+
+		return bashVar;
 	}
 
 	/**
@@ -980,17 +821,13 @@ public class Config
 	 * @return integer value or null
 	 * @throws ConfigFormatException if property is defined, but does not return an integer
 	 */
-	private static Integer getIntegerProp( final BioModule module, final String property ) throws ConfigFormatException
-	{
-		if( getString( module, property ) != null )
-		{
-			try
-			{
+	private static Integer getIntegerProp( final BioModule module, final String property )
+		throws ConfigFormatException {
+		if( getString( module, property ) != null ) {
+			try {
 				final Integer val = Integer.parseInt( getString( module, property ) );
 				return val;
-			}
-			catch( final Exception ex )
-			{
+			} catch( final Exception ex ) {
 				throw new ConfigFormatException( property, "Property only accepts integer values" );
 			}
 		}
@@ -998,71 +835,31 @@ public class Config
 		return null;
 	}
 
-	private static String getInternalRefProp( String propName )
-	{
-		final String origPropName = propName;
-		String val = "";
-		try
-		{
-			int startIndex = propName.indexOf( "${" );
-			int endIndex = propName.indexOf( "}" );
-
-			while( startIndex > -1 && endIndex > -1 )
-			{
-				val += propName.substring( 0, startIndex );
-				final String refProp = propName.substring( startIndex + 2, endIndex );
-				final String refVal = props.getProperty( refProp );
-				if( refVal == null )
-				{
-					throw new Exception(
-							"Could not find Config.prop references (in ${val} format) of property: " + origPropName );
-				}
-				propName = propName.substring( endIndex + 1 );
-				val += refVal;
-				startIndex = propName.indexOf( "${" );
-				endIndex = propName.indexOf( "}" );
-			}
-
-			if( propName != null )
-			{
-				val += propName;
-			}
-
-			System.out.println( "FINAL NAME: ===> " + propName );
-
-		}
-		catch( final Exception ex )
-		{
-			Log.warn( Config.class, ex.getMessage() );
-			return origPropName;
-		}
-
-		return val;
+	private static boolean hasEnvVar( final String val ) {
+		return val.startsWith( "~" )
+			|| val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
 	}
 
-	private static File getPipelineDir()
-	{
-		if( pipelineDir == null )
-		{
-			try
-			{
-				pipelineDir = requireExistingDir( null, Constants.PIPELINE_DIR );
-			}
-			catch( final Exception ex )
-			{
-				ex.printStackTrace();
-			}
-		}
-		return pipelineDir;
+	private static String stripBashMarkUp( final String bashVar ) {
+		if( bashVar != null && bashVar.length() > 3 ) return bashVar.substring( 2, bashVar.length() - 1 );
+		return bashVar;
 	}
 
-	private static String suffix( final String prop )
-	{
+	private static String suffix( final String prop ) {
 		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
 	}
 
-	private static final String METADATA = "metadata";
-	private static final String BLJ_SUPPORT = "blj_support";
+	/**
+	 * Bash variable with path to BioLockJ directory: {@value #BLJ_BASH_VAR}
+	 */
+	public static final String BLJ_BASH_VAR = "${BLJ}";
+
+	/**
+	 * Bash variable with path to blj_support directory: {@value #BLJ_SUP_BASH_VAR}
+	 */
+	public static final String BLJ_SUP_BASH_VAR = "${BLJ_SUP}";
+
+	private static final Map<String, String> bashVarMap = new HashMap<>();
 	private static File configFile = null;
 	private static File pipelineDir = null;
 	private static Properties props = null;

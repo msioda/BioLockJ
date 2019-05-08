@@ -18,9 +18,9 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.Config;
-import biolockj.Constants;
 import biolockj.Log;
 import biolockj.module.BioModule;
+import biolockj.util.BioLockJUtil;
 import biolockj.util.ModuleUtil;
 
 /**
@@ -28,8 +28,7 @@ import biolockj.util.ModuleUtil;
  * 
  * @blj.web_desc R Statistics Calculator
  */
-public class R_CalculateStats extends R_Module implements BioModule
-{
+public class R_CalculateStats extends R_Module {
 	/**
 	 * Validate configuration file properties used to build the R report:
 	 * <ul>
@@ -39,8 +38,7 @@ public class R_CalculateStats extends R_Module implements BioModule
 	 * </ul>
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		Config.requireString( this, R_ADJ_PVALS_SCOPE );
 		Config.requireString( this, R_PVAL_ADJ_METHOD );
@@ -58,34 +56,27 @@ public class R_CalculateStats extends R_Module implements BioModule
 	 * @throws Exception if errors occur
 	 */
 	public static File getStatsFile( final BioModule module, final String level, final Boolean isParametric,
-			final Boolean isAdjusted ) throws Exception
-	{
+		final Boolean isAdjusted ) throws Exception {
 		final String querySuffix = "_" + level + "_" + getSuffix( isParametric, isAdjusted ) + TSV_EXT;
 		final Set<File> results = new HashSet<>();
 		final IOFileFilter ff = new WildcardFileFilter( "*" + querySuffix );
-		for( final File dir: getStatsFileDirs( module ) )
-		{
+		for( final File dir: getStatsFileDirs( module ) ) {
 			final Collection<File> files = FileUtils.listFiles( dir, ff, HiddenFileFilter.VISIBLE );
-			if( files.size() > 0 )
-			{
+			if( files.size() > 0 ) {
 				results.addAll( files );
 			}
 		}
 
 		final int count = results.size();
-		if( count == 0 )
-		{
-			return null;
-		}
-		else if( count == 1 )
-		{
+		if( count == 0 ) return null;
+		else if( count == 1 ) {
 			final File statsFile = results.iterator().next();
 			Log.info( R_CalculateStats.class, "Return stats file: " + statsFile.getAbsolutePath() );
 			return statsFile;
 		}
 
 		throw new Exception( "Only 1 " + R_CalculateStats.class.getSimpleName() + " output file with suffix = \""
-				+ querySuffix + "\" should exist.  Found " + count + " files --> " + results );
+			+ querySuffix + "\" should exist.  Found " + count + " files --> " + results );
 
 	}
 
@@ -98,28 +89,12 @@ public class R_CalculateStats extends R_Module implements BioModule
 	 * @return file name suffix
 	 * @throws Exception if errors occur
 	 */
-	public static String getSuffix( final Boolean isParametric, final Boolean isAdjusted ) throws Exception
-	{
-		if( isParametric == null )
-		{
-			return R_SQUARED_VALS;
-		}
-		else if( isParametric && isAdjusted != null && isAdjusted )
-		{
-			return P_VALS_PAR_ADJ;
-		}
-		else if( isParametric )
-		{
-			return P_VALS_PAR;
-		}
-		else if( !isParametric && isAdjusted != null && isAdjusted )
-		{
-			return P_VALS_NP_ADJ;
-		}
-		else if( !isParametric )
-		{
-			return P_VALS_NP;
-		}
+	public static String getSuffix( final Boolean isParametric, final Boolean isAdjusted ) throws Exception {
+		if( isParametric == null ) return R_SQUARED_VALS;
+		else if( isParametric && isAdjusted != null && isAdjusted ) return P_VALS_PAR_ADJ;
+		else if( isParametric ) return P_VALS_PAR;
+		else if( !isParametric && isAdjusted != null && isAdjusted ) return P_VALS_NP_ADJ;
+		else if( !isParametric ) return P_VALS_NP;
 
 		throw new Exception( "BUG DETECTED! Logic error in getSuffix( isParametric, isAdjusted)" );
 	}
@@ -129,31 +104,23 @@ public class R_CalculateStats extends R_Module implements BioModule
 	 *
 	 * @param file Ambiguous file
 	 * @return TRUE if file name is formatted as if output by this module
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isStatsFile( final File file ) throws Exception
-	{
-		for( final String suffix: statSuffixSet )
-		{
-			if( file.getName().contains( suffix ) && file.getName().endsWith( TSV_EXT ) )
-			{
-				return true;
-			}
+	public static boolean isStatsFile( final File file ) {
+		for( final String suffix: statSuffixSet ) {
+			if( file.getName().contains( suffix ) && file.getName().endsWith( TSV_EXT ) ) return true;
 		}
 		return false;
 	}
 
-	private static List<File> getStatsFileDirs( final BioModule module ) throws Exception
-	{
+	private static List<File> getStatsFileDirs( final BioModule module ) throws Exception {
 		final BioModule statsModule = ModuleUtil.getModule( module, R_CalculateStats.class.getName(), false );
-		if( statsModule != null )
-		{
+		if( statsModule != null ) {
 			final List<File> dirs = new ArrayList<>();
 			dirs.add( statsModule.getOutputDir() );
 			return dirs;
 		}
 
-		return Config.requireExistingDirs( module, Constants.INPUT_DIRS );
+		return BioLockJUtil.getInputDirs();
 	}
 
 	/**
@@ -221,8 +188,7 @@ public class R_CalculateStats extends R_Module implements BioModule
 
 	private static final Set<String> statSuffixSet = new HashSet<>();
 
-	static
-	{
+	static {
 		statSuffixSet.add( P_VALS_NP );
 		statSuffixSet.add( P_VALS_NP_ADJ );
 		statSuffixSet.add( P_VALS_PAR );

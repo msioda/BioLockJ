@@ -18,7 +18,6 @@ import java.util.StringTokenizer;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.JavaModule;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.MetaUtil;
 import biolockj.util.PathwayUtil;
@@ -29,14 +28,14 @@ import biolockj.util.PathwayUtil;
  * 
  * @blj.web_desc Add Metadata to Pathway Tables
  */
-public class AddMetadataToPathwayTables extends Humann2CountModule implements JavaModule
-{
+public class AddMetadataToPathwayTables extends Humann2CountModule {
+
 	/**
 	 * For R to report HumanN2 reports instead of taxa levels
 	 */
 	@Override
-	public void cleanUp() throws Exception
-	{
+	public void cleanUp() throws Exception {
+		super.cleanUp();
 		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
 	}
 
@@ -44,15 +43,11 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 	 * Produce summary message with min, max, mean, and median hit ratios
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
-		try
-		{
-			sb.append( "Merged metadata for " + types.size() + " HumanN2 reports: " + types );
-		}
-		catch( final Exception ex )
-		{
+		try {
+			sb.append( "Merged metadata for " + this.types.size() + " HumanN2 reports: " + this.types );
+		} catch( final Exception ex ) {
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( getClass(), msg );
@@ -68,11 +63,10 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 	 * Set
 	 */
 	@Override
-	public void runModule() throws Exception
-	{
+	public void runModule() throws Exception {
 		generateMergedTables();
-		Log.info( getClass(), mergeHeaderLine );
-		Log.info( getClass(), mergeSampleLine );
+		Log.info( getClass(), this.mergeHeaderLine );
+		Log.info( getClass(), this.mergeSampleLine );
 		Log.info( getClass(), "Metadata has been appended to the pathway abundance table" );
 	}
 
@@ -81,29 +75,34 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 	 *
 	 * @throws Exception if unable to build tables
 	 */
-	protected void generateMergedTables() throws Exception
-	{
+	protected void generateMergedTables() throws Exception {
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
-		for( final File file: getInputFiles() )
-		{
+		for( final File file: getInputFiles() ) {
 			final String name = file.getName().replaceAll( TSV_EXT, "" ) + META_MERGED;
-			types.add( PathwayUtil.getHn2Type( file ) );
+			this.types.add( PathwayUtil.getHn2Type( file ) );
 			Log.info( getClass(),
-					"Merge HumanN2 " + PathwayUtil.getHn2Type( file ) + " table with metadata: " + outDir + name );
-			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
+				"Merge HumanN2 " + PathwayUtil.getHn2Type( file ) + " table with metadata: " + outDir + name );
+			BufferedReader reader = null;
+			BufferedWriter writer = null;
+			try {
+				reader = BioLockJUtil.getFileReader( file );
+				writer = new BufferedWriter( new FileWriter( outDir + name ) );
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+					final String mergedLine = getMergedLine( line );
+					if( mergedLine != null ) {
+						writer.write( mergedLine + RETURN );
+					}
 
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				final String mergedLine = getMergedLine( line );
-				if( mergedLine != null )
-				{
-					writer.write( mergedLine + RETURN );
+				}
+			} finally {
+				if( reader != null ) {
+					reader.close();
+				}
+				if( writer != null ) {
+					writer.close();
 				}
 			}
 
-			writer.close();
-			reader.close();
 			Log.info( getClass(), "Done merging table: " + file.getAbsolutePath() );
 		}
 
@@ -116,31 +115,23 @@ public class AddMetadataToPathwayTables extends Humann2CountModule implements Ja
 	 * @return OTU table line + metadata line
 	 * @throws Exception if unable to create merged line
 	 */
-	protected String getMergedLine( final String line ) throws Exception
-	{
+	protected String getMergedLine( final String line ) throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		final String sampleId = new StringTokenizer( line, TAB_DELIM ).nextToken();
-		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) )
-		{
+		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) ) {
 			sb.append( BioLockJUtil.removeQuotes( line ) );
-			for( final String field: MetaUtil.getMetadataRecord( sampleId ) )
-			{
+			for( final String field: MetaUtil.getRecord( sampleId ) ) {
 				sb.append( TAB_DELIM ).append( BioLockJUtil.removeQuotes( field ) );
 			}
-		}
-		else
-		{
+		} else {
 			Log.warn( getClass(), "Missing record for: " + sampleId + " in metadata: " + MetaUtil.getPath() );
 			return null;
 		}
 
-		if( mergeHeaderLine == null )
-		{
-			mergeHeaderLine = "Merged OTU table header [" + sampleId + "] = " + sb.toString();
-		}
-		else if( mergeSampleLine == null )
-		{
-			mergeSampleLine = "Example Merged OTU table row [" + sampleId + "] = " + sb.toString();
+		if( this.mergeHeaderLine == null ) {
+			this.mergeHeaderLine = "Merged OTU table header [" + sampleId + "] = " + sb.toString();
+		} else if( this.mergeSampleLine == null ) {
+			this.mergeSampleLine = "Example Merged OTU table row [" + sampleId + "] = " + sb.toString();
 		}
 
 		return sb.toString();

@@ -1,0 +1,28 @@
+#########################################################################
+##                                                                     ##
+##  The $USER profile was updated by $BLJ/install to run               ##
+##  $BLJ/script/blj_config.  This purpose of this script it to:        ##
+##                                                                     ##
+##   1. Add env. variable $DOCK_ID = "biolockj"                        ##
+##   2. Add env. variable $DOCKER_DIR = "$BLJ/resources/docker"        ##
+##   3. Add $BLJ/script/docker_functions to bash shell                 ##
+##                                                                     ##
+#########################################################################
+
+export DOCKER_CLONE_SCRIPT="${HOME}/runDockerClone.sh"
+export DOCKER_DIR="${BLJ}/resources/docker"
+export DOCKER_ID="biolockj"
+export DOCK_SOCK="/var/run/docker.sock"
+export DOCKER_VER="docker-18.09.2"
+
+export EFS="/mnt/efs"
+export EFS_PROJ="${EFS}/pipelines"
+
+export BLJ_CONFIG="${EFS}/config"
+export BLJ_DB="${EFS}/db"
+export BLJ_DEFAULT_DB="/mnt/db"
+export BLJ_INPUT="${EFS}/input"
+export BLJ_META="${EFS}/metadata"
+export BLJ_PRIMER="${EFS}/primer"
+
+[ -f "/.dockerenv" ] && export BLJ_PROJ="${EFS_PROJ}"

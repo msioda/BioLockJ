@@ -25,8 +25,7 @@ import biolockj.module.ScriptModule;
 /**
  * This util adds auxiliary log info to BioLockJ log file
  */
-public class LogUtil
-{
+public class LogUtil {
 
 	/**
 	 * Not used currently.
@@ -34,113 +33,65 @@ public class LogUtil
 	 * @param module BioModule
 	 * @throws Exception if errors occur
 	 */
-	public static void syncModuleLogs( final ScriptModule module ) throws Exception
-	{
-		if( module instanceof JavaModule && Config.getBoolean( module, Constants.CLUSTER_RUN_JAVA_AS_SCRIPT ) )
-		{
+	public static void syncModuleLogs( final ScriptModule module ) throws Exception {
+		if( module instanceof JavaModule && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
 			merge( cacheLog( getModuleLog( module ) ) );
-		}
-
-		if( module instanceof ScriptModule && Config.isOnCluster() )
-		{
-			// final List<String> cache = new ArrayList<>();
-			// for( final File log: module.getScriptDir().listFiles() )
-			// {
-			// final List<String> lines = cacheLog( log );
-			// if( !lines.isEmpty() )
-			// {
-			// cache.add( "Logging info from: " + log.getAbsolutePath() );
-			// cache.addAll( lines );
-			// }
-			// }
-			//
-			// merge( cache );
 		}
 	}
 
-	private static List<String> cacheLog( final File log ) throws Exception
-	{
+	private static List<String> cacheLog( final File log ) throws Exception {
 		final List<String> cache = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( log );
-		try
-		{
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
-			{
-				if( !line.trim().isEmpty() && !getProfile().contains( line ) )
-				{
+		try {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				if( !line.trim().isEmpty() && !getProfileLines().contains( line ) ) {
 					cache.add( line );
 				}
 			}
-		}
-		finally
-		{
+		} finally {
 			reader.close();
 		}
 
 		return cache;
 	}
 
-	private static File getModuleLog( final BioModule module ) throws Exception
-	{
+	private static File getModuleLog( final BioModule module ) {
 		return new File( module.getTempDir().getAbsolutePath() + File.separator + module.getClass().getSimpleName()
-				+ Constants.LOG_EXT );
+			+ Constants.LOG_EXT );
 	}
 
-	private static List<String> getProfile()
-	{
-		if( profile.isEmpty() )
-		{
-			String userProfile = "Config property [" + USER_PROFILE
-					+ "] is undefined.  Bash users typically use: ~/.bash_profile";
-			try
-			{
-				userProfile = Config.requireString( null, USER_PROFILE );
-				final File bashProfile = new File( Config.getSystemFilePath( userProfile ) );
-				if( bashProfile.exists() )
-				{
+	private static List<String> getProfileLines() {
+		if( profile.isEmpty() ) {
+			try {
+				final File bashProfile = new File( Config.requireString( null, Constants.USER_PROFILE ) );
+				if( bashProfile.exists() ) {
 					profile.addAll( cacheLog( bashProfile ) );
 				}
-			}
-			catch( final Exception ex )
-			{
-				Log.warn( LogUtil.class, "Unable to find " + userProfile );
+			} catch( final Exception ex ) {
+				Log.warn( LogUtil.class, "Config property [ " + Constants.USER_PROFILE
+					+ " ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile" );
 			}
 		}
 		return profile;
 	}
 
-	private static String getTempLogPath()
-	{
+	private static String getTempLogPath() {
 		return Log.getFile().getAbsolutePath().replace( Log.getFile().getName(), ".temp" + Log.getFile().getName() );
 	}
 
-	private static void merge( final List<String> lines ) throws Exception
-	{
+	private static void merge( final List<String> lines ) throws Exception {
 		final File tempLog = new File( getTempLogPath() );
 		FileUtils.copyFile( Log.getFile(), tempLog );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( tempLog, true ) );
-		try
-		{
-			for( final String line: lines )
-			{
+		try {
+			for( final String line: lines ) {
 				writer.write( line + Constants.RETURN );
 			}
-		}
-		finally
-		{
-			if( writer != null )
-			{
-				writer.close();
-			}
+		} finally {
+			writer.close();
 		}
 		FileUtils.copyFile( tempLog, Log.getFile() );
 	}
-
-	/**
-	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
-	 * Bash users typically use ~/.bash_profile.
-	 */
-	public static final String USER_PROFILE = "pipeline.userProfile";
 
 	private static final List<String> profile = new ArrayList<>();
 }

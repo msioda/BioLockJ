@@ -17,7 +17,6 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.ScriptModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.classifier.r16s.QiimeClosedRefClassifier;
 import biolockj.util.ModuleUtil;
@@ -25,8 +24,7 @@ import biolockj.util.ModuleUtil;
 /**
  * This BioModule will run immediately after QiimeClosedRefClassifier if multiple otu_table.biom files were created.
  */
-public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModule
-{
+public class MergeQiimeOtuTables extends ScriptModuleImpl {
 
 	/**
 	 * Build a single bash script line to call {@value #SCRIPT_MERGE_OTU_TABLES} to create the single
@@ -34,19 +32,14 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 	 * {@link biolockj.module.implicit.parser.r16s.QiimeParser}.
 	 */
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		String tables = "";
-		for( final File f: files )
-		{
-			if( f.getName().startsWith( Constants.OTU_TABLE_PREFIX ) )
-			{
+		for( final File f: files ) {
+			if( f.getName().startsWith( Constants.OTU_TABLE_PREFIX ) ) {
 				tables += ( tables.isEmpty() ? "": "," ) + f.getAbsolutePath();
-			}
-			else
-			{
+			} else {
 				Log.warn( getClass(),
-						"Ignoring non-" + Constants.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
+					"Ignoring non-" + Constants.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
 			}
 		}
 
@@ -63,14 +56,11 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 	 * Verify the previous module = {@link biolockj.module.classifier.r16s.QiimeClosedRefClassifier}
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		if( !( ModuleUtil.getPreviousModule( this ) instanceof QiimeClosedRefClassifier ) )
-		{
 			throw new Exception( "Module order exception!  " + RETURN + getClass().getName()
-					+ " must run immediately after " + QiimeClosedRefClassifier.class.getName() + " (if configured)" );
-		}
+				+ " must run immediately after " + QiimeClosedRefClassifier.class.getName() + " (if configured)" );
 	}
 
 	/**
@@ -79,22 +69,14 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl implements ScriptModul
 	 * only 1 input file found, in which case, just copy it to the output dir.
 	 */
 	@Override
-	public void executeTask() throws Exception
-	{
-		if( getInputFiles().size() > 1 )
-		{
+	public void executeTask() throws Exception {
+		if( getInputFiles().size() > 1 ) {
 			super.executeTask();
-		}
-		else if( getInputFiles().size() == 1 )
-		{
+		} else if( getInputFiles().size() == 1 ) {
 			Log.warn( getClass(),
-					"Previous module only output 1 " + QiimeClassifier.OTU_TABLE + "so there is nothing to merge" );
+				"Previous module only output 1 " + QiimeClassifier.OTU_TABLE + "so there is nothing to merge" );
 			FileUtils.copyFileToDirectory( getInputFiles().get( 0 ), getOutputDir() );
-		}
-		else
-		{
-			throw new Exception( "No " + Constants.OTU_TABLE_PREFIX + " files to merge" );
-		}
+		} else throw new Exception( "No " + Constants.OTU_TABLE_PREFIX + " files to merge" );
 	}
 
 	/**

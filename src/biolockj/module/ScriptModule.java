@@ -19,8 +19,7 @@ import biolockj.exception.ConfigFormatException;
  * Classes that implement this interface are <br>
  * 
  */
-public interface ScriptModule extends BioModule
-{
+public interface ScriptModule extends BioModule {
 
 	/**
 	 * Method returns a nested list of bash script lines to classify samples containing forward reads only. The inner
@@ -43,9 +42,10 @@ public interface ScriptModule extends BioModule
 	public List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception;
 
 	/**
-	 * Many ScriptModules generate bash or R scripts for the Operating System to run as a {@link biolockj.Job}.<br>
-	 * The Job creates a {@link java.lang.Process} using the parameters supplied by this method and executed in the
-	 * {@link java.lang.Runtime} environment.<br>
+	 * Many ScriptModules generate bash or R scripts for the Operating System to run as a
+	 * {@link biolockj.Processor}.<br>
+	 * The Processor creates a {@link java.lang.Process} using the parameters supplied by this method and executed in
+	 * the {@link java.lang.Runtime} environment.<br>
 	 * Parameters typically contain the full script path and script parameters, if needed.
 	 *
 	 * @return {@link java.lang.Runtime#exec(String)} parameters

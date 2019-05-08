@@ -24,11 +24,9 @@ import biolockj.exception.ConfigNotFoundException;
  * Taxa files containing sample taxa counts for a given taxonomy level as output by
  * {@link biolockj.module.report.taxa.BuildTaxaTables}.
  */
-public class TaxaUtil
-{
+public class TaxaUtil {
 	// Prevent instantiation
-	private TaxaUtil()
-	{}
+	private TaxaUtil() {}
 
 	/**
 	 * Returns a list of all taxonomy levels, not only the levels configured via
@@ -36,9 +34,8 @@ public class TaxaUtil
 	 * 
 	 * @return Ordered List of all possible taxonomy levels
 	 */
-	public static List<String> allTaxonomyLevels()
-	{
-		return allLevels;
+	public static List<String> allTaxonomyLevels() {
+		return TAXA_LEVELS;
 	}
 
 	/**
@@ -46,12 +43,9 @@ public class TaxaUtil
 	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * 
 	 * @return Taxonomy level
-	 * @throws Exception if errors occur
 	 */
-	public static String bottomTaxaLevel() throws Exception
-	{
-		if( bottomLevel == null )
-		{
+	public static String bottomTaxaLevel() {
+		if( bottomLevel == null ) {
 			bottomLevel = getTaxaLevels().get( getTaxaLevels().size() - 1 );
 		}
 		return bottomLevel;
@@ -64,8 +58,7 @@ public class TaxaUtil
 	 * @param taxa Taxa name
 	 * @return Unclassified Taxa name
 	 */
-	public static String buildUnclassifiedTaxa( final String taxa )
-	{
+	public static String buildUnclassifiedTaxa( final String taxa ) {
 		return UNCLASSIFIED + " " + taxa + " " + TAXA;
 	}
 
@@ -75,16 +68,12 @@ public class TaxaUtil
 	 * @param otus TreeSet of OTUs in {@link biolockj.module.implicit.parser.ParserModule} format
 	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return Ordered TreeSet of unique taxonomy names
-	 * @throws Exception if errors occur
 	 */
-	public static TreeSet<String> findUniqueTaxa( final TreeSet<String> otus, final String level ) throws Exception
-	{
+	public static TreeSet<String> findUniqueTaxa( final TreeSet<String> otus, final String level ) {
 		final TreeSet<String> uniqueTaxa = new TreeSet<>();
-		for( final String otu: otus )
-		{
+		for( final String otu: otus ) {
 			final String taxa = getTaxaName( otu, level );
-			if( taxa != null )
-			{
+			if( taxa != null ) {
 				uniqueTaxa.add( taxa );
 			}
 		}
@@ -111,31 +100,24 @@ public class TaxaUtil
 	 * @param sampleOtuCounts TreeMap(sampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return TreeMap(sampleId, TreeMap(taxa, count))
-	 * @throws Exception if errors occur
 	 */
 	public static TreeMap<String, TreeMap<String, Long>> getLevelTaxaCounts(
-			final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final String level ) throws Exception
-	{
+		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final String level ) {
 		final TreeMap<String, TreeMap<String, Long>> taxaCounts = new TreeMap<>();
 
-		for( final String sampleId: sampleOtuCounts.keySet() )
-		{
+		for( final String sampleId: sampleOtuCounts.keySet() ) {
 			final TreeMap<String, Long> otuCounts = sampleOtuCounts.get( sampleId );
-			for( final String otu: otuCounts.keySet() )
-			{
+			for( final String otu: otuCounts.keySet() ) {
 				final String taxa = getTaxaName( otu, level );
-				if( taxa != null )
-				{
-					if( taxaCounts.get( sampleId ) == null )
-					{
+				if( taxa != null ) {
+					if( taxaCounts.get( sampleId ) == null ) {
 						taxaCounts.put( sampleId, new TreeMap<>() );
 					}
-					if( taxaCounts.get( sampleId ).get( taxa ) == null )
-					{
+					if( taxaCounts.get( sampleId ).get( taxa ) == null ) {
 						taxaCounts.get( sampleId ).put( taxa, 0L );
 					}
 					taxaCounts.get( sampleId ).put( taxa,
-							taxaCounts.get( sampleId ).get( taxa ) + otuCounts.get( otu ) );
+						taxaCounts.get( sampleId ).get( taxa ) + otuCounts.get( otu ) );
 				}
 			}
 		}
@@ -148,16 +130,12 @@ public class TaxaUtil
 	 * 
 	 * @param otu OTU path value
 	 * @return TreeMap(level, taxa)
-	 * @throws Exception if errors occur
 	 */
-	public static TreeMap<String, String> getTaxaByLevel( final String otu ) throws Exception
-	{
+	public static TreeMap<String, String> getTaxaByLevel( final String otu ) {
 		final TreeMap<String, String> map = new TreeMap<>();
-		for( final String level: getTaxaLevels() )
-		{
+		for( final String level: getTaxaLevels() ) {
 			final String name = getTaxaName( otu, level );
-			if( name != null )
-			{
+			if( name != null ) {
 				map.put( level, getTaxaName( otu, level ) );
 			}
 		}
@@ -169,8 +147,7 @@ public class TaxaUtil
 	 * 
 	 * @return configLevels
 	 */
-	public static List<String> getTaxaLevels()
-	{
+	public static List<String> getTaxaLevels() {
 		return configLevels;
 	}
 
@@ -179,25 +156,17 @@ public class TaxaUtil
 	 * {@value Constants#REPORT_TAXONOMY_LEVELS}
 	 * 
 	 * @return List of taxonomy levels
-	 * @throws Exception if errors occur
 	 */
-	public static List<String> getTaxaLevelSpan() throws Exception
-	{
-		if( levelSpan != null )
-		{
-			return levelSpan;
-		}
+	public static List<String> getTaxaLevelSpan() {
+		if( levelSpan != null ) return levelSpan;
 
 		levelSpan = new ArrayList<>();
-		for( final String level: allTaxonomyLevels() )
-		{
-			if( !levelSpan.isEmpty() || level.equals( topTaxaLevel() ) )
-			{
+		for( final String level: allTaxonomyLevels() ) {
+			if( !levelSpan.isEmpty() || level.equals( topTaxaLevel() ) ) {
 				levelSpan.add( level );
 			}
 
-			if( level.equals( bottomTaxaLevel() ) )
-			{
+			if( level.equals( bottomTaxaLevel() ) ) {
 				break;
 			}
 		}
@@ -210,18 +179,13 @@ public class TaxaUtil
 	 * @param otu OTU name in {@link biolockj.module.implicit.parser.ParserModule} format
 	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return Taxonomy name
-	 * @throws Exception if errors occur
 	 */
-	public static String getTaxaName( final String otu, final String level ) throws Exception
-	{
+	public static String getTaxaName( final String otu, final String level ) {
 		final StringTokenizer st = new StringTokenizer( otu, Constants.SEPARATOR );
-		while( st.hasMoreTokens() )
-		{
+		while( st.hasMoreTokens() ) {
 			final String levelOtu = st.nextToken();
 			if( levelOtu.startsWith( level + Constants.DELIM_SEP ) )
-			{
 				return levelOtu.replaceFirst( level + Constants.DELIM_SEP, "" );
-			}
 		}
 		return null;
 	}
@@ -235,28 +199,21 @@ public class TaxaUtil
 	 * @return Taxonomy Table File
 	 * @throws Exception if errors occur
 	 */
-	public static File getTaxonomyTableFile( final File dir, final String level, String suffix ) throws Exception
-	{
-		if( level == null )
-		{
-			throw new Exception( "Level is required to build a taonomy table" );
+	public static File getTaxonomyTableFile( final File dir, final String level, final String suffix )
+		throws Exception {
+		if( level == null ) throw new Exception( "Level is required to build a taonomy table" );
+		String mySuffix = suffix;
+		if( mySuffix != null && !mySuffix.endsWith( "_" ) ) {
+			mySuffix += "_";
 		}
-
-		if( suffix != null && !suffix.endsWith( "_" ) )
-		{
-			suffix += "_";
+		if( mySuffix != null && !mySuffix.startsWith( "_" ) ) {
+			mySuffix = "_" + mySuffix;
 		}
-		if( suffix != null && !suffix.startsWith( "_" ) )
-		{
-			suffix = "_" + suffix;
+		if( mySuffix == null ) {
+			mySuffix = "_";
 		}
-		if( suffix == null )
-		{
-			suffix = "_";
-		}
-
-		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + suffix
-				+ level + Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + mySuffix
+			+ level + Constants.TSV_EXT );
 	}
 
 	/**
@@ -264,16 +221,10 @@ public class TaxaUtil
 	 * 
 	 * @param file File Taxonomy Table
 	 * @return Taxonomy level
-	 * @throws Exception if errors occur
 	 */
-	public static String getTaxonomyTableLevel( final File file ) throws Exception
-	{
-		for( final String level: getTaxaLevels() )
-		{
-			if( file.getName().endsWith( level + Constants.TSV_EXT ) )
-			{
-				return level;
-			}
+	public static String getTaxonomyTableLevel( final File file ) {
+		for( final String level: getTaxaLevels() ) {
+			if( file.getName().endsWith( level + Constants.TSV_EXT ) ) return level;
 		}
 		return null;
 	}
@@ -289,61 +240,44 @@ public class TaxaUtil
 	 * @throws ConfigFormatException if {@value Constants#REPORT_TAXONOMY_LEVELS} is defined, but does not contain any
 	 * valid taxonomy levels
 	 */
-	public static List<String> initTaxaLevels() throws ConfigNotFoundException, ConfigFormatException
-	{
+	public static List<String> initTaxaLevels() throws ConfigNotFoundException, ConfigFormatException {
 		configLevels = new ArrayList<>();
 		final String errorMsg = "Property only accepts valid taxonomy levels ==>  "
-				+ BioLockJUtil.getCollectionAsString( allLevels );
+			+ BioLockJUtil.getCollectionAsString( TAXA_LEVELS );
 		final Set<String> configuredLevels = new HashSet<>();
 		final List<String> validOptions = allTaxonomyLevels();
 
-		for( final String element: Config.requireList( null, Constants.REPORT_TAXONOMY_LEVELS ) )
-		{
-			if( validOptions.contains( element.toLowerCase() ) )
-			{
+		for( final String element: Config.requireList( null, Constants.REPORT_TAXONOMY_LEVELS ) ) {
+			if( validOptions.contains( element.toLowerCase() ) ) {
 				configuredLevels.add( element.toLowerCase() );
-			}
-			else
-			{
-				throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
-						"Invalid level defined [" + element + "]  " + errorMsg );
-			}
+			} else throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
+				"Invalid level defined [" + element + "]  " + errorMsg );
 		}
 
-		if( configuredLevels.contains( Constants.DOMAIN ) )
-		{
+		if( configuredLevels.contains( Constants.DOMAIN ) ) {
 			configLevels.add( Constants.DOMAIN );
 		}
-		if( configuredLevels.contains( Constants.PHYLUM ) )
-		{
+		if( configuredLevels.contains( Constants.PHYLUM ) ) {
 			configLevels.add( Constants.PHYLUM );
 		}
-		if( configuredLevels.contains( Constants.CLASS ) )
-		{
+		if( configuredLevels.contains( Constants.CLASS ) ) {
 			configLevels.add( Constants.CLASS );
 		}
-		if( configuredLevels.contains( Constants.ORDER ) )
-		{
+		if( configuredLevels.contains( Constants.ORDER ) ) {
 			configLevels.add( Constants.ORDER );
 		}
-		if( configuredLevels.contains( Constants.FAMILY ) )
-		{
+		if( configuredLevels.contains( Constants.FAMILY ) ) {
 			configLevels.add( Constants.FAMILY );
 		}
-		if( configuredLevels.contains( Constants.GENUS ) )
-		{
+		if( configuredLevels.contains( Constants.GENUS ) ) {
 			configLevels.add( Constants.GENUS );
 		}
-		if( configuredLevels.contains( Constants.SPECIES ) )
-		{
+		if( configuredLevels.contains( Constants.SPECIES ) ) {
 			configLevels.add( Constants.SPECIES );
 		}
 
-		if( configLevels.isEmpty() )
-		{
-			throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
-					"No valid options configured.  " + errorMsg );
-		}
+		if( configLevels.isEmpty() ) throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
+			"No valid options configured.  " + errorMsg );
 
 		Config.setConfigProperty( Constants.REPORT_TAXONOMY_LEVELS, configLevels );
 		return configLevels;
@@ -354,17 +288,11 @@ public class TaxaUtil
 	 * 
 	 * @param file File to test
 	 * @return boolean TRUE if file is a normalized taxonomy count file
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isLogNormalizedTaxaFile( final File file ) throws Exception
-	{
-		for( final String level: getTaxaLevels() )
-		{
+	public static boolean isLogNormalizedTaxaFile( final File file ) {
+		for( final String level: getTaxaLevels() ) {
 			if( file.getName().contains( "_" + TAXA_TABLE + "_Log" )
-					&& file.getName().endsWith( "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) )
-			{
-				return true;
-			}
+				&& file.getName().endsWith( "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) ) return true;
 		}
 		return false;
 	}
@@ -374,16 +302,11 @@ public class TaxaUtil
 	 * 
 	 * @param file File to test
 	 * @return boolean TRUE if file is a normalized taxonomy count file
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isNormalizedTaxaFile( final File file ) throws Exception
-	{
-		for( final String level: getTaxaLevels() )
-		{
+	public static boolean isNormalizedTaxaFile( final File file ) {
+		for( final String level: getTaxaLevels() ) {
 			if( file.getName().endsWith( "_" + TAXA_TABLE + "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) )
-			{
 				return true;
-			}
 		}
 		return false;
 	}
@@ -393,18 +316,11 @@ public class TaxaUtil
 	 * 
 	 * @param file File to test
 	 * @return boolean TRUE if file is a taxonomy count file
-	 * @throws Exception if errors occur
 	 */
-	public static boolean isTaxaFile( final File file ) throws Exception
-	{
-		if( file.getName().contains( "_" + TAXA_TABLE + "_" ) )
-		{
-			for( final String level: getTaxaLevels() )
-			{
-				if( file.getName().endsWith( level + Constants.TSV_EXT ) )
-				{
-					return true;
-				}
+	public static boolean isTaxaFile( final File file ) {
+		if( file.getName().contains( "_" + TAXA_TABLE + "_" ) ) {
+			for( final String level: getTaxaLevels() ) {
+				if( file.getName().endsWith( level + Constants.TSV_EXT ) ) return true;
 			}
 		}
 		return false;
@@ -415,13 +331,10 @@ public class TaxaUtil
 	 * 
 	 * @param level Taxonomy level
 	 * @return Parent taxonomy level
-	 * @throws Exception if errors occur
 	 */
-	public static String parentTaxaLevel( final String level ) throws Exception
-	{
+	public static String parentTaxaLevel( final String level ) {
 		final int x = allTaxonomyLevels().indexOf( level );
-		if( x == 0 )
-		{
+		if( x == 0 ) {
 			Log.debug( TaxaUtil.class, level + " is already the highest taxonomy level so has no parent" );
 			return null;
 		}
@@ -434,12 +347,9 @@ public class TaxaUtil
 	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * 
 	 * @return Taxonomy level
-	 * @throws Exception if errors occur
 	 */
-	public static String topTaxaLevel() throws Exception
-	{
-		if( topLevel == null )
-		{
+	public static String topTaxaLevel() {
+		if( topLevel == null ) {
 			topLevel = getTaxaLevels().get( 0 );
 		}
 		return topLevel;
@@ -455,14 +365,12 @@ public class TaxaUtil
 	 */
 	protected static final String TAXA_TABLE = "taxaCount";
 
-	private static final List<String> allLevels = Arrays.asList( new String[] { Constants.DOMAIN, Constants.PHYLUM,
-			Constants.CLASS, Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES } );
 	private static String bottomLevel = null;
 	private static List<String> configLevels = null;
 	private static List<String> levelSpan = null;
-
 	private static final String TAXA = "Taxa";
-
+	private static final List<String> TAXA_LEVELS = Arrays.asList( Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS,
+		Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES );
 	private static String topLevel = null;
 	private static final String UNCLASSIFIED = "Unclassified";
 }

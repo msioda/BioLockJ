@@ -16,7 +16,6 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.module.SeqModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
@@ -29,8 +28,7 @@ import biolockj.util.*;
  * 
  * @blj.web_desc Merge Reads with PEAR
  */
-public class PearMergeReads extends SeqModuleImpl implements SeqModule
-{
+public class PearMergeReads extends SeqModuleImpl {
 	/**
 	 * Build the script lines for each sample as a nested list. PAIR program will be called once for each pair of files
 	 * to output a single merged read.
@@ -40,19 +38,17 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	 * @throws Exception if error occurs generating bash script lines
 	 */
 	@Override
-	public List<List<String>> buildScript( final List<File> files ) throws Exception
-	{
-		sampleIds.addAll( MetaUtil.getSampleIds() );
+	public List<List<String>> buildScript( final List<File> files ) throws Exception {
+		this.sampleIds.addAll( MetaUtil.getSampleIds() );
 		final List<List<String>> data = new ArrayList<>();
 		final Map<File, File> map = SeqUtil.getPairedReads( files );
 		final Set<File> keys = new TreeSet<>( map.keySet() );
 
-		for( final File file: keys )
-		{
+		for( final File file: keys ) {
 			final List<String> lines = new ArrayList<>();
 			lines.add( FUNCTION_PEAR_MERGE + " " + SeqUtil.getSampleId( file.getName() ) + " " + file.getAbsolutePath()
-					+ " " + map.get( file ).getAbsolutePath() + " " + getTempDir().getAbsolutePath() + " "
-					+ getOutputDir().getAbsolutePath() );
+				+ " " + map.get( file ).getAbsolutePath() + " " + getTempDir().getAbsolutePath() + " "
+				+ getOutputDir().getAbsolutePath() );
 
 			data.add( lines );
 		}
@@ -70,31 +66,21 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	 * </ol>
 	 */
 	@Override
-	public void checkDependencies() throws Exception
-	{
+	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX );
 		Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX );
 		getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM );
 
-		if( ModuleUtil.isComplete( this ) )
-		{
-			return;
-		}
+		if( ModuleUtil.isComplete( this ) ) return;
 
-		if( !SeqUtil.isFastQ() )
-		{
-			throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
-		}
+		if( !SeqUtil.isFastQ() ) throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
 
-		if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-		{
-			throw new Exception( getClass().getName()
-					+ " requires paired input data as a combined multiplexed file or as separate files named with "
-					+ " matching sample IDs ending in the forward & reverse file suffix values: "
-					+ Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX ) + " & "
-					+ Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX ) );
-		}
+		if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) throw new Exception( getClass().getName()
+			+ " requires paired input data as a combined multiplexed file or as separate files named with "
+			+ " matching sample IDs ending in the forward & reverse file suffix values: "
+			+ Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX ) + " & "
+			+ Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX ) );
 	}
 
 	/**
@@ -102,37 +88,29 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	 * and register number of reads.
 	 */
 	@Override
-	public void cleanUp() throws Exception
-	{
+	public void cleanUp() throws Exception {
 		final String metaColName = getMetaColName();
 		super.cleanUp();
 		Config.setConfigProperty( Constants.INTERNAL_PAIRED_READS, Constants.FALSE );
 
-		final File updatedMeta = new File(
-				getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getMetadataFileName() );
-		if( updatedMeta.exists() )
-		{
+		final File updatedMeta = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
+		if( updatedMeta.exists() ) {
 			MetaUtil.setFile( updatedMeta );
 			MetaUtil.refreshCache();
-		}
-		else if( !MetaUtil.getFieldNames().contains( metaColName ) && readsPerSample != null )
-		{
+		} else if( !MetaUtil.getFieldNames().contains( metaColName ) && this.readsPerSample != null ) {
 			Log.info( getClass(),
-					"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
-			for( final File f: getOutputDir().listFiles() )
-			{
+				"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
+			for( final File f: getOutputDir().listFiles() ) {
 				final long count = SeqUtil.countNumReads( f );
 				Log.info( getClass(), "Num merged Reads for File:[" + f.getName() + "] ==> ID:["
-						+ SeqUtil.getSampleId( f.getName() ) + "] = " + count );
-				readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
+					+ SeqUtil.getSampleId( f.getName() ) + "] = " + count );
+				this.readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
-			MetaUtil.addColumn( metaColName, readsPerSample, getOutputDir(), true );
-		}
-		else
-		{
-			Log.warn( getClass(), "Counts for # merged reads/sample already found in metadata, not re-counting "
-					+ MetaUtil.getPath() );
+			MetaUtil.addColumn( metaColName, this.readsPerSample, getOutputDir(), true );
+		} else {
+			Log.warn( getClass(),
+				"Counts for # merged reads/sample already found in metadata, not re-counting " + MetaUtil.getPath() );
 		}
 		RegisterNumReads.setNumReadFieldName( metaColName );
 	}
@@ -141,18 +119,16 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	 * Produce summary message with min, max, mean, and median number of reads.
 	 */
 	@Override
-	public String getSummary() throws Exception
-	{
+	public String getSummary() throws Exception {
 		final String label = "Paired Reads";
 		final int pad = SummaryUtil.getPad( label );
-		String summary = SummaryUtil.getCountSummary( readsPerSample, "Paired Reads", true );
-		sampleIds.removeAll( readsPerSample.keySet() );
-		if( !sampleIds.isEmpty() )
-		{
+		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Paired Reads", true );
+		this.sampleIds.removeAll( this.readsPerSample.keySet() );
+		if( !this.sampleIds.isEmpty() ) {
 			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-					+ BioLockJUtil.getCollectionAsString( sampleIds );
+				+ BioLockJUtil.getCollectionAsString( this.sampleIds );
 		}
-		readsPerSample = null;
+		this.readsPerSample = null;
 		return super.getSummary() + summary;
 	}
 
@@ -160,27 +136,24 @@ public class PearMergeReads extends SeqModuleImpl implements SeqModule
 	 * This method generates the required bash functions used by the worker scripts: {@value #FUNCTION_PEAR_MERGE}
 	 */
 	@Override
-	public List<String> getWorkerScriptFunctions() throws Exception
-	{
+	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_PEAR_MERGE + "() {" );
 		lines.add( Config.getExe( this, EXE_PEAR ) + " "
-				+ getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 "
-				+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
+			+ getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 "
+			+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
 		lines.add( "mv $4" + File.separator + "$1.assembled." + Constants.FASTQ + " $5" + File.separator + "$1."
-				+ Constants.FASTQ );
+			+ Constants.FASTQ );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
 
-	private String getMetaColName() throws Exception
-	{
-		if( otuColName == null )
-		{
-			otuColName = MetaUtil.getSystemMetaCol( this, NUM_MERGED_READS );
+	private String getMetaColName() throws Exception {
+		if( this.otuColName == null ) {
+			this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_MERGED_READS );
 		}
 
-		return otuColName;
+		return this.otuColName;
 	}
 
 	private String otuColName = null;

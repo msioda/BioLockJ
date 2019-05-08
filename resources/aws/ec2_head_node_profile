@@ -1,0 +1,46 @@
+######=========================================######
+######    LOAD BioLockJ AWS ~/.bash_profile    ###### 
+######=========================================######
+
+[ -f ~/.bashrc ] && . ~/.bashrc
+umask 0007
+export PS1='\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h\[\033[33;1m\]..$(basename "$(dirname $PWD)")/$(basename $PWD)\[\033[m\]~$ '
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad
+export BSH_PROF=~/.bash_profile
+export BLJ=/mnt/efs
+export BLJ_SCRIPT="${BLJ}/script"
+
+alias ls="ls -lFh"
+alias rd="rm -rf"
+alias md5="openssl md5"
+alias rf="source ${BSH_PROF}"
+alias ..="cd .."
+alias h="head -n 8"
+alias t="tail -n 8"
+alias f="find . -name"
+alias vib="vi ${BSH_PROF}"
+alias cab="cat ${BSH_PROF}"
+alias tlog="tail -1000 *.log"
+alias tlogf="tail -1000f *.log"
+alias goblj="blj_go"
+alias showIFS="printf %q $IFS"
+
+# Initialize bash environment
+source "${BLJ_SCRIPT}/blj_config"
+
+# To reset ownership after Nextflow pipeline runs
+# Otherwise cannot upload new data to EFS
+set_ec2_owner() {
+	sudo chown -R "${USER}":"${USER}" "${EFS}"
+	sudo chmod -R 777 "${EFS}"
+}
+
+alias sudome='set_ec2_owner'
+
+[ ${#dockerUser} -gt 0 ] && export DOCKER_ID="${dockerUser}"
+[ ! -f "$(get_docker_job_def_flag)" ] && build_docker_job_defs
+echo "AWS Profile ~/.bash_profile loaded - Docker Account ID: $DOCKER_ID"
+######=========================================######
+######   BioLockJ AWS ~/.bash_profile LOADED   ###### 
+######=========================================######

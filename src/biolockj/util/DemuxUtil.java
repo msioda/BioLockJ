@@ -11,18 +11,15 @@
  */
 package biolockj.util;
 
-import java.io.File;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
 
 /**
  * This utility contains standard methods used to handle multiplexed data.
  */
-public class DemuxUtil
-{
+public class DemuxUtil {
 
 	/**
 	 * Return TRUE if Config is setup to demultiplex the sequence data based on bar-codes in the sequence headers.
@@ -30,10 +27,9 @@ public class DemuxUtil
 	 * @return boolean
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
-	public static boolean barcodeInHeader() throws ConfigNotFoundException
-	{
+	public static boolean barcodeInHeader() throws ConfigNotFoundException {
 		return Config.getString( null, DEMUX_STRATEGY ) != null
-				&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_HEADER );
+			&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_HEADER );
 	}
 
 	/**
@@ -42,10 +38,9 @@ public class DemuxUtil
 	 * @return boolean
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
-	public static boolean barcodeInMapping() throws ConfigNotFoundException
-	{
+	public static boolean barcodeInMapping() throws ConfigNotFoundException {
 		return Config.getString( null, DEMUX_STRATEGY ) != null
-				&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_MAPPING );
+			&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_MAPPING );
 	}
 
 	/**
@@ -54,19 +49,15 @@ public class DemuxUtil
 	 * @return boolean
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
-	public static boolean barcodeInSeq() throws ConfigNotFoundException
-	{
+	public static boolean barcodeInSeq() throws ConfigNotFoundException {
 		return Config.getString( null, DEMUX_STRATEGY ) != null
-				&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
+			&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
 	}
 
 	/**
 	 * Clear demultiplexer related fields
-	 * 
-	 * @throws Exception if errors occur
 	 */
-	public static void clearDemuxConfig() throws Exception
-	{
+	public static void clearDemuxConfig() {
 		Config.setConfigProperty( MetaUtil.META_BARCODE_COLUMN, "" );
 		Config.setConfigProperty( DemuxUtil.BARCODE_CUTOFF, "" );
 		Config.setConfigProperty( DemuxUtil.BARCODE_USE_REV_COMP, "" );
@@ -80,15 +71,11 @@ public class DemuxUtil
 	 * @return TRUE or FALSE
 	 * @throws Exception if unable to access metadata file or Config
 	 */
-	public static boolean demuxWithBarcode() throws Exception
-	{
+	public static boolean demuxWithBarcode() throws Exception {
 		if( ( barcodeInHeader() || barcodeInSeq() || barcodeInMapping() )
-				&& MetaUtil.getFieldNames().contains( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) )
-				&& !MetaUtil.getFieldValues( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ), true )
-						.isEmpty() )
-		{
+			&& MetaUtil.getFieldNames().contains( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) )
+			&& !MetaUtil.getFieldValues( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 			return true;
-		}
 		return false;
 	}
 
@@ -139,34 +126,10 @@ public class DemuxUtil
 	 * @return boolean
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
-	public static Boolean doDemux() throws ConfigNotFoundException
-	{
-		if( Config.getString( null, DEMUX_STRATEGY ) == null )
-		{
-			return null;
-		}
-		else if( !Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX ) )
-		{
-			return true;
-		}
+	public static Boolean doDemux() throws ConfigNotFoundException {
+		if( Config.getString( null, DEMUX_STRATEGY ) == null ) return null;
+		else if( !Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_DO_NOT_DEMUX ) ) return true;
 		return false;
-	}
-
-	/**
-	 * Return the demultiplexer mapping file used to map sequence files to barcode.
-	 * 
-	 * @return Mapping file path
-	 * @throws ConfigNotFoundException if {@value #MAPPING_FILE} is undefined
-	 * @throws ConfigPathException if {@value #MAPPING_FILE} path does not exist on the file system
-	 * 
-	 */
-	public static File getMapping() throws ConfigNotFoundException, ConfigPathException
-	{
-		if( barcodeInMapping() )
-		{
-			return Config.requireExistingFile( null, MAPPING_FILE );
-		}
-		return null;
 	}
 
 	/**
@@ -184,20 +147,13 @@ public class DemuxUtil
 	 * @return Sample ID or null
 	 * @throws Exception if propagated from {@link biolockj.util.SeqUtil} or {@link biolockj.Config}
 	 */
-	public static String getSampleId( final List<String> seqLines ) throws Exception
-	{
-		if( demuxWithBarcode() )
-		{
-			final Map<String, String> idMap = getIdMap();
-			if( idMap != null )
-			{
-				for( final String barCodeId: idMap.keySet() )
-				{
+	public static String getSampleId( final List<String> seqLines ) throws Exception {
+		if( demuxWithBarcode() ) {
+			final Map<String, String> map = getIdMap();
+			if( map != null ) {
+				for( final String barCodeId: map.keySet() ) {
 					if( ( barcodeInHeader() || barcodeInMapping() ) && seqLines.get( 0 ).contains( barCodeId )
-							|| barcodeInSeq() && seqLines.get( 1 ).startsWith( barCodeId ) )
-					{
-						return idMap.get( barCodeId );
-					}
+						|| barcodeInSeq() && seqLines.get( 1 ).startsWith( barCodeId ) ) return map.get( barCodeId );
 
 				}
 			}
@@ -214,37 +170,23 @@ public class DemuxUtil
 	 * 
 	 * @return Boolean TRUE if barcode column exists and is populated.
 	 */
-	public static boolean hasValidBarcodes()
-	{
-		try
-		{
+	public static boolean hasValidBarcodes() {
+		try {
 			final String barCodeCol = Config.getString( null, MetaUtil.META_BARCODE_COLUMN );
-			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) )
-			{
+			if( barCodeCol != null && MetaUtil.getFieldNames().contains( barCodeCol ) ) {
 				final Set<String> sampleIds = new HashSet<>( MetaUtil.getSampleIds() );
 				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol, true ) );
-				if( sampleIds.size() == vals.size() )
-				{
-					return true;
-				}
-				else
-				{
-					Log.warn( DemuxUtil.class,
-							"Multiplexer adding Sample ID to sequence headers instead of barcode because dataset contains "
-									+ sampleIds.size() + " unique Sample IDs but only " + vals.size()
-									+ " unique barcodes" );
-					for( final String id: MetaUtil.getSampleIds() )
-					{
-						Log.warn( DemuxUtil.class, "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
-					}
-
+				if( sampleIds.size() == vals.size() ) return true;
+				Log.warn( DemuxUtil.class,
+					"Multiplexer adding Sample ID to sequence headers instead of barcode because dataset contains "
+						+ sampleIds.size() + " unique Sample IDs but only " + vals.size() + " unique barcodes" );
+				for( final String id: MetaUtil.getSampleIds() ) {
+					Log.warn( DemuxUtil.class, "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
 				}
 			}
-		}
-		catch( final Exception ex )
-		{
+		} catch( final Exception ex ) {
 			Log.error( DemuxUtil.class, "Error occurred checking metadata file for valid barcodes" + ex.getMessage(),
-					ex );
+				ex );
 		}
 
 		return false;
@@ -254,12 +196,10 @@ public class DemuxUtil
 	 * Return TRUE if Config is setup to demultiplex the sequence data based on Sample IDs in the sequence headers.
 	 * 
 	 * @return boolean
-	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
-	public static boolean sampleIdInHeader() throws ConfigNotFoundException
-	{
+	public static boolean sampleIdInHeader() {
 		return Config.getString( null, DEMUX_STRATEGY ) != null
-				&& Config.getString( null, DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
+			&& Config.getString( null, DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
 	}
 
 	/**
@@ -270,45 +210,35 @@ public class DemuxUtil
 	 * @return Id map
 	 * @throws Exception if propagated from {@link biolockj.util.MetaUtil} or {@link biolockj.Config}
 	 */
-	protected static Map<String, String> getIdMap() throws Exception
-	{
-		if( !idMap.isEmpty() )
-		{
-			return idMap;
-		}
+	protected static Map<String, String> getIdMap() throws Exception {
+		if( !idMap.isEmpty() ) return idMap;
 
-		if( demuxWithBarcode() )
-		{
-			Log.info( DemuxUtil.class, "Detected Config." + BARCODE_USE_REV_COMP + " = "
-					+ Config.getBoolean( null, BARCODE_USE_REV_COMP ) );
+		if( demuxWithBarcode() ) {
+			Log.info( DemuxUtil.class,
+				"Detected Config." + BARCODE_USE_REV_COMP + " = " + Config.getBoolean( null, BARCODE_USE_REV_COMP ) );
 
 			Log.info( DemuxUtil.class,
-					"Building Barcode-SampleID Map using the "
-							+ ( Config.getBoolean( null, BARCODE_USE_REV_COMP ) ? "reverse compliment of ": "" )
-							+ "metadata column = " + Config.getString( null, MetaUtil.META_BARCODE_COLUMN ) );
-		}
-		else
-		{
+				"Building Barcode-SampleID Map using the "
+					+ ( Config.getBoolean( null, BARCODE_USE_REV_COMP ) ? "reverse compliment of ": "" )
+					+ "metadata column = " + Config.getString( null, MetaUtil.META_BARCODE_COLUMN ) );
+		} else {
 			Log.debug( DemuxUtil.class, "Lookup multiplexed Sample IDs in header (no barcodes)" );
 			return null;
 		}
 
-		for( final String id: MetaUtil.getSampleIds() )
-		{
+		for( final String id: MetaUtil.getSampleIds() ) {
 			String val = MetaUtil.getField( id, Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) );
 
-			if( Config.getBoolean( null, BARCODE_USE_REV_COMP ) )
-			{
+			if( Config.getBoolean( null, BARCODE_USE_REV_COMP ) ) {
 				val = SeqUtil.reverseComplement( val );
 			}
 
 			idMap.put( val, id );
 		}
 
-		for( final String key: idMap.keySet() )
-		{
+		for( final String key: idMap.keySet() ) {
 			Log.info( DemuxUtil.class,
-					"Barcode-SampleID Map key[ " + key + " ] -->  value[ " + idMap.get( key ) + " ]" );
+				"Barcode-SampleID Map key[ " + key + " ] -->  value[ " + idMap.get( key ) + " ]" );
 		}
 
 		return idMap;
