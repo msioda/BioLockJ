@@ -50,11 +50,11 @@ public class Pipeline {
 		if( runDetached ) {
 			MasterConfigUtil.saveMasterConfig();
 		}
-		
+
 		if( hasScripts( module ) && !DockerUtil.inAwsEnv() ) {
 			Processor.submit( (ScriptModule) module );
 		}
-		
+
 		if( hasScripts( module ) ) {
 			waitForModuleScripts( (ScriptModule) module );
 		}
@@ -88,7 +88,7 @@ public class Pipeline {
 		if( pipelineException != null || getModules() == null || getModules().isEmpty() )
 			return Constants.SCRIPT_FAILURES;
 		for( final BioModule module: getModules() ) {
-			if( !ModuleUtil.isComplete( module ) ) return Constants.SCRIPT_FAILURES;
+			if( !ModuleUtil.isComplete( module ) && !( module instanceof Email ) ) return Constants.SCRIPT_FAILURES;
 		}
 		return Constants.SCRIPT_SUCCESS;
 	}

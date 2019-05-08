@@ -521,7 +521,8 @@ public class Config {
 	 * @throws ConfigPathException if directory paths are undefined or do not exist
 	 * @throws ConfigNotFoundException if a required property is undefined
 	 */
-	public static List<File> requireExistingDirs( final BioModule module, final String property ) throws ConfigPathException, ConfigNotFoundException {
+	public static List<File> requireExistingDirs( final BioModule module, final String property )
+		throws ConfigPathException, ConfigNotFoundException {
 		final List<File> returnDirs = new ArrayList<>();
 		for( final String d: requireSet( module, property ) ) {
 			final File dir = getExistingFileObject( d );

@@ -11,8 +11,6 @@
  */
 package biolockj.exception;
 
-
-
 /**
  * OtuFileException is thrown if errors occur processing OTU files.
  */

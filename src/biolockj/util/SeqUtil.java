@@ -462,13 +462,13 @@ public class SeqUtil {
 	 * @param file File
 	 * @return TRUE if file is a sequence file
 	 */
-	public static boolean isSeqFile( final File file )  {
+	public static boolean isSeqFile( final File file ) {
 		BufferedReader reader = null;
 		try {
 			info( "Check if input file is a SEQ file: " + file.getAbsolutePath() );
 			boolean isSeq = false;
 			reader = BioLockJUtil.getFileReader( file );
-	
+
 			final String header = SeqUtil.scanFirstLine( reader, file );
 			final String idChar = header.substring( 0, 1 );
 			String seq = reader.readLine();
@@ -484,14 +484,17 @@ public class SeqUtil {
 				info( file.getAbsolutePath() + " is not a sequence file! " + Constants.RETURN + "Line 1: [ " + header
 					+ " ]" + Constants.RETURN + "Line 2= [ " + seq + " ]" );
 			}
-			
+
 			return isSeq;
-		} catch( Exception ex  ) {
-			Log.error( SeqUtil.class, "Error occurred examining file to determine if it is a sequence file or not", ex );
+		} catch( final Exception ex ) {
+			Log.error( SeqUtil.class, "Error occurred examining file to determine if it is a sequence file or not",
+				ex );
 		} finally {
 			try {
-				if( reader != null ) reader.close();
-			} catch( Exception ex  ) {
+				if( reader != null ) {
+					reader.close();
+				}
+			} catch( final Exception ex ) {
 				Log.error( SeqUtil.class, "Failed to close file reader", ex );
 			}
 		}

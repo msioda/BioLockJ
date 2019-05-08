@@ -315,14 +315,15 @@ public class BioLockJUtil {
 			final List<File> dirs = new ArrayList<>();
 			final String path = Config.requireString( null, Constants.INPUT_DIRS );
 			File dir = null;
-			if( path.equals( File.separator ) )
+			if( path.equals( File.separator ) ) {
 				dir = new File( DockerUtil.DOCKER_INPUT_DIR );
-			else
-				dir = new File( path.replace( new File( path ).getParentFile().getAbsolutePath(), DockerUtil.DOCKER_INPUT_DIR ) );
+			} else {
+				dir = new File(
+					path.replace( new File( path ).getParentFile().getAbsolutePath(), DockerUtil.DOCKER_INPUT_DIR ) );
+			}
 
-			if( !dir.exists() ) 
-				throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
-			
+			if( !dir.exists() ) throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
+
 			dirs.add( dir );
 			return dirs;
 		}
@@ -337,7 +338,8 @@ public class BioLockJUtil {
 	 * @throws ConfigPathException if configured directory does not exist on the file-system
 	 * @throws ConfigViolationException if input directories contain duplicate file names
 	 */
-	public static Collection<File> getPipelineInputFiles() throws ConfigNotFoundException, ConfigPathException, ConfigViolationException   {
+	public static Collection<File> getPipelineInputFiles()
+		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException {
 		if( inputFiles.isEmpty() ) {
 			Collection<File> files = new HashSet<>();
 			for( final File dir: getInputDirs() ) {
@@ -597,8 +599,8 @@ public class BioLockJUtil {
 		inputFiles = files;
 	}
 
-	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles ) 
-			throws ConfigViolationException {
+	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles )
+		throws ConfigViolationException {
 		final Map<String, String> names = new HashMap<>();
 		for( final File f: files ) {
 			names.put( f.getName(), f.getAbsolutePath() );
