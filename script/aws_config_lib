@@ -10,9 +10,8 @@
 
 sheBang='#!/bin/bash'
 IS_NULL="IS_NULL"
-HN2_NUCL_DB="${BLJ_DB}/chocophlan"
-HN2_PROT_DB="${BLJ_DB}/uniref"
-RDP_DB="${BLJ_DB}/rRNAClassifier.properties"
+HN2_NUCL_DB="${BLJ_DEFAULT_DB}/chocophlan"
+HN2_PROT_DB="${BLJ_DEFAULT_DB}/uniref"
 STANDARD_CONFIG="${BLJ}/resources/config/default/standard.properties"
 DOCKER_CONFIG="${BLJ}/resources/config/default/docker.properties"
 alias awsr="aws_report_config"
@@ -116,7 +115,7 @@ clear_aws_cache() {
 # Param 2 - DB property name
 convert_db_prop() {
 	db=$(get_prop "${1}" "${2}")
-	[ "$db" != "${BLJ_DB}" ] && convert_prop "${1}" "${2}"
+	[ "$db" != "${BLJ_DEFAULT_DB}" ] && convert_prop "${1}" "${2}"
 }
 
 # Convert pipeline Config prop to AWS Config file property format in: $blj_aws_config
@@ -334,7 +333,6 @@ set_pipeline_conig_props() {
 
 	[ "$(get_prop ${1} humann2.nuclDB)" != "${HN2_NUCL_DB}" ] && convert_db_prop "${1}" "humann2.nuclDB"
 	[ "$(get_prop ${1} humann2.protDB)" != "${HN2_PROT_DB}" ] && convert_db_prop "${1}" "humann2.protDB"
-	[ "$(get_prop ${1} rdp.db)" != "${RDP_DB}" ] && convert_db_prop "${1}" "rdp.db"
 	aws_report_config
 }
 

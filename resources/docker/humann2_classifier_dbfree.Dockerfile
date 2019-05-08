@@ -45,6 +45,7 @@ ENV BLJ_SUP="/app/blj_support"
 ENV EFS="/mnt/efs"
 ENV BLJ_CONFIG="${EFS}/config"
 ENV BLJ_DB="${EFS}/db"
+ENV BLJ_DEFAULT_DB="/mnt/db"
 ENV BLJ_INPUT="${EFS}/input"
 ENV BLJ_META="${EFS}/metadata"
 ENV BLJ_PROJ="${EFS}/pipelines"
@@ -56,7 +57,8 @@ ENV PATH="${EC2_HOME}/miniconda/bin:$PATH"
 #5.) Build Standard Directories 
 RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \
 	mkdir "${BLJ_CONFIG}" && mkdir "${BLJ_DB}" && mkdir "${BLJ_INPUT}" && \
-	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && mkdir "/log"
+	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && \
+	mkdir "${BLJ_DEFAULT_DB}" && mkdir "/log"
 
 #6.) Set the timezone to EST
 RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
