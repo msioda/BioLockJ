@@ -335,7 +335,9 @@ public class SummaryUtil {
 	public static String getScriptDirSummary( final ScriptModule module ) {
 		final StringBuffer sb = new StringBuffer();
 		try {
-			if( module.getMainScript() == null && !DockerUtil.inAwsEnv() )
+
+			final File mainScript = module.getMainScript();
+			if( mainScript == null && !DockerUtil.inAwsEnv() )
 				return "Module MAIN script not found in -->" + module.getScriptDir().getAbsolutePath() + RETURN;
 
 			final IOFileFilter ff0 = new WildcardFileFilter( "*" + Constants.SH_EXT );
@@ -351,19 +353,19 @@ public class SummaryUtil {
 			final Collection<File> scriptsFailed = FileUtils.listFiles( module.getScriptDir(), ffFailed, null );
 			final Collection<File> scriptsSuccess = FileUtils.listFiles( module.getScriptDir(), ffSuccess, null );
 
-			final File mainSuccess = new File(
-				module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
+			if( mainScript != null ) {
+				final File mainSuccess = new File(
+					module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
+				final File mainFail = new File(
+					module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
+				final File mainStarted = new File(
+					module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
 
-			final File mainFail = new File(
-				module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
-
-			final File mainStarted = new File(
-				module.getMainScript().getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
-
-			scripts.remove( module.getMainScript() );
-			scriptsFailed.remove( mainFail );
-			scriptsSuccess.remove( mainSuccess );
-			scriptsStarted.remove( mainStarted );
+				scripts.remove( module.getMainScript() );
+				scriptsFailed.remove( mainFail );
+				scriptsSuccess.remove( mainSuccess );
+				scriptsStarted.remove( mainStarted );
+			}
 
 			final Map<String, Long> longestScripts = new HashMap<>();
 			final Map<String, Long> shortestScripts = new HashMap<>();
@@ -416,7 +418,9 @@ public class SummaryUtil {
 
 			final Long avgRunTime = numCompleted > 0 ? totalRunTime / numCompleted: null;
 			final int numInc = scriptsStarted.size() - numCompleted;
-			sb.append( "Main Script:  " + module.getMainScript().getAbsolutePath() + RETURN );
+			if( mainScript != null ) {
+				sb.append( "Main Script:  " + mainScript.getAbsolutePath() + RETURN );
+			}
 			sb.append( "Executed " + scriptsStarted.size() + "/" + scripts.size() + " worker scripts [" );
 			sb.append( scriptsSuccess.size() + " successful" );
 			sb.append( scriptsFailed.isEmpty() ? "": "; " + scriptsFailed.size() + " failed" );
@@ -447,7 +451,6 @@ public class SummaryUtil {
 				+ ex.getMessage();
 			sb.append( msg + RETURN );
 			Log.warn( SummaryUtil.class, msg );
-
 			ex.printStackTrace();
 		}
 
@@ -766,27 +769,26 @@ public class SummaryUtil {
 		String clusterHost = null;
 		runtimeEnv = "localhost";
 		try {
-			if( Config.isOnCluster() ) {
-				clusterHost = Config.requireString( null, Constants.CLUSTER_HOST );
+			clusterHost = Config.isOnCluster() ? Config.requireString( null, Constants.CLUSTER_HOST ): null;
+			if( clusterHost != null ) {
 				runtimeEnv = clusterHost;
 			}
-			runtimeEnv = Processor.submit( "hostname", "Query Hostname" );
+
+			final String hostName = Processor.submit( "hostname", "Query Host" );
+			if( hostName != null ) {
+				runtimeEnv = hostName;
+			}
+
 		} catch( final Exception ex ) {
-			Log.warn( SummaryUtil.class, "Failed to determine runtime environment host" );
+			Log.error( SummaryUtil.class, "Failed to determine runtime environment host", ex );
 		}
 
-		if( DockerUtil.inAwsEnv() ) {
-			runtimeEnv = "AWS+Nextflow+Docker:" + runtimeEnv;
-		} else if( DockerUtil.inDockerEnv() ) {
-			runtimeEnv = "DOCKER::" + runtimeEnv;
-		} else if( Config.isOnCluster() ) {
-			if( clusterHost != null && runtimeEnv != clusterHost ) {
-				runtimeEnv = "head::" + DockerUtil.AWS_EC2_USER + "@" + clusterHost + " --> compute::" 
-								+ DockerUtil.AWS_EC2_USER + "@" + runtimeEnv;
-			}
-			runtimeEnv = "CLUSTER [ " + runtimeEnv + " ]";
-		}
-		return runtimeEnv;
+		if( DockerUtil.inAwsEnv() ) return "AWS-Nextflow/Docker@" + runtimeEnv;
+		if( DockerUtil.inDockerEnv() ) return "DOCKER@" + runtimeEnv;
+		if( Config.isOnCluster() && clusterHost != null && runtimeEnv != clusterHost )
+			return "CLUSTER [ head::" + DockerUtil.AWS_EC2_USER + "@" + clusterHost + " --> compute::"
+				+ DockerUtil.ROOT_HOME + "@" + runtimeEnv + " ]";
+		return "@" + runtimeEnv;
 	}
 
 	private static String getSpacer( final String val, final int len ) {
@@ -808,9 +810,9 @@ public class SummaryUtil {
 	private static String downloadCommand = null;
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String EXT_SPACER = getDashes( 154 );
-	private static final String MASTER_CONFIG = "Master Config";
 	private static final String FINAL_META = "Final Metadata";
 	private static final String INPUT_CONFIG = "Input Config";
+	private static final String MASTER_CONFIG = "Master Config";
 	private static final String MODULE = "Module";
 	private static final String NUM_ATTEMPTS = "# Attempts";
 	private static final String NUM_MODULES = "# Modules";

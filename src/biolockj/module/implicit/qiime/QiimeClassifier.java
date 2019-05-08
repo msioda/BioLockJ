@@ -219,7 +219,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 					+ QIIME_TAXA_DB + "=" + taxaDB );
 		}
 
-		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.AWS_EFS_DB );
+		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
 
 		final File pynastFile = new File( pynastDB );
 		final File refSeqFile = new File( refSeqDB );
@@ -369,7 +369,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	protected File getDockerDB( final String prop ) throws Exception {
 		return new File(
-			Config.requireString( this, prop ).replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) );
+			Config.requireString( this, prop ).replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) );
 	}
 
 	/**
@@ -601,7 +601,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	private static final String QIIME_CONFIG_SEQ_REF = "pick_otus_reference_seqs_fp";
 	private static final String QIIME_CONFIG_TAXA_ID_REF = "assign_taxonomy_id_to_taxonomy_fp";
 	private static final String QIIME_CONFIG_TAXA_SEQ_REF = "assign_taxonomy_reference_seqs_fp";
-	private static final String QIIME_DOCKER_CONFIG = DockerUtil.DOCKER_HOME + "/.qiime_config";
+	private static final String QIIME_DOCKER_CONFIG = DockerUtil.ROOT_HOME + "/.qiime_config";
 	private static final String UNDEFINED = "UNDEFINED";
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
 

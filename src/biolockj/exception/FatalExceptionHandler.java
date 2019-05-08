@@ -132,9 +132,9 @@ public class FatalExceptionHandler {
 		final String path = getErrorLog().getAbsolutePath();
 		final String hostDir = RuntimeParamUtil.getDockerHostPipelineDir();
 		final String hostHome = RuntimeParamUtil.getDockerHostHomeDir();
-		if( hostDir != null && path.startsWith( DockerUtil.CONTAINER_OUTPUT_DIR ) )
-			return path.replace( DockerUtil.CONTAINER_OUTPUT_DIR, hostDir );
-		if( path.startsWith( DockerUtil.DOCKER_HOME ) ) return path.replace( DockerUtil.DOCKER_HOME, hostHome );
+		if( hostDir != null && path.startsWith( DockerUtil.DOCKER_OUTPUT_DIR ) )
+			return path.replace( DockerUtil.DOCKER_OUTPUT_DIR, hostDir );
+		if( path.startsWith( DockerUtil.ROOT_HOME ) ) return path.replace( DockerUtil.ROOT_HOME, hostHome );
 		return null;
 	}
 

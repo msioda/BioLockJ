@@ -59,8 +59,10 @@ public class Pipeline {
 
 		refreshOutputMetadata( module );
 		module.cleanUp();
-		
-		if( !runDetached ) SummaryUtil.reportSuccess( module );
+
+		if( !runDetached ) {
+			SummaryUtil.reportSuccess( module );
+		}
 
 		ModuleUtil.markComplete( module );
 

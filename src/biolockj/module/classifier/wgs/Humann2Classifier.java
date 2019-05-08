@@ -127,7 +127,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws Exception {
-		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.AWS_EFS_DB );
+		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
 		final File nuclDb = new File( Config.requireString( this, HN2_NUCL_DB ) );
 		final File protDb = new File( Config.requireString( this, HN2_PROT_DB ) );
 		final File parentDir = BioLockJUtil.getCommonParent( nuclDb, protDb );
@@ -229,7 +229,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private String getDbPath( final String prop ) throws Exception {
 		final File db = new File( Config.requireString( this, prop ) );
 		return DockerUtil.inDockerEnv()
-			? db.getAbsolutePath().replace( db.getParentFile().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR )
+			? db.getAbsolutePath().replace( db.getParentFile().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR )
 			: Config.requireExistingDir( this, prop ).getAbsolutePath();
 	}
 

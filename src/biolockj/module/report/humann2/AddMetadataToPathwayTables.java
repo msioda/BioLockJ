@@ -29,7 +29,7 @@ import biolockj.util.PathwayUtil;
  * @blj.web_desc Add Metadata to Pathway Tables
  */
 public class AddMetadataToPathwayTables extends Humann2CountModule {
-	
+
 	/**
 	 * For R to report HumanN2 reports instead of taxa levels
 	 */
@@ -38,7 +38,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule {
 		super.cleanUp();
 		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
 	}
-	
+
 	/**
 	 * Produce summary message with min, max, mean, and median hit ratios
 	 */

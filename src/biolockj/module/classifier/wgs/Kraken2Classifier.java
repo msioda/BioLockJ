@@ -133,7 +133,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	}
 
 	private String getKrakenDB() throws Exception {
-		if( DockerUtil.inDockerEnv() ) return DockerUtil.CONTAINER_DB_DIR;
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.DOCKER_DB_DIR;
 
 		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}

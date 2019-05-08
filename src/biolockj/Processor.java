@@ -75,10 +75,10 @@ public class Processor {
 		String s = null;
 		while( ( s = br.readLine() ) != null ) {
 			if( !s.trim().isEmpty() ) {
+				Log.info( getClass(), "[ " + label + " ]: " + s );
 				if( returnVal == null ) {
 					returnVal = s;
 				}
-				Log.info( getClass(), "[ " + label + " ]: " + s );
 			}
 		}
 		p.waitFor();
@@ -105,10 +105,11 @@ public class Processor {
 	public static String getBashVar( final String bashVar ) {
 		if( bashVar == null ) return null;
 		String bashVarValue = null;
-		Log.info( Processor.class, "[ Get Bash Var ("+bashVar+") ]: STARTING" );
+		Log.info( Processor.class, "[ Get Bash Var (" + bashVar + ") ]: STARTING" );
 		try {
 			final String var = bashVar.startsWith( "$" ) || bashVar.equals( "~" ) ? bashVar: "$" + bashVar;
-			Log.info( Processor.class, "[ Get Bash Var ("+bashVar+") ]: CMD --> " + getArgsAsString( bashVarArgs( var ) ) );
+			Log.info( Processor.class,
+				"[ Get Bash Var (" + bashVar + ") ]: CMD --> " + getArgsAsString( bashVarArgs( var ) ) );
 			final Process p = Runtime.getRuntime().exec( bashVarArgs( var ) );
 			final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 			String s = null;
@@ -123,12 +124,12 @@ public class Processor {
 			Log.error( Processor.class, "Problem occurred looking up bash env. variable: " + bashVar, ex );
 		}
 		if( bashVarValue == null ) {
-			Log.warn( Processor.class, "[ Get Bash Var ("+bashVar+") ]: FAILED" );
+			Log.warn( Processor.class, "[ Get Bash Var (" + bashVar + ") ]: FAILED" );
 		}
 		if( bashVarValue != null && bashVarValue.trim().isEmpty() ) {
 			bashVarValue = null;
 		}
-		Log.info( Processor.class, "[ Get Bash Var ("+bashVar+") ]: COMPLETE" );
+		Log.info( Processor.class, "[ Get Bash Var (" + bashVar + ") ]: COMPLETE" );
 		return bashVarValue;
 	}
 

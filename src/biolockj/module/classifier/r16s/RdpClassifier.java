@@ -120,8 +120,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 		if( getDB() == null ) return "";
 
 		final String dbParam = DockerUtil.inDockerEnv()
-			? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(),
-				DockerUtil.CONTAINER_DB_DIR )
+			? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR )
 			: getDB().getAbsolutePath();
 
 		return DB_PARAM + " " + dbParam + " ";

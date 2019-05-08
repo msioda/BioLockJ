@@ -15,7 +15,9 @@ import java.io.File;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.DockerUtil;
+import biolockj.util.RuntimeParamUtil;
 
 /**
  * Simple Logging Facade for Java (SLF4J) implementation using Log4J<br>

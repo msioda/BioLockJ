@@ -243,7 +243,7 @@ public class MetaUtil {
 		final String path = Config.getString( null, META_FILE_PATH );
 		if( path == null ) return null;
 		if( DockerUtil.inDockerEnv() ) {
-			setFile( DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.CONTAINER_META_DIR ) );
+			setFile( DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.DOCKER_META_DIR ) );
 		} else {
 			setFile( new File( path ) );
 		}

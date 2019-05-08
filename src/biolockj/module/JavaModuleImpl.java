@@ -59,10 +59,11 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public void executeTask() throws Exception {
 		final boolean detached = Config.getBoolean( this, Constants.DETACH_JAVA_MODULES );
 		final boolean buildDockerScript = DockerUtil.inDockerEnv() && !DockerUtil.isDirectMode();
-		if( detached && buildDockerScript || Config.isOnCluster() ) 
+		if( detached && buildDockerScript || Config.isOnCluster() ) {
 			super.executeTask();
-		else
+		} else {
 			runModule();
+		}
 	}
 
 	/**
@@ -72,8 +73,9 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = new ArrayList<>();
-		if( DockerUtil.inDockerEnv() )
+		if( DockerUtil.inDockerEnv() ) {
 			lines.add( BLJ_OPTIONS + "=\"" + RuntimeParamUtil.getJavaContainerArgs( this ) + "\"" + Constants.RETURN );
+		}
 
 		return lines;
 	}

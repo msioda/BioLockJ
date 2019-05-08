@@ -116,7 +116,7 @@ public class BioLockJ {
 	protected static void copyInputData() throws Exception {
 
 		if( Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) ) {
-			NextflowUtil.awsSyncS3( DockerUtil.CONTAINER_INPUT_DIR, false );
+			NextflowUtil.awsSyncS3( DockerUtil.DOCKER_INPUT_DIR, false );
 		}
 
 		final String path = Config.pipelinePath() + File.separator + pipelineInputDir().getName() + File.separator

@@ -79,11 +79,6 @@ public class RuntimeParamUtil {
 		return params.get( DIRECT_MODE );
 	}
 
-
-	private static String getDirectModuleParam( final BioModule module ) {
-		return DIRECT_MODE + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
-	}
-
 	/**
 	 * Runtime property getter for direct module pipeline directory
 	 * 
@@ -164,7 +159,7 @@ public class RuntimeParamUtil {
 	public static File getHomeDir() {
 		return new File( params.get( HOME_DIR ) );
 	}
-	
+
 	/**
 	 * Return runtime params that need be forward to detached cluster Java modules
 	 * 
@@ -173,8 +168,8 @@ public class RuntimeParamUtil {
 	 */
 	public static String getJavaComputeNodeArgs( final JavaModule module ) {
 		Log.info( RuntimeParamUtil.class, "Building Docker java -jar args for Cluster-Compute nodes  -->" );
-		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam()
-			+ " " + getDirectModuleParam( module );
+		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam() + " "
+			+ getDirectModuleParam( module );
 	}
 
 	/**
@@ -398,9 +393,25 @@ public class RuntimeParamUtil {
 			masterPrefix + " Config file not found in: " + pipelineDir.getAbsolutePath() );
 	}
 
+	private static String getBaseDirParam() {
+		return BLJ_PROJ_DIR + " " + getBaseDir().getAbsolutePath();
+	}
+
+	private static String getConfigFileParam() {
+		return CONFIG_FILE + " " + getConfigFile().getAbsolutePath();
+	}
+
 	private static String getDir( final String path ) {
 		if( path != null && path.endsWith( File.separator ) ) return path.substring( 0, path.length() - 1 );
 		return path;
+	}
+
+	private static String getDirectModuleParam( final BioModule module ) {
+		return DIRECT_MODE + " " + Config.pipelineName() + ":" + module.getModuleDir().getName();
+	}
+
+	private static String getHomeParam() {
+		return HOME_DIR + " " + getHomeDir().getAbsolutePath();
 	}
 
 	private static void parseParams( final String[] args ) throws RuntimeParamException {
@@ -431,16 +442,16 @@ public class RuntimeParamUtil {
 		Log.info( RuntimeParamUtil.class,
 			"Assign \"" + HOST_BLJ_PROJ_DIR + "\" arg ---> " + params.get( BLJ_PROJ_DIR ) );
 		Log.info( RuntimeParamUtil.class,
-			"Reassign \"" + BLJ_PROJ_DIR + "\" arg ---> " + DockerUtil.CONTAINER_OUTPUT_DIR );
+			"Reassign \"" + BLJ_PROJ_DIR + "\" arg ---> " + DockerUtil.DOCKER_OUTPUT_DIR );
 		params.put( HOST_BLJ_PROJ_DIR, params.get( BLJ_PROJ_DIR ) );
 		params.put( HOST_CONFIG_DIR, getConfigFile().getParentFile().getAbsolutePath() );
 		params.put( HOST_HOME_DIR, params.get( HOME_DIR ) );
 		if( doRestart() ) {
-			params.put( RESTART_DIR, DockerUtil.CONTAINER_OUTPUT_DIR + File.separator + getRestartDir().getName() );
+			params.put( RESTART_DIR, DockerUtil.DOCKER_OUTPUT_DIR + File.separator + getRestartDir().getName() );
 		}
 
-		params.put( BLJ_PROJ_DIR, DockerUtil.CONTAINER_OUTPUT_DIR );
-		params.put( HOME_DIR, DockerUtil.DOCKER_HOME );
+		params.put( BLJ_PROJ_DIR, DockerUtil.DOCKER_OUTPUT_DIR );
+		params.put( HOME_DIR, DockerUtil.ROOT_HOME );
 	}
 
 	private static String[] simplifyArgs( final String[] args ) {
@@ -469,19 +480,6 @@ public class RuntimeParamUtil {
 
 		return simpleArgs;
 	}
-	
-	private static String getBaseDirParam() {
-		return BLJ_PROJ_DIR + " " + getBaseDir().getAbsolutePath();
-	}
-	
-	private static String getHomeParam() {
-		return HOME_DIR + " " + getHomeDir().getAbsolutePath();
-	}
-	
-	private static String getConfigFileParam() {
-		return CONFIG_FILE + " " + getConfigFile().getAbsolutePath();
-	}
-
 
 	private static void validateParams() throws RuntimeParamException {
 		if( isDockerMode() && getDockerHostInputDir() == null )

@@ -70,7 +70,7 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 		final List<String> paths = Config.requireList( this, KNEAD_DBS );
 		if( paths.size() == 1 ) return new File( paths.get( 0 ) );
 
-		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.AWS_EFS_DB );
+		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
 
 		final List<File> dbs = new ArrayList<>();
 		for( final String db: Config.requireList( this, KNEAD_DBS ) ) {
@@ -176,9 +176,9 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 		for( final String path: Config.requireList( this, KNEAD_DBS ) ) {
 			final File db = new File( path );
 			if( DockerUtil.inDockerEnv() && Config.requireList( this, KNEAD_DBS ).size() == 1 ) {
-				dbs += DB_PARAM + " " + DockerUtil.CONTAINER_DB_DIR + " ";
+				dbs += DB_PARAM + " " + DockerUtil.DOCKER_DB_DIR + " ";
 			} else if( DockerUtil.inDockerEnv() ) {
-				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.CONTAINER_DB_DIR ) + " ";
+				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) + " ";
 			} else {
 				dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
 

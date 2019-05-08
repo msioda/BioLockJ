@@ -64,7 +64,7 @@ public class DockerUtil {
 	 * @throws ConfigPathException if errors occur due to invalid file path
 	 */
 	public static File getConfigFile( final String path ) throws ConfigPathException {
-		final String newPath = DockerUtil.getDockerVolumePath( path, DockerUtil.CONTAINER_CONFIG_DIR );
+		final String newPath = DockerUtil.getDockerVolumePath( path, DockerUtil.DOCKER_CONFIG_DIR );
 		final File dockerConfigFile = new File( newPath );
 		if( !dockerConfigFile.isFile() ) throw new ConfigPathException( dockerConfigFile,
 			"Config file [ " + path + " ] --> converted to container file-path that does not exist: " + newPath );
@@ -143,7 +143,7 @@ public class DockerUtil {
 
 	/**
 	 * Return the Docker Image name for the given class name.<br>
-	 * Return {@value #BLJ_BASH} for simple bash script modules that don't rely on special software<br>
+	 * Return blj_bash for simple bash script modules that don't rely on special software<br>
 	 * Class names contain no spaces, words are separated via CamelCaseConvension.<br>
 	 * Docker image names cannot contain upper case letters, so this method substitutes "_" before the lower-case
 	 * version of each capital letter.<br>
@@ -213,7 +213,7 @@ public class DockerUtil {
 	public static final boolean hasDB( final BioModule module ) throws Exception {
 		if( DockerUtil.inDockerEnv() && module instanceof DatabaseModule ) {
 			final File db = ( (DatabaseModule) module ).getDB();
-			if( db != null ) return !db.getAbsolutePath().equals( CONTAINER_DB_DIR );
+			if( db != null ) return !db.getAbsolutePath().equals( DOCKER_DB_DIR );
 		}
 
 		return false;
@@ -248,7 +248,8 @@ public class DockerUtil {
 
 	private static String getAwsVolumes() {
 		Log.debug( DockerUtil.class, "Assign Docker AWS volumes" );
-		return "-v " + AWS_HOME + ":" + AWS_HOME + ":ro -v " + AWS_EFS + ":" + AWS_EFS + ":delegated";
+		return "-v " + AWS_HOME + ":" + AWS_HOME + ":ro -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR
+			+ ":delegated";
 	}
 
 	private static String getDockerClassName( final BioModule module ) {
@@ -271,20 +272,19 @@ public class DockerUtil {
 		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
 		if( inAwsEnv() ) return dockerVolumes + " " + getAwsVolumes();
 
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + CONTAINER_INPUT_DIR + ":ro";
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + CONTAINER_OUTPUT_DIR
-			+ ":delegated";
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + CONTAINER_CONFIG_DIR + ":ro";
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + DOCKER_INPUT_DIR + ":ro";
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_OUTPUT_DIR + ":delegated";
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + DOCKER_CONFIG_DIR + ":ro";
 
 		if( module instanceof TrimPrimers ) {
 			final File primers = new File( Config.requireString( module, Constants.INPUT_TRIM_SEQ_FILE ) )
 				.getParentFile();
 			Log.info( DockerUtil.class, "Map Docker volume for TrimPrimers: " + primers.getAbsolutePath() );
-			dockerVolumes += " -v " + getVolumePath( primers.getAbsolutePath() ) + ":" + CONTAINER_PRIMER_DIR + ":ro";
+			dockerVolumes += " -v " + getVolumePath( primers.getAbsolutePath() ) + ":" + DOCKER_PRIMER_DIR + ":ro";
 		}
 
 		if( RuntimeParamUtil.getDockerHostMetaDir() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + CONTAINER_META_DIR + ":ro";
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + DOCKER_META_DIR + ":ro";
 		}
 
 		if( RuntimeParamUtil.getDockerHostBLJ() != null ) {
@@ -298,7 +298,7 @@ public class DockerUtil {
 		}
 
 		if( RuntimeParamUtil.getDockerHostHomeDir() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostHomeDir() + ":" + DOCKER_HOME + ":ro";
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostHomeDir() + ":" + ROOT_HOME + ":ro";
 		}
 
 		if( hasDB( module ) ) {
@@ -311,14 +311,14 @@ public class DockerUtil {
 				Log.info( DockerUtil.class, "RDP DB directory path: " + dbPath );
 			}
 
-			if( dbPath.startsWith( DOCKER_HOME ) ) {
-				dbPath = dbPath.replace( DOCKER_HOME, RuntimeParamUtil.getDockerHostHomeDir() );
-				Log.info( DockerUtil.class, "Replace " + DOCKER_HOME + " with DB Host dir: " + dbPath );
+			if( dbPath.startsWith( ROOT_HOME ) ) {
+				dbPath = dbPath.replace( ROOT_HOME, RuntimeParamUtil.getDockerHostHomeDir() );
+				Log.info( DockerUtil.class, "Replace " + ROOT_HOME + " with DB Host dir: " + dbPath );
 			}
 
 			// TODO: Probably fine as read-only, but will wait until all modules tested before adding :ro
-			// dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + CONTAINER_DB_DIR + ":ro";
-			dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + CONTAINER_DB_DIR;
+			// dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + DOCKER_DB_DIR + ":ro";
+			dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + DOCKER_DB_DIR;
 		}
 
 		return dockerVolumes;
@@ -350,95 +350,41 @@ public class DockerUtil {
 	}
 
 	/**
-	 * Docker container root user EFS directory
+	 * Docker container root user EFS directory: /mnt/efs
 	 */
-	public static final String AWS_EFS = "/mnt/efs";
+	public static final String DOCKER_BLJ_MOUNT_DIR = File.separator + "mnt" + File.separator + "efs";
 
 	/**
-	 * Docker container root user DB directory
+	 * Docker container root user DB directory: /mnt/efs/db
 	 */
-	public static final String AWS_EFS_DB = AWS_EFS + "/db";
-	
-	/**
-	 * AWS $USER: {@value #AWS_EC2_USER}
-	 */
-	public static final String AWS_EC2_USER = "ec2-user";
+	public static final String DOCKER_DB_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "db";
 
 	/**
-	 * AWS container root user $HOME directory: {@value #AWS_HOME}
+	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume: :
+	 * /mnt/efs/input
 	 */
-	public static final String AWS_HOME = "/home/" + AWS_EC2_USER;
-
-
-	/**
-	 * Docker container blj_support dir for dev support
-	 */
-	public static final String CONTAINER_BLJ_DIR = "/app/biolockj";
+	public static final String DOCKER_INPUT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "input";
 
 	/**
-	 * Docker container blj_support dir for dev support
+	 * All containers mount {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} to the container volume: /mnt/efs/output
 	 */
-	public static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
-
-	/**
-	 * All containers mount the host {@link biolockj.Config} directory to the container volume:
-	 * {@value #CONTAINER_CONFIG_DIR}
-	 */
-	public static final String CONTAINER_CONFIG_DIR = AWS_EFS + "/config";
-
-	/**
-	 * Some containers mount a database to the containers "db" volume: {@value #CONTAINER_DB_DIR}
-	 */
-	public static final String CONTAINER_DB_DIR = AWS_EFS + "/db";
-
-	/**
-	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume:
-	 * {@value #CONTAINER_INPUT_DIR}
-	 */
-	public static final String CONTAINER_INPUT_DIR = AWS_EFS + "/input";
-
-	/**
-	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume:
-	 * {@value #CONTAINER_META_DIR}
-	 */
-	public static final String CONTAINER_META_DIR = AWS_EFS + "/metadata";
-
-	/**
-	 * All containers mount {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} to the container volume:
-	 * {@value #CONTAINER_OUTPUT_DIR}
-	 */
-	public static final String CONTAINER_OUTPUT_DIR = AWS_EFS + "/pipelines";
+	public static final String DOCKER_OUTPUT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "pipelines";
 
 	/**
 	 * Some containers mount the {@value biolockj.Constants#INPUT_TRIM_SEQ_FILE} to the containers "primer":
-	 * {@value #CONTAINER_PRIMER_DIR} volume.
+	 * /mnt/efs/primer
 	 */
-	public static final String CONTAINER_PRIMER_DIR = AWS_EFS + "/primer";
+	public static final String DOCKER_PRIMER_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "primer";
 
 	/**
-	 * Docker container root user $HOME directory: {@value #DOCKER_HOME}
+	 * Docker container default $USER: {@value #DOCKER_USER}
 	 */
-	public static final String DOCKER_HOME = "/root";
+	public static final String DOCKER_USER = "root";
 
 	/**
-	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
+	 * Docker container root user $HOME directory: /root
 	 */
-	public static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
-
-	/**
-	 * Docker image name for simple bash scripts (awk,gzip,pear).
-	 */
-	protected static final String BLJ_BASH = "blj_bash";
-
-	/**
-	 * Docker environment variable holding the name of the compute script file: {@value #COMPUTE_SCRIPT}
-	 */
-	protected static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
-
-	/**
-	 * Name of the BioLockJ Docker account ID: {@value #DEFAULT_DOCKER_HUB_USER}
-	 */
-	protected static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
+	public static final String ROOT_HOME = File.separator + DOCKER_USER;
 
 	/**
 	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
@@ -449,13 +395,57 @@ public class DockerUtil {
 	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	/**
-	 * {@link biolockj.Config} property removed the default --rm flag on docker run command if set to TRUE:
-	 * {@value #SAVE_CONTAINER_ON_EXIT}
+	 * AWS EC2 head/batch node $USER: {@value #AWS_EC2_USER}
 	 */
-	protected static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
+	static final String AWS_EC2_USER = "ec2-user";
+
+	/**
+	 * AWS container root user $HOME directory: /home/ec2-user
+	 */
+	static final String AWS_HOME = File.separator + "home" + File.separator + AWS_EC2_USER;
+
+	/**
+	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
+	 */
+	static final String CONTAINER_BLJ_DIR = "/app/biolockj";
+
+	/**
+	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_SUP_DIR}
+	 */
+	static final String CONTAINER_BLJ_SUP_DIR = "/app/blj_support";
+
+	/**
+	 * All containers mount the host {@link biolockj.Config} directory to the container volume: /mnt/efs/config
+	 */
+	static final String DOCKER_CONFIG_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "config";
+
+	/**
+	 * {@link biolockj.Config} String property used to run specific version of Docker images:
+	 * {@value #DOCKER_IMG_VERSION}
+	 */
+	static final String DOCKER_IMG_VERSION = "docker.imgVersion";
+
+	/**
+	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume:
+	 * /mnt/efs/metadata
+	 */
+	static final String DOCKER_META_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "metadata";
+
+	/**
+	 * {@link biolockj.Config} Boolean property - enable to avoid docker run --rm flag: {@value #SAVE_CONTAINER_ON_EXIT}
+	 */
+	static final String SAVE_CONTAINER_ON_EXIT = "docker.saveContainerOnExit";
+
+	/**
+	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
+	 */
+	static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
+
+	private static final String BLJ_BASH = "blj_bash";
+	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
 	private static final String DB_FREE = "_dbfree";
+	private static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
 	private static final String DOCK_RM_FLAG = "--rm";
-	private static final String DOCKER_IMG_VERSION = "docker.imgVersion";
 	private static final String DOCKER_LATEST = "latest";
 	private static final String DOCKER_SOCKET = "/var/run/docker.sock";
 	private static final String IMAGE_NAME_DELIM = "_";

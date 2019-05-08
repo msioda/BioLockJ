@@ -106,12 +106,12 @@ public class NextflowUtil {
 			if( Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT ) ) {
 				purge( Config.pipelinePath() );
 			} else if( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
-				purge( DockerUtil.CONTAINER_CONFIG_DIR );
-				purge( DockerUtil.CONTAINER_INPUT_DIR );
-				purge( DockerUtil.CONTAINER_META_DIR );
-				purge( DockerUtil.CONTAINER_PRIMER_DIR );
+				purge( DockerUtil.DOCKER_CONFIG_DIR );
+				purge( DockerUtil.DOCKER_INPUT_DIR );
+				purge( DockerUtil.DOCKER_META_DIR );
+				purge( DockerUtil.DOCKER_PRIMER_DIR );
 
-				purge( DockerUtil.CONTAINER_DB_DIR );
+				purge( DockerUtil.DOCKER_DB_DIR );
 			}
 			return true;
 		} catch( final Exception ex ) {
@@ -181,14 +181,14 @@ public class NextflowUtil {
 	public static void stageRootConfig() throws IOException {
 		final File ec2Aws = new File( DockerUtil.AWS_HOME + File.separator + AWS_DIR );
 		final File ec2NfConfig = new File( DockerUtil.AWS_HOME + File.separator + NF_DIR + File.separator + "config" );
-		final File rootNfDir = new File( DockerUtil.DOCKER_HOME + File.separator + NF_DIR );
+		final File rootNfDir = new File( DockerUtil.ROOT_HOME + File.separator + NF_DIR );
 		final File rootNfConfig = new File( rootNfDir.getAbsolutePath() + File.separator + "config" );
 		final File rootAwsConfig = new File(
-			DockerUtil.DOCKER_HOME + File.separator + AWS_DIR + File.separator + "config" );
+			DockerUtil.ROOT_HOME + File.separator + AWS_DIR + File.separator + "config" );
 		final File rootAwsCred = new File(
-			DockerUtil.DOCKER_HOME + File.separator + AWS_DIR + File.separator + "credentials" );
+			DockerUtil.ROOT_HOME + File.separator + AWS_DIR + File.separator + "credentials" );
 		FileUtils.copyFileToDirectory( ec2NfConfig, rootNfDir );
-		FileUtils.copyDirectoryToDirectory( ec2Aws, new File( DockerUtil.DOCKER_HOME ) );
+		FileUtils.copyDirectoryToDirectory( ec2Aws, new File( DockerUtil.ROOT_HOME ) );
 		if( !rootNfConfig.isFile() )
 			throw new IOException( "Root Nextflow config not found --> " + rootNfDir.getAbsolutePath() );
 		if( !rootAwsConfig.isFile() )

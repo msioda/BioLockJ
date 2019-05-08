@@ -311,7 +311,7 @@ public class BioLockJUtil {
 	public static List<File> getInputDirs() throws Exception {
 		if( DockerUtil.inDockerEnv() ) {
 			final List<File> dirs = new ArrayList<>();
-			final File dir = new File( DockerUtil.CONTAINER_INPUT_DIR );
+			final File dir = new File( DockerUtil.DOCKER_INPUT_DIR );
 			if( !dir.exists() )
 				throw new Exception( "Container missing mapped input volume system path: " + dir.getAbsolutePath() );
 			dirs.add( dir );
@@ -367,10 +367,10 @@ public class BioLockJUtil {
 		File prof = null;
 		try {
 			if( DockerUtil.inAwsEnv() ) {
-				prof = getProfile( DockerUtil.DOCKER_HOME + File.separator + Constants.BASH_PROFILE );
+				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_PROFILE );
 			}
 			if( prof == null && DockerUtil.inDockerEnv() ) {
-				prof = getProfile( DockerUtil.DOCKER_HOME + File.separator + Constants.BASH_RC );
+				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_RC );
 			}
 			final String path = Config.getString( null, Constants.USER_PROFILE );
 			if( prof == null && path != null ) {
