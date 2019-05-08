@@ -31,6 +31,7 @@ display_help() {
     echo "Run AWS pipeline:             -a/--aws/aws         <config_file>"
     echo "Restart pipeline:             -r/--restart/restart  <directory>"
     echo "Encrypt password:             -p/--pass/pass        <new_passw>"
+    echo "Use existing AWS env:         -e/--exist/exist"
     echo "Show help menu:               -h/--help/help"
     echo "Display BioLockJ version:     -v/--version/version"
 }
@@ -41,11 +42,15 @@ get_params() {
 	numArgs=${#@}
 	i=0
     for arg in ${args[@]}; do  
-		[ $((i%2)) -eq 0 ] && name=${arg//-} && name=${name:0:1}
+		[ $((i%2)) -eq 0 ] && name=${arg//-} 
+		[ "$name" == "ea" ] || [ "$name" == "ae" ] && name="a" && echo "e=Y"
+		[ $((i%2)) -eq 0 ] && name=${name:0:1}
 		if [ $((i%2)) -eq 1 ]; then
     			[ "$name" == "c" ] && myConfig=${arg}
     			echo "$name=${arg}"
     			name=""
+    		elif [ "$name" == "e" ]; then
+    			echo "e=Y"
 		fi  
     	i=$(expr $i + 1)
     done
@@ -56,6 +61,7 @@ get_params() {
 init() {
 	inArray=$(get_params "$@")
 	runAws=$(named_arg $inArray a)
+	runExistingAws=$(named_arg $inArray e)
 	config=$(named_arg $inArray c)
 	restart=$(named_arg $inArray r)
 	newPass=$(named_arg $inArray p)
@@ -64,7 +70,9 @@ init() {
 
 # Launch AWS pipeline
 launchAwsPipeline() {
-	run_aws "$runAws" start
+
+	run_aws "$runAws" start ${runExistingAws}
+
 	if [ $? -eq 0 ]; then
 		exit_script "Successfully ran AWS Pipeline" 0
 	else

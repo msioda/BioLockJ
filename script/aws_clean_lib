@@ -79,7 +79,7 @@ aws_rm_stacks() {
 		id=$(get_id ${ids}) && ((count++))
 		status=$(aws cloudformation describe-stacks --stack-name "${id}" --query "Stacks[*].StackStatus")
 		[ "${status/DELETE}" != "${status}" ] && ids="${ids/$id}" && \
-			echo "Skipping Stack [ ${id} ] status=${status}..." && continue
+			aws_log "Skipping Stack [ ${id} ] status=${status}..." && continue
 		aws_log "Deleting stack ARN #[$count]: ${id}" && aws cloudformation delete-stack --stack-name "${id}" 
 		status=ACTIVE
 		while [ "${status}" != "DELETE_COMPLETE" ]; do
@@ -166,7 +166,7 @@ kill_head_node() {
 	[ ${#ids} -gt 0 ] && aws ec2 terminate-instances --instance-id "${ids}" && \
 		aws_log "The following EC2 instances have been terminated --> ${ids}"
 		
-	echo "Describe Remaining EC2 instances:" && \
+	aws_log "Describe Remaining EC2 instances:" && \
 		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
 	rm_prop "$blj_aws_config" awsEc2InstanceID && rm_prop "$blj_aws_config" ec2PublicIP && awsEc2InstanceID="" && ec2PublicIP="" 
 	refresh_aws_cache && aws_rm_key_pairs

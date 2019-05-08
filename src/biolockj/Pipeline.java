@@ -50,9 +50,11 @@ public class Pipeline {
 		if( runDetached ) {
 			MasterConfigUtil.saveMasterConfig();
 		}
+		
 		if( hasScripts( module ) && !DockerUtil.inAwsEnv() ) {
 			Processor.submit( (ScriptModule) module );
 		}
+		
 		if( hasScripts( module ) ) {
 			waitForModuleScripts( (ScriptModule) module );
 		}
@@ -65,7 +67,6 @@ public class Pipeline {
 		}
 
 		ModuleUtil.markComplete( module );
-
 	}
 
 	/**

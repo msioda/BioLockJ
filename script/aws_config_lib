@@ -13,7 +13,8 @@ IS_NULL="IS_NULL"
 HN2_NUCL_DB="${BLJ_DB}/chocophlan"
 HN2_PROT_DB="${BLJ_DB}/uniref"
 RDP_DB="${BLJ_DB}/rRNAClassifier.properties"
-DEFAULT_CONFIG="${BLJ}/resources/config/default/docker.properties"
+STANDARD_CONFIG="${BLJ}/resources/config/default/standard.properties"
+DOCKER_CONFIG="${BLJ}/resources/config/default/docker.properties"
 alias awsr="aws_report_config"
 alias awsrf="refresh_aws_cache"
 
@@ -56,11 +57,11 @@ aws_log() {
 # Print AWS Config report
 aws_report_config() {
 	[ ! -f $blj_aws_config ] && echo "$blj_aws_config not found" && return
-	echo "---------------------------------------------------"
-	echo "Report current AWS Config"
-	echo "---------------------------------------------------"
+	aws_log "---------------------------------------------------"
+	aws_log "Report current AWS Config"
+	aws_log "---------------------------------------------------"
 	tail -n +2 $blj_aws_config
-	echo "---------------------------------------------------"
+	aws_log "---------------------------------------------------"
 }
 
 # Get the s3 bucket names in the user region
@@ -180,16 +181,21 @@ get_prop() {
 # Check BLJ pipeline Config files + all nested default Config files
 # Add docker.properties if not already in list of nested Config files
 # Param 1 - Pipeline Config file path
+# Param 2 - Flag to use exsting AWS cloud
 init_aws_config() {
 	[ ! -f "${HOME}/.aws/config" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/config"
 	[ ! -f "${HOME}/.aws/credentials" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/credentials"
-	aws_archive
+	[ $#2 -eq 1 ] && aws_archive
 	aws_log "Copy AWS properties from Pipeline Config \"$1\" into AWS Config --> \"$blj_aws_config\""
 	set_pipeline_config_files "${1}"
 	configFiles=$(get_blj_prop configFiles)
 	if [ "${configFiles/docker.properties}" == "${configFiles}" ]; then
 		[ ${#configFiles} -gt 0 ] && configFiles=",${configFiles}"
-		configFiles="${DEFAULT_CONFIG}${configFiles}" 
+		configFiles="${DOCKER_CONFIG}${configFiles}" 
+	fi
+	if [ "${configFiles/standard.properties}" == "${configFiles}" ]; then
+		[ ${#configFiles} -gt 0 ] && configFiles=",${configFiles}"
+		configFiles="${STANDARD_CONFIG}${configFiles}" 
 	fi
 	propFiles=( ${configFiles//,/ } )
 	for propFile in ${propFiles[@]}; do set_pipeline_conig_props $propFile; done
@@ -317,6 +323,7 @@ set_pipeline_conig_props() {
 	convert_prop "${1}" "metadata.filePath"
 	convert_prop "${1}" "trimPrimers.filePath"
 	convert_prop "${1}" "input.dirPaths"
+	convert_prop "${1}" "pipeline.downloadDir"
 	convert_db_prop "${1}" "kneaddata.dbs"
 	convert_db_prop "${1}" "kraken.db"
 	convert_db_prop "${1}" "kraken2.db"

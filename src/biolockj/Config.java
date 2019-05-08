@@ -518,9 +518,10 @@ public class Config {
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return List of File directories
-	 * @throws Exception if errors occur
+	 * @throws ConfigPathException if directory paths are undefined or do not exist
+	 * @throws ConfigNotFoundException if a required property is undefined
 	 */
-	public static List<File> requireExistingDirs( final BioModule module, final String property ) throws Exception {
+	public static List<File> requireExistingDirs( final BioModule module, final String property ) throws ConfigPathException, ConfigNotFoundException {
 		final List<File> returnDirs = new ArrayList<>();
 		for( final String d: requireSet( module, property ) ) {
 			final File dir = getExistingFileObject( d );
@@ -709,9 +710,9 @@ public class Config {
 	 *
 	 * @param filePath File path
 	 * @return File or null
-	 * @throws Exception if path is defined but is not found on the file system or other errors occur
+	 * @throws ConfigPathException if path is defined but is not found on the file system
 	 */
-	protected static File getExistingFileObject( final String filePath ) throws Exception {
+	protected static File getExistingFileObject( final String filePath ) throws ConfigPathException {
 		if( filePath != null ) {
 			final File f = new File( filePath );
 			if( f.exists() ) return f;

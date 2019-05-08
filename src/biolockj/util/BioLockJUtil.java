@@ -21,6 +21,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.report.r.R_CalculateStats;
 
 /**
@@ -306,14 +307,22 @@ public class BioLockJUtil {
 	 * Get the list of input directories for the pipeline.
 	 * 
 	 * @return List of system directory file paths
-	 * @throws Exception if errors occur
+	 * @throws ConfigNotFoundException if a required property is undefined
+	 * @throws ConfigPathException if configured directory does not exist on the file-system
 	 */
-	public static List<File> getInputDirs() throws Exception {
+	public static List<File> getInputDirs() throws ConfigNotFoundException, ConfigPathException {
 		if( DockerUtil.inDockerEnv() ) {
 			final List<File> dirs = new ArrayList<>();
-			final File dir = new File( DockerUtil.DOCKER_INPUT_DIR );
-			if( !dir.exists() )
-				throw new Exception( "Container missing mapped input volume system path: " + dir.getAbsolutePath() );
+			final String path = Config.requireString( null, Constants.INPUT_DIRS );
+			File dir = null;
+			if( path.equals( File.separator ) )
+				dir = new File( DockerUtil.DOCKER_INPUT_DIR );
+			else
+				dir = new File( path.replace( new File( path ).getParentFile().getAbsolutePath(), DockerUtil.DOCKER_INPUT_DIR ) );
+
+			if( !dir.exists() ) 
+				throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
+			
 			dirs.add( dir );
 			return dirs;
 		}
@@ -324,9 +333,11 @@ public class BioLockJUtil {
 	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
 	 * 
 	 * @return Collection of pipeline input files
-	 * @throws Exception if errors occur
+	 * @throws ConfigNotFoundException if a required property is undefined
+	 * @throws ConfigPathException if configured directory does not exist on the file-system
+	 * @throws ConfigViolationException if input directories contain duplicate file names
 	 */
-	public static Collection<File> getPipelineInputFiles() throws Exception {
+	public static Collection<File> getPipelineInputFiles() throws ConfigNotFoundException, ConfigPathException, ConfigViolationException   {
 		if( inputFiles.isEmpty() ) {
 			Collection<File> files = new HashSet<>();
 			for( final File dir: getInputDirs() ) {
@@ -335,15 +346,11 @@ public class BioLockJUtil {
 					FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) ) ) );
 			}
 			Log.info( BioLockJUtil.class, "# Initial input files found: " + files.size() );
-
 			files = removeIgnoredAndEmptyFiles( files );
 			inputFiles.addAll( files );
-
 			Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
-
 			setPipelineInputFileTypes();
 		}
-
 		return inputFiles;
 	}
 
@@ -590,15 +597,15 @@ public class BioLockJUtil {
 		inputFiles = files;
 	}
 
-	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles )
-		throws Exception {
+	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles ) 
+			throws ConfigViolationException {
 		final Map<String, String> names = new HashMap<>();
 		for( final File f: files ) {
 			names.put( f.getName(), f.getAbsolutePath() );
 		}
 		for( final File f: newFiles ) {
 			if( names.keySet().contains( f.getName() ) )
-				throw new Exception( "Pipeline input file names must be unique [ " + f.getAbsolutePath()
+				throw new ConfigViolationException( "Pipeline input file names must be unique [ " + f.getAbsolutePath()
 					+ " ] has the same file name as [ " + names.get( f.getName() ) + " ]" );
 			names.put( f.getName(), f.getAbsolutePath() );
 		}
@@ -613,7 +620,7 @@ public class BioLockJUtil {
 		return null;
 	}
 
-	private static void setPipelineInputFileTypes() throws Exception {
+	private static void setPipelineInputFileTypes() {
 		final Set<String> fileTypes = new HashSet<>();
 
 		for( final File file: inputFiles ) {

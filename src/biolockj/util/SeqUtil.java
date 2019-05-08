@@ -460,14 +460,15 @@ public class SeqUtil {
 	 * Verify 1st character of sequence header and mask 1st sequence for valid DNA/RNA bases "acgtu"
 	 * 
 	 * @param file File
-	 * @return TRUE if file is a squence file
-	 * @throws Exception if errors occur
+	 * @return TRUE if file is a sequence file
 	 */
-	public static boolean isSeqFile( final File file ) throws Exception {
-		info( "Check if input file is a SEQ file: " + file.getAbsolutePath() );
-		boolean isSeq = false;
-		final BufferedReader reader = BioLockJUtil.getFileReader( file );
+	public static boolean isSeqFile( final File file )  {
+		BufferedReader reader = null;
 		try {
+			info( "Check if input file is a SEQ file: " + file.getAbsolutePath() );
+			boolean isSeq = false;
+			reader = BioLockJUtil.getFileReader( file );
+	
 			final String header = SeqUtil.scanFirstLine( reader, file );
 			final String idChar = header.substring( 0, 1 );
 			String seq = reader.readLine();
@@ -483,12 +484,18 @@ public class SeqUtil {
 				info( file.getAbsolutePath() + " is not a sequence file! " + Constants.RETURN + "Line 1: [ " + header
 					+ " ]" + Constants.RETURN + "Line 2= [ " + seq + " ]" );
 			}
+			
+			return isSeq;
+		} catch( Exception ex  ) {
+			Log.error( SeqUtil.class, "Error occurred examining file to determine if it is a sequence file or not", ex );
 		} finally {
-			if( reader != null ) {
-				reader.close();
+			try {
+				if( reader != null ) reader.close();
+			} catch( Exception ex  ) {
+				Log.error( SeqUtil.class, "Failed to close file reader", ex );
 			}
 		}
-		return isSeq;
+		return false;
 	}
 
 	/**

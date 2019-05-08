@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
 import biolockj.module.ScriptModule;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.report.Email;
@@ -204,7 +205,12 @@ public class NextflowUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static void startNextflow( final List<BioModule> modules ) throws Exception {
-		final File template = buildInitialTemplate( asString( modules ) );
+		final String plist = buildNextflowProcessList( modules );
+		if( plist == null ) {
+			Log.warn( NextflowUtil.class, "Nextflow not neccesary for this pipeline.  All modules are attached java_modules that will run on the head node." );
+			return;
+		}
+		final File template = buildInitialTemplate( plist );
 		writeNextflowMainNF( getNextflowLines( template ) );
 		Log.info( NextflowUtil.class, "Nextflow main.nf generated: " + getMainNf().getAbsolutePath() );
 		template.delete();
@@ -280,14 +286,20 @@ public class NextflowUtil {
 		return lines;
 	}
 
-	private static String asString( final List<BioModule> modules ) {
-		String flatMods = "";
+	private static String buildNextflowProcessList( final List<BioModule> modules ) throws ConfigFormatException {
+		String plist = "";
 		for( final BioModule module: modules ) {
 			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) ) {
-				flatMods += ( flatMods.isEmpty() ? "": " " ) + module.getClass().getName();
+				if( module instanceof JavaModule && !Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
+					Log.warn( NextflowUtil.class, "Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" + Constants.FALSE  
+						+ " so JavaModule \"" + module.getClass().getName() + "\" will run on the head node - HEAD NODE MUST HAVE SUFFICIENT RESOURCES" );
+				} else {
+					plist += ( plist.isEmpty() ? "": " " ) + module.getClass().getName();
+				}
 			}
 		}
-		return flatMods;
+		if( plist.isEmpty() ) plist = null;
+		return plist;
 	}
 
 	private static File buildInitialTemplate( final String modules ) throws Exception {

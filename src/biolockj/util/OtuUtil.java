@@ -11,12 +11,12 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.File;
+import java.io.*;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.OtuFileException;
 
 /**
  * This utility helps work with OTU count files as formatted by the
@@ -31,12 +31,12 @@ public class OtuUtil {
 		 * Each OTU count file line has 2 parts: OTU Name and OTU Count
 		 * 
 		 * @param line OTU count file line
-		 * @throws Exception if errors occur
+		 * @throws OtuFileException if errors occur
 		 */
-		public OtuCountLine( final String line ) throws Exception {
+		public OtuCountLine( final String line ) throws OtuFileException {
 			final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
-			if( st.countTokens() != 2 ) throw new Exception(
-				"OTU count lines should have 2 tokens {OTU, COUNT}, #tokens found: " + st.countTokens() );
+			if( st.countTokens() != 2 ) throw new OtuFileException(
+				"OTU count lines should have 2 tab-separated tokens {OTU, COUNT}, #tokens found: " + st.countTokens() );
 			this.otu = st.nextToken();
 			this.count = Long.valueOf( st.nextToken() );
 		}
@@ -82,17 +82,17 @@ public class OtuUtil {
 	 * 
 	 * @param file OTU count file
 	 * @return TreeMap(OTU, count)
-	 * @throws Exception if errors occur
+	 * @throws OtuFileException If the file is not formatted as an OTU file.
+	 * @throws IOException if unable to parse the input file
+	 * @throws FileNotFoundException  if the file path is not found in the file system
 	 */
-	public static TreeMap<String, Long> compileSampleOtuCounts( final File file ) throws Exception {
+	public static TreeMap<String, Long> compileSampleOtuCounts( final File file ) throws OtuFileException, FileNotFoundException, IOException {
 		final TreeMap<String, Long> otuCounts = new TreeMap<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final OtuCountLine ocl = new OtuCountLine( line );
-				final String otu = ocl.getOtu();
-				final Long count = ocl.getCount();
-				otuCounts.put( otu, count );
+				otuCounts.put( ocl.getOtu(), ocl.getCount() );
 			}
 		} finally {
 			if( reader != null ) {
@@ -160,11 +160,11 @@ public class OtuUtil {
 	 * 
 	 * @param otuCountFile {@value biolockj.Constants#OTU_COUNT} file
 	 * @return Sample ID
-	 * @throws Exception if errors occur
+	 * @throws OtuFileException  if the OTU count file name is improperly formatted
 	 */
-	public static String getSampleId( final File otuCountFile ) throws Exception {
+	public static String getSampleId( final File otuCountFile ) throws OtuFileException  {
 		if( otuCountFile.getName().lastIndexOf( "_" ) < 0 )
-			throw new Exception( "Unexpected format!  Missing \"_\" from input file name: " + otuCountFile.getName() );
+			throw new OtuFileException( "Unexpected format!  Missing \"_\" from input file name: " + otuCountFile.getName() );
 		return otuCountFile.getName().substring( otuCountFile.getName().lastIndexOf( Constants.OTU_COUNT + "_" ) + 9,
 			otuCountFile.getName().length() - Constants.TSV_EXT.length() );
 	}
@@ -196,27 +196,25 @@ public class OtuUtil {
 	 * 
 	 * @param file File
 	 * @return boolean TRUE if file is an OTU count file
-	 * @throws Exception if errors occur
 	 */
-	@SuppressWarnings("unused")
-	public static boolean isOtuFile( final File file ) throws Exception {
-		final String name = file.getName();
-		if( name.contains( "_" + Constants.OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) ) {
-			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			try {
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-					new OtuCountLine( line );
-				}
-			} catch( final Exception ex ) {
-				Log.debug( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
-				return false;
-			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+	public static boolean isOtuFile( final File file ) {
+		BufferedReader reader = null;
+		try {
+			final String name = file.getName();
+			if( name.contains( "_" + Constants.OTU_COUNT + "_" ) && name.endsWith( Constants.TSV_EXT ) ) {
+				reader = BioLockJUtil.getFileReader( file );
+				OtuCountLine otuCountLine = new OtuCountLine( reader.readLine() );
+				Log.debug( OtuUtil.class, "Found OTU file " + otuCountLine.getOtu() + " : " + otuCountLine.getCount() );
+				return true;
 			}
-
-			return true;
+		} catch( final Exception ex ) {
+			Log.error( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
+		} finally {
+			try {
+				if( reader != null ) reader.close();
+			} catch( final Exception ex ) {
+				Log.error( OtuUtil.class, "Failed to close file reader", ex );
+			}
 		}
 
 		return false;

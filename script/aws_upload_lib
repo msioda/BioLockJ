@@ -175,16 +175,21 @@ stage_local_aws() {
 }
 
 # Upload local pipeline inputs and aws/nextflow config files to EFS
+# Param 1 (optional) - Flag to use existing AWS Cloud
 stage_pipeline_on_aws() {
+	
+	if [ $# -eq 0 ]; then
+		stage_local_aws
+		upload_file_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
+		upload_file_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
+		upload_file_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
+		upload_file_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
+		exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
+	fi
+	
 	stage_input_files_to_efs
-	stage_local_aws
 	upload_file_to_efs "$(build_start_script)"
-	upload_file_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
-	upload_file_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
 	upload_file_to_efs "$blj_aws_config" "${EC2_HOME}/.aws"
-	upload_file_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
-	upload_file_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
-	exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
 	[ -f "$(get_docker_job_def_flag)" ] && upload_file_to_efs "$(get_docker_job_def_flag)"
 }
 

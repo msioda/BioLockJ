@@ -18,15 +18,13 @@ add_nextflow_job_def() {
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
 	refresh_aws_cache
-	[ -f "$(get_docker_job_def_flag)" ] && echo "Jobs already exist, found flag file: $(get_docker_job_def_flag)" && return
+	[ -f "$(get_docker_job_def_flag)" ] && aws_log "Jobs already exist, found flag file: $(get_docker_job_def_flag)" && return
 	init_nextflow_config
 	dockerModules=$(docker search --no-trunc --limit 100 ${dockerUser} | grep -E ^${dockerUser} ) 
 	IFS2=$IFS && IFS=$'\t'
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
 	aws_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
-		#[ $(echo $line | grep -c biolockj_controller) -eq 0 ] && [ $(echo $line | grep -c java_module) -eq 0 ] && \
-		#	aws_log "Skip Docker image: \"$line\"" && continue
 		[ $(echo $line | grep -c blj_basic) -gt 0 ] && aws_log "Skip Docker image: \"$line\"" && continue
 		module=$(echo $line | cut -f 1 -d " ")
 		jobImg="${module}:${dockerImgVersion}"
@@ -74,6 +72,13 @@ connect_head() {
 	ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip)
 }
 
+# Download reports from AWS
+# Param 1 - Pipeline directory name
+aws_dl_reports() {
+	aws_log "Opening SSH tunnel to Head Node...$(get_ec2_public_ip)"
+	scp -pro StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip):${EFS}/pipelines/${1} ${pipelineDownloadDir}
+}
+
 # Get the flag file that indicates Docker job definitions were created
 get_docker_job_def_flag() {
 	echo "${HOME}/.${awsStack}-CREATED_DOCKER_JOB_DEFS"
@@ -107,9 +112,6 @@ init_nextflow_config() {
     echo "" >> "$(local_nf_conf)"
     echo "aws {" >> "$(local_nf_conf)"
 	echo "    region = '${awsRegion}'" >> "$(local_nf_conf)"
-	# We should be able to avoid saving these details outside of our Docker containers
-	#echo "    aws_access_key_id = '$(get_aws_access_key_id)'" >> "$(local_nf_conf)"
-	#echo "    aws_secret_access_key = '$(aws_secret_access_key)'" >> "$(local_nf_conf)"
 	echo "}" >> "$(local_nf_conf)"
 	echo "" >> "$(local_nf_conf)"
 	echo "process {" >> "$(local_nf_conf)"
@@ -121,19 +123,24 @@ init_nextflow_config() {
 
 # Launch a new ec2 head node
 # Param 1 (optional) - If "start" then launch the pipeline, otherwise connect to the head node
+# Param 2 (optional) - Flag to use existing AWS Cloud
 launch_ec2_head_node() {
-	cache_key_pair
 	[ -x "$(which docker)" ] && build_docker_job_defs
-	set_ec2_head_node_id
-	refresh_aws_cache
-	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
-	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
-	stage_pipeline_on_aws
-	if [ $# -eq 1 ] && [ -x "$(which docker)" ] && [ "${1}" == "start" ]; then
-		echo "Exectue internal CMD [  launch_ec2_head_node \"start\"  ]"
-		exe_remote_cmd "$(basename $(start_aws_pipeline_script))" 
+	if [ $# -lt 2 ]; then
+		cache_key_pair
+		set_ec2_head_node_id
+		refresh_aws_cache
+		keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
+		[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
 	else
-		echo "Exectue internal CMD [  connect_head  ]"
+		aws_log "Run pipeline on existing EC2 head node"
+	fi
+	stage_pipeline_on_aws ${2}
+	if [ $# -eq 1 ] && [ "${1}" == "start" ] && [ -x "$(which docker)" ] || [ $# -eq 2 ]; then
+		aws_log "Exectue internal CMD [  launch_ec2_head_node \"start\"  ]"
+		exe_remote_cmd "nohup ${EC2_HOME}/$(basename $(start_aws_pipeline_script)) > ${EC2_HOME}/$(get_config_name).log 2>&1" 
+	else
+		aws_log "Exectue internal CMD [  connect_head  ]"
 		connect_head
 	fi
 }
@@ -144,17 +151,17 @@ set_ec2_head_node_id() {
 	isStarting=false
 	[ "${#awsEc2InstanceID}" -gt 0 ] && instances=$(aws ec2 describe-instances --instance-ids "${awsEc2InstanceID}" --query "Reservations[].Instances[].[State.Name, InstanceId]")
 	if [ "${instances/$awsEc2InstanceID}" != "${awsEc2InstanceID}" ]; then
-		echo "Found existing instance ${awsEc2InstanceID}"
+		aws_log "Found existing instance ${awsEc2InstanceID}"
 		if [ "${instances/stopped}" != "${instances}" ]; then
 			aws ec2 start-instances --instance-ids "${awsEc2InstanceID}"
 			printf "Configured EC2 instance ${awsEc2InstanceID} was stopped...attempting to restart...please wait."
 			isStarting=true
 		elif [ "${instances/terminated}" != "${instances}" ]; then
-			echo "Configured EC2 instance ${awsEc2InstanceID} was terminated...launching a new instance"
+			aws_log "Configured EC2 instance ${awsEc2InstanceID} was terminated...launching a new instance"
 		elif [ "${instances/pending}" != "${instances}" ] || [ "${instances/shutting-down}" != "${awsEc2InstanceID}" ] || [ "${instances/stopping}" != "${awsEc2InstanceID}" ]; then
 			exit_script "Error [ aws_head_node_lib.set_ec2_head_node_id() ]: Configured EC2 Instance ${awsEc2InstanceID} has an in-between state-status, aborting launch EC2 instance - check status and try again later: ${instances}"
 		elif [ "${instances/running}" != "${instances}" ]; then
-			echo "Configured EC2 instance ${awsEc2InstanceID} is running..." && return
+			aws_log "Configured EC2 instance ${awsEc2InstanceID} is running..." && return
 		fi
 	fi
 	
