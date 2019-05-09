@@ -16,7 +16,12 @@ exports.listAwsProfiles = function (req, res, next) {
   res.end();
 }
 
-exports.list3Buckets = function (req, res, next) {
+exports.listS3Buckets = function (req, res, next) {
+  res.setHeader('Content-Type', 'text/html');
+  res.write((JSON.stringify(['profile1', 'profile2', 'profile3'])));
+  res.end();
+}
+exports.listEc2InstanceIds = function (req, res, next) {
   res.setHeader('Content-Type', 'text/html');
   res.write((JSON.stringify(['profile1', 'profile2', 'profile3'])));
   res.end();
