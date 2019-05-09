@@ -232,6 +232,7 @@ router.post('/listAwsProfiles', awsUtil.listAwsProfiles);
 
 router.post('/listS3Buckets', awsUtil.listS3Buckets);
 
+router.post('/listEc2InstanceIds', awsUtil.listEc2InstanceIds);
 
 
 // source ~/.batchawsdeploy/config ; getcloudformationstack.sh testing2
