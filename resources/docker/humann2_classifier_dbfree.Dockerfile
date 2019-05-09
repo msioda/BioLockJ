@@ -17,21 +17,19 @@ ENV BOWTIE=bowtie2-${BOWTIE_VER}-linux-x86_64
 ENV B_URL=${BOWTIE_URL}${BOWTIE_VER}/${BOWTIE}.zip
 RUN cd /usr/local/bin && \
 	wget -qO- $B_URL | bsdtar -xf- && \
-	chmod o+x -R /usr/local/bin/$BOWTIE && \
-	rm -rf /usr/local/bin/$BOWTIE/*-debug && \
-	mv /usr/local/bin/$BOWTIE/[bs]* . && \
-	rm -rf /usr/local/bin/$BOWTIE
+	chmod o+x -R /usr/local/bin/${BOWTIE} && \
+	rm -rf /usr/local/bin/${BOWTIE}/*-debug && \
+	mv /usr/local/bin/${BOWTIE}/[bs]* . && \
+	rm -rf /usr/local/bin/${BOWTIE}
 
 #3.) Install MetaPhlAn2
 ENV mpa_dir=/usr/local/bin
-ENV METAPHLAN_APP=/app/metaphlan2
-ENV META_URL="https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip"
 RUN cd /app && \
-	wget -qO- $META_URL | bsdtar -xf- && \
-	chmod -R 774 $METAPHLAN_APP && \
-	mv ${METAPHLAN_APP}/* $mpa_dir && \
-	rm -rf $METAPHLAN_APP && \
-	cd $mpa_dir && \
+	wget -qO- "https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip" | bsdtar -xf- && \
+	chmod -R 774 /app/metaphlan2 && \
+	mv /app/metaphlan2/* ${mpa_dir} && \
+	rm -rf /app/metaphlan2 && \
+	cd ${mpa_dir} && \
 	ln -s metaphlan2.py metaphlan2
 	
 #==================================================================================================
