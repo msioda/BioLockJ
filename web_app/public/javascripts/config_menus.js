@@ -566,6 +566,19 @@ document.getElementById('aws.profile').addEventListener('focus', function(){
     updateDataList('awsProfiles', arr);
   })
 })
+document.getElementById('aws.s3').addEventListener('focus', function(){
+  let datL = returnPromiseFromServer('/listS3Buckets', requestParameter = null);
+  datL.then( arr => {
+    updateDataList('s3BucketList', arr);
+  })
+})
+document.getElementById('aws.ec2InstanceID').addEventListener('focus', function(){
+  let datL = returnPromiseFromServer('/listEc2InstanceIds', requestParameter = null);
+  datL.then( arr => {
+    updateDataList('ec2InstanceIdList', arr);
+  })
+})
+
 
 //update datalist from array
 function updateDataList(dataListId, arry) {

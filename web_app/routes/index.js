@@ -16,7 +16,8 @@ let express = require('express'),
  exec = require('child_process').exec,
  pipelineIo = require(path.join('..','controllers','pipelineIo.js')),
  errorLogger = require(path.join('..','controllers','errorLogger.js')),
- propertiesIo = require(path.join('..','controllers','propertiesIo.js'));
+ propertiesIo = require(path.join('..','controllers','propertiesIo.js')),
+ awsUtil = require(path.join('..','controllers','awsUtil.js'));
 const { spawn } = require('child_process');//for running child processes
 const Stream = new events.EventEmitter(); // my event emitter instance
 
@@ -227,11 +228,11 @@ router.get('/streamProgress', function(request, response){
   });
 });
 
-router.post('/listAwsProfiles', function (req, res, next) {
-  res.setHeader('Content-Type', 'text/html');
-  res.write((JSON.stringify(['profile1', 'profile2', 'profile3'])));
-  res.end();
-})
+router.post('/listAwsProfiles', awsUtil.listAwsProfiles);
+
+router.post('/listS3Buckets', awsUtil.listS3Buckets);
+
+
 
 // source ~/.batchawsdeploy/config ; getcloudformationstack.sh testing2
 
