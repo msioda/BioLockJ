@@ -52,8 +52,9 @@ public class FatalExceptionHandler {
 		if( getErrorLog() != null ) {
 			Log.info( FatalExceptionHandler.class,
 				"Local file-system error log path: " + getErrorLog().getAbsolutePath() );
-			if( DockerUtil.inDockerEnv() && getHostLogPath() != null ) {
-				Log.info( FatalExceptionHandler.class, "Host file-system error log path: " + getHostLogPath() );
+			if( DockerUtil.inDockerEnv()  ) {
+				Log.info( FatalExceptionHandler.class, "Host file-system error log path: " 
+				+ RuntimeParamUtil.getDockerHostHomeDir() + File.separator + getErrorLog().getName());
 			}
 			if( !getErrorLog().isFile() ) {
 				dumpLogs( getLogs() );
@@ -104,8 +105,12 @@ public class FatalExceptionHandler {
 	private static File getErrorLogDir() {
 		File dir = RuntimeParamUtil.getBaseDir();
 		if( dir == null || !dir.isDirectory() ) {
-			dir = RuntimeParamUtil.getHomeDir();
+			if( DockerUtil.inDockerEnv() )
+				dir = new File( DockerUtil.BLJ_HOST_HOME );
+			else
+				dir = RuntimeParamUtil.getHomeDir();
 		}
+		
 		if( dir == null || !dir.isDirectory() ) {
 			final String path = Config.replaceEnvVar( "${HOME}" );
 			if( path != null && !path.isEmpty() ) {
@@ -126,16 +131,6 @@ public class FatalExceptionHandler {
 		else if( Config.pipelineName() != null ) return Config.pipelineName();
 		else if( RuntimeParamUtil.getConfigFile() != null ) return RuntimeParamUtil.getConfigFile().getName();
 		return "Unknown_Config";
-	}
-
-	private static String getHostLogPath() {
-		final String path = getErrorLog().getAbsolutePath();
-		final String hostDir = RuntimeParamUtil.getDockerHostPipelineDir();
-		final String hostHome = RuntimeParamUtil.getDockerHostHomeDir();
-		if( hostDir != null && path.startsWith( DockerUtil.DOCKER_OUTPUT_DIR ) )
-			return path.replace( DockerUtil.DOCKER_OUTPUT_DIR, hostDir );
-		if( path.startsWith( DockerUtil.ROOT_HOME ) ) return path.replace( DockerUtil.ROOT_HOME, hostHome );
-		return null;
 	}
 
 	private static List<String> getLogs() {

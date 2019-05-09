@@ -46,7 +46,7 @@ public class DockerUtil {
 	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception {
 		final List<String> lines = new ArrayList<>();
 		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module )
-			+ getDockerEnvVars() + getDockerVolumes( module ) + getDockerImage( module );
+			+ getDockerEnvVars() + " " + getDockerVolumes( module ) + getDockerImage( module );
 		Log.debug( DockerUtil.class, "----> Docker CMD:" + cmd );
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
@@ -246,11 +246,6 @@ public class DockerUtil {
 		return RuntimeParamUtil.getDirectModuleDir() != null;
 	}
 
-	private static String getAwsVolumes() {
-		Log.debug( DockerUtil.class, "Assign Docker AWS volumes" );
-		return "-v " + AWS_HOME + ":" + AWS_HOME + ":ro -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR
-			+ ":delegated";
-	}
 
 	private static String getDockerClassName( final BioModule module ) {
 		final String className = module.getClass().getSimpleName();
@@ -269,8 +264,10 @@ public class DockerUtil {
 	private static String getDockerVolumes( final BioModule module ) throws Exception {
 		Log.debug( DockerUtil.class, "Assign Docker volumes for module: " + module.getClass().getSimpleName() );
 
-		String dockerVolumes = " -v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET;
-		if( inAwsEnv() ) return dockerVolumes + " " + getAwsVolumes();
+		String dockerVolumes = "-v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET  
+				+ " -v " + RuntimeParamUtil.getDockerHostHomeDir() + ":" + BLJ_HOST_HOME;
+
+		if( inAwsEnv() ) return dockerVolumes + " -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR + ":delegated";
 
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + DOCKER_INPUT_DIR + ":ro";
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_OUTPUT_DIR + ":delegated";
@@ -295,10 +292,6 @@ public class DockerUtil {
 		if( RuntimeParamUtil.getDockerHostBLJ_SUP() != null ) {
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":"
 				+ CONTAINER_BLJ_SUP_DIR + ":ro";
-		}
-
-		if( RuntimeParamUtil.getDockerHostHomeDir() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostHomeDir() + ":" + ROOT_HOME + ":ro";
 		}
 
 		if( hasDB( module ) ) {
@@ -359,6 +352,11 @@ public class DockerUtil {
 	 */
 	public static final String DOCKER_DB_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "db";
 
+	/**
+	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #BLJ_HOST_HOME}
+	 */
+	public static final String BLJ_HOST_HOME = "/host_home";
+	
 	/**
 	 * Docker container root user DB directory: /mnt/efs/db
 	 */
