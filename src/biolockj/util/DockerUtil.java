@@ -400,11 +400,6 @@ public class DockerUtil {
 	static final String AWS_EC2_USER = "ec2-user";
 
 	/**
-	 * AWS container root user $HOME directory: /home/ec2-user
-	 */
-	static final String AWS_HOME = File.separator + "home" + File.separator + AWS_EC2_USER;
-
-	/**
 	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
 	 */
 	static final String CONTAINER_BLJ_DIR = "/app/biolockj";
