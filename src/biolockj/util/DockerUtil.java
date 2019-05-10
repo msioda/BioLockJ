@@ -345,44 +345,44 @@ public class DockerUtil {
 	/**
 	 * Docker container root user EFS directory: /mnt/efs
 	 */
-	public static final String DOCKER_BLJ_MOUNT_DIR = File.separator + "mnt" + File.separator + "efs";
+	public static final String DOCKER_BLJ_MOUNT_DIR = "/mnt/efs";
 
 	/**
 	 * Docker container root user DB directory: /mnt/efs/db
 	 */
-	public static final String DOCKER_DB_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "db";
+	public static final String DOCKER_DB_DIR = DOCKER_BLJ_MOUNT_DIR + "/db";
 
 	/**
 	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #BLJ_HOST_HOME}
 	 */
-	public static final String BLJ_HOST_HOME = "/host_home";
+	public static final String BLJ_HOST_HOME = "/mnt/host_home";
 	
 	/**
 	 * Docker container root user DB directory: /mnt/efs/db
 	 */
-	public static final String DOCKER_DEFAULT_DB_DIR = File.separator + "mnt" + File.separator + "db";
+	public static final String DOCKER_DEFAULT_DB_DIR = "/mnt/db";
 
 	/**
 	 * All containers mount the host {@value biolockj.Constants#INPUT_DIRS} to the container "input" volume: :
 	 * /mnt/efs/input
 	 */
-	public static final String DOCKER_INPUT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "input";
+	public static final String DOCKER_INPUT_DIR = DOCKER_BLJ_MOUNT_DIR + "/input";
 
 	/**
 	 * AWS deployed containers mount $BLJ/script to {@value #DOCKER_BLJ_MOUNT_DIR}/script dir: /mnt/efs/script
 	 */
-	public static final String DOCKER_SCRIPT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "script";
+	public static final String DOCKER_SCRIPT_DIR = DOCKER_BLJ_MOUNT_DIR + "/script";
 	
 	/**
 	 * All containers mount {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} to the container volume: /mnt/efs/output
 	 */
-	public static final String DOCKER_OUTPUT_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "pipelines";
+	public static final String DOCKER_OUTPUT_DIR = DOCKER_BLJ_MOUNT_DIR + "/pipelines";
 
 	/**
 	 * Some containers mount the {@value biolockj.Constants#INPUT_TRIM_SEQ_FILE} to the containers "primer":
 	 * /mnt/efs/primer
 	 */
-	public static final String DOCKER_PRIMER_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "primer";
+	public static final String DOCKER_PRIMER_DIR = DOCKER_BLJ_MOUNT_DIR + "/primer";
 
 	/**
 	 * Docker container default $USER: {@value #DOCKER_USER}
@@ -412,7 +412,7 @@ public class DockerUtil {
 	/**
 	 * All containers mount the host {@link biolockj.Config} directory to the container volume: /mnt/efs/config
 	 */
-	static final String DOCKER_CONFIG_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "config";
+	static final String DOCKER_CONFIG_DIR = DOCKER_BLJ_MOUNT_DIR + "/config";
 
 	/**
 	 * {@link biolockj.Config} String property used to run specific version of Docker images:
@@ -424,7 +424,7 @@ public class DockerUtil {
 	 * Some containers mount the {@value biolockj.util.MetaUtil#META_FILE_PATH} to the container "meta" volume:
 	 * /mnt/efs/metadata
 	 */
-	static final String DOCKER_META_DIR = DOCKER_BLJ_MOUNT_DIR + File.separator + "metadata";
+	static final String DOCKER_META_DIR = DOCKER_BLJ_MOUNT_DIR + "/metadata";
 
 	/**
 	 * {@link biolockj.Config} Boolean property - enable to avoid docker run --rm flag: {@value #SAVE_CONTAINER_ON_EXIT}
