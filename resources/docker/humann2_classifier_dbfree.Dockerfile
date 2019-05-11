@@ -1,5 +1,8 @@
 # Deployment path: $DOCKER_DIR/humann2_classifier_dbfree.Dockerfile
 
+FROM ubuntu:18.04
+ARG DEBIAN_FRONTEND=noninteractive
+
 #1.) Install HumanN2 + dependencies
 RUN apt-get update && \
 	apt-get install -y build-essential apt-utils bsdtar gawk nano tzdata wget && \
