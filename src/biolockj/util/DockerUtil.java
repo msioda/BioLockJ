@@ -210,10 +210,10 @@ public class DockerUtil {
 	 * @return TRUE if module has a custom DB defined
 	 * @throws Exception if errors occur
 	 */
-	public static final boolean hasDB( final BioModule module ) throws Exception {
+	public static boolean hasDB( final BioModule module ) throws Exception {
 		if( DockerUtil.inDockerEnv() && module instanceof DatabaseModule ) {
 			final File db = ( (DatabaseModule) module ).getDB();
-			if( db != null ) return !db.getAbsolutePath().equals( DOCKER_DB_DIR );
+			if( db != null ) return !db.getAbsolutePath().startsWith( DOCKER_DEFAULT_DB_DIR );
 		}
 
 		return false;
@@ -246,7 +246,6 @@ public class DockerUtil {
 		return RuntimeParamUtil.getDirectModuleDir() != null;
 	}
 
-
 	private static String getDockerClassName( final BioModule module ) {
 		final String className = module.getClass().getSimpleName();
 		final boolean isQiime = module instanceof BuildQiimeMapping || module instanceof MergeQiimeOtuTables
@@ -264,10 +263,11 @@ public class DockerUtil {
 	private static String getDockerVolumes( final BioModule module ) throws Exception {
 		Log.debug( DockerUtil.class, "Assign Docker volumes for module: " + module.getClass().getSimpleName() );
 
-		String dockerVolumes = "-v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET  
-				+ " -v " + RuntimeParamUtil.getDockerHostHomeDir() + ":" + BLJ_HOST_HOME;
+		String dockerVolumes = "-v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET + " -v "
+			+ RuntimeParamUtil.getDockerHostHomeDir() + ":" + BLJ_HOST_HOME;
 
-		if( inAwsEnv() ) return dockerVolumes + " -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR + ":delegated";
+		if( inAwsEnv() )
+			return dockerVolumes + " -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR + ":delegated";
 
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + DOCKER_INPUT_DIR + ":ro";
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_OUTPUT_DIR + ":delegated";
@@ -297,21 +297,15 @@ public class DockerUtil {
 		if( hasDB( module ) ) {
 			final File db = ( (DatabaseModule) module ).getDB();
 			String dbPath = db.getAbsolutePath();
-			Log.info( DockerUtil.class, "Map Docker volume for DB: " + dbPath );
 
 			if( module instanceof RdpClassifier ) {
 				dbPath = db.getParentFile().getAbsolutePath();
 				Log.info( DockerUtil.class, "RDP DB directory path: " + dbPath );
+			} else {
+				Log.info( DockerUtil.class, "Map Docker volume for DB: " + dbPath );
 			}
 
-			if( dbPath.startsWith( ROOT_HOME ) ) {
-				dbPath = dbPath.replace( ROOT_HOME, RuntimeParamUtil.getDockerHostHomeDir() );
-				Log.info( DockerUtil.class, "Replace " + ROOT_HOME + " with DB Host dir: " + dbPath );
-			}
-
-			// TODO: Probably fine as read-only, but will wait until all modules tested before adding :ro
-			// dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + DOCKER_DB_DIR + ":ro";
-			dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + DOCKER_DB_DIR;
+			dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + DOCKER_DB_DIR + ":ro";
 		}
 
 		return dockerVolumes;
@@ -343,6 +337,11 @@ public class DockerUtil {
 	}
 
 	/**
+	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #BLJ_HOST_HOME}
+	 */
+	public static final String BLJ_HOST_HOME = "/mnt/host_home";
+
+	/**
 	 * Docker container root user EFS directory: /mnt/efs
 	 */
 	public static final String DOCKER_BLJ_MOUNT_DIR = "/mnt/efs";
@@ -352,11 +351,6 @@ public class DockerUtil {
 	 */
 	public static final String DOCKER_DB_DIR = DOCKER_BLJ_MOUNT_DIR + "/db";
 
-	/**
-	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #BLJ_HOST_HOME}
-	 */
-	public static final String BLJ_HOST_HOME = "/mnt/host_home";
-	
 	/**
 	 * Docker container root user DB directory: /mnt/efs/db
 	 */
@@ -369,11 +363,6 @@ public class DockerUtil {
 	public static final String DOCKER_INPUT_DIR = DOCKER_BLJ_MOUNT_DIR + "/input";
 
 	/**
-	 * AWS deployed containers mount $BLJ/script to {@value #DOCKER_BLJ_MOUNT_DIR}/script dir: /mnt/efs/script
-	 */
-	public static final String DOCKER_SCRIPT_DIR = DOCKER_BLJ_MOUNT_DIR + "/script";
-	
-	/**
 	 * All containers mount {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} to the container volume: /mnt/efs/output
 	 */
 	public static final String DOCKER_OUTPUT_DIR = DOCKER_BLJ_MOUNT_DIR + "/pipelines";
@@ -385,6 +374,11 @@ public class DockerUtil {
 	public static final String DOCKER_PRIMER_DIR = DOCKER_BLJ_MOUNT_DIR + "/primer";
 
 	/**
+	 * AWS deployed containers mount $BLJ/script to {@value #DOCKER_BLJ_MOUNT_DIR}/script dir: /mnt/efs/script
+	 */
+	public static final String DOCKER_SCRIPT_DIR = DOCKER_BLJ_MOUNT_DIR + "/script";
+
+	/**
 	 * Docker container default $USER: {@value #DOCKER_USER}
 	 */
 	public static final String DOCKER_USER = "root";
@@ -393,6 +387,14 @@ public class DockerUtil {
 	 * Docker container root user $HOME directory: /root
 	 */
 	public static final String ROOT_HOME = File.separator + DOCKER_USER;
+
+	/**
+	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
+	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
+	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
+	 * versions of these modules and add new modules in their own Docker Hub account.
+	 */
+	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	/**
 	 * AWS EC2 head/batch node $USER: {@value #AWS_EC2_USER}
@@ -435,14 +437,6 @@ public class DockerUtil {
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
 	 */
 	static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
-
-	/**
-	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
-	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
-	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
-	 * versions of these modules and add new modules in their own Docker Hub account.
-	 */
-	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	private static final String BLJ_BASH = "blj_bash";
 	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";

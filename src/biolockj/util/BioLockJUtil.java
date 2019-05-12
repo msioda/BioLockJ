@@ -58,6 +58,31 @@ public class BioLockJUtil {
 	}
 
 	/**
+	 * Copy input files into an internal folder within the pipeline root direction named "input"
+	 * 
+	 * @return Internal pipeline input dir
+	 * @throws ConfigNotFoundException if {@value biolockj.Constants#INPUT_DIRS} or
+	 * {@value biolockj.Constants#PIPELINE_COPY_FILES} property is undefined
+	 * @throws ConfigFormatException if {@value biolockj.Constants#PIPELINE_COPY_FILES} does not have a boolean "Y" or
+	 * "N" value
+	 */
+	public static boolean copyInputFiles() throws ConfigNotFoundException, ConfigFormatException {
+		final boolean hasMixedInputs = pipelineInputType( PIPELINE_R_INPUT_TYPE )
+			|| pipelineInputType( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
+			|| pipelineInputType( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
+			|| pipelineInputType( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
+			|| pipelineInputType( PIPELINE_STATS_TABLE_INPUT_TYPE );
+
+		if( hasMixedInputs ) {
+			Log.warn( BioLockJ.class,
+				"Non-sequence inputs found - copy input files from "
+					+ Config.requireString( null, Constants.INPUT_DIRS ) + " to:"
+					+ pipelineInternalInputDir().getAbsolutePath() );
+		}
+		return Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) || hasMixedInputs;
+	}
+
+	/**
 	 * Used to save status files for modules and the pipeline.
 	 * 
 	 * @param path Target dir path
@@ -300,37 +325,6 @@ public class BioLockJUtil {
 			? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
 			: new BufferedReader( new FileReader( file ) );
 	}
-	
-	
-	/**
-	 * Return the pipeline input directory
-	 * 
-	 * @return Input dir
-	 */
-	public static File pipelineInternalInputDir() {
-		return new File( Config.pipelinePath() + File.separator + "input" );
-	}
-	
-	/**
-	 * Copy input files into an internal folder within the pipeline root direction named "input"
-	 * 
-	 * @return Internal pipeline input dir
-	 * @throws ConfigNotFoundException if {@value biolockj.Constants#INPUT_DIRS} or {@value biolockj.Constants#PIPELINE_COPY_FILES} property is undefined
-	 * @throws ConfigFormatException if {@value biolockj.Constants#PIPELINE_COPY_FILES} does not have a boolean "Y" or "N" value
-	 */
-	public static boolean copyInputFiles() throws ConfigNotFoundException, ConfigFormatException {
-		final boolean hasMixedInputs = pipelineInputType( PIPELINE_R_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_STATS_TABLE_INPUT_TYPE );
-
-		if( hasMixedInputs ) {
-			Log.warn( BioLockJ.class, "Non-sequence inputs found - copy input files from "
-				+ Config.requireString( null, Constants.INPUT_DIRS ) + " to:" + pipelineInternalInputDir().getAbsolutePath() );
-		}
-		return Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) || hasMixedInputs;
-	}
 
 	/**
 	 * Get the list of input directories for the pipeline.
@@ -338,14 +332,15 @@ public class BioLockJUtil {
 	 * @return List of system directory file paths
 	 * @throws ConfigNotFoundException if a required property is undefined
 	 * @throws ConfigPathException if configured directory does not exist on the file-system
-	 * @throws ConfigFormatException if {@value biolockj.Constants#PIPELINE_COPY_FILES} does not have a boolean "Y" or "N" value
+	 * @throws ConfigFormatException if {@value biolockj.Constants#PIPELINE_COPY_FILES} does not have a boolean "Y" or
+	 * "N" value
 	 */
 	public static List<File> getInputDirs() throws ConfigNotFoundException, ConfigPathException, ConfigFormatException {
 		if( DockerUtil.inDockerEnv() ) {
 			final List<File> dirs = new ArrayList<>();
-			String path = Config.requireString( null, Constants.INPUT_DIRS );
+			final String path = Config.requireString( null, Constants.INPUT_DIRS );
 			Log.debug( BioLockJUtil.class, "Current property value of [ " + Constants.INPUT_DIRS + " ] = " + path );
-			
+
 			File dir = null;
 			if( path.equals( File.separator ) ) {
 				dir = new File( DockerUtil.DOCKER_INPUT_DIR );
@@ -359,7 +354,8 @@ public class BioLockJUtil {
 			}
 
 			Log.debug( BioLockJUtil.class, "Add input dir --> " + dir.getAbsolutePath() );
-			if( !dir.isDirectory() ) throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
+			if( !dir.isDirectory() )
+				throw new ConfigPathException( Constants.INPUT_DIRS, ConfigPathException.DIRECTORY );
 			dirs.add( dir );
 			return dirs;
 		}
@@ -560,6 +556,15 @@ public class BioLockJUtil {
 	 */
 	public static boolean pipelineInputType( final String type ) throws ConfigNotFoundException {
 		return Config.requireSet( null, INTERNAL_PIPELINE_INPUT_TYPES ).contains( type );
+	}
+
+	/**
+	 * Return the pipeline input directory
+	 * 
+	 * @return Input dir
+	 */
+	public static File pipelineInternalInputDir() {
+		return new File( Config.pipelinePath() + File.separator + "input" );
 	}
 
 	/**

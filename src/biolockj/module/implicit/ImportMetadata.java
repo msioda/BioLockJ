@@ -46,14 +46,8 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		if( MetaUtil.exists() ) {
-			MetaUtil.setFile( MetaUtil.getMetadata() );
-			MetaUtil.refreshCache();
-			BioLockJUtil.ignoreFile( MetaUtil.getMetadata() );
-			if( hasRModules() ) {
-				RMetaUtil.classifyReportableMetadata( this );
-			}
-		} else throw new Exception( "Metadata not found ---> " + MetaUtil.getPath() );
+		if( MetaUtil.exists() && hasRModules() && !DockerUtil.isDirectMode() )
+			RMetaUtil.classifyReportableMetadata( this );
 	}
 
 	/**

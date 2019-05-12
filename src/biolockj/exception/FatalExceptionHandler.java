@@ -52,9 +52,9 @@ public class FatalExceptionHandler {
 		if( getErrorLog() != null ) {
 			Log.info( FatalExceptionHandler.class,
 				"Local file-system error log path: " + getErrorLog().getAbsolutePath() );
-			if( DockerUtil.inDockerEnv()  ) {
-				Log.info( FatalExceptionHandler.class, "Host file-system error log path: " 
-				+ RuntimeParamUtil.getDockerHostHomeDir() + File.separator + getErrorLog().getName());
+			if( DockerUtil.inDockerEnv() ) {
+				Log.info( FatalExceptionHandler.class, "Host file-system error log path: "
+					+ RuntimeParamUtil.getDockerHostHomeDir() + File.separator + getErrorLog().getName() );
 			}
 			if( !getErrorLog().isFile() ) {
 				dumpLogs( getLogs() );
@@ -105,12 +105,13 @@ public class FatalExceptionHandler {
 	private static File getErrorLogDir() {
 		File dir = RuntimeParamUtil.getBaseDir();
 		if( dir == null || !dir.isDirectory() ) {
-			if( DockerUtil.inDockerEnv() )
+			if( DockerUtil.inDockerEnv() ) {
 				dir = new File( DockerUtil.BLJ_HOST_HOME );
-			else
+			} else {
 				dir = RuntimeParamUtil.getHomeDir();
+			}
 		}
-		
+
 		if( dir == null || !dir.isDirectory() ) {
 			final String path = Config.replaceEnvVar( "${HOME}" );
 			if( path != null && !path.isEmpty() ) {

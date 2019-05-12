@@ -127,12 +127,18 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws Exception {
-		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
-		final File nuclDb = new File( Config.requireString( this, HN2_NUCL_DB ) );
-		final File protDb = new File( Config.requireString( this, HN2_PROT_DB ) );
-		final File parentDir = BioLockJUtil.getCommonParent( nuclDb, protDb );
-		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
-		return parentDir;
+		if( dbCache != null ) {
+			if( DockerUtil.inDockerEnv() ) {
+				final File nuclDb = new File( Config.requireString( this, HN2_NUCL_DB ) );
+				final File protDb = new File( Config.requireString( this, HN2_PROT_DB ) );
+				dbCache = BioLockJUtil.getCommonParent( nuclDb, protDb );
+			} else {
+				dbCache = BioLockJUtil.getCommonParent( Config.requireExistingDir( this, HN2_NUCL_DB ),
+					Config.requireExistingDir( this, HN2_PROT_DB ) );
+			}
+			Log.info( getClass(), "Found common database dir: " + dbCache.getAbsolutePath() );
+		}
+		return dbCache;
 	}
 
 	@Override
@@ -227,10 +233,14 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 * humann2.protDB=/db/uniref
 	 */
 	private String getDbPath( final String prop ) throws Exception {
-		final File db = new File( Config.requireString( this, prop ) );
-		return DockerUtil.inDockerEnv()
-			? db.getAbsolutePath().replace( db.getParentFile().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR )
-			: Config.requireExistingDir( this, prop ).getAbsolutePath();
+		final String path = Config.getString( this, prop );
+		if( path == null ) return null;
+		if( DockerUtil.hasDB( this ) )
+			return new File( path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) ).getAbsolutePath();
+		if( DockerUtil.inDockerEnv() )
+			return new File( path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DEFAULT_DB_DIR ) )
+				.getAbsolutePath();
+		return Config.requireExistingDir( this, prop ).getAbsolutePath();
 	}
 
 	private String getJoinTableCmd() throws Exception {
@@ -329,6 +339,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	protected static final String HN2_PROT_DB = "humann2.protDB";
 
 	private static final String BUILD_SUMMARY_BASH_COMMENT = "# Wait until all worker scripts are complete to build summary tables";
+	private static File dbCache = null;
 	private static final String FILE_NAME_PARAM = "--file_name";
 	private static final String FUNCTION_BUILD_SUMMARY_TABLES = "buildSummaryTables";
 	private static final String FUNCTION_CONCAT_PAIRED_READS = "mergePairedReads";

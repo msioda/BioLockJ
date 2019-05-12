@@ -181,7 +181,8 @@ public class NextflowUtil {
 	 */
 	public static void stageRootConfig() throws IOException {
 		final File ec2Aws = new File( DockerUtil.BLJ_HOST_HOME + File.separator + AWS_DIR );
-		final File ec2NfConfig = new File( DockerUtil.BLJ_HOST_HOME + File.separator + NF_DIR + File.separator + "config" );
+		final File ec2NfConfig = new File(
+			DockerUtil.BLJ_HOST_HOME + File.separator + NF_DIR + File.separator + "config" );
 		final File rootNfDir = new File( DockerUtil.ROOT_HOME + File.separator + NF_DIR );
 		final File rootNfConfig = new File( rootNfDir.getAbsolutePath() + File.separator + "config" );
 		final File rootAwsConfig = new File(

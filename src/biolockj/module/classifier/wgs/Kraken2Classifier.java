@@ -93,7 +93,6 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		getParams();
-		getKrakenDB();
 	}
 
 	/**
@@ -114,7 +113,20 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws Exception {
-		return new File( Config.requireString( this, KRAKEN_DATABASE ) );
+		if( DockerUtil.inDockerEnv() ) return new File( Config.requireString( this, KRAKEN_DATABASE ) );
+		return Config.requireExistingDir( this, KRAKEN_DATABASE );
+	}
+
+	/**
+	 * Get the DB directory
+	 * 
+	 * @return DB Dir
+	 * @throws Exception if errors occur
+	 */
+	public File getKrakenDB() throws Exception {
+		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		return getDB();
 	}
 
 	/**
@@ -130,12 +142,6 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 		lines.add( "}" + RETURN );
 
 		return lines;
-	}
-
-	private String getKrakenDB() throws Exception {
-		if( DockerUtil.inDockerEnv() ) return DockerUtil.DOCKER_DB_DIR;
-
-		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
 	private String getParams() throws Exception {
@@ -175,8 +181,8 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 				"Invalid classifier option (" + REPORT_PARAM + ") found in property(" + getExeParamName()
 					+ "). BioLockJ hard codes this value based on Sample IDs found in: " + Constants.INPUT_DIRS );
 
-			this.defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM + getKrakenDB()
-				+ " " + USE_NAMES_PARAM + USE_MPA_PARAM;
+			this.defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM
+				+ getKrakenDB().getAbsolutePath() + " " + USE_NAMES_PARAM + USE_MPA_PARAM;
 		}
 
 		return this.defaultSwitches;

@@ -95,7 +95,7 @@ docker_cmd() {
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} knead_data" && $(get_cmd ${1} knead_data)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken2_classifier" && $(get_cmd ${1} kraken2_classifier)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken_classifier" && $(get_cmd ${1} kraken_classifier)
-	ind=$((ind+1)) && $(exe_cmd) && echo "${1} humann2_classifier" && $(get_cmd ${1} humann2_classifier)
+	#ind=$((ind+1)) && $(exe_cmd) && echo "${1} humann2_classifier" && $(get_cmd ${1} humann2_classifier)
 	aws_log "COMPLETED Docker ${1} for ${displayNum} modules starting with index #${startInd}!"
 }
 

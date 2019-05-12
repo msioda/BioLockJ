@@ -56,9 +56,10 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
 		Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
 		Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
-		if( DockerUtil.hasDB( this ) && Config.getBoolean( this, NextflowUtil.AWS_COPY_DB_TO_S3 ) ) {
+		if( DockerUtil.hasDB( this ) && Config.getBoolean( this, NextflowUtil.AWS_COPY_DB_TO_S3 )
+			&& !DockerUtil.isDirectMode() ) {
 			Log.info( getClass(), "Start async copy of module DBs to S3" );
-			NextflowUtil.awsSyncS3( ( (DatabaseModule) this ).getDB().getAbsolutePath(), false );
+			NextflowUtil.awsSyncS3( DockerUtil.DOCKER_DB_DIR, false );
 		}
 	}
 

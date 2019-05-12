@@ -99,7 +99,6 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		getParams();
-		getKrakenDB();
 	}
 
 	/**
@@ -120,7 +119,20 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws Exception {
-		return new File( Config.requireString( this, KRAKEN_DATABASE ) );
+		if( DockerUtil.inDockerEnv() ) return new File( Config.requireString( this, KRAKEN_DATABASE ) );
+		return Config.requireExistingDir( this, KRAKEN_DATABASE );
+	}
+
+	/**
+	 * Get the DB directory (or DOcker container DB dir if in a docker container)
+	 * 
+	 * @return DB Dir
+	 * @throws Exception if errors occur
+	 */
+	public File getKrakenDB() throws Exception {
+		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		return getDB();
 	}
 
 	/**
@@ -134,15 +146,10 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" + RETURN );
 		lines.add( "function " + FUNCTION_TRANSLATE + "() {" );
-		lines.add( getClassifierExe() + "-translate " + DB_PARAM + getKrakenDB() + " --mpa-format $1 > $2" );
+		lines.add(
+			getClassifierExe() + "-translate " + DB_PARAM + getKrakenDB().getAbsolutePath() + " --mpa-format $1 > $2" );
 		lines.add( "}" + RETURN );
 		return lines;
-	}
-
-	private String getKrakenDB() throws Exception {
-		if( DockerUtil.inDockerEnv() ) return DockerUtil.DOCKER_DB_DIR;
-
-		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
 	}
 
 	private String getParams() throws Exception {
@@ -189,7 +196,7 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 			params += GZIP_PARAM;
 		}
 
-		params += DB_PARAM + getKrakenDB() + " " + getInputSwitch();
+		params += DB_PARAM + getKrakenDB().getAbsolutePath() + " " + getInputSwitch();
 		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
 			params += PAIRED_PARAM;
 		}
@@ -197,6 +204,7 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) ) {
 			params += GZIP_PARAM;
 		}
+
 		return params;
 	}
 

@@ -17,6 +17,7 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.DatabaseModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.BioLockJUtil;
@@ -67,39 +68,28 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 
 	@Override
 	public File getDB() throws Exception {
-		final List<String> paths = Config.requireList( this, KNEAD_DBS );
-
-		if( paths.size() == 1 ) return new File( paths.get( 0 ) );
-
-		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
-
+		if( dbCache != null ) return dbCache;
 		final List<File> dbs = new ArrayList<>();
-		for( final String db: Config.requireList( this, KNEAD_DBS ) ) {
-			dbs.add( new File( db ) );
-		}
-
-		File parentDir = null;
-		File testDB = null;
-		for( final File db: dbs ) {
-			if( testDB == null ) {
-				testDB = db;
-			} else if( parentDir == null ) {
-				parentDir = BioLockJUtil.getCommonParent( testDB, db );
+		for( final String path: Config.requireList( this, KNEAD_DBS ) ) {
+			final File db = new File( path );
+			dbs.add( db );
+			if( dbCache == null ) {
+				dbCache = db;
 			} else {
-				parentDir = BioLockJUtil.getCommonParent( parentDir, db );
+				dbCache = BioLockJUtil.getCommonParent( dbCache, db );
 			}
 		}
 
-		if( parentDir == null )
-			throw new Exception( "Docker implementation requires all databases exist under a common parent directory" );
+		final String errMsg = "Docker implementation requires all databases exist under a common parent directory";
+		if( dbCache == null ) throw new ConfigViolationException( KNEAD_DBS, errMsg );
 
 		for( final File db: dbs ) {
-			if( !db.getAbsolutePath().contains( parentDir.getAbsolutePath() ) ) throw new Exception(
-				"Docker implementation requires all databases exist under a common parent directory" );
+			if( !db.getAbsolutePath().contains( dbCache.getAbsolutePath() ) )
+				throw new ConfigViolationException( KNEAD_DBS, errMsg );
 		}
 
-		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
-		return parentDir;
+		Log.info( getClass(), "Found common database dir: " + dbCache.getAbsolutePath() );
+		return dbCache;
 	}
 
 	@Override
@@ -169,20 +159,22 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 	 * @throws Exception if errors occur
 	 */
 	protected String getDBs() throws Exception {
-		if( !DockerUtil.inDockerEnv() ) {
-			Config.requireExistingDirs( this, KNEAD_DBS );
-		}
-
 		String dbs = "";
-		for( final String path: Config.requireList( this, KNEAD_DBS ) ) {
-			final File db = new File( path );
-			if( DockerUtil.inDockerEnv() && Config.requireList( this, KNEAD_DBS ).size() == 1 ) {
-				dbs += DB_PARAM + " " + DockerUtil.DOCKER_DB_DIR + " ";
-			} else if( DockerUtil.inDockerEnv() ) {
-				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) + " ";
-			} else {
+		if( DockerUtil.hasDB( this ) ) {
+			for( final String path: Config.requireList( this, KNEAD_DBS ) ) {
+				dbs += DB_PARAM + " "
+					+ new File( path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) ).getAbsolutePath()
+					+ " ";
+			}
+		} else if( DockerUtil.inDockerEnv() ) {
+			for( final String path: Config.requireList( this, KNEAD_DBS ) ) {
+				dbs += DB_PARAM + " "
+					+ new File( path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DEFAULT_DB_DIR ) )
+						.getAbsolutePath();
+			}
+		} else {
+			for( final File db: Config.requireExistingDirs( this, KNEAD_DBS ) ) {
 				dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
-
 			}
 		}
 
@@ -248,6 +240,7 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 
 	private static final String BYPASS_TRIM_PARAM = "--bypass-trim";
 	private static final String DB_PARAM = "-db";
+	private static File dbCache = null;
 	private static final String DOCKER_TRIM_PARAM = "--trimmomatic /app/Trimmomatic-0.38";
 	private static final String FW_OUTPUT_SUFFIX = "_paired_1";
 	private static final String INPUT_PARAM = "-i";

@@ -271,8 +271,8 @@ public class Pipeline {
 			}
 
 			if( ModuleUtil.isComplete( module ) ) {
-				module.cleanUp();
 				refreshOutputMetadata( module );
+				module.cleanUp();
 				refreshRCacheIfNeeded( module );
 			}
 

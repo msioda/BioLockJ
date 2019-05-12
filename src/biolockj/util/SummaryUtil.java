@@ -126,7 +126,7 @@ public class SummaryUtil {
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
 		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration ) + RETURN );
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
-		sb.append( getLabel( INPUT_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( INPUT_CONFIG ) + "    " + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( MASTER_CONFIG ) + "   " + MasterConfigUtil.getPath() + RETURN );
 		sb.append( getLabel( FINAL_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
 
@@ -704,7 +704,7 @@ public class SummaryUtil {
 	 */
 	protected static void saveSummary( final String summary ) throws Exception {
 		final File f = getSummaryFile();
-		final FileWriter writer = new FileWriter( f, f.isFile());
+		final FileWriter writer = new FileWriter( f, f.isFile() );
 		writer.write( summary );
 		writer.close();
 		Log.info( SummaryUtil.class, "Summary updated" );

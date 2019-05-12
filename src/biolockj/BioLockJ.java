@@ -109,13 +109,13 @@ public class BioLockJ {
 		if( Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) ) {
 			NextflowUtil.awsSyncS3( DockerUtil.DOCKER_INPUT_DIR, false );
 		}
-		File inputDir = BioLockJUtil.pipelineInternalInputDir();
+		final File inputDir = BioLockJUtil.pipelineInternalInputDir();
 		final String path = Config.pipelinePath() + File.separator + inputDir.getName() + File.separator
 			+ Constants.BLJ_COMPLETE;
 		final File statusFile = new File( path );
-		if( !inputDir.isDirectory() )
+		if( !inputDir.isDirectory() ) {
 			inputDir.mkdirs();
-		else if( statusFile.isFile() ) return;
+		} else if( statusFile.isFile() ) return;
 
 		for( final File dir: BioLockJUtil.getInputDirs() ) {
 			info( "Copying input files from " + dir + " to " + inputDir.getAbsolutePath() );

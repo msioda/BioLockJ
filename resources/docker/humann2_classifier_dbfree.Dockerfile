@@ -25,22 +25,12 @@ RUN cd /usr/local/bin && \
 	mv /usr/local/bin/${BOWTIE}/[bs]* . && \
 	rm -rf /usr/local/bin/${BOWTIE}
 
-#3.) Install MetaPhlAn2
-ENV mpa_dir=/usr/local/bin
-RUN cd /app && \
-	wget -qO- "https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip" | bsdtar -xf- && \
-	chmod -R 774 /app/metaphlan2 && \
-	mv /app/metaphlan2/* ${mpa_dir} && \
-	rm -rf /app/metaphlan2 && \
-	cd ${mpa_dir} && \
-	ln -s metaphlan2.py metaphlan2
-	
 #==================================================================================================
 #  To avoid coupling with blj_basic files (which change sometimes) 
 #  Recode blj_basic_py2 here so rebuilds won't have to repull DBs
 #==================================================================================================
 
-#4.) Setup Standard Dirs (used by some but not all ancestors)
+#3.) Setup Standard Dirs (used by some but not all ancestors)
 ENV BLJ="/app/biolockj"
 ENV BLJ_SUP="/app/blj_support"
 ENV EFS="/mnt/efs"
@@ -55,16 +45,27 @@ ENV BLJ_PRIMER="${EFS}/primer"
 ENV BLJ_SCRIPT="${EFS}/script"
 ENV PATH="${BLJ_HOST_HOME}/miniconda/bin:$PATH"
 
-#5.) Build Standard Directories 
+#4.) Build Standard Directories 
 RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \
 	mkdir "${BLJ_CONFIG}" && mkdir "${BLJ_DB}" && mkdir "${BLJ_INPUT}" && \
 	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && \
 	mkdir "${BLJ_DEFAULT_DB}" && mkdir "${BLJ_HOST_HOME}"
 
-#6.) Set the timezone to EST
+#5.) Set the timezone to EST
 RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
 	dpkg-reconfigure -f noninteractive tzdata
 
+
+#6.) Install MetaPhlAn2
+ENV mpa_dir=/usr/local/bin
+RUN cd /app && \
+	wget -qO- "https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip" | bsdtar -xf- && \
+	chmod -R 774 /app/metaphlan2 && \
+	mv /app/metaphlan2/* ${mpa_dir} && \
+	rm -rf /app/metaphlan2 && \
+	cd ${mpa_dir} && \
+	ln -s metaphlan2.py metaphlan2
+	
 #7.) Update  ~/.bashrc
 RUN echo ' '  >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \

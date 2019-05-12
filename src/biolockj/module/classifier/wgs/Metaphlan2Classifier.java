@@ -105,7 +105,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	public List<String> getClassifierParams() throws Exception {
 		final List<String> params = Config.getList( this, EXE_METAPHLAN_PARAMS );
 		if( Config.getString( this, METAPHLAN2_DB ) != null ) {
-			params.add( ALT_DB_PARAM + " " + getMpaDB() );
+			params.add( ALT_DB_PARAM + " " + getMpaDB().getAbsolutePath() );
 		}
 
 		return params;
@@ -114,9 +114,9 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	@Override
 	public File getDB() throws Exception {
 		final String path = Config.getString( this, METAPHLAN2_DB );
-		if( path != null ) return new File( path );
-
-		return null;
+		if( path == null ) return null;
+		if( DockerUtil.inDockerEnv() ) return new File( path );
+		return Config.requireExistingDir( this, METAPHLAN2_DB );
 	}
 
 	@Override
@@ -173,19 +173,18 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 		return this.defaultSwitches;
 	}
 
-	private String getMpaDB() throws Exception {
-		if( Config.getString( this, METAPHLAN2_DB ) == null ) return null;
-
-		if( DockerUtil.inDockerEnv() ) return DockerUtil.DOCKER_DB_DIR;
-
-		return Config.requireExistingDir( this, METAPHLAN2_DB ).getAbsolutePath();
+	private File getMpaDB() throws Exception {
+		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		return getDB();
 	}
 
-	private String getMpaPkl() throws Exception {
-		final String mpaPkl = Config.getString( this, METAPHLAN2_MPA_PKL );
-		if( mpaPkl == null ) return null;
-		if( DockerUtil.inDockerEnv() ) return DockerUtil.DOCKER_DB_DIR + File.separator + mpaPkl;
-		return Config.requireExistingFile( this, METAPHLAN2_MPA_PKL ).getAbsolutePath();
+	private File getMpaPkl() throws Exception {
+		final String path = Config.getString( this, METAPHLAN2_MPA_PKL );
+		if( path == null ) return null;
+		if( DockerUtil.inDockerEnv() )
+			return new File( getMpaDB().getAbsolutePath() + File.separator + new File( path ).getName() );
+		return Config.requireExistingFile( this, METAPHLAN2_MPA_PKL );
 	}
 
 	private String getWorkerFunctionParams() throws Exception {
@@ -228,7 +227,6 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	 * Must always be paired with {@value #METAPHLAN2_DB}
 	 */
 	protected static final String METAPHLAN2_MPA_PKL = "metaphlan2.mpa_pkl";
-
 	private static final String ALT_DB_PARAM = "--mpa_pkl";
 	private static final String BOWTIE_EXT = ".bowtie2.bz2";
 	private static final String FUNCTION_RUN_METAPHLAN = "runMetaphlan";

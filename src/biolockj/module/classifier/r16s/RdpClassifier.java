@@ -85,7 +85,11 @@ public class RdpClassifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws Exception {
-		if( Config.getString( this, RDP_DB ) != null ) return new File( Config.getString( this, RDP_DB ) );
+		final String path = Config.getString( this, RDP_DB );
+		if( path != null ) {
+			if( DockerUtil.inDockerEnv() ) return new File( path );
+			return Config.requireExistingFile( this, RDP_DB );
+		}
 		return null;
 	}
 
@@ -118,12 +122,10 @@ public class RdpClassifier extends ClassifierModuleImpl {
 
 	private String getDbParam() throws Exception {
 		if( getDB() == null ) return "";
-
-		final String dbParam = DockerUtil.inDockerEnv()
-			? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR )
-			: getDB().getAbsolutePath();
-
-		return DB_PARAM + " " + dbParam + " ";
+		return DB_PARAM + " "
+			+ ( DockerUtil.inDockerEnv() ? DockerUtil.DOCKER_DB_DIR + File.separator + getDB().getName()
+				: getDB().getAbsolutePath() )
+			+ " ";
 	}
 
 	private String getJar() throws Exception {

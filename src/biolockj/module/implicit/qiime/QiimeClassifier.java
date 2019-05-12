@@ -197,12 +197,12 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	@Override
 	public File getDB() throws Exception {
+		if( dbCache != null ) return dbCache;
 		String pynastDB = Config.getString( this, QIIME_PYNAST_ALIGN_DB );
 		String refSeqDB = Config.getString( this, QIIME_REF_SEQ_DB );
 		String taxaDB = Config.getString( this, QIIME_TAXA_DB );
 
 		if( pynastDB == null && refSeqDB == null && taxaDB == null ) return null;
-
 		if( pynastDB == null || refSeqDB == null || taxaDB == null ) {
 			if( pynastDB == null ) {
 				pynastDB = UNDEFINED;
@@ -219,16 +219,13 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 					+ QIIME_TAXA_DB + "=" + taxaDB );
 		}
 
-		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
-
 		final File pynastFile = new File( pynastDB );
 		final File refSeqFile = new File( refSeqDB );
 		final File taxaFile = new File( taxaDB );
 
-		final File parentDir = BioLockJUtil.getCommonParent( BioLockJUtil.getCommonParent( pynastFile, refSeqFile ),
-			taxaFile );
-		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
-		return parentDir;
+		dbCache = BioLockJUtil.getCommonParent( BioLockJUtil.getCommonParent( pynastFile, refSeqFile ), taxaFile );
+		Log.info( getClass(), "Found common database dir: " + dbCache.getAbsolutePath() );
+		return dbCache;
 	}
 
 	@Override
@@ -361,15 +358,15 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	}
 
 	/**
-	 * Return the Docker container database directory (starting with /db/...)
+	 * Return the Docker container database directory
 	 * 
 	 * @param prop QIIME database dir
 	 * @return Docker container DB dir
 	 * @throws Exception if errors occur
 	 */
 	protected File getDockerDB( final String prop ) throws Exception {
-		return new File(
-			Config.requireString( this, prop ).replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) );
+		final String path = Config.requireString( this, prop );
+		return new File( path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) );
 	}
 
 	/**
@@ -383,7 +380,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		final String inDir = getInputFiles().get( 0 ).getAbsolutePath();
 		final int i = inDir.indexOf( File.separator + getInputFiles().get( 0 ).getName() );
 		final File dir = new File( inDir.substring( 0, i ) );
-		if( !dir.isDirectory() ) throw new Exception( "Module input directory not found! --> " + dir.getAbsolutePath() );
+		if( !dir.isDirectory() )
+			throw new Exception( "Module input directory not found! --> " + dir.getAbsolutePath() );
 
 		return dir;
 	}
@@ -594,6 +592,15 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
 
+	private static File dbCache = null;
+	// OTHER SCRIPT THAT MAY BE ADDED IN THE FUTURE
+	// public static final String VALIDATED_MAPPING = "_corrected.txt";
+	// private static final String OTUS_TREE_97 = "97_otus.tree";
+	// private static final String TAXA_TREE = "taxa.tre";
+	// private static final String SCRIPT_FILTER_TREE = "filter_tree.py -i ";
+	// private static final String DIFF_OTU_SUMMARY = "differential_otu_summary.txt";
+	// private static final String SCRIPT_DIFF_ABUNDANCE = "differential_abundance.py -i ";
+	// private static final String SCRIPT_COMP_CORE_MB = "compute_core_microbiome.py ";
 	private static final String NORMALIZED_ALPHA = "_normalized_alpha";
 	private static final String NORMALIZED_ALPHA_LABEL = "_alpha_label";
 	private static final String NUM_THREADS_PARAM = "-aO";
@@ -604,14 +611,5 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	private static final String QIIME_DOCKER_CONFIG = DockerUtil.ROOT_HOME + "/.qiime_config";
 	private static final String UNDEFINED = "UNDEFINED";
 	private static final String VSEARCH_NUM_THREADS_PARAM = "--threads";
-
-	// OTHER SCRIPT THAT MAY BE ADDED IN THE FUTURE
-	// public static final String VALIDATED_MAPPING = "_corrected.txt";
-	// private static final String OTUS_TREE_97 = "97_otus.tree";
-	// private static final String TAXA_TREE = "taxa.tre";
-	// private static final String SCRIPT_FILTER_TREE = "filter_tree.py -i ";
-	// private static final String DIFF_OTU_SUMMARY = "differential_otu_summary.txt";
-	// private static final String SCRIPT_DIFF_ABUNDANCE = "differential_abundance.py -i ";
-	// private static final String SCRIPT_COMP_CORE_MB = "compute_core_microbiome.py ";
 
 }
