@@ -8,14 +8,18 @@
     <button class="dropbtn" onclick="projectOptions()">Projects (Click here to start)</button>
     <div class="dropdown-content" id="projects">
       <a onclick="newProj()" href="#">New</a>
-      <a id="openAwsSettings">AWS Mini-dashboard</a>
       <a >Open BLJ config with file picker <input type="file" accept=".txt,.properties" id="localFile"></a>
-      <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
-      <a id="restartListAnchor" href="#">Modify configuration of a previously launched project </a>
-      <a id="recent" href="#">(Auto)Saved configuration</a>
+      <a id="recent" href="#">(Auto)Saved Configurations</a>
     </div>
+    <button class="dropbtn" id="prevConfigNavBut">Previously Launched Pipeline</button>
+    <button class="dropbtn"
+    onclick='document.getElementById("projects").classList.toggle("show")'
+    >Settings</button>
+      <div id="settingsContent" class="dropdown-content">
+        <a id="openAwsSettings">AWS Mini-dashboard</a>
+        <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
+      </div>
   </div>
-  <button class="dropbtn" id="prevConfigNavBut">Previously run config</button>
 </div>
 
 <div class="banner">BioLockJ</div>
@@ -1268,7 +1272,7 @@
 <script type="text/javascript" src="./../javascripts/config_config.js"></script>
 <script type="text/javascript" src="./../javascripts/tests/standPropsAllPresent.js"></script>
 <script type="text/javascript" src="./../javascripts/awsMiniDash.js"></script>
-<script type="module" src="./../javascripts/config_aws.js"></script>
+<!-- <script type="module" src="./../javascripts/config_aws.js"></script> -->
 
 <!-- <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>

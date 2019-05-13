@@ -675,29 +675,6 @@ document.getElementById("recent").addEventListener("mouseover", function() {
  once: true
 });
 
-//eventlistener for adding the recent config files to "recent"
-document.getElementById("restartListAnchor").addEventListener("mouseover", function() {
-  const configs = retrievePipelines();
-  configs.then(retrievedConfigs => {
-    console.log('retrievedConfigs: ', retrievedConfigs);
-    for (let i = 0; i < retrievedConfigs.names.length; i++) {
-      console.log('retrievedConfigs.names[i]: ', retrievedConfigs.names[i]);
-      let opt = document.createElement('a');
-      let text = document.createTextNode(retrievedConfigs.names[i]);
-      opt.addEventListener("click", function() {
-        loadConfigPathToForm(retrievedConfigs.paths[i]);
-        })
-      opt.appendChild(text);
-      opt.classList.add('recentConfigs');
-      let proj = document.getElementById("restartListAnchor");
-      proj.appendChild(opt);
-      console.log('added opt', opt);
-    };
-  })
-}, {
- once: true
-});
-
 const createDownload = document.getElementsByClassName('createDownload');
 for (var i = 0; i < createDownload.length; i++) {
   createDownload[i].addEventListener('click', function() {
