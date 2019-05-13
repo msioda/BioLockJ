@@ -45,7 +45,9 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		if( MetaUtil.exists() && hasRModules() && !DockerUtil.isDirectMode() ) {
+		if( getMetadata( true ) != null && hasRModules() && !DockerUtil.isDirectMode() ) {
+			MetaUtil.setFile( getMetadata( true ) );
+			MetaUtil.refreshCache();
 			RMetaUtil.classifyReportableMetadata( this );
 		}
 	}
@@ -245,12 +247,11 @@ public class ImportMetadata extends BioModuleImpl {
 	 * @throws Exception if required Config values are missing or invalid
 	 */
 	protected String parseRow( final String line, final boolean isHeader ) throws Exception {
+		Log.info( getClass(), "Parse metadata " + (isHeader ? "HEADER" : "RECORD" ) + ": " + line );
 		final String[] cells = line.split( inputDelim, -1 );
 		int colNum = 1;
-
 		final StringBuffer sb = new StringBuffer();
 		for( String cell: cells ) {
-
 			cell = cell.trim();
 			if( inQuotes( cell ) ) {
 				cell = getQuotedValue( cell );
@@ -273,7 +274,8 @@ public class ImportMetadata extends BioModuleImpl {
 			}
 
 			Log.debug( getClass(), "====> Set Row # [" + this.rowNum + "] - Column#[" + colNum + "] = " + cell );
-			sb.append( cell + ( colNum++ > 1 ? TAB_DELIM: "" ) );
+			sb.append( cell );
+			if( colNum++ < cells.length ) sb.append( Constants.TAB_DELIM );
 		}
 		this.rowNum++;
 		return sb.toString() + RETURN;

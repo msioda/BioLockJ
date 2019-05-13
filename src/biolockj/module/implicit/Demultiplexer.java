@@ -48,14 +48,14 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	 * <li>If {@link biolockj.Config}.{@value biolockj.util.DemuxUtil#DEMUX_STRATEGY} indicates use of barcodes to
 	 * demultiplexer, validate metadata column named
 	 * {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_BARCODE_COLUMN} exists
-	 * <li>Call {@link #setMultiplexedConfig()} to set multiplexed Config if needed
+	 * <li>Call {@link biolockj.util.DemuxUtil#setMultiplexedConfig()} to set multiplexed Config if needed
 	 * <li>If {@link biolockj.Config}.{@value biolockj.util.DemuxUtil#BARCODE_CUTOFF} defined, validate between 0.0 -
 	 * 1.0
 	 * </ol>
 	 */
 	@Override
 	public void checkDependencies() throws Exception {
-		setMultiplexedConfig();
+		DemuxUtil.setMultiplexedConfig();
 		getBarcodeCutoff();
 		final String demuxStrategy = "Config property [ " + DemuxUtil.DEMUX_STRATEGY + "="
 			+ Config.getString( this, DemuxUtil.DEMUX_STRATEGY ) + " ]";
@@ -434,31 +434,6 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		return validHeaders;
 	}
 
-	/**
-	 * Set the {@link biolockj.Config} properties needed to read the sample IDs from a multiplexed file if no barcode is
-	 * provided<br>
-	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INPUT_TRIM_PREFIX} = 1st sequence header character.<br>
-	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INPUT_TRIM_SUFFIX}
-	 * ={@value #SAMPLE_ID_SUFFIX_TRIM_DEFAULT}<br>
-	 *
-	 * @throws Exception if unable to update the property values
-	 */
-	protected void setMultiplexedConfig() throws Exception {
-		if( DemuxUtil.sampleIdInHeader() ) {
-			final String defaultSeqHeadChar = Config.requireString( this, Constants.INTERNAL_SEQ_HEADER_CHAR );
-
-			if( Config.getString( this, Constants.INPUT_TRIM_PREFIX ) == null ) {
-				Config.setConfigProperty( Constants.INPUT_TRIM_PREFIX, defaultSeqHeadChar );
-				Log.info( getClass(), "====> Set: " + Constants.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
-			}
-
-			if( Config.getString( this, Constants.INPUT_TRIM_SUFFIX ) == null ) {
-				Config.setConfigProperty( Constants.INPUT_TRIM_SUFFIX, SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
-				Log.info( getClass(),
-					"====> Set: " + Constants.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
-			}
-		}
-	}
 
 	private void buildSummaryAndSetConfig( final File file, final long numReads, final long headerFwBarcodes,
 		final long seqFwBarcodes, final long headerRvBarcodes, final long seqRvBarcodes ) throws Exception {
@@ -680,12 +655,4 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	 * Module splits multiplexed file into smaller files with this number of lines: {@value #NUM_LINES_TEMP_FILE}
 	 */
 	protected static final int NUM_LINES_TEMP_FILE = 2000000;
-
-	/**
-	 * Multiplexed files created by BioLockJ may add sample ID to the sequence header if no barcode is provided.<br>
-	 * If sample ID is added, it is immediately followed by the character: {@value #SAMPLE_ID_SUFFIX_TRIM_DEFAULT}<br>
-	 * This value can be used then to set {@link biolockj.Config}.{@value biolockj.Constants#INPUT_TRIM_SUFFIX}
-	 */
-	protected static final String SAMPLE_ID_SUFFIX_TRIM_DEFAULT = "_";
-
 }

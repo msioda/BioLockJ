@@ -403,7 +403,7 @@ public class RuntimeParamUtil {
 
 	private static String getDir( final String path ) {
 		if( path != null && path.endsWith( File.separator ) ) return path.substring( 0, path.length() - 1 );
-		return path;
+		return Config.replaceEnvVar( path );
 	}
 
 	private static String getDirectModuleParam( final BioModule module ) {

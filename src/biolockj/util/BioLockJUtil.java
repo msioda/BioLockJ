@@ -451,9 +451,9 @@ public class BioLockJUtil {
 	 * @param file File to ignore
 	 */
 	public static void ignoreFile( final File file ) {
-		final Set<String> ignoreFileName = Config.getSet( null, Constants.INPUT_IGNORE_FILES );
-		ignoreFileName.add( file.getName() );
-		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignoreFileName );
+		final Set<String> ignoredFileNames = Config.getSet( null, Constants.INPUT_IGNORE_FILES );
+		ignoredFileNames.add( file.getName() );
+		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignoredFileNames );
 	}
 
 	/**

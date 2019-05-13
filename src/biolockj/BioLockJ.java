@@ -131,7 +131,6 @@ public class BioLockJ {
 		info( "Total number of input files: " + allFiles.size() );
 		int i = 0;
 		for( final File file: allFiles ) {
-			BioLockJUtil.ignoreFile( file );
 			info( "Pipeline Input [ " + i++ + " ]: " + file.getAbsolutePath() );
 		}
 

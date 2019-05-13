@@ -13,6 +13,7 @@ package biolockj.util;
 
 import java.util.*;
 import biolockj.Config;
+import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigNotFoundException;
 
@@ -52,6 +53,33 @@ public class DemuxUtil {
 	public static boolean barcodeInSeq() throws ConfigNotFoundException {
 		return Config.getString( null, DEMUX_STRATEGY ) != null
 			&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
+	}
+	
+
+	/**
+	 * Set the {@link biolockj.Config} properties needed to read the sample IDs from a multiplexed file if no barcode is
+	 * provided<br>
+	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INPUT_TRIM_PREFIX} = 1st sequence header character.<br>
+	 * Set {@link biolockj.Config}.{@value biolockj.Constants#INPUT_TRIM_SUFFIX}
+	 * ={@value #SAMPLE_ID_SUFFIX_TRIM_DEFAULT}<br>
+	 *
+	 * @throws Exception if unable to update the property values
+	 */
+	public static void setMultiplexedConfig() throws Exception {
+		if( DemuxUtil.sampleIdInHeader() ) {
+			final String defaultSeqHeadChar = Config.requireString( null, Constants.INTERNAL_SEQ_HEADER_CHAR );
+
+			if( Config.getString( null, Constants.INPUT_TRIM_PREFIX ) == null ) {
+				Config.setConfigProperty( Constants.INPUT_TRIM_PREFIX, defaultSeqHeadChar );
+				Log.info( DemuxUtil.class, "====> Set: " + Constants.INPUT_TRIM_PREFIX + " = " + defaultSeqHeadChar );
+			}
+
+			if( Config.getString( null, Constants.INPUT_TRIM_SUFFIX ) == null ) {
+				Config.setConfigProperty( Constants.INPUT_TRIM_SUFFIX, SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
+				Log.info( DemuxUtil.class,
+					"====> Set: " + Constants.INPUT_TRIM_SUFFIX + " = " + SAMPLE_ID_SUFFIX_TRIM_DEFAULT );
+			}
+		}
 	}
 
 	/**
@@ -153,8 +181,14 @@ public class DemuxUtil {
 	 * @return boolean
 	 */
 	public static boolean sampleIdInHeader() {
-		return Config.getString( null, DEMUX_STRATEGY ) != null
-			&& Config.getString( null, DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER );
+		try {
+			return ( Config.getString( null, DEMUX_STRATEGY ) != null
+					&& Config.getString( null, DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER ) ) 
+					|| !demuxWithBarcode();
+		} catch( Exception ex ) {
+			Log.warn( DemuxUtil.class, "Failed to determine demux strategy" );
+			return false;
+		}
 	}
 
 	/**
@@ -250,6 +284,13 @@ public class DemuxUtil {
 	 * {@link biolockj.Config} property {@value #DEMUX_STRATEGY} option: {@value #OPTION_ID_IN_HEADER}
 	 */
 	public static final String OPTION_ID_IN_HEADER = "id_in_header";
+	
+	/**
+	 * Multiplexed files created by BioLockJ may add sample ID to the sequence header if no barcode is provided.<br>
+	 * If sample ID is added, it is immediately followed by the character: {@value #SAMPLE_ID_SUFFIX_TRIM_DEFAULT}<br>
+	 * This value can be used then to set {@link biolockj.Config}.{@value biolockj.Constants#INPUT_TRIM_SUFFIX}
+	 */
+	protected static final String SAMPLE_ID_SUFFIX_TRIM_DEFAULT = "_";
 
 	private static final Map<String, String> idMap = new HashMap<>();
 

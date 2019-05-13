@@ -147,11 +147,9 @@ public class MetaUtil {
 	public static List<String> getFieldValues( final String field, final boolean ignoreNulls )
 		throws MetadataException {
 		final List<String> vals = new ArrayList<>();
-		if( !exists() ) return vals;
 		if( !getFieldNames().contains( field ) ) throw new MetadataException(
 			"Invalid field [" + field + "] in Metadata = " + getPath()  );
 
-		
 		for( final String id: getSampleIds() ) {
 			final String val = getField( id, field );
 			if( val != null && val.trim().length() > 0 && !val.equals( getNullValue( null ) ) || !ignoreNulls ) {
@@ -294,7 +292,6 @@ public class MetaUtil {
 	 * @throws MetadataException if Sample ID not found or metadata file doesn't exist
 	 */
 	public static List<String> getRecord( final String sampleId ) throws MetadataException {
-		if( !exists() ) return new ArrayList<>();
 		if( metadataMap == null || !metadataMap.keySet().contains( sampleId ) )
 			throw new MetadataException( "Invalid Sample ID: " + sampleId );
 		return metadataMap.get( sampleId );
@@ -306,7 +303,6 @@ public class MetaUtil {
 	 * @return Sample IDs found in metadata file
 	 */
 	public static List<String> getSampleIds() {
-		if( !exists() ) return new ArrayList<>();
 		final List<String> ids = new ArrayList<>();
 		for( final String key: metadataMap.keySet() )
 			if( !key.equals( metaId ) ) {
@@ -496,7 +492,7 @@ public class MetaUtil {
 				if( isUpdated() ) {
 					Log.debug( MetaUtil.class, "Metadata Headers: " + row );
 				}
-			} else if( rowNum++ == 1 && isUpdated() ) {
+			} else if( rowNum == 1 && isUpdated() ) {
 				Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
 			}
 
@@ -507,6 +503,7 @@ public class MetaUtil {
 				}
 				metadataMap.put( id, row );
 			}
+			rowNum++;
 		}
 	}
 
