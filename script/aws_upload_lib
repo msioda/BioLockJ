@@ -186,7 +186,7 @@ stage_local_aws() {
 # Param 1 (optional) - Flag to use existing AWS Cloud
 stage_pipeline() {
 	aws_log "Starting --> [  stage_pipeline ${@}  ]"
-	if [ $# -eq 0 ]; then
+	if [ "$systemStatus" == "createEc2" ]; then
 		stage_local_aws
 		upload_file_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
 		upload_file_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"

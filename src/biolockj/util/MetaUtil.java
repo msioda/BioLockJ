@@ -130,7 +130,6 @@ public class MetaUtil {
 	public static List<String> getFieldNames() {
 		try {
 			return getRecord( metaId );
-
 		} catch( final MetadataException ex ) {
 			Log.error( MetaUtil.class, "Error occurred accessing Config property: " + META_FILE_PATH, ex );
 		}
@@ -147,10 +146,12 @@ public class MetaUtil {
 	 */
 	public static List<String> getFieldValues( final String field, final boolean ignoreNulls )
 		throws MetadataException {
+		final List<String> vals = new ArrayList<>();
+		if( !exists() ) return vals;
 		if( !getFieldNames().contains( field ) ) throw new MetadataException(
 			"Invalid field [" + field + "] in Metadata = " + getPath()  );
 
-		final List<String> vals = new ArrayList<>();
+		
 		for( final String id: getSampleIds() ) {
 			final String val = getField( id, field );
 			if( val != null && val.trim().length() > 0 && !val.equals( getNullValue( null ) ) || !ignoreNulls ) {
@@ -293,6 +294,7 @@ public class MetaUtil {
 	 * @throws MetadataException if Sample ID not found or metadata file doesn't exist
 	 */
 	public static List<String> getRecord( final String sampleId ) throws MetadataException {
+		if( !exists() ) return new ArrayList<>();
 		if( metadataMap == null || !metadataMap.keySet().contains( sampleId ) )
 			throw new MetadataException( "Invalid Sample ID: " + sampleId );
 		return metadataMap.get( sampleId );
@@ -304,6 +306,7 @@ public class MetaUtil {
 	 * @return Sample IDs found in metadata file
 	 */
 	public static List<String> getSampleIds() {
+		if( !exists() ) return new ArrayList<>();
 		final List<String> ids = new ArrayList<>();
 		for( final String key: metadataMap.keySet() )
 			if( !key.equals( metaId ) ) {
@@ -325,7 +328,7 @@ public class MetaUtil {
 	 */
 	public static String getSystemMetaCol( final BioModule module, final String col )
 		throws MetadataException, FileNotFoundException, IOException {
-		final File outputMeta = new File( module.getOutputDir().getAbsolutePath() + File.separator + getFileName() );
+		final File outputMeta = module.getMetadata( false );
 		if( ModuleUtil.isComplete( module ) || outputMeta.isFile() ) {
 			if( outputMeta.isFile() ) {
 				setFile( outputMeta );
@@ -356,7 +359,7 @@ public class MetaUtil {
 	 * @return TRUE if columnName exists in hearder row of metadata file
 	 */
 	public static boolean hasColumn( final String columnName ) {
-		return columnName != null && getFieldNames().contains( columnName );
+		return exists() && columnName != null && getFieldNames().contains( columnName );
 	}
 
 	/**
