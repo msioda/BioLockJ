@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.Log;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
 import biolockj.util.*;
@@ -28,7 +29,7 @@ import biolockj.util.*;
 public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -56,13 +57,10 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 		this.sampleIds.addAll( MetaUtil.getSampleIds() );
 		if( MetaUtil.getFieldNames().contains( NUM_READS ) ) {
 			if( MetaUtil.getFieldValues( NUM_READS, false ).size() == MetaUtil.getSampleIds().size() ) {
-				Log.warn( getClass(),
-					NUM_READS + " column already fully populated in metadata file :" + MetaUtil.getPath() );
+				Log.warn( getClass(), NUM_READS + " column already  populated in: " + MetaUtil.getPath() );
 				FileUtils.copyFileToDirectory( MetaUtil.getMetadata(), getOutputDir() );
-				final File metaFile = new File(
-					getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-				if( !metaFile.isFile() )
-					throw new Exception( "FileUtils.copyFileToDirectory did not successfully copy the metadata file" );
+				if( getMetadata( true ) == null )
+					throw new Exception( "FileUtils.copyFileToDirectory failed to copy metadata to module output dir" );
 				return;
 			}
 

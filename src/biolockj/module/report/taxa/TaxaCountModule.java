@@ -27,7 +27,7 @@ import biolockj.util.TaxaUtil;
 public abstract class TaxaCountModule extends JavaModuleImpl {
 
 	@Override
-	public List<File> getInputFiles() throws Exception {
+	public List<File> getInputFiles() {
 		if( getFileCache().isEmpty() ) {
 			final List<File> files = new ArrayList<>();
 			for( final File f: findModuleInputFiles() ) {

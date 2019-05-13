@@ -106,11 +106,11 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 
 				writer.write( key + TAB_DELIM );
 				if( !hasQm1 ) {
-					writer.write( Config.requireString( this, MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
+					writer.write( MetaUtil.getNullValue( this ) + TAB_DELIM );
 				}
 
 				if( !hasQm2 ) {
-					writer.write( Config.requireString( this, MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
+					writer.write( MetaUtil.getNullValue( this ) + TAB_DELIM );
 				}
 
 				final StringTokenizer st = new StringTokenizer( metaLines.get( key ), TAB_DELIM );
@@ -276,8 +276,8 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 	/**
 	 * Call validate_mapping_file.py to get corrected QIIME Mapping.
 	 */
-	private String validateMapping() throws Exception {
-		return SCRIPT_VALIDATE_MAPPING + " -p -b -m " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
+	private String validateMapping() {
+		return SCRIPT_VALIDATE_MAPPING + " -pbm " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
 			+ Constants.QIIME_DEMUX_COL;
 	}
 
@@ -285,7 +285,7 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 		return " $" + ( cols.indexOf( name ) + 1 );
 	}
 
-	private static List<String> getMetaCols() throws Exception {
+	private static List<String> getMetaCols() {
 		final List<String> cols = new ArrayList<>();
 		cols.add( MetaUtil.getID() );
 		cols.addAll( MetaUtil.getFieldNames() );

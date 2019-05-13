@@ -14,28 +14,32 @@ package biolockj.module;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import biolockj.Log;
+import biolockj.exception.SequnceFormatException;
 import biolockj.util.SeqUtil;
 
 /**
  * Superclass for SeqModules that take sequence files as input for pre-processing prior to classification.
  */
 public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModule {
+
 	/**
 	 * Return {@link #getSeqFiles(Collection)} to filter standard module input files.
-	 *
-	 * @throws Exception thrown if any runtime error occurs
 	 */
 	@Override
-	public List<File> getInputFiles() throws Exception {
+	public List<File> getInputFiles() {
 		if( getFileCache().isEmpty() ) {
-			cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+			try {
+				cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+			} catch( final SequnceFormatException ex ) {
+				Log.error( getClass(), "Unable to find module input sequence files: " + ex.getMessage(), ex );
+			}
 		}
-
 		return getFileCache();
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -44,12 +48,9 @@ public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModul
 	 */
 	@Override
 	public String getSummary() throws Exception {
-		String summary = "";
-		if( this instanceof DatabaseModule && ( (DatabaseModule) this ).getDB() != null ) {
-			summary = "Used Database: " + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
-		}
-
-		return super.getSummary() + summary;
+		if( this instanceof DatabaseModule && ( (DatabaseModule) this ).getDB() != null ) return super.getSummary()
+			+ "Used Database: " + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
+		return super.getSummary();
 	}
 
 	@Override

@@ -39,13 +39,12 @@ public class QiimeParser extends ParserModuleImpl {
 	 * Get only the lowest level report since it contains taxa info for all higher OTU reports.
 	 */
 	@Override
-	public List<File> getInputFiles() throws Exception {
+	public List<File> getInputFiles() {
 		File lowestLevelReport = null;
 		Integer levelNum = null;
 		for( final File file: super.getInputFiles() ) {
 			final Integer reportLevel = Integer.valueOf(
 				file.getName().substring( Constants.OTU_TABLE_PREFIX.length() + 2, file.getName().length() - 4 ) );
-
 			if( levelNum == null || levelNum < reportLevel ) {
 				levelNum = reportLevel;
 				lowestLevelReport = file;

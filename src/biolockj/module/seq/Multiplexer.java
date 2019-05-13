@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 import biolockj.*;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
@@ -48,7 +49,7 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 

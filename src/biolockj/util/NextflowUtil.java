@@ -89,6 +89,20 @@ public class NextflowUtil {
 	}
 
 	/**
+	 * Get S3 Transfer timeout limit - default = 30 minutes if undefined
+	 * 
+	 * @return Number of minutes beforer S3 transfer thread will abort
+	 */
+	public static int getS3_TransferTimeout() {
+		try {
+			return Config.requirePositiveInteger( null, Constants.AWS_S3_XFER_TIMEOUT );
+		} catch( final Exception ex ) {
+			Log.error( NextflowUtil.class, "Error occurred waiting for subprocess to compelete!", ex );
+		}
+		return DEFAULT_S3_TIMEOUT;
+	}
+
+	/**
 	 * Return true if the Nextflow log has been saved to the pipeline root directory
 	 * 
 	 * @return TRUE if log exists in pipeline root directory
@@ -174,6 +188,23 @@ public class NextflowUtil {
 	}
 
 	/**
+	 * Save success flag, so after pipeline bash start script can stop/terminate S3 instances if successful.
+	 */
+	public static void saveNextflowSuccessFlag() {
+		try {
+			final File f = BioLockJUtil
+				.createFile( DockerUtil.EC2_HOME + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
+			if( f.isFile() ) {
+				Log.info( NextflowUtil.class, "Created pipeline success file: " + f.getAbsolutePath() );
+			} else {
+				Log.warn( NextflowUtil.class, "Failed to generate pipeline success file: " + f.getAbsolutePath() );
+			}
+		} catch( final Exception ex ) {
+			Log.error( NextflowUtil.class, "Error occurred attempting to save pipeline success indicator file", ex );
+		}
+	}
+
+	/**
 	 * Before any AWS or Nextflow functionality can be used, the Docker root user $HOME directory must be updated with
 	 * the EC2 user aws + Nextflow config.
 	 * 
@@ -223,7 +254,7 @@ public class NextflowUtil {
 
 	/**
 	 * Stop Nextflow process (required since parent Java process that ran BioLockJ pipeline will not halt until this
-	 * subprocess is finished.  Also create pipeline success flag file in $HOME dir on the EC2 head node.
+	 * subprocess is finished. Also create pipeline success flag file in $HOME dir on the EC2 head node.
 	 */
 	public static void stopNextflow() {
 		if( nfMainThread != null ) {
@@ -231,24 +262,15 @@ public class NextflowUtil {
 			Processor.deregisterThread( nfMainThread );
 			Log.info( NextflowUtil.class, "Nextflow process thread de-registered" );
 		}
-		
+
 		try {
 			while( Processor.subProcsAlive() ) {
 				Log.warn( NextflowUtil.class, "Standard execution complete - waiting for S3-Data-xFers to complete" );
 				Thread.sleep( BioLockJUtil.minutesToMillis( 1 ) );
 			}
-			
-			final File f = BioLockJUtil.createFile( DockerUtil.EC2_HOME + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
-			if( f.isFile() )
-				Log.warn( NextflowUtil.class,  "Created pipeline complete file: " + f.getAbsolutePath() );
-			else 
-				Log.warn( NextflowUtil.class,  "Failed to generate pipeline complete file" );
-			
-			
 		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Error occurred waiting for subprocess to compelete!", ex );
 		}
-		
 	}
 
 	/**
@@ -554,6 +576,7 @@ public class NextflowUtil {
 
 	private static final String AWS_DIR = ".aws";
 
+	private static final Integer DEFAULT_S3_TIMEOUT = 30;
 	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";

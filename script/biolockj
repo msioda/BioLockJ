@@ -70,14 +70,7 @@ init() {
 
 # Launch AWS pipeline
 launchAwsPipeline() {
-
-	run_aws "$runAws" start ${runExistingAws}
-
-	if [ $? -eq 0 ]; then
-		exit_script "Successfully ran AWS Pipeline" 0
-	else
-		exit_script "Error [ biolockj ]: AWS Pipeline failed"
-	fi
+	run_aws "$runAws" ${runExistingAws}
 }
 
 # Launch local pipeline

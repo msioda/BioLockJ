@@ -78,6 +78,7 @@ cache_key_pair() {
 # Deploy AWS cloud formation AMI, S3 Bucket, EC2-KeyPair, Cloud Formation Stack, and Compute Environment
 # Confirm any configured values exist, create objects that are undefined as store them in AWS config
 deploy_cloud_formation() {
+	aws_log "Starting --> [  deploy_cloud_formation  ]"
 	refresh_aws_cache && build_s3 && get_ami && set_stack_name && cache_key_pair && verify_stack
 }
 
@@ -140,13 +141,13 @@ is_stack_complete() {
 
 # Main method #1, called to build AWS environment and launch BioLockJ pipeline on AWS
 # Param 1 - Pipeline Config file-path
-# Param 2 - Start Pipeline
-# Param 3 - Flag to use existing AWS cloud
+# Param 2 - Flag to use existing AWS cloud
 run_aws() {
-	[ $# -eq 0 ] || [ ! -f "${1}" ] && exit_script "Error [ aws_config_lib.run_aws() ]: Required pipeline Config file not found: \"$1\""
-	init_aws_config "${1}" ${3}
-	[ ${#3} -eq 0 ] && deploy_cloud_formation
-	launch_ec2_head_node ${2} ${3}
+	aws_log "Starting --> [  run_aws ${@}  ]"
+	[ ! -f "${1}" ] && exit_script "Error [ aws_functions.run_aws() ]: Required pipeline Config file not found: \"$1\""
+	init_aws_config "${1}" ${2}
+	[ $# -eq 1 ] && deploy_cloud_formation
+	launch_ec2_head_node ${2}
 }
 
 

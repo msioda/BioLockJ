@@ -106,7 +106,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) {
 		return getInputFiles();
 	}
 

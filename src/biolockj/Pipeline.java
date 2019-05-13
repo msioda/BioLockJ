@@ -231,23 +231,6 @@ public class Pipeline {
 	}
 
 	/**
-	 * If the bioModule is complete and contains a metadata file in its output directory, return the metadata file,
-	 * since it must be a new version.
-	 *
-	 * @param bioModule BioModule
-	 * @return New metadata file (or null)
-	 */
-	protected static File getMetadata( final BioModule bioModule ) {
-		if( bioModule != null ) {
-			final File metadata = new File(
-				bioModule.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-			if( metadata.isFile() ) return metadata;
-		}
-
-		return null;
-	}
-
-	/**
 	 * Initialization occurs by calling {@link biolockj.module.BioModule} methods on configured modules<br>
 	 * <ol>
 	 * <li>Create module sub-directories under {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} as ordered in
@@ -343,15 +326,10 @@ public class Pipeline {
 	 * @throws Exception if unable to refresh the cache
 	 */
 	protected static void refreshOutputMetadata( final BioModule module ) throws Exception {
-		if( module != null ) {
-			final File metadata = new File(
-				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
+		if( module == null || module.getMetadata( true ) == null ) return;
+		MetaUtil.setFile( module.getMetadata( true ) );
+		MetaUtil.refreshCache();
 
-			if( metadata.isFile() ) {
-				MetaUtil.setFile( metadata );
-				MetaUtil.refreshCache();
-			}
-		}
 	}
 
 	/**

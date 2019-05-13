@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
 import biolockj.module.implicit.RegisterNumReads;
@@ -38,7 +39,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 

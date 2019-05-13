@@ -26,14 +26,13 @@ import biolockj.util.OtuUtil;
 public abstract class OtuCountModule extends JavaModuleImpl {
 
 	@Override
-	public List<File> getInputFiles() throws Exception {
+	public List<File> getInputFiles() {
 		if( getFileCache().isEmpty() ) {
 			final List<File> files = new ArrayList<>();
-			for( final File f: findModuleInputFiles() ) {
+			for( final File f: findModuleInputFiles() )
 				if( OtuUtil.isOtuFile( f ) ) {
 					files.add( f );
 				}
-			}
 			cacheInputFiles( files );
 		}
 		return getFileCache();

@@ -313,13 +313,11 @@ public class JsonReport extends JavaModuleImpl {
 	 * Check pipeline input to see if OTU summary file is the only pipeline input file.
 	 *
 	 * @return TRUE if pipeline input
-	 * @throws Exception if errors occur
 	 */
-	protected static boolean pipelineInputContainsOtuSummary() throws Exception {
+	protected static boolean pipelineInputContainsOtuSummary() {
 		final Iterator<File> it = BioLockJUtil.getPipelineInputFiles().iterator();
-		while( it.hasNext() ) {
+		while( it.hasNext() )
 			if( it.next().getName().endsWith( getInputFileSuffix() ) ) return true;
-		}
 		return false;
 	}
 
@@ -329,13 +327,11 @@ public class JsonReport extends JavaModuleImpl {
 		if( nodeLevel < TaxaUtil.getTaxaLevels().size() ) {
 			// getting all JsonNodes for the nodeLevel
 			final Set<JsonNode> jsonNodes = jsonMap.get( TaxaUtil.getTaxaLevels().get( nodeLevel ) );
-
 			if( jsonNodes != null ) {
-				for( final JsonNode innerNode: jsonNodes ) {
+				for( final JsonNode innerNode: jsonNodes )
 					if( innerNode.getParent().equals( node ) ) {
 						childNodes.add( innerNode );
 					}
-				}
 			}
 		}
 		return childNodes;

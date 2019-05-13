@@ -15,6 +15,7 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
 import biolockj.*;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
 import biolockj.module.implicit.RegisterNumReads;
@@ -41,7 +42,6 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	@Override
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
-
 		if( DockerUtil.inDockerEnv() ) {
 			Config.requireString( null, Constants.INPUT_TRIM_SEQ_FILE );
 		} else {
@@ -59,7 +59,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -74,9 +74,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 			for( final String msg: summaryMsgs ) {
 				sb.append( msg + RETURN );
 			}
-
 			return sb.toString() + super.getSummary();
-
 		} catch( final Exception ex ) {
 			Log.warn( getClass(), "Unable to complete module summary! " + ex.getMessage() );
 		}
@@ -341,7 +339,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		return primers;
 	}
 
-	private List<File> getFwReads( final Map<File, File> pairedReads ) throws Exception {
+	private List<File> getFwReads( final Map<File, File> pairedReads ) {
 		if( pairedReads != null ) return new ArrayList<>( pairedReads.keySet() );
 		return getInputFiles();
 	}

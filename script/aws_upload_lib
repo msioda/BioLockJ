@@ -75,10 +75,10 @@ build_start_script() {
 	echo "##  1) Pull the latest biolockj image from Docker Hub            ##" >> "${ss}"
 	echo "##  2) Clear stale Docker images/containers (if any)             ##" >> "${ss}"
 	echo "##  3) Run dockblj on the AWS Config                             ##" >> "${ss}"
-	echo "##  4) Reset Nextflow-modified ${EFS} owner and access privs     ##" >> "${ss}"
+	echo "##  4) Reset Nextflow-modified EFS dir owner and access privs    ##" >> "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo '. ~/.bash_profile' >> "${ss}"
-	echo "flagFile=$( echo $(get_config ec2) | cut -f1 -d".")-success" >> "${ss}"
+	echo "flagFile=${EC2_HOME}/start-$(get_config_name)-success" >> "${ss}"
 	echo '[ -f "${flagFile}" ] && rm "${flagFile}"' >> "${ss}"
 	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> "${ss}"
 	echo "clearDock" >> "${ss}"
@@ -86,7 +86,7 @@ build_start_script() {
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
 	if [ "${awsEc2EndState}" == "stop" ] || [ "${awsEc2EndState}" == "terminate" ]; then 
-		echo "[ -f \"${flagFile}\" ] && aws ec2 stop-instances --instance-ids \"${awsEc2InstanceID}\"" >> "${ss}"
+		echo '[ -f "${flagFile}" ] && aws ec2 stop-instances --instance-ids "${awsEc2InstanceID}"' >> "${ss}"
 		[ "${awsEc2EndState}" == "terminate" ] && echo "[ -f \"${flagFile}\" ] && aws ec2 terminate-instances --instance-id \"${awsEc2InstanceID}\"" >> "${ss}"
 	fi
 	chmod 770 "${ss}"
@@ -184,17 +184,17 @@ stage_local_aws() {
 
 # Upload local pipeline inputs and aws/nextflow config files to EFS
 # Param 1 (optional) - Flag to use existing AWS Cloud
-stage_pipeline_on_aws() {
-	
+stage_pipeline() {
+	aws_log "Starting --> [  stage_pipeline ${@}  ]"
 	if [ $# -eq 0 ]; then
 		stage_local_aws
 		upload_file_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
 		upload_file_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
 		upload_file_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
 		upload_file_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
-		exe_remote_cmd "mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile"
+		exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
 	else
-		exe_remote_cmd "[ ! -d ~/.aws/history ] && mkdir ~/.aws/history"
+		exe_remote_cmd '[ ! -d ~/.aws/history ] && mkdir ~/.aws/history'
 		exe_remote_cmd '[ -f ~/.aws/aws_config ] && mv ~/.aws/aws_config ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")'
 	fi
 

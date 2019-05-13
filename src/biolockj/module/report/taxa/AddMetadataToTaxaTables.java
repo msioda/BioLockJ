@@ -50,8 +50,8 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 
 			if( !this.hitRatioPerSample.isEmpty() ) {
 				for( final String key: this.hitRatioPerSample.keySet() ) {
-					if( this.hitRatioPerSample.get( key ) == null || this.hitRatioPerSample.get( key )
-						.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) ) {
+					if( this.hitRatioPerSample.get( key ) == null
+						|| this.hitRatioPerSample.get( key ).equals( MetaUtil.getNullValue( this ) ) ) {
 						this.hitRatioPerSample.put( key, "0.0" );
 					}
 				}
@@ -116,10 +116,9 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 			final String numReadsField = MetaUtil.getField( id, RegisterNumReads.getNumReadFieldName() );
 			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getOtuCountField() );
 
-			if( numReadsField == null || numHitsField == null
-				|| numReadsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) )
-				|| numHitsField.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) ) {
-				this.hitRatioPerSample.put( id, Config.requireString( this, MetaUtil.META_NULL_VALUE ) );
+			if( numReadsField == null || numHitsField == null || numReadsField.equals( MetaUtil.getNullValue( this ) )
+				|| numHitsField.equals( MetaUtil.getNullValue( this ) ) ) {
+				this.hitRatioPerSample.put( id, MetaUtil.getNullValue( this ) );
 			} else {
 				final long numReads = Long.valueOf( numReadsField );
 				if( numReads == 0L ) {

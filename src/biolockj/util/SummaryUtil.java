@@ -120,7 +120,6 @@ public class SummaryUtil {
 	public static String getFooter() throws Exception {
 		final long duration = System.currentTimeMillis() - Constants.APP_START_TIME;
 		final StringBuffer sb = new StringBuffer();
-		sb.append( EXT_SPACER + RETURN );
 		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( RUNTIME_ENV ) + "     " + getRuntimeEnv() + RETURN );
 		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
@@ -248,21 +247,14 @@ public class SummaryUtil {
 		try {
 
 			if( module.getOutputDir().listFiles().length == 0 ) return "# Files Output:  0" + RETURN;
-
 			final Collection<File> outFiles = FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE,
 				HiddenFileFilter.VISIBLE );
 			int count = outFiles.size();
-
 			BigInteger outAvg = FileUtils.sizeOfAsBigInteger( module.getOutputDir() );
-
-			File newMeta = new File(
-				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-
-			if( newMeta.isFile() && module.getOutputDir().listFiles().length > 1 ) {
+			final File newMeta = module.getMetadata( true );
+			if( newMeta != null && module.getOutputDir().listFiles().length > 1 ) {
 				count--;
 				outAvg = outAvg.subtract( FileUtils.sizeOfAsBigInteger( newMeta ) );
-			} else if( !newMeta.isFile() ) {
-				newMeta = null;
 			}
 
 			if( count == 0 ) {
@@ -279,8 +271,7 @@ public class SummaryUtil {
 			final String msg = "Unable to produce module output summary for: " + module.getClass().getName() + " : "
 				+ ex.getMessage();
 			sb.append( msg + RETURN );
-			Log.warn( SummaryUtil.class, msg );
-			ex.printStackTrace();
+			Log.error( SummaryUtil.class, msg, ex );
 		}
 
 		return sb.toString();
@@ -314,7 +305,6 @@ public class SummaryUtil {
 		if( hours.equals( "00" ) && minutes.equals( "00" ) && seconds.equals( "00" ) ) {
 			seconds = "01";
 		}
-
 		return hours + " hours : " + minutes + " minutes : " + seconds + " seconds";
 	}
 

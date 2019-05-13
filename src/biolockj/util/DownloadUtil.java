@@ -46,7 +46,10 @@ public final class DownloadUtil {
 	 * @throws Exception if {@link biolockj.Config} parameters are missing or invalid
 	 */
 	public static String getDownloadCmd() throws Exception {
+
 		final List<BioModule> modules = getDownloadModules();
+		Log.info( DownloadUtil.class,
+			"DownloadUtil building download command --> # downloadable modules: " + modules.size() );
 		if( buildRsyncCmd( modules ) ) {
 			boolean hasRmods = false;
 			final Set<File> downloadPaths = new TreeSet<>();

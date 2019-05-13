@@ -90,7 +90,7 @@ public class BioLockJUtil {
 	 * @throws Exception if errors occur attempting to save the file
 	 */
 	public static File createFile( final String path ) throws Exception {
-		final File f = new File ( path );
+		final File f = new File( path );
 		final FileWriter writer = new FileWriter( f );
 		writer.close();
 		if( !f.isFile() ) throw new Exception( "Unable to create status file: " + f.getAbsolutePath() );
@@ -366,26 +366,8 @@ public class BioLockJUtil {
 	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
 	 * 
 	 * @return Collection of pipeline input files
-	 * @throws ConfigNotFoundException if a required property is undefined
-	 * @throws ConfigPathException if configured directory does not exist on the file-system
-	 * @throws ConfigViolationException if input directories contain duplicate file names
-	 * @throws ConfigFormatException if Config properties have values that do not match variable type
 	 */
-	public static Collection<File> getPipelineInputFiles()
-		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException, ConfigFormatException {
-		if( inputFiles.isEmpty() ) {
-			Collection<File> files = new HashSet<>();
-			for( final File dir: getInputDirs() ) {
-				Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
-				files.addAll( findDups( files, removeIgnoredAndEmptyFiles(
-					FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) ) ) );
-			}
-			Log.info( BioLockJUtil.class, "# Initial input files found: " + files.size() );
-			files = removeIgnoredAndEmptyFiles( files );
-			inputFiles.addAll( files );
-			Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
-			setPipelineInputFileTypes();
-		}
+	public static Collection<File> getPipelineInputFiles() {
 		return inputFiles;
 	}
 
@@ -469,13 +451,32 @@ public class BioLockJUtil {
 	 * @param file File to ignore
 	 */
 	public static void ignoreFile( final File file ) {
-		final Set<String> ignore = new HashSet<>();
-		if( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) != null ) {
-			ignore.addAll( Config.getSet( null, Constants.INPUT_IGNORE_FILES ) );
-		}
+		final Set<String> ignoreFileName = Config.getSet( null, Constants.INPUT_IGNORE_FILES );
+		ignoreFileName.add( file.getName() );
+		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignoreFileName );
+	}
 
-		ignore.add( file.getName() );
-		Config.setConfigProperty( Constants.INPUT_IGNORE_FILES, ignore );
+	/**
+	 * Basic input files may be sequences, or any other file type acceptable in a pipeline module.
+	 * 
+	 * @throws ConfigNotFoundException if a required property is undefined
+	 * @throws ConfigPathException if configured directory does not exist on the file-system
+	 * @throws ConfigViolationException if input directories contain duplicate file names
+	 * @throws ConfigFormatException if Config properties have values that do not match variable type
+	 */
+	public static void initPipelineInput()
+		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException, ConfigFormatException {
+		Collection<File> files = new HashSet<>();
+		for( final File dir: getInputDirs() ) {
+			Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
+			files.addAll( findDups( files, removeIgnoredAndEmptyFiles(
+				FileUtils.listFiles( dir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) ) ) );
+		}
+		Log.info( BioLockJUtil.class, "# Initial input files found: " + files.size() );
+		files = removeIgnoredAndEmptyFiles( files );
+		inputFiles.addAll( files );
+		Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
+		setPipelineInputFileTypes();
 	}
 
 	/**
@@ -486,7 +487,6 @@ public class BioLockJUtil {
 	 */
 	public static String join( final Collection<?> collection ) {
 		if( collection == null || collection.isEmpty() ) return "";
-
 		final StringBuilder sb = new StringBuilder();
 		for( final Object item: collection ) {
 			sb.append( item.toString().trim() ).append( " " );
@@ -666,7 +666,6 @@ public class BioLockJUtil {
 
 	private static void setPipelineInputFileTypes() {
 		final Set<String> fileTypes = new HashSet<>();
-
 		for( final File file: inputFiles ) {
 			if( SeqUtil.isSeqFile( file ) ) {
 				fileTypes.add( PIPELINE_SEQ_INPUT_TYPE );

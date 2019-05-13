@@ -18,6 +18,7 @@ import java.util.*;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.ScriptModule;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.NextflowUtil;
 
 /**
  * {@link biolockj.module.ScriptModule}s that generate scripts will submit a main script to the OS for execution as a
@@ -218,13 +219,11 @@ public class Processor {
 	 * Check if any Subprocess threads are still running.
 	 * 
 	 * @return boolean TRUE if all complete
-	 * @throws Exception if errors occur
 	 */
-	public static boolean subProcsAlive() throws Exception {
+	public static boolean subProcsAlive() {
 		if( threadRegister.isEmpty() ) return false;
-		final long max = BioLockJUtil
-			.minutesToMillis( Config.getPositiveInteger( null, Constants.AWS_S3_XFER_TIMEOUT ) );
-		Log.warn( Processor.class,
+		final long max = BioLockJUtil.minutesToMillis( NextflowUtil.getS3_TransferTimeout() );
+		Log.info( Processor.class,
 			"Running Subprocess Threads will be terminated if incomplete after [ " + max + " ] minutes." );
 		for( final Thread t: threadRegister.keySet() ) {
 			if( t.isAlive() ) {

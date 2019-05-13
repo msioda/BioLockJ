@@ -18,9 +18,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * Superclass for standard BioModules (classifiers, parsers, etc). Sets standard behavior for many of the BioModule
@@ -70,12 +68,18 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 * BioModule {@link #getInputFiles()} is called to initialize upon first call and cached.
 	 */
 	@Override
-	public List<File> getInputFiles() throws Exception {
+	public List<File> getInputFiles() {
 		if( getFileCache().isEmpty() ) {
 			cacheInputFiles( findModuleInputFiles() );
 		}
-
 		return getFileCache();
+	}
+
+	@Override
+	public File getMetadata( final boolean requireFileExists ) {
+		final File newMeta = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
+		if( !requireFileExists || newMeta.isFile() ) return newMeta;
+		return null;
 	}
 
 	/**
@@ -180,16 +184,12 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 * Cache the input files for quick access on subsequent calls to {@link #getInputFiles()}
 	 * 
 	 * @param files Input files
-	 * @throws Exception if errors occur
 	 */
-	protected void cacheInputFiles( final Collection<File> files ) throws Exception {
-		if( files == null || files.isEmpty() ) throw new Exception( "No input files found!" );
+	protected void cacheInputFiles( final Collection<File> files ) {
 		this.inputFiles.clear();
 		this.inputFiles.addAll( files );
 		Collections.sort( this.inputFiles );
-
 		printInputFiles();
-
 	}
 
 	/**
@@ -199,9 +199,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 * Call {@link #isValidInputModule(BioModule)} on each previous module until acceptable input files are found<br>
 	 * 
 	 * @return Set of input files
-	 * @throws Exception if errors occur
 	 */
-	protected List<File> findModuleInputFiles() throws Exception {
+	protected List<File> findModuleInputFiles() {
 		final Set<File> moduleInputFiles = new HashSet<>();
 		Log.debug( getClass(), "Initialize input files..." );
 		boolean validInput = false;

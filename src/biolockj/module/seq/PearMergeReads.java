@@ -12,10 +12,13 @@
 package biolockj.module.seq;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.MetadataException;
 import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
@@ -93,9 +96,8 @@ public class PearMergeReads extends SeqModuleImpl {
 		super.cleanUp();
 		Config.setConfigProperty( Constants.INTERNAL_PAIRED_READS, Constants.FALSE );
 
-		final File updatedMeta = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-		if( updatedMeta.isFile() ) {
-			MetaUtil.setFile( updatedMeta );
+		if( getMetadata( true ) != null ) {
+			MetaUtil.setFile( getMetadata( true ) );
 			MetaUtil.refreshCache();
 		} else if( !MetaUtil.getFieldNames().contains( metaColName ) && this.readsPerSample != null ) {
 			Log.info( getClass(),
@@ -148,11 +150,10 @@ public class PearMergeReads extends SeqModuleImpl {
 		return lines;
 	}
 
-	private String getMetaColName() throws Exception {
+	private String getMetaColName() throws FileNotFoundException, MetadataException, IOException {
 		if( this.otuColName == null ) {
 			this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_MERGED_READS );
 		}
-
 		return this.otuColName;
 	}
 

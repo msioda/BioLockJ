@@ -217,7 +217,7 @@ public class BioModuleFactory {
 			&& Config.getBoolean( null, Constants.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
 	}
 
-	private boolean requireGunzip( final String module ) throws Exception {
+	private boolean requireGunzip( final String module ) {
 		return !this.foundSeqMod && hasGzippedInput() && isSeqProcessingModule( module )
 			&& module.toLowerCase().contains( Constants.QIIME );
 	}
@@ -285,7 +285,7 @@ public class BioModuleFactory {
 
 	}
 
-	private static boolean hasGzippedInput() throws Exception {
+	private static boolean hasGzippedInput() {
 		return !BioLockJUtil.getPipelineInputFiles().isEmpty()
 			&& SeqUtil.isGzipped( BioLockJUtil.getPipelineInputFiles().iterator().next().getName() );
 	}

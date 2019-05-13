@@ -18,6 +18,7 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
@@ -81,7 +82,7 @@ public class AwkFastaConverter extends SeqModuleImpl {
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -118,7 +119,7 @@ public class AwkFastaConverter extends SeqModuleImpl {
 		return "cp " + source + " " + getOutputDir().getAbsolutePath() + File.separator + target;
 	}
 
-	private boolean hasGzipped() throws Exception {
+	private boolean hasGzipped() {
 		for( final File f: getInputFiles() ) {
 			if( SeqUtil.isGzipped( f.getName() ) ) return true;
 		}

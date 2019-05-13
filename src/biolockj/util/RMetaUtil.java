@@ -325,13 +325,12 @@ public final class RMetaUtil {
 		}
 	}
 
-	private static List<String> getMetaCols( final BioModule module ) throws Exception {
+	private static List<String> getMetaCols( final BioModule module ) {
 		final List<String> cols = new ArrayList<>();
-		for( final String field: MetaUtil.getFieldNames() ) {
+		for( final String field: MetaUtil.getFieldNames() )
 			if( !isQiimeMetric( module, field ) ) {
 				cols.add( field );
 			}
-		}
 		return cols;
 	}
 

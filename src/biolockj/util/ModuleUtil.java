@@ -252,18 +252,12 @@ public class ModuleUtil {
 	public static boolean isMetadataModule( final BioModule module ) {
 		boolean foundMeta = false;
 		boolean foundOther = false;
-		try {
-			final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
-			for( final File f: files ) {
-				if( f.getName().equals( MetaUtil.getFileName() ) ) {
-					foundMeta = true;
-				} else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) ) {
-					foundOther = true;
-				}
-			}
-		} catch( final Exception ex ) {
-			return false;
+		final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
+		for( final File f: files ) {
+			if( f.getName().equals( MetaUtil.getFileName() ) ) foundMeta = true;
+			else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) ) foundOther = true;
 		}
+	
 		return foundMeta && !foundOther;
 	}
 

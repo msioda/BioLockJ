@@ -18,18 +18,21 @@ alias awsr="aws_report_config"
 alias awsrf="refresh_aws_cache"
 
 # Archive previous AWS Config properties file: $blj_aws_config
+# Param 1 - Run existing flag, if enabled, do not archive key.pem
 aws_archive() {
-	clear_aws_cache
+	clear_aws_cache ${1}
 	aws_history=~/.aws/history
 	aws_log "Archive AWS properties, key file, and start script to $aws_history"
 	[ ! -d $aws_history ] && mkdir $aws_history
 	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
 	echo $sheBang > $blj_aws_config
 	chmod 770 $blj_aws_config
-	foundKeys=$(ls ~/.aws | grep -c ".pem" )
-	[ ${foundKeys} -gt 0 ] && chmod 770 ~/.aws/*.pem && mv ~/.aws/*.pem $aws_history
 	foundStartScript=$(ls ~/.aws | grep -c "run-bljStack" )
 	[ ${foundStartScript} -gt 0 ] && mv ~/.aws/run-bljStack* $aws_history
+	if [ $# -gt 0 ]; then 
+		foundKeys=$(ls ~/.aws | grep -c ".pem" )
+		[ ${foundKeys} -gt 0 ] && chmod 770 ~/.aws/*.pem && mv ~/.aws/*.pem $aws_history
+	fi
 }
 
 # Get an AWS property ${1} from local AWS Config file ${2} under the awsProfile
@@ -82,15 +85,16 @@ aws_stacks() {
 }
 
 # Clear possible aws_config from bash shell memeroy
+# Param 1 - (optional) flag to indciate re-use of existing stack
 clear_aws_cache() {
-	awsAmi=
-	awsEc2InstanceID=
+	[ $# -eq 0 ] && awsAmi=
+	[ $# -eq 0 ] && awsEc2InstanceID=
+	[ $# -eq 0 ] && awsStack=
+	[ $# -eq 0 ] && awsS3=
 	awsEc2SpotPer=
 	awsProfile=
 	awsRam=
 	awsRegion=
-	awsStack=
-	awsS3=
 	awsWalltime=
 	configFiles=
 	dockerImgVersion=
@@ -182,7 +186,7 @@ get_prop() {
 init_aws_config() {
 	[ ! -f "${HOME}/.aws/config" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/config"
 	[ ! -f "${HOME}/.aws/credentials" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/credentials"
-	[ $#2 -eq 1 ] && aws_archive
+	[ $# -eq 1 ] && aws_archive ${2}
 	aws_log "Copy AWS properties from Pipeline Config \"$1\" into AWS Config --> \"$blj_aws_config\""
 	set_pipeline_config_files "${1}"
 	configFiles=$(get_blj_prop configFiles)

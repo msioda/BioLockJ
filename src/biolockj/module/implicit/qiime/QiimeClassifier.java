@@ -14,6 +14,7 @@ package biolockj.module.implicit.qiime;
 import java.io.*;
 import java.util.*;
 import biolockj.*;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.module.classifier.r16s.QiimeOpenRefClassifier;
@@ -110,7 +111,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		super.cleanUp();
 		final List<String> metrics = Config.getList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
-			|| Config.requireString( this, MetaUtil.META_NULL_VALUE ).equals( ALPHA_DIV_NULL_VALUE ) ) {
+			|| MetaUtil.getNullValue( this ).equals( ALPHA_DIV_NULL_VALUE ) ) {
 			if( !metrics.isEmpty() ) {
 				MetaUtil.refreshCache();
 			}
@@ -119,15 +120,12 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 
 		MetaUtil.refreshCache(); // to get the new alpha metric fields
 		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getMetadata() );
-		MetaUtil.setFile( new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() ) );
+		MetaUtil.setFile( getMetadata( false ) );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( MetaUtil.getMetadata() ) );
 		final int numCols = MetaUtil.getFieldNames().size() - metrics.size() * 3;
-
+		boolean isHeader = true;
 		try {
-
 			final Set<Integer> skipCols = new HashSet<>();
-
-			boolean isHeader = true;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
 				writer.write( st.nextToken() ); // write ID col
@@ -146,18 +144,16 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 					} else if( isHeader || !skipCols.contains( i ) ) {
 						// replace any N/A values with configured MetaUtil.META_ULL_VALUE
 						if( !isHeader && val != null && val.equals( ALPHA_DIV_NULL_VALUE ) ) {
-							val = Config.requireString( this, MetaUtil.META_NULL_VALUE );
+							val = MetaUtil.getNullValue( this );
 						}
 
 						writer.write( TAB_DELIM + val );
 					}
 				}
 
-				// Add previously existing meta cols
 				for( int i = 0; i < numCols; i++ ) {
 					writer.write( TAB_DELIM + record.get( i ) );
 				}
-
 				writer.write( RETURN );
 				isHeader = false;
 			}
@@ -229,15 +225,16 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	}
 
 	@Override
-	public List<File> getInputFiles() throws Exception {
-		if( getFileCache().isEmpty() ) {
-			if( getClass().getName().equals( QiimeClassifier.class.getName() ) ) {
-				cacheInputFiles( findModuleInputFiles() );
-			} else {
+	public List<File> getInputFiles() {
+		if( getFileCache().isEmpty() ) if( getClass().getName().equals( QiimeClassifier.class.getName() ) ) {
+			cacheInputFiles( findModuleInputFiles() );
+		} else {
+			try {
 				cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+			} catch( final SequnceFormatException ex ) {
+				Log.error( getClass(), "Unable to find module input sequence files: " + ex.getMessage(), ex );
 			}
 		}
-
 		return getFileCache();
 	}
 

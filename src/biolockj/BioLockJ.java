@@ -131,10 +131,8 @@ public class BioLockJ {
 		info( "Total number of input files: " + allFiles.size() );
 		int i = 0;
 		for( final File file: allFiles ) {
-			if( !Config.getSet( null, Constants.INPUT_IGNORE_FILES ).contains( file.getName() ) ) {
-				inputFiles.add( file );
-				info( "Pipeline Input [ " + i++ + " ]: " + file.getAbsolutePath() );
-			}
+			BioLockJUtil.ignoreFile( file );
+			info( "Pipeline Input [ " + i++ + " ]: " + file.getAbsolutePath() );
 		}
 
 		BioLockJUtil.setPipelineInputFiles( inputFiles );
@@ -215,8 +213,7 @@ public class BioLockJ {
 				NextflowUtil.stageRootConfig();
 			}
 
-			// Initializes PIPELINE_SEQ_INPUT_TYPE
-			BioLockJUtil.getPipelineInputFiles();
+			BioLockJUtil.initPipelineInput();
 
 			if( BioLockJUtil.copyInputFiles() ) {
 				copyInputData();
@@ -355,6 +352,7 @@ public class BioLockJ {
 
 		if( isPipelineComplete() ) {
 			MasterConfigUtil.sanitizeMasterConfig();
+			NextflowUtil.saveNextflowSuccessFlag();
 		}
 
 		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );

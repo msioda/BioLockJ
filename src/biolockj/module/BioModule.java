@@ -85,6 +85,15 @@ public interface BioModule {
 	public List<File> getInputFiles() throws Exception;
 
 	/**
+	 * Updated/new metadata files are saved to the module output directory (if created by the module). Use param = FALSE
+	 * to return an empty file objects in preparation for building a new metadata file.
+	 *
+	 * @param requireFileExists If TRUE, return null file not found on file system
+	 * @return Updated or new module/metadata/metadataFile.tsv is created, otherwise null
+	 */
+	public File getMetadata( final boolean requireFileExists );
+
+	/**
 	 * Each BioModule generates sub-directory under $DOCKER_PROJ
 	 *
 	 * @return BioModule root directory
