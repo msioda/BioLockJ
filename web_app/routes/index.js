@@ -19,17 +19,13 @@ let express = require('express'),
  propertiesIo = require(path.join('..','controllers','propertiesIo.js')),
  awsUtil = require(path.join('..','controllers','awsUtil.js')),
  launcher = require(path.join('..','controllers','launcher.js'));
-  
+
 const { spawn } = require('child_process');//for running child processes
 const Stream = new events.EventEmitter(); // my event emitter instance
-
 const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
 const bljDir = process.env.BLJ;
 console.log('bljDir ', bljDir);
 const HOST_BLJ = process.env.HOST_BLJ;
-
-//For turning streamProgress on and off
-let launchedPipeline = false;
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -113,37 +109,10 @@ router.post('/checkProjectExists', function(req, res, next) {
 
 router.post('/launch', launcher.launch);
 
-router.get('/streamLog', function(request, response){
-  response.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
-  });
-  Stream.on("log", function(event) {
-    console.log(`Stream: ${event}`);
-    response.write("data: " + event + "\n\n");
-    //response.write("event: " + String(event) + "\n" + "data: " + JSON.stringify(data) + "\n\n");
-  });
-});
+router.get('/streamLog', launcher.streamLog);
 
 //begin serverside events
-router.get('/streamProgress', function(request, response){
-  while (launchedPipeline === false) {
-    response.res.status(400);
-    response.send('Pipeline not yet launched');
-    break;
-  }
-  response.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
-  });
-  Stream.on("progresspush", function(event) {
-    console.log(`Stream: ${event}`);
-    response.write("data: " + event + "\n\n");
-    //response.write("event: " + String(event) + "\n" + "data: " + JSON.stringify(data) + "\n\n");
-  });
-});
+router.get('/streamProgress', launcher.streamProgress );
 
 router.post('/listAwsProfiles', awsUtil.listAwsProfiles);
 
