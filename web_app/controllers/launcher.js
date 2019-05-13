@@ -10,7 +10,13 @@ const fs = require('fs'),
   errorLogger = require('./errorLogger.js'),
   bljProjDir = process.env.BLJ_PROJ, //path to blj_proj
   bljDir = process.env.BLJ,
-  HOST_BLJ = process.env.HOST_BLJ;
+  HOST_BLJ = process.env.HOST_BLJ,
+  events = require('events'),
+  Stream = new events.EventEmitter(), // my event emitter instance
+  { spawn } = require('child_process');//for running child processes
+
+//For turning streamProgress on and off
+let launchedPipeline = false;
 
 exports.launch = function(req, res, next) {
   console.log('entered /launch');
@@ -86,7 +92,6 @@ exports.launch = function(req, res, next) {
 
       break;
       default:
-
     }
     res.setHeader('Content-Type', 'text/html');
     res.write('Server Response: pipeline launched!');
@@ -97,4 +102,35 @@ exports.launch = function(req, res, next) {
     console.error(e);
   }
     console.log('leaving /launch post request');
+}
+
+exports.streamLog = function(req, res, next){
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+  Stream.on("log", function(event) {
+    console.log(`Stream: ${event}`);
+    res.write("data: " + event + "\n\n");
+    //response.write("event: " + String(event) + "\n" + "data: " + JSON.stringify(data) + "\n\n");
+  });
+}
+
+exports.streamProgress = function(req, res, next){
+  while (launchedPipeline === false) {
+    res.status(400);
+    res.send('Pipeline not yet launched');
+    break;
+  }
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+  Stream.on("progresspush", function(event) {
+    console.log(`Stream: ${event}`);
+    res.write("data: " + event + "\n\n");
+    //response.write("event: " + String(event) + "\n" + "data: " + JSON.stringify(data) + "\n\n");
+  });
 }
