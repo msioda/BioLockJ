@@ -223,7 +223,7 @@ public class NextflowUtil {
 
 	/**
 	 * Stop Nextflow process (required since parent Java process that ran BioLockJ pipeline will not halt until this
-	 * subprocess is finished.
+	 * subprocess is finished.  Also create pipeline success flag file in $HOME dir on the EC2 head node.
 	 */
 	public static void stopNextflow() {
 		if( nfMainThread != null ) {
@@ -231,6 +231,24 @@ public class NextflowUtil {
 			Processor.deregisterThread( nfMainThread );
 			Log.info( NextflowUtil.class, "Nextflow process thread de-registered" );
 		}
+		
+		try {
+			while( Processor.subProcsAlive() ) {
+				Log.warn( NextflowUtil.class, "Standard execution complete - waiting for S3-Data-xFers to complete" );
+				Thread.sleep( BioLockJUtil.minutesToMillis( 1 ) );
+			}
+			
+			final File f = BioLockJUtil.createFile( DockerUtil.EC2_HOME + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
+			if( f.isFile() )
+				Log.warn( NextflowUtil.class,  "Created pipeline complete file: " + f.getAbsolutePath() );
+			else 
+				Log.warn( NextflowUtil.class,  "Failed to generate pipeline complete file" );
+			
+			
+		} catch( final Exception ex ) {
+			Log.error( NextflowUtil.class, "Error occurred waiting for subprocess to compelete!", ex );
+		}
+		
 	}
 
 	/**

@@ -224,6 +224,8 @@ public class Processor {
 		if( threadRegister.isEmpty() ) return false;
 		final long max = BioLockJUtil
 			.minutesToMillis( Config.getPositiveInteger( null, Constants.AWS_S3_XFER_TIMEOUT ) );
+		Log.warn( Processor.class,
+			"Running Subprocess Threads will be terminated if incomplete after [ " + max + " ] minutes." );
 		for( final Thread t: threadRegister.keySet() ) {
 			if( t.isAlive() ) {
 				final String id = t.getId() + " - " + t.getName();

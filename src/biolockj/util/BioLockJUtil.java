@@ -90,7 +90,7 @@ public class BioLockJUtil {
 	 * @throws Exception if errors occur attempting to save the file
 	 */
 	public static File createFile( final String path ) throws Exception {
-		final File f = new File( path );
+		final File f = new File ( path );
 		final FileWriter writer = new FileWriter( f );
 		writer.close();
 		if( !f.isFile() ) throw new Exception( "Unable to create status file: " + f.getAbsolutePath() );

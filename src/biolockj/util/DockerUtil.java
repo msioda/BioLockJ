@@ -400,6 +400,11 @@ public class DockerUtil {
 	 * AWS EC2 head/batch node $USER: {@value #AWS_EC2_USER}
 	 */
 	static final String AWS_EC2_USER = "ec2-user";
+	
+	/**
+	 * AWS EC2 head/batch node $HOME: {@value #EC2_HOME}
+	 */
+	static final String EC2_HOME = "/home/" + AWS_EC2_USER;
 
 	/**
 	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
