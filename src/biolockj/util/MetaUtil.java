@@ -83,7 +83,7 @@ public class MetaUtil {
 	 */
 	public static boolean exists() {
 		try {
-			return getMetadata().isFile();
+			if( getMetadata() != null ) return getMetadata().isFile();
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class, "Error occurred trying to dtermine if metadata file exists on file sytsem", ex );
 		}

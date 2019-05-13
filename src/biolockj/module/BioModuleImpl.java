@@ -249,13 +249,14 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	}
 
 	private final List<File> inputFiles = new ArrayList<>();
-
 	private File moduleDir = null;
 	private Integer moduleId;
+	
 	/**
 	 * BioLockJ gzip file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = Constants.GZIP_EXT;
+	
 	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */

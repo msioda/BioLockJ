@@ -212,7 +212,8 @@ public class BioLockJ {
 			if( DockerUtil.inAwsEnv() ) {
 				NextflowUtil.stageRootConfig();
 			}
-
+		}
+		
 			BioLockJUtil.initPipelineInput();
 
 			if( BioLockJUtil.copyInputFiles() ) {
@@ -220,7 +221,7 @@ public class BioLockJ {
 			}
 
 			SeqUtil.initialize();
-		}
+
 	}
 
 	/**
