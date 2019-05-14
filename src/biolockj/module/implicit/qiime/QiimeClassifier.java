@@ -108,7 +108,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	@Override
 	public void cleanUp() throws Exception {
-		super.cleanUp();
+		Log.info( getClass(), "Clean up: " + getClass().getName() );
+		
 		final List<String> metrics = Config.getList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
 			|| MetaUtil.getNullValue( this ).equals( ALPHA_DIV_NULL_VALUE ) ) {
@@ -117,11 +118,10 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 			}
 			return; // nothing to do
 		}
-
+		
 		MetaUtil.refreshCache(); // to get the new alpha metric fields
 		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getMetadata() );
-		MetaUtil.setFile( getMetadata( false ) );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( MetaUtil.getMetadata() ) );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 		final int numCols = MetaUtil.getFieldNames().size() - metrics.size() * 3;
 		boolean isHeader = true;
 		try {
@@ -131,9 +131,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 				writer.write( st.nextToken() ); // write ID col
 
 				final List<String> record = new ArrayList<>();
-				while( st.hasMoreTokens() ) {
-					record.add( st.nextToken() );
-				}
+				while( st.hasMoreTokens() ) record.add( st.nextToken() );
 
 				// Add Alpha Metrics as 1st columns since these will be used later as count cols instead of meta cols
 				for( int i = numCols; i < record.size(); i++ ) {
@@ -160,8 +158,13 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		} finally {
 			reader.close();
 			writer.close();
+		}
+		
+		if( getMetadata().isFile() ) {
+			MetaUtil.setFile( getMetadata() );
 			MetaUtil.refreshCache();
 		}
+		
 	}
 
 	/**

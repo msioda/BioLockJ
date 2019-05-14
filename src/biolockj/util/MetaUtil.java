@@ -83,7 +83,7 @@ public class MetaUtil {
 	 */
 	public static boolean exists() {
 		try {
-			if( getMetadata() != null ) return getMetadata().isFile();
+			return getMetadata() != null;
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class, "Error occurred trying to dtermine if metadata file exists on file sytsem", ex );
 		}
@@ -167,11 +167,11 @@ public class MetaUtil {
 	 */
 	public static String getFileName() {
 		try {
-			return getMetadata().getName();
+			if( getMetadata() != null ) return getMetadata().getName();
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class, "Error occurred accessing Config property: " + META_FILE_PATH, ex );
 		}
-
+		
 		return Config.pipelineName() + "_metadata" + Constants.TSV_EXT;
 	}
 
@@ -277,7 +277,7 @@ public class MetaUtil {
 	 */
 	public static String getPath() {
 		try {
-			return getMetadata().getAbsolutePath();
+			if( getMetadata() != null) return getMetadata().getAbsolutePath();
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class, "Failed to return meatada file path -  metadata file not found! ", ex );
 		}
@@ -324,12 +324,10 @@ public class MetaUtil {
 	 */
 	public static String getSystemMetaCol( final BioModule module, final String col )
 		throws MetadataException, FileNotFoundException, IOException {
-		final File outputMeta = module.getMetadata( false );
+		final File outputMeta = module.getMetadata();
 		if( ModuleUtil.isComplete( module ) || outputMeta.isFile() ) {
-			if( outputMeta.isFile() ) {
-				setFile( outputMeta );
-				refreshCache();
-			}
+			setFile( outputMeta );
+			refreshCache();
 			return getLatestColumnName( col );
 		}
 		return getForcedColumnName( col );
@@ -442,11 +440,9 @@ public class MetaUtil {
 		Log.info( MetaUtil.class,
 			"Removing field [" + colName + "] from metadata: " + getPath() );
 		final int index = getFieldNames().indexOf( colName );
-
 		final File newMeta = new File( myDir.getAbsolutePath() + File.separator + getFileName() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
-		setFile( newMeta );
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( newMeta ) );
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				int i = 1;
@@ -463,6 +459,7 @@ public class MetaUtil {
 		} finally {
 			reader.close();
 			writer.close();
+			setFile( newMeta );
 			refreshCache();
 		}
 	}
@@ -531,7 +528,7 @@ public class MetaUtil {
 	private static boolean isUpdated() {
 		try {
 			final boolean foundNewReport = getMetadata() != null && reportedMetadata != null
-				&& !reportedMetadata.getAbsolutePath().equals( getPath()  );
+				&& !reportedMetadata.getAbsolutePath().equals( getPath() );
 			final boolean noReport = getMetadata() != null && reportedMetadata == null;
 			return foundNewReport || noReport;
 		} catch( final MetadataException ex ) {

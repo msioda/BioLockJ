@@ -59,7 +59,7 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 			if( MetaUtil.getFieldValues( NUM_READS, false ).size() == MetaUtil.getSampleIds().size() ) {
 				Log.warn( getClass(), NUM_READS + " column already  populated in: " + MetaUtil.getPath() );
 				FileUtils.copyFileToDirectory( MetaUtil.getMetadata(), getOutputDir() );
-				if( getMetadata( true ) == null )
+				if( getMetadata() == null )
 					throw new Exception( "FileUtils.copyFileToDirectory failed to copy metadata to module output dir" );
 				return;
 			}

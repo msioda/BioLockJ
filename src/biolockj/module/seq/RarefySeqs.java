@@ -57,10 +57,9 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 	 */
 	@Override
 	public void cleanUp() throws Exception {
-		final String colName = getMetaColName();
 		super.cleanUp();
-		RegisterNumReads.setNumReadFieldName( colName );
-		MetaUtil.addColumn( colName, this.readsPerSample, getOutputDir(), true );
+		RegisterNumReads.setNumReadFieldName( getMetaColName() );
+		MetaUtil.addColumn( getMetaColName(), this.readsPerSample, getOutputDir(), true );
 	}
 
 	/**

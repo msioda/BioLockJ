@@ -45,11 +45,7 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		if( getMetadata( true ) != null && hasRModules() && !DockerUtil.isDirectMode() ) {
-			MetaUtil.setFile( getMetadata( true ) );
-			MetaUtil.refreshCache();
-			RMetaUtil.classifyReportableMetadata( this );
-		}
+		if( hasRModules() && !DockerUtil.isDirectMode() ) RMetaUtil.classifyReportableMetadata( this );
 	}
 
 	/**
@@ -68,7 +64,7 @@ public class ImportMetadata extends BioModuleImpl {
 				+ Config.requireString( this, MetaUtil.META_COLUMN_DELIM ) + "): " + MetaUtil.getPath() );
 
 			final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getMetadata() );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata( false ) ) );
+			final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			try {
 				int lineNum = 0;
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
@@ -80,7 +76,7 @@ public class ImportMetadata extends BioModuleImpl {
 			}
 
 			if( doIdToSeqVerifiction() ) {
-				MetaUtil.setFile( getMetadata( true ) );
+				MetaUtil.setFile( getMetadata() );
 				MetaUtil.refreshCache();
 				verifyAllRowsMapToSeqFile( getInputFiles() );
 			}
@@ -114,14 +110,12 @@ public class ImportMetadata extends BioModuleImpl {
 	/**
 	 * Create a simple metadata file in the module output directory, with only the 1st column populated with Sample IDs.
 	 *
-	 * @return Metadata file
 	 * @throws MetadataException if attempt to build new metadata file fails for any reason
 	 */
-	protected File buildNewMetadataFile() throws MetadataException {
-		final File meta = getMetadata( false );
+	protected void buildNewMetadataFile() throws MetadataException {
 		BufferedWriter writer = null;
 		try {
-			writer = new BufferedWriter( new FileWriter( meta ) );
+			writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			writer.write( MetaUtil.getID() + Constants.RETURN );
 			for( final String id: getSampleIds() ) {
 				writer.write( id + Constants.RETURN );
@@ -138,7 +132,6 @@ public class ImportMetadata extends BioModuleImpl {
 				Log.error( getClass(), "Unable to close reader: " + ex.getMessage(), ex );
 			}
 		}
-		return meta;
 	}
 
 	/**
@@ -247,7 +240,6 @@ public class ImportMetadata extends BioModuleImpl {
 	 * @throws Exception if required Config values are missing or invalid
 	 */
 	protected String parseRow( final String line, final boolean isHeader ) throws Exception {
-		Log.info( getClass(), "Parse metadata " + (isHeader ? "HEADER" : "RECORD" ) + ": " + line );
 		final String[] cells = line.split( inputDelim, -1 );
 		int colNum = 1;
 		final StringBuffer sb = new StringBuffer();

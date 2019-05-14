@@ -35,6 +35,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 	 */
 	@Override
 	public void cleanUp() throws Exception {
+		super.cleanUp();
 		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.FALSE );
 	}
 

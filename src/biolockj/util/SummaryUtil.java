@@ -251,8 +251,8 @@ public class SummaryUtil {
 				HiddenFileFilter.VISIBLE );
 			int count = outFiles.size();
 			BigInteger outAvg = FileUtils.sizeOfAsBigInteger( module.getOutputDir() );
-			final File newMeta = module.getMetadata( true );
-			if( newMeta != null && module.getOutputDir().listFiles().length > 1 ) {
+			final File newMeta = module.getMetadata();
+			if( newMeta.isFile() && module.getOutputDir().listFiles().length > 1 ) {
 				count--;
 				outAvg = outAvg.subtract( FileUtils.sizeOfAsBigInteger( newMeta ) );
 			}
@@ -265,7 +265,7 @@ public class SummaryUtil {
 
 			sb.append( "# Files Output:  " + count + RETURN );
 			sb.append( "Mean Output File Size:  " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
-			sb.append( newMeta == null ? "": "New metadata: " + newMeta.getAbsolutePath() + RETURN );
+			sb.append( newMeta.isFile() ? "New metadata: " + newMeta.getAbsolutePath() + RETURN : "" );
 
 		} catch( final Exception ex ) {
 			final String msg = "Unable to produce module output summary for: " + module.getClass().getName() + " : "

@@ -92,14 +92,9 @@ public class PearMergeReads extends SeqModuleImpl {
 	 */
 	@Override
 	public void cleanUp() throws Exception {
-		final String metaColName = getMetaColName();
 		super.cleanUp();
 		Config.setConfigProperty( Constants.INTERNAL_PAIRED_READS, Constants.FALSE );
-
-		if( getMetadata( true ) != null ) {
-			MetaUtil.setFile( getMetadata( true ) );
-			MetaUtil.refreshCache();
-		} else if( !MetaUtil.getFieldNames().contains( metaColName ) && this.readsPerSample != null ) {
+		if( !MetaUtil.getFieldNames().contains( getMetaColName() ) && this.readsPerSample != null ) {
 			Log.info( getClass(),
 				"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
 			for( final File f: getOutputDir().listFiles() ) {
@@ -109,12 +104,12 @@ public class PearMergeReads extends SeqModuleImpl {
 				this.readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
-			MetaUtil.addColumn( metaColName, this.readsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( getMetaColName(), this.readsPerSample, getOutputDir(), true );
 		} else {
 			Log.warn( getClass(),
 				"Counts for # merged reads/sample already found in metadata, not re-counting " + MetaUtil.getPath() );
 		}
-		RegisterNumReads.setNumReadFieldName( metaColName );
+		RegisterNumReads.setNumReadFieldName( getMetaColName() );
 	}
 
 	/**

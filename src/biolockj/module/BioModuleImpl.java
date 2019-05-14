@@ -38,6 +38,10 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	@Override
 	public void cleanUp() throws Exception {
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
+		if( getMetadata().isFile() ) {
+			MetaUtil.setFile( getMetadata() );
+			MetaUtil.refreshCache();
+		}
 	}
 
 	@Override
@@ -76,10 +80,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	}
 
 	@Override
-	public File getMetadata( final boolean requireFileExists ) {
-		final File newMeta = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-		if( !requireFileExists || newMeta.isFile() ) return newMeta;
-		return null;
+	public File getMetadata() {
+		return new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 	}
 
 	/**

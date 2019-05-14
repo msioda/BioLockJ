@@ -40,7 +40,7 @@ public class Pipeline {
 	 */
 	public static void executeModule( final BioModule module ) throws Exception {
 		ModuleUtil.markStarted( module );
-		refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
+		//refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
 		refreshRCacheIfNeeded( module );
 		module.executeTask();
 
@@ -59,7 +59,6 @@ public class Pipeline {
 			waitForModuleScripts( (ScriptModule) module );
 		}
 
-		refreshOutputMetadata( module );
 		module.cleanUp();
 
 		if( !runDetached ) {
@@ -121,7 +120,6 @@ public class Pipeline {
 				"Start Direct BioModule Execution for [ ID #" + id + " ] ---> " + module.getClass().getSimpleName() );
 			module.runModule();
 			Log.info( Pipeline.class, "DIRECT module ID [" + id + "].runModule() complete!" );
-			refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
 			module.cleanUp();
 			module.moduleComplete();
 			SummaryUtil.reportSuccess( module );
@@ -212,7 +210,6 @@ public class Pipeline {
 	 * Execution steps:
 	 * <ol>
 	 * <li>File {@value Constants#BLJ_STARTED} is added to the module directory
-	 * <li>Execute {@link #refreshOutputMetadata(BioModule)} to cache updated metadata, if generatede.
 	 * <li>Run module scripts, if any, polling 1/minute for status until all scripts complete or time out.
 	 * <li>File {@value Constants#BLJ_STARTED} is replaced by {@value Constants#BLJ_COMPLETE} as status indicator
 	 * </ol>
@@ -239,7 +236,6 @@ public class Pipeline {
 	 * modules
 	 * <li>Delete incomplete module contents if restarting a failed pipeline
 	 * {@value biolockj.module.BioModule#OUTPUT_DIR} directory<br>
-	 * <li>Call {@link #refreshOutputMetadata(BioModule)} to cache metadata if output by a complete module<br>
 	 * <li>Call {@link #refreshRCacheIfNeeded(BioModule)} to cache R fields after 1st R module runs<br>
 	 * <li>Verify dependencies with {@link biolockj.module.BioModule#checkDependencies()}<br>
 	 * </ol>
@@ -252,15 +248,14 @@ public class Pipeline {
 			if( ModuleUtil.isIncomplete( module ) && ( !DockerUtil.isDirectMode() || module instanceof Email ) ) {
 				deleteIncompleteModule( module );
 			}
+			
+			info( "Check dependencies for: " + module.getClass().getName() );
+			module.checkDependencies();
 
 			if( ModuleUtil.isComplete( module ) ) {
-				refreshOutputMetadata( module );
 				module.cleanUp();
 				refreshRCacheIfNeeded( module );
 			}
-
-			info( "Check dependencies for: " + module.getClass().getName() );
-			module.checkDependencies();
 		}
 
 		return true;
@@ -316,20 +311,6 @@ public class Pipeline {
 		}
 
 		return numScripts > 0 && numSuccess + numFailed == numScripts;
-	}
-
-	/**
-	 * Call {@link biolockj.util.MetaUtil} to refresh the metadata cache if a new metadata file was output by the
-	 * bioModule .
-	 * 
-	 * @param module BioModule
-	 * @throws Exception if unable to refresh the cache
-	 */
-	protected static void refreshOutputMetadata( final BioModule module ) throws Exception {
-		if( module == null || module.getMetadata( true ) == null ) return;
-		MetaUtil.setFile( module.getMetadata( true ) );
-		MetaUtil.refreshCache();
-
 	}
 
 	/**
