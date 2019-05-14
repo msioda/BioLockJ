@@ -774,7 +774,7 @@ public class SummaryUtil {
 		if( DockerUtil.inAwsEnv() ) return "AWS-Nextflow/Docker @" + runtimeEnv;
 		if( DockerUtil.inDockerEnv() ) return "Docker @" + runtimeEnv;
 		if( Config.isOnCluster() && clusterHost != null && runtimeEnv != clusterHost )
-			return "CLUSTER [ head: @" + clusterHost + " --> compute: @" + runtimeEnv + " ]";
+			return "CLUSTER [ head@" + clusterHost + " --> compute@" + runtimeEnv + " ]";
 		return "@" + runtimeEnv;
 	}
 
