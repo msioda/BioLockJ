@@ -771,11 +771,10 @@ public class SummaryUtil {
 			Log.error( SummaryUtil.class, "Failed to determine runtime environment host", ex );
 		}
 
-		if( DockerUtil.inAwsEnv() ) return "AWS-Nextflow/Docker@" + runtimeEnv;
-		if( DockerUtil.inDockerEnv() ) return "DOCKER@" + runtimeEnv;
+		if( DockerUtil.inAwsEnv() ) return "AWS-Nextflow/Docker @" + runtimeEnv;
+		if( DockerUtil.inDockerEnv() ) return "Docker @" + runtimeEnv;
 		if( Config.isOnCluster() && clusterHost != null && runtimeEnv != clusterHost )
-			return "CLUSTER [ head::" + DockerUtil.AWS_EC2_USER + "@" + clusterHost + " --> compute::"
-				+ DockerUtil.ROOT_HOME + "@" + runtimeEnv + " ]";
+			return "CLUSTER [ head: @" + clusterHost + " --> compute: @" + runtimeEnv + " ]";
 		return "@" + runtimeEnv;
 	}
 
