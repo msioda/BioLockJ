@@ -44,10 +44,9 @@ public class MetaUtil {
 		final boolean removeMissingIds ) throws MetadataException, IOException {
 		final File newMeta = new File( fileDir.getAbsolutePath() + File.separator + getFileName() );
 		Log.info( MetaUtil.class, "Adding new field [" + colName + "] to metadata: " + newMeta.getAbsolutePath() );
-		Log.debug( MetaUtil.class, "Current metadata: " + getPath()  );
+		Log.debug( MetaUtil.class, "Current metadata: " + getPath() );
 		if( getFieldNames().contains( colName ) ) {
-			Log.warn( MetaUtil.class,
-				"Metadata column [" + colName + "] already exists in: " + getPath()  );
+			Log.warn( MetaUtil.class, "Metadata column [" + colName + "] already exists in: " + getPath() );
 			return;
 		}
 
@@ -112,11 +111,11 @@ public class MetaUtil {
 	 * @throws MetadataException if field not found in the metadata for the given sample Id.
 	 */
 	public static String getField( final String sampleId, final String field ) throws MetadataException {
-		if( !getFieldNames().contains( field ) ) throw new MetadataException(
-			"Invalid field [" + field + "] not found in Metadata = " + getPath()  );
+		if( !getFieldNames().contains( field ) )
+			throw new MetadataException( "Invalid field [" + field + "] not found in Metadata = " + getPath() );
 
-		if( getRecord( sampleId ) == null ) throw new MetadataException(
-			"Invalid Sample ID [" + sampleId + "] not found in Metadata = " + getPath()  );
+		if( getRecord( sampleId ) == null )
+			throw new MetadataException( "Invalid Sample ID [" + sampleId + "] not found in Metadata = " + getPath() );
 
 		return getRecord( sampleId ).get( getFieldNames().indexOf( field ) );
 	}
@@ -147,8 +146,8 @@ public class MetaUtil {
 	public static List<String> getFieldValues( final String field, final boolean ignoreNulls )
 		throws MetadataException {
 		final List<String> vals = new ArrayList<>();
-		if( !getFieldNames().contains( field ) ) throw new MetadataException(
-			"Invalid field [" + field + "] in Metadata = " + getPath()  );
+		if( !getFieldNames().contains( field ) )
+			throw new MetadataException( "Invalid field [" + field + "] in Metadata = " + getPath() );
 
 		for( final String id: getSampleIds() ) {
 			final String val = getField( id, field );
@@ -171,7 +170,7 @@ public class MetaUtil {
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class, "Error occurred accessing Config property: " + META_FILE_PATH, ex );
 		}
-		
+
 		return Config.pipelineName() + "_metadata" + Constants.TSV_EXT;
 	}
 
@@ -241,7 +240,7 @@ public class MetaUtil {
 			} else {
 				setFile( new File( Config.getString( null, META_FILE_PATH ) ) );
 			}
-			Log.debug( MetaUtil.class, "Returning new metadata file path: " + getPath()  );
+			Log.debug( MetaUtil.class, "Returning new metadata file path: " + getPath() );
 		} catch( final Exception ex ) {
 			throw new MetadataException( "Faile to get handle to metadata file:  " + ex.getMessage() );
 		}
@@ -277,7 +276,7 @@ public class MetaUtil {
 	 */
 	public static String getPath() {
 		try {
-			if( getMetadata() != null) return getMetadata().getAbsolutePath();
+			if( getMetadata() != null ) return getMetadata().getAbsolutePath();
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class, "Failed to return meatada file path -  metadata file not found! ", ex );
 		}
@@ -397,7 +396,7 @@ public class MetaUtil {
 	 */
 	public static void refreshCache() throws MetadataException {
 		if( isUpdated() ) {
-			Log.info( MetaUtil.class, "Update metadata cache: " + getPath()  );
+			Log.info( MetaUtil.class, "Update metadata cache: " + getPath() );
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
@@ -408,7 +407,7 @@ public class MetaUtil {
 			reportedMetadata = getMetadata();
 		} else {
 			Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
-				+ ( getMetadata() == null ? "<NO_METADATA_PATH>": getPath()  ) );
+				+ ( getMetadata() == null ? "<NO_METADATA_PATH>": getPath() ) );
 		}
 	}
 
@@ -432,13 +431,12 @@ public class MetaUtil {
 		}
 
 		if( !getFieldNames().contains( colName ) ) {
-			Log.warn( MetaUtil.class, "Metadata column [" + colName
-				+ "] cannot be removed, because it does not exists in: " + getPath() );
+			Log.warn( MetaUtil.class,
+				"Metadata column [" + colName + "] cannot be removed, because it does not exists in: " + getPath() );
 			return;
 		}
 
-		Log.info( MetaUtil.class,
-			"Removing field [" + colName + "] from metadata: " + getPath() );
+		Log.info( MetaUtil.class, "Removing field [" + colName + "] from metadata: " + getPath() );
 		final int index = getFieldNames().indexOf( colName );
 		final File newMeta = new File( myDir.getAbsolutePath() + File.separator + getFileName() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( getMetadata() );
@@ -472,8 +470,9 @@ public class MetaUtil {
 	 */
 	public static void setFile( final File file ) throws MetadataException {
 		if( file == null ) throw new MetadataException( "Cannot pass NULL to MetaUtil.setFile( file )" );
-		if( metadataFile != null && file.getAbsolutePath().equals( getPath() ) )
+		if( metadataFile != null && file.getAbsolutePath().equals( getPath() ) ) {
 			Log.debug( MetaUtil.class, "===> MetaUtil.setFile() not required, no changes to: " + getPath() );
+		}
 		BioLockJUtil.ignoreFile( file );
 		metadataFile = file;
 	}
@@ -582,7 +581,7 @@ public class MetaUtil {
 		try {
 			final String exId = getSampleIds().get( 0 );
 			Log.info( MetaUtil.class, META_SPACER );
-			Log.info( MetaUtil.class, "===> New Metadata file: " + getPath()  );
+			Log.info( MetaUtil.class, "===> New Metadata file: " + getPath() );
 			Log.info( MetaUtil.class, "===> Sample IDs: " + getSampleIds() );
 			Log.info( MetaUtil.class, "===> Metadata fields: " + getFieldNames() );
 			Log.info( MetaUtil.class, "===> 1st Record: [" + exId + "]: " + getRecord( exId ) );

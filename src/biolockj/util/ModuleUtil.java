@@ -254,10 +254,13 @@ public class ModuleUtil {
 		boolean foundOther = false;
 		final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
 		for( final File f: files ) {
-			if( f.getName().equals( MetaUtil.getFileName() ) ) foundMeta = true;
-			else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) ) foundOther = true;
+			if( f.getName().equals( MetaUtil.getFileName() ) ) {
+				foundMeta = true;
+			} else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) ) {
+				foundOther = true;
+			}
 		}
-	
+
 		return foundMeta && !foundOther;
 	}
 

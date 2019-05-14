@@ -40,7 +40,7 @@ public class Pipeline {
 	 */
 	public static void executeModule( final BioModule module ) throws Exception {
 		ModuleUtil.markStarted( module );
-		//refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
+		// refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
 		refreshRCacheIfNeeded( module );
 		module.executeTask();
 
@@ -248,7 +248,7 @@ public class Pipeline {
 			if( ModuleUtil.isIncomplete( module ) && ( !DockerUtil.isDirectMode() || module instanceof Email ) ) {
 				deleteIncompleteModule( module );
 			}
-			
+
 			info( "Check dependencies for: " + module.getClass().getName() );
 			module.checkDependencies();
 

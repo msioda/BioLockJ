@@ -265,7 +265,7 @@ public class SummaryUtil {
 
 			sb.append( "# Files Output:  " + count + RETURN );
 			sb.append( "Mean Output File Size:  " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
-			sb.append( newMeta.isFile() ? "New metadata: " + newMeta.getAbsolutePath() + RETURN : "" );
+			sb.append( newMeta.isFile() ? "New metadata: " + newMeta.getAbsolutePath() + RETURN: "" );
 
 		} catch( final Exception ex ) {
 			final String msg = "Unable to produce module output summary for: " + module.getClass().getName() + " : "

@@ -45,7 +45,9 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		if( hasRModules() && !DockerUtil.isDirectMode() ) RMetaUtil.classifyReportableMetadata( this );
+		if( hasRModules() && !DockerUtil.isDirectMode() ) {
+			RMetaUtil.classifyReportableMetadata( this );
+		}
 	}
 
 	/**
@@ -267,7 +269,9 @@ public class ImportMetadata extends BioModuleImpl {
 
 			Log.debug( getClass(), "====> Set Row # [" + this.rowNum + "] - Column#[" + colNum + "] = " + cell );
 			sb.append( cell );
-			if( colNum++ < cells.length ) sb.append( Constants.TAB_DELIM );
+			if( colNum++ < cells.length ) {
+				sb.append( Constants.TAB_DELIM );
+			}
 		}
 		this.rowNum++;
 		return sb.toString() + RETURN;

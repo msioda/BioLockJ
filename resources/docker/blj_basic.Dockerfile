@@ -11,7 +11,8 @@ ENV BLJ_CONFIG="${EFS}/config"
 ENV BLJ_DB="${EFS}/db"
 ENV BLJ_DEFAULT_DB="/mnt/db"
 ENV BLJ_INPUT="${EFS}/input"
-ENV BLJ_HOST_HOME="/mnt/host_home"
+#ENV BLJ_HOST_HOME="/mnt/host_home"
+ENV BLJ_HOST_HOME="/home/ec2-user"
 ENV BLJ_META="${EFS}/metadata"
 ENV BLJ_PROJ="${EFS}/pipelines"
 ENV BLJ_PRIMER="${EFS}/primer"
@@ -22,7 +23,7 @@ ENV PATH="${BLJ_HOST_HOME}/miniconda/bin:$PATH"
 RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \
 	mkdir "${BLJ_CONFIG}" && mkdir "${BLJ_DB}" && mkdir "${BLJ_INPUT}" && \
 	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && \
-	mkdir "${BLJ_DEFAULT_DB}" && mkdir "${BLJ_HOST_HOME}"
+	mkdir "${BLJ_DEFAULT_DB}" && mkdir -p "${BLJ_HOST_HOME}"
 
 #3.) Install Ubuntu Software 
 RUN apt-get update && \

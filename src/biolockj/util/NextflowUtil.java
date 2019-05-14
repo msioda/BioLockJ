@@ -45,8 +45,8 @@ public class NextflowUtil {
 		}
 
 		s3SyncRegister.add( efsPath );
-		
-		boolean isDir = new File( efsPath ).isDirectory();
+
+		final boolean isDir = new File( efsPath ).isDirectory();
 
 		String s3Dir = getAwsS3();
 		if( efsPath.contains( Config.pipelinePath() ) ) {
@@ -54,17 +54,17 @@ public class NextflowUtil {
 		}
 		Log.info( BioLockJ.class, "Transfer " + efsPath + " to --> " + s3Dir );
 
-		final String[] s3args = new String[ ( isDir ? 7 : 5 ) ];
+		final String[] s3args = new String[ isDir ? 7: 5 ];
 		s3args[ 0 ] = "aws";
 		s3args[ 1 ] = "s3";
-		s3args[ 2 ] = isDir ? "sync" : "cp";
+		s3args[ 2 ] = isDir ? "sync": "cp";
 		s3args[ 3 ] = efsPath;
 		s3args[ 4 ] = s3Dir;
 		if( isDir ) {
 			s3args[ 5 ] = "--exclude";
 			s3args[ 6 ] = Constants.BLJ_COMPLETE;
 		}
-		
+
 		if( waitUntilComplete ) {
 			Processor.submit( s3args, "S3-Sync-xFer" );
 		} else {
@@ -198,8 +198,8 @@ public class NextflowUtil {
 	 */
 	public static void saveNextflowSuccessFlag() {
 		try {
-			final File f = BioLockJUtil
-				.createFile( DockerUtil.BLJ_HOST_HOME + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
+			final File f = BioLockJUtil.createFile(
+				DockerUtil.BLJ_HOST_HOME + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
 			if( f.isFile() ) {
 				Log.info( NextflowUtil.class, "Created pipeline success file: " + f.getAbsolutePath() );
 			} else {

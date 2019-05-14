@@ -223,8 +223,8 @@ public class Processor {
 	public static boolean subProcsAlive() {
 		if( threadRegister.isEmpty() ) return false;
 		final long max = BioLockJUtil.minutesToMillis( NextflowUtil.getS3_TransferTimeout() );
-		Log.info( Processor.class,
-			"Running Subprocess Threads will be terminated if incomplete after [ " + max + " ] minutes." );
+		Log.info( Processor.class, "Running Subprocess Threads will be terminated if incomplete after [ "
+			+ NextflowUtil.getS3_TransferTimeout() + " ] minutes." );
 		for( final Thread t: threadRegister.keySet() ) {
 			if( t.isAlive() ) {
 				final String id = t.getId() + " - " + t.getName();

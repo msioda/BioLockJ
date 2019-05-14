@@ -25,7 +25,8 @@ build_docker_job_defs() {
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
 	aws_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
-		[ $(echo $line | grep -c biolockj_controller) -eq 0 ] && [ $(echo $line | grep -c java_module) -eq 0 ] && continue
+		# Uncomment to build biolockj_controller + java_module ONLY (enough to use testAwsEmail.properties for testing purposes)
+		#[ $(echo $line | grep -c biolockj_controller) -eq 0 ] && [ $(echo $line | grep -c java_module) -eq 0 ] && continue
 		[ $(echo $line | grep -c blj_basic) -gt 0 ] && aws_log "Skip Docker image: \"$line\"" && continue
 		module=$(echo $line | cut -f 1 -d " ")
 		jobImg="${module}:${dockerImgVersion}"
@@ -39,7 +40,7 @@ build_docker_job_defs() {
 			\"command\": [ \"/bin/bash\" ],
 			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
 			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"${EC2_HOME}\" }, \"name\": \"hostHome\" } ],
-			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${BLJ_HOST_HOME}\", \"readOnly\": false, \"sourceVolume\": \"hostHome\" } ],
+			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${EC2_HOME}\", \"readOnly\": false, \"sourceVolume\": \"hostHome\" } ],
 			\"readonlyRootFilesystem\": false,
 			\"privileged\": true
 		}"
@@ -154,7 +155,7 @@ init_nextflow_config() {
 	echo "" >> "$(local_nf_conf)"
 	echo "executor {" >> "$(local_nf_conf)"
     echo "    name = 'awsbatch'" >> "$(local_nf_conf)"
-    echo "    executor.awscli = '${BLJ_HOST_HOME}/miniconda/bin/aws'" >> "$(local_nf_conf)"
+    echo "    executor.awscli = '${EC2_HOME}/miniconda/bin/aws'" >> "$(local_nf_conf)"
     echo "}" >> "$(local_nf_conf)"
     echo "" >> "$(local_nf_conf)"
     echo "aws {" >> "$(local_nf_conf)"

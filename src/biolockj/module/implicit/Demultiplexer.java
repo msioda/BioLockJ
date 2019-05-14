@@ -434,7 +434,6 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		return validHeaders;
 	}
 
-
 	private void buildSummaryAndSetConfig( final File file, final long numReads, final long headerFwBarcodes,
 		final long seqFwBarcodes, final long headerRvBarcodes, final long seqRvBarcodes ) throws Exception {
 		this.summary += "Compre #BC (BarCode) vs. #rcBC (Reverse Compliment BC) in Headers vs. Sequences" + RETURN;

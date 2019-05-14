@@ -338,8 +338,10 @@ public class DockerUtil {
 
 	/**
 	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #BLJ_HOST_HOME}
+	 * Need to name this dir = "/home/ec2-user" so Nextflow config is same inside + outside of container
 	 */
-	public static final String BLJ_HOST_HOME = "/mnt/host_home";
+	public static final String BLJ_HOST_HOME = "/home/ec2-user";
+	// public static final String BLJ_HOST_HOME = "/mnt/host_home";
 
 	/**
 	 * Docker container root user EFS directory: /mnt/efs

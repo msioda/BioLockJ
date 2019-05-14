@@ -248,12 +248,10 @@ public final class DownloadUtil {
 					modules.add( module );
 				}
 			}
-
-			return modules;
 		} catch( final Exception ex ) {
 			Log.warn( DownloadUtil.class, "Unable to find any executed modules to summarize: " + ex.getMessage() );
 		}
-		return null;
+		return modules;
 	}
 
 	/**
