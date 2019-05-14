@@ -397,11 +397,6 @@ public class DockerUtil {
 	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	/**
-	 * AWS EC2 head/batch node $USER: {@value #AWS_EC2_USER}
-	 */
-	static final String AWS_EC2_USER = "ec2-user";
-
-	/**
 	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
 	 */
 	static final String CONTAINER_BLJ_DIR = "/app/biolockj";
@@ -427,11 +422,6 @@ public class DockerUtil {
 	 * /mnt/efs/metadata
 	 */
 	static final String DOCKER_META_DIR = DOCKER_BLJ_MOUNT_DIR + "/metadata";
-
-	/**
-	 * AWS EC2 head/batch node $HOME: {@value #EC2_HOME}
-	 */
-	static final String EC2_HOME = "/home/" + AWS_EC2_USER;
 
 	/**
 	 * {@link biolockj.Config} Boolean property - enable to avoid docker run --rm flag: {@value #SAVE_CONTAINER_ON_EXIT}
