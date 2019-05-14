@@ -352,7 +352,7 @@ public class BioLockJ {
 
 		if( isPipelineComplete() ) {
 			MasterConfigUtil.sanitizeMasterConfig();
-			NextflowUtil.saveNextflowSuccessFlag();
+			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
 		}
 
 		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
@@ -361,7 +361,7 @@ public class BioLockJ {
 			System.exit( 0 );
 		}
 
-		System.exit( 42 );
+		System.exit( 1 );
 	}
 
 	private static void setPipelineSecurity() {
