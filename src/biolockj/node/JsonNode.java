@@ -157,9 +157,7 @@ public class JsonNode implements Serializable, Comparable<JsonNode> {
 	 * @param val Statistic value
 	 */
 	public void updateStats( final String name, final Double val ) {
-		if( !this.stats.keySet().contains( name ) ) {
-			this.stats.put( name, 0D );
-		}
+		if( !this.stats.keySet().contains( name ) ) this.stats.put( name, 0D );
 
 		this.stats.put( name, this.stats.get( name ) + val );
 	}

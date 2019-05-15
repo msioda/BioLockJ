@@ -14,6 +14,7 @@ package biolockj.module;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import biolockj.exception.SequnceFormatException;
 
 /**
  * Classes that implement this interface requires sequence files for input.<br>
@@ -27,8 +28,10 @@ public interface SeqModule extends ScriptModule {
 	 * 
 	 * @param files Module input files
 	 * @return Module sequence files
-	 * @throws Exception if no input files are found
+	 * @throws SequnceFormatException If {@link biolockj.Config}.{@value biolockj.util.MetaUtil#META_REQUIRED} =
+	 * {@value biolockj.Constants#TRUE} but sequence files found that do not have a corresponding record in the metadata
+	 * file or if invalid metadata prevents parsing SEQ files.
 	 */
-	public List<File> getSeqFiles( Collection<File> files ) throws Exception;
+	public List<File> getSeqFiles( Collection<File> files ) throws SequnceFormatException;
 
 }

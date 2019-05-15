@@ -14,7 +14,7 @@ package biolockj.module.implicit;
 import java.io.*;
 import java.util.*;
 import biolockj.*;
-import biolockj.exception.ConfigViolationException;
+import biolockj.exception.*;
 import biolockj.module.BioModule;
 import biolockj.module.BioModuleImpl;
 import biolockj.module.report.r.R_Module;
@@ -31,10 +31,7 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void checkDependencies() throws Exception {
 		inputDelim = Config.requireString( this, MetaUtil.META_COLUMN_DELIM );
-		if( inputDelim.equals( "\\t" ) ) {
-			inputDelim = TAB_DELIM;
-		}
-
+		if( inputDelim.equals( "\\t" ) ) inputDelim = TAB_DELIM;
 		if( SeqUtil.isMultiplexed() && !MetaUtil.exists() )
 			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: "
 				+ MetaUtil.META_FILE_PATH );
@@ -46,14 +43,7 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		if( MetaUtil.exists() ) {
-			MetaUtil.setFile( MetaUtil.getMetadata() );
-			MetaUtil.refreshCache();
-			BioLockJUtil.ignoreFile( MetaUtil.getMetadata() );
-			if( hasRModules() ) {
-				RMetaUtil.classifyReportableMetadata( this );
-			}
-		} else throw new Exception( "Metadata not found ---> " + MetaUtil.getPath() );
+		if( hasRModules() && !DockerUtil.isDirectMode() ) RMetaUtil.classifyReportableMetadata( this );
 	}
 
 	/**
@@ -65,9 +55,8 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void executeTask() throws Exception {
 		this.configMeta = MetaUtil.getMetadata();
-		if( this.configMeta == null ) {
-			buildNewMetadataFile();
-		} else {
+		if( this.configMeta == null ) buildNewMetadataFile();
+		else {
 			Log.info( getClass(), "Importing metadata (column delim="
 				+ Config.requireString( this, MetaUtil.META_COLUMN_DELIM ) + "): " + MetaUtil.getPath() );
 
@@ -75,9 +64,8 @@ public class ImportMetadata extends BioModuleImpl {
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			try {
 				int lineNum = 0;
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					writer.write( parseRow( line, lineNum++ == 0 ) );
-				}
 			} finally {
 				reader.close();
 				writer.close();
@@ -101,10 +89,7 @@ public class ImportMetadata extends BioModuleImpl {
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		try {
-			if( this.configMeta != null ) {
-				sb.append( "Imported file:  " + this.configMeta.getAbsolutePath() + RETURN );
-			}
-
+			if( this.configMeta != null ) sb.append( "Imported file:  " + this.configMeta.getAbsolutePath() + RETURN );
 			sb.append( "# Samples: " + MetaUtil.getSampleIds().size() + RETURN );
 			sb.append( "# Fields:  " + MetaUtil.getFieldNames().size() + RETURN );
 		} catch( final Exception ex ) {
@@ -119,22 +104,25 @@ public class ImportMetadata extends BioModuleImpl {
 	/**
 	 * Create a simple metadata file in the module output directory, with only the 1st column populated with Sample IDs.
 	 *
-	 * @return Metadata file
-	 * @throws Exception if unable to build the new file due to invalid params or I/O errors
+	 * @throws MetadataException if attempt to build new metadata file fails for any reason
 	 */
-	protected File buildNewMetadataFile() throws Exception {
-		final File meta = getMetadata();
-		final BufferedWriter writer = new BufferedWriter( new FileWriter( meta ) );
+	protected void buildNewMetadataFile() throws MetadataException {
+		BufferedWriter writer = null;
 		try {
+			writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			writer.write( MetaUtil.getID() + Constants.RETURN );
-
-			for( final String id: getSampleIds() ) {
+			for( final String id: getSampleIds() )
 				writer.write( id + Constants.RETURN );
-			}
+		} catch( final Exception ex ) {
+			ex.printStackTrace();
+			throw new MetadataException( "Unable to find module input sequence files: " + ex.getMessage() );
 		} finally {
-			writer.close();
+			try {
+				if( writer != null ) writer.close();
+			} catch( final Exception ex ) {
+				Log.error( getClass(), "Unable to close reader: " + ex.getMessage(), ex );
+			}
 		}
-		return meta;
 	}
 
 	/**
@@ -155,9 +143,8 @@ public class ImportMetadata extends BioModuleImpl {
 					+ "For more details, see http://www.fileformat.info/info/unicode/char/feff/index.htm" );
 
 			final char[] chars = colName.trim().toCharArray();
-			for( int i = 0; i < chars.length; i++ ) {
+			for( int i = 0; i < chars.length; i++ )
 				Log.debug( getClass(), "ID[" + i + "] = " + chars[ i ] );
-			}
 
 			colName = colName.substring( 1 );
 			Log.info( getClass(), "Updated ID = " + colName );
@@ -179,11 +166,8 @@ public class ImportMetadata extends BioModuleImpl {
 		String qVal = val;
 		this.quotedText = this.quotedText + qVal;
 		qVal = this.quotedText;
-		if( qVal.endsWith( "\"" ) ) {
-			this.quotedText = "";
-		} else {
-			this.quotedText = this.quotedText + inputDelim;
-		}
+		if( qVal.endsWith( "\"" ) ) this.quotedText = "";
+		else this.quotedText = this.quotedText + inputDelim;
 		return qVal;
 	}
 
@@ -191,27 +175,22 @@ public class ImportMetadata extends BioModuleImpl {
 	 * Extract the sample IDs from the file names with {@link biolockj.util.SeqUtil#getSampleId(String)}
 	 *
 	 * @return Ordered set of Sample IDs
-	 * @throws Exception if any duplicate or invalid sample IDs are returned by {@link biolockj.util.SeqUtil}
+	 * @throws MetadataException if metadata file not found and cannot be assigned
+	 * @throws ConfigViolationException if forward read found without corresponding reverse read or vice versa
+	 * @throws ConfigFormatException if boolean Config properties set with value other than "N" or "Y"
+	 * @throws SequnceFormatException if sample ID cannot be extracted from the sequence file name
 	 */
-	protected TreeSet<String> getSampleIds() throws Exception {
+	protected TreeSet<String> getSampleIds()
+		throws ConfigFormatException, ConfigViolationException, MetadataException, SequnceFormatException {
 		final TreeSet<String> ids = new TreeSet<>();
-		final Collection<File> inputFiles = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
+		final Collection<File> inputFiles = SeqUtil.hasPairedReads()
 			? new TreeSet<>( SeqUtil.getPairedReads( getInputFiles() ).keySet() )
 			: getInputFiles();
 
 		for( final File file: inputFiles ) {
-			String id = null;
-			try {
-				id = SeqUtil.getSampleId( file.getName() );
-			} catch( final Exception ex ) {
-				// Silent failure handled in next statement
-			}
-
-			if( id == null || id.length() < 1 )
-				throw new Exception( "No Sample ID found in metadata for file: " + file.getAbsolutePath() );
-			else if( ids.contains( id ) ) throw new Exception(
+			final String id = SeqUtil.getSampleId( file.getName() );
+			if( ids.contains( id ) ) throw new SequnceFormatException(
 				"Duplicate Sample ID [ " + id + " ] returned for file: " + file.getAbsolutePath() );
-
 			ids.add( id );
 		}
 
@@ -250,37 +229,26 @@ public class ImportMetadata extends BioModuleImpl {
 	protected String parseRow( final String line, final boolean isHeader ) throws Exception {
 		final String[] cells = line.split( inputDelim, -1 );
 		int colNum = 1;
-
 		final StringBuffer sb = new StringBuffer();
 		for( String cell: cells ) {
 			cell = cell.trim();
-
 			if( inQuotes( cell ) ) {
 				cell = getQuotedValue( cell );
-				if( !quoteEnded() ) {
-					continue;
-				}
+				if( !quoteEnded() ) continue;
 			}
 
 			if( isHeader ) {
 				verifyHeader( cell, this.colNames, colNum );
 				if( this.colNames.isEmpty() ) {
 					cell = formatMetaId( cell );
-					if( cell == null || cell.equals( Config.requireString( this, MetaUtil.META_NULL_VALUE ) ) ) {
-						continue;
-					}
+					if( cell == null || cell.equals( MetaUtil.getNullValue( this ) ) ) continue;
 				}
 				this.colNames.add( cell );
-			} else if( cell.isEmpty() ) {
-				cell = Config.requireString( this, MetaUtil.META_NULL_VALUE );
-				Log.debug( getClass(), "====> Set Row#[" + this.rowNum + "] - Column#[" + colNum + "] = " + cell );
-			}
+			} else if( cell.isEmpty() ) cell = MetaUtil.getNullValue( this );
 
-			if( colNum++ > 1 ) {
-				sb.append( TAB_DELIM );
-			}
-
+			Log.debug( getClass(), "====> Set Row # [" + this.rowNum + "] - Column#[" + colNum + "] = " + cell );
 			sb.append( cell );
+			if( colNum++ < cells.length ) sb.append( Constants.TAB_DELIM );
 		}
 		this.rowNum++;
 		return sb.toString() + RETURN;
@@ -295,14 +263,12 @@ public class ImportMetadata extends BioModuleImpl {
 	 */
 	protected void verifyAllRowsMapToSeqFile( final List<File> files ) throws Exception {
 		final List<String> ids = MetaUtil.getSampleIds();
-		for( final String id: MetaUtil.getSampleIds() ) {
-			for( final File seq: files ) {
+		for( final String id: MetaUtil.getSampleIds() )
+			for( final File seq: files )
 				if( SeqUtil.isForwardRead( seq.getName() ) && SeqUtil.getSampleId( seq.getName() ).equals( id ) ) {
 					ids.remove( id );
 					break;
 				}
-			}
-		}
 
 		if( !ids.isEmpty() ) throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
 			"This property requires every Sample ID in the metadata file " + MetaUtil.getFileName()
@@ -314,10 +280,6 @@ public class ImportMetadata extends BioModuleImpl {
 	private boolean doIdToSeqVerifiction() throws Exception {
 		return Config.getBoolean( this, MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() )
 			&& !SeqUtil.isMultiplexed();
-	}
-
-	private File getMetadata() {
-		return new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 	}
 
 	/**
@@ -359,9 +321,8 @@ public class ImportMetadata extends BioModuleImpl {
 	}
 
 	private static boolean hasRModules() {
-		for( final BioModule module: Pipeline.getModules() ) {
+		for( final BioModule module: Pipeline.getModules() )
 			if( module instanceof R_Module ) return true;
-		}
 		return false;
 	}
 

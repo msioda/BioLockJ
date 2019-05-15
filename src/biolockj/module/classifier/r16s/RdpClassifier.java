@@ -17,6 +17,8 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.DockerUtil;
 import biolockj.util.ModuleUtil;
@@ -55,6 +57,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 		super.checkDependencies();
 		Config.requireString( this, RDP_JAR );
 		getRuntimeParams( getClassifierParams(), null );
+		getDbParam();
 	}
 
 	/**
@@ -71,21 +74,22 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getClassifierParams() throws Exception {
 		final List<String> validParams = new ArrayList<>();
-		for( final String param: Config.getList( this, RDP_PARAMS ) ) {
-			if( param.startsWith( DB_PARAM ) ) {
+		for( final String param: Config.getList( this, RDP_PARAMS ) )
+			if( param.startsWith( DB_PARAM ) )
 				Log.warn( getClass(), "Ignoring " + DB_PARAM + " value: [ " + param + " ] set in Config property "
 					+ RDP_PARAMS + "since this property must be explictily defined in " + RDP_DB );
-			} else {
-				validParams.add( param );
-			}
-		}
+			else validParams.add( param );
 
 		return validParams;
 	}
 
 	@Override
-	public File getDB() throws Exception {
-		if( Config.getString( this, RDP_DB ) != null ) return new File( Config.getString( this, RDP_DB ) );
+	public File getDB() throws ConfigPathException, ConfigNotFoundException {
+		final String path = Config.getString( this, RDP_DB );
+		if( path != null ) {
+			if( DockerUtil.inDockerEnv() ) return new File( path );
+			return Config.requireExistingFile( this, RDP_DB );
+		}
 		return null;
 	}
 
@@ -95,9 +99,8 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
-		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
@@ -116,14 +119,10 @@ public class RdpClassifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
-	private String getDbParam() throws Exception {
+	private String getDbParam() throws ConfigPathException, ConfigNotFoundException {
 		if( getDB() == null ) return "";
-
-		final String dbParam = DockerUtil.inDockerEnv()
-			? getDB().getAbsolutePath().replace( getDB().getParentFile().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR )
-			: getDB().getAbsolutePath();
-
-		return DB_PARAM + " " + dbParam + " ";
+		return DB_PARAM + " " + ( DockerUtil.inDockerEnv() ? DockerUtil.getDockerDB( this ).getAbsolutePath()
+			: Config.requireExistingFile( this, RDP_DB ).getAbsolutePath() ) + " ";
 	}
 
 	private String getJar() throws Exception {

@@ -12,9 +12,10 @@
 package biolockj;
 
 import java.io.File;
-import java.util.*;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Locale;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.exception.FatalExceptionHandler;
 import biolockj.module.BioModule;
 import biolockj.module.report.Email;
@@ -92,9 +93,7 @@ public class BioLockJ {
 		} catch( final Exception ex ) {
 			FatalExceptionHandler.logFatalError( args, ex );
 		} finally {
-			if( !DockerUtil.isDirectMode() ) {
-				pipelineShutDown();
-			}
+			if( !DockerUtil.isDirectMode() ) pipelineShutDown();
 		}
 	}
 
@@ -106,39 +105,24 @@ public class BioLockJ {
 	 */
 	protected static void copyInputData() throws Exception {
 
-		if( Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) ) {
+		// Copy input does not need to copy files into pipeline dir if not copying entire pipeline dir
+		// since copy will take place as S3 xFer.
+		if( DockerUtil.inAwsEnv() && Config.getBoolean( null, Constants.PIPELINE_COPY_FILES )
+			&& !Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 ) ) {
 			NextflowUtil.awsSyncS3( DockerUtil.DOCKER_INPUT_DIR, false );
+			return;
 		}
-		File inputDir = BioLockJUtil.pipelineInternalInputDir();
+		final File inputDir = BioLockJUtil.pipelineInternalInputDir();
 		final String path = Config.pipelinePath() + File.separator + inputDir.getName() + File.separator
 			+ Constants.BLJ_COMPLETE;
 		final File statusFile = new File( path );
-		if( !inputDir.isDirectory() )
-			inputDir.mkdirs();
+		if( !inputDir.isDirectory() ) inputDir.mkdirs();
 		else if( statusFile.isFile() ) return;
 
 		for( final File dir: BioLockJUtil.getInputDirs() ) {
 			info( "Copying input files from " + dir + " to " + inputDir.getAbsolutePath() );
 			FileUtils.copyDirectory( dir, inputDir );
 		}
-
-		BioLockJUtil.ignoreFile( statusFile );
-		BioLockJUtil.createFile( path );
-		final File internalInputDir = BioLockJUtil.pipelineInternalInputDir();
-		final List<File> inputFiles = new ArrayList<>();
-		final List<File> allFiles = new ArrayList<>(
-			FileUtils.listFiles( internalInputDir, HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
-		info( "Total number of input files: " + allFiles.size() );
-		int i = 0;
-		for( final File file: allFiles ) {
-			if( !Config.getSet( null, Constants.INPUT_IGNORE_FILES ).contains( file.getName() ) ) {
-				inputFiles.add( file );
-				info( "Pipeline Input [ " + i++ + " ]: " + file.getAbsolutePath() );
-			}
-		}
-
-		BioLockJUtil.setPipelineInputFiles( inputFiles );
-		Config.setConfigProperty( Constants.INPUT_DIRS, internalInputDir.getAbsolutePath() );
 	}
 
 	/**
@@ -164,9 +148,8 @@ public class BioLockJ {
 		final String dateString = "_" + year + month + day;
 		File projectDir = new File( baseString + dateString );
 		int i = 2;
-		while( projectDir.isDirectory() ) {
+		while( projectDir.isDirectory() )
 			projectDir = new File( baseString + "_" + i++ + dateString );
-		}
 		projectDir.mkdirs();
 		return projectDir;
 	}
@@ -196,34 +179,22 @@ public class BioLockJ {
 
 		MetaUtil.initialize();
 
-		if( DockerUtil.isDirectMode() ) {
-			Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
-		} else {
-			Log.initialize( Config.pipelineName() );
-		}
-
-		if( RuntimeParamUtil.doRestart() ) {
-			initRestart();
-		}
+		if( DockerUtil.isDirectMode() ) Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
+		else Log.initialize( Config.pipelineName() );
+		
+		if( RuntimeParamUtil.doRestart() ) initRestart();
 
 		if( !DockerUtil.isDirectMode() ) {
-			if( MetaUtil.getMetadata() != null ) {
-				BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
-			}
+			if( MetaUtil.getMetadata() != null ) BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
 
-			if( DockerUtil.inAwsEnv() ) {
-				NextflowUtil.stageRootConfig();
-			}
-
-			// Initializes PIPELINE_SEQ_INPUT_TYPE
-			BioLockJUtil.getPipelineInputFiles();
-
-			if( BioLockJUtil.copyInputFiles() ) {
-				copyInputData();
-			}
-
-			SeqUtil.initialize();
+			if( DockerUtil.inAwsEnv() ) NextflowUtil.stageRootConfig();
 		}
+
+		BioLockJUtil.initPipelineInput();
+
+		if( !DockerUtil.isDirectMode() && BioLockJUtil.copyInputFiles() ) copyInputData();
+
+		SeqUtil.initialize();
 	}
 
 	/**
@@ -247,17 +218,11 @@ public class BioLockJ {
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
-		if( DownloadUtil.getDownloadListFile().isFile() ) {
-			DownloadUtil.getDownloadListFile().delete();
-		}
-		if( NextflowUtil.getMainNf().isFile() ) {
-			NextflowUtil.getMainNf().delete();
-		}
+		if( DownloadUtil.getDownloadListFile().isFile() ) DownloadUtil.getDownloadListFile().delete();
+		if( NextflowUtil.getMainNf().isFile() ) NextflowUtil.getMainNf().delete();
 
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
-		if( f.isFile() ) {
-			f.delete();
-		}
+		if( f.isFile() ) f.delete();
 	}
 
 	/**
@@ -265,13 +230,12 @@ public class BioLockJ {
 	 */
 	protected static void removeTempFiles() {
 		Log.info( BioLockJ.class, "Cleaning up BioLockJ Modules..." );
-		for( final BioModule bioModule: Pipeline.getModules() ) {
+		for( final BioModule bioModule: Pipeline.getModules() )
 			if( ModuleUtil.subDirExists( bioModule, BioModule.TEMP_DIR ) ) {
 				Log.info( BioLockJ.class, "Delete temp dir for BioLockJ Module: " + bioModule.getClass().getName() );
 				ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ).delete();
 				// BioLockJUtil.deleteWithRetry( ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ), 10 );
 			}
-		}
 	}
 
 	/**
@@ -296,27 +260,22 @@ public class BioLockJ {
 
 		Pipeline.initializePipeline();
 
-		if( DockerUtil.isDirectMode() ) {
+		if( DockerUtil.isDirectMode() )
 			Pipeline.runDirectModule( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
-		} else {
+		else {
 			MasterConfigUtil.saveMasterConfig();
-			if( DockerUtil.inAwsEnv() ) {
-				NextflowUtil.startNextflow( Pipeline.getModules() );
-			}
+			if( DockerUtil.inAwsEnv() ) NextflowUtil.startNextflow( Pipeline.getModules() );
 
 			Pipeline.runPipeline();
 
 			if( DockerUtil.inAwsEnv() ) {
 				NextflowUtil.saveNextflowLog();
-				if( NextflowUtil.saveEfsDataToS3() ) {
-					NextflowUtil.purgeEfsData();
-				} else throw new Exception( "Pipeline completed successfully, EFS data failed to transfer to S3!" );
+				if( NextflowUtil.saveEfsDataToS3() ) NextflowUtil.purgeEfsData();
+				else throw new Exception( "Pipeline completed successfully, EFS data failed to transfer to S3!" );
 			}
 
 			BioLockJUtil.createFile( Config.pipelinePath() + File.separator + Constants.BLJ_COMPLETE );
-			if( Config.getBoolean( null, Constants.RM_TEMP_FILES ) ) {
-				removeTempFiles();
-			}
+			if( Config.getBoolean( null, Constants.RM_TEMP_FILES ) ) removeTempFiles();
 		}
 	}
 
@@ -326,9 +285,7 @@ public class BioLockJ {
 			throw new Exception( "Direct module directory not found --> " + modDir.getAbsolutePath() );
 
 		final File tempDir = new File( modDir.getAbsoluteFile() + File.separator + BioModule.TEMP_DIR );
-		if( !tempDir.isDirectory() ) {
-			tempDir.mkdir();
-		}
+		if( !tempDir.isDirectory() ) tempDir.mkdir();
 
 		return modDir.getName() + File.separator + tempDir.getName() + File.separator + moduleDir;
 
@@ -339,9 +296,7 @@ public class BioLockJ {
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) {
-			Log.info( BioLockJ.class, msg );
-		}
+		if( !DockerUtil.isDirectMode() ) Log.info( BioLockJ.class, msg );
 	}
 
 	private static void pipelineShutDown() {
@@ -351,30 +306,17 @@ public class BioLockJ {
 		if( DockerUtil.inAwsEnv() ) {
 			NextflowUtil.saveNextflowLog();
 			NextflowUtil.stopNextflow();
-
-			try {
-				BioLockJUtil.createFile( "${HOME}" + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
-				while( Processor.subProcsAlive() ) {
-					Log.warn( BioLockJ.class,
-						"Standard execution complete - check again in 3 minutes - wait for S3-Data-xFers to complete" );
-					Thread.sleep( BioLockJUtil.minutesToMillis( 3 ) );
-				}
-			} catch( final Exception ex ) {
-				Log.error( BioLockJ.class, "Error occurred waiting for subprocess to compelte!", ex );
-			}
 		}
 
 		if( isPipelineComplete() ) {
 			MasterConfigUtil.sanitizeMasterConfig();
+			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
 		}
 
-		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
-		// + SummaryUtil.display_ASCII_Status() );
-		if( isPipelineComplete() ) {
-			System.exit( 0 );
-		}
+		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() + SummaryUtil.display_ASCII_Status() );
+		if( isPipelineComplete() ) System.exit( 0 );
 
-		System.exit( 42 );
+		System.exit( 1 );
 	}
 
 	private static void setPipelineSecurity() {

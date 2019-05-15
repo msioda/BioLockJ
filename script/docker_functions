@@ -7,8 +7,8 @@
 . "${BLJ_LIB}"
 
 alias bljb="build_blj_only"
-alias bljbd="build_blj_only; clearDock; deploy_blj_only"
-alias bljd="deploy_blj_only"
+alias bljd="build_blj_only; clearDock; push_blj_only"
+alias bljp="push_blj_only"
 alias dclone="run_docker_clone"
 alias docker_build="docker_cmd build"
 alias docker_push="docker_cmd push"
@@ -16,19 +16,8 @@ alias docker_pull="docker_cmd pull"
 
 # Build only Docker images that contain $BLJ/dist/BioLockJ.jar
 build_blj_only() {
-	docker $(build_jm) -t $DOCKER_ID/java_module${bljV} $(docker_dir) -f $(docker_dir)/java_module.Dockerfile
-	docker $(build_controller) -t $DOCKER_ID/biolockj_controller${bljV} $(docker_dir) -f $(docker_dir)/biolockj_controller.Dockerfile
-}
-
-# Use to build containers with BioLockJ and the Docker client installed.
-build_controller() {
-	echo "$(build_jm) --build-arg DOCKER_CLIENT=$DOCKER_VER"
-}
-
-# Use to build containers with BioLockJ installed.
-# The date build-arg forces Docker to pull latest BioLockJ.tgz from GitHub 
-build_jm() {
-	echo "build --build-arg BLJ_DATE=$(date +%s) --build-arg VER=$(biolockj -v)"
+	$(get_cmd build java_module)
+	$(get_cmd build biolockj_controller)
 }
 
 # Remove old Docker images
@@ -44,18 +33,29 @@ clearDock() {
 	dockls
 }
 
-# Deploy only Docker images that contain $BLJ/dist/BioLockJ.jar
-deploy_blj_only() {
-	docker push $DOCKER_ID/java_module${bljV}
-	docker push $DOCKER_ID/biolockj_controller${bljV}
-}
-
 # Instantiate Docker bash shell for image + map ${BLJ_PROJ} to ${EFS_PROJ}
 # Param $1 = Docker image name (without user prefix)
-# Example, for biolockj/rdp_classifier run: "dock rdp_classifier"
+# Param $2 = input directory
+# Param $3 = optional "dev" param which overrides container $BLJ with localhost $BLJ
 dock() {
-	echo -e  "Run Docker CMD:  \"docker run --rm -v ${BLJ_PROJ}:${EFS_PROJ}:delegated -it $(dock_id)/$1 /bin/bash"\"
-	docker run --rm -v "${BLJ_PROJ}":"${EFS_PROJ}":delegated -it $(dock_id)/$1 /bin/bash
+	img=${1} && [ ${#1} -eq 0 ] && img="biolockj_controller"
+	inDir="" && [ ${#2} -gt 0 ] && inDir="-v \"${2}\":\"${BLJ_INPUT}\":ro "
+	args="" && [ ${#3} -gt 0 ] && args="${3} "
+	echo -e  "Run Docker CMD -->  [ docker run --rm ${args}${inDir}-v \"${DOCK_SOCK}\":\"${DOCK_SOCK}\" -v \"${HOME}\":\"${BLJ_HOST_HOME}\" -v \"${BLJ_PROJ}\":\"${EFS_PROJ}\":delegated -it $(dock_id)/${img} /bin/bash  ]"
+	docker run --rm ${args}${inDir}-v "${DOCK_SOCK}":"${DOCK_SOCK}" -v "${HOME}":"${BLJ_HOST_HOME}" -v "${BLJ_PROJ}":"${EFS_PROJ}":delegated -it $(dock_id)/${img} /bin/bash
+}
+
+# Deploy only Docker images that contain $BLJ/dist/BioLockJ.jar
+push_blj_only() {
+	$(get_cmd push java_module)
+	$(get_cmd push biolockj_controller)
+}
+
+# Instantiate Docker bash shell for biolockj_controller with  
+# Param $1 - input directory
+# Param $2 - (optional) additional args
+dockCon() {
+	dock biolockj_controller "${1}" ${2}
 }
 
 # Get configured Docker account ID
@@ -68,90 +68,74 @@ docker_dir() {
 	echo "${DOCKER_DIR}"
 }
 
-# Single function used to build, pull, push Docker modules.
-# Images are built roughly in order of size.
-# Param 1 - command (build|pull|push)
+# Single function used to build, pull, push, and removed Docker images.
+# Images are built in order of depedencies and size.
+# Param 1 - command (build|pull|push|rmi)
 # Param 2 - (optional) number of images to build
+# Param 3 - (optional) Start with this image number (if given a 2) start with blj_bash
 docker_cmd() {
-	i=0 && cmd="${1}" && bljCmd="${cmd}" && javaCmd="${cmd}" && x=${2} && num=${2}
-	[ $# -eq 1 ] && x="ALL" && num=100
-	if [ "${1}" == "build" ]; then
-		cmd="${1} -t"
-		bljCmd="$(build_controller) -t"
-		javaCmd="$(build_jm) -t"
-	fi
-	aws_log "Docker ${1} latest Docker images for $x modules"
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/blj_basic${bljV} $(docker_file ${1} blj_basic)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/blj_bash${bljV}  $(docker_file ${1} blj_bash)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/blj_basic_py2${bljV}  $(docker_file ${1} blj_basic_py2)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/blj_basic_java${bljV} $(docker_file ${1} blj_basic_java)
-	[ $num -gt $((i++)) ] && docker $javaCmd $(dock_id)/java_module${bljV} $(docker_file ${1} java_module)
-	[ $num -gt $((i++)) ] && docker $bljCmd $(dock_id)/biolockj_controller${bljV} $(docker_file ${1} biolockj_controller)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/kraken2_classifier_dbfree${bljV} $(docker_file ${1} kraken2_classifier_dbfree)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/kraken_classifier_dbfree${bljV} $(docker_file ${1} kraken_classifier_dbfree)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/knead_data_dbfree${bljV} $(docker_file ${1} knead_data_dbfree)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/metaphlan2_classifier_dbfree${bljV} $(docker_file ${1} metaphlan2_classifier_dbfree)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/r_module${bljV} $(docker_file ${1} r_module)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/rdp_classifier${bljV} $(docker_file ${1} rdp_classifier)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/qiime_classifier${bljV} $(docker_file ${1} qiime_classifier)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/metaphlan2_classifier${bljV} $(docker_file ${1} metaphlan2_classifier)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/humann2_classifier_dbfree${bljV} $(docker_file ${1} humann2_classifier_dbfree)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/knead_data${bljV} $(docker_file ${1} knead_data)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/kraken2_classifier${bljV} $(docker_file ${1} kraken2_classifier)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/kraken_classifier${bljV} $(docker_file ${1} kraken_classifier)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/humann2_classifier${bljV} $(docker_file ${1} humann2_classifier)
-	[ $num -gt $((i++)) ] && docker $cmd $(dock_id)/humann2_classifier_dbfree${bljV} $(docker_file ${1} humann2_classifier_dbfree)
-	aws_log "Docker ${1} completed for $x modules!"
+	ind=0 && startInd=1 && num=${2} && displayNum=${2} && [ $# -eq 3 ] && startInd=${3}
+	[ $# -eq 1 ] && displayNum="ALL" && num=100
+	aws_log "STARTED Docker ${1} ${displayNum} Docker images starting with index #${startInd}..."
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} blj_basic" && $(get_cmd ${1} blj_basic)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} blj_bash" && $(get_cmd ${1} blj_bash)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} blj_basic_py2" && $(get_cmd ${1} blj_basic_py2)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} blj_basic_java" && $(get_cmd ${1} blj_basic_java)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} java_module" && $(get_cmd ${1} java_module)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} biolockj_controller" && $(get_cmd ${1} biolockj_controller)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken2_classifier_dbfree" && $(get_cmd ${1} kraken2_classifier_dbfree)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken_classifier_dbfree" && $(get_cmd ${1} kraken_classifier_dbfree)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} knead_data_dbfree" && $(get_cmd ${1} knead_data_dbfree)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} metaphlan2_classifier_dbfree" && $(get_cmd ${1} metaphlan2_classifier_dbfree)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} r_module" && $(get_cmd ${1} r_module)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} rdp_classifier" && $(get_cmd ${1} rdp_classifier)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} qiime_classifier" && $(get_cmd ${1} qiime_classifier)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} metaphlan2_classifier" && $(get_cmd ${1} metaphlan2_classifier)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} humann2_classifier_dbfree" && $(get_cmd ${1} humann2_classifier_dbfree)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} knead_data" && $(get_cmd ${1} knead_data)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken2_classifier" && $(get_cmd ${1} kraken2_classifier)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken_classifier" && $(get_cmd ${1} kraken_classifier)
+	#ind=$((ind+1)) && $(exe_cmd) && echo "${1} humann2_classifier" && $(get_cmd ${1} humann2_classifier)
+	aws_log "COMPLETED Docker ${1} for ${displayNum} modules starting with index #${startInd}!"
 }
 
 # Used by docker_cmd to build and push number of modules given, or all modules if no params
-# Param 1 - Limit build to first ${1} modules
+# Param 1 - (optional) Limit build to first ${1} modules
+# Param 2 - (optional) Start with this image # ${2}
 docker_deploy() {
-	docker_cmd "build" ${1}
+	docker_cmd "build" ${1} ${2}
 	clearDock
-	docker_cmd "push" ${1}
+	docker_cmd "push" ${1} ${2}
 	clearDock
 }
-
-# Used by docker_cmd to reference Dockerfiles
-# Param 1 - Docker command (build|pull|push)
-# Param 2 - Docker image
-docker_file() {
-	[ "${1}" == "build" ] && echo "$(docker_dir) -f $(docker_dir)/${2}.Dockerfile"
-}
-
-# Instantiate Docker bash shell for image + map ${BLJ_PROJ} to ${EFS_PROJ}
-# Param $1 = Docker image name (without user prefix)
-# Param $2 = input directory
-# Param $3 = optional "dev" param which overrides container $BLJ with localhost $BLJ
-dockin() {
-	echo "TESTING...${BLJ_PROJ}"
-	if [ $# -eq 3 ] && [ "$3" == "dev" ]; then
-		echo -e  "Run Docker CMD:  \"docker run --rm -v $2:${BLJ_INPUT}:ro -v ${BLJ_PROJ}:${EFS_PROJ}:delegated -v ${BLJ}:/app/biolockj -it $(dock_id)/$1 /bin/bash\""
-		docker run --rm -v $2:"${BLJ_INPUT}":ro -v "${BLJ_PROJ}":"${EFS_PROJ}":delegated -v "${BLJ}":/app/biolockj -it $(dock_id)/$1 /bin/bash
-	else
-		echo -e  "Run Docker CMD:  \"docker run --rm -v $2:${BLJ_INPUT}:ro -v ${BLJ_PROJ}:${EFS_PROJ}:delegated -it $(dock_id)/$1 /bin/bash\""
-		docker run --rm -v $2:"${BLJ_INPUT}":ro -v "${BLJ_PROJ}":"${EFS_PROJ}":delegated -it $(dock_id)/$1 /bin/bash
-	fi
-}
-
 
 # List all Doker images & containers
 dockls() {
 	docker images && docker container ls --all
 }
 
-# Instantiate Docker bash shell for biolockj_controller with  
-# Param $1 = input directory
-dockManager() {
-	echo -e  "Run Docker CMD:  \"docker run --rm -v ${BLJ_PROJ}:${EFS_PROJ}:delegated -v ${DOCK_SOCK}:${DOCK_SOCK} v $1:${BLJ_INPUT}:ro -it $(dock_id)/biolockj_controller /bin/bash"\"
-	docker run --rm -v "${BLJ_PROJ}":"${EFS_PROJ}":delegated -v "${DOCK_SOCK}":"${DOCK_SOCK}" -v $1:"${BLJ_INPUT}":ro -it $(dock_id)/biolockj_controller /bin/bash
+# Check start index and number of images to build to return TRUE or FALSE
+exe_cmd() {
+	[ $ind -ge $startInd ] && [ $num -gt $((ind-startInd)) ]
 }
 
+# Used by docker_cmd to reference Dockerfiles
+# Param 1 - Docker command (build|pull|push|rmi)
+# Param 2 - Docker image
+get_cmd() {
+	cmd="${1}" && target="$(dock_id)/${2}"
+	if [ "${1}" == "build" ]; then
+		bjm="${1} --build-arg BLJ_DATE=$(date +%s) --build-arg VER=$(biolockj -v)"
+		cmd="${1}" && target="${target} $(docker_dir) -f $(docker_dir)/${2}.Dockerfile" 
+		[ "${2}" == "biolockj_controller" ] && cmd="${bjm} --build-arg DOCKER_CLIENT=$DOCKER_VER"
+		[ "${2}" == "java_module" ] && cmd="${bjm}"
+		cmd="${cmd} -t"
+	fi
+	echo docker ${cmd} ${target}
+}
 # Launch a new bash shell for a running Docker container 
 # Param $1 = Docker container name or ID, if undefined use 1st ID
 goDock() {
-	
 	count=$(docker ps -q| head -1)
 	if [ $# -eq 0 ]; then id="$(docker ps -q | head -n 1)"; else id="${1}"; fi
 	docker exec -ti ${id} /bin/bash

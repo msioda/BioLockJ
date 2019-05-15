@@ -62,9 +62,7 @@ public class R_CalculateStats extends R_Module {
 		final IOFileFilter ff = new WildcardFileFilter( "*" + querySuffix );
 		for( final File dir: getStatsFileDirs( module ) ) {
 			final Collection<File> files = FileUtils.listFiles( dir, ff, HiddenFileFilter.VISIBLE );
-			if( files.size() > 0 ) {
-				results.addAll( files );
-			}
+			if( files.size() > 0 ) results.addAll( files );
 		}
 
 		final int count = results.size();
@@ -106,9 +104,8 @@ public class R_CalculateStats extends R_Module {
 	 * @return TRUE if file name is formatted as if output by this module
 	 */
 	public static boolean isStatsFile( final File file ) {
-		for( final String suffix: statSuffixSet ) {
+		for( final String suffix: statSuffixSet )
 			if( file.getName().contains( suffix ) && file.getName().endsWith( TSV_EXT ) ) return true;
-		}
 		return false;
 	}
 

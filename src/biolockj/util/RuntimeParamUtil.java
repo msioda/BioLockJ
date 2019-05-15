@@ -184,21 +184,14 @@ public class RuntimeParamUtil {
 		String javaModArgs = "";
 		for( final String key: params.keySet() ) {
 			Log.debug( RuntimeParamUtil.class, "Found Docker param: " + key + "=" + params.get( key ) );
-			if( BLJ_CONTROLLER_ONLY_ARGS.contains( key ) ) {
-				continue;
-			}
+			if( BLJ_CONTROLLER_ONLY_ARGS.contains( key ) ) continue;
 			String val = null;
-			if( key.equals( HOST_CONFIG_DIR ) ) {
+			if( key.equals( HOST_CONFIG_DIR ) )
 				val = CONFIG_FILE + " " + params.get( key ) + File.separator + getConfigFile().getName();
-			} else if( key.equals( HOST_HOME_DIR ) ) {
-				val = HOME_DIR + " " + params.get( key );
-			} else if( key.equals( HOST_BLJ_PROJ_DIR ) ) {
-				val = BLJ_PROJ_DIR + " " + params.get( key );
-			} else if( ARG_FLAGS.contains( key ) ) {
-				val = key;
-			} else {
-				val = key + " " + params.get( key );
-			}
+			else if( key.equals( HOST_HOME_DIR ) ) val = HOME_DIR + " " + params.get( key );
+			else if( key.equals( HOST_BLJ_PROJ_DIR ) ) val = BLJ_PROJ_DIR + " " + params.get( key );
+			else if( ARG_FLAGS.contains( key ) ) val = key;
+			else val = key + " " + params.get( key );
 
 			javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + val;
 			Log.info( RuntimeParamUtil.class, "Add Docker param: " + val );
@@ -218,20 +211,14 @@ public class RuntimeParamUtil {
 		final String[] exts = { ".ascii", ".asc", ".plain", ".rft", ".tab", ".text", ".tsv", ".txt",
 			Constants.PROPS_EXT, ".prop", ".props", ".config" };
 
-		for( final String ext: exts ) {
-			if( name.toLowerCase().endsWith( ext ) ) {
-				name = name.substring( 0, name.length() - ext.length() );
-			}
-		}
+		for( final String ext: exts )
+			if( name.toLowerCase().endsWith( ext ) ) name = name.substring( 0, name.length() - ext.length() );
 
 		final int i = name.indexOf( "." );
-		if( name.equals( configName ) && i > -1 && name.length() > i + 1 ) {
-			name = name.substring( i + 1 );
-		}
+		if( name.equals( configName ) && i > -1 && name.length() > i + 1 ) name = name.substring( i + 1 );
 
-		if( name.length() > Constants.MASTER_PREFIX.length() && name.startsWith( Constants.MASTER_PREFIX ) ) {
+		if( name.length() > Constants.MASTER_PREFIX.length() && name.startsWith( Constants.MASTER_PREFIX ) )
 			name = name.replace( Constants.MASTER_PREFIX, "" );
-		}
 
 		return name;
 	}
@@ -303,24 +290,18 @@ public class RuntimeParamUtil {
 
 		parseParams( simplifyArgs( args ) );
 
-		if( isDockerMode() ) {
-			reassignDockerConfig();
-		}
+		if( isDockerMode() ) reassignDockerConfig();
 
 		verifyBaseDir();
 
-		if( getDirectModuleDir() != null ) {
-			assignMasterConfig( DIRECT_MODE, assignDirectPipelineDir() );
-		} else if( doRestart() && getConfigFile() == null ) {
-			assignMasterConfig( RESTART_DIR, getRestartDir() );
-		} else {
-			try {
-				final File localConfig = Config.getLocalConfigFile( params.get( CONFIG_FILE ) );
-				params.put( CONFIG_FILE, localConfig.getAbsolutePath() );
-			} catch( final Exception ex ) {
-				throw new RuntimeParamException( CONFIG_FILE, params.get( CONFIG_FILE ),
-					"Failed to get local Confg file path: " + ex.getMessage() );
-			}
+		if( getDirectModuleDir() != null ) assignMasterConfig( DIRECT_MODE, assignDirectPipelineDir() );
+		else if( doRestart() && getConfigFile() == null ) assignMasterConfig( RESTART_DIR, getRestartDir() );
+		else try {
+			final File localConfig = Config.getLocalConfigFile( params.get( CONFIG_FILE ) );
+			params.put( CONFIG_FILE, localConfig.getAbsolutePath() );
+		} catch( final Exception ex ) {
+			throw new RuntimeParamException( CONFIG_FILE, params.get( CONFIG_FILE ),
+				"Failed to get local Confg file path: " + ex.getMessage() );
 		}
 
 		validateParams();
@@ -341,9 +322,7 @@ public class RuntimeParamUtil {
 				runtimeArgs += ( runtimeArgs.isEmpty() ? "": " " ) + arg;
 				Log.info( RuntimeParamUtil.class, " ---> arg[" + numArgs++ + "] = " + arg );
 			}
-		} else {
-			Log.info( RuntimeParamUtil.class, "No Java runtime args found!" );
-		}
+		} else Log.info( RuntimeParamUtil.class, "No Java runtime args found!" );
 		Log.info( RuntimeParamUtil.class, Constants.LOG_SPACER );
 	}
 
@@ -368,9 +347,8 @@ public class RuntimeParamUtil {
 	private static void assignLastParam( final String param ) throws RuntimeParamException {
 		if( !params.keySet().contains( CONFIG_FILE )
 			&& !params.keySet().contains( RESTART_DIR ) & !params.keySet().contains( param )
-			&& !params.values().contains( param ) ) {
-			params.put( CONFIG_FILE, param );
-		} else if( NAMED_ARGS.contains( param ) )
+			&& !params.values().contains( param ) ) params.put( CONFIG_FILE, param );
+		else if( NAMED_ARGS.contains( param ) )
 			throw new RuntimeParamException( param, "", "Missing argument for named parameter" );
 	}
 
@@ -379,15 +357,12 @@ public class RuntimeParamUtil {
 		if( pipelineDir == null ) throw new RuntimeParamException( param, "", "Pipeline root directory not found!" );
 		if( !pipelineDir.isDirectory() )
 			throw new RuntimeParamException( param, pipelineDir.getAbsolutePath(), "System directory not found" );
-		for( final File file: pipelineDir.listFiles() ) {
+		for( final File file: pipelineDir.listFiles() )
 			if( file.getName().startsWith( Constants.MASTER_PREFIX ) ) {
 				params.put( CONFIG_FILE, file.getAbsolutePath() );
-				if( isDockerMode() ) {
-					params.put( HOST_CONFIG_DIR, getDockerHostPipelineDir() );
-				}
+				if( isDockerMode() ) params.put( HOST_CONFIG_DIR, getDockerHostPipelineDir() );
 				return;
 			}
-		}
 
 		throw new RuntimeParamException( param, pipelineDir.getAbsolutePath(),
 			masterPrefix + " Config file not found in: " + pipelineDir.getAbsolutePath() );
@@ -403,7 +378,7 @@ public class RuntimeParamUtil {
 
 	private static String getDir( final String path ) {
 		if( path != null && path.endsWith( File.separator ) ) return path.substring( 0, path.length() - 1 );
-		return path;
+		return Config.replaceEnvVar( path );
 	}
 
 	private static String getDirectModuleParam( final BioModule module ) {
@@ -417,15 +392,10 @@ public class RuntimeParamUtil {
 	private static void parseParams( final String[] args ) throws RuntimeParamException {
 		String prevParam = "";
 		for( final String arg: args ) {
-			if( ARG_FLAGS.contains( arg ) ) {
-				params.put( arg, Constants.TRUE );
-			} else if( DIR_ARGS.contains( prevParam ) ) {
-				params.put( prevParam, getDir( arg ) );
-			} else if( NAMED_ARGS.contains( prevParam ) ) {
-				params.put( prevParam, arg );
-			} else {
-				extraParams.add( arg );
-			}
+			if( ARG_FLAGS.contains( arg ) ) params.put( arg, Constants.TRUE );
+			else if( DIR_ARGS.contains( prevParam ) ) params.put( prevParam, getDir( arg ) );
+			else if( NAMED_ARGS.contains( prevParam ) ) params.put( prevParam, arg );
+			else extraParams.add( arg );
 			prevParam = arg;
 		}
 
@@ -446,9 +416,8 @@ public class RuntimeParamUtil {
 		params.put( HOST_BLJ_PROJ_DIR, params.get( BLJ_PROJ_DIR ) );
 		params.put( HOST_CONFIG_DIR, getConfigFile().getParentFile().getAbsolutePath() );
 		params.put( HOST_HOME_DIR, params.get( HOME_DIR ) );
-		if( doRestart() ) {
+		if( doRestart() )
 			params.put( RESTART_DIR, DockerUtil.DOCKER_OUTPUT_DIR + File.separator + getRestartDir().getName() );
-		}
 
 		params.put( BLJ_PROJ_DIR, DockerUtil.DOCKER_OUTPUT_DIR );
 		params.put( HOME_DIR, DockerUtil.ROOT_HOME );
@@ -462,15 +431,10 @@ public class RuntimeParamUtil {
 
 		for( String arg: args ) {
 			if( LONG_ARG_NAMES.contains( arg ) || NAMED_ARGS.contains( prevArg ) || DIR_ARGS.contains( prevArg )
-				|| i == args.length - 1 && !foundConfig ) {
-				simpleArgs[ i++ ] = arg;
-			} else {
-				if( arg.startsWith( "--" ) ) {
-					arg = arg.substring( 1 );
-				}
-				if( !arg.startsWith( "-" ) ) {
-					arg = "-" + arg;
-				}
+				|| i == args.length - 1 && !foundConfig ) simpleArgs[ i++ ] = arg;
+			else {
+				if( arg.startsWith( "--" ) ) arg = arg.substring( 1 );
+				if( !arg.startsWith( "-" ) ) arg = "-" + arg;
 				arg = arg.substring( 0, 2 );
 				simpleArgs[ i++ ] = arg;
 			}
@@ -534,7 +498,7 @@ public class RuntimeParamUtil {
 	 * Host BioLockJ deployment to run - used to override installed $BLJ in Docker containers with BioLockJ installed:
 	 * {@value #HOST_BLJ_DIR}
 	 */
-	protected static final String HOST_BLJ_DIR = "--host-blj";
+	protected static final String HOST_BLJ_DIR = "--blj";
 
 	/**
 	 * Host $USER $BLJ_PROJ_DIR param: {@value #HOST_BLJ_PROJ_DIR}
@@ -545,7 +509,7 @@ public class RuntimeParamUtil {
 	 * Host BioLockJ deployment to run - used to map $BLJ_SUP volume in Docker containers with BioLockJ installed:
 	 * {@value #HOST_BLJ_SUP_DIR}
 	 */
-	protected static final String HOST_BLJ_SUP_DIR = "--host-blj_sup";
+	protected static final String HOST_BLJ_SUP_DIR = "--bljSup";
 
 	/**
 	 * Host $USER config file path param: {@value #HOST_CONFIG_DIR}

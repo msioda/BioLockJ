@@ -48,13 +48,12 @@ calculateStats <- function( level ) {
    for( countCol in 1:numDataCols ){
       if( sum( countTable[,countCol] > 0 ) >= cutoffValue ) {
          names[ length(names)+1 ] = names(countTable)[countCol]
-         logInfo( c( "Calculate pvalues for:", names[ length(names) ] ) )
-
          if( length( getBinaryFields() ) > 0 ) {
             for( field in getBinaryFields() ) {
+               logInfo( c( "Calculate pvalues for:", names[ length(names) ], " ~ ", field ) )
                att = as.factor( metaTable[,field] )
                vals = levels( att )
-               if( everyGroupHasData( countTable, countCol, att, vals ) ) { 
+               if( everyGroupHasData( countTable, countCol, field, vals ) ) { 
                      myLm = lm( countTable[,countCol] ~ att, na.action=na.exclude )
                      parametricPvals = addNamedVectorElement( parametricPvals, field, t.test( countTable[att==vals[1], countCol], countTable[att==vals[2], countCol] )$p.value )
                      nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, pvalue( wilcox_test( countTable[att==vals[1], countCol], countTable[att==vals[2], countCol] ) ) )
@@ -69,9 +68,10 @@ calculateStats <- function( level ) {
 
          if( length( getNominalFields() ) > 0 ) {
             for( field in getNominalFields() ) {
+               logInfo( c( "Calculate pvalues for:", names[ length(names) ], " ~ ", field ) )
                att = as.factor( metaTable[,field] )
                vals = levels( att )
-               if( everyGroupHasData( countTable, countCol, att, vals ) ) { 
+               if( everyGroupHasData( countTable, countCol, field, vals ) ) { 
                      myLm = lm( countTable[,countCol] ~ att, na.action=na.exclude )
                      myAnova = anova( myLm )
                      parametricPvals = addNamedVectorElement( parametricPvals, field, myAnova$"Pr(>F)"[1] )
@@ -87,6 +87,7 @@ calculateStats <- function( level ) {
          
          if( length( getNumericFields() ) > 0 ) {
             for( field in getNumericFields() ) {
+               logInfo( c( "Calculate pvalues for:", names[ length(names) ], " ~ ", field ) )
                att = as.numeric( metaTable[,field] )
                parametricPvals = addNamedVectorElement( parametricPvals, field, Kendall( countTable[,countCol], att)$sl[1] )
                nonParametricPvals = addNamedVectorElement( nonParametricPvals, field, cor.test( countTable[,countCol], att, na.action=na.exclude )$p.value )
@@ -170,11 +171,12 @@ main <- function() {
 }
 
 # Verify all groups have 2+ values to avoid statistical test failures
-everyGroupHasData <- function( countTable, countCol, att, vals )  {
+everyGroupHasData <- function( countTable, countCol, field, vals )  {
    for( val in vals ) {
-   	  numVals = length( countTable[ countTable[ , att] == val, countCol] )
-      if( numVals < 1 ) {
-         logInfo( c( "Skip statistical test for", names(countTable)[countCol], "since it has no data for", att, "=", val ) )
+      hasTaxa = !is.na( countTable[, countCol] )
+      hasVal = as.vector( countTable[,field] ) == val
+      if( length( which( hasTaxa & hasVal == TRUE) ) < 1 ) {
+         logInfo( c( "Skip statistical test for", names(countTable)[countCol], "no data for", field, "=", val ) )
          return( FALSE )
       }
    }

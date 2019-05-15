@@ -45,9 +45,7 @@ public class TaxaUtil {
 	 * @return Taxonomy level
 	 */
 	public static String bottomTaxaLevel() {
-		if( bottomLevel == null ) {
-			bottomLevel = getTaxaLevels().get( getTaxaLevels().size() - 1 );
-		}
+		if( bottomLevel == null ) bottomLevel = getTaxaLevels().get( getTaxaLevels().size() - 1 );
 		return bottomLevel;
 	}
 
@@ -73,9 +71,7 @@ public class TaxaUtil {
 		final TreeSet<String> uniqueTaxa = new TreeSet<>();
 		for( final String otu: otus ) {
 			final String taxa = getTaxaName( otu, level );
-			if( taxa != null ) {
-				uniqueTaxa.add( taxa );
-			}
+			if( taxa != null ) uniqueTaxa.add( taxa );
 		}
 		return uniqueTaxa;
 	}
@@ -110,12 +106,8 @@ public class TaxaUtil {
 			for( final String otu: otuCounts.keySet() ) {
 				final String taxa = getTaxaName( otu, level );
 				if( taxa != null ) {
-					if( taxaCounts.get( sampleId ) == null ) {
-						taxaCounts.put( sampleId, new TreeMap<>() );
-					}
-					if( taxaCounts.get( sampleId ).get( taxa ) == null ) {
-						taxaCounts.get( sampleId ).put( taxa, 0L );
-					}
+					if( taxaCounts.get( sampleId ) == null ) taxaCounts.put( sampleId, new TreeMap<>() );
+					if( taxaCounts.get( sampleId ).get( taxa ) == null ) taxaCounts.get( sampleId ).put( taxa, 0L );
 					taxaCounts.get( sampleId ).put( taxa,
 						taxaCounts.get( sampleId ).get( taxa ) + otuCounts.get( otu ) );
 				}
@@ -135,9 +127,7 @@ public class TaxaUtil {
 		final TreeMap<String, String> map = new TreeMap<>();
 		for( final String level: getTaxaLevels() ) {
 			final String name = getTaxaName( otu, level );
-			if( name != null ) {
-				map.put( level, getTaxaName( otu, level ) );
-			}
+			if( name != null ) map.put( level, getTaxaName( otu, level ) );
 		}
 		return map;
 	}
@@ -162,13 +152,9 @@ public class TaxaUtil {
 
 		levelSpan = new ArrayList<>();
 		for( final String level: allTaxonomyLevels() ) {
-			if( !levelSpan.isEmpty() || level.equals( topTaxaLevel() ) ) {
-				levelSpan.add( level );
-			}
+			if( !levelSpan.isEmpty() || level.equals( topTaxaLevel() ) ) levelSpan.add( level );
 
-			if( level.equals( bottomTaxaLevel() ) ) {
-				break;
-			}
+			if( level.equals( bottomTaxaLevel() ) ) break;
 		}
 		return levelSpan;
 	}
@@ -203,15 +189,9 @@ public class TaxaUtil {
 		throws Exception {
 		if( level == null ) throw new Exception( "Level is required to build a taonomy table" );
 		String mySuffix = suffix;
-		if( mySuffix != null && !mySuffix.endsWith( "_" ) ) {
-			mySuffix += "_";
-		}
-		if( mySuffix != null && !mySuffix.startsWith( "_" ) ) {
-			mySuffix = "_" + mySuffix;
-		}
-		if( mySuffix == null ) {
-			mySuffix = "_";
-		}
+		if( mySuffix != null && !mySuffix.endsWith( "_" ) ) mySuffix += "_";
+		if( mySuffix != null && !mySuffix.startsWith( "_" ) ) mySuffix = "_" + mySuffix;
+		if( mySuffix == null ) mySuffix = "_";
 		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + mySuffix
 			+ level + Constants.TSV_EXT );
 	}
@@ -223,9 +203,8 @@ public class TaxaUtil {
 	 * @return Taxonomy level
 	 */
 	public static String getTaxonomyTableLevel( final File file ) {
-		for( final String level: getTaxaLevels() ) {
+		for( final String level: getTaxaLevels() )
 			if( file.getName().endsWith( level + Constants.TSV_EXT ) ) return level;
-		}
 		return null;
 	}
 
@@ -247,34 +226,18 @@ public class TaxaUtil {
 		final Set<String> configuredLevels = new HashSet<>();
 		final List<String> validOptions = allTaxonomyLevels();
 
-		for( final String element: Config.requireList( null, Constants.REPORT_TAXONOMY_LEVELS ) ) {
-			if( validOptions.contains( element.toLowerCase() ) ) {
-				configuredLevels.add( element.toLowerCase() );
-			} else throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
+		for( final String element: Config.requireList( null, Constants.REPORT_TAXONOMY_LEVELS ) )
+			if( validOptions.contains( element.toLowerCase() ) ) configuredLevels.add( element.toLowerCase() );
+			else throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
 				"Invalid level defined [" + element + "]  " + errorMsg );
-		}
 
-		if( configuredLevels.contains( Constants.DOMAIN ) ) {
-			configLevels.add( Constants.DOMAIN );
-		}
-		if( configuredLevels.contains( Constants.PHYLUM ) ) {
-			configLevels.add( Constants.PHYLUM );
-		}
-		if( configuredLevels.contains( Constants.CLASS ) ) {
-			configLevels.add( Constants.CLASS );
-		}
-		if( configuredLevels.contains( Constants.ORDER ) ) {
-			configLevels.add( Constants.ORDER );
-		}
-		if( configuredLevels.contains( Constants.FAMILY ) ) {
-			configLevels.add( Constants.FAMILY );
-		}
-		if( configuredLevels.contains( Constants.GENUS ) ) {
-			configLevels.add( Constants.GENUS );
-		}
-		if( configuredLevels.contains( Constants.SPECIES ) ) {
-			configLevels.add( Constants.SPECIES );
-		}
+		if( configuredLevels.contains( Constants.DOMAIN ) ) configLevels.add( Constants.DOMAIN );
+		if( configuredLevels.contains( Constants.PHYLUM ) ) configLevels.add( Constants.PHYLUM );
+		if( configuredLevels.contains( Constants.CLASS ) ) configLevels.add( Constants.CLASS );
+		if( configuredLevels.contains( Constants.ORDER ) ) configLevels.add( Constants.ORDER );
+		if( configuredLevels.contains( Constants.FAMILY ) ) configLevels.add( Constants.FAMILY );
+		if( configuredLevels.contains( Constants.GENUS ) ) configLevels.add( Constants.GENUS );
+		if( configuredLevels.contains( Constants.SPECIES ) ) configLevels.add( Constants.SPECIES );
 
 		if( configLevels.isEmpty() ) throw new ConfigFormatException( Constants.REPORT_TAXONOMY_LEVELS,
 			"No valid options configured.  " + errorMsg );
@@ -290,10 +253,9 @@ public class TaxaUtil {
 	 * @return boolean TRUE if file is a normalized taxonomy count file
 	 */
 	public static boolean isLogNormalizedTaxaFile( final File file ) {
-		for( final String level: getTaxaLevels() ) {
+		for( final String level: getTaxaLevels() )
 			if( file.getName().contains( "_" + TAXA_TABLE + "_Log" )
 				&& file.getName().endsWith( "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) ) return true;
-		}
 		return false;
 	}
 
@@ -304,10 +266,9 @@ public class TaxaUtil {
 	 * @return boolean TRUE if file is a normalized taxonomy count file
 	 */
 	public static boolean isNormalizedTaxaFile( final File file ) {
-		for( final String level: getTaxaLevels() ) {
+		for( final String level: getTaxaLevels() )
 			if( file.getName().endsWith( "_" + TAXA_TABLE + "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) )
 				return true;
-		}
 		return false;
 	}
 
@@ -318,11 +279,8 @@ public class TaxaUtil {
 	 * @return boolean TRUE if file is a taxonomy count file
 	 */
 	public static boolean isTaxaFile( final File file ) {
-		if( file.getName().contains( "_" + TAXA_TABLE + "_" ) ) {
-			for( final String level: getTaxaLevels() ) {
-				if( file.getName().endsWith( level + Constants.TSV_EXT ) ) return true;
-			}
-		}
+		if( file.getName().contains( "_" + TAXA_TABLE + "_" ) ) for( final String level: getTaxaLevels() )
+			if( file.getName().endsWith( level + Constants.TSV_EXT ) ) return true;
 		return false;
 	}
 
@@ -349,9 +307,7 @@ public class TaxaUtil {
 	 * @return Taxonomy level
 	 */
 	public static String topTaxaLevel() {
-		if( topLevel == null ) {
-			topLevel = getTaxaLevels().get( 0 );
-		}
+		if( topLevel == null ) topLevel = getTaxaLevels().get( 0 );
 		return topLevel;
 	}
 

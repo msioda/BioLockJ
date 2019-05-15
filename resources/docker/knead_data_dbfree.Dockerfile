@@ -12,12 +12,10 @@ RUN apt-get install -y software-properties-common && \
 RUN pip install kneaddata
 
 #3.) Install Trimmomatic
-ENV TRIMMOMATIC_URL="http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic"
 ENV TRIMM_VER=0.38
 ENV TRIM_APP=Trimmomatic-${TRIMM_VER}
-ENV DL_URL=${TRIMMOMATIC_URL}-${TRIMM_VER}.zip
 RUN cd /app && \
-	wget -qO- $DL_URL | bsdtar -xf- 
+wget -qO- "http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-${TRIMM_VER}.zip" | bsdtar -xf- 
 
 #4.) Install bowtie 2.3.4.3
 ENV BOWTIE_URL="https://github.com/BenLangmead/bowtie2/releases/download/v"

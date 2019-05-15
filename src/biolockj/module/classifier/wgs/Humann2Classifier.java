@@ -16,6 +16,8 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
 
@@ -106,33 +108,32 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	public List<String> getClassifierParams() throws Exception {
 		final List<String> res = new ArrayList<>();
 
-		for( final String val: Config.getList( this, EXE_HUMANN2_PARAMS ) ) {
+		for( final String val: Config.getList( this, EXE_HUMANN2_PARAMS ) )
 			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM )
-				|| val.startsWith( LONG_OUTPUT_PARAM ) ) {
+				|| val.startsWith( LONG_OUTPUT_PARAM ) )
 				Log.warn( getClass(),
 					"Ignore runtime option [ " + val + " ] set in Config property: " + EXE_HUMANN2_PARAMS
 						+ " because this value is set by BioLockJ at runtime based on pipeline context" );
-			} else if( val.startsWith( NUCL_DB_PARAM ) ) {
+			else if( val.startsWith( NUCL_DB_PARAM ) )
 				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: "
 					+ EXE_HUMANN2_PARAMS + " because this value is set by BioLockJ Config property: " + HN2_NUCL_DB );
-			} else if( val.startsWith( PROT_DB_PARAM ) ) {
+			else if( val.startsWith( PROT_DB_PARAM ) )
 				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: "
 					+ EXE_HUMANN2_PARAMS + " because this value is set by BioLockJ Config property: " + HN2_PROT_DB );
-			} else {
-				res.add( val );
-			}
-		}
+			else res.add( val );
 		return res;
 	}
 
 	@Override
-	public File getDB() throws Exception {
-		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
-		final File nuclDb = new File( Config.requireString( this, HN2_NUCL_DB ) );
-		final File protDb = new File( Config.requireString( this, HN2_PROT_DB ) );
-		final File parentDir = BioLockJUtil.getCommonParent( nuclDb, protDb );
-		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
-		return parentDir;
+	public File getDB() throws ConfigNotFoundException, ConfigPathException {
+		if( getDbCache() != null ) return getDbCache();
+		if( DockerUtil.inDockerEnv() ) {
+			final File nuclDb = new File( Config.requireString( this, HN2_NUCL_DB ) );
+			final File protDb = new File( Config.requireString( this, HN2_PROT_DB ) );
+			setDbCache( BioLockJUtil.getCommonParent( nuclDb, protDb ) );
+		} else setDbCache( BioLockJUtil.getCommonParent( Config.requireExistingDir( this, HN2_NUCL_DB ),
+			Config.requireExistingDir( this, HN2_PROT_DB ) ) );
+		return getDbCache();
 	}
 
 	@Override
@@ -227,10 +228,12 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 * humann2.protDB=/db/uniref
 	 */
 	private String getDbPath( final String prop ) throws Exception {
-		final File db = new File( Config.requireString( this, prop ) );
-		return DockerUtil.inDockerEnv()
-			? db.getAbsolutePath().replace( db.getParentFile().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR )
-			: Config.requireExistingDir( this, prop ).getAbsolutePath();
+		final String path = Config.getString( this, prop );
+		if( path == null ) return null;
+		if( DockerUtil.hasDB( this ) ) return DockerUtil.getDockerDB( this, path ).getAbsolutePath();
+		if( DockerUtil.inDockerEnv() )
+			return path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		return Config.requireExistingDir( this, prop ).getAbsolutePath();
 	}
 
 	private String getJoinTableCmd() throws Exception {
@@ -254,24 +257,20 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	}
 
 	private Map<File, File> getPairedReads() throws Exception {
-		if( this.pairedReads == null && Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( this.pairedReads == null && Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 			this.pairedReads = SeqUtil.getPairedReads( getInputFiles() );
-		}
-
 		return this.pairedReads;
 	}
 
 	private String getParams( final String property ) {
 		String params = " ";
-		for( final String val: Config.getList( this, property ) ) {
+		for( final String val: Config.getList( this, property ) )
 			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM )
-				|| val.startsWith( LONG_OUTPUT_PARAM ) ) {
+				|| val.startsWith( LONG_OUTPUT_PARAM ) )
 				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: " + property
 					+ " because this value is set by BioLockJ at runtime based on pipeline context" );
-			} else {
-				params = val + " ";
-			}
-		}
+			else params = val + " ";
+
 		return params;
 	}
 
@@ -286,9 +285,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	private File getTempSubDir( final String name ) {
 		final File dir = new File( getTempDir().getAbsolutePath() + File.separator + name );
-		if( !dir.isDirectory() ) {
-			dir.mkdirs();
-		}
+		if( !dir.isDirectory() ) dir.mkdirs();
 		return dir;
 	}
 

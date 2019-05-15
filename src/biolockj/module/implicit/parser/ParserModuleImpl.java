@@ -34,11 +34,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	public void addOtuNode( final OtuNode node ) throws Exception {
 		if( isValid( node ) ) {
 			final ParsedSample sample = getParsedSample( node.getSampleId() );
-			if( sample == null ) {
-				addParsedSample( new ParsedSample( node ) );
-			} else {
-				sample.addNode( node );
-			}
+			if( sample == null ) addParsedSample( new ParsedSample( node ) );
+			else sample.addNode( node );
 		}
 	}
 
@@ -65,11 +62,9 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 				} finally {
 					writer.close();
 				}
-			} else {
-				Log.error( getClass(),
-					"buildOtuCountFiles should not encounter empty sample files where sample.getOtuCounts() == null!  Found null for: "
-						+ sample.getSampleId() );
-			}
+			} else Log.error( getClass(),
+				"buildOtuCountFiles should not encounter empty sample files where sample.getOtuCounts() == null!  Found null for: "
+					+ sample.getSampleId() );
 		}
 	}
 
@@ -84,9 +79,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 
 	@Override
 	public ParsedSample getParsedSample( final String sampleId ) {
-		for( final ParsedSample sample: this.parsedSamples ) {
+		for( final ParsedSample sample: this.parsedSamples )
 			if( sample.getSampleId().equals( sampleId ) ) return sample;
-		}
 		return null;
 	}
 
@@ -97,9 +91,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	public String getSummary() throws Exception {
 		String summary = SummaryUtil.getCountSummary( this.hitsPerSample, "OTUs", true );
 		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) {
-			summary += "Removed empty samples: " + this.sampleIds + RETURN;
-		}
+		if( !this.sampleIds.isEmpty() ) summary += "Removed empty samples: " + this.sampleIds + RETURN;
 
 		summary += "# Unique OTUs: " + this.uniqueOtus.size() + RETURN;
 		freeMemory();
@@ -128,9 +120,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 
 		buildOtuCountFiles();
 
-		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) {
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 			MetaUtil.addColumn( NUM_OTUS, this.hitsPerSample, getOutputDir(), true );
-		}
 	}
 
 	/**
@@ -154,20 +145,17 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * @throws Exception if modules are out of order
 	 */
 	protected void validateModuleOrder() throws Exception {
-		for( final BioModule module: ModuleUtil.getModules( this, true ) ) {
-			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) {
-				break;
-			} else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
+		for( final BioModule module: ModuleUtil.getModules( this, true ) )
+			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) break;
+			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
 				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
 					+ " must run before the ParserModule." );
-		}
 	}
 
 	private void addParsedSample( final ParsedSample newSample ) throws Exception {
-		for( final ParsedSample sample: this.parsedSamples ) {
+		for( final ParsedSample sample: this.parsedSamples )
 			if( sample.getSampleId().equals( newSample.getSampleId() ) )
 				throw new Exception( "Attempt to add duplicate sample! " + sample.getSampleId() );
-		}
 
 		this.parsedSamples.add( newSample );
 	}
@@ -206,12 +194,10 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	public static void setNumHitsFieldName( final String name ) throws Exception {
 		if( name == null )
 			throw new Exception( "Null name value passed to ParserModuleImpl.setNumHitsFieldName(name)" );
-		else if( otuCountField != null && otuCountField.equals( name ) ) {
+		else if( otuCountField != null && otuCountField.equals( name ) )
 			Log.warn( ParserModuleImpl.class, "Num Hits field already set to: " + otuCountField );
-		} else {
-			if( otuCountField != null ) {
-				depricatedOtuCountFields.add( otuCountField );
-			}
+		else {
+			if( otuCountField != null ) depricatedOtuCountFields.add( otuCountField );
 
 			depricatedOtuCountFields.remove( name );
 			otuCountField = name;

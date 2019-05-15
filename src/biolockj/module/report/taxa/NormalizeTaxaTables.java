@@ -57,17 +57,14 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 				throw new ConfigFormatException( Constants.REPORT_LOG_BASE,
 					"Property only accepts value \"10\" or \"e\"" );
 			Log.debug( getClass(), "Found logBase: " + this.logBase );
-		} else {
-			this.logBase = "";
-		}
+		} else this.logBase = "";
 		super.checkDependencies();
 	}
 
 	@Override
 	public String getSummary() throws Exception {
-		if( Config.getString( this, Constants.REPORT_LOG_BASE ) != null ) {
+		if( Config.getString( this, Constants.REPORT_LOG_BASE ) != null )
 			this.summary += " Log(" + Config.getString( this, Constants.REPORT_LOG_BASE ) + ")";
-		}
 
 		this.summary += " normalized tables";
 		return super.getSummary() + this.summary;
@@ -75,9 +72,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 
 	@Override
 	public void runModule() throws Exception {
-		for( final File file: getInputFiles() ) {
+		for( final File file: getInputFiles() )
 			transform( file );
-		}
 
 		this.summary = "Output " + getOutputDir().listFiles().length;
 	}
@@ -122,9 +118,7 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 				while( st.hasMoreTokens() ) {
 					final String nextToken = st.nextToken();
 					long d = 0;
-					if( nextToken.length() > 0 ) {
-						d = Long.parseLong( nextToken );
-					}
+					if( nextToken.length() > 0 ) d = Long.parseLong( nextToken );
 					innerList.add( d );
 				}
 
@@ -136,9 +130,7 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 				Log.debug( getClass(), "Row Sum [" + sampleIDs.size() + "] = " + rowSum );
 			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 
 		Log.debug( getClass(), "Table Sum [ #samples=" + sampleIDs.size() + "] = " + tableSum );
@@ -162,11 +154,10 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 					// index 0 = col headers, so add + 1
 					final String id = MetaUtil.getSampleIds().get( x + 1 );
 					Log.warn( getClass(), "All zero row will not be transformed - ID removed: " + id );
-				} else if( getLogBase().equalsIgnoreCase( LOG_E ) ) {
+				} else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 					loggedInnerList.add( new Double( Math.log( normVal ) ).toString() );
-				} else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
+				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
 					loggedInnerList.add( new Double( Math.log10( normVal ) ).toString() );
-				}
 			}
 		}
 
@@ -197,9 +188,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 	protected static List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
 		final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
 
-		for( final String id: zeroSampleIDs ) {
+		for( final String id: zeroSampleIDs )
 			sampleIDs.remove( id );
-		}
 		return sampleIDs;
 	}
 
@@ -211,19 +201,15 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 	 */
 	protected static Set<Integer> findAllZeroIndex( final List<List<Long>> data ) {
 		final Set<Integer> allZero = new HashSet<>();
-		for( int x = 0; x < data.size(); x++ ) {
+		for( int x = 0; x < data.size(); x++ )
 			for( int y = 0; y < data.get( x ).size(); y++ ) {
 				long sum = 0;
 
-				for( final Long d: data.get( x ) ) {
+				for( final Long d: data.get( x ) )
 					sum += d;
-				}
 
-				if( sum == 0 ) {
-					allZero.add( x );
-				}
+				if( sum == 0 ) allZero.add( x );
 			}
-		}
 		return allZero;
 	}
 
@@ -237,9 +223,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		final List<String> otuNames = new ArrayList<>();
 		final StringTokenizer st = new StringTokenizer( header, Constants.TAB_DELIM );
 		st.nextToken(); // skip ID & then strip quotes
-		while( st.hasMoreTokens() ) {
+		while( st.hasMoreTokens() )
 			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
-		}
 
 		return otuNames;
 	}
@@ -259,9 +244,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 
 		writer.write( MetaUtil.getID() );
 
-		for( final String s: taxaNames ) {
+		for( final String s: taxaNames )
 			writer.write( Constants.TAB_DELIM + s );
-		}
 
 		writer.write( Constants.RETURN );
 
@@ -269,13 +253,10 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		for( int x = 0; x < size; x++ ) {
 			writer.write( sampleNames.get( x ) );
 
-			for( int y = 0; y < taxaNames.size(); y++ ) {
+			for( int y = 0; y < taxaNames.size(); y++ )
 				writer.write( Constants.TAB_DELIM + taxaCounts.get( x ).get( y ) );
-			}
 
-			if( x + 1 != size ) {
-				writer.write( Constants.RETURN );
-			}
+			if( x + 1 != size ) writer.write( Constants.RETURN );
 		}
 
 		writer.close();
@@ -283,9 +264,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 
 	private static List<String> getNonZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
 		final List<String> zeroSampleIDs = new ArrayList<>();
-		for( final Integer i: allZeroIndex ) {
+		for( final Integer i: allZeroIndex )
 			zeroSampleIDs.add( sampleIDs.get( i ) );
-		}
 
 		return zeroSampleIDs;
 	}

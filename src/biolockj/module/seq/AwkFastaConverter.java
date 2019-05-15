@@ -18,6 +18,7 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
@@ -48,11 +49,9 @@ public class AwkFastaConverter extends SeqModuleImpl {
 				lines.add( unzip( f, filePath ) );
 			}
 
-			if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) ) {
+			if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
 				lines.add( convert454( filePath, fileId + dirExt, outDir ) );
-			} else if( SeqUtil.isFastQ() ) {
-				lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
-			}
+			else if( SeqUtil.isFastQ() ) lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
 
 			if( !SeqUtil.isGzipped( f.getName() ) && SeqUtil.isFastA() ) {
 				Log.warn( getClass(), "Remove this BioModule from Config:  "
@@ -81,7 +80,7 @@ public class AwkFastaConverter extends SeqModuleImpl {
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -118,10 +117,9 @@ public class AwkFastaConverter extends SeqModuleImpl {
 		return "cp " + source + " " + getOutputDir().getAbsolutePath() + File.separator + target;
 	}
 
-	private boolean hasGzipped() throws Exception {
-		for( final File f: getInputFiles() ) {
+	private boolean hasGzipped() {
+		for( final File f: getInputFiles() )
 			if( SeqUtil.isGzipped( f.getName() ) ) return true;
-		}
 
 		return false;
 	}

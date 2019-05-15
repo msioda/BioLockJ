@@ -12,18 +12,23 @@
 package biolockj.module;
 
 import java.io.File;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 
 /**
  * Interface for BioModules that use a reference database that is used by the DockerUtil to find the correct database
  * directory to map to the container /db volume.
  */
 public interface DatabaseModule extends BioModule {
+
 	/**
 	 * Return database directory, if multiple databases are configured, they must share a common parent directory and
 	 * the common parent directory is returned by this method.
 	 *
 	 * @return Database directory
-	 * @throws Exception thrown if any runtime error occurs
+	 * @throws ConfigPathException if path is defined but does not exists
+	 * @throws ConfigNotFoundException if DB property is undefined and the default DB is not included in the module
+	 * runtime env
 	 */
-	public File getDB() throws Exception;
+	public File getDB() throws ConfigPathException, ConfigNotFoundException;
 }

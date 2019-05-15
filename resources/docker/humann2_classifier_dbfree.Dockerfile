@@ -1,4 +1,7 @@
-# Deployment path:  $DOCKER_DIR/humann2_classifier_dbfree.Dockerfile
+# Deployment path: $DOCKER_DIR/humann2_classifier_dbfree.Dockerfile
+
+FROM ubuntu:18.04
+ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Install HumanN2 + dependencies
 RUN apt-get update && \
@@ -17,53 +20,53 @@ ENV BOWTIE=bowtie2-${BOWTIE_VER}-linux-x86_64
 ENV B_URL=${BOWTIE_URL}${BOWTIE_VER}/${BOWTIE}.zip
 RUN cd /usr/local/bin && \
 	wget -qO- $B_URL | bsdtar -xf- && \
-	chmod o+x -R /usr/local/bin/$BOWTIE && \
-	rm -rf /usr/local/bin/$BOWTIE/*-debug && \
-	mv /usr/local/bin/$BOWTIE/[bs]* . && \
-	rm -rf /usr/local/bin/$BOWTIE
+	chmod o+x -R /usr/local/bin/${BOWTIE} && \
+	rm -rf /usr/local/bin/${BOWTIE}/*-debug && \
+	mv /usr/local/bin/${BOWTIE}/[bs]* . && \
+	rm -rf /usr/local/bin/${BOWTIE}
 
-#3.) Install MetaPhlAn2
-ENV mpa_dir=/usr/local/bin
-ENV METAPHLAN_APP=/app/metaphlan2
-ENV META_URL="https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip"
-RUN cd /app && \
-	wget -qO- $META_URL | bsdtar -xf- && \
-	chmod -R 774 $METAPHLAN_APP && \
-	mv ${METAPHLAN_APP}/* $mpa_dir && \
-	rm -rf $METAPHLAN_APP && \
-	cd $mpa_dir && \
-	ln -s metaphlan2.py metaphlan2
-	
 #==================================================================================================
 #  To avoid coupling with blj_basic files (which change sometimes) 
 #  Recode blj_basic_py2 here so rebuilds won't have to repull DBs
 #==================================================================================================
 
-#4.) Setup Standard Dirs (used by some but not all ancestors)
+#3.) Setup Standard Dirs (used by some but not all ancestors)
 ENV BLJ="/app/biolockj"
 ENV BLJ_SUP="/app/blj_support"
 ENV EFS="/mnt/efs"
 ENV BLJ_CONFIG="${EFS}/config"
 ENV BLJ_DB="${EFS}/db"
 ENV BLJ_DEFAULT_DB="/mnt/db"
+#ENV BLJ_HOST_HOME="/mnt/host_home"
+ENV BLJ_HOST_HOME="/home/ec2-user"
 ENV BLJ_INPUT="${EFS}/input"
 ENV BLJ_META="${EFS}/metadata"
 ENV BLJ_PROJ="${EFS}/pipelines"
 ENV BLJ_PRIMER="${EFS}/primer"
 ENV BLJ_SCRIPT="${EFS}/script"
-ENV EC2_HOME="/home/ec2-user"
-ENV PATH="${EC2_HOME}/miniconda/bin:$PATH"
+ENV PATH="${BLJ_HOST_HOME}/miniconda/bin:$PATH"
 
-#5.) Build Standard Directories 
+#4.) Build Standard Directories 
 RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \
 	mkdir "${BLJ_CONFIG}" && mkdir "${BLJ_DB}" && mkdir "${BLJ_INPUT}" && \
 	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && \
-	mkdir "${BLJ_DEFAULT_DB}" && mkdir "/log"
+	mkdir "${BLJ_DEFAULT_DB}" && mkdir -p "${BLJ_HOST_HOME}"
 
-#6.) Set the timezone to EST
+#5.) Set the timezone to EST
 RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
 	dpkg-reconfigure -f noninteractive tzdata
 
+
+#6.) Install MetaPhlAn2
+ENV mpa_dir=/usr/local/bin
+RUN cd /app && \
+	wget -qO- "https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip" | bsdtar -xf- && \
+	chmod -R 774 /app/metaphlan2 && \
+	mv /app/metaphlan2/* ${mpa_dir} && \
+	rm -rf /app/metaphlan2 && \
+	cd ${mpa_dir} && \
+	ln -s metaphlan2.py metaphlan2
+	
 #7.) Update  ~/.bashrc
 RUN echo ' '  >> ~/.bashrc && \
 	echo 'force_color_prompt=yes' >> ~/.bashrc && \

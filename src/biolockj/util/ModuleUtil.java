@@ -49,9 +49,8 @@ public class ModuleUtil {
 	 * @return BioModule
 	 */
 	public static ClassifierModule getClassifier( final BioModule module, final boolean checkAhead ) {
-		for( final BioModule m: getModules( module, checkAhead ) ) {
+		for( final BioModule m: getModules( module, checkAhead ) )
 			if( m instanceof ClassifierModule ) return (ClassifierModule) m;
-		}
 		return null;
 	}
 
@@ -108,14 +107,13 @@ public class ModuleUtil {
 				+ module.getClass().getName() );
 
 		final ClassifierModule classifier = getClassifier( module, checkAhead );
-		for( final BioModule m: getModules( module, checkAhead ) ) {
+		for( final BioModule m: getModules( module, checkAhead ) )
 			if( m.getClass().getName().equals( className ) ) {
 				final boolean targetBeforeClassifier = m.getID() < classifier.getID();
 				final boolean targetAfterClassifier = m.getID() > classifier.getID();
 				if( checkAhead && targetBeforeClassifier || !checkAhead && targetAfterClassifier ) return m;
 
 			}
-		}
 
 		return null;
 	}
@@ -143,10 +141,9 @@ public class ModuleUtil {
 	 */
 	public static List<BioModule> getModules( final BioModule module, final Boolean checkAhead ) {
 		List<BioModule> modules = null;
-		if( checkAhead ) {
-			modules = new ArrayList<>(
-				new TreeSet<>( Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
-		} else {
+		if( checkAhead ) modules = new ArrayList<>(
+			new TreeSet<>( Pipeline.getModules().subList( module.getID() + 1, Pipeline.getModules().size() ) ) );
+		else {
 			modules = new ArrayList<>( new TreeSet<>( Pipeline.getModules().subList( 0, module.getID() ) ) );
 			Collections.reverse( modules );
 		}
@@ -214,12 +211,8 @@ public class ModuleUtil {
 				final BioModule prevClassMod = getClassifier( module, false );
 				final BioModule nextClassMod = getClassifier( module, true );
 				for( final Integer rId: rIds ) {
-					if( prevClassMod != null && rId < prevClassMod.getID() ) {
-						filteredR_ids.remove( rId );
-					}
-					if( nextClassMod != null && rId > nextClassMod.getID() ) {
-						filteredR_ids.remove( rId );
-					}
+					if( prevClassMod != null && rId < prevClassMod.getID() ) filteredR_ids.remove( rId );
+					if( nextClassMod != null && rId > nextClassMod.getID() ) filteredR_ids.remove( rId );
 				}
 
 				Log.debug( ModuleUtil.class,
@@ -252,18 +245,11 @@ public class ModuleUtil {
 	public static boolean isMetadataModule( final BioModule module ) {
 		boolean foundMeta = false;
 		boolean foundOther = false;
-		try {
-			final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
-			for( final File f: files ) {
-				if( f.getName().equals( MetaUtil.getFileName() ) ) {
-					foundMeta = true;
-				} else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) ) {
-					foundOther = true;
-				}
-			}
-		} catch( final Exception ex ) {
-			return false;
-		}
+		final List<File> files = Arrays.asList( module.getOutputDir().listFiles() );
+		for( final File f: files )
+			if( f.getName().equals( MetaUtil.getFileName() ) ) foundMeta = true;
+			else if( !Config.getSet( module, Constants.INPUT_IGNORE_FILES ).contains( f.getName() ) ) foundOther = true;
+
 		return foundMeta && !foundOther;
 	}
 
@@ -308,9 +294,8 @@ public class ModuleUtil {
 	 * @return boolean
 	 */
 	public static boolean moduleExists( final String className ) {
-		for( final BioModule m: Pipeline.getModules() ) {
+		for( final BioModule m: Pipeline.getModules() )
 			if( m.getClass().getName().equals( className ) ) return true;
-		}
 
 		return false;
 	}
@@ -345,30 +330,22 @@ public class ModuleUtil {
 
 	private static List<Integer> getClassifierIds() {
 		final List<Integer> ids = new ArrayList<>();
-		for( final BioModule m: Pipeline.getModules() ) {
-			if( m instanceof ClassifierModule ) {
-				ids.add( m.getID() );
-			}
-		}
+		for( final BioModule m: Pipeline.getModules() )
+			if( m instanceof ClassifierModule ) ids.add( m.getID() );
 		return ids;
 	}
 
 	private static String getDefaultModule( final String name, final String className ) {
 		String defaultModule = Config.getString( null, name );
-		if( defaultModule == null ) {
-			defaultModule = className;
-		}
+		if( defaultModule == null ) defaultModule = className;
 
 		return defaultModule;
 	}
 
 	private static List<Integer> getRModulesIds() {
 		final List<Integer> ids = new ArrayList<>();
-		for( final BioModule m: Pipeline.getModules() ) {
-			if( m instanceof R_Module ) {
-				ids.add( m.getID() );
-			}
-		}
+		for( final BioModule m: Pipeline.getModules() )
+			if( m instanceof R_Module ) ids.add( m.getID() );
 		return ids;
 	}
 

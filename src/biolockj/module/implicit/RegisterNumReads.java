@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.Log;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
 import biolockj.util.*;
@@ -28,7 +29,7 @@ import biolockj.util.*;
 public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -39,9 +40,8 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 	public String getSummary() throws Exception {
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) {
+		if( !this.sampleIds.isEmpty() )
 			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( this.sampleIds );
-		}
 
 		freeMemory();
 		return super.getSummary() + summary;
@@ -56,13 +56,10 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 		this.sampleIds.addAll( MetaUtil.getSampleIds() );
 		if( MetaUtil.getFieldNames().contains( NUM_READS ) ) {
 			if( MetaUtil.getFieldValues( NUM_READS, false ).size() == MetaUtil.getSampleIds().size() ) {
-				Log.warn( getClass(),
-					NUM_READS + " column already fully populated in metadata file :" + MetaUtil.getPath() );
+				Log.warn( getClass(), NUM_READS + " column already  populated in: " + MetaUtil.getPath() );
 				FileUtils.copyFileToDirectory( MetaUtil.getMetadata(), getOutputDir() );
-				final File metaFile = new File(
-					getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-				if( !metaFile.isFile() )
-					throw new Exception( "FileUtils.copyFileToDirectory did not successfully copy the metadata file" );
+				if( getMetadata() == null )
+					throw new Exception( "FileUtils.copyFileToDirectory failed to copy metadata to module output dir" );
 				return;
 			}
 
@@ -73,13 +70,12 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 		final List<File> files = getInputFiles();
 		Log.info( getClass(), "Counting # reads/sample for " + files.size() + " files" );
 
-		for( final File f: files ) {
+		for( final File f: files )
 			if( SeqUtil.isForwardRead( f.getName() ) ) {
 				final long count = SeqUtil.countNumReads( f );
 				Log.debug( getClass(), "Num Reads for :[" + SeqUtil.getSampleId( f.getName() ) + "] = " + count );
 				this.readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
-		}
 
 		MetaUtil.addColumn( getNumReadFieldName(), this.readsPerSample, getOutputDir(), true );
 	}
@@ -119,12 +115,10 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 	public static void setNumReadFieldName( final String name ) throws Exception {
 		if( name == null )
 			throw new Exception( "Null name value passed to RegisterNumReads.setNumReadFieldName(name)" );
-		else if( numReadFieldName != null && numReadFieldName.equals( name ) ) {
+		else if( numReadFieldName != null && numReadFieldName.equals( name ) )
 			Log.warn( RegisterNumReads.class, "NumReads field already set to: " + numReadFieldName );
-		} else {
-			if( numReadFieldName != null ) {
-				depricatedReadFields.add( numReadFieldName );
-			}
+		else {
+			if( numReadFieldName != null ) depricatedReadFields.add( numReadFieldName );
 
 			depricatedReadFields.remove( name );
 			numReadFieldName = name;

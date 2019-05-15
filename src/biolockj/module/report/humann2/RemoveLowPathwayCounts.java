@@ -44,9 +44,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 			summary += SummaryUtil.getCountSummary( this.uniquePathwaysPerSample, "Unique Pathways", false );
 			summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
 			this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
-			if( !this.sampleIds.isEmpty() ) {
-				summary += "Removed empty samples: " + this.sampleIds;
-			}
+			if( !this.sampleIds.isEmpty() ) summary += "Removed empty samples: " + this.sampleIds;
 		}
 		freeMemory();
 		return super.getSummary() + summary;
@@ -84,9 +82,8 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 			for( final String id: map.keySet() ) {
 				final TreeSet<String> pathways = map.get( id );
 
-				for( final String pathway: pathways ) {
+				for( final String pathway: pathways )
 					writer.write( id + ": " + pathway + RETURN );
-				}
 			}
 		} finally {
 			writer.close();
@@ -183,27 +180,19 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 			boolean firstRecord = true;
 			for( final List<String> record: data ) {
 				boolean newRecord = true;
-				if( firstRecord && !badPathways.isEmpty() ) {
-					for( final String pathway: record ) {
-						if( badPathways.contains( pathway ) ) {
-							badIndex.add( record.indexOf( pathway ) );
-						} else {
-							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
-						}
-						newRecord = false;
-					}
-				} else if( !firstRecord ) {
-					for( int i = 0; i < record.size(); i++ ) {
-						if( !badIndex.contains( i ) ) {
-							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + record.get( i ) );
-						}
-						newRecord = false;
-					}
-				} else {
-					for( final String pathway: record ) {
-						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
-						newRecord = false;
-					}
+				if( firstRecord && !badPathways.isEmpty() ) for( final String pathway: record ) {
+					if( badPathways.contains( pathway ) ) badIndex.add( record.indexOf( pathway ) );
+					else writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
+					newRecord = false;
+				}
+				else if( !firstRecord ) for( int i = 0; i < record.size(); i++ ) {
+					if( !badIndex.contains( i ) )
+						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + record.get( i ) );
+					newRecord = false;
+				}
+				else for( final String pathway: record ) {
+					writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
+					newRecord = false;
 				}
 				firstRecord = false;
 				writer.write( RETURN );
@@ -231,9 +220,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 	}
 
 	private String getProp() {
-		if( this.prop == null ) {
-			this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
-		}
+		if( this.prop == null ) this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
 		return this.prop;
 	}
 

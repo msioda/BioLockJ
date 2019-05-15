@@ -39,13 +39,12 @@ public class QiimeParser extends ParserModuleImpl {
 	 * Get only the lowest level report since it contains taxa info for all higher OTU reports.
 	 */
 	@Override
-	public List<File> getInputFiles() throws Exception {
+	public List<File> getInputFiles() {
 		File lowestLevelReport = null;
 		Integer levelNum = null;
 		for( final File file: super.getInputFiles() ) {
 			final Integer reportLevel = Integer.valueOf(
 				file.getName().substring( Constants.OTU_TABLE_PREFIX.length() + 2, file.getName().length() - 4 ) );
-
 			if( levelNum == null || levelNum < reportLevel ) {
 				levelNum = reportLevel;
 				lowestLevelReport = file;
@@ -80,9 +79,7 @@ public class QiimeParser extends ParserModuleImpl {
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				if( line.startsWith( "#" ) ) {
-					continue;
-				}
+				if( line.startsWith( "#" ) ) continue;
 
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
 				int index = 0;
@@ -95,9 +92,7 @@ public class QiimeParser extends ParserModuleImpl {
 				}
 			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 
 	}
@@ -209,12 +204,11 @@ public class QiimeParser extends ParserModuleImpl {
 		Log.info( getClass(), "Remaining header line should contain the QIIME IDs for all samples: " + header );
 
 		final String[] parts = header.split( "\\s" );
-		for( final String qiimeId: parts ) {
+		for( final String qiimeId: parts )
 			if( qiimeId.trim().length() > 0 ) {
 				Log.debug( getClass(), "Add QiimeID: " + qiimeId );
 				orderedQiimeIDs.add( qiimeId );
 			}
-		}
 
 		reader.close();
 
@@ -235,14 +229,9 @@ public class QiimeParser extends ParserModuleImpl {
 		final StringTokenizer st = new StringTokenizer( valWithoutQuotes, TAB_DELIM );
 		while( st.hasMoreTokens() ) {
 			final String token = st.nextToken();
-			if( !sb.toString().isEmpty() ) {
-				sb.append( TAB_DELIM ).append( token );
-			} else if( token.equals( MetaUtil.getID() ) ) {
-				sb.append( token );
-			} else // must be a Qiime ID
-			{
-				sb.append( getSampleId( token ).replaceAll( "'", "" ).replaceAll( "\"", "" ) );
-			}
+			if( !sb.toString().isEmpty() ) sb.append( TAB_DELIM ).append( token );
+			else if( token.equals( MetaUtil.getID() ) ) sb.append( token );
+			else sb.append( getSampleId( token ).replaceAll( "'", "" ).replaceAll( "\"", "" ) );
 		}
 
 		return sb.toString();

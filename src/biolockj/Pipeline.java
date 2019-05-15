@@ -40,31 +40,22 @@ public class Pipeline {
 	 */
 	public static void executeModule( final BioModule module ) throws Exception {
 		ModuleUtil.markStarted( module );
-		refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
+		// refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
 		refreshRCacheIfNeeded( module );
 		module.executeTask();
 
 		final boolean runDetached = module instanceof JavaModule && hasScripts( module )
 			&& Config.getBoolean( module, Constants.DETACH_JAVA_MODULES );
 
-		if( runDetached ) {
-			MasterConfigUtil.saveMasterConfig();
-		}
+		if( runDetached ) MasterConfigUtil.saveMasterConfig();
 
-		if( hasScripts( module ) && !DockerUtil.inAwsEnv() ) {
-			Processor.submit( (ScriptModule) module );
-		}
+		if( hasScripts( module ) && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) module );
 
-		if( hasScripts( module ) ) {
-			waitForModuleScripts( (ScriptModule) module );
-		}
+		if( hasScripts( module ) ) waitForModuleScripts( (ScriptModule) module );
 
-		refreshOutputMetadata( module );
 		module.cleanUp();
 
-		if( !runDetached ) {
-			SummaryUtil.reportSuccess( module );
-		}
+		if( !runDetached ) SummaryUtil.reportSuccess( module );
 
 		ModuleUtil.markComplete( module );
 	}
@@ -87,9 +78,8 @@ public class Pipeline {
 	public static String getStatus() {
 		if( pipelineException != null || getModules() == null || getModules().isEmpty() )
 			return Constants.SCRIPT_FAILURES;
-		for( final BioModule module: getModules() ) {
+		for( final BioModule module: getModules() )
 			if( !ModuleUtil.isComplete( module ) && !( module instanceof Email ) ) return Constants.SCRIPT_FAILURES;
-		}
 		return Constants.SCRIPT_SUCCESS;
 	}
 
@@ -102,9 +92,8 @@ public class Pipeline {
 		Log.info( Pipeline.class, "Initialize " + ( DockerUtil.isDirectMode() ? "DIRECT module "
 			: DockerUtil.inAwsEnv() ? "AWS ": DockerUtil.inDockerEnv() ? "DOCKER ": "" ) + "pipeline" );
 		bioModules = BioModuleFactory.buildPipeline();
-		if( !DockerUtil.isDirectMode() ) {
+		if( !DockerUtil.isDirectMode() )
 			Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
-		}
 		initializeModules();
 	}
 
@@ -121,7 +110,6 @@ public class Pipeline {
 				"Start Direct BioModule Execution for [ ID #" + id + " ] ---> " + module.getClass().getSimpleName() );
 			module.runModule();
 			Log.info( Pipeline.class, "DIRECT module ID [" + id + "].runModule() complete!" );
-			refreshOutputMetadata( module ); // keep in case cleanup does something with metadata
 			module.cleanUp();
 			module.moduleComplete();
 			SummaryUtil.reportSuccess( module );
@@ -156,12 +144,8 @@ public class Pipeline {
 				BioModule emailMod = null;
 				boolean foundIncomplete = false;
 				for( final BioModule module: Pipeline.getModules() ) {
-					if( module instanceof Email ) {
-						emailMod = module;
-					}
-					if( !foundIncomplete && !ModuleUtil.isComplete( module ) ) {
-						foundIncomplete = true;
-					}
+					if( module instanceof Email ) emailMod = module;
+					if( !foundIncomplete && !ModuleUtil.isComplete( module ) ) foundIncomplete = true;
 					if( foundIncomplete && emailMod != null ) {
 						Log.warn( Pipeline.class, "Attempting to send failure notification with Email module: "
 							+ emailMod.getModuleDir().getName() );
@@ -181,28 +165,6 @@ public class Pipeline {
 	}
 
 	/**
-	 * Delete and recreate incomplete module directory.
-	 * 
-	 * @param module BioModule
-	 * @throws Exception if errors occur
-	 */
-	protected static void deleteIncompleteModule( final BioModule module ) throws Exception {
-		Log.info( Pipeline.class, "Reset incomplete module: " + module.getModuleDir().getAbsolutePath() );
-		final File moduleDir = module.getModuleDir();
-		// if( BioLockJUtil.deleteWithRetry( module.getModuleDir(), 10 ) ) {
-		if( module.getModuleDir().delete() ) {
-			moduleDir.mkdirs(); // recreate deleted directory
-		} else if( module.getModuleDir().listFiles().length > 0 ) {
-			for( final File f: module.getModuleDir().listFiles() ) {
-				// if( BioLockJUtil.deleteWithRetry( f, 5 ) ) {
-				if( f.delete() ) {
-					Log.info( Pipeline.class, "Deleted: " + f.getAbsolutePath() );
-				} else throw new Exception( "Unable to Delete: " + f.getAbsolutePath() );
-			}
-		}
-	}
-
-	/**
 	 * This method executes all new and incomplete modules<br>
 	 * Before/after a module is executed, set persistent module status by creating status indicator files. Incomplete
 	 * modules have an empty file {@value Constants#BLJ_STARTED} in the module directory.<br>
@@ -212,7 +174,6 @@ public class Pipeline {
 	 * Execution steps:
 	 * <ol>
 	 * <li>File {@value Constants#BLJ_STARTED} is added to the module directory
-	 * <li>Execute {@link #refreshOutputMetadata(BioModule)} to cache updated metadata, if generatede.
 	 * <li>Run module scripts, if any, polling 1/minute for status until all scripts complete or time out.
 	 * <li>File {@value Constants#BLJ_STARTED} is replaced by {@value Constants#BLJ_COMPLETE} as status indicator
 	 * </ol>
@@ -220,31 +181,10 @@ public class Pipeline {
 	 * @throws Exception if script errors occur
 	 */
 	protected static void executeModules() throws Exception {
-		for( final BioModule module: Pipeline.getModules() ) {
-			if( !ModuleUtil.isComplete( module ) ) {
-				executeModule( module );
-			} else {
-				Log.debug( Pipeline.class,
-					"Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
-			}
-		}
-	}
-
-	/**
-	 * If the bioModule is complete and contains a metadata file in its output directory, return the metadata file,
-	 * since it must be a new version.
-	 *
-	 * @param bioModule BioModule
-	 * @return New metadata file (or null)
-	 */
-	protected static File getMetadata( final BioModule bioModule ) {
-		if( bioModule != null ) {
-			final File metadata = new File(
-				bioModule.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-			if( metadata.isFile() ) return metadata;
-		}
-
-		return null;
+		for( final BioModule module: Pipeline.getModules() )
+			if( !ModuleUtil.isComplete( module ) ) executeModule( module );
+			else Log.debug( Pipeline.class,
+				"Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
 	}
 
 	/**
@@ -256,7 +196,6 @@ public class Pipeline {
 	 * modules
 	 * <li>Delete incomplete module contents if restarting a failed pipeline
 	 * {@value biolockj.module.BioModule#OUTPUT_DIR} directory<br>
-	 * <li>Call {@link #refreshOutputMetadata(BioModule)} to cache metadata if output by a complete module<br>
 	 * <li>Call {@link #refreshRCacheIfNeeded(BioModule)} to cache R fields after 1st R module runs<br>
 	 * <li>Verify dependencies with {@link biolockj.module.BioModule#checkDependencies()}<br>
 	 * </ol>
@@ -267,17 +206,20 @@ public class Pipeline {
 	protected static boolean initializeModules() throws Exception {
 		for( final BioModule module: getModules() ) {
 			if( ModuleUtil.isIncomplete( module ) && ( !DockerUtil.isDirectMode() || module instanceof Email ) ) {
-				deleteIncompleteModule( module );
-			}
+				final String path = module.getModuleDir().getAbsolutePath();
+				Log.info( Pipeline.class, "Reset incomplete module: " + path );
 
-			if( ModuleUtil.isComplete( module ) ) {
-				module.cleanUp();
-				refreshOutputMetadata( module );
-				refreshRCacheIfNeeded( module );
+				FileUtils.forceDelete( module.getModuleDir() );
+				new File( path ).mkdirs();
 			}
 
 			info( "Check dependencies for: " + module.getClass().getName() );
 			module.checkDependencies();
+
+			if( ModuleUtil.isComplete( module ) ) {
+				module.cleanUp();
+				refreshRCacheIfNeeded( module );
+			}
 		}
 
 		return true;
@@ -323,9 +265,7 @@ public class Pipeline {
 			statusMsg = logMsg;
 			pollCount = 0;
 			Log.info( Pipeline.class, logMsg );
-		} else if( ++pollCount % 10 == 0 ) {
-			Log.info( Pipeline.class, logMsg );
-		}
+		} else if( ++pollCount % 10 == 0 ) Log.info( Pipeline.class, logMsg );
 
 		if( numFailed > 0 ) {
 			final String failMsg = "SCRIPT FAILED: " + BioLockJUtil.getCollectionAsString( module.getScriptErrors() );
@@ -333,25 +273,6 @@ public class Pipeline {
 		}
 
 		return numScripts > 0 && numSuccess + numFailed == numScripts;
-	}
-
-	/**
-	 * Call {@link biolockj.util.MetaUtil} to refresh the metadata cache if a new metadata file was output by the
-	 * bioModule .
-	 * 
-	 * @param module BioModule
-	 * @throws Exception if unable to refresh the cache
-	 */
-	protected static void refreshOutputMetadata( final BioModule module ) throws Exception {
-		if( module != null ) {
-			final File metadata = new File(
-				module.getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-
-			if( metadata.isFile() ) {
-				MetaUtil.setFile( metadata );
-				MetaUtil.refreshCache();
-			}
-		}
 	}
 
 	/**
@@ -369,11 +290,9 @@ public class Pipeline {
 
 	private static IOFileFilter getWorkerScriptFilter( final ScriptModule module ) {
 		String filterString = "*" + Constants.SH_EXT;
-		if( DockerUtil.inDockerEnv() && module instanceof R_Module ) {
+		if( DockerUtil.inDockerEnv() && module instanceof R_Module )
 			filterString = BioModule.MAIN_SCRIPT_PREFIX + "*" + Constants.SH_EXT;
-		} else if( module instanceof R_Module ) {
-			filterString = BioModule.MAIN_SCRIPT_PREFIX + "*" + Constants.R_EXT;
-		}
+		else if( module instanceof R_Module ) filterString = BioModule.MAIN_SCRIPT_PREFIX + "*" + Constants.R_EXT;
 
 		return new WildcardFileFilter( filterString );
 
@@ -384,14 +303,12 @@ public class Pipeline {
 			File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), getWorkerScriptFilter( module ), null );
 
 		final File mainScript = module.getMainScript();
-		if( !( module instanceof R_Module ) && mainScript != null ) {
-			scriptFiles.remove( mainScript );
-		}
+		if( !( module instanceof R_Module ) && mainScript != null ) scriptFiles.remove( mainScript );
 
-		Log.debug( Pipeline.class, "mainScript = " + ( mainScript == null ? "<null>": mainScript.getAbsolutePath() ) );
-		for( final File f: scriptFiles ) {
+		if( !DockerUtil.inAwsEnv() ) Log.debug( Pipeline.class,
+			"mainScript = " + ( mainScript == null ? "<null>": mainScript.getAbsolutePath() ) );
+		for( final File f: scriptFiles )
 			Log.debug( Pipeline.class, "Worker Script = " + f.getAbsolutePath() );
-		}
 
 		return scriptFiles;
 	}
@@ -403,9 +320,7 @@ public class Pipeline {
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) {
-			Log.info( Pipeline.class, msg );
-		}
+		if( !DockerUtil.isDirectMode() ) Log.info( Pipeline.class, msg );
 	}
 
 	private static void logScriptTimeOutMsg( final ScriptModule module ) throws Exception {
@@ -417,17 +332,12 @@ public class Pipeline {
 			+ Constants.SCRIPT_SUCCESS + "\", or \"_" + Constants.SCRIPT_FAILURES + "\"" );
 		Log.info( Pipeline.class,
 			prompt + "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
-		if( module.getTimeout() == null || module.getTimeout() > 10 ) {
-			Log.info( Pipeline.class, prompt
-				+ "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
-		}
+		if( module.getTimeout() == null || module.getTimeout() > 10 ) Log.info( Pipeline.class, prompt
+			+ "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
 
-		if( module.getTimeout() != null ) {
-			Log.info( Pipeline.class,
-				prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = " + module.getTimeout() );
-		} else {
-			Log.info( Pipeline.class, prompt + "Running scripts will NEVER TIME OUT." );
-		}
+		if( module.getTimeout() != null ) Log.info( Pipeline.class,
+			prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = " + module.getTimeout() );
+		else Log.info( Pipeline.class, prompt + "Running scripts will NEVER TIME OUT." );
 	}
 
 	/**

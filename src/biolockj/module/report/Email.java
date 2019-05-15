@@ -59,9 +59,8 @@ public class Email extends BioModuleImpl {
 		Config.getString( this, Constants.CLUSTER_HOST );
 
 		new InternetAddress( Config.requireString( this, EMAIL_FROM ) ).validate();
-		for( final String email: Config.requireList( this, EMAIL_TO ) ) {
+		for( final String email: Config.requireList( this, EMAIL_TO ) )
 			new InternetAddress( email ).validate();
-		}
 	}
 
 	/**
@@ -95,29 +94,6 @@ public class Email extends BioModuleImpl {
 	}
 
 	/**
-	 * Used to authenticate the service email account defined in EMAIL_FROM. WARNING - This is a trivial level of
-	 * encryption! Service email account should never send confidential information!
-	 *
-	 * @param val Encrypted password
-	 * @return Clear-text password
-	 */
-	String decrypt( final String val ) {
-		String decryptedPassword = null;
-		try {
-			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
-			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
-			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
-			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
-			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
-		} catch( final Exception ex ) {
-			Log.error( getClass(), ex.getMessage(), ex );
-		}
-
-		return decryptedPassword;
-
-	}
-
-	/**
 	 * Build an authenticated javax.mail.Session using {@link biolockj.Config} email properties
 	 *
 	 * @return javax.mail.Session required to send a MimeMessage
@@ -126,12 +102,8 @@ public class Email extends BioModuleImpl {
 	protected Session getSession() throws Exception {
 		String startTls = "false";
 		String smtpAuth = "false";
-		if( Config.getBoolean( this, EMAIL_SMTP_AUTH ) ) {
-			smtpAuth = "true";
-		}
-		if( Config.getBoolean( this, EMAIL_START_TLS_ENABLE ) ) {
-			startTls = "true";
-		}
+		if( Config.getBoolean( this, EMAIL_SMTP_AUTH ) ) smtpAuth = "true";
+		if( Config.getBoolean( this, EMAIL_START_TLS_ENABLE ) ) startTls = "true";
 
 		final Properties props = new Properties();
 		props.put( EMAIL_SMTP_AUTH, smtpAuth );
@@ -155,6 +127,29 @@ public class Email extends BioModuleImpl {
 		} );
 
 		return session;
+	}
+
+	/**
+	 * Used to authenticate the service email account defined in EMAIL_FROM. WARNING - This is a trivial level of
+	 * encryption! Service email account should never send confidential information!
+	 *
+	 * @param val Encrypted password
+	 * @return Clear-text password
+	 */
+	String decrypt( final String val ) {
+		String decryptedPassword = null;
+		try {
+			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
+			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
+			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
+			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
+			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
+		} catch( final Exception ex ) {
+			Log.error( getClass(), ex.getMessage(), ex );
+		}
+
+		return decryptedPassword;
+
 	}
 
 	/**
@@ -182,9 +177,7 @@ public class Email extends BioModuleImpl {
 	private String getRecipients() throws Exception {
 		final StringBuffer addys = new StringBuffer();
 		for( final String to: Config.requireList( this, EMAIL_TO ) ) {
-			if( addys.length() != 0 ) {
-				addys.append( "," );
-			}
+			if( addys.length() != 0 ) addys.append( "," );
 			addys.append( to );
 		}
 
@@ -201,15 +194,12 @@ public class Email extends BioModuleImpl {
 		Log.info( Email.class, "About to encrypt and store new admin email password in MASTER Config: "
 			+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
 		Config.setConfigProperty( EMAIL_ENCRYPTED_PASSWORD, encrypt( RuntimeParamUtil.getAdminEmailPassword() ) );
-		if( MasterConfigUtil.saveMasterConfig() ) {
-			Log.info( Email.class,
-				"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
-					+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
-					+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
-		} else {
-			Log.error( Email.class,
-				"Failed to store enctryped password in the MASTER Config - check Log file for error details" );
-		}
+		if( MasterConfigUtil.saveMasterConfig() ) Log.info( Email.class,
+			"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
+				+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
+				+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
+		else Log.error( Email.class,
+			"Failed to store enctryped password in the MASTER Config - check Log file for error details" );
 	}
 
 	/**

@@ -26,14 +26,11 @@ import biolockj.util.OtuUtil;
 public abstract class OtuCountModule extends JavaModuleImpl {
 
 	@Override
-	public List<File> getInputFiles() throws Exception {
+	public List<File> getInputFiles() {
 		if( getFileCache().isEmpty() ) {
 			final List<File> files = new ArrayList<>();
-			for( final File f: findModuleInputFiles() ) {
-				if( OtuUtil.isOtuFile( f ) ) {
-					files.add( f );
-				}
-			}
+			for( final File f: findModuleInputFiles() )
+				if( OtuUtil.isOtuFile( f ) ) files.add( f );
 			cacheInputFiles( files );
 		}
 		return getFileCache();
@@ -54,9 +51,8 @@ public abstract class OtuCountModule extends JavaModuleImpl {
 		try {
 			final File[] files = module.getOutputDir().listFiles();
 
-			for( final File f: files ) {
+			for( final File f: files )
 				if( OtuUtil.isOtuFile( f ) ) return true;
-			}
 		} catch( final Exception ex ) {
 			Log.warn( getClass(), "Error occurred while inspecting module output files: " + module );
 			ex.printStackTrace();

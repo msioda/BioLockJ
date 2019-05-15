@@ -83,9 +83,8 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 		}
 		final StringTokenizer ht = new StringTokenizer( header, TAB_DELIM );
 		ht.nextToken(); // skip the ID column
-		while( ht.hasMoreTokens() ) {
+		while( ht.hasMoreTokens() )
 			writer.write( TAB_DELIM + ht.nextToken() );
-		}
 		if( !hasQm3 ) {
 			Log.info( getClass(), "Add required column(n-1) field = " + Constants.QIIME_DEMUX_COL );
 			writer.write( TAB_DELIM + Constants.QIIME_DEMUX_COL );
@@ -98,41 +97,28 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 
 		writer.write( RETURN );
 
-		for( final File f: getInputFiles() ) {
+		for( final File f: getInputFiles() )
 			for( final String key: metaLines.keySet() ) {
-				if( !SeqUtil.getSampleId( f.getName() ).equals( key ) ) {
-					continue;
-				}
+				if( !SeqUtil.getSampleId( f.getName() ).equals( key ) ) continue;
 
 				writer.write( key + TAB_DELIM );
-				if( !hasQm1 ) {
-					writer.write( Config.requireString( this, MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
-				}
+				if( !hasQm1 ) writer.write( MetaUtil.getNullValue( this ) + TAB_DELIM );
 
-				if( !hasQm2 ) {
-					writer.write( Config.requireString( this, MetaUtil.META_NULL_VALUE ) + TAB_DELIM );
-				}
+				if( !hasQm2 ) writer.write( MetaUtil.getNullValue( this ) + TAB_DELIM );
 
 				final StringTokenizer st = new StringTokenizer( metaLines.get( key ), TAB_DELIM );
 				st.nextToken(); // skip the id
 				writer.write( st.nextToken() );
-				while( st.hasMoreTokens() ) {
+				while( st.hasMoreTokens() )
 					writer.write( TAB_DELIM + st.nextToken() );
-				}
 
-				if( !hasQm3 ) {
+				if( !hasQm3 ) writer.write( TAB_DELIM + f.getName() );
+				// writer.write( TAB_DELIM + key + "." + SeqUtil.FASTA );
 
-					writer.write( TAB_DELIM + f.getName() );
-					// writer.write( TAB_DELIM + key + "." + SeqUtil.FASTA );
-				}
-
-				if( !hasQm4 ) {
-					writer.write( TAB_DELIM + QIIME_COMMENT );
-				}
+				if( !hasQm4 ) writer.write( TAB_DELIM + QIIME_COMMENT );
 
 				writer.write( RETURN );
 			}
-		}
 
 		writer.close();
 		MetaUtil.refreshCache();
@@ -182,11 +168,8 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 			+ "\" '{ print $1," + colIndex( this.metaColumns, Constants.QIIME_BARCODE_SEQ_COL ) + ","
 			+ colIndex( this.metaColumns, Constants.QIIME_LINKER_PRIMER_SEQ_COL ) + ",";
 
-		for( int i = 1; i < this.metaColumns.size(); i++ ) {
-			if( !skip.contains( i ) ) {
-				awkBody += " $" + ( i + 1 ) + ",";
-			}
-		}
+		for( int i = 1; i < this.metaColumns.size(); i++ )
+			if( !skip.contains( i ) ) awkBody += " $" + ( i + 1 ) + ",";
 
 		awkBody += colIndex( this.metaColumns, Constants.QIIME_DEMUX_COL ) + ",";
 		awkBody += colIndex( this.metaColumns, Constants.QIIME_DESC_COL );
@@ -230,15 +213,12 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 		if( this.metaColumns != null ) {
 			Log.info( getClass(), "Metadata column order:" );
 			int d = 0;
-			for( final String col: this.metaColumns ) {
+			for( final String col: this.metaColumns )
 				Log.info( getClass(), "col[" + d++ + "] = " + col );
-			}
 
 			lines.add( FUNCTION_REORDER_FIELDS );
 			MetaUtil.setFile( getOrderedMapping() );
-		} else {
-			Log.info( getClass(), "Qiime mapping file columns already in order!" );
-		}
+		} else Log.info( getClass(), "Qiime mapping file columns already in order!" );
 
 		lines.add( validateMapping() );
 		lines.add( copyMappingToOutputDir() );
@@ -253,18 +233,14 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 	 */
 	private String getMappingDir() {
 		final File dir = new File( getTempDir().getAbsolutePath() + File.separator + "mapping" );
-		if( !dir.isDirectory() ) {
-			dir.mkdirs();
-		}
+		if( !dir.isDirectory() ) dir.mkdirs();
 
 		return dir.getAbsolutePath() + File.separator;
 	}
 
 	private File getOrderedMapping() {
 		final File orderedDir = new File( getTempDir().getAbsolutePath() + File.separator + "orderedColumns" );
-		if( !orderedDir.isDirectory() ) {
-			orderedDir.mkdirs();
-		}
+		if( !orderedDir.isDirectory() ) orderedDir.mkdirs();
 
 		return new File( orderedDir.getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 	}
@@ -276,8 +252,8 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 	/**
 	 * Call validate_mapping_file.py to get corrected QIIME Mapping.
 	 */
-	private String validateMapping() throws Exception {
-		return SCRIPT_VALIDATE_MAPPING + " -p -b -m " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
+	private String validateMapping() {
+		return SCRIPT_VALIDATE_MAPPING + " -pbm " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
 			+ Constants.QIIME_DEMUX_COL;
 	}
 
@@ -285,7 +261,7 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 		return " $" + ( cols.indexOf( name ) + 1 );
 	}
 
-	private static List<String> getMetaCols() throws Exception {
+	private static List<String> getMetaCols() {
 		final List<String> cols = new ArrayList<>();
 		cols.add( MetaUtil.getID() );
 		cols.addAll( MetaUtil.getFieldNames() );

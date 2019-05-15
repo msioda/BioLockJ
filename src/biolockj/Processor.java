@@ -18,6 +18,7 @@ import java.util.*;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.ScriptModule;
 import biolockj.util.BioLockJUtil;
+import biolockj.util.NextflowUtil;
 
 /**
  * {@link biolockj.module.ScriptModule}s that generate scripts will submit a main script to the OS for execution as a
@@ -76,14 +77,11 @@ public class Processor {
 		final BufferedReader br = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
 		String returnVal = null;
 		String s = null;
-		while( ( s = br.readLine() ) != null ) {
+		while( ( s = br.readLine() ) != null )
 			if( !s.trim().isEmpty() ) {
 				Log.info( getClass(), "[ " + label + " ]: " + s );
-				if( returnVal == null ) {
-					returnVal = s;
-				}
+				if( returnVal == null ) returnVal = s;
 			}
-		}
 		p.waitFor();
 		p.destroy();
 		Log.info( getClass(), "[ " + label + " ]: COMPLETE" );
@@ -126,12 +124,8 @@ public class Processor {
 		} catch( final Exception ex ) {
 			Log.error( Processor.class, "Problem occurred looking up bash env. variable: " + bashVar, ex );
 		}
-		if( bashVarValue == null ) {
-			Log.warn( Processor.class, "[ Get Bash Var (" + bashVar + ") ]: FAILED" );
-		}
-		if( bashVarValue != null && bashVarValue.trim().isEmpty() ) {
-			bashVarValue = null;
-		}
+		if( bashVarValue == null ) Log.warn( Processor.class, "[ Get Bash Var (" + bashVar + ") ]: FAILED" );
+		if( bashVarValue != null && bashVarValue.trim().isEmpty() ) bashVarValue = null;
 		Log.info( Processor.class, "[ Get Bash Var (" + bashVar + ") ]: COMPLETE" );
 		return bashVarValue;
 	}
@@ -166,9 +160,8 @@ public class Processor {
 		if( BioLockJUtil.hasNullOrEmptyVal( Arrays.asList( path, permissions ) ) ) return;
 		final StringTokenizer st = new StringTokenizer( "chmod -R " + permissions + " " + path );
 		final String[] args = new String[ st.countTokens() ];
-		for( int i = 0; i < args.length; i++ ) {
+		for( int i = 0; i < args.length; i++ )
 			args[ i ] = st.nextToken();
-		}
 
 		submit( args, "Set File Privs" );
 	}
@@ -218,13 +211,13 @@ public class Processor {
 	 * Check if any Subprocess threads are still running.
 	 * 
 	 * @return boolean TRUE if all complete
-	 * @throws Exception if errors occur
 	 */
-	public static boolean subProcsAlive() throws Exception {
+	public static boolean subProcsAlive() {
 		if( threadRegister.isEmpty() ) return false;
-		final long max = BioLockJUtil
-			.minutesToMillis( Config.getPositiveInteger( null, Constants.AWS_S3_XFER_TIMEOUT ) );
-		for( final Thread t: threadRegister.keySet() ) {
+		final long max = BioLockJUtil.minutesToMillis( NextflowUtil.getS3_TransferTimeout() );
+		Log.info( Processor.class, "Running Subprocess Threads will be terminated if incomplete after [ "
+			+ NextflowUtil.getS3_TransferTimeout() + " ] minutes." );
+		for( final Thread t: threadRegister.keySet() )
 			if( t.isAlive() ) {
 				final String id = t.getId() + " - " + t.getName();
 				final long runTime = System.currentTimeMillis() - threadRegister.get( t );
@@ -240,7 +233,6 @@ public class Processor {
 					return true;
 				}
 			}
-		}
 		return false;
 	}
 
@@ -260,9 +252,8 @@ public class Processor {
 
 	private static String getArgsAsString( final String[] args ) {
 		final StringBuffer sb = new StringBuffer();
-		for( final String arg: args ) {
+		for( final String arg: args )
 			sb.append( arg + " " );
-		}
 		return sb.toString();
 	}
 

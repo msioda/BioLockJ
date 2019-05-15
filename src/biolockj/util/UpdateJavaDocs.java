@@ -43,7 +43,7 @@ public class UpdateJavaDocs {
 				System.out.println( "Reading file [" + i++ + "] --> " + file.getAbsolutePath() );
 				reader = BioLockJUtil.getFileReader( file );
 				boolean updatedFile = false;
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					if( file.getName().equals( INDEX ) && line.replaceAll( "\"", "" ).equals( BAD_INDEX_TITLE ) ) {
 						System.out.println( "Modify " + file.getAbsolutePath() + " change: " + BAD_INDEX_TITLE );
 						lines.add( NEW_INDEX_TITLE );
@@ -66,15 +66,10 @@ public class UpdateJavaDocs {
 						lines.add( NEWLINE_1 );
 						lines.add( NEWLINE_2 );
 						updatedFile = true;
-					} else {
-						lines.add( line );
-					}
-				}
+					} else lines.add( line );
 
 				reader.close();
-				if( updatedFile ) {
-					updateFile( file, lines );
-				}
+				if( updatedFile ) updateFile( file, lines );
 			}
 
 			System.out.println( "JavaDoc Update Successful!" );
@@ -84,9 +79,7 @@ public class UpdateJavaDocs {
 		} finally {
 			System.out.println( "End Time: " + new GregorianCalendar().getTime() );
 			try {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			} catch( final Exception ex ) {
 				ex.printStackTrace();
 			}
@@ -101,9 +94,8 @@ public class UpdateJavaDocs {
 		System.out.println( "Deleted: " + filePath );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( filePath ) );
 		try {
-			for( final String line: lines ) {
+			for( final String line: lines )
 				writer.write( line + RETURN );
-			}
 			updatedFiles.add( file.getAbsolutePath() );
 			System.out.println( "Created a new: " + filePath );
 		} finally {

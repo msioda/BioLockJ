@@ -53,9 +53,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier {
 				+ ".fna" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir + "nochimeras.fasta" );
 			lines
 				.add( SCRIPT_FILTER_OTUS + " -i " + biomFile + " -e " + otusToFilter + " -o " + outputDir + OTU_TABLE );
-		} else {
-			lines.add( "cp " + biomFile + " " + outputDir + OTU_TABLE );
-		}
+		} else lines.add( "cp " + biomFile + " " + outputDir + OTU_TABLE );
 
 		data.add( lines );
 		return data;
@@ -72,9 +70,7 @@ public class QiimeOpenRefClassifier extends QiimeClassifier {
 		super.checkDependencies();
 		getParams();
 
-		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) {
-			getVsearchParams();
-		}
+		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) getVsearchParams();
 	}
 
 	/**

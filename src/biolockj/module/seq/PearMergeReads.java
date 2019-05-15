@@ -12,10 +12,13 @@
 package biolockj.module.seq;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.MetadataException;
 import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.util.*;
@@ -89,15 +92,9 @@ public class PearMergeReads extends SeqModuleImpl {
 	 */
 	@Override
 	public void cleanUp() throws Exception {
-		final String metaColName = getMetaColName();
 		super.cleanUp();
 		Config.setConfigProperty( Constants.INTERNAL_PAIRED_READS, Constants.FALSE );
-
-		final File updatedMeta = new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
-		if( updatedMeta.isFile() ) {
-			MetaUtil.setFile( updatedMeta );
-			MetaUtil.refreshCache();
-		} else if( !MetaUtil.getFieldNames().contains( metaColName ) && this.readsPerSample != null ) {
+		if( !MetaUtil.getFieldNames().contains( getMetaColName() ) && this.readsPerSample != null ) {
 			Log.info( getClass(),
 				"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
 			for( final File f: getOutputDir().listFiles() ) {
@@ -107,12 +104,10 @@ public class PearMergeReads extends SeqModuleImpl {
 				this.readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
-			MetaUtil.addColumn( metaColName, this.readsPerSample, getOutputDir(), true );
-		} else {
-			Log.warn( getClass(),
-				"Counts for # merged reads/sample already found in metadata, not re-counting " + MetaUtil.getPath() );
-		}
-		RegisterNumReads.setNumReadFieldName( metaColName );
+			MetaUtil.addColumn( getMetaColName(), this.readsPerSample, getOutputDir(), true );
+		} else Log.warn( getClass(),
+			"Counts for # merged reads/sample already found in metadata, not re-counting " + MetaUtil.getPath() );
+		RegisterNumReads.setNumReadFieldName( getMetaColName() );
 	}
 
 	/**
@@ -124,10 +119,8 @@ public class PearMergeReads extends SeqModuleImpl {
 		final int pad = SummaryUtil.getPad( label );
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Paired Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) {
-			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-				+ BioLockJUtil.getCollectionAsString( this.sampleIds );
-		}
+		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+			+ BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.readsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -148,11 +141,8 @@ public class PearMergeReads extends SeqModuleImpl {
 		return lines;
 	}
 
-	private String getMetaColName() throws Exception {
-		if( this.otuColName == null ) {
-			this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_MERGED_READS );
-		}
-
+	private String getMetaColName() throws FileNotFoundException, MetadataException, IOException {
+		if( this.otuColName == null ) this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_MERGED_READS );
 		return this.otuColName;
 	}
 

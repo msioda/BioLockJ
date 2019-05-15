@@ -18,9 +18,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * Superclass for standard BioModules (classifiers, parsers, etc). Sets standard behavior for many of the BioModule
@@ -40,6 +38,10 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	@Override
 	public void cleanUp() throws Exception {
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
+		if( getMetadata().isFile() ) {
+			MetaUtil.setFile( getMetadata() );
+			MetaUtil.refreshCache();
+		}
 	}
 
 	@Override
@@ -70,12 +72,14 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 * BioModule {@link #getInputFiles()} is called to initialize upon first call and cached.
 	 */
 	@Override
-	public List<File> getInputFiles() throws Exception {
-		if( getFileCache().isEmpty() ) {
-			cacheInputFiles( findModuleInputFiles() );
-		}
-
+	public List<File> getInputFiles() {
+		if( getFileCache().isEmpty() ) cacheInputFiles( findModuleInputFiles() );
 		return getFileCache();
+	}
+
+	@Override
+	public File getMetadata() {
+		return new File( getOutputDir().getAbsolutePath() + File.separator + MetaUtil.getFileName() );
 	}
 
 	/**
@@ -144,10 +148,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 			this.moduleDir.mkdirs();
 			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new "
 				+ this.moduleDir.getAbsolutePath() );
-		} else {
-			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing "
-				+ this.moduleDir.getAbsolutePath() );
-		}
+		} else Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing "
+			+ this.moduleDir.getAbsolutePath() );
 	}
 
 	/**
@@ -180,16 +182,12 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 * Cache the input files for quick access on subsequent calls to {@link #getInputFiles()}
 	 * 
 	 * @param files Input files
-	 * @throws Exception if errors occur
 	 */
-	protected void cacheInputFiles( final Collection<File> files ) throws Exception {
-		if( files == null || files.isEmpty() ) throw new Exception( "No input files found!" );
+	protected void cacheInputFiles( final Collection<File> files ) {
 		this.inputFiles.clear();
 		this.inputFiles.addAll( files );
 		Collections.sort( this.inputFiles );
-
 		printInputFiles();
-
 	}
 
 	/**
@@ -199,14 +197,13 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 * Call {@link #isValidInputModule(BioModule)} on each previous module until acceptable input files are found<br>
 	 * 
 	 * @return Set of input files
-	 * @throws Exception if errors occur
 	 */
-	protected List<File> findModuleInputFiles() throws Exception {
+	protected List<File> findModuleInputFiles() {
 		final Set<File> moduleInputFiles = new HashSet<>();
 		Log.debug( getClass(), "Initialize input files..." );
 		boolean validInput = false;
 		BioModule previousModule = ModuleUtil.getPreviousModule( this );
-		while( !validInput ) {
+		while( !validInput )
 			if( previousModule == null ) {
 				Log.debug( getClass(),
 					"Previous module is NULL.  Return pipleline input from: " + Constants.INPUT_DIRS );
@@ -224,11 +221,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 					moduleInputFiles.addAll( FileUtils.listFiles( previousModule.getOutputDir(),
 						HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 					Log.debug( getClass(), "# Files found: " + moduleInputFiles.size() );
-				} else {
-					previousModule = ModuleUtil.getPreviousModule( previousModule );
-				}
+				} else previousModule = ModuleUtil.getPreviousModule( previousModule );
 			}
-		}
 
 		return BioLockJUtil.removeIgnoredAndEmptyFiles( moduleInputFiles );
 	}
@@ -244,19 +238,19 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 
 	private void printInputFiles() {
 		Log.info( getClass(), "# Input Files: " + getFileCache().size() );
-		for( int i = 0; i < getFileCache().size(); i++ ) {
+		for( int i = 0; i < getFileCache().size(); i++ )
 			Log.info( getClass(), "Input File [" + i + "]: " + this.inputFiles.get( i ).getAbsolutePath() );
-		}
 	}
 
 	private final List<File> inputFiles = new ArrayList<>();
-
 	private File moduleDir = null;
 	private Integer moduleId;
+
 	/**
 	 * BioLockJ gzip file extension constant: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = Constants.GZIP_EXT;
+
 	/**
 	 * BioLockJ log file extension constant: {@value #LOG_EXT}
 	 */

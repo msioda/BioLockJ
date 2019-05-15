@@ -17,6 +17,8 @@ import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.DatabaseModule;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.BioLockJUtil;
@@ -37,17 +39,13 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 		final List<List<String>> data = new ArrayList<>();
 		for( final File seqFile: files ) {
 			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
-				&& !SeqUtil.isForwardRead( seqFile.getName() ) ) {
-				continue;
-			}
+				&& !SeqUtil.isForwardRead( seqFile.getName() ) ) continue;
 
 			final ArrayList<String> lines = new ArrayList<>();
 
-			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 				lines.add( sanatize( seqFile, SeqUtil.getPairedReads( files ).get( seqFile ) ) );
-			} else {
-				lines.add( sanatize( seqFile, null ) );
-			}
+			else lines.add( sanatize( seqFile, null ) );
 
 			lines.addAll( buildScriptLinesToMoveValidSeqsToOutputDir( SeqUtil.getSampleId( seqFile.getName() ) ) );
 
@@ -66,40 +64,25 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 	}
 
 	@Override
-	public File getDB() throws Exception {
-		final List<String> paths = Config.requireList( this, KNEAD_DBS );
-
-		if( paths.size() == 1 ) return new File( paths.get( 0 ) );
-
-		if( DockerUtil.inAwsEnv() ) return new File( DockerUtil.DOCKER_DB_DIR );
-
+	public File getDB() throws ConfigPathException, ConfigNotFoundException {
+		if( dbCache != null ) return dbCache;
 		final List<File> dbs = new ArrayList<>();
-		for( final String db: Config.requireList( this, KNEAD_DBS ) ) {
-			dbs.add( new File( db ) );
+		for( final String path: Config.requireList( this, KNEAD_DBS ) ) {
+			final File db = new File( path );
+			dbs.add( db );
+			if( dbCache == null ) dbCache = db;
+			else dbCache = BioLockJUtil.getCommonParent( dbCache, db );
 		}
 
-		File parentDir = null;
-		File testDB = null;
-		for( final File db: dbs ) {
-			if( testDB == null ) {
-				testDB = db;
-			} else if( parentDir == null ) {
-				parentDir = BioLockJUtil.getCommonParent( testDB, db );
-			} else {
-				parentDir = BioLockJUtil.getCommonParent( parentDir, db );
-			}
-		}
+		final String errMsg = "Docker implementation requires all databases exist under a common parent directory";
+		if( dbCache == null ) throw new ConfigPathException( KNEAD_DBS, errMsg );
 
-		if( parentDir == null )
-			throw new Exception( "Docker implementation requires all databases exist under a common parent directory" );
+		for( final File db: dbs )
+			if( !db.getAbsolutePath().contains( dbCache.getAbsolutePath() ) )
+				throw new ConfigPathException( KNEAD_DBS, errMsg );
 
-		for( final File db: dbs ) {
-			if( !db.getAbsolutePath().contains( parentDir.getAbsolutePath() ) ) throw new Exception(
-				"Docker implementation requires all databases exist under a common parent directory" );
-		}
-
-		Log.info( getClass(), "Found common database dir: " + parentDir.getAbsolutePath() );
-		return parentDir;
+		Log.info( getClass(), "Found common database dir: " + dbCache.getAbsolutePath() );
+		return dbCache;
 	}
 
 	@Override
@@ -163,33 +146,6 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 	}
 
 	/**
-	 * Get the configured database parameters
-	 * 
-	 * @return Database parameters
-	 * @throws Exception if errors occur
-	 */
-	protected String getDBs() throws Exception {
-		if( !DockerUtil.inDockerEnv() ) {
-			Config.requireExistingDirs( this, KNEAD_DBS );
-		}
-
-		String dbs = "";
-		for( final String path: Config.requireList( this, KNEAD_DBS ) ) {
-			final File db = new File( path );
-			if( DockerUtil.inDockerEnv() && Config.requireList( this, KNEAD_DBS ).size() == 1 ) {
-				dbs += DB_PARAM + " " + DockerUtil.DOCKER_DB_DIR + " ";
-			} else if( DockerUtil.inDockerEnv() ) {
-				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) + " ";
-			} else {
-				dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
-
-			}
-		}
-
-		return dbs;
-	}
-
-	/**
 	 * Return sanitized sequence data file.
 	 *
 	 * @param sampleId Sample ID
@@ -199,19 +155,27 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 	 */
 	protected File getSanatizedFile( final String sampleId, final Boolean isRvRead ) throws Exception {
 		String suffix = "";
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 			suffix += isRvRead ? RV_OUTPUT_SUFFIX: FW_OUTPUT_SUFFIX;
-		}
 
 		return new File( getTempDir().getAbsolutePath() + File.separator + sampleId + suffix + fastqExt() );
 	}
 
+	private String getDBs() throws ConfigPathException, ConfigNotFoundException {
+		String dbs = "";
+		if( DockerUtil.hasDB( this ) ) for( final String path: Config.requireList( this, KNEAD_DBS ) )
+			dbs += DB_PARAM + " " + DockerUtil.getDockerDB( this, path ).getAbsolutePath() + " ";
+		else if( DockerUtil.inDockerEnv() ) for( final String path: Config.requireList( this, KNEAD_DBS ) )
+			dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		else for( final File db: Config.requireExistingDirs( this, KNEAD_DBS ) )
+			dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
+		return dbs;
+	}
+
 	private String getParams() throws Exception {
 		String params = getRuntimeParams( Config.getList( this, EXE_KNEADDATA_PARAMS ), NUM_THREADS_PARAM ) + getDBs();
-		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM )
-			&& DockerUtil.inDockerEnv() ) {
+		if( !params.contains( BYPASS_TRIM_PARAM ) && !params.contains( TRIMMOMATIC_PARAM ) && DockerUtil.inDockerEnv() )
 			params += DOCKER_TRIM_PARAM + " ";
-		}
 
 		return params;
 	}
@@ -248,6 +212,7 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 
 	private static final String BYPASS_TRIM_PARAM = "--bypass-trim";
 	private static final String DB_PARAM = "-db";
+	private static File dbCache = null;
 	private static final String DOCKER_TRIM_PARAM = "--trimmomatic /app/Trimmomatic-0.38";
 	private static final String FW_OUTPUT_SUFFIX = "_paired_1";
 	private static final String INPUT_PARAM = "-i";

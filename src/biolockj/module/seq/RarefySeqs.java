@@ -18,6 +18,7 @@ import org.apache.commons.lang.math.NumberUtils;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
 import biolockj.module.implicit.RegisterNumReads;
@@ -56,10 +57,9 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 	 */
 	@Override
 	public void cleanUp() throws Exception {
-		final String colName = getMetaColName();
 		super.cleanUp();
-		RegisterNumReads.setNumReadFieldName( colName );
-		MetaUtil.addColumn( colName, this.readsPerSample, getOutputDir(), true );
+		RegisterNumReads.setNumReadFieldName( getMetaColName() );
+		MetaUtil.addColumn( getMetaColName(), this.readsPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -70,17 +70,15 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = super.getPreRequisiteModules();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
-		} else if( SeqUtil.piplineHasSeqInput() && needsCountModule() ) {
-			preReqs.add( RegisterNumReads.class.getName() );
-		}
+		else if( SeqUtil.piplineHasSeqInput() && needsCountModule() ) preReqs.add( RegisterNumReads.class.getName() );
 
 		return preReqs;
 	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) throws Exception {
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
 		return SeqUtil.getSeqFiles( files );
 	}
 
@@ -93,10 +91,8 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		final int pad = SummaryUtil.getPad( label );
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) {
-			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-				+ BioLockJUtil.getCollectionAsString( this.sampleIds );
-		}
+		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+			+ BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.readsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -114,9 +110,8 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		for( int i = 0; i < files.size(); i++ ) {
 			final File f = files.get( i );
 			rarefy( f );
-			if( i % 25 == 0 || i + 1 == files.size() ) {
+			if( i % 25 == 0 || i + 1 == files.size() )
 				Log.info( getClass(), "Done rarefying " + i + "/" + files.size() + " files." );
-			}
 		}
 
 	}
@@ -146,17 +141,13 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 			final Set<Long> usedIndexes = new HashSet<>();
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				if( indexes.contains( index ) ) {
-					if( !usedIndexes.contains( index ) ) {
-						Log.debug( getClass(), "Add to usedIndexes: " + index );
-					}
+					if( !usedIndexes.contains( index ) ) Log.debug( getClass(), "Add to usedIndexes: " + index );
 
 					usedIndexes.add( index );
 					writer.write( line + RETURN );
 				}
 
-				if( ++i % SeqUtil.getNumLinesPerRead() == 0 ) {
-					index++;
-				}
+				if( ++i % SeqUtil.getNumLinesPerRead() == 0 ) index++;
 			}
 
 			this.readsPerSample.put( SeqUtil.getSampleId( input.getName() ), Integer.toString( indexes.size() ) );
@@ -186,15 +177,10 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
 		final long numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
 
-		if( maxConfig != null ) {
-			max = numReads < maxConfig.longValue() ? numReads: minConfig.longValue();
-		}
+		if( maxConfig != null ) max = numReads < maxConfig.longValue() ? numReads: minConfig.longValue();
 
-		if( minConfig == null ) {
-			min = 1L;
-		} else {
-			min = minConfig.longValue();
-		}
+		if( minConfig == null ) min = 1L;
+		else min = minConfig.longValue();
 
 		Log.debug( getClass(), "min = " + min );
 		Log.debug( getClass(), "max = " + max );
@@ -213,28 +199,22 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 			Log.debug( getClass(), "Sample #indexes size  #2 -->  [" + indexes.size() + "]" );
 
 			buildRarefiedFile( seqFile, indexes );
-		} else {
-			Log.info( getClass(),
-				"Remove sample [" + sampleId + "] - contains (" + numReads
-					+ ") reads, which is less than minimum # reads ("
-					+ Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
-		}
+		} else Log.info( getClass(),
+			"Remove sample [" + sampleId + "] - contains (" + numReads + ") reads, which is less than minimum # reads ("
+				+ Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
 	}
 
 	private String getMetaColName() throws Exception {
-		if( this.otuColName == null ) {
-			this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_RAREFIED_READS );
-		}
+		if( this.otuColName == null ) this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_RAREFIED_READS );
 
 		return this.otuColName;
 	}
 
 	private boolean needsCountModule() throws Exception {
-		for( final String module: Config.requireList( this, Constants.INTERNAL_BLJ_MODULE ) ) {
+		for( final String module: Config.requireList( this, Constants.INTERNAL_BLJ_MODULE ) )
 			if( module.equals( SeqFileValidator.class.getName() ) || module.equals( TrimPrimers.class.getName() ) )
 				return false;
 			else if( module.equals( getClass().getName() ) ) return true;
-		}
 
 		return true;
 	}

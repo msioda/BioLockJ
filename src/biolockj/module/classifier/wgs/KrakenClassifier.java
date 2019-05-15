@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import biolockj.Config;
 import biolockj.Constants;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.DockerUtil;
@@ -99,7 +101,6 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		getParams();
-		getKrakenDB();
 	}
 
 	/**
@@ -119,8 +120,9 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 	}
 
 	@Override
-	public File getDB() throws Exception {
-		return new File( Config.requireString( this, KRAKEN_DATABASE ) );
+	public File getDB() throws ConfigNotFoundException, ConfigPathException {
+		if( DockerUtil.inDockerEnv() ) return new File( Config.requireString( this, KRAKEN_DATABASE ) );
+		return Config.requireExistingDir( this, KRAKEN_DATABASE );
 	}
 
 	/**
@@ -134,15 +136,20 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" + RETURN );
 		lines.add( "function " + FUNCTION_TRANSLATE + "() {" );
-		lines.add( getClassifierExe() + "-translate " + DB_PARAM + getKrakenDB() + " --mpa-format $1 > $2" );
+		lines.add(
+			getClassifierExe() + "-translate " + DB_PARAM + getKrakenDB().getAbsolutePath() + " --mpa-format $1 > $2" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
 
-	private String getKrakenDB() throws Exception {
-		if( DockerUtil.inDockerEnv() ) return DockerUtil.DOCKER_DB_DIR;
+	protected File getDockerDB( final String property ) throws ConfigPathException, ConfigNotFoundException {
+		return DockerUtil.getDockerDB( this, Config.requireString( this, property ) );
+	}
 
-		return Config.requireExistingDir( this, KRAKEN_DATABASE ).getAbsolutePath();
+	private File getKrakenDB() throws ConfigPathException, ConfigNotFoundException {
+		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		return getDB();
 	}
 
 	private String getParams() throws Exception {
@@ -150,12 +157,8 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 			final List<String> classifierParams = getClassifierParams();
 			final String params = BioLockJUtil.join( classifierParams );
 
-			if( params.indexOf( FASTA_PARAM ) > -1 ) {
-				classifierParams.remove( FASTA_PARAM );
-			}
-			if( params.indexOf( FASTQ_PARAM ) > -1 ) {
-				classifierParams.remove( FASTQ_PARAM );
-			}
+			if( params.indexOf( FASTA_PARAM ) > -1 ) classifierParams.remove( FASTA_PARAM );
+			if( params.indexOf( FASTQ_PARAM ) > -1 ) classifierParams.remove( FASTQ_PARAM );
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
 					+ getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
@@ -181,22 +184,17 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 
 	private String getWorkerFunctionParams() throws Exception {
 		String params = " " + getParams();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-			params += PAIRED_PARAM;
-		}
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
 
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) ) {
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;
-		}
 
-		params += DB_PARAM + getKrakenDB() + " " + getInputSwitch();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-			params += PAIRED_PARAM;
-		}
+		params += DB_PARAM + getKrakenDB().getAbsolutePath() + " " + getInputSwitch();
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
 
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) ) {
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;
-		}
+
 		return params;
 	}
 

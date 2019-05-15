@@ -11,7 +11,7 @@
 ##                                                                              ##
 ##  Optional Parameters:                                                        ##
 ##  Aws flag:               -aws                                                ##
-##  Docker flag:            -docker                                             ##
+##  Run GUI flag:           -gui                                                ##
 ##  Metadata directory:     -m  <path>                                          ##
 ##  New email password:     -p  <new_pass>                                      ##
 ##  Restart flag:           -r  <directory>                                     ##
@@ -21,7 +21,6 @@
 
 cmd="dockblj ${@}"
 printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
-
 [ ${#DOCKER_ID} -eq 0 ] && exit_script "Error [ dockblj ]: Required bash variable DOCKER_ID undefined"
 [ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ dockblj ]: Required bash variable BLJ_PROJ undefined"
 
@@ -30,31 +29,28 @@ printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
 # In AWS mode, add -aws indicator, otherwise include the Host path for pipeline input. 
 # These paths are used by biolockj_controller to map Docker volumes for java_module containers
 blj_options() {
-	if $(has_param $runAws); then
-		options="-u ${EC2_HOME} -aws"
-	else
-		options="-u ${HOME}"
-	fi
-	$(has_param $doRestart) && options="$options -r ${BLJ_PROJ}/${doRestart#$(blj_proj)/}"
-	$(has_param $newPass) && options="$options -p $newPass"
-	$(has_param $inputDir) && options="$options -i $inputDir"
-	$(has_param $metaPath) && options="$options -m $metaPath"
-	$(has_param $runDev) && $(has_param ${HOST_BLJ}) && options="$options -blj ${HOST_BLJ}"
-	$(has_param $runDev) && $(has_param ${HOST_BLJ_SUP}) && options="$options -bljSup ${HOST_BLJ_SUP}"
-	echo "$options -b $(blj_proj) -c $config"
+	options="-u ${HOME} -b $(blj_proj)" 
+	$(has_param $runDev) && $(has_param $HOST_BLJ) && options="${options} --blj ${HOST_BLJ}"
+	$(has_param $runDev) && $(has_param $HOST_BLJ_SUP) && options="${options} --bljSup ${HOST_BLJ_SUP}"
+	$(has_param $launchGui) && echo ${options} && return
+	
+	$(has_param $doRestart) && options="${options} -r ${BLJ_PROJ}/${doRestart#$(blj_proj)/}"
+	$(has_param $newPass) && options="${options} -p $newPass"
+	$(has_param $metaPath) && options="${options} -m $metaPath"
+	echo ${options} -i ${inputDir} -c ${config} ${runAws}
 }
 
 # Return $HOST_BLJ_PROJ if called from within the biolockj_controller Docker container, otherwise return $BLJ_PROJ
 # If dir ends with "/" trim it off
 blj_proj() {
-	$(has_param $inDocker) && !$(has_param "${HOST_BLJ_PROJ}") && exit_script "Error [ dockblj ]: Required env variable HOST_BLJ_PROJ undefined"
-	if $(has_param $inDocker); then bljProj="${HOST_BLJ_PROJ}"; else bljProj="${BLJ_PROJ}"; fi
+	if [ -d "${HOST_BLJ_PROJ}" ]; then bljProj="${HOST_BLJ_PROJ}"; else bljProj="${BLJ_PROJ}"; fi
 	if [ "${bljProj: -1}" == "/" ]; then
 		len=$((${#bljProj}-1))
 		bljProj="${bljProj:0:len}"
 	fi
-	$(has_param $bljProj) && echo "${bljProj}" && return
-	exit_script "Error [ dockblj ]: Required env variable BLJ_PROJ undefined"
+	! $(has_param $bljProj) && exit_script "Error [ dockblj.blj_proj ]: Required env variable BLJ_PROJ undefined"
+	echo "${bljProj}"
+	
 }
 
 # Build a script that can be used to launch a clone of the
@@ -64,37 +60,41 @@ build_clone_script() {
 	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
 	echo ${@/$(get_docker_img)/-ti $(dock_id)/biolockj_controller /bin/bash} >> "${DOCKER_CLONE_SCRIPT}"
 	chmod 777 "${DOCKER_CLONE_SCRIPT}"
-	echo "This script will execute a Docker clone of your most recent pipeline --> ${DOCKER_CLONE_SCRIPT}"
+	echo "** DEVELOPER NOTE ** dockblj creates a script that if run, launchs a clone of this container shell (same env vars + volumes) without executing the default CMD"
+	echo "** DEVELOPER NOTE ** Useful to inspect moduleruntime envionment.  A shortcut to run the script is provided via the \"dclone\" alias"
+	echo "even after this container is terminated --> ${DOCKER_CLONE_SCRIPT}"
 	[ -f "${DOCKER_CLONE_SCRIPT}" ] && cat "${DOCKER_CLONE_SCRIPT}" & printf "\n"
 }
 
 # Get Docker image - add port, entrypoint, anc command if launching GUI
 get_docker_img() {
 	cmd=$(dock_id)/biolockj_controller	
-	$(has_param $launchGui) && cmd="-p 8080:3000 --expose 8080 -w '$BLJ/web_app' --entrypoint '/bin/bash' $cmd -c 'npm start'"
-	echo "${cmd}"
+	$(has_param $launchGui) && echo "-p 8080:3000 --expose 8080 -w '$BLJ/web_app' --entrypoint '/bin/bash' ${cmd} -c 'npm start'"
+	! $(has_param $launchGui) && echo "${cmd}"
 }
 
 # Get mapped  Docker volumes
 get_volumes() {
+	vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${HOME}:${BLJ_HOST_HOME}"
 	if $(has_param $runAws); then
-		vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${EC2_HOME}:${EC2_HOME}:ro -v ${EFS}:${EFS}:delegated"
+		vols="${vols} -v ${EFS}:${EFS}:delegated"
 	else
-		vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v $(blj_proj):${EFS_PROJ}:delegated"
-		if $(has_param $launchGui); then
-			vols="${vols} -v ${BLJ}/web_app/logs:/log:delegated -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}"
+		vols="${vols} -v $(blj_proj):${EFS_PROJ}:delegated"
+		if $(has_param $launchGui) && [ -d "${BLJ}/resources/config/gui" ]; then
+			vols="${vols} -v ${BLJ_CONFIG}:${BLJ}/resources/config/gui"
 		else
 			vols="${vols} -v $inputDir:${BLJ_INPUT}:ro -v $(dirname $config):${BLJ_CONFIG}:ro"
 			$(has_param $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}:ro"
 		fi
 	
-		$(has_param $runDev) && $(has_param ${HOST_BLJ}) && vols="${vols} -v ${HOST_BLJ}:/app/biolockj:ro"
-		$(has_param $runDev) && $(has_param ${HOST_BLJ_SUP}) && vols="${vols} -v ${HOST_BLJ_SUP}:/app/blj_support:ro"
+		$(has_param $runDev) && $(has_param $HOST_BLJ) && vols="${vols} -v ${HOST_BLJ}:/app/biolockj:ro"
+		$(has_param $runDev) && $(has_param $HOST_BLJ_SUP) && vols="${vols} -v ${HOST_BLJ_SUP}:/app/blj_support:ro"
 	fi
 	echo "${vols}"
 }
 
 # Boolean evaluation if single argument passed exists with a non-zero size
+# Param 1 - Script arg
 has_param() {
 	[ ${#1} -gt 0 ]
 }
@@ -105,6 +105,21 @@ run_docker() {
 	printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
 	build_clone_script "${cmd}"
 	docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) "$(get_docker_img)"
+}
+
+# Start the local browswer
+startBrowser() {
+	sleep 2
+	# Helpful info: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
+	if which xdg-open > /dev/null; then
+		xdg-open 'http://localhost:8080/'
+	elif which gnome-open > /dev/null; then
+		gnome-open 'http://localhost:8080/'
+	elif which python > /dev/null; then
+		python -mwebbrowser http://localhost:8080/
+	else
+		echo "Web browser not found on localhost!"
+	fi
 }
 
 # Verify host directory exists, if dockblj is not deployed inside a Docker container
@@ -130,22 +145,21 @@ verify_inputs() {
 	verify_host_dir $dirPath Input
 }
 
-inDocker=$(arg_exists "$@" -docker)
 launchGui=$(arg_exists "$@" -gui)
 runAws=$(arg_exists "$@" -aws)
 runDev=$(arg_exists "$@" -dev)
-
 config=$(named_arg "$@" -c)
 inputDir=$(named_arg "$@" -i)
 metaPath=$(named_arg "$@" -m)
 newPass=$(named_arg "$@" -p)
 doRestart=$(named_arg "$@" -r)
-if ! $(has_param $inDocker); then
-	$(has_param "${BLJ_SUP}") && HOST_BLJ_SUP="${BLJ_SUP}" 
-	$(has_param $launchGui) && verify_inputs 
+
+if $(has_param $runDev); then
+	echo "Run DEV mode!"
+	[ ${#HOST_BLJ} -eq 0 ] && [ -d "${BLJ}" ] && HOST_BLJ="${BLJ}" 
+	[ ${#HOST_BLJ_SUP} -eq 0 ] && [ -d "${BLJ_SUP}" ] && HOST_BLJ_SUP="${BLJ_SUP}" 
 fi
 
-$(has_param $runDev) && echo "Run DEV mode!"
-$(has_param $runAws) && echo "Run AWS mode!"
-
+! $(has_param $launchGui) && verify_inputs 
 run_docker
+$(has_param $launchGui) && startBrowser
