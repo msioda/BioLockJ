@@ -25,6 +25,7 @@ document.getElementById('validateAwsCreditials').addEventListener('click', funct
     }
     console.log(request.responseText);
   }, 2000);
+  updateCloudStackElements();
 });
 
 document.getElementById('submitConfigureAWS').addEventListener('click', function(evt){
@@ -44,13 +45,23 @@ document.getElementById('submitConfigureAWS').addEventListener('click', function
           incorrect.forEach( ele => ele.style.display = 'inline');
           correct.forEach( ele => ele.style.display = 'none');
         }
+        updateCloudStackElements();
       })
-  }
+    }
+
 });
 //document.getElementById('configureAwsForm').getElementsByTagName('span').getElementsByClassName('correctInput')
 document.getElementById('deployComputeStack').addEventListener('click', function(evt){
   evt.preventDefault();
-  console.log('this: ', this);
+  console.log(this);
+  this.disabled = true;
+  let button = this;
+  let correct = Array.from(this.parentNode.getElementsByClassName('correctInput'));
+  let incorrect = Array.from(this.parentNode.getElementsByClassName('incorrectInput'));
+  let inProgress = Array.from(this.parentNode.getElementsByClassName('inProgress'));
+  incorrect.forEach( ele => ele.style.display = 'none');
+  correct.forEach( ele => ele.style.display = 'none');
+  inProgress.forEach( ele => ele.style.display = 'block');
   let formData = {};
   let myForm = new FormData(this.parentNode.parentNode);
   for (var i of myForm.entries()) {
@@ -58,26 +69,163 @@ document.getElementById('deployComputeStack').addEventListener('click', function
   }
   console.log('formData: ', formData);
   let request = new XMLHttpRequest();
+  request.timeout = 1000 * 10 * 60;
+  request.ontimeout = function (e) {
+    console.log('timed out from browser \n', e);
+  };
   request.open("POST", '/deployCloudInfrastructure', true);
   request.setRequestHeader("Content-Type", "application/json");
   request.send(JSON.stringify({formData}));
-
   request.onreadystatechange = function() {
     if (request.readyState == XMLHttpRequest.DONE) {
-      console.log(request.responseText);
-      let correct = Array.from(this.parentNode.parentNode.getElementsByClassName('correctInput'));
-      let incorrect = Array.from(this.parentNode.parentNode.getElementsByClassName('incorrectInput'));
-      if (responseText === "success"){
+      console.log(request);
+      console.log('request.responseText: ', request.responseText);
+      const rt = request.responseText.trim();
+      inProgress.forEach( ele => ele.style.display = 'none');
+      if (rt.endsWith("_COMPLETE")){
         correct.forEach( ele => ele.style.display = 'inline');
-        incorrect.forEach( ele => ele.style.display = 'none');
+      }else if (rt.endsWith("FAILED") ){
+        incorrect.forEach( ele => ele.style.display = 'inline');
+      }else {
+        incorrect.forEach( ele => ele.style.display = 'inline');
+        correct.forEach( ele => ele.style.display = 'none');
+      }
+      updateCloudStackElements();
+      console.log('undisabling');
+      button.disabled = false;
+    }
+  }
+});
+
+document.getElementById('launchEc2HeadNodeButton').addEventListener('click', function(evt) {
+  evt.preventDefault();
+  console.log('this.parentNode: ', this.parentNode);
+  let correct = Array.from(this.parentNode.getElementsByClassName('correctInput'));
+  let incorrect = Array.from(this.parentNode.getElementsByClassName('incorrectInput'));
+  let inProgress = Array.from(this.parentNode.getElementsByClassName('inProgress'));
+  incorrect.forEach( ele => ele.style.display = 'none');
+  correct.forEach( ele => ele.style.display = 'none');
+  inProgress.forEach( ele => ele.style.display = 'block');
+  let formData = {};
+  let myForm = new FormData(this.parentNode.parentNode);
+  for (var i of myForm.entries()) {
+    formData[i[0]] = i[1];
+  }
+  console.log('formData: ', formData);
+  let request = new XMLHttpRequest();
+  request.timeout = 1000 * 10 * 60;
+  request.ontimeout = function (e) {
+    console.log('timed out from browser \n', e);
+  };
+  request.open("POST", '/deployCloudInfrastructure', true);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.send(JSON.stringify({formData}));
+  request.onreadystatechange = function() {
+    if (request.readyState == XMLHttpRequest.DONE) {
+      console.log(request);
+      console.log('request.responseText: ', request.responseText);
+      const rt = request.responseText.trim();
+      inProgress.forEach( ele => ele.style.display = 'none');
+      if (rt.endsWith("_COMPLETE")){
+        correct.forEach( ele => ele.style.display = 'inline');
+      }else if (rt.endsWith("FAILED") ){
+        incorrect.forEach( ele => ele.style.display = 'inline');
       }else {
         incorrect.forEach( ele => ele.style.display = 'inline');
         correct.forEach( ele => ele.style.display = 'none');
       }
     }
   }
+  updateCloudStackElements();
 });
-document.getElementById('launchEc2HeadNodeButton').addEventListener('click', function(evt) {
-  evt.preventDefault();
-  sendFormToNode('launchEc2HeadNodeButton', 'launchEc2HeadNode')
-});
+
+//copy past from config_config
+function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST', timeOut = 2) {
+  //timeOut should be in minutes
+  return new Promise((resolve, reject) => {
+    let formData = {};
+    let myForm = new FormData(document.getElementById(formElementId).parentNode.parentNode);
+    for (var i of myForm.entries()) {
+      formData[i[0]] = i[1];
+    }
+    console.log('formData: ', formData);
+
+    let request = new XMLHttpRequest();
+    request.open(requestMethod, nodeAddress, true);
+    request.timeout = 1000 * 60 * timeOut;
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(JSON.stringify({formData}));
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        try {
+          if(this.status === 200 && request.readyState === 4){
+            console.log(this.responseText);
+            resolve(this.responseText);
+          }else{
+            reject(this.status + " " + this.statusText)
+          }
+        } catch (e) {
+          reject (e.message)
+        }
+      }
+    }
+  });
+  updateCloudStackElements();
+};
+
+function retrieveStackListAsPromise() {
+  try {
+    return new Promise((resolve, reject) => {
+      let request = new XMLHttpRequest();
+      request.open('POST', '/retrieveAwsStackLists', true);
+      request.setRequestHeader("Content-Type", "application/json");
+      request.send();
+      console.log('request sent');
+      request.onreadystatechange = function() {
+        if (request.readyState === XMLHttpRequest.DONE) {
+          try {
+            if(this.status === 200 && request.readyState === 4){
+              console.log(this.responseText);
+              resolve(this.responseText);
+            }else{
+              reject(this.status + " " + this.statusText)
+            }
+          } catch (e) {
+            reject (e.message)
+          }
+        }
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+function updateCloudStackElements() {
+  const awsMiniDash = document.getElementById('awsSettings');
+  let datLis = Array.from(awsMiniDash.getElementsByClassName('stackList'));
+  console.log('datLis: ', datLis);
+  let stacks = retrieveStackListAsPromise();
+  stacks.then(dat => {
+    console.log(dat);
+    let data = dat.trim().split('\n');
+    console.log(data);
+    datLis.forEach( ele => {
+
+      //remove child nodes
+      while (ele.firstChild) {
+        ele.removeChild(ele.firstChild);
+      }
+
+      //iterate through stackname list (data)
+      for (var i = 0; i < data.length; i++) {
+        let o = document.createElement('option');
+        o.innerHTML = data[i];
+        o.value = data[i];
+        ele.appendChild(o);
+        console.log('ele: ', ele);
+      }
+    })
+  })//.then end
+
+  console.log();
+}

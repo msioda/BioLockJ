@@ -1,16 +1,24 @@
-<!--file button-->
+<!-- {{HOST_ENVIRONMENT}} -->
+<!-- root div for react -->
+<div class="" id="root"></div>
+
 <link rel="stylesheet" type="text/css" href="./../stylesheets/config.css" />
 <div class="nav-bar">
   <div class="dropdown">
     <button class="dropbtn" onclick="projectOptions()">Projects (Click here to start)</button>
     <div class="dropdown-content" id="projects">
       <a onclick="newProj()" href="#">New</a>
-      <a id="openAwsSettings">AWS Mini-dashboard</a>
       <a >Open BLJ config with file picker <input type="file" accept=".txt,.properties" id="localFile"></a>
-      <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
-      <a id="restartListAnchor" href="#">Modify configuration of a previously launched project </a>
-      <a id="recent" href="#">(Auto)Saved configuration</a>
+      <a id="recent" href="#">(Auto)Saved Configurations</a>
     </div>
+    <button class="dropbtn" id="prevConfigNavBut">Previously Launched Pipeline</button>
+    <button class="dropbtn"
+    onclick='document.getElementById("projects").classList.toggle("show")'
+    >Settings</button>
+      <div id="settingsContent" class="dropdown-content">
+        <a id="openAwsSettings">AWS Mini-dashboard</a>
+        <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
+      </div>
   </div>
 </div>
 
@@ -18,35 +26,35 @@
 
 <!--options for control panel-->
 <div class="menu" id='mainMenu'>
-  <div class="tab">
-    <button id="defaultOpen" class="tablinks" onclick="openTab(event, 'projectTab')">Project</button>
-    <button class="tablinks" onclick="openTab(event, 'moduleTab')">Modules</button>
-    <button class="tablinks" onclick="openTab(event, 'inputTab')">Input</button>
-    <button class="tablinks" onclick="openTab(event, 'metadataTab')">Metadata</button>
-    <button class="tablinks" onclick="openTab(event, 'clusterTab')">Cluster</button>
-    <button class="tablinks" onclick="openTab(event, 'scriptTab')">Script</button>
-    <button class="tablinks" onclick="openTab(event, 'reportTab')">Report</button>
-    <button class="tablinks" onclick="openTab(event, 'mailTab')">E-mail</button>
-    <button class="tablinks" onclick="openTab(event, 'rTab')">R</button>
-    <button class="tablinks" onclick="openTab(event, 'exeTab')">Exe</button>
-    <button class="tablinks" onclick="openTab(event, 'rdpTab')">RDP</button>
-    <button class="tablinks" onclick="openTab(event, 'qiimeTab')">QIIME</button>
-    <button class="tablinks" onclick="openTab(event, 'krakenTab')">Kraken</button>
-    <button class="tablinks" onclick="openTab(event, 'kraken2Tab')">Kraken2</button>
-    <button class="tablinks" onclick="openTab(event, 'metaphlanTab')">MetaPhlAn</button>
-    <button class="tablinks" onclick="openTab(event, 'kneadDataTab')">kneadData</button>
-    <button class="tablinks" onclick="openTab(event, 'r_PlotMdsTab')">R Plot MDS</button>
-    <button class="tablinks" onclick="openTab(event, 'r_CalculateStatsTab')">R Statistics Calculator</button>
-    <button class="tablinks" onclick="openTab(event, 'r_PlotEffectSizeTab')">R Plot Effect Size</button>
-    <button class="tablinks" onclick="openTab(event, 'rarefyOtuCountsTab')">Rarefy OTU Counts</button>
-    <button class="tablinks" onclick="openTab(event, 'removeLowOtuCountsTab')">Remove Low OTU Counts</button>
-    <button class="tablinks" onclick="openTab(event, 'seqFileValidatorTab')">Sequence File Validator</button>
-    <button class="tablinks" onclick="openTab(event, 'demultiplexerTab')">Demultiplexer</button>
-    <button class="tablinks" onclick="openTab(event, 'dockerTab')">Docker</button>
-    <button class="tablinks" onclick="openTab(event, 'humann2Tab')">HumanN2</button>
-    <button class="tablinks" onclick="openTab(event, 'multiplexerTab')">Multiplexer</button>
-    <button class="tablinks" onclick="openTab(event, 'rarefySeqsTab')">Rarify Seqs</button>
-    <button id='AwsButton' class="tablinks" onclick="openTab(event, 'AwsTab')">AWS</button>
+  <div id="tabButtons" class="tab">
+    <button id="defaultOpen" class="tablinks basicTabBut" onclick="openTab(event, 'projectTab')">Project</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'moduleTab')">Modules</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'inputTab')">Input</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'metadataTab')">Metadata</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'clusterTab')">Cluster</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'scriptTab')">Script</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'reportTab')">Report</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'multiplexerTab')">Multiplexer</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'demultiplexerTab')">Demultiplexer</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'exeTab')">Exe</button>
+    <button class="tablinks basicTabBut" onclick="openTab(event, 'dockerTab')">Docker</button>
+    <button class="tablinks rMod" onclick="openTab(event, 'rTab')">R</button>
+    <button class="tablinks rdpClass" onclick="openTab(event, 'rdpTab')">RDP</button>
+    <button class="tablinks qiimeClass" onclick="openTab(event, 'qiimeTab')">QIIME</button>
+    <button class="tablinks krakenClass" onclick="openTab(event, 'krakenTab')">Kraken</button>
+    <button class="tablinks kraken2Class" onclick="openTab(event, 'kraken2Tab')">Kraken2</button>
+    <button class="tablinks metaphlanClass" onclick="openTab(event, 'metaphlanTab')">MetaPhlAn</button>
+    <button class="tablinks kneadDataClass" onclick="openTab(event, 'kneadDataTab')">kneadData</button>
+    <button class="tablinks R_PlotMds" onclick="openTab(event, 'r_PlotMdsTab')">R Plot MDS</button>
+    <button class="tablinks R_CalculateStats" onclick="openTab(event, 'r_CalculateStatsTab')">R Statistics Calculator</button>
+    <button class="tablinks R_PlotEffectSize" onclick="openTab(event, 'r_PlotEffectSizeTab')">R Plot Effect Size</button>
+    <button class="tablinks rarefyOtuCounts" onclick="openTab(event, 'rarefyOtuCountsTab')">Rarefy OTU Counts</button>
+    <button class="tablinks removeLowOtuCounts" onclick="openTab(event, 'removeLowOtuCountsTab')">Remove Low OTU Counts</button>
+    <button class="tablinks SeqFileValidatorMod" onclick="openTab(event, 'seqFileValidatorTab')">Sequence File Validator</button>
+    <button class="tablinks humann2Class" onclick="openTab(event, 'humann2Tab')">HumanN2</button>
+    <button class="tablinks rarefySeqs" onclick="openTab(event, 'rarefySeqsTab')">Rarify Seqs</button>
+    <button id='AwsButton' class="tablinks basicTabBut" onclick="openTab(event, 'AwsTab')">AWS</button>
+    <button class="tablinks emailMod" onclick="openTab(event, 'mailTab')">E-mail</button>
   </div>
 
   <!--tabbed menu-->
@@ -182,8 +190,8 @@
         <input class="sp" type="text" id="input.trimPrefix" name="input.trimPrefix">
       <h5>(For files named by Sample ID, provide the
         prefix preceding the ID to trim when extracting Sample ID.
-If input.demultiplex=Y, provide any characters in the sequence header preceding the ID.
-For fastq, typically “@”.)<h5></p>
+        If input.demultiplex=Y, provide any characters in the sequence header preceding the ID.
+        For fastq, typically “@”.)<h5></p>
       <p>Trim suffix:
         <input class="sp" type="text" id="input.trimSuffix" name="input.trimSuffix"><br>
         <h5>(For files named by Sample ID, provide the suffix after the ID, often
@@ -514,6 +522,56 @@ For fastq, typically “@”.)<h5></p>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
+  <div id="demultiplexerTab" class="tabcontent moduleTab">
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <p>
+        Demultiplexer barcode cutoff:
+        <input type="text" name="demultiplexer.barcodeCutoff" id="demultiplexer.barcodeCutoff" class="sp "value="">
+      </p>
+      <p>
+        Path to the mapping file to match sequence headers to barcodes:
+        <input type="text" name="demultiplexer.mapping" id="demultiplexer.mapping" class="sp" value="">
+      </p>
+      <p>Set the Demultiplexer strategy. If using barcodes, they must be provided in the
+        metadata.filePath with in column name defined by metadata.barcodeColumn. This is only used by the Demultiplexer module:
+        <select class="sp" id="demultiplexer.strategy" name="demultiplexer.strategy">
+          <!-- <option selected value="">Click for options</option> -->
+          <option value="barcode_in_header">Barcode in header</option>
+          <option value="barcode_in_seq">Barcode in sequence</option>
+          <option value="id_in_header">Sequence ID in header</option>
+          <option selected default value="do_not_demux.">N/A</option>
+        </select>
+      </p>
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+    </div>
+
+  <div id="dockerTab" class="tabcontent moduleTab">
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <p>
+        Docker Image version:
+        <br>
+        (By default, docker will always use 'latest', but advanced users may specify a different tag)
+        <input type="text" class="sp" name="docker.imgVersion" id="docker.imgVersion" value="">
+      </p>
+      <p>Docker Hub user name with the BioLockJ containers. By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own versions of these modules and add new modules in their own Docker Hub account:
+      <input type="text" class="sp" name="docker.user" id="docker.user" value="">
+      </p>
+      <p>Save container on exit:
+        <select class="sp" name="docker.saveContainerOnExit" id="docker.saveContainerOnExit">
+          <option selected default value="">Click for options</option>
+          <option value="Y">Yes</option>
+          <option value="N">No</option>
+        </select>
+      </p>
+      <button class="createDownload">Create configuration file for download</button>
+      <a class="downloadlink hidden">Download configuration file to default directory</a>
+      <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
+    </div>
+
   <div id="rdpTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
@@ -550,6 +608,26 @@ For fastq, typically “@”.)<h5></p>
       <p>Optional parameters passed to qiime scripts:
         <input class='sp' type="text" name="qiime.params" id="qiime.params"value="">
       </p>
+      <fieldset>
+        <legend>If supplied, all three of these must be in the same parent directory.
+          For more info about these parameters,
+          visit <a href="http://qiime.org/install/qiime_config.html">http://qiime.org/install/qiime_config.html</a>.
+        </legend>
+            File property to define ~/.qiime_config pynast_template_alignment_fp.
+            This defines the template alignment to use with PyNAST as a fasta file,
+            if the user doesn't want to use the default (more info at ):
+            <input class='sp' type="text" name="qiime.pynastAlignDB" id="qiime.pynastAlignDB">
+            <br>
+            File property to define ~/.qiime_config pick_otus_reference_seqs_fp and
+            assign_taxonomy_reference_seqs_fp, reference database to use with all OTU
+            picking scripts and workflows, if you prefer to not use the default:
+            <input class='sp' type="text" name="qiime.refSeqDB" id="qiime.refSeqDB">
+            <br>
+            File property to define ~/.qiime_config assign_taxonomy_id_to_taxonomy_fp,
+            an id-to-taxonomy map to use with assign_taxonomy.py (and parallel versions),
+            if you prefer to not use the default:
+            <input class='sp' type="text" name="qiime.taxaDB" id="qiime.taxaDB">
+      </fieldset>
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
       <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -751,56 +829,6 @@ For fastq, typically “@”.)<h5></p>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
   </div>
 
-  <div id="demultiplexerTab" class="tabcontent moduleTab">
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <p>
-      Demultiplexer barcode cutoff:
-      <input type="text" name="demultiplexer.barcodeCutoff" id="demultiplexer.barcodeCutoff" class="sp "value="">
-    </p>
-    <p>
-      Path to the mapping file to match sequence headers to barcodes:
-      <input type="text" name="demultiplexer.mapping" id="demultiplexer.mapping" class="sp" value="">
-    </p>
-    <p>Set the Demultiplexer strategy. If using barcodes, they must be provided in the
-      metadata.filePath with in column name defined by metadata.barcodeColumn. This is only used by the Demultiplexer module:
-      <select class="sp" id="demultiplexer.strategy" name="demultiplexer.strategy">
-        <!-- <option selected value="">Click for options</option> -->
-        <option value="barcode_in_header">Barcode in header</option>
-        <option value="barcode_in_seq">Barcode in sequence</option>
-        <option value="id_in_header">Sequence ID in header</option>
-        <option selected default value="do_not_demux.">N/A</option>
-      </select>
-    </p>
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div>
-
-  <div id="dockerTab" class="tabcontent moduleTab">
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <p>
-      Docker Image version:
-      <br>
-      (By default, docker will always use 'latest', but advanced users may specify a different tag)
-      <input type="text" class="sp" name="docker.imgVersion" id="docker.imgVersion" value="">
-    </p>
-    <p>Docker Hub user name with the BioLockJ containers. By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own versions of these modules and add new modules in their own Docker Hub account:
-    <input type="text" class="sp" name="docker.user" id="docker.user" value="">
-    </p>
-    <p>Save container on exit:
-      <select class="sp" name="docker.saveContainerOnExit" id="docker.saveContainerOnExit">
-        <option selected default value="">Click for options</option>
-        <option value="Y">Yes</option>
-        <option value="N">No</option>
-      </select>
-    </p>
-    <button class="createDownload">Create configuration file for download</button>
-    <a class="downloadlink hidden">Download configuration file to default directory</a>
-    <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
-  </div>
-
   <div id="kneadDataTab" class="tabcontent moduleTab">
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a><br>
@@ -844,6 +872,20 @@ For fastq, typically “@”.)<h5></p>
     <p>HummanN2 protein database (Directory property may contain multiple nucleotide database files):
     <input type="text" class="sp" name="humann2.protDB" id="humann2.protDB" value="">
     </p>
+    <p>Keep UNMAPPED column in count tables:
+      <select class="sp" name="humann2.keepUnmapped" id="humann2.keepUnmapped">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
+    <p>Keep UNINTEGRATED column in count tables:
+      <select class="sp" name="humann2.keepUnintegrated" id="humann2.keepUnintegrated">
+        <option selected default value="">Click for options</option>
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </p>
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -880,9 +922,125 @@ For fastq, typically “@”.)<h5></p>
 
   <div id="AwsTab" class="tabcontent moduleTab">
     <button class="createDownload">Create configuration file for download</button><br>
-    aws.stack<input type="text" name="aws.stack" id="aws.stack" value=""><br>
-    aws.ram<input type="text" name="aws.ram" id="aws.ram" value=""><br>
-    s3.blj_proj<input type="s3.blj_proj" name="" value=""><br>
+    <p>AWS profile as found in your rootkey.csv:
+      <!-- Add update to this in save loop -->
+      <input class="sp" type="text" placeholder="select AWS profile"list="awsProfiles" name="aws.profile" id="aws.profile">
+      <datalist name='awsProfiles' id="awsProfiles" placeholder='add your own'>
+        <option value="default">default</option>
+      </datalist>
+    </p>
+    <p>Please select the geographic area in which you live. Subsequent configuration
+  questions will narrow this down by presenting a list of cities, representing
+  the time zones in which they are located.
+    <select class="sp" class="" name="REGION" id="">
+      <option default value="us-east-1">us-east-1</option>
+      <option value="1">Africa</option>
+      <option value="2">America</option>
+      <option value="3">Antarctica</option>
+      <option value="4">Australia</option>
+      <option value="5">Arctic</option>
+      <option value="6">Asia</option>
+      <option value="7">Atlantic</option>
+      <option value="8">Europe</option>
+      <option value="9">Indian</option>
+      <option value="10">Pacific</option>
+      <option value="11">SystemV</option>
+      <option value="10">Pacific</option>
+      <option value="11">SystemV</option>
+      <option value="12">US</option>
+      <option value="13">Etc</option>
+    </select>
+    <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span>
+    </p>
+    <p>AWS ram:
+      <input class="sp" type="text" name="aws.ram" value="">
+    </p>
+    <p>AWS S3 bucket:
+      <input class="sp" type="text" name="aws.s3" id="aws.s3" placeholder="select AWS stack name" list="s3BucketList">
+      <datalist name='s3BucketList' id="s3BucketList" class='stackList'>
+      </datalist>
+    </p>
+    <p>AWS RAM:
+      <input class="sp" type="text" id="aws.ram" value=""><br>
+    </p>
+    <!-- <p>BioLockJ project folder on S3
+      <input type="text" name="s3.blj_proj" id="s3.blj_proj" value=""><br>
+    </p> -->
+    <p>Copy input files to S3 storage?
+      <select class="sp" name="aws.copyInputsToS3" value="aws.copyInputsToS3">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, delete input files</option>
+      </select>
+    </p>
+    <p>Copy entire pipeline to S3 storage?
+      <select class="sp" name="aws.copyPipelineToS3" value="aws.copyPipelineToS3">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, delete the pipeline</option>
+      </select>
+    </p>
+    <p>Copy report to S3?
+      <select class="sp" name="aws.copyReportsToS3" value="aws.copyReportsToS3">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, delete report</option>
+      </select>
+    </p>
+    <p>Purge Efs Inputs?
+      <select class="sp" name="aws.purgeEfsInputs" value="aws.purgeEfsInputs">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, leave them on EC2</option>
+      </select>
+    </p>
+    <p>Purge Efs Ouputs?
+      <select class="sp" name="aws.purgeEfsOuputs" value="aws.purgeEfsOutputs">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, leave them on EC2</option>
+      </select>
+    </p>
+    <p>Shutdown EC2 after purge?
+      <select class="sp" class="" name="aws.ec2ShutdownAfterPurge" value="aws.ec2ShutdownAfterPurge">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, leave EC2 running</option>
+      </select>
+    </p>
+    <p>Save cloud after purge?(Mike is this the correct question for aws.saveCloud?)
+      <select class="sp" class="" name="aws.saveCloud" value="aws.saveCloud">
+        <option value="">Choose an option</option>
+        <option value="Y">Yes</option>
+        <option value="N">No, leave EC2 running</option>
+      </select>
+    </p>
+    <p>AWS walltime:
+      <input class="sp" type="number" min="1" name="aws.walltime" id="aws.walltime" value="">
+    </p>
+    <!-- Add update to this in save loop -->
+    <p>EC2 Instance ID:
+      <input class="sp" type="text" name="aws.ec2InstanceID" id="aws.ec2InstanceID" placeholder="select EC2 ID" list="ec2InstanceList">
+        <datalist id="ec2InstanceIdList" class='stackList'>
+        </datalist>
+    </p>
+    <!-- Add update to this in save loop -->
+    <p>EC2 Instance Type:
+      <input class="sp" type="text" name="aws.ec2InstanceID" id="aws.ec2InstanceID" placeholder="select AWS stack name" list="ec2instanceType">
+    </p>
+    <p>Spot price for AWS minues (percentage going rate that you are willing to pay per minute ):
+      <input class="sp" type="percentage" id="aws.ec2SpotPer" name="aws.ec2SpotPer" value="100">%<br>
+    </p>
+    <p>Stack name:
+      <input class="sp" type="text" name="aws.stack" id="aws.stack" placeholder="select stack" list="AwsStackList">
+        <datalist id="AwsStackList" class="stackList">
+        </datalist>
+    </p>
+<!-- Still need to add input for
+    aws.ec2AcquisitionStrategy
+-->
+
+
     <button class="createDownload">Create configuration file for download</button>
     <a class="downloadlink hidden">Download configuration file to default directory</a>
     <button type="button" class="openLaunchModal">Ready to Launch BioLockJ!</button>
@@ -900,6 +1058,7 @@ For fastq, typically “@”.)<h5></p>
       <form id='configureAwsForm' class="" action="#" method="#">
       <fieldset>
         <legend>Configure AWS Credentials</legend>
+        <a href="https://console.aws.amazon.com/iam/home?#/security_credentials">If you don’t have an access key ID, click here and select access keys to create one.</a>
         <p>AWS Access Key ID:<input required type="text" name="AWSACCESSKEYID">
           <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span></p>
         <p>*AWS Secret Key ID:*<input required type="text" name="AWSSECRETACCESSKEY">
@@ -943,13 +1102,15 @@ For fastq, typically “@”.)<h5></p>
           AWS CLoud Infrastructure Stack
           <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
         </legend>
-        <p>Stackname: <input type="text" name="stackname" value="" pattern="[-a-zA-Z0-9]">
+        <p>Stackname: <input type="text" name="stackname" placeholder="select AWS stack name" list="cloudFormationStackDatalist">
+          <datalist name='cloudFormationStackDatalist' id="cloudFormationStackDatalist" class='stackList'>
+          </datalist>
         </p>
         <p>Docker HUB user account (for images used):<input type="text" name="dockerRepository" value="biolockj">
         </p>
         <p>S3bucket: <input type="text" name="s3bucket" value="autogenerate">
         </p>
-        <p>You can view your S3 bucket here <a href="#"></a>.
+        <p>You can view your S3 bucket here <a href="http://s3.console.aws.amazon.com">http://s3.console.aws.amazon.com</a>.
         </p>
         <p>Create or delete stack?
           <select class="" name="deployArg">
@@ -957,14 +1118,17 @@ For fastq, typically “@”.)<h5></p>
             <option value="delete">delete</option>
           </select>
         </p>
-        <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span>
+        <span class="correctInput">&#10003;</span>
+        <span class='incorrectInput'>X</span>
+        <span class='inProgress'>O</span>
         <a id="stackPath"></a>
-        <button type="button" id='deployComputeStack' name="deployComputeStack">Deploy Compute Stack</button>
+        <button type="button" id='deployComputeStack' value='deployComputeStack1' name="deployComputeStack">Deploy Compute Stack</button>
       </fieldset>
     </form>
     <form id="launchEc2HeadNode"class="" action="#" method="">
       <fieldset>
         <legend>EC2 headnode</legend>
+        <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
         <p>Launch action:
           <select class="" name="launchAction">
             <option value="directconnect">directconnect</option>
@@ -974,15 +1138,14 @@ For fastq, typically “@”.)<h5></p>
         </p>
         <p>Stack name:
           <input type="text" placeholder="select AWS stack name"list="ec2StackName">
-          <datalist name='ec2StackName' placeholder='add your own' id="ec2StackName">
-            <option value="blj_testing">blj_testing</option>
+          <datalist name='ec2StackName' placeholder='add your own' id="ec2StackName" class='stackList'>
           </datalist>
         </p>
         <p>Script name:
         <input type="text" name="scriptName" value="startHeadNodeGui.sh"></p>
         <p>instanceType:
-          <input type="text" placeholder="select AWS instance type or define a custom type"list="awsInstanceType">
-          <datalist name='awsInstanceType' id="awsInstanceType">
+          <input type="text" placeholder="select AWS instance type or define a custom type" list="ec2instanceType">
+          <datalist id="ec2instanceType">
             <option value="t2.micro">1GB</option>
             <option value="t2.small">2GB</option>
             <option value="t2.medium">4GB</option>
@@ -992,12 +1155,13 @@ For fastq, typically “@”.)<h5></p>
         </p>
         <p>
           Instance name:
-          <select class="" name="instanceType">
+          <select class="" name="instanceName">
             <option default value="HeadNode">HeadNode</option>
           </select>
         </p>
+        <span class="correctInput">&#10003;</span><span class='incorrectInput'>X</span><span class='inProgress'>O</span>
         <button type="button" id='launchEc2HeadNodeButton' name="launchEc2HeadNodeButton">Launch EC2 headnode</button>
-        <button type="button" id='terminateEc2HeadNodeButton' name="terminateEc2HeadNodeButton">Terminate EC2 headnode</button>
+        <!-- <button type="button" id='terminateEc2HeadNodeButton' name="terminateEc2HeadNodeButton">Terminate EC2 headnode</button> -->
       </fieldset>
     </form>
   </div>
@@ -1063,6 +1227,21 @@ For fastq, typically “@”.)<h5></p>
   </div>
 </div>
 
+<div id="prevConfigModal"class="modal">
+  <div class="modal-content">
+    <span class="closeModal">&times;</span>
+    <div class="">
+      Any previously run config file can be cloned, however, only unsuccessful configs can be edited.
+      <div >
+        <ul id="prevRunConfigsUl">
+
+        </ul>
+      </div>
+    </div>
+    <button type="button" class="closeModal" name="cancel">Cancel</button>
+  </div>
+</div>
+
 <div class="banner">
   <!--Working on logo here-->
   <?xml version="1.0" standalone="No"?>
@@ -1089,8 +1268,16 @@ For fastq, typically “@”.)<h5></p>
   </div>
 </div>
 
-<script type="text/javascript" src="./../javascripts/config_menus.js"></script>
+<script type="text/javascript" src="/javascripts/config_menus.js"></script>
 <script type="text/javascript" src="./../javascripts/config_config.js"></script>
 <script type="text/javascript" src="./../javascripts/tests/standPropsAllPresent.js"></script>
 <script type="text/javascript" src="./../javascripts/awsMiniDash.js"></script>
+<!-- <script type="module" src="./../javascripts/config_aws.js"></script> -->
+
+<!-- <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.24.0/babel.js"></script>
+<script <script type="text/babel" src="./../javascripts/config_react.js"></script> -->
+
+</script>
 <!-- <script type="text/javascript" src="resetAnimationWorker.js"></script> -->

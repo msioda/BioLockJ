@@ -4,6 +4,21 @@ function projectOptions() {
   document.getElementById("projects").classList.toggle("show");
 }
 
+function toggleShow(trgt, useId = true) {
+//can be used on html objects or their ids
+  let x;
+  if (useId = true){
+    x = document.getElementById(trgt);
+  }else{
+    x = trgt;
+  }
+  if (x.style.display === "none") {
+    x.style.display = "block";
+  } else {
+    x.style.display = "none";
+  }
+}
+
 //Open the main Menu when "Projects" -> "New" is clicked
 function newProj() {
   document.getElementById("mainMenu").style.display = "block";
@@ -135,16 +150,16 @@ function moduleCounter(modulesToDisable) {
     this.count++
   };
   this.modClassSelected = function(target){
-  if (target.classList.contains("modChoosen")) {
-    target.classList.remove("modChoosen");
+    if (!target.classList.contains("modChoosen")) {
+      // target.classList.remove("modChoosen");
       this.decrementCount();
       if (this.getCount() == 0) {
         for (let t = 0; t < this.modsToDisable.length; t++) {
           removeClassToAllElemInList(this.modsToDisable[t], "disabledMod");
         }
       }
-  }else {
-    target.classList.add("modChoosen");
+    }else {
+      // target.classList.add("modChoosen");
       this.incrementCount();
       if (this.getCount() > 0) {
         for (let t = 0; t < this.modsToDisable.length; t++) {
@@ -246,7 +261,7 @@ let myModules = new Map(Object.entries({
   'biolockj/module/implicit/Demultiplexer' :
   { cssClass : ['implicit', 'hidden'], category : 'implicit'},
 
-  'biolockj/module/seq/SeqFileValidator' : { cssClass : [], category : 'seq'},
+  'biolockj/module/seq/SeqFileValidator' : { cssClass : ['SeqFileValidatorMod'], category : 'seq'},
 
   'biolockj/module/seq/TrimPrimers' : { cssClass : [], category : 'seq'},
 
@@ -260,10 +275,10 @@ let myModules = new Map(Object.entries({
   { cssClass : ['rdpClass', 'classifierUnique'], label : "16S Classifier: RDP", counter : 'rdpModuleCounter' , category : 'classifier'},
 
   'biolockj/module/implicit/parser/r16s/RdpParser' :
-  { cssClass : ['rdpClass', , 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
+  { cssClass : ['rdpClass', 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/implicit/parser/r16s/QiimeParser' :
-  { cssClass : ['rdpClass', , 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
+  { cssClass : ['rdpClass', 'classifierUnique', 'implicit', 'hidden'], counter : 'rdpModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/classifier/r16s/QiimeDeNovoClassifier' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
@@ -272,7 +287,7 @@ let myModules = new Map(Object.entries({
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
   'biolockj/module/implicit/parser/wgs/Humann2Parser' :
-  { cssClass : ['humann2Class', , 'classifierUnique', 'implicit', 'hidden'], counter : 'humann2ModuleCounter' , category : 'implicit.parser'},
+  { cssClass : ['humann2Class', 'classifierUnique', 'implicit', 'hidden'], counter : 'humann2ModuleCounter' , category : 'implicit.parser'},
 
   'biolockj/module/classifier/wgs/KrakenClassifier' :
   { cssClass : ['krakenClass', 'classifierUnique'], counter : 'krakenModuleCounter', category : 'classifier'},
@@ -303,21 +318,16 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/implicit/qiime/MergeQiimeOtuTables' :
   { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'qiime'},
-  //what is this?
-  'biolockj/module/implicit/qiime/QiimeClassifier' :
-  { cssClass : ['qiimeClass', 'classifierUnique'], counter : 'qiimeModuleCounter', category : 'classifier'},
 
-  'biolockj/module/report/r/R_PlotMds' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotMds' : { cssClass : ['rMod', 'R_PlotMds'], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotOtus' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotOtus' : { cssClass : ['rMod', 'R_PlotOtus'], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotPvalHistograms' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotPvalHistograms' : { cssClass : ['rMod'], category : 'r'},
 
-  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : ['rMod', 'R_PlotEffectSize'], category : 'r'},
 
-  'biolockj/module/report/r/R_CalculateStats' : { cssClass : [], category : 'r'},
-
-  'biolockj/module/report/r/R_PlotEffectSize' : { cssClass : [], category : 'r'},
+  'biolockj/module/report/r/R_CalculateStats' : { cssClass : ['rMod', 'R_CalculateStats'], category : 'r'},
 
   'biolockj/module/report/taxa/AddMetadataToTaxaTables' : { cssClass : [], category : 'report'},
 
@@ -333,25 +343,25 @@ let myModules = new Map(Object.entries({
 
   'biolockj/module/report/otu/RemoveScarceOtuCounts' : { cssClass : [], category : 'report'},
 
-  'biolockj/module/report/otu/RarefyOtuCounts' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/otu/RarefyOtuCounts' : { cssClass : ['rarefyOtuCounts'], category : 'report'},
 
-  'biolockj/module/report/taxa/LogTransformTaxaTables' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/taxa/LogTransformTaxaTables' : { cssClass : ['removeLowOtuCounts'], category : 'report'},
 
   'biolockj/module/seq/AwkFastaConverter' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/KneadData' : { cssClass : [], category : 'seq'},
+  'biolockj/module/seq/KneadData' : { cssClass : ['kneadDataClass'], category : 'seq'},
 
   'biolockj/module/seq/Multiplexer' : { cssClass : [], category : 'seq'},
 
   'biolockj/module/seq/PearMergeReads' : { cssClass : [], category : 'seq'},
 
-  'biolockj/module/seq/RarefySeqs' : { cssClass : [], category : 'seq'},
+  'biolockj/module/seq/RarefySeqs' : { cssClass : ['rarefySeqs'], category : 'seq'},
 
   'biolockj/module/seq/Gunzipper' : { cssClass : [], category : 'seq'},
 
   'biolockj/module/implicit/RegisterNumReads' : { cssClass : ['implicit', 'hidden'], category : 'implicit'},
 
-  'biolockj/module/report/Email' : { cssClass : [], category : 'report'},
+  'biolockj/module/report/Email' : { cssClass : ['emailMod'], category : 'report'},
 
 }));
 
@@ -402,6 +412,34 @@ function orderModulesFromLocalFiles(selectedModulesArray, defaultOrderMap){
 function runModuleFunctions() {//large function to build module li and counters
 
   function toggleSelectModule(target) {//function called when modules are selected, it both selects them and disables others
+    //first, enable or disable the mods, then add or remove their button from the tab buttons
+    const tabButtons = document.getElementById('tabButtons');
+    if (target.classList.contains("modChoosen")){
+      target.classList.remove("modChoosen");
+      //remove the module's tab button
+      for (let i = 0; i < target.classList.length; i++) {
+        let thisClassMenu = tabButtons.getElementsByClassName(target.classList[i]);
+        if (thisClassMenu.length > 0) {
+          for (let i = 0; i < thisClassMenu.length; i++) {
+            thisClassMenu[i].style.display = 'none';
+            thisClassMenu[i].classList.remove('modChoosen');
+          }//end second for loop
+        }
+      }//End first for loop
+    }else{
+      target.classList.add("modChoosen");
+      //add the module's tab to tab Buttons
+      for (let i = 0; i < target.classList.length; i++) {
+        let thisClassMenu = tabButtons.getElementsByClassName(target.classList[i]);
+        if (thisClassMenu.length > 0) {
+          for (let i = 0; i < thisClassMenu.length; i++) {
+            thisClassMenu[i].style.display = 'block';
+            thisClassMenu[i].classList.add('modChoosen');
+          }//end second for loop
+        }
+      }//first for loop
+    }
+    //Next, let module counters calculate if any modules need to be disabled or enabled ect
     if (target.classList.contains("qiimeClass")) {
       qiimeModuleCounter.modClassSelected(target)
     }else if (target.classList.contains("rdpClass")) {
@@ -416,13 +454,6 @@ function runModuleFunctions() {//large function to build module li and counters
       metaphlanModuleCounter.modClassSelected(target)
     }else if (target.classList.contains("humann2Class")) {
       humann2ModuleCounter.modClassSelected(target)
-    }else{
-      //for all modules that are not a classifier
-      if (target.classList.contains("modChoosen")) {
-      target.classList.remove("modChoosen");
-      }else{
-        target.classList.add("modChoosen");
-        }
     }
   };// end toggleSelectModule
 
@@ -442,7 +473,7 @@ function runModuleFunctions() {//large function to build module li and counters
         text.then(result => {
           let parsedResult = parseBljModuleJavaClass(result);
           //console.log('result: ', result);
-          console.log('parsedResult[0]: ', parsedResult[0]);
+          // console.log('parsedResult[0]: ', parsedResult[0]);
           mod.setAttribute('data-info', parsedResult[0]);
           hoverEventlistenerForModules(mod);
           if (parsedResult.length > 1){
@@ -486,14 +517,15 @@ function runModuleFunctions() {//large function to build module li and counters
     }
   }//end forloop
 
+  const module = document.getElementById('module');
   //the following are list of module nodes with class for building the subsequence "Choosen" lists
-  var qiimeClassModNodes = Array.from(document.getElementsByClassName("qiimeClass"));
-  var slimmClassModNodes = Array.from(document.getElementsByClassName("slimmClass"));
-  var krakenClassModNodes = Array.from(document.getElementsByClassName("krakenClass"));
-  var kraken2ClassModNodes = Array.from(document.getElementsByClassName("kraken2Class"));
-  var rdpClassModNodes = Array.from(document.getElementsByClassName("rdpClass"));
-  var metaphlanClassModNodes = Array.from(document.getElementsByClassName("metaphlanClass"));
-  var humann2ClassModNodes = Array.from(document.getElementsByClassName("humann2"));
+  var qiimeClassModNodes = Array.from(module.getElementsByClassName("qiimeClass"));
+  var slimmClassModNodes = Array.from(module.getElementsByClassName("slimmClass"));
+  var krakenClassModNodes = Array.from(module.getElementsByClassName("krakenClass"));
+  var kraken2ClassModNodes = Array.from(module.getElementsByClassName("kraken2Class"));
+  var rdpClassModNodes = Array.from(module.getElementsByClassName("rdpClass"));
+  var metaphlanClassModNodes = Array.from(module.getElementsByClassName("metaphlanClass"));
+  var humann2ClassModNodes = Array.from(module.getElementsByClassName("humann2Class"));
 
   //moduleCounters instanciated with nodes that they will disable
   var qiimeModuleCounter = new moduleCounter([slimmClassModNodes, krakenClassModNodes, rdpClassModNodes, metaphlanClassModNodes, kraken2ClassModNodes, humann2ClassModNodes]);
@@ -520,3 +552,43 @@ function runModuleFunctions() {//large function to build module li and counters
      }
    }
  }
+
+function clearChildren(t) {
+  while (t.firstChild) {
+    t.removeChild(t.firstChild);
+  }
+}
+
+document.getElementById('aws.profile').addEventListener('focus', function(){
+  let datL = returnPromiseFromServer('/listAwsProfiles', requestParameter = null);
+  datL.then( arr => {
+    console.log('aws.profile: ', arr);
+    updateDataList('awsProfiles', arr);
+  })
+})
+document.getElementById('aws.s3').addEventListener('focus', function(){
+  let datL = returnPromiseFromServer('/listS3Buckets', requestParameter = null);
+  datL.then( arr => {
+    updateDataList('s3BucketList', arr);
+  })
+})
+document.getElementById('aws.ec2InstanceID').addEventListener('focus', function(){
+  let datL = returnPromiseFromServer('/listEc2InstanceIds', requestParameter = null);
+  datL.then( arr => {
+    updateDataList('ec2InstanceIdList', arr);
+  })
+})
+
+
+//update datalist from array
+function updateDataList(dataListId, arry) {
+  let dl = document.getElementById(dataListId);
+  clearChildren(dl);
+  for (let a of arry){
+    let opt = document.createElement('option');
+    opt.value = a;
+    opt.text = a;
+    dl.appendChild(opt)
+  }
+}
+
