@@ -49,15 +49,28 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		return getID().compareTo( module.getID() );
 	}
 
-	/**
-	 * Compared based on ID
-	 */
-	@Override
-	public boolean equals( final Object o ) {
-		if( o == this ) return true;
-		else if( !( o instanceof BioModule ) ) return false;
 
-		return ( (BioModule) o ).getID().equals( getID() );
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ( ( getID() == null ) ? 0: getID().hashCode() );
+		return result;
+	}
+	
+	  /**
+	   * Compared based on ID
+	   */
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( obj == null ) return false;
+		if( !( obj instanceof BioModuleImpl ) ) return false;
+		BioModuleImpl other = (BioModuleImpl) obj;
+		if( getID() == null ) {
+			if( other.getID() != null ) return false;
+		} else if( !getID().equals( other.getID() ) ) return false;
+		return true;
 	}
 
 	@Override

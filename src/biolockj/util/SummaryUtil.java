@@ -427,6 +427,7 @@ public class SummaryUtil {
 	 */
 	public static String getScriptDirSummary( final ScriptModule module ) {
 		final StringBuffer sb = new StringBuffer();
+		BufferedReader reader = null;
 		try {
 
 			final File mainScript = module.getMainScript();
@@ -520,7 +521,7 @@ public class SummaryUtil {
 
 			for( final File failureScript: scriptsFailed ) {
 				sb.append( "Script Failed:" + failureScript.getAbsolutePath() + RETURN );
-				final BufferedReader reader = BioLockJUtil.getFileReader( failureScript );
+				reader = BioLockJUtil.getFileReader( failureScript );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					sb.append( line + RETURN );
 			}
@@ -530,6 +531,12 @@ public class SummaryUtil {
 			sb.append( msg + RETURN );
 			Log.warn( SummaryUtil.class, msg );
 			ex.printStackTrace();
+		} finally {
+			try {
+				if( reader != null ) reader.close();
+			} catch( final Exception ex ) { 
+				Log.error( SummaryUtil.class, "Failed to close file reader", ex );
+			}
 		}
 
 		return sb.toString();

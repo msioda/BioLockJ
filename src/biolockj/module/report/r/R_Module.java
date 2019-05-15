@@ -292,7 +292,11 @@ public abstract class R_Module extends ScriptModuleImpl {
 	 */
 	public static void writeNewScript( final String path, final String rCode ) throws Exception {
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( path ) );
-		writeScript( writer, rCode );
+		try {
+			writeScript( writer, rCode );
+		} finally {
+			writer.close();
+		}
 	}
 
 	/**
@@ -318,8 +322,6 @@ public abstract class R_Module extends ScriptModuleImpl {
 
 			if( line.endsWith( "{" ) ) indentCount++;
 		}
-
-		writer.close();
 	}
 
 	private static File getFunctionLib() throws Exception {

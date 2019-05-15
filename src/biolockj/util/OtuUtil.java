@@ -196,7 +196,7 @@ public class OtuUtil {
 				return true;
 			}
 		} catch( final Exception ex ) {
-			Log.error( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
+			Log.error( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath(), ex );
 		} finally {
 			try {
 				if( reader != null ) reader.close();

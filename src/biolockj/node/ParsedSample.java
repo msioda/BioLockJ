@@ -56,13 +56,25 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 		return o.getSampleId().compareTo( getSampleId() );
 	}
 
-	@Override
-	public boolean equals( final Object o ) {
-		if( this.sampleId == null || o == null || !( o instanceof ParsedSample ) ) return false;
-		final ParsedSample ps = (ParsedSample) o;
-		if( ps.getSampleId() == null || ps.getSampleId().isEmpty() ) return false;
-		return ps.getSampleId().equals( this.sampleId );
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ( ( getSampleId() == null ) ? 0: getSampleId().hashCode() );
+		return result;
+	}
+	
+	@Override
+	public boolean equals( Object obj ) {
+		if( this == obj ) return true;
+		if( obj == null ) return false;
+		if( !( obj instanceof ParsedSample ) ) return false;
+		ParsedSample other = (ParsedSample) obj;
+		if( getSampleId() == null ) {
+			if( other.getSampleId() != null ) return false;
+		} else if( !getSampleId().equals( other.getSampleId() ) ) return false;
+		return true;
 	}
 
 	/**

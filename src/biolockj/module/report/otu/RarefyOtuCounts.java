@@ -133,7 +133,7 @@ public class RarefyOtuCounts extends OtuCountModule {
 							}
 					}
 				} catch( final Exception ex ) {
-					Log.warn( getClass(), "Quiet try-catch for format exception: " + sampleId );
+					Log.warn( getClass(), "Quiet try-catch for format exception: " + sampleId  + " --> " + ex.getMessage());
 				}
 			}
 

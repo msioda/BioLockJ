@@ -128,7 +128,7 @@ public class NextflowUtil {
 			}
 			return true;
 		} catch( final Exception ex ) {
-			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
+			Log.error( NextflowUtil.class, "Failed to save datat to S3", ex );
 			return false;
 		}
 	}
@@ -157,7 +157,7 @@ public class NextflowUtil {
 
 			return true;
 		} catch( final Exception ex ) {
-			Log.error( NextflowUtil.class, "Failed to save datat to S3" );
+			Log.error( NextflowUtil.class, "Failed to save datat to S3", ex );
 			return false;
 		}
 	}
@@ -380,7 +380,7 @@ public class NextflowUtil {
 				+ " converted to ---> " + intVal );
 			return intVal;
 		} catch( final Exception ex ) {
-			Log.debug( NextflowUtil.class, "RAM value is not purely numeric, ensure it is single quoted" );
+			Log.warn( NextflowUtil.class, "RAM value is not purely numeric, ensure it is single quoted: " + ex.getMessage() );
 		}
 
 		if( !val.startsWith( "'" ) ) val = "'" + val;

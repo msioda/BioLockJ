@@ -90,10 +90,19 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		return type;
 	}
 
+	/**
+	 * DB directory path getter
+	 * 
+	 * @return DB directory
+	 */
 	protected File getDbCache() {
 		return this.dbCache;
 	}
 
+	/**
+	 * Set DB cache directory path on 1st access
+	 * @param db
+	 */
 	protected void setDbCache( final File db ) {
 		if( db != null ) Log.info( getClass(), "Set DB cache: " + db.getAbsolutePath() );
 		this.dbCache = db;

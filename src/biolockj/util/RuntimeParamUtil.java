@@ -286,12 +286,9 @@ public class RuntimeParamUtil {
 	 * @throws RuntimeParamException if invalid parameters found
 	 */
 	public static void registerRuntimeParameters( final String[] args ) throws RuntimeParamException {
-		printRuntimeArgs( args, true );
-
+		printRuntimeArgs( args );
 		parseParams( simplifyArgs( args ) );
-
 		if( isDockerMode() ) reassignDockerConfig();
-
 		verifyBaseDir();
 
 		if( getDirectModuleDir() != null ) assignMasterConfig( DIRECT_MODE, assignDirectPipelineDir() );
@@ -311,9 +308,8 @@ public class RuntimeParamUtil {
 	 * Print the runtime args to System.out or using the Logger based on useSysOut parameter.
 	 * 
 	 * @param args Runtime Args
-	 * @param useSysOut Set TRUE if should use System.out to print
 	 */
-	protected static void printRuntimeArgs( final String[] args, final boolean useSysOut ) {
+	protected static void printRuntimeArgs( final String[] args ) {
 		int numArgs = 0;
 		Log.info( RuntimeParamUtil.class, RETURN + Constants.LOG_SPACER );
 		if( args != null && args.length > 0 ) {

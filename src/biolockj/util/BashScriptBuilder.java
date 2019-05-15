@@ -38,12 +38,9 @@ public class BashScriptBuilder {
 		if( workerScripts.isEmpty() )
 			throw new Exception( "No worker scripts created for module: " + module.getClass().getName() );
 
-		int scriptCount = 0;
-		final int digits = new Integer( workerScripts.size() - 1 ).toString().length();
 		final List<String> mainScriptLines = initMainScript( module );
 		for( final File worker: workerScripts )
-			mainScriptLines.add( getMainScriptExecuteWorkerLine( module, worker.getAbsolutePath(),
-				getWorkerId( scriptCount++, digits ) ) );
+			mainScriptLines.add( getMainScriptExecuteWorkerLine( worker.getAbsolutePath() ) );
 
 		mainScriptLines
 			.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_SUCCESS );
@@ -130,22 +127,15 @@ public class BashScriptBuilder {
 	/**
 	 * Call {@value #FUNCTION_EXECUTE} on the worker script
 	 * 
-	 * @param module ScriptModule
 	 * @param workerScriptPath Worker script path
-	 * @param workerId Worker script ID
 	 * @return bash script line
 	 */
-	protected static String getMainScriptExecuteWorkerLine( final ScriptModule module, final String workerScriptPath,
-		final String workerId ) {
+	protected static String getMainScriptExecuteWorkerLine( final String workerScriptPath ) {
 		final StringBuffer line = new StringBuffer();
-
 		if( DockerUtil.inDockerEnv() ) line.append( DockerUtil.SPAWN_DOCKER_CONTAINER + " " );
 		else if( Config.isOnCluster() ) line.append( FUNCTION_RUN_JOB + " " );
-
 		line.append( workerScriptPath );
-
 		return FUNCTION_EXECUTE + " \"" + line.toString() + "\" $LINENO";
-
 	}
 
 	/**
@@ -156,8 +146,7 @@ public class BashScriptBuilder {
 	 */
 	protected static List<String> getWorkerScriptLines( final List<String> lines ) {
 		final List<String> wrappedLines = new ArrayList<>();
-		for( final String line: lines )
-			wrappedLines.add( FUNCTION_EXECUTE + " \"" + line + "\" $LINENO" );
+		for( final String line: lines ) wrappedLines.add( FUNCTION_EXECUTE + " \"" + line + "\" $LINENO" );
 		wrappedLines.add( "" );
 		return wrappedLines;
 	}

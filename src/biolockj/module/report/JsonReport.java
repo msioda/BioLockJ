@@ -55,7 +55,7 @@ public class JsonReport extends JavaModuleImpl {
 		root.addCount( this.totalTaxaCount );
 		if( hasStats() ) {
 			this.summary += "with summary statistics";
-			addStats( jsonMap, root );
+			addStats( jsonMap );
 		}
 
 		writeJson( writeNodeAndChildren( root, false, jsonMap, 0 ) );
@@ -190,17 +190,15 @@ public class JsonReport extends JavaModuleImpl {
 	 * configured as the
 	 *
 	 * @param jsonMap jsonMap (key=level)
-	 * @param root JsonNode
 	 * @throws Exception if unable to parse report files
 	 */
-	private void addStats( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap, final JsonNode root )
+	private void addStats( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap )
 		throws Exception {
 		Log.info( getClass(), "Adding stats to JSON nodes..." );
 		for( final String level: TaxaUtil.getTaxaLevels() ) {
 			final Map<String, File> statReports = getAllStatReports( level );
 			for( final String name: statReports.keySet() ) {
 				final File file = statReports.get( name );
-				// if( file != null ) jsonMap = updateNodeStats( jsonMap, file, level, name );
 				if( file != null ) updateNodeStats( jsonMap, file, level, name );
 			}
 		}

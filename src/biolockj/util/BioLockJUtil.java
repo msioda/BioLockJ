@@ -115,8 +115,8 @@ public class BioLockJUtil {
 
 				return true;
 			} catch( final IOException ex ) {
-				Log.info( BioLockJUtil.class,
-					"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
+				Log.error( BioLockJUtil.class,
+					"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath(), ex );
 			}
 
 		Log.warn( BioLockJUtil.class, "Failed to delete file: " + file.getAbsolutePath() );
@@ -300,6 +300,7 @@ public class BioLockJUtil {
 	 * @throws FileNotFoundException if file does not exist
 	 * @throws IOException if unable to read or write the file
 	 */
+	@SuppressWarnings("resource")
 	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException {
 		return SeqUtil.isGzipped( file.getName() )
 			? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
@@ -378,9 +379,12 @@ public class BioLockJUtil {
 		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
 		if( file.isFile() ) {
 			final BufferedReader reader = getFileReader( file );
-			for( final String line = reader.readLine(); line != null; )
-				return line;
-			reader.close();
+			try {
+				for( final String line = reader.readLine(); line != null; )
+					return line;
+			} finally {
+				reader.close();
+			}		
 		}
 
 		return missingMsg;

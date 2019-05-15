@@ -154,8 +154,9 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 			try {
 				line = SeqUtil.scanFirstLine( reader, file );
-			} catch( final Exception scanEx ) {
+			} catch( final Exception ex ) {
 				this.badFiles.add( outputFile );
+				Log.debug( getClass(), "Error scanning input file: " + ex.getMessage() );
 				return;
 			}
 

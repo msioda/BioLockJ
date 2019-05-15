@@ -307,7 +307,7 @@ public class SeqUtil {
 				} catch( final Exception ex ) {
 					if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) ) seqsWithoutMetaId.add( file );
 					else Log.warn( SeqUtil.class, "Ignoring input file not found in metadata <-> Config property [ "
-						+ MetaUtil.META_REQUIRED + "=" + Constants.FALSE + " ]: " + file.getAbsolutePath() );
+						+ MetaUtil.META_REQUIRED + "=" + Constants.FALSE + " ]: " + file.getAbsolutePath() + " --> " + ex.getMessage() );
 				}
 
 			if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) && !seqsWithoutMetaId.isEmpty() )
@@ -609,7 +609,7 @@ public class SeqUtil {
 					}
 				}
 			} catch( final Exception ex ) {
-				throw new Exception( "Found invalid sequence file: " + f.getAbsolutePath() );
+				throw new Exception( "Found invalid sequence file: " + f.getAbsolutePath() + " --> " + ex.getMessage() );
 			} finally {
 				if( reader != null ) reader.close();
 			}

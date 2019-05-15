@@ -111,8 +111,7 @@ public class ImportMetadata extends BioModuleImpl {
 		try {
 			writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			writer.write( MetaUtil.getID() + Constants.RETURN );
-			for( final String id: getSampleIds() )
-				writer.write( id + Constants.RETURN );
+			for( final String id: getSampleIds() ) writer.write( id + Constants.RETURN );
 		} catch( final Exception ex ) {
 			ex.printStackTrace();
 			throw new MetadataException( "Unable to find module input sequence files: " + ex.getMessage() );

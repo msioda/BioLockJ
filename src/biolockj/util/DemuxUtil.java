@@ -154,7 +154,7 @@ public class DemuxUtil {
 			return Config.getString( null, DEMUX_STRATEGY ) != null
 				&& Config.getString( null, DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER ) || !demuxWithBarcode();
 		} catch( final Exception ex ) {
-			Log.warn( DemuxUtil.class, "Failed to determine demux strategy" );
+			Log.warn( DemuxUtil.class, "Failed to determine demux strategy: " + ex.getMessage());
 			return false;
 		}
 	}

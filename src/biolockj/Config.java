@@ -84,7 +84,7 @@ public class Config {
 			final Double val = Double.parseDouble( getString( module, property ) );
 			return val;
 		} catch( final Exception ex ) {
-			throw new ConfigFormatException( property, "Property only accepts numeric values" );
+			throw new ConfigFormatException( property, "Property only accepts numeric values: " + ex.getMessage() );
 		}
 		return null;
 	}
@@ -782,7 +782,7 @@ public class Config {
 			}
 
 		} catch( final Exception ex ) {
-			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar );
+			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar  + " --> " + ex.getMessage() );
 		}
 
 		return bashVar;
@@ -801,7 +801,7 @@ public class Config {
 			final Integer val = Integer.parseInt( getString( module, property ) );
 			return val;
 		} catch( final Exception ex ) {
-			throw new ConfigFormatException( property, "Property only accepts integer values" );
+			throw new ConfigFormatException( property, "Property only accepts integer values: " + ex.getMessage() );
 		}
 
 		return null;

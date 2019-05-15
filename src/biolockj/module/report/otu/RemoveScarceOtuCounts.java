@@ -78,7 +78,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 				+ getCutoff() + " samples." );
 
 		final TreeMap<String, TreeSet<String>> scarceTaxa = findScarceTaxa( sampleOtuCounts, uniqueOtus );
-		final TreeMap<String, TreeSet<String>> scarceOtus = findScarceOtus( sampleOtuCounts, uniqueOtus, scarceTaxa );
+		final TreeMap<String, TreeSet<String>> scarceOtus = findScarceOtus( uniqueOtus, scarceTaxa );
 		logScarceOtus( scarceOtus.keySet() );
 		removeScarceOtuCounts( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
 
@@ -234,13 +234,11 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 	/**
 	 * Find the scarce OTUs that contain the key values in scarceTaxa.
 	 *
-	 * @param sampleOtuCounts TreeMap(SampleId, TreeMap(OTU, count)) OTU counts for every sample
 	 * @param uniqueOtus TreeSet(OTU) contains all OTUs for all samples
 	 * @param scarceTaxa TreeMap(taxa, TreeSet(SampleId)) contains scarce taxa and their associated samples
 	 * @return TreeMap(OTU, TreeSet(SampleId)) contains scarce OTUs and their associated samples
 	 */
-	protected static TreeMap<String, TreeSet<String>> findScarceOtus(
-		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> uniqueOtus,
+	protected static TreeMap<String, TreeSet<String>> findScarceOtus( final TreeSet<String> uniqueOtus,
 		final TreeMap<String, TreeSet<String>> scarceTaxa ) {
 		final TreeMap<String, TreeSet<String>> scarceOtus = new TreeMap<>();
 		for( final String otu: uniqueOtus )

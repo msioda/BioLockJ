@@ -62,7 +62,7 @@ public class LogUtil {
 			if( bashProfile.isFile() ) profile.addAll( cacheLog( bashProfile ) );
 		} catch( final Exception ex ) {
 			Log.warn( LogUtil.class, "Config property [ " + Constants.USER_PROFILE
-				+ " ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile" );
+				+ " ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile: " + ex.getMessage() );
 		}
 		return profile;
 	}
