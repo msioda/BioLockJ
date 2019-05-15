@@ -55,8 +55,8 @@ public class SummaryUtil {
 	 * @return Beautiful artwork
 	 */
 	public static String display_ASCII_Status() {
-		return "";
-		//return testascii( ass_T1() ) + testascii( ass_T2() ) + testascii( ass_T3() ) + testascii( ass_T4() ) + testascii( ass_T5() );
+		//return "";
+		return testascii( ass_T1() ) + testascii( ass_T2() ) + testascii( ass_T3() ) + testascii( ass_T4() ) + testascii( ass_T5() );
 	}
 	
 	private static String ass_T1() {
