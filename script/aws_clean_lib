@@ -117,7 +117,7 @@ clear_staged_jobs() {
 		((count++)) && id=$(get_id ${ids})
 		if [ ${#id} -gt 0 ]; then 
 			aws_log "Cancel ${2} Job ARN #[$count]: ${id}"
-			aws batch cancel-job --job-id "${id}" && ((numComplete++))
+			aws batch cancel-job --job-id "${id}" --reason "BAD PIPELINE" && ((numComplete++))
 		else break; fi
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && return
 		ids="${ids/$id}"
@@ -135,7 +135,7 @@ clear_running_jobs() {
 		((count++)) && id=$(get_id ${ids})
 		if [ ${#id} -gt 0 ]; then 
 			aws_log "Terminate ${2} Job ARN #[$count]: ${id}"
-			aws batch terminate-job --job-id "${id}" && ((numComplete++))
+			aws batch terminate-job --job-id "${id}" --reason "BAD PIPELINE" && ((numComplete++))
 		else break; fi
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && return
 		ids="${ids/$id}"

@@ -294,7 +294,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	private String getSeqModSummary( final TreeSet<String> invalidReads, final TreeSet<String> shortReads,
 		final TreeSet<String> longReads, final long totalAvgFwLen, final long totalAvgRvLen, final long minReadLen,
 		final long maxReadLen ) throws Exception {
-
+		Log.info( getClass(), "Building Sequence File Summary for #Samples = " + this.sampleStats.size() );
 		final String label = "Valid Reads";
 		final int pad = SummaryUtil.getPad( label );
 
