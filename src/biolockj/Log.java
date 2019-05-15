@@ -61,11 +61,8 @@ public class Log {
 			return;
 		}
 
-		if( logFile == null ) {
-			logMesseges.add( new String[] { DEBUG, msg } );
-		} else {
-			out( loggingClass ).debug( msg );
-		}
+		if( logFile == null ) logMesseges.add( new String[] { DEBUG, msg } );
+		else out( loggingClass ).debug( msg );
 	}
 
 	/**
@@ -109,13 +106,9 @@ public class Log {
 			System.out.println( "[ DEBUG ] " + msg + " --> " + exception.getMessage() );
 			return;
 		}
-		if( logFile == null ) {
-			logMesseges.add( new String[] { ERROR, msg } );
-		} else if( exception != null ) {
-			out( myClass ).error( msg, exception );
-		} else {
-			out( myClass ).error( msg );
-		}
+		if( logFile == null ) logMesseges.add( new String[] { ERROR, msg } );
+		else if( exception != null ) out( myClass ).error( msg, exception );
+		else out( myClass ).error( msg );
 	}
 
 	/**
@@ -148,11 +141,8 @@ public class Log {
 			System.out.println( "[ INFO ] " + msg );
 			return;
 		}
-		if( logFile == null ) {
-			logMesseges.add( new String[] { INFO, msg } );
-		} else {
-			out( myClass ).info( msg );
-		}
+		if( logFile == null ) logMesseges.add( new String[] { INFO, msg } );
+		else out( myClass ).info( msg );
 	}
 
 	/**
@@ -181,18 +171,10 @@ public class Log {
 		if( !DockerUtil.isDirectMode() ) {
 			logWelcomeMsg();
 			for( final String[] m: Log.logMesseges ) {
-				if( m[ 0 ].equals( DEBUG ) ) {
-					Log.debug( Log.class, m[ 1 ] );
-				}
-				if( m[ 0 ].equals( INFO ) ) {
-					Log.info( Log.class, m[ 1 ] );
-				}
-				if( m[ 0 ].equals( WARN ) ) {
-					Log.warn( Log.class, m[ 1 ] );
-				}
-				if( m[ 0 ].equals( ERROR ) ) {
-					Log.error( Log.class, m[ 1 ] );
-				}
+				if( m[ 0 ].equals( DEBUG ) ) Log.debug( Log.class, m[ 1 ] );
+				if( m[ 0 ].equals( INFO ) ) Log.info( Log.class, m[ 1 ] );
+				if( m[ 0 ].equals( WARN ) ) Log.warn( Log.class, m[ 1 ] );
+				if( m[ 0 ].equals( ERROR ) ) Log.error( Log.class, m[ 1 ] );
 			}
 
 			Log.info( Log.class, "Set " + LOG_FILE + " = " + logFile.getAbsolutePath() );
@@ -214,9 +196,8 @@ public class Log {
 	 * @return Logger for callingClass
 	 */
 	public static Logger out( final Class<?> callingClass ) {
-		if( loggers.get( callingClass.getName() ) == null ) {
+		if( loggers.get( callingClass.getName() ) == null )
 			loggers.put( callingClass.getName(), LoggerFactory.getLogger( callingClass ) );
-		}
 
 		return loggers.get( callingClass.getName() );
 	}
@@ -233,11 +214,8 @@ public class Log {
 			System.out.println( "[ WARN ] " + msg );
 			return;
 		}
-		if( logFile == null ) {
-			logMesseges.add( new String[] { WARN, msg } );
-		} else {
-			out( myClass ).warn( msg );
-		}
+		if( logFile == null ) logMesseges.add( new String[] { WARN, msg } );
+		else out( myClass ).warn( msg );
 	}
 
 	/**

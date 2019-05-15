@@ -89,18 +89,12 @@ public class AddMetadataToPathwayTables extends Humann2CountModule {
 				writer = new BufferedWriter( new FileWriter( outDir + name ) );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 					final String mergedLine = getMergedLine( line );
-					if( mergedLine != null ) {
-						writer.write( mergedLine + RETURN );
-					}
+					if( mergedLine != null ) writer.write( mergedLine + RETURN );
 
 				}
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
-				if( writer != null ) {
-					writer.close();
-				}
+				if( reader != null ) reader.close();
+				if( writer != null ) writer.close();
 			}
 
 			Log.info( getClass(), "Done merging table: " + file.getAbsolutePath() );
@@ -120,19 +114,17 @@ public class AddMetadataToPathwayTables extends Humann2CountModule {
 		final String sampleId = new StringTokenizer( line, TAB_DELIM ).nextToken();
 		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) ) {
 			sb.append( BioLockJUtil.removeQuotes( line ) );
-			for( final String field: MetaUtil.getRecord( sampleId ) ) {
+			for( final String field: MetaUtil.getRecord( sampleId ) )
 				sb.append( TAB_DELIM ).append( BioLockJUtil.removeQuotes( field ) );
-			}
 		} else {
 			Log.warn( getClass(), "Missing record for: " + sampleId + " in metadata: " + MetaUtil.getPath() );
 			return null;
 		}
 
-		if( this.mergeHeaderLine == null ) {
+		if( this.mergeHeaderLine == null )
 			this.mergeHeaderLine = "Merged OTU table header [" + sampleId + "] = " + sb.toString();
-		} else if( this.mergeSampleLine == null ) {
+		else if( this.mergeSampleLine == null )
 			this.mergeSampleLine = "Example Merged OTU table row [" + sampleId + "] = " + sb.toString();
-		}
 
 		return sb.toString();
 	}

@@ -39,11 +39,8 @@ public abstract class Humann2CountModule extends JavaModuleImpl {
 	public List<File> getInputFiles() {
 		if( getFileCache().isEmpty() ) {
 			final List<File> files = new ArrayList<>();
-			for( final File f: findModuleInputFiles() ) {
-				if( PathwayUtil.isPathwayFile( f ) ) {
-					files.add( f );
-				}
-			}
+			for( final File f: findModuleInputFiles() )
+				if( PathwayUtil.isPathwayFile( f ) ) files.add( f );
 			cacheInputFiles( files );
 		}
 		return getFileCache();
@@ -55,9 +52,8 @@ public abstract class Humann2CountModule extends JavaModuleImpl {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) ) {
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) )
 			preReqs.add( Humann2Parser.class.getName() );
-		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
@@ -78,9 +74,8 @@ public abstract class Humann2CountModule extends JavaModuleImpl {
 			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-			for( final File f: files ) {
+			for( final File f: files )
 				if( PathwayUtil.isPathwayFile( f ) ) return true;
-			}
 		} catch( final Exception ex ) {
 			Log.warn( getClass(), "Error occurred while inspecting module output files: " + module );
 			ex.printStackTrace();

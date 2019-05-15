@@ -48,13 +48,10 @@ public class KrakenParser extends ParserModuleImpl {
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try {
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					addOtuNode( new KrakenNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
-				}
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			}
 		}
 	}

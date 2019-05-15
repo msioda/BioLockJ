@@ -28,9 +28,7 @@ public class JsonReport extends JavaModuleImpl {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( !pipelineInputContainsOtuSummary() ) {
-			preReqs.add( CompileOtuCounts.class.getName() );
-		}
+		if( !pipelineInputContainsOtuSummary() ) preReqs.add( CompileOtuCounts.class.getName() );
 
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
@@ -88,9 +86,7 @@ public class JsonReport extends JavaModuleImpl {
 				if( jsonNode == null ) {
 					jsonNode = new JsonNode( taxa, otuCount, parent, level );
 					this.numberOfNodes++;
-				} else {
-					jsonNode.addCount( otuCount );
-				}
+				} else jsonNode.addCount( otuCount );
 
 				jsonMap.get( level ).add( jsonNode );
 
@@ -128,22 +124,16 @@ public class JsonReport extends JavaModuleImpl {
 
 				int i = 0;
 				final JsonNode jsonNode = getJsonNode( otu, jsonMap.get( level ), level );
-				if( jsonNode != null ) {
-					while( st.hasMoreTokens() ) {
-						final String token = st.nextToken();
-						if( NumberUtils.isNumber( token ) ) {
-							jsonNode.updateStats( label + "_" + columnNames.get( ++i ), Double.parseDouble( token ) );
-						}
-					}
-				} else {
-					Log.warn( getClass(),
-						"Missing Taxa " + level + ": " + otu + " from R_CalculateStats: " + stats.getAbsolutePath() );
+				if( jsonNode != null ) while( st.hasMoreTokens() ) {
+					final String token = st.nextToken();
+					if( NumberUtils.isNumber( token ) )
+						jsonNode.updateStats( label + "_" + columnNames.get( ++i ), Double.parseDouble( token ) );
 				}
+				else Log.warn( getClass(),
+					"Missing Taxa " + level + ": " + otu + " from R_CalculateStats: " + stats.getAbsolutePath() );
 			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 
 		return jsonMap;
@@ -175,21 +165,19 @@ public class JsonReport extends JavaModuleImpl {
 		sb.append( "\"" + NUM_SEQS + "\": " + node.getCount()
 			+ ( node.getStats().isEmpty() && childNodes.isEmpty() ? "": "," ) + RETURN );
 
-		if( !node.getStats().isEmpty() ) {
+		if( !node.getStats().isEmpty() )
 			for( final Iterator<String> stats = node.getStats().keySet().iterator(); stats.hasNext(); ) {
-				final String stat = stats.next();
-				final String name = stat.startsWith( R_CalculateStats.getSuffix( null, false ) ) ? stat
-					: prefix + "(" + stat + ")";
-				sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
-				sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
+			final String stat = stats.next();
+			final String name = stat.startsWith( R_CalculateStats.getSuffix( null, false ) ) ? stat
+				: prefix + "(" + stat + ")";
+			sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
+			sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
 			}
-		}
 
 		if( !childNodes.isEmpty() ) {
 			sb.append( "\"" + CHILDREN + "\": [" + RETURN );
-			for( final Iterator<JsonNode> children = childNodes.iterator(); children.hasNext(); ) {
+			for( final Iterator<JsonNode> children = childNodes.iterator(); children.hasNext(); )
 				sb.append( writeNodeAndChildren( children.next(), children.hasNext(), jsonMap, nodeLevel + 1 ) );
-			}
 		}
 
 		sb.append( "}" + ( hasPeer ? ",": nodeLevel != 0 ? " ]": "" ) + RETURN );
@@ -213,9 +201,7 @@ public class JsonReport extends JavaModuleImpl {
 			for( final String name: statReports.keySet() ) {
 				final File file = statReports.get( name );
 				// if( file != null ) jsonMap = updateNodeStats( jsonMap, file, level, name );
-				if( file != null ) {
-					updateNodeStats( jsonMap, file, level, name );
-				}
+				if( file != null ) updateNodeStats( jsonMap, file, level, name );
 			}
 		}
 	}
@@ -233,25 +219,20 @@ public class JsonReport extends JavaModuleImpl {
 		if( classifier != null && classifier instanceof Humann2Classifier ) {
 			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
 				final Map<String, File> reports = getStatReports( Constants.HN2_PATH_ABUND_SUM + "_" + level );
-				for( final String key: reports.keySet() ) {
+				for( final String key: reports.keySet() )
 					statReports.put( key, reports.get( key ) );
-				}
 			}
 			if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_COVERAGE ) ) {
 				final Map<String, File> reports = getStatReports( Constants.HN2_PATH_COVG_SUM + "_" + level );
-				for( final String key: reports.keySet() ) {
+				for( final String key: reports.keySet() )
 					statReports.put( key, reports.get( key ) );
-				}
 			}
 			if( !Config.getBoolean( this, Constants.HN2_DISABLE_GENE_FAMILIES ) ) {
 				final Map<String, File> reports = getStatReports( Constants.HN2_GENE_FAM_SUM + "_" + level );
-				for( final String key: reports.keySet() ) {
+				for( final String key: reports.keySet() )
 					statReports.put( key, reports.get( key ) );
-				}
 			}
-		} else {
-			statReports = getStatReports( level );
-		}
+		} else statReports = getStatReports( level );
 
 		return statReports;
 	}
@@ -289,20 +270,15 @@ public class JsonReport extends JavaModuleImpl {
 			final StringTokenizer st = new StringTokenizer( code, Constants.RETURN );
 			while( st.hasMoreTokens() ) {
 				final String line = st.nextToken();
-				if( line.startsWith( "}" ) ) {
-					indentCount--;
-				}
+				if( line.startsWith( "}" ) ) indentCount--;
 
 				int i = 0;
-				while( i++ < indentCount ) {
+				while( i++ < indentCount )
 					writer.write( Constants.TAB_DELIM );
-				}
 
 				writer.write( line + Constants.RETURN );
 
-				if( line.endsWith( "{" ) ) {
-					indentCount++;
-				}
+				if( line.endsWith( "{" ) ) indentCount++;
 			}
 		} finally {
 			writer.close();
@@ -327,12 +303,8 @@ public class JsonReport extends JavaModuleImpl {
 		if( nodeLevel < TaxaUtil.getTaxaLevels().size() ) {
 			// getting all JsonNodes for the nodeLevel
 			final Set<JsonNode> jsonNodes = jsonMap.get( TaxaUtil.getTaxaLevels().get( nodeLevel ) );
-			if( jsonNodes != null ) {
-				for( final JsonNode innerNode: jsonNodes )
-					if( innerNode.getParent().equals( node ) ) {
-						childNodes.add( innerNode );
-					}
-			}
+			if( jsonNodes != null ) for( final JsonNode innerNode: jsonNodes )
+				if( innerNode.getParent().equals( node ) ) childNodes.add( innerNode );
 		}
 		return childNodes;
 	}
@@ -342,26 +314,21 @@ public class JsonReport extends JavaModuleImpl {
 	}
 
 	private static JsonNode getJsonNode( final String otu, final Set<JsonNode> jsonNodes, final String level ) {
-		if( jsonNodes != null ) {
-			for( final JsonNode jsonNode: jsonNodes ) {
-				if( jsonNode.getTaxa().equals( otu ) && jsonNode.getLevel().equals( level ) ) return jsonNode;
-			}
-		}
+		if( jsonNodes != null ) for( final JsonNode jsonNode: jsonNodes )
+			if( jsonNode.getTaxa().equals( otu ) && jsonNode.getLevel().equals( level ) ) return jsonNode;
 		return null;
 	}
 
 	private static JsonNode getNode( final Set<JsonNode> nodes, final String taxa ) {
-		for( final JsonNode node: nodes ) {
+		for( final JsonNode node: nodes )
 			if( node.getTaxa().equals( taxa ) ) return node;
-		}
 		return null;
 	}
 
 	private static LinkedHashMap<String, TreeSet<JsonNode>> initJsonMap() {
 		final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap = new LinkedHashMap<>();
-		for( final String level: TaxaUtil.getTaxaLevels() ) {
+		for( final String level: TaxaUtil.getTaxaLevels() )
 			jsonMap.put( level, new TreeSet<JsonNode>() );
-		}
 		return jsonMap;
 	}
 

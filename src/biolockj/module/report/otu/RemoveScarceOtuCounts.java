@@ -59,10 +59,8 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 		summary += BioLockJUtil.addTrailingSpaces( "# Total OTU removed:", pad ) + this.totalOtuRemoved + RETURN;
 		summary += SummaryUtil.getCountSummary( this.hitsPerSample, label, true );
 		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) {
-			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-				+ BioLockJUtil.getCollectionAsString( this.sampleIds );
-		}
+		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
+			+ BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.hitsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -84,10 +82,8 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 		logScarceOtus( scarceOtus.keySet() );
 		removeScarceOtuCounts( getUpdatedOtuCounts( sampleOtuCounts, scarceOtus ) );
 
-		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) {
-			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, this.hitsPerSample, getOutputDir(),
-				true );
-		}
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) MetaUtil
+			.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, this.hitsPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -115,9 +111,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 					final TreeMap<String, Long> taxaCounts = levelTaxaCounts.get( sampleId );
 					Log.debug( getClass(), "Checking sampleId: " + sampleId + " with " + taxaCounts.size() + " " + level
 						+ " taxa for: " + taxa );
-					if( taxaCounts.keySet().contains( taxa ) ) {
-						samplesWithTaxa.add( sampleId );
-					}
+					if( taxaCounts.keySet().contains( taxa ) ) samplesWithTaxa.add( sampleId );
 				}
 
 				Log.debug( getClass(), taxa + " found in " + samplesWithTaxa.size() + " samples" );
@@ -145,15 +139,13 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 	protected TreeMap<String, TreeMap<String, Long>> getUpdatedOtuCounts(
 		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts,
 		final TreeMap<String, TreeSet<String>> scarceOtus ) {
-		for( final String badOtu: scarceOtus.keySet() ) {
-			for( final String sampleId: scarceOtus.get( badOtu ) ) {
+		for( final String badOtu: scarceOtus.keySet() )
+			for( final String sampleId: scarceOtus.get( badOtu ) )
 				if( sampleOtuCounts.get( sampleId ).get( badOtu ) != null ) {
 					this.uniqueOtuRemoved.add( badOtu );
 					this.totalOtuRemoved += sampleOtuCounts.get( sampleId ).get( badOtu );
 					sampleOtuCounts.get( sampleId ).remove( badOtu );
 				}
-			}
-		}
 
 		return sampleOtuCounts;
 
@@ -172,9 +164,8 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 		}
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getScareOtuLogFile() ) );
 		try {
-			for( final String otu: scarceOtus ) {
+			for( final String otu: scarceOtus )
 				writer.write( otu + RETURN );
-			}
 		} finally {
 			writer.close();
 		}
@@ -217,9 +208,8 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 	}
 
 	private int getCutoff() throws Exception {
-		if( this.cutoff == null ) {
+		if( this.cutoff == null )
 			this.cutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCutoff() ) ).intValue();
-		}
 
 		return this.cutoff;
 	}
@@ -233,9 +223,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 	}
 
 	private String getScarceProp() {
-		if( this.prop == null ) {
-			this.prop = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
-		}
+		if( this.prop == null ) this.prop = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
 		return this.prop;
 	}
 
@@ -255,13 +243,9 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final TreeSet<String> uniqueOtus,
 		final TreeMap<String, TreeSet<String>> scarceTaxa ) {
 		final TreeMap<String, TreeSet<String>> scarceOtus = new TreeMap<>();
-		for( final String otu: uniqueOtus ) {
-			for( final String taxa: scarceTaxa.keySet() ) {
-				if( otu.contains( taxa ) ) {
-					scarceOtus.put( otu, scarceTaxa.get( taxa ) );
-				}
-			}
-		}
+		for( final String otu: uniqueOtus )
+			for( final String taxa: scarceTaxa.keySet() )
+				if( otu.contains( taxa ) ) scarceOtus.put( otu, scarceTaxa.get( taxa ) );
 		return scarceOtus;
 	}
 

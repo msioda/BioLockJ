@@ -70,9 +70,8 @@ public class RdpNode extends OtuNodeImpl {
 
 		while( st.hasMoreTokens() ) {
 			String taxa = getTaxaName( st.nextToken() );
-			while( st.hasMoreTokens() && ( taxa.equals( "-" ) || taxa.equals( "" ) ) ) {
+			while( st.hasMoreTokens() && ( taxa.equals( "-" ) || taxa.equals( "" ) ) )
 				taxa = getTaxaName( st.nextToken() );
-			}
 
 			final String level = st.hasMoreTokens() ? st.nextToken().trim(): null;
 			final Integer nextScore = st.hasMoreTokens() ? calculateScore( st.nextToken().trim() ): null;
@@ -98,9 +97,7 @@ public class RdpNode extends OtuNodeImpl {
 		else if( confScore.equals( "0" ) || confScore.equals( "0.0" ) ) return 0;
 		else if( !confScore.startsWith( "0." ) ) throw new Exception( rangeError( confScore ) );
 		confScore = scoreString.replace( "0.", "" );
-		if( confScore.length() == 1 ) {
-			confScore += "0";
-		}
+		if( confScore.length() == 1 ) confScore += "0";
 		final Integer thisScore = Integer.parseInt( confScore );
 		if( thisScore < 0 || thisScore > 100 ) throw new Exception( rangeError( confScore ) );
 		return thisScore;

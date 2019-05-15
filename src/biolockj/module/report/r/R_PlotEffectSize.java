@@ -55,9 +55,8 @@ public class R_PlotEffectSize extends R_Module {
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = getStatPreReqs();
 		if( !Config.getBoolean( this, Constants.R_PLOT_EFFECT_SIZE_DISABLE_FC )
-			&& !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ) {
+			&& !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) )
 			preReqs.add( NormalizeTaxaTables.class.getName() );
-		}
 		return preReqs;
 	}
 

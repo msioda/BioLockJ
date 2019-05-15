@@ -121,9 +121,10 @@ init_ec2_head_node() {
 			aws_log "Configured EC2 instance ${awsEc2InstanceID} was terminated...launching a new instance"
 			awsEc2InstanceID=
 			ec2PublicIP=
-		elif [ "${instances/pending}" != "${instances}" ] || [ "${instances/shutting-down}" != "${awsEc2InstanceID}" ] || [ "${instances/stopping}" != "${awsEc2InstanceID}" ]; then
+		elif [ "${instances/pending}" != "${instances}" ] || [ "${instances/shutting-down}" != "${instances}" ] || [ "${instances/stopping}" != "${instances}" ]; then
 			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Configured EC2 Instance ${awsEc2InstanceID} has an in-between state-status, aborting launch EC2 instance - check status and try again later: ${instances}"
 		elif [ "${instances/running}" != "${instances}" ]; then
+			systemStatus=ok
 			aws_log "Configured EC2 instance ${awsEc2InstanceID} is running..." && return
 		fi
 	fi

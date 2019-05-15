@@ -64,11 +64,48 @@ public class DockerUtil {
 	 * @throws ConfigPathException if errors occur due to invalid file path
 	 */
 	public static File getConfigFile( final String path ) throws ConfigPathException {
-		final String newPath = DockerUtil.getDockerVolumePath( path, DockerUtil.DOCKER_CONFIG_DIR );
-		final File dockerConfigFile = new File( newPath );
-		if( !dockerConfigFile.isFile() ) throw new ConfigPathException( dockerConfigFile,
-			"Config file [ " + path + " ] --> converted to container file-path that does not exist: " + newPath );
-		return dockerConfigFile;
+		File config = DockerUtil.getDockerVolumePath( path, DockerUtil.DOCKER_CONFIG_DIR );
+		if( !config.isFile() ) throw new ConfigPathException( config, "Config file not found in Docker container");
+		return config;
+	}
+
+	/**
+	 * Get the Docker container database directory.
+	 * 
+	 * @param module DatabaseModule
+	 * @return Container database directory
+	 * @throws ConfigPathException if DB property not found
+	 * @throws ConfigNotFoundException if path is defined but is not an existing directory
+	 */
+	public static File getDockerDB( final DatabaseModule module ) throws ConfigPathException, ConfigNotFoundException {
+		return getDockerDB( module, null );
+	}
+
+	/**
+	 * Get the Docker container database file found under the DockerDB directory or one of it's sub-directories.
+	 * 
+	 * @param module DatabaseModule
+	 * @param dbPath Database file or sub-directory under the main Docker DB.
+	 * @return Container database directory
+	 * @throws ConfigPathException if DB property not found
+	 * @throws ConfigNotFoundException if path is defined but is not an existing directory
+	 */
+	public static File getDockerDB( final DatabaseModule module, final String dbPath )
+		throws ConfigPathException, ConfigNotFoundException {
+		if( module.getDB() == null ) return null;
+		final String path = module.getDB().getAbsolutePath();
+		File dockerDB = path.startsWith( DOCKER_DEFAULT_DB_DIR ) || path.startsWith( DOCKER_DB_DIR ) ? new File( path ) :
+			new File( DOCKER_DB_DIR );
+		if( dbPath != null ) {
+			if( inAwsEnv() ) dockerDB = getDockerVolumePath( dbPath, dockerDB.getAbsolutePath() ); 
+			else dockerDB = new File( dbPath.replace( path, DOCKER_DB_DIR ) );
+		}
+		
+		Log.info( DockerUtil.class,
+			"Convert Config DB path --> Docker DB path for [ " + module.getClass().getSimpleName() + " - DB = "
+				+ path + ( dbPath == null ? "": " | Target = " + dbPath ) + " ] =====> " + dockerDB.getAbsolutePath() );
+
+		return dockerDB;
 	}
 
 	/**
@@ -106,8 +143,11 @@ public class DockerUtil {
 	 */
 	public static File getDockerVolumeDir( final String prop, final String containerPath )
 		throws ConfigPathException, ConfigNotFoundException {
-		final File dir = new File( getDockerVolumePath( Config.requireString( null, prop ), containerPath ) );
+		final String path = Config.requireString( null, prop );
+		final File dir = inAwsEnv() ? getDockerVolumePath( path, containerPath ) : new File( containerPath );
 		if( !dir.isDirectory() ) throw new ConfigPathException( dir );
+		Log.info( BioLockJUtil.class, "Replace Config directory path \"" + path + "\" with Docker container path \""
+			+ dir.getAbsolutePath() + "\"" );
 		return dir;
 	}
 
@@ -119,14 +159,10 @@ public class DockerUtil {
 	 * @param containerPath Local container path
 	 * @return Docker volume file or null
 	 * @throws ConfigNotFoundException if prop not found
-	 * @throws ConfigPathException if path is defined but is not an existing directory
 	 */
 	public static File getDockerVolumeFile( final String prop, final String containerPath )
-		throws ConfigPathException, ConfigNotFoundException {
-		final File file = new File( getDockerVolumePath( Config.requireString( null, prop ), containerPath ) );
-		Log.info( DockerUtil.class, "Calling getDockerVolumeFile for propVal: " + file.getAbsolutePath() );
-		if( !file.isFile() ) throw new ConfigPathException( file );
-		return file;
+		throws ConfigNotFoundException {
+		return getDockerVolumePath( Config.requireString( null, prop ), containerPath );
 	}
 
 	/**
@@ -136,9 +172,9 @@ public class DockerUtil {
 	 * @param containerPath Local container path
 	 * @return Docker file path
 	 */
-	public static String getDockerVolumePath( final String path, final String containerPath ) {
+	public static File getDockerVolumePath( final String path, final String containerPath ) {
 		if( path == null || path.isEmpty() ) return null;
-		return containerPath + File.separator + path.substring( path.lastIndexOf( File.separator ) );
+		return new File( containerPath + path.substring( path.lastIndexOf( File.separator ) ) );
 	}
 
 	/**
@@ -170,18 +206,15 @@ public class DockerUtil {
 			final String prevChar = imageName.toString().substring( len - 1, len );
 			final String val = simpleName.substring( i - 1, i );
 			if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM )
-				&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) ) {
+				&& val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
 				imageName += IMAGE_NAME_DELIM + val.toLowerCase();
-			} else if( !prevChar.equals( IMAGE_NAME_DELIM )
-				|| prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) {
+			else if( !prevChar.equals( IMAGE_NAME_DELIM )
+				|| prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) )
 				imageName += val.toLowerCase();
-			}
 		}
 
 		if( ( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE )
-			|| className.equals( KneadData.class.getName() ) ) && hasDB( module ) ) {
-			imageName += DB_FREE;
-		}
+			|| className.equals( KneadData.class.getName() ) ) && hasDB( module ) ) imageName += DB_FREE;
 
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
 
@@ -197,9 +230,7 @@ public class DockerUtil {
 	 */
 	public static String getImageVersion( final BioModule module ) {
 		String ver = Config.getString( null, Config.getModuleProp( module, DOCKER_IMG_VERSION ) );
-		if( ver == null ) {
-			ver = DOCKER_LATEST;
-		}
+		if( ver == null ) ver = DOCKER_LATEST;
 		return ver;
 	}
 
@@ -208,9 +239,11 @@ public class DockerUtil {
 	 * 
 	 * @param module BioModule
 	 * @return TRUE if module has a custom DB defined
-	 * @throws Exception if errors occur
+	 * @throws ConfigPathException if path is defined but does not exists
+	 * @throws ConfigNotFoundException if DB property is undefined and the default DB is not included in the module
+	 * runtime env
 	 */
-	public static boolean hasDB( final BioModule module ) throws Exception {
+	public static boolean hasDB( final BioModule module ) throws ConfigPathException, ConfigNotFoundException {
 		if( DockerUtil.inDockerEnv() && module instanceof DatabaseModule ) {
 			final File db = ( (DatabaseModule) module ).getDB();
 			if( db != null ) return !db.getAbsolutePath().startsWith( DOCKER_DEFAULT_DB_DIR );
@@ -280,32 +313,24 @@ public class DockerUtil {
 			dockerVolumes += " -v " + getVolumePath( primers.getAbsolutePath() ) + ":" + DOCKER_PRIMER_DIR + ":ro";
 		}
 
-		if( RuntimeParamUtil.getDockerHostMetaDir() != null ) {
+		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + DOCKER_META_DIR + ":ro";
-		}
 
-		if( RuntimeParamUtil.getDockerHostBLJ() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR
-				+ ":ro";
-		}
+		if( RuntimeParamUtil.getDockerHostBLJ() != null ) dockerVolumes += " -v "
+			+ RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR + ":ro";
 
-		if( RuntimeParamUtil.getDockerHostBLJ_SUP() != null ) {
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":"
-				+ CONTAINER_BLJ_SUP_DIR + ":ro";
-		}
+		if( RuntimeParamUtil.getDockerHostBLJ_SUP() != null ) dockerVolumes += " -v "
+			+ RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":" + CONTAINER_BLJ_SUP_DIR + ":ro";
 
 		if( hasDB( module ) ) {
 			final File db = ( (DatabaseModule) module ).getDB();
-			String dbPath = db.getAbsolutePath();
-
 			if( module instanceof RdpClassifier ) {
-				dbPath = db.getParentFile().getAbsolutePath();
-				Log.info( DockerUtil.class, "RDP DB directory path: " + dbPath );
+				Log.info( DockerUtil.class, "Map Docker volume for DB directory: " + db.getParentFile().getAbsolutePath() );
+				dockerVolumes += " -v " + db.getParentFile().getAbsolutePath() + ":" + DOCKER_DB_DIR + ":ro";
 			} else {
-				Log.info( DockerUtil.class, "Map Docker volume for DB: " + dbPath );
+				Log.info( DockerUtil.class, "Map Docker volume for DB directory: " + db.getAbsolutePath() );
+				dockerVolumes += " -v " + db.getAbsolutePath() + ":" + DOCKER_DB_DIR + ":ro";
 			}
-
-			dockerVolumes += " -v " + getVolumePath( dbPath ) + ":" + DOCKER_DB_DIR + ":ro";
 		}
 
 		return dockerVolumes;

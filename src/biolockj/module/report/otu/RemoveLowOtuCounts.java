@@ -58,9 +58,7 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 		summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs removed:", pad ) + this.totalOtuRemoved + RETURN;
 		summary += SummaryUtil.getCountSummary( this.hitsPerSample, label, false );
 		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) {
-			summary += "Removed empty samples: " + this.sampleIds;
-		}
+		if( !this.sampleIds.isEmpty() ) summary += "Removed empty samples: " + this.sampleIds;
 		this.hitsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -72,10 +70,8 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 
 		final TreeMap<String, TreeSet<String>> lowCountOtus = removeLowOtuCounts( sampleOtuCounts );
 		logLowCountOtus( lowCountOtus );
-		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) {
-			MetaUtil.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, this.hitsPerSample, getOutputDir(),
-				true );
-		}
+		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) ) MetaUtil
+			.addColumn( getMetaColName() + "_" + Constants.OTU_COUNT, this.hitsPerSample, getOutputDir(), true );
 	}
 
 	/**
@@ -94,9 +90,8 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 			for( final String id: lowCountOtus.keySet() ) {
 				final TreeSet<String> otus = lowCountOtus.get( id );
 
-				for( final String otu: otus ) {
+				for( final String otu: otus )
 					writer.write( id + ": " + otu + RETURN );
-				}
 			}
 		} finally {
 			writer.close();
@@ -134,25 +129,20 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 					badOtus.add( otu );
 					Log.debug( getClass(), sampleId + ": Remove Low OTU count: " + otu + "=" + count );
 					validOtus.remove( otu );
-					if( lowCountOtus.get( sampleId ) == null ) {
-						lowCountOtus.put( sampleId, new TreeSet<>() );
-					}
+					if( lowCountOtus.get( sampleId ) == null ) lowCountOtus.put( sampleId, new TreeSet<>() );
 					lowCountOtus.get( sampleId ).add( otu );
 					numOtuRemoved += count;
-				} else {
-					numOtus += count;
-					// Log.debug( getClass(),
-					// sampleId + ": update OTU count to " + numOtus + " after adding: " + otu + "=" + count );
-				}
+				} else numOtus += count;
+				// Log.debug( getClass(),
+				// sampleId + ": update OTU count to " + numOtus + " after adding: " + otu + "=" + count );
 			}
 
 			if( numOtus > 0 ) {
 				Log.debug( getClass(), sampleId + ": Reduce total OTU count by: " + numOtuRemoved );
 				this.hitsPerSample.put( sampleId, String.valueOf( numOtus ) );
 
-				if( numOtuRemoved == 0 ) {
-					FileUtils.copyFileToDirectory( getFileMap().get( sampleId ), getOutputDir() );
-				} else {
+				if( numOtuRemoved == 0 ) FileUtils.copyFileToDirectory( getFileMap().get( sampleId ), getOutputDir() );
+				else {
 
 					Log.warn( getClass(), sampleId + ": Removed " + badOtus.size() + " low OTU counts (below "
 						+ getProp() + "=" + getMinCount() + ") --> " + badOtus );
@@ -160,9 +150,8 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 					final File otuFile = OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName() );
 					final BufferedWriter writer = new BufferedWriter( new FileWriter( otuFile ) );
 					try {
-						for( final String otu: validOtus ) {
+						for( final String otu: validOtus )
 							writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
-						}
 					} finally {
 						writer.close();
 						getFileMap().put( sampleId, otuFile );
@@ -178,9 +167,8 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 	private Map<String, File> getFileMap() throws Exception {
 		if( this.fileMap == null ) {
 			this.fileMap = new HashMap<>();
-			for( final File f: getInputFiles() ) {
+			for( final File f: getInputFiles() )
 				this.fileMap.put( OtuUtil.getSampleId( f ), f );
-			}
 		}
 		return this.fileMap;
 	}
@@ -198,9 +186,7 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 	}
 
 	private String getProp() {
-		if( this.prop == null ) {
-			this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
-		}
+		if( this.prop == null ) this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
 		return this.prop;
 	}
 

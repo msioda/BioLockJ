@@ -96,9 +96,7 @@ public class OtuUtil {
 				otuCounts.put( ocl.getOtu(), ocl.getCount() );
 			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 
 		return otuCounts;
@@ -114,9 +112,7 @@ public class OtuUtil {
 		final TreeSet<String> otus = new TreeSet<>();
 		for( final String id: sampleOtuCounts.keySet() ) {
 			final TreeMap<String, Long> taxaCounts = sampleOtuCounts.get( id );
-			if( taxaCounts != null && !taxaCounts.isEmpty() ) {
-				otus.addAll( sampleOtuCounts.get( id ).keySet() );
-			}
+			if( taxaCounts != null && !taxaCounts.isEmpty() ) otus.addAll( sampleOtuCounts.get( id ).keySet() );
 		}
 
 		return otus;
@@ -135,21 +131,12 @@ public class OtuUtil {
 	public static File getOtuCountFile( final File dir, final String sampleId, final String prefix ) {
 		String myPrefix = prefix;
 		String id = sampleId;
-		if( myPrefix == null ) {
-			myPrefix = "_";
-		}
-		if( !myPrefix.startsWith( "_" ) ) {
-			myPrefix = "_" + myPrefix;
-		}
-		if( !myPrefix.endsWith( "_" ) ) {
-			myPrefix += "_";
-		}
+		if( myPrefix == null ) myPrefix = "_";
+		if( !myPrefix.startsWith( "_" ) ) myPrefix = "_" + myPrefix;
+		if( !myPrefix.endsWith( "_" ) ) myPrefix += "_";
 
-		if( id != null ) {
-			id = "_" + id;
-		} else {
-			id = "";
-		}
+		if( id != null ) id = "_" + id;
+		else id = "";
 
 		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + myPrefix + Constants.OTU_COUNT
 			+ id + Constants.TSV_EXT );
@@ -212,9 +199,7 @@ public class OtuUtil {
 			Log.error( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
 		} finally {
 			try {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			} catch( final Exception ex ) {
 				Log.error( OtuUtil.class, "Failed to close file reader", ex );
 			}

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.Log;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.report.r.R_Module;
@@ -56,11 +55,6 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 		Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
 		Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
 		Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
-		if( DockerUtil.hasDB( this ) && Config.getBoolean( this, NextflowUtil.AWS_COPY_DB_TO_S3 )
-			&& !DockerUtil.isDirectMode() ) {
-			Log.info( getClass(), "Start async copy of module DBs to S3" );
-			NextflowUtil.awsSyncS3( DockerUtil.DOCKER_DB_DIR, false );
-		}
 	}
 
 	/**
@@ -93,16 +87,12 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	@Override
 	public File getMainScript() throws Exception {
 		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
-		if( scriptDir.isDirectory() ) {
-			for( final File file: getScriptDir().listFiles() ) {
-				final String name = file.getName();
-				if( name.startsWith( MAIN_SCRIPT_PREFIX ) ) {
-					if( this instanceof R_Module && !DockerUtil.inDockerEnv() ) {
-						if( name.endsWith( Constants.R_EXT ) ) return file;
-						else if( name.endsWith( SH_EXT ) ) return file;
-					} else if( file.getName().endsWith( SH_EXT ) ) return file;
-				}
-			}
+		if( scriptDir.isDirectory() ) for( final File file: getScriptDir().listFiles() ) {
+			final String name = file.getName();
+			if( name.startsWith( MAIN_SCRIPT_PREFIX ) ) if( this instanceof R_Module && !DockerUtil.inDockerEnv() ) {
+				if( name.endsWith( Constants.R_EXT ) ) return file;
+				else if( name.endsWith( SH_EXT ) ) return file;
+			} else if( file.getName().endsWith( SH_EXT ) ) return file;
 		}
 
 		return null;
@@ -126,14 +116,11 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	public List<String> getScriptErrors() throws Exception {
 		final List<String> errors = new ArrayList<>();
 		for( final File script: getScriptDir().listFiles() ) {
-			if( !script.getName().endsWith( Constants.SCRIPT_FAILURES ) ) {
-				continue;
-			}
+			if( !script.getName().endsWith( Constants.SCRIPT_FAILURES ) ) continue;
 			final BufferedReader reader = BioLockJUtil.getFileReader( script );
 			try {
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					errors.add( script.getName() + " | " + line );
-				}
 			} finally {
 				reader.close();
 			}

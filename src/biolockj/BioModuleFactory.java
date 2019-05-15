@@ -26,11 +26,8 @@ import biolockj.util.*;
  */
 public class BioModuleFactory {
 	private BioModuleFactory() throws Exception {
-		if( DockerUtil.isDirectMode() ) {
-			this.moduleCache = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
-		} else {
-			initModules();
-		}
+		if( DockerUtil.isDirectMode() ) this.moduleCache = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
+		else initModules();
 	}
 
 	/**
@@ -45,16 +42,11 @@ public class BioModuleFactory {
 			throw new Exception( "Too many calls [" + SAFE_MAX + "] to getPostRequisites( module )" );
 		final List<String> postReqs = new ArrayList<>();
 		for( final String postReq: module.getPostRequisiteModules() ) {
-			if( !postReqs.contains( postReq ) ) {
-				postReqs.add( postReq );
-			}
+			if( !postReqs.contains( postReq ) ) postReqs.add( postReq );
 
 			final List<String> postPostReqs = getPostRequisites( ModuleUtil.getModule( postReq ) );
-			for( final String postPostReq: postPostReqs ) {
-				if( !postReqs.contains( postPostReq ) ) {
-					postReqs.add( postPostReq );
-				}
-			}
+			for( final String postPostReq: postPostReqs )
+				if( !postReqs.contains( postPostReq ) ) postReqs.add( postPostReq );
 		}
 
 		return postReqs;
@@ -73,24 +65,17 @@ public class BioModuleFactory {
 		final List<String> preReqs = new ArrayList<>();
 		for( final String preReq: module.getPreRequisiteModules() ) {
 			final List<String> prePreReqs = getPreRequisites( ModuleUtil.getModule( preReq ) );
-			for( final String prePreReq: prePreReqs ) {
-				if( !preReqs.contains( prePreReq ) ) {
-					preReqs.add( prePreReq );
-				}
-			}
+			for( final String prePreReq: prePreReqs )
+				if( !preReqs.contains( prePreReq ) ) preReqs.add( prePreReq );
 
-			if( !preReqs.contains( preReq ) ) {
-				preReqs.add( preReq );
-			}
+			if( !preReqs.contains( preReq ) ) preReqs.add( preReq );
 		}
 
 		return preReqs;
 	}
 
 	private String addModule( final String className ) {
-		if( className.startsWith( MODULE_CLASSIFIER_PACKAGE ) ) {
-			this.branchClassifier = true;
-		}
+		if( className.startsWith( MODULE_CLASSIFIER_PACKAGE ) ) this.branchClassifier = true;
 
 		return className;
 	}
@@ -118,15 +103,9 @@ public class BioModuleFactory {
 	private int getCountModIndex() throws Exception {
 		int i = -1;
 		final boolean addMod = requireCountMod();
-		if( addMod ) {
-
-			if( this.moduleCache.size() == 1
-				|| !this.moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) ) {
-				i = 1;
-			} else if( this.moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) ) {
-				i = 2;
-			}
-		}
+		if( addMod ) if( this.moduleCache.size() == 1
+			|| !this.moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) ) i = 1;
+		else if( this.moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) ) i = 2;
 
 		Log.debug( getClass(), addMod ? "ADD count module at index: " + i: "No need to add count mdoule" );
 
@@ -145,26 +124,15 @@ public class BioModuleFactory {
 		for( final String className: configModules ) {
 			this.safteyCheck = SAFE_MAX;
 			final BioModule module = ModuleUtil.getModule( className );
-			if( !Config.getBoolean( null, Constants.DISABLE_PRE_REQ_MODULES ) ) {
-				for( final String mod: getPreRequisites( module ) ) {
-					if( !branchModules.contains( mod ) ) {
-						branchModules.add( addModule( mod ) );
-					}
-				}
-			}
+			if( !Config.getBoolean( null, Constants.DISABLE_PRE_REQ_MODULES ) )
+				for( final String mod: getPreRequisites( module ) )
+				if( !branchModules.contains( mod ) ) branchModules.add( addModule( mod ) );
 
-			if( !branchModules.contains( className ) ) {
-				branchModules.add( addModule( className ) );
-			}
+			if( !branchModules.contains( className ) ) branchModules.add( addModule( className ) );
 
 			this.safteyCheck = SAFE_MAX;
-			if( !module.getPostRequisiteModules().isEmpty() ) {
-				for( final String mod: getPostRequisites( module ) ) {
-					if( !branchModules.contains( mod ) ) {
-						branchModules.add( addModule( mod ) );
-					}
-				}
-			}
+			if( !module.getPostRequisiteModules().isEmpty() ) for( final String mod: getPostRequisites( module ) )
+				if( !branchModules.contains( mod ) ) branchModules.add( addModule( mod ) );
 
 			if( this.foundClassifier && this.branchClassifier ) {
 				info( "Found another classifier: reset branch" );
@@ -179,9 +147,7 @@ public class BioModuleFactory {
 
 		}
 
-		if( !branchModules.isEmpty() ) {
-			this.moduleCache.addAll( branchModules );
-		}
+		if( !branchModules.isEmpty() ) this.moduleCache.addAll( branchModules );
 
 		insertConditionalModules();
 	}
@@ -202,9 +168,7 @@ public class BioModuleFactory {
 
 				this.foundSeqMod = true;
 				finalModules.add( Gunzipper.class.getName() );
-			} else if( isSeqProcessingModule( module ) ) {
-				this.foundSeqMod = true;
-			}
+			} else if( isSeqProcessingModule( module ) ) this.foundSeqMod = true;
 
 			finalModules.add( module );
 		}
@@ -229,9 +193,7 @@ public class BioModuleFactory {
 	 * @throws Exception if errors occur
 	 */
 	public static List<BioModule> buildPipeline() throws Exception {
-		if( factory == null ) {
-			initFactory();
-		}
+		if( factory == null ) initFactory();
 
 		return factory.buildModules();
 	}
@@ -261,16 +223,13 @@ public class BioModuleFactory {
 			}
 		}
 
-		for( final String module: configModules ) {
-			if( isImplicitModule( module ) && !Config.getBoolean( null, Constants.DISABLE_ADD_IMPLICIT_MODULES ) ) {
+		for( final String module: configModules )
+			if( isImplicitModule( module ) && !Config.getBoolean( null, Constants.DISABLE_ADD_IMPLICIT_MODULES ) )
 				warn( "Ignoring configured module [" + module
 					+ "] since implicit BioModules are added to the pipeline by the system if needed.  "
 					+ "To override this behavior and ignore implicit designation, udpate project Config: ["
 					+ Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE + "]" );
-			} else {
-				modules.add( module );
-			}
-		}
+			else modules.add( module );
 
 		return modules;
 	}
@@ -291,9 +250,7 @@ public class BioModuleFactory {
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) {
-			Log.info( BioModuleFactory.class, msg );
-		}
+		if( !DockerUtil.isDirectMode() ) Log.info( BioModuleFactory.class, msg );
 	}
 
 	private static void initFactory() throws Exception {
@@ -312,9 +269,7 @@ public class BioModuleFactory {
 	}
 
 	private static void warn( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) {
-			Log.warn( BioModuleFactory.class, msg );
-		}
+		if( !DockerUtil.isDirectMode() ) Log.warn( BioModuleFactory.class, msg );
 	}
 
 	private boolean branchClassifier = false;

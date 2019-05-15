@@ -60,12 +60,11 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		final String demuxStrategy = "Config property [ " + DemuxUtil.DEMUX_STRATEGY + "="
 			+ Config.getString( this, DemuxUtil.DEMUX_STRATEGY ) + " ]";
 
-		if( Config.getString( this, DemuxUtil.DEMUX_STRATEGY ) == null ) {
-			Log.info( getClass(), DemuxUtil.DEMUX_STRATEGY
-				+ " is undefined for a multiplexed dataset.  Demultiplexer will analyze the file to determine if Sample IDs or barcodes "
-				+ "should be used for demultiplexing.  Demultiplexer will also determine if reverse compliment barcodes are needed and set: "
-				+ DemuxUtil.BARCODE_USE_REV_COMP );
-		} else if( DemuxUtil.demuxWithBarcode() ) {
+		if( Config.getString( this, DemuxUtil.DEMUX_STRATEGY ) == null ) Log.info( getClass(), DemuxUtil.DEMUX_STRATEGY
+			+ " is undefined for a multiplexed dataset.  Demultiplexer will analyze the file to determine if Sample IDs or barcodes "
+			+ "should be used for demultiplexing.  Demultiplexer will also determine if reverse compliment barcodes are needed and set: "
+			+ DemuxUtil.BARCODE_USE_REV_COMP );
+		else if( DemuxUtil.demuxWithBarcode() ) {
 			if( !MetaUtil.exists() ) throw new Exception( demuxStrategy + " but metadata file is undefined" );
 
 			if( !MetaUtil.getFieldNames().contains( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ) ) )
@@ -78,9 +77,8 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 					+ MetaUtil.META_BARCODE_COLUMN + "=" + Config.requireString( this, MetaUtil.META_BARCODE_COLUMN )
 					+ " ] is empty in the metadata file: " + MetaUtil.getPath() );
 
-			if( DemuxUtil.barcodeInSeq() ) {
+			if( DemuxUtil.barcodeInSeq() )
 				Log.info( getClass(), "Barcode sequences will be removed from the output file sequences." );
-			}
 		} else {
 			Log.info( getClass(),
 				demuxStrategy + " so Demultiplexer will use the Config properties [" + Constants.INPUT_TRIM_PREFIX
@@ -121,18 +119,14 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 				sb.append( "# Forward Reads: " + this.numTotalFwReads + RETURN );
 				sb.append( "# Reverse Reads: " + this.numTotalRvReads + RETURN );
 
-				if( this.numTotalFwReads != this.numValidFwReads ) {
+				if( this.numTotalFwReads != this.numValidFwReads )
 					sb.append( "# Valid Forward Reads (matched to a sample): " + this.numValidFwReads + RETURN );
-				}
-				if( this.numTotalRvReads != this.numValidRvReads ) {
-
+				if( this.numTotalRvReads != this.numValidRvReads )
 					sb.append( "# Valid Reverse Reads (matched to a sample): " + this.numValidRvReads + RETURN );
-				}
 			} else {
 				sb.append( "# Total Reads:  " + this.numTotalFwReads + RETURN );
-				if( this.numTotalFwReads != this.numValidFwReads ) {
+				if( this.numTotalFwReads != this.numValidFwReads )
 					sb.append( "# Valid Reads (matched to a sample): " + this.numValidFwReads + RETURN );
-				}
 			}
 		} catch( final Exception ex ) {
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
@@ -194,20 +188,14 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 						if( testFile == null && read.size() == 1 ) {
 							numReads++;
 							final int testBarcodes = hasBarcode( line );
-							if( testBarcodes == 1 ) {
-								headerFwBarcodes++;
-							} else if( testBarcodes == 2 ) {
-								headerRvBarcodes++;
-							}
+							if( testBarcodes == 1 ) headerFwBarcodes++;
+							else if( testBarcodes == 2 ) headerRvBarcodes++;
 						}
 
 						if( testFile == null && read.size() == 2 ) {
 							final int testBarcodes = hasBarcode( line );
-							if( testBarcodes == 1 ) {
-								seqFwBarcodes++;
-							} else if( testBarcodes == 2 ) {
-								seqRvBarcodes++;
-							}
+							if( testBarcodes == 1 ) seqFwBarcodes++;
+							else if( testBarcodes == 2 ) seqRvBarcodes++;
 						}
 					}
 
@@ -222,13 +210,9 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 					}
 				}
 
-				if( !seqLines.isEmpty() ) {
-					writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
-				}
+				if( !seqLines.isEmpty() ) writeSample( seqLines, getSplitFileName( file.getName(), i++ ) );
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			}
 
 			Log.info( getClass(), "Done splitting file: " + file.getAbsolutePath() );
@@ -271,9 +255,8 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 
 						String otu = null;
 
-						if( sampleId == null ) {
-							otu = getNoMatchFileName( file.getName(), seqLines.get( 0 ) );
-						} else {
+						if( sampleId == null ) otu = getNoMatchFileName( file.getName(), seqLines.get( 0 ) );
+						else {
 							otu = getOutputFileName( sampleId, file.getName(), seqLines.get( 0 ) );
 							incrementCounts( file.getName(), seqLines.get( 0 ) );
 
@@ -284,9 +267,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 							}
 						}
 
-						if( !output.keySet().contains( otu ) ) {
-							output.put( otu, new ArrayList<>() );
-						}
+						if( !output.keySet().contains( otu ) ) output.put( otu, new ArrayList<>() );
 
 						output.get( otu ).addAll( seqLines );
 						seqLines.clear();
@@ -298,9 +279,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 					writeSample( output.get( outName ), outName );
 				}
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			}
 		}
 	}
@@ -322,9 +301,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		// check forward reads only
 		for( final File file: getSplitDir().listFiles() ) {
 			// skip files ending with _R2 suffix since contain only reverse reads
-			if( !isCombined && !SeqUtil.isForwardRead( file.getName() ) ) {
-				continue;
-			}
+			if( !isCombined && !SeqUtil.isForwardRead( file.getName() ) ) continue;
 
 			Log.info( getClass(), "Processing split file for FW headers: " + file.getAbsolutePath() );
 
@@ -339,9 +316,8 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 							this.numTotalFwReads++;
 							final String sampleId = DemuxUtil.getSampleId( seqLines );
 							if( sampleId != null ) {
-								if( validHeaders.get( sampleId ) == null ) {
+								if( validHeaders.get( sampleId ) == null )
 									validHeaders.put( sampleId, new HashSet<>() );
-								}
 								final String header = SeqUtil.getHeader( seqLines.get( 0 ) );
 								validHeaders.get( sampleId ).add( header );
 							}
@@ -351,21 +327,16 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 					}
 				}
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			}
 
 		}
 
 		String msg = " # valid reads = ";
-		if( Config.requireBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-			msg = " # valid fw read headers = ";
-		}
+		if( Config.requireBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) msg = " # valid fw read headers = ";
 
-		for( final String sampleId: validHeaders.keySet() ) {
+		for( final String sampleId: validHeaders.keySet() )
 			Log.debug( getClass(), sampleId + msg + validHeaders.get( sampleId ).size() );
-		}
 
 		return validHeaders;
 	}
@@ -390,9 +361,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		// check reverse reads only
 		for( final File file: getSplitDir().listFiles() ) {
 			// skip files ending with _R1 suffix since contain only forward reads
-			if( !isCombined && SeqUtil.isForwardRead( file.getName() ) ) {
-				continue;
-			}
+			if( !isCombined && SeqUtil.isForwardRead( file.getName() ) ) continue;
 
 			Log.info( getClass(), "Processing split file for RV headers: " + file.getAbsolutePath() );
 
@@ -407,16 +376,14 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 							final String header = SeqUtil.getHeader( seqLines.get( 0 ) );
 							this.numTotalRvReads++;
 
-							for( final String sampleId: validFwHeaders.keySet() ) {
+							for( final String sampleId: validFwHeaders.keySet() )
 								if( validFwHeaders.get( sampleId ).contains( header ) ) {
-									if( validHeaders.get( sampleId ) == null ) {
+									if( validHeaders.get( sampleId ) == null )
 										validHeaders.put( sampleId, new HashSet<>() );
-									}
 
 									validHeaders.get( sampleId ).add( header );
 									break;
 								}
-							}
 						}
 
 						seqLines.clear();
@@ -427,9 +394,8 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 			}
 		}
 
-		for( final String sampleId: validHeaders.keySet() ) {
+		for( final String sampleId: validHeaders.keySet() )
 			Log.info( getClass(), sampleId + " # valid headers = " + validHeaders.get( sampleId ).size() );
-		}
 
 		return validHeaders;
 	}
@@ -470,17 +436,13 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 				Config.setConfigProperty( DemuxUtil.DEMUX_STRATEGY, DemuxUtil.OPTION_ID_IN_HEADER );
 			}
 		} else if( strategyConfigSet() ) {
-			if( DemuxUtil.barcodeInHeader() && useSeqBarcodes ) {
-				this.summary += "WARNING: [" + strategy + "]  --> but [" + numSeqBarcodes + "] sequence BC > ["
-					+ numHeaderBarcodes + "] header BC in";
-			} else if( DemuxUtil.barcodeInSeq() && !useSeqBarcodes ) {
-
-				this.summary += "WARNING: [" + strategy + "] --> but [" + numHeaderBarcodes + "] header BC > ["
-					+ numSeqBarcodes + "] sequence BC";
-			} else if( numHeaderBarcodes == numSeqBarcodes ) {
-				this.summary += "WARNING: [" + numHeaderBarcodes + "] header BC = [" + numSeqBarcodes
-					+ "] sequence BC --> TrimPrimers Module can be used to remove sequence BC if located at very start of sequence.";
-			}
+			if( DemuxUtil.barcodeInHeader() && useSeqBarcodes ) this.summary += "WARNING: [" + strategy + "]  --> but ["
+				+ numSeqBarcodes + "] sequence BC > [" + numHeaderBarcodes + "] header BC in";
+			else if( DemuxUtil.barcodeInSeq() && !useSeqBarcodes ) this.summary += "WARNING: [" + strategy
+				+ "] --> but [" + numHeaderBarcodes + "] header BC > [" + numSeqBarcodes + "] sequence BC";
+			else if( numHeaderBarcodes == numSeqBarcodes ) this.summary += "WARNING: [" + numHeaderBarcodes
+				+ "] header BC = [" + numSeqBarcodes
+				+ "] sequence BC --> TrimPrimers Module can be used to remove sequence BC if located at very start of sequence.";
 		} else if( useSeqBarcodes ) {
 			this.summary += "Set: " + DemuxUtil.DEMUX_STRATEGY + "=" + DemuxUtil.OPTION_BARCODE_IN_SEQ
 				+ " based on BC counts" + RETURN;
@@ -493,10 +455,8 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		}
 
 		if( useRevCompConfigSet() ) {
-			if( Config.getBoolean( this, DemuxUtil.BARCODE_USE_REV_COMP ) && !useRevComp ) {
-				this.summary += "WARNING: [" + revCompAssign + "] --> but [" + numFwBarcodes + "] BC > ["
-					+ numRvBarcodes + "] rcBC" + RETURN;
-			}
+			if( Config.getBoolean( this, DemuxUtil.BARCODE_USE_REV_COMP ) && !useRevComp ) this.summary += "WARNING: ["
+				+ revCompAssign + "] --> but [" + numFwBarcodes + "] BC > [" + numRvBarcodes + "] rcBC" + RETURN;
 		} else {
 			final Double cutoff = getBarcodeCutoff();
 			if( cutoff != null ) {
@@ -524,10 +484,9 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 
 	private String getFileSuffix( final String name, final String header ) throws Exception {
 		String suffix = "";
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 			suffix = isForwardRead( name, header ) ? Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX )
 				: Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX );
-		}
 
 		return suffix + "." + ( SeqUtil.isFastA() ? Constants.FASTA: Constants.FASTQ );
 	}
@@ -548,9 +507,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 
 	private String getSplitFileName( final String fileName, final int i ) throws Exception {
 		String suffix = "";
-		if( getInputFiles().size() > 1 ) {
-			suffix = SeqUtil.getReadDirectionSuffix( fileName );
-		}
+		if( getInputFiles().size() > 1 ) suffix = SeqUtil.getReadDirectionSuffix( fileName );
 
 		suffix += "." + ( SeqUtil.isFastA() ? Constants.FASTA: Constants.FASTQ );
 
@@ -559,7 +516,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 
 	private int hasBarcode( final String line ) throws Exception {
 		for( final String code: MetaUtil.getFieldValues( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ),
-			true ) ) {
+			true ) )
 			if( line.contains( code ) )
 				// Log.info( getClass(), "Found barcode[ " + code + "] in line: " + line );
 				return 1;
@@ -568,38 +525,31 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 																			// SeqUtil.reverseComplement( code ) +
 				// "] in line: " + line );
 				return 2;
-		}
 		return 0;
 	}
 
 	private void incrementCounts( final String name, final String header ) throws Exception {
-		if( isForwardRead( name, header ) ) {
-			this.numValidFwReads++;
-		} else {
-			this.numValidRvReads++;
-		}
+		if( isForwardRead( name, header ) ) this.numValidFwReads++;
+		else this.numValidRvReads++;
 	}
 
 	private boolean isForwardRead( final String name, final String header ) throws Exception {
 		if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) return true;
 
 		final boolean isCombined = getInputFiles().size() == 1;
-		if( isCombined ) {
-			if( header.contains( SeqUtil.ILLUMINA_FW_READ_IND ) ) return true;
-			else if( header.contains( SeqUtil.ILLUMINA_RV_READ_IND ) ) return false;
-			else throw new Exception(
-				"Sequence header in " + name + " does not indicate forward[" + SeqUtil.ILLUMINA_FW_READ_IND
-					+ "] or reverse[" + SeqUtil.ILLUMINA_RV_READ_IND + "] read for header = " + header );
-		}
+		if( isCombined ) if( header.contains( SeqUtil.ILLUMINA_FW_READ_IND ) ) return true;
+		else if( header.contains( SeqUtil.ILLUMINA_RV_READ_IND ) ) return false;
+		else throw new Exception(
+			"Sequence header in " + name + " does not indicate forward[" + SeqUtil.ILLUMINA_FW_READ_IND
+				+ "] or reverse[" + SeqUtil.ILLUMINA_RV_READ_IND + "] read for header = " + header );
 
 		return SeqUtil.isForwardRead( name );
 	}
 
 	private void printCounts( final Map<String, Set<String>> validHeaders ) {
 		long size = 0L;
-		for( final String sampleId: validHeaders.keySet() ) {
+		for( final String sampleId: validHeaders.keySet() )
 			size += validHeaders.get( sampleId ).size();
-		}
 
 		Log.info( getClass(), "Total fw reads = " + this.numTotalFwReads );
 		Log.info( getClass(), "Total rv reads = " + this.numTotalRvReads );
@@ -626,9 +576,8 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	}
 
 	private static String getSampleId( final String header, final Map<String, Set<String>> validHeaders ) {
-		for( final String sampleId: validHeaders.keySet() ) {
+		for( final String sampleId: validHeaders.keySet() )
 			if( validHeaders.get( sampleId ).contains( header ) ) return sampleId;
-		}
 		return null;
 	}
 
@@ -636,9 +585,8 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		final File outFile = new File( fileName );
 		final boolean exists = outFile.isFile();
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile, exists ) );
-		for( final String line: lines ) {
+		for( final String line: lines )
 			writer.write( line + Constants.RETURN );
-		}
 		writer.close();
 	}
 

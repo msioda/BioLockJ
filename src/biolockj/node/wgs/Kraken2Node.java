@@ -46,9 +46,7 @@ public class Kraken2Node extends OtuNodeImpl {
 				final String token = taxas.nextToken();
 				final String levelDelim = token.substring( 0, 3 );
 				final String taxa = token.substring( 3 ).trim();
-				if( !taxa.isEmpty() ) {
-					addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
-				}
+				if( !taxa.isEmpty() ) addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
 			}
 		} catch( final Exception ex ) {
 			throw new Exception( "Error parsing Sample ID:" + id + "> line: " + line + ": " + ex.getMessage() );

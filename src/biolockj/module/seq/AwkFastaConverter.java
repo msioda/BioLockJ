@@ -49,11 +49,9 @@ public class AwkFastaConverter extends SeqModuleImpl {
 				lines.add( unzip( f, filePath ) );
 			}
 
-			if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) ) {
+			if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) )
 				lines.add( convert454( filePath, fileId + dirExt, outDir ) );
-			} else if( SeqUtil.isFastQ() ) {
-				lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
-			}
+			else if( SeqUtil.isFastQ() ) lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
 
 			if( !SeqUtil.isGzipped( f.getName() ) && SeqUtil.isFastA() ) {
 				Log.warn( getClass(), "Remove this BioModule from Config:  "
@@ -120,9 +118,8 @@ public class AwkFastaConverter extends SeqModuleImpl {
 	}
 
 	private boolean hasGzipped() {
-		for( final File f: getInputFiles() ) {
+		for( final File f: getInputFiles() )
 			if( SeqUtil.isGzipped( f.getName() ) ) return true;
-		}
 
 		return false;
 	}

@@ -45,15 +45,11 @@ public class Metaphlan2Parser extends ParserModuleImpl {
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try {
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-					if( !line.startsWith( "#" ) ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
+					if( !line.startsWith( "#" ) )
 						addOtuNode( new MetaphlanNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
-					}
-				}
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			}
 		}
 	}

@@ -70,9 +70,8 @@ public class BuildTaxaTables extends OtuCountModule {
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( table ) );
 			try {
 				writer.write( MetaUtil.getID() );
-				for( final String taxa: levelTaxa ) {
+				for( final String taxa: levelTaxa )
 					writer.write( TAB_DELIM + taxa );
-				}
 				writer.write( RETURN );
 
 				for( final String sampleId: sampleOtuCounts.keySet() ) {
@@ -87,9 +86,7 @@ public class BuildTaxaTables extends OtuCountModule {
 						Long count = 0L;
 						if( taxaCounts.keySet().contains( taxa ) ) {
 							count = taxaCounts.get( taxa );
-							if( topLevel ) {
-								totalOtus += count;
-							}
+							if( topLevel ) totalOtus += count;
 						}
 
 						writer.write( TAB_DELIM + count );
@@ -112,21 +109,15 @@ public class BuildTaxaTables extends OtuCountModule {
 	}
 
 	private void report( final String label, final Collection<String> col ) {
-		if( Log.doDebug() ) {
-			for( final String item: col ) {
-				Log.debug( getClass(), "REPORT [ " + label + " ]:" + item );
-			}
-		}
+		if( Log.doDebug() ) for( final String item: col )
+			Log.debug( getClass(), "REPORT [ " + label + " ]:" + item );
 	}
 
 	private void report( final String label, final TreeMap<String, TreeMap<String, Long>> map ) {
-		if( Log.doDebug() ) {
-			for( final String id: map.keySet() ) {
-				final TreeMap<String, Long> innerMap = map.get( id );
-				for( final String otu: innerMap.keySet() ) {
-					Log.debug( getClass(), "REPORT [ " + id + " " + label + " ]: " + otu + "=" + innerMap.get( otu ) );
-				}
-			}
+		if( Log.doDebug() ) for( final String id: map.keySet() ) {
+			final TreeMap<String, Long> innerMap = map.get( id );
+			for( final String otu: innerMap.keySet() )
+				Log.debug( getClass(), "REPORT [ " + id + " " + label + " ]: " + otu + "=" + innerMap.get( otu ) );
 		}
 	}
 

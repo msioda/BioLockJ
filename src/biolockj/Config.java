@@ -56,11 +56,8 @@ public class Config {
 	public static String getConfigFileExt() {
 		String ext = null;
 		final StringTokenizer st = new StringTokenizer( configFile.getName(), "." );
-		if( st.countTokens() > 1 ) {
-			while( st.hasMoreTokens() ) {
-				ext = st.nextToken();
-			}
-		}
+		if( st.countTokens() > 1 ) while( st.hasMoreTokens() )
+			ext = st.nextToken();
 
 		return "." + ext;
 	}
@@ -83,13 +80,11 @@ public class Config {
 	 * @throws ConfigFormatException if property is defined, but set with a non-numeric value
 	 */
 	public static Double getDoubleVal( final BioModule module, final String property ) throws ConfigFormatException {
-		if( getString( module, property ) != null ) {
-			try {
-				final Double val = Double.parseDouble( getString( module, property ) );
-				return val;
-			} catch( final Exception ex ) {
-				throw new ConfigFormatException( property, "Property only accepts numeric values" );
-			}
+		if( getString( module, property ) != null ) try {
+			final Double val = Double.parseDouble( getString( module, property ) );
+			return val;
+		} catch( final Exception ex ) {
+			throw new ConfigFormatException( property, "Property only accepts numeric values" );
 		}
 		return null;
 	}
@@ -129,9 +124,7 @@ public class Config {
 			throw new Exception( "Config.getExeParams() can only be called for properties that begin with \"exe.\"" );
 		if( getString( module, property2 + Constants.PARAMS ) == null ) return "";
 		String val = getString( module, property2 + Constants.PARAMS );
-		if( val != null && !val.isEmpty() && !val.endsWith( " " ) ) {
-			val = val + " ";
-		}
+		if( val != null && !val.isEmpty() && !val.endsWith( " " ) ) val = val + " ";
 		return val;
 	}
 
@@ -141,15 +134,13 @@ public class Config {
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File directory or null
-	 * @throws Exception if path is defined but is not an existing directory or other errors occur
+	 * @throws ConfigPathException if path is defined but is not an existing file
 	 */
-	public static File getExistingDir( final BioModule module, final String property ) throws Exception {
+	public static File getExistingDir( final BioModule module, final String property ) throws ConfigPathException {
 		final File f = getExistingFileObject( getString( module, property ) );
 		if( f != null && !f.isDirectory() ) throw new ConfigPathException( property, ConfigPathException.DIRECTORY );
 
-		if( props != null && f != null ) {
-			Config.setConfigProperty( property, f.getAbsolutePath() );
-		}
+		if( props != null && f != null ) Config.setConfigProperty( property, f.getAbsolutePath() );
 
 		return f;
 	}
@@ -160,21 +151,17 @@ public class Config {
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File (not directory) or null
-	 * @throws Exception if path is defined but is not an existing file or if other errors occur
+	 * @throws ConfigPathException if path is defined but is not an existing file
 	 */
-	public static File getExistingFile( final BioModule module, final String property ) throws Exception {
+	public static File getExistingFile( final BioModule module, final String property ) throws ConfigPathException {
 		File f = getExistingFileObject( getString( module, property ) );
-		if( f != null && !f.isFile() ) {
-			if( f.isDirectory() && f.list( HiddenFileFilter.VISIBLE ).length == 1 ) {
-				Log.warn( Config.class,
-					property + " is a directory with only 1 valid file.  Return the lone file within." );
-				f = new File( f.list( HiddenFileFilter.VISIBLE )[ 0 ] );
-			} else throw new ConfigPathException( property, ConfigPathException.FILE );
-		}
+		if( f != null && !f.isFile() ) if( f.isDirectory() && f.list( HiddenFileFilter.VISIBLE ).length == 1 ) {
+			Log.warn( Config.class,
+				property + " is a directory with only 1 valid file.  Return the lone file within." );
+			f = new File( f.list( HiddenFileFilter.VISIBLE )[ 0 ] );
+		} else throw new ConfigPathException( property, ConfigPathException.FILE );
 
-		if( props != null && f != null ) {
-			Config.setConfigProperty( property, f.getAbsolutePath() );
-		}
+		if( props != null && f != null ) Config.setConfigProperty( property, f.getAbsolutePath() );
 
 		return f;
 	}
@@ -200,9 +187,8 @@ public class Config {
 		final String val = getString( module, property );
 		if( val != null ) {
 			final StringTokenizer st = new StringTokenizer( val, "," );
-			while( st.hasMoreTokens() ) {
+			while( st.hasMoreTokens() )
 				list.add( st.nextToken().trim() );
-			}
 		}
 
 		return list;
@@ -218,7 +204,7 @@ public class Config {
 	public static File getLocalConfigFile( final String path ) throws ConfigPathException {
 		if( path == null || path.trim().isEmpty() ) return null;
 		final File file = new File( replaceEnvVar( path.trim() ) );
-		if( DockerUtil.inDockerEnv() && !file.isFile() ) return DockerUtil.getConfigFile( path.trim() );
+		if( DockerUtil.inDockerEnv() && !file.isFile() ) return DockerUtil.getConfigFile( file.getAbsolutePath() );
 		return file;
 	}
 
@@ -270,12 +256,10 @@ public class Config {
 	 * @return Pipeline directory (if it exists)
 	 */
 	public static File getPipelineDir() {
-		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) {
-			try {
-				pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
-			} catch( final Exception ex ) {
-				Log.error( Config.class, "Pipeline directory does not exist", ex );
-			}
+		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) try {
+			pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
+		} catch( final Exception ex ) {
+			Log.error( Config.class, "Pipeline directory does not exist", ex );
 		}
 		return pipelineDir;
 	}
@@ -348,9 +332,7 @@ public class Config {
 
 		if( module != null ) {
 			final String modPropName = Config.getModuleProp( module, propName );
-			if( props.getProperty( modPropName ) != null ) {
-				propName = modPropName;
-			}
+			if( props.getProperty( modPropName ) != null ) propName = modPropName;
 		}
 
 		final String val = props.getProperty( propName );
@@ -503,9 +485,11 @@ public class Config {
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File directory
-	 * @throws Exception if property is undefined or if property is not a valid directory path
+	 * @throws ConfigPathException if path is defined but is not an existing file
+	 * @throws ConfigNotFoundException if property is undefined
 	 */
-	public static File requireExistingDir( final BioModule module, final String property ) throws Exception {
+	public static File requireExistingDir( final BioModule module, final String property )
+		throws ConfigPathException, ConfigNotFoundException {
 		final File f = getExistingDir( module, property );
 		if( f == null ) throw new ConfigNotFoundException( property );
 
@@ -532,9 +516,7 @@ public class Config {
 			returnDirs.add( dir );
 		}
 
-		if( !returnDirs.isEmpty() ) {
-			Config.setConfigProperty( property, returnDirs );
-		}
+		if( !returnDirs.isEmpty() ) Config.setConfigProperty( property, returnDirs );
 		return returnDirs;
 	}
 
@@ -544,9 +526,11 @@ public class Config {
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return File with filename defined by property
-	 * @throws Exception if property is undefined or if property is not a valid file path
+	 * @throws ConfigPathException if path is defined but is not an existing file
+	 * @throws ConfigNotFoundException if property is undefined
 	 */
-	public static File requireExistingFile( final BioModule module, final String property ) throws Exception {
+	public static File requireExistingFile( final BioModule module, final String property )
+		throws ConfigPathException, ConfigNotFoundException {
 		final File f = getExistingFile( module, property );
 		if( f == null ) throw new ConfigNotFoundException( property );
 		return f;
@@ -659,14 +643,10 @@ public class Config {
 		String val = null;
 		if( data != null && !data.isEmpty() && data.iterator().next() instanceof File ) {
 			final Collection<String> fileData = new ArrayList<>();
-			for( final Object obj: data ) {
+			for( final Object obj: data )
 				fileData.add( ( (File) obj ).getAbsolutePath() );
-			}
 			val = BioLockJUtil.getCollectionAsString( fileData );
-		} else {
-			val = BioLockJUtil.getCollectionAsString( data );
-
-		}
+		} else val = BioLockJUtil.getCollectionAsString( data );
 
 		props.setProperty( name, val );
 
@@ -786,21 +766,15 @@ public class Config {
 		try {
 			if( bashVarMap.get( bashVar ) != null ) return bashVarMap.get( bashVar );
 			String bashVal = props == null ? null: props.getProperty( stripBashMarkUp( bashVar ) );
-			if( bashVal == null || bashVal.trim().isEmpty() ) {
-				if( bashVar.equals( BLJ_BASH_VAR ) ) {
-					final File blj = BioLockJUtil.getBljDir();
-					if( blj != null && blj.isDirectory() ) {
-						bashVal = blj.getAbsolutePath();
-					}
-				} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
-					final File bljSup = BioLockJUtil.getBljSupDir();
-					if( bljSup != null && bljSup.isDirectory() ) {
-						bashVal = bljSup.getAbsolutePath();
-					}
-				} else {
-					bashVal = Processor.getBashVar( bashVar );
-				}
-			}
+			if( DockerUtil.inDockerEnv() && stripBashMarkUp( bashVar ).equals( "HOME" ) ) {
+				bashVal = RuntimeParamUtil.getDockerHostHomeDir();
+			} else if( bashVal == null || bashVal.trim().isEmpty() ) if( bashVar.equals( BLJ_BASH_VAR ) ) {
+				final File blj = BioLockJUtil.getBljDir();
+				if( blj != null && blj.isDirectory() ) bashVal = blj.getAbsolutePath();
+			} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
+				final File bljSup = BioLockJUtil.getBljSupDir();
+				if( bljSup != null && bljSup.isDirectory() ) bashVal = bljSup.getAbsolutePath();
+			} else bashVal = Processor.getBashVar( bashVar );
 
 			if( bashVal != null && !bashVal.trim().isEmpty() ) {
 				bashVarMap.put( bashVar, bashVal );
@@ -823,13 +797,11 @@ public class Config {
 	 */
 	private static Integer getIntegerProp( final BioModule module, final String property )
 		throws ConfigFormatException {
-		if( getString( module, property ) != null ) {
-			try {
-				final Integer val = Integer.parseInt( getString( module, property ) );
-				return val;
-			} catch( final Exception ex ) {
-				throw new ConfigFormatException( property, "Property only accepts integer values" );
-			}
+		if( getString( module, property ) != null ) try {
+			final Integer val = Integer.parseInt( getString( module, property ) );
+			return val;
+		} catch( final Exception ex ) {
+			throw new ConfigFormatException( property, "Property only accepts integer values" );
 		}
 
 		return null;

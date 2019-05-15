@@ -12,16 +12,16 @@ aws_deregister_job_defs() {
 	while $(has_data ${ids}); do
 		id=$(get_id ${ids}) && ((count++))
 		if [ ${#id} -gt 0 ]; then 
-			aws_log "De-register ${2} Job-definition ARN #[$count]: ${id}"
+			aws_log "De-register Job-definition ARN #[$count]: ${id}"
 			aws batch deregister-job-definition --job-definition "${id}" && status=ACTIVE
 			while [ ${#status} -gt 0 ] && [ "$status" != "INACTIVE" ]; do
-				sleep 10 && status=$(aws batch describe-job-definitions --job-definitions ${id} --query "jobDefinitions[*].status")
+				sleep 5 && status=$(aws batch describe-job-definitions --job-definitions ${id} --query "jobDefinitions[*].status")
 			done
 		else break; fi
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
 		ids="${ids/$id}" && ((numComplete++))
 	done
-	aws_log "De-registered ${numComplete}/${count} ${2} job-definitions" && rm $(get_docker_job_def_flag)
+	aws_log "De-registered ${numComplete}/${count} job-definitions" && rm $(get_docker_job_def_flag)
 	aws_log "Check for any job-definitions with status != 'INACTIVE':"
 	aws batch describe-job-definitions --query "jobDefinitions[?status!='INACTIVE']|[*]"
 }

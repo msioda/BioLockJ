@@ -49,9 +49,7 @@ public class NextflowUtil {
 		final boolean isDir = new File( efsPath ).isDirectory();
 
 		String s3Dir = getAwsS3();
-		if( efsPath.contains( Config.pipelinePath() ) ) {
-			s3Dir += efsPath.replace( Config.pipelinePath(), "" );
-		}
+		if( efsPath.contains( Config.pipelinePath() ) ) s3Dir += efsPath.replace( Config.pipelinePath(), "" );
 		Log.info( BioLockJ.class, "Transfer " + efsPath + " to --> " + s3Dir );
 
 		final String[] s3args = new String[ isDir ? 7: 5 ];
@@ -65,11 +63,8 @@ public class NextflowUtil {
 			s3args[ 6 ] = Constants.BLJ_COMPLETE;
 		}
 
-		if( waitUntilComplete ) {
-			Processor.submit( s3args, "S3-Sync-xFer" );
-		} else {
-			Processor.runSubprocess( s3args, "S3-Async-xFer" );
-		}
+		if( waitUntilComplete ) Processor.submit( s3args, "S3-Sync-xFer" );
+		else Processor.runSubprocess( s3args, "S3-Async-xFer" );
 	}
 
 	/**
@@ -88,9 +83,7 @@ public class NextflowUtil {
 	 */
 	public static File getNextflowReportDir() {
 		final File dir = new File( Config.pipelinePath() + File.separator + NEXTFLOW );
-		if( !dir.isDirectory() ) {
-			dir.mkdir();
-		}
+		if( !dir.isDirectory() ) dir.mkdir();
 		return dir;
 	}
 
@@ -124,9 +117,8 @@ public class NextflowUtil {
 	 */
 	public static boolean purgeEfsData() {
 		try {
-			if( Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT ) ) {
-				purge( Config.pipelinePath() );
-			} else if( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
+			if( Config.getBoolean( null, AWS_PURGE_EFS_OUTPUT ) ) purge( Config.pipelinePath() );
+			else if( Config.getBoolean( null, AWS_PURGE_EFS_INPUTS ) ) {
 				purge( DockerUtil.DOCKER_CONFIG_DIR );
 				purge( DockerUtil.DOCKER_INPUT_DIR );
 				purge( DockerUtil.DOCKER_META_DIR );
@@ -148,25 +140,20 @@ public class NextflowUtil {
 	 */
 	public static boolean saveEfsDataToS3() {
 		try {
-			if( Config.getBoolean( null, AWS_COPY_PIPELINE_TO_S3 ) ) {
-				awsSyncS3( Config.pipelinePath(), true );
-			} else if( DownloadUtil.getDownloadListFile().isFile()
+			if( Config.getBoolean( null, AWS_COPY_PIPELINE_TO_S3 ) ) awsSyncS3( Config.pipelinePath(), true );
+			else if( DownloadUtil.getDownloadListFile().isFile()
 				&& Config.getBoolean( null, AWS_COPY_REPORTS_TO_S3 ) ) {
 				final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
 				try {
-					for( String path = reader.readLine(); path != null; path = reader.readLine() ) {
+					for( String path = reader.readLine(); path != null; path = reader.readLine() )
 						awsSyncS3( Config.pipelinePath() + File.separator + path, true );
-					}
 				} finally {
-					if( reader != null ) {
-						reader.close();
-					}
+					if( reader != null ) reader.close();
 				}
-			} else {
-				Log.warn( NextflowUtil.class, "Pipeline ouput will be not saved to configured AWS S3 bucket: "
-					+ Config.requireString( null, AWS_S3 ) + " due to Config properties [ " + AWS_COPY_PIPELINE_TO_S3
-					+ "=" + Constants.FALSE + " ] & [ " + AWS_COPY_REPORTS_TO_S3 + "=" + Constants.FALSE + " ]" );
-			}
+			} else Log.warn( NextflowUtil.class,
+				"Pipeline ouput will be not saved to configured AWS S3 bucket: " + Config.requireString( null, AWS_S3 )
+					+ " due to Config properties [ " + AWS_COPY_PIPELINE_TO_S3 + "=" + Constants.FALSE + " ] & [ "
+					+ AWS_COPY_REPORTS_TO_S3 + "=" + Constants.FALSE + " ]" );
 
 			return true;
 		} catch( final Exception ex ) {
@@ -200,11 +187,8 @@ public class NextflowUtil {
 		try {
 			final File f = BioLockJUtil.createFile(
 				DockerUtil.BLJ_HOST_HOME + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
-			if( f.isFile() ) {
-				Log.info( NextflowUtil.class, "Created pipeline success file: " + f.getAbsolutePath() );
-			} else {
-				Log.warn( NextflowUtil.class, "Failed to generate pipeline success file: " + f.getAbsolutePath() );
-			}
+			if( f.isFile() ) Log.info( NextflowUtil.class, "Created pipeline success file: " + f.getAbsolutePath() );
+			else Log.warn( NextflowUtil.class, "Failed to generate pipeline success file: " + f.getAbsolutePath() );
 		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Error occurred attempting to save pipeline success indicator file", ex );
 		}
@@ -298,25 +282,19 @@ public class NextflowUtil {
 				if( line.trim().startsWith( PROCESS ) ) {
 					module = getModule( line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim() );
 					line = line.replaceAll( "\\.", "_" );
-				} else if( module != null ) {
-					if( line.contains( NF_CPUS ) ) {
-						final String prop = Config.getModuleProp( module, NF_CPUS.substring( 1 ) );
-						line = line.replace( NF_CPUS, Config.getString( module, prop ) );
-					} else if( line.contains( NF_MEMORY ) ) {
-						final String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
-						line = line.replace( NF_MEMORY, getRAM( Config.requireString( module, prop ) ) );
-					} else if( line.contains( NF_DOCKER_IMAGE ) ) {
-						line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
-						if( Config.requireString( module, EC2_ACQUISITION_STRATEGY ).toUpperCase()
-							.equals( ON_DEMAND ) ) {
-							onDemandLabel = "    label '" + ON_DEMAND + "'";
-						}
-					} else if( line.contains( MODULE_SCRIPT ) ) {
-						line = line.replace( MODULE_SCRIPT, module.getScriptDir().getAbsolutePath() );
-					} else if( line.trim().equals( "}" ) ) {
-						module = null;
-					}
-				}
+				} else if( module != null ) if( line.contains( NF_CPUS ) ) {
+					final String prop = Config.getModuleProp( module, NF_CPUS.substring( 1 ) );
+					line = line.replace( NF_CPUS, Config.getString( module, prop ) );
+				} else if( line.contains( NF_MEMORY ) ) {
+					final String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
+					line = line.replace( NF_MEMORY, getRAM( Config.requireString( module, prop ) ) );
+				} else if( line.contains( NF_DOCKER_IMAGE ) ) {
+					line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
+					if( Config.requireString( module, EC2_ACQUISITION_STRATEGY ).toUpperCase().equals( ON_DEMAND ) )
+						onDemandLabel = "    label '" + ON_DEMAND + "'";
+				} else if( line.contains( MODULE_SCRIPT ) )
+					line = line.replace( MODULE_SCRIPT, module.getScriptDir().getAbsolutePath() );
+				else if( line.trim().equals( "}" ) ) module = null;
 
 				Log.debug( NextflowUtil.class, "ADD LINE: " + line );
 				lines.add( line );
@@ -326,9 +304,7 @@ public class NextflowUtil {
 				}
 			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 		Log.info( NextflowUtil.class, "Done building main.nf with # lines = " + lines.size() );
 		return lines;
@@ -351,21 +327,15 @@ public class NextflowUtil {
 
 	private static String buildNextflowProcessList( final List<BioModule> modules ) throws ConfigFormatException {
 		String plist = "";
-		for( final BioModule module: modules ) {
-			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) ) {
-				if( module instanceof JavaModule && !Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
+		for( final BioModule module: modules )
+			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) )
+				if( module instanceof JavaModule && !Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) )
 					Log.warn( NextflowUtil.class,
 						"Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" + Constants.FALSE
 							+ " so JavaModule \"" + module.getClass().getName()
 							+ "\" will run on the head node - HEAD NODE MUST HAVE SUFFICIENT RESOURCES" );
-				} else {
-					plist += ( plist.isEmpty() ? "": " " ) + module.getClass().getName();
-				}
-			}
-		}
-		if( plist.isEmpty() ) {
-			plist = null;
-		}
+				else plist += ( plist.isEmpty() ? "": " " ) + module.getClass().getName();
+		if( plist.isEmpty() ) plist = null;
 		return plist;
 	}
 
@@ -382,21 +352,18 @@ public class NextflowUtil {
 
 	private static ScriptModule getModule( final String className ) {
 		Log.debug( NextflowUtil.class, "Calling getModule( " + className + " )" );
-		for( final BioModule module: Pipeline.getModules() ) {
-			if( module.getClass().getName().equals( className ) ) {
-				if( usedModules.contains( module.getID() ) ) {
-					Log.debug( NextflowUtil.class,
-						"Skip module [ ID = " + module.getID()
-							+ " ] in since it was already used, look for another module of type: "
-							+ module.getClass().getName() );
-				} else {
-					Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = "
-						+ module.getID() + " ] --> " + module.getClass().getName() );
-					usedModules.add( module.getID() );
-					return (ScriptModule) module;
+		for( final BioModule module: Pipeline.getModules() )
+			if( module.getClass().getName().equals( className ) )
+				if( usedModules.contains( module.getID() ) ) Log.debug( NextflowUtil.class,
+					"Skip module [ ID = " + module.getID()
+						+ " ] in since it was already used, look for another module of type: "
+						+ module.getClass().getName() );
+				else {
+				Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = " + module.getID()
+					+ " ] --> " + module.getClass().getName() );
+				usedModules.add( module.getID() );
+				return (ScriptModule) module;
 				}
-			}
-		}
 		return null;
 	}
 
@@ -416,12 +383,8 @@ public class NextflowUtil {
 			Log.debug( NextflowUtil.class, "RAM value is not purely numeric, ensure it is single quoted" );
 		}
 
-		if( !val.startsWith( "'" ) ) {
-			val = "'" + val;
-		}
-		if( !val.endsWith( "'" ) ) {
-			val = val + "'";
-		}
+		if( !val.startsWith( "'" ) ) val = "'" + val;
+		if( !val.endsWith( "'" ) ) val = val + "'";
 
 		return ram;
 	}
@@ -431,23 +394,18 @@ public class NextflowUtil {
 		if( nfLog.isFile() ) {
 			final BufferedReader reader = BioLockJUtil.getFileReader( nfLog );
 			try {
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					if( line.contains( NF_INIT_FLAG ) ) return true;
-				}
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			}
-		} else {
-			Log.info( NextflowUtil.class, "Nextflow log file \"" + NF_LOG + "\" has not been created yet..." );
-		}
+		} else Log.info( NextflowUtil.class, "Nextflow log file \"" + NF_LOG + "\" has not been created yet..." );
 		return false;
 	}
 
 	private static void pollAndSpin() throws Exception {
 		Log.info( NextflowUtil.class,
-			"Poll " + NF_LOG + " every 15 seconds until the status message \"" + NF_INIT_FLAG + "\" is logged" );
+			"Poll " + NF_LOG + " every 30 seconds until the status message \"" + NF_INIT_FLAG + "\" is logged" );
 		int numSecs = 0;
 		boolean finished = false;
 		while( !finished ) {
@@ -456,11 +414,9 @@ public class NextflowUtil {
 				if( numSecs > NF_TIMEOUT )
 					throw new Exception( "Nextflow initialization timed out after " + numSecs + " seconds." );
 				Log.info( NextflowUtil.class, "Nextflow initializing..." );
-				Thread.sleep( 15 * 1000 );
-				numSecs += 15;
-			} else {
-				Log.info( NextflowUtil.class, "Nextflow initialization complete!" );
-			}
+				Thread.sleep( 30 * 1000 );
+				numSecs += 30;
+			} else Log.info( NextflowUtil.class, "Nextflow initialization complete!" );
 		}
 	}
 
@@ -512,16 +468,10 @@ public class NextflowUtil {
 		try {
 			boolean indent = false;
 			for( String line: lines ) {
-				if( line.trim().equals( "}" ) ) {
-					indent = !indent;
-				}
-				if( indent ) {
-					line = "    " + line;
-				}
+				if( line.trim().equals( "}" ) ) indent = !indent;
+				if( indent ) line = "    " + line;
 				writer.write( line + Constants.RETURN );
-				if( line.trim().endsWith( "{" ) ) {
-					indent = !indent;
-				}
+				if( line.trim().endsWith( "{" ) ) indent = !indent;
 			}
 		} finally {
 			writer.close();

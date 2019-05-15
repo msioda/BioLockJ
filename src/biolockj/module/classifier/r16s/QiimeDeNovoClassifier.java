@@ -51,9 +51,7 @@ public class QiimeDeNovoClassifier extends QiimeClassifier {
 				+ "nochimeras.fasta" );
 			lines.add( SCRIPT_FILTER_OTUS + " -i " + tempDir + OTU_TABLE + " -e " + otusToFilter + " -o " + outputDir
 				+ OTU_TABLE );
-		} else {
-			lines.add( copyTempOtuTableToOutputDir() );
-		}
+		} else lines.add( copyTempOtuTableToOutputDir() );
 
 		data.add( lines );
 		return data;
@@ -69,9 +67,7 @@ public class QiimeDeNovoClassifier extends QiimeClassifier {
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		getParams();
-		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) {
-			getVsearchParams();
-		}
+		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) getVsearchParams();
 	}
 
 	/**

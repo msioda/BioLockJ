@@ -50,12 +50,10 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 			sb.append( "# Fields:  " + MetaUtil.getFieldNames().size() + RETURN );
 
 			if( !this.hitRatioPerSample.isEmpty() ) {
-				for( final String key: this.hitRatioPerSample.keySet() ) {
+				for( final String key: this.hitRatioPerSample.keySet() )
 					if( this.hitRatioPerSample.get( key ) == null
-						|| this.hitRatioPerSample.get( key ).equals( MetaUtil.getNullValue( this ) ) ) {
+						|| this.hitRatioPerSample.get( key ).equals( MetaUtil.getNullValue( this ) ) )
 						this.hitRatioPerSample.put( key, "0.0" );
-					}
-				}
 
 				if( !this.hitRatioPerSample.isEmpty() ) {
 					final TreeSet<Double> vals = new TreeSet<>( this.hitRatioPerSample.values().stream()
@@ -68,11 +66,9 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 
 					if( !vals.first().equals( vals.last() ) ) {
 						final Set<String> minSamples = new HashSet<>();
-						for( final String id: this.hitRatioPerSample.keySet() ) {
-							if( this.hitRatioPerSample.get( id ).equals( vals.first().toString() ) ) {
+						for( final String id: this.hitRatioPerSample.keySet() )
+							if( this.hitRatioPerSample.get( id ).equals( vals.first().toString() ) )
 								minSamples.add( id );
-							}
-						}
 
 						sb.append( "Samples w/ Min. Hit Ratio: " + minSamples + RETURN );
 					}
@@ -96,9 +92,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 		final String numReadsCol = RegisterNumReads.getNumReadFieldName();
 		final String numHitsCol = ParserModuleImpl.getOtuCountField();
 		if( numReadsCol != null && numHitsCol != null && MetaUtil.getFieldNames().contains( numReadsCol )
-			&& MetaUtil.getFieldNames().contains( numHitsCol ) ) {
-			addHitRatioToMetadata();
-		}
+			&& MetaUtil.getFieldNames().contains( numHitsCol ) ) addHitRatioToMetadata();
 
 		generateMergedTables();
 
@@ -118,13 +112,12 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getOtuCountField() );
 
 			if( numReadsField == null || numHitsField == null || numReadsField.equals( MetaUtil.getNullValue( this ) )
-				|| numHitsField.equals( MetaUtil.getNullValue( this ) ) ) {
+				|| numHitsField.equals( MetaUtil.getNullValue( this ) ) )
 				this.hitRatioPerSample.put( id, MetaUtil.getNullValue( this ) );
-			} else {
+			else {
 				final long numReads = Long.valueOf( numReadsField );
-				if( numReads == 0L ) {
-					this.hitRatioPerSample.put( id, "0.0" );
-				} else {
+				if( numReads == 0L ) this.hitRatioPerSample.put( id, "0.0" );
+				else {
 
 					final long numHits = Long.valueOf( numHitsField );
 
@@ -153,9 +146,7 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final String mergedLine = getMergedLine( line );
-				if( mergedLine != null ) {
-					writer.write( mergedLine + RETURN );
-				}
+				if( mergedLine != null ) writer.write( mergedLine + RETURN );
 			}
 
 			writer.close();
@@ -177,19 +168,17 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 		final String sampleId = new StringTokenizer( line, TAB_DELIM ).nextToken();
 		if( sampleId.equals( MetaUtil.getID() ) || MetaUtil.getSampleIds().contains( sampleId ) ) {
 			sb.append( BioLockJUtil.removeQuotes( line ) );
-			for( final String field: MetaUtil.getRecord( sampleId ) ) {
+			for( final String field: MetaUtil.getRecord( sampleId ) )
 				sb.append( TAB_DELIM ).append( BioLockJUtil.removeQuotes( field ) );
-			}
 		} else {
 			Log.warn( getClass(), "Missing record for: " + sampleId + " in metadata: " + MetaUtil.getPath() );
 			return null;
 		}
 
-		if( this.mergeHeaderLine == null ) {
+		if( this.mergeHeaderLine == null )
 			this.mergeHeaderLine = "Merged OTU table header [" + sampleId + "] = " + sb.toString();
-		} else if( this.mergeSampleLine == null ) {
+		else if( this.mergeSampleLine == null )
 			this.mergeSampleLine = "Example Merged OTU table row [" + sampleId + "] = " + sb.toString();
-		}
 
 		return sb.toString();
 	}

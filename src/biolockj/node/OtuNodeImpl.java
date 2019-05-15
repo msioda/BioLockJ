@@ -56,9 +56,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 			// Populate missing levels between top-level and current level
 			String parentTaxa = null;
 			for( final String testLevel: TaxaUtil.getTaxaLevelSpan() ) {
-				if( this.taxaMap.keySet().contains( testLevel ) ) {
-					parentTaxa = this.taxaMap.get( testLevel );
-				} else if( parentTaxa != null ) {
+				if( this.taxaMap.keySet().contains( testLevel ) ) parentTaxa = this.taxaMap.get( testLevel );
+				else if( parentTaxa != null ) {
 					final String unclassifiedTaxa = TaxaUtil.buildUnclassifiedTaxa( parentTaxa );
 					this.taxaMap.put( testLevel, unclassifiedTaxa );
 					// Log.debug( getClass(), testLevel + " taxa undefined, inherit parent name as: " + unclassifiedTaxa
@@ -72,10 +71,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 			return;
 		}
 
-		if( this.taxaMap.get( level ) != null ) {
-			Log.debug( getClass(), this.sampleId + " overwriting OTU: " + this.taxaMap.get( level ) + " with " + taxa
-				+ "  --> Line = " + this.line );
-		}
+		if( this.taxaMap.get( level ) != null ) Log.debug( getClass(), this.sampleId + " overwriting OTU: "
+			+ this.taxaMap.get( level ) + " with " + taxa + "  --> Line = " + this.line );
 
 		// Log.debug( getClass(), "taxaMap.put( level=" + level + ", taxa=" + taxa + " )" );
 		this.taxaMap.put( level, taxa );
@@ -126,15 +123,10 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 			String parentTaxa = null;
 			for( final String level: TaxaUtil.getTaxaLevels() ) {
 				String taxaName = this.taxaMap.get( level );
-				if( taxaName == null || taxaName.isEmpty() ) {
-					taxaName = TaxaUtil.buildUnclassifiedTaxa( parentTaxa );
-				} else {
-					parentTaxa = taxaName;
-				}
+				if( taxaName == null || taxaName.isEmpty() ) taxaName = TaxaUtil.buildUnclassifiedTaxa( parentTaxa );
+				else parentTaxa = taxaName;
 
-				if( !otu.toString().isEmpty() ) {
-					otu.append( Constants.SEPARATOR );
-				}
+				if( !otu.toString().isEmpty() ) otu.append( Constants.SEPARATOR );
 
 				otu.append( OtuUtil.buildOtuTaxa( level, taxaName ) );
 			}
@@ -177,9 +169,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	@Override
 	public void setLine( final String line ) {
 		try {
-			if( Log.doDebug() ) {
-				this.line = line;
-			}
+			if( Log.doDebug() ) this.line = line;
 		} catch( final Exception ex ) {
 			Log.error( getClass(),
 				"Unable to set OtuNode line: " + ( this.sampleId == null ? "sampleId UNDEFINED": this.sampleId ), ex );
@@ -200,16 +190,13 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		int numFound = 0;
 		String parentTaxa = null;
 
-		for( final String level: TaxaUtil.getTaxaLevelSpan() ) {
+		for( final String level: TaxaUtil.getTaxaLevelSpan() )
 			if( this.taxaMap.get( level ) != null ) {
 				numFound++;
 				parentTaxa = this.taxaMap.get( level );
-			} else if( parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa ) {
+			} else if( parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
 				this.taxaMap.put( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
-			} else if( numFound == numTaxa ) {
-				break;
-			}
-		}
+			else if( numFound == numTaxa ) break;
 	}
 
 	private int count = 0;

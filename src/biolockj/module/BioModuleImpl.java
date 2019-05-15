@@ -73,9 +73,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 */
 	@Override
 	public List<File> getInputFiles() {
-		if( getFileCache().isEmpty() ) {
-			cacheInputFiles( findModuleInputFiles() );
-		}
+		if( getFileCache().isEmpty() ) cacheInputFiles( findModuleInputFiles() );
 		return getFileCache();
 	}
 
@@ -150,10 +148,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 			this.moduleDir.mkdirs();
 			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new "
 				+ this.moduleDir.getAbsolutePath() );
-		} else {
-			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing "
-				+ this.moduleDir.getAbsolutePath() );
-		}
+		} else Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing "
+			+ this.moduleDir.getAbsolutePath() );
 	}
 
 	/**
@@ -207,7 +203,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		Log.debug( getClass(), "Initialize input files..." );
 		boolean validInput = false;
 		BioModule previousModule = ModuleUtil.getPreviousModule( this );
-		while( !validInput ) {
+		while( !validInput )
 			if( previousModule == null ) {
 				Log.debug( getClass(),
 					"Previous module is NULL.  Return pipleline input from: " + Constants.INPUT_DIRS );
@@ -225,11 +221,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 					moduleInputFiles.addAll( FileUtils.listFiles( previousModule.getOutputDir(),
 						HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 					Log.debug( getClass(), "# Files found: " + moduleInputFiles.size() );
-				} else {
-					previousModule = ModuleUtil.getPreviousModule( previousModule );
-				}
+				} else previousModule = ModuleUtil.getPreviousModule( previousModule );
 			}
-		}
 
 		return BioLockJUtil.removeIgnoredAndEmptyFiles( moduleInputFiles );
 	}
@@ -245,9 +238,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 
 	private void printInputFiles() {
 		Log.info( getClass(), "# Input Files: " + getFileCache().size() );
-		for( int i = 0; i < getFileCache().size(); i++ ) {
+		for( int i = 0; i < getFileCache().size(); i++ )
 			Log.info( getClass(), "Input File [" + i + "]: " + this.inputFiles.get( i ).getAbsolutePath() );
-		}
 	}
 
 	private final List<File> inputFiles = new ArrayList<>();

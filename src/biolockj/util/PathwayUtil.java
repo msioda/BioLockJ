@@ -95,9 +95,7 @@ public class PathwayUtil {
 	public static File getPathwayCountFile( final File dir, final File hn2OutputFile, final String prefix )
 		throws Exception {
 		String myPrefix = prefix == null ? "": prefix;
-		if( !myPrefix.startsWith( Config.pipelineName() ) ) {
-			myPrefix = Config.pipelineName() + "_" + prefix;
-		}
+		if( !myPrefix.startsWith( Config.pipelineName() ) ) myPrefix = Config.pipelineName() + "_" + prefix;
 		final String name = myPrefix + "_" + getHn2Type( hn2OutputFile ) + Constants.TSV_EXT;
 		return new File( dir.getAbsolutePath() + File.separator + name );
 	}
@@ -128,9 +126,8 @@ public class PathwayUtil {
 			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-			for( final File f: files ) {
+			for( final File f: files )
 				if( isPathwayFile( f ) ) return true;
-			}
 		} catch( final Exception ex ) {
 			Log.warn( PathwayUtil.class, "Error occurred while inspecting module output files: " + module );
 			ex.printStackTrace();
@@ -147,9 +144,7 @@ public class PathwayUtil {
 	 */
 	public static Boolean useHumann2RawCount( final BioModule module ) throws Exception {
 		Integer initCount = initMap.get( module.getClass().getName() );
-		if( initCount == null ) {
-			initCount = 0;
-		}
+		if( initCount == null ) initCount = 0;
 		initMap.put( module.getClass().getName(), ++initCount );
 
 		Log.debug( module.getClass(), "Check to see if module inherits HumanN2 or Taxa tables..." );
@@ -163,17 +158,11 @@ public class PathwayUtil {
 			final boolean isParser = mods.get( i ).toLowerCase().contains( "parser" );
 			final boolean isClassifier = mods.get( i ).toLowerCase().contains( "classifier" );
 			final boolean isHn2 = isClassifier && mods.get( i ).toLowerCase().contains( "humann2" );
-			if( mods.get( i ).equals( module.getClass().getName() ) ) {
-				thisClass.add( i );
-			} else if( mods.get( i ).startsWith( "R_" ) ) {
-				otherRModules.add( i );
-			} else if( isHn2 ) {
-				hn2Classifiers.add( i );
-			} else if( isClassifier ) {
-				classifiers.add( i );
-			} else if( isParser ) {
-				parsers.add( i );
-			}
+			if( mods.get( i ).equals( module.getClass().getName() ) ) thisClass.add( i );
+			else if( mods.get( i ).startsWith( "R_" ) ) otherRModules.add( i );
+			else if( isHn2 ) hn2Classifiers.add( i );
+			else if( isClassifier ) classifiers.add( i );
+			else if( isParser ) parsers.add( i );
 		}
 
 		final boolean hasPathwayInputs = BioLockJUtil
@@ -243,11 +232,8 @@ public class PathwayUtil {
 
 	private static Integer getClosestIndex( final List<Integer> indexes, final Integer target ) {
 		Integer hit = null;
-		for( final Integer i: indexes ) {
-			if( i < target ) {
-				hit = i;
-			}
-		}
+		for( final Integer i: indexes )
+			if( i < target ) hit = i;
 		return hit;
 	}
 

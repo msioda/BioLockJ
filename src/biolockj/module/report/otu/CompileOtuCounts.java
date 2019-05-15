@@ -45,9 +45,7 @@ public class CompileOtuCounts extends OtuCountModule {
 				totalOtus += otuLine.getCount();
 			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 
 		msg += "# Unique OTUs: " + BioLockJUtil.formatNumericOutput( uniqueOtus, false ) + RETURN;
@@ -74,9 +72,8 @@ public class CompileOtuCounts extends OtuCountModule {
 			"Build " + otuCountFile.getAbsolutePath() + " from " + otuCounts.size() + " unqiue OTU strings" );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( otuCountFile ) );
 		try {
-			for( final String otu: otuCounts.keySet() ) {
+			for( final String otu: otuCounts.keySet() )
 				writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
-			}
 		} finally {
 			writer.close();
 		}
@@ -97,9 +94,7 @@ public class CompileOtuCounts extends OtuCountModule {
 			for( final String otu: otuCounts.keySet() ) {
 				final Long count = otuCounts.get( otu );
 
-				if( !combinedOtuCounts.keySet().contains( otu ) ) {
-					combinedOtuCounts.put( otu, 0L );
-				}
+				if( !combinedOtuCounts.keySet().contains( otu ) ) combinedOtuCounts.put( otu, 0L );
 
 				combinedOtuCounts.put( otu, combinedOtuCounts.get( otu ) + count );
 			}
@@ -116,15 +111,13 @@ public class CompileOtuCounts extends OtuCountModule {
 	protected String getMaxOtusPerSample() {
 		final TreeSet<String> ids = new TreeSet<>();
 		long max = 0L;
-		for( final String sampleId: this.uniqueOtuPerSample.keySet() ) {
-			if( this.uniqueOtuPerSample.get( sampleId ) == max ) {
-				ids.add( sampleId );
-			} else if( this.uniqueOtuPerSample.get( sampleId ) > max ) {
+		for( final String sampleId: this.uniqueOtuPerSample.keySet() )
+			if( this.uniqueOtuPerSample.get( sampleId ) == max ) ids.add( sampleId );
+			else if( this.uniqueOtuPerSample.get( sampleId ) > max ) {
 				ids.clear();
 				ids.add( sampleId );
 				max = this.uniqueOtuPerSample.get( sampleId );
 			}
-		}
 		return "Max # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( max, false ) + " ]: "
 			+ BioLockJUtil.getCollectionAsString( ids );
 	}
@@ -137,7 +130,7 @@ public class CompileOtuCounts extends OtuCountModule {
 	protected String getMinOtusPerSample() {
 		final TreeSet<String> ids = new TreeSet<>();
 		Long min = null;
-		for( final String sampleId: this.uniqueOtuPerSample.keySet() ) {
+		for( final String sampleId: this.uniqueOtuPerSample.keySet() )
 			if( min == null || this.uniqueOtuPerSample.get( sampleId ) == min ) {
 				ids.add( sampleId );
 				min = this.uniqueOtuPerSample.get( sampleId );
@@ -146,7 +139,6 @@ public class CompileOtuCounts extends OtuCountModule {
 				ids.add( sampleId );
 				min = this.uniqueOtuPerSample.get( sampleId );
 			}
-		}
 		return "Min # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( min, false ) + " ]: "
 			+ BioLockJUtil.getCollectionAsString( ids );
 	}

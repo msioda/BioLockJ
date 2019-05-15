@@ -34,14 +34,11 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl {
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		String tables = "";
-		for( final File f: files ) {
-			if( f.getName().startsWith( Constants.OTU_TABLE_PREFIX ) ) {
+		for( final File f: files )
+			if( f.getName().startsWith( Constants.OTU_TABLE_PREFIX ) )
 				tables += ( tables.isEmpty() ? "": "," ) + f.getAbsolutePath();
-			} else {
-				Log.warn( getClass(),
-					"Ignoring non-" + Constants.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
-			}
-		}
+			else Log.warn( getClass(),
+				"Ignoring non-" + Constants.OTU_TABLE_PREFIX + " input file: " + f.getAbsolutePath() );
 
 		final List<List<String>> data = new ArrayList<>();
 		final List<String> lines = new ArrayList<>();
@@ -70,9 +67,8 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl {
 	 */
 	@Override
 	public void executeTask() throws Exception {
-		if( getInputFiles().size() > 1 ) {
-			super.executeTask();
-		} else if( getInputFiles().size() == 1 ) {
+		if( getInputFiles().size() > 1 ) super.executeTask();
+		else if( getInputFiles().size() == 1 ) {
 			Log.warn( getClass(),
 				"Previous module only output 1 " + QiimeClassifier.OTU_TABLE + "so there is nothing to merge" );
 			FileUtils.copyFileToDirectory( getInputFiles().get( 0 ), getOutputDir() );

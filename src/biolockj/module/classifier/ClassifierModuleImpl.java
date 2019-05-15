@@ -15,6 +15,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.Constants;
+import biolockj.Log;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.BioModule;
 import biolockj.module.DatabaseModule;
 import biolockj.module.SeqModuleImpl;
@@ -51,7 +54,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	public abstract List<String> getClassifierParams() throws Exception;
 
 	@Override
-	public abstract File getDB() throws Exception;
+	public abstract File getDB() throws ConfigPathException, ConfigNotFoundException;
 
 	/**
 	 * This method returns the corresponding Parser module associated with the classifier. The Parser module name is
@@ -82,11 +85,18 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 */
 	protected String getClassifierType() {
 		String type = getClass().getSimpleName().toLowerCase().replaceAll( "classifier", "" );
-		if( type.startsWith( Constants.QIIME ) ) {
-			type = Constants.QIIME;
-		}
+		if( type.startsWith( Constants.QIIME ) ) type = Constants.QIIME;
 
 		return type;
+	}
+
+	protected File getDbCache() {
+		return this.dbCache;
+	}
+
+	protected void setDbCache( final File db ) {
+		if( db != null ) Log.info( getClass(), "Set DB cache: " + db.getAbsolutePath() );
+		this.dbCache = db;
 	}
 
 	/**
@@ -96,13 +106,11 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	 * @throws Exception if modules are out of order
 	 */
 	protected void validateModuleOrder() throws Exception {
-		for( final BioModule module: ModuleUtil.getModules( this, true ) ) {
-			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) {
-				break;
-			} else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
+		for( final BioModule module: ModuleUtil.getModules( this, true ) )
+			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) break;
+			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
 				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
 					+ " must run before the ParserModule." );
-		}
 	}
 
 	private String getSeqType() {
@@ -111,4 +119,6 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		return "r16s";
 
 	}
+
+	private File dbCache = null;
 }

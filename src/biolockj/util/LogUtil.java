@@ -34,20 +34,16 @@ public class LogUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static void syncModuleLogs( final ScriptModule module ) throws Exception {
-		if( module instanceof JavaModule && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) ) {
+		if( module instanceof JavaModule && Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) )
 			merge( cacheLog( getModuleLog( module ) ) );
-		}
 	}
 
 	private static List<String> cacheLog( final File log ) throws Exception {
 		final List<String> cache = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( log );
 		try {
-			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				if( !line.trim().isEmpty() && !getProfileLines().contains( line ) ) {
-					cache.add( line );
-				}
-			}
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+				if( !line.trim().isEmpty() && !getProfileLines().contains( line ) ) cache.add( line );
 		} finally {
 			reader.close();
 		}
@@ -61,16 +57,12 @@ public class LogUtil {
 	}
 
 	private static List<String> getProfileLines() {
-		if( profile.isEmpty() ) {
-			try {
-				final File bashProfile = new File( Config.requireString( null, Constants.USER_PROFILE ) );
-				if( bashProfile.isFile() ) {
-					profile.addAll( cacheLog( bashProfile ) );
-				}
-			} catch( final Exception ex ) {
-				Log.warn( LogUtil.class, "Config property [ " + Constants.USER_PROFILE
-					+ " ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile" );
-			}
+		if( profile.isEmpty() ) try {
+			final File bashProfile = new File( Config.requireString( null, Constants.USER_PROFILE ) );
+			if( bashProfile.isFile() ) profile.addAll( cacheLog( bashProfile ) );
+		} catch( final Exception ex ) {
+			Log.warn( LogUtil.class, "Config property [ " + Constants.USER_PROFILE
+				+ " ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile" );
 		}
 		return profile;
 	}
@@ -84,9 +76,8 @@ public class LogUtil {
 		FileUtils.copyFile( Log.getFile(), tempLog );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( tempLog, true ) );
 		try {
-			for( final String line: lines ) {
+			for( final String line: lines )
 				writer.write( line + Constants.RETURN );
-			}
 		} finally {
 			writer.close();
 		}

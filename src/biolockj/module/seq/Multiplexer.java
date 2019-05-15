@@ -68,13 +68,10 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 			} else if( this.totalNumFwReads > 0 ) {
 				sb.append( "# Samples multiplexed = " + this.fwMap.keySet().size() + RETURN );
 				sb.append( "# Total Reads = " + this.totalNumFwReads + RETURN );
-			} else {
-				sb.append( "Module incomplete - no output produced!" + RETURN );
-			}
+			} else sb.append( "Module incomplete - no output produced!" + RETURN );
 
-			if( this.rcCount > 0 ) {
+			if( this.rcCount > 0 )
 				sb.append( "# Reads saved with existing reverse compliment header barcode: " + this.rcCount + RETURN );
-			}
 
 		} catch( final Exception ex ) {
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
@@ -110,9 +107,8 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 	public void runModule() throws Exception {
 		Log.info( getClass(), "Multiplexing file type = " + Config.requireString( this, Constants.INTERNAL_SEQ_TYPE ) );
 
-		for( final File f: getInputFiles() ) {
+		for( final File f: getInputFiles() )
 			multiplex( f );
-		}
 
 		if( Config.getBoolean( this, DO_GZIP ) ) {
 			Log.warn( getClass(), "BioLockJ gzip data in: " + this.muxFiles );
@@ -171,19 +167,14 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 				if( seqLines.size() == SeqUtil.getNumLinesPerRead() ) // full read
 				{
 					writer.write( getHeader( sample, seqLines ) + RETURN );
-					for( int i = 1; i < seqLines.size(); i++ ) {
+					for( int i = 1; i < seqLines.size(); i++ )
 						writer.write( seqLines.get( i ) + RETURN );
-					}
 					seqLines.clear();
 				}
 			}
 		} finally {
-			if( writer != null ) {
-				writer.close();
-			}
-			if( reader != null ) {
-				reader.close();
-			}
+			if( writer != null ) writer.close();
+			if( reader != null ) reader.close();
 		}
 	}
 
@@ -199,13 +190,12 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 		final BioModule lastModule = Pipeline.getModules().get( modCount - 1 );
 		final BioModule penultimateModule = modCount > 1 ? Pipeline.getModules().get( modCount - 2 ): null;
 
-		if( lastModule.equals( this ) ) {
-			Log.info( getClass(), "Multiplexing seqs as final step in pipeline." );
-		} else if( lastModule instanceof Email && penultimateModule != null && penultimateModule.equals( this ) ) {
+		if( lastModule.equals( this ) ) Log.info( getClass(), "Multiplexing seqs as final step in pipeline." );
+		else if( lastModule instanceof Email && penultimateModule != null && penultimateModule.equals( this ) )
 			Log.info( getClass(), "Multiplexing seqs  as final step before sending email notification" );
-		} else if( nextModule instanceof ClassifierModule ) {
+		else if( nextModule instanceof ClassifierModule )
 			Log.info( getClass(), "Multiplexing seqs, before branching pipeline with new classifier" );
-		} else throw new Exception( "Invalid BioModule configuration! " + getClass().getName()
+		else throw new Exception( "Invalid BioModule configuration! " + getClass().getName()
 			+ " must be the last module executed in the pipeline branch (or last before Email)." + RETURN
 			+ "All other BioLockJ modules require demultiplexed data." );
 	}
@@ -221,19 +211,12 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 				gzipOS = new GZIPOutputStream( fos );
 				final byte[] buffer = new byte[ 1024 ];
 				int len;
-				while( ( len = fis.read( buffer ) ) != -1 ) {
+				while( ( len = fis.read( buffer ) ) != -1 )
 					gzipOS.write( buffer, 0, len );
-				}
 			} finally {
-				if( gzipOS != null ) {
-					gzipOS.close();
-				}
-				if( fos != null ) {
-					fos.close();
-				}
-				if( fis != null ) {
-					fis.close();
-				}
+				if( gzipOS != null ) gzipOS.close();
+				if( fos != null ) fos.close();
+				if( fis != null ) fis.close();
 			}
 		}
 	}
@@ -247,15 +230,11 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 
 	private long getNumReads( final File file ) throws Exception {
 		Long numReads = null;
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) ) {
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
 			numReads = this.rvMap.get( file.getName() );
-		} else {
-			numReads = this.fwMap.get( file.getName() );
-		}
+		else numReads = this.fwMap.get( file.getName() );
 
-		if( numReads == null ) {
-			numReads = 0L;
-		}
+		if( numReads == null ) numReads = 0L;
 		return numReads;
 	}
 
@@ -275,10 +254,9 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 	}
 
 	private void removeDecompressedFiles() {
-		for( final String path: this.muxFiles ) {
+		for( final String path: this.muxFiles )
 			new File( path ).delete();
-			// BioLockJUtil.deleteWithRetry( new File( path ), 5 );
-		}
+		// BioLockJUtil.deleteWithRetry( new File( path ), 5 );
 	}
 
 	private final Map<String, Long> fwMap = new HashMap<>();

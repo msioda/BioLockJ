@@ -63,9 +63,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 				}
 			}
 
-			if( addFinalBatch( sampleCount ) ) {
-				data.add( getBatch( lines, batchNum, startIndex ) );
-			}
+			if( addFinalBatch( sampleCount ) ) data.add( getBatch( lines, batchNum, startIndex ) );
 		}
 
 		return data;
@@ -105,9 +103,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
 		if( !DockerUtil.inDockerEnv() && ( SeqUtil.isMultiplexed()
-			|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( this, SCRIPT_BATCH_SIZE ) ) ) {
+			|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( this, SCRIPT_BATCH_SIZE ) ) )
 			postReqs.add( MergeQiimeOtuTables.class.getName() );
-		}
 
 		postReqs.addAll( super.getPostRequisiteModules() );
 
@@ -177,9 +174,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 */
 	protected File getBatchDir( final int batchNum ) {
 		final File dir = new File( getTempDir().getAbsolutePath() + File.separator + "batch_" + batchNum );
-		if( !dir.isDirectory() ) {
-			dir.mkdirs();
-		}
+		if( !dir.isDirectory() ) dir.mkdirs();
 		return dir;
 	}
 
@@ -191,9 +186,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 */
 	protected File getBatchFastaDir( final int batchNum ) {
 		final File f = new File( getBatchDir( batchNum ) + File.separator + Constants.FASTA );
-		if( !f.isFile() ) {
-			f.mkdirs();
-		}
+		if( !f.isFile() ) f.mkdirs();
 		return f;
 	}
 

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import biolockj.Config;
 import biolockj.Constants;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.DockerUtil;
@@ -112,21 +114,9 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	}
 
 	@Override
-	public File getDB() throws Exception {
+	public File getDB() throws ConfigNotFoundException, ConfigPathException {
 		if( DockerUtil.inDockerEnv() ) return new File( Config.requireString( this, KRAKEN_DATABASE ) );
 		return Config.requireExistingDir( this, KRAKEN_DATABASE );
-	}
-
-	/**
-	 * Get the DB directory
-	 * 
-	 * @return DB Dir
-	 * @throws Exception if errors occur
-	 */
-	public File getKrakenDB() throws Exception {
-		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
-		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
-		return getDB();
 	}
 
 	/**
@@ -144,23 +134,21 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
+	private File getKrakenDB() throws ConfigPathException, ConfigNotFoundException {
+		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		return getDB();
+	}
+
 	private String getParams() throws Exception {
 		if( this.defaultSwitches == null ) {
 			final List<String> classifierParams = getClassifierParams();
 			final String params = BioLockJUtil.join( classifierParams );
 
-			if( params.contains( FASTA_PARAM ) ) {
-				classifierParams.remove( FASTA_PARAM );
-			}
-			if( params.contains( FASTQ_PARAM ) ) {
-				classifierParams.remove( FASTQ_PARAM );
-			}
-			if( params.contains( USE_NAMES_PARAM ) ) {
-				classifierParams.remove( USE_NAMES_PARAM );
-			}
-			if( params.contains( USE_MPA_PARAM ) ) {
-				classifierParams.remove( USE_MPA_PARAM );
-			}
+			if( params.contains( FASTA_PARAM ) ) classifierParams.remove( FASTA_PARAM );
+			if( params.contains( FASTQ_PARAM ) ) classifierParams.remove( FASTQ_PARAM );
+			if( params.contains( USE_NAMES_PARAM ) ) classifierParams.remove( USE_NAMES_PARAM );
+			if( params.contains( USE_MPA_PARAM ) ) classifierParams.remove( USE_MPA_PARAM );
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
 					+ getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
@@ -191,13 +179,10 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	// method calculates mean need by the module.
 	private String getWorkerFunctionParams() throws Exception {
 		String params = " " + getParams();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-			params += PAIRED_PARAM;
-		}
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
 
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) ) {
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;
-		}
 		return params;
 	}
 

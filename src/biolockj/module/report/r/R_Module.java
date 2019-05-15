@@ -65,9 +65,7 @@ public abstract class R_Module extends ScriptModuleImpl {
 	@Override
 	public void executeTask() throws Exception {
 		writePrimaryScript();
-		if( DockerUtil.inDockerEnv() ) {
-			BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
-		}
+		if( DockerUtil.inDockerEnv() ) BashScriptBuilder.buildScripts( this, buildDockerBashScript() );
 	}
 
 	/**
@@ -104,9 +102,8 @@ public abstract class R_Module extends ScriptModuleImpl {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) ) {
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) )
 			preReqs.add( getMetaMergedModule() );
-		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
@@ -132,35 +129,28 @@ public abstract class R_Module extends ScriptModuleImpl {
 		try {
 
 			final Map<String, Integer> map = new HashMap<>();
-			for( final File file: getOutputDir().listFiles() ) {
-				if( !file.isFile() ) {
-					continue;
-				} else if( file.getName().indexOf( "." ) > -1 ) {
+			for( final File file: getOutputDir().listFiles() )
+				if( !file.isFile() ) continue;
+				else if( file.getName().indexOf( "." ) > -1 ) {
 					final String ext = file.getName().substring( file.getName().lastIndexOf( "." ) + 1 );
-					if( map.get( ext ) == null ) {
-						map.put( ext, 0 );
-					}
+					if( map.get( ext ) == null ) map.put( ext, 0 );
 
 					map.put( ext, map.get( ext ) + 1 );
 				} else {
-					if( map.get( "none" ) == null ) {
-						map.put( "none", 0 );
-					}
+					if( map.get( "none" ) == null ) map.put( "none", 0 );
 
 					map.put( "none", map.get( "none" ) + 1 );
 				}
-			}
 
 			final File rScript = getPrimaryScript();
-			if( DockerUtil.inAwsEnv() && ( rScript == null || !rScript.isFile() ) ) {
+			if( DockerUtil.inAwsEnv() && ( rScript == null || !rScript.isFile() ) )
 				sb.append( "Failed to generate R Script!" + RETURN );
-			} else {
+			else {
 				sb.append( getClass().getSimpleName() + ( getErrors().isEmpty() ? " successful": " failed" ) + ": "
 					+ rScript.getAbsolutePath() + RETURN );
 
-				for( final String ext: map.keySet() ) {
+				for( final String ext: map.keySet() )
 					sb.append( "Generated " + map.get( ext ) + " " + ext + " files" + RETURN );
-				}
 
 				if( Config.getBoolean( this, R_DEBUG ) ) {
 					final IOFileFilter ff = new WildcardFileFilter( "*" + LOG_EXT );
@@ -227,9 +217,8 @@ public abstract class R_Module extends ScriptModuleImpl {
 	 */
 	protected List<String> getStatPreReqs() throws Exception {
 		final List<String> preReqs = super.getPreRequisiteModules();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) ) {
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
 			preReqs.add( ModuleUtil.getDefaultStatsModule() );
-		}
 		return preReqs;
 	}
 
@@ -258,13 +247,10 @@ public abstract class R_Module extends ScriptModuleImpl {
 		errors.append( INDENT + "R Script Errors:" + RETURN );
 		final BufferedReader reader = BioLockJUtil.getFileReader( scriptsFailed.iterator().next() );
 		try {
-			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				errors.append( INDENT + line + RETURN );
-			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 		errors.append( INDENT + rSpacer + RETURN );
 		return errors.toString();
@@ -322,20 +308,15 @@ public abstract class R_Module extends ScriptModuleImpl {
 		while( st.hasMoreTokens() ) {
 			final String line = st.nextToken();
 
-			if( line.equals( "}" ) ) {
-				indentCount--;
-			}
+			if( line.equals( "}" ) ) indentCount--;
 
 			int i = 0;
-			while( i++ < indentCount ) {
+			while( i++ < indentCount )
 				writer.write( INDENT );
-			}
 
 			writer.write( line + Constants.RETURN );
 
-			if( line.endsWith( "{" ) ) {
-				indentCount++;
-			}
+			if( line.endsWith( "{" ) ) indentCount++;
 		}
 
 		writer.close();

@@ -41,9 +41,7 @@ public class MemoryUtil {
 					+ getFreeMemoryInMiB() + ", ∆Free: " + getChangeFormatted( free, prevFree ) );
 			prevTotal = total;
 			prevFree = free;
-		} else {
-			Log.debug( MemoryUtil.class, msg + " no change" );
-		}
+		} else Log.debug( MemoryUtil.class, msg + " no change" );
 	}
 
 	private static double bytesToMiB( final long val ) {

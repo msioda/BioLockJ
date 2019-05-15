@@ -43,22 +43,16 @@ public class FatalExceptionHandler {
 			setErrorLog( Log.getFile() );
 			setFailedStatus();
 			SummaryUtil.addSummaryFooterForFailedPipeline();
-		} else {
-			setErrorLog( createErrorLog() );
-		}
+		} else setErrorLog( createErrorLog() );
 
 		logFatalException( args, ex );
 
 		if( getErrorLog() != null ) {
 			Log.info( FatalExceptionHandler.class,
 				"Local file-system error log path: " + getErrorLog().getAbsolutePath() );
-			if( DockerUtil.inDockerEnv() ) {
-				Log.info( FatalExceptionHandler.class, "Host file-system error log path: "
-					+ RuntimeParamUtil.getDockerHostHomeDir() + File.separator + getErrorLog().getName() );
-			}
-			if( !getErrorLog().isFile() ) {
-				dumpLogs( getLogs() );
-			}
+			if( DockerUtil.inDockerEnv() ) Log.info( FatalExceptionHandler.class, "Host file-system error log path: "
+				+ RuntimeParamUtil.getDockerHostHomeDir() + File.separator + getErrorLog().getName() );
+			if( !getErrorLog().isFile() ) dumpLogs( getLogs() );
 		} else {
 			Log.warn( FatalExceptionHandler.class, "Unable to save logs to file-system: " );
 			printLogsOnScreen( getLogs() );
@@ -73,10 +67,9 @@ public class FatalExceptionHandler {
 		int i = 0;
 		File file = new File(
 			dir.getAbsolutePath() + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT );
-		while( file.exists() ) {
+		while( file.exists() )
 			file = new File( dir.getAbsolutePath() + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + "_"
 				+ new Integer( ++i ).toString() + Constants.LOG_EXT );
-		}
 		return file;
 	}
 
@@ -84,17 +77,14 @@ public class FatalExceptionHandler {
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter( new FileWriter( getErrorLog() ) );
-			for( final String line: lines ) {
+			for( final String line: lines )
 				writer.write( line );
-			}
 		} catch( final Exception ex ) {
 			System.out.println( "Failed to write to: " + getErrorLog().getAbsolutePath() + " : " + ex.getMessage() );
 			ex.printStackTrace();
 		} finally {
 			try {
-				if( writer != null ) {
-					writer.close();
-				}
+				if( writer != null ) writer.close();
 			} catch( final IOException ex ) {
 				System.out.println(
 					"Failed to close writer for: " + getErrorLog().getAbsolutePath() + " : " + ex.getMessage() );
@@ -104,19 +94,13 @@ public class FatalExceptionHandler {
 
 	private static File getErrorLogDir() {
 		File dir = RuntimeParamUtil.getBaseDir();
-		if( dir == null || !dir.isDirectory() ) {
-			if( DockerUtil.inDockerEnv() ) {
-				dir = new File( DockerUtil.BLJ_HOST_HOME );
-			} else {
-				dir = RuntimeParamUtil.getHomeDir();
-			}
-		}
+		if( dir == null || !dir.isDirectory() )
+			if( DockerUtil.inDockerEnv() ) dir = new File( DockerUtil.BLJ_HOST_HOME );
+			else dir = RuntimeParamUtil.getHomeDir();
 
 		if( dir == null || !dir.isDirectory() ) {
 			final String path = Config.replaceEnvVar( "${HOME}" );
-			if( path != null && !path.isEmpty() ) {
-				dir = new File( path );
-			}
+			if( path != null && !path.isEmpty() ) dir = new File( path );
 		}
 
 		if( dir == null || !dir.isDirectory() ) {
@@ -137,18 +121,10 @@ public class FatalExceptionHandler {
 	private static List<String> getLogs() {
 		final List<String> lines = new ArrayList<>();
 		for( final String[] m: Log.getMsgs() ) {
-			if( m[ 0 ].equals( Log.DEBUG ) ) {
-				lines.add( "[ " + Log.DEBUG + " ] " + m[ 1 ] + Constants.RETURN );
-			}
-			if( m[ 0 ].equals( Log.INFO ) ) {
-				lines.add( "[ " + Log.INFO + " ] " + m[ 1 ] + Constants.RETURN );
-			}
-			if( m[ 0 ].equals( Log.WARN ) ) {
-				lines.add( "[ " + Log.WARN + " ] " + m[ 1 ] + Constants.RETURN );
-			}
-			if( m[ 0 ].equals( Log.ERROR ) ) {
-				lines.add( "[ " + Log.ERROR + " ] " + m[ 1 ] + Constants.RETURN );
-			}
+			if( m[ 0 ].equals( Log.DEBUG ) ) lines.add( "[ " + Log.DEBUG + " ] " + m[ 1 ] + Constants.RETURN );
+			if( m[ 0 ].equals( Log.INFO ) ) lines.add( "[ " + Log.INFO + " ] " + m[ 1 ] + Constants.RETURN );
+			if( m[ 0 ].equals( Log.WARN ) ) lines.add( "[ " + Log.WARN + " ] " + m[ 1 ] + Constants.RETURN );
+			if( m[ 0 ].equals( Log.ERROR ) ) lines.add( "[ " + Log.ERROR + " ] " + m[ 1 ] + Constants.RETURN );
 		}
 		return lines;
 	}
@@ -166,9 +142,8 @@ public class FatalExceptionHandler {
 	}
 
 	private static void printLogsOnScreen( final List<String> lines ) {
-		for( final String line: lines ) {
+		for( final String line: lines )
 			System.out.println( line );
-		}
 	}
 
 	private static void setErrorLog( final File file ) {
@@ -177,9 +152,8 @@ public class FatalExceptionHandler {
 
 	private static void setFailedStatus() {
 		try {
-			if( Config.getPipelineDir() != null ) {
+			if( Config.getPipelineDir() != null )
 				BioLockJUtil.createFile( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
-			}
 		} catch( final Exception ex ) {
 			Log.error( FatalExceptionHandler.class,
 				"Pipeline root directory not found - unable save Pipeline Status File: " + Constants.BLJ_FAILED + " : "

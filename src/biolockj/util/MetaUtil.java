@@ -16,6 +16,7 @@ import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.exception.ConfigPathException;
 import biolockj.exception.MetadataException;
 import biolockj.module.BioModule;
 
@@ -59,13 +60,11 @@ public class MetaUtil {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
 				final String id = st.nextToken();
-				if( sampleIds.contains( id ) ) {
+				if( sampleIds.contains( id ) )
 					writer.write( line + Constants.TAB_DELIM + map.get( id ) + Constants.RETURN );
-				} else if( !removeMissingIds ) {
+				else if( !removeMissingIds )
 					writer.write( line + Constants.TAB_DELIM + getNullValue( null ) + Constants.RETURN );
-				} else {
-					Log.warn( MetaUtil.class, getRemoveIdMsg( id ) );
-				}
+				else Log.warn( MetaUtil.class, getRemoveIdMsg( id ) );
 
 			}
 		} finally {
@@ -151,9 +150,8 @@ public class MetaUtil {
 
 		for( final String id: getSampleIds() ) {
 			final String val = getField( id, field );
-			if( val != null && val.trim().length() > 0 && !val.equals( getNullValue( null ) ) || !ignoreNulls ) {
+			if( val != null && val.trim().length() > 0 && !val.equals( getNullValue( null ) ) || !ignoreNulls )
 				vals.add( val );
-			}
 		}
 
 		return vals;
@@ -237,9 +235,9 @@ public class MetaUtil {
 			if( Config.getString( null, META_FILE_PATH ) == null ) return null;
 			if( DockerUtil.inDockerEnv() ) {
 				setFile( DockerUtil.getDockerVolumeFile( META_FILE_PATH, DockerUtil.DOCKER_META_DIR ) );
-			} else {
-				setFile( new File( Config.getString( null, META_FILE_PATH ) ) );
-			}
+				if( !metadataFile.isFile() )
+					throw new ConfigPathException( metadataFile, "Metadata file not found in Docker container" );
+			} else setFile( new File( Config.getString( null, META_FILE_PATH ) ) );
 			Log.debug( MetaUtil.class, "Returning new metadata file path: " + getPath() );
 		} catch( final Exception ex ) {
 			throw new MetadataException( "Faile to get handle to metadata file:  " + ex.getMessage() );
@@ -262,9 +260,7 @@ public class MetaUtil {
 				"Undefined prop: " + META_NULL_VALUE + " set to default val: " + DEFAULT_NULL_VALUE );
 			metaNullVal = DEFAULT_NULL_VALUE;
 			Config.setConfigProperty( META_COLUMN_DELIM, metaNullVal );
-		} else {
-			metaNullVal = Config.getString( module, META_NULL_VALUE );
-		}
+		} else metaNullVal = Config.getString( module, META_NULL_VALUE );
 
 		return metaNullVal;
 	}
@@ -304,9 +300,7 @@ public class MetaUtil {
 	public static List<String> getSampleIds() {
 		final List<String> ids = new ArrayList<>();
 		for( final String key: metadataMap.keySet() )
-			if( !key.equals( metaId ) ) {
-				ids.add( key );
-			}
+			if( !key.equals( metaId ) ) ids.add( key );
 		Collections.sort( ids );
 		return ids;
 	}
@@ -371,13 +365,11 @@ public class MetaUtil {
 		Log.info( MetaUtil.class,
 			"Initialize metadata property [ " + META_NULL_VALUE + " ] = " + getNullValue( null ) );
 
-		if( Config.getString( null, META_COLUMN_DELIM ) == null ) {
+		if( Config.getString( null, META_COLUMN_DELIM ) == null )
 			Config.setConfigProperty( META_COLUMN_DELIM, DEFAULT_COL_DELIM );
-		}
 
-		if( Config.getString( null, META_COMMENT_CHAR ) == null ) {
+		if( Config.getString( null, META_COMMENT_CHAR ) == null )
 			Config.setConfigProperty( META_COMMENT_CHAR, DEFAULT_COMMENT_CHAR );
-		}
 
 		final String commentChar = Config.getString( null, META_COMMENT_CHAR );
 		if( commentChar != null && commentChar.length() > 1 ) throw new MetadataException(
@@ -400,15 +392,11 @@ public class MetaUtil {
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
-			if( !DockerUtil.isDirectMode() ) {
-				report();
-			}
+			if( !DockerUtil.isDirectMode() ) report();
 
 			reportedMetadata = getMetadata();
-		} else {
-			Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
-				+ ( getMetadata() == null ? "<NO_METADATA_PATH>": getPath() ) );
-		}
+		} else Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
+			+ ( getMetadata() == null ? "<NO_METADATA_PATH>": getPath() ) );
 	}
 
 	/**
@@ -425,9 +413,7 @@ public class MetaUtil {
 		File myDir = fileDir;
 		if( fileDir == null ) {
 			myDir = new File( Config.pipelinePath() + File.separator + ".temp" );
-			if( !myDir.isDirectory() ) {
-				myDir.mkdirs();
-			}
+			if( !myDir.isDirectory() ) myDir.mkdirs();
 		}
 
 		if( !getFieldNames().contains( colName ) ) {
@@ -448,9 +434,7 @@ public class MetaUtil {
 				writer.write( st.nextToken() );
 				while( st.hasMoreTokens() ) {
 					final String token = st.nextToken();
-					if( i++ != index ) {
-						writer.write( Constants.TAB_DELIM + token );
-					}
+					if( i++ != index ) writer.write( Constants.TAB_DELIM + token );
 				}
 				writer.write( Constants.RETURN );
 			}
@@ -470,9 +454,8 @@ public class MetaUtil {
 	 */
 	public static void setFile( final File file ) throws MetadataException {
 		if( file == null ) throw new MetadataException( "Cannot pass NULL to MetaUtil.setFile( file )" );
-		if( metadataFile != null && file.getAbsolutePath().equals( getPath() ) ) {
+		if( metadataFile != null && file.getAbsolutePath().equals( getPath() ) )
 			Log.debug( MetaUtil.class, "===> MetaUtil.setFile() not required, no changes to: " + getPath() );
-		}
 		BioLockJUtil.ignoreFile( file );
 		metadataFile = file;
 	}
@@ -485,18 +468,12 @@ public class MetaUtil {
 			final String id = row.get( 0 );
 			if( rowNum == 0 ) {
 				metaId = id;
-				if( isUpdated() ) {
-					Log.debug( MetaUtil.class, "Metadata Headers: " + row );
-				}
-			} else if( rowNum == 1 && isUpdated() ) {
-				Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
-			}
+				if( isUpdated() ) Log.debug( MetaUtil.class, "Metadata Headers: " + row );
+			} else if( rowNum == 1 && isUpdated() ) Log.debug( MetaUtil.class, "Metadata Record (1st Row): " + row );
 
 			if( id != null && !id.equals( getNullValue( null ) ) ) {
 				row.remove( 0 );
-				if( isUpdated() ) {
-					Log.debug( MetaUtil.class, "metadataMap add: " + id + " = " + row );
-				}
+				if( isUpdated() ) Log.debug( MetaUtil.class, "metadataMap add: " + id + " = " + row );
 				metadataMap.put( id, row );
 			}
 			rowNum++;
@@ -514,9 +491,7 @@ public class MetaUtil {
 						return msg + "No valid seqs remain in: " + seqFile.getName();
 				}
 				msg += "Sample not found in pipeline input dirs: " + dirs;
-			} else {
-				msg += "Sample not referenced in pipeline inputs: " + dirs;
-			}
+			} else msg += "Sample not referenced in pipeline inputs: " + dirs;
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class,
 				"Failed to generate log message with reason why a Sample removed from metadata column", ex );
@@ -542,27 +517,19 @@ public class MetaUtil {
 		try {
 			reader = BioLockJUtil.getFileReader( getMetadata() );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				if( isUpdated() ) {
-					Log.debug( MetaUtil.class, "===> Meta line: " + line );
-				}
+				if( isUpdated() ) Log.debug( MetaUtil.class, "===> Meta line: " + line );
 				final ArrayList<String> record = new ArrayList<>();
 				final String[] cells = line.split( Constants.TAB_DELIM, -1 );
-				for( final String cell: cells ) {
-					if( cell == null || cell.trim().isEmpty() ) {
-						record.add( getNullValue( null ) );
-					} else {
-						record.add( removeComments( cell.trim() ) );
-					}
-				}
+				for( final String cell: cells )
+					if( cell == null || cell.trim().isEmpty() ) record.add( getNullValue( null ) );
+					else record.add( removeComments( cell.trim() ) );
 				data.add( record );
 			}
 		} catch( final Exception ex ) {
 			Log.error( MetaUtil.class, "Error occurrred parsing metadata file!", ex );
 		} finally {
 			try {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			} catch( final IOException ex ) {
 				Log.error( MetaUtil.class, "Failed to close file reader", ex );
 			}

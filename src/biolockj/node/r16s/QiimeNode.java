@@ -70,27 +70,24 @@ public class QiimeNode extends OtuNodeImpl {
 	 * @throws Exception if the taxa delim is undefined
 	 */
 	protected String getLevel( final String taxa ) throws Exception {
-		for( final String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA ) {
+		for( final String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA )
 			if( taxa.startsWith( abmiguousDelim ) ) return null;
-		}
 
-		if( delimToLevelMap.isEmpty() ) {
-			if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null ) {
-				delimToLevelMap.clear();
-				levelDelimSize = 5;
-				DOMAIN_DELIM = SILVA_DOMAIN_DELIM;
-				PHYLUM_DELIM = SILVA_PHYLUM_DELIM;
-				CLASS_DELIM = SILVA_CLASS_DELIM;
-				ORDER_DELIM = SILVA_ORDER_DELIM;
-				FAMILY_DELIM = SILVA_FAMILY_DELIM;
-				GENUS_DELIM = SILVA_GENUS_DELIM;
-				SPECIES_DELIM = SILVA_SPECIES_DELIM;
+		if( delimToLevelMap.isEmpty() ) if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null ) {
+			delimToLevelMap.clear();
+			levelDelimSize = 5;
+			DOMAIN_DELIM = SILVA_DOMAIN_DELIM;
+			PHYLUM_DELIM = SILVA_PHYLUM_DELIM;
+			CLASS_DELIM = SILVA_CLASS_DELIM;
+			ORDER_DELIM = SILVA_ORDER_DELIM;
+			FAMILY_DELIM = SILVA_FAMILY_DELIM;
+			GENUS_DELIM = SILVA_GENUS_DELIM;
+			SPECIES_DELIM = SILVA_SPECIES_DELIM;
 
-				final String delim = taxa.substring( 0, levelDelimSize );
-				if( delimToLevelMap().get( delim ) == null ) throw new Exception(
-					"Taxa delim [ " + delim + " ] is undefined in: " + getSampleId() + ": " + taxa );
+			final String delim = taxa.substring( 0, levelDelimSize );
+			if( delimToLevelMap().get( delim ) == null )
+				throw new Exception( "Taxa delim [ " + delim + " ] is undefined in: " + getSampleId() + ": " + taxa );
 
-			}
 		}
 
 		return delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) );

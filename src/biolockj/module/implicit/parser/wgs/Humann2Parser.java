@@ -45,22 +45,16 @@ public class Humann2Parser extends ParserModuleImpl {
 
 		String summary = SummaryUtil.getOutputDirSummary( this )
 			+ ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
-		if( this.numPathwayAbund != null ) {
+		if( this.numPathwayAbund != null )
 			summary += BioLockJUtil.addTrailingSpaces( longestLabel, pad ) + this.numPathwayAbund + RETURN;
-		}
-		if( this.numPathwayCovg != null ) {
-			summary += BioLockJUtil.addTrailingSpaces( "# Coverage File Pathways:", pad ) + this.numPathwayCovg
-				+ RETURN;
-		}
-		if( this.numGeneFamilies != null ) {
+		if( this.numPathwayCovg != null ) summary += BioLockJUtil.addTrailingSpaces( "# Coverage File Pathways:", pad )
+			+ this.numPathwayCovg + RETURN;
+		if( this.numGeneFamilies != null )
 			summary += BioLockJUtil.addTrailingSpaces( "# Gene Families:", pad ) + this.numGeneFamilies + RETURN;
-		}
-		if( !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) ) {
+		if( !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) )
 			summary += "UNMAPPED column discarded from output tables" + RETURN;
-		}
-		if( !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) ) {
+		if( !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) )
 			summary += "UNINTEGRATED column discarded from output tables" + RETURN;
-		}
 
 		return summary;
 	}
@@ -91,22 +85,16 @@ public class Humann2Parser extends ParserModuleImpl {
 				boolean headerRow = true;
 				final Set<Integer> skipCols = new HashSet<>();
 				for( final String[] record: data ) {
-					if( this.numSamples == null ) {
-						count++;
-					}
+					if( this.numSamples == null ) count++;
 					boolean newRecord = true;
 					for( int i = 0; i < record.length; i++ ) {
 						final String cell = BioLockJUtil.removeQuotes( record[ i ] );
-						if( headerRow && cell.equals( UNMAPPED ) && !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) ) {
+						if( headerRow && cell.equals( UNMAPPED ) && !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) )
 							skipCols.add( i );
-						} else if( headerRow && cell.equals( UNINTEGRATED )
-							&& !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) ) {
-							skipCols.add( i );
-						} else if( skipCols.contains( i ) ) {
-							skipCols.add( i );
-						} else {
-							writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + cell );
-						}
+						else if( headerRow && cell.equals( UNINTEGRATED )
+							&& !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) ) skipCols.add( i );
+						else if( skipCols.contains( i ) ) skipCols.add( i );
+						else writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + cell );
 
 						newRecord = false;
 					}
@@ -117,16 +105,13 @@ public class Humann2Parser extends ParserModuleImpl {
 				writer.close();
 			}
 
-			if( this.numSamples == null ) {
-				this.numSamples = count;
-			}
-			if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_ABUND_SUM ) ) {
+			if( this.numSamples == null ) this.numSamples = count;
+			if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_ABUND_SUM ) )
 				this.numPathwayAbund = data[ 0 ].length - 1;
-			} else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_COVG_SUM ) ) {
+			else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_PATH_COVG_SUM ) )
 				this.numPathwayCovg = data[ 0 ].length - 1;
-			} else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_GENE_FAM_SUM ) ) {
+			else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_GENE_FAM_SUM ) )
 				this.numGeneFamilies = data[ 0 ].length - 1;
-			}
 
 			MemoryUtil.reportMemoryUsage( "Parsed " + file.getAbsolutePath() );
 		}
@@ -142,13 +127,9 @@ public class Humann2Parser extends ParserModuleImpl {
 		boolean firstRecord = true;
 		for( final List<String> row: data ) {
 			final ArrayList<String> record = new ArrayList<>();
-			if( firstRecord ) {
-				for( final String cell: row ) {
-					record.add( record.isEmpty() ? MetaUtil.getID(): getSampleID( cell ) );
-				}
-			} else {
-				record.addAll( row );
-			}
+			if( firstRecord ) for( final String cell: row )
+				record.add( record.isEmpty() ? MetaUtil.getID(): getSampleID( cell ) );
+			else record.addAll( row );
 
 			output.add( record );
 			firstRecord = false;
@@ -159,21 +140,11 @@ public class Humann2Parser extends ParserModuleImpl {
 
 	private static String getSampleID( final String name ) {
 		String id = name;
-		if( id.contains( PAIRED_SUFFIX ) ) {
-			id = id.replace( PAIRED_SUFFIX, "" );
-		}
-		if( id.contains( KD_SUFFIX ) ) {
-			id = id.replace( KD_SUFFIX, "" );
-		}
-		if( id.contains( ABUND_SUFFIX ) ) {
-			id = id.replace( ABUND_SUFFIX, "" );
-		}
-		if( id.contains( COVERAGE_SUFFIX ) ) {
-			id = id.replace( COVERAGE_SUFFIX, "" );
-		}
-		if( id.contains( RPK_SUFFIX ) ) {
-			id = id.replace( RPK_SUFFIX, "" );
-		}
+		if( id.contains( PAIRED_SUFFIX ) ) id = id.replace( PAIRED_SUFFIX, "" );
+		if( id.contains( KD_SUFFIX ) ) id = id.replace( KD_SUFFIX, "" );
+		if( id.contains( ABUND_SUFFIX ) ) id = id.replace( ABUND_SUFFIX, "" );
+		if( id.contains( COVERAGE_SUFFIX ) ) id = id.replace( COVERAGE_SUFFIX, "" );
+		if( id.contains( RPK_SUFFIX ) ) id = id.replace( RPK_SUFFIX, "" );
 
 		return id;
 	}
@@ -191,11 +162,9 @@ public class Humann2Parser extends ParserModuleImpl {
 
 		final String transpose[][] = new String[ n ][ m ];
 
-		for( int c = 0; c < m; c++ ) {
-			for( int d = 0; d < n; d++ ) {
+		for( int c = 0; c < m; c++ )
+			for( int d = 0; d < n; d++ )
 				transpose[ d ][ c ] = data.get( c ).get( d );
-			}
-		}
 
 		return transpose;
 	}

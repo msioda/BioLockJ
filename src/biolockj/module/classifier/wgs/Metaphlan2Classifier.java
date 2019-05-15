@@ -15,6 +15,8 @@ import java.io.File;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
@@ -104,15 +106,14 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getClassifierParams() throws Exception {
 		final List<String> params = Config.getList( this, EXE_METAPHLAN_PARAMS );
-		if( Config.getString( this, METAPHLAN2_DB ) != null ) {
+		if( Config.getString( this, METAPHLAN2_DB ) != null )
 			params.add( ALT_DB_PARAM + " " + getMpaDB().getAbsolutePath() );
-		}
 
 		return params;
 	}
 
 	@Override
-	public File getDB() throws Exception {
+	public File getDB() throws ConfigPathException, ConfigNotFoundException {
 		final String path = Config.getString( this, METAPHLAN2_DB );
 		if( path == null ) return null;
 		if( DockerUtil.inDockerEnv() ) return new File( path );
@@ -165,9 +166,8 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 			this.defaultSwitches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM )
 				+ "-t rel_ab_w_read_stats ";
 
-			if( TaxaUtil.getTaxaLevels().size() == 1 ) {
+			if( TaxaUtil.getTaxaLevels().size() == 1 )
 				this.defaultSwitches += "--tax_lev " + this.taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
-			}
 		}
 
 		return this.defaultSwitches;

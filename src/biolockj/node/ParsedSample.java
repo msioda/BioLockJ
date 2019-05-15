@@ -86,9 +86,7 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 
 		final TreeMap<String, Integer> fullPathOtuCounts = new TreeMap<>();
 		for( String otu: this.otuCounts.keySet() ) {
-			if( otu.isEmpty() ) {
-				continue;
-			}
+			if( otu.isEmpty() ) continue;
 
 			final Set<String> kids = getChildren( fullPathOtuCounts, otu );
 			final int otuCount = this.otuCounts.get( otu );
@@ -99,22 +97,17 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 				final int totalCount = totalCount( fullPathOtuCounts, kids );
 				if( totalCount < otuCount ) {
 					String parentTaxa = null;
-					for( final String level: TaxaUtil.getTaxaLevelSpan() ) {
-						if( otu.contains( level ) ) {
-							parentTaxa = TaxaUtil.getTaxaName( otu, level );
-						} else if( parentTaxa != null ) {
-							otu += Constants.SEPARATOR
-								+ OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
-						}
-					}
+					for( final String level: TaxaUtil.getTaxaLevelSpan() )
+						if( otu.contains( level ) ) parentTaxa = TaxaUtil.getTaxaName( otu, level );
+						else if( parentTaxa != null ) otu += Constants.SEPARATOR
+							+ OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
 
 					final int diff = otuCount - totalCount;
 					fullPathOtuCounts.put( otu, diff );
 					Log.debug( getClass(),
 						"Add parent remainder count [ " + this.sampleId + " ] Unclassified OTU: " + otu + "=" + diff );
-				} else if( otuCount >= totalCount ) {
+				} else if( otuCount >= totalCount )
 					Log.debug( getClass(), "Ignore [" + this.sampleId + " ] Parent OTU " + otu + "=" + otuCount );
-				}
 			}
 		}
 		this.otuCounts = null;
@@ -132,19 +125,15 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 
 	private static Set<String> getChildren( final TreeMap<String, Integer> otuCounts, final String otu ) {
 		final Set<String> kids = new HashSet<>();
-		for( final String key: otuCounts.keySet() ) {
-			if( key.contains( otu ) ) {
-				kids.add( key );
-			}
-		}
+		for( final String key: otuCounts.keySet() )
+			if( key.contains( otu ) ) kids.add( key );
 		return kids;
 	}
 
 	private static int totalCount( final TreeMap<String, Integer> otuCounts, final Set<String> otus ) {
 		int count = 0;
-		for( final String otu: otus ) {
+		for( final String otu: otus )
 			count += otuCounts.get( otu );
-		}
 		return count;
 	}
 

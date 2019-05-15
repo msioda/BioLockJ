@@ -28,12 +28,10 @@ public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModul
 	 */
 	@Override
 	public List<File> getInputFiles() {
-		if( getFileCache().isEmpty() ) {
-			try {
-				cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
-			} catch( final SequnceFormatException ex ) {
-				Log.error( getClass(), "Unable to find module input sequence files: " + ex.getMessage(), ex );
-			}
+		if( getFileCache().isEmpty() ) try {
+			cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+		} catch( final SequnceFormatException ex ) {
+			Log.error( getClass(), "Unable to find module input sequence files: " + ex.getMessage(), ex );
 		}
 		return getFileCache();
 	}

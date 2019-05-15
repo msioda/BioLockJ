@@ -83,24 +83,17 @@ public class SummaryUtil {
 				+ BioLockJUtil.formatNumericOutput( vals.last(), false ) + RETURN;
 
 			Long sum = 0L;
-			for( final long val: vals ) {
+			for( final long val: vals )
 				sum += val;
-			}
 
-			if( addTotal ) {
-				msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (total):", pad )
-					+ BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
-			}
+			if( addTotal ) msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (total):", pad )
+				+ BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
 			if( !vals.first().equals( vals.last() ) ) {
 				final Set<String> minSamples = new HashSet<>();
 				final Set<String> maxSamples = new HashSet<>();
 				for( final String id: map.keySet() ) {
-					if( map.get( id ).equals( vals.first().toString() ) ) {
-						minSamples.add( id );
-					}
-					if( map.get( id ).equals( vals.last().toString() ) ) {
-						maxSamples.add( id );
-					}
+					if( map.get( id ).equals( vals.first().toString() ) ) minSamples.add( id );
+					if( map.get( id ).equals( vals.last().toString() ) ) maxSamples.add( id );
 				}
 
 				msg += BioLockJUtil.addTrailingSpaces( "IDs w/ min " + label + ":", pad ) + minSamples + RETURN;
@@ -152,9 +145,8 @@ public class SummaryUtil {
 			if( numIn < 1 ) return null;
 
 			Long inAvg = 0L;
-			for( final File f: module.getInputFiles() ) {
+			for( final File f: module.getInputFiles() )
 				inAvg += FileUtils.sizeOf( f );
-			}
 
 			inAvg = new Double( inAvg / numIn ).longValue();
 
@@ -203,11 +195,8 @@ public class SummaryUtil {
 		if( vals.size() == 1 ) return vals.iterator().next().toString();
 
 		List data = null;
-		if( isDouble ) {
-			data = new ArrayList<>( (Collection<Double>) vals );
-		} else {
-			data = new ArrayList<>( (Collection<Long>) vals );
-		}
+		if( isDouble ) data = new ArrayList<>( (Collection<Double>) vals );
+		else data = new ArrayList<>( (Collection<Long>) vals );
 
 		Collections.sort( data );
 
@@ -257,11 +246,8 @@ public class SummaryUtil {
 				outAvg = outAvg.subtract( FileUtils.sizeOfAsBigInteger( newMeta ) );
 			}
 
-			if( count == 0 ) {
-				outAvg = BigInteger.valueOf( 0 );
-			} else {
-				outAvg = outAvg.divide( BigInteger.valueOf( count ) );
-			}
+			if( count == 0 ) outAvg = BigInteger.valueOf( 0 );
+			else outAvg = outAvg.divide( BigInteger.valueOf( count ) );
 
 			sb.append( "# Files Output:  " + count + RETURN );
 			sb.append( "Mean Output File Size:  " + FileUtils.byteCountToDisplaySize( outAvg ) + RETURN );
@@ -296,15 +282,11 @@ public class SummaryUtil {
 	public static String getRunTime( final long duration ) {
 		final String format = String.format( "%%0%dd", 2 );
 		long elapsedTime = duration / 1000;
-		if( elapsedTime < 0 ) {
-			elapsedTime = 0;
-		}
+		if( elapsedTime < 0 ) elapsedTime = 0;
 		final String hours = String.format( format, elapsedTime / 3600 );
 		final String minutes = String.format( format, elapsedTime % 3600 / 60 );
 		String seconds = String.format( format, elapsedTime % 60 );
-		if( hours.equals( "00" ) && minutes.equals( "00" ) && seconds.equals( "00" ) ) {
-			seconds = "01";
-		}
+		if( hours.equals( "00" ) && minutes.equals( "00" ) && seconds.equals( "00" ) ) seconds = "01";
 		return hours + " hours : " + minutes + " minutes : " + seconds + " seconds";
 	}
 
@@ -369,9 +351,8 @@ public class SummaryUtil {
 			for( final File script: scripts ) {
 				final File started = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
 				File finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_SUCCESS );
-				if( !finish.isFile() ) {
-					finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
-				} else {
+				if( !finish.isFile() ) finish = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_FAILURES );
+				else {
 					final long duration = finish.lastModified() - started.lastModified();
 					Log.debug( SummaryUtil.class, script.getName() + " duration: " + duration );
 					totalRunTime += duration;
@@ -379,26 +360,21 @@ public class SummaryUtil {
 						longestScripts.clear();
 						longestScripts.put( script.getName(), duration );
 						maxDuration = duration;
-					} else if( duration > oneMinute && duration == maxDuration ) {
+					} else if( duration > oneMinute && duration == maxDuration )
 						longestScripts.put( script.getName(), duration );
-					}
 
 					if( duration > oneMinute && duration < minDuration ) {
 						shortestScripts.clear();
 						shortestScripts.put( script.getName(), duration );
 						minDuration = duration;
-					} else if( duration > oneMinute && duration == minDuration ) {
+					} else if( duration > oneMinute && duration == minDuration )
 						shortestScripts.put( script.getName(), duration );
-					}
 				}
 			}
 
 			final Set<String> removeItems = new HashSet<>();
-			for( final String name: shortestScripts.keySet() ) {
-				if( longestScripts.keySet().contains( name ) ) {
-					removeItems.add( name );
-				}
-			}
+			for( final String name: shortestScripts.keySet() )
+				if( longestScripts.keySet().contains( name ) ) removeItems.add( name );
 
 			for( final String name: removeItems ) {
 				shortestScripts.remove( name );
@@ -407,33 +383,25 @@ public class SummaryUtil {
 
 			final Long avgRunTime = numCompleted > 0 ? totalRunTime / numCompleted: null;
 			final int numInc = scriptsStarted.size() - numCompleted;
-			if( mainScript != null ) {
-				sb.append( "Main Script:  " + mainScript.getAbsolutePath() + RETURN );
-			}
+			if( mainScript != null ) sb.append( "Main Script:  " + mainScript.getAbsolutePath() + RETURN );
 			sb.append( "Executed " + scriptsStarted.size() + "/" + scripts.size() + " worker scripts [" );
 			sb.append( scriptsSuccess.size() + " successful" );
 			sb.append( scriptsFailed.isEmpty() ? "": "; " + scriptsFailed.size() + " failed" );
 			sb.append( numInc > 0 ? "; " + numInc + " incomplete": "" );
 			sb.append( "]" + RETURN );
 
-			if( avgRunTime != null ) {
+			if( avgRunTime != null )
 				sb.append( "Average worker script runtime: " + getScriptRunTime( avgRunTime ) + RETURN );
-			}
-			if( !shortestScripts.isEmpty() ) {
-				sb.append( "Shortest running scripts [" + getScriptRunTime( minDuration ) + "] --> "
-					+ shortestScripts.keySet() + RETURN );
-			}
-			if( !longestScripts.isEmpty() ) {
-				sb.append( "Longest running scripts [" + getScriptRunTime( maxDuration ) + "] --> "
-					+ longestScripts.keySet() + RETURN );
-			}
+			if( !shortestScripts.isEmpty() ) sb.append( "Shortest running scripts [" + getScriptRunTime( minDuration )
+				+ "] --> " + shortestScripts.keySet() + RETURN );
+			if( !longestScripts.isEmpty() ) sb.append( "Longest running scripts [" + getScriptRunTime( maxDuration )
+				+ "] --> " + longestScripts.keySet() + RETURN );
 
 			for( final File failureScript: scriptsFailed ) {
 				sb.append( "Script Failed:" + failureScript.getAbsolutePath() + RETURN );
 				final BufferedReader reader = BioLockJUtil.getFileReader( failureScript );
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					sb.append( line + RETURN );
-				}
 			}
 		} catch( final Exception ex ) {
 			final String msg = "Unable to produce module script summary for: " + module.getClass().getName() + " : "
@@ -455,13 +423,11 @@ public class SummaryUtil {
 		final StringBuffer sb = new StringBuffer();
 		try {
 			final File summary = getSummaryFile();
-			if( !summary.isFile() ) {
-				sb.append( "NO SUMMARY FOUND" );
-			} else {
+			if( !summary.isFile() ) sb.append( "NO SUMMARY FOUND" );
+			else {
 				final BufferedReader reader = BioLockJUtil.getFileReader( summary );
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					sb.append( line + RETURN );
-				}
 				reader.close();
 			}
 		} catch( final Exception ex ) {
@@ -490,15 +456,12 @@ public class SummaryUtil {
 	public static void reportFailure( final Exception ex ) throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		sb.append( getDashes( 60 ) + RETURN + getLabel( "Exception" ) );
-		if( ex == null ) {
-			sb.append( "Error message not found!" + RETURN );
-		} else {
+		if( ex == null ) sb.append( "Error message not found!" + RETURN );
+		else {
 			sb.append( ex.getMessage() + RETURN );
-			if( ex.getStackTrace() != null & ex.getStackTrace().length > 0 ) {
-				for( final StackTraceElement ste: ex.getStackTrace() ) {
-					sb.append( Constants.TAB_DELIM + ste.toString() + RETURN );
-				}
-			}
+			if( ex.getStackTrace() != null & ex.getStackTrace().length > 0 )
+				for( final StackTraceElement ste: ex.getStackTrace() )
+				sb.append( Constants.TAB_DELIM + ste.toString() + RETURN );
 		}
 		saveSummary( sb.toString() );
 	}
@@ -513,33 +476,28 @@ public class SummaryUtil {
 	public static void reportSuccess( final BioModule module ) throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		final File summaryFile = getSummaryFile();
-		if( module == null ) {
-			sb.append( getFooter() );
-		} else {
+		if( module == null ) sb.append( getFooter() );
+		else {
 			Log.info( SummaryUtil.class,
 				"Update BioModule summary [ " + module.getClass().getName() + " ] " + summaryFile.getAbsolutePath() );
 			Integer modNum = 0;
-			if( !summaryFile.isFile() ) {
-				sb.append( getHeading() );
-			} else {
+			if( !summaryFile.isFile() ) sb.append( getHeading() );
+			else {
 				resetModuleSummary( module );
 				modNum = getModuleNumber();
 			}
 
 			String gap = "  ";
-			if( modNum.toString().length() == 2 ) {
-				gap += " ";
-			}
+			if( modNum.toString().length() == 2 ) gap += " ";
 			final String modLabel = getLabel( MODULE + "[" + modNum + "]" ) + module.getClass().getName();
 			final String runtime = getLabel( RUN_TIME ) + gap + getModuleRunTime( module );
 			sb.append( modLabel + RETURN );
 			sb.append( runtime + RETURN );
 
 			final String summary = module.getSummary();
-			if( summary != null && !summary.isEmpty() ) {
+			if( summary != null && !summary.isEmpty() )
 				sb.append( getDashes( Math.max( modLabel.length(), runtime.length() ) ) + RETURN + summary
 					+ ( summary.endsWith( RETURN ) ? "": RETURN ) );
-			}
 			sb.append( EXT_SPACER + RETURN );
 		}
 
@@ -560,21 +518,16 @@ public class SummaryUtil {
 			final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 			try {
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					if( line.startsWith( NUM_ATTEMPTS ) ) {
 						final String count = line.substring( getLabel( NUM_ATTEMPTS ).length() ).trim();
 						final Integer num = Integer.valueOf( count ) + 1;
 						writer.write( line.replace( count, num.toString() ) + RETURN );
-					} else {
-						writer.write( line + RETURN );
-					}
-				}
+					} else writer.write( line + RETURN );
 				getTempFile().delete();
 				// BioLockJUtil.deleteWithRetry( getTempFile(), 10 );
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 				writer.close();
 			}
 		}
@@ -590,14 +543,12 @@ public class SummaryUtil {
 		Integer num = null;
 		final BufferedReader reader = BioLockJUtil.getFileReader( getSummaryFile() );
 		try {
-			if( getSummaryFile().isFile() ) {
+			if( getSummaryFile().isFile() )
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-					final String label = MODULE + "[";
-					if( line.startsWith( label ) && line.indexOf( "]" ) > 0 ) {
-						num = Integer.valueOf( line.substring( label.length(), line.indexOf( "]" ) ) );
-					}
+				final String label = MODULE + "[";
+				if( line.startsWith( label ) && line.indexOf( "]" ) > 0 )
+					num = Integer.valueOf( line.substring( label.length(), line.indexOf( "]" ) ) );
 				}
-			}
 		} finally {
 			reader.close();
 		}
@@ -616,35 +567,20 @@ public class SummaryUtil {
 
 		final String format = String.format( "%%0%dd", 2 );
 		long elapsedTime = duration / 1000;
-		if( elapsedTime < 0 ) {
-			elapsedTime = 0;
-		}
+		if( elapsedTime < 0 ) elapsedTime = 0;
 		String hours = String.format( format, elapsedTime / 3600 );
 		String minutes = String.format( format, elapsedTime % 3600 / 60 );
 
-		if( hours.equals( "00" ) ) {
-			hours = "";
-		} else if( hours.equals( "01" ) ) {
-			hours = "1 hour";
-		} else {
-			hours += " hours";
-		}
+		if( hours.equals( "00" ) ) hours = "";
+		else if( hours.equals( "01" ) ) hours = "1 hour";
+		else hours += " hours";
 
-		if( hours.isEmpty() && minutes.equals( "00" ) ) {
-			minutes = "<1 minute";
-		} else if( minutes.equals( "00" ) ) {
-			minutes = "";
-		} else if( hours.isEmpty() && minutes.equals( "01" ) ) {
-			minutes = "1 minute";
-		} else if( minutes.equals( "01" ) ) {
-			minutes = " : 1 minute";
-		} else if( hours.isEmpty() ) // and minutes > 01
-		{
-			minutes += " minutes";
-		} else // hours not empty & minutes > 01
-		{
-			minutes = " : " + minutes + " minutes";
-		}
+		if( hours.isEmpty() && minutes.equals( "00" ) ) minutes = "<1 minute";
+		else if( minutes.equals( "00" ) ) minutes = "";
+		else if( hours.isEmpty() && minutes.equals( "01" ) ) minutes = "1 minute";
+		else if( minutes.equals( "01" ) ) minutes = " : 1 minute";
+		else if( hours.isEmpty() ) minutes += " minutes";
+		else minutes = " : " + minutes + " minutes";
 
 		return hours + minutes;
 	}
@@ -667,21 +603,15 @@ public class SummaryUtil {
 			boolean foundMod = false;
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final String label = MODULE + "[";
-				if( foundMod ) {
-					break;
-				} else if( line.startsWith( EXCEPTION_LABEL )
-					|| line.startsWith( label ) && line.endsWith( module.getClass().getName() ) ) {
-					foundMod = true;
-				} else {
-					writer.write( line + RETURN );
-				}
+				if( foundMod ) break;
+				else if( line.startsWith( EXCEPTION_LABEL )
+					|| line.startsWith( label ) && line.endsWith( module.getClass().getName() ) ) foundMod = true;
+				else writer.write( line + RETURN );
 			}
 			getTempFile().delete();
 			// FileUtils.forceDelete( getTempFile() );
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 			writer.close();
 		}
 	}
@@ -715,9 +645,7 @@ public class SummaryUtil {
 	}
 
 	private static String downloadCmd() throws Exception {
-		if( downloadCommand == null ) {
-			downloadCommand = DownloadUtil.getDownloadCmd();
-		}
+		if( downloadCommand == null ) downloadCommand = DownloadUtil.getDownloadCmd();
 		return downloadCommand;
 	}
 
@@ -758,14 +686,10 @@ public class SummaryUtil {
 		runtimeEnv = "localhost";
 		try {
 			clusterHost = Config.isOnCluster() ? Config.requireString( null, Constants.CLUSTER_HOST ): null;
-			if( clusterHost != null ) {
-				runtimeEnv = clusterHost;
-			}
+			if( clusterHost != null ) runtimeEnv = clusterHost;
 
 			final String hostName = Processor.submit( "hostname", "Query Host" );
-			if( hostName != null ) {
-				runtimeEnv = hostName;
-			}
+			if( hostName != null ) runtimeEnv = hostName;
 
 		} catch( final Exception ex ) {
 			Log.error( SummaryUtil.class, "Failed to determine runtime environment host", ex );
@@ -780,9 +704,8 @@ public class SummaryUtil {
 
 	private static String getSpacer( final String val, final int len ) {
 		String spacer = "";
-		for( int i = 0; i < len; i++ ) {
+		for( int i = 0; i < len; i++ )
 			spacer += val;
-		}
 		return spacer;
 	}
 

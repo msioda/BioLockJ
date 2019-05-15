@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import biolockj.Config;
 import biolockj.Constants;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.BioLockJUtil;
 import biolockj.util.DockerUtil;
@@ -118,21 +120,9 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 	}
 
 	@Override
-	public File getDB() throws Exception {
+	public File getDB() throws ConfigNotFoundException, ConfigPathException {
 		if( DockerUtil.inDockerEnv() ) return new File( Config.requireString( this, KRAKEN_DATABASE ) );
 		return Config.requireExistingDir( this, KRAKEN_DATABASE );
-	}
-
-	/**
-	 * Get the DB directory (or DOcker container DB dir if in a docker container)
-	 * 
-	 * @return DB Dir
-	 * @throws Exception if errors occur
-	 */
-	public File getKrakenDB() throws Exception {
-		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
-		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
-		return getDB();
 	}
 
 	/**
@@ -152,17 +142,23 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
+	protected File getDockerDB( final String property ) throws ConfigPathException, ConfigNotFoundException {
+		return DockerUtil.getDockerDB( this, Config.requireString( this, property ) );
+	}
+
+	private File getKrakenDB() throws ConfigPathException, ConfigNotFoundException {
+		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
+		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		return getDB();
+	}
+
 	private String getParams() throws Exception {
 		if( this.defaultSwitches == null ) {
 			final List<String> classifierParams = getClassifierParams();
 			final String params = BioLockJUtil.join( classifierParams );
 
-			if( params.indexOf( FASTA_PARAM ) > -1 ) {
-				classifierParams.remove( FASTA_PARAM );
-			}
-			if( params.indexOf( FASTQ_PARAM ) > -1 ) {
-				classifierParams.remove( FASTQ_PARAM );
-			}
+			if( params.indexOf( FASTA_PARAM ) > -1 ) classifierParams.remove( FASTA_PARAM );
+			if( params.indexOf( FASTQ_PARAM ) > -1 ) classifierParams.remove( FASTQ_PARAM );
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
 				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
 					+ getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
@@ -188,22 +184,16 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 
 	private String getWorkerFunctionParams() throws Exception {
 		String params = " " + getParams();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-			params += PAIRED_PARAM;
-		}
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
 
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) ) {
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;
-		}
 
 		params += DB_PARAM + getKrakenDB().getAbsolutePath() + " " + getInputSwitch();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-			params += PAIRED_PARAM;
-		}
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
 
-		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) ) {
+		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;
-		}
 
 		return params;
 	}

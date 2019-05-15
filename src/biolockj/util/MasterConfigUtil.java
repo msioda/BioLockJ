@@ -30,9 +30,8 @@ public class MasterConfigUtil {
 	 */
 	public static File getMasterConfig() {
 		String configName = Config.pipelineName();
-		if( configName.startsWith( Constants.MASTER_PREFIX ) ) {
+		if( configName.startsWith( Constants.MASTER_PREFIX ) )
 			configName = configName.replaceAll( Constants.MASTER_PREFIX, "" );
-		}
 		return new File(
 			Config.pipelinePath() + File.separator + Constants.MASTER_PREFIX + configName + Constants.PROPS_EXT );
 	}
@@ -62,15 +61,10 @@ public class MasterConfigUtil {
 		final String defaultStats = ModuleUtil.getDefaultStatsModule();
 		final Set<String> configMods = Config.getSet( null, Constants.INTERNAL_BLJ_MODULE );
 		boolean foundQiime = false;
-		for( final String mod: configMods ) {
-			if( mod.toLowerCase().contains( Constants.QIIME ) ) {
-				foundQiime = true;
-			}
-		}
+		for( final String mod: configMods )
+			if( mod.toLowerCase().contains( Constants.QIIME ) ) foundQiime = true;
 
-		if( !foundQiime ) {
-			usedProps.remove( Constants.QIIME_ALPHA_DIVERSITY_METRICS );
-		}
+		if( !foundQiime ) usedProps.remove( Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 
 		if( !ModuleUtil.moduleExists( defaultDemux ) && !configMods.contains( defaultDemux ) ) {
 			usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
@@ -79,17 +73,14 @@ public class MasterConfigUtil {
 			usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
 		}
 
-		if( !ModuleUtil.moduleExists( defaultFaCon ) && !configMods.contains( defaultFaCon ) ) {
+		if( !ModuleUtil.moduleExists( defaultFaCon ) && !configMods.contains( defaultFaCon ) )
 			usedProps.remove( Constants.DEFAULT_MOD_FASTA_CONV );
-		}
 
-		if( !ModuleUtil.moduleExists( defaultMerger ) && !configMods.contains( defaultMerger ) ) {
+		if( !ModuleUtil.moduleExists( defaultMerger ) && !configMods.contains( defaultMerger ) )
 			usedProps.remove( Constants.DEFAULT_MOD_SEQ_MERGER );
-		}
 
-		if( !configMods.contains( defaultStats ) && !ModuleUtil.moduleExists( defaultStats ) ) {
+		if( !configMods.contains( defaultStats ) && !ModuleUtil.moduleExists( defaultStats ) )
 			usedProps.remove( Constants.DEFAULT_STATS_MODULE );
-		}
 
 		if( !Log.doDebug() ) {
 			Log.info( MasterConfigUtil.class,
@@ -106,12 +97,9 @@ public class MasterConfigUtil {
 
 		for( final String key: usedProps.keySet() ) {
 			final String val = usedProps.get( key );
-			if( val == null || val.trim().isEmpty() ) {
-				Log.debug( MasterConfigUtil.class,
-					"Remove unused property from sanatized MASTER Config: " + key + "=" + val );
-			} else if( !key.startsWith( INTERNAL_PREFIX ) ) {
-				props.put( key, val );
-			}
+			if( val == null || val.trim().isEmpty() ) Log.debug( MasterConfigUtil.class,
+				"Remove unused property from sanatized MASTER Config: " + key + "=" + val );
+			else if( !key.startsWith( INTERNAL_PREFIX ) ) props.put( key, val );
 		}
 
 		Log.info( MasterConfigUtil.class, "The original version of project Config contained: "
@@ -140,39 +128,30 @@ public class MasterConfigUtil {
 	 */
 	public static boolean saveMasterConfig( final Map<String, String> props ) {
 
-		if( getMasterConfig().isFile() ) {
-			try {
-				FileUtils.moveFile( getMasterConfig(), getTempConfig() );
-			} catch( final Exception ex ) {
-				Log.error( MasterConfigUtil.class, "Failed to archive: " + getMasterConfig().getAbsolutePath(), ex );
-				return false;
-			}
+		if( getMasterConfig().isFile() ) try {
+			FileUtils.moveFile( getMasterConfig(), getTempConfig() );
+		} catch( final Exception ex ) {
+			Log.error( MasterConfigUtil.class, "Failed to archive: " + getMasterConfig().getAbsolutePath(), ex );
+			return false;
 		}
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter( new FileWriter( getMasterConfig() ) );
 			writeConfigHeaders( writer );
-			if( props != null ) {
-				writeCompleteHeader( writer, props );
-			}
+			if( props != null ) writeCompleteHeader( writer, props );
 			final Set<String> keys = new TreeSet<>( getProps( props ).keySet() );
-			for( final String key: keys ) {
+			for( final String key: keys )
 				writer.write( key + "=" + getProps( props ).get( key ) + RETURN );
-			}
 		} catch( final IOException ex ) {
 			Log.error( MasterConfigUtil.class, "Failed to archive: " + getMasterConfig().getAbsolutePath(), ex );
 			return false;
 		} finally {
-			if( writer != null ) {
-				try {
-					writer.close();
-				} catch( final IOException ex2 ) {
-					Log.error( MasterConfigUtil.class, "Failed to close MASTER config writer", ex2 );
-				}
+			if( writer != null ) try {
+				writer.close();
+			} catch( final IOException ex2 ) {
+				Log.error( MasterConfigUtil.class, "Failed to close MASTER config writer", ex2 );
 			}
-			if( getTempConfig().isFile() ) {
-				getTempConfig().delete();
-			}
+			if( getTempConfig().isFile() ) getTempConfig().delete();
 		}
 
 		return getMasterConfig().isFile();
@@ -185,15 +164,11 @@ public class MasterConfigUtil {
 		final List<String> initConfig = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( masterConfig );
 		try {
-			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				if( line.startsWith( PROJ_CONFIG_FLAG ) || line.startsWith( DEFAULT_CONFIG_FLAG ) ) {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+				if( line.startsWith( PROJ_CONFIG_FLAG ) || line.startsWith( DEFAULT_CONFIG_FLAG ) )
 					initConfig.add( line );
-				}
-			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 		return initConfig;
 	}
@@ -222,9 +197,8 @@ public class MasterConfigUtil {
 			writer.write( "#   implicit modules that BioLockJ determined were required to meet BioLockJ" + RETURN );
 			writer.write( "#   standard requirements or BioModule input file format requirments." + RETURN );
 			writer.write( "#" + RETURN );
-			for( final String mod: Config.getList( null, Constants.INTERNAL_ALL_MODULES ) ) {
+			for( final String mod: Config.getList( null, Constants.INTERNAL_ALL_MODULES ) )
 				writer.write( "#      " + Constants.BLJ_MODULE_TAG + " " + mod + RETURN );
-			}
 			writer.write( "#" + RETURN );
 			writer.write(
 				"####################################################################################" + RETURN );
@@ -242,10 +216,8 @@ public class MasterConfigUtil {
 			final TreeSet<String> keys = new TreeSet<>( props.keySet() );
 			for( final String key: keys ) {
 				final String val = props.get( key );
-				if( key.startsWith( INTERNAL_PREFIX ) && val != null && !val.isEmpty() ) {
-
+				if( key.startsWith( INTERNAL_PREFIX ) && val != null && !val.isEmpty() )
 					writer.write( "###     " + key + "=" + props.get( key ) + RETURN );
-				}
 			}
 			writer.write( "###" + RETURN );
 			writer.write(
@@ -260,21 +232,14 @@ public class MasterConfigUtil {
 		if( initConfig == null ) {
 			writer.write( PROJ_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
 			final List<String> defaults = Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG );
-			if( defaults != null && !defaults.isEmpty() ) {
-				for( final String defConfig: defaults ) {
-					writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
-				}
-			}
-		} else {
-			for( final String line: initConfig ) {
-				writer.write( line + RETURN );
-			}
-		}
+			if( defaults != null && !defaults.isEmpty() ) for( final String defConfig: defaults )
+				writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
+		} else for( final String line: initConfig )
+			writer.write( line + RETURN );
 
 		writer.write( RETURN );
-		for( final String module: Config.getList( null, Constants.INTERNAL_BLJ_MODULE ) ) {
+		for( final String module: Config.getList( null, Constants.INTERNAL_BLJ_MODULE ) )
 			writer.write( Constants.BLJ_MODULE_TAG + " " + module + RETURN );
-		}
 		writer.write( RETURN );
 	}
 

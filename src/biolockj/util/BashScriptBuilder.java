@@ -41,10 +41,9 @@ public class BashScriptBuilder {
 		int scriptCount = 0;
 		final int digits = new Integer( workerScripts.size() - 1 ).toString().length();
 		final List<String> mainScriptLines = initMainScript( module );
-		for( final File worker: workerScripts ) {
+		for( final File worker: workerScripts )
 			mainScriptLines.add( getMainScriptExecuteWorkerLine( module, worker.getAbsolutePath(),
 				getWorkerId( scriptCount++, digits ) ) );
-		}
 
 		mainScriptLines
 			.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_SUCCESS );
@@ -70,15 +69,11 @@ public class BashScriptBuilder {
 
 		setBatchSize( module, data );
 
-		if( Config.isOnCluster() ) {
-			verifyConfig( module );
-		}
+		if( Config.isOnCluster() ) verifyConfig( module );
 
 		buildWorkerScripts( module, data );
 
-		if( !DockerUtil.inAwsEnv() ) {
-			buildMainScript( module );
-		}
+		if( !DockerUtil.inAwsEnv() ) buildMainScript( module );
 	}
 
 	/**
@@ -125,9 +120,8 @@ public class BashScriptBuilder {
 			writer.close();
 		}
 
-		if( DockerUtil.inAwsEnv() ) {
+		if( DockerUtil.inAwsEnv() )
 			Processor.setFilePermissions( scriptPath, Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
-		}
 
 		printScriptAsDebug( scriptPath );
 		return workerScript;
@@ -145,11 +139,8 @@ public class BashScriptBuilder {
 		final String workerId ) {
 		final StringBuffer line = new StringBuffer();
 
-		if( DockerUtil.inDockerEnv() ) {
-			line.append( DockerUtil.SPAWN_DOCKER_CONTAINER + " " );
-		} else if( Config.isOnCluster() ) {
-			line.append( FUNCTION_RUN_JOB + " " );
-		}
+		if( DockerUtil.inDockerEnv() ) line.append( DockerUtil.SPAWN_DOCKER_CONTAINER + " " );
+		else if( Config.isOnCluster() ) line.append( FUNCTION_RUN_JOB + " " );
 
 		line.append( workerScriptPath );
 
@@ -165,9 +156,8 @@ public class BashScriptBuilder {
 	 */
 	protected static List<String> getWorkerScriptLines( final List<String> lines ) {
 		final List<String> wrappedLines = new ArrayList<>();
-		for( final String line: lines ) {
+		for( final String line: lines )
 			wrappedLines.add( FUNCTION_EXECUTE + " \"" + line + "\" $LINENO" );
-		}
 		wrappedLines.add( "" );
 		return wrappedLines;
 	}
@@ -198,17 +188,15 @@ public class BashScriptBuilder {
 	protected static List<String> initMainScript( final ScriptModule module ) throws Exception {
 		final List<String> lines = new ArrayList<>();
 
-		if( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null ) {
+		if( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 			lines.add( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
-		}
 
 		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + getMainScriptPath( module ) + RETURN );
 		lines.add( "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.add( "cd " + module.getScriptDir().getAbsolutePath() + RETURN );
 
-		if( DockerUtil.inDockerEnv() ) {
-			lines.addAll( DockerUtil.buildSpawnDockerContainerFunction( module ) );
-		} else if( Config.isOnCluster() ) {
+		if( DockerUtil.inDockerEnv() ) lines.addAll( DockerUtil.buildSpawnDockerContainerFunction( module ) );
+		else if( Config.isOnCluster() ) {
 			lines.add( "# Submit job script" );
 			lines.add( "function " + FUNCTION_RUN_JOB + "() {" );
 			lines.add( Config.requireString( module, CLUSTER_BATCH_COMMAND ) + " $1" );
@@ -234,11 +222,9 @@ public class BashScriptBuilder {
 		throws Exception {
 		final List<String> lines = new ArrayList<>();
 		final String header = Config.getString( module, SCRIPT_JOB_HEADER );
-		if( Config.isOnCluster() && header != null ) {
-			lines.add( header + RETURN );
-		} else if( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null ) {
+		if( Config.isOnCluster() && header != null ) lines.add( header + RETURN );
+		else if( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
 			lines.add( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
-		}
 
 		lines.add(
 			"#BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | batch size = " + batchSize + RETURN );
@@ -247,9 +233,7 @@ public class BashScriptBuilder {
 		lines.addAll( loadModules( module ) );
 
 		final List<String> bashFunctions = module.getWorkerScriptFunctions();
-		if( bashFunctions != null && !bashFunctions.isEmpty() ) {
-			lines.addAll( bashFunctions );
-		}
+		if( bashFunctions != null && !bashFunctions.isEmpty() ) lines.addAll( bashFunctions );
 
 		lines.addAll( buildExecuteFunction( scriptPath ) );
 		return lines;
@@ -303,9 +287,7 @@ public class BashScriptBuilder {
 				while( pToken.hasMoreTokens() ) {
 					token = pToken.nextToken().trim();
 					if( !foundNumCores ) {
-						if( hasNumCoresParam( token ) ) {
-							foundNumCores = true;
-						}
+						if( hasNumCoresParam( token ) ) foundNumCores = true;
 					} else {
 
 						final String numThreadsParam = Config.getModuleProp( module, ScriptModule.SCRIPT_NUM_THREADS );
@@ -333,22 +315,17 @@ public class BashScriptBuilder {
 
 		for( final String line: lines ) {
 			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.trim().equals( "elif" )
-				|| line.trim().equals( "else" ) || line.trim().equals( "done" ) ) {
-				indentCount--;
-			}
+				|| line.trim().equals( "else" ) || line.trim().equals( "done" ) ) indentCount--;
 
 			int i = 0;
-			while( i++ < indentCount ) {
+			while( i++ < indentCount )
 				writer.write( Constants.INDENT );
-			}
 
 			writer.write( line + RETURN );
 
 			if( line.trim().endsWith( "{" ) || line.trim().equals( "elif" ) || line.trim().equals( "else" )
 				|| line.trim().startsWith( "if" ) && line.trim().endsWith( "then" )
-				|| line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) ) {
-				indentCount++;
-			}
+				|| line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) ) indentCount++;
 		}
 
 		writer.close();
@@ -380,9 +357,8 @@ public class BashScriptBuilder {
 			subScriptLines.addAll( getWorkerScriptLines( lines ) );
 
 			if( ++sampleCount == data.size() || batchSize > 0 && ++samplesInScript == batchSize ) {
-				if( !( module instanceof JavaModule ) ) {
+				if( !( module instanceof JavaModule ) )
 					subScriptLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
-				}
 				workerScripts.add( createScript( workerScriptPath, subScriptLines ) );
 				samplesInScript = 0;
 			}
@@ -411,9 +387,8 @@ public class BashScriptBuilder {
 			if( paramsNoSpaces.contains( " " ) )
 				throw new ConfigFormatException( SCRIPT_JOB_HEADER, "Must not contain spaces!" );
 
-			for( final String paramName: CLUSTER_NUM_PROCESSORS ) {
+			for( final String paramName: CLUSTER_NUM_PROCESSORS )
 				if( paramsNoSpaces.contains( paramName ) ) return true;
-			}
 		}
 
 		return false;
@@ -427,17 +402,12 @@ public class BashScriptBuilder {
 	 */
 	private static List<String> loadModules( final ScriptModule module ) {
 		final List<String> lines = new ArrayList<>();
-		for( final String clusterMod: Config.getList( module, CLUSTER_MODULES ) ) {
+		for( final String clusterMod: Config.getList( module, CLUSTER_MODULES ) )
 			lines.add( "module load " + clusterMod );
-		}
 
-		if( !lines.isEmpty() ) {
-			lines.add( "" );
-		}
+		if( !lines.isEmpty() ) lines.add( "" );
 		final String prologue = Config.getString( module, CLUSTER_PROLOGUE );
-		if( prologue != null ) {
-			lines.add( prologue + RETURN );
-		}
+		if( prologue != null ) lines.add( prologue + RETURN );
 
 		return lines;
 	}
@@ -452,9 +422,8 @@ public class BashScriptBuilder {
 		try {
 			final BufferedReader in = BioLockJUtil.getFileReader( new File( filePath ) );
 			String line;
-			while( ( line = in.readLine() ) != null ) {
+			while( ( line = in.readLine() ) != null )
 				Log.debug( BashScriptBuilder.class, line );
-			}
 			in.close();
 		} catch( final Exception ex ) {
 			Log.error( BashScriptBuilder.class, "Error occurred printing script to log file: " + filePath, ex );
@@ -462,11 +431,8 @@ public class BashScriptBuilder {
 	}
 
 	private static void setBatchSize( final ScriptModule module, final List<List<String>> data ) throws Exception {
-		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv() ) {
-			batchSize = data.size();
-		} else {
-			batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
-		}
+		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv() ) batchSize = data.size();
+		else batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
 	}
 
 	/**

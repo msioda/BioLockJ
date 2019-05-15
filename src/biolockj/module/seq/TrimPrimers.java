@@ -15,6 +15,8 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
 import biolockj.*;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
@@ -42,11 +44,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	@Override
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
-		if( DockerUtil.inDockerEnv() ) {
-			Config.requireString( null, Constants.INPUT_TRIM_SEQ_FILE );
-		} else {
-			Config.requireExistingFile( null, Constants.INPUT_TRIM_SEQ_FILE );
-		}
+		if( DockerUtil.inDockerEnv() ) Config.requireString( null, Constants.INPUT_TRIM_SEQ_FILE );
+		else Config.requireExistingFile( null, Constants.INPUT_TRIM_SEQ_FILE );
 	}
 
 	/**
@@ -71,9 +70,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		final StringBuffer sb = new StringBuffer();
 		try {
 			sb.append( "Primer file: " + Config.requireString( this, Constants.INPUT_TRIM_SEQ_FILE ) + RETURN );
-			for( final String msg: summaryMsgs ) {
+			for( final String msg: summaryMsgs )
 				sb.append( msg + RETURN );
-			}
 			return sb.toString() + super.getSummary();
 		} catch( final Exception ex ) {
 			Log.warn( getClass(), "Unable to complete module summary! " + ex.getMessage() );
@@ -101,12 +99,9 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		addBadFilesToSummary();
 
 		String reqPrimerMsg = "";
-		if( Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) ) {
-			reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.TRUE
-				+ " --> Sequences without a primer were discarded";
-		} else {
-			reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.FALSE + " --> Sequences without a primer were saved";
-		}
+		if( Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) ) reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.TRUE
+			+ " --> Sequences without a primer were discarded";
+		else reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.FALSE + " --> Sequences without a primer were saved";
 		Log.warn( getClass(), reqPrimerMsg );
 		summaryMsgs.add( reqPrimerMsg );
 
@@ -134,15 +129,9 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 			Long a = this.numLinesWithPrimer.get( f.getAbsolutePath() );
 			Long b = this.numLinesNoPrimer.get( f.getAbsolutePath() );
 
-			if( v == null ) {
-				v = 0L;
-			}
-			if( a == null ) {
-				a = 0L;
-			}
-			if( b == null ) {
-				b = 0L;
-			}
+			if( v == null ) v = 0L;
+			if( a == null ) a = 0L;
+			if( b == null ) b = 0L;
 
 			totalValid += v;
 
@@ -154,10 +143,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				per = BioLockJUtil.formatPercentage( v, a + b );
 				Log.info( getClass(),
 					f.getName() + " Paired reads with primer in both -- " + v + "/" + ( a + b ) + " = " + per );
-			} else {
-				Log.info( getClass(),
-					f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
-			}
+			} else Log.info( getClass(),
+				f.getName() + " Reads with primer ----------------- " + a + "/" + ( a + b ) + " = " + per );
 
 			Log.debug( getClass(), "file = " + f.getAbsolutePath() );
 			Log.debug( getClass(), "maxFw = " + maxFw );
@@ -243,10 +230,9 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				summaryMsgs.add( "Mean % Reverse reads with primer  = " + totalPrimerR + "/" + totalR + " = "
 					+ BioLockJUtil.formatPercentage( totalPrimerR, totalR ) );
 				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
-				if( !Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) ) {
+				if( !Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) )
 					summaryMsgs.add( "Mean % Paired reads with matching primer = " + totalValid + "/" + total + " = "
 						+ BioLockJUtil.formatPercentage( totalValid, total ) );
-				}
 
 				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			}
@@ -304,19 +290,15 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 							final String base = seq.substring( i - 1, i );
 							final String iupac = SeqUtil.getIupacBase( base );
 							regexSeq = regexSeq + iupac;
-							if( !base.equals( iupac ) ) {
-								if( !substitutions.contains( base ) ) {
-									Log.info( getClass(), "IUPAC substitution of base: " + base + " to: " + iupac );
-									substitutions.add( base );
-								}
+							if( !base.equals( iupac ) ) if( !substitutions.contains( base ) ) {
+								Log.info( getClass(), "IUPAC substitution of base: " + base + " to: " + iupac );
+								substitutions.add( base );
 							}
 						}
 
-						if( regexSeq.startsWith( "^" ) ) {
-							fwMergePrimerFound = true;
-						} else if( seq.endsWith( "$" ) ) {
-							rvMergePrimerFound = true;
-						} else throw new Exception(
+						if( regexSeq.startsWith( "^" ) ) fwMergePrimerFound = true;
+						else if( seq.endsWith( "$" ) ) rvMergePrimerFound = true;
+						else throw new Exception(
 							"INVALID PRIMER!  Primers must start with \"^\" or end with \"$\"  Update primer file: "
 								+ trimSeqFile.getAbsolutePath() );
 
@@ -326,13 +308,9 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				}
 			}
 
-			if( fwMergePrimerFound && rvMergePrimerFound ) {
-				this.mergedReadTwoPrimers = true;
-			}
+			if( fwMergePrimerFound && rvMergePrimerFound ) this.mergedReadTwoPrimers = true;
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 		if( primers.size() < 1 ) throw new Exception( "No primers found in: " + trimSeqFile.getAbsolutePath() );
 
@@ -345,9 +323,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	}
 
 	private String getMetaColName() throws Exception {
-		if( this.otuColName == null ) {
-			this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_TRIMMED_READS );
-		}
+		if( this.otuColName == null ) this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_TRIMMED_READS );
 
 		return this.otuColName;
 	}
@@ -365,16 +341,13 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				line = line.trim();
-				if( lineCounter % SeqUtil.getNumLinesPerRead() == 1 ) {
-					header = SeqUtil.getHeader( line );
-				} else if( lineCounter % SeqUtil.getNumLinesPerRead() == 2 ) {
+				if( lineCounter % SeqUtil.getNumLinesPerRead() == 1 ) header = SeqUtil.getHeader( line );
+				else if( lineCounter % SeqUtil.getNumLinesPerRead() == 2 ) {
 					boolean foundHeader = false;
 					for( final String seq: primers ) {
 						final int seqLength = line.length();
 						line = line.replaceFirst( seq, "" );
-						if( seqLength != line.length() ) {
-							foundHeader = true;
-						}
+						if( seqLength != line.length() ) foundHeader = true;
 					}
 
 					if( foundHeader ) {
@@ -397,44 +370,35 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	}
 
 	private Map<String, String> getValidReadsPerSample() throws Exception {
-		if( !MetaUtil.getFieldNames().contains( NUM_TRIMMED_READS ) && this.validReadsPerSample.isEmpty() ) {
-			for( final File f: this.seqsWithPrimersTrimmed.keySet() ) {
-				if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
-					|| SeqUtil.isForwardRead( f.getName() ) ) {
-					this.validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
-						Long.toString( this.seqsWithPrimersTrimmed.get( f ) ) );
-				}
-			}
-		}
+		if( !MetaUtil.getFieldNames().contains( NUM_TRIMMED_READS ) && this.validReadsPerSample.isEmpty() )
+			for( final File f: this.seqsWithPrimersTrimmed.keySet() )
+			if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
+				this.validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
+					Long.toString( this.seqsWithPrimersTrimmed.get( f ) ) );
 		return this.validReadsPerSample;
 	}
 
 	private void printReports( final Map<String, Map<String, String>> missingPrimers, final String reportLabel )
 		throws Exception {
-		if( !missingPrimers.isEmpty() ) {
-			for( final String key: missingPrimers.keySet() ) {
-				final Map<String, String> map = missingPrimers.get( key );
-				Log.warn( getClass(), "TrimPrimers " + key + " # " + reportLabel + " = " + map.size() );
+		if( !missingPrimers.isEmpty() ) for( final String key: missingPrimers.keySet() ) {
+			final Map<String, String> map = missingPrimers.get( key );
+			Log.warn( getClass(), "TrimPrimers " + key + " # " + reportLabel + " = " + map.size() );
 
-				BufferedWriter writer = null;
-				try {
-					writer = new BufferedWriter( new FileWriter( new File(
-						getTempDir().getAbsolutePath() + File.separator + key + "_" + reportLabel + TXT_EXT ) ) );
-					for( final String header: map.keySet() ) {
-						writer.write( header + RETURN );
-						writer.write( map.get( header ) + RETURN );
-					}
-				} catch( final Exception ex ) {
-					Log.error( getClass(), "Error occurred writng primer report" + ex.getMessage(), ex );
-				} finally {
-					if( writer != null ) {
-						writer.close();
-					}
+			BufferedWriter writer = null;
+			try {
+				writer = new BufferedWriter( new FileWriter(
+					new File( getTempDir().getAbsolutePath() + File.separator + key + "_" + reportLabel + TXT_EXT ) ) );
+				for( final String header: map.keySet() ) {
+					writer.write( header + RETURN );
+					writer.write( map.get( header ) + RETURN );
 				}
+			} catch( final Exception ex ) {
+				Log.error( getClass(), "Error occurred writng primer report" + ex.getMessage(), ex );
+			} finally {
+				if( writer != null ) writer.close();
 			}
-		} else if( this.mergedReadTwoPrimers ) {
-			Log.warn( getClass(), "TrimPrimers # " + reportLabel + " = 0" );
 		}
+		else if( this.mergedReadTwoPrimers ) Log.warn( getClass(), "TrimPrimers # " + reportLabel + " = 0" );
 	}
 
 	private void processFile( final File file, final Set<String> primers ) throws Exception {
@@ -446,9 +410,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		Log.info( getClass(), "Processing file = " + file.getAbsolutePath() );
 		this.seqs.add( file );
 
-		if( !SeqUtil.isForwardRead( file.getName() ) ) {
-			this.foundPaired = true;
-		}
+		if( !SeqUtil.isForwardRead( file.getName() ) ) this.foundPaired = true;
 
 		final File trimmedFile = new File( getTrimFilePath( file ) );
 		Log.info( getClass(), "Create trimmed file = " + trimmedFile.getAbsolutePath() );
@@ -466,7 +428,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				if( seqLines.size() == 1 ) {
 					origSequence = line;
 					found = false;
-					for( final String seq: primers ) {
+					for( final String seq: primers )
 						if( line.replaceFirst( seq, "" ).length() != line.length() ) {
 							if( seq.startsWith( "^" ) ) {
 								if( fwPrimerLength != 0 ) throw new Exception(
@@ -489,19 +451,16 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 									final Map<String, String> m = new HashMap<>();
 									m.put( seqLines.get( 0 ), origSequence );
 									this.missingBothPrimers.put( file.getName(), m );
-								} else {
-									this.missingBothPrimers.get( file.getName() ).put( seqLines.get( 0 ),
-										origSequence );
-								}
+								} else this.missingBothPrimers.get( file.getName() ).put( seqLines.get( 0 ),
+									origSequence );
 							} else if( this.mergedReadTwoPrimers && fwPrimerLength < 1 ) {
 								Log.debug( getClass(), "Read missing forward primer " + origSequence );
 								if( this.missingFwPrimers.get( file.getName() ) == null ) {
 									final Map<String, String> m = new HashMap<>();
 									m.put( seqLines.get( 0 ), origSequence );
 									this.missingFwPrimers.put( file.getName(), m );
-								} else {
+								} else
 									this.missingFwPrimers.get( file.getName() ).put( seqLines.get( 0 ), origSequence );
-								}
 
 							} else if( this.mergedReadTwoPrimers && rvPrimerLength < 1 ) {
 								Log.debug( getClass(), "Read missing reverse primer " + origSequence );
@@ -509,14 +468,10 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 									final Map<String, String> m = new HashMap<>();
 									m.put( seqLines.get( 0 ), origSequence );
 									this.missingRvPrimers.put( file.getName(), m );
-								} else {
+								} else
 									this.missingRvPrimers.get( file.getName() ).put( seqLines.get( 0 ), origSequence );
-								}
-							} else {
-								found = true;
-							}
+							} else found = true;
 						}
-					}
 
 					if( found ) {
 						final Long x = this.numLinesWithPrimer.get( file.getAbsolutePath() );
@@ -526,12 +481,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 						this.numLinesNoPrimer.put( file.getAbsolutePath(), x == null ? 1L: x + 1L );
 					}
 				} else if( seqLines.size() == 3 ) {
-					if( fwPrimerLength > 0 ) {
-						line = line.substring( fwPrimerLength );
-					}
-					if( rvPrimerLength > 0 ) {
-						line = line.substring( 0, line.length() - rvPrimerLength );
-					}
+					if( fwPrimerLength > 0 ) line = line.substring( fwPrimerLength );
+					if( rvPrimerLength > 0 ) line = line.substring( 0, line.length() - rvPrimerLength );
 				}
 
 				seqLines.add( line );
@@ -545,9 +496,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 						final Long x = this.seqsWithPrimersTrimmed.get( file );
 						this.seqsWithPrimersTrimmed.put( file, x == null ? 1L: x + 1L );
 
-						for( int j = 0; j < SeqUtil.getNumLinesPerRead(); j++ ) {
+						for( int j = 0; j < SeqUtil.getNumLinesPerRead(); j++ )
 							writer.write( seqLines.get( j ) + RETURN );
-						}
 					}
 					fwPrimerLength = 0;
 					rvPrimerLength = 0;
@@ -577,14 +527,10 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				validReads.retainAll( getValidHeaders( pairedReads.get( file ), primers ) );
 				processFile( file, validReads, primers );
 				processFile( pairedReads.get( file ), validReads );
-			} else {
-				processFile( file, primers );
-			}
+			} else processFile( file, primers );
 
-			if( ( i++ + 1 ) % 25 == 0 ) {
-				Log.info( getClass(),
-					"Done trimming " + i + "/" + count + ( hasPairedReads ? " file pairs": " files" ) );
-			}
+			if( ( i++ + 1 ) % 25 == 0 ) Log.info( getClass(),
+				"Done trimming " + i + "/" + count + ( hasPairedReads ? " file pairs": " files" ) );
 		}
 
 		Log.info( getClass(), "Done trimming " + i + "/" + count + ( hasPairedReads ? " file pairs": " files" ) );
@@ -598,11 +544,15 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	 * Return the primer file.
 	 * 
 	 * @return File with sequence primers
-	 * @throws Exception if errors occur
+	 * @throws ConfigPathException if primer file path is defined but does not exist on file system
+	 * @throws ConfigNotFoundException if primer property is undefined
 	 */
-	public static File getSeqPrimerFile() throws Exception {
-		if( DockerUtil.inDockerEnv() )
-			return DockerUtil.getDockerVolumeFile( Constants.INPUT_TRIM_SEQ_FILE, DockerUtil.DOCKER_PRIMER_DIR );
+	public static File getSeqPrimerFile() throws ConfigNotFoundException, ConfigPathException {
+		if( DockerUtil.inDockerEnv() ) {
+			File primers = DockerUtil.getDockerVolumeFile( Constants.INPUT_TRIM_SEQ_FILE, DockerUtil.DOCKER_PRIMER_DIR );
+			if( !primers.isFile() )
+				throw new ConfigPathException( primers, "Seq Primer file not found in Docker container" );
+		}
 		return Config.requireExistingFile( null, Constants.INPUT_TRIM_SEQ_FILE );
 	}
 

@@ -40,9 +40,8 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 	public String getSummary() throws Exception {
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) {
+		if( !this.sampleIds.isEmpty() )
 			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( this.sampleIds );
-		}
 
 		freeMemory();
 		return super.getSummary() + summary;
@@ -71,13 +70,12 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 		final List<File> files = getInputFiles();
 		Log.info( getClass(), "Counting # reads/sample for " + files.size() + " files" );
 
-		for( final File f: files ) {
+		for( final File f: files )
 			if( SeqUtil.isForwardRead( f.getName() ) ) {
 				final long count = SeqUtil.countNumReads( f );
 				Log.debug( getClass(), "Num Reads for :[" + SeqUtil.getSampleId( f.getName() ) + "] = " + count );
 				this.readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
-		}
 
 		MetaUtil.addColumn( getNumReadFieldName(), this.readsPerSample, getOutputDir(), true );
 	}
@@ -117,12 +115,10 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 	public static void setNumReadFieldName( final String name ) throws Exception {
 		if( name == null )
 			throw new Exception( "Null name value passed to RegisterNumReads.setNumReadFieldName(name)" );
-		else if( numReadFieldName != null && numReadFieldName.equals( name ) ) {
+		else if( numReadFieldName != null && numReadFieldName.equals( name ) )
 			Log.warn( RegisterNumReads.class, "NumReads field already set to: " + numReadFieldName );
-		} else {
-			if( numReadFieldName != null ) {
-				depricatedReadFields.add( numReadFieldName );
-			}
+		else {
+			if( numReadFieldName != null ) depricatedReadFields.add( numReadFieldName );
 
 			depricatedReadFields.remove( name );
 			numReadFieldName = name;

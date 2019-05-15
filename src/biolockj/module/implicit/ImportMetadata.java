@@ -31,9 +31,7 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void checkDependencies() throws Exception {
 		inputDelim = Config.requireString( this, MetaUtil.META_COLUMN_DELIM );
-		if( inputDelim.equals( "\\t" ) ) {
-			inputDelim = TAB_DELIM;
-		}
+		if( inputDelim.equals( "\\t" ) ) inputDelim = TAB_DELIM;
 		if( SeqUtil.isMultiplexed() && !MetaUtil.exists() )
 			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: "
 				+ MetaUtil.META_FILE_PATH );
@@ -45,9 +43,7 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		if( hasRModules() && !DockerUtil.isDirectMode() ) {
-			RMetaUtil.classifyReportableMetadata( this );
-		}
+		if( hasRModules() && !DockerUtil.isDirectMode() ) RMetaUtil.classifyReportableMetadata( this );
 	}
 
 	/**
@@ -59,9 +55,8 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void executeTask() throws Exception {
 		this.configMeta = MetaUtil.getMetadata();
-		if( this.configMeta == null ) {
-			buildNewMetadataFile();
-		} else {
+		if( this.configMeta == null ) buildNewMetadataFile();
+		else {
 			Log.info( getClass(), "Importing metadata (column delim="
 				+ Config.requireString( this, MetaUtil.META_COLUMN_DELIM ) + "): " + MetaUtil.getPath() );
 
@@ -69,9 +64,8 @@ public class ImportMetadata extends BioModuleImpl {
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			try {
 				int lineNum = 0;
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					writer.write( parseRow( line, lineNum++ == 0 ) );
-				}
 			} finally {
 				reader.close();
 				writer.close();
@@ -95,9 +89,7 @@ public class ImportMetadata extends BioModuleImpl {
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		try {
-			if( this.configMeta != null ) {
-				sb.append( "Imported file:  " + this.configMeta.getAbsolutePath() + RETURN );
-			}
+			if( this.configMeta != null ) sb.append( "Imported file:  " + this.configMeta.getAbsolutePath() + RETURN );
 			sb.append( "# Samples: " + MetaUtil.getSampleIds().size() + RETURN );
 			sb.append( "# Fields:  " + MetaUtil.getFieldNames().size() + RETURN );
 		} catch( final Exception ex ) {
@@ -119,17 +111,14 @@ public class ImportMetadata extends BioModuleImpl {
 		try {
 			writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			writer.write( MetaUtil.getID() + Constants.RETURN );
-			for( final String id: getSampleIds() ) {
+			for( final String id: getSampleIds() )
 				writer.write( id + Constants.RETURN );
-			}
 		} catch( final Exception ex ) {
 			ex.printStackTrace();
 			throw new MetadataException( "Unable to find module input sequence files: " + ex.getMessage() );
 		} finally {
 			try {
-				if( writer != null ) {
-					writer.close();
-				}
+				if( writer != null ) writer.close();
 			} catch( final Exception ex ) {
 				Log.error( getClass(), "Unable to close reader: " + ex.getMessage(), ex );
 			}
@@ -154,9 +143,8 @@ public class ImportMetadata extends BioModuleImpl {
 					+ "For more details, see http://www.fileformat.info/info/unicode/char/feff/index.htm" );
 
 			final char[] chars = colName.trim().toCharArray();
-			for( int i = 0; i < chars.length; i++ ) {
+			for( int i = 0; i < chars.length; i++ )
 				Log.debug( getClass(), "ID[" + i + "] = " + chars[ i ] );
-			}
 
 			colName = colName.substring( 1 );
 			Log.info( getClass(), "Updated ID = " + colName );
@@ -178,11 +166,8 @@ public class ImportMetadata extends BioModuleImpl {
 		String qVal = val;
 		this.quotedText = this.quotedText + qVal;
 		qVal = this.quotedText;
-		if( qVal.endsWith( "\"" ) ) {
-			this.quotedText = "";
-		} else {
-			this.quotedText = this.quotedText + inputDelim;
-		}
+		if( qVal.endsWith( "\"" ) ) this.quotedText = "";
+		else this.quotedText = this.quotedText + inputDelim;
 		return qVal;
 	}
 
@@ -249,29 +234,21 @@ public class ImportMetadata extends BioModuleImpl {
 			cell = cell.trim();
 			if( inQuotes( cell ) ) {
 				cell = getQuotedValue( cell );
-				if( !quoteEnded() ) {
-					continue;
-				}
+				if( !quoteEnded() ) continue;
 			}
 
 			if( isHeader ) {
 				verifyHeader( cell, this.colNames, colNum );
 				if( this.colNames.isEmpty() ) {
 					cell = formatMetaId( cell );
-					if( cell == null || cell.equals( MetaUtil.getNullValue( this ) ) ) {
-						continue;
-					}
+					if( cell == null || cell.equals( MetaUtil.getNullValue( this ) ) ) continue;
 				}
 				this.colNames.add( cell );
-			} else if( cell.isEmpty() ) {
-				cell = MetaUtil.getNullValue( this );
-			}
+			} else if( cell.isEmpty() ) cell = MetaUtil.getNullValue( this );
 
 			Log.debug( getClass(), "====> Set Row # [" + this.rowNum + "] - Column#[" + colNum + "] = " + cell );
 			sb.append( cell );
-			if( colNum++ < cells.length ) {
-				sb.append( Constants.TAB_DELIM );
-			}
+			if( colNum++ < cells.length ) sb.append( Constants.TAB_DELIM );
 		}
 		this.rowNum++;
 		return sb.toString() + RETURN;
@@ -286,14 +263,12 @@ public class ImportMetadata extends BioModuleImpl {
 	 */
 	protected void verifyAllRowsMapToSeqFile( final List<File> files ) throws Exception {
 		final List<String> ids = MetaUtil.getSampleIds();
-		for( final String id: MetaUtil.getSampleIds() ) {
-			for( final File seq: files ) {
+		for( final String id: MetaUtil.getSampleIds() )
+			for( final File seq: files )
 				if( SeqUtil.isForwardRead( seq.getName() ) && SeqUtil.getSampleId( seq.getName() ).equals( id ) ) {
 					ids.remove( id );
 					break;
 				}
-			}
-		}
 
 		if( !ids.isEmpty() ) throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
 			"This property requires every Sample ID in the metadata file " + MetaUtil.getFileName()
@@ -346,9 +321,8 @@ public class ImportMetadata extends BioModuleImpl {
 	}
 
 	private static boolean hasRModules() {
-		for( final BioModule module: Pipeline.getModules() ) {
+		for( final BioModule module: Pipeline.getModules() )
 			if( module instanceof R_Module ) return true;
-		}
 		return false;
 	}
 

@@ -45,14 +45,11 @@ public class Kraken2Parser extends ParserModuleImpl {
 			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try {
-				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					// Log.debug( getClass(), " LINE = " + line );
 					addOtuNode( new Kraken2Node( file.getName().replace( Constants.PROCESSED, "" ), line ) );
-				}
 			} finally {
-				if( reader != null ) {
-					reader.close();
-				}
+				if( reader != null ) reader.close();
 			}
 
 		}

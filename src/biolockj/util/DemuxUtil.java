@@ -110,12 +110,9 @@ public class DemuxUtil {
 	public static String getSampleId( final List<String> seqLines ) throws Exception {
 		if( demuxWithBarcode() ) {
 			final Map<String, String> map = getIdMap();
-			if( map != null ) {
-				for( final String barCodeId: map.keySet() ) {
-					if( ( barcodeInHeader() || barcodeInMapping() ) && seqLines.get( 0 ).contains( barCodeId )
-						|| barcodeInSeq() && seqLines.get( 1 ).startsWith( barCodeId ) ) return map.get( barCodeId );
-				}
-			}
+			if( map != null ) for( final String barCodeId: map.keySet() )
+				if( ( barcodeInHeader() || barcodeInMapping() ) && seqLines.get( 0 ).contains( barCodeId )
+					|| barcodeInSeq() && seqLines.get( 1 ).startsWith( barCodeId ) ) return map.get( barCodeId );
 			return null;
 		}
 		return SeqUtil.getSampleId( seqLines.get( 0 ) );
@@ -136,9 +133,8 @@ public class DemuxUtil {
 				Log.warn( DemuxUtil.class,
 					"Multiplexer adding Sample ID to sequence headers instead of barcode because dataset contains "
 						+ sampleIds.size() + " unique Sample IDs but only " + vals.size() + " unique barcodes" );
-				for( final String id: MetaUtil.getSampleIds() ) {
+				for( final String id: MetaUtil.getSampleIds() )
 					Log.warn( DemuxUtil.class, "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
-				}
 			}
 		} catch( final Exception ex ) {
 			Log.error( DemuxUtil.class, "Error occurred checking metadata file for valid barcodes" + ex.getMessage(),
@@ -216,17 +212,14 @@ public class DemuxUtil {
 		for( final String id: MetaUtil.getSampleIds() ) {
 			String val = MetaUtil.getField( id, Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) );
 
-			if( Config.getBoolean( null, BARCODE_USE_REV_COMP ) ) {
-				val = SeqUtil.reverseComplement( val );
-			}
+			if( Config.getBoolean( null, BARCODE_USE_REV_COMP ) ) val = SeqUtil.reverseComplement( val );
 
 			idMap.put( val, id );
 		}
 
-		for( final String key: idMap.keySet() ) {
+		for( final String key: idMap.keySet() )
 			Log.info( DemuxUtil.class,
 				"Barcode-SampleID Map key[ " + key + " ] -->  value[ " + idMap.get( key ) + " ]" );
-		}
 
 		return idMap;
 	}

@@ -53,9 +53,7 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables {
 				while( st.hasMoreTokens() ) {
 					final String nextToken = st.nextToken();
 					long d = 0;
-					if( nextToken.length() > 0 ) {
-						d = Long.parseLong( nextToken );
-					}
+					if( nextToken.length() > 0 ) d = Long.parseLong( nextToken );
 					innerList.add( d );
 				}
 
@@ -65,9 +63,7 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables {
 				nextLine = reader.readLine();
 			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
@@ -83,11 +79,10 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables {
 					// index 0 = col headers, so add + 1
 					final String id = MetaUtil.getSampleIds().get( x + 1 );
 					Log.warn( getClass(), "All zero row will not be transformed - ID ommitted: " + id );
-				} else if( getLogBase().equalsIgnoreCase( LOG_E ) ) {
+				} else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 					loggedInnerList.add( new Double( Math.log( val ) ).toString() );
-				} else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
+				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
 					loggedInnerList.add( new Double( Math.log10( val ) ).toString() );
-				}
 			}
 		}
 

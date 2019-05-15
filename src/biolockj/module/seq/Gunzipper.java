@@ -32,9 +32,8 @@ public class Gunzipper extends SeqModuleImpl {
 		final List<List<String>> data = new ArrayList<>();
 		for( final File f: files ) {
 			final ArrayList<String> lines = new ArrayList<>();
-			if( SeqUtil.isGzipped( f.getName() ) ) {
-				lines.add( unzip( f ) );
-			} else {
+			if( SeqUtil.isGzipped( f.getName() ) ) lines.add( unzip( f ) );
+			else {
 				Log.warn( getClass(),
 					"May be able to remove this BioModule - input already decompressed: " + f.getAbsolutePath() );
 				lines.add( copyToOutputDir( f ) );

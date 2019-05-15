@@ -30,11 +30,8 @@ public abstract class TaxaCountModule extends JavaModuleImpl {
 	public List<File> getInputFiles() {
 		if( getFileCache().isEmpty() ) {
 			final List<File> files = new ArrayList<>();
-			for( final File f: findModuleInputFiles() ) {
-				if( TaxaUtil.isTaxaFile( f ) ) {
-					files.add( f );
-				}
-			}
+			for( final File f: findModuleInputFiles() )
+				if( TaxaUtil.isTaxaFile( f ) ) files.add( f );
 
 			cacheInputFiles( filterByProcessLevel( files ) );
 		}
@@ -48,9 +45,8 @@ public abstract class TaxaCountModule extends JavaModuleImpl {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ) {
+		if( !BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) )
 			preReqs.add( BuildTaxaTables.class.getName() );
-		}
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
@@ -66,9 +62,8 @@ public abstract class TaxaCountModule extends JavaModuleImpl {
 			final Collection<File> files = BioLockJUtil.removeIgnoredAndEmptyFiles(
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 
-			for( final File f: files ) {
+			for( final File f: files )
 				if( TaxaUtil.isTaxaFile( f ) ) return true;
-			}
 		} catch( final Exception ex ) {
 			Log.warn( getClass(), "Error occurred while inspecting module output files: " + module );
 			ex.printStackTrace();
@@ -105,11 +100,8 @@ public abstract class TaxaCountModule extends JavaModuleImpl {
 					topFile = file;
 					break;
 				}
-				if( TaxaUtil.isNormalizedTaxaFile( file ) ) {
-					topFile = file;
-				} else if( topFile == null ) {
-					topFile = file;
-				}
+				if( TaxaUtil.isNormalizedTaxaFile( file ) ) topFile = file;
+				else if( topFile == null ) topFile = file;
 			}
 
 			filteredFiles.add( topFile );
@@ -120,18 +112,14 @@ public abstract class TaxaCountModule extends JavaModuleImpl {
 
 	private static Map<String, Set<File>> getTaxaFilesByLevel( final List<File> files ) {
 		final Map<String, Set<File>> levelFiles = new HashMap<>();
-		for( final String level: TaxaUtil.getTaxaLevels() ) {
-			for( final File file: files ) {
+		for( final String level: TaxaUtil.getTaxaLevels() )
+			for( final File file: files )
 				if( file.getName().contains( level ) ) {
 					Set<File> fileSet = levelFiles.get( level );
-					if( fileSet == null ) {
-						fileSet = new HashSet<>();
-					}
+					if( fileSet == null ) fileSet = new HashSet<>();
 					fileSet.add( file );
 					levelFiles.put( level, fileSet );
 				}
-			}
-		}
 
 		return levelFiles;
 	}

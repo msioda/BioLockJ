@@ -14,6 +14,8 @@ package biolockj.module.implicit.qiime;
 import java.io.*;
 import java.util.*;
 import biolockj.*;
+import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.ConfigPathException;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -84,11 +86,9 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	public void checkDependencies() throws Exception {
 		if( getClass().equals( QiimeClassifier.class ) ) {
 			boolean foundOtuPickingModule = false;
-			for( final BioModule module: Pipeline.getModules() ) {
-				if( module.getClass().getPackage().equals( QiimeOpenRefClassifier.class.getPackage() ) ) {
+			for( final BioModule module: Pipeline.getModules() )
+				if( module.getClass().getPackage().equals( QiimeOpenRefClassifier.class.getPackage() ) )
 					foundOtuPickingModule = true;
-				}
-			}
 
 			if( !foundOtuPickingModule )
 				throw new Exception( "QIIME pipelines require an OTU Picking module from package: "
@@ -113,9 +113,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		final List<String> metrics = Config.getList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
 			|| MetaUtil.getNullValue( this ).equals( ALPHA_DIV_NULL_VALUE ) ) {
-			if( !metrics.isEmpty() ) {
-				MetaUtil.refreshCache();
-			}
+			if( !metrics.isEmpty() ) MetaUtil.refreshCache();
 			return; // nothing to do
 		}
 
@@ -131,29 +129,26 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 				writer.write( st.nextToken() ); // write ID col
 
 				final List<String> record = new ArrayList<>();
-				while( st.hasMoreTokens() ) {
+				while( st.hasMoreTokens() )
 					record.add( st.nextToken() );
-				}
 
 				// Add Alpha Metrics as 1st columns since these will be used later as count cols instead of meta cols
 				for( int i = numCols; i < record.size(); i++ ) {
 					String val = record.get( i );
 					if( isHeader && val != null
-						&& ( val.endsWith( NORMALIZED_ALPHA ) || val.endsWith( NORMALIZED_ALPHA_LABEL ) ) ) {
+						&& ( val.endsWith( NORMALIZED_ALPHA ) || val.endsWith( NORMALIZED_ALPHA_LABEL ) ) )
 						skipCols.add( i );
-					} else if( isHeader || !skipCols.contains( i ) ) {
+					else if( isHeader || !skipCols.contains( i ) ) {
 						// replace any N/A values with configured MetaUtil.META_ULL_VALUE
-						if( !isHeader && val != null && val.equals( ALPHA_DIV_NULL_VALUE ) ) {
+						if( !isHeader && val != null && val.equals( ALPHA_DIV_NULL_VALUE ) )
 							val = MetaUtil.getNullValue( this );
-						}
 
 						writer.write( TAB_DELIM + val );
 					}
 				}
 
-				for( int i = 0; i < numCols; i++ ) {
+				for( int i = 0; i < numCols; i++ )
 					writer.write( TAB_DELIM + record.get( i ) );
-				}
 				writer.write( RETURN );
 				isHeader = false;
 			}
@@ -192,53 +187,55 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 * <li>{@value #QIIME_REF_SEQ_DB}
 	 * <li>{@value #QIIME_TAXA_DB}
 	 * </ol>
-	 * 
-	 * @return Parent DB directory
-	 * @throws Exception if errors occur
 	 */
 	@Override
-	public File getDB() throws Exception {
-		if( dbCache != null ) return dbCache;
+	public File getDB() throws ConfigPathException, ConfigNotFoundException {
+		if( getDbCache() != null ) return getDbCache();
+		Log.info( getClass(), "Get Configured QIIME DB root directory..." );
 		String pynastDB = Config.getString( this, QIIME_PYNAST_ALIGN_DB );
 		String refSeqDB = Config.getString( this, QIIME_REF_SEQ_DB );
 		String taxaDB = Config.getString( this, QIIME_TAXA_DB );
 
 		if( pynastDB == null && refSeqDB == null && taxaDB == null ) return null;
 		if( pynastDB == null || refSeqDB == null || taxaDB == null ) {
+			String undefinedDB = "";
 			if( pynastDB == null ) {
 				pynastDB = UNDEFINED;
+				undefinedDB = QIIME_PYNAST_ALIGN_DB;
 			}
-			if( pynastDB == null ) {
+			if( refSeqDB == null ) {
 				refSeqDB = UNDEFINED;
+				undefinedDB = QIIME_REF_SEQ_DB;
 			}
-			if( pynastDB == null ) {
+			if( taxaDB == null ) {
 				taxaDB = UNDEFINED;
+				undefinedDB = QIIME_TAXA_DB;
 			}
-			throw new Exception(
+			throw new ConfigNotFoundException( undefinedDB,
 				"Alternate QIIME database cannot be partially defined.  If any of these Config properties are defined, they must all be defined: "
 					+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB + ", "
 					+ QIIME_TAXA_DB + "=" + taxaDB );
 		}
 
-		final File pynastFile = new File( pynastDB );
-		final File refSeqFile = new File( refSeqDB );
-		final File taxaFile = new File( taxaDB );
-
-		dbCache = BioLockJUtil.getCommonParent( BioLockJUtil.getCommonParent( pynastFile, refSeqFile ), taxaFile );
-		Log.info( getClass(), "Found common database dir: " + dbCache.getAbsolutePath() );
-		return dbCache;
+		Log.info( getClass(), "pynastDB: " + pynastDB );
+		Log.info( getClass(), "refSeqDB: " + refSeqDB );
+		Log.info( getClass(), "taxaDB: " + taxaDB );
+		final File commonParentDir = BioLockJUtil.getCommonParent( 
+			BioLockJUtil.getCommonParent( new File( pynastDB ), new File( refSeqDB ) ), new File( taxaDB ) );
+		Log.info( getClass(), "commonParentDir: " + commonParentDir.getAbsolutePath() );
+		setDbCache( commonParentDir );
+		
+		return getDbCache();
 	}
 
 	@Override
 	public List<File> getInputFiles() {
-		if( getFileCache().isEmpty() ) if( getClass().getName().equals( QiimeClassifier.class.getName() ) ) {
+		if( getFileCache().isEmpty() ) if( getClass().getName().equals( QiimeClassifier.class.getName() ) )
 			cacheInputFiles( findModuleInputFiles() );
-		} else {
-			try {
-				cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
-			} catch( final SequnceFormatException ex ) {
-				Log.error( getClass(), "Unable to find module input sequence files: " + ex.getMessage(), ex );
-			}
+		else try {
+			cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+		} catch( final SequnceFormatException ex ) {
+			Log.error( getClass(), "Unable to find module input sequence files: " + ex.getMessage(), ex );
 		}
 		return getFileCache();
 	}
@@ -250,9 +247,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
-		if( !getClass().equals( QiimeClassifier.class ) ) {
-			postReqs.add( QiimeClassifier.class.getName() );
-		}
+		if( !getClass().equals( QiimeClassifier.class ) ) postReqs.add( QiimeClassifier.class.getName() );
 
 		postReqs.addAll( super.getPostRequisiteModules() );
 
@@ -269,16 +264,11 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
 		preReqs.addAll( super.getPreRequisiteModules() );
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
-		}
-		if( SeqUtil.piplineHasSeqInput() && !SeqUtil.isFastA() ) {
-			preReqs.add( ModuleUtil.getDefaultFastaConverter() );
-		}
-		if( !getClass().getName().equals( QiimeClassifier.class.getName() ) ) // must be a classifier
-		{
+		if( SeqUtil.piplineHasSeqInput() && !SeqUtil.isFastA() ) preReqs.add( ModuleUtil.getDefaultFastaConverter() );
+		if( !getClass().getName().equals( QiimeClassifier.class.getName() ) )
 			preReqs.add( BuildQiimeMapping.class.getName() );
-		}
 		return preReqs;
 	}
 
@@ -295,12 +285,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 				final BufferedReader reader = BioLockJUtil.getFileReader( otuSummary );
 				sb.append( "OTU Summary" + RETURN );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-					if( line.trim().equals( endString ) ) {
-						break;
-					}
-					if( !line.trim().isEmpty() ) {
-						sb.append( line + RETURN );
-					}
+					if( line.trim().equals( endString ) ) break;
+					if( !line.trim().isEmpty() ) sb.append( line + RETURN );
 				}
 
 				reader.close();
@@ -346,29 +332,17 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	protected List<String> buildQiimeDockerConfigLines() throws Exception {
 		final List<String> lines = new ArrayList<>();
 		if( getDB() != null ) {
-			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ) + "' > "
-				+ QIIME_DOCKER_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " + getDockerDB( QIIME_PYNAST_ALIGN_DB ) + "' >> "
-				+ QIIME_DOCKER_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ) + "' >> "
-				+ QIIME_DOCKER_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDockerDB( QIIME_TAXA_DB ) + "' >> "
-				+ QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ).getAbsolutePath()
+				+ "' > " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " "
+				+ getDockerDB( QIIME_PYNAST_ALIGN_DB ).getAbsolutePath() + "' >> " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ).getAbsolutePath()
+				+ "' >> " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDockerDB( QIIME_TAXA_DB ).getAbsolutePath()
+				+ "' >> " + QIIME_DOCKER_CONFIG );
 		}
 
 		return lines;
-	}
-
-	/**
-	 * Return the Docker container database directory
-	 * 
-	 * @param prop QIIME database dir
-	 * @return Docker container DB dir
-	 * @throws Exception if errors occur
-	 */
-	protected File getDockerDB( final String prop ) throws Exception {
-		final String path = Config.requireString( this, prop );
-		return new File( path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) );
 	}
 
 	/**
@@ -458,10 +432,13 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		final StringBuffer sb = new StringBuffer();
 		final Iterator<String> metrics = Config.requireList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
 		sb.append( metrics.next() );
-		while( metrics.hasNext() ) {
+		while( metrics.hasNext() )
 			sb.append( "," ).append( metrics.next() );
-		}
 		return sb.toString();
+	}
+
+	private File getDockerDB( final String property ) throws ConfigPathException, ConfigNotFoundException {
+		return DockerUtil.getDockerDB( this, Config.requireString( this, property ) );
 	}
 
 	private static String getLowestQiimeTaxaLevel() throws Exception {
@@ -594,7 +571,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	protected static final String SUMMARIZE_TAXA_SUPPRESS_BIOM = "suppress_biom_table_output";
 
-	private static File dbCache = null;
 	// OTHER SCRIPT THAT MAY BE ADDED IN THE FUTURE
 	// public static final String VALIDATED_MAPPING = "_corrected.txt";
 	// private static final String OTUS_TREE_97 = "97_otus.tree";

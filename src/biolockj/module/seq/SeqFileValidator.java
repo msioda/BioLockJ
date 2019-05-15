@@ -58,9 +58,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 			sb.append( getSeqLenRange() + RETURN );
 
-			if( !this.badFiles.isEmpty() ) {
-				sb.append( "Removed " + this.badFiles.size() + " empty files" + RETURN );
-			}
+			if( !this.badFiles.isEmpty() ) sb.append( "Removed " + this.badFiles.size() + " empty files" + RETURN );
 
 			final TreeSet<String> invalidReads = new TreeSet<>();
 			final TreeSet<String> shortReads = new TreeSet<>();
@@ -71,23 +69,18 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 				combinedMeanRvReadLen += stats[ INDEX_AVG_RV_READ_LEN ];
 				Log.debug( getClass(), "combinedMeanFwReadLen=" + combinedMeanFwReadLen );
 				Log.debug( getClass(), "combinedMeanRvReadLen=" + combinedMeanRvReadLen );
-				if( stats[ INDEX_MIN_READS ] == 0 || overallMinReadLen == 0 ) {
+				if( stats[ INDEX_MIN_READS ] == 0 || overallMinReadLen == 0 )
 					overallMinReadLen = Math.max( overallMinReadLen, stats[ INDEX_MIN_READS ] );
-				} else {
-					overallMinReadLen = Math.min( overallMinReadLen, stats[ INDEX_MIN_READS ] );
-				}
+				else overallMinReadLen = Math.min( overallMinReadLen, stats[ INDEX_MIN_READS ] );
 
 				overallMaxReadLen = Math.max( overallMaxReadLen, stats[ INDEX_MAX_READS ] );
 
-				if( stats[ INDEX_NUM_READS_INVALID_FORMAT ] > 0 ) {
+				if( stats[ INDEX_NUM_READS_INVALID_FORMAT ] > 0 )
 					invalidReads.add( sampleId + ":" + stats[ INDEX_NUM_READS_INVALID_FORMAT ] );
-				}
-				if( stats[ INDEX_NUM_READS_TOO_SHORT ] > 0 ) {
+				if( stats[ INDEX_NUM_READS_TOO_SHORT ] > 0 )
 					shortReads.add( sampleId + ":" + stats[ INDEX_NUM_READS_TOO_SHORT ] );
-				}
-				if( stats[ INDEX_NUM_TRIMMED_READS ] > 0 ) {
+				if( stats[ INDEX_NUM_TRIMMED_READS ] > 0 )
 					longReads.add( sampleId + ":" + stats[ INDEX_NUM_TRIMMED_READS ] );
-				}
 			}
 
 			sb.append( getSeqModSummary( invalidReads, shortReads, longReads, combinedMeanFwReadLen,
@@ -113,15 +106,12 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	public void runModule() throws Exception {
 		this.sampleIds.addAll( MetaUtil.getSampleIds() );
 		int count = 0;
-		for( final File file: getInputFiles() ) {
+		for( final File file: getInputFiles() )
 			validateFile( file, count++ );
-		}
 
 		removeBadFiles();
 
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-			verifyPairedSeqs();
-		}
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) verifyPairedSeqs();
 
 		MetaUtil.addColumn( getMetaColName(), this.readsPerSample, getOutputDir(), true );
 	}
@@ -130,14 +120,9 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	 * Remove sequence files in which all reads failed validation checks, leaving only an empty file.
 	 */
 	protected void removeBadFiles() {
-		if( !this.badFiles.isEmpty() ) {
-			for( final File file: this.badFiles ) {
-				// if( BioLockJUtil.deleteWithRetry( file, 5 ) ) {
-				if( file.delete() ) {
-					Log.warn( BioLockJUtil.class, "Deleted empty file: " + file.getAbsolutePath() );
-				}
-			}
-		}
+		if( !this.badFiles.isEmpty() ) for( final File file: this.badFiles )
+			// if( BioLockJUtil.deleteWithRetry( file, 5 ) ) {
+			if( file.delete() ) Log.warn( BioLockJUtil.class, "Deleted empty file: " + file.getAbsolutePath() );
 	}
 
 	/**
@@ -182,12 +167,9 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 					final int headerLen = seqLines.get( 0 ).length();
 					final int seqLen = seqLines.get( 1 ).length();
 					String headerChar = "";
-					if( headerLen == 0 ) {
-						Log.warn( getClass(), "Sequence #" + seqNum + " has an empty header & seq len = " + seqLen
-							+ " in ---> " + file.getAbsolutePath() );
-					} else {
-						headerChar = seqLines.get( 0 ).substring( 0, 1 );
-					}
+					if( headerLen == 0 ) Log.warn( getClass(), "Sequence #" + seqNum
+						+ " has an empty header & seq len = " + seqLen + " in ---> " + file.getAbsolutePath() );
+					else headerChar = seqLines.get( 0 ).substring( 0, 1 );
 
 					if( !SeqUtil.getSeqHeaderChars().contains( headerChar ) ) {
 						stats[ INDEX_NUM_READS_INVALID_FORMAT ]++;
@@ -213,24 +195,18 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 						if( seqMax != null && seqMax > 0 && seqLen > seqMax ) {
 							stats[ INDEX_NUM_TRIMMED_READS ]++;
 							seqLines.set( 1, seqLines.get( 1 ).substring( 0, seqMax ) );
-							if( SeqUtil.isFastQ() ) {
-								seqLines.set( 3, seqLines.get( 3 ).substring( 0, seqMax ) );
-							}
+							if( SeqUtil.isFastQ() ) seqLines.set( 3, seqLines.get( 3 ).substring( 0, seqMax ) );
 						}
 
 						final long readLen = seqLines.get( 1 ).length();
 						combinedReadLen += readLen;
 
-						if( readLen > 0 && stats[ INDEX_MIN_READS ] == 0 || readLen < stats[ INDEX_MIN_READS ] ) {
+						if( readLen > 0 && stats[ INDEX_MIN_READS ] == 0 || readLen < stats[ INDEX_MIN_READS ] )
 							stats[ INDEX_MIN_READS ] = readLen;
-						}
-						if( readLen > stats[ INDEX_MAX_READS ] ) {
-							stats[ INDEX_MAX_READS ] = readLen;
-						}
+						if( readLen > stats[ INDEX_MAX_READS ] ) stats[ INDEX_MAX_READS ] = readLen;
 
-						for( final String seqLine: seqLines ) {
+						for( final String seqLine: seqLines )
 							writer.write( seqLine + Constants.RETURN );
-						}
 					}
 
 					seqLines.clear();
@@ -240,15 +216,11 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 			} while( line != null );
 		} finally {
 			writer.close();
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 		Log.info( BioLockJUtil.class, "Output file: " + outputFile.getAbsolutePath() );
 
-		if( stats[ INDEX_NUM_VALID_READS ] == 0 ) {
-			this.badFiles.add( file );
-		}
+		if( stats[ INDEX_NUM_VALID_READS ] == 0 ) this.badFiles.add( file );
 
 		if( !this.badFiles.contains( file ) ) {
 			saveRemovedSeqsToFile( badLines, file );
@@ -308,9 +280,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	}
 
 	private String getMetaColName() throws Exception {
-		if( this.otuColName == null ) {
-			this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_VALID_READS );
-		}
+		if( this.otuColName == null ) this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_VALID_READS );
 
 		return this.otuColName;
 	}
@@ -335,30 +305,24 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 			final long avgRvReadLen = Double.valueOf( totalAvgRvLen / this.sampleStats.size() ).longValue();
 			sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid FW read len:", pad ) + avgReadLen + RETURN );
 			sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid RV read len:", pad ) + avgRvReadLen + RETURN );
-		} else {
-			sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid read len:", pad ) + avgReadLen + RETURN );
-		}
+		} else sb.append( BioLockJUtil.addTrailingSpaces( "Mean valid read len:", pad ) + avgReadLen + RETURN );
 
 		sb.append( BioLockJUtil.addTrailingSpaces( "Min valid read len:", pad ) + minReadLen + RETURN );
 		sb.append( BioLockJUtil.addTrailingSpaces( "Max valid read len:", pad ) + maxReadLen + RETURN );
 
-		if( invalidReads.isEmpty() && shortReads.isEmpty() && longReads.isEmpty() ) {
+		if( invalidReads.isEmpty() && shortReads.isEmpty() && longReads.isEmpty() )
 			sb.append( "SEQ files pass all validations - no sequences were modified or removed." + RETURN );
-		} else if( !invalidReads.isEmpty() || !shortReads.isEmpty() ) {
-			if( !invalidReads.isEmpty() ) {
-				sb.append(
-					BioLockJUtil.addTrailingSpaces( "Removed invalid reads from:", pad ) + invalidReads + RETURN );
-			}
+		else if( !invalidReads.isEmpty() || !shortReads.isEmpty() ) {
+			if( !invalidReads.isEmpty() ) sb
+				.append( BioLockJUtil.addTrailingSpaces( "Removed invalid reads from:", pad ) + invalidReads + RETURN );
 
-			if( !shortReads.isEmpty() ) {
+			if( !shortReads.isEmpty() )
 				sb.append( BioLockJUtil.addTrailingSpaces( "Removed short reads from:", pad ) + shortReads + RETURN );
-			}
 			sb.append( BioLockJUtil.addTrailingSpaces( "Discarded reads stored in:", pad )
 				+ getTempDir().getAbsolutePath() + RETURN );
 
-			if( !longReads.isEmpty() ) {
+			if( !longReads.isEmpty() )
 				sb.append( BioLockJUtil.addTrailingSpaces( "Trimmed long reads from:", pad ) + shortReads + RETURN );
-			}
 
 			final long max = this.maxSeqFound.keySet().iterator().next();
 			final TreeSet<String> ids = new TreeSet<>( this.maxSeqFound.values().iterator().next() );
@@ -369,9 +333,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, label, true ) + sb.toString();
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) {
+		if( !this.sampleIds.isEmpty() )
 			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) + this.sampleIds;
-		}
 
 		return summary;
 	}
@@ -432,9 +395,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 			Log.warn( getClass(), "Extracting invalid reads to --> " + tempFile.getAbsolutePath() );
 			final BufferedWriter invalidWriter = new BufferedWriter( new FileWriter( tempFile ) );
 			try {
-				for( final String seqLine: badLines ) {
+				for( final String seqLine: badLines )
 					invalidWriter.write( seqLine + RETURN );
-				}
 			} finally {
 				invalidWriter.close();
 			}
@@ -445,28 +407,22 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 		final TreeSet<String> ids = new TreeSet<>();
 		ids.add( sampleId );
 
-		if( this.maxSeqFound.isEmpty() ) {
-			this.maxSeqFound.put( seqLen, ids );
-		} else {
+		if( this.maxSeqFound.isEmpty() ) this.maxSeqFound.put( seqLen, ids );
+		else {
 			final long currentMaxLen = this.maxSeqFound.keySet().iterator().next();
 			final long newMaxLen = Math.max( seqLen, currentMaxLen );
 			if( newMaxLen == currentMaxLen ) {
 				ids.addAll( this.maxSeqFound.values().iterator().next() );
 				this.maxSeqFound.put( newMaxLen, ids );
-			} else if( newMaxLen > currentMaxLen ) {
-				this.maxSeqFound.put( newMaxLen, ids );
-			}
+			} else if( newMaxLen > currentMaxLen ) this.maxSeqFound.put( newMaxLen, ids );
 		}
 	}
 
 	private void setNumReads( final File file, final Long[] stats ) throws Exception {
-		if( SeqUtil.isForwardRead( file.getName() ) ) {
-			this.readsPerSample.put( SeqUtil.getSampleId( file.getName() ),
-				String.valueOf( stats[ INDEX_NUM_VALID_READS ] ) );
-		} else {
-			this.rvReadsPerSample.put( SeqUtil.getSampleId( file.getName() ),
-				String.valueOf( stats[ INDEX_NUM_VALID_READS ] ) );
-		}
+		if( SeqUtil.isForwardRead( file.getName() ) ) this.readsPerSample.put( SeqUtil.getSampleId( file.getName() ),
+			String.valueOf( stats[ INDEX_NUM_VALID_READS ] ) );
+		else this.rvReadsPerSample.put( SeqUtil.getSampleId( file.getName() ),
+			String.valueOf( stats[ INDEX_NUM_VALID_READS ] ) );
 
 	}
 
@@ -478,9 +434,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private static Long[] initStats() {
 		final Long[] stats = new Long[ 8 ];
-		for( int i = 0; i < stats.length; i++ ) {
+		for( int i = 0; i < stats.length; i++ )
 			stats[ i ] = 0L;
-		}
 		return stats;
 	}
 

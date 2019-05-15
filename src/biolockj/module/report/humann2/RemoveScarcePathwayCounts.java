@@ -62,25 +62,15 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	public void runModule() throws Exception {
 		this.sampleIds.addAll( MetaUtil.getSampleIds() );
 		final int cutoff = getCutoff();
-		for( final File file: getInputFiles() ) {
-			if( cutoff < 1 ) {
-				FileUtils.copyFileToDirectory( file, getOutputDir() );
-
-			} else {
+		for( final File file: getInputFiles() )
+			if( cutoff < 1 ) FileUtils.copyFileToDirectory( file, getOutputDir() );
+			else {
 				final List<List<String>> table = BioLockJUtil.parseCountTable( file );
 				logScarceData( removeScarcePathwayCounts( file, getScarcePathways( table ) ),
 					getScarcePathwayLogFile() );
 				logScarceData( removeScarceSamples( file, getScarceSampleIds( file, table ) ),
 					getScarceSampleLogFile() );
 			}
-
-			// if( addMetaCol( file ) ) {
-			// MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT,
-			// this.uniquePathwaysPerSample, getTempDir(), true );
-			// MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT,
-			// this.totalPathwaysPerSample, getOutputDir(), true );
-			// }
-		}
 	}
 
 	/**
@@ -97,11 +87,9 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		}
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( file ) );
 		try {
-			for( final String id: map.keySet() ) {
-				for( final String pathway: map.get( id ) ) {
+			for( final String id: map.keySet() )
+				for( final String pathway: map.get( id ) )
 					writer.write( id + ": " + pathway + RETURN );
-				}
-			}
 		} finally {
 			writer.close();
 		}
@@ -155,9 +143,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 					final Double count = Double.valueOf( record.get( i ) );
 					line.add( count.toString() );
 					totalPathwayCount += count;
-					if( count > 0 ) {
-						validSamplePathways.add( pathway );
-					}
+					if( count > 0 ) validSamplePathways.add( pathway );
 				}
 			}
 
@@ -215,10 +201,9 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	}
 
 	private int getCutoff() throws Exception {
-		if( this.scarceCountCutoff == null ) {
+		if( this.scarceCountCutoff == null )
 			this.scarceCountCutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCountCutoff() ) )
 				.intValue();
-		}
 
 		return this.scarceCountCutoff;
 	}
@@ -228,10 +213,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	}
 
 	private int getSampleCutoff() throws Exception {
-		if( this.scarceSampleCutoff == null ) {
-			this.scarceSampleCutoff = new Double(
-				Math.ceil( MetaUtil.getFieldNames().size() * getScarceSampleCutoff() ) ).intValue();
-		}
+		if( this.scarceSampleCutoff == null ) this.scarceSampleCutoff = new Double(
+			Math.ceil( MetaUtil.getFieldNames().size() * getScarceSampleCutoff() ) ).intValue();
 
 		return this.scarceSampleCutoff;
 	}
@@ -241,9 +224,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	}
 
 	private String getScarceCountProp() {
-		if( this.scarceCountCutoffProp == null ) {
+		if( this.scarceCountCutoffProp == null )
 			this.scarceCountCutoffProp = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
-		}
 		return this.scarceCountCutoffProp;
 	}
 
@@ -255,25 +237,19 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		final Set<String> scarcePathways = new HashSet<>();
 		final Map<String, Double> pathMap = new HashMap<>();
 		final List<String> pathways = table.get( 0 ).subList( 1, table.get( 0 ).size() - 1 );
-		for( final String pathway: pathways ) {
+		for( final String pathway: pathways )
 			pathMap.put( pathway, 0.0 );
-		}
 
-		for( final List<String> record: table.subList( 1, table.size() - 1 ) ) {
+		for( final List<String> record: table.subList( 1, table.size() - 1 ) )
 			for( int i = 0; i < pathways.size(); i++ ) {
 				final Double count = Double.valueOf( record.get( i + 1 ) );
 				final String pathway = pathways.get( i );
-				if( count > 0 ) {
-					pathMap.put( pathway, pathMap.get( pathway ) + 1 );
-				}
+				if( count > 0 ) pathMap.put( pathway, pathMap.get( pathway ) + 1 );
 			}
-		}
 
 		for( final String pathway: pathways ) {
 			final Double count = pathMap.get( pathway );
-			if( count > 0 && count < getCutoff() ) {
-				scarcePathways.add( pathway );
-			}
+			if( count > 0 && count < getCutoff() ) scarcePathways.add( pathway );
 		}
 
 		return scarcePathways;
@@ -293,12 +269,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 			for( final String cell: record ) {
 				if( newRecord ) {
 					id = cell;
-					if( id.equals( this.TARGET ) ) {
-						Log.info( getClass(), "TARGET " + this.TARGET + " located!" );
-					}
-				} else if( NumberUtils.isNumber( cell ) && Double.valueOf( cell ) > 0 ) {
-					count++;
-				}
+					if( id.equals( this.TARGET ) ) Log.info( getClass(), "TARGET " + this.TARGET + " located!" );
+				} else if( NumberUtils.isNumber( cell ) && Double.valueOf( cell ) > 0 ) count++;
 				newRecord = false;
 			}
 
@@ -317,9 +289,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	}
 
 	private String getScarceSampleProp() {
-		if( this.scarceSampleCutoffProp == null ) {
+		if( this.scarceSampleCutoffProp == null )
 			this.scarceSampleCutoffProp = Config.getModuleProp( this, Constants.REPORT_SAMPLE_CUTOFF );
-		}
 		return this.scarceSampleCutoffProp;
 	}
 
@@ -331,20 +302,14 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		List<String> pathways = null;
 		for( final List<String> record: table ) {
 			final String id = record.get( 0 );
-			if( id.equals( MetaUtil.getID() ) ) {
-				pathways = record.subList( 1, record.size() );
-			}
+			if( id.equals( MetaUtil.getID() ) ) pathways = record.subList( 1, record.size() );
 
 			if( scarceIds.contains( id ) && pathways != null ) {
 				scarceSampleMap.put( id, new TreeSet<>() );
-				for( int i = 1; i < record.size(); i++ ) {
-					if( !record.get( i ).equals( "0" ) && !record.get( i ).equals( "0.0" ) ) {
+				for( int i = 1; i < record.size(); i++ )
+					if( !record.get( i ).equals( "0" ) && !record.get( i ).equals( "0.0" ) )
 						scarceSampleMap.get( id ).add( pathways.get( i - 1 ) );
-					}
-				}
-			} else {
-				output.add( record );
-			}
+			} else output.add( record );
 		}
 
 		buildOutputTable( file, output );

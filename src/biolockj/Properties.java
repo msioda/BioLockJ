@@ -67,10 +67,9 @@ public class Properties extends java.util.Properties {
 		final Properties props = buildConfig( file );
 		props.setProperty( Constants.INTERNAL_BLJ_MODULE,
 			BioLockJUtil.getCollectionAsString( getListedModules( file ) ) );
-		if( configRegister.size() > 1 ) {
+		if( configRegister.size() > 1 )
 			props.setProperty( Constants.INTERNAL_DEFAULT_CONFIG, BioLockJUtil.getCollectionAsString(
 				BioLockJUtil.getFilePaths( configRegister.subList( 0, configRegister.size() - 1 ) ) ) );
-		}
 		return props;
 	}
 
@@ -97,22 +96,17 @@ public class Properties extends java.util.Properties {
 			"Import All Config Properties for --> Top Level Pipeline Properties File: " + propFile.getAbsolutePath() );
 		Properties defaultProps = null;
 		final File standConf = Config.getLocalConfigFile( Constants.STANDARD_CONFIG_PATH );
-		if( standConf != null && !configRegister.contains( propFile ) ) {
-			defaultProps = readProps( standConf, null );
-		}
+		if( standConf != null && !configRegister.contains( propFile ) ) defaultProps = readProps( standConf, null );
 
 		if( DockerUtil.inDockerEnv() ) {
 			final File dockConf = Config.getLocalConfigFile( Constants.DOCKER_CONFIG_PATH );
-			if( dockConf != null && !configRegister.contains( dockConf ) ) {
+			if( dockConf != null && !configRegister.contains( dockConf ) )
 				defaultProps = readProps( dockConf, defaultProps );
-			}
 		}
 
-		for( final File pipelineDefaultConfig: getNestedDefaultProps( propFile ) ) {
-			if( !configRegister.contains( pipelineDefaultConfig ) ) {
+		for( final File pipelineDefaultConfig: getNestedDefaultProps( propFile ) )
+			if( !configRegister.contains( pipelineDefaultConfig ) )
 				defaultProps = readProps( pipelineDefaultConfig, defaultProps );
-			}
-		}
 
 		final Properties props = readProps( propFile, defaultProps );
 		report( props, propFile, true );
@@ -132,15 +126,11 @@ public class Properties extends java.util.Properties {
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final StringTokenizer st = new StringTokenizer( line, "=" );
-				if( st.countTokens() > 1 ) {
-					if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
-						return Config.getLocalConfigFile( st.nextToken().trim() );
-				}
+				if( st.countTokens() > 1 ) if( st.nextToken().trim().equals( Constants.PIPELINE_DEFAULT_PROPS ) )
+					return Config.getLocalConfigFile( st.nextToken().trim() );
 			}
 		} finally {
-			if( reader != null ) {
-				reader.close();
-			}
+			if( reader != null ) reader.close();
 		}
 		return null;
 	}
@@ -174,13 +164,12 @@ public class Properties extends java.util.Properties {
 		final List<String> modules = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {
-			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+			for( String line = reader.readLine(); line != null; line = reader.readLine() )
 				if( line.startsWith( Constants.BLJ_MODULE_TAG ) ) {
 					final String moduleName = line.trim().substring( line.indexOf( " " ) + 1 );
 					Log.info( Properties.class, "Configured BioModule: " + moduleName );
 					modules.add( moduleName );
 				}
-			}
 		} finally {
 			reader.close();
 		}
@@ -193,9 +182,7 @@ public class Properties extends java.util.Properties {
 		File defConfig = null;
 		do {
 			defConfig = getDefaultConfig( propFile );
-			if( defConfig == null || configRegister.contains( defConfig ) || configFiles.contains( defConfig ) ) {
-				break;
-			}
+			if( defConfig == null || configRegister.contains( defConfig ) || configFiles.contains( defConfig ) ) break;
 			configFiles.add( defConfig );
 		} while( true );
 		Collections.reverse( configFiles );
@@ -204,11 +191,9 @@ public class Properties extends java.util.Properties {
 
 	private static void report( final Properties properties, final File config, final boolean projectConfigOnly ) {
 		Log.debug( Properties.class, " ---------- Report [ " + config.getAbsolutePath() + " ] ------------> " );
-		if( projectConfigOnly ) {
-			for( final Object key: properties.keySet() ) {
-				Log.debug( Config.class, "Project Config: " + key + "=" + properties.getProperty( (String) key ) );
-			}
-		} else {
+		if( projectConfigOnly ) for( final Object key: properties.keySet() )
+			Log.debug( Config.class, "Project Config: " + key + "=" + properties.getProperty( (String) key ) );
+		else {
 			final Enumeration<?> en = properties.propertyNames();
 			while( en.hasMoreElements() ) {
 				final String key = en.nextElement().toString();

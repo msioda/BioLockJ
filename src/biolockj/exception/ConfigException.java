@@ -33,7 +33,7 @@ public abstract class ConfigException extends Exception {
 	 * error message for Configuration file errors, passing an empty string for the msg parameter.
 	 *
 	 * @param property {@link biolockj.Config} property name
-	 * @param msg Exception type
+	 * @param msg Exception details
 	 */
 	public ConfigException( final String property, final String msg ) {
 		super( buildMessage( property, msg ) );
@@ -48,9 +48,7 @@ public abstract class ConfigException extends Exception {
 	 */
 	protected static String buildMessage( final String property, final String msg ) {
 		String val = Config.getString( null, property );
-		if( val == null ) {
-			val = "{undefined}";
-		}
+		if( val == null ) val = "{undefined}";
 		return "[ " + property + "=" + val + " ] " + Constants.RETURN + msg + Constants.RETURN
 			+ "Restart pipeline after updating the property value in: " + Config.getConfigFilePath() + Constants.RETURN
 			+ "RESTART SHORTCUT CMD ---> \"blj_rerun " + Config.getConfigFilePath() + "\"";
