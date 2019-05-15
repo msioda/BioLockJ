@@ -385,7 +385,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 				Log.debug( getClass(), "Updated FW seq length = " + stats[ INDEX_AVG_FW_READ_LEN ] );
 			}
 		}
-
+		Log.info( getClass(), "Set sample Stats for file =====> " + file.getAbsolutePath() );
+		Log.info( getClass(), "FIND SeqUtil.getSampleId() =====> " +  SeqUtil.getSampleId( file.getName() ));
 		this.sampleStats.put( SeqUtil.getSampleId( file.getName() ), stats );
 	}
 

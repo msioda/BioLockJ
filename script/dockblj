@@ -60,7 +60,9 @@ build_clone_script() {
 	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
 	echo ${@/$(get_docker_img)/-ti $(dock_id)/biolockj_controller /bin/bash} >> "${DOCKER_CLONE_SCRIPT}"
 	chmod 777 "${DOCKER_CLONE_SCRIPT}"
-	echo "This script will execute a Docker clone of your most recent pipeline --> ${DOCKER_CLONE_SCRIPT}"
+	echo "** DEVELOPER NOTE ** dockblj creates a script that if run, launchs a clone of this container shell (same env vars + volumes) without executing the default CMD"
+	echo "** DEVELOPER NOTE ** Useful to inspect moduleruntime envionment.  A shortcut to run the script is provided via the \"dclone\" alias"
+	echo "even after this container is terminated --> ${DOCKER_CLONE_SCRIPT}"
 	[ -f "${DOCKER_CLONE_SCRIPT}" ] && cat "${DOCKER_CLONE_SCRIPT}" & printf "\n"
 }
 

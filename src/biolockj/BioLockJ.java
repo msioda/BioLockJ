@@ -181,6 +181,8 @@ public class BioLockJ {
 
 		if( DockerUtil.isDirectMode() ) Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
 		else Log.initialize( Config.pipelineName() );
+		
+		Log.warn( BioLockJ.class, "ASCII LOG TESTS!  -----> \n\n" + SummaryUtil.display_ASCII_Status() );
 
 		if( RuntimeParamUtil.doRestart() ) initRestart();
 
@@ -313,8 +315,7 @@ public class BioLockJ {
 			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
 		}
 
-		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() );
-		// + SummaryUtil.display_ASCII_Status() );
+		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() + SummaryUtil.display_ASCII_Status() );
 		if( isPipelineComplete() ) System.exit( 0 );
 
 		System.exit( 1 );
