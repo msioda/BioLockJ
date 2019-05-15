@@ -89,15 +89,15 @@ public class SummaryUtil {
 		sb.append( "                       _-^-_" + RETURN );
 		sb.append( "                    _' ,'  \\ ~=_" + RETURN ); 
 		sb.append( "                 -'  ,'     `.  `-_" + RETURN );
-		sb.append( "				  !`-_.;_______:.-':::" + RETURN );
-		sb.append( "				  !   /\\        /\\::::" + RETURN );
-		sb.append( "				  |  /  \\      /..\\:::" + RETURN ); 
-		sb.append( "				  ! /    \\    /....\\::" + RETURN );
-		sb.append( "				  !/      \\  /......\\:" + RETURN );
-		sb.append( "				  :--.___. \\/_.__.--;;" + RETURN );
-		sb.append( "				  `-_     ` !;;;;;;;'" + RETURN );
-		sb.append( "				    `-_     !;;;''" + RETURN );
-		sb.append( "				       `-.. !'" + RETURN );
+		sb.append( "               !`-_.;_______:.-':::" + RETURN );
+		sb.append( "               !   /\\        /\\::::" + RETURN );
+		sb.append( "               |  /  \\      /..\\:::" + RETURN ); 
+		sb.append( "               ! /    \\    /....\\::" + RETURN );
+		sb.append( "               !/      \\  /......\\:" + RETURN );
+		sb.append( "               :--.___. \\/_.__.--;;" + RETURN );
+		sb.append( "                -_     ` !;;;;;;;'" + RETURN );
+		sb.append( "                 `-_     !;;;''" + RETURN );
+		sb.append( "                    `-.. !'" + RETURN );
 		sb.append( "                        (=)" + RETURN );
 		sb.append( "                        (=)" + RETURN );
 		sb.append( "                        (=)" + RETURN );
@@ -113,13 +113,13 @@ public class SummaryUtil {
 		sb.append( "                       '/V\\`" + RETURN );
 		sb.append( "                     ' /   \\ `" + RETURN );
 		sb.append( "                   '  /     \\  `" + RETURN );
-		sb.append( "                 '   /       \\   `" + RETURN );
-		sb.append( "	             .'    /          \\    `." + RETURN );
-		sb.append( "	            \\    |            |    /" + RETURN );
-		sb.append( "	             \\   |            |   /" + RETURN );
-		sb.append( "		          \\  |            |  /" + RETURN );
-		sb.append( "		            ` |            | '" + RETURN );
-		sb.append( "		              |            |" + RETURN );
+		sb.append( "                '   /       \\   `" + RETURN );
+		sb.append( "             .'    /          \\    `." + RETURN );
+		sb.append( "            \\    |            |    /" + RETURN );
+		sb.append( "             \\   |            |   /" + RETURN );
+		sb.append( "	              \\  |            |  /" + RETURN );
+		sb.append( "	                ` |            | '" + RETURN );
+		sb.append( "	                  |            |" + RETURN );
 		return sb.toString();
 	}
 	
