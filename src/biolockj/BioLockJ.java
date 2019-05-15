@@ -182,8 +182,6 @@ public class BioLockJ {
 		if( DockerUtil.isDirectMode() ) Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
 		else Log.initialize( Config.pipelineName() );
 		
-		Log.warn( BioLockJ.class, "ASCII LOG TESTS!  -----> \n\n" + SummaryUtil.display_ASCII_Status() );
-
 		if( RuntimeParamUtil.doRestart() ) initRestart();
 
 		if( !DockerUtil.isDirectMode() ) {

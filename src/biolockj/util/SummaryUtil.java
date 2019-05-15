@@ -43,7 +43,7 @@ public class SummaryUtil {
 	}
 
 	private static boolean x = false;
-	private static String assShow( String val ) {
+	private static String testascii( String val ) {
 		x = !x;
 		final String GAP = RETURN + RETURN + RETURN + RETURN + RETURN;    
 		return GAP + val + RETURN + ( x ? complete_ASCII_Art(): failed_ASCII_Art() );
@@ -55,7 +55,8 @@ public class SummaryUtil {
 	 * @return Beautiful artwork
 	 */
 	public static String display_ASCII_Status() {
-		return assShow( ass_T1() ) + assShow( ass_T2() ) + assShow( ass_T3() ) + assShow( ass_T4() ) + assShow( ass_T5() );
+		return "";
+		//return testascii( ass_T1() ) + testascii( ass_T2() ) + testascii( ass_T3() ) + testascii( ass_T4() ) + testascii( ass_T5() );
 	}
 	
 	private static String ass_T1() {

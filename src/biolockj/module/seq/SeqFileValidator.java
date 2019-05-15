@@ -121,7 +121,6 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	 */
 	protected void removeBadFiles() {
 		if( !this.badFiles.isEmpty() ) for( final File file: this.badFiles )
-			// if( BioLockJUtil.deleteWithRetry( file, 5 ) ) {
 			if( file.delete() ) Log.warn( BioLockJUtil.class, "Deleted empty file: " + file.getAbsolutePath() );
 	}
 
@@ -281,7 +280,6 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private String getMetaColName() throws Exception {
 		if( this.otuColName == null ) this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_VALID_READS );
-
 		return this.otuColName;
 	}
 
@@ -294,7 +292,6 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	private String getSeqModSummary( final TreeSet<String> invalidReads, final TreeSet<String> shortReads,
 		final TreeSet<String> longReads, final long totalAvgFwLen, final long totalAvgRvLen, final long minReadLen,
 		final long maxReadLen ) throws Exception {
-		Log.info( getClass(), "Building Sequence File Summary for #Samples = " + this.sampleStats.size() );
 		final String label = "Valid Reads";
 		final int pad = SummaryUtil.getPad( label );
 
@@ -328,7 +325,6 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 			final TreeSet<String> ids = new TreeSet<>( this.maxSeqFound.values().iterator().next() );
 			sb.append(
 				BioLockJUtil.addTrailingSpaces( "IDs w/ ORIGINAL max read len [" + max + "]:", pad ) + ids + RETURN );
-
 		}
 
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, label, true ) + sb.toString();
@@ -385,8 +381,6 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 				Log.debug( getClass(), "Updated FW seq length = " + stats[ INDEX_AVG_FW_READ_LEN ] );
 			}
 		}
-		Log.info( getClass(), "Set sample Stats for file =====> " + file.getAbsolutePath() );
-		Log.info( getClass(), "FIND SeqUtil.getSampleId() =====> " +  SeqUtil.getSampleId( file.getName() ));
 		this.sampleStats.put( SeqUtil.getSampleId( file.getName() ), stats );
 	}
 
@@ -435,8 +429,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private static Long[] initStats() {
 		final Long[] stats = new Long[ 8 ];
-		for( int i = 0; i < stats.length; i++ )
-			stats[ i ] = 0L;
+		for( int i = 0; i < stats.length; i++ ) stats[ i ] = 0L;
 		return stats;
 	}
 
@@ -446,7 +439,6 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 	private Map<String, String> readsPerSample = new HashMap<>();
 	private Map<String, String> rvReadsPerSample = new HashMap<>();
 	private Set<String> sampleIds = new HashSet<>();
-
 	private Map<String, Long[]> sampleStats = new HashMap<>();
 
 	/**
