@@ -14,9 +14,7 @@ package biolockj.module.implicit.qiime;
 import java.io.*;
 import java.util.*;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
-import biolockj.exception.SequnceFormatException;
+import biolockj.exception.*;
 import biolockj.module.BioModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.module.classifier.r16s.QiimeOpenRefClassifier;
@@ -65,15 +63,15 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		final List<List<String>> data = new ArrayList<>();
 		final List<String> lines = new ArrayList<>();
 		lines.add( SCRIPT_PRINT_CONFIG );
-		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L "
-			+ getLowestQiimeTaxaLevel() + " -o " + outDir );
+		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L " +
+			getLowestQiimeTaxaLevel() + " -o " + outDir );
 		lines.add( SCRIPT_SUMMARIZE_BIOM + " -i " + files.get( 0 ) + " -o " + tempDir + OTU_SUMMARY_FILE );
 		if( Config.getString( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS ) != null ) {
 			final File newMapping = new File( tempDir + MetaUtil.getFileName() );
-			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics()
-				+ " -o " + tempDir + ALPHA_DIVERSITY_TABLE );
-			lines.add( SCRIPT_ADD_ALPHA_DIVERSITY + " -m " + MetaUtil.getPath() + " -i " + tempDir
-				+ ALPHA_DIVERSITY_TABLE + " -o " + newMapping );
+			lines.add( SCRIPT_CALC_ALPHA_DIVERSITY + " -i " + files.get( 0 ) + " -m " + getAlphaDiversityMetrics() +
+				" -o " + tempDir + ALPHA_DIVERSITY_TABLE );
+			lines.add( SCRIPT_ADD_ALPHA_DIVERSITY + " -m " + MetaUtil.getPath() + " -i " + tempDir +
+				ALPHA_DIVERSITY_TABLE + " -o " + newMapping );
 			MetaUtil.setFile( newMapping );
 		}
 
@@ -91,8 +89,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 					foundOtuPickingModule = true;
 
 			if( !foundOtuPickingModule )
-				throw new Exception( "QIIME pipelines require an OTU Picking module from package: "
-					+ QiimeOpenRefClassifier.class.getPackage() );
+				throw new Exception( "QIIME pipelines require an OTU Picking module from package: " +
+					QiimeOpenRefClassifier.class.getPackage() );
 		}
 
 		super.checkDependencies();
@@ -111,8 +109,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
 
 		final List<String> metrics = Config.getList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
-		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty()
-			|| MetaUtil.getNullValue( this ).equals( ALPHA_DIV_NULL_VALUE ) ) {
+		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty() ||
+			MetaUtil.getNullValue( this ).equals( ALPHA_DIV_NULL_VALUE ) ) {
 			if( !metrics.isEmpty() ) MetaUtil.refreshCache();
 			return; // nothing to do
 		}
@@ -135,8 +133,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 				// Add Alpha Metrics as 1st columns since these will be used later as count cols instead of meta cols
 				for( int i = numCols; i < record.size(); i++ ) {
 					String val = record.get( i );
-					if( isHeader && val != null
-						&& ( val.endsWith( NORMALIZED_ALPHA ) || val.endsWith( NORMALIZED_ALPHA_LABEL ) ) )
+					if( isHeader && val != null &&
+						( val.endsWith( NORMALIZED_ALPHA ) || val.endsWith( NORMALIZED_ALPHA_LABEL ) ) )
 						skipCols.add( i );
 					else if( isHeader || !skipCols.contains( i ) ) {
 						// replace any N/A values with configured MetaUtil.META_ULL_VALUE
@@ -212,19 +210,19 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 				undefinedDB = QIIME_TAXA_DB;
 			}
 			throw new ConfigNotFoundException( undefinedDB,
-				"Alternate QIIME database cannot be partially defined.  If any of these Config properties are defined, they must all be defined: "
-					+ QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB + ", "
-					+ QIIME_TAXA_DB + "=" + taxaDB );
+				"Alternate QIIME database cannot be partially defined.  If any of these Config properties are defined, they must all be defined: " +
+					QIIME_PYNAST_ALIGN_DB + "=" + pynastDB + ", " + QIIME_REF_SEQ_DB + "=" + refSeqDB + ", " +
+					QIIME_TAXA_DB + "=" + taxaDB );
 		}
 
 		Log.info( getClass(), "pynastDB: " + pynastDB );
 		Log.info( getClass(), "refSeqDB: " + refSeqDB );
 		Log.info( getClass(), "taxaDB: " + taxaDB );
-		final File commonParentDir = BioLockJUtil.getCommonParent( 
+		final File commonParentDir = BioLockJUtil.getCommonParent(
 			BioLockJUtil.getCommonParent( new File( pynastDB ), new File( refSeqDB ) ), new File( taxaDB ) );
 		Log.info( getClass(), "commonParentDir: " + commonParentDir.getAbsolutePath() );
 		setDbCache( commonParentDir );
-		
+
 		return getDbCache();
 	}
 
@@ -316,8 +314,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	@Override
 	public boolean isValidInputModule( final BioModule module ) {
-		if( getClass().getName().equals( QiimeClassifier.class.getName() )
-			&& module.getClass().getName().toLowerCase().contains( Constants.QIIME ) ) return true;
+		if( getClass().getName().equals( QiimeClassifier.class.getName() ) &&
+			module.getClass().getName().toLowerCase().contains( Constants.QIIME ) ) return true;
 
 		return super.isValidInputModule( module );
 	}
@@ -332,14 +330,14 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	protected List<String> buildQiimeDockerConfigLines() throws Exception {
 		final List<String> lines = new ArrayList<>();
 		if( getDB() != null ) {
-			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ).getAbsolutePath()
-				+ "' > " + QIIME_DOCKER_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " "
-				+ getDockerDB( QIIME_PYNAST_ALIGN_DB ).getAbsolutePath() + "' >> " + QIIME_DOCKER_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ).getAbsolutePath()
-				+ "' >> " + QIIME_DOCKER_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDockerDB( QIIME_TAXA_DB ).getAbsolutePath()
-				+ "' >> " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ).getAbsolutePath() +
+				"' > " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " +
+				getDockerDB( QIIME_PYNAST_ALIGN_DB ).getAbsolutePath() + "' >> " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ).getAbsolutePath() +
+				"' >> " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDockerDB( QIIME_TAXA_DB ).getAbsolutePath() +
+				"' >> " + QIIME_DOCKER_CONFIG );
 		}
 
 		return lines;
@@ -373,17 +371,17 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		if( this.switches == null ) {
 			final String params = BioLockJUtil.join( getClassifierParams() );
 			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
-				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY (" + QIIME_PARAMS
-					+ "). PLEASE REMOVE.  INPUT DETERMINED BY: " + Constants.INPUT_DIRS );
+				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY (" + QIIME_PARAMS +
+					"). PLEASE REMOVE.  INPUT DETERMINED BY: " + Constants.INPUT_DIRS );
 			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
-				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY (" + QIIME_PARAMS
-					+ "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
+				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY (" +
+					QIIME_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
 			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
-				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + QIIME_PARAMS
-					+ "). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
+				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + QIIME_PARAMS +
+					"). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
 			if( params.indexOf( "-f " ) > -1 )
-				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY (" + QIIME_PARAMS
-					+ "). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
+				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY (" + QIIME_PARAMS +
+					"). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
 
 			this.switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
 			if( this.switches == null || this.switches.trim().isEmpty() )
@@ -411,8 +409,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		final File outputDir ) throws Exception {
 		final List<String> lines = new ArrayList<>();
 		lines.add( "sleep 5s" );
-		lines.add( SCRIPT_ADD_LABELS + " -n 1 -i " + fastaDir.getAbsolutePath() + " -m " + mapping + " -c "
-			+ Constants.QIIME_DEMUX_COL + " -o " + outputDir.getAbsolutePath() );
+		lines.add( SCRIPT_ADD_LABELS + " -n 1 -i " + fastaDir.getAbsolutePath() + " -m " + mapping + " -c " +
+			Constants.QIIME_DEMUX_COL + " -o " + outputDir.getAbsolutePath() );
 		final String fnaFile = outputDir + File.separator + COMBINED_FNA;
 		lines.add( otuPickingScript + getParams() + "-i " + fnaFile + " -fo " + outputDir );
 		return lines;
@@ -450,8 +448,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.PHYLUM ) ) return "2";
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.DOMAIN ) ) return "1";
 
-		throw new Exception( "Should not be possible to reach this error, value based on required field: "
-			+ Constants.REPORT_TAXONOMY_LEVELS );
+		throw new Exception( "Should not be possible to reach this error, value based on required field: " +
+			Constants.REPORT_TAXONOMY_LEVELS );
 
 	}
 

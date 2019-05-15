@@ -40,9 +40,9 @@ public class MetaphlanNode extends OtuNodeImpl {
 	 */
 	public MetaphlanNode( final String id, final String line ) throws Exception {
 		final String[] parts = line.split( "\\s" );
-		if( parts.length != 5 ) throw new Exception( "INVALID FILE FORMAT.  Line should have 5 parts.  LINE =  (" + line
-			+ ") METAPHLAN CLASSIFICATION NOT RUN WITH SWITCH: -t (ANALYSIS_TYPE) rel_ab_w_read_stats.  Add "
-			+ " \"-t rel_ab_w_read_stats\" when calling metaphlan2." );
+		if( parts.length != 5 ) throw new Exception( "INVALID FILE FORMAT.  Line should have 5 parts.  LINE =  (" +
+			line + ") METAPHLAN CLASSIFICATION NOT RUN WITH SWITCH: -t (ANALYSIS_TYPE) rel_ab_w_read_stats.  Add " +
+			" \"-t rel_ab_w_read_stats\" when calling metaphlan2." );
 
 		try {
 			setSampleId( id );

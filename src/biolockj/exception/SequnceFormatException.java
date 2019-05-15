@@ -25,7 +25,7 @@ public class SequnceFormatException extends Exception {
 	 * @param msg Exception message details
 	 */
 	public SequnceFormatException( final File seqFile, final String msg ) {
-		super( "Error processing SEQ file: " + seqFile.getAbsolutePath() + " --> " +  msg );
+		super( "Error processing SEQ file: " + seqFile.getAbsolutePath() + " --> " + msg );
 	}
 
 	/**

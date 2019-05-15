@@ -13,9 +13,7 @@ package biolockj.util;
 
 import java.io.File;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.RuntimeParamException;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModule;
@@ -168,8 +166,8 @@ public class RuntimeParamUtil {
 	 */
 	public static String getJavaComputeNodeArgs( final JavaModule module ) {
 		Log.info( RuntimeParamUtil.class, "Building Docker java -jar args for Cluster-Compute nodes  -->" );
-		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam() + " "
-			+ getDirectModuleParam( module );
+		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam() + " " +
+			getDirectModuleParam( module );
 	}
 
 	/**
@@ -327,8 +325,8 @@ public class RuntimeParamUtil {
 			"Separating pipeline dir name and module name from: \"" + DIRECT_MODE + "\" " + getDirectModuleDir() );
 		final StringTokenizer st = new StringTokenizer( getDirectModuleDir(), ":" );
 		if( st.countTokens() != 2 ) throw new RuntimeParamException( DIRECT_MODE, getDirectModuleDir(),
-			"Required parameter format = $PIPELINE_DIR_NAME:$MODULE_DIR_NAME (with a single colon \":\" - but "
-				+ st.countTokens() + " instances of \":\" were found" );
+			"Required parameter format = $PIPELINE_DIR_NAME:$MODULE_DIR_NAME (with a single colon \":\" - but " +
+				st.countTokens() + " instances of \":\" were found" );
 
 		final String pipelineName = st.nextToken();
 		final File pipelineDir = new File( getBaseDir().getAbsolutePath() + File.separator + pipelineName );
@@ -341,9 +339,9 @@ public class RuntimeParamUtil {
 	}
 
 	private static void assignLastParam( final String param ) throws RuntimeParamException {
-		if( !params.keySet().contains( CONFIG_FILE )
-			&& !params.keySet().contains( RESTART_DIR ) & !params.keySet().contains( param )
-			&& !params.values().contains( param ) ) params.put( CONFIG_FILE, param );
+		if( !params.keySet().contains( CONFIG_FILE ) &&
+			!params.keySet().contains( RESTART_DIR ) & !params.keySet().contains( param ) &&
+			!params.values().contains( param ) ) params.put( CONFIG_FILE, param );
 		else if( NAMED_ARGS.contains( param ) )
 			throw new RuntimeParamException( param, "", "Missing argument for named parameter" );
 	}
@@ -426,8 +424,8 @@ public class RuntimeParamUtil {
 		boolean foundConfig = false;
 
 		for( String arg: args ) {
-			if( LONG_ARG_NAMES.contains( arg ) || NAMED_ARGS.contains( prevArg ) || DIR_ARGS.contains( prevArg )
-				|| i == args.length - 1 && !foundConfig ) simpleArgs[ i++ ] = arg;
+			if( LONG_ARG_NAMES.contains( arg ) || NAMED_ARGS.contains( prevArg ) || DIR_ARGS.contains( prevArg ) ||
+				i == args.length - 1 && !foundConfig ) simpleArgs[ i++ ] = arg;
 			else {
 				if( arg.startsWith( "--" ) ) arg = arg.substring( 1 );
 				if( !arg.startsWith( "-" ) ) arg = "-" + arg;
@@ -543,8 +541,8 @@ public class RuntimeParamUtil {
 	protected static final String SYSTEM_OUT_FLAG = "-s";
 
 	private static final List<String> ARG_FLAGS = Arrays.asList( AWS_FLAG, SYSTEM_OUT_FLAG );
-	private static final List<
-		String> BLJ_CONTROLLER_ONLY_ARGS = Arrays.asList( BLJ_PROJ_DIR, CONFIG_FILE, HOME_DIR, PASSWORD, RESTART_DIR );
+	private static final List<String> BLJ_CONTROLLER_ONLY_ARGS =
+		Arrays.asList( BLJ_PROJ_DIR, CONFIG_FILE, HOME_DIR, PASSWORD, RESTART_DIR );
 	private static final List<String> DIR_ARGS = Arrays.asList( BLJ_PROJ_DIR, HOME_DIR, HOST_BLJ_DIR, HOST_BLJ_PROJ_DIR,
 		HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR, INPUT_DIR, META_DIR, RESTART_DIR );
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";

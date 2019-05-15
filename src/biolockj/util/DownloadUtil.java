@@ -11,9 +11,7 @@
  */
 package biolockj.util;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
@@ -70,17 +68,18 @@ public final class DownloadUtil {
 			if( hasRmods ) makeRunAllScript( modules );
 
 			final AndFileFilter filter = new AndFileFilter( EmptyFileFilter.NOT_EMPTY, HiddenFileFilter.VISIBLE );
-			final Collection<
-				File> dirs = FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
+			final Collection<File> dirs =
+				FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
 
 			downloadPaths.addAll( dirs );
 
 			if( DockerUtil.inAwsEnv() ) downloadPaths.add( NextflowUtil.getNextflowReportDir() );
 
-			final String status = ( ModuleUtil.isComplete( modules.get( modules.size() - 1 ) ) ? "completed": "failed" )
-				+ " pipeline -->";
-			final String displaySize = FileUtils
-				.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
+			final String status =
+				( ModuleUtil.isComplete( modules.get( modules.size() - 1 ) ) ? "completed": "failed" ) +
+					" pipeline -->";
+			final String displaySize =
+				FileUtils.byteCountToDisplaySize( getDownloadSize( buildDownloadList( downloadPaths ) ) );
 
 			if( DockerUtil.inAwsEnv() ) {
 				Log.info( DownloadUtil.class,
@@ -89,9 +88,9 @@ public final class DownloadUtil {
 			}
 
 			final String src = SRC + "=" + Config.pipelinePath();
-			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator
-				+ getDownloadListFile().getName() + " " + getClusterUser() + "@"
-				+ Config.requireString( null, Constants.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
+			final String cmd = "rsync -prtv --chmod=a+rwx,g+rwx,o-wx --files-from=:$" + SRC + File.separator +
+				getDownloadListFile().getName() + " " + getClusterUser() + "@" +
+				Config.requireString( null, Constants.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 
 			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + src + RETURN + cmd;
 		}
@@ -135,12 +134,12 @@ public final class DownloadUtil {
 		try {
 			final File pipeRoot = new File( Config.pipelinePath() );
 
-			if( BioLockJUtil.pipelineInternalInputDir().isDirectory()
-				&& BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE )
-				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
-				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
-				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
-				|| BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
+			if( BioLockJUtil.pipelineInternalInputDir().isDirectory() &&
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) ||
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) ||
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
 				for( final File file: BioLockJUtil.getPipelineInputFiles() )
 				if( !SeqUtil.isSeqFile( file ) ) {
 				downFiles.add( file );
@@ -220,9 +219,9 @@ public final class DownloadUtil {
 		try {
 			for( final BioModule module: Pipeline.getModules() ) {
 
-				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module
-					|| module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
-					|| module instanceof NormalizeTaxaTables;
+				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module ||
+					module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables ||
+					module instanceof NormalizeTaxaTables;
 
 				if( ModuleUtil.hasExecuted( module ) && downloadableType ) modules.add( module );
 			}
@@ -266,8 +265,8 @@ public final class DownloadUtil {
 
 		for( final BioModule mod: modules )
 			if( mod instanceof R_Module ) {
-				final String relPath = pipeRoot.toURI().relativize( ( (R_Module) mod ).getPrimaryScript().toURI() )
-					.toString();
+				final String relPath =
+					pipeRoot.toURI().relativize( ( (R_Module) mod ).getPrimaryScript().toURI() ).toString();
 				writer.write( "Rscript " + relPath + RETURN );
 			}
 
@@ -277,8 +276,8 @@ public final class DownloadUtil {
 	}
 
 	private static boolean buildRsyncCmd( final List<BioModule> modules ) {
-		return modules != null && !modules.isEmpty()
-			&& ( DockerUtil.inAwsEnv() || Config.isOnCluster() && getDownloadDirPath() != null );
+		return modules != null && !modules.isEmpty() &&
+			( DockerUtil.inAwsEnv() || Config.isOnCluster() && getDownloadDirPath() != null );
 	}
 
 	private static File getRunAllRScript() {

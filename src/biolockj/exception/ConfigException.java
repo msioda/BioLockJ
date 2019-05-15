@@ -49,9 +49,9 @@ public abstract class ConfigException extends Exception {
 	protected static String buildMessage( final String property, final String msg ) {
 		String val = Config.getString( null, property );
 		if( val == null ) val = "{undefined}";
-		return "[ " + property + "=" + val + " ] " + Constants.RETURN + msg + Constants.RETURN
-			+ "Restart pipeline after updating the property value in: " + Config.getConfigFilePath() + Constants.RETURN
-			+ "RESTART SHORTCUT CMD ---> \"blj_rerun " + Config.getConfigFilePath() + "\"";
+		return "[ " + property + "=" + val + " ] " + Constants.RETURN + msg + Constants.RETURN +
+			"Restart pipeline after updating the property value in: " + Config.getConfigFilePath() + Constants.RETURN +
+			"RESTART SHORTCUT CMD ---> \"blj_rerun " + Config.getConfigFilePath() + "\"";
 	}
 
 	private static final long serialVersionUID = 3479702562753539290L;

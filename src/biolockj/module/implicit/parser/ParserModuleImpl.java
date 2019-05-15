@@ -11,13 +11,9 @@
  */
 package biolockj.module.implicit.parser;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.node.OtuNode;
@@ -45,8 +41,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 			final Map<String, Integer> otuCounts = sample.getOtuCounts();
 			if( otuCounts != null ) {
 				final File outputFile = OtuUtil.getOtuCountFile( getOutputDir(), sample.getSampleId(), null );
-				Log.info( getClass(), "Build output sample: " + sample.getSampleId() + " | #OTUs=" + otuCounts.size()
-					+ "--> " + outputFile.getAbsolutePath() );
+				Log.info( getClass(), "Build output sample: " + sample.getSampleId() + " | #OTUs=" + otuCounts.size() +
+					"--> " + outputFile.getAbsolutePath() );
 				final BufferedWriter writer = new BufferedWriter( new FileWriter( outputFile ) );
 				try {
 					int numOtus = 0;
@@ -63,8 +59,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 					writer.close();
 				}
 			} else Log.error( getClass(),
-				"buildOtuCountFiles should not encounter empty sample files where sample.getOtuCounts() == null!  Found null for: "
-					+ sample.getSampleId() );
+				"buildOtuCountFiles should not encounter empty sample files where sample.getOtuCounts() == null!  Found null for: " +
+					sample.getSampleId() );
 		}
 	}
 
@@ -134,8 +130,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * @throws Exception if errors occur checking if node is valid
 	 */
 	protected boolean isValid( final OtuNode node ) throws Exception {
-		return node != null && node.getSampleId() != null && !node.getSampleId().isEmpty() && node.getTaxaMap() != null
-			&& !node.getTaxaMap().isEmpty() && node.getCount() > 0;
+		return node != null && node.getSampleId() != null && !node.getSampleId().isEmpty() &&
+			node.getTaxaMap() != null && !node.getTaxaMap().isEmpty() && node.getCount() > 0;
 	}
 
 	/**
@@ -148,8 +144,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		for( final BioModule module: ModuleUtil.getModules( this, true ) )
 			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) break;
 			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
-				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
-					+ " must run before the ParserModule." );
+				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName() +
+					" must run before the ParserModule." );
 	}
 
 	private void addParsedSample( final ParsedSample newSample ) throws Exception {

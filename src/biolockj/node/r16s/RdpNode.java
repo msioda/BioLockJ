@@ -76,8 +76,8 @@ public class RdpNode extends OtuNodeImpl {
 			final String level = st.hasMoreTokens() ? st.nextToken().trim(): null;
 			final Integer nextScore = st.hasMoreTokens() ? calculateScore( st.nextToken().trim() ): null;
 
-			if( level == null || nextScore == null
-				|| nextScore < Config.requirePositiveInteger( null, Constants.RDP_THRESHOLD_SCORE ) ) return;
+			if( level == null || nextScore == null ||
+				nextScore < Config.requirePositiveInteger( null, Constants.RDP_THRESHOLD_SCORE ) ) return;
 
 			this.score = nextScore;
 			addTaxa( taxa, level );

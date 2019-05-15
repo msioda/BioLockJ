@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigViolationException;
 import biolockj.module.BioModule;
 
@@ -37,9 +35,9 @@ public class PathwayUtil {
 	public static boolean containsHn2ParserOutput( final Collection<File> files ) {
 		for( final File file: files ) {
 			final String name = file.getName();
-			if( name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_PATH_ABUND_SUM ) )
-				|| name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_PATH_COVG_SUM ) )
-				|| name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_GENE_FAM_SUM ) ) ) return true;
+			if( name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_PATH_ABUND_SUM ) ) ||
+				name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_PATH_COVG_SUM ) ) ||
+				name.equals( PathwayUtil.getHn2ClassifierOutput( Constants.HN2_GENE_FAM_SUM ) ) ) return true;
 
 		}
 		return false;
@@ -79,8 +77,8 @@ public class PathwayUtil {
 		if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) return Constants.HN2_PATH_ABUND_SUM;
 		if( file.getName().contains( Constants.HN2_PATH_COVG_SUM ) ) return Constants.HN2_PATH_COVG_SUM;
 		if( file.getName().contains( Constants.HN2_GENE_FAM_SUM ) ) return Constants.HN2_GENE_FAM_SUM;
-		throw new Exception( "Invalid Pathway file [ " + file.getAbsolutePath()
-			+ " ] name does not match HumanN2 output file name format.  Valid file suffixes contain: " + validFormats );
+		throw new Exception( "Invalid Pathway file [ " + file.getAbsolutePath() +
+			" ] name does not match HumanN2 output file name format.  Valid file suffixes contain: " + validFormats );
 	}
 
 	/**
@@ -165,10 +163,10 @@ public class PathwayUtil {
 			else if( isParser ) parsers.add( i );
 		}
 
-		final boolean hasPathwayInputs = BioLockJUtil
-			.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE );
-		final boolean hasTaxaInputs = BioLockJUtil
-			.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
+		final boolean hasPathwayInputs =
+			BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE );
+		final boolean hasTaxaInputs =
+			BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE );
 		Log.debug( module.getClass(), "hasPathwayInputs: " + hasPathwayInputs );
 		Log.debug( module.getClass(), "hasTaxaInputs: " + hasTaxaInputs );
 		if( hn2Classifiers.isEmpty() && classifiers.isEmpty() ) {
@@ -220,14 +218,14 @@ public class PathwayUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static void verifyConfig( final BioModule module ) throws Exception {
-		if( Config.getBoolean( module, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-			&& Config.getBoolean( module, Constants.HN2_DISABLE_PATH_COVERAGE )
-			&& Config.getBoolean( module, Constants.HN2_DISABLE_GENE_FAMILIES ) )
+		if( Config.getBoolean( module, Constants.HN2_DISABLE_PATH_ABUNDANCE ) &&
+			Config.getBoolean( module, Constants.HN2_DISABLE_PATH_COVERAGE ) &&
+			Config.getBoolean( module, Constants.HN2_DISABLE_GENE_FAMILIES ) )
 			throw new ConfigViolationException(
-				"Must enable at least one type of HumanN2 report.  All 3 reports are disable via Config properties: "
-					+ Constants.HN2_DISABLE_PATH_ABUNDANCE + "=" + Constants.FALSE + ", "
-					+ Constants.HN2_DISABLE_PATH_COVERAGE + "=" + Constants.FALSE + ", "
-					+ Constants.HN2_DISABLE_GENE_FAMILIES + "=" + Constants.FALSE );
+				"Must enable at least one type of HumanN2 report.  All 3 reports are disable via Config properties: " +
+					Constants.HN2_DISABLE_PATH_ABUNDANCE + "=" + Constants.FALSE + ", " +
+					Constants.HN2_DISABLE_PATH_COVERAGE + "=" + Constants.FALSE + ", " +
+					Constants.HN2_DISABLE_GENE_FAMILIES + "=" + Constants.FALSE );
 	}
 
 	private static Integer getClosestIndex( final List<Integer> indexes, final Integer target ) {
@@ -239,6 +237,6 @@ public class PathwayUtil {
 
 	private static Map<String, Integer> initMap = new HashMap<>();
 
-	private static String validFormats = "[ " + Constants.HN2_PATH_ABUND_SUM + ", " + Constants.HN2_PATH_COVG_SUM + ", "
-		+ Constants.HN2_GENE_FAM_SUM + " ]";
+	private static String validFormats = "[ " + Constants.HN2_PATH_ABUND_SUM + ", " + Constants.HN2_PATH_COVG_SUM +
+		", " + Constants.HN2_GENE_FAM_SUM + " ]";
 }

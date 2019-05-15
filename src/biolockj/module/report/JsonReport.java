@@ -3,9 +3,7 @@ package biolockj.module.report;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.classifier.ClassifierModule;
@@ -115,8 +113,8 @@ public class JsonReport extends JavaModuleImpl {
 		Log.info( getClass(), "Adding " + label + " stats from: " + stats.getAbsolutePath() );
 		final BufferedReader reader = BioLockJUtil.getFileReader( stats );
 		try {
-			final List<
-				String> columnNames = Arrays.asList( reader.readLine().replaceAll( "\"", "" ).split( TAB_DELIM ) );
+			final List<String> columnNames =
+				Arrays.asList( reader.readLine().replaceAll( "\"", "" ).split( TAB_DELIM ) );
 
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final StringTokenizer st = new StringTokenizer( line.replaceAll( "\"", "" ), TAB_DELIM );
@@ -162,14 +160,14 @@ public class JsonReport extends JavaModuleImpl {
 		sb.append( "{" + RETURN );
 		sb.append( "\"" + TAXA + "\": \"" + node.getTaxa() + "\"," + RETURN );
 		sb.append( "\"" + OTU_LEVEL + "\": \"" + taxaLevel + "\"," + RETURN );
-		sb.append( "\"" + NUM_SEQS + "\": " + node.getCount()
-			+ ( node.getStats().isEmpty() && childNodes.isEmpty() ? "": "," ) + RETURN );
+		sb.append( "\"" + NUM_SEQS + "\": " + node.getCount() +
+			( node.getStats().isEmpty() && childNodes.isEmpty() ? "": "," ) + RETURN );
 
 		if( !node.getStats().isEmpty() )
 			for( final Iterator<String> stats = node.getStats().keySet().iterator(); stats.hasNext(); ) {
 			final String stat = stats.next();
-			final String name = stat.startsWith( R_CalculateStats.getSuffix( null, false ) ) ? stat
-				: prefix + "(" + stat + ")";
+			final String name =
+				stat.startsWith( R_CalculateStats.getSuffix( null, false ) ) ? stat: prefix + "(" + stat + ")";
 			sb.append( "\"" + name + "\": " + node.getStats().get( stat ) );
 			sb.append( ( stats.hasNext() || !childNodes.isEmpty() ? ",": "" ) + RETURN );
 			}
@@ -192,8 +190,7 @@ public class JsonReport extends JavaModuleImpl {
 	 * @param jsonMap jsonMap (key=level)
 	 * @throws Exception if unable to parse report files
 	 */
-	private void addStats( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap )
-		throws Exception {
+	private void addStats( final LinkedHashMap<String, TreeSet<JsonNode>> jsonMap ) throws Exception {
 		Log.info( getClass(), "Adding stats to JSON nodes..." );
 		for( final String level: TaxaUtil.getTaxaLevels() ) {
 			final Map<String, File> statReports = getAllStatReports( level );

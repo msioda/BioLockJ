@@ -13,9 +13,7 @@ package biolockj.module.implicit.parser.r16s;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.r16s.RdpNode;

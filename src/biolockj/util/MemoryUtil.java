@@ -36,9 +36,9 @@ public class MemoryUtil {
 		if( total != prevTotal || free != prevFree ) {
 			// reportMemoryInBytes();
 			Log.debug( MemoryUtil.class,
-				msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB() + ", ∆Total: "
-					+ getChangeFormatted( total, prevTotal ) + ", %Free: " + getPercentageFreeFormatted() + ", Free: "
-					+ getFreeMemoryInMiB() + ", ∆Free: " + getChangeFormatted( free, prevFree ) );
+				msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB() + ", ∆Total: " +
+					getChangeFormatted( total, prevTotal ) + ", %Free: " + getPercentageFreeFormatted() + ", Free: " +
+					getFreeMemoryInMiB() + ", ∆Free: " + getChangeFormatted( free, prevFree ) );
 			prevTotal = total;
 			prevFree = free;
 		} else Log.debug( MemoryUtil.class, msg + " no change" );
@@ -84,8 +84,8 @@ public class MemoryUtil {
 	private static void reportInitMemory( final String msg ) {
 		prevFree = Runtime.getRuntime().freeMemory();
 		prevTotal = Runtime.getRuntime().totalMemory();
-		Log.debug( MemoryUtil.class, msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB()
-			+ ", %Free: " + getPercentageFreeFormatted() + ", Free: " + getFreeMemoryInMiB() );
+		Log.debug( MemoryUtil.class, msg + ": => Max: " + getMaxMemoryInMiB() + ", Total: " + getTotalMemoryInMiB() +
+			", %Free: " + getPercentageFreeFormatted() + ", Free: " + getFreeMemoryInMiB() );
 	}
 
 	@SuppressWarnings("unused")

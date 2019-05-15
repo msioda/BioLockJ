@@ -15,9 +15,7 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.LongStream;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
@@ -46,8 +44,8 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		final Integer rarefyingMax = Config.getPositiveInteger( this, INPUT_RAREFYING_MAX );
 		final Integer rarefyingMin = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
 
-		if( rarefyingMin == null && rarefyingMax == null
-			|| rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
+		if( rarefyingMin == null && rarefyingMax == null ||
+			rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
 			throw new Exception(
 				"Invalid parameters!  RarefySeqs requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
 	}
@@ -91,8 +89,8 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		final int pad = SummaryUtil.getPad( label );
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-			+ BioLockJUtil.getCollectionAsString( this.sampleIds );
+		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) +
+			BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.readsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -127,8 +125,8 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
 		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
 		final String fileExt = "." + SeqUtil.getSeqType();
-		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
-			+ fileExt;
+		final String name =
+			getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() ) + fileExt;
 		final File output = new File( name );
 		final BufferedReader reader = BioLockJUtil.getFileReader( input );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( output ) );
@@ -200,8 +198,9 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 
 			buildRarefiedFile( seqFile, indexes );
 		} else Log.info( getClass(),
-			"Remove sample [" + sampleId + "] - contains (" + numReads + ") reads, which is less than minimum # reads ("
-				+ Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
+			"Remove sample [" + sampleId + "] - contains (" + numReads +
+				") reads, which is less than minimum # reads (" +
+				Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
 	}
 
 	private String getMetaColName() throws Exception {

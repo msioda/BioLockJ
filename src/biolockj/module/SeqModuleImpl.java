@@ -46,8 +46,8 @@ public abstract class SeqModuleImpl extends ScriptModuleImpl implements SeqModul
 	 */
 	@Override
 	public String getSummary() throws Exception {
-		if( this instanceof DatabaseModule && ( (DatabaseModule) this ).getDB() != null ) return super.getSummary()
-			+ "Used Database: " + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
+		if( this instanceof DatabaseModule && ( (DatabaseModule) this ).getDB() != null ) return super.getSummary() +
+			"Used Database: " + ( (DatabaseModule) this ).getDB().getAbsolutePath() + RETURN;
 		return super.getSummary();
 	}
 

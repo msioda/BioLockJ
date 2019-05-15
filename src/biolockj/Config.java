@@ -14,9 +14,7 @@ package biolockj;
 import java.io.File;
 import java.util.*;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.exception.ConfigFormatException;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.exception.*;
 import biolockj.module.BioModule;
 import biolockj.util.*;
 
@@ -42,8 +40,8 @@ public class Config {
 			setConfigProperty( property, Constants.FALSE );
 			Log.debug( Config.class, property + " is undefined, so return: " + Constants.FALSE );
 		} else if( !getString( module, property ).equalsIgnoreCase( Constants.FALSE ) )
-			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE
-				+ " or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
+			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE +
+				" or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
 
 		return false;
 	}
@@ -385,8 +383,8 @@ public class Config {
 	 * @return TRUE if running on the cluster
 	 */
 	public static boolean isOnCluster() {
-		return getString( null, Constants.PIPELINE_ENV ) != null
-			&& getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
+		return getString( null, Constants.PIPELINE_ENV ) != null &&
+			getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
 	}
 
 	/**
@@ -651,8 +649,8 @@ public class Config {
 		props.setProperty( name, val );
 
 		final boolean hasVal = val != null && !val.isEmpty();
-		if( origProp == null && hasVal || origProp != null && !hasVal
-			|| origProp != null && hasVal && !origProp.equals( val ) ) {
+		if( origProp == null && hasVal || origProp != null && !hasVal ||
+			origProp != null && hasVal && !origProp.equals( val ) ) {
 			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
@@ -669,8 +667,8 @@ public class Config {
 		origProp = origProp != null && origProp.isEmpty() ? null: origProp;
 		props.setProperty( name, val );
 		final boolean hasVal = val != null && !val.isEmpty();
-		if( origProp == null && hasVal || origProp != null && !hasVal
-			|| origProp != null && hasVal && !origProp.equals( val ) ) {
+		if( origProp == null && hasVal || origProp != null && !hasVal ||
+			origProp != null && hasVal && !origProp.equals( val ) ) {
 			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
@@ -766,9 +764,9 @@ public class Config {
 		try {
 			if( bashVarMap.get( bashVar ) != null ) return bashVarMap.get( bashVar );
 			String bashVal = props == null ? null: props.getProperty( stripBashMarkUp( bashVar ) );
-			if( DockerUtil.inDockerEnv() && stripBashMarkUp( bashVar ).equals( "HOME" ) ) {
+			if( DockerUtil.inDockerEnv() && stripBashMarkUp( bashVar ).equals( "HOME" ) )
 				bashVal = RuntimeParamUtil.getDockerHostHomeDir();
-			} else if( bashVal == null || bashVal.trim().isEmpty() ) if( bashVar.equals( BLJ_BASH_VAR ) ) {
+			else if( bashVal == null || bashVal.trim().isEmpty() ) if( bashVar.equals( BLJ_BASH_VAR ) ) {
 				final File blj = BioLockJUtil.getBljDir();
 				if( blj != null && blj.isDirectory() ) bashVal = blj.getAbsolutePath();
 			} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
@@ -782,7 +780,8 @@ public class Config {
 			}
 
 		} catch( final Exception ex ) {
-			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar  + " --> " + ex.getMessage() );
+			Log.warn( Config.class,
+				"Error occurred attempting to decode bash var: " + bashVar + " --> " + ex.getMessage() );
 		}
 
 		return bashVar;
@@ -808,8 +807,8 @@ public class Config {
 	}
 
 	private static boolean hasEnvVar( final String val ) {
-		return val.startsWith( "~" )
-			|| val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
+		return val.startsWith( "~" ) ||
+			val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
 	}
 
 	private static String stripBashMarkUp( final String bashVar ) {

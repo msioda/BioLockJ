@@ -13,9 +13,7 @@ package biolockj.util;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigPathException;
 import biolockj.exception.MetadataException;
 import biolockj.module.BioModule;
@@ -395,8 +393,8 @@ public class MetaUtil {
 			if( !DockerUtil.isDirectMode() ) report();
 
 			reportedMetadata = getMetadata();
-		} else Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
-			+ ( getMetadata() == null ? "<NO_METADATA_PATH>": getPath() ) );
+		} else Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: " +
+			( getMetadata() == null ? "<NO_METADATA_PATH>": getPath() ) );
 	}
 
 	/**
@@ -501,8 +499,8 @@ public class MetaUtil {
 
 	private static boolean isUpdated() {
 		try {
-			final boolean foundNewReport = getMetadata() != null && reportedMetadata != null
-				&& !reportedMetadata.getAbsolutePath().equals( getPath() );
+			final boolean foundNewReport = getMetadata() != null && reportedMetadata != null &&
+				!reportedMetadata.getAbsolutePath().equals( getPath() );
 			final boolean noReport = getMetadata() != null && reportedMetadata == null;
 			return foundNewReport || noReport;
 		} catch( final MetadataException ex ) {

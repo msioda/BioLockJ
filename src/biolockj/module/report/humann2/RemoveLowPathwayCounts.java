@@ -11,13 +11,9 @@ package biolockj.module.report.humann2;
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.util.*;
 
 /**
@@ -55,9 +51,9 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 		this.sampleIds.addAll( MetaUtil.getSampleIds() );
 		for( final File file: getInputFiles() ) {
 			logLowCountPathways( removeLowPathwayCounts( file ) );
-			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS )
-				&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-				&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
+			if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) &&
+				!Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) &&
+				file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) {
 				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_UNIQUE_PATH_COUNT,
 					this.uniquePathwaysPerSample, getTempDir(), true );
 				MetaUtil.addColumn( getMetaColName() + "_" + Constants.HN2_TOTAL_PATH_COUNT,
@@ -90,8 +86,8 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 		}
 
 		Log.info( getClass(),
-			"Found " + map.size() + " samples with low count pathways removed - Pathway list saved to --> "
-				+ getLowCountPathwayLogFile().getAbsolutePath() );
+			"Found " + map.size() + " samples with low count pathways removed - Pathway list saved to --> " +
+				getLowCountPathwayLogFile().getAbsolutePath() );
 	}
 
 	/**
@@ -152,8 +148,8 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 
 			if( !badSamplePathways.isEmpty() ) {
 				lowCountPathways.put( sampleId, badSamplePathways );
-				Log.warn( getClass(), sampleId + ": Remove " + badSamplePathways.size()
-					+ " Pathways with #counts below threshold: " + getProp() + "=" + getMinCount() );
+				Log.warn( getClass(), sampleId + ": Remove " + badSamplePathways.size() +
+					" Pathways with #counts below threshold: " + getProp() + "=" + getMinCount() );
 				Log.debug( getClass(), sampleId + ": Removed Pathways: " + badSamplePathways );
 			}
 		}
@@ -161,8 +157,8 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 		final TreeSet<String> allRemovedPathways = new TreeSet<>( validPathways );
 		allRemovedPathways.removeAll( foundSamplePathways );
 		if( !allRemovedPathways.isEmpty() ) {
-			Log.warn( getClass(), "Remove " + allRemovedPathways.size() + " Pathways with #counts below threshold: "
-				+ getProp() + "=" + getMinCount() );
+			Log.warn( getClass(), "Remove " + allRemovedPathways.size() + " Pathways with #counts below threshold: " +
+				getProp() + "=" + getMinCount() );
 			Log.debug( getClass(), "Removed Pathways: " + allRemovedPathways );
 		}
 

@@ -12,9 +12,7 @@
 package biolockj.util;
 
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 
 /**
@@ -29,8 +27,8 @@ public class DemuxUtil {
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
 	public static boolean barcodeInHeader() throws ConfigNotFoundException {
-		return Config.getString( null, DEMUX_STRATEGY ) != null
-			&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_HEADER );
+		return Config.getString( null, DEMUX_STRATEGY ) != null &&
+			Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_HEADER );
 	}
 
 	/**
@@ -40,8 +38,8 @@ public class DemuxUtil {
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
 	public static boolean barcodeInMapping() throws ConfigNotFoundException {
-		return Config.getString( null, DEMUX_STRATEGY ) != null
-			&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_MAPPING );
+		return Config.getString( null, DEMUX_STRATEGY ) != null &&
+			Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_MAPPING );
 	}
 
 	/**
@@ -51,8 +49,8 @@ public class DemuxUtil {
 	 * @throws ConfigNotFoundException if {@value #DEMUX_STRATEGY} is undefined
 	 */
 	public static boolean barcodeInSeq() throws ConfigNotFoundException {
-		return Config.getString( null, DEMUX_STRATEGY ) != null
-			&& Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
+		return Config.getString( null, DEMUX_STRATEGY ) != null &&
+			Config.requireString( null, DEMUX_STRATEGY ).equals( OPTION_BARCODE_IN_SEQ );
 	}
 
 	/**
@@ -73,9 +71,9 @@ public class DemuxUtil {
 	 * @throws Exception if unable to access metadata file or Config
 	 */
 	public static boolean demuxWithBarcode() throws Exception {
-		if( ( barcodeInHeader() || barcodeInSeq() || barcodeInMapping() )
-			&& MetaUtil.getFieldNames().contains( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) )
-			&& !MetaUtil.getFieldValues( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
+		if( ( barcodeInHeader() || barcodeInSeq() || barcodeInMapping() ) &&
+			MetaUtil.getFieldNames().contains( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ) ) &&
+			!MetaUtil.getFieldValues( Config.requireString( null, MetaUtil.META_BARCODE_COLUMN ), true ).isEmpty() )
 			return true;
 		return false;
 	}
@@ -111,8 +109,8 @@ public class DemuxUtil {
 		if( demuxWithBarcode() ) {
 			final Map<String, String> map = getIdMap();
 			if( map != null ) for( final String barCodeId: map.keySet() )
-				if( ( barcodeInHeader() || barcodeInMapping() ) && seqLines.get( 0 ).contains( barCodeId )
-					|| barcodeInSeq() && seqLines.get( 1 ).startsWith( barCodeId ) ) return map.get( barCodeId );
+				if( ( barcodeInHeader() || barcodeInMapping() ) && seqLines.get( 0 ).contains( barCodeId ) ||
+					barcodeInSeq() && seqLines.get( 1 ).startsWith( barCodeId ) ) return map.get( barCodeId );
 			return null;
 		}
 		return SeqUtil.getSampleId( seqLines.get( 0 ) );
@@ -131,8 +129,8 @@ public class DemuxUtil {
 				final Set<String> vals = new HashSet<>( MetaUtil.getFieldValues( barCodeCol, true ) );
 				if( sampleIds.size() == vals.size() ) return true;
 				Log.warn( DemuxUtil.class,
-					"Multiplexer adding Sample ID to sequence headers instead of barcode because dataset contains "
-						+ sampleIds.size() + " unique Sample IDs but only " + vals.size() + " unique barcodes" );
+					"Multiplexer adding Sample ID to sequence headers instead of barcode because dataset contains " +
+						sampleIds.size() + " unique Sample IDs but only " + vals.size() + " unique barcodes" );
 				for( final String id: MetaUtil.getSampleIds() )
 					Log.warn( DemuxUtil.class, "ID [ " + id + " ] ==> " + MetaUtil.getField( id, barCodeCol ) );
 			}
@@ -151,10 +149,10 @@ public class DemuxUtil {
 	 */
 	public static boolean sampleIdInHeader() {
 		try {
-			return Config.getString( null, DEMUX_STRATEGY ) != null
-				&& Config.getString( null, DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER ) || !demuxWithBarcode();
+			return Config.getString( null, DEMUX_STRATEGY ) != null &&
+				Config.getString( null, DEMUX_STRATEGY ).equals( OPTION_ID_IN_HEADER ) || !demuxWithBarcode();
 		} catch( final Exception ex ) {
-			Log.warn( DemuxUtil.class, "Failed to determine demux strategy: " + ex.getMessage());
+			Log.warn( DemuxUtil.class, "Failed to determine demux strategy: " + ex.getMessage() );
 			return false;
 		}
 	}
@@ -201,9 +199,9 @@ public class DemuxUtil {
 				"Detected Config." + BARCODE_USE_REV_COMP + " = " + Config.getBoolean( null, BARCODE_USE_REV_COMP ) );
 
 			Log.info( DemuxUtil.class,
-				"Building Barcode-SampleID Map using the "
-					+ ( Config.getBoolean( null, BARCODE_USE_REV_COMP ) ? "reverse compliment of ": "" )
-					+ "metadata column = " + Config.getString( null, MetaUtil.META_BARCODE_COLUMN ) );
+				"Building Barcode-SampleID Map using the " +
+					( Config.getBoolean( null, BARCODE_USE_REV_COMP ) ? "reverse compliment of ": "" ) +
+					"metadata column = " + Config.getString( null, MetaUtil.META_BARCODE_COLUMN ) );
 		} else {
 			Log.debug( DemuxUtil.class, "Lookup multiplexed Sample IDs in header (no barcodes)" );
 			return null;

@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.DockerUtil;
-import biolockj.util.RuntimeParamUtil;
+import biolockj.util.*;
 
 /**
  * Simple Logging Facade for Java (SLF4J) implementation using Log4J<br>
@@ -54,9 +52,9 @@ public class Log {
 		if( isInitialized() && !debugClasses().isEmpty() && !debugClasses().contains( loggingClass.getName() ) ) {
 			if( !gaveDebugWarning ) {
 				gaveDebugWarning = true;
-				warn( loggingClass, "DEBUG DISABLED!  Because the [ " + Constants.LIMIT_DEBUG_CLASSES
-					+ " ] property is enabled, \"Debug\" log output is only written for clasess defined in Config property: "
-					+ Constants.LIMIT_DEBUG_CLASSES + " ---> " + debugClasses() );
+				warn( loggingClass, "DEBUG DISABLED!  Because the [ " + Constants.LIMIT_DEBUG_CLASSES +
+					" ] property is enabled, \"Debug\" log output is only written for clasess defined in Config property: " +
+					Constants.LIMIT_DEBUG_CLASSES + " ---> " + debugClasses() );
 			}
 			return;
 		}
@@ -268,10 +266,10 @@ public class Log {
 	 */
 	protected static String validateLogLevel() throws Exception {
 		final String logLevel = Config.requireString( null, Constants.LOG_LEVEL_PROPERTY ).toUpperCase();
-		if( !logLevel.equals( "DEBUG" ) && !logLevel.equals( "INFO" ) && !logLevel.equals( "WARN" )
-			&& !logLevel.equals( "ERROR" ) )
-			throw new Exception( "Config property: " + Constants.LOG_LEVEL_PROPERTY
-				+ "missing or invlid.  Please configure a valid option: " + "[DEBUG/INFO/WARN/ERROR]" );
+		if( !logLevel.equals( "DEBUG" ) && !logLevel.equals( "INFO" ) && !logLevel.equals( "WARN" ) &&
+			!logLevel.equals( "ERROR" ) )
+			throw new Exception( "Config property: " + Constants.LOG_LEVEL_PROPERTY +
+				"missing or invlid.  Please configure a valid option: " + "[DEBUG/INFO/WARN/ERROR]" );
 		return logLevel;
 	}
 

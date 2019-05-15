@@ -13,15 +13,11 @@ package biolockj.module;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
-import biolockj.util.DockerUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * Superclass for Java BioModules that will be called in separate instances of the application.
@@ -139,8 +135,8 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	 * @throws Exception if unable to determine source
 	 */
 	protected final String runBioLockJ_CMD() throws Exception {
-		final File source = new File(
-			JavaModuleImpl.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
+		final File source =
+			new File( JavaModuleImpl.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
 		String javaString = null;
 		if( source.isFile() ) javaString = " " + Constants.JAR_ARG + " " + source.getAbsolutePath();
 		else if( source.isDirectory() ) {

@@ -16,9 +16,7 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.ScriptModule;
+import biolockj.module.*;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.report.Email;
 
@@ -141,8 +139,8 @@ public class NextflowUtil {
 	public static boolean saveEfsDataToS3() {
 		try {
 			if( Config.getBoolean( null, AWS_COPY_PIPELINE_TO_S3 ) ) awsSyncS3( Config.pipelinePath(), true );
-			else if( DownloadUtil.getDownloadListFile().isFile()
-				&& Config.getBoolean( null, AWS_COPY_REPORTS_TO_S3 ) ) {
+			else if( DownloadUtil.getDownloadListFile().isFile() &&
+				Config.getBoolean( null, AWS_COPY_REPORTS_TO_S3 ) ) {
 				final BufferedReader reader = BioLockJUtil.getFileReader( DownloadUtil.getDownloadListFile() );
 				try {
 					for( String path = reader.readLine(); path != null; path = reader.readLine() )
@@ -151,9 +149,9 @@ public class NextflowUtil {
 					if( reader != null ) reader.close();
 				}
 			} else Log.warn( NextflowUtil.class,
-				"Pipeline ouput will be not saved to configured AWS S3 bucket: " + Config.requireString( null, AWS_S3 )
-					+ " due to Config properties [ " + AWS_COPY_PIPELINE_TO_S3 + "=" + Constants.FALSE + " ] & [ "
-					+ AWS_COPY_REPORTS_TO_S3 + "=" + Constants.FALSE + " ]" );
+				"Pipeline ouput will be not saved to configured AWS S3 bucket: " +
+					Config.requireString( null, AWS_S3 ) + " due to Config properties [ " + AWS_COPY_PIPELINE_TO_S3 +
+					"=" + Constants.FALSE + " ] & [ " + AWS_COPY_REPORTS_TO_S3 + "=" + Constants.FALSE + " ]" );
 
 			return true;
 		} catch( final Exception ex ) {
@@ -202,14 +200,14 @@ public class NextflowUtil {
 	 */
 	public static void stageRootConfig() throws IOException {
 		final File ec2Aws = new File( DockerUtil.BLJ_HOST_HOME + File.separator + AWS_DIR );
-		final File ec2NfConfig = new File(
-			DockerUtil.BLJ_HOST_HOME + File.separator + NF_DIR + File.separator + "config" );
+		final File ec2NfConfig =
+			new File( DockerUtil.BLJ_HOST_HOME + File.separator + NF_DIR + File.separator + "config" );
 		final File rootNfDir = new File( DockerUtil.ROOT_HOME + File.separator + NF_DIR );
 		final File rootNfConfig = new File( rootNfDir.getAbsolutePath() + File.separator + "config" );
-		final File rootAwsConfig = new File(
-			DockerUtil.ROOT_HOME + File.separator + AWS_DIR + File.separator + "config" );
-		final File rootAwsCred = new File(
-			DockerUtil.ROOT_HOME + File.separator + AWS_DIR + File.separator + "credentials" );
+		final File rootAwsConfig =
+			new File( DockerUtil.ROOT_HOME + File.separator + AWS_DIR + File.separator + "config" );
+		final File rootAwsCred =
+			new File( DockerUtil.ROOT_HOME + File.separator + AWS_DIR + File.separator + "credentials" );
 		FileUtils.copyFileToDirectory( ec2NfConfig, rootNfDir );
 		FileUtils.copyDirectoryToDirectory( ec2Aws, new File( DockerUtil.ROOT_HOME ) );
 		if( !rootNfConfig.isFile() )
@@ -331,9 +329,9 @@ public class NextflowUtil {
 			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) )
 				if( module instanceof JavaModule && !Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) )
 					Log.warn( NextflowUtil.class,
-						"Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" + Constants.FALSE
-							+ " so JavaModule \"" + module.getClass().getName()
-							+ "\" will run on the head node - HEAD NODE MUST HAVE SUFFICIENT RESOURCES" );
+						"Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" + Constants.FALSE +
+							" so JavaModule \"" + module.getClass().getName() +
+							"\" will run on the head node - HEAD NODE MUST HAVE SUFFICIENT RESOURCES" );
 				else plist += ( plist.isEmpty() ? "": " " ) + module.getClass().getName();
 		if( plist.isEmpty() ) plist = null;
 		return plist;
@@ -346,8 +344,8 @@ public class NextflowUtil {
 	}
 
 	private static String getDockerImageLabel( final BioModule module ) throws Exception {
-		return "'" + IMAGE + "_" + DockerUtil.getDockerUser( module ) + "_" + DockerUtil.getImageName( module ) + "_"
-			+ DockerUtil.getImageVersion( module ) + "'";
+		return "'" + IMAGE + "_" + DockerUtil.getDockerUser( module ) + "_" + DockerUtil.getImageName( module ) + "_" +
+			DockerUtil.getImageVersion( module ) + "'";
 	}
 
 	private static ScriptModule getModule( final String className ) {
@@ -355,12 +353,12 @@ public class NextflowUtil {
 		for( final BioModule module: Pipeline.getModules() )
 			if( module.getClass().getName().equals( className ) )
 				if( usedModules.contains( module.getID() ) ) Log.debug( NextflowUtil.class,
-					"Skip module [ ID = " + module.getID()
-						+ " ] in since it was already used, look for another module of type: "
-						+ module.getClass().getName() );
+					"Skip module [ ID = " + module.getID() +
+						" ] in since it was already used, look for another module of type: " +
+						module.getClass().getName() );
 				else {
-				Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = " + module.getID()
-					+ " ] --> " + module.getClass().getName() );
+				Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = " + module.getID() +
+					" ] --> " + module.getClass().getName() );
 				usedModules.add( module.getID() );
 				return (ScriptModule) module;
 				}
@@ -370,17 +368,18 @@ public class NextflowUtil {
 	private static String getRAM( final String ram ) throws ConfigFormatException {
 		String val = ram.trim();
 		String intVal = val.replaceAll( "[^0-9]", "" );
-		final String level = ram.replace( intVal, "" ).replaceAll( " ", "" ).replaceAll( "'", "" ).replaceAll( "\"",
-			"" );
+		final String level =
+			ram.replace( intVal, "" ).replaceAll( " ", "" ).replaceAll( "'", "" ).replaceAll( "\"", "" );
 		if( level.length() > 0 && !ramLevels.contains( level ) ) throw new ConfigFormatException( AWS_RAM, "" );
 
 		try {
 			intVal = "'" + Integer.parseInt( ram ) + " GB'";
-			Log.warn( NextflowUtil.class, "RAM Config was purely numeric, adding default GB designation: " + ram
-				+ " converted to ---> " + intVal );
+			Log.warn( NextflowUtil.class, "RAM Config was purely numeric, adding default GB designation: " + ram +
+				" converted to ---> " + intVal );
 			return intVal;
 		} catch( final Exception ex ) {
-			Log.warn( NextflowUtil.class, "RAM value is not purely numeric, ensure it is single quoted: " + ex.getMessage() );
+			Log.warn( NextflowUtil.class,
+				"RAM value is not purely numeric, ensure it is single quoted: " + ex.getMessage() );
 		}
 
 		if( !val.startsWith( "'" ) ) val = "'" + val;
@@ -436,8 +435,8 @@ public class NextflowUtil {
 	}
 
 	private static void startService() throws Exception {
-		final String reportBase = getNextflowReportDir().getAbsolutePath() + File.separator + Config.pipelineName()
-			+ "_";
+		final String reportBase =
+			getNextflowReportDir().getAbsolutePath() + File.separator + Config.pipelineName() + "_";
 		final String[] args = new String[ 11 ];
 		args[ 0 ] = NEXTFLOW;
 		args[ 1 ] = "run";
@@ -458,8 +457,8 @@ public class NextflowUtil {
 	}
 
 	private static File templateScript() throws Exception {
-		return new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR
-			+ File.separator + MAKE_NEXTFLOW_SCRIPT );
+		return new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR +
+			File.separator + MAKE_NEXTFLOW_SCRIPT );
 	}
 
 	private static void writeNextflowMainNF( final List<String> lines ) throws Exception {

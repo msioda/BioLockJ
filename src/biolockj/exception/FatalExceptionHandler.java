@@ -50,8 +50,8 @@ public class FatalExceptionHandler {
 		if( getErrorLog() != null ) {
 			Log.info( FatalExceptionHandler.class,
 				"Local file-system error log path: " + getErrorLog().getAbsolutePath() );
-			if( DockerUtil.inDockerEnv() ) Log.info( FatalExceptionHandler.class, "Host file-system error log path: "
-				+ RuntimeParamUtil.getDockerHostHomeDir() + File.separator + getErrorLog().getName() );
+			if( DockerUtil.inDockerEnv() ) Log.info( FatalExceptionHandler.class, "Host file-system error log path: " +
+				RuntimeParamUtil.getDockerHostHomeDir() + File.separator + getErrorLog().getName() );
 			if( !getErrorLog().isFile() ) dumpLogs( getLogs() );
 		} else {
 			Log.warn( FatalExceptionHandler.class, "Unable to save logs to file-system: " );
@@ -65,11 +65,11 @@ public class FatalExceptionHandler {
 		if( dir == null ) return null;
 		final String suffix = getErrorLogSuffix();
 		int i = 0;
-		File file = new File(
-			dir.getAbsolutePath() + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT );
+		File file =
+			new File( dir.getAbsolutePath() + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + Constants.LOG_EXT );
 		while( file.exists() )
-			file = new File( dir.getAbsolutePath() + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + "_"
-				+ new Integer( ++i ).toString() + Constants.LOG_EXT );
+			file = new File( dir.getAbsolutePath() + File.separator + FATAL_ERROR_FILE_PREFIX + suffix + "_" +
+				new Integer( ++i ).toString() + Constants.LOG_EXT );
 		return file;
 	}
 
@@ -131,8 +131,8 @@ public class FatalExceptionHandler {
 
 	private static void logFatalException( final String[] args, final Exception ex ) {
 		Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
-		Log.error( FatalExceptionHandler.class, Constants.RETURN + "FATAL APPLICATION ERROR "
-			+ ( args == null ? "": " -->" + Constants.RETURN + " Program args: " + RuntimeParamUtil.getRuntimeArgs() ),
+		Log.error( FatalExceptionHandler.class, Constants.RETURN + "FATAL APPLICATION ERROR " +
+			( args == null ? "": " -->" + Constants.RETURN + " Program args: " + RuntimeParamUtil.getRuntimeArgs() ),
 			ex );
 		Log.error( FatalExceptionHandler.class, Constants.LOG_SPACER );
 		ex.printStackTrace();
@@ -156,8 +156,8 @@ public class FatalExceptionHandler {
 				BioLockJUtil.createFile( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
 		} catch( final Exception ex ) {
 			Log.error( FatalExceptionHandler.class,
-				"Pipeline root directory not found - unable save Pipeline Status File: " + Constants.BLJ_FAILED + " : "
-					+ ex.getMessage() );
+				"Pipeline root directory not found - unable save Pipeline Status File: " + Constants.BLJ_FAILED +
+					" : " + ex.getMessage() );
 		}
 	}
 

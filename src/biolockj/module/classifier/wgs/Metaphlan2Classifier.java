@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
-import biolockj.exception.ConfigViolationException;
+import biolockj.exception.*;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
 
@@ -67,8 +65,8 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 			final String outputFile = getOutputDir().getAbsolutePath() + File.separator + fileId + Constants.PROCESSED;
 			final String bowtie2Out = getTempDir().getAbsolutePath() + File.separator + fileId + BOWTIE_EXT;
 			final ArrayList<String> lines = new ArrayList<>();
-			lines.add( FUNCTION_RUN_METAPHLAN + " " + file.getAbsolutePath() + "," + map.get( file ).getAbsolutePath()
-				+ " " + bowtie2Out + " " + outputFile );
+			lines.add( FUNCTION_RUN_METAPHLAN + " " + file.getAbsolutePath() + "," + map.get( file ).getAbsolutePath() +
+				" " + bowtie2Out + " " + outputFile );
 			data.add( lines );
 		}
 
@@ -143,28 +141,29 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 			final String params = BioLockJUtil.join( getClassifierParams() );
 
 			if( params.indexOf( "--input_type " ) > -1 )
-				throw new Exception( "Invalid classifier option (--input_type) found in property("
-					+ EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value by examinging one of the input files." );
-			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
-				throw new Exception( "Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-					+ EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
+				throw new Exception( "Invalid classifier option (--input_type) found in property(" +
+					EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value by examinging one of the input files." );
+			if( params.indexOf( NUM_THREADS_PARAM ) > -1 ) throw new Exception(
+				"Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property(" +
+					EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
 			if( params.indexOf( "--bowtie2out " ) > -1 )
-				throw new Exception( "Invalid classifier option (--bowtie2out) found in property("
-					+ EXE_METAPHLAN_PARAMS + "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
+				throw new Exception( "Invalid classifier option (--bowtie2out) found in property(" +
+					EXE_METAPHLAN_PARAMS + "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
 			if( params.indexOf( "-t rel_ab_w_read_stats " ) > -1 )
-				throw new Exception( "Invalid classifier option (-t rel_ab_w_read_stats). BioLockJ hard codes this "
-					+ "option for MetaPhlAn so must not be included in the property file." );
+				throw new Exception( "Invalid classifier option (-t rel_ab_w_read_stats). BioLockJ hard codes this " +
+					"option for MetaPhlAn so must not be included in the property file." );
 			if( params.indexOf( "--tax_lev " ) > -1 )
-				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + EXE_METAPHLAN_PARAMS
-					+ "). BioLockJ sets this value based on: " + Constants.REPORT_TAXONOMY_LEVELS );
-			if( params.indexOf( "-s " ) > -1 ) throw new Exception( "Invalid classifier option (-s) found in property("
-				+ EXE_METAPHLAN_PARAMS + "). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
+				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + EXE_METAPHLAN_PARAMS +
+					"). BioLockJ sets this value based on: " + Constants.REPORT_TAXONOMY_LEVELS );
+			if( params.indexOf( "-s " ) > -1 )
+				throw new Exception( "Invalid classifier option (-s) found in property(" + EXE_METAPHLAN_PARAMS +
+					"). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
 			if( params.indexOf( "-o " ) > -1 )
-				throw new Exception( "Invalid classifier option (-o) found in property(" + EXE_METAPHLAN_PARAMS
-					+ "). BioLockJ outputs results to: " + getOutputDir().getAbsolutePath() + File.separator );
+				throw new Exception( "Invalid classifier option (-o) found in property(" + EXE_METAPHLAN_PARAMS +
+					"). BioLockJ outputs results to: " + getOutputDir().getAbsolutePath() + File.separator );
 
-			this.defaultSwitches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM )
-				+ "-t rel_ab_w_read_stats ";
+			this.defaultSwitches =
+				getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + "-t rel_ab_w_read_stats ";
 
 			if( TaxaUtil.getTaxaLevels().size() == 1 )
 				this.defaultSwitches += "--tax_lev " + this.taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";

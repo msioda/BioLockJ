@@ -11,19 +11,13 @@ package biolockj.module.report.humann2;
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.PathwayUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule removes scarce pathways not found in enough samples.<br>
@@ -95,8 +89,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		}
 
 		Log.info( getClass(),
-			"Found " + map.size() + " samples with scarce pathways to removed- Pathway list saved to --> "
-				+ getScarcePathwayLogFile().getAbsolutePath() );
+			"Found " + map.size() + " samples with scarce pathways to removed- Pathway list saved to --> " +
+				getScarcePathwayLogFile().getAbsolutePath() );
 	}
 
 	/**
@@ -157,9 +151,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 
 			if( !badSamplePathways.isEmpty() ) {
 				scarcePathMap.put( id, badSamplePathways );
-				Log.warn( getClass(),
-					id + ": Remove " + badSamplePathways.size() + " Pathways found in % samples below threshold: "
-						+ getScarceCountProp() + "=" + getMetaColName() );
+				Log.warn( getClass(), id + ": Remove " + badSamplePathways.size() +
+					" Pathways found in % samples below threshold: " + getScarceCountProp() + "=" + getMetaColName() );
 				Log.debug( getClass(), id + ": Removed Pathways: " + badSamplePathways );
 			}
 		}
@@ -171,9 +164,9 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 
 	@SuppressWarnings("unused")
 	private boolean addMetaCol( final File file ) throws Exception {
-		return Config.getBoolean( this, Constants.REPORT_NUM_HITS )
-			&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-			&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM );
+		return Config.getBoolean( this, Constants.REPORT_NUM_HITS ) &&
+			!Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) &&
+			file.getName().contains( Constants.HN2_PATH_ABUND_SUM );
 	}
 
 	private void buildOutputTable( final File file, final List<List<String>> data ) throws Exception {
@@ -201,9 +194,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	}
 
 	private int getCutoff() throws Exception {
-		if( this.scarceCountCutoff == null )
-			this.scarceCountCutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCountCutoff() ) )
-				.intValue();
+		if( this.scarceCountCutoff == null ) this.scarceCountCutoff =
+			new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCountCutoff() ) ).intValue();
 
 		return this.scarceCountCutoff;
 	}
@@ -213,8 +205,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	}
 
 	private int getSampleCutoff() throws Exception {
-		if( this.scarceSampleCutoff == null ) this.scarceSampleCutoff = new Double(
-			Math.ceil( MetaUtil.getFieldNames().size() * getScarceSampleCutoff() ) ).intValue();
+		if( this.scarceSampleCutoff == null ) this.scarceSampleCutoff =
+			new Double( Math.ceil( MetaUtil.getFieldNames().size() * getScarceSampleCutoff() ) ).intValue();
 
 		return this.scarceSampleCutoff;
 	}

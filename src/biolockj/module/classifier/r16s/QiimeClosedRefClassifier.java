@@ -14,9 +14,7 @@ package biolockj.module.classifier.r16s;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.util.*;
@@ -42,15 +40,15 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
 
-		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv()
-			|| Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= numFiles ) {
+		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv() ||
+			Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= numFiles ) {
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
 			lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 			lines.add( copyBatchOtuTableToOutputDir( getTempDir(), null ) );
 			data.add( lines );
 		} else if( files != null ) {
-			Log.info( getClass(), "Pick closed ref OTUs in batches of size: "
-				+ Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) );
+			Log.info( getClass(), "Pick closed ref OTUs in batches of size: " +
+				Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) );
 			int startIndex = 1;
 			int batchNum = 0;
 			int sampleCount = 0;
@@ -87,9 +85,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 */
 	@Override
 	public void executeTask() throws Exception {
-		final List<List<String>> data = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
-			? buildScriptForPairedReads( getInputFiles() )
-			: buildScript( getInputFiles() );
+		final List<List<String>> data = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ?
+			buildScriptForPairedReads( getInputFiles() ): buildScript( getInputFiles() );
 		final Integer batchSize = Config.getPositiveInteger( this, SCRIPT_BATCH_SIZE );
 		Config.setConfigProperty( SCRIPT_BATCH_SIZE, "1" );
 		BashScriptBuilder.buildScripts( this, data );
@@ -102,9 +99,11 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	@Override
 	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
-		if( !DockerUtil.inDockerEnv() && ( SeqUtil.isMultiplexed()
-			|| BioLockJUtil.getPipelineInputFiles().size() > Config.requireInteger( this, SCRIPT_BATCH_SIZE ) ) )
-			postReqs.add( MergeQiimeOtuTables.class.getName() );
+		final int numSeqFiles = BioLockJUtil.getPipelineInputFiles().size();
+		final int batchSize = Config.requireInteger( this, SCRIPT_BATCH_SIZE );
+		if( SeqUtil.isMultiplexed() || numSeqFiles > batchSize )
+			if( DockerUtil.inAwsEnv() || !DockerUtil.inDockerEnv() )
+				postReqs.add( MergeQiimeOtuTables.class.getName() );
 
 		postReqs.addAll( super.getPostRequisiteModules() );
 
@@ -131,8 +130,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 */
 	protected String copyBatchOtuTableToOutputDir( final File batchDir, final Integer batchNum ) {
 		final String fileName = batchNum == null ? OTU_TABLE: Constants.OTU_TABLE_PREFIX + "_" + batchNum + ".biom";
-		return "cp " + batchDir.getAbsolutePath() + File.separator + OTU_TABLE + " " + getOutputDir().getAbsolutePath()
-			+ File.separator + fileName;
+		return "cp " + batchDir.getAbsolutePath() + File.separator + OTU_TABLE + " " +
+			getOutputDir().getAbsolutePath() + File.separator + fileName;
 	}
 
 	/**

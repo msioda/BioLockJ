@@ -16,9 +16,7 @@ import java.io.File;
 import java.util.*;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.TaxaUtil;
+import biolockj.util.*;
 
 /**
  * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.

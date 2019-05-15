@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.util.*;
 
 /**
@@ -49,24 +47,15 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		return getID().compareTo( module.getID() );
 	}
 
-
+	/**
+	 * Compared based on ID
+	 */
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ( ( getID() == null ) ? 0: getID().hashCode() );
-		return result;
-	}
-	
-	  /**
-	   * Compared based on ID
-	   */
-	@Override
-	public boolean equals( Object obj ) {
+	public boolean equals( final Object obj ) {
 		if( this == obj ) return true;
 		if( obj == null ) return false;
 		if( !( obj instanceof BioModuleImpl ) ) return false;
-		BioModuleImpl other = (BioModuleImpl) obj;
+		final BioModuleImpl other = (BioModuleImpl) obj;
 		if( getID() == null ) {
 			if( other.getID() != null ) return false;
 		} else if( !getID().equals( other.getID() ) ) return false;
@@ -146,6 +135,14 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		return ModuleUtil.requireSubDir( this, TEMP_DIR );
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ( getID() == null ? 0: getID().hashCode() );
+		return result;
+	}
+
 	/**
 	 * This method must be called immediately upon instantiation.
 	 * 
@@ -159,10 +156,10 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 
 		if( !this.moduleDir.isDirectory() ) {
 			this.moduleDir.mkdirs();
-			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new "
-				+ this.moduleDir.getAbsolutePath() );
-		} else Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing "
-			+ this.moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new " +
+				this.moduleDir.getAbsolutePath() );
+		} else Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing " +
+			this.moduleDir.getAbsolutePath() );
 	}
 
 	/**
@@ -224,13 +221,13 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 				validInput = true;
 			} else {
 				Log.debug( getClass(),
-					"Check previous module for valid input files... # " + previousModule.getClass().getName()
-						+ " ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
+					"Check previous module for valid input files... # " + previousModule.getClass().getName() +
+						" ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
 				validInput = isValidInputModule( previousModule );
 				if( validInput ) {
 					Log.debug( getClass(),
-						"Found VALID input in the output dir of: " + previousModule.getClass().getName() + " --> "
-							+ previousModule.getOutputDir().getAbsolutePath() );
+						"Found VALID input in the output dir of: " + previousModule.getClass().getName() + " --> " +
+							previousModule.getOutputDir().getAbsolutePath() );
 					moduleInputFiles.addAll( FileUtils.listFiles( previousModule.getOutputDir(),
 						HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 					Log.debug( getClass(), "# Files found: " + moduleInputFiles.size() );

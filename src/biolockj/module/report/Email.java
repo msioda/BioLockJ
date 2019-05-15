@@ -15,18 +15,14 @@ import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.Properties;
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
+import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.mail.*;
 import javax.mail.internet.*;
 import biolockj.*;
 import biolockj.module.BioModuleImpl;
-import biolockj.util.MasterConfigUtil;
-import biolockj.util.RuntimeParamUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule is used to email the user the pipeline execution status and summary. If run on cluster, an scp command
@@ -94,6 +90,29 @@ public class Email extends BioModuleImpl {
 	}
 
 	/**
+	 * Used to authenticate the service email account defined in EMAIL_FROM. WARNING - This is a trivial level of
+	 * encryption! Service email account should never send confidential information!
+	 *
+	 * @param val Encrypted password
+	 * @return Clear-text password
+	 */
+	String decrypt( final String val ) {
+		String decryptedPassword = null;
+		try {
+			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
+			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
+			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
+			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
+			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
+		} catch( final Exception ex ) {
+			Log.error( getClass(), ex.getMessage(), ex );
+		}
+
+		return decryptedPassword;
+
+	}
+
+	/**
 	 * Build an authenticated javax.mail.Session using {@link biolockj.Config} email properties
 	 *
 	 * @return javax.mail.Session required to send a MimeMessage
@@ -118,8 +137,10 @@ public class Email extends BioModuleImpl {
 					return new PasswordAuthentication( Config.requireString( null, EMAIL_FROM ),
 						decrypt( Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) ) );
 				} catch( final Exception ex ) {
-					Log.error( getClass(), "Unable to build PasswordAuthentication due to missing/invalid properties: "
-						+ EMAIL_FROM + " or " + EMAIL_ENCRYPTED_PASSWORD + " : " + ex.getMessage(), ex );
+					Log.error( getClass(),
+						"Unable to build PasswordAuthentication due to missing/invalid properties: " + EMAIL_FROM +
+							" or " + EMAIL_ENCRYPTED_PASSWORD + " : " + ex.getMessage(),
+						ex );
 				}
 
 				return null;
@@ -127,29 +148,6 @@ public class Email extends BioModuleImpl {
 		} );
 
 		return session;
-	}
-
-	/**
-	 * Used to authenticate the service email account defined in EMAIL_FROM. WARNING - This is a trivial level of
-	 * encryption! Service email account should never send confidential information!
-	 *
-	 * @param val Encrypted password
-	 * @return Clear-text password
-	 */
-	String decrypt( final String val ) {
-		String decryptedPassword = null;
-		try {
-			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
-			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
-			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
-			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
-			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
-		} catch( final Exception ex ) {
-			Log.error( getClass(), ex.getMessage(), ex );
-		}
-
-		return decryptedPassword;
-
 	}
 
 	/**
@@ -191,13 +189,13 @@ public class Email extends BioModuleImpl {
 	 * @throws Exception if unable to encrypt or store password
 	 */
 	public static void encryptAndStoreEmailPassword() throws Exception {
-		Log.info( Email.class, "About to encrypt and store new admin email password in MASTER Config: "
-			+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
+		Log.info( Email.class, "About to encrypt and store new admin email password in MASTER Config: " +
+			MasterConfigUtil.getMasterConfig().getAbsolutePath() );
 		Config.setConfigProperty( EMAIL_ENCRYPTED_PASSWORD, encrypt( RuntimeParamUtil.getAdminEmailPassword() ) );
 		if( MasterConfigUtil.saveMasterConfig() ) Log.info( Email.class,
-			"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "="
-				+ Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: "
-				+ MasterConfigUtil.getMasterConfig().getAbsolutePath() );
+			"New admin email password [ " + EMAIL_ENCRYPTED_PASSWORD + "=" +
+				Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) + " ] saved to MASTER Config: " +
+				MasterConfigUtil.getMasterConfig().getAbsolutePath() );
 		else Log.error( Email.class,
 			"Failed to store enctryped password in the MASTER Config - check Log file for error details" );
 	}
@@ -287,7 +285,7 @@ public class Email extends BioModuleImpl {
 
 	private static final char[] PASSWORD = "enfldsgbnlsngdlksdsgm".toCharArray();
 
-	private static final byte[] SALT = { (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33,
-		(byte) 0x10, (byte) 0x12, };
+	private static final byte[] SALT =
+		{ (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, };
 	private static boolean successful = false;
 }

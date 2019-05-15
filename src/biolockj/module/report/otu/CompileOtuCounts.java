@@ -14,9 +14,7 @@ package biolockj.module.report.otu;
 import java.io.*;
 import java.util.*;
 import biolockj.Log;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.OtuUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule compiles the counts from all OTU count files into a single summary OTU count file containing OTU
@@ -31,9 +29,9 @@ public class CompileOtuCounts extends OtuCountModule {
 	 */
 	@Override
 	public String getSummary() throws Exception {
-		String msg = "# Samples:     "
-			+ BioLockJUtil.formatNumericOutput( new Integer( MetaUtil.getSampleIds().size() ).longValue(), false )
-			+ RETURN;
+		String msg = "# Samples:     " +
+			BioLockJUtil.formatNumericOutput( new Integer( MetaUtil.getSampleIds().size() ).longValue(), false ) +
+			RETURN;
 		long uniqueOtus = 0;
 		long totalOtus = 0;
 		BufferedReader reader = null;
@@ -118,8 +116,8 @@ public class CompileOtuCounts extends OtuCountModule {
 				ids.add( sampleId );
 				max = this.uniqueOtuPerSample.get( sampleId );
 			}
-		return "Max # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( max, false ) + " ]: "
-			+ BioLockJUtil.getCollectionAsString( ids );
+		return "Max # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( max, false ) + " ]: " +
+			BioLockJUtil.getCollectionAsString( ids );
 	}
 
 	/**
@@ -139,8 +137,8 @@ public class CompileOtuCounts extends OtuCountModule {
 				ids.add( sampleId );
 				min = this.uniqueOtuPerSample.get( sampleId );
 			}
-		return "Min # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( min, false ) + " ]: "
-			+ BioLockJUtil.getCollectionAsString( ids );
+		return "Min # Unique OTUs[ " + BioLockJUtil.formatNumericOutput( min, false ) + " ]: " +
+			BioLockJUtil.getCollectionAsString( ids );
 	}
 
 	/**

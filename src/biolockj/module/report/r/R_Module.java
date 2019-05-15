@@ -16,9 +16,7 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
@@ -146,8 +144,8 @@ public abstract class R_Module extends ScriptModuleImpl {
 			if( DockerUtil.inAwsEnv() && ( rScript == null || !rScript.isFile() ) )
 				sb.append( "Failed to generate R Script!" + RETURN );
 			else {
-				sb.append( getClass().getSimpleName() + ( getErrors().isEmpty() ? " successful": " failed" ) + ": "
-					+ rScript.getAbsolutePath() + RETURN );
+				sb.append( getClass().getSimpleName() + ( getErrors().isEmpty() ? " successful": " failed" ) + ": " +
+					rScript.getAbsolutePath() + RETURN );
 
 				for( final String ext: map.keySet() )
 					sb.append( "Generated " + map.get( ext ) + " " + ext + " files" + RETURN );
@@ -279,8 +277,8 @@ public abstract class R_Module extends ScriptModuleImpl {
 	 * @throws Exception if errors occur
 	 */
 	public static String getRTemplateDir() throws Exception {
-		return BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + "resources" + File.separator + "R"
-			+ File.separator;
+		return BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + "resources" + File.separator + "R" +
+			File.separator;
 	}
 
 	/**

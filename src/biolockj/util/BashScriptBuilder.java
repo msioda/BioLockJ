@@ -15,9 +15,7 @@ import java.io.*;
 import java.util.*;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.ScriptModule;
+import biolockj.module.*;
 import biolockj.module.report.r.R_Module;
 
 /**
@@ -90,8 +88,8 @@ public class BashScriptBuilder {
 		lines.add( "$1" );
 		lines.add( "statusCode=$?" );
 		lines.add( "if [ $statusCode != 0 ]; then" );
-		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_"
-			+ Constants.SCRIPT_FAILURES + "\"" );
+		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_" +
+			Constants.SCRIPT_FAILURES + "\"" );
 		lines.add( "exit $statusCode" );
 		lines.add( "fi" );
 		lines.add( "}" + RETURN );
@@ -146,7 +144,8 @@ public class BashScriptBuilder {
 	 */
 	protected static List<String> getWorkerScriptLines( final List<String> lines ) {
 		final List<String> wrappedLines = new ArrayList<>();
-		for( final String line: lines ) wrappedLines.add( FUNCTION_EXECUTE + " \"" + line + "\" $LINENO" );
+		for( final String line: lines )
+			wrappedLines.add( FUNCTION_EXECUTE + " \"" + line + "\" $LINENO" );
 		wrappedLines.add( "" );
 		return wrappedLines;
 	}
@@ -162,8 +161,8 @@ public class BashScriptBuilder {
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) {
 		if( DockerUtil.inAwsEnv() && module instanceof R_Module ) return getMainScriptPath( module );
 
-		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "."
-			+ workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
+		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "." +
+			workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
 	}
 
 	/**
@@ -249,8 +248,8 @@ public class BashScriptBuilder {
 		Config.requireString( module, CLUSTER_BATCH_COMMAND );
 
 		if( !Config.getBoolean( null, CLUSTER_VALIDATE_PARAMS ) ) {
-			Log.warn( BashScriptBuilder.class, CLUSTER_VALIDATE_PARAMS + "=" + Constants.FALSE
-				+ " --  Will NOT enforce cluster #cores  = " + ScriptModule.SCRIPT_NUM_THREADS );
+			Log.warn( BashScriptBuilder.class, CLUSTER_VALIDATE_PARAMS + "=" + Constants.FALSE +
+				" --  Will NOT enforce cluster #cores  = " + ScriptModule.SCRIPT_NUM_THREADS );
 			// + getNumThreadsParam( module ) );
 			return;
 		}
@@ -282,9 +281,9 @@ public class BashScriptBuilder {
 						final String numThreadsParam = Config.getModuleProp( module, ScriptModule.SCRIPT_NUM_THREADS );
 						final int numThreads = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_NUM_THREADS );
 						if( Integer.valueOf( token ) != numThreads ) throw new ConfigFormatException( jobHeaderParam,
-							"Inconsistent config values. " + numThreadsParam + "=" + numThreads + " & " + jobHeaderParam
-								+ "=" + jobScriptHeader + " --> (#" + CLUSTER_NUM_PROCESSORS + "="
-								+ Integer.valueOf( token ) + ")" );
+							"Inconsistent config values. " + numThreadsParam + "=" + numThreads + " & " +
+								jobHeaderParam + "=" + jobScriptHeader + " --> (#" + CLUSTER_NUM_PROCESSORS + "=" +
+								Integer.valueOf( token ) + ")" );
 						break;
 					}
 				}
@@ -303,8 +302,8 @@ public class BashScriptBuilder {
 		int indentCount = 0;
 
 		for( final String line: lines ) {
-			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.trim().equals( "elif" )
-				|| line.trim().equals( "else" ) || line.trim().equals( "done" ) ) indentCount--;
+			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.trim().equals( "elif" ) ||
+				line.trim().equals( "else" ) || line.trim().equals( "done" ) ) indentCount--;
 
 			int i = 0;
 			while( i++ < indentCount )
@@ -312,9 +311,9 @@ public class BashScriptBuilder {
 
 			writer.write( line + RETURN );
 
-			if( line.trim().endsWith( "{" ) || line.trim().equals( "elif" ) || line.trim().equals( "else" )
-				|| line.trim().startsWith( "if" ) && line.trim().endsWith( "then" )
-				|| line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) ) indentCount++;
+			if( line.trim().endsWith( "{" ) || line.trim().equals( "elif" ) || line.trim().equals( "else" ) ||
+				line.trim().startsWith( "if" ) && line.trim().endsWith( "then" ) ||
+				line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) ) indentCount++;
 		}
 
 		writer.close();
@@ -360,8 +359,8 @@ public class BashScriptBuilder {
 	}
 
 	private static String getMainScriptPath( final ScriptModule module ) {
-		return new File( module.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
-			+ module.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
+		return new File( module.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX +
+			module.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
 	}
 
 	private static String getWorkerId( final int scriptNum, final int digits ) {

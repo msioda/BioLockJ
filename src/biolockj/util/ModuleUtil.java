@@ -103,8 +103,8 @@ public class ModuleUtil {
 	public static BioModule getModule( final BioModule module, final String className, final boolean checkAhead )
 		throws Exception {
 		if( module instanceof ClassifierModule ) throw new Exception(
-			"ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: "
-				+ module.getClass().getName() );
+			"ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: " +
+				module.getClass().getName() );
 
 		final ClassifierModule classifier = getClassifier( module, checkAhead );
 		for( final BioModule m: getModules( module, checkAhead ) )
@@ -262,8 +262,8 @@ public class ModuleUtil {
 	 */
 	public static void markComplete( final BioModule module ) throws Exception {
 		BioLockJUtil.createFile( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
-		final File startFile = new File(
-			module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
+		final File startFile =
+			new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		startFile.delete();
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 		Log.info( ModuleUtil.class,
