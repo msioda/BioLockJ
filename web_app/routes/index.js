@@ -6,19 +6,19 @@ Notes:
   https://www.html5rocks.com/en/tutorials/eventsource/basics/
 */
 let express = require('express'),
- router = express.Router(),
- path = require('path'),
- indexAux = require('../lib/indexAux.js'),
- fs = require('fs'),
- events = require('events'),
- eventEmitter = new events.EventEmitter();//for making an event emitter,
- sys = require('util'),
- exec = require('child_process').exec,
- pipelineIo = require(path.join('..','controllers','pipelineIo.js')),
- errorLogger = require(path.join('..','controllers','errorLogger.js')),
- propertiesIo = require(path.join('..','controllers','propertiesIo.js')),
- awsUtil = require(path.join('..','controllers','awsUtil.js')),
- launcher = require(path.join('..','controllers','launcher.js')),
+  router = express.Router(),
+  path = require('path'),
+  indexAux = require('../lib/indexAux.js'),
+  fs = require('fs'),
+  events = require('events'),
+  eventEmitter = new events.EventEmitter();//for making an event emitter,
+  sys = require('util'),
+  exec = require('child_process').exec,
+  pipelineIo = require(path.join('..','controllers','pipelineIo.js')),
+  errorLogger = require(path.join('..','controllers','errorLogger.js')),
+  propertiesIo = require(path.join('..','controllers','propertiesIo.js')),
+  awsUtil = require(path.join('..','controllers','awsUtil.js')),
+  launcher = require(path.join('..','controllers','launcher.js')),
   javaDocs = require(path.join('..','controllers','javaDocs.js'));
 
 const { spawn } = require('child_process');//for running child processes
