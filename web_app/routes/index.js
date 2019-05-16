@@ -18,7 +18,8 @@ let express = require('express'),
  errorLogger = require(path.join('..','controllers','errorLogger.js')),
  propertiesIo = require(path.join('..','controllers','propertiesIo.js')),
  awsUtil = require(path.join('..','controllers','awsUtil.js')),
- launcher = require(path.join('..','controllers','launcher.js'));
+ launcher = require(path.join('..','controllers','launcher.js')),
+  javaDocs = require(path.join('..','controllers','javaDocs.js'));
 
 const { spawn } = require('child_process');//for running child processes
 const Stream = new events.EventEmitter(); // my event emitter instance
@@ -53,22 +54,7 @@ router.post('/retrieveConfigs', propertiesIo.retrievePropertiesFiles);
 
 router.post('/retrievePropertiesFile', propertiesIo.retrievePropertiesFile);
 
-router.post('/javadocsmodulegetter', function(req, res, next) {
-  try {
-    let modPathString = req.body.moduleJavaClassPath;
-    modPathString = modPathString.concat('.java');
-    const modPathArray = modPathString.split('/');
-    // console.log(path.join.apply(null, modPathArray));
-    const datum = fs.readFileSync(path.join(bljDir, 'src', path.join.apply(null, modPathArray)), 'utf8');
-      res.setHeader("Content-Type", "text/html");
-      res.write(datum);
-      res.end();
-  } catch (e) {
-    console.error(e);
-    errorLogger.writeError(e.stack);
-  }
-});
-//__dirname resolves to /app/biolockj/web_app/routes
+router.post('/javadocsmodulegetter', javaDocs.javaDocsModGetter);
 
 router.get('/results', function(req, res, next) {
   res.render('results', { title: 'BioLockJ' });
