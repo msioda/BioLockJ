@@ -64,35 +64,6 @@ router.post('/saveConfigToGui', propertiesIo.saveConfig);
 
 router.post('/defaultproperties', propertiesIo.getDefaultProperties);//end router.post('/defaultproperties'...
 
-//currently for docker only
-router.post('/checkProjectExists', function(req, res, next) {
-  try {
-    const projectPath = pipelineProjectName(req.body.projectName);
-    const projectName = path.parse(projectPath).base;
-    console.log('checkingProject: ', projectName);
-    if (fs.existsSync(projectPath)){
-      console.log('exists');
-
-      const resParams = {
-        projectName : projectName,
-        projectPath : projectPath,
-      }
-
-      res.setHeader('Content-Type', 'text/html');
-      res.write(JSON.stringify(resParams));
-      res.end();
-    }else{
-      console.log('not exists');
-      res.setHeader('Content-Type', 'text/html');
-      res.write('');
-      res.end();
-    }
-  } catch (e) {
-    console.log(e);
-    errorLogger.writeError(e.stack);
-  }
-});// end outer.post('/checkProjectExists',
-
 router.post('/launch', launcher.launch);
 
 router.get('/streamLog', launcher.streamLog);
@@ -105,7 +76,6 @@ router.post('/listAwsProfiles', awsUtil.listAwsProfiles);
 router.post('/listS3Buckets', awsUtil.listS3Buckets);
 
 router.post('/listEc2InstanceIds', awsUtil.listEc2InstanceIds);
-
 
 // source ~/.batchawsdeploy/config ; getcloudformationstack.sh testing2
 
