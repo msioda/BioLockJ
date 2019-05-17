@@ -93,7 +93,7 @@ public class FatalExceptionHandler {
 	}
 
 	private static File getErrorLogDir() {
-		File dir = RuntimeParamUtil.getBaseDir();
+		File dir = RuntimeParamUtil.get_BLJ_PROJ();
 		if( dir == null || !dir.isDirectory() )
 			if( DockerUtil.inDockerEnv() ) dir = new File( DockerUtil.BLJ_HOST_HOME );
 			else dir = RuntimeParamUtil.getHomeDir();

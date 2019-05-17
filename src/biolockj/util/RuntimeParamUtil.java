@@ -55,7 +55,7 @@ public class RuntimeParamUtil {
 	 * 
 	 * @return $BLJ_PROJ_DIR pipeline parent directory
 	 */
-	public static File getBaseDir() {
+	public static File get_BLJ_PROJ() {
 		return new File( params.get( BLJ_PROJ_DIR ) );
 	}
 
@@ -253,25 +253,10 @@ public class RuntimeParamUtil {
 	 * 
 	 * @return boolean
 	 */
-	public static boolean isDebugMode() {
+	public static boolean logToSystemOut() {
 		return params.get( SYSTEM_OUT_FLAG ) != null;
 	}
 
-	/**
-	 * Return TRUE if /.dockerenv file exists.
-	 * 
-	 * @return boolean
-	 */
-	public static boolean isDockerMode() {
-		try {
-			return new File( "/.dockerenv" ).isFile();
-		} catch( final Exception ex ) {
-			Log.warn( RuntimeParamUtil.class, "Error occured checking file-system root directory for \"/.dockerenv\"" );
-			ex.printStackTrace();
-		}
-		Log.info( RuntimeParamUtil.class, "Detected NOTE-IN-DOCKER mode because \"/.dockerenv\" file not found" );
-		return false;
-	}
 
 	/**
 	 * Register and verify the runtime parameters. There are 2 required parameters:<br>
@@ -286,8 +271,8 @@ public class RuntimeParamUtil {
 	public static void registerRuntimeParameters( final String[] args ) throws RuntimeParamException {
 		printRuntimeArgs( args );
 		parseParams( simplifyArgs( args ) );
-		if( isDockerMode() ) reassignDockerConfig();
-		verifyBaseDir();
+		if( DockerUtil.inDockerEnv() ) reassignDockerConfig();
+		verify_BLJ_PROJ();
 
 		if( getDirectModuleDir() != null ) assignMasterConfig( DIRECT_MODE, assignDirectPipelineDir() );
 		else if( doRestart() && getConfigFile() == null ) assignMasterConfig( RESTART_DIR, getRestartDir() );
@@ -325,11 +310,10 @@ public class RuntimeParamUtil {
 			"Separating pipeline dir name and module name from: \"" + DIRECT_MODE + "\" " + getDirectModuleDir() );
 		final StringTokenizer st = new StringTokenizer( getDirectModuleDir(), ":" );
 		if( st.countTokens() != 2 ) throw new RuntimeParamException( DIRECT_MODE, getDirectModuleDir(),
-			"Required parameter format = $PIPELINE_DIR_NAME:$MODULE_DIR_NAME (with a single colon \":\" - but " +
+			"Invalid parameter format = $PIPELINE_DIR_NAME:$MODULE_DIR_NAME (with a single colon \":\" - but " +
 				st.countTokens() + " instances of \":\" were found" );
 
-		final String pipelineName = st.nextToken();
-		final File pipelineDir = new File( getBaseDir().getAbsolutePath() + File.separator + pipelineName );
+		final File pipelineDir = new File( get_BLJ_PROJ().getAbsolutePath() + File.separator + st.nextToken() );
 		if( !pipelineDir.isDirectory() ) throw new RuntimeParamException( DIRECT_MODE, getDirectModuleDir(),
 			"Direct module pipeline directory not found: " + pipelineDir.getAbsolutePath() );
 
@@ -354,7 +338,7 @@ public class RuntimeParamUtil {
 		for( final File file: pipelineDir.listFiles() )
 			if( file.getName().startsWith( Constants.MASTER_PREFIX ) ) {
 				params.put( CONFIG_FILE, file.getAbsolutePath() );
-				if( isDockerMode() ) params.put( HOST_CONFIG_DIR, getDockerHostPipelineDir() );
+				if( DockerUtil.inDockerEnv() ) params.put( HOST_CONFIG_DIR, getDockerHostPipelineDir() );
 				return;
 			}
 
@@ -363,7 +347,7 @@ public class RuntimeParamUtil {
 	}
 
 	private static String getBaseDirParam() {
-		return BLJ_PROJ_DIR + " " + getBaseDir().getAbsolutePath();
+		return BLJ_PROJ_DIR + " " + get_BLJ_PROJ().getAbsolutePath();
 	}
 
 	private static String getConfigFileParam() {
@@ -394,10 +378,8 @@ public class RuntimeParamUtil {
 		}
 
 		assignLastParam( prevParam );
-
 		extraParams.removeAll( params.keySet() );
 		extraParams.removeAll( params.values() );
-
 		if( !extraParams.isEmpty() )
 			throw new RuntimeParamException( "Unexpected runtime parameters found:  { " + extraParams + " }" );
 	}
@@ -427,7 +409,7 @@ public class RuntimeParamUtil {
 			if( LONG_ARG_NAMES.contains( arg ) || NAMED_ARGS.contains( prevArg ) || DIR_ARGS.contains( prevArg ) ||
 				i == args.length - 1 && !foundConfig ) simpleArgs[ i++ ] = arg;
 			else {
-				if( arg.startsWith( "--" ) ) arg = arg.substring( 1 );
+				while( arg.startsWith( "--" ) ) arg = arg.substring( 1 );
 				if( !arg.startsWith( "-" ) ) arg = "-" + arg;
 				arg = arg.substring( 0, 2 );
 				simpleArgs[ i++ ] = arg;
@@ -440,11 +422,11 @@ public class RuntimeParamUtil {
 	}
 
 	private static void validateParams() throws RuntimeParamException {
-		if( isDockerMode() && getDockerHostInputDir() == null )
+		if( DockerUtil.inDockerEnv() && getDockerHostInputDir() == null )
 			throw new RuntimeParamException( INPUT_DIR, "", "Docker host input directory required, but not found" );
-		if( isDockerMode() && getDockerHostHomeDir() == null )
+		if( DockerUtil.inDockerEnv() && getDockerHostHomeDir() == null )
 			throw new RuntimeParamException( HOME_DIR, "", "Docker host $HOME directory required, but not found" );
-		if( isDockerMode() && getDockerHostConfigDir() == null ) throw new RuntimeParamException( HOST_CONFIG_DIR, "",
+		if( DockerUtil.inDockerEnv() && getDockerHostConfigDir() == null ) throw new RuntimeParamException( HOST_CONFIG_DIR, "",
 			"Docker host Config directory required, but not found" );
 		if( getHomeDir() == null )
 			throw new RuntimeParamException( HOME_DIR, "", "$HOME directory required, but not found" );
@@ -456,10 +438,10 @@ public class RuntimeParamUtil {
 			"System file-path not found" );
 	}
 
-	private static void verifyBaseDir() throws RuntimeParamException {
-		if( getBaseDir() == null )
+	private static void verify_BLJ_PROJ() throws RuntimeParamException {
+		if( get_BLJ_PROJ() == null )
 			throw new RuntimeParamException( BLJ_PROJ_DIR, "", "$BLJ_PROJ directory required, but not found" );
-		if( !getBaseDir().isDirectory() ) throw new RuntimeParamException( BLJ_PROJ_DIR, getBaseDir().getAbsolutePath(),
+		if( !get_BLJ_PROJ().isDirectory() ) throw new RuntimeParamException( BLJ_PROJ_DIR, get_BLJ_PROJ().getAbsolutePath(),
 			"System directory-path not found" );
 	}
 
@@ -489,10 +471,10 @@ public class RuntimeParamUtil {
 	protected static final String HOME_DIR = "-u";
 
 	/**
-	 * Host BioLockJ deployment to run - used to override installed $BLJ in Docker containers with BioLockJ installed:
+	 * Host BioLockJ directory used to override installed $BLJ in Docker containers:
 	 * {@value #HOST_BLJ_DIR}
 	 */
-	protected static final String HOST_BLJ_DIR = "--blj";
+	protected static final String HOST_BLJ_DIR = "-blj";
 
 	/**
 	 * Host $USER $BLJ_PROJ_DIR param: {@value #HOST_BLJ_PROJ_DIR}
@@ -500,10 +482,10 @@ public class RuntimeParamUtil {
 	protected static final String HOST_BLJ_PROJ_DIR = "--host-pipeline";
 
 	/**
-	 * Host BioLockJ deployment to run - used to map $BLJ_SUP volume in Docker containers with BioLockJ installed:
+	 * Directory used to map $BLJ_SUP Host volume to local blj_support directory:
 	 * {@value #HOST_BLJ_SUP_DIR}
 	 */
-	protected static final String HOST_BLJ_SUP_DIR = "--bljSup";
+	protected static final String HOST_BLJ_SUP_DIR = "-blj_sup";
 
 	/**
 	 * Host $USER config file path param: {@value #HOST_CONFIG_DIR}

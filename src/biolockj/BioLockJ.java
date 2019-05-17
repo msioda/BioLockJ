@@ -142,7 +142,7 @@ public class BioLockJ {
 		final String month = new GregorianCalendar().getDisplayName( Calendar.MONTH, Calendar.SHORT, Locale.ENGLISH );
 		final String day = BioLockJUtil.formatDigits( new GregorianCalendar().get( Calendar.DATE ), 2 );
 		final String baseString =
-			RuntimeParamUtil.getBaseDir().getAbsolutePath() + File.separator + RuntimeParamUtil.getProjectName();
+			RuntimeParamUtil.get_BLJ_PROJ().getAbsolutePath() + File.separator + RuntimeParamUtil.getProjectName();
 		final String dateString = "_" + year + month + day;
 		File projectDir = new File( baseString + dateString );
 		int i = 2;

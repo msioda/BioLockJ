@@ -246,3 +246,11 @@ named_arg() {
 		[ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
 	done
 }
+
+# Return TRUE if variable name in Param 1 exists in shell
+# Param 1 - bash env variable
+var_exists() {
+	varExists=$(set | grep "^${1}=")
+	[ ${#varExists} -gt 0 ]
+}
+

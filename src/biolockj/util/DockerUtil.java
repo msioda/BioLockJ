@@ -258,9 +258,8 @@ public class DockerUtil {
 	 * @return TRUE if Java running in Docker container
 	 */
 	public static boolean inDockerEnv() {
-		return RuntimeParamUtil.isDockerMode();
+		return DOCKER_ENV_FLAG_FILE.isFile();
 	}
-
 	/**
 	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
 	 * 
@@ -451,6 +450,7 @@ public class DockerUtil {
 	 */
 	protected static final String DOCKER_HUB_USER = "docker.user";
 
+	private static final File DOCKER_ENV_FLAG_FILE = new File( "/.dockerenv" );
 	private static final String BLJ_BASH = "blj_bash";
 	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
 	private static final String DB_FREE = "_dbfree";

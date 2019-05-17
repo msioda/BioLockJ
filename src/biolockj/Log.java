@@ -44,7 +44,7 @@ public class Log {
 	 */
 	public static void debug( final Class<?> loggingClass, final String msg ) {
 		if( suppressLogs ) return;
-		if( useSystemOut() ) {
+		if( RuntimeParamUtil.logToSystemOut() ) {
 			System.out.println( "[ DEBUG ] " + msg );
 			return;
 		}
@@ -100,7 +100,7 @@ public class Log {
 	 */
 	public static void error( final Class<?> myClass, final String msg, final Exception exception ) {
 		if( suppressLogs ) return;
-		if( useSystemOut() ) {
+		if( RuntimeParamUtil.logToSystemOut() ) {
 			System.out.println( "[ DEBUG ] " + msg + " --> " + exception.getMessage() );
 			return;
 		}
@@ -135,7 +135,7 @@ public class Log {
 	 */
 	public static void info( final Class<?> myClass, final String msg ) {
 		if( suppressLogs ) return;
-		if( useSystemOut() ) {
+		if( RuntimeParamUtil.logToSystemOut() ) {
 			System.out.println( "[ INFO ] " + msg );
 			return;
 		}
@@ -208,7 +208,7 @@ public class Log {
 	 */
 	public static void warn( final Class<?> myClass, final String msg ) {
 		if( suppressLogs ) return;
-		if( useSystemOut() ) {
+		if( RuntimeParamUtil.logToSystemOut() ) {
 			System.out.println( "[ WARN ] " + msg );
 			return;
 		}
@@ -297,10 +297,6 @@ public class Log {
 
 	private static boolean isInitialized() {
 		return logFile != null && logFile.isFile();
-	}
-
-	private static boolean useSystemOut() {
-		return RuntimeParamUtil.isDebugMode();
 	}
 
 	/**
