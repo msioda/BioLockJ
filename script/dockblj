@@ -67,9 +67,8 @@ build_clone_script() {
 	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
 	echo "${cmd}" >> "${DOCKER_CLONE_SCRIPT}"
 	chmod 777 "${DOCKER_CLONE_SCRIPT}"
-	echo "dockblj created \"${DOCKER_CLONE_SCRIPT}\" -->  a script used to launch a clone of the resulting container in a new bash shell (same env vars + volumes) "
-	echo "alias \"dclone\" will run \"${DOCKER_CLONE_SCRIPT}\" (even after original container is terminated)"
-	[ -f "${DOCKER_CLONE_SCRIPT}" ] && cat "${DOCKER_CLONE_SCRIPT}" & printf "\n"
+	echo "dockblj created \"${DOCKER_CLONE_SCRIPT}\" -->  This script will launch a clone of the current biolockj_controller (same env vars + volumes)"
+	echo "alias \"dclone\" can be used to run \"${DOCKER_CLONE_SCRIPT}\""
 }
 
 # Get Docker image - add port, entrypoint, anc command if launching GUI
@@ -81,13 +80,13 @@ get_docker_img() {
 
 # Get mapped  Docker volumes
 get_volumes() {
-	vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${HOME}:${BLJ_HOST_HOME}"
+	vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${HOME}:${BLJ_HOST_HOME}:delegated"
 	if $(var_not_null $runAws); then
 		vols="${vols} -v ${EFS}:${EFS}:delegated"
 	else
 		vols="${vols} -v $(blj_proj):${EFS_PROJ}:delegated"
-		if $(var_not_null $launchGui) && [ -d "${BLJ}/resources/config/gui" ]; then
-			vols="${vols} -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}"
+		if $(var_not_null $launchGui); then
+			vols="${vols} -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}:delegated"
 		else
 			vols="${vols} -v $inputDir:${BLJ_INPUT}:ro -v $(dirname $config):${BLJ_CONFIG}:ro"
 			$(var_not_null $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}:ro"
@@ -114,8 +113,8 @@ scan_script_and_env_args() {
 	runAws=$(arg_exists "$@" -aws)
 	overrideBLJ=$(named_arg "$@" -blj)
 	overrideBLJ_SUP=$(named_arg "$@" -blj_sup)
-	! $(var_not_null overrideBLJ) && $(arg_exists "$@" -blj) && overrideBLJ="${BLJ}" 
-	! $(var_not_null overrideBLJ_SUP) && $(arg_exists "$@" -blj_sup) && overrideBLJ="${BLJ_SUP}" 
+	! $(var_not_null $overrideBLJ) && overrideBLJ=$(arg_exists "$@" -blj) && [ ${#overrideBLJ} -gt 0 ] && overrideBLJ="${BLJ}" 
+	! $(var_not_null $overrideBLJ_SUP) && overrideBLJ_SUP=$(arg_exists "$@" -blj_sup) && [ ${#overrideBLJ_SUP} -gt 0 ] && overrideBLJ_SUP="${BLJ_SUP}" 
 	config=$(named_arg "$@" -c)
 	inputDir=$(named_arg "$@" -i)
 	metaPath=$(named_arg "$@" -m)
@@ -167,7 +166,7 @@ verify_inputs() {
 	$(var_not_null $metaPath) && verify_dir $metaPath	
 }
 
-printf "\n---------> Execute CMD [  dockblj ${@}  ] \n\n"
+printf "\n ---------> Execute CMD [  $(echo ${@})  ]\n\n"
 scan_script_and_env_args $@
 
 if $(var_not_null $launchGui); then

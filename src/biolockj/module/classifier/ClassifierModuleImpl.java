@@ -100,7 +100,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	/**
 	 * Set DB cache directory path on 1st access
 	 * 
-	 * @param db
+	 * @param db Database file
 	 */
 	protected void setDbCache( final File db ) {
 		if( db != null ) Log.info( getClass(), "Set DB cache: " + db.getAbsolutePath() );

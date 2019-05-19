@@ -116,7 +116,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 
 	private String getDbParam() throws ConfigPathException, ConfigNotFoundException {
 		if( getDB() == null ) return "";
-		return DB_PARAM + " " + ( DockerUtil.inDockerEnv() ? DockerUtil.getDockerDB( this ).getAbsolutePath():
+		return DB_PARAM + " " + ( DockerUtil.inDockerEnv() ? DockerUtil.getDockerDB( this, Config.requireString( this, RDP_DB ) ).getAbsolutePath():
 			Config.requireExistingFile( this, RDP_DB ).getAbsolutePath() ) + " ";
 	}
 

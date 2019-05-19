@@ -175,8 +175,6 @@ public class Processor {
 	 * @throws Exception if errors occur during execution
 	 */
 	public static void submit( final ScriptModule module ) throws Exception {
-		setFilePermissions( module.getScriptDir().getAbsolutePath(),
-			Config.requireString( module, ScriptModule.SCRIPT_PERMISSIONS ) );
 		new Processor().runJob( module.getJobParams(), module.getClass().getSimpleName() );
 	}
 

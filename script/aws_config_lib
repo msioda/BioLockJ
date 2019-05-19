@@ -202,6 +202,7 @@ init_aws_config() {
 	for propFile in ${propFiles[@]}; do set_pipeline_conig_props $propFile; done
 	verify_config
 	aws_log "Pipeline Config properties initialized and saved to --> $blj_aws_config"
+	aws_report_config
 }
 
 # Get the ec2 key file for the ec2 head node
@@ -244,6 +245,12 @@ map_property_name() {
 # Refersh bash variables in memory via source $blj_aws_config
 refresh_aws_cache() {
 	. $blj_aws_config
+}
+
+# Remove AWS property from $blj_aws_config
+# Param 1 - prop name 
+rm_blj_prop() {
+	rm_prop "$blj_aws_config" "${1}"
 }
 
 # Remove AWS property - delete the line from the file

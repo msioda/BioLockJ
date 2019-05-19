@@ -13,6 +13,7 @@ package biolockj;
 
 import java.io.File;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.exception.*;
 import biolockj.module.BioModule;
@@ -364,6 +365,7 @@ public class Config {
 
 	/**
 	 * Initialize {@link biolockj.Config} by reading in properties from config runtime parameter.
+	 * Save a copy of the primary Config to the pipeline root directory
 	 * 
 	 * @throws Exception if unable to load Props
 	 */
@@ -372,6 +374,7 @@ public class Config {
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
+		FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
 		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
 		TaxaUtil.initTaxaLevels();

@@ -193,7 +193,6 @@ stage_pipeline() {
 		upload_file_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
 		upload_file_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
 		exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
-		#[ -f "$(get_docker_job_def_flag)" ] && upload_file_to_efs "$(get_docker_job_def_flag)"
 	fi
 
 	stage_input_files_to_efs

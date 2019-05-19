@@ -90,9 +90,10 @@ public class DockerUtil {
 		final String path = module.getDB().getAbsolutePath();
 		File dockerDB = path.startsWith( DOCKER_DEFAULT_DB_DIR ) || path.startsWith( DOCKER_DB_DIR ) ? new File( path ):
 			new File( DOCKER_DB_DIR );
-		if( dbPath != null ) if( inAwsEnv() ) dockerDB = getDockerVolumePath( dbPath, dockerDB.getAbsolutePath() );
-		else dockerDB = new File( dbPath.replace( path, DOCKER_DB_DIR ) );
-
+		if( dbPath != null ) {
+			if( inAwsEnv() ) dockerDB = getDockerVolumePath( dbPath, dockerDB.getAbsolutePath() );
+			else dockerDB = new File( dbPath.replace( path, DOCKER_DB_DIR ) );
+		}
 		Log.info( DockerUtil.class,
 			"Convert Config DB path --> Docker DB path for [ " + module.getClass().getSimpleName() + " - DB = " + path +
 				( dbPath == null ? "": " | Target = " + dbPath ) + " ] =====> " + dockerDB.getAbsolutePath() );
@@ -204,8 +205,7 @@ public class DockerUtil {
 				prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
 		}
 
-		if( ( className.startsWith( Constants.MODULE_WGS_CLASSIFIER_PACKAGE ) ||
-			className.equals( KneadData.class.getName() ) ) && hasDB( module ) ) imageName += DB_FREE;
+		if( hasDB( module ) && !className.startsWith( RdpClassifier.class.getPackage().getName() ) ) imageName += DB_FREE;
 
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
 
@@ -286,13 +286,13 @@ public class DockerUtil {
 		Log.debug( DockerUtil.class, "Assign Docker volumes for module: " + module.getClass().getSimpleName() );
 
 		String dockerVolumes = "-v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET + " -v " +
-			RuntimeParamUtil.getDockerHostHomeDir() + ":" + BLJ_HOST_HOME;
+			RuntimeParamUtil.getDockerHostHomeDir() + ":" + BLJ_HOST_HOME + ":delegated";
 
 		if( inAwsEnv() )
 			return dockerVolumes + " -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR + ":delegated";
 
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + DOCKER_INPUT_DIR + ":ro";
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_OUTPUT_DIR + ":delegated";
+		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_PIPELINE_DIR + ":delegated";
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + DOCKER_CONFIG_DIR + ":ro";
 
 		if( module instanceof TrimPrimers ) {
@@ -330,12 +330,10 @@ public class DockerUtil {
 		Log.info( DockerUtil.class, "Map Docker volume getVolumePath( " + path + " )" );
 		String newPath = path;
 		if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) ) {
-			Log.info( DockerUtil.class, "path.startsWith( " + CONTAINER_BLJ_SUP_DIR + " ) = TRUE!" );
 			newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() +
 				path.substring( CONTAINER_BLJ_SUP_DIR.length() );
 		}
 		if( path.startsWith( CONTAINER_BLJ_DIR ) ) {
-			Log.info( DockerUtil.class, "path.startsWith( " + CONTAINER_BLJ_DIR + " ) = TRUE!" );
 			newPath =
 				RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + path.substring( CONTAINER_BLJ_DIR.length() );
 		}
@@ -356,7 +354,6 @@ public class DockerUtil {
 	 * Need to name this dir = "/home/ec2-user" so Nextflow config is same inside + outside of container
 	 */
 	public static final String BLJ_HOST_HOME = "/home/ec2-user";
-	// public static final String BLJ_HOST_HOME = "/mnt/host_home";
 
 	/**
 	 * Docker container root user EFS directory: /mnt/efs
@@ -382,7 +379,7 @@ public class DockerUtil {
 	/**
 	 * All containers mount {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} to the container volume: /mnt/efs/output
 	 */
-	public static final String DOCKER_OUTPUT_DIR = DOCKER_BLJ_MOUNT_DIR + "/pipelines";
+	public static final String DOCKER_PIPELINE_DIR = DOCKER_BLJ_MOUNT_DIR + "/pipelines";
 
 	/**
 	 * Some containers mount the {@value biolockj.Constants#INPUT_TRIM_SEQ_FILE} to the containers "primer":

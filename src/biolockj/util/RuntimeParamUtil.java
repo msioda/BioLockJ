@@ -388,14 +388,14 @@ public class RuntimeParamUtil {
 		Log.info( RuntimeParamUtil.class,
 			"Assign \"" + HOST_BLJ_PROJ_DIR + "\" arg ---> " + params.get( BLJ_PROJ_DIR ) );
 		Log.info( RuntimeParamUtil.class,
-			"Reassign \"" + BLJ_PROJ_DIR + "\" arg ---> " + DockerUtil.DOCKER_OUTPUT_DIR );
+			"Reassign \"" + BLJ_PROJ_DIR + "\" arg ---> " + DockerUtil.DOCKER_PIPELINE_DIR );
 		params.put( HOST_BLJ_PROJ_DIR, params.get( BLJ_PROJ_DIR ) );
 		params.put( HOST_CONFIG_DIR, getConfigFile().getParentFile().getAbsolutePath() );
 		params.put( HOST_HOME_DIR, params.get( HOME_DIR ) );
 		if( doRestart() )
-			params.put( RESTART_DIR, DockerUtil.DOCKER_OUTPUT_DIR + File.separator + getRestartDir().getName() );
+			params.put( RESTART_DIR, DockerUtil.DOCKER_PIPELINE_DIR + File.separator + getRestartDir().getName() );
 
-		params.put( BLJ_PROJ_DIR, DockerUtil.DOCKER_OUTPUT_DIR );
+		params.put( BLJ_PROJ_DIR, DockerUtil.DOCKER_PIPELINE_DIR );
 		params.put( HOME_DIR, DockerUtil.ROOT_HOME );
 	}
 

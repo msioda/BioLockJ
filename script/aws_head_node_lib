@@ -25,9 +25,9 @@ build_docker_job_defs() {
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
 	aws_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
-		# Uncomment to build biolockj_controller + java_module ONLY (enough to use testAwsEmail.properties for testing purposes)
+		# Uncomment to build java_module ONLY (enough to use testAwsEmail.properties for testing purposes)
 		#[ $(echo $line | grep -c java_module) -eq 0 ] && continue
-		[ $(echo $line | grep -c blj_basic) -gt 0 ] && aws_log "Skip Docker image: \"$line\"" && continue
+		[ $(echo $line | grep -c blj_basic) -gt 0 ] || [ $(echo $line | grep -c biolockj_controller) -gt 0 ] && aws_log "Skip Docker image: \"$line\"" && continue
 		module=$(echo $line | cut -f 1 -d " ")
 		jobImg="${module}:${dockerImgVersion}"
 		aws_log "Add job-definition for Docker image: \"$jobImg\""
@@ -191,19 +191,21 @@ launch_ec2_head_node() {
 	connect_head
 }
 
-# Start EC2 head node
+# Start EC2 head node - if just created new EC2 Head Node, use EC2 Docker exe to build Docker jobs + set server clock timezone
 start_ec2_head_node() {
 	startStatus=init
 	while [ "$startStatus" != "ok" ]; do
 		startStatus=$(aws ec2 describe-instance-status --instance-ids ${awsEc2InstanceID} --query "InstanceStatuses[*].SystemStatus.Status")
 		printf "." && sleep 10s && runTime=$((runTime+10))  
 	done
+	
 	echo ""
 	if [ "$systemStatus" == "createEc2" ]; then
 		aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] created in $runTime seconds"
 		set_blj_prop awsEc2InstanceID ${awsEc2InstanceID}
 		ec2PublicIP=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
 		set_blj_prop ec2PublicIP $ec2PublicIP
+		[ ! -f "$(get_docker_job_def_flag)" ] && build_docker_job_defs
 	else
 		aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] restarted in $runTime seconds"
 	fi

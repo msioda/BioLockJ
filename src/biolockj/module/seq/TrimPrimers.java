@@ -550,18 +550,15 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				DockerUtil.getDockerVolumeFile( Constants.INPUT_TRIM_SEQ_FILE, DockerUtil.DOCKER_PRIMER_DIR );
 			if( !primers.isFile() )
 				throw new ConfigPathException( primers, "Seq Primer file not found in Docker container" );
+			return primers;
 		}
 		return Config.requireExistingFile( null, Constants.INPUT_TRIM_SEQ_FILE );
 	}
 
 	private final DecimalFormat df = new DecimalFormat( "##.##" );
-
 	private boolean foundPaired = false;
-
 	private boolean mergedReadTwoPrimers = false;
-
 	private final Map<String, Map<String, String>> missingBothPrimers = new HashMap<>();
-
 	private final Map<String, Map<String, String>> missingFwPrimers = new HashMap<>();
 	private final Map<String, Map<String, String>> missingRvPrimers = new HashMap<>();
 	private final Map<String, Long> numLinesNoPrimer = new HashMap<>();

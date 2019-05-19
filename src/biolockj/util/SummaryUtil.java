@@ -827,7 +827,7 @@ public class SummaryUtil {
 		sb.append( "                -_     ` !;;;;;;;'" + RETURN );
 		sb.append( "                 `-_     !;;;''" + RETURN );
 		sb.append( "                    `-.. !'" + RETURN );
-		sb.append( "                        (=)" + RETURN );
+		sb.append( "                        <+>" + RETURN );
 		sb.append( "                        (=)" + RETURN );
 		sb.append( "                        (=)" + RETURN );
 		sb.append( "                        (=)" + RETURN );
@@ -839,16 +839,15 @@ public class SummaryUtil {
 		sb.append( "                        (=)" + RETURN );
 		sb.append( "                        (=)" + RETURN );
 		sb.append( "                        <+>" + RETURN );
-		sb.append( "                       '/V\\`" + RETURN );
-		sb.append( "                     ' /   \\ `" + RETURN );
-		sb.append( "                   '  /     \\  `" + RETURN );
-		sb.append( "                '   /       \\   `" + RETURN );
-		sb.append( "             .'    /          \\    `." + RETURN );
-		sb.append( "            \\    |            |    /" + RETURN );
-		sb.append( "             \\   |            |   /" + RETURN );
-		sb.append( "	              \\  |            |  /" + RETURN );
-		sb.append( "	                ` |            | '" + RETURN );
-		sb.append( "	                  |            |" + RETURN );
+		sb.append( "                       '/V\\`." + RETURN );
+		sb.append( "                     ' /   \\  `." + RETURN );
+		sb.append( "                   '  /     \\   `." + RETURN );
+		sb.append( "                '    /       \\    `." + RETURN );
+		sb.append( "             .'     /         \\     `." + RETURN );
+		sb.append( "            \\     |            |     /" + RETURN );
+		sb.append( "             \\    |            |    /" + RETURN );
+		sb.append( "              \\   |            |   /" + RETURN );
+		sb.append( "               \\  |            |  /" + RETURN );
 		return sb.toString();
 	}
 
