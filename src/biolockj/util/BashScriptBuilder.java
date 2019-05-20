@@ -62,7 +62,7 @@ public class BashScriptBuilder {
 		if( data == null || data.size() < 1 )
 			throw new Exception( "Cannot build empty scripts for: " + module.getClass().getName() );
 
-		setBatchSize( module, data );
+		batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
 
 		if( Config.isOnCluster() ) verifyConfig( module );
 
@@ -415,11 +415,6 @@ public class BashScriptBuilder {
 		} catch( final Exception ex ) {
 			Log.error( BashScriptBuilder.class, "Error occurred printing script to log file: " + filePath, ex );
 		}
-	}
-
-	private static void setBatchSize( final ScriptModule module, final List<List<String>> data ) throws Exception {
-		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv() ) batchSize = data.size();
-		else batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
 	}
 
 	/**

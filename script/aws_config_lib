@@ -128,7 +128,7 @@ convert_db_prop() {
 convert_prop() {
 	val=$(get_prop "${1}" "${2}")
 	[ $(echo "${val}" | wc -w) -gt 1 ] && val="'${val}'"
-	set_blj_prop $(map_property_name "${2}") "${val}" $IS_NULL
+	set_blj_prop $(map_to_aws_property "${2}") "${val}" $IS_NULL
 }
 
 # Get AWS-Access-ID from local file sytem (requires user has logged on to client or file is staged to $HOME)
@@ -222,14 +222,14 @@ local_nf_conf() {
 
 # AWS Config prop names cannot contain "." or bash fails by trying to interpret and run them as function calls
 # Param 1 - Prop name
-map_property_name() {
+map_to_aws_property() {
 	val=
 	foundPeriod=N
 	size=$((${#1}-1))
 	for i in $(seq 0 $size); do
 		char=${1:$i:1}
+		upCase=$(echo "${char}" | awk '{print toupper($0)}')
 		if [ $foundPeriod == Y ]; then
-			upCase=$(echo "${char}" | awk '{print toupper($0)}')
 			val=${val}${upCase}
 			foundPeriod=N
 		elif [ "${char}" == "." ]; then
@@ -241,6 +241,24 @@ map_property_name() {
 	done
 	echo ${val}
 }
+
+# Convert aws config property name to pipeline config property name format
+map_to_pipeline_property() {
+	size=$((${#1}-1))
+	for i in $(seq 0 $size); do
+		char=${1:$i:1}
+		upCase=$(echo "${char}" | awk '{print toupper($0)}')
+		if [ "${upCase}" == "${char}" ]; then
+			loCase=$(echo "${char}" | awk '{print tolower($0)}')
+			val="${val}.${loCase}"
+		else
+			val=${val}${char}
+		fi
+	done
+	[ "${1/.}" != "${1}" ] || [ ] && return "${val}"
+	echo ${val}
+}
+
 
 # Refersh bash variables in memory via source $blj_aws_config
 refresh_aws_cache() {

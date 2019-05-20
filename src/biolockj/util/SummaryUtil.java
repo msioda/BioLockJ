@@ -46,9 +46,8 @@ public class SummaryUtil {
 	 * @return Beautiful artwork
 	 */
 	public static String display_ASCII_Status() {
-		// return "";
-		return testascii( ass_T1() ) + testascii( ass_T2() ) + testascii( ass_T3() ) + testascii( ass_T4() ) +
-			testascii( ass_T5() );
+		final String status = BioLockJ.isPipelineComplete() ? getSpaces( 16 ) + spacedWord( "COMPLETE", 10 ) : getSpaces( 27 ) + spacedWord( "FAILED", 10 );
+		return ascii_bioLockj( status );
 	}
 
 	/**
@@ -81,8 +80,7 @@ public class SummaryUtil {
 				BioLockJUtil.formatNumericOutput( vals.last(), false ) + RETURN;
 
 			Long sum = 0L;
-			for( final long val: vals )
-				sum += val;
+			for( final long val: vals ) sum += val;
 
 			if( addTotal ) msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (total):", pad ) +
 				BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
@@ -637,231 +635,44 @@ public class SummaryUtil {
 		Log.info( SummaryUtil.class, "Summary updated" );
 	}
 
-	private static String ass_T1() {
+
+	private static String ascii_bioLockj( final String status ) {
 		final StringBuffer sb = new StringBuffer();
-		sb.append(
-			"          _____                    _____                   _______                   _____           _______                   _____                    _____                    _____" +
-				RETURN );
-		sb.append(
-			"         /\\    \\                  /\\    \\                 /::\\    \\                 /\\    \\         /::\\    \\                 /\\    \\                  /\\    \\                  /\\    \\" +
-				RETURN );
-		sb.append(
-			"        /::\\    \\                /::\\    \\               /::::\\    \\               /::\\____\\       /::::\\    \\               /::\\    \\                /::\\____\\                /::\\    \\" +
-				RETURN );
-		sb.append(
-			"       /::::\\    \\               \\:::\\    \\             /::::::\\    \\             /:::/    /      /::::::\\    \\             /::::\\    \\              /:::/    /                \\:::\\    \\" +
-				RETURN );
-		sb.append(
-			"      /::::::\\    \\               \\:::\\    \\           /::::::::\\    \\           /:::/    /      /::::::::\\    \\           /::::::\\    \\            /:::/    /                  \\:::\\    \\" +
-				RETURN );
-		sb.append(
-			"     /:::/\\:::\\    \\               \\:::\\    \\         /:::/~~\\:::\\    \\         /:::/    /      /:::/~~\\:::\\    \\         /:::/\\:::\\    \\          /:::/    /                    \\:::\\    \\" +
-				RETURN );
-		sb.append(
-			"    /:::/__\\:::\\    \\               \\:::\\    \\       /:::/    \\:::\\    \\       /:::/    /      /:::/    \\:::\\    \\       /:::/  \\:::\\    \\        /:::/____/                      \\:::\\    \\" +
-				RETURN );
-		sb.append(
-			"   /::::\\   \\:::\\    \\              /::::\\    \\     /:::/    / \\:::\\    \\     /:::/    /      /:::/    / \\:::\\    \\     /:::/    \\:::\\    \\      /::::\\    \\                      /::::\\    \\" +
-				RETURN );
-		sb.append(
-			"  /::::::\\   \\:::\\    \\    ____    /::::::\\    \\   /:::/____/   \\:::\\____\\   /:::/    /      /:::/____/   \\:::\\____\\   /:::/    / \\:::\\    \\    /::::::\\____\\________    _____   /::::::\\    \\" +
-				RETURN );
-		sb.append(
-			" /:::/\\:::\\   \\:::\\ ___\\  /\\   \\  /:::/\\:::\\    \\ |:::|    |     |:::|    | /:::/    /      |:::|    |     |:::|    | /:::/    /   \\:::\\    \\  /:::/\\:::::::::::\\    \\  /\\    \\ /:::/\\:::\\    \\" +
-				RETURN );
-		sb.append(
-			"/:::/__\\:::\\   \\:::|    |/::\\   \\/:::/  \\:::\\____\\|:::|____|     |:::|    |/:::/____/       |:::|____|     |:::|    |/:::/____/     \\:::\\____\\/:::/  |:::::::::::\\____\\/::\\    /:::/  \\:::\\____\\" +
-				RETURN );
-		sb.append(
-			"\\:::\\   \\:::\\  /:::|____|\\:::\\  /:::/    \\::/    / \\:::\\    \\   /:::/    / \\:::\\    \\        \\:::\\    \\   /:::/    / \\:::\\    \\      \\::/    /\\::/   |::|~~~|~~~~~     \\:::\\  /:::/    \\::/    /" +
-				RETURN );
-		sb.append(
-			" \\:::\\   \\:::\\/:::/    /  \\:::\\/:::/    / \\/____/   \\:::\\    \\ /:::/    /   \\:::\\    \\        \\:::\\    \\ /:::/    /   \\:::\\    \\      \\/____/  \\/____|::|   |           \\:::\\/:::/    / \\/____/" +
-				RETURN );
-		sb.append(
-			"  \\:::\\   \\::::::/    /    \\::::::/    /             \\:::\\    /:::/    /     \\:::\\    \\        \\:::\\    /:::/    /     \\:::\\    \\                    |::|   |            \\::::::/    /" +
-				RETURN );
-		sb.append(
-			"   \\:::\\   \\::::/    /      \\::::/____/               \\:::\\__/:::/    /       \\:::\\    \\        \\:::\\__/:::/    /       \\:::\\    \\                   |::|   |             \\::::/    /" +
-				RETURN );
-		sb.append(
-			"    \\:::\\  /:::/    /        \\:::\\    \\                \\::::::::/    /         \\:::\\    \\        \\::::::::/    /         \\:::\\    \\                  |::|   |              \\::/    /" +
-				RETURN );
-		sb.append(
-			"     \\:::\\/:::/    /          \\:::\\    \\                \\::::::/    /           \\:::\\    \\        \\::::::/    /           \\:::\\    \\                 |::|   |               \\/____/" +
-				RETURN );
-		sb.append(
-			"      \\::::::/    /            \\:::\\    \\                \\::::/    /             \\:::\\    \\        \\::::/    /             \\:::\\    \\                |::|   |" +
-				RETURN );
-		sb.append(
-			"       \\::::/    /              \\:::\\____\\                \\::/____/               \\:::\\____\\        \\::/____/               \\:::\\____\\               \\::|   |" +
-				RETURN );
-		sb.append(
-			"        \\::/____/                \\::/    /                 ~~                      \\::/    /         ~~                      \\::/    /                \\:|   |" +
-				RETURN );
-		sb.append(
-			"         ~~                       \\/____/                                           \\/____/                                   \\/____/                  \\|___|" +
-				RETURN );
-		return sb.toString();
+		sb.append( "                                                    _-^-_" + RETURN );
+		sb.append( "                                                _','    \\'~." + RETURN );
+		sb.append( "                                             -'  ,'      `. `-_" + RETURN );
+		sb.append( "                                            !`-_.;________:.':::" + RETURN );
+		sb.append( "                                            !   /\\        /\\::::" + RETURN );
+		sb.append( "                                            |  /  \\      /..\\:::" + RETURN );
+		sb.append( "                                            ! /    \\    /....\\::" + RETURN );
+		sb.append( "                                            !/      \\  /......\\:" + RETURN );
+		sb.append( "                                            :--.___..\\/_.__.--;;" + RETURN );
+		sb.append( "                                             -_      `!;;;;;;;'" + RETURN );
+		sb.append( "                                               `-_    !;;;;''" + RETURN );
+		sb.append( "                                                  `-. !;'" + RETURN );
+		sb.append( "                                                     <+>" + RETURN );
+		sb.append( "  _______      ___      ________      ___            (=)   ________      ________      ___ ____            __" + RETURN );
+		sb.append( "|\\   __  \\    |\\  \\    |\\   __  \\    |\\  \\           (=)  |\\   __  \\    |\\   ____\\    |\\  \\|\\  \\         |\\  \\" + RETURN );
+		sb.append( "\\ \\  \\|\\ /_   \\ \\  \\   \\ \\  \\|\\  \\   \\ \\  \\          (=)  \\ \\  \\|\\  \\   \\ \\  \\___|    \\ \\  \\/  /|_       \\ \\  \\" + RETURN );
+		sb.append( " \\ \\   __  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\         (=)   \\ \\  \\\\\\  \\   \\ \\  \\        \\ \\   ___  \\    __ \\ \\  \\" + RETURN );
+		sb.append( "  \\ \\  \\|\\  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\____    (=)    \\ \\  \\\\\\  \\   \\ \\  \\____    \\ \\  \\\\ \\  \\  |\\  \\\\_\\  \\" + RETURN );
+		sb.append( "   \\ \\_______\\   \\ \\__\\   \\ \\_______\\   \\ \\_______\\  (=)     \\ \\_______\\   \\ \\_______\\   \\ \\__\\\\ \\__\\ \\ \\________\\" + RETURN );
+		sb.append( "    \\|_______|    \\|__|    \\|_______|    \\|_______|  (=)      \\|_______|    \\|_______|    \\|__| \\|__|  \\|________|" + RETURN );
+		sb.append( "                                                     (=)" + RETURN );
+		sb.append( "                                                     <+>" + RETURN );
+		sb.append( "                                                   .'/V\\`." + RETURN );
+		sb.append( "                                                 .' /   \\  `." + RETURN );
+		sb.append( "                                               .'  /     \\   `." + RETURN );
+		sb.append( "                                             .'   /       \\    `." + RETURN );
+		sb.append( "                                            \\    |         |    /" + RETURN );
+		sb.append( "                                             \\   |         |   /" + RETURN );
+		sb.append( "                                              \\  |         |  /" + RETURN );
+		return sb.toString() + RETURN + status + RETURN + RETURN;
 	}
-
-	private static String ass_T2() {
-		final StringBuffer sb = new StringBuffer();
-		sb.append(
-			"BBBBBBBBBBBBBBBBB                                LLLLLLLLLLL                                                     kkkkkkkk                   JJJJJJJJJJJJJJ" +
-				RETURN );
-		sb.append(
-			"B::::::::::::::::B                               L:::::::::L                                                     k::::::k                   J::::::::::::J" +
-				RETURN );
-		sb.append(
-			"B::::::BBBBBB:::::B    iiii                      LL:::::::LL                                                     k::::::k                   JJJ:::::::JJJ" +
-				RETURN );
-		sb.append(
-			"BB:::::B     B:::::B  i::::i                       L:::::L                                                       k::::::k                      J:::::J" +
-				RETURN );
-		sb.append(
-			"  B::::B     B:::::B   iiii      ooooooooooo       L:::::L                  ooooooooooo       ccccccccccccccc    k:::::k    kkkkkkk            J:::::J" +
-				RETURN );
-		sb.append(
-			"  B::::B     B:::::B           oo:::::::::::oo     L:::::L                oo:::::::::::oo   cc:::::::::::::::cc  k:::::k   k:::::k             J:::::J" +
-				RETURN );
-		sb.append(
-			"  B::::BBBBBB:::::B   iiiiii  o:::::::::::::::o    L:::::L               o:::::::::::::::o  c:::::::::::::::::c  k:::::k  k:::::k              J:::::J" +
-				RETURN );
-		sb.append(
-			"  B:::::::::::::BB    i::::i  o:::::ooooo:::::o    L:::::L               o:::::ooooo:::::o  c:::::::ccccccc:::c  k:::::k k:::::k               J:::::j" +
-				RETURN );
-		sb.append(
-			"  B::::BBBBBB:::::B   i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c::::::c       cccc  k::::::k:::::k                J:::::J" +
-				RETURN );
-		sb.append(
-			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c:::::c              k:::::::::::k     JJJJJJJ     J:::::J" +
-				RETURN );
-		sb.append(
-			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L               o::::o     o::::o  c:::::c              k:::::::::::k     J:::::J     J:::::J" +
-				RETURN );
-		sb.append(
-			"  B::::B     B:::::B  i::::i  o::::o     o::::o    L:::::L       LLLLLL  o::::o     o::::o  c::::::c      cccc   k::::::k:::::k    J::::::J   J::::::J" +
-				RETURN );
-		sb.append(
-			"BB:::::BBBBBB::::::B  i::::i  o:::::ooooo:::::o  LL::::::LLLLLLLLL::::L  o:::::ooooo:::::o  c:::::::cccccc::::c  k::::::k k:::::k   J:::::::JJJ:::::::J" +
-				RETURN );
-		sb.append(
-			"B:::::::::::::::::B   i::::i  o:::::::::::::::o  L::::::::::::::::::::L  o:::::::::::::::o  c:::::::::::::::::c  k::::::k  k:::::k   JJ:::::::::::::JJ" +
-				RETURN );
-		sb.append(
-			"B::::::::::::::::B    i::::i   oo:::::::::::oo   L::::::::::::::::::::L   oo:::::::::::oo    cc::::::::::::::cc  k::::::k   k:::::k    JJ:::::::::JJ" +
-				RETURN );
-		sb.append(
-			"BBBBBBBBBBBBBBBBB     iiiiii     ooooooooooo     LLLLLLLLLLLLLLLLLLLLLL     ooooooooooo        cccccccccccccc    kkkkkkkk    kkkkkkk     JJJJJJJJJ" +
-				RETURN );
-		return sb.toString();
-	}
-
-	private static String ass_T3() {
-		final StringBuffer sb = new StringBuffer();
-		sb.append(
-			" _  _  _  _                _                                   _                                                               _                         _  _  _" +
-				RETURN );
-		sb.append(
-			"(_)(_)(_)(_)_             (_)                                 (_)                                                             (_)                       (_)(_)(_)" +
-				RETURN );
-		sb.append(
-			"(_)        (_)          _  _                 _  _  _          (_)                      _  _  _              _  _  _           (_)     _                    (_)" +
-				RETURN );
-		sb.append(
-			"(_) _  _  _(_)         (_)(_)             _ (_)(_)(_) _       (_)                   _ (_)(_)(_) _         _(_)(_)(_)          (_)   _(_)                   (_)" +
-				RETURN );
-		sb.append(
-			"(_)(_)(_)(_)_             (_)            (_)         (_)      (_)                  (_)         (_)       (_)                  (_) _(_)                     (_)" +
-				RETURN );
-		sb.append(
-			"(_)        (_)            (_)            (_)         (_)      (_)                  (_)         (_)       (_)                  (_)(_)_               _      (_)" +
-				RETURN );
-		sb.append(
-			"(_) _  _  _(_)          _ (_) _          (_) _  _  _ (_)      (_) _  _  _  _       (_) _  _  _ (_)       (_)_  _  _           (_)  (_)_            (_)  _  (_)" +
-				RETURN );
-		sb.append(
-			"(_)(_)(_)(_)           (_)(_)(_)            (_)(_)(_)         (_)(_)(_)(_)(_)         (_)(_)(_)            (_)(_)(_)          (_)    (_)            (_)(_)(_)" +
-				RETURN );
-		return sb.toString();
-	}
-
-	private static String ass_T4() {
-		final StringBuffer sb = new StringBuffer();
-		sb.append(
-			" ________      ___      ________      ___           ________      ________      ___  __           ___" +
-				RETURN );
-		sb.append(
-			"|\\   __  \\    |\\  \\    |\\   __  \\    |\\  \\         |\\   __  \\    |\\   ____\\    |\\  \\|\\  \\        |\\  \\" +
-				RETURN );
-		sb.append(
-			"\\ \\  \\|\\ /_   \\ \\  \\   \\ \\  \\|\\  \\   \\ \\  \\        \\ \\  \\|\\  \\   \\ \\  \\___|    \\ \\  \\/  /|_      \\ \\  \\" +
-				RETURN );
-		sb.append(
-			" \\ \\   __  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\        \\ \\  \\\\\\  \\   \\ \\  \\        \\ \\   ___  \\   __ \\ \\  \\" +
-				RETURN );
-		sb.append(
-			"  \\ \\  \\|\\  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\____    \\ \\  \\\\\\  \\   \\ \\  \\____    \\ \\  \\\\ \\  \\ |\\  \\\\_\\  \\" +
-				RETURN );
-		sb.append(
-			"   \\ \\_______\\   \\ \\__\\   \\ \\_______\\   \\ \\_______\\   \\ \\_______\\   \\ \\_______\\   \\ \\__\\\\ \\__\\\\ \\________\\" +
-				RETURN );
-		sb.append(
-			"    \\|_______|    \\|__|    \\|_______|    \\|_______|    \\|_______|    \\|_______|    \\|__| \\|__| \\|________|" +
-				RETURN );
-		return sb.toString();
-	}
-
-	private static String ass_T5() {
-		final StringBuffer sb = new StringBuffer();
-		sb.append( "                       _-^-_" + RETURN );
-		sb.append( "                    _' ,'  \\ ~=_" + RETURN );
-		sb.append( "                 -'  ,'     `.  `-_" + RETURN );
-		sb.append( "               !`-_.;_______:.-':::" + RETURN );
-		sb.append( "               !   /\\        /\\::::" + RETURN );
-		sb.append( "               |  /  \\      /..\\:::" + RETURN );
-		sb.append( "               ! /    \\    /....\\::" + RETURN );
-		sb.append( "               !/      \\  /......\\:" + RETURN );
-		sb.append( "               :--.___. \\/_.__.--;;" + RETURN );
-		sb.append( "                -_     ` !;;;;;;;'" + RETURN );
-		sb.append( "                 `-_     !;;;''" + RETURN );
-		sb.append( "                    `-.. !'" + RETURN );
-		sb.append( "                        <+>" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        (=)" + RETURN );
-		sb.append( "                        <+>" + RETURN );
-		sb.append( "                       '/V\\`." + RETURN );
-		sb.append( "                     ' /   \\  `." + RETURN );
-		sb.append( "                   '  /     \\   `." + RETURN );
-		sb.append( "                '    /       \\    `." + RETURN );
-		sb.append( "             .'     /         \\     `." + RETURN );
-		sb.append( "            \\     |            |     /" + RETURN );
-		sb.append( "             \\    |            |    /" + RETURN );
-		sb.append( "              \\   |            |   /" + RETURN );
-		sb.append( "               \\  |            |  /" + RETURN );
-		return sb.toString();
-	}
-
-	private static String complete_ASCII_Art() {
-		return getSpaces( 5 ) + spacedWord( "COMPLETE", 5 ) + RETURN;
-	}
-
+	
 	private static String downloadCmd() throws Exception {
 		if( downloadCommand == null ) downloadCommand = DownloadUtil.getDownloadCmd();
 		return downloadCommand;
-	}
-
-	private static String failed_ASCII_Art() {
-		return getSpaces( 11 ) + spacedWord( "FAILED", 5 ) + RETURN;
 	}
 
 	private static String getDashes( final int len ) {
@@ -932,14 +743,7 @@ public class SummaryUtil {
 		return sb.toString();
 	}
 
-	private static String testascii( final String val ) {
-		x = !x;
-		final String GAP = RETURN + RETURN + RETURN + RETURN + RETURN;
-		return GAP + val + RETURN + ( x ? complete_ASCII_Art(): failed_ASCII_Art() );
-	}
-
 	private static String downloadCommand = null;
-
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String EXT_SPACER = getDashes( 154 );
 	private static final String FINAL_META = "Final Metadata";
@@ -958,5 +762,4 @@ public class SummaryUtil {
 	private static String runtimeEnv = null;
 	private static final String SUMMARY_FILE = "summary" + Constants.TXT_EXT;
 	private static final String TEMP_SUMMARY_FILE = ".tempSummary" + Constants.TXT_EXT;
-	private static boolean x = false;
 }

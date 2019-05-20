@@ -138,11 +138,13 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
+	
 	private File getKrakenDB() throws ConfigPathException, ConfigNotFoundException {
-		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
+		if( DockerUtil.hasCustomDockerDB( this ) ) return DockerUtil.getCustomDB( this, getDB().getAbsolutePath() );
 		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
 		return getDB();
 	}
+
 
 	private String getParams() throws Exception {
 		if( this.defaultSwitches == null ) {

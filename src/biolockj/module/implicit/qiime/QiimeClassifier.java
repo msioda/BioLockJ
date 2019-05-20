@@ -320,7 +320,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
-		if( DockerUtil.hasDB( this ) ) {
+		if( DockerUtil.hasCustomDockerDB( this ) ) {
 			lines.addAll( buildQiimeDockerConfigLines() );
 			lines.add( "" );
 		}
@@ -349,14 +349,14 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	protected List<String> buildQiimeDockerConfigLines() throws Exception {
 		final List<String> lines = new ArrayList<>();
-		if( getDB() != null ) {
-			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ).getAbsolutePath() +
+		if( DockerUtil.hasCustomDockerDB( this ) ) {
+			lines.add( "echo '" + QIIME_CONFIG_SEQ_REF + " " + DockerUtil.getCustomDB( this, Config.requireString( this, QIIME_REF_SEQ_DB ) ).getAbsolutePath() +
 				"' > " + QIIME_DOCKER_CONFIG );
 			lines.add( "echo '" + QIIME_CONFIG_PYNAST_ALIGN_REF + " " +
-				getDockerDB( QIIME_PYNAST_ALIGN_DB ).getAbsolutePath() + "' >> " + QIIME_DOCKER_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + getDockerDB( QIIME_REF_SEQ_DB ).getAbsolutePath() +
+				DockerUtil.getCustomDB( this, Config.requireString( this, QIIME_PYNAST_ALIGN_DB ) ).getAbsolutePath() + "' >> " + QIIME_DOCKER_CONFIG );
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_SEQ_REF + " " + DockerUtil.getCustomDB( this, Config.requireString( this, QIIME_REF_SEQ_DB ) ).getAbsolutePath() +
 				"' >> " + QIIME_DOCKER_CONFIG );
-			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + getDockerDB( QIIME_TAXA_DB ).getAbsolutePath() +
+			lines.add( "echo '" + QIIME_CONFIG_TAXA_ID_REF + " " + DockerUtil.getCustomDB( this, Config.requireString( this, QIIME_TAXA_DB ) ).getAbsolutePath() +
 				"' >> " + QIIME_DOCKER_CONFIG );
 		}
 
@@ -455,10 +455,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		return sb.toString();
 	}
 
-	private File getDockerDB( final String property ) throws ConfigPathException, ConfigNotFoundException {
-		return DockerUtil.getDockerDB( this, Config.requireString( this, property ) );
-	}
-
 	private static String getLowestQiimeTaxaLevel() throws Exception {
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.SPECIES ) ) return "7";
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.GENUS ) ) return "6";
@@ -467,10 +463,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.CLASS ) ) return "3";
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.PHYLUM ) ) return "2";
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.DOMAIN ) ) return "1";
-
 		throw new Exception( "Should not be possible to reach this error, value based on required field: " +
 			Constants.REPORT_TAXONOMY_LEVELS );
-
 	}
 
 	

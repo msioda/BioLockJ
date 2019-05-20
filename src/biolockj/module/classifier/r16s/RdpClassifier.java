@@ -81,9 +81,8 @@ public class RdpClassifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws ConfigPathException, ConfigNotFoundException {
-		final String path = Config.getString( this, RDP_DB );
-		if( path != null ) {
-			if( DockerUtil.inDockerEnv() ) return new File( path );
+		if( Config.getString( this, RDP_DB ) != null ) {
+			if( DockerUtil.inDockerEnv() ) return new File( Config.getString( this, RDP_DB ) );
 			return Config.requireExistingFile( this, RDP_DB );
 		}
 		return null;
@@ -113,10 +112,23 @@ public class RdpClassifier extends ClassifierModuleImpl {
 		lines.add( "}" + RETURN );
 		return lines;
 	}
+	
+//	@Override
+//	public File getDockerDB( final String hostPath ) throws ConfigPathException, ConfigNotFoundException {
+//		
+//		File db = new File( hostPath );
+//		
+//		if( inAwsEnv() ) return DockerUtil.getDockerVolumePath( DockerUtil.DOCKER_DB_DIR, getDB().getAbsolutePath() );
+//		
+//		return new File( dbPath.replace( module.getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) );
+//
+//		File localDbDir = module.getDB();
+//		
+//	}
 
 	private String getDbParam() throws ConfigPathException, ConfigNotFoundException {
 		if( getDB() == null ) return "";
-		return DB_PARAM + " " + ( DockerUtil.inDockerEnv() ? DockerUtil.getDockerDB( this, Config.requireString( this, RDP_DB ) ).getAbsolutePath():
+		return DB_PARAM + " " + ( DockerUtil.hasCustomDockerDB( this ) ? DockerUtil.getCustomDB( this, Config.requireString( this, RDP_DB ) ).getAbsolutePath():
 			Config.requireExistingFile( this, RDP_DB ).getAbsolutePath() ) + " ";
 	}
 

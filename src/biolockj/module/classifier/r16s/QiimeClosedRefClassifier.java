@@ -40,8 +40,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
 
-		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv() ||
-			Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= numFiles ) {
+		if( Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= numFiles ) {
 			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
 			lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 			lines.add( copyBatchOtuTableToOutputDir( getTempDir(), null ) );
@@ -81,7 +80,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
 	 * the worker scripts. Pass{@link #getInputFiles()} to either {@link #buildScript(List)} or
 	 * {@link #buildScriptForPairedReads(List)} based on
-	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS}.
+	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS}.  
+	 * Each worker script is already written as a batch, so each batch = 1 worker script.
 	 */
 	@Override
 	public void executeTask() throws Exception {
@@ -102,8 +102,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		final int numSeqFiles = BioLockJUtil.getPipelineInputFiles().size();
 		final int batchSize = Config.requireInteger( this, SCRIPT_BATCH_SIZE );
 		if( SeqUtil.isMultiplexed() || numSeqFiles > batchSize )
-			if( DockerUtil.inAwsEnv() || !DockerUtil.inDockerEnv() )
-				postReqs.add( MergeQiimeOtuTables.class.getName() );
+			postReqs.add( MergeQiimeOtuTables.class.getName() );
 
 		postReqs.addAll( super.getPostRequisiteModules() );
 

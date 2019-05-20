@@ -150,7 +150,6 @@ run_aws() {
 	launch_ec2_head_node ${2}
 }
 
-
 # Create new stack name if awsStack is undefined in AWS Config
 set_stack_name() {
 	if [ ${#awsStack} -gt 0 ]; then

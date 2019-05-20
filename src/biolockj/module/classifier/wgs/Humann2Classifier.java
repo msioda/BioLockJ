@@ -228,10 +228,9 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private String getDbPath( final String prop ) throws Exception {
 		final String path = Config.getString( this, prop );
 		if( path == null ) return null;
-		if( DockerUtil.hasDB( this ) ) return DockerUtil.getDockerDB( this, path ).getAbsolutePath();
-		if( DockerUtil.inDockerEnv() )
-			return path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DEFAULT_DB_DIR );
-		return Config.requireExistingDir( this, prop ).getAbsolutePath();
+		if( !DockerUtil.inDockerEnv() ) return Config.requireExistingDir( this, prop ).getAbsolutePath();
+		if( DockerUtil.hasCustomDockerDB( this ) ) return DockerUtil.getCustomDB( this, path ).getAbsolutePath();
+		return path;
 	}
 
 	private String getJoinTableCmd() throws Exception {

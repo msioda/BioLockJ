@@ -15,6 +15,7 @@
 ##  Metadata directory:        -m  <path>                                       ##
 ##  New email password:        -p  <new_password>                               ##
 ##  Restart flag:              -r  <directory-path>                             ##
+##  Trim Primer file:          -t  <file-path>                                  ##
 ##                                                                              ##
 ##################################################################################
 . "${DOCKER_LIB}"
@@ -36,6 +37,8 @@ blj_options() {
 	$(var_not_null $restartDir) && options="${options} -r ${BLJ_PROJ}/${restartDir#$(blj_proj)/}"
 	$(var_not_null $newPass) && options="${options} -p $newPass"
 	$(var_not_null $metaPath) && options="${options} -m $metaPath"
+	$(var_not_null $primerPath) && options="${options} -t $primerPath"
+	
 	echo ${options} -i ${inputDir} -c ${config} ${runAws}
 }
 
@@ -90,6 +93,7 @@ get_volumes() {
 		else
 			vols="${vols} -v $inputDir:${BLJ_INPUT}:ro -v $(dirname $config):${BLJ_CONFIG}:ro"
 			$(var_not_null $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}:ro"
+			$(var_not_null $primerPath) && vols="${vols} -v $primerPath:${BLJ_PRIMER}:ro"
 		fi
 		
 		$(var_not_null $overrideBLJ) && vols="${vols} -v ${overrideBLJ}:/app/biolockj:ro"
@@ -120,6 +124,7 @@ scan_script_and_env_args() {
 	metaPath=$(named_arg "$@" -m)
 	newPass=$(named_arg "$@" -p)
 	restartDir=$(named_arg "$@" -r)
+	primerPath=$(named_arg "$@" -t)
 }
 
 # Start the local browswer
@@ -163,7 +168,8 @@ verify_inputs() {
 	verify_dir $BLJ_PROJ
 	$(var_not_null $restartDir) && verify_dir $restartDir
 	$(var_not_null $config) && verify_file $config
-	$(var_not_null $metaPath) && verify_dir $metaPath	
+	$(var_not_null $metaPath) && verify_dir $metaPath
+	$(var_not_null $primerPath) && verify_file $primerPath	
 }
 
 printf "\n ---------> Execute CMD [  $(echo ${@})  ]\n\n"

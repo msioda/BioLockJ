@@ -175,7 +175,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	private File getMpaDB() throws Exception {
 		final String path = Config.getString( this, METAPHLAN2_DB );
 		if( path == null ) return null;
-		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
+		if( DockerUtil.hasCustomDockerDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
 		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
 		return getDB();
 	}
