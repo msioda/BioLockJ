@@ -66,9 +66,7 @@ public class Email extends BioModuleImpl {
 	@Override
 	public void executeTask() throws Exception {
 		String emailBody = SummaryUtil.getSummary() + SummaryUtil.getFooter();
-
 		if( emailBody.trim().length() < 1 ) throw new Exception( "Unable to obtain SummaryUtil.getSummary()" );
-
 		try {
 			emailBody += RETURN + "Regards," + RETURN + "BioLockJ Admin";
 			Log.info( getClass(), "Attempt to send email ---> " + RETURN + emailBody );
@@ -78,7 +76,6 @@ public class Email extends BioModuleImpl {
 		} catch( final Exception ex ) {
 			throw new Exception( "Unable to send email: " + ex.getMessage() );
 		}
-
 	}
 
 	/**

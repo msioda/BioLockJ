@@ -312,7 +312,7 @@ public class BioLockJ {
 		}
 
 		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() +
-			SummaryUtil.display_ASCII_Status() );
+			SummaryUtil.displayAsciiArt() );
 		if( isPipelineComplete() ) System.exit( 0 );
 
 		System.exit( 1 );

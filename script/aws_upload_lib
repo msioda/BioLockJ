@@ -73,9 +73,10 @@ build_start_script() {
 	echo "##  Run this script to launch BioLockJ pipeline on AWS           ##" >> "${ss}"
 	echo "##  1) Pull the latest biolockj image from Docker Hub            ##" >> "${ss}"
 	echo "##  2) Clear stale Docker images/containers (if any)             ##" >> "${ss}"
-	echo "##  3) Run dockblj on the AWS Config                             ##" >> "${ss}"
-	echo "##  4) Reset Nextflow-modified EFS dir owner and access privs    ##" >> "${ss}"
-	echo "##  5) May stop/terminate EC2 instance upon pipeline success     ##" >> "${ss}"
+	echo "##  3) Set pipeline.host Config property                         ##" >> "${ss}"
+	echo "##  4) Run dockblj on the AWS Config                             ##" >> "${ss}"
+	echo "##  5) Reset Nextflow-modified EFS dir owner and access privs    ##" >> "${ss}"
+	echo "##  6) May stop/terminate EC2 instance upon pipeline success     ##" >> "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo '. ~/.bash_profile' >> "${ss}"
 	echo "flagFile=${EC2_HOME}/$(get_config_name)-success" >> "${ss}"
@@ -85,7 +86,8 @@ build_start_script() {
 	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $inputDirPaths) -c=$(get_config ec2)" >> "${ss}"
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
-	if [ "${awsEc2EndState}" == "stop" ] || [ "${awsEc2EndState}" == "terminate" ]; then 
+	if [ "${awsEc2EndState}" == "stop" ] || [ "${awsEc2EndState}" == "terminate" ]; then
+		echo 'refresh_aws_cache' >> "${ss}"ho
 		echo '[ -f "${flagFile}" ] && aws ec2 stop-instances --instance-ids "${awsEc2InstanceID}"' >> "${ss}"
 		[ "${awsEc2EndState}" == "terminate" ] && echo "[ -f \"${flagFile}\" ] && aws ec2 terminate-instances --instance-id \"${awsEc2InstanceID}\"" >> "${ss}"
 	fi

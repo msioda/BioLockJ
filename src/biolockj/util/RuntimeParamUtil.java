@@ -229,6 +229,16 @@ public class RuntimeParamUtil {
 	public static File getRestartDir() {
 		return params.get( RESTART_DIR ) == null ? null: new File( params.get( RESTART_DIR ) );
 	}
+	
+	/**
+	 * Return host on which Docker container is running
+	 * 
+	 * @return Host name
+	 */
+	public static String getDockerHostName() {
+		return params.get( HOSTNAME );
+	}
+	
 
 	/**
 	 * Return the runtime args as a String.
@@ -323,7 +333,7 @@ public class RuntimeParamUtil {
 
 	private static void assignLastParam( final String param ) throws RuntimeParamException {
 		if( !params.keySet().contains( CONFIG_FILE ) &&
-			!params.keySet().contains( RESTART_DIR ) & !params.keySet().contains( param ) &&
+			!params.keySet().contains( RESTART_DIR ) && !params.keySet().contains( param ) &&
 			!params.values().contains( param ) ) params.put( CONFIG_FILE, param );
 		else if( NAMED_ARGS.contains( param ) )
 			throw new RuntimeParamException( param, "", "Missing argument for named parameter" );
@@ -467,9 +477,14 @@ public class RuntimeParamUtil {
 	protected static final String DIRECT_MODE = "-d";
 
 	/**
-	 * Automatically added $HOME by biolockj script: {@value #HOME_DIR}
+	 * Automatically added $HOME by biolockj/dockblj script: {@value #HOME_DIR}
 	 */
 	protected static final String HOME_DIR = "-u";
+	
+	/**
+	 * Automatically added $(hostname) by biolockj/dockblj script: {@value #HOSTNAME}
+	 */
+	protected static final String HOSTNAME = "-h";
 
 	/**
 	 * Host BioLockJ directory used to override installed $BLJ in Docker containers: {@value #HOST_BLJ_DIR}
@@ -523,14 +538,14 @@ public class RuntimeParamUtil {
 
 	private static final List<String> ARG_FLAGS = Arrays.asList( AWS_FLAG, SYSTEM_OUT_FLAG );
 	private static final List<String> BLJ_CONTROLLER_ONLY_ARGS =
-		Arrays.asList( BLJ_PROJ_DIR, CONFIG_FILE, HOME_DIR, PASSWORD, RESTART_DIR );
+		Arrays.asList( BLJ_PROJ_DIR, CONFIG_FILE, HOME_DIR, PASSWORD, RESTART_DIR, HOSTNAME );
 	private static final List<String> DIR_ARGS = Arrays.asList( BLJ_PROJ_DIR, HOME_DIR, HOST_BLJ_DIR, HOST_BLJ_PROJ_DIR,
 		HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR, INPUT_DIR, META_DIR, RESTART_DIR );
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
 	private static final List<String> extraParams = new ArrayList<>();
 	private static final List<String> LONG_ARG_NAMES = Arrays.asList( DIRECT_PIPELINE_DIR, HOST_BLJ_DIR,
 		HOST_BLJ_PROJ_DIR, HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR );
-	private static final List<String> NAMED_ARGS = Arrays.asList( CONFIG_FILE, DIRECT_MODE, PASSWORD );
+	private static final List<String> NAMED_ARGS = Arrays.asList( CONFIG_FILE, DIRECT_MODE, HOSTNAME, PASSWORD );
 	private static final Map<String, String> params = new HashMap<>();
 	private static final String RETURN = Constants.RETURN;
 	private static String runtimeArgs = "";

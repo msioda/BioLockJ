@@ -184,7 +184,7 @@ public class NextflowUtil {
 	public static void saveNextflowSuccessFlag() {
 		try {
 			final File f = BioLockJUtil.createFile(
-				DockerUtil.BLJ_HOST_HOME + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
+				DockerUtil.AWS_EC2_HOME + File.separator + RuntimeParamUtil.getProjectName() + "-success" );
 			if( f.isFile() ) Log.info( NextflowUtil.class, "Created pipeline success file: " + f.getAbsolutePath() );
 			else Log.warn( NextflowUtil.class, "Failed to generate pipeline success file: " + f.getAbsolutePath() );
 		} catch( final Exception ex ) {
@@ -199,9 +199,9 @@ public class NextflowUtil {
 	 * @throws IOException if source or target config directories are not found
 	 */
 	public static void stageRootConfig() throws IOException {
-		final File ec2Aws = new File( DockerUtil.BLJ_HOST_HOME + File.separator + AWS_DIR );
+		final File ec2Aws = new File( DockerUtil.AWS_EC2_HOME + File.separator + AWS_DIR );
 		final File ec2NfConfig =
-			new File( DockerUtil.BLJ_HOST_HOME + File.separator + NF_DIR + File.separator + "config" );
+			new File( DockerUtil.AWS_EC2_HOME + File.separator + NF_DIR + File.separator + "config" );
 		final File rootNfDir = new File( DockerUtil.ROOT_HOME + File.separator + NF_DIR );
 		final File rootNfConfig = new File( rootNfDir.getAbsolutePath() + File.separator + "config" );
 		final File rootAwsConfig =

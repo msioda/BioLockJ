@@ -276,7 +276,7 @@ public class DockerUtil {
 		Log.debug( DockerUtil.class, "Assign Docker volumes for module: " + module.getClass().getSimpleName() );
 
 		String dockerVolumes = "-v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET + " -v " +
-			RuntimeParamUtil.getDockerHostHomeDir() + ":" + BLJ_HOST_HOME + ":delegated";
+			RuntimeParamUtil.getDockerHostHomeDir() + ":" + AWS_EC2_HOME + ":delegated";
 
 		if( inAwsEnv() )
 			return dockerVolumes + " -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR + ":delegated";
@@ -329,10 +329,10 @@ public class DockerUtil {
 	}
 
 	/**
-	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #BLJ_HOST_HOME}
+	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #AWS_EC2_HOME}
 	 * Need to name this dir = "/home/ec2-user" so Nextflow config is same inside + outside of container
 	 */
-	public static final String BLJ_HOST_HOME = "/home/ec2-user";
+	public static final String AWS_EC2_HOME = "/home/ec2-user";
 
 	/**
 	 * Docker container root user EFS directory: /mnt/efs
