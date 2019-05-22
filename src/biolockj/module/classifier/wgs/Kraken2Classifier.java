@@ -129,13 +129,11 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 
 		return lines;
 	}
-	
+
 	private File getKrakenDB() throws ConfigPathException, ConfigNotFoundException {
-		if( DockerUtil.hasCustomDockerDB( this ) ) return DockerUtil.getCustomDB( this, getDB().getAbsolutePath() );
-		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, getDB().getAbsolutePath() );
 		return getDB();
 	}
-
 
 	private String getParams() throws Exception {
 		if( this.defaultSwitches == null ) {

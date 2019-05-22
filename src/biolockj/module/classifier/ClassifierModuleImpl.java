@@ -20,7 +20,6 @@ import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.*;
 import biolockj.module.implicit.parser.ParserModule;
-import biolockj.util.DockerUtil;
 import biolockj.util.ModuleUtil;
 import biolockj.util.SummaryUtil;
 

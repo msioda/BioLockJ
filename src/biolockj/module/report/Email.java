@@ -92,29 +92,6 @@ public class Email extends BioModuleImpl {
 	}
 
 	/**
-	 * Used to authenticate the service email account defined in EMAIL_FROM. WARNING - This is a trivial level of
-	 * encryption! Service email account should never send confidential information!
-	 *
-	 * @param val Encrypted password
-	 * @return Clear-text password
-	 */
-	String decrypt( final String val ) {
-		String decryptedPassword = null;
-		try {
-			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
-			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
-			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
-			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
-			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
-		} catch( final Exception ex ) {
-			Log.error( getClass(), ex.getMessage(), ex );
-		}
-
-		return decryptedPassword;
-
-	}
-
-	/**
 	 * Build an authenticated javax.mail.Session using {@link biolockj.Config} email properties
 	 *
 	 * @return javax.mail.Session required to send a MimeMessage
@@ -150,6 +127,29 @@ public class Email extends BioModuleImpl {
 		} );
 
 		return session;
+	}
+
+	/**
+	 * Used to authenticate the service email account defined in EMAIL_FROM. WARNING - This is a trivial level of
+	 * encryption! Service email account should never send confidential information!
+	 *
+	 * @param val Encrypted password
+	 * @return Clear-text password
+	 */
+	String decrypt( final String val ) {
+		String decryptedPassword = null;
+		try {
+			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
+			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
+			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
+			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
+			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
+		} catch( final Exception ex ) {
+			Log.error( getClass(), ex.getMessage(), ex );
+		}
+
+		return decryptedPassword;
+
 	}
 
 	/**

@@ -42,21 +42,21 @@ public class RuntimeParamUtil {
 	}
 
 	/**
-	 * Runtime property getter for {@value #PASSWORD}
-	 * 
-	 * @return New clear-text password
-	 */
-	public static String getAdminEmailPassword() {
-		return params.get( PASSWORD );
-	}
-
-	/**
 	 * Runtime property getter for {@value #BLJ_PROJ_DIR}
 	 * 
 	 * @return $BLJ_PROJ_DIR pipeline parent directory
 	 */
 	public static File get_BLJ_PROJ() {
 		return new File( params.get( BLJ_PROJ_DIR ) );
+	}
+
+	/**
+	 * Runtime property getter for {@value #PASSWORD}
+	 * 
+	 * @return New clear-text password
+	 */
+	public static String getAdminEmailPassword() {
+		return params.get( PASSWORD );
 	}
 
 	/**
@@ -257,7 +257,6 @@ public class RuntimeParamUtil {
 		return params.get( SYSTEM_OUT_FLAG ) != null;
 	}
 
-
 	/**
 	 * Register and verify the runtime parameters. There are 2 required parameters:<br>
 	 * <ol>
@@ -409,7 +408,8 @@ public class RuntimeParamUtil {
 			if( LONG_ARG_NAMES.contains( arg ) || NAMED_ARGS.contains( prevArg ) || DIR_ARGS.contains( prevArg ) ||
 				i == args.length - 1 && !foundConfig ) simpleArgs[ i++ ] = arg;
 			else {
-				while( arg.startsWith( "--" ) ) arg = arg.substring( 1 );
+				while( arg.startsWith( "--" ) )
+					arg = arg.substring( 1 );
 				if( !arg.startsWith( "-" ) ) arg = "-" + arg;
 				arg = arg.substring( 0, 2 );
 				simpleArgs[ i++ ] = arg;
@@ -426,8 +426,9 @@ public class RuntimeParamUtil {
 			throw new RuntimeParamException( INPUT_DIR, "", "Docker host input directory required, but not found" );
 		if( DockerUtil.inDockerEnv() && getDockerHostHomeDir() == null )
 			throw new RuntimeParamException( HOME_DIR, "", "Docker host $HOME directory required, but not found" );
-		if( DockerUtil.inDockerEnv() && getDockerHostConfigDir() == null ) throw new RuntimeParamException( HOST_CONFIG_DIR, "",
-			"Docker host Config directory required, but not found" );
+		if( DockerUtil.inDockerEnv() && getDockerHostConfigDir() == null )
+			throw new RuntimeParamException( HOST_CONFIG_DIR, "",
+				"Docker host Config directory required, but not found" );
 		if( getHomeDir() == null )
 			throw new RuntimeParamException( HOME_DIR, "", "$HOME directory required, but not found" );
 		if( getConfigFile() == null )
@@ -441,8 +442,8 @@ public class RuntimeParamUtil {
 	private static void verify_BLJ_PROJ() throws RuntimeParamException {
 		if( get_BLJ_PROJ() == null )
 			throw new RuntimeParamException( BLJ_PROJ_DIR, "", "$BLJ_PROJ directory required, but not found" );
-		if( !get_BLJ_PROJ().isDirectory() ) throw new RuntimeParamException( BLJ_PROJ_DIR, get_BLJ_PROJ().getAbsolutePath(),
-			"System directory-path not found" );
+		if( !get_BLJ_PROJ().isDirectory() ) throw new RuntimeParamException( BLJ_PROJ_DIR,
+			get_BLJ_PROJ().getAbsolutePath(), "System directory-path not found" );
 	}
 
 	/**
@@ -471,8 +472,7 @@ public class RuntimeParamUtil {
 	protected static final String HOME_DIR = "-u";
 
 	/**
-	 * Host BioLockJ directory used to override installed $BLJ in Docker containers:
-	 * {@value #HOST_BLJ_DIR}
+	 * Host BioLockJ directory used to override installed $BLJ in Docker containers: {@value #HOST_BLJ_DIR}
 	 */
 	protected static final String HOST_BLJ_DIR = "-blj";
 
@@ -482,8 +482,7 @@ public class RuntimeParamUtil {
 	protected static final String HOST_BLJ_PROJ_DIR = "--host-pipeline";
 
 	/**
-	 * Directory used to map $BLJ_SUP Host volume to local blj_support directory:
-	 * {@value #HOST_BLJ_SUP_DIR}
+	 * Directory used to map $BLJ_SUP Host volume to local blj_support directory: {@value #HOST_BLJ_SUP_DIR}
 	 */
 	protected static final String HOST_BLJ_SUP_DIR = "-blj_sup";
 

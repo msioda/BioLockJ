@@ -46,7 +46,7 @@ public final class DownloadUtil {
 	public static String getDownloadCmd() throws Exception {
 
 		final List<BioModule> modules = getDownloadModules();
-		
+
 		if( buildRsyncCmd( modules ) ) {
 			Log.info( DownloadUtil.class,
 				"DownloadUtil building download command --> # downloadable modules: " + modules.size() );
@@ -94,8 +94,8 @@ public final class DownloadUtil {
 				Config.requireString( null, Constants.CLUSTER_HOST ) + ":$" + SRC + " " + getDownloadDirPath();
 
 			return "Download " + status + " [ " + displaySize + " ]:" + RETURN + src + RETURN + cmd;
-		} 
-			
+		}
+
 		Log.info( DownloadUtil.class, "DownloadUtil found there are no downloadable modules" );
 		return null;
 	}

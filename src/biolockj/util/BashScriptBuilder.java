@@ -69,8 +69,9 @@ public class BashScriptBuilder {
 		buildWorkerScripts( module, data );
 
 		if( !DockerUtil.inAwsEnv() ) buildMainScript( module );
-		
-		Processor.setFilePermissions( module.getScriptDir().getAbsolutePath(), Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
+
+		Processor.setFilePermissions( module.getScriptDir().getAbsolutePath(),
+			Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
 	}
 
 	/**

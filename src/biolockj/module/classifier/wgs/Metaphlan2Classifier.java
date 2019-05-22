@@ -104,9 +104,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getClassifierParams() throws Exception {
 		final List<String> params = Config.getList( this, EXE_METAPHLAN_PARAMS );
-		if( Config.getString( this, METAPHLAN2_DB ) != null )
-			params.add( ALT_DB_PARAM + " " + getMpaDB().getAbsolutePath() );
-
+		if( getMpaDB() != null ) params.add( ALT_DB_PARAM + " " + getMpaDB().getAbsolutePath() );
 		return params;
 	}
 
@@ -173,18 +171,15 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	}
 
 	private File getMpaDB() throws Exception {
-		final String path = Config.getString( this, METAPHLAN2_DB );
-		if( path == null ) return null;
-		if( DockerUtil.hasCustomDockerDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
-		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		if( getDB() == null ) return null;
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, null );
 		return getDB();
 	}
 
 	private File getMpaPkl() throws Exception {
 		final String path = Config.getString( this, METAPHLAN2_MPA_PKL );
 		if( path == null ) return null;
-		if( DockerUtil.inDockerEnv() )
-			return new File( getMpaDB().getAbsolutePath() + File.separator + new File( path ).getName() );
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, path );
 		return Config.requireExistingFile( this, METAPHLAN2_MPA_PKL );
 	}
 

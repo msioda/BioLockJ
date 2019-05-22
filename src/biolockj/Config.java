@@ -364,9 +364,9 @@ public class Config {
 	}
 
 	/**
-	 * Initialize {@link biolockj.Config} by reading in properties from config runtime parameter.
-	 * Save a copy of the primary Config to the pipeline root directory
-	 * 
+	 * Initialize {@link biolockj.Config} by reading in properties from config runtime parameter. Save a copy of the
+	 * primary Config to the pipeline root directory
+	 *
 	 * @throws Exception if unable to load Props
 	 */
 	public static void initialize() throws Exception {

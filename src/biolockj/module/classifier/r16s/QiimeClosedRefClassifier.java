@@ -80,8 +80,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 * Build the nested list of bash script lines that will be used by {@link biolockj.util.BashScriptBuilder} to build
 	 * the worker scripts. Pass{@link #getInputFiles()} to either {@link #buildScript(List)} or
 	 * {@link #buildScriptForPairedReads(List)} based on
-	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS}.  
-	 * Each worker script is already written as a batch, so each batch = 1 worker script.
+	 * {@link biolockj.Config}.{@value biolockj.Constants#INTERNAL_PAIRED_READS}. Each worker script is already written
+	 * as a batch, so each batch = 1 worker script.
 	 */
 	@Override
 	public void executeTask() throws Exception {
@@ -101,8 +101,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		final List<String> postReqs = new ArrayList<>();
 		final int numSeqFiles = BioLockJUtil.getPipelineInputFiles().size();
 		final int batchSize = Config.requireInteger( this, SCRIPT_BATCH_SIZE );
-		if( SeqUtil.isMultiplexed() || numSeqFiles > batchSize )
-			postReqs.add( MergeQiimeOtuTables.class.getName() );
+		if( SeqUtil.isMultiplexed() || numSeqFiles > batchSize ) postReqs.add( MergeQiimeOtuTables.class.getName() );
 
 		postReqs.addAll( super.getPostRequisiteModules() );
 

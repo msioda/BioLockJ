@@ -184,7 +184,7 @@ launch_ec2_head_node() {
 	stage_pipeline ${1}
 	if [ -x "$(which docker)" ]; then
 		aws_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &  ]"
-		exe_remote_cmd "nohup ${EC2_HOME}/start-$(get_config_name).sh"
+		exe_remote_cmd "nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &"
 	fi
 		
 	aws_log "Exectue CMD [  connect_head  ]"

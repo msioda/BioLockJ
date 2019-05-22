@@ -159,15 +159,10 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 
 	private String getDBs() throws ConfigPathException, ConfigNotFoundException {
 		String dbs = "";
-		if( DockerUtil.hasCustomDockerDB( this ) ) 
-			for( final String path: Config.requireList( this, KNEAD_DBS ) )
-				dbs += DB_PARAM + " " + DockerUtil.getCustomDB( this, path ).getAbsolutePath() + " ";
-		else if( DockerUtil.inDockerEnv() ) 
-			for( final String path: Config.requireList( this, KNEAD_DBS ) )
-				dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DEFAULT_DB_DIR );
-		else 
-			for( final File db: Config.requireExistingDirs( this, KNEAD_DBS ) )
-				dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
+		if( DockerUtil.inDockerEnv() ) for( final String path: Config.requireList( this, KNEAD_DBS ) )
+			dbs += DB_PARAM + " " + DockerUtil.getDockerDB( this, path ).getAbsolutePath() + " ";
+		else for( final File db: Config.requireExistingDirs( this, KNEAD_DBS ) )
+			dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
 		return dbs;
 	}
 

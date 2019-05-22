@@ -221,16 +221,10 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
-	/**
-	 * Typically in Docker both databases are expected to have the same parent dir humann2.nuclDB=/db/chocophlan
-	 * humann2.protDB=/db/uniref
-	 */
-	private String getDbPath( final String prop ) throws Exception {
-		final String path = Config.getString( this, prop );
-		if( path == null ) return null;
-		if( !DockerUtil.inDockerEnv() ) return Config.requireExistingDir( this, prop ).getAbsolutePath();
-		if( DockerUtil.hasCustomDockerDB( this ) ) return DockerUtil.getCustomDB( this, path ).getAbsolutePath();
-		return path;
+	private String getDbPath( final String prop ) throws ConfigNotFoundException, ConfigPathException {
+		final String path = Config.requireString( this, prop );
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, path ).getAbsolutePath();
+		return Config.requireExistingDir( this, prop ).getAbsolutePath();
 	}
 
 	private String getJoinTableCmd() throws Exception {

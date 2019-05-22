@@ -244,6 +244,8 @@ map_to_aws_property() {
 
 # Convert aws config property name to pipeline config property name format
 map_to_pipeline_property() {
+	# Special case has camel case in prefix (only one)
+	[ "${1}" == "trimPrimersFilePath" ] && echo "trimPrimers.filePath" && return
 	val=
 	addedPeriod=N
 	size=$((${#1}-1))
@@ -361,7 +363,8 @@ set_pipeline_conig_props() {
 	convert_db_prop "${1}" "qiime.pynastAlignDB"
 	convert_db_prop "${1}" "qiime.refSeqDB"
 	convert_db_prop "${1}" "qiime.taxaDB"
-
+	convert_db_prop "${1}" "rdp.db"
+	
 	[ "$(get_prop ${1} humann2.nuclDB)" != "${HN2_NUCL_DB}" ] && convert_db_prop "${1}" "humann2.nuclDB"
 	[ "$(get_prop ${1} humann2.protDB)" != "${HN2_PROT_DB}" ] && convert_db_prop "${1}" "humann2.protDB"
 	aws_report_config

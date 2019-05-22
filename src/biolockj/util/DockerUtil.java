@@ -64,58 +64,34 @@ public class DockerUtil {
 	}
 
 	/**
-	 * Get the Docker container database file found under the DockerDB directory or one of it's sub-directories.
+	 * Get the Docker container database found under the DockerDB directory or one of it's sub-directories.
 	 * 
 	 * @param module DatabaseModule
-	 * @param dbPath Database file or sub-directory under the main Docker DB directory.
+	 * @param dbPath Database file or sub-directory under the main Docker $BLJ_DB directory.
 	 * @return Container database directory
 	 * @throws ConfigPathException if DB property not found
 	 * @throws ConfigNotFoundException if path is defined but is not an existing directory
 	 */
-	public static File getCustomDB( final DatabaseModule module, final String dbPath )
-	{
-//		throws ConfigPathException, ConfigNotFoundException {
+	public static File getDockerDB( final DatabaseModule module, final String dbPath )
+		throws ConfigPathException, ConfigNotFoundException {
+		if( hasCustomDockerDB( module ) ) {
+			if( dbPath == null ) return new File( DOCKER_DB_DIR );
+			if( inAwsEnv() ) return new File( dbPath );
+			return new File( dbPath.replace( getDbDirPath( module ), DockerUtil.DOCKER_DB_DIR ) );
+		}
 
-//		if( dbPath == null ) return new File( DOCKER_DB_DIR );
-//		File db = new File( dbPath );
-//		
-//		if( inAwsEnv() ) return getDockerVolumePath( DOCKER_DB_DIR, module.getDB().getAbsolutePath() );
-//		
-//		return new File( dbPath.replace( module.getDB().getAbsolutePath(), DockerUtil.DOCKER_DB_DIR ) );
-//
-//		File localDbDir = module.getDB();
-//		if( !localDbDir.isDirectory() ) localDbDir = localDbDir.getParentFile();
-//		Log.info( DockerUtil.class, "Config DB path: " + module.getDB().getAbsolutePath() ); 
-//		File dockerDB = module.getDB(); 
-//		if( inAwsEnv() ) {
-//			if( !dockerDB.isDirectory() ) dockerDB = module.getDB().getParentFile();
-//			dockerDB = new File( DOCKER_DB_DIR + File.separator + dockerDB.getName() ); 
-//		} else if( !dockerDB.getAbsolutePath().startsWith( DOCKER_DB_DIR ) ) 
-//			dockerDB = new File( DOCKER_DB_DIR );
-//
-//		Log.warn( DockerUtil.class, "dbPath --> " + dbPath); 
-//		Log.info( DockerUtil.class, "Found dockerDB dir --> " + dockerDB.getAbsolutePath() ); 
-//		if( dbPath != null ) {
-//			if( inAwsEnv() ) dockerDB = getDockerVolumePath( dbPath, dockerDB.getAbsolutePath() );
-//			else dockerDB = new File( dbPath.replace( localDbDir.getAbsolutePath(), dockerDB.getAbsolutePath() ) );
-//		}
-//		Log.info( DockerUtil.class,
-//			"Convert Config DB path --> Docker DB path for [ " + module.getClass().getSimpleName() + " - DB = " + module.getDB().getAbsolutePath() +
-//				( dbPath == null ? "": " | Target = " + dbPath ) + " ] =====> " + dockerDB.getAbsolutePath() );
-//		return dockerDB;
-		
-		return null;
+		if( dbPath == null || module.getDB() == null ) return new File( DOCKER_DEFAULT_DB_DIR );
+		if( inAwsEnv() ) return new File( dbPath );
+		return new File( dbPath.replace( getDbDirPath( module ), DockerUtil.DOCKER_DEFAULT_DB_DIR ) );
 	}
-	
 
 	/**
 	 * Return the name of the Docker image needed for the given module.
 	 * 
 	 * @param module BioModule
 	 * @return Docker image name
-	 * @throws Exception if errors occur
 	 */
-	public static String getDockerImage( final BioModule module ) throws Exception {
+	public static String getDockerImage( final BioModule module ) {
 		return " " + getDockerUser( module ) + "/" + getImageName( module ) + ":" + getImageVersion( module );
 	}
 
@@ -176,7 +152,7 @@ public class DockerUtil {
 		if( path == null || path.isEmpty() ) return null;
 		return new File( containerPath + path.substring( path.lastIndexOf( File.separator ) ) );
 	}
-	 
+
 	/**
 	 * Return the Docker Image name for the given class name.<br>
 	 * Return blj_bash for simple bash script modules that don't rely on special software<br>
@@ -188,9 +164,8 @@ public class DockerUtil {
 	 * 
 	 * @param module BioModule
 	 * @return Docker Image Name
-	 * @throws Exception if errors occur
 	 */
-	public static String getImageName( final BioModule module ) throws Exception {
+	public static String getImageName( final BioModule module ) {
 		final String className = module.getClass().getName();
 		if( useBasicBashImg( module ) ) {
 			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
@@ -212,10 +187,9 @@ public class DockerUtil {
 				prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
 		}
 
-		if( hasCustomDockerDB( module ) && !className.startsWith( RdpClassifier.class.getPackage().getName() ) ) imageName += DB_FREE;
-
+		if( hasCustomDockerDB( module ) && !className.startsWith( RdpClassifier.class.getPackage().getName() ) )
+			imageName += DB_FREE;
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
-
 		return imageName;
 	}
 
@@ -236,17 +210,18 @@ public class DockerUtil {
 	 * Function used to determine if an alternate database has been defined (other than /db).
 	 * 
 	 * @param module BioModule
-	 * @return TRUE if module has a custom DB defined
-	 * @throws ConfigPathException if path is defined but does not exists
-	 * @throws ConfigNotFoundException if DB property is undefined and the default DB is not included in the module
-	 * runtime env
+	 * @return TRUE if module has a custom DB defined runtime env
 	 */
-	public static boolean hasCustomDockerDB( final BioModule module ) throws ConfigPathException, ConfigNotFoundException {
-		if( inDockerEnv() && module instanceof DatabaseModule ) {
-			final File db = ( (DatabaseModule) module ).getDB();
-			if( db != null ) return !db.getAbsolutePath().startsWith( DOCKER_DEFAULT_DB_DIR );
+	public static boolean hasCustomDockerDB( final BioModule module ) {
+		try {
+			if( inDockerEnv() && module instanceof DatabaseModule ) {
+				final File db = ( (DatabaseModule) module ).getDB();
+				if( db != null ) return !db.getAbsolutePath().startsWith( DOCKER_DEFAULT_DB_DIR );
+			}
+		} catch( ConfigPathException | ConfigNotFoundException ex ) {
+			Log.error( DockerUtil.class,
+				"Error occurred checking database path of module: " + module.getClass().getName() );
 		}
-
 		return false;
 	}
 
@@ -267,6 +242,7 @@ public class DockerUtil {
 	public static boolean inDockerEnv() {
 		return DOCKER_ENV_FLAG_FILE.isFile();
 	}
+
 	/**
 	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
 	 * 
@@ -274,6 +250,13 @@ public class DockerUtil {
 	 */
 	public static boolean isDirectMode() {
 		return RuntimeParamUtil.getDirectModuleDir() != null;
+	}
+
+	private static String getDbDirPath( final DatabaseModule module )
+		throws ConfigPathException, ConfigNotFoundException {
+		if( module.getDB() == null ) return null;
+		if( module instanceof RdpClassifier ) return module.getDB().getParentFile().getAbsolutePath();
+		return module.getDB().getAbsolutePath();
 	}
 
 	private static String getDockerClassName( final BioModule module ) {
@@ -299,7 +282,8 @@ public class DockerUtil {
 			return dockerVolumes + " -v " + DOCKER_BLJ_MOUNT_DIR + ":" + DOCKER_BLJ_MOUNT_DIR + ":delegated";
 
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostInputDir() + ":" + DOCKER_INPUT_DIR + ":ro";
-		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_PIPELINE_DIR + ":delegated";
+		dockerVolumes +=
+			" -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_PIPELINE_DIR + ":delegated";
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + DOCKER_CONFIG_DIR + ":ro";
 
 		if( module instanceof TrimPrimers ) {
@@ -318,17 +302,8 @@ public class DockerUtil {
 		if( RuntimeParamUtil.getDockerHostBLJ_SUP() != null ) dockerVolumes +=
 			" -v " + RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() + ":" + CONTAINER_BLJ_SUP_DIR + ":ro";
 
-		if( hasCustomDockerDB( module ) ) {
-			final File db = ( (DatabaseModule) module ).getDB();
-			if( module instanceof RdpClassifier ) {
-				Log.info( DockerUtil.class,
-					"Map Docker volume for DB directory: " + db.getParentFile().getAbsolutePath() );
-				dockerVolumes += " -v " + db.getParentFile().getAbsolutePath() + ":" + DOCKER_DB_DIR + ":ro";
-			} else {
-				Log.info( DockerUtil.class, "Map Docker volume for DB directory: " + db.getAbsolutePath() );
-				dockerVolumes += " -v " + db.getAbsolutePath() + ":" + DOCKER_DB_DIR + ":ro";
-			}
-		}
+		if( hasCustomDockerDB( module ) )
+			dockerVolumes += " -v " + getDbDirPath( (DatabaseModule) module ) + ":" + DOCKER_DB_DIR + ":ro";
 
 		return dockerVolumes;
 	}
@@ -336,14 +311,11 @@ public class DockerUtil {
 	private static String getVolumePath( final String path ) {
 		Log.info( DockerUtil.class, "Map Docker volume getVolumePath( " + path + " )" );
 		String newPath = path;
-		if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) ) {
+		if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) )
 			newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() +
 				path.substring( CONTAINER_BLJ_SUP_DIR.length() );
-		}
-		if( path.startsWith( CONTAINER_BLJ_DIR ) ) {
-			newPath =
-				RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + path.substring( CONTAINER_BLJ_DIR.length() );
-		}
+		if( path.startsWith( CONTAINER_BLJ_DIR ) ) newPath =
+			RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + path.substring( CONTAINER_BLJ_DIR.length() );
 		Log.info( DockerUtil.class, "Map Docker volume newPath -----> ( " + newPath + " )" );
 		return newPath;
 	}
@@ -410,6 +382,14 @@ public class DockerUtil {
 	public static final String ROOT_HOME = File.separator + DOCKER_USER;
 
 	/**
+	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
+	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
+	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
+	 * versions of these modules and add new modules in their own Docker Hub account.
+	 */
+	protected static final String DOCKER_HUB_USER = "docker.user";
+
+	/**
 	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
 	 */
 	static final String CONTAINER_BLJ_DIR = "/app/biolockj";
@@ -446,20 +426,12 @@ public class DockerUtil {
 	 */
 	static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
 
-	/**
-	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
-	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
-	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
-	 * versions of these modules and add new modules in their own Docker Hub account.
-	 */
-	protected static final String DOCKER_HUB_USER = "docker.user";
-
-	private static final File DOCKER_ENV_FLAG_FILE = new File( "/.dockerenv" );
 	private static final String BLJ_BASH = "blj_bash";
 	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
 	private static final String DB_FREE = "_dbfree";
 	private static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
 	private static final String DOCK_RM_FLAG = "--rm";
+	private static final File DOCKER_ENV_FLAG_FILE = new File( "/.dockerenv" );
 	private static final String DOCKER_LATEST = "latest";
 	private static final String DOCKER_SOCKET = "/var/run/docker.sock";
 	private static final String IMAGE_NAME_DELIM = "_";

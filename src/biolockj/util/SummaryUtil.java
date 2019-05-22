@@ -46,7 +46,8 @@ public class SummaryUtil {
 	 * @return Beautiful artwork
 	 */
 	public static String display_ASCII_Status() {
-		final String status = BioLockJ.isPipelineComplete() ? getSpaces( 16 ) + spacedWord( "COMPLETE", 10 ) : getSpaces( 27 ) + spacedWord( "FAILED", 10 );
+		final String status = BioLockJ.isPipelineComplete() ? getSpaces( 16 ) + spacedWord( "COMPLETE", 10 ):
+			getSpaces( 27 ) + spacedWord( "FAILED", 10 );
 		return ascii_bioLockj( status );
 	}
 
@@ -80,7 +81,8 @@ public class SummaryUtil {
 				BioLockJUtil.formatNumericOutput( vals.last(), false ) + RETURN;
 
 			Long sum = 0L;
-			for( final long val: vals ) sum += val;
+			for( final long val: vals )
+				sum += val;
 
 			if( addTotal ) msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (total):", pad ) +
 				BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
@@ -635,7 +637,6 @@ public class SummaryUtil {
 		Log.info( SummaryUtil.class, "Summary updated" );
 	}
 
-
 	private static String ascii_bioLockj( final String status ) {
 		final StringBuffer sb = new StringBuffer();
 		sb.append( "                                                    _-^-_" + RETURN );
@@ -651,13 +652,27 @@ public class SummaryUtil {
 		sb.append( "                                               `-_    !;;;;''" + RETURN );
 		sb.append( "                                                  `-. !;'" + RETURN );
 		sb.append( "                                                     <+>" + RETURN );
-		sb.append( "  _______      ___      ________      ___            (=)   ________      ________      ___ ____            __" + RETURN );
-		sb.append( "|\\   __  \\    |\\  \\    |\\   __  \\    |\\  \\           (=)  |\\   __  \\    |\\   ____\\    |\\  \\|\\  \\         |\\  \\" + RETURN );
-		sb.append( "\\ \\  \\|\\ /_   \\ \\  \\   \\ \\  \\|\\  \\   \\ \\  \\          (=)  \\ \\  \\|\\  \\   \\ \\  \\___|    \\ \\  \\/  /|_       \\ \\  \\" + RETURN );
-		sb.append( " \\ \\   __  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\         (=)   \\ \\  \\\\\\  \\   \\ \\  \\        \\ \\   ___  \\    __ \\ \\  \\" + RETURN );
-		sb.append( "  \\ \\  \\|\\  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\____    (=)    \\ \\  \\\\\\  \\   \\ \\  \\____    \\ \\  \\\\ \\  \\  |\\  \\\\_\\  \\" + RETURN );
-		sb.append( "   \\ \\_______\\   \\ \\__\\   \\ \\_______\\   \\ \\_______\\  (=)     \\ \\_______\\   \\ \\_______\\   \\ \\__\\\\ \\__\\ \\ \\________\\" + RETURN );
-		sb.append( "    \\|_______|    \\|__|    \\|_______|    \\|_______|  (=)      \\|_______|    \\|_______|    \\|__| \\|__|  \\|________|" + RETURN );
+		sb.append(
+			"  _______      ___      ________      ___            (=)   ________      ________      ___ ____            __" +
+				RETURN );
+		sb.append(
+			"|\\   __  \\    |\\  \\    |\\   __  \\    |\\  \\           (=)  |\\   __  \\    |\\   ____\\    |\\  \\|\\  \\         |\\  \\" +
+				RETURN );
+		sb.append(
+			"\\ \\  \\|\\ /_   \\ \\  \\   \\ \\  \\|\\  \\   \\ \\  \\          (=)  \\ \\  \\|\\  \\   \\ \\  \\___|    \\ \\  \\/  /|_       \\ \\  \\" +
+				RETURN );
+		sb.append(
+			" \\ \\   __  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\         (=)   \\ \\  \\\\\\  \\   \\ \\  \\        \\ \\   ___  \\    __ \\ \\  \\" +
+				RETURN );
+		sb.append(
+			"  \\ \\  \\|\\  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\____    (=)    \\ \\  \\\\\\  \\   \\ \\  \\____    \\ \\  \\\\ \\  \\  |\\  \\\\_\\  \\" +
+				RETURN );
+		sb.append(
+			"   \\ \\_______\\   \\ \\__\\   \\ \\_______\\   \\ \\_______\\  (=)     \\ \\_______\\   \\ \\_______\\   \\ \\__\\\\ \\__\\ \\ \\________\\" +
+				RETURN );
+		sb.append(
+			"    \\|_______|    \\|__|    \\|_______|    \\|_______|  (=)      \\|_______|    \\|_______|    \\|__| \\|__|  \\|________|" +
+				RETURN );
 		sb.append( "                                                     (=)" + RETURN );
 		sb.append( "                                                     <+>" + RETURN );
 		sb.append( "                                                   .'/V\\`." + RETURN );
@@ -669,7 +684,7 @@ public class SummaryUtil {
 		sb.append( "                                              \\  |         |  /" + RETURN );
 		return sb.toString() + RETURN + status + RETURN + RETURN;
 	}
-	
+
 	private static String downloadCmd() throws Exception {
 		if( downloadCommand == null ) downloadCommand = DownloadUtil.getDownloadCmd();
 		return downloadCommand;
