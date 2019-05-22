@@ -238,7 +238,7 @@ map_to_aws_property() {
 
 # Convert aws config property name to pipeline config property name format
 map_to_pipeline_property() {
-	# Special case has camel case in prefix (only one)
+	# Special cases with camel case in prefix
 	[ "${1}" == "trimPrimersFilePath" ] && echo "trimPrimers.filePath" && return
 	val=
 	addedPeriod=N
@@ -246,8 +246,8 @@ map_to_pipeline_property() {
 	for i in $(seq 0 $size); do
 		char=${1:$i:1}
 		upCase=$(echo "${char}" | awk '{print toupper($0)}')
-		if [ "${addedPeriod}" == "N" ] && [ "${upCase}" == "${char}" ]; then
-			loCase=$(echo "${char}" | awk '{print tolower($0)}')
+		loCase=$(echo "${char}" | awk '{print tolower($0)}')
+		if [ "${addedPeriod}" == "N" ] && [ "${upCase}" == "${char}" ] && [ "${upCase}" != "${loCase}" ]; then
 			val="${val}.${loCase}"
 			addedPeriod="Y"
 		else

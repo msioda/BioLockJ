@@ -183,8 +183,9 @@ launch_ec2_head_node() {
 	stage_pipeline
 	aws_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &  ]"
 	exe_remote_cmd "nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &"
-	aws_log "Exectue CMD [  connect_head  ]"
+	aws_log "Exectue CMD [  connect_head --> run \"blj_go\" to navigate to the EC2 pipeline output directory or \"blj_log\" to tail the pipeline log ]"
 	connect_head
+	
 }
 
 # Start EC2 head node - if just created new EC2 Head Node, use EC2 Docker exe to build Docker jobs + set server clock timezone
