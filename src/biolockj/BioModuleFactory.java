@@ -12,6 +12,7 @@
 package biolockj;
 
 import java.util.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.implicit.RegisterNumReads;
@@ -159,15 +160,16 @@ public class BioModuleFactory {
 				info( "Config property [ " + Constants.REPORT_NUM_READS + "=" + Constants.TRUE + " ] & [ " +
 					Constants.INTERNAL_SEQ_TYPE + "=" + Config.requireString( null, Constants.INTERNAL_SEQ_TYPE ) +
 					" ] --> Adding module: " + SeqFileValidator.class.getName() );
+				this.foundSeqMod = true;
 			}
-			if( requireGunzip( module ) ) {
+			if( isSeqProcessingModule( module ) ) this.foundSeqMod = true;
+			else if( requireGunzip( module ) ) {
 				info(
 					"Qiime does not accept \"" + Constants.GZIP_EXT + "\" format, so adding required pre-req module: " +
 						Gunzipper.class.getName() + " before " + module );
-
 				this.foundSeqMod = true;
 				finalModules.add( Gunzipper.class.getName() );
-			} else if( isSeqProcessingModule( module ) ) this.foundSeqMod = true;
+			} 
 
 			finalModules.add( module );
 		}
@@ -180,7 +182,7 @@ public class BioModuleFactory {
 			Config.getBoolean( null, Constants.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
 	}
 
-	private boolean requireGunzip( final String module ) {
+	private boolean requireGunzip( final String module ) throws ConfigFormatException {
 		return !this.foundSeqMod && hasGzippedInput() && isSeqProcessingModule( module ) &&
 			module.toLowerCase().contains( Constants.QIIME );
 	}
@@ -193,7 +195,6 @@ public class BioModuleFactory {
 	 */
 	public static List<BioModule> buildPipeline() throws Exception {
 		if( factory == null ) initFactory();
-
 		return factory.buildModules();
 	}
 
@@ -243,9 +244,10 @@ public class BioModuleFactory {
 
 	}
 
-	private static boolean hasGzippedInput() {
+	private static boolean hasGzippedInput() throws ConfigFormatException {
 		return !BioLockJUtil.getPipelineInputFiles().isEmpty() &&
-			SeqUtil.isGzipped( BioLockJUtil.getPipelineInputFiles().iterator().next().getName() );
+			SeqUtil.isGzipped( BioLockJUtil.getPipelineInputFiles().iterator().next().getName() ) &&
+			!Config.getBoolean( null, Constants.REPORT_NUM_READS );
 	}
 
 	private static void info( final String msg ) {
