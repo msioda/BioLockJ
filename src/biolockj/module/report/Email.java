@@ -69,7 +69,7 @@ public class Email extends BioModuleImpl {
 		if( emailBody.trim().length() < 1 ) throw new Exception( "Unable to obtain SummaryUtil.getSummary()" );
 		try {
 			emailBody += RETURN + "Regards," + RETURN + "BioLockJ Admin";
-			Log.info( getClass(), "Attempt to send email ---> " + RETURN + emailBody );
+			Log.debug( getClass(), "Attempt to send email ---> " + RETURN + emailBody );
 			Transport.send( getMimeMessage( emailBody ) );
 			Log.info( getClass(), "EMAIL SENT!" );
 			successful = true;

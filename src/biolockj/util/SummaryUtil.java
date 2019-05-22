@@ -714,8 +714,8 @@ public class SummaryUtil {
 		if( runtimeEnv != null ) return runtimeEnv;
 		String parentHost = null;
 		String host = null;
-		String user = RuntimeParamUtil.getHomeDir().getAbsolutePath();
-		user = user.substring( user.lastIndexOf( File.separator ) );
+		String user = DockerUtil.inDockerEnv() ? RuntimeParamUtil.getDockerHostHomeDir() : RuntimeParamUtil.getHomeDir().getAbsolutePath();
+		user = user.substring( user.lastIndexOf( File.separator ) + 1 );
 		try {
 			host = Processor.submit( "hostname", "Query Host" );
 			parentHost = Config.isOnCluster() ? Config.requireString( null, Constants.CLUSTER_HOST ): 

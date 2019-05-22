@@ -112,17 +112,17 @@ init_ec2_head_node() {
 	[ ${#awsEc2InstanceID} -gt 0 ] && aws_log "Configured EC2 Instance ID --> \"${awsEc2InstanceID}\"" && \
 		instances=$(aws ec2 describe-instances --instance-ids "${awsEc2InstanceID}" --query "Reservations[].Instances[].[State.Name, InstanceId]")
 	if [ ${#instances} -gt 0 ] && [ "${instances/$awsEc2InstanceID}" != "${instances}" ]; then
-		aws_log "Found existing instance ${awsEc2InstanceID}"
+		aws_log "Found configured instance ${awsEc2InstanceID} on AWS cloud"
 		if [ "${instances/stopped}" != "${instances}" ]; then
-			printf "Configured EC2 instance ${awsEc2InstanceID} was stopped...attempting to restart...please wait."
+			printf "Configured EC2 instance ${awsEc2InstanceID} was stopped - attempting restart, please wait..."
 			aws ec2 start-instances --instance-ids "${awsEc2InstanceID}"
 			systemStatus=startEc2
 		elif [ "${instances/terminated}" != "${instances}" ]; then
-			aws_log "Configured EC2 instance ${awsEc2InstanceID} was terminated...launching a new instance"
+			aws_log "Configured EC2 instance ${awsEc2InstanceID} was terminated...launching a new instance, please wait..."
 			awsEc2InstanceID=
 			ec2PublicIP=
 		elif [ "${instances/pending}" != "${instances}" ] || [ "${instances/shutting-down}" != "${instances}" ] || [ "${instances/stopping}" != "${instances}" ]; then
-			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Configured EC2 Instance ${awsEc2InstanceID} has an in-between state-status, aborting launch EC2 instance - check status and try again later: ${instances}"
+			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Configured EC2 Instance ${awsEc2InstanceID} is in a transition state, abort job - check status and try again later: ${instances}"
 		elif [ "${instances/running}" != "${instances}" ]; then
 			systemStatus=ok
 			aws_log "Configured EC2 instance ${awsEc2InstanceID} is running..." && return
@@ -171,22 +171,18 @@ init_nextflow_config() {
 }
 
 # Launch a new ec2 head node
-# Param 1 (optional) - Flag to use existing AWS Cloud
 launch_ec2_head_node() {
 	aws_log "Starting --> [  launch_ec2_head_node ${@}  ]"
-	[ $# -eq 0 ] && [ -x "$(which docker)" ] && build_docker_job_defs && aws_log "Run pipeline on new EC2 head node"
-	[ $# -eq 1 ] && aws_log "Run pipeline on existing AWS cloud deployment"
+	[ ! -f "$(get_docker_job_def_flag)" ] && [ -x "$(which docker)" ] && build_docker_job_defs
 	init_ec2_head_node
+	[ ! -f "$(get_docker_job_def_flag)" ] && exe_remote_cmd "build_docker_job_defs"
 	
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
 	
-	stage_pipeline ${1}
-	if [ -x "$(which docker)" ]; then
-		aws_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &  ]"
-		exe_remote_cmd "nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &"
-	fi
-		
+	stage_pipeline
+	aws_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &  ]"
+	exe_remote_cmd "nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &"
 	aws_log "Exectue CMD [  connect_head  ]"
 	connect_head
 }
@@ -196,16 +192,15 @@ start_ec2_head_node() {
 	startStatus=init
 	while [ "$startStatus" != "ok" ]; do
 		startStatus=$(aws ec2 describe-instance-status --instance-ids ${awsEc2InstanceID} --query "InstanceStatuses[*].SystemStatus.Status")
-		printf "." && sleep 10s && runTime=$((runTime+10))  
+		printf "." && sleep 5s && runTime=$((runTime+5))  
 	done
 	
-	echo ""
+	echo "ready"
 	if [ "$systemStatus" == "createEc2" ]; then
 		aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] created in $runTime seconds"
 		set_blj_prop awsEc2InstanceID ${awsEc2InstanceID}
 		ec2PublicIP=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
 		set_blj_prop ec2PublicIP $ec2PublicIP
-		[ ! -f "$(get_docker_job_def_flag)" ] && [ !-x "$(which docker)" ] && exe_remote_cmd "build_docker_job_defs"
 	else
 		aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] restarted in $runTime seconds"
 	fi

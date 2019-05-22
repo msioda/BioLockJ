@@ -142,13 +142,12 @@ is_stack_complete() {
 
 # Main method #1, called to build AWS environment and launch BioLockJ pipeline on AWS
 # Param 1 - Pipeline Config file-path
-# Param 2 - Flag to use existing AWS cloud
 run_aws() {
 	aws_log "Starting --> [  run_aws ${@}  ]"
 	[ ! -f "${1}" ] && exit_script "Error [ aws_functions.run_aws() ]: Required pipeline Config file not found: \"$1\""
-	init_aws_config "${1}" ${2}
-	[ $# -eq 1 ] && deploy_cloud_formation
-	launch_ec2_head_node ${2}
+	init_aws_config "${1}"
+	deploy_cloud_formation
+	launch_ec2_head_node
 }
 
 # Create new stack name if awsStack is undefined in AWS Config

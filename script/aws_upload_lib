@@ -66,8 +66,8 @@ aws_s3_ls() {
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
-	ss="~/.aws/start-$(get_config_name).sh"
-	[ -f "${metadataFilePath}" ] && meta="-m=${BLJ_META} "
+	ss="${HOME}/.aws/start-$(get_config_name).sh"
+	[ -f "${metadataFilePath}" ] && maweta="-m=${BLJ_META} "
 	echo "${sheBang}" > "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo "##  Run this script to launch BioLockJ pipeline on AWS           ##" >> "${ss}"
@@ -151,6 +151,7 @@ get_s3_name() {
 
 # Stage AWS config and credentials files to push to AWS cloud
 stage_aws_and_nf_config_to_efs() {
+	aws_log "Starting --> [  stage_aws_and_nf_config_to_efs  ]: Stage AWS/Nextflow Config on new EC2 Head Node"
 	[ ! -d "${AWS_STAGE}" ] && mkdir "${AWS_STAGE}"
 	echo "$(get_aws_profile)" > "${AWS_STAGE}/config"
 	echo "region = ${awsRegion}" >> "${AWS_STAGE}/config"
@@ -166,16 +167,17 @@ stage_aws_and_nf_config_to_efs() {
 	upload_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
 	upload_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
 	upload_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
+	upload_to_efs "${BLJ_SCRIPT}" "${EFS}"
 	exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
+	exe_remote_cmd "sudo chmod -R 777 ${EFS}"
 }
 
 # Upload local pipeline inputs and aws/nextflow config files to EFS
-# Param 1 (optional) - Flag to use existing AWS Cloud
 stage_pipeline() {
 	aws_log "Starting --> [  stage_pipeline ${@}  ]"
 	[ "$systemStatus" == "createEc2" ] && stage_aws_and_nf_config_to_efs
 	stage_pipeline_config_to_efs
-	stage_pipeline_inputs_and_scripts_to_efs
+	stage_pipeline_inputs_to_efs
 	stage_pipeline_dbs_to_efs
 }
 
@@ -184,7 +186,7 @@ stage_pipeline() {
 stage_pipeline_config_to_efs() {
 	upload_to_efs "$blj_aws_config" "${EC2_HOME}/.aws"
 	configFiles=$(get_blj_prop configFiles)
-	aws_log "Upload Config files to EFS: $configFiles"
+	aws_log "Uploading pipeline Config files to EFS: $configFiles"
 	propFiles=( ${configFiles//,/ } )
 	for propFile in ${propFiles[@]}; do upload_to_efs $propFile ${BLJ_CONFIG}; done
 	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_prop $(get_config ec2) aws.s3 ${awsS3}"
@@ -192,6 +194,7 @@ stage_pipeline_config_to_efs() {
 
 # Stage custom database files for pipeline onto EFS volume
 stage_pipeline_dbs_to_efs() {
+	aws_log "Starting --> [  stage_pipeline_dbs_to_efs  ]: Looking for any configured custom databases..."
 	if [ -d "$metaphlan2Db" ] || [ -f "$metaphlan2Mpa_pkl" ]; then
 		if [ -d "$metaphlan2Db" ] && [ -f "$metaphlan2Mpa_pkl" ]; then
 			if [ "$(dirname $metaphlan2Mpa_pkl)" != "${metaphlan2Db}"  ]; then
@@ -218,23 +221,21 @@ stage_pipeline_dbs_to_efs() {
 			exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: Required Config missing - if any defined, all must be defined { \"qiimePynastAlignDB\", \"qiimeRefSeqDB\", \"qiimeTaxaDB\" }"
 		fi
 	fi
-	[ -d "$kneaddataDbs" ] && upload_to_efs_and_update_config kneaddataDbs ${kneaddataDbs} ${BLJ_DB}
-	[ -d "$krakenDb" ] && upload_to_efs_and_update_config krakenDb ${krakenDb} ${BLJ_DB}
-	[ -d "$kraken2Db" ] && upload_to_efs_and_update_config kraken2Db ${kraken2Db} ${BLJ_DB}
-	[ -d "$humann2NuclDB" ] && upload_to_efs_and_update_config humann2NuclDB ${humann2NuclDB} ${BLJ_DB}
-	[ -d "$humann2ProtDB" ] && upload_to_efs_and_update_config humann2ProtDB ${humann2ProtDB} ${BLJ_DB}
+	[ -d "$kneaddataDbs" ] && aws_log "Uploading KneadData DBs: ${kneaddataDbs}" && upload_to_efs_and_update_config kneaddataDbs ${kneaddataDbs} ${BLJ_DB}
+	[ -d "$krakenDb" ] && aws_log "Uploading Kraken DB: ${krakenDb}" && upload_to_efs_and_update_config krakenDb ${krakenDb} ${BLJ_DB}
+	[ -d "$kraken2Db" ] && aws_log "Uploading Kraken2 DB: ${kraken2Db}" && upload_to_efs_and_update_config kraken2Db ${kraken2Db} ${BLJ_DB}
+	[ -d "$humann2NuclDB" ] && aws_log "Uploading HumanN2 Nucl DB: ${humann2NuclDB}" && upload_to_efs_and_update_config humann2NuclDB ${humann2NuclDB} ${BLJ_DB}
+	[ -d "$humann2ProtDB" ] && aws_log "Uploading  HumanN2 Prot DB: ${humann2ProtDB}" && upload_to_efs_and_update_config humann2ProtDB ${humann2ProtDB} ${BLJ_DB}
 	
 	if [ -f "$rdpDb" ]; then
-		filePath=$(upload_to_efs $(dirname $rdpDb) $BLJ_DB) && echo "Uploaded $(dirname $rdpDb) --> ${filePath}"
+		filePath=$(upload_to_efs $(dirname $rdpDb) $BLJ_DB) && echo "Uploading RDP DB: $(dirname $rdpDb) --> ${filePath}"
 		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_prop $(get_config ec2) $(map_to_pipeline_property rdpDb) $filePath/$(basename $rdpDb)"
 	fi 
 }
 
 # Stage data for pipeline onto EFS volume
-stage_pipeline_inputs_and_scripts_to_efs() {
+stage_pipeline_inputs_to_efs() {
 	aws_log "Upload pipeline inputs to EFS"
-	upload_to_efs "${BLJ_SCRIPT}" "${EFS}"
-	exe_remote_cmd "sudo chmod -R 777 ${EFS}"
 	[ ! -d "${inputDirPaths}" ] && exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: inputDirPaths=\"${inputDirPaths}\" is not a valid directory"
 	upload_to_efs_and_update_config inputDirPaths ${inputDirPaths} ${BLJ_INPUT}
 	[ -f "$metadataFilePath" ] && upload_to_efs_and_update_config metadataFilePath ${metadataFilePath} ${BLJ_META}

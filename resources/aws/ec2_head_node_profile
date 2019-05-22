@@ -38,7 +38,7 @@ set_ec2_owner() {
 source "${BLJ_SCRIPT}/blj_config"
 
 [ ${#dockerUser} -gt 0 ] && export DOCKER_ID="${dockerUser}"
-echo "AWS Profile ~/.bash_profile loaded - Docker Account ID: $DOCKER_ID"
+#echo "AWS Profile ~/.bash_profile loaded - Docker Account ID: $DOCKER_ID"
 ######=========================================######
 ######   BioLockJ AWS ~/.bash_profile LOADED   ###### 
 ######=========================================######
