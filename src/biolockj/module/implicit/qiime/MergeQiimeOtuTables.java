@@ -56,8 +56,8 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl {
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		if( !( ModuleUtil.getPreviousModule( this ) instanceof QiimeClosedRefClassifier ) )
-			throw new Exception( "Module order exception!  " + RETURN + getClass().getName()
-				+ " must run immediately after " + QiimeClosedRefClassifier.class.getName() + " (if configured)" );
+			throw new Exception( "Module order exception!  " + RETURN + getClass().getName() +
+				" must run immediately after " + QiimeClosedRefClassifier.class.getName() + " (if configured)" );
 	}
 
 	/**

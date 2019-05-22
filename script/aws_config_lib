@@ -18,21 +18,14 @@ alias awsr="aws_report_config"
 alias awsrf="refresh_aws_cache"
 
 # Archive previous AWS Config properties file: $blj_aws_config
-# Param 1 - Run existing flag, if enabled, do not archive key.pem
+
 aws_archive() {
-	clear_aws_cache ${1}
-	aws_history=~/.aws/history
-	aws_log "Archive AWS properties, key file, and start script to $aws_history"
-	[ ! -d $aws_history ] && mkdir $aws_history
-	[ -f $blj_aws_config ] && mv $blj_aws_config $aws_history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
-	echo $sheBang > $blj_aws_config
-	chmod 770 $blj_aws_config
-	foundStartScript=$(ls ~/.aws | grep -c "run-bljStack" )
-	[ ${foundStartScript} -gt 0 ] && mv ~/.aws/run-bljStack* $aws_history
-	if [ $# -gt 0 ]; then 
-		foundKeys=$(ls ~/.aws | grep -c ".pem" )
-		[ ${foundKeys} -gt 0 ] && chmod 770 ~/.aws/*.pem && mv ~/.aws/*.pem $aws_history
-	fi
+	clear_aws_cache
+	aws_log "Archive AWS properties, key file, and start script to ~/.aws/history"
+	[ ! -d ~/.aws/history ] && mkdir ~/.aws/history
+	[ -f $blj_aws_config ] && mv $blj_aws_config ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
+	echo $sheBang > $blj_aws_config && chmod 770 $blj_aws_config
+	refresh_aws_cache
 }
 
 # Get an AWS property ${1} from local AWS Config file ${2} under the awsProfile
@@ -84,13 +77,15 @@ aws_stacks() {
 	[ ${#awsStacks} -gt 0 ] && [ "${awsStacks}" != "None" ] && echo "${awsStacks}" && return
 }
 
+
 # Clear possible aws_config from bash shell memeroy
 # Param 1 - (optional) flag to indciate re-use of existing stack
 clear_aws_cache() {
-	[ $# -eq 0 ] && awsAmi=
-	[ $# -eq 0 ] && awsEc2InstanceID=
-	[ $# -eq 0 ] && awsStack=
-	[ $# -eq 0 ] && awsS3=
+	awsAmi=
+	awsEc2InstanceID=
+	ec2PublicIP=
+	awsStack=
+	awsS3=
 	awsEc2SpotPer=
 	awsProfile=
 	awsRam=
@@ -128,7 +123,7 @@ convert_db_prop() {
 convert_prop() {
 	val=$(get_prop "${1}" "${2}")
 	[ $(echo "${val}" | wc -w) -gt 1 ] && val="'${val}'"
-	set_blj_prop $(map_property_name "${2}") "${val}" $IS_NULL
+	set_blj_prop $(map_to_aws_property "${2}") "${val}" $IS_NULL
 }
 
 # Get AWS-Access-ID from local file sytem (requires user has logged on to client or file is staged to $HOME)
@@ -182,11 +177,10 @@ get_prop() {
 # Check BLJ pipeline Config files + all nested default Config files
 # Add docker.properties if not already in list of nested Config files
 # Param 1 - Pipeline Config file path
-# Param 2 - Flag to use exsting AWS cloud
 init_aws_config() {
 	[ ! -f "${HOME}/.aws/config" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/config"
 	[ ! -f "${HOME}/.aws/credentials" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/credentials"
-	[ $# -eq 1 ] && aws_archive ${2}
+	aws_archive
 	aws_log "Copy AWS properties from Pipeline Config \"$1\" into AWS Config --> \"$blj_aws_config\""
 	set_pipeline_config_files "${1}"
 	configFiles=$(get_blj_prop configFiles)
@@ -202,6 +196,7 @@ init_aws_config() {
 	for propFile in ${propFiles[@]}; do set_pipeline_conig_props $propFile; done
 	verify_config
 	aws_log "Pipeline Config properties initialized and saved to --> $blj_aws_config"
+	aws_report_config
 }
 
 # Get the ec2 key file for the ec2 head node
@@ -221,14 +216,14 @@ local_nf_conf() {
 
 # AWS Config prop names cannot contain "." or bash fails by trying to interpret and run them as function calls
 # Param 1 - Prop name
-map_property_name() {
+map_to_aws_property() {
 	val=
 	foundPeriod=N
 	size=$((${#1}-1))
 	for i in $(seq 0 $size); do
 		char=${1:$i:1}
+		upCase=$(echo "${char}" | awk '{print toupper($0)}')
 		if [ $foundPeriod == Y ]; then
-			upCase=$(echo "${char}" | awk '{print toupper($0)}')
 			val=${val}${upCase}
 			foundPeriod=N
 		elif [ "${char}" == "." ]; then
@@ -241,9 +236,37 @@ map_property_name() {
 	echo ${val}
 }
 
+# Convert aws config property name to pipeline config property name format
+map_to_pipeline_property() {
+	# Special cases with camel case in prefix
+	[ "${1}" == "trimPrimersFilePath" ] && echo "trimPrimers.filePath" && return
+	val=
+	addedPeriod=N
+	size=$((${#1}-1))
+	for i in $(seq 0 $size); do
+		char=${1:$i:1}
+		upCase=$(echo "${char}" | awk '{print toupper($0)}')
+		loCase=$(echo "${char}" | awk '{print tolower($0)}')
+		if [ "${addedPeriod}" == "N" ] && [ "${upCase}" == "${char}" ] && [ "${upCase}" != "${loCase}" ]; then
+			val="${val}.${loCase}"
+			addedPeriod="Y"
+		else
+			val=${val}${char}
+		fi
+	done
+	echo ${val}
+}
+
+
 # Refersh bash variables in memory via source $blj_aws_config
 refresh_aws_cache() {
 	. $blj_aws_config
+}
+
+# Remove AWS property from $blj_aws_config
+# Param 1 - prop name 
+rm_blj_prop() {
+	rm_prop "$blj_aws_config" "${1}"
 }
 
 # Remove AWS property - delete the line from the file
@@ -334,7 +357,8 @@ set_pipeline_conig_props() {
 	convert_db_prop "${1}" "qiime.pynastAlignDB"
 	convert_db_prop "${1}" "qiime.refSeqDB"
 	convert_db_prop "${1}" "qiime.taxaDB"
-
+	convert_db_prop "${1}" "rdp.db"
+	
 	[ "$(get_prop ${1} humann2.nuclDB)" != "${HN2_NUCL_DB}" ] && convert_db_prop "${1}" "humann2.nuclDB"
 	[ "$(get_prop ${1} humann2.protDB)" != "${HN2_PROT_DB}" ] && convert_db_prop "${1}" "humann2.protDB"
 	aws_report_config

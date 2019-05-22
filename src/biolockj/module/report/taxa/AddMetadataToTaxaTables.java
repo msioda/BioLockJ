@@ -14,14 +14,10 @@ package biolockj.module.report.taxa;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.implicit.RegisterNumReads;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SummaryUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule is used to add metadata columns to the OTU abundance tables.
@@ -51,8 +47,8 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 
 			if( !this.hitRatioPerSample.isEmpty() ) {
 				for( final String key: this.hitRatioPerSample.keySet() )
-					if( this.hitRatioPerSample.get( key ) == null
-						|| this.hitRatioPerSample.get( key ).equals( MetaUtil.getNullValue( this ) ) )
+					if( this.hitRatioPerSample.get( key ) == null ||
+						this.hitRatioPerSample.get( key ).equals( MetaUtil.getNullValue( this ) ) )
 						this.hitRatioPerSample.put( key, "0.0" );
 
 				if( !this.hitRatioPerSample.isEmpty() ) {
@@ -91,8 +87,8 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 	public void runModule() throws Exception {
 		final String numReadsCol = RegisterNumReads.getNumReadFieldName();
 		final String numHitsCol = ParserModuleImpl.getOtuCountField();
-		if( numReadsCol != null && numHitsCol != null && MetaUtil.getFieldNames().contains( numReadsCol )
-			&& MetaUtil.getFieldNames().contains( numHitsCol ) ) addHitRatioToMetadata();
+		if( numReadsCol != null && numHitsCol != null && MetaUtil.getFieldNames().contains( numReadsCol ) &&
+			MetaUtil.getFieldNames().contains( numHitsCol ) ) addHitRatioToMetadata();
 
 		generateMergedTables();
 
@@ -111,8 +107,9 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 			final String numReadsField = MetaUtil.getField( id, RegisterNumReads.getNumReadFieldName() );
 			final String numHitsField = MetaUtil.getField( id, ParserModuleImpl.getOtuCountField() );
 
-			if( numReadsField == null || numHitsField == null || numReadsField.equals( MetaUtil.getNullValue( this ) )
-				|| numHitsField.equals( MetaUtil.getNullValue( this ) ) )
+			if( numReadsField == null || numHitsField == null ||
+				numReadsField.equals( MetaUtil.getNullValue( this ) ) ||
+				numHitsField.equals( MetaUtil.getNullValue( this ) ) )
 				this.hitRatioPerSample.put( id, MetaUtil.getNullValue( this ) );
 			else {
 				final long numReads = Long.valueOf( numReadsField );

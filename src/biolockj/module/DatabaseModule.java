@@ -31,4 +31,5 @@ public interface DatabaseModule extends BioModule {
 	 * runtime env
 	 */
 	public File getDB() throws ConfigPathException, ConfigNotFoundException;
+
 }

@@ -21,11 +21,14 @@ build_blj_only() {
 }
 
 # Remove old Docker images
+# docker stop = SIG TERM, after timeout period, tries SIG KILL
 clearDock() {
 	echo "Stop/remove all containers & remove old images..."
 	containers=$(docker ps -aq)
 	runningProcs=$(docker ps -q)
 	images=$(docker images -f "dangling=true" -q) 
+	[ ${#runningProcs} -gt 0 ] && docker kill -s SIGINT $runningProcs && runningProcs=$(docker ps -q)
+	[ ${#runningProcs} -gt 0 ] && docker stop -t 20 $runningProcs && runningProcs=$(docker ps -q)
 	[ ${#runningProcs} -gt 0 ] && docker kill $runningProcs
 	[ ${#containers} -gt 0 ] && docker rm $containers
 	[ ${#images} -gt 0 ] && docker rmi $images

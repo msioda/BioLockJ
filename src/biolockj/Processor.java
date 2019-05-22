@@ -11,9 +11,7 @@
  */
 package biolockj;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.ScriptModule;
@@ -177,8 +175,6 @@ public class Processor {
 	 * @throws Exception if errors occur during execution
 	 */
 	public static void submit( final ScriptModule module ) throws Exception {
-		setFilePermissions( module.getScriptDir().getAbsolutePath(),
-			Config.requireString( module, ScriptModule.SCRIPT_PERMISSIONS ) );
 		new Processor().runJob( module.getJobParams(), module.getClass().getSimpleName() );
 	}
 
@@ -215,8 +211,8 @@ public class Processor {
 	public static boolean subProcsAlive() {
 		if( threadRegister.isEmpty() ) return false;
 		final long max = BioLockJUtil.minutesToMillis( NextflowUtil.getS3_TransferTimeout() );
-		Log.info( Processor.class, "Running Subprocess Threads will be terminated if incomplete after [ "
-			+ NextflowUtil.getS3_TransferTimeout() + " ] minutes." );
+		Log.info( Processor.class, "Running Subprocess Threads will be terminated if incomplete after [ " +
+			NextflowUtil.getS3_TransferTimeout() + " ] minutes." );
 		for( final Thread t: threadRegister.keySet() )
 			if( t.isAlive() ) {
 				final String id = t.getId() + " - " + t.getName();
@@ -244,8 +240,8 @@ public class Processor {
 	}
 
 	private static File bashVarScript() throws ConfigPathException {
-		final File script = new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR
-			+ File.separator + BLJ_GET_ENV_VAR_SCRIPT );
+		final File script = new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator +
+			Constants.SCRIPT_DIR + File.separator + BLJ_GET_ENV_VAR_SCRIPT );
 		if( script.isFile() ) return script;
 		throw new ConfigPathException( script );
 	}

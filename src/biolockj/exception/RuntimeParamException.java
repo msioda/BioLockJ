@@ -62,8 +62,8 @@ public class RuntimeParamException extends Exception {
 	 */
 	protected static String buildMessage( final String arg, final String val, final String msg ) {
 		final String displayVal = val == null ? "{undefined}": val;
-		return "Pipeline failed to start due to invalid runtime parameter: [ " + arg + " = " + displayVal + " ] "
-			+ ( msg == null || msg.trim().isEmpty() ? "": Constants.RETURN + msg );
+		return "Pipeline failed to start due to invalid runtime parameter: [ " + arg + " = " + displayVal + " ] " +
+			( msg == null || msg.trim().isEmpty() ? "": Constants.RETURN + msg );
 	}
 
 	private static final long serialVersionUID = 4511621216880299923L;

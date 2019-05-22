@@ -33,8 +33,8 @@ public class ImportMetadata extends BioModuleImpl {
 		inputDelim = Config.requireString( this, MetaUtil.META_COLUMN_DELIM );
 		if( inputDelim.equals( "\\t" ) ) inputDelim = TAB_DELIM;
 		if( SeqUtil.isMultiplexed() && !MetaUtil.exists() )
-			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: "
-				+ MetaUtil.META_FILE_PATH );
+			throw new Exception( "Metadata file is required for multiplexed datasets, please set Config property: " +
+				MetaUtil.META_FILE_PATH );
 	}
 
 	/**
@@ -57,8 +57,8 @@ public class ImportMetadata extends BioModuleImpl {
 		this.configMeta = MetaUtil.getMetadata();
 		if( this.configMeta == null ) buildNewMetadataFile();
 		else {
-			Log.info( getClass(), "Importing metadata (column delim="
-				+ Config.requireString( this, MetaUtil.META_COLUMN_DELIM ) + "): " + MetaUtil.getPath() );
+			Log.info( getClass(), "Importing metadata (column delim=" +
+				Config.requireString( this, MetaUtil.META_COLUMN_DELIM ) + "): " + MetaUtil.getPath() );
 
 			final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getMetadata() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
@@ -139,8 +139,8 @@ public class ImportMetadata extends BioModuleImpl {
 		final char c = colName.trim().toCharArray()[ 0 ];
 		if( c == 65279 ) {
 			Log.warn( getClass(),
-				"Removed ZERO WIDTH NO-BREAK invisible character [ASCII 65279] from 1st cell in metadata file.  "
-					+ "For more details, see http://www.fileformat.info/info/unicode/char/feff/index.htm" );
+				"Removed ZERO WIDTH NO-BREAK invisible character [ASCII 65279] from 1st cell in metadata file.  " +
+					"For more details, see http://www.fileformat.info/info/unicode/char/feff/index.htm" );
 
 			final char[] chars = colName.trim().toCharArray();
 			for( int i = 0; i < chars.length; i++ )
@@ -183,9 +183,8 @@ public class ImportMetadata extends BioModuleImpl {
 	protected TreeSet<String> getSampleIds()
 		throws ConfigFormatException, ConfigViolationException, MetadataException, SequnceFormatException {
 		final TreeSet<String> ids = new TreeSet<>();
-		final Collection<File> inputFiles = SeqUtil.hasPairedReads()
-			? new TreeSet<>( SeqUtil.getPairedReads( getInputFiles() ).keySet() )
-			: getInputFiles();
+		final Collection<File> inputFiles = SeqUtil.hasPairedReads() ?
+			new TreeSet<>( SeqUtil.getPairedReads( getInputFiles() ).keySet() ): getInputFiles();
 
 		for( final File file: inputFiles ) {
 			final String id = SeqUtil.getSampleId( file.getName() );
@@ -271,15 +270,15 @@ public class ImportMetadata extends BioModuleImpl {
 				}
 
 		if( !ids.isEmpty() ) throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
-			"This property requires every Sample ID in the metadata file " + MetaUtil.getFileName()
-				+ " map to one of the sequence files in an input directory: "
-				+ Config.getString( this, Constants.INPUT_DIRS ) + Constants.RETURN + "The following " + ids.size()
-				+ " Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
+			"This property requires every Sample ID in the metadata file " + MetaUtil.getFileName() +
+				" map to one of the sequence files in an input directory: " +
+				Config.getString( this, Constants.INPUT_DIRS ) + Constants.RETURN + "The following " + ids.size() +
+				" Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
 	}
 
 	private boolean doIdToSeqVerifiction() throws Exception {
-		return Config.getBoolean( this, MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() )
-			&& !SeqUtil.isMultiplexed();
+		return Config.getBoolean( this, MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() ) &&
+			!SeqUtil.isMultiplexed();
 	}
 
 	/**
@@ -315,8 +314,8 @@ public class ImportMetadata extends BioModuleImpl {
 				j++;
 			}
 
-			throw new Exception( "MetaUtil file column names must be unique.  Column #" + colNum
-				+ " is a duplicate of Column #" + j + " - duplicate name = [" + dup + "]" );
+			throw new Exception( "MetaUtil file column names must be unique.  Column #" + colNum +
+				" is a duplicate of Column #" + j + " - duplicate name = [" + dup + "]" );
 		}
 	}
 

@@ -65,15 +65,15 @@ public class BioLockJUtil {
 	 * "N" value
 	 */
 	public static boolean copyInputFiles() throws ConfigNotFoundException, ConfigFormatException {
-		final boolean hasMixedInputs = pipelineInputType( PIPELINE_R_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_STATS_TABLE_INPUT_TYPE );
+		final boolean hasMixedInputs = pipelineInputType( PIPELINE_R_INPUT_TYPE ) ||
+			pipelineInputType( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) ||
+			pipelineInputType( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+			pipelineInputType( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+			pipelineInputType( PIPELINE_STATS_TABLE_INPUT_TYPE );
 
 		if( hasMixedInputs ) Log.warn( BioLockJ.class,
-			"Non-sequence inputs found - copy input files from " + Config.requireString( null, Constants.INPUT_DIRS )
-				+ " to:" + pipelineInternalInputDir().getAbsolutePath() );
+			"Non-sequence inputs found - copy input files from " + Config.requireString( null, Constants.INPUT_DIRS ) +
+				" to:" + pipelineInternalInputDir().getAbsolutePath() );
 		return Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) || hasMixedInputs;
 	}
 
@@ -115,8 +115,9 @@ public class BioLockJUtil {
 
 				return true;
 			} catch( final IOException ex ) {
-				Log.info( BioLockJUtil.class,
-					"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
+				Log.error( BioLockJUtil.class,
+					"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath(),
+					ex );
 			}
 
 		Log.warn( BioLockJUtil.class, "Failed to delete file: " + file.getAbsolutePath() );
@@ -300,10 +301,11 @@ public class BioLockJUtil {
 	 * @throws FileNotFoundException if file does not exist
 	 * @throws IOException if unable to read or write the file
 	 */
+	@SuppressWarnings("resource")
 	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException {
-		return SeqUtil.isGzipped( file.getName() )
-			? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
-			: new BufferedReader( new FileReader( file ) );
+		return SeqUtil.isGzipped( file.getName() ) ?
+			new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) ):
+			new BufferedReader( new FileReader( file ) );
 	}
 
 	/**
@@ -378,9 +380,12 @@ public class BioLockJUtil {
 		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
 		if( file.isFile() ) {
 			final BufferedReader reader = getFileReader( file );
-			for( final String line = reader.readLine(); line != null; )
-				return line;
-			reader.close();
+			try {
+				for( final String line = reader.readLine(); line != null; )
+					return line;
+			} finally {
+				reader.close();
+			}
 		}
 
 		return missingMsg;
@@ -576,15 +581,6 @@ public class BioLockJUtil {
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
-	/**
-	 * Setter for pipeline input files.
-	 * 
-	 * @param files List of input files
-	 */
-	public static void setPipelineInputFiles( final List<File> files ) {
-		inputFiles = files;
-	}
-
 	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles )
 		throws ConfigViolationException {
 		final Map<String, String> names = new HashMap<>();
@@ -592,8 +588,8 @@ public class BioLockJUtil {
 			names.put( f.getName(), f.getAbsolutePath() );
 		for( final File f: newFiles ) {
 			if( names.keySet().contains( f.getName() ) )
-				throw new ConfigViolationException( "Pipeline input file names must be unique [ " + f.getAbsolutePath()
-					+ " ] has the same file name as [ " + names.get( f.getName() ) + " ]" );
+				throw new ConfigViolationException( "Pipeline input file names must be unique [ " +
+					f.getAbsolutePath() + " ] has the same file name as [ " + names.get( f.getName() ) + " ]" );
 			names.put( f.getName(), f.getAbsolutePath() );
 		}
 		return newFiles;

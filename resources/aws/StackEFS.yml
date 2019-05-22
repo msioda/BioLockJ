@@ -491,6 +491,24 @@ Resources:
 
             - yum install -y bzip2 wget
 
+            - CLOCK=/etc/sysconfig/clock
+
+            - wget -q https://ipapi.co/timezone -P /
+
+            - TZ=$(cat /timezone)
+
+            - rm ${!CLOCK} 
+
+            - touch ${!CLOCK}
+
+            - chmod 777 ${!CLOCK}
+
+            - echo ZONE="${!TZ}" >> ${!CLOCK}
+
+            - echo UTC=true >> ${!CLOCK}
+
+            - ln -sf /usr/share/zoneinfo/${!TZ} /etc/localtime
+
             - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
 
             - runuser -l  ec2-user -c 'bash Miniconda3-latest-Linux-x86_64.sh -bfp /home/ec2-user/miniconda'
@@ -571,6 +589,24 @@ Resources:
             - chmod g+s ${!efs_directory}
 
             - yum install -y bzip2 wget
+
+            - CLOCK=/etc/sysconfig/clock
+
+            - wget -q https://ipapi.co/timezone -P /
+
+            - TZ=$(cat /timezone)
+
+            - rm ${!CLOCK} 
+
+            - touch ${!CLOCK}
+
+            - chmod 777 ${!CLOCK}
+
+            - echo ZONE="${!TZ}" >> ${!CLOCK}
+
+            - echo UTC=true >> ${!CLOCK}
+
+            - ln -sf /usr/share/zoneinfo/${!TZ} /etc/localtime
 
             - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
 

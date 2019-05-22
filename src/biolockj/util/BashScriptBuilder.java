@@ -15,9 +15,7 @@ import java.io.*;
 import java.util.*;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.ScriptModule;
+import biolockj.module.*;
 import biolockj.module.report.r.R_Module;
 
 /**
@@ -38,12 +36,9 @@ public class BashScriptBuilder {
 		if( workerScripts.isEmpty() )
 			throw new Exception( "No worker scripts created for module: " + module.getClass().getName() );
 
-		int scriptCount = 0;
-		final int digits = new Integer( workerScripts.size() - 1 ).toString().length();
 		final List<String> mainScriptLines = initMainScript( module );
 		for( final File worker: workerScripts )
-			mainScriptLines.add( getMainScriptExecuteWorkerLine( module, worker.getAbsolutePath(),
-				getWorkerId( scriptCount++, digits ) ) );
+			mainScriptLines.add( getMainScriptExecuteWorkerLine( worker.getAbsolutePath() ) );
 
 		mainScriptLines
 			.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_SUCCESS );
@@ -67,13 +62,16 @@ public class BashScriptBuilder {
 		if( data == null || data.size() < 1 )
 			throw new Exception( "Cannot build empty scripts for: " + module.getClass().getName() );
 
-		setBatchSize( module, data );
+		batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
 
 		if( Config.isOnCluster() ) verifyConfig( module );
 
 		buildWorkerScripts( module, data );
 
 		if( !DockerUtil.inAwsEnv() ) buildMainScript( module );
+
+		Processor.setFilePermissions( module.getScriptDir().getAbsolutePath(),
+			Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
 	}
 
 	/**
@@ -93,8 +91,8 @@ public class BashScriptBuilder {
 		lines.add( "$1" );
 		lines.add( "statusCode=$?" );
 		lines.add( "if [ $statusCode != 0 ]; then" );
-		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_"
-			+ Constants.SCRIPT_FAILURES + "\"" );
+		lines.add( "echo \"Failure code [ $statusCode ] on Line [ $2 ]:  $1\" >> \"" + script + "_" +
+			Constants.SCRIPT_FAILURES + "\"" );
 		lines.add( "exit $statusCode" );
 		lines.add( "fi" );
 		lines.add( "}" + RETURN );
@@ -120,9 +118,6 @@ public class BashScriptBuilder {
 			writer.close();
 		}
 
-		if( DockerUtil.inAwsEnv() )
-			Processor.setFilePermissions( scriptPath, Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
-
 		printScriptAsDebug( scriptPath );
 		return workerScript;
 	}
@@ -130,22 +125,15 @@ public class BashScriptBuilder {
 	/**
 	 * Call {@value #FUNCTION_EXECUTE} on the worker script
 	 * 
-	 * @param module ScriptModule
 	 * @param workerScriptPath Worker script path
-	 * @param workerId Worker script ID
 	 * @return bash script line
 	 */
-	protected static String getMainScriptExecuteWorkerLine( final ScriptModule module, final String workerScriptPath,
-		final String workerId ) {
+	protected static String getMainScriptExecuteWorkerLine( final String workerScriptPath ) {
 		final StringBuffer line = new StringBuffer();
-
 		if( DockerUtil.inDockerEnv() ) line.append( DockerUtil.SPAWN_DOCKER_CONTAINER + " " );
 		else if( Config.isOnCluster() ) line.append( FUNCTION_RUN_JOB + " " );
-
 		line.append( workerScriptPath );
-
 		return FUNCTION_EXECUTE + " \"" + line.toString() + "\" $LINENO";
-
 	}
 
 	/**
@@ -173,8 +161,8 @@ public class BashScriptBuilder {
 	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) {
 		if( DockerUtil.inAwsEnv() && module instanceof R_Module ) return getMainScriptPath( module );
 
-		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "."
-			+ workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
+		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "." +
+			workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
 	}
 
 	/**
@@ -260,8 +248,8 @@ public class BashScriptBuilder {
 		Config.requireString( module, CLUSTER_BATCH_COMMAND );
 
 		if( !Config.getBoolean( null, CLUSTER_VALIDATE_PARAMS ) ) {
-			Log.warn( BashScriptBuilder.class, CLUSTER_VALIDATE_PARAMS + "=" + Constants.FALSE
-				+ " --  Will NOT enforce cluster #cores  = " + ScriptModule.SCRIPT_NUM_THREADS );
+			Log.warn( BashScriptBuilder.class, CLUSTER_VALIDATE_PARAMS + "=" + Constants.FALSE +
+				" --  Will NOT enforce cluster #cores  = " + ScriptModule.SCRIPT_NUM_THREADS );
 			// + getNumThreadsParam( module ) );
 			return;
 		}
@@ -293,9 +281,9 @@ public class BashScriptBuilder {
 						final String numThreadsParam = Config.getModuleProp( module, ScriptModule.SCRIPT_NUM_THREADS );
 						final int numThreads = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_NUM_THREADS );
 						if( Integer.valueOf( token ) != numThreads ) throw new ConfigFormatException( jobHeaderParam,
-							"Inconsistent config values. " + numThreadsParam + "=" + numThreads + " & " + jobHeaderParam
-								+ "=" + jobScriptHeader + " --> (#" + CLUSTER_NUM_PROCESSORS + "="
-								+ Integer.valueOf( token ) + ")" );
+							"Inconsistent config values. " + numThreadsParam + "=" + numThreads + " & " +
+								jobHeaderParam + "=" + jobScriptHeader + " --> (#" + CLUSTER_NUM_PROCESSORS + "=" +
+								Integer.valueOf( token ) + ")" );
 						break;
 					}
 				}
@@ -314,8 +302,8 @@ public class BashScriptBuilder {
 		int indentCount = 0;
 
 		for( final String line: lines ) {
-			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.trim().equals( "elif" )
-				|| line.trim().equals( "else" ) || line.trim().equals( "done" ) ) indentCount--;
+			if( line.trim().equals( "fi" ) || line.trim().equals( "}" ) || line.trim().equals( "elif" ) ||
+				line.trim().equals( "else" ) || line.trim().equals( "done" ) ) indentCount--;
 
 			int i = 0;
 			while( i++ < indentCount )
@@ -323,9 +311,9 @@ public class BashScriptBuilder {
 
 			writer.write( line + RETURN );
 
-			if( line.trim().endsWith( "{" ) || line.trim().equals( "elif" ) || line.trim().equals( "else" )
-				|| line.trim().startsWith( "if" ) && line.trim().endsWith( "then" )
-				|| line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) ) indentCount++;
+			if( line.trim().endsWith( "{" ) || line.trim().equals( "elif" ) || line.trim().equals( "else" ) ||
+				line.trim().startsWith( "if" ) && line.trim().endsWith( "then" ) ||
+				line.trim().startsWith( "while" ) && line.trim().endsWith( "do" ) ) indentCount++;
 		}
 
 		writer.close();
@@ -371,8 +359,8 @@ public class BashScriptBuilder {
 	}
 
 	private static String getMainScriptPath( final ScriptModule module ) {
-		return new File( module.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX
-			+ module.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
+		return new File( module.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX +
+			module.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
 	}
 
 	private static String getWorkerId( final int scriptNum, final int digits ) {
@@ -428,11 +416,6 @@ public class BashScriptBuilder {
 		} catch( final Exception ex ) {
 			Log.error( BashScriptBuilder.class, "Error occurred printing script to log file: " + filePath, ex );
 		}
-	}
-
-	private static void setBatchSize( final ScriptModule module, final List<List<String>> data ) throws Exception {
-		if( DockerUtil.inDockerEnv() && !DockerUtil.inAwsEnv() ) batchSize = data.size();
-		else batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
 	}
 
 	/**

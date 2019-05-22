@@ -14,16 +14,12 @@ package biolockj.module.seq;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.DatabaseModule;
 import biolockj.module.SeqModuleImpl;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.DockerUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule runs biobakery kneaddata program to remove contaminated DNA.<br>
@@ -38,8 +34,8 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
 		for( final File seqFile: files ) {
-			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
-				&& !SeqUtil.isForwardRead( seqFile.getName() ) ) continue;
+			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) &&
+				!SeqUtil.isForwardRead( seqFile.getName() ) ) continue;
 
 			final ArrayList<String> lines = new ArrayList<>();
 
@@ -107,9 +103,9 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_SANATIZE + "() {" );
 		lines.add(
-			Config.getExe( this, EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 " + INPUT_PARAM
-				+ " $2 " + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" )
-				+ OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
+			Config.getExe( this, EXE_KNEADDATA ) + " " + getParams() + OUTPUT_FILE_PREFIX_PARAM + " $1 " + INPUT_PARAM +
+				" $2 " + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? INPUT_PARAM + " $3 ": "" ) +
+				OUTPUT_PARAM + " " + getTempDir().getAbsolutePath() );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
@@ -129,10 +125,10 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
 			final String fwSuffix = Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX );
 			final String rvSuffix = Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX );
-			final File fwOutFile = new File(
-				getOutputDir().getAbsolutePath() + File.separator + sampleId + fwSuffix + fileSuffix );
-			final File rvOutFile = new File(
-				getOutputDir().getAbsolutePath() + File.separator + sampleId + rvSuffix + fileSuffix );
+			final File fwOutFile =
+				new File( getOutputDir().getAbsolutePath() + File.separator + sampleId + fwSuffix + fileSuffix );
+			final File rvOutFile =
+				new File( getOutputDir().getAbsolutePath() + File.separator + sampleId + rvSuffix + fileSuffix );
 			lines.add(
 				"mv " + getSanatizedFile( sampleId, false ).getAbsolutePath() + " " + fwOutFile.getAbsolutePath() );
 			lines.add(
@@ -163,10 +159,8 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 
 	private String getDBs() throws ConfigPathException, ConfigNotFoundException {
 		String dbs = "";
-		if( DockerUtil.hasDB( this ) ) for( final String path: Config.requireList( this, KNEAD_DBS ) )
+		if( DockerUtil.inDockerEnv() ) for( final String path: Config.requireList( this, KNEAD_DBS ) )
 			dbs += DB_PARAM + " " + DockerUtil.getDockerDB( this, path ).getAbsolutePath() + " ";
-		else if( DockerUtil.inDockerEnv() ) for( final String path: Config.requireList( this, KNEAD_DBS ) )
-			dbs += DB_PARAM + " " + path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DEFAULT_DB_DIR );
 		else for( final File db: Config.requireExistingDirs( this, KNEAD_DBS ) )
 			dbs += DB_PARAM + " " + db.getAbsolutePath() + " ";
 		return dbs;
@@ -185,8 +179,8 @@ public class KneadData extends SeqModuleImpl implements DatabaseModule {
 	}
 
 	private static String sanatize( final File seqFile, final File rvRead ) throws Exception {
-		return FUNCTION_SANATIZE + " " + SeqUtil.getSampleId( seqFile.getName() ) + " " + seqFile.getAbsolutePath()
-			+ ( rvRead == null ? "": " " + rvRead.getAbsolutePath() );
+		return FUNCTION_SANATIZE + " " + SeqUtil.getSampleId( seqFile.getName() ) + " " + seqFile.getAbsolutePath() +
+			( rvRead == null ? "": " " + rvRead.getAbsolutePath() );
 	}
 
 	/**

@@ -13,9 +13,7 @@ package biolockj.module.classifier.wgs;
 
 import java.io.File;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.classifier.ClassifierModuleImpl;
@@ -109,17 +107,17 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		final List<String> res = new ArrayList<>();
 
 		for( final String val: Config.getList( this, EXE_HUMANN2_PARAMS ) )
-			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM )
-				|| val.startsWith( LONG_OUTPUT_PARAM ) )
+			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM ) ||
+				val.startsWith( LONG_OUTPUT_PARAM ) )
 				Log.warn( getClass(),
-					"Ignore runtime option [ " + val + " ] set in Config property: " + EXE_HUMANN2_PARAMS
-						+ " because this value is set by BioLockJ at runtime based on pipeline context" );
+					"Ignore runtime option [ " + val + " ] set in Config property: " + EXE_HUMANN2_PARAMS +
+						" because this value is set by BioLockJ at runtime based on pipeline context" );
 			else if( val.startsWith( NUCL_DB_PARAM ) )
-				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: "
-					+ EXE_HUMANN2_PARAMS + " because this value is set by BioLockJ Config property: " + HN2_NUCL_DB );
+				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: " +
+					EXE_HUMANN2_PARAMS + " because this value is set by BioLockJ Config property: " + HN2_NUCL_DB );
 			else if( val.startsWith( PROT_DB_PARAM ) )
-				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: "
-					+ EXE_HUMANN2_PARAMS + " because this value is set by BioLockJ Config property: " + HN2_PROT_DB );
+				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: " +
+					EXE_HUMANN2_PARAMS + " because this value is set by BioLockJ Config property: " + HN2_PROT_DB );
 			else res.add( val );
 		return res;
 	}
@@ -163,20 +161,20 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 		lines.add( HN2_BASH_COMMENT );
 		lines.add( "function " + FUNCTION_RUN_HN2 + "() {" );
-		lines.add( getClassifierExe() + " " + getRuntimeParams() + INPUT_PARAM + " $1 " + OUTPUT_PARAM + " "
-			+ getTempSubDir( FUNCTION_RUN_HN2 ) );
+		lines.add( getClassifierExe() + " " + getRuntimeParams() + INPUT_PARAM + " $1 " + OUTPUT_PARAM + " " +
+			getTempSubDir( FUNCTION_RUN_HN2 ) );
 		lines.add( "}" + RETURN );
 
 		lines.add( JOIN_BASH_COMMENT );
 		lines.add( "function " + FUNCTION_JOIN_HN2_TABLES + "() {" );
-		lines.add( getJoinTableCmd() + getParams( EXE_HUMANN2_JOIN_PARAMS ) + INPUT_PARAM + " $1 " + OUTPUT_PARAM
-			+ " $2 " + FILE_NAME_PARAM + " $3" );
+		lines.add( getJoinTableCmd() + getParams( EXE_HUMANN2_JOIN_PARAMS ) + INPUT_PARAM + " $1 " + OUTPUT_PARAM +
+			" $2 " + FILE_NAME_PARAM + " $3" );
 		lines.add( "}" + RETURN );
 
 		lines.add( RENORM_BASH_COMMENT );
 		lines.add( "function " + FUNCTION_RENORM_HN2_TABLES + "() {" );
-		lines.add( getRenormTableCmd() + getParams( EXE_HUMANN2_RENORM_PARAMS ) + INPUT_PARAM + " $1 " + OUTPUT_PARAM
-			+ " $2" );
+		lines.add( getRenormTableCmd() + getParams( EXE_HUMANN2_RENORM_PARAMS ) + INPUT_PARAM + " $1 " + OUTPUT_PARAM +
+			" $2" );
 		lines.add( "}" + RETURN );
 		lines.addAll( getBuildSummaryFunction() );
 		return lines;
@@ -189,8 +187,8 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 * @throws Exception if errors occur
 	 */
 	protected String getRuntimeParams() throws Exception {
-		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " + NUCL_DB_PARAM
-			+ " " + getDbPath( HN2_NUCL_DB ) + " " + PROT_DB_PARAM + " " + getDbPath( HN2_PROT_DB ) + " ";
+		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " +
+			NUCL_DB_PARAM + " " + getDbPath( HN2_NUCL_DB ) + " " + PROT_DB_PARAM + " " + getDbPath( HN2_PROT_DB ) + " ";
 	}
 
 	private List<String> getBuildSummaryFunction() throws Exception {
@@ -200,10 +198,10 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		lines.add( "numStarted=1" );
 		lines.add( "numComplete=0" );
 		lines.add( "while [ $numStarted != $numComplete ]; do " );
-		lines.add( "numStarted=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
-			+ Constants.SCRIPT_STARTED + " | wc -l)" );
-		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*"
-			+ Constants.SCRIPT_SUCCESS + " | wc -l)" );
+		lines.add( "numStarted=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*" +
+			Constants.SCRIPT_STARTED + " | wc -l)" );
+		lines.add( "numComplete=$(ls \"" + getScriptDir().getAbsolutePath() + File.separator + "\"*" +
+			Constants.SCRIPT_SUCCESS + " | wc -l)" );
 		lines.add( "let \"numComplete++\"" );
 		lines.add( "[ $numStarted != $numComplete ] && sleep 30" );
 		lines.add( "done" );
@@ -223,16 +221,9 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
-	/**
-	 * Typically in Docker both databases are expected to have the same parent dir humann2.nuclDB=/db/chocophlan
-	 * humann2.protDB=/db/uniref
-	 */
-	private String getDbPath( final String prop ) throws Exception {
-		final String path = Config.getString( this, prop );
-		if( path == null ) return null;
-		if( DockerUtil.hasDB( this ) ) return DockerUtil.getDockerDB( this, path ).getAbsolutePath();
-		if( DockerUtil.inDockerEnv() )
-			return path.replace( getDB().getAbsolutePath(), DockerUtil.DOCKER_DEFAULT_DB_DIR );
+	private String getDbPath( final String prop ) throws ConfigNotFoundException, ConfigPathException {
+		final String path = Config.requireString( this, prop );
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, path ).getAbsolutePath();
 		return Config.requireExistingDir( this, prop ).getAbsolutePath();
 	}
 
@@ -241,19 +232,19 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	}
 
 	private String getJoinTableLine( final String key ) {
-		return FUNCTION_JOIN_HN2_TABLES + " " + getTempSubDir( FUNCTION_RUN_HN2 ) + " "
-			+ summaryFile( getTempSubDir( JOIN_OUT_DIR ), key ) + " " + key;
+		return FUNCTION_JOIN_HN2_TABLES + " " + getTempSubDir( FUNCTION_RUN_HN2 ) + " " +
+			summaryFile( getTempSubDir( JOIN_OUT_DIR ), key ) + " " + key;
 	}
 
 	private File getMergedReadFile( final File file ) throws Exception {
-		return new File( getTempSubDir( TEMP_MERGE_READ_DIR ).getAbsoluteFile() + File.separator
-			+ SeqUtil.getSampleId( file.getName() ) + BioLockJUtil.fileExt( file ) );
+		return new File( getTempSubDir( TEMP_MERGE_READ_DIR ).getAbsoluteFile() + File.separator +
+			SeqUtil.getSampleId( file.getName() ) + BioLockJUtil.fileExt( file ) );
 	}
 
 	private String getPairedReadLine( final File file ) throws Exception {
-		return FUNCTION_CONCAT_PAIRED_READS + " " + file.getAbsolutePath() + " "
-			+ getPairedReads().get( file ).getAbsolutePath() + " " + SeqUtil.getSampleId( file.getName() )
-			+ BioLockJUtil.fileExt( file );
+		return FUNCTION_CONCAT_PAIRED_READS + " " + file.getAbsolutePath() + " " +
+			getPairedReads().get( file ).getAbsolutePath() + " " + SeqUtil.getSampleId( file.getName() ) +
+			BioLockJUtil.fileExt( file );
 	}
 
 	private Map<File, File> getPairedReads() throws Exception {
@@ -265,10 +256,10 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private String getParams( final String property ) {
 		String params = " ";
 		for( final String val: Config.getList( this, property ) )
-			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM )
-				|| val.startsWith( LONG_OUTPUT_PARAM ) )
-				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: " + property
-					+ " because this value is set by BioLockJ at runtime based on pipeline context" );
+			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM ) ||
+				val.startsWith( LONG_OUTPUT_PARAM ) )
+				Log.warn( getClass(), "Ignore runtime option [ " + val + " ] set in Config property: " + property +
+					" because this value is set by BioLockJ at runtime based on pipeline context" );
 			else params = val + " ";
 
 		return params;
@@ -279,8 +270,8 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	}
 
 	private String getRenormTableLine( final String input, final String output ) {
-		return FUNCTION_RENORM_HN2_TABLES + " " + summaryFile( getTempSubDir( JOIN_OUT_DIR ), input ) + " "
-			+ getOutputDir().getAbsolutePath() + File.separator + PathwayUtil.getHn2ClassifierOutput( output );
+		return FUNCTION_RENORM_HN2_TABLES + " " + summaryFile( getTempSubDir( JOIN_OUT_DIR ), input ) + " " +
+			getOutputDir().getAbsolutePath() + File.separator + PathwayUtil.getHn2ClassifierOutput( output );
 	}
 
 	private File getTempSubDir( final String name ) {
@@ -325,7 +316,8 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 */
 	protected static final String HN2_PROT_DB = "humann2.protDB";
 
-	private static final String BUILD_SUMMARY_BASH_COMMENT = "# Wait until all worker scripts are complete to build summary tables";
+	private static final String BUILD_SUMMARY_BASH_COMMENT =
+		"# Wait until all worker scripts are complete to build summary tables";
 	private static final String FILE_NAME_PARAM = "--file_name";
 	private static final String FUNCTION_BUILD_SUMMARY_TABLES = "buildSummaryTables";
 	private static final String FUNCTION_CONCAT_PAIRED_READS = "mergePairedReads";
@@ -346,9 +338,9 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private static final String NUM_THREADS_PARAM = "--threads";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String PROT_DB_PARAM = "--protein-database";
-	private static final String RENORM_BASH_COMMENT = "# Renormalize output summary tables" + RETURN
-		+ "# Renorm unit options: counts/million (default) or relative abundance" + RETURN
-		+ "# Renorm mode options: community (default) or levelwise";
+	private static final String RENORM_BASH_COMMENT = "# Renormalize output summary tables" + RETURN +
+		"# Renorm unit options: counts/million (default) or relative abundance" + RETURN +
+		"# Renorm mode options: community (default) or levelwise";
 	private static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table";
 	private static final String RM_STRATIFIED_OUTPUT = "--remove-stratified-output";
 	private static final String TEMP_MERGE_READ_DIR = "merged";

@@ -13,9 +13,7 @@ package biolockj.module.seq;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
@@ -154,8 +152,9 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 			try {
 				line = SeqUtil.scanFirstLine( reader, file );
-			} catch( final Exception scanEx ) {
+			} catch( final Exception ex ) {
 				this.badFiles.add( outputFile );
+				Log.debug( getClass(), "Error scanning input file: " + ex.getMessage() );
 				return;
 			}
 
@@ -166,27 +165,27 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 					final int headerLen = seqLines.get( 0 ).length();
 					final int seqLen = seqLines.get( 1 ).length();
 					String headerChar = "";
-					if( headerLen == 0 ) Log.warn( getClass(), "Sequence #" + seqNum
-						+ " has an empty header & seq len = " + seqLen + " in ---> " + file.getAbsolutePath() );
+					if( headerLen == 0 ) Log.warn( getClass(), "Sequence #" + seqNum +
+						" has an empty header & seq len = " + seqLen + " in ---> " + file.getAbsolutePath() );
 					else headerChar = seqLines.get( 0 ).substring( 0, 1 );
 
 					if( !SeqUtil.getSeqHeaderChars().contains( headerChar ) ) {
 						stats[ INDEX_NUM_READS_INVALID_FORMAT ]++;
 						badLines.addAll( seqLines );
 						Log.warn( getClass(),
-							"Sequence #" + seqNum + " format invalid.  Must begin with a valid header char ("
-								+ SeqUtil.getSeqHeaderChars() + ")  --> header line = " + seqLines.get( 0 ) );
+							"Sequence #" + seqNum + " format invalid.  Must begin with a valid header char (" +
+								SeqUtil.getSeqHeaderChars() + ")  --> header line = " + seqLines.get( 0 ) );
 					} else if( seqLen < minReadLen() ) {
 						stats[ INDEX_NUM_READS_TOO_SHORT ]++;
 						badLines.addAll( seqLines );
 						Log.warn( getClass(),
-							"Sequence #" + seqNum + " format invalid.  Must have a minimum number of bases ("
-								+ minReadLen() + ")  --> \n" + seqLines.get( 0 ) + "\n" + seqLines.get( 1 ) );
+							"Sequence #" + seqNum + " format invalid.  Must have a minimum number of bases (" +
+								minReadLen() + ")  --> \n" + seqLines.get( 0 ) + "\n" + seqLines.get( 1 ) );
 					} else if( SeqUtil.isFastQ() && seqLen != seqLines.get( 3 ).length() ) {
 						stats[ INDEX_NUM_READS_INVALID_FORMAT ]++;
 						badLines.addAll( seqLines );
-						Log.warn( getClass(), "Sequence #" + seqNum + " fastq format invalid.  Must have equal "
-							+ " number of bases and quality scores: " + seqLines.get( 0 ) );
+						Log.warn( getClass(), "Sequence #" + seqNum + " fastq format invalid.  Must have equal " +
+							" number of bases and quality scores: " + seqLines.get( 0 ) );
 					} else {
 						stats[ INDEX_NUM_VALID_READS ]++;
 						setMaxSeq( SeqUtil.getSampleId( file.getName() ), seqLen );
@@ -253,8 +252,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 					final String numFwReads = this.readsPerSample.get( sampleId );
 					final String numRvReads = this.rvReadsPerSample.get( sampleId );
 					if( !Long.valueOf( numFwReads ).equals( Long.valueOf( numRvReads ) ) ) {
-						Log.warn( getClass(), sampleId + " has unequal read count FW="
-							+ this.readsPerSample.get( sampleId ) + "; RV=" + this.rvReadsPerSample.get( sampleId ) );
+						Log.warn( getClass(), sampleId + " has unequal read count FW=" +
+							this.readsPerSample.get( sampleId ) + "; RV=" + this.rvReadsPerSample.get( sampleId ) );
 						unequalNumReads.add( sampleId );
 					}
 				}
@@ -285,8 +284,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private String getSeqLenRange() throws Exception {
 		final Integer max = Config.getPositiveInteger( this, INPUT_SEQ_MAX );
-		return "Valid SEQ Len Range --> min( " + minReadLen() + " ) - max( " + ( max == null ? "UNLIMITED": max )
-			+ " )";
+		return "Valid SEQ Len Range --> min( " + minReadLen() + " ) - max( " + ( max == null ? "UNLIMITED": max ) +
+			" )";
 	}
 
 	private String getSeqModSummary( final TreeSet<String> invalidReads, final TreeSet<String> shortReads,
@@ -315,8 +314,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 			if( !shortReads.isEmpty() )
 				sb.append( BioLockJUtil.addTrailingSpaces( "Removed short reads from:", pad ) + shortReads + RETURN );
-			sb.append( BioLockJUtil.addTrailingSpaces( "Discarded reads stored in:", pad )
-				+ getTempDir().getAbsolutePath() + RETURN );
+			sb.append( BioLockJUtil.addTrailingSpaces( "Discarded reads stored in:", pad ) +
+				getTempDir().getAbsolutePath() + RETURN );
 
 			if( !longReads.isEmpty() )
 				sb.append( BioLockJUtil.addTrailingSpaces( "Trimmed long reads from:", pad ) + shortReads + RETURN );
@@ -347,9 +346,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 		setNumReads( file, stats );
 
 		final Long[] otherStats = this.sampleStats.get( id );
-		final long len = stats[ INDEX_NUM_VALID_READS ] > 0
-			? Double.valueOf( combinedReadLen / stats[ INDEX_NUM_VALID_READS ] ).longValue()
-			: 0;
+		final long len = stats[ INDEX_NUM_VALID_READS ] > 0 ?
+			Double.valueOf( combinedReadLen / stats[ INDEX_NUM_VALID_READS ] ).longValue(): 0;
 		if( SeqUtil.isForwardRead( file.getName() ) ) {
 			Log.debug( getClass(),
 				"Average FW seq length = " + combinedReadLen + " / " + stats[ INDEX_NUM_VALID_READS ] + " = " + len );
@@ -364,10 +362,10 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 			Log.debug( getClass(), "Merging paired read stats for: " + file.getName() );
 			stats[ INDEX_NUM_VALID_READS ] = otherStats[ INDEX_NUM_VALID_READS ] + stats[ INDEX_NUM_VALID_READS ];
 			stats[ INDEX_NUM_TRIMMED_READS ] = otherStats[ INDEX_NUM_TRIMMED_READS ] + stats[ INDEX_NUM_TRIMMED_READS ];
-			stats[ INDEX_NUM_READS_TOO_SHORT ] = otherStats[ INDEX_NUM_READS_TOO_SHORT ]
-				+ stats[ INDEX_NUM_READS_TOO_SHORT ];
-			stats[ INDEX_NUM_READS_INVALID_FORMAT ] = otherStats[ INDEX_NUM_READS_INVALID_FORMAT ]
-				+ stats[ INDEX_NUM_READS_INVALID_FORMAT ];
+			stats[ INDEX_NUM_READS_TOO_SHORT ] =
+				otherStats[ INDEX_NUM_READS_TOO_SHORT ] + stats[ INDEX_NUM_READS_TOO_SHORT ];
+			stats[ INDEX_NUM_READS_INVALID_FORMAT ] =
+				otherStats[ INDEX_NUM_READS_INVALID_FORMAT ] + stats[ INDEX_NUM_READS_INVALID_FORMAT ];
 			stats[ INDEX_MIN_READS ] = Math.min( otherStats[ INDEX_MIN_READS ], stats[ INDEX_MIN_READS ] );
 			stats[ INDEX_MAX_READS ] = Math.max( otherStats[ INDEX_MAX_READS ], stats[ INDEX_MAX_READS ] );
 
@@ -429,7 +427,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private static Long[] initStats() {
 		final Long[] stats = new Long[ 8 ];
-		for( int i = 0; i < stats.length; i++ ) stats[ i ] = 0L;
+		for( int i = 0; i < stats.length; i++ )
+			stats[ i ] = 0L;
 		return stats;
 	}
 

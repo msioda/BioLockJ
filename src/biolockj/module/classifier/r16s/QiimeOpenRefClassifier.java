@@ -49,8 +49,8 @@ public class QiimeOpenRefClassifier extends QiimeClassifier {
 
 		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) {
 			final String otusToFilter = tempDir + "chimeras.fasta";
-			lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET
-				+ ".fna" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir + "nochimeras.fasta" );
+			lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET +
+				".fna" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir + "nochimeras.fasta" );
 			lines
 				.add( SCRIPT_FILTER_OTUS + " -i " + biomFile + " -e " + otusToFilter + " -o " + outputDir + OTU_TABLE );
 		} else lines.add( "cp " + biomFile + " " + outputDir + OTU_TABLE );

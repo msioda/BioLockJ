@@ -37,7 +37,6 @@ ENV EFS="/mnt/efs"
 ENV BLJ_CONFIG="${EFS}/config"
 ENV BLJ_DB="${EFS}/db"
 ENV BLJ_DEFAULT_DB="/mnt/db"
-#ENV BLJ_HOST_HOME="/mnt/host_home"
 ENV BLJ_HOST_HOME="/home/ec2-user"
 ENV BLJ_INPUT="${EFS}/input"
 ENV BLJ_META="${EFS}/metadata"
@@ -55,7 +54,6 @@ RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \
 #5.) Set the timezone to EST
 RUN ln -fs /usr/share/zoneinfo/US/Eastern /etc/localtime && \
 	dpkg-reconfigure -f noninteractive tzdata
-
 
 #6.) Install MetaPhlAn2
 ENV mpa_dir=/usr/local/bin

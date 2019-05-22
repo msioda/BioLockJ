@@ -12,12 +12,8 @@
 package biolockj.module.seq;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import java.util.*;
+import biolockj.*;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
@@ -54,8 +50,8 @@ public class AwkFastaConverter extends SeqModuleImpl {
 			else if( SeqUtil.isFastQ() ) lines.add( convert2fastA( filePath, fileId + dirExt, outDir ) );
 
 			if( !SeqUtil.isGzipped( f.getName() ) && SeqUtil.isFastA() ) {
-				Log.warn( getClass(), "Remove this BioModule from Config:  "
-					+ " Files are already in decompressed FastA format!  It is unnecessary to make duplicate files..." );
+				Log.warn( getClass(), "Remove this BioModule from Config:  " +
+					" Files are already in decompressed FastA format!  It is unnecessary to make duplicate files..." );
 				lines.add( copyToOutputDir( filePath, fileId + dirExt + ext ) );
 			}
 
@@ -95,8 +91,8 @@ public class AwkFastaConverter extends SeqModuleImpl {
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_CONVERT_TO_FASTA + "() {" );
-		lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
-			+ " '{ if(NR%4==1) { printf( \">%s \\n\",substr($0,2) ); } else if(NR%4==2) print; }' > $2 " );
+		lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK ) +
+			" '{ if(NR%4==1) { printf( \">%s \\n\",substr($0,2) ); } else if(NR%4==2) print; }' > $2 " );
 		lines.add( "}" + RETURN );
 		if( hasGzipped() ) {
 			lines.add( "function " + FUNCTION_GUNZIP + "() {" );
@@ -106,8 +102,8 @@ public class AwkFastaConverter extends SeqModuleImpl {
 
 		if( Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ ) ) {
 			lines.add( "function " + FUNCTION_CONVERT_454 + "() {" );
-			lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK )
-				+ " '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf $0;}' > $2 " );
+			lines.add( "cat $1 | " + Config.getExe( this, Constants.EXE_AWK ) +
+				" '{if(substr($0,0,1) == \">\" ) { printf(\"\\n%s\\n\", $0); } else printf $0;}' > $2 " );
 			lines.add( "}" + RETURN );
 		}
 		return lines;

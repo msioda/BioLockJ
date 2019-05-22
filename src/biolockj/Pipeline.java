@@ -17,9 +17,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.ScriptModule;
+import biolockj.module.*;
 import biolockj.module.report.Email;
 import biolockj.module.report.r.R_Module;
 import biolockj.util.*;
@@ -44,8 +42,8 @@ public class Pipeline {
 		refreshRCacheIfNeeded( module );
 		module.executeTask();
 
-		final boolean runDetached = module instanceof JavaModule && hasScripts( module )
-			&& Config.getBoolean( module, Constants.DETACH_JAVA_MODULES );
+		final boolean runDetached = module instanceof JavaModule && hasScripts( module ) &&
+			Config.getBoolean( module, Constants.DETACH_JAVA_MODULES );
 
 		if( runDetached ) MasterConfigUtil.saveMasterConfig();
 
@@ -89,8 +87,8 @@ public class Pipeline {
 	 * @throws Exception if errors occur
 	 */
 	public static void initializePipeline() throws Exception {
-		Log.info( Pipeline.class, "Initialize " + ( DockerUtil.isDirectMode() ? "DIRECT module "
-			: DockerUtil.inAwsEnv() ? "AWS ": DockerUtil.inDockerEnv() ? "DOCKER ": "" ) + "pipeline" );
+		Log.info( Pipeline.class, "Initialize " + ( DockerUtil.isDirectMode() ? "DIRECT module ":
+			DockerUtil.inAwsEnv() ? "AWS ": DockerUtil.inDockerEnv() ? "DOCKER ": "" ) + "pipeline" );
 		bioModules = BioModuleFactory.buildPipeline();
 		if( !DockerUtil.isDirectMode() )
 			Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
@@ -115,8 +113,8 @@ public class Pipeline {
 			SummaryUtil.reportSuccess( module );
 			MasterConfigUtil.saveMasterConfig();
 		} catch( final Exception ex ) {
-			Log.error( Pipeline.class, "Errors occurred attempting to run DIRECT module [ ID=" + id + " ] --> "
-				+ module.getClass().getSimpleName(), ex );
+			Log.error( Pipeline.class, "Errors occurred attempting to run DIRECT module [ ID=" + id + " ] --> " +
+				module.getClass().getSimpleName(), ex );
 			module.moduleFailed();
 			SummaryUtil.reportFailure( ex );
 		}
@@ -147,8 +145,8 @@ public class Pipeline {
 					if( module instanceof Email ) emailMod = module;
 					if( !foundIncomplete && !ModuleUtil.isComplete( module ) ) foundIncomplete = true;
 					if( foundIncomplete && emailMod != null ) {
-						Log.warn( Pipeline.class, "Attempting to send failure notification with Email module: "
-							+ emailMod.getModuleDir().getName() );
+						Log.warn( Pipeline.class, "Attempting to send failure notification with Email module: " +
+							emailMod.getModuleDir().getName() );
 						emailMod.executeTask();
 						Log.warn( Pipeline.class, "Attempt appears to be a success!" );
 						break;
@@ -257,9 +255,9 @@ public class Pipeline {
 			numFailed = numFailed + ( testFailure.isFile() ? 1: 0 );
 		}
 
-		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success="
-			+ numSuccess + "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed )
-			+ "; Queued=" + ( numScripts - numStarted );
+		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success=" +
+			numSuccess + "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) +
+			"; Queued=" + ( numScripts - numStarted );
 
 		if( !statusMsg.equals( logMsg ) ) {
 			statusMsg = logMsg;
@@ -299,8 +297,8 @@ public class Pipeline {
 	}
 
 	private static Collection<File> getWorkerScripts( final ScriptModule module ) throws Exception {
-		final Collection<
-			File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), getWorkerScriptFilter( module ), null );
+		final Collection<File> scriptFiles =
+			FileUtils.listFiles( module.getScriptDir(), getWorkerScriptFilter( module ), null );
 
 		final File mainScript = module.getMainScript();
 		if( !( module instanceof R_Module ) && mainScript != null ) scriptFiles.remove( mainScript );
@@ -314,8 +312,8 @@ public class Pipeline {
 	}
 
 	private static boolean hasScripts( final BioModule module ) {
-		final File scriptDir = new File(
-			module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
+		final File scriptDir =
+			new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		return module instanceof ScriptModule && scriptDir.isDirectory() && scriptDir.list().length > 0;
 	}
 
@@ -326,14 +324,14 @@ public class Pipeline {
 	private static void logScriptTimeOutMsg( final ScriptModule module ) throws Exception {
 		final String prompt = "------> ";
 		Log.info( Pipeline.class, prompt + "Java program wakes every 60 seconds to check execution progress" );
-		Log.info( Pipeline.class, prompt + "Status determined by existance of indicator files in "
-			+ module.getScriptDir().getAbsolutePath() );
-		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + Constants.SCRIPT_STARTED + "\", \"_"
-			+ Constants.SCRIPT_SUCCESS + "\", or \"_" + Constants.SCRIPT_FAILURES + "\"" );
+		Log.info( Pipeline.class, prompt + "Status determined by existance of indicator files in " +
+			module.getScriptDir().getAbsolutePath() );
+		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + Constants.SCRIPT_STARTED + "\", \"_" +
+			Constants.SCRIPT_SUCCESS + "\", or \"_" + Constants.SCRIPT_FAILURES + "\"" );
 		Log.info( Pipeline.class,
 			prompt + "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
-		if( module.getTimeout() == null || module.getTimeout() > 10 ) Log.info( Pipeline.class, prompt
-			+ "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
+		if( module.getTimeout() == null || module.getTimeout() > 10 ) Log.info( Pipeline.class, prompt +
+			"Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
 
 		if( module.getTimeout() != null ) Log.info( Pipeline.class,
 			prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = " + module.getTimeout() );

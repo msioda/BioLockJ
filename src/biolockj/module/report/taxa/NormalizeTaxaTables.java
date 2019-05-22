@@ -13,13 +13,9 @@ package biolockj.module.report.taxa;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.TaxaUtil;
+import biolockj.util.*;
 
 /**
  * This utility is used to normalize and/or log-transform the raw OTU counts using the formulas:

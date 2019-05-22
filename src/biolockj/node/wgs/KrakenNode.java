@@ -53,8 +53,8 @@ public class KrakenNode extends OtuNodeImpl {
 			while( st.hasMoreTokens() )
 				Log.warn( getClass(), "Extra Kraken token [ more than expected 2! ]: " + st.nextToken() );
 
-			throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + Constants.RETURN
-				+ "Kraken output must have exactly 2 tab delimited columns per line. " );
+			throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + Constants.RETURN +
+				"Kraken output must have exactly 2 tab delimited columns per line. " );
 		}
 	}
 

@@ -15,9 +15,7 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
-import biolockj.exception.SequnceFormatException;
+import biolockj.exception.*;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
 import biolockj.module.implicit.RegisterNumReads;
@@ -99,8 +97,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		addBadFilesToSummary();
 
 		String reqPrimerMsg = "";
-		if( Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) ) reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.TRUE
-			+ " --> Sequences without a primer were discarded";
+		if( Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) ) reqPrimerMsg =
+			INPUT_REQUIRE_PRIMER + "=" + Constants.TRUE + " --> Sequences without a primer were discarded";
 		else reqPrimerMsg = INPUT_REQUIRE_PRIMER + "=" + Constants.FALSE + " --> Sequences without a primer were saved";
 		Log.warn( getClass(), reqPrimerMsg );
 		summaryMsgs.add( reqPrimerMsg );
@@ -218,21 +216,21 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 		final long total = totalNoPrimer + totalWithPrimer;
 		if( total > 1 ) {
 
-			summaryMsgs.add( "Mean % reads with primer = " + totalWithPrimer + "/" + total + " = "
-				+ BioLockJUtil.formatPercentage( totalWithPrimer, total ) );
+			summaryMsgs.add( "Mean % reads with primer = " + totalWithPrimer + "/" + total + " = " +
+				BioLockJUtil.formatPercentage( totalWithPrimer, total ) );
 
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 
 			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-				summaryMsgs.add( "Mean % Forward reads with primer = " + totalPrimerF + "/" + totalF + " = "
-					+ BioLockJUtil.formatPercentage( totalPrimerF, totalF ) );
+				summaryMsgs.add( "Mean % Forward reads with primer = " + totalPrimerF + "/" + totalF + " = " +
+					BioLockJUtil.formatPercentage( totalPrimerF, totalF ) );
 				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
-				summaryMsgs.add( "Mean % Reverse reads with primer  = " + totalPrimerR + "/" + totalR + " = "
-					+ BioLockJUtil.formatPercentage( totalPrimerR, totalR ) );
+				summaryMsgs.add( "Mean % Reverse reads with primer  = " + totalPrimerR + "/" + totalR + " = " +
+					BioLockJUtil.formatPercentage( totalPrimerR, totalR ) );
 				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 				if( !Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) )
-					summaryMsgs.add( "Mean % Paired reads with matching primer = " + totalValid + "/" + total + " = "
-						+ BioLockJUtil.formatPercentage( totalValid, total ) );
+					summaryMsgs.add( "Mean % Paired reads with matching primer = " + totalValid + "/" + total + " = " +
+						BioLockJUtil.formatPercentage( totalValid, total ) );
 
 				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			}
@@ -299,8 +297,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 						if( regexSeq.startsWith( "^" ) ) fwMergePrimerFound = true;
 						else if( seq.endsWith( "$" ) ) rvMergePrimerFound = true;
 						else throw new Exception(
-							"INVALID PRIMER!  Primers must start with \"^\" or end with \"$\"  Update primer file: "
-								+ trimSeqFile.getAbsolutePath() );
+							"INVALID PRIMER!  Primers must start with \"^\" or end with \"$\"  Update primer file: " +
+								trimSeqFile.getAbsolutePath() );
 
 						primers.add( regexSeq );
 
@@ -329,8 +327,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	}
 
 	private String getTrimFilePath( final File file ) throws Exception {
-		return getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( file.getName() )
-			+ SeqUtil.getReadDirectionSuffix( file ) + "." + SeqUtil.getSeqType();
+		return getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( file.getName() ) +
+			SeqUtil.getReadDirectionSuffix( file ) + "." + SeqUtil.getSeqType();
 	}
 
 	private Set<String> getValidHeaders( final File file, final Set<String> primers ) throws Exception {
@@ -488,9 +486,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				seqLines.add( line );
 
 				if( seqLines.size() == SeqUtil.getNumLinesPerRead() ) {
-					final boolean validRecord = found && ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
-						? validHeaders.contains( seqLines.get( 0 ) )
-						: true );
+					final boolean validRecord = found && ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ?
+						validHeaders.contains( seqLines.get( 0 ) ): true );
 
 					if( !Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) || validRecord ) {
 						final Long x = this.seqsWithPrimersTrimmed.get( file );
@@ -549,21 +546,19 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	 */
 	public static File getSeqPrimerFile() throws ConfigNotFoundException, ConfigPathException {
 		if( DockerUtil.inDockerEnv() ) {
-			File primers = DockerUtil.getDockerVolumeFile( Constants.INPUT_TRIM_SEQ_FILE, DockerUtil.DOCKER_PRIMER_DIR );
+			final File primers =
+				DockerUtil.getDockerVolumeFile( Constants.INPUT_TRIM_SEQ_FILE, DockerUtil.DOCKER_PRIMER_DIR );
 			if( !primers.isFile() )
 				throw new ConfigPathException( primers, "Seq Primer file not found in Docker container" );
+			return primers;
 		}
 		return Config.requireExistingFile( null, Constants.INPUT_TRIM_SEQ_FILE );
 	}
 
 	private final DecimalFormat df = new DecimalFormat( "##.##" );
-
 	private boolean foundPaired = false;
-
 	private boolean mergedReadTwoPrimers = false;
-
 	private final Map<String, Map<String, String>> missingBothPrimers = new HashMap<>();
-
 	private final Map<String, Map<String, String>> missingFwPrimers = new HashMap<>();
 	private final Map<String, Map<String, String>> missingRvPrimers = new HashMap<>();
 	private final Map<String, Long> numLinesNoPrimer = new HashMap<>();

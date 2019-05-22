@@ -15,9 +15,7 @@ import java.io.File;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
-import biolockj.exception.ConfigViolationException;
+import biolockj.exception.*;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
 
@@ -67,8 +65,8 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 			final String outputFile = getOutputDir().getAbsolutePath() + File.separator + fileId + Constants.PROCESSED;
 			final String bowtie2Out = getTempDir().getAbsolutePath() + File.separator + fileId + BOWTIE_EXT;
 			final ArrayList<String> lines = new ArrayList<>();
-			lines.add( FUNCTION_RUN_METAPHLAN + " " + file.getAbsolutePath() + "," + map.get( file ).getAbsolutePath()
-				+ " " + bowtie2Out + " " + outputFile );
+			lines.add( FUNCTION_RUN_METAPHLAN + " " + file.getAbsolutePath() + "," + map.get( file ).getAbsolutePath() +
+				" " + bowtie2Out + " " + outputFile );
 			data.add( lines );
 		}
 
@@ -106,9 +104,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getClassifierParams() throws Exception {
 		final List<String> params = Config.getList( this, EXE_METAPHLAN_PARAMS );
-		if( Config.getString( this, METAPHLAN2_DB ) != null )
-			params.add( ALT_DB_PARAM + " " + getMpaDB().getAbsolutePath() );
-
+		if( getMpaDB() != null ) params.add( ALT_DB_PARAM + " " + getMpaDB().getAbsolutePath() );
 		return params;
 	}
 
@@ -143,28 +139,29 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 			final String params = BioLockJUtil.join( getClassifierParams() );
 
 			if( params.indexOf( "--input_type " ) > -1 )
-				throw new Exception( "Invalid classifier option (--input_type) found in property("
-					+ EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value by examinging one of the input files." );
-			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
-				throw new Exception( "Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-					+ EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
+				throw new Exception( "Invalid classifier option (--input_type) found in property(" +
+					EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value by examinging one of the input files." );
+			if( params.indexOf( NUM_THREADS_PARAM ) > -1 ) throw new Exception(
+				"Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property(" +
+					EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
 			if( params.indexOf( "--bowtie2out " ) > -1 )
-				throw new Exception( "Invalid classifier option (--bowtie2out) found in property("
-					+ EXE_METAPHLAN_PARAMS + "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
+				throw new Exception( "Invalid classifier option (--bowtie2out) found in property(" +
+					EXE_METAPHLAN_PARAMS + "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
 			if( params.indexOf( "-t rel_ab_w_read_stats " ) > -1 )
-				throw new Exception( "Invalid classifier option (-t rel_ab_w_read_stats). BioLockJ hard codes this "
-					+ "option for MetaPhlAn so must not be included in the property file." );
+				throw new Exception( "Invalid classifier option (-t rel_ab_w_read_stats). BioLockJ hard codes this " +
+					"option for MetaPhlAn so must not be included in the property file." );
 			if( params.indexOf( "--tax_lev " ) > -1 )
-				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + EXE_METAPHLAN_PARAMS
-					+ "). BioLockJ sets this value based on: " + Constants.REPORT_TAXONOMY_LEVELS );
-			if( params.indexOf( "-s " ) > -1 ) throw new Exception( "Invalid classifier option (-s) found in property("
-				+ EXE_METAPHLAN_PARAMS + "). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
+				throw new Exception( "Invalid classifier option (--tax_lev) found in property(" + EXE_METAPHLAN_PARAMS +
+					"). BioLockJ sets this value based on: " + Constants.REPORT_TAXONOMY_LEVELS );
+			if( params.indexOf( "-s " ) > -1 )
+				throw new Exception( "Invalid classifier option (-s) found in property(" + EXE_METAPHLAN_PARAMS +
+					"). SAM output not supported.  BioLockJ outputs " + TSV_EXT + " files." );
 			if( params.indexOf( "-o " ) > -1 )
-				throw new Exception( "Invalid classifier option (-o) found in property(" + EXE_METAPHLAN_PARAMS
-					+ "). BioLockJ outputs results to: " + getOutputDir().getAbsolutePath() + File.separator );
+				throw new Exception( "Invalid classifier option (-o) found in property(" + EXE_METAPHLAN_PARAMS +
+					"). BioLockJ outputs results to: " + getOutputDir().getAbsolutePath() + File.separator );
 
-			this.defaultSwitches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM )
-				+ "-t rel_ab_w_read_stats ";
+			this.defaultSwitches =
+				getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + "-t rel_ab_w_read_stats ";
 
 			if( TaxaUtil.getTaxaLevels().size() == 1 )
 				this.defaultSwitches += "--tax_lev " + this.taxaLevelMap.get( TaxaUtil.getTaxaLevels().get( 0 ) ) + " ";
@@ -174,18 +171,15 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	}
 
 	private File getMpaDB() throws Exception {
-		final String path = Config.getString( this, METAPHLAN2_DB );
-		if( path == null ) return null;
-		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
-		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		if( getDB() == null ) return null;
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, null );
 		return getDB();
 	}
 
 	private File getMpaPkl() throws Exception {
 		final String path = Config.getString( this, METAPHLAN2_MPA_PKL );
 		if( path == null ) return null;
-		if( DockerUtil.inDockerEnv() )
-			return new File( getMpaDB().getAbsolutePath() + File.separator + new File( path ).getName() );
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, path );
 		return Config.requireExistingFile( this, METAPHLAN2_MPA_PKL );
 	}
 

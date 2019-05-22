@@ -11,13 +11,9 @@ package biolockj.module.report.otu;
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
@@ -64,8 +60,8 @@ public class RarefyOtuCounts extends OtuCountModule {
 		final int pad = SummaryUtil.getPad( label );
 		String summary = SummaryUtil.getCountSummary( this.hitsPerSample, "OTUs", false );
 		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-			+ BioLockJUtil.getCollectionAsString( this.sampleIds );
+		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) +
+			BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.hitsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -109,8 +105,8 @@ public class RarefyOtuCounts extends OtuCountModule {
 			.intValue();
 
 		final String otuCountField = ParserModuleImpl.getOtuCountField();
-		if( otuCountField == null || !MetaUtil.getFieldNames().contains( otuCountField )
-			|| MetaUtil.getFieldValues( otuCountField, true ).isEmpty() )
+		if( otuCountField == null || !MetaUtil.getFieldNames().contains( otuCountField ) ||
+			MetaUtil.getFieldValues( otuCountField, true ).isEmpty() )
 			Log.warn( getClass(),
 				"Cannot remove low abundant fields without OTU Count files, field is empty: " + otuCountField );
 		else {
@@ -133,7 +129,8 @@ public class RarefyOtuCounts extends OtuCountModule {
 							}
 					}
 				} catch( final Exception ex ) {
-					Log.warn( getClass(), "Quiet try-catch for format exception: " + sampleId );
+					Log.warn( getClass(),
+						"Quiet try-catch for format exception: " + sampleId + " --> " + ex.getMessage() );
 				}
 			}
 
@@ -198,8 +195,9 @@ public class RarefyOtuCounts extends OtuCountModule {
 		final TreeMap<String, Long> meanCountValues = new TreeMap<>();
 		int i = 0;
 		for( final String otu: otuCount.keySet() ) {
-			final long avg = new Integer(
-				Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) ) ).longValue();
+			final long avg =
+				new Integer( Math.round( otuCount.get( otu ) / Config.requirePositiveInteger( this, NUM_ITERATIONS ) ) )
+					.longValue();
 			if( avg > 0 ) {
 				meanCountValues.put( otu, avg );
 				totalSampleOtuCount += avg;

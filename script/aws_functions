@@ -1,7 +1,7 @@
 #!/bin/bash
 ##############################################################
 ##                                                          ##
-##  This script is used for AWS core functions + logic       ##
+##  This script is used for AWS core functions + logic      ##
 ##                                                          ##
 ##############################################################
 . "${BLJ_SCRIPT}/aws_config_lib"
@@ -47,8 +47,9 @@ build_s3() {
 		if [ ${#awsS3} -eq 0 ] || [ "$awsS3" == "None" ]; then
 			exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: $awsS3"
 		fi
-		set_blj_prop awsS3 ${awsS3:1}
-		aws_log "Set awsS3=${awsS3:1}"
+		awsS3=${awsS3:1}
+		set_blj_prop awsS3 ${awsS3}
+		aws_log "Set awsS3=${awsS3}"
 	fi
 	
 	s3items=$(aws s3api list-objects --bucket ${awsS3} --query "Contents[].Key")
@@ -141,15 +142,13 @@ is_stack_complete() {
 
 # Main method #1, called to build AWS environment and launch BioLockJ pipeline on AWS
 # Param 1 - Pipeline Config file-path
-# Param 2 - Flag to use existing AWS cloud
 run_aws() {
 	aws_log "Starting --> [  run_aws ${@}  ]"
 	[ ! -f "${1}" ] && exit_script "Error [ aws_functions.run_aws() ]: Required pipeline Config file not found: \"$1\""
-	init_aws_config "${1}" ${2}
-	[ $# -eq 1 ] && deploy_cloud_formation
-	launch_ec2_head_node ${2}
+	init_aws_config "${1}"
+	deploy_cloud_formation
+	launch_ec2_head_node
 }
-
 
 # Create new stack name if awsStack is undefined in AWS Config
 set_stack_name() {

@@ -14,9 +14,7 @@ package biolockj.module.report.r;
 import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.commons.io.filefilter.*;
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.module.BioModule;
@@ -73,8 +71,8 @@ public class R_CalculateStats extends R_Module {
 			return statsFile;
 		}
 
-		throw new Exception( "Only 1 " + R_CalculateStats.class.getSimpleName() + " output file with suffix = \""
-			+ querySuffix + "\" should exist.  Found " + count + " files --> " + results );
+		throw new Exception( "Only 1 " + R_CalculateStats.class.getSimpleName() + " output file with suffix = \"" +
+			querySuffix + "\" should exist.  Found " + count + " files --> " + results );
 
 	}
 

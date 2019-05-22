@@ -18,9 +18,7 @@ import biolockj.Constants;
 import biolockj.Log;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
-import biolockj.module.BioModule;
-import biolockj.module.DatabaseModule;
-import biolockj.module.SeqModuleImpl;
+import biolockj.module.*;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.util.ModuleUtil;
 import biolockj.util.SummaryUtil;
@@ -90,10 +88,20 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		return type;
 	}
 
+	/**
+	 * DB directory path getter
+	 * 
+	 * @return DB directory
+	 */
 	protected File getDbCache() {
 		return this.dbCache;
 	}
 
+	/**
+	 * Set DB cache directory path on 1st access
+	 * 
+	 * @param db Database file
+	 */
 	protected void setDbCache( final File db ) {
 		if( db != null ) Log.info( getClass(), "Set DB cache: " + db.getAbsolutePath() );
 		this.dbCache = db;
@@ -109,8 +117,8 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 		for( final BioModule module: ModuleUtil.getModules( this, true ) )
 			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) break;
 			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
-				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
-					+ " must run before the ParserModule." );
+				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName() +
+					" must run before the ParserModule." );
 	}
 
 	private String getSeqType() {

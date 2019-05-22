@@ -13,9 +13,7 @@ package biolockj.util;
 
 import java.io.File;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 
@@ -97,8 +95,8 @@ public class TaxaUtil {
 	 * @param level {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
 	 * @return TreeMap(sampleId, TreeMap(taxa, count))
 	 */
-	public static TreeMap<String, TreeMap<String, Long>> getLevelTaxaCounts(
-		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final String level ) {
+	public static TreeMap<String, TreeMap<String, Long>>
+		getLevelTaxaCounts( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts, final String level ) {
 		final TreeMap<String, TreeMap<String, Long>> taxaCounts = new TreeMap<>();
 
 		for( final String sampleId: sampleOtuCounts.keySet() ) {
@@ -192,8 +190,8 @@ public class TaxaUtil {
 		if( mySuffix != null && !mySuffix.endsWith( "_" ) ) mySuffix += "_";
 		if( mySuffix != null && !mySuffix.startsWith( "_" ) ) mySuffix = "_" + mySuffix;
 		if( mySuffix == null ) mySuffix = "_";
-		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + mySuffix
-			+ level + Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + mySuffix +
+			level + Constants.TSV_EXT );
 	}
 
 	/**
@@ -221,8 +219,8 @@ public class TaxaUtil {
 	 */
 	public static List<String> initTaxaLevels() throws ConfigNotFoundException, ConfigFormatException {
 		configLevels = new ArrayList<>();
-		final String errorMsg = "Property only accepts valid taxonomy levels ==>  "
-			+ BioLockJUtil.getCollectionAsString( TAXA_LEVELS );
+		final String errorMsg =
+			"Property only accepts valid taxonomy levels ==>  " + BioLockJUtil.getCollectionAsString( TAXA_LEVELS );
 		final Set<String> configuredLevels = new HashSet<>();
 		final List<String> validOptions = allTaxonomyLevels();
 
@@ -254,8 +252,8 @@ public class TaxaUtil {
 	 */
 	public static boolean isLogNormalizedTaxaFile( final File file ) {
 		for( final String level: getTaxaLevels() )
-			if( file.getName().contains( "_" + TAXA_TABLE + "_Log" )
-				&& file.getName().endsWith( "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) ) return true;
+			if( file.getName().contains( "_" + TAXA_TABLE + "_Log" ) &&
+				file.getName().endsWith( "_" + NORMALIZED + "_" + level + Constants.TSV_EXT ) ) return true;
 		return false;
 	}
 

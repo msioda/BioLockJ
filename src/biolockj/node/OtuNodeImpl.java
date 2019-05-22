@@ -40,8 +40,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	@Override
 	public void addTaxa( final String taxa, final String level ) throws Exception {
 		if( level == null || taxa == null || level.trim().isEmpty() || taxa.trim().isEmpty() ) {
-			Log.debug( getClass(), "ID=[ " + this.sampleId + " ] --> Taxa missing for: level=[ " + level + " ]; Taxa=[ "
-				+ taxa + " ]; Line =[ " + this.line + " ]" );
+			Log.debug( getClass(), "ID=[ " + this.sampleId + " ] --> Taxa missing for: level=[ " + level +
+				" ]; Taxa=[ " + taxa + " ]; Line =[ " + this.line + " ]" );
 			return;
 		}
 
@@ -71,8 +71,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 			return;
 		}
 
-		if( this.taxaMap.get( level ) != null ) Log.debug( getClass(), this.sampleId + " overwriting OTU: "
-			+ this.taxaMap.get( level ) + " with " + taxa + "  --> Line = " + this.line );
+		if( this.taxaMap.get( level ) != null ) Log.debug( getClass(), this.sampleId + " overwriting OTU: " +
+			this.taxaMap.get( level ) + " with " + taxa + "  --> Line = " + this.line );
 
 		// Log.debug( getClass(), "taxaMap.put( level=" + level + ", taxa=" + taxa + " )" );
 		this.taxaMap.put( level, taxa );
@@ -149,8 +149,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	@Override
 	public Map<String, String> getTaxaMap() throws Exception {
 		if( !this.taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) ) {
-			Log.debug( getClass(), "Omit incomplete [ " + this.sampleId + " ] OTU missing the top taxonomy level: "
-				+ TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "": ", classifier output = " + this.line ) );
+			Log.debug( getClass(), "Omit incomplete [ " + this.sampleId + " ] OTU missing the top taxonomy level: " +
+				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "": ", classifier output = " + this.line ) );
 			return null;
 		}
 

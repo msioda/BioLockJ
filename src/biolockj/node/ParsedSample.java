@@ -57,12 +57,15 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 	}
 
 	@Override
-	public boolean equals( final Object o ) {
-		if( this.sampleId == null || o == null || !( o instanceof ParsedSample ) ) return false;
-		final ParsedSample ps = (ParsedSample) o;
-		if( ps.getSampleId() == null || ps.getSampleId().isEmpty() ) return false;
-		return ps.getSampleId().equals( this.sampleId );
-
+	public boolean equals( final Object obj ) {
+		if( this == obj ) return true;
+		if( obj == null ) return false;
+		if( !( obj instanceof ParsedSample ) ) return false;
+		final ParsedSample other = (ParsedSample) obj;
+		if( getSampleId() == null ) {
+			if( other.getSampleId() != null ) return false;
+		} else if( !getSampleId().equals( other.getSampleId() ) ) return false;
+		return true;
 	}
 
 	/**
@@ -77,8 +80,8 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 	 */
 	public TreeMap<String, Integer> getOtuCounts() throws Exception {
 		// Log.debug( getClass(), "Calling getOtuCounts() for: " + sampleId );
-		if( this.otuCounts == null ) throw new Exception( getClass().getName()
-			+ ".getOtuCounts() should be called only once - cached data is cleared after 1st call." );
+		if( this.otuCounts == null ) throw new Exception( getClass().getName() +
+			".getOtuCounts() should be called only once - cached data is cleared after 1st call." );
 		else if( this.otuCounts.isEmpty() ) {
 			Log.debug( getClass(), "No valid OTUs found for: " + this.sampleId );
 			return null;
@@ -99,8 +102,8 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 					String parentTaxa = null;
 					for( final String level: TaxaUtil.getTaxaLevelSpan() )
 						if( otu.contains( level ) ) parentTaxa = TaxaUtil.getTaxaName( otu, level );
-						else if( parentTaxa != null ) otu += Constants.SEPARATOR
-							+ OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
+						else if( parentTaxa != null ) otu += Constants.SEPARATOR +
+							OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
 
 					final int diff = otuCount - totalCount;
 					fullPathOtuCounts.put( otu, diff );
@@ -121,6 +124,14 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 	 */
 	public String getSampleId() {
 		return this.sampleId;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ( getSampleId() == null ? 0: getSampleId().hashCode() );
+		return result;
 	}
 
 	private static Set<String> getChildren( final TreeMap<String, Integer> otuCounts, final String otu ) {

@@ -11,9 +11,7 @@
  */
 package biolockj.node.r16s;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 import biolockj.Constants;
 import biolockj.node.OtuNodeImpl;
 

@@ -15,12 +15,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.ScriptModule;
+import biolockj.*;
+import biolockj.module.*;
 
 /**
  * This util adds auxiliary log info to BioLockJ log file
@@ -52,8 +48,8 @@ public class LogUtil {
 	}
 
 	private static File getModuleLog( final BioModule module ) {
-		return new File( module.getTempDir().getAbsolutePath() + File.separator + module.getClass().getSimpleName()
-			+ Constants.LOG_EXT );
+		return new File( module.getTempDir().getAbsolutePath() + File.separator + module.getClass().getSimpleName() +
+			Constants.LOG_EXT );
 	}
 
 	private static List<String> getProfileLines() {
@@ -61,8 +57,8 @@ public class LogUtil {
 			final File bashProfile = new File( Config.requireString( null, Constants.USER_PROFILE ) );
 			if( bashProfile.isFile() ) profile.addAll( cacheLog( bashProfile ) );
 		} catch( final Exception ex ) {
-			Log.warn( LogUtil.class, "Config property [ " + Constants.USER_PROFILE
-				+ " ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile" );
+			Log.warn( LogUtil.class, "Config property [ " + Constants.USER_PROFILE +
+				" ] is undefined.  Set to appropriate env profile, for example: ~/.bash_profile: " + ex.getMessage() );
 		}
 		return profile;
 	}

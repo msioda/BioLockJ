@@ -12,17 +12,13 @@
 package biolockj.module.classifier.wgs;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.classifier.ClassifierModuleImpl;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.DockerUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule assigns taxonomy to WGS sequences and translates the results into mpa-format. Command line options are
@@ -51,8 +47,8 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 		for( final File file: files ) {
 			final String fileId = SeqUtil.getSampleId( file.getName() );
 			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
-			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId
-				+ Constants.PROCESSED;
+			final String krakenOutput =
+				getOutputDir().getAbsolutePath() + File.separator + fileId + Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>( 2 );
 			lines.add( FUNCTION_KRAKEN + " " + tempFile + " " + file.getAbsolutePath() );
 			lines.add( FUNCTION_TRANSLATE + " " + tempFile + " " + krakenOutput );
@@ -81,11 +77,11 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 		for( final File file: map.keySet() ) {
 			final String fileId = SeqUtil.getSampleId( file.getName() );
 			final String tempFile = getTempDir().getAbsolutePath() + File.separator + fileId + KRAKEN_FILE;
-			final String krakenOutput = getOutputDir().getAbsolutePath() + File.separator + fileId
-				+ Constants.PROCESSED;
+			final String krakenOutput =
+				getOutputDir().getAbsolutePath() + File.separator + fileId + Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>( 2 );
-			lines.add( FUNCTION_KRAKEN + " " + tempFile + " " + file.getAbsolutePath() + " "
-				+ map.get( file ).getAbsolutePath() );
+			lines.add( FUNCTION_KRAKEN + " " + tempFile + " " + file.getAbsolutePath() + " " +
+				map.get( file ).getAbsolutePath() );
 			lines.add( FUNCTION_TRANSLATE + " " + tempFile + " " + krakenOutput );
 			data.add( lines );
 		}
@@ -142,13 +138,8 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
-	protected File getDockerDB( final String property ) throws ConfigPathException, ConfigNotFoundException {
-		return DockerUtil.getDockerDB( this, Config.requireString( this, property ) );
-	}
-
 	private File getKrakenDB() throws ConfigPathException, ConfigNotFoundException {
-		if( DockerUtil.hasDB( this ) ) return new File( DockerUtil.DOCKER_DB_DIR );
-		if( DockerUtil.inDockerEnv() ) return new File( DockerUtil.DOCKER_DEFAULT_DB_DIR );
+		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, getDB().getAbsolutePath() );
 		return getDB();
 	}
 
@@ -160,17 +151,17 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 			if( params.indexOf( FASTA_PARAM ) > -1 ) classifierParams.remove( FASTA_PARAM );
 			if( params.indexOf( FASTQ_PARAM ) > -1 ) classifierParams.remove( FASTQ_PARAM );
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
-				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property("
-					+ getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
+				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property(" +
+					getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
 			if( params.indexOf( PAIRED_PARAM ) > -1 )
-				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property("
-					+ getExeParamName() + "). BioLockJ derives this value by analyzing input sequence files" );
-			if( params.indexOf( OUTPUT_PARAM ) > -1 ) throw new Exception( "Invalid classifier option (" + OUTPUT_PARAM
-				+ ") found in property(" + getExeParamName()
-				+ "). BioLockJ hard codes this file path based on sequence files names in: " + Constants.INPUT_DIRS );
+				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property(" +
+					getExeParamName() + "). BioLockJ derives this value by analyzing input sequence files" );
+			if( params.indexOf( OUTPUT_PARAM ) > -1 ) throw new Exception(
+				"Invalid classifier option (" + OUTPUT_PARAM + ") found in property(" + getExeParamName() +
+					"). BioLockJ hard codes this file path based on sequence files names in: " + Constants.INPUT_DIRS );
 			if( params.indexOf( DB_PARAM ) > -1 ) throw new Exception(
-				"Invalid classifier option (" + DB_PARAM + ") found in property(" + getExeParamName()
-					+ "). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
+				"Invalid classifier option (" + DB_PARAM + ") found in property(" + getExeParamName() +
+					"). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
 			if( params.indexOf( "--help " ) > -1 ) throw new Exception(
 				"Invalid classifier option (--help) found in property(" + getExeParamName() + ")." );
 			if( params.indexOf( "--version " ) > -1 ) throw new Exception(

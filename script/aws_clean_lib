@@ -92,6 +92,12 @@ aws_rm_stacks() {
 	rm_prop "$blj_aws_config" "awsStack" && awsStack="" && aws_log "Check for emaining stacks: ${ids}" && refresh_aws_cache
 }
 
+# De-register, disable, and remove all AWS objects
+# Param 1 (optional) - Also remove S3 buckets if = s3
+clear_aws() {
+	refresh_aws_cache && kill_head_node && aws_deregister_job_defs && aws_rm_stacks && [ "${1}" == "s3" ] && aws_rm_s3_buckets
+}
+
 # Clear all Pipeline Jobs
 clear_jobs() {
 	if [ "${awsEc2AcquisitionStrategy}" == "DEMAND" ]; then 
@@ -170,10 +176,4 @@ kill_head_node() {
 		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
 	rm_prop "$blj_aws_config" awsEc2InstanceID && rm_prop "$blj_aws_config" ec2PublicIP && awsEc2InstanceID="" && ec2PublicIP="" 
 	refresh_aws_cache && aws_rm_key_pairs
-}
-
-# De-register, disable, and remove all AWS objects
-# Param 1 (optional) - Also remove S3 buckets if = s3
-nuke_aws() {
-	refresh_aws_cache && kill_head_node && aws_deregister_job_defs && aws_rm_stacks && [ "${1}" == "s3" ] && aws_rm_s3_buckets
 }

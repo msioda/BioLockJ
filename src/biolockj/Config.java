@@ -13,10 +13,9 @@ package biolockj;
 
 import java.io.File;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.exception.ConfigFormatException;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.exception.*;
 import biolockj.module.BioModule;
 import biolockj.util.*;
 
@@ -42,8 +41,8 @@ public class Config {
 			setConfigProperty( property, Constants.FALSE );
 			Log.debug( Config.class, property + " is undefined, so return: " + Constants.FALSE );
 		} else if( !getString( module, property ).equalsIgnoreCase( Constants.FALSE ) )
-			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE
-				+ " or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
+			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE +
+				" or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
 
 		return false;
 	}
@@ -84,7 +83,7 @@ public class Config {
 			final Double val = Double.parseDouble( getString( module, property ) );
 			return val;
 		} catch( final Exception ex ) {
-			throw new ConfigFormatException( property, "Property only accepts numeric values" );
+			throw new ConfigFormatException( property, "Property only accepts numeric values: " + ex.getMessage() );
 		}
 		return null;
 	}
@@ -365,8 +364,9 @@ public class Config {
 	}
 
 	/**
-	 * Initialize {@link biolockj.Config} by reading in properties from config runtime parameter.
-	 * 
+	 * Initialize {@link biolockj.Config} by reading in properties from config runtime parameter. Save a copy of the
+	 * primary Config to the pipeline root directory
+	 *
 	 * @throws Exception if unable to load Props
 	 */
 	public static void initialize() throws Exception {
@@ -374,6 +374,7 @@ public class Config {
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
+		if( !DockerUtil.isDirectMode() ) FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
 		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
 		TaxaUtil.initTaxaLevels();
@@ -385,8 +386,8 @@ public class Config {
 	 * @return TRUE if running on the cluster
 	 */
 	public static boolean isOnCluster() {
-		return getString( null, Constants.PIPELINE_ENV ) != null
-			&& getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
+		return getString( null, Constants.PIPELINE_ENV ) != null &&
+			getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
 	}
 
 	/**
@@ -651,8 +652,8 @@ public class Config {
 		props.setProperty( name, val );
 
 		final boolean hasVal = val != null && !val.isEmpty();
-		if( origProp == null && hasVal || origProp != null && !hasVal
-			|| origProp != null && hasVal && !origProp.equals( val ) ) {
+		if( origProp == null && hasVal || origProp != null && !hasVal ||
+			origProp != null && hasVal && !origProp.equals( val ) ) {
 			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
@@ -669,8 +670,8 @@ public class Config {
 		origProp = origProp != null && origProp.isEmpty() ? null: origProp;
 		props.setProperty( name, val );
 		final boolean hasVal = val != null && !val.isEmpty();
-		if( origProp == null && hasVal || origProp != null && !hasVal
-			|| origProp != null && hasVal && !origProp.equals( val ) ) {
+		if( origProp == null && hasVal || origProp != null && !hasVal ||
+			origProp != null && hasVal && !origProp.equals( val ) ) {
 			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
@@ -766,9 +767,9 @@ public class Config {
 		try {
 			if( bashVarMap.get( bashVar ) != null ) return bashVarMap.get( bashVar );
 			String bashVal = props == null ? null: props.getProperty( stripBashMarkUp( bashVar ) );
-			if( DockerUtil.inDockerEnv() && stripBashMarkUp( bashVar ).equals( "HOME" ) ) {
+			if( DockerUtil.inDockerEnv() && stripBashMarkUp( bashVar ).equals( "HOME" ) )
 				bashVal = RuntimeParamUtil.getDockerHostHomeDir();
-			} else if( bashVal == null || bashVal.trim().isEmpty() ) if( bashVar.equals( BLJ_BASH_VAR ) ) {
+			else if( bashVal == null || bashVal.trim().isEmpty() ) if( bashVar.equals( BLJ_BASH_VAR ) ) {
 				final File blj = BioLockJUtil.getBljDir();
 				if( blj != null && blj.isDirectory() ) bashVal = blj.getAbsolutePath();
 			} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
@@ -782,7 +783,8 @@ public class Config {
 			}
 
 		} catch( final Exception ex ) {
-			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar );
+			Log.warn( Config.class,
+				"Error occurred attempting to decode bash var: " + bashVar + " --> " + ex.getMessage() );
 		}
 
 		return bashVar;
@@ -801,15 +803,15 @@ public class Config {
 			final Integer val = Integer.parseInt( getString( module, property ) );
 			return val;
 		} catch( final Exception ex ) {
-			throw new ConfigFormatException( property, "Property only accepts integer values" );
+			throw new ConfigFormatException( property, "Property only accepts integer values: " + ex.getMessage() );
 		}
 
 		return null;
 	}
 
 	private static boolean hasEnvVar( final String val ) {
-		return val.startsWith( "~" )
-			|| val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
+		return val.startsWith( "~" ) ||
+			val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
 	}
 
 	private static String stripBashMarkUp( final String bashVar ) {

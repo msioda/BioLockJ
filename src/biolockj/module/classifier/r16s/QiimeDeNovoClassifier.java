@@ -46,11 +46,11 @@ public class QiimeDeNovoClassifier extends QiimeClassifier {
 
 		if( Config.getBoolean( this, QIIME_REMOVE_CHIMERAS ) ) {
 			final String otusToFilter = tempDir + "chimeras.fasta";
-			lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET
-				+ File.separator + "*.fasta" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir
-				+ "nochimeras.fasta" );
-			lines.add( SCRIPT_FILTER_OTUS + " -i " + tempDir + OTU_TABLE + " -e " + otusToFilter + " -o " + outputDir
-				+ OTU_TABLE );
+			lines.add( Config.getExe( this, EXE_VSEARCH ) + getVsearchParams() + "--uchime_ref " + tempDir + REP_SET +
+				File.separator + "*.fasta" + " --chimeras " + otusToFilter + " --nonchimeras " + tempDir +
+				"nochimeras.fasta" );
+			lines.add( SCRIPT_FILTER_OTUS + " -i " + tempDir + OTU_TABLE + " -e " + otusToFilter + " -o " + outputDir +
+				OTU_TABLE );
 		} else lines.add( copyTempOtuTableToOutputDir() );
 
 		data.add( lines );
@@ -77,8 +77,8 @@ public class QiimeDeNovoClassifier extends QiimeClassifier {
 	 * @return Bash script line to copy table to
 	 */
 	protected String copyTempOtuTableToOutputDir() {
-		return "cp " + getTempDir().getAbsolutePath() + File.separator + OTU_TABLE + " "
-			+ getOutputDir().getAbsolutePath();
+		return "cp " + getTempDir().getAbsolutePath() + File.separator + OTU_TABLE + " " +
+			getOutputDir().getAbsolutePath();
 	}
 
 	/**
