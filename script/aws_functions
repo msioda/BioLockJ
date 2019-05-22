@@ -47,8 +47,9 @@ build_s3() {
 		if [ ${#awsS3} -eq 0 ] || [ "$awsS3" == "None" ]; then
 			exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: $awsS3"
 		fi
-		set_blj_prop awsS3 ${awsS3:1}
-		aws_log "Set awsS3=${awsS3:1}"
+		awsS3=${awsS3:1}
+		set_blj_prop awsS3 ${awsS3}
+		aws_log "Set awsS3=${awsS3}"
 	fi
 	
 	s3items=$(aws s3api list-objects --bucket ${awsS3} --query "Contents[].Key")

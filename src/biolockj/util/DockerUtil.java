@@ -73,7 +73,8 @@ public class DockerUtil {
 	 * @throws ConfigNotFoundException if path is defined but is not an existing directory
 	 */
 	public static File getCustomDB( final DatabaseModule module, final String dbPath )
-		throws ConfigPathException, ConfigNotFoundException {
+	{
+//		throws ConfigPathException, ConfigNotFoundException {
 
 //		if( dbPath == null ) return new File( DOCKER_DB_DIR );
 //		File db = new File( dbPath );

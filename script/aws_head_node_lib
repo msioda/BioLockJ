@@ -111,7 +111,7 @@ init_ec2_head_node() {
 	systemStatus=createEc2
 	[ ${#awsEc2InstanceID} -gt 0 ] && aws_log "Configured EC2 Instance ID --> \"${awsEc2InstanceID}\"" && \
 		instances=$(aws ec2 describe-instances --instance-ids "${awsEc2InstanceID}" --query "Reservations[].Instances[].[State.Name, InstanceId]")
-	if [ ${#instances} -gt 0 ] && [ "${instances/$awsEc2InstanceID}" != "${awsEc2InstanceID}" ]; then
+	if [ ${#instances} -gt 0 ] && [ "${instances/$awsEc2InstanceID}" != "${instances}" ]; then
 		aws_log "Found existing instance ${awsEc2InstanceID}"
 		if [ "${instances/stopped}" != "${instances}" ]; then
 			printf "Configured EC2 instance ${awsEc2InstanceID} was stopped...attempting to restart...please wait."
@@ -205,7 +205,7 @@ start_ec2_head_node() {
 		set_blj_prop awsEc2InstanceID ${awsEc2InstanceID}
 		ec2PublicIP=$(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName")
 		set_blj_prop ec2PublicIP $ec2PublicIP
-		[ ! -f "$(get_docker_job_def_flag)" ] && build_docker_job_defs
+		[ ! -f "$(get_docker_job_def_flag)" ] && [ !-x "$(which docker)" ] && exe_remote_cmd "build_docker_job_defs"
 	else
 		aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] restarted in $runTime seconds"
 	fi

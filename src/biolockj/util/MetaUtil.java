@@ -238,7 +238,7 @@ public class MetaUtil {
 			} else setFile( new File( Config.getString( null, META_FILE_PATH ) ) );
 			Log.debug( MetaUtil.class, "Returning new metadata file path: " + getPath() );
 		} catch( final Exception ex ) {
-			throw new MetadataException( "Faile to get handle to metadata file:  " + ex.getMessage() );
+			throw new MetadataException( "Failed to get handle to metadata file:  " + ex.getMessage() );
 		}
 		return metadataFile;
 	}

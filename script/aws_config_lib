@@ -244,18 +244,20 @@ map_to_aws_property() {
 
 # Convert aws config property name to pipeline config property name format
 map_to_pipeline_property() {
+	val=
+	addedPeriod=N
 	size=$((${#1}-1))
 	for i in $(seq 0 $size); do
 		char=${1:$i:1}
 		upCase=$(echo "${char}" | awk '{print toupper($0)}')
-		if [ "${upCase}" == "${char}" ]; then
+		if [ "${addedPeriod}" == "N" ] && [ "${upCase}" == "${char}" ]; then
 			loCase=$(echo "${char}" | awk '{print tolower($0)}')
 			val="${val}.${loCase}"
+			addedPeriod="Y"
 		else
 			val=${val}${char}
 		fi
 	done
-	[ "${1/.}" != "${1}" ] || [ ] && return "${val}"
 	echo ${val}
 }
 
