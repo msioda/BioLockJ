@@ -343,7 +343,7 @@ public class NextflowUtil {
 		return S3_DIR + s3;
 	}
 
-	private static String getDockerImageLabel( final BioModule module ) throws Exception {
+	private static String getDockerImageLabel( final BioModule module ) {
 		return "'" + IMAGE + "_" + DockerUtil.getDockerUser( module ) + "_" + DockerUtil.getImageName( module ) + "_" +
 			DockerUtil.getImageVersion( module ) + "'";
 	}

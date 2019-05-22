@@ -301,7 +301,6 @@ public class BioLockJUtil {
 	 * @throws FileNotFoundException if file does not exist
 	 * @throws IOException if unable to read or write the file
 	 */
-	@SuppressWarnings("resource")
 	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException {
 		return SeqUtil.isGzipped( file.getName() ) ?
 			new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) ):
