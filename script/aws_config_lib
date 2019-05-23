@@ -168,7 +168,7 @@ get_blj_prop() {
 # Param 1 - Config file
 # Param 2 - Prop name
 get_prop() {
-	prop=$(cat "${1}" | grep ${2})
+	prop=$(cat "${1}" | grep ${2}=)
 	out=$(eval "echo ${prop/${2}=}")
 	[ "${out:0:1}" != "#" ] && echo "${out}"
 }
