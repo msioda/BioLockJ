@@ -172,7 +172,7 @@ init_nextflow_config() {
 
 # Launch a new ec2 head node
 launch_ec2_head_node() {
-	aws_log "Starting --> [  launch_ec2_head_node ${@}  ]"
+	aws_log "Starting --> [  launch_ec2_head_node ]"
 	[ ! -f "$(get_docker_job_def_flag)" ] && [ -x "$(which docker)" ] && build_docker_job_defs
 	init_ec2_head_node
 	[ ! -f "$(get_docker_job_def_flag)" ] && exe_remote_cmd "build_docker_job_defs"

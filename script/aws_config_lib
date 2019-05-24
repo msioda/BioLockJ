@@ -51,7 +51,7 @@ aws_log() {
 
 # Print AWS Config report
 aws_report_config() {
-	[ ! -f $blj_aws_config ] && echo "$blj_aws_config not found" && return
+	[ ! -f $blj_aws_config ] && aws_log "Cannot report cache --> $blj_aws_config not found" && return
 	aws_log "---------------------------------------------------"
 	aws_log "Report current AWS Config"
 	aws_log "---------------------------------------------------"
@@ -260,6 +260,7 @@ map_to_pipeline_property() {
 
 # Refersh bash variables in memory via source $blj_aws_config
 refresh_aws_cache() {
+	[ ! -f $blj_aws_config ] && aws_log "Cannot refresh cache --> $blj_aws_config not found" && return
 	. $blj_aws_config
 }
 

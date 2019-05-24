@@ -184,7 +184,6 @@ public class BioLockJ {
 
 		if( !DockerUtil.isDirectMode() ) {
 			if( MetaUtil.getMetadata() != null ) BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
-
 			if( DockerUtil.inAwsEnv() ) NextflowUtil.stageRootConfig();
 		}
 
