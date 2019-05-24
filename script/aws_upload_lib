@@ -194,7 +194,7 @@ stage_pipeline_config_to_efs() {
 
 # Stage custom database files for pipeline onto EFS volume
 stage_pipeline_dbs_to_efs() {
-	aws_log "Starting --> [  stage_pipeline_dbs_to_efs  ]: Looking for any configured custom databases..."
+	aws_log "Starting --> [  stage_pipeline_dbs_to_efs  ]: Upload custom databases (if configured)..."
 	if [ -d "$metaphlan2Db" ] || [ -f "$metaphlan2Mpa_pkl" ]; then
 		if [ -d "$metaphlan2Db" ] && [ -f "$metaphlan2Mpa_pkl" ]; then
 			if [ "$(dirname $metaphlan2Mpa_pkl)" != "${metaphlan2Db}"  ]; then

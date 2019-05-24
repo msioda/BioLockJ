@@ -27,12 +27,12 @@ clearDock() {
 	containers=$(docker ps -aq)
 	runningProcs=$(docker ps -q)
 	images=$(docker images -f "dangling=true" -q) 
-	[ ${#runningProcs} -gt 0 ] && docker kill -s SIGINT $runningProcs && runningProcs=$(docker ps -q)
-	[ ${#runningProcs} -gt 0 ] && docker stop -t 20 $runningProcs && runningProcs=$(docker ps -q)
-	[ ${#runningProcs} -gt 0 ] && docker kill $runningProcs
-	[ ${#containers} -gt 0 ] && docker rm $containers
-	[ ${#images} -gt 0 ] && docker rmi $images
-	echo "All containers + stale images = REMOVED..."
+	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker stop -t 30 $runningProcs ]" && docker stop -t 30 $runningProcs && runningProcs=$(docker ps -q)
+	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker kill -s SIGINT $runningProcs ]" && docker kill -s SIGINT $runningProcs && runningProcs=$(docker ps -q)
+	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker kill $runningProcs ]" && docker kill $runningProcs
+	[ ${#containers} -gt 0 ] && echo "run CMD [ docker rm $containers ]" && docker rm $containers
+	[ ${#images} -gt 0 ] && echo "run CMD [ docker rmi $images ]" && docker rmi $images
+	echo "All containers + stale images = REMOVED"
 	dockls
 }
 
