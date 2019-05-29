@@ -43,6 +43,10 @@ Parameters:
     Type: String
     MinLength: '1'
     Default: myEFSvolume
+  BatchAMIcustomID:
+    Description: AMI to use in batchnode launch template
+    Type: String
+    Default: ami-007571470797b8ffa
   MountPoint:
     Description: The Linux mount point for the EFS volume
     Type: String
@@ -556,6 +560,7 @@ Resources:
         - - !Ref 'AWS::StackName'
           - BatchNodeTemplateWithEFS
       LaunchTemplateData:
+        ImageId: !Ref BatchAMIcustomID
         TagSpecifications:
           - ResourceType: 'instance'
             Tags:
@@ -563,7 +568,7 @@ Resources:
                 Value: !Ref 'AWS::StackName'
         BlockDeviceMappings:
           -
-            DeviceName: /dev/xvdcz
+            DeviceName: /dev/xvda
             Ebs: 
               VolumeSize: !Ref EbsRootVolumeSizeBatchNode
               VolumeType: gp2
@@ -628,8 +633,10 @@ Resources:
             - runuser -l  ec2-user -c '/home/ec2-user/miniconda/bin/conda install -c conda-forge -y awscli'
 
             - runuser -l  ec2-user -c 'rm Miniconda3-latest-Linux-x86_64.sh'
-            
+
             - runuser -l  ec2-user -c 'echo "export PATH=/home/ec2-user/miniconda/bin:$PATH" >> ~/.bashrc'
+
+            - echo 'DOCKER_STORAGE_OPTIONS="--storage-opt dm.basesize=50G"' >> /etc/sysconfig/docker-storage
 
             - runuser -l  ec2-user -c 'mkdir /mnt/efs/config'
 
