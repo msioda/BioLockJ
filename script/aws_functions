@@ -76,42 +76,36 @@ cache_key_pair() {
 	fi
 }
 
-# Deploy AWS cloud formation AMI, S3 Bucket, EC2-KeyPair, Cloud Formation Stack, and Compute Environment
+# Deploy AWS S3 Bucket, EC2-KeyPair, Cloud Formation Stack (including Comp. Env. + Batch queues)
 # Confirm any configured values exist, create objects that are undefined as store them in AWS config
 deploy_cloud_formation() {
 	aws_log "Starting --> [  deploy_cloud_formation  ]"
-	refresh_aws_cache && build_s3 && get_ami && set_stack_name && cache_key_pair && verify_stack
+	refresh_aws_cache && build_s3 && set_stack_name && cache_key_pair && verify_stack
 }
 
 # Generate a name not found in $1, created using format $2-$date-index
 # Param 1 - Key String
 # Param 2 - (optional) List of unavailable names
 generate_name() {
-	testVal="$1-$(date +%F)"
-	[ $# -eq 1 ] && echo $testVal && return
-	i=0
-	maxI=1000
-	while [ $i -lt $maxI ]; do
-		[ "${2/$testVal}" == "$2" ] && echo $testVal && return
+	testVal="$1-$(date +%F)" && i=0
+	[ $# -eq 1 ] && echo "${testVal}" && return
+	while [ $i -lt 1000 ]; do
+		[ "${2/$testVal}" == "$2" ] && echo "${testVal}" && return
 		i=$[$i+1] && testVal="$1-$(date +%F)-$i"
 	done
-	[ $i -eq $maxI ] && exit_script "Error [ aws_functions.generate_name() ]: Failed to generate unique name: $maxI names already exist!"
+	[ $i -ge 1000 ] && exit_script "Error [ aws_functions.generate_name() ]: Failed to generate unique name: $i names already exist!"
 }
 
 # Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
 get_ami() {
-	if [ ${#awsAmi} -gt 0 ]; then
-		awsAmi=$(aws ec2 describe-images --image-ids $awsAmi --query "Images[?State=='available'].ImageId")
-		[ $awsAmi == "None" ] && exit_script "Error [ aws_functions.get_ami() ]:  Unable to use configured AWS AMI: $ami"
-		[ ${#awsAmi} -gt 0 ] && aws_log "Found existing AWS Image: $awsAmi" && return
-	else
+	[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] && \
 		awsAmi=$(aws ec2 describe-images --region $awsRegion --owner amazon \
 			--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
 			--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
-		[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] && exit_script "Error [ aws_functions.get_ami() ]: Unable to obtain AWS AMI template from region $awsRegion"
-		set_blj_prop awsAmi $awsAmi
-		aws_log "Set awsAmi=$awsAmi"
-	fi
+	[ ${#awsAmi} -gt 0 ] && [ $awsAmi != "None" ] &&
+		awsAmi=$(aws ec2 describe-images --image-ids $awsAmi --query "Images[?State=='available'].ImageId")
+	[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] && exit_script "Error [ aws_functions.get_ami() ]:  Unable to use configured AWS AMI: $ami"
+	echo "${awsAmi}"
 }
 
 # Get current IP address
@@ -145,9 +139,7 @@ is_stack_complete() {
 run_aws() {
 	aws_log "Starting --> [  run_aws ${@}  ]"
 	[ ! -f "${1}" ] && exit_script "Error [ aws_functions.run_aws() ]: Required pipeline Config file not found: \"$1\""
-	init_aws_config "${1}"
-	deploy_cloud_formation
-	launch_ec2_head_node
+	init_aws_config "${1}" && deploy_cloud_formation && launch_ec2_head_node
 }
 
 # Create new stack name if awsStack is undefined in AWS Config
