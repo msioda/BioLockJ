@@ -231,6 +231,19 @@ public class Processor {
 			}
 		return false;
 	}
+	
+	/**
+	 * Check if a specific process is alive
+	 * 
+	 * @param id - Registered thread ID
+	 * @return Boolean TRUE only if the ID is alive
+	 */
+	public static boolean subProcAlive( final Long id ) {
+		if( threadRegister.isEmpty() ) return false;
+		for( final Thread t: threadRegister.keySet() )
+			if( t.isAlive() && t.getId() == id ) return true;
+		return false;
+	}
 
 	private static String[] bashVarArgs( final String bashVar ) throws Exception {
 		final File profile = BioLockJUtil.getUserProfile();

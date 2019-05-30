@@ -14,8 +14,7 @@ package biolockj.module.classifier.wgs;
 import java.io.File;
 import java.util.*;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.exception.*;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
 
@@ -61,6 +60,23 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return data;
 	}
 
+	/**
+	 * Calling super to build scripts, then wait until any database downloads are complete before
+	 * allowing the Pipeline to move forward and use these DB.
+	 */
+	@Override
+	public void executeTask() throws Exception {
+		super.executeTask();
+		try {
+			for( Long id: threadRegister )
+				while( Processor.subProcAlive( id ) ) {
+					Log.warn( NextflowUtil.class, "Humann2 classifier scripts are ready, waiting on database downloads to complete" );
+					Thread.sleep( BioLockJUtil.minutesToMillis( 1 ) );
+				}
+		} catch( final Exception ex ) {
+			Log.error( NextflowUtil.class, "Error occurred waiting for subprocess to compelete!", ex );
+		}
+	}
 	@Override
 	public List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception {
 		final List<File> sortedFiles = new ArrayList<>( getPairedReads().keySet() );
@@ -83,6 +99,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		getParams( EXE_HUMANN2_JOIN_PARAMS );
 		getParams( EXE_HUMANN2_RENORM_PARAMS );
 		PathwayUtil.verifyConfig( this );
+		getDB();
 	}
 
 	@Override
@@ -125,21 +142,29 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	@Override
 	public File getDB() throws ConfigNotFoundException, ConfigPathException {
 		if( getDbCache() != null ) return getDbCache();
-		if( DockerUtil.inDockerEnv() ) {
-			final File nuclDb = new File( Config.requireString( this, HN2_NUCL_DB ) );
-			final File protDb = new File( Config.requireString( this, HN2_PROT_DB ) );
-			setDbCache( BioLockJUtil.getCommonParent( nuclDb, protDb ) );
-		} else setDbCache( BioLockJUtil.getCommonParent( Config.requireExistingDir( this, HN2_NUCL_DB ),
-			Config.requireExistingDir( this, HN2_PROT_DB ) ) );
+		setDbCache( BioLockJUtil.getCommonParent( new File( getNuclDbPath() ), new File( getProtDbPath() ) ) );
 		return getDbCache();
 	}
+	
 
+	private String downloadDefaultDB( final String dbProp ) throws ConfigNotFoundException {
+		final String[] parts = Config.requireString( this, dbProp ).split( "\\s" );
+		final String[] args = new String[ parts.length + 2 ];
+		args[ 0 ] = DOWNLOAD_DB_CMD;
+		args[ 1 ] = DL_DB_SWITCH;
+		args[ 2 ] = parts[0]; // <database>  
+		args[ 3 ] = parts[1]; // <build>
+		args[ 4 ] = parts[2]; // <install_location>
+		threadRegister.add( DockerUtil.downloadDB( args, "Download HumanN2 DB" ) );
+		return parts[2] + File.pathSeparator + parts[0];
+	}
+	
 	@Override
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		try {
-			sb.append( "HumanN2 nucleotide DB: " + getDbPath( HN2_NUCL_DB ) );
-			sb.append( "HumanN2 protein DB: " + getDbPath( HN2_PROT_DB ) );
+			sb.append( "HumanN2 nucleotide DB: " + getNuclDbPath() + RETURN );
+			sb.append( "HumanN2 protein DB: " + getNuclDbPath() + RETURN );
 		} catch( final Exception ex ) {
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
@@ -188,7 +213,11 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 */
 	protected String getRuntimeParams() throws Exception {
 		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " +
-			NUCL_DB_PARAM + " " + getDbPath( HN2_NUCL_DB ) + " " + PROT_DB_PARAM + " " + getDbPath( HN2_PROT_DB ) + " ";
+			NUCL_DB_PARAM + " " +  getNuclDbPath() + " " + PROT_DB_PARAM + " " + getProtDbPath() + " ";
+	}
+	
+	private static boolean isPath( final String val ) {
+		return val != null && !val.isEmpty() && !val.contains( " " ) && val.contains( File.separator );
 	}
 
 	private List<String> getBuildSummaryFunction() throws Exception {
@@ -220,11 +249,25 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		lines.add( "}" + RETURN );
 		return lines;
 	}
-
-	private String getDbPath( final String prop ) throws ConfigNotFoundException, ConfigPathException {
-		final String path = Config.requireString( this, prop );
-		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, path ).getAbsolutePath();
-		return Config.requireExistingDir( this, prop ).getAbsolutePath();
+	
+	private String getProtDbPath() throws ConfigNotFoundException, ConfigPathException {
+		if( protDbCache != null ) return protDbCache;
+		final String prop = Config.requireString( this, HN2_PROT_DB );
+		if( DockerUtil.inDockerEnv() ) {
+			if( isPath( prop ) ) protDbCache = prop;
+			else protDbCache = downloadDefaultDB( prop );
+		} else protDbCache = Config.requireExistingDir( this, HN2_PROT_DB ).getAbsolutePath();
+		return protDbCache;
+	}
+	
+	private String getNuclDbPath() throws ConfigNotFoundException, ConfigPathException {
+		if( nuclDbCache != null ) return nuclDbCache;
+		final String prop = Config.requireString( this, HN2_NUCL_DB );
+		if( DockerUtil.inDockerEnv() ) {
+			if( isPath( prop ) ) nuclDbCache = prop;
+			else nuclDbCache = downloadDefaultDB( prop );
+		} else nuclDbCache = Config.requireExistingDir( this, HN2_NUCL_DB ).getAbsolutePath();
+		return nuclDbCache;
 	}
 
 	private String getJoinTableCmd() throws Exception {
@@ -344,4 +387,9 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table";
 	private static final String RM_STRATIFIED_OUTPUT = "--remove-stratified-output";
 	private static final String TEMP_MERGE_READ_DIR = "merged";
+	private static final String DOWNLOAD_DB_CMD = "humann2_databases";
+	private final static String DL_DB_SWITCH = "--download";
+	private static String protDbCache = null;
+	private static String nuclDbCache = null;
+	private static final Set<Long> threadRegister = new HashSet<>();
 }

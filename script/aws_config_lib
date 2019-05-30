@@ -188,7 +188,7 @@ map_to_aws_property() {
 map_to_pipeline_property() {
 	# Handle special case with camel case in property prefix
 	[ "${1}" == "trimPrimersFilePath" ] && echo "trimPrimers.filePath" && return
-	val='' && addedPeriod=N && size=$((${#1}-1))
+	val='' && addedPeriod=N && i=0 && size=$((${#1}-1))
 	for i in $(seq 0 $size); do
 		char=${1:$i:1} && upCase=$(echo "${char}" | awk '{print toupper($0)}')
 		loCase=$(echo "${char}" | awk '{print tolower($0)}')

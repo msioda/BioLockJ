@@ -12,8 +12,7 @@
 package biolockj.util;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
@@ -205,7 +204,25 @@ public class DockerUtil {
 		if( ver == null ) ver = DOCKER_LATEST;
 		return ver;
 	}
+	
+	/**
+	 * Download a database for a Docker container
+	 * @param args Terminal command + args
+	 * @param label Log file identifier for subprocess
+	 * @return Thread ID
+	 */
+	public static Long downloadDB( final String[] args, final String label ) {
+		if( downloadDbCmdRegister.contains( args ) ) {
+			Log.warn( DockerUtil.class, "Ignoring duplicate download request - already downloading Docker DB: " + label );
+			return null;
+		}
 
+		downloadDbCmdRegister.add( args );
+		return Processor.runSubprocess( args, label ).getId();
+	}
+
+	
+	
 	/**
 	 * Function used to determine if an alternate database has been defined (other than /db).
 	 * 
@@ -220,7 +237,7 @@ public class DockerUtil {
 			}
 		} catch( ConfigPathException | ConfigNotFoundException ex ) {
 			Log.error( DockerUtil.class,
-				"Error occurred checking database path of module: " + module.getClass().getName() );
+				"Error occurred checking database path of module: " + module.getClass().getName(), ex );
 		}
 		return false;
 	}
@@ -435,4 +452,5 @@ public class DockerUtil {
 	private static final String DOCKER_LATEST = "latest";
 	private static final String DOCKER_SOCKET = "/var/run/docker.sock";
 	private static final String IMAGE_NAME_DELIM = "_";
+	private static Set<String[]> downloadDbCmdRegister = new HashSet<>();
 }
