@@ -149,14 +149,17 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	private String downloadDefaultDB( final String dbProp ) throws ConfigNotFoundException {
 		final String[] parts = Config.requireString( this, dbProp ).split( "\\s" );
-		final String[] args = new String[ parts.length + 2 ];
-		args[ 0 ] = DOWNLOAD_DB_CMD;
-		args[ 1 ] = DL_DB_SWITCH;
-		args[ 2 ] = parts[0]; // <database>  
-		args[ 3 ] = parts[1]; // <build>
-		args[ 4 ] = parts[2]; // <install_location>
-		threadRegister.add( DockerUtil.downloadDB( args, "Download HumanN2 DB" ) );
-		return parts[2] + File.pathSeparator + parts[0];
+		final File db = new File( parts[2] + File.pathSeparator + parts[0] );
+		if( !db.isDirectory() ) {
+			final String[] args = new String[ parts.length + 2 ];
+			args[ 0 ] = DOWNLOAD_DB_CMD;
+			args[ 1 ] = DL_DB_SWITCH;
+			args[ 2 ] = parts[0]; // <database>  
+			args[ 3 ] = parts[1]; // <build>
+			args[ 4 ] = parts[2]; // <install_location>
+			threadRegister.add( DockerUtil.downloadDB( args, "Download HumanN2 DB" ) );
+		}
+		return db.getAbsolutePath();
 	}
 	
 	@Override
@@ -217,7 +220,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	}
 	
 	private static boolean isPath( final String val ) {
-		return val != null && !val.isEmpty() && !val.contains( " " ) && val.contains( File.separator );
+		return val != null && !val.isEmpty() && !val.trim().contains( " " ) && val.contains( File.separator );
 	}
 
 	private List<String> getBuildSummaryFunction() throws Exception {

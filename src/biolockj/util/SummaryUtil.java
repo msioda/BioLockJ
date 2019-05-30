@@ -726,10 +726,8 @@ public class SummaryUtil {
 		if( parentHost == null ) parentHost = "Unknown-Host";
 		if( host == null ) host = "localhost";
 		
-		if( DockerUtil.inAwsEnv() )
-			runtimeEnv = "AWS-NF [ " + user + "@" + parentHost + " --> " + DockerUtil.ROOT_HOME + "@" + host + " ]";
-		else if( DockerUtil.inDockerEnv() )
-			runtimeEnv = "Docker [ " + user + "@" + parentHost + " --> " + DockerUtil.ROOT_HOME + "@" + host + " ]";
+		if( DockerUtil.inAwsEnv() || DockerUtil.inDockerEnv() )
+			runtimeEnv =  (DockerUtil.inAwsEnv() ? "AWS " : "" ) + "Host [ " + user + "@" + parentHost + " ] --> Docker Container [ " + DockerUtil.ROOT_HOME.substring( 1 ) + "@" + host + " ]";
 		else if( Config.isOnCluster() )
 			runtimeEnv = "Cluster [ " + user + "@" + parentHost + " ]";
 		else

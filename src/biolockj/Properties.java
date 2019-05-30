@@ -179,9 +179,8 @@ public class Properties extends java.util.Properties {
 
 	private static List<File> getNestedDefaultProps( final File propFile ) throws Exception {
 		final List<File> configFiles = new ArrayList<>();
-		File defConfig = null;
 		do {
-			defConfig = getDefaultConfig( propFile );
+			final File defConfig = getDefaultConfig( propFile );
 			if( defConfig == null || configRegister.contains( defConfig ) || configFiles.contains( defConfig ) ) break;
 			configFiles.add( defConfig );
 		} while( true );

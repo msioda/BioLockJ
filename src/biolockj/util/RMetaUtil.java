@@ -96,7 +96,7 @@ public final class RMetaUtil {
 		}
 
 		if( reportAllFields( module ) ) {
-			rScriptFields.addAll( getMetaCols( module ) );
+			rScriptFields.addAll( getMetaCols( module, false ) );
 			rScriptFields.removeAll( excludeFields );
 			if( Config.getString( module, MetaUtil.META_BARCODE_COLUMN ) != null )
 				rScriptFields.remove( Config.getString( module, MetaUtil.META_BARCODE_COLUMN ) );
@@ -232,7 +232,7 @@ public final class RMetaUtil {
 	 */
 	public static boolean updateRConfig( final BioModule module ) throws Exception {
 		final Integer numCols = Config.getPositiveInteger( module, RMetaUtil.NUM_META_COLS );
-		final Integer numMetaCols = getMetaCols( module ).size();
+		final Integer numMetaCols = getMetaCols( module, true ).size();
 
 		if( numCols != null && numCols == numMetaCols || numMetaCols == 0 ) {
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
@@ -298,10 +298,10 @@ public final class RMetaUtil {
 					"] not found in metadata: " + MetaUtil.getPath() );
 	}
 
-	private static List<String> getMetaCols( final BioModule module ) {
+	private static List<String> getMetaCols( final BioModule module, final boolean includeQiime ) {
 		final List<String> cols = new ArrayList<>();
 		for( final String field: MetaUtil.getFieldNames() )
-			if( !isQiimeMetric( module, field ) ) cols.add( field );
+			if( includeQiime || !isQiimeMetric( module, field ) ) cols.add( field );
 		return cols;
 	}
 
