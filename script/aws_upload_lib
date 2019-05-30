@@ -136,8 +136,6 @@ stage_pipeline_dbs_to_efs() {
 	[ -d "$kneaddataDbs" ] && aws_log "Uploading KneadData DBs: ${kneaddataDbs}" && upload_to_efs_and_update_config kneaddataDbs ${kneaddataDbs} ${BLJ_DB}
 	[ -d "$krakenDb" ] && aws_log "Uploading Kraken DB: ${krakenDb}" && upload_to_efs_and_update_config krakenDb ${krakenDb} ${BLJ_DB}
 	[ -d "$kraken2Db" ] && aws_log "Uploading Kraken2 DB: ${kraken2Db}" && upload_to_efs_and_update_config kraken2Db ${kraken2Db} ${BLJ_DB}
-	[ -d "$humann2NuclDB" ] && aws_log "Uploading HumanN2 Nucl DB: ${humann2NuclDB}" && upload_to_efs_and_update_config humann2NuclDB ${humann2NuclDB} ${BLJ_DB}
-	[ -d "$humann2ProtDB" ] && aws_log "Uploading  HumanN2 Prot DB: ${humann2ProtDB}" && upload_to_efs_and_update_config humann2ProtDB ${humann2ProtDB} ${BLJ_DB}
 	if [ -f "$rdpDb" ]; then
 		filePath=$(upload_to_efs $(dirname $rdpDb) $BLJ_DB) && echo "Uploading RDP DB: $(dirname $rdpDb) --> ${filePath}"
 		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_prop $(get_config ec2) $(map_to_pipeline_property rdpDb) $filePath/$(basename $rdpDb)"
