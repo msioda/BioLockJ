@@ -127,10 +127,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
 				writer.write( st.nextToken() ); // write ID col
-
 				final List<String> record = new ArrayList<>();
-				while( st.hasMoreTokens() )
-					record.add( st.nextToken() );
+				while( st.hasMoreTokens() ) record.add( st.nextToken() );
 
 				// Add Alpha Metrics as 1st columns since these will be used later as count cols instead of meta cols
 				for( int i = numCols; i < record.size(); i++ ) {
@@ -142,13 +140,11 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 						// replace any N/A values with configured MetaUtil.META_ULL_VALUE
 						if( !isHeader && val != null && val.equals( ALPHA_DIV_NULL_VALUE ) )
 							val = MetaUtil.getNullValue( this );
-
 						writer.write( TAB_DELIM + val );
 					}
 				}
 
-				for( int i = 0; i < numCols; i++ )
-					writer.write( TAB_DELIM + record.get( i ) );
+				for( int i = 0; i < numCols; i++ ) writer.write( TAB_DELIM + record.get( i ) );
 				writer.write( RETURN );
 				isHeader = false;
 			}
@@ -248,9 +244,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
 		if( !getClass().equals( QiimeClassifier.class ) ) postReqs.add( QiimeClassifier.class.getName() );
-
 		postReqs.addAll( super.getPostRequisiteModules() );
-
 		return postReqs;
 	}
 

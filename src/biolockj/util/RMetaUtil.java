@@ -96,7 +96,7 @@ public final class RMetaUtil {
 		}
 
 		if( reportAllFields( module ) ) {
-			rScriptFields.addAll( getMetaCols( module, false ) );
+			rScriptFields.addAll( getMetaCols( module ) );
 			rScriptFields.removeAll( excludeFields );
 			if( Config.getString( module, MetaUtil.META_BARCODE_COLUMN ) != null )
 				rScriptFields.remove( Config.getString( module, MetaUtil.META_BARCODE_COLUMN ) );
@@ -232,7 +232,7 @@ public final class RMetaUtil {
 	 */
 	public static boolean updateRConfig( final BioModule module ) throws Exception {
 		final Integer numCols = Config.getPositiveInteger( module, RMetaUtil.NUM_META_COLS );
-		final Integer numMetaCols = getMetaCols( module, true ).size();
+		final Integer numMetaCols = getMetaCols( module ).size();
 
 		if( numCols != null && numCols == numMetaCols || numMetaCols == 0 ) {
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
@@ -298,10 +298,10 @@ public final class RMetaUtil {
 					"] not found in metadata: " + MetaUtil.getPath() );
 	}
 
-	private static List<String> getMetaCols( final BioModule module, final boolean includeQiime ) {
+	private static List<String> getMetaCols( final BioModule module ) {
 		final List<String> cols = new ArrayList<>();
 		for( final String field: MetaUtil.getFieldNames() )
-			if( includeQiime || !isQiimeMetric( module, field ) ) cols.add( field );
+			if( !isQiimeMetric( module, field ) ) cols.add( field );
 		return cols;
 	}
 
@@ -319,8 +319,7 @@ public final class RMetaUtil {
 		final Set<String> alphaDivMetrics = Config.getSet( module, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( !alphaDivMetrics.isEmpty() ) for( final String metric: alphaDivMetrics )
 			if( field.equals( metric + QIIME_ALPHA_METRIC_SUFFIX ) ) {
-				Log.info( RMetaUtil.class,
-					"Metadata validation of field(" + field + ") --> found QIIME metric: " + metric );
+				Log.info( RMetaUtil.class, "Metadata field (" + field + ") --> is QIIME metric: " + metric );
 				return true;
 			}
 
@@ -396,6 +395,11 @@ public final class RMetaUtil {
 	 * R reports must contain at least one valid field.
 	 */
 	protected static final String R_REPORT_FIELDS = "r.reportFields";
+	
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #QIIME_PLOT_ALPHA_METRICS}<br>
+	 */
+	protected static final String QIIME_PLOT_ALPHA_METRICS = "qiime.plotAlphaMetrics";
 
 	private static Set<String> binaryFields = null;
 	private static Set<String> mdsFields = null;

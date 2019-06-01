@@ -84,9 +84,8 @@ blj_go() {
 	[ ! -d "${BLJ_PROJ}" ] && echo "Exit program - BLJ_PROJ: directory not found: ${BLJ_PROJ}" && return
 	pipeline=$(most_recent_pipeline)
 	if [ ${#pipeline} -gt 0 ]; then
-		echo "Goto latest BioLockJ pipeline: $pipeline"
-		cd "$pipeline"
-		ls "$pipeline"
+		echo "Goto latest BioLockJ pipeline: ${pipeline}"
+		cd "${pipeline}" && ls "${pipeline}"
 	else
 		echo "No pipelines found in BLJ_PROJ: ${BLJ_PROJ}"
 	fi
