@@ -10,7 +10,7 @@ alias dl_efs="download_dir_from_efs"
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
-	ss="${HOME}/.aws/start-$(get_config_name).sh" && [ -f "${metadataFilePath}" ] && maweta="-m=${BLJ_META} "
+	ss="${HOME}/.aws/start-$(get_config_name).sh" && [ -f "${metadataFilePath}" ] && meta="-m=${BLJ_META} "
 	echo "${sheBang}" > "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo "##  Run this script to launch BioLockJ pipeline on AWS           ##" >> "${ss}"
@@ -100,10 +100,10 @@ stage_pipeline() {
 
 # The method creates a new version of the pipeline Config files by replacing 
 stage_pipeline_config_to_efs() {
-	upload_to_efs "${awsConf}" "${EC2_HOME}/.aws" && configFiles=$(get_blj_prop configFiles)
-	aws_log "Uploading pipeline Config files to EFS: $configFiles" && propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_to_efs $propFile ${BLJ_CONFIG}; done
-	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_prop $(get_config ec2) aws.s3 ${awsS3}"
+	upload_to_efs "${awsConf}" "${EC2_HOME}/.aws" && configFiles="$(get_blj_prop configFiles)"
+	aws_log "Uploading pipeline Config files to EFS: ${configFiles}" && propFiles=( ${configFiles//,/ } )
+	for propFile in ${propFiles[@]}; do upload_to_efs "${propFile}" "${BLJ_CONFIG}"; done
+	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) aws.s3 ${awsS3}"
 }
 
 # Stage custom database files for pipeline onto EFS volume
@@ -138,7 +138,7 @@ stage_pipeline_dbs_to_efs() {
 	[ -d "$kraken2Db" ] && aws_log "Uploading Kraken2 DB: ${kraken2Db}" && upload_to_efs_and_update_config kraken2Db ${kraken2Db} ${BLJ_DB}
 	if [ -f "$rdpDb" ]; then
 		filePath=$(upload_to_efs $(dirname $rdpDb) $BLJ_DB) && echo "Uploading RDP DB: $(dirname $rdpDb) --> ${filePath}"
-		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_prop $(get_config ec2) $(map_to_pipeline_property rdpDb) $filePath/$(basename $rdpDb)"
+		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) $(map_to_pipeline_property rdpDb) $filePath/$(basename $rdpDb)"
 	fi 
 }
 
@@ -156,7 +156,7 @@ stage_pipeline_inputs_to_efs() {
 # Param 1 Config property name
 # Param 2 Config property value
 update_efs_config() {
-	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_prop $(get_config ec2) ${1} ${2}"
+	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) ${1} ${2}"
 }
 
 # Upload file/directory to the EC2 head node, if no target dir specified use EC2 ${HOME}.

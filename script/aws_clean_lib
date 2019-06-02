@@ -54,7 +54,7 @@ aws_rm_s3_buckets() {
 	for bucket in ${buckets[@]}; do
 		aws s3 rb --force "${bucket}"  && count=$[$count+1] && aws_log "Deleted s3-bucket #${count}: ${bucket}" && ((numComplete++))
 	done
-	aws_log "Deleted $numComplete/$count S3-buckets" && rm_prop "${awsConf}" "awsS3" && awsS3=''
+	aws_log "Deleted $numComplete/$count S3-buckets" && rm_property "${awsConf}" "awsS3" && awsS3=''
 	refresh_aws_cache && aws_log "Remaining S3-buckets:  $(aws s3api list-buckets)" 
 }
 
@@ -73,7 +73,7 @@ aws_rm_stacks() {
 		ids="${ids/$id}" && ((numComplete++))
 	done
 	aws_log "Deleted $numComplete/$count stacks" && ids=$(aws cloudformation describe-stacks)
-	rm_prop "${awsConf}" "awsStack" && awsStack="" && aws_log "Check for emaining stacks: ${ids}" && refresh_aws_cache
+	rm_property "${awsConf}" "awsStack" && awsStack="" && aws_log "Check for emaining stacks: ${ids}" && refresh_aws_cache
 }
 
 # Clear all Pipeline Jobs
@@ -139,7 +139,7 @@ kill_head_node() {
 	[ ${#ids} -gt 0 ] && aws ec2 terminate-instances --instance-id "${ids}" && aws_log "The following EC2 instances have been terminated --> ${ids}"
 	aws_log "Describe Remaining EC2 instances:" && 
 		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
-	rm_prop "${awsConf}" awsEc2InstanceID && awsEc2InstanceID='' && refresh_aws_cache && aws_rm_key_pairs
+	rm_property "${awsConf}" awsEc2InstanceID && awsEc2InstanceID='' && refresh_aws_cache && aws_rm_key_pairs
 }
 
 # De-register, disable, and remove all AWS objects.  

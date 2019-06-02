@@ -58,7 +58,7 @@ generate_name() {
 	testVal="${1}-$(date +%F)" && i=0 && [ $# -eq 1 ] && echo "${testVal}" && return
 	while [ ${i} -lt 1000 ]; do
 		[ "${2/$testVal}" == "${2}" ] && echo "${testVal}" && return
-		i=$[$i+1] && testVal="${1}-$(date +%F)-${i}"
+		i=$((i+1)) && testVal="${1}-$(date +%F)-${i}"
 	done
 	[ ${i} -ge 1000 ] && exit_script "Error [ aws_functions.generate_name() ]: Failed to generate unique name: ${i} names already exist!"
 }
@@ -104,8 +104,8 @@ set_stack_name() {
 		aws_log "Pipeline Config \"aws.stack=${awsStack}\" status=CREATE_COMPLETE" && return
 	fi
 	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-	awsStack=$(generate_name bljStack "$stacks") && set_blj_prop awsStack "${awsStack}"
-	aws_log "Generated awsStack=$awsStack" && refresh_aws_cache
+	set_blj_prop awsStack $(generate_name bljStack "$stacks") && refresh_aws_cache
+	aws_log "Generated awsStack=$awsStack" 
 }
 
 # Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.

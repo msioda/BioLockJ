@@ -25,28 +25,22 @@ add_nextflow_job_def() {
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
 	refresh_aws_cache && [ -f "$(get_docker_job_def_flag)" ] && aws_log "Jobs already exist, found flag file: $(get_docker_job_def_flag)" && return
-	init_nextflow_config && dockerModules=$(docker search --no-trunc --limit 100 ${dockerUser} | grep -E ^${dockerUser} ) 
+	init_nextflow_config && dockerModules=$(docker search --no-trunc --limit 100 $dockerUser | grep -E ^$dockerUser ) 
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
-	IFS2=$IFS && IFS=$'\t' && aws_log "Building Docker job-definitions..."
+	IFS=$'\t' && aws_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
-		# Uncomment to build java_module ONLY (enough to use testAwsEmail.properties for testing purposes)
-		#[ $(echo $line | grep -c java_module) -eq 0 ] && [ $(echo $line | grep -c humann2_classifier) -eq 0 ] && [ $(echo $line | grep -c knead_data) -eq 0 ] && continue
-		[ $(echo $line | grep -c blj_basic) -gt 0 ] || [ $(echo $line | grep -c biolockj_controller) -gt 0 ] && aws_log "Skip Docker image: \"$line\"" && continue
-		module=$(echo $line | cut -f 1 -d " ") && jobImg="${module}:${dockerImgVersion}"
-		aws_log "Add job-definition for Docker image: \"$jobImg\"" && jobLabel=${jobImg/\//_} &&jobLabel=${jobLabel/:/_} 
+		jobImg=$(echo $line | cut -f 1 -d " "):${dockerImgVersion}
+		# Uncomment next line to build java_module ONLY (the only Docker container needed to run testAwsEmail.properties)
+		#[ $(echo $jobImg | grep -c 'java_module') -eq 0 ] && continue
+		[ $(echo $jobImg | egrep -c 'blj_basic|biolockj_controller') -gt 0 ] && aws_log "Skip Docker image: \"$jobImg\"" && continue
+		aws_log "Add job-definition for Docker image: \"$jobImg\"" && jobLabel=${jobImg/\//_} && jobLabel=${jobLabel/:/_} 
 	    jobConfig="{ 
-			\"image\": \"${jobImg}\",
-			\"vcpus\": 2,
-			\"memory\": 1024,
-			\"command\": [ \"/bin/bash\" ],
-			\"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
+			\"image\": \"${jobImg}\", \"vcpus\": 2, \"memory\": 1024, \"command\": [ \"/bin/bash\" ], \"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
 			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"${EC2_HOME}\" }, \"name\": \"hostHome\" } ],
 			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${EC2_HOME}\", \"readOnly\": false, \"sourceVolume\": \"hostHome\" } ],
-			\"readonlyRootFilesystem\": false,
-			\"privileged\": true
+			\"readonlyRootFilesystem\": false, \"privileged\": true
 		}"
-		jobDef="${awsStack}_${jobLabel}"
-		jobName=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name ${jobDef} --query "jobDefinitions[*].jobDefinitionName")
+		jobDef="${awsStack}_${jobLabel}" && jobName=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name ${jobDef} --query "jobDefinitions[*].jobDefinitionName")
 		if [ ${#jobName} -eq 0 ]; then
 			registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
 			aws_log "Registered new Docker job-definition: ${registeredJob}"
@@ -55,7 +49,7 @@ build_docker_job_defs() {
 		fi
 		aws_log "Registered Docker job-definition: ${jobName}" && add_nextflow_job_def "image_${jobLabel}" "${jobName}"
 	done
-	IFS2=$IFS && echo "}" >> "$(local_nf_conf)" && echo "" >> "$(local_nf_conf)" && touch "$(get_docker_job_def_flag)"
+	reset_IFS && echo "}" >> "$(local_nf_conf)" && echo "" >> "$(local_nf_conf)" && touch "$(get_docker_job_def_flag)"
 }
 
 # Connect to running head node
@@ -104,10 +98,10 @@ init_ec2_head_node() {
 			secureGroup="$(get_stack_param BastionSecurityGroup)" && templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
 		[ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ] &&
 			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Cannot launch EC2 - required parameters undefined in ${awsConf}"
-		awsEc2InstanceID=$(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id $(get_ami) --security-group-ids ${secureGroup} \
+		set_blj_prop awsEc2InstanceID $(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id $(get_ami) --security-group-ids ${secureGroup} \
 			--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='${ec2Name}'}" --subnet-id ${subnet} \
 			--launch-template LaunchTemplateId="${templateId}" --instance-type "${awsEc2InstanceType}" --query "Instances[].InstanceId" )
-		printf "Launching EC2 Head Node ${ec2Name}, please wait..." && set_blj_prop awsEc2InstanceID "${awsEc2InstanceID}"
+		refresh_aws_cache && printf "Launching EC2 Head Node ${ec2Name}, please wait..."
 	fi
 	[ "${ec2Status}" != "ok" ] && start_ec2_head_node
 }

@@ -285,7 +285,7 @@ public class NextflowUtil {
 					line = line.replace( NF_CPUS, Config.getString( module, prop ) );
 				} else if( line.contains( NF_MEMORY ) ) {
 					final String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
-					line = line.replace( NF_MEMORY, getRAM( Config.requireString( module, prop ) ) );
+					line = line.replace( NF_MEMORY, "'" + Config.requirePositiveInteger( module, prop ) + " GB'" );
 				} else if( line.contains( NF_DOCKER_IMAGE ) ) {
 					line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
 					if( Config.requireString( module, EC2_ACQUISITION_STRATEGY ).toUpperCase().equals( ON_DEMAND ) )
@@ -363,29 +363,6 @@ public class NextflowUtil {
 				return (ScriptModule) module;
 				}
 		return null;
-	}
-
-	private static String getRAM( final String ram ) throws ConfigFormatException {
-		String val = ram.trim();
-		String intVal = val.replaceAll( "[^0-9]", "" );
-		final String level =
-			ram.replace( intVal, "" ).replaceAll( " ", "" ).replaceAll( "'", "" ).replaceAll( "\"", "" );
-		if( level.length() > 0 && !ramLevels.contains( level ) ) throw new ConfigFormatException( AWS_RAM, "" );
-
-		try {
-			intVal = "'" + Integer.parseInt( ram ) + " GB'";
-			Log.warn( NextflowUtil.class, "RAM Config was purely numeric, adding default GB designation: " + ram +
-				" converted to ---> " + intVal );
-			return intVal;
-		} catch( final Exception ex ) {
-			Log.warn( NextflowUtil.class,
-				"RAM value is not purely numeric, ensure it is single quoted: " + ex.getMessage() );
-		}
-
-		if( !val.startsWith( "'" ) ) val = "'" + val;
-		if( !val.endsWith( "'" ) ) val = val + "'";
-
-		return ram;
 	}
 
 	private static boolean poll() throws Exception {
@@ -548,7 +525,6 @@ public class NextflowUtil {
 	private static Thread nfMainThread = null;
 	private static final String ON_DEMAND = "DEMAND";
 	private static final String PROCESS = "process";
-	private static List<String> ramLevels = Arrays.asList( "KB", "MB", "GB", "TB" );
 	private static final String S3_DIR = "s3://";
 	private static Set<String> s3SyncRegister = new HashSet<>();
 	private static final Set<Integer> usedModules = new HashSet<>();

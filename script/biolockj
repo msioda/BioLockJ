@@ -1,8 +1,8 @@
 #!/bin/bash
 ##########################################################################
 ##                                                                      ##
-##  Script requires valid BioLockJ Config file passed as a parameter.   ##
-##  Script requires valid BioLockJ pipeline root directory: $BLJ_PROJ.  ##
+##  Script requires 1+ of the listed arguments parameter.               ##
+##  Script requires  BioLockJ pipeline root directory: $BLJ_PROJ.       ##
 ##                                                                      ##
 ##  Pass optional param "-r" as 1st param to restart failed pipeline    ##
 ##                                                                      ##
@@ -12,114 +12,104 @@
 ##########################################################################
 . "${AWS_LIB}"
 
-bljJar=${BLJ}/dist/BioLockJ.jar
-
 # Display BioLockJ release version
 display_version() {
-	if [ -f "${BLJ}/.version" ]; then
-		cat "${BLJ}/.version"
-	else
-		echo "Missing ${BLJ}/.version"
-	fi
+	[ -f "${BLJ}/.version" ] && cat "${BLJ}/.version" && return
+	echo "Missing ${BLJ}/.version"
 }
 
 # Show the help menu
 display_help() {
-    echo "BioLockJ $(display_version) - UNCC Fodor Lab July 2018"
-    echo "Run new pipeline:   biolockj                       <config_file>"
-    echo "Run new pipeline:             -c/--config/config   <config_file>"
-    echo "Run AWS pipeline:             -a/--aws/aws         <config_file>"
-    echo "Restart pipeline:             -r/--restart/restart  <directory>"
-    echo "Encrypt password:             -p/--pass/pass        <new_passw>"
-    echo "Show help menu:               -h/--help/help"
-    echo "Display BioLockJ version:     -v/--version/version"
+    echo "BioLockJ $(display_version) - UNCC Fodor Lab July 2018" 
+    echo "Most args can be passed using 1st letter (with or without hyphens)" && echo ""
+    echo "Valid syntax options: biolockj --config $CONF, biolockj -c $CONFIG, biolockj c $CONFIG" && echo ""
+    echo "Run new pipeline:    biolockj           <config_file>"
+    echo "Run new pipeline:              config   <config_file>"
+    echo "Restart failed pipeline:       restart   <directory>"
+    echo "Encrypt password:              pass     <new_password>"
+    echo "Run pipeline on AWS:           aws"
+    echo "Run Docker pipeline:           docker"
+    echo "Run Docker GUI:                gui"
+    echo "Map BLJ Docker volume          blj"
+    echo "Map BLJ_SUP in Docker volume   blj_sup"
+    echo "Show help menu:                help"
+    echo "Display BioLockJ version:      version"
+}
+
+# Get dockblj scripts formatted named arg params
+docker_args() {
+	args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
+	[ ${#restart} -gt 0 ] && args="${args} r=${restart}"
+	[ ${#overrideBLJ} -gt 0 ] && args="${args} blj=${overrideBLJ}"
+	[ ${#overrideBLJ_SUP} -gt 0 ] && args="${args} blj_sup=${overrideBLJ_SUP}"
+	echo "${args}"
 }
 
 # Convert input parameters to array with values "name=value"
 get_params() {
-	args=("$@")
-	numArgs=${#@}
-	i=0
-    for arg in ${args[@]}; do  
-		[ $((i%2)) -eq 0 ] && name=${arg//-} 
-		[ $((i%2)) -eq 0 ] && name=${name:0:1}
-		if [ $((i%2)) -eq 1 ]; then
-    			[ "$name" == "c" ] && myConfig=${arg}
-    			echo "$name=${arg}"
-    			name=""
-		fi  
-    	i=$(expr $i + 1)
-    done
-    [ ${#name} -gt 0 ] && [ ${#myConfig} -eq 0 ] && echo "c=$name"
+	i=0 && args=( "$@" )
+    for arg in ${args[@]}; do
+		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${arg//-}" && [ "${name}" == "${name/blj}" ] && name="${name:0:1}"
+		[ $((i%2)) -eq 1 ] && $(is_flag_arg $name) && echo "${name}" && i=$((i+1)) && continue
+		[ $((i%2)) -eq 0 ] && echo "${name}=${arg}" && x="${name}" && name='' && [ "${x}" == "c" ] && conf="${arg}"
+    done && [ ${#conf} -eq 0 ] && echo "c=${name}"
+}
+
+# Determine if given arg is a flag arg that will not be matched with the next arg
+# Param 1 - script arg
+is_flag_arg() {
+	[ $(echo $1 | egrep -c 'a|d|g') -gt 0 ]
 }
 
 # Initialize script, read in script arguments
-init() {
-	inArray=$(get_params "$@")
-	runAws=$(named_arg $inArray a)
-	config=$(named_arg $inArray c)
-	restart=$(named_arg $inArray r)
-	newPass=$(named_arg $inArray p)
-	[ ${#config} -eq 0 ] && [ $# -eq 1 ] && config="${1}"
+# Param 1 -  All script args ${@}
+parse_input_args() {
+	args=$(get_params "$@")
+	runAws=$(arg_exists $args a)
+	displayHelp=$(arg_exists $args h)
+	displayVersion=$(arg_exists $args v)
+	runDocker=$(arg_exists $args d)
+	config=$(named_arg $args c)
+	newPass=$(named_arg $args p)
+	restart=$(named_arg $args r)
+	overrideBLJ=$(named_arg $args blj)
+	overrideBLJ_SUP=$(named_arg $args blj_sup)
+	[ ! -f "${config}" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
 }
 
-# Launch AWS pipeline
-launchAwsPipeline() {
-	run_aws "$runAws"
+# Run biolockj by locally, on AWS, or in Docker mode based on script args
+run_biolockj() {
+	[ ${#displayHelp} -gt 0 ] && display_help && return
+	[ ${#displayVersion} -gt 0 ] && display_version && return
+	[ ${#runAws} -gt 0 ] && run_aws "${config}" && return
+	[ ${#runDocker} -gt 0 ] && dockblj $(docker_args) && return
+	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
+	[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ biolockj ]: BioLockJ Jar file \"${BLJ_JAR}\" not found"
+	start_pipeline "${@}"
 }
 
-# Launch local pipeline
+# Start local pipeline by calling java to run the BioLockJ.jar on the given Config file
 # Param 1 - array of script args "$@"
-launchLocalPipeline() {
-	i=0
-	initPipeline=$(most_recent_pipeline)
-	pipelineDir=$(most_recent_pipeline)
-	initJava=$(ps | grep -c java)
-	numJava=$(ps | grep -c java)
-	
-	echo -e "Launching BioLockJ:  \"nohup java -jar $bljJar -b ${BLJ_PROJ} -u ${HOME} $@ >/dev/null 2>&1 &\""
-	nohup java -jar $bljJar -b "${BLJ_PROJ}" -u "${HOME}" $@ >/dev/null 2>&1 &
-	[ $? != 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run $bljJar"
+start_pipeline() {
+	i=0 && initDir="$(most_recent_pipeline)" && initJava=$(ps | grep -c java) && pipeDir="${initDir}" && numJava=${initJava}
+	echo -e "Launching BioLockJ:  \"nohup java -jar ${BLJ_JAR} -b ${BLJ_PROJ} -u ${HOME} $@ >/dev/null 2>&1 &\""
+	nohup java -jar "${BLJ_JAR}" -b "${BLJ_PROJ}" -u "${HOME}" $@ >/dev/null 2>&1 &
+	[ $? != 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run ${BLJ_JAR}"
 	printf "Initializing BioLockJ."
 	
-	while [ $i -lt 15 ] && [ "$initPipeline" == "$pipelineDir" ] && [ $initJava -eq $numJava ]; do
-		sleep 1 && i=$((i+1)) && printf "." && pipelineDir="$(most_recent_pipeline)" && numJava=$(ps | grep -c java)
+	while [ $i -lt 15 ] && [ "${initDir}" == "${pipeDir}" ] && [ ${initJava} -eq ${numJava} ]; do
+		sleep 1 && i=$((i+1)) && printf "." && pipeDir="$(most_recent_pipeline)" && numJava=$(ps | grep -c java)
 	done
-	sleep 1 && echo "." && pipelineDir="$(most_recent_pipeline)"
-	if [ ${#restart} -gt 0 ] && [ $numJava -gt $initJava ]; then
-		echo "Restarting pipeline:  $pipelineDir"
-	elif [ ${#restart} -eq 0 ] && [ "$initPipeline" != "$pipelineDir" ] || [ $numJava -gt $initJava ]; then
-		echo "Starting pipeline:  $pipelineDir"
-	elif [ ${#restart} -eq 0 ] ; then
-		exit_script "Error [ biolockj ]:  BioLockJ pipeline failed to start!" 1
-	fi
+	
+	sleep 1 && echo "." && pipeDir="$(most_recent_pipeline)"
+	[ ${#restart} -gt 0 ] && [ ${numJava} -gt ${initJava} ] && echo "Restarting pipeline:  ${pipeDir}"
+	[ ${#restart} -eq 0 ] && [ "${initDir}" != "${pipeDir}" ] || [ ${numJava} -gt ${initJava} ] && echo "Starting pipeline:  ${pipeDir}"
+	[ ${#restart} -eq 0 ] && exit_script "Error [ biolockj ]:  Pipeline failed to start!"
 	echo "blj_go       -> Move to pipeline output directory"
 	echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
 	echo "blj_summary  -> View module execution summary"
 }
 
-# Verify input argument paths
-verifyArgPaths() {
-	[ ! -f "$runAws" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
-}
-
-# Verify required local BioLockJ system paths exist
-verifyLocalBljPaths() {
-	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
-	[ ! -f "$bljJar" ] && exit_script "Error [ biolockj ]: Jar file \"$bljJar\" not found"
-} 
-
-if [ $# -eq 0 ] || [ "${1}" == "-h" ] || [ "${1}" == "--help" ] || [ "${1}" == "help" ]; then
-	display_help
-elif [ "${1}" == "-v" ] || [ "${1}" == "--version" ] || [ "${1}" == "version" ]; then
-	display_version
-else
-	init $@
-	if [ ${#runAws} -gt 0 ]; then
-		verifyArgPaths
-		launchAwsPipeline
-	else
-		verifyLocalBljPaths
-		launchLocalPipeline $@
-	fi
-fi
+BLJ_JAR=${BLJ}/dist/BioLockJ.jar
+parse_input_args "${@}"
+run_biolockj "${@}"
