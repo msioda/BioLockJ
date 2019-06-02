@@ -186,7 +186,7 @@ public class DockerUtil {
 				prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
 		}
 
-		if( hasCustomDockerDB( module ) && !className.startsWith( RdpClassifier.class.getPackage().getName() ) && !className.toLowerCase().contains( Constants.QIIME ) )
+		if( hasCustomDockerDB( module ) && className.toLowerCase().contains( "knead_data" ) || className.toLowerCase().contains( "kraken" ) )
 			imageName += DB_FREE;
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
 		return imageName;
