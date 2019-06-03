@@ -46,7 +46,7 @@ exports.launch = function(req, res, next) {
         console.log('restart request: ', req.body.restartProjectPath);
         const fullRestartPath = path.join(bljDir,req.body.restartProjectPath);
         console.log(fullRestartPath);
-        launchCommand = indexAux.createFullLaunchCommand(launchArg, fullRestartPath);
+        launchCommand = createFullLaunchCommand(launchArg, fullRestartPath);
         console.log('launching!');
         runLaunchCommand(launchCommand, Stream);
         break;
@@ -76,7 +76,7 @@ exports.launch = function(req, res, next) {
         deleteFolderRecursive(eraseDir);
         launchCommand = indexAux.createFullLaunchCommand(launchArg);
         console.log('launching!');
-        indexAux.runLaunchCommand(launchCommand, Stream);
+        runLaunchCommand(launchCommand, Stream);
 
       } catch (e) {
         console.log(e);
@@ -87,7 +87,7 @@ exports.launch = function(req, res, next) {
       case 'launchNew':
         launchCommand = indexAux.createFullLaunchCommand(launchArg);
         console.log('launching!');
-        indexAux.runLaunchCommand(launchCommand, Stream);
+        runLaunchCommand(launchCommand, Stream);
         //let fileModTime = new Map();
 
       break;
