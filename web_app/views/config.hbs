@@ -4,18 +4,19 @@
 
 <link rel="stylesheet" type="text/css" href="./../stylesheets/config.css" />
 <div class="nav-bar">
-  <div class="dropdown">
-    <button class="dropbtn" onclick="projectOptions()">Projects (Click here to start)</button>
+  <div class="dropdown lft">
+    <button class="dropbtn" onclick="projectOptions()">Pipelines (Click here to start)</button>
     <div class="dropdown-content" id="projects">
       <a onclick="newProj()" href="#">New</a>
+      <a id="prevConfigNavBut" href="#">Previously Launched Pipelines</a>
       <a >Open BLJ config with file picker <input type="file" accept=".txt,.properties" id="localFile"></a>
       <a id="recent" href="#">(Auto)Saved Configurations</a>
     </div>
-    <button class="dropbtn" id="prevConfigNavBut">Previously Launched Pipeline</button>
-    <button class="dropbtn"
-    onclick='document.getElementById("projects").classList.toggle("show")'
-    >Settings</button>
-      <div id="settingsContent" class="dropdown-content">
+  </div>
+  <div class="dropdown rght">
+    <button class="dropbtn" onclick='document.getElementById("settingsContent").classList.toggle("show")'
+      >Settings</button>
+        <div id="settingsContent" class="dropdown-content">
         <a id="openAwsSettings">AWS Mini-dashboard</a>
         <a id="manageConfigs" href="#">Manage saved BLJ configs</a>
       </div>

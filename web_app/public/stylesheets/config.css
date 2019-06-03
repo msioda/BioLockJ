@@ -52,8 +52,14 @@ body {background-color: #A9A9A9;}/* for dark theme */
   margin-top: 11px;
 }
 .dropdown {
-    float: left;
-    overflow: hidden;
+  overflow: hidden;
+}
+.lft{
+  float: left;
+}
+.rght{
+  float: right;
+  padding-right: 125px;
 }
 .dropdown .dropbtn {
     cursor: pointer;
