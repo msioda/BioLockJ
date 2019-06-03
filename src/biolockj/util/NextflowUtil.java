@@ -322,9 +322,10 @@ public class NextflowUtil {
 		String plist = "";
 		for( final BioModule m: modules ) {
 			if( m instanceof ImportMetadata || m instanceof Email ) continue;
-			if( m instanceof JavaModule && !Config.getBoolean( m, Constants.DETACH_JAVA_MODULES ) )
-				Log.warn( NextflowUtil.class, "Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" +
-					Constants.FALSE + " ] so JavaModule \"" + m.getClass().getName() +
+			if( m instanceof JavaModule && !Config.getBoolean( m, Constants.DETACH_JAVA_MODULES ) ) Log.warn(
+				NextflowUtil.class,
+				"Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" + Constants.FALSE + " ] so JavaModule \"" +
+					m.getClass().getName() +
 					"\" must run on a head node deployed with SUFFICIENT RESOURCES --> Current Config value --> [ " +
 					EC2_INSTANCE_TYPE + "=" + Config.getString( m, EC2_INSTANCE_TYPE ) + " ]" );
 			else plist += ( plist.isEmpty() ? "": " " ) + m.getClass().getName();
@@ -352,10 +353,10 @@ public class NextflowUtil {
 						" ] in since it was already used, look for another module of type: " +
 						module.getClass().getName() );
 				else {
-					Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = " + module.getID() +
+				Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = " + module.getID() +
 					" ] --> " + module.getClass().getName() );
-					usedModules.add( module.getID() );
-					return (ScriptModule) module;
+				usedModules.add( module.getID() );
+				return (ScriptModule) module;
 				}
 		return null;
 	}
@@ -375,8 +376,8 @@ public class NextflowUtil {
 	}
 
 	private static void pollAndSpin() throws Exception {
-		Log.info( NextflowUtil.class,
-			"Nextflow initializing...Poll " + NF_LOG + " every 30 seconds until the status message \"" + NF_INIT_FLAG + "\" is logged" );
+		Log.info( NextflowUtil.class, "Nextflow initializing...Poll " + NF_LOG +
+			" every 30 seconds until the status message \"" + NF_INIT_FLAG + "\" is logged" );
 		int numSecs = 0;
 		boolean finished = false;
 		while( !finished ) {
@@ -424,12 +425,12 @@ public class NextflowUtil {
 		return new File( Config.pipelinePath() + File.separator + ".template_" + MAIN_NF );
 	}
 
-	private static File templateScript() throws ConfigPathException  {
+	private static File templateScript() throws ConfigPathException {
 		return new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR +
 			File.separator + MAKE_NEXTFLOW_SCRIPT );
 	}
 
-	private static void writeNextflowMainNF( final List<String> lines ) throws IOException  {
+	private static void writeNextflowMainNF( final List<String> lines ) throws IOException {
 		Log.debug( NextflowUtil.class, "Create " + getMainNf().getAbsolutePath() + " with # lines = " + lines.size() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMainNf() ) );
 		try {
