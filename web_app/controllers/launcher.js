@@ -74,7 +74,7 @@ exports.launch = function(req, res, next) {
           }
         };
         deleteFolderRecursive(eraseDir);
-        launchCommand = indexAux.createFullLaunchCommand(launchArg);
+        launchCommand = createFullLaunchCommand(launchArg);
         console.log('launching!');
         runLaunchCommand(launchCommand, Stream);
 
@@ -85,7 +85,7 @@ exports.launch = function(req, res, next) {
 
         break;
       case 'launchNew':
-        launchCommand = indexAux.createFullLaunchCommand(launchArg);
+        launchCommand = createFullLaunchCommand(launchArg);
         console.log('launching!');
         runLaunchCommand(launchCommand, Stream);
         //let fileModTime = new Map();
