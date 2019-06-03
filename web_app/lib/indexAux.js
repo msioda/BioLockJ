@@ -3,8 +3,9 @@
   *
 */
 
-var fs = require('fs'),
-  path = require('path');
+const fs = require('fs'),
+  path = require('path'),
+  BLJ_CONFIG = process.env.BLJ_CONFIG;
 
 /**parseBljJson turns a config json into a string in flat file format.*/
 exports.formatAsFlatFile = function(modules, paramKeys, paramValues){
@@ -33,7 +34,6 @@ exports.formatAsFlatFile = function(modules, paramKeys, paramValues){
 exports.progressStatus = function(dirPath){
   fs.watch(dirPath, (eventType, filename) => {
     console.log(`Filename: ${filename}, Event: ${eventType}`);
-    console.log(fs.lstatSync('/Users/aaronyerke/Desktop/fodor_lab/blj_testing/' + filename).isDirectory());
   // could be either 'rename' or 'change'. new file event and delete
   // also generally emit 'rename'
   })
@@ -43,7 +43,7 @@ exports.saveConfigToLocal = function(configName, configText){
   if (!configName.endsWith('.properties')){
     configName = configName.concat('.properties')
   }
-  const configPath = path.join('/', 'config', configName);
+  const configPath = path.join(BLJ_CONFIG, configName);
   //console.log(configPath.toString());
   fs.writeFile(configPath, configText,function(err) {
     if(err) {
@@ -54,8 +54,6 @@ exports.saveConfigToLocal = function(configName, configText){
 }
 
 exports.createFullLaunchCommand = function(launchJSON, restartPath){//
-  //const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
-  //const bljDir = process.env.BLJ;
   const execSync = require('child_process').execSync;
   const dockblj = path.join('..','script','dockblj');//relative path from webapp folder
   let command = [];
@@ -135,13 +133,3 @@ exports.mapDir = function (currentDirPath, callback) {
         });
     });
 }
-/*use with line like:
-    walk('path/to/root/dir', function(filePath, stat) {
-        // do something with "filePath"...
-    });
-*/
-// fs.readdir('/Users/aaronyerke/Desktop/fodor_lab/blj_testing', (err, files) => {
-//   files.forEach(file => {
-//     console.log(file);
-//   });
-// })
