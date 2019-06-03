@@ -16,8 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.exception.*;
 import biolockj.module.*;
 import biolockj.module.implicit.parser.ParserModule;
 import biolockj.util.ModuleUtil;
@@ -46,7 +45,7 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	}
 
 	@Override
-	public abstract String getClassifierExe() throws Exception;
+	public abstract String getClassifierExe() throws ConfigViolationException;
 
 	@Override
 	public abstract List<String> getClassifierParams() throws Exception;

@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.*;
 import biolockj.*;
 import biolockj.exception.*;
+import biolockj.module.ScriptModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
 
@@ -36,9 +37,21 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
+		int dbBatchIndex = 0;
 		for( final File file: files ) {
+			
+			final List<String> lines = new ArrayList<>();
+			final int batchNum = getBatchNum( data.size() + 1 );
 			File hn2InputSeq = file;
-			final ArrayList<String> lines = new ArrayList<>();
+			
+			Log.info( getClass(), "Generating script lines for worker script #" + batchNum + 
+				" for sample #" + ( data.size() + 1 ) + " --> " + file.getAbsolutePath() );
+
+			if( doDownloadDB() && dbBatchIndex < batchNum ) {
+				lines.addAll( getDownloadDbLines( batchNum ) );
+				dbBatchIndex = batchNum;
+			}
+
 			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
 				lines.add( getPairedReadLine( file ) );
 				hn2InputSeq = getMergedReadFile( file );
@@ -51,32 +64,17 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			// #Merging metaphlan2 files
 			// humann2_join_tables -i metaphlan2_output -o metaphlan2.tsv --file_name bugs_list
 
+			if( data.size() == files.size() - 1 ) {
+				Log.warn( getClass(), "Total samples = " + files.size() + " and data has " + data.size() +
+					" samples added so far, so add function to build summary table as last line of last script which will be added to buildScripts() data list" );
+				lines.add( FUNCTION_BUILD_SUMMARY_TABLES );
+			}
 			data.add( lines );
 		}
 
-		final ArrayList<String> lines = new ArrayList<>();
-		lines.add( FUNCTION_BUILD_SUMMARY_TABLES );
-		data.add( lines );
 		return data;
 	}
 
-	/**
-	 * Calling super to build scripts, then wait until any database downloads are complete before
-	 * allowing the Pipeline to move forward and use these DB.
-	 */
-	@Override
-	public void executeTask() throws Exception {
-		super.executeTask();
-		try {
-			for( Long id: threadRegister )
-				while( Processor.subProcAlive( id ) ) {
-					Log.warn( NextflowUtil.class, "Humann2 classifier scripts are ready, waiting on database downloads to complete" );
-					Thread.sleep( BioLockJUtil.minutesToMillis( 1 ) );
-				}
-		} catch( final Exception ex ) {
-			Log.error( NextflowUtil.class, "Error occurred waiting for subprocess to compelete!", ex );
-		}
-	}
 	@Override
 	public List<List<String>> buildScriptForPairedReads( final List<File> files ) throws Exception {
 		final List<File> sortedFiles = new ArrayList<>( getPairedReads().keySet() );
@@ -109,10 +107,31 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	}
 
 	/**
-	 * Get kraken executable command: {@value #EXE_HUMANN2}
+	 * Calling super to build scripts, then wait until any database downloads are complete before allowing the Pipeline
+	 * to move forward and use these DB.
 	 */
 	@Override
-	public String getClassifierExe() throws Exception {
+	public void executeTask() throws Exception {
+		if( getBatchNum( getInputFiles().size() ) == 1 && doDownloadDB() ) updateDownloadDbBatchTarget();
+		super.executeTask();
+		try {
+			for( final Long id: threadRegister )
+				while( Processor.subProcAlive( id ) ) {
+					Log.warn( NextflowUtil.class,
+						"Humann2 classifier scripts are ready, waiting on database downloads to complete" );
+					Thread.sleep( BioLockJUtil.minutesToMillis( 1 ) );
+				}
+		} catch( final InterruptedException ex ) {
+			Log.error( NextflowUtil.class, "Error occurred waiting for HumanN2 Download-DB subprocess to compelete!",
+				ex );
+		}
+	}
+
+	/**
+	 * Get HumanN2 executable command: {@value #EXE_HUMANN2}
+	 */
+	@Override
+	public String getClassifierExe() throws ConfigViolationException {
 		return Config.getExe( this, EXE_HUMANN2 );
 	}
 
@@ -122,7 +141,6 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getClassifierParams() throws Exception {
 		final List<String> res = new ArrayList<>();
-
 		for( final String val: Config.getList( this, EXE_HUMANN2_PARAMS ) )
 			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM ) ||
 				val.startsWith( LONG_OUTPUT_PARAM ) )
@@ -145,23 +163,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		setDbCache( BioLockJUtil.getCommonParent( new File( getNuclDbPath() ), new File( getProtDbPath() ) ) );
 		return getDbCache();
 	}
-	
 
-	private String downloadDefaultDB( final String dbProp ) throws ConfigNotFoundException {
-		final String[] parts = Config.requireString( this, dbProp ).split( "\\s" );
-		final File db = new File( parts[2] + File.pathSeparator + parts[0] );
-		if( !db.isDirectory() ) {
-			final String[] args = new String[ parts.length + 2 ];
-			args[ 0 ] = DOWNLOAD_DB_CMD;
-			args[ 1 ] = DL_DB_SWITCH;
-			args[ 2 ] = parts[0]; // <database>  
-			args[ 3 ] = parts[1]; // <build>
-			args[ 4 ] = parts[2]; // <install_location>
-			threadRegister.add( DockerUtil.downloadDB( args, "Download HumanN2 DB" ) );
-		}
-		return db.getAbsolutePath();
-	}
-	
 	@Override
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
@@ -180,30 +182,11 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
-			lines.add( "function " + FUNCTION_CONCAT_PAIRED_READS + "() {" );
-			lines
-				.add( "cat $1 $2 > " + getTempSubDir( TEMP_MERGE_READ_DIR ).getAbsolutePath() + File.separator + "$3" );
-			lines.add( "}" + RETURN );
-		}
-
-		lines.add( HN2_BASH_COMMENT );
-		lines.add( "function " + FUNCTION_RUN_HN2 + "() {" );
-		lines.add( getClassifierExe() + " " + getRuntimeParams() + INPUT_PARAM + " $1 " + OUTPUT_PARAM + " " +
-			getTempSubDir( FUNCTION_RUN_HN2 ) );
-		lines.add( "}" + RETURN );
-
-		lines.add( JOIN_BASH_COMMENT );
-		lines.add( "function " + FUNCTION_JOIN_HN2_TABLES + "() {" );
-		lines.add( getJoinTableCmd() + getParams( EXE_HUMANN2_JOIN_PARAMS ) + INPUT_PARAM + " $1 " + OUTPUT_PARAM +
-			" $2 " + FILE_NAME_PARAM + " $3" );
-		lines.add( "}" + RETURN );
-
-		lines.add( RENORM_BASH_COMMENT );
-		lines.add( "function " + FUNCTION_RENORM_HN2_TABLES + "() {" );
-		lines.add( getRenormTableCmd() + getParams( EXE_HUMANN2_RENORM_PARAMS ) + INPUT_PARAM + " $1 " + OUTPUT_PARAM +
-			" $2" );
-		lines.add( "}" + RETURN );
+		if( doDownloadDB() ) lines.addAll( waitForDbDownloadFunction() );
+		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) lines.addAll( concatPairedReadFunction() );
+		lines.addAll( runHn2Function() );
+		lines.addAll( joinTableFunction() );
+		lines.addAll( renormTableFunction() );
 		lines.addAll( getBuildSummaryFunction() );
 		return lines;
 	}
@@ -216,11 +199,47 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 */
 	protected String getRuntimeParams() throws Exception {
 		return getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM ) + RM_STRATIFIED_OUTPUT + " " +
-			NUCL_DB_PARAM + " " +  getNuclDbPath() + " " + PROT_DB_PARAM + " " + getProtDbPath() + " ";
+			NUCL_DB_PARAM + " " + getNuclDbPath() + " " + PROT_DB_PARAM + " " + getProtDbPath() + " ";
 	}
-	
-	private static boolean isPath( final String val ) {
-		return val != null && !val.isEmpty() && !val.trim().contains( " " ) && val.contains( File.separator );
+
+	private List<String> concatPairedReadFunction() {
+		final List<String> lines = new ArrayList<>();
+		lines.add( "function " + FUNCTION_CONCAT_PAIRED_READS + "() {" );
+		lines.add( "cat $1 $2 > " + getTempSubDir( TEMP_MERGE_READ_DIR ).getAbsolutePath() + File.separator + "$3" );
+		lines.add( "}" + RETURN );
+		return lines;
+	}
+
+	private List<String> downloadDbLines( final String prop ) throws ConfigNotFoundException {
+		final List<String> lines = new ArrayList<>();
+		final String[] db = Config.requireString( this, prop ).split( "\\s" );
+		lines.add( DOWNLOAD_DB_CMD + " " + DL_DB_SWITCH + " " + db[ 0 ] + " " + db[ 1 ] + " " + db[ 2 ] );
+		lines.add( "touch " + getDbFlag( prop ).getAbsolutePath() );
+		return lines;
+	}
+
+	private String downloadDefaultDB( final String prop ) throws ConfigNotFoundException {
+		final String[] parts = Config.requireString( this, prop ).split( "\\s" );
+		final File db = new File( parts[ 2 ] + File.pathSeparator + parts[ 0 ] );
+		if( !db.isDirectory() ) {
+			Log.info( getClass(), "Database property [ Config." + prop + " ] is not a system directory path." );
+			if( DockerUtil.inAwsEnv() ) dlHn2DBs.put( prop, dlHn2DBs.size() + 1 );
+			else {
+				final String[] args = new String[ parts.length + 2 ];
+				args[ 0 ] = DOWNLOAD_DB_CMD;
+				args[ 1 ] = DL_DB_SWITCH;
+				args[ 2 ] = parts[ 0 ]; // <database>
+				args[ 3 ] = parts[ 1 ]; // <build>
+				args[ 4 ] = parts[ 2 ]; // <install_location>
+				threadRegister.add( DockerUtil.downloadDB( args, "Download HumanN2 DB" ) );
+			}
+		}
+		return db.getAbsolutePath();
+	}
+
+	private int getBatchNum( final int sampleCount ) throws ConfigNotFoundException, ConfigFormatException {
+		final int batchSize = Config.requirePositiveInteger( this, ScriptModule.SCRIPT_BATCH_SIZE );
+		return new Double( Math.ceil( new Double( sampleCount ) / new Double( batchSize ) ) ).intValue();
 	}
 
 	private List<String> getBuildSummaryFunction() throws Exception {
@@ -252,29 +271,19 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		lines.add( "}" + RETURN );
 		return lines;
 	}
-	
-	private String getProtDbPath() throws ConfigNotFoundException, ConfigPathException {
-		if( protDbCache != null ) return protDbCache;
-		final String prop = Config.requireString( this, HN2_PROT_DB );
-		if( DockerUtil.inDockerEnv() ) {
-			if( isPath( prop ) ) protDbCache = prop;
-			else protDbCache = downloadDefaultDB( prop );
-		} else protDbCache = Config.requireExistingDir( this, HN2_PROT_DB ).getAbsolutePath();
-		return protDbCache;
-	}
-	
-	private String getNuclDbPath() throws ConfigNotFoundException, ConfigPathException {
-		if( nuclDbCache != null ) return nuclDbCache;
-		final String prop = Config.requireString( this, HN2_NUCL_DB );
-		if( DockerUtil.inDockerEnv() ) {
-			if( isPath( prop ) ) nuclDbCache = prop;
-			else nuclDbCache = downloadDefaultDB( prop );
-		} else nuclDbCache = Config.requireExistingDir( this, HN2_NUCL_DB ).getAbsolutePath();
-		return nuclDbCache;
+
+	private File getDbFlag( final String prop ) throws ConfigNotFoundException {
+		final String[] db = Config.requireString( this, prop ).split( "\\s" );
+		return new File(
+			getTempDir().getAbsolutePath() + File.separator + "DB_" + db[ 0 ] + "_" + Constants.BLJ_COMPLETE );
 	}
 
-	private String getJoinTableCmd() throws Exception {
-		return getClassifierExe() + JOIN_TABLE_CMD_SUFFIX;
+	private List<String> getDownloadDbLines( final int batchNum ) throws ConfigNotFoundException {
+		final List<String> lines = new ArrayList<>();
+		if( dlHn2DBs.get( HN2_NUCL_DB ) == batchNum ) lines.addAll( downloadDbLines( HN2_NUCL_DB ) );
+		if( dlHn2DBs.get( HN2_PROT_DB ) == batchNum ) lines.addAll( downloadDbLines( HN2_PROT_DB ) );
+		if( lines.size() < 2 ) lines.add( FUNCTION_DOWNLOAD_DB );
+		return lines;
 	}
 
 	private String getJoinTableLine( final String key ) {
@@ -287,13 +296,23 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			SeqUtil.getSampleId( file.getName() ) + BioLockJUtil.fileExt( file ) );
 	}
 
-	private String getPairedReadLine( final File file ) throws Exception {
+	private String getNuclDbPath() throws ConfigNotFoundException, ConfigPathException {
+		if( nuclDbCache != null ) return nuclDbCache;
+		final String prop = Config.requireString( this, HN2_NUCL_DB );
+		if( DockerUtil.inDockerEnv() ) {
+			if( isDirPath( prop ) ) nuclDbCache = prop;
+			else nuclDbCache = downloadDefaultDB( HN2_NUCL_DB );
+		} else nuclDbCache = Config.requireExistingDir( this, HN2_NUCL_DB ).getAbsolutePath();
+		return nuclDbCache;
+	}
+
+	private String getPairedReadLine( final File file ) throws ConfigFormatException, SequnceFormatException, MetadataException, ConfigViolationException {
 		return FUNCTION_CONCAT_PAIRED_READS + " " + file.getAbsolutePath() + " " +
 			getPairedReads().get( file ).getAbsolutePath() + " " + SeqUtil.getSampleId( file.getName() ) +
 			BioLockJUtil.fileExt( file );
 	}
 
-	private Map<File, File> getPairedReads() throws Exception {
+	private Map<File, File> getPairedReads() throws ConfigFormatException, ConfigViolationException, SequnceFormatException, MetadataException {
 		if( this.pairedReads == null && Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
 			this.pairedReads = SeqUtil.getPairedReads( getInputFiles() );
 		return this.pairedReads;
@@ -311,8 +330,14 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return params;
 	}
 
-	private String getRenormTableCmd() throws Exception {
-		return getClassifierExe() + RENORM_TABLE_CMD_SUFFIX;
+	private String getProtDbPath() throws ConfigNotFoundException, ConfigPathException {
+		if( protDbCache != null ) return protDbCache;
+		final String prop = Config.requireString( this, HN2_PROT_DB );
+		if( DockerUtil.inDockerEnv() ) {
+			if( isDirPath( prop ) ) protDbCache = prop;
+			else protDbCache = downloadDefaultDB( HN2_PROT_DB );
+		} else protDbCache = Config.requireExistingDir( this, HN2_PROT_DB ).getAbsolutePath();
+		return protDbCache;
 	}
 
 	private String getRenormTableLine( final String input, final String output ) {
@@ -326,8 +351,67 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return dir;
 	}
 
+	private List<String> joinTableFunction() throws ConfigViolationException {
+		final List<String> lines = new ArrayList<>();
+		lines.add( JOIN_BASH_COMMENT );
+		lines.add( "function " + FUNCTION_JOIN_HN2_TABLES + "() {" );
+		lines.add( getClassifierExe() + JOIN_TABLE_CMD_SUFFIX + getParams( EXE_HUMANN2_JOIN_PARAMS ) + INPUT_PARAM +
+			" $1 " + OUTPUT_PARAM + " $2 " + FILE_NAME_PARAM + " $3" );
+		lines.add( "}" + RETURN );
+		return lines;
+	}
+
+	private List<String> renormTableFunction() throws ConfigViolationException {
+		final List<String> lines = new ArrayList<>();
+		lines.add( RENORM_BASH_COMMENT );
+		lines.add( "function " + FUNCTION_RENORM_HN2_TABLES + "() {" );
+		lines.add( getClassifierExe() + RENORM_TABLE_CMD_SUFFIX + getParams( EXE_HUMANN2_RENORM_PARAMS ) + INPUT_PARAM +
+			" $1 " + OUTPUT_PARAM + " $2" );
+		lines.add( "}" + RETURN );
+		return lines;
+	}
+
+	private List<String> runHn2Function() throws Exception {
+		final List<String> lines = new ArrayList<>();
+		lines.add( HN2_BASH_COMMENT );
+		lines.add( "function " + FUNCTION_RUN_HN2 + "() {" );
+		lines.add( getClassifierExe() + " " + getRuntimeParams() + INPUT_PARAM + " $1 " + OUTPUT_PARAM + " " +
+			getTempSubDir( FUNCTION_RUN_HN2 ) );
+		lines.add( "}" + RETURN );
+		return lines;
+	}
+
+	private List<String> waitForDbDownloadFunction() throws ConfigNotFoundException {
+		final List<String> lines = new ArrayList<>();
+		lines.add( DOWNLOAD_DB_COMMENT );
+		lines.add( "function " + FUNCTION_DOWNLOAD_DB + "() {" );
+		lines.add( "count=0" );
+		lines.add( "while [ ! -f " + getDbFlag( HN2_PROT_DB ).getAbsolutePath() + " ] || [ ! -f " +
+			getDbFlag( HN2_NUCL_DB ).getAbsolutePath() + " ]; do" );
+		lines.add( "sleep 60" );
+		lines.add( "let \"count++\"" );
+		lines.add( "[ ${count} > 30 ] && echo \"Failed to download HumanN2 DBs after 30 minutes\" && sleep 20 && exit 1" );
+		lines.add( "done" );
+		lines.add( "}" + RETURN );
+		return lines;
+	}
+
+	private static boolean doDownloadDB() {
+		return !dlHn2DBs.isEmpty();
+	}
+
+	private static boolean isDirPath( final String val ) {
+		if( !DockerUtil.inDockerEnv() ) return new File( val ).isDirectory();
+		return val != null && !val.isEmpty() && !val.trim().contains( " " ) && val.contains( File.separator );
+	}
+
 	private static String summaryFile( final File dir, final String key ) {
 		return dir + File.separator + Config.pipelineName() + "_" + key + TSV_EXT;
+	}
+
+	private static void updateDownloadDbBatchTarget() {
+		for( final String key: dlHn2DBs.keySet() )
+			dlHn2DBs.put( key, 1 );
 	}
 
 	private Map<File, File> pairedReads = null;
@@ -364,9 +448,16 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	private static final String BUILD_SUMMARY_BASH_COMMENT =
 		"# Wait until all worker scripts are complete to build summary tables";
+	private static final String DL_DB_SWITCH = "--download";
+	private static final Map<String, Integer> dlHn2DBs = new HashMap<>();
+	private static final String DOWNLOAD_DB_CMD = "humann2_databases";
+	private static final String DOWNLOAD_DB_COMMENT =
+		"# The 1st 2 batch scripts each download one database - a flag indicator is saved when complete" + RETURN +
+			"# Check for completed DBs 1/minute until ready";
 	private static final String FILE_NAME_PARAM = "--file_name";
 	private static final String FUNCTION_BUILD_SUMMARY_TABLES = "buildSummaryTables";
 	private static final String FUNCTION_CONCAT_PAIRED_READS = "mergePairedReads";
+	private static final String FUNCTION_DOWNLOAD_DB = "waitForDbDownload";
 	private static final String FUNCTION_JOIN_HN2_TABLES = "joinHn2Tables";
 	private static final String FUNCTION_RENORM_HN2_TABLES = "renormHn2Tables";
 	private static final String FUNCTION_RUN_HN2 = "runHn2";
@@ -381,18 +472,16 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private static final String LONG_INPUT_PARAM = "--input";
 	private static final String LONG_OUTPUT_PARAM = "--output";
 	private static final String NUCL_DB_PARAM = "--nucleotide-database";
+	private static String nuclDbCache = null;
 	private static final String NUM_THREADS_PARAM = "--threads";
 	private static final String OUTPUT_PARAM = "-o";
 	private static final String PROT_DB_PARAM = "--protein-database";
+	private static String protDbCache = null;
 	private static final String RENORM_BASH_COMMENT = "# Renormalize output summary tables" + RETURN +
-		"# Renorm unit options: counts/million (default) or relative abundance" + RETURN +
-		"# Renorm mode options: community (default) or levelwise";
+		"    # Renorm unit options: counts/million (default) or relative abundance" + RETURN +
+		"    # Renorm mode options: community (default) or levelwise";
 	private static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table";
 	private static final String RM_STRATIFIED_OUTPUT = "--remove-stratified-output";
 	private static final String TEMP_MERGE_READ_DIR = "merged";
-	private static final String DOWNLOAD_DB_CMD = "humann2_databases";
-	private final static String DL_DB_SWITCH = "--download";
-	private static String protDbCache = null;
-	private static String nuclDbCache = null;
 	private static final Set<Long> threadRegister = new HashSet<>();
 }

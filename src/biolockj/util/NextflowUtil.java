@@ -15,7 +15,7 @@ import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.*;
-import biolockj.exception.ConfigFormatException;
+import biolockj.exception.*;
 import biolockj.module.*;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.report.Email;
@@ -79,7 +79,7 @@ public class NextflowUtil {
 	 * 
 	 * @return Nextflow report directory
 	 */
-	public static File getNextflowReportDir() {
+	public static File getNfReportDir() {
 		final File dir = new File( Config.pipelinePath() + File.separator + NEXTFLOW );
 		if( !dir.isDirectory() ) dir.mkdir();
 		return dir;
@@ -105,7 +105,7 @@ public class NextflowUtil {
 	 * @return TRUE if log exists in pipeline root directory
 	 */
 	public static boolean nextflowLogExists() {
-		return new File( getNextflowReportDir().getAbsolutePath() + File.separator + NF_LOG_NAME ).isFile();
+		return new File( getNfReportDir().getAbsolutePath() + File.separator + NF_LOG_NAME ).isFile();
 	}
 
 	/**
@@ -172,7 +172,7 @@ public class NextflowUtil {
 				return;
 			}
 			FileUtils.copyFile( log,
-				new File( getNextflowReportDir().getAbsolutePath() + File.separator + NEXTFLOW + Constants.LOG_EXT ) );
+				new File( getNfReportDir().getAbsolutePath() + File.separator + NEXTFLOW + Constants.LOG_EXT ) );
 		} catch( final Exception ex ) {
 			Log.error( NextflowUtil.class, "Failed to copy nextflow.log to pipeline root directory ", ex );
 		}
@@ -226,9 +226,9 @@ public class NextflowUtil {
 	 */
 	public static void startNextflow( final List<BioModule> modules ) throws Exception {
 		final String plist = buildNextflowProcessList( modules );
-		if( plist == null ) {
+		if( plist.isEmpty() ) {
 			Log.warn( NextflowUtil.class,
-				"Nextflow not neccesary for this pipeline.  All modules are attached java_modules that will run on the head node." );
+				"Nextflow not neccesary for this pipeline.  All modules are attached java_modules that run on the head node." );
 			return;
 		}
 		final File template = buildInitialTemplate( plist );
@@ -280,13 +280,11 @@ public class NextflowUtil {
 				if( line.trim().startsWith( PROCESS ) ) {
 					module = getModule( line.replace( PROCESS, "" ).replaceAll( "\\{", "" ).trim() );
 					line = line.replaceAll( "\\.", "_" );
-				} else if( module != null ) if( line.contains( NF_CPUS ) ) {
-					final String prop = Config.getModuleProp( module, NF_CPUS.substring( 1 ) );
-					line = line.replace( NF_CPUS, Config.getString( module, prop ) );
-				} else if( line.contains( NF_MEMORY ) ) {
-					final String prop = Config.getModuleProp( module, NF_MEMORY.substring( 1 ) );
-					line = line.replace( NF_MEMORY, "'" + Config.requirePositiveInteger( module, prop ) + " GB'" );
-				} else if( line.contains( NF_DOCKER_IMAGE ) ) {
+				} else if( module != null ) if( line.contains( NF_CPUS ) )
+					line = line.replace( NF_CPUS, Config.getString( module, NF_CPUS.substring( 1 ) ) );
+				else if( line.contains( NF_MEMORY ) ) line = line.replace( NF_MEMORY,
+					"'" + Config.requirePositiveInteger( module, NF_MEMORY.substring( 1 ) ) + " GB'" );
+				else if( line.contains( NF_DOCKER_IMAGE ) ) {
 					line = line.replace( NF_DOCKER_IMAGE, getDockerImageLabel( module ) );
 					if( Config.requireString( module, EC2_ACQUISITION_STRATEGY ).toUpperCase().equals( ON_DEMAND ) )
 						onDemandLabel = "    label '" + ON_DEMAND + "'";
@@ -296,10 +294,7 @@ public class NextflowUtil {
 
 				Log.debug( NextflowUtil.class, "ADD LINE: " + line );
 				lines.add( line );
-				if( onDemandLabel != null ) {
-					lines.add( onDemandLabel );
-					Log.debug( NextflowUtil.class, "ADD LINE: " + onDemandLabel );
-				}
+				if( onDemandLabel != null ) lines.add( onDemandLabel );
 			}
 		} finally {
 			if( reader != null ) reader.close();
@@ -325,15 +320,15 @@ public class NextflowUtil {
 
 	private static String buildNextflowProcessList( final List<BioModule> modules ) throws ConfigFormatException {
 		String plist = "";
-		for( final BioModule module: modules )
-			if( !( module instanceof ImportMetadata ) && !( module instanceof Email ) )
-				if( module instanceof JavaModule && !Config.getBoolean( module, Constants.DETACH_JAVA_MODULES ) )
-					Log.warn( NextflowUtil.class,
-						"Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" + Constants.FALSE +
-							" so JavaModule \"" + module.getClass().getName() +
-							"\" will run on the head node - HEAD NODE MUST HAVE SUFFICIENT RESOURCES" );
-				else plist += ( plist.isEmpty() ? "": " " ) + module.getClass().getName();
-		if( plist.isEmpty() ) plist = null;
+		for( final BioModule m: modules ) {
+			if( m instanceof ImportMetadata || m instanceof Email ) continue;
+			if( m instanceof JavaModule && !Config.getBoolean( m, Constants.DETACH_JAVA_MODULES ) )
+				Log.warn( NextflowUtil.class, "Confg property [ " + Constants.DETACH_JAVA_MODULES + "=" +
+					Constants.FALSE + " ] so JavaModule \"" + m.getClass().getName() +
+					"\" must run on a head node deployed with SUFFICIENT RESOURCES --> Current Config value --> [ " +
+					EC2_INSTANCE_TYPE + "=" + Config.getString( m, EC2_INSTANCE_TYPE ) + " ]" );
+			else plist += ( plist.isEmpty() ? "": " " ) + m.getClass().getName();
+		}
 		return plist;
 	}
 
@@ -343,9 +338,9 @@ public class NextflowUtil {
 		return S3_DIR + s3;
 	}
 
-	private static String getDockerImageLabel( final BioModule module ) {
+	private static String getDockerImageLabel( final BioModule module ) throws ConfigNotFoundException {
 		return "'" + IMAGE + "_" + DockerUtil.getDockerUser( module ) + "_" + DockerUtil.getImageName( module ) + "_" +
-			DockerUtil.getImageVersion( module ) + "'";
+			Config.requireString( module, DockerUtil.DOCKER_IMG_VERSION ) + "'";
 	}
 
 	private static ScriptModule getModule( final String className ) {
@@ -357,10 +352,10 @@ public class NextflowUtil {
 						" ] in since it was already used, look for another module of type: " +
 						module.getClass().getName() );
 				else {
-				Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = " + module.getID() +
+					Log.debug( NextflowUtil.class, "getModule( " + className + " ) RETURN module [ ID = " + module.getID() +
 					" ] --> " + module.getClass().getName() );
-				usedModules.add( module.getID() );
-				return (ScriptModule) module;
+					usedModules.add( module.getID() );
+					return (ScriptModule) module;
 				}
 		return null;
 	}
@@ -381,15 +376,13 @@ public class NextflowUtil {
 
 	private static void pollAndSpin() throws Exception {
 		Log.info( NextflowUtil.class,
-			"Poll " + NF_LOG + " every 30 seconds until the status message \"" + NF_INIT_FLAG + "\" is logged" );
+			"Nextflow initializing...Poll " + NF_LOG + " every 30 seconds until the status message \"" + NF_INIT_FLAG + "\" is logged" );
 		int numSecs = 0;
 		boolean finished = false;
 		while( !finished ) {
 			finished = poll();
 			if( !finished ) {
-				if( numSecs > NF_TIMEOUT )
-					throw new Exception( "Nextflow initialization timed out after " + numSecs + " seconds." );
-				Log.info( NextflowUtil.class, "Nextflow initializing..." );
+				if( numSecs > NF_TIMEOUT ) throw new Exception( "Nextflow timed out after " + numSecs + " seconds." );
 				Thread.sleep( 30 * 1000 );
 				numSecs += 30;
 			} else Log.info( NextflowUtil.class, "Nextflow initialization complete!" );
@@ -397,7 +390,6 @@ public class NextflowUtil {
 	}
 
 	private static boolean purge( final String path ) throws Exception {
-
 		Log.info( BioLockJ.class, "Delete everything under/including --> " + path );
 		final String[] args = new String[ 3 ];
 		args[ 0 ] = "rm";
@@ -411,9 +403,8 @@ public class NextflowUtil {
 		nfMainThread = thread;
 	}
 
-	private static void startService() throws Exception {
-		final String reportBase =
-			getNextflowReportDir().getAbsolutePath() + File.separator + Config.pipelineName() + "_";
+	private static void startService() throws ConfigNotFoundException {
+		final String reportBase = getNfReportDir().getAbsolutePath() + File.separator + Config.pipelineName() + "_";
 		final String[] args = new String[ 11 ];
 		args[ 0 ] = NEXTFLOW;
 		args[ 1 ] = "run";
@@ -433,12 +424,12 @@ public class NextflowUtil {
 		return new File( Config.pipelinePath() + File.separator + ".template_" + MAIN_NF );
 	}
 
-	private static File templateScript() throws Exception {
+	private static File templateScript() throws ConfigPathException  {
 		return new File( BioLockJUtil.getBljDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR +
 			File.separator + MAKE_NEXTFLOW_SCRIPT );
 	}
 
-	private static void writeNextflowMainNF( final List<String> lines ) throws Exception {
+	private static void writeNextflowMainNF( final List<String> lines ) throws IOException  {
 		Log.debug( NextflowUtil.class, "Create " + getMainNf().getAbsolutePath() + " with # lines = " + lines.size() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMainNf() ) );
 		try {
@@ -502,14 +493,24 @@ public class NextflowUtil {
 	public static final String AWS_S3 = "aws.s3";
 
 	/**
+	 * {@link biolockj.Config} String property: {@value #EC2_ACQUISITION_STRATEGY}<br>
+	 * The AWS acquisition strategy (SPOT or DEMAND) sets the service SLA for procuring new EC2 instances:
+	 */
+	protected static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #EC2_INSTANCE_TYPE}<br>
+	 * AWS instance type determines initial resource class (t2.micro is common)
+	 */
+	protected static final String EC2_INSTANCE_TYPE = "aws.ec2InstanceType";
+
+	/**
 	 * The Docker container will generate a nextflow.log file in the root directory, this is the file name
 	 */
 	protected static final String NF_LOG = "/.nextflow.log";
 
 	private static final String AWS_DIR = ".aws";
-
 	private static final Integer DEFAULT_S3_TIMEOUT = 30;
-	private static final String EC2_ACQUISITION_STRATEGY = "aws.ec2AcquisitionStrategy";
 	private static final String IMAGE = "image";
 	private static final String MAIN_NF = "main.nf";
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
@@ -526,6 +527,6 @@ public class NextflowUtil {
 	private static final String ON_DEMAND = "DEMAND";
 	private static final String PROCESS = "process";
 	private static final String S3_DIR = "s3://";
-	private static Set<String> s3SyncRegister = new HashSet<>();
+	private static final Set<String> s3SyncRegister = new HashSet<>();
 	private static final Set<Integer> usedModules = new HashSet<>();
 }

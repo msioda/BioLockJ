@@ -477,9 +477,10 @@ public class BioLockJUtil {
 	 * 
 	 * @param file Path abundance file
 	 * @return List of Lists - each inner list 1 line
-	 * @throws Exception if errors occur
+	 * @throws IOException if errors occur reading path abundance file
+	 * @throws FileNotFoundException if path abundance file not found
 	 */
-	public static List<List<String>> parseCountTable( final File file ) throws Exception {
+	public static List<List<String>> parseCountTable( final File file ) throws FileNotFoundException, IOException {
 		final List<List<String>> data = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {

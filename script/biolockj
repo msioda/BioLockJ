@@ -12,6 +12,8 @@
 ##########################################################################
 . "${AWS_LIB}"
 
+BLJ_JAR=${BLJ}/dist/BioLockJ.jar
+
 # Display BioLockJ release version
 display_version() {
 	[ -f "${BLJ}/.version" ] && cat "${BLJ}/.version" && return
@@ -21,19 +23,18 @@ display_version() {
 # Show the help menu
 display_help() {
     echo "BioLockJ $(display_version) - UNCC Fodor Lab July 2018" 
-    echo "Most args can be passed using 1st letter (with or without hyphens)" && echo ""
-    echo "Valid syntax options: biolockj --config $CONF, biolockj -c $CONFIG, biolockj c $CONFIG" && echo ""
-    echo "Run new pipeline:    biolockj           <config_file>"
-    echo "Run new pipeline:              config   <config_file>"
-    echo "Restart failed pipeline:       restart   <directory>"
-    echo "Encrypt password:              pass     <new_password>"
-    echo "Run pipeline on AWS:           aws"
-    echo "Run Docker pipeline:           docker"
-    echo "Run Docker GUI:                gui"
-    echo "Map BLJ Docker volume          blj"
-    echo "Map BLJ_SUP in Docker volume   blj_sup"
-    echo "Show help menu:                help"
-    echo "Display BioLockJ version:      version"
+    echo 'Most args can be passed using 1st letter only (with or without hyphens)'
+    echo '    Run new pipeline:     biolockj          $config_file'
+    echo '    Run new pipeline:              config   $config_file'
+    echo '    Restart failed pipeline:       restart  $directory'
+    echo '    Run pipeline on AWS:           aws'
+    echo '    Run Docker pipeline:           docker'
+    echo '    Run Docker GUI:                gui'
+    echo '    Map BLJ as Docker volume       blj      $directory'
+    echo '    Map BLJ_SUP as Docker volume   blj_sup  $directory'
+    echo '    Encrypt password:              pass     $new_password'
+    echo '    Show help menu:                help'
+    echo '    Display software version:      version'
 }
 
 # Get dockblj scripts formatted named arg params
@@ -49,16 +50,17 @@ docker_args() {
 get_params() {
 	i=0 && args=( "$@" )
     for arg in ${args[@]}; do
-		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${arg//-}" && [ "${name}" == "${name/blj}" ] && name="${name:0:1}"
-		[ $((i%2)) -eq 1 ] && $(is_flag_arg $name) && echo "${name}" && i=$((i+1)) && continue
+		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${arg//-}"
+		[ $((i%2)) -eq 1 ] && $(is_flag_arg $name) && echo "${name:0:1}" && i=$((i+1)) && continue
 		[ $((i%2)) -eq 0 ] && echo "${name}=${arg}" && x="${name}" && name='' && [ "${x}" == "c" ] && conf="${arg}"
-    done && [ ${#conf} -eq 0 ] && echo "c=${name}"
+    done
+    [ ${#conf} -eq 0 ] && echo "c=${name}"
 }
 
 # Determine if given arg is a flag arg that will not be matched with the next arg
 # Param 1 - script arg
 is_flag_arg() {
-	[ $(echo $1 | egrep -c 'a|d|g') -gt 0 ]
+	[ $(echo ${1:0:1} | egrep -c 'a|d|g') -gt 0 ]
 }
 
 # Initialize script, read in script arguments
@@ -79,8 +81,6 @@ parse_input_args() {
 
 # Run biolockj by locally, on AWS, or in Docker mode based on script args
 run_biolockj() {
-	[ ${#displayHelp} -gt 0 ] && display_help && return
-	[ ${#displayVersion} -gt 0 ] && display_version && return
 	[ ${#runAws} -gt 0 ] && run_aws "${config}" && return
 	[ ${#runDocker} -gt 0 ] && dockblj $(docker_args) && return
 	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
@@ -102,14 +102,24 @@ start_pipeline() {
 	done
 	
 	sleep 1 && echo "." && pipeDir="$(most_recent_pipeline)"
-	[ ${#restart} -gt 0 ] && [ ${numJava} -gt ${initJava} ] && echo "Restarting pipeline:  ${pipeDir}"
-	[ ${#restart} -eq 0 ] && [ "${initDir}" != "${pipeDir}" ] || [ ${numJava} -gt ${initJava} ] && echo "Starting pipeline:  ${pipeDir}"
-	[ ${#restart} -eq 0 ] && exit_script "Error [ biolockj ]:  Pipeline failed to start!"
+	if [ ${#restart} -gt 0 ] && [ ${numJava} -gt ${initJava} ]; then 
+		echo "Restarting pipeline:  ${pipeDir}"
+	elif [ ${#restart} -eq 0 ] && [ "${initDir}" != "${pipeDir}" ] || [ ${numJava} -gt ${initJava} ]; then 
+		echo "Starting pipeline:  ${pipeDir}"
+	else 
+		echo "Pipeline may have failed to launch - check $BLJ_PROJ for new pipeline"
+	fi
 	echo "blj_go       -> Move to pipeline output directory"
 	echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
 	echo "blj_summary  -> View module execution summary"
 }
 
-BLJ_JAR=${BLJ}/dist/BioLockJ.jar
-parse_input_args "${@}"
-run_biolockj "${@}"
+arg="${@//-}" && arg="${arg:0:1}"
+if [ $# -eq 1 ] && [ "${arg}" == "v" ]; then
+	display_version
+elif [ $# -eq 1 ] && [ "${arg}" == "h" ]; then
+	display_help
+else
+	parse_input_args "${@}"
+	run_biolockj "${@}"
+fi

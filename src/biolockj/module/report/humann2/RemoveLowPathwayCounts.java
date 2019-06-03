@@ -149,7 +149,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 			if( !badSamplePathways.isEmpty() ) {
 				lowCountPathways.put( sampleId, badSamplePathways );
 				Log.warn( getClass(), sampleId + ": Remove " + badSamplePathways.size() +
-					" Pathways with #counts below threshold: " + getProp() + "=" + getMinCount() );
+					" Pathways with #counts below threshold: " + getMinCount() );
 				Log.debug( getClass(), sampleId + ": Removed Pathways: " + badSamplePathways );
 			}
 		}
@@ -157,8 +157,8 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 		final TreeSet<String> allRemovedPathways = new TreeSet<>( validPathways );
 		allRemovedPathways.removeAll( foundSamplePathways );
 		if( !allRemovedPathways.isEmpty() ) {
-			Log.warn( getClass(), "Remove " + allRemovedPathways.size() + " Pathways with #counts below threshold: " +
-				getProp() + "=" + getMinCount() );
+			Log.warn( getClass(),
+				"Remove " + allRemovedPathways.size() + " Pathways with #counts below threshold: " + getMinCount() );
 			Log.debug( getClass(), "Removed Pathways: " + allRemovedPathways );
 		}
 
@@ -212,15 +212,9 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 	}
 
 	private Integer getMinCount() throws Exception {
-		return Config.requirePositiveInteger( this, getProp() );
+		return Config.requirePositiveInteger( this, Constants.REPORT_MIN_COUNT );
 	}
 
-	private String getProp() {
-		if( this.prop == null ) this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
-		return this.prop;
-	}
-
-	private String prop = null;
 	private final Set<String> sampleIds = new HashSet<>();
 	private Map<String, String> totalPathwaysPerSample = new HashMap<>();
 	private Map<String, String> uniquePathwaysPerSample = new HashMap<>();

@@ -204,6 +204,19 @@ public class Processor {
 	}
 
 	/**
+	 * Check if a specific process is alive
+	 * 
+	 * @param id - Registered thread ID
+	 * @return Boolean TRUE only if the ID is alive
+	 */
+	public static boolean subProcAlive( final Long id ) {
+		if( threadRegister.isEmpty() ) return false;
+		for( final Thread t: threadRegister.keySet() )
+			if( t.isAlive() && t.getId() == id ) return true;
+		return false;
+	}
+
+	/**
 	 * Check if any Subprocess threads are still running.
 	 * 
 	 * @return boolean TRUE if all complete
@@ -229,19 +242,6 @@ public class Processor {
 					return true;
 				}
 			}
-		return false;
-	}
-	
-	/**
-	 * Check if a specific process is alive
-	 * 
-	 * @param id - Registered thread ID
-	 * @return Boolean TRUE only if the ID is alive
-	 */
-	public static boolean subProcAlive( final Long id ) {
-		if( threadRegister.isEmpty() ) return false;
-		for( final Thread t: threadRegister.keySet() )
-			if( t.isAlive() && t.getId() == id ) return true;
 		return false;
 	}
 

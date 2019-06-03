@@ -141,6 +141,15 @@ public class RuntimeParamUtil {
 	}
 
 	/**
+	 * Return host on which Docker container is running
+	 * 
+	 * @return Host name
+	 */
+	public static String getDockerHostName() {
+		return params.get( HOSTNAME );
+	}
+
+	/**
 	 * Runtime property getter for Docker host pipeline dir
 	 * 
 	 * @return Host {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} directory
@@ -229,16 +238,6 @@ public class RuntimeParamUtil {
 	public static File getRestartDir() {
 		return params.get( RESTART_DIR ) == null ? null: new File( params.get( RESTART_DIR ) );
 	}
-	
-	/**
-	 * Return host on which Docker container is running
-	 * 
-	 * @return Host name
-	 */
-	public static String getDockerHostName() {
-		return params.get( HOSTNAME );
-	}
-	
 
 	/**
 	 * Return the runtime args as a String.
@@ -332,9 +331,8 @@ public class RuntimeParamUtil {
 	}
 
 	private static void assignLastParam( final String param ) throws RuntimeParamException {
-		if( !params.keySet().contains( CONFIG_FILE ) &&
-			!params.keySet().contains( RESTART_DIR ) && !params.keySet().contains( param ) &&
-			!params.values().contains( param ) ) params.put( CONFIG_FILE, param );
+		if( !params.keySet().contains( CONFIG_FILE ) && !params.keySet().contains( RESTART_DIR ) &&
+			!params.keySet().contains( param ) && !params.values().contains( param ) ) params.put( CONFIG_FILE, param );
 		else if( NAMED_ARGS.contains( param ) )
 			throw new RuntimeParamException( param, "", "Missing argument for named parameter" );
 	}
@@ -480,11 +478,6 @@ public class RuntimeParamUtil {
 	 * Automatically added $HOME by biolockj/dockblj script: {@value #HOME_DIR}
 	 */
 	protected static final String HOME_DIR = "-u";
-	
-	/**
-	 * Automatically added $(hostname) by biolockj/dockblj script: {@value #HOSTNAME}
-	 */
-	protected static final String HOSTNAME = "-h";
 
 	/**
 	 * Host BioLockJ directory used to override installed $BLJ in Docker containers: {@value #HOST_BLJ_DIR}
@@ -510,6 +503,11 @@ public class RuntimeParamUtil {
 	 * Host $USER $HOME param: {@value #HOST_HOME_DIR}
 	 */
 	protected static final String HOST_HOME_DIR = "--host-home";
+
+	/**
+	 * Automatically added $(hostname) by biolockj/dockblj script: {@value #HOSTNAME}
+	 */
+	protected static final String HOSTNAME = "-h";
 
 	/**
 	 * Input directory file-path runtime parameter switch: {@value #INPUT_DIR}

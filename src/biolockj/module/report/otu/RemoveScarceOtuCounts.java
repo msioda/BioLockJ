@@ -30,7 +30,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		if( getScarceCutoff() > 1 )
-			throw new ConfigFormatException( getScarceProp(), "Required range 0.0 < " + getScarceProp() + " < 1.0 " );
+			throw new ConfigFormatException( Constants.REPORT_SCARCE_CUTOFF, "Required range 0.0 - 1.0 " );
 	}
 
 	/**
@@ -215,12 +215,7 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 	}
 
 	private Double getScarceCutoff() throws Exception {
-		return Config.requirePositiveDouble( this, getScarceProp() );
-	}
-
-	private String getScarceProp() {
-		if( this.prop == null ) this.prop = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
-		return this.prop;
+		return Config.requirePositiveDouble( this, Constants.REPORT_SCARCE_CUTOFF );
 	}
 
 	private File getScareOtuLogFile() {
@@ -245,7 +240,6 @@ public class RemoveScarceOtuCounts extends OtuCountModule {
 
 	private Integer cutoff = null;
 	private Map<String, String> hitsPerSample = new HashMap<>();
-	private String prop = null;
 	private final TreeSet<String> sampleIds = new TreeSet<>();
 	private long totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();

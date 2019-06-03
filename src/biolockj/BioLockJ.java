@@ -310,8 +310,7 @@ public class BioLockJ {
 			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
 		}
 
-		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() +
-			SummaryUtil.displayAsciiArt() );
+		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() + SummaryUtil.displayAsciiArt() );
 		if( isPipelineComplete() ) System.exit( 0 );
 
 		System.exit( 1 );

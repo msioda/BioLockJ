@@ -15,8 +15,7 @@ import java.io.File;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.exception.*;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
 
@@ -97,7 +96,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	 * Get kraken executable command: {@value #EXE_KRAKEN2}
 	 */
 	@Override
-	public String getClassifierExe() throws Exception {
+	public String getClassifierExe() throws ConfigViolationException {
 		return Config.getExe( this, EXE_KRAKEN2 );
 	}
 
@@ -145,23 +144,23 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 			if( params.contains( USE_NAMES_PARAM ) ) classifierParams.remove( USE_NAMES_PARAM );
 			if( params.contains( USE_MPA_PARAM ) ) classifierParams.remove( USE_MPA_PARAM );
 			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
-				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property(" +
+				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property (" +
 					getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
 			if( params.indexOf( PAIRED_PARAM ) > -1 )
-				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property(" +
+				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property (" +
 					getExeParamName() + "). BioLockJ derives this value by analyzing input sequence files" );
 			if( params.indexOf( OUTPUT_PARAM ) > -1 ) throw new Exception(
-				"Invalid classifier option (" + OUTPUT_PARAM + ") found in property(" + getExeParamName() +
+				"Invalid classifier option (" + OUTPUT_PARAM + ") found in property (" + getExeParamName() +
 					"). BioLockJ hard codes this file path based on sequence files names in: " + Constants.INPUT_DIRS );
 			if( params.indexOf( DB_PARAM ) > -1 ) throw new Exception(
-				"Invalid classifier option (" + DB_PARAM + ") found in property(" + getExeParamName() +
+				"Invalid classifier option (" + DB_PARAM + ") found in property (" + getExeParamName() +
 					"). BioLockJ hard codes this directory path based on Config property: " + KRAKEN_DATABASE );
 			if( params.indexOf( "--help " ) > -1 ) throw new Exception(
-				"Invalid classifier option (--help) found in property(" + getExeParamName() + ")." );
+				"Invalid classifier option (--help) found in property (" + getExeParamName() + ")." );
 			if( params.indexOf( "--version " ) > -1 ) throw new Exception(
-				"Invalid classifier option (--version) found in property(" + getExeParamName() + ")." );
+				"Invalid classifier option (--version) found in property (" + getExeParamName() + ")." );
 			if( params.indexOf( REPORT_PARAM ) > -1 ) throw new Exception(
-				"Invalid classifier option (" + REPORT_PARAM + ") found in property(" + getExeParamName() +
+				"Invalid classifier option (" + REPORT_PARAM + ") found in property (" + getExeParamName() +
 					"). BioLockJ hard codes this value based on Sample IDs found in: " + Constants.INPUT_DIRS );
 
 			this.defaultSwitches = getRuntimeParams( classifierParams, NUM_THREADS_PARAM ) + DB_PARAM +

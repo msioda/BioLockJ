@@ -367,6 +367,11 @@ public final class RMetaUtil {
 	protected static final String NUM_META_COLS = "R_internal.numMetaCols";
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #QIIME_PLOT_ALPHA_METRICS}<br>
+	 */
+	protected static final String QIIME_PLOT_ALPHA_METRICS = "qiime.plotAlphaMetrics";
+
+	/**
 	 * {@link biolockj.Config} List property: {@value #R_EXCLUDE_FIELDS}<br>
 	 * R reports must contain at least one valid nominal or numeric metadata field.
 	 */
@@ -395,11 +400,6 @@ public final class RMetaUtil {
 	 * R reports must contain at least one valid field.
 	 */
 	protected static final String R_REPORT_FIELDS = "r.reportFields";
-	
-	/**
-	 * {@link biolockj.Config} Boolean property: {@value #QIIME_PLOT_ALPHA_METRICS}<br>
-	 */
-	protected static final String QIIME_PLOT_ALPHA_METRICS = "qiime.plotAlphaMetrics";
 
 	private static Set<String> binaryFields = null;
 	private static Set<String> mdsFields = null;

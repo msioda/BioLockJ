@@ -169,7 +169,7 @@ public class BioModuleFactory {
 						Gunzipper.class.getName() + " before " + module );
 				this.foundSeqMod = true;
 				finalModules.add( Gunzipper.class.getName() );
-			} 
+			}
 
 			finalModules.add( module );
 		}

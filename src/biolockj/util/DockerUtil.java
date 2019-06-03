@@ -50,6 +50,24 @@ public class DockerUtil {
 	}
 
 	/**
+	 * Download a database for a Docker container
+	 * 
+	 * @param args Terminal command + args
+	 * @param label Log file identifier for subprocess
+	 * @return Thread ID
+	 */
+	public static Long downloadDB( final String[] args, final String label ) {
+		if( downloadDbCmdRegister.contains( args ) ) {
+			Log.warn( DockerUtil.class,
+				"Ignoring duplicate download request - already downloading Docker DB: " + label );
+			return null;
+		}
+
+		downloadDbCmdRegister.add( args );
+		return Processor.runSubprocess( args, label ).getId();
+	}
+
+	/**
 	 * Get Config file path - update for Docker env or bash env var references as needed.
 	 * 
 	 * @param path Runtime arg or Config property path
@@ -89,9 +107,11 @@ public class DockerUtil {
 	 * 
 	 * @param module BioModule
 	 * @return Docker image name
+	 * @throws ConfigNotFoundException if Docker image version is undefined
 	 */
-	public static String getDockerImage( final BioModule module ) {
-		return " " + getDockerUser( module ) + "/" + getImageName( module ) + ":" + getImageVersion( module );
+	public static String getDockerImage( final BioModule module ) throws ConfigNotFoundException {
+		return " " + getDockerUser( module ) + "/" + getImageName( module ) + ":" +
+			Config.requireString( module, DockerUtil.DOCKER_IMG_VERSION );
 	}
 
 	/**
@@ -101,8 +121,8 @@ public class DockerUtil {
 	 * @return Docker Hub User ID
 	 */
 	public static String getDockerUser( final BioModule module ) {
-		String user = Config.getString( null, Config.getModuleProp( module, DOCKER_HUB_USER ) );
-		user = user == null ? DEFAULT_DOCKER_HUB_USER: user;
+		final String user = Config.getString( module, DOCKER_HUB_USER );
+		if( user == null ) return DEFAULT_DOCKER_HUB_USER;
 		return user;
 	}
 
@@ -186,43 +206,12 @@ public class DockerUtil {
 				prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
 		}
 
-		if( hasCustomDockerDB( module ) && className.toLowerCase().contains( "knead_data" ) || className.toLowerCase().contains( "kraken" ) )
-			imageName += DB_FREE;
+		if( hasCustomDockerDB( module ) && className.toLowerCase().contains( "knead_data" ) ||
+			className.toLowerCase().contains( "kraken" ) ) imageName += DB_FREE;
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
 		return imageName;
 	}
 
-	/**
-	 * Get the Docker image version if defined in the {@link biolockj.Config} file<br>
-	 * If not found, return the default version "latest"
-	 * 
-	 * @param module BioModule
-	 * @return Docker image version
-	 */
-	public static String getImageVersion( final BioModule module ) {
-		String ver = Config.getString( null, Config.getModuleProp( module, DOCKER_IMG_VERSION ) );
-		if( ver == null ) ver = DOCKER_LATEST;
-		return ver;
-	}
-	
-	/**
-	 * Download a database for a Docker container
-	 * @param args Terminal command + args
-	 * @param label Log file identifier for subprocess
-	 * @return Thread ID
-	 */
-	public static Long downloadDB( final String[] args, final String label ) {
-		if( downloadDbCmdRegister.contains( args ) ) {
-			Log.warn( DockerUtil.class, "Ignoring duplicate download request - already downloading Docker DB: " + label );
-			return null;
-		}
-
-		downloadDbCmdRegister.add( args );
-		return Processor.runSubprocess( args, label ).getId();
-	}
-
-	
-	
 	/**
 	 * Function used to determine if an alternate database has been defined (other than /db).
 	 * 
@@ -346,8 +335,8 @@ public class DockerUtil {
 	}
 
 	/**
-	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #AWS_EC2_HOME}
-	 * Need to name this dir = "/home/ec2-user" so Nextflow config is same inside + outside of container
+	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #AWS_EC2_HOME} Need
+	 * to name this dir = "/home/ec2-user" so Nextflow config is same inside + outside of container
 	 */
 	public static final String AWS_EC2_HOME = "/home/ec2-user";
 
@@ -449,8 +438,7 @@ public class DockerUtil {
 	private static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
 	private static final String DOCK_RM_FLAG = "--rm";
 	private static final File DOCKER_ENV_FLAG_FILE = new File( "/.dockerenv" );
-	private static final String DOCKER_LATEST = "latest";
 	private static final String DOCKER_SOCKET = "/var/run/docker.sock";
+	private static final Set<String[]> downloadDbCmdRegister = new HashSet<>();
 	private static final String IMAGE_NAME_DELIM = "_";
-	private static Set<String[]> downloadDbCmdRegister = new HashSet<>();
 }

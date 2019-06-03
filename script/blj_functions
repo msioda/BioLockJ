@@ -256,9 +256,9 @@ rm_property() {
 	[ ! -f "${1}" ] && exit_script "Error [ blj_functions.rm_property() ]: Config file ${1} does not exist"
 	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.rm_property() ]: Config property name is required"
 	TMP=~/.temp_config.txt && [ -f "${TMP}" ] && rm "${TMP}" && touch "${TMP}" && chmod 770 "${TMP}"
-	while read line; do 
-		IFS=" " && tokens=( ${line//=/ } ) && reset_IFS
-		[ "${tokens[0]}" != "${2}" ] && echo "${line}" >> "${TMP}"
+	while read line; do
+		line="$(echo ${line} | xargs)" && IFS=$' ' && tokens=( ${line//=/ } ) 
+		reset_IFS && [ ${#line} -gt 0 ] && [ "${tokens[0]}" != "${2}" ] && echo "${line}" >> "${TMP}"
 	done < "${1}"
 	[ -f "${TMP}" ] && rm "${1}" && mv "${TMP}" "${1}"
 }
