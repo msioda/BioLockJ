@@ -28,7 +28,7 @@
 <!--options for control panel-->
 <div class="menu" id='mainMenu'>
   <div id="tabButtons" class="tab">
-    <button id="defaultOpen" class="tablinks basicTabBut" onclick="openTab(event, 'projectTab')">Project</button>
+    <button id="defaultOpen" class="tablinks basicTabBut" onclick="openTab(event, 'projectTab')">Pipeline</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'moduleTab')">Modules</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'inputTab')">Input</button>
     <button class="tablinks basicTabBut" onclick="openTab(event, 'metadataTab')">Metadata</button>
@@ -64,9 +64,9 @@
   <div id="projectTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Project name:
+      <p>Pipeline name:
         <input class="sp" id='pipeline.configFile' name='pipeline.configFile' type="text" size='35'></p>
-      <p>Project description (for your own records):
+      <p>Pipeline description (for your own records):
         <input class="sp" id='pipeline.description' name='pipeline.description' type="text" size='70'></p>
       <p>Copy input files into the parent directory:
         <select class="sp" id='pipeline.copyInput' name='pipeline.copyInput'>
