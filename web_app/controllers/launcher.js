@@ -183,7 +183,6 @@ createFullLaunchCommand = function(launchJSON, restartPath){//
     };
     // command.push(`-${key}=${launchJSON[key]}`);
   });
-  command.push('-docker');
   if (restartPath !== undefined ){
     //note, change to make more universal
     command.push(`-r ${restartPath}`);
