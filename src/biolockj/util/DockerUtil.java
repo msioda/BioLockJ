@@ -388,14 +388,6 @@ public class DockerUtil {
 	public static final String ROOT_HOME = File.separator + DOCKER_USER;
 
 	/**
-	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
-	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
-	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
-	 * versions of these modules and add new modules in their own Docker Hub account.
-	 */
-	protected static final String DOCKER_HUB_USER = "docker.user";
-
-	/**
 	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
 	 */
 	static final String CONTAINER_BLJ_DIR = "/app/biolockj";
@@ -431,6 +423,14 @@ public class DockerUtil {
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
 	 */
 	static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
+
+	/**
+	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
+	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
+	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
+	 * versions of these modules and add new modules in their own Docker Hub account.
+	 */
+	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	private static final String BLJ_BASH = "blj_bash";
 	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";

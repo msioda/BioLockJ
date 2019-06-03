@@ -72,8 +72,8 @@ public class BashScriptBuilder {
 
 	/**
 	 * Create bash worker script function: executeLine<br>
-	 * Capture status code of the payload script line.
-	 * Call scriptFailed function to capture all failure info (if any occur).
+	 * Capture status code of the payload script line. Call scriptFailed function to capture all failure info (if any
+	 * occur).
 	 * 
 	 * @return Bash script lines
 	 */
@@ -86,7 +86,7 @@ public class BashScriptBuilder {
 		lines.add( "}" + RETURN );
 		return lines;
 	}
-	
+
 	/**
 	 * Create bash worker script function: scriptFailed<br>
 	 * Failure details written to the failure indicator file:<br>
@@ -95,13 +95,15 @@ public class BashScriptBuilder {
 	 * <li>$2 Script line number
 	 * <li>$3 Script line failure status code
 	 * </ol>
+	 * 
 	 * @param path Script path
 	 * @return Bash script lines
 	 */
 	protected static List<String> buildScriptFailureFunction( final String path ) {
 		final List<String> lines = new ArrayList<>();
 		lines.add( "function " + FUNCTION_SCRIPT_FAILED + "() {" );
-		lines.add( "echo \"Line #${2} failure status code [ ${3} ]:  ${1}\" >> \"" + path + "_" + Constants.SCRIPT_FAILURES + "\"" );
+		lines.add( "echo \"Line #${2} failure status code [ ${3} ]:  ${1}\" >> \"" + path + "_" +
+			Constants.SCRIPT_FAILURES + "\"" );
 		lines.add( "exit ${3}" );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -365,18 +367,17 @@ public class BashScriptBuilder {
 	 */
 	protected static final String CLUSTER_PROLOGUE = "cluster.prologue";
 
-	
-	private static final String FUNCTION_SCRIPT_FAILED = "scriptFailed";
-	private static final String FUNCTION_EXECUTE_LINE = "executeLine";
-	private static final String FUNCTION_RUN_JOB = "runJob";
-
 	/**
 	 * {@link biolockj.Config} String property: {@value #SCRIPT_JOB_HEADER}<br>
 	 * Header written at top of worker scripts
 	 */
 	protected static final String SCRIPT_JOB_HEADER = "cluster.jobHeader";
-
 	private static Integer batchSize = null;
+	private static final String FUNCTION_EXECUTE_LINE = "executeLine";
+
+	private static final String FUNCTION_RUN_JOB = "runJob";
+
+	private static final String FUNCTION_SCRIPT_FAILED = "scriptFailed";
 	private static final String PIPE_DIR = "pipeDir";
 	private static final String RETURN = Constants.RETURN;
 	private static final List<File> workerScripts = new ArrayList<>();

@@ -13,8 +13,6 @@ package biolockj.module.classifier.wgs;
 
 import java.io.File;
 import java.util.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.*;
 import biolockj.exception.*;
 import biolockj.module.ScriptModule;
@@ -43,8 +41,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		for( final File file: files ) {
 			final List<String> lines = new ArrayList<>();
 			File hn2InputSeq = file;
-
-			Log.warn( getClass(), "getWorkerID(): " + workerID() );
+			Log.warn( getClass(), "getWorkerID(): " + getBatchNum( data.size() ) );
 			Log.warn( getClass(), "dlHn2DBs size: " + dlHn2DBs.size() );
 			Log.warn( getClass(), "Collections.max( dlHn2DBs.values() ): " + Collections.max( dlHn2DBs.values() ) );
 			if( doDownloadDB() ) Log.warn( getClass(), "doDownloadDB(): TRUE" );
@@ -193,6 +190,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		lines.addAll( joinTableFunction() );
 		lines.addAll( renormTableFunction() );
 		lines.addAll( buildSummaryFunction() );
+		this.workerID++;
 		return lines;
 	}
 
@@ -234,7 +232,8 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			Constants.SCRIPT_SUCCESS + " | wc -l)" );
 		lines.add( "let \"numComplete++\"" );
 		lines.add( "[ $numStarted != $numComplete ] && sleep 60" );
-		lines.add( "[ ${count} > 30 ] && echo \"Failed to build HumanN2 summary tables after 60 minutes\" && sleep 15 && exit 1" );
+		lines.add(
+			"[ ${count} > 30 ] && echo \"Failed to build HumanN2 summary tables after 60 minutes\" && sleep 15 && exit 1" );
 		lines.add( "done" );
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
 			lines.add( getJoinTableLine( HN2_PATH_ABUNDANCE ) );
@@ -261,8 +260,8 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	}
 
 	private boolean doDownloadDB() {
-		return !dlHn2DBs.isEmpty() && workerID() < dlHn2DBs.size() &&
-			workerID() <= Collections.max( dlHn2DBs.values() );
+		return !dlHn2DBs.isEmpty() && this.workerID < dlHn2DBs.size() &&
+			this.workerID <= Collections.max( dlHn2DBs.values() );
 	}
 
 	private String downloadDB( final String prop ) throws ConfigNotFoundException {
@@ -284,15 +283,15 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	private List<String> downloadDbFunction() throws ConfigNotFoundException, ConfigFormatException {
 		final List<String> lines = new ArrayList<>();
-		final boolean dlNuclDB =
-			dlHn2DBs.get( HN2_NUCL_DB ) != null && ( numWorkers() == 1 || dlHn2DBs.get( HN2_NUCL_DB ) == workerID() );
-		final boolean dlProtDB =
-			dlHn2DBs.get( HN2_PROT_DB ) != null && ( numWorkers() == 1 || dlHn2DBs.get( HN2_PROT_DB ) == workerID() );
+		final boolean dlNuclDB = dlHn2DBs.get( HN2_NUCL_DB ) != null &&
+			( numWorkers() == 1 || dlHn2DBs.get( HN2_NUCL_DB ) == this.workerID );
+		final boolean dlProtDB = dlHn2DBs.get( HN2_PROT_DB ) != null &&
+			( numWorkers() == 1 || dlHn2DBs.get( HN2_PROT_DB ) == this.workerID );
 		lines.add( DOWNLOAD_DB_COMMENT );
 		lines.add( "function " + FUNCTION_DOWNLOAD_DB + "() {" );
 		if( dlNuclDB ) lines.addAll( downloadDbLines( HN2_NUCL_DB ) );
 		if( dlProtDB ) lines.addAll( downloadDbLines( HN2_PROT_DB ) );
-		if( ( !dlNuclDB && !dlProtDB ) || ( dlHn2DBs.size() == 2 && !dlNuclDB || !dlProtDB ) ) 
+		if( !dlNuclDB && !dlProtDB || dlHn2DBs.size() == 2 && !dlNuclDB || !dlProtDB )
 			lines.add( FUNCTION_BLOCK_FOR_DBS );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -418,12 +417,6 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
-	private int workerID() {
-		return FileUtils
-			.listFiles( getScriptDir(), new WildcardFileFilter( getID().toString() + "*" + Constants.SH_EXT ), null )
-			.size();
-	}
-
 	private static boolean isDirPath( final String val ) {
 		if( !DockerUtil.inDockerEnv() ) return new File( val ).isDirectory();
 		return val != null && !val.isEmpty() && !val.trim().contains( " " ) && val.contains( File.separator );
@@ -438,6 +431,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	}
 
 	private Map<File, File> pairedReads = null;
+	private int workerID = 0;
 
 	/**
 	 * {@link biolockj.Config} exe property for humnan2 executable: {@value #EXE_HUMANN2}
