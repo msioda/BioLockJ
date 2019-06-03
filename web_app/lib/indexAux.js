@@ -52,29 +52,3 @@ exports.saveConfigToLocal = function(configName, configText){
     console.log("The file was saved!");
   })
 }
-
-exports.createFullLaunchCommand = function(launchJSON, restartPath){//
-  const execSync = require('child_process').execSync;
-  const dockblj = path.join('..','script','dockblj');//relative path from webapp folder
-  let command = [];
-  command.push(dockblj.toString());
-  Object.keys(launchJSON).forEach(key => {
-    //if key not config, grab path.Dirname(launchJSON[key])
-
-    //need to pass directories to map for all except -c and -i is already a directory
-    if (key != 'c' && key != 'i'){// TODO: update this to handle '\' also incase someone is running windows
-      command.push(`-${key}=${path.dirname(launchJSON[key])}`)
-    }else{
-    command.push(`-${key}=${launchJSON[key]}`);
-    };
-    // command.push(`-${key}=${launchJSON[key]}`);
-  });
-  command.push('-docker');
-  if (restartPath !== undefined ){
-    //note, change to make more universal
-    command.push(`-r ${restartPath}`);
-  }
-  console.log('launch');
-  console.log('full launch command: \n', command);
-  return command;
-}//end createFullLaunchCommand
