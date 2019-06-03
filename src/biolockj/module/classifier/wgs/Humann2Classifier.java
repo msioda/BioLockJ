@@ -70,7 +70,6 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			if( data.size() == files.size() - 1 ) {
 				Log.warn( getClass(), "Total samples = " + files.size() + " and data has " + data.size() +
 					" samples added so far, so add function to build summary table as last line of last script which will be added to buildScripts() data list" );
-				lines.add( "" );
 				lines.add( FUNCTION_BUILD_SUMMARY_TABLES );
 			}
 			data.add( lines );
@@ -185,8 +184,10 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
-		if( doDownloadDB() ) lines.addAll( downloadDbFunction() );
-		else if( waitForDownloadDBs() ) lines.addAll( blockForDbsFunction() );
+		if( doDownloadDB() ) {
+			lines.addAll( downloadDbFunction() );
+			lines.addAll( blockForDbsFunction() );
+		} else if( waitForDownloadDBs() ) lines.addAll( blockForDbsFunction() );
 		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) lines.addAll( concatPairedReadFunction() );
 		lines.addAll( runHn2Function() );
 		lines.addAll( joinTableFunction() );
@@ -501,8 +502,8 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private static final String PROT_DB_PARAM = "--protein-database";
 	private static String protDbCache = null;
 	private static final String RENORM_BASH_COMMENT = "# Renormalize output summary tables" + RETURN +
-		"    # Renorm unit options: counts/million (default) or relative abundance" + RETURN +
-		"    # Renorm mode options: community (default) or levelwise";
+		"# Renorm unit options: counts/million (default) or relative abundance" + RETURN +
+		"# Renorm mode options: community (default) or levelwise";
 	private static final String RENORM_TABLE_CMD_SUFFIX = "_renorm_table";
 	private static final String RM_STRATIFIED_OUTPUT = "--remove-stratified-output";
 	private static final String TEMP_MERGE_READ_DIR = "merged";
