@@ -76,7 +76,7 @@ parse_input_args() {
 	restart=$(named_arg $args r)
 	overrideBLJ=$(named_arg $args blj)
 	overrideBLJ_SUP=$(named_arg $args blj_sup)
-	[ ! -f "${config}" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
+	[ ${#restart} -eq 0 ] && [ ! -f "${config}" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
 }
 
 # Run biolockj by locally, on AWS, or in Docker mode based on script args
@@ -106,7 +106,7 @@ start_pipeline() {
 		echo "Restarting pipeline:  ${pipeDir}"
 	elif [ ${#restart} -eq 0 ] && [ "${initDir}" != "${pipeDir}" ] || [ ${numJava} -gt ${initJava} ]; then 
 		echo "Starting pipeline:  ${pipeDir}"
-	else 
+	elif [ ${#restart} -eq 0 ]; then
 		echo "Pipeline may have failed to launch - check $BLJ_PROJ for new pipeline"
 	fi
 	echo "blj_go       -> Move to pipeline output directory"
