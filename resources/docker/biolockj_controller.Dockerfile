@@ -9,7 +9,8 @@ RUN apt-get update && \
 	apt-get install -y ca-certificates software-properties-common nodejs aptitude npm && \
 	apt-get upgrade -y && \
    	apt-get install -y openjdk-8-jre-headless && \
-    wget "https://deb.nodesource.com/setup_8.x" | bash -
+    wget "https://deb.nodesource.com/setup_8.x" | bash - && \
+    npm install --only=production
 
 #2.) Install Nextflow Client
 RUN cd /usr/local/bin && wget -qO- https://get.nextflow.io | bash
@@ -27,13 +28,7 @@ RUN echo "${BLJ_DATE}" && cd $BLJ && \
 	wget -qO- "https://github.com/msioda/BioLockJ/releases/download/${VER}/biolockj_${VER}.tgz" | bsdtar -xzf- && \
 	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]*
 
-#5.) Install npm
-RUN cp "${BLJ}/web_app/package-lock.json" ./ && \
-	cp "${BLJ}/web_app/package.json" ./ && \
-	npm install --only=production && \
-	cp -r $BLJ/web_app/* ./
-
-#6.) Cleanup
+#5.) Cleanup
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
 	mv /usr/share/ca-certificates* ~ && \
@@ -45,9 +40,9 @@ RUN	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
 
-#7.) Update  ~/.bashrc
+#6.) Update  ~/.bashrc
 RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
 	echo 'alias goblj=blj_go' >> ~/.bashrc
 		
-#8.) Setup environment and assign default command
+#7.) Setup environment and assign default command
 CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS

@@ -39,7 +39,8 @@ display_help() {
 
 # Get dockblj scripts formatted named arg params
 docker_args() {
-	args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
+	[ ${#gui} -gt 0 ] && args="g"
+	[ ${#config} -gt 0 ] && args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
 	[ ${#restart} -gt 0 ] && args="${args} r=${restart}"
 	[ ${#overrideBLJ} -gt 0 ] && args="${args} blj=${overrideBLJ}"
 	[ ${#overrideBLJ_SUP} -gt 0 ] && args="${args} blj_sup=${overrideBLJ_SUP}"
@@ -68,6 +69,7 @@ is_flag_arg() {
 parse_input_args() {
 	args=$(get_params "$@")
 	runAws=$(arg_exists $args a)
+	runGui=$(arg_exists $args g)
 	displayHelp=$(arg_exists $args h)
 	displayVersion=$(arg_exists $args v)
 	runDocker=$(arg_exists $args d)
@@ -76,7 +78,7 @@ parse_input_args() {
 	restart=$(named_arg $args r)
 	overrideBLJ=$(named_arg $args blj)
 	overrideBLJ_SUP=$(named_arg $args blj_sup)
-	[ ${#restart} -eq 0 ] && [ ! -f "${config}" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
+	[ ${#runGui} -eq 0 ] && [ ${#restart} -eq 0 ] && [ ! -f "${config}" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
 }
 
 # Run biolockj by locally, on AWS, or in Docker mode based on script args
@@ -106,7 +108,7 @@ start_pipeline() {
 		echo "Restarting pipeline:  ${pipeDir}"
 	elif [ ${#restart} -eq 0 ] && [ "${initDir}" != "${pipeDir}" ] || [ ${numJava} -gt ${initJava} ]; then 
 		echo "Starting pipeline:  ${pipeDir}"
-	elif [ ${#restart} -eq 0 ]; then
+	elif [ ${#restart} -eq 0 ] && [ ${#runGui} -eq 0 ]; then
 		echo "Pipeline may have failed to launch - check $BLJ_PROJ for new pipeline"
 	fi
 	echo "blj_go       -> Move to pipeline output directory"

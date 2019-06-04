@@ -16,7 +16,7 @@ aws_archive() {
 	clear_aws_cache && aws_log "Archive AWS properties, key file, and start script to ~/.aws/history"
 	[ ! -d ~/.aws/history ] && mkdir ~/.aws/history
 	[ -f "${awsConf}" ] && mv "${awsConf}" ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
-	echo $sheBang > "${awsConf}" && chmod 770 "${awsConf}" && refresh_aws_cache
+	echo ${sheBang} > "${awsConf}" && chmod 770 "${awsConf}" && refresh_aws_cache
 }
 
 # Set property "configFiles" as list of project Config files + nested default Config files.
