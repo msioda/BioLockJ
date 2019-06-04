@@ -9,8 +9,7 @@ RUN apt-get update && \
 	apt-get install -y ca-certificates software-properties-common nodejs aptitude npm && \
 	apt-get upgrade -y && \
    	apt-get install -y openjdk-8-jre-headless && \
-    wget "https://deb.nodesource.com/setup_8.x" | bash - && \
-    npm install --only=production
+    wget "https://deb.nodesource.com/setup_8.x" | bash -
 
 #2.) Install Nextflow Client
 RUN cd /usr/local/bin && wget -qO- https://get.nextflow.io | bash
@@ -24,9 +23,9 @@ RUN cd /usr/local/bin && \
 #4.) Install BioLockJ
 ARG BLJ_DATE
 ARG VER
-RUN echo "${BLJ_DATE}" && cd $BLJ && \
+RUN echo "${BLJ_DATE}" && cd "${BLJ}" && \
 	wget -qO- "https://github.com/msioda/BioLockJ/releases/download/${VER}/biolockj_${VER}.tgz" | bsdtar -xzf- && \
-	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]*
+	rm -rf ${BLJ}/[bil]* && rm -rf ${BLJ}/resources/[bdil]* && cd "${BLJ}/web_app" && npm install --only=production
 
 #5.) Cleanup
 RUN	apt-get clean && \
