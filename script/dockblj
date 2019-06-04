@@ -118,9 +118,9 @@ scan_script_and_env_args() {
 	config=$(named_arg "$@" -c)
 	newPass=$(named_arg "$@" -p)
 	restartDir=$(named_arg "$@" -r)
-	inputDir=''
-	metaPath=''
-	primerPath=''
+	inputDir=$(named_arg "$@" -i)
+	metaPath=$(named_arg "$@" -m)
+	primerPath=$(named_arg "$@" -t)
 	#inputDir="$(get_property $config input.dirPaths)"
 	#metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"
 	#primerPath="$(get_property $config trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)"
