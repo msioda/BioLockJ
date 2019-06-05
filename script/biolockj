@@ -41,8 +41,8 @@ docker_args() {
 	[ ${#gui} -gt 0 ] && args="g"
 	[ ${#config} -gt 0 ] && args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
 	[ ${#restart} -gt 0 ] && args="${args} r=${restart}"
-	[ ${#overrideBLJ} -gt 0 ] && args="${args} blj=${overrideBLJ}"
-	[ ${#overrideBLJ_SUP} -gt 0 ] && args="${args} blj_sup=${overrideBLJ_SUP}"
+	[ ${#blj} -gt 0 ] && args="${args} blj=${blj}"
+	[ ${#blj_sup} -gt 0 ] && args="${args} blj_sup=${blj_sup}"
 	echo "${args}"
 }
 
@@ -75,13 +75,17 @@ parse_input_args() {
 	config=$(named_arg $args c)
 	newPass=$(named_arg $args p)
 	restart=$(named_arg $args r)
-	overrideBLJ=$(named_arg $args blj)
-	overrideBLJ_SUP=$(named_arg $args blj_sup)
+	blj=$(named_arg $args blj)
+	blj_sup=$(named_arg $args blj_sup)
+	[ ${#runDocker} -eq 0 ] && [ ${#blj} -gt 0 ] && echo "Arg \"blj\" is only applicable in Docker mode so will be ignored"
+	[ ${#runDocker} -eq 0 ] && [ ${#blj_sup} -gt 0 ] && echo "Arg \"blj_sup\" is only applicable in Docker mode so will be ignored"
+	[ ${#runDocker} -eq 0 ] && [ ${#runGui} -gt 0 ] && runDocker="d" && echo "Arg \"gui\" is only applicable in Docker mode --> starting Docker biolockj_controller container"
 	[ ${#runGui} -eq 0 ] && [ ${#restart} -eq 0 ] && [ ! -f "${config}" ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"$config\" is not a valid file \n"
 }
 
 # Run biolockj by locally, on AWS, or in Docker mode based on script args
 run_biolockj() {
+	[ ${#gui} -gt 0 ] 
 	[ ${#runAws} -gt 0 ] && run_aws "${config}" && return
 	[ ${#runDocker} -gt 0 ] && dockblj $(docker_args) && return
 	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""

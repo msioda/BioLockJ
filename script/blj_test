@@ -5,7 +5,7 @@
 ##                                                                       ##
 ##  Script requires valid BioLockJ Config file passed as a parameter.    ##
 ##                                                                       ##
-##  Pass optional param "-c" as 1st param to continue after any failure. ##
+##  Pass optional param "-x" as 1st param to continue after any failure. ##
 ##  Otherwise exit script if any pipeline fails.                         ##
 ##                                                                       ##
 ###########################################################################
@@ -53,5 +53,5 @@ verify_params() {
 	[ ! -d "$BLJ_PROJ" ] && exit_script "Error [ blj_test ]: Required env variable undefined --> \"BLJ_PROJ\""
 }
 
-verify_params
-run_tests
+verify_params $@
+run_tests $@
