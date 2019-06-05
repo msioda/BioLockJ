@@ -41,16 +41,6 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		for( final File file: files ) {
 			final List<String> lines = new ArrayList<>();
 			File hn2InputSeq = file;
-			Log.warn( getClass(), "getWorkerID(): " + getBatchNum( data.size() ) );
-			if( !dlHn2DBs.isEmpty() ) {
-				Log.warn( getClass(), "dlHn2DBs size: " + dlHn2DBs.size() );
-				Log.warn( getClass(), "Collections.max( dlHn2DBs.values() ): " + Collections.max( dlHn2DBs.values() ) );
-			}
-			if( doDownloadDB() ) Log.warn( getClass(), "doDownloadDB(): TRUE" );
-			else Log.warn( getClass(), "doDownloadDB(): FALSE" );
-			if( !doDownloadDB() && waitForDownloadDBs() ) Log.warn( getClass(), "waitForDownloadDBs(): TRUE" );
-			else Log.warn( getClass(), "waitForDownloadDBs(): FALSE" );
-
 			if( doDownloadDB() ) lines.add( FUNCTION_DOWNLOAD_DB );
 			else if( waitForDownloadDBs() ) lines.add( FUNCTION_BLOCK_FOR_DBS );
 
@@ -216,7 +206,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			getDbFlag( HN2_NUCL_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() + "\" ]; do" );
 		lines.add( "sleep 60 && let \"count++\"" );
 		lines.add(
-			"[ ${count} > 30 ] && echo \"Failed to download HumanN2 DBs after 30 minutes\" && sleep 15 && exit 1" );
+			"[ ${count} -gt 60 ] && echo \"Failed to download HumanN2 DBs after 60 minutes\" && sleep 15 && exit 1" );
 		lines.add( "done" );
 		lines.add( "}" + RETURN );
 		return lines;
@@ -235,7 +225,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		lines.add( "let \"numComplete++\"" );
 		lines.add( "[ $numStarted != $numComplete ] && sleep 60" );
 		lines.add(
-			"[ ${count} > 30 ] && echo \"Failed to build HumanN2 summary tables after 60 minutes\" && sleep 15 && exit 1" );
+			"[ ${count} -gt 60 ] && echo \"Failed to build HumanN2 summary tables after 60 minutes\" && sleep 15 && exit 1" );
 		lines.add( "done" );
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
 			lines.add( getJoinTableLine( HN2_PATH_ABUNDANCE ) );
@@ -269,6 +259,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private String downloadDB( final String prop ) throws ConfigNotFoundException {
 		final String[] parts = Config.requireString( this, prop ).split( "\\s" );
 		final File db = new File( parts[ 2 ] + File.separator + parts[ 0 ] );
+		if( db.isDirectory() ) return db.getAbsolutePath();
 		if( DockerUtil.inAwsEnv() ) dlHn2DBs.put( prop, dlHn2DBs.size() );
 		else {
 			final String[] args = new String[ parts.length + 2 ];
