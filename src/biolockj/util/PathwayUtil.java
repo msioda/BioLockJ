@@ -71,13 +71,13 @@ public class PathwayUtil {
 	 * 
 	 * @param file Humann2 classifier output type
 	 * @return Name of humann2 output file of the given type
-	 * @throws Exception if unable to determine the type
+	 * @throws ConfigViolationException if unable to match the given file with a valid HN2 file type
 	 */
-	public static String getHn2Type( final File file ) throws Exception {
+	public static String getHn2Type( final File file ) throws ConfigViolationException {
 		if( file.getName().contains( Constants.HN2_PATH_ABUND_SUM ) ) return Constants.HN2_PATH_ABUND_SUM;
 		if( file.getName().contains( Constants.HN2_PATH_COVG_SUM ) ) return Constants.HN2_PATH_COVG_SUM;
 		if( file.getName().contains( Constants.HN2_GENE_FAM_SUM ) ) return Constants.HN2_GENE_FAM_SUM;
-		throw new Exception( "Invalid Pathway file [ " + file.getAbsolutePath() +
+		throw new ConfigViolationException( "Invalid Pathway file [ " + file.getAbsolutePath() +
 			" ] name does not match HumanN2 output file name format.  Valid file suffixes contain: " + validFormats );
 	}
 
@@ -88,10 +88,10 @@ public class PathwayUtil {
 	 * @param hn2OutputFile Root file indicates type of coverage, abundance, or gene
 	 * @param prefix Optional prefix
 	 * @return Pathway count file
-	 * @throws Exception if invalid file name formats are found
+	 * @throws ConfigViolationException if invalid file format detected
 	 */
 	public static File getPathwayCountFile( final File dir, final File hn2OutputFile, final String prefix )
-		throws Exception {
+		throws ConfigViolationException {
 		String myPrefix = prefix == null ? "": prefix;
 		if( !myPrefix.startsWith( Config.pipelineName() ) ) myPrefix = Config.pipelineName() + "_" + prefix;
 		final String name = myPrefix + "_" + getHn2Type( hn2OutputFile ) + Constants.TSV_EXT;

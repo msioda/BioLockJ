@@ -301,7 +301,6 @@ public class BioLockJUtil {
 	 * @throws FileNotFoundException if file does not exist
 	 * @throws IOException if unable to read or write the file
 	 */
-	@SuppressWarnings("resource")
 	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException {
 		return SeqUtil.isGzipped( file.getName() ) ?
 			new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) ):
@@ -478,9 +477,10 @@ public class BioLockJUtil {
 	 * 
 	 * @param file Path abundance file
 	 * @return List of Lists - each inner list 1 line
-	 * @throws Exception if errors occur
+	 * @throws IOException if errors occur reading path abundance file
+	 * @throws FileNotFoundException if path abundance file not found
 	 */
-	public static List<List<String>> parseCountTable( final File file ) throws Exception {
+	public static List<List<String>> parseCountTable( final File file ) throws FileNotFoundException, IOException {
 		final List<List<String>> data = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {

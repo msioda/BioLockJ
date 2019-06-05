@@ -41,6 +41,62 @@ public class SummaryUtil {
 	}
 
 	/**
+	 * Print the application name *bigly* with some ASCII art :-)
+	 * 
+	 * @return My beautiful artwork
+	 */
+	public static String displayAsciiArt() {
+		final StringBuffer sb = new StringBuffer();
+		sb.append( "                                                    _-^-_" + RETURN );
+		sb.append( "                                                _','    \\'~." + RETURN );
+		sb.append( "                                             -'  ,'      `. `-_" + RETURN );
+		sb.append( "                                            !`-_.;________:.':::" + RETURN );
+		sb.append( "                                            !   /\\        /\\::::" + RETURN );
+		sb.append( "                                            |  /  \\      /..\\:::" + RETURN );
+		sb.append( "                                            ! /    \\    /....\\::" + RETURN );
+		sb.append( "                                            !/      \\  /......\\:" + RETURN );
+		sb.append( "                                            :--.___..\\/_.__.--;;" + RETURN );
+		sb.append( "                                             -_      `!;;;;;;;'" + RETURN );
+		sb.append( "                                               `-_    !;;;;''" + RETURN );
+		sb.append( "                                                  `-. !;'" + RETURN );
+		sb.append( "                                                     <+>" + RETURN );
+		sb.append(
+			"  _______      ___      ________      ___            (=)   ________      ________      ___ ____            __" +
+				RETURN );
+		sb.append(
+			"|\\   __  \\    |\\  \\    |\\   __  \\    |\\  \\           (=)  |\\   __  \\    |\\   ____\\    |\\  \\|\\  \\         |\\  \\" +
+				RETURN );
+		sb.append(
+			"\\ \\  \\|\\ /_   \\ \\  \\   \\ \\  \\|\\  \\   \\ \\  \\          (=)  \\ \\  \\|\\  \\   \\ \\  \\___|    \\ \\  \\/  /|_       \\ \\  \\" +
+				RETURN );
+		sb.append(
+			" \\ \\   __  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\         (=)   \\ \\  \\\\\\  \\   \\ \\  \\        \\ \\   ___  \\    __ \\ \\  \\" +
+				RETURN );
+		sb.append(
+			"  \\ \\  \\|\\  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\____    (=)    \\ \\  \\\\\\  \\   \\ \\  \\____    \\ \\  \\\\ \\  \\  |\\  \\\\_\\  \\" +
+				RETURN );
+		sb.append(
+			"   \\ \\_______\\   \\ \\__\\   \\ \\_______\\   \\ \\_______\\  (=)     \\ \\_______\\   \\ \\_______\\   \\ \\__\\\\ \\__\\ \\ \\________\\" +
+				RETURN );
+		sb.append(
+			"    \\|_______|    \\|__|    \\|_______|    \\|_______|  (=)      \\|_______|    \\|_______|    \\|__| \\|__|  \\|________|" +
+				RETURN );
+		sb.append( "                                                     (=)" + RETURN );
+		sb.append( "                                                     <+>" + RETURN );
+		sb.append( "                                                   .'/V\\`." + RETURN );
+		sb.append( "                                                 .' /   \\  `." + RETURN );
+		sb.append( "                                               .'  /     \\   `." + RETURN );
+		sb.append( "                                             .'   /       \\    `." + RETURN );
+		sb.append( "                                            \\    |         |    /" + RETURN );
+		sb.append( "                                             \\   |         |   /" + RETURN );
+		sb.append( "                                              \\  |         |  /" + RETURN );
+
+		return sb.toString() + RETURN + ( BioLockJ.isPipelineComplete() ?
+			getSpaces( 16 ) + spacedWord( "COMPLETE", 10 ): getSpaces( 27 ) + spacedWord( "FAILED", 10 ) ) + RETURN +
+			RETURN;
+	}
+
+	/**
 	 * Return the min/max/mean/median summary stats for the given metadata numeric column
 	 * 
 	 * @param map Map(sampleId,count)
@@ -626,61 +682,6 @@ public class SummaryUtil {
 		Log.info( SummaryUtil.class, "Summary updated" );
 	}
 
-	/**
-	 * Print the application name *bigly* with some ASCII art :-)
-	 * 
-	 * @return My beautiful artwork
-	 */
-	public static String displayAsciiArt() {
-		final StringBuffer sb = new StringBuffer();
-		sb.append( "                                                    _-^-_" + RETURN );
-		sb.append( "                                                _','    \\'~." + RETURN );
-		sb.append( "                                             -'  ,'      `. `-_" + RETURN );
-		sb.append( "                                            !`-_.;________:.':::" + RETURN );
-		sb.append( "                                            !   /\\        /\\::::" + RETURN );
-		sb.append( "                                            |  /  \\      /..\\:::" + RETURN );
-		sb.append( "                                            ! /    \\    /....\\::" + RETURN );
-		sb.append( "                                            !/      \\  /......\\:" + RETURN );
-		sb.append( "                                            :--.___..\\/_.__.--;;" + RETURN );
-		sb.append( "                                             -_      `!;;;;;;;'" + RETURN );
-		sb.append( "                                               `-_    !;;;;''" + RETURN );
-		sb.append( "                                                  `-. !;'" + RETURN );
-		sb.append( "                                                     <+>" + RETURN );
-		sb.append(
-			"  _______      ___      ________      ___            (=)   ________      ________      ___ ____            __" +
-				RETURN );
-		sb.append(
-			"|\\   __  \\    |\\  \\    |\\   __  \\    |\\  \\           (=)  |\\   __  \\    |\\   ____\\    |\\  \\|\\  \\         |\\  \\" +
-				RETURN );
-		sb.append(
-			"\\ \\  \\|\\ /_   \\ \\  \\   \\ \\  \\|\\  \\   \\ \\  \\          (=)  \\ \\  \\|\\  \\   \\ \\  \\___|    \\ \\  \\/  /|_       \\ \\  \\" +
-				RETURN );
-		sb.append(
-			" \\ \\   __  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\         (=)   \\ \\  \\\\\\  \\   \\ \\  \\        \\ \\   ___  \\    __ \\ \\  \\" +
-				RETURN );
-		sb.append(
-			"  \\ \\  \\|\\  \\   \\ \\  \\   \\ \\  \\\\\\  \\   \\ \\  \\____    (=)    \\ \\  \\\\\\  \\   \\ \\  \\____    \\ \\  \\\\ \\  \\  |\\  \\\\_\\  \\" +
-				RETURN );
-		sb.append(
-			"   \\ \\_______\\   \\ \\__\\   \\ \\_______\\   \\ \\_______\\  (=)     \\ \\_______\\   \\ \\_______\\   \\ \\__\\\\ \\__\\ \\ \\________\\" +
-				RETURN );
-		sb.append(
-			"    \\|_______|    \\|__|    \\|_______|    \\|_______|  (=)      \\|_______|    \\|_______|    \\|__| \\|__|  \\|________|" +
-				RETURN );
-		sb.append( "                                                     (=)" + RETURN );
-		sb.append( "                                                     <+>" + RETURN );
-		sb.append( "                                                   .'/V\\`." + RETURN );
-		sb.append( "                                                 .' /   \\  `." + RETURN );
-		sb.append( "                                               .'  /     \\   `." + RETURN );
-		sb.append( "                                             .'   /       \\    `." + RETURN );
-		sb.append( "                                            \\    |         |    /" + RETURN );
-		sb.append( "                                             \\   |         |   /" + RETURN );
-		sb.append( "                                              \\  |         |  /" + RETURN );
-		
-		return sb.toString() + RETURN + ( BioLockJ.isPipelineComplete() ? getSpaces( 16 ) + spacedWord( "COMPLETE", 10 ):
-			getSpaces( 27 ) + spacedWord( "FAILED", 10 ) ) + RETURN + RETURN;
-	}
-
 	private static String downloadCmd() throws Exception {
 		if( downloadCommand == null ) downloadCommand = DownloadUtil.getDownloadCmd();
 		return downloadCommand;
@@ -714,30 +715,26 @@ public class SummaryUtil {
 		if( runtimeEnv != null ) return runtimeEnv;
 		String parentHost = null;
 		String host = null;
-		String user = DockerUtil.inDockerEnv() ? RuntimeParamUtil.getDockerHostHomeDir() : RuntimeParamUtil.getHomeDir().getAbsolutePath();
+		String user = DockerUtil.inDockerEnv() ? RuntimeParamUtil.getDockerHostHomeDir():
+			RuntimeParamUtil.getHomeDir().getAbsolutePath();
 		user = user.substring( user.lastIndexOf( File.separator ) + 1 );
 		try {
 			host = Processor.submit( "hostname", "Query Host" );
-			parentHost = Config.isOnCluster() ? Config.requireString( null, Constants.CLUSTER_HOST ): 
-				DockerUtil.inDockerEnv() ? RuntimeParamUtil.getDockerHostName() : null;
+			parentHost = Config.isOnCluster() ? Config.requireString( null, Constants.CLUSTER_HOST ):
+				DockerUtil.inDockerEnv() ? RuntimeParamUtil.getDockerHostName(): null;
 		} catch( final Exception ex ) {
 			Log.error( SummaryUtil.class, "Failed to determine runtime environment host", ex );
 		}
 		if( parentHost == null ) parentHost = "Unknown-Host";
 		if( host == null ) host = "localhost";
-		
-		if( DockerUtil.inAwsEnv() )
-			runtimeEnv = "AWS-NF [ " + user + "@" + parentHost + " --> " + DockerUtil.ROOT_HOME + "@" + host + " ]";
-		else if( DockerUtil.inDockerEnv() )
-			runtimeEnv = "Docker [ " + user + "@" + parentHost + " --> " + DockerUtil.ROOT_HOME + "@" + host + " ]";
-		else if( Config.isOnCluster() )
-			runtimeEnv = "Cluster [ " + user + "@" + parentHost + " ]";
-		else
-			runtimeEnv = "Localhost [ " + user + "@" + parentHost + " ]";
+
+		if( DockerUtil.inAwsEnv() || DockerUtil.inDockerEnv() )
+			runtimeEnv = ( DockerUtil.inAwsEnv() ? "AWS ": "" ) + "Host [ " + user + "@" + parentHost +
+				" ] --> Docker Container [ " + DockerUtil.ROOT_HOME.substring( 1 ) + "@" + host + " ]";
+		else if( Config.isOnCluster() ) runtimeEnv = "Cluster [ " + user + "@" + parentHost + " ]";
+		else runtimeEnv = "Localhost [ " + user + "@" + host + " ]";
 		return runtimeEnv;
 	}
-	
-
 
 	private static String getSpacer( final String val, final int len ) {
 		String spacer = "";

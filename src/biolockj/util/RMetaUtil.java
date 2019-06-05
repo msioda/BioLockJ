@@ -319,8 +319,7 @@ public final class RMetaUtil {
 		final Set<String> alphaDivMetrics = Config.getSet( module, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 		if( !alphaDivMetrics.isEmpty() ) for( final String metric: alphaDivMetrics )
 			if( field.equals( metric + QIIME_ALPHA_METRIC_SUFFIX ) ) {
-				Log.info( RMetaUtil.class,
-					"Metadata validation of field(" + field + ") --> found QIIME metric: " + metric );
+				Log.info( RMetaUtil.class, "Metadata field (" + field + ") --> is QIIME metric: " + metric );
 				return true;
 			}
 
@@ -366,6 +365,11 @@ public final class RMetaUtil {
 	 * Name of R script variable with metadata column count
 	 */
 	protected static final String NUM_META_COLS = "R_internal.numMetaCols";
+
+	/**
+	 * {@link biolockj.Config} Boolean property: {@value #QIIME_PLOT_ALPHA_METRICS}<br>
+	 */
+	protected static final String QIIME_PLOT_ALPHA_METRICS = "qiime.plotAlphaMetrics";
 
 	/**
 	 * {@link biolockj.Config} List property: {@value #R_EXCLUDE_FIELDS}<br>

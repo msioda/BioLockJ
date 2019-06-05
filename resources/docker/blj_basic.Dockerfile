@@ -16,7 +16,7 @@ ENV BLJ_META="${EFS}/metadata"
 ENV BLJ_PROJ="${EFS}/pipelines"
 ENV BLJ_PRIMER="${EFS}/primer"
 ENV BLJ_SCRIPT="${EFS}/script"
-ENV PATH="${BLJ_HOST_HOME}/miniconda/bin:$PATH"
+ENV PATH="$PATH:${BLJ_HOST_HOME}/miniconda/bin"
 
 #2.) Build Standard Directories 
 RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \

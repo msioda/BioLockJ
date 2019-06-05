@@ -24,7 +24,6 @@ alias cab="cat ${BSH_PROF}"
 alias tlog="tail -1000 *.log"
 alias tlogf="tail -1000f *.log"
 alias goblj="blj_go"
-alias showIFS="printf %q $IFS"
 alias sudome='set_ec2_owner'
 
 # Reset file/dir ownership after Nextflow pipeline runs
@@ -36,9 +35,7 @@ set_ec2_owner() {
 
 # Initialize bash environment
 source "${BLJ_SCRIPT}/blj_config"
-
 [ ${#dockerUser} -gt 0 ] && export DOCKER_ID="${dockerUser}"
-#echo "AWS Profile ~/.bash_profile loaded - Docker Account ID: $DOCKER_ID"
 ######=========================================######
 ######   BioLockJ AWS ~/.bash_profile LOADED   ###### 
 ######=========================================######

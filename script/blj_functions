@@ -32,8 +32,8 @@ add_named_arg() {
 # Call ANT to build BioLockJ
 blj_build() {
 	echo "Building BioLockJ with ANT..."
-	[ ! -f "$BLJ/resources/build.xml" ] && exit_script "Error [ blj_build ]: ANT build script missing: $BLJ/resources/build.xml"
-	myDir=$PWD
+	[ ! -f "$BLJ/resources/build.xml" ] && exit_script "Error [ blj_functions.blj_build() ]: ANT build script missing: $BLJ/resources/build.xml"
+	myDir="$PWD"
 	cd $BLJ/resources
 	[ ${#1} -eq 0 ] && ant
 	[ ${#1} -gt 0 ] && ant $1
@@ -61,22 +61,18 @@ blj_git() {
 }
 
 # Reset git repo + set file permissions 770
-# Param 1 Directory path of Git repo
+# Param 1 - Directory path of Git repo (use current directory if undefined)
 blj_git_reset() {
-	myDir=$PWD
-	echo "Get latest code from GitHub repo: $1"
-	cd $1
-	git fetch
-  	git checkout -q master
-  	git reset -q --hard origin/master  
-	chmod -R 770 $1
-	echo "==========================================================================="
-	echo "$1 Git pull SUCESSFULLY COMPLETED!"
-	chmod -R 770 $1
-	echo "$1 permissions set: 770"
-	echo "==========================================================================="
-	echo ""
-	cd $myDir
+	gitDir="$PWD" && [ ${#1} -gt 0 ] && gitDir="${1}" 
+	echo "Get latest code from GitHub repo: ${gitDir}" && cd "${gitDir}"
+	git fetch && git checkout -q master && git reset -q --hard origin/master  
+	chmod -R 770 "${gitDir}"
+	echo "$SPACER"
+	echo "${gitDir} Git pull SUCESSFULLY COMPLETED!"
+	chmod -R 770 "${gitDir}"
+	echo "${gitDir} permissions set: 770"
+	echo "$SPACER"
+	echo "" && cd "${gitDir}"
 }
 
 # This script navigates the $USER to their most recent pipeline and lists the current directory
@@ -84,9 +80,8 @@ blj_go() {
 	[ ! -d "${BLJ_PROJ}" ] && echo "Exit program - BLJ_PROJ: directory not found: ${BLJ_PROJ}" && return
 	pipeline=$(most_recent_pipeline)
 	if [ ${#pipeline} -gt 0 ]; then
-		echo "Goto latest BioLockJ pipeline: $pipeline"
-		cd "$pipeline"
-		ls "$pipeline"
+		echo "Goto latest BioLockJ pipeline: ${pipeline}"
+		cd "${pipeline}" && ls "${pipeline}"
 	else
 		echo "No pipelines found in BLJ_PROJ: ${BLJ_PROJ}"
 	fi
@@ -117,8 +112,8 @@ blj_log() {
 
 # Rerun current pipeline from point of failure using same MASTER config
 blj_rerun() {
-	echo "Restarting BioLockJ pipeline: $PWD"
-	if [ ${#1} -gt 0 ]; then biolockj -r $PWD -c "${1}"; else biolockj -r $PWD; fi
+	echo "Restarting BioLockJ pipeline: ${PWD}"
+	if [ ${#1} -gt 0 ]; then biolockj -r "${PWD}" -c "${1}"; else biolockj -r "${PWD}"; fi
 }
 
 # This script prints the Summary BioModule output of current pipeline.
@@ -170,6 +165,13 @@ get_default_profile() {
 	[ -f "${user_profile}" ] && echo "${user_profile}"
 }
 
+# Return property value from the given file
+# Param 1 - Config file
+# Param 2 - Prop name
+get_property() {
+	prop="$(cat $1 | grep ^$2=)" && echo "${prop/$2=}"
+}
+
 # Exit script after sleeping 10 seconds because in some cases (Docker bash shells) exit command will close the terminal window.
 # In this case, the user can at least view the message before the window closes.
 # Param 1 Exit message
@@ -201,8 +203,7 @@ is_module_dir() {
 # Return 0 status code if $1 param ends with patthern _yyyymmmdd.
 # Example: myTestPipeline_2019Jan01 returns TRUE
 is_pipeline_dir() {
-	dir=$1
-	[ "${dir: -1}" == "/" ] && dir=${dir:0:$((${#dir}-1))}
+	dir=$1 && [ "${dir: -1}" == "/" ] && dir=${dir:0:$((${#dir}-1))}
 	prefix=${dir: -10:1}
 	year=$(echo ${dir: -9:4} | egrep "^[0-9{4}]+$")
 	mon1=$(echo ${dir: -5:1} | egrep "^[A-S]+$")
@@ -222,14 +223,13 @@ kill_blj() {
 
 # Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
 most_recent_pipeline() {
-	IFS2="${IFS}"
 	if [ -d "${BLJ_PROJ}" ]; then
 		IFS=$'\n' && dirs=$(\ls -1dt ${BLJ_PROJ}/*) && myDirs=( "$dirs" )
 		for dir in $myDirs; do
-			$(is_pipeline_dir $dir) && IFS="${IFS2}" && echo "$dir" && return
+			$(is_pipeline_dir $dir) && reset_IFS && echo "$dir" && return
 		done
 	fi
-	IFS="${IFS2}"
+	reset_IFS
 }
 
 # Pass script input parameters + the argument name
@@ -237,20 +237,56 @@ most_recent_pipeline() {
 # Param 1 - Array of script args $@
 # Param 2 - Parameter name
 named_arg() {
-	args=("$@")
-	numArgs=${#@}
-	target=${args[$((numArgs-1))]}
+	args=("$@") && numArgs=${#@} && target=${args[$((numArgs-1))]}
 	args=${args[@]:0:$((numArgs-1))}
 	for arg in $args; do
-		tokens=( ${arg//=/ } )
-		[ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
+		tokens=( ${arg//=/ } ) && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
 	done
+}
+
+# Reset IFS to initial shell value
+reset_IFS() {
+	export IFS="$IFS_CACHE"
+}
+
+# Remove property - delete the line from the file
+# Param 1 - Config file
+# Param 2 - prop name 
+rm_property() {
+	[ ! -f "${1}" ] && exit_script "Error [ blj_functions.rm_property() ]: Config file ${1} does not exist"
+	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.rm_property() ]: Config property name is required"
+	TMP=~/.temp_config.txt && [ -f "${TMP}" ] && rm "${TMP}" && touch "${TMP}" && chmod 770 "${TMP}"
+	while read line; do
+		line="$(echo ${line} | xargs)" && IFS=$' ' && tokens=( ${line//=/ } ) 
+		reset_IFS && [ ${#line} -gt 0 ] && [ "${tokens[0]}" != "${2}" ] && echo "${line}" >> "${TMP}"
+	done < "${1}"
+	[ -f "${TMP}" ] && rm "${1}" && mv "${TMP}" "${1}"
+}
+
+# Set property in Config file ${1} unless this value already is set, in which case - do nothing.
+# Param 1 - Config file-path
+# Param 2 - Prop name
+# Param 3 - Prop value
+set_property() {
+	[ ! -f "${1}" ] && exit_script "Error [ blj_functions.set_property() ]: Config file ${1} does not exist"
+	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.set_property() ]: Config property name is required"
+	[ $(cat $1 | grep -c ^$2="${3}") -gt 0 ] && return
+	prop="$(cat $1 | grep ^$2=)" && [ ${#prop} -gt 0 ] && rm_property "${1}" "${2}"
+	lastLine="$(tail -n 1 $1 | xargs)" && [ ${#lastLine} -gt 0 ] && printf "\n" >> "${1}"
+	echo "${2}=${3}" >> "${1}"
+}
+
+# Default value --> $' \t\n'
+show_IFS() {
+	echo "Cached  IFS  -->  $(printf %q "$IFS_CACHE")"
+	echo "Current IFS  -->  $(printf %q "$IFS")"
 }
 
 # Return TRUE if variable name in Param 1 exists in shell
 # Param 1 - bash env variable
 var_exists() {
-	varExists=$(set | grep "^${1}=")
-	[ ${#varExists} -gt 0 ]
+	[ $(set | grep -c "^${1}=") -gt 0 ]
 }
 
+IFS_CACHE="$IFS" && alias showIFS="show_IFS" && alias resetIFS="reset_IFS"
+SPACER="================================================================================"

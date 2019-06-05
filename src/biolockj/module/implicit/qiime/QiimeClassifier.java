@@ -127,7 +127,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
 				writer.write( st.nextToken() ); // write ID col
-
 				final List<String> record = new ArrayList<>();
 				while( st.hasMoreTokens() )
 					record.add( st.nextToken() );
@@ -142,7 +141,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 						// replace any N/A values with configured MetaUtil.META_ULL_VALUE
 						if( !isHeader && val != null && val.equals( ALPHA_DIV_NULL_VALUE ) )
 							val = MetaUtil.getNullValue( this );
-
 						writer.write( TAB_DELIM + val );
 					}
 				}
@@ -168,7 +166,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 * QIIME calls python scripts, so no special command is required
 	 */
 	@Override
-	public String getClassifierExe() throws Exception {
+	public String getClassifierExe() throws ConfigViolationException {
 		return null;
 	}
 
@@ -248,9 +246,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
 		if( !getClass().equals( QiimeClassifier.class ) ) postReqs.add( QiimeClassifier.class.getName() );
-
 		postReqs.addAll( super.getPostRequisiteModules() );
-
 		return postReqs;
 	}
 
@@ -371,17 +367,17 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		if( this.switches == null ) {
 			final String params = BioLockJUtil.join( getClassifierParams() );
 			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
-				throw new Exception( "INVALID CLASSIFIER OPTION (-i or --input_fp) FOUND IN PROPERTY (" + QIIME_PARAMS +
-					"). PLEASE REMOVE.  INPUT DETERMINED BY: " + Constants.INPUT_DIRS );
+				throw new Exception( "Invalid classifier option  (-i or --input_fp) found in property (" +
+					QIIME_PARAMS + "). BioLockJ sets this value based on: " + Constants.INPUT_DIRS );
 			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
-				throw new Exception( "INVALID CLASSIFIER OPTION (-o or --output_dir) FOUND IN PROPERTY (" +
-					QIIME_PARAMS + "). PLEASE REMOVE THIS VALUE FROM PROPERTY FILE. " );
+				throw new Exception( "Invalid classifier option  (-o or --output_dir) found in property (" +
+					QIIME_PARAMS + "). Output is stored in: " + getOutputDir().getAbsolutePath() );
 			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
-				throw new Exception( "INVALID CLASSIFIER OPTION (-a or -O) FOUND IN PROPERTY (" + QIIME_PARAMS +
-					"). BIOLOCKJ DERIVES THIS VALUE FROM: " + SCRIPT_NUM_THREADS );
+				throw new Exception( "Invalid classifier option  (-a or -O) found in property (" + QIIME_PARAMS +
+					"). BioLockJ sets this value based on: " + SCRIPT_NUM_THREADS );
 			if( params.indexOf( "-f " ) > -1 )
-				throw new Exception( "INVALID CLASSIFIER OPTION (-f or --force) FOUND IN PROPERTY (" + QIIME_PARAMS +
-					"). OUTPUT OPTIONS AUTOMATED BY BIOLOCKJ." );
+				throw new Exception( "Invalid classifier option  (-f or --force) found in property (" + QIIME_PARAMS +
+					"). Output options are hanlded by BioLockJ." );
 
 			this.switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
 			if( this.switches == null || this.switches.trim().isEmpty() )

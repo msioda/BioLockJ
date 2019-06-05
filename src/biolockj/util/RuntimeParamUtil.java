@@ -47,7 +47,7 @@ public class RuntimeParamUtil {
 	 * @return $BLJ_PROJ_DIR pipeline parent directory
 	 */
 	public static File get_BLJ_PROJ() {
-		return new File( params.get( BLJ_PROJ_DIR ) );
+		return params.get( BLJ_PROJ_DIR ) == null ? null: new File( params.get( BLJ_PROJ_DIR ) );
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class RuntimeParamUtil {
 	 * @return {@link biolockj.Config} file
 	 */
 	public static File getConfigFile() {
-		return new File( params.get( CONFIG_FILE ) );
+		return params.get( CONFIG_FILE ) == null ? null: new File( params.get( CONFIG_FILE ) );
 	}
 
 	/**
@@ -141,6 +141,15 @@ public class RuntimeParamUtil {
 	}
 
 	/**
+	 * Return host on which Docker container is running
+	 * 
+	 * @return Host name
+	 */
+	public static String getDockerHostName() {
+		return params.get( HOSTNAME );
+	}
+
+	/**
 	 * Runtime property getter for Docker host pipeline dir
 	 * 
 	 * @return Host {@value biolockj.Constants#INTERNAL_PIPELINE_DIR} directory
@@ -155,7 +164,7 @@ public class RuntimeParamUtil {
 	 * @return Host {@value #HOST_HOME_DIR} directory
 	 */
 	public static File getHomeDir() {
-		return new File( params.get( HOME_DIR ) );
+		return params.get( HOME_DIR ) == null ? null: new File( params.get( HOME_DIR ) );
 	}
 
 	/**
@@ -229,16 +238,6 @@ public class RuntimeParamUtil {
 	public static File getRestartDir() {
 		return params.get( RESTART_DIR ) == null ? null: new File( params.get( RESTART_DIR ) );
 	}
-	
-	/**
-	 * Return host on which Docker container is running
-	 * 
-	 * @return Host name
-	 */
-	public static String getDockerHostName() {
-		return params.get( HOSTNAME );
-	}
-	
 
 	/**
 	 * Return the runtime args as a String.
@@ -332,9 +331,8 @@ public class RuntimeParamUtil {
 	}
 
 	private static void assignLastParam( final String param ) throws RuntimeParamException {
-		if( !params.keySet().contains( CONFIG_FILE ) &&
-			!params.keySet().contains( RESTART_DIR ) && !params.keySet().contains( param ) &&
-			!params.values().contains( param ) ) params.put( CONFIG_FILE, param );
+		if( !params.keySet().contains( CONFIG_FILE ) && !params.keySet().contains( RESTART_DIR ) &&
+			!params.keySet().contains( param ) && !params.values().contains( param ) ) params.put( CONFIG_FILE, param );
 		else if( NAMED_ARGS.contains( param ) )
 			throw new RuntimeParamException( param, "", "Missing argument for named parameter" );
 	}
@@ -480,11 +478,6 @@ public class RuntimeParamUtil {
 	 * Automatically added $HOME by biolockj/dockblj script: {@value #HOME_DIR}
 	 */
 	protected static final String HOME_DIR = "-u";
-	
-	/**
-	 * Automatically added $(hostname) by biolockj/dockblj script: {@value #HOSTNAME}
-	 */
-	protected static final String HOSTNAME = "-h";
 
 	/**
 	 * Host BioLockJ directory used to override installed $BLJ in Docker containers: {@value #HOST_BLJ_DIR}
@@ -510,6 +503,11 @@ public class RuntimeParamUtil {
 	 * Host $USER $HOME param: {@value #HOST_HOME_DIR}
 	 */
 	protected static final String HOST_HOME_DIR = "--host-home";
+
+	/**
+	 * Automatically added $(hostname) by biolockj/dockblj script: {@value #HOSTNAME}
+	 */
+	protected static final String HOSTNAME = "-h";
 
 	/**
 	 * Input directory file-path runtime parameter switch: {@value #INPUT_DIR}

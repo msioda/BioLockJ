@@ -12,8 +12,7 @@
 package biolockj.util;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
 import biolockj.exception.ConfigNotFoundException;
@@ -48,6 +47,24 @@ public class DockerUtil {
 		lines.add( "}" + Constants.RETURN );
 
 		return lines;
+	}
+
+	/**
+	 * Download a database for a Docker container
+	 * 
+	 * @param args Terminal command + args
+	 * @param label Log file identifier for subprocess
+	 * @return Thread ID
+	 */
+	public static Long downloadDB( final String[] args, final String label ) {
+		if( downloadDbCmdRegister.contains( args ) ) {
+			Log.warn( DockerUtil.class,
+				"Ignoring duplicate download request - already downloading Docker DB: " + label );
+			return null;
+		}
+
+		downloadDbCmdRegister.add( args );
+		return Processor.runSubprocess( args, label ).getId();
 	}
 
 	/**
@@ -90,9 +107,11 @@ public class DockerUtil {
 	 * 
 	 * @param module BioModule
 	 * @return Docker image name
+	 * @throws ConfigNotFoundException if Docker image version is undefined
 	 */
-	public static String getDockerImage( final BioModule module ) {
-		return " " + getDockerUser( module ) + "/" + getImageName( module ) + ":" + getImageVersion( module );
+	public static String getDockerImage( final BioModule module ) throws ConfigNotFoundException {
+		return " " + getDockerUser( module ) + "/" + getImageName( module ) + ":" +
+			Config.requireString( module, DockerUtil.DOCKER_IMG_VERSION );
 	}
 
 	/**
@@ -102,8 +121,8 @@ public class DockerUtil {
 	 * @return Docker Hub User ID
 	 */
 	public static String getDockerUser( final BioModule module ) {
-		String user = Config.getString( null, Config.getModuleProp( module, DOCKER_HUB_USER ) );
-		user = user == null ? DEFAULT_DOCKER_HUB_USER: user;
+		final String user = Config.getString( module, DOCKER_HUB_USER );
+		if( user == null ) return DEFAULT_DOCKER_HUB_USER;
 		return user;
 	}
 
@@ -187,23 +206,10 @@ public class DockerUtil {
 				prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
 		}
 
-		if( hasCustomDockerDB( module ) && !className.startsWith( RdpClassifier.class.getPackage().getName() ) )
-			imageName += DB_FREE;
+		if( hasCustomDockerDB( module ) && className.toLowerCase().contains( "knead_data" ) ||
+			className.toLowerCase().contains( "kraken" ) ) imageName += DB_FREE;
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
 		return imageName;
-	}
-
-	/**
-	 * Get the Docker image version if defined in the {@link biolockj.Config} file<br>
-	 * If not found, return the default version "latest"
-	 * 
-	 * @param module BioModule
-	 * @return Docker image version
-	 */
-	public static String getImageVersion( final BioModule module ) {
-		String ver = Config.getString( null, Config.getModuleProp( module, DOCKER_IMG_VERSION ) );
-		if( ver == null ) ver = DOCKER_LATEST;
-		return ver;
 	}
 
 	/**
@@ -220,7 +226,7 @@ public class DockerUtil {
 			}
 		} catch( ConfigPathException | ConfigNotFoundException ex ) {
 			Log.error( DockerUtil.class,
-				"Error occurred checking database path of module: " + module.getClass().getName() );
+				"Error occurred checking database path of module: " + module.getClass().getName(), ex );
 		}
 		return false;
 	}
@@ -329,8 +335,8 @@ public class DockerUtil {
 	}
 
 	/**
-	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #AWS_EC2_HOME}
-	 * Need to name this dir = "/home/ec2-user" so Nextflow config is same inside + outside of container
+	 * Docker container dir to map HOST $HOME to save logs + find Config values using $HOME: {@value #AWS_EC2_HOME} Need
+	 * to name this dir = "/home/ec2-user" so Nextflow config is same inside + outside of container
 	 */
 	public static final String AWS_EC2_HOME = "/home/ec2-user";
 
@@ -382,14 +388,6 @@ public class DockerUtil {
 	public static final String ROOT_HOME = File.separator + DOCKER_USER;
 
 	/**
-	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
-	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
-	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
-	 * versions of these modules and add new modules in their own Docker Hub account.
-	 */
-	protected static final String DOCKER_HUB_USER = "docker.user";
-
-	/**
 	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
 	 */
 	static final String CONTAINER_BLJ_DIR = "/app/biolockj";
@@ -426,13 +424,21 @@ public class DockerUtil {
 	 */
 	static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
 
+	/**
+	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
+	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
+	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
+	 * versions of these modules and add new modules in their own Docker Hub account.
+	 */
+	protected static final String DOCKER_HUB_USER = "docker.user";
+
 	private static final String BLJ_BASH = "blj_bash";
 	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";
 	private static final String DB_FREE = "_dbfree";
 	private static final String DEFAULT_DOCKER_HUB_USER = "biolockj";
 	private static final String DOCK_RM_FLAG = "--rm";
 	private static final File DOCKER_ENV_FLAG_FILE = new File( "/.dockerenv" );
-	private static final String DOCKER_LATEST = "latest";
 	private static final String DOCKER_SOCKET = "/var/run/docker.sock";
+	private static final Set<String[]> downloadDbCmdRegister = new HashSet<>();
 	private static final String IMAGE_NAME_DELIM = "_";
 }

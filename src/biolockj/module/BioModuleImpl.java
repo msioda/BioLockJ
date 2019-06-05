@@ -31,7 +31,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	public abstract void checkDependencies() throws Exception;
 
 	/**
-	 * By default, no cleanUp code is required.
+	 * If metadata exists in module output directory, refresh MetaUtil.
 	 */
 	@Override
 	public void cleanUp() throws Exception {

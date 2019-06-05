@@ -94,16 +94,14 @@ public class Config {
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return String value of executable
-	 * @throws Exception if property does not start with "exe."
+	 * @throws ConfigViolationException if property name does not start with "exe."
 	 */
-	public static String getExe( final BioModule module, final String property ) throws Exception {
-		if( !property.startsWith( "exe." ) )
-			throw new Exception( "Config.getExe() can only be called for properties that begin with \"exe.\"" );
+	public static String getExe( final BioModule module, final String property ) throws ConfigViolationException {
+		if( !property.startsWith( "exe." ) ) throw new ConfigViolationException(
+			"Config.getExe() can only be called for properties that begin with \"exe.\"" );
 
-		// return name of property after trimming "exe." prefix, for example if exe.Rscript is undefined, return
-		// "Rscript"
+		// property name after trimming "exe." prefix, for example if exe.Rscript is undefined, return "Rscript"
 		if( getString( module, property ) == null ) return property.substring( property.indexOf( "." ) + 1 );
-
 		return getString( module, property );
 	}
 
@@ -208,32 +206,6 @@ public class Config {
 	}
 
 	/**
-	 * Return module specific property if configured, otherwise use the given prop.
-	 * 
-	 * @param module BioModule
-	 * @param prop Property
-	 * @return Config property
-	 */
-	public static String getModuleProp( final BioModule module, final String prop ) {
-		return getModuleProp( module.getClass().getSimpleName(), prop );
-	}
-
-	/**
-	 * Return module specific property if configured, otherwise use the given prop.
-	 * 
-	 * @param moduleName BioModule name
-	 * @param prop Property
-	 * @return property name
-	 */
-	public static String getModuleProp( final String moduleName, final String prop ) {
-		final String moduleProp = moduleName + "." + suffix( prop );
-		final String val = Config.getString( null, moduleProp );
-		if( val == null || val.isEmpty() ) return prop;
-		Log.debug( Config.class, "Use module specific property: [ " + moduleProp + "=" + val + " ]" );
-		return moduleProp;
-	}
-
-	/**
 	 * Parse property as non-negative integer value
 	 *
 	 * @param module BioModule to check for module-specific form of this property
@@ -255,7 +227,8 @@ public class Config {
 	 * @return Pipeline directory (if it exists)
 	 */
 	public static File getPipelineDir() {
-		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) try {
+		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) 
+			try {
 			pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
 		} catch( final Exception ex ) {
 			Log.error( Config.class, "Pipeline directory does not exist", ex );
@@ -328,13 +301,19 @@ public class Config {
 	public static String getString( final BioModule module, final String property ) {
 		if( props == null ) return null;
 		String propName = property;
+		String val = props.getProperty( property );
 
 		if( module != null ) {
-			final String modPropName = Config.getModuleProp( module, propName );
-			if( props.getProperty( modPropName ) != null ) propName = modPropName;
+			propName = module.getClass().getSimpleName() + "." + suffix( property );
+			val = props.getProperty( propName );
+			if( val != null )
+				Log.debug( Config.class, "Found module override property: [ " + propName + "=" + val + " ]" );
+			else {
+				propName = property;
+				val = props.getProperty( property );
+			}
 		}
 
-		final String val = props.getProperty( propName );
 		usedProps.put( propName, val );
 		if( val == null || val.isEmpty() ) return null;
 		return val;
@@ -374,7 +353,10 @@ public class Config {
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
-		if( !DockerUtil.isDirectMode() ) FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
+		if( FileUtils.directoryContains( getPipelineDir() , configFile )  ) System.out.println(  "------------1111"  );
+		if( !DockerUtil.isDirectMode() && !FileUtils.directoryContains( getPipelineDir() , configFile ) ) {
+			FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
+		}
 		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
 		TaxaUtil.initTaxaLevels();

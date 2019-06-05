@@ -1,9 +1,7 @@
 #!/bin/bash
 ###############################################################################
-##                                                                           ##
 ##  This script manually completes current module and pipeline status.       ##
 ##  All modules numbered below than the current module will also be reset.   ##
-##                                                                           ##
 ###############################################################################
 . "${BLJ_LIB}"
 
@@ -20,8 +18,9 @@ if ! $(is_pipeline_dir "$pipeDir"); then
 	exit_script "Error [ blj_reset ] target dir is not a pipeline or module root directory --> $myDir"
 fi
 
-[ -f "$pipeDir/biolockjComplete" ] && rm "$pipeDir/biolockjComplete" && echo "Deleted $pipeDir/biolockjComplete"
 [ -f "$pipeDir/biolockjFailed" ] && rm "$pipeDir/biolockjFailed" && echo "Deleted $pipeDir/biolockjFailed"
+[ ! -f "$pipeDir/biolockjComplete" ] && touch "$pipeDir/biolockjComplete" && echo "Created $pipeDir/biolockjComplete"
+
 found=false
 for modDir in $pipeDir/*; do
 	if ! $(is_empty "$modDir") && $(is_module_dir "$modDir"); then

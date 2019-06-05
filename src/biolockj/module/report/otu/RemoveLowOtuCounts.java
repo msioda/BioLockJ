@@ -139,9 +139,8 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 
 				if( numOtuRemoved == 0 ) FileUtils.copyFileToDirectory( getFileMap().get( sampleId ), getOutputDir() );
 				else {
-
 					Log.warn( getClass(), sampleId + ": Removed " + badOtus.size() + " low OTU counts (below " +
-						getProp() + "=" + getMinCount() + ") --> " + badOtus );
+						getMinCount() + ") --> " + badOtus );
 
 					final File otuFile = OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName() );
 					final BufferedWriter writer = new BufferedWriter( new FileWriter( otuFile ) );
@@ -178,17 +177,11 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 	}
 
 	private Integer getMinCount() throws Exception {
-		return Config.requirePositiveInteger( this, getProp() );
-	}
-
-	private String getProp() {
-		if( this.prop == null ) this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
-		return this.prop;
+		return Config.requirePositiveInteger( this, Constants.REPORT_MIN_COUNT );
 	}
 
 	private Map<String, File> fileMap = null;
 	private Map<String, String> hitsPerSample = new HashMap<>();
-	private String prop = null;
 	private final Set<String> sampleIds = new HashSet<>();
 	private long totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();

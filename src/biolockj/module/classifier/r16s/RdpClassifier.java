@@ -15,8 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.exception.*;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
 
@@ -60,7 +59,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	 * RDP uses java to run a JAR file, so no special command is required
 	 */
 	@Override
-	public String getClassifierExe() throws Exception {
+	public String getClassifierExe() throws ConfigViolationException {
 		return null;
 	}
 
@@ -148,7 +147,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	/**
 	 * {@link biolockj.Config} List property for RDP java executable JAR runtime params: {@value #RDP_PARAMS}
 	 */
-	protected static final String RDP_PARAMS = "exe.rdpParams";
+	protected static final String RDP_PARAMS = "rdp.params";
 
 	private static final String DB_PARAM = "-t";
 	private static final String OUTPUT_PARAM = "-o";

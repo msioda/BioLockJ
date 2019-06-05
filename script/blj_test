@@ -11,98 +11,47 @@
 ###########################################################################
 . "${BLJ_LIB}"
 
-SPACER="================================================================================"
-
-# Verify params
-[ $# -eq 0 ] && exit_script "Error [ blj_test ]: Missing required parameter - pass Config directory path"
-[ ! -d "$1" ] && exit_script "Error [ blj_test ]: $1 is not a valid directory"
-[ ! -d "$BLJ_PROJ" ] && exit_script "Error [ blj_test ]: Required env variable BLJ_PROJ undefined"
 
 # Get pipeline status
-pipeLineStatus() {
-	if [ -f "$1/biolockjComplete" ]; then
-    		echo "PASS"
-  	elif [ -f "$1/biolockjFailed" ]; then
-    		echo "FAIL"
-  	else
-   		echo "Working"
-  	fi
+pipeStatus() {
+	if [ -f "${1}/biolockjComplete" ]; then echo "PASS"
+  	elif [ -f "${1}/biolockjFailed" ]; then echo "FAIL"; else echo "Working"; fi
 }
 
 # requires 1 parameter --> path to pipeline directory
-exitProgram() {
-  echo "$SPACER"
-  echo "$1/$2 pipelines completed successfully - $(/bin/date)"
-  echo "$SPACER"
-  exit 1
+exit_program() {
+  echo "${SPACER}" && echo "$1/$2 pipelines completed successfully - $(date)" && echo "${SPACER}" && exit 1
 }
 
-exitOnFailure="exit"
-if [ "$#" == 2 ] && [ "$2" == "-x" ]; then
-    exitOnFailure="continue"
-fi
+ # script times out after 5 hours
+run_tests() {
+	startCount=0 && passCount=0 && exitOnFailure="exit" && [ "${2}" == "-x" ] && exitOnFailure="continue"
+	[ "${BLJ_PROJ}" == "${PWD}" ] && echo "Cannot execute blj_test from ${BLJ_PROJ}" && exit 1
+	echo "Run all pipelines under ${1} --> if errors occur: ${exitOnFailure}" && prevDir=$(most_recent_pipeline)
+	echo "${SPACER}" && echo "Initial Pipeline = ${prevDir} - $(date)"
+	for f in ${1}/*; do
+	  i=0 && j=0 && startCount=$((startCount+1)) && pipeDir="$(most_recent_pipeline)" && biolockj "${f}"
+	  while [ ${i} -lt 12 ] && [ "${pipeDir}" == "${prevDir}" ]; do
+	    sleep 15 && i=$((i+1)) && pipeDir="$(most_recent_pipeline)"
+	  done
+	  [ "${pipeDir}" == "${prevDir}" ] && echo "Most recent pipeline is still ${prevDir} --> EXIT SCRIPT!" && exit_program ${passCount} ${startCount}
+	  prevDir="${pipeDir}" && echo "New Pipeline started:  ${prevDir} - $(date)" && status="$(pipeStatus $prevDir)" && printf "${status}"
+	  while [ ${j} -lt 100 ] && [ "${status}" == "Working" ]; do
+	    printf "." && sleep 180 && j=$((j+1)) && status="$(pipeStatus $prevDir)"
+	  done
+	  echo "" && [ "${status}" == "PASS" ] && passCount=$((passCount+1)) && echo "PIPELINE SUCCESS --> $f - $(date)" && continue
+	  if [ "${status}" == "Working" ]; then echo "PIPELINE TIME-OUT --> $f - $(date)" else echo "PIPELINE FAILED --> $f - $(date)"; fi
+	  [ "${exitOnFailure}" == "exit" ] && exit_program ${passCount} ${startCount}
+	  echo "Continue to next project"
+	done
+	exit_program ${passCount} ${startCount}
+}
 
-if [ "$BLJ_PROJ" == "$PWD" ]; then
-    echo "Cannot execute blj_test from $BLJ_PROJ"
-    exit 1
-fi
+verify_params() {
+	[ $# -eq 0 ] && exit_script "Error [ blj_test ]: Missing required parameter - pipeline Config directory path"
+	[ ! -d "${1}" ] && exit_script "Error [ blj_test ]: ${1} is not a valid directory"
+	[ ! -d "$BLJ_PROJ" ] && exit_script "Error [ blj_test ]: Required env variable undefined --> \"BLJ_PROJ\""
+}
 
-numExecuted=0
-numSuccess=0
-echo "BLJ pipeline output directory: $BLJ_PROJ"
-echo "Run test suite:  $1"
-echo "If pipline failures occur: $exitOnFailure"
-pipelineDir=$(most_recent_pipeline)
-echo "$SPACER"
-echo "Initial Pipeline = $pipelineDir - $(date)"
-for f in $1/*; do
-
-  biolockj $f
-  count=0
-  pipeDir="$(most_recent_pipeline)"
-  while [ "${count}" -lt 12 -a "$pipeDir" == "$pipelineDir" ]; do
-    sleep 15
-    let "count++"
-    pipeDir="$(most_recent_pipeline)"
-  done
-  let "numExecuted++"
-
-  if [ "$pipeDir" == "$pipelineDir" ]; then
-    echo "Pipeline directory still not created after 60 seconds! Latest is still $pipelineDir --> EXIT SCRIPT!"
-    exitProgram $numSuccess $numExecuted
-  else
-  	pipelineDir="$pipeDir"
-	  echo "New Pipeline started:  $pipelineDir - $(date)"
-  fi
- 
-  status="$(pipeLineStatus $pipelineDir)"
-  count=0
-
-  printf "$status"
-
-  # script times out after 5 hours
-  while [ "${count}" -lt 100 ] && [ "$status" == "Working" ]; do
-    printf "."
-    sleep 180
-    let "count++"
-    status="$(pipeLineStatus $pipelineDir)"
-  done
-  echo ""
-  if [ "$status" == "PASS" ]; then
-    let "numSuccess++"
-    echo "PIPELINE SUCCESS --> $f - $(date)"
-  else
-    if [ "$status" == "Working" ]; then
-      echo "PIPELINE TIME-OUT --> $f - $(date)"
-    else
-      echo "PIPELINE FAILED --> $f - $(date)"
-    fi
-    if [ "$exitOnFailure" == "exit" ]; then
-      exitProgram $numSuccess $numExecuted
-    else
-      echo "Continue to next project"
-	  fi
-  fi
-done
-
-exitProgram $numSuccess $numExecuted
+verify_params
+run_tests

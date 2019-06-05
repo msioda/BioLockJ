@@ -109,6 +109,7 @@ public class ModuleUtil {
 		final ClassifierModule classifier = getClassifier( module, checkAhead );
 		for( final BioModule m: getModules( module, checkAhead ) )
 			if( m.getClass().getName().equals( className ) ) {
+				if( classifier == null ) return m;
 				final boolean targetBeforeClassifier = m.getID() < classifier.getID();
 				final boolean targetAfterClassifier = m.getID() > classifier.getID();
 				if( checkAhead && targetBeforeClassifier || !checkAhead && targetAfterClassifier ) return m;

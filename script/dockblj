@@ -5,17 +5,14 @@
 ##                                                                              ##
 ##  Required Parameters (If -gui arg passed, no other args required)            ##
 ##  Config file path:          -c <file-path>                                   ##
-##  Input directory:           -i <file-path>                                   ##
 ##                                                                              ##
 ##  Optional Parameters:                                                        ##
 ##  Aws flag:                  -aws                                             ##
 ##  Use local BLJ flag:        -blj                                             ##
 ##  Use local BLJ_SUP flag:    -blj_sup                                         ##
 ##  Run GUI flag:              -gui                                             ##
-##  Metadata directory:        -m  <path>                                       ##
 ##  New email password:        -p  <new_password>                               ##
 ##  Restart flag:              -r  <directory-path>                             ##
-##  Trim Primer file:          -t  <file-path>                                  ##
 ##                                                                              ##
 ##################################################################################
 . "${DOCKER_LIB}"
@@ -29,10 +26,9 @@ GUI_PORT=8080
 # These paths are used by biolockj_controller to map Docker volumes for java_module containers
 blj_options() {
 	options="-u ${HOME} -b $(blj_proj) -h $(hostname)" 
-	
 	$(var_not_null $overrideBLJ) && options="${options} -blj ${overrideBLJ}"
 	$(var_not_null $overrideBLJ_SUP) && options="${options} -blj_sup ${overrideBLJ_SUP}"
-	$(var_not_null $launchGui) && echo ${options} && return
+	$(var_not_null $launchGui) && echo "${options}" && return
 	
 	$(var_not_null $restartDir) && options="${options} -r ${BLJ_PROJ}/${restartDir#$(blj_proj)/}"
 	$(var_not_null $newPass) && options="${options} -p $newPass"
@@ -117,14 +113,17 @@ scan_script_and_env_args() {
 	runAws=$(arg_exists "$@" -aws)
 	overrideBLJ=$(named_arg "$@" -blj)
 	overrideBLJ_SUP=$(named_arg "$@" -blj_sup)
-	! $(var_not_null $overrideBLJ) && overrideBLJ=$(arg_exists "$@" -blj) && [ ${#overrideBLJ} -gt 0 ] && overrideBLJ="${BLJ}" 
-	! $(var_not_null $overrideBLJ_SUP) && overrideBLJ_SUP=$(arg_exists "$@" -blj_sup) && [ ${#overrideBLJ_SUP} -gt 0 ] && overrideBLJ_SUP="${BLJ_SUP}" 
+	! $(var_not_null $overrideBLJ) && overrideBLJ=$(arg_exists "$@" -blj) && [ ${#overrideBLJ} -eq 0 ] && overrideBLJ="${BLJ}" 
+	! $(var_not_null $overrideBLJ_SUP) && overrideBLJ_SUP=$(arg_exists "$@" -blj_sup) && [ ${#overrideBLJ_SUP} -eq 0 ] && overrideBLJ_SUP="${BLJ_SUP}" 
 	config=$(named_arg "$@" -c)
-	inputDir=$(named_arg "$@" -i)
-	metaPath=$(named_arg "$@" -m)
 	newPass=$(named_arg "$@" -p)
 	restartDir=$(named_arg "$@" -r)
+	inputDir=$(named_arg "$@" -i)
+	metaPath=$(named_arg "$@" -m)
 	primerPath=$(named_arg "$@" -t)
+	#inputDir="$(get_property $config input.dirPaths)"
+	#metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"
+	#primerPath="$(get_property $config trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)"
 }
 
 # Start the local browswer
@@ -172,11 +171,11 @@ verify_inputs() {
 	$(var_not_null $primerPath) && verify_file $primerPath	
 }
 
-printf "\n ---------> Execute CMD [  $(echo ${@})  ]\n\n"
+printf "\n ---------> Execute CMD [  dockblj $(echo ${@})  ]\n\n"
 scan_script_and_env_args $@
 
 if $(var_not_null $launchGui); then
-	# Execute run_docker in background to move on to next operation startBrowser
+	# Execute run_docker in background to startBrowser
 	run_docker &
 	startBrowser
 else

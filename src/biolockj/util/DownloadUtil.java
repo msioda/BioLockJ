@@ -74,7 +74,7 @@ public final class DownloadUtil {
 
 			downloadPaths.addAll( dirs );
 
-			if( DockerUtil.inAwsEnv() ) downloadPaths.add( NextflowUtil.getNextflowReportDir() );
+			if( DockerUtil.inAwsEnv() ) downloadPaths.add( NextflowUtil.getNfReportDir() );
 
 			final String status =
 				( ModuleUtil.isComplete( modules.get( modules.size() - 1 ) ) ? "completed": "failed" ) +

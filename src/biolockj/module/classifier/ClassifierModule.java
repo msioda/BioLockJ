@@ -12,6 +12,7 @@
 package biolockj.module.classifier;
 
 import java.util.List;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.SeqModule;
 
 /**
@@ -25,9 +26,9 @@ public interface ClassifierModule extends SeqModule {
 	 * Get the executable required to classify your samples.
 	 *
 	 * @return Command to execute classifier program
-	 * @throws Exception if the classifier program undefined or invalid
+	 * @throws ConfigViolationException if the classifier ".exe" property violates buiness rules
 	 */
-	public String getClassifierExe() throws Exception;
+	public String getClassifierExe() throws ConfigViolationException;
 
 	/**
 	 * Get optional list of parameters to append whenever the classifier executable is called.

@@ -23,17 +23,11 @@ RUN cd /usr/local/bin && \
 #4.) Install BioLockJ
 ARG BLJ_DATE
 ARG VER
-RUN echo "${BLJ_DATE}" && cd $BLJ && \
+RUN echo "${BLJ_DATE}" && cd "${BLJ}" && \
 	wget -qO- "https://github.com/msioda/BioLockJ/releases/download/${VER}/biolockj_${VER}.tgz" | bsdtar -xzf- && \
-	rm -rf $BLJ/[bil]* && rm -rf $BLJ/resources/[bdil]*
+	rm -rf ${BLJ}/[bil]* && rm -rf ${BLJ}/resources/[bdil]* && cd "${BLJ}/web_app" && npm install --only=production
 
-#5.) Install npm
-RUN cp "${BLJ}/web_app/package-lock.json" ./ && \
-	cp "${BLJ}/web_app/package.json" ./ && \
-	npm install --only=production && \
-	cp -r $BLJ/web_app/* ./
-
-#6.) Cleanup
+#5.) Cleanup
 RUN	apt-get clean && \
 	rm -rf /tmp/* && \
 	mv /usr/share/ca-certificates* ~ && \
@@ -45,9 +39,9 @@ RUN	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
 
-#7.) Update  ~/.bashrc
+#6.) Update  ~/.bashrc
 RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bashrc && \
 	echo 'alias goblj=blj_go' >> ~/.bashrc
 		
-#8.) Setup environment and assign default command
+#7.) Setup environment and assign default command
 CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS
