@@ -23,7 +23,7 @@ export BLJ_DB="${EFS}/db"
 export BLJ_DEFAULT_DB="/mnt/db"
 export BLJ_HOST_HOME="/home/ec2-user"
 export BLJ_INPUT="${EFS}/input"
-export BLJ_META="${EFS}/metadata"
 export BLJ_PRIMER="${EFS}/primer"
+[ ! -d "${BLJ_META}" ] && export BLJ_META="${EFS}/metadata"
 
 [ -f "/.dockerenv" ] && export BLJ_PROJ="${EFS_PROJ}"
