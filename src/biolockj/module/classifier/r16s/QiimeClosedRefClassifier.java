@@ -87,9 +87,14 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	public void executeTask() throws Exception {
 		final List<List<String>> data = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ?
 			buildScriptForPairedReads( getInputFiles() ): buildScript( getInputFiles() );
-		final Integer batchSize = Config.getPositiveInteger( this, SCRIPT_BATCH_SIZE );
+		batchSize = Config.getPositiveInteger( this, SCRIPT_BATCH_SIZE );
 		Config.setConfigProperty( SCRIPT_BATCH_SIZE, "1" );
 		BashScriptBuilder.buildScripts( this, data );
+	}
+	
+	@Override
+	public void cleanUp() throws Exception {
+		super.cleanUp();
 		Config.setConfigProperty( SCRIPT_BATCH_SIZE, batchSize.toString() );
 	}
 
@@ -100,11 +105,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
 		final int numSeqFiles = BioLockJUtil.getPipelineInputFiles().size();
-		final int batchSize = Config.requireInteger( this, SCRIPT_BATCH_SIZE );
 		if( SeqUtil.isMultiplexed() || numSeqFiles > batchSize ) postReqs.add( MergeQiimeOtuTables.class.getName() );
-
 		postReqs.addAll( super.getPostRequisiteModules() );
-
 		return postReqs;
 	}
 
@@ -214,5 +216,5 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 * Name of the bash function that prepares a batch of seqs for processing: {@value #FUNCTION_CREATE_BATCH_MAPPING}
 	 */
 	protected static final String FUNCTION_CREATE_BATCH_MAPPING = "createBatchMapping";
-
+	private static Integer batchSize = 1;
 }
