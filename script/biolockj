@@ -92,8 +92,8 @@ run_biolockj() {
 # Start local pipeline by calling java to run the BioLockJ.jar on the given Config file
 # Param 1 - array of script args "$@"
 start_pipeline() {
-	i=0 && initDir="$(most_recent_pipeline)" && initJava=$(ps | grep -c java) && pipeDir="${initDir}" && numJava=${initJava}
-	echo -e "Launching BioLockJ:  \"nohup java -jar ${BLJ_JAR} -b ${BLJ_PROJ} -u ${HOME} $@ >/dev/null 2>&1 &\""
+	i=0 && initDir="$(most_recent_pipeline)" && pipeDir="${initDir}" && initJava=$(ps | grep -c java) 
+	numJava=${initJava} && echo -e "Launching BioLockJ:  \"nohup java -jar ${BLJ_JAR} -b ${BLJ_PROJ} -u ${HOME} $@ >/dev/null 2>&1 &\""
 	nohup java -jar "${BLJ_JAR}" -b "${BLJ_PROJ}" -u "${HOME}" $@ >/dev/null 2>&1 &
 	[ $? != 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run ${BLJ_JAR}"
 	printf "Initializing BioLockJ."
