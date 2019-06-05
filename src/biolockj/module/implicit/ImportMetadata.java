@@ -135,21 +135,30 @@ public class ImportMetadata extends BioModuleImpl {
 	 * @return Formatted Sample ID column name
 	 */
 	protected String formatMetaId( final String sampleIdColumnName ) {
-		String colName = sampleIdColumnName;
-		final char c = colName.trim().toCharArray()[ 0 ];
+		String id = sampleIdColumnName;
+		final char c = id.trim().toCharArray()[ 0 ];
 		if( c == 65279 ) {
 			Log.warn( getClass(),
 				"Removed ZERO WIDTH NO-BREAK invisible character [ASCII 65279] from 1st cell in metadata file.  " +
 					"For more details, see http://www.fileformat.info/info/unicode/char/feff/index.htm" );
 
-			final char[] chars = colName.trim().toCharArray();
+			final char[] chars = id.trim().toCharArray();
 			for( int i = 0; i < chars.length; i++ )
 				Log.debug( getClass(), "ID[" + i + "] = " + chars[ i ] );
 
-			colName = colName.substring( 1 );
-			Log.info( getClass(), "Updated ID = " + colName );
+			id = id.substring( 1 );
+			Log.info( getClass(), "Updated ID = " + id );
 		}
-		return colName;
+		
+		if( id.endsWith( Constants.FASTA ) || id.endsWith( Constants.FASTQ ) ) {
+			id = id.substring( 0, id.length() - 6 );
+			Log.info( getClass(), "Updated ID = " + id );
+		}
+		if( id.endsWith( Constants.GZIP_EXT ) ) {
+			id = id.substring( 0, id.length() - 3 );
+			Log.info( getClass(), "Updated ID = " + id );
+		}
+		return id;
 	}
 
 	/**
