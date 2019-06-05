@@ -49,6 +49,7 @@ public class Pipeline {
 		if( hasScripts && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) exeModule() );
 		if( hasScripts ) waitForModuleScripts();
 		exeModule().cleanUp();
+		ValidationUtil.executeTask(exeModule());
 		if( !runDetached ) SummaryUtil.reportSuccess( exeModule() );
 		ModuleUtil.markComplete( exeModule() );
 	}
@@ -112,6 +113,7 @@ public class Pipeline {
 			module.runModule();
 			Log.info( Pipeline.class, "DIRECT module ID [" + id + "].runModule() complete!" );
 			module.cleanUp();
+			ValidationUtil.executeTask(module);
 			module.moduleComplete();
 			SummaryUtil.reportSuccess( module );
 			MasterConfigUtil.saveMasterConfig();
@@ -219,9 +221,11 @@ public class Pipeline {
 
 			info( "Check dependencies for: " + module.getClass().getName() );
 			module.checkDependencies();
+			ValidationUtil.checkDependencies(module);
 
 			if( ModuleUtil.isComplete( module ) ) {
 				module.cleanUp();
+				ValidationUtil.executeTask(module);
 				refreshRCacheIfNeeded();
 			}
 		}

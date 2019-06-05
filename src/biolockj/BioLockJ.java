@@ -216,6 +216,7 @@ public class BioLockJ {
 
 		SummaryUtil.updateNumAttempts();
 		if( DownloadUtil.getDownloadListFile().isFile() ) DownloadUtil.getDownloadListFile().delete();
+		if( ValidationUtil.getValidationDir().exists() ) ValidationUtil.getValidationDir().delete();
 		if( NextflowUtil.getMainNf().isFile() ) NextflowUtil.getMainNf().delete();
 
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
