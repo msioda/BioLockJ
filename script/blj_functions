@@ -112,8 +112,8 @@ blj_log() {
 
 # Rerun current pipeline from point of failure using same MASTER config
 blj_rerun() {
-	echo "Restarting BioLockJ pipeline: $PWD"
-	if [ ${#1} -gt 0 ]; then biolockj -r $PWD -c "${1}"; else biolockj -r $PWD; fi
+	echo "Restarting BioLockJ pipeline: ${PWD}"
+	if [ ${#1} -gt 0 ]; then biolockj -r "${PWD}" -c "${1}"; else biolockj -r "${PWD}"; fi
 }
 
 # This script prints the Summary BioModule output of current pipeline.

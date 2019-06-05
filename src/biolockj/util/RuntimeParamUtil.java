@@ -47,7 +47,7 @@ public class RuntimeParamUtil {
 	 * @return $BLJ_PROJ_DIR pipeline parent directory
 	 */
 	public static File get_BLJ_PROJ() {
-		return new File( params.get( BLJ_PROJ_DIR ) );
+		return params.get( BLJ_PROJ_DIR ) == null ? null: new File( params.get( BLJ_PROJ_DIR ) );
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class RuntimeParamUtil {
 	 * @return {@link biolockj.Config} file
 	 */
 	public static File getConfigFile() {
-		return new File( params.get( CONFIG_FILE ) );
+		return params.get( CONFIG_FILE ) == null ? null: new File( params.get( CONFIG_FILE ) );
 	}
 
 	/**
@@ -164,7 +164,7 @@ public class RuntimeParamUtil {
 	 * @return Host {@value #HOST_HOME_DIR} directory
 	 */
 	public static File getHomeDir() {
-		return new File( params.get( HOME_DIR ) );
+		return params.get( HOME_DIR ) == null ? null: new File( params.get( HOME_DIR ) );
 	}
 
 	/**

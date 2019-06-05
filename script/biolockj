@@ -24,17 +24,16 @@ display_version() {
 display_help() {
     echo "BioLockJ $(display_version) - UNCC Fodor Lab July 2018" 
     echo 'Most args can be passed using 1st letter only (with or without hyphens)'
-    echo '    Run new pipeline:     biolockj          $config_file'
-    echo '    Run new pipeline:              config   $config_file'
-    echo '    Restart failed pipeline:       restart  $directory'
-    echo '    Run pipeline on AWS:           aws'
-    echo '    Run Docker pipeline:           docker'
-    echo '    Run Docker GUI:                gui'
-    echo '    Map BLJ as Docker volume       blj      $directory'
-    echo '    Map BLJ_SUP as Docker volume   blj_sup  $directory'
-    echo '    Encrypt password:              pass     $new_password'
-    echo '    Show help menu:                help'
-    echo '    Display software version:      version'
+    echo '    Run new pipeline:        config   <file_path>'
+    echo '    Restart pipeline:        restart  <dir_path>'
+    echo '    Encrypt password:        pass     <password>'
+    echo '    Show help menu:          help'
+    echo '    Show version:            version'
+    echo '    Run on AWS:              aws'
+    echo '    Run in Docker:           docker'
+    echo '    Run Docker GUI:          gui'
+    echo '    Mount Docker BLJ         blj'
+    echo '    Mount Docker BLJ_SUP     blj_sup'
 }
 
 # Get dockblj scripts formatted named arg params
@@ -52,10 +51,10 @@ get_params() {
 	i=0 && args=( "$@" )
     for arg in ${args[@]}; do
 		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${arg//-}"
-		[ $((i%2)) -eq 1 ] && $(is_flag_arg $name) && echo "${name:0:1}" && i=$((i+1)) && continue
+		[ $((i%2)) -eq 1 ] && $(is_flag_arg $name) && echo "${name:0:1}" && name='' && i=$((i+1)) && continue
 		[ $((i%2)) -eq 0 ] && echo "${name}=${arg}" && x="${name}" && name='' && [ "${x}" == "c" ] && conf="${arg}"
     done
-    [ ${#conf} -eq 0 ] && echo "c=${name}"
+     [ ${#name} -gt 0 ] && [ ${#conf} -eq 0 ] && echo "c=${name}"
 }
 
 # Determine if given arg is a flag arg that will not be matched with the next arg

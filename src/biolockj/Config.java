@@ -227,7 +227,8 @@ public class Config {
 	 * @return Pipeline directory (if it exists)
 	 */
 	public static File getPipelineDir() {
-		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) try {
+		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) 
+			try {
 			pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
 		} catch( final Exception ex ) {
 			Log.error( Config.class, "Pipeline directory does not exist", ex );
@@ -352,7 +353,10 @@ public class Config {
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
-		if( !DockerUtil.isDirectMode() ) FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
+		if( FileUtils.directoryContains( getPipelineDir() , configFile )  ) System.out.println(  "------------1111"  );
+		if( !DockerUtil.isDirectMode() && !FileUtils.directoryContains( getPipelineDir() , configFile ) ) {
+			FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
+		}
 		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
 		TaxaUtil.initTaxaLevels();

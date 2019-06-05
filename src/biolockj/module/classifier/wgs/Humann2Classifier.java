@@ -42,8 +42,10 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			final List<String> lines = new ArrayList<>();
 			File hn2InputSeq = file;
 			Log.warn( getClass(), "getWorkerID(): " + getBatchNum( data.size() ) );
-			Log.warn( getClass(), "dlHn2DBs size: " + dlHn2DBs.size() );
-			Log.warn( getClass(), "Collections.max( dlHn2DBs.values() ): " + Collections.max( dlHn2DBs.values() ) );
+			if( !dlHn2DBs.isEmpty() ) {
+				Log.warn( getClass(), "dlHn2DBs size: " + dlHn2DBs.size() );
+				Log.warn( getClass(), "Collections.max( dlHn2DBs.values() ): " + Collections.max( dlHn2DBs.values() ) );
+			}
 			if( doDownloadDB() ) Log.warn( getClass(), "doDownloadDB(): TRUE" );
 			else Log.warn( getClass(), "doDownloadDB(): FALSE" );
 			if( !doDownloadDB() && waitForDownloadDBs() ) Log.warn( getClass(), "waitForDownloadDBs(): TRUE" );
@@ -209,9 +211,9 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		final List<String> lines = new ArrayList<>();
 		lines.add( BLOCK_FOR_DB_COMMENT );
 		lines.add( "function " + FUNCTION_BLOCK_FOR_DBS + "() {" );
-		lines.add( "count=0" );
-		lines.add( "while [ ! -f \"" + getDbFlag( HN2_PROT_DB ).getAbsolutePath() + "\" ] || [ ! -f \"" +
-			getDbFlag( HN2_NUCL_DB ).getAbsolutePath() + "\" ]; do" );
+		lines.add( "count=0 && touch " + getDbFlag( HN2_NUCL_DB, Constants.BLJ_STARTED ).getAbsolutePath() );
+		lines.add( "while [ ! -f \"" + getDbFlag( HN2_PROT_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() + "\" ] || [ ! -f \"" +
+			getDbFlag( HN2_NUCL_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() + "\" ]; do" );
 		lines.add( "sleep 60 && let \"count++\"" );
 		lines.add(
 			"[ ${count} > 30 ] && echo \"Failed to download HumanN2 DBs after 30 minutes\" && sleep 15 && exit 1" );
@@ -301,7 +303,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		final List<String> lines = new ArrayList<>();
 		final String[] db = Config.requireString( this, prop ).split( "\\s" );
 		lines.add( DOWNLOAD_DB_CMD + " " + DL_DB_SWITCH + " " + db[ 0 ] + " " + db[ 1 ] + " " + db[ 2 ] );
-		lines.add( "touch " + getDbFlag( prop ).getAbsolutePath() );
+		lines.add( "touch " + getDbFlag( prop, Constants.BLJ_COMPLETE ).getAbsolutePath() );
 		return lines;
 	}
 
@@ -310,10 +312,10 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return new Double( Math.ceil( new Double( sampleCount ) / new Double( batchSize ) ) ).intValue();
 	}
 
-	private File getDbFlag( final String prop ) throws ConfigNotFoundException {
+	private File getDbFlag( final String prop, final String status ) throws ConfigNotFoundException {
 		final String[] db = Config.requireString( this, prop ).split( "\\s" );
 		return new File(
-			getTempDir().getAbsolutePath() + File.separator + "DB_" + db[ 0 ] + "_" + Constants.BLJ_COMPLETE );
+			getTempDir().getAbsolutePath() + File.separator + "DB_" + db[ 0 ] + "_" + status );
 	}
 
 	private String getJoinTableLine( final String key ) {
