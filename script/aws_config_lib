@@ -94,14 +94,18 @@ clear_aws_cache() {
 # Param 1 - Pipeline Config file-path
 # Param 2 - DB property name
 convert_db_prop() {
-	db=$(get_property $1 $2) && [ "$db" != '${BLJ_DEFAULT_DB}' ] && convert_prop "${1}" "${2}"
+	defaultDB='${BLJ_DEFAULT_DB}'
+	db=$(get_property $1 $2) && [ ${#db} -gt 0 ] && [ "${db}" == "${db/$defaultDB}" ] && convert_prop "${1}" "${2}"
 }
 
 # Convert pipeline Config prop to AWS Config file property format in: $awsConf
 # Param 1 - Pipeline Config file-path
 # Param 2 - property name
 convert_prop() {
-	x=$(get_blj_prop "$(map_to_aws_property $2)" "$(get_property $1 $2)")
+	prop="$(map_to_aws_property $2)"
+	val="$(get_blj_prop $prop)"
+	newVal="$(get_property $1 $2)"
+	[ "${val}" != "${newVal}" ] && set_blj_prop "${prop}" "${newVal}"
 }
 
 # Get AWS-Access-ID from local file sytem (requires user has logged on to client or file is staged to $HOME)
@@ -119,10 +123,7 @@ get_aws_secret_access_key() {
 # Param 2 - (Optional) Default value
 get_blj_prop() {
 	val="$(get_property $awsConf $1)"
-	if [ "${val}" != "${2}" ]; then
-		[ ${#val} -eq 0 ] && val="${2}"
-		set_blj_prop "${1}" "${2}"
-	fi
+	[ ${#val} -eq 0 ] && [ ${#2} -gt 0 ] && val="${2}" && set_blj_prop "${1}" "${2}"
 	echo "${val}"
 }
 

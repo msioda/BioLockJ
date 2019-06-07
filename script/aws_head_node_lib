@@ -54,7 +54,7 @@ build_docker_job_defs() {
 
 # Connect to running head node
 connect_head() {
-	aws_log "SSH t--> Head Node $(get_ec2_public_ip)" && ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip)
+	aws_log "SSH --> $(head_name) $(get_ec2_public_ip)" && ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip)
 }
 
 # Get the flag file that indicates Docker job definitions were created
@@ -75,9 +75,13 @@ get_stack_param() {
 	echo $(aws cloudformation describe-stacks --stack-name $awsStack --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
 }
 
+head_name() {
+	echo "Head-${awsProfile}-${awsStack}"
+}
+
 # Start Head node if stopped, create if not found, and set awsEc2InstanceID
 init_ec2_head_node() {
-	aws_log "Starting --> [  init_ec2_head_node ]" && ec2Name="Head-${awsStack}" && refresh_aws_cache 
+	aws_log "Starting --> [  init_ec2_head_node ]" && refresh_aws_cache 
 	ec2Id="${awsEc2InstanceID}" && cache_key_pair && ec2Label="Configured EC2 instance \"${ec2Id}\""
 	[ ${#ec2Id} -gt 0 ] && aws_log "Found ${ec2Label}" &&
 		instances=$(aws ec2 describe-instances --instance-ids "$ec2Id" --query "Reservations[].Instances[].[State.Name, InstanceId]")
@@ -99,9 +103,9 @@ init_ec2_head_node() {
 		[ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ] &&
 			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Cannot launch EC2 - required parameters undefined in ${awsConf}"
 		set_blj_prop awsEc2InstanceID $(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id $(get_ami) --security-group-ids ${secureGroup} \
-			--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='${ec2Name}'}" --subnet-id ${subnet} \
+			--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='$(head_name)'}" --subnet-id ${subnet} \
 			--launch-template LaunchTemplateId="${templateId}" --instance-type "${awsEc2InstanceType}" --query "Instances[].InstanceId" )
-		refresh_aws_cache && printf "Launching EC2 Head Node ${ec2Name}, please wait..."
+		refresh_aws_cache && printf "Launching EC2 Head Node $(head_name), please wait..."
 	fi
 	[ "${ec2Status}" != "ok" ] && start_ec2_head_node
 }
