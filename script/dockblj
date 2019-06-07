@@ -13,7 +13,6 @@
 ##  Run GUI flag:              g                                             ##
 ##  New email password:        p  <new_password>                             ##
 ##  Restart flag:              r  <dir_path>                                 ##
-##                                                                           ##
 ###############################################################################
 . "${DOCKER_LIB}"
 

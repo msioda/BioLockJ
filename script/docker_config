@@ -1,3 +1,4 @@
+#!/bin/bash
 #########################################################################
 ##                                                                     ##
 ##  The $USER profile was updated by $BLJ/install to run               ##
@@ -8,7 +9,6 @@
 ##   3. Add $BLJ/script/docker_functions to bash shell                 ##
 ##                                                                     ##
 #########################################################################
-
 export DOCKER_CLONE_SCRIPT="${HOME}/runDockerClone.sh"
 export DOCKER_DIR="${BLJ}/resources/docker"
 export DOCKER_ID="biolockj"
