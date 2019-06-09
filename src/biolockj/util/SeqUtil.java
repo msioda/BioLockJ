@@ -284,7 +284,11 @@ public class SeqUtil {
 			id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
 		Log.info( SeqUtil.class, "Sample ID " + value + " [ " + i++ + " ] -->  id: " + id );
 		if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 ) id = id.substring( 0, id.indexOf( trimSuffix ) );
+		
+		if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 )  Log.info( SeqUtil.class, "Trim suffix " + trimSuffix );
+			
 		Log.info( SeqUtil.class, "Sample ID " + value + " [ " + i++ + " ] -->  id: " + id );
+		
 		if( id == null || id.isEmpty() )
 			throw new SequnceFormatException( "Unable to extract a valid Sample ID from: " + value );
 		return id;
