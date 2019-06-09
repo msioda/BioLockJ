@@ -240,7 +240,6 @@ public class Pipeline {
 	 */
 	protected static boolean poll( final ScriptModule module ) throws Exception {
 		final Collection<File> scriptFiles = getWorkerScripts( module );
-
 		final int numScripts = scriptFiles.size();
 		int numSuccess = 0;
 		int numStarted = 0;

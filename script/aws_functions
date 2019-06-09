@@ -2,53 +2,55 @@
 ##############################################################
 ##  This script is used for AWS core functions + logic      ##
 ##############################################################
-. "${BLJ_SCRIPT}/aws_config_lib" && . "${BLJ_SCRIPT}/aws_clean_lib" && . "${BLJ_SCRIPT}/aws_head_node_lib" &&. "${BLJ_SCRIPT}/aws_upload_lib"
+. "${BLJ_SCRIPT}/aws_config_lib" && . "${BLJ_SCRIPT}/aws_head_node_lib" &&. "${BLJ_SCRIPT}/aws_upload_lib"
 
 alias clearPipes="sudo rm -rf ${EFS}/pipelines/*; echo AWS pipelines removed"
 alias tailnf="tail -1000f /.nextflow.log"
 
 # Build Cloud-formation Stack
 build_stack() {
-	refresh_aws_cache && numSecs=0 && stackYml="file://${BLJ}/resources/aws/StackEFS.yml" 
-	[ $(is_stack_complete $awsStack) == "true" ] && aws_log "Reusing configured CREATE_COMPLETE AWS Stack: ${awsStack}" && return 
-	aws_log "Please wait while building AWS cloud formation stack: ${awsStack}..." 
+	numSecs=0 && stackYml="file://${BLJ}/resources/aws/StackEFS.yml" 
+	[ $(is_stack_complete) == "true" ] && aws_log "Reusing configured CREATE_COMPLETE AWS Stack: $(aws_stack)" && return 
+	aws_log "Please wait while building AWS cloud formation stack: $(aws_stack)..." 
 	myIP=$(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
+	ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
 	params="ParameterKey=NetworkAccessIP,ParameterValue=${myIP}/32"
-	[ ${#awsEc2SpotPer} -gt 0 ] && [ ${awsEc2SpotPer} -gt 0 ] && params="${params} ParameterKey=SpotBidPercentage,ParameterValue=${awsEc2SpotPer}"
-	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name ${awsStack} --capabilities CAPABILITY_IAM --parameters ${params}"
-	aws cloudformation create-stack --template-body "${stackYml}" --stack-name "${awsStack}" --capabilities CAPABILITY_IAM --parameters ${params}
-	while [ $(is_stack_complete $awsStack) != "true" ]; do printf "." && sleep 5s && numSecs=$((numSecs+5)); done
-	aws_log "New AWS Stack: ${awsStack} (created in in ${numSecs} seconds).  EC2 instances generated on this stack will only be accessible from your current IP address: ${myIP}"
+	[ ${ec2SpotPer} -gt 0 ] && params="${params} ParameterKey=SpotBidPercentage,ParameterValue=${ec2SpotPer}"
+	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name $(aws_stack) --capabilities CAPABILITY_IAM --parameters ${params}"
+	aws cloudformation create-stack --template-body "${stackYml}" --stack-name "$(aws_stack)" --capabilities CAPABILITY_IAM --parameters ${params}
+	while [ $(is_stack_complete) != "true" ]; do printf "." && sleep 5s && numSecs=$((numSecs+5)); done
+	aws_log "New AWS Stack: $(aws_stack) (created in in ${numSecs} seconds).  EC2 instances generated on this stack will only be accessible from your current IP address: ${myIP}"
 }
 
 # Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
 build_s3() {
+	awsS3=$(get_blj_prop aws.s3)
 	if [ ${#awsS3} -gt 0 ]; then
-		awsS3=$(aws s3api list-buckets --region $awsRegion --query "Buckets[?Name=='$awsS3']|[*].Name")
-		[ ${#awsS3} -eq 0 ] || [ "$awsS3" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Configured S3 bucket [ aws.s3=${awsS3} ] not found"
-		aws_log "Found existing S3 Bucket $awsS3"
+		awsS3=$(aws s3api list-buckets --region $(get_blj_prop aws.region) --query "Buckets[?Name=='$awsS3']|[*].Name")
+		[ ${#awsS3} -eq 0 ] || [ "${awsS3}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Configured S3 bucket [ aws.s3=${awsS3} ] not found"
+		aws_log "Found existing S3 Bucket ${awsS3}"
 	else
 		awsS3=$(aws s3api create-bucket --region $awsRegion --bucket $(generate_name blj $(aws_s3_buckets)))
 		[ ${#awsS3} -eq 0 ] || [ "$awsS3" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: ${awsS3}"
-		awsS3="${awsS3:1}" && set_blj_prop awsS3 "${awsS3}" && aws_log "Set awsS3=${awsS3}"
+		awsS3="${awsS3:1}" && set_blj_prop aws.s3 "${awsS3}" && aws_log "Set aws.s3=${awsS3}"
 	fi
-	refresh_aws_cache && s3items=$(aws s3api list-objects --bucket $awsS3 --query "Contents[].Key")
+	s3items=$(aws s3api list-objects --bucket $awsS3 --query "Contents[].Key")
 	[ "${s3items/nextflow}" == "${s3items}" ] && aws s3api put-object --bucket "${awsS3}" --key nextflow/
 	echo "${awsS3}"
 }
 
-# Build key pair + save to ~/.aws/$awsStack.pem file with security requirement (perms 400) 
+# Build key pair + save to ~/.aws/$(aws_stack).pem file with security requirement (perms 400) 
 cache_key_pair() {
 	[ -f "$(key_file)" ] && aws_log "Found existing: $(key_file)" && return
 	keys=$(aws ec2 describe-key-pairs) && [ "${keys/$keyPair}" == "$keys" ]
-	aws ec2 create-key-pair --key-name "${awsStack}" --query "KeyMaterial" > "$(key_file)" 
+	aws ec2 create-key-pair --key-name "$(aws_stack)" --query "KeyMaterial" > "$(key_file)" 
 	chmod 400 "$(key_file)" && aws_log "Security keys created --> private key: $(key_file)"
 }
 
 # Deploy AWS S3 Bucket, EC2-KeyPair, Cloud Formation Stack (including Comp. Env. + Batch queues)
 # Confirm any configured values exist, create objects that are undefined as store them in AWS config
 deploy_cloud_formation() {
-	refresh_aws_cache && aws_log "Starting --> [  deploy_cloud_formation  ]" && build_s3 && set_stack_name && cache_key_pair && verify_stack
+	aws_log "Starting --> [  deploy_cloud_formation  ]" && build_s3 && set_stack_name && cache_key_pair && verify_stack
 }
 
 # Generate a name not found in $1, created using format $2-$date-index
@@ -85,7 +87,7 @@ is_stack_complete() {
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
 	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] || [ $# -eq 0 ] && echo "false" && return
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
-	[ ${#stacks} -gt 0 ] && [ "$stacks" != "None" ] && [ "${stacks/$awsStack}" != "$stacks"  ] && echo "true" && return
+	[ ${#stacks} -gt 0 ] && [ "$stacks" != "None" ] && [ "${stacks/$(aws_stack)}" != "$stacks"  ] && echo "true" && return
 	echo "false"
 }
 
@@ -96,31 +98,31 @@ run_aws() {
 	aws_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "${1}" && deploy_cloud_formation && launch_ec2_head_node
 }
 
-# Create new stack name if awsStack is undefined in AWS Config
+# Create new stack name if $(aws_stack) is undefined in AWS Config
 set_stack_name() {
-	if [ ${#awsStack} -gt 0 ]; then
+	if [ "$(aws_stack)" != "" ]; then
 		enabledStacks=$(aws_stacks CREATE_COMPLETE)
-		[ "${enabledStacks/$awsStack}" == "${enabledStacks}" ] && exit_script "Using Pipeline Config \"aws.stack=${awsStack}\""
-		aws_log "Pipeline Config \"aws.stack=${awsStack}\" status=CREATE_COMPLETE" && return
+		[ "${enabledStacks/$(aws_stack)}" == "${enabledStacks}" ] && exit_script "Using Pipeline Config \"aws.stack=$(aws_stack)\""
+		aws_log "Pipeline Config \"aws.stack=$(aws_stack)\" status=CREATE_COMPLETE" && return
 	fi
 	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-	set_blj_prop awsStack $(generate_name bljStack "$stacks") && refresh_aws_cache
-	aws_log "Generated awsStack=$awsStack" 
+	set_blj_prop aws.stack $(generate_name bljStack "$stacks") 
+	aws_log "Generated aws.stack=$(aws_stack)" 
 }
 
 # Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.
 # If aws.stack was undefined, create a new stack.
 verify_stack() {
-	refresh_aws_cache && aws_log "Check status of AWS Stack: \"$awsStack\""
+	aws_log "Check status of AWS Stack: \"$(aws_stack)\""
 	allStacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
 	enabledStacks=$(aws_stacks CREATE_COMPLETE) && createInProgStacks=$(aws_stacks CREATE_IN_PROGRESS)
-	if [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$awsStack}" != "$enabledStacks" ]; then
-		aws_log "Configured AWS Stack: $awsStack --> status=CREATE_COMPLETE"
-	elif [ ${#createInProgStacks} -gt 0 ] && [ "${createInProgStacks/$awsStack}" != "$createInProgStacks" ]; then
+	if [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$(aws_stack)}" != "$enabledStacks" ]; then
+		aws_log "Configured AWS Stack: $(aws_stack) --> status=CREATE_COMPLETE"
+	elif [ ${#createInProgStacks} -gt 0 ] && [ "${createInProgStacks/$(aws_stack)}" != "$createInProgStacks" ]; then
 		sleep 30 && verify_stack
-	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$awsStack}" != "$allStacks" ]; then
-		status=$(aws cloudformation describe-stacks --stack-name ${awsStack} --query "Stacks[*].StackStatus")
-		exit_script "Error [ aws_functions.verify_stack() ]:  Configured AWS Stack [ $awsStack ] exists but is disabled --> status=$status"
+	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$(aws_stack)}" != "$allStacks" ]; then
+		status=$(aws cloudformation describe-stacks --stack-name $(aws_stack) --query "Stacks[*].StackStatus")
+		exit_script "Error [ aws_functions.verify_stack() ]:  Configured AWS Stack [ $(aws_stack) ] exists but is disabled --> status=$status"
 	else
 		build_stack
 	fi

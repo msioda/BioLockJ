@@ -258,8 +258,8 @@ rm_property() {
 	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.rm_property() ]: Config property name is required"
 	TMP=~/.temp_config.txt && [ -f "${TMP}" ] && rm "${TMP}" && touch "${TMP}" && chmod 770 "${TMP}"
 	while read line; do
-		line="$(echo ${line} | xargs)" && IFS=$' ' && tokens=( ${line//=/ } ) 
-		reset_IFS && [ ${#line} -gt 0 ] && [ "${tokens[0]}" != "${2}" ] && echo "${line}" >> "${TMP}"
+		line="$(echo ${line} | xargs)" && IFS=$'=' && tokens=( ${line} ) && reset_IFS 
+		[ ${#line} -gt 0 ] && [ "${tokens[0]}" != "${2}" ] && echo "${line}" >> "${TMP}"
 	done < "${1}"
 	[ -f "${TMP}" ] && rm "${1}" && mv "${TMP}" "${1}"
 }
@@ -273,7 +273,6 @@ set_property() {
 	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.set_property() ]: Config property name is required"
 	[ $(cat $1 | grep -c ^$2="${3}") -gt 0 ] && return
 	prop="$(cat $1 | grep ^$2=)" && [ ${#prop} -gt 0 ] && rm_property "${1}" "${2}"
-	lastLine="$(tail -n 1 $1 | xargs)" && [ ${#lastLine} -gt 0 ] && printf "\n" >> "${1}"
 	echo "${2}=${3}" >> "${1}"
 }
 

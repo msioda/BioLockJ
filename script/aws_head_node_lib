@@ -9,7 +9,7 @@
 # Param 1 - Pipeline directory name
 aws_dl_reports() {
 	aws_log "Opening SSH tunnel to Head Node...$(get_ec2_public_ip)"
-	scp -pro StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip):${EFS}/pipelines/${1} ${pipelineDownloadDir}
+	scp -pro StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip):${EFS}/pipelines/${1} $(get_blj_prop pipeline.downloadDir)
 }
 
 # Add job definition to Nextflow Config
@@ -24,12 +24,13 @@ add_nextflow_job_def() {
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
-	refresh_aws_cache && [ -f "$(get_docker_job_def_flag)" ] && aws_log "Jobs already exist, found flag file: $(get_docker_job_def_flag)" && return
+	[ -f "$(get_docker_job_def_flag)" ] && aws_log "Jobs already exist, found flag file: $(get_docker_job_def_flag)" && return
+	dockerUser="$(get_blj_prop docker.user)"
 	init_nextflow_config && dockerModules=$(docker search --no-trunc --limit 100 $dockerUser | grep -E ^$dockerUser ) 
 	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
 	IFS=$'\t' && aws_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
-		jobImg=$(echo $line | cut -f 1 -d " "):${dockerImgVersion}
+		jobImg=$(echo $line | cut -f 1 -d " "):$(get_blj_prop docker.imgVersion)
 		# Uncomment next line to build java_module ONLY (the only Docker container needed to run testAwsEmail.properties)
 		#[ $(echo $jobImg | grep -c 'java_module') -eq 0 ] && continue
 		[ $(echo $jobImg | egrep -c 'blj_basic|biolockj_controller') -gt 0 ] && aws_log "Skip Docker image: \"$jobImg\"" && continue
@@ -40,7 +41,7 @@ build_docker_job_defs() {
 			\"mountPoints\": [ { \"containerPath\": \"${EFS}\", \"readOnly\": false, \"sourceVolume\": \"efs\" }, { \"containerPath\": \"${EC2_HOME}\", \"readOnly\": false, \"sourceVolume\": \"hostHome\" } ],
 			\"readonlyRootFilesystem\": false, \"privileged\": true
 		}"
-		jobDef="${awsStack}_${jobLabel}" && jobName=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name ${jobDef} --query "jobDefinitions[*].jobDefinitionName")
+		jobDef="$(aws_stack)_${jobLabel}" && jobName=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name ${jobDef} --query "jobDefinitions[*].jobDefinitionName")
 		if [ ${#jobName} -eq 0 ]; then
 			registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
 			aws_log "Registered new Docker job-definition: ${registeredJob}"
@@ -59,30 +60,32 @@ connect_head() {
 
 # Get the flag file that indicates Docker job definitions were created
 get_docker_job_def_flag() {
-	echo "${HOME}/.${awsStack}-CREATED_DOCKER_JOB_DEFS"
+	echo ~/.$(aws_stack)-CREATED_DOCKER_JOB_DEFS
 }
 
 # Get EC2 instance public IP address
 get_ec2_public_ip() {
-	ec2PublicIP="$(get_blj_prop ec2PublicIP)" && [ ${#ec2PublicIP} -eq 0 ] && 
-		ec2PublicIP=$(get_blj_prop ec2PublicIP $(aws ec2 describe-instances --instance-ids ${awsEc2InstanceID} --query "Reservations[].Instances[].PublicDnsName"))
-	echo "${ec2PublicIP}"
+	if [ "$(get_blj_prop aws.ec2PublicIP)" == "" ]; then
+		[ "$(get_blj_prop aws.ec2InstanceID)" == "" ] && exit_script "Error [ aws_head_node_lib.get_ec2_public_ip() ] ] property \"aws.ec2InstanceID\" is undefined"
+		set_blj_prop aws.ec2PublicIP $(aws ec2 describe-instances --instance-ids $(get_blj_prop aws.ec2InstanceID) --query "Reservations[].Instances[].PublicDnsName")
+	fi
+	echo "$(get_blj_prop aws.ec2PublicIP)"
 }
 
 # Get a stack parameter for the configured stack 
 # Param 1 - Param name
 get_stack_param() {
-	echo $(aws cloudformation describe-stacks --stack-name $awsStack --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
+	echo $(aws cloudformation describe-stacks --stack-name $(aws_stack) --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
 }
 
 head_name() {
-	echo "Head-${awsProfile}-${awsStack}"
+	echo "Head-$(aws_profile)-$(aws_stack)"
 }
 
 # Start Head node if stopped, create if not found, and set awsEc2InstanceID
 init_ec2_head_node() {
-	aws_log "Starting --> [  init_ec2_head_node ]" && refresh_aws_cache 
-	ec2Id="${awsEc2InstanceID}" && cache_key_pair && ec2Label="Configured EC2 instance \"${ec2Id}\""
+	aws_log "Starting --> [  init_ec2_head_node ]"
+	ec2Id="$(get_blj_prop aws.ec2InstanceID)" && cache_key_pair && ec2Label="Configured EC2 instance \"${ec2Id}\""
 	[ ${#ec2Id} -gt 0 ] && aws_log "Found ${ec2Label}" &&
 		instances=$(aws ec2 describe-instances --instance-ids "$ec2Id" --query "Reservations[].Instances[].[State.Name, InstanceId]")
 	if [ ${#instances} -gt 0 ] && [ "${instances/$ec2Id}" != "${instances}" ]; then
@@ -98,26 +101,25 @@ init_ec2_head_node() {
 		fi
 	fi
 	if [ "${ec2Status}" != "start" ] && [ "${ec2Status}" != "ok" ]; then
-		aws_log "Creating EC2 head node --> type: ${awsEc2InstanceType}" && subnet="$(get_stack_param Subnet1)" &&
+		aws_log "Creating EC2 head node --> type: $(get_blj_prop aws.ec2InstanceType)" && subnet="$(get_stack_param Subnet1)" &&
 			secureGroup="$(get_stack_param BastionSecurityGroup)" && templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
-		[ ${#awsStack} -eq 0 ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ] &&
-			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Cannot launch EC2 - required parameters undefined in ${awsConf}"
-		set_blj_prop awsEc2InstanceID $(aws ec2 run-instances --count 1 --key-name ${awsStack} --image-id $(get_ami) --security-group-ids ${secureGroup} \
+		[ "$(aws_stack)" == "" ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ] &&
+			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Cannot launch EC2 - required aws.stack parameters undefined in $(aws_conf)"
+		set_blj_prop aws.ec2InstanceID $(aws ec2 run-instances --count 1 --key-name $(aws_stack) --image-id $(get_ami) --security-group-ids ${secureGroup} \
 			--tag-specifications "ResourceType=instance,Tags={Key=Name,Value='$(head_name)'}" --subnet-id ${subnet} \
 			--launch-template LaunchTemplateId="${templateId}" --instance-type "${awsEc2InstanceType}" --query "Instances[].InstanceId" )
-		refresh_aws_cache && printf "Launching EC2 Head Node $(head_name), please wait..."
+		printf "Launching EC2 Head Node $(head_name), please wait..."
 	fi
 	[ "${ec2Status}" != "ok" ] && start_ec2_head_node
 }
 
 # Create the basic nextflow config file using the current statck AWS batch queues
 init_nextflow_config() {
-	NF="$(local_nf_conf)"
-	LPQ="$(get_stack_param LowPriorityJobQueue)" && HPQ="$(get_stack_param HighPriorityJobQueue)"
+	NF="$(local_nf_conf)" && LPQ="$(get_stack_param LowPriorityJobQueue)" && HPQ="$(get_stack_param HighPriorityJobQueue)"
 	echo "// Nextflow properties inherited by BioLockJ $(biolockj -v) pipeline main.nf" > "${NF}"
 	echo "" >> "${NF}" && echo "executor {" >> "${NF}" && echo "    name = 'awsbatch'" >> "${NF}"
     echo "    executor.awscli = '${EC2_HOME}/miniconda/bin/aws'" >> "${NF}" && echo "}" >> "${NF}"
-    echo "" >> "${NF}" && echo "aws {" >> "${NF}" && echo "    region = '${awsRegion}'" >> "${NF}"
+    echo "" >> "${NF}" && echo "aws {" >> "${NF}" && echo "    region = '$(get_blj_prop aws.region)'" >> "${NF}"
     echo "}" >> "${NF}" && echo "" >> "${NF}" && echo "process {" >> "${NF}"
 	echo "    queue = '${LPQ}'" >> "${NF}" && echo "    withLabel: 'DEMAND' {" >> "${NF}"
 	echo "        queue = '${HPQ}'" >> "${NF}" && echo "    }" >> "${NF}"
@@ -139,8 +141,8 @@ launch_ec2_head_node() {
 start_ec2_head_node() {
 	runTime=0 
 	while [ "${ec2Status}" != "ok" ]; do
-		ec2Status=$(aws ec2 describe-instance-status --instance-ids ${awsEc2InstanceID} --query "InstanceStatuses[*].SystemStatus.Status")
+		ec2Status=$(aws ec2 describe-instance-status --instance-ids $(get_blj_prop aws.ec2InstanceID) --query "InstanceStatuses[*].SystemStatus.Status")
 		printf "." && sleep 5s && runTime=$((runTime+5))  
 	done
-	echo "ready" && aws_log "EC2 Instance [ ID=${awsEc2InstanceID} ] started in ${runTime} seconds"
+	echo "ready" && aws_log "EC2 Instance [ ID=$(get_blj_prop aws.ec2InstanceID) ] started in ${runTime} seconds"
 }

@@ -2,6 +2,7 @@
 ##############################################################
 ##  This script is used for AWS core function + logic       ##
 ##############################################################
+. "${BLJ_SCRIPT}/aws_functions"
 
 # Remove all job-definitions 
 aws_deregister_job_defs() {
@@ -46,18 +47,6 @@ aws_rm_key_pairs() {
 	aws_log "Check for remaining key-pairs:" && aws ec2 describe-key-pairs
 }
 
-# Remove S3 buckets
-aws_rm_s3_buckets() {
-	count=0 && numComplete=0 && ids=$(aws s3api list-buckets --query "Buckets[*].Name")
-	! $(has_data $ids) && aws_log "No S3 buckets to remove" && return
-	aws_log "Deleting S3 buckets...${ids}" && buckets=( "$ids" )
-	for bucket in ${buckets[@]}; do
-		aws s3 rb --force "${bucket}"  && count=$[$count+1] && aws_log "Deleted s3-bucket #${count}: ${bucket}" && ((numComplete++))
-	done
-	aws_log "Deleted $numComplete/$count S3-buckets" && rm_property "${awsConf}" "awsS3" && awsS3=''
-	refresh_aws_cache && aws_log "Remaining S3-buckets:  $(aws s3api list-buckets)" 
-}
-
 # Remove AWS Stacks
 aws_rm_stacks() {
 	count=0 && numComplete=0 && ids=$(aws cloudformation describe-stacks --query "Stacks[*].StackId")
@@ -72,8 +61,18 @@ aws_rm_stacks() {
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
 		ids="${ids/$id}" && ((numComplete++))
 	done
-	aws_log "Deleted $numComplete/$count stacks" && ids=$(aws cloudformation describe-stacks)
-	rm_property "${awsConf}" "awsStack" && awsStack="" && aws_log "Check for emaining stacks: ${ids}" && refresh_aws_cache
+	aws_log "Deleted $numComplete/$count stacks" && aws_log "Check for emaining stacks: $(aws cloudformation describe-stacks)"
+}
+
+# Remove S3 buckets
+aws_rm_s3_buckets() {
+	count=0 && numComplete=0 && ids=$(aws s3api list-buckets --query "Buckets[*].Name")
+	! $(has_data $ids) && aws_log "No S3 buckets to remove" && return
+	aws_log "Deleting S3 buckets...${ids}" && buckets=( "$ids" )
+	for bucket in ${buckets[@]}; do
+		aws s3 rb --force "${bucket}"  && count=$[$count+1] && aws_log "Deleted s3-bucket #${count}: ${bucket}" && ((numComplete++))
+	done
+	aws_log "Deleted $numComplete/$count S3-buckets" && aws_log "Remaining S3-buckets:  $(aws s3api list-buckets)" 
 }
 
 # Clear all Pipeline Jobs
@@ -139,12 +138,12 @@ kill_head_node() {
 	[ ${#ids} -gt 0 ] && aws ec2 terminate-instances --instance-id "${ids}" && aws_log "The following EC2 instances have been terminated --> ${ids}"
 	aws_log "Describe Remaining EC2 instances:" && 
 		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
-	rm_property "${awsConf}" awsEc2InstanceID && awsEc2InstanceID='' && refresh_aws_cache && aws_rm_key_pairs
+	aws_rm_key_pairs
 }
 
 # De-register, disable, and remove all AWS objects.  
 # This should stop all charges - but verify in the AWS console nothing is still running to be sure.
 # Param 1 (optional) - Also remove S3 buckets if = s3
 reset_aws() {
-	refresh_aws_cache && kill_head_node && aws_deregister_job_defs && aws_rm_stacks && [ "${1}" == "s3" ] && aws_rm_s3_buckets
+	kill_head_node && aws_deregister_job_defs && aws_rm_stacks && [ "${1}" == "s3" ] && aws_rm_s3_buckets
 }
