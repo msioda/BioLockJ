@@ -357,8 +357,8 @@ public class BioLockJUtil {
 				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_PROFILE );
 			if( prof == null && DockerUtil.inDockerEnv() )
 				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_RC );
-			final String path = Config.getString( null, Constants.USER_PROFILE );
-			if( prof == null && path != null ) prof = getProfile( path );
+			final File prop = Config.getExistingFile( null, Constants.USER_PROFILE );
+			if( prop != null ) prof = prop;
 			if( prof == null ) prof = getProfile( Processor.submit( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
 		} catch( final Exception ex ) {
 			Log.error( LogUtil.class, "Failed to find user shell profile ", ex );
@@ -419,9 +419,11 @@ public class BioLockJUtil {
 	 * @throws ConfigNotFoundException if a required property is undefined
 	 * @throws ConfigPathException if configured directory does not exist on the file-system
 	 * @throws ConfigViolationException if input directories contain duplicate file names
+	 * @throws SequnceFormatException if input sequence files fail initial validations
+	 * @throws ConfigFormatException if properties are found with invalid format
 	 */
 	public static void initPipelineInput()
-		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException {
+		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException, SequnceFormatException, ConfigFormatException {
 		Collection<File> files = new HashSet<>();
 		for( final File dir: getInputDirs() ) {
 			Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
@@ -433,6 +435,20 @@ public class BioLockJUtil {
 		inputFiles.addAll( files );
 		Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 		setPipelineInputFileTypes();
+		
+		if( Config.requireSet( null, PIPELINE_SEQ_INPUT_TYPE ).contains( PIPELINE_SEQ_INPUT_TYPE ) ) {
+			
+			Collection<File> seqFiles = new ArrayList<>();
+			for( File file: inputFiles ) {
+				if( SeqUtil.isSeqFile( file ) ) seqFiles.add( file );
+			}
+			if( MetaUtil.exists() ) Log.info( BioLockJUtil.class, "Metadata file exists" );
+			if( MetaUtil.exists() && Config.getBoolean( null, MetaUtil.META_REQUIRED )  ) 
+				Log.info( BioLockJUtil.class, "Metadata Sample IDs are required for " + seqFiles.size() + " sequence files" );
+			else
+				Log.info( BioLockJUtil.class, "Pipeline input dirs contain " + seqFiles.size() + " sequence files" );
+			SeqUtil.getSeqFiles( seqFiles );
+		}
 	}
 
 	/**
@@ -577,7 +593,6 @@ public class BioLockJUtil {
 	 */
 	public static String removeQuotes( final String value ) {
 		if( value == null ) return null;
-
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
 	}
 
@@ -597,7 +612,7 @@ public class BioLockJUtil {
 
 	private static File getProfile( final String path ) {
 		if( path != null ) {
-			final File prof = new File( path );
+			final File prof = new File( Config.replaceEnvVar( path ) );
 			if( prof.isFile() ) return prof;
 		}
 		return null;
