@@ -184,7 +184,7 @@ public class TaxaUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static File getTaxonomyTableFile( final File dir, final String level, final String suffix )
-		throws Exception {
+		throws Exception { // Replace Exception with new TaxaTableException
 		if( level == null ) throw new Exception( "Level is required to build a taonomy table" );
 		String mySuffix = suffix;
 		if( mySuffix != null && !mySuffix.endsWith( "_" ) ) mySuffix += "_";
@@ -192,6 +192,30 @@ public class TaxaUtil {
 		if( mySuffix == null ) mySuffix = "_";
 		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + mySuffix +
 			level + Constants.TSV_EXT );
+		
+		// Use new getLevelNum( level ) method once I have time to test with R scripts.
+		//return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + "_" + TAXA_TABLE + mySuffix +
+		//	getLevelNum(level) + "_" + level + Constants.TSV_EXT );
+	}
+	
+	/**
+	 * Return the absolute taxonomy level for the given level.
+	 *  Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS,
+		Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES 
+	 * <ol>
+	 * <li>{@value biolockj.Constants#DOMAIN}
+	 * <li>{@value biolockj.Constants#PHYLUM}
+	 * <li>{@value biolockj.Constants#CLASS}
+	 * <li>{@value biolockj.Constants#ORDER}
+	 * <li>{@value biolockj.Constants#FAMILY}
+	 * <li>{@value biolockj.Constants#GENUS}
+	 * <li>{@value biolockj.Constants#SPECIES}
+	 * </ol>
+	 * @param level Taxonomy level
+	 * @return Integer level number
+	 */
+	public static Integer getLevelNum( final String level ) {
+		return allTaxonomyLevels().indexOf( level );
 	}
 
 	/**

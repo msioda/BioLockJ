@@ -16,13 +16,8 @@ alias awsr="aws_report_config"
 aws_archive() {
 	aws_log "Archive AWS properties, key file, and start script to ~/.aws/history"
 	[ ! -d ~/.aws/history ] && mkdir ~/.aws/history
-	[ -f "$(aws_conf)" ] && mv "$(aws_conf)" ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
-	echo "# MASTER Config for ${1}" > "$(aws_conf)" && chmod 770 "$(aws_conf)" 
-}
-
-# Get Master Config for current AWS pipeline
-aws_conf() {
-	echo "${AWS_CONF}" 
+	[ -f "${AWS_CONF}" ] && mv "${AWS_CONF}" ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
+	echo "# MASTER Config for ${1}" > "${AWS_CONF}" && chmod 770 "${AWS_CONF}" 
 }
 
 # Get an AWS property ${1} from local AWS Config file ${2} under the aws.profile
@@ -52,11 +47,11 @@ aws_profile() {
 
 # Print AWS Config report
 aws_report_config() {
-	[ ! -f "$(aws_conf)" ] && aws_log "Cannot report cache --> $(aws_conf) not found" && return
+	[ ! -f "${AWS_CONF}" ] && aws_log "Cannot report cache --> ${AWS_CONF} not found" && return
 	aws_log "---------------------------------------------------"
 	aws_log "Report current AWS Config"
 	aws_log "---------------------------------------------------"
-	cat "$(aws_conf)"
+	cat "${AWS_CONF}"
 	aws_log "---------------------------------------------------"
 }
 
@@ -83,6 +78,11 @@ aws_s3_buckets() {
 	echo "${myBuckets}"
 }
 
+# Force bash variable expansion
+# Param 1 - variable
+expand() {
+	echo $(eval echo $1)
+}
 
 # Get AWS-Access-ID from local file sytem (requires user has logged on to client or file is staged to $HOME)
 get_aws_access_key_id() {
@@ -94,11 +94,11 @@ get_aws_secret_access_key() {
 	echo $(aws_local_prop aws_secret_access_key ~/.aws/credentials)
 }
 
-# Get a prop stored in $(aws_conf)
+# Get a prop stored in ${AWS_CONF}
 # Param 1 - Prop name
 # Param 2 - (Optional) Default value
 get_blj_prop() {
-	val="$(get_property $(aws_conf) $1)"
+	val="$(get_property ${AWS_CONF} $1)"
 	[ ${#val} -eq 0 ] && [ ${#2} -gt 0 ] && val="${2}" && set_blj_prop "${1}" "${2}"
 	echo "${val}"
 }
@@ -115,14 +115,14 @@ get_config_name() {
 	echo $(echo $(basename $(get_config local)) | cut -f1 -d".")
 }
 
-# Init AWS Config properties file [ $(aws_conf) ] with pipeline Config, AWS config, and standard defaults
+# Init AWS Config properties file [ ${AWS_CONF} ] with pipeline Config, AWS config, and standard defaults
 # Check BLJ pipeline Config files + all nested default Config files
 # Add docker.properties if not already in list of nested Config files
 # Param 1 - Pipeline Config file path
 init_aws_config() {
 	[ ! -f "${HOME}/.aws/config" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/config"
 	[ ! -f "${HOME}/.aws/credentials" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/credentials"
-	aws_archive "${1}" && aws_log "Copy AWS properties from Pipeline Config ${1} into AWS Config --> $(aws_conf)"
+	aws_archive "${1}" && aws_log "Copy AWS properties from Pipeline Config ${1} into AWS Config --> ${AWS_CONF}"
 	set_pipeline_conig_props "${STANDARD_CONFIG}" && set_pipeline_conig_props "${DOCKER_CONFIG}"
 	defaultConfig="${STANDARD_CONFIG}, ${DOCKER_CONFIG}" && propFile="$(get_property $1 pipeline.defaultProps)"
 	while [ -f "${propFile}" ] && [ "${defaultConfig}" == "${defaultConfig/$propFile}" ]; do
@@ -130,8 +130,8 @@ init_aws_config() {
 		propFile="$(get_property $propFile pipeline.defaultProps)"
 	done
 	set_pipeline_conig_props "${1}" && verify_config
-	set_blj_prop "internal.config" "$(aws_conf)" && set_blj_prop "internal.defaultConfig" "${defaultConfig}"
-	aws_log "MASTER AWS Config properties saved to --> $(aws_conf)" && sort -d "$(aws_conf)" > "${TMP}" && mv "${TMP}" "$(aws_conf)"
+	set_blj_prop "internal.config" "${1}" && set_blj_prop "internal.defaultConfig" "${defaultConfig}"
+	aws_log "MASTER AWS Config properties saved to --> ${AWS_CONF}" && sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}"
 }
 
 # Get the ec2 key file for the ec2 head node
@@ -146,33 +146,33 @@ local_nf_conf() {
 	echo ~/.aws/nextflow/$(get_blj_prop aws.stack)/config
 }
 
-# Remove AWS property from $(aws_conf)
+# Remove AWS property from ${AWS_CONF}
 # Param 1 - prop name 
 rm_blj_prop() {
-	rm_property "$(aws_conf)" "${1}"
+	rm_property "${AWS_CONF}" "${1}"
 }
 
-# Call set_property on Config file $(aws_conf)
+# Call set_property on Config file ${AWS_CONF}
 # Param 1 - Prop name
 # Param 2 - Prop value
 set_blj_prop() {
-	set_property "$(aws_conf)" "${1}" "${2}"
+	set_property "${AWS_CONF}" "${1}" "${2}"
 }
 
-# Save AWS Config properties in pipeline Config file to AWS Config file: $(aws_conf)
+# Save AWS Config properties in pipeline Config file to AWS Config file: ${AWS_CONF}
 # Param 1 - Pipeline Config file path
 set_pipeline_conig_props() {
-	aws_log "Update $(aws_conf) with AWS properties found in Pipeline Config ${1}"
+	aws_log "Update ${AWS_CONF} with AWS properties found in Pipeline Config ${1}"
 	while read line; do
 		line="$(echo ${line} | xargs)" && [ ${#line} -eq 0 ] || [ "${line:0:1}" == "#" ] && continue
-		IFS=$'=' && tokens=( ${line} ) && reset_IFS && set_blj_prop "${tokens[0]}" "${tokens[1]}"
+		IFS=$'=' && tokens=( ${line} ) && reset_IFS && set_blj_prop "${tokens[0]}" "$(expand ${tokens[1]})"
 	done < "${1}"
-	sort -d "$(aws_conf)" > "${TMP}" && mv "${TMP}" "$(aws_conf)" && aws_report_config
+	sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}" && aws_report_config
 }
 
 # Set basic defaults if undefined & throw error if user did not login to aws client or is missing required properties
 verify_config() {
-	err="Error [ aws_config_lib.verify_config() ]: Unable to find required AWS Config: $(aws_conf)"
+	err="Error [ aws_config_lib.verify_config() ]: Unable to find required AWS Config: ${AWS_CONF}"
 	err2="Please verify AWS client configuration details from command line and try again."
 	aws_log "Verfiying rquired AWS Config configuration..."  
 	quiet=$(get_blj_prop aws.region $(aws configure get region))
@@ -181,7 +181,7 @@ verify_config() {
 	quiet=$(get_blj_prop docker.user biolockj)
 	[ "$(get_aws_access_key_id)" == "" ] && exit_script "${err} \"aws_access_key_id\" in ~/.aws/credentials.  ${err2}"
 	[ "$(get_aws_secret_access_key)" == "" ]  && exit_script "${err} \"aws_secret_access_key\" in ~/.aws/credentials.  ${err2}"
-	[ "$(get_blj_prop aws.ram)" == "" ] && exit_script "${err} \"aws.ram\" in $(aws_conf)"
+	[ "$(get_blj_prop aws.ram)" == "" ] && exit_script "${err} \"aws.ram\" in ${AWS_CONF}"
 	verify_ec2_props
 }
 

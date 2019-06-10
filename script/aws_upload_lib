@@ -10,8 +10,8 @@ alias dl_efs="download_dir_from_efs"
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
-	ss="${HOME}/.aws/start-$(get_config_name).sh" && [ -f "$(get_blj_prop metadata.filePath)" ] && meta="-m=${EFS}/metadata"
-	echo "${sheBang}" > "${ss}"
+	ss="${HOME}/.aws/start-$(get_config_name).sh" && [ -f "$(get_blj_prop metadata.filePath)" ] && meta="-m=${EFS}/metadata "
+	echo '#!/bin/bash' > "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo "##  Run this script to launch BioLockJ pipeline on AWS           ##" >> "${ss}"
 	echo "##  1) Pull the latest biolockj image from Docker Hub            ##" >> "${ss}"
@@ -26,7 +26,7 @@ build_start_script() {
 	echo '[ -f "${flagFile}" ] && rm "${flagFile}"' >> "${ss}"
 	echo "docker pull $(get_blj_prop docker.user)/biolockj_controller:$(get_blj_prop docker.imgVersion)" >> "${ss}"
 	echo "clearDock" >> "${ss}"
-	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $inputDirPaths) -c=$(get_config ec2)" >> "${ss}"
+	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $(get_blj_prop input.dirPaths)) -c=$(get_config ec2)" >> "${ss}"
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
 	if [ "$(get_blj_prop aws.ec2EndState)" == "stop" ] || [ "$(get_blj_prop aws.ec2EndState)" == "terminate" ]; then
@@ -71,12 +71,12 @@ exe_remote_cmd() {
 stage_aws_and_nf_config_to_efs() {
 	aws_log "Staging AWS/Nextflow Config on new EC2 Head-Node" && AWS_STAGE=~/.aws/stage 
 	[ ! -d "${AWS_STAGE}" ] && mkdir "${AWS_STAGE}"
-	echo "[$(aws_profile)]" > "${AWS_STAGE}/config"
-	echo "region = ${awsRegion}" >> "${AWS_STAGE}/config"
+	echo "[default]" > "${AWS_STAGE}/config"
+	echo "region = $(get_blj_prop aws.region)" >> "${AWS_STAGE}/config"
 	echo "output = text" >> "${AWS_STAGE}/config"
 	echo "Created file:  ${AWS_STAGE}/config"
 	cat "${AWS_STAGE}/config" 
-	echo "[$(aws_profile)]" > "${AWS_STAGE}/credentials"
+	echo "[default]" > "${AWS_STAGE}/credentials"
 	echo "aws_access_key_id = $(get_aws_access_key_id)" >> "${AWS_STAGE}/credentials"
 	echo "aws_secret_access_key = $(get_aws_secret_access_key)" >> "${AWS_STAGE}/credentials"
 	echo "Created file:  ${AWS_STAGE}/credentials"
@@ -85,6 +85,7 @@ stage_aws_and_nf_config_to_efs() {
 	upload_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
 	upload_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
 	upload_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
+	upload_to_efs "${AWS_CONF}" "${EC2_HOME}/.aws"
 	upload_to_efs "${BLJ_SCRIPT}" "${EFS}"
 	exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
 	exe_remote_cmd "sudo chmod -R 777 ${EFS}"
@@ -98,8 +99,8 @@ stage_pipeline() {
 
 # The method creates a new version of the pipeline Config files by replacing 
 stage_pipeline_config_to_efs() {
-	aws_log "Uploading pipeline Config files to EFS: $(aws_conf)" 
-	upload_to_efs "$(aws_conf)" "${BLJ_CONFIG}" 
+	aws_log "Uploading pipeline Config files to EFS: ${AWS_CONF}" 
+	upload_to_efs "${AWS_CONF}" "${BLJ_CONFIG}" 
 }
 
 # Stage custom database files for pipeline onto EFS volume
@@ -138,17 +139,18 @@ stage_pipeline_dbs_to_efs() {
 	[ -d "${k2DB}" ] && aws_log "Uploading Kraken2 DB: ${k2DB}" && upload_to_efs_and_update_config "kraken2.db" "${k2DB}" "${BLJ_DB}"
 	if [ -f "${rdpDb}" ]; then
 		filePath="$(upload_to_efs $(dirname $rdpDb) $BLJ_DB)" && echo "Uploading RDP DB: $(dirname $rdpDb) --> ${filePath}"
-		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) rdp.db $filePath/$(basename $rdpDb)"
+		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) rdp.db ${filePath}/$(basename $rdpDb)"
 	fi 
 }
 
 # Stage data for pipeline onto EFS volume
 stage_pipeline_inputs_to_efs() {
 	aws_log "Upload pipeline inputs to EFS"
-	[ ! -d "$(get_blj_prop input.dirPaths)" ] && exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: input.dirPaths=\"$(get_blj_prop input.dirPaths)\" is not a valid directory"
-	upload_to_efs_and_update_config "input.dirPaths" "$(get_blj_prop input.dirPaths)" "${BLJ_INPUT}"
-	[ -f "$(get_blj_prop metadata.filePath)" ] && upload_to_efs_and_update_config "metadata.filePath" "$(get_blj_prop metadata.filePath)" "${EFS}/metadata"
-	[ -f "$(get_blj_prop trimPrimers.filePath)" ] && upload_to_efs_and_update_config "trimPrimers.filePath" "$(get_blj_prop trimPrimers.filePath)" "${BLJ_PRIMER}"
+	inputDir="$(get_blj_prop input.dirPaths)" && metaFile="$(get_blj_prop metadata.filePath)" && primerFile="$(get_blj_prop trimPrimers.filePath)"
+	[ ! -d "${inputDir}" ] && exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: input.dirPaths=\"${inputDir}\" is not a valid directory"
+	aws_log "Upload inputDir:  ${inputDir}" && upload_to_efs_and_update_config "input.dirPaths" "${inputDir}" "${BLJ_INPUT}"
+	[ -f "${metaFile}" ] && aws_log "Upload metaFile:  ${metaFile}" && upload_to_efs_and_update_config "metadata.filePath" "${metaFile}" "${EFS}/metadata"
+	[ -f "${primerFile}" ] && aws_log "Upload primerFile:  ${primerFile}" && upload_to_efs_and_update_config "trimPrimers.filePath" "${primerFile}" "${BLJ_PRIMER}"
 	upload_to_efs "$(build_start_script)"
 }
 
