@@ -191,9 +191,7 @@ getModuleDir <- function() {
 
 # Return vector of nominal fields or an empty vector
 getNominalFields <- function() {
-	vals = getProperty("R_internal.nominalFields", vector( mode="character" ) )
-	if( length( vals ) == 0 ) return( NULL )
-	return( vals )
+	return( getProperty( "R_internal.nominalFields", vector( mode="character" ) )
 }
 
 # Return vector of numeric fields or an empty vector
