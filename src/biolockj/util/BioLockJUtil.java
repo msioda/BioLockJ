@@ -436,12 +436,9 @@ public class BioLockJUtil {
 		Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 		setPipelineInputFileTypes();
 		
-		if( Config.requireSet( null, PIPELINE_SEQ_INPUT_TYPE ).contains( PIPELINE_SEQ_INPUT_TYPE ) ) {
-			
+		if( Config.requireSet( null, INTERNAL_PIPELINE_INPUT_TYPES ).contains( PIPELINE_SEQ_INPUT_TYPE ) ) {
 			Collection<File> seqFiles = new ArrayList<>();
-			for( File file: inputFiles ) {
-				if( SeqUtil.isSeqFile( file ) ) seqFiles.add( file );
-			}
+			for( File file: inputFiles ) if( SeqUtil.isSeqFile( file ) ) seqFiles.add( file );
 			if( MetaUtil.exists() ) Log.info( BioLockJUtil.class, "Metadata file exists" );
 			if( MetaUtil.exists() && Config.getBoolean( null, MetaUtil.META_REQUIRED )  ) 
 				Log.info( BioLockJUtil.class, "Metadata Sample IDs are required for " + seqFiles.size() + " sequence files" );
