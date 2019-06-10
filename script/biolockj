@@ -41,8 +41,8 @@ docker_args() {
 	[ ${#gui} -gt 0 ] && args="g"
 	[ ${#config} -gt 0 ] && args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
 	[ ${#restart} -gt 0 ] && args="${args} r=${restart}"
-	[ ${#blj} -gt 0 ] && args="${args} blj=${blj}"
-	[ ${#blj_sup} -gt 0 ] && args="${args} blj_sup=${blj_sup}"
+	[ ${#blj} -gt 0 ] && args="${args} blj"
+	[ ${#blj_sup} -gt 0 ] && args="${args} blj_sup"
 	echo "${args}"
 }
 
@@ -67,6 +67,8 @@ is_flag_arg() {
 # Param 1 -  All script args ${@}
 parse_input_args() {
 	args=$(get_params "$@")
+	blj=$(arg_exists $args blj)
+	blj_sup=$(arg_exists $args blj_sup)
 	runAws=$(arg_exists $args a)
 	runGui=$(arg_exists $args g)
 	displayHelp=$(arg_exists $args h)
@@ -75,8 +77,7 @@ parse_input_args() {
 	config=$(named_arg $args c)
 	newPass=$(named_arg $args p)
 	restart=$(named_arg $args r)
-	blj=$(named_arg $args blj)
-	blj_sup=$(named_arg $args blj_sup)
+	
 	[ ${#runDocker} -eq 0 ] && [ ${#blj} -gt 0 ] && echo "Arg \"blj\" is only applicable in Docker mode so will be ignored"
 	[ ${#runDocker} -eq 0 ] && [ ${#blj_sup} -gt 0 ] && echo "Arg \"blj_sup\" is only applicable in Docker mode so will be ignored"
 	[ ${#runDocker} -eq 0 ] && [ ${#runGui} -gt 0 ] && runDocker="d" && echo "Arg \"gui\" is only applicable in Docker mode --> starting Docker biolockj_controller container"

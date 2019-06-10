@@ -43,7 +43,6 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		super.checkDependencies();
 		final Integer rarefyingMax = Config.getPositiveInteger( this, INPUT_RAREFYING_MAX );
 		final Integer rarefyingMin = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
-
 		if( rarefyingMin == null && rarefyingMax == null ||
 			rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
 			throw new Exception(
@@ -140,7 +139,6 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				if( indexes.contains( index ) ) {
 					if( !usedIndexes.contains( index ) ) Log.debug( getClass(), "Add to usedIndexes: " + index );
-
 					usedIndexes.add( index );
 					writer.write( line + RETURN );
 				}

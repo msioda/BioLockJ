@@ -3,16 +3,17 @@
 ##  Script launches BioLockJ via Docker + creates $DOCKER_CLONE_SCRIPT       ##
 ##  Bash env must include pipeline base directory: ${BLJ_PROJ}               ##
 ##                                                                           ##
-##  Required Parameters (If g arg passed, no other args required)            ##
-##  Config file path:          c <file_path>                                 ##
+##  Required Parameters (If gui arg passed, no other args required)          ##
+##  Note, all params (other than blj & blj_sup) can use only 1st letter      ##
+##  Config file path:          config  <file_path>                            ##
 ##                                                                           ##
 ##  Optional Parameters:                                                     ##
-##  Aws flag:                  a                                             ##
-##  Use local BLJ flag:        -blj                                          ##
-##  Use local BLJ_SUP flag:    -blj_sup                                      ##
-##  Run GUI flag:              g                                             ##
-##  New email password:        p  <new_password>                             ##
-##  Restart flag:              r  <dir_path>                                 ##
+##  Aws flag:                  aws                                           ##
+##  Use local BLJ flag:        blj                                           ##
+##  Use local BLJ_SUP flag:    blj_sup                                       ##
+##  Run GUI flag:              gui                                           ##
+##  New email password:        pass    <new_password>                        ##
+##  Restart flag:              restart <dir_path>                            ##
 ###############################################################################
 . "${DOCKER_LIB}"
 
@@ -24,14 +25,14 @@ GUI_PORT=8080
 # These paths are used by biolockj_controller to map Docker volumes for java_module containers
 blj_options() {
 	options="-u ${HOME} -b $(blj_proj) -h $(hostname)" 
-	! $(null_var $blj) && options="${options} -blj ${blj}"
-	! $(null_var $blj_sup) && options="${options} -blj_sup ${blj_sup}"
+	! $(null_var $blj) && options="${options} -blj ${BLJ}"
+	! $(null_var $blj_sup) && options="${options} -blj_sup ${BLJ_SUP}"
 	! $(null_var $runGui) && echo "${options}" && return
-	! $(null_var $restartDir) && options="${options} r ${BLJ_PROJ}/${restartDir#$(blj_proj)/}"
-	! $(null_var $newPass) && options="${options} p $newPass"
+	! $(null_var $restartDir) && options="${options} -r ${BLJ_PROJ}/${restartDir#$(blj_proj)/}"
+	! $(null_var $newPass) && options="${options} -p $newPass"
 	! $(null_var $metaPath) && options="${options} -m $metaPath"
 	! $(null_var $primerPath) && options="${options} -t $primerPath"
-	echo "${options} -i ${inputDir} c ${config} ${runAws}"
+	echo "${options} -i ${inputDir} -c ${config} ${runAws}"
 }
 
 # If dockblj called by biolockj_controller Docker container in GUI mode, set BLJ_PROJ based on the $BLJ_OPTIONS
@@ -115,19 +116,16 @@ run_docker() {
 scan_script_and_env_args() {
 	runGui=$(arg_exists "$@" g)
 	runAws=$(arg_exists "$@" a)
+	blj=$(arg_exists "$@" blj)
+	blj_sup=$(arg_exists "$@" blj_sup)
 	config=$(named_arg "$@" c)
 	newPass=$(named_arg "$@" p)
 	restartDir=$(named_arg "$@" r)
-	blj=$(named_arg "$@" -blj)
-	blj_sup=$(named_arg "$@" -blj_sup)
 	
-	if $(null_var $blj) && blj=$(arg_exists "$@" -blj); then
-		blj="${BLJ}" && $(null_var $blj) && echo "Arg \"blj\" will be ignored because environment variable \"BLJ\" is undefined"
-	fi
-	if $(null_var $blj_sup) && blj_sup=$(arg_exists "$@" -blj_sup); then
-		blj_sup="${BLJ_SUP}" && $(null_var $blj_sup) && echo "Arg \"blj_sup\" will be ignored because environment variable \"BLJ_SUP\" is undefined"
-	fi
+	! $(null_var $blj) && blj="${BLJ}"
+	! $(null_var $blj_sup) && blj="${BLJ_SUP}"
 	
+	echo "Look for property values in the Config: $config"
 	if $(null_var $runGui); then
 		inputDir="$(get_property $config input.dirPaths)"
 		metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"

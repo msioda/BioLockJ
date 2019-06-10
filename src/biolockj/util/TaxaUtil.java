@@ -51,12 +51,14 @@ public class TaxaUtil {
 	 * Build the name of an unclassified taxa using the given "taxa" parameter.<br>
 	 * Returns a name like Unclassified (taxa name) Taxa
 	 * 
-	 * @param taxa Taxa name
+	 * @param taxa Taxa parent name
+	 * @param level Taxa parent level
 	 * @return Unclassified Taxa name
 	 */
-	public static String buildUnclassifiedTaxa( final String taxa ) {
-		return UNCLASSIFIED + " " + taxa + " " + TAXA;
+	public static String getUnclassifiedTaxa( final String taxa, final String level ) {
+		return UNCLASSIFIED + " " + taxa + " " + level.substring( 0, 1 ).toUpperCase() + level.substring( 1 );
 	}
+
 
 	/**
 	 * Extract taxonomy names at the given level from all given OTUs.
@@ -346,7 +348,6 @@ public class TaxaUtil {
 	private static String bottomLevel = null;
 	private static List<String> configLevels = null;
 	private static List<String> levelSpan = null;
-	private static final String TAXA = "Taxa";
 	private static final List<String> TAXA_LEVELS = Arrays.asList( Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS,
 		Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES );
 	private static String topLevel = null;

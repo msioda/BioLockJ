@@ -27,7 +27,6 @@ public class JsonReport extends JavaModuleImpl {
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
 		if( !pipelineInputContainsOtuSummary() ) preReqs.add( CompileOtuCounts.class.getName() );
-
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
@@ -57,7 +56,6 @@ public class JsonReport extends JavaModuleImpl {
 		}
 
 		writeJson( writeNodeAndChildren( root, false, jsonMap, 0 ) );
-
 		this.summary = "Report generated " + this.numberOfNodes + " nodes " + this.summary;
 	}
 
@@ -87,8 +85,8 @@ public class JsonReport extends JavaModuleImpl {
 				} else jsonNode.addCount( otuCount );
 
 				jsonMap.get( level ).add( jsonNode );
-
 				parent = jsonNode;
+				if( taxa == null ) break;
 			}
 
 			this.totalTaxaCount += otuCount;
