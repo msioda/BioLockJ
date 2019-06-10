@@ -100,32 +100,14 @@ getColorsByCategory <- function( metaTable ){
 # Parse MASTER config for property value, if undefined return default defaultVal
 # save all properties in propCache upon 1st request
 getConfig <- function( name, defaultVal=NULL ) {
-	if( is.null( propCache ) ) {
-		propCache = read.properties( getMasterConfigFile() )
-	}
-	
+	if( is.null( propCache ) ) propCache = read.properties( getMasterConfigFile() )
 	prop = propCache[[ name ]]
-	
-	if( is.null( prop ) ) {
-		return( defaultVal )
-	}
-	
-	if( str_trim( prop ) == "Y" ) {
-		return( TRUE )
-	}
-	if( str_trim( prop ) == "N" ) {
-		return( FALSE )
-	}
-	if( !is.na( as.numeric( prop ) ) && grepl( ",", prop ) ) {
-		return( as.numeric( unlist( strsplit( prop, "," ) ) ) )
-	}
-	if( is.character( prop ) && grepl( ",", prop ) ) {
-		return( str_trim( unlist( strsplit( prop, "," ) ) ) )
-	}
-	if( !is.na( as.numeric( prop ) ) ) {
-		return( as.numeric( prop ) )
-	}
-	
+	if( is.null( prop ) ) return( defaultVal )
+	if( str_trim( prop ) == "Y" ) return( TRUE )
+	if( str_trim( prop ) == "N" ) return( FALSE )
+	if( !is.na( as.numeric( prop ) ) && grepl( ",", prop ) ) return( as.numeric( unlist( strsplit( prop, "," ) ) ) )
+	if( is.character( prop ) && grepl( ",", prop ) ) return( str_trim( unlist( strsplit( prop, "," ) ) ) )
+	if( !is.na( as.numeric( prop ) ) ) return( as.numeric( prop ) )
 	return( str_trim( prop ) )
 }
 
@@ -203,15 +185,15 @@ getMetaData <- function( level ){
 # If downloaded with scp, all files share 1 directory, so return getPipelineDir() 
 # Otherwise, script path like: piplineDir/moduleDir/script/MAIN*.R, so return moduleDir (the dir 2 levels above script)  
 getModuleDir <- function() {
-	if( getPipelineDir() == dirname( getModuleScript() ) ) {
-		return( getPipelineDir() )
-	}
+	if( getPipelineDir() == dirname( getModuleScript() ) ) return( getPipelineDir() )
 	return( dirname( dirname( getModuleScript() ) ) )
 }
 
 # Return vector of nominal fields or an empty vector
 getNominalFields <- function() {
-	return( getProperty("R_internal.nominalFields", vector( mode="character" ) ) )
+	vals = getProperty("R_internal.nominalFields", vector( mode="character" ) )
+	if( length( vals ) == 0 ) return( NULL )
+	return( vals )
 }
 
 # Return vector of numeric fields or an empty vector
