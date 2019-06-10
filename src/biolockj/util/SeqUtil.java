@@ -248,11 +248,10 @@ public class SeqUtil {
 		final String fwReadSuffix = Config.getString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
 		final String rvReadSuffix = Config.getString( null, Constants.INPUT_REVERSE_READ_SUFFIX );
 		final String fileNameCol = Config.getString( null, MetaUtil.META_FILENAME_COLUMN );
-		int i = 0;
+
 		if( !isForwardRead( id ) ) {
 			final int rvIndex = value.lastIndexOf( rvReadSuffix );
 			id = id.substring( 0, rvIndex ) + fwReadSuffix + id.substring( rvIndex + 3 );
-			Log.info( SeqUtil.class, "Sample ID " + value + " [ " + i++ + " ] -->  id: " + id );
 		}
 
 		if( MetaUtil.hasColumn( fileNameCol ) && !MetaUtil.getFieldValues( fileNameCol, true ).isEmpty() ) {
@@ -268,26 +267,18 @@ public class SeqUtil {
 			id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
 		
 		
-		Log.info( SeqUtil.class, "Sample ID " + value + " [ " + i++ + " ] -->  id: " + id );
 		// trim files extensions: .gz | .fasta | .fastq
 		if( isGzipped( id ) ) id = id.substring( 0, id.length() - 3 );
-		Log.info( SeqUtil.class, "Sample ID " + value + " [ " + i++ + " ] -->  id: " + id );
 		if( id.toLowerCase().endsWith( "." + Constants.FASTA ) || id.toLowerCase().endsWith( "." + Constants.FASTQ ) )
 			id = id.substring( 0, id.length() - 6 );
-
-		Log.info( SeqUtil.class, "Sample ID " + value + " [ " + i++ + " ] -->  id: " + id );
 
 		// trim user defined file prefix and/or suffix patterns
 		final String trimPrefix = Config.getString( null, Constants.INPUT_TRIM_PREFIX );
 		final String trimSuffix = Config.getString( null, Constants.INPUT_TRIM_SUFFIX );
 		if( trimPrefix != null && id.indexOf( trimPrefix ) > -1 )
 			id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
-		Log.info( SeqUtil.class, "Sample ID " + value + " [ " + i++ + " ] -->  id: " + id );
-		if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 ) id = id.substring( 0, id.indexOf( trimSuffix ) );
 		
-		if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 )  Log.info( SeqUtil.class, "Trim suffix " + trimSuffix );
-			
-		Log.info( SeqUtil.class, "Sample ID " + value + " [ " + i++ + " ] -->  id: " + id );
+		if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 ) id = id.substring( 0, id.indexOf( trimSuffix ) );
 		
 		if( id == null || id.isEmpty() )
 			throw new SequnceFormatException( "Unable to extract a valid Sample ID from: " + value );
