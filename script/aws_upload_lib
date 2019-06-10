@@ -4,7 +4,6 @@
 ##  This script is used for uploading data + config to AWS cloud.  ##
 ##                                                                 ##
 #####################################################################
-. "${BLJ_SCRIPT}/aws_config_lib"
 alias dl_efs="download_dir_from_efs"
 
 # Build start script for given Pipeline Config file and reutnr local path

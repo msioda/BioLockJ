@@ -2,7 +2,6 @@
 ##############################################################
 ##  This script is used for AWS core function + logic       ##
 ##############################################################
-. "${BLJ_SCRIPT}/aws_functions"
 
 # Remove all job-definitions 
 aws_deregister_job_defs() {
