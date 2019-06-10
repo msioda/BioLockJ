@@ -252,8 +252,7 @@ public final class RMetaUtil {
 				Log.info( RMetaUtil.class, "Set " + BINARY_FIELDS + " = " + val );
 				Config.setConfigProperty( BINARY_FIELDS, val );
 			}
-
-		}
+		} else Config.setConfigProperty( BINARY_FIELDS, "" );
 
 		if( !nominalFields.isEmpty() ) {
 			final String val = BioLockJUtil.getCollectionAsString( nominalFields );
@@ -265,7 +264,8 @@ public final class RMetaUtil {
 				Log.info( RMetaUtil.class, "Set " + NOMINAL_FIELDS + " = " + val );
 				Config.setConfigProperty( NOMINAL_FIELDS, val );
 			}
-		}
+		} else Config.setConfigProperty( NOMINAL_FIELDS, "" );
+
 
 		if( !numericFields.isEmpty() ) {
 			final String val = BioLockJUtil.getCollectionAsString( numericFields );
@@ -277,7 +277,7 @@ public final class RMetaUtil {
 				Log.info( RMetaUtil.class, "Set " + NUMERIC_FIELDS + " = " + val );
 				Config.setConfigProperty( NUMERIC_FIELDS, val );
 			}
-		}
+		} else Config.setConfigProperty( NUMERIC_FIELDS, "" );
 
 		return true;
 	}
