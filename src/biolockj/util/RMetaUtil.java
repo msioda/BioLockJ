@@ -95,7 +95,7 @@ public final class RMetaUtil {
 				"List override numeric fields: " + BioLockJUtil.getCollectionAsString( numericFields ) );
 		}
 
-		if( reportAllFields( module ) ) {
+		if( rScriptFields.isEmpty() ) {
 			rScriptFields.addAll( getMetaCols( module ) );
 			rScriptFields.removeAll( excludeFields );
 			if( Config.getString( module, MetaUtil.META_BARCODE_COLUMN ) != null )
@@ -133,7 +133,7 @@ public final class RMetaUtil {
 		rScriptFields = updateNumericData( ParserModuleImpl.getOtuCountField(), rScriptFields, reportHits );
 		rScriptFields = updateNumericData( AddMetadataToTaxaTables.HIT_RATIO, rScriptFields, reportHits );
 
-		if( reportAllFields( module ) && !DockerUtil.isDirectMode() )
+		if( rScriptFields.isEmpty() && !DockerUtil.isDirectMode() )
 			Log.info( RMetaUtil.class, "R_Modules will report on the all [" + rScriptFields.size() +
 				"] metadata fields since Config property: " + R_REPORT_FIELDS + " is undefined." );
 
@@ -210,17 +210,6 @@ public final class RMetaUtil {
 	 */
 	public static boolean isMetaMergeTable( final File file ) {
 		return file.getName().endsWith( AddMetadataToTaxaTables.META_MERGED );
-	}
-
-	/**
-	 * The override property: {@link biolockj.Config}.{@value #R_REPORT_FIELDS} can be used to list the metadata
-	 * reportable fields for use in the R modules. If undefined, report all fields.
-	 * 
-	 * @param module BioModule
-	 * @return true if {@value #R_REPORT_FIELDS} is empty
-	 */
-	public static boolean reportAllFields( final BioModule module ) {
-		return Config.getSet( module, R_REPORT_FIELDS ).isEmpty();
 	}
 
 	/**

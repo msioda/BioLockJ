@@ -31,6 +31,7 @@ public class AddMetadataToPathwayTables extends Humann2CountModule {
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
+		Log.info( getClass(), "Update Config to set " +  Constants.R_INTERNAL_RUN_HN2 + " = " + Constants.TRUE );
 	}
 
 	/**
