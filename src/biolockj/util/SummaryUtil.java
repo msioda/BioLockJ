@@ -156,21 +156,22 @@ public class SummaryUtil {
 	public static String getFooter() throws Exception {
 		final long duration = System.currentTimeMillis() - Constants.APP_START_TIME;
 		final StringBuffer sb = new StringBuffer();
-		sb.append( getLabel( PIPELINE_NAME ) + "   " + Config.pipelineName() + RETURN );
-		sb.append( getLabel( RUNTIME_ENV ) + "     " + getRuntimeEnv() + RETURN );
-		sb.append( getLabel( PIPELINE_STATUS ) + " " + Pipeline.getStatus().toLowerCase() + "!" + RETURN );
-		sb.append( getLabel( PIPELINE_RUNTIME ) + getRunTime( duration ) + RETURN );
-		sb.append( getLabel( PIPELINE_OUTPUT ) + "    " + Config.pipelinePath() + RETURN );
-		sb.append( getLabel( INPUT_CONFIG ) + "    " + Config.getConfigFilePath() + RETURN );
-		sb.append( getLabel( MASTER_CONFIG ) + "   " + MasterConfigUtil.getPath() + RETURN );
-		sb.append( getLabel( FINAL_META ) + "  " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
-
-		final String downloadCmd = downloadCmd();
-		if( downloadCmd != null ) {
-			sb.append( EXT_SPACER + RETURN );
-			sb.append( downloadCmd + RETURN );
-		}
-
+		String meta = Config.getString( null, MetaUtil.META_FILE_PATH );
+		if( meta == null ) meta = "N/A";
+		sb.append( getLabel( PIPELINE_NAME ) + "    " + Config.pipelineName() + RETURN );
+		sb.append( EXT_SPACER + RETURN );
+		sb.append( getLabel( RUNTIME_ENV ) + "      " + getRuntimeEnv() + RETURN );
+		sb.append( getLabel( PIPELINE_STATUS ) + "  " + Pipeline.getStatus() + RETURN );
+		sb.append( getLabel( PIPELINE_RUNTIME ) + " " + getRunTime( duration ) + RETURN );
+		sb.append( EXT_SPACER + RETURN );
+		sb.append( getLabel( PIPELINE_CONFIG ) + "  " + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( PIPELINE_INPUT ) + "   " + Config.getString( null, Constants.INPUT_DIRS ) + RETURN );
+		sb.append( getLabel( PIPELINE_META ) + " " + meta + RETURN );
+		sb.append( EXT_SPACER + RETURN );
+		sb.append( getLabel( PIPELINE_OUTPUT ) + "  " + Config.pipelinePath() + RETURN );
+		sb.append( getLabel( MASTER_CONFIG ) + "    " + MasterConfigUtil.getPath() + RETURN );
+		sb.append( getLabel( FINAL_META ) + "   " + ( MetaUtil.exists() ? MetaUtil.getPath(): "N/A" ) + RETURN );
+		if( downloadCmd() != null ) sb.append( EXT_SPACER + RETURN  + downloadCmd() + RETURN );
 		sb.append( EXT_SPACER + RETURN );
 		return sb.toString();
 	}
@@ -694,7 +695,7 @@ public class SummaryUtil {
 	private static String getHeading() {
 		final StringBuffer sb = new StringBuffer();
 		sb.append( RETURN + EXT_SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
-		sb.append( getLabel( INPUT_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( PIPELINE_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
 		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
 		sb.append( EXT_SPACER + RETURN );
@@ -762,13 +763,15 @@ public class SummaryUtil {
 	private static final String EXCEPTION_LABEL = "Exception:";
 	private static final String EXT_SPACER = getDashes( 154 );
 	private static final String FINAL_META = "Final Metadata";
-	private static final String INPUT_CONFIG = "Input Config";
+	private static final String PIPELINE_CONFIG = "Pipeline Config";
+	private static final String PIPELINE_INPUT = "Pipeline Input";
 	private static final String MASTER_CONFIG = "Master Config";
 	private static final String MODULE = "Module";
 	private static final String NUM_ATTEMPTS = "# Attempts";
 	private static final String NUM_MODULES = "# Modules";
 	private static final String PIPELINE_NAME = "Pipeline Name";
-	private static final String PIPELINE_OUTPUT = "Pipeline Dir";
+	private static final String PIPELINE_META ="Pipeline Metadata";
+	private static final String PIPELINE_OUTPUT = "Pipeline Output";
 	private static final String PIPELINE_RUNTIME = "Pipeline Runtime";
 	private static final String PIPELINE_STATUS = "Pipeline Status";
 	private static final String RETURN = Constants.RETURN;

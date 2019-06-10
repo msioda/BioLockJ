@@ -310,8 +310,9 @@ public class SeqUtil {
 		try {
 			for( final File file: files )
 				try {
-					SeqUtil.getSampleId( file.getName() );
-					seqFiles.add( file );
+					final String id = SeqUtil.getSampleId( file.getName() );
+					if( MetaUtil.exists() && !MetaUtil.getSampleIds().contains( id ) ) seqsWithoutMetaId.add( file );
+					else seqFiles.add( file );
 				} catch( final Exception ex ) {
 					if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) ) seqsWithoutMetaId.add( file );
 					else Log.warn( SeqUtil.class,
