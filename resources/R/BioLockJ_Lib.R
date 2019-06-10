@@ -418,7 +418,7 @@ statsFileSuffix <- function( parametric=NULL, adjusted=TRUE ) {
 taxaLevels <- function() {
 	levels = c()
 	errMsg = "No levels found"
-	logInfo( c( moduleScriptName(), " -->  calling taxaLevels(): Is R_internal.runHumann2 ? --> ", getProperty( "R_internal.runHumann2", FALSE ) )
+	logInfo( c( moduleScriptName(), " -->  calling taxaLevels(): Is R_internal.runHumann2 ? --> ", getProperty( "R_internal.runHumann2", FALSE ) ) )
 	if( getProperty( "R_internal.runHumann2", FALSE ) ) {
 		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) levels[length(levels) + 1] = "pAbund" 
 		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) levels[length(levels) + 1] = "pCovg" 
