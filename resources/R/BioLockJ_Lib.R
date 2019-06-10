@@ -37,7 +37,9 @@ doDebug <- function() {
 
 # Return vector of binary fields or an empty vector
 getBinaryFields <- function() {
-	return( getProperty("R_internal.binaryFields", vector( mode="character" ) ) )
+	vals = getProperty( "R_internal.binaryFields", vector( mode="character" )
+	if( length( vals ) == 1 && vals[1] == '' ) vals = vector( length=0 )
+	return( vals )
 }
 
 # Return countTable column indexes for the given colNames
@@ -191,12 +193,16 @@ getModuleDir <- function() {
 
 # Return vector of nominal fields or an empty vector
 getNominalFields <- function() {
-	return( getProperty( "R_internal.nominalFields", vector( mode="character" ) )
+	vals = getProperty( "R_internal.nominalFields", vector( mode="character" ) )
+	if( length( vals ) == 1 && vals[1] == '' ) vals = vector( length=0 )
+	return( vals )
 }
 
 # Return vector of numeric fields or an empty vector
 getNumericFields <- function() {
-	return( getProperty("R_internal.numericFields", vector( mode="character" ) ) )
+	vals = getProperty( "R_internal.numericFields", vector( mode="character" )
+	if( length( vals ) == 1 && vals[1] == '' ) vals = vector( length=0 )
+	return( vals )
 }
 
 # Get the temp dir for the current module, if it does not exist, create it.
