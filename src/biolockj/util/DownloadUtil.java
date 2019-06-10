@@ -22,8 +22,7 @@ import biolockj.module.ScriptModule;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
-import biolockj.module.report.taxa.AddMetadataToTaxaTables;
-import biolockj.module.report.taxa.NormalizeTaxaTables;
+import biolockj.module.report.taxa.*;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -62,7 +61,8 @@ public final class DownloadUtil {
 				} else if( module instanceof NormalizeTaxaTables ) {
 					downloadPaths.add( module.getOutputDir() );
 					downloadPaths.add( module.getTempDir() );
-				} else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables )
+				} else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
+								|| module instanceof BuildTaxaTables )
 					downloadPaths.add( module.getOutputDir() );
 			}
 
@@ -223,7 +223,7 @@ public final class DownloadUtil {
 
 				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module ||
 					module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables ||
-					module instanceof NormalizeTaxaTables;
+					module instanceof BuildTaxaTables || module instanceof NormalizeTaxaTables;
 
 				if( ModuleUtil.hasExecuted( module ) && downloadableType ) modules.add( module );
 			}
