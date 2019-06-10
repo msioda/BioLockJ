@@ -138,4 +138,4 @@ writeErrors <- function( msgs ) {
 
 moduleScript = NULL
 
-runModule()
+if( is.null( R_PATH ) ) runModule()
