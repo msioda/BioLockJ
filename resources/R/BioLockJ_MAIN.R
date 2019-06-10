@@ -122,7 +122,6 @@ runModule <- function()
 	print( paste( getModuleScript(), "status --> SUCCESS!" ) )
 }
 
-
 # Absolute path of the warning file - in the same directory as the MAIN script
 warningFile <- function() {
 	return( file.path( dirname( getModuleScript() ), ".warnings" ) )

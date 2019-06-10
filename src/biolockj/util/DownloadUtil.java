@@ -73,7 +73,12 @@ public final class DownloadUtil {
 				FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
 
 			downloadPaths.addAll( dirs );
-
+			
+			if( BioLockJUtil.pipelineInternalInputDir().isDirectory() &&
+				Config.requireSet( null, BioLockJUtil.INTERNAL_PIPELINE_INPUT_TYPES ).size() > 1 ||
+				!BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_SEQ_INPUT_TYPE ) ) 
+					downloadPaths.add( BioLockJUtil.pipelineInternalInputDir() );
+			
 			if( DockerUtil.inAwsEnv() ) downloadPaths.add( NextflowUtil.getNfReportDir() );
 
 			final String status =
@@ -135,20 +140,6 @@ public final class DownloadUtil {
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getDownloadListFile() ) );
 		try {
 			final File pipeRoot = new File( Config.pipelinePath() );
-
-			if( BioLockJUtil.pipelineInternalInputDir().isDirectory() &&
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) ||
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) ||
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
-				for( final File file: BioLockJUtil.getPipelineInputFiles() )
-				if( !SeqUtil.isSeqFile( file ) ) {
-				downFiles.add( file );
-				final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
-				writer.write( relPath + RETURN );
-				}
-
 			Log.info( DownloadUtil.class, "Building download list: " + getDownloadListFile().getAbsolutePath() );
 			for( final File file: files ) {
 				Log.debug( DownloadUtil.class, "Candidate download path: " + file.getAbsolutePath() );
