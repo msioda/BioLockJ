@@ -426,7 +426,7 @@ taxaLevels <- function() {
 		errMsg = "No HumanN2 Pathway or Gene Family reports found"
 	} else levels = getProperty( "report.taxonomyLevels" )
 
-	logInfo( c( "Found levels --> ", levels )
+	logInfo( c( "Found levels --> ", levels ) )
 	if( length( levels ) == 0 ) writeErrors( c( errMsg ) )
 	return( levels )
 }
