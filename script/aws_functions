@@ -9,17 +9,18 @@ alias tailnf="tail -1000f /.nextflow.log"
 
 # Build Cloud-formation Stack
 build_stack() {
-	numSecs=0 && stackYml="file://${BLJ}/resources/aws/StackEFS.yml" 
-	[ $(is_stack_complete) == "true" ] && aws_log "Reusing configured CREATE_COMPLETE AWS Stack: $(aws_stack)" && return 
-	aws_log "Please wait while building AWS cloud formation stack: $(aws_stack)..." 
+	numSecs=0 && stackYml="file://${BLJ}/resources/aws/StackEFS.yml" && stack="$(get_blj_prop aws.stack)"
+	[ $(is_stack_complete) == "true" ] && aws_log "Reusing configured CREATE_COMPLETE AWS Stack: ${stack}" && return 
+	aws_log "Please wait while building AWS cloud formation stack: ${stack}..." 
 	myIP=$(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
 	ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
 	params="ParameterKey=NetworkAccessIP,ParameterValue=${myIP}/32"
 	[ ${ec2SpotPer} -gt 0 ] && params="${params} ParameterKey=SpotBidPercentage,ParameterValue=${ec2SpotPer}"
-	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name $(aws_stack) --capabilities CAPABILITY_IAM --parameters ${params}"
-	aws cloudformation create-stack --template-body "${stackYml}" --stack-name "$(aws_stack)" --capabilities CAPABILITY_IAM --parameters ${params}
+	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name ${stack} --capabilities CAPABILITY_IAM --parameters ${params}"
+	aws cloudformation create-stack --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
 	while [ $(is_stack_complete) != "true" ]; do printf "." && sleep 5s && numSecs=$((numSecs+5)); done
-	aws_log "New AWS Stack: $(aws_stack) (created in in ${numSecs} seconds).  EC2 instances generated on this stack will only be accessible from your current IP address: ${myIP}"
+	set_blj_prop "aws.stack" "${stack}"
+	aws_log "New AWS Stack: ${stack} (created in in ${numSecs} seconds).  EC2 instances generated on this stack will only be accessible from your current IP address: ${myIP}"
 }
 
 # Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
@@ -36,14 +37,14 @@ build_s3() {
 	fi
 	s3items=$(aws s3api list-objects --bucket $awsS3 --query "Contents[].Key")
 	[ "${s3items/nextflow}" == "${s3items}" ] && aws s3api put-object --bucket "${awsS3}" --key nextflow/
-	echo "${awsS3}"
+	set_blj_prop "aws.s3" "${awsS3}" && echo "${awsS3}"
 }
 
-# Build key pair + save to ~/.aws/$(aws_stack).pem file with security requirement (perms 400) 
+# Build key pair + save to $(key_file) file with security requirement (perms 400) 
 cache_key_pair() {
 	[ -f "$(key_file)" ] && aws_log "Found existing: $(key_file)" && return
 	keys=$(aws ec2 describe-key-pairs) && [ "${keys/$keyPair}" == "$keys" ]
-	aws ec2 create-key-pair --key-name "$(aws_stack)" --query "KeyMaterial" > "$(key_file)" 
+	aws ec2 create-key-pair --key-name "$(get_blj_prop aws.stack)" --query "KeyMaterial" > "$(key_file)" 
 	chmod 400 "$(key_file)" && aws_log "Security keys created --> private key: $(key_file)"
 }
 
@@ -67,8 +68,9 @@ generate_name() {
 
 # Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
 get_ami() {
+	awsAmi="$(get_blj_prop aws.ami)"
 	[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] &&
-		awsAmi=$(aws ec2 describe-images --region $awsRegion --owner amazon \
+		awsAmi=$(aws ec2 describe-images --region $(get_blj_prop aws.region) --owner amazon \
 			--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
 			--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
 	[ ${#awsAmi} -gt 0 ] && [ $awsAmi != "None" ] &&
@@ -85,9 +87,9 @@ get_s3_buckets() {
 # Check status of Cloud Formation Stack
 is_stack_complete() {
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
-	[ ${#stacks} -eq 0 ] || [ "$stacks" == "None" ] || [ $# -eq 0 ] && echo "false" && return
+	[ ${#stacks} -eq 0 ] || [ "${stacks}" == "None" ] || [ $# -eq 0 ] && echo "false" && return
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
-	[ ${#stacks} -gt 0 ] && [ "$stacks" != "None" ] && [ "${stacks/$(aws_stack)}" != "$stacks"  ] && echo "true" && return
+	[ ${#stacks} -gt 0 ] && [ "${stacks}" != "None" ] && [ "${stacks/$(get_blj_prop aws.stack)}" != "${stacks}"  ] && echo "true" && return
 	echo "false"
 }
 
@@ -98,32 +100,38 @@ run_aws() {
 	aws_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "${1}" && deploy_cloud_formation && launch_ec2_head_node
 }
 
-# Create new stack name if $(aws_stack) is undefined in AWS Config
+# This method will  build AWS environment and launch BioLockJ GUI on AWS 
+run_aws_gui() {
+	aws_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "gui" && deploy_cloud_formation && echo "TBD - add code to launch GUI from head node"
+}
+
+# Create new stack name if $(get_blj_prop aws.stack) is undefined in AWS Config
 set_stack_name() {
-	if [ "$(aws_stack)" != "" ]; then
-		enabledStacks=$(aws_stacks CREATE_COMPLETE)
-		[ "${enabledStacks/$(aws_stack)}" == "${enabledStacks}" ] && exit_script "Using Pipeline Config \"aws.stack=$(aws_stack)\""
-		aws_log "Pipeline Config \"aws.stack=$(aws_stack)\" status=CREATE_COMPLETE" && return
+	stack="$(get_blj_prop aws.stack)" 
+	if [ ${#stack} -gt 0 ]; then
+		enabledStacks=$(aws_stacks CREATE_COMPLETE) 
+		[ "${enabledStacks/$stack}" == "${enabledStacks}" ] && exit_script "Using Pipeline Config \"aws.stack=${stack}\""
+		aws_log "Pipeline Config \"aws.stack=${stack}\" status=CREATE_COMPLETE" && return
 	fi
 	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-	set_blj_prop aws.stack $(generate_name bljStack "$stacks") 
-	aws_log "Generated aws.stack=$(aws_stack)" 
+	set_blj_prop aws.stack $(generate_name bljStack "${stack}") 
+	aws_log "Generated aws.stack=${stack}" 
 }
 
 # Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.
 # If aws.stack was undefined, create a new stack.
 verify_stack() {
-	aws_log "Check status of AWS Stack: \"$(aws_stack)\""
+	stack="$(get_blj_prop aws.stack)" && aws_log "Check status of AWS Stack: \"${stack}\""
 	allStacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
 	enabledStacks=$(aws_stacks CREATE_COMPLETE) && createInProgStacks=$(aws_stacks CREATE_IN_PROGRESS)
-	if [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$(aws_stack)}" != "$enabledStacks" ]; then
-		aws_log "Configured AWS Stack: $(aws_stack) --> status=CREATE_COMPLETE"
-	elif [ ${#createInProgStacks} -gt 0 ] && [ "${createInProgStacks/$(aws_stack)}" != "$createInProgStacks" ]; then
+	if [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$stack}" != "${enabledStacks}" ]; then
+		aws_log "Configured AWS Stack: ${stack} --> status=CREATE_COMPLETE"
+	elif [ ${#createInProgStacks} -gt 0 ] && [ "${createInProgStacks/$stack}" != "${createInProgStacks}" ]; then
 		sleep 30 && verify_stack
-	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$(aws_stack)}" != "$allStacks" ]; then
-		status=$(aws cloudformation describe-stacks --stack-name $(aws_stack) --query "Stacks[*].StackStatus")
-		exit_script "Error [ aws_functions.verify_stack() ]:  Configured AWS Stack [ $(aws_stack) ] exists but is disabled --> status=$status"
-	else
+	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$stack}" != "${allStacks}" ]; then
+		status=$(aws cloudformation describe-stacks --stack-name "${stack}" --query "Stacks[*].StackStatus")
+		exit_script "Error [ aws_functions.verify_stack() ]:  Configured AWS Stack \"${stack}\" exists but is disabled --> status=$status"
+	else 
 		build_stack
 	fi
 }

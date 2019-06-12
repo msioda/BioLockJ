@@ -115,17 +115,14 @@ run_docker() {
 # Param 1 - Array of dockblj script args
 scan_script_and_env_args() {
 	runGui=$(arg_exists "$@" g)
-	runAws=$(arg_exists "$@" a)
+	runAws=$(arg_exists "$@" -aws)
 	blj=$(arg_exists "$@" blj)
 	blj_sup=$(arg_exists "$@" blj_sup)
 	config=$(named_arg "$@" c)
 	newPass=$(named_arg "$@" p)
 	restartDir=$(named_arg "$@" r)
-	
 	! $(null_var $blj) && blj="${BLJ}"
-	! $(null_var $blj_sup) && blj="${BLJ_SUP}"
-	
-	echo "Look for property values in the Config: $config"
+	! $(null_var $blj_sup) && blj_sup="${BLJ_SUP}"
 	if $(null_var $runGui); then
 		inputDir="$(get_property $config input.dirPaths)"
 		metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"
@@ -135,8 +132,7 @@ scan_script_and_env_args() {
 
 # Start the local browswer
 startBrowser() {
-	sleep 2
-	# See also: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
+	sleep 2 # See also: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
 	if which xdg-open > /dev/null; then
 		xdg-open http://localhost:${GUI_PORT}
 	elif which gnome-open > /dev/null; then

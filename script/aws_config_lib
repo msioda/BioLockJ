@@ -1,8 +1,6 @@
 #!/bin/bash
 ##############################################################
-##                                                          ##
-##  This script is used for AWS Config functions            ##
-##                                                          ##
+##  This script contains functions to work with AWS Config  ##
 ##############################################################
 . "${DOCKER_LIB}"
 
@@ -55,11 +53,6 @@ aws_report_config() {
 	aws_log "---------------------------------------------------"
 }
 
-# Return configured AWS Stack
-aws_stack() {
-	echo "$(get_blj_prop aws.stack)" 
-}
-
 # Lists stacks available on AWS. If status arg provided, only return stacks with the given status.
 # Param 1 (optional) Stack status
 aws_stacks() {
@@ -73,15 +66,9 @@ aws_stacks() {
 
 # Get the s3 bucket names in the user region
 aws_s3_buckets() {
-	myBuckets=$(aws s3api list-buckets --region $(get_blj_prop aws.region) --query "Buckets[].Name")
-	[ ${#myBuckets} -eq 0 ] || [ "$myBuckets" == "None" ] && return
+	myBuckets=$(aws s3api list-buckets --region $(get_blj_prop aws.region $(aws configure get region)) --query "Buckets[].Name")
+	[ ${#myBuckets} -eq 0 ] || [ "${myBuckets}" == "None" ] && return
 	echo "${myBuckets}"
-}
-
-# Force bash variable expansion
-# Param 1 - variable
-expand() {
-	echo $(eval echo $1)
 }
 
 # Get AWS-Access-ID from local file sytem (requires user has logged on to client or file is staged to $HOME)
@@ -115,29 +102,29 @@ get_config_name() {
 	echo $(echo $(basename $(get_config local)) | cut -f1 -d".")
 }
 
-# Init AWS Config properties file [ ${AWS_CONF} ] with pipeline Config, AWS config, and standard defaults
+# Init AWS Config properties file ${AWS_CONF} with pipeline Config, AWS config, and standard defaults
 # Check BLJ pipeline Config files + all nested default Config files
 # Add docker.properties if not already in list of nested Config files
 # Param 1 - Pipeline Config file path
 init_aws_config() {
 	[ ! -f "${HOME}/.aws/config" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/config"
 	[ ! -f "${HOME}/.aws/credentials" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/credentials"
-	aws_archive "${1}" && aws_log "Copy AWS properties from Pipeline Config ${1} into AWS Config --> ${AWS_CONF}"
-	set_pipeline_conig_props "${STANDARD_CONFIG}" && set_pipeline_conig_props "${DOCKER_CONFIG}"
-	defaultConfig="${STANDARD_CONFIG}, ${DOCKER_CONFIG}" && propFile="$(get_property $1 pipeline.defaultProps)"
-	while [ -f "${propFile}" ] && [ "${defaultConfig}" == "${defaultConfig/$propFile}" ]; do
-		defaultConfig="${defaultConfig}, ${propFile}" && set_pipeline_conig_props "${propFile}"
-		propFile="$(get_property $propFile pipeline.defaultProps)"
+	[ "${1:0:1}" == "g" ] && return
+	aws_archive "${1}" && set_pipeline_conig_props "${STANDARD_CONFIG}" && set_pipeline_conig_props "${DOCKER_CONFIG}"
+	defConfig='' && propFile="$(get_property $1 pipeline.defaultProps)"
+	while [ -f "${propFile}" ] && [ "${propFile}" != "${STANDARD_CONFIG}" ] && [ "${propFile}" != "${DOCKER_CONFIG}" ] && [ "${defConfig}" == "${defConfig/$propFile}" ]; do
+		[ ${#defConfig} -gt 0 ] && defConfig=", ${defConfig}"
+		defConfig="${propFile}${defConfig}" && set_pipeline_conig_props "${propFile}" && propFile="$(get_property $propFile pipeline.defaultProps)"
 	done
 	set_pipeline_conig_props "${1}" && verify_config
-	set_blj_prop "internal.config" "${1}" && set_blj_prop "internal.defaultConfig" "${defaultConfig}"
+	set_blj_prop "internal.config" "${1}" && [ ${#defConfig} -gt 0 ] && set_blj_prop "internal.defaultConfig" "${defConfig}"
 	aws_log "MASTER AWS Config properties saved to --> ${AWS_CONF}" && sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}"
 }
 
 # Get the ec2 key file for the ec2 head node
 key_file() {
-	[ "$(aws_stack)" == "" ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"aws.stack\" is undefined!"
-	echo ~/.aws/$(aws_stack).pem
+	[ "$(get_blj_prop aws.stack)" == "" ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"aws.stack\" is undefined!"
+	echo "${HOME}/.aws/$(get_blj_prop aws.stack).pem"
 }
 
 # Get local Nextflow <base> config file
@@ -165,7 +152,7 @@ set_pipeline_conig_props() {
 	aws_log "Update ${AWS_CONF} with AWS properties found in Pipeline Config ${1}"
 	while read line; do
 		line="$(echo ${line} | xargs)" && [ ${#line} -eq 0 ] || [ "${line:0:1}" == "#" ] && continue
-		IFS=$'=' && tokens=( ${line} ) && reset_IFS && set_blj_prop "${tokens[0]}" "$(expand ${tokens[1]})"
+		IFS=$'=' && tokens=( ${line} ) && reset_IFS && set_blj_prop "${tokens[0]}" "$(eval echo ${tokens[1]})"
 	done < "${1}"
 	sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}" && aws_report_config
 }

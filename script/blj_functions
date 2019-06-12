@@ -170,7 +170,7 @@ get_default_profile() {
 # Param 1 - Config file
 # Param 2 - Prop name
 get_property() {
-	prop="$(cat $1 | grep ^$2=)" && echo "${prop/$2=}"
+	prop="$(cat $1 | grep ^$2=)" && echo "$(eval echo ${prop/$2=})"
 }
 
 # Exit script after sleeping 10 seconds because in some cases (Docker bash shells) exit command will close the terminal window.
@@ -178,9 +178,8 @@ get_property() {
 # Param 1 Exit message
 # Param 2 (optional) Numeric status code
 exit_script() {
-	status=$2
-	[ ${#status} -eq 0 ] && status=1
-	echo "$1" && sleep 5 && exit $2
+	echo "${1}" && sleep 5 && [ ${#2} -gt 0 ] && exit ${2}
+	exit 1
 }
 
 # Check if parameter contains alpha-numeric chars [a-zA-Z0-9]
@@ -193,10 +192,8 @@ is_empty() {
 # Return TRUE if the directory path given ends with a valid module name
 # Example: 01_Demultiplexer
 is_module_dir() {
-	modName=$(basename $1)
-	modNum=0
+	modNum=0 && modName=$(basename $1)
 	[ ${#modName} -gt 3 ] && modNum=$( echo ${modName:0:2} | egrep "^[0-9{2}]+$" )
-	
 	[ -d "$1" ] && [ ${modName:2:1} == "_" ] && [ $modNum -gt 0 ]
 }
 
