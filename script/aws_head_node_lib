@@ -119,7 +119,7 @@ init_nextflow_config() {
 	echo "// Nextflow properties inherited by BioLockJ $(biolockj -v) pipeline main.nf" > "${NF}"
 	echo "" >> "${NF}" && echo "executor {" >> "${NF}" && echo "    name = 'awsbatch'" >> "${NF}"
     echo "    executor.awscli = '${EC2_HOME}/miniconda/bin/aws'" >> "${NF}" && echo "}" >> "${NF}"
-    echo "" >> "${NF}" && echo "aws {" >> "${NF}" && echo "    region = '$(get_blj_prop aws.region)'" >> "${NF}"
+    echo "" >> "${NF}" && echo "aws {" >> "${NF}" && echo "    region = '$(aws_region)'" >> "${NF}"
     echo "}" >> "${NF}" && echo "" >> "${NF}" && echo "process {" >> "${NF}"
 	echo "    queue = '${LPQ}'" >> "${NF}" && echo "    withLabel: 'DEMAND' {" >> "${NF}"
 	echo "        queue = '${HPQ}'" >> "${NF}" && echo "    }" >> "${NF}"
@@ -132,7 +132,7 @@ launch_ec2_head_node() {
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
 	stage_pipeline && aws_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &  ]"
-	exe_remote_cmd "nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &"
+	exe_remote_cmd "nohup bash ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &"
 	aws_log "Exectue CMD [  connect_head --> type \"blj_go\" to navigate to the EC2 pipeline output directory  ]"
 	connect_head
 }

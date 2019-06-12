@@ -165,7 +165,7 @@ verify_inputs() {
 	! $(null_var $restartDir) && verify_dir $restartDir
 	! $(null_var $config) && verify_file $config
 	! $(null_var $metaPath) && verify_dir $metaPath
-	! $(null_var $primerPath) && verify_file $primerPath	
+	! $(null_var $primerPath) && verify_dir $primerPath	
 }
 
 printf "\n ---------> Execute CMD [  dockblj $(echo ${@})  ]\n\n"

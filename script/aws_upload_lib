@@ -71,7 +71,7 @@ stage_aws_and_nf_config_to_efs() {
 	aws_log "Staging AWS/Nextflow Config on new EC2 Head-Node" && AWS_STAGE=~/.aws/stage 
 	[ ! -d "${AWS_STAGE}" ] && mkdir "${AWS_STAGE}"
 	echo "[default]" > "${AWS_STAGE}/config"
-	echo "region = $(get_blj_prop aws.region)" >> "${AWS_STAGE}/config"
+	echo "region = $(aws_region)" >> "${AWS_STAGE}/config"
 	echo "output = text" >> "${AWS_STAGE}/config"
 	echo "Created file:  ${AWS_STAGE}/config"
 	cat "${AWS_STAGE}/config" 
@@ -98,8 +98,10 @@ stage_pipeline() {
 
 # The method creates a new version of the pipeline Config files by replacing 
 stage_pipeline_config_to_efs() {
-	aws_log "Uploading pipeline Config files to EFS: $(get_blj_prop internal.config)" 
-	upload_to_efs "$(get_blj_prop internal.config)" "${BLJ_CONFIG}" 
+	aws_log "Uploading pipeline Config files to EFS: $(get_config ec2)" 
+	upload_to_efs $(get_blj_prop internal.config) $BLJ_CONFIG
+	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) internal.config $(get_config ec2)"
+	
 }
 
 # Stage custom database files for pipeline onto EFS volume
@@ -132,7 +134,7 @@ stage_pipeline_dbs_to_efs() {
 		fi
 	fi
 	
-	kdDB="$(get_blj_prop kneaddata.dbs)" && kDB="$(get_blj_prop kraken.db)" && k2DB="$(get_blj_prop kraken2.db)" && rdpDb="$(get_blj_prop kraken2.db)"
+	kdDB="$(get_blj_prop kneaddata.dbs)" && kDB="$(get_blj_prop kraken.db)" && k2DB="$(get_blj_prop kraken2.db)" && rdpDb="$(get_blj_prop rdp.db)"
 	[ -d "${kdDB}" ] && aws_log "Uploading KneadData DBs: ${kdDB}" && upload_to_efs_and_update_config "kneaddata.dbs" "${kdDB}" "${BLJ_DB}"
 	[ -d "${kDB}" ] && aws_log "Uploading Kraken DB: ${kDB}" && upload_to_efs_and_update_config "kraken.db" "${kDB}" "${BLJ_DB}"
 	[ -d "${k2DB}" ] && aws_log "Uploading Kraken2 DB: ${k2DB}" && upload_to_efs_and_update_config "kraken2.db" "${k2DB}" "${BLJ_DB}"

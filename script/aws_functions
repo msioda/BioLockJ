@@ -27,7 +27,7 @@ build_stack() {
 build_s3() {
 	awsS3=$(get_blj_prop aws.s3)
 	if [ ${#awsS3} -gt 0 ]; then
-		awsS3=$(aws s3api list-buckets --region $(get_blj_prop aws.region) --query "Buckets[?Name=='$awsS3']|[*].Name")
+		awsS3=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$awsS3']|[*].Name")
 		[ ${#awsS3} -eq 0 ] || [ "${awsS3}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Configured S3 bucket [ aws.s3=${awsS3} ] not found"
 		aws_log "Found existing S3 Bucket ${awsS3}"
 	else
@@ -70,7 +70,7 @@ generate_name() {
 get_ami() {
 	awsAmi="$(get_blj_prop aws.ami)"
 	[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] &&
-		awsAmi=$(aws ec2 describe-images --region $(get_blj_prop aws.region) --owner amazon \
+		awsAmi=$(aws ec2 describe-images --region $(aws_region) --owner amazon \
 			--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
 			--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
 	[ ${#awsAmi} -gt 0 ] && [ $awsAmi != "None" ] &&

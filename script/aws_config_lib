@@ -15,7 +15,7 @@ aws_archive() {
 	aws_log "Archive AWS properties, key file, and start script to ~/.aws/history"
 	[ ! -d ~/.aws/history ] && mkdir ~/.aws/history
 	[ -f "${AWS_CONF}" ] && mv "${AWS_CONF}" ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
-	echo "# MASTER Config for ${1}" > "${AWS_CONF}" && chmod 770 "${AWS_CONF}" 
+	echo "# AWS + Pipeline Config Cache to launch ${1}" > "${AWS_CONF}" && chmod 770 "${AWS_CONF}" 
 }
 
 # Get an AWS property ${1} from local AWS Config file ${2} under the aws.profile
@@ -42,6 +42,9 @@ aws_profile() {
 	echo "$(get_blj_prop aws.profile default)"
 }
 
+aws_region() {
+	echo "$(get_blj_prop aws.region $(aws configure get region))"
+}
 
 # Print AWS Config report
 aws_report_config() {
@@ -66,7 +69,7 @@ aws_stacks() {
 
 # Get the s3 bucket names in the user region
 aws_s3_buckets() {
-	myBuckets=$(aws s3api list-buckets --region $(get_blj_prop aws.region $(aws configure get region)) --query "Buckets[].Name")
+	myBuckets=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[].Name")
 	[ ${#myBuckets} -eq 0 ] || [ "${myBuckets}" == "None" ] && return
 	echo "${myBuckets}"
 }
@@ -162,7 +165,7 @@ verify_config() {
 	err="Error [ aws_config_lib.verify_config() ]: Unable to find required AWS Config: ${AWS_CONF}"
 	err2="Please verify AWS client configuration details from command line and try again."
 	aws_log "Verfiying rquired AWS Config configuration..."  
-	quiet=$(get_blj_prop aws.region $(aws configure get region))
+	quiet=$(aws_region)
 	quiet=$(get_blj_prop aws.ec2InstanceType t2.micro)
 	quiet=$(get_blj_prop docker.imgVersion latest)
 	quiet=$(get_blj_prop docker.user biolockj)
