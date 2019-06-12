@@ -14,7 +14,8 @@ package biolockj;
 /**
  * Single Java class to hold shared constant values referenced my multiple classes.
  */
-public class Constants {
+public class Constants
+{
 
 	/**
 	 * Captures the application start time
@@ -679,6 +680,11 @@ public class Constants {
 	 * Sets # of minutes before worker scripts times out.
 	 */
 	public static final String SCRIPT_TIMEOUT = "script.timeout";
+
+	/**
+	 * {@link biolockj.Config} property {@value #SET_SEED} set the seed for a random process. Must be positive integer.
+	 */
+	public static final String SET_SEED = "pipeline.setSeed";
 
 	/**
 	 * BioLockJ shell script file extension: {@value #SH_EXT}
