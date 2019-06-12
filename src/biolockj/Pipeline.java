@@ -69,16 +69,16 @@ public class Pipeline {
 
 	/**
 	 * Return {@value Constants#SCRIPT_SUCCESS} if no pipelineException has been thrown, otherwise return
-	 * {@value Constants#SCRIPT_FAILURES}
+	 * FAILED
 	 *
-	 * @return pipeline status (success or failed)
+	 * @return pipeline status (SUCCESS or FAILED)
 	 */
 	public static String getStatus() {
 		if( pipelineException != null || getModules() == null || getModules().isEmpty() )
-			return Constants.SCRIPT_FAILURES;
+			return "FAILED";
 		for( final BioModule module: getModules() )
-			if( !ModuleUtil.isComplete( module ) && !( module instanceof Email ) ) return Constants.SCRIPT_FAILURES;
-		return Constants.SCRIPT_SUCCESS;
+			if( !ModuleUtil.isComplete( module ) && !( module instanceof Email ) ) return "FAILED";
+		return Constants.SCRIPT_SUCCESS.toUpperCase();
 	}
 
 	/**
@@ -240,7 +240,6 @@ public class Pipeline {
 	 */
 	protected static boolean poll( final ScriptModule module ) throws Exception {
 		final Collection<File> scriptFiles = getWorkerScripts( module );
-
 		final int numScripts = scriptFiles.size();
 		int numSuccess = 0;
 		int numStarted = 0;

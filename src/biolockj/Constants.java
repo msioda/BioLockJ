@@ -17,6 +17,12 @@ package biolockj;
 public class Constants {
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #REPORT_UNCLASSIFIED_TAXA}<br>
+	 * Set the max number of minutes to allow for S3 transfers to complete.
+	 */
+	public static final String REPORT_UNCLASSIFIED_TAXA = "report.unclassifiedTaxa";
+	
+	/**
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();

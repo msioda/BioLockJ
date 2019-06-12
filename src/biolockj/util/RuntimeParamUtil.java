@@ -139,6 +139,15 @@ public class RuntimeParamUtil {
 	public static String getDockerHostMetaDir() {
 		return params.get( META_DIR );
 	}
+	
+	/**
+	 * Runtime property getter for {@value #PRIMER_DIR}
+	 * 
+	 * @return Primer file directory path
+	 */
+	public static String getDockerHostPrimerDir() {
+		return params.get( PRIMER_DIR );
+	}
 
 	/**
 	 * Return host on which Docker container is running
@@ -518,6 +527,11 @@ public class RuntimeParamUtil {
 	 * Metadata file directory path runtime parameter switch: {@value #META_DIR}
 	 */
 	protected static final String META_DIR = "-m";
+	
+	/**
+	 * Primer file directory path runtime parameter switch: {@value #PRIMER_DIR}
+	 */
+	protected static final String PRIMER_DIR = "-t";
 
 	/**
 	 * Change password runtime parameter switch: {@value #PASSWORD}
@@ -538,7 +552,7 @@ public class RuntimeParamUtil {
 	private static final List<String> BLJ_CONTROLLER_ONLY_ARGS =
 		Arrays.asList( BLJ_PROJ_DIR, CONFIG_FILE, HOME_DIR, PASSWORD, RESTART_DIR, HOSTNAME );
 	private static final List<String> DIR_ARGS = Arrays.asList( BLJ_PROJ_DIR, HOME_DIR, HOST_BLJ_DIR, HOST_BLJ_PROJ_DIR,
-		HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR, INPUT_DIR, META_DIR, RESTART_DIR );
+		HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR, INPUT_DIR, META_DIR, PRIMER_DIR, RESTART_DIR );
 	private static final String DIRECT_PIPELINE_DIR = "--pipeline-dir";
 	private static final List<String> extraParams = new ArrayList<>();
 	private static final List<String> LONG_ARG_NAMES = Arrays.asList( DIRECT_PIPELINE_DIR, HOST_BLJ_DIR,

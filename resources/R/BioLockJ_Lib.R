@@ -105,27 +105,18 @@ getConfig <- function( name, defaultVal=NULL ) {
 	}
 	
 	prop = propCache[[ name ]]
+	if( is.null( prop ) ) return( defaultVal )
+	if( str_trim( prop ) == "Y" ) return( TRUE )
+
+	if( str_trim( prop ) == "N" ) return( FALSE )
 	
-	if( is.null( prop ) ) {
-		return( defaultVal )
-	}
-	
-	if( str_trim( prop ) == "Y" ) {
-		return( TRUE )
-	}
-	if( str_trim( prop ) == "N" ) {
-		return( FALSE )
-	}
 	if( !is.na( as.numeric( prop ) ) && grepl( ",", prop ) ) {
 		return( as.numeric( unlist( strsplit( prop, "," ) ) ) )
 	}
 	if( is.character( prop ) && grepl( ",", prop ) ) {
 		return( str_trim( unlist( strsplit( prop, "," ) ) ) )
 	}
-	if( !is.na( as.numeric( prop ) ) ) {
-		return( as.numeric( prop ) )
-	}
-	
+	if( !is.na( as.numeric( prop ) ) ) return( as.numeric( prop ) )
 	return( str_trim( prop ) )
 }
 
@@ -428,22 +419,14 @@ taxaLevels <- function() {
 	levels = c()
 	errMsg = "No levels found"
 	if( getProperty( "R_internal.runHumann2", FALSE ) ) {
-		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
-			levels[length(levels) + 1] = "pAbund" 
-		}
-		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) {
-			levels[length(levels) + 1] = "pCovg" 
-		}
-		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
-			levels[length(levels) + 1] = "geneFam" 
-		}
+		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) levels[length(levels) + 1] = "pAbund" 
+		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) levels[length(levels) + 1] = "pCovg" 
+		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) levels[length(levels) + 1] = "geneFam" 
 		errMsg = "No HumanN2 Pathway or Gene Family reports found"
-	} else {
-		levels = getProperty( "report.taxonomyLevels" )
-	}
-	if( length( levels ) == 0 ) {
-		writeErrors( c( errMsg ) )
-	}
+	} else levels = getProperty( "report.taxonomyLevels" )
+
+	logInfo( c( "Found levels --> ", levels ) )
+	if( length( levels ) == 0 ) writeErrors( c( errMsg ) )
 	return( levels )
 }
 

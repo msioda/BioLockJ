@@ -22,8 +22,7 @@ import biolockj.module.ScriptModule;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
-import biolockj.module.report.taxa.AddMetadataToTaxaTables;
-import biolockj.module.report.taxa.NormalizeTaxaTables;
+import biolockj.module.report.taxa.*;
 
 /**
  * This utility is used to validate the metadata to help ensure the format is valid R script input.
@@ -62,7 +61,8 @@ public final class DownloadUtil {
 				} else if( module instanceof NormalizeTaxaTables ) {
 					downloadPaths.add( module.getOutputDir() );
 					downloadPaths.add( module.getTempDir() );
-				} else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables )
+				} else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
+								|| module instanceof BuildTaxaTables )
 					downloadPaths.add( module.getOutputDir() );
 			}
 
@@ -73,7 +73,12 @@ public final class DownloadUtil {
 				FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
 
 			downloadPaths.addAll( dirs );
-
+			
+			if( BioLockJUtil.pipelineInternalInputDir().isDirectory() &&
+				Config.requireSet( null, BioLockJUtil.INTERNAL_PIPELINE_INPUT_TYPES ).size() > 1 ||
+				!BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_SEQ_INPUT_TYPE ) ) 
+					downloadPaths.add( BioLockJUtil.pipelineInternalInputDir() );
+			
 			if( DockerUtil.inAwsEnv() ) downloadPaths.add( NextflowUtil.getNfReportDir() );
 
 			final String status =
@@ -135,20 +140,6 @@ public final class DownloadUtil {
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getDownloadListFile() ) );
 		try {
 			final File pipeRoot = new File( Config.pipelinePath() );
-
-			if( BioLockJUtil.pipelineInternalInputDir().isDirectory() &&
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_R_INPUT_TYPE ) ||
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) ||
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
-				BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_STATS_TABLE_INPUT_TYPE ) )
-				for( final File file: BioLockJUtil.getPipelineInputFiles() )
-				if( !SeqUtil.isSeqFile( file ) ) {
-				downFiles.add( file );
-				final String relPath = pipeRoot.toURI().relativize( file.toURI() ).toString();
-				writer.write( relPath + RETURN );
-				}
-
 			Log.info( DownloadUtil.class, "Building download list: " + getDownloadListFile().getAbsolutePath() );
 			for( final File file: files ) {
 				Log.debug( DownloadUtil.class, "Candidate download path: " + file.getAbsolutePath() );
@@ -223,7 +214,7 @@ public final class DownloadUtil {
 
 				final boolean downloadableType = module instanceof JsonReport || module instanceof R_Module ||
 					module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables ||
-					module instanceof NormalizeTaxaTables;
+					module instanceof BuildTaxaTables || module instanceof NormalizeTaxaTables;
 
 				if( ModuleUtil.hasExecuted( module ) && downloadableType ) modules.add( module );
 			}

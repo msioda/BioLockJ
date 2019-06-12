@@ -292,15 +292,8 @@ public class DockerUtil {
 			" -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_PIPELINE_DIR + ":delegated";
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + DOCKER_CONFIG_DIR + ":ro";
 
-		if( module instanceof TrimPrimers ) {
-			final File primers =
-				new File( Config.requireString( module, Constants.INPUT_TRIM_SEQ_FILE ) ).getParentFile();
-			Log.info( DockerUtil.class, "Map Docker volume for TrimPrimers: " + primers.getAbsolutePath() );
-			dockerVolumes += " -v " + getVolumePath( primers.getAbsolutePath() ) + ":" + DOCKER_PRIMER_DIR + ":ro";
-		}
-
-		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
-			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + DOCKER_META_DIR + ":ro";
+		if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPrimerDir() + ":" + DOCKER_PRIMER_DIR + ":ro";
 
 		if( RuntimeParamUtil.getDockerHostBLJ() != null ) dockerVolumes +=
 			" -v " + RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + ":" + CONTAINER_BLJ_DIR + ":ro";
@@ -314,17 +307,17 @@ public class DockerUtil {
 		return dockerVolumes;
 	}
 
-	private static String getVolumePath( final String path ) {
-		Log.info( DockerUtil.class, "Map Docker volume getVolumePath( " + path + " )" );
-		String newPath = path;
-		if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) )
-			newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() +
-				path.substring( CONTAINER_BLJ_SUP_DIR.length() );
-		if( path.startsWith( CONTAINER_BLJ_DIR ) ) newPath =
-			RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + path.substring( CONTAINER_BLJ_DIR.length() );
-		Log.info( DockerUtil.class, "Map Docker volume newPath -----> ( " + newPath + " )" );
-		return newPath;
-	}
+//	private static String getVolumePath( final String path ) {
+//		Log.info( DockerUtil.class, "Map Docker volume getVolumePath( " + path + " )" );
+//		String newPath = path;
+//		if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) )
+//			newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() +
+//				path.substring( CONTAINER_BLJ_SUP_DIR.length() );
+//		if( path.startsWith( CONTAINER_BLJ_DIR ) ) newPath =
+//			RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + path.substring( CONTAINER_BLJ_DIR.length() );
+//		Log.info( DockerUtil.class, "Map Docker volume newPath -----> ( " + newPath + " )" );
+//		return newPath;
+//	}
 
 	private static final String rmFlag( final BioModule module ) throws Exception {
 		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "": DOCK_RM_FLAG;

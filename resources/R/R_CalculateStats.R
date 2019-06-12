@@ -151,11 +151,11 @@ getP_AdjustLen <- function( names ) {
    } 
 }
 
-# Main function imports coin and Kendall libraries 
-# Generates the reportStats list with p-value and R^2 metrics 
+# Main function imports coin and Kendall libraries
+# Generates the reportStats list with p-value and R^2 metrics
 # Outputs summary tables for each metric at each taxonomyLevel
 main <- function() {
-   importLibs( c( "coin", "Kendall" ) ) 
+   importLibs( c( "coin", "Kendall" ) )
    for( level in taxaLevels() ) {
       if( doDebug() ) sink( getLogFile( level ) )
       reportStats = calculateStats( level )

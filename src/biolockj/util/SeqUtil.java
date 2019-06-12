@@ -265,20 +265,21 @@ public class SeqUtil {
 		// trim directional suffix
 		if( !isMultiplexed() && fwReadSuffix != null && id.indexOf( fwReadSuffix ) > 0 )
 			id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
-
-		if( id.toLowerCase().endsWith( "." + Constants.FASTA ) || id.toLowerCase().endsWith( "." + Constants.FASTQ ) )
-			id = id.substring( 0, id.length() - 6 );
-
+		
+		
 		// trim files extensions: .gz | .fasta | .fastq
 		if( isGzipped( id ) ) id = id.substring( 0, id.length() - 3 );
+		if( id.toLowerCase().endsWith( "." + Constants.FASTA ) || id.toLowerCase().endsWith( "." + Constants.FASTQ ) )
+			id = id.substring( 0, id.length() - 6 );
 
 		// trim user defined file prefix and/or suffix patterns
 		final String trimPrefix = Config.getString( null, Constants.INPUT_TRIM_PREFIX );
 		final String trimSuffix = Config.getString( null, Constants.INPUT_TRIM_SUFFIX );
 		if( trimPrefix != null && id.indexOf( trimPrefix ) > -1 )
 			id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
+		
 		if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 ) id = id.substring( 0, id.indexOf( trimSuffix ) );
-
+		
 		if( id == null || id.isEmpty() )
 			throw new SequnceFormatException( "Unable to extract a valid Sample ID from: " + value );
 		return id;
@@ -300,8 +301,9 @@ public class SeqUtil {
 		try {
 			for( final File file: files )
 				try {
-					SeqUtil.getSampleId( file.getName() );
-					seqFiles.add( file );
+					final String id = SeqUtil.getSampleId( file.getName() );
+					if( MetaUtil.exists() && !MetaUtil.getSampleIds().contains( id ) ) seqsWithoutMetaId.add( file );
+					else seqFiles.add( file );
 				} catch( final Exception ex ) {
 					if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) ) seqsWithoutMetaId.add( file );
 					else Log.warn( SeqUtil.class,

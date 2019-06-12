@@ -612,6 +612,16 @@ public class Config {
 
 		return getString( module, property ).trim();
 	}
+	
+	/**
+	 * Remove a property (probably internal since these are the only that change mid-program).
+	 * 
+	 * @param property Property name
+	 */
+	public static void removeConfigProperty( final String property ) {
+		props.remove( property );
+		usedProps.remove( property );
+	}
 
 	/**
 	 * Sets a property value in the props cache as a list

@@ -14,6 +14,7 @@ package biolockj.module.seq;
 import java.io.*;
 import java.util.*;
 import biolockj.*;
+import biolockj.exception.ConfigViolationException;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
@@ -259,7 +260,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 				}
 
 				if( !unequalNumReads.isEmpty() )
-					throw new Exception( "Paired reads require an equal number of reads: " + unequalNumReads );
+					throw new ConfigViolationException( REQUIRE_EUQL_NUM_PAIRS, "Paired reads require an equal number of reads: " + unequalNumReads );
 			}
 		}
 	}

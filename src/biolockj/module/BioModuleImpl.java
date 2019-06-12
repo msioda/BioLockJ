@@ -14,8 +14,10 @@ package biolockj.module;
 import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.comparator.SizeFileComparator;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import biolockj.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.util.*;
 
 /**
@@ -197,7 +199,26 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		this.inputFiles.clear();
 		this.inputFiles.addAll( files );
 		Collections.sort( this.inputFiles );
-		printInputFiles();
+		if( SeqUtil.isSeqModule( this ) ) sortCachedInputFilesForEvenBatchSize();
+		else printInputFiles();
+	}
+		
+	private void sortCachedInputFilesForEvenBatchSize() {
+		try {
+			final Map<Integer, List<File>> map = new HashMap<>();
+			final int batchSize = Config.getPositiveInteger( this, ScriptModule.SCRIPT_BATCH_SIZE );
+			final List<File> sortedList = new SizeFileComparator().sort( new ArrayList<>( this.inputFiles ) );
+			for( int i=0; i < sortedList.size(); i++ ) {
+				List<File> files = map.get( i % batchSize ) == null ? new ArrayList<File>() : map.get( i % batchSize );
+				files.add( sortedList.get( i ) );
+				map.put( i % batchSize, files );
+			}
+			this.inputFiles.clear();
+			for( Integer batchNum : map.keySet() ) this.inputFiles.addAll( map.get( batchNum ) );
+			Log.info( getClass(), "List seqFiles sorted for equal batch sizes " + BioLockJUtil.printLongFormList( this.inputFiles ) );
+		} catch( ConfigFormatException ex ) {
+			Log.error( getClass(), "Failed sort by size, return alphabetical list instead", ex );
+		}
 	}
 
 	/**

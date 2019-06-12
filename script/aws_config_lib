@@ -1,72 +1,59 @@
 #!/bin/bash
 ##############################################################
-##                                                          ##
-##  This script is used for AWS Config functions            ##
-##                                                          ##
+##  This script contains functions to work with AWS Config  ##
 ##############################################################
 . "${DOCKER_LIB}"
 
-sheBang='#!/bin/bash' && [ ! -f "${awsConf}" ] && awsConf=~/.aws/aws_config 
+TMP=~/.temp_config.txt && AWS_CONF=~/.aws/aws_config
 STANDARD_CONFIG="${BLJ}/resources/config/default/standard.properties"
 DOCKER_CONFIG="${BLJ}/resources/config/default/docker.properties"
-alias awsr="aws_report_config" && alias awsrf="refresh_aws_cache"
+alias awsr="aws_report_config"
 
-# Archive previous AWS Config properties file: $awsConf
-aws_archive() {
-	clear_aws_cache && aws_log "Archive AWS properties, key file, and start script to ~/.aws/history"
-	[ ! -d ~/.aws/history ] && mkdir ~/.aws/history
-	[ -f "${awsConf}" ] && mv "${awsConf}" ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
-	echo ${sheBang} > "${awsConf}" && chmod 770 "${awsConf}" && refresh_aws_cache
-}
-
-# Set property "configFiles" as list of project Config files + nested default Config files.
-# Files should be listed in order and standard + Docker property files are ignored (added automatically later)
+# Archive previous AWS Config properties file
 # Param 1 - Pipeline Config file-path
-assign_config_files() {
-	aws_log "Search ${1} for nested \"pipeline.defaultProps\" Config files"
-	configFiles="${1}" && propFile="$(get_property $1 pipeline.defaultProps)"
-	while [ -f "${propFile}" ]; do
-		configFiles="${propFile},${configFiles}" && propFile="$(get_property $propFile pipeline.defaultProps)"
-	done
-	configFiles="${configFiles/$STANDARD_CONFIG,}" && configFiles="${configFiles/$DOCKER_CONFIG,}"
-	aws_log "List of pipeline Config files --> ${configFiles}"
-	set_blj_prop configFiles "${configFiles}" && refresh_aws_cache
+aws_archive() {
+	aws_log "Archive AWS properties, key file, and start script to ~/.aws/history"
+	[ ! -d ~/.aws/history ] && mkdir ~/.aws/history
+	[ -f "${AWS_CONF}" ] && mv "${AWS_CONF}" ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
+	echo "# AWS + Pipeline Config Cache to launch ${1}" > "${AWS_CONF}" && chmod 770 "${AWS_CONF}" 
 }
 
-# Get an AWS property ${1} from local AWS Config file ${2} under the awsProfile
+# Get an AWS property ${1} from local AWS Config file ${2} under the aws.profile
 # Param 1 - argName Parse filePath for a line that starts with argName
 # Param 2 - filePath Target file
 aws_local_prop() {
 	[ ! -f "${2}" ] && aws_log "Error:  File not found: ${2}" && return
-	foundProfile=0 && prop="$1 = " && awsProfile="$(get_blj_prop awsProfile default)" 
+	foundProfile=0 && prop="${1} = "
 	cat "${2}" | while read -r line; do
 		[ $foundProfile -eq 1 ] && [ "${line:0:1}" == "[" ] && break
-		[ $foundProfile -eq 1 ] && [ "${line:0:${#prop}}" == "$prop" ] && echo "${line/$prop}" && return
-		[ "$line" == "[${awsProfile}]" ] && foundProfile=1
+		[ $foundProfile -eq 1 ] && [ "${line:0:${#prop}}" == "${prop}" ] && echo "${line/$prop}" && return
+		[ "$line" == "[$(aws_profile)]" ] && foundProfile=1
 	done
 }
 
 # Log current time-stamp and print the line parameter
 # Param 1 - Log statement  
 aws_log() {
-	echo "[ $(date "+%Y-%m-%d %H:%M:%S") ] $1"
+	echo "[ $(date "+%Y-%m-%d %H:%M:%S") ] ${1}"
+}
+
+# Return configured AWS Profile
+aws_profile() {
+	echo "$(get_blj_prop aws.profile default)"
+}
+
+aws_region() {
+	echo "$(get_blj_prop aws.region $(aws configure get region))"
 }
 
 # Print AWS Config report
 aws_report_config() {
-	[ ! -f "${awsConf}" ] && aws_log "Cannot report cache --> ${awsConf} not found" && return
+	[ ! -f "${AWS_CONF}" ] && aws_log "Cannot report cache --> ${AWS_CONF} not found" && return
 	aws_log "---------------------------------------------------"
 	aws_log "Report current AWS Config"
 	aws_log "---------------------------------------------------"
-	tail -n +2 "${awsConf}"
+	cat "${AWS_CONF}"
 	aws_log "---------------------------------------------------"
-}
-
-# Get the s3 bucket names in the user region
-aws_s3_buckets() {
-	myBuckets=$(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
-	[ ${#myBuckets} -eq 0 ] || [ "$myBuckets" == "None" ] && return
-	echo "${myBuckets}"
 }
 
 # Lists stacks available on AWS. If status arg provided, only return stacks with the given status.
@@ -80,28 +67,11 @@ aws_stacks() {
 	[ ${#awsStacks} -gt 0 ] && [ "${awsStacks}" != "None" ] && echo "${awsStacks}" && return
 }
 
-# Clear possible aws_config from bash shell memeroy
-# Param 1 - (optional) flag to indciate re-use of existing stack
-clear_aws_cache() {
-	awsEc2InstanceID='' && awsStack='' && awsS3='' && awsEc2SpotPer='' && awsRam='' &&
-		awsRegion='' && awsWalltime='' && configFiles='' && dockerImgVersion='' &&
-		ec2PublicIP='' && inputDirPaths='' && metadataFilePath='' && trimPrimersFilePath='' && 
-		kneaddataDbs='' &&krakenDb='' && kraken2Db='' && metaphlan2Db='' && metaphlan2Mpa_pkl='' && 
-		qiimePynastAlignDB='' && qiimeRefSeqDB='' && qiimeTaxaDB='' && rdpDb=''
-}
-
-# Convert pipeline Config DB prop to AWS Config file property format in: $awsConf
-# Param 1 - Pipeline Config file-path
-# Param 2 - DB property name
-convert_db_prop() {
-	db=$(get_property $1 $2) && [ "$db" != '${BLJ_DEFAULT_DB}' ] && convert_prop "${1}" "${2}"
-}
-
-# Convert pipeline Config prop to AWS Config file property format in: $awsConf
-# Param 1 - Pipeline Config file-path
-# Param 2 - property name
-convert_prop() {
-	x=$(get_blj_prop "$(map_to_aws_property $2)" "$(get_property $1 $2)")
+# Get the s3 bucket names in the user region
+aws_s3_buckets() {
+	myBuckets=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[].Name")
+	[ ${#myBuckets} -eq 0 ] || [ "${myBuckets}" == "None" ] && return
+	echo "${myBuckets}"
 }
 
 # Get AWS-Access-ID from local file sytem (requires user has logged on to client or file is staged to $HOME)
@@ -114,25 +84,20 @@ get_aws_secret_access_key() {
 	echo $(aws_local_prop aws_secret_access_key ~/.aws/credentials)
 }
 
-# Get a prop stored in $awsConf
+# Get a prop stored in ${AWS_CONF}
 # Param 1 - Prop name
 # Param 2 - (Optional) Default value
 get_blj_prop() {
-	val="$(get_property $awsConf $1)"
-	if [ "${val}" != "${2}" ]; then
-		[ ${#val} -eq 0 ] && val="${2}"
-		set_blj_prop "${1}" "${2}"
-	fi
+	val="$(get_property ${AWS_CONF} $1)"
+	[ ${#val} -eq 0 ] && [ ${#2} -gt 0 ] && val="${2}" && set_blj_prop "${1}" "${2}"
 	echo "${val}"
 }
 
 # Get the Pipeline Config local file-path
 # Param 1 - local or ec2
 get_config() {
-	configFiles=$(get_blj_prop configFiles) && propFiles=( ${configFiles//,/ } )
-	numConfig=${#propFiles[@]} && ((numConfig--))
-	[ "${1}" == "local" ] && echo "${propFiles[$numConfig]}"
-	[ "${1}" == "ec2" ] && echo "${BLJ_CONFIG}/$(basename ${propFiles[$numConfig]})"
+	[ "${1}" == "local" ] && echo "$(get_blj_prop internal.config)"
+	[ "${1}" == "ec2" ] && echo "${BLJ_CONFIG}/$(basename $(get_blj_prop internal.config))"
 }
 
 # Get the Config name - used to label pipeline dirs
@@ -140,145 +105,84 @@ get_config_name() {
 	echo $(echo $(basename $(get_config local)) | cut -f1 -d".")
 }
 
-# Init AWS Config properties file [ $awsConf ] with pipeline Config, AWS config, and standard defaults
+# Init AWS Config properties file ${AWS_CONF} with pipeline Config, AWS config, and standard defaults
 # Check BLJ pipeline Config files + all nested default Config files
 # Add docker.properties if not already in list of nested Config files
 # Param 1 - Pipeline Config file path
 init_aws_config() {
 	[ ! -f "${HOME}/.aws/config" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/config"
 	[ ! -f "${HOME}/.aws/credentials" ] && exit_script "Error [ aws_config_lib.init_aws_config() ]: Required file not found: ${HOME}/.aws/credentials"
-	aws_archive && aws_log "Copy AWS properties from Pipeline Config ${1} into AWS Config --> ${awsConf}"
-	assign_config_files "${1}"
-	set_pipeline_conig_props "${STANDARD_CONFIG}" && set_pipeline_conig_props "${DOCKER_CONFIG}"
-	propFiles=( ${configFiles//,/ } ) && for propFile in ${propFiles[@]}; do set_pipeline_conig_props "${propFile}"; done
-	verify_config
-	aws_log "Pipeline Config properties saved to --> ${awsConf}"
+	[ "${1:0:1}" == "g" ] && return
+	aws_archive "${1}" && set_pipeline_conig_props "${STANDARD_CONFIG}" && set_pipeline_conig_props "${DOCKER_CONFIG}"
+	defConfig='' && propFile="$(get_property $1 pipeline.defaultProps)"
+	while [ -f "${propFile}" ] && [ "${propFile}" != "${STANDARD_CONFIG}" ] && [ "${propFile}" != "${DOCKER_CONFIG}" ] && [ "${defConfig}" == "${defConfig/$propFile}" ]; do
+		[ ${#defConfig} -gt 0 ] && defConfig=", ${defConfig}"
+		defConfig="${propFile}${defConfig}" && set_pipeline_conig_props "${propFile}" && propFile="$(get_property $propFile pipeline.defaultProps)"
+	done
+	set_pipeline_conig_props "${1}" && verify_config
+	set_blj_prop "internal.config" "${1}" && [ ${#defConfig} -gt 0 ] && set_blj_prop "internal.defaultConfig" "${defConfig}"
+	aws_log "MASTER AWS Config properties saved to --> ${AWS_CONF}" && sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}"
 }
 
 # Get the ec2 key file for the ec2 head node
 key_file() {
-	refresh_aws_cache && [ ${#awsStack} -eq 0 ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"awsStack\" is undefined!"
-	echo ~/.aws/${awsStack}.pem
+	[ "$(get_blj_prop aws.stack)" == "" ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"aws.stack\" is undefined!"
+	echo "${HOME}/.aws/$(get_blj_prop aws.stack).pem"
 }
 
 # Get local Nextflow <base> config file
 local_nf_conf() {
-	[ ! -d ~/.aws/nextflow/${awsStack} ] && mkdir -p ~/.aws/nextflow/${awsStack}
-	echo ~/.aws/nextflow/${awsStack}/config
+	[ ! -d ~/.aws/nextflow/$(get_blj_prop aws.stack) ] && mkdir -p ~/.aws/nextflow/$(get_blj_prop aws.stack)
+	echo ~/.aws/nextflow/$(get_blj_prop aws.stack)/config
 }
 
-# AWS Config prop names cannot contain "." or bash fails by trying to interpret and run them as function calls
-# Param 1 - Prop name
-map_to_aws_property() {
-	val='' && foundPeriod=N && i=0
-	while [ ${i} -lt ${#1} ]; do
-		char=${1:$i:1} && upCase=$(echo "${char}" | awk '{print toupper($0)}') && ((i++))
-		if [ $foundPeriod == Y ]; then
-			val=${val}${upCase} && foundPeriod=N
-		elif [ "${char}" == "." ]; then
-			foundPeriod=Y
-		else
-			val=${val}${char} && foundPeriod=N
-		fi
-		
-	done
-	echo ${val}
-}
-
-# Convert aws config property name to pipeline config property name format
-map_to_pipeline_property() {
-	# Handle special case with camel case in property prefix
-	[ "${1}" == "trimPrimersFilePath" ] && echo "trimPrimers.filePath" && return
-	val='' && addedPeriod=N && i=0
-	while [ ${i} -lt ${#1} ]; do
-		char=${1:$i:1} && upCase=$(echo "${char}" | awk '{print toupper($0)}')
-		loCase=$(echo "${char}" | awk '{print tolower($0)}') && ((i++))
-		if [ "${addedPeriod}" == "N" ] && [ "${upCase}" == "${char}" ] && [ "${upCase}" != "${loCase}" ]; then
-			val="${val}.${loCase}" && addedPeriod=Y
-		else
-			val=${val}${char}
-		fi
-	done
-	echo ${val}
-}
-
-# Refersh bash variables in memory via source $awsConf
-refresh_aws_cache() {
-	[ ! -f "${awsConf}" ] && aws_log "Cannot refresh cache --> ${awsConf} not found" && return
-	. "${awsConf}"
-}
-
-# Remove AWS property from $awsConf
+# Remove AWS property from ${AWS_CONF}
 # Param 1 - prop name 
 rm_blj_prop() {
-	rm_property "${awsConf}" "${1}" && echo "${1}=''" >> "${awsConf}" && refresh_aws_cache && rm_property "${awsConf}" "${1}"
+	rm_property "${AWS_CONF}" "${1}"
 }
 
-# Call set_property on Config file $awsConf
+# Call set_property on Config file ${AWS_CONF}
 # Param 1 - Prop name
 # Param 2 - Prop value
 set_blj_prop() {
-	set_property "${awsConf}" "${1}" "${2}"
+	set_property "${AWS_CONF}" "${1}" "${2}"
 }
 
-# Save AWS Config properties in pipeline Config file to AWS Config file: $awsConf
+# Save AWS Config properties in pipeline Config file to AWS Config file: ${AWS_CONF}
 # Param 1 - Pipeline Config file path
 set_pipeline_conig_props() {
-	aws_log "Update ${awsConf} with AWS properties found in Pipeline Config ${1}"
-	convert_prop "${1}" "aws.ec2AcquisitionStrategy"
-	convert_prop "${1}" "aws.ec2EndState"
-	convert_prop "${1}" "aws.ec2InstanceID"
-	convert_prop "${1}" "aws.ec2InstanceType"
-	convert_prop "${1}" "aws.ec2SpotPer"
-	convert_prop "${1}" "aws.stack"
-	convert_prop "${1}" "aws.profile"
-	convert_prop "${1}" "aws.ram"
-	convert_prop "${1}" "aws.region"
-	convert_prop "${1}" "aws.stack"
-	convert_prop "${1}" "aws.s3"
-	convert_prop "${1}" "aws.walltime"
-	convert_prop "${1}" "docker.imgVersion"
-	convert_prop "${1}" "docker.user"
-	convert_prop "${1}" "input.dirPaths"
-	convert_prop "${1}" "metadata.filePath"
-	convert_prop "${1}" "trimPrimers.filePath"
-	convert_prop "${1}" "pipeline.downloadDir"
-	convert_db_prop "${1}" "kneaddata.dbs"
-	convert_db_prop "${1}" "kraken.db"
-	convert_db_prop "${1}" "kraken2.db"
-	convert_db_prop "${1}" "metaphlan2.db"
-	convert_db_prop "${1}" "metaphlan2.mpa_pkl"
-	convert_db_prop "${1}" "qiime.pynastAlignDB"
-	convert_db_prop "${1}" "qiime.refSeqDB"
-	convert_db_prop "${1}" "qiime.taxaDB"
-	convert_db_prop "${1}" "rdp.db"
-	aws_report_config
+	aws_log "Update ${AWS_CONF} with AWS properties found in Pipeline Config ${1}"
+	while read line; do
+		line="$(echo ${line} | xargs)" && [ ${#line} -eq 0 ] || [ "${line:0:1}" == "#" ] && continue
+		IFS=$'=' && tokens=( ${line} ) && reset_IFS && set_blj_prop "${tokens[0]}" "$(eval echo ${tokens[1]})"
+	done < "${1}"
+	sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}" && aws_report_config
 }
 
 # Set basic defaults if undefined & throw error if user did not login to aws client or is missing required properties
 verify_config() {
-	refresh_aws_cache && err="Error [ aws_config_lib.verify_config() ]: Unable to find required AWS Config: ${awsConf}"
-	aws_log "Verfiying rquired AWS Config configuration..." && err2="Please verify AWS client configuration details from command line and try again."
-	awsRegion=$(get_blj_prop awsRegion $(aws configure get region))
-	awsEc2InstanceType=$(get_blj_prop awsEc2InstanceType t2.micro)
-	dockerImgVersion=$(get_blj_prop dockerImgVersion latest)
-	dockerUser=$(get_blj_prop dockerUser biolockj)
-	refresh_aws_cache && aws_log "Verfiying AWS client authentication properties..."
-	access_id=$(get_aws_access_key_id) && access_key=$(get_aws_secret_access_key)
-	[ ${#awsRegion} -eq 0 ] && exit_script "${err} \"aws.region\" in ${awsConf}. ${err2}"
-	[ ${#access_id} -eq 0 ] && exit_script "${err} \"aws_access_key_id\" in ~/.aws/credentials.  ${err2}"
-	[ ${#access_key} -eq 0 ] && exit_script "${err} \"aws_secret_access_key\" in ~/.aws/credentials.  ${err2}"
-	[ ${#awsRam} -eq 0 ] && exit_script "${err} \"aws.ram\" in ${awsConf}"
-	aws_log "Verify required BLJ pipeline properties..." && verify_ec2_acquisition_strategy
+	err="Error [ aws_config_lib.verify_config() ]: Unable to find required AWS Config: ${AWS_CONF}"
+	err2="Please verify AWS client configuration details from command line and try again."
+	aws_log "Verfiying rquired AWS Config configuration..."  
+	quiet=$(aws_region)
+	quiet=$(get_blj_prop aws.ec2InstanceType t2.micro)
+	quiet=$(get_blj_prop docker.imgVersion latest)
+	quiet=$(get_blj_prop docker.user biolockj)
+	[ "$(get_aws_access_key_id)" == "" ] && exit_script "${err} \"aws_access_key_id\" in ~/.aws/credentials.  ${err2}"
+	[ "$(get_aws_secret_access_key)" == "" ]  && exit_script "${err} \"aws_secret_access_key\" in ~/.aws/credentials.  ${err2}"
+	[ "$(get_blj_prop aws.ram)" == "" ] && exit_script "${err} \"aws.ram\" in ${AWS_CONF}"
+	verify_ec2_props
 }
 
 # Verify the Pipeline Config property aws.ec2AcquisitionStrategy
-verify_ec2_acquisition_strategy() {
-	[ ${#awsEc2AcquisitionStrategy} -eq 0 ] && 
-		exit_script "Error [ aws_config_lib.verify_ec2_acquisition_strategy() ]: Required property \"aws.ec2AcquisitionStrategy\" is undefined!"
-	ec2strategy=$(echo "${awsEc2AcquisitionStrategy}" | awk '{print toupper($0)}')
-	[ "$ec2strategy" != "SPOT" ] && [ "$ec2strategy" != "DEMAND" ] && 
-		exit_script "Error [ aws_config_lib.verify_ec2_acquisition_strategy() ]: Required property \"aws.ec2AcquisitionStrategy\" is invalid \"$ec2strategy\".  Update to \"spot\" or \"demand\"!"
-	[ "${ec2strategy}" == "SPOT" ] && [ ${#awsEc2SpotPer} -eq 0 ] || [ ${awsEc2SpotPer} -lt 0 ] || [ ${awsEc2SpotPer} -gt 100 ] && \
-		exit_script "Error [ aws_config_lib.verify_ec2_acquisition_strategy() ]: Dependent property \"aws.ec2SpotPer\" is required for \"aws.ec2AcquisitionStrategy=SPOT\".  Update to integer value in the range {0-100}"
+verify_ec2_props() {
+	aws_log "Verify required BLJ pipeline properties..." && ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
+	ec2strategy=$(echo $(get_blj_prop aws.ec2AcquisitionStrategy) | awk '{print toupper($0)}')
+	[ ${#ec2strategy} -eq 0 ] && 
+		exit_script "Error [ aws_config_lib.verify_ec2_props() ]: Required property \"aws.ec2AcquisitionStrategy\" is undefined!"
+	[ "${ec2strategy}" != "SPOT" ] && [ "${ec2strategy}" != "DEMAND" ] && 
+		exit_script "Error [ aws_config_lib.verify_ec2_props() ]: Required property \"aws.ec2AcquisitionStrategy\" is invalid \"${ec2strategy}\".  Update to \"spot\" or \"demand\"!"
+	[ "${ec2strategy}" == "SPOT" ] && [ ${#ec2SpotPer} -lt 1 ] || [ ${ec2SpotPer} -gt 100 ] && \
+		exit_script "Error [ aws_config_lib.verify_ec2_props() ]: Dependent property \"aws.ec2SpotPer=${ec2SpotPer}\" is required for \"aws.ec2AcquisitionStrategy=SPOT\".  Update to integer value in the range {0-100}"
 }

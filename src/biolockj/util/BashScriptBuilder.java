@@ -82,7 +82,7 @@ public class BashScriptBuilder {
 		lines.add( "function " + FUNCTION_EXECUTE_LINE + "() {" );
 		lines.add( "${1}" );
 		lines.add( "statusCode=$?" );
-		lines.add( "[ ${statusCode} != 0 ] && " + FUNCTION_SCRIPT_FAILED + " ${1} ${2} ${statusCode}" );
+		lines.add( "[ ${statusCode} != 0 ] && " + FUNCTION_SCRIPT_FAILED + " \"${1}\" ${2} ${statusCode}" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}

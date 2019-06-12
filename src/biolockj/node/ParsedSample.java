@@ -13,8 +13,7 @@ package biolockj.node;
 
 import java.io.Serializable;
 import java.util.*;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.util.OtuUtil;
 import biolockj.util.TaxaUtil;
 
@@ -90,7 +89,6 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 		final TreeMap<String, Integer> fullPathOtuCounts = new TreeMap<>();
 		for( String otu: this.otuCounts.keySet() ) {
 			if( otu.isEmpty() ) continue;
-
 			final Set<String> kids = getChildren( fullPathOtuCounts, otu );
 			final int otuCount = this.otuCounts.get( otu );
 			if( kids.isEmpty() ) {
@@ -100,10 +98,13 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 				final int totalCount = totalCount( fullPathOtuCounts, kids );
 				if( totalCount < otuCount ) {
 					String parentTaxa = null;
+					String parentLevel = null;
 					for( final String level: TaxaUtil.getTaxaLevelSpan() )
-						if( otu.contains( level ) ) parentTaxa = TaxaUtil.getTaxaName( otu, level );
-						else if( parentTaxa != null ) otu += Constants.SEPARATOR +
-							OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
+						if( otu.contains( level ) ) {
+							parentTaxa = TaxaUtil.getTaxaName( otu, level );
+							parentLevel = level;
+						} else if( parentTaxa != null && Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) ) 
+							otu += Constants.SEPARATOR + OtuUtil.buildOtuTaxa( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 
 					final int diff = otuCount - totalCount;
 					fullPathOtuCounts.put( otu, diff );
@@ -136,15 +137,13 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 
 	private static Set<String> getChildren( final TreeMap<String, Integer> otuCounts, final String otu ) {
 		final Set<String> kids = new HashSet<>();
-		for( final String key: otuCounts.keySet() )
-			if( key.contains( otu ) ) kids.add( key );
+		for( final String key: otuCounts.keySet() ) if( key.contains( otu ) ) kids.add( key );
 		return kids;
 	}
 
 	private static int totalCount( final TreeMap<String, Integer> otuCounts, final Set<String> otus ) {
 		int count = 0;
-		for( final String otu: otus )
-			count += otuCounts.get( otu );
+		for( final String otu: otus ) count += otuCounts.get( otu );
 		return count;
 	}
 

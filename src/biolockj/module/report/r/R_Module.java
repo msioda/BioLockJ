@@ -90,7 +90,6 @@ public abstract class R_Module extends ScriptModuleImpl {
 	public File getModuleScript() throws Exception {
 		final File rFile = new File( getRTemplateDir() + getModuleScriptName() );
 		if( !rFile.isFile() ) throw new Exception( "Missing R module script: " + rFile.getAbsolutePath() );
-
 		return rFile;
 	}
 
@@ -203,7 +202,6 @@ public abstract class R_Module extends ScriptModuleImpl {
 	 */
 	protected String getMetaMergedModule() throws Exception {
 		if( PathwayUtil.useHumann2RawCount( this ) ) return AddMetadataToPathwayTables.class.getName();
-
 		return AddMetadataToTaxaTables.class.getName();
 	}
 

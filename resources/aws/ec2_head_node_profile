@@ -35,7 +35,7 @@ set_ec2_owner() {
 
 # Initialize bash environment
 source "${BLJ_SCRIPT}/blj_config"
-[ ${#dockerUser} -gt 0 ] && export DOCKER_ID="${dockerUser}"
+[ "$(get_blj_prop docker.user)" != "" ] && export DOCKER_ID="$(get_blj_prop docker.user)"
 ######=========================================######
 ######   BioLockJ AWS ~/.bash_profile LOADED   ###### 
 ######=========================================######

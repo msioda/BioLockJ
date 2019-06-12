@@ -154,7 +154,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		setDbCache( BioLockJUtil.getCommonParent( new File( getNuclDbPath() ), new File( getProtDbPath() ) ) );
 		return getDbCache();
 	}
-
+	
 	@Override
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
@@ -206,10 +206,21 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			getDbFlag( HN2_NUCL_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() + "\" ]; do" );
 		lines.add( "sleep 60 && let \"count++\"" );
 		lines.add(
-			"[ ${count} -gt 60 ] && echo \"Failed to download HumanN2 DBs after 60 minutes\" && sleep 15 && exit 1" );
+			"[ ${count} -gt " + getTimeOut() + " ] && echo \"Failed to download HumanN2 DBs after " + getTimeOut() + " minutes\" && exit 1" );
 		lines.add( "done" );
 		lines.add( "}" + RETURN );
 		return lines;
+	}
+	
+	private Integer getTimeOut() {
+		Integer timeout = null;
+		try {
+			timeout = Config.getPositiveInteger( this, ScriptModule.SCRIPT_TIMEOUT );
+		} catch( ConfigFormatException ex ) {
+			ex.printStackTrace();
+		}
+		if( timeout == null ) timeout = 420;
+		return timeout;
 	}
 
 	private List<String> buildSummaryFunction() throws Exception {
@@ -225,7 +236,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		lines.add( "let \"numComplete++\"" );
 		lines.add( "[ $numStarted != $numComplete ] && sleep 60" );
 		lines.add(
-			"[ ${count} -gt 60 ] && echo \"Failed to build HumanN2 summary tables after 60 minutes\" && sleep 15 && exit 1" );
+			"[ ${count} -gt " + getTimeOut() + " ] && echo \"Failed to build HumanN2 summary tables after " + getTimeOut() + " minutes\" && sleep 15 && exit 1" );
 		lines.add( "done" );
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
 			lines.add( getJoinTableLine( HN2_PATH_ABUNDANCE ) );
