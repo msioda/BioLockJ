@@ -11,29 +11,12 @@
  */
 package biolockj.util;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
-import biolockj.exception.ConfigFormatException;
-import biolockj.exception.ConfigPathException;
-import biolockj.exception.ConfigViolationException;
-import biolockj.exception.ExpectationFileFormatException;
-import biolockj.exception.ValidationException;
+import java.util.*;
+import biolockj.*;
+import biolockj.exception.*;
 import biolockj.module.BioModule;
 
 /**
@@ -41,7 +24,8 @@ import biolockj.module.BioModule;
  * expectation file, the utility reports the values for these attributes and saves a file in the
  * {@value #VALIDATION_FOLDER} folder which can be used as an expectation in future runs. If there is an expectation
  * file, the values for the current outputs will be compared with the expected values and the utility will stop the
- * pipeline if the files do not meet expectations. Set {@value #ALWAYS_PASS} to Y to report on the comparison but not
+ * pipeline if the files do not meet expectations. Set {@value #HALT_PIPELINE} to Y to stop the pipeline if expectations are not met. 
+ * Be default ({@value #HALT_PIPELINE}=N), the utility will report on the comparison but not
  * stop the pipeline.
  * 
  * This is an easy way to verify that the outputs of a pipeline are the same as a previous run, which is particularly
@@ -72,16 +56,6 @@ public class ValidationUtil
 		 */
 		private long size = -1;
 
-		/**
-		 * The size rounded to the nearest GB.
-		 */
-		private long sizeGB = -1;
-
-		/**
-		 * The size rounded to the nearest MB.
-		 */
-		private long sizeMB = -1;
-
 		private int validationStatus = ValidationUtil.REPORT;
 
 		public FileSummary( final File inFile ) throws Exception
@@ -89,8 +63,6 @@ public class ValidationUtil
 			file = inFile;
 			name = file.getName();
 			size = file.length();
-			sizeMB = Math.round( size / Math.pow( 1024, 2 ) );
-			sizeGB = Math.round( size / Math.pow( 1024, 3 ) );
 		}
 
 		public FileSummary( final String fileName )
@@ -124,14 +96,9 @@ public class ValidationUtil
 			md5 = md5sum;
 		}
 
-		public int compareToExpected( final FileSummary other, final Collection<String> comparisons ) throws Exception
+		public int compareToExpected( final FileSummary other, final Collection<String> comparisons,
+				final BioModule module ) throws Exception
 		{
-			if( !ValidationUtil.availableAttributes.containsAll( comparisons ) )
-			{
-				Log.error( this.getClass(),
-						"Cannot do comparisons on: " + comparisons.removeAll( ValidationUtil.availableAttributes ) );
-				throw new Exception();
-			}
 			if( other == null )
 			{
 				Log.warn( this.getClass(), "Cannot compare against a null." );
@@ -155,13 +122,16 @@ public class ValidationUtil
 						else
 						{
 							mentionMismatch( att, other.getAtt( att ), getAtt( att ) );
+							if( att.equals( "size" ) && passesSoftValidation(other, module) )
+							{
+								passed++;
+							}
 						}
 					}
 					catch( final NullPointerException np )
 					{
 						Log.warn( this.getClass(), "Cannot compare missing attribute: " + att );
 					}
-
 				}
 			}
 
@@ -178,6 +148,27 @@ public class ValidationUtil
 				return ValidationUtil.FAIL;
 			}
 		}
+		
+		private boolean passesSoftValidation( FileSummary other, BioModule module ) throws ConfigFormatException
+		{
+			if( ValidationUtil.getSizePercentAllowed( module ) > 0 )
+			{
+				double diff = getSize() - other.getSize();
+				double percentDiff = diff / other.getSize() * 100;
+				String bigsmaller = getSize() > other.getSize() ? "bigger": "smaller";
+				Log.info( module.getClass(), "Output file [" + name + "] is " + percentDiff + "% " + bigsmaller
+						+ " than the expected value." );
+				if( Math.abs( percentDiff ) <= ValidationUtil.getSizePercentAllowed( module ) )
+				{
+					Log.info( this.getClass(),
+							"File [" + name + "] passes soft size validation: " + getSize() + " is within "
+									+ ValidationUtil.getSizePercentAllowed( module ) + "% of the expected value: "
+									+ other.getSize() + " ." );
+					return true;
+				}
+			}
+			return false;
+		}
 
 		protected String getAtt( final String col ) throws Exception
 		{
@@ -187,10 +178,6 @@ public class ValidationUtil
 					return getName();
 				case "size":
 					return String.valueOf( size );
-				case "sizeMB":
-					return String.valueOf( sizeMB );
-				case "sizeGB":
-					return String.valueOf( sizeGB );
 				case "md5":
 					return md5;
 			}
@@ -206,6 +193,11 @@ public class ValidationUtil
 			return name;
 		}
 
+		public long getSize()
+		{
+			return size;
+		}
+
 		private void mentionMismatch( final String attribute, final Object expectedValue, final Object foundValue )
 		{
 			Log.debug( this.getClass(), "File " + name + " failed " + attribute + " comparison.  Expected value: "
@@ -215,21 +207,10 @@ public class ValidationUtil
 		protected void setAtt( final String col, final String val ) throws Exception
 		{
 			Log.debug( this.getClass(), "Setting " + col + " to " + val );
-			if( !ValidationUtil.availableAttributes.contains( col ) )
-			{
-				throw new ConfigViolationException(
-						"Available file attributes for validation are: " + ValidationUtil.availableAttributes );
-			}
 			switch( col )
 			{
 				case "size":
 					size = Long.parseLong( val );
-					break;
-				case "sizeMB":
-					sizeMB = Long.parseLong( val );
-					break;
-				case "sizeGB":
-					sizeGB = Long.parseLong( val );
 					break;
 				case "md5":
 					md5 = val;
@@ -247,10 +228,10 @@ public class ValidationUtil
 	}
 
 	/**
-	 * {@link biolockj.Config} boolean property. Even if the files do not meet expectation, just record this, do not
-	 * halt the pipeline.
+	 * {@link biolockj.Config} boolean property {@value #HALT_PIPELINE}. If the output files do not meet expectation,
+	 * stop the pipeline.
 	 */
-	protected static final String ALWAYS_PASS = "validation.alwaysPass";
+	protected static final String HALT_PIPELINE = "validation.stopPipeline";
 
 	/**
 	 * {@link biolockj.Config} set property giving the file metrics to use in comparing to the expectation. Default is
@@ -270,11 +251,13 @@ public class ValidationUtil
 	 */
 	public static final String EXPECTATION_FILE = "validation.expectationFile";
 
+	protected static final int FAIL = 0;
+
 	/**
 	 * The last column in a the output file, {@value #MATCHED_EXPECTATION}, indicates if the referenced file met all
-	 * expectations (PASS), or not (FAIL), or was not
-	 * compared to any expectations (REPORT). The value "MATCHED_EXPECTATION" is
-	 * hard-coded in the FileSummary.getAtt() method. If this is a column in the expectation file, it is ignored.
+	 * expectations (PASS), or not (FAIL), or was not compared to any expectations (REPORT). The value
+	 * "MATCHED_EXPECTATION" is hard-coded in the FileSummary.getAtt() method. If this is a column in the expectation
+	 * file, it is ignored.
 	 */
 	protected static final String MATCHED_EXPECTATION = "MATCHED_EXPECTATION";
 
@@ -287,28 +270,32 @@ public class ValidationUtil
 	 * Append the String {@value #OUTPUT_FILE_SUFFIX} to the name of the validated module to get the output file name.
 	 */
 	protected static final String OUTPUT_FILE_SUFFIX = "_validation.txt";
-	
-	protected static final int FAIL = 0;
 
 	protected static final int PASS = 1;
 
 	protected static final int REPORT = 2;
 
 	/**
-	 * {@link biolockj.Config} property {@value #REPORT_ON} giving the set of file metrics to use report. Default is to use all currently available metrics.
+	 * {@link biolockj.Config} property {@value #REPORT_ON} giving the set of file metrics to use report. Default is to
+	 * use all currently available metrics.
 	 */
 	protected static final String REPORT_ON = "validation.reportOn";
-
-	private static final String[] sa = { "name", "size", "sizeMB", "sizeGB", "md5" };
+	private static final String[] sa = { "name", "size", "md5" };
 	protected static final ArrayList<String> availableAttributes = new ArrayList<>( Arrays.asList( sa ) );
+	
+	/**
+	 * {@link biolockj.Config} property {@value #SIZE_WITHIN_PERCENT} giving the percentage by which size is allow to
+	 * deviate and still be considered a valid match for the expectation.
+	 */
+	protected static final String SIZE_WITHIN_PERCENT = "validation.sizeWithinPercent";
 
 	protected static final String[] statusStrings = { "FAIL", "PASS", "REPORT" };
 
 	protected static final String VALIDATION_FOLDER = "validation";
 
-	private static boolean alwaysPass( final BioModule module ) throws ConfigFormatException
+	private static boolean canHaltPipeline( final BioModule module ) throws ConfigFormatException
 	{
-		return Config.getBoolean( module, ALWAYS_PASS );
+		return Config.getBoolean( module, HALT_PIPELINE );
 	}
 
 	/**
@@ -327,9 +314,14 @@ public class ValidationUtil
 			{
 				Log.info( ValidationUtil.class, "The " + module.getClass().getSimpleName()
 						+ " module is expected to produce " + getPrevSummaries( module ).size() + " output files." );
+				if( getSizePercentAllowed( module ) > 0 )
+				{
+					Log.warn( ValidationUtil.class, "Output file sizes can deveate from the expected value by up to "
+							+ getSizePercentAllowed( module ) + "% and will still pass validation." );
+				}
 			}
 			getReportSet( module );
-			if( alwaysPass( module ) )
+			if( !canHaltPipeline( module ) )
 			{
 				Log.info( ValidationUtil.class,
 						"The pipeline will continue even if module outputs from [" + module.getID() + "_"
@@ -352,7 +344,7 @@ public class ValidationUtil
 			writeRow( writer, getReportSet( module ) );
 
 			final File[] outputs = module.getOutputDir().listFiles();
-			Arrays.sort(outputs);
+			Arrays.sort( outputs );
 			Log.debug( ValidationUtil.class,
 					"Found [" + outputs.length + "] files in output dir of module [" + module + "]." );
 			int passingFiles = 0;
@@ -368,7 +360,7 @@ public class ValidationUtil
 				{
 					final String ekey = fileNameToKey( fs.getAtt( NAME ) );
 					final FileSummary expected = prevOutput.get( ekey );
-					if( fs.compareToExpected( expected, getCompareSet( module ) ) == PASS )
+					if( fs.compareToExpected( expected, getCompareSet( module ), module ) == PASS )
 					{
 						passingFiles += 1;
 					}
@@ -390,16 +382,16 @@ public class ValidationUtil
 				{
 					Log.warn( ValidationUtil.class, prevOutput.get( oldFileName ).toString() );
 				}
-				if( !alwaysPass( module ) )
+				if( canHaltPipeline( module ) )
 				{
 					throw new ValidationException( module );
 				}
 			}
-			if( hasExp( module ) && !alwaysPass( module ) && passingFiles < outputs.length )
+			if( hasExp( module ) && canHaltPipeline( module ) && passingFiles < outputs.length )
 			{
 				Log.warn( ValidationUtil.class, "passingFiles: " + passingFiles );
 				Log.warn( ValidationUtil.class, "outputs to validate: " + outputs.length );
-				if( !alwaysPass( module ) )
+				if( canHaltPipeline( module ) )
 				{
 					throw new ValidationException( module );
 				}
@@ -420,10 +412,11 @@ public class ValidationUtil
 	 */
 	private static String fileNameToKey( final String fileName )
 	{
-		String key = fileName.replaceAll( "_[0-9]+_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
+		String pipePrifix = RuntimeParamUtil.getProjectName();
+		String key = fileName.replaceAll( pipePrifix + " _[0-9]+_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
 		if( key.equals( fileName ) )
 		{
-			key = fileName.replaceAll( "_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
+			key = fileName.replaceAll( pipePrifix + "_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
 		}
 		return key;
 	}
@@ -447,13 +440,16 @@ public class ValidationUtil
 		compareFeatures.remove( NAME );
 		if( !availableAttributes.containsAll( compareFeatures ) )
 		{
+			compareFeatures.removeAll( availableAttributes );
 			throw new ConfigViolationException(
-					"Available file attributes for validation are: " + availableAttributes );
+					"Available file attributes for validation are: " + availableAttributes + Constants.RETURN
+					+ "Cannot compare on: " + compareFeatures);
 		}
 		if( !headers.containsAll( compareFeatures ) )
 		{
+			compareFeatures.removeAll( headers );
 			throw new ConfigViolationException( COMPARE_ON,
-					"Cannot compare on features that are not given in expectation file." );
+					"Cannot compare on features that are not given in expectation file: " + compareFeatures );
 		}
 		Log.debug( ValidationUtil.class, "Comparing based on features: " + compareFeatures );
 		return compareFeatures;
@@ -565,7 +561,7 @@ public class ValidationUtil
 		ArrayList<String> reportFeatures = new ArrayList<>( Config.getSet( module, REPORT_ON ) );
 		if( reportFeatures == null || reportFeatures.isEmpty() )
 		{
-			reportFeatures = availableAttributes;
+			reportFeatures.addAll( availableAttributes );
 		}
 		else
 		{
@@ -584,6 +580,20 @@ public class ValidationUtil
 		reportFeatures.add( MATCHED_EXPECTATION );
 		Log.debug( ValidationUtil.class, "Reporting on features: " + reportFeatures );
 		return reportFeatures;
+	}
+
+	/**
+	 * Reads {@link biolockj.Config} property {@value #SIZE_WITHIN_PERCENT}.
+	 * 
+	 * @param module The BioModule being validated
+	 * @return The percentage deviation that is acceptable
+	 * @throws ConfigFormatException if the value is not a suitable double
+	 */
+	private static double getSizePercentAllowed( final BioModule module ) throws ConfigFormatException
+	{
+		Double d = Config.getPositiveDoubleVal( module, SIZE_WITHIN_PERCENT );
+		if (d == null) {return 0; }
+		return d.doubleValue();
 	}
 
 	public static File getValidationDir()
