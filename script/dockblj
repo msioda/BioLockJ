@@ -79,8 +79,8 @@ get_volumes() {
 		vols="${vols} -v $(blj_proj):${EFS_PROJ}:delegated"
 		if $(null_var $runGui); then
 			vols="${vols} -v $inputDir:${BLJ_INPUT}:ro -v $(dirname $config):${BLJ_CONFIG}:ro"
-			$(null_var $metaPath) && vols="${vols} -v $metaPath:${BLJ_META}:ro"
-			$(null_var $primerPath) && vols="${vols} -v $primerPath:${BLJ_PRIMER}:ro"
+			! $(null_var $metaPath) && vols="${vols} -v $metaPath:${EFS}/metadata:ro"
+			! $(null_var $primerPath) && vols="${vols} -v $primerPath:${BLJ_PRIMER}:ro"
 		else
 			vols="${vols} -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}:delegated"
 		fi

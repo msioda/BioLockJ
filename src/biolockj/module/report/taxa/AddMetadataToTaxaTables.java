@@ -139,16 +139,19 @@ public class AddMetadataToTaxaTables extends TaxaCountModule {
 		for( final File file: getInputFiles() ) {
 			final String name = file.getName().replaceAll( TSV_EXT, "" ) + META_MERGED;
 			Log.info( getClass(), "Merge OTU table + Metadata file: " + outDir + name );
-			final BufferedReader reader = BioLockJUtil.getFileReader( file );
-			final BufferedWriter writer = new BufferedWriter( new FileWriter( outDir + name ) );
-
-			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				final String mergedLine = getMergedLine( line );
-				if( mergedLine != null ) writer.write( mergedLine + RETURN );
+			BufferedReader reader = null;
+			BufferedWriter writer = null;
+			try {
+				reader = BioLockJUtil.getFileReader( file );
+				writer = new BufferedWriter( new FileWriter( outDir + name ) );
+				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+					final String mergedLine = getMergedLine( line );
+					if( mergedLine != null ) writer.write( mergedLine + RETURN );
+				}
+			} finally {
+				if( writer != null ) writer.close();
+				if( reader != null ) reader.close();
 			}
-
-			writer.close();
-			reader.close();
 			Log.info( getClass(), "Done merging table: " + file.getAbsolutePath() );
 		}
 

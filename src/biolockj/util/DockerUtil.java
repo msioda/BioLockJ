@@ -291,6 +291,9 @@ public class DockerUtil {
 		dockerVolumes +=
 			" -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_PIPELINE_DIR + ":delegated";
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + DOCKER_CONFIG_DIR + ":ro";
+		
+		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
+			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + DOCKER_META_DIR + ":ro";
 
 		if( RuntimeParamUtil.getDockerHostPrimerDir() != null )
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostPrimerDir() + ":" + DOCKER_PRIMER_DIR + ":ro";
