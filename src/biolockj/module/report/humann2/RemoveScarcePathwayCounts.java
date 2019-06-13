@@ -45,7 +45,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		// summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
 		// this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
 		// if( !this.sampleIds.isEmpty() ) {
-		// summary += "Removed empty samples: " + this.sampleIds;
+		// summary += "Removed empty metadata records: " + this.sampleIds;
 		// }
 		// }
 		freeMemory();

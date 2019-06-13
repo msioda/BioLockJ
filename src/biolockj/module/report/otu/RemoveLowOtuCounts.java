@@ -54,7 +54,7 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 		summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs removed:", pad ) + this.totalOtuRemoved + RETURN;
 		summary += SummaryUtil.getCountSummary( this.hitsPerSample, label, false );
 		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += "Removed empty samples: " + this.sampleIds;
+		if( !this.sampleIds.isEmpty() ) summary += "Removed empty metadata records: " + this.sampleIds;
 		this.hitsPerSample = null;
 		return super.getSummary() + summary;
 	}

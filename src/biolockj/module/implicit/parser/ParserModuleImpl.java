@@ -87,7 +87,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	public String getSummary() throws Exception {
 		String summary = SummaryUtil.getCountSummary( this.hitsPerSample, "OTUs", true );
 		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += "Removed empty samples: " + this.sampleIds + RETURN;
+		if( !this.sampleIds.isEmpty() ) summary += "Removed empty metadata records: " + this.sampleIds + RETURN;
 
 		summary += "# Unique OTUs: " + this.uniqueOtus.size() + RETURN;
 		freeMemory();

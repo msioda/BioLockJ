@@ -330,7 +330,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, label, true ) + sb.toString();
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
 		if( !this.sampleIds.isEmpty() )
-			summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) + this.sampleIds;
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty metadata records:", pad ) + this.sampleIds;
 
 		return summary;
 	}
