@@ -157,7 +157,7 @@ set_pipeline_conig_props() {
 		line="$(echo ${line} | xargs)" && [ ${#line} -eq 0 ] || [ "${line:0:1}" == "#" ] && continue
 		IFS=$'=' && tokens=( ${line} ) && reset_IFS && set_blj_prop "${tokens[0]}" "$(eval echo ${tokens[1]})"
 	done < "${1}"
-	sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}" && aws_report_config
+	sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}"
 }
 
 # Set basic defaults if undefined & throw error if user did not login to aws client or is missing required properties
