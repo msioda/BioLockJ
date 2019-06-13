@@ -41,8 +41,8 @@ docker_args() {
 	args='' && [ ${#gui} -gt 0 ] && args="-gui"
 	[ ${#config} -gt 0 ] && args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
 	[ ${#restart} -gt 0 ] && args="${args} r=${restart}"
-	[ ${#blj} -gt 0 ] && args="${args} -blj"
-	[ ${#blj_sup} -gt 0 ] && args="${args} -blj_sup"
+	[ ${#blj} -gt 0 ] && args="${args} blj"
+	[ ${#blj_sup} -gt 0 ] && args="${args} blj_sup"
 	echo "${args}"
 }
 
@@ -50,6 +50,8 @@ docker_args() {
 get_params() {
 	i=0 && args=( "$@" )
     for arg in ${args[@]}; do
+    		[ "${arg//-}" == "blj" ] && echo "blj" && continue
+   	 	[ "${arg//-}" == "blj_sup" ] && echo "blj_sup" && continue
 		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${arg//-}"
 		[ $((i%2)) -eq 1 ] && $(is_flag_arg $name) && echo "${name:0:1}" && name='' && i=$((i+1)) && continue
 		[ $((i%2)) -eq 0 ] && echo "${name}=${arg}" && x="${name}" && name='' && [ "${x}" == "c" ] && conf="${arg}"

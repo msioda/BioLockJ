@@ -178,6 +178,7 @@ public final class RMetaUtil {
 				}
 			}
 		}
+		
 
 		if( updateRConfig( module ) && !MasterConfigUtil.saveMasterConfig() )
 			throw new Exception( "Failed to update MASTER config with latest \"R_internal\" Config" );
@@ -221,7 +222,10 @@ public final class RMetaUtil {
 	 */
 	public static boolean updateRConfig( final BioModule module ) throws Exception {
 		final Integer numCols = Config.getPositiveInteger( module, RMetaUtil.NUM_META_COLS );
-		final Integer numMetaCols = getMetaCols( module ).size();
+		Integer numMetaCols = getMetaCols( module ).size();
+		
+		if( Config.getBoolean( module, QIIME_PLOT_ALPHA_METRICS ) ) 
+			numMetaCols = numMetaCols - getQiimeAlphaMetrics( module ).size();
 
 		if( numCols != null && numCols == numMetaCols || numMetaCols == 0 ) {
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
@@ -306,14 +310,25 @@ public final class RMetaUtil {
 
 	private static boolean isQiimeMetric( final BioModule module, final String field ) {
 		final Set<String> alphaDivMetrics = Config.getSet( module, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
-		if( !alphaDivMetrics.isEmpty() ) for( final String metric: alphaDivMetrics )
-			if( field.equals( metric + QIIME_ALPHA_METRIC_SUFFIX ) ) {
-				Log.info( RMetaUtil.class, "Metadata field (" + field + ") --> is QIIME metric: " + metric );
-				return true;
-			}
+		if( !alphaDivMetrics.isEmpty() ) 
+			for( final String metric: alphaDivMetrics )
+				if( field.equals( metric + QIIME_ALPHA_METRIC_SUFFIX ) ) {
+					Log.info( RMetaUtil.class, "Metadata field (" + field + ") --> is QIIME metric: " + metric );
+					return true;
+				}
 
 		return false;
 	}
+	
+	private static List<String> getQiimeAlphaMetrics( final BioModule module ) {
+		final List<String> metrics = new ArrayList<>();
+		final List<String> alphaDivMetrics = Config.getList( module, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
+		if( !alphaDivMetrics.isEmpty() ) 
+			for( final String val: alphaDivMetrics ) metrics.add( val + QIIME_ALPHA_METRIC_SUFFIX );
+
+		return metrics;
+	}
+
 
 	private static boolean isValidNumericField( final String field ) throws Exception {
 		if( field != null && MetaUtil.getFieldNames().contains( field ) ) {

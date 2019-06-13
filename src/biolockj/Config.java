@@ -353,7 +353,6 @@ public class Config {
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
-		if( FileUtils.directoryContains( getPipelineDir() , configFile )  ) System.out.println(  "------------1111"  );
 		if( !DockerUtil.isDirectMode() && !FileUtils.directoryContains( getPipelineDir() , configFile ) ) {
 			FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
 		}

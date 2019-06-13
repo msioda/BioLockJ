@@ -128,8 +128,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
 				writer.write( st.nextToken() ); // write ID col
 				final List<String> record = new ArrayList<>();
-				while( st.hasMoreTokens() )
-					record.add( st.nextToken() );
+				while( st.hasMoreTokens() ) record.add( st.nextToken() );
 
 				// Add Alpha Metrics as 1st columns since these will be used later as count cols instead of meta cols
 				for( int i = numCols; i < record.size(); i++ ) {
@@ -145,8 +144,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 					}
 				}
 
-				for( int i = 0; i < numCols; i++ )
-					writer.write( TAB_DELIM + record.get( i ) );
+				for( int i = 0; i < numCols; i++ ) writer.write( TAB_DELIM + record.get( i ) );
 				writer.write( RETURN );
 				isHeader = false;
 			}
@@ -274,22 +272,26 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	@Override
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
+		BufferedReader reader = null;
 		try {
 			final String endString = "Counts/sample detail:";
 			final File otuSummary = new File( getTempDir().getAbsolutePath() + File.separator + OTU_SUMMARY_FILE );
 			if( otuSummary.isFile() ) {
-				final BufferedReader reader = BioLockJUtil.getFileReader( otuSummary );
+				final String metrics = Config.getString( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
+				if( metrics != null ) sb.append( "Added Alpha Diversity Metrics: " + metrics + RETURN );
+				reader = BioLockJUtil.getFileReader( otuSummary );
 				sb.append( "OTU Summary" + RETURN );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 					if( line.trim().equals( endString ) ) break;
 					if( !line.trim().isEmpty() ) sb.append( line + RETURN );
 				}
-
 				reader.close();
 			}
 			return super.getSummary() + sb.toString();
 		} catch( final Exception ex ) {
 			Log.warn( getClass(), "Unable to complete module summary: " + ex.getMessage() );
+		} finally {
+			if( reader != null ) reader.close();
 		}
 
 		return super.getSummary();
@@ -426,8 +428,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		final StringBuffer sb = new StringBuffer();
 		final Iterator<String> metrics = Config.requireList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
 		sb.append( metrics.next() );
-		while( metrics.hasNext() )
-			sb.append( "," ).append( metrics.next() );
+		while( metrics.hasNext() ) sb.append( "," ).append( metrics.next() );
 		return sb.toString();
 	}
 
