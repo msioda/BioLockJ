@@ -139,15 +139,6 @@ public class RuntimeParamUtil {
 	public static String getDockerHostMetaDir() {
 		return params.get( META_DIR );
 	}
-	
-	/**
-	 * Runtime property getter for {@value #PRIMER_DIR}
-	 * 
-	 * @return Primer file directory path
-	 */
-	public static String getDockerHostPrimerDir() {
-		return params.get( PRIMER_DIR );
-	}
 
 	/**
 	 * Return host on which Docker container is running
@@ -165,6 +156,15 @@ public class RuntimeParamUtil {
 	 */
 	public static String getDockerHostPipelineDir() {
 		return params.get( HOST_BLJ_PROJ_DIR );
+	}
+
+	/**
+	 * Runtime property getter for {@value #PRIMER_DIR}
+	 * 
+	 * @return Primer file directory path
+	 */
+	public static String getDockerHostPrimerDir() {
+		return params.get( PRIMER_DIR );
 	}
 
 	/**
@@ -527,16 +527,16 @@ public class RuntimeParamUtil {
 	 * Metadata file directory path runtime parameter switch: {@value #META_DIR}
 	 */
 	protected static final String META_DIR = "-m";
-	
-	/**
-	 * Primer file directory path runtime parameter switch: {@value #PRIMER_DIR}
-	 */
-	protected static final String PRIMER_DIR = "-t";
 
 	/**
 	 * Change password runtime parameter switch: {@value #PASSWORD}
 	 */
 	protected static final String PASSWORD = "-p";
+
+	/**
+	 * Primer file directory path runtime parameter switch: {@value #PRIMER_DIR}
+	 */
+	protected static final String PRIMER_DIR = "-t";
 
 	/**
 	 * Restart pipeline runtime parameter switch: {@value #RESTART_DIR}

@@ -133,7 +133,7 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
 		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
-		final double aveRowSum = ((double)tableSum) / ((double)filteredSampleIDs.size());
+		final double aveRowSum = (double) tableSum / (double) filteredSampleIDs.size();
 
 		Log.debug( getClass(), "Final Table Sum = " + tableSum );
 		Log.debug( getClass(), "Average Row Sum = " + aveRowSum );
@@ -144,7 +144,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 			final List<String> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
 
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ ) {
-				final Double normVal = aveRowSum * ((double)dataPointsUnnormalized.get( x ).get( y )) / ((double)rowSum + 1);
+				final Double normVal =
+					aveRowSum * (double) dataPointsUnnormalized.get( x ).get( y ) / ( (double) rowSum + 1 );
 				dataPointsNormalized.get( x ).add( new Long( normVal.longValue() ).toString() );
 				if( allZeroIndex.contains( x ) ) {
 					// index 0 = col headers, so add + 1
@@ -183,7 +184,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 	 */
 	protected static List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
 		final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
-		for( final String id: zeroSampleIDs ) sampleIDs.remove( id );
+		for( final String id: zeroSampleIDs )
+			sampleIDs.remove( id );
 		return sampleIDs;
 	}
 
@@ -198,7 +200,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		for( int x = 0; x < data.size(); x++ )
 			for( int y = 0; y < data.get( x ).size(); y++ ) {
 				long sum = 0;
-				for( final Long d: data.get( x ) ) sum += d;
+				for( final Long d: data.get( x ) )
+					sum += d;
 				if( sum == 0 ) allZero.add( x );
 			}
 		return allZero;
@@ -234,7 +237,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 
 		writer.write( MetaUtil.getID() );
 
-		for( final String s: taxaNames ) writer.write( Constants.TAB_DELIM + s );
+		for( final String s: taxaNames )
+			writer.write( Constants.TAB_DELIM + s );
 
 		writer.write( Constants.RETURN );
 

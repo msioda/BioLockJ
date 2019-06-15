@@ -103,8 +103,9 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 						if( otu.contains( level ) ) {
 							parentTaxa = TaxaUtil.getTaxaName( otu, level );
 							parentLevel = level;
-						} else if( parentTaxa != null && Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) ) 
-							otu += Constants.SEPARATOR + OtuUtil.buildOtuTaxa( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
+						} else if( parentTaxa != null && Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) )
+							otu += Constants.SEPARATOR +
+								OtuUtil.buildOtuTaxa( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 
 					final int diff = otuCount - totalCount;
 					fullPathOtuCounts.put( otu, diff );
@@ -137,13 +138,15 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 
 	private static Set<String> getChildren( final TreeMap<String, Integer> otuCounts, final String otu ) {
 		final Set<String> kids = new HashSet<>();
-		for( final String key: otuCounts.keySet() ) if( key.contains( otu ) ) kids.add( key );
+		for( final String key: otuCounts.keySet() )
+			if( key.contains( otu ) ) kids.add( key );
 		return kids;
 	}
 
 	private static int totalCount( final TreeMap<String, Integer> otuCounts, final Set<String> otus ) {
 		int count = 0;
-		for( final String otu: otus ) count += otuCounts.get( otu );
+		for( final String otu: otus )
+			count += otuCounts.get( otu );
 		return count;
 	}
 

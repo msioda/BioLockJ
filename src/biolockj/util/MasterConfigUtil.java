@@ -59,7 +59,8 @@ public class MasterConfigUtil {
 		final String defaultStats = ModuleUtil.getDefaultStatsModule();
 		final Set<String> configMods = Config.getSet( null, Constants.INTERNAL_BLJ_MODULE );
 		boolean foundQiime = false;
-		for( final String mod: configMods ) if( mod.toLowerCase().contains( Constants.QIIME ) ) foundQiime = true;
+		for( final String mod: configMods )
+			if( mod.toLowerCase().contains( Constants.QIIME ) ) foundQiime = true;
 		if( !foundQiime ) usedProps.remove( Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 
 		if( !ModuleUtil.moduleExists( defaultDemux ) && !configMods.contains( defaultDemux ) ) {

@@ -297,7 +297,8 @@ public class MetaUtil {
 	 */
 	public static List<String> getSampleIds() {
 		final List<String> ids = new ArrayList<>();
-		for( final String key: metadataMap.keySet() ) if( !key.equals( metaId ) ) ids.add( key );
+		for( final String key: metadataMap.keySet() )
+			if( !key.equals( metaId ) ) ids.add( key );
 		Collections.sort( ids );
 		return ids;
 	}

@@ -15,8 +15,7 @@ import java.io.File;
 import java.util.*;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.exception.*;
 import biolockj.module.*;
 import biolockj.module.classifier.r16s.RdpClassifier;
 import biolockj.module.implicit.qiime.*;
@@ -34,9 +33,15 @@ public class DockerUtil {
 	 * 
 	 * @param module BioModule
 	 * @return Bash function to run docker
-	 * @throws Exception if unable to build the function
+	 * @throws ConfigNotFoundException If required {@link biolockj.Config} properties are undefined
+	 * @throws ConfigViolationException If {@value biolockj.Constants#EXE_DOCKER} property name does not start with
+	 * prefix "exe."
+	 * @throws ConfigFormatException If {@value #SAVE_CONTAINER_ON_EXIT} property value is not set as a boolean
+	 * {@value biolockj.Constants#TRUE} or {@value biolockj.Constants#FALSE}
+	 * @throws ConfigPathException If mounted Docker volumes are not found on host or container file-system
 	 */
-	public static List<String> buildSpawnDockerContainerFunction( final BioModule module ) throws Exception {
+	public static List<String> buildSpawnDockerContainerFunction( final BioModule module )
+		throws ConfigViolationException, ConfigNotFoundException, ConfigFormatException, ConfigPathException {
 		final List<String> lines = new ArrayList<>();
 		final String cmd = Config.getExe( module, Constants.EXE_DOCKER ) + " run " + rmFlag( module ) +
 			getDockerEnvVars() + " " + getDockerVolumes( module ) + getDockerImage( module );
@@ -278,7 +283,8 @@ public class DockerUtil {
 		return " -e \"" + COMPUTE_SCRIPT + "=$1\"";
 	}
 
-	private static String getDockerVolumes( final BioModule module ) throws Exception {
+	private static String getDockerVolumes( final BioModule module )
+		throws ConfigPathException, ConfigNotFoundException {
 		Log.debug( DockerUtil.class, "Assign Docker volumes for module: " + module.getClass().getSimpleName() );
 
 		String dockerVolumes = "-v " + DOCKER_SOCKET + ":" + DOCKER_SOCKET + " -v " +
@@ -291,7 +297,7 @@ public class DockerUtil {
 		dockerVolumes +=
 			" -v " + RuntimeParamUtil.getDockerHostPipelineDir() + ":" + DOCKER_PIPELINE_DIR + ":delegated";
 		dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostConfigDir() + ":" + DOCKER_CONFIG_DIR + ":ro";
-		
+
 		if( RuntimeParamUtil.getDockerHostMetaDir() != null )
 			dockerVolumes += " -v " + RuntimeParamUtil.getDockerHostMetaDir() + ":" + DOCKER_META_DIR + ":ro";
 
@@ -310,19 +316,19 @@ public class DockerUtil {
 		return dockerVolumes;
 	}
 
-//	private static String getVolumePath( final String path ) {
-//		Log.info( DockerUtil.class, "Map Docker volume getVolumePath( " + path + " )" );
-//		String newPath = path;
-//		if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) )
-//			newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() +
-//				path.substring( CONTAINER_BLJ_SUP_DIR.length() );
-//		if( path.startsWith( CONTAINER_BLJ_DIR ) ) newPath =
-//			RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + path.substring( CONTAINER_BLJ_DIR.length() );
-//		Log.info( DockerUtil.class, "Map Docker volume newPath -----> ( " + newPath + " )" );
-//		return newPath;
-//	}
+	// private static String getVolumePath( final String path ) {
+	// Log.info( DockerUtil.class, "Map Docker volume getVolumePath( " + path + " )" );
+	// String newPath = path;
+	// if( path.startsWith( CONTAINER_BLJ_SUP_DIR ) )
+	// newPath = RuntimeParamUtil.getDockerHostBLJ_SUP().getAbsolutePath() +
+	// path.substring( CONTAINER_BLJ_SUP_DIR.length() );
+	// if( path.startsWith( CONTAINER_BLJ_DIR ) ) newPath =
+	// RuntimeParamUtil.getDockerHostBLJ().getAbsolutePath() + path.substring( CONTAINER_BLJ_DIR.length() );
+	// Log.info( DockerUtil.class, "Map Docker volume newPath -----> ( " + newPath + " )" );
+	// return newPath;
+	// }
 
-	private static final String rmFlag( final BioModule module ) throws Exception {
+	private static final String rmFlag( final BioModule module ) throws ConfigFormatException {
 		return Config.getBoolean( module, SAVE_CONTAINER_ON_EXIT ) ? "": DOCK_RM_FLAG;
 	}
 
@@ -384,6 +390,14 @@ public class DockerUtil {
 	public static final String ROOT_HOME = File.separator + DOCKER_USER;
 
 	/**
+	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
+	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
+	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
+	 * versions of these modules and add new modules in their own Docker Hub account.
+	 */
+	protected static final String DOCKER_HUB_USER = "docker.user";
+
+	/**
 	 * Docker container blj_support dir for dev support: {@value #CONTAINER_BLJ_DIR}
 	 */
 	static final String CONTAINER_BLJ_DIR = "/app/biolockj";
@@ -419,14 +433,6 @@ public class DockerUtil {
 	 * Name of the bash script function used to generate a new Docker container: {@value #SPAWN_DOCKER_CONTAINER}
 	 */
 	static final String SPAWN_DOCKER_CONTAINER = "spawnDockerContainer";
-
-	/**
-	 * {@link biolockj.Config} name of the Docker Hub user with the BioLockJ containers: {@value #DOCKER_HUB_USER}<br>
-	 * Docker Hub URL: <a href="https://hub.docker.com" target="_top">https://hub.docker.com</a><br>
-	 * By default the "biolockj" user is used to pull the standard modules, but advanced users can deploy their own
-	 * versions of these modules and add new modules in their own Docker Hub account.
-	 */
-	protected static final String DOCKER_HUB_USER = "docker.user";
 
 	private static final String BLJ_BASH = "blj_bash";
 	private static final String COMPUTE_SCRIPT = "COMPUTE_SCRIPT";

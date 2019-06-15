@@ -259,8 +259,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 					}
 				}
 
-				if( !unequalNumReads.isEmpty() )
-					throw new ConfigViolationException( REQUIRE_EUQL_NUM_PAIRS, "Paired reads require an equal number of reads: " + unequalNumReads );
+				if( !unequalNumReads.isEmpty() ) throw new ConfigViolationException( REQUIRE_EUQL_NUM_PAIRS,
+					"Paired reads require an equal number of reads: " + unequalNumReads );
 			}
 		}
 	}

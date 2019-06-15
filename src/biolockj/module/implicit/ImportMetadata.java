@@ -111,7 +111,8 @@ public class ImportMetadata extends BioModuleImpl {
 		try {
 			writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 			writer.write( MetaUtil.getID() + Constants.RETURN );
-			for( final String id: getSampleIds() ) writer.write( id + Constants.RETURN );
+			for( final String id: getSampleIds() )
+				writer.write( id + Constants.RETURN );
 		} catch( final Exception ex ) {
 			ex.printStackTrace();
 			throw new MetadataException( "Unable to find module input sequence files: " + ex.getMessage() );
@@ -148,22 +149,8 @@ public class ImportMetadata extends BioModuleImpl {
 			id = id.substring( 1 );
 			Log.info( getClass(), "Updated ID = " + id );
 		}
-	
+
 		return id;
-	}
-	
-	private String formatSampleId( String sampleId ) {
-		String id = sampleId;
-		if( id.endsWith( Constants.GZIP_EXT ) ) {
-			id = id.substring( 0, id.length() - 3 );
-			Log.info( getClass(), "Updated ID = " + id );
-		}
-		if( id.endsWith( Constants.FASTA ) || id.endsWith( Constants.FASTQ ) ) {
-			id = id.substring( 0, id.length() - 6 );
-			Log.info( getClass(), "Updated ID = " + id );
-		}
-		return id;
-		
 	}
 
 	/**
@@ -257,11 +244,8 @@ public class ImportMetadata extends BioModuleImpl {
 					if( cell == null || cell.equals( MetaUtil.getNullValue( this ) ) ) continue;
 				}
 				this.colNames.add( cell );
-			} else if( cell.isEmpty() ) {
-				cell = MetaUtil.getNullValue( this );
-			} else if( sb.toString().isEmpty() ) {
-				cell = formatSampleId( cell ); 
-			}
+			} else if( cell.isEmpty() ) cell = MetaUtil.getNullValue( this );
+			else if( sb.toString().isEmpty() ) cell = formatSampleId( cell );
 
 			Log.debug( getClass(), "====> Set Row # [" + this.rowNum + "] - Column#[" + colNum + "] = " + cell );
 			sb.append( cell );
@@ -297,6 +281,20 @@ public class ImportMetadata extends BioModuleImpl {
 	private boolean doIdToSeqVerifiction() throws Exception {
 		return Config.getBoolean( this, MetaUtil.USE_EVERY_ROW ) && ( SeqUtil.isFastA() || SeqUtil.isFastQ() ) &&
 			!SeqUtil.isMultiplexed();
+	}
+
+	private String formatSampleId( final String sampleId ) {
+		String id = sampleId;
+		if( id.endsWith( Constants.GZIP_EXT ) ) {
+			id = id.substring( 0, id.length() - 3 );
+			Log.info( getClass(), "Updated ID = " + id );
+		}
+		if( id.endsWith( Constants.FASTA ) || id.endsWith( Constants.FASTQ ) ) {
+			id = id.substring( 0, id.length() - 6 );
+			Log.info( getClass(), "Updated ID = " + id );
+		}
+		return id;
+
 	}
 
 	/**

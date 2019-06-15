@@ -29,7 +29,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	/**
 	 * If called for level not included in {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS},
 	 * check if the top level taxonomy level is already assigned. If so, populate missing levels by passing the parent
-	 * taxa to {@link biolockj.util.TaxaUtil#getUnclassifiedTaxa(String, String)} until the given in level is assigned.<br>
+	 * taxa to {@link biolockj.util.TaxaUtil#getUnclassifiedTaxa(String, String)} until the given in level is
+	 * assigned.<br>
 	 * <br>
 	 * This method assumes it is called repeatedly for each OTU (once/level) and that each subsequent call passes a
 	 * lower taxonomy level than the previous.
@@ -123,12 +124,11 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		try {
 			String parentTaxa = null;
 			String parentLevel = null;
-			
+
 			for( final String level: TaxaUtil.getTaxaLevels() ) {
 				String taxaName = this.taxaMap.get( level );
-				if( Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) && taxaName == null || taxaName.isEmpty() ) {
-					taxaName = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
-				}
+				if( Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) && taxaName == null ||
+					taxaName.isEmpty() ) taxaName = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
 				else {
 					parentTaxa = taxaName;
 					parentLevel = level;
@@ -192,6 +192,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	/**
 	 * Populate missing OTUs if top level taxa is defined and there is a level gap between the top level and the bottom
 	 * level. If configured, missing levels inherit the parent name as "Unclassified (parent-name) OTU".
+	 * 
 	 * @throws ConfigFormatException if Config prop boolean does not contain Y or N
 	 */
 	protected void populateInBetweenTaxa() throws ConfigFormatException {
@@ -204,7 +205,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 				numFound++;
 				parentTaxa = this.taxaMap.get( level );
 				parentLevel = level;
-			} else if( Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) && parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
+			} else if( Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) && parentTaxa != null &&
+				this.taxaMap.get( level ) == null && numFound < numTaxa )
 				this.taxaMap.put( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 			else if( numFound == numTaxa ) break;
 	}

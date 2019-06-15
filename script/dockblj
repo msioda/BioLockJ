@@ -24,7 +24,7 @@ GUI_PORT=8080
 # In AWS mode, add a indicator, otherwise include the Host path for pipeline input. 
 # These paths are used by biolockj_controller to map Docker volumes for java_module containers
 blj_options() {
-	options="-u ${HOME} -b $(blj_proj) -h $(hostname)" 
+	options="-u ${HOME} -b $(blj_proj) -h $(hostname) -i ${inputDir}" 
 	! $(null_var $blj) && options="${options} -blj ${BLJ}"
 	! $(null_var $blj_sup) && options="${options} -blj_sup ${BLJ_SUP}"
 	! $(null_var $runGui) && echo "${options}" && return
@@ -32,7 +32,8 @@ blj_options() {
 	! $(null_var $newPass) && options="${options} -p $newPass"
 	! $(null_var $metaPath) && options="${options} -m $metaPath"
 	! $(null_var $primerPath) && options="${options} -t $primerPath"
-	echo "${options} -i ${inputDir} -c ${config} ${runAws}"
+	! $(null_var $runAws) && options="${options} ${runAws}"
+	echo "${options} -c ${config}"
 }
 
 # If dockblj called by biolockj_controller Docker container in GUI mode, set BLJ_PROJ based on the $BLJ_OPTIONS
@@ -168,7 +169,7 @@ verify_inputs() {
 	! $(null_var $primerPath) && verify_dir $primerPath	
 }
 
-printf "\n ---------> Execute CMD [  dockblj $(echo ${@})  ]\n\n"
+printf "\n ---------> Execute CMD [  dockblj $(echo ${@})  ]\n"
 scan_script_and_env_args $@
 $(null_var $runGui) && verify_inputs 
 run_docker

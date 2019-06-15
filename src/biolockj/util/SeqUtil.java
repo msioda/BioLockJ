@@ -265,8 +265,7 @@ public class SeqUtil {
 		// trim directional suffix
 		if( !isMultiplexed() && fwReadSuffix != null && id.indexOf( fwReadSuffix ) > 0 )
 			id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
-		
-		
+
 		// trim files extensions: .gz | .fasta | .fastq
 		if( isGzipped( id ) ) id = id.substring( 0, id.length() - 3 );
 		if( id.toLowerCase().endsWith( "." + Constants.FASTA ) || id.toLowerCase().endsWith( "." + Constants.FASTQ ) )
@@ -277,9 +276,9 @@ public class SeqUtil {
 		final String trimSuffix = Config.getString( null, Constants.INPUT_TRIM_SUFFIX );
 		if( trimPrefix != null && id.indexOf( trimPrefix ) > -1 )
 			id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
-		
+
 		if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 ) id = id.substring( 0, id.indexOf( trimSuffix ) );
-		
+
 		if( id == null || id.isEmpty() )
 			throw new SequnceFormatException( "Unable to extract a valid Sample ID from: " + value );
 		return id;

@@ -66,9 +66,10 @@ public class Processor {
 	 * @param args Command args
 	 * @param label Log label
 	 * @return last line of process output
-	 * @throws Exception if errors occur in the Processor
+	 * @throws IOException if errors occur reading the InputStream
+	 * @throws InterruptedException if the thread process is interrupted
 	 */
-	public String runJob( final String[] args, final String label ) throws Exception {
+	public String runJob( final String[] args, final String label ) throws IOException, InterruptedException {
 		Log.info( getClass(), "[ " + label + " ]: STARTING" );
 		Log.info( getClass(), "[ " + label + " ]: CMD --> " + getArgsAsString( args ) );
 		final Process p = Runtime.getRuntime().exec( args );
@@ -147,8 +148,7 @@ public class Processor {
 	}
 
 	/**
-	 * Set file permissions by executing chmod {@value biolockj.module.ScriptModule#SCRIPT_PERMISSIONS} on generated
-	 * bash scripts.
+	 * Set file permissions by executing chmod {@value biolockj.Constants#SCRIPT_PERMISSIONS} on generated bash scripts.
 	 *
 	 * @param path Target directory path
 	 * @param permissions Set the chmod security bits (ex 764)
@@ -172,9 +172,10 @@ public class Processor {
 	 *
 	 * @param module ScriptModule that is submitting its main script as a Processor
 	 * 
-	 * @throws Exception if errors occur during execution
+	 * @throws IOException if errors occur reading the InputStream
+	 * @throws InterruptedException if the thread process is interrupted
 	 */
-	public static void submit( final ScriptModule module ) throws Exception {
+	public static void submit( final ScriptModule module ) throws IOException, InterruptedException {
 		new Processor().runJob( module.getJobParams(), module.getClass().getSimpleName() );
 	}
 
@@ -184,9 +185,10 @@ public class Processor {
 	 * @param cmd Command
 	 * @param label Process Label
 	 * @return script output
-	 * @throws Exception if errors occur
+	 * @throws IOException if errors occur reading the InputStream
+	 * @throws InterruptedException if the thread process is interrupted
 	 */
-	public static String submit( final String cmd, final String label ) throws Exception {
+	public static String submit( final String cmd, final String label ) throws IOException, InterruptedException {
 		return new Processor().runJob( new String[] { cmd }, label );
 	}
 
@@ -197,9 +199,10 @@ public class Processor {
 	 *
 	 * @param args Terminal command created from args (adds 1 space between each array element)
 	 * @param label - Process label
-	 * @throws Exception if errors occur during execution
+	 * @throws IOException if errors occur reading the InputStream
+	 * @throws InterruptedException if the thread process is interrupted
 	 */
-	public static void submit( final String[] args, final String label ) throws Exception {
+	public static void submit( final String[] args, final String label ) throws IOException, InterruptedException {
 		new Processor().runJob( args, label );
 	}
 
@@ -245,7 +248,7 @@ public class Processor {
 		return false;
 	}
 
-	private static String[] bashVarArgs( final String bashVar ) throws Exception {
+	private static String[] bashVarArgs( final String bashVar ) throws ConfigPathException {
 		final File profile = BioLockJUtil.getUserProfile();
 		if( profile != null )
 			return new String[] { bashVarScript().getAbsolutePath(), bashVar, profile.getAbsolutePath() };

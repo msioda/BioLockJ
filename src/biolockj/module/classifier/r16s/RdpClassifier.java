@@ -59,7 +59,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	 * RDP uses java to run a JAR file, so no special command is required
 	 */
 	@Override
-	public String getClassifierExe() throws ConfigViolationException {
+	public String getClassifierExe() throws ConfigException {
 		return null;
 	}
 
@@ -67,7 +67,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	 * Do not accept -t to define a database, since that instead requires the specific property: {@value #RDP_DB}
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception {
+	public List<String> getClassifierParams() throws ConfigException {
 		final List<String> validParams = new ArrayList<>();
 		for( final String param: Config.getList( this, RDP_PARAMS ) )
 			if( param.startsWith( DB_PARAM ) )

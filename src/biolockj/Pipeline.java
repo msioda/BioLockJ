@@ -68,14 +68,12 @@ public class Pipeline {
 	}
 
 	/**
-	 * Return {@value Constants#SCRIPT_SUCCESS} if no pipelineException has been thrown, otherwise return
-	 * FAILED
+	 * Return {@value Constants#SCRIPT_SUCCESS} if no pipelineException has been thrown, otherwise return FAILED
 	 *
 	 * @return pipeline status (SUCCESS or FAILED)
 	 */
 	public static String getStatus() {
-		if( pipelineException != null || getModules() == null || getModules().isEmpty() )
-			return "FAILED";
+		if( pipelineException != null || getModules() == null || getModules().isEmpty() ) return "FAILED";
 		for( final BioModule module: getModules() )
 			if( !ModuleUtil.isComplete( module ) && !( module instanceof Email ) ) return "FAILED";
 		return Constants.SCRIPT_SUCCESS.toUpperCase();

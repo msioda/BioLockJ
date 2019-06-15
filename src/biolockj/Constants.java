@@ -17,12 +17,6 @@ package biolockj;
 public class Constants {
 
 	/**
-	 * {@link biolockj.Config} Boolean property: {@value #REPORT_UNCLASSIFIED_TAXA}<br>
-	 * Set the max number of minutes to allow for S3 transfers to complete.
-	 */
-	public static final String REPORT_UNCLASSIFIED_TAXA = "report.unclassifiedTaxa";
-	
-	/**
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();
@@ -152,6 +146,7 @@ public class Constants {
 	 * Set command line executable docker
 	 */
 	public static final String EXE_DOCKER = "exe.docker";
+
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
 	 * Set command line executable gzip
@@ -187,7 +182,6 @@ public class Constants {
 	 * File extension for fastq files: {@value #FASTQ}
 	 */
 	public static final String FASTQ = "fastq";
-
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #GENUS}
 	 */
@@ -215,6 +209,7 @@ public class Constants {
 	 * {@value #HN2_DISABLE_PATH_COVERAGE}
 	 */
 	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
+
 	/**
 	 * HumanN2 file suffix identifier for Gene Family Summary report: {@value #HN2_GENE_FAM_SUM}
 	 */
@@ -250,7 +245,6 @@ public class Constants {
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
-
 	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_FORWARD_READ_SUFFIX}<br>
 	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
@@ -609,6 +603,12 @@ public class Constants {
 	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #REPORT_UNCLASSIFIED_TAXA}<br>
+	 * Set the max number of minutes to allow for S3 transfers to complete.
+	 */
+	public static final String REPORT_UNCLASSIFIED_TAXA = "report.unclassifiedTaxa";
+
+	/**
 	 * Return character: *backslash-n*
 	 */
 	public static final String RETURN = "\n";
@@ -618,6 +618,17 @@ public class Constants {
 	 * {@value #RM_TEMP_FILES}
 	 */
 	public static final String RM_TEMP_FILES = "pipeline.deleteTempFiles";
+
+	/**
+	 * Rscript exe commmand.
+	 */
+	public static final String RSCRIPT = "Rscript";
+
+	/**
+	 * {@link biolockj.Config} List property: {@value #SCRIPT_DEFAULT_HEADER}<br>
+	 * Store default script header for MAIN script and locally run WORKER scripts.
+	 */
+	public static final String SCRIPT_DEFAULT_HEADER = "script.defaultHeader";
 
 	/**
 	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
@@ -630,6 +641,25 @@ public class Constants {
 	public static final String SCRIPT_FAILURES = "Failures";
 
 	/**
+	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_NUM_THREADS}<br>
+	 * Used to reserve cluster resources and passed to any external application call that accepts a numThreads
+	 * parameter.
+	 */
+	public static final String SCRIPT_NUM_THREADS = "script.numThreads";
+
+	/**
+	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_NUM_WORKERS}<br>
+	 * Set number of samples to process per script (if parallel processing)
+	 */
+	public static final String SCRIPT_NUM_WORKERS = "script.numWorkers";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #SCRIPT_PERMISSIONS}<br>
+	 * Used as chmod permission parameter (ex: 774)
+	 */
+	public static final String SCRIPT_PERMISSIONS = "script.permissions";
+
+	/**
 	 * File suffix appended to started script: {@value #SCRIPT_STARTED}
 	 */
 	public static final String SCRIPT_STARTED = "Started";
@@ -638,6 +668,12 @@ public class Constants {
 	 * File suffix appended to successful scripts: {@value #SCRIPT_SUCCESS}
 	 */
 	public static final String SCRIPT_SUCCESS = "Success";
+
+	/**
+	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_TIMEOUT}<br>
+	 * Sets # of minutes before worker scripts times out.
+	 */
+	public static final String SCRIPT_TIMEOUT = "script.timeout";
 
 	/**
 	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}

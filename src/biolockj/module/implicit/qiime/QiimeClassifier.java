@@ -59,13 +59,12 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
-		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final List<List<String>> data = new ArrayList<>();
 		final List<String> lines = new ArrayList<>();
 		lines.add( SCRIPT_PRINT_CONFIG );
 		lines.add( SCRIPT_SUMMARIZE_TAXA + " -a --" + SUMMARIZE_TAXA_SUPPRESS_BIOM + " -i " + files.get( 0 ) + " -L " +
-			getLowestQiimeTaxaLevel() + " -o " + outDir );
+			getLowestQiimeTaxaLevel() + " -o " + getOutputDir().getAbsolutePath() + File.separator );
 		lines.add( SCRIPT_SUMMARIZE_BIOM + " -i " + files.get( 0 ) + " -o " + tempDir + OTU_SUMMARY_FILE );
 		if( Config.getString( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS ) != null ) {
 			final File newMapping = new File( tempDir + MetaUtil.getFileName() );
@@ -128,7 +127,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 				final StringTokenizer st = new StringTokenizer( line, TAB_DELIM );
 				writer.write( st.nextToken() ); // write ID col
 				final List<String> record = new ArrayList<>();
-				while( st.hasMoreTokens() ) record.add( st.nextToken() );
+				while( st.hasMoreTokens() )
+					record.add( st.nextToken() );
 
 				// Add Alpha Metrics as 1st columns since these will be used later as count cols instead of meta cols
 				for( int i = numCols; i < record.size(); i++ ) {
@@ -144,7 +144,8 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 					}
 				}
 
-				for( int i = 0; i < numCols; i++ ) writer.write( TAB_DELIM + record.get( i ) );
+				for( int i = 0; i < numCols; i++ )
+					writer.write( TAB_DELIM + record.get( i ) );
 				writer.write( RETURN );
 				isHeader = false;
 			}
@@ -164,7 +165,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 * QIIME calls python scripts, so no special command is required
 	 */
 	@Override
-	public String getClassifierExe() throws ConfigViolationException {
+	public String getClassifierExe() throws ConfigException {
 		return null;
 	}
 
@@ -172,7 +173,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 * Obtain the QIIME runtime params
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception {
+	public List<String> getClassifierParams() throws ConfigException {
 		return Config.getList( this, QIIME_PARAMS );
 	}
 
@@ -213,12 +214,12 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 					QIIME_TAXA_DB + "=" + taxaDB );
 		}
 
-		Log.info( getClass(), "pynastDB: " + pynastDB );
-		Log.info( getClass(), "refSeqDB: " + refSeqDB );
-		Log.info( getClass(), "taxaDB: " + taxaDB );
 		final File commonParentDir = BioLockJUtil.getCommonParent(
 			BioLockJUtil.getCommonParent( new File( pynastDB ), new File( refSeqDB ) ), new File( taxaDB ) );
-		Log.info( getClass(), "commonParentDir: " + commonParentDir.getAbsolutePath() );
+		Log.debug( getClass(), "pynastDB: " + pynastDB );
+		Log.debug( getClass(), "refSeqDB: " + refSeqDB );
+		Log.debug( getClass(), "taxaDB: " + taxaDB );
+		Log.debug( getClass(), "commonParentDir: " + commonParentDir.getAbsolutePath() );
 		setDbCache( commonParentDir );
 
 		return getDbCache();
@@ -354,7 +355,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		final File dir = new File( inDir.substring( 0, i ) );
 		if( !dir.isDirectory() )
 			throw new Exception( "Module input directory not found! --> " + dir.getAbsolutePath() );
-
 		return dir;
 	}
 
@@ -363,33 +363,36 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 * {@link biolockj.Config}.{@value #QIIME_PARAMS}
 	 *
 	 * @return Validated QIIME runtime parameters
-	 * @throws Exception if {@value #QIIME_PARAMS} contains invalid parameters
+	 * @throws ConfigException if {@value #QIIME_PARAMS} contains invalid parameters
 	 */
-	protected String getParams() throws Exception {
+	protected String getParams() throws ConfigException {
 		if( this.switches == null ) {
 			final String params = BioLockJUtil.join( getClassifierParams() );
 			if( params.indexOf( "-i " ) > -1 || params.indexOf( "--input_fp " ) > -1 )
-				throw new Exception( "Invalid classifier option  (-i or --input_fp) found in property (" +
-					QIIME_PARAMS + "). BioLockJ sets this value based on: " + Constants.INPUT_DIRS );
+				throw new ConfigViolationException(
+					"Invalid classifier option  (-i or --input_fp) found in property (" + QIIME_PARAMS +
+						"). BioLockJ sets this value based on: " + Constants.INPUT_DIRS );
 			if( params.indexOf( "-o " ) > -1 || params.indexOf( "--output_dir " ) > -1 )
-				throw new Exception( "Invalid classifier option  (-o or --output_dir) found in property (" +
-					QIIME_PARAMS + "). Output is stored in: " + getOutputDir().getAbsolutePath() );
+				throw new ConfigViolationException(
+					"Invalid classifier option  (-o or --output_dir) found in property (" + QIIME_PARAMS +
+						"). Output is stored in: " + getOutputDir().getAbsolutePath() );
 			if( params.indexOf( "-a " ) > -1 || params.indexOf( "-O " ) > -1 )
-				throw new Exception( "Invalid classifier option  (-a or -O) found in property (" + QIIME_PARAMS +
-					"). BioLockJ sets this value based on: " + SCRIPT_NUM_THREADS );
+				throw new ConfigViolationException( "Invalid classifier option  (-a or -O) found in property (" +
+					QIIME_PARAMS + "). BioLockJ sets this value based on: " + Constants.SCRIPT_NUM_THREADS );
 			if( params.indexOf( "-f " ) > -1 )
-				throw new Exception( "Invalid classifier option  (-f or --force) found in property (" + QIIME_PARAMS +
-					"). Output options are hanlded by BioLockJ." );
+				throw new ConfigViolationException( "Invalid classifier option  (-f or --force) found in property (" +
+					QIIME_PARAMS + "). Output options are hanlded by BioLockJ." );
 
 			this.switches = getRuntimeParams( getClassifierParams(), NUM_THREADS_PARAM );
 			if( this.switches == null || this.switches.trim().isEmpty() )
-				throw new Exception( "No threads + no exe.classifierParams found!" );
+				throw new ConfigViolationException( "No threads + no exe.classifierParams found!" );
 
 			Log.info( getClass(), "Set Qiime params: \"" + this.switches + "\"" );
 		}
 
 		return " " + this.switches;
 	}
+	
 
 	/**
 	 * Subclasses call this method to add OTU picking lines by calling {@value #SCRIPT_ADD_LABELS} via OTU picking
@@ -401,16 +404,16 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 * @param mapping File-path of mapping file
 	 * @param outputDir Directory to output {@value #COMBINED_FNA}
 	 * @return 2 script lines for the bash script
-	 * @throws Exception if errors occur
+	 ** @throws ConfigException if {@value #QIIME_PARAMS} contains invalid parameters
 	 */
 	protected List<String> getPickOtuLines( final String otuPickingScript, final File fastaDir, final String mapping,
-		final File outputDir ) throws Exception {
+		final File outputDir ) throws ConfigException {
 		final List<String> lines = new ArrayList<>();
-		lines.add( "sleep 5s" );
+		// lines.add( "sleep 5s" );
 		lines.add( SCRIPT_ADD_LABELS + " -n 1 -i " + fastaDir.getAbsolutePath() + " -m " + mapping + " -c " +
 			Constants.QIIME_DEMUX_COL + " -o " + outputDir.getAbsolutePath() );
-		final String fnaFile = outputDir + File.separator + COMBINED_FNA;
-		lines.add( otuPickingScript + getParams() + "-i " + fnaFile + " -fo " + outputDir );
+		lines.add( otuPickingScript + getParams() + "-i " + outputDir.getAbsolutePath() + File.separator +
+			COMBINED_FNA + " -fo " + outputDir.getAbsolutePath() );
 		return lines;
 	}
 
@@ -418,21 +421,22 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 * Return runtime parameters for {@value #EXE_VSEARCH_PARAMS}
 	 * 
 	 * @return Vsearch runtime parameters
-	 * @throws Exception if errors occur
+	 * @throws ConfigException if {@value #EXE_VSEARCH_PARAMS} arg contains invalid parameters
 	 */
-	protected String getVsearchParams() throws Exception {
+	protected String getVsearchParams() throws ConfigException {
 		return " " + getRuntimeParams( Config.getList( this, EXE_VSEARCH_PARAMS ), VSEARCH_NUM_THREADS_PARAM );
 	}
 
-	private String getAlphaDiversityMetrics() throws Exception {
+	private String getAlphaDiversityMetrics() throws ConfigException {
 		final StringBuffer sb = new StringBuffer();
 		final Iterator<String> metrics = Config.requireList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS ).iterator();
 		sb.append( metrics.next() );
-		while( metrics.hasNext() ) sb.append( "," ).append( metrics.next() );
+		while( metrics.hasNext() )
+			sb.append( "," ).append( metrics.next() );
 		return sb.toString();
 	}
 
-	private void verifyParamArg() throws Exception {
+	private void verifyParamArg() throws ConfigException, IOException {
 		for( final String arg: PARAM_ARGS )
 			for( final String param: getClassifierParams() )
 				if( param.startsWith( arg + " " ) ) {
@@ -450,7 +454,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 				}
 	}
 
-	private static String getLowestQiimeTaxaLevel() throws Exception {
+	private static String getLowestQiimeTaxaLevel() throws ConfigViolationException {
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.SPECIES ) ) return "7";
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.GENUS ) ) return "6";
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.FAMILY ) ) return "5";
@@ -458,8 +462,9 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.CLASS ) ) return "3";
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.PHYLUM ) ) return "2";
 		if( TaxaUtil.bottomTaxaLevel().equals( Constants.DOMAIN ) ) return "1";
-		throw new Exception( "Should not be possible to reach this error, value based on required field: " +
-			Constants.REPORT_TAXONOMY_LEVELS );
+		throw new ConfigViolationException(
+			"Should not be possible to reach this error, value based on required field: " +
+				Constants.REPORT_TAXONOMY_LEVELS );
 	}
 
 	private String switches = null;

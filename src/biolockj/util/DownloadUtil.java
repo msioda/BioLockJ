@@ -18,7 +18,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.*;
 import biolockj.*;
 import biolockj.module.BioModule;
-import biolockj.module.ScriptModule;
 import biolockj.module.report.JsonReport;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.r.R_Module;
@@ -61,9 +60,8 @@ public final class DownloadUtil {
 				} else if( module instanceof NormalizeTaxaTables ) {
 					downloadPaths.add( module.getOutputDir() );
 					downloadPaths.add( module.getTempDir() );
-				} else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables
-								|| module instanceof BuildTaxaTables )
-					downloadPaths.add( module.getOutputDir() );
+				} else if( module instanceof AddMetadataToTaxaTables || module instanceof AddMetadataToPathwayTables ||
+					module instanceof BuildTaxaTables ) downloadPaths.add( module.getOutputDir() );
 			}
 
 			if( hasRmods ) makeRunAllScript( modules );
@@ -73,12 +71,12 @@ public final class DownloadUtil {
 				FileUtils.listFiles( new File( Config.pipelinePath() ), filter, FalseFileFilter.INSTANCE );
 
 			downloadPaths.addAll( dirs );
-			
+
 			if( BioLockJUtil.pipelineInternalInputDir().isDirectory() &&
 				Config.requireSet( null, BioLockJUtil.INTERNAL_PIPELINE_INPUT_TYPES ).size() > 1 ||
-				!BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_SEQ_INPUT_TYPE ) ) 
-					downloadPaths.add( BioLockJUtil.pipelineInternalInputDir() );
-			
+				!BioLockJUtil.pipelineInputType( BioLockJUtil.PIPELINE_SEQ_INPUT_TYPE ) )
+				downloadPaths.add( BioLockJUtil.pipelineInternalInputDir() );
+
 			if( DockerUtil.inAwsEnv() ) downloadPaths.add( NextflowUtil.getNfReportDir() );
 
 			final String status =
@@ -251,8 +249,8 @@ public final class DownloadUtil {
 		final File script = getRunAllRScript();
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( script ) );
 
-		if( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
-			writer.write( Config.getString( null, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN + RETURN );
+		if( Config.getString( null, Constants.SCRIPT_DEFAULT_HEADER ) != null )
+			writer.write( Config.getString( null, Constants.SCRIPT_DEFAULT_HEADER ) + RETURN + RETURN );
 
 		writer.write( "# Use this script to locally run R modules." + RETURN );
 
@@ -260,7 +258,7 @@ public final class DownloadUtil {
 			if( mod instanceof R_Module ) {
 				final String relPath =
 					pipeRoot.toURI().relativize( ( (R_Module) mod ).getPrimaryScript().toURI() ).toString();
-				writer.write( "Rscript " + relPath + RETURN );
+				writer.write( Constants.RSCRIPT + " " + relPath + RETURN );
 			}
 
 		writer.close();

@@ -94,7 +94,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	 * Metaphlan runs python scripts, so no special command is required
 	 */
 	@Override
-	public String getClassifierExe() throws ConfigViolationException {
+	public String getClassifierExe() throws ConfigException {
 		return Config.getExe( this, EXE_METAPHLAN );
 	}
 
@@ -102,7 +102,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 	 * Obtain the metaphlan2 runtime params
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception {
+	public List<String> getClassifierParams() throws ConfigException {
 		final List<String> params = Config.getList( this, EXE_METAPHLAN_PARAMS );
 		if( getMpaDB() != null ) params.add( ALT_DB_PARAM + " " + getMpaDB().getAbsolutePath() );
 		return params;
@@ -141,9 +141,9 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 			if( params.indexOf( "--input_type " ) > -1 )
 				throw new Exception( "Invalid classifier option (--input_type) found in property (" +
 					EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value by examinging one of the input files." );
-			if( params.indexOf( NUM_THREADS_PARAM ) > -1 ) throw new Exception(
-				"Ignoring nvalid classifier option (" + NUM_THREADS_PARAM + ") found in property (" +
-					EXE_METAPHLAN_PARAMS + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
+			if( params.indexOf( NUM_THREADS_PARAM ) > -1 ) throw new Exception( "Ignoring nvalid classifier option (" +
+				NUM_THREADS_PARAM + ") found in property (" + EXE_METAPHLAN_PARAMS +
+				"). BioLockJ derives this value from property: " + Constants.SCRIPT_NUM_THREADS );
 			if( params.indexOf( "--bowtie2out " ) > -1 )
 				throw new Exception( "Invalid classifier option (--bowtie2out) found in property (" +
 					EXE_METAPHLAN_PARAMS + "). BioLockJ outputs bowtie2out files to Metaphlan2Classifier/temp." );
@@ -170,7 +170,7 @@ public class Metaphlan2Classifier extends ClassifierModuleImpl {
 		return this.defaultSwitches;
 	}
 
-	private File getMpaDB() throws Exception {
+	private File getMpaDB() throws ConfigPathException, ConfigNotFoundException {
 		if( getDB() == null ) return null;
 		if( DockerUtil.inDockerEnv() ) return DockerUtil.getDockerDB( this, null );
 		return getDB();

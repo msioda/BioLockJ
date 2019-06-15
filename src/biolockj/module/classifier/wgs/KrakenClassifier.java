@@ -102,7 +102,7 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 	 * Get kraken executable command: {@value #EXE_KRAKEN}
 	 */
 	@Override
-	public String getClassifierExe() throws ConfigViolationException {
+	public String getClassifierExe() throws ConfigException {
 		return Config.getExe( this, EXE_KRAKEN );
 	}
 
@@ -110,7 +110,7 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 	 * Obtain the kraken runtime params
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception {
+	public List<String> getClassifierParams() throws ConfigException {
 		return Config.getList( this, getExeParamName() );
 	}
 
@@ -149,9 +149,9 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 
 			if( params.indexOf( FASTA_PARAM ) > -1 ) classifierParams.remove( FASTA_PARAM );
 			if( params.indexOf( FASTQ_PARAM ) > -1 ) classifierParams.remove( FASTQ_PARAM );
-			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
-				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property (" +
-					getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
+			if( params.indexOf( NUM_THREADS_PARAM ) > -1 ) throw new Exception(
+				"Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property (" + getExeParamName() +
+					"). BioLockJ derives this value from property: " + Constants.SCRIPT_NUM_THREADS );
 			if( params.indexOf( PAIRED_PARAM ) > -1 )
 				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property (" +
 					getExeParamName() + "). BioLockJ derives this value by analyzing input sequence files" );

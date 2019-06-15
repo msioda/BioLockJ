@@ -517,7 +517,7 @@ public class NextflowUtil {
 	private static final String MAKE_NEXTFLOW_SCRIPT = "make_nextflow";
 	private static final String MODULE_SCRIPT = "BLJ_MODULE_SUB_DIR";
 	private static final String NEXTFLOW = "nextflow";
-	private static final String NF_CPUS = "$" + ScriptModule.SCRIPT_NUM_THREADS;
+	private static final String NF_CPUS = "$" + Constants.SCRIPT_NUM_THREADS;
 	private static final String NF_DIR = ".nextflow";
 	private static final String NF_DOCKER_IMAGE = "$nextflow.dockerImage";
 	private static final String NF_INIT_FLAG = "Session await";
