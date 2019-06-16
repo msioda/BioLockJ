@@ -422,11 +422,9 @@ public class BioLockJUtil {
 	 * @throws ConfigNotFoundException if a required property is undefined
 	 * @throws ConfigPathException if configured directory does not exist on the file-system
 	 * @throws ConfigViolationException if input directories contain duplicate file names
-	 * @throws SequnceFormatException if input sequence files fail initial validations
-	 * @throws ConfigFormatException if properties are found with invalid format
 	 */
 	public static void initPipelineInput() throws ConfigNotFoundException, ConfigPathException,
-		ConfigViolationException, SequnceFormatException, ConfigFormatException {
+		ConfigViolationException {
 		Collection<File> files = new HashSet<>();
 		for( final File dir: getInputDirs() ) {
 			Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
@@ -438,22 +436,6 @@ public class BioLockJUtil {
 		inputFiles.addAll( files );
 		Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 		setPipelineInputFileTypes();
-
-		if( Config.requireSet( null, INTERNAL_PIPELINE_INPUT_TYPES ).contains( PIPELINE_SEQ_INPUT_TYPE ) ) {
-			final Collection<File> seqFiles = new ArrayList<>();
-			final Collection<File> otherFiles = new ArrayList<>();
-			for( final File file: inputFiles )
-				if( SeqUtil.isSeqFile( file ) ) seqFiles.add( file );
-				else otherFiles.add( file );
-			if( MetaUtil.exists() && Config.getBoolean( null, MetaUtil.META_REQUIRED ) ) Log.info( BioLockJUtil.class,
-				"Metadata Sample IDs are required for " + seqFiles.size() + " sequence files" );
-			else Log.info( BioLockJUtil.class, "Pipeline input dirs contain " + seqFiles.size() + " sequence files" );
-			if( !otherFiles.isEmpty() ) Log.info( BioLockJUtil.class,
-				"Pipeline input dirs contain " + otherFiles.size() + " non-sequence files" );
-			inputFiles.clear();
-			inputFiles.addAll( SeqUtil.getSeqFiles( seqFiles ) );
-			inputFiles.addAll( otherFiles );
-		}
 	}
 
 	/**

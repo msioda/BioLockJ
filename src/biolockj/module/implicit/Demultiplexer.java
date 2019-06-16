@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 import biolockj.*;
 import biolockj.exception.ConfigFormatException;
+import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
 import biolockj.util.*;
@@ -101,10 +102,20 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		super.cleanUp();
 		Config.setConfigProperty( Constants.INTERNAL_MULTIPLEXED, Constants.FALSE );
 	}
+	
+	@Override
+	public List<File> getInputFiles() {
+		if( getFileCache().isEmpty() ) try {
+			cacheInputFiles( getSeqFiles( findModuleInputFiles() ) );
+		} catch( final SequnceFormatException ex ) {
+			Log.error( getClass(), "Unable to find module input sequence files: " + ex.getMessage(), ex );
+		}
+		return getFileCache();
+	}
 
 	@Override
-	public List<File> getSeqFiles( final Collection<File> files ) {
-		return getInputFiles();
+	public List<File> getSeqFiles( final Collection<File> files ) throws SequnceFormatException {
+		return SeqUtil.getSeqFiles( files );
 	}
 
 	/**
