@@ -286,7 +286,11 @@ public class BashScriptBuilder {
 
 	private static void buildWorkerScripts( final ScriptModule module, final List<List<String>> data )
 		throws Exception {
-		Log.info( BashScriptBuilder.class, "Calling buildWorkerScripts()" );
+		
+		int samplesPerWorker = new Double( Math.floor( ((double)data.size()) / ((double)ModuleUtil.getNumWorkers( module )) ) ).intValue();
+		Log.info( BashScriptBuilder.class, "Calling buildWorkerScripts - minimum samplesPerWorker: " + samplesPerWorker );
+		int workersWithMinSamples = data.size() - (ModuleUtil.getNumWorkers( module ) * samplesPerWorker);
+		int workersWithExtraSample = data.size() - workersWithMinSamples;
 		int innerListCount = 0;
 		String workerScriptPath = getWorkerScriptPath( module );
 		List<String> workerLines = initWorkerScript( module, workerScriptPath );
@@ -297,7 +301,8 @@ public class BashScriptBuilder {
 				" Worker script #" + workerScripts.size() + " is empty." );
 
 			workerLines.addAll( getWorkerScriptLines( lines ) );
-			if( !it.hasNext() || ++innerListCount % ModuleUtil.getNumSamplesPerWorker( module ) == 0 ) {
+			if( data.size() - ++innerListCount == workersWithExtraSample ) samplesPerWorker++;
+			if( !it.hasNext() || innerListCount % samplesPerWorker == 0 ) {
 				if( !( module instanceof JavaModule ) ) workerLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
 				workerScripts.add( createScript( workerScriptPath, workerLines ) );
 				if( it.hasNext() ) {

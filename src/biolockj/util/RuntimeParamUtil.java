@@ -183,7 +183,7 @@ public class RuntimeParamUtil {
 	 * @return java -jar BioLockJ.jar runtime args
 	 */
 	public static String getJavaComputeNodeArgs( final JavaModule module ) {
-		Log.info( RuntimeParamUtil.class, "Building Docker java -jar args for Cluster-Compute nodes  -->" );
+		Log.info( RuntimeParamUtil.class, "Building java args for Cluster Compute nodes  -->" );
 		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam() + " " +
 			getDirectModuleParam( module );
 	}
