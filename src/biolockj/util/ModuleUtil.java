@@ -17,6 +17,7 @@ import biolockj.*;
 import biolockj.exception.ConfigFormatException;
 import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.Demultiplexer;
 import biolockj.module.report.r.R_CalculateStats;
@@ -177,6 +178,7 @@ public class ModuleUtil {
 	 */
 	public static Integer getNumWorkers( final BioModule module )
 		throws ConfigNotFoundException, ConfigFormatException {
+		if( module instanceof JavaModule ) return 1;
 		return Math.max( 1, Math.min( maxNumWorkers( module ), module.getInputFiles().size() ) );
 	}
 
