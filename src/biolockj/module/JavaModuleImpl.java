@@ -104,7 +104,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		File script = null;
 		final Collection<File> files = FileUtils.listFiles( getScriptDir(), HiddenFileFilter.VISIBLE, null );
 		for( final File file: files ) {
-			final String key = ".0_" + getClass().getSimpleName() + SH_EXT;
+			final String key = ".00_" + getClass().getSimpleName() + SH_EXT;
 			if( file.getName().endsWith( key + "_" + status ) ) statusIndicator = file;
 
 			if( file.getName().endsWith( key ) ) script = file;
