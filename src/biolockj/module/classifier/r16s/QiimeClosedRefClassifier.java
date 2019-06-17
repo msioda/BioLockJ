@@ -46,15 +46,13 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 			lines.add( copyBatchOtuTableToOutputDir( getTempDir(), null ) );
 			data.add( lines );
 		} else if( files != null ) {
-			Log.info( getClass(),
-				"Pick closed ref OTUs with max batch size = " + ModuleUtil.getNumSamplesPerWorker( this ) );
 			int startIndex = 1;
 			int batchNum = 0;
 			for( final File f: files ) {
 				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( batchNum ).getAbsolutePath() );
 				if( doAddBatch( lines.size() ) ) {
 					data.add( getBatch( lines, batchNum++, startIndex ) );
-					startIndex += ModuleUtil.getNumSamplesPerWorker( this );
+					startIndex += ModuleUtil.getMinSamplesPerWorker( this ) + 1;
 					lines = new ArrayList<>();
 				}
 			}
@@ -137,7 +135,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
 	 */
 	protected boolean doAddBatch( final int sampleCount ) throws ConfigNotFoundException, ConfigFormatException {
-		return sampleCount % ModuleUtil.getNumSamplesPerWorker( this ) == 0;
+		return sampleCount % ( ModuleUtil.getMinSamplesPerWorker( this ) + 1 ) == 0;
 	}
 
 	/**
@@ -167,7 +165,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		throws ConfigException {
 		final File batchDir = getBatchDir( batchNum );
 		final String mapping = batchDir.getAbsolutePath() + File.separator + BATCH_MAPPING;
-		final int endIndex = index + ModuleUtil.getNumSamplesPerWorker( this );
+		final int endIndex = index + ModuleUtil.getMinSamplesPerWorker( this ) + 1;
 		lines.add( FUNCTION_CREATE_BATCH_MAPPING + " " + mapping + " " + index + " " + endIndex );
 		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getBatchFastaDir( batchNum ), mapping, batchDir ) );
 		lines.add( copyBatchOtuTableToOutputDir( batchDir, batchNum ) );

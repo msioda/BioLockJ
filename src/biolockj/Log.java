@@ -239,10 +239,8 @@ public class Log {
 	 * Print welcome message.<br>
 	 * Message includes BioLockJ version {@link biolockj.util.BioLockJUtil#getVersion()}, lab citation, and freeware
 	 * blurb.
-	 * 
-	 * @throws Exception if errors occur
 	 */
-	protected static void logWelcomeMsg() throws Exception {
+	protected static void logWelcomeMsg() {
 		Log.info( Log.class, Constants.LOG_SPACER );
 		Log.info( Log.class,
 			"Launching BioLockJ " + BioLockJUtil.getVersion() + " ~ Distributed by UNCC Fodor Lab @2019" );

@@ -305,21 +305,40 @@ public class ModuleUtil {
 			"STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 	}
-
+	
 	/**
-	 * Return the max number of samples that can be processed per worker script.
+	 * Return the min number of samples that can be processed per worker script.
 	 * 
 	 * @param module BioModule
-	 * @return Max # samples/worker
+	 * @return Min # samples/worker
 	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
 	 * integer
 	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
 	 */
-	public static Integer getNumSamplesPerWorker( final BioModule module )
+	public static Integer getMinSamplesPerWorker( final BioModule module )
 		throws ConfigNotFoundException, ConfigFormatException {
-		return new Double( Math.ceil( (double) module.getInputFiles().size() / (double) getNumWorkers( module ) ) ).intValue();
+		return new Double( Math.floor( (double) module.getInputFiles().size() / (double) getNumWorkers( module ) ) ).intValue();
 	}
 	
+	public static Integer getNumWorkersWithMaxSamples( final BioModule module )
+		throws ConfigNotFoundException, ConfigFormatException {
+		return module.getInputFiles().size() - (getNumWorkers( module ) * getMinSamplesPerWorker( module ) );
+	}
+	
+	public static Integer getNumWorkersWithMinSamples( final BioModule module )
+		throws ConfigNotFoundException, ConfigFormatException {
+		return module.getInputFiles().size() - getNumWorkersWithMaxSamples( module );
+	}
+	
+	private static void test0( BioModule module ) throws Exception {
+		System.out.println( "# samples: " + module.getInputFiles().size() );
+		System.out.println( "maxNumWorkers: " + maxNumWorkers(module) );
+		System.out.println( "getNumWorkers: " + getNumWorkers(module) );
+		System.out.println( "getMinSamplesPerWorker: " + getMinSamplesPerWorker(module) );
+		System.out.println( "getMaxSamplesPerWorker: " + ( getMinSamplesPerWorker(module) + 1 ) );
+		System.out.println( "getNumWorkersWithMinSamples: " + getNumWorkersWithMinSamples(module) );
+		System.out.println( "getNumWorkersWithMaxSamples: " + getNumWorkersWithMaxSamples(module) );
+	}
 
 	/**
 	 * Return the module ID as a 2 digit display number (add leading zero if needed).

@@ -236,7 +236,7 @@ public class BashScriptBuilder {
 
 		lines.add( PIPE_DIR + "=\"" + Config.pipelinePath() + "\"" + RETURN );
 		lines.add( "# BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | Max #samples/batch: " +
-			ModuleUtil.getNumSamplesPerWorker( module ) + RETURN );
+			( ModuleUtil.getMinSamplesPerWorker( module ) + 1 ) + RETURN );
 		lines.add( "touch " + scriptPath + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules( module ) );
 
@@ -281,33 +281,34 @@ public class BashScriptBuilder {
 		} finally {
 			if( writer != null ) writer.close();
 		}
-
+	}
+	
+	private static int workerNum() {
+		return workerScripts.size();
 	}
 
 	private static void buildWorkerScripts( final ScriptModule module, final List<List<String>> data )
 		throws Exception {
 		
-		int samplesPerWorker = new Double( Math.floor( ((double)data.size()) / ((double)ModuleUtil.getNumWorkers( module )) ) ).intValue();
-		Log.info( BashScriptBuilder.class, "Calling buildWorkerScripts - minimum samplesPerWorker: " + samplesPerWorker );
-		int workersWithMinSamples = data.size() - (ModuleUtil.getNumWorkers( module ) * samplesPerWorker);
-		int workersWithExtraSample = data.size() - workersWithMinSamples;
-		int innerListCount = 0;
+		int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( module );
+		int numWorkersWithMaxSamples = ModuleUtil.getNumWorkersWithMaxSamples(module);
+		int samplesPerWorker = 0;
 		String workerScriptPath = getWorkerScriptPath( module );
 		List<String> workerLines = initWorkerScript( module, workerScriptPath );
 		final Iterator<List<String>> it = data.iterator();
 		while( it.hasNext() ) {
 			final List<String> lines = it.next();
 			if( lines.isEmpty() ) throw new PipelineScriptException( module, true,
-				" Worker script #" + workerScripts.size() + " is empty." );
-
+				" Worker script #" + workerNum() + " is empty." );
 			workerLines.addAll( getWorkerScriptLines( lines ) );
-			if( data.size() - ++innerListCount == workersWithExtraSample ) samplesPerWorker++;
-			if( !it.hasNext() || innerListCount % samplesPerWorker == 0 ) {
+			samplesPerWorker++;
+			if( !it.hasNext() || ( workerNum() <= numWorkersWithMaxSamples ) && ( samplesPerWorker == (minSamplesPerWorker + 1) ) ||
+				( workerNum() > numWorkersWithMaxSamples ) && ( samplesPerWorker == minSamplesPerWorker ) ) {
 				if( !( module instanceof JavaModule ) ) workerLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
 				workerScripts.add( createScript( workerScriptPath, workerLines ) );
+				samplesPerWorker = 0;
 				if( it.hasNext() ) {
-					workerScriptPath = getWorkerScriptPath( module );
-					workerLines = initWorkerScript( module, workerScriptPath );
+					workerLines = initWorkerScript( module, getWorkerScriptPath( module ) );
 				}
 			}
 		}
