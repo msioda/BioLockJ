@@ -94,6 +94,21 @@ public class ModuleUtil {
 	}
 
 	/**
+	 * Return the min number of samples that can be processed per worker script.
+	 * 
+	 * @param module BioModule
+	 * @return Min # samples/worker
+	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
+	 * integer
+	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
+	 */
+	public static Integer getMinSamplesPerWorker( final BioModule module )
+		throws ConfigNotFoundException, ConfigFormatException {
+		return new Double( Math.floor( (double) module.getInputFiles().size() / (double) getNumWorkers( module ) ) )
+			.intValue();
+	}
+
+	/**
 	 * Get a module with given className unless a classifier module is found 1st.<br>
 	 * Use checkAhead parameter to determine if we look forward or backwards starting from the given module.
 	 * 
@@ -168,6 +183,20 @@ public class ModuleUtil {
 	}
 
 	/**
+	 * For uneven batch sizes, some workers will process 1 extra script. Return the number of workers that do so.
+	 * 
+	 * @param module BioModule
+	 * @return Number of worker scripts that process 1 extra sequence.
+	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
+	 * integer
+	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
+	 */
+	public static Integer getNumMaxWorkers( final BioModule module )
+		throws ConfigNotFoundException, ConfigFormatException {
+		return module.getInputFiles().size() - getNumWorkers( module ) * getMinSamplesPerWorker( module );
+	}
+
+	/**
 	 * Get the actual number of worker scripts generated for a given module, minimum value = 1.
 	 * 
 	 * @param module BioModule
@@ -179,7 +208,8 @@ public class ModuleUtil {
 	public static Integer getNumWorkers( final BioModule module )
 		throws ConfigNotFoundException, ConfigFormatException {
 		if( module instanceof JavaModule ) return 1;
-		return Math.max( 1, Math.min( maxNumWorkers( module ), module.getInputFiles().size() ) );
+		final int count = Config.requirePositiveInteger( module, Constants.SCRIPT_NUM_WORKERS );
+		return Math.max( 1, Math.min( count, module.getInputFiles().size() ) );
 	}
 
 	/**
@@ -305,54 +335,6 @@ public class ModuleUtil {
 			"STARTING [ " + ModuleUtil.displayID( module ) + " ] " + module.getClass().getName() );
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 	}
-	
-	/**
-	 * Return the min number of samples that can be processed per worker script.
-	 * 
-	 * @param module BioModule
-	 * @return Min # samples/worker
-	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
-	 * integer
-	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
-	 */
-	public static Integer getMinSamplesPerWorker( final BioModule module )
-		throws ConfigNotFoundException, ConfigFormatException {
-		return new Double( Math.floor( (double) module.getInputFiles().size() / (double) getNumWorkers( module ) ) ).intValue();
-	}
-	
-	public static Integer getNumWorkersWithMaxSamples( final BioModule module )
-		throws ConfigNotFoundException, ConfigFormatException {
-		return module.getInputFiles().size() - (getNumWorkers( module ) * getMinSamplesPerWorker( module ) );
-	}
-	
-	public static Integer getNumWorkersWithMinSamples( final BioModule module )
-		throws ConfigNotFoundException, ConfigFormatException {
-		return module.getInputFiles().size() - getNumWorkersWithMaxSamples( module );
-	}
-	
-	private static void test0( BioModule module ) throws Exception {
-		System.out.println( "# samples: " + module.getInputFiles().size() );
-		System.out.println( "maxNumWorkers: " + maxNumWorkers(module) );
-		System.out.println( "getNumWorkers: " + getNumWorkers(module) );
-		System.out.println( "getMinSamplesPerWorker: " + getMinSamplesPerWorker(module) );
-		System.out.println( "getMaxSamplesPerWorker: " + ( getMinSamplesPerWorker(module) + 1 ) );
-		System.out.println( "getNumWorkersWithMinSamples: " + getNumWorkersWithMinSamples(module) );
-		System.out.println( "getNumWorkersWithMaxSamples: " + getNumWorkersWithMaxSamples(module) );
-	}
-
-	/**
-	 * Return the module ID as a 2 digit display number (add leading zero if needed).
-	 * 
-	 * @param module BioModule
-	 * @return Number of workers
-	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
-	 * integer
-	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
-	 */
-	public static Integer maxNumWorkers( final BioModule module )
-		throws ConfigNotFoundException, ConfigFormatException {
-		return Config.requirePositiveInteger( module, Constants.SCRIPT_NUM_WORKERS );
-	}
 
 	/**
 	 * Check if a module was in the pipeline at least once.
@@ -363,7 +345,6 @@ public class ModuleUtil {
 	public static boolean moduleExists( final String className ) {
 		for( final BioModule m: Pipeline.getModules() )
 			if( m.getClass().getName().equals( className ) ) return true;
-
 		return false;
 	}
 

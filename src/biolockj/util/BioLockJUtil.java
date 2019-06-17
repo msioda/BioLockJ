@@ -423,8 +423,8 @@ public class BioLockJUtil {
 	 * @throws ConfigPathException if configured directory does not exist on the file-system
 	 * @throws ConfigViolationException if input directories contain duplicate file names
 	 */
-	public static void initPipelineInput() throws ConfigNotFoundException, ConfigPathException,
-		ConfigViolationException {
+	public static void initPipelineInput()
+		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException {
 		Collection<File> files = new HashSet<>();
 		for( final File dir: getInputDirs() ) {
 			Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );

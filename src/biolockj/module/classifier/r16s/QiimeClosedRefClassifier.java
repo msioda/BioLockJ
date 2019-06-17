@@ -47,17 +47,17 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 			data.add( lines );
 		} else if( files != null ) {
 			int startIndex = 1;
-			int batchNum = 0;
 			for( final File f: files ) {
-				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( batchNum ).getAbsolutePath() );
-				if( doAddBatch( lines.size() ) ) {
-					data.add( getBatch( lines, batchNum++, startIndex ) );
-					startIndex += ModuleUtil.getMinSamplesPerWorker( this ) + 1;
+				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( data.size() ).getAbsolutePath() );
+				if( saveBatch( data.size(), lines.size() ) ) {
+					final int sampleCount = lines.size();
+					data.add( getBatch( lines, data.size(), startIndex ) );
+					startIndex += sampleCount;
 					lines = new ArrayList<>();
 				}
 			}
 
-			if( !lines.isEmpty() ) data.add( getBatch( lines, batchNum, startIndex ) );
+			if( !lines.isEmpty() ) data.add( getBatch( lines, data.size(), startIndex ) );
 		}
 
 		return data;
@@ -87,21 +87,6 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		setNumWorkers( data.size() );
 		BashScriptBuilder.buildScripts( this, data );
 	}
-	
-	/**
-	 * Assign a specific number of worker scripts for the module
-	 * 
-	 * @param count Number of worker scripts
-	 */
-	protected void setNumWorkers( final Integer count ) {
-		Config.setConfigProperty( getClass().getSimpleName() + "." + suffix( Constants.SCRIPT_NUM_WORKERS ),
-			count.toString() );
-	}
-	
-	private static String suffix( final String prop ) {
-		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
-	}
-
 
 	/**
 	 * If paired reads found, return prerequisite module: {@link biolockj.module.seq.PearMergeReads}.
@@ -123,19 +108,6 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		lines.add( Config.getExe( this, Constants.EXE_AWK ) + " 'NR>'$2'&&NR<='$3 " + MetaUtil.getPath() + " >> $1" );
 		lines.add( "}" + RETURN );
 		return lines;
-	}
-
-	/**
-	 * Return true if the sample count indicates we have a full batch
-	 *
-	 * @param sampleCount Current number of samples processed so far
-	 * @return boolean true if another batch is needed
-	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
-	 * integer
-	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
-	 */
-	protected boolean doAddBatch( final int sampleCount ) throws ConfigNotFoundException, ConfigFormatException {
-		return sampleCount % ( ModuleUtil.getMinSamplesPerWorker( this ) + 1 ) == 0;
 	}
 
 	/**
@@ -165,7 +137,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		throws ConfigException {
 		final File batchDir = getBatchDir( batchNum );
 		final String mapping = batchDir.getAbsolutePath() + File.separator + BATCH_MAPPING;
-		final int endIndex = index + ModuleUtil.getMinSamplesPerWorker( this ) + 1;
+		final int endIndex = index + lines.size();
 		lines.add( FUNCTION_CREATE_BATCH_MAPPING + " " + mapping + " " + index + " " + endIndex );
 		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getBatchFastaDir( batchNum ), mapping, batchDir ) );
 		lines.add( copyBatchOtuTableToOutputDir( batchDir, batchNum ) );
@@ -195,7 +167,29 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		if( !f.isFile() ) f.mkdirs();
 		return f;
 	}
-	
+
+	/**
+	 * Assign a specific number of worker scripts for the module
+	 * 
+	 * @param count Number of worker scripts
+	 */
+	protected void setNumWorkers( final Integer count ) {
+		Config.setConfigProperty( getClass().getSimpleName() + "." + suffix( Constants.SCRIPT_NUM_WORKERS ),
+			count.toString() );
+	}
+
+	private boolean saveBatch( final int workerNum, final int sampleCount )
+		throws ConfigNotFoundException, ConfigFormatException {
+		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( this );
+		final int maxWorkers = ModuleUtil.getNumMaxWorkers( this );
+		return workerNum < maxWorkers && sampleCount == minSamplesPerWorker + 1 ||
+			workerNum >= maxWorkers && sampleCount == minSamplesPerWorker;
+	}
+
+	private static String suffix( final String prop ) {
+		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
+	}
+
 	/**
 	 * Closed reference OTU picking script: {@value #PICK_OTU_SCRIPT}
 	 */

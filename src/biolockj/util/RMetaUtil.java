@@ -299,11 +299,10 @@ public final class RMetaUtil {
 	private static List<String> getQiimeAlphaMetrics( final BioModule module ) {
 		final List<String> metrics = new ArrayList<>();
 		final List<String> alphaDivMetrics = Config.getList( module, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
-		if( !alphaDivMetrics.isEmpty() ) 
-			for( final String val: alphaDivMetrics ) {
-				String metric = val + QIIME_ALPHA_METRIC_SUFFIX;
-				if( MetaUtil.hasColumn( metric ) ) metrics.add( metric );
-			}
+		if( !alphaDivMetrics.isEmpty() ) for( final String val: alphaDivMetrics ) {
+			final String metric = val + QIIME_ALPHA_METRIC_SUFFIX;
+			if( MetaUtil.hasColumn( metric ) ) metrics.add( metric );
+		}
 
 		return metrics;
 	}

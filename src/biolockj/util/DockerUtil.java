@@ -49,8 +49,8 @@ public class DockerUtil {
 		lines.add( "# Spawn Docker container" );
 		lines.add( "function " + SPAWN_DOCKER_CONTAINER + "() {" );
 		lines.add( cmd );
+		lines.add( "echo \"Docker container " + module.getClass().getSimpleName() + " execution complete\"" );
 		lines.add( "}" + Constants.RETURN );
-
 		return lines;
 	}
 

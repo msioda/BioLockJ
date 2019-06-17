@@ -392,7 +392,6 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 
 		return " " + this.switches;
 	}
-	
 
 	/**
 	 * Subclasses call this method to add OTU picking lines by calling {@value #SCRIPT_ADD_LABELS} via OTU picking

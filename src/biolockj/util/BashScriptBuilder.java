@@ -57,7 +57,6 @@ public class BashScriptBuilder {
 			Log.error( BashScriptBuilder.class, "Localized error details: ", ex );
 			throw new PipelineScriptException( module, ex.getMessage() );
 		}
-
 	}
 
 	/**
@@ -72,7 +71,7 @@ public class BashScriptBuilder {
 		lines.add( "function " + FUNCTION_EXECUTE_LINE + "() {" );
 		lines.add( "${1}" );
 		lines.add( "statusCode=$?" );
-		lines.add( "[ ${statusCode} != 0 ] && " + FUNCTION_SCRIPT_FAILED + " \"${1}\" ${2} ${statusCode}" );
+		lines.add( "[ ${statusCode} -ne 0 ] && " + FUNCTION_SCRIPT_FAILED + " \"${1}\" ${2} ${statusCode}" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
@@ -179,7 +178,7 @@ public class BashScriptBuilder {
 		throws ConfigNotFoundException, ConfigFormatException {
 		if( DockerUtil.inAwsEnv() && module instanceof R_Module ) return getMainScriptPath( module );
 		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "." +
-			getWorkerId( workerScripts.size(), ModuleUtil.getNumWorkers( module ).toString().length() ) + "_" +
+			getWorkerId( workerNum(), ModuleUtil.getNumWorkers( module ).toString().length() ) + "_" +
 			module.getClass().getSimpleName() + Constants.SH_EXT;
 	}
 
@@ -235,8 +234,7 @@ public class BashScriptBuilder {
 		else if( defaultHeader != null ) lines.add( defaultHeader + RETURN );
 
 		lines.add( PIPE_DIR + "=\"" + Config.pipelinePath() + "\"" + RETURN );
-		lines.add( "# BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " | Max #samples/batch: " +
-			( ModuleUtil.getMinSamplesPerWorker( module ) + 1 ) + RETURN );
+		lines.add( "# BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + RETURN );
 		lines.add( "touch " + scriptPath + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules( module ) );
 
@@ -282,48 +280,45 @@ public class BashScriptBuilder {
 			if( writer != null ) writer.close();
 		}
 	}
-	
-	private static int workerNum() {
-		return workerScripts.size();
-	}
 
 	private static void buildWorkerScripts( final ScriptModule module, final List<List<String>> data )
 		throws Exception {
-		
-		int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( module );
-		int numWorkersWithMaxSamples = ModuleUtil.getNumWorkersWithMaxSamples(module);
-		int samplesPerWorker = 0;
+		int sampleCount = 0;
+
+		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts # data (inner lists) = " + data.size() );
+		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts getNumWorkers = " + ModuleUtil.getNumWorkers( module )
+		// );
+		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts getNumMaxWorkers = " + ModuleUtil.getNumMaxWorkers(
+		// module ) );
+		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts getMinSamplesPerWorker = " +
+		// ModuleUtil.getMinSamplesPerWorker( module ) );
+		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts BEGIN workerNum() = " + workerNum());
+
 		String workerScriptPath = getWorkerScriptPath( module );
 		List<String> workerLines = initWorkerScript( module, workerScriptPath );
 		final Iterator<List<String>> it = data.iterator();
 		while( it.hasNext() ) {
 			final List<String> lines = it.next();
-			if( lines.isEmpty() ) throw new PipelineScriptException( module, true,
-				" Worker script #" + workerNum() + " is empty." );
+			if( lines.isEmpty() )
+				throw new PipelineScriptException( module, true, " Worker script #" + workerNum() + " is empty." );
 			workerLines.addAll( getWorkerScriptLines( lines ) );
-			samplesPerWorker++;
-			if( !it.hasNext() || ( workerNum() <= numWorkersWithMaxSamples ) && ( samplesPerWorker == (minSamplesPerWorker + 1) ) ||
-				( workerNum() > numWorkersWithMaxSamples ) && ( samplesPerWorker == minSamplesPerWorker ) ) {
-				if( !( module instanceof JavaModule ) ) workerLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
+			if( saveWorker( module, ++sampleCount ) || !it.hasNext() ) {
+				if( !( module instanceof JavaModule ) )
+					workerLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
 				workerScripts.add( createScript( workerScriptPath, workerLines ) );
-				samplesPerWorker = 0;
+				sampleCount = 0;
 				if( it.hasNext() ) {
-					workerLines = initWorkerScript( module, getWorkerScriptPath( module ) );
+					workerScriptPath = getWorkerScriptPath( module );
+					workerLines = initWorkerScript( module, workerScriptPath );
 				}
 			}
 		}
 
 		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
 		Log.info( BashScriptBuilder.class,
-			workerScripts.size() + " WORKER scripts created for: " + module.getClass().getName() );
+			workerNum() + " WORKER scripts created for: " + module.getClass().getName() );
 		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
 	}
-
-	// private static int getBatchSize( final ScriptModule module ) throws ConfigNotFoundException,
-	// ConfigFormatException {
-	// if( numWorkers == null ) numWorkers = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_NUM_WORKERS );
-	// return numWorkers;
-	// }
 
 	private static String getMainScriptPath( final ScriptModule module ) {
 		return new File( module.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX +
@@ -348,6 +343,24 @@ public class BashScriptBuilder {
 		final String prologue = Config.getString( module, CLUSTER_PROLOGUE );
 		if( prologue != null ) lines.add( prologue + RETURN );
 		return lines;
+	}
+
+	private static boolean saveWorker( final BioModule module, final int sampleCount )
+		throws ConfigNotFoundException, ConfigFormatException {
+		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( module );
+		final int maxWorkers = ModuleUtil.getNumMaxWorkers( module );
+
+		Log.warn( BashScriptBuilder.class, "CHECK - should we save worker #" + workerNum() + " ?" );
+		Log.warn( BashScriptBuilder.class, "saveWorker - sampleCount = " + sampleCount );
+		Log.warn( BashScriptBuilder.class, "saveWorker - minSamplesPerWorker = " + minSamplesPerWorker );
+		Log.warn( BashScriptBuilder.class, "saveWorker - maxWorkers = " + maxWorkers );
+
+		return workerNum() < maxWorkers && sampleCount == minSamplesPerWorker + 1 ||
+			workerNum() >= maxWorkers && sampleCount == minSamplesPerWorker;
+	}
+
+	private static int workerNum() {
+		return workerScripts.size();
 	}
 
 	/**
@@ -385,5 +398,4 @@ public class BashScriptBuilder {
 	private static final String PIPE_DIR = "pipeDir";
 	private static final String RETURN = Constants.RETURN;
 	private static final List<File> workerScripts = new ArrayList<>();
-	// private static Integer numWorkers = null;
 }

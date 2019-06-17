@@ -300,8 +300,9 @@ public class SeqUtil {
 		try {
 			for( final File file: files )
 				try {
-					if( isSeqFile( file ) && !isMultiplexed() && MetaUtil.exists() && 
-						!MetaUtil.getSampleIds().contains( getSampleId( file.getName() ) ) ) seqsWithoutMetaId.add( file );
+					if( isSeqFile( file ) && !isMultiplexed() && MetaUtil.exists() &&
+						!MetaUtil.getSampleIds().contains( getSampleId( file.getName() ) ) )
+						seqsWithoutMetaId.add( file );
 					else seqFiles.add( file );
 				} catch( final Exception ex ) {
 					if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) ) seqsWithoutMetaId.add( file );
@@ -450,6 +451,7 @@ public class SeqUtil {
 	public static boolean isSeqFile( final File file ) {
 		BufferedReader reader = null;
 		try {
+			if( fileSeqMap.keySet().contains( file.getName() ) ) return fileSeqMap.get( file.getName() );
 			info( "Check if input file is a SEQ file: " + file.getAbsolutePath() );
 			boolean isSeq = false;
 			reader = BioLockJUtil.getFileReader( file );
@@ -467,7 +469,7 @@ public class SeqUtil {
 				}
 			} else info( file.getAbsolutePath() + " is not a sequence file! " + Constants.RETURN + "Line 1: [ " +
 				header + " ]" + Constants.RETURN + "Line 2= [ " + seq + " ]" );
-
+			fileSeqMap.put( file.getName(), isSeq );
 			return isSeq;
 		} catch( final Exception ex ) {
 			Log.error( SeqUtil.class, "Error occurred examining file to determine if it is a sequence file or not",
@@ -479,6 +481,7 @@ public class SeqUtil {
 				Log.error( SeqUtil.class, "Failed to close file reader", ex );
 			}
 		}
+		fileSeqMap.put( file.getName(), false );
 		return false;
 	}
 
@@ -768,8 +771,10 @@ public class SeqUtil {
 	public static final String ILLUMINA_RV_READ_IND = " 2:N:";
 
 	private static final Map<String, String> DNA_BASE_MAP = new HashMap<>();
+
 	private static final List<String> FASTA_HEADER_DELIMS = Arrays.asList( ">", ";" );
 	private static final String FASTQ_HEADER_DELIM = "@";
+	private static final Map<String, Boolean> fileSeqMap = new HashMap<>();
 	private static Integer numMultiSeqLines = 0;
 
 	static {

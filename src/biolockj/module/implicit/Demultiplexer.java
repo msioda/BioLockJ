@@ -102,7 +102,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		super.cleanUp();
 		Config.setConfigProperty( Constants.INTERNAL_MULTIPLEXED, Constants.FALSE );
 	}
-	
+
 	@Override
 	public List<File> getInputFiles() {
 		if( getFileCache().isEmpty() ) try {
