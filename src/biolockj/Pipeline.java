@@ -38,7 +38,6 @@ public class Pipeline {
 	 */
 	public static void executeModule( final BioModule module ) throws Exception {
 		ModuleUtil.markStarted( module );
-		// refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
 		refreshRCacheIfNeeded( module );
 		module.executeTask();
 
@@ -104,6 +103,7 @@ public class Pipeline {
 		try {
 			Log.info( Pipeline.class,
 				"Start Direct BioModule Execution for [ ID #" + id + " ] ---> " + module.getClass().getSimpleName() );
+
 			module.runModule();
 			Log.info( Pipeline.class, "DIRECT module ID [" + id + "].runModule() complete!" );
 			module.cleanUp();
@@ -204,7 +204,6 @@ public class Pipeline {
 			if( ModuleUtil.isIncomplete( module ) && ( !DockerUtil.isDirectMode() || module instanceof Email ) ) {
 				final String path = module.getModuleDir().getAbsolutePath();
 				Log.info( Pipeline.class, "Reset incomplete module: " + path );
-
 				FileUtils.forceDelete( module.getModuleDir() );
 				new File( path ).mkdirs();
 			}

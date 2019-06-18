@@ -342,14 +342,8 @@ public class BashScriptBuilder {
 
 	private static boolean saveWorker( final BioModule module, final int sampleCount, final int count )
 		throws ConfigNotFoundException, ConfigFormatException {
-		
 		final int maxWorkers = count - ModuleUtil.getNumWorkers( module );
 		final int minSamplesPerWorker = getMinSamplesPerWorker( module, count );
-	
-		Log.info( BashScriptBuilder.class, "CHECK IF TIME TO SAVE WORKER#"+ workerNum() + " FOR " + sampleCount + " SAMPLES" );
-		Log.info( BashScriptBuilder.class, "CHECK numMaxWorkers: " + maxWorkers );
-		Log.info( BashScriptBuilder.class, "CHECK minSamplesPerWorker: " + minSamplesPerWorker );
-		
 		return ( workerNum() < maxWorkers && sampleCount == ( minSamplesPerWorker + 1 ) ) ||
 			( workerNum() >= maxWorkers && sampleCount == minSamplesPerWorker );
 	}

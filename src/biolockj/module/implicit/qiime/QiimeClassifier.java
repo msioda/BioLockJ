@@ -110,9 +110,10 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 		Log.info( getClass(), "Clean up: " + getClass().getName() );
 
 		final List<String> metrics = Config.getList( this, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
+
 		if( ModuleUtil.isComplete( this ) || !getClass().equals( QiimeClassifier.class ) || metrics.isEmpty() ||
 			MetaUtil.getNullValue( this ).equals( ALPHA_DIV_NULL_VALUE ) ) {
-			if( !metrics.isEmpty() ) MetaUtil.refreshCache();
+			if( !metrics.isEmpty() ) super.cleanUp();
 			return; // nothing to do
 		}
 
