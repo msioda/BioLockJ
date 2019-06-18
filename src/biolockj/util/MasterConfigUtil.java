@@ -229,10 +229,8 @@ public class MasterConfigUtil {
 		if( initConfig == null ) {
 			writer.write( PROJ_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
 			final List<String> defaults = Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG );
-			if( defaults != null && !defaults.isEmpty() ) for( final String defConfig: defaults )
-				writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
-		} else for( final String line: initConfig )
-			writer.write( line + RETURN );
+			for( int i=defaults.size(); i>0; i-- ) writer.write( DEFAULT_CONFIG_FLAG + defaults.get( i - 1 ) + RETURN );
+		} else for( final String line: initConfig ) writer.write( line + RETURN );
 
 		writer.write( RETURN );
 		for( final String module: Config.getList( null, Constants.INTERNAL_BLJ_MODULE ) )
