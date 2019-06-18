@@ -142,19 +142,25 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ ) {
 			final long rowSum = dataPointsUnnormalized.get( x ).stream().mapToLong( Long::longValue ).sum();
 			final List<String> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
-
+			Log.debug( getClass(), "Row Sum = " + rowSum );
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ ) {
-				final Double normVal =
-					aveRowSum * (double) dataPointsUnnormalized.get( x ).get( y ) / ( (double) rowSum + 1 );
+				final Double normVal = 1D +
+					aveRowSum * (double) dataPointsUnnormalized.get( x ).get( y ) / rowSum;
 				dataPointsNormalized.get( x ).add( new Long( normVal.longValue() ).toString() );
+				
+				Log.debug( getClass(), "Cell val = " + dataPointsUnnormalized.get( x ).get( y )  );
+				Log.debug( getClass(), "normVal( " + dataPointsUnnormalized.get( x ).get( y ) + " ) = " + normVal );
 				if( allZeroIndex.contains( x ) ) {
 					// index 0 = col headers, so add + 1
 					final String id = MetaUtil.getSampleIds().get( x + 1 );
 					Log.warn( getClass(), "All zero row will not be transformed - ID removed: " + id );
-				} else if( getLogBase().equalsIgnoreCase( LOG_E ) )
+				} else if( getLogBase().equalsIgnoreCase( LOG_E ) ) {
 					loggedInnerList.add( new Double( Math.log( normVal ) ).toString() );
-				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
-					loggedInnerList.add( new Double( Math.log10( normVal ) ).toString() );
+				} else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
+					String res = new Double( Math.log10( normVal ) ).toString();
+					Log.debug( getClass(), "Math.log10( " + normVal + ") = " + Math.log10( normVal ) + " ==> " + res );
+					loggedInnerList.add( res );
+				}
 			}
 		}
 
@@ -184,8 +190,7 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 	 */
 	protected static List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
 		final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
-		for( final String id: zeroSampleIDs )
-			sampleIDs.remove( id );
+		for( final String id: zeroSampleIDs ) sampleIDs.remove( id );
 		return sampleIDs;
 	}
 
@@ -200,8 +205,7 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		for( int x = 0; x < data.size(); x++ )
 			for( int y = 0; y < data.get( x ).size(); y++ ) {
 				long sum = 0;
-				for( final Long d: data.get( x ) )
-					sum += d;
+				for( final Long d: data.get( x ) ) sum += d;
 				if( sum == 0 ) allZero.add( x );
 			}
 		return allZero;
