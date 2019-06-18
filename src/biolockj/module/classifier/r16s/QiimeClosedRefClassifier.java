@@ -56,9 +56,10 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 			for( final File f: files ) {
 				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( data.size() ).getAbsolutePath() );
 				if( saveBatch( data.size(), lines.size() ) ) {
+					int numSamples = lines.size();
 					Log.info( getClass(), "Save Worker#" + data.size() + " --> # samples = " + lines.size() );
 					data.add( getBatch( lines, data.size(), startIndex ) );
-					startIndex += lines.size();
+					startIndex += numSamples;
 					lines = new ArrayList<>();
 				}
 			}
