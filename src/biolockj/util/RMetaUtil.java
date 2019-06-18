@@ -223,9 +223,6 @@ public final class RMetaUtil {
 		final Integer numCols = Config.getPositiveInteger( module, RMetaUtil.NUM_META_COLS );
 		Integer numMetaCols = getMetaCols( module ).size();
 
-		if( Config.getBoolean( module, QIIME_PLOT_ALPHA_METRICS ) )
-			numMetaCols = numMetaCols - getQiimeAlphaMetrics( module ).size();
-
 		if( numCols != null && numCols == numMetaCols || numMetaCols == 0 ) {
 			Log.info( RMetaUtil.class, "R Config unchanged..." );
 			return false;
@@ -296,16 +293,6 @@ public final class RMetaUtil {
 		return cols;
 	}
 
-	private static List<String> getQiimeAlphaMetrics( final BioModule module ) {
-		final List<String> metrics = new ArrayList<>();
-		final List<String> alphaDivMetrics = Config.getList( module, Constants.QIIME_ALPHA_DIVERSITY_METRICS );
-		if( !alphaDivMetrics.isEmpty() ) for( final String val: alphaDivMetrics ) {
-			final String metric = val + QIIME_ALPHA_METRIC_SUFFIX;
-			if( MetaUtil.hasColumn( metric ) ) metrics.add( metric );
-		}
-
-		return metrics;
-	}
 
 	private static boolean hasQiimeMapping() {
 		for( final BioModule module: Pipeline.getModules() )
