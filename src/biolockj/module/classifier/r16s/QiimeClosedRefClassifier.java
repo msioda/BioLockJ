@@ -40,10 +40,10 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		Log.info( getClass(),
 			"Buidling QIIME Close Ref scripts to assign taxonomy to " + numFiles + " sequence files" );
 		
-		Log.info( getClass(), "TOTAL # Workers" + ModuleUtil.getNumWorkers( this ) );
-		Log.info( getClass(), "TOTAL # Min Workers (" + ModuleUtil.getMinSamplesPerWorker( this ) + "sample/batch)" + 
+		Log.info( getClass(), "TOTAL # Workers: " + ModuleUtil.getNumWorkers( this ) );
+		Log.info( getClass(), "TOTAL # Min Workers (" + ModuleUtil.getMinSamplesPerWorker( this ) + " sample/batch) --> " + 
 						( ModuleUtil.getNumWorkers( this ) - ModuleUtil.getNumMaxWorkers( this ) ) );
-		Log.info( getClass(), "TOTAL # Max Workers (" + ( ModuleUtil.getMinSamplesPerWorker( this ) + 1 ) + " samples/batch)" + ModuleUtil.getNumMaxWorkers( this ) );
+		Log.info( getClass(), "TOTAL # Max Workers (" + ( ModuleUtil.getMinSamplesPerWorker( this ) + 1 ) + " samples/batch) --> " + ModuleUtil.getNumMaxWorkers( this ) );
 		
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();

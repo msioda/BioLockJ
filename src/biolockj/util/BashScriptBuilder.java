@@ -284,16 +284,6 @@ public class BashScriptBuilder {
 	private static void buildWorkerScripts( final ScriptModule module, final List<List<String>> data )
 		throws Exception {
 		int sampleCount = 0;
-
-		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts # data (inner lists) = " + data.size() );
-		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts getNumWorkers = " + ModuleUtil.getNumWorkers( module )
-		// );
-		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts getNumMaxWorkers = " + ModuleUtil.getNumMaxWorkers(
-		// module ) );
-		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts getMinSamplesPerWorker = " +
-		// ModuleUtil.getMinSamplesPerWorker( module ) );
-		// Log.warn( BashScriptBuilder.class, "buildWorkerScripts BEGIN workerNum() = " + workerNum());
-
 		String workerScriptPath = getWorkerScriptPath( module );
 		List<String> workerLines = initWorkerScript( module, workerScriptPath );
 		final Iterator<List<String>> it = data.iterator();
@@ -302,7 +292,7 @@ public class BashScriptBuilder {
 			if( lines.isEmpty() )
 				throw new PipelineScriptException( module, true, " Worker script #" + workerNum() + " is empty." );
 			workerLines.addAll( getWorkerScriptLines( lines ) );
-			if( saveWorker( module, ++sampleCount ) || !it.hasNext() ) {
+			if( saveWorker( module, ++sampleCount, data.size() ) || !it.hasNext() ) {
 				if( !( module instanceof JavaModule ) )
 					workerLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
 				workerScripts.add( createScript( workerScriptPath, workerLines ) );
@@ -344,10 +334,15 @@ public class BashScriptBuilder {
 		if( prologue != null ) lines.add( prologue + RETURN );
 		return lines;
 	}
-
-	private static boolean saveWorker( final BioModule module, final int sampleCount )
+	
+	private static Integer getMinSamplesPerWorker( final BioModule module, final int count )
 		throws ConfigNotFoundException, ConfigFormatException {
-		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( module );
+		return new Double( Math.floor( (double) count / (double) ModuleUtil.getNumWorkers( module ) ) ).intValue();
+	}
+
+	private static boolean saveWorker( final BioModule module, final int sampleCount, final int count )
+		throws ConfigNotFoundException, ConfigFormatException {
+		final int minSamplesPerWorker = getMinSamplesPerWorker( module, count );
 		final int maxWorkers = ModuleUtil.getNumMaxWorkers( module );
 		Log.info( BashScriptBuilder.class, "CHECK IF TIME TO SAVE WORKER#"+ workerNum() + " FOR " + sampleCount + " SAMPLES" );
 		Log.info( BashScriptBuilder.class, "CHECK maxWorkers: " + maxWorkers );
