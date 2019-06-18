@@ -65,7 +65,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 			}
 			if( !lines.isEmpty() ) data.add( getBatch( lines, data.size(), startIndex ) );
 		}
-
+		Log.info( getClass(), "Build script returning data for #workers = " + data.size() );
 		return data;
 	}
 	
