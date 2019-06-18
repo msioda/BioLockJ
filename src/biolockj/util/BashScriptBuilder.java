@@ -349,8 +349,11 @@ public class BashScriptBuilder {
 		throws ConfigNotFoundException, ConfigFormatException {
 		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( module );
 		final int maxWorkers = ModuleUtil.getNumMaxWorkers( module );
-		return workerNum() < maxWorkers && sampleCount == minSamplesPerWorker + 1 ||
-			workerNum() >= maxWorkers && sampleCount == minSamplesPerWorker;
+		Log.info( BashScriptBuilder.class, "CHECK IF TIME TO SAVE WORKER#"+ workerNum() + " FOR " + sampleCount + " SAMPLES" );
+		Log.info( BashScriptBuilder.class, "CHECK maxWorkers: " + maxWorkers );
+		Log.info( BashScriptBuilder.class, "CHECK minSamplesPerWorker: " + minSamplesPerWorker );
+		return ( workerNum() < maxWorkers && sampleCount == ( minSamplesPerWorker + 1 ) ) ||
+			( workerNum() >= maxWorkers && sampleCount == minSamplesPerWorker );
 	}
 
 	private static int workerNum() {

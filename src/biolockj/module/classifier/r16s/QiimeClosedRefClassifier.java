@@ -183,14 +183,11 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		return f;
 	}
 
-	/**
-	 * Assign a specific number of worker scripts for the module
-	 * 
-	 * @param count Number of worker scripts
-	 */
-	protected void setNumWorkers( final Integer count ) {
-		Config.setConfigProperty( getClass().getSimpleName() + "." + suffix( Constants.SCRIPT_NUM_WORKERS ),
-			count.toString() );
+
+	private void setNumWorkers( final Integer count ) throws ConfigNotFoundException, ConfigFormatException {
+		if( count != ModuleUtil.getNumWorkers( this ) )
+			Config.setConfigProperty( getClass().getSimpleName() + "." + suffix( Constants.SCRIPT_NUM_WORKERS ),
+				count.toString() );
 	}
 
 	private static String suffix( final String prop ) {
