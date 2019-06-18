@@ -311,10 +311,10 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	 */
 	@Override
 	public boolean isValidInputModule( final BioModule module ) {
-		if( getClass().getName().equals( QiimeClassifier.class.getName() ) &&
-			module.getClass().getName().toLowerCase().contains( Constants.QIIME ) ) return true;
-
-		return super.isValidInputModule( module );
+		return !module.getClass().getName().equals( QiimeClassifier.class.getName() ) &&
+			( getClass().getName().equals( QiimeClassifier.class.getName() ) &&
+			module instanceof MergeQiimeOtuTables || module instanceof QiimeClassifier ) ||
+			super.isValidInputModule( module );
 	}
 
 	/**

@@ -17,6 +17,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.module.BioModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.classifier.r16s.QiimeClosedRefClassifier;
 import biolockj.util.ModuleUtil;
@@ -47,6 +48,11 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl {
 		data.add( lines );
 
 		return data;
+	}
+	
+	@Override
+	public boolean isValidInputModule( final BioModule module ) {
+		return module instanceof QiimeClosedRefClassifier;
 	}
 
 	/**

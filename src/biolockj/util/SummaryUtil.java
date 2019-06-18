@@ -126,8 +126,7 @@ public class SummaryUtil {
 				BioLockJUtil.formatNumericOutput( vals.last(), false ) + RETURN;
 
 			Long sum = 0L;
-			for( final long val: vals )
-				sum += val;
+			for( final long val: vals ) sum += val;
 
 			if( addTotal ) msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (total):", pad ) +
 				BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
@@ -166,7 +165,7 @@ public class SummaryUtil {
 		sb.append( EXT_SPACER + RETURN );
 		sb.append( getLabel( PIPELINE_CONFIG ) + "  " + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( PIPELINE_INPUT ) + "   " + Config.getString( null, Constants.INPUT_DIRS ) + RETURN );
-		sb.append( getLabel( PIPELINE_META ) + " " + meta + RETURN );
+		sb.append( getLabel( PIPELINE_META ) + meta + RETURN );
 		sb.append( EXT_SPACER + RETURN );
 		sb.append( getLabel( PIPELINE_OUTPUT ) + "  " + Config.pipelinePath() + RETURN );
 		sb.append( getLabel( MASTER_CONFIG ) + "    " + MasterConfigUtil.getPath() + RETURN );
@@ -280,7 +279,6 @@ public class SummaryUtil {
 	public static String getOutputDirSummary( final BioModule module ) {
 		final StringBuffer sb = new StringBuffer();
 		try {
-
 			if( module.getOutputDir().listFiles().length == 0 ) return "# Files Output:  0" + RETURN;
 			final Collection<File> outFiles =
 				FileUtils.listFiles( module.getOutputDir(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE );
@@ -389,11 +387,11 @@ public class SummaryUtil {
 			final Map<String, Long> longestScripts = new HashMap<>();
 			final Map<String, Long> shortestScripts = new HashMap<>();
 			long totalRunTime = 0L;
-			final int numCompleted = scriptsSuccess.size() + scriptsFailed.size();
 			long maxDuration = 0L;
-			long minDuration = Long.MAX_VALUE;
-
 			final long oneMinute = BioLockJUtil.minutesToMillis( 1 );
+			long minDuration = Long.MAX_VALUE;
+			final int numCompleted = scriptsSuccess.size() + scriptsFailed.size();
+			if( numCompleted < 1 ) return "No completed module scripts found in -->" + module.getScriptDir().getAbsolutePath() + RETURN;
 
 			for( final File script: scripts ) {
 				final File started = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
@@ -428,17 +426,15 @@ public class SummaryUtil {
 				longestScripts.remove( name );
 			}
 
-			final Long avgRunTime = numCompleted > 0 ? totalRunTime / numCompleted: null;
-			final int numInc = scriptsStarted.size() - numCompleted;
+
+			final int numIncomplete = scriptsStarted.size() - numCompleted;
 			if( mainScript != null ) sb.append( "Main Script:  " + mainScript.getAbsolutePath() + RETURN );
 			sb.append( "Executed " + scriptsStarted.size() + "/" + scripts.size() + " worker scripts [" );
 			sb.append( scriptsSuccess.size() + " successful" );
 			sb.append( scriptsFailed.isEmpty() ? "": "; " + scriptsFailed.size() + " failed" );
-			sb.append( numInc > 0 ? "; " + numInc + " incomplete": "" );
+			sb.append( numIncomplete > 0 ? "; " + numIncomplete + " incomplete": "" );
 			sb.append( "]" + RETURN );
-
-			if( avgRunTime != null )
-				sb.append( "Average worker script runtime: " + getScriptRunTime( avgRunTime ) + RETURN );
+			sb.append( "Average worker script runtime: " + getScriptRunTime( totalRunTime / numCompleted ) + RETURN );
 			if( !shortestScripts.isEmpty() ) sb.append( "Shortest running scripts [" + getScriptRunTime( minDuration ) +
 				"] --> " + shortestScripts.keySet() + RETURN );
 			if( !longestScripts.isEmpty() ) sb.append( "Longest running scripts [" + getScriptRunTime( maxDuration ) +
@@ -465,6 +461,32 @@ public class SummaryUtil {
 		}
 
 		return sb.toString();
+	}
+	
+	/**
+	 * Return a num/denom ratio floor value (do not round up)
+	 * 
+	 * @param num Numerator
+	 * @param denom Denominator
+	 * @return num/denom Long floor value
+	 */
+	public static Long getLongRatio( Double num, Double denom ) {
+		if( num == null || num == 0D  ) return 0L;
+		if( denom == null || denom == 0D ) return null;
+		return new Double(num/denom).longValue();
+	}
+	
+	/**
+	 * Return a num/denom ratio
+	 * 
+	 * @param num Numerator
+	 * @param denom Denominator
+	 * @return num/denom Double value
+	 */
+	public static Double getDoubleRatio( Double num, Double denom ) {
+		if( num == null ||  num == 0D  ) return 0D;
+		if( denom == null || denom == 0D ) return null;
+		return num/denom;
 	}
 
 	/**
@@ -567,7 +589,6 @@ public class SummaryUtil {
 		if( summary.exists() ) {
 			FileUtils.copyFile( getSummaryFile(), getTempFile() );
 			getSummaryFile().delete();
-			// BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
 			final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 			try {
@@ -578,7 +599,6 @@ public class SummaryUtil {
 						writer.write( line.replace( count, num.toString() ) + RETURN );
 					} else writer.write( line + RETURN );
 				getTempFile().delete();
-				// BioLockJUtil.deleteWithRetry( getTempFile(), 10 );
 			} finally {
 				if( reader != null ) reader.close();
 				writer.close();
@@ -617,7 +637,6 @@ public class SummaryUtil {
 	 */
 	protected static String getScriptRunTime( final Long duration ) {
 		if( duration == null ) return "N/A";
-
 		final String format = String.format( "%%0%dd", 2 );
 		long elapsedTime = duration / 1000;
 		if( elapsedTime < 0 ) elapsedTime = 0;
@@ -634,7 +653,6 @@ public class SummaryUtil {
 		else if( minutes.equals( "01" ) ) minutes = " : 1 minute";
 		else if( hours.isEmpty() ) minutes += " minutes";
 		else minutes = " : " + minutes + " minutes";
-
 		return hours + minutes;
 	}
 
@@ -648,7 +666,6 @@ public class SummaryUtil {
 	protected static void resetModuleSummary( final BioModule module ) throws Exception {
 		FileUtils.copyFile( getSummaryFile(), getTempFile() );
 		getSummaryFile().delete();
-		// BioLockJUtil.deleteWithRetry( getSummaryFile(), 10 );
 		final BufferedReader reader = BioLockJUtil.getFileReader( getTempFile() );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getSummaryFile() ) );
 		try {
@@ -662,7 +679,6 @@ public class SummaryUtil {
 				else writer.write( line + RETURN );
 			}
 			getTempFile().delete();
-			// FileUtils.forceDelete( getTempFile() );
 		} finally {
 			if( reader != null ) reader.close();
 			writer.close();
@@ -695,7 +711,7 @@ public class SummaryUtil {
 	private static String getHeading() {
 		final StringBuffer sb = new StringBuffer();
 		sb.append( RETURN + EXT_SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
-		sb.append( getLabel( PIPELINE_CONFIG ) + "   " + Config.getConfigFilePath() + RETURN );
+		sb.append( getLabel( PIPELINE_CONFIG ) + Config.getConfigFilePath() + RETURN );
 		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
 		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
 		sb.append( EXT_SPACER + RETURN );

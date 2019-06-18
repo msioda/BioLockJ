@@ -294,6 +294,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 		final long maxReadLen ) throws Exception {
 		final String label = "Valid Reads";
 		final int pad = SummaryUtil.getPad( label );
+		if( this.sampleStats.size() == 0 ) throw new Exception( "Summary stats not found!" );
 
 		final StringBuffer sb = new StringBuffer();
 		final long avgReadLen = Double.valueOf( totalAvgFwLen / this.sampleStats.size() ).longValue();
@@ -321,10 +322,12 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 			if( !longReads.isEmpty() )
 				sb.append( BioLockJUtil.addTrailingSpaces( "Trimmed long reads from:", pad ) + shortReads + RETURN );
 
-			final long max = this.maxSeqFound.keySet().iterator().next();
-			final TreeSet<String> ids = new TreeSet<>( this.maxSeqFound.values().iterator().next() );
-			sb.append(
-				BioLockJUtil.addTrailingSpaces( "IDs w/ ORIGINAL max read len [" + max + "]:", pad ) + ids + RETURN );
+			if( !this.maxSeqFound.isEmpty() ) {
+				final long max = this.maxSeqFound.keySet().iterator().next();
+				final TreeSet<String> ids = new TreeSet<>( this.maxSeqFound.values().iterator().next() );
+				sb.append(
+					BioLockJUtil.addTrailingSpaces( "IDs w/ ORIGINAL max read len [" + max + "]:", pad ) + ids + RETURN );
+			}
 		}
 
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, label, true ) + sb.toString();
@@ -343,25 +346,32 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private void populateSampleStats( final Long[] stats, final File file, final long combinedReadLen )
 		throws Exception {
+		
+		
 		final String id = SeqUtil.getSampleId( file.getName() );
+		
 		setNumReads( file, stats );
-
-		final Long[] otherStats = this.sampleStats.get( id );
-		final long len = stats[ INDEX_NUM_VALID_READS ] > 0 ?
-			Double.valueOf( combinedReadLen / stats[ INDEX_NUM_VALID_READS ] ).longValue(): 0;
+		final Long numValidReads = stats[ INDEX_NUM_VALID_READS ];
+		
+		
+		if( numValidReads == null || numValidReads == 0L ) return;
+		
+		final long len = numValidReads > 0 ?
+			Double.valueOf( combinedReadLen / numValidReads ).longValue(): 0;
 		if( SeqUtil.isForwardRead( file.getName() ) ) {
 			Log.debug( getClass(),
-				"Average FW seq length = " + combinedReadLen + " / " + stats[ INDEX_NUM_VALID_READS ] + " = " + len );
+				"Average FW seq length = " + combinedReadLen + " / " + numValidReads + " = " + len );
 			stats[ INDEX_AVG_FW_READ_LEN ] = len;
 		} else {
 			Log.debug( getClass(),
-				"Average RV seq length = " + combinedReadLen + " / " + stats[ INDEX_NUM_VALID_READS ] + " = " + len );
+				"Average RV seq length = " + combinedReadLen + " / " + numValidReads + " = " + len );
 			stats[ INDEX_AVG_RV_READ_LEN ] = len;
 		}
 
-		if( otherStats != null ) {
+		final Long[] otherStats = this.sampleStats.get( id );
+		if( otherStats != null && otherStats[ INDEX_NUM_VALID_READS ] != null && otherStats[ INDEX_NUM_VALID_READS ] != 0L ) {
 			Log.debug( getClass(), "Merging paired read stats for: " + file.getName() );
-			stats[ INDEX_NUM_VALID_READS ] = otherStats[ INDEX_NUM_VALID_READS ] + stats[ INDEX_NUM_VALID_READS ];
+			stats[ INDEX_NUM_VALID_READS ] = otherStats[ INDEX_NUM_VALID_READS ] + numValidReads;
 			stats[ INDEX_NUM_TRIMMED_READS ] = otherStats[ INDEX_NUM_TRIMMED_READS ] + stats[ INDEX_NUM_TRIMMED_READS ];
 			stats[ INDEX_NUM_READS_TOO_SHORT ] =
 				otherStats[ INDEX_NUM_READS_TOO_SHORT ] + stats[ INDEX_NUM_READS_TOO_SHORT ];
@@ -428,8 +438,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private static Long[] initStats() {
 		final Long[] stats = new Long[ 8 ];
-		for( int i = 0; i < stats.length; i++ )
-			stats[ i ] = 0L;
+		for( int i = 0; i < stats.length; i++ ) stats[ i ] = 0L;
 		return stats;
 	}
 

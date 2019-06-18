@@ -39,6 +39,12 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		final int numFiles = files == null ? 0: files.size();
 		Log.info( getClass(),
 			"Buidling QIIME Close Ref scripts to assign taxonomy to " + numFiles + " sequence files" );
+		
+		Log.info( getClass(), "TOTAL # Workers" + ModuleUtil.getNumWorkers( this ) );
+		Log.info( getClass(), "TOTAL # Min Workers (" + ModuleUtil.getMinSamplesPerWorker( this ) + "sample/batch)" + 
+						( ModuleUtil.getNumWorkers( this ) - ModuleUtil.getNumMaxWorkers( this ) ) );
+		Log.info( getClass(), "TOTAL # Max Workers (" + ( ModuleUtil.getMinSamplesPerWorker( this ) + 1 ) + " samples/batch)" + ModuleUtil.getNumMaxWorkers( this ) );
+		
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
 		if( ModuleUtil.getNumWorkers( this ) == 1 ) {
@@ -50,17 +56,25 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 			for( final File f: files ) {
 				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( data.size() ).getAbsolutePath() );
 				if( saveBatch( data.size(), lines.size() ) ) {
-					final int sampleCount = lines.size();
+					Log.info( getClass(), "Save Worker#" + data.size() + " --> # samples = " + lines.size() );
 					data.add( getBatch( lines, data.size(), startIndex ) );
-					startIndex += sampleCount;
+					startIndex += lines.size();
 					lines = new ArrayList<>();
 				}
 			}
-
 			if( !lines.isEmpty() ) data.add( getBatch( lines, data.size(), startIndex ) );
 		}
 
 		return data;
+	}
+	
+	
+	private boolean saveBatch( final int workerNum, final int sampleCount )
+		throws ConfigNotFoundException, ConfigFormatException {
+		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( this );  // 1
+		final int maxWorkers = ModuleUtil.getNumMaxWorkers( this ); // 8
+		return ( workerNum < maxWorkers && sampleCount == (minSamplesPerWorker + 1) ) ||
+			(workerNum >= maxWorkers && sampleCount == minSamplesPerWorker);
 	}
 
 	/**
@@ -143,7 +157,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		lines.add( copyBatchOtuTableToOutputDir( batchDir, batchNum ) );
 		return lines;
 	}
-
+	
 	/**
 	 * Get the pipeline/module/temp/batch_# dir. Create it if it doesn't exist.
 	 *
@@ -176,14 +190,6 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	protected void setNumWorkers( final Integer count ) {
 		Config.setConfigProperty( getClass().getSimpleName() + "." + suffix( Constants.SCRIPT_NUM_WORKERS ),
 			count.toString() );
-	}
-
-	private boolean saveBatch( final int workerNum, final int sampleCount )
-		throws ConfigNotFoundException, ConfigFormatException {
-		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( this );
-		final int maxWorkers = ModuleUtil.getNumMaxWorkers( this );
-		return workerNum < maxWorkers && sampleCount == minSamplesPerWorker + 1 ||
-			workerNum >= maxWorkers && sampleCount == minSamplesPerWorker;
 	}
 
 	private static String suffix( final String prop ) {
