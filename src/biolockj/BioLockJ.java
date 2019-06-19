@@ -28,7 +28,7 @@ import biolockj.util.*;
  */
 public class BioLockJ {
 
-	private BioLockJ() {}
+	protected BioLockJ() {}
 
 	/**
 	 * Copy file to pipeline root directory.
@@ -297,7 +297,7 @@ public class BioLockJ {
 		if( !BioLockJUtil.isDirectMode() ) Log.info( BioLockJ.class, msg );
 	}
 
-	private static void pipelineShutDown() {
+	protected static void pipelineShutDown() {
 
 		setPipelineSecurity();
 
@@ -317,7 +317,7 @@ public class BioLockJ {
 		System.exit( 1 );
 	}
 
-	private static void setPipelineSecurity() {
+	protected static void setPipelineSecurity() {
 		try {
 			Processor.setFilePermissions( Config.pipelinePath(), Config.getString( null, Constants.PIPELINE_PRIVS ) );
 		} catch( final Exception ex ) {
