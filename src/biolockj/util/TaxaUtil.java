@@ -123,6 +123,29 @@ public class TaxaUtil {
 
 		return taxaCounts;
 	}
+	
+	/**
+	 * Return a map<Level, Taxa> for the leaf edge of the OTU
+	 * 
+	 * @param otu OTU
+	 * @return Leaf Level Taxa
+	 */
+	public static Map<String, String> getLeafTaxa( final String otu ) {
+		final TreeMap<String, String> map = new TreeMap<>();
+		String lastLevel = null;
+		String lastTaxa = null;
+		for( final String level: getTaxaLevelSpan() ) {
+			if( otu.contains( level ) ) {
+				String taxa = getTaxaName( otu, level );
+				if( taxa != null ) {
+					lastTaxa =  taxa;
+					lastLevel = level;
+				}
+			}
+		}
+		map.put( lastLevel, lastTaxa );
+		return map;
+	}
 
 	/**
 	 * Return a map of the given otu parameter split by level.
@@ -229,7 +252,7 @@ public class TaxaUtil {
 	 * @return Unclassified Taxa name
 	 */
 	public static String getUnclassifiedTaxa( final String taxa, final String level ) {
-		return UNCLASSIFIED + " " + taxa + " " + level.substring( 0, 1 ).toUpperCase() + level.substring( 1 );
+		return Constants.UNCLASSIFIED + " " + taxa + " " + level.substring( 0, 1 ).toUpperCase() + level.substring( 1 );
 	}
 
 	/**
@@ -351,5 +374,4 @@ public class TaxaUtil {
 	private static final List<String> TAXA_LEVELS = Arrays.asList( Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS,
 		Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES );
 	private static String topLevel = null;
-	private static final String UNCLASSIFIED = "Unclassified";
 }

@@ -607,6 +607,11 @@ public class Constants {
 	 * Set the max number of minutes to allow for S3 transfers to complete.
 	 */
 	public static final String REPORT_UNCLASSIFIED_TAXA = "report.unclassifiedTaxa";
+	
+	/**
+	 * Unclassified taxa prefix: {@value #UNCLASSIFIED}
+	 */
+	public static final String UNCLASSIFIED = "Unclassified";
 
 	/**
 	 * Return character: *backslash-n*
@@ -676,7 +681,7 @@ public class Constants {
 	public static final String SCRIPT_TIMEOUT = "script.timeout";
 
 	/**
-	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
+	 * A pipe is used to separate each taxa {@value #SEPARATOR}
 	 */
 	public static final String SEPARATOR = "|";
 

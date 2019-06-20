@@ -710,10 +710,10 @@ public class SummaryUtil {
 
 	private static String getHeading() {
 		final StringBuffer sb = new StringBuffer();
-		sb.append( RETURN + EXT_SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
+		sb.append( RETURN + EXT_SPACER + RETURN + getLabel( PIPELINE_NAME ) + "     " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( PIPELINE_CONFIG ) + Config.getConfigFilePath() + RETURN );
-		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
-		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
+		sb.append( getLabel( NUM_MODULES ) + "         " + Pipeline.getModules().size() + RETURN );
+		sb.append( getLabel( NUM_ATTEMPTS ) + "        1" + RETURN );
 		sb.append( EXT_SPACER + RETURN );
 		return sb.toString();
 	}

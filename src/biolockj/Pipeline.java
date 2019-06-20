@@ -33,28 +33,27 @@ public class Pipeline {
 	/**
 	 * Execute a single pipeline module.
 	 * 
-	 * @param module BioModule current module
 	 * @throws Exception if runtime errors occur
 	 */
-	public static void executeModule( final BioModule module ) throws Exception {
-		ModuleUtil.markStarted( module );
-		refreshRCacheIfNeeded( module );
-		module.executeTask();
+	public static void executeModule() throws Exception {
+		ModuleUtil.markStarted( exeModule() );
+		refreshRCacheIfNeeded();
+		exeModule().executeTask();
 
-		final boolean runDetached = module instanceof JavaModule && hasScripts( module ) &&
-			Config.getBoolean( module, Constants.DETACH_JAVA_MODULES );
+		final boolean runDetached = exeModule() instanceof JavaModule && hasScripts() &&
+			Config.getBoolean( exeModule(), Constants.DETACH_JAVA_MODULES );
 
 		if( runDetached ) MasterConfigUtil.saveMasterConfig();
 
-		if( hasScripts( module ) && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) module );
+		if( hasScripts() && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) exeModule() );
 
-		if( hasScripts( module ) ) waitForModuleScripts( (ScriptModule) module );
+		if( hasScripts() ) waitForModuleScripts();
 
-		module.cleanUp();
+		exeModule().cleanUp();
 
-		if( !runDetached ) SummaryUtil.reportSuccess( module );
+		if( !runDetached ) SummaryUtil.reportSuccess( exeModule() );
 
-		ModuleUtil.markComplete( module );
+		ModuleUtil.markComplete( exeModule() );
 	}
 
 	/**
@@ -140,6 +139,7 @@ public class Pipeline {
 				BioModule emailMod = null;
 				boolean foundIncomplete = false;
 				for( final BioModule module: Pipeline.getModules() ) {
+					setExeModule( module );
 					if( module instanceof Email ) emailMod = module;
 					if( !foundIncomplete && !ModuleUtil.isComplete( module ) ) foundIncomplete = true;
 					if( foundIncomplete && emailMod != null ) {
@@ -159,6 +159,18 @@ public class Pipeline {
 			throw ex;
 		}
 	}
+	
+	/**
+	 * Return the BioModule currently being executed
+	 * @return Current BioModule
+	 */
+	public static BioModule exeModule() {
+		return currentModule;
+	}
+	
+	private static void setExeModule( BioModule module ) {
+		currentModule = module;
+	}
 
 	/**
 	 * This method executes all new and incomplete modules<br>
@@ -177,10 +189,12 @@ public class Pipeline {
 	 * @throws Exception if script errors occur
 	 */
 	protected static void executeModules() throws Exception {
-		for( final BioModule module: Pipeline.getModules() )
-			if( !ModuleUtil.isComplete( module ) ) executeModule( module );
+		for( final BioModule module: Pipeline.getModules() ) {
+			setExeModule( module );
+			if( !ModuleUtil.isComplete( module ) ) executeModule();
 			else Log.debug( Pipeline.class,
 				"Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
+		}
 	}
 
 	/**
@@ -192,7 +206,7 @@ public class Pipeline {
 	 * modules
 	 * <li>Delete incomplete module contents if restarting a failed pipeline
 	 * {@value biolockj.module.BioModule#OUTPUT_DIR} directory<br>
-	 * <li>Call {@link #refreshRCacheIfNeeded(BioModule)} to cache R fields after 1st R module runs<br>
+	 * <li>Call {@link #refreshRCacheIfNeeded()} to cache R fields after 1st R module runs<br>
 	 * <li>Verify dependencies with {@link biolockj.module.BioModule#checkDependencies()}<br>
 	 * </ol>
 	 *
@@ -201,6 +215,7 @@ public class Pipeline {
 	 */
 	protected static boolean initializeModules() throws Exception {
 		for( final BioModule module: getModules() ) {
+			setExeModule( module );
 			if( ModuleUtil.isIncomplete( module ) && ( !DockerUtil.isDirectMode() || module instanceof Email ) ) {
 				final String path = module.getModuleDir().getAbsolutePath();
 				Log.info( Pipeline.class, "Reset incomplete module: " + path );
@@ -213,7 +228,7 @@ public class Pipeline {
 
 			if( ModuleUtil.isComplete( module ) ) {
 				module.cleanUp();
-				refreshRCacheIfNeeded( module );
+				refreshRCacheIfNeeded();
 			}
 		}
 
@@ -272,13 +287,12 @@ public class Pipeline {
 	/**
 	 * Refresh R cache if about to run the 1st R module.
 	 * 
-	 * @param module BioModule
 	 * @throws Exception if errors occur
 	 */
-	protected static void refreshRCacheIfNeeded( final BioModule module ) throws Exception {
-		if( ModuleUtil.isFirstRModule( module ) ) {
-			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
-			RMetaUtil.classifyReportableMetadata( module );
+	protected static void refreshRCacheIfNeeded() throws Exception {
+		if( ModuleUtil.isFirstRModule( exeModule() ) ) {
+			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + exeModule().getClass().getName() );
+			RMetaUtil.classifyReportableMetadata( exeModule() );
 		}
 	}
 
@@ -307,10 +321,10 @@ public class Pipeline {
 		return scriptFiles;
 	}
 
-	private static boolean hasScripts( final BioModule module ) {
+	private static boolean hasScripts() {
 		final File scriptDir =
-			new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
-		return module instanceof ScriptModule && scriptDir.isDirectory() && scriptDir.list().length > 0;
+			new File( exeModule().getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
+		return exeModule() instanceof ScriptModule && scriptDir.isDirectory() && scriptDir.list().length > 0;
 	}
 
 	private static void info( final String msg ) {
@@ -338,10 +352,10 @@ public class Pipeline {
 	 * This method calls executes script module scripts and monitors them until complete or timing out after
 	 * {@value #POLL_TIME} seconds.
 	 *
-	 * @param module ScriptModule
 	 * @throws Exception if errors occur
 	 */
-	private static void waitForModuleScripts( final ScriptModule module ) throws Exception {
+	private static void waitForModuleScripts() throws Exception {
+		ScriptModule module = (ScriptModule) exeModule();
 		logScriptTimeOutMsg( module );
 		int numMinutes = 0;
 		boolean finished = false;
@@ -355,6 +369,7 @@ public class Pipeline {
 		}
 	}
 
+	private static BioModule currentModule = null;
 	private static List<BioModule> bioModules = null;
 	private static Exception pipelineException = null;
 	private static int pollCount = 0;

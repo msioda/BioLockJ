@@ -45,7 +45,7 @@ public interface OtuNode {
 	 *
 	 * @return Number of reads in node sampleId with node OTU assignment
 	 */
-	public int getCount();
+	public long getCount();
 
 	/**
 	 * Get the line from classifier output file used to create this OtuNode.
@@ -81,7 +81,7 @@ public interface OtuNode {
 	 *
 	 * @param count Number of reads having this OTU assignment
 	 */
-	public void setCount( int count );
+	public void setCount( long count );
 
 	/**
 	 * Set the classifier report line parsed to build this OTU node.

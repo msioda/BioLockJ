@@ -68,8 +68,7 @@ public class BuildTaxaTables extends OtuCountModule {
 			final BufferedWriter writer = new BufferedWriter( new FileWriter( table ) );
 			try {
 				writer.write( MetaUtil.getID() );
-				for( final String taxa: levelTaxa )
-					writer.write( TAB_DELIM + taxa );
+				for( final String taxa: levelTaxa ) writer.write( TAB_DELIM + taxa );
 				writer.write( RETURN );
 
 				for( final String sampleId: sampleOtuCounts.keySet() ) {

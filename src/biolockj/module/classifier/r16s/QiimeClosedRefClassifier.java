@@ -38,13 +38,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final int numFiles = files == null ? 0: files.size();
 		Log.info( getClass(),
-			"Buidling QIIME Close Ref scripts to assign taxonomy to " + numFiles + " sequence files" );
-		
-		Log.info( getClass(), "TOTAL # Workers: " + ModuleUtil.getNumWorkers( this ) );
-		Log.info( getClass(), "TOTAL # Min Workers (" + ModuleUtil.getMinSamplesPerWorker( this ) + " sample/batch) --> " + 
-						( ModuleUtil.getNumWorkers( this ) - ModuleUtil.getNumMaxWorkers( this ) ) );
-		Log.info( getClass(), "TOTAL # Max Workers (" + ( ModuleUtil.getMinSamplesPerWorker( this ) + 1 ) + " samples/batch) --> " + ModuleUtil.getNumMaxWorkers( this ) );
-		
+			"Buidling QIIME Close Ref scripts to assign taxonomy for " + numFiles + " sequence files" );
+
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
 		if( ModuleUtil.getNumWorkers( this ) == 1 ) {
@@ -57,7 +52,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( data.size() ).getAbsolutePath() );
 				if( saveBatch( data.size(), lines.size() ) ) {
 					int numSamples = lines.size();
-					Log.info( getClass(), "Save Worker#" + data.size() + " --> # samples = " + lines.size() );
+					Log.debug( getClass(), "Save Worker#" + data.size() + " --> # samples = " + lines.size() );
 					data.add( getBatch( lines, data.size(), startIndex ) );
 					startIndex += numSamples;
 					lines = new ArrayList<>();

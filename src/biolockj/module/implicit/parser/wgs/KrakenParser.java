@@ -13,12 +13,10 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.Constants;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.wgs.KrakenNode;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MemoryUtil;
+import biolockj.util.*;
 
 /**
  * This BioModules parses KrakenClassifier output reports to build standard OTU abundance tables.
@@ -49,7 +47,7 @@ public class KrakenParser extends ParserModuleImpl {
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try {
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-					addOtuNode( new KrakenNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
+					addOtuNode( new KrakenNode( SeqUtil.getSampleId( file.getName() ), line ) );
 			} finally {
 				if( reader != null ) reader.close();
 			}

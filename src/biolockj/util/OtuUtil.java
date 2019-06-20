@@ -22,7 +22,7 @@ import biolockj.exception.OtuFileException;
  */
 public class OtuUtil {
 	/**
-	 * This inner class is used to hold a signle line from an OTU count file.
+	 * This inner class is used to hold a single line from an OTU count file.
 	 */
 	public static class OtuCountLine {
 		/**

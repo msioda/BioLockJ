@@ -213,11 +213,8 @@ public class Config {
 	 * @return BioModule specific property name
 	 */
 	public static String getModulePropName( final BioModule module, final String property ) {
-		if( module != null ) {
-			final String propName = module.getClass().getSimpleName() + "." + suffix( property );
-			if( props.getProperty( propName ) != null ) return propName;
-		}
-		return property;
+		if( module != null ) return module.getClass().getSimpleName() + "." + suffix( property );
+		return null;
 	}
 
 	/**
@@ -315,17 +312,11 @@ public class Config {
 	public static String getString( final BioModule module, final String property ) {
 		if( props == null ) return null;
 		String prop = getModulePropName( module, property );
+		if( prop == null || props.getProperty( prop ) == null ) prop = property;
 		String val = props.getProperty( prop );
-
-		if( getModulePropName( module, property ) != null )
-
-			if( prop != null ) // Log.debug( Config.class, "Found module override property: [ " + prop + "=" +
-								// props.getProperty( prop ) + " ]" );
-				val = props.getProperty( prop );
-			else prop = property;
-
+		if( val != null ) val = val.trim();
 		usedProps.put( prop, val );
-		if( val == null || val.isEmpty() ) return null;
+		if( val != null && val.isEmpty() ) val = null;
 		return val;
 	}
 

@@ -39,7 +39,7 @@ public class Kraken2Node extends OtuNodeImpl {
 		try {
 			setSampleId( id );
 			setLine( line );
-			setCount( Integer.valueOf( parts[ 1 ] ) );
+			setCount( Long.valueOf( parts[ 1 ] ) );
 
 			final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], TAXA_DELIM );
 			while( taxas.hasMoreTokens() ) {

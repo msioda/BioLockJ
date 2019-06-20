@@ -47,7 +47,7 @@ public class MetaphlanNode extends OtuNodeImpl {
 		try {
 			setSampleId( id );
 			setLine( line );
-			setCount( Integer.valueOf( parts[ 4 ] ) );
+			setCount( Long.valueOf( parts[ 4 ] ) );
 
 			final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], METAPHLAN_DELIM );
 			while( taxas.hasMoreTokens() ) {
