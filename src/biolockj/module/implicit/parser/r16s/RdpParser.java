@@ -17,7 +17,8 @@ import biolockj.*;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.r16s.RdpNode;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModule parses RDP output files to build standard OTU abundance tables.

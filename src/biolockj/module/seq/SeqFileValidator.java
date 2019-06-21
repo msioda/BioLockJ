@@ -391,7 +391,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 			Log.warn( getClass(), "Extracting invalid reads to --> " + tempFile.getAbsolutePath() );
 			final BufferedWriter invalidWriter = new BufferedWriter( new FileWriter( tempFile ) );
 			try {
-				for( final String seqLine: badLines ) invalidWriter.write( seqLine + RETURN );
+				for( final String seqLine: badLines )
+					invalidWriter.write( seqLine + RETURN );
 			} finally {
 				invalidWriter.close();
 			}
@@ -428,7 +429,8 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 	private static Long[] initStats() {
 		final Long[] stats = new Long[ 8 ];
-		for( int i = 0; i < stats.length; i++ ) stats[ i ] = 0L;
+		for( int i = 0; i < stats.length; i++ )
+			stats[ i ] = 0L;
 		return stats;
 	}
 

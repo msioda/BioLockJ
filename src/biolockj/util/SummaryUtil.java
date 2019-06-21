@@ -126,7 +126,8 @@ public class SummaryUtil {
 				BioLockJUtil.formatNumericOutput( vals.last(), false ) + RETURN;
 
 			Long sum = 0L;
-			for( final long val: vals ) sum += val;
+			for( final long val: vals )
+				sum += val;
 
 			if( addTotal ) msg += BioLockJUtil.addTrailingSpaces( "# " + label + " (total):", pad ) +
 				BioLockJUtil.formatNumericOutput( sum, false ) + RETURN;
@@ -417,7 +418,8 @@ public class SummaryUtil {
 			final long oneMinute = BioLockJUtil.minutesToMillis( 1 );
 			long minDuration = Long.MAX_VALUE;
 			final int numCompleted = scriptsSuccess.size() + scriptsFailed.size();
-			if( numCompleted < 1 ) return "No complete scripts found -->" + module.getScriptDir().getAbsolutePath() + RETURN;
+			if( numCompleted < 1 )
+				return "No complete scripts found -->" + module.getScriptDir().getAbsolutePath() + RETURN;
 
 			for( final File script: scripts ) {
 				final File started = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );

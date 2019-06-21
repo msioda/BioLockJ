@@ -119,15 +119,6 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 		this.otuCounts = null;
 		return fullPathOtuCounts;
 	}
-	
-	/**
-	 * Directly assign OtuCounts
-	 * 
-	 * @param overrideOtuCounts Override otuCounts
-	 */
-	public void setOtuCounts( final Map<String, Long> overrideOtuCounts ) {
-		this.otuCounts = overrideOtuCounts;
-	}
 
 	/**
 	 * Getter for sampleId.
@@ -142,6 +133,15 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 	public int hashCode() {
 		final int prime = 31;
 		return prime * 1 + ( getSampleId() == null ? 0: getSampleId().hashCode() );
+	}
+
+	/**
+	 * Directly assign OtuCounts
+	 * 
+	 * @param overrideOtuCounts Override otuCounts
+	 */
+	public void setOtuCounts( final Map<String, Long> overrideOtuCounts ) {
+		this.otuCounts = overrideOtuCounts;
 	}
 
 	private static Set<String> getChildren( final TreeMap<String, Long> otuCounts, final String otu ) {

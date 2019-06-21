@@ -51,11 +51,13 @@ public class Log {
 
 		if( isInitialized() && !debugClasses().isEmpty() ) {
 			boolean isDebugClass = false;
-			for( String val: debugClasses() ) if( loggingClass.getName().contains( val ) ) isDebugClass = true;
+			for( final String val: debugClasses() )
+				if( loggingClass.getName().contains( val ) ) isDebugClass = true;
 			if( !isDebugClass ) {
 				if( !gaveDebugWarning ) {
 					gaveDebugWarning = true;
-					warn( loggingClass, "DEBUG DISABLED for " + loggingClass.getName() + " because Config property [ " + Constants.LIMIT_DEBUG_CLASSES +
+					warn( loggingClass, "DEBUG DISABLED for " + loggingClass.getName() + " because Config property [ " +
+						Constants.LIMIT_DEBUG_CLASSES +
 						" ] property is enabled.  \"Debug\" log output is only written for class names that match a key string value in the property: " +
 						Constants.LIMIT_DEBUG_CLASSES + " ---> " + debugClasses() );
 				}
@@ -83,15 +85,6 @@ public class Log {
 	 */
 	public static void enableLogs( final boolean enable ) {
 		enableLogs = enable;
-	}
-	
-	/**
-	 * Check status of boolean toggle variable used to enable/disable log messages.
-	 * 
-	 * @return TRUE if log messages are enable 
-	 */
-	public static boolean logsEnabled() {
-		return enableLogs;
 	}
 
 	/**
@@ -200,6 +193,15 @@ public class Log {
 	}
 
 	/**
+	 * Check status of boolean toggle variable used to enable/disable log messages.
+	 * 
+	 * @return TRUE if log messages are enable
+	 */
+	public static boolean logsEnabled() {
+		return enableLogs;
+	}
+
+	/**
 	 * Returns the Logger for the callingClass. Each class has its own Logger since the callingClass name can be
 	 * appended to the log file without impacting performance.
 	 *
@@ -300,7 +302,8 @@ public class Log {
 				debugClasses.add( Pipeline.class.getName() );
 				debugClasses.add( Properties.class.getName() );
 				debugClasses.add( DockerUtil.class.getName() );
-				warn( Log.class, "Log [DEBUG] messages for class names containing any of the following key strings: " + debugClasses );
+				warn( Log.class, "Log [DEBUG] messages for class names containing any of the following key strings: " +
+					debugClasses );
 			}
 		}
 		return debugClasses;
@@ -353,7 +356,7 @@ public class Log {
 	 * <i>log4j.appender.file.File=${LOG_FILE}</i>
 	 */
 	protected static final String LOG_FILE = "LOG_FILE";
-	
+
 	/**
 	 * Set in {@link #initialize(String)} to proper layout based on pipeline is direct or note<br>
 	 * Used by <a href= "https://github.com/msioda/BioLockJ/blob/master/resources/log4j.properties?raw=true" target=
@@ -361,10 +364,10 @@ public class Log {
 	 * <i>log4j.appender.file.layout.ConversionPattern=${LOG_FORMAT}</i>
 	 */
 	protected static final String LOG_FORMAT = "LOG_FORMAT";
+	private static Set<String> debugClasses = null;
+	private static boolean enableLogs = true;
+	private static boolean gaveDebugWarning = false;
 	private static File logFile = null;
 	private static Map<String, Logger> loggers = new HashMap<>();
 	private static final List<String[]> logMesseges = new ArrayList<>();
-	private static boolean enableLogs = true;
-	private static Set<String> debugClasses = null;
-	private static boolean gaveDebugWarning = false;
 }

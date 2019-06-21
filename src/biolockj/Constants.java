@@ -101,8 +101,8 @@ public class Constants {
 	public static final String DEFAULT_STATS_MODULE = "pipeline.defaultStatsModule";
 
 	/**
-	 * In an otu string for multiple levels, each separated by {@value #OTU_SEPARATOR}, each otu has a level prefix ending
-	 * with {@value #DELIM_SEP}
+	 * In an otu string for multiple levels, each separated by {@value #OTU_SEPARATOR}, each otu has a level prefix
+	 * ending with {@value #DELIM_SEP}
 	 */
 	public static final String DELIM_SEP = "__";
 
@@ -404,6 +404,11 @@ public class Constants {
 	public static final String OTU_COUNT = "otuCount";
 
 	/**
+	 * A pipe is used to separate each taxa {@value #OTU_SEPARATOR}
+	 */
+	public static final String OTU_SEPARATOR = "|";
+
+	/**
 	 * QIIME OTU table prefix: {@value #OTU_TABLE_PREFIX}
 	 */
 	public static final String OTU_TABLE_PREFIX = "otu_table";
@@ -674,11 +679,6 @@ public class Constants {
 	 * Sets # of minutes before worker scripts times out.
 	 */
 	public static final String SCRIPT_TIMEOUT = "script.timeout";
-
-	/**
-	 * A pipe is used to separate each taxa {@value #OTU_SEPARATOR}
-	 */
-	public static final String OTU_SEPARATOR = "|";
 
 	/**
 	 * BioLockJ shell script file extension: {@value #SH_EXT}

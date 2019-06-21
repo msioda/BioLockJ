@@ -15,7 +15,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.wgs.MetaphlanNode;
-import biolockj.util.*;
+import biolockj.util.BioLockJUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModules parses Metaphlan2Classifier output reports to build standard OTU abundance tables.

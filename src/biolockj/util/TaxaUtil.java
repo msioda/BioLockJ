@@ -67,7 +67,7 @@ public class TaxaUtil {
 	 * Return OTU taxonomy level for the leaf edge of the OTU
 	 * 
 	 * @param otu OTU
-	 * @return Leaf taxonomy level 
+	 * @return Leaf taxonomy level
 	 */
 	public static String getLeafLevel( final String otu ) {
 		String lastLevel = null;
@@ -75,7 +75,6 @@ public class TaxaUtil {
 			if( otu.contains( level ) ) lastLevel = level;
 		return lastLevel;
 	}
-	
 
 	/**
 	 * Return the absolute taxonomy level for the given level. Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS,

@@ -11,7 +11,8 @@
  */
 package biolockj.module.implicit.parser.wgs;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
 import java.util.*;
 import biolockj.*;
 import biolockj.exception.OtuFileException;
@@ -39,8 +40,7 @@ public class KrakenParser extends ParserModuleImpl {
 
 	/**
 	 * Parse all {@link biolockj.module.classifier.wgs.KrakenClassifier} reports in the input directory.<br>
-	 * Cache the leaf counts
-	 * Build an {@link biolockj.node.wgs.KrakenNode} for each line.<br>
+	 * Cache the leaf counts Build an {@link biolockj.node.wgs.KrakenNode} for each line.<br>
 	 * If {@link #isValid(OtuNode)},<br>
 	 * <ol>
 	 * <li>Create {@link biolockj.node.ParsedSample} for the {@link biolockj.node.wgs.KrakenNode#getSampleId()} if not
@@ -61,40 +61,10 @@ public class KrakenParser extends ParserModuleImpl {
 			} finally {
 				reportUnclassifiedTaxa( true );
 			}
-			
+
 			addUnclassifiedTaxa( getParsedSample( SeqUtil.getSampleId( file.getName() ) ) );
 		}
 	}
-	
-	private void reportUnclassifiedTaxa( final boolean enable ) {
-		boolean logStatus = Log.logsEnabled();
-		Log.enableLogs( false );
-		final String modProp = Config.getModulePropName( this, Constants.REPORT_UNCLASSIFIED_TAXA );
-		Config.setConfigProperty( modProp, enable ? Constants.TRUE : Constants.FALSE );
-		Log.enableLogs( logStatus );
-	}
-	
-	private void addUnclassifiedTaxa( final ParsedSample sample ) throws Exception {
-		final Map<String, Long> leafCounts = sample.getOtuCounts();
-		report( leafCounts, "Parsed Input Line", false );
-		final Map<String, Long> otuCounts = populateInBetweenTaxa( leafCounts );
-		final List<String> levels = new ArrayList<>();
-		levels.add( TaxaUtil.bottomTaxaLevel() );
-		for( final String level: PARENT_TAXA_LEVELS ) {
-			for( final String otu: leafCounts.keySet() ) {
-				if( !TaxaUtil.getLeafLevel( otu ).equals( level ) ) continue;
-				final Map<String, Long> levTaxa = levelCounts( otuCounts, OtuUtil.buildOtuTaxa( level, TaxaUtil.getTaxaName( otu, level ) ) );
-				final Long sum = levTaxa.isEmpty() ? 0L: levTaxa.values().stream().mapToLong( Long::longValue ).sum();
-				final Long diff = leafCounts.get( otu ) - sum;
-				if( diff < 0 ) throw new Exception( "Inconsistent OTU counts in Sample [ " + sample.getSampleId() + " ] - Parent OTU \"" +
-						otu + "\" (count=" + leafCounts.get( otu ) + ") < sum child taxa (count=" + sum + ")" );
-				if( diff > 0 ) otuCounts.put( buildUnclassifiedOtu( otu, levels ), diff );
-			}
-			levels.add( level );
-		}
-		sample.setOtuCounts( populateInBetweenTaxa( otuCounts ) );
-	}
-
 
 	/**
 	 * Construct a new KrakenNode
@@ -109,6 +79,29 @@ public class KrakenParser extends ParserModuleImpl {
 		return new KrakenNode( id, line );
 	}
 
+	private void addUnclassifiedTaxa( final ParsedSample sample ) throws Exception {
+		final Map<String, Long> leafCounts = sample.getOtuCounts();
+		report( leafCounts, "Parsed Input Line", false );
+		final Map<String, Long> otuCounts = populateInBetweenTaxa( leafCounts );
+		final List<String> levels = new ArrayList<>();
+		levels.add( TaxaUtil.bottomTaxaLevel() );
+		for( final String level: PARENT_TAXA_LEVELS ) {
+			for( final String otu: leafCounts.keySet() ) {
+				if( !TaxaUtil.getLeafLevel( otu ).equals( level ) ) continue;
+				final Map<String, Long> levTaxa =
+					levelCounts( otuCounts, OtuUtil.buildOtuTaxa( level, TaxaUtil.getTaxaName( otu, level ) ) );
+				final Long sum = levTaxa.isEmpty() ? 0L: levTaxa.values().stream().mapToLong( Long::longValue ).sum();
+				final Long diff = leafCounts.get( otu ) - sum;
+				if( diff < 0 ) throw new Exception(
+					"Inconsistent OTU counts in Sample [ " + sample.getSampleId() + " ] - Parent OTU \"" + otu +
+						"\" (count=" + leafCounts.get( otu ) + ") < sum child taxa (count=" + sum + ")" );
+				if( diff > 0 ) otuCounts.put( buildUnclassifiedOtu( otu, levels ), diff );
+			}
+			levels.add( level );
+		}
+		sample.setOtuCounts( populateInBetweenTaxa( otuCounts ) );
+	}
+
 	private void parseSample( final File file ) throws Exception {
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {
@@ -117,37 +110,6 @@ public class KrakenParser extends ParserModuleImpl {
 		} finally {
 			if( reader != null ) reader.close();
 		}
-	}
-
-	private void report( final Map<String, Long> otuCounts, final String msg, boolean printInfo ) {
-		for( final String otu: otuCounts.keySet() )
-			if( printInfo ) Log.info( getClass(), msg + ": " + otu + " --> " + otuCounts.get( otu ) );
-			else Log.debug( getClass(), msg + ": " + otu + " --> " + otuCounts.get( otu ) );
-	}
-
-	private static String buildUnclassifiedOtu( final String otu, final List<String> levels ) {
-		String gapOtu = otu;
-		final String taxa = otu.substring( otu.lastIndexOf( Constants.OTU_SEPARATOR ) + 1 );
-		final String name = taxa.substring( taxa.indexOf( Constants.DELIM_SEP ) + Constants.DELIM_SEP.length() );
-		final String level = taxa.substring( 0, taxa.indexOf( Constants.DELIM_SEP ) );
-		for( int i = levels.size() - 1; i >= 0; i-- )
-			gapOtu += Constants.OTU_SEPARATOR + OtuUtil.buildOtuTaxa( levels.get( i ), TaxaUtil.getUnclassifiedTaxa( name, level ) );
-		return gapOtu;
-	}
-
-	private static List<String> getParentLevels() {
-		final List<String> levels = new ArrayList<>();
-		levels.addAll( TaxaUtil.getTaxaLevelSpan() );
-		levels.remove( TaxaUtil.bottomTaxaLevel() );
-		Collections.reverse( levels );
-		return levels;
-	}
-
-	private static Map<String, Long> levelCounts( final Map<String, Long> otuCounts, final String name ) {
-		final Map<String, Long> map = new TreeMap<>();
-		for( final String otu: otuCounts.keySet() )
-			if( otu.contains( name + Constants.OTU_SEPARATOR ) ) map.put( otu, otuCounts.get( otu ) );
-		return map;
 	}
 
 	private Map<String, Long> populateInBetweenTaxa( final Map<String, Long> otuCounts ) throws OtuFileException {
@@ -166,13 +128,14 @@ public class KrakenParser extends ParserModuleImpl {
 						gapTaxa = TaxaUtil.getUnclassifiedTaxa( taxa, parentLevel( level ) );
 						taxa = gapTaxa;
 						foundGap = true;
-					} else throw new OtuFileException( "Programming error, OTU path missing " + TaxaUtil.topTaxaLevel() + 
+					} else throw new OtuFileException( "Programming error, OTU path missing " +
+						TaxaUtil.topTaxaLevel() +
 						" in populateInBetweenTaxa( otuCounts ) --> OTUs missing the top level should not be found in any ParsedSample." );
 				} else {
 					taxa = TaxaUtil.getTaxaName( otu, level );
 					gapTaxa = null;
 				}
-				sb.append( ( sb.length() > 0 ? Constants.OTU_SEPARATOR : "" ) + OtuUtil.buildOtuTaxa( level, taxa ) );
+				sb.append( ( sb.length() > 0 ? Constants.OTU_SEPARATOR: "" ) + OtuUtil.buildOtuTaxa( level, taxa ) );
 			}
 			map.put( sb.toString(), otuCounts.get( otu ) );
 			if( foundGap ) changes.put( sb.toString(), otuCounts.get( otu ) );
@@ -180,8 +143,48 @@ public class KrakenParser extends ParserModuleImpl {
 		report( changes, "BioLockJ filled OTU gap", true );
 		return map;
 	}
-	
-	private static String parentLevel( String level ) {
+
+	private void report( final Map<String, Long> otuCounts, final String msg, final boolean printInfo ) {
+		for( final String otu: otuCounts.keySet() )
+			if( printInfo ) Log.info( getClass(), msg + ": " + otu + " --> " + otuCounts.get( otu ) );
+			else Log.debug( getClass(), msg + ": " + otu + " --> " + otuCounts.get( otu ) );
+	}
+
+	private void reportUnclassifiedTaxa( final boolean enable ) {
+		final boolean logStatus = Log.logsEnabled();
+		Log.enableLogs( false );
+		final String modProp = Config.getModulePropName( this, Constants.REPORT_UNCLASSIFIED_TAXA );
+		Config.setConfigProperty( modProp, enable ? Constants.TRUE: Constants.FALSE );
+		Log.enableLogs( logStatus );
+	}
+
+	private static String buildUnclassifiedOtu( final String otu, final List<String> levels ) {
+		String gapOtu = otu;
+		final String taxa = otu.substring( otu.lastIndexOf( Constants.OTU_SEPARATOR ) + 1 );
+		final String name = taxa.substring( taxa.indexOf( Constants.DELIM_SEP ) + Constants.DELIM_SEP.length() );
+		final String level = taxa.substring( 0, taxa.indexOf( Constants.DELIM_SEP ) );
+		for( int i = levels.size() - 1; i >= 0; i-- )
+			gapOtu += Constants.OTU_SEPARATOR +
+				OtuUtil.buildOtuTaxa( levels.get( i ), TaxaUtil.getUnclassifiedTaxa( name, level ) );
+		return gapOtu;
+	}
+
+	private static List<String> getParentLevels() {
+		final List<String> levels = new ArrayList<>();
+		levels.addAll( TaxaUtil.getTaxaLevelSpan() );
+		levels.remove( TaxaUtil.bottomTaxaLevel() );
+		Collections.reverse( levels );
+		return levels;
+	}
+
+	private static Map<String, Long> levelCounts( final Map<String, Long> otuCounts, final String name ) {
+		final Map<String, Long> map = new TreeMap<>();
+		for( final String otu: otuCounts.keySet() )
+			if( otu.contains( name + Constants.OTU_SEPARATOR ) ) map.put( otu, otuCounts.get( otu ) );
+		return map;
+	}
+
+	private static String parentLevel( final String level ) {
 		return TaxaUtil.allTaxonomyLevels().get( TaxaUtil.allTaxonomyLevels().indexOf( level ) - 1 );
 	}
 

@@ -157,7 +157,8 @@ public class Processor {
 		if( BioLockJUtil.hasNullOrEmptyVal( Arrays.asList( path, permissions ) ) ) return;
 		final StringTokenizer st = new StringTokenizer( "chmod -R " + permissions + " " + path );
 		final String[] args = new String[ st.countTokens() ];
-		for( int i = 0; i < args.length; i++ ) args[ i ] = st.nextToken();
+		for( int i = 0; i < args.length; i++ )
+			args[ i ] = st.nextToken();
 		submit( args, "Set File Privs" );
 	}
 
@@ -211,7 +212,8 @@ public class Processor {
 	 */
 	public static boolean subProcAlive( final Long id ) {
 		if( threadRegister.isEmpty() ) return false;
-		for( final Thread t: threadRegister.keySet() ) if( t.isAlive() && t.getId() == id ) return true;
+		for( final Thread t: threadRegister.keySet() )
+			if( t.isAlive() && t.getId() == id ) return true;
 		return false;
 	}
 
@@ -260,7 +262,8 @@ public class Processor {
 
 	private static String getArgsAsString( final String[] args ) {
 		final StringBuffer sb = new StringBuffer();
-		for( final String arg: args ) sb.append( arg + " " );
+		for( final String arg: args )
+			sb.append( arg + " " );
 		return sb.toString();
 	}
 

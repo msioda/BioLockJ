@@ -201,7 +201,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		for( int x = 0; x < data.size(); x++ )
 			for( int y = 0; y < data.get( x ).size(); y++ ) {
 				long sum = 0;
-				for( final Long d: data.get( x ) ) sum += d;
+				for( final Long d: data.get( x ) )
+					sum += d;
 				if( sum == 0 ) allZero.add( x );
 			}
 		return allZero;
