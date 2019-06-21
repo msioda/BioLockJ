@@ -49,7 +49,8 @@ public class Kraken2Node extends OtuNodeImpl {
 				if( !taxa.isEmpty() ) addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
 			}
 		} catch( final Exception ex ) {
-			throw new Exception( "Error parsing Sample ID:" + id + "> line: " + line + ": " + ex.getMessage() );
+			ex.printStackTrace();
+			throw new Exception( "Error parsing Sample ID:" + id + " --> line: " + line + ": " + ex.getMessage() );
 		}
 	}
 

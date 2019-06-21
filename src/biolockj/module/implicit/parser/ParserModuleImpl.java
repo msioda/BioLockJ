@@ -34,11 +34,11 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 			else sample.addNode( node );
 		}
 	}
-	
+
 	@Override
-	public void buildOtuCountFiles() throws Exception {	
+	public void buildOtuCountFiles() throws Exception {
 		for( final ParsedSample sample: getParsedSamples() ) {
-			final TreeMap<String, Long> otuCounts = sample.getOtuCounts( true );
+			final TreeMap<String, Long> otuCounts = sample.getOtuCounts();
 			if( otuCounts != null ) {
 				final File outputFile = OtuUtil.getOtuCountFile( getOutputDir(), sample.getSampleId(), null );
 				Log.info( getClass(), "Build output sample: " + sample.getSampleId() + " | #OTUs=" + otuCounts.size() +
@@ -72,7 +72,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		super.checkDependencies();
 		validateModuleOrder();
 	}
-	
+
 	@Override
 	public ParsedSample getParsedSample( final String sampleId ) {
 		for( final ParsedSample sample: getParsedSamples() )
@@ -107,7 +107,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	@Override
 	public void runModule() throws Exception {
 		getSampleIds().addAll( MetaUtil.getSampleIds() );
-		MemoryUtil.reportMemoryUsage( "About to parse samples" );
 		parseSamples();
 		if( getParsedSamples().isEmpty() ) throw new Exception( "Parser failed to produce output!" );
 		Log.debug( getClass(), "# Samples parsed: " + getParsedSamples().size() );
@@ -115,6 +114,35 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 
 		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
 			MetaUtil.addColumn( NUM_OTUS, getHitsPerSample(), getOutputDir(), true );
+	}
+
+	/**
+	 * Add {@link biolockj.node.ParsedSample} to parser cache
+	 * 
+	 * @param parsedSample ParsedSample
+	 * @throws Exception if method is used to add a duplicate sample
+	 */
+	protected void addParsedSample( final ParsedSample parsedSample ) throws Exception {
+		for( final ParsedSample sample: getParsedSamples() )
+			if( sample.getSampleId().equals( parsedSample.getSampleId() ) )
+				throw new Exception( "Attempt to add duplicate sample! " + sample.getSampleId() );
+		getParsedSamples().add( parsedSample );
+	}
+
+	protected Map<String, String> getHitsPerSample() {
+		return this.hitsPerSample;
+	}
+
+	protected TreeSet<ParsedSample> getParsedSamples() {
+		return this.parsedSamples;
+	}
+
+	protected Set<String> getSampleIds() {
+		return this.sampleIds;
+	}
+
+	protected Set<String> getUniqueOtus() {
+		return this.uniqueOtus;
 	}
 
 	/**
@@ -127,9 +155,9 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * @throws Exception if errors occur checking if node is valid
 	 */
 	protected boolean isValid( final OtuNode node ) throws Exception {
-		boolean isValid = node != null && node.getSampleId() != null && !node.getSampleId().isEmpty() &&
+		final boolean isValid = node != null && node.getSampleId() != null && !node.getSampleId().isEmpty() &&
 			node.getTaxaMap() != null && !node.getTaxaMap().isEmpty() && node.getCount() > 0;
-		if( !isValid ) Log.warn( getClass(), "" );
+		if( !isValid ) Log.debug( getClass(), "Ignore invalid node" );
 		return isValid;
 	}
 
@@ -145,19 +173,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
 				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName() +
 					" must run before the ParserModule." );
-	}
-
-	/**
-	 * Add {@link biolockj.node.ParsedSample} to parser cache
-	 *  
-	 * @param parsedSample ParsedSample
-	 * @throws Exception if method is used to add a duplicate sample
-	 */
-	protected void addParsedSample( final ParsedSample parsedSample ) throws Exception {
-		for( final ParsedSample sample: getParsedSamples() )
-			if( sample.getSampleId().equals( parsedSample.getSampleId() ) )
-				throw new Exception( "Attempt to add duplicate sample! " + sample.getSampleId() );
-		getParsedSamples().add( parsedSample );
 	}
 
 	private void freeMemory() {
@@ -202,22 +217,6 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 			depricatedOtuCountFields.remove( name );
 			otuCountField = name;
 		}
-	}
-	
-	protected TreeSet<ParsedSample> getParsedSamples() {
-		return this.parsedSamples;
-	}
-	
-	protected Set<String> getUniqueOtus() {
-		return this.uniqueOtus;
-	}
-	
-	protected Set<String> getSampleIds() {
-		return this.sampleIds;
-	}
-	
-	protected Map<String, String> getHitsPerSample() {
-		return this.hitsPerSample;
 	}
 
 	private Map<String, String> hitsPerSample = new HashMap<>();

@@ -147,6 +147,19 @@ public class SummaryUtil {
 	}
 
 	/**
+	 * Return a num/denom ratio
+	 * 
+	 * @param num Numerator
+	 * @param denom Denominator
+	 * @return num/denom Double value
+	 */
+	public static Double getDoubleRatio( final Double num, final Double denom ) {
+		if( num == null || num == 0D ) return 0D;
+		if( denom == null || denom == 0D ) return null;
+		return num / denom;
+	}
+
+	/**
 	 * Print the final lines of the summary with overall status, runtime, and the download scp command if applicable.
 	 * 
 	 * @return Summary info
@@ -204,6 +217,19 @@ public class SummaryUtil {
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Return a num/denom ratio floor value (do not round up)
+	 * 
+	 * @param num Numerator
+	 * @param denom Denominator
+	 * @return num/denom Long floor value
+	 */
+	public static Long getLongRatio( final Double num, final Double denom ) {
+		if( num == null || num == 0D ) return 0L;
+		if( denom == null || denom == 0D ) return null;
+		return new Double( num / denom ).longValue();
 	}
 
 	/**
@@ -391,7 +417,7 @@ public class SummaryUtil {
 			final long oneMinute = BioLockJUtil.minutesToMillis( 1 );
 			long minDuration = Long.MAX_VALUE;
 			final int numCompleted = scriptsSuccess.size() + scriptsFailed.size();
-			if( numCompleted < 1 ) return "No completed module scripts found in -->" + module.getScriptDir().getAbsolutePath() + RETURN;
+			if( numCompleted < 1 ) return "No complete scripts found -->" + module.getScriptDir().getAbsolutePath() + RETURN;
 
 			for( final File script: scripts ) {
 				final File started = new File( script.getAbsolutePath() + "_" + Constants.SCRIPT_STARTED );
@@ -425,7 +451,6 @@ public class SummaryUtil {
 				shortestScripts.remove( name );
 				longestScripts.remove( name );
 			}
-
 
 			final int numIncomplete = scriptsStarted.size() - numCompleted;
 			if( mainScript != null ) sb.append( "Main Script:  " + mainScript.getAbsolutePath() + RETURN );
@@ -461,32 +486,6 @@ public class SummaryUtil {
 		}
 
 		return sb.toString();
-	}
-	
-	/**
-	 * Return a num/denom ratio floor value (do not round up)
-	 * 
-	 * @param num Numerator
-	 * @param denom Denominator
-	 * @return num/denom Long floor value
-	 */
-	public static Long getLongRatio( Double num, Double denom ) {
-		if( num == null || num == 0D  ) return 0L;
-		if( denom == null || denom == 0D ) return null;
-		return new Double(num/denom).longValue();
-	}
-	
-	/**
-	 * Return a num/denom ratio
-	 * 
-	 * @param num Numerator
-	 * @param denom Denominator
-	 * @return num/denom Double value
-	 */
-	public static Double getDoubleRatio( Double num, Double denom ) {
-		if( num == null ||  num == 0D  ) return 0D;
-		if( denom == null || denom == 0D ) return null;
-		return num/denom;
 	}
 
 	/**
@@ -710,10 +709,10 @@ public class SummaryUtil {
 
 	private static String getHeading() {
 		final StringBuffer sb = new StringBuffer();
-		sb.append( RETURN + EXT_SPACER + RETURN + getLabel( PIPELINE_NAME ) + "     " + Config.pipelineName() + RETURN );
+		sb.append( RETURN + EXT_SPACER + RETURN + getLabel( PIPELINE_NAME ) + "  " + Config.pipelineName() + RETURN );
 		sb.append( getLabel( PIPELINE_CONFIG ) + Config.getConfigFilePath() + RETURN );
-		sb.append( getLabel( NUM_MODULES ) + "         " + Pipeline.getModules().size() + RETURN );
-		sb.append( getLabel( NUM_ATTEMPTS ) + "        1" + RETURN );
+		sb.append( getLabel( NUM_MODULES ) + "      " + Pipeline.getModules().size() + RETURN );
+		sb.append( getLabel( NUM_ATTEMPTS ) + "     1" + RETURN );
 		sb.append( EXT_SPACER + RETURN );
 		return sb.toString();
 	}

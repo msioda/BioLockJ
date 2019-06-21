@@ -246,8 +246,8 @@ public class SeqUtil {
 		throws SequnceFormatException, MetadataException, ConfigFormatException {
 		String id = value.replace( Constants.PROCESSED, "" );
 		if( MetaUtil.getSampleIds().contains( id ) ) return id;
-		id = value;	
-		
+		id = value;
+
 		final String fwReadSuffix = Config.getString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
 		final String rvReadSuffix = Config.getString( null, Constants.INPUT_REVERSE_READ_SUFFIX );
 		final String fileNameCol = Config.getString( null, MetaUtil.META_FILENAME_COLUMN );

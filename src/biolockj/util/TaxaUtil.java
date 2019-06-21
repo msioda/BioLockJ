@@ -64,6 +64,20 @@ public class TaxaUtil {
 	}
 
 	/**
+	 * Return OTU taxonomy level for the leaf edge of the OTU
+	 * 
+	 * @param otu OTU
+	 * @return Leaf taxonomy level 
+	 */
+	public static String getLeafLevel( final String otu ) {
+		String lastLevel = null;
+		for( final String level: getTaxaLevelSpan() )
+			if( otu.contains( level ) ) lastLevel = level;
+		return lastLevel;
+	}
+	
+
+	/**
 	 * Return the absolute taxonomy level for the given level. Constants.DOMAIN, Constants.PHYLUM, Constants.CLASS,
 	 * Constants.ORDER, Constants.FAMILY, Constants.GENUS, Constants.SPECIES
 	 * <ol>
@@ -123,29 +137,6 @@ public class TaxaUtil {
 
 		return taxaCounts;
 	}
-	
-	/**
-	 * Return a map<Level, Taxa> for the leaf edge of the OTU
-	 * 
-	 * @param otu OTU
-	 * @return Leaf Level Taxa
-	 */
-	public static Map<String, String> getLeafTaxa( final String otu ) {
-		final TreeMap<String, String> map = new TreeMap<>();
-		String lastLevel = null;
-		String lastTaxa = null;
-		for( final String level: getTaxaLevelSpan() ) {
-			if( otu.contains( level ) ) {
-				String taxa = getTaxaName( otu, level );
-				if( taxa != null ) {
-					lastTaxa =  taxa;
-					lastLevel = level;
-				}
-			}
-		}
-		map.put( lastLevel, lastTaxa );
-		return map;
-	}
 
 	/**
 	 * Return a map of the given otu parameter split by level.
@@ -179,11 +170,9 @@ public class TaxaUtil {
 	 */
 	public static List<String> getTaxaLevelSpan() {
 		if( levelSpan != null ) return levelSpan;
-
 		levelSpan = new ArrayList<>();
 		for( final String level: allTaxonomyLevels() ) {
 			if( !levelSpan.isEmpty() || level.equals( topTaxaLevel() ) ) levelSpan.add( level );
-
 			if( level.equals( bottomTaxaLevel() ) ) break;
 		}
 		return levelSpan;
@@ -197,7 +186,7 @@ public class TaxaUtil {
 	 * @return Taxonomy name
 	 */
 	public static String getTaxaName( final String otu, final String level ) {
-		final StringTokenizer st = new StringTokenizer( otu, Constants.SEPARATOR );
+		final StringTokenizer st = new StringTokenizer( otu, Constants.OTU_SEPARATOR );
 		while( st.hasMoreTokens() ) {
 			final String levelOtu = st.nextToken();
 			if( levelOtu.startsWith( level + Constants.DELIM_SEP ) )

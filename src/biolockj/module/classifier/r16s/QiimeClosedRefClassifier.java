@@ -51,8 +51,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 			for( final File f: files ) {
 				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( data.size() ).getAbsolutePath() );
 				if( saveBatch( data.size(), lines.size() ) ) {
-					int numSamples = lines.size();
-					Log.debug( getClass(), "Save Worker#" + data.size() + " --> # samples = " + lines.size() );
+					final int numSamples = lines.size();
+					Log.debug( getClass(), "Save Worker #" + data.size() + " --> # samples = " + lines.size() );
 					data.add( getBatch( lines, data.size(), startIndex ) );
 					startIndex += numSamples;
 					lines = new ArrayList<>();
@@ -62,15 +62,6 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		}
 		Log.info( getClass(), "Build script returning data for #workers = " + data.size() );
 		return data;
-	}
-	
-	
-	private boolean saveBatch( final int workerNum, final int sampleCount )
-		throws ConfigNotFoundException, ConfigFormatException {
-		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( this );  // 1
-		final int maxWorkers = ModuleUtil.getNumMaxWorkers( this ); // 8
-		return ( workerNum < maxWorkers && sampleCount == (minSamplesPerWorker + 1) ) ||
-			(workerNum >= maxWorkers && sampleCount == minSamplesPerWorker);
 	}
 
 	/**
@@ -153,7 +144,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		lines.add( copyBatchOtuTableToOutputDir( batchDir, batchNum ) );
 		return lines;
 	}
-	
+
 	/**
 	 * Get the pipeline/module/temp/batch_# dir. Create it if it doesn't exist.
 	 *
@@ -178,6 +169,13 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		return f;
 	}
 
+	private boolean saveBatch( final int workerNum, final int sampleCount )
+		throws ConfigNotFoundException, ConfigFormatException {
+		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( this ); // 1
+		final int maxWorkers = ModuleUtil.getNumMaxWorkers( this ); // 8
+		return workerNum < maxWorkers && sampleCount == minSamplesPerWorker + 1 ||
+			workerNum >= maxWorkers && sampleCount == minSamplesPerWorker;
+	}
 
 	private void setNumWorkers( final Integer count ) throws ConfigNotFoundException, ConfigFormatException {
 		if( count != ModuleUtil.getNumWorkers( this ) )

@@ -57,6 +57,15 @@ public class Pipeline {
 	}
 
 	/**
+	 * Return the BioModule currently being executed
+	 * 
+	 * @return Current BioModule
+	 */
+	public static BioModule exeModule() {
+		return currentModule;
+	}
+
+	/**
 	 * Return a list of {@link biolockj.module.BioModule}s constructed by the {@link biolockj.BioModuleFactory}
 	 *
 	 * @return List of BioModules
@@ -158,18 +167,6 @@ public class Pipeline {
 
 			throw ex;
 		}
-	}
-	
-	/**
-	 * Return the BioModule currently being executed
-	 * @return Current BioModule
-	 */
-	public static BioModule exeModule() {
-		return currentModule;
-	}
-	
-	private static void setExeModule( BioModule module ) {
-		currentModule = module;
 	}
 
 	/**
@@ -291,7 +288,8 @@ public class Pipeline {
 	 */
 	protected static void refreshRCacheIfNeeded() throws Exception {
 		if( ModuleUtil.isFirstRModule( exeModule() ) ) {
-			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + exeModule().getClass().getName() );
+			Log.info( Pipeline.class,
+				"Refresh R-cache before running 1st R module: " + exeModule().getClass().getName() );
 			RMetaUtil.classifyReportableMetadata( exeModule() );
 		}
 	}
@@ -348,6 +346,10 @@ public class Pipeline {
 		else Log.info( Pipeline.class, prompt + "Running scripts will NEVER TIME OUT." );
 	}
 
+	private static void setExeModule( final BioModule module ) {
+		currentModule = module;
+	}
+
 	/**
 	 * This method calls executes script module scripts and monitors them until complete or timing out after
 	 * {@value #POLL_TIME} seconds.
@@ -355,7 +357,7 @@ public class Pipeline {
 	 * @throws Exception if errors occur
 	 */
 	private static void waitForModuleScripts() throws Exception {
-		ScriptModule module = (ScriptModule) exeModule();
+		final ScriptModule module = (ScriptModule) exeModule();
 		logScriptTimeOutMsg( module );
 		int numMinutes = 0;
 		boolean finished = false;
@@ -369,8 +371,8 @@ public class Pipeline {
 		}
 	}
 
-	private static BioModule currentModule = null;
 	private static List<BioModule> bioModules = null;
+	private static BioModule currentModule = null;
 	private static Exception pipelineException = null;
 	private static int pollCount = 0;
 	private static String statusMsg = "";

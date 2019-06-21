@@ -145,11 +145,10 @@ public final class RMetaUtil {
 			if( !DockerUtil.isDirectMode() )
 				Log.info( RMetaUtil.class, "Metadata field [" + field + "] has " + count + " unique non-null values." );
 
-			if( count < 2 ) throw new MetadataException( 
+			if( count < 2 ) throw new MetadataException(
 				"Metadata field [" + field + "] is invalid!  Statistical tests require at least 2 unique values." );
 
-			if( numericFields.contains( field ) ) 
-				verifyNumericData( field, data );
+			if( numericFields.contains( field ) ) verifyNumericData( field, data );
 			else if( count == 2 ) {
 				binaryFields.add( field );
 				numericFields.remove( field );
@@ -159,7 +158,8 @@ public final class RMetaUtil {
 				boolean foundNominal = false;
 
 				for( final String val: data )
-					if( NumberUtils.isNumber( val ) ) foundNumeric = true; else foundNominal = true;
+					if( NumberUtils.isNumber( val ) ) foundNumeric = true;
+					else foundNominal = true;
 
 				if( foundNominal && !foundNumeric ) { // all nominal
 					nominalFields.add( field );
@@ -217,9 +217,9 @@ public final class RMetaUtil {
 	 */
 	public static boolean updateRConfig( final BioModule module ) throws Exception {
 		final Integer numCols = Config.getPositiveInteger( module, RMetaUtil.NUM_META_COLS );
-		Integer numMetaCols = getMetaCols( module ).size();
+		final Integer numMetaCols = getMetaCols( module ).size();
 
-		if( (numCols != null && numCols == numMetaCols ) || numMetaCols == 0 ) {
+		if( numCols != null && numCols == numMetaCols || numMetaCols == 0 ) {
 			Log.info( RMetaUtil.class, "R Config unchanged by module " + module.getClass().getName() + "..." );
 			return false;
 		}
@@ -287,7 +287,6 @@ public final class RMetaUtil {
 			if( !isQiimeMetric( module, field ) ) cols.add( field );
 		return cols;
 	}
-
 
 	private static boolean hasQiimeMapping() {
 		for( final BioModule module: Pipeline.getModules() )

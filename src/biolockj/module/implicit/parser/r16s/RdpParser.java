@@ -42,7 +42,6 @@ public class RdpParser extends ParserModuleImpl {
 	@Override
 	public void parseSamples() throws Exception {
 		for( final File file: getInputFiles() ) {
-			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try {
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )

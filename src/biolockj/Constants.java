@@ -101,7 +101,7 @@ public class Constants {
 	public static final String DEFAULT_STATS_MODULE = "pipeline.defaultStatsModule";
 
 	/**
-	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
+	 * In an otu string for multiple levels, each separated by {@value #OTU_SEPARATOR}, each otu has a level prefix ending
 	 * with {@value #DELIM_SEP}
 	 */
 	public static final String DELIM_SEP = "__";
@@ -607,11 +607,6 @@ public class Constants {
 	 * Set the max number of minutes to allow for S3 transfers to complete.
 	 */
 	public static final String REPORT_UNCLASSIFIED_TAXA = "report.unclassifiedTaxa";
-	
-	/**
-	 * Unclassified taxa prefix: {@value #UNCLASSIFIED}
-	 */
-	public static final String UNCLASSIFIED = "Unclassified";
 
 	/**
 	 * Return character: *backslash-n*
@@ -681,9 +676,9 @@ public class Constants {
 	public static final String SCRIPT_TIMEOUT = "script.timeout";
 
 	/**
-	 * A pipe is used to separate each taxa {@value #SEPARATOR}
+	 * A pipe is used to separate each taxa {@value #OTU_SEPARATOR}
 	 */
-	public static final String SEPARATOR = "|";
+	public static final String OTU_SEPARATOR = "|";
 
 	/**
 	 * BioLockJ shell script file extension: {@value #SH_EXT}
@@ -719,6 +714,11 @@ public class Constants {
 	 * BioLockJ standard text file extension: {@value #TXT_EXT}
 	 */
 	public static final String TXT_EXT = ".txt";
+
+	/**
+	 * Unclassified taxa prefix: {@value #UNCLASSIFIED}
+	 */
+	public static final String UNCLASSIFIED = "Unclassified";
 
 	/**
 	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>

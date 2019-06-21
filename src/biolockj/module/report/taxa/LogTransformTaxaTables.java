@@ -77,10 +77,10 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables {
 					final String id = MetaUtil.getSampleIds().get( x + 1 );
 					Log.warn( getClass(), "All zero row will not be transformed - ID ommitted: " + id );
 				} else if( getLogBase().equalsIgnoreCase( LOG_E ) ) {
-					String res = new Double( Math.log( val ) ).toString();
+					final String res = new Double( Math.log( val ) ).toString();
 					loggedInnerList.add( res );
 				} else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
-					String res = new Double( Math.log10( val ) ).toString();
+					final String res = new Double( Math.log10( val ) ).toString();
 					Log.debug( getClass(), "Math.log10( " + val + ") = " + Math.log10( val ) + " ==> " + res );
 					loggedInnerList.add( res );
 				}

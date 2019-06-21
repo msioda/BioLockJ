@@ -61,7 +61,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 				if( this.taxaMap.keySet().contains( testLevel ) ) {
 					parentTaxa = this.taxaMap.get( testLevel );
 					parentLevel = testLevel;
-				} else if( parentTaxa != null && Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) ) {
+				} else if( parentTaxa != null &&
+					Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) ) {
 					final String unclassifiedTaxa = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
 					this.taxaMap.put( testLevel, unclassifiedTaxa );
 				}
@@ -128,15 +129,15 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 			for( final String level: TaxaUtil.getTaxaLevels() ) {
 				String taxaName = this.taxaMap.get( level );
 				if( taxaName != null && taxaName.trim().isEmpty() ) taxaName = null;
-				if( taxaName == null && Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) ) 
+				if( taxaName == null && Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) )
 					taxaName = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
 				else if( taxaName != null ) {
 					parentTaxa = taxaName;
 					parentLevel = level;
 				}
-				
+
 				if( taxaName == null ) continue;
-				if( !otu.toString().isEmpty() ) otu.append( Constants.SEPARATOR );
+				if( !otu.toString().isEmpty() ) otu.append( Constants.OTU_SEPARATOR );
 				otu.append( OtuUtil.buildOtuTaxa( level, taxaName ) );
 			}
 		} catch( final Exception ex ) {
@@ -156,7 +157,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	 * levels are found, they inherit their parent taxa.
 	 */
 	@Override
-	public Map<String, String> getTaxaMap() throws Exception {
+	public Map<String, String> getTaxaMap() throws ConfigFormatException {
 		if( !this.taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) ) {
 			Log.debug( getClass(), "Omit incomplete [ " + this.sampleId + " ] OTU missing the top taxonomy level: " +
 				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "": ", classifier output = " + this.line ) );
@@ -206,8 +207,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 				numFound++;
 				parentTaxa = this.taxaMap.get( level );
 				parentLevel = level;
-			} else if( Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) && parentTaxa != null &&
-				this.taxaMap.get( level ) == null && numFound < numTaxa )
+			} else if( Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) &&
+				parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
 				this.taxaMap.put( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 			else if( numFound == numTaxa ) break;
 	}

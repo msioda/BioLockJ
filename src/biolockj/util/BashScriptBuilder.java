@@ -315,6 +315,11 @@ public class BashScriptBuilder {
 			module.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
 	}
 
+	private static Integer getMinSamplesPerWorker( final BioModule module, final int count )
+		throws ConfigNotFoundException, ConfigFormatException {
+		return new Double( Math.floor( (double) count / (double) ModuleUtil.getNumWorkers( module ) ) ).intValue();
+	}
+
 	private static String getWorkerId( final int scriptNum, final int digits ) {
 		return String.format( "%0" + digits + "d", scriptNum );
 	}
@@ -334,18 +339,13 @@ public class BashScriptBuilder {
 		if( prologue != null ) lines.add( prologue + RETURN );
 		return lines;
 	}
-	
-	private static Integer getMinSamplesPerWorker( final BioModule module, final int count )
-		throws ConfigNotFoundException, ConfigFormatException {
-		return new Double( Math.floor( (double) count / (double) ModuleUtil.getNumWorkers( module ) ) ).intValue();
-	}
 
 	private static boolean saveWorker( final BioModule module, final int sampleCount, final int count )
 		throws ConfigNotFoundException, ConfigFormatException {
 		final int maxWorkers = count - ModuleUtil.getNumWorkers( module );
 		final int minSamplesPerWorker = getMinSamplesPerWorker( module, count );
-		return ( workerNum() < maxWorkers && sampleCount == ( minSamplesPerWorker + 1 ) ) ||
-			( workerNum() >= maxWorkers && sampleCount == minSamplesPerWorker );
+		return workerNum() < maxWorkers && sampleCount == minSamplesPerWorker + 1 ||
+			workerNum() >= maxWorkers && sampleCount == minSamplesPerWorker;
 	}
 
 	private static int workerNum() {

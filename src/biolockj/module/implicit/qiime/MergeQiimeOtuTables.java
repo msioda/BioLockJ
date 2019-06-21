@@ -49,11 +49,6 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl {
 
 		return data;
 	}
-	
-	@Override
-	public boolean isValidInputModule( final BioModule module ) {
-		return module instanceof QiimeClosedRefClassifier;
-	}
 
 	/**
 	 * Verify the previous module = {@link biolockj.module.classifier.r16s.QiimeClosedRefClassifier}
@@ -79,6 +74,11 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl {
 				"Previous module only output 1 " + QiimeClassifier.OTU_TABLE + "so there is nothing to merge" );
 			FileUtils.copyFileToDirectory( getInputFiles().get( 0 ), getOutputDir() );
 		} else throw new Exception( "No " + Constants.OTU_TABLE_PREFIX + " files to merge" );
+	}
+
+	@Override
+	public boolean isValidInputModule( final BioModule module ) {
+		return module instanceof QiimeClosedRefClassifier;
 	}
 
 	/**
