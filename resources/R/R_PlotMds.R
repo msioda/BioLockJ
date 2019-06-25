@@ -16,7 +16,6 @@ main <- function() {
     
     myMDS = capscale( countTable~1, distance=getProperty("r_PlotMds.distance") )
     numAxis = min( c( getProperty("r_PlotMds.numAxis"), ncol(myMDS$CA$u) ) )
-    metaColColors = getColorsByCategory( metaTable )
     
     pcoaFileName = paste0( getPath( file.path(getModuleDir(), "temp"), paste0(level, "_pcoa") ), ".tsv" )
     write.table( cbind(id=row.names(myMDS$CA$u), as.data.frame(myMDS$CA$u)), file=pcoaFileName, col.names=TRUE, row.names=FALSE, sep="\t" )
@@ -33,14 +32,15 @@ main <- function() {
     pageNum = 0
     
     for( field in mdsFields ){
+      logInfo(c("Generating plots colored by: ", field))
+
       par(mfrow = par("mfrow"), cex = par("cex"))
       position = 1
       
       metaColVals = as.character(metaTable[,field])
-      colorKey = metaColColors[[field]]
+      colorKey = getColorsByCategory( field, metaTable )
       
       logInfo( "metaColVals", metaColVals )
-      logInfo( c( "Using colors: ", paste(colorKey, "for", names(colorKey), collapse= ", ")) )
       
       for( x in 1: (numAxis-1) ) {
         for( y in (x+1): numAxis ) {
@@ -48,7 +48,9 @@ main <- function() {
           plot( myMDS$CA$u[,x], myMDS$CA$u[,y], main=paste("Axes", x, "vs", y),
                 xlab=getMdsLabel( x, perVariance[x] ),
                 ylab=getMdsLabel( y, perVariance[y] ),
-                cex=1.2, pch=getProperty("r.pch", 20), col=colorKey[metaColVals] )
+                cex=1, pch=getProperty("r.pch", default.pch), 
+                fg=getProperty("r.colorPoint", default.pt.col),
+                bg=colorKey[metaColVals])
           
           if( position == 1 || position > prod( par("mfrow") ) ) {
             position = 1
@@ -96,16 +98,19 @@ plotRelativeVariance <- function( field, metaColVals, perVariance, level, numAxi
   text(x=bp, y=heights, labels = labels, pos=3, xpd=TRUE)
   title( str_to_title( level ) )
   
-  legendKey = colorKey
+  legendKey = colorKey[ order(table(metaColVals)[names(colorKey)], decreasing = TRUE) ]
   legendLabels = paste0(names(legendKey), " (n=", table(metaColVals)[names(legendKey)], ")")
-  legendKey = legendKey[ order(table(metaColVals)[names(colorKey)]) ]
   
   if (length(colorKey) > (maxInLegend + 1) ){
-    legendKey = c( colorKey[ 1:maxInLegend], NA)
+    legendKey = c( legendKey[ 1:maxInLegend], NA)
     numDropped = length(colorKey) - length(legendKey) + 1
     legendLabels = c(legendLabels[1:maxInLegend], paste("(", numDropped, "other labels )"))
   }
-  legend( "topright", title=field, legend=legendLabels, cex=0.8, col=legendKey, pch=getProperty("r.pch", 20), bty="n" )
+  legend( "topright", title=field, legend=legendLabels, cex=1, 
+          col=getProperty("r.colorPoint", default.pt.col),
+          pt.bg=legendKey, pch=getProperty("r.pch", default.pch), bty="n" )
 }
 
 maxInLegend = 6
+default.pch = 21
+default.pt.col = "black"
