@@ -28,15 +28,6 @@ import biolockj.module.report.r.R_CalculateStats;
 public class BioLockJUtil {
 
 	/**
-	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
-	 * 
-	 * @return boolean
-	 */
-	public static boolean isDirectMode() {
-		return RuntimeParamUtil.getDirectModuleDir() != null;
-	}
-
-	/**
 	 * Add leading spaces until the val is padded to given length
 	 * 
 	 * @param val Value to add spaces
@@ -445,6 +436,15 @@ public class BioLockJUtil {
 		inputFiles.addAll( files );
 		Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 		setPipelineInputFileTypes();
+	}
+
+	/**
+	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
+	 * 
+	 * @return boolean
+	 */
+	public static boolean isDirectMode() {
+		return RuntimeParamUtil.getDirectModuleDir() != null;
 	}
 
 	/**

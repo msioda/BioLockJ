@@ -370,9 +370,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	private Map<String, String> getValidReadsPerSample() throws Exception {
 		if( !MetaUtil.getFieldNames().contains( NUM_TRIMMED_READS ) && this.validReadsPerSample.isEmpty() )
 			for( final File f: this.seqsWithPrimersTrimmed.keySet() )
-			if( !SeqUtil.hasPairedReads() || SeqUtil.isForwardRead( f.getName() ) )
-				this.validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
-					Long.toString( this.seqsWithPrimersTrimmed.get( f ) ) );
+			if( !SeqUtil.hasPairedReads() || SeqUtil.isForwardRead( f.getName() ) ) this.validReadsPerSample
+				.put( SeqUtil.getSampleId( f.getName() ), Long.toString( this.seqsWithPrimersTrimmed.get( f ) ) );
 		return this.validReadsPerSample;
 	}
 
@@ -486,8 +485,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				seqLines.add( line );
 
 				if( seqLines.size() == SeqUtil.getNumLinesPerRead() ) {
-					final boolean validRecord = found && ( SeqUtil.hasPairedReads() ?
-						validHeaders.contains( seqLines.get( 0 ) ): true );
+					final boolean validRecord =
+						found && ( SeqUtil.hasPairedReads() ? validHeaders.contains( seqLines.get( 0 ) ): true );
 
 					if( !Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) || validRecord ) {
 						final Long x = this.seqsWithPrimersTrimmed.get( file );

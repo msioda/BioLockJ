@@ -178,19 +178,6 @@ public class Processor {
 	}
 
 	/**
-	 * Run script that expects a single result
-	 * 
-	 * @param cmd Command
-	 * @param label Process Label
-	 * @return script output
-	 * @throws IOException if errors occur reading the InputStream
-	 * @throws InterruptedException if the thread process is interrupted
-	 */
-	public static String submitQuery( final String cmd, final String label ) throws IOException, InterruptedException {
-		return new Processor().runJob( new String[] { cmd }, label );
-	}
-
-	/**
 	 * Instantiates a new {@link biolockj.Processor}.<br>
 	 * String[] array used to control spacing between command/params.<br>
 	 * As if executing on terminal args[0] args[1]... args[n-1] as one command.
@@ -202,6 +189,19 @@ public class Processor {
 	 */
 	public static void submitJob( final String[] args, final String label ) throws IOException, InterruptedException {
 		new Processor().runJob( args, label );
+	}
+
+	/**
+	 * Run script that expects a single result
+	 * 
+	 * @param cmd Command
+	 * @param label Process Label
+	 * @return script output
+	 * @throws IOException if errors occur reading the InputStream
+	 * @throws InterruptedException if the thread process is interrupted
+	 */
+	public static String submitQuery( final String cmd, final String label ) throws IOException, InterruptedException {
+		return new Processor().runJob( new String[] { cmd }, label );
 	}
 
 	/**

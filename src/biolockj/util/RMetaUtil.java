@@ -163,14 +163,16 @@ public final class RMetaUtil {
 
 				if( foundNominal && !foundNumeric ) { // all nominal
 					nominalFields.add( field );
-					if( !BioLockJUtil.isDirectMode() ) Log.debug( RMetaUtil.class, "Assign as nominal field: " + field );
+					if( !BioLockJUtil.isDirectMode() )
+						Log.debug( RMetaUtil.class, "Assign as nominal field: " + field );
 				} else if( foundNominal && foundNumeric ) { // mixed nominal/numeric
 					nominalFields.add( field );
 					if( !BioLockJUtil.isDirectMode() ) Log.warn( RMetaUtil.class, "Metadata field [" + field +
 						"] has both numeric and " + "non-numeric data so will be classified as nominal data" );
 				} else if( !foundNominal && foundNumeric ) { // all numeric
 					numericFields.add( field );
-					if( !BioLockJUtil.isDirectMode() ) Log.debug( RMetaUtil.class, "Assign as numeric field: " + field );
+					if( !BioLockJUtil.isDirectMode() )
+						Log.debug( RMetaUtil.class, "Assign as numeric field: " + field );
 				}
 			}
 		}

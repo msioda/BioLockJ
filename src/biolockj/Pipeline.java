@@ -39,12 +39,12 @@ public class Pipeline {
 		ModuleUtil.markStarted( exeModule() );
 		refreshRCacheIfNeeded();
 		exeModule().executeTask();
-		
+
 		final boolean isJava = exeModule() instanceof JavaModule;
 		final boolean hasScripts = ModuleUtil.hasScripts( exeModule() );
 		final boolean detachJava = Config.getBoolean( exeModule(), Constants.DETACH_JAVA_MODULES );
 		final boolean runDetached = isJava && hasScripts && detachJava;
-		
+
 		if( runDetached ) MasterConfigUtil.saveMasterConfig();
 		if( hasScripts && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) exeModule() );
 		if( hasScripts ) waitForModuleScripts();
@@ -315,7 +315,6 @@ public class Pipeline {
 
 		return scriptFiles;
 	}
-
 
 	private static void info( final String msg ) {
 		if( !BioLockJUtil.isDirectMode() ) Log.info( Pipeline.class, msg );

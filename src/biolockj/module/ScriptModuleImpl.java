@@ -64,8 +64,8 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 */
 	@Override
 	public void executeTask() throws Exception {
-		final List<List<String>> data = SeqUtil.hasPairedReads() ?
-			buildScriptForPairedReads( getInputFiles() ): buildScript( getInputFiles() );
+		final List<List<String>> data =
+			SeqUtil.hasPairedReads() ? buildScriptForPairedReads( getInputFiles() ): buildScript( getInputFiles() );
 		BashScriptBuilder.buildScripts( this, data );
 
 	}
