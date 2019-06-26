@@ -67,7 +67,7 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = super.getPreRequisiteModules();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
+		if( SeqUtil.hasPairedReads() )
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		else if( SeqUtil.piplineHasSeqInput() && needsCountModule() ) preReqs.add( RegisterNumReads.class.getName() );
 

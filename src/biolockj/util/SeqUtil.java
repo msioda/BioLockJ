@@ -28,6 +28,7 @@ public class SeqUtil {
 	// Prevent instantiation
 	private SeqUtil() {}
 
+
 	/**
 	 * Method counts number of reads in the given sequence file by counting the number of lines and dividing by the
 	 * number of lines/sample (fasta=2, fastq=4)
@@ -220,7 +221,7 @@ public class SeqUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static String getReadDirectionSuffix( final String fileName ) throws Exception {
-		if( Config.getBoolean( null, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( hasPairedReads() ) {
 			if( SeqUtil.isForwardRead( fileName ) )
 				return Config.requireString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
 			return Config.requireString( null, Constants.INPUT_REVERSE_READ_SUFFIX );
@@ -698,7 +699,7 @@ public class SeqUtil {
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.info( SeqUtil.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.info( SeqUtil.class, msg );
 	}
 
 	private static boolean mapSampleIdWithMetaFileNameCol() throws Exception {

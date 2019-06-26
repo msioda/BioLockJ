@@ -354,7 +354,7 @@ public class Config {
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
-		if( !DockerUtil.isDirectMode() && !FileUtils.directoryContains( getPipelineDir(), configFile ) )
+		if( !BioLockJUtil.isDirectMode() && !FileUtils.directoryContains( getPipelineDir(), configFile ) )
 			FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
 		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
@@ -732,7 +732,7 @@ public class Config {
 		if( RuntimeParamUtil.doRestart() ) {
 			setPipelineDir( RuntimeParamUtil.getRestartDir() );
 			Log.info( Config.class, "Assign RESTART_DIR pipeline root directory: " + Config.pipelinePath() );
-		} else if( DockerUtil.isDirectMode() ) {
+		} else if( BioLockJUtil.isDirectMode() ) {
 			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
 			Log.info( Config.class, "Assign DIRECT pipeline root directory: " + Config.pipelinePath() );
 		} else {

@@ -176,26 +176,28 @@ public class RuntimeParamUtil {
 		return params.get( HOME_DIR ) == null ? null: new File( params.get( HOME_DIR ) );
 	}
 
-	/**
-	 * Return runtime params that need be forward to detached cluster Java modules
-	 * 
-	 * @param module JavaModule
-	 * @return java -jar BioLockJ.jar runtime args
-	 */
-	public static String getJavaComputeNodeArgs( final JavaModule module ) {
+	
+	private static String getJavaComputeNodeArgs( final JavaModule module ) {
 		Log.info( RuntimeParamUtil.class, "Building java args for Cluster Compute nodes  -->" );
 		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam() + " " +
 			getDirectModuleParam( module );
 	}
-
+	
 	/**
-	 * Get Docker runtime arguments passed to BioLockJ from dockblj script.<br>
-	 * These are used to to populate BLJ_OPTIONS in Docker java_module scripts.
+	 * For cluster env, runtime params that need be forward to detached cluster Java modules.
+	 * For Docker env, return line with BLJ_OPTIONS in Docker java_module scripts.
 	 * 
-	 * @param module JavaModule BioModule subclass
-	 * @return Docker runtime parameters
+	 * @param module JavaModule
+	 * @return java -jar BioLockJ.jar runtime args
 	 */
-	public static String getJavaContainerArgs( final JavaModule module ) {
+	public static String getJavaModuleArgs( final JavaModule module ) {
+		Log.info( RuntimeParamUtil.class, "Building Docker BLJ_OPTIONS for java_module Docker script -->" );			
+		if( DockerUtil.inDockerEnv() ) return getJavaContainerArgs( module );	
+		return getJavaComputeNodeArgs( module );
+	}
+	
+	
+	private static String getJavaContainerArgs( final JavaModule module ) {
 		Log.info( RuntimeParamUtil.class, "Building Docker BLJ_OPTIONS for java_module Docker script -->" );
 		String javaModArgs = "";
 		for( final String key: params.keySet() ) {

@@ -390,7 +390,7 @@ public class MetaUtil {
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
-			if( !DockerUtil.isDirectMode() ) report();
+			if( !BioLockJUtil.isDirectMode() ) report();
 
 			reportedMetadata = getMetadata();
 		} else Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: " +

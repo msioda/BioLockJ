@@ -260,7 +260,7 @@ public class QiimeClassifier extends ClassifierModuleImpl {
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
 		preReqs.addAll( super.getPreRequisiteModules() );
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
+		if( SeqUtil.hasPairedReads() )
 			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		if( SeqUtil.piplineHasSeqInput() && !SeqUtil.isFastA() ) preReqs.add( ModuleUtil.getDefaultFastaConverter() );
 		if( !getClass().getName().equals( QiimeClassifier.class.getName() ) )

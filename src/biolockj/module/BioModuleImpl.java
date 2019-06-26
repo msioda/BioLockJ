@@ -200,7 +200,8 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		this.inputFiles.clear();
 		this.inputFiles.addAll( files );
 		Collections.sort( this.inputFiles );
-		if( SeqUtil.isSeqFile( this.inputFiles.get( 0 ) ) ) sortCachedInputFilesForEvenBatchSize();
+		if( !this.inputFiles.isEmpty() && SeqUtil.isSeqFile( this.inputFiles.get( 0 ) ) ) 
+			sortCachedInputFilesForEvenBatchSize();
 		else printInputFiles();
 	}
 

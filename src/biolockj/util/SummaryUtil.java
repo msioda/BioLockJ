@@ -499,7 +499,7 @@ public class SummaryUtil {
 		final StringBuffer sb = new StringBuffer();
 		try {
 			final File summary = getSummaryFile();
-			if( !summary.isFile() ) sb.append( "NO SUMMARY FOUND" );
+			if( !summary.isFile() ) sb.append( "NO SUMMARY FOUND" + RETURN );
 			else {
 				final BufferedReader reader = BioLockJUtil.getFileReader( summary );
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
@@ -737,7 +737,7 @@ public class SummaryUtil {
 			RuntimeParamUtil.getHomeDir().getAbsolutePath();
 		user = user.substring( user.lastIndexOf( File.separator ) + 1 );
 		try {
-			host = Processor.submit( "hostname", "Query Host" );
+			host = Processor.submitQuery( "hostname", "Query Host" );
 			parentHost = Config.isOnCluster() ? Config.requireString( null, Constants.CLUSTER_HOST ):
 				DockerUtil.inDockerEnv() ? RuntimeParamUtil.getDockerHostName(): null;
 		} catch( final Exception ex ) {

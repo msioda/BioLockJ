@@ -32,6 +32,18 @@ public class ModuleUtil {
 
 	// Prevent instantiation
 	private ModuleUtil() {}
+	
+	/**
+	 * Check a BioModule for scripts to execute.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if the module has scripts to run
+	 */
+	public static boolean hasScripts( final BioModule module ) {
+		final File scriptDir =
+			new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
+		return scriptDir.isDirectory() && scriptDir.list().length > 0;
+	}
 
 	/**
 	 * Return the module ID as a 2 digit display number (add leading zero if needed).
@@ -211,6 +223,7 @@ public class ModuleUtil {
 		final int count = Config.requirePositiveInteger( module, Constants.SCRIPT_NUM_WORKERS );
 		return Math.max( 1, Math.min( count, module.getInputFiles().size() ) );
 	}
+
 
 	/**
 	 * BioModules are run in the order configured.<br>

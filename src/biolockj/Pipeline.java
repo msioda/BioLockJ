@@ -39,20 +39,17 @@ public class Pipeline {
 		ModuleUtil.markStarted( exeModule() );
 		refreshRCacheIfNeeded();
 		exeModule().executeTask();
-
-		final boolean runDetached = exeModule() instanceof JavaModule && hasScripts() &&
-			Config.getBoolean( exeModule(), Constants.DETACH_JAVA_MODULES );
-
+		
+		final boolean isJava = exeModule() instanceof JavaModule;
+		final boolean hasScripts = ModuleUtil.hasScripts( exeModule() );
+		final boolean detachJava = Config.getBoolean( exeModule(), Constants.DETACH_JAVA_MODULES );
+		final boolean runDetached = isJava && hasScripts && detachJava;
+		
 		if( runDetached ) MasterConfigUtil.saveMasterConfig();
-
-		if( hasScripts() && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) exeModule() );
-
-		if( hasScripts() ) waitForModuleScripts();
-
+		if( hasScripts && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) exeModule() );
+		if( hasScripts ) waitForModuleScripts();
 		exeModule().cleanUp();
-
 		if( !runDetached ) SummaryUtil.reportSuccess( exeModule() );
-
 		ModuleUtil.markComplete( exeModule() );
 	}
 
@@ -92,10 +89,10 @@ public class Pipeline {
 	 * @throws Exception if errors occur
 	 */
 	public static void initializePipeline() throws Exception {
-		Log.info( Pipeline.class, "Initialize " + ( DockerUtil.isDirectMode() ? "DIRECT module ":
+		Log.info( Pipeline.class, "Initialize " + ( BioLockJUtil.isDirectMode() ? "DIRECT module ":
 			DockerUtil.inAwsEnv() ? "AWS ": DockerUtil.inDockerEnv() ? "DOCKER ": "" ) + "pipeline" );
 		bioModules = BioModuleFactory.buildPipeline();
-		if( !DockerUtil.isDirectMode() )
+		if( !BioLockJUtil.isDirectMode() )
 			Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
 	}
@@ -213,7 +210,7 @@ public class Pipeline {
 	protected static boolean initializeModules() throws Exception {
 		for( final BioModule module: getModules() ) {
 			setExeModule( module );
-			if( ModuleUtil.isIncomplete( module ) && ( !DockerUtil.isDirectMode() || module instanceof Email ) ) {
+			if( ModuleUtil.isIncomplete( module ) && ( !BioLockJUtil.isDirectMode() || module instanceof Email ) ) {
 				final String path = module.getModuleDir().getAbsolutePath();
 				Log.info( Pipeline.class, "Reset incomplete module: " + path );
 				FileUtils.forceDelete( module.getModuleDir() );
@@ -319,14 +316,9 @@ public class Pipeline {
 		return scriptFiles;
 	}
 
-	private static boolean hasScripts() {
-		final File scriptDir =
-			new File( exeModule().getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
-		return exeModule() instanceof ScriptModule && scriptDir.isDirectory() && scriptDir.list().length > 0;
-	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.info( Pipeline.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.info( Pipeline.class, msg );
 	}
 
 	private static void logScriptTimeOutMsg( final ScriptModule module ) throws Exception {

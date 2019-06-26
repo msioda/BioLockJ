@@ -43,7 +43,7 @@ public class ImportMetadata extends BioModuleImpl {
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		if( hasRModules() && !DockerUtil.isDirectMode() ) RMetaUtil.classifyReportableMetadata( this );
+		if( hasRModules() && !BioLockJUtil.isDirectMode() ) RMetaUtil.classifyReportableMetadata( this );
 	}
 
 	/**

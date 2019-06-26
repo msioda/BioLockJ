@@ -61,7 +61,7 @@ public class NextflowUtil {
 			s3args[ 6 ] = Constants.BLJ_COMPLETE;
 		}
 
-		if( waitUntilComplete ) Processor.submit( s3args, "S3-Sync-xFer" );
+		if( waitUntilComplete ) Processor.submitJob( s3args, "S3-Sync-xFer" );
 		else Processor.runSubprocess( s3args, "S3-Async-xFer" );
 	}
 
@@ -311,7 +311,7 @@ public class NextflowUtil {
 		args[ 0 ] = templateScript().getAbsolutePath();
 		args[ 1 ] = templateConfig().getAbsolutePath();
 		args[ 2 ] = modules;
-		Processor.submit( args, "Build Nf Template" );
+		Processor.submitJob( args, "Build Nf Template" );
 		if( !templateConfig().isFile() )
 			throw new Exception( "Nextflow Template file is not found at path: " + templateConfig().getAbsolutePath() );
 		Log.info( NextflowUtil.class, "Nextflow Template file created: " + templateConfig().getAbsolutePath() );
@@ -396,7 +396,7 @@ public class NextflowUtil {
 		args[ 0 ] = "rm";
 		args[ 1 ] = "-rf";
 		args[ 2 ] = path;
-		Processor.submit( args, "Clear-AWS-Data" );
+		Processor.submitJob( args, "Clear-AWS-Data" );
 		return true;
 	}
 

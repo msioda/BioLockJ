@@ -43,7 +43,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			if( doDownloadDB() ) lines.add( FUNCTION_DOWNLOAD_DB );
 			else if( waitForDownloadDBs() ) lines.add( FUNCTION_BLOCK_FOR_DBS );
 
-			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+			if( SeqUtil.hasPairedReads() ) {
 				lines.add( getPairedReadLine( file ) );
 				hn2InputSeq = getMergedReadFile( file );
 			}
@@ -176,7 +176,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			lines.addAll( downloadDbFunction() );
 			lines.addAll( blockForDbsFunction() );
 		} else if( waitForDownloadDBs() ) lines.addAll( blockForDbsFunction() );
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) lines.addAll( concatPairedReadFunction() );
+		if( SeqUtil.hasPairedReads() ) lines.addAll( concatPairedReadFunction() );
 		lines.addAll( runHn2Function() );
 		lines.addAll( joinTableFunction() );
 		lines.addAll( renormTableFunction() );
@@ -336,7 +336,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	private Map<File, File> getPairedReads()
 		throws ConfigFormatException, ConfigViolationException, SequnceFormatException, MetadataException {
-		if( this.pairedReads == null && Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
+		if( this.pairedReads == null && SeqUtil.hasPairedReads() )
 			this.pairedReads = SeqUtil.getPairedReads( getInputFiles() );
 		return this.pairedReads;
 	}

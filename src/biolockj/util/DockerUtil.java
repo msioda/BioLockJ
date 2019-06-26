@@ -254,15 +254,6 @@ public class DockerUtil {
 		return DOCKER_ENV_FLAG_FILE.isFile();
 	}
 
-	/**
-	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
-	 * 
-	 * @return boolean
-	 */
-	public static boolean isDirectMode() {
-		return RuntimeParamUtil.getDirectModuleDir() != null;
-	}
-
 	private static String getDbDirPath( final DatabaseModule module )
 		throws ConfigPathException, ConfigNotFoundException {
 		if( module.getDB() == null ) return null;

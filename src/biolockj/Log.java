@@ -170,9 +170,9 @@ public class Log {
 		System.setProperty( Constants.LOG_LEVEL_PROPERTY, validateLogLevel() );
 		System.setProperty( LOG_APPEND, String.valueOf( logFile.isFile() ) );
 		System.setProperty( LOG_FORMAT,
-			DockerUtil.isDirectMode() && !Config.isOnCluster() ? DIRECT_FORMAT: DEFAULT_FORMAT );
+			BioLockJUtil.isDirectMode() && !Config.isOnCluster() ? DIRECT_FORMAT: DEFAULT_FORMAT );
 
-		if( !DockerUtil.isDirectMode() ) {
+		if( !BioLockJUtil.isDirectMode() ) {
 			logWelcomeMsg();
 			for( final String[] m: Log.logMesseges ) {
 				if( m[ 0 ].equals( DEBUG ) ) Log.debug( Log.class, m[ 1 ] );

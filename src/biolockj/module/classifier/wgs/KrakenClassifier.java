@@ -126,7 +126,7 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
-		final String params = "$1 $2" + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? " $3": "" );
+		final String params = "$1 $2" + ( SeqUtil.hasPairedReads() ? " $3": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add( getClassifierExe() + getWorkerFunctionParams() + "--output " + params );
 		lines.add( "}" + RETURN );
@@ -174,13 +174,13 @@ public class KrakenClassifier extends ClassifierModuleImpl {
 
 	private String getWorkerFunctionParams() throws Exception {
 		String params = " " + getParams();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
+		if( SeqUtil.hasPairedReads() ) params += PAIRED_PARAM;
 
 		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;
 
 		params += DB_PARAM + getKrakenDB().getAbsolutePath() + " " + getInputSwitch();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
+		if( SeqUtil.hasPairedReads() ) params += PAIRED_PARAM;
 
 		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;

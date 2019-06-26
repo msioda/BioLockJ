@@ -28,6 +28,15 @@ import biolockj.module.report.r.R_CalculateStats;
 public class BioLockJUtil {
 
 	/**
+	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
+	 * 
+	 * @return boolean
+	 */
+	public static boolean isDirectMode() {
+		return RuntimeParamUtil.getDirectModuleDir() != null;
+	}
+
+	/**
 	 * Add leading spaces until the val is padded to given length
 	 * 
 	 * @param val Value to add spaces
@@ -359,7 +368,7 @@ public class BioLockJUtil {
 				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_RC );
 			final File prop = Config.getExistingFile( null, Constants.USER_PROFILE );
 			if( prop != null ) prof = prop;
-			if( prof == null ) prof = getProfile( Processor.submit( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
+			if( prof == null ) prof = getProfile( Processor.submitQuery( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
 		} catch( final Exception ex ) {
 			Log.error( LogUtil.class, "Failed to find user shell profile ", ex );
 		}

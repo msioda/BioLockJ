@@ -125,7 +125,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
 		try {
-			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+			if( SeqUtil.hasPairedReads() ) {
 				sb.append( "# Forward Reads: " + this.numTotalFwReads + RETURN );
 				sb.append( "# Reverse Reads: " + this.numTotalRvReads + RETURN );
 
@@ -302,7 +302,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	 */
 	protected Map<String, Set<String>> getValidFwHeaders() throws Exception {
 		final Map<String, Set<String>> validHeaders = new HashMap<>();
-		final boolean isPaird = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS );
+		final boolean isPaird = SeqUtil.hasPairedReads();
 		final boolean isCombined = isPaird && getInputFiles().size() == 1;
 
 		Log.info( getClass(), "Get FW Headers from temp files " +
@@ -343,7 +343,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		}
 
 		String msg = " # valid reads = ";
-		if( Config.requireBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) msg = " # valid fw read headers = ";
+		if( SeqUtil.hasPairedReads() ) msg = " # valid fw read headers = ";
 
 		for( final String sampleId: validHeaders.keySet() )
 			Log.debug( getClass(), sampleId + msg + validHeaders.get( sampleId ).size() );
@@ -360,7 +360,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	 */
 	protected Map<String, Set<String>> getValidHeaders() throws Exception {
 		final Map<String, Set<String>> validFwHeaders = getValidFwHeaders();
-		if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( !SeqUtil.hasPairedReads() ) {
 			Log.info( getClass(), "Demultiplexing unpaired reads...# " + validFwHeaders.size() );
 			return validFwHeaders;
 		}
@@ -495,7 +495,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 
 	private String getFileSuffix( final String name, final String header ) throws Exception {
 		String suffix = "";
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
+		if( SeqUtil.hasPairedReads() )
 			suffix = isForwardRead( name, header ) ? Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX ):
 				Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX );
 
@@ -545,7 +545,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	}
 
 	private boolean isForwardRead( final String name, final String header ) throws Exception {
-		if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) return true;
+		if( !SeqUtil.hasPairedReads() ) return true;
 
 		final boolean isCombined = getInputFiles().size() == 1;
 		if( isCombined ) if( header.contains( SeqUtil.ILLUMINA_FW_READ_IND ) ) return true;

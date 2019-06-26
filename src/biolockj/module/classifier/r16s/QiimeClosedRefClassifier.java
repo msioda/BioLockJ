@@ -83,7 +83,7 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 */
 	@Override
 	public void executeTask() throws Exception {
-		final List<List<String>> data = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ?
+		final List<List<String>> data = SeqUtil.hasPairedReads() ?
 			buildScriptForPairedReads( getInputFiles() ): buildScript( getInputFiles() );
 		setNumWorkers( data.size() );
 		BashScriptBuilder.buildScripts( this, data );

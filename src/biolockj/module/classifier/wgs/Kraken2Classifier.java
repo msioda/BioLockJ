@@ -120,7 +120,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
-		final String inFiles = "$3" + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? " $4": "" );
+		final String inFiles = "$3" + ( SeqUtil.hasPairedReads() ? " $4": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add(
 			getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 " + inFiles );
@@ -173,7 +173,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	// method calculates mean need by the module.
 	private String getWorkerFunctionParams() throws Exception {
 		String params = " " + getParams();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
+		if( SeqUtil.hasPairedReads() ) params += PAIRED_PARAM;
 
 		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;

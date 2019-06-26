@@ -75,7 +75,7 @@ public class PearMergeReads extends SeqModuleImpl {
 
 		if( !SeqUtil.isFastQ() ) throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
 
-		if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) throw new Exception( getClass().getName() +
+		if( !SeqUtil.hasPairedReads() ) throw new Exception( getClass().getName() +
 			" requires paired input data as a combined multiplexed file or as separate files named with " +
 			" matching sample IDs ending in the forward & reverse file suffix values: " +
 			Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX ) + " & " +

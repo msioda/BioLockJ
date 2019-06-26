@@ -110,7 +110,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 
 		removeBadFiles();
 
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) verifyPairedSeqs();
+		if( SeqUtil.hasPairedReads() ) verifyPairedSeqs();
 
 		MetaUtil.addColumn( getMetaColName(), this.readsPerSample, getOutputDir(), true );
 	}
