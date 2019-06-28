@@ -17,8 +17,7 @@ import java.util.*;
 import biolockj.*;
 import biolockj.exception.OtuFileException;
 import biolockj.module.implicit.parser.ParserModuleImpl;
-import biolockj.node.OtuNode;
-import biolockj.node.ParsedSample;
+import biolockj.node.*;
 import biolockj.node.wgs.KrakenNode;
 import biolockj.util.*;
 
@@ -37,7 +36,7 @@ public class KrakenParser extends ParserModuleImpl {
 			else sample.addNode( node );
 		}
 	}
-
+	
 	/**
 	 * Parse all {@link biolockj.module.classifier.wgs.KrakenClassifier} reports in the input directory.<br>
 	 * Cache the leaf counts Build an {@link biolockj.node.wgs.KrakenNode} for each line.<br>
@@ -55,11 +54,11 @@ public class KrakenParser extends ParserModuleImpl {
 	@Override
 	public void parseSamples() throws Exception {
 		for( final File file: getInputFiles() ) {
-			reportUnclassifiedTaxa( false );
+			setReportUnclassifiedTaxa( false );
 			try {
 				parseSample( file );
 			} finally {
-				reportUnclassifiedTaxa( true );
+				setReportUnclassifiedTaxa( true );
 			}
 
 			addUnclassifiedTaxa( getParsedSample( SeqUtil.getSampleId( file.getName() ) ) );
@@ -85,6 +84,7 @@ public class KrakenParser extends ParserModuleImpl {
 		final Map<String, Long> otuCounts = populateInBetweenTaxa( leafCounts );
 		final List<String> levels = new ArrayList<>();
 		levels.add( TaxaUtil.bottomTaxaLevel() );
+
 		for( final String level: PARENT_TAXA_LEVELS ) {
 			for( final String otu: leafCounts.keySet() ) {
 				if( !TaxaUtil.getLeafLevel( otu ).equals( level ) ) continue;
@@ -105,11 +105,22 @@ public class KrakenParser extends ParserModuleImpl {
 	private void parseSample( final File file ) throws Exception {
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {
-			for( String line = reader.readLine(); line != null; line = reader.readLine() )
+			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
+				if( discardOtu( line ) ) continue;
 				addOtuNode( getNode( SeqUtil.getSampleId( file.getName() ), line ) );
+			}
 		} finally {
 			if( reader != null ) reader.close();
 		}
+	}
+	
+	private boolean discardOtu( final String line ) {
+		for( String delim: DISCARD_TAXA_LEVEL_DELIMS ) 
+			if( line.contains( delim ) ) {
+				Log.debug( getClass(), "Discard Line [" + line +"] - due to invalid level: " + OtuNodeImpl.delimToLevelMap().get( delim )  );
+				return true;
+			}
+		return false;
 	}
 
 	private Map<String, Long> populateInBetweenTaxa( final Map<String, Long> otuCounts ) throws OtuFileException {
@@ -150,7 +161,7 @@ public class KrakenParser extends ParserModuleImpl {
 			else Log.debug( getClass(), msg + ": " + otu + " --> " + otuCounts.get( otu ) );
 	}
 
-	private void reportUnclassifiedTaxa( final boolean enable ) {
+	private void setReportUnclassifiedTaxa( final boolean enable ) {
 		final boolean logStatus = Log.logsEnabled();
 		Log.enableLogs( false );
 		final String modProp = Config.getModulePropName( this, Constants.REPORT_UNCLASSIFIED_TAXA );
@@ -167,6 +178,22 @@ public class KrakenParser extends ParserModuleImpl {
 			gapOtu += Constants.OTU_SEPARATOR +
 				OtuUtil.buildOtuTaxa( levels.get( i ), TaxaUtil.getUnclassifiedTaxa( name, level ) );
 		return gapOtu;
+	}
+	
+	private static List<String> getDiscardLevelDelims() {
+		final List<String> levelDelims = new ArrayList<>();
+		boolean foundBottomLevel = false;
+		Map<String, String> levelToDelim = new HashMap<>();
+		for( String delim: OtuNodeImpl.delimToLevelMap().keySet() ) {
+			levelToDelim.put( OtuNodeImpl.delimToLevelMap().get( delim ), delim );
+		}
+
+		for( String level: TaxaUtil.allTaxonomyLevels() ) {
+			if( foundBottomLevel ) levelDelims.add( levelToDelim.get( level ) );
+			if( TaxaUtil.bottomTaxaLevel().equals( level ) ) foundBottomLevel = true;
+		}
+		
+		return levelDelims;
 	}
 
 	private static List<String> getParentLevels() {
@@ -189,4 +216,5 @@ public class KrakenParser extends ParserModuleImpl {
 	}
 
 	private static final List<String> PARENT_TAXA_LEVELS = getParentLevels();
+	private static final List<String> DISCARD_TAXA_LEVEL_DELIMS = getDiscardLevelDelims();
 }

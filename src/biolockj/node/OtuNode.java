@@ -33,14 +33,6 @@ public interface OtuNode {
 	public void addTaxa( final String taxa, final String levelDelim ) throws Exception;
 
 	/**
-	 * Get a map of the {@link biolockj.module.classifier.ClassifierModule} taxonomy delimiters to
-	 * {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS}
-	 * 
-	 * @return Map(delim, level) map
-	 */
-	public Map<String, String> delimToLevelMap();
-
-	/**
 	 * Gets the OTU count.
 	 *
 	 * @return Number of reads in node sampleId with node OTU assignment

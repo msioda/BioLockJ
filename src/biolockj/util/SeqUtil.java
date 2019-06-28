@@ -244,9 +244,8 @@ public class SeqUtil {
 	 */
 	public static String getSampleId( final String value )
 		throws SequnceFormatException, MetadataException, ConfigFormatException {
-		String id = value.replace( Constants.PROCESSED, "" );
-		if( MetaUtil.getSampleIds().contains( id ) ) return id;
-		id = value;
+		String id = value;
+		if( id.endsWith( Constants.PROCESSED ) ) return id.replace( Constants.PROCESSED, "" );
 
 		final String fwReadSuffix = Config.getString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
 		final String rvReadSuffix = Config.getString( null, Constants.INPUT_REVERSE_READ_SUFFIX );

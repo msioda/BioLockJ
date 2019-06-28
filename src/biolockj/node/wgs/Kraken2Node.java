@@ -44,9 +44,9 @@ public class Kraken2Node extends OtuNodeImpl {
 			final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], TAXA_DELIM );
 			while( taxas.hasMoreTokens() ) {
 				final String token = taxas.nextToken();
-				final String levelDelim = token.substring( 0, 3 );
+				final String level = delimToLevelMap().get( token.substring( 0, 3 ) );
 				final String taxa = token.substring( 3 ).trim();
-				if( !taxa.isEmpty() ) addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
+				if( !taxa.isEmpty() ) addTaxa( taxa, level );
 			}
 		} catch( final Exception ex ) {
 			ex.printStackTrace();

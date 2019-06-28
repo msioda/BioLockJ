@@ -93,8 +93,12 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		return node.getOtuName().compareTo( getOtuName() );
 	}
 
-	@Override
-	public Map<String, String> delimToLevelMap() {
+	/**
+	 * Map level delimeter to level names.
+	 * 
+	 * @return Map delim to level name
+	 */
+	public static Map<String, String> delimToLevelMap() {
 		if( delimToLevelMap.isEmpty() ) {
 			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
 			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
@@ -106,6 +110,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		}
 		return delimToLevelMap;
 	}
+
 
 	@Override
 	public long getCount() {
@@ -146,6 +151,20 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		this.name = otu.toString();
 		return this.name;
 	}
+	
+	@Override
+	public String toString() {
+		String val = getSampleId();
+		try {
+			if (getTaxaMap() != null)
+				for( String level: getTaxaMap().keySet() ) 
+					val += ":" + level + "-" + getTaxaMap().get( level );
+		} catch( Exception ex ) {
+			Log.error( getClass(), "Unable to build toString() for " + getSampleId(), ex );
+			ex.printStackTrace();
+		}
+		return val;	
+	}
 
 	@Override
 	public String getSampleId() {
@@ -160,7 +179,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	public Map<String, String> getTaxaMap() throws ConfigFormatException {
 		if( !this.taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) ) {
 			Log.debug( getClass(), "Omit incomplete [ " + this.sampleId + " ] OTU missing the top taxonomy level: " +
-				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "": ", classifier output = " + this.line ) );
+				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "" : ", classifier output = " + this.line ) );
 			return null;
 		}
 
