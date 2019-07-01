@@ -131,13 +131,13 @@ start_pipeline() {
 	echo "blj_summary  -> View module execution summary"
 }
 
-printf "\n ---------> Execute CMD [  biolockj $(echo ${@})  ]\n"
 arg="${@//-}"
 if [ $# -eq 1 ] && [ "${arg:0:1}" == "v" ]; then
 	display_version
 elif [ $# -eq 1 ] && [ "${arg:0:1}" == "h" ]; then
 	display_help
 else
+	printf "\n ---------> Execute CMD [  biolockj $(echo ${@})  ]\n"
 	read_input_args "${@}"
 	run_biolockj "${@}"
 fi
