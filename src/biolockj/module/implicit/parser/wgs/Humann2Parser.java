@@ -75,6 +75,7 @@ public class Humann2Parser extends ParserModuleImpl {
 	@Override
 	public void parseSamples() throws Exception {
 		int count = 0;
+		MemoryUtil.reportMemoryUsage( "Begin parsing Humann2Classifier output" );
 		for( final File file: getInputFiles() ) {
 			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
 			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, HN2_PARSED );
@@ -111,7 +112,7 @@ public class Humann2Parser extends ParserModuleImpl {
 			else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_GENE_FAM_SUM ) )
 				this.numGeneFamilies = data[ 0 ].length - 1;
 
-			MemoryUtil.reportMemoryUsage( "Parsed " + file.getAbsolutePath() );
+			MemoryUtil.reportMemoryUsage( "Parsed file: " + file.getAbsolutePath() );
 		}
 	}
 

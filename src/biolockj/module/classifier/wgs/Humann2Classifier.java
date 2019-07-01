@@ -15,7 +15,6 @@ import java.io.File;
 import java.util.*;
 import biolockj.*;
 import biolockj.exception.*;
-import biolockj.module.ScriptModule;
 import biolockj.module.classifier.ClassifierModuleImpl;
 import biolockj.util.*;
 
@@ -37,14 +36,14 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
-		Log.warn( getClass(), "Total # worker scripts = " + numWorkers() );
+		Log.warn( getClass(), "Total # worker scripts = " + ModuleUtil.getNumWorkers( this ) );
 		for( final File file: files ) {
 			final List<String> lines = new ArrayList<>();
 			File hn2InputSeq = file;
 			if( doDownloadDB() ) lines.add( FUNCTION_DOWNLOAD_DB );
 			else if( waitForDownloadDBs() ) lines.add( FUNCTION_BLOCK_FOR_DBS );
 
-			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+			if( SeqUtil.hasPairedReads() ) {
 				lines.add( getPairedReadLine( file ) );
 				hn2InputSeq = getMergedReadFile( file );
 			}
@@ -122,7 +121,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 * Get HumanN2 executable command: {@value #EXE_HUMANN2}
 	 */
 	@Override
-	public String getClassifierExe() throws ConfigViolationException {
+	public String getClassifierExe() throws ConfigException {
 		return Config.getExe( this, EXE_HUMANN2 );
 	}
 
@@ -130,7 +129,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	 * Obtain the humann2 runtime params
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception {
+	public List<String> getClassifierParams() throws ConfigException {
 		final List<String> res = new ArrayList<>();
 		for( final String val: Config.getList( this, EXE_HUMANN2_PARAMS ) )
 			if( val.startsWith( INPUT_PARAM ) || val.startsWith( LONG_INPUT_PARAM ) || val.startsWith( OUTPUT_PARAM ) ||
@@ -154,7 +153,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		setDbCache( BioLockJUtil.getCommonParent( new File( getNuclDbPath() ), new File( getProtDbPath() ) ) );
 		return getDbCache();
 	}
-	
+
 	@Override
 	public String getSummary() throws Exception {
 		final StringBuffer sb = new StringBuffer();
@@ -177,7 +176,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			lines.addAll( downloadDbFunction() );
 			lines.addAll( blockForDbsFunction() );
 		} else if( waitForDownloadDBs() ) lines.addAll( blockForDbsFunction() );
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) lines.addAll( concatPairedReadFunction() );
+		if( SeqUtil.hasPairedReads() ) lines.addAll( concatPairedReadFunction() );
 		lines.addAll( runHn2Function() );
 		lines.addAll( joinTableFunction() );
 		lines.addAll( renormTableFunction() );
@@ -187,7 +186,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	}
 
 	/**
-	 * Get formatted runtime parameters and {@value #SCRIPT_NUM_THREADS}
+	 * Get formatted runtime parameters and {@value Constants#SCRIPT_NUM_THREADS}
 	 *
 	 * @return Formatted runtime switches
 	 * @throws Exception if errors occur
@@ -202,25 +201,14 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		lines.add( BLOCK_FOR_DB_COMMENT );
 		lines.add( "function " + FUNCTION_BLOCK_FOR_DBS + "() {" );
 		lines.add( "count=0 && touch " + getDbFlag( HN2_NUCL_DB, Constants.BLJ_STARTED ).getAbsolutePath() );
-		lines.add( "while [ ! -f \"" + getDbFlag( HN2_PROT_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() + "\" ] || [ ! -f \"" +
-			getDbFlag( HN2_NUCL_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() + "\" ]; do" );
+		lines.add( "while [ ! -f \"" + getDbFlag( HN2_PROT_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() +
+			"\" ] || [ ! -f \"" + getDbFlag( HN2_NUCL_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() + "\" ]; do" );
 		lines.add( "sleep 60 && let \"count++\"" );
-		lines.add(
-			"[ ${count} -gt " + getTimeOut() + " ] && echo \"Failed to download HumanN2 DBs after " + getTimeOut() + " minutes\" && exit 1" );
+		lines.add( "[ ${count} -gt " + getTimeOut() + " ] && echo \"Failed to download HumanN2 DBs after " +
+			getTimeOut() + " minutes\" && exit 1" );
 		lines.add( "done" );
 		lines.add( "}" + RETURN );
 		return lines;
-	}
-	
-	private Integer getTimeOut() {
-		Integer timeout = null;
-		try {
-			timeout = Config.getPositiveInteger( this, ScriptModule.SCRIPT_TIMEOUT );
-		} catch( ConfigFormatException ex ) {
-			ex.printStackTrace();
-		}
-		if( timeout == null ) timeout = 420;
-		return timeout;
 	}
 
 	private List<String> buildSummaryFunction() throws Exception {
@@ -235,8 +223,8 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 			Constants.SCRIPT_SUCCESS + " | wc -l)" );
 		lines.add( "let \"numComplete++\"" );
 		lines.add( "[ $numStarted != $numComplete ] && sleep 60" );
-		lines.add(
-			"[ ${count} -gt " + getTimeOut() + " ] && echo \"Failed to build HumanN2 summary tables after " + getTimeOut() + " minutes\" && sleep 15 && exit 1" );
+		lines.add( "[ ${count} -gt " + getTimeOut() + " ] && echo \"Failed to build HumanN2 summary tables after " +
+			getTimeOut() + " minutes\" && sleep 15 && exit 1" );
 		lines.add( "done" );
 		if( !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) ) {
 			lines.add( getJoinTableLine( HN2_PATH_ABUNDANCE ) );
@@ -288,9 +276,9 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private List<String> downloadDbFunction() throws ConfigNotFoundException, ConfigFormatException {
 		final List<String> lines = new ArrayList<>();
 		final boolean dlNuclDB = dlHn2DBs.get( HN2_NUCL_DB ) != null &&
-			( numWorkers() == 1 || dlHn2DBs.get( HN2_NUCL_DB ) == this.workerID );
+			( ModuleUtil.getNumWorkers( this ) == 1 || dlHn2DBs.get( HN2_NUCL_DB ) == this.workerID );
 		final boolean dlProtDB = dlHn2DBs.get( HN2_PROT_DB ) != null &&
-			( numWorkers() == 1 || dlHn2DBs.get( HN2_PROT_DB ) == this.workerID );
+			( ModuleUtil.getNumWorkers( this ) == 1 || dlHn2DBs.get( HN2_PROT_DB ) == this.workerID );
 		lines.add( DOWNLOAD_DB_COMMENT );
 		lines.add( "function " + FUNCTION_DOWNLOAD_DB + "() {" );
 		if( dlNuclDB ) lines.addAll( downloadDbLines( HN2_NUCL_DB ) );
@@ -309,16 +297,15 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
-	private int getBatchNum( final int sampleCount ) throws ConfigNotFoundException, ConfigFormatException {
-		final int batchSize = Config.requirePositiveInteger( this, ScriptModule.SCRIPT_BATCH_SIZE );
-		return new Double( Math.ceil( new Double( sampleCount ) / new Double( batchSize ) ) ).intValue();
-	}
-
 	private File getDbFlag( final String prop, final String status ) throws ConfigNotFoundException {
 		final String[] db = Config.requireString( this, prop ).split( "\\s" );
-		return new File(
-			getTempDir().getAbsolutePath() + File.separator + "DB_" + db[ 0 ] + "_" + status );
+		return new File( getTempDir().getAbsolutePath() + File.separator + "DB_" + db[ 0 ] + "_" + status );
 	}
+
+	// private int getBatchNum( final int sampleCount ) throws ConfigNotFoundException, ConfigFormatException {
+	// final int numWorkers = Config.requirePositiveInteger( this, ScriptModule.SCRIPT_NUM_WORKERS );
+	// return new Double( Math.ceil( new Double( sampleCount ) / new Double( numWorkers ) ) ).intValue();
+	// }
 
 	private String getJoinTableLine( final String key ) {
 		return FUNCTION_JOIN_HN2_TABLES + " " + getTempSubDir( FUNCTION_RUN_HN2 ) + " " +
@@ -349,7 +336,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 
 	private Map<File, File> getPairedReads()
 		throws ConfigFormatException, ConfigViolationException, SequnceFormatException, MetadataException {
-		if( this.pairedReads == null && Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
+		if( this.pairedReads == null && SeqUtil.hasPairedReads() )
 			this.pairedReads = SeqUtil.getPairedReads( getInputFiles() );
 		return this.pairedReads;
 	}
@@ -387,7 +374,18 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return dir;
 	}
 
-	private List<String> joinTableFunction() throws ConfigViolationException {
+	private Integer getTimeOut() {
+		Integer timeout = null;
+		try {
+			timeout = Config.getPositiveInteger( this, Constants.SCRIPT_TIMEOUT );
+		} catch( final ConfigFormatException ex ) {
+			ex.printStackTrace();
+		}
+		if( timeout == null ) timeout = 420;
+		return timeout;
+	}
+
+	private List<String> joinTableFunction() throws ConfigException {
 		final List<String> lines = new ArrayList<>();
 		lines.add( JOIN_BASH_COMMENT );
 		lines.add( "function " + FUNCTION_JOIN_HN2_TABLES + "() {" );
@@ -397,11 +395,11 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		return lines;
 	}
 
-	private int numWorkers() throws ConfigNotFoundException, ConfigFormatException {
-		return getBatchNum( getInputFiles().size() );
-	}
+	// private int numWorkers() throws ConfigNotFoundException, ConfigFormatException {
+	// return getBatchNum( getInputFiles().size() );
+	// }
 
-	private List<String> renormTableFunction() throws ConfigViolationException {
+	private List<String> renormTableFunction() throws ConfigException {
 		final List<String> lines = new ArrayList<>();
 		lines.add( RENORM_BASH_COMMENT );
 		lines.add( "function " + FUNCTION_RENORM_HN2_TABLES + "() {" );

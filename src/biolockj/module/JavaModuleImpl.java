@@ -33,7 +33,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		final List<List<String>> data = new ArrayList<>();
 		final ArrayList<String> lines = new ArrayList<>();
 		if( DockerUtil.inDockerEnv() ) lines.add( "java" + runBioLockJ_CMD() + " $" + BLJ_OPTIONS );
-		else lines.add( "java" + runBioLockJ_CMD() + " " + RuntimeParamUtil.getJavaComputeNodeArgs( this ) );
+		else lines.add( "java" + runBioLockJ_CMD() + " " + RuntimeParamUtil.getJavaModuleArgs( this ) );
 
 		data.add( lines );
 		return data;
@@ -51,7 +51,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	@Override
 	public void executeTask() throws Exception {
 		final boolean detached = Config.getBoolean( this, Constants.DETACH_JAVA_MODULES );
-		final boolean buildDockerScript = DockerUtil.inDockerEnv() && !DockerUtil.isDirectMode();
+		final boolean buildDockerScript = DockerUtil.inDockerEnv() && !BioLockJUtil.isDirectMode();
 		if( detached && ( buildDockerScript || Config.isOnCluster() ) ) super.executeTask();
 		else runModule();
 	}
@@ -64,7 +64,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = new ArrayList<>();
 		if( DockerUtil.inDockerEnv() )
-			lines.add( BLJ_OPTIONS + "=\"" + RuntimeParamUtil.getJavaContainerArgs( this ) + "\"" + Constants.RETURN );
+			lines.add( BLJ_OPTIONS + "=\"" + RuntimeParamUtil.getJavaModuleArgs( this ) + "\"" + Constants.RETURN );
 
 		return lines;
 	}
@@ -103,11 +103,10 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 		File statusIndicator = null;
 		File script = null;
 		final Collection<File> files = FileUtils.listFiles( getScriptDir(), HiddenFileFilter.VISIBLE, null );
+		final String key1 = ".0_" + getClass().getSimpleName() + SH_EXT;
 		for( final File file: files ) {
-			final String key = ".0_" + getClass().getSimpleName() + SH_EXT;
-			if( file.getName().endsWith( key + "_" + status ) ) statusIndicator = file;
-
-			if( file.getName().endsWith( key ) ) script = file;
+			if( statusIndicator == null && file.getName().endsWith( key1 + "_" + status ) ) statusIndicator = file;
+			if( script == null && file.getName().endsWith( key1 ) ) script = file;
 		}
 
 		if( script == null ) {

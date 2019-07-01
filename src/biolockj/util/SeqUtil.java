@@ -220,7 +220,7 @@ public class SeqUtil {
 	 * @throws Exception if errors occur
 	 */
 	public static String getReadDirectionSuffix( final String fileName ) throws Exception {
-		if( Config.getBoolean( null, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( hasPairedReads() ) {
 			if( SeqUtil.isForwardRead( fileName ) )
 				return Config.requireString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
 			return Config.requireString( null, Constants.INPUT_REVERSE_READ_SUFFIX );
@@ -245,6 +245,8 @@ public class SeqUtil {
 	public static String getSampleId( final String value )
 		throws SequnceFormatException, MetadataException, ConfigFormatException {
 		String id = value;
+		if( id.endsWith( Constants.PROCESSED ) ) return id.replace( Constants.PROCESSED, "" );
+
 		final String fwReadSuffix = Config.getString( null, Constants.INPUT_FORWARD_READ_SUFFIX );
 		final String rvReadSuffix = Config.getString( null, Constants.INPUT_REVERSE_READ_SUFFIX );
 		final String fileNameCol = Config.getString( null, MetaUtil.META_FILENAME_COLUMN );
@@ -265,8 +267,7 @@ public class SeqUtil {
 		// trim directional suffix
 		if( !isMultiplexed() && fwReadSuffix != null && id.indexOf( fwReadSuffix ) > 0 )
 			id = id.substring( 0, id.lastIndexOf( fwReadSuffix ) );
-		
-		
+
 		// trim files extensions: .gz | .fasta | .fastq
 		if( isGzipped( id ) ) id = id.substring( 0, id.length() - 3 );
 		if( id.toLowerCase().endsWith( "." + Constants.FASTA ) || id.toLowerCase().endsWith( "." + Constants.FASTQ ) )
@@ -277,9 +278,9 @@ public class SeqUtil {
 		final String trimSuffix = Config.getString( null, Constants.INPUT_TRIM_SUFFIX );
 		if( trimPrefix != null && id.indexOf( trimPrefix ) > -1 )
 			id = id.substring( trimPrefix.length() + id.indexOf( trimPrefix ) );
-		
+
 		if( trimSuffix != null && id.indexOf( trimSuffix ) > 0 ) id = id.substring( 0, id.indexOf( trimSuffix ) );
-		
+
 		if( id == null || id.isEmpty() )
 			throw new SequnceFormatException( "Unable to extract a valid Sample ID from: " + value );
 		return id;
@@ -301,8 +302,9 @@ public class SeqUtil {
 		try {
 			for( final File file: files )
 				try {
-					final String id = SeqUtil.getSampleId( file.getName() );
-					if( MetaUtil.exists() && !MetaUtil.getSampleIds().contains( id ) ) seqsWithoutMetaId.add( file );
+					if( isSeqFile( file ) && !isMultiplexed() && MetaUtil.exists() &&
+						!MetaUtil.getSampleIds().contains( getSampleId( file.getName() ) ) )
+						seqsWithoutMetaId.add( file );
 					else seqFiles.add( file );
 				} catch( final Exception ex ) {
 					if( Config.getBoolean( null, MetaUtil.META_REQUIRED ) ) seqsWithoutMetaId.add( file );
@@ -451,6 +453,7 @@ public class SeqUtil {
 	public static boolean isSeqFile( final File file ) {
 		BufferedReader reader = null;
 		try {
+			if( fileSeqMap.keySet().contains( file.getName() ) ) return fileSeqMap.get( file.getName() );
 			info( "Check if input file is a SEQ file: " + file.getAbsolutePath() );
 			boolean isSeq = false;
 			reader = BioLockJUtil.getFileReader( file );
@@ -468,7 +471,7 @@ public class SeqUtil {
 				}
 			} else info( file.getAbsolutePath() + " is not a sequence file! " + Constants.RETURN + "Line 1: [ " +
 				header + " ]" + Constants.RETURN + "Line 2= [ " + seq + " ]" );
-
+			fileSeqMap.put( file.getName(), isSeq );
 			return isSeq;
 		} catch( final Exception ex ) {
 			Log.error( SeqUtil.class, "Error occurred examining file to determine if it is a sequence file or not",
@@ -480,6 +483,7 @@ public class SeqUtil {
 				Log.error( SeqUtil.class, "Failed to close file reader", ex );
 			}
 		}
+		fileSeqMap.put( file.getName(), false );
 		return false;
 	}
 
@@ -693,7 +697,7 @@ public class SeqUtil {
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.info( SeqUtil.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.info( SeqUtil.class, msg );
 	}
 
 	private static boolean mapSampleIdWithMetaFileNameCol() throws Exception {
@@ -769,8 +773,10 @@ public class SeqUtil {
 	public static final String ILLUMINA_RV_READ_IND = " 2:N:";
 
 	private static final Map<String, String> DNA_BASE_MAP = new HashMap<>();
+
 	private static final List<String> FASTA_HEADER_DELIMS = Arrays.asList( ">", ";" );
 	private static final String FASTQ_HEADER_DELIM = "@";
+	private static final Map<String, Boolean> fileSeqMap = new HashMap<>();
 	private static Integer numMultiSeqLines = 0;
 
 	static {

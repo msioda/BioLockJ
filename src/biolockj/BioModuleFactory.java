@@ -25,7 +25,7 @@ import biolockj.util.*;
  */
 public class BioModuleFactory {
 	private BioModuleFactory() throws Exception {
-		if( DockerUtil.isDirectMode() ) this.moduleCache = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
+		if( BioLockJUtil.isDirectMode() ) this.moduleCache = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
 		else initModules();
 	}
 
@@ -251,7 +251,7 @@ public class BioModuleFactory {
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.info( BioModuleFactory.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.info( BioModuleFactory.class, msg );
 	}
 
 	private static void initFactory() throws Exception {
@@ -270,7 +270,7 @@ public class BioModuleFactory {
 	}
 
 	private static void warn( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.warn( BioModuleFactory.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.warn( BioModuleFactory.class, msg );
 	}
 
 	private boolean branchClassifier = false;

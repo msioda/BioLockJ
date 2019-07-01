@@ -139,15 +139,6 @@ public class RuntimeParamUtil {
 	public static String getDockerHostMetaDir() {
 		return params.get( META_DIR );
 	}
-	
-	/**
-	 * Runtime property getter for {@value #PRIMER_DIR}
-	 * 
-	 * @return Primer file directory path
-	 */
-	public static String getDockerHostPrimerDir() {
-		return params.get( PRIMER_DIR );
-	}
 
 	/**
 	 * Return host on which Docker container is running
@@ -168,6 +159,15 @@ public class RuntimeParamUtil {
 	}
 
 	/**
+	 * Runtime property getter for {@value #PRIMER_DIR}
+	 * 
+	 * @return Primer file directory path
+	 */
+	public static String getDockerHostPrimerDir() {
+		return params.get( PRIMER_DIR );
+	}
+
+	/**
 	 * Runtime property getter for Docker host $USER $HOME dir
 	 * 
 	 * @return Host {@value #HOST_HOME_DIR} directory
@@ -177,43 +177,16 @@ public class RuntimeParamUtil {
 	}
 
 	/**
-	 * Return runtime params that need be forward to detached cluster Java modules
+	 * For cluster env, runtime params that need be forward to detached cluster Java modules. For Docker env, return
+	 * line with BLJ_OPTIONS in Docker java_module scripts.
 	 * 
 	 * @param module JavaModule
 	 * @return java -jar BioLockJ.jar runtime args
 	 */
-	public static String getJavaComputeNodeArgs( final JavaModule module ) {
-		Log.info( RuntimeParamUtil.class, "Building Docker java -jar args for Cluster-Compute nodes  -->" );
-		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam() + " " +
-			getDirectModuleParam( module );
-	}
-
-	/**
-	 * Get Docker runtime arguments passed to BioLockJ from dockblj script.<br>
-	 * These are used to to populate BLJ_OPTIONS in Docker java_module scripts.
-	 * 
-	 * @param module JavaModule BioModule subclass
-	 * @return Docker runtime parameters
-	 */
-	public static String getJavaContainerArgs( final JavaModule module ) {
+	public static String getJavaModuleArgs( final JavaModule module ) {
 		Log.info( RuntimeParamUtil.class, "Building Docker BLJ_OPTIONS for java_module Docker script -->" );
-		String javaModArgs = "";
-		for( final String key: params.keySet() ) {
-			Log.debug( RuntimeParamUtil.class, "Found Docker param: " + key + "=" + params.get( key ) );
-			if( BLJ_CONTROLLER_ONLY_ARGS.contains( key ) ) continue;
-			String val = null;
-			if( key.equals( HOST_CONFIG_DIR ) )
-				val = CONFIG_FILE + " " + params.get( key ) + File.separator + getConfigFile().getName();
-			else if( key.equals( HOST_HOME_DIR ) ) val = HOME_DIR + " " + params.get( key );
-			else if( key.equals( HOST_BLJ_PROJ_DIR ) ) val = BLJ_PROJ_DIR + " " + params.get( key );
-			else if( ARG_FLAGS.contains( key ) ) val = key;
-			else val = key + " " + params.get( key );
-
-			javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + val;
-			Log.info( RuntimeParamUtil.class, "Add Docker param: " + val );
-		}
-
-		return javaModArgs + " " + RuntimeParamUtil.getDirectModuleParam( module );
+		if( DockerUtil.inDockerEnv() ) return getJavaContainerArgs( module );
+		return getJavaComputeNodeArgs( module );
 	}
 
 	/**
@@ -383,6 +356,33 @@ public class RuntimeParamUtil {
 		return HOME_DIR + " " + getHomeDir().getAbsolutePath();
 	}
 
+	private static String getJavaComputeNodeArgs( final JavaModule module ) {
+		Log.info( RuntimeParamUtil.class, "Building java args for Cluster Compute nodes  -->" );
+		return getBaseDirParam() + " " + getHomeParam() + " " + getConfigFileParam() + " " +
+			getDirectModuleParam( module );
+	}
+
+	private static String getJavaContainerArgs( final JavaModule module ) {
+		Log.info( RuntimeParamUtil.class, "Building Docker BLJ_OPTIONS for java_module Docker script -->" );
+		String javaModArgs = "";
+		for( final String key: params.keySet() ) {
+			Log.debug( RuntimeParamUtil.class, "Found Docker param: " + key + "=" + params.get( key ) );
+			if( BLJ_CONTROLLER_ONLY_ARGS.contains( key ) ) continue;
+			String val = null;
+			if( key.equals( HOST_CONFIG_DIR ) )
+				val = CONFIG_FILE + " " + params.get( key ) + File.separator + getConfigFile().getName();
+			else if( key.equals( HOST_HOME_DIR ) ) val = HOME_DIR + " " + params.get( key );
+			else if( key.equals( HOST_BLJ_PROJ_DIR ) ) val = BLJ_PROJ_DIR + " " + params.get( key );
+			else if( ARG_FLAGS.contains( key ) ) val = key;
+			else val = key + " " + params.get( key );
+
+			javaModArgs += ( javaModArgs.isEmpty() ? "": " " ) + val;
+			Log.info( RuntimeParamUtil.class, "Add Docker param: " + val );
+		}
+
+		return javaModArgs + " " + RuntimeParamUtil.getDirectModuleParam( module );
+	}
+
 	private static void parseParams( final String[] args ) throws RuntimeParamException {
 		String prevParam = "";
 		for( final String arg: args ) {
@@ -527,16 +527,16 @@ public class RuntimeParamUtil {
 	 * Metadata file directory path runtime parameter switch: {@value #META_DIR}
 	 */
 	protected static final String META_DIR = "-m";
-	
-	/**
-	 * Primer file directory path runtime parameter switch: {@value #PRIMER_DIR}
-	 */
-	protected static final String PRIMER_DIR = "-t";
 
 	/**
 	 * Change password runtime parameter switch: {@value #PASSWORD}
 	 */
 	protected static final String PASSWORD = "-p";
+
+	/**
+	 * Primer file directory path runtime parameter switch: {@value #PRIMER_DIR}
+	 */
+	protected static final String PRIMER_DIR = "-t";
 
 	/**
 	 * Restart pipeline runtime parameter switch: {@value #RESTART_DIR}

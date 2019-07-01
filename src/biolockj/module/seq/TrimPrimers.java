@@ -136,7 +136,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 			double ratio = Double.valueOf( this.df.format( 100 * ( (double) a / ( a + b ) ) ) );
 			String per = BioLockJUtil.formatPercentage( a, a + b );
 
-			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+			if( SeqUtil.hasPairedReads() ) {
 				ratio = Double.valueOf( this.df.format( 100 * ( (double) v / ( a + b ) ) ) );
 				per = BioLockJUtil.formatPercentage( v, a + b );
 				Log.info( getClass(),
@@ -192,7 +192,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 			}
 		}
 
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+		if( SeqUtil.hasPairedReads() ) {
 			summaryMsgs.add( "Max % reads kept in Forward Read = " + maxFileFw + " = " + maxFwDisplay );
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 			summaryMsgs.add( "Min % reads kept in Forward Read = " + minFileFw + " = " + minFwDisplay );
@@ -221,7 +221,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 
 			Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
 
-			if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) {
+			if( SeqUtil.hasPairedReads() ) {
 				summaryMsgs.add( "Mean % Forward reads with primer = " + totalPrimerF + "/" + totalF + " = " +
 					BioLockJUtil.formatPercentage( totalPrimerF, totalF ) );
 				Log.info( getClass(), summaryMsgs.get( summaryMsgs.size() - 1 ) );
@@ -370,9 +370,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 	private Map<String, String> getValidReadsPerSample() throws Exception {
 		if( !MetaUtil.getFieldNames().contains( NUM_TRIMMED_READS ) && this.validReadsPerSample.isEmpty() )
 			for( final File f: this.seqsWithPrimersTrimmed.keySet() )
-			if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) || SeqUtil.isForwardRead( f.getName() ) )
-				this.validReadsPerSample.put( SeqUtil.getSampleId( f.getName() ),
-					Long.toString( this.seqsWithPrimersTrimmed.get( f ) ) );
+			if( !SeqUtil.hasPairedReads() || SeqUtil.isForwardRead( f.getName() ) ) this.validReadsPerSample
+				.put( SeqUtil.getSampleId( f.getName() ), Long.toString( this.seqsWithPrimersTrimmed.get( f ) ) );
 		return this.validReadsPerSample;
 	}
 
@@ -486,8 +485,8 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 				seqLines.add( line );
 
 				if( seqLines.size() == SeqUtil.getNumLinesPerRead() ) {
-					final boolean validRecord = found && ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ?
-						validHeaders.contains( seqLines.get( 0 ) ): true );
+					final boolean validRecord =
+						found && ( SeqUtil.hasPairedReads() ? validHeaders.contains( seqLines.get( 0 ) ): true );
 
 					if( !Config.getBoolean( this, INPUT_REQUIRE_PRIMER ) || validRecord ) {
 						final Long x = this.seqsWithPrimersTrimmed.get( file );
@@ -511,7 +510,7 @@ public class TrimPrimers extends JavaModuleImpl implements SeqModule {
 
 	private void trimSeqs() throws Exception {
 		final Set<String> primers = getPrimers();
-		final boolean hasPairedReads = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS );
+		final boolean hasPairedReads = SeqUtil.hasPairedReads();
 		final Map<File, File> pairedReads = hasPairedReads ? SeqUtil.getPairedReads( getInputFiles() ): null;
 		final List<File> files = getFwReads( pairedReads );
 		if( files == null ) throw new Exception( "Failed to obtain input sequence files" );

@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import biolockj.*;
+import biolockj.exception.*;
 import biolockj.module.implicit.qiime.MergeQiimeOtuTables;
 import biolockj.module.implicit.qiime.QiimeClassifier;
 import biolockj.util.*;
@@ -31,38 +32,35 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 
 	/**
 	 * Create bash script lines to split up the QIIME mapping and fasta files into batches of size
-	 * {@link biolockj.Config}.{@value biolockj.module.ScriptModule#SCRIPT_BATCH_SIZE}
+	 * {@link biolockj.Config}.{@value biolockj.Constants#SCRIPT_NUM_WORKERS}
 	 */
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final int numFiles = files == null ? 0: files.size();
-		Log.info( getClass(), "Processing " + numFiles + " files" );
+		Log.info( getClass(),
+			"Buidling QIIME Close Ref scripts to assign taxonomy for " + numFiles + " sequence files" );
+
 		final List<List<String>> data = new ArrayList<>();
 		List<String> lines = new ArrayList<>();
-
-		if( Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) >= numFiles ) {
-			Log.info( getClass(), "Batch size > # sequence files, so run all in 1 batch" );
+		if( ModuleUtil.getNumWorkers( this ) == 1 ) {
 			lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getInputFileDir(), MetaUtil.getPath(), getTempDir() ) );
 			lines.add( copyBatchOtuTableToOutputDir( getTempDir(), null ) );
 			data.add( lines );
 		} else if( files != null ) {
-			Log.info( getClass(), "Pick closed ref OTUs in batches of size: " +
-				Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) );
 			int startIndex = 1;
-			int batchNum = 0;
-			int sampleCount = 0;
 			for( final File f: files ) {
-				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( batchNum ).getAbsolutePath() );
-				if( doAddNextBatch( ++sampleCount ) ) {
-					data.add( getBatch( lines, batchNum++, startIndex ) );
-					startIndex = startIndex + Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
+				lines.add( "cp " + f.getAbsolutePath() + " " + getBatchFastaDir( data.size() ).getAbsolutePath() );
+				if( saveBatch( data.size(), lines.size() ) ) {
+					final int numSamples = lines.size();
+					Log.debug( getClass(), "Save Worker #" + data.size() + " --> # samples = " + lines.size() );
+					data.add( getBatch( lines, data.size(), startIndex ) );
+					startIndex += numSamples;
 					lines = new ArrayList<>();
 				}
 			}
-
-			if( addFinalBatch( sampleCount ) ) data.add( getBatch( lines, batchNum, startIndex ) );
+			if( !lines.isEmpty() ) data.add( getBatch( lines, data.size(), startIndex ) );
 		}
-
+		Log.info( getClass(), "Build script returning data for #workers = " + data.size() );
 		return data;
 	}
 
@@ -85,17 +83,10 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 */
 	@Override
 	public void executeTask() throws Exception {
-		final List<List<String>> data = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ?
-			buildScriptForPairedReads( getInputFiles() ): buildScript( getInputFiles() );
-		batchSize = Config.getPositiveInteger( this, SCRIPT_BATCH_SIZE );
-		Config.setConfigProperty( SCRIPT_BATCH_SIZE, "1" );
+		final List<List<String>> data =
+			SeqUtil.hasPairedReads() ? buildScriptForPairedReads( getInputFiles() ): buildScript( getInputFiles() );
+		setNumWorkers( data.size() );
 		BashScriptBuilder.buildScripts( this, data );
-	}
-	
-	@Override
-	public void cleanUp() throws Exception {
-		super.cleanUp();
-		Config.setConfigProperty( SCRIPT_BATCH_SIZE, batchSize.toString() );
 	}
 
 	/**
@@ -104,8 +95,8 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	@Override
 	public List<String> getPostRequisiteModules() throws Exception {
 		final List<String> postReqs = new ArrayList<>();
-		final int numSeqFiles = BioLockJUtil.getPipelineInputFiles().size();
-		if( SeqUtil.isMultiplexed() || numSeqFiles > batchSize ) postReqs.add( MergeQiimeOtuTables.class.getName() );
+		if( SeqUtil.isMultiplexed() || BioLockJUtil.getPipelineInputFiles().size() > 1 )
+			postReqs.add( MergeQiimeOtuTables.class.getName() );
 		postReqs.addAll( super.getPostRequisiteModules() );
 		return postReqs;
 	}
@@ -135,30 +126,19 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	}
 
 	/**
-	 * Return true if the sample count indicates we have a full batch
-	 *
-	 * @param sampleCount Current number of samples processed so far
-	 * @return boolean true if another batch is needed
-	 * @throws Exception if batch size is undefined or invalid
-	 */
-	protected boolean doAddNextBatch( final int sampleCount ) throws Exception {
-		if( sampleCount % Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) == 0 ) return true;
-		return false;
-	}
-
-	/**
 	 * Method returns batch script lines for one batch.
 	 *
 	 * @param lines Batch script lines to copy fasta to batch_#/fasta
 	 * @param batchNum Batch number
 	 * @param index Start index used to break up mapping file
 	 * @return List of batch script lines used to process batch
-	 * @throws Exception if unable to get batch script lines
+	 * @throws ConfigException if error occurs batching samples for worker scripts
 	 */
-	protected List<String> getBatch( final List<String> lines, final int batchNum, final int index ) throws Exception {
+	protected List<String> getBatch( final List<String> lines, final int batchNum, final int index )
+		throws ConfigException {
 		final File batchDir = getBatchDir( batchNum );
 		final String mapping = batchDir.getAbsolutePath() + File.separator + BATCH_MAPPING;
-		final int endIndex = index + Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
+		final int endIndex = index + lines.size();
 		lines.add( FUNCTION_CREATE_BATCH_MAPPING + " " + mapping + " " + index + " " + endIndex );
 		lines.addAll( getPickOtuLines( PICK_OTU_SCRIPT, getBatchFastaDir( batchNum ), mapping, batchDir ) );
 		lines.add( copyBatchOtuTableToOutputDir( batchDir, batchNum ) );
@@ -189,17 +169,22 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 		return f;
 	}
 
-	/**
-	 * Return true if there is a batch of samples that need to be processed (if sampleCount did not reach the batch size
-	 * yet)
-	 *
-	 * @param sampleCount Current number of samples processed so far
-	 * @return boolean true if another batch is needed
-	 * @throws Exception if batch size is undefined or invalid
-	 */
-	private boolean addFinalBatch( final int sampleCount ) throws Exception {
-		if( sampleCount % Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE ) != 0 ) return true;
-		return false;
+	private boolean saveBatch( final int workerNum, final int sampleCount )
+		throws ConfigNotFoundException, ConfigFormatException {
+		final int minSamplesPerWorker = ModuleUtil.getMinSamplesPerWorker( this ); // 1
+		final int maxWorkers = ModuleUtil.getNumMaxWorkers( this ); // 8
+		return workerNum < maxWorkers && sampleCount == minSamplesPerWorker + 1 ||
+			workerNum >= maxWorkers && sampleCount == minSamplesPerWorker;
+	}
+
+	private void setNumWorkers( final Integer count ) throws ConfigNotFoundException, ConfigFormatException {
+		if( count != ModuleUtil.getNumWorkers( this ) )
+			Config.setConfigProperty( getClass().getSimpleName() + "." + suffix( Constants.SCRIPT_NUM_WORKERS ),
+				count.toString() );
+	}
+
+	private static String suffix( final String prop ) {
+		return prop.indexOf( "." ) > -1 ? prop.substring( prop.indexOf( "." ) + 1 ): prop;
 	}
 
 	/**
@@ -216,5 +201,4 @@ public class QiimeClosedRefClassifier extends QiimeClassifier {
 	 * Name of the bash function that prepares a batch of seqs for processing: {@value #FUNCTION_CREATE_BATCH_MAPPING}
 	 */
 	protected static final String FUNCTION_CREATE_BATCH_MAPPING = "createBatchMapping";
-	private static Integer batchSize = 1;
 }

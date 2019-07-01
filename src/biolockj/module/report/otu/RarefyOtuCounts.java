@@ -60,8 +60,9 @@ public class RarefyOtuCounts extends OtuCountModule {
 		final int pad = SummaryUtil.getPad( label );
 		String summary = SummaryUtil.getCountSummary( this.hitsPerSample, "OTUs", false );
 		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) +
-			BioLockJUtil.getCollectionAsString( this.sampleIds );
+		if( !this.sampleIds.isEmpty() )
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty metadata records:", pad ) +
+				BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.hitsPerSample = null;
 		return super.getSummary() + summary;
 	}

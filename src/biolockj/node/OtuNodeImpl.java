@@ -29,7 +29,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	/**
 	 * If called for level not included in {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS},
 	 * check if the top level taxonomy level is already assigned. If so, populate missing levels by passing the parent
-	 * taxa to {@link biolockj.util.TaxaUtil#getUnclassifiedTaxa(String, String)} until the given in level is assigned.<br>
+	 * taxa to {@link biolockj.util.TaxaUtil#getUnclassifiedTaxa(String, String)} until the given in level is
+	 * assigned.<br>
 	 * <br>
 	 * This method assumes it is called repeatedly for each OTU (once/level) and that each subsequent call passes a
 	 * lower taxonomy level than the previous.
@@ -60,7 +61,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 				if( this.taxaMap.keySet().contains( testLevel ) ) {
 					parentTaxa = this.taxaMap.get( testLevel );
 					parentLevel = testLevel;
-				} else if( parentTaxa != null && Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) ) {
+				} else if( parentTaxa != null &&
+					Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) ) {
 					final String unclassifiedTaxa = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
 					this.taxaMap.put( testLevel, unclassifiedTaxa );
 				}
@@ -91,8 +93,12 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		return node.getOtuName().compareTo( getOtuName() );
 	}
 
-	@Override
-	public Map<String, String> delimToLevelMap() {
+	/**
+	 * Map level delimeter to level names.
+	 * 
+	 * @return Map delim to level name
+	 */
+	public static Map<String, String> delimToLevelMap() {
 		if( delimToLevelMap.isEmpty() ) {
 			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
 			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
@@ -105,8 +111,9 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		return delimToLevelMap;
 	}
 
+
 	@Override
-	public int getCount() {
+	public long getCount() {
 		return this.count;
 	}
 
@@ -123,19 +130,19 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		try {
 			String parentTaxa = null;
 			String parentLevel = null;
-			
+
 			for( final String level: TaxaUtil.getTaxaLevels() ) {
 				String taxaName = this.taxaMap.get( level );
-				if( Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) && taxaName == null || taxaName.isEmpty() ) {
+				if( taxaName != null && taxaName.trim().isEmpty() ) taxaName = null;
+				if( taxaName == null && Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) )
 					taxaName = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
-				}
-				else {
+				else if( taxaName != null ) {
 					parentTaxa = taxaName;
 					parentLevel = level;
 				}
 
-				if( !otu.toString().isEmpty() ) otu.append( Constants.SEPARATOR );
-
+				if( taxaName == null ) continue;
+				if( !otu.toString().isEmpty() ) otu.append( Constants.OTU_SEPARATOR );
 				otu.append( OtuUtil.buildOtuTaxa( level, taxaName ) );
 			}
 		} catch( final Exception ex ) {
@@ -143,6 +150,20 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		}
 		this.name = otu.toString();
 		return this.name;
+	}
+	
+	@Override
+	public String toString() {
+		String val = getSampleId();
+		try {
+			if (getTaxaMap() != null)
+				for( String level: getTaxaMap().keySet() ) 
+					val += ":" + level + "-" + getTaxaMap().get( level );
+		} catch( Exception ex ) {
+			Log.error( getClass(), "Unable to build toString() for " + getSampleId(), ex );
+			ex.printStackTrace();
+		}
+		return val;	
 	}
 
 	@Override
@@ -155,10 +176,10 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	 * levels are found, they inherit their parent taxa.
 	 */
 	@Override
-	public Map<String, String> getTaxaMap() throws Exception {
+	public Map<String, String> getTaxaMap() throws ConfigFormatException {
 		if( !this.taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) ) {
 			Log.debug( getClass(), "Omit incomplete [ " + this.sampleId + " ] OTU missing the top taxonomy level: " +
-				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "": ", classifier output = " + this.line ) );
+				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "" : ", classifier output = " + this.line ) );
 			return null;
 		}
 
@@ -167,7 +188,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	}
 
 	@Override
-	public void setCount( final int count ) {
+	public void setCount( final long count ) {
 		this.count = count;
 	}
 
@@ -192,6 +213,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	/**
 	 * Populate missing OTUs if top level taxa is defined and there is a level gap between the top level and the bottom
 	 * level. If configured, missing levels inherit the parent name as "Unclassified (parent-name) OTU".
+	 * 
 	 * @throws ConfigFormatException if Config prop boolean does not contain Y or N
 	 */
 	protected void populateInBetweenTaxa() throws ConfigFormatException {
@@ -204,12 +226,13 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 				numFound++;
 				parentTaxa = this.taxaMap.get( level );
 				parentLevel = level;
-			} else if( Config.getBoolean( null, Constants.REPORT_UNCLASSIFIED_TAXA ) && parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
+			} else if( Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) &&
+				parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
 				this.taxaMap.put( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 			else if( numFound == numTaxa ) break;
 	}
 
-	private int count = 0;
+	private long count = 0;
 	private String line = "";
 	private String name = null;
 	private String sampleId = null;

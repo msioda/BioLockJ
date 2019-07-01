@@ -45,10 +45,10 @@ public abstract class ClassifierModuleImpl extends SeqModuleImpl implements Clas
 	}
 
 	@Override
-	public abstract String getClassifierExe() throws ConfigViolationException;
+	public abstract String getClassifierExe() throws ConfigException;
 
 	@Override
-	public abstract List<String> getClassifierParams() throws Exception;
+	public abstract List<String> getClassifierParams() throws ConfigException;
 
 	@Override
 	public abstract File getDB() throws ConfigPathException, ConfigNotFoundException;

@@ -91,7 +91,7 @@ public class BioLockJ {
 		} catch( final Exception ex ) {
 			FatalExceptionHandler.logFatalError( args, ex );
 		} finally {
-			if( !DockerUtil.isDirectMode() ) pipelineShutDown();
+			if( !BioLockJUtil.isDirectMode() ) pipelineShutDown();
 		}
 	}
 
@@ -177,19 +177,19 @@ public class BioLockJ {
 
 		MetaUtil.initialize();
 
-		if( DockerUtil.isDirectMode() ) Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
+		if( BioLockJUtil.isDirectMode() ) Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
 		else Log.initialize( Config.pipelineName() );
 
 		if( RuntimeParamUtil.doRestart() ) initRestart();
 
-		if( !DockerUtil.isDirectMode() ) {
+		if( !BioLockJUtil.isDirectMode() ) {
 			if( MetaUtil.getMetadata() != null ) BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
 			if( DockerUtil.inAwsEnv() ) NextflowUtil.stageRootConfig();
 		}
 
 		BioLockJUtil.initPipelineInput();
 
-		if( !DockerUtil.isDirectMode() && BioLockJUtil.copyInputFiles() ) copyInputData();
+		if( !BioLockJUtil.isDirectMode() && BioLockJUtil.copyInputFiles() ) copyInputData();
 
 		SeqUtil.initialize();
 	}
@@ -257,7 +257,7 @@ public class BioLockJ {
 
 		Pipeline.initializePipeline();
 
-		if( DockerUtil.isDirectMode() )
+		if( BioLockJUtil.isDirectMode() )
 			Pipeline.runDirectModule( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
 		else {
 			MasterConfigUtil.saveMasterConfig();
@@ -293,7 +293,7 @@ public class BioLockJ {
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.info( BioLockJ.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.info( BioLockJ.class, msg );
 	}
 
 	private static void pipelineShutDown() {

@@ -112,7 +112,7 @@ public class FatalExceptionHandler {
 	}
 
 	private static String getErrorLogSuffix() {
-		if( DockerUtil.isDirectMode() ) return RuntimeParamUtil.getDirectModuleDir();
+		if( BioLockJUtil.isDirectMode() ) return RuntimeParamUtil.getDirectModuleDir();
 		else if( Config.pipelineName() != null ) return Config.pipelineName();
 		else if( RuntimeParamUtil.getConfigFile() != null ) return RuntimeParamUtil.getConfigFile().getName();
 		return "Unknown_Config";

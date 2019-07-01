@@ -206,6 +206,18 @@ public class Config {
 	}
 
 	/**
+	 * Return property name after substituting the module name as its prefix.
+	 * 
+	 * @param module BioModule
+	 * @param property Property name
+	 * @return BioModule specific property name
+	 */
+	public static String getModulePropName( final BioModule module, final String property ) {
+		if( module != null ) return module.getClass().getSimpleName() + "." + suffix( property );
+		return null;
+	}
+
+	/**
 	 * Parse property as non-negative integer value
 	 *
 	 * @param module BioModule to check for module-specific form of this property
@@ -227,8 +239,7 @@ public class Config {
 	 * @return Pipeline directory (if it exists)
 	 */
 	public static File getPipelineDir() {
-		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) 
-			try {
+		if( pipelineDir == null && props != null && props.getProperty( Constants.INTERNAL_PIPELINE_DIR ) != null ) try {
 			pipelineDir = requireExistingDir( null, Constants.INTERNAL_PIPELINE_DIR );
 		} catch( final Exception ex ) {
 			Log.error( Config.class, "Pipeline directory does not exist", ex );
@@ -300,22 +311,12 @@ public class Config {
 	 */
 	public static String getString( final BioModule module, final String property ) {
 		if( props == null ) return null;
-		String propName = property;
-		String val = props.getProperty( property );
-
-		if( module != null ) {
-			propName = module.getClass().getSimpleName() + "." + suffix( property );
-			val = props.getProperty( propName );
-			if( val != null )
-				Log.debug( Config.class, "Found module override property: [ " + propName + "=" + val + " ]" );
-			else {
-				propName = property;
-				val = props.getProperty( property );
-			}
-		}
-
-		usedProps.put( propName, val );
-		if( val == null || val.isEmpty() ) return null;
+		String prop = getModulePropName( module, property );
+		if( prop == null || props.getProperty( prop ) == null ) prop = property;
+		String val = props.getProperty( prop );
+		if( val != null ) val = val.trim();
+		usedProps.put( prop, val );
+		if( val != null && val.isEmpty() ) val = null;
 		return val;
 	}
 
@@ -353,9 +354,8 @@ public class Config {
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
-		if( !DockerUtil.isDirectMode() && !FileUtils.directoryContains( getPipelineDir() , configFile ) ) {
+		if( !BioLockJUtil.isDirectMode() && !FileUtils.directoryContains( getPipelineDir(), configFile ) )
 			FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
-		}
 		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
 		TaxaUtil.initTaxaLevels();
@@ -388,6 +388,16 @@ public class Config {
 	 */
 	public static String pipelinePath() {
 		return getPipelineDir().getAbsolutePath();
+	}
+
+	/**
+	 * Remove a property (probably internal since these are the only that change mid-program).
+	 * 
+	 * @param property Property name
+	 */
+	public static void removeConfigProperty( final String property ) {
+		props.remove( property );
+		usedProps.remove( property );
 	}
 
 	/**
@@ -611,16 +621,6 @@ public class Config {
 
 		return getString( module, property ).trim();
 	}
-	
-	/**
-	 * Remove a property (probably internal since these are the only that change mid-program).
-	 * 
-	 * @param property Property name
-	 */
-	public static void removeConfigProperty( final String property ) {
-		props.remove( property );
-		usedProps.remove( property );
-	}
 
 	/**
 	 * Sets a property value in the props cache as a list
@@ -732,7 +732,7 @@ public class Config {
 		if( RuntimeParamUtil.doRestart() ) {
 			setPipelineDir( RuntimeParamUtil.getRestartDir() );
 			Log.info( Config.class, "Assign RESTART_DIR pipeline root directory: " + Config.pipelinePath() );
-		} else if( DockerUtil.isDirectMode() ) {
+		} else if( BioLockJUtil.isDirectMode() ) {
 			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
 			Log.info( Config.class, "Assign DIRECT pipeline root directory: " + Config.pipelinePath() );
 		} else {

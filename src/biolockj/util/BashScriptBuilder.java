@@ -15,8 +15,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import biolockj.*;
-import biolockj.exception.ConfigFormatException;
-import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.*;
 import biolockj.module.*;
 import biolockj.module.report.r.R_Module;
 
@@ -30,44 +29,34 @@ public class BashScriptBuilder {
 	private BashScriptBuilder() {}
 
 	/**
-	 * Build the MIAN script.
-	 * 
-	 * @param module ScriptModule
-	 * @throws Exception if any error occurs
-	 */
-	public static void buildMainScript( final ScriptModule module ) throws Exception {
-		if( workerScripts.isEmpty() )
-			throw new Exception( "No worker scripts created for module: " + module.getClass().getName() );
-
-		final List<String> mainScriptLines = initMainScript( module );
-		for( final File worker: workerScripts )
-			mainScriptLines.add( getMainScriptExecuteWorkerLine( worker.getAbsolutePath() ) );
-
-		mainScriptLines
-			.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_SUCCESS );
-		createScript( getMainScriptPath( module ), mainScriptLines );
-		workerScripts.clear();
-	}
-
-	/**
 	 * This method builds the bash scripts required for the given module.<br>
 	 * Standard local/cluster pipelines include: 1 MAIN script, 1+ worker-scripts.<br>
-	 * Docker R_Modules include: 1 MAIN scirpt, 0 worker-scripts - MAIN.R run by MAIN.sh<br>
-	 * Docker *non-R_Modules* include: 1 MAIN scirpt, 1+ worker-scripts - MAIN.sh runs workers<br>
-	 * AWS Docker R_Modules include: 0 MAIN scirpts, 0 worker-scripts - MAIN.R run by nextflow<br>
-	 * AWS Docker *non-R_Modules* include: 0 MAIN scirpts, 1+ worker-scripts MAIN.sh runs workers<br>
+	 * Docker R_Modules include: 1 MAIN script, 0 worker-scripts - MAIN.R run by MAIN.sh<br>
+	 * Docker *non-R_Modules* include: 1 MAIN script, 1+ worker-scripts - MAIN.sh runs workers<br>
+	 * AWS Docker R_Modules include: 0 MAIN scripts, 0 worker-scripts - MAIN.R run by Nextflow<br>
+	 * AWS Docker *non-R_Modules* include: 0 MAIN scripts, 1+ worker-scripts MAIN.sh runs workers<br>
 	 * 
 	 * @param module ScriptModule
 	 * @param data Bash script lines
-	 * @throws Exception if any error occurs
+	 * @throws PipelineScriptException if any errors occur writing module script
 	 */
-	public static void buildScripts( final ScriptModule module, final List<List<String>> data ) throws Exception {
+	public static void buildScripts( final ScriptModule module, final List<List<String>> data )
+		throws PipelineScriptException {
 		if( data == null || data.size() < 1 )
-			throw new Exception( "Cannot build empty scripts for: " + module.getClass().getName() );
-		buildWorkerScripts( module, data );
-		if( !DockerUtil.inAwsEnv() ) buildMainScript( module );
-		Processor.setFilePermissions( module.getScriptDir().getAbsolutePath(),
-			Config.requireString( null, ScriptModule.SCRIPT_PERMISSIONS ) );
+			throw new PipelineScriptException( module, "All worker scripts are empty" );
+		try {
+			workerScripts.clear();
+			buildWorkerScripts( module, data );
+			if( workerScripts.isEmpty() )
+				throw new PipelineScriptException( module, false, "No worker script lines created" );
+			if( !DockerUtil.inAwsEnv() ) buildMainScript( module );
+			workerScripts.clear();
+			Processor.setFilePermissions( module.getScriptDir().getAbsolutePath(),
+				Config.requireString( module, Constants.SCRIPT_PERMISSIONS ) );
+		} catch( final Exception ex ) {
+			Log.error( BashScriptBuilder.class, "Localized error details: ", ex );
+			throw new PipelineScriptException( module, ex.getMessage() );
+		}
 	}
 
 	/**
@@ -82,9 +71,27 @@ public class BashScriptBuilder {
 		lines.add( "function " + FUNCTION_EXECUTE_LINE + "() {" );
 		lines.add( "${1}" );
 		lines.add( "statusCode=$?" );
-		lines.add( "[ ${statusCode} != 0 ] && " + FUNCTION_SCRIPT_FAILED + " \"${1}\" ${2} ${statusCode}" );
+		lines.add( "[ ${statusCode} -ne 0 ] && " + FUNCTION_SCRIPT_FAILED + " \"${1}\" ${2} ${statusCode}" );
 		lines.add( "}" + RETURN );
 		return lines;
+	}
+
+	/**
+	 * Build the MIAN script.
+	 * 
+	 * @param module ScriptModule
+	 * @throws IOException if errors occur writing the MAIN script lines
+	 * @throws ConfigException if problems occur accessing {@link biolockj.Config} properties
+	 */
+	protected static void buildMainScript( final ScriptModule module ) throws ConfigException, IOException {
+
+		final List<String> mainScriptLines = initMainScript( module );
+		for( final File worker: workerScripts )
+			mainScriptLines.add( getMainScriptExecuteWorkerLine( worker.getAbsolutePath() ) );
+
+		mainScriptLines
+			.add( Constants.RETURN + "touch " + getMainScriptPath( module ) + "_" + Constants.SCRIPT_SUCCESS );
+		createScript( getMainScriptPath( module ), mainScriptLines );
 	}
 
 	/**
@@ -116,10 +123,10 @@ public class BashScriptBuilder {
 	 * @param scriptPath Worker script path
 	 * @param lines Ordered bash script lines to write to the scriptPath
 	 * @return File bash script
-	 * @throws Exception if I/O errors occur
+	 * @throws IOException if unable to write the bash script to file system
 	 */
-	protected static File createScript( final String scriptPath, final List<String> lines ) throws Exception {
-		Log.info( BashScriptBuilder.class, "Create new script: " + scriptPath );
+	protected static File createScript( final String scriptPath, final List<String> lines ) throws IOException {
+		Log.info( BashScriptBuilder.class, "Write new script: " + scriptPath );
 		final File workerScript = new File( scriptPath );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( workerScript ) );
 		try {
@@ -162,13 +169,17 @@ public class BashScriptBuilder {
 	 * number of digits.
 	 * 
 	 * @param module ScriptModule is the module that owns the scripts
-	 * @param workerId Worker ID
 	 * @return Absolute path of next worker script
+	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
+	 * integer
+	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
 	 */
-	protected static String getWorkerScriptPath( final ScriptModule module, final String workerId ) {
+	protected static String getWorkerScriptPath( final ScriptModule module )
+		throws ConfigNotFoundException, ConfigFormatException {
 		if( DockerUtil.inAwsEnv() && module instanceof R_Module ) return getMainScriptPath( module );
 		return module.getScriptDir().getAbsolutePath() + File.separator + ModuleUtil.displayID( module ) + "." +
-			workerId + "_" + module.getClass().getSimpleName() + Constants.SH_EXT;
+			getWorkerId( workerNum(), ModuleUtil.getNumWorkers( module ).toString().length() ) + "_" +
+			module.getClass().getSimpleName() + Constants.SH_EXT;
 	}
 
 	/**
@@ -177,13 +188,13 @@ public class BashScriptBuilder {
 	 * @param module ScriptModule script directory is where main script is written
 	 * @return List of lines for the main script that has the prefix
 	 * {@value biolockj.module.ScriptModule#MAIN_SCRIPT_PREFIX}
-	 * @throws Exception if error occurs writing the file
+	 * @throws ConfigException if errors occur accessing {@link biolockj.Config} properties
 	 */
-	protected static List<String> initMainScript( final ScriptModule module ) throws Exception {
+	protected static List<String> initMainScript( final ScriptModule module ) throws ConfigException {
 		final List<String> lines = new ArrayList<>();
 		final String scriptPath = getMainScriptPath( module );
-		if( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) != null )
-			lines.add( Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER ) + RETURN );
+		if( Config.getString( module, Constants.SCRIPT_DEFAULT_HEADER ) != null )
+			lines.add( Config.getString( module, Constants.SCRIPT_DEFAULT_HEADER ) + RETURN );
 		lines.add( PIPE_DIR + "=\"" + Config.pipelinePath() + "\"" + RETURN );
 		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + " " + scriptPath + RETURN );
 		lines.add( "touch " + scriptPath + "_" + Constants.SCRIPT_STARTED + RETURN );
@@ -217,14 +228,13 @@ public class BashScriptBuilder {
 		throws Exception {
 		final List<String> lines = new ArrayList<>();
 		final String header = Config.getString( module, SCRIPT_JOB_HEADER );
-		final String defaultHeader = Config.getString( module, ScriptModule.SCRIPT_DEFAULT_HEADER );
+		final String defaultHeader = Config.getString( module, Constants.SCRIPT_DEFAULT_HEADER );
 
 		if( Config.isOnCluster() && header != null ) lines.add( header + RETURN );
 		else if( defaultHeader != null ) lines.add( defaultHeader + RETURN );
 
 		lines.add( PIPE_DIR + "=\"" + Config.pipelinePath() + "\"" + RETURN );
-		lines.add( "# BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + " #samples/batch=" +
-			getBatchSize( module ) + RETURN );
+		lines.add( "# BioLockJ." + BioLockJUtil.getVersion() + " " + scriptPath + RETURN );
 		lines.add( "touch " + scriptPath + "_" + Constants.SCRIPT_STARTED + RETURN );
 		lines.addAll( loadModules( module ) );
 
@@ -269,57 +279,45 @@ public class BashScriptBuilder {
 		} finally {
 			if( writer != null ) writer.close();
 		}
-
 	}
 
 	private static void buildWorkerScripts( final ScriptModule module, final List<List<String>> data )
 		throws Exception {
-		workerScripts.clear();
-		final int count = getBatchSize( module );
-		int numWorkerScripts = count == 0 ? 1: new Double( new Double( data.size() ) / new Double( count ) ).intValue();
-		numWorkerScripts = numWorkerScripts == 0 ? 1: numWorkerScripts;
-
-		final int digits = new Integer( numWorkerScripts ).toString().length();
-		final List<String> subScriptLines = new ArrayList<>();
-		int scriptCount = 0;
 		int sampleCount = 0;
-		int samplesInScript = 0;
-		String workerScriptPath = null;
-
-		for( final List<String> lines: data ) {
-			if( lines.size() == 0 )
-				throw new Exception( " Worker script is empty for: " + module.getClass().getName() );
-
-			if( samplesInScript == 0 ) {
-				subScriptLines.clear();
-				workerScriptPath = getWorkerScriptPath( module, getWorkerId( scriptCount++, digits ) );
-				subScriptLines.addAll( initWorkerScript( module, workerScriptPath ) );
-			}
-
-			subScriptLines.addAll( getWorkerScriptLines( lines ) );
-
-			if( ++sampleCount == data.size() || count > 0 && ++samplesInScript == count ) {
+		String workerScriptPath = getWorkerScriptPath( module );
+		List<String> workerLines = initWorkerScript( module, workerScriptPath );
+		final Iterator<List<String>> it = data.iterator();
+		while( it.hasNext() ) {
+			final List<String> lines = it.next();
+			if( lines.isEmpty() )
+				throw new PipelineScriptException( module, true, " Worker script #" + workerNum() + " is empty." );
+			workerLines.addAll( getWorkerScriptLines( lines ) );
+			if( saveWorker( module, ++sampleCount, data.size() ) || !it.hasNext() ) {
 				if( !( module instanceof JavaModule ) )
-					subScriptLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
-				workerScripts.add( createScript( workerScriptPath, subScriptLines ) );
-				samplesInScript = 0;
+					workerLines.add( "touch " + workerScriptPath + "_" + Constants.SCRIPT_SUCCESS );
+				workerScripts.add( createScript( workerScriptPath, workerLines ) );
+				sampleCount = 0;
+				if( it.hasNext() ) {
+					workerScriptPath = getWorkerScriptPath( module );
+					workerLines = initWorkerScript( module, workerScriptPath );
+				}
 			}
 		}
 
 		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
 		Log.info( BashScriptBuilder.class,
-			workerScripts.size() + " WORKER scripts created for: " + module.getClass().getName() );
+			workerNum() + " WORKER scripts created for: " + module.getClass().getName() );
 		Log.info( BashScriptBuilder.class, Constants.LOG_SPACER );
-	}
-
-	private static int getBatchSize( final ScriptModule module ) throws ConfigNotFoundException, ConfigFormatException {
-		if( batchSize == null ) batchSize = Config.requirePositiveInteger( module, ScriptModule.SCRIPT_BATCH_SIZE );
-		return batchSize;
 	}
 
 	private static String getMainScriptPath( final ScriptModule module ) {
 		return new File( module.getScriptDir().getAbsolutePath() + File.separator + BioModule.MAIN_SCRIPT_PREFIX +
 			module.getModuleDir().getName() + Constants.SH_EXT ).getAbsolutePath();
+	}
+
+	private static Integer getMinSamplesPerWorker( final BioModule module, final int count )
+		throws ConfigNotFoundException, ConfigFormatException {
+		return new Double( Math.floor( (double) count / (double) ModuleUtil.getNumWorkers( module ) ) ).intValue();
 	}
 
 	private static String getWorkerId( final int scriptNum, final int digits ) {
@@ -336,12 +334,22 @@ public class BashScriptBuilder {
 		final List<String> lines = new ArrayList<>();
 		for( final String clusterMod: Config.getList( module, CLUSTER_MODULES ) )
 			lines.add( "module load " + clusterMod );
-
 		if( !lines.isEmpty() ) lines.add( "" );
 		final String prologue = Config.getString( module, CLUSTER_PROLOGUE );
 		if( prologue != null ) lines.add( prologue + RETURN );
-
 		return lines;
+	}
+
+	private static boolean saveWorker( final BioModule module, final int sampleCount, final int count )
+		throws ConfigNotFoundException, ConfigFormatException {
+		final int maxWorkers = count - ModuleUtil.getNumWorkers( module );
+		final int minSamplesPerWorker = getMinSamplesPerWorker( module, count );
+		return workerNum() < maxWorkers && sampleCount == minSamplesPerWorker + 1 ||
+			workerNum() >= maxWorkers && sampleCount == minSamplesPerWorker;
+	}
+
+	private static int workerNum() {
+		return workerScripts.size();
 	}
 
 	/**
@@ -372,11 +380,9 @@ public class BashScriptBuilder {
 	 * Header written at top of worker scripts
 	 */
 	protected static final String SCRIPT_JOB_HEADER = "cluster.jobHeader";
-	private static Integer batchSize = null;
+
 	private static final String FUNCTION_EXECUTE_LINE = "executeLine";
-
 	private static final String FUNCTION_RUN_JOB = "runJob";
-
 	private static final String FUNCTION_SCRIPT_FAILED = "scriptFailed";
 	private static final String PIPE_DIR = "pipeDir";
 	private static final String RETURN = Constants.RETURN;

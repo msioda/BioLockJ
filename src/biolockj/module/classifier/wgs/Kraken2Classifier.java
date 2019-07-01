@@ -96,7 +96,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	 * Get kraken executable command: {@value #EXE_KRAKEN2}
 	 */
 	@Override
-	public String getClassifierExe() throws ConfigViolationException {
+	public String getClassifierExe() throws ConfigException {
 		return Config.getExe( this, EXE_KRAKEN2 );
 	}
 
@@ -104,7 +104,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	 * Obtain the kraken2 runtime params
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception {
+	public List<String> getClassifierParams() throws ConfigException {
 		return Config.getList( this, getExeParamName() );
 	}
 
@@ -120,7 +120,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
-		final String inFiles = "$3" + ( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ? " $4": "" );
+		final String inFiles = "$3" + ( SeqUtil.hasPairedReads() ? " $4": "" );
 		lines.add( "function " + FUNCTION_KRAKEN + "() {" );
 		lines.add(
 			getClassifierExe() + getWorkerFunctionParams() + REPORT_PARAM + "$1 " + OUTPUT_PARAM + " $2 " + inFiles );
@@ -143,9 +143,9 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 			if( params.contains( FASTQ_PARAM ) ) classifierParams.remove( FASTQ_PARAM );
 			if( params.contains( USE_NAMES_PARAM ) ) classifierParams.remove( USE_NAMES_PARAM );
 			if( params.contains( USE_MPA_PARAM ) ) classifierParams.remove( USE_MPA_PARAM );
-			if( params.indexOf( NUM_THREADS_PARAM ) > -1 )
-				throw new Exception( "Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property (" +
-					getExeParamName() + "). BioLockJ derives this value from property: " + SCRIPT_NUM_THREADS );
+			if( params.indexOf( NUM_THREADS_PARAM ) > -1 ) throw new Exception(
+				"Invalid classifier option (" + NUM_THREADS_PARAM + ") found in property (" + getExeParamName() +
+					"). BioLockJ derives this value from property: " + Constants.SCRIPT_NUM_THREADS );
 			if( params.indexOf( PAIRED_PARAM ) > -1 )
 				throw new Exception( "Invalid classifier option (" + PAIRED_PARAM + ") found in property (" +
 					getExeParamName() + "). BioLockJ derives this value by analyzing input sequence files" );
@@ -173,7 +173,7 @@ public class Kraken2Classifier extends ClassifierModuleImpl {
 	// method calculates mean need by the module.
 	private String getWorkerFunctionParams() throws Exception {
 		String params = " " + getParams();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) params += PAIRED_PARAM;
+		if( SeqUtil.hasPairedReads() ) params += PAIRED_PARAM;
 
 		if( !getInputFiles().isEmpty() && SeqUtil.isGzipped( getInputFiles().get( 0 ).getName() ) )
 			params += GZIP_PARAM;

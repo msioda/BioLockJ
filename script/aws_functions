@@ -37,7 +37,7 @@ build_s3() {
 	fi
 	s3items=$(aws s3api list-objects --bucket $awsS3 --query "Contents[].Key")
 	[ "${s3items/nextflow}" == "${s3items}" ] && aws s3api put-object --bucket "${awsS3}" --key nextflow/
-	set_blj_prop "aws.s3" "${awsS3}" && echo "${awsS3}"
+	set_blj_prop "aws.s3" "${awsS3}"
 }
 
 # Build key pair + save to $(key_file) file with security requirement (perms 400) 
@@ -81,7 +81,7 @@ get_ami() {
 
 # Got existing S3 bucket names in your region
 get_s3_buckets() {
-	echo $(aws s3api list-buckets --region $(get_blj_prop awsRegion) --query "Buckets[].Name")
+	echo $(aws s3api list-buckets --region $(aws_region) --query "Buckets[].Name")
 }
 
 # Check status of Cloud Formation Stack
@@ -114,8 +114,8 @@ set_stack_name() {
 		aws_log "Pipeline Config \"aws.stack=${stack}\" status=CREATE_COMPLETE" && return
 	fi
 	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-	set_blj_prop aws.stack $(generate_name bljStack "${stack}") 
-	aws_log "Generated aws.stack=${stack}" 
+	set_blj_prop aws.stack $(generate_name bljStack "${stacks}") 
+	aws_log "Generated aws.stack=$(get_blj_prop aws.stack)" 
 }
 
 # Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.

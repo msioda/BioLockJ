@@ -31,8 +31,8 @@ public class AwkFastaConverter extends SeqModuleImpl {
 		final boolean isMultiLine = Config.getBoolean( this, Constants.INTERNAL_IS_MULTI_LINE_SEQ );
 		final String tempDir = getTempDir().getAbsolutePath() + File.separator;
 		final String outDir = getOutputDir().getAbsolutePath() + File.separator;
-
 		final String ext = "." + ( isMultiLine ? Constants.FASTA: SeqUtil.getSeqType() );
+
 		for( final File f: files ) {
 			final ArrayList<String> lines = new ArrayList<>();
 			final String fileId = SeqUtil.getSampleId( f.getName() );

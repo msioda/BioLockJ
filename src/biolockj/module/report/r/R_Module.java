@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import biolockj.*;
+import biolockj.exception.ConfigViolationException;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.report.humann2.AddMetadataToPathwayTables;
 import biolockj.module.report.taxa.AddMetadataToTaxaTables;
@@ -50,6 +51,7 @@ public abstract class R_Module extends ScriptModuleImpl {
 	@Override
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
+		Config.getExe( this, EXE_RSCRIPT );
 		Config.getPositiveInteger( this, R_TIMEOUT );
 		Config.getBoolean( this, R_DEBUG );
 		Config.getBoolean( this, R_SAVE_R_DATA );
@@ -72,11 +74,11 @@ public abstract class R_Module extends ScriptModuleImpl {
 	 * {@link ScriptModuleImpl#getMainScript()}.
 	 */
 	@Override
-	public String[] getJobParams() throws Exception {
+	public String[] getJobParams() {
 		Log.info( getClass(), "Run MAIN Script: " + getMainScript().getName() );
 		if( DockerUtil.inDockerEnv() ) return super.getJobParams();
 		final String[] cmd = new String[ 2 ];
-		cmd[ 0 ] = Config.getExe( this, EXE_RSCRIPT );
+		cmd[ 0 ] = getRscriptCmd();
 		cmd[ 1 ] = getMainScript().getAbsolutePath();
 		return cmd;
 	}
@@ -254,6 +256,15 @@ public abstract class R_Module extends ScriptModuleImpl {
 
 	private String getModuleScriptName() {
 		return getClass().getSimpleName() + Constants.R_EXT;
+	}
+
+	private String getRscriptCmd() {
+		try {
+			return Config.getExe( this, EXE_RSCRIPT );
+		} catch( final ConfigViolationException ex ) {
+			Log.error( getClass(), EXE_RSCRIPT + " property misconfigured", ex );
+		}
+		return Constants.RSCRIPT;
 	}
 
 	/**

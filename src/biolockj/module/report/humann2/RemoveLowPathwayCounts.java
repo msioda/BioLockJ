@@ -40,7 +40,7 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 			summary += SummaryUtil.getCountSummary( this.uniquePathwaysPerSample, "Unique Pathways", false );
 			summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
 			this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
-			if( !this.sampleIds.isEmpty() ) summary += "Removed empty samples: " + this.sampleIds;
+			if( !this.sampleIds.isEmpty() ) summary += "Removed empty metadata records: " + this.sampleIds;
 		}
 		freeMemory();
 		return super.getSummary() + summary;

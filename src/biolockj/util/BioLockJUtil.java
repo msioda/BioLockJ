@@ -359,7 +359,7 @@ public class BioLockJUtil {
 				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_RC );
 			final File prop = Config.getExistingFile( null, Constants.USER_PROFILE );
 			if( prop != null ) prof = prop;
-			if( prof == null ) prof = getProfile( Processor.submit( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
+			if( prof == null ) prof = getProfile( Processor.submitQuery( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
 		} catch( final Exception ex ) {
 			Log.error( LogUtil.class, "Failed to find user shell profile ", ex );
 		}
@@ -369,25 +369,28 @@ public class BioLockJUtil {
 	}
 
 	/**
-	 * Method returns the current version of BioLockJ.
+	 * Method returns the current version of BioLockJ - or undefined message.
 	 * 
 	 * @return BioLockJ version
-	 * @throws Exception if errors occur
 	 */
-	public static String getVersion() throws Exception {
-		final String missingMsg = "undetermined - missing $BLJ/.version file";
-		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
-		if( file.isFile() ) {
-			final BufferedReader reader = getFileReader( file );
+	public static String getVersion() {
+		BufferedReader reader = null;
+		try {
+			reader = getFileReader( new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE ) );
+			return reader.readLine();
+		} catch( IOException | ConfigPathException ex ) {
+			Log.error( BioLockJUtil.class, "Cannot read BioLockJ version file: ${BLJ}" + File.separator + VERSION_FILE,
+				ex );
+		} finally {
 			try {
-				for( final String line = reader.readLine(); line != null; )
-					return line;
-			} finally {
-				reader.close();
+				if( reader != null ) reader.close();
+			} catch( final IOException ex ) {
+				Log.error( BioLockJUtil.class,
+					"Cannot failed to close BufferedReader for version file: ${BLJ}" + File.separator + VERSION_FILE,
+					ex );
 			}
 		}
-
-		return missingMsg;
+		return "Version Unknown - missing file \"${BLJ}/.version\"";
 	}
 
 	/**
@@ -419,11 +422,9 @@ public class BioLockJUtil {
 	 * @throws ConfigNotFoundException if a required property is undefined
 	 * @throws ConfigPathException if configured directory does not exist on the file-system
 	 * @throws ConfigViolationException if input directories contain duplicate file names
-	 * @throws SequnceFormatException if input sequence files fail initial validations
-	 * @throws ConfigFormatException if properties are found with invalid format
 	 */
 	public static void initPipelineInput()
-		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException, SequnceFormatException, ConfigFormatException {
+		throws ConfigNotFoundException, ConfigPathException, ConfigViolationException {
 		Collection<File> files = new HashSet<>();
 		for( final File dir: getInputDirs() ) {
 			Log.info( BioLockJUtil.class, "Found pipeline input dir " + dir.getAbsolutePath() );
@@ -435,23 +436,15 @@ public class BioLockJUtil {
 		inputFiles.addAll( files );
 		Log.info( BioLockJUtil.class, "# Initial input files after removing empty/ignored files: " + files.size() );
 		setPipelineInputFileTypes();
-		
-		if( Config.requireSet( null, INTERNAL_PIPELINE_INPUT_TYPES ).contains( PIPELINE_SEQ_INPUT_TYPE ) ) {
-			Collection<File> seqFiles = new ArrayList<>();
-			Collection<File> otherFiles = new ArrayList<>();
-			for( File file: inputFiles ) {
-				if( SeqUtil.isSeqFile( file ) ) seqFiles.add( file );
-				else otherFiles.add( file );
-			}
-			if( MetaUtil.exists() && Config.getBoolean( null, MetaUtil.META_REQUIRED )  ) 
-				Log.info( BioLockJUtil.class, "Metadata Sample IDs are required for " + seqFiles.size() + " sequence files" );
-			else
-				Log.info( BioLockJUtil.class, "Pipeline input dirs contain " + seqFiles.size() + " sequence files" );
-			if( !otherFiles.isEmpty() ) Log.info( BioLockJUtil.class, "Pipeline input dirs contain " + otherFiles.size() + " non-sequence files" );
-			inputFiles.clear();
-			inputFiles.addAll( SeqUtil.getSeqFiles( seqFiles ) );
-			inputFiles.addAll( otherFiles );
-		}
+	}
+
+	/**
+	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
+	 * 
+	 * @return boolean
+	 */
+	public static boolean isDirectMode() {
+		return RuntimeParamUtil.getDirectModuleDir() != null;
 	}
 
 	/**

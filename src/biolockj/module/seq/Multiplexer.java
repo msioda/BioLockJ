@@ -228,7 +228,7 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 
 	private long getNumReads( final File file ) throws Exception {
 		Long numReads = null;
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) )
+		if( SeqUtil.hasPairedReads() && !SeqUtil.isForwardRead( file.getName() ) )
 			numReads = this.rvMap.get( file.getName() );
 		else numReads = this.fwMap.get( file.getName() );
 
@@ -240,7 +240,7 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 		Long numReads = getNumReads( file );
 		numReads++;
 
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) && !SeqUtil.isForwardRead( file.getName() ) ) {
+		if( SeqUtil.hasPairedReads() && !SeqUtil.isForwardRead( file.getName() ) ) {
 			this.rvMap.put( file.getName(), numReads );
 			this.totalNumRvReads++;
 		} else {

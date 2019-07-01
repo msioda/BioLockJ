@@ -297,7 +297,8 @@ public class MetaUtil {
 	 */
 	public static List<String> getSampleIds() {
 		final List<String> ids = new ArrayList<>();
-		for( final String key: metadataMap.keySet() ) if( !key.equals( metaId ) ) ids.add( key );
+		for( final String key: metadataMap.keySet() )
+			if( !key.equals( metaId ) ) ids.add( key );
 		Collections.sort( ids );
 		return ids;
 	}
@@ -389,7 +390,7 @@ public class MetaUtil {
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
-			if( !DockerUtil.isDirectMode() ) report();
+			if( !BioLockJUtil.isDirectMode() ) report();
 
 			reportedMetadata = getMetadata();
 		} else Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: " +

@@ -18,7 +18,7 @@ import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.OtuNode;
 import biolockj.node.r16s.RdpNode;
 import biolockj.util.BioLockJUtil;
-import biolockj.util.MemoryUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModule parses RDP output files to build standard OTU abundance tables.
@@ -43,11 +43,10 @@ public class RdpParser extends ParserModuleImpl {
 	@Override
 	public void parseSamples() throws Exception {
 		for( final File file: getInputFiles() ) {
-			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try {
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
-					addOtuNode( new RdpNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
+					addOtuNode( new RdpNode( SeqUtil.getSampleId( file.getName() ), line ) );
 			} finally {
 				if( reader != null ) reader.close();
 			}
@@ -58,8 +57,6 @@ public class RdpParser extends ParserModuleImpl {
 	 * If {@link biolockj.node.r16s.RdpNode#getScore()} is above the
 	 * {@link biolockj.Config}.{@value Constants#RDP_THRESHOLD_SCORE}, continue with the standard
 	 * {@link biolockj.node.OtuNode} validation.
-	 *
-	 * @return true if {@link biolockj.node.OtuNode} is valid
 	 */
 	@Override
 	protected boolean isValid( final OtuNode node ) {
@@ -67,7 +64,7 @@ public class RdpParser extends ParserModuleImpl {
 			if( ( (RdpNode) node ).getScore() >= Config.requirePositiveInteger( this, Constants.RDP_THRESHOLD_SCORE ) )
 				return super.isValid( node );
 		} catch( final Exception ex ) {
-			Log.error( getClass(), "Unable to verify if OTU node is valid! " + ex.getMessage(), ex );
+			Log.error( getClass(), "Unable to verify if OTU node is valid!", ex );
 		}
 		return false;
 	}

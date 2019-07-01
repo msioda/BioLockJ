@@ -59,7 +59,8 @@ public class MasterConfigUtil {
 		final String defaultStats = ModuleUtil.getDefaultStatsModule();
 		final Set<String> configMods = Config.getSet( null, Constants.INTERNAL_BLJ_MODULE );
 		boolean foundQiime = false;
-		for( final String mod: configMods ) if( mod.toLowerCase().contains( Constants.QIIME ) ) foundQiime = true;
+		for( final String mod: configMods )
+			if( mod.toLowerCase().contains( Constants.QIIME ) ) foundQiime = true;
 		if( !foundQiime ) usedProps.remove( Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 
 		if( !ModuleUtil.moduleExists( defaultDemux ) && !configMods.contains( defaultDemux ) ) {
@@ -228,8 +229,8 @@ public class MasterConfigUtil {
 		if( initConfig == null ) {
 			writer.write( PROJ_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
 			final List<String> defaults = Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG );
-			if( defaults != null && !defaults.isEmpty() ) for( final String defConfig: defaults )
-				writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
+			for( int i = defaults.size(); i > 0; i-- )
+				writer.write( DEFAULT_CONFIG_FLAG + defaults.get( i - 1 ) + RETURN );
 		} else for( final String line: initConfig )
 			writer.write( line + RETURN );
 

@@ -67,8 +67,7 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = super.getPreRequisiteModules();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
+		if( SeqUtil.hasPairedReads() ) preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		else if( SeqUtil.piplineHasSeqInput() && needsCountModule() ) preReqs.add( RegisterNumReads.class.getName() );
 
 		return preReqs;
@@ -88,8 +87,9 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		final int pad = SummaryUtil.getPad( label );
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad ) +
-			BioLockJUtil.getCollectionAsString( this.sampleIds );
+		if( !this.sampleIds.isEmpty() )
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty metadata records:", pad ) +
+				BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.readsPerSample = null;
 		return super.getSummary() + summary;
 	}
