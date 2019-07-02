@@ -13,8 +13,10 @@ package biolockj.util;
 
 import java.io.*;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.jar.Manifest;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -368,12 +370,62 @@ public class BioLockJUtil {
 		return prof;
 	}
 
+	public static String getVersion() {
+		return( getVersion( false ) );
+	}
+	
 	/**
 	 * Method returns the current version of BioLockJ - or undefined message.
 	 * 
+	 * @param getBuildId boolean - should the returned string include the git revision hash
 	 * @return BioLockJ version
 	 */
-	public static String getVersion() {
+	public static String getVersion( boolean getBuildId ) {
+		String version;
+		try {
+			version = getVersionFromManefest( getBuildId );
+		}catch ( IOException E ) {
+			version = getVersionFromVersionFile();
+		}
+		return( version );
+	}
+	
+	/**
+	 * Method returns the current version of BioLockJ - or undefined message.
+	 * 
+	 * @param getBuildId boolean - should the returned string include the git revision hash
+	 * @return BioLockJ version
+	 * @throws IOException if the manifest file cannot be found
+	 */
+	private static String getVersionFromManefest(boolean getBuildId) throws IOException {
+		String version = "";
+		try{
+			Enumeration<URL> resources = BioLockJ.class.getClassLoader().getResources( "META-INF/MANIFEST.MF" );
+			while( resources.hasMoreElements() ){
+				Manifest manifest = new Manifest( resources.nextElement().openStream() );
+				String mainClass = manifest.getMainAttributes().getValue( "Main-Class" );
+				if (mainClass != null && mainClass.equals("biolockj.BioLockJ")) {
+					version = manifest.getMainAttributes().getValue( "Version" );
+					String gitRev = manifest.getMainAttributes().getValue( "Implementation-Version" );
+					if ( gitRev != null && getBuildId ) version = version + " Build: " + gitRev;
+					return(version);
+				}
+			}
+			throw(new IOException());
+		}
+		catch( IOException E ){
+			System.err.print( "Cannot access BioLockJ.jar manefest file." );
+			E.printStackTrace();
+			throw(E);
+		}
+	}
+	
+	/**
+	 * Method returns the current version of BioLockJ - or undefined message - based on the .version file.
+	 * 
+	 * @return BioLockJ version
+	 */
+	private static String getVersionFromVersionFile() {
 		BufferedReader reader = null;
 		try {
 			reader = getFileReader( new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE ) );
@@ -391,6 +443,21 @@ public class BioLockJUtil {
 			}
 		}
 		return "Version Unknown - missing file \"${BLJ}/.version\"";
+	}
+	
+
+	public static void printHelp()
+	{
+		System.err.println(Constants.RETURN + "BioLockJ " + getVersion() + " java help menu:");
+		System.err.println("The BioLockJ.jar file is not intended to be called directly," 
+						+ Constants.RETURN + "it should be called through the biolockj command.");
+		System.err.println(Constants.RETURN + "Developers: When calling java directly, the following parameters are recognized: ");
+		System.err.println("Stand alone arguments:" 
+						+ Constants.RETURN + Constants.HELP + Constants.TAB_DELIM + "print this help menu"
+						+ Constants.RETURN + Constants.VERSION + Constants.TAB_DELIM + "print version number");
+		RuntimeParamUtil.printArgsDescriptions();
+		System.err.println(Constants.RETURN + "Users: please use the biolockj command.");
+		System.err.println("See: \"biolockj -h\" ");
 	}
 
 	/**

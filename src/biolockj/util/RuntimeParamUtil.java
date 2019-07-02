@@ -284,7 +284,7 @@ public class RuntimeParamUtil {
 	 */
 	protected static void printRuntimeArgs( final String[] args ) {
 		int numArgs = 0;
-		Log.info( RuntimeParamUtil.class, RETURN + Constants.LOG_SPACER );
+		Log.info( RuntimeParamUtil.class, Constants.RETURN + Constants.LOG_SPACER );
 		if( args != null && args.length > 0 ) {
 			Log.info( RuntimeParamUtil.class, "Application runtime args:" );
 			for( final String arg: args ) {
@@ -462,6 +462,18 @@ public class RuntimeParamUtil {
 		if( !get_BLJ_PROJ().isDirectory() ) throw new RuntimeParamException( BLJ_PROJ_DIR,
 			get_BLJ_PROJ().getAbsolutePath(), "System directory-path not found" );
 	}
+	
+	public static void printArgsDescriptions() {
+		//TODO: Fill this in with descriptions here!
+		String sep = ", ";
+		System.err.println( "long arg names:" + Constants.RETURN + String.join( sep, LONG_ARG_NAMES ));
+		System.err.println( "arg names:" + Constants.RETURN + String.join( sep, NAMED_ARGS ));
+		System.err.println( "flags:" + Constants.RETURN + String.join( sep, ARG_FLAGS) );
+		System.err.println( "arguments for directories:"  + Constants.RETURN + String.join( sep, DIR_ARGS) );
+		
+		System.err.println( Constants.RETURN + "See java docs for descriptions:" );
+		System.err.println( "https://msioda.github.io/BioLockJ/docs/biolockj/util/RuntimeParamUtil.html");
+	}
 
 	/**
 	 * {@link biolockj.Config} AWS end parameter switch: {@value #AWS_FLAG}
@@ -559,6 +571,5 @@ public class RuntimeParamUtil {
 		HOST_BLJ_PROJ_DIR, HOST_BLJ_SUP_DIR, HOST_CONFIG_DIR, HOST_HOME_DIR );
 	private static final List<String> NAMED_ARGS = Arrays.asList( CONFIG_FILE, DIRECT_MODE, HOSTNAME, PASSWORD );
 	private static final Map<String, String> params = new HashMap<>();
-	private static final String RETURN = Constants.RETURN;
 	private static String runtimeArgs = "";
 }
