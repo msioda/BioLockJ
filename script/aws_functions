@@ -31,7 +31,7 @@ build_s3() {
 		[ ${#awsS3} -eq 0 ] || [ "${awsS3}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Configured S3 bucket [ aws.s3=${awsS3} ] not found"
 		aws_log "Found existing S3 Bucket ${awsS3}"
 	else
-		awsS3=$(aws s3api create-bucket --region $awsRegion --bucket $(generate_name blj $(aws_s3_buckets)))
+		awsS3=$(aws s3api create-bucket --region $(aws_region) --bucket $(generate_name blj $(aws_s3_buckets)))
 		[ ${#awsS3} -eq 0 ] || [ "$awsS3" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: ${awsS3}"
 		awsS3="${awsS3:1}" && set_blj_prop aws.s3 "${awsS3}" && aws_log "Set aws.s3=${awsS3}"
 	fi
@@ -87,7 +87,7 @@ get_s3_buckets() {
 # Check status of Cloud Formation Stack
 is_stack_complete() {
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
-	[ ${#stacks} -eq 0 ] || [ "${stacks}" == "None" ] || [ $# -eq 0 ] && echo "false" && return
+	[ ${#stacks} -eq 0 ] || [ "${stacks}" == "None" ] && echo "false" && return
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
 	[ ${#stacks} -gt 0 ] && [ "${stacks}" != "None" ] && [ "${stacks/$(get_blj_prop aws.stack)}" != "${stacks}"  ] && echo "true" && return
 	echo "false"

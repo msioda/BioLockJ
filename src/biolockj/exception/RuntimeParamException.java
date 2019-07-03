@@ -16,7 +16,7 @@ import biolockj.Constants;
 /**
  * ConfigException is the superclass for all BioLockJ configuration file Exceptions used to ensure message uniformity.
  */
-public class RuntimeParamException extends Exception {
+public class RuntimeParamException extends BioLockJException {
 
 	/**
 	 * Print error message originating from {@link biolockj.util.RuntimeParamUtil} and print all runtime args.

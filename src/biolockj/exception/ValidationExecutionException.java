@@ -12,23 +12,19 @@
 package biolockj.exception;
 
 import biolockj.module.BioModule;
-import biolockj.util.ModuleUtil;
 
 /**
- * ValidationException is thrown at module runtime if the Validation module finds 
- * a discrepancy between the expectations given for one or more files and the files 
- * found in the previous module.
- * 
- * @author Ivory Blakley
+ * ValidationException is thrown at module runtime if the ValidationUtil throws
+ * a non-BioLockJ error while validating module output.
  */
-public class ValidationException extends BioLockJException {
+public class ValidationExecutionException extends BioLockJException {
 
 	/**
 	 * Default error message (not BioModule specific).
 	 * 
 	 * @param msg Error message
 	 */
-	public ValidationException( String msg ) {
+	public ValidationExecutionException( String msg ) {
 		super( msg );
 	}
 	
@@ -37,14 +33,12 @@ public class ValidationException extends BioLockJException {
 	 * 
 	 * @param module BioModule
 	 */
-	public ValidationException( BioModule module ) {
+	public ValidationExecutionException( BioModule module ) {
 		super( buildMessage( module ) );
 	}
 	
 	private static String buildMessage(BioModule module) {
-		return "This pipeline has validaiton turned on to verify the output of module "
-				+ ModuleUtil.displayID(module) + "_" + module.getClass().getSimpleName()
-				+ ". The output is different from the expectations, so the pipeline was halted.";
+		return "Error occurred validating the output of module " + module.getModuleDir().getName();
 	}
 
 	private static final long serialVersionUID = 9095697645997739998L;

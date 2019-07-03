@@ -226,7 +226,7 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 		return path;
 	}
 
-	private long getNumReads( final File file ) throws Exception {
+	private long getNumReads( final File file ) {
 		Long numReads = null;
 		if( SeqUtil.hasPairedReads() && !SeqUtil.isForwardRead( file.getName() ) )
 			numReads = this.rvMap.get( file.getName() );
@@ -236,7 +236,7 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 		return numReads;
 	}
 
-	private long incrementNumReads( final File file ) throws Exception {
+	private long incrementNumReads( final File file ) {
 		Long numReads = getNumReads( file );
 		numReads++;
 
@@ -254,7 +254,6 @@ public class Multiplexer extends JavaModuleImpl implements SeqModule {
 	private void removeDecompressedFiles() {
 		for( final String path: this.muxFiles )
 			new File( path ).delete();
-		// BioLockJUtil.deleteWithRetry( new File( path ), 5 );
 	}
 
 	private final Map<String, Long> fwMap = new HashMap<>();

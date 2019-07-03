@@ -58,7 +58,7 @@ public class ValidationUtil
 
 		private int validationStatus = ValidationUtil.REPORT;
 
-		public FileSummary( final File inFile ) throws Exception
+		public FileSummary( final File inFile )
 		{
 			file = inFile;
 			name = file.getName();
@@ -140,13 +140,12 @@ public class ValidationUtil
 				validationStatus = ValidationUtil.PASS;
 				return ValidationUtil.PASS;
 			}
-			else
-			{
-				validationStatus = ValidationUtil.FAIL;
-				Log.error( this.getClass(),
-						"File " + name + " passed only " + passed + " out of " + comparisons.size() + " comparisons." );
-				return ValidationUtil.FAIL;
-			}
+	
+			validationStatus = ValidationUtil.FAIL;
+			Log.error( this.getClass(),
+					"File " + name + " passed only " + passed + " out of " + comparisons.size() + " comparisons." );
+			return ValidationUtil.FAIL;
+			
 		}
 		
 		private boolean passesSoftValidation( FileSummary other, BioModule module ) throws ConfigFormatException
@@ -170,7 +169,7 @@ public class ValidationUtil
 			return false;
 		}
 
-		protected String getAtt( final String col ) throws Exception
+		protected String getAtt( final String col )
 		{
 			switch( col )
 			{
@@ -413,7 +412,7 @@ public class ValidationUtil
 	private static String fileNameToKey( final String fileName )
 	{
 		String pipePrifix = RuntimeParamUtil.getProjectName();
-		String key = fileName.replaceAll( pipePrifix + " _[0-9]+_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
+		String key = fileName.replaceAll( pipePrifix + "_[0-9]+_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
 		if( key.equals( fileName ) )
 		{
 			key = fileName.replaceAll( pipePrifix + "_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
@@ -537,15 +536,14 @@ public class ValidationUtil
 						"Row [" + rowNum + "] does not have a value in \"" + NAME + "\" column.",
 						getExpectationFile( module ) );
 			}
-			else
+
+			final FileSummary fs = new FileSummary( id );
+			prevOutput.put( fileNameToKey( id ), fs );
+			for( final String cf: getCompareSet( module ) )
 			{
-				final FileSummary fs = new FileSummary( id );
-				prevOutput.put( fileNameToKey( id ), fs );
-				for( final String cf: getCompareSet( module ) )
-				{
-					fs.setAtt( cf, row.get( headers.indexOf( cf ) ) );
-				}
+				fs.setAtt( cf, row.get( headers.indexOf( cf ) ) );
 			}
+			
 			rowNum++;
 		}
 		if( prevOutput == null || prevOutput.isEmpty() )

@@ -11,10 +11,13 @@
  */
 package biolockj.exception;
 
+import biolockj.Constants;
+import biolockj.util.MetaUtil;
+
 /**
  * MetadataException is thrown if errors occur processing Metadata files.
  */
-public class MetadataException extends Exception {
+public class MetadataException extends BioLockJException {
 
 	/**
 	 * Create standard error to throw for Metadata related errors.
@@ -22,7 +25,7 @@ public class MetadataException extends Exception {
 	 * @param msg Exception message details
 	 */
 	public MetadataException( final String msg ) {
-		super( msg );
+		super( ( MetaUtil.exists() ? "Error in metadata file [ " + MetaUtil.getPath() + " ] " + Constants.RETURN : "" ) + msg );
 	}
 
 	private static final long serialVersionUID = 2815907364437447934L;
