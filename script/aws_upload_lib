@@ -92,8 +92,10 @@ stage_aws_and_nf_config_to_efs() {
 
 # Upload local pipeline inputs and aws/nextflow config files to EFS
 stage_pipeline() {
-	aws_log "Starting --> [ stage_pipeline ]" && stage_aws_and_nf_config_to_efs && 
-		stage_pipeline_config_to_efs && stage_pipeline_inputs_to_efs && stage_pipeline_dbs_to_efs
+	aws_log "Starting --> [ stage_pipeline ]" && stage_aws_and_nf_config_to_efs 
+	stage_pipeline_config_to_efs
+	stage_pipeline_inputs_to_efs
+	stage_pipeline_dbs_to_efs
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
@@ -101,7 +103,8 @@ stage_pipeline_config_to_efs() {
 	aws_log "Uploading pipeline Config files to EFS: $(get_config ec2)" 
 	upload_to_efs $(get_blj_prop internal.config) $BLJ_CONFIG
 	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) internal.config $(get_config ec2)"
-	
+	localS3=$(get_property $(get_config local) "aws.s3")
+	[ ${#localS3} -eq 0 ] && update_efs_config "aws.s3" "$(get_blj_prop aws.s3)"
 }
 
 # Stage custom database files for pipeline onto EFS volume

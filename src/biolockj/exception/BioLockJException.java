@@ -18,7 +18,6 @@ import java.lang.Exception;
  */
 public class BioLockJException extends Exception {
 
-
 	/**
 	 * Simple default {@link Exception} implementation
 	 *
@@ -29,5 +28,4 @@ public class BioLockJException extends Exception {
 	}
 	
 	private static final long serialVersionUID = 243456830655360169L;
-
 }

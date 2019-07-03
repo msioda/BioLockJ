@@ -39,7 +39,6 @@ public class Pipeline {
 		ModuleUtil.markStarted( exeModule() );
 		refreshRCacheIfNeeded();
 		exeModule().executeTask();
-
 		final boolean isJava = exeModule() instanceof JavaModule;
 		final boolean hasScripts = ModuleUtil.hasScripts( exeModule() );
 		final boolean detachJava = Config.getBoolean( exeModule(), Constants.DETACH_JAVA_MODULES );
@@ -109,7 +108,6 @@ public class Pipeline {
 		try {
 			Log.info( Pipeline.class,
 				"Start Direct BioModule Execution for [ ID #" + id + " ] ---> " + module.getClass().getSimpleName() );
-
 			module.runModule();
 			Log.info( Pipeline.class, "DIRECT module ID [" + id + "].runModule() complete!" );
 			module.cleanUp();
@@ -225,7 +223,8 @@ public class Pipeline {
 
 			if( ModuleUtil.isComplete( module ) ) {
 				module.cleanUp();
-				ValidationUtil.validateModule(module);
+				if( !BioLockJUtil.isDirectMode() )
+					ValidationUtil.validateModule(module);
 				refreshRCacheIfNeeded();
 			}
 		}

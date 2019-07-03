@@ -395,7 +395,7 @@ public class NextflowUtil {
 		final String[] args = new String[ 3 ];
 		args[ 0 ] = "rm";
 		args[ 1 ] = "-rf";
-		args[ 2 ] = path;
+		args[ 2 ] = path + File.separator + "*";
 		Processor.submitJob( args, "Clear-AWS-Data" );
 		return true;
 	}
