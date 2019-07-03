@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.stream.LongStream;
 import org.apache.commons.lang.math.NumberUtils;
 import biolockj.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
@@ -189,7 +190,7 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 
 			Log.debug( getClass(), "Sample #indexes size #1 -->  [" + indexes.size() + "]" );
 
-			Collections.shuffle( indexes );
+			Collections.shuffle( indexes, getRandomSeed() );
 			indexes.subList( max.intValue(), indexes.size() ).clear();
 
 			Log.debug( getClass(), "Sample #indexes size  #2 -->  [" + indexes.size() + "]" );
@@ -199,6 +200,14 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 			"Remove sample [" + sampleId + "] - contains (" + numReads +
 				") reads, which is less than minimum # reads (" +
 				Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
+	}
+	
+	private Random getRandomSeed() throws ConfigFormatException {
+		Integer seed = Config.getPositiveInteger( this, Constants.SET_SEED );
+		if (seed != null ) {
+			return new Random(seed);
+		}
+		return new Random();
 	}
 
 	private String getMetaColName() throws Exception {
