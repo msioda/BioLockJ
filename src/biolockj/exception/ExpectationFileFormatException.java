@@ -2,18 +2,27 @@ package biolockj.exception;
 
 import java.io.File;
 import biolockj.Constants;
-import biolockj.exception.ConfigException;
-import biolockj.util.ValidationUtil;;
+import biolockj.util.ValidationUtil;
 
-public class ExpectationFileFormatException extends Exception {
+/**
+ * TODO : Add info
+ */
+public class ExpectationFileFormatException extends BioLockJException {
 
-
-	public ExpectationFileFormatException(String msg, File expectationFile) {
-		super(buildMessage(msg, expectationFile));
+	
+	/**
+	 * 
+	 * TODO : Add info
+	 * 
+	 * @param msg Error message info
+	 * @param file Problem file
+	 */
+	public ExpectationFileFormatException(String msg, File file) {
+		super(buildMessage(msg, file));
 	}
 	
-	private static String buildMessage (String inMsg, File file) {
-		return(inMsg + Constants.RETURN + 
+	private static String buildMessage (String msg, File file) {
+		return(msg + Constants.RETURN + 
 				"Configuration property [" + ValidationUtil.EXPECTATION_FILE + "] points to file [" + file.getAbsolutePath() + "]." + Constants.RETURN 
 				+ "Make corrections to [" + file.getName() + "] and restart pipeline.");
 	}

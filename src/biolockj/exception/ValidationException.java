@@ -18,13 +18,27 @@ import biolockj.util.ModuleUtil;
  * ValidationException is thrown at module runtime if the Validation module finds 
  * a discrepancy between the expectations given for one or more files and the files 
  * found in the previous module.
+ * 
  * @author Ivory Blakley
- *
  */
-public class ValidationException extends Exception {
+public class ValidationException extends BioLockJException {
 
-	public ValidationException(BioModule module) {
-		super(buildMessage(module));
+	/**
+	 * Default error message (not BioModule specific).
+	 * 
+	 * @param msg Error message
+	 */
+	public ValidationException( String msg ) {
+		super( msg );
+	}
+	
+	/**
+	 * Generate BioModule specific error message.
+	 * 
+	 * @param module BioModule
+	 */
+	public ValidationException( BioModule module ) {
+		super( buildMessage( module ) );
 	}
 	
 	private static String buildMessage(BioModule module) {

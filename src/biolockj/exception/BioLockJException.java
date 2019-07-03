@@ -11,19 +11,23 @@
  */
 package biolockj.exception;
 
+import java.lang.Exception;
+
 /**
- * OtuFileException is thrown if errors occur processing OTU files.
+ * Superclass for all BioLockJ exception used to ensure message uniformity.
  */
-public class OtuFileException extends BioLockJException {
+public class BioLockJException extends Exception {
+
 
 	/**
-	 * Create standard error to throw for OTU file errors.
+	 * Simple default {@link Exception} implementation
 	 *
 	 * @param msg Exception message details
 	 */
-	public OtuFileException( final String msg ) {
+	public BioLockJException( final String msg ) {
 		super( msg );
 	}
+	
+	private static final long serialVersionUID = 243456830655360169L;
 
-	private static final long serialVersionUID = 1703127035033358631L;
 }

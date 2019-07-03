@@ -17,7 +17,7 @@ import biolockj.module.ScriptModule;
  * PipelineScriptException is thrown by {@link biolockj.util.BashScriptBuilder} if errors occur writing MASTER & WORKER
  * scripts.
  */
-public class PipelineScriptException extends Exception {
+public class PipelineScriptException extends BioLockJException {
 
 	/**
 	 * Create standard error to throw writing MASTER & WORKER bash scripts.
