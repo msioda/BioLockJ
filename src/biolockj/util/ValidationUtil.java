@@ -329,7 +329,7 @@ public class ValidationUtil
 		}
 	}
 
-	public static void executeTask( final BioModule module ) throws Exception
+	public static void validateModule( final BioModule module ) throws Exception
 	{
 		if( !Config.getBoolean( module, DISABLE_VALIDATION ) )
 		{
