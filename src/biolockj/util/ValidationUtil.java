@@ -122,7 +122,7 @@ public class ValidationUtil
 						else
 						{
 							mentionMismatch( att, other.getAtt( att ), getAtt( att ) );
-							if( att.equals( "size" ) && passesSoftValidation(other, module) )
+							if( att.equals( SIZE ) && passesSoftValidation(other, module) )
 							{
 								passed++;
 							}
@@ -174,10 +174,10 @@ public class ValidationUtil
 			switch( col )
 			{
 				case NAME:
-					return getName();
-				case "size":
+					return fileNameToKey(getName());
+				case SIZE:
 					return String.valueOf( size );
-				case "md5":
+				case MD5:
 					return md5;
 			}
 			if( col.equals( ValidationUtil.MATCHED_EXPECTATION ) )
@@ -208,10 +208,10 @@ public class ValidationUtil
 			Log.debug( this.getClass(), "Setting " + col + " to " + val );
 			switch( col )
 			{
-				case "size":
+				case SIZE:
 					size = Long.parseLong( val );
 					break;
-				case "md5":
+				case MD5:
 					md5 = val;
 					break;
 			}
@@ -264,6 +264,8 @@ public class ValidationUtil
 	 * The first column in an expectation file must be {@value #NAME}
 	 */
 	protected static final String NAME = "name";
+	protected static final String SIZE = "size";
+	protected static final String MD5 = "md5";
 
 	/**
 	 * Append the String {@value #OUTPUT_FILE_SUFFIX} to the name of the validated module to get the output file name.
@@ -279,7 +281,7 @@ public class ValidationUtil
 	 * use all currently available metrics.
 	 */
 	protected static final String REPORT_ON = "validation.reportOn";
-	protected static final ArrayList<String> availableAttributes = new ArrayList<>( Arrays.asList( "name", "size", "md5" ) );
+	protected static final ArrayList<String> availableAttributes = new ArrayList<>( Arrays.asList( NAME, SIZE, MD5 ) );
 	
 	/**
 	 * {@link biolockj.Config} property {@value #SIZE_WITHIN_PERCENT} giving the percentage by which size is allow to
@@ -350,8 +352,8 @@ public class ValidationUtil
 			for( final File f: outputs )
 			{
 				final FileSummary fs = new FileSummary( f );
-				if( getReportSet( module ).contains( "md5" )
-						|| hasExp( module ) && getCompareSet( module ).contains( "md5" ) )
+				if( getReportSet( module ).contains( MD5 )
+						|| hasExp( module ) && getCompareSet( module ).contains( MD5 ) )
 				{
 					fs.calcMd5();
 				}
@@ -417,10 +419,10 @@ public class ValidationUtil
 	private static String fileNameToKey( final String fileName )
 	{
 		String pipePrifix = RuntimeParamUtil.getProjectName();
-		String key = fileName.replaceAll( pipePrifix + "_[0-9]+_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
+		String key = fileName.replaceAll( pipePrifix + "_[0-9]+_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "PIPELINE_DATE" );
 		if( key.equals( fileName ) )
 		{
-			key = fileName.replaceAll( pipePrifix + "_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
+			key = fileName.replaceAll( pipePrifix + "_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "PIPELINE_DATE" );
 		}
 		Log.debug(ValidationUtil.class, "Using [" + key + "] as the key based on [" + fileName + "].");
 		return key;
