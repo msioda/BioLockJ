@@ -12,7 +12,10 @@
 package biolockj;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.*;
+import java.util.jar.Manifest;
 import org.apache.commons.io.FileUtils;
 import biolockj.exception.FatalExceptionHandler;
 import biolockj.module.BioModule;
@@ -54,6 +57,7 @@ public class BioLockJ {
 	 */
 	public static String getHelpInfo() {
 		final File errFile = FatalExceptionHandler.getErrorLog();
+		//TODO: reference the jar help menu: showInfo(Constants.HELP)
 		return Constants.RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + Constants.RETURN +
 			( errFile != null ? "Check error logs here --> " + errFile.getAbsolutePath() + Constants.RETURN: "" ) +
 			"For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + Constants.RETURN;
@@ -84,6 +88,7 @@ public class BioLockJ {
 	 * @param args - String[] runtime parameters passed to the Java program when launching BioLockJ
 	 */
 	public static void main( final String[] args ) {
+		showInfo( args );
 		System.out.println( "Starting BioLockj..." + Constants.APP_START_TIME );
 		try {
 			initBioLockJ( args );
@@ -92,6 +97,21 @@ public class BioLockJ {
 			FatalExceptionHandler.logFatalError( args, ex );
 		} finally {
 			if( !BioLockJUtil.isDirectMode() ) pipelineShutDown();
+		}
+	}
+
+	private static void showInfo( String[] args )
+	{
+		for (String arg : args) {
+			String lowerArg = arg.replaceAll( "^--", "-" ).toLowerCase();
+			if (lowerArg.equals( Constants.VERSION ) ) {
+				System.out.println("BioLockJ " + BioLockJUtil.getVersion( true ) );
+				System.exit( 0 );
+			}
+			if (lowerArg.equals( Constants.HELP ) ) {
+				BioLockJUtil.printHelp();
+				System.exit( 0 );
+			}
 		}
 	}
 

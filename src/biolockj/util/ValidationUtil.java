@@ -122,7 +122,7 @@ public class ValidationUtil
 						else
 						{
 							mentionMismatch( att, other.getAtt( att ), getAtt( att ) );
-							if( att.equals( "size" ) && passesSoftValidation(other, module) )
+							if( att.equals( SIZE ) && passesSoftValidation(other, module) )
 							{
 								passed++;
 							}
@@ -173,11 +173,11 @@ public class ValidationUtil
 		{
 			switch( col )
 			{
-				case "name":
-					return getName();
-				case "size":
+				case NAME:
+					return fileNameToKey(getName());
+				case SIZE:
 					return String.valueOf( size );
-				case "md5":
+				case MD5:
 					return md5;
 			}
 			if( col.equals( ValidationUtil.MATCHED_EXPECTATION ) )
@@ -203,15 +203,15 @@ public class ValidationUtil
 					+ expectedValue + "; found: " + foundValue + "." );
 		}
 
-		protected void setAtt( final String col, final String val ) throws Exception
+		protected void setAtt( final String col, final String val ) 
 		{
 			Log.debug( this.getClass(), "Setting " + col + " to " + val );
 			switch( col )
 			{
-				case "size":
+				case SIZE:
 					size = Long.parseLong( val );
 					break;
-				case "md5":
+				case MD5:
 					md5 = val;
 					break;
 			}
@@ -264,6 +264,8 @@ public class ValidationUtil
 	 * The first column in an expectation file must be {@value #NAME}
 	 */
 	protected static final String NAME = "name";
+	protected static final String SIZE = "size";
+	protected static final String MD5 = "md5";
 
 	/**
 	 * Append the String {@value #OUTPUT_FILE_SUFFIX} to the name of the validated module to get the output file name.
@@ -279,8 +281,7 @@ public class ValidationUtil
 	 * use all currently available metrics.
 	 */
 	protected static final String REPORT_ON = "validation.reportOn";
-	private static final String[] sa = { "name", "size", "md5" };
-	protected static final ArrayList<String> availableAttributes = new ArrayList<>( Arrays.asList( sa ) );
+	protected static final ArrayList<String> availableAttributes = new ArrayList<>( Arrays.asList( NAME, SIZE, MD5 ) );
 	
 	/**
 	 * {@link biolockj.Config} property {@value #SIZE_WITHIN_PERCENT} giving the percentage by which size is allow to
@@ -329,8 +330,9 @@ public class ValidationUtil
 		}
 	}
 
-	public static void validateModule( final BioModule module ) throws Exception
+	public static void validateModule( final BioModule module ) throws BioLockJException
 	{
+		try {
 		if( !Config.getBoolean( module, DISABLE_VALIDATION ) )
 		{
 			HashMap<String, FileSummary> prevOutput = new HashMap<>();
@@ -345,13 +347,13 @@ public class ValidationUtil
 			final File[] outputs = module.getOutputDir().listFiles();
 			Arrays.sort( outputs );
 			Log.debug( ValidationUtil.class,
-					"Found [" + outputs.length + "] files in output dir of module [" + module + "]." );
+					"Found [" + outputs.length + "] files in output dir of module [" + module.getModuleDir().getName() + "]." );
 			int passingFiles = 0;
 			for( final File f: outputs )
 			{
 				final FileSummary fs = new FileSummary( f );
-				if( getReportSet( module ).contains( "md5" )
-						|| hasExp( module ) && getCompareSet( module ).contains( "md5" ) )
+				if( getReportSet( module ).contains( MD5 )
+						|| hasExp( module ) && getCompareSet( module ).contains( MD5 ) )
 				{
 					fs.calcMd5();
 				}
@@ -401,6 +403,11 @@ public class ValidationUtil
 			Log.debug( ValidationUtil.class, "Validation is turned off for module: " + ModuleUtil.displayID( module )
 					+ "_" + module.getClass().getSimpleName() );
 		}
+		}catch(BioLockJException bljEx) {
+			throw bljEx;
+		}catch(Exception ex) {
+			throw new ValidationUtilityException(ex, "An unexpected error was encountered during the Validation step.");
+		}
 	}
 
 	/**
@@ -412,15 +419,16 @@ public class ValidationUtil
 	private static String fileNameToKey( final String fileName )
 	{
 		String pipePrifix = RuntimeParamUtil.getProjectName();
-		String key = fileName.replaceAll( pipePrifix + "_[0-9]+_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
+		String key = fileName.replaceAll( pipePrifix + "_[0-9]+_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "PIPELINE_DATE" );
 		if( key.equals( fileName ) )
 		{
-			key = fileName.replaceAll( pipePrifix + "_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "_DATE" );
+			key = fileName.replaceAll( pipePrifix + "_[0-9]{4}[A-Za-z]{3}[0-9]{2}", "PIPELINE_DATE" );
 		}
+		Log.debug(ValidationUtil.class, "Using [" + key + "] as the key based on [" + fileName + "].");
 		return key;
 	}
 
-	private static ArrayList<String> getCompareSet( final BioModule module ) throws Exception
+	private static ArrayList<String> getCompareSet( final BioModule module ) throws BioLockJException
 	{
 		ArrayList<String> compareFeatures = new ArrayList<>();
 		final ArrayList<String> configCompareOn = new ArrayList<>( Config.getSet( module, COMPARE_ON ) );
@@ -454,7 +462,7 @@ public class ValidationUtil
 		return compareFeatures;
 	}
 
-	private static File getExpectationFile( final BioModule module ) throws Exception
+	private static File getExpectationFile( final BioModule module ) throws ConfigException
 	{
 		File expectationFile = null;
 		final String expectationFilePath = Config.getString( module, EXPECTATION_FILE );
@@ -480,7 +488,7 @@ public class ValidationUtil
 		return expectationFile;
 	}
 
-	private static List<String> getHeaders( final BioModule module ) throws ExpectationFileFormatException, Exception
+	private static List<String> getHeaders( final BioModule module ) throws BioLockJException
 	{
 		List<String> headers = null;
 		final List<List<String>> table = parseTableFile( module );
@@ -518,7 +526,7 @@ public class ValidationUtil
 		return ModuleUtil.displayID( module ) + "_" + module.getClass().getSimpleName() + OUTPUT_FILE_SUFFIX;
 	}
 
-	private static HashMap<String, FileSummary> getPrevSummaries( final BioModule module ) throws Exception
+	private static HashMap<String, FileSummary> getPrevSummaries( final BioModule module ) throws BioLockJException
 	{
 		final HashMap<String, FileSummary> prevOutput = new HashMap<>();
 		final List<String> headers = getHeaders( module );
@@ -610,7 +618,7 @@ public class ValidationUtil
 		return getExpectationFile( module ) != null;
 	}
 
-	private static List<List<String>> parseTableFile( final BioModule module ) throws Exception
+	private static List<List<String>> parseTableFile( final BioModule module ) throws BioLockJException
 	{
 		final List<List<String>> data = new ArrayList<>();
 		BufferedReader reader = null;
@@ -634,10 +642,12 @@ public class ValidationUtil
 				}
 				data.add( record );
 			}
+		}catch( final FileNotFoundException ex) {
+			throw new ConfigPathException(getExpectationFile( module ));
 		}
-		catch( final Exception ex )
+		catch( final IOException ex )
 		{
-			throw new Exception( "Error occurrred parsing expectation file!", ex );
+			throw new ExpectationFileFormatException( "Error occurrred parsing expectation file!", getExpectationFile( module ));
 		}
 		finally
 		{

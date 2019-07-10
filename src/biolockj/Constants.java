@@ -192,6 +192,11 @@ public class Constants
 	 * Gzip compressed file extension: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
+	
+	/**
+	 * Argument to print help menu: {@value #HELP}
+	 */
+	public static final String HELP = "-help";
 
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Gene Family report:
@@ -731,6 +736,11 @@ public class Constants
 	 * Bash profile - may be ~/.bash_profile or ~/.bashrc or others
 	 */
 	public static final String USER_PROFILE = "pipeline.userProfile";
+	
+	/**
+	 * Argument to print version info: {@value #VERSION}
+	 */
+	public static final String VERSION = "-version";
 
 	/**
 	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:
