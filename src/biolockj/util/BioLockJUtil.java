@@ -380,14 +380,14 @@ public class BioLockJUtil {
 	 * @param getBuildId boolean - should the returned string include the git revision hash
 	 * @return BioLockJ version
 	 */
-	public static String getVersion( boolean getBuildId ) {
-		String version;
+	public static String getVersion( boolean getBuildId )  {
 		try {
-			version = getVersionFromManefest( getBuildId );
-		}catch ( IOException E ) {
-			version = getVersionFromVersionFile();
+			if( BioLockJUtil.getSource().isFile() )
+				return getVersionFromManefest( getBuildId );
+			return getVersionFromVersionFile();
+		} catch( IOException | URISyntaxException ex ) {
+			return "Version not found: " + ex.getMessage();
 		}
-		return( version );
 	}
 	
 	/**
@@ -404,7 +404,7 @@ public class BioLockJUtil {
 			while( resources.hasMoreElements() ){
 				Manifest manifest = new Manifest( resources.nextElement().openStream() );
 				String mainClass = manifest.getMainAttributes().getValue( "Main-Class" );
-				if (mainClass != null && mainClass.equals("biolockj.BioLockJ")) {
+				if (mainClass != null && mainClass.equals( BioLockJ.class.getName()) ) {
 					version = manifest.getMainAttributes().getValue( "Version" );
 					String gitRev = manifest.getMainAttributes().getValue( "Implementation-Version" );
 					if ( gitRev != null && getBuildId ) version = version + " Build: " + gitRev;

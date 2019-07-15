@@ -72,17 +72,16 @@ public class GenMod extends ScriptModuleImpl {
 		
 	}
 	
-	protected String getScriptParams() throws Exception{
+	protected String getScriptParams() {
 		String param =Config.getString(this, PARAM);
 		if (param == null) {
 			Log.debug(GenMod.class,"No param provided");
 			return "";
-			
-		}else {
-			Log.debug(GenMod.class,"param provided: "+ param);
-			return " " + param;
 		}
-	
+		
+		Log.debug(GenMod.class,"param provided: "+ param);
+		return " " + param;
+
 	}
 	
 	/**

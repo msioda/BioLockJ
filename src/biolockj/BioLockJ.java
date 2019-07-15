@@ -31,8 +31,6 @@ import biolockj.util.*;
  */
 public class BioLockJ {
 
-	protected BioLockJ() {}
-
 	/**
 	 * Copy file to pipeline root directory.
 	 * 
