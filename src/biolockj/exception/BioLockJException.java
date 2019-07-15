@@ -11,8 +11,6 @@
  */
 package biolockj.exception;
 
-import java.lang.Exception;
-
 /**
  * Superclass for all BioLockJ exception used to ensure message uniformity.
  */
@@ -26,6 +24,6 @@ public class BioLockJException extends Exception {
 	public BioLockJException( final String msg ) {
 		super( msg );
 	}
-	
+
 	private static final long serialVersionUID = 243456830655360169L;
 }

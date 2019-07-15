@@ -275,16 +275,16 @@ public class Email extends BioModuleImpl {
 	protected static final String EMAIL_PORT = "mail.smtp.port";
 
 	/**
+	 * {@link biolockj.Config} Email protocol: {@value #EMAIL_PROTOCOL}<br>
+	 */
+	protected static final String EMAIL_PROTOCOL = "mail.transport.protocol";
+
+	/**
 	 * {@link biolockj.Config} Boolean property: {@value #EMAIL_SMTP_AUTH}<br>
 	 * {@link javax.mail.Session} SMTP authorization flag, set to {@value biolockj.Constants#TRUE} if required by
 	 * {@value #EMAIL_HOST}
 	 */
 	protected static final String EMAIL_SMTP_AUTH = "mail.smtp.auth";
-	
-	/**
-	 * {@link biolockj.Config} Email protocol: {@value #EMAIL_PROTOCOL}<br>
-	 */
-	protected static final String EMAIL_PROTOCOL = "mail.transport.protocol";
 
 	/**
 	 * {@link biolockj.Config} Boolean property: {@value #EMAIL_START_TLS_ENABLE}<br>
@@ -302,6 +302,6 @@ public class Email extends BioModuleImpl {
 
 	private static final byte[] SALT =
 		{ (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, };
-	private static boolean successful = false;
 	private static final String SMTP = "smtp";
+	private static boolean successful = false;
 }

@@ -12,10 +12,7 @@
 package biolockj;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.*;
-import java.util.jar.Manifest;
 import org.apache.commons.io.FileUtils;
 import biolockj.exception.FatalExceptionHandler;
 import biolockj.module.BioModule;
@@ -55,7 +52,7 @@ public class BioLockJ {
 	 */
 	public static String getHelpInfo() {
 		final File errFile = FatalExceptionHandler.getErrorLog();
-		//TODO: reference the jar help menu: showInfo(Constants.HELP)
+		// TODO: reference the jar help menu: showInfo(Constants.HELP)
 		return Constants.RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + Constants.RETURN +
 			( errFile != null ? "Check error logs here --> " + errFile.getAbsolutePath() + Constants.RETURN: "" ) +
 			"For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + Constants.RETURN;
@@ -95,21 +92,6 @@ public class BioLockJ {
 			FatalExceptionHandler.logFatalError( args, ex );
 		} finally {
 			if( !BioLockJUtil.isDirectMode() ) pipelineShutDown();
-		}
-	}
-
-	private static void showInfo( String[] args )
-	{
-		for (String arg : args) {
-			String lowerArg = arg.replaceAll( "^--", "-" ).toLowerCase();
-			if (lowerArg.equals( Constants.VERSION ) ) {
-				System.out.println("BioLockJ " + BioLockJUtil.getVersion( true ) );
-				System.exit( 0 );
-			}
-			if (lowerArg.equals( Constants.HELP ) ) {
-				BioLockJUtil.printHelp();
-				System.exit( 0 );
-			}
 		}
 	}
 
@@ -241,6 +223,26 @@ public class BioLockJ {
 		if( f.isFile() ) f.delete();
 	}
 
+	protected static void pipelineShutDown() {
+
+		setPipelineSecurity();
+
+		if( DockerUtil.inAwsEnv() ) {
+			NextflowUtil.saveNextflowLog();
+			NextflowUtil.stopNextflow();
+		}
+
+		if( isPipelineComplete() ) {
+			MasterConfigUtil.sanitizeMasterConfig();
+			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
+		}
+
+		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() + SummaryUtil.displayAsciiArt() );
+		if( isPipelineComplete() ) System.exit( 0 );
+
+		System.exit( 1 );
+	}
+
 	/**
 	 * Delete all {@link biolockj.module.BioModule}/{@value biolockj.module.BioModule#TEMP_DIR} folders.
 	 */
@@ -295,6 +297,15 @@ public class BioLockJ {
 		}
 	}
 
+	protected static void setPipelineSecurity() {
+		try {
+			Processor.setFilePermissions( Config.pipelinePath(), Config.getString( null, Constants.PIPELINE_PRIVS ) );
+		} catch( final Exception ex ) {
+			System.out.println( "Unable to set pipeline filesystem privileges" );
+			ex.printStackTrace();
+		}
+	}
+
 	private static String getDirectLogName( final String moduleDir ) throws Exception {
 		final File modDir = new File( Config.pipelinePath() + File.separator + moduleDir );
 		if( !modDir.isDirectory() )
@@ -315,32 +326,17 @@ public class BioLockJ {
 		if( !BioLockJUtil.isDirectMode() ) Log.info( BioLockJ.class, msg );
 	}
 
-	protected static void pipelineShutDown() {
-
-		setPipelineSecurity();
-
-		if( DockerUtil.inAwsEnv() ) {
-			NextflowUtil.saveNextflowLog();
-			NextflowUtil.stopNextflow();
-		}
-
-		if( isPipelineComplete() ) {
-			MasterConfigUtil.sanitizeMasterConfig();
-			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
-		}
-
-		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() + SummaryUtil.displayAsciiArt() );
-		if( isPipelineComplete() ) System.exit( 0 );
-
-		System.exit( 1 );
-	}
-
-	protected static void setPipelineSecurity() {
-		try {
-			Processor.setFilePermissions( Config.pipelinePath(), Config.getString( null, Constants.PIPELINE_PRIVS ) );
-		} catch( final Exception ex ) {
-			System.out.println( "Unable to set pipeline filesystem privileges" );
-			ex.printStackTrace();
+	private static void showInfo( final String[] args ) {
+		for( final String arg: args ) {
+			final String lowerArg = arg.replaceAll( "^--", "-" ).toLowerCase();
+			if( lowerArg.equals( Constants.VERSION ) ) {
+				System.out.println( "BioLockJ " + BioLockJUtil.getVersion( true ) );
+				System.exit( 0 );
+			}
+			if( lowerArg.equals( Constants.HELP ) ) {
+				BioLockJUtil.printHelp();
+				System.exit( 0 );
+			}
 		}
 	}
 }

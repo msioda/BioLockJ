@@ -45,9 +45,10 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 					"--> " + outputFile.getAbsolutePath() );
 				final BufferedWriter writer = new BufferedWriter( new FileWriter( outputFile ) );
 				try {
-					long numOtus = otuCounts.isEmpty() ? 0L: otuCounts.values().stream().mapToLong( Long::longValue ).sum();
+					final long numOtus =
+						otuCounts.isEmpty() ? 0L: otuCounts.values().stream().mapToLong( Long::longValue ).sum();
 					getUniqueOtus().addAll( otuCounts.keySet() );
-					for( final String otu: otuCounts.keySet() ) 
+					for( final String otu: otuCounts.keySet() )
 						writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
 					getHitsPerSample().put( sample.getSampleId(), String.valueOf( numOtus ) );
 

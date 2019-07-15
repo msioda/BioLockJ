@@ -25,7 +25,8 @@ public class MetadataException extends BioLockJException {
 	 * @param msg Exception message details
 	 */
 	public MetadataException( final String msg ) {
-		super( ( MetaUtil.exists() ? "Error in metadata file [ " + MetaUtil.getPath() + " ] " + Constants.RETURN : "" ) + msg );
+		super( ( MetaUtil.exists() ? "Error in metadata file [ " + MetaUtil.getPath() + " ] " + Constants.RETURN: "" ) +
+			msg );
 	}
 
 	private static final long serialVersionUID = 2815907364437447934L;

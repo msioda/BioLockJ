@@ -2,8 +2,8 @@ package biolockj.exception;
 
 public class ValidationUtilityException extends BioLockJException {
 
-	public ValidationUtilityException( Exception ex, String msg ) {
-		super(msg);
+	public ValidationUtilityException( final Exception ex, final String msg ) {
+		super( msg );
 		ex.printStackTrace();
 	}
 

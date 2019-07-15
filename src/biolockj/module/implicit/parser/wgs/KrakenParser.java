@@ -36,7 +36,7 @@ public class KrakenParser extends ParserModuleImpl {
 			else sample.addNode( node );
 		}
 	}
-	
+
 	/**
 	 * Parse all {@link biolockj.module.classifier.wgs.KrakenClassifier} reports in the input directory.<br>
 	 * Cache the leaf counts Build an {@link biolockj.node.wgs.KrakenNode} for each line.<br>
@@ -102,6 +102,16 @@ public class KrakenParser extends ParserModuleImpl {
 		sample.setOtuCounts( populateInBetweenTaxa( otuCounts ) );
 	}
 
+	private boolean discardOtu( final String line ) {
+		for( final String delim: DISCARD_TAXA_LEVEL_DELIMS )
+			if( line.contains( delim ) ) {
+				Log.debug( getClass(), "Discard Line [" + line + "] - due to invalid level: " +
+					OtuNodeImpl.delimToLevelMap().get( delim ) );
+				return true;
+			}
+		return false;
+	}
+
 	private void parseSample( final File file ) throws Exception {
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {
@@ -112,15 +122,6 @@ public class KrakenParser extends ParserModuleImpl {
 		} finally {
 			if( reader != null ) reader.close();
 		}
-	}
-	
-	private boolean discardOtu( final String line ) {
-		for( String delim: DISCARD_TAXA_LEVEL_DELIMS ) 
-			if( line.contains( delim ) ) {
-				Log.debug( getClass(), "Discard Line [" + line +"] - due to invalid level: " + OtuNodeImpl.delimToLevelMap().get( delim )  );
-				return true;
-			}
-		return false;
 	}
 
 	private Map<String, Long> populateInBetweenTaxa( final Map<String, Long> otuCounts ) throws OtuFileException {
@@ -179,20 +180,19 @@ public class KrakenParser extends ParserModuleImpl {
 				OtuUtil.buildOtuTaxa( levels.get( i ), TaxaUtil.getUnclassifiedTaxa( name, level ) );
 		return gapOtu;
 	}
-	
+
 	private static List<String> getDiscardLevelDelims() {
 		final List<String> levelDelims = new ArrayList<>();
 		boolean foundBottomLevel = false;
-		Map<String, String> levelToDelim = new HashMap<>();
-		for( String delim: OtuNodeImpl.delimToLevelMap().keySet() ) {
+		final Map<String, String> levelToDelim = new HashMap<>();
+		for( final String delim: OtuNodeImpl.delimToLevelMap().keySet() )
 			levelToDelim.put( OtuNodeImpl.delimToLevelMap().get( delim ), delim );
-		}
 
-		for( String level: TaxaUtil.allTaxonomyLevels() ) {
+		for( final String level: TaxaUtil.allTaxonomyLevels() ) {
 			if( foundBottomLevel ) levelDelims.add( levelToDelim.get( level ) );
 			if( TaxaUtil.bottomTaxaLevel().equals( level ) ) foundBottomLevel = true;
 		}
-		
+
 		return levelDelims;
 	}
 
@@ -215,6 +215,6 @@ public class KrakenParser extends ParserModuleImpl {
 		return TaxaUtil.allTaxonomyLevels().get( TaxaUtil.allTaxonomyLevels().indexOf( level ) - 1 );
 	}
 
-	private static final List<String> PARENT_TAXA_LEVELS = getParentLevels();
 	private static final List<String> DISCARD_TAXA_LEVEL_DELIMS = getDiscardLevelDelims();
+	private static final List<String> PARENT_TAXA_LEVELS = getParentLevels();
 }

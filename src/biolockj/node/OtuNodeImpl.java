@@ -93,25 +93,6 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		return node.getOtuName().compareTo( getOtuName() );
 	}
 
-	/**
-	 * Map level delimeter to level names.
-	 * 
-	 * @return Map delim to level name
-	 */
-	public static Map<String, String> delimToLevelMap() {
-		if( delimToLevelMap.isEmpty() ) {
-			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
-		}
-		return delimToLevelMap;
-	}
-
-
 	@Override
 	public long getCount() {
 		return this.count;
@@ -151,20 +132,6 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		this.name = otu.toString();
 		return this.name;
 	}
-	
-	@Override
-	public String toString() {
-		String val = getSampleId();
-		try {
-			if (getTaxaMap() != null)
-				for( String level: getTaxaMap().keySet() ) 
-					val += ":" + level + "-" + getTaxaMap().get( level );
-		} catch( Exception ex ) {
-			Log.error( getClass(), "Unable to build toString() for " + getSampleId(), ex );
-			ex.printStackTrace();
-		}
-		return val;	
-	}
 
 	@Override
 	public String getSampleId() {
@@ -179,7 +146,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	public Map<String, String> getTaxaMap() throws ConfigFormatException {
 		if( !this.taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) ) {
 			Log.debug( getClass(), "Omit incomplete [ " + this.sampleId + " ] OTU missing the top taxonomy level: " +
-				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "" : ", classifier output = " + this.line ) );
+				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "": ", classifier output = " + this.line ) );
 			return null;
 		}
 
@@ -210,6 +177,19 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		this.sampleId = sampleId;
 	}
 
+	@Override
+	public String toString() {
+		String val = getSampleId();
+		try {
+			if( getTaxaMap() != null ) for( final String level: getTaxaMap().keySet() )
+				val += ":" + level + "-" + getTaxaMap().get( level );
+		} catch( final Exception ex ) {
+			Log.error( getClass(), "Unable to build toString() for " + getSampleId(), ex );
+			ex.printStackTrace();
+		}
+		return val;
+	}
+
 	/**
 	 * Populate missing OTUs if top level taxa is defined and there is a level gap between the top level and the bottom
 	 * level. If configured, missing levels inherit the parent name as "Unclassified (parent-name) OTU".
@@ -230,6 +210,24 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 				parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
 				this.taxaMap.put( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 			else if( numFound == numTaxa ) break;
+	}
+
+	/**
+	 * Map level delimeter to level names.
+	 * 
+	 * @return Map delim to level name
+	 */
+	public static Map<String, String> delimToLevelMap() {
+		if( delimToLevelMap.isEmpty() ) {
+			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
+			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
+			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
+			delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
+			delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
+			delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
+			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
+		}
+		return delimToLevelMap;
 	}
 
 	private long count = 0;
