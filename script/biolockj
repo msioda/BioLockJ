@@ -48,13 +48,18 @@ docker_args() {
 
 # Convert input parameters to array with values "name=value"
 get_params() {
-	i=0 && args=( "$@" )
+	count=0 && i=0 && conf='' && restartDir='' && args=( "$@" )
     for arg in ${args[@]}; do
-    		[ "${arg//-}" == "blj" ] && echo "blj" && continue
+    	count=$((count+1))
+    	[ "${arg//-}" == "blj" ] && echo "blj" && continue
    	 	[ "${arg//-}" == "blj_sup" ] && echo "blj_sup" && continue
 		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${arg//-}"
-		[ $((i%2)) -eq 1 ] && $(is_flag_arg $name) && echo "${name:0:1}" && name='' && i=$((i+1)) && continue
-		[ $((i%2)) -eq 0 ] && echo "${name}=${arg}" && x="${name}" && name='' && [ "${x}" == "c" ] && conf="${arg}"
+		[ $((i%2)) -eq 1 ] && ! $(lastArgMustBeConfig $count $numArgs) && $(is_flag_arg $name) && echo "${name:0:1}" && name='' && i=$((i+1)) && continue
+		if [ $((i%2)) -eq 0 ]; then
+			echo "${name}=${arg}" && x="${name}" && name=''
+			[ "${x:0:1}" == "r" ] && restartDir="${arg}"
+			[ "${x:0:1}" == "c" ] && conf="${arg}"
+    	fi
     done
      [ ${#name} -gt 0 ] && [ ${#conf} -eq 0 ] && echo "c=${name}"
 }
@@ -65,10 +70,17 @@ is_flag_arg() {
 	[ $(echo ${1:0:1} | egrep -c 'a|b|d|g') -gt 0 ]
 }
 
+# The last arg must be the config path, if config & restart dir are undefined and we are looking at the last parameter
+# Param 1 - Current script input param number
+# Param 2 - Total number of script input params
+lastArgMustBeConfig() {
+	[ $1 -eq $2 ] && [ ${#conf} -eq 0 ] && [ ${#restartDir} -eq 0 ]
+}
+
 # Initialize script, read in script arguments
 # Param 1 -  All script args ${@}
 read_input_args() {
-	args=$(get_params "$@")
+	args=$(get_params $@)
 	blj=$(arg_exists $args blj)
 	blj_sup=$(arg_exists $args blj_sup)
 	runAws=$(arg_exists $args a)

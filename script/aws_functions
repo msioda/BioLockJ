@@ -27,8 +27,8 @@ build_stack() {
 build_s3() {
 	awsS3=$(get_blj_prop aws.s3)
 	if [ ${#awsS3} -gt 0 ]; then
-		awsS3=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$awsS3']|[*].Name")
-		[ ${#awsS3} -eq 0 ] || [ "${awsS3}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Configured S3 bucket [ aws.s3=${awsS3} ] not found"
+		testAws=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$awsS3']|[*].Name")
+		[ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Configured S3 bucket [ aws.s3=${awsS3} ] not found"
 		aws_log "Found existing S3 Bucket ${awsS3}"
 	else
 		awsS3=$(aws s3api create-bucket --region $(aws_region) --bucket $(generate_name blj $(aws_s3_buckets)))
@@ -114,7 +114,7 @@ set_stack_name() {
 		aws_log "Pipeline Config \"aws.stack=${stack}\" status=CREATE_COMPLETE" && return
 	fi
 	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-	set_blj_prop aws.stack $(generate_name bljStack "${stacks}") 
+	set_blj_prop aws.stack $(generate_name blj "${stacks}") 
 	aws_log "Generated aws.stack=$(get_blj_prop aws.stack)" 
 }
 

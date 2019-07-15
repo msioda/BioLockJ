@@ -15,15 +15,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.io.FileUtils;
-
 import biolockj.Config;
 import biolockj.Log;
 import biolockj.exception.ConfigPathException;
 import biolockj.module.ScriptModuleImpl;
-
-
 
 /**
  * This BioModule allows users to call in their own scripts into BLJ
@@ -36,65 +32,62 @@ public class GenMod extends ScriptModuleImpl {
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
 		final ArrayList<String> lines = new ArrayList<>();
-		lines.add(getLauncher()+ transferScript() + getScriptParams());	
+		lines.add( getLauncher() + transferScript() + getScriptParams() );
 		data.add( lines );
-		Log.info(GenMod.class,"Command ran: "+ data);
+		Log.info( GenMod.class, "Command ran: " + data );
 		return data;
 	}
-	
 
-	
 	@Override
 	public void checkDependencies() throws Exception {
-		Config.requireExistingFile(this, SCRIPT);	
+		Config.requireExistingFile( this, SCRIPT );
 	}
-	
-	protected String transferScript() throws ConfigPathException, IOException,Exception{
-		File original = Config.requireExistingFile(this, SCRIPT);
-		FileUtils.copyFileToDirectory(original, getModuleDir());
-		File copy = new File(getModuleDir() + File.separator + original.getName());
-		copy.setExecutable(true, false);
-		Log.debug(GenMod.class,"Users script saved to: "+ copy.getAbsolutePath());
-		return copy.getAbsolutePath();
-		
-	}
-	
-	protected String getLauncher() throws Exception{
-		String launcher =Config.getString(this, LAUNCHER);
-		if ( launcher != null) {
-			launcher = Config.getExe(this, "exe." + launcher) +" ";
-			Log.debug(GenMod.class,"Launcher used: " + launcher);
-		}else{
-			launcher="";
-			Log.debug(GenMod.class,"No Launcher provided");
-			}
-		return launcher;
-		
-	}
-	
-	protected String getScriptParams() throws Exception{
-		String param =Config.getString(this, PARAM);
-		if (param == null) {
-			Log.debug(GenMod.class,"No param provided");
-			return "";
-			
-		}else {
-			Log.debug(GenMod.class,"param provided: "+ param);
-			return " " + param;
+
+	protected String getLauncher() throws Exception {
+		String launcher = Config.getString( this, LAUNCHER );
+		if( launcher != null ) {
+			launcher = Config.getExe( this, "exe." + launcher ) + " ";
+			Log.debug( GenMod.class, "Launcher used: " + launcher );
+		} else {
+			launcher = "";
+			Log.debug( GenMod.class, "No Launcher provided" );
 		}
-	
+		return launcher;
+
 	}
-	
+
+	protected String getScriptParams() {
+		final String param = Config.getString( this, PARAM );
+		if( param == null ) {
+			Log.debug( GenMod.class, "No param provided" );
+			return "";
+		}
+
+		Log.debug( GenMod.class, "param provided: " + param );
+		return " " + param;
+
+	}
+
+	protected String transferScript() throws ConfigPathException, IOException, Exception {
+		final File original = Config.requireExistingFile( this, SCRIPT );
+		FileUtils.copyFileToDirectory( original, getModuleDir() );
+		final File copy = new File( getModuleDir() + File.separator + original.getName() );
+		copy.setExecutable( true, false );
+		Log.debug( GenMod.class, "Users script saved to: " + copy.getAbsolutePath() );
+		return copy.getAbsolutePath();
+
+	}
+
 	/**
 	 * {@value #LAUNCHER} type of Script used by User
 	 */
 	protected static final String LAUNCHER = "genMod.launcher";
 	/**
-	 *  {@value #SCRIPT} path to user Script
-	 */
-	protected static final String SCRIPT ="genMod.scriptPath";
-	/**
-	 *  {@value #PARAM} parameters for user script
+	 * {@value #PARAM} parameters for user script
 	 */
 	protected static final String PARAM = "genMod.param";
+	/**
+	 * {@value #SCRIPT} path to user Script
+	 */
+	protected static final String SCRIPT = "genMod.scriptPath";
 }

@@ -14,30 +14,30 @@ package biolockj.exception;
 import biolockj.module.BioModule;
 
 /**
- * ValidationException is thrown at module runtime if the ValidationUtil throws
- * a non-BioLockJ error while validating module output.
+ * ValidationException is thrown at module runtime if the ValidationUtil throws a non-BioLockJ error while validating
+ * module output.
  */
 public class ValidationExecutionException extends BioLockJException {
+
+	/**
+	 * Generate BioModule specific error message.
+	 * 
+	 * @param module BioModule
+	 */
+	public ValidationExecutionException( final BioModule module ) {
+		super( buildMessage( module ) );
+	}
 
 	/**
 	 * Default error message (not BioModule specific).
 	 * 
 	 * @param msg Error message
 	 */
-	public ValidationExecutionException( String msg ) {
+	public ValidationExecutionException( final String msg ) {
 		super( msg );
 	}
-	
-	/**
-	 * Generate BioModule specific error message.
-	 * 
-	 * @param module BioModule
-	 */
-	public ValidationExecutionException( BioModule module ) {
-		super( buildMessage( module ) );
-	}
-	
-	private static String buildMessage(BioModule module) {
+
+	private static String buildMessage( final BioModule module ) {
 		return "Error occurred validating the output of module " + module.getModuleDir().getName();
 	}
 

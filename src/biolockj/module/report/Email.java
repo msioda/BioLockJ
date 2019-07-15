@@ -21,6 +21,7 @@ import javax.crypto.spec.PBEParameterSpec;
 import javax.mail.*;
 import javax.mail.internet.*;
 import biolockj.*;
+import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModuleImpl;
 import biolockj.util.*;
 
@@ -47,7 +48,7 @@ public class Email extends BioModuleImpl {
 	 */
 	@Override
 	public void checkDependencies() throws Exception {
-		Config.requireString( this, EMAIL_HOST );
+		getHost();
 		Config.requireString( this, EMAIL_PORT );
 		Config.requireBoolean( this, EMAIL_SMTP_AUTH );
 		Config.requireBoolean( this, EMAIL_START_TLS_ENABLE );
@@ -89,6 +90,29 @@ public class Email extends BioModuleImpl {
 	}
 
 	/**
+	 * Used to authenticate the service email account defined in EMAIL_FROM. WARNING - This is a trivial level of
+	 * encryption! Service email account should never send confidential information!
+	 *
+	 * @param val Encrypted password
+	 * @return Clear-text password
+	 */
+	String decrypt( final String val ) {
+		String decryptedPassword = null;
+		try {
+			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
+			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
+			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
+			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
+			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
+		} catch( final Exception ex ) {
+			Log.error( getClass(), ex.getMessage(), ex );
+		}
+
+		return decryptedPassword;
+
+	}
+
+	/**
 	 * Build an authenticated javax.mail.Session using {@link biolockj.Config} email properties
 	 *
 	 * @return javax.mail.Session required to send a MimeMessage
@@ -103,8 +127,9 @@ public class Email extends BioModuleImpl {
 		final Properties props = new Properties();
 		props.put( EMAIL_SMTP_AUTH, smtpAuth );
 		props.put( EMAIL_START_TLS_ENABLE, startTls );
-		props.put( EMAIL_HOST, Config.requireString( this, EMAIL_HOST ) );
+		props.put( EMAIL_HOST, getHost() );
 		props.put( EMAIL_PORT, Config.requireString( this, EMAIL_PORT ) );
+		props.put( EMAIL_PROTOCOL, SMTP );
 
 		final Session session = Session.getInstance( props, new Authenticator() {
 			@Override
@@ -126,27 +151,8 @@ public class Email extends BioModuleImpl {
 		return session;
 	}
 
-	/**
-	 * Used to authenticate the service email account defined in EMAIL_FROM. WARNING - This is a trivial level of
-	 * encryption! Service email account should never send confidential information!
-	 *
-	 * @param val Encrypted password
-	 * @return Clear-text password
-	 */
-	String decrypt( final String val ) {
-		String decryptedPassword = null;
-		try {
-			final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance( "PBEWithMD5AndDES" );
-			final SecretKey key = keyFactory.generateSecret( new PBEKeySpec( PASSWORD ) );
-			final Cipher pbeCipher = Cipher.getInstance( "PBEWithMD5AndDES" );
-			pbeCipher.init( Cipher.DECRYPT_MODE, key, new PBEParameterSpec( SALT, 20 ) );
-			decryptedPassword = new String( pbeCipher.doFinal( base64Decode( val ) ), "UTF-8" );
-		} catch( final Exception ex ) {
-			Log.error( getClass(), ex.getMessage(), ex );
-		}
-
-		return decryptedPassword;
-
+	private String getHost() throws ConfigNotFoundException {
+		return Config.requireString( this, DockerUtil.inAwsEnv() ? AWS_EMAIL_HOST: EMAIL_HOST );
 	}
 
 	/**
@@ -240,6 +246,11 @@ public class Email extends BioModuleImpl {
 	}
 
 	/**
+	 * {@link biolockj.Config} AWS Specific SMTP Host: {@value #AWS_EMAIL_HOST}
+	 */
+	protected static final String AWS_EMAIL_HOST = "aws.emailHost";
+
+	/**
 	 * {@link biolockj.Config} String property: {@value #EMAIL_ENCRYPTED_PASSWORD}<br>
 	 * The Base 64 encrypted password is stored in the Config file using this property.
 	 */
@@ -264,6 +275,11 @@ public class Email extends BioModuleImpl {
 	protected static final String EMAIL_PORT = "mail.smtp.port";
 
 	/**
+	 * {@link biolockj.Config} Email protocol: {@value #EMAIL_PROTOCOL}<br>
+	 */
+	protected static final String EMAIL_PROTOCOL = "mail.transport.protocol";
+
+	/**
 	 * {@link biolockj.Config} Boolean property: {@value #EMAIL_SMTP_AUTH}<br>
 	 * {@link javax.mail.Session} SMTP authorization flag, set to {@value biolockj.Constants#TRUE} if required by
 	 * {@value #EMAIL_HOST}
@@ -286,5 +302,6 @@ public class Email extends BioModuleImpl {
 
 	private static final byte[] SALT =
 		{ (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, };
+	private static final String SMTP = "smtp";
 	private static boolean successful = false;
 }

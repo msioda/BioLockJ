@@ -48,7 +48,7 @@ public class Pipeline {
 		if( hasScripts && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) exeModule() );
 		if( hasScripts ) waitForModuleScripts();
 		exeModule().cleanUp();
-		ValidationUtil.validateModule(exeModule());
+		ValidationUtil.validateModule( exeModule() );
 		if( !runDetached ) SummaryUtil.reportSuccess( exeModule() );
 		ModuleUtil.markComplete( exeModule() );
 	}
@@ -111,7 +111,7 @@ public class Pipeline {
 			module.runModule();
 			Log.info( Pipeline.class, "DIRECT module ID [" + id + "].runModule() complete!" );
 			module.cleanUp();
-			ValidationUtil.validateModule(module);
+			ValidationUtil.validateModule( module );
 			module.moduleComplete();
 			SummaryUtil.reportSuccess( module );
 			MasterConfigUtil.saveMasterConfig();
@@ -219,12 +219,11 @@ public class Pipeline {
 
 			info( "Check dependencies for: " + module.getClass().getName() );
 			module.checkDependencies();
-			ValidationUtil.checkDependencies(module);
+			ValidationUtil.checkDependencies( module );
 
 			if( ModuleUtil.isComplete( module ) ) {
 				module.cleanUp();
-				if( !BioLockJUtil.isDirectMode() )
-					ValidationUtil.validateModule(module);
+				if( !BioLockJUtil.isDirectMode() ) ValidationUtil.validateModule( module );
 				refreshRCacheIfNeeded();
 			}
 		}

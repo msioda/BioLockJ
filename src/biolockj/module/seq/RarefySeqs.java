@@ -201,19 +201,17 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 				") reads, which is less than minimum # reads (" +
 				Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
 	}
-	
-	private Random getRandomSeed() throws ConfigFormatException {
-		Integer seed = Config.getPositiveInteger( this, Constants.SET_SEED );
-		if (seed != null ) {
-			return new Random(seed);
-		}
-		return new Random();
-	}
 
 	private String getMetaColName() throws Exception {
 		if( this.otuColName == null ) this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_RAREFIED_READS );
 
 		return this.otuColName;
+	}
+
+	private Random getRandomSeed() throws ConfigFormatException {
+		final Integer seed = Config.getPositiveInteger( this, Constants.SET_SEED );
+		if( seed != null ) return new Random( seed );
+		return new Random();
 	}
 
 	private boolean needsCountModule() throws Exception {
