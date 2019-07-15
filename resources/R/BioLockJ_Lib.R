@@ -60,17 +60,21 @@ getConfig <- function( name, defaultVal=NULL ) {
 	
 	prop = propCache[[ name ]]
 	value=str_trim( prop )
-	if( is.null( prop ) ){ value = defaultVal }
-	elif( str_trim( prop ) == "Y" ) { value = TRUE }
-	elif( str_trim( prop ) == "N" ) { value = FALSE }
-	elif( !is.na( as.numeric( prop ) ) && grepl( ",", prop ) ) {
-	  value = as.numeric( unlist( strsplit( prop, "," ) ) ) 
-	}elif( is.character( prop ) && grepl( ",", prop ) ) {
-		value = str_trim( unlist( strsplit( prop, "," ) ) ) 
-	}elif( !is.na( as.numeric( prop ) ) ) { value = as.numeric( prop )  }
+
+	if( is.null( prop ) ) return( defaultVal )
 	
-	logInfo( c("Using \"", value, "\" for property ", name))
-	return( value )
+	if( value == "Y" ) return( TRUE )
+	if( value == "N" ) return( FALSE )
+	
+	if( !is.na( as.numeric( value ) ) && grepl( ",", prop ) ) {
+		return( as.numeric( unlist( strsplit( prop, "," ) ) ) )
+	}
+	if( is.character( value ) && grepl( ",", value ) ) {
+		return( str_trim( unlist( strsplit( value, "," ) ) ) )
+	}
+	if( !is.na( as.numeric( value ) ) ) return( as.numeric( value ) )
+	
+	return( value )	
 }
 
 # Return the data columns (no metadata)
