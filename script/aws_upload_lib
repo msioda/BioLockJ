@@ -28,9 +28,9 @@ build_start_script() {
 	echo "dockblj -aws ${meta}i=${BLJ_INPUT}/$(basename $(get_blj_prop input.dirPaths)) c=$(get_config ec2)" >> "${ss}"
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
-	if [ "$(get_blj_prop aws.ec2EndState)" == "stop" ] || [ "$(get_blj_prop aws.ec2EndState)" == "terminate" ]; then
+	if [ "$(get_blj_prop aws.ec2TerminateHead)" == "Y" ]; then
 		echo '[ -f "${flagFile}" ] && aws ec2 stop-instances --instance-ids "$(get_blj_prop aws.ec2InstanceID)"' >> "${ss}"
-		[ "$(get_blj_prop aws.ec2EndState)" == "terminate" ] && echo "[ -f \"${flagFile}\" ] && aws ec2 terminate-instances --instance-id \"$(get_blj_prop aws.ec2InstanceID)\"" >> "${ss}"
+		echo '[ -f "${flagFile}" ] && aws ec2 terminate-instances --instance-id "$(get_blj_prop aws.ec2InstanceID)"' >> "${ss}"
 	fi
 	chmod 770 "${ss}" && echo "${ss}"
 }

@@ -5,7 +5,7 @@
 ##                                                                           ##
 ##  Required Parameters (If gui arg passed, no other args required)          ##
 ##  Note, all params (other than blj & blj_sup) can use only 1st letter      ##
-##  Config file path:          config  <file_path>                            ##
+##  Config file path:          config  <file_path>                           ##
 ##                                                                           ##
 ##  Optional Parameters:                                                     ##
 ##  Aws flag:                  aws                                           ##

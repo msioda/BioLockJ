@@ -49,11 +49,13 @@ docker_args() {
 # Convert input parameters to array with values "name=value"
 get_params() {
 	count=0 && i=0 && conf='' && restartDir='' && args=( "$@" )
+	numArgs=${#args[*]}
     for arg in ${args[@]}; do
     	count=$((count+1))
-    	[ "${arg//-}" == "blj" ] && echo "blj" && continue
-   	 	[ "${arg//-}" == "blj_sup" ] && echo "blj_sup" && continue
-		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${arg//-}"
+    	a="${arg//-}"
+    	[ $a == blj ] && echo blj && continue
+   	 	[ $a == blj_sup ] && echo blj_sup && continue
+		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name=$a
 		[ $((i%2)) -eq 1 ] && ! $(lastArgMustBeConfig $count $numArgs) && $(is_flag_arg $name) && echo "${name:0:1}" && name='' && i=$((i+1)) && continue
 		if [ $((i%2)) -eq 0 ]; then
 			echo "${name}=${arg}" && x="${name}" && name=''
