@@ -19,7 +19,7 @@ exports.retrieveAllPipelines = function(req, res, next) {
     fs.readdir(path.join( '/', 'pipelines' ), (err, files) => {
       if (err) {
         console.error(err);
-        accessLogStream.write(e.stack + '\n');
+        errorLogger.writeError(e.stack + '\n');
       }
       let completePosition = 0;//variable for
       files.forEach( file => {
