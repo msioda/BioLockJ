@@ -933,7 +933,9 @@
     <p>Please select the geographic area in which you live. Subsequent configuration
   questions will narrow this down by presenting a list of cities, representing
   the time zones in which they are located.
+  <!-- TODO: make warning if they change from default -->
     <select class="sp" class="" name="REGION" id="">
+      <!-- TODO: populate this based on list_region() -->
       <option default value="us-east-1">us-east-1</option>
       <option value="1">Africa</option>
       <option value="2">America</option>
@@ -967,11 +969,11 @@
     <!-- <p>BioLockJ project folder on S3
       <input type="text" name="s3.blj_proj" id="s3.blj_proj" value=""><br>
     </p> -->
-    <p>Copy input files to S3 storage?
-      <select class="sp" name="aws.copyInputsToS3" value="aws.copyInputsToS3">
+    <p>Copy database(s) to S3 storage?
+      <select class="sp" name="aws.copyDbToS3" value="aws.copyDbToS3">
         <option value="">Choose an option</option>
         <option value="Y">Yes</option>
-        <option value="N">No, delete input files</option>
+        <option value="N">No, delete databases</option>
       </select>
     </p>
     <p>Copy entire pipeline to S3 storage?
@@ -1002,8 +1004,8 @@
         <option value="N">No, leave them on EC2</option>
       </select>
     </p>
-    <p>Shutdown EC2 after purge?
-      <select class="sp" class="" name="aws.ec2ShutdownAfterPurge" value="aws.ec2ShutdownAfterPurge">
+    <p>Terminate EC2 after pipeline completion?
+      <select class="sp" class="" name="aws.ec2TerminateHead" value="aws.ec2TerminateHead">
         <option value="">Choose an option</option>
         <option value="Y">Yes</option>
         <option value="N">No, leave EC2 running</option>
