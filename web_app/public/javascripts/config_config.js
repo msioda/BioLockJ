@@ -521,30 +521,6 @@ function Config(modules = [], paramKeys = [], paramValues = [], comments = []){
     return true;
   };//end validation
 
-  this.buildPartialLaunchArgument = function buildLaunchArgument(restart = false){
-    /**
-    Returns something like:
-    inputDirPaths: "/Users/aaronyerke/git/blj_support/resources/test/data/multiplexed/combinedFastq"
-    metadataFilePath: "/Users/aaronyerke/git/blj_support/resources/test/metadata/testMetadata.tsv"
-    */
-    const partialLaunchArgument = {};
-    //config key : blj_argument
-    //config Path will be built serverside
-    const runtimeArguments = {
-      'input.dirPaths' : 'i',
-      'metadata.filePath' : 'm',
-      // 'pipeline.configFile' : 'c',
-      // TODO: Add -p to arguements list
-    };
-    for (var i = 0; i < this.paramKeys.length; i++) {
-      if (Object.keys(runtimeArguments).includes(this.paramKeys[i])){
-        partialLaunchArgument[runtimeArguments[this.paramKeys[i]]] = this.paramValues[i];
-      }
-    }
-    console.log('partialLaunchArgument: ', partialLaunchArgument);
-    return partialLaunchArgument;
-  }
-
   this.formatAsFlatFile = function(){
     var text = "";
     textFile = null;
@@ -657,13 +633,13 @@ function loadConfigPathToForm(conPath) {
 document.getElementById("recent").addEventListener("mouseover", function() {
   const configs = retrieveConfigs();
   configs.then(retrievedConfigs => {
-    console.log(retrievedConfigs);
+    console.log("retrievedConfigs: ", retrievedConfigs);
     for (var i = 0; i < retrievedConfigs.length; i++) {
       let opt = document.createElement('a');
       opt.setAttribute("name", retrievedConfigs[i]);
       var text = document.createTextNode(retrievedConfigs[i].toString());
       opt.addEventListener("click", function() {
-        loadConfigPathToForm('/config/' + this.name.concat('.properties'));
+        loadConfigPathToForm(this.name.concat('.properties'));
         })
       opt.appendChild(text);
       opt.classList.add('recentConfigs');
@@ -1169,7 +1145,6 @@ function launcher(launchAction = 'launchNew', restartProjectPath){
     modules : currentConfig.modules,
     paramKeys : currentConfig.paramKeys,
     paramValues : currentConfig.paramValues,
-    partialLaunchArg : currentConfig.buildPartialLaunchArgument(),
     launchAction : launchAction,
     //additional parameters for launch
   }
