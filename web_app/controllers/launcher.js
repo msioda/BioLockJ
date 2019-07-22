@@ -27,7 +27,6 @@ exports.launch = function(req, res, next) {
     const modules = req.body.modules;
     const paramKeys = req.body.paramKeys;
     const paramValues = req.body.paramValues;
-    let launchArg = req.body.partialLaunchArg;
     let configName = paramValues[paramKeys.indexOf('pipeline.configFile')];
     if (!configName.endsWith('.properties')){
       configName = configName.concat('.properties');
@@ -37,16 +36,15 @@ exports.launch = function(req, res, next) {
     indexAux.saveConfigToLocal(configName,configText);
 
     //set host-path for the config:
-    launchArg['c'] = path.join( BLJ_CONFIG, configName);
-
-    let launchCommand;
+    const configPath = path.join( BLJ_CONFIG, configName);
 
     switch (req.body.launchAction) {
       case 'restartFromCheckPoint':
         console.log('restart request: ', req.body.restartProjectPath);
         const fullRestartPath = path.join(bljDir,req.body.restartProjectPath);
         console.log(fullRestartPath);
-        launchCommand = createFullLaunchCommand(launchArg, fullRestartPath);
+        launchCommand = createLaunchCommand(configPath, paramKeys, paramValues, fullRestartPath);
+        //configPath, keys, params, restartPath
         console.log('launching!');
         runLaunchCommand(launchCommand, Stream);
         break;
@@ -74,7 +72,7 @@ exports.launch = function(req, res, next) {
           }
         };
         deleteFolderRecursive(eraseDir);
-        launchCommand = createFullLaunchCommand(launchArg);
+        launchCommand = createLaunchCommand(configPath, paramKeys, paramValues);
         console.log('launching!');
         runLaunchCommand(launchCommand, Stream);
 
@@ -85,10 +83,9 @@ exports.launch = function(req, res, next) {
 
         break;
       case 'launchNew':
-        launchCommand = createFullLaunchCommand(launchArg);
+        launchCommand = createLaunchCommand(configPath, paramKeys, paramValues);
         console.log('launching!');
         runLaunchCommand(launchCommand, Stream);
-        //let fileModTime = new Map();
 
       break;
       default:
@@ -167,27 +164,27 @@ runLaunchCommand = function(command, eventEmitter) {
 
 }//end runLaunchCommand
 
-createFullLaunchCommand = function(launchJSON, restartPath){//
-  const execSync = require('child_process').execSync;
-  const dockblj = path.join('..','script','dockblj');//relative path from webapp folder
-  let command = [];
-  command.push(dockblj.toString());
-  Object.keys(launchJSON).forEach(key => {
-    //if key not config, grab path.Dirname(launchJSON[key])
+createLaunchCommand = function(configPath, keys, values, restartPath){//
+  let command = ['biolockj', "docker"];
 
-    //need to pass directories to map for all except -c and -i is already a directory
-    if (key != 'c' && key != 'i'){// TODO: update this to handle '\' also incase someone is running windows
-      command.push(`-${key}=${path.dirname(launchJSON[key])}`)
-    }else{
-    command.push(`-${key}=${launchJSON[key]}`);
-    };
-    // command.push(`-${key}=${launchJSON[key]}`);
-  });
+  let env = '-c';//flag, -c
+
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] == 'pipeline.env' && values[i] == 'aws'){
+      command.push(`-aws ${configPath}`);
+      env = 'aws';
+    }
+  }
+
+  if (env == '-c') {
+    command.push(`-c ${configPath}`);
+  }
+
   if (restartPath !== undefined ){
     //note, change to make more universal
-    command.push(`-r ${restartPath}`);
+    command.push(`-r ${path.Dirname(restartPath)}`);
   }
   console.log('launch');
   console.log('full launch command: \n', command);
   return command;
-}//end createFullLaunchCommand
+}//end createLaunchCommand
