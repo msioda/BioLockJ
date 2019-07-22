@@ -165,7 +165,7 @@ runLaunchCommand = function(command, eventEmitter) {
 }//end runLaunchCommand
 
 createLaunchCommand = function(configPath, keys, values, restartPath){//
-  let command = ['biolockj', "docker"];
+  let command = ['biolockj', "--docker"];
 
   let env = '-c';//flag, -c
 
