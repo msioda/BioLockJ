@@ -10,13 +10,14 @@ const fs = require('fs'),
   errorLogger = require('./errorLogger.js'),
   bljProjDir = process.env.BLJ_PROJ, //path to blj_proj
   bljDir = process.env.BLJ,
+  BLJ_CONFIG = process.env.BLJ_CONFIG,
   HOST_BLJ = process.env.HOST_BLJ;
 
 exports.retrievePropertiesFiles = function(req, res, next) {
   console.log('/retrieveConfigs');
   try {
     let configs = [];
-    fs.readdir(path.join('/', 'config'), (err, files) => {
+    fs.readdir(BLJ_CONFIG, (err, files) => {
       if (err) {
         console.error(err);
       }
@@ -53,7 +54,7 @@ exports.retrievePropertiesFile = function(req, res, next){
       res.end();
     } else{
       console.log('no / found');
-      const datum = fs.readFileSync(path.join('/','config', propertiesFile), 'utf8');
+      const datum = fs.readFileSync(path.join(BLJ_CONFIG, propertiesFile), 'utf8');
       res.setHeader("Content-Type", "text/html");
       res.write(JSON.stringify({data : datum}));
       res.end();
