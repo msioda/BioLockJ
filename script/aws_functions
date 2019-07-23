@@ -79,11 +79,6 @@ get_ami() {
 	echo "${awsAmi}"
 }
 
-# Got existing S3 bucket names in your region
-get_s3_buckets() {
-	echo $(aws s3api list-buckets --region $(aws_region) --query "Buckets[].Name")
-}
-
 # Check status of Cloud Formation Stack
 is_stack_complete() {
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
@@ -92,6 +87,30 @@ is_stack_complete() {
 	[ ${#stacks} -gt 0 ] && [ "${stacks}" != "None" ] && [ "${stacks/$(get_blj_prop aws.stack)}" != "${stacks}"  ] && echo "true" && return
 	echo "false"
 }
+
+# List existing S3 bucket names in your region
+# Param 1 - AWS region
+list_s3_buckets() {
+	[ ${#1} -gt 0 ] && region=${1}
+	[ ${#region} -eq 0 ] && region=$(aws_region)
+	aws s3api list-buckets --region ${region} --query Buckets[].Name
+}
+
+# List all available regions
+list_regions() {
+	aws ec2 describe-regions --query Regions[*].RegionName
+}
+
+# List EC2 instance types by region
+# Param 1 - AWS region
+list_ec2_instance_types() {
+	[ ${#1} -gt 0 ] && region=${1}
+	[ ${#region} -eq 0 ] && region=$(aws_region)
+	curl -s https://pricing.${region}.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/${region}/index.csv  \
+  		| tail -n +7 | cut -d , -f 19 | grep "\." | sed 's/"//g' | sort -u
+}
+
+
 
 # Main method #1, called to build AWS environment and launch BioLockJ pipeline on AWS
 # Param 1 - Pipeline Config file-path

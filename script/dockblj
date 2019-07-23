@@ -84,6 +84,7 @@ get_volumes() {
 			! $(null_var $primerPath) && vols="${vols} -v $primerPath:${BLJ_PRIMER}:ro"
 		else
 			vols="${vols} -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}:delegated"
+			[ -f "$(which aws)" ] && [ -d "$(dirname $(which aws))" ] && vols="${vols} -v $(dirname $(which aws)):${APP_BIN}"
 		fi
 		! $(null_var $blj) && vols="${vols} -v ${blj}:/app/biolockj:ro"
 		! $(null_var $blj_sup) && vols="${vols} -v ${blj_sup}:/app/blj_support:ro"
